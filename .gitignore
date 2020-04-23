@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+build
+vcpkg
+node_modules
