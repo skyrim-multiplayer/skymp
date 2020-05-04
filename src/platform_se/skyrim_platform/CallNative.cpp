@@ -2,6 +2,7 @@
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
 #include "Overloaded.h"
+#include <RE/TESObjectREFR.h>
 
 CallNative::Any CallNative::Apply(Any (*nativeFn)(...),
                                   RE::BSScript::IVirtualMachine* vm,
@@ -272,9 +273,26 @@ CallNative::AnySafe CallNative::CallNativeSafe(
     }
   }
 
-  auto r =
-    CallNativeUnsafe(vm, stackId, funcInfo->GetNativeFunctionAddr(),
-                     funcInfo->UsesLongSignature(), rawSelf, argsRaw, numArgs);
+  CallNative::Any r;
+
+  // Temporary fix for GetPosition* functions
+  if ((!stricmp(className.data(), "Actor") ||
+       !stricmp(className.data(), "ObjectReference")) &&
+      !stricmp(classFunc.data(), "GetPositionX")) {
+    r.f = ((RE::TESObjectREFR*)rawSelf)->GetPositionX();
+  } else if ((!stricmp(className.data(), "Actor") ||
+              !stricmp(className.data(), "ObjectReference")) &&
+             !stricmp(classFunc.data(), "GetPositionY")) {
+    r.f = ((RE::TESObjectREFR*)rawSelf)->GetPositionY();
+  } else if ((!stricmp(className.data(), "Actor") ||
+              !stricmp(className.data(), "ObjectReference")) &&
+             !stricmp(classFunc.data(), "GetPositionZ")) {
+    r.f = ((RE::TESObjectREFR*)rawSelf)->GetPositionZ();
+  } else {
+    r = CallNativeUnsafe(vm, stackId, funcInfo->GetNativeFunctionAddr(),
+                         funcInfo->UsesLongSignature(), rawSelf, argsRaw,
+                         numArgs);
+  }
 
   switch (funcInfo->GetReturnType().type) {
     case RE::BSScript::TypeInfo::RawType::kNone:
