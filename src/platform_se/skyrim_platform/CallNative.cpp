@@ -298,6 +298,8 @@ CallNative::AnySafe CallNative::CallNativeSafe(
     case RE::BSScript::TypeInfo::RawType::kNone:
       return ObjectPtr();
     case RE::BSScript::TypeInfo::RawType::kObject: {
+      if (!r.obj)
+        return ObjectPtr();
       return std::make_shared<Object>(funcInfo->GetReturnType().className,
                                       r.obj);
     }
