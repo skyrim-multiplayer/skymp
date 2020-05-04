@@ -1,0 +1,15 @@
+{
+  "name": "dev_service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --ignore dist/ ."
+  },
+  "keywords": [],
+  "author": "Pospelov",
+  "dependencies": {
+    "fs-extra": "^9.0.0",
+    "nodemon": "^2.0.3"
+  }
+}

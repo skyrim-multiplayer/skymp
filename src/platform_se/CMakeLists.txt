@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 project(platform_se)
 
-if ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
-  message(FATAL_ERROR "Missing toolchain file")
-endif()
-
 if ("${SKYRIM_MP_ROOT}" STREQUAL "")
   message(FATAL_ERROR "SKYRIM_MP_ROOT is not specified")
 endif()
@@ -53,7 +49,7 @@ apply_default_settings(TARGETS
 include(${cmake_dir}/integrate_vcpkg.cmake)
 integrate_vcpkg(
   TARGETS skyrim_platform
-  VCPKG_PATH "${SKYRIM_MP_ROOT}/vcpkg"
+  VCPKG_PATH "${VCPKG_ROOT}"
 )
 
 set_target_properties(skyrim_platform PROPERTIES

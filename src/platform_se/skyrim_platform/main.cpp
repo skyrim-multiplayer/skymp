@@ -1,176 +1,220 @@
-#include <Windows.h>
-
-#include <shlobj.h>
-#include <thread>
-
+#include "CallNativeApi.h"
+#include "ConsoleApi.h"
+#include "DevApi.h"
+#include "DirectoryMonitor.h"
+#include "DumpFunctions.h"
+#include "EventsApi.h"
+#include "JsEngine.h"
+#include "MyUpdateTask.h"
+#include "PapyrusTESModPlatform.h"
+#include "SkyrimPlatformProxy.h"
+#include "SystemPolyfill.h"
+#include "TaskQueue.h"
 #include <RE/ConsoleLog.h>
 #include <SKSE/API.h>
 #include <SKSE/Interfaces.h>
 #include <SKSE/Stubs.h>
-#include <skse64/PluginAPI.h>
-#include <skse64/gamethreads.h>
-
-#include "DirectoryMonitor.h"
-#include "JsEngine.h"
-#include "MyUpdateTask.h"
-#include "TaskQueue.h"
-
-#include "ConsoleApi.h"
-#include "DevApi.h"
-#include "EventsApi.h"
-#include "SystemPolyfill.h"
-#include "VmApi.h"
-
+#include <Windows.h>
 #include <atomic>
+#include <ctpl/ctpl_stl.h>
 #include <memory>
 #include <mutex>
+#include <shlobj.h>
+#include <skse64/PluginAPI.h>
+#include <skse64/gamethreads.h>
 #include <sstream>
 #include <string>
-
-#include <ctpl/ctpl_stl.h>
+#include <thread>
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
 
 void StartSKSE(void* hDllHandle);
 
-SKSETaskInterface* g_taskInterface = nullptr;
-SKSEMessagingInterface* g_messaging = nullptr;
+static SKSETaskInterface* g_taskInterface = nullptr;
+static SKSEMessagingInterface* g_messaging = nullptr;
+static ctpl::thread_pool g_pool(1);
 
-void OnUpdate()
+CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+
+std::string ReadFile(const std::filesystem::path& p)
 {
-  static ctpl::thread_pool pool(1);
+  std::ifstream t(p);
+  if (!t.is_open())
+    throw std::runtime_error("Unable to open " + p.string() + " for reading");
+  std::stringstream content;
+  content << t.rdbuf();
 
-  auto future = pool.push([](int) {
-    if (auto console = RE::ConsoleLog::GetSingleton()) {
-      static bool helloSaid = false;
-      if (!helloSaid) {
-        helloSaid = true;
-        console->Print("Hello SE");
+  return content.str();
+}
+
+void JsTick(bool gameFunctionsAvailable)
+{
+  if (auto console = RE::ConsoleLog::GetSingleton()) {
+    static bool helloSaid = false;
+    if (!helloSaid) {
+      helloSaid = true;
+      console->Print("Hello SE");
+    }
+  }
+  try {
+    static TaskQueue taskQueue;
+    taskQueue.Update();
+
+    static std::shared_ptr<JsEngine> engine;
+
+    auto fileDir = std::filesystem::path("Data/Platform/Plugins");
+    static auto monitor = new DirectoryMonitor(fileDir);
+    static uint32_t lastNumUpdates = 0;
+
+    static uint32_t tickId = 0;
+    tickId++;
+
+    const auto n = monitor->GetNumUpdates();
+    bool scriptsUpdated = false;
+    if (lastNumUpdates != n) {
+      lastNumUpdates = n;
+      scriptsUpdated = true;
+    }
+
+    if (auto ec = monitor->GetErrorCode()) {
+      static bool thrown = false;
+      if (!thrown) {
+        thrown = true;
+        throw std::runtime_error("DirectoryMonitor failed with code " +
+                                 std::to_string(ec));
       }
     }
-    try {
-      static TaskQueue taskQueue;
-      taskQueue.Update();
 
-      static std::shared_ptr<JsEngine> engine;
+    if (tickId == 1 || scriptsUpdated) {
+      EventsApi::Clear();
 
-      auto fileDir =
-        std::filesystem::path("C:/projects/skyrim-multiplayer/build/_client");
-      static auto monitor = new DirectoryMonitor(fileDir);
-      static uint32_t lastNumUpdates = 0;
-
-      static uint32_t tickId = 0;
-      tickId++;
-
-      const auto n = monitor->GetNumUpdates();
-      bool scriptsUpdated = false;
-      if (lastNumUpdates != n) {
-        lastNumUpdates = n;
-        scriptsUpdated = true;
-      }
-
-      if (auto ec = monitor->GetErrorCode()) {
-        static bool thrown = false;
-        if (!thrown) {
-          thrown = true;
-          throw std::runtime_error("DirectoryMonitor failed with code " +
-                                   std::to_string(ec));
-        }
-      }
-
-      if (tickId == 1 || scriptsUpdated) {
-        EventsApi::Clear();
-
-        auto filePath = fileDir / "index.js";
-        std::ifstream t(filePath);
-        std::stringstream scriptSrc;
-        scriptSrc << t.rdbuf();
-
-        if (!engine)
-          engine.reset(new JsEngine);
+      if (!engine) {
+        engine.reset(new JsEngine);
         engine->ResetContext(&taskQueue);
+      }
+
+      for (auto& it : std::filesystem::directory_iterator(fileDir)) {
+
+        std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
+
+        auto scriptSrc = ReadFile(p);
 
         // We will be able to use require() and log()
         JsValue devApi = JsValue::Object();
         DevApi::Register(
           devApi, &engine,
-          { { "skyrimPlatform/console", ConsoleApi::Register },
-            { "skyrimPlatform/dev",
-              [](JsValue& e) { DevApi::Register(e, &engine, {}); } },
-            { "skyrimPlatform/events", EventsApi::Register },
-            { "skyrimPlatform/vm",
-              [](JsValue& e) { VmApi::Register(e, &taskQueue); } } });
+          { { "skyrimPlatform",
+              [it](JsValue e) {
+                ConsoleApi::Register(e);
+                DevApi::Register(e, &engine, {}, it);
+                EventsApi::Register(e);
+                CallNativeApi::Register(
+                  e, [] { return g_nativeCallRequirements; });
+                e.SetProperty(
+                  "getJsMemoryUsage",
+                  JsValue::Function(
+                    [](const JsFunctionArguments& args) -> JsValue {
+                      return (double)engine->GetMemoryUsage();
+                    }));
+
+                return SkyrimPlatformProxy::Attach(e);
+              } } },
+          it);
 
         JsValue consoleApi = JsValue::Object();
         ConsoleApi::Register(consoleApi);
-        JsValue::GlobalObject().SetProperty("require",
-                                            devApi.GetProperty("require"));
-        JsValue::GlobalObject().SetProperty("log",
-                                            consoleApi.GetProperty("log"));
+        for (auto f : { "require", "addNativeExports" })
+          JsValue::GlobalObject().SetProperty(f, devApi.GetProperty(f));
+        JsValue::GlobalObject().SetProperty(
+          "log", consoleApi.GetProperty("printConsole"));
 
-        /*JsValue::GlobalObject().SetProperty(
-          "System",
-          SystemPolyfill::Register(
-            &engine, [](const std::string& moduleName, JsValue& exports) {
-              if (auto console = RE::ConsoleLog::GetSingleton()) {
-
-                console->Print("moduleName %s", moduleName.data());
-              }
-
-              if (moduleName == "skyrimPlatform/console")
-                ConsoleApi::Register(exports);
-              else if (moduleName == "skyrimPlatform/dev")
-                DevApi::Register(exports, &engine);
-              else if (moduleName == "skyrimPlatform/events")
-                EventsApi::Register(exports);
-              else if (moduleName == "skyrimPlatform/vm")
-                VmApi::Register(exports, &taskQueue);
-            }));*/
-
-        auto fileName = std::filesystem::path(filePath).filename();
-        auto res =
-          engine->RunScript(scriptSrc.str(), fileName.string()).ToString();
-      }
-
-      EventsApi::SendEvent("update", {});
-
-    } catch (std::exception& e) {
-      if (auto console = RE::ConsoleLog::GetSingleton()) {
-        std::string what = e.what();
-        std::string tmp;
-
-        while (what.size() > sizeof("Error: ") - 1 &&
-               !memcmp(what.data(), "Error: ", sizeof("Error: ") - 1)) {
-          what = { what.begin() + sizeof("Error: ") - 1, what.end() };
+        if (JsValue::GlobalObject().GetProperty("storage").GetType() ==
+            JsValue::Undefined().GetType()) {
+          JsValue::GlobalObject().SetProperty("storage", JsValue::Object());
         }
 
-        size_t i = 0;
-
-        auto safePrint = [what, console, &i](std::string msg) {
-          if (msg.size() > 128) {
-            msg.resize(128);
-            msg += '...';
-          }
-          console->Print("%s%s", (i ? "" : "[Exception] "), msg.data());
-          ++i;
-        };
-
-        for (size_t i = 0; i < what.size(); ++i) {
-          if (what[i] == '\n') {
-            safePrint(tmp);
-            tmp.clear();
-          } else {
-            tmp += what[i];
-          }
-        }
-        if (!tmp.empty())
-          safePrint(tmp);
-        // console->Print("[Exception] %s", e.what());
+        auto fileName = std::filesystem::path(it).filename();
+        engine->RunScript(
+          ReadFile(std::filesystem::path("Data/Platform/Distribution") /
+                   "___systemPolyfill.js"),
+          "___systemPolyfill.js");
+        engine->RunScript(scriptSrc, fileName.string()).ToString();
       }
     }
-  });
-  future.wait();
+    
+    EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
+
+  } catch (std::exception& e) {
+    if (auto console = RE::ConsoleLog::GetSingleton()) {
+      std::string what = e.what();
+      std::string tmp;
+
+      while (what.size() > sizeof("Error: ") - 1 &&
+             !memcmp(what.data(), "Error: ", sizeof("Error: ") - 1)) {
+        what = { what.begin() + sizeof("Error: ") - 1, what.end() };
+      }
+
+      size_t i = 0;
+
+      auto safePrint = [what, console, &i](std::string msg) {
+        if (msg.size() > 128) {
+          msg.resize(128);
+          msg += '...';
+        }
+        console->Print("%s%s", (i ? "" : "[Exception] "), msg.data());
+        ++i;
+      };
+
+      for (size_t i = 0; i < what.size(); ++i) {
+        if (what[i] == '\n') {
+          safePrint(tmp);
+          tmp.clear();
+        } else {
+          tmp += what[i];
+        }
+      }
+      if (!tmp.empty())
+        safePrint(tmp);
+      // console->Print("[Exception] %s", e.what());
+    }
+  }
+}
+
+void PushJsTick(bool gameFunctionsAvailable)
+{
+  g_pool.push([=](int) { JsTick(gameFunctionsAvailable); }).wait();
+}
+
+void OnUpdate()
+{
+  PushJsTick(false);
+  TESModPlatform::Update();
+}
+
+void UpdateDumpFunctions()
+{
+  auto pressed = [](int key) {
+    return (GetAsyncKeyState(key) & 0x80000000) > 0;
+  };
+  const bool comb = pressed('9') && pressed('O') && pressed('L');
+  static bool g_combWas = false;
+
+  if (comb != g_combWas) {
+    g_combWas = comb;
+    if (comb)
+      DumpFunctions::Run();
+  }
+}
+
+void OnPapyrusUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
+{
+  UpdateDumpFunctions();
+
+  g_nativeCallRequirements.stackId = stackId;
+  g_nativeCallRequirements.vm = vm;
+  PushJsTick(true);
+  g_nativeCallRequirements = {};
 }
 
 extern "C" {
@@ -203,7 +247,18 @@ __declspec(dllexport) bool SKSEPlugin_Load(const SKSEInterface* skse)
     return false;
   }
 
+  auto papyrusInterface = static_cast<SKSEPapyrusInterface*>(
+    skse->QueryInterface(kInterface_Papyrus));
+  if (!papyrusInterface) {
+    _FATALERROR("QueryInterface failed for PapyrusInterface");
+    return false;
+  }
+
   g_taskInterface->AddTask(new MyUpdateTask(g_taskInterface, OnUpdate));
+
+  papyrusInterface->Register(
+    (SKSEPapyrusInterface::RegisterFunctions)TESModPlatform::Register);
+  TESModPlatform::onPapyrusUpdate = OnPapyrusUpdate;
 
   return true;
 }

@@ -3,8 +3,22 @@ project(skyrim_multiplayer)
 
 include(src/cmake/cmake_generate.cmake)
 
-if ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
-  message(FATAL_ERROR "Missing toolchain file")
+# Clear CMake cache after changing this
+# (also for subprojects like platform_se)
+set(VCPKG_REVISION f29a191d0afccc3ed6f481283d6d15e0186096ae)
+
+# Download vcpkg dependencies
+include(pmm.cmake)
+set(ports
+  chakracore:x86-windows chakracore:x64-windows
+  nlohmann-json:x86-windows nlohmann-json:x64-windows
+)
+foreach(port ${ports})
+  message(STATUS "Installing ${port}")
+  pmm(VCPKG REVISION ${VCPKG_REVISION} REQUIRES ${port})
+endforeach()
+if ("${_VCPKG_ROOT_DIR}" STREQUAL "")
+  message(FATAL_ERROR "Expected _VCPKG_ROOT_DIR variable to be set by pmm")
 endif()
 
 cmake_generate(
@@ -13,5 +27,9 @@ cmake_generate(
   BINARY_DIR "${CMAKE_BINARY_DIR}/_platform_se"
   ARCHITECTURE "x64"
   GENERATOR "${CMAKE_GENERATOR}"
-  VARIABLES "SKYRIM_MP_ROOT=${CMAKE_SOURCE_DIR}" "CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
+  VARIABLES
+    "SKYRIM_MP_ROOT=${CMAKE_SOURCE_DIR}"
+    "CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
+    "VCPKG_ROOT=${_VCPKG_ROOT_DIR}"
+    "CMAKE_TOOLCHAIN_FILE=${_VCPKG_ROOT_DIR}\\scripts\\buildsystems\\vcpkg.cmake"
 )

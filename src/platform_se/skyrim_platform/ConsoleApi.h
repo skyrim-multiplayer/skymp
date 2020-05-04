@@ -2,10 +2,10 @@
 #include "JsEngine.h"
 
 namespace ConsoleApi {
-JsValue Log(const JsFunctionArguments& args);
+JsValue PrintConsole(const JsFunctionArguments& args);
 
-inline void Register(JsValue &exports)
+inline void Register(JsValue& exports)
 {
-  exports.SetProperty("log", JsValue::Function(Log));
+  exports.SetProperty("printConsole", JsValue::Function(PrintConsole));
 }
 }

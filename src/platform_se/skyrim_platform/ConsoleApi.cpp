@@ -2,7 +2,7 @@
 #include "NullPointerException.h"
 #include <RE/ConsoleLog.h>
 
-JsValue ConsoleApi::Log(const JsFunctionArguments& args)
+JsValue ConsoleApi::PrintConsole(const JsFunctionArguments& args)
 {
   auto console = RE::ConsoleLog::GetSingleton();
   if (!console)
@@ -15,8 +15,8 @@ JsValue ConsoleApi::Log(const JsFunctionArguments& args)
     if (args[i].GetType() == JsValue::Type::Object &&
         !args[i].GetExternalData()) {
 
-      JsValue JSON = JsValue::GlobalObject().GetProperty("JSON");
-      str = JSON.GetProperty("stringify").Call({ args[i] }, JSON);
+      JsValue json = JsValue::GlobalObject().GetProperty("JSON");
+      str = json.GetProperty("stringify").Call({ json, args[i] });
     }
     s += str.ToString() + ' ';
   }

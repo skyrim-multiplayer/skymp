@@ -9,6 +9,12 @@
 class JsFunctionArguments;
 class JsPropertyKey;
 
+class JsExternalObjectBase
+{
+public:
+  virtual ~JsExternalObjectBase() = default;
+};
+
 class JsValue
 {
 public:
@@ -36,15 +42,17 @@ public:
   static JsValue Undefined();
   static JsValue Null();
   static JsValue Object();
-  static JsValue ExternalObject(void* data, void (*finalize)(void*));
+  static JsValue ExternalObject(JsExternalObjectBase* data);
   static JsValue Array(uint32_t n);
   static JsValue GlobalObject();
   static JsValue Function(const FunctionT&);
+  static JsValue NamedFunction(const char* name, const FunctionT&);
   static JsValue Bool(bool);
   static JsValue String(const std::string&);
   static JsValue Int(int);
   static JsValue Double(double);
 
+  JsValue() { *this = Undefined(); }
   JsValue(const std::string& arg) { *this = String(arg); }
   JsValue(const char* arg) { *this = String(arg); }
   JsValue(int arg) { *this = Int(arg); }
@@ -69,13 +77,29 @@ public:
   explicit operator double() const;
 
   Type GetType() const;
-  void* GetExternalData() const;
-  JsValue Call(const std::vector<JsValue>& arguments,
-               std::optional<JsValue> thisArg = std::nullopt) const;
+  JsExternalObjectBase* GetExternalData() const;
   void SetProperty(const JsValue& key, const JsValue& value);
   JsValue GetProperty(const JsValue& key) const;
 
+  JsValue Call(const std::vector<JsValue>& arguments) const
+  {
+    return Call(arguments, false);
+  }
+
+  JsValue Constructor(const std::vector<JsValue>& arguments) const
+  {
+    return Call(arguments, true);
+  }
+
 private:
+  static void* NativeFunctionImpl(void* callee, bool isConstructorCall,
+                                  void** arguments,
+                                  unsigned short argumentsCount,
+                                  void* callbackState);
+
+  JsValue Call(const std::vector<JsValue>& arguments,
+               bool isConstructorCall) const;
+
   explicit JsValue(void* internalJsRef);
   void AddRef();
   void Release();
@@ -87,7 +111,7 @@ class JsFunctionArguments
 {
 public:
   virtual size_t GetSize() const noexcept = 0;
-  virtual JsValue operator[](size_t i) const noexcept = 0;
+  virtual const JsValue& operator[](size_t i) const noexcept = 0;
 };
 
 class JsEngine
@@ -99,6 +123,8 @@ public:
   JsValue RunScript(const std::string& source, const std::string& fileName);
 
   void ResetContext(TaskQueue* taskQueue);
+
+  size_t GetMemoryUsage() const;
 
 private:
   struct Impl;

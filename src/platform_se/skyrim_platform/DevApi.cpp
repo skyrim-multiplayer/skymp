@@ -12,22 +12,12 @@
 std::shared_ptr<JsEngine>* DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
 
-namespace {
-std::filesystem::path projectRoot = "C:/projects/skyrim-multiplayer";
-std::filesystem::path builtScriptsDir =
-  "C:/projects/skyrim-multiplayer/build/_client";
-}
-
 JsValue DevApi::WriteScript(const JsFunctionArguments& args)
 {
   auto scriptName = (std::string)args[1], scriptSrc = (std::string)args[2];
 
-  if (!std::filesystem::exists(projectRoot))
-    throw std::runtime_error("Project root doesn't exist");
-
-  auto dir = projectRoot / "src/client/skyrimPlatform/generated";
-  if (!std::filesystem::exists(dir))
-    std::filesystem::create_directories(dir);
+  auto dir = std::filesystem::path("Data\\Platform\\Output");
+  std::filesystem::create_directories(dir);
 
   auto scriptPath = dir / scriptName;
 
@@ -43,7 +33,8 @@ JsValue DevApi::WriteScript(const JsFunctionArguments& args)
   return JsValue::Undefined();
 }
 
-JsValue DevApi::Require(const JsFunctionArguments& args)
+JsValue DevApi::Require(const JsFunctionArguments& args,
+                        std::filesystem::path builtScriptsDir)
 {
   auto fileName = args[1].ToString();
 
@@ -71,7 +62,17 @@ JsValue DevApi::Require(const JsFunctionArguments& args)
   auto exports = (**jsEngine).RunScript(src.str(), fileName);
 
   if (auto& f = DevApi::nativeExportsMap[fileName])
-    f(exports);
+    exports = f(exports);
 
+  return exports;
+}
+
+JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
+{
+  auto fileName = (std::string)args[1];
+  auto exports = args[2];
+
+  if (auto& f = DevApi::nativeExportsMap[fileName])
+    exports = f(exports);
   return exports;
 }

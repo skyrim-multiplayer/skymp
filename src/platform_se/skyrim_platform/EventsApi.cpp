@@ -4,6 +4,7 @@
 #include "MyUpdateTask.h"
 #include "NullPointerException.h"
 #include <map>
+#include <set>
 
 struct
 {
@@ -27,7 +28,9 @@ JsValue EventsApi::On(const JsFunctionArguments& args)
   auto eventName = args[1].ToString();
   auto callback = args[2];
 
-  if (eventName != "update")
+  std::set<std::string> events = { "tick", "update" };
+
+  if (events.count(eventName) == 0)
     throw InvalidArgumentException("eventName", eventName);
 
   g.callbacks[eventName].push_back(callback);

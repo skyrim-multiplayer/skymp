@@ -25,9 +25,10 @@ public:
 
   size_t GetSize() const noexcept { return n; }
 
-  JsValue operator[](size_t i) const noexcept
+  const JsValue& operator[](size_t i) const noexcept
   {
-    return i < n ? JsValueAccess::Ctor(arr[i]) : JsValue::Undefined();
+    thread_local auto g_undefined = JsValue::Undefined();
+    return i < n ? reinterpret_cast<const JsValue&>(arr[i]) : g_undefined;
   }
 
 private:
@@ -104,7 +105,7 @@ JsValue JsValue::Undefined()
 {
   JsValueRef v;
   SafeCall(F(JsGetUndefinedValue), &v);
-  return JsValue(v); 
+  return JsValue(v);
 }
 
 JsValue JsValue::Null()
@@ -121,10 +122,13 @@ JsValue JsValue::Object()
   return JsValue(v);
 }
 
-JsValue JsValue::ExternalObject(void* data, void (*finalize)(void*))
+JsValue JsValue::ExternalObject(JsExternalObjectBase* data)
 {
   JsValueRef v;
-  SafeCall(F(JsCreateExternalObject), data, finalize, &v);
+  SafeCall(
+    F(JsCreateExternalObject), data,
+    [](void* data_) { delete reinterpret_cast<JsExternalObjectBase*>(data_); },
+    &v);
   return JsValue(v);
 }
 
@@ -170,27 +174,37 @@ JsValue JsValue::Double(double arg)
   return JsValue(v);
 }
 
+void* JsValue::NativeFunctionImpl(void* callee, bool isConstructorCall,
+                                  void** arguments,
+                                  unsigned short argumentsCount,
+                                  void* callbackState)
+{
+  JsFunctionArgumentsImpl args(arguments, argumentsCount);
+  try {
+    auto f = reinterpret_cast<FunctionT*>(callbackState);
+    return (*f)(args).value;
+  } catch (std::exception& e) {
+    JsValueRef whatStr, err;
+    if (JsCreateString(e.what(), strlen(e.what()), &whatStr) == JsNoError &&
+        JsCreateError(whatStr, &err) == JsNoError)
+      JsSetException(err);
+    return JS_INVALID_REFERENCE;
+  }
+}
+
 JsValue JsValue::Function(const FunctionT& arg)
 {
   JsValueRef v;
-  SafeCall(
-    F(JsCreateFunction),
-    [](JsValueRef callee, bool isConstructorCall, JsValueRef* arguments,
-       unsigned short argumentsCount, void* callbackState) -> JsValueRef {
-      JsFunctionArgumentsImpl args(arguments, argumentsCount);
-      try {
-        auto f = reinterpret_cast<FunctionT*>(callbackState);
-        return (*f)(args).value;
-      } catch (std::exception& e) {
-        JsValueRef whatStr, err;
-        if (JsCreateString(e.what(), strlen(e.what()), &whatStr) ==
-              JsNoError &&
-            JsCreateError(whatStr, &err) == JsNoError)
-          JsSetException(err);
-        return JS_INVALID_REFERENCE;
-      }
-    },
-    new FunctionT(arg), &v);
+  SafeCall(F(JsCreateFunction), NativeFunctionImpl, new FunctionT(arg), &v);
+  return JsValue(v);
+}
+
+JsValue JsValue::NamedFunction(const char* name, const FunctionT& arg)
+{
+  JsValueRef v;
+  auto jsName = JsValue::String(name);
+  SafeCall(F(JsCreateNamedFunction), jsName.value, NativeFunctionImpl,
+           new FunctionT(arg), &v);
   return JsValue(v);
 }
 
@@ -259,36 +273,38 @@ JsValue::Type JsValue::GetType() const
   return static_cast<JsValue::Type>(type);
 }
 
-void* JsValue::GetExternalData() const
+JsExternalObjectBase* JsValue::GetExternalData() const
 {
   void* externalData;
   bool hasExternslData;
 
   SafeCall(F(JsHasExternalData), value, &hasExternslData);
-  if(!hasExternslData)return nullptr;
-  
+  if (!hasExternslData)
+    return nullptr;
+
   SafeCall(F(JsGetExternalData), value, &externalData);
-  return externalData;
+  return reinterpret_cast<JsExternalObjectBase*>(externalData);
 }
 
-JsValue JsValue::Call(const std::vector<JsValue>& arguments,
-                      std::optional<JsValue> thisArg) const
+JsValue JsValue::Call(const std::vector<JsValue>& arguments, bool ctor) const
 {
-  // TODO: reinterpret_cast<std::vector<JsValueRef> *> instead??
-
-  std::vector<JsValueRef> argv(1);
-  argv.reserve(arguments.size() + 1);
-
-  if (thisArg)
-    argv[0] = thisArg->value;
-  else
-    SafeCall(F(JsGetUndefinedValue), &argv[0]);
-
-  for (auto& v : arguments)
-    argv.push_back(v.value);
-
   JsValueRef res;
-  SafeCall(F(JsCallFunction), value, argv.data(), argv.size(), &res);
+
+  thread_local auto undefined = JsValue::Undefined();
+
+  auto n = arguments.size();
+  JsValueRef* args = nullptr;
+
+  if (n > 0) {
+    args = const_cast<JsValueRef*>(
+      reinterpret_cast<const JsValueRef*>(arguments.data()));
+  } else {
+    args = reinterpret_cast<JsValueRef*>(&undefined);
+    ++n;
+  }
+
+  SafeCall(ctor ? JsConstructObject : JsCallFunction,
+           "JsCallFunction/JsConstructObject", value, args, n, &res);
   return JsValue(res);
 }
 
@@ -321,14 +337,30 @@ JsValue JsValue::GetProperty(const JsValue& key) const
       return JsValue(res);
     } break;
     case Type::String: {
-
-      auto str = (std::string)key;
-      JsValueRef res;
       JsPropertyIdRef propId;
+      JsValueRef res;
+
+      // Hot path. Platform-specific functions on Windows are faster than the
+      // cross-platform equivalents
+#ifndef WIN32
+      auto str = (std::string)key;
       SafeCall(F(JsCreatePropertyId), str.data(), str.size(), &propId);
+#else
+      const wchar_t* stringPtr;
+      size_t stringSize;
+      SafeCall(F(JsStringToPointer), key.value, &stringPtr, &stringSize);
+      SafeCall(F(JsGetPropertyIdFromName), stringPtr, &propId);
+#endif
       SafeCall(F(JsGetProperty), value, propId, &res);
       return JsValue(res);
     } break;
+    case Type::Symbol: {
+      JsValueRef res;
+      JsPropertyIdRef propId;
+      SafeCall(F(JsGetPropertyIdFromSymbol), key.value, &propId);
+      SafeCall(F(JsGetProperty), value, propId, &res);
+      return JsValue(res);
+    }
     default:
       throw std::runtime_error("GetProperty: Bad key type (" +
                                std::to_string(int(key.GetType())) + ")");
@@ -419,4 +451,11 @@ void JsEngine::ResetContext(TaskQueue* taskQueue)
       abort();
       },
     poolForJsThreadTasks);*/
+}
+
+size_t JsEngine::GetMemoryUsage() const
+{
+  size_t res;
+  SafeCall(F(JsGetRuntimeMemoryUsage), pImpl->runtime, &res);
+  return res;
 }

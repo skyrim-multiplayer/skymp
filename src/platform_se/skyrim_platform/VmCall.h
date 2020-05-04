@@ -2,8 +2,8 @@
 #include "VmCallback.h"
 #include "VmFunctionArguments.h"
 #include <RE/BSScript/Internal/VirtualMachine.h>
-
 #include <functional>
+#include <sstream>
 
 class VmCall
 {
