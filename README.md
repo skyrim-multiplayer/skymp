@@ -1,0 +1,1 @@
+skyrimplatform-plugin-example
