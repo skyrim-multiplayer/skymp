@@ -188,6 +188,42 @@ CallNative::AnySafe CallNative::CallNativeSafe(
   }
 }
 
+namespace {
+bool IsInstanceOf(
+  RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo>& objectInfo,
+  const char* parentType)
+{
+  RE::BSScript::ObjectTypeInfo* objectInQuestion = objectInfo.get();
+
+  if (!objectInQuestion)
+    NullPointerException("objectInQuestion");
+
+  while (true) {
+
+    if (!stricmp(objectInQuestion->GetName(), parentType))
+      return true;
+
+    objectInQuestion = objectInQuestion->GetParent();
+
+    if (!objectInQuestion)
+      return false;
+  }
+};
+
+void GetScriptObjectType(RE::BSScript::Internal::VirtualMachine& vm, RE::VMTypeID vmTypeID,
+ RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo>& objectTypeInfo)
+{
+  bool res = vm.GetScriptObjectType(vmTypeID, objectTypeInfo);
+
+  if (!objectTypeInfo)
+    throw NullPointerException("objectTypeInfo");
+  
+  if (!res)
+    throw std::runtime_error("GetScriptObjectType returned false");
+};
+
+}
+
 // I don't think this implementation covers all cases but it should work
 // for TESForm and derived classes
 CallNative::AnySafe CallNative::DynamicCast(const std::string& to,
@@ -208,23 +244,35 @@ CallNative::AnySafe CallNative::DynamicCast(const std::string& to,
   if (!stricmp(from->GetType(), to.data()))
     return from_;
 
-  if (!stricmp(from->GetType(), "Form") ||
-      !stricmp(from->GetType(), "ObjectReference")) {
-    auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-    if (!vm)
-      throw NullPointerException("vm");
+  auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+  if (!vm)
+    throw NullPointerException("vm");
 
-    RE::VMTypeID targetTypeId;
-    vm->GetTypeIDForScriptObject(to.data(), targetTypeId);
+  RE::VMTypeID rawTypeId;
+  RE::VMTypeID targetTypeId;
+
+  if (!vm->GetTypeIDForScriptObject(from->GetType(), rawTypeId))
+    return ObjectPtr();
+
+  if (!vm->GetTypeIDForScriptObject(to.data(), targetTypeId))
+    return ObjectPtr();
+
+  RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> rawTypeInfoPtr;
+  RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> outTypeInfoPtr;
+
+  GetScriptObjectType(*vm, rawTypeId, rawTypeInfoPtr);
+  GetScriptObjectType(*vm, targetTypeId, outTypeInfoPtr);
+
+  if (IsInstanceOf(rawTypeInfoPtr, "Form")) {
 
     auto form = (RE::TESForm*)rawPtr;
 
-    RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> outTypeInfoPtr;
-    vm->GetScriptObjectType(targetTypeId, outTypeInfoPtr);
-    if (!outTypeInfoPtr)
-      throw NullPointerException("outTypeInfoPtr");
+    const bool IsParentOf = IsInstanceOf(outTypeInfoPtr, rawTypeInfoPtr->GetName());
+    const bool IsChildOf = IsInstanceOf(rawTypeInfoPtr, outTypeInfoPtr->GetName());
 
-    if (targetTypeId == (RE::VMTypeID)form->formType) {
+    if (IsChildOf ||
+        IsParentOf && targetTypeId == (RE::VMTypeID)form->formType) {
+
       return std::shared_ptr<Object>(
         new Object(outTypeInfoPtr->GetName(), form));
     }
