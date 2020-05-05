@@ -133,25 +133,25 @@ export declare class ObjectReference extends Form {
     activate(akActivator: ObjectReference, abDefaultProcessingOnly: boolean): boolean;
     addDependentAnimatedObjectReference(akDependent: ObjectReference): boolean;
     addInventoryEventFilter(akFilter: Form): void;
-    addItem(akItemToAdd: Form, aiCount: number, abSilent: boolean): void;
+    addItem(akItemToAdd: Form, aiCount: number, abSilent: boolean): Promise<void>;
     addToMap(abAllowFastTravel: boolean): void;
-    applyHavokImpulse(afX: number, afY: number, afZ: number, afMagnitude: number): void;
+    applyHavokImpulse(afX: number, afY: number, afZ: number, afMagnitude: number): Promise<void>;
     blockActivation(abBlocked: boolean): void;
     calculateEncounterLevel(aiDifficulty: number): number;
     canFastTravelToMarker(): boolean;
     clearDestruction(): void;
     createDetectionEvent(akOwner: Actor, aiSoundLevel: number): void;
     createEnchantment(maxCharge: number, effects: object[], magnitudes: number[], areas: number[], durations: number[]): void;
-    damageObject(afDamage: number): void;
-    delete(): void;
-    disable(abFadeOut: boolean): void;
+    damageObject(afDamage: number): Promise<void>;
+    delete(): Promise<void>;
+    disable(abFadeOut: boolean): Promise<void>;
     disableNoWait(abFadeOut: boolean): void;
-    dropObject(akObject: Form, aiCount: number): ObjectReference;
-    enable(abFadeIn: boolean): void;
+    dropObject(akObject: Form, aiCount: number): Promise<ObjectReference>;
+    enable(abFadeIn: boolean): Promise<void>;
     enableFastTravel(abEnable: boolean): void;
     enableNoWait(abFadeIn: boolean): void;
-    forceAddRagdollToWorld(): void;
-    forceRemoveRagdollFromWorld(): void;
+    forceAddRagdollToWorld(): Promise<void>;
+    forceRemoveRagdollFromWorld(): Promise<void>;
     getActorOwner(): ActorBase;
     getAllForms(toFill: FormList): void;
     getAngleX(): number;
@@ -221,17 +221,17 @@ export declare class ObjectReference extends Form {
     isOffLimits(): boolean;
     knockAreaEffect(afMagnitude: number, afRadius: number): void;
     lock(abLock: boolean, abAsOwner: boolean): void;
-    moveTo(akTarget: ObjectReference, afXOffset: number, afYOffset: number, afZOffset: number, abMatchRotation: boolean): void;
-    moveToInteractionLocation(akTarget: ObjectReference): void;
-    moveToMyEditorLocation(): void;
-    moveToNode(akTarget: ObjectReference, asNodeName: string): void;
+    moveTo(akTarget: ObjectReference, afXOffset: number, afYOffset: number, afZOffset: number, abMatchRotation: boolean): Promise<void>;
+    moveToInteractionLocation(akTarget: ObjectReference): Promise<void>;
+    moveToMyEditorLocation(): Promise<void>;
+    moveToNode(akTarget: ObjectReference, asNodeName: string): Promise<void>;
     placeActorAtMe(akActorToPlace: ActorBase, aiLevelMod: number, akZone: Form): Actor;
     placeAtMe(akFormToPlace: Form, aiCount: number, abForcePersist: boolean, abInitiallyDisabled: boolean): ObjectReference;
     playAnimation(asAnimation: string): boolean;
-    playAnimationAndWait(asAnimation: string, asEventName: string): boolean;
+    playAnimationAndWait(asAnimation: string, asEventName: string): Promise<boolean>;
     playGamebryoAnimation(asAnimation: string, abStartOver: boolean, afEaseInTime: number): boolean;
     playImpactEffect(akImpactEffect: Form, asNodeName: string, afPickDirX: number, afPickDirY: number, afPickDirZ: number, afPickLength: number, abApplyNodeRotation: boolean, abUseNodeLocalRotation: boolean): boolean;
-    playSyncedAnimationAndWaitSS(asAnimation1: string, asEvent1: string, akObj2: ObjectReference, asAnimation2: string, asEvent2: string): boolean;
+    playSyncedAnimationAndWaitSS(asAnimation1: string, asEvent1: string, akObj2: ObjectReference, asAnimation2: string, asEvent2: string): Promise<boolean>;
     playSyncedAnimationSS(asAnimation1: string, akObj2: ObjectReference, asAnimation2: string): boolean;
     playTerrainEffect(asEffectModelName: string, asAttachBoneName: string): void;
     processTrapHit(akTrap: ObjectReference, afDamage: number, afPushback: number, afXVel: number, afYVel: number, afZVel: number, afXPos: number, afYPos: number, afZPos: number, aeMaterial: number, afStagger: number): void;
@@ -240,14 +240,14 @@ export declare class ObjectReference extends Form {
     removeAllItems(akTransferTo: ObjectReference, abKeepOwnership: boolean, abRemoveQuestItems: boolean): void;
     removeDependentAnimatedObjectReference(akDependent: ObjectReference): boolean;
     removeInventoryEventFilter(akFilter: Form): void;
-    removeItem(akItemToRemove: Form, aiCount: number, abSilent: boolean, akOtherContainer: ObjectReference): void;
-    reset(akTarget: ObjectReference): void;
+    removeItem(akItemToRemove: Form, aiCount: number, abSilent: boolean, akOtherContainer: ObjectReference): Promise<void>;
+    reset(akTarget: ObjectReference): Promise<void>;
     resetInventory(): void;
     say(akTopicToSay: Topic, akActorToSpeakAs: Actor, abSpeakInPlayersHead: boolean): void;
     sendStealAlarm(akThief: Actor): void;
     setActorCause(akActor: Actor): void;
     setActorOwner(akActorBase: ActorBase): void;
-    setAngle(afXAngle: number, afYAngle: number, afZAngle: number): void;
+    setAngle(afXAngle: number, afYAngle: number, afZAngle: number): Promise<void>;
     setAnimationVariableBool(arVariableName: string, abNewValue: boolean): void;
     setAnimationVariableFloat(arVariableName: string, afNewValue: number): void;
     setAnimationVariableInt(arVariableName: string, aiNewValue: number): void;
@@ -260,17 +260,17 @@ export declare class ObjectReference extends Form {
     setItemHealthPercent(health: number): void;
     setItemMaxCharge(maxCharge: number): void;
     setLockLevel(aiLockLevel: number): void;
-    setMotionType(aeMotionType: number, abAllowActivate: boolean): void;
+    setMotionType(aeMotionType: number, abAllowActivate: boolean): Promise<void>;
     setNoFavorAllowed(abNoFavor: boolean): void;
     setOpen(abOpen: boolean): void;
-    setPosition(afX: number, afY: number, afZ: number): void;
-    setScale(afScale: number): void;
+    setPosition(afX: number, afY: number, afZ: number): Promise<void>;
+    setScale(afScale: number): Promise<void>;
     splineTranslateTo(afX: number, afY: number, afZ: number, afXAngle: number, afYAngle: number, afZAngle: number, afTangentMagnitude: number, afSpeed: number, afMaxRotationSpeed: number): void;
     splineTranslateToRefNode(arTarget: ObjectReference, arNodeName: string, afTangentMagnitude: number, afSpeed: number, afMaxRotationSpeed: number): void;
     stopTranslation(): void;
     tetherToHorse(akHorse: ObjectReference): void;
     translateTo(afX: number, afY: number, afZ: number, afXAngle: number, afYAngle: number, afZAngle: number, afSpeed: number, afMaxRotationSpeed: number): void;
-    waitForAnimationEvent(asEventName: string): boolean;
+    waitForAnimationEvent(asEventName: string): Promise<boolean>;
     getDistance(akOther: ObjectReference): number;
 }
 
@@ -406,9 +406,9 @@ export declare class Actor extends ObjectReference {
     killSilent(akKiller: Actor): void;
     modActorValue(asValueName: string, afAmount: number): void;
     modFactionRank(akFaction: Faction, aiMod: number): void;
-    moveToPackageLocation(): void;
+    moveToPackageLocation(): Promise<void>;
     openInventory(abForceOpen: boolean): void;
-    pathToReference(aTarget: ObjectReference, afWalkRunPercent: number): boolean;
+    pathToReference(aTarget: ObjectReference, afWalkRunPercent: number): Promise<boolean>;
     playIdle(akIdle: Form): boolean;
     playIdleWithTarget(akIdle: Form, akTarget: ObjectReference): boolean;
     playSubGraphAnimation(asEventName: string): void;
@@ -424,7 +424,7 @@ export declare class Actor extends ObjectReference {
     resetExpressionOverrides(): void;
     resetHealthAndLimbs(): void;
     restoreActorValue(asValueName: string, afAmount: number): void;
-    resurrect(): void;
+    resurrect(): Promise<void>;
     sendAssaultAlarm(): void;
     sendLycanthropyStateChanged(abIsWerewolf: boolean): void;
     sendTrespassAlarm(akCriminal: Actor): void;
@@ -465,7 +465,7 @@ export declare class Actor extends ObjectReference {
     setVoiceRecoveryTime(afTime: number): void;
     sheatheWeapon(): void;
     showBarterMenu(): void;
-    showGiftMenu(abGivingGift: boolean, apFilterList: FormList, abShowStolenItems: boolean, abUseFavorPoints: boolean): number;
+    showGiftMenu(abGivingGift: boolean, apFilterList: FormList, abShowStolenItems: boolean, abUseFavorPoints: boolean): Promise<number>;
     startCannibal(akTarget: Actor): void;
     startCombat(akTarget: Actor): void;
     startDeferredKill(): void;
@@ -765,18 +765,18 @@ export declare class CombatStyle extends Form {
 export declare class Debug {
     static from(form: Form): Debug;
     static centerOnCell(param1: string): void;
-    static centerOnCellAndWait(param1: string): number;
+    static centerOnCellAndWait(param1: string): Promise<number>;
     static closeUserLog(param1: string): void;
     static dBSendPlayerPosition(): void;
     static debugChannelNotify(param1: string, param2: string): void;
     static dumpAliasData(param1: Quest): void;
-    static getConfigName(): string;
-    static getPlatformName(): string;
-    static getVersionNumber(): string;
+    static getConfigName(): Promise<string>;
+    static getPlatformName(): Promise<string>;
+    static getVersionNumber(): Promise<string>;
     static messageBox(param1: string): void;
     static notification(param1: string): void;
     static openUserLog(param1: string): boolean;
-    static playerMoveToAndWait(param1: string): number;
+    static playerMoveToAndWait(param1: string): Promise<number>;
     static quitGame(): void;
     static sendAnimationEvent(param1: ObjectReference, param2: string): void;
     static setFootIK(param1: boolean): void;
@@ -855,7 +855,7 @@ export declare class Faction extends Form {
     onlyBuysStolenItems(): boolean;
     playerPayCrimeGold(abRemoveStolenItems: boolean, abGoToJail: boolean): void;
     sendAssaultAlarm(): void;
-    sendPlayerToJail(abRemoveInventory: boolean, abRealJail: boolean): void;
+    sendPlayerToJail(abRemoveInventory: boolean, abRealJail: boolean): Promise<void>;
     setAlly(akOther: Faction, abSelfIsFriendToOther: boolean, abOtherIsFriendToSelf: boolean): void;
     setBuySellList(akList: FormList): void;
     setCrimeGold(aiGold: number): void;
@@ -900,7 +900,7 @@ export declare class FormList extends Form {
 export declare class Game {
     static from(form: Form): Game;
     static addAchievement(aiAchievementID: number): void;
-    static addHavokBallAndSocketConstraint(arRefA: ObjectReference, arRefANode: string, arRefB: ObjectReference, arRefBNode: string, afRefALocalOffsetX: number, afRefALocalOffsetY: number, afRefALocalOffsetZ: number, afRefBLocalOffsetX: number, afRefBLocalOffsetY: number, afRefBLocalOffsetZ: number): boolean;
+    static addHavokBallAndSocketConstraint(arRefA: ObjectReference, arRefANode: string, arRefB: ObjectReference, arRefBNode: string, afRefALocalOffsetX: number, afRefALocalOffsetY: number, afRefALocalOffsetZ: number, afRefBLocalOffsetX: number, afRefBLocalOffsetY: number, afRefBLocalOffsetZ: number): Promise<boolean>;
     static addPerkPoints(aiPerkPoints: number): void;
     static advanceSkill(asSkillName: string, afMagnitude: number): void;
     static calculateFavorCost(aiFavorPrice: number): number;
@@ -929,7 +929,7 @@ export declare class Game {
     static getFormFromFile(aiFormID: number, asFilename: string): Form;
     static getGameSettingFloat(asGameSetting: string): number;
     static getGameSettingInt(asGameSetting: string): number;
-    static getGameSettingString(asGameSetting: string): string;
+    static getGameSettingString(asGameSetting: string): Promise<string>;
     static getHotkeyBoundObject(hotkey: number): Form;
     static getLightModAuthor(idx: number): string;
     static getLightModByName(name: string): number;
@@ -985,7 +985,7 @@ export declare class Game {
     static precacheCharGenClear(): void;
     static queryStat(asStat: string): number;
     static quitToMainMenu(): void;
-    static removeHavokConstraints(arFirstRef: ObjectReference, arFirstRefNodeName: string, arSecondRef: ObjectReference, arSecondRefNodeName: string): boolean;
+    static removeHavokConstraints(arFirstRef: ObjectReference, arFirstRefNodeName: string, arSecondRef: ObjectReference, arSecondRefNodeName: string): Promise<boolean>;
     static requestAutosave(): void;
     static requestModel(asModelName: string): void;
     static requestSave(): void;
@@ -1093,7 +1093,7 @@ export declare class Keyword extends Form {
     static from(form: Form): Keyword;
     getString(): string;
     sendStoryEvent(akLoc: Location, akRef1: ObjectReference, akRef2: ObjectReference, aiValue1: number, aiValue2: number): void;
-    sendStoryEventAndWait(akLoc: Location, akRef1: ObjectReference, akRef2: ObjectReference, aiValue1: number, aiValue2: number): boolean;
+    sendStoryEventAndWait(akLoc: Location, akRef1: ObjectReference, akRef2: ObjectReference, aiValue1: number, aiValue2: number): Promise<boolean>;
     static getKeyword(key: string): Keyword;
 }
 
@@ -1161,7 +1161,7 @@ export declare class MagicEffect extends Form {
     static from(form: Form): MagicEffect;
     clearEffectFlag(flag: number): void;
     getArea(): number;
-    getAssociatedSkill(): string;
+    getAssociatedSkill(): Promise<string>;
     getBaseCost(): number;
     getCastTime(): number;
     getCastingArt(): Art;
@@ -1208,7 +1208,7 @@ export declare class MagicEffect extends Form {
 // Based on Message.pex
 export declare class Message extends Form {
     static from(form: Form): Message;
-    show(param1: number, param2: number, param3: number, param4: number, param5: number, param6: number, param7: number, param8: number, param9: number): number;
+    show(param1: number, param2: number, param3: number, param4: number, param5: number, param6: number, param7: number, param8: number, param9: number): Promise<number>;
     showAsHelpMessage(param1: string, param2: number, param3: number, param4: number): void;
     static resetHelpMessage(param1: string): void;
 }
@@ -1306,11 +1306,11 @@ export declare class Quest extends Form {
     isStopping(): boolean;
     reset(): void;
     setActive(abActive: boolean): void;
-    setCurrentStageID(aiStageID: number): boolean;
+    setCurrentStageID(aiStageID: number): Promise<boolean>;
     setObjectiveCompleted(aiObjective: number, abCompleted: boolean): void;
     setObjectiveDisplayed(aiObjective: number, abDisplayed: boolean, abForce: boolean): void;
     setObjectiveFailed(aiObjective: number, abFailed: boolean): void;
-    start(): boolean;
+    start(): Promise<boolean>;
     stop(): void;
     updateCurrentInstanceGlobal(aUpdateGlobal: GlobalVariable): boolean;
     static getQuest(editorId: string): Quest;
@@ -1347,7 +1347,7 @@ export declare class ReferenceAlias extends Alias {
 // Based on Spell.pex
 export declare class Spell extends Form {
     static from(form: Form): Spell;
-    cast(akSource: ObjectReference, akTarget: ObjectReference): void;
+    cast(akSource: ObjectReference, akTarget: ObjectReference): Promise<void>;
     getCastTime(): number;
     getCostliestEffectIndex(): number;
     getEffectAreas(): number[];
@@ -1365,7 +1365,7 @@ export declare class Spell extends Form {
     getPerk(): Perk;
     isHostile(): boolean;
     preload(): void;
-    remoteCast(akSource: ObjectReference, akBlameActor: Actor, akTarget: ObjectReference): void;
+    remoteCast(akSource: ObjectReference, akBlameActor: Actor, akTarget: ObjectReference): Promise<void>;
     setEquipType(type: EquipSlot): void;
     setNthEffectArea(index: number, value: number): void;
     setNthEffectDuration(index: number, value: number): void;
@@ -1387,7 +1387,7 @@ export declare class Scene extends Form {
 // Based on Scroll.pex
 export declare class Scroll extends Form {
     static from(form: Form): Scroll;
-    cast(akSource: ObjectReference, akTarget: ObjectReference): void;
+    cast(akSource: ObjectReference, akTarget: ObjectReference): Promise<void>;
     getCastTime(): number;
     getCostliestEffectIndex(): number;
     getEffectAreas(): number[];
@@ -1437,7 +1437,7 @@ export declare class Sound extends Form {
     static from(form: Form): Sound;
     getDescriptor(): SoundDescriptor;
     play(akSource: ObjectReference): number;
-    playAndWait(akSource: ObjectReference): boolean;
+    playAndWait(akSource: ObjectReference): Promise<boolean>;
     static setInstanceVolume(aiPlaybackInstance: number, afVolume: number): void;
     static stopInstance(aiPlaybackInstance: number): void;
 }
@@ -1559,7 +1559,7 @@ export declare class Utility {
     static createIntArray(size: number, fill: number): number[];
     static createStringArray(size: number, fill: string): string[];
     static endFrameRateCapture(): void;
-    static gameTimeToString(afGameTime: number): string;
+    static gameTimeToString(afGameTime: number): Promise<string>;
     static getAverageFrameRate(): number;
     static getBudgetCount(): number;
     static getBudgetName(aiBudgetNumber: number): string;
@@ -1588,7 +1588,7 @@ export declare class Utility {
     static setINIInt(ini: string, value: number): void;
     static setINIString(ini: string, value: string): void;
     static startFrameRateCapture(): void;
-    static wait(afSeconds: number): void;
-    static waitGameTime(afHours: number): void;
-    static waitMenuMode(afSeconds: number): void;
+    static wait(afSeconds: number): Promise<void>;
+    static waitGameTime(afHours: number): Promise<void>;
+    static waitMenuMode(afSeconds: number): Promise<void>;
 }
