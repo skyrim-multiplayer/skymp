@@ -2,106 +2,10 @@
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
 #include "Overloaded.h"
-#include <RE/TESObjectREFR.h>
-
-CallNative::Any CallNative::Apply(Any (*nativeFn)(...),
-                                  RE::BSScript::IVirtualMachine* vm,
-                                  RE::VMStackID stackId, void* self,
-                                  const Any* args, size_t numArgs,
-                                  bool useLongSignature)
-{
-  if (useLongSignature) {
-    switch (numArgs) {
-      case 0:
-        return nativeFn(vm, stackId, self);
-      case 1:
-        return nativeFn(vm, stackId, self, args[0]);
-      case 2:
-        return nativeFn(vm, stackId, self, args[0], args[1]);
-      case 3:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2]);
-      case 4:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3]);
-      case 5:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3],
-                        args[4]);
-      case 6:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3],
-                        args[4], args[5]);
-      case 7:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3],
-                        args[4], args[5], args[6]);
-      case 8:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3],
-                        args[4], args[5], args[6], args[7]);
-      case 9:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3],
-                        args[4], args[5], args[6], args[7], args[8]);
-      case 10:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3],
-                        args[4], args[5], args[6], args[7], args[8], args[9]);
-      case 11:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3],
-                        args[4], args[5], args[6], args[7], args[8], args[9],
-                        args[10]);
-      case 12:
-        return nativeFn(vm, stackId, self, args[0], args[1], args[2], args[3],
-                        args[4], args[5], args[6], args[7], args[8], args[9],
-                        args[10], args[11]);
-      default:
-        throw std::runtime_error("Bad arg count " + std::to_string(numArgs));
-    }
-  } else {
-    switch (numArgs) {
-      case 0:
-        return nativeFn(self);
-      case 1:
-        return nativeFn(self, args[0]);
-      case 2:
-        return nativeFn(self, args[0], args[1]);
-      case 3:
-        return nativeFn(self, args[0], args[1], args[2]);
-      case 4:
-        return nativeFn(self, args[0], args[1], args[2], args[3]);
-      case 5:
-        return nativeFn(self, args[0], args[1], args[2], args[3], args[4]);
-      case 6:
-        return nativeFn(self, args[0], args[1], args[2], args[3], args[4],
-                        args[5]);
-      case 7:
-        return nativeFn(self, args[0], args[1], args[2], args[3], args[4],
-                        args[5], args[6]);
-      case 8:
-        return nativeFn(self, args[0], args[1], args[2], args[3], args[4],
-                        args[5], args[6], args[7]);
-      case 9:
-        return nativeFn(self, args[0], args[1], args[2], args[3], args[4],
-                        args[5], args[6], args[7], args[8]);
-      case 10:
-        return nativeFn(self, args[0], args[1], args[2], args[3], args[4],
-                        args[5], args[6], args[7], args[8], args[9]);
-      case 11:
-        return nativeFn(self, args[0], args[1], args[2], args[3], args[4],
-                        args[5], args[6], args[7], args[8], args[9], args[10]);
-      case 12:
-        return nativeFn(self, args[0], args[1], args[2], args[3], args[4],
-                        args[5], args[6], args[7], args[8], args[9], args[10],
-                        args[11]);
-      default:
-        throw std::runtime_error("Bad arg count " + std::to_string(numArgs));
-    }
-  }
-}
-
-CallNative::Any CallNative::CallNativeUnsafe(RE::BSScript::IVirtualMachine* vm,
-                                             RE::VMStackID stackId,
-                                             void* nativeFn,
-                                             bool useLongSignature, void* self,
-                                             const Any* args, size_t numArgs)
-{
-  return Apply(reinterpret_cast<Any (*)(...)>(nativeFn), vm, stackId, self,
-               args, numArgs, useLongSignature);
-}
+#include <RE/BSScript/PackUnpack.h>
+#include <RE/BSScript/StackFrame.h>
+#include <RE/SkyrimVM.h>
+#include <bitset>
 
 template <class T>
 inline size_t GetIndexFor()
@@ -110,83 +14,56 @@ inline size_t GetIndexFor()
   return v.index();
 }
 
-int ToInt(const CallNative::AnySafe& v)
+RE::BSScript::Variable AnySafeToVariable(const CallNative::AnySafe& v,
+                                         bool treatNumberAsInt)
 {
   return std::visit(
     overloaded{
-      [](double f) { return (int)floor(f); }, [](bool b) { return b ? 1 : 0; },
-      [](const std::string& s) { return atoi(s.data()); },
-      [](auto) -> int {
-        throw std::runtime_error("Unable to cast the argument to Int");
-      } },
-    v);
-}
-
-float ToFloat(const CallNative::AnySafe& v)
-{
-  return std::visit(
-    overloaded{
-      [](double f) { return (float)f; }, [](bool b) { return b ? 1.f : 0.f; },
-      [](const std::string& s) { return (float)atof(s.data()); },
-      [](auto) -> float {
-        throw std::runtime_error("Unable to cast the argument to Float");
-      } },
-    v);
-}
-
-bool ToBool(const CallNative::AnySafe& v)
-{
-  return std::visit(
-    overloaded{
-      [](double f) { return f >= 0; }, [](bool b) { return b; },
-      [](const std::string& s) {
-        return s != "0" &&
-          s != ""; /*https://dorey.github.io/JavaScript-Equality-Table/*/
+      [&](double f) {
+        RE::BSScript::Variable res;
+        treatNumberAsInt ? res.SetSInt((int)floor(f)) : res.SetFloat((float)f);
+        return res;
       },
-      [](const CallNative::ObjectPtr& obj) { return !!obj; },
-      [](auto) -> bool {
-        throw std::runtime_error("Unable to cast the argument to Bool");
+      [](bool b) {
+        RE::BSScript::Variable res;
+        res.SetBool(b);
+        return res;
+      },
+      [](const std::string& s) -> RE::BSScript::Variable {
+        throw std::runtime_error("Unable to cast String to Variable");
+      },
+      [](const CallNative::ObjectPtr& obj) {
+        RE::BSScript::Variable res;
+        res.SetNone();
+        if (!obj) {
+          return res;
+        }
+        auto nativePtrRaw = (RE::TESForm*)obj->GetNativeObjectPtr();
+        if (!nativePtrRaw)
+          throw NullPointerException("nativePtrRaw");
+
+        RE::BSScript::PackHandle(
+          &res, nativePtrRaw,
+          static_cast<RE::VMTypeID>(nativePtrRaw->formType));
+        return res;
+      },
+      [](auto) -> RE::BSScript::Variable {
+        throw std::runtime_error(
+          "Unable to cast the argument to RE::BSScript::Variable");
       } },
     v);
 }
 
-void* ToObject(const CallNative::AnySafe& v, const char* t,
-               FunctionInfoProvider& provider)
+class VariableAccess : public RE::BSScript::Variable
 {
-  return std::visit(
-    overloaded{ [&](const CallNative::ObjectPtr& obj) {
-                 if (!obj)
-                   return (void*)0;
-                 auto objPtr = obj->GetNativeObjectPtr();
-                 if (!objPtr)
-                   throw NullPointerException("objPtr");
-                 if (!provider.IsDerivedFrom(obj->GetType(), t)) {
-                   std::stringstream ss;
-                   ss << obj->GetType()
-                      << " is not a valid value for argument with type " << t;
-                   throw std::runtime_error(ss.str());
-                 }
-                 return objPtr;
-               },
-                [](auto) -> void* {
-                  throw std::runtime_error(
-                    "Unable to cast the argument to Object");
-                } },
-    v);
-}
+public:
+  VariableAccess() = delete;
 
-std::string ToString(const CallNative::AnySafe& v)
-{
-  return std::visit(
-    overloaded{ [](double f) { return std::to_string(f); },
-                [](bool b) { return std::string(b ? "true" : "false"); },
-                [](const std::string& s) { return s; },
-                [](auto) -> std::string {
-                  throw std::runtime_error(
-                    "Unable to cast the argument to String");
-                } },
-    v);
-}
+  static RE::BSScript::TypeInfo GetType(const RE::BSScript::Variable& v)
+  {
+    return ((VariableAccess&)v).varType;
+  }
+};
 
 CallNative::AnySafe CallNative::CallNativeSafe(
   RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
@@ -199,6 +76,9 @@ CallNative::AnySafe CallNative::CallNativeSafe(
     throw std::runtime_error("Native function not found '" +
                              std::string(className) + "." +
                              std::string(classFunc) + "' ");
+  }
+  if (funcInfo->IsLatent()) {
+    throw std::runtime_error("Latent functions are not supported");
   }
 
   if (self.index() != GetIndexFor<ObjectPtr>())
@@ -231,87 +111,70 @@ CallNative::AnySafe CallNative::CallNativeSafe(
     throw std::runtime_error(ss.str());
   }
 
-  Any argsRaw[g_maxArgs + 1];
+  auto f = funcInfo->GetIFunction();
+  auto vmImpl = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+  auto stackIterator = vmImpl->allRunningStacks.find(stackId);
+  if (stackIterator == vmImpl->allRunningStacks.end())
+    throw std::runtime_error("Bad stackIterator");
 
-  thread_local std::vector<std::string> stringsHolder(g_maxArgs + 1);
-  char* stringPtrs[g_maxArgs + 1];
+  auto it = vmImpl->objectTypeMap.find(f->GetObjectTypeName());
+  if (it == vmImpl->objectTypeMap.end())
+    throw std::runtime_error("Unable to find owning object type");
 
-  for (size_t i = 0; i < numArgs; ++i) {
-    auto [type, className] = funcInfo->GetParamType(i);
-    switch (type) {
-      case RE::BSScript::TypeInfo::RawType::kNone:
-        throw std::runtime_error(
-          "Functions with None arguments are not supported");
-      case RE::BSScript::TypeInfo::RawType::kObject: {
-        argsRaw[i].obj = ToObject(args[i], className, provider);
-        break;
-      }
-      case RE::BSScript::TypeInfo::RawType::kString: {
-        stringsHolder[i] = ToString(args[i]);
-        stringPtrs[i] = stringsHolder[i].data();
-        argsRaw[i].s = const_cast<const char**>(&stringPtrs[i]);
-        break;
-      }
-      case RE::BSScript::TypeInfo::RawType::kInt:
-        argsRaw[i].i = ToInt(args[i]);
-        break;
-      case RE::BSScript::TypeInfo::RawType::kFloat:
-        argsRaw[i].f = ToFloat(args[i]);
-        break;
-      case RE::BSScript::TypeInfo::RawType::kBool:
-        argsRaw[i].b = ToBool(args[i]);
-        break;
+  stackIterator->second->top->owningFunction = f;
+  stackIterator->second->top->owningObjectType = it->second;
+  stackIterator->second->top->self = AnySafeToVariable(self, false);
+  stackIterator->second->top->size = numArgs;
+  auto topArgs = stackIterator->second->top->args;
+  for (int i = 0; i < numArgs; i++) {
+    RE::BSFixedString unusedNameOut;
+    RE::BSScript::TypeInfo typeOut;
+    f->GetParam(i, unusedNameOut, typeOut);
 
-      case RE::BSScript::TypeInfo::RawType::kNoneArray:
-      case RE::BSScript::TypeInfo::RawType::kObjectArray:
-      case RE::BSScript::TypeInfo::RawType::kStringArray:
-      case RE::BSScript::TypeInfo::RawType::kIntArray:
-      case RE::BSScript::TypeInfo::RawType::kFloatArray:
-      case RE::BSScript::TypeInfo::RawType::kBoolArray:
-        throw std::runtime_error(
-          "Functions with Array arguments are not supported");
-    }
+    topArgs[i] = AnySafeToVariable(args[i], typeOut.IsInt());
   }
 
-  CallNative::Any r;
-
-  // Temporary fix for GetPosition* functions
-  if ((!stricmp(className.data(), "Actor") ||
-       !stricmp(className.data(), "ObjectReference")) &&
-      !stricmp(classFunc.data(), "GetPositionX")) {
-    r.f = ((RE::TESObjectREFR*)rawSelf)->GetPositionX();
-  } else if ((!stricmp(className.data(), "Actor") ||
-              !stricmp(className.data(), "ObjectReference")) &&
-             !stricmp(classFunc.data(), "GetPositionY")) {
-    r.f = ((RE::TESObjectREFR*)rawSelf)->GetPositionY();
-  } else if ((!stricmp(className.data(), "Actor") ||
-              !stricmp(className.data(), "ObjectReference")) &&
-             !stricmp(classFunc.data(), "GetPositionZ")) {
-    r.f = ((RE::TESObjectREFR*)rawSelf)->GetPositionZ();
-  } else {
-    r = CallNativeUnsafe(vm, stackId, funcInfo->GetNativeFunctionAddr(),
-                         funcInfo->UsesLongSignature(), rawSelf, argsRaw,
-                         numArgs);
+  RE::BSScript::IFunction::CallResult callResut =
+    f->Call(stackIterator->second, vmImpl->GetErrorLogger(), vmImpl, false);
+  if (callResut != RE::BSScript::IFunction::CallResult::kCompleted) {
+    throw std::runtime_error("Bad call result " +
+                             std::to_string((int)callResut));
   }
+
+  auto& r = stackIterator->second->returnValue;
 
   switch (funcInfo->GetReturnType().type) {
     case RE::BSScript::TypeInfo::RawType::kNone:
       return ObjectPtr();
     case RE::BSScript::TypeInfo::RawType::kObject: {
-      if (!r.obj)
+      auto object = r.GetObject();
+      if (!object)
         return ObjectPtr();
-      return std::make_shared<Object>(funcInfo->GetReturnType().className,
-                                      r.obj);
+
+      auto policy = vmImpl->GetObjectHandlePolicy();
+
+      void* objPtr = nullptr;
+
+      for (int i = 0; i < (int)RE::FormType::Max; ++i)
+        if (policy->HandleIsType(i, object->handle)) {
+          objPtr = object->Resolve(i);
+          break;
+        }
+      if (objPtr)
+        return std::make_shared<Object>(funcInfo->GetReturnType().className,
+                                        objPtr);
+      else
+        return ObjectPtr();
     }
     case RE::BSScript::TypeInfo::RawType::kString:
       throw std::runtime_error(
         "Functions with String return type are not supported");
     case RE::BSScript::TypeInfo::RawType::kInt:
-      return (double)r.i;
+      return (double)r.GetSInt();
     case RE::BSScript::TypeInfo::RawType::kFloat:
-      return (double)r.f;
+      return (double)r.GetFloat();
     case RE::BSScript::TypeInfo::RawType::kBool:
-      return r.b;
+      return r.GetBool();
     case RE::BSScript::TypeInfo::RawType::kNoneArray:
     case RE::BSScript::TypeInfo::RawType::kObjectArray:
     case RE::BSScript::TypeInfo::RawType::kStringArray:

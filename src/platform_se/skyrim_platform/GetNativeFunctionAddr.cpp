@@ -12,5 +12,8 @@ GetNativeFunctionAddr::Result GetNativeFunctionAddr::Run(
   auto useLongSignaturePtr = reinterpret_cast<const bool*>(
     reinterpret_cast<const uint8_t*>(addrPtr) + sizeof(void*));
 
-  return { nativeFn, *useLongSignaturePtr };
+  auto isLatentPtr =
+    reinterpret_cast<const bool*>(&(const RE::BSScript::IFunction&)f) + 0x42;
+
+  return { nativeFn, *useLongSignaturePtr, *isLatentPtr };
 }

@@ -8,6 +8,7 @@ public:
   {
     void* fn = nullptr;
     bool useLongSignature = false;
+    bool isLatent = false;
   };
   static Result Run(const RE::BSScript::IFunction& f);
 };

@@ -10,7 +10,8 @@ extern std::function<void(RE::BSScript::IVirtualMachine* vm,
   onPapyrusUpdate;
 
 SInt32 Add(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-           RE::StaticFunctionTag*);
+           RE::StaticFunctionTag*, SInt32, SInt32, SInt32, SInt32, SInt32,
+           SInt32, SInt32, SInt32, SInt32, SInt32, SInt32, SInt32);
 
 void Update();
 

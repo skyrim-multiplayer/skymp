@@ -107,9 +107,11 @@ public:
     }
   }
 
-  void* GetNativeFunctionAddr() override
+  bool IsLatent() override { return GetNativeFunctionAddr::Run(*f).isLatent; }
+
+  RE::BSTSmartPointer<RE::BSScript::IFunction> GetIFunction() override
   {
-    return GetNativeFunctionAddr::Run(*f).fn;
+    return f;
   }
 
   bool UsesLongSignature() override

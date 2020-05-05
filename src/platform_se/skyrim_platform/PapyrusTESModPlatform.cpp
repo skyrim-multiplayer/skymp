@@ -18,7 +18,10 @@ public:
   bool operator()(
     RE::BSScrapArray<RE::BSScript::Variable>& a_dst) const override
   {
-    a_dst.resize(0);
+    a_dst.resize(12);
+    for (int i = 0; i < 12; i++) {
+      a_dst[i].SetSInt(100 + i);
+    }
     return true;
   }
 };
@@ -34,7 +37,9 @@ public:
 }
 
 SInt32 TESModPlatform::Add(RE::BSScript::IVirtualMachine* vm,
-                           RE::VMStackID stackId, RE::StaticFunctionTag*)
+                           RE::VMStackID stackId, RE::StaticFunctionTag*,
+                           SInt32, SInt32, SInt32, SInt32, SInt32, SInt32,
+                           SInt32, SInt32, SInt32, SInt32, SInt32, SInt32)
 {
   if (!papyrusUpdateAllowed)
     return 0;
@@ -86,7 +91,9 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
 
   vm->BindNativeMethod(
     new RE::BSScript::NativeFunction<true, decltype(Add), SInt32,
-                                     RE::StaticFunctionTag*>(
+                                     RE::StaticFunctionTag*, SInt32, SInt32,
+                                     SInt32, SInt32, SInt32, SInt32, SInt32,
+                                     SInt32, SInt32, SInt32, SInt32, SInt32>(
       "Add", "TESModPlatform", Add));
   return true;
 }

@@ -43,23 +43,4 @@ public:
                                 FunctionInfoProvider& provider);
 
   static AnySafe DynamicCast(const std::string& to, const AnySafe& from);
-
-private:
-  union Any
-  {
-    void* obj = nullptr;
-    SInt32 i;
-    float f;
-    bool b;
-    const char** s;
-  };
-
-  static Any Apply(Any (*nativeFn)(...), RE::BSScript::IVirtualMachine* vm,
-                   RE::VMStackID stackId, void* self, const Any* args,
-                   size_t numArgs, bool useLongSignature);
-
-  static Any CallNativeUnsafe(RE::BSScript::IVirtualMachine* vm,
-                              RE::VMStackID stackId, void* nativeFn,
-                              bool useLongSignature, void* self,
-                              const Any* args, size_t numArgs);
 };
