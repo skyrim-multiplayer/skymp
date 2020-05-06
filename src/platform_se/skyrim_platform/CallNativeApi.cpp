@@ -146,6 +146,15 @@ JsValue NativeValueToJsValue(const CallNative::AnySafe& v)
 }
 }
 
+namespace {
+inline JsValue CreatePromise(const JsValue& resolver)
+{
+  thread_local auto g_standardPromise =
+    JsValue::GlobalObject().GetProperty("Promise");
+  return g_standardPromise.Constructor({ g_standardPromise, resolver });
+}
+}
+
 JsValue CallNativeApi::CallNative(
   const JsFunctionArguments& args,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements)
@@ -167,11 +176,57 @@ JsValue CallNativeApi::CallNative(
 
   static VmProvider provider;
 
-  auto res = CallNative::CallNativeSafe(
-    requirements.vm, requirements.stackId, className, functionName,
-    JsValueToNativeValue(self), nativeArgs, n, provider);
+  if (!requirements.gameThrQ)
+    throw NullPointerException("gameThrQ");
+  if (!requirements.jsThrQ)
+    throw NullPointerException("jsThrQ");
 
-  return NativeValueToJsValue(res);
+  /* thread_local auto g_promiseFn = JsValue::Function(
+     [](const JsFunctionArguments& args) { return JsValue::Undefined(); });
+
+   thread_local auto g_standardPromise =
+     JsValue::GlobalObject().GetProperty("Promise");
+
+   auto promise = std::make_shared<JsValue>(
+     g_standardPromise.Constructor({ g_standardPromise, g_promiseFn }));
+
+   CallNative::LatentCallback latentCallback =
+     [promise](const CallNative::AnySafe& v) {
+
+     };
+     */
+  CallNative::Arguments callNativeArgs{ requirements.vm,
+                                        requirements.stackId,
+                                        className,
+                                        functionName,
+                                        JsValueToNativeValue(self),
+                                        nativeArgs,
+                                        n,
+                                        provider,
+                                        *requirements.gameThrQ,
+                                        *requirements.jsThrQ,
+                                        nullptr };
+
+  auto f = provider.GetFunctionInfo(className, functionName);
+  if (f && f->IsLatent()) {
+
+    thread_local CallNative::Arguments* g_callNativeArgsPtr = nullptr;
+    g_callNativeArgsPtr = &callNativeArgs;
+
+    thread_local auto g_promiseFn =
+      JsValue::Function([](const JsFunctionArguments& args) {
+        auto resolve = std::shared_ptr<JsValue>(new JsValue(args[1]));
+        g_callNativeArgsPtr->latentCallback =
+          [resolve](const CallNative::AnySafe& v) {
+            resolve->Call({ JsValue::Undefined(), NativeValueToJsValue(v) });
+          };
+        CallNative::CallNativeSafe(*g_callNativeArgsPtr);
+        return JsValue::Undefined();
+      });
+    return CreatePromise(g_promiseFn);
+  } else {
+    return NativeValueToJsValue(CallNative::CallNativeSafe(callNativeArgs));
+  }
 }
 
 JsValue CallNativeApi::DynamicCast(

@@ -36,6 +36,12 @@ public:
     }
   }
 
+  void Clear()
+  {
+    std::lock_guard l(m);
+    tasks.clear();
+  }
+
 private:
   std::mutex m;
   std::vector<std::function<void()>> tasks;

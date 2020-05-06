@@ -60,8 +60,13 @@ let dumpFunction = (f, isGlobal) => {
             output += `, `;
         }
     });
+    let returnType = parseReturnValue(f.returnType);
+    if (f.isLatent) {
+        returnType = `Promise<${returnType}>`;
+    }
+
     output += `)`;
-    output += `: ${parseReturnValue(f.returnType)}`;
+    output += `: ${returnType}`;
     output += `;\n`;
 };
 

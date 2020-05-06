@@ -115,6 +115,7 @@ json FunctionToJson(const char* typeName, RE::BSScript::IFunction* f,
   res["address"] = ss.str();
 
   res["useLongSignature"] = GetNativeFunctionAddr::Run(*f).useLongSignature;
+  res["isLatent"] = GetNativeFunctionAddr::Run(*f).isLatent;
   return res;
 }
 

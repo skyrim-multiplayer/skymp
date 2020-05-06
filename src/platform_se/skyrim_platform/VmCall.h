@@ -32,13 +32,14 @@ public:
         __try {
           return vm.DispatchStaticCall(className, functionName, args, functor);
         } __except (EXCEPTION_EXECUTE_HANDLER) {
-          err << getExceptionInfo();
+          if (getExceptionInfo)
+            err << getExceptionInfo();
           return false;
         }
       })(vm, className, functionName, args, functor, err, getExceptionInfo);
 
     if (!err.str().empty())
-      throw std::runtime_error(err.str());
+      throw std::runtime_error("VmCall::Run " + err.str());
 
     return res;
   }

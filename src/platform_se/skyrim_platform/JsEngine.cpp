@@ -445,12 +445,21 @@ void JsEngine::ResetContext(TaskQueue* taskQueue)
     },
     taskQueue);
 
-  /*SafeCall(
+  SafeCall(
     F(JsSetHostPromiseRejectionTracker),
-    [](JsValueRef promise, JsValueRef reason, bool handled, void* state) {
-      abort();
-      },
-    poolForJsThreadTasks);*/
+    [](JsValueRef promise, JsValueRef reason_, bool handled, void* state) {
+      if (handled)
+        return;
+      auto q = reinterpret_cast<TaskQueue*>(state);
+      std::stringstream ss;
+      auto reason = JsValueAccess::Ctor(reason_);
+      auto stack = reason.GetProperty("stack").ToString();
+      ss << "Unhandled promise rejection" << std::endl;
+      ss << ((stack == "undefined") ? reason.ToString() : stack);
+      std::string str = ss.str();
+      q->AddTask([str] { throw std::runtime_error(str); });
+    },
+    taskQueue);
 }
 
 size_t JsEngine::GetMemoryUsage() const

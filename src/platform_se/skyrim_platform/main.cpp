@@ -26,6 +26,8 @@
 #include <string>
 #include <thread>
 
+#include <skse64/GameReferences.h>
+
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
 
@@ -36,6 +38,7 @@ static SKSEMessagingInterface* g_messaging = nullptr;
 static ctpl::thread_pool g_pool(1);
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+static TaskQueue g_taskQueue;
 
 std::string ReadFile(const std::filesystem::path& p)
 {
@@ -58,9 +61,6 @@ void JsTick(bool gameFunctionsAvailable)
     }
   }
   try {
-    static TaskQueue taskQueue;
-    taskQueue.Update();
-
     static std::shared_ptr<JsEngine> engine;
 
     auto fileDir = std::filesystem::path("Data/Platform/Plugins");
@@ -88,10 +88,13 @@ void JsTick(bool gameFunctionsAvailable)
 
     if (tickId == 1 || scriptsUpdated) {
       EventsApi::Clear();
+      g_taskQueue.Clear();
+      g_nativeCallRequirements.jsThrQ->Clear();
+
 
       if (!engine) {
         engine.reset(new JsEngine);
-        engine->ResetContext(&taskQueue);
+        engine->ResetContext(&g_taskQueue);
       }
 
       for (auto& it : std::filesystem::directory_iterator(fileDir)) {
@@ -142,7 +145,12 @@ void JsTick(bool gameFunctionsAvailable)
         engine->RunScript(scriptSrc, fileName.string()).ToString();
       }
     }
-    
+
+    if (gameFunctionsAvailable) {
+      g_taskQueue.Update();
+      g_nativeCallRequirements.jsThrQ->Update();
+    }
+
     EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
 
   } catch (std::exception& e) {
@@ -214,7 +222,9 @@ void OnPapyrusUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
   PushJsTick(true);
-  g_nativeCallRequirements = {};
+  g_nativeCallRequirements.gameThrQ->Update();
+  g_nativeCallRequirements.stackId = (RE::VMStackID)~0;
+  g_nativeCallRequirements.vm = nullptr;
 }
 
 extern "C" {
