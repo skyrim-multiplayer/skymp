@@ -199,7 +199,7 @@ export declare class ObjectReference extends Form {
     getTriggerObjectCount(): number;
     getVoiceType(): Form;
     getWidth(): number;
-    getWorldSpace(): Form;
+    getWorldSpace(): WorldSpace;
     hasEffectKeyword(akKeyword: Keyword): boolean;
     hasNode(asNodeName: string): boolean;
     hasRefType(akRefType: Form): boolean;
@@ -781,7 +781,7 @@ export declare class Debug {
     static sendAnimationEvent(param1: ObjectReference, param2: string): void;
     static setFootIK(param1: boolean): void;
     static setGodMode(param1: boolean): void;
-    static showRefPosition(arRef: ObjectReference): void;
+    static showRefPosition(arRef: ObjectReference): Promise<void>;
     static startScriptProfiling(param1: string): void;
     static startStackProfiling(): void;
     static stopScriptProfiling(param1: string): void;
@@ -1455,6 +1455,12 @@ export declare class SoundDescriptor extends Form {
     setFrequencyVariance(frequencyVariance: number): void;
 }
 
+// Based on TESModPlatform.pex
+export declare class TESModPlatform {
+    static from(form: Form): TESModPlatform;
+    static moveRefrToPosition(refr: ObjectReference, cell: Cell, world: WorldSpace, posX: number, posY: number, posZ: number, rotX: number, rotY: number, rotZ: number): void;
+}
+
 // Based on TextureSet.pex
 export declare class TextureSet extends Form {
     static from(form: Form): TextureSet;
@@ -1591,4 +1597,9 @@ export declare class Utility {
     static wait(afSeconds: number): Promise<void>;
     static waitGameTime(afHours: number): Promise<void>;
     static waitMenuMode(afSeconds: number): Promise<void>;
+}
+
+// Based on WorldSpace.pex
+export declare class WorldSpace extends Form {
+    static from(form: Form): WorldSpace;
 }
