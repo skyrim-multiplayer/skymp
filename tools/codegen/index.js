@@ -10,7 +10,7 @@ let prettify = (name, f = ''.toUpperCase) => {
 const p = 'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Platform\\Output\\FunctionsDump.txt';
 const source = JSON.parse(fs.readFileSync(p));
 const tab = '    ';
-const ignoredClasses = ['TESModPlatform', 'Math'];
+const ignored = ['TESModPlatform.Add', 'Math'];
 const functionNameOverrides = {'getplayer': 'getPlayer'};
 
 let output = `
@@ -50,7 +50,11 @@ let parseReturnValue = (v) => {
     throw new Error(`Unknown type ${v.rawType}`);
 };
 
-let dumpFunction = (f, isGlobal) => {
+let dumpFunction = (className, f, isGlobal) => {
+    if (ignored.includes(className + '.' + f.name)) {
+        return;
+    }
+
     let funcName = functionNameOverrides[f.name] || f.name;
     output += tab + `${isGlobal ? 'static ' : ''}${prettify(funcName, ''.toLowerCase)}`;
     output += `(`;
@@ -71,7 +75,7 @@ let dumpFunction = (f, isGlobal) => {
 };
 
 let dumpType = (data) => {
-    if (ignoredClasses.includes(data.name) || dumped.includes(data.name)) {
+    if (ignored.includes(data.name) || dumped.includes(data.name)) {
         return;
     }
 
@@ -81,21 +85,27 @@ let dumpType = (data) => {
 
     output += `\n// Based on ${prettify(data.name)}.pex\n`;
 
-    if (data.memberFunctions.length || data.globalFunctions.length) {
-        output += data.parent 
-            ? `export declare class ${prettify(data.name)} extends ${prettify(data.parent.name)} {\n`
-            : `export declare class ${prettify(data.name)} {\n`;
+    output += data.parent 
+        ? `export declare class ${prettify(data.name)} extends ${prettify(data.parent.name)} {\n`
+        : `export declare class ${prettify(data.name)} {\n`;
 
-        output += tab + `static from(form: Form): ${prettify(data.name)};\n`;
+    output += tab + `static from(form: Form): ${prettify(data.name)};\n`;
 
-        data.memberFunctions.forEach(f => dumpFunction(f, false));
-        data.globalFunctions.forEach(f => dumpFunction(f, true));
+    data.memberFunctions.forEach(f => dumpFunction(data.name, f, false));
+    data.globalFunctions.forEach(f => dumpFunction(data.name, f, true));
 
-        output += '}\n';
-    }
+    output += '}\n';
 
     dumped.push(data.name);
 };
+
+if (!source.types.WorldSpace) {
+    source.types.WorldSpace = {
+        parent: 'Form',
+        globalFunctions: [],
+        memberFunctions: []
+    };
+}
 
 for (typeName in source.types) {
     let data = source.types[typeName];

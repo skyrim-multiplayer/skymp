@@ -5,6 +5,7 @@
 #include <RE/BSScript/NativeFunction.h>
 #include <RE/ConsoleLog.h>
 #include <RE/SkyrimVM.h>
+#include <skse64/GameReferences.h>
 
 namespace TESModPlatform {
 bool papyrusUpdateAllowed = false;
@@ -59,6 +60,23 @@ SInt32 TESModPlatform::Add(RE::BSScript::IVirtualMachine* vm,
   return 0;
 }
 
+void TESModPlatform::MoveRefrToPosition(
+  RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
+  RE::StaticFunctionTag*, RE::TESObjectREFR* refr, RE::TESObjectCELL* cell,
+  RE::TESWorldSpace* world, float posX, float posY, float posZ, float rotX,
+  float rotY, float rotZ)
+{
+  if (!refr || (!cell && !world))
+    return;
+
+  NiPoint3 pos = { posX, posY, posZ }, rot = { rotX, rotY, rotZ };
+  auto nullHandle = *g_invalidRefHandle;
+
+  auto f = ::MoveRefrToPosition.operator _MoveRefrToPosition();
+  f(reinterpret_cast<TESObjectREFR*>(refr), &nullHandle, cell, world, &pos,
+    &rot);
+}
+
 void TESModPlatform::Update()
 {
   papyrusUpdateAllowed = true;
@@ -95,5 +113,11 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
                                      SInt32, SInt32, SInt32, SInt32, SInt32,
                                      SInt32, SInt32, SInt32, SInt32, SInt32>(
       "Add", "TESModPlatform", Add));
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<
+      true, decltype(MoveRefrToPosition), void, RE::StaticFunctionTag*,
+      RE::TESObjectREFR*, RE::TESObjectCELL*, RE::TESWorldSpace*, float, float,
+      float, float, float, float>("MoveRefrToPosition", "TESModPlatform",
+                                  MoveRefrToPosition));
   return true;
 }
