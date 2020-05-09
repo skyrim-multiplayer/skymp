@@ -179,6 +179,12 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
          gameThrQ, jsThrQ, latentCallback] = args_;
 
   auto funcInfo = provider.GetFunctionInfo(className, classFunc);
+
+  if (!funcInfo) {
+    vm->ReloadType(className.data());
+    funcInfo = provider.GetFunctionInfo(className, classFunc);
+  }
+
   if (!funcInfo) {
     throw std::runtime_error("Native function not found '" +
                              std::string(className) + "." +
