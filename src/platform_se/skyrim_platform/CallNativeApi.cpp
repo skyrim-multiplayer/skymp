@@ -216,6 +216,8 @@ JsValue CallNativeApi::CallNative(
     thread_local auto g_promiseFn =
       JsValue::Function([](const JsFunctionArguments& args) {
         auto resolve = std::shared_ptr<JsValue>(new JsValue(args[1]));
+        if (!g_callNativeArgsPtr)
+          throw NullPointerException("g_callNativeArgsPtr");
         g_callNativeArgsPtr->latentCallback =
           [resolve](const CallNative::AnySafe& v) {
             resolve->Call({ JsValue::Undefined(), NativeValueToJsValue(v) });

@@ -9,6 +9,7 @@
 
 namespace TESModPlatform {
 bool papyrusUpdateAllowed = false;
+bool vmCallAllowed = true;
 std::function<void(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)>
   onPapyrusUpdate = nullptr;
 uint64_t numPapyrusUpdates = 0;
@@ -57,6 +58,8 @@ SInt32 TESModPlatform::Add(RE::BSScript::IVirtualMachine* vm,
       console->Print("Papyrus context exception: %s", e.what());
   }
 
+  vmCallAllowed = true;
+
   return 0;
 }
 
@@ -79,6 +82,10 @@ void TESModPlatform::MoveRefrToPosition(
 
 void TESModPlatform::Update()
 {
+  if (!vmCallAllowed)
+    return;
+  vmCallAllowed = false;
+
   papyrusUpdateAllowed = true;
 
   auto console = RE::ConsoleLog::GetSingleton();
