@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
-project(platform_se)
+if ("${CMAKE_PROJECT_NAME}" STREQUAL "")
+  project(platform_se)
+endif()
 
 if ("${SKYRIM_MP_ROOT}" STREQUAL "")
   message(FATAL_ERROR "SKYRIM_MP_ROOT is not specified")
@@ -11,7 +13,7 @@ if (NOT EXISTS "${cmake_dir}")
 endif()
 
 set(lib_root "${SKYRIM_MP_ROOT}/submodules/CommonLibSSE")
-set(third_party "third_party")
+set(third_party "${SKYRIM_MP_ROOT}/src/platform_se/third_party")
 
 file(GLOB_RECURSE lib_src "${lib_root}/src/*" "${lib_root}/include/*")
 add_library(CommonLibSSE STATIC ${lib_src})
@@ -36,28 +38,33 @@ target_include_directories(skse64 PUBLIC "${third_party}/common" "${third_party}
 target_compile_definitions(skse64 PRIVATE RUNTIME=1 RUNTIME_VERSION=0x01050610)
 target_link_libraries(skse64 PUBLIC common skse64_common)
 
-file(GLOB_RECURSE platform_src "skyrim_platform/*" "${SKYRIM_MP_ROOT}/.clang-format")
-add_library(skyrim_platform SHARED ${platform_src})
-target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE)
-set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatform")
-
 include(${cmake_dir}/apply_default_settings.cmake)
+
+if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
+  file(GLOB_RECURSE platform_src "skyrim_platform/*" "${SKYRIM_MP_ROOT}/.clang-format")
+  add_library(skyrim_platform SHARED ${platform_src})
+  target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE)
+  set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatform")
+
+  apply_default_settings(TARGETS skyrim_platform)
+
+  include(${cmake_dir}/integrate_vcpkg.cmake)
+  integrate_vcpkg(
+    TARGETS skyrim_platform
+    VCPKG_PATH "${VCPKG_ROOT}"
+  )
+
+  set_target_properties(skyrim_platform PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "bin"
+    PDB_OUTPUT_DIRECTORY "bin"
+  )
+
+  add_custom_command(
+    TARGET skyrim_platform POST_BUILD COMMAND
+    ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>
+  )
+endif()
+
 apply_default_settings(TARGETS
-  CommonLibSSE common skse64_common skse64 skyrim_platform
-)
-
-include(${cmake_dir}/integrate_vcpkg.cmake)
-integrate_vcpkg(
-  TARGETS skyrim_platform
-  VCPKG_PATH "${VCPKG_ROOT}"
-)
-
-set_target_properties(skyrim_platform PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY "bin"
-  PDB_OUTPUT_DIRECTORY "bin"
-)
-
-add_custom_command(
-  TARGET skyrim_platform POST_BUILD COMMAND
-  ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>
+  CommonLibSSE common skse64_common skse64
 )
