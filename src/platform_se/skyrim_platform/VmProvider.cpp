@@ -11,10 +11,14 @@ const RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo>& FindType(
 {
   auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
   if (!vm)
-    throw std::runtime_error("vm was nullptr");
-  for (auto& [thisClassName, classInfo] : vm->objectTypeMap) {
-    if (!stricmp(thisClassName.data(), className.data()) != 0)
-      return classInfo;
+    throw NullPointerException("vm");
+
+  for (int i = 0; i < 2; ++i) {
+    for (auto& [thisClassName, classInfo] : vm->objectTypeMap) {
+      if (!stricmp(thisClassName.data(), className.data()) != 0)
+        return classInfo;
+    }
+    if (!vm->ReloadType(className.data())) break;
   }
 
   static const RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> notFound;
