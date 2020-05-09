@@ -63,7 +63,7 @@ void Reader::CreateScriptStructure(std::vector<uint8_t> arrayBytes)
 
 ScriptHeader Reader::FillHeader()
 {
-  ScriptHeader Header;
+  ScriptHeader Header = ScriptHeader();
 
   Header.Signature = Read32_bit(); // 00	FA57C0DE
   Header.VerMajor = Read8_bit();   // 04	03
@@ -109,7 +109,7 @@ std::string Reader::FillMachine()
 
 StringTable Reader::FillStringTable()
 {
-  StringTable stringTable;
+  StringTable stringTable = StringTable();
 
   int SizeStringTable = Read16_bit();
 
@@ -123,7 +123,7 @@ StringTable Reader::FillStringTable()
 
 DebugInfo Reader::FillDebugInfo()
 {
-  DebugInfo debugInfo;
+  DebugInfo debugInfo = DebugInfo();
 
   debugInfo.m_flags = Read8_bit();
   debugInfo.m_sourceModificationTime = Read64_bit();
@@ -141,7 +141,7 @@ DebugInfo Reader::FillDebugInfo()
 
 DebugInfo::DebugFunction Reader::FillDebugFunction()
 {
-  DebugInfo::DebugFunction Fdebug;
+  DebugInfo::DebugFunction Fdebug = DebugInfo::DebugFunction();
 
   Fdebug.objName = this->structure->stringTable.m_data[Read16_bit()];
   Fdebug.stateName = this->structure->stringTable.m_data[Read16_bit()];
@@ -158,7 +158,7 @@ DebugInfo::DebugFunction Reader::FillDebugFunction()
 
 UserFlagTable Reader::FillUserFlagTable()
 {
-  UserFlagTable userFlagTable;
+  UserFlagTable userFlagTable = UserFlagTable();
 
   int UserFlagCount = Read16_bit();
 
@@ -173,7 +173,7 @@ UserFlagTable Reader::FillUserFlagTable()
 
 UserFlagTable::UserFlag Reader::FillUserFlag()
 {
-  UserFlagTable::UserFlag flag;
+  UserFlagTable::UserFlag flag = UserFlagTable::UserFlag();
 
   flag.name = this->structure->stringTable.m_data[Read16_bit()];
   flag.idx = Read8_bit();
@@ -183,7 +183,7 @@ UserFlagTable::UserFlag Reader::FillUserFlag()
 
 ObjectTable Reader::FillObjectTable()
 {
-  ObjectTable objectTable;
+  ObjectTable objectTable = ObjectTable();
 
   int ObjectCount = Read16_bit();
 
@@ -198,7 +198,7 @@ ObjectTable Reader::FillObjectTable()
 
 ObjectTable::Object Reader::FillObject()
 {
-  ObjectTable::Object object;
+  ObjectTable::Object object = ObjectTable::Object();
 
   object.NameIndex = this->structure->stringTable.m_data[Read16_bit()];
 
@@ -233,7 +233,7 @@ ObjectTable::Object Reader::FillObject()
 
 ObjectTable::Object::VarInfo Reader::FillVariable()
 {
-  ObjectTable::Object::VarInfo Var;
+  ObjectTable::Object::VarInfo Var = ObjectTable::Object::VarInfo();
 
   Var.name = this->structure->stringTable.m_data[Read16_bit()];
   Var.typeName = this->structure->stringTable.m_data[Read16_bit()];
@@ -244,7 +244,7 @@ ObjectTable::Object::VarInfo Reader::FillVariable()
 }
 VarValue Reader::FillVariableData()
 {
-  VarValue Data;
+  VarValue Data = VarValue();
 
   uint8_t type = Read8_bit();
 
@@ -296,7 +296,7 @@ VarValue Reader::FillVariableData()
 
 FunctionInfo Reader::FillFuncInfo()
 {
-  FunctionInfo info;
+  FunctionInfo info = FunctionInfo();
 
   info.returnType = this->structure->stringTable.m_data[Read16_bit()];
   info.docstring = this->structure->stringTable.m_data[Read16_bit()];
@@ -304,21 +304,21 @@ FunctionInfo Reader::FillFuncInfo()
   info.flags = Read8_bit();
 
   int CountParams = Read16_bit();
-
+  info.params.resize(CountParams);
   for (int i = 0; i < CountParams; i++) {
-    FunctionInfo::ParamInfo temp;
+    FunctionInfo::ParamInfo temp = FunctionInfo::ParamInfo();
     temp.name = this->structure->stringTable.m_data[Read16_bit()];
     temp.type = this->structure->stringTable.m_data[Read16_bit()];
-    info.params.push_back(temp);
+    info.params[i] = temp;
   }
 
   int CountLocals = Read16_bit();
-
+  info.locals.resize(CountLocals);
   for (int i = 0; i < CountLocals; i++) {
-    FunctionInfo::ParamInfo temp;
+    FunctionInfo::ParamInfo temp = FunctionInfo::ParamInfo();
     temp.name = this->structure->stringTable.m_data[Read16_bit()];
     temp.type = this->structure->stringTable.m_data[Read16_bit()];
-    info.params.push_back(temp);
+    info.locals[i] = temp;
   }
 
   int CountInstructions = Read16_bit();
@@ -330,9 +330,9 @@ FunctionInfo Reader::FillFuncInfo()
 
 FunctionCode Reader::FillFunctionCode(int CountInstructions)
 {
-  FunctionCode funcCode;
+  FunctionCode funcCode = FunctionCode();
   for (int i = 0; i < CountInstructions; i++) {
-    FunctionCode::Instruction item;
+    FunctionCode::Instruction item = FunctionCode::Instruction();
     item.op = Read8_bit();
 
     int numArguments = GetCountArguments(item.op);
@@ -372,7 +372,7 @@ uint8_t Reader::GetCountArguments(uint8_t opcode)
 
 ObjectTable::Object::PropInfo Reader::FillProperty()
 {
-  ObjectTable::Object::PropInfo prop;
+  ObjectTable::Object::PropInfo prop = ObjectTable::Object::PropInfo();
 
   prop.name = this->structure->stringTable.m_data[Read16_bit()];
   prop.type = this->structure->stringTable.m_data[Read16_bit()];
@@ -400,7 +400,7 @@ ObjectTable::Object::PropInfo Reader::FillProperty()
 
 ObjectTable::Object::StateInfo Reader::FillState()
 {
-  ObjectTable::Object::StateInfo stateinfo;
+  ObjectTable::Object::StateInfo stateinfo = ObjectTable::Object::StateInfo();
 
   stateinfo.name = this->structure->stringTable.m_data[Read16_bit()];
 
@@ -415,7 +415,8 @@ ObjectTable::Object::StateInfo Reader::FillState()
 
 ObjectTable::Object::StateInfo::StateFunction Reader::FillStateFunction()
 {
-  ObjectTable::Object::StateInfo::StateFunction temp;
+  ObjectTable::Object::StateInfo::StateFunction temp =
+    ObjectTable::Object::StateInfo::StateFunction();
 
   temp.name = this->structure->stringTable.m_data[Read16_bit()];
   temp.function = FillFuncInfo();
@@ -425,7 +426,7 @@ ObjectTable::Object::StateInfo::StateFunction Reader::FillStateFunction()
 
 uint8_t Reader::Read8_bit()
 {
-  uint8_t temp;
+  uint8_t temp = NULL;
 
   temp = arrayBytes[currentReadPositionInFile];
   currentReadPositionInFile++;

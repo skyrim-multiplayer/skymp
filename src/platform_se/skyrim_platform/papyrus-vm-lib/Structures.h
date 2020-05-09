@@ -188,8 +188,8 @@ struct FunctionInfo
     std::string type;
   };
 
-  std::string returnType;
-  std::string docstring;
+  std::string returnType = "";
+  std::string docstring = "";
   uint32_t userFlags = 0;
   uint8_t flags = 0;
 
