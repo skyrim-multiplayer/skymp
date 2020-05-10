@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-if ("${CMAKE_PROJECT_NAME}" STREQUAL "")
+if ("${CMAKE_PROJECT_NAME}" STREQUAL "" OR "${CMAKE_PROJECT_NAME}" STREQUAL "platform_se")
   project(platform_se)
 endif()
 
