@@ -15,7 +15,7 @@ struct PerClassCache
 }
 
 void NativeObjectProxy::Attach(JsValue& obj, const std::string& cacheClassName,
-                               const JsValue& toString)
+                               const JsValue& toString, const JsValue& toJson)
 {
 
   thread_local std::unordered_map<std::string, std::shared_ptr<PerClassCache>>
@@ -29,6 +29,7 @@ void NativeObjectProxy::Attach(JsValue& obj, const std::string& cacheClassName,
     auto handler = JsValue::Object();
     auto proxyTarget = JsValue::Object();
     proxyTarget.SetProperty("toString", toString);
+    proxyTarget.SetProperty("toJSON", toJson);
 
     handler.SetProperty(
       "get",

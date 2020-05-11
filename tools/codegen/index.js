@@ -21,6 +21,33 @@ export declare function on(eventName: string, callback: any): void;
 export declare function callNative(className: string, functionName: string, self?: object, ...args: any): any;
 export declare function getJsMemoryUsage(): number;
 export declare let storage: any;
+
+export declare namespace SendAnimationEventHook {
+    class Context {
+        selfId: number;
+        animEventName: string;
+
+        storage: Map<string, any>;
+    }
+
+    class LeaveContext extends Context {
+        animationSucceeded: boolean;
+    }
+
+    class Handler {
+        enter(ctx: Context);
+        leave(ctx: LeaveContext);
+    }
+
+    class Target {
+        add(handler: Handler)
+    }
+}
+export declare class Hooks {
+    sendAnimationEvent: SendAnimationEventHook.Target;
+}
+
+export declare let hooks: Hooks;
 `;
 let dumped = [];
 

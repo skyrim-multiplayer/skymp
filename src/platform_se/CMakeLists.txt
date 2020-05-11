@@ -45,6 +45,8 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   add_library(skyrim_platform SHARED ${platform_src})
   target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE)
   set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatform")
+  target_include_directories(skyrim_platform PRIVATE "${third_party}")
+  target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
 
   apply_default_settings(TARGETS skyrim_platform)
 
