@@ -61,8 +61,29 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     PDB_OUTPUT_DIRECTORY "bin"
   )
 
+  function(add_papyrus_library)
+    set(options)
+    set(oneValueArgs NAME DIRECTORY)
+    set(multiValueArgs)
+    cmake_parse_arguments(A
+      "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN}
+    )
+
+    file(GLOB src ${A_DIRECTORY}/*.psc)
+
+    set(OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/pex)
+    add_custom_target(${A_NAME} ALL
+      COMMAND "${SKYRIM_DIR}\\Papyrus Compiler\\PapyrusCompiler.exe"
+        ${A_DIRECTORY} -output=${OUTPUT_DIR} -import=${A_DIRECTORY} -all
+      SOURCES ${src}
+    )
+  endfunction()
+
+  add_papyrus_library(NAME TESModPlatformPsc DIRECTORY "${CMAKE_SOURCE_DIR}/psc")
+  add_dependencies(TESModPlatformPsc skyrim_platform)
+
   add_custom_command(
-    TARGET skyrim_platform POST_BUILD COMMAND
+    TARGET TESModPlatformPsc POST_BUILD COMMAND
     ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>
   )
 endif()

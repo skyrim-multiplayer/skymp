@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.17)
 project(skyrim_multiplayer)
 
+option(SKYRIM_DIR "Path to Skyrim" OFF)
+if (NOT SKYRIM_DIR)
+  message(FATAL_ERROR "Please specify SKYRIM_DIR")
+endif()
+if (NOT EXISTS ${SKYRIM_DIR}/SkyrimSE.exe)
+  message(FATAL_ERROR "Bad SKYRIM_DIR: ${SKYRIM_DIR}")
+endif()
+
 include(src/cmake/cmake_generate.cmake)
 
 # Clear CMake cache after changing this
@@ -32,4 +40,5 @@ cmake_generate(
     "CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
     "VCPKG_ROOT=${_VCPKG_ROOT_DIR}"
     "CMAKE_TOOLCHAIN_FILE=${_VCPKG_ROOT_DIR}\\scripts\\buildsystems\\vcpkg.cmake"
+    "SKYRIM_DIR=${SKYRIM_DIR}"
 )
