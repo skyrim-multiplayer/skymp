@@ -20,6 +20,7 @@ namespace {
 struct State
 {
   std::set<std::string> dumpedClasses;
+  bool isDumpingEmptyTypesAllowed = true;
 };
 
 std::string RawTypeToString(RE::BSScript::TypeInfo::RawType raw)
@@ -169,11 +170,13 @@ void DumpType(State& state, RE::BSScript::ObjectTypeInfo* type, json& out)
   if (auto parent = type->GetParent()) {
     jType["parent"] = parent->GetName();
   }
-
-  if (!globalFuncs.empty() || !memberFuncs.empty())
+  if (state.isDumpingEmptyTypesAllowed || !globalFuncs.empty() ||
+      !memberFuncs.empty())
     out["types"][name] = jType;
 }
 }
+
+thread_local RE::BSScrapArray<RE::BSFixedString> g_typeNames;
 
 void DumpFunctions::Run()
 {
@@ -187,6 +190,24 @@ void DumpFunctions::Run()
     State state;
 
     std::map<std::string, RE::BSScript::ObjectTypeInfo*> types;
+    vm->GetScriptObjectsWithATypeID(g_typeNames);
+
+    for (auto& papirusCalss : g_typeNames) {
+      RE::VMTypeID typeID;
+      RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> obj;
+
+      vm->GetTypeIDForScriptObject(papirusCalss.data(), typeID);
+      vm->GetScriptObjectType(typeID, obj);
+      types[papirusCalss.data()] = obj.get();
+    }
+
+    for (auto& [name, type] : types) {
+      DumpType(state, type, out);
+    }
+
+    state.isDumpingEmptyTypesAllowed = false;
+    types.clear();
+
     for (auto& [name, type] : vm->objectTypeMap)
       types[name.data()] = type.get();
 
