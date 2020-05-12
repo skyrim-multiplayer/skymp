@@ -7,59 +7,32 @@ export declare function callNative(className: string, functionName: string, self
 export declare function getJsMemoryUsage(): number;
 export declare let storage: any;
 
-// Based on ActiveMagicEffect.pex
-export declare class ActiveMagicEffect {
-    static from(form: Form): ActiveMagicEffect;
-    addInventoryEventFilter(akFilter: Form): void;
-    dispel(): void;
-    getBaseObject(): MagicEffect;
-    getCasterActor(): Actor;
-    getDuration(): number;
-    getMagnitude(): number;
-    getTargetActor(): Actor;
-    getTimeElapsed(): number;
-    registerForActorAction(actionType: number): void;
-    registerForAnimationEvent(akSender: ObjectReference, asEventName: string): boolean;
-    registerForCameraState(): void;
-    registerForControl(control: string): void;
-    registerForCrosshairRef(): void;
-    registerForKey(keyCode: number): void;
-    registerForLOS(akViewer: Actor, akTarget: ObjectReference): void;
-    registerForMenu(menuName: string): void;
-    registerForModEvent(eventName: string, callbackName: string): void;
-    registerForNiNodeUpdate(): void;
-    registerForSingleLOSGain(akViewer: Actor, akTarget: ObjectReference): void;
-    registerForSingleLOSLost(akViewer: Actor, akTarget: ObjectReference): void;
-    registerForSingleUpdate(afInterval: number): void;
-    registerForSingleUpdateGameTime(afInterval: number): void;
-    registerForSleep(): void;
-    registerForTrackedStatsEvent(): void;
-    registerForUpdate(afInterval: number): void;
-    registerForUpdateGameTime(afInterval: number): void;
-    removeAllInventoryEventFilters(): void;
-    removeInventoryEventFilter(akFilter: Form): void;
-    sendModEvent(eventName: string, strArg: string, numArg: number): void;
-    startObjectProfiling(): void;
-    stopObjectProfiling(): void;
-    unregisterForActorAction(actionType: number): void;
-    unregisterForAllControls(): void;
-    unregisterForAllKeys(): void;
-    unregisterForAllMenus(): void;
-    unregisterForAllModEvents(): void;
-    unregisterForAnimationEvent(akSender: ObjectReference, asEventName: string): void;
-    unregisterForCameraState(): void;
-    unregisterForControl(control: string): void;
-    unregisterForCrosshairRef(): void;
-    unregisterForKey(keyCode: number): void;
-    unregisterForLOS(akViewer: Actor, akTarget: ObjectReference): void;
-    unregisterForMenu(menuName: string): void;
-    unregisterForModEvent(eventName: string): void;
-    unregisterForNiNodeUpdate(): void;
-    unregisterForSleep(): void;
-    unregisterForTrackedStatsEvent(): void;
-    unregisterForUpdate(): void;
-    unregisterForUpdateGameTime(): void;
+export declare namespace SendAnimationEventHook {
+    class Context {
+        selfId: number;
+        animEventName: string;
+
+        storage: Map<string, any>;
+    }
+
+    class LeaveContext extends Context {
+        animationSucceeded: boolean;
+    }
+
+    class Handler {
+        enter(ctx: Context);
+        leave(ctx: LeaveContext);
+    }
+
+    class Target {
+        add(handler: Handler)
+    }
 }
+export declare class Hooks {
+    sendAnimationEvent: SendAnimationEventHook.Target;
+}
+
+export declare let hooks: Hooks;
 
 // Based on Form.pex
 export declare class Form {
@@ -107,6 +80,70 @@ export declare class Form {
     startObjectProfiling(): void;
     stopObjectProfiling(): void;
     tempClone(): Form;
+    unregisterForActorAction(actionType: number): void;
+    unregisterForAllControls(): void;
+    unregisterForAllKeys(): void;
+    unregisterForAllMenus(): void;
+    unregisterForAllModEvents(): void;
+    unregisterForAnimationEvent(akSender: ObjectReference, asEventName: string): void;
+    unregisterForCameraState(): void;
+    unregisterForControl(control: string): void;
+    unregisterForCrosshairRef(): void;
+    unregisterForKey(keyCode: number): void;
+    unregisterForLOS(akViewer: Actor, akTarget: ObjectReference): void;
+    unregisterForMenu(menuName: string): void;
+    unregisterForModEvent(eventName: string): void;
+    unregisterForNiNodeUpdate(): void;
+    unregisterForSleep(): void;
+    unregisterForTrackedStatsEvent(): void;
+    unregisterForUpdate(): void;
+    unregisterForUpdateGameTime(): void;
+}
+
+// Based on Action.pex
+export declare class Action extends Form {
+    static from(form: Form): Action;
+}
+
+// Based on Activator.pex
+export declare class Activator extends Form {
+    static from(form: Form): Activator;
+}
+
+// Based on ActiveMagicEffect.pex
+export declare class ActiveMagicEffect {
+    static from(form: Form): ActiveMagicEffect;
+    addInventoryEventFilter(akFilter: Form): void;
+    dispel(): void;
+    getBaseObject(): MagicEffect;
+    getCasterActor(): Actor;
+    getDuration(): number;
+    getMagnitude(): number;
+    getTargetActor(): Actor;
+    getTimeElapsed(): number;
+    registerForActorAction(actionType: number): void;
+    registerForAnimationEvent(akSender: ObjectReference, asEventName: string): boolean;
+    registerForCameraState(): void;
+    registerForControl(control: string): void;
+    registerForCrosshairRef(): void;
+    registerForKey(keyCode: number): void;
+    registerForLOS(akViewer: Actor, akTarget: ObjectReference): void;
+    registerForMenu(menuName: string): void;
+    registerForModEvent(eventName: string, callbackName: string): void;
+    registerForNiNodeUpdate(): void;
+    registerForSingleLOSGain(akViewer: Actor, akTarget: ObjectReference): void;
+    registerForSingleLOSLost(akViewer: Actor, akTarget: ObjectReference): void;
+    registerForSingleUpdate(afInterval: number): void;
+    registerForSingleUpdateGameTime(afInterval: number): void;
+    registerForSleep(): void;
+    registerForTrackedStatsEvent(): void;
+    registerForUpdate(afInterval: number): void;
+    registerForUpdateGameTime(afInterval: number): void;
+    removeAllInventoryEventFilters(): void;
+    removeInventoryEventFilter(akFilter: Form): void;
+    sendModEvent(eventName: string, strArg: string, numArg: number): void;
+    startObjectProfiling(): void;
+    stopObjectProfiling(): void;
     unregisterForActorAction(actionType: number): void;
     unregisterForAllControls(): void;
     unregisterForAllKeys(): void;
@@ -176,7 +213,7 @@ export declare class ObjectReference extends Form {
     getItemCount(akItem: Form): number;
     getItemHealthPercent(): number;
     getItemMaxCharge(): number;
-    getKey(): Form;
+    getKey(): Key;
     getLength(): number;
     getLinkedRef(apKeyword: Keyword): ObjectReference;
     getLockLevel(): number;
@@ -197,12 +234,12 @@ export declare class ObjectReference extends Form {
     getTotalArmorWeight(): number;
     getTotalItemWeight(): number;
     getTriggerObjectCount(): number;
-    getVoiceType(): Form;
+    getVoiceType(): VoiceType;
     getWidth(): number;
     getWorldSpace(): WorldSpace;
     hasEffectKeyword(akKeyword: Keyword): boolean;
     hasNode(asNodeName: string): boolean;
-    hasRefType(akRefType: Form): boolean;
+    hasRefType(akRefType: LocationRefType): boolean;
     ignoreFriendlyHits(abIgnore: boolean): void;
     interruptCast(): void;
     is3DLoaded(): boolean;
@@ -225,12 +262,12 @@ export declare class ObjectReference extends Form {
     moveToInteractionLocation(akTarget: ObjectReference): Promise<void>;
     moveToMyEditorLocation(): Promise<void>;
     moveToNode(akTarget: ObjectReference, asNodeName: string): Promise<void>;
-    placeActorAtMe(akActorToPlace: ActorBase, aiLevelMod: number, akZone: Form): Actor;
+    placeActorAtMe(akActorToPlace: ActorBase, aiLevelMod: number, akZone: EncounterZone): Actor;
     placeAtMe(akFormToPlace: Form, aiCount: number, abForcePersist: boolean, abInitiallyDisabled: boolean): ObjectReference;
     playAnimation(asAnimation: string): boolean;
     playAnimationAndWait(asAnimation: string, asEventName: string): Promise<boolean>;
     playGamebryoAnimation(asAnimation: string, abStartOver: boolean, afEaseInTime: number): boolean;
-    playImpactEffect(akImpactEffect: Form, asNodeName: string, afPickDirX: number, afPickDirY: number, afPickDirZ: number, afPickLength: number, abApplyNodeRotation: boolean, abUseNodeLocalRotation: boolean): boolean;
+    playImpactEffect(akImpactEffect: ImpactDataSet, asNodeName: string, afPickDirX: number, afPickDirY: number, afPickDirZ: number, afPickLength: number, abApplyNodeRotation: boolean, abUseNodeLocalRotation: boolean): boolean;
     playSyncedAnimationAndWaitSS(asAnimation1: string, asEvent1: string, akObj2: ObjectReference, asAnimation2: string, asEvent2: string): Promise<boolean>;
     playSyncedAnimationSS(asAnimation1: string, akObj2: ObjectReference, asAnimation2: string): boolean;
     playTerrainEffect(asEffectModelName: string, asAttachBoneName: string): void;
@@ -358,7 +395,7 @@ export declare class Actor extends ObjectReference {
     getWarmthRating(): number;
     getWornForm(slotMask: number): Form;
     getWornItemId(slotMask: number): number;
-    hasAssociation(akAssociation: Form, akOther: Actor): boolean;
+    hasAssociation(akAssociation: AssociationType, akOther: Actor): boolean;
     hasFamilyRelationship(akOther: Actor): boolean;
     hasLOS(akOther: ObjectReference): boolean;
     hasMagicEffect(akEffect: MagicEffect): boolean;
@@ -409,8 +446,8 @@ export declare class Actor extends ObjectReference {
     moveToPackageLocation(): Promise<void>;
     openInventory(abForceOpen: boolean): void;
     pathToReference(aTarget: ObjectReference, afWalkRunPercent: number): Promise<boolean>;
-    playIdle(akIdle: Form): boolean;
-    playIdleWithTarget(akIdle: Form, akTarget: ObjectReference): boolean;
+    playIdle(akIdle: Idle): boolean;
+    playIdleWithTarget(akIdle: Idle, akTarget: ObjectReference): boolean;
     playSubGraphAnimation(asEventName: string): void;
     queueNiNodeUpdate(): void;
     regenerateHead(): void;
@@ -489,7 +526,7 @@ export declare class Actor extends ObjectReference {
 // Based on ActorBase.pex
 export declare class ActorBase extends Form {
     static from(form: Form): ActorBase;
-    getClass(): Form;
+    getClass(): Class;
     getCombatStyle(): CombatStyle;
     getDeadCount(): number;
     getFaceMorph(index: number): number;
@@ -512,13 +549,13 @@ export declare class ActorBase extends Form {
     getSkinFar(): Armor;
     getSpellCount(): number;
     getTemplate(): ActorBase;
-    getVoiceType(): Form;
+    getVoiceType(): VoiceType;
     getWeight(): number;
     isEssential(): boolean;
     isInvulnerable(): boolean;
     isProtected(): boolean;
     isUnique(): boolean;
-    setClass(c: Form): void;
+    setClass(c: Class): void;
     setCombatStyle(cs: CombatStyle): void;
     setEssential(abEssential: boolean): void;
     setFaceMorph(value: number, index: number): void;
@@ -532,7 +569,7 @@ export declare class ActorBase extends Form {
     setProtected(abProtected: boolean): void;
     setSkin(skin: Armor): void;
     setSkinFar(skin: Armor): void;
-    setVoiceType(nVoice: Form): void;
+    setVoiceType(nVoice: VoiceType): void;
     setWeight(weight: number): void;
 }
 
@@ -614,8 +651,20 @@ export declare class Alias {
 export declare class Ammo extends Form {
     static from(form: Form): Ammo;
     getDamage(): number;
-    getProjectile(): Form;
+    getProjectile(): Projectile;
     isBolt(): boolean;
+}
+
+// Based on MiscObject.pex
+export declare class MiscObject extends Form {
+    static from(form: Form): MiscObject;
+}
+
+// Based on Apparatus.pex
+export declare class Apparatus extends MiscObject {
+    static from(form: Form): Apparatus;
+    getQuality(): number;
+    setQuality(quality: number): void;
 }
 
 // Based on Armor.pex
@@ -667,6 +716,11 @@ export declare class Art extends Form {
     setModelPath(path: string): void;
 }
 
+// Based on AssociationType.pex
+export declare class AssociationType extends Form {
+    static from(form: Form): AssociationType;
+}
+
 // Based on Book.pex
 export declare class Book extends Form {
     static from(form: Form): Book;
@@ -693,6 +747,11 @@ export declare class Cell extends Form {
     setFogPlanes(afNear: number, afFar: number): void;
     setFogPower(afPower: number): void;
     setPublic(abPublic: boolean): void;
+}
+
+// Based on Class.pex
+export declare class Class extends Form {
+    static from(form: Form): Class;
 }
 
 // Based on ColorForm.pex
@@ -761,6 +820,27 @@ export declare class CombatStyle extends Form {
     setUnarmedMult(mult: number): void;
 }
 
+// Based on ConstructibleObject.pex
+export declare class ConstructibleObject extends MiscObject {
+    static from(form: Form): ConstructibleObject;
+    getNthIngredient(n: number): Form;
+    getNthIngredientQuantity(n: number): number;
+    getNumIngredients(): number;
+    getResult(): Form;
+    getResultQuantity(): number;
+    getWorkbenchKeyword(): Keyword;
+    setNthIngredient(required: Form, n: number): void;
+    setNthIngredientQuantity(value: number, n: number): void;
+    setResult(result: Form): void;
+    setResultQuantity(quantity: number): void;
+    setWorkbenchKeyword(aKeyword: Keyword): void;
+}
+
+// Based on Container.pex
+export declare class Container extends Form {
+    static from(form: Form): Container;
+}
+
 // Based on Debug.pex
 export declare class Debug {
     static from(form: Form): Debug;
@@ -781,7 +861,7 @@ export declare class Debug {
     static sendAnimationEvent(param1: ObjectReference, param2: string): void;
     static setFootIK(param1: boolean): void;
     static setGodMode(param1: boolean): void;
-    static showRefPosition(arRef: ObjectReference): Promise<void>;
+    static showRefPosition(arRef: ObjectReference): void;
     static startScriptProfiling(param1: string): void;
     static startStackProfiling(): void;
     static stopScriptProfiling(param1: string): void;
@@ -793,6 +873,18 @@ export declare class Debug {
     static trace(param1: string, param2: number): void;
     static traceStack(param1: string, param2: number): void;
     static traceUser(param1: string, param2: string, param3: number): boolean;
+}
+
+// Based on DefaultObjectManager.pex
+export declare class DefaultObjectManager extends Form {
+    static from(form: Form): DefaultObjectManager;
+    getForm(key: string): Form;
+    setForm(key: string, newForm: Form): void;
+}
+
+// Based on Door.pex
+export declare class Door extends Form {
+    static from(form: Form): Door;
 }
 
 // Based on EffectShader.pex
@@ -820,11 +912,21 @@ export declare class Enchantment extends Form {
     setNthEffectMagnitude(index: number, value: number): void;
 }
 
+// Based on EncounterZone.pex
+export declare class EncounterZone extends Form {
+    static from(form: Form): EncounterZone;
+}
+
 // Based on EquipSlot.pex
 export declare class EquipSlot extends Form {
     static from(form: Form): EquipSlot;
     getNthParent(n: number): EquipSlot;
     getNumParents(): number;
+}
+
+// Based on Explosion.pex
+export declare class Explosion extends Form {
+    static from(form: Form): Explosion;
 }
 
 // Based on Faction.pex
@@ -874,7 +976,7 @@ export declare class Faction extends Form {
 }
 
 // Based on Flora.pex
-export declare class Flora {
+export declare class Flora extends Activator {
     static from(form: Form): Flora;
     getHarvestSound(): SoundDescriptor;
     getIngredient(): Form;
@@ -894,6 +996,11 @@ export declare class FormList extends Form {
     removeAddedForm(apForm: Form): void;
     revert(): void;
     toArray(): object[];
+}
+
+// Based on Furniture.pex
+export declare class Furniture extends Activator {
+    static from(form: Form): Furniture;
 }
 
 // Based on Game.pex
@@ -977,7 +1084,7 @@ export declare class Game {
     static isPlayerSungazing(): boolean;
     static isPluginInstalled(name: string): boolean;
     static isSneakingControlsEnabled(): boolean;
-    static isWordUnlocked(akWord: Form): boolean;
+    static isWordUnlocked(akWord: WordOfPower): boolean;
     static loadGame(name: string): void;
     static modPerkPoints(perkPoints: number): void;
     static playBink(asFilename: string, abInterruptible: boolean, abMuteAudio: boolean, abMuteMusic: boolean, abLetterbox: boolean): void;
@@ -1020,10 +1127,10 @@ export declare class Game {
     static showTitleSequenceMenu(): void;
     static showTrainingMenu(aTrainer: Actor): void;
     static startTitleSequence(asSequenceName: string): void;
-    static teachWord(akWord: Form): void;
+    static teachWord(akWord: WordOfPower): void;
     static triggerScreenBlood(aiValue: number): void;
     static unbindObjectHotkey(hotkey: number): void;
-    static unlockWord(akWord: Form): void;
+    static unlockWord(akWord: WordOfPower): void;
     static updateHairColor(): void;
     static updateThirdPerson(): void;
     static updateTintMaskColors(): void;
@@ -1038,6 +1145,11 @@ export declare class GlobalVariable extends Form {
     static from(form: Form): GlobalVariable;
     getValue(): number;
     setValue(param1: number): void;
+}
+
+// Based on Hazard.pex
+export declare class Hazard extends Form {
+    static from(form: Form): Hazard;
 }
 
 // Based on HeadPart.pex
@@ -1055,6 +1167,11 @@ export declare class HeadPart extends Form {
     static getHeadPart(name: string): HeadPart;
 }
 
+// Based on Idle.pex
+export declare class Idle extends Form {
+    static from(form: Form): Idle;
+}
+
 // Based on ImageSpaceModifier.pex
 export declare class ImageSpaceModifier extends Form {
     static from(form: Form): ImageSpaceModifier;
@@ -1063,6 +1180,11 @@ export declare class ImageSpaceModifier extends Form {
     popTo(param1: ImageSpaceModifier, param2: number): void;
     remove(): void;
     static removeCrossFade(param1: number): void;
+}
+
+// Based on ImpactDataSet.pex
+export declare class ImpactDataSet extends Form {
+    static from(form: Form): ImpactDataSet;
 }
 
 // Based on Ingredient.pex
@@ -1086,6 +1208,11 @@ export declare class Ingredient extends Form {
     setNthEffectArea(index: number, value: number): void;
     setNthEffectDuration(index: number, value: number): void;
     setNthEffectMagnitude(index: number, value: number): void;
+}
+
+// Based on Key.pex
+export declare class Key extends MiscObject {
+    static from(form: Form): Key;
 }
 
 // Based on Keyword.pex
@@ -1127,6 +1254,19 @@ export declare class LeveledItem extends Form {
     setNthLevel(n: number, level: number): void;
 }
 
+// Based on LeveledSpell.pex
+export declare class LeveledSpell extends Form {
+    static from(form: Form): LeveledSpell;
+    addForm(apForm: Form, aiLevel: number): void;
+    getChanceNone(): number;
+    getNthForm(n: number): Form;
+    getNthLevel(n: number): number;
+    getNumForms(): number;
+    revert(): void;
+    setChanceNone(chance: number): void;
+    setNthLevel(n: number, level: number): void;
+}
+
 // Based on Light.pex
 export declare class Light extends Form {
     static from(form: Form): Light;
@@ -1137,10 +1277,10 @@ export declare class Light extends Form {
 export declare class Location extends Form {
     static from(form: Form): Location;
     getKeywordData(param1: Keyword): number;
-    getRefTypeAliveCount(param1: Form): number;
-    getRefTypeDeadCount(param1: Form): number;
+    getRefTypeAliveCount(param1: LocationRefType): number;
+    getRefTypeDeadCount(param1: LocationRefType): number;
     hasCommonParent(param1: Location, param2: Keyword): boolean;
-    hasRefType(param1: Form): boolean;
+    hasRefType(param1: LocationRefType): boolean;
     isChild(param1: Location): boolean;
     isCleared(): boolean;
     isLoaded(): boolean;
@@ -1154,6 +1294,11 @@ export declare class LocationAlias extends Alias {
     clear(): void;
     forceLocationTo(param1: Location): void;
     getLocation(): Location;
+}
+
+// Based on LocationRefType.pex
+export declare class LocationRefType extends Keyword {
+    static from(form: Form): LocationRefType;
 }
 
 // Based on MagicEffect.pex
@@ -1170,14 +1315,14 @@ export declare class MagicEffect extends Form {
     getEnchantArt(): Art;
     getEnchantShader(): EffectShader;
     getEquipAbility(): Spell;
-    getExplosion(): Form;
+    getExplosion(): Explosion;
     getHitEffectArt(): Art;
     getHitShader(): EffectShader;
     getImageSpaceMod(): ImageSpaceModifier;
-    getImpactDataSet(): Form;
+    getImpactDataSet(): ImpactDataSet;
     getLight(): Light;
     getPerk(): Perk;
-    getProjectile(): Form;
+    getProjectile(): Projectile;
     getResistance(): string;
     getSkillLevel(): number;
     getSkillUsageMult(): number;
@@ -1192,14 +1337,14 @@ export declare class MagicEffect extends Form {
     setEnchantArt(obj: Art): void;
     setEnchantShader(obj: EffectShader): void;
     setEquipAbility(obj: Spell): void;
-    setExplosion(obj: Form): void;
+    setExplosion(obj: Explosion): void;
     setHitEffectArt(obj: Art): void;
     setHitShader(obj: EffectShader): void;
     setImageSpaceMod(obj: ImageSpaceModifier): void;
-    setImpactDataSet(obj: Form): void;
+    setImpactDataSet(obj: ImpactDataSet): void;
     setLight(obj: Light): void;
     setPerk(obj: Perk): void;
-    setProjectile(obj: Form): void;
+    setProjectile(obj: Projectile): void;
     setResistance(skill: string): void;
     setSkillLevel(level: number): void;
     setSkillUsageMult(usageMult: number): void;
@@ -1225,6 +1370,11 @@ export declare class Outfit extends Form {
     static from(form: Form): Outfit;
     getNthPart(n: number): Form;
     getNumParts(): number;
+}
+
+// Based on Projectile.pex
+export declare class Projectile extends Form {
+    static from(form: Form): Projectile;
 }
 
 // Based on Package.pex
@@ -1320,12 +1470,12 @@ export declare class Quest extends Form {
 export declare class Race extends Form {
     static from(form: Form): Race;
     clearRaceFlag(n: number): void;
-    getDefaultVoiceType(female: boolean): Form;
+    getDefaultVoiceType(female: boolean): VoiceType;
     getNthSpell(n: number): Spell;
     getSkin(): Armor;
     getSpellCount(): number;
     isRaceFlagSet(n: number): boolean;
-    setDefaultVoiceType(female: boolean, voice: Form): void;
+    setDefaultVoiceType(female: boolean, voice: VoiceType): void;
     setRaceFlag(n: number): void;
     setSkin(skin: Armor): void;
     static getNthPlayableRace(n: number): Race;
@@ -1371,6 +1521,11 @@ export declare class Spell extends Form {
     setNthEffectDuration(index: number, value: number): void;
     setNthEffectMagnitude(index: number, value: number): void;
     unload(): void;
+}
+
+// Based on Static.pex
+export declare class Static extends Form {
+    static from(form: Form): Static;
 }
 
 // Based on Scene.pex
@@ -1419,14 +1574,14 @@ export declare class Shout extends Form {
     static from(form: Form): Shout;
     getNthRecoveryTime(n: number): number;
     getNthSpell(n: number): Spell;
-    getNthWordOfPower(n: number): Form;
+    getNthWordOfPower(n: number): WordOfPower;
     setNthRecoveryTime(n: number, time: number): void;
     setNthSpell(n: number, aSpell: Spell): void;
-    setNthWordOfPower(n: number, aWoop: Form): void;
+    setNthWordOfPower(n: number, aWoop: WordOfPower): void;
 }
 
 // Based on SoulGem.pex
-export declare class SoulGem {
+export declare class SoulGem extends MiscObject {
     static from(form: Form): SoulGem;
     getGemSize(): number;
     getSoulSize(): number;
@@ -1440,6 +1595,17 @@ export declare class Sound extends Form {
     playAndWait(akSource: ObjectReference): Promise<boolean>;
     static setInstanceVolume(aiPlaybackInstance: number, afVolume: number): void;
     static stopInstance(aiPlaybackInstance: number): void;
+}
+
+// Based on SoundCategory.pex
+export declare class SoundCategory extends Form {
+    static from(form: Form): SoundCategory;
+    mute(): void;
+    pause(): void;
+    setFrequency(param1: number): void;
+    setVolume(param1: number): void;
+    unMute(): void;
+    unPause(): void;
 }
 
 // Based on SoundDescriptor.pex
@@ -1459,6 +1625,11 @@ export declare class SoundDescriptor extends Form {
 export declare class TESModPlatform {
     static from(form: Form): TESModPlatform;
     static moveRefrToPosition(refr: ObjectReference, cell: Cell, world: WorldSpace, posX: number, posY: number, posZ: number, rotX: number, rotY: number, rotZ: number): void;
+}
+
+// Based on TalkingActivator.pex
+export declare class TalkingActivator extends Activator {
+    static from(form: Form): TalkingActivator;
 }
 
 // Based on TextureSet.pex
@@ -1481,11 +1652,25 @@ export declare class TopicInfo extends Form {
     getOwningQuest(): Quest;
 }
 
+// Based on TreeObject.pex
+export declare class TreeObject extends Form {
+    static from(form: Form): TreeObject;
+    getHarvestSound(): SoundDescriptor;
+    getIngredient(): Form;
+    setHarvestSound(akSoundDescriptor: SoundDescriptor): void;
+    setIngredient(akIngredient: Form): void;
+}
+
 // Based on VisualEffect.pex
 export declare class VisualEffect extends Form {
     static from(form: Form): VisualEffect;
     play(param1: ObjectReference, param2: number, param3: ObjectReference): void;
     stop(param1: ObjectReference): void;
+}
+
+// Based on VoiceType.pex
+export declare class VoiceType extends Form {
+    static from(form: Form): VoiceType;
 }
 
 // Based on Weapon.pex
@@ -1500,7 +1685,7 @@ export declare class Weapon extends Form {
     getEnchantment(): Enchantment;
     getEnchantmentValue(): number;
     getEquipType(): EquipSlot;
-    getEquippedModel(): Form;
+    getEquippedModel(): Static;
     getIconPath(): string;
     getMaxRange(): number;
     getMessageIconPath(): string;
@@ -1521,7 +1706,7 @@ export declare class Weapon extends Form {
     setEnchantment(e: Enchantment): void;
     setEnchantmentValue(value: number): void;
     setEquipType(type: EquipSlot): void;
-    setEquippedModel(model: Form): void;
+    setEquippedModel(model: Static): void;
     setIconPath(path: string): void;
     setMaxRange(maxRange: number): void;
     setMessageIconPath(path: string): void;
@@ -1552,6 +1737,16 @@ export declare class Weather extends Form {
     static getOutgoingWeather(): Weather;
     static getSkyMode(): number;
     static releaseOverride(): void;
+}
+
+// Based on WordOfPower.pex
+export declare class WordOfPower extends Form {
+    static from(form: Form): WordOfPower;
+}
+
+// Based on WorldSpace.pex
+export declare class WorldSpace extends Form {
+    static from(form: Form): WorldSpace;
 }
 
 // Based on Utility.pex
@@ -1597,9 +1792,4 @@ export declare class Utility {
     static wait(afSeconds: number): Promise<void>;
     static waitGameTime(afHours: number): Promise<void>;
     static waitMenuMode(afSeconds: number): Promise<void>;
-}
-
-// Based on WorldSpace.pex
-export declare class WorldSpace extends Form {
-    static from(form: Form): WorldSpace;
 }
