@@ -16,7 +16,9 @@ extern TaskQueue g_taskQueue;
 
 struct EventsGlobalState
 {
-  std::map<std::string, std::vector<JsValue>> callbacks;
+  using Callbacks = std::map<std::string, std::vector<JsValue>>;
+  Callbacks callbacks;
+  Callbacks callbacksOnce;
 
   class Handler
   {
@@ -54,11 +56,27 @@ struct SendAnimationEventTag
 };
 }
 
+namespace {
+void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
+                  bool isOnce = false)
+{
+  EventsGlobalState::Callbacks callbacks =
+    isOnce ? g.callbacksOnce : g.callbacks;
+
+  if (isOnce)
+    g.callbacksOnce[eventName].clear();
+
+  for (auto& f : callbacks[eventName]) {
+    f.Call(arguments);
+  }
+}
+}
+
 void EventsApi::SendEvent(const char* eventName,
                           const std::vector<JsValue>& arguments)
 {
-  for (auto& f : g.callbacks[eventName])
-    f.Call(arguments);
+  CallCalbacks(eventName, arguments);
+  CallCalbacks(eventName, arguments, true);
 }
 
 void EventsApi::Clear()
@@ -113,7 +131,7 @@ void EventsApi::SendAnimationEventEnter(uint32_t selfId,
         perThread.context.SetProperty("animEventName", animEventName);
 
         h.enter.Call({ JsValue::Undefined(), perThread.context });
-        
+
         animEventName =
           (std::string)perThread.context.GetProperty("animEventName");
       }
@@ -182,7 +200,8 @@ JsValue EventsApi::GetHooks()
   return hooks;
 }
 
-JsValue EventsApi::On(const JsFunctionArguments& args)
+namespace {
+JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
   auto eventName = args[1].ToString();
   auto callback = args[2];
@@ -192,7 +211,18 @@ JsValue EventsApi::On(const JsFunctionArguments& args)
   if (events.count(eventName) == 0)
     throw InvalidArgumentException("eventName", eventName);
 
-  g.callbacks[eventName].push_back(callback);
-
+  isOnce ? g.callbacksOnce[eventName].push_back(callback)
+         : g.callbacks[eventName].push_back(callback);
   return JsValue::Undefined();
+}
+}
+
+JsValue EventsApi::On(const JsFunctionArguments& args)
+{
+  return AddCallback(args);
+}
+
+JsValue EventsApi::Once(const JsFunctionArguments& args)
+{
+  return AddCallback(args, true);
 }

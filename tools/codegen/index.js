@@ -18,6 +18,7 @@ let output = `
 export declare function printConsole(...arguments: any[]): void;
 export declare function writeScript(scriptName: string, src: string): void;
 export declare function on(eventName: string, callback: any): void;
+export declare function once(eventName: string, callback: any): void;
 export declare function callNative(className: string, functionName: string, self?: object, ...args: any): any;
 export declare function getJsMemoryUsage(): number;
 export declare let storage: any;
