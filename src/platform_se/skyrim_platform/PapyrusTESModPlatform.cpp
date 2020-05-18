@@ -1,11 +1,16 @@
 #include "PapyrusTESModPlatform.h"
+#include "CallNativeApi.h"
 #include "NullPointerException.h"
 #include <RE/BSScript/IFunctionArguments.h>
 #include <RE/BSScript/IStackCallbackFunctor.h>
 #include <RE/BSScript/NativeFunction.h>
 #include <RE/ConsoleLog.h>
 #include <RE/SkyrimVM.h>
+#include <mutex>
 #include <skse64/GameReferences.h>
+#include <unordered_map>
+
+extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace TESModPlatform {
 bool papyrusUpdateAllowed = false;
@@ -13,6 +18,11 @@ bool vmCallAllowed = true;
 std::function<void(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)>
   onPapyrusUpdate = nullptr;
 uint64_t numPapyrusUpdates = 0;
+struct
+{
+  std::unordered_map<uint32_t, int> weapDrawnMode;
+  std::recursive_mutex m;
+} share;
 
 class FunctionArguments : public RE::BSScript::IFunctionArguments
 {
@@ -80,6 +90,43 @@ void TESModPlatform::MoveRefrToPosition(
     &rot);
 }
 
+void TESModPlatform::SetWeaponDrawnMode(RE::BSScript::IVirtualMachine* vm,
+                                        RE::VMStackID stackId,
+                                        RE::StaticFunctionTag*,
+                                        RE::Actor* actor, SInt32 weapDrawnMode)
+{
+  if (!actor || weapDrawnMode < WEAP_DRAWN_MODE_MIN ||
+      weapDrawnMode > WEAP_DRAWN_MODE_MAX)
+    return;
+
+  if (g_nativeCallRequirements.gameThrQ) {
+    auto formId = actor->formID;
+    g_nativeCallRequirements.gameThrQ->AddTask([=] {
+      if (LookupFormByID(formId) != (void*)actor)
+        return;
+
+      if (!actor->IsWeaponDrawn() &&
+          weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_TRUE)
+        actor->DrawWeaponMagicHands(true);
+
+      if (actor->IsWeaponDrawn() &&
+          weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_FALSE)
+        actor->DrawWeaponMagicHands(false);
+    });
+  }
+
+  std::lock_guard l(share.m);
+  share.weapDrawnMode[actor->formID] = weapDrawnMode;
+}
+
+int TESModPlatform::GetWeapDrawnMode(uint32_t actorId)
+{
+  std::lock_guard l(share.m);
+  auto it = share.weapDrawnMode.find(actorId);
+  return it == share.weapDrawnMode.end() ? WEAP_DRAWN_MODE_DEFAULT
+                                         : it->second;
+}
+
 void TESModPlatform::Update()
 {
   if (!vmCallAllowed)
@@ -126,5 +173,9 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
       RE::TESObjectREFR*, RE::TESObjectCELL*, RE::TESWorldSpace*, float, float,
       float, float, float, float>("MoveRefrToPosition", "TESModPlatform",
                                   MoveRefrToPosition));
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(SetWeaponDrawnMode), void,
+                                     RE::StaticFunctionTag*, RE::Actor*, int>(
+      "SetWeaponDrawnMode", "TESModPlatform", SetWeaponDrawnMode));
   return true;
 }
