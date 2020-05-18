@@ -12,27 +12,6 @@
 std::shared_ptr<JsEngine>* DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
 
-JsValue DevApi::WriteScript(const JsFunctionArguments& args)
-{
-  auto scriptName = (std::string)args[1], scriptSrc = (std::string)args[2];
-
-  auto dir = std::filesystem::path("Data\\Platform\\Output");
-  std::filesystem::create_directories(dir);
-
-  auto scriptPath = dir / scriptName;
-
-  std::ofstream f(scriptPath);
-  if (!f.is_open())
-    throw std::runtime_error("Unable to open '" + scriptPath.generic_string() +
-                             "' for writing");
-  f.write(scriptSrc.data(), scriptSrc.size());
-  if (!f.good())
-    throw std::runtime_error("Failed to write into '" +
-                             scriptPath.generic_string() + "'");
-
-  return JsValue::Undefined();
-}
-
 JsValue DevApi::Require(const JsFunctionArguments& args,
                         std::filesystem::path builtScriptsDir)
 {

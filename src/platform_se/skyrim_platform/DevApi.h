@@ -7,7 +7,6 @@
 #include <string>
 
 namespace DevApi {
-JsValue WriteScript(const JsFunctionArguments& args);
 JsValue Require(const JsFunctionArguments& args,
                 std::filesystem::path builtScriptsDir);
 JsValue AddNativeExports(const JsFunctionArguments& args);
@@ -27,7 +26,6 @@ inline void Register(JsValue& exports, std::shared_ptr<JsEngine>* jsEngine,
     DevApi::nativeExportsMap.insert(p);
   DevApi::jsEngine = jsEngine;
 
-  exports.SetProperty("writeScript", JsValue::Function(WriteScript));
   exports.SetProperty(
     "require",
     JsValue::Function([builtScriptsDir](const JsFunctionArguments& args) {
