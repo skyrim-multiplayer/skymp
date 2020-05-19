@@ -5,3 +5,5 @@ function MoveRefrToPosition(ObjectReference refr, cell cell, WorldSpace world, F
 Int function Add(Int a1, Int a2, Int a3, Int a4, Int a5, Int a6, Int a7, Int a8, Int a9, Int a10, Int a11, Int a12) global native
 
 function SetWeaponDrawnMode(Actor actor, Int mode) global native
+
+Int function GetNthVtableElement(Form pointer, Int pointerOffset, Int elementIndex) global native

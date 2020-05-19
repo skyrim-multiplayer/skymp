@@ -119,6 +119,31 @@ void TESModPlatform::SetWeaponDrawnMode(RE::BSScript::IVirtualMachine* vm,
   share.weapDrawnMode[actor->formID] = weapDrawnMode;
 }
 
+SInt32 TESModPlatform::GetNthVtableElement(RE::BSScript::IVirtualMachine* vm,
+                                           RE::VMStackID stackId,
+                                           RE::StaticFunctionTag*,
+                                           RE::TESForm* pointer,
+                                           SInt32 pointerOffset,
+                                           SInt32 elementIndex)
+{
+  static auto getNthVTableElement = [](void* obj, size_t idx) {
+    using VTable = size_t*;
+    auto vtable = *(VTable*)obj;
+    return vtable[idx];
+  };
+
+  if (pointer && elementIndex >= 0) {
+    __try {
+      return getNthVTableElement(reinterpret_cast<uint8_t*>(pointer) +
+                                   pointerOffset,
+                                 elementIndex) -
+        REL::Module::BaseAddr();
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+  }
+  return -1;
+}
+
 int TESModPlatform::GetWeapDrawnMode(uint32_t actorId)
 {
   std::lock_guard l(share.m);
@@ -177,5 +202,11 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
     new RE::BSScript::NativeFunction<true, decltype(SetWeaponDrawnMode), void,
                                      RE::StaticFunctionTag*, RE::Actor*, int>(
       "SetWeaponDrawnMode", "TESModPlatform", SetWeaponDrawnMode));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(GetNthVtableElement),
+                                     SInt32, RE::StaticFunctionTag*,
+                                     RE::TESForm*, int, int>(
+      "GetNthVtableElement", "TESModPlatform", GetNthVtableElement));
   return true;
 }

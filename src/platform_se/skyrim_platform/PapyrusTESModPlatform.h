@@ -36,6 +36,11 @@ void SetWeaponDrawnMode(RE::BSScript::IVirtualMachine* vm,
                         RE::VMStackID stackId, RE::StaticFunctionTag*,
                         RE::Actor* actor, SInt32 weapDrawnMode);
 
+SInt32 GetNthVtableElement(RE::BSScript::IVirtualMachine* vm,
+                           RE::VMStackID stackId, RE::StaticFunctionTag*,
+                           RE::TESForm* pointer, SInt32 pointerOffset,
+                           SInt32 elementIndex);
+
 int GetWeapDrawnMode(uint32_t actorId); // Threadsafe
 
 void Update();
