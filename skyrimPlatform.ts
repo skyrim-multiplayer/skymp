@@ -3,9 +3,20 @@
 export declare function printConsole(...arguments: any[]): void;
 export declare function writeScript(scriptName: string, src: string): void;
 export declare function on(eventName: string, callback: any): void;
+export declare function once(eventName: string, callback: any): void;
 export declare function callNative(className: string, functionName: string, self?: object, ...args: any): any;
 export declare function getJsMemoryUsage(): number;
 export declare let storage: any;
+
+export enum MotionType {
+    Dynamic = 1,
+    SphereInertia = 2, 
+    BoxInertia = 3,
+    Keyframed = 4,
+    Fixed = 5,
+    ThinBoxInertia = 6,
+    Character = 7
+};
 
 export declare namespace SendAnimationEventHook {
     class Context {
@@ -297,7 +308,7 @@ export declare class ObjectReference extends Form {
     setItemHealthPercent(health: number): void;
     setItemMaxCharge(maxCharge: number): void;
     setLockLevel(aiLockLevel: number): void;
-    setMotionType(aeMotionType: number, abAllowActivate: boolean): Promise<void>;
+    setMotionType(aeMotionType: MotionType, abAllowActivate: boolean): Promise<void>;
     setNoFavorAllowed(abNoFavor: boolean): void;
     setOpen(abOpen: boolean): void;
     setPosition(afX: number, afY: number, afZ: number): Promise<void>;
@@ -1625,6 +1636,7 @@ export declare class SoundDescriptor extends Form {
 export declare class TESModPlatform {
     static from(form: Form): TESModPlatform;
     static moveRefrToPosition(refr: ObjectReference, cell: Cell, world: WorldSpace, posX: number, posY: number, posZ: number, rotX: number, rotY: number, rotZ: number): void;
+    static setWeaponDrawnMode(actor: Actor, mode: number): void;
 }
 
 // Based on TalkingActivator.pex
