@@ -1,5 +1,5 @@
 function(integrate_vcpkg)
-  cmake_parse_arguments(A "" "VCPKG_PATH" "TARGETS" ${ARGN})
+  cmake_parse_arguments(A "" "VCPKG_PATH" "TARGETS;ADDITIONAL_INCLUDE_DIRS" ${ARGN})
   foreach(arg VCPKG_PATH TARGETS)
     if ("${A_${arg}}" STREQUAL "")
       message(FATAL_ERROR "Missing ${arg} argument")
@@ -29,9 +29,16 @@ function(integrate_vcpkg)
   message(STATUS "[integrate_vcpkg] platform is ${platform}, triplet is ${triplet}")
 
   foreach(target ${A_TARGETS})
-    target_include_directories(${target} PRIVATE "${A_VCPKG_PATH}/installed/${triplet}/include")
+    target_include_directories(${target} PUBLIC
+      "${A_VCPKG_PATH}/installed/${triplet}/include"
+    )
+    foreach(dir ${A_ADDITIONAL_INCLUDE_DIRS})
+      target_include_directories(${target} PUBLIC
+        "${A_VCPKG_PATH}/installed/${triplet}/include/${dir}"
+      )
+    endforeach()
     file(GLOB_RECURSE release_libs "${A_VCPKG_PATH}/installed/${triplet}/lib/*")
     file(GLOB_RECURSE debug_libs "${A_VCPKG_PATH}/installed/${triplet}/debug/lib/*")
-    target_link_libraries(${target} PRIVATE debug ${debug_libs} optimized ${release_libs})
+    target_link_libraries(${target} PUBLIC debug ${debug_libs} optimized ${release_libs})
   endforeach()
 endfunction()
