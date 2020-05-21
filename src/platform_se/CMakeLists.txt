@@ -39,6 +39,7 @@ target_compile_definitions(skse64 PRIVATE RUNTIME=1 RUNTIME_VERSION=0x01050610)
 target_link_libraries(skse64 PUBLIC common skse64_common)
 
 include(${cmake_dir}/apply_default_settings.cmake)
+include(${cmake_dir}/integrate_vcpkg.cmake)
 
 if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   file(GLOB_RECURSE platform_src "skyrim_platform/*" "${SKYRIM_MP_ROOT}/.clang-format")
@@ -50,7 +51,6 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
   apply_default_settings(TARGETS skyrim_platform)
 
-  include(${cmake_dir}/integrate_vcpkg.cmake)
   integrate_vcpkg(
     TARGETS skyrim_platform
     VCPKG_PATH "${VCPKG_ROOT}"
