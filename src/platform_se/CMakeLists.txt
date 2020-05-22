@@ -42,6 +42,20 @@ include(${cmake_dir}/apply_default_settings.cmake)
 include(${cmake_dir}/integrate_vcpkg.cmake)
 
 if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
+
+  include(${cmake_dir}/npm.cmake)
+
+  set(wdir "${CMAKE_CURRENT_BINARY_DIR}/_codegen")
+  file(MAKE_DIRECTORY ${wdir})
+  npm_execute_command(
+    WORKING_DIRECTORY ${wdir}
+    COMMAND init -y
+  )
+  npm_execute_command(
+    WORKING_DIRECTORY ${wdir}
+    COMMAND install tsc-watch@4.2.3 typescript@3.8.3 --save
+  )
+
   file(GLOB_RECURSE platform_src "skyrim_platform/*" "${SKYRIM_MP_ROOT}/.clang-format")
   add_library(skyrim_platform SHARED ${platform_src})
   target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE)
@@ -85,6 +99,14 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   add_custom_command(
     TARGET TESModPlatformPsc POST_BUILD COMMAND
     ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>
+  )
+  add_custom_command(
+    TARGET TESModPlatformPsc POST_BUILD COMMAND
+    node "${CMAKE_SOURCE_DIR}/codegen/index.js"
+    WORKING_DIRECTORY ${wdir}
+  )
+  add_custom_target(codegen ALL
+    COMMAND node ${CMAKE_SOURCE_DIR}/codegen/index.js
   )
 endif()
 
