@@ -79,6 +79,10 @@ public:
   Type GetType() const;
   JsExternalObjectBase* GetExternalData() const;
   void SetProperty(const JsValue& key, const JsValue& value);
+
+  void SetProperty(const char* propertyName, const FunctionT& getter,
+                   const FunctionT& setter);
+
   JsValue GetProperty(const JsValue& key) const;
 
   JsValue Call(const std::vector<JsValue>& arguments) const

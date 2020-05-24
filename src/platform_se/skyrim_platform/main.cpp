@@ -88,6 +88,7 @@ void JsTick(bool gameFunctionsAvailable)
     }
 
     if (tickId == 1 || scriptsUpdated) {
+      ConsoleApi::Clear();
       EventsApi::Clear();
       g_taskQueue.Clear();
       g_nativeCallRequirements.jsThrQ->Clear();
