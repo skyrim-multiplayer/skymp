@@ -8,7 +8,7 @@ let prettify = (name, f = ''.toUpperCase) => {
         : c + name.slice(1);
 };
 
-const p = path.resolve(__dirname, 'FunctionsDump.txt')
+const p = path.resolve(__dirname, 'FunctionsDump.txt');
 const source = JSON.parse(fs.readFileSync(p));
 const tab = '    ';
 const ignored = ['TESModPlatform.Add', 'Math'];
@@ -169,4 +169,4 @@ for (typeName in source.types) {
     dumpType(data);
 }
 
-fs.writeFileSync('out.ts', output);
+fs.writeFileSync('skyrimPlatform.ts', output);

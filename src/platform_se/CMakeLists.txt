@@ -100,13 +100,9 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     TARGET TESModPlatformPsc POST_BUILD COMMAND
     ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>
   )
-  add_custom_command(
-    TARGET TESModPlatformPsc POST_BUILD COMMAND
-    node "${CMAKE_SOURCE_DIR}/codegen/index.js"
-    WORKING_DIRECTORY ${wdir}
-  )
   add_custom_target(codegen ALL
     COMMAND node ${CMAKE_SOURCE_DIR}/codegen/index.js
+    WORKING_DIRECTORY ${wdir}
   )
 endif()
 
