@@ -1,4 +1,4 @@
-import { on, printConsole, Game, Debug } from "../skyrimPlatform"
+import { on, printConsole, Game, Debug } from "skyrimPlatform"
 
 export let main = () => {
     printConsole('Hello Platform');
