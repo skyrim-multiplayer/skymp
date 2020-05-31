@@ -78,10 +78,11 @@ public:
 
   Type GetType() const;
   JsExternalObjectBase* GetExternalData() const;
-  void SetProperty(const JsValue& key, const JsValue& value);
 
+  // SetProperty is const because this doesn't modify JsValue itself
+  void SetProperty(const JsValue& key, const JsValue& value) const;
   void SetProperty(const char* propertyName, const FunctionT& getter,
-                   const FunctionT& setter);
+                   const FunctionT& setter) const;
 
   JsValue GetProperty(const JsValue& key) const;
 

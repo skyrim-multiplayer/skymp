@@ -308,7 +308,7 @@ JsValue JsValue::Call(const std::vector<JsValue>& arguments, bool ctor) const
   return JsValue(res);
 }
 
-void JsValue::SetProperty(const JsValue& key, const JsValue& newValue)
+void JsValue::SetProperty(const JsValue& key, const JsValue& newValue) const
 {
   switch (key.GetType()) {
     case Type::Number: {
@@ -329,7 +329,7 @@ void JsValue::SetProperty(const JsValue& key, const JsValue& newValue)
 }
 
 void JsValue::SetProperty(const char* propertyName, const FunctionT& getter,
-                          const FunctionT& setter)
+                          const FunctionT& setter) const
 {
   JsValue descriptor = JsValue::Object();
   JsValue propName = JsValue::String(propertyName);

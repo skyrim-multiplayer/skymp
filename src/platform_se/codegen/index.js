@@ -68,6 +68,16 @@ export declare class Hooks {
 }
 
 export declare let hooks: Hooks;
+
+export declare class HttpResponse {
+    body: string;
+}
+
+export declare class HttpClient {
+    constructor(host: string, port?: number);
+    get(path: string): Promise<HttpResponse>;
+}
+
 `;
 let dumped = [];
 

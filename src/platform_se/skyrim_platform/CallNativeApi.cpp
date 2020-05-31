@@ -4,15 +4,7 @@
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "VmProvider.h"
-
-namespace {
-inline JsValue CreatePromise(const JsValue& resolver)
-{
-  thread_local auto g_standardPromise =
-    JsValue::GlobalObject().GetProperty("Promise");
-  return g_standardPromise.Constructor({ g_standardPromise, resolver });
-}
-}
+#include "CreatePromise.h"
 
 JsValue CallNativeApi::CallNative(
   const JsFunctionArguments& args,

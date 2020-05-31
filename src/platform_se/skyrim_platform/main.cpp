@@ -4,6 +4,8 @@
 #include "DirectoryMonitor.h"
 #include "DumpFunctions.h"
 #include "EventsApi.h"
+#include "HttpClient.h"
+#include "HttpClientApi.h"
 #include "JsEngine.h"
 #include "MyUpdateTask.h"
 #include "PapyrusTESModPlatform.h"
@@ -37,6 +39,7 @@ void SetupFridaHooks();
 static SKSETaskInterface* g_taskInterface = nullptr;
 static SKSEMessagingInterface* g_messaging = nullptr;
 ThreadPoolWrapper g_pool;
+HttpClient g_httpClient;
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 TaskQueue g_taskQueue;
@@ -110,6 +113,7 @@ void JsTick(bool gameFunctionsAvailable)
           devApi, &engine,
           { { "skyrimPlatform",
               [it](JsValue e) {
+                HttpClientApi::Register(e);
                 ConsoleApi::Register(e);
                 DevApi::Register(e, &engine, {}, it);
                 EventsApi::Register(e);
@@ -151,7 +155,9 @@ void JsTick(bool gameFunctionsAvailable)
       g_taskQueue.Update();
       g_nativeCallRequirements.jsThrQ->Update();
     }
-
+    if (!gameFunctionsAvailable) {
+      g_httpClient.Update();
+    }
     EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
 
   } catch (std::exception& e) {
