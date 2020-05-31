@@ -6,7 +6,10 @@
         "rootDir": "",
         "lib": [
             "ES2015"
-        ]
+        ],
+        "paths": {
+            "chai": ["./node_modules/@types/chai"]
+        }
     },
     "include": ["./*.ts"]   
 }

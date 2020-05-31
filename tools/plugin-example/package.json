@@ -9,6 +9,7 @@
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "license": "MIT",
   "dependencies": {
+    "@types/chai": "^4.2.0",
     "fs-extra": "^9.0.0",
     "tsc-watch": "^4.2.3",
     "typescript": "^3.8.3"
