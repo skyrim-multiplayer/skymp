@@ -41,18 +41,19 @@ JsValue CallNativeApi::CallNative(
     throw NullPointerException("gameThrQ");
   if (!requirements.jsThrQ)
     throw NullPointerException("jsThrQ");
-  CallNative::Arguments callNativeArgs{ requirements.vm,
-                                        requirements.stackId,
-                                        className,
-                                        functionName,
-                                        NativeValueCasts::JsValueToNativeValue(
-                                          self),
-                                        nativeArgs,
-                                        n,
-                                        provider,
-                                        *requirements.gameThrQ,
-                                        *requirements.jsThrQ,
-                                        nullptr };
+  CallNative::Arguments callNativeArgs{
+    requirements.vm,
+    requirements.stackId,
+    className,
+    functionName,
+    NativeValueCasts::JsObjectToNativeObject(self),
+    nativeArgs,
+    n,
+    provider,
+    *requirements.gameThrQ,
+    *requirements.jsThrQ,
+    nullptr
+  };
 
   auto f = provider.GetFunctionInfo(className, functionName);
   if (f && f->IsLatent()) {

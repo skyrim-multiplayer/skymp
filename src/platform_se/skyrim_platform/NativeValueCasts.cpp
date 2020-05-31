@@ -114,6 +114,8 @@ CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const JsValue& v)
 
 JsValue NativeValueCasts::NativeValueToJsValue(const CallNative::AnySafe& v)
 {
+  if (v.valueless_by_exception())
+    return JsValue::Null();
   return std::visit(
     overloaded{ [](double v) { return JsValue(v); },
                 [](bool v) { return JsValue::Bool(v); },
