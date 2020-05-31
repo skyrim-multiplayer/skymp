@@ -75,6 +75,9 @@ let testCallStaticNoArgs = () => {
     expect(Game.getPlayer().getBaseObject().getName()).to.be.eql('Pepe');
     
     Debug.sendAnimationEvent(Game.getPlayer(), "jumpstandingstart");
+
+    let ffRefr = Game.getPlayer().placeAtMe(Game.getPlayer().getBaseObject(), 1, false, true);
+    expect(ffRefr.getFormID()).to.be.greaterThan(0xff000000);
     
     printConsole('Test passed');
 };

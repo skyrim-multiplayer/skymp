@@ -213,6 +213,9 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     return ObjectPtr();
   }
 
+  if (!stricmp(classFunc.data(), "getFormID"))
+    return (double)rawSelf->formID;
+
   auto topArgs = stackIterator->second->top->args;
   for (int i = 0; i < numArgs; i++) {
     RE::BSFixedString unusedNameOut;
