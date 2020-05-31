@@ -51,7 +51,11 @@ JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
   auto fileName = (std::string)args[1];
   auto exports = args[2];
 
-  if (auto& f = DevApi::nativeExportsMap[fileName])
-    exports = f(exports);
+  for (auto& [moduleName, f] : DevApi::nativeExportsMap) {
+    if (moduleName == fileName ||
+        std::filesystem::path(fileName).filename().string() == moduleName)
+      exports = f(exports);
+  }
+
   return exports;
 }
