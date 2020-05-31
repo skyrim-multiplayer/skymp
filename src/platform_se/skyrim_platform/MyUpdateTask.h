@@ -1,5 +1,5 @@
 #pragma once
-#include "ctpl/ctpl_stl.h"
+#include "ThreadPoolWrapper.h"
 #include <skse64/PluginAPI.h>
 #include <skse64/gamethreads.h>
 
@@ -11,7 +11,7 @@ public:
   MyUpdateTask(SKSETaskInterface* taskInterface, const OnUpdate& onUpdate)
   {
     state.taskInterface = taskInterface;
-    state.threadPool.reset(new ctpl::thread_pool(1));
+    state.threadPool.reset(new ThreadPoolWrapper);
     state.onUpdate = onUpdate;
   }
 
@@ -19,7 +19,7 @@ private:
   struct State
   {
     SKSETaskInterface* taskInterface = nullptr;
-    std::shared_ptr<ctpl::thread_pool> threadPool;
+    std::shared_ptr<ThreadPoolWrapper> threadPool;
     OnUpdate onUpdate;
   } state;
 
@@ -31,7 +31,7 @@ private:
       state.onUpdate();
 
     auto state = this->state;
-    state.threadPool->push(
+    state.threadPool->Push(
       [state](int) { state.taskInterface->AddTask(new MyUpdateTask(state)); });
   }
 

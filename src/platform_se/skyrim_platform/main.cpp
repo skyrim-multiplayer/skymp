@@ -10,13 +10,13 @@
 #include "SkyrimPlatformProxy.h"
 #include "SystemPolyfill.h"
 #include "TaskQueue.h"
+#include "ThreadPoolWrapper.h"
 #include <RE/ConsoleLog.h>
 #include <SKSE/API.h>
 #include <SKSE/Interfaces.h>
 #include <SKSE/Stubs.h>
 #include <Windows.h>
 #include <atomic>
-#include <ctpl/ctpl_stl.h>
 #include <memory>
 #include <mutex>
 #include <shlobj.h>
@@ -36,7 +36,7 @@ void SetupFridaHooks();
 
 static SKSETaskInterface* g_taskInterface = nullptr;
 static SKSEMessagingInterface* g_messaging = nullptr;
-ctpl::thread_pool g_pool(1);
+ThreadPoolWrapper g_pool;
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 TaskQueue g_taskQueue;
@@ -192,7 +192,7 @@ void JsTick(bool gameFunctionsAvailable)
 
 void PushJsTick(bool gameFunctionsAvailable)
 {
-  g_pool.push([=](int) { JsTick(gameFunctionsAvailable); }).wait();
+  g_pool.Push([=](int) { JsTick(gameFunctionsAvailable); }).wait();
 }
 
 void OnUpdate()

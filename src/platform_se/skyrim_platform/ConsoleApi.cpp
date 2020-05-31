@@ -1,5 +1,6 @@
 #include "ConsoleApi.h"
 #include "NullPointerException.h"
+#include "ThreadPoolWrapper.h"
 #include <RE/CommandTable.h>
 #include <RE/ConsoleLog.h>
 #include <RE/Script.h>
@@ -12,7 +13,7 @@
 #include <skse64_common/SafeWrite.h>
 #include <vector>
 
-extern ctpl::thread_pool g_pool;
+extern ThreadPoolWrapper g_pool;
 extern TaskQueue g_taskQueue;
 
 namespace {
@@ -262,7 +263,6 @@ bool ConsoleComand_Execute(const ObScriptParam* paramInfo,
 
           refr ? args.push_back(JsValue::Double((double)refr->formID))
                : args.push_back(JsValue::Double(0));
-            
 
           auto param =
             reinterpret_cast<const RE::SCRIPT_PARAMETER*>(paramInfo);
@@ -297,7 +297,7 @@ bool ConsoleComand_Execute(const ObScriptParam* paramInfo,
     }
   };
 
-  g_pool.push(func).wait();
+  g_pool.Push(func).wait();
   if (iterator)
     iterator->second.execute(paramInfo, scriptData, thisObj, containingObj,
                              scriptObj, locals, result, opcodeOffsetPtr);
