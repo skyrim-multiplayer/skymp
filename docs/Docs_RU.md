@@ -1,4 +1,5 @@
 
+
 ### Papyrus-типы из оригинальной игры
 * Все типы в SkyrimPlatform имеют такое же название как и в Papyrus, например: `Game`, `Actor`, `Form`, `Spell`, `Perk` и т.д.
 
@@ -123,7 +124,7 @@ let f = async () => {
 
 ### События
 
-* На данный момент в SkyrimPlatform есть возможность подписаться только на два события: `update`  и `tick`.
+* На данный момент в SkyrimPlatform есть возможность подписаться на собственные события: `update`  и `tick`.
 
 * `update` - это событие, которое вызывается один раз за каждый кадр в игре (60 раз в секунду при 60 FPS) после того как вы загрузили сохранение или начали новую игру.
 ```typescript
@@ -141,6 +142,25 @@ on('tick', () => {
 // Тут нет доступа к игровым методам.
 });
 ```
+* А также на игровые события, такие как `effectStart`, `effectFinish`, `magicEffectApply`, `equip`, `unequip`, `hit`, `containerChanged`, `deathStart`, `deathEnd`,  `loadGame`, `combatState`, `reset`, `scriptInit`, `trackedStats`, `uniqueIdChange`, `switchRaceComplete`, `cellFullyLoaded`, `grabRelease`, `lockChanged`, `moveAttachDetach`, `objectLoaded`, `waitStop`, `activate`.
+
+* С помощью `on` можно навсегда подписаться на событие.
+```typescript
+import { on } from  "../skyrimPlatform"
+on("equip", (even) => {
+	printConsole(`actor: ${even.actor.getBaseObject().getName()}`);
+	printConsole(`object: ${even.baseObj.getName()}`);
+});
+```
+* С помощью `once` можно добавить обработчик, который вызовется единожды при следующем срабатывании события.
+```typescript
+import { once } from  "../skyrimPlatform"
+once("equip", (even) => {
+	printConsole(`actor: ${even.actor.getBaseObject().getName()}`);
+	printConsole(`object: ${even.baseObj.getName()}`);
+});
+```
+* В переменной `even` всегда содержатся переменные касающиеся того события на которое вы подписаны.
 
 ### Хуки
 * Хуки позволяют перехватывать запуск и завершение некоторых функций движка игры.

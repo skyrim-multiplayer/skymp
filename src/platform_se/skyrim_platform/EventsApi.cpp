@@ -1,5 +1,6 @@
 #include "EventsApi.h"
 
+#include "EventSinks.h"
 #include "InvalidArgumentException.h"
 #include "MyUpdateTask.h"
 #include "NativeObject.h"
@@ -204,10 +205,36 @@ JsValue EventsApi::GetHooks()
 namespace {
 JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
+  static EventSinks g_sinks;
+
   auto eventName = args[1].ToString();
   auto callback = args[2];
 
-  std::set<std::string> events = { "tick", "update" };
+  std::set<std::string> events = { "tick",
+                                   "update",
+                                   "effectStart",
+                                   "effectFinish",
+                                   "magicEffectApply",
+                                   "equip",
+                                   "unequip",
+                                   "hit",
+                                   "containerChanged",
+                                   "deathStart",
+                                   "deathEnd",
+                                   "loadGame",
+                                   "combatState",
+                                   "reset",
+                                   "scriptInit",
+                                   "trackedStats",
+                                   "uniqueIdChange",
+                                   "switchRaceComplete",
+                                   "cellFullyLoaded",
+                                   "grabRelease",
+                                   "lockChanged",
+                                   "moveAttachDetach",
+                                   "objectLoaded",
+                                   "waitStop",
+                                   "activate" };
 
   if (events.count(eventName) == 0)
     throw InvalidArgumentException("eventName", eventName);

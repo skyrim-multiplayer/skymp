@@ -18,11 +18,189 @@ let output = `
 // Generated automatically. Do not edit.
 export declare function printConsole(...arguments: any[]): void;
 export declare function writeScript(scriptName: string, src: string): void;
-export declare function on(eventName: string, callback: any): void;
-export declare function once(eventName: string, callback: any): void;
 export declare function callNative(className: string, functionName: string, self?: object, ...args: any): any;
 export declare function getJsMemoryUsage(): number;
 export declare let storage: any;
+
+export declare function on(eventName: 'update', callback: () => void): void;
+export declare function once(eventName: 'update', callback: () => void): void;
+
+export declare function on(eventName: 'tick', callback: () => void): void;
+export declare function once(eventName: 'tick', callback: () => void): void;
+
+export interface ActivateEvent {
+    target: ObjectReference,
+    caster: ObjectReference,
+    isCrimeToActivate: boolean
+}
+
+export interface MoveAttachDetachEvent {
+    movedRef: ObjectReference,
+    isCellAttached: boolean
+}
+export interface WaitStopEvent { 
+    isInterrupted: boolean
+}
+export interface ObjectLoadedEvent { 
+    object: Form,
+    isLoaded: boolean
+}
+export interface LockChangedEvent { 
+    lockedObject: ObjectReference
+}
+
+export interface CellFullyLoadedEvent { 
+    cell: Cell
+}
+
+export interface GrabReleaseEvent { 
+    refr: ObjectReference,
+    isGrabbed: boolean
+}
+
+export interface SwitchRaceCompleteEvent { 
+    subject: ObjectReference
+}
+
+export interface UniqueIDChangeEvent { 
+    oldBaseID: number,
+    newBaseID: number,
+    oldUniqueID: number,
+    newUniqueID: number
+}
+
+export interface TrackedStatsEvent { 
+    statName: string,
+    newValue: number
+}
+
+export interface InitScriptEvent { 
+    initializedObject: ObjectReference
+}
+
+export interface ResetEvent {
+    object: ObjectReference
+}
+
+export interface CombatEvent { 
+    target: ObjectReference,
+    actor: ObjectReference,
+    isCombat: boolean,
+    isSearching: boolean
+}
+
+export interface DeathEvent { 
+    actorDying: ObjectReference,
+    actorKiller: ObjectReference
+}
+
+export interface ContainerChangedEvent { 
+    oldContainer: ObjectReference,
+    newContainer: ObjectReference,
+    baseObj: Form,
+    numItems: number,
+    uniqueID: number,
+    reference: ObjectReference
+}
+
+export interface HitEvent { 
+    target: ObjectReference,
+    agressor: ObjectReference,
+    source: Form,
+    projectile: Projectile,
+    isPowerAttack: boolean,
+    isSneakAttack: boolean,
+    isBashAttack: boolean,
+    isHitBlocked: boolean
+}
+
+export interface EquipEvent { 
+    actor: ObjectReference,
+    baseObj: Form,
+    uniqueId: number,
+    originalRefr: ObjectReference
+}
+
+export interface ActiveEffectApplyRemoveEvent { 
+    effect: MagicEffect,
+    caster: ObjectReference,
+    target: ObjectReference
+}
+
+export interface MagicEffectApplyEvent { 
+    effect: MagicEffect,
+    caster: ObjectReference,
+    target: ObjectReference
+}
+
+export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
+export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
+
+export declare function on(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): void;
+export declare function once(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): void;
+
+export declare function on(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): void;
+export declare function once(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): void;
+
+export declare function on(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): void;
+export declare function once(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): void;
+
+export declare function on(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): void;
+export declare function once(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): void;
+
+export declare function on(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): void;
+export declare function once(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): void;
+
+export declare function on(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): void;
+export declare function once(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): void;
+
+export declare function on(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): void;
+export declare function once(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): void;
+
+export declare function on(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): void;
+export declare function once(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): void;
+
+export declare function on(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): void;
+export declare function once(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): void;
+
+export declare function on(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): void;
+export declare function once(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): void;
+
+export declare function on(eventName: 'reset', callback: (event: ResetEvent) => void): void;
+export declare function once(eventName: 'reset', callback: (event: ResetEvent) => void): void;
+
+export declare function on(eventName: 'combatState', callback: (event: CombatEvent) => void): void;
+export declare function once(eventName: 'combatState', callback: (event: CombatEvent) => void): void;
+
+export declare function on(eventName: 'loadGame', callback: () => void): void;
+export declare function once(eventName: 'loadGame', callback: () => void): void;
+
+export declare function on(eventName: 'deathEnd', callback: (event: DeathEvent) => void): void;
+export declare function once(eventName: 'deathEnd', callback: (event: DeathEvent) => void): void;
+
+export declare function on(eventName: 'deathStart', callback: (event: DeathEvent) => void): void;
+export declare function once(eventName: 'deathStart', callback: (event: DeathEvent) => void): void;
+
+export declare function on(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): void;
+export declare function once(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): void;
+
+export declare function on(eventName: 'hit', callback: (event: HitEvent) => void): void;
+export declare function once(eventName: 'hit', callback: (event: HitEvent) => void): void;
+
+export declare function on(eventName: 'unequip', callback: (event: EquipEvent) => void): void;
+export declare function once(eventName: 'unequip', callback: (event: EquipEvent) => void): void;
+
+export declare function on(eventName: 'equip', callback: (event: EquipEvent) => void): void;
+export declare function once(eventName: 'equip', callback: (event: EquipEvent) => void): void;
+
+export declare function on(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): void;
+export declare function once(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): void;
+
+export declare function on(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+export declare function once(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+
+export declare function on(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+export declare function once(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
 
 declare class ConsoleComand {
     longName: string;
