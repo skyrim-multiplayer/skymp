@@ -5,6 +5,7 @@
 #include <RE/BSScript/IStackCallbackFunctor.h>
 #include <RE/BSScript/NativeFunction.h>
 #include <RE/ConsoleLog.h>
+#include <RE/ScriptEventSourceHolder.h>
 #include <RE/SkyrimVM.h>
 #include <mutex>
 #include <skse64/GameReferences.h>
@@ -45,6 +46,29 @@ public:
   bool CanSave() const override { return false; }
   void SetObject(
     const RE::BSTSmartPointer<RE::BSScript::Object>& a_object) override{};
+};
+
+// This class has been added as an issue 52 workaround 
+class LoadGameEvent : public RE::BSTEventSink<RE::TESLoadGameEvent>
+{
+public:
+  LoadGameEvent()
+  {
+    auto holder = RE::ScriptEventSourceHolder::GetSingleton();
+    if (!holder)
+      throw NullPointerException("holder");
+
+    holder->AddEventSink(this);
+  }
+
+private:
+  RE::BSEventNotifyControl ProcessEvent(
+    const RE::TESLoadGameEvent* event_,
+    RE::BSTEventSource<RE::TESLoadGameEvent>* eventSource) override
+  {
+    vmCallAllowed = true;
+    return RE::BSEventNotifyControl::kContinue;
+  }
 };
 }
 
@@ -192,6 +216,7 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
                                      SInt32, SInt32, SInt32, SInt32, SInt32,
                                      SInt32, SInt32, SInt32, SInt32, SInt32>(
       "Add", "TESModPlatform", Add));
+
   vm->BindNativeMethod(
     new RE::BSScript::NativeFunction<
       true, decltype(MoveRefrToPosition), void, RE::StaticFunctionTag*,
@@ -208,5 +233,8 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
                                      SInt32, RE::StaticFunctionTag*,
                                      RE::TESForm*, int, int>(
       "GetNthVtableElement", "TESModPlatform", GetNthVtableElement));
+
+  static LoadGameEvent loadGameEvent;
+
   return true;
 }
