@@ -216,6 +216,13 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   if (!stricmp(classFunc.data(), "getFormID"))
     return (double)rawSelf->formID;
 
+  if (!stricmp(className.data(), "Game") &&
+      !stricmp(classFunc.data(), "getFormEx")) {
+    auto form =
+      RE::TESForm::LookupByID((uint32_t)std::get<double>(args_.args[0]));
+    return form ? std::make_shared<Object>("Form", form) : ObjectPtr();
+  }
+
   auto topArgs = stackIterator->second->top->args;
   for (int i = 0; i < numArgs; i++) {
     RE::BSFixedString unusedNameOut;

@@ -77,7 +77,10 @@ let testCallStaticNoArgs = () => {
     Debug.sendAnimationEvent(Game.getPlayer(), "jumpstandingstart");
 
     let ffRefr = Game.getPlayer().placeAtMe(Game.getPlayer().getBaseObject(), 1, false, true);
-    expect(ffRefr.getFormID()).to.be.greaterThan(0xff000000);
+    let ffRefrId = ffRefr.getFormID();
+    expect(ffRefrId).to.be.greaterThan(0xff000000);
+    expect(Game.getFormEx(ffRefrId)).not.to.be.null;
+    expect(Game.getFormEx(ffRefrId).getFormID()).to.be.eql(ffRefrId);
     
     printConsole('Test passed');
 };
