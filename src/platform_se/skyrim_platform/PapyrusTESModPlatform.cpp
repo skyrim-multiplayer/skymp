@@ -5,6 +5,7 @@
 #include <RE/BSScript/IStackCallbackFunctor.h>
 #include <RE/BSScript/NativeFunction.h>
 #include <RE/ConsoleLog.h>
+#include <RE/PlayerControls.h>
 #include <RE/ScriptEventSourceHolder.h>
 #include <RE/SkyrimVM.h>
 #include <mutex>
@@ -168,6 +169,15 @@ SInt32 TESModPlatform::GetNthVtableElement(RE::BSScript::IVirtualMachine* vm,
   return -1;
 }
 
+bool TESModPlatform::IsPlayerRunningEnabled(RE::BSScript::IVirtualMachine* vm,
+                                            RE::VMStackID stackId,
+                                            RE::StaticFunctionTag*)
+{
+  if (auto controls = RE::PlayerControls::GetSingleton())
+    return controls->data.running;
+  return false;
+}
+
 int TESModPlatform::GetWeapDrawnMode(uint32_t actorId)
 {
   std::lock_guard l(share.m);
@@ -233,6 +243,11 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
                                      SInt32, RE::StaticFunctionTag*,
                                      RE::TESForm*, int, int>(
       "GetNthVtableElement", "TESModPlatform", GetNthVtableElement));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(IsPlayerRunningEnabled),
+                                     bool, RE::StaticFunctionTag*>(
+      "IsPlayerRunningEnabled", "TESModPlatform", IsPlayerRunningEnabled));
 
   static LoadGameEvent loadGameEvent;
 

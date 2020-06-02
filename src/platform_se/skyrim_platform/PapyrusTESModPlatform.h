@@ -41,6 +41,9 @@ SInt32 GetNthVtableElement(RE::BSScript::IVirtualMachine* vm,
                            RE::TESForm* pointer, SInt32 pointerOffset,
                            SInt32 elementIndex);
 
+bool IsPlayerRunningEnabled(RE::BSScript::IVirtualMachine* vm,
+                            RE::VMStackID stackId, RE::StaticFunctionTag*);
+
 int GetWeapDrawnMode(uint32_t actorId); // Threadsafe
 
 void Update();

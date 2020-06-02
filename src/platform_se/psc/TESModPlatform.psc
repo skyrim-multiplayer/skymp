@@ -7,3 +7,5 @@ Int function Add(Int a1, Int a2, Int a3, Int a4, Int a5, Int a6, Int a7, Int a8,
 function SetWeaponDrawnMode(Actor actor, Int mode) global native
 
 Int function GetNthVtableElement(Form pointer, Int pointerOffset, Int elementIndex) global native
+
+Bool Function IsPlayerRunningEnabled() global native
