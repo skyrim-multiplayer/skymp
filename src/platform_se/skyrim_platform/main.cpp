@@ -7,6 +7,7 @@
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "JsEngine.h"
+#include "MpClientPluginApi.h"
 #include "MyUpdateTask.h"
 #include "PapyrusTESModPlatform.h"
 #include "SkyrimPlatformProxy.h"
@@ -113,6 +114,7 @@ void JsTick(bool gameFunctionsAvailable)
           devApi, &engine,
           { { "skyrimPlatform",
               [it](JsValue e) {
+                MpClientPluginApi::Register(e);
                 HttpClientApi::Register(e);
                 ConsoleApi::Register(e);
                 DevApi::Register(e, &engine, {}, it);
