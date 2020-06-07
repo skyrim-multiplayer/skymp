@@ -4,6 +4,7 @@
 #include "DirectoryMonitor.h"
 #include "DumpFunctions.h"
 #include "EventsApi.h"
+#include "FlowManager.h"
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "JsEngine.h"
@@ -295,6 +296,7 @@ BOOL WINAPI DllMain(HANDLE hDllHandle, DWORD dwReason, LPVOID lpreserved)
       break;
 
     case DLL_PROCESS_DETACH:
+      FlowManager::CloseProcess(L"SkyrimSE.exe");
       break;
   };
 
