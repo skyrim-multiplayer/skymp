@@ -8,6 +8,7 @@
 #include <RE/PlayerControls.h>
 #include <RE/ScriptEventSourceHolder.h>
 #include <RE/SkyrimVM.h>
+#include <atomic>
 #include <mutex>
 #include <skse64/GameReferences.h>
 #include <unordered_map>
@@ -17,9 +18,10 @@ extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 namespace TESModPlatform {
 bool papyrusUpdateAllowed = false;
 bool vmCallAllowed = true;
+std::atomic<bool> moveRefrBlocked = false;
 std::function<void(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)>
   onPapyrusUpdate = nullptr;
-uint64_t numPapyrusUpdates = 0;
+std::atomic<uint64_t> numPapyrusUpdates = 0;
 struct
 {
   std::unordered_map<uint32_t, int> weapDrawnMode;
@@ -104,7 +106,7 @@ void TESModPlatform::MoveRefrToPosition(
   RE::TESWorldSpace* world, float posX, float posY, float posZ, float rotX,
   float rotY, float rotZ)
 {
-  if (!refr || (!cell && !world))
+  if (!refr || (!cell && !world) || moveRefrBlocked)
     return;
 
   NiPoint3 pos = { posX, posY, posZ }, rot = { rotX, rotY, rotZ };
@@ -113,6 +115,11 @@ void TESModPlatform::MoveRefrToPosition(
   auto f = ::MoveRefrToPosition.operator _MoveRefrToPosition();
   f(reinterpret_cast<TESObjectREFR*>(refr), &nullHandle, cell, world, &pos,
     &rot);
+}
+
+void TESModPlatform::BlockMoveRefrToPosition(bool blocked)
+{
+  moveRefrBlocked = blocked;
 }
 
 void TESModPlatform::SetWeaponDrawnMode(RE::BSScript::IVirtualMachine* vm,

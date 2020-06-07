@@ -43,6 +43,15 @@ include(${cmake_dir}/integrate_vcpkg.cmake)
 
 if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
+  include(${cmake_dir}/CMakeRC.cmake)
+
+  # assets
+  set(ASSET_FILES ${CMAKE_SOURCE_DIR}/skyrim_platform/savefile/template.ess)
+    cmrc_add_resource_library(skyrim_plugin_resources ${ASSET_FILES}
+    ALIAS assets NAMESPACE skyrim_plugin_resources WHENCE skyrim_platform
+  )
+  apply_default_settings(TARGETS skyrim_plugin_resources)
+
   include(${cmake_dir}/npm.cmake)
 
   set(wdir "${CMAKE_CURRENT_BINARY_DIR}/_codegen")
@@ -58,7 +67,7 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
   file(GLOB_RECURSE platform_src "skyrim_platform/*" "${SKYRIM_MP_ROOT}/.clang-format")
   add_library(skyrim_platform SHARED ${platform_src})
-  target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE)
+  target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE skyrim_plugin_resources)
   set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatform")
   target_include_directories(skyrim_platform PRIVATE "${third_party}")
   target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")

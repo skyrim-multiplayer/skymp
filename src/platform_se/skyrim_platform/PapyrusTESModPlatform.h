@@ -44,10 +44,12 @@ SInt32 GetNthVtableElement(RE::BSScript::IVirtualMachine* vm,
 bool IsPlayerRunningEnabled(RE::BSScript::IVirtualMachine* vm,
                             RE::VMStackID stackId, RE::StaticFunctionTag*);
 
-int GetWeapDrawnMode(uint32_t actorId); // Threadsafe
+// Threadsafe
+void BlockMoveRefrToPosition(bool blocked);
+int GetWeapDrawnMode(uint32_t actorId);
+uint64_t GetNumPapyrusUpdates();
 
 void Update();
-uint64_t GetNumPapyrusUpdates();
 
 bool Register(RE::BSScript::IVirtualMachine* vm);
 }

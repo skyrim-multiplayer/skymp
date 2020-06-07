@@ -28,6 +28,8 @@ export declare function once(eventName: 'update', callback: () => void): void;
 export declare function on(eventName: 'tick', callback: () => void): void;
 export declare function once(eventName: 'tick', callback: () => void): void;
 
+export declare function loadGame(pos: number[], angle: number[], worldOrCell: number);
+
 export type PacketType = 'message' | 'disconnect' | 'connectionAccepted' | 'connectionFailed' | 'connectionDenied';
 
 // Available only if multiplayer is installed on user's machine

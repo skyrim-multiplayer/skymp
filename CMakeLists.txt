@@ -21,6 +21,7 @@ set(ports
   chakracore:x86-windows chakracore:x64-windows
   nlohmann-json:x86-windows nlohmann-json:x64-windows
   cpp-httplib:x86-windows cpp-httplib:x64-windows
+  zlib:x86-windows zlib:x64-windows 
 )
 foreach(port ${ports})
   message(STATUS "Installing ${port}")
