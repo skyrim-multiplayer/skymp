@@ -6,9 +6,11 @@
 #include "StringHolder.h"
 #include "VmCall.h"
 #include "VmCallback.h"
+#include <RE/Actor.h>
 #include <RE/BSScript/PackUnpack.h>
 #include <RE/BSScript/StackFrame.h>
 #include <RE/SkyrimVM.h>
+#include <limits>
 #include <optional>
 
 RE::BSScript::Variable CallNative::AnySafeToVariable(
@@ -135,6 +137,34 @@ CallNative::AnySafe VariableToAnySafe(
       throw std::runtime_error("Unknown function return type");
   }
 }
+
+bool IsActorOrObjectRefr(const std::string& className)
+{
+  return !stricmp(className.data(), "Actor") ||
+    !stricmp(className.data(), "ObjectReference");
+}
+
+bool IsActorOrObjectRefr(RE::FormType formType)
+{
+  return formType == RE::FormType::ActorCharacter ||
+    formType == RE::FormType::Reference;
+}
+
+bool IsAddItem(const std::string& className, const std::string& classFunc,
+               RE::TESForm* rawSelf)
+{
+  return IsActorOrObjectRefr(className) &&
+    !stricmp(classFunc.data(), "addItem") && rawSelf &&
+    IsActorOrObjectRefr(rawSelf->formType);
+}
+
+bool IsRemoveItem(const std::string& className, const std::string& classFunc,
+                  RE::TESForm* rawSelf)
+{
+  return IsActorOrObjectRefr(className) &&
+    !stricmp(classFunc.data(), "removeItem") && rawSelf &&
+    IsActorOrObjectRefr(rawSelf->formType);
+}
 }
 
 CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
@@ -221,6 +251,47 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     auto form =
       RE::TESForm::LookupByID((uint32_t)std::get<double>(args_.args[0]));
     return form ? std::make_shared<Object>("Form", form) : ObjectPtr();
+  }
+
+  if (IsAddItem(className, classFunc, rawSelf)) {
+
+    if (auto actor = reinterpret_cast<RE::Actor*>(rawSelf)) {
+
+      auto obj = std::get<CallNative::ObjectPtr>(args_.args[0]);
+      int32_t count = std::get<double>(args_.args[1]);
+
+      RE::TESBoundObject* boundObject = obj
+        ? reinterpret_cast<RE::TESBoundObject*>(obj->GetNativeObjectPtr())
+        : nullptr;
+
+      actor->AddObjectToContainer(boundObject, nullptr, count, nullptr);
+    }
+    return ObjectPtr();
+  }
+
+  if (IsRemoveItem(className, classFunc, rawSelf)) {
+
+    if (auto actor = reinterpret_cast<RE::Actor*>(rawSelf)) {
+
+      auto obj = std::get<CallNative::ObjectPtr>(args_.args[0]);
+      int32_t count = std::get<double>(args_.args[1]);
+      auto objToMove = std::get<CallNative::ObjectPtr>(args_.args[3]);
+
+      RE::TESBoundObject* boundObject = obj
+        ? reinterpret_cast<RE::TESBoundObject*>(obj->GetNativeObjectPtr())
+        : nullptr;
+
+      RE::TESObjectREFR* refrToMove = objToMove
+        ? reinterpret_cast<RE::TESObjectREFR*>(objToMove->GetNativeObjectPtr())
+        : nullptr;
+
+      if (count < 0)
+        count = std::numeric_limits<int32_t>::max();
+
+      actor->RemoveItem(boundObject, count, RE::ITEM_REMOVE_REASON::kRemove,
+                        nullptr, refrToMove);
+    }
+    return ObjectPtr();
   }
 
   auto topArgs = stackIterator->second->top->args;

@@ -81,7 +81,35 @@ let testCallStaticNoArgs = () => {
     expect(ffRefrId).to.be.greaterThan(0xff000000);
     expect(Game.getFormEx(ffRefrId)).not.to.be.null;
     expect(Game.getFormEx(ffRefrId).getFormID()).to.be.eql(ffRefrId);
-    
+
+    let ironSword = Game.getFormEx(0x12eb7);
+    let n = Game.getPlayer().getItemCount(ironSword);
+    let addItemReturnValue = Game.getPlayer().addItem(ironSword, 1, true);
+    expect(Game.getPlayer().getItemCount(ironSword)).to.be.eql(n + 1);
+    expect(addItemReturnValue).to.be.null;
+
+    let barrel = Game.getFormEx(0x60752);
+    let barrelRef = Game.getPlayer().placeAtMe(barrel, 1, true,false);
+    expect(barrelRef).to.not.be.null;
+
+    expect(barrelRef.getItemCount(ironSword)).to.be.eql(0);
+    barrelRef.addItem(ironSword, 10, false);
+    expect(barrelRef.getItemCount(ironSword)).to.be.eql(10);
+    barrelRef.removeItem(ironSword, 5, true, Game.getPlayer());
+    expect(barrelRef.getItemCount(ironSword)).to.be.eql(5);
+    expect(Game.getPlayer().getItemCount(ironSword)).to.eql(5 + n + 1);
+
+    Game.getPlayer().addItem(barrelRef, 10, false);
+    Game.getPlayer().removeItem(barrelRef, 10, false, null);
+
+    let blackreachWeather = Game.getFormEx(0x48c14);
+    Game.getPlayer().addItem(blackreachWeather, 1, false);
+    Game.getPlayer().removeItem(blackreachWeather, 1, false, null);
+
+    expect(barrelRef.getItemCount(ironSword)).to.not.eql(0);
+    barrelRef.removeItem(ironSword, -1, true, null);
+    expect(barrelRef.getItemCount(ironSword)).to.be.eql(0);
+
     printConsole('Test passed');
 };
 

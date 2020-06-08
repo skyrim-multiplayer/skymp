@@ -48,7 +48,9 @@ JsValue CallNativeApi::CallNative(
   };
 
   auto f = provider.GetFunctionInfo(className, functionName);
-  if (f && f->IsLatent()) {
+  auto isAddOrRemove = (functionName == "removeItem") || (functionName == "addItem");
+
+  if (f && f->IsLatent() && !isAddOrRemove) {
 
     thread_local CallNative::Arguments* g_callNativeArgsPtr = nullptr;
     g_callNativeArgsPtr = &callNativeArgs;

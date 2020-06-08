@@ -308,9 +308,13 @@ let dumpFunction = (className, f, isGlobal) => {
     let funcName = functionNameOverrides[f.name] || f.name;
     output += tab + `${isGlobal ? 'static ' : ''}${prettify(funcName, ''.toLowerCase)}`;
     output += `(`;
+    let isAddOrRemove = (funcName.toLowerCase() === "additem" || funcName.toLowerCase() === "removeitem");
+
     f.arguments.forEach((arg, i) => {
+        
         let isSetMotioTypeFistArg = funcName.toLowerCase() === "setmotiontype" && i === 0;
         let argType = isSetMotioTypeFistArg ? "MotionType" : parseReturnValue(arg.type);
+
         output += `${arg.name}: ${argType}`;
         if (i !== f.arguments.length - 1) {
             output += `, `;
@@ -318,7 +322,8 @@ let dumpFunction = (className, f, isGlobal) => {
     });
     let returnType = parseReturnValue(f.returnType);
     if (f.isLatent) {
-        returnType = `Promise<${returnType}>`;
+        if(!isAddOrRemove)
+            returnType = `Promise<${returnType}>`;
     }
 
     output += `)`;
