@@ -8,8 +8,8 @@ using namespace std::chrono_literals;
 
 TEST_CASE("Handler destroys the client", "[Networking]")
 {
-  auto server = Networking::CreateServer(7777, 100);
-  static auto client = Networking::CreateClient("127.0.0.1", 7777, 500);
+  auto server = Networking::CreateServer(7778, 100);
+  static auto client = Networking::CreateClient("127.0.0.1", 7778, 500);
 
   static bool reset = false;
 
@@ -31,8 +31,8 @@ TEST_CASE("Handler destroys the client", "[Networking]")
 
 TEST_CASE("Connect/disconnect", "[Networking]")
 {
-  auto server = Networking::CreateServer(7777, 100);
-  auto client = Networking::CreateClient("127.0.0.1", 7777, 500);
+  auto server = Networking::CreateServer(7778, 100);
+  auto client = Networking::CreateClient("127.0.0.1", 7778, 500);
 
   REQUIRE(!client->IsConnected());
   for (int i = 0; i < 100; ++i) {
@@ -51,8 +51,8 @@ TEST_CASE("Connect/disconnect", "[Networking]")
 
 TEST_CASE("Data transfer", "[Networking]")
 {
-  static auto server = Networking::CreateServer(7777, 100);
-  static auto client = Networking::CreateClient("127.0.0.1", 7777);
+  static auto server = Networking::CreateServer(7778, 100);
+  static auto client = Networking::CreateClient("127.0.0.1", 7778);
 
   std::string res;
 
@@ -116,11 +116,11 @@ TEST_CASE("Data transfer", "[Networking]")
 
 TEST_CASE("Ctors", "[Networking]")
 {
-  auto server = Networking::CreateServer(7777, 100);
-  auto client = Networking::CreateClient("127.0.0.1", 7777);
+  auto server = Networking::CreateServer(7778, 100);
+  auto client = Networking::CreateClient("127.0.0.1", 7778);
 
   try {
-    Networking::CreateServer(7777, 100);
+    Networking::CreateServer(7778, 100);
     REQUIRE(false);
   } catch (std::exception& e) {
     REQUIRE(e.what() == std::string("Peer startup failed with code 5"));
