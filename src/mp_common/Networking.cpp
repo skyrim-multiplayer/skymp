@@ -52,7 +52,7 @@ public:
     peer.reset(new RakPeer);
     socket.reset(new SocketDescriptor(0, nullptr));
     const auto res = peer->Startup(1, &*socket, 1);
-    if (res != StartupResult::CRABNET_STARTED) {
+    if (res != StartupResult::RAKNET_STARTED) {
       throw std::runtime_error("Peer startup failed with code " +
                                std::to_string((int)res));
     }
@@ -107,7 +107,7 @@ private:
   const std::string ip;
   const unsigned short port;
 
-  RakNetGUID serverGuid = UNASSIGNED_CRABNET_GUID;
+  RakNetGUID serverGuid = UNASSIGNED_RAKNET_GUID;
   std::shared_ptr<RakPeerInterface> peer;
   std::unique_ptr<SocketDescriptor> socket;
   std::unique_ptr<PacketGuard> packetGuard;
@@ -126,7 +126,7 @@ public:
     socket.reset(new SocketDescriptor(port_, nullptr));
 
     const auto res = peer->Startup(maxConnections, &*socket, 1);
-    if (res != StartupResult::CRABNET_STARTED) {
+    if (res != StartupResult::RAKNET_STARTED) {
       throw std::runtime_error("Peer startup failed with code " +
                                std::to_string((int)res));
     }

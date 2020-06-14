@@ -129,6 +129,8 @@ function(integrate_vcpkg)
 
   message(STATUS "[integrate_vcpkg] platform is ${platform}, triplet is ${triplet}")
 
+  file(GLOB_RECURSE release_libs "${A_VCPKG_PATH}/installed/${triplet}/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  file(GLOB_RECURSE debug_libs "${A_VCPKG_PATH}/installed/${triplet}/debug/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
   foreach(target ${A_TARGETS})
     target_include_directories(${target} PUBLIC
       "${A_VCPKG_PATH}/installed/${triplet}/include"
@@ -138,8 +140,6 @@ function(integrate_vcpkg)
         "${A_VCPKG_PATH}/installed/${triplet}/include/${dir}"
       )
     endforeach()
-    file(GLOB_RECURSE release_libs "${A_VCPKG_PATH}/installed/${triplet}/lib/*")
-    file(GLOB_RECURSE debug_libs "${A_VCPKG_PATH}/installed/${triplet}/debug/lib/*")
     target_link_libraries(${target} PUBLIC debug ${debug_libs} optimized ${release_libs})
   endforeach()
 endfunction()
@@ -399,5 +399,3 @@ function(skymp_execute_process)
   set(${A_OUT_EXIT_CODE} ${res} PARENT_SCOPE)
   set(${A_OUT_STDOUT} ${stdout} PARENT_SCOPE)
 endfunction()
-
-

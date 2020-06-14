@@ -11,6 +11,8 @@ set(ports
   sparsepp:x64-windows-static
   nlohmann-json:x64-windows-static
   simdjson:x64-windows-static
+  spdlog:x64-windows-static
+  slikenet:x64-windows-static
 )
 foreach(port ${ports})
   message(STATUS "Installing ${port}")
@@ -37,34 +39,12 @@ if(WIN32)
   target_link_libraries(MpClientPlugin PUBLIC mp_common)
   set_target_properties(MpClientPlugin PROPERTIES OUTPUT_NAME "MpClientPlugin")
   apply_default_settings(TARGETS MpClientPlugin)
-  integrate_vcpkg(
-    TARGETS MpClientPlugin
-    VCPKG_PATH "${_VCPKG_ROOT_DIR}"
-  )
+  list(APPEND VCPKG_DEPENDENT MpClientPlugin)
 
   add_custom_command(
     TARGET MpClientPlugin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MpClientPlugin> ${SKYRIM_DIR}/Data/SKSE/plugins
   )
-endif()
-
-include(cmake/external/_external.cmake)
-set(CRABNET_ROOT ${CMAKE_CURRENT_BINARY_DIR}/external_build/CrabNet/src/CrabNet)
-
-# RakNet
-set(RAKNET_TARGET _RakNet)
-file(GLOB RAKNET_SRC
-  "${CRABNET_ROOT}/include/raknet/*.h"
-  "${CRABNET_ROOT}/Source/*.cpp"
-  "${CRABNET_ROOT}/Source/Plugins/*.cpp"
-  "${CRABNET_ROOT}/Source/Utils/*.cpp"
-)
-add_library(${RAKNET_TARGET} STATIC ${RAKNET_SRC})
-target_include_directories(${RAKNET_TARGET} PUBLIC "${CRABNET_ROOT}/include/raknet" "${CRABNET_ROOT}/Source")
-target_compile_definitions(${RAKNET_TARGET} PRIVATE SHA1_NO_WIPE_VARIABLES=1 _CRT_SECURE_NO_WARNINGS=1)
-apply_default_settings(TARGETS ${RAKNET_TARGET})
-if (WIN32)
-  target_link_libraries(${RAKNET_TARGET} PUBLIC ws2_32.lib)
 endif()
 
 set(OPENCPPCOV_DIR "")
@@ -74,40 +54,29 @@ add_executable(unit ${src})
 target_link_libraries(unit PRIVATE mp_common)
 target_include_directories(unit PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mp_common")
 apply_default_settings(TARGETS unit)
-integrate_vcpkg(
-  TARGETS unit
-  VCPKG_PATH "${_VCPKG_ROOT_DIR}"
-)
+list(APPEND VCPKG_DEPENDENT unit)
 
 file(GLOB_RECURSE src "src/server_host/*" "${SKYRIM_MP_ROOT}/.clang-format")
 add_executable(server_host ${src})
 apply_default_settings(TARGETS server_host)
-integrate_vcpkg(
-  TARGETS server_host
-  VCPKG_PATH "${_VCPKG_ROOT_DIR}"
-)
+list(APPEND VCPKG_DEPENDENT server_host)
 target_include_directories(server_host PRIVATE "${CMAKE_SOURCE_DIR}/src/third_party")
 
 file(GLOB_RECURSE src "src/server_guest/*" "${SKYRIM_MP_ROOT}/.clang-format")
 add_library(server_guest SHARED ${src})
 target_link_libraries(server_guest PRIVATE mp_common)
 apply_default_settings(TARGETS server_guest)
-integrate_vcpkg(
-  TARGETS server_guest
-  VCPKG_PATH "${_VCPKG_ROOT_DIR}"
-)
+list(APPEND VCPKG_DEPENDENT server_guest)
 target_include_directories(server_guest PRIVATE "${CMAKE_SOURCE_DIR}/src/third_party")
 
 file(GLOB_RECURSE src "src/mp_common/*" "${SKYRIM_MP_ROOT}/.clang-format")
 add_library(mp_common STATIC ${src})
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/mp_common")
 apply_default_settings(TARGETS mp_common)
-integrate_vcpkg(
-  TARGETS mp_common
-  VCPKG_PATH "${_VCPKG_ROOT_DIR}"
-)
-target_link_libraries(mp_common PUBLIC ${RAKNET_TARGET})
-target_include_directories(mp_common PUBLIC ${CRABNET_ROOT}/include)
+list(APPEND VCPKG_DEPENDENT mp_common)
+if (WIN32)
+  target_link_libraries(mp_common PUBLIC ws2_32.lib)
+endif()
 
 if (WIN32)
   file(COPY
@@ -121,3 +90,8 @@ if (WIN32)
 endif()
 
 include(cmake/tests_unit.cmake)
+
+integrate_vcpkg(
+  TARGETS ${VCPKG_DEPENDENT}
+  VCPKG_PATH "${_VCPKG_ROOT_DIR}"
+)

@@ -2,10 +2,6 @@
 
 using userid = IdManager::userid;
 
-namespace {
-const RakNetGUID UNASSIGNED_RAKNET_GUID((uint64_t)-1);
-}
-
 IdManager::IdManager(userid maxConnections_)
   : maxConnections(maxConnections_)
 {

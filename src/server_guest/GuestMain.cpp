@@ -1,8 +1,12 @@
-#include <Networking.h>
+#include "Networking.h"
+#include "PartOne.h"
+#include "PartTwo.h"
 #include <cr.h>
 #include <cstdio>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 static unsigned int CR_STATE g_version = 1;
 
@@ -12,41 +16,34 @@ class Skymp5Server
 public:
   Skymp5Server()
   {
+    auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
+    logger = std::make_shared<spdlog::logger>("log", sink);
+
+    partTwo.reset(new PartTwo(logger));
+    partOne.reset(new PartOne(partTwo));
+
     auto port = 7777;
     auto maxPlayers = 1000;
     server = Networking::CreateServer(port, maxPlayers);
-    std::cout << "Listening on " << port << std::endl;
+    logger->info("Listening on {}", port);
   }
-  ~Skymp5Server() {}
 
   void Tick()
   {
-    server->Tick(
-      [](void* state, Networking::UserId userId,
-         Networking::PacketType packetType, Networking::PacketData data,
-         size_t length) {
-        auto this_ = reinterpret_cast<Skymp5Server*>(state);
-
-        switch (packetType) {
-          case Networking::PacketType::ServerSideUserConnect:
-            std::cout << "Connected " << userId << std::endl;
-            break;
-          case Networking::PacketType::ServerSideUserDisconnect:
-            std::cout << "Disconnected " << userId << std::endl;
-            break;
-          case Networking::PacketType::Message:
-            std::string str(reinterpret_cast<const char*>(data + 1),
-                            length - 1);
-            std::cout << "Message from " << userId << ": " << str << std::endl;
-            this_->server->Send(userId, data, length, false);
-            break;
-        }
-      },
-      this);
+    while (1) {
+      try {
+        return server->Tick(PartOne::HandlePacket, partOne.get());
+      } catch (std::exception& e) {
+        logger->error(e.what());
+      }
+    }
   }
 
 private:
   std::shared_ptr<Networking::IServer> server;
+  std::shared_ptr<PartOne> partOne;
+  std::shared_ptr<PartTwo> partTwo;
+  std::shared_ptr<spdlog::logger> logger;
 };
 }
 

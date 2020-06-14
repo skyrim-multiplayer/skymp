@@ -1,4 +1,5 @@
 #include "MpClientPlugin.h"
+#include <vector>
 
 void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
                                   uint16_t targetPort)
