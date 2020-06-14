@@ -91,7 +91,8 @@ TEST_CASE("Handshake: Hash already used", "[PartTwo]")
 {
   PartTwo::ClearDiskCache();
 
-  PartTwo partTwo;
+  LogSink sink;
+  PartTwo partTwo(sink);
   partTwo.OnConnect(0);
   partTwo.OnConnect(1);
 
@@ -99,13 +100,23 @@ TEST_CASE("Handshake: Hash already used", "[PartTwo]")
     partTwo, 0,
     { { "p", "handshake" }, { "hash", "111111111111111111111111111111" } });
 
-  REQUIRE_THROWS_MATCHES(
-    OnCustomPacket(
-      partTwo, 1,
-      { { "p", "handshake" }, { "hash", "111111111111111111111111111111" } }),
-    PublicError,
-    Message("Hash '111111111111111111111111111111' is already used by user "
-            "with id 0"));
+  REQUIRE(partTwo.users[0]->sessionHash == "111111111111111111111111111111");
+  REQUIRE(partTwo.users[1]->sessionHash.empty());
+
+  OnCustomPacket(
+    partTwo, 1,
+    { { "p", "handshake" }, { "hash", "111111111111111111111111111111" } });
+
+  REQUIRE(partTwo.sessions.size() == 1);
+  REQUIRE(partTwo.sessions[0].hash == "111111111111111111111111111111");
+
+  REQUIRE(partTwo.users[0]->sessionHash.empty());
+  REQUIRE(partTwo.users[1]->sessionHash == "111111111111111111111111111111");
+
+  REQUIRE_THAT(sink.str(),
+               Contains("Transfer session ownership from user 0 to user 1"));
+  REQUIRE_THAT(sink.str(),
+               !Contains("Restored session for"));
 }
 
 TEST_CASE("Handshake: Restore session with such hash", "[PartTwo]")

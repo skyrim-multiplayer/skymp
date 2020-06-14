@@ -120,10 +120,13 @@ void PartTwo::OnCustomPacket(Networking::UserId userId,
                              return user && user->sessionHash == hash;
                            });
     if (it != users.end()) {
-      throw PublicError("Hash '" + it->value().sessionHash +
-                        "' is already "
-                        "used by user with id " +
-                        std::to_string(it - users.begin()));
+      auto newUser = userId;
+      auto oldUser = it - users.begin();
+      log->info("Transfer session ownership from user {} to user {}", oldUser,
+                newUser);
+      users[newUser]->sessionHash = std::move(users[oldUser]->sessionHash);
+      users[oldUser]->sessionHash.clear();
+      return;
     }
 
     auto existingSession = std::find_if(
