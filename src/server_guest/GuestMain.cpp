@@ -1,6 +1,6 @@
 #include "Networking.h"
+#include "P2SessionManager.h"
 #include "PartOne.h"
-#include "PartTwo.h"
 #include <cr.h>
 #include <cstdio>
 #include <iostream>
@@ -19,8 +19,8 @@ public:
     auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
     logger = std::make_shared<spdlog::logger>("log", sink);
 
-    partTwo.reset(new PartTwo(logger));
-    partOne.reset(new PartOne(partTwo));
+    sessionManager.reset(new P2SessionManager(logger));
+    partOne.reset(new PartOne(sessionManager));
 
     auto port = 7777;
     auto maxPlayers = 1000;
@@ -42,7 +42,7 @@ public:
 private:
   std::shared_ptr<Networking::IServer> server;
   std::shared_ptr<PartOne> partOne;
-  std::shared_ptr<PartTwo> partTwo;
+  std::shared_ptr<P2SessionManager> sessionManager;
   std::shared_ptr<spdlog::logger> logger;
 };
 }

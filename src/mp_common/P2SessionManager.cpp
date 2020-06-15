@@ -1,4 +1,4 @@
-#include "PartTwo.h"
+#include "P2SessionManager.h"
 #include "Exceptions.h"
 #include "JsonUtils.h"
 #include <filesystem>
@@ -6,27 +6,29 @@
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 
-// It should not be a static variable. PartTwo may be static too and destructor
-// calling order would be unpredictable (~PartTwo dtor depends on this)
+// It should not be a static variable. P2SessionManager may be static too and
+// destructor calling order would be unpredictable (~P2SessionManager depends
+// on g_sessionsFilePath)
 #define g_sessionsFilePath                                                    \
   (std::filesystem::current_path() / "server" / "sessions")
 
 namespace {
-bool IsExpired(PartTwo* p, const PartTwo::SessionInfo& session)
+bool IsExpired(P2SessionManager* p,
+               const P2SessionManager::SessionInfo& session)
 {
   return std::chrono::steady_clock::now() - session.disconnectMoment >=
     p->sessionExpiration &&
     session.disconnectMoment.time_since_epoch().count() > 0;
 };
 
-void RemoveExpiredSessions(PartTwo* p)
+void RemoveExpiredSessions(P2SessionManager* p)
 {
   p->sessions.erase(std::remove_if(p->sessions.begin(), p->sessions.end(),
                                    [p](auto& s) { return IsExpired(p, s); }),
                     p->sessions.end());
 }
 
-std::string SerializeSessions(PartTwo* p)
+std::string SerializeSessions(P2SessionManager* p)
 {
   auto j = nlohmann::json::array();
   for (auto& session : p->sessions)
@@ -38,7 +40,7 @@ std::string SerializeSessions(PartTwo* p)
   return j.dump(2);
 }
 
-void DeserializeSessions(PartTwo* p, const std::string& data)
+void DeserializeSessions(P2SessionManager* p, const std::string& data)
 {
   p->sessions.clear();
 
@@ -62,12 +64,12 @@ void DeserializeSessions(PartTwo* p, const std::string& data)
 }
 }
 
-void PartTwo::ClearDiskCache()
+void P2SessionManager::ClearDiskCache()
 {
   std::filesystem::remove_all(std::filesystem::current_path() / "server");
 }
 
-PartTwo::PartTwo(std::shared_ptr<spdlog::logger> logger)
+P2SessionManager::P2SessionManager(std::shared_ptr<spdlog::logger> logger)
 {
   // We expect log to always be non-nullptr
   log = logger ? logger : std::make_shared<spdlog::logger>("dummy");
@@ -76,18 +78,18 @@ PartTwo::PartTwo(std::shared_ptr<spdlog::logger> logger)
   LoadSessions();
 }
 
-PartTwo::~PartTwo()
+P2SessionManager::~P2SessionManager()
 {
   SaveSessions();
 }
 
-void PartTwo::OnConnect(Networking::UserId userId)
+void P2SessionManager::OnConnect(Networking::UserId userId)
 {
   users[userId] = UserInfo();
   log->info("Connected {}", userId);
 }
 
-void PartTwo::OnDisconnect(Networking::UserId userId)
+void P2SessionManager::OnDisconnect(Networking::UserId userId)
 {
   if (auto& user = users[userId]) {
     if (!user->sessionHash.empty()) {
@@ -105,8 +107,8 @@ void PartTwo::OnDisconnect(Networking::UserId userId)
   log->info("Disconnected {}", userId);
 }
 
-void PartTwo::OnCustomPacket(Networking::UserId userId,
-                             const simdjson::dom::element& content)
+void P2SessionManager::OnCustomPacket(Networking::UserId userId,
+                                      const simdjson::dom::element& content)
 {
   const char* purpose;
   Read(content, "p", &purpose);
@@ -152,7 +154,7 @@ void PartTwo::OnCustomPacket(Networking::UserId userId,
   }
 }
 
-void PartTwo::LoadSessions()
+void P2SessionManager::LoadSessions()
 {
   if (!std::filesystem::exists(g_sessionsFilePath))
     return;
@@ -166,7 +168,7 @@ void PartTwo::LoadSessions()
   DeserializeSessions(this, buffer.str());
 }
 
-void PartTwo::SaveSessions()
+void P2SessionManager::SaveSessions()
 {
   RemoveExpiredSessions(this);
   std::filesystem::create_directories(g_sessionsFilePath.parent_path());

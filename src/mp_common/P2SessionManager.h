@@ -9,13 +9,13 @@
 #include <string>
 #include <vector>
 
-class PartTwo : public PartOne::Listener
+class P2SessionManager : public PartOne::Listener
 {
 public:
   static void ClearDiskCache();
 
-  PartTwo(std::shared_ptr<spdlog::logger> = nullptr);
-  ~PartTwo();
+  P2SessionManager(std::shared_ptr<spdlog::logger> = nullptr);
+  ~P2SessionManager();
 
   void OnConnect(Networking::UserId userId) override;
   void OnDisconnect(Networking::UserId userId) override;
