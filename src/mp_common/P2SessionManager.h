@@ -44,4 +44,7 @@ public:
     std::chrono::seconds(5);
 
   std::shared_ptr<spdlog::logger> log;
+
+private:
+  SessionInfo* GetSession(const char* hash);
 };

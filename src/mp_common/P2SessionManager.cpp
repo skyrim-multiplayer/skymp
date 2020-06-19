@@ -94,10 +94,7 @@ void P2SessionManager::OnDisconnect(Networking::UserId userId)
   if (auto& user = users[userId]) {
     if (!user->sessionHash.empty()) {
       auto hash = user->sessionHash.data();
-      auto session = std::find_if(
-        sessions.begin(), sessions.end(),
-        [&](const SessionInfo& session) { return hash == session.hash; });
-      if (session != sessions.end()) {
+      if (auto session = GetSession(hash)) {
         session->disconnectMoment = std::chrono::steady_clock::now();
         SaveSessions();
       }
@@ -131,10 +128,8 @@ void P2SessionManager::OnCustomPacket(Networking::UserId userId,
       return;
     }
 
-    auto existingSession = std::find_if(
-      sessions.begin(), sessions.end(),
-      [hash](const SessionInfo& session) { return session.hash == hash; });
-    if (existingSession == sessions.end()) {
+    auto existingSession = GetSession(hash);
+    if (!existingSession) {
       sessions.push_back({ hash });
       log->info("Initialized new session for user {}", userId);
 
@@ -177,4 +172,14 @@ void P2SessionManager::SaveSessions()
   if (!t.good())
     throw std::runtime_error("File " + g_sessionsFilePath.string() +
                              " is not good");
+}
+
+P2SessionManager::SessionInfo* P2SessionManager::GetSession(const char* hash)
+{
+  auto session = std::find_if(
+    sessions.begin(), sessions.end(),
+    [&](const SessionInfo& session) { return hash == session.hash; });
+  if (session == sessions.end())
+    return nullptr;
+  return &*session;
 }
