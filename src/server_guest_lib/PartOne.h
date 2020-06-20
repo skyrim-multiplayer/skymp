@@ -3,7 +3,12 @@
 #include <memory>
 #include <simdjson.h>
 
-class PartOne
+class PartOneInterface
+{
+public:
+};
+
+class PartOne : public PartOneInterface
 {
 public:
   class Listener

@@ -1,4 +1,5 @@
 #include "Networking.h"
+#include "P2.h"
 #include "P2SessionManager.h"
 #include "PartOne.h"
 #include <cr.h>
@@ -16,11 +17,9 @@ class Skymp5Server
 public:
   Skymp5Server()
   {
-    auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
-    logger = std::make_shared<spdlog::logger>("log", sink);
-
-    sessionManager.reset(new P2SessionManager(logger));
-    partOne.reset(new PartOne(sessionManager));
+    partTwo.reset(new P2);
+    partOne.reset(new PartOne);
+    P2::Attach(partOne, partTwo);
 
     auto port = 7777;
     auto maxPlayers = 1000;
@@ -42,7 +41,7 @@ public:
 private:
   std::shared_ptr<Networking::IServer> server;
   std::shared_ptr<PartOne> partOne;
-  std::shared_ptr<P2SessionManager> sessionManager;
+  std::shared_ptr<P2> partTwo;
   std::shared_ptr<spdlog::logger> logger;
 };
 }

@@ -51,7 +51,7 @@ set(OPENCPPCOV_DIR "")
 
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/unit/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/.clang-format")
 add_executable(unit ${src})
-target_link_libraries(unit PRIVATE mp_common)
+target_link_libraries(unit PRIVATE server_guest_lib)
 target_include_directories(unit PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mp_common")
 apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
@@ -64,7 +64,7 @@ target_include_directories(server_host PRIVATE "${CMAKE_SOURCE_DIR}/src/third_pa
 
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/server_guest/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/.clang-format")
 add_library(server_guest SHARED ${src})
-target_link_libraries(server_guest PRIVATE mp_common)
+target_link_libraries(server_guest PRIVATE server_guest_lib)
 apply_default_settings(TARGETS server_guest)
 list(APPEND VCPKG_DEPENDENT server_guest)
 target_include_directories(server_guest PRIVATE "${CMAKE_SOURCE_DIR}/src/third_party")
@@ -78,6 +78,13 @@ if (WIN32)
   target_link_libraries(mp_common PUBLIC ws2_32.lib)
 endif()
 
+file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/server_guest_lib/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/.clang-format")
+add_library(server_guest_lib STATIC ${src})
+target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/server_guest_lib")
+target_include_directories(server_guest_lib PRIVATE "${CMAKE_SOURCE_DIR}/src/third_party")
+apply_default_settings(TARGETS server_guest_lib)
+list(APPEND VCPKG_DEPENDENT server_guest_lib)
+target_link_libraries(server_guest_lib PUBLIC mp_common)
 if (WIN32)
   file(COPY
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ctest.bat
