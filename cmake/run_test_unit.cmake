@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../cmake_scripts_collection.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/third_party/cmake_scripts_collection.cmake)
 
 # Run without OpenCppCoverage first:
 

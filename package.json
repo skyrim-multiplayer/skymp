@@ -1,0 +1,17 @@
+{
+  "name": "scamp-server",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install": "npm run configure && npm run build",
+    "configure": "cmake-js configure",
+    "build": "cd build && cmake --build .",
+    "test": "cd build && ctest -C Debug -V"
+  },
+  "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
+  "dependencies": {
+    "cmake-js": "^6.1.0",
+    "node-addon-api": "^3.0.0"
+  }
+}

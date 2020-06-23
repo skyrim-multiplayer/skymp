@@ -1,104 +1,28 @@
 cmake_minimum_required(VERSION 3.17)
-project(skymp5_server)
+project(scamp_native)
+enable_testing()
 
-include(pmm.cmake)
-# Clear CMake cache after changing this
-# (also for subprojects like platform_se)
-set(VCPKG_REVISION cb8a9fe7157f8ad2423742f893955ed9ced05910)
-# Download vcpkg dependencies
-set(ports
-  catch2:x64-windows-static
-  sparsepp:x64-windows-static
-  nlohmann-json:x64-windows-static
-  simdjson:x64-windows-static
-  spdlog:x64-windows-static
-  slikenet:x64-windows-static
+add_subdirectory(scamp_native)
+
+add_library(node INTERFACE)
+target_link_libraries(node INTERFACE ${CMAKE_JS_LIB})
+target_include_directories(node INTERFACE ${CMAKE_JS_INC})
+target_sources(node INTERFACE ${CMAKE_JS_SRC})
+
+# Include N-API wrappers
+execute_process(COMMAND node -p "require('node-addon-api').include"
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE NODE_ADDON_API_DIR
 )
-foreach(port ${ports})
-  message(STATUS "Installing ${port}")
-  pmm(VCPKG REVISION ${VCPKG_REVISION} REQUIRES ${port})
-endforeach()
-if ("${_VCPKG_ROOT_DIR}" STREQUAL "")
-  message(FATAL_ERROR "Expected _VCPKG_ROOT_DIR variable to be set by pmm")
-endif()
+string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
+string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
+target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
 
-# TODO: Check SHA512
-include(cmake_scripts_collection.cmake)
+file(GLOB_RECURSE SOURCE_FILES "${CMAKE_SOURCE_DIR}/scamp_native/addon/*")
+list(APPEND SOURCE_FILES ".clang-format")
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
+target_link_libraries(${PROJECT_NAME} PRIVATE node mp_common server_guest_lib)
 
-if(WIN32)
-  option(SKYRIM_DIR "Path to Skyrim" OFF)
-  if (NOT SKYRIM_DIR)
-    message(FATAL_ERROR "Please specify SKYRIM_DIR")
-  endif()
-  if (NOT EXISTS ${SKYRIM_DIR}/SkyrimSE.exe)
-    message(FATAL_ERROR "Bad SKYRIM_DIR: ${SKYRIM_DIR}")
-  endif()
-
-  file(GLOB_RECURSE src "src/client/*" "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format")
-  add_library(MpClientPlugin SHARED ${src})
-  target_link_libraries(MpClientPlugin PUBLIC mp_common)
-  set_target_properties(MpClientPlugin PROPERTIES OUTPUT_NAME "MpClientPlugin")
-  apply_default_settings(TARGETS MpClientPlugin)
-  list(APPEND VCPKG_DEPENDENT MpClientPlugin)
-
-  add_custom_command(
-    TARGET MpClientPlugin POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MpClientPlugin> ${SKYRIM_DIR}/Data/SKSE/plugins
-  )
-endif()
-
-set(OPENCPPCOV_DIR "")
-
-file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/unit/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/.clang-format")
-add_executable(unit ${src})
-target_link_libraries(unit PRIVATE server_guest_lib)
-target_include_directories(unit PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/mp_common")
-apply_default_settings(TARGETS unit)
-list(APPEND VCPKG_DEPENDENT unit)
-
-file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/server_host/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/.clang-format")
-add_executable(server_host ${src})
-apply_default_settings(TARGETS server_host)
-list(APPEND VCPKG_DEPENDENT server_host)
-target_include_directories(server_host PRIVATE "${CMAKE_SOURCE_DIR}/src/third_party")
-
-file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/server_guest/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/.clang-format")
-add_library(server_guest SHARED ${src})
-target_link_libraries(server_guest PRIVATE server_guest_lib)
-apply_default_settings(TARGETS server_guest)
-list(APPEND VCPKG_DEPENDENT server_guest)
-target_include_directories(server_guest PRIVATE "${CMAKE_SOURCE_DIR}/src/third_party")
-
-file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/mp_common/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/.clang-format")
-add_library(mp_common STATIC ${src})
-target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/mp_common")
-apply_default_settings(TARGETS mp_common)
-list(APPEND VCPKG_DEPENDENT mp_common)
-if (WIN32)
-  target_link_libraries(mp_common PUBLIC ws2_32.lib)
-endif()
-
-file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/server_guest_lib/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/.clang-format")
-add_library(server_guest_lib STATIC ${src})
-target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/server_guest_lib")
-target_include_directories(server_guest_lib PRIVATE "${CMAKE_SOURCE_DIR}/src/third_party")
-apply_default_settings(TARGETS server_guest_lib)
-list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC mp_common)
-if (WIN32)
-  file(COPY
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ctest.bat
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/before_ctest.cmake
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-  )
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/before_ctest.cmake
-    "\n\n# This file was copied from cmake/before_ctest.cmake, do not modify"
-  )
-endif()
-
-include(cmake/tests_unit.cmake)
-
-integrate_vcpkg(
-  TARGETS ${VCPKG_DEPENDENT}
-  VCPKG_PATH "${_VCPKG_ROOT_DIR}"
-)
+include(cmake/third_party/cmake_scripts_collection.cmake)
+apply_default_settings(TARGETS ${PROJECT_NAME})

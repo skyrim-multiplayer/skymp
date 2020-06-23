@@ -13,12 +13,6 @@ struct UserInfo
 class ServerState
 {
 public:
-  enum class MessageMethod
-  {
-    OnReceive,
-    OnCacheReady
-  };
-
   ServerState() { userInfo.resize(65536); }
 
   std::vector<std::optional<UserInfo>> userInfo;
