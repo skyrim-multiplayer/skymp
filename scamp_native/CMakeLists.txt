@@ -22,6 +22,10 @@ endif()
 # TODO: Check SHA512
 include(${CMAKE_SOURCE_DIR}/cmake/third_party/cmake_scripts_collection.cmake)
 
+if (NOT CPPCOV)
+  message(WARNING "CPPCOV is not set, coverage for C++ code is disabled")
+endif()
+
 if(WIN32)
   option(SKYRIM_DIR "Path to Skyrim" OFF)
   if (NOT SKYRIM_DIR)
