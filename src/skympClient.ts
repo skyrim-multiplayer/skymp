@@ -3,6 +3,7 @@ import { WorldView } from './view';
 import { WorldModel, FormModel } from './model';
 import { getMovement } from './components/movement';
 import { AnimationSource } from './components/animation';
+import * as networking from './networking';
 
 let isIdle = (animEventName: string) => {
     return animEventName === 'MotionDrivenIdle'
@@ -27,6 +28,7 @@ export class SkympClient {
         });
         on('update', () => view.update(this.getWorldModel()));
 
+        // Disable idle animations for 0xff actors
         hooks.sendAnimationEvent.add({
             enter: (ctx) => {
                 if (ctx.selfId < 0xff000000) return;
