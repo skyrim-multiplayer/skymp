@@ -6,8 +6,11 @@
 #include <simdjson.h>
 #include <unordered_map>
 
+class MpActor;
+
 struct UserInfo
 {
+  MpActor* actor = nullptr;
 };
 
 class ServerState

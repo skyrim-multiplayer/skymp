@@ -30,15 +30,14 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
       auto [onPacket, state_] =
         *reinterpret_cast<std::pair<OnPacket, void*>*>(state);
 
-      auto contentPtr = "";
+      std::string jsonContent;
 
       if (packetType == Networking::PacketType::Message && length > 1) {
-        std::string jsonContent(reinterpret_cast<const char*>(data) + 1,
-                                length - 1);
-        contentPtr = jsonContent.data();
+        jsonContent =
+          std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
       }
 
-      onPacket((int32_t)packetType, contentPtr, error, state_);
+      onPacket((int32_t)packetType, jsonContent.data(), error, state_);
     },
     &packetAndState);
 }

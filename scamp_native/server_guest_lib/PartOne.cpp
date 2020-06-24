@@ -1,8 +1,9 @@
-#include <Exceptions.h>
-#include <JsonUtils.h>
-#include <MsgType.h>
-#include <PartOne.h>
-#include <ServerState.h>
+#include "PartOne.h"
+#include "Exceptions.h"
+#include "JsonUtils.h"
+#include "MsgType.h"
+#include "ServerState.h"
+#include "WorldState.h"
 #include <array>
 #include <optional>
 #include <vector>
@@ -10,6 +11,7 @@
 struct PartOne::Impl
 {
   ServerState serverState;
+  WorldState worldState;
   simdjson::dom::parser parser;
   std::vector<std::shared_ptr<Listener>> listeners;
 };
@@ -28,6 +30,69 @@ PartOne::PartOne(std::shared_ptr<Listener> listener)
 void PartOne::AddListener(std::shared_ptr<Listener> listener)
 {
   pImpl->listeners.push_back(listener);
+}
+
+void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
+                          uint32_t cellOrWorld, Networking::IServer* svr)
+{
+  pImpl->worldState.AddForm(std::unique_ptr<MpActor>(new MpActor(
+                              { pos, { 0, 0, angleZ }, cellOrWorld })),
+                            formId);
+}
+
+void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
+                           Networking::IServer* svr)
+{
+  if (!pImpl->serverState.userInfo[userId]) {
+    throw std::runtime_error("User with id " + std::to_string(userId) +
+                             " doesn't exist");
+  }
+
+  if (actorFormId > 0) {
+    auto form = pImpl->worldState.LookupFormById(actorFormId);
+    if (!form) {
+      std::stringstream ss;
+      ss << "Form with id " << std::hex << actorFormId << " doesn't exist";
+      throw std::runtime_error(ss.str());
+    }
+
+    auto actor = dynamic_cast<MpActor*>(form);
+    if (!actor) {
+      std::stringstream ss;
+      ss << "Form with id " << std::hex << actorFormId << " is not Actor";
+      throw std::runtime_error(ss.str());
+    }
+
+    pImpl->serverState.userInfo[userId]->actor = actor;
+  } else {
+    pImpl->serverState.userInfo[userId]->actor = nullptr;
+  }
+
+  {
+    char data[1024] = { 0 };
+    data[0] = Networking::MinPacketId;
+    auto len = (size_t)snprintf(data + 1, std::size(data) - 1,
+                                R"({"type": "setUserActor", "formId": %u})",
+                                actorFormId);
+    svr->Send(userId, reinterpret_cast<Networking::PacketData>(data), len + 1,
+              true);
+  }
+
+  if (MpActor* ac = pImpl->serverState.userInfo[userId]->actor) {
+    auto& pos = ac->GetPos();
+    auto& angle = ac->GetAngle();
+    auto& cellOrWorld = ac->GetCellOrWorld();
+
+    char data[1024] = { 0 };
+    data[0] = Networking::MinPacketId;
+    auto len = (size_t)snprintf(
+      data + 1, std::size(data) - 1,
+      R"({"type": "moveTo", "formId": %u, "pos": [%f,%f,%f], "rot": [%f,%f,%f], "cellOrWorld": %u})",
+      actorFormId, pos.x, pos.y, pos.z, angle.x, angle.y, angle.z,
+      cellOrWorld);
+    svr->Send(userId, reinterpret_cast<Networking::PacketData>(data), len + 1,
+              true);
+  }
 }
 
 void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,

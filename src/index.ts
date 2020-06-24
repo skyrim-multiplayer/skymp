@@ -1,18 +1,32 @@
-const config =
-  !process.env.NODE_ENV || process.env.NODE_ENV === "development"
-    ? "Debug"
-    : "Release";
-console.log(`Using scamp_native config ${config}`);
-const scampNative = require(`../build/${config}/scamp_native.node`);
-
 import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install();
 
-console.log(scampNative.hello());
+import * as scampNative from "./scampNative";
+
+const server = new scampNative.ScampServer(7777, 1000);
+
+server.on("connect", (userId: number) => {
+  console.log("connect", userId);
+
+  const formId = 0xff000000 + userId;
+  server.createActor(formId, [163113.0938, -62752.3008, 7487.8579], 0, 0x3c);
+  server.setUserActor(userId, formId);
+  console.log("hey");
+});
+
+server.on("disconnect", (userId: number) => {
+  console.log("disconnect", userId);
+  //server.destroyActor(server.getUserActor(userId));
+});
+
+server.on("customPacket", (userId: number, content: string) => {
+  console.log("customPacket", userId, content);
+});
 
 (async () => {
   while (1) {
     await new Promise(setImmediate);
+    server.tick();
   }
 })();
 

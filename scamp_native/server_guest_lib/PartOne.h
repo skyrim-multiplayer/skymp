@@ -1,5 +1,6 @@
 #pragma once
 #include "Networking.h"
+#include "NiPoint3.h"
 #include <memory>
 #include <simdjson.h>
 
@@ -20,6 +21,12 @@ public:
   PartOne(std::shared_ptr<Listener> listener);
 
   void AddListener(std::shared_ptr<Listener> listener);
+
+  void CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
+                   uint32_t cellOrWorld, Networking::IServer* svr);
+
+  void SetUserActor(Networking::UserId userId, uint32_t actorFormId,
+                    Networking::IServer* svr);
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
