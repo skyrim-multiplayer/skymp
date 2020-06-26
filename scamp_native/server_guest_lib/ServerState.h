@@ -10,7 +10,7 @@ class MpActor;
 
 struct UserInfo
 {
-  MpActor* actor = nullptr;
+  std::weak_ptr<MpActor> actor;
 };
 
 class ServerState

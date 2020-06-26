@@ -22,11 +22,15 @@ public:
 
   void AddListener(std::shared_ptr<Listener> listener);
 
+  bool IsConnected(Networking::UserId userId) const;
+
+  // API
   void CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                    uint32_t cellOrWorld, Networking::IServer* svr);
-
   void SetUserActor(Networking::UserId userId, uint32_t actorFormId,
                     Networking::IServer* svr);
+  uint32_t GetUserActor(Networking::UserId userId);
+  void DestroyActor(uint32_t actorFormId);
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,

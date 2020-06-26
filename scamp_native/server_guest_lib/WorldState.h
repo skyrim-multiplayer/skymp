@@ -2,6 +2,7 @@
 #include "NiPoint3.h"
 #include <sparsepp/spp.h>
 #include <sstream>
+#include <typeinfo>
 
 #ifdef AddForm
 #  undef AddForm
@@ -9,8 +10,15 @@
 
 class MpForm
 {
+  friend class WorldState;
+
 public:
   virtual ~MpForm() = default;
+
+  auto GetFormId() const noexcept { return formId; }
+
+private:
+  uint32_t formId = 0; // Assigned by WorldState::AddForm
 };
 
 struct LocationalData
@@ -45,17 +53,42 @@ public:
       ss << "Form with id " << std::hex << formId << " already exists";
       throw std::runtime_error(ss.str());
     }
+    form->formId = formId;
     f = std::move(form);
   }
 
-  MpForm* LookupFormById(uint32_t formId)
+  template <class FormType = MpForm>
+  void DestroyForm(uint32_t formId)
   {
     auto it = forms.find(formId);
-    if (it == forms.end())
-      return nullptr;
-    return it->second.get();
+    if (it == forms.end()) {
+      std::stringstream ss;
+      ss << "Form with id " << std::hex << formId << "doesn't exist";
+      throw std::runtime_error(ss.str());
+    }
+
+    auto& [formId_, form] = *it;
+    if (!dynamic_cast<FormType*>(form.get())) {
+      std::stringstream ss;
+      ss << "Expected form " << std::hex << formId << " to be "
+         << typeid(FormType).name() << ", but got "
+         << typeid(*form.get()).name();
+      throw std::runtime_error(ss.str());
+    }
+
+    forms.erase(it);
+  }
+
+  const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId)
+  {
+    auto it = forms.find(formId);
+    if (it == forms.end()) {
+      static const std::shared_ptr<MpForm> g_null;
+      return g_null;
+    }
+    return it->second;
   }
 
 private:
-  spp::sparse_hash_map<uint32_t, std::unique_ptr<MpForm>> forms;
+  spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
 };

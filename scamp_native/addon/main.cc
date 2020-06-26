@@ -28,6 +28,8 @@ public:
   Napi::Value On(const Napi::CallbackInfo& info);
   Napi::Value CreateActor(const Napi::CallbackInfo& info);
   Napi::Value SetUserActor(const Napi::CallbackInfo& info);
+  Napi::Value GetUserActor(const Napi::CallbackInfo& info);
+  Napi::Value DestroyActor(const Napi::CallbackInfo& info);
 
 private:
   std::unique_ptr<PartOne> partOne;
@@ -95,7 +97,9 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
     { InstanceMethod<&ScampServer::Tick>("tick"),
       InstanceMethod<&ScampServer::On>("on"),
       InstanceMethod<&ScampServer::CreateActor>("createActor"),
-      InstanceMethod<&ScampServer::SetUserActor>("setUserActor") });
+      InstanceMethod<&ScampServer::SetUserActor>("setUserActor"),
+      InstanceMethod<&ScampServer::GetUserActor>("getUserActor"),
+      InstanceMethod<&ScampServer::DestroyActor>("destroyActor") });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -156,6 +160,28 @@ Napi::Value ScampServer::SetUserActor(const Napi::CallbackInfo& info)
   auto actorFormId = info[1].As<Napi::Number>().Uint32Value();
   try {
     partOne->SetUserActor(userId, actorFormId, server.get());
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::GetUserActor(const Napi::CallbackInfo& info)
+{
+  auto userId = info[0].As<Napi::Number>().Uint32Value();
+  try {
+    return Napi::Number::New(info.Env(), partOne->GetUserActor(userId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::DestroyActor(const Napi::CallbackInfo& info)
+{
+  auto actorFormId = info[0].As<Napi::Number>().Uint32Value();
+  try {
+    partOne->DestroyActor(actorFormId);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

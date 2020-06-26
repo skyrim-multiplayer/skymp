@@ -16,7 +16,8 @@ server.on("connect", (userId: number) => {
 
 server.on("disconnect", (userId: number) => {
   console.log("disconnect", userId);
-  //server.destroyActor(server.getUserActor(userId));
+  const actorId = server.getUserActor(userId);
+  if (actorId !== 0) server.destroyActor(actorId);
 });
 
 server.on("customPacket", (userId: number, content: string) => {

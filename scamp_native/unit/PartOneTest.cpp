@@ -119,3 +119,31 @@ TEST_CASE("Messages for non-existent users", "[PartOne]")
                               { "content", { { "x", "y" } } } }),
     Contains("User with id 0 doesn't exist"));
 }
+
+TEST_CASE("Disconnect event sent before user actually disconnects",
+          "[PartOne]")
+{
+  static auto partOne = std::make_shared<PartOne>();
+
+  using Base = FakeListener;
+  class MyFakeListener : public Base
+  {
+  public:
+    void OnDisconnect(Networking::UserId userId) override
+    {
+      REQUIRE(partOne->IsConnected(userId));
+      Base::OnDisconnect(userId);
+    }
+  };
+  auto lst = std::make_shared<MyFakeListener>();
+  partOne->AddListener(lst);
+
+  REQUIRE(!partOne->IsConnected(0));
+  DoConnect(*partOne, 0);
+  REQUIRE(partOne->IsConnected(0));
+  DoDisconnect(*partOne, 0);
+  REQUIRE(!partOne->IsConnected(0));
+
+  REQUIRE_THAT(lst->str(), Contains("OnConnect(0)\nOnDisconnect(0)"));
+  partOne.reset();
+}

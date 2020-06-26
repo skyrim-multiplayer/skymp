@@ -25,6 +25,8 @@ export declare class ScampServer {
   destroyActor(formId: number): void;
 
   setUserActor(userId: number, actorFormId: number): void;
+
+  getUserActor(userId: number): number;
 }
 
 module.exports.ScampServer = require(`../build/${config}/scamp_native.node`).ScampServer;

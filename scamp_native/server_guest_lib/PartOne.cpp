@@ -32,6 +32,11 @@ void PartOne::AddListener(std::shared_ptr<Listener> listener)
   pImpl->listeners.push_back(listener);
 }
 
+bool PartOne::IsConnected(Networking::UserId userId) const
+{
+  return pImpl->serverState.IsConnected(userId);
+}
+
 void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                           uint32_t cellOrWorld, Networking::IServer* svr)
 {
@@ -43,10 +48,9 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
                            Networking::IServer* svr)
 {
-  if (!pImpl->serverState.userInfo[userId]) {
+  if (!pImpl->serverState.userInfo[userId])
     throw std::runtime_error("User with id " + std::to_string(userId) +
                              " doesn't exist");
-  }
 
   if (actorFormId > 0) {
     auto form = pImpl->worldState.LookupFormById(actorFormId);
@@ -56,7 +60,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
       throw std::runtime_error(ss.str());
     }
 
-    auto actor = dynamic_cast<MpActor*>(form);
+    auto actor = std::dynamic_pointer_cast<MpActor>(form);
     if (!actor) {
       std::stringstream ss;
       ss << "Form with id " << std::hex << actorFormId << " is not Actor";
@@ -65,7 +69,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
 
     pImpl->serverState.userInfo[userId]->actor = actor;
   } else {
-    pImpl->serverState.userInfo[userId]->actor = nullptr;
+    pImpl->serverState.userInfo[userId]->actor = {};
   }
 
   {
@@ -78,7 +82,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
               true);
   }
 
-  if (MpActor* ac = pImpl->serverState.userInfo[userId]->actor) {
+  if (auto ac = pImpl->serverState.userInfo[userId]->actor.lock()) {
     auto& pos = ac->GetPos();
     auto& angle = ac->GetAngle();
     auto& cellOrWorld = ac->GetCellOrWorld();
@@ -95,6 +99,24 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
   }
 }
 
+uint32_t PartOne::GetUserActor(Networking::UserId userId)
+{
+  auto& user = pImpl->serverState.userInfo[userId];
+  if (!user)
+    throw std::runtime_error("User with id " + std::to_string(userId) +
+                             " doesn't exist");
+
+  auto actor = user->actor.lock();
+  if (!actor)
+    return 0;
+  return actor->GetFormId();
+}
+
+void PartOne::DestroyActor(uint32_t actorFormId)
+{
+  pImpl->worldState.DestroyForm<MpActor>(actorFormId);
+}
+
 void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
                            Networking::PacketData data, size_t length)
@@ -108,9 +130,9 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
         listener->OnConnect(userId);
       return;
     case Networking::PacketType::ServerSideUserDisconnect:
-      this_->pImpl->serverState.Disconnect(userId);
       for (auto& listener : this_->pImpl->listeners)
         listener->OnDisconnect(userId);
+      this_->pImpl->serverState.Disconnect(userId);
       return;
     case Networking::PacketType::Message:
       return this_->HandleMessagePacket(userId, data, length);
