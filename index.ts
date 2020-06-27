@@ -5,7 +5,7 @@ import { printConsole, loadGame, findConsoleCommand, TESModPlatform, Game, on, s
 
 new SkympClient;
 
-networking.connect('127.0.0.1', 7777);
+/*networking.connect('127.0.0.1', 7777);
 
 networking.on('message', (msg: any) => {
     // ...
@@ -49,4 +49,4 @@ networking.on('message', (msg: any) => {
             break;
     }
     printConsole('Packet from server:', msg);
-});
+});*/

@@ -1,3 +1,11 @@
+export type NiPoint3 = [number, number, number];
+
+export interface Transform {
+    worldOrCell: number;
+    pos: NiPoint3;
+    rot: NiPoint3;
+}
+
 export type RunMode = 'Standing' | 'Walking' | 'Running' | 'Sprinting';
 
 export interface AnimationVariables {
@@ -7,14 +15,6 @@ export interface AnimationVariables {
     isSneaking: boolean;
     isBlocking: boolean;
     isWeapDrawn: boolean;
-}
-
-export type NiPoint3 = [number, number, number];
-
-export interface Transform {
-    worldOrCell: number;
-    pos: NiPoint3;
-    rot: NiPoint3;
 }
 
 export type Movement = Transform & AnimationVariables;
