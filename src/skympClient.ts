@@ -1,12 +1,12 @@
-import { on, once, printConsole, storage, Game, loadGame } from 'skyrimPlatform';
+import { on, once, printConsole, storage, Game, loadGame, SoulGem } from 'skyrimPlatform';
 import { WorldView } from './view';
 import { WorldModel, FormModel } from './model';
-import { getMovement, Movement } from './components/movement';
+import { getMovement, Movement, Transform } from './components/movement';
 import { AnimationSource } from './components/animation';
 import * as networking from './networking';
 import * as miscHacks from './miscHacks';
 
-const sendMovementRateMs = 150;
+const sendMovementRateMs = 200;
 
 enum MsgType {
     CustomPacket = 1,
@@ -17,19 +17,19 @@ enum MsgType {
 interface CreateActorMessage {
     type: 'createActor';
     formId: number;
-    mov: Movement;
+    transform: Transform;
     isMe: boolean;
 }
 
 interface DestroyActorMessage {
-    type: 'createActor';
+    type: 'destroyActor';
     formId: number;
 }
 
 interface UpdateMovementMessage {
-    type: 'updMov';
+    t: MsgType.UpdateMovement;
     formId: number;
-    mov: Movement;
+    data: Movement;
 }
 
 interface FormModelInfo extends FormModel {
@@ -44,20 +44,52 @@ export class SkympClient {
 
         networking.connect('127.0.0.1', 7777);
 
+        networking.on('connectionFailed', () => {
+            printConsole('Connection failed');
+        });
+
+        networking.on('connectionDenied', (err: string) => {
+            printConsole('Connection denied: ', err);
+        });
+
+        networking.on('connectionAccepted', () => {
+            this.forms = [];
+            this.myActorRemoteFormId = 0;
+            this.myActorIndex = -1;
+        });
+
         networking.on('message', (msgAny: any) => {
-            printConsole(msgAny.type);
+            let msgType = msgAny.type || MsgType[msgAny.t];
+            if (msgType !== 'UpdateMovement') printConsole(msgType);
             if (msgAny.type === 'createActor') {
                 let msg = msgAny as CreateActorMessage;
 
+                let alreadyEsistingIdx = this.forms.findIndex(form => form && form.serverFormId === msg.formId);
+
                 let i = this.forms.indexOf(null);
-                if (i === -1) {
+
+                if (alreadyEsistingIdx !== -1) {
+                    printConsole(`Actor ${msg.formId.toString(16)} already exists! Reusung `);
+                    i = alreadyEsistingIdx;
+                }
+                else if (i === -1) {
                     this.forms.push(null);
                     i = this.forms.length - 1;
                 }
 
                 this.forms[i] = {
                     serverFormId: msg.formId,
-                    movement: msg.mov
+                    movement: {
+                        pos: msg.transform.pos,
+                        rot: msg.transform.rot,
+                        worldOrCell: msg.transform.worldOrCell,
+                        runMode: "Standing",
+                        direction: 0,
+                        isInJumpState: false,
+                        isSneaking: false,
+                        isBlocking: false,
+                        isWeapDrawn: false
+                    }
                 };
 
                 if (msg.isMe) {
@@ -67,13 +99,13 @@ export class SkympClient {
 
                 // TODO: move to view
                 if (msg.isMe) {
-                    loadGame(msg.mov.pos, msg.mov.rot, msg.mov.worldOrCell);
+                    loadGame(msg.transform.pos, msg.transform.rot, msg.transform.worldOrCell);
                 }
             }
             else if (msgAny.type === 'destroyActor') {
                 let msg = msgAny as DestroyActorMessage;
 
-                let i = this.forms.findIndex(form => form.serverFormId === msg.formId);
+                let i = this.forms.findIndex(form => form && form.serverFormId === msg.formId);
                 if (i !== -1) {
                     this.forms[i] = null;
                 }
@@ -86,12 +118,16 @@ export class SkympClient {
                     Game.quitToMainMenu();
                 }
             }
-            else if (msgAny.type === 'updMov') {
+            else if (msgAny.t === MsgType.UpdateMovement) {
                 let msg = msgAny as UpdateMovementMessage;
 
-                let i = this.forms.findIndex(form => form.serverFormId === msg.formId);
+                let i = this.forms.findIndex(form => form && form.serverFormId === msg.formId);
                 if (i !== -1) {
-                    this.forms[i].movement = msg.mov;
+                    this.forms[i].movement = msg.data;
+                    if (!this.forms[i].numMovementChanges) {
+                        this.forms[i].numMovementChanges = 0;
+                    }
+                    this.forms[i].numMovementChanges++;
                 }
             }
         });
@@ -100,9 +136,11 @@ export class SkympClient {
     }    
 
     private sendMovement() {    
+        if (!this.myActorRemoteFormId) return;
+
         let now = Date.now();
         if (now - this.lastSendMovementMoment > sendMovementRateMs) {
-            networking.send({ t: MsgType.UpdateMovement, data: getMovement(Game.getPlayer()) }, false);
+            networking.send({ t: MsgType.UpdateMovement, data: getMovement(Game.getPlayer()), formId: this.myActorRemoteFormId }, false);
             this.lastSendMovementMoment = now;
         }
     }
@@ -113,27 +151,6 @@ export class SkympClient {
 
     private getWorldModel(): WorldModel {
         return { forms: this.forms, playerCharacterFormIdx: this.myActorIndex };
-        /*let refr = Game.getCurrentConsoleRef() || Game.getPlayer();
-        let refrId = refr.getFormID();
-
-        if (!this.animSources.has(refrId)) {
-            this.animSources.set(refrId, new AnimationSource(refr));
-        }
-        let animSource = this.animSources.get(refrId);
-
-        let pc: FormModel = { 
-            movement: getMovement(refr), 
-            baseId: refr.getBaseObject().getFormID(),
-            animation: animSource.getAnimation()
-        };
-
-        pc.movement.pos[0] += 128;
-        pc.movement.pos[1] += 128;
-        pc.movement.pos[2] += 0;
-
-        pc.movement = animSource.filterMovement(pc.movement);
-
-        return { forms: [pc], playerCharacterFormIdx: -1};*/
     }
 
     private resetView() {

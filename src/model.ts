@@ -5,6 +5,7 @@ export interface FormModel {
     baseId?: number;
     movement?: Movement;
     animation?: Animation;
+    numMovementChanges?: number;
 }
 
 export interface WorldModel {

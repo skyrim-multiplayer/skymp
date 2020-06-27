@@ -63,21 +63,41 @@ export class FormView implements View<FormModel> {
     }
 
     private applyAll(refr: ObjectReference, model: FormModel) {
-        if (model.movement) applyMovement(refr, model.movement);
+        if (model.movement) {
+            if (+model.numMovementChanges !== this.movState.lastNumChanges) {
+                applyMovement(refr, model.movement);
+                this.movState.lastNumChanges = +model.numMovementChanges;
+            }
+        }
         if (model.animation) applyAnimation(refr, model.animation, this.animState);
     }
 
     private refrId = 0;
     private ready = false;
     private animState = { lastNumChanges: 0 };
+    private movState = { lastNumChanges: 0 };
 }
 
 export class WorldView implements View<WorldModel> {
     update(model: WorldModel) {
         this.resize(model.forms.length);
 
+        const showMe = true;
+
         model.forms.forEach((form, i) => {
-            form ? this.updateForm(form, i) : this.destroyForm(i);
+            if (!form || (model.playerCharacterFormIdx === i && !showMe)) {
+                return this.destroyForm(i);
+            }
+
+            let realPos: NiPoint3;
+            if (model.playerCharacterFormIdx === i && form.movement) {
+                realPos = form.movement.pos;
+                form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
+            }
+            this.updateForm(form, i);
+            if (model.playerCharacterFormIdx === i && form.movement) {
+                form.movement.pos = realPos;
+            }
         });
     }
 
