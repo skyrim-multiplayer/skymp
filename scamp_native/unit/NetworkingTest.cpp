@@ -200,25 +200,29 @@ TEST_CASE("HandlePacketServerside", "[Networking]")
 
   // Disconnection
   for (uint8_t t : { ID_DISCONNECTION_NOTIFICATION, ID_CONNECTION_LOST }) {
-    IdManager idManager(100);
+    static std::shared_ptr<IdManager> idManager;
+    idManager.reset(new IdManager(100));
+
     packet.data = new uint8_t[1]{ t };
     packet.length = 1;
     packet.guid = RakNetGUID(222);
-    idManager.allocateId(packet.guid);
+    idManager->allocateId(packet.guid);
     bool called = false;
     Networking::HandlePacketServerside(
       [](void* called, Networking::UserId userId,
          Networking::PacketType packetType, Networking::PacketData data,
          size_t length) {
         *reinterpret_cast<bool*>(called) = true;
+        REQUIRE(idManager->find(0) == RakNetGUID(222));
         REQUIRE(userId == 0);
         REQUIRE(length == 0);
         REQUIRE(data == nullptr);
         REQUIRE(packetType ==
                 Networking::PacketType::ServerSideUserDisconnect);
       },
-      &called, &packet, idManager);
+      &called, &packet, *idManager);
     REQUIRE(called);
+    REQUIRE(idManager->find(0) == RakNetGUID(-1));
   }
 
   // Connection

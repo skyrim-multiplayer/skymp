@@ -36,10 +36,16 @@ public:
                            Networking::PacketType packetType,
                            Networking::PacketData data, size_t length);
 
+  void PushServer(Networking::IServer* server);
+
 private:
+  Networking::IServer* PopServer();
+
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
+
+  Networking::IServer* pushedServer = nullptr;
 };

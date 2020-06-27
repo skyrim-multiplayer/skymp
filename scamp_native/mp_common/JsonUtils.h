@@ -24,7 +24,7 @@ private:
 template <class Key, class Value>
 void Read(const simdjson::dom::element& j, Key key, Value* out)
 {
-  auto v = j[key];
+  auto v = j.at(key);
   if (v.error() != simdjson::error_code::SUCCESS)
     throw JsonIndexException(j, key, v.error());
 

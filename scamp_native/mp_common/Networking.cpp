@@ -216,9 +216,9 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
            << "Unexpected disconnection for system without userId (guid="
            << packet->guid.g << ")")
             .str());
-      idManager.freeId(userId);
       onPacket(state, userId, Networking::PacketType::ServerSideUserDisconnect,
                nullptr, 0);
+      idManager.freeId(userId);
       break;
     case ID_NEW_INCOMING_CONNECTION:
       userId = idManager.allocateId(packet->guid);

@@ -10,6 +10,7 @@ set(ports
   simdjson:x64-windows-static
   spdlog:x64-windows-static
   slikenet:x64-windows-static
+  boost-bimap:x64-windows-static
 )
 foreach(port ${ports})
   message(STATUS "Installing ${port}")
