@@ -196,6 +196,17 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
       }
       break;
     }
+    case MsgType::UpdateAnimation: {
+      if (MpActor* actor = pImpl->serverState.ActorByUser(userId)) {
+        for (auto listener : actor->GetListeners()) {
+          auto targetuserId = pImpl->serverState.UserByActor(listener);
+          if (targetuserId == Networking::InvalidUserId)
+            return;
+          pushedSendTarget->Send(targetuserId, data, length, false);
+        }
+      }
+      break;
+    }
     case MsgType::UpdateMovement: {
       simdjson::dom::element data_;
       Read(jMessage, "data", &data_);
