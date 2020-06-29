@@ -16,24 +16,24 @@ enum MsgType {
 
 interface CreateActorMessage {
     type: 'createActor';
-    formId: number;
+    idx: number;
     transform: Transform;
     isMe: boolean;
 }
 
 interface DestroyActorMessage {
     type: 'destroyActor';
-    formId: number;
+    idx: number;
 }
 
 interface UpdateMovementMessage {
     t: MsgType.UpdateMovement;
-    formId: number;
+    idx: number;
     data: Movement;
 }
 
 interface FormModelInfo extends FormModel {
-    serverFormId: number;
+    // ...
 }
 
 export class SkympClient {
@@ -54,7 +54,6 @@ export class SkympClient {
 
         networking.on('connectionAccepted', () => {
             this.forms = [];
-            this.myActorRemoteFormId = 0;
             this.myActorIndex = -1;
         });
 
@@ -64,21 +63,11 @@ export class SkympClient {
             if (msgAny.type === 'createActor') {
                 let msg = msgAny as CreateActorMessage;
 
-                let alreadyEsistingIdx = this.forms.findIndex(form => form && form.serverFormId === msg.formId);
-
-                let i = this.forms.indexOf(null);
-
-                if (alreadyEsistingIdx !== -1) {
-                    printConsole(`Actor ${msg.formId.toString(16)} already exists! Reusung `);
-                    i = alreadyEsistingIdx;
-                }
-                else if (i === -1) {
-                    this.forms.push(null);
-                    i = this.forms.length - 1;
-                }
+                let i = msg.idx;
+                if (this.forms.length <= i)
+                    this.forms.length = i + 1;
 
                 this.forms[i] = {
-                    serverFormId: msg.formId,
                     movement: {
                         pos: msg.transform.pos,
                         rot: msg.transform.rot,
@@ -92,10 +81,8 @@ export class SkympClient {
                     }
                 };
 
-                if (msg.isMe) {
-                    this.myActorRemoteFormId = msg.formId;
+                if (msg.isMe)
                     this.myActorIndex = i;
-                }
 
                 // TODO: move to view
                 if (msg.isMe) {
@@ -105,13 +92,10 @@ export class SkympClient {
             else if (msgAny.type === 'destroyActor') {
                 let msg = msgAny as DestroyActorMessage;
 
-                let i = this.forms.findIndex(form => form && form.serverFormId === msg.formId);
-                if (i !== -1) {
-                    this.forms[i] = null;
-                }
+                let i = msg.idx;
+                this.forms[i] = null;
 
-                if (this.myActorRemoteFormId === msg.formId) {
-                    this.myActorRemoteFormId = 0;
+                if (this.myActorIndex === msg.idx) {
                     this.myActorIndex = -1;
 
                     // TODO: move to view
@@ -121,14 +105,12 @@ export class SkympClient {
             else if (msgAny.t === MsgType.UpdateMovement) {
                 let msg = msgAny as UpdateMovementMessage;
 
-                let i = this.forms.findIndex(form => form && form.serverFormId === msg.formId);
-                if (i !== -1) {
-                    this.forms[i].movement = msg.data;
-                    if (!this.forms[i].numMovementChanges) {
-                        this.forms[i].numMovementChanges = 0;
-                    }
-                    this.forms[i].numMovementChanges++;
+                let i = msg.idx;
+                this.forms[i].movement = msg.data;
+                if (!this.forms[i].numMovementChanges) {
+                    this.forms[i].numMovementChanges = 0;
                 }
+                this.forms[i].numMovementChanges++;
             }
         });
 
@@ -136,11 +118,11 @@ export class SkympClient {
     }    
 
     private sendMovement() {    
-        if (!this.myActorRemoteFormId) return;
+        if (this.myActorIndex === -1) return;
 
         let now = Date.now();
         if (now - this.lastSendMovementMoment > sendMovementRateMs) {
-            networking.send({ t: MsgType.UpdateMovement, data: getMovement(Game.getPlayer()), formId: this.myActorRemoteFormId }, false);
+            networking.send({ t: MsgType.UpdateMovement, data: getMovement(Game.getPlayer()), idx: this.myActorIndex }, false);
             this.lastSendMovementMoment = now;
         }
     }
@@ -175,6 +157,5 @@ export class SkympClient {
     private lastSendMovementMoment = 0;
     private lastNumAnimChanges = 0;
     private forms = new Array<FormModelInfo>();
-    private myActorRemoteFormId = 0;
     private myActorIndex = -1;
 }
