@@ -2,6 +2,7 @@
 #include "Grid.h"
 #include "GridElement.h"
 #include "NiPoint3.h"
+#include <MakeID.h>
 #include <algorithm>
 #include <sparsepp/spp.h>
 #include <sstream>
@@ -37,9 +38,20 @@ struct LocationalData
   uint32_t cellOrWorld;
 };
 
+class FormIndex
+{
+public:
+  constexpr static uint32_t g_invalidIdx = (uint32_t)-1;
+
+  const auto& GetIdx() { return idx; }
+
+  uint32_t idx = g_invalidIdx;
+};
+
 class MpActor
   : public MpForm
   , private LocationalData
+  , public FormIndex
 {
 public:
   using SubscribeCallback =
@@ -106,6 +118,14 @@ public:
     }
     form->formId = formId;
     form->parent = this;
+
+    if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
+      if (!formIdxManager)
+        formIdxManager.reset(new MakeID(FormIndex::g_invalidIdx - 1));
+      if (!formIdxManager->CreateID(formIndex->idx))
+        throw std::runtime_error("CreateID failed");
+    }
+
     f = std::move(form);
   }
 
@@ -135,6 +155,11 @@ public:
 
     it->second->BeforeDestroy();
 
+    if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
+      if (formIdxManager && !formIdxManager->DestroyID(formIndex->idx))
+        throw std::runtime_error("DestroyID failed");
+    }
+
     forms.erase(it);
   }
 
@@ -151,6 +176,7 @@ public:
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, Grid<MpActor*>> grids;
+  std::unique_ptr<MakeID> formIdxManager;
 };
 
 inline std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept

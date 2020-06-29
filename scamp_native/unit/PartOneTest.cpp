@@ -208,7 +208,7 @@ TEST_CASE("SetUserActor", "[PartOne]")
   REQUIRE(tgt.messages.size() == 1);
   REQUIRE(tgt.messages.at(0).j.dump() ==
           nlohmann::json{ { "type", "createActor" },
-                          { "formId", 0xff000ABC },
+                          { "idx", 0 },
                           { "isMe", true },
                           { "transform",
                             nlohmann::json{ { "pos", { 1.f, 2.f, 3.f } },
@@ -260,7 +260,7 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   partOne.pushedSendTarget = &tgt;
 
   auto jMovement = nlohmann::json{ { "t", MsgType::UpdateMovement },
-                                   { "formId", 0xff000ABC },
+                                   { "idx", 0 },
                                    { "data",
                                      { { "worldOrCell", 0x3c },
                                        { "pos", { 0, 0, 0 } },
@@ -292,24 +292,22 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   tgt = {};
   partOne.SetUserActor(1, 0xff00ABCD, &tgt);
   REQUIRE(tgt.messages.size() == 3);
-  // Create ABCD for user 0, then ABC for 1, then ABCD for 1 (self streaming)
+  // Create idx 1 for user 0, then idx 0 for 1, then idx 1 for 1 (self
+  // streaming)
   REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
                        [&](FakeSendTarget::Message m) {
                          return m.j["type"] == "createActor" &&
-                           m.j["formId"] == 0xff00ABCD && m.reliable &&
-                           m.userId == 0;
+                           m.j["idx"] == 1 && m.reliable && m.userId == 0;
                        }) != tgt.messages.end());
   REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
                        [&](FakeSendTarget::Message m) {
                          return m.j["type"] == "createActor" &&
-                           m.j["formId"] == 0xff000ABC && m.reliable &&
-                           m.userId == 1;
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1;
                        }) != tgt.messages.end());
   REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
                        [&](FakeSendTarget::Message m) {
                          return m.j["type"] == "createActor" &&
-                           m.j["formId"] == 0xff00ABCD && m.reliable &&
-                           m.userId == 1;
+                           m.j["idx"] == 1 && m.reliable && m.userId == 1;
                        }) != tgt.messages.end());
 
   tgt = {};
@@ -327,13 +325,11 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
                        [&](FakeSendTarget::Message m) {
                          return m.j["type"] == "destroyActor" &&
-                           m.j["formId"] == 0xff00ABCD && m.reliable &&
-                           m.userId == 0;
+                           m.j["idx"] == 1 && m.reliable && m.userId == 0;
                        }) != tgt.messages.end());
   REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
                        [&](FakeSendTarget::Message m) {
                          return m.j["type"] == "destroyActor" &&
-                           m.j["formId"] == 0xff000ABC && m.reliable &&
-                           m.userId == 1;
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1;
                        }) != tgt.messages.end());
 }

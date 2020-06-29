@@ -61,10 +61,10 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
     data[0] = Networking::MinPacketId;
     auto len = (size_t)snprintf(
       data + 1, std::size(data) - 1,
-      R"({"type": "createActor", "formId": %u, "isMe": %s, "transform": {"pos": [%f,%f,%f],
+      R"({"type": "createActor", "idx": %u, "isMe": %s, "transform": {"pos": [%f,%f,%f],
     "rot": [%f,%f,%f], "worldOrCell": %u}})",
-      emitter->GetFormId(), isMe ? "true" : "false", emitterPos.x,
-      emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
+      emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x, emitterPos.y,
+      emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
       emitter->GetCellOrWorld());
 
     auto listenerUserId = serverState->UserByActor(listener);
@@ -78,8 +78,8 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
     char data[1024] = { 0 };
     data[0] = Networking::MinPacketId;
     auto len = (size_t)snprintf(data + 1, std::size(data) - 1,
-                                R"({"type": "destroyActor", "formId": %u})",
-                                emitter->GetFormId());
+                                R"({"type": "destroyActor", "idx": %u})",
+                                emitter->GetIdx());
 
     auto listenerUserId = serverState->UserByActor(listener);
     if (listenerUserId != Networking::InvalidUserId)
@@ -199,13 +199,13 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
     case MsgType::UpdateMovement: {
       simdjson::dom::element data_;
       Read(jMessage, "data", &data_);
-      int64_t formId = 0;
-      Read(jMessage, "formId", &formId);
+      int64_t idx = 0;
+      Read(jMessage, "idx", &idx);
       if (MpActor* actor = pImpl->serverState.ActorByUser(userId)) {
-        if (formId != actor->GetFormId()) {
+        if (idx != actor->GetIdx()) {
           std::stringstream ss;
-          ss << std::hex << "You aren't able to update actor with id "
-             << formId << " (your actor's id is " << actor->GetFormId() << ')';
+          ss << std::hex << "You aren't able to update actor with idx " << idx
+             << " (your actor's idx is " << actor->GetIdx() << ')';
           throw PublicError(ss.str());
         }
 
