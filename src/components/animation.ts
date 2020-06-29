@@ -10,9 +10,23 @@ export interface AnimationApplyState {
     lastNumChanges: number;
 }
 
+
+let isIdle = (animEventName: string) => {
+    return animEventName === 'MotionDrivenIdle'
+        || (animEventName.startsWith('Idle') 
+        && animEventName !== 'IdleStop' 
+        && animEventName !== 'IdleForceDefaultState');
+}
+
+let allowedIdles = new Array<[number, string]>();
+
 export let applyAnimation = (refr: ObjectReference, anim: Animation, state: AnimationApplyState) => {
     if (state.lastNumChanges === anim.numChanges) return;
     state.lastNumChanges = anim.numChanges;
+
+    if (isIdle(anim.animEventName)) {
+        allowedIdles.push([refr.getFormID(), anim.animEventName]);
+    }
 
     Debug.sendAnimationEvent(refr, anim.animEventName);
 };
@@ -90,3 +104,21 @@ let ignoredAnims = new Set<string>([
     'TurnLeft',
     'TurnRightdddw'
 ]);
+
+export let setupHooks = () => {
+    // Disable idle animations for 0xff actors
+    hooks.sendAnimationEvent.add({
+        enter: (ctx) => {
+            if (ctx.selfId < 0xff000000) return;
+            if (isIdle(ctx.animEventName)) {
+                let i = allowedIdles.findIndex((pair) => {
+                    return pair[0] === ctx.selfId && pair[1] === ctx.animEventName;
+                });
+                i === -1 ? ctx.animEventName = '' : allowedIdles.splice(i, 1);
+            }
+        },
+        leave: () => {
+
+        }
+    });
+};

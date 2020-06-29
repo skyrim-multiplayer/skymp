@@ -2,11 +2,10 @@ import { on, once, printConsole, storage, Game, loadGame, SoulGem } from 'skyrim
 import { WorldView } from './view';
 import { WorldModel, FormModel } from './model';
 import { getMovement, Movement, Transform } from './components/movement';
-import { AnimationSource } from './components/animation';
+import { AnimationSource, Animation, setupHooks } from './components/animation';
 import * as networking from './networking';
-import * as miscHacks from './miscHacks';
 
-const sendMovementRateMs = 200;
+const sendMovementRateMs = 130;
 
 enum MsgType {
     CustomPacket = 1,
@@ -32,6 +31,12 @@ interface UpdateMovementMessage {
     data: Movement;
 }
 
+interface UpdateAnimationMessage {
+    t: MsgType.UpdateAnimation;
+    idx: number;
+    data: Animation;
+}
+
 interface FormModelInfo extends FormModel {
     // ...
 }
@@ -40,7 +45,7 @@ export class SkympClient {
     constructor() {
         this.helloWorld();
         this.resetView();
-        miscHacks.setup();
+        setupHooks();
 
         networking.connect('127.0.0.1', 7777);
 
@@ -112,6 +117,12 @@ export class SkympClient {
                 }
                 this.forms[i].numMovementChanges++;
             }
+            else if (msgAny.t === MsgType.UpdateAnimation) {
+                let msg = msgAny as UpdateAnimationMessage;
+
+                let i = msg.idx;
+                this.forms[i].animation = msg.data;
+            }
         });
 
         on('update', () => { this.sendInputs(); });
@@ -127,8 +138,22 @@ export class SkympClient {
         }
     }
 
+    private sendAnimation() {
+        if (!this.playerAnimSource) {
+            this.playerAnimSource = new AnimationSource(Game.getPlayer());
+        }
+        let anim = this.playerAnimSource.getAnimation();
+        if (!this.lastAnimationSent || anim.numChanges !== this.lastAnimationSent.numChanges) {
+            if (anim.animEventName !== '') {
+                this.lastAnimationSent = anim;
+                networking.send({ t: MsgType.UpdateAnimation, data: anim, idx: this.myActorIndex }, false);
+            }
+        }
+    }
+
     private sendInputs() {
         this.sendMovement();
+        this.sendAnimation();
     }
 
     private getWorldModel(): WorldModel {
@@ -153,9 +178,9 @@ export class SkympClient {
         printConsole('Hello Multiplayer');
     }
 
-    private animSources = new Map<number, AnimationSource>();
+    private playerAnimSource?: AnimationSource;
     private lastSendMovementMoment = 0;
-    private lastNumAnimChanges = 0;
+    private lastAnimationSent?: Animation;
     private forms = new Array<FormModelInfo>();
     private myActorIndex = -1;
 }

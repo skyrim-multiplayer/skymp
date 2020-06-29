@@ -74,7 +74,7 @@ let applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean) => {
 
 let translateTo = (refr: ObjectReference, m: Movement) => {
     let distance = getDistance(getPos(refr), m.pos);
-    let time = 0.2;
+    let time = m.runMode === 'Standing' ? 0.1 : 0.2;
     let speed = distance / time;
 
     let angleDiff = Math.abs(m.rot[2] - refr.getAngleZ());
