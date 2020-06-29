@@ -24,6 +24,8 @@ protected:
   auto GetParent() const { return parent; }
 
 private:
+  virtual void BeforeDestroy(){};
+
   // Assigned by WorldState::AddForm
   uint32_t formId = 0;
   WorldState* parent = nullptr;
@@ -52,7 +54,7 @@ public:
     static_cast<LocationalData&>(*this) = locationalData_;
   }
 
-  ~MpActor();
+  ~MpActor() = default;
 
   const auto& GetPos() { return pos; }
   const auto& GetAngle() { return rot; }
@@ -79,6 +81,8 @@ public:
   auto& GetListeners() const { return listeners; }
 
 private:
+  void BeforeDestroy() override;
+
   bool isOnGrid = false;
   std::set<MpActor*> listeners;
   std::set<MpActor*> emitters;
@@ -95,9 +99,10 @@ public:
   {
     auto& f = forms[formId];
     if (f) {
-      std::stringstream ss;
-      ss << "Form with id " << std::hex << formId << " already exists";
-      throw std::runtime_error(ss.str());
+      throw std::runtime_error((std::stringstream()
+                                << "Form with id " << std::hex << formId
+                                << " already exists")
+                                 .str());
     }
     form->formId = formId;
     form->parent = this;
@@ -110,22 +115,26 @@ public:
   {
     auto it = forms.find(formId);
     if (it == forms.end()) {
-      std::stringstream ss;
-      ss << "Form with id " << std::hex << formId << "doesn't exist";
-      throw std::runtime_error(ss.str());
+      throw std::runtime_error((std::stringstream()
+                                << "Form with id " << std::hex << formId
+                                << " doesn't exist")
+                                 .str());
     }
 
     auto& [formId_, form] = *it;
     if (!dynamic_cast<FormType*>(form.get())) {
-      std::stringstream ss;
-      ss << "Expected form " << std::hex << formId << " to be "
-         << typeid(FormType).name() << ", but got "
-         << typeid(*form.get()).name();
-      throw std::runtime_error(ss.str());
+      throw std::runtime_error((std::stringstream()
+                                << "Expected form " << std::hex << formId
+                                << " to be " << typeid(FormType).name()
+                                << ", but got " << typeid(*form.get()).name())
+                                 .str());
     }
 
     if (outDestroyedForm)
       *outDestroyedForm = std::dynamic_pointer_cast<FormType>(it->second);
+
+    it->second->BeforeDestroy();
+
     forms.erase(it);
   }
 
@@ -139,15 +148,6 @@ public:
     return it->second;
   }
 
-  template <class F>
-  void ForEachNeighbour(uint32_t worldOrCell, int16_t gridX, int16_t gridY,
-                        F f)
-  {
-    auto& neighbours = grids[worldOrCell].GetNeighbours(gridX, gridY);
-    for (auto nei : neighbours)
-      f(nei);
-  }
-
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, Grid<MpActor*>> grids;
@@ -156,19 +156,6 @@ private:
 inline std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 {
   return { int16_t(pos.x / 4096), int16_t(pos.y / 4096) };
-}
-
-inline MpActor::~MpActor()
-{
-  GetParent()->grids[cellOrWorld].Forget(this);
-
-  auto listenersCopy = listeners;
-  for (auto listener : listenersCopy)
-    Unsubscribe(this, listener);
-
-  auto emittersCopy = emitters;
-  for (auto emitter : emittersCopy)
-    Unsubscribe(emitter, this);
 }
 
 inline void MpActor::SetPos(const NiPoint3& newPos)
@@ -189,7 +176,8 @@ inline void MpActor::SetPos(const NiPoint3& newPos)
                         std::inserter(toRemove, toRemove.begin()));
     for (auto listener : toRemove) {
       Unsubscribe(this, listener);
-      Unsubscribe(listener, this);
+      if (listener != this)
+        Unsubscribe(listener, this);
     }
 
     std::vector<MpActor*> toAdd;
@@ -197,7 +185,8 @@ inline void MpActor::SetPos(const NiPoint3& newPos)
                         std::inserter(toAdd, toAdd.begin()));
     for (auto listener : toAdd) {
       Subscribe(this, listener);
-      Subscribe(listener, this);
+      if (listener != this)
+        Subscribe(listener, this);
     }
   }
   pos = newPos;
@@ -206,4 +195,17 @@ inline void MpActor::SetPos(const NiPoint3& newPos)
 inline void MpActor::SetAngle(const NiPoint3& newAngle)
 {
   rot = newAngle;
+}
+
+inline void MpActor::BeforeDestroy()
+{
+  GetParent()->grids[cellOrWorld].Forget(this);
+
+  auto listenersCopy = listeners;
+  for (auto listener : listenersCopy)
+    Unsubscribe(this, listener);
+
+  auto emittersCopy = emitters;
+  for (auto emitter : emittersCopy)
+    Unsubscribe(emitter, this);
 }

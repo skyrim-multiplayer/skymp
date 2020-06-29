@@ -23,7 +23,7 @@ skymp_execute_process(
   CPPCOV_TAG ${tag}
   CPPCOV_PATH ${OPENCPPCOV_DIR}
   CPPCOV_MODULES *
-  CPPCOV_SOURCES *\\mp_common\\*
+  CPPCOV_SOURCES *\\mp_common\\* *\\server_guest_lib\\*
   CPPCOV_OUTPUT_DIRECTORY ${COVERAGE_HTML_OUT_DIR}
   OUT_EXIT_CODE EXIT_CODE
   OUT_STDOUT STDOUT

@@ -129,7 +129,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
 {
   tickEnv = info.Env();
-  partOne->PushServer(server.get());
+  partOne->pushedSendTarget = server.get();
   server->Tick(PartOne::HandlePacket, partOne.get());
   return info.Env().Undefined();
 }

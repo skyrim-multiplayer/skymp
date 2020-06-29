@@ -1,6 +1,7 @@
 #pragma once
 #include "Networking.h"
 #include "NiPoint3.h"
+#include "WorldState.h"
 #include <memory>
 #include <simdjson.h>
 
@@ -19,6 +20,7 @@ public:
 
   PartOne();
   PartOne(std::shared_ptr<Listener> listener);
+  ~PartOne();
 
   void AddListener(std::shared_ptr<Listener> listener);
 
@@ -26,9 +28,9 @@ public:
 
   // API
   void CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
-                   uint32_t cellOrWorld, Networking::IServer* svr);
+                   uint32_t cellOrWorld, Networking::ISendTarget* sendTarget);
   void SetUserActor(Networking::UserId userId, uint32_t actorFormId,
-                    Networking::IServer* svr);
+                    Networking::ISendTarget* sendTarget);
   uint32_t GetUserActor(Networking::UserId userId);
   void DestroyActor(uint32_t actorFormId);
 
@@ -36,16 +38,13 @@ public:
                            Networking::PacketType packetType,
                            Networking::PacketData data, size_t length);
 
-  void PushServer(Networking::IServer* server);
+  WorldState worldState;
+  Networking::ISendTarget* pushedSendTarget = nullptr;
 
 private:
-  Networking::IServer* PopServer();
-
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
-
-  Networking::IServer* pushedServer = nullptr;
 };

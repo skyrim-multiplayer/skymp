@@ -43,16 +43,20 @@ public:
   virtual bool IsConnected() const = 0;
 };
 
-class IServer
+class ISendTarget
+{
+public:
+  virtual void Send(UserId targetUserId, PacketData data, size_t length,
+                    bool reliable) = 0;
+};
+
+class IServer : public ISendTarget
 {
 public:
   typedef void (*OnPacket)(void* state, UserId userId, PacketType packetType,
                            PacketData data, size_t length);
 
   virtual ~IServer() = default;
-
-  virtual void Send(UserId targetUserId, PacketData data, size_t length,
-                    bool reliable) = 0;
 
   virtual void Tick(OnPacket onPacket, void* state) = 0;
 };

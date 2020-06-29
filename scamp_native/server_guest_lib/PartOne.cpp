@@ -12,7 +12,6 @@
 struct PartOne::Impl
 {
   ServerState serverState;
-  WorldState worldState;
   simdjson::dom::parser parser;
   std::vector<std::shared_ptr<Listener>> listeners;
 };
@@ -28,6 +27,13 @@ PartOne::PartOne(std::shared_ptr<Listener> listener)
   AddListener(listener);
 }
 
+PartOne::~PartOne()
+{
+  // worldState may depend on serverState (actorsMap), we should reset it first
+  worldState = {};
+  pImpl->serverState = {};
+}
+
 void PartOne::AddListener(std::shared_ptr<Listener> listener)
 {
   pImpl->listeners.push_back(listener);
@@ -39,11 +45,13 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 }
 
 void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
-                          uint32_t cellOrWorld, Networking::IServer* svr)
+                          uint32_t cellOrWorld,
+                          Networking::ISendTarget* sendTarget)
 {
   auto serverState = &pImpl->serverState;
 
-  auto onSubscribe = [svr, serverState](MpActor* emitter, MpActor* listener) {
+  auto onSubscribe = [sendTarget, serverState](MpActor* emitter,
+                                               MpActor* listener) {
     auto& emitterPos = emitter->GetPos();
     auto& emitterRot = emitter->GetAngle();
 
@@ -60,12 +68,13 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
       emitter->GetCellOrWorld());
 
     auto listenerUserId = serverState->UserByActor(listener);
-    svr->Send(listenerUserId, reinterpret_cast<Networking::PacketData>(data),
-              len + 1, true);
+    sendTarget->Send(listenerUserId,
+                     reinterpret_cast<Networking::PacketData>(data), len + 1,
+                     true);
   };
 
-  auto onUnsubscribe = [svr, serverState](MpActor* emitter,
-                                          MpActor* listener) {
+  auto onUnsubscribe = [sendTarget, serverState](MpActor* emitter,
+                                                 MpActor* listener) {
     char data[1024] = { 0 };
     data[0] = Networking::MinPacketId;
     auto len = (size_t)snprintf(data + 1, std::size(data) - 1,
@@ -74,25 +83,26 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
 
     auto listenerUserId = serverState->UserByActor(listener);
     if (listenerUserId != Networking::InvalidUserId)
-      svr->Send(listenerUserId, reinterpret_cast<Networking::PacketData>(data),
-                len + 1, true);
+      sendTarget->Send(listenerUserId,
+                       reinterpret_cast<Networking::PacketData>(data), len + 1,
+                       true);
   };
 
-  pImpl->worldState.AddForm(
+  worldState.AddForm(
     std::unique_ptr<MpActor>(new MpActor(
       { pos, { 0, 0, angleZ }, cellOrWorld }, onSubscribe, onUnsubscribe)),
     formId);
 }
 
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
-                           Networking::IServer* svr)
+                           Networking::ISendTarget* sendTarget)
 {
   if (!pImpl->serverState.userInfo[userId])
     throw std::runtime_error("User with id " + std::to_string(userId) +
                              " doesn't exist");
 
   if (actorFormId > 0) {
-    auto form = pImpl->worldState.LookupFormById(actorFormId);
+    auto form = worldState.LookupFormById(actorFormId);
     if (!form) {
       std::stringstream ss;
       ss << "Form with id " << std::hex << actorFormId << " doesn't exist";
@@ -111,33 +121,8 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
     // Hacky way to force self-subscribing
     actor->SetPos(actor->GetPos());
   } else {
-    pImpl->serverState.actorsMap.insert({ userId, nullptr });
+    pImpl->serverState.actorsMap.left.erase(userId);
   }
-
-  /*{
-    char data[1024] = { 0 };
-    data[0] = Networking::MinPacketId;
-    auto len = (size_t)snprintf(data + 1, std::size(data) - 1,
-                                R"({"type": "setUserActor", "formId": %u})",
-                                actorFormId);
-    svr->Send(userId, reinterpret_cast<Networking::PacketData>(data), len + 1,
-              true);
-  }
-
-  if (auto ac = pImpl->serverState.ActorByUser(userId)) {
-    auto& pos = ac->GetPos();
-    auto& angle = ac->GetAngle();
-    auto& cellOrWorld = ac->GetCellOrWorld();
-
-    char data[1024] = { 0 };
-    data[0] = Networking::MinPacketId;
-    auto len = (size_t)snprintf(
-      data + 1, std::size(data) - 1,
-      R"({"type": "moveTo", "formId": %u, "pos": [%f,%f,%f], "rot": [%f,%f,%f],
-  "cellOrWorld": %u})", actorFormId, pos.x, pos.y, pos.z, angle.x, angle.y,
-  angle.z, cellOrWorld); svr->Send(userId,
-  reinterpret_cast<Networking::PacketData>(data), len + 1, true);
-  }*/
 }
 
 uint32_t PartOne::GetUserActor(Networking::UserId userId)
@@ -156,10 +141,9 @@ uint32_t PartOne::GetUserActor(Networking::UserId userId)
 void PartOne::DestroyActor(uint32_t actorFormId)
 {
   std::shared_ptr<MpActor> destroyedForm;
-  pImpl->worldState.DestroyForm<MpActor>(actorFormId, &destroyedForm);
+  worldState.DestroyForm<MpActor>(actorFormId, &destroyedForm);
 
-  size_t n = pImpl->serverState.actorsMap.right.erase(destroyedForm.get());
-  assert(n == 1);
+  pImpl->serverState.actorsMap.right.erase(destroyedForm.get());
 }
 
 void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
@@ -185,16 +169,6 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
       throw std::runtime_error("Unexpected PacketType: " +
                                std::to_string((int)packetType));
   }
-}
-
-void PartOne::PushServer(Networking::IServer* server)
-{
-  pushedServer = server;
-}
-
-Networking::IServer* PartOne::PopServer()
-{
-  return pushedServer;
 }
 
 void PartOne::HandleMessagePacket(Networking::UserId userId,
@@ -234,7 +208,6 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
              << formId << " (your actor's id is " << actor->GetFormId() << ')';
           throw PublicError(ss.str());
         }
-        // auto [x, y] = GetGridPos(actor->GetPos());
 
         {
           simdjson::dom::element jPos;
@@ -254,21 +227,12 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
         }
 
         // Send my movement to all
-        auto svr = PopServer();
         for (auto listener : actor->GetListeners()) {
           auto targetuserId = pImpl->serverState.UserByActor(listener);
           if (targetuserId == Networking::InvalidUserId)
             return;
-          svr->Send(targetuserId, data, length, false);
+          pushedSendTarget->Send(targetuserId, data, length, false);
         }
-
-        /*pImpl->worldState.ForEachNeighbour(
-          actor->GetCellOrWorld(), x, y, [&](MpActor* nei) {
-            auto targetuserId = pImpl->serverState.UserByActor(nei);
-            if (targetuserId == Networking::InvalidUserId)
-              return;
-            svr->Send(targetuserId, data, length, false);
-          });*/
       }
       break;
     }
