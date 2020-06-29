@@ -263,8 +263,8 @@ TEST_CASE("UpdateMovement", "[PartOne]")
                                    { "idx", 0 },
                                    { "data",
                                      { { "worldOrCell", 0x3c },
-                                       { "pos", { 0, 0, 0 } },
-                                       { "rot", { 0, 0, 0 } },
+                                       { "pos", { 1, -1, 1 } },
+                                       { "rot", { 0, 0, 179 } },
                                        { "runMode", "Standing" },
                                        { "direction", 0 },
                                        { "isInJumpState", false },
@@ -285,6 +285,14 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   doMovement();
   REQUIRE(tgt.messages.size() == 1);
   REQUIRE(tgt.messages.at(0).j.dump() == jMovement.dump());
+
+  // UpdateMovement actually changes position and rotation
+  REQUIRE(
+    dynamic_cast<MpActor*>(partOne.worldState.LookupFormById(0xff000ABC).get())
+      ->GetPos() == NiPoint3{ 1, -1, 1 });
+  REQUIRE(
+    dynamic_cast<MpActor*>(partOne.worldState.LookupFormById(0xff000ABC).get())
+      ->GetAngle() == NiPoint3{ 0, 0, 179 });
 
   // Another player connects and see us
   DoConnect(partOne, 1);
