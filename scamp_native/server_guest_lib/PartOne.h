@@ -42,6 +42,11 @@ public:
   Networking::ISendTarget* pushedSendTarget = nullptr;
 
 private:
+  // Returns user's actor if present
+  MpActor* SendToNeighbours(const simdjson::dom::element& jMessage,
+                            Networking::UserId userId,
+                            Networking::PacketData data, size_t length);
+
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
 

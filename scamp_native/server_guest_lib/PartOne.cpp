@@ -171,6 +171,43 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
   }
 }
 
+MpActor* PartOne::SendToNeighbours(const simdjson::dom::element& jMessage,
+                                   Networking::UserId userId,
+                                   Networking::PacketData data, size_t length)
+{
+  int64_t idx;
+  Read(jMessage, "idx", &idx);
+
+  MpActor* actor = pImpl->serverState.ActorByUser(userId);
+
+  if (actor) {
+    if (idx != actor->GetIdx()) {
+      std::stringstream ss;
+      ss << std::hex << "You aren't able to update actor with idx " << idx
+         << " (your actor's idx is " << actor->GetIdx() << ')';
+      throw PublicError(ss.str());
+    }
+
+    for (auto listener : actor->GetListeners()) {
+      auto targetuserId = pImpl->serverState.UserByActor(listener);
+
+      /*
+      Actually targetuserId is always valid here
+      See test case in PartOneTest.cpp:
+
+      TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor
+      without user present",
+          "[PartOne]")
+      */
+      assert(targetuserId != Networking::InvalidUserId);
+
+      pushedSendTarget->Send(targetuserId, data, length, false);
+    }
+  }
+
+  return actor;
+}
+
 void PartOne::HandleMessagePacket(Networking::UserId userId,
                                   Networking::PacketData data, size_t length)
 {
@@ -197,53 +234,30 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
       break;
     }
     case MsgType::UpdateAnimation: {
-      if (MpActor* actor = pImpl->serverState.ActorByUser(userId)) {
-        for (auto listener : actor->GetListeners()) {
-          auto targetuserId = pImpl->serverState.UserByActor(listener);
-          if (targetuserId == Networking::InvalidUserId)
-            return;
-          pushedSendTarget->Send(targetuserId, data, length, false);
-        }
-      }
+      SendToNeighbours(jMessage, userId, data, length);
       break;
     }
     case MsgType::UpdateMovement: {
       simdjson::dom::element data_;
       Read(jMessage, "data", &data_);
-      int64_t idx = 0;
-      Read(jMessage, "idx", &idx);
-      if (MpActor* actor = pImpl->serverState.ActorByUser(userId)) {
-        if (idx != actor->GetIdx()) {
-          std::stringstream ss;
-          ss << std::hex << "You aren't able to update actor with idx " << idx
-             << " (your actor's idx is " << actor->GetIdx() << ')';
-          throw PublicError(ss.str());
-        }
 
-        {
-          simdjson::dom::element jPos;
-          Read(data_, "pos", &jPos);
-          double pos[3];
-          for (int i = 0; i < 3; ++i)
-            Read(jPos, i, &pos[i]);
-          actor->SetPos({ (float)pos[0], (float)pos[1], (float)pos[2] });
-        }
-        {
-          simdjson::dom::element jRot;
-          Read(data_, "rot", &jRot);
-          double rot[3];
-          for (int i = 0; i < 3; ++i)
-            Read(jRot, i, &rot[i]);
-          actor->SetAngle({ (float)rot[0], (float)rot[1], (float)rot[2] });
-        }
+      auto actor = SendToNeighbours(jMessage, userId, data, length);
 
-        // Send my movement to all
-        for (auto listener : actor->GetListeners()) {
-          auto targetuserId = pImpl->serverState.UserByActor(listener);
-          if (targetuserId == Networking::InvalidUserId)
-            return;
-          pushedSendTarget->Send(targetuserId, data, length, false);
-        }
+      if (actor) {
+        simdjson::dom::element jPos;
+        Read(data_, "pos", &jPos);
+        double pos[3];
+        for (int i = 0; i < 3; ++i)
+          Read(jPos, i, &pos[i]);
+        actor->SetPos({ (float)pos[0], (float)pos[1], (float)pos[2] });
+      }
+      if (actor) {
+        simdjson::dom::element jRot;
+        Read(data_, "rot", &jRot);
+        double rot[3];
+        for (int i = 0; i < 3; ++i)
+          Read(jRot, i, &rot[i]);
+        actor->SetAngle({ (float)rot[0], (float)rot[1], (float)rot[2] });
       }
       break;
     }

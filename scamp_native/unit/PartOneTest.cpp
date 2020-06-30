@@ -14,7 +14,7 @@ void DoMessage(PartOne& partOne, Networking::UserId id,
   s += (char)Networking::MinPacketId;
   s += j.dump();
   PartOne* ptr = &partOne;
-  PartOne::HandlePacket(ptr, 0, Networking::PacketType::Message,
+  PartOne::HandlePacket(ptr, id, Networking::PacketType::Message,
                         reinterpret_cast<Networking::PacketData>(s.data()),
                         s.size());
 }
@@ -31,6 +31,30 @@ void DoDisconnect(PartOne& partOne, Networking::UserId id)
   PartOne* ptr = &partOne;
   PartOne::HandlePacket(
     ptr, id, Networking::PacketType::ServerSideUserDisconnect, nullptr, 0);
+}
+
+static const auto jMovement =
+  nlohmann::json{ { "t", MsgType::UpdateMovement },
+                  { "idx", 0 },
+                  { "data",
+                    { { "worldOrCell", 0x3c },
+                      { "pos", { 1, -1, 1 } },
+                      { "rot", { 0, 0, 179 } },
+                      { "runMode", "Standing" },
+                      { "direction", 0 },
+                      { "isInJumpState", false },
+                      { "isSneaking", false },
+                      { "isBlocking", false },
+                      { "isWeapDrawn", false } } } };
+
+inline void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
+                             Networking::UserId userId)
+{
+  auto jMyMovement = jMovement;
+  jMyMovement["idx"] = dynamic_cast<MpActor*>(
+                         partOne.worldState.LookupFormById(actorFormId).get())
+                         ->GetIdx();
+  DoMessage(partOne, userId, jMyMovement);
 }
 
 class FakeListener : public PartOne::Listener
@@ -253,24 +277,39 @@ TEST_CASE("SetUserActor failures", "[PartOne]")
                       Contains("Form with id ff000000 is not Actor"));
 }
 
-TEST_CASE("UpdateMovement", "[PartOne]")
+TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
+          "user present",
+          "[PartOne]")
 {
   FakeSendTarget tgt;
   PartOne partOne;
   partOne.pushedSendTarget = &tgt;
 
-  auto jMovement = nlohmann::json{ { "t", MsgType::UpdateMovement },
-                                   { "idx", 0 },
-                                   { "data",
-                                     { { "worldOrCell", 0x3c },
-                                       { "pos", { 1, -1, 1 } },
-                                       { "rot", { 0, 0, 179 } },
-                                       { "runMode", "Standing" },
-                                       { "direction", 0 },
-                                       { "isInJumpState", false },
-                                       { "isSneaking", false },
-                                       { "isBlocking", false },
-                                       { "isWeapDrawn", false } } } };
+  for (uint32_t i = 0; i < 100; ++i) {
+    partOne.CreateActor(i + 0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+    if (i % 2 == 0)
+      continue;
+
+    DoConnect(partOne, i + 1);
+    partOne.SetUserActor(i + 1, i + 0xff000000, &tgt);
+
+    DoUpdateMovement(partOne, i + 0xff000000, i + 1);
+  }
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xffffffff, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(0, 0xffffffff, &tgt);
+  tgt = {};
+
+  DoUpdateMovement(partOne, 0xffffffff, 0);
+  REQUIRE(tgt.messages.size() == 51); // Me and 50 other users created in loop
+}
+
+TEST_CASE("UpdateMovement", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
 
   auto doMovement = [&] { DoMessage(partOne, 0, jMovement); };
 
