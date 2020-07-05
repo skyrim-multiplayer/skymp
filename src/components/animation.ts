@@ -1,5 +1,6 @@
-import { ObjectReference, Debug, hooks, printConsole } from 'skyrimPlatform';
+import { ObjectReference, Debug, hooks, Actor } from 'skyrimPlatform';
 import { Movement } from './movement';
+import { applyWeapDrawn } from './movementApply';
 
 export interface Animation {
     animEventName: string;
@@ -28,7 +29,17 @@ export let applyAnimation = (refr: ObjectReference, anim: Animation, state: Anim
         allowedIdles.push([refr.getFormID(), anim.animEventName]);
     }
 
-    Debug.sendAnimationEvent(refr, anim.animEventName);
+    if (anim.animEventName === 'SkympFakeEquip') {
+        let ac = Actor.from(refr);
+        if (ac) applyWeapDrawn(ac, true);
+    }
+    else if (anim.animEventName === 'SkympFakeUnequip') {
+        let ac = Actor.from(refr);
+        if (ac) applyWeapDrawn(ac, false);
+    }
+    else {
+        Debug.sendAnimationEvent(refr, anim.animEventName);
+    }
 };
 
 export class AnimationSource {
@@ -66,11 +77,11 @@ export class AnimationSource {
 
         if (animEventName.toLowerCase().includes('unequip')) {
             this.weapNonDrawnBlocker = Date.now() + 300;
-            return;
+            animEventName = 'SkympFakeUnequip';
         }
-        if (animEventName.toLowerCase().includes('equip')) {
+        else if (animEventName.toLowerCase().includes('equip')) {
             this.weapDrawnBlocker = Date.now() + 300;
-            return;
+            animEventName = 'SkympFakeEquip';
         }
 
         if (animEventName === 'SneakStart') {

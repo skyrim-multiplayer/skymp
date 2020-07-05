@@ -66,7 +66,7 @@ let applySneaking = (ac: Actor, isSneaking: boolean) => {
     }
 };
 
-let applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean) => {
+export let applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean) => {
     if (ac.isWeaponDrawn() !== isWeapDrawn) {
         TESModPlatform.setWeaponDrawnMode(ac, isWeapDrawn ? 1 : 0);
     }

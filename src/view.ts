@@ -63,9 +63,25 @@ export class FormView implements View<FormModel> {
     }
 
     private applyAll(refr: ObjectReference, model: FormModel) {
+        let forcedWeapDrawn: boolean | null = null;
+
+        if (model.animation.animEventName === 'SkympFakeUnequip') {
+            forcedWeapDrawn = false;
+        }
+        else if (model.animation.animEventName === 'SkympFakeEquip') {
+            forcedWeapDrawn = true;
+        }
+
         if (model.movement) {
             if (+model.numMovementChanges !== this.movState.lastNumChanges) {
+
+                let backup = model.movement.isWeapDrawn;
+                if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
+                    model.movement.isWeapDrawn = forcedWeapDrawn;
+                }
                 applyMovement(refr, model.movement);
+                model.movement.isWeapDrawn = backup;
+
                 this.movState.lastNumChanges = +model.numMovementChanges;
             }
         }
