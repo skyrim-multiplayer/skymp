@@ -114,7 +114,7 @@ export class WorldView implements View<WorldModel> {
 
     private resize(newSize: number) {
         if (this.formViews.length > newSize) {
-            this.formViews.slice(newSize).forEach(v => v.destroy());
+            this.formViews.slice(newSize).forEach(v => v && v.destroy());
         }
         this.formViews.length = newSize;
     }
