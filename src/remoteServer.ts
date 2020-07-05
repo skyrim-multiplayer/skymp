@@ -4,10 +4,14 @@ import { MsgHandler } from './msgHandler';
 import { ModelSource } from './modelSource';
 import { SendTarget } from './sendTarget';
 import * as messages from './messages';
-import { loadGame, Game } from 'skyrimPlatform';
+import { loadGame, Game, once, TESModPlatform, Cell, WorldSpace, printConsole } from 'skyrimPlatform';
 
 interface FormModelInfo extends FormModel {
     // ...
+}
+
+class SpawnTask {
+    running = false;
 }
 
 export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
@@ -31,9 +35,35 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         
         if (msg.isMe) this.myActorIndex = i;
         
-        // TODO: move to view
+        // TODO: move to a separate module
         if (msg.isMe) {
-            loadGame(msg.transform.pos, msg.transform.rot, msg.transform.worldOrCell);
+            let task = new SpawnTask;
+            once('update', () => {
+                if (!task.running) {
+                    task.running = true;
+                    printConsole('Using moveRefrToPosition to spawn player');
+                    TESModPlatform.moveRefrToPosition(
+                        Game.getPlayer(), 
+                        Cell.from(Game.getFormEx(msg.transform.worldOrCell)), 
+                        WorldSpace.from(Game.getFormEx(msg.transform.worldOrCell)),
+                        msg.transform.pos[0],
+                        msg.transform.pos[1],
+                        msg.transform.pos[2],
+                        msg.transform.rot[0],
+                        msg.transform.rot[1],
+                        msg.transform.rot[2]
+                    );
+                }
+            });
+            once('tick', () => {
+                once('tick', () => {
+                    if (!task.running) {
+                        task.running = true;
+                        printConsole('Using loadGame to spawn player');
+                        loadGame(msg.transform.pos, msg.transform.rot, msg.transform.worldOrCell);
+                    }
+                });
+            });
         }
     }
 
@@ -44,7 +74,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         if (this.myActorIndex === msg.idx) {
             this.myActorIndex = -1;
 
-            // TODO: move to view
+            // TODO: move to a separate module
             Game.quitToMainMenu();
         }
     }
