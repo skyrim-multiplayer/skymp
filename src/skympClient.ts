@@ -11,23 +11,34 @@ import * as networking from './networking';
 
 let handleMessage = (msgAny: any, handler: MsgHandler) => {
     let msgType = msgAny.type || MsgType[msgAny.t];
-    if (msgType !== 'UpdateMovement') printConsole(msgType);
+    if (msgType !== 'UpdateMovement') printConsole(msgType, msgAny);
 
     let f = handler[msgType];
     if (f && typeof f === 'function') handler[msgType](msgAny);
 };
 
+for (let i = 0; i < 100; ++i) printConsole();
+printConsole('Hello Multiplayer');
+
+let targetIp = '127.0.0.1';
+let targetPort = 7777;
+
+if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+    storage.targetIp = targetIp;
+    storage.targetPort = targetPort;
+
+    printConsole(`Connecting to ${storage.targetIp}:${storage.targetPort}`);
+    networking.connect(targetIp, targetPort);
+}
+else {
+    printConsole('Reconnect is not required');
+}
+
 export class SkympClient {
     constructor() {
-        this.helloWorld();
         this.resetView();
+        this.resetRemoteServer();
         setupHooks();
-        let remoteServer = new RemoteServer;
-        this.sendTarget = remoteServer;
-        this.msgHandler = remoteServer;
-        this.modelSource = remoteServer;
-
-        networking.connect('127.0.0.1', 7777);
 
         networking.on('connectionFailed', () => {
             printConsole('Connection failed');
@@ -79,6 +90,25 @@ export class SkympClient {
         this.sendAnimation();
     }
 
+    private resetRemoteServer() {
+        let prevRemoteServer: RemoteServer = storage.remoteServer;
+        let rs: RemoteServer;
+
+        if (prevRemoteServer && prevRemoteServer.getWorldModel) {
+            rs = prevRemoteServer;
+            printConsole('Restore previous RemoteServer');
+        }
+        else {
+            rs = new RemoteServer;
+            printConsole('Creating RemoteServer');
+        }
+
+        this.sendTarget = rs;
+        this.msgHandler = rs;
+        this.modelSource = rs
+        storage.remoteServer = rs;
+    }
+
     private resetView() {
         let prevView: WorldView = storage.view;
         let view = new WorldView;
@@ -90,11 +120,6 @@ export class SkympClient {
             storage.view = view;
         });
         on('update', () => view.update(this.modelSource.getWorldModel()));
-    }
-
-    private helloWorld() {
-        for (let i = 0; i < 100; ++i) printConsole();
-        printConsole('Hello Multiplayer');
     }
 
     private playerAnimSource?: AnimationSource;

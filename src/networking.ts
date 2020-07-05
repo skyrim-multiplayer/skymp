@@ -1,7 +1,5 @@
-import { mpClientPlugin, printConsole, PacketType } from 'skyrimPlatform';
+import { mpClientPlugin, PacketType } from 'skyrimPlatform';
 import * as sp from 'skyrimPlatform';
-
-mpClientPlugin.destroyClient();
 
 type Handler = (messageOrError: object | string) => void;
 let handlersMap = new Map<PacketType, Handler[]>();
