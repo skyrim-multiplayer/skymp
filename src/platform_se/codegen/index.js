@@ -21,6 +21,7 @@ export declare function writeScript(scriptName: string, src: string): void;
 export declare function callNative(className: string, functionName: string, self?: object, ...args: any): any;
 export declare function getJsMemoryUsage(): number;
 export declare let storage: any;
+export declare let settings: any;
 
 export declare function on(eventName: 'update', callback: () => void): void;
 export declare function once(eventName: 'update', callback: () => void): void;

@@ -195,6 +195,14 @@ on('update', () => {
 * `callNative(className: string, functionName: string, self?: object, ...args: any): any` - вызвать функцию из оригинальной игры по имени.
 * `getJsMemoryUsage(): number` - получить количество оперативной памяти, используемой встроенным JS-движком, в байтах.
 * `storage` - объект, служащий для сохранения данных между перезагрузкой скриптов.
+* `settings` - объект, предоставляющий доступ к настройкам плагинов:
+```typescript
+import { settings, printConsole } from  "../skyrimPlatform"
+let option = settings["plugin-name"]["my-option"];
+printConsole(option);
+```
+Файл с настройками для плагина называется `имя-плагина-settings.txt` и должен находиться в папке `Data/Platform/Plugins`.
+Формат файла - JSON, расширение `.txt` - для удобства пользователей.
 
 ### Изменение игровых консольных команд
 * SkyrimPlatform позволяет изменить реализацию любой консольной команды игры, для подобной модификации вам необходимо получить объект консольной команды, передав имя команды  в метод `findConsoleCommand(commandName)` короткое или длинное.
