@@ -88,6 +88,13 @@ export class FormView implements View<FormModel> {
             }
         }
         if (model.animation) applyAnimation(refr, model.animation, this.animState);
+
+        let actor = Actor.from(refr);
+        if (actor) {
+            actor.startDeferredKill();
+            actor.setActorValue('health', 99999);
+            actor.forceActorValue('health', 99999);
+        }
     }
 
     private refrId = 0;
