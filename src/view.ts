@@ -1,5 +1,5 @@
 import { FormModel, WorldModel } from './model';
-import { ObjectReference, Game, Form, Actor, once, MotionType } from 'skyrimPlatform';
+import { ObjectReference, Game, Actor, MotionType, settings } from 'skyrimPlatform';
 
 import { applyMovement, NiPoint3 } from './components/movement';
 import { applyAnimation } from './components/animation';
@@ -107,7 +107,7 @@ export class WorldView implements View<WorldModel> {
     update(model: WorldModel) {
         this.resize(model.forms.length);
 
-        const showMe = true;
+        const showMe = settings['skymp5-client']['show-me'];
 
         model.forms.forEach((form, i) => {
             if (!form || (model.playerCharacterFormIdx === i && !showMe)) {

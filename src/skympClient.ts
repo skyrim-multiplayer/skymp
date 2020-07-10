@@ -1,4 +1,4 @@
-import { on, once, printConsole, storage, Game } from 'skyrimPlatform';
+import { on, once, printConsole, storage, settings, Game } from 'skyrimPlatform';
 import { WorldView } from './view';
 import { getMovement} from './components/movement';
 import { AnimationSource, Animation, setupHooks } from './components/animation';
@@ -19,9 +19,10 @@ let handleMessage = (msgAny: any, handler: MsgHandler) => {
 
 for (let i = 0; i < 100; ++i) printConsole();
 printConsole('Hello Multiplayer');
+printConsole('settings:', settings['skymp5-client']);
 
-let targetIp = '127.0.0.1';
-let targetPort = 7777;
+let targetIp = settings['skymp5-client']['server-ip'];
+let targetPort = settings['skymp5-client']['server-port'];;
 
 if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
     storage.targetIp = targetIp;
