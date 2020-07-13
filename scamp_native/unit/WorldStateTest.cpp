@@ -24,5 +24,5 @@ TEST_CASE("DestroyForm failures", "[WorldState]")
   REQUIRE_THROWS_WITH(
     worldState.DestroyForm<MpActor>(0x12345678),
     Contains(
-      "Expected form 12345678 to be class MpActor, but got class MpForm"));
+      "Expected form 12345678 to be Actor, but got Form"));
 }

@@ -19,6 +19,29 @@ class MpForm
   friend class WorldState;
 
 public:
+  static const char* PrettifyType(const char* typeidName)
+  {
+#ifdef WIN32
+    return typeidName + strlen("class Mp");
+#else
+    auto name = typeidName;
+    while (memcmp(name, "Mp", 2) != 0)
+      ++name;
+    return name + 2;
+#endif
+  }
+
+  template <class F>
+  static const char* GetFormType()
+  {
+    return PrettifyType(typeid(F).name());
+  }
+
+  static const char* GetFormType(MpForm* form)
+  {
+    return PrettifyType(typeid(form).name());
+  }
+
   virtual ~MpForm() = default;
 
   auto GetFormId() const noexcept { return formId; }
@@ -147,12 +170,11 @@ public:
 
     auto& form = it->second;
     if (!dynamic_cast<FormType*>(form.get())) {
-      throw std::runtime_error(static_cast<const std::stringstream&>(
-                                 std::stringstream()
-                                 << "Expected form " << std::hex << formId
-                                 << " to be " << typeid(FormType).name()
-                                 << ", but got " << typeid(*form.get()).name())
-                                 .str());
+      std::stringstream s;
+      s << "Expected form " << std::hex << formId << " to be "
+        << MpForm::GetFormType<FormType>() << ", but got "
+        << MpForm::GetFormType(form.get());
+      throw std::runtime_error(s.str());
     }
 
     if (outDestroyedForm)
