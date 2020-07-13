@@ -111,21 +111,25 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
   : ObjectWrap(info)
 {
-  partOne.reset(new PartOne);
-  listener.reset(new ScampServerListener(*this));
-  partOne->AddListener(listener);
+  try {
+    partOne.reset(new PartOne);
+    listener.reset(new ScampServerListener(*this));
+    partOne->AddListener(listener);
 
-  Napi::Number port = info[0].As<Napi::Number>(),
-               maxConnections = info[1].As<Napi::Number>();
-  server = Networking::CreateServer(static_cast<uint32_t>(port),
-                                    static_cast<uint32_t>(maxConnections));
+    Napi::Number port = info[0].As<Napi::Number>(),
+                 maxConnections = info[1].As<Napi::Number>();
+    server = Networking::CreateServer(static_cast<uint32_t>(port),
+                                      static_cast<uint32_t>(maxConnections));
 
-  auto res =
-    info.Env().RunScript("let require = global.require || "
-                         "global.process.mainModule.constructor._load; let "
-                         "Emitter = require('events'); new Emitter");
-  emitter = Napi::Persistent(res.As<Napi::Object>());
-  emit = Napi::Persistent(emitter.Value().Get("emit").As<Napi::Function>());
+    auto res =
+      info.Env().RunScript("let require = global.require || "
+                           "global.process.mainModule.constructor._load; let "
+                           "Emitter = require('events'); new Emitter");
+    emitter = Napi::Persistent(res.As<Napi::Object>());
+    emit = Napi::Persistent(emitter.Value().Get("emit").As<Napi::Function>());
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
 }
 
 Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)

@@ -1,4 +1,5 @@
 #include "Networking.h"
+#include "Config.h"
 #include "IdManager.h"
 #include "RakNet.h"
 #include <memory>
@@ -123,6 +124,10 @@ public:
 
   Server(unsigned short port_, unsigned short maxConnections)
   {
+    if (maxConnections > g_maxPlayers)
+      throw std::runtime_error("Current slots limit is " +
+                               std::to_string(g_maxPlayers));
+
     idManager.reset(new IdManager(maxConnections));
     peer.reset(new RakPeer);
     socket.reset(new SocketDescriptor(port_, nullptr));

@@ -1,4 +1,5 @@
 #pragma once
+#include "Config.h"
 #include <Networking.h>
 #include <array>
 #include <boost/bimap.hpp>
@@ -17,7 +18,7 @@ using ActorsMap = boost::bimaps::bimap<Networking::UserId, MpActor*>;
 class ServerState
 {
 public:
-  ServerState() { userInfo.resize(65536); }
+  ServerState() { userInfo.resize(g_maxPlayers); }
 
   std::vector<std::unique_ptr<UserInfo>> userInfo;
   Networking::UserId maxConnectedId = 0;

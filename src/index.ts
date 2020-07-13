@@ -1,9 +1,23 @@
 import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install();
 
+import { ArgumentParser } from "argparse";
+const parser = new ArgumentParser({
+  version: "0.0.0",
+  addHelp: false,
+  description: "",
+});
+parser.addArgument(["-m", "--maxPlayers"], {});
+const args = parser.parseArgs();
+
 import * as scampNative from "./scampNative";
 
-const server = new scampNative.ScampServer(7777, 1000);
+const port = 7777;
+const maxPlayers = +args.maxPlayers || 30;
+console.log(
+  `The server is starting on port ${port} with maxPlayers=${maxPlayers}`
+);
+const server = new scampNative.ScampServer(port, maxPlayers);
 
 server.on("connect", (userId: number) => {
   console.log("connect", userId);
