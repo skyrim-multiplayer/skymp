@@ -11,11 +11,8 @@ if(CPPCOV)
     message("${out}")
     message(FATAL_ERROR "Exited with ${res}")
   endif()
+  determine_cppcov_tag(OUTPUT_VARIABLE tag)
 endif()
-
-# Run under OpenCppCoverage:
-
-determine_cppcov_tag(OUTPUT_VARIABLE tag)
 
 skymp_execute_process(
   EXECUTABLE_PATH ${EXE_PATH}
