@@ -13,7 +13,8 @@
     "watch-ts": "tsc -w",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
     "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/index.js",
+    "start-prod": "cross-env NODE_ENV=production node ./dist/index.js"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
@@ -25,6 +26,7 @@
     "@typescript-eslint/parser": "^3.4.0",
     "cmake-js": "^6.1.0",
     "concurrently": "^5.2.0",
+    "cross-env": "^7.0.2",
     "eslint": "^7.3.1",
     "jest": "^26.1.0",
     "node-addon-api": "^3.0.0",
