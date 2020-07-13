@@ -10,11 +10,11 @@
 #include <unordered_map>
 #include <utility>
 
-template <class T = uint64_t>
-class Grid
+template <class T>
+class GridImpl
 {
 public:
-  void Grid::Move(const T& id, int16_t x, int16_t y)
+  void Move(const T& id, int16_t x, int16_t y)
   {
     auto& obj = objects[id];
 
@@ -27,14 +27,14 @@ public:
     }
   }
 
-  std::pair<int16_t, int16_t> Grid::GetPos(const T& id) const
+  std::pair<int16_t, int16_t> GetPos(const T& id) const
   {
     if (objects[id].active)
       return objects[id].coords;
     throw std::logic_error("grid: id not found");
   }
 
-  void Grid::Forget(const T& id)
+  void Forget(const T& id)
   {
     auto& obj = objects[id];
 
@@ -45,15 +45,16 @@ public:
     }
   }
 
-  const std::set<T>& Grid::GetNeighbours(int16_t x, int16_t y) const
+  const std::set<T>& GetNeighboursByPosition(int16_t x, int16_t y) const
   {
-    return nei[x][y];
+    auto& neiX = nei.At(x);
+    return neiX.At(y);
   }
 
-  const std::set<T>& Grid::GetNeighboursAndMe(const T& id) const
+  const std::set<T>& GetNeighboursAndMe(const T& id) const
   {
     auto& pos = objects[id].coords;
-    return GetNeighbours(pos.first, pos.second);
+    return GetNeighboursByPosition(pos.first, pos.second);
   }
 
   std::set<T> GetNeighbours(const T& id)
@@ -71,15 +72,15 @@ private:
     std::pair<int16_t, int16_t> coords = { -32000, -32000 };
   };
 
-  void Grid::MoveImpl(const T& id, std::pair<int16_t, int16_t>* from,
-                      std::pair<int16_t, int16_t>* to)
+  void MoveImpl(const T& id, std::pair<int16_t, int16_t>* from,
+                std::pair<int16_t, int16_t>* to)
   {
     auto& obj = objects[id];
 
     if (from) {
       for (int i = -1; i <= 1; ++i) {
         for (int j = -1; j <= 1; ++j) {
-          nei[from->first + i][from->second + j].erase(id);
+          nei.At(from->first + i).At(from->second + j).erase(id);
         }
       }
     }
@@ -87,7 +88,7 @@ private:
     if (to) {
       for (int i = -1; i <= 1; ++i) {
         for (int j = -1; j <= 1; ++j) {
-          nei[to->first + i][to->second + j].insert(id);
+          nei.At(to->first + i).At(to->second + j).insert(id);
         }
       }
     }
@@ -103,3 +104,5 @@ private:
     return false;
   }
 };
+
+using Grid = GridImpl<uint64_t>;

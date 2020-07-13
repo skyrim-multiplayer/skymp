@@ -6,11 +6,14 @@
     "install": "npm run configure && npm run build",
     "configure": "cmake-js configure",
     "build": "tsc && cd build && cmake --build .",
+    "build-ts": "tsc",
+    "build-cpp": "cd build && cmake --build .",
     "test": "jest --forceExit --coverage --verbose && cd build && ctest -C Debug -V",
     "watch-node": "nodemon ./dist/index.js",
     "watch-ts": "tsc -w",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
-    "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix"
+    "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
+    "start": "node ./dist/index.js"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {

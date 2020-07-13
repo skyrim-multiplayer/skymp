@@ -1,8 +1,8 @@
 #include "Networking.h"
 #include "PartOne.h"
 #include <cassert>
+#include <memory>
 #include <napi.h>
-#include <optional>
 
 namespace {
 inline NiPoint3 NapiValueToNiPoint3(Napi::Value v)
@@ -15,6 +15,8 @@ inline NiPoint3 NapiValueToNiPoint3(Napi::Value v)
   return res;
 }
 }
+
+class ScampServerListener;
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {
@@ -35,7 +37,7 @@ private:
   std::unique_ptr<PartOne> partOne;
   std::shared_ptr<Networking::IServer> server;
   std::shared_ptr<ScampServerListener> listener;
-  std::optional<Napi::Env> tickEnv;
+  std::unique_ptr<Napi::Env> tickEnv;
   Napi::ObjectReference emitter;
   Napi::FunctionReference emit;
 
@@ -128,7 +130,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
 {
-  tickEnv = info.Env();
+  tickEnv.reset(new Napi::Env(info.Env()));
   partOne->pushedSendTarget = server.get();
   server->Tick(PartOne::HandlePacket, partOne.get());
   return info.Env().Undefined();

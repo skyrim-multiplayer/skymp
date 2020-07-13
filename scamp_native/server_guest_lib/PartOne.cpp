@@ -6,7 +6,6 @@
 #include "WorldState.h"
 #include <array>
 #include <cassert>
-#include <optional>
 #include <vector>
 
 struct PartOne::Impl

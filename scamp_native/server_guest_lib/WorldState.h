@@ -12,6 +12,8 @@
 #  undef AddForm
 #endif
 
+class WorldState;
+
 class MpForm
 {
   friend class WorldState;
@@ -111,10 +113,11 @@ public:
   {
     auto& f = forms[formId];
     if (f) {
-      throw std::runtime_error((std::stringstream()
-                                << "Form with id " << std::hex << formId
-                                << " already exists")
-                                 .str());
+      throw std::runtime_error(
+        static_cast<const std::stringstream&>(std::stringstream()
+                                              << "Form with id " << std::hex
+                                              << formId << " already exists")
+          .str());
     }
     form->formId = formId;
     form->parent = this;
@@ -135,18 +138,20 @@ public:
   {
     auto it = forms.find(formId);
     if (it == forms.end()) {
-      throw std::runtime_error((std::stringstream()
-                                << "Form with id " << std::hex << formId
-                                << " doesn't exist")
-                                 .str());
+      throw std::runtime_error(
+        static_cast<const std::stringstream&>(std::stringstream()
+                                              << "Form with id " << std::hex
+                                              << formId << " doesn't exist")
+          .str());
     }
 
-    auto& [formId_, form] = *it;
+    auto& form = it->second;
     if (!dynamic_cast<FormType*>(form.get())) {
-      throw std::runtime_error((std::stringstream()
-                                << "Expected form " << std::hex << formId
-                                << " to be " << typeid(FormType).name()
-                                << ", but got " << typeid(*form.get()).name())
+      throw std::runtime_error(static_cast<const std::stringstream&>(
+                                 std::stringstream()
+                                 << "Expected form " << std::hex << formId
+                                 << " to be " << typeid(FormType).name()
+                                 << ", but got " << typeid(*form.get()).name())
                                  .str());
     }
 
@@ -175,7 +180,7 @@ public:
 
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
-  spp::sparse_hash_map<uint32_t, Grid<MpActor*>> grids;
+  spp::sparse_hash_map<uint32_t, GridImpl<MpActor*>> grids;
   std::unique_ptr<MakeID> formIdxManager;
 };
 

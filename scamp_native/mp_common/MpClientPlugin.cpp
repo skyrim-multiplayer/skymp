@@ -27,7 +27,7 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
   state.cl->Tick(
     [](void* state, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
-      auto [onPacket, state_] =
+      auto onPacketAndState =
         *reinterpret_cast<std::pair<OnPacket, void*>*>(state);
 
       std::string jsonContent;
@@ -37,7 +37,8 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
           std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
       }
 
-      onPacket((int32_t)packetType, jsonContent.data(), error, state_);
+      onPacketAndState.first((int32_t)packetType, jsonContent.data(), error,
+                             onPacketAndState.second);
     },
     &packetAndState);
 }

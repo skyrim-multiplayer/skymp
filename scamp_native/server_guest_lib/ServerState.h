@@ -3,7 +3,6 @@
 #include <array>
 #include <boost/bimap.hpp>
 #include <memory>
-#include <optional>
 #include <simdjson.h>
 #include <unordered_map>
 
@@ -20,7 +19,7 @@ class ServerState
 public:
   ServerState() { userInfo.resize(65536); }
 
-  std::vector<std::optional<UserInfo>> userInfo;
+  std::vector<std::unique_ptr<UserInfo>> userInfo;
   Networking::UserId maxConnectedId = 0;
   ActorsMap actorsMap;
 

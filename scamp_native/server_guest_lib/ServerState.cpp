@@ -6,18 +6,18 @@
 
 void ServerState::Connect(Networking::UserId userId)
 {
-  userInfo[userId] = UserInfo();
+  userInfo[userId].reset(new UserInfo);
   if (maxConnectedId < userId)
     maxConnectedId = userId;
 }
 
 void ServerState::Disconnect(Networking::UserId userId)
 {
-  userInfo[userId] = std::nullopt;
+  userInfo[userId].reset();
   if (maxConnectedId == userId) {
-    auto it = std::find_if(
-      userInfo.rbegin(), userInfo.rend(),
-      [](const std::optional<UserInfo>& v) { return v.has_value(); });
+    auto it =
+      std::find_if(userInfo.rbegin(), userInfo.rend(),
+                   [](const std::unique_ptr<UserInfo>& v) { return !!v; });
     if (it != userInfo.rend())
       maxConnectedId = &*it - &userInfo[0];
     else

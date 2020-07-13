@@ -1,17 +1,26 @@
 include(${CMAKE_SOURCE_DIR}/cmake/third_party/pmm.cmake)
 # Clear CMake cache after changing this
 # (also for subprojects like platform_se)
-set(VCPKG_REVISION cb8a9fe7157f8ad2423742f893955ed9ced05910)
+if (UNIX)
+  # See also Dockerfile
+  set(VCPKG_REVISION bff594f7ff8e023592f366b67fd7f57f4fe035e7)
+  set(triplet x64-linux)
+else()
+  set(VCPKG_REVISION cb8a9fe7157f8ad2423742f893955ed9ced05910)
+  set(triplet x64-windows-static)
+endif()
 # Download vcpkg dependencies
 set(ports
-  catch2:x64-windows-static
-  sparsepp:x64-windows-static
-  nlohmann-json:x64-windows-static
-  simdjson:x64-windows-static
-  spdlog:x64-windows-static
-  slikenet:x64-windows-static
-  boost-bimap:x64-windows-static
+  catch2:${triplet}
+  sparsepp:${triplet}
+  nlohmann-json:${triplet}
+  spdlog:${triplet}
+  slikenet:${triplet}
+  boost-bimap:${triplet}
 )
+if (WIN32)
+  list(APPEND ports simdjson:${triplet})
+endif()
 foreach(port ${ports})
   message(STATUS "Installing ${port}")
   pmm(VCPKG REVISION ${VCPKG_REVISION} REQUIRES ${port})
@@ -93,3 +102,31 @@ integrate_vcpkg(
   TARGETS ${VCPKG_DEPENDENT}
   VCPKG_PATH "${_VCPKG_ROOT_DIR}"
 )
+
+if(UNIX)
+  foreach(target ${VCPKG_DEPENDENT})
+    target_link_libraries(${target} PUBLIC pthread)
+  endforeach()
+endif()
+
+# For now we are unable to install simdjson from vcpkg on linux
+if(UNIX)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/simdjson)
+  file(DOWNLOAD
+    https://raw.githubusercontent.com/simdjson/simdjson/d0ce2f0b5a6b93707bf6872cc591f32cf5d9eef2/singleheader/simdjson.h
+    ${CMAKE_CURRENT_BINARY_DIR}/simdjson/simdjson.h
+  )
+  file(DOWNLOAD
+    https://raw.githubusercontent.com/simdjson/simdjson/d0ce2f0b5a6b93707bf6872cc591f32cf5d9eef2/singleheader/simdjson.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/simdjson/simdjson.cpp
+  )
+  foreach(target ${VCPKG_DEPENDENT})
+    target_sources(${target} PUBLIC
+      ${CMAKE_CURRENT_BINARY_DIR}/simdjson/simdjson.h
+      ${CMAKE_CURRENT_BINARY_DIR}/simdjson/simdjson.cpp
+    )
+    target_include_directories(${target} PUBLIC
+      ${CMAKE_CURRENT_BINARY_DIR}/simdjson
+    )
+  endforeach()
+endif()

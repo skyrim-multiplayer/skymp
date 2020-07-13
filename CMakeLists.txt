@@ -1,6 +1,13 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.15.2)
 project(scamp_native)
 enable_testing()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+if (UNIX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+endif()
 
 add_subdirectory(scamp_native)
 
@@ -19,7 +26,9 @@ string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
 
 file(GLOB_RECURSE SOURCE_FILES "${CMAKE_SOURCE_DIR}/scamp_native/addon/*")
-list(APPEND SOURCE_FILES ".clang-format")
+if (MSVC)
+  list(APPEND SOURCE_FILES ".clang-format")
+endif()
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} PRIVATE node mp_common server_guest_lib)

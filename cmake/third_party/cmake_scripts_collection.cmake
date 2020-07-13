@@ -125,11 +125,12 @@ function(integrate_vcpkg)
   elseif(NOT "${CMAKE_VS_PLATFORM_NAME}" STREQUAL "")
     set(platform ${CMAKE_VS_PLATFORM_NAME})
   else()
-    message(FATAL_ERROR "Enable to detect current platform")
+    set(platform x64)
+    message(WARNING "Unable to detect current platform, defaulting to x64")
   endif()
 
   if (WIN32)
-    set(os windows)
+    set(os windows-static)
   elseif(UNIX)
     set(os linux)
   else()
@@ -138,7 +139,7 @@ function(integrate_vcpkg)
 
   set(triplet_prefix_Win32 "x86")
   set(triplet_prefix_x64 "x64")
-  set(triplet "${triplet_prefix_${platform}}-${os}-static")
+  set(triplet "${triplet_prefix_${platform}}-${os}")
 
   message(STATUS "[integrate_vcpkg] platform is ${platform}, triplet is ${triplet}")
 

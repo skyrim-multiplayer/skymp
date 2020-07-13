@@ -78,13 +78,15 @@ public:
 
   void Tick(OnPacket onPacket, void* state) override
   {
-    std::weak_ptr weakPeer = peer;
+    std::weak_ptr<SLNet::RakPeerInterface> weakPeer = peer;
     while (1) {
       Packet* packet = nullptr;
-      if (auto p = weakPeer.lock()) {
+      auto p = weakPeer.lock();
+      if (p) {
         packet = p->Receive();
         packetGuard.reset(new PacketGuard(&*p, packet));
       }
+      p.reset();
       if (!packet)
         break;
 
@@ -181,6 +183,7 @@ void Networking::HandlePacketClientside(Networking::IClient::OnPacket onPacket,
                                         void* state, Packet* packet)
 {
   const auto packetId = packet->data[0];
+  const auto err = GetError(packetId);
   if (packetId >= Networking::MinPacketId) {
     onPacket(state, Networking::PacketType::Message, packet->data,
              packet->length, "");
@@ -194,7 +197,7 @@ void Networking::HandlePacketClientside(Networking::IClient::OnPacket onPacket,
   } else if (packetId == ID_CONNECTION_REQUEST_ACCEPTED) {
     onPacket(state, Networking::PacketType::ClientSideConnectionAccepted,
              nullptr, 0, "");
-  } else if (auto err = GetError(packetId); err && err[0]) {
+  } else if (err && err[0]) {
     onPacket(state, Networking::PacketType::ClientSideConnectionDenied,
              nullptr, 0, err);
   }
@@ -212,9 +215,10 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
       userId = idManager.find(packet->guid);
       if (userId == Networking::InvalidUserId)
         throw std::runtime_error(
-          (std::stringstream()
-           << "Unexpected disconnection for system without userId (guid="
-           << packet->guid.g << ")")
+          static_cast<const std::stringstream&>(
+            std::stringstream()
+            << "Unexpected disconnection for system without userId (guid="
+            << packet->guid.g << ")")
             .str());
       onPacket(state, userId, Networking::PacketType::ServerSideUserDisconnect,
                nullptr, 0);
