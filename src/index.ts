@@ -38,11 +38,15 @@ if (!master) {
     console.log(`Our endpoint on master is ${endpoint}`);
     while (1) {
       await new Promise((r) => setTimeout(r, 5000));
-      await Axios.post(`${master}/api/servers/${myIp}:${port}`, {
-        name: args.name,
-        maxPlayers: maxPlayers,
-        online: totalOnline,
-      });
+      try {
+        await Axios.post(`${master}/api/servers/${myIp}:${port}`, {
+          name: args.name,
+          maxPlayers: maxPlayers,
+          online: totalOnline,
+        });
+      } catch (e) {
+        console.log(e.toString());
+      }
     }
   })();
 }
