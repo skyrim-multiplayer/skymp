@@ -1,8 +1,18 @@
-const config =
-  !process.env.NODE_ENV || process.env.NODE_ENV === "development"
-    ? "Debug"
-    : "Release";
-console.log(`Using scamp_native config ${config}`);
+let scampNativeNode;
+
+import * as fs from "fs";
+
+if (fs.existsSync(process.cwd() + "/scamp_native.node")) {
+  console.log("Using scamp_native.node from server's dir");
+  scampNativeNode = require(process.cwd() + "/scamp_native.node");
+} else {
+  const config =
+    !process.env.NODE_ENV || process.env.NODE_ENV === "development"
+      ? "Debug"
+      : "Release";
+  console.log(`Using scamp_native config ${config}`);
+  scampNativeNode = require(`../build/${config}/scamp_native.node`);
+}
 
 export declare class ScampServer {
   constructor(serverPort: number, maxPlayers: number);
@@ -29,4 +39,4 @@ export declare class ScampServer {
   getUserActor(userId: number): number;
 }
 
-module.exports.ScampServer = require(`../build/${config}/scamp_native.node`).ScampServer;
+module.exports.ScampServer = scampNativeNode.ScampServer;

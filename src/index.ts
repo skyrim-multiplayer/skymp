@@ -8,6 +8,8 @@ const parser = new ArgumentParser({
   description: "",
 });
 parser.addArgument(["-m", "--maxPlayers"], {});
+parser.addArgument(["--master"], {});
+parser.addArgument(["--name"], {});
 const args = parser.parseArgs();
 
 import * as scampNative from "./scampNative";
@@ -19,7 +21,34 @@ console.log(
 );
 const server = new scampNative.ScampServer(port, maxPlayers);
 
+import Axios from "axios";
+
+import { getMyPublicIp } from "./publicIp";
+
+let totalOnline = 0;
+
+const master = args.master;
+if (!master) {
+  console.log("No master server specified");
+} else {
+  console.log(`Using master server on ${master}`);
+  (async () => {
+    const myIp = await getMyPublicIp();
+    const endpoint = `${master}/api/servers/${myIp}:${port}`;
+    console.log(`Our endpoint on master is ${endpoint}`);
+    while (1) {
+      await new Promise((r) => setTimeout(r, 5000));
+      await Axios.post(`${master}/api/servers/${myIp}:${port}`, {
+        name: args.name,
+        maxPlayers: maxPlayers,
+        online: totalOnline,
+      });
+    }
+  })();
+}
+
 server.on("connect", (userId: number) => {
+  totalOnline++;
   console.log("connect", userId);
 
   const formId = 0xff000000 + userId;
@@ -29,6 +58,7 @@ server.on("connect", (userId: number) => {
 });
 
 server.on("disconnect", (userId: number) => {
+  totalOnline--;
   console.log("disconnect", userId);
   const actorId = server.getUserActor(userId);
   if (actorId !== 0) server.destroyActor(actorId);

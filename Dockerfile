@@ -37,5 +37,4 @@ COPY . .
 
 RUN npm run build-ts
 
-EXPOSE 7777
 CMD [ "npm", "run", "start" ]
