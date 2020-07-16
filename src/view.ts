@@ -1,5 +1,5 @@
 import { FormModel, WorldModel } from './model';
-import { ObjectReference, Game, Actor, MotionType, settings } from 'skyrimPlatform';
+import { ObjectReference, Game, Actor, MotionType, settings, printConsole } from 'skyrimPlatform';
 
 import { applyMovement, NiPoint3 } from './components/movement';
 import { applyAnimation } from './components/animation';
@@ -109,6 +109,8 @@ export class WorldView implements View<WorldModel> {
 
         const showMe = settings['skymp5-client']['show-me'];
 
+        let toDestroy = [];
+
         model.forms.forEach((form, i) => {
             if (!form || (model.playerCharacterFormIdx === i && !showMe)) {
                 return this.destroyForm(i);
@@ -119,11 +121,21 @@ export class WorldView implements View<WorldModel> {
                 realPos = form.movement.pos;
                 form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
             }
-            this.updateForm(form, i);
+            try {
+                this.updateForm(form, i);
+            }
+            catch(err) {
+                if (err.message.includes('needs to be teleported')) {
+                    toDestroy.push(i);
+                    printConsole('destroying');
+                }
+            }
             if (model.playerCharacterFormIdx === i && form.movement) {
                 form.movement.pos = realPos;
             }
         });
+
+        toDestroy.forEach(i => this.destroyForm(i));
     }
 
     private updateForm(form: FormModel, i: number) {

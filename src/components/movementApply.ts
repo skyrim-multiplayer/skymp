@@ -87,10 +87,9 @@ let translateTo = (refr: ObjectReference, m: Movement) => {
 
 let teleportIfNeed = (refr: ObjectReference, m: Transform) => {
     if (isInDifferentWorldOrCell(refr, m.worldOrCell) || isInDifferentExteriorCell(refr, m.pos)) {
-        let cell = Cell.from(Game.getFormEx(m.worldOrCell));
-        let world = WorldSpace.from(Game.getFormEx(m.worldOrCell));
-        TESModPlatform.moveRefrToPosition(refr, cell, world, m.pos[0], m.pos[1], m.pos[2], m.rot[0], m.rot[1], m.rot[2]);
-        return true;
+        if (!refr.is3DLoaded()) {
+            throw new Error('needs to be teleported');
+        }
     }
     return false;
 }
