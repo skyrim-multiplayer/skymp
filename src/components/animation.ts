@@ -113,7 +113,7 @@ let ignoredAnims = new Set<string>([
     'CyclicCrossBlend',
     'CyclicFreeze',
     'TurnLeft',
-    'TurnRightdddw'
+    'TurnRight'
 ]);
 
 export let setupHooks = () => {
