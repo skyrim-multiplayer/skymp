@@ -10,6 +10,7 @@ export let applyMovement = (refr: ObjectReference, m: Movement) => {
     if (ac) {
         ac.setHeadTracking(false);
         ac.stopCombat();
+        ac.blockActivation(true);
 
         keepOffsetFromActor(ac, m);
 
@@ -88,7 +89,7 @@ let translateTo = (refr: ObjectReference, m: Movement) => {
 let teleportIfNeed = (refr: ObjectReference, m: Transform) => {
     if (isInDifferentWorldOrCell(refr, m.worldOrCell) || isInDifferentExteriorCell(refr, m.pos)) {
         if (!refr.is3DLoaded()) {
-            throw new Error('needs to be teleported');
+            throw new Error('needs to be respawned');
         }
     }
     return false;

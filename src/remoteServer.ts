@@ -4,7 +4,7 @@ import { MsgHandler } from './msgHandler';
 import { ModelSource } from './modelSource';
 import { SendTarget } from './sendTarget';
 import * as messages from './messages';
-import { loadGame, Game, once, TESModPlatform, Cell, WorldSpace, printConsole } from 'skyrimPlatform';
+import { loadGame, Game, once, TESModPlatform, Cell, WorldSpace, printConsole, Utility } from 'skyrimPlatform';
 
 interface FormModelInfo extends FormModel {
     // ...
@@ -32,6 +32,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 isWeapDrawn: false
             }
         };
+        if (msg.look) {
+            this.forms[i].look = msg.look;
+        }
         
         if (msg.isMe) this.myActorIndex = i;
         
@@ -93,12 +96,28 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         this.forms[i].animation = msg.data;
     }
 
+    UpdateLook(msg: messages.UpdateLookMessage) {
+        let i = msg.idx;
+        this.forms[i].look = msg.data;
+    }
+
     handleConnectionAccepted() {
         this.forms = [];
         this.myActorIndex = -1;
     }
 
     handleDisconnect() {
+    }
+
+    setRaceMenuOpen(msg: messages.SetRaceMenuOpenMessage) {
+        if (msg.open) {
+            // wait 0.3s cause we can see visual bugs when teleporting
+            // and showing this menu at the same time in onConnect
+            once('update', () => Utility.wait(0.3).then(() => Game.showRaceMenu()));
+        }
+        else {
+            // TODO: Implement closeMenu in SkyrimPlatform
+        }
     }
 
     getWorldModel() {

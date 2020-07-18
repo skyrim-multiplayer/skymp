@@ -1,6 +1,7 @@
-import { on, once, printConsole, storage, settings, Game } from 'skyrimPlatform';
+import { on, once, printConsole, storage, settings, Game, findConsoleCommand, SwitchRaceCompleteEvent, ActorBase, TESModPlatform } from 'skyrimPlatform';
 import { WorldView } from './view';
 import { getMovement} from './components/movement';
+import { Look, Tint, getLook } from './components/look';
 import { AnimationSource, Animation, setupHooks } from './components/animation';
 import { MsgType } from './messages';
 import { MsgHandler } from './msgHandler';
@@ -8,12 +9,12 @@ import { ModelSource } from './modelSource';
 import { RemoteServer } from './remoteServer';
 import { SendTarget } from './sendTarget';
 import * as networking from './networking';
+import * as sp from 'skyrimPlatform';
 
 let handleMessage = (msgAny: any, handler: MsgHandler) => {
     let msgType = msgAny.type || MsgType[msgAny.t];
-    if (msgType !== 'UpdateMovement') printConsole(msgType, msgAny);
-
     let f = handler[msgType];
+    if (msgType !== 'UpdateMovement') printConsole(msgType, msgAny);
     if (f && typeof f === 'function') handler[msgType](msgAny);
 };
 
@@ -81,7 +82,23 @@ export class SkympClient {
         if (!this.lastAnimationSent || anim.numChanges !== this.lastAnimationSent.numChanges) {
             if (anim.animEventName !== '') {
                 this.lastAnimationSent = anim;
-                this.sendTarget.send({ t: MsgType.UpdateAnimation, data: anim}, false);
+                this.sendTarget.send({ t: MsgType.UpdateAnimation, data: anim }, false);
+            }
+        }
+    }
+
+    private sendLook() {
+        let shown = sp['UI']['isMenuOpen']('RaceSex Menu'); 
+        if (shown != this.isRaceSexMenuShown) {
+            this.isRaceSexMenuShown = shown;
+            if (!shown) {
+                printConsole('Exited from race menu');
+
+                let look = getLook(Game.getPlayer());
+                this.sendTarget.send({ t: MsgType.UpdateLook, data: look }, true);
+                for (let key in look) {
+                    printConsole(`${key} = ${JSON.stringify(look[key])}`);
+                }
             }
         }
     }
@@ -89,6 +106,7 @@ export class SkympClient {
     private sendInputs() {
         this.sendMovement();
         this.sendAnimation();
+        this.sendLook();
     }
 
     private resetRemoteServer() {
@@ -98,6 +116,12 @@ export class SkympClient {
         if (prevRemoteServer && prevRemoteServer.getWorldModel) {
             rs = prevRemoteServer;
             printConsole('Restore previous RemoteServer');
+            
+            // Keep previous RemoteServer, but update func implementations
+            let newObj = new RemoteServer;
+            for (let key in newObj) {
+                if (typeof newObj[key] === 'function') rs[key] = newObj[key];
+            }
         }
         else {
             rs = new RemoteServer;
@@ -129,4 +153,15 @@ export class SkympClient {
     private msgHandler?: MsgHandler;
     private modelSource?: ModelSource;
     private sendTarget?: SendTarget;
+    private isRaceSexMenuShown = false;
 }
+
+findConsoleCommand('showracemenu').execute = () => {
+    printConsole('bope');
+    return false;
+};
+
+// TODO: remove this
+once('update', () => {
+    Game.getPlayer().unequipAll();
+});

@@ -1,10 +1,12 @@
-import { CreateActorMessage, DestroyActorMessage, UpdateMovementMessage, UpdateAnimationMessage } from './messages';
+import * as msg from './messages';
 
 export interface MsgHandler {
-    createActor(msg: CreateActorMessage);
-    destroyActor(msg: DestroyActorMessage);
-    UpdateMovement(msg: UpdateMovementMessage);
-    UpdateAnimation(msg: UpdateAnimationMessage);
+    createActor(msg: msg.CreateActorMessage);
+    destroyActor(msg: msg.DestroyActorMessage);
+    UpdateMovement(msg: msg.UpdateMovementMessage);
+    UpdateAnimation(msg: msg.UpdateAnimationMessage);
+    UpdateLook(msg: msg.UpdateLookMessage);
+    setRaceMenuOpen(msg: msg.SetRaceMenuOpenMessage);
 
     handleConnectionAccepted();
     handleDisconnect();

@@ -1,4 +1,4 @@
-import { ObjectReference, Debug, hooks, Actor } from 'skyrimPlatform';
+import { ObjectReference, Debug, hooks, Actor, printConsole } from 'skyrimPlatform';
 import { Movement } from './movement';
 import { applyWeapDrawn } from './movementApply';
 
@@ -117,9 +117,14 @@ let ignoredAnims = new Set<string>([
 ]);
 
 export let setupHooks = () => {
-    // Disable idle animations for 0xff actors
     hooks.sendAnimationEvent.add({
         enter: (ctx) => {
+            // ShowRaceMenu forces this anim
+            if (ctx.animEventName ==='OffsetBoundStandingPlayerInstant') {
+                return ctx.animEventName = '';
+            }
+            
+            // Disable idle animations for 0xff actors
             if (ctx.selfId < 0xff000000) return;
             if (isIdle(ctx.animEventName)) {
                 let i = allowedIdles.findIndex((pair) => {
