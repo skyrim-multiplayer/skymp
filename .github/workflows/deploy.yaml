@@ -29,7 +29,7 @@ jobs:
             docker build -t skymp5-server .
             rm -rf $GITHUB_SHA
             docker rm -f scamp || true
-            docker run -p 7777:7777/udp --name scamp --restart always -dit skymp5-server npm run start-prod -- --master http://$MASTER_IP:80 --name Nirnroot
+            docker run -p 7777:7777/udp --name scamp --restart always -dit skymp5-server npm run start-prod -- --master http://$MASTER_IP:3000 --name Nirnroot
           envs: GITHUB_SHA,GITHUB_REPOSITORY,DNOHUB_USERNAME,DNOHUB_PASSWORD,MASTER_IP
           script_stop: true
           command_timeout: 6h
