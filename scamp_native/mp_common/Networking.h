@@ -1,6 +1,8 @@
 #pragma once
 #include "RakNet.h"
+#include <cstdlib>
 #include <memory>
+#include <vector>
 
 class IdManager;
 
@@ -72,4 +74,22 @@ void HandlePacketClientside(Networking::IClient::OnPacket onPacket,
 
 void HandlePacketServerside(Networking::IServer::OnPacket onPacket,
                             void* state, Packet* packet, IdManager& idManager);
+
+template <class... Ts>
+inline void SendFormatted(Networking::ISendTarget* sendTarget,
+                          Networking::UserId userId, const char* format,
+                          Ts... args)
+{
+  auto textSize = (size_t)snprintf(nullptr, 0, format, args...);
+
+  const auto n = textSize + sizeof('\0') + sizeof(MinPacketId);
+  std::vector<char> buf(n);
+
+  buf[0] = MinPacketId;
+  auto len = (size_t)snprintf(buf.data() + 1, n - 1, format, args...);
+
+  sendTarget->Send(userId,
+                   reinterpret_cast<Networking::PacketData>(buf.data()),
+                   len + 1, true);
+}
 }

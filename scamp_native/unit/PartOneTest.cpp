@@ -47,6 +47,24 @@ static const auto jMovement =
                       { "isBlocking", false },
                       { "isWeapDrawn", false } } } };
 
+static const auto jLook = nlohmann::json{
+  { "t", MsgType::UpdateLook },
+  { "idx", 0 },
+  { "data",
+    { { "isFemale", false },
+      { "raceId", 0x00000001 },
+      { "weight", 99.9f },
+      { "skinColor", -1 },
+      { "hairColor", -1 },
+      { "headpartIds", nlohmann::json::array() },
+      { "headTextureSetId", 0x00000000 },
+      { "tints", nlohmann::json::array() },
+      { "options",
+        nlohmann::json::array({ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                0, 0, 0 }) },                  // size=19
+      { "presets", nlohmann::json::array({ 0, 0, 0, 0 }) } } } // size=4
+};
+
 inline void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
                              Networking::UserId userId)
 {
@@ -264,16 +282,16 @@ TEST_CASE("Use SetUserActor with 0 formId argument", "[PartOne]")
 TEST_CASE("SetUserActor failures", "[PartOne]")
 {
   PartOne partOne;
-  REQUIRE_THROWS_WITH(partOne.SetUserActor(549, 0xff000000, nullptr),
-                      Contains("User with id 549 doesn't exist"));
-  DoConnect(partOne, 549);
+  REQUIRE_THROWS_WITH(partOne.SetUserActor(9, 0xff000000, nullptr),
+                      Contains("User with id 9 doesn't exist"));
+  DoConnect(partOne, 9);
 
-  REQUIRE_THROWS_WITH(partOne.SetUserActor(549, 0xff000000, nullptr),
+  REQUIRE_THROWS_WITH(partOne.SetUserActor(9, 0xff000000, nullptr),
                       Contains("Form with id ff000000 doesn't exist"));
 
   partOne.worldState.AddForm(std::unique_ptr<MpForm>(new MpForm), 0xff000000);
 
-  REQUIRE_THROWS_WITH(partOne.SetUserActor(549, 0xff000000, nullptr),
+  REQUIRE_THROWS_WITH(partOne.SetUserActor(9, 0xff000000, nullptr),
                       Contains("Form with id ff000000 is not Actor"));
 }
 
@@ -285,7 +303,10 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
   PartOne partOne;
   partOne.pushedSendTarget = &tgt;
 
-  for (uint32_t i = 0; i < 100; ++i) {
+  constexpr uint32_t n = 20;
+  static_assert(n <= MAX_PLAYERS - 1);
+
+  for (uint32_t i = 0; i < n; ++i) {
     partOne.CreateActor(i + 0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
     if (i % 2 == 0)
       continue;
@@ -302,7 +323,177 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
   tgt = {};
 
   DoUpdateMovement(partOne, 0xffffffff, 0);
-  REQUIRE(tgt.messages.size() == 51); // Me and 50 other users created in loop
+  REQUIRE(tgt.messages.size() == 11); // Me and 10 other users created in loop
+}
+
+TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+
+  REQUIRE_THROWS_WITH(
+    partOne.SetRaceMenuOpen(0xff000000, true, &tgt),
+    Contains("Actor with id ff000000 is not attached to any of users"));
+
+  REQUIRE_THROWS_WITH(partOne.SetRaceMenuOpen(0xffffffff, true, &tgt),
+                      Contains("Form with id ffffffff doesn't exist"));
+
+  partOne.worldState.AddForm(std::make_unique<MpForm>(), 0xffffffff);
+
+  REQUIRE_THROWS_WITH(partOne.SetRaceMenuOpen(0xffffffff, true, &tgt),
+                      Contains("Form with id ffffffff is not Actor"));
+}
+
+TEST_CASE("SetRaceMenuOpen", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  DoConnect(partOne, 1);
+  partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  auto actor = std::dynamic_pointer_cast<MpActor>(
+    partOne.worldState.LookupFormById(0xff000000));
+  partOne.SetUserActor(1, 0xff000000, &tgt);
+  tgt = {};
+
+  REQUIRE(actor->IsRaceMenuOpen() == false);
+
+  partOne.SetRaceMenuOpen(0xff000000, true, &tgt);
+
+  REQUIRE(actor->IsRaceMenuOpen() == true);
+  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(tgt.messages[0].j ==
+          nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", true } });
+  REQUIRE(tgt.messages[0].userId == 1);
+  REQUIRE(tgt.messages[0].reliable);
+
+  for (int i = 0; i < 3; ++i)
+    partOne.SetRaceMenuOpen(0xff000000, true, &tgt);
+  REQUIRE(tgt.messages.size() == 1);
+
+  partOne.SetRaceMenuOpen(0xff000000, false, &tgt);
+  REQUIRE(tgt.messages.size() == 2);
+  REQUIRE(tgt.messages[1].j ==
+          nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", false } });
+  REQUIRE(tgt.messages[1].userId == 1);
+  REQUIRE(tgt.messages[1].reliable);
+
+  for (int i = 0; i < 3; ++i)
+    partOne.SetRaceMenuOpen(0xff000000, false, &tgt);
+  REQUIRE(tgt.messages.size() == 2);
+}
+
+TEST_CASE("Look <=> JSON casts", "[PartOne]")
+{
+  simdjson::dom::parser p;
+  auto jLookSimd = p.parse(jLook["data"].dump());
+  auto look = MpActor::Look::FromJson(jLookSimd.value());
+
+  REQUIRE(nlohmann::json::parse(look.ToJson()) == jLook["data"]);
+}
+
+TEST_CASE("UpdateLook1", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(0, 0xff000ABC, &tgt);
+  partOne.SetRaceMenuOpen(0xff000ABC, true, &tgt);
+
+  DoConnect(partOne, 1);
+  partOne.CreateActor(0xffABCABC, { 11.f, 22.f, 33.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(1, 0xffABCABC, &tgt);
+
+  tgt = {};
+  auto doLook = [&] { DoMessage(partOne, 0, jLook); };
+  doLook();
+
+  REQUIRE(tgt.messages.size() == 2);
+  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
+                       [&](FakeSendTarget::Message m) {
+                         return m.j["t"] == MsgType::UpdateLook &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["data"] == jLook["data"];
+                       }) != tgt.messages.end());
+
+  REQUIRE(partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLook() !=
+          nullptr);
+  REQUIRE(
+    nlohmann::json::parse(
+      partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLookAsJson()) ==
+    jLook["data"]);
+}
+
+TEST_CASE("UpdateLook2", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(0, 0xff000ABC, &tgt);
+  partOne.SetRaceMenuOpen(0xff000ABC, true, &tgt);
+
+  DoConnect(partOne, 1);
+  partOne.CreateActor(0xffABCABC, { 11.f, 22.f, 33.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(1, 0xffABCABC, &tgt);
+
+  tgt = {};
+  auto doLook = [&] { DoMessage(partOne, 0, jLook); };
+  doLook();
+
+  REQUIRE(tgt.messages.size() == 2);
+  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
+                       [&](FakeSendTarget::Message m) {
+                         return m.j["t"] == MsgType::UpdateLook &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["data"] == jLook["data"];
+                       }) != tgt.messages.end());
+
+  REQUIRE(partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLook() !=
+          nullptr);
+  REQUIRE(
+    nlohmann::json::parse(
+      partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLookAsJson()) ==
+    jLook["data"]);
+}
+
+TEST_CASE("createActor message contains look", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(0, 0xff000ABC, &tgt);
+  const MpActor::Look look = MpActor::Look::FromJson(jLook["data"]);
+  partOne.worldState.GetFormAt<MpActor>(0xff000ABC).SetLook(&look);
+
+  DoConnect(partOne, 1);
+  partOne.CreateActor(0xff000FFF, { 100.f, 200.f, 300.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(1, 0xff000FFF, &tgt);
+
+  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
+                       [&](FakeSendTarget::Message m) {
+                         return m.j["type"] == "createActor" &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["look"] == jLook["data"];
+                       }) != tgt.messages.end());
+
+  /*REQUIRE_THROWS_WITH(
+    doLook(), Contains("Unable to update appearance, RaceMenu is not open"));
+
+  partOne.SetRaceMenuOpen(0xff000ABC, true, &tgt);
+  doLook();*/
 }
 
 TEST_CASE("UpdateMovement", "[PartOne]")
@@ -356,6 +547,12 @@ TEST_CASE("UpdateMovement", "[PartOne]")
                          return m.j["type"] == "createActor" &&
                            m.j["idx"] == 1 && m.reliable && m.userId == 1;
                        }) != tgt.messages.end());
+
+  // Look must be empty by default
+  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
+                       [&](FakeSendTarget::Message m) {
+                         return m.j["look"] != nullptr;
+                       }) == tgt.messages.end());
 
   tgt = {};
   doMovement();

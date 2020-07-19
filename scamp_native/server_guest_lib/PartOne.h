@@ -33,6 +33,8 @@ public:
                     Networking::ISendTarget* sendTarget);
   uint32_t GetUserActor(Networking::UserId userId);
   void DestroyActor(uint32_t actorFormId);
+  void SetRaceMenuOpen(uint32_t formId, bool open,
+                       Networking::ISendTarget* sendTarget);
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
@@ -42,10 +44,11 @@ public:
   Networking::ISendTarget* pushedSendTarget = nullptr;
 
 private:
-  // Returns user's actor if present
+  // Returns user's actor if exists
   MpActor* SendToNeighbours(const simdjson::dom::element& jMessage,
                             Networking::UserId userId,
-                            Networking::PacketData data, size_t length);
+                            Networking::PacketData data, size_t length,
+                            bool reliable = false);
 
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);

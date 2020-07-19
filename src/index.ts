@@ -58,6 +58,7 @@ server.on("connect", (userId: number) => {
   const formId = 0xff000000 + userId;
   server.createActor(formId, [163113.0938, -62752.3008, 7487.8579], 0, 0x3c);
   server.setUserActor(userId, formId);
+  server.setRaceMenuOpen(formId, true);
   console.log("hey");
 });
 
@@ -74,8 +75,12 @@ server.on("customPacket", (userId: number, content: string) => {
 
 (async () => {
   while (1) {
-    await new Promise(setImmediate);
-    server.tick();
+    try {
+      server.tick();
+      await new Promise(setImmediate);
+    } catch (e) {
+      console.error("server.tick ", e);
+    }
   }
 })();
 

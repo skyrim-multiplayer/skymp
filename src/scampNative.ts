@@ -37,6 +37,8 @@ export declare class ScampServer {
   setUserActor(userId: number, actorFormId: number): void;
 
   getUserActor(userId: number): number;
+
+  setRaceMenuOpen(formId: number, open: boolean): void;
 }
 
 module.exports.ScampServer = scampNativeNode.ScampServer;

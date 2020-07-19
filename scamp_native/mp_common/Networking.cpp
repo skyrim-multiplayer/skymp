@@ -1,7 +1,9 @@
 #include "Networking.h"
 #include "Config.h"
+#include "Exceptions.h"
 #include "IdManager.h"
 #include "RakNet.h"
+#include <iostream>
 #include <memory>
 #include <sstream>
 
@@ -160,8 +162,16 @@ public:
       if (!packet)
         break;
       PacketGuard guard(peer.get(), packet);
-      Networking::HandlePacketServerside(onPacket, state, packet,
-                                         *this->idManager);
+      try {
+
+        Networking::HandlePacketServerside(onPacket, state, packet,
+                                           *this->idManager);
+      } catch (PublicError& e) {
+        // TODO: Send PublicError to related client
+        throw;
+      } catch (std::exception& e) {
+        throw;
+      }
     }
   }
 

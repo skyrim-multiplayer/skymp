@@ -56,35 +56,30 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
 
     bool isMe = emitter == listener;
 
-    char data[1024] = { 0 };
-    data[0] = Networking::MinPacketId;
-    auto len = (size_t)snprintf(
-      data + 1, std::size(data) - 1,
-      R"({"type": "createActor", "idx": %u, "isMe": %s, "transform": {"pos": [%f,%f,%f],
-    "rot": [%f,%f,%f], "worldOrCell": %u}})",
-      emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x, emitterPos.y,
-      emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      emitter->GetCellOrWorld());
+    const char *lookPrefix = "", *look = "";
+    auto& jLook = emitter->GetLookAsJson();
+    if (!jLook.empty()) {
+      lookPrefix = R"(, "look": )";
+      look = jLook.data();
+    }
 
     auto listenerUserId = serverState->UserByActor(listener);
-    sendTarget->Send(listenerUserId,
-                     reinterpret_cast<Networking::PacketData>(data), len + 1,
-                     true);
+    Networking::SendFormatted(
+      sendTarget, listenerUserId,
+      R"({"type": "createActor", "idx": %u, "isMe": %s, "transform": {"pos":
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s})",
+      emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x, emitterPos.y,
+      emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
+      emitter->GetCellOrWorld(), lookPrefix, look);
   };
 
   auto onUnsubscribe = [sendTarget, serverState](MpActor* emitter,
                                                  MpActor* listener) {
-    char data[1024] = { 0 };
-    data[0] = Networking::MinPacketId;
-    auto len = (size_t)snprintf(data + 1, std::size(data) - 1,
-                                R"({"type": "destroyActor", "idx": %u})",
-                                emitter->GetIdx());
-
     auto listenerUserId = serverState->UserByActor(listener);
     if (listenerUserId != Networking::InvalidUserId)
-      sendTarget->Send(listenerUserId,
-                       reinterpret_cast<Networking::PacketData>(data), len + 1,
-                       true);
+      Networking::SendFormatted(sendTarget, listenerUserId,
+                                R"({"type": "destroyActor", "idx": %u})",
+                                emitter->GetIdx());
   };
 
   worldState.AddForm(
@@ -101,24 +96,12 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
                              " doesn't exist");
 
   if (actorFormId > 0) {
-    auto form = worldState.LookupFormById(actorFormId);
-    if (!form) {
-      std::stringstream ss;
-      ss << "Form with id " << std::hex << actorFormId << " doesn't exist";
-      throw std::runtime_error(ss.str());
-    }
+    auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
 
-    auto actor = std::dynamic_pointer_cast<MpActor>(form);
-    if (!actor) {
-      std::stringstream ss;
-      ss << "Form with id " << std::hex << actorFormId << " is not Actor";
-      throw std::runtime_error(ss.str());
-    }
-
-    pImpl->serverState.actorsMap.insert({ userId, actor.get() });
+    pImpl->serverState.actorsMap.insert({ userId, &actor });
 
     // Hacky way to force self-subscribing
-    actor->SetPos(actor->GetPos());
+    actor.SetPos(actor.GetPos());
   } else {
     pImpl->serverState.actorsMap.left.erase(userId);
   }
@@ -143,6 +126,29 @@ void PartOne::DestroyActor(uint32_t actorFormId)
   worldState.DestroyForm<MpActor>(actorFormId, &destroyedForm);
 
   pImpl->serverState.actorsMap.right.erase(destroyedForm.get());
+}
+
+void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open,
+                              Networking::ISendTarget* sendTarget)
+{
+  auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
+
+  if (actor.IsRaceMenuOpen() == open)
+    return;
+
+  actor.SetRaceMenuOpen(open);
+
+  auto userId = pImpl->serverState.UserByActor(&actor);
+  if (userId == Networking::InvalidUserId) {
+    std::stringstream ss;
+    ss << "Actor with id " << std::hex << actorFormId
+       << " is not attached to any of users";
+    throw std::runtime_error(ss.str());
+  }
+
+  Networking::SendFormatted(sendTarget, userId,
+                            R"({"type": "setRaceMenuOpen", "open": %s})",
+                            open ? "true" : "false");
 }
 
 void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
@@ -172,7 +178,8 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
 
 MpActor* PartOne::SendToNeighbours(const simdjson::dom::element& jMessage,
                                    Networking::UserId userId,
-                                   Networking::PacketData data, size_t length)
+                                   Networking::PacketData data, size_t length,
+                                   bool reliable)
 {
   int64_t idx;
   Read(jMessage, "idx", &idx);
@@ -200,7 +207,7 @@ MpActor* PartOne::SendToNeighbours(const simdjson::dom::element& jMessage,
       */
       assert(targetuserId != Networking::InvalidUserId);
 
-      pushedSendTarget->Send(targetuserId, data, length, false);
+      pushedSendTarget->Send(targetuserId, data, length, reliable);
     }
   }
 
@@ -234,6 +241,21 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
     }
     case MsgType::UpdateAnimation: {
       SendToNeighbours(jMessage, userId, data, length);
+      break;
+    }
+
+    case MsgType::UpdateLook: {
+      simdjson::dom::element jData;
+      Read(jMessage, "data", &jData);
+
+      auto look = MpActor::Look::FromJson(jData);
+      // TODO: validate
+
+      auto actor = SendToNeighbours(jMessage, userId, data, length, true);
+
+      if (actor) {
+        actor->SetLook(&look);
+      }
       break;
     }
     case MsgType::UpdateMovement: {

@@ -1,9 +1,12 @@
 #pragma once
 #include "Grid.h"
 #include "GridElement.h"
+#include "JsonUtils.h"
 #include "NiPoint3.h"
 #include <MakeID.h>
 #include <algorithm>
+#include <nlohmann/json.hpp>
+#include <simdjson.h>
 #include <sparsepp/spp.h>
 #include <sstream>
 #include <typeinfo>
@@ -79,6 +82,93 @@ class MpActor
   , public FormIndex
 {
 public:
+  struct Tint
+  {
+    std::string texturePath;
+    int32_t argb = 0;
+    int32_t type = 0;
+
+    static Tint FromJson(simdjson::dom::element& j)
+    {
+      Tint res;
+      ReadEx(j, "argb", &res.argb);
+      ReadEx(j, "type", &res.type);
+
+      const char* texturePathCstr = "";
+      ReadEx(j, "texturePath", &texturePathCstr);
+      res.texturePath = texturePathCstr;
+
+      return res;
+    }
+  };
+
+  struct Look
+  {
+    bool isFemale = false;
+    uint32_t raceId = 0;
+    float weight = 0.f;
+    int32_t skinColor = 0;
+    int32_t hairColor = 0;
+    std::vector<uint32_t> headpartIds;
+    uint32_t headTextureSetId = 0;
+    std::vector<float> faceMorphs;
+    std::vector<float> facePresets;
+    std::vector<Tint> tints;
+
+    static Look FromJson(const nlohmann::json& j)
+    {
+      simdjson::dom::parser p;
+      simdjson::dom::element parsed = p.parse(j.dump());
+      return FromJson(parsed);
+    }
+
+    static Look FromJson(simdjson::dom::element& j)
+    {
+      Look res;
+      ReadEx(j, "isFemale", &res.isFemale);
+      ReadEx(j, "raceId", &res.raceId);
+      ReadEx(j, "weight", &res.weight);
+      ReadEx(j, "skinColor", &res.skinColor);
+      ReadEx(j, "hairColor", &res.hairColor);
+      ReadVector(j, "headpartIds", &res.headpartIds);
+      ReadEx(j, "headTextureSetId", &res.headTextureSetId);
+      ReadVector(j, "options", &res.faceMorphs);
+      ReadVector(j, "presets", &res.facePresets);
+
+      simdjson::dom::element jTints;
+      ReadEx(j, "tints", &jTints);
+
+      res.tints.reserve(30);
+      auto jTintsArr = jTints.operator simdjson::dom::array();
+      for (simdjson::dom::element el : jTintsArr) {
+        res.tints.push_back(Tint::FromJson(el));
+      }
+
+      return res;
+    }
+
+    std::string ToJson() const
+    {
+      auto j = nlohmann::json{ { "isFemale", isFemale },
+                               { "raceId", raceId },
+                               { "weight", weight },
+                               { "skinColor", skinColor },
+                               { "hairColor", hairColor },
+                               { "headpartIds", headpartIds },
+                               { "headTextureSetId", headTextureSetId },
+                               { "options", faceMorphs },
+                               { "presets", facePresets } };
+      j["tints"] = nlohmann::json::array();
+      for (auto& tint : tints) {
+        j["tints"].push_back(
+          nlohmann::json{ { "texturePath", tint.texturePath },
+                          { "argb", tint.argb },
+                          { "type", tint.type } });
+      }
+      return j.dump();
+    }
+  };
+
   using SubscribeCallback =
     std::function<void(MpActor* emitter, MpActor* listener)>;
 
@@ -93,13 +183,24 @@ public:
 
   ~MpActor() = default;
 
-  const auto& GetPos() { return pos; }
-  const auto& GetAngle() { return rot; }
-  const auto& GetCellOrWorld() { return cellOrWorld; }
+  const auto& GetPos() const { return pos; }
+  const auto& GetAngle() const { return rot; }
+  const auto& GetCellOrWorld() const { return cellOrWorld; }
+  const auto& IsRaceMenuOpen() const { return isRaceMenuOpen; }
+  auto GetLook() const { return look.get(); }
+
+  // Guaranted to have "data" property with look structure
+  const std::string& GetLookAsJson()
+  {
+    if (look && jLookCache.empty())
+      jLookCache = look->ToJson();
+    return jLookCache;
+  }
 
   void SetPos(const NiPoint3& newPos);
-
   void SetAngle(const NiPoint3& newAngle);
+  void SetRaceMenuOpen(bool isOpen);
+  void SetLook(const Look* newLook);
 
   static void Subscribe(MpActor* emitter, MpActor* listener)
   {
@@ -123,8 +224,12 @@ private:
   bool isOnGrid = false;
   std::set<MpActor*> listeners;
   std::set<MpActor*> emitters;
-
   const SubscribeCallback onSubscribe, onUnsubscribe;
+
+  bool isRaceMenuOpen = false;
+  std::unique_ptr<Look> look;
+
+  std::string jLookCache;
 };
 
 class WorldState
@@ -200,6 +305,28 @@ public:
     return it->second;
   }
 
+  template <class F>
+  F& GetFormAt(uint32_t formId)
+  {
+    auto form = LookupFormById(formId);
+    if (!form) {
+      std::stringstream ss;
+      ss << "Form with id " << std::hex << formId << " doesn't exist";
+      throw std::runtime_error(ss.str());
+    }
+
+    auto typedForm = std::dynamic_pointer_cast<F>(form);
+    if (!typedForm) {
+      const char* formType = typeid(F).name() + strlen("class Mp");
+
+      std::stringstream ss;
+      ss << "Form with id " << std::hex << formId << " is not " << formType;
+      throw std::runtime_error(ss.str());
+    }
+
+    return *typedForm;
+  }
+
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridImpl<MpActor*>> grids;
@@ -248,6 +375,21 @@ inline void MpActor::SetPos(const NiPoint3& newPos)
 inline void MpActor::SetAngle(const NiPoint3& newAngle)
 {
   rot = newAngle;
+}
+
+inline void MpActor::SetRaceMenuOpen(bool isOpen)
+{
+  isRaceMenuOpen = isOpen;
+}
+
+inline void MpActor::SetLook(const Look* newLook)
+{
+  jLookCache.clear();
+  if (newLook) {
+    look.reset(new Look(*newLook));
+  } else {
+    look.reset();
+  }
 }
 
 inline void MpActor::BeforeDestroy()
