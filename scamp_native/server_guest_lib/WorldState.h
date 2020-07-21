@@ -114,6 +114,7 @@ public:
     std::vector<float> faceMorphs;
     std::vector<float> facePresets;
     std::vector<Tint> tints;
+    std::string name;
 
     static Look FromJson(const nlohmann::json& j)
     {
@@ -134,6 +135,14 @@ public:
       ReadEx(j, "headTextureSetId", &res.headTextureSetId);
       ReadVector(j, "options", &res.faceMorphs);
       ReadVector(j, "presets", &res.facePresets);
+
+      const char* name;
+      try {
+        Read(j, "name", &name);
+      } catch (std::exception&) {
+        name = "";
+      }
+      res.name = name;
 
       simdjson::dom::element jTints;
       ReadEx(j, "tints", &jTints);
@@ -157,7 +166,8 @@ public:
                                { "headpartIds", headpartIds },
                                { "headTextureSetId", headTextureSetId },
                                { "options", faceMorphs },
-                               { "presets", facePresets } };
+                               { "presets", facePresets },
+                               { "name", name } };
       j["tints"] = nlohmann::json::array();
       for (auto& tint : tints) {
         j["tints"].push_back(

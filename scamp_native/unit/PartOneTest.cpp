@@ -59,6 +59,7 @@ static const auto jLook = nlohmann::json{
       { "headpartIds", nlohmann::json::array() },
       { "headTextureSetId", 0x00000000 },
       { "tints", nlohmann::json::array() },
+      { "name", "Oberyn" },
       { "options",
         nlohmann::json::array({ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                 0, 0, 0 }) },                  // size=19
