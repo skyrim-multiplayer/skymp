@@ -1,5 +1,6 @@
 import { FormModel, WorldModel } from './model';
-import { ObjectReference, Game, Actor, MotionType, settings, printConsole, ActorBase, once, Utility } from 'skyrimPlatform';
+import { ObjectReference, Game, Actor, MotionType, settings, printConsole, ActorBase, once, Utility, worldPointToScreenPoint } from 'skyrimPlatform';
+import * as sp from "skyrimPlatform";
 
 import { applyMovement, NiPoint3 } from './components/movement';
 import { applyAnimation } from './components/animation';
@@ -38,51 +39,63 @@ function objectEquals(x, y) {
 }
 
 class SpawnProcess {
-    constructor(pos: NiPoint3, refrId: number, private callback: () => void) {
+    constructor(look: Look, pos: NiPoint3, refrId: number, private callback: () => void) {
         let refr = ObjectReference.from(Game.getFormEx(refrId));
         if (!refr || refr.getFormID() !== refrId) return;
 
-        refr.setPosition(...pos).then(() => this.enable(refrId));
+        refr.setPosition(...pos).then(() => this.enable(look, refrId));
     }
 
-    private enable(refrId: number) {
+    private enable(look: Look, refrId: number) {
         let refr = ObjectReference.from(Game.getFormEx(refrId));
         if (!refr || refr.getFormID() !== refrId) return;
 
-        refr.enable(false).then(() => this.resurrect(refrId));
+        let ac = Actor.from(refr);
+        if (look && ac) applyTints(ac, look);
+        refr.enable(false).then(() => this.resurrect(look, refrId));
     }
 
-    private resurrect(refrId: number) {
+    private resurrect(look: Look, refrId: number) {
         let refr = ObjectReference.from(Game.getFormEx(refrId));
         if (!refr || refr.getFormID() !== refrId) return;
 
         let ac = Actor.from(refr);
         if (ac) {
-            return ac.resurrect().then(this.callback);
+            return ac.resurrect().then(() => {
+                this.callback();
+            });
         }
         return refr.setMotionType(MotionType.Keyframed, true).then(this.callback);
     }
 }
+
+let getTime = () => Utility.getCurrentGameTime() * 60 * 60 * 1000;
 
 export class FormView implements View<FormModel> {
     update(model: FormModel) {
         if (!model.movement) {
             throw new Error('FormModel without Movement component, is it a mistake?');
         }
+
+        // Apply look before base form selection to prevent double-spawn
+        if (model.look) {
+            if (!this.look || !objectEquals(model.look, this.look)) {
+                this.look = model.look;
+                this.lookBasedBaseId = 0;
+            }
+        }
         
         const AADeleteWhenDoneTestJeremyRegular = 0x0010D13E;
         let base = Game.getFormEx(+model.baseId) || Game.getFormEx(this.getLookBasedBase()) || Game.getFormEx(AADeleteWhenDoneTestJeremyRegular);
 
         let refr = ObjectReference.from(Game.getFormEx(this.refrId));
-        if (!refr || refr.getBaseObject().getFormID() !== base.getFormID()) {
+        let respawnRequired = !refr || refr.getBaseObject().getFormID() !== base.getFormID();
+
+        if (respawnRequired) {
             this.destroy();
             refr = Game.getPlayer().placeAtMe(base, 1, true, true);
-            if (this.look) {
-                let ac = Actor.from(refr);
-                if (ac) applyTints(ac, this.look);
-            }
             this.ready = false;
-            new SpawnProcess(model.movement.pos, refr.getFormID(), () => this.ready = true);
+            new SpawnProcess(this.look, model.movement.pos, refr.getFormID(), () => this.ready = true);
         }
         this.refrId = refr.getFormID();
 
@@ -96,16 +109,6 @@ export class FormView implements View<FormModel> {
     }
 
     private applyAll(refr: ObjectReference, model: FormModel) {
-
-        // temp
-        let ids = [0x000E40DF, 0x000E40DE];
-        ids.forEach(id => {
-            let item = Game.getFormEx(id);
-            if (Actor.from(refr)) Actor.from(refr).equipItem(item, true, true);
-            Game.getPlayer().equipItem(item, true, true);
-        });
-        // end temp
-
         let forcedWeapDrawn: boolean | null = null;
 
         if (model.animation) {
@@ -132,28 +135,45 @@ export class FormView implements View<FormModel> {
         }
         if (model.animation) applyAnimation(refr, model.animation, this.animState);
 
-        // Apply look
-        if (model.look) {
-            if (!this.look || !objectEquals(model.look, this.look)) {
-                this.look = model.look;
-                this.lookBasedBaseId = 0;
-            }
-        }
-
         let actor = Actor.from(refr);
         if (actor) {
             actor.startDeferredKill();
             actor.setActorValue('health', 99999);
             actor.forceActorValue('health', 99999);
         }
+
+        if (!Game.getPlayer().getAnimationVariableBool('bInJumpState')) {
+            let pcWorldOrCell = Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
+            if (pcWorldOrCell) {
+                let id = pcWorldOrCell.getFormID();
+                if (this.lastPcWorldOrCell && id !== this.lastPcWorldOrCell) {
+                    // Redraw tints if PC world/cell changed
+                    this.isOnScreen = false;
+                }
+                this.lastPcWorldOrCell = id;
+            }
+
+            let headPos = [
+                sp['NetImmerse'].GetNodeWorldPositionX(actor, 'NPC Head [Head]', false),
+                sp['NetImmerse'].GetNodeWorldPositionY(actor, 'NPC Head [Head]', false),
+                sp['NetImmerse'].GetNodeWorldPositionZ(actor, 'NPC Head [Head]', false)
+            ];
+            let [screenPoint] = worldPointToScreenPoint(headPos);
+            let isOnScreen = screenPoint[0] > 0 && screenPoint[1] > 0 && screenPoint [2] > 0 && screenPoint[0] < 1 && screenPoint[1] < 1 && screenPoint [2] < 1;
+            if (isOnScreen != this.isOnScreen) {
+                this.isOnScreen = isOnScreen;
+                if (isOnScreen) {
+                    actor.queueNiNodeUpdate();
+                    Game.getPlayer().queueNiNodeUpdate();
+                }
+            }
+        }
     }
 
     private getLookBasedBase(): number {
         let base = ActorBase.from(Game.getFormEx(this.lookBasedBaseId));
         if (!base && this.look) {
-            printConsole(11);
             this.lookBasedBaseId = applyLook(this.look).getFormID();
-            printConsole(22);
         }
         return this.lookBasedBaseId;
     }
@@ -164,6 +184,8 @@ export class FormView implements View<FormModel> {
     private movState = { lastNumChanges: 0 };
     private lookBasedBaseId = 0;
     private look?: Look;
+    private isOnScreen = false;
+    private lastPcWorldOrCell = 0;
 }
 
 export class WorldView implements View<WorldModel> {

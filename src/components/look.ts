@@ -1,4 +1,4 @@
-import { Actor, ActorBase, Game, TESModPlatform, Race, HeadPart, TextureSet, printConsole, VoiceType, Utility } from "skyrimPlatform";
+import { Actor, ActorBase, Game, TESModPlatform, Race, HeadPart, TextureSet, printConsole, VoiceType } from "skyrimPlatform";
 
 export interface Tint {
     texturePath: string;
@@ -17,6 +17,7 @@ export interface Look {
     options: number[];
     presets: number[];
     tints: Tint[];
+    name: string;
 };
 
 export let getLook = (actor: Actor) => {
@@ -36,7 +37,8 @@ export let getLook = (actor: Actor) => {
         options: new Array(19),
         presets: new Array(4),
         tints: [],
-        skinColor: skinColor ? skinColor.getColor() : 0
+        skinColor: skinColor ? skinColor.getColor() : 0,
+        name: actor.getBaseObject().getName()
     };
 
     let numHeadparts = base.getNumHeadParts();
@@ -55,7 +57,6 @@ export let getLook = (actor: Actor) => {
 
     let numTints = Game.getPlayer().getFormID() === actor.getFormID() ? Game.getNumTintMasks() : 0;
     for (let i = 0; i < numTints; ++i) {
-        //printConsole('ALPHA', TESModPlatform.getNthTintMaskAlpha(i));
         let tint: Tint = {
             texturePath: Game.getNthTintMaskTexturePath(i),
             type: Game.getNthTintMaskType(i),
@@ -64,26 +65,50 @@ export let getLook = (actor: Actor) => {
         newLook.tints.push(tint);
     }
 
-    printConsole('skin',newLook.skinColor);
-    printConsole('hair',newLook.hairColor);
-
     return newLook;
 };
 
-export let applyTints = (actor: Actor, look: Look) => {
-    /*TESModPlatform.resizeTintsArray(look.tints.length);
-    look.tints.forEach((tint, i) => {
-        Game.setNthTintMaskColor(i, tint.argb);
-        Game.setNthTintMaskTexturePath(tint.texturePath, i);
-    });
-    //TESModPlatform.setFormIdUnsafe(actor, Game.getPlayer().getBaseObject().getFormID());
-    actor.queueNiNodeUpdate();*/
+let isVisible = (argb: number) => argb > 0x00ffffff || argb < 0;
 
-    //Utility.wait(1).then(() => {
-    //let item = Game.getFormEx(0x00061CC1);
-    //Game.getPlayer().equipItem(item, true, true);
-    //printConsole('apply', item);
-    //});
+let gFixing = false;
+
+export let applyTints = (actor: Actor, look: Look) => {
+    if (!look) throw new Error(`null look has been passed to applyTints`);
+
+    let tints = look.tints.filter(t => isVisible(t.argb));
+
+    let raceWarPaintRegex = /.*Head.+WarPaint.*/;
+    let uniWarPaintRegex = /.*HeadWarPaint.*/;
+    let raceSpecificWarPaint = tints.filter(t => isVisible(t.argb) && t.texturePath.match(raceWarPaintRegex)).length; // MaleHeadNordWarPaint
+    let uniWarPaint = tints.filter(t => isVisible(t.argb) && t.texturePath.match(uniWarPaintRegex)).length; // MaleHeadWarPaint
+
+    if (raceSpecificWarPaint + uniWarPaint > 1) {
+        // If visible war paints of these two types present, then Skyrim crashes
+        //tints = tints.filter(t => !t.texturePath.match(raceWarPaintRegex) && !t.texturePath.match(uniWarPaintRegex));
+        printConsole('bad warpaint!', raceSpecificWarPaint, uniWarPaint);
+        return;
+    }
+
+    // Dirty fix
+    /*if (!gFixing) {
+        if (actor.getFormID() != Game.getPlayer().getFormID()) {
+            gFixing = true;
+            let pcLook = getLook(Game.getPlayer());
+            Utility.wait(0.3).then(() => {
+                applyTints(Game.getPlayer(), pcLook);
+                gFixing = false;
+            });
+        }
+    }*/
+
+    TESModPlatform.clearTintMasks(actor);
+    tints.forEach((tint, i) => {
+        TESModPlatform.pushTintMask(actor,tint.type, tint.argb, tint.texturePath);
+    });
+    
+    let playerBaseId = Game.getPlayer().getBaseObject().getFormID();
+
+    TESModPlatform.setFormIdUnsafe(actor.getBaseObject(), playerBaseId);
 };
 
 export let applyLook = (look: Look): ActorBase => {
@@ -103,6 +128,12 @@ export let applyLook = (look: Look): ActorBase => {
     npc.setVoiceType(VoiceType.from(Game.getFormEx(0x0002F7C3)));
     look.options.forEach((v, i) => npc.setFaceMorph(v, i));
     look.presets.forEach((v, i) => npc.setFacePreset(v, i));
+    if (look.name) {
+        npc.setName(look.name);
+    }
+    else { // for undefined or empty name
+        npc.setName(' ');
+    }
 
     return npc;
 }

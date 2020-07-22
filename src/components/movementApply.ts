@@ -87,10 +87,8 @@ let translateTo = (refr: ObjectReference, m: Movement) => {
 }
 
 let teleportIfNeed = (refr: ObjectReference, m: Transform) => {
-    if (isInDifferentWorldOrCell(refr, m.worldOrCell) || isInDifferentExteriorCell(refr, m.pos)) {
-        if (!refr.is3DLoaded()) {
-            throw new Error('needs to be respawned');
-        }
+    if (isInDifferentWorldOrCell(refr, m.worldOrCell) || (!refr.is3DLoaded() && isInDifferentExteriorCell(refr, m.pos))) {
+        throw new Error('needs to be respawned');
     }
     return false;
 }

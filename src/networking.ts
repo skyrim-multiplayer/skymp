@@ -29,6 +29,10 @@ export let connect = (hostname: string, port: number) => {
     mpClientPlugin.createClient(hostname, port);
 };
 
+export let close = () => {
+    mpClientPlugin.destroyClient();
+}
+
 export let on = (packetType: PacketType, handler: Handler) => {
     let arr = handlersMap.get(packetType);
     arr = (arr ? arr : []).concat([handler]);

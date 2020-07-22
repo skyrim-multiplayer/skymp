@@ -4,7 +4,8 @@ import { MsgHandler } from './msgHandler';
 import { ModelSource } from './modelSource';
 import { SendTarget } from './sendTarget';
 import * as messages from './messages';
-import { loadGame, Game, once, TESModPlatform, Cell, WorldSpace, printConsole, Utility } from 'skyrimPlatform';
+import { Game, once, TESModPlatform, Cell, WorldSpace, printConsole, Utility, loadGame } from 'skyrimPlatform';
+import * as loadGameManager from './loadGameManager';
 
 interface FormModelInfo extends FormModel {
     // ...
@@ -63,7 +64,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                     if (!task.running) {
                         task.running = true;
                         printConsole('Using loadGame to spawn player');
-                        loadGame(msg.transform.pos, msg.transform.rot, msg.transform.worldOrCell);
+                        loadGameManager.loadGame(msg.transform.pos, msg.transform.rot, msg.transform.worldOrCell);
                     }
                 });
             });

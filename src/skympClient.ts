@@ -1,7 +1,7 @@
-import { on, once, printConsole, storage, settings, Game, findConsoleCommand, SwitchRaceCompleteEvent, ActorBase, TESModPlatform } from 'skyrimPlatform';
+import { on, once, printConsole, storage, settings, Game, findConsoleCommand } from 'skyrimPlatform';
 import { WorldView } from './view';
 import { getMovement} from './components/movement';
-import { Look, Tint, getLook } from './components/look';
+import { getLook } from './components/look';
 import { AnimationSource, Animation, setupHooks } from './components/animation';
 import { MsgType } from './messages';
 import { MsgHandler } from './msgHandler';
@@ -10,6 +10,8 @@ import { RemoteServer } from './remoteServer';
 import { SendTarget } from './sendTarget';
 import * as networking from './networking';
 import * as sp from 'skyrimPlatform';
+import * as loadGameManager from './loadGameManager';
+import { WorldModel, FormModel } from './model';
 
 let handleMessage = (msgAny: any, handler: MsgHandler) => {
     let msgType = msgAny.type || MsgType[msgAny.t];
@@ -62,7 +64,20 @@ export class SkympClient {
             handleMessage(msgAny, this.msgHandler);
         });
 
-        on('update', () => { this.sendInputs(); });
+        on('update', () => { 
+            if (!this.singlePlayer) {
+                this.sendInputs(); 
+            }
+        });
+
+        loadGameManager.addLoadGameListener((e: loadGameManager.GameLoadEvent) => {
+            if (!e.isCausedBySkyrimPlatform && !this.singlePlayer) {
+                sp.Debug.messageBox("Save has been loaded in multiplayer, switching to the single-player mode");
+                networking.close();
+                this.singlePlayer = true;
+                Game.setInChargen(false, false, false);
+            }
+        });
     }    
 
     private sendMovement() { 
@@ -144,7 +159,9 @@ export class SkympClient {
             }
             storage.view = view;
         });
-        on('update', () => view.update(this.modelSource.getWorldModel()));
+        on('update', () => {
+            if (!this.singlePlayer) view.update(this.modelSource.getWorldModel());
+        });
     }
 
     private playerAnimSource?: AnimationSource;
@@ -154,6 +171,7 @@ export class SkympClient {
     private modelSource?: ModelSource;
     private sendTarget?: SendTarget;
     private isRaceSexMenuShown = false;
+    private singlePlayer = false;
 }
 
 findConsoleCommand('showracemenu').execute = () => {
@@ -165,3 +183,10 @@ findConsoleCommand('showracemenu').execute = () => {
 once('update', () => {
     Game.getPlayer().unequipAll();
 });
+
+let enforceLimitations = () => {
+    Game.setInChargen(true, true, false);
+}
+
+once('update', enforceLimitations);
+loadGameManager.addLoadGameListener(enforceLimitations);
