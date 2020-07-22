@@ -12,6 +12,7 @@
 #include <RE/SkyrimVM.h>
 #include <limits>
 #include <optional>
+#include <skse64/PapyrusActor.h>
 
 RE::BSScript::Variable CallNative::AnySafeToVariable(
   const CallNative::AnySafe& v, bool treatNumberAsInt = false)
@@ -232,14 +233,27 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   stackIterator->second->top->self = AnySafeToVariable(self);
   stackIterator->second->top->size = numArgs;
 
-  bool needsRealGameThread =
-    (!stricmp(className.data(), "Debug") &&
-     !stricmp(classFunc.data(), "sendAnimationEvent"));
-  if (needsRealGameThread) {
+  bool isSendAnimEvent = (!stricmp(className.data(), "Debug") &&
+                          !stricmp(classFunc.data(), "sendAnimationEvent"));
+  if (isSendAnimEvent) {
     std::vector<AnySafe> _args;
     for (auto it = args; it < args + numArgs; it++)
       _args.push_back(*it);
     gameThrQ.AddTask([=] { SendAnimationEvent::Run(_args); });
+    return ObjectPtr();
+  }
+
+  bool isQueueNiNodeUpdate = !stricmp(classFunc.data(), "queueNiNodeUpdate");
+  if (isQueueNiNodeUpdate) {
+    CallNative::ObjectPtr _self = self;
+    gameThrQ.AddTask([_self] {
+      auto nativeActorPtr = (RE::Actor*)_self->GetNativeObjectPtr();
+      if (!nativeActorPtr)
+        throw NullPointerException("nativeActorPtr");
+      if (nativeActorPtr->formType != RE::FormType::ActorCharacter)
+        throw std::runtime_error("QueueNiNodeUpdate must be called on Actor");
+      papyrusActor::QueueNiNodeUpdate((Actor*)nativeActorPtr);
+    });
     return ObjectPtr();
   }
 

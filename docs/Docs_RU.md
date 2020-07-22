@@ -97,6 +97,18 @@ let actor = Actor.from(Game.getPlayer());
 * `moveRefrToPosition` - телепортирует объект в заданную локацию и позицию.
 * `setWeaponDrawnMode` - заставляет актёра всегда держать оружие достанным/убранным.
 * `getNthVtableElement` - получает сдвиг функции из виртуальной таблицы (для реверс-инжиниринга).
+* `getSkinColor` - получает цвет кожи ActorBase.
+* `createNpc` - создаёт новую форму типа ActorBase.
+* `setNpcSex` - изменяет пол ActorBase.
+* `setNpcRace` - изменяет расу ActorBase.
+* `setNpcSkinColor` - изменяет цвет кожи ActorBase.
+* `setNpcHairColor` - изменяет цвет волос ActorBase.
+* `resizeHeadpartsArray` - изменяет размер массива частей головы ActorBase.
+* `resizeTintsArray` - изменяет размер массива TintMasks главного героя.
+* `setFormIdUnsafe` - изменяет ID формы. Небезопасно, используйте на свой страх и риск.
+* `clearTintMasks` - удалить TintMasks для данного Actor или ГГ, если Actor не передан.
+* `pushTintMask` - добавить TintMask с опр. параметрами для данного Actor или ГГ, если Actor не передан.
+
 
 ### Асинхронность
 * Выполнение некоторых игровых функций занимает время и происходит в фоновом режиме. Такие функции в SkyrimPlatform возвращают `Promise`:
@@ -191,6 +203,7 @@ on('update', () => {
 	printConsole(`player id = ${Game.getPlayer().getFormID()}`);
 });
 ```
+* `worldPointToScreenPoint` - преобразовать массив точек игрового мира в массив точек на экране пользователя. Точка на экране обозначается 3 числами от -1 до 1.
 * `on(eventName: string, callback: any): void` - подписаться на событие с именем `eventName`.
 * `callNative(className: string, functionName: string, self?: object, ...args: any): any` - вызвать функцию из оригинальной игры по имени.
 * `getJsMemoryUsage(): number` - получить количество оперативной памяти, используемой встроенным JS-движком, в байтах.

@@ -9,3 +9,25 @@ function SetWeaponDrawnMode(Actor actor, Int mode) global native
 Int function GetNthVtableElement(Form pointer, Int pointerOffset, Int elementIndex) global native
 
 Bool Function IsPlayerRunningEnabled() global native
+
+ColorForm Function GetSkinColor(ActorBase base) global native
+
+ActorBase Function CreateNpc() global native
+
+Function SetNpcSex(ActorBase npc, Int sex) global native
+
+Function SetNpcRace(ActorBase npc, Race race) global native
+
+Function SetNpcSkinColor(ActorBase npc, Int skinColor) global native
+
+Function SetNpcHairColor(ActorBase npc, Int hairColor) global native
+
+Function ResizeHeadpartsArray(ActorBase npc, Int newSize) global native
+
+Function ResizeTintsArray(Int newSize) global native
+
+Function SetFormIdUnsafe(Form form, Int newId) global native
+
+Function ClearTintMasks(Actor targetActor) global native
+
+Function PushTintMask(Actor targetActor, Int type, Int argb, String texturePath) global native

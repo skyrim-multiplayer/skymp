@@ -1,4 +1,5 @@
 #include "CallNativeApi.h"
+#include "CameraApi.h"
 #include "ConsoleApi.h"
 #include "DevApi.h"
 #include "DirectoryMonitor.h"
@@ -178,6 +179,7 @@ void JsTick(bool gameFunctionsAvailable)
           { { "skyrimPlatform",
               [fileDir](JsValue e) {
                 LoadGameApi::Register(e);
+                CameraApi::Register(e);
                 MpClientPluginApi::Register(e);
                 HttpClientApi::Register(e);
                 ConsoleApi::Register(e);

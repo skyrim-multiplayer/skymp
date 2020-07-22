@@ -29,7 +29,9 @@ enum _ExampleHookId
 {
   HOOK_SEND_ANIMATION_EVENT,
   DRAW_SHEATHE_WEAPON_ACTOR,
-  DRAW_SHEATHE_WEAPON_PC
+  DRAW_SHEATHE_WEAPON_PC,
+  QUEUE_NINODE_UPDATE,
+  APPLY_MASKS_TO_RENDER_TARGET
 };
 
 static void example_listener_iface_init(gpointer g_iface, gpointer iface_data);
@@ -41,51 +43,57 @@ G_DEFINE_TYPE_EXTENDED(ExampleListener, example_listener, G_TYPE_OBJECT, 0,
                        G_IMPLEMENT_INTERFACE(GUM_TYPE_INVOCATION_LISTENER,
                                              example_listener_iface_init))
 
+namespace {
+class InterceptorWrapper
+{
+public:
+  InterceptorWrapper(GumInterceptor* interceptor_)
+    : interceptor(interceptor_)
+  {
+    gum_interceptor_begin_transaction(interceptor);
+  }
+
+  ~InterceptorWrapper() { gum_interceptor_end_transaction(interceptor); }
+
+  void Attach(GumInvocationListener* listener, int offset,
+              _ExampleHookId hookId)
+  {
+    int r = gum_interceptor_attach(interceptor,
+                                   (void*)(REL::Module::BaseAddr() + offset),
+                                   listener, GSIZE_TO_POINTER(hookId));
+
+    if (GUM_ATTACH_OK != r) {
+      char buf[1025];
+      sprintf_s(buf, "Interceptor failed with %d for hook %d", int(r),
+                int(hookId));
+      MessageBox(0, buf, "Error", MB_ICONERROR);
+      return;
+    }
+  }
+
+private:
+  GumInterceptor* const interceptor;
+};
+}
+
 void SetupFridaHooks()
 {
   GumInterceptor* interceptor;
-  GumInvocationListener* listener;
 
   gum_init_embedded();
 
-  interceptor = gum_interceptor_obtain();
-  listener = (GumInvocationListener*)g_object_new(EXAMPLE_TYPE_LISTENER, NULL);
+  InterceptorWrapper w(gum_interceptor_obtain());
+  auto listener =
+    (GumInvocationListener*)g_object_new(EXAMPLE_TYPE_LISTENER, NULL);
 
-  int r;
-
-  gum_interceptor_begin_transaction(interceptor);
-  r = gum_interceptor_attach(
-    interceptor, (void*)(REL::Module::BaseAddr() + 6353472), listener,
-    GSIZE_TO_POINTER(HOOK_SEND_ANIMATION_EVENT));
-
-  if (GUM_ATTACH_OK != r) {
-    char buf[1025];
-    sprintf_s(buf, "Interceptor failed with %d", int(r));
-    MessageBox(0, buf, "Error", MB_ICONERROR);
-  }
-
-  gum_interceptor_attach(interceptor,
-                         (void*)(REL::Module::BaseAddr() + 6104992), listener,
-                         GSIZE_TO_POINTER(DRAW_SHEATHE_WEAPON_ACTOR));
-
-  if (GUM_ATTACH_OK != r) {
-    char buf[1025];
-    sprintf_s(buf, "Interceptor failed with %d", int(r));
-    MessageBox(0, buf, "Error", MB_ICONERROR);
-  }
-
-  gum_interceptor_attach(interceptor,
-                         (void*)(REL::Module::BaseAddr() + 7141008), listener,
-                         GSIZE_TO_POINTER(DRAW_SHEATHE_WEAPON_PC));
-
-  if (GUM_ATTACH_OK != r) {
-    char buf[1025];
-    sprintf_s(buf, "Interceptor failed with %d", int(r));
-    MessageBox(0, buf, "Error", MB_ICONERROR);
-  }
-
-  gum_interceptor_end_transaction(interceptor);
+  w.Attach(listener, 6353472, HOOK_SEND_ANIMATION_EVENT);
+  w.Attach(listener, 6104992, DRAW_SHEATHE_WEAPON_ACTOR);
+  w.Attach(listener, 7141008, DRAW_SHEATHE_WEAPON_PC);
+  w.Attach(listener, 6893840, QUEUE_NINODE_UPDATE);
+  w.Attach(listener, 4043808, APPLY_MASKS_TO_RENDER_TARGET);
 }
+
+thread_local uint32_t g_queueNiNodeActorId = 0;
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -135,7 +143,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       }
       break;
     }
-    case HOOK_SEND_ANIMATION_EVENT:
+    case HOOK_SEND_ANIMATION_EVENT: {
       auto refr = _ic->cpu_context->rcx
         ? (RE::TESObjectREFR*)(_ic->cpu_context->rcx - 0x38)
         : nullptr;
@@ -158,6 +166,28 @@ static void example_listener_on_enter(GumInvocationListener* listener,
                                                     newAnimEventName);
       }
       break;
+    }
+    case QUEUE_NINODE_UPDATE: {
+      auto refr = _ic->cpu_context->rcx
+        ? (RE::TESObjectREFR*)(_ic->cpu_context->rcx)
+        : nullptr;
+
+      uint32_t id = refr ? refr->formID : 0;
+
+      g_queueNiNodeActorId = id;
+      break;
+    }
+    case APPLY_MASKS_TO_RENDER_TARGET: {
+      if (g_queueNiNodeActorId > 0) {
+        auto tints = TESModPlatform::GetTintsFor(g_queueNiNodeActorId);
+        if (tints) {
+          gum_invocation_context_replace_nth_argument(ic, 0, tints.get());
+        }
+      }
+
+      g_queueNiNodeActorId = 0;
+      break;
+    }
   }
 }
 
@@ -168,10 +198,11 @@ static void example_listener_on_leave(GumInvocationListener* listener,
   auto hook_id = gum_invocation_context_get_listener_function_data(ic);
 
   switch ((size_t)hook_id) {
-    case HOOK_SEND_ANIMATION_EVENT:
+    case HOOK_SEND_ANIMATION_EVENT: {
       bool res = !!gum_invocation_context_get_return_value(ic);
       EventsApi::SendAnimationEventLeave(res);
       break;
+    }
   }
 }
 

@@ -31,6 +31,8 @@ export declare function once(eventName: 'tick', callback: () => void): void;
 
 export declare function loadGame(pos: number[], angle: number[], worldOrCell: number);
 
+export declare function worldPointToScreenPoint(...args: number[][]): number[][];
+
 export type PacketType = 'message' | 'disconnect' | 'connectionAccepted' | 'connectionFailed' | 'connectionDenied';
 
 // Available only if multiplayer is installed on user's machine
@@ -312,7 +314,7 @@ let dumpFunction = (className, f, isGlobal) => {
     let isAddOrRemove = (funcName.toLowerCase() === "additem" || funcName.toLowerCase() === "removeitem");
 
     f.arguments.forEach((arg, i) => {
-        
+
         let isSetMotioTypeFistArg = funcName.toLowerCase() === "setmotiontype" && i === 0;
         let argType = isSetMotioTypeFistArg ? "MotionType" : parseReturnValue(arg.type);
 

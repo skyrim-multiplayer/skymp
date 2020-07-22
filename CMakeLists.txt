@@ -13,15 +13,15 @@ include(src/cmake/cmake_generate.cmake)
 
 # Clear CMake cache after changing this
 # (also for subprojects like platform_se)
-set(VCPKG_REVISION f29a191d0afccc3ed6f481283d6d15e0186096ae)
+set(VCPKG_REVISION cb8a9fe7157f8ad2423742f893955ed9ced05910)
 
 # Download vcpkg dependencies
 include(pmm.cmake)
 set(ports
-  chakracore:x86-windows chakracore:x64-windows
-  nlohmann-json:x86-windows nlohmann-json:x64-windows
-  cpp-httplib:x86-windows cpp-httplib:x64-windows
-  zlib:x86-windows zlib:x64-windows 
+  chakracore:x64-windows
+  nlohmann-json:x64-windows
+  cpp-httplib:x64-windows
+  zlib:x64-windows
 )
 foreach(port ${ports})
   message(STATUS "Installing ${port}")
