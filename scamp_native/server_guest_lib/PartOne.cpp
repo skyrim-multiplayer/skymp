@@ -63,14 +63,21 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
       look = jLook.data();
     }
 
+    const char *equipmentPrefix = "", *equipment = "";
+    auto& jEquipment = emitter->GetEquipmentAsJson();
+    if (!jEquipment.empty()) {
+      equipmentPrefix = R"(, "equipment": )";
+      equipment = jEquipment.data();
+    }
+
     auto listenerUserId = serverState->UserByActor(listener);
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "createActor", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s})",
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s})",
       emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x, emitterPos.y,
       emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      emitter->GetCellOrWorld(), lookPrefix, look);
+      emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix, equipment);
   };
 
   auto onUnsubscribe = [sendTarget, serverState](MpActor* emitter,
@@ -283,7 +290,12 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
       break;
     }
     case MsgType::UpdateEquipment: {
-      SendToNeighbours(jMessage, userId, data, length, true);
+      auto actor = SendToNeighbours(jMessage, userId, data, length, true);
+      if (actor) {
+        simdjson::dom::element data_;
+        Read(jMessage, "data", &data_);
+        actor->SetEquipment(simdjson::minify(data_));
+      }
       break;
     }
     default:

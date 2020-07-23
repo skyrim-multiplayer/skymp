@@ -199,7 +199,6 @@ public:
   const auto& IsRaceMenuOpen() const { return isRaceMenuOpen; }
   auto GetLook() const { return look.get(); }
 
-  // Guaranted to have "data" property with look structure
   const std::string& GetLookAsJson()
   {
     if (look && jLookCache.empty())
@@ -207,10 +206,13 @@ public:
     return jLookCache;
   }
 
+  const std::string& GetEquipmentAsJson() { return jEquipmentCache; }
+
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);
   void SetRaceMenuOpen(bool isOpen);
   void SetLook(const Look* newLook);
+  void SetEquipment(const std::string& jsonString);
 
   static void Subscribe(MpActor* emitter, MpActor* listener)
   {
@@ -240,6 +242,7 @@ private:
   std::unique_ptr<Look> look;
 
   std::string jLookCache;
+  std::string jEquipmentCache;
 };
 
 class WorldState
@@ -400,6 +403,11 @@ inline void MpActor::SetLook(const Look* newLook)
   } else {
     look.reset();
   }
+}
+
+inline void MpActor::SetEquipment(const std::string& jsonString)
+{
+  jEquipmentCache = jsonString;
 }
 
 inline void MpActor::BeforeDestroy()
