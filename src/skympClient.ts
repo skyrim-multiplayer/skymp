@@ -265,6 +265,7 @@ findConsoleCommand('showracemenu').execute = () => {
 // TODO: remove this
 once('update', () => {
     Game.getPlayer().unequipAll();
+    Game.getPlayer().addItem(Game.getFormEx(0x0001397D), 100, true);
 });
 
 let enforceLimitations = () => {

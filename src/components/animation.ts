@@ -75,11 +75,12 @@ export class AnimationSource {
     private onSendAnimationEvent(animEventName: string) {
         if (ignoredAnims.has(animEventName)) return;
 
-        if (animEventName.toLowerCase().includes('unequip')) {
+        let isTorchEvent = animEventName.toLowerCase().includes('torch');
+        if (animEventName.toLowerCase().includes('unequip') && !isTorchEvent) {
             this.weapNonDrawnBlocker = Date.now() + 300;
             animEventName = 'SkympFakeUnequip';
         }
-        else if (animEventName.toLowerCase().includes('equip')) {
+        else if (animEventName.toLowerCase().includes('equip') && !isTorchEvent) {
             this.weapDrawnBlocker = Date.now() + 300;
             animEventName = 'SkympFakeEquip';
         }

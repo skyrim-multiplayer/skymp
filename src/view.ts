@@ -5,7 +5,7 @@ import * as sp from "skyrimPlatform";
 import { applyMovement, NiPoint3 } from './components/movement';
 import { applyAnimation } from './components/animation';
 import { Look, applyLook, applyTints } from './components/look';
-import { applyEquipment } from './components/equipment';
+import { applyEquipment, isBadMenuShown } from './components/equipment';
 
 export interface View<T> {
     update(model: T);
@@ -171,6 +171,11 @@ export class FormView implements View<FormModel> {
         }
 
         if (model.equipment) {
+            let isShown = isBadMenuShown();
+            if (this.eqState.isBadMenuShown !== isShown) {
+                this.eqState.isBadMenuShown = isShown; 
+                if (!isShown) this.eqState.lastNumChanges = -1;
+            }
             if (this.eqState.lastNumChanges !== model.equipment.numChanges) {
                 this.eqState.lastNumChanges = model.equipment.numChanges;
                 let ac = Actor.from(refr);
@@ -191,7 +196,7 @@ export class FormView implements View<FormModel> {
     private ready = false;
     private animState = { lastNumChanges: 0 };
     private movState = { lastNumChanges: 0 };
-    private eqState = { lastNumChanges: 0 };
+    private eqState = { lastNumChanges: 0, isBadMenuShown: false };
     private lookBasedBaseId = 0;
     private look?: Look;
     private isOnScreen = false;
