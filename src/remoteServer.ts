@@ -36,6 +36,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         if (msg.look) {
             this.forms[i].look = msg.look;
         }
+
+        if (msg.equipment) {
+            this.forms[i].equipment = msg.equipment;
+        }
         
         if (msg.isMe) this.myActorIndex = i;
         
@@ -100,6 +104,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     UpdateLook(msg: messages.UpdateLookMessage) {
         let i = msg.idx;
         this.forms[i].look = msg.data;
+    }
+
+    UpdateEquipment(msg: messages.UpdateEquipmentMessage) {
+        let i = msg.idx;
+        this.forms[i].equipment = msg.data;
     }
 
     handleConnectionAccepted() {

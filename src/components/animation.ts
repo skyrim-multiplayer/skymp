@@ -1,4 +1,4 @@
-import { ObjectReference, Debug, hooks, Actor, printConsole } from 'skyrimPlatform';
+import { ObjectReference, Debug, hooks, Actor } from 'skyrimPlatform';
 import { Movement } from './movement';
 import { applyWeapDrawn } from './movementApply';
 
