@@ -8,4 +8,5 @@ enum class MsgType : int64_t
   UpdateMovement = 2,
   UpdateAnimation = 3,
   UpdateLook = 4,
+  UpdateEquipment = 5,
 };

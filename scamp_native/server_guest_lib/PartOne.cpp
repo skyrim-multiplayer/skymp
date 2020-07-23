@@ -282,6 +282,10 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
       }
       break;
     }
+    case MsgType::UpdateEquipment: {
+      SendToNeighbours(jMessage, userId, data, length, true);
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }

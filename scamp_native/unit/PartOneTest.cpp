@@ -66,6 +66,11 @@ static const auto jLook = nlohmann::json{
       { "presets", nlohmann::json::array({ 0, 0, 0, 0 }) } } } // size=4
 };
 
+static const auto jEquipment =
+  nlohmann::json{ { "t", MsgType::UpdateEquipment },
+                  { "idx", 0 },
+                  { "data", { { "armor", nlohmann::json::array() } } } };
+
 inline void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
                              Networking::UserId userId)
 {
@@ -465,6 +470,39 @@ TEST_CASE("UpdateLook2", "[PartOne]")
     nlohmann::json::parse(
       partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLookAsJson()) ==
     jLook["data"]);
+}
+
+TEST_CASE("UpdateEquipment", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(0, 0xff000ABC, &tgt);
+
+  DoConnect(partOne, 1);
+  partOne.CreateActor(0xffABCABC, { 11.f, 22.f, 33.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(1, 0xffABCABC, &tgt);
+
+  tgt = {};
+
+  DoMessage(partOne, 0, jEquipment);
+
+  REQUIRE(tgt.messages.size() == 2);
+  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
+                       [&](FakeSendTarget::Message m) {
+                         return m.j["t"] == MsgType::UpdateEquipment &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["data"] == jEquipment["data"];
+                       }) != tgt.messages.end());
+  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
+                       [&](FakeSendTarget::Message m) {
+                         return m.j["t"] == MsgType::UpdateEquipment &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 0 &&
+                           m.j["data"] == jEquipment["data"];
+                       }) != tgt.messages.end());
 }
 
 TEST_CASE("createActor message contains look", "[PartOne]")
