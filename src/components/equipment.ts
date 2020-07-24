@@ -1,9 +1,11 @@
-import { Actor, Armor, Game, Ammo, Form, Light, Utility, printConsole, on } from 'skyrimPlatform';
+import { Actor, Armor, Game, Ammo, Form, Light, Weapon, printConsole, cloneWeapoForLeftHand } from 'skyrimPlatform';
 import * as sp from 'skyrimPlatform';
 
 export interface Equipment {
     armor: number[],
-    numChanges: number
+    numChanges: number,
+    leftHandWeapon:number,
+    rightHandWeapon:number  
 };
 
 enum FormType {
@@ -11,6 +13,7 @@ enum FormType {
 };
 
 let isArmorLike = (form: Form) => Armor.from(form) || Ammo.from(form) || Light.from(form);
+let isWeaponLike = (form: Form) => Weapon.from(form);
 
 export let isBadMenuShown = () => {
     let menus = [
@@ -56,16 +59,33 @@ let equipItem = (actor: Actor, f: Form) => {
     actor.equipItem(f, true, true);
 }
 
+export let getEquippedWeaponId = (actor:Actor, isLeft:boolean) =>{
+    let weapon = actor.getEquippedWeapon(isLeft);
+    return weapon ? weapon.getFormID() : 0;
+};
+
 export let getEquipment = (actor: Actor, numChanges: number): Equipment => {
     let armor = new Array<number>();
+    let rightHandWeapon = 0;
+    let leftHandWeapon = 0;
     let n = actor.getNumItems();
+
     for (let i = 0; i < n; ++i) {
         let f = actor.getNthForm(i);
         if (isArmorLike(f) && isEquipped(actor, f)) {
             armor.push(f.getFormID());
         }
+        if(isWeaponLike(f)){
+            let isRight = getEquippedWeaponId(Game.getPlayer(), false) === f.getFormID();
+            let isLeft = getEquippedWeaponId(Game.getPlayer(), true) === f.getFormID();
+
+            if(!isRight && !isLeft) continue;
+            
+            rightHandWeapon = isRight ? f.getFormID() : 0; 
+            leftHandWeapon = isLeft ? f.getFormID() : 0;
+        }
     }
-    return { armor, numChanges };
+    return { armor, numChanges, leftHandWeapon, rightHandWeapon };
 };
 
 export let applyEquipment = (actor: Actor, equipment: Equipment) => {
@@ -80,4 +100,22 @@ export let applyEquipment = (actor: Actor, equipment: Equipment) => {
         .map(id => Game.getFormEx(id))
         .filter(form => !!form)
         .forEach(form => equipItem(actor, form));
+
+        if(equipment.rightHandWeapon === 0){
+            let rWeap = getEquippedWeaponId(actor, false);
+
+            if(rWeap !== 0){
+                actor.unequipItem(Game.getFormEx(rWeap), true,true);
+            }
+        }
+       
+    if(equipment.rightHandWeapon){
+        actor.equipItem(Game.getFormEx(equipment.rightHandWeapon), true, true);
+    }
+
+    if(false){
+            let idForLeft = cloneWeapoForLeftHand(equipment.leftHandWeapon);
+            printConsole(`idForLeft  = ${idForLeft}`);
+           actor.equipItem(Game.getFormEx(idForLeft), true, true);
+    }
 };
