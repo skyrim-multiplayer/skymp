@@ -8,6 +8,11 @@ export let getMovement = (refr: ObjectReference): Movement => {
     // Doesn't lead to translateTo call
     let runMode = ac ? getRunMode(ac) : 'Running';
     
+    let healthPercentage = ac && ac.getActorValuePercentage('health');
+    if (ac && ac.isDead()) {
+        healthPercentage = 0;
+    }
+
     return {
         worldOrCell: (refr.getWorldSpace() || refr.getParentCell()).getFormID(),
         pos: [refr.getPositionX(), refr.getPositionY(), refr.getPositionZ()],
@@ -17,7 +22,8 @@ export let getMovement = (refr: ObjectReference): Movement => {
         isInJumpState: ac && ac.getAnimationVariableBool("bInJumpState"),
         isSneaking: ac && isSneaking(ac),
         isBlocking: ac && ac.getAnimationVariableBool("IsBlocking"),
-        isWeapDrawn: ac && ac.isWeaponDrawn()
+        isWeapDrawn: ac && ac.isWeaponDrawn(),
+        healthPercentage
     };
 };
 

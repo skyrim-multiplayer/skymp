@@ -15,6 +15,7 @@ export interface AnimationVariables {
     isSneaking: boolean;
     isBlocking: boolean;
     isWeapDrawn: boolean;
+    healthPercentage: number;
 }
 
 export type Movement = Transform & AnimationVariables;

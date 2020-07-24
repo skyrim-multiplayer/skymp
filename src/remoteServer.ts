@@ -30,7 +30,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 isInJumpState: false,
                 isSneaking: false,
                 isBlocking: false,
-                isWeapDrawn: false
+                isWeapDrawn: false,
+                healthPercentage: 1.0
             }
         };
         if (msg.look) {

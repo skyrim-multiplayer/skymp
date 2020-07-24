@@ -1,4 +1,4 @@
-import { ObjectReference, Actor, Game, Cell, WorldSpace, TESModPlatform, Debug, printConsole } from 'skyrimPlatform';
+import { ObjectReference, Actor, Game, TESModPlatform, Debug } from 'skyrimPlatform';
 import { Movement, RunMode, AnimationVariables, Transform } from './movement';
 
 export let applyMovement = (refr: ObjectReference, m: Movement) => {
@@ -18,6 +18,7 @@ export let applyMovement = (refr: ObjectReference, m: Movement) => {
         applyBlocking(ac, m);
         applySneaking(ac, m.isSneaking);
         applyWeapDrawn(ac, m.isWeapDrawn);
+        applyHealthPercentage(ac, m.healthPercentage);
     }
 };
 
@@ -73,6 +74,36 @@ export let applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean) => {
     }
 };
 
+
+let applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
+    if (ac.isDead()) {
+        if (healthPercentage > 0)
+            throw new Error('needs to be respawned');
+    }
+    else {
+        if (healthPercentage <= 0) {
+            ac.endDeferredKill();
+            ac.kill(null);
+        }
+        else {
+            ac.startDeferredKill();
+            let base = 99999;
+            ac.setActorValue('health', base);
+            //ac.forceActorValue('health', healthPercentage * 99999);
+
+            let currentPercentage = ac.getActorValuePercentage('health');
+            let mod = base * (healthPercentage - currentPercentage);
+            if (mod > 0) {
+                ac.restoreActorValue('health', mod);
+            }
+            else if (mod < 0) {
+                ac.damageActorValue('health', mod);
+            }
+
+        }
+    }
+}
+
 let translateTo = (refr: ObjectReference, m: Movement) => {
     let distance = getDistance(getPos(refr), m.pos);
     let time = 0.1;
@@ -82,7 +113,10 @@ let translateTo = (refr: ObjectReference, m: Movement) => {
 
     let angleDiff = Math.abs(m.rot[2] - refr.getAngleZ());
     if (m.runMode != 'Standing' || m.isInJumpState || distance > 64 || angleDiff > 80) {
-        refr.translateTo(m.pos[0], m.pos[1], m.pos[2], m.rot[0], m.rot[1], m.rot[2], speed, 0);
+        let actor = Actor.from(refr);
+        if (!actor.isDead()) {
+            refr.translateTo(m.pos[0], m.pos[1], m.pos[2], m.rot[0], m.rot[1], m.rot[2], speed, 0);
+        }
     }
 }
 

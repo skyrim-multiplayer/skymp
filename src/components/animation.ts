@@ -94,6 +94,8 @@ export class AnimationSource {
             return;
         }
 
+        if (animEventName === 'Ragdoll') return;
+
         this.numChanges++;
         this.animEventName = animEventName;
     }

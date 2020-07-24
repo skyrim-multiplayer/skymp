@@ -97,6 +97,7 @@ export class FormView implements View<FormModel> {
             refr = Game.getPlayer().placeAtMe(base, 1, true, true);
             this.ready = false;
             new SpawnProcess(this.look, model.movement.pos, refr.getFormID(), () => this.ready = true);
+            if (model.look && model.look.name) refr.setDisplayName('' + model.look.name, true);
         }
         this.refrId = refr.getFormID();
 
@@ -105,6 +106,7 @@ export class FormView implements View<FormModel> {
     }
 
     destroy() {
+        this.isOnScreen = false;
         let refr = ObjectReference.from(Game.getFormEx(this.refrId));
         if (refr) refr.delete();
     }
@@ -137,13 +139,7 @@ export class FormView implements View<FormModel> {
         if (model.animation) applyAnimation(refr, model.animation, this.animState);
 
         let actor = Actor.from(refr);
-        if (actor) {
-            actor.startDeferredKill();
-            actor.setActorValue('health', 99999);
-            actor.forceActorValue('health', 99999);
-        }
-
-        if (!Game.getPlayer().getAnimationVariableBool('bInJumpState')) {
+        if (actor && !Game.getPlayer().getAnimationVariableBool('bInJumpState')) {
             let pcWorldOrCell = Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
             if (pcWorldOrCell) {
                 let id = pcWorldOrCell.getFormID();
