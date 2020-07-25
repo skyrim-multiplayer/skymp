@@ -117,7 +117,7 @@ export let applyEquipment = (actor: Actor, equipment: Equipment) => {
        
     if (typeof equipment.rightHandWeapon === 'number') {
         let right = Game.getFormEx(equipment.rightHandWeapon);
-        if (right && equipment.rightHandWeapon !== getEquippedWeaponId(actor, false)) {
+        if (right && !isBadMenuShown() && equipment.rightHandWeapon !== getEquippedWeaponId(actor, false)) {
             equipItem(actor,right);
         }
     }
