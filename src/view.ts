@@ -70,6 +70,10 @@ class SpawnProcess {
     }
 }
 
+let getDefaultEquipState = () => {
+    return { lastNumChanges: 0, isBadMenuShown: false };
+}
+
 let getTime = () => Utility.getCurrentGameTime() * 60 * 60 * 1000;
 
 export class FormView implements View<FormModel> {
@@ -103,6 +107,10 @@ export class FormView implements View<FormModel> {
         if (respawnRequired) {
             this.destroy();
             refr = Game.getPlayer().placeAtMe(base, 1, true, true);
+
+            // TODO: reset all states?
+            this.eqState = getDefaultEquipState();
+
             this.ready = false;
             new SpawnProcess(this.look, model.movement.pos, refr.getFormID(), () => this.ready = true);
             if (model.look && model.look.name) refr.setDisplayName('' + model.look.name, true);
@@ -200,7 +208,7 @@ export class FormView implements View<FormModel> {
     private ready = false;
     private animState = { lastNumChanges: 0 };
     private movState = { lastNumChanges: 0 };
-    private eqState = { lastNumChanges: 0, isBadMenuShown: false };
+    private eqState = getDefaultEquipState();
     private lookBasedBaseId = 0;
     private look?: Look;
     private isOnScreen = false;
