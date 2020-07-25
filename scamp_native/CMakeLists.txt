@@ -71,7 +71,7 @@ list(APPEND VCPKG_DEPENDENT unit)
 
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/mp_common/*" "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(mp_common STATIC ${src})
-target_compile_definitions(mp_common PUBLIC MAX_PLAYERS=30)
+target_compile_definitions(mp_common PUBLIC MAX_PLAYERS=100)
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common")
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
 apply_default_settings(TARGETS mp_common)

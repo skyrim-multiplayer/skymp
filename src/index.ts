@@ -15,7 +15,7 @@ const args = parser.parseArgs();
 import * as scampNative from "./scampNative";
 
 const port = 7777;
-const maxPlayers = +args.maxPlayers || 30;
+const maxPlayers = +args.maxPlayers || 50;
 console.log(
   `The server is starting on port ${port} with maxPlayers=${maxPlayers}`
 );
@@ -51,12 +51,25 @@ if (!master) {
   })();
 }
 
+function randomInteger(min: number, max: number) {
+  const rand = min + Math.random() * (max + 1 - min);
+  return Math.floor(rand);
+}
+
 server.on("connect", (userId: number) => {
   totalOnline++;
   console.log("connect", userId);
 
   const formId = 0xff000000 + userId;
-  server.createActor(formId, [163113.0938, -62752.3008, 7487.8579], 0, 0x3c);
+
+  const spawnpoints = [
+    [163113.0938, -62752.3008, 7487.8579],
+    [160021.66, -90599.31, 10707.21],
+  ];
+  const idx = randomInteger(0, spawnpoints.length - 1);
+
+  server.createActor(formId, spawnpoints[idx], 0, 0x3c);
+
   server.setUserActor(userId, formId);
   server.setRaceMenuOpen(formId, true);
   console.log("hey");
