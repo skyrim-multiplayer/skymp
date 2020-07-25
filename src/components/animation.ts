@@ -1,4 +1,4 @@
-import { ObjectReference, Debug, hooks, Actor } from 'skyrimPlatform';
+import { ObjectReference, Debug, hooks, Actor, printConsole } from 'skyrimPlatform';
 import { Movement } from './movement';
 import { applyWeapDrawn } from './movementApply';
 
@@ -75,7 +75,13 @@ export class AnimationSource {
     private onSendAnimationEvent(animEventName: string) {
         if (ignoredAnims.has(animEventName)) return;
 
-        let isTorchEvent = animEventName.toLowerCase().includes('torch');
+        let lower = animEventName.toLowerCase();
+        if (lower.includes('spell')) {
+            printConsole(`spell animation has been blocked`);
+            return;
+        }
+
+        let isTorchEvent = lower.includes('torch');
         if (animEventName.toLowerCase().includes('unequip') && !isTorchEvent) {
             this.weapNonDrawnBlocker = Date.now() + 300;
             animEventName = 'SkympFakeUnequip';
