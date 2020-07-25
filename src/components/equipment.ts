@@ -47,15 +47,30 @@ let unequipItem = (actor: Actor, f: Form) => {
     actor.unequipItem(f, true, true);
 }
 
+let isBothHandsWeapon = (weapon: Weapon) => {
+    if (!weapon) return false;
+    switch(weapon.getWeaponType()) {
+        case 5:
+        case 6:
+        case 7:
+        case 9:
+            return true;
+    }
+    return false;
+};
+
 let equipItem = (actor: Actor, f: Form) => {
     let armor = Armor.from(f);
     const shieldMask = 0x00000200;
     let isShield = armor && armor.getSlotMask() & shieldMask;
-    if (isShield || Light.from(f)) {
+    let weapon = Weapon.from(f);
+    if (isShield || Light.from(f) || isBothHandsWeapon(weapon)) {
         if (isAnyTorchEquipped(actor) && isBadMenuShown()) {
             return printConsole(`sorry it may lead to crash`);
         }
     }
+    let isStaff = weapon && weapon.getWeaponType() === 8;
+    if (isStaff) return printConsole(`staffs are disabled for now`);
     actor.equipItem(f, true, true);
 }
 
@@ -66,8 +81,6 @@ export let getEquippedWeaponId = (actor:Actor, isLeft:boolean) =>{
 
 export let getEquipment = (actor: Actor, numChanges: number): Equipment => {
     let armor = new Array<number>();
-    let rightHandWeapon = 0;
-    let leftHandWeapon = 0;
     let n = actor.getNumItems();
 
     for (let i = 0; i < n; ++i) {
@@ -75,16 +88,10 @@ export let getEquipment = (actor: Actor, numChanges: number): Equipment => {
         if (isArmorLike(f) && isEquipped(actor, f)) {
             armor.push(f.getFormID());
         }
-        if(isWeaponLike(f)){
-            let isRight = getEquippedWeaponId(Game.getPlayer(), false) === f.getFormID();
-            let isLeft = getEquippedWeaponId(Game.getPlayer(), true) === f.getFormID();
-
-            if(!isRight && !isLeft) continue;
-            
-            rightHandWeapon = isRight ? f.getFormID() : 0; 
-            leftHandWeapon = isLeft ? f.getFormID() : 0;
-        }
     }
+
+    let rightHandWeapon = getEquippedWeaponId(Game.getPlayer(), false);
+    let leftHandWeapon = getEquippedWeaponId(Game.getPlayer(), true);
     return { armor, numChanges, leftHandWeapon, rightHandWeapon };
 };
 
@@ -101,21 +108,23 @@ export let applyEquipment = (actor: Actor, equipment: Equipment) => {
         .filter(form => !!form)
         .forEach(form => equipItem(actor, form));
 
-        if(equipment.rightHandWeapon === 0){
-            let rWeap = getEquippedWeaponId(actor, false);
-
-            if(rWeap !== 0){
-                actor.unequipItem(Game.getFormEx(rWeap), true,true);
-            }
+    if (equipment.rightHandWeapon === 0){
+        let rWeap = getEquippedWeaponId(actor, false);
+        if(rWeap !== 0) {
+            actor.unequipItem(Game.getFormEx(rWeap), true,true);
         }
+    }
        
-    if(equipment.rightHandWeapon){
-        actor.equipItem(Game.getFormEx(equipment.rightHandWeapon), true, true);
+    if (typeof equipment.rightHandWeapon === 'number') {
+        let right = Game.getFormEx(equipment.rightHandWeapon);
+        if (right && equipment.rightHandWeapon !== getEquippedWeaponId(actor, false)) {
+            equipItem(actor,right);
+        }
     }
 
-    if(false){
+    /*if (false) {
             let idForLeft = cloneWeapoForLeftHand(equipment.leftHandWeapon);
             printConsole(`idForLeft  = ${idForLeft}`);
            actor.equipItem(Game.getFormEx(idForLeft), true, true);
-    }
+    }*/
 };

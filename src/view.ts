@@ -1,5 +1,5 @@
 import { FormModel, WorldModel } from './model';
-import { ObjectReference, Game, Actor, MotionType, settings, printConsole, ActorBase, once, Utility, worldPointToScreenPoint } from 'skyrimPlatform';
+import { ObjectReference, Game, Actor, MotionType, settings, printConsole, ActorBase, once, on, Utility, worldPointToScreenPoint } from 'skyrimPlatform';
 import * as sp from "skyrimPlatform";
 
 import { applyMovement, NiPoint3 } from './components/movement';
