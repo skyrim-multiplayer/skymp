@@ -78,6 +78,14 @@ export class FormView implements View<FormModel> {
             throw new Error('FormModel without Movement component, is it a mistake?');
         }
 
+        // Players with different worldOrCell should be invisible
+        let worldOrCell = Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
+        if (worldOrCell && model.movement.worldOrCell !== worldOrCell.getFormID()) {
+            this.destroy();
+            this.refrId = 0;
+            return;
+        }
+
         // Apply look before base form selection to prevent double-spawn
         if (model.look) {
             if (!this.look || !objectEquals(model.look, this.look)) {
