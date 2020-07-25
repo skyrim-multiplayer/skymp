@@ -84,22 +84,9 @@ export let applyTints = (actor: Actor, look: Look) => {
 
     if (raceSpecificWarPaint + uniWarPaint > 1) {
         // If visible war paints of these two types present, then Skyrim crashes
-        //tints = tints.filter(t => !t.texturePath.match(raceWarPaintRegex) && !t.texturePath.match(uniWarPaintRegex));
         printConsole('bad warpaint!', raceSpecificWarPaint, uniWarPaint);
         return;
     }
-
-    // Dirty fix
-    /*if (!gFixing) {
-        if (actor.getFormID() != Game.getPlayer().getFormID()) {
-            gFixing = true;
-            let pcLook = getLook(Game.getPlayer());
-            Utility.wait(0.3).then(() => {
-                applyTints(Game.getPlayer(), pcLook);
-                gFixing = false;
-            });
-        }
-    }*/
 
     TESModPlatform.clearTintMasks(actor);
     tints.forEach((tint, i) => {
