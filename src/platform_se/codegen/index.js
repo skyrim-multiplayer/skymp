@@ -29,7 +29,7 @@ export declare function once(eventName: 'update', callback: () => void): void;
 export declare function on(eventName: 'tick', callback: () => void): void;
 export declare function once(eventName: 'tick', callback: () => void): void;
 
-export declare function loadGame(pos: number[], angle: number[], worldOrCell: number);
+export declare function loadGame(pos: number[], angle: number[], worldOrCell: number): void;
 
 export declare function worldPointToScreenPoint(...args: number[][]): number[][];
 
@@ -251,12 +251,12 @@ export declare namespace SendAnimationEventHook {
     }
 
     class Handler {
-        enter(ctx: Context);
-        leave(ctx: LeaveContext);
+        enter(ctx: Context): void;
+        leave(ctx: LeaveContext): void;
     }
 
     class Target {
-        add(handler: Handler)
+        add(handler: Handler): void;
     }
 }
 export declare class Hooks {
