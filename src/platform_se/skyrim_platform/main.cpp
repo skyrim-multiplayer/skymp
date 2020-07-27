@@ -13,6 +13,7 @@
 #include "MpClientPluginApi.h"
 #include "MyUpdateTask.h"
 #include "PapyrusTESModPlatform.h"
+#include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
 #include "SystemPolyfill.h"
 #include "TaskQueue.h"
@@ -48,17 +49,6 @@ HttpClient g_httpClient;
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 TaskQueue g_taskQueue;
-
-std::string ReadFile(const std::filesystem::path& p)
-{
-  std::ifstream t(p);
-  if (!t.is_open())
-    throw std::runtime_error("Unable to open " + p.string() + " for reading");
-  std::stringstream content;
-  content << t.rdbuf();
-
-  return content.str();
-}
 
 bool EndsWith(const std::wstring& value, const std::wstring& ending)
 {

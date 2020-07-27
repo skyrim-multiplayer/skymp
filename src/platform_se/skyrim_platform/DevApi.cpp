@@ -2,6 +2,7 @@
 
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
+#include "ReadFile.h"
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -58,4 +59,34 @@ JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
   }
 
   return exports;
+}
+
+namespace {
+std::filesystem::path GetPluginPath(std::string pluginName)
+{
+  return std::filesystem::path("Data/Platform/Plugins") / (pluginName + ".js");
+}
+}
+
+JsValue DevApi::GetPluginSourceCode(const JsFunctionArguments& args)
+{
+  // TODO: Support multifile plugins?
+  auto pluginName = args[1].ToString();
+  return ReadFile(GetPluginPath(pluginName));
+}
+
+JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
+{
+  // TODO: Support multifile plugins?
+  auto pluginName = args[1].ToString();
+  auto newSources = args[2].ToString();
+
+  auto path = GetPluginPath(pluginName);
+
+  std::ofstream f(path);
+  f << newSources;
+  f.close();
+  if (!f)
+    throw std::runtime_error("Failed to write into " + path.string());
+  return JsValue::Undefined();
 }

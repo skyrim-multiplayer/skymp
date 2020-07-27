@@ -11,6 +11,10 @@ JsValue Require(const JsFunctionArguments& args,
                 std::filesystem::path builtScriptsDir);
 JsValue AddNativeExports(const JsFunctionArguments& args);
 
+JsValue GetPluginSourceCode(const JsFunctionArguments& args);
+
+JsValue WritePlugin(const JsFunctionArguments& args);
+
 using NativeExportsMap =
   std::map<std::string, std::function<JsValue(const JsValue&)>>;
 
@@ -32,5 +36,8 @@ inline void Register(JsValue& exports, std::shared_ptr<JsEngine>* jsEngine,
       return Require(args, builtScriptsDir);
     }));
   exports.SetProperty("addNativeExports", JsValue::Function(AddNativeExports));
+  exports.SetProperty("getPluginSourceCode",
+                      JsValue::Function(GetPluginSourceCode));
+  exports.SetProperty("writePlugin", JsValue::Function(WritePlugin));
 }
 }

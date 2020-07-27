@@ -20,6 +20,8 @@ export declare function printConsole(...arguments: any[]): void;
 export declare function writeScript(scriptName: string, src: string): void;
 export declare function callNative(className: string, functionName: string, self?: object, ...args: any): any;
 export declare function getJsMemoryUsage(): number;
+export declare function getPluginSourceCode(pluginName: string): string;
+export declare function writePlugin(pluginName: string, newSources: string): string;
 export declare let storage: any;
 export declare let settings: any;
 
