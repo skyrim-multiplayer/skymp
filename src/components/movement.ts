@@ -1,21 +1,21 @@
 export type NiPoint3 = [number, number, number];
 
 export interface Transform {
-    worldOrCell: number;
-    pos: NiPoint3;
-    rot: NiPoint3;
+  worldOrCell: number;
+  pos: NiPoint3;
+  rot: NiPoint3;
 }
 
-export type RunMode = 'Standing' | 'Walking' | 'Running' | 'Sprinting';
+export type RunMode = "Standing" | "Walking" | "Running" | "Sprinting";
 
 export interface AnimationVariables {
-    runMode: RunMode;
-    direction: number;
-    isInJumpState: boolean;
-    isSneaking: boolean;
-    isBlocking: boolean;
-    isWeapDrawn: boolean;
-    healthPercentage: number;
+  runMode: RunMode;
+  direction: number;
+  isInJumpState: boolean;
+  isSneaking: boolean;
+  isBlocking: boolean;
+  isWeapDrawn: boolean;
+  healthPercentage: number;
 }
 
 export type Movement = Transform & AnimationVariables;
@@ -25,7 +25,7 @@ export type Movement = Transform & AnimationVariables;
 // export * from './movementGet';
 
 // Temporary workaround:
-import * as movementApply from './movementApply';
-export let applyMovement = movementApply.applyMovement;
-import * as movementGet from './movementGet';
-export let getMovement = movementGet.getMovement;
+import * as movementApply from "./movementApply";
+export const applyMovement = movementApply.applyMovement;
+import * as movementGet from "./movementGet";
+export const getMovement = movementGet.getMovement;

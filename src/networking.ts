@@ -1,50 +1,49 @@
-import { mpClientPlugin, PacketType } from 'skyrimPlatform';
-import * as sp from 'skyrimPlatform';
+import { mpClientPlugin, PacketType } from "skyrimPlatform";
+import * as sp from "skyrimPlatform";
 
-type Handler = (messageOrError: object | string) => void;
-let handlersMap = new Map<PacketType, Handler[]>();
-let lastHostname = '';
+type Handler = (messageOrError: Record<string, unknown> | string) => void;
+const handlersMap = new Map<PacketType, Handler[]>();
+let lastHostname = "";
 let lastPort = 0;
 
-sp.on('tick', () => {
-    mpClientPlugin.tick((packetType, jsonContent, error) => {
-        let handlers = handlersMap.get(packetType) || [];
-        handlers.forEach((handler) => {
-            let parse = (() => {
-                try {
-                    return JSON.parse(jsonContent);
-                }
-                catch(e) {
-                    throw new Error(`JSON ${jsonContent} failed to parse: ${e}`);
-                }
-            });
-            handler(jsonContent.length ? parse() : error);
-        });
+sp.on("tick", () => {
+  mpClientPlugin.tick((packetType, jsonContent, error) => {
+    const handlers = handlersMap.get(packetType) || [];
+    handlers.forEach((handler) => {
+      const parse = () => {
+        try {
+          return JSON.parse(jsonContent);
+        } catch (e) {
+          throw new Error(`JSON ${jsonContent} failed to parse: ${e}`);
+        }
+      };
+      handler(jsonContent.length ? parse() : error);
     });
+  });
 });
 
-export let connect = (hostname: string, port: number) => {
-    lastHostname = hostname;
-    lastPort = port;
-    mpClientPlugin.createClient(hostname, port);
+export const connect = (hostname: string, port: number): void => {
+  lastHostname = hostname;
+  lastPort = port;
+  mpClientPlugin.createClient(hostname, port);
 };
 
-export let close = () => {
-    mpClientPlugin.destroyClient();
-}
-
-export let on = (packetType: PacketType, handler: Handler) => {
-    let arr = handlersMap.get(packetType);
-    arr = (arr ? arr : []).concat([handler]);
-    handlersMap.set(packetType, arr);
+export const close = (): void => {
+  mpClientPlugin.destroyClient();
 };
 
-export let send = (msg: object, reliable: boolean) => {
-    mpClientPlugin.send(JSON.stringify(msg), reliable);
+export const on = (packetType: PacketType, handler: Handler): void => {
+  let arr = handlersMap.get(packetType);
+  arr = (arr ? arr : []).concat([handler]);
+  handlersMap.set(packetType, arr);
+};
+
+export const send = (msg: Record<string, unknown>, reliable: boolean): void => {
+  mpClientPlugin.send(JSON.stringify(msg), reliable);
 };
 
 // Reconnect automatically
-let reconnect = () => mpClientPlugin.createClient(lastHostname, lastPort);
-on('connectionFailed', reconnect);
-on('connectionDenied', reconnect);
-on('disconnect', reconnect);
+const reconnect = () => mpClientPlugin.createClient(lastHostname, lastPort);
+on("connectionFailed", reconnect);
+on("connectionDenied", reconnect);
+on("disconnect", reconnect);
