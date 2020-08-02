@@ -10,10 +10,14 @@
 #include <frida/frida-gum.h>
 
 #include "EventsApi.h"
+#include "FridaHooksUtils.h"
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
 #include <RE/ConsoleLog.h>
 #include <RE/TESObjectREFR.h>
+#include <skse64/GameData.h>
+#include <skse64/GameTypes.h>
+
 #include <sstream>
 #include <windows.h>
 
@@ -31,7 +35,8 @@ enum _ExampleHookId
   DRAW_SHEATHE_WEAPON_ACTOR,
   DRAW_SHEATHE_WEAPON_PC,
   QUEUE_NINODE_UPDATE,
-  APPLY_MASKS_TO_RENDER_TARGET
+  APPLY_MASKS_TO_RENDER_TARGET,
+  RENDER_MAIN_MENU
 };
 
 static void example_listener_iface_init(gpointer g_iface, gpointer iface_data);
@@ -91,9 +96,13 @@ void SetupFridaHooks()
   w.Attach(listener, 7141008, DRAW_SHEATHE_WEAPON_PC);
   w.Attach(listener, 6893840, QUEUE_NINODE_UPDATE);
   w.Attach(listener, 4043808, APPLY_MASKS_TO_RENDER_TARGET);
+  w.Attach(listener, 5367792, RENDER_MAIN_MENU);
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
+thread_local void* g_prevMainMenuView = nullptr;
+
+bool g_allowHideMainMenu = true;
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -188,6 +197,25 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       g_queueNiNodeActorId = 0;
       break;
     }
+    case RENDER_MAIN_MENU: {
+      static auto fsMainMenu = new BSFixedString("Cursor Menu");
+      auto mainMenu = FridaHooksUtils::GetMenuByName(fsMainMenu);
+      auto this_ = (int64_t*)_ic->cpu_context->rcx;
+      if (g_allowHideMainMenu) {
+
+        if (this_)
+          if (mainMenu == this_) {
+            auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
+            g_prevMainMenuView = *viewPtr;
+            *viewPtr = nullptr;
+            // FridaHooksUtils::ResetView(this_);
+          }
+        /* FridaHooksUtils::GetMenuByName() auto menu =
+           (uint8_t*)_ic->cpu_context->rcx;
+         *reinterpret_cast<void**>(menu + 0x10) = nullptr;*/
+      }
+      break;
+    }
   }
 }
 
@@ -201,6 +229,22 @@ static void example_listener_on_leave(GumInvocationListener* listener,
     case HOOK_SEND_ANIMATION_EVENT: {
       bool res = !!gum_invocation_context_get_return_value(ic);
       EventsApi::SendAnimationEventLeave(res);
+      break;
+    }
+    case RENDER_MAIN_MENU: {
+      auto _ic = (_GumInvocationContext*)ic;
+
+      static auto fsMainMenu = new BSFixedString("Cursor Menu");
+      auto mainMenu = FridaHooksUtils::GetMenuByName(fsMainMenu);
+      auto this_ = (int64_t*)_ic->cpu_context->rcx;
+      auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
+      bool renderHookInProgress = g_prevMainMenuView != nullptr;
+      if (renderHookInProgress)
+        if (this_)
+          if (mainMenu == this_) {
+            *viewPtr = g_prevMainMenuView;
+            g_prevMainMenuView = nullptr;
+          }
       break;
     }
   }

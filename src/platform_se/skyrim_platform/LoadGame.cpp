@@ -72,12 +72,13 @@ public:
   }
 };
 
+extern bool g_allowHideMainMenu;
+
 void LoadGame::Run(const std::array<float, 3>& pos,
                    const std::array<float, 3>& angle, uint32_t cellOrWorld,
                    Time* time, SaveFile_::Weather* _weather,
                    SaveFile_::ChangeFormNPC_* changeFormNPC)
 {
-
   cmrc::file file;
   try {
     file = cmrc::skyrim_plugin_resources::get_filesystem().open(

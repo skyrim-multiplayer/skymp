@@ -48,6 +48,14 @@ interface MpClientPlugin {
 }
 export declare let mpClientPlugin: MpClientPlugin;
 
+interface Browser {
+  setVisible(visible: boolean): void;
+  setFocused(focused: boolean): void;
+  loadUrl(url: string): void;
+  getToken(): string;
+}
+export declare let browser: Browser;
+
 export interface ActivateEvent {
     target: ObjectReference,
     caster: ObjectReference,

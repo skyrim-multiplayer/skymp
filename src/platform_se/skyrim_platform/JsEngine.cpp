@@ -252,6 +252,14 @@ JsValue::operator std::string() const
   return res;
 }
 
+JsValue::operator std::wstring() const
+{
+  const wchar_t* stringPtr;
+  size_t stringSize;
+  SafeCall(F(JsStringToPointer), value, &stringPtr, &stringSize);
+  return std::wstring(stringPtr, stringSize);
+}
+
 JsValue::operator int() const
 {
   int res;

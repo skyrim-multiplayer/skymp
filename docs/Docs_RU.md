@@ -208,6 +208,7 @@ on('update', () => {
 * `callNative(className: string, functionName: string, self?: object, ...args: any): any` - вызвать функцию из оригинальной игры по имени.
 * `getJsMemoryUsage(): number` - получить количество оперативной памяти, используемой встроенным JS-движком, в байтах.
 * `storage` - объект, служащий для сохранения данных между перезагрузкой скриптов.
+* `browser` - объект, предоставляющий доступ к Chromium Embedded Framework.
 * `settings` - объект, предоставляющий доступ к настройкам плагинов:
 ```typescript
 import { settings, printConsole } from  "../skyrimPlatform"

@@ -73,6 +73,7 @@ public:
 
   explicit operator bool() const;
   explicit operator std::string() const;
+  explicit operator std::wstring() const;
   explicit operator int() const;
   explicit operator double() const;
 
