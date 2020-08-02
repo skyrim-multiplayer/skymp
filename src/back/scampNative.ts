@@ -11,7 +11,7 @@ if (fs.existsSync(process.cwd() + "/scamp_native.node")) {
       ? "Debug"
       : "Release";
   console.log(`Using scamp_native config ${config}`);
-  scampNativeNode = require(`../build/${config}/scamp_native.node`);
+  scampNativeNode = require(`../../build/${config}/scamp_native.node`);
 }
 
 export declare class ScampServer {
@@ -38,7 +38,13 @@ export declare class ScampServer {
 
   getUserActor(userId: number): number;
 
+  getActorName(actorId: number): string;
+
+  getActorPos(actorId: number): number[];
+
   setRaceMenuOpen(formId: number, open: boolean): void;
+
+  sendCustomPacket(userId: number, jsonContent: string): void;
 }
 
 module.exports.ScampServer = scampNativeNode.ScampServer;

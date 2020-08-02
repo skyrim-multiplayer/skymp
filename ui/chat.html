@@ -1,0 +1,32 @@
+<link rel="stylesheet" href="css/chat.css" />
+
+<div class="main">
+  <div class="magicarea" id="magicarea"></div>
+  <div class="header">
+    <div class="header__time" id="header__time"></div>
+    <div class="header__chatname" id="header__chatname">Общий чат</div>
+  </div>
+
+  <div class="menu">
+    <ul id="menu__ul">
+      <li class="menu__ul__item" id="menu__ul__1">Чат</li>
+      <li class="menu__ul__item" id="menu__ul__2">RP</li>
+      <li class="menu__ul__item" id="menu__ul__3">NonRP</li>
+    </ul>
+  </div>
+
+  <div class="chat">
+    <div class="chatline" id="chatline"></div>
+    <ul class="chat__ul chat__offli" id="chat__1"></ul>
+    <ul class="chat__ul chat__offli hide" id="chat__2"></ul>
+    <ul class="chat__ul chat__offli hide" id="chat__3"></ul>
+    <ul class="chat__ul chat__offli hide" id="chat__4"></ul>
+    <form class="chat__sendform" id="chat__sendform" action="#" method="POST">
+      <input type="text" />
+      <button type="submit"><div>Отправить</div></button>
+    </form>
+  </div>
+</div>
+
+<div id="tech"></div>
+<script src="js/chat.js"></script>

@@ -35,6 +35,11 @@ public:
   void DestroyActor(uint32_t actorFormId);
   void SetRaceMenuOpen(uint32_t formId, bool open,
                        Networking::ISendTarget* sendTarget);
+  void SendCustomPacket(Networking::UserId userId, const std::string& jContent,
+                        Networking::ISendTarget* sendTarget);
+
+  std::string GetActorName(uint32_t actorFormId);
+  NiPoint3 GetActorPos(uint32_t actorFormId);
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,

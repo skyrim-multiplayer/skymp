@@ -1,0 +1,250 @@
+@font-face {
+	font-family: 'Futura_Condenced-Normal';
+	src: url('../font/Futura_Condenced-Normal.eot');
+	src: local('../font/Futura_Condenced-Normal'),
+		url('../font/Futura_Condenced-Normal.eot?#iefix') format('embedded-opentype'),
+		url('../font/Futura_Condenced-Normal.woff') format('woff'),
+		url('../font/Futura_Condenced-Normal.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+
+.clearfix::after {
+	content: "";
+	display: table;
+	clear: both;
+}
+
+.main{
+	/*background: url(../svg/chat.svg) no-repeat;*/ /* сделать svg подходящего размера + все это дело сдвинется вниз при 2х линиях менюх, так что надо бы еще 2ю svg, которые будем менять скриптом */
+	background: url(../svg/testchat_2.svg) no-repeat;
+	width: 490px;
+	/*height: 435;*/
+	height: 475px;
+	background-size: 100%;
+	/*padding-right: 50px;*/
+
+	/*pospelov*/
+	margin-left: 60px;
+	padding-top: 26%;
+	background-position-y: 95%;
+}
+
+/* ------------------- HEADER --------------------- */
+
+.header{
+	color: white;
+	width: auto;
+	padding: 20px 20px 15px 20px;
+	position: relative;
+	text-align: center;
+	text-transform: uppercase;
+	user-select: none;
+}
+
+.header__chatname{
+	font-size: 21px;
+	letter-spacing: 1px;
+	line-height: 35px;
+	color: #ffffff;
+	font-family: "Futura_Condenced-Normal";
+	font-weight: bold;
+}
+
+.header__time{
+	font-size: 20px;
+	color: #ffffff;
+	font-family: "Futura_Condenced-Normal";
+	position: absolute;
+	right: 50px;
+	top: calc(50% - 9px); /* костыль, мб есть лучше решение; */
+}
+
+/* -------------------------------------------------- */
+
+/* --------------------- MENU ----------------------- */
+
+.menu{
+	color: white;
+	padding: 0 10px;
+	font-family: "Futura_Condenced-Normal";
+	user-select: none;
+}
+
+.menu > ul {
+	margin: 0;
+	padding: 0 1px;
+	list-style: none;
+	display: flex;
+	color: #ffffff;
+
+}
+
+.menu > ul > .menu__ul__item {
+	font-size: 18px;
+	letter-spacing: 1px;
+	line-height: 30px;
+	font-family: "Futura_Condenced-Normal";
+	text-align: center;
+	border: 1px solid #9d9e9e;
+	flex-grow: 1;
+	flex-shrink: 1;
+	flex-basis: 0;
+}
+
+.menu > ul > .menu__ul__item:hover{
+	box-shadow: 0 0 10px 0.1px white, inset 0 0 10px 0.1px white;
+	transition: 0.5s;
+	border: 1px solid white;
+	cursor: pointer;
+}
+
+.active {
+	color: black;
+	background: white;
+}
+
+.line-break{
+	width: 100%;
+}
+/* ----------------------------------------------------- */
+
+/* --------------------- CHAT -------------------------- */
+
+.chat{
+	color: white;
+}
+
+.chat__offli{
+	margin: 0;
+	padding: 0;
+	padding-left: 10px;
+	list-style: none;
+}
+
+.chat__ul{
+	height: 265px;
+	width: 450px;
+	margin-left: 25px;
+	font-family: "Futura_Condenced-Normal";
+	user-select: none; /* можно убрать, если разрезрешить копирование текста */
+	overflow-y: scroll;
+	direction: rtl;
+	word-wrap: break-word;
+	position: relative;
+	z-index: 2;
+}
+
+.chat__ul__item{
+	direction: ltr;
+	text-align: left;
+	margin-right: 10px;
+	word-wrap: break-word;
+}
+
+.chat__ul__item div {
+	word-wrap: break-word;
+	position: relative;
+}
+
+.animate{
+	animation: msg 1s;
+}
+
+@keyframes msg
+{
+   0% { transform: translate(300px,0px) rotate(0deg) ; opacity: 0;  }
+   100% { transform: translate(0px,0px) rotate(0deg) ; opacity: 1;  }
+}
+
+
+.chatline{
+	position: absolute;
+	height: 265px;
+	width: 1px;
+	background: #9d9e9e;
+	left: 35px;
+	z-index: 1;
+	/*pospelov*/
+	margin-left: 60px;
+}
+
+.chat__ul::-webkit-scrollbar              { /* 1 - скроллбар */  width: 5px; }
+.chat__ul::-webkit-scrollbar-button       { /* 2 - кнопка */ }
+.chat__ul::-webkit-scrollbar-track        { /* 3 - трек */ }
+.chat__ul::-webkit-scrollbar-track-piece  { /* 4 - видимая часть трека */}
+.chat__ul::-webkit-scrollbar-thumb        { /* 5 - ползунок */background: white;}
+.chat__ul::-webkit-scrollbar-corner       { /* 6 - уголок */ }
+.chat__ul::-webkit-resizer                { /* 7 - изменение размеров */ }
+
+.hide{
+	display: none;
+}
+
+.chat__sendform{
+	display: none;
+	padding: 0 10px 0 30px;
+}
+
+.chat__sendform > input{
+	height: 30px;
+	background: rgba(0,0,0,0.6);
+	flex-grow: 1;
+	border-top: 1px solid #9d9e9e;
+	border-bottom: 1px solid #9d9e9e;
+	border-left: 1px solid #9d9e9e;
+	border-right: 1px solid #9d9e9e;
+	color: white;
+	font-size: 16px;
+	padding: 0 20px 0 20px;
+	font-family: "Futura_Condenced-Normal";
+	margin-left: -3px;
+}
+
+.chat__sendform > input:focus{
+	box-shadow: 0 0 10px 0.1px white;
+	transition: 0.5s;
+	outline: none;
+}
+
+.chat__sendform > input:hover{
+	box-shadow: 0 0 10px 0.1px white;
+	transition: 0.5s;
+}
+
+.chat__sendform > button{
+	background: none;
+	color: white;
+	font-family: "Futura_Condenced-Normal";
+	border-left: none;
+	border-right: none;
+	border-top: 1px solid #9d9e9e;
+	border-bottom: 1px solid #9d9e9e;
+	padding: 0 30px;
+	font-size: 18px;
+	text-transform: uppercase;
+	cursor: pointer;
+	outline: none;
+}
+
+.chat__sendform > button > div{
+	margin-top: 2px;
+}
+
+.chat__sendform > button:hover{
+	box-shadow: 0 0 10px 0.1px white;
+	transition: 0.5s;
+}
+
+#chat__1{
+	height: 320px;
+}
+
+.magicarea{
+	position: absolute;
+	height: 50px;
+	width: 450px;
+	left: 35px;
+	top: 109px;
+}

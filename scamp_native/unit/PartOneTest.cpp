@@ -136,6 +136,18 @@ public:
 };
 }
 
+TEST_CASE("PartOne API doesn't crash when bad userId passed", "[PartOne]")
+{
+  PartOne partOne;
+
+  REQUIRE_THROWS_WITH(partOne.GetUserActor(Networking::InvalidUserId),
+                      Contains("User with id 65535 doesn't exist"));
+
+  REQUIRE_THROWS_WITH(
+    partOne.SetUserActor(Networking::InvalidUserId, 0, nullptr),
+    Contains("User with id 65535 doesn't exist"));
+}
+
 TEST_CASE("OnConnect/OnDisconnect", "[PartOne]")
 {
   auto lst = FakeListener::New();
@@ -624,4 +636,22 @@ TEST_CASE("UpdateMovement", "[PartOne]")
                          return m.j["type"] == "destroyActor" &&
                            m.j["idx"] == 0 && m.reliable && m.userId == 1;
                        }) != tgt.messages.end());
+}
+
+TEST_CASE("Server custom packet")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  DoConnect(partOne, 1);
+
+  partOne.SendCustomPacket(1, nlohmann::json({ { "x", "y" } }).dump(), &tgt);
+  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(tgt.messages[0].j.dump() ==
+          nlohmann::json{ { "type", "customPacket" },
+                          { "content", { { "x", "y" } } } }
+            .dump());
+  REQUIRE(tgt.messages[0].userId == 1);
+  REQUIRE(tgt.messages[0].reliable);
 }

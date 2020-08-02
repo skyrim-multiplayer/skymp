@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "module": "System",
+    "target": "ES5",
+    "outFile": "./dist_front/skymp5-client.js",
+    "rootDir": "",
+    "lib": ["ES2015"],
+    "paths": {
+      "chai": ["./node_modules/@types/chai"]
+    }
+  },
+  "exclude": ["src/back"]
+}

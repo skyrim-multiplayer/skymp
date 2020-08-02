@@ -6,6 +6,7 @@
 #include "WorldState.h"
 #include <array>
 #include <cassert>
+#include <type_traits>
 #include <vector>
 
 struct PartOne::Impl
@@ -98,9 +99,7 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
                            Networking::ISendTarget* sendTarget)
 {
-  if (!pImpl->serverState.userInfo[userId])
-    throw std::runtime_error("User with id " + std::to_string(userId) +
-                             " doesn't exist");
+  pImpl->serverState.EnsureUserExists(userId);
 
   if (actorFormId > 0) {
     auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
@@ -116,10 +115,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
 
 uint32_t PartOne::GetUserActor(Networking::UserId userId)
 {
-  auto& user = pImpl->serverState.userInfo[userId];
-  if (!user)
-    throw std::runtime_error("User with id " + std::to_string(userId) +
-                             " doesn't exist");
+  pImpl->serverState.EnsureUserExists(userId);
 
   auto actor = pImpl->serverState.ActorByUser(userId);
   if (!actor)
@@ -156,6 +152,27 @@ void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open,
   Networking::SendFormatted(sendTarget, userId,
                             R"({"type": "setRaceMenuOpen", "open": %s})",
                             open ? "true" : "false");
+}
+
+void PartOne::SendCustomPacket(Networking::UserId userId,
+                               const std::string& jContent,
+                               Networking::ISendTarget* sendTarget)
+{
+  Networking::SendFormatted(sendTarget, userId,
+                            R"({"type": "customPacket", "content":%s})",
+                            jContent.data());
+}
+
+std::string PartOne::GetActorName(uint32_t actorFormId)
+{
+  auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
+  return ac.GetLook() ? ac.GetLook()->name : "Prisoner";
+}
+
+NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
+{
+  auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
+  return ac.GetPos();
 }
 
 void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
