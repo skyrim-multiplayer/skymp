@@ -1,1 +1,0 @@
-skymp5-client
