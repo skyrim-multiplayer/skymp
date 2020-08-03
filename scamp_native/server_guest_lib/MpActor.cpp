@@ -1,6 +1,6 @@
 #include "MpActor.h"
-#include <NiPoint3.h>
 #include "WorldState.h"
+#include <NiPoint3.h>
 
 namespace {
 std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept

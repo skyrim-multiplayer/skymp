@@ -1,11 +1,10 @@
 #pragma once
+#include "MpActor.h"
 #include "Networking.h"
 #include "NiPoint3.h"
+#include "WorldState.h"
 #include <memory>
 #include <simdjson.h>
-
-#include "WorldState.h"
-#include "MpActor.h"
 
 class PartOne
 {

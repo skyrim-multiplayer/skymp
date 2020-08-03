@@ -1,11 +1,11 @@
 #pragma once
+#include "FormIndex.h"
 #include "JsonUtils.h"
 #include "MpForm.h"
 #include <nlohmann/json.hpp>
+#include <set>
 #include <simdjson.h>
 #include <vector>
-#include <set>
-#include "FormIndex.h"
 
 class WorldState;
 
@@ -14,7 +14,6 @@ struct LocationalData
   NiPoint3 pos, rot;
   uint32_t cellOrWorld;
 };
-
 
 class MpActor
   : public MpForm
