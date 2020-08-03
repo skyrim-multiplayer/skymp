@@ -14,7 +14,6 @@ if (NOT CEF_DIR)
   message(FATAL_ERROR "Please specify CEF_DIR")
 endif()
 
-# http://opensource.spotify.com/cefbuilds/cef_binary_84.3.7%2Bg97011bc%2Bchromium-84.0.4147.89_windows64.tar.bz2
 set(expected_readme_hash dbaa71607debbba411f9ce4c8e28ca52ba98676ebf11db25d2ba0e47b686c7ec9b30bfc34bdd7ff665e3b79cb863c85639585bd6d945c86f1b28fee548452c47)
 file(SHA512 ${CEF_DIR}/README.txt readme_hash)
 if (NOT "${readme_hash}" STREQUAL expected_readme_hash)
