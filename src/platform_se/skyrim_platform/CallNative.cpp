@@ -278,7 +278,8 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
         ? reinterpret_cast<RE::TESBoundObject*>(obj->GetNativeObjectPtr())
         : nullptr;
 
-      actor->AddObjectToContainer(boundObject, nullptr, count, nullptr);
+      if (boundObject)
+        actor->AddObjectToContainer(boundObject, nullptr, count, nullptr);
     }
     return ObjectPtr();
   }
@@ -302,7 +303,8 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
       if (count < 0)
         count = std::numeric_limits<int32_t>::max();
 
-      actor->RemoveItem(boundObject, count, RE::ITEM_REMOVE_REASON::kRemove,
+      if (boundObject)
+        actor->RemoveItem(boundObject, count, RE::ITEM_REMOVE_REASON::kRemove,
                         nullptr, refrToMove);
     }
     return ObjectPtr();
