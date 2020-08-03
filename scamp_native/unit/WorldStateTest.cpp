@@ -1,7 +1,9 @@
-#include "WorldState.h"
+#include <WorldState.h>
+#include <MpForm.h>
 #include "MsgType.h"
 #include <catch2/catch.hpp>
 #include <nlohmann/json.hpp>
+#include <MpActor.h>
 
 using namespace Catch;
 
@@ -23,6 +25,5 @@ TEST_CASE("DestroyForm failures", "[WorldState]")
   worldState.AddForm(std::unique_ptr<MpForm>(new MpForm), 0x12345678);
   REQUIRE_THROWS_WITH(
     worldState.DestroyForm<MpActor>(0x12345678),
-    Contains(
-      "Expected form 12345678 to be Actor, but got Form"));
+    Contains("Expected form 12345678 to be Actor, but got Form"));
 }

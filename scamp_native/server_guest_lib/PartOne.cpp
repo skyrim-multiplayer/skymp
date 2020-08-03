@@ -3,7 +3,6 @@
 #include "JsonUtils.h"
 #include "MsgType.h"
 #include "ServerState.h"
-#include "WorldState.h"
 #include <array>
 #include <cassert>
 #include <type_traits>

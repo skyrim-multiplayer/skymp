@@ -2,6 +2,7 @@
 #include "MsgType.h"
 #include <catch2/catch.hpp>
 #include <nlohmann/json.hpp>
+#include "MpActor.h"
 
 using namespace Catch;
 
