@@ -7,13 +7,21 @@ import {
   Game,
   Ui,
   Utility,
+  Input,
   findConsoleCommand,
+  TESModPlatform,
+  Actor,
 } from "skyrimPlatform";
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
 import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
+import {
+  getInventory,
+  Inventory,
+  applyInventory,
+} from "./components/inventory";
 import { MsgType } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
@@ -237,12 +245,6 @@ findConsoleCommand("tim").execute = () => {
   return false;
 };
 
-// TODO: remove this
-once("update", () => {
-  Game.getPlayer().unequipAll();
-  Game.getPlayer().addItem(Game.getFormEx(0x0001397d), 100, true);
-});
-
 const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
 };
@@ -250,7 +252,6 @@ const enforceLimitations = () => {
 once("update", enforceLimitations);
 loadGameManager.addLoadGameListener(enforceLimitations);
 
-const Input = (sp as Record<string, any>)["Input"];
 const F2 = 0x3c;
 const F6 = 0x40;
 const Escape = 0x01;
@@ -325,4 +326,83 @@ sp.browser.loadUrl(url);
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
+});
+/*enchantmentId: 0x49bb7,
+        maxCharge: 1000,
+        removeEnchantmentOnUnequip: false,
+        chargePercent: 500,
+        name: "slon eblan",
+        health: 1.6,
+        poisonId: 0x34c5e,
+        poisonCount: 3,*/
+
+/*sp.hooks.sendAnimationEvent.add({
+  enter(ctx) {
+    if (ctx.selfId === 0x14) printConsole(ctx.animEventName);
+  },
+  leave() {
+    return;
+  },
+});*/
+const targetInventory = (): Inventory => {
+  return {
+    entries: [
+      /*{
+        baseId: 0x0001391d,
+        count: 1,
+        worn: true,
+      },*/
+      {
+        baseId: 0x12eb7,
+        count: 1,
+        worn: true,
+        health: 1.1,
+        name: "da da pizda",
+        //enchantmentId: 0x49bb7,
+        //maxCharge: 1000,
+        //removeEnchantmentOnUnequip: false,
+        //chargePercent: 500,
+        //name: "eblan ish",
+        poisonId: 0x34c5e,
+        poisonCount: 3,
+      },
+
+      /*{
+        baseId: 0x00012eb6,
+        count: 1,
+      },*/
+      /*{
+        baseId: 0x0001d4ec,
+        count: 1,
+      },*/
+      /*{
+        baseId: 0x000236a5,
+        count: 1,
+      },*/
+      /*{
+        //baseId: 0x0002ac6f,
+        baseId: 0x12eb7,
+        count: 1,
+      },*/
+    ],
+  };
+};
+
+let last = 0;
+on("update", () => {
+  if (Date.now() - last > 1000) {
+    if (!Ui.isMenuOpen("InventoryMenu")) {
+      applyInventory(Game.getPlayer(), targetInventory());
+      last = Date.now();
+    }
+  }
+});
+
+on("unequip", (e) => {
+  last = 0;
+  //TESModPlatform.updateEquipment(Actor.from(e.actor), null, false);
+});
+
+on("update", () => {
+  //printConsole(Game.getPlayer().getAnimationVariableInt("IsEquipping"));
 });
