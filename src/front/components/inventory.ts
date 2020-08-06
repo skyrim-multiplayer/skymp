@@ -129,6 +129,11 @@ const extractExtraData = (
     switch (extra.type) {
       case "Health":
         out.health = Math.round((extra as ExtraHealth).health * 10) / 10;
+
+        // TESModPlatform::AddItemEx makes all items at least 1.01 health
+        if (out.health === 1) {
+          delete out.health;
+        }
         break;
       case "Count":
         out.count = (extra as ExtraCount).count;
@@ -305,7 +310,14 @@ export const applyInventory = (
       }
     }*/
 
+    let k = 0;
     for (let i = 0; i < absCount; ++i) {
+      k++;
+      if (k > 1000) {
+        printConsole("huh!", absCount);
+        break;
+      }
+
       if (worn || wornLeft) {
         TESModPlatform.pushWornState(!!worn, !!wornLeft);
         queueNiNodeUpdateNeeded = true;

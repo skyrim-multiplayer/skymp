@@ -16,33 +16,24 @@ export interface Equipment {
   numChanges: number;
 }
 
+const filterWorn = (inv: Inventory): Inventory => {
+  return { entries: inv.entries.filter((x) => x.worn || x.wornLeft) };
+};
+
 export const getEquipment = (ac: Actor, numChanges: number): Equipment => {
   return { inv: getInventory(ac), numChanges };
 };
 
-const last: Record<string, number> = {};
-
-const filterWornOrWornLeft = (inv: Inventory): Inventory => {
-  return { entries: inv.entries.filter((x) => x.worn || x.wornLeft) };
-};
-
-export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
-  const id = ac.getFormID();
-
-  if (isBadMenuShown()) last[id] = Date.now();
-  if (Date.now() - last[id] > 1000) {
-    applyInventory(ac, filterWornOrWornLeft(eq.inv));
-    last[id] = Date.now();
-    return true;
-  }
-  return false;
+export const applyEquipment = (ac: Actor, eq: Equipment): void => {
+  applyInventory(ac, filterWorn(eq.inv));
 };
 
 export const isBadMenuShown = (): boolean => {
-  const menus = ["InventoryMenu", "FavoritesMenu", "MagicMenu"];
-  const res = menus.map((name) => Ui.isMenuOpen(name)).indexOf(true) !== -1;
-  //printConsole(res);
-  return res;
+  return (
+    Ui.isMenuOpen("InventoryMenu") ||
+    Ui.isMenuOpen("FavoritesMenu") ||
+    Ui.isMenuOpen("MagicMenu")
+  );
 };
 
 /*export interface Equipment {

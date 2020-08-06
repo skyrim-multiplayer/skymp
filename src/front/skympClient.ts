@@ -380,7 +380,13 @@ const targetInventory = (): Inventory => {
       {
         baseId: 0x0001397d,
         count: 1,
-        ///worn: true,
+        ///worn: true
+      },
+      {
+        baseId: 0x12eb7,
+        count: 1,
+        poisonId: 0x34c5e,
+        poisonCount: 3,
       },
       {
         baseId: 0x000139b9,
@@ -388,10 +394,10 @@ const targetInventory = (): Inventory => {
         //worn: true,
         health: 1.4,
 
-        enchantmentId: 0x49bb7,
+        /*enchantmentId: 0x49bb7,
         maxCharge: 1000,
         removeEnchantmentOnUnequip: false,
-        chargePercent: 500,
+        chargePercent: 500,*/
         name: "SKYMP2020 []",
         poisonId: 0x34c5e,
         poisonCount: 3,
@@ -432,11 +438,16 @@ on("update", () => {
 });*/
 
 once("update", () => {
-  Game.getPlayer().addItem(Game.getFormEx(0x0001397d), 100, true);
-  Game.getPlayer().addItem(Game.getFormEx(0x0002acd2), 1, true);
-  Game.getPlayer().addItem(Game.getFormEx(0x000233e3), 1, true);
-  Game.getPlayer().addItem(Game.getFormEx(0x02000800), 1, true);
-  Game.getPlayer().addItem(Game.getFormEx(0x02000801), 1, true);
-  Game.getPlayer().addItem(Game.getFormEx(0x0200f1b1), 1, true);
-  Game.getPlayer().addItem(Game.getFormEx(0x00061cd6), 1, true);
+  applyInventory(Game.getPlayer(), targetInventory());
+  Utility.wait(0.4).then(() => {
+    Game.getPlayer().addItem(Game.getFormEx(0x0001397d), 100, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0002acd2), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x000233e3), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x02000800), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x02000801), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0200f1b1), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x00061cd6), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0001397f), 100, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0200284d), 1, true);
+  });
 });
