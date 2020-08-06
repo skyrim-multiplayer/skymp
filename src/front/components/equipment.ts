@@ -9,8 +9,43 @@ import {
   printConsole,
   Ui,
 } from "skyrimPlatform";
+import { Inventory, getInventory, applyInventory } from "./inventory";
 
 export interface Equipment {
+  inv: Inventory;
+  numChanges: number;
+}
+
+export const getEquipment = (ac: Actor, numChanges: number): Equipment => {
+  return { inv: getInventory(ac), numChanges };
+};
+
+const last: Record<string, number> = {};
+
+const filterWornOrWornLeft = (inv: Inventory): Inventory => {
+  return { entries: inv.entries.filter((x) => x.worn || x.wornLeft) };
+};
+
+export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
+  const id = ac.getFormID();
+
+  if (isBadMenuShown()) last[id] = Date.now();
+  if (Date.now() - last[id] > 1000) {
+    applyInventory(ac, filterWornOrWornLeft(eq.inv));
+    last[id] = Date.now();
+    return true;
+  }
+  return false;
+};
+
+export const isBadMenuShown = (): boolean => {
+  const menus = ["InventoryMenu", "FavoritesMenu", "MagicMenu"];
+  const res = menus.map((name) => Ui.isMenuOpen(name)).indexOf(true) !== -1;
+  //printConsole(res);
+  return res;
+};
+
+/*export interface Equipment {
   armor: number[];
   numChanges: number;
   leftHandWeapon: number;
@@ -131,9 +166,5 @@ export const applyEquipment = (actor: Actor, equipment: Equipment): void => {
     }
   }
 
-  /*if (false) {
-            let idForLeft = cloneWeapoForLeftHand(equipment.leftHandWeapon);
-            printConsole(`idForLeft  = ${idForLeft}`);
-           actor.equipItem(Game.getFormEx(idForLeft), true, true);
-    }*/
 };
+*/

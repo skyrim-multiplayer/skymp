@@ -272,9 +272,11 @@ export class FormView implements View<FormModel> {
         if (!isShown) this.eqState.lastNumChanges = -1;
       }
       if (this.eqState.lastNumChanges !== model.equipment.numChanges) {
-        this.eqState.lastNumChanges = model.equipment.numChanges;
         const ac = Actor.from(refr);
-        if (ac) applyEquipment(ac, model.equipment);
+        if (ac) {
+          const res: boolean = applyEquipment(ac, model.equipment);
+          if (res) this.eqState.lastNumChanges = model.equipment.numChanges;
+        }
       }
     }
   }

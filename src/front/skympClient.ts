@@ -347,22 +347,52 @@ once("update", () => {
 const targetInventory = (): Inventory => {
   return {
     entries: [
-      /*{
+      {
+        //baseId: 0x0200284d, //shield
+        baseId: 0x0001d4ec,
+        count: 1,
+        //wornLeft: true,
+      },
+      {
         baseId: 0x0001391d,
         count: 1,
-        worn: true,
-      },*/
+        ///worn: true,
+        enchantmentId: 0xfcc01,
+        maxCharge: 1000,
+        chargePercent: 1000,
+        name: "Шлем летчика",
+      },
       {
-        baseId: 0x12eb7,
+        //baseId: 0x0001359d,
+        baseId: 0x0003b562,
         count: 1,
-        worn: true,
-        health: 1.1,
-        name: "da da pizda",
-        //enchantmentId: 0x49bb7,
-        //maxCharge: 1000,
-        //removeEnchantmentOnUnequip: false,
-        //chargePercent: 500,
-        //name: "eblan ish",
+        ///worn: true,
+        health: 1.2,
+        //name: "da da pizda",
+        enchantmentId: 0x49bb7,
+        maxCharge: 1000,
+        removeEnchantmentOnUnequip: false,
+        chargePercent: 500,
+        name: "eblan ishs []",
+        poisonId: 0x34c5e,
+        poisonCount: 3,
+      },
+      {
+        baseId: 0x0001397d,
+        count: 1,
+        ///worn: true,
+      },
+      {
+        baseId: 0x000139b9,
+        count: 1,
+        //worn: true,
+        health: 1.4,
+
+        enchantmentId: 0x49bb7,
+        maxCharge: 1000,
+        removeEnchantmentOnUnequip: false,
+        chargePercent: 500,
+        name: "SKYMP2020 []",
         poisonId: 0x34c5e,
         poisonCount: 3,
       },
@@ -390,19 +420,23 @@ const targetInventory = (): Inventory => {
 
 let last = 0;
 on("update", () => {
+  if (Ui.isMenuOpen("InventoryMenu")) last = Date.now();
   if (Date.now() - last > 1000) {
-    if (!Ui.isMenuOpen("InventoryMenu")) {
-      applyInventory(Game.getPlayer(), targetInventory());
-      last = Date.now();
-    }
+    //applyInventory(Game.getPlayer(), targetInventory());
+    last = Date.now();
   }
 });
 
-on("unequip", (e) => {
-  last = 0;
-  //TESModPlatform.updateEquipment(Actor.from(e.actor), null, false);
-});
+/*once("update", () => {
+  printConsole("pizda" + Game.getFormEx(0x12eb7).getName());
+});*/
 
-on("update", () => {
-  //printConsole(Game.getPlayer().getAnimationVariableInt("IsEquipping"));
+once("update", () => {
+  Game.getPlayer().addItem(Game.getFormEx(0x0001397d), 100, true);
+  Game.getPlayer().addItem(Game.getFormEx(0x0002acd2), 1, true);
+  Game.getPlayer().addItem(Game.getFormEx(0x000233e3), 1, true);
+  Game.getPlayer().addItem(Game.getFormEx(0x02000800), 1, true);
+  Game.getPlayer().addItem(Game.getFormEx(0x02000801), 1, true);
+  Game.getPlayer().addItem(Game.getFormEx(0x0200f1b1), 1, true);
+  Game.getPlayer().addItem(Game.getFormEx(0x00061cd6), 1, true);
 });

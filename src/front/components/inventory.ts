@@ -17,10 +17,6 @@ import {
   Enchantment,
   Potion,
   Actor,
-  Weapon,
-  Debug,
-  Utility,
-  Armor,
 } from "skyrimPlatform";
 
 export interface Extra {
@@ -67,6 +63,40 @@ const cropName = (s?: string): string => {
     : s;
 };
 
+const checkIfNameIsGeneratedByGame = (
+  aStr: string,
+  bStr: string,
+  formName: string
+) => {
+  if (!aStr.length && bStr.startsWith(formName)) {
+    const bEnding = bStr.substr(formName.length);
+    if (bEnding.match(/^\s\(.*\)$/)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const namesEqual = (a: Entry, b: Entry): boolean => {
+  const aStr = a.name || "";
+  const bStr = b.name || "";
+  if (cropName(getRealName(aStr)) === cropName(getRealName(bStr))) return true;
+
+  if (a.baseId === b.baseId) {
+    const form = Game.getFormEx(a.baseId);
+    if (form) {
+      const formName = form.getName();
+      if (
+        checkIfNameIsGeneratedByGame(aStr, bStr, formName) ||
+        checkIfNameIsGeneratedByGame(bStr, aStr, formName)
+      )
+        return true;
+    }
+  }
+
+  return false;
+};
+
 const extrasEqual = (a: Entry, b: Entry) => {
   return (
     a.health === b.health &&
@@ -74,10 +104,12 @@ const extrasEqual = (a: Entry, b: Entry) => {
     a.maxCharge === b.maxCharge &&
     !!a.removeEnchantmentOnUnequip === !!b.removeEnchantmentOnUnequip &&
     a.chargePercent === b.chargePercent &&
-    cropName(getRealName(a.name)) === cropName(getRealName(b.name)) &&
+    namesEqual(a, b) &&
     a.soul === b.soul &&
     a.poisonId === b.poisonId &&
-    a.poisonCount === b.poisonCount
+    a.poisonCount === b.poisonCount &&
+    !!a.worn === !!b.worn &&
+    !!a.wornLeft === !!b.wornLeft
   );
 };
 
@@ -119,6 +151,12 @@ const extractExtraData = (
       case "TextDisplayData":
         out.name = (extra as ExtraTextDisplayData).name;
         break;
+      case "Worn":
+        out.worn = true;
+        break;
+      case "WornLeft":
+        out.wornLeft = true;
+        break;
     }
   });
 };
@@ -127,33 +165,6 @@ const getExtraContainerChangesAsInventory = (
   refr: ObjectReference
 ): Inventory => {
   const extraContainerChanges = getExtraContainerChanges(refr.getFormID());
-
-  /** {
-        baseId: 0x12e49,
-        count: 1,
-      },
-
-      {
-        baseId: 0x00012eb6,
-        count: 1,
-      },
-      {
-        baseId: 0x0001d4ec,
-        count: 1,
-      },
-      {
-        baseId: 0x000236a5, */
-  printConsole({
-    extraContainerChanges: extraContainerChanges.filter(
-      (x) =>
-        x.baseId == 0x12eb7 ||
-        x.baseId == 0x12e49 ||
-        x.baseId == 0x00012eb6 ||
-        x.baseId == 0x0001d4ec ||
-        x.baseId == 0x000236a5
-    ),
-  });
-
   const entries = new Array<Entry>();
 
   extraContainerChanges.forEach((changesEntry) => {
@@ -174,7 +185,6 @@ const getExtraContainerChangesAsInventory = (
 
     if (entry.count !== 0) entries.push(entry);
   });
-
   return { entries };
 };
 
@@ -274,27 +284,33 @@ export const applyInventory = (
   if (diff.length) printConsole("diff " + diff.length);
   diff.sort((a, b) => (a.count < b.count ? -1 : 1));
   diff.forEach((e) => {
-    printConsole("addItemEx", e.baseId.toString(16), e);
-
     const absCount = Math.abs(e.count);
 
     let queueNiNodeUpdateNeeded = false;
-    //let noQueuePlz = false;
 
     printConsole(e);
-    for (let i = 0; i < absCount; ++i) {
-      if (e.worn || e.wornLeft) {
-        // refr.setAnimationVariableInt("IsEquipping", 1);
 
-        TESModPlatform.pushWornState(!!e.worn, !!e.wornLeft);
-        queueNiNodeUpdateNeeded = true;
-        /*if (e.worn && Armor.from(Game.getFormEx(e.baseId))) {
-          queueNiNodeUpdateNeeded = true;
+    const worn = !!e.worn;
+    const wornLeft = !!e.wornLeft;
+
+    /*for (let i = 0; i < absCount; ++i) {
+      if (worn || wornLeft) {
+        if (e.count < 0) {
+          const ac = Actor.from(refr);
+          const f = Game.getFormEx(e.baseId);
+          if (ac && f) {
+            ac.unequipItem(f, false, true);
+          }
         }
-        if ((e.wornLeft || e.worn) && !Armor.from(Game.getFormEx(e.baseId))) {
-          noQueuePlz = true;
-        }*/
       }
+    }*/
+
+    for (let i = 0; i < absCount; ++i) {
+      if (worn || wornLeft) {
+        TESModPlatform.pushWornState(!!worn, !!wornLeft);
+        queueNiNodeUpdateNeeded = true;
+      }
+
       TESModPlatform.addItemEx(
         refr,
         Game.getFormEx(e.baseId),
@@ -311,50 +327,12 @@ export const applyInventory = (
         e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
         e.poisonCount ? e.poisonCount : 0
       );
-
-      /*if (e.worn && Weapon.from(Game.getFormEx(e.baseId))) {
-        const refrId = refr.getFormID();
-        Utility.wait(0).then(() => {
-          const r = Actor.from(Game.getFormEx(refrId));
-          if (r) {
-            printConsole("ddd");
-            TESModPlatform.updateEquipment(r, Game.getFormEx(e.baseId), true);
-          }
-        });
-      }
-
-      if (e.wornLeft && Weapon.from(Game.getFormEx(e.baseId))) {
-        const refrId = refr.getFormID();
-        Utility.wait(0).then(() => {
-          const r = Actor.from(Game.getFormEx(refrId));
-          if (r) {
-            TESModPlatform.updateEquipment(r, Game.getFormEx(e.baseId), false);
-          }
-        });
-      }*/
     }
 
     if (queueNiNodeUpdateNeeded) {
       const ac = Actor.from(refr);
       if (ac) {
         ac.queueNiNodeUpdate();
-
-        /*const id = ac.getFormID();
-        Utility.wait(0.0).then(() => {
-          const r = Actor.from(Game.getFormEx(id));
-          if (r) {
-            //r.queueNiNodeUpdate();
-          }
-        });
-        Utility.wait(0.3).then(() => {
-          const r = Actor.from(Game.getFormEx(id));
-          if (r) {
-            //TESModPlatform.updateEquipment(r, Game.getFormEx(e.baseId), false);
-            r.queueNiNodeUpdate();
-          }
-        });*/
-
-        //ac.queueNiNodeUpdate();
       }
     }
   });
