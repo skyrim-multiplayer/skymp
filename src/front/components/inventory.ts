@@ -17,6 +17,7 @@ import {
   Enchantment,
   Potion,
   Actor,
+  Ammo,
 } from "skyrimPlatform";
 
 export interface Extra {
@@ -122,9 +123,19 @@ export interface Inventory {
 }
 
 const extractExtraData = (
+  refr: ObjectReference,
   extraList: BaseExtraList | null,
   out: Entry
 ): void => {
+  // I see that ExtraWorn is not emitted for 0xFF actors when arrows are equipped. Fixing
+  const item = Game.getFormEx(out.baseId);
+  if (Ammo.from(item)) {
+    const actor = Actor.from(refr);
+    if (actor && actor.isEquipped(item)) {
+      out.worn = true;
+    }
+  }
+
   (extraList || []).forEach((extra) => {
     switch (extra.type) {
       case "Health":
@@ -183,7 +194,7 @@ const getExtraContainerChangesAsInventory = (
         baseId: entry.baseId,
         count: 1,
       };
-      extractExtraData(extraList, e);
+      extractExtraData(refr, extraList, e);
       entries.push(e);
       entry.count -= e.count;
     });
@@ -289,7 +300,7 @@ export const applyInventory = (
   if (diff.length) printConsole("diff " + diff.length);
   diff.sort((a, b) => (a.count < b.count ? -1 : 1));
   diff.forEach((e) => {
-    const absCount = Math.abs(e.count);
+    let absCount = Math.abs(e.count);
 
     let queueNiNodeUpdateNeeded = false;
 
@@ -310,14 +321,27 @@ export const applyInventory = (
       }
     }*/
 
-    let k = 0;
-    for (let i = 0; i < absCount; ++i) {
-      k++;
-      if (k > 1000) {
-        printConsole("huh!", absCount);
-        break;
-      }
+    let oneStepCount = e.count / absCount;
 
+    if (absCount > 1000) {
+      printConsole("huh!", absCount);
+      absCount = 1;
+      oneStepCount = 1;
+
+      // Also for arrows with strange count
+      if (worn && e.count < 0) absCount = 0;
+    }
+
+    if (e.count > 1 && Ammo.from(Game.getFormEx(e.baseId))) {
+      absCount = 1;
+      oneStepCount = e.count;
+      if (e.count > 60000) {
+        // Why would actor have 60k arrows?
+        e.count = 1;
+      }
+    }
+
+    for (let i = 0; i < absCount; ++i) {
       if (worn || wornLeft) {
         TESModPlatform.pushWornState(!!worn, !!wornLeft);
         queueNiNodeUpdateNeeded = true;
@@ -326,7 +350,7 @@ export const applyInventory = (
       TESModPlatform.addItemEx(
         refr,
         Game.getFormEx(e.baseId),
-        e.count / absCount,
+        oneStepCount,
         e.health ? e.health : 1,
         e.enchantmentId
           ? Enchantment.from(Game.getFormEx(e.enchantmentId))

@@ -449,5 +449,7 @@ once("update", () => {
     Game.getPlayer().addItem(Game.getFormEx(0x00061cd6), 1, true);
     Game.getPlayer().addItem(Game.getFormEx(0x0001397f), 100, true);
     Game.getPlayer().addItem(Game.getFormEx(0x0200284d), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0004dee3), 2, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0002ac6f), 2, true);
   });
 });
