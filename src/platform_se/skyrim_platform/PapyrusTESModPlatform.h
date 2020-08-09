@@ -87,6 +87,24 @@ void PushTintMask(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
                   RE::StaticFunctionTag*, RE::Actor* targetActor, SInt32 type,
                   UInt32 argb, RE::BSFixedString texturePath);
 
+void PushWornState(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
+                   RE::StaticFunctionTag*, bool worn, bool wornLeft);
+
+void AddItemEx(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
+               RE::StaticFunctionTag*, RE::TESObjectREFR* containerRefr,
+               RE::TESForm* item, SInt32 countDelta, float health,
+               RE::EnchantmentItem* enchantment, SInt32 maxCharge,
+               bool removeEnchantmentOnUnequip, float chargePercent,
+               RE::BSFixedString textDisplayData, SInt32 soul,
+               RE::AlchemyItem* poison, SInt32 poisonCount);
+
+void UpdateEquipment(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
+                     RE::StaticFunctionTag*, RE::Actor* containerRefr,
+                     RE::TESForm* item, bool leftHand);
+
+void ResetContainer(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
+                    RE::StaticFunctionTag*, RE::TESForm* container);
+
 // Threadsafe
 void BlockMoveRefrToPosition(bool blocked);
 int GetWeapDrawnMode(uint32_t actorId);

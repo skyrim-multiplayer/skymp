@@ -32,8 +32,6 @@ cmake_generate(
   VARIABLES
     "SKYRIM_MP_ROOT=${CMAKE_SOURCE_DIR}"
     "CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
-    #"VCPKG_ROOT=${_VCPKG_ROOT_DIR}"
-    #"CMAKE_TOOLCHAIN_FILE=${_VCPKG_ROOT_DIR}\\scripts\\buildsystems\\vcpkg.cmake"
     "SKYRIM_DIR=${SKYRIM_DIR}"
     "CEF_DIR=${CEF_DIR}"
 )

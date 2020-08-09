@@ -31,3 +31,11 @@ Function SetFormIdUnsafe(Form form, Int newId) global native
 Function ClearTintMasks(Actor targetActor) global native
 
 Function PushTintMask(Actor targetActor, Int type, Int argb, String texturePath) global native
+
+Function PushWornState(Bool worn, Bool wornLeft) global native
+
+Function AddItemEx(ObjectReference containerRefr, Form item, Int countDelta, Float health, Enchantment enchantment, Int maxCharge, Bool removeEnchantmentOnUnequip, Float chargePercent, String textDisplayData, Int soul, Potion poison, Int poisonCount) global native
+
+Function UpdateEquipment(Actor actor, Form item, Bool leftHand) global native
+
+Function ResetContainer(Form container) global native

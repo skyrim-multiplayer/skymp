@@ -1,20 +1,45 @@
 #include "PapyrusTESModPlatform.h"
 #include "CallNativeApi.h"
 #include "NullPointerException.h"
+#include <RE/AIProcess.h>
+#include <RE/ActorEquipManager.h>
+#include <RE/AlchemyItem.h>
+#include <RE/BGSEquipSlot.h>
 #include <RE/BSScript/IFunctionArguments.h>
 #include <RE/BSScript/IStackCallbackFunctor.h>
 #include <RE/BSScript/NativeFunction.h>
 #include <RE/ConsoleLog.h>
+#include <RE/EnchantmentItem.h>
+#include <RE/ExtraCharge.h>
+#include <RE/ExtraEnchantment.h>
+#include <RE/ExtraHealth.h>
+#include <RE/ExtraPoison.h>
+#include <RE/ExtraShouldWear.h>
+#include <RE/ExtraSoul.h>
+#include <RE/ExtraTextDisplayData.h>
+#include <RE/ExtraWorn.h>
+#include <RE/ExtraWornLeft.h>
+#include <RE/MiddleHighProcessData.h>
 #include <RE/Offsets.h>
 #include <RE/PlayerCharacter.h>
 #include <RE/PlayerControls.h>
 #include <RE/ScriptEventSourceHolder.h>
 #include <RE/SkyrimVM.h>
+#include <RE/TESForm.h>
 #include <RE/TESNPC.h>
+#include <RE/TESObjectARMO.h>
+#include <RE/TESObjectWEAP.h>
+#include <RE/UI.h>
 #include <atomic>
+#include <map>
 #include <mutex>
+#include <re/BGSEquipSlot.h>
+#include <re/Offsets_RTTI.h>
 #include <skse64/Colors.h>
+#include <skse64/GameData.h>
+#include <skse64/GameExtraData.h>
 #include <skse64/GameForms.h> // IFormFactory::GetFactoryForType
+#include <skse64/GameRTTI.h>
 #include <skse64/GameReferences.h>
 #include <skse64/NiNodes.h>
 #include <skse64/PapyrusGame.h>
@@ -469,6 +494,258 @@ void TESModPlatform::PushTintMask(RE::BSScript::IVirtualMachine* vm,
   share2.actorsTints[i] = tints;
 }
 
+namespace {
+RE::ExtraDataList* CreateExtraDataList()
+{
+  auto extraList = new RE::ExtraDataList;
+
+  auto extraList_ = reinterpret_cast<BaseExtraList*>(extraList);
+
+  auto p = reinterpret_cast<uint8_t*>(Heap_Allocate(0x18));
+  for (int i = 0; i < 0x18; ++i) {
+    p[i] = 0;
+  }
+  reinterpret_cast<void*&>(extraList_->m_presence) = p;
+
+  return extraList;
+}
+}
+
+namespace {
+thread_local bool g_worn = false;
+thread_local bool g_wornLeft = false;
+}
+
+void TESModPlatform::PushWornState(RE::BSScript::IVirtualMachine* vm,
+                                   RE::VMStackID stackId,
+                                   RE::StaticFunctionTag*, bool worn,
+                                   bool wornLeft)
+{
+  g_worn = worn;
+  g_wornLeft = wornLeft;
+}
+
+class MyBSExtraData
+{
+public:
+  MyBSExtraData() = default;
+  virtual ~MyBSExtraData() = default;
+  virtual UInt32 GetType(void) = 0;
+
+  MyBSExtraData* next; // 08
+};
+
+template <ExtraDataType t>
+class MyExtra : public MyBSExtraData
+{
+public:
+  MyExtra() = default;
+
+  virtual ~MyExtra() = default;
+
+  UInt32 GetType() override { return t; }
+};
+
+void TESModPlatform::AddItemEx(
+  RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
+  RE::StaticFunctionTag*, RE::TESObjectREFR* containerRefr, RE::TESForm* item,
+  SInt32 countDelta, float health, RE::EnchantmentItem* enchantment,
+  SInt32 maxCharge, bool removeEnchantmentOnUnequip, float chargePercent,
+  RE::BSFixedString textDisplayData, SInt32 soul, RE::AlchemyItem* poison,
+  SInt32 poisonCount)
+{
+  auto ui = RE::UI::GetSingleton();
+  if (!containerRefr || !item || !ui || ui->GameIsPaused())
+    return;
+
+  const auto refrId = containerRefr->GetFormID();
+
+  auto boundObject = reinterpret_cast<RE::TESBoundObject*>(
+    DYNAMIC_CAST(reinterpret_cast<TESForm*>(item), TESForm, TESBoundObject));
+  if (!boundObject)
+    return;
+
+  auto tuple = std::make_tuple(
+    containerRefr->formID, item, health, enchantment, maxCharge,
+    removeEnchantmentOnUnequip, chargePercent,
+    (std::string)textDisplayData.data(), soul, poison, poisonCount);
+
+  using Tuple = decltype(tuple);
+
+  thread_local std::map<Tuple, RE::ExtraDataList*> g_lastEquippedExtraList[2];
+
+  RE::ExtraDataList* extraList = nullptr;
+
+  const bool isShieldLike =
+    (item->formType == RE::FormType::Armor &&
+     reinterpret_cast<RE::TESObjectARMO*>(item)->IsShield());
+
+  const bool isTorch = item->formType == RE::FormType::Light;
+
+  const bool isClothes =
+    (item->formType == RE::FormType::Armor && !isShieldLike) ||
+    item->formType == RE::FormType::Light;
+
+  // Our extra-less items support is disgusting! EquipItem crashes when we try
+  // an iron sword. This hack saves our slav lives
+  if (item->formType != RE::FormType::Ammo && health <= 1)
+    health = 1.01f;
+
+  if (health > 1 || enchantment || chargePercent > 0 ||
+      strlen(textDisplayData.data()) > 0 || (soul > 0 && soul <= 5) ||
+      poison || g_worn || g_wornLeft) {
+    extraList = CreateExtraDataList();
+
+    auto extraList_ = reinterpret_cast<BaseExtraList*>(extraList);
+
+    if (g_worn) {
+      if (isClothes) {
+        auto extra =
+          reinterpret_cast<BSExtraData*>(new MyExtra<kExtraData_Worn>);
+        extraList_->Add(kExtraData_Worn, extra);
+      }
+    }
+
+    if (g_wornLeft) {
+      if (isClothes) {
+        auto extra =
+          reinterpret_cast<BSExtraData*>(new MyExtra<kExtraData_WornLeft>);
+        extraList_->Add(kExtraData_WornLeft, extra);
+      }
+    }
+
+    if (health > 1)
+      extraList_->Add(kExtraData_Health,
+                      (BSExtraData*)new RE::ExtraHealth(health));
+    if (enchantment)
+      extraList_->Add(kExtraData_Enchantment,
+                      (BSExtraData*)new RE::ExtraEnchantment(
+                        enchantment, maxCharge, removeEnchantmentOnUnequip));
+    if (chargePercent > 0) {
+      auto extraCharge = new RE::ExtraCharge;
+      extraCharge->charge = chargePercent;
+      extraList_->Add(kExtraData_Charge, (BSExtraData*)extraCharge);
+    }
+    if (strlen(textDisplayData.data()) > 0)
+      extraList_->Add(
+        kExtraData_TextDisplayData,
+        (BSExtraData*)new RE::ExtraTextDisplayData(textDisplayData.data()));
+    if (soul > 0 && soul <= 5)
+      extraList_->Add(
+        kExtraData_Soul,
+        (BSExtraData*)new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
+    if (poison) {
+      extraList_->Add(kExtraData_Poison,
+                      (BSExtraData*)new RE::ExtraPoison(poison, poisonCount));
+    }
+  }
+
+  g_nativeCallRequirements.gameThrQ->AddTask([=] {
+    if (containerRefr != (void*)LookupFormByID(refrId))
+      return;
+
+    auto optExtraList =
+      item->formType == RE::FormType::Ammo ? nullptr : extraList;
+
+    if (countDelta > 0) {
+      containerRefr->AddObjectToContainer(boundObject, optExtraList,
+                                          countDelta, nullptr);
+    } else if (countDelta < 0) {
+      containerRefr->RemoveItem(boundObject, -countDelta,
+                                RE::ITEM_REMOVE_REASON::kRemove, optExtraList,
+                                nullptr);
+    }
+  });
+
+  const bool needEquipWeap =
+    (g_worn || g_wornLeft) && item->formType == RE::FormType::Weapon;
+
+  const bool needEquipShieldLike = (g_worn || g_wornLeft) && isShieldLike;
+
+  const bool needEquipAmmo =
+    (g_worn || g_wornLeft) && item->formType == RE::FormType::Ammo;
+
+  if (needEquipWeap || needEquipShieldLike || needEquipAmmo) {
+    auto s = RE::ActorEquipManager::GetSingleton();
+    if (containerRefr->formType == RE::FormType::ActorCharacter) {
+
+      enum EquipSlot
+      {
+        BothHands = 0x13f45,
+        LeftHand = 0x13f43,
+        RightHand = 0x13f42
+      };
+      static const auto g_bothHandsSlot = LookupFormByID(BothHands);
+
+      RE::Actor* actor = reinterpret_cast<RE::Actor*>(containerRefr);
+      if (s) {
+        auto slot = reinterpret_cast<RE::BGSEquipSlot*>(GetRightHandSlot());
+
+        if (g_wornLeft && !needEquipShieldLike) // wornLeft + shield = deadlock
+          slot = reinterpret_cast<RE::BGSEquipSlot*>(GetLeftHandSlot());
+
+        if (item->formType == RE::FormType::Ammo) {
+          extraList = nullptr;
+          slot = nullptr;
+        }
+
+        if (countDelta > 0) {
+          g_lastEquippedExtraList[g_worn ? false : true][tuple] = extraList;
+          g_nativeCallRequirements.gameThrQ->AddTask([=] {
+            if (actor != (void*)LookupFormByID(refrId))
+              return;
+            s->EquipObject(actor, boundObject, extraList, 1, slot);
+          });
+        } else if (countDelta < 0)
+          g_nativeCallRequirements.gameThrQ->AddTask([=] {
+            if (actor != (void*)LookupFormByID(refrId))
+              return;
+            s->UnequipObject(actor, boundObject, extraList, 1, slot);
+          });
+      }
+    }
+  }
+
+  g_worn = false;
+  g_wornLeft = false;
+}
+
+void TESModPlatform::UpdateEquipment(RE::BSScript::IVirtualMachine* vm,
+                                     RE::VMStackID stackId,
+                                     RE::StaticFunctionTag*,
+                                     RE::Actor* containerRefr,
+                                     RE::TESForm* item, bool leftHand)
+{
+
+  auto ac = ((Actor*)containerRefr);
+
+  if (!ac || !ac->processManager)
+    return;
+
+  auto& ref =
+    ac->processManager
+      ->equippedObject[leftHand ? ActorProcessManager::kEquippedHand_Left
+                                : ActorProcessManager::kEquippedHand_Right];
+
+  const auto backup = ref;
+  ref = (TESForm*)item;
+}
+
+void TESModPlatform::ResetContainer(RE::BSScript::IVirtualMachine* vm,
+                                    RE::VMStackID stackId,
+                                    RE::StaticFunctionTag*,
+                                    RE::TESForm* container)
+{
+  if (!container)
+    return;
+  TESContainer* pContainer =
+    DYNAMIC_CAST(reinterpret_cast<TESForm*>(container), TESForm, TESContainer);
+  if (!pContainer)
+    return;
+  pContainer->numEntries = 0;
+  pContainer->entries = nullptr;
+}
+
 int TESModPlatform::GetWeapDrawnMode(uint32_t actorId)
 {
   std::lock_guard l(share.m);
@@ -615,6 +892,29 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
                                      RE::StaticFunctionTag*, RE::Actor*,
                                      SInt32, UInt32, RE::BSFixedString>(
       "PushTintMask", "TESModPlatform", PushTintMask));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<
+      true, decltype(AddItemEx), void, RE::StaticFunctionTag*,
+      RE::TESObjectREFR*, RE::TESForm*, SInt32, float, RE::EnchantmentItem*,
+      SInt32, bool, float, RE::BSFixedString, SInt32, RE::AlchemyItem*,
+      SInt32>("AddItemEx", "TESModPlatform", AddItemEx));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(UpdateEquipment), void,
+                                     RE::StaticFunctionTag*, RE::Actor*,
+                                     RE::TESForm*, bool>(
+      "UpdateEquipment", "TESModPlatform", UpdateEquipment));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(PushWornState), void,
+                                     RE::StaticFunctionTag*, bool, bool>(
+      "PushWornState", "TESModPlatform", PushWornState));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(ResetContainer), void,
+                                     RE::StaticFunctionTag*, RE::TESForm*>(
+      "ResetContainer", "TESModPlatform", ResetContainer));
 
   static LoadGameEvent loadGameEvent;
 

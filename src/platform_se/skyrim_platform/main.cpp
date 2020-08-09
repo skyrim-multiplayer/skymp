@@ -10,6 +10,7 @@
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InputConverter.h"
+#include "InventoryApi.h"
 #include "JsEngine.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
@@ -42,14 +43,13 @@
 #include <mutex>
 #include <shlobj.h>
 #include <skse64/GameMenus.h>
+#include <skse64/GameReferences.h>
+#include <skse64/NiRenderer.h>
 #include <skse64/PluginAPI.h>
 #include <skse64/gamethreads.h>
 #include <sstream>
 #include <string>
 #include <thread>
-
-#include <skse64/GameReferences.h>
-#include <skse64\NiRenderer.h>
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
@@ -192,6 +192,7 @@ void JsTick(bool gameFunctionsAvailable)
                 DevApi::Register(e, &engine, {}, fileDir);
                 EventsApi::Register(e);
                 BrowserApi::Register(e, g_browserApiState);
+                InventoryApi::Register(e);
                 CallNativeApi::Register(
                   e, [] { return g_nativeCallRequirements; });
                 e.SetProperty(
@@ -257,23 +258,6 @@ void PushJsTick(bool gameFunctionsAvailable)
 
 void OnUpdate()
 {
-  static auto getNthVTableElement = [](void* obj, size_t idx) {
-    using VTable = size_t*;
-    auto vtable = *(VTable*)obj;
-    return vtable[idx];
-  };
-
-  if (auto mm = MenuManager::GetSingleton()) {
-    static const auto s = new BSFixedString("Main Menu");
-    IMenu* m = mm->GetMenu(s);
-    if (auto c = RE::ConsoleLog::GetSingleton()) {
-      // auto offset =
-      //  std::to_string(getNthVTableElement(m, 6) - REL::Module::BaseAddr());
-      // auto offset = std::to_string((uint64_t)m - REL::Module::BaseAddr());
-      // c->Print("%s", offset.data());
-    }
-  }
-
   PushJsTick(false);
   TESModPlatform::Update();
 }
@@ -596,10 +580,7 @@ public:
     return winMain.GetPtr();
   }
 
-  bool Attach() override
-  {
-    return true;
-  }
+  bool Attach() override { return true; }
 
   bool Detach() override
   {

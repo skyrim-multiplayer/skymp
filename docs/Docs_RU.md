@@ -108,6 +108,9 @@ let actor = Actor.from(Game.getPlayer());
 * `setFormIdUnsafe` - изменяет ID формы. Небезопасно, используйте на свой страх и риск.
 * `clearTintMasks` - удалить TintMasks для данного Actor или ГГ, если Actor не передан.
 * `pushTintMask` - добавить TintMask с опр. параметрами для данного Actor или ГГ, если Actor не передан.
+* `pushWornState`, `addItemEx` - добавить/удалить предметы с опр. ExtraData.
+* `updateEquipment` - обновить экипировку (нестабильно).
+* `resetContainer` - очистить базовый контейнер.
 
 
 ### Асинхронность
@@ -209,6 +212,8 @@ on('update', () => {
 * `getJsMemoryUsage(): number` - получить количество оперативной памяти, используемой встроенным JS-движком, в байтах.
 * `storage` - объект, служащий для сохранения данных между перезагрузкой скриптов.
 * `browser` - объект, предоставляющий доступ к Chromium Embedded Framework.
+* `getExtraContainerChanges` - получить ExtraContainerChanges данного ObjectReference.
+* `getContainer` - получить все предметы базового контейнера.
 * `settings` - объект, предоставляющий доступ к настройкам плагинов:
 ```typescript
 import { settings, printConsole } from  "../skyrimPlatform"

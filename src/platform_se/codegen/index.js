@@ -48,13 +48,67 @@ interface MpClientPlugin {
 }
 export declare let mpClientPlugin: MpClientPlugin;
 
-interface Browser {
+export interface Browser {
   setVisible(visible: boolean): void;
   setFocused(focused: boolean): void;
   loadUrl(url: string): void;
   getToken(): string;
 }
 export declare let browser: Browser;
+
+export interface ExtraData {
+  type: 'Health' | 'Count' | 'Enchantment' | 'Charge' | 'TextDisplayData' | 'Soul' | 'Poison' | 'Worn' | 'WornLeft';
+}
+export interface ExtraHealth extends ExtraData {
+  type: 'Health';
+  health: number;
+}
+export interface ExtraCount extends ExtraData {
+  type: 'Count';
+  count: number;
+}
+export interface ExtraEnchantment extends ExtraData {
+  type: 'Enchantment';
+  enchantmentId: number;
+  maxCharge: number;
+  removeOnUnequip: boolean;
+}
+export interface ExtraCharge extends ExtraData {
+  type: 'Charge';
+  charge: number;
+}
+export interface ExtraTextDisplayData extends ExtraData {
+  type: 'TextDisplayData';
+  name: string;
+}
+export interface ExtraSoul extends ExtraData {
+  type: 'Soul';
+  soul: 0 | 1 | 2 | 3 | 4 | 5;
+}
+export interface ExtraPoison extends ExtraData {
+  type: 'Poison';
+  poisonId: number;
+  count: number;
+}
+export interface ExtraWorn extends ExtraData {
+  type: 'Worn';
+}
+export interface ExtraWornLeft extends ExtraData {
+  type: 'WornLeft';
+}
+export type BaseExtraList = ExtraData[];
+export interface InventoryChangesEntry {
+  countDelta: number;
+  baseId: number;
+  extendDataList: BaseExtraList[];
+}
+export declare let getExtraContainerChanges: (objectReferenceId: number) => InventoryChangesEntry[];
+
+export interface InventoryEntry {
+  count: number;
+  baseId: number;
+}
+export declare let getContainer: (baseId: number) => InventoryEntry[];
 
 export interface ActivateEvent {
     target: ObjectReference,
@@ -328,6 +382,9 @@ let dumpFunction = (className, f, isGlobal) => {
         let isSetMotioTypeFistArg = funcName.toLowerCase() === "setmotiontype" && i === 0;
         let argType = isSetMotioTypeFistArg ? "MotionType" : parseReturnValue(arg.type);
 
+        if (arg.name === "in") {
+          arg.name = "_in";
+        }
         output += `${arg.name}: ${argType}`;
         if (i !== f.arguments.length - 1) {
             output += `, `;
