@@ -113,3 +113,62 @@ TEST_CASE("createActor message contains look", "[PartOne]")
   partOne.SetRaceMenuOpen(0xff000ABC, true, &tgt);
   doLook();*/
 }
+
+TEST_CASE("GetUserActor", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c, &tgt);
+  partOne.SetUserActor(0, 0xff000000, &tgt);
+
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+
+  REQUIRE(partOne.GetUserActor(0) == 0xff000000);
+  REQUIRE(partOne.serverState.ActorByUser(0) != nullptr);
+  REQUIRE(partOne.serverState.UserByActor(&ac) == 0);
+
+  DoDisconnect(partOne, 0);
+
+  REQUIRE(partOne.serverState.ActorByUser(0) == nullptr);
+  REQUIRE(partOne.serverState.UserByActor(&ac) == Networking::InvalidUserId);
+  REQUIRE_THROWS_WITH(partOne.GetUserActor(0),
+                      Contains("User with id 0 doesn't exist"));
+}
+
+TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  static PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.SetUserActor(0, 0xff000ABC, &tgt);
+  DoMessage(partOne, 0, jMovement);
+
+  static auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000ABC);
+
+  class Listener : public PartOne::Listener
+  {
+  public:
+    void OnConnect(Networking::UserId userId) override {}
+    void OnDisconnect(Networking::UserId userId) override
+    {
+      REQUIRE(partOne.serverState.UserByActor(&ac) == 0);
+      partOne.DestroyActor(0xff000ABC);
+    }
+    void OnCustomPacket(Networking::UserId userId,
+                        const simdjson::dom::element& content) override
+    {
+    }
+  };
+
+  partOne.AddListener(std::shared_ptr<PartOne::Listener>(new Listener));
+
+  REQUIRE(partOne.serverState.UserByActor(&ac) == 0);
+  DoDisconnect(partOne, 1);
+  REQUIRE(partOne.serverState.UserByActor(&ac) == Networking::InvalidUserId);
+}

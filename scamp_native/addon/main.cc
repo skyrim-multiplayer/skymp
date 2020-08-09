@@ -1,4 +1,6 @@
 #include "Networking.h"
+#include "NetworkingCombined.h"
+#include "NetworkingMock.h"
 #include "PartOne.h"
 #include <cassert>
 #include <memory>
@@ -18,6 +20,33 @@ inline NiPoint3 NapiValueToNiPoint3(Napi::Value v)
 
 class ScampServerListener;
 
+class Bot
+{
+public:
+  Bot(std::shared_ptr<Networking::IClient> cl_)
+    : cl(cl_)
+  {
+  }
+
+  void Destroy() { cl.reset(); }
+
+  void Send(std::string packet)
+  {
+    if (cl)
+      cl->Send(reinterpret_cast<Networking::PacketData>(packet.data()),
+               packet.size(), true);
+  }
+
+  void Tick()
+  {
+    if (cl)
+      cl->Tick([](auto, auto, auto, auto, auto) {}, nullptr);
+  }
+
+private:
+  std::shared_ptr<Networking::IClient> cl;
+};
+
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {
   friend class ScampServerListener;
@@ -36,10 +65,12 @@ public:
   Napi::Value DestroyActor(const Napi::CallbackInfo& info);
   Napi::Value SetRaceMenuOpen(const Napi::CallbackInfo& info);
   Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
+  Napi::Value CreateBot(const Napi::CallbackInfo& info);
 
 private:
   std::unique_ptr<PartOne> partOne;
   std::shared_ptr<Networking::IServer> server;
+  std::shared_ptr<Networking::MockServer> serverMock;
   std::shared_ptr<ScampServerListener> listener;
   std::unique_ptr<Napi::Env> tickEnv;
   Napi::ObjectReference emitter;
@@ -109,7 +140,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod<&ScampServer::GetActorName>("getActorName"),
       InstanceMethod<&ScampServer::DestroyActor>("destroyActor"),
       InstanceMethod<&ScampServer::SetRaceMenuOpen>("setRaceMenuOpen"),
-      InstanceMethod<&ScampServer::SendCustomPacket>("sendCustomPacket") });
+      InstanceMethod<&ScampServer::SendCustomPacket>("sendCustomPacket"),
+      InstanceMethod<&ScampServer::CreateBot>("createBot") });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -126,8 +158,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     Napi::Number port = info[0].As<Napi::Number>(),
                  maxConnections = info[1].As<Napi::Number>();
-    server = Networking::CreateServer(static_cast<uint32_t>(port),
-                                      static_cast<uint32_t>(maxConnections));
+
+    auto realServer = Networking::CreateServer(
+      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
+
+    serverMock = std::make_shared<Networking::MockServer>();
+
+    server = Networking::CreateCombinedServer({ realServer, serverMock });
 
     auto res =
       info.Env().RunScript("let require = global.require || "
@@ -255,6 +292,41 @@ Napi::Value ScampServer::SendCustomPacket(const Napi::CallbackInfo& info)
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
   return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::CreateBot(const Napi::CallbackInfo& info)
+{
+  if (!this->serverMock)
+    throw Napi::Error::New(info.Env(), "Bad serverMock");
+
+  std::shared_ptr<Bot> bot(new Bot(this->serverMock->CreateClient()));
+
+  auto jBot = Napi::Object::New(info.Env());
+
+  jBot.Set(
+    "destroy",
+    Napi::Function::New(info.Env(), [bot](const Napi::CallbackInfo& info) {
+      bot->Destroy();
+      return info.Env().Undefined();
+    }));
+  jBot.Set(
+    "send",
+    Napi::Function::New(info.Env(), [bot](const Napi::CallbackInfo& info) {
+      auto standardJson = info.Env().Global().Get("JSON").As<Napi::Object>();
+      auto stringify = standardJson.Get("stringify").As<Napi::Function>();
+      std::string s;
+      s += Networking::MinPacketId;
+      s += (std::string)stringify.Call({ info[0] }).As<Napi::String>();
+      bot->Send(s);
+
+      // Memory leak fix
+      // TODO: Provide tick API
+      bot->Tick();
+
+      return info.Env().Undefined();
+    }));
+
+  return jBot;
 }
 
 Napi::String Method(const Napi::CallbackInfo& info)

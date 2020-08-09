@@ -2,6 +2,7 @@
 #include "MpActor.h"
 #include "Networking.h"
 #include "NiPoint3.h"
+#include "ServerState.h"
 #include "WorldState.h"
 #include <memory>
 #include <simdjson.h>
@@ -42,14 +43,26 @@ public:
   std::string GetActorName(uint32_t actorFormId);
   NiPoint3 GetActorPos(uint32_t actorFormId);
 
+  Networking::UserId ConnectBot();
+  void DisconnectBot(Networking::UserId id);
+
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
                            Networking::PacketData data, size_t length);
 
   WorldState worldState;
+  ServerState serverState;
   Networking::ISendTarget* pushedSendTarget = nullptr;
 
 private:
+  enum class UserType
+  {
+    User,
+    Bot
+  };
+
+  void AddUser(Networking::UserId userId, UserType userType);
+
   // Returns user's actor if exists
   MpActor* SendToNeighbours(const simdjson::dom::element& jMessage,
                             Networking::UserId userId,

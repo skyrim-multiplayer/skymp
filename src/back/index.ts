@@ -173,3 +173,67 @@ process.on("unhandledRejection", console.error);
 
 import * as chat from "./chat";
 chat.main(server);
+
+// Increase this to start the server with bots
+const numBots = 0;
+
+const bots = new Array<scampNative.Bot>();
+for (let i = 0; i < numBots; ++i) {
+  bots.push(server.createBot());
+}
+setInterval(() => {
+  bots.forEach((bot, i) => {
+    bot.send({
+      idx: i,
+      t: 2,
+      data: {
+        pos: [
+          171450 + (i % 10) * 128,
+          -62565 + ((i / 10) % 10) * 128,
+          7223 + 32,
+        ],
+        rot: [0, 0, 0],
+        worldOrCell: 0x3c,
+        isWeapDrawn: true,
+      },
+    });
+  });
+}, 500);
+
+const numChanges = new Array<number>();
+numChanges.length = numBots;
+numChanges.fill(1);
+
+const items: number[] = [
+  0x0002acd2, // These three appears to be non-crashing
+  0x000233e3, //
+  0x00061cd6, //
+  0x0200284d,
+  0x0004dee3,
+  0x0002ac6f,
+];
+
+function createInventory() {
+  return {
+    entries: items
+      .filter(() => Math.random() > 0.5)
+      .map(function (x) {
+        return { baseId: x, count: 1, worn: true };
+      }),
+  };
+}
+
+setInterval(() => {
+  bots.forEach((bot, i) => {
+    bot.send({
+      idx: i,
+      t: 5,
+      data: {
+        numChanges: numChanges[i]++,
+        inv: createInventory(),
+      },
+    });
+  });
+}, 50);
+
+server.on("connect", (userId) => userId < numBots && onClientVerify(userId));

@@ -85,6 +85,7 @@ public:
   auto& GetListeners() const { return listeners; }
 
 private:
+  void UnsubscribeFromAll();
   void BeforeDestroy() override;
 
   bool isOnGrid = false;

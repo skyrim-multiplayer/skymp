@@ -1,6 +1,7 @@
 #include "ServerState.h"
 #include "Exceptions.h"
 #include "JsonUtils.h"
+#include "MpActor.h"
 #include "MsgType.h"
 #include <algorithm>
 
@@ -11,7 +12,7 @@ void ServerState::Connect(Networking::UserId userId)
     maxConnectedId = userId;
 }
 
-void ServerState::Disconnect(Networking::UserId userId)
+void ServerState::Disconnect(Networking::UserId userId) noexcept
 {
   userInfo[userId].reset();
   if (maxConnectedId == userId) {
@@ -23,6 +24,8 @@ void ServerState::Disconnect(Networking::UserId userId)
     else
       maxConnectedId = 0;
   }
+
+  actorsMap.left.erase(userId);
 }
 
 bool ServerState::IsConnected(Networking::UserId userId) const

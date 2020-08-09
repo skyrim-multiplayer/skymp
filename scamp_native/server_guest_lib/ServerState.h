@@ -11,6 +11,7 @@ class MpActor;
 
 struct UserInfo
 {
+  bool isDisconnecting = false;
 };
 
 using ActorsMap = boost::bimaps::bimap<Networking::UserId, MpActor*>;
@@ -23,9 +24,10 @@ public:
   std::vector<std::unique_ptr<UserInfo>> userInfo;
   Networking::UserId maxConnectedId = 0;
   ActorsMap actorsMap;
+  Networking::UserId disconnectingUserId = Networking::InvalidUserId;
 
   void Connect(Networking::UserId userId);
-  void Disconnect(Networking::UserId userId);
+  void Disconnect(Networking::UserId userId) noexcept;
   bool IsConnected(Networking::UserId userId) const;
 
   MpActor* ActorByUser(Networking::UserId userId)

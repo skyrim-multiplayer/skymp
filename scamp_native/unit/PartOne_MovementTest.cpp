@@ -31,6 +31,30 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
   REQUIRE(tgt.messages.size() == 11); // Me and 10 other users created in loop
 }
 
+TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.pushedSendTarget = &tgt;
+
+  for (int i = 0; i < 2; ++i) {
+    DoConnect(partOne, i);
+    partOne.CreateActor(i + 0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+    partOne.SetUserActor(i, i + 0xff000ABC, &tgt);
+    auto m = jMovement;
+    m["idx"] = i;
+    DoMessage(partOne, i, m);
+  }
+
+  tgt = {};
+
+  DoDisconnect(partOne, 1);
+
+  tgt = {};
+  DoMessage(partOne, 0, jMovement);
+  REQUIRE(tgt.messages.size() == 1);
+}
+
 TEST_CASE("UpdateMovement", "[PartOne]")
 {
   FakeSendTarget tgt;

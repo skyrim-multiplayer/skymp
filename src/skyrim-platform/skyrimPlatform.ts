@@ -56,13 +56,78 @@ interface MpClientPlugin {
 }
 export declare let mpClientPlugin: MpClientPlugin;
 
-interface Browser {
+export interface Browser {
   setVisible(visible: boolean): void;
   setFocused(focused: boolean): void;
   loadUrl(url: string): void;
   getToken(): string;
 }
 export declare let browser: Browser;
+
+export interface ExtraData {
+  type:
+    | "Health"
+    | "Count"
+    | "Enchantment"
+    | "Charge"
+    | "TextDisplayData"
+    | "Soul"
+    | "Poison"
+    | "Worn"
+    | "WornLeft";
+}
+export interface ExtraHealth extends ExtraData {
+  type: "Health";
+  health: number;
+}
+export interface ExtraCount extends ExtraData {
+  type: "Count";
+  count: number;
+}
+export interface ExtraEnchantment extends ExtraData {
+  type: "Enchantment";
+  enchantmentId: number;
+  maxCharge: number;
+  removeOnUnequip: boolean;
+}
+export interface ExtraCharge extends ExtraData {
+  type: "Charge";
+  charge: number;
+}
+export interface ExtraTextDisplayData extends ExtraData {
+  type: "TextDisplayData";
+  name: string;
+}
+export interface ExtraSoul extends ExtraData {
+  type: "Soul";
+  soul: 0 | 1 | 2 | 3 | 4 | 5;
+}
+export interface ExtraPoison extends ExtraData {
+  type: "Poison";
+  poisonId: number;
+  count: number;
+}
+export interface ExtraWorn extends ExtraData {
+  type: "Worn";
+}
+export interface ExtraWornLeft extends ExtraData {
+  type: "WornLeft";
+}
+export type BaseExtraList = ExtraData[];
+export interface InventoryChangesEntry {
+  countDelta: number;
+  baseId: number;
+  extendDataList: BaseExtraList[];
+}
+export declare let getExtraContainerChanges: (
+  objectReferenceId: number
+) => InventoryChangesEntry[];
+
+export interface InventoryEntry {
+  count: number;
+  baseId: number;
+}
+export declare let getContainer: (baseId: number) => InventoryEntry[];
 
 export interface ActivateEvent {
   target: ObjectReference;
@@ -1906,6 +1971,19 @@ export declare class Ingredient extends Form {
   setNthEffectMagnitude(index: number, value: number): void;
 }
 
+// Based on Input.pex
+export declare class Input {
+  static from(form: Form): Input;
+  static getMappedControl(keycode: number): string;
+  static getMappedKey(control: string, deviceType: number): number;
+  static getNthKeyPressed(n: number): number;
+  static getNumKeysPressed(): number;
+  static holdKey(dxKeycode: number): void;
+  static isKeyPressed(dxKeycode: number): boolean;
+  static releaseKey(dxKeycode: number): void;
+  static tapKey(dxKeycode: number): void;
+}
+
 // Based on Key.pex
 export declare class Key extends MiscObject {
   static from(form: Form): Key;
@@ -2086,6 +2164,160 @@ export declare class MusicType extends Form {
   static from(form: Form): MusicType;
   add(): void;
   remove(): void;
+}
+
+// Based on NetImmerse.pex
+export declare class NetImmerse {
+  static from(form: Form): NetImmerse;
+  static getNodeLocalPosition(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static getNodeLocalPositionX(
+    ref: ObjectReference,
+    node: string,
+    firstPerson: boolean
+  ): number;
+  static getNodeLocalPositionY(
+    ref: ObjectReference,
+    node: string,
+    firstPerson: boolean
+  ): number;
+  static getNodeLocalPositionZ(
+    ref: ObjectReference,
+    node: string,
+    firstPerson: boolean
+  ): number;
+  static getNodeLocalRotationEuler(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static getNodeLocalRotationMatrix(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static getNodeScale(
+    ref: ObjectReference,
+    node: string,
+    firstPerson: boolean
+  ): number;
+  static getNodeWorldPosition(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static getNodeWorldPositionX(
+    ref: ObjectReference,
+    node: string,
+    firstPerson: boolean
+  ): number;
+  static getNodeWorldPositionY(
+    ref: ObjectReference,
+    node: string,
+    firstPerson: boolean
+  ): number;
+  static getNodeWorldPositionZ(
+    ref: ObjectReference,
+    node: string,
+    firstPerson: boolean
+  ): number;
+  static getNodeWorldRotationEuler(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static getNodeWorldRotationMatrix(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static getRelativeNodePosition(
+    ref: ObjectReference,
+    nodeA: string,
+    nodeB: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static getRelativeNodePositionX(
+    ref: ObjectReference,
+    nodeA: string,
+    nodeB: string,
+    firstPerson: boolean
+  ): number;
+  static getRelativeNodePositionY(
+    ref: ObjectReference,
+    nodeA: string,
+    nodeB: string,
+    firstPerson: boolean
+  ): number;
+  static getRelativeNodePositionZ(
+    ref: ObjectReference,
+    nodeA: string,
+    nodeB: string,
+    firstPerson: boolean
+  ): number;
+  static hasNode(
+    ref: ObjectReference,
+    node: string,
+    firstPerson: boolean
+  ): boolean;
+  static setNodeLocalPosition(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static setNodeLocalPositionX(
+    ref: ObjectReference,
+    node: string,
+    x: number,
+    firstPerson: boolean
+  ): void;
+  static setNodeLocalPositionY(
+    ref: ObjectReference,
+    node: string,
+    y: number,
+    firstPerson: boolean
+  ): void;
+  static setNodeLocalPositionZ(
+    ref: ObjectReference,
+    node: string,
+    z: number,
+    firstPerson: boolean
+  ): void;
+  static setNodeLocalRotationEuler(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static setNodeLocalRotationMatrix(
+    ref: ObjectReference,
+    node: string,
+    _in: number[],
+    firstPerson: boolean
+  ): boolean;
+  static setNodeScale(
+    ref: ObjectReference,
+    node: string,
+    scale: number,
+    firstPerson: boolean
+  ): void;
+  static setNodeTextureSet(
+    ref: ObjectReference,
+    node: string,
+    tSet: TextureSet,
+    firstPerson: boolean
+  ): void;
 }
 
 // Based on Outfit.pex
@@ -2355,6 +2587,20 @@ export declare class SoundDescriptor extends Form {
 // Based on TESModPlatform.pex
 export declare class TESModPlatform {
   static from(form: Form): TESModPlatform;
+  static addItemEx(
+    containerRefr: ObjectReference,
+    item: Form,
+    countDelta: number,
+    health: number,
+    enchantment: Enchantment,
+    maxCharge: number,
+    removeEnchantmentOnUnequip: boolean,
+    chargePercent: number,
+    textDisplayData: string,
+    soul: number,
+    poison: Potion,
+    poisonCount: number
+  ): void;
   static clearTintMasks(targetActor: Actor): void;
   static createNpc(): ActorBase;
   static getNthVtableElement(
@@ -2381,6 +2627,8 @@ export declare class TESModPlatform {
     argb: number,
     texturePath: string
   ): void;
+  static pushWornState(worn: boolean, wornLeft: boolean): void;
+  static resetContainer(container: Form): void;
   static resizeHeadpartsArray(npc: ActorBase, newSize: number): void;
   static resizeTintsArray(newSize: number): void;
   static setFormIdUnsafe(Form: Form, newId: number): void;
@@ -2389,6 +2637,7 @@ export declare class TESModPlatform {
   static setNpcSex(npc: ActorBase, sex: number): void;
   static setNpcSkinColor(npc: ActorBase, skinColor: number): void;
   static setWeaponDrawnMode(actor: Actor, mode: number): void;
+  static updateEquipment(actor: Actor, item: Form, leftHand: boolean): void;
 }
 
 // Based on TalkingActivator.pex

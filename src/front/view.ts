@@ -16,12 +16,7 @@ import * as sp from "skyrimPlatform";
 
 import { applyMovement, NiPoint3 } from "./components/movement";
 import { applyAnimation } from "./components/animation";
-import {
-  Look,
-  applyLook,
-  applyTints,
-  silentVoiceTypeId,
-} from "./components/look";
+import { Look, applyLook, applyTints } from "./components/look";
 import { applyEquipment, isBadMenuShown } from "./components/equipment";
 
 export interface View<T> {
@@ -117,7 +112,7 @@ class SpawnProcess {
 }
 
 const getDefaultEquipState = () => {
-  return { lastNumChanges: 0, isBadMenuShown: false };
+  return { lastNumChanges: 0, isBadMenuShown: false, lastEqMoment: 0 };
 };
 
 export class FormView implements View<FormModel> {
@@ -179,12 +174,10 @@ export class FormView implements View<FormModel> {
       this.eqState = getDefaultEquipState();
 
       this.ready = false;
-      new SpawnProcess(
-        this.look,
-        model.movement.pos,
-        refr.getFormID(),
-        () => (this.ready = true)
-      );
+      new SpawnProcess(this.look, model.movement.pos, refr.getFormID(), () => {
+        this.ready = true;
+        this.spawnMoment = Date.now();
+      });
       if (model.look && model.look.name)
         refr.setDisplayName("" + model.look.name, true);
     }
@@ -196,6 +189,7 @@ export class FormView implements View<FormModel> {
 
   destroy(): void {
     this.isOnScreen = false;
+    this.spawnMoment = 0;
     const refr = ObjectReference.from(Game.getFormEx(this.refrId));
     if (refr) refr.delete();
   }
@@ -272,9 +266,27 @@ export class FormView implements View<FormModel> {
         if (!isShown) this.eqState.lastNumChanges = -1;
       }
       if (this.eqState.lastNumChanges !== model.equipment.numChanges) {
-        this.eqState.lastNumChanges = model.equipment.numChanges;
         const ac = Actor.from(refr);
-        if (ac) applyEquipment(ac, model.equipment);
+        // If we do not block inventory here, we will be able to reproduce the bug:
+        // 1. Place ~90 bots and force them to reequip iron swords to the left hand (rate should be ~50ms)
+        // 2. Open your inventory and reequip different items fast
+        // 3. After 1-2 minutes close your inventory and see that HUD disappeared
+        if (
+          ac &&
+          !isBadMenuShown() &&
+          Date.now() - this.eqState.lastEqMoment > 500 &&
+          Date.now() - this.spawnMoment > -1 &&
+          this.spawnMoment > 0
+        ) {
+          //if (this.spawnMoment > 0 && Date.now() - this.spawnMoment > 5000) {
+          if (applyEquipment(ac, model.equipment)) {
+            this.eqState.lastNumChanges = model.equipment.numChanges;
+          }
+          this.eqState.lastEqMoment = Date.now();
+          //}
+          //const res: boolean = applyEquipment(ac, model.equipment);
+          //if (res) this.eqState.lastNumChanges = model.equipment.numChanges;
+        }
       }
     }
   }
@@ -297,6 +309,7 @@ export class FormView implements View<FormModel> {
   private isOnScreen = false;
   private lastPcWorldOrCell = 0;
   private lastWorldOrCell = 0;
+  private spawnMoment = 0;
 }
 
 export class WorldView implements View<WorldModel> {

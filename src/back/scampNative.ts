@@ -14,6 +14,11 @@ if (fs.existsSync(process.cwd() + "/scamp_native.node")) {
   scampNativeNode = require(`../../build/${config}/scamp_native.node`);
 }
 
+export declare interface Bot {
+  destroy(): void;
+  send(msg: Record<string, unknown>): void;
+}
+
 export declare class ScampServer {
   constructor(serverPort: number, maxPlayers: number);
 
@@ -45,6 +50,8 @@ export declare class ScampServer {
   setRaceMenuOpen(formId: number, open: boolean): void;
 
   sendCustomPacket(userId: number, jsonContent: string): void;
+
+  createBot(): Bot;
 }
 
 module.exports.ScampServer = scampNativeNode.ScampServer;

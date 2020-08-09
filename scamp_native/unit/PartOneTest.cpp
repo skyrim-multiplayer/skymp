@@ -93,7 +93,7 @@ TEST_CASE("Disconnect event sent before user actually disconnects",
   partOne.reset();
 }
 
-TEST_CASE("Server custom packet")
+TEST_CASE("Server custom packet", "[PartOne]")
 {
   FakeSendTarget tgt;
   PartOne partOne;

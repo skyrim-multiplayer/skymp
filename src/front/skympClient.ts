@@ -7,13 +7,21 @@ import {
   Game,
   Ui,
   Utility,
+  Input,
   findConsoleCommand,
+  TESModPlatform,
+  Actor,
 } from "skyrimPlatform";
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
 import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
+import {
+  getInventory,
+  Inventory,
+  applyInventory,
+} from "./components/inventory";
 import { MsgType } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
@@ -237,12 +245,6 @@ findConsoleCommand("tim").execute = () => {
   return false;
 };
 
-// TODO: remove this
-once("update", () => {
-  Game.getPlayer().unequipAll();
-  Game.getPlayer().addItem(Game.getFormEx(0x0001397d), 100, true);
-});
-
 const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
 };
@@ -250,7 +252,6 @@ const enforceLimitations = () => {
 once("update", enforceLimitations);
 loadGameManager.addLoadGameListener(enforceLimitations);
 
-const Input = (sp as Record<string, any>)["Input"];
 const F2 = 0x3c;
 const F6 = 0x40;
 const Escape = 0x01;
@@ -325,4 +326,25 @@ sp.browser.loadUrl(url);
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
+});
+
+once("update", () => {
+  applyInventory(Game.getPlayer(), { entries: [] }, false);
+  Utility.wait(0.4).then(() => {
+    Game.getPlayer().addItem(Game.getFormEx(0x0001397d), 100, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0002acd2), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x000233e3), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x02000800), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x02000801), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0200f1b1), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x00061cd6), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0001397f), 100, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0200284d), 1, true);
+    Game.getPlayer().addItem(Game.getFormEx(0x0004dee3), 2, true);
+    Game.getPlayer().addItem(
+      Game.getFormEx(0x00029b8b /*0x0002ac6f*/),
+      2,
+      true
+    );
+  });
 });

@@ -68,17 +68,24 @@ void MpActor::SetEquipment(const std::string& jsonString)
   jEquipmentCache = jsonString;
 }
 
+void MpActor::UnsubscribeFromAll()
+{
+  auto emittersCopy = emitters;
+  for (auto emitter : emittersCopy)
+    if (emitter != this)
+      Unsubscribe(emitter, this);
+}
+
 void MpActor::BeforeDestroy()
 {
   GetParent()->grids[cellOrWorld].Forget(this);
 
   auto listenersCopy = listeners;
   for (auto listener : listenersCopy)
-    Unsubscribe(this, listener);
+    if (this != listener)
+      Unsubscribe(this, listener);
 
-  auto emittersCopy = emitters;
-  for (auto emitter : emittersCopy)
-    Unsubscribe(emitter, this);
+  UnsubscribeFromAll();
 }
 
 MpActor::Tint MpActor::Tint::FromJson(simdjson::dom::element& j)
