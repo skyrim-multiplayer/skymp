@@ -63,12 +63,17 @@ const onClientVerify = (userId: number) => {
   const formId = 0xff000000 + userId;
 
   const spawnpoints = [
-    //[163113.0938, -62752.3008, 7487.8579],
-    [171450.66, -62565.31, 7223.21],
+    //[171450.66, -62565.31, 7223.21],
+    { pos: [22659, -8697, -3594], worldOrCell: 0x1a26f, angleZ: 268 },
   ];
   const idx = randomInteger(0, spawnpoints.length - 1);
 
-  server.createActor(formId, spawnpoints[idx], 268, 0x3c);
+  server.createActor(
+    formId,
+    spawnpoints[idx].pos,
+    spawnpoints[idx].angleZ,
+    spawnpoints[idx].worldOrCell
+  );
 
   server.setUserActor(userId, formId);
   server.setRaceMenuOpen(formId, true);

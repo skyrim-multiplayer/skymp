@@ -9,19 +9,13 @@ import {
   Utility,
   Input,
   findConsoleCommand,
-  TESModPlatform,
-  Actor,
 } from "skyrimPlatform";
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
 import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
-import {
-  getInventory,
-  Inventory,
-  applyInventory,
-} from "./components/inventory";
+import { applyInventory } from "./components/inventory";
 import { MsgType } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
@@ -30,6 +24,8 @@ import { SendTarget } from "./sendTarget";
 import * as networking from "./networking";
 import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
+import { consoleCommands, scriptCommands } from "./consoleCommands";
+import * as deathSystem from "./deathSystem";
 
 interface AnyMessage {
   type?: string;
@@ -115,6 +111,7 @@ export class SkympClient {
         Game.setInChargen(false, false, false);
       }
     });
+    on("update", () => deathSystem.update());
   }
 
   private sendMovement() {
@@ -235,16 +232,6 @@ export class SkympClient {
   private numEquipmentChanges = 0;
 }
 
-findConsoleCommand("showracemenu").execute = () => {
-  printConsole("bope");
-  return false;
-};
-
-findConsoleCommand("tim").execute = () => {
-  printConsole("nope");
-  return false;
-};
-
 const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
 };
@@ -327,24 +314,52 @@ sp.browser.loadUrl(url);
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
 });
+on("update", () => {
+  Utility.setINIInt("iDifficulty:GamePlay", 5);
+});
 
-once("update", () => {
+loadGameManager.addLoadGameListener((e) => {
+  if (!e.isCausedBySkyrimPlatform) return;
+
   applyInventory(Game.getPlayer(), { entries: [] }, false);
   Utility.wait(0.4).then(() => {
-    Game.getPlayer().addItem(Game.getFormEx(0x0001397d), 100, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x0002acd2), 1, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x000233e3), 1, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x02000800), 1, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x02000801), 1, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x0200f1b1), 1, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x00061cd6), 1, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x0001397f), 100, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x0200284d), 1, true);
-    Game.getPlayer().addItem(Game.getFormEx(0x0004dee3), 2, true);
-    Game.getPlayer().addItem(
-      Game.getFormEx(0x00029b8b /*0x0002ac6f*/),
-      2,
-      true
-    );
+    [
+      [0x00012e49, 1],
+      [0x00012e4b, 1],
+      [0x00012e46, 1],
+      [0x00012e4d, 1],
+      [0x00012eb6, 1],
+      [0x0001397d, 100],
+      [0x0003b562, 1],
+      [0x0001359d, 1],
+      [0x02000800, 1],
+      [0x02000801, 2],
+      [0x00012eb7, 1],
+      [0x00013982, 1],
+      [0x00029b8b, 1],
+      [0x0004dee3, 1],
+    ].forEach((p) => {
+      Game.getPlayer().addItem(Game.getFormEx(p[0]), p[1], true);
+    });
   });
 });
+
+if (settings["skymp5-client"]["enable-console"] !== true) {
+  const legalCommands = ["qqq"];
+  consoleCommands.concat(scriptCommands).forEach((name) => {
+    const command = findConsoleCommand(name);
+
+    if (
+      !command ||
+      legalCommands.includes(command.longName.toLowerCase()) ||
+      legalCommands.includes(command.shortName.toLowerCase())
+    )
+      return;
+    command.execute = () => {
+      printConsole(
+        "You do not have permission to use this command ('" + name + "')"
+      );
+      return false;
+    };
+  });
+}
