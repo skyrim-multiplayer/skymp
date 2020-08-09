@@ -1,1316 +1,438 @@
-{
-  "types": {
-    "consloleComads": {
-      "comands": [
-        {
-          "name": "Show"
-        },
-        {
-          "name": "ShowVars"
-        },
-        {
-          "name": "ShowGlobalVars"
-        },
-        {
-          "name": "ShowQuestVars"
-        },
-        {
-          "name": "ShowQuests"
-        },
-        {
-          "name": "ShowQuestAliases"
-        },
-        {
-          "name": "SetPapyrusQuestVar"
-        },
-        {
-          "name": "SetPapyrusVar"
-        },
-        {
-          "name": "SetQuestAliases"
-        },
-        {
-          "name": "ClearQuestAliases"
-        },
-        {
-          "name": "ToggleCombatStats"
-        },
-        {
-          "name": "ToggleSafeZone"
-        },
-        {
-          "name": "ToggleAI"
-        },
-        {
-          "name": "ToggleCollisionGeometry"
-        },
-        {
-          "name": "ToggleMaterialGeometry"
-        },
-        {
-          "name": "ToggleStairsGeometry"
-        },
-        {
-          "name": "ToggleBorders"
-        },
-        {
-          "name": "ToggleSky"
-        },
-        {
-          "name": "ToggleWireframe"
-        },
-        {
-          "name": "ToggleCollision"
-        },
-        {
-          "name": "ToggleDebugText"
-        },
-        {
-          "name": "ToggleMenus"
-        },
-        {
-          "name": "TogglePrimitives"
-        },
-        {
-          "name": "ShowScenegraph"
-        },
-        {
-          "name": "ShowScenegraph"
-        },
-        {
-          "name": "ToggleMagicStats"
-        },
-        {
-          "name": "ShowAnim"
-        },
-        {
-          "name": "Show1stPerson"
-        },
-        {
-          "name": "Help"
-        },
-        {
-          "name": "ToggleNavMesh"
-        },
-        {
-          "name": "TogglePathLine"
-        },
-        {
-          "name": "PickRefByID"
-        },
-        {
-          "name": "SetLightingPasses"
-        },
-        {
-          "name": "ToggleLensFlare"
-        },
-        {
-          "name": "SetLensFlareGlobalIntensity"
-        },
-        {
-          "name": "ToggleLODLand"
-        },
-        {
-          "name": "ToggleMapEffect"
-        },
-        {
-          "name": "SetLODObjectDistance"
-        },
-        {
-          "name": "ToggleGrassUpdate"
-        },
-        {
-          "name": "CenterOnCell"
-        },
-        {
-          "name": "CheckRenderTargets"
-        },
-        {
-          "name": "SetGameSetting"
-        },
-        {
-          "name": "SetINISetting"
-        },
-        {
-          "name": "GetINISetting"
-        },
-        {
-          "name": "CenterOnExterior"
-        },
-        {
-          "name": "CalcPathToPoint"
-        },
-        {
-          "name": "CalcLowPathToPoint"
-        },
-        {
-          "name": "SetFog"
-        },
-        {
-          "name": "SetClipDist"
-        },
-        {
-          "name": "ToggleShadowVolumes"
-        },
-        {
-          "name": "SetImageSpaceGlow"
-        },
-        {
-          "name": "ToggleDetection"
-        },
-        {
-          "name": "ToggleHighProcess"
-        },
-        {
-          "name": "ToggleLowProcess"
-        },
-        {
-          "name": "ToggleMiddleLowProcess"
-        },
-        {
-          "name": "ToggleMiddleHighProcess"
-        },
-        {
-          "name": "ToggleAiSchedules"
-        },
-        {
-          "name": "SpeakSound"
-        },
-        {
-          "name": "BetaComment"
-        },
-        {
-          "name": "GameComment"
-        },
-        {
-          "name": "ToggleCellNode"
-        },
-        {
-          "name": "ToggleTrees"
-        },
-        {
-          "name": "SetCameraFOV"
-        },
-        {
-          "name": "ToggleGodMode"
-        },
-        {
-          "name": "RefreshShaders"
-        },
-        {
-          "name": "ReloadFXP"
-        },
-        {
-          "name": "ToggleScripts"
-        },
-        {
-          "name": "ToggleConversations"
-        },
-        {
-          "name": "ToggleFullHelp"
-        },
-        {
-          "name": "ShowQuestLog"
-        },
-        {
-          "name": "ShowFullQuestLog"
-        },
-        {
-          "name": "DumpTexturePalette"
-        },
-        {
-          "name": "DumpModelMap"
-        },
-        {
-          "name": "CenterOnWorld"
-        },
-        {
-          "name": "ToggleGrass"
-        },
-        {
-          "name": "CreateGrassAt"
-        },
-        {
-          "name": "AddFaceAnimNote"
-        },
-        {
-          "name": "RefreshINI"
-        },
-        {
-          "name": "ToggleEmotions"
-        },
-        {
-          "name": "AddDecal"
-        },
-        {
-          "name": "TestCode"
-        },
-        {
-          "name": "PlayerSpellBook"
-        },
-        {
-          "name": "PrintAiList"
-        },
-        {
-          "name": "ShowQuestTargets"
-        },
-        {
-          "name": "HairTint"
-        },
-        {
-          "name": "SaveGame"
-        },
-        {
-          "name": "LoadGame"
-        },
-        {
-          "name": "DisplayPlayerIDs"
-        },
-        {
-          "name": "SetDisplayPlayerID"
-        },
-        {
-          "name": "TestAllCells"
-        },
-        {
-          "name": "RenderTestCell"
-        },
-        {
-          "name": "RenderTestHere"
-        },
-        {
-          "name": "SaveWorld"
-        },
-        {
-          "name": "ReloadCurrentClimate"
-        },
-        {
-          "name": "ReloadCurrentWeather"
-        },
-        {
-          "name": "TestSeenData"
-        },
-        {
-          "name": "TestLocalMap"
-        },
-        {
-          "name": "MoveToQuestTarget"
-        },
-        {
-          "name": "PrintNPCDialog"
-        },
-        {
-          "name": "ShowSubtitle"
-        },
-        {
-          "name": "ShowRenderPasses"
-        },
-        {
-          "name": "FreezeRenderAccumulation"
-        },
-        {
-          "name": "ToggleOcclusion"
-        },
-        {
-          "name": "OutputMemContexts"
-        },
-        {
-          "name": "OutputMemStats"
-        },
-        {
-          "name": "SetMemCheckPoint"
-        },
-        {
-          "name": "GetMemCheckPoint"
-        },
-        {
-          "name": "IncMemCheckPoint"
-        },
-        {
-          "name": "OutputAllocations"
-        },
-        {
-          "name": "AddWatchAddress"
-        },
-        {
-          "name": "RemoveWatchAddress"
-        },
-        {
-          "name": "ToggleDetectionStats"
-        },
-        {
-          "name": "SetTargetRefraction"
-        },
-        {
-          "name": "SetTargetRefractionFire"
-        },
-        {
-          "name": "ToggleRefractionDebug"
-        },
-        {
-          "name": "ToggleCharControllerShape"
-        },
-        {
-          "name": "ShowHeadTrackTarget"
-        },
-        {
-          "name": "SetCinematicParam"
-        },
-        {
-          "name": "SetTintParam"
-        },
-        {
-          "name": "SetHDRParam"
-        },
-        {
-          "name": "VisualRefPosition"
-        },
-        {
-          "name": "ShowPivot"
-        },
-        {
-          "name": "PrintHDRParam"
-        },
-        {
-          "name": "ToggleHDRDebug"
-        },
-        {
-          "name": "ToggleHDRMultipleLuminance"
-        },
-        {
-          "name": "RevertWorld"
-        },
-        {
-          "name": "OutputArchiveProfile"
-        },
-        {
-          "name": "QuitGame"
-        },
-        {
-          "name": "SaveIniFiles"
-        },
-        {
-          "name": "SetDebugText"
-        },
-        {
-          "name": "ToggleLiteBrite"
-        },
-        {
-          "name": "RunMemoryPass"
-        },
-        {
-          "name": "ResetMemContexts"
-        },
-        {
-          "name": "ToggleWaterSystem"
-        },
-        {
-          "name": "ToggleWaterRadius"
-        },
-        {
-          "name": "ShowWhoDetectsPlayer"
-        },
-        {
-          "name": "ToggleCombatAI"
-        },
-        {
-          "name": "ToggleFlyCam"
-        },
-        {
-          "name": "ModWaterShader"
-        },
-        {
-          "name": "WaterColor"
-        },
-        {
-          "name": "BeginTrace"
-        },
-        {
-          "name": "RunCellTest"
-        },
-        {
-          "name": "StartAllQuests"
-        },
-        {
-          "name": "CompleteAllQuestStages"
-        },
-        {
-          "name": "ToggleFogOfWar"
-        },
-        {
-          "name": "OutputLocalMapPictures"
-        },
-        {
-          "name": "SetGamma"
-        },
-        {
-          "name": "WasteMemory"
-        },
-        {
-          "name": "ClearAdaptedLight"
-        },
-        {
-          "name": "SetHudGlowConstants"
-        },
-        {
-          "name": "CloseFile"
-        },
-        {
-          "name": "SetTreeMipmapBias"
-        },
-        {
-          "name": "SendSherlockDebugText"
-        },
-        {
-          "name": "PlayExplosion"
-        },
-        {
-          "name": "SetMaxAniso"
-        },
-        {
-          "name": "SetMeshLODLevel"
-        },
-        {
-          "name": "SetTargetDOF"
-        },
-        {
-          "name": "ToggleFullScreenMotionBlur"
-        },
-        {
-          "name": "SetTriLinearThreshold"
-        },
-        {
-          "name": "SetVel"
-        },
-        {
-          "name": "DebugCombatBehavior"
-        },
-        {
-          "name": "ToggleCombatDebug"
-        },
-        {
-          "name": "TogglePathingInfoFunction"
-        },
-        {
-          "name": "ShowInventory"
-        },
-        {
-          "name": "ResetPerformanceTimers"
-        },
-        {
-          "name": "ToggleDebugDecal"
-        },
-        {
-          "name": "ToggleDecalRendering"
-        },
-        {
-          "name": "SetImageSpaceModifiersEnable"
-        },
-        {
-          "name": "SetUFOCamSpeedMult"
-        },
-        {
-          "name": "ToggleTestLight"
-        },
-        {
-          "name": "PlaceLocationMarker"
-        },
-        {
-          "name": "ClearLocationMarkers"
-        },
-        {
-          "name": "ToggleMultiboundCheck"
-        },
-        {
-          "name": "AddOcclusionPlane"
-        },
-        {
-          "name": "SetGlobalRadialBlur"
-        },
-        {
-          "name": "OutputTextureUseMap"
-        },
-        {
-          "name": "ClearScreenBlood"
-        },
-        {
-          "name": "ResetDialogueFlags"
-        },
-        {
-          "name": "GetActorValueInfo"
-        },
-        {
-          "name": "ToggleBoundVisGeom"
-        },
-        {
-          "name": "SetConsoleOuputFile"
-        },
-        {
-          "name": "IgnoreRenderPass"
-        },
-        {
-          "name": "PlayVATSCameras"
-        },
-        {
-          "name": "SetTargetFalloff"
-        },
-        {
-          "name": "ToggleActorMover"
-        },
-        {
-          "name": "CopySaves"
-        },
-        {
-          "name": "ToggleEOFImageSpace"
-        },
-        {
-          "name": "ForceFileCache"
-        },
-        {
-          "name": "DumpNiUpdates"
-        },
-        {
-          "name": "TestDegrade"
-        },
-        {
-          "name": "ToggleDepthBias"
-        },
-        {
-          "name": "ToggleSPURenderBatch"
-        },
-        {
-          "name": "ToggleSPUTransformUpdate"
-        },
-        {
-          "name": "ToggleSPUCulling"
-        },
-        {
-          "name": "ModifyFaceGen"
-        },
-        {
-          "name": "GetSKSEVersion"
-        },
-        {
-          "name": "SetEmitterParticleMax"
-        },
-        {
-          "name": "SetMPSParticleMax"
-        },
-        {
-          "name": "SetTaskThreadSleep"
-        },
-        {
-          "name": "SetTaskThreadUpdateSleep"
-        },
-        {
-          "name": "EvalActorTextures"
-        },
-        {
-          "name": "CreateSaveData"
-        },
-        {
-          "name": "CreateGameData"
-        },
-        {
-          "name": "LoadFlashMovie"
-        },
-        {
-          "name": "ShowMenu"
-        },
-        {
-          "name": "HideMenu"
-        },
-        {
-          "name": "RecvAnimEvent"
-        },
-        {
-          "name": "RunConsoleBatch"
-        },
-        {
-          "name": "LTGraph"
-        },
-        {
-          "name": "RTGraph"
-        },
-        {
-          "name": "ToggleHeapTracking"
-        },
-        {
-          "name": "TogglePoolTracking"
-        },
-        {
-          "name": "RumbleManager"
-        },
-        {
-          "name": "InstallMemoryTracker"
-        },
-        {
-          "name": "UninstallMemoryTracker"
-        },
-        {
-          "name": "CheckMemory"
-        },
-        {
-          "name": "SetStackDepth"
-        },
-        {
-          "name": "PathToRef"
-        },
-        {
-          "name": "StartAIControlledRobotTest"
-        },
-        {
-          "name": "TestHandleManagerWarnAndKillSDM"
-        },
-        {
-          "name": "SetFaceTarget"
-        },
-        {
-          "name": "PrecomputedLOSGeneration"
-        },
-        {
-          "name": "PrecomputedLOSDebug"
-        },
-        {
-          "name": "SetPathSprinting"
-        },
-        {
-          "name": "SetAnimGraphVar"
-        },
-        {
-          "name": "SetTreeTrunkFlexibility"
-        },
-        {
-          "name": "SetTreeBranchFlexibility"
-        },
-        {
-          "name": "SetTreeBranchAnimationRange"
-        },
-        {
-          "name": "SetTreeLeafFlexibility"
-        },
-        {
-          "name": "SetTreeLeafAmplitude"
-        },
-        {
-          "name": "SetTreeLeafFrequency"
-        },
-        {
-          "name": "SetTreeWindDirection"
-        },
-        {
-          "name": "SetTreeWindMagnitude"
-        },
-        {
-          "name": "SetBloodParam"
-        },
-        {
-          "name": "RegisterPrefix"
-        },
-        {
-          "name": "ToggleEventLog"
-        },
-        {
-          "name": "ExportPerfTrackingData"
-        },
-        {
-          "name": "DisplayGraphVariable"
-        },
-        {
-          "name": "ToggleMotionDriven"
-        },
-        {
-          "name": "ToggleControlsDriven"
-        },
-        {
-          "name": "ToggleGUIOverlay"
-        },
-        {
-          "name": "ModifyGUIOverlay"
-        },
-        {
-          "name": "SetActionComplete"
-        },
-        {
-          "name": "SetConsoleScopeQuest"
-        },
-        {
-          "name": "GetDistanceFromActorsPath"
-        },
-        {
-          "name": "ClearConsole"
-        },
-        {
-          "name": "ToggleMarkers"
-        },
-        {
-          "name": "KillAllProjectiles"
-        },
-        {
-          "name": "PlayTerrainEffect"
-        },
-        {
-          "name": "CellInfo"
-        },
-        {
-          "name": "Textures"
-        },
-        {
-          "name": "Timing"
-        },
-        {
-          "name": "Polygons"
-        },
-        {
-          "name": "Actors"
-        },
-        {
-          "name": "Quest"
-        },
-        {
-          "name": "Particles"
-        },
-        {
-          "name": "Memory"
-        },
-        {
-          "name": "ShowNodes"
-        },
-        {
-          "name": "SaveDebugTextPages"
-        },
-        {
-          "name": "OutputFixedStringTable"
-        },
-        {
-          "name": "AttachPapyrusScript"
-        },
-        {
-          "name": "SaveHavokSnapshot"
-        },
-        {
-          "name": "SetNPCWeight"
-        },
-        {
-          "name": "ShowClosestLocationForSphere"
-        },
-        {
-          "name": "PrintShaderMacros"
-        },
-        {
-          "name": "ToggleAudioOverlay"
-        },
-        {
-          "name": "TogglePapyrusLog"
-        },
-        {
-          "name": "ToggleContextOverlay"
-        },
-        {
-          "name": "ForceOutOfMemory"
-        },
-        {
-          "name": "ToggleMovement"
-        },
-        {
-          "name": "ToggleAnimations"
-        },
-        {
-          "name": "SetWarning"
-        },
-        {
-          "name": "TestFadeNodes"
-        },
-        {
-          "name": "ShowLowMaxHeights"
-        },
-        {
-          "name": "ShowHighMaxHeights"
-        },
-        {
-          "name": "EnableStoryManagerLogging"
-        },
-        {
-          "name": "SetFramebufferRange"
-        },
-        {
-          "name": "DumpPapyrusStacks"
-        },
-        {
-          "name": "DumpPapyrusUpdates"
-        },
-        {
-          "name": "SoundCatMod"
-        },
-        {
-          "name": "RunCompaction"
-        },
-        {
-          "name": "ToggleAnimatorCam"
-        },
-        {
-          "name": "ToggleImmortalMode"
-        },
-        {
-          "name": "SetSubgraphToDebug"
-        },
-        {
-          "name": "EnableRumble"
-        },
-        {
-          "name": "HavokVDBCapture"
-        },
-        {
-          "name": "ToggleMapCam"
-        },
-        {
-          "name": "ToggleNavmeshInfo"
-        },
-        {
-          "name": "PlaySyncAnim"
-        },
-        {
-          "name": "SetFormKnown"
-        },
-        {
-          "name": "SetDebugQuest"
-        },
-        {
-          "name": "SetQuestAliasLogging"
-        },
-        {
-          "name": "SetRace"
-        },
-        {
-          "name": "FindForm"
-        },
-        {
-          "name": "StartPapyrusScriptProfile"
-        },
-        {
-          "name": "StopPapyrusScriptProfile"
-        },
-        {
-          "name": "StartPapyrusFormProfile"
-        },
-        {
-          "name": "StopPapyrusFormProfile"
-        },
-        {
-          "name": "PrintQuestSceneInfo"
-        },
-        {
-          "name": "IsInvulnerable"
-        },
-        {
-          "name": "ExportInventoryItemInfo"
-        },
-        {
-          "name": "CollisionMesh"
-        },
-        {
-          "name": "IsolateRendering"
-        },
-        {
-          "name": "ToggleWaterCurrentGeometry"
-        },
-        {
-          "name": "PerformAction"
-        },
-        {
-          "name": "StartTrackPlayerDoors"
-        },
-        {
-          "name": "StopTrackPlayerDoors"
-        },
-        {
-          "name": "CheckPlayerDoors"
-        },
-        {
-          "name": "ToggleSPUMovement"
-        },
-        {
-          "name": "SetInChargen"
-        },
-        {
-          "name": "ClearAchievement"
-        },
-        {
-          "name": "ForceReset"
-        },
-        {
-          "name": "ReloadScript"
-        },
-        {
-          "name": "ForceCloseFiles"
-        },
-        {
-          "name": "HotLoadPlugin"
-        },
-        {
-          "name": "ToggleVerletDebug"
-        },
-        {
-          "name": "DumpConditionFunctions"
-        },
-        {
-          "name": "PlaceFurnitureTester"
-        },
-        {
-          "name": "DumpLoadedAnimationFiles"
-        },
-        {
-          "name": "FunctionDisplayRenderTarget"
-        },
-        {
-          "name": "ToggleParallaxOcclusion"
-        },
-        {
-          "name": "ToggleProjectedUVDiffuseNormals"
-        },
-        {
-          "name": "ReloadProjectedUVTextures"
-        },
-        {
-          "name": "FunctionToggleDownsampleCS"
-        },
-        {
-          "name": "FunctionToggleVolumetricLighting"
-        },
-        {
-          "name": "FunctionToggleVolumetricLighting"
-        },
-        {
-          "name": "FunctionToggleVolumetricLightingTemporalAccumulation"
-        },
-        {
-          "name": "FunctionSetVolumetricLightingParameters"
-        },
-        {
-          "name": "FunctionPrintVolumetricLightingParameters"
-        },
-        {
-          "name": "FunctionSetVolumetricLightingResolution"
-        },
-        {
-          "name": "ToggleCastShadows"
-        },
-        {
-          "name": "SetShadowParameter"
-        },
-        {
-          "name": "SetESRAMSetup"
-        },
-        {
-          "name": "ToggleESRAM"
-        },
-        {
-          "name": "ToggleMTR"
-        },
-        {
-          "name": "ToggleHTile"
-        },
-        {
-          "name": "ToggleZPrepassOutput"
-        },
-        {
-          "name": "ToggleFXAA"
-        },
-        {
-          "name": "SetJobListBatch"
-        },
-        {
-          "name": "SetJobListThread"
-        },
-        {
-          "name": "JobListTool"
-        },
-        {
-          "name": "SetCullingProcessCount"
-        },
-        {
-          "name": " ConfigureIBL"
-        },
-        {
-          "name": "ToggleDOF"
-        },
-        {
-          "name": "ToggleDDOF"
-        },
-        {
-          "name": "ConfigureDDOF"
-        },
-        {
-          "name": "SetLightingColourClamp"
-        },
-        {
-          "name": "ChangeSnowParameters"
-        },
-        {
-          "name": "ToggleFog"
-        },
-        {
-          "name": "ToggleHDR"
-        },
-        {
-          "name": "ToggleStippleFade"
-        },
-        {
-          "name": "ToggleLandFade"
-        },
-        {
-          "name": "ResetGrassFade"
-        },
-        {
-          "name": " ToggleAR"
-        },
-        {
-          "name": " ToggleAVL"
-        },
-        {
-          "name": " ToggleBC"
-        },
-        {
-          "name": " ToggleIBLF"
-        },
-        {
-          "name": " ToggleBCS"
-        },
-        {
-          "name": " ToggleCLFVL"
-        },
-        {
-          "name": " ToggleCSRCS"
-        },
-        {
-          "name": " ToggleDS"
-        },
-        {
-          "name": " ToggleIBEPF"
-        },
-        {
-          "name": " ToggleLC"
-        },
-        {
-          "name": " TogglePNCS"
-        },
-        {
-          "name": " ToggleR"
-        },
-        {
-          "name": " ToggleSAO"
-        },
-        {
-          "name": " ToggleSAOCS"
-        },
-        {
-          "name": " ToggleIL"
-        },
-        {
-          "name": " ToggleSC"
-        },
-        {
-          "name": " ToggleSSSS"
-        },
-        {
-          "name": " ToggleTAA"
-        },
-        {
-          "name": " ToggleUDR"
-        },
-        {
-          "name": " ToggleWB"
-        },
-        {
-          "name": " ToggleUM"
-        },
-        {
-          "name": " ConfigureAR"
-        },
-        {
-          "name": " ConfigureAVL"
-        },
-        {
-          "name": " ConfigureBC"
-        },
-        {
-          "name": " ConfigureIBLF"
-        },
-        {
-          "name": " ConfigureBCS"
-        },
-        {
-          "name": " ConfigureCLFVL"
-        },
-        {
-          "name": " ConfigureCSRCS"
-        },
-        {
-          "name": " ConfigureDS"
-        },
-        {
-          "name": " ConfigureIBEPF"
-        },
-        {
-          "name": " ConfigureLC"
-        },
-        {
-          "name": " ConfigurePNCS"
-        },
-        {
-          "name": " ConfigureR"
-        },
-        {
-          "name": " ConfigureSAO"
-        },
-        {
-          "name": " ConfigureSAOCS"
-        },
-        {
-          "name": " ConfigureIL"
-        },
-        {
-          "name": " ConfigureSC"
-        },
-        {
-          "name": " ConfigureSSSS"
-        },
-        {
-          "name": " ConfigureTAA"
-        },
-        {
-          "name": " ConfigureUDR"
-        },
-        {
-          "name": " ConfigureWB"
-        },
-        {
-          "name": " ConfigureUM"
-        },
-        {
-          "name": "SyncCharacterFromSaveFile"
-        },
-        {
-          "name": "PreloadLinkedInteriors"
-        },
-        {
-          "name": "ResizeLargeRefLODGrid"
-        },
-        {
-          "name": "DisplaySaveCacheStatus"
-        },
-        {
-          "name": "AuditionSoundDescriptor"
-        },
-        {
-          "name": "TogglePrecipitationOcclusionMap"
-        },
-        {
-          "name": "ToggleTrijuice"
-        },
-        {
-          "name": "ToggleWaterJittering"
-        },
-        {
-          "name": "ToggleAlphaEffectJittering"
-        },
-        {
-          "name": "ExtractMod"
-        },
-        {
-          "name": "InstallMod"
-        },
-        {
-          "name": "UninstallMod"
-        },
-        {
-          "name": "DeleteMod"
-        },
-        {
-          "name": "BuildBNetModArchive"
-        },
-        {
-          "name": "ToggleEarlyZ"
-        },
-        {
-          "name": "ToggleDepthShift"
-        },
-        {
-          "name": "TogglePostponeBlurryEffect"
-        },
-        {
-          "name": "CharacterLight"
-        },
-        {
-          "name": "ClearMotionVectors"
-        },
-        {
-          "name": "ToggleTAAWaterBlending"
-        },
-        {
-          "name": "ToggleDecompressToCopy"
-        },
-        {
-          "name": "BNetLogin"
-        },
-        {
-          "name": "BNetLoginSSO"
-        },
-        {
-          "name": "BNetLogout"
-        },
-        {
-          "name": "IsLoggedIn"
-        },
-        {
-          "name": "BNetCreateAccount"
-        },
-        {
-          "name": "BNetLinkAccount"
-        },
-        {
-          "name": "BNetUnlinkAccount"
-        },
-        {
-          "name": "RequestOTP"
-        },
-        {
-          "name": "VerifyOTP"
-        },
-        {
-          "name": "GetLegalDocs"
-        },
-        {
-          "name": "AcceptLegalDoc"
-        },
-        {
-          "name": "SubscribeUGC"
-        },
-        {
-          "name": "UnsubscribeUGC"
-        },
-        {
-          "name": "GetSubscribedList"
-        },
-        {
-          "name": "FollowUGC"
-        },
-        {
-          "name": "UnfollowUGC"
-        },
-        {
-          "name": "GetFollowedList"
-        },
-        {
-          "name": "GetUGCDetails"
-        },
-        {
-          "name": "DownloadUGC"
-        },
-        {
-          "name": "DynamicResolution"
-        }
-      ]
-    }
-  }
-}
+[
+  "Show",
+  "ShowVars",
+  "ShowGlobalVars",
+  "ShowQuestVars",
+  "ShowQuests",
+  "ShowQuestAliases",
+  "SetPapyrusQuestVar",
+  "SetPapyrusVar",
+  "SetQuestAliases",
+  "ClearQuestAliases",
+  "ToggleCombatStats",
+  "ToggleSafeZone",
+  "ToggleAI",
+  "ToggleCollisionGeometry",
+  "ToggleMaterialGeometry",
+  "ToggleStairsGeometry",
+  "ToggleBorders",
+  "ToggleSky",
+  "ToggleWireframe",
+  "ToggleCollision",
+  "ToggleDebugText",
+  "ToggleMenus",
+  "TogglePrimitives",
+  "ShowScenegraph",
+  "ShowScenegraph",
+  "ToggleMagicStats",
+  "ShowAnim",
+  "Show1stPerson",
+  "Help",
+  "ToggleNavMesh",
+  "TogglePathLine",
+  "PickRefByID",
+  "SetLightingPasses",
+  "ToggleLensFlare",
+  "SetLensFlareGlobalIntensity",
+  "ToggleLODLand",
+  "ToggleMapEffect",
+  "SetLODObjectDistance",
+  "ToggleGrassUpdate",
+  "CenterOnCell",
+  "CheckRenderTargets",
+  "SetGameSetting",
+  "SetINISetting",
+  "GetINISetting",
+  "CenterOnExterior",
+  "CalcPathToPoint",
+  "CalcLowPathToPoint",
+  "SetFog",
+  "SetClipDist",
+  "ToggleShadowVolumes",
+  "SetImageSpaceGlow",
+  "ToggleDetection",
+  "ToggleHighProcess",
+  "ToggleLowProcess",
+  "ToggleMiddleLowProcess",
+  "ToggleMiddleHighProcess",
+  "ToggleAiSchedules",
+  "SpeakSound",
+  "BetaComment",
+  "GameComment",
+  "ToggleCellNode",
+  "ToggleTrees",
+  "SetCameraFOV",
+  "ToggleGodMode",
+  "RefreshShaders",
+  "ReloadFXP",
+  "ToggleScripts",
+  "ToggleConversations",
+  "ToggleFullHelp",
+  "ShowQuestLog",
+  "ShowFullQuestLog",
+  "DumpTexturePalette",
+  "DumpModelMap",
+  "CenterOnWorld",
+  "ToggleGrass",
+  "CreateGrassAt",
+  "AddFaceAnimNote",
+  "RefreshINI",
+  "ToggleEmotions",
+  "AddDecal",
+  "TestCode",
+  "PlayerSpellBook",
+  "PrintAiList",
+  "ShowQuestTargets",
+  "HairTint",
+  "SaveGame",
+  "LoadGame",
+  "DisplayPlayerIDs",
+  "SetDisplayPlayerID",
+  "TestAllCells",
+  "RenderTestCell",
+  "RenderTestHere",
+  "SaveWorld",
+  "ReloadCurrentClimate",
+  "ReloadCurrentWeather",
+  "TestSeenData",
+  "TestLocalMap",
+  "MoveToQuestTarget",
+  "PrintNPCDialog",
+  "ShowSubtitle",
+  "ShowRenderPasses",
+  "FreezeRenderAccumulation",
+  "ToggleOcclusion",
+  "OutputMemContexts",
+  "OutputMemStats",
+  "SetMemCheckPoint",
+  "GetMemCheckPoint",
+  "IncMemCheckPoint",
+  "OutputAllocations",
+  "AddWatchAddress",
+  "RemoveWatchAddress",
+  "ToggleDetectionStats",
+  "SetTargetRefraction",
+  "SetTargetRefractionFire",
+  "ToggleRefractionDebug",
+  "ToggleCharControllerShape",
+  "ShowHeadTrackTarget",
+  "SetCinematicParam",
+  "SetTintParam",
+  "SetHDRParam",
+  "VisualRefPosition",
+  "ShowPivot",
+  "PrintHDRParam",
+  "ToggleHDRDebug",
+  "ToggleHDRMultipleLuminance",
+  "RevertWorld",
+  "OutputArchiveProfile",
+  "QuitGame",
+  "SaveIniFiles",
+  "SetDebugText",
+  "ToggleLiteBrite",
+  "RunMemoryPass",
+  "ResetMemContexts",
+  "ToggleWaterSystem",
+  "ToggleWaterRadius",
+  "ShowWhoDetectsPlayer",
+  "ToggleCombatAI",
+  "ToggleFlyCam",
+  "ModWaterShader",
+  "WaterColor",
+  "BeginTrace",
+  "RunCellTest",
+  "StartAllQuests",
+  "CompleteAllQuestStages",
+  "ToggleFogOfWar",
+  "OutputLocalMapPictures",
+  "SetGamma",
+  "WasteMemory",
+  "ClearAdaptedLight",
+  "SetHudGlowConstants",
+  "CloseFile",
+  "SetTreeMipmapBias",
+  "SendSherlockDebugText",
+  "PlayExplosion",
+  "SetMaxAniso",
+  "SetMeshLODLevel",
+  "SetTargetDOF",
+  "ToggleFullScreenMotionBlur",
+  "SetTriLinearThreshold",
+  "SetVel",
+  "DebugCombatBehavior",
+  "ToggleCombatDebug",
+  "TogglePathingInfoFunction",
+  "ShowInventory",
+  "ResetPerformanceTimers",
+  "ToggleDebugDecal",
+  "ToggleDecalRendering",
+  "SetImageSpaceModifiersEnable",
+  "SetUFOCamSpeedMult",
+  "ToggleTestLight",
+  "PlaceLocationMarker",
+  "ClearLocationMarkers",
+  "ToggleMultiboundCheck",
+  "AddOcclusionPlane",
+  "SetGlobalRadialBlur",
+  "OutputTextureUseMap",
+  "ClearScreenBlood",
+  "ResetDialogueFlags",
+  "GetActorValueInfo",
+  "ToggleBoundVisGeom",
+  "SetConsoleOuputFile",
+  "IgnoreRenderPass",
+  "PlayVATSCameras",
+  "SetTargetFalloff",
+  "ToggleActorMover",
+  "CopySaves",
+  "ToggleEOFImageSpace",
+  "ForceFileCache",
+  "DumpNiUpdates",
+  "TestDegrade",
+  "ToggleDepthBias",
+  "ToggleSPURenderBatch",
+  "ToggleSPUTransformUpdate",
+  "ToggleSPUCulling",
+  "ModifyFaceGen",
+  "GetSKSEVersion",
+  "SetEmitterParticleMax",
+  "SetMPSParticleMax",
+  "SetTaskThreadSleep",
+  "SetTaskThreadUpdateSleep",
+  "EvalActorTextures",
+  "CreateSaveData",
+  "CreateGameData",
+  "LoadFlashMovie",
+  "ShowMenu",
+  "HideMenu",
+  "RecvAnimEvent",
+  "RunConsoleBatch",
+  "LTGraph",
+  "RTGraph",
+  "ToggleHeapTracking",
+  "TogglePoolTracking",
+  "RumbleManager",
+  "InstallMemoryTracker",
+  "UninstallMemoryTracker",
+  "CheckMemory",
+  "SetStackDepth",
+  "PathToRef",
+  "StartAIControlledRobotTest",
+  "TestHandleManagerWarnAndKillSDM",
+  "SetFaceTarget",
+  "PrecomputedLOSGeneration",
+  "PrecomputedLOSDebug",
+  "SetPathSprinting",
+  "SetAnimGraphVar",
+  "SetTreeTrunkFlexibility",
+  "SetTreeBranchFlexibility",
+  "SetTreeBranchAnimationRange",
+  "SetTreeLeafFlexibility",
+  "SetTreeLeafAmplitude",
+  "SetTreeLeafFrequency",
+  "SetTreeWindDirection",
+  "SetTreeWindMagnitude",
+  "SetBloodParam",
+  "RegisterPrefix",
+  "ToggleEventLog",
+  "ExportPerfTrackingData",
+  "DisplayGraphVariable",
+  "ToggleMotionDriven",
+  "ToggleControlsDriven",
+  "ToggleGUIOverlay",
+  "ModifyGUIOverlay",
+  "SetActionComplete",
+  "SetConsoleScopeQuest",
+  "GetDistanceFromActorsPath",
+  "ClearConsole",
+  "ToggleMarkers",
+  "KillAllProjectiles",
+  "PlayTerrainEffect",
+  "CellInfo",
+  "Textures",
+  "Timing",
+  "Polygons",
+  "Actors",
+  "Quest",
+  "Particles",
+  "Memory",
+  "ShowNodes",
+  "SaveDebugTextPages",
+  "OutputFixedStringTable",
+  "AttachPapyrusScript",
+  "SaveHavokSnapshot",
+  "SetNPCWeight",
+  "ShowClosestLocationForSphere",
+  "PrintShaderMacros",
+  "ToggleAudioOverlay",
+  "TogglePapyrusLog",
+  "ToggleContextOverlay",
+  "ForceOutOfMemory",
+  "ToggleMovement",
+  "ToggleAnimations",
+  "SetWarning",
+  "TestFadeNodes",
+  "ShowLowMaxHeights",
+  "ShowHighMaxHeights",
+  "EnableStoryManagerLogging",
+  "SetFramebufferRange",
+  "DumpPapyrusStacks",
+  "DumpPapyrusUpdates",
+  "SoundCatMod",
+  "RunCompaction",
+  "ToggleAnimatorCam",
+  "ToggleImmortalMode",
+  "SetSubgraphToDebug",
+  "EnableRumble",
+  "HavokVDBCapture",
+  "ToggleMapCam",
+  "ToggleNavmeshInfo",
+  "PlaySyncAnim",
+  "SetFormKnown",
+  "SetDebugQuest",
+  "SetQuestAliasLogging",
+  "SetRace",
+  "FindForm",
+  "StartPapyrusScriptProfile",
+  "StopPapyrusScriptProfile",
+  "StartPapyrusFormProfile",
+  "StopPapyrusFormProfile",
+  "PrintQuestSceneInfo",
+  "IsInvulnerable",
+  "ExportInventoryItemInfo",
+  "CollisionMesh",
+  "IsolateRendering",
+  "ToggleWaterCurrentGeometry",
+  "PerformAction",
+  "StartTrackPlayerDoors",
+  "StopTrackPlayerDoors",
+  "CheckPlayerDoors",
+  "ToggleSPUMovement",
+  "SetInChargen",
+  "ClearAchievement",
+  "ForceReset",
+  "ReloadScript",
+  "ForceCloseFiles",
+  "HotLoadPlugin",
+  "ToggleVerletDebug",
+  "DumpConditionFunctions",
+  "PlaceFurnitureTester",
+  "DumpLoadedAnimationFiles",
+  "FunctionDisplayRenderTarget",
+  "ToggleParallaxOcclusion",
+  "ToggleProjectedUVDiffuseNormals",
+  "ReloadProjectedUVTextures",
+  "FunctionToggleDownsampleCS",
+  "FunctionToggleVolumetricLighting",
+  "FunctionToggleVolumetricLighting",
+  "FunctionToggleVolumetricLightingTemporalAccumulation",
+  "FunctionSetVolumetricLightingParameters",
+  "FunctionPrintVolumetricLightingParameters",
+  "FunctionSetVolumetricLightingResolution",
+  "ToggleCastShadows",
+  "SetShadowParameter",
+  "SetESRAMSetup",
+  "ToggleESRAM",
+  "ToggleMTR",
+  "ToggleHTile",
+  "ToggleZPrepassOutput",
+  "ToggleFXAA",
+  "SetJobListBatch",
+  "SetJobListThread",
+  "JobListTool",
+  "SetCullingProcessCount",
+  " ConfigureIBL",
+  "ToggleDOF",
+  "ToggleDDOF",
+  "ConfigureDDOF",
+  "SetLightingColourClamp",
+  "ChangeSnowParameters",
+  "ToggleFog",
+  "ToggleHDR",
+  "ToggleStippleFade",
+  "ToggleLandFade",
+  "ResetGrassFade",
+  " ToggleAR",
+  " ToggleAVL",
+  " ToggleBC",
+  " ToggleIBLF",
+  " ToggleBCS",
+  " ToggleCLFVL",
+  " ToggleCSRCS",
+  " ToggleDS",
+  " ToggleIBEPF",
+  " ToggleLC",
+  " TogglePNCS",
+  " ToggleR",
+  " ToggleSAO",
+  " ToggleSAOCS",
+  " ToggleIL",
+  " ToggleSC",
+  " ToggleSSSS",
+  " ToggleTAA",
+  " ToggleUDR",
+  " ToggleWB",
+  " ToggleUM",
+  " ConfigureAR",
+  " ConfigureAVL",
+  " ConfigureBC",
+  " ConfigureIBLF",
+  " ConfigureBCS",
+  " ConfigureCLFVL",
+  " ConfigureCSRCS",
+  " ConfigureDS",
+  " ConfigureIBEPF",
+  " ConfigureLC",
+  " ConfigurePNCS",
+  " ConfigureR",
+  " ConfigureSAO",
+  " ConfigureSAOCS",
+  " ConfigureIL",
+  " ConfigureSC",
+  " ConfigureSSSS",
+  " ConfigureTAA",
+  " ConfigureUDR",
+  " ConfigureWB",
+  " ConfigureUM",
+  "SyncCharacterFromSaveFile",
+  "PreloadLinkedInteriors",
+  "ResizeLargeRefLODGrid",
+  "DisplaySaveCacheStatus",
+  "AuditionSoundDescriptor",
+  "TogglePrecipitationOcclusionMap",
+  "ToggleTrijuice",
+  "ToggleWaterJittering",
+  "ToggleAlphaEffectJittering",
+  "ExtractMod",
+  "InstallMod",
+  "UninstallMod",
+  "DeleteMod",
+  "BuildBNetModArchive",
+  "ToggleEarlyZ",
+  "ToggleDepthShift",
+  "TogglePostponeBlurryEffect",
+  "CharacterLight",
+  "ClearMotionVectors",
+  "ToggleTAAWaterBlending",
+  "ToggleDecompressToCopy",
+  "BNetLogin",
+  "BNetLoginSSO",
+  "BNetLogout",
+  "IsLoggedIn",
+  "BNetCreateAccount",
+  "BNetLinkAccount",
+  "BNetUnlinkAccount",
+  "RequestOTP",
+  "VerifyOTP",
+  "GetLegalDocs",
+  "AcceptLegalDoc",
+  "SubscribeUGC",
+  "UnsubscribeUGC",
+  "GetSubscribedList",
+  "FollowUGC",
+  "UnfollowUGC",
+  "GetFollowedList",
+  "GetUGCDetails",
+  "DownloadUGC",
+  "DynamicResolution"
+]
