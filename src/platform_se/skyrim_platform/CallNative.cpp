@@ -1,4 +1,5 @@
 #include "CallNative.h"
+#include "CallNativeApi.h"
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
 #include "Overloaded.h"
@@ -12,7 +13,11 @@
 #include <RE/SkyrimVM.h>
 #include <limits>
 #include <optional>
+#include <skse64/GameReferences.h>
 #include <skse64/PapyrusActor.h>
+#include <skse64_common/Relocation.h>
+
+extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 RE::BSScript::Variable CallNative::AnySafeToVariable(
   const CallNative::AnySafe& v, bool treatNumberAsInt = false)
@@ -257,6 +262,41 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     return ObjectPtr();
   }
 
+  if (!stricmp(classFunc.data(), "pushActorAway")) {
+    auto targetActor = std::get<ObjectPtr>(args_.args[0]);
+    if (!targetActor)
+      throw NullPointerException("targetActor");
+
+    auto nativeTargetActor = (RE::Actor*)targetActor->GetNativeObjectPtr();
+    if (!nativeTargetActor)
+      throw NullPointerException("nativeTargetActor");
+
+    if (nativeTargetActor->formType != RE::FormType::ActorCharacter)
+      throw std::runtime_error(
+        "nativeTargetActor - unexpected formType (" +
+        std::to_string(static_cast<int>(nativeTargetActor->formType)) + ")");
+
+    const auto targetActorId = nativeTargetActor->formID;
+    const auto mag = static_cast<float>(std::get<double>(args_.args[1]));
+
+    gameThrQ.AddTask([mag, nativeTargetActor, targetActorId] {
+      if (LookupFormByID(targetActorId) !=
+          reinterpret_cast<void*>(nativeTargetActor))
+        return;
+      if (!g_nativeCallRequirements.vm)
+        throw NullPointerException("g_nativeCallRequirements.vm");
+
+      typedef void(PushActorAway)(void* vm, RE::VMStackID stackId,
+                                  RE::Actor* self, RE::Actor* targetActor,
+                                  float magnitude);
+      RelocPtr<PushActorAway> pushActorAway(10052416);
+      pushActorAway.GetPtr()(g_nativeCallRequirements.vm,
+                             g_nativeCallRequirements.stackId,
+                             nativeTargetActor, nativeTargetActor, mag);
+    });
+    return ObjectPtr();
+  }
+
   if (!stricmp(classFunc.data(), "getFormID"))
     return (double)rawSelf->formID;
 
@@ -305,7 +345,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
 
       if (boundObject)
         actor->RemoveItem(boundObject, count, RE::ITEM_REMOVE_REASON::kRemove,
-                        nullptr, refrToMove);
+                          nullptr, refrToMove);
     }
     return ObjectPtr();
   }
