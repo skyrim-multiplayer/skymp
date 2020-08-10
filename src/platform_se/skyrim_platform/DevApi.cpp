@@ -90,3 +90,8 @@ JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
     throw std::runtime_error("Failed to write into " + path.string());
   return JsValue::Undefined();
 }
+
+JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
+{
+  return "0.7.0+build1";
+}

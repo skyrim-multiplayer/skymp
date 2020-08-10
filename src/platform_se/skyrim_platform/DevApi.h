@@ -15,6 +15,8 @@ JsValue GetPluginSourceCode(const JsFunctionArguments& args);
 
 JsValue WritePlugin(const JsFunctionArguments& args);
 
+JsValue GetPlatformVersion(const JsFunctionArguments& args);
+
 using NativeExportsMap =
   std::map<std::string, std::function<JsValue(const JsValue&)>>;
 
@@ -39,5 +41,7 @@ inline void Register(JsValue& exports, std::shared_ptr<JsEngine>* jsEngine,
   exports.SetProperty("getPluginSourceCode",
                       JsValue::Function(GetPluginSourceCode));
   exports.SetProperty("writePlugin", JsValue::Function(WritePlugin));
+  exports.SetProperty("getPlatformVersion",
+                      JsValue::Function(GetPlatformVersion));
 }
 }
