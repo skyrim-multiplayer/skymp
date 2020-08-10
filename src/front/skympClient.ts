@@ -363,3 +363,23 @@ if (settings["skymp5-client"]["enable-console"] !== true) {
     };
   });
 }
+
+once("update", () => {
+  const requiredVersion = "0.7.0+build1";
+
+  const realVersion =
+    typeof sp.getPlatformVersion === "function"
+      ? sp.getPlatformVersion()
+      : "unknown";
+
+  if (realVersion !== requiredVersion) {
+    sp.Debug.messageBox(
+      `You need to have SkyrimPlatform ${requiredVersion} to join this server. Your current version is ${realVersion}`
+    );
+    Utility.waitMenuMode(0.5).then(() => {
+      on("update", () => {
+        if (!Ui.isMenuOpen("MessageBoxMenu")) Game.quitToMainMenu();
+      });
+    });
+  }
+});

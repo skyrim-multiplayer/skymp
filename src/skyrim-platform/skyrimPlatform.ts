@@ -13,6 +13,7 @@ export declare function writePlugin(
   pluginName: string,
   newSources: string
 ): string;
+export declare function getPlatformVersion(): string;
 export declare let storage: any;
 export declare let settings: any;
 
