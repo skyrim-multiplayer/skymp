@@ -8,6 +8,8 @@ import {
   hooks,
   once,
   WorldSpace,
+  Faction,
+  on,
 } from "skyrimPlatform";
 
 const spawnPosition = [227, 239, 53];
@@ -21,6 +23,10 @@ let pcIsInGreenZone = false;
 
 hooks.sendAnimationEvent.add({
   enter(ctx) {
+    if (ctx.animEventName.toLowerCase().includes("killmove")) {
+      ctx.animEventName = "";
+    }
+
     if (ctx.selfId !== 0x14) return;
     if (!gAllowGetUp && ctx.animEventName === "GetUpBegin")
       ctx.animEventName = "";
@@ -78,7 +84,21 @@ const playSpell = () => {
 const die = () => {
   gAllowGetUp = false;
   const actor = Game.getPlayer();
-  actor.pushActorAway(actor, 0);
+
+  Faction.from(Game.getFormEx(0x000267ea)).setCrimeGold(-1000);
+  const pos = [
+    actor.getPositionX(),
+    actor.getPositionY(),
+    actor.getPositionZ(),
+  ];
+  for (let i = 0; i < 200; ++i) {
+    const ac = Game.findRandomActor(pos[0], pos[1], pos[2], 10000);
+    if (!ac) continue;
+    const tgt = ac.getCombatTarget();
+    if (tgt && tgt.getFormID() === 0x14) ac.stopCombat();
+  }
+
+  Game.getPlayer().pushActorAway(Game.getPlayer(), 0);
   actor.damageActorValue("health", 1000);
   Utility.wait(6).then(() => {
     gAllowGetUp = true;
@@ -87,20 +107,33 @@ const die = () => {
       Utility.wait(2).then(() => {
         once("update", () => {
           playSpell();
-          Debug.sendAnimationEvent(actor, "GetUpBegin");
-          actor.restoreActorValue("health", 10000000);
+          // actor is expired here
+          Debug.sendAnimationEvent(Game.getPlayer(), "GetUpBegin");
+          Game.getPlayer().restoreActorValue("health", 10000000);
         });
       });
     });
   });
 };
 
+let lastPcHit = 0;
+
+on("hit", (e) => {
+  if (e.target.getFormID() !== 0x14) return;
+  lastPcHit = Date.now();
+});
+
 const handleDeath = () => {
+  if (Date.now() - lastPcHit < -1) return;
+
   let hp = Game.getPlayer().getActorValuePercentage("health");
   hp = hp <= 0 ? 0 : hp;
   if (lastHp != hp) {
     lastHp = hp;
-    if (hp <= 0) die();
+    if (hp <= 0) {
+      //Debug.sendAnimationEvent(Game.getPlayer(), "idleforcedefaultstate");
+      Utility.wait(0.1).then(die);
+    }
   }
 };
 
@@ -109,4 +142,7 @@ export const update = (): void => {
 
   blockPvpInTemple();
   handleDeath();
+
+  const whiterunExit = ObjectReference.from(Game.getFormEx(0x1b1f3));
+  if (whiterunExit) whiterunExit.lock(false, false);
 };
