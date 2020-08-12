@@ -18,6 +18,7 @@ import { applyMovement, NiPoint3 } from "./components/movement";
 import { applyAnimation } from "./components/animation";
 import { Look, applyLook, applyTints } from "./components/look";
 import { applyEquipment, isBadMenuShown } from "./components/equipment";
+import { modWcProtection } from "./worldCleaner";
 
 export interface View<T> {
   update(model: T): void;
@@ -169,6 +170,7 @@ export class FormView implements View<FormModel> {
     if (respawnRequired) {
       this.destroy();
       refr = Game.getPlayer().placeAtMe(base, 1, true, true);
+      modWcProtection(refr.getFormID(), 1);
 
       // TODO: reset all states?
       this.eqState = getDefaultEquipState();
@@ -192,6 +194,8 @@ export class FormView implements View<FormModel> {
     this.spawnMoment = 0;
     const refr = ObjectReference.from(Game.getFormEx(this.refrId));
     if (refr) refr.delete();
+
+    modWcProtection(this.refrId, -1);
   }
 
   private applyAll(refr: ObjectReference, model: FormModel) {
