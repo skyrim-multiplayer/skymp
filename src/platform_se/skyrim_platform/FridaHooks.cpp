@@ -208,11 +208,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
             auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
             g_prevMainMenuView = *viewPtr;
             *viewPtr = nullptr;
-            // FridaHooksUtils::ResetView(this_);
           }
-        /* FridaHooksUtils::GetMenuByName() auto menu =
-           (uint8_t*)_ic->cpu_context->rcx;
-         *reinterpret_cast<void**>(menu + 0x10) = nullptr;*/
       }
       break;
     }
