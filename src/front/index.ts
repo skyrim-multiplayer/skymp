@@ -5,6 +5,7 @@ import * as loadGameManager from "./loadGameManager";
 import { Game, Utility, on, once } from "skyrimPlatform";
 import { verifyVersion } from "./version";
 import { applyInventory } from "./components/inventory";
+import { updateWc } from "./worldCleaner";
 
 new SkympClient();
 
@@ -53,3 +54,4 @@ blockConsole();
 
 once("update", verifyVersion);
 
+on("update", () => updateWc());
