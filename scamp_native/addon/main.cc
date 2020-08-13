@@ -72,7 +72,7 @@ private:
   std::shared_ptr<Networking::IServer> server;
   std::shared_ptr<Networking::MockServer> serverMock;
   std::shared_ptr<ScampServerListener> listener;
-  std::unique_ptr<Napi::Env> tickEnv;
+  Napi::Env tickEnv;
   Napi::ObjectReference emitter;
   Napi::FunctionReference emit;
 
@@ -89,8 +89,7 @@ public:
 
   void OnConnect(Networking::UserId userId) override
   {
-    assert(server.tickEnv);
-    auto env = *server.tickEnv;
+    auto& env = server.tickEnv;
     auto emit = server.emit.Value();
     emit.Call(
       server.emitter.Value(),
@@ -99,8 +98,7 @@ public:
 
   void OnDisconnect(Networking::UserId userId) override
   {
-    assert(server.tickEnv);
-    auto env = *server.tickEnv;
+    auto& env = server.tickEnv;
     auto emit = server.emit.Value();
     emit.Call(server.emitter.Value(),
               { Napi::String::New(env, "disconnect"),
@@ -112,8 +110,7 @@ public:
   {
     std::string contentStr = simdjson::minify(content);
 
-    assert(server.tickEnv);
-    auto env = *server.tickEnv;
+    auto& env = server.tickEnv;
     auto emit = server.emit.Value();
     emit.Call(server.emitter.Value(),
               { Napi::String::New(env, "customPacket"),
@@ -150,6 +147,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
   : ObjectWrap(info)
+  , tickEnv(info.Env())
 {
   try {
     partOne.reset(new PartOne);
@@ -180,7 +178,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
 {
   try {
-    tickEnv.reset(new Napi::Env(info.Env()));
+    tickEnv = info.Env();
     partOne->pushedSendTarget = server.get();
     server->Tick(PartOne::HandlePacket, partOne.get());
   } catch (std::exception& e) {

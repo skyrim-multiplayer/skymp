@@ -16,7 +16,8 @@
     "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
     "start": "node ./dist_back/back/index.js",
     "nexe": "nexe ./dist/index.js",
-    "start-prod": "cross-env NODE_ENV=production node ./dist_back/back/index.js"
+    "start-prod": "cross-env NODE_ENV=production node ./dist_back/back/index.js",
+    "clinic": "clinic flame -- node ./dist_back/back/index.js"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
@@ -34,6 +35,7 @@
     "@typescript-eslint/parser": "^3.4.0",
     "argparse": "^1.0.10",
     "axios": "^0.19.2",
+    "clinic": "^6.0.3",
     "cmake-js": "^6.1.0",
     "concurrently": "^5.2.0",
     "cross-env": "^7.0.2",

@@ -167,7 +167,7 @@ server.on("disconnect", (userId: number) => {
   while (1) {
     try {
       server.tick();
-      await new Promise(setImmediate);
+      await new Promise((r) => setTimeout(r, 1));
     } catch (e) {
       console.error("server.tick ", e);
     }
