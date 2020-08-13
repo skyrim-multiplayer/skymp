@@ -1,10 +1,8 @@
 import { Actor, Game, Ammo, Ui } from "skyrimPlatform";
 import { Inventory, getInventory, applyInventory, Entry } from "./inventory";
 
-export interface Equipment {
-  inv: Inventory;
-  numChanges: number;
-}
+import * as structures from "../../lib/structures/equipment";
+export type Equipment = structures.Equipment;
 
 const filterWorn = (inv: Inventory): Inventory => {
   return { entries: inv.entries.filter((x) => x.worn || x.wornLeft) };

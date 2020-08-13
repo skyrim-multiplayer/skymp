@@ -19,26 +19,10 @@ import {
   Ammo,
 } from "skyrimPlatform";
 
-export interface Extra {
-  health?: number;
-  enchantmentId?: number;
-  maxCharge?: number;
-  removeEnchantmentOnUnequip?: boolean;
-  chargePercent?: number;
-  name?: string;
-  soul?: 0 | 1 | 2 | 3 | 4 | 5;
-  poisonId?: number;
-  poisonCount?: number;
-  worn?: boolean;
-  wornLeft?: boolean;
-}
-
-export interface BasicEntry {
-  baseId: number;
-  count: number;
-}
-
-export type Entry = BasicEntry & Extra;
+import * as structures from "../../lib/structures/inventory";
+export type Inventory = structures.Inventory;
+export type Entry = structures.Entry;
+export type BasicEntry = structures.BasicEntry;
 
 // 'loxsword (Legendary)' => 'loxsword'
 const getRealName = (s?: string): string => {
@@ -116,10 +100,6 @@ const extrasEqual = (a: Entry, b: Entry) => {
 const hasExtras = (e: Entry): boolean => {
   return !extrasEqual(e, { baseId: 0, count: 0 });
 };
-
-export interface Inventory {
-  entries: Entry[];
-}
 
 const extractExtraData = (
   refr: ObjectReference,

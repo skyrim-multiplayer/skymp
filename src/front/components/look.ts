@@ -10,25 +10,9 @@ import {
   VoiceType,
 } from "skyrimPlatform";
 
-export interface Tint {
-  texturePath: string;
-  argb: number;
-  type: number;
-}
-
-export interface Look {
-  isFemale: boolean;
-  raceId: number;
-  weight: number;
-  skinColor: number;
-  hairColor: number;
-  headpartIds: number[];
-  headTextureSetId: number;
-  options: number[];
-  presets: number[];
-  tints: Tint[];
-  name: string;
-}
+import * as structures from "../../lib/structures/look";
+export type Look = structures.Look;
+export type Tint = structures.Tint;
 
 export const getLook = (actor: Actor): Look => {
   const base = ActorBase.from(actor.getBaseObject());

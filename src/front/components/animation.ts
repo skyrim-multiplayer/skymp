@@ -9,10 +9,8 @@ import {
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
 
-export interface Animation {
-  animEventName: string;
-  numChanges: number;
-}
+import * as structures from "../../lib/structures/animation";
+export type Animation = structures.Animation;
 
 export interface AnimationApplyState {
   lastNumChanges: number;

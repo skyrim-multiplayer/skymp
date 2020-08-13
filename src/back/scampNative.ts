@@ -38,19 +38,12 @@ export declare class ScampServer {
   ): void;
 
   destroyActor(formId: number): void;
-
   setUserActor(userId: number, actorFormId: number): void;
-
   getUserActor(userId: number): number;
-
   getActorName(actorId: number): string;
-
   getActorPos(actorId: number): number[];
-
   setRaceMenuOpen(formId: number, open: boolean): void;
-
   sendCustomPacket(userId: number, jsonContent: string): void;
-
   createBot(): Bot;
 }
 
