@@ -17,6 +17,7 @@ set(ports
   spdlog:${triplet}
   slikenet:${triplet}
   boost-bimap:${triplet}
+  zlib:${triplet}
 )
 if (WIN32)
   list(APPEND ports simdjson:${triplet})
@@ -61,6 +62,10 @@ if(WIN32)
 endif()
 
 set(OPENCPPCOV_DIR "")
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib_espm)
+list(APPEND VCPKG_DEPENDENT espm)
+apply_default_settings(TARGETS espm)
 
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/unit/*" "${CMAKE_SOURCE_DIR}/.clang-format")
 add_executable(unit ${src})
