@@ -2,7 +2,15 @@ import { SkympClient } from "./skympClient";
 import { blockConsole } from "./console";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
-import { Game, Utility, on, once } from "skyrimPlatform";
+import {
+  Game,
+  Utility,
+  on,
+  once,
+  GlobalVariable,
+  printConsole,
+  ObjectReference,
+} from "skyrimPlatform";
 import { verifyVersion } from "./version";
 import { applyInventory } from "./components/inventory";
 import { updateWc } from "./worldCleaner";
@@ -55,3 +63,26 @@ blockConsole();
 once("update", verifyVersion);
 
 on("update", () => updateWc());
+
+const gameHourId = 0x38;
+const gameMonthId = 0x36;
+const gameDayId = 0x37;
+const gameYearId = 0x35;
+const timeScaleId = 0x3a;
+on("update", () => {
+  /*const gameHour = GlobalVariable.from(Game.getFormEx(gameHourId));
+  printConsole(gameHour.getValue());
+  gameHour.setValue(21);
+
+  const timeScale = GlobalVariable.from(Game.getFormEx(timeScaleId));
+  timeScale.setValue(0);*/
+});
+
+let riftenUnlocked = false;
+on("update", () => {
+  if (riftenUnlocked) return;
+  const refr = ObjectReference.from(Game.getFormEx(0x42284));
+  if (!refr) return;
+  refr.lock(false, false);
+  riftenUnlocked = true;
+});
