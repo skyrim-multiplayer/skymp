@@ -1,13 +1,13 @@
 #pragma once
+#include "FormIndex.h"
 #include "Grid.h"
 #include "GridElement.h"
-#include <MpForm.h>
 #include "NiPoint3.h"
 #include <MakeID.h>
+#include <MpForm.h>
 #include <algorithm>
 #include <sparsepp/spp.h>
 #include <sstream>
-#include "FormIndex.h"
 
 #ifdef AddForm
 #  undef AddForm
@@ -20,6 +20,12 @@ class WorldState
   friend class MpActor;
 
 public:
+  WorldState() = default;
+  WorldState(const WorldState&) = delete;
+  WorldState& operator=(const WorldState&) = delete;
+
+  void Clear();
+
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);

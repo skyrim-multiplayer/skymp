@@ -1,8 +1,8 @@
 #pragma once
-#include <string.h>
-#include <cstdint>
-#include <typeinfo>
 #include "NiPoint3.h"
+#include <cstdint>
+#include <string.h>
+#include <typeinfo>
 
 class WorldState;
 
@@ -36,15 +36,21 @@ public:
 
   virtual ~MpForm() = default;
 
-  auto GetFormId() const noexcept { return formId; }
+  auto GetFormId() const noexcept { return id; }
+
+  MpForm() = default;
+  MpForm(const MpForm&) = delete;
+  MpForm& operator=(const MpForm&) = delete;
 
 protected:
   auto GetParent() const { return parent; }
 
+  // See WorldState::AddForm
+  virtual void Init(uint32_t formId) { id = formId; };
+
 private:
   virtual void BeforeDestroy(){};
 
-  // Assigned by WorldState::AddForm
-  uint32_t formId = 0;
+  uint32_t id = 0;
   WorldState* parent = nullptr;
 };

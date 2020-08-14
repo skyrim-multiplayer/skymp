@@ -28,7 +28,7 @@ PartOne::PartOne(std::shared_ptr<Listener> listener)
 PartOne::~PartOne()
 {
   // worldState may depend on serverState (actorsMap), we should reset it first
-  worldState = {};
+  worldState.Clear();
   serverState = {};
 }
 

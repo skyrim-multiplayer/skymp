@@ -1,6 +1,13 @@
 #include "WorldState.h"
 #include "MpActor.h"
 
+void WorldState::Clear()
+{
+  forms.clear();
+  grids.clear();
+  formIdxManager.reset();
+}
+
 void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId)
 {
   auto& f = forms[formId];
@@ -11,7 +18,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId)
                                             << formId << " already exists")
         .str());
   }
-  form->formId = formId;
+  form->Init(formId);
   form->parent = this;
 
   if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
