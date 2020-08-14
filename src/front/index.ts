@@ -10,6 +10,7 @@ import {
   GlobalVariable,
   printConsole,
   ObjectReference,
+  Weather,
 } from "skyrimPlatform";
 import { verifyVersion } from "./version";
 import { applyInventory } from "./components/inventory";
@@ -68,6 +69,12 @@ let lastTimeUpd = 0;
 on("update", () => {
   if (Date.now() - lastTimeUpd <= 5000) return;
   lastTimeUpd = Date.now();
+
+  // Also update weather to be always clear
+  const w = Weather.findWeather(0);
+  if (w) {
+    w.forceActive(false);
+  }
 
   const gameHourId = 0x38;
   const gameMonthId = 0x36;
