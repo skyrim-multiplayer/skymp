@@ -64,18 +64,38 @@ once("update", verifyVersion);
 
 on("update", () => updateWc());
 
-const gameHourId = 0x38;
-const gameMonthId = 0x36;
-const gameDayId = 0x37;
-const gameYearId = 0x35;
-const timeScaleId = 0x3a;
+let lastTimeUpd = 0;
 on("update", () => {
-  /*const gameHour = GlobalVariable.from(Game.getFormEx(gameHourId));
-  printConsole(gameHour.getValue());
-  gameHour.setValue(21);
+  if (Date.now() - lastTimeUpd <= 5000) return;
+  lastTimeUpd = Date.now();
+
+  const gameHourId = 0x38;
+  const gameMonthId = 0x36;
+  const gameDayId = 0x37;
+  const gameYearId = 0x35;
+  const timeScaleId = 0x3a;
+
+  const d = new Date();
+
+  const gameHour = GlobalVariable.from(Game.getFormEx(gameHourId));
+  gameHour.setValue(
+    d.getUTCHours() +
+      d.getUTCMinutes() / 60 +
+      d.getUTCSeconds() / 60 / 60 +
+      d.getUTCMilliseconds() / 60 / 60 / 1000
+  );
+
+  const gameDay = GlobalVariable.from(Game.getFormEx(gameDayId));
+  gameDay.setValue(d.getUTCDate());
+
+  const gameMonth = GlobalVariable.from(Game.getFormEx(gameMonthId));
+  gameMonth.setValue(d.getUTCMonth());
+
+  const gameYear = GlobalVariable.from(Game.getFormEx(gameYearId));
+  gameYear.setValue(d.getUTCFullYear() - 2020 + 199);
 
   const timeScale = GlobalVariable.from(Game.getFormEx(timeScaleId));
-  timeScale.setValue(0);*/
+  timeScale.setValue(1);
 });
 
 let riftenUnlocked = false;
