@@ -127,7 +127,9 @@ std::pair<espm::RecordHeader**, size_t> espm::CombineBrowser::FindNavMeshes(
     const uint32_t rawFormId = espm::GetMappedId(worldSpaceId, *src.toRaw);
     if (rawFormId >= 0xff000000)
       continue;
-    auto [front, size] = src.br->FindNavMeshes(worldSpaceId, cellOrGridPos);
+    auto p = src.br->FindNavMeshes(worldSpaceId, cellOrGridPos);
+    auto front = p.first;
+    auto size = p.second;
     if (front && *front) {
       return { front, size };
     }

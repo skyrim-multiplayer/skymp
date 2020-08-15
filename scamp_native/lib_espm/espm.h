@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <cstring> // memcmp
 #include <functional>
-#include <optional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -216,7 +216,7 @@ namespace espm {
 class TES4 : public RecordHeader
 {
 public:
-  inline static const auto type = "TES4";
+  static constexpr auto type = "TES4";
 
   // Header
   struct Header
@@ -242,7 +242,7 @@ static_assert(sizeof(TES4) == sizeof(RecordHeader));
 class REFR : public RecordHeader
 {
 public:
-  inline static const auto type = "REFR";
+  static constexpr auto type = "REFR";
 
   struct LocationalData
   {
@@ -264,7 +264,7 @@ static_assert(sizeof(REFR) == sizeof(RecordHeader));
 class NAVM : public RecordHeader
 {
 public:
-  inline static const auto type = "NVNM";
+  static constexpr auto type = "NVNM";
 
   class Vertices
   {
@@ -282,7 +282,7 @@ public:
 
   struct Data
   {
-    std::optional<Vertices> vertices;
+    std::unique_ptr<Vertices> vertices;
     uint32_t worldSpaceId = 0;
     CellOrGridPos cellOrGridPos;
   };

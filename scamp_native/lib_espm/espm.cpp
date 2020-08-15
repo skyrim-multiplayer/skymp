@@ -440,7 +440,7 @@ espm::NAVM::Data espm::NAVM::GetData(
           (reinterpret_cast<const uint8_t*>(data) + 8));
         result.cellOrGridPos = *reinterpret_cast<const CellOrGridPos*>(
           (reinterpret_cast<const uint8_t*>(data) + 12));
-        result.vertices = Vertices(data);
+        result.vertices.reset(new Vertices(data));
       }
     },
     &compressedFieldsCache);
