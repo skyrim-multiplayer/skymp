@@ -90,7 +90,7 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC mp_common)
+target_link_libraries(server_guest_lib PUBLIC mp_common espm)
 if (WIN32)
   file(COPY
     ${CMAKE_SOURCE_DIR}/cmake/ctest.bat

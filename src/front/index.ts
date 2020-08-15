@@ -11,6 +11,7 @@ import {
   printConsole,
   ObjectReference,
   Weather,
+  Form,
 } from "skyrimPlatform";
 import { verifyVersion } from "./version";
 import { applyInventory } from "./components/inventory";
@@ -30,32 +31,6 @@ once("update", () => {
 });
 on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);
-});
-
-loadGameManager.addLoadGameListener((e) => {
-  if (!e.isCausedBySkyrimPlatform) return;
-
-  applyInventory(Game.getPlayer(), { entries: [] }, false);
-  Utility.wait(0.4).then(() => {
-    [
-      [0x00012e49, 1],
-      [0x00012e4b, 1],
-      [0x00012e46, 1],
-      [0x00012e4d, 1],
-      [0x00012eb6, 1],
-      [0x0001397d, 100],
-      [0x0003b562, 1],
-      [0x0001359d, 1],
-      [0x02000800, 1],
-      [0x02000801, 2],
-      [0x00012eb7, 1],
-      [0x00013982, 1],
-      [0x00029b8b, 1],
-      [0x0004dee3, 1],
-    ].forEach((p) => {
-      Game.getPlayer().addItem(Game.getFormEx(p[0]), p[1], true);
-    });
-  });
 });
 
 browser.main();
@@ -112,4 +87,82 @@ on("update", () => {
   if (!refr) return;
   refr.lock(false, false);
   riftenUnlocked = true;
+});
+
+function dealWithRef(ref: ObjectReference, base: Form): void {
+  const t = base.getType();
+  const isContainer = t === 28;
+
+  const isAmmo = t === 42;
+  const isArmor = t === 26;
+  const isBook = t === 27;
+  const isIngredient = t === 30;
+  const isLight = t === 31;
+  const isPotion = t === 46;
+  const isScroll = t === 23;
+  const isSoulGem = t === 52;
+  const isWeapon = t === 41;
+  const isMisc = t === 32;
+
+  const isItem =
+    isAmmo ||
+    isArmor ||
+    isBook ||
+    isIngredient ||
+    isLight ||
+    isPotion ||
+    isScroll ||
+    isSoulGem ||
+    isWeapon ||
+    isMisc;
+
+  const isFlora = t === 39;
+  const isTree = t === 38;
+
+  const isIngredientSource = isFlora || isTree;
+
+  const isMovableStatic = t === 36;
+  const isNpc = t === 43;
+  const isDoor = t === 29;
+
+  if (isContainer || isItem || isIngredientSource || isNpc || isDoor) {
+    ref.blockActivation(true);
+  } else {
+    ref.blockActivation(false);
+  }
+}
+
+let lastCrosshairRefId = 0;
+on("update", () => {
+  const ref = Game.getCurrentCrosshairRef();
+  const refId = ref ? ref.getFormID() : 0;
+  if (refId === lastCrosshairRefId) return;
+
+  lastCrosshairRefId = refId;
+  printConsole("crosshair ref changed to " + refId.toString(16));
+
+  if (!ref) return;
+
+  const base = ref.getBaseObject();
+  if (!base) return;
+
+  const processedIds = new Set<number>();
+  processedIds.add(refId);
+
+  dealWithRef(ref, base);
+
+  for (let i = 0; i < 10; ++i) {
+    const foundRef = Game.findRandomReferenceOfType(
+      base,
+      ref.getPositionX(),
+      ref.getPositionY(),
+      ref.getPositionZ(),
+      10000
+    );
+    const foundRefId = foundRef ? foundRef.getFormID() : 0;
+    if (foundRef && !processedIds.has(foundRefId)) {
+      dealWithRef(foundRef, base);
+      processedIds.add(foundRefId);
+    }
+  }
 });

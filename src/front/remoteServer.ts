@@ -19,6 +19,7 @@ import {
   browser,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
+import { applyInventory } from "./components/inventory";
 
 interface FormModelInfo extends FormModel {
   dummy: undefined;
@@ -95,6 +96,15 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (msg.isMe) this.myActorIndex = i;
 
     // TODO: move to a separate module
+
+    const applyPcInv = () => {
+      applyInventory(
+        Game.getPlayer(),
+        msg.inventory ? msg.inventory : { entries: [] },
+        false
+      );
+    };
+
     if (msg.isMe) {
       const task = new SpawnTask();
       once("update", () => {
@@ -112,6 +122,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
             msg.transform.rot[1],
             msg.transform.rot[2]
           );
+          // Unfortunatelly it requires two calls to work
+          Utility.wait(1).then(applyPcInv);
+          Utility.wait(1.3).then(applyPcInv);
         }
       });
       once("tick", () => {
@@ -124,6 +137,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               msg.transform.rot,
               msg.transform.worldOrCell
             );
+            once("update", () => {
+              applyPcInv();
+              Utility.wait(0.3).then(applyPcInv);
+            });
           }
         });
       });

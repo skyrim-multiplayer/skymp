@@ -1,7 +1,8 @@
-import { Movement, Transform } from "./components/movement";
-import { Look } from "./components/look";
-import { Animation } from "./components/animation";
-import { Equipment } from "./components/equipment";
+import { Movement, Transform } from "../lib/structures/movement";
+import { Look } from "../lib/structures/look";
+import { Animation } from "../lib/structures/animation";
+import { Equipment } from "../lib/structures/equipment";
+import { Inventory } from "../lib/structures/inventory";
 
 export enum MsgType {
   CustomPacket = 1,
@@ -9,6 +10,7 @@ export enum MsgType {
   UpdateAnimation = 3,
   UpdateLook = 4,
   UpdateEquipment = 5,
+  Activate = 6,
 }
 
 export interface CreateActorMessage {
@@ -18,6 +20,7 @@ export interface CreateActorMessage {
   isMe: boolean;
   look?: Look;
   equipment?: Equipment;
+  inventory?: Inventory;
 }
 
 export interface DestroyActorMessage {

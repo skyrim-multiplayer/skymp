@@ -409,6 +409,43 @@ espm::REFR::Data espm::REFR::GetData() const noexcept
   return result;
 }
 
+espm::CONT::Data espm::CONT::GetData() const noexcept
+{
+  Data result;
+  ForEachField([&](const char* type, uint32_t dataSize, const char* data) {
+    if (!memcmp(type, "EDID", 4))
+      result.editorId = data;
+    else if (!memcmp(type, "FULL", 4))
+      result.fullName = data;
+    else if (!memcmp(type, "CNTO", 4))
+      result.objects.push_back(*(ContainerObject*)data);
+    else if (!memcmp(type, "COED", 4)) {
+      // Not supported
+    }
+  });
+  return result;
+}
+
+espm::LVLI::Data espm::LVLI::GetData() const noexcept
+{
+  Data result;
+  ForEachField([&](const char* type, uint32_t dataSize, const char* data) {
+    if (!memcmp(type, "EDID", 4))
+      result.editorId = data;
+    else if (!memcmp(type, "LVLF", 4))
+      result.leveledItemFlags = *(uint8_t*)data;
+    else if (!memcmp(type, "LVLG", 4))
+      result.chanceNoneGlobalId = *(uint32_t*)data;
+    else if (!memcmp(type, "LVLD", 4))
+      result.chanceNone = *(uint8_t*)data;
+    else if (!memcmp(type, "LLCT", 4)) {
+      result.numEntries = *(uint8_t*)data;
+      result.entries = (Entry*)(data + 1);
+    }
+  });
+  return result;
+}
+
 espm::NAVM::Vertices::Vertices(const void* nvnmField_)
   : nvnmField(nvnmField_)
 {

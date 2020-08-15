@@ -6,15 +6,12 @@ import {
   settings,
   Game,
   Ui,
-  Utility,
-  findConsoleCommand,
 } from "skyrimPlatform";
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
 import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
-import { applyInventory } from "./components/inventory";
 import { MsgType } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
@@ -23,10 +20,7 @@ import { SendTarget } from "./sendTarget";
 import * as networking from "./networking";
 import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
-import { consoleCommands, scriptCommands } from "./consoleCommands";
 import * as deathSystem from "./deathSystem";
-import { verifyVersion } from "./version";
-import * as browser from "./browser";
 
 interface AnyMessage {
   type?: string;
@@ -92,6 +86,21 @@ export class SkympClient {
       if (!this.singlePlayer) {
         this.sendInputs();
       }
+    });
+
+    on("activate", (e) => {
+      const caster = e.caster ? e.caster.getFormID() : 0;
+      const target = e.target ? e.target.getFormID() : 0;
+
+      if (caster !== 0x14) return;
+
+      if (!target || target >= 0xff000000) return;
+
+      this.sendTarget.send(
+        { t: MsgType.Activate, data: { caster, target } },
+        true
+      );
+      printConsole("sendActi", { caster, target });
     });
 
     const playerFormId = 0x14;
