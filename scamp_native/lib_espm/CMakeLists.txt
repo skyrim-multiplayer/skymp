@@ -8,5 +8,5 @@ if(MSVC)
   # it breaks Release Win32 version
 endif()
 if(UNIX)
-  target_link_libraries(espm stdc++fs)
+  target_link_libraries(espm PUBLIC stdc++fs)
 endif()
