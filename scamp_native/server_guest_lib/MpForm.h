@@ -49,8 +49,9 @@ protected:
   virtual void Init(uint32_t formId) { id = formId; };
 
 private:
-  virtual void BeforeDestroy(){};
-
   uint32_t id = 0;
   WorldState* parent = nullptr;
+
+protected:
+  virtual void BeforeDestroy(){};
 };

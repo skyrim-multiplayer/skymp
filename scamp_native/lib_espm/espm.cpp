@@ -194,6 +194,80 @@ uint32_t espm::RecordHeader::GetId() const noexcept
   return id;
 }
 
+class espm::RecordHeaderAccess
+{
+public:
+  template <class T>
+  static void IterateFields(
+    const espm::RecordHeader* rec, const T& f,
+    espm::CompressedFieldsCache* compressedFieldsCache = nullptr)
+  {
+    const int8_t* ptr = ((int8_t*)rec) + sizeof(*rec);
+    const int8_t* endPtr = ptr + rec->GetFieldsSizeSum();
+    uint32_t fiDataSizeOverride = 0;
+
+    if (rec->flags & RecordFlags::Compressed) {
+
+      if (!compressedFieldsCache) {
+        assert(
+          0 &&
+          "CompressedFieldsCache is required to iterate through compressed "
+          "fields");
+        return;
+      }
+
+      auto& decompressedFieldsHolder =
+        compressedFieldsCache->pImpl->data[rec].decompressedFieldsHolder;
+      if (!decompressedFieldsHolder) {
+
+        const uint32_t* decompSize = reinterpret_cast<const uint32_t*>(ptr);
+        ptr += sizeof(uint32_t);
+
+        std::shared_ptr<std::vector<uint8_t>> out(new std::vector<uint8_t>);
+        out->resize(*decompSize);
+        try {
+          const auto inSize = rec->GetFieldsSizeSum() - sizeof(uint32_t);
+          ZlibDecompress(ptr, inSize, out->data(), out->size());
+        } catch (std ::exception& e) {
+          assert(0 && "ZlibDecompress has thrown an error");
+          return;
+        }
+
+        decompressedFieldsHolder = out;
+      }
+
+      ptr = reinterpret_cast<int8_t*>(decompressedFieldsHolder->data());
+      endPtr = reinterpret_cast<int8_t*>(decompressedFieldsHolder->data() +
+                                         decompressedFieldsHolder->size());
+    }
+
+    while (ptr < endPtr) {
+      const auto fiHeader = (FieldHeader*)ptr;
+      ptr += sizeof(FieldHeader);
+      const uint32_t fiDataSize =
+        fiHeader->dataSize ? fiHeader->dataSize : fiDataSizeOverride;
+      const char* fiData = (char*)ptr;
+      ptr += fiDataSize;
+
+      if (!memcmp(fiHeader->type, "XXXX", 4)) {
+        fiDataSizeOverride = *(uint32_t*)fiData;
+      }
+      f(fiHeader->type, fiDataSize, fiData);
+    }
+  }
+};
+
+const char* espm::RecordHeader::GetEditorId() const noexcept
+{
+  const char* result = "";
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "EDID", 4))
+        result = data;
+    });
+  return result;
+}
+
 espm::Type espm::RecordHeader::GetType() const noexcept
 {
   return ((char*)this) - 8;
@@ -215,66 +289,10 @@ uint32_t espm::RecordHeader::GetFieldsSizeSum() const noexcept
   return *(uint32_t*)ptr;
 }
 
-void espm::RecordHeader::ForEachField(
-  const FieldVisitor& f, CompressedFieldsCache* compressedFieldsCache) const
-  noexcept
-{
-
-  const int8_t* ptr = ((int8_t*)this) + sizeof(*this);
-  const int8_t* endPtr = ptr + GetFieldsSizeSum();
-  uint32_t fiDataSizeOverride = 0;
-
-  if (flags & RecordFlags::Compressed) {
-
-    if (!compressedFieldsCache) {
-      assert(0 &&
-             "CompressedFieldsCache is required to iterate through compressed "
-             "fields");
-      return;
-    }
-
-    auto& decompressedFieldsHolder =
-      compressedFieldsCache->pImpl->data[this].decompressedFieldsHolder;
-    if (!decompressedFieldsHolder) {
-
-      const uint32_t* decompSize = reinterpret_cast<const uint32_t*>(ptr);
-      ptr += sizeof(uint32_t);
-
-      std::shared_ptr<std::vector<uint8_t>> out(new std::vector<uint8_t>);
-      out->resize(*decompSize);
-      try {
-        const auto inSize = GetFieldsSizeSum() - sizeof(uint32_t);
-        ZlibDecompress(ptr, inSize, out->data(), out->size());
-      } catch (std ::exception& e) {
-        assert(0 && "ZlibDecompress has thrown an error");
-        return;
-      }
-
-      decompressedFieldsHolder = out;
-    }
-
-    ptr = reinterpret_cast<int8_t*>(decompressedFieldsHolder->data());
-    endPtr = reinterpret_cast<int8_t*>(decompressedFieldsHolder->data() +
-                                       decompressedFieldsHolder->size());
-  }
-
-  while (ptr < endPtr) {
-    const auto fiHeader = (FieldHeader*)ptr;
-    ptr += sizeof(FieldHeader);
-    const uint32_t fiDataSize =
-      fiHeader->dataSize ? fiHeader->dataSize : fiDataSizeOverride;
-    const char* fiData = (char*)ptr;
-    ptr += fiDataSize;
-
-    if (!memcmp(fiHeader->type, "XXXX", 4)) {
-      fiDataSizeOverride = *(uint32_t*)fiData;
-    }
-    f(fiHeader->type, fiDataSize, fiData);
-  }
-}
-
 struct espm::Browser::Impl
 {
+  Impl() { objectReferences.reserve(100'000); }
+
   char* buf;
   size_t length;
 
@@ -282,7 +300,7 @@ struct espm::Browser::Impl
   uint32_t fiDataSizeOverride = 0;
   spp::sparse_hash_map<uint32_t, RecordHeader*> recById;
   spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>> navmeshes;
-  std::vector<RecordHeader*> navmesh;
+  std::vector<RecordHeader*> objectReferences;
 
   GroupStack grStack;
   std::vector<std::unique_ptr<GroupStack>> grStackCopies;
@@ -326,6 +344,16 @@ std::pair<espm::RecordHeader**, size_t> espm::Browser::FindNavMeshes(
   }
 }
 
+const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsByType(
+  const char* type) const
+{
+  if (!strcmp(type, "REFR")) {
+    return pImpl->objectReferences;
+  }
+  throw std::runtime_error(
+    "GetRecordsByType currently supports only REFR records");
+}
+
 bool espm::Browser::ReadAny(void* parentGrStack)
 {
   if (pImpl->pos >= pImpl->length)
@@ -365,6 +393,9 @@ bool espm::Browser::ReadAny(void* parentGrStack)
 
     pImpl->recById[recHeader->id] = recHeader;
 
+    if (recHeader->GetType() == "REFR")
+      pImpl->objectReferences.push_back(recHeader);
+
     if (recHeader->GetType() == "NAVM") {
       auto nvnm = reinterpret_cast<NAVM*>(recHeader);
 
@@ -382,67 +413,71 @@ bool espm::Browser::ReadAny(void* parentGrStack)
 espm::TES4::Data espm::TES4::GetData() const noexcept
 {
   Data result;
-  ForEachField([&](const char* type, uint32_t dataSize, const char* data) {
-    if (!memcmp(type, "HEDR", 4))
-      result.header = (Header*)data;
-    else if (!memcmp(type, "CNAM", 4))
-      result.author = data;
-    else if (!memcmp(type, "SNAM", 4))
-      result.description = data;
-    else if (!memcmp(type, "MAST", 4))
-      result.masters.push_back(data);
-  });
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "HEDR", 4))
+        result.header = (Header*)data;
+      else if (!memcmp(type, "CNAM", 4))
+        result.author = data;
+      else if (!memcmp(type, "SNAM", 4))
+        result.description = data;
+      else if (!memcmp(type, "MAST", 4))
+        result.masters.push_back(data);
+    });
   return result;
 }
 
 espm::REFR::Data espm::REFR::GetData() const noexcept
 {
   Data result;
-  ForEachField([&](const char* type, uint32_t dataSize, const char* data) {
-    if (!memcmp(type, "NAME", 4))
-      result.baseId = *(uint32_t*)data;
-    else if (!memcmp(type, "XSCL", 4))
-      result.scale = *(float*)data;
-    else if (!memcmp(type, "DATA", 4))
-      result.loc = (LocationalData*)data;
-  });
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "NAME", 4))
+        result.baseId = *(uint32_t*)data;
+      else if (!memcmp(type, "XSCL", 4))
+        result.scale = *(float*)data;
+      else if (!memcmp(type, "DATA", 4))
+        result.loc = (LocationalData*)data;
+    });
   return result;
 }
 
 espm::CONT::Data espm::CONT::GetData() const noexcept
 {
   Data result;
-  ForEachField([&](const char* type, uint32_t dataSize, const char* data) {
-    if (!memcmp(type, "EDID", 4))
-      result.editorId = data;
-    else if (!memcmp(type, "FULL", 4))
-      result.fullName = data;
-    else if (!memcmp(type, "CNTO", 4))
-      result.objects.push_back(*(ContainerObject*)data);
-    else if (!memcmp(type, "COED", 4)) {
-      // Not supported
-    }
-  });
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "EDID", 4))
+        result.editorId = data;
+      else if (!memcmp(type, "FULL", 4))
+        result.fullName = data;
+      else if (!memcmp(type, "CNTO", 4))
+        result.objects.push_back(*(ContainerObject*)data);
+      else if (!memcmp(type, "COED", 4)) {
+        // Not supported
+      }
+    });
   return result;
 }
 
 espm::LVLI::Data espm::LVLI::GetData() const noexcept
 {
   Data result;
-  ForEachField([&](const char* type, uint32_t dataSize, const char* data) {
-    if (!memcmp(type, "EDID", 4))
-      result.editorId = data;
-    else if (!memcmp(type, "LVLF", 4))
-      result.leveledItemFlags = *(uint8_t*)data;
-    else if (!memcmp(type, "LVLG", 4))
-      result.chanceNoneGlobalId = *(uint32_t*)data;
-    else if (!memcmp(type, "LVLD", 4))
-      result.chanceNone = *(uint8_t*)data;
-    else if (!memcmp(type, "LLCT", 4)) {
-      result.numEntries = *(uint8_t*)data;
-      result.entries = (Entry*)(data + 1);
-    }
-  });
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "EDID", 4))
+        result.editorId = data;
+      else if (!memcmp(type, "LVLF", 4))
+        result.leveledItemFlags = *(uint8_t*)data;
+      else if (!memcmp(type, "LVLG", 4))
+        result.chanceNoneGlobalId = *(uint32_t*)data;
+      else if (!memcmp(type, "LVLD", 4))
+        result.chanceNone = *(uint8_t*)data;
+      else if (!memcmp(type, "LLCT", 4)) {
+        result.numEntries = *(uint8_t*)data;
+        result.entries = (Entry*)(data + 1);
+      }
+    });
   return result;
 }
 
@@ -470,7 +505,8 @@ espm::NAVM::Data espm::NAVM::GetData(
   CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
-  ForEachField(
+  espm::RecordHeaderAccess::IterateFields(
+    this,
     [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "NVNM", 4)) {
         result.worldSpaceId = *reinterpret_cast<const uint32_t*>(

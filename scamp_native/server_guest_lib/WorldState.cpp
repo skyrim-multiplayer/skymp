@@ -8,10 +8,16 @@ void WorldState::Clear()
   formIdxManager.reset();
 }
 
-void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId)
+void WorldState::AttachEspm(espm::Loader* espm_)
 {
-  auto& f = forms[formId];
-  if (f) {
+  espm = espm_;
+}
+
+void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
+                         bool skipChecks)
+{
+  if (!skipChecks && forms.find(formId) != forms.end()) {
+
     throw std::runtime_error(
       static_cast<const std::stringstream&>(std::stringstream()
                                             << "Form with id " << std::hex
@@ -28,7 +34,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId)
       throw std::runtime_error("CreateID failed");
   }
 
-  f = std::move(form);
+  forms.insert({ formId, std::move(form) });
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)

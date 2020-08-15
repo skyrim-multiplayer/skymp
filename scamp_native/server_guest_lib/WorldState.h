@@ -3,6 +3,7 @@
 #include "Grid.h"
 #include "GridElement.h"
 #include "NiPoint3.h"
+#include <Loader.h>
 #include <MakeID.h>
 #include <MpForm.h>
 #include <algorithm>
@@ -13,10 +14,12 @@
 #  undef AddForm
 #endif
 
+class MpObjectReference;
 class MpActor;
 
 class WorldState
 {
+  friend class MpObjectReference;
   friend class MpActor;
 
 public:
@@ -26,7 +29,10 @@ public:
 
   void Clear();
 
-  void AddForm(std::unique_ptr<MpForm> form, uint32_t formId);
+  void AttachEspm(espm::Loader* espm);
+
+  void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
+               bool skipChecks = false);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
@@ -89,6 +95,7 @@ public:
 
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
-  spp::sparse_hash_map<uint32_t, GridImpl<MpActor*>> grids;
+  spp::sparse_hash_map<uint32_t, GridImpl<MpObjectReference*>> grids;
   std::unique_ptr<MakeID> formIdxManager;
+  espm::Loader* espm = nullptr;
 };

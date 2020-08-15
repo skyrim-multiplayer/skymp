@@ -45,6 +45,9 @@ public:
   std::pair<espm::RecordHeader**, size_t> FindNavMeshes(
     uint32_t worldSpaceId, CellOrGridPos cellOrGridPos) const noexcept;
 
+  const std::vector<espm::RecordHeader*>& GetRecordsByType(
+    const char* type) const;
+
 private:
   struct Impl;
   Impl* const pImpl;
@@ -127,18 +130,24 @@ public:
     return !memcmp(type, rhs, 4);
   }
 
+  bool operator!=(const char* rhs) const noexcept { return !(*this == rhs); }
+
   std::string ToString() const noexcept { return std::string(type, 4); }
 
 private:
   const char* type;
 };
 
+class RecordHeaderAccess;
+
 class RecordHeader
 {
   friend class espm::Browser;
+  friend class RecordHeaderAccess;
 
 public:
   uint32_t GetId() const noexcept;
+  const char* GetEditorId() const noexcept;
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;
 
@@ -164,13 +173,6 @@ private:
   RecordHeader() = delete;
   RecordHeader(const RecordHeader&) = delete;
   void operator=(const RecordHeader&) = delete;
-
-protected:
-  using FieldVisitor =
-    std::function<void(const char* type, uint32_t dataSize, const char* data)>;
-  void ForEachField(const FieldVisitor& f,
-                    CompressedFieldsCache* optionalCompressedFieldsCache =
-                      nullptr) const noexcept;
 };
 static_assert(sizeof(RecordHeader) == 16);
 
@@ -264,7 +266,7 @@ static_assert(sizeof(REFR) == sizeof(RecordHeader));
 class CONT : public RecordHeader
 {
 public:
-  inline static const auto type = "CONT";
+  static constexpr auto type = "CONT";
 
   struct ContainerObject
   {
@@ -286,7 +288,7 @@ static_assert(sizeof(CONT) == sizeof(RecordHeader));
 class LVLI : public RecordHeader
 {
 public:
-  inline static const auto type = "LVLI";
+  static constexpr auto type = "LVLI";
 
   enum LeveledItemFlags
   {

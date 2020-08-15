@@ -2,52 +2,6 @@
 #include "WorldState.h"
 #include <NiPoint3.h>
 
-namespace {
-std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
-{
-  return { int16_t(pos.x / 4096), int16_t(pos.y / 4096) };
-}
-}
-
-void MpActor::SetPos(const NiPoint3& newPos)
-{
-  auto& grid = GetParent()->grids[cellOrWorld];
-
-  auto oldGridPos = GetGridPos(pos);
-  auto newGridPos = GetGridPos(newPos);
-  if (oldGridPos != newGridPos || !isOnGrid) {
-    grid.Move(this, newGridPos.first, newGridPos.second);
-    isOnGrid = true;
-
-    auto& was = this->listeners;
-    auto& now = grid.GetNeighboursAndMe(this);
-
-    std::vector<MpActor*> toRemove;
-    std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
-                        std::inserter(toRemove, toRemove.begin()));
-    for (auto listener : toRemove) {
-      Unsubscribe(this, listener);
-      if (listener != this)
-        Unsubscribe(listener, this);
-    }
-
-    std::vector<MpActor*> toAdd;
-    std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
-                        std::inserter(toAdd, toAdd.begin()));
-    for (auto listener : toAdd) {
-      Subscribe(this, listener);
-      if (listener != this)
-        Subscribe(listener, this);
-    }
-  }
-  pos = newPos;
-}
-
-void MpActor::SetAngle(const NiPoint3& newAngle)
-{
-  rot = newAngle;
-}
-
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   isRaceMenuOpen = isOpen;
@@ -66,26 +20,6 @@ void MpActor::SetLook(const Look* newLook)
 void MpActor::SetEquipment(const std::string& jsonString)
 {
   jEquipmentCache = jsonString;
-}
-
-void MpActor::UnsubscribeFromAll()
-{
-  auto emittersCopy = emitters;
-  for (auto emitter : emittersCopy)
-    if (emitter != this)
-      Unsubscribe(emitter, this);
-}
-
-void MpActor::BeforeDestroy()
-{
-  GetParent()->grids[cellOrWorld].Forget(this);
-
-  auto listenersCopy = listeners;
-  for (auto listener : listenersCopy)
-    if (this != listener)
-      Unsubscribe(this, listener);
-
-  UnsubscribeFromAll();
 }
 
 MpActor::Tint MpActor::Tint::FromJson(simdjson::dom::element& j)
@@ -169,16 +103,17 @@ const std::string& MpActor::GetLookAsJson()
   return jLookCache;
 }
 
-void MpActor::Subscribe(MpActor* emitter, MpActor* listener)
+void MpActor::UnsubscribeFromAll()
 {
-  emitter->listeners.insert(listener);
-  listener->emitters.insert(emitter);
-  emitter->onSubscribe(emitter, listener);
+  auto emittersCopy = GetEmitters();
+  for (auto emitter : emittersCopy)
+    if (emitter != this)
+      Unsubscribe(emitter, this);
 }
 
-void MpActor::Unsubscribe(MpActor* emitter, MpActor* listener)
+void MpActor::BeforeDestroy()
 {
-  emitter->onUnsubscribe(emitter, listener);
-  emitter->listeners.erase(listener);
-  listener->emitters.erase(emitter);
+  MpObjectReference::BeforeDestroy();
+
+  UnsubscribeFromAll();
 }

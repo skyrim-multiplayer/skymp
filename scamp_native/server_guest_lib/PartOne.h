@@ -4,6 +4,7 @@
 #include "NiPoint3.h"
 #include "ServerState.h"
 #include "WorldState.h"
+#include <Loader.h>
 #include <memory>
 #include <simdjson.h>
 
@@ -39,12 +40,9 @@ public:
                        Networking::ISendTarget* sendTarget);
   void SendCustomPacket(Networking::UserId userId, const std::string& jContent,
                         Networking::ISendTarget* sendTarget);
-
   std::string GetActorName(uint32_t actorFormId);
   NiPoint3 GetActorPos(uint32_t actorFormId);
-
-  Networking::UserId ConnectBot();
-  void DisconnectBot(Networking::UserId id);
+  void AttachEspm(espm::Loader* espm, Networking::ISendTarget* sendTarget);
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,

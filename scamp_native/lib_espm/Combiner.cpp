@@ -137,6 +137,16 @@ std::pair<espm::RecordHeader**, size_t> espm::CombineBrowser::FindNavMeshes(
   return { nullptr, 0 };
 }
 
+std::vector<const std::vector<espm::RecordHeader*>*>
+espm::CombineBrowser::GetRecordsByType(const char* type) const
+{
+  std::vector<const std::vector<espm::RecordHeader*>*> res;
+  for (size_t i = 0; i < pImpl->numSources; ++i) {
+    res.push_back(&pImpl->sources[i].br->GetRecordsByType(type));
+  }
+  return res;
+}
+
 const espm::IdMapping* espm::CombineBrowser::GetMapping(size_t fileIndex) const
   noexcept
 {

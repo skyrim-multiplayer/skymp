@@ -1,29 +1,11 @@
 #pragma once
-#include "FormIndex.h"
-#include "JsonUtils.h"
-#include "MpForm.h"
-#include <nlohmann/json.hpp>
-#include <set>
-#include <simdjson.h>
-#include <vector>
+#include "MpObjectReference.h"
 
 class WorldState;
 
-struct LocationalData
-{
-  NiPoint3 pos, rot;
-  uint32_t cellOrWorld;
-};
-
-class MpActor
-  : public MpForm
-  , private LocationalData
-  , public FormIndex
+class MpActor : public MpObjectReference
 {
 public:
-  using SubscribeCallback =
-    std::function<void(MpActor* emitter, MpActor* listener)>;
-
   struct Tint
   {
     static Tint FromJson(simdjson::dom::element& j);
@@ -55,47 +37,32 @@ public:
   MpActor(const LocationalData& locationalData_,
           const SubscribeCallback& onSubscribe_,
           const SubscribeCallback& onUnsubscribe_)
-    : onSubscribe(onSubscribe_)
-    , onUnsubscribe(onUnsubscribe_)
+    : MpObjectReference(locationalData_, onSubscribe_, onUnsubscribe_)
   {
-    static_cast<LocationalData&>(*this) = locationalData_;
   }
 
   ~MpActor() = default;
 
-  const auto& GetPos() const { return pos; }
-  const auto& GetAngle() const { return rot; }
-  const auto& GetCellOrWorld() const { return cellOrWorld; }
   const auto& IsRaceMenuOpen() const { return isRaceMenuOpen; }
   auto GetLook() const { return look.get(); }
 
   const std::string& GetEquipmentAsJson() { return jEquipmentCache; };
 
-  void SetPos(const NiPoint3& newPos);
-  void SetAngle(const NiPoint3& newAngle);
   void SetRaceMenuOpen(bool isOpen);
   void SetLook(const Look* newLook);
   void SetEquipment(const std::string& jsonString);
 
   const std::string& GetLookAsJson();
 
-  static void Subscribe(MpActor* emitter, MpActor* listener);
-  static void Unsubscribe(MpActor* emitter, MpActor* listener);
-
-  auto& GetListeners() const { return listeners; }
-
 private:
   void UnsubscribeFromAll();
-  void BeforeDestroy() override;
-
-  bool isOnGrid = false;
-  std::set<MpActor*> listeners;
-  std::set<MpActor*> emitters;
-  const SubscribeCallback onSubscribe, onUnsubscribe;
 
   bool isRaceMenuOpen = false;
   std::unique_ptr<Look> look;
 
   std::string jLookCache;
   std::string jEquipmentCache;
+
+protected:
+  void BeforeDestroy() override;
 };
