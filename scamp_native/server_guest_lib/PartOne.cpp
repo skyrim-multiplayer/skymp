@@ -295,7 +295,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
         continue;
 
       espm::Type t = base.rec->GetType();
-      if (t != "CONT" &&
+      if (t != "DOOR" && t != "CONT" &&
           (t != "FLOR" ||
            !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
           (t != "TREE" ||
@@ -336,6 +336,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
           continue;
         }
 
+        auto typeStr = t.ToString();
         worldState.AddForm(
           std::unique_ptr<MpObjectReference>(new MpObjectReference(
             { GetPos(locationalData), GetRot(locationalData), worldOrCell },
@@ -345,7 +346,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
             [sendTarget, this](MpObjectReference* emitter, MpActor* listener) {
               return pImpl->onUnsubscribe(sendTarget, emitter, listener);
             },
-            baseId)),
+            baseId, typeStr.data())),
           formId, true);
       }
     }

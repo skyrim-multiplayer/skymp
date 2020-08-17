@@ -13,18 +13,27 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
                                      const SubscribeCallback& onSubscribe_,
                                      const SubscribeCallback& onUnsubscribe_,
-                                     uint32_t baseId_)
+                                     uint32_t baseId_, const char* baseType_)
   : onSubscribe(onSubscribe_)
   , onUnsubscribe(onUnsubscribe_)
   , baseId(baseId_)
+  , baseType(baseType_)
 {
   static_cast<LocationalData&>(*this) = locationalData_;
+
+  if (!strcmp(baseType_, "FLOR") || !strcmp(baseType_, "TREE")) {
+    relootTime = std::chrono::hours(1);
+  } else if (!strcmp(baseType_, "DOOR")) {
+    relootTime = std::chrono::seconds(3);
+  }
 }
 
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
 {
   if (IsHarvested())
     visitor("isHarvested", "true");
+  if (IsOpen())
+    visitor("isOpen", "true");
 }
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)
@@ -95,6 +104,24 @@ void MpObjectReference::SetHarvested(bool harvested)
     listener->SendToUser(str.data(), str.size(), true);
 }
 
+void MpObjectReference::SetOpen(bool open)
+{
+  if (open == isOpen)
+    return;
+  isOpen = open;
+
+  nlohmann::json j{ { "idx", GetIdx() },
+                    { "t", MsgType::UpdateProperty },
+                    { "propName", "isOpen" },
+                    { "data", open } };
+  std::string str;
+  str += Networking::MinPacketId;
+  str += j.dump();
+
+  for (auto listener : GetListeners())
+    listener->SendToUser(str.data(), str.size(), true);
+}
+
 void MpObjectReference::Activate(
   MpActor& activationSource, espm::Loader& loader,
   espm::CompressedFieldsCache& compressedFieldsCache)
@@ -134,12 +161,59 @@ void MpObjectReference::Activate(
     activationSource.AddItem(data.resultItem, 1);
     SetHarvested(true);
     RequestReloot();
+  } else if (t == espm::DOOR::type) {
+
+    auto refrRecord = espm::Convert<espm::REFR>(
+      loader.GetBrowser().LookupById(GetFormId()).rec);
+    auto teleport = refrRecord->GetData().teleport;
+    if (teleport) {
+      if (!IsOpen()) {
+        SetOpen(true);
+        RequestReloot();
+      }
+
+      auto destinationRecord = espm::Convert<espm::REFR>(
+        loader.GetBrowser().LookupById(teleport->destinationDoor).rec);
+      if (!destinationRecord)
+        throw std::runtime_error(
+          "No destination found for this teleport door");
+
+      auto teleportWorldOrCell = espm::GetWorldOrCell(destinationRecord);
+
+      static const auto g_pi = std::acos(-1.f);
+      std::string msg;
+      msg += Networking::MinPacketId;
+      msg += nlohmann::json{
+        { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
+        { "rot",
+          { teleport->rotRadians[0] / g_pi * 180,
+            teleport->rotRadians[1] / g_pi * 180,
+            teleport->rotRadians[2] / g_pi * 180 } },
+        { "worldOrCell", teleportWorldOrCell },
+        { "type", "teleport" }
+      }.dump();
+      activationSource.SendToUser(msg.data(), msg.size(), true);
+
+      activationSource.SetCellOrWorld(teleportWorldOrCell);
+
+    } else {
+      SetOpen(!IsOpen());
+    }
   }
 }
 
 void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
 {
   relootTime = newRelootTime;
+}
+
+void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
+{
+  everSubscribedOrListened = false;
+  auto& grid = GetParent()->grids[cellOrWorld];
+  grid.Forget(this);
+
+  cellOrWorld = newWorldOrCell;
 }
 
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)

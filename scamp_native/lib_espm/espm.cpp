@@ -440,6 +440,8 @@ espm::REFR::Data espm::REFR::GetData() const noexcept
         result.scale = *(float*)data;
       else if (!memcmp(type, "DATA", 4))
         result.loc = (LocationalData*)data;
+      else if (!memcmp(type, "XTEL", 4))
+        result.teleport = (DoorTeleport*)data;
     });
   return result;
 }

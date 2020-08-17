@@ -12,6 +12,7 @@ export interface FormModel {
   look?: Look;
   equipment?: Equipment;
   isHarvested?: boolean;
+  isOpen?: boolean;
 }
 
 export interface WorldModel {

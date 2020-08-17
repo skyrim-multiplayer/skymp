@@ -202,6 +202,26 @@ inline GroupHeader* GetCellGroup(const RecordHeader* rec)
   }
   return nullptr;
 }
+
+inline uint32_t GetWorldOrCell(const RecordHeader* rec)
+{
+  auto world = espm::GetExteriorWorldGroup(rec);
+  auto cell = espm::GetCellGroup(rec);
+
+  uint32_t worldOrCell;
+
+  if (!world || !world->GetParentWRLD(worldOrCell))
+    worldOrCell = 0;
+
+  if (!worldOrCell) {
+    if (!cell->GetParentCELL(worldOrCell)) {
+      return 0;
+    }
+  }
+
+  return worldOrCell;
+}
+
 }
 
 namespace espm {
@@ -253,11 +273,19 @@ public:
     float rotRadians[3];
   };
 
+  struct DoorTeleport
+  {
+    uint32_t destinationDoor = 0;
+    float pos[3];
+    float rotRadians[3];
+  };
+
   struct Data
   {
     uint32_t baseId = 0;
     float scale = 1;
     const LocationalData* loc = nullptr;
+    const DoorTeleport* teleport = nullptr;
   };
 
   Data GetData() const noexcept;
@@ -321,6 +349,13 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(TREE) == sizeof(RecordHeader));
+
+class DOOR : public RecordHeader
+{
+public:
+  static constexpr auto type = "DOOR";
+};
+static_assert(sizeof(DOOR) == sizeof(RecordHeader));
 
 class LVLI : public RecordHeader
 {

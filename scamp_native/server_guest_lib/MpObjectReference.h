@@ -47,7 +47,8 @@ public:
 
   MpObjectReference(const LocationalData& locationalData_,
                     const SubscribeCallback& onSubscribe_,
-                    const SubscribeCallback& onUnsubscribe_, uint32_t baseId);
+                    const SubscribeCallback& onUnsubscribe_, uint32_t baseId,
+                    const char* baseType);
 
   const auto& GetPos() const { return pos; }
   const auto& GetAngle() const { return rot; }
@@ -55,6 +56,7 @@ public:
   const auto& GetBaseId() const { return baseId; }
   const auto& GetInventory() const { return inv; }
   const auto& IsHarvested() const { return isHarvested; }
+  const auto& IsOpen() const { return isOpen; };
   const auto& GetRelootTime() const { return relootTime; }
 
   using PropertiesVisitor =
@@ -65,9 +67,11 @@ public:
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);
   void SetHarvested(bool harvested);
+  void SetOpen(bool open);
   void Activate(MpActor& activationSource, espm::Loader& loader,
                 espm::CompressedFieldsCache& compressedFieldsCache);
   void SetRelootTime(std::chrono::milliseconds newRelootTime);
+  void SetCellOrWorld(uint32_t worldOrCell);
 
   void AddItem(uint32_t baseId, uint32_t count);
 
@@ -93,7 +97,9 @@ private:
 
   Inventory inv;
   uint32_t baseId = 0;
+  const char* const baseType;
   bool isHarvested = false;
+  bool isOpen = false;
   std::chrono::milliseconds relootTime{ 3000 };
 
 protected:

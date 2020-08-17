@@ -132,6 +132,139 @@ TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne]")
   refr.SetHarvested(false);
 }
 
+TEST_CASE("See open DisplayCaseSmFlat01 in Whiterun", "[PartOne]")
+{
+  auto& partOne = GetPartOne();
+  g_tgt = {};
+
+  const auto refrId = 0x72080;
+  auto& refr = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
+
+  refr.SetOpen(true);
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000000, { 25217.0293, -7373.9536, -3317.6880 }, 0,
+                      0x1a26f, &g_tgt);
+  partOne.SetUserActor(0, 0xff000000, &g_tgt);
+
+  auto it =
+    std::find_if(g_tgt.messages.begin(), g_tgt.messages.end(),
+                 [&](FakeSendTarget::Message m) {
+                   return m.reliable && m.userId == 0 &&
+                     m.j["type"] == "createActor" && m.j["refrId"] == refrId &&
+                     m.j["props"] == nlohmann::json{ { "isOpen", true } };
+                 });
+  REQUIRE(it != g_tgt.messages.end());
+
+  DoDisconnect(partOne, 0);
+  partOne.DestroyActor(0xff000000);
+  refr.SetOpen(false);
+}
+
+TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne]")
+{
+
+  auto& partOne = GetPartOne();
+
+  g_tgt = {};
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000000, { 25217.0293, -7373.9536, -3317.6880 }, 0,
+                      0x1a26f, &g_tgt);
+  partOne.SetUserActor(0, 0xff000000, &g_tgt);
+
+  const auto refrId = 0x72080;
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
+
+  auto it = std::find_if(g_tgt.messages.begin(), g_tgt.messages.end(),
+                         [&](FakeSendTarget::Message m) {
+                           return m.reliable && m.userId == 0 &&
+                             m.j["type"] == "createActor" &&
+                             m.j["refrId"] == refrId &&
+                             m.j["props"] == nullptr;
+                         });
+  REQUIRE(it != g_tgt.messages.end());
+
+  g_tgt = {};
+
+  REQUIRE(!ref.IsOpen());
+  DoMessage(partOne, 0,
+            nlohmann::json{
+              { "t", MsgType::Activate },
+              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+  REQUIRE(ref.IsOpen());
+  DoMessage(partOne, 0,
+            nlohmann::json{
+              { "t", MsgType::Activate },
+              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+  REQUIRE(!ref.IsOpen());
+
+  REQUIRE(g_tgt.messages.size() == 2);
+
+  std::cout << g_tgt.messages[0].j << std::endl;
+
+  REQUIRE(g_tgt.messages[0].j["data"] == true);
+  REQUIRE(g_tgt.messages[0].j["idx"] == ref.GetIdx());
+  REQUIRE(g_tgt.messages[0].j["propName"] == "isOpen");
+  REQUIRE(g_tgt.messages[0].j["t"] == MsgType::UpdateProperty);
+  REQUIRE(g_tgt.messages[1].j["data"] == false);
+  REQUIRE(g_tgt.messages[1].j["idx"] == ref.GetIdx());
+  REQUIRE(g_tgt.messages[1].j["propName"] == "isOpen");
+  REQUIRE(g_tgt.messages[1].j["t"] == MsgType::UpdateProperty);
+
+  DoDisconnect(partOne, 0);
+  partOne.DestroyActor(0xff000000);
+}
+
+TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne]")
+{
+  auto& partOne = GetPartOne();
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000000, { 19367.3379, -7433.0698, -3547.4492 }, 0,
+                      0x1a26f, &g_tgt);
+  partOne.SetUserActor(0, 0xff000000, &g_tgt);
+
+  g_tgt = {};
+  auto refrId = 0x1b1f3;
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
+  ref.SetRelootTime(std::chrono::milliseconds(30));
+  DoMessage(partOne, 0,
+            nlohmann::json{
+              { "t", MsgType::Activate },
+              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+  REQUIRE(g_tgt.messages.size() >= 1);
+  REQUIRE(g_tgt.messages[0].j["data"] == true);
+  REQUIRE(g_tgt.messages[0].j["idx"] == ref.GetIdx());
+  REQUIRE(g_tgt.messages[0].j["propName"] == "isOpen");
+  REQUIRE(g_tgt.messages[0].j["t"] == MsgType::UpdateProperty);
+
+  REQUIRE(g_tgt.messages.size() >= 2);
+  REQUIRE(g_tgt.messages[1].j["type"] == "teleport");
+  REQUIRE(g_tgt.messages[1].j["pos"].dump() ==
+          nlohmann::json{ 19243.53515625, -7427.3427734375, -3595.4052734375 }
+            .dump());
+  REQUIRE(g_tgt.messages[1].j["rot"].dump() ==
+          nlohmann::json{ 0.0, -0.0, -89.99922180175781 }.dump());
+  REQUIRE(g_tgt.messages[1].j["worldOrCell"] == 0x3c);
+
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+  REQUIRE(ac.GetCellOrWorld() == 0x3c);
+
+  g_tgt = {};
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  partOne.Tick();
+
+  REQUIRE(g_tgt.messages.size() == 1);
+  REQUIRE(g_tgt.messages[0].j["data"] == false);
+  REQUIRE(g_tgt.messages[0].j["idx"] == ref.GetIdx());
+  REQUIRE(g_tgt.messages[0].j["propName"] == "isOpen");
+  REQUIRE(g_tgt.messages[0].j["t"] == MsgType::UpdateProperty);
+
+  DoDisconnect(partOne, 0);
+  partOne.DestroyActor(0xff000000);
+}
+
 TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne]")
 {
   auto& partOne = GetPartOne();

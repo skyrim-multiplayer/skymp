@@ -19,6 +19,13 @@ export interface SetInventory {
   inventory: Inventory;
 }
 
+export interface Teleport {
+  type: "teleport";
+  pos: number[];
+  rot: number[];
+  worldOrCell: number;
+}
+
 export interface CreateActorMessage {
   type: "createActor";
   idx: number;

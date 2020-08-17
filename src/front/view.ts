@@ -281,6 +281,14 @@ export class FormView implements View<FormModel> {
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
 
+    const isLocked = false;
+    if (refr.isLocked()) {
+      refr.lock(isLocked, false);
+    }
+
+    const isOpen = !!model.isOpen;
+    if (refr.getOpenState() != 0) refr.setOpen(isOpen);
+
     const isHarvested = !!model.isHarvested;
     const base = refr.getBaseObject();
     if (base) {

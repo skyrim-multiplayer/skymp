@@ -46,8 +46,10 @@ void WorldState::TickTimers()
       uint32_t relootTargetId = list.begin()->first;
       auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
         LookupFormById(relootTargetId));
-      if (relootTarget)
+      if (relootTarget) {
+        relootTarget->SetOpen(false);
         relootTarget->SetHarvested(false);
+      }
 
       list.pop_front();
     }

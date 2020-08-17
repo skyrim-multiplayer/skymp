@@ -83,6 +83,25 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
+  teleport(msg: messages.Teleport): void {
+    once("update", () => {
+      TESModPlatform.moveRefrToPosition(
+        Game.getPlayer(),
+        Cell.from(Game.getFormEx(msg.worldOrCell)),
+        WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
+        msg.pos[0],
+        msg.pos[1],
+        msg.pos[2],
+        msg.rot[0],
+        msg.rot[1],
+        msg.rot[2]
+      );
+      Utility.wait(0.2).then(() => {
+        Game.getPlayer().setAngle(msg.rot[0], msg.rot[1], msg.rot[2]);
+      });
+    });
+  }
+
   createActor(msg: messages.CreateActorMessage): void {
     const i = msg.idx;
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;

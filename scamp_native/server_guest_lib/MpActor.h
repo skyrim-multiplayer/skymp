@@ -44,7 +44,7 @@ public:
           const SubscribeCallback& onUnsubscribe_,
           const SendToUserFn& sendToUser_)
     : MpObjectReference(locationalData_, onSubscribe_, onUnsubscribe_,
-                        nullBaseId)
+                        nullBaseId, "ACHR")
     , sendToUser(sendToUser_)
   {
   }
