@@ -153,7 +153,6 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne.reset(new PartOne);
     listener.reset(new ScampServerListener(*this));
     partOne->AddListener(listener);
-
     Napi::Number port = info[0].As<Napi::Number>(),
                  maxConnections = info[1].As<Napi::Number>();
 
@@ -163,6 +162,15 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     serverMock = std::make_shared<Networking::MockServer>();
 
     server = Networking::CreateCombinedServer({ realServer, serverMock });
+
+    std::string dataDir =
+      "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special "
+      "Edition\\Data";
+
+    auto espm = new espm::Loader(dataDir,
+                                 { "Skyrim.esm", "Update.esm", "Dawnguard.esm",
+                                   "HearthFires.esm", "Dragonborn.esm" });
+    partOne->AttachEspm(espm, server.get());
 
     auto res =
       info.Env().RunScript("let require = global.require || "
@@ -181,6 +189,7 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
     tickEnv = info.Env();
     partOne->pushedSendTarget = server.get();
     server->Tick(PartOne::HandlePacket, partOne.get());
+    partOne->Tick();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

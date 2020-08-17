@@ -11,16 +11,25 @@ export enum MsgType {
   UpdateLook = 4,
   UpdateEquipment = 5,
   Activate = 6,
+  UpdateProperty = 7,
+}
+
+export interface SetInventory {
+  type: "setInventory";
+  inventory: Inventory;
 }
 
 export interface CreateActorMessage {
   type: "createActor";
   idx: number;
+  refrId?: number;
   transform: Transform;
   isMe: boolean;
   look?: Look;
   equipment?: Equipment;
   inventory?: Inventory;
+  baseId?: number;
+  props?: Record<string, unknown>;
 }
 
 export interface DestroyActorMessage {
@@ -50,6 +59,13 @@ export interface UpdateEquipmentMessage {
   t: MsgType.UpdateEquipment;
   idx: number;
   data: Equipment;
+}
+
+export interface UpdatePropertyMessage {
+  t: MsgType.UpdateProperty;
+  idx: number;
+  data: unknown;
+  propName: string;
 }
 
 export interface SetRaceMenuOpenMessage {

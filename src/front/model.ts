@@ -5,11 +5,13 @@ import { Equipment } from "./components/equipment";
 
 export interface FormModel {
   baseId?: number;
+  refrId?: number;
   movement?: Movement;
   animation?: Animation;
   numMovementChanges?: number;
   look?: Look;
   equipment?: Equipment;
+  isHarvested?: boolean;
 }
 
 export interface WorldModel {

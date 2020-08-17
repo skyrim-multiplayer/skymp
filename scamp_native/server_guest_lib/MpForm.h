@@ -46,7 +46,11 @@ protected:
   auto GetParent() const { return parent; }
 
   // See WorldState::AddForm
-  virtual void Init(uint32_t formId) { id = formId; };
+  virtual void Init(WorldState* parent_, uint32_t formId_)
+  {
+    parent = parent_;
+    id = formId_;
+  };
 
 private:
   uint32_t id = 0;

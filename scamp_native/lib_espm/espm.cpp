@@ -257,14 +257,17 @@ public:
   }
 };
 
-const char* espm::RecordHeader::GetEditorId() const noexcept
+const char* espm::RecordHeader::GetEditorId(
+  espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
 {
   const char* result = "";
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "EDID", 4))
         result = data;
-    });
+    },
+    compressedFieldsCache);
   return result;
 }
 
@@ -326,11 +329,10 @@ espm::Browser::~Browser()
 
 espm::RecordHeader* espm::Browser::LookupById(uint32_t formId) const noexcept
 {
-  try {
-    return pImpl->recById.at(formId);
-  } catch (...) {
+  auto it = pImpl->recById.find(formId);
+  if (it == pImpl->recById.end())
     return nullptr;
-  }
+  return it->second;
 }
 
 std::pair<espm::RecordHeader**, size_t> espm::Browser::FindNavMeshes(
@@ -456,6 +458,44 @@ espm::CONT::Data espm::CONT::GetData() const noexcept
       else if (!memcmp(type, "COED", 4)) {
         // Not supported
       }
+    });
+  return result;
+}
+
+espm::TREE::Data espm::TREE::GetData() const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "EDID", 4))
+        result.editorId = data;
+      else if (!memcmp(type, "FULL", 4))
+        result.fullName = data;
+      else if (!memcmp(type, "OBND", 4))
+        result.bounds = reinterpret_cast<const ObjectBounds*>(data);
+      else if (!memcmp(type, "PFIG", 4))
+        result.resultItem = *reinterpret_cast<const uint32_t*>(data);
+      else if (!memcmp(type, "SNAM", 4))
+        result.useSound = *reinterpret_cast<const uint32_t*>(data);
+    });
+  return result;
+}
+
+espm::FLOR::Data espm::FLOR::GetData() const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "EDID", 4))
+        result.editorId = data;
+      else if (!memcmp(type, "FULL", 4))
+        result.fullName = data;
+      else if (!memcmp(type, "OBND", 4))
+        result.bounds = reinterpret_cast<const ObjectBounds*>(data);
+      else if (!memcmp(type, "PFIG", 4))
+        result.resultItem = *reinterpret_cast<const uint32_t*>(data);
+      else if (!memcmp(type, "SNAM", 4))
+        result.useSound = *reinterpret_cast<const uint32_t*>(data);
     });
   return result;
 }

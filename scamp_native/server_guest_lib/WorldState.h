@@ -7,6 +7,8 @@
 #include <MakeID.h>
 #include <MpForm.h>
 #include <algorithm>
+#include <list>
+#include <map>
 #include <sparsepp/spp.h>
 #include <sstream>
 
@@ -33,6 +35,10 @@ public:
 
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                bool skipChecks = false);
+
+  void TickTimers();
+
+  void RequestReloot(MpObjectReference& ref);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
@@ -97,5 +103,9 @@ private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridImpl<MpObjectReference*>> grids;
   std::unique_ptr<MakeID> formIdxManager;
+  std::map<
+    std::chrono::milliseconds,
+    std::list<std::pair<uint32_t, std::chrono::steady_clock::time_point>>>
+    relootTimers;
   espm::Loader* espm = nullptr;
 };

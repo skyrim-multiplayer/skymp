@@ -17,6 +17,7 @@ import {
   Potion,
   Actor,
   Ammo,
+  printConsole,
 } from "skyrimPlatform";
 
 import * as structures from "../../lib/structures/inventory";
@@ -88,7 +89,7 @@ const extrasEqual = (a: Entry, b: Entry) => {
     a.maxCharge === b.maxCharge &&
     !!a.removeEnchantmentOnUnequip === !!b.removeEnchantmentOnUnequip &&
     a.chargePercent === b.chargePercent &&
-    namesEqual(a, b) &&
+    //namesEqual(a, b) &&
     a.soul === b.soul &&
     a.poisonId === b.poisonId &&
     a.poisonCount === b.poisonCount &&
@@ -156,6 +157,19 @@ const extractExtraData = (
   });
 };
 
+const squash = (inv: Inventory): Inventory => {
+  const res = new Array<Entry>();
+  inv.entries.forEach((e) => {
+    const same = res.find((x) => e.baseId === x.baseId && extrasEqual(x, e));
+    if (same) {
+      same.count += e.count;
+    } else {
+      res.push(JSON.parse(JSON.stringify(e)));
+    }
+  });
+  return { entries: res.filter((x) => x.count !== 0) };
+};
+
 const getExtraContainerChangesAsInventory = (
   refr: ObjectReference
 ): Inventory => {
@@ -180,7 +194,10 @@ const getExtraContainerChangesAsInventory = (
 
     if (entry.count !== 0) entries.push(entry);
   });
-  return { entries };
+
+  let res: Inventory = { entries };
+  res = squash(res);
+  return res;
 };
 
 const getBaseContainerAsInventory = (refr: ObjectReference): Inventory => {
@@ -227,19 +244,6 @@ const getDiff = (lhs: Inventory, rhs: Inventory): Inventory => {
   });
 
   return { entries: lhsCopy.entries.filter((x) => x.count !== 0) };
-};
-
-const squash = (inv: Inventory): Inventory => {
-  const res = new Array<Entry>();
-  inv.entries.forEach((e) => {
-    const same = res.find((x) => e.baseId === x.baseId && extrasEqual(x, e));
-    if (same) {
-      same.count += e.count;
-    } else {
-      res.push(JSON.parse(JSON.stringify(e)));
-    }
-  });
-  return { entries: res.filter((x) => x.count !== 0) };
 };
 
 export const getInventory = (refr: ObjectReference): Inventory => {
@@ -329,7 +333,7 @@ export const applyInventory = (
         e.maxCharge ? e.maxCharge : 0,
         !!e.removeEnchantmentOnUnequip,
         e.chargePercent ? e.chargePercent : 0,
-        e.name ? cropName(e.name) : "",
+        e.name ? cropName(e.name) : Game.getFormEx(e.baseId).getName(),
         e.soul ? e.soul : 0,
         e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
         e.poisonCount ? e.poisonCount : 0

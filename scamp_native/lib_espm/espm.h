@@ -147,7 +147,8 @@ class RecordHeader
 
 public:
   uint32_t GetId() const noexcept;
-  const char* GetEditorId() const noexcept;
+  const char* GetEditorId(espm::CompressedFieldsCache* compressedFieldsCache =
+                            nullptr) const noexcept;
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;
 
@@ -284,6 +285,42 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(CONT) == sizeof(RecordHeader));
+
+struct ObjectBounds
+{
+  int16_t pos1[3] = { 0, 0, 0 };
+  int16_t pos2[3] = { 0, 0, 0 };
+};
+static_assert(sizeof(ObjectBounds) == 12);
+
+class TREE : public RecordHeader
+{
+public:
+  static constexpr auto type = "TREE";
+
+  struct Data
+  {
+    const char* editorId = "";
+    const char* fullName = "";
+    const ObjectBounds* bounds = nullptr;
+    uint32_t resultItem = 0;
+    uint32_t useSound = 0;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(TREE) == sizeof(RecordHeader));
+
+class FLOR : public RecordHeader
+{
+public:
+  static constexpr auto type = "FLOR";
+
+  using Data = TREE::Data;
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(TREE) == sizeof(RecordHeader));
 
 class LVLI : public RecordHeader
 {

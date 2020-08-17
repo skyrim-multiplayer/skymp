@@ -1,6 +1,7 @@
 #include "MpObjectReference.h"
 #include "MpActor.h"
 #include "WorldState.h"
+#include <MsgType.h>
 
 namespace {
 std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
@@ -9,17 +10,36 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 }
 }
 
+MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
+                                     const SubscribeCallback& onSubscribe_,
+                                     const SubscribeCallback& onUnsubscribe_,
+                                     uint32_t baseId_)
+  : onSubscribe(onSubscribe_)
+  , onUnsubscribe(onUnsubscribe_)
+  , baseId(baseId_)
+{
+  static_cast<LocationalData&>(*this) = locationalData_;
+}
+
+void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
+{
+  if (IsHarvested())
+    visitor("isHarvested", "true");
+}
+
 void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
   auto& grid = GetParent()->grids[cellOrWorld];
 
   auto oldGridPos = GetGridPos(pos);
   auto newGridPos = GetGridPos(newPos);
-  if (oldGridPos != newGridPos || !isOnGrid) {
+  pos = newPos;
+  if (oldGridPos != newGridPos || !everSubscribedOrListened) {
+    everSubscribedOrListened = true;
+
     InitListenersAndEmitters();
 
-    grid.Move(this, newGridPos.first, newGridPos.second);
-    isOnGrid = true;
+    MoveOnGrid(grid);
 
     auto& was = *this->listeners;
     auto& now = grid.GetNeighboursAndMe(this);
@@ -50,12 +70,92 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
         Subscribe(listener, thisAsActor);
     }
   }
-  pos = newPos;
 }
 
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
 {
   rot = newAngle;
+}
+
+void MpObjectReference::SetHarvested(bool harvested)
+{
+  if (harvested == isHarvested)
+    return;
+  isHarvested = harvested;
+
+  nlohmann::json j{ { "idx", GetIdx() },
+                    { "t", MsgType::UpdateProperty },
+                    { "propName", "isHarvested" },
+                    { "data", harvested } };
+  std::string str;
+  str += Networking::MinPacketId;
+  str += j.dump();
+
+  for (auto listener : GetListeners())
+    listener->SendToUser(str.data(), str.size(), true);
+}
+
+void MpObjectReference::Activate(
+  MpActor& activationSource, espm::Loader& loader,
+  espm::CompressedFieldsCache& compressedFieldsCache)
+{
+  auto casterWorld =
+    loader.GetBrowser().LookupById(activationSource.GetCellOrWorld()).rec;
+  auto targetWorld = loader.GetBrowser().LookupById(GetCellOrWorld()).rec;
+
+  if (targetWorld != casterWorld) {
+    const char* casterWorldName =
+      casterWorld ? casterWorld->GetEditorId(&compressedFieldsCache) : "";
+
+    const char* targetWorldName =
+      targetWorld ? targetWorld->GetEditorId(&compressedFieldsCache) : "";
+    std::stringstream ss;
+    ss << "WorldSpace doesn't match: caster is in " << casterWorldName
+       << ", target is in " << targetWorldName;
+    throw std::runtime_error(ss.str());
+  }
+
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (!base.rec || !GetBaseId()) {
+    std::stringstream ss;
+    ss << std::hex << GetFormId() << " doesn't have base form";
+    throw std::runtime_error(ss.str());
+  }
+
+  auto t = base.rec->GetType();
+
+  if (t == espm::TREE::type || t == espm::FLOR::type) {
+    espm::FLOR::Data data;
+    if (t == espm::TREE::type)
+      data = espm::Convert<espm::TREE>(base.rec)->GetData();
+    else
+      data = espm::Convert<espm::FLOR>(base.rec)->GetData();
+
+    activationSource.AddItem(data.resultItem, 1);
+    SetHarvested(true);
+    RequestReloot();
+  }
+}
+
+void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
+{
+  relootTime = newRelootTime;
+}
+
+void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
+{
+  inv.AddItem(baseId, count);
+
+  auto actor = dynamic_cast<MpActor*>(this);
+  if (actor) {
+    std::string msg;
+    msg += Networking::MinPacketId;
+    msg += nlohmann::json{
+      { "inventory", actor->GetInventory().ToJson() },
+      { "type", "setInventory" }
+    }.dump();
+    actor->SendToUser(msg.data(), msg.size(), true);
+  }
 }
 
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
@@ -88,12 +188,31 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
   return emitters ? *emitters : g_emptyEmitters;
 }
 
+void MpObjectReference::Init(WorldState* parent, uint32_t formId)
+{
+  MpForm::Init(parent, formId);
+
+  auto& grid = GetParent()->grids[cellOrWorld];
+  MoveOnGrid(grid);
+}
+
+void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
+{
+  auto newGridPos = GetGridPos(pos);
+  grid.Move(this, newGridPos.first, newGridPos.second);
+}
+
 void MpObjectReference::InitListenersAndEmitters()
 {
   if (!listeners) {
     listeners.reset(new std::set<MpActor*>);
     emitters.reset(new std::set<MpObjectReference*>);
   }
+}
+
+void MpObjectReference::RequestReloot()
+{
+  GetParent()->RequestReloot(*this);
 }
 
 void MpObjectReference::BeforeDestroy()

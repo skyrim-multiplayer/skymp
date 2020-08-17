@@ -24,8 +24,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                                             << formId << " already exists")
         .str());
   }
-  form->Init(formId);
-  form->parent = this;
+  form->Init(this, formId);
 
   if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
     if (!formIdxManager)
@@ -35,6 +34,31 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
   }
 
   forms.insert({ formId, std::move(form) });
+}
+
+void WorldState::TickTimers()
+{
+  auto now = std::chrono::steady_clock::now();
+
+  for (auto& p : relootTimers) {
+    auto& list = p.second;
+    while (!list.empty() && list.begin()->second <= now) {
+      uint32_t relootTargetId = list.begin()->first;
+      auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
+        LookupFormById(relootTargetId));
+      if (relootTarget)
+        relootTarget->SetHarvested(false);
+
+      list.pop_front();
+    }
+  }
+}
+
+void WorldState::RequestReloot(MpObjectReference& ref)
+{
+  auto& list = relootTimers[ref.GetRelootTime()];
+  list.push_back({ ref.GetFormId(),
+                   std::chrono::steady_clock::now() + ref.GetRelootTime() });
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)

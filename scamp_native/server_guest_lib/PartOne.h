@@ -26,8 +26,8 @@ public:
   ~PartOne();
 
   void AddListener(std::shared_ptr<Listener> listener);
-
   bool IsConnected(Networking::UserId userId) const;
+  void Tick();
 
   // API
   void CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
@@ -69,6 +69,9 @@ private:
 
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
+
+  void HandleActivate(Networking::UserId userId, uint32_t caster,
+                      uint32_t target);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

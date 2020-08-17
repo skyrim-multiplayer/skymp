@@ -10,4 +10,5 @@ enum class MsgType : int64_t
   UpdateLook = 4,
   UpdateEquipment = 5,
   Activate = 6,
+  UpdateProperty = 7,
 };

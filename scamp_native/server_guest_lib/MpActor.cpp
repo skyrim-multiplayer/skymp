@@ -22,6 +22,14 @@ void MpActor::SetEquipment(const std::string& jsonString)
   jEquipmentCache = jsonString;
 }
 
+void MpActor::SendToUser(const void* data, size_t size, bool reliable)
+{
+  if (this->sendToUser)
+    this->sendToUser(this, data, size, reliable);
+  else
+    throw std::runtime_error("sendToUser is nullptr");
+}
+
 MpActor::Tint MpActor::Tint::FromJson(simdjson::dom::element& j)
 {
   Tint res;

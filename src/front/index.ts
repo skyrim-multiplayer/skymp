@@ -11,16 +11,15 @@ import {
   printConsole,
   ObjectReference,
   Weather,
-  Form,
 } from "skyrimPlatform";
 import { verifyVersion } from "./version";
-import { applyInventory } from "./components/inventory";
 import { updateWc } from "./worldCleaner";
 
 new SkympClient();
 
 const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
+  Game.enableFastTravel(false);
 };
 
 once("update", enforceLimitations);
@@ -42,13 +41,13 @@ on("update", () => updateWc());
 
 let lastTimeUpd = 0;
 on("update", () => {
-  if (Date.now() - lastTimeUpd <= 5000) return;
+  if (Date.now() - lastTimeUpd <= 2000) return;
   lastTimeUpd = Date.now();
 
   // Also update weather to be always clear
   const w = Weather.findWeather(0);
   if (w) {
-    w.forceActive(false);
+    w.setActive(false, false);
   }
 
   const gameHourId = 0x38;
@@ -89,50 +88,7 @@ on("update", () => {
   riftenUnlocked = true;
 });
 
-function dealWithRef(ref: ObjectReference, base: Form): void {
-  const t = base.getType();
-  const isContainer = t === 28;
-
-  const isAmmo = t === 42;
-  const isArmor = t === 26;
-  const isBook = t === 27;
-  const isIngredient = t === 30;
-  const isLight = t === 31;
-  const isPotion = t === 46;
-  const isScroll = t === 23;
-  const isSoulGem = t === 52;
-  const isWeapon = t === 41;
-  const isMisc = t === 32;
-
-  const isItem =
-    isAmmo ||
-    isArmor ||
-    isBook ||
-    isIngredient ||
-    isLight ||
-    isPotion ||
-    isScroll ||
-    isSoulGem ||
-    isWeapon ||
-    isMisc;
-
-  const isFlora = t === 39;
-  const isTree = t === 38;
-
-  const isIngredientSource = isFlora || isTree;
-
-  const isMovableStatic = t === 36;
-  const isNpc = t === 43;
-  const isDoor = t === 29;
-
-  if (isContainer || isItem || isIngredientSource || isNpc || isDoor) {
-    ref.blockActivation(true);
-  } else {
-    ref.blockActivation(false);
-  }
-}
-
-let lastCrosshairRefId = 0;
+/*let lastCrosshairRefId = 0;
 on("update", () => {
   const ref = Game.getCurrentCrosshairRef();
   const refId = ref ? ref.getFormID() : 0;
@@ -149,7 +105,7 @@ on("update", () => {
   const processedIds = new Set<number>();
   processedIds.add(refId);
 
-  dealWithRef(ref, base);
+  //dealWithRef(ref, base);
 
   for (let i = 0; i < 10; ++i) {
     const foundRef = Game.findRandomReferenceOfType(
@@ -161,8 +117,29 @@ on("update", () => {
     );
     const foundRefId = foundRef ? foundRef.getFormID() : 0;
     if (foundRef && !processedIds.has(foundRefId)) {
-      dealWithRef(foundRef, base);
+      //dealWithRef(foundRef, base);
       processedIds.add(foundRefId);
     }
+  }
+});
+*/
+
+const n = 10;
+let k = 0;
+let zeroKMoment = 0;
+let lastFps = 0;
+on("update", () => {
+  ++k;
+  if (k == n) {
+    k = 0;
+    if (zeroKMoment) {
+      const timePassed = (Date.now() - zeroKMoment) * 0.001;
+      const fps = Math.round(n / timePassed);
+      if (lastFps != fps) {
+        lastFps = fps;
+        printConsole(`Current FPS is ${fps}`);
+      }
+    }
+    zeroKMoment = Date.now();
   }
 });
