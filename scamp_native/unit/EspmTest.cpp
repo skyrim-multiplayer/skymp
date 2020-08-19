@@ -37,7 +37,7 @@ TEST_CASE("Loads Tree", "[espm]")
   auto& br = l.GetBrowser();
 
   auto form = br.LookupById(0xbcf3d);
-  REQUIRE(form.rec->GetType() == espm::TREE::type);
+  REQUIRE(form.rec->GetType() == "TREE");
 
   auto data = reinterpret_cast<espm::TREE*>(form.rec)->GetData();
   REQUIRE(data.editorId == std::string("TreeFloraMountainFlower01Blue"));
@@ -50,7 +50,7 @@ TEST_CASE("Loads Flora", "[espm]")
   auto& br = l.GetBrowser();
 
   auto form = br.LookupById(0x7e8c9);
-  REQUIRE(form.rec->GetType() == espm::FLOR::type);
+  REQUIRE(form.rec->GetType() == "FLOR");
 
   auto data = reinterpret_cast<espm::FLOR*>(form.rec)->GetData();
   REQUIRE(data.editorId == std::string("BirdsNest"));
