@@ -82,7 +82,7 @@ const namesEqual = (a: Entry, b: Entry): boolean => {
   return false;
 };
 
-const extrasEqual = (a: Entry, b: Entry) => {
+const extrasEqual = (a: Entry, b: Entry, ignoreWorn = false) => {
   return (
     a.health === b.health &&
     a.enchantmentId === b.enchantmentId &&
@@ -93,8 +93,7 @@ const extrasEqual = (a: Entry, b: Entry) => {
     a.soul === b.soul &&
     a.poisonId === b.poisonId &&
     a.poisonCount === b.poisonCount &&
-    !!a.worn === !!b.worn &&
-    !!a.wornLeft === !!b.wornLeft
+    ((!!a.worn === !!b.worn && !!a.wornLeft === !!b.wornLeft) || ignoreWorn)
   );
 };
 
@@ -227,13 +226,17 @@ const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
   };
 };
 
-const getDiff = (lhs: Inventory, rhs: Inventory): Inventory => {
+export const getDiff = (
+  lhs: Inventory,
+  rhs: Inventory,
+  ignoreWorn: boolean
+): Inventory => {
   const lhsCopy: Inventory = JSON.parse(JSON.stringify(lhs));
   const rhsCopy: Inventory = JSON.parse(JSON.stringify(rhs));
 
   rhsCopy.entries.forEach((e) => {
     const sameFromLeft = lhsCopy.entries.find(
-      (x) => x.baseId === e.baseId && extrasEqual(x, e)
+      (x) => x.baseId === e.baseId && extrasEqual(x, e, ignoreWorn)
     );
     if (sameFromLeft) {
       sameFromLeft.count -= e.count;
@@ -277,10 +280,11 @@ const resetBase = (refr: ObjectReference): void => {
 export const applyInventory = (
   refr: ObjectReference,
   newInventory: Inventory,
-  enableCrashProtection: boolean
+  enableCrashProtection: boolean,
+  ignoreWorn = false
 ): boolean => {
   resetBase(refr);
-  const diff = getDiff(newInventory, getInventory(refr)).entries;
+  const diff = getDiff(newInventory, getInventory(refr), ignoreWorn).entries;
 
   let res = true;
 
@@ -322,22 +326,26 @@ export const applyInventory = (
         queueNiNodeUpdateNeeded = true;
       }
 
-      TESModPlatform.addItemEx(
-        refr,
-        Game.getFormEx(e.baseId),
-        oneStepCount,
-        e.health ? e.health : 1,
-        e.enchantmentId
-          ? Enchantment.from(Game.getFormEx(e.enchantmentId))
-          : null,
-        e.maxCharge ? e.maxCharge : 0,
-        !!e.removeEnchantmentOnUnequip,
-        e.chargePercent ? e.chargePercent : 0,
-        e.name ? cropName(e.name) : Game.getFormEx(e.baseId).getName(),
-        e.soul ? e.soul : 0,
-        e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
-        e.poisonCount ? e.poisonCount : 0
-      );
+      const f = Game.getFormEx(e.baseId);
+
+      if (!f) printConsole(`Bad form id ${e.baseId.toString(16)}`);
+      else
+        TESModPlatform.addItemEx(
+          refr,
+          f,
+          oneStepCount,
+          e.health ? e.health : 1,
+          e.enchantmentId
+            ? Enchantment.from(Game.getFormEx(e.enchantmentId))
+            : null,
+          e.maxCharge ? e.maxCharge : 0,
+          !!e.removeEnchantmentOnUnequip,
+          e.chargePercent ? e.chargePercent : 0,
+          e.name ? cropName(e.name) : f.getName(),
+          e.soul ? e.soul : 0,
+          e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
+          e.poisonCount ? e.poisonCount : 0
+        );
     }
 
     if (queueNiNodeUpdateNeeded) {

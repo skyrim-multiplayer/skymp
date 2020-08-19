@@ -88,42 +88,6 @@ on("update", () => {
   riftenUnlocked = true;
 });
 
-/*let lastCrosshairRefId = 0;
-on("update", () => {
-  const ref = Game.getCurrentCrosshairRef();
-  const refId = ref ? ref.getFormID() : 0;
-  if (refId === lastCrosshairRefId) return;
-
-  lastCrosshairRefId = refId;
-  printConsole("crosshair ref changed to " + refId.toString(16));
-
-  if (!ref) return;
-
-  const base = ref.getBaseObject();
-  if (!base) return;
-
-  const processedIds = new Set<number>();
-  processedIds.add(refId);
-
-  //dealWithRef(ref, base);
-
-  for (let i = 0; i < 10; ++i) {
-    const foundRef = Game.findRandomReferenceOfType(
-      base,
-      ref.getPositionX(),
-      ref.getPositionY(),
-      ref.getPositionZ(),
-      10000
-    );
-    const foundRefId = foundRef ? foundRef.getFormID() : 0;
-    if (foundRef && !processedIds.has(foundRefId)) {
-      //dealWithRef(foundRef, base);
-      processedIds.add(foundRefId);
-    }
-  }
-});
-*/
-
 const n = 10;
 let k = 0;
 let zeroKMoment = 0;
@@ -137,7 +101,7 @@ on("update", () => {
       const fps = Math.round(n / timePassed);
       if (lastFps != fps) {
         lastFps = fps;
-        printConsole(`Current FPS is ${fps}`);
+        //printConsole(`Current FPS is ${fps}`);
       }
     }
     zeroKMoment = Date.now();

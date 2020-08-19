@@ -222,6 +222,11 @@ inline uint32_t GetWorldOrCell(const RecordHeader* rec)
   return worldOrCell;
 }
 
+inline bool IsItem(Type t) noexcept
+{
+  return t == "AMMO" || t == "ARMO" || t == "BOOK" || t == "INGR" ||
+    t == "ALCH" || t == "SCRL" || t == "SLGM" || t == "WEAP" || t == "MISC";
+}
 }
 
 namespace espm {

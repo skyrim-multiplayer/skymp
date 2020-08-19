@@ -1,5 +1,6 @@
 #pragma once
 #include "MpObjectReference.h"
+#include <set>
 
 class WorldState;
 
@@ -62,6 +63,16 @@ public:
 
   void SendToUser(const void* data, size_t size, bool reliable);
 
+  class DestroyEventSink
+  {
+  public:
+    virtual ~DestroyEventSink() = default;
+    virtual void BeforeDestroy(MpActor& actor) = 0;
+  };
+
+  void AddEventSink(std::shared_ptr<DestroyEventSink> sink);
+  void RemoveEventSink(std::shared_ptr<DestroyEventSink> sink);
+
 private:
   void UnsubscribeFromAll();
 
@@ -71,6 +82,7 @@ private:
   std::unique_ptr<Look> look;
   std::string jLookCache;
   std::string jEquipmentCache;
+  std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 
 protected:
   void BeforeDestroy() override;

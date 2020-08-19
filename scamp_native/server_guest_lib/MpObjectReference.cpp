@@ -1,7 +1,40 @@
 #include "MpObjectReference.h"
+#include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "WorldState.h"
 #include <MsgType.h>
+
+class OccupantDestroyEventSink : public MpActor::DestroyEventSink
+{
+public:
+  OccupantDestroyEventSink(WorldState& wst_,
+                           MpObjectReference* untrustedRefPtr_)
+    : wst(wst_)
+    , untrustedRefPtr(untrustedRefPtr_)
+    , refId(untrustedRefPtr_->GetFormId())
+  {
+  }
+
+  void BeforeDestroy(MpActor& actor) override
+  {
+    if (!RefStillValid())
+      return;
+    if (untrustedRefPtr->occupant == &actor) {
+      untrustedRefPtr->SetOpen(false);
+      untrustedRefPtr->occupant = nullptr;
+    }
+  }
+
+private:
+  bool RefStillValid() const
+  {
+    return untrustedRefPtr == wst.LookupFormById(refId).get();
+  }
+
+  WorldState& wst;
+  MpObjectReference* const untrustedRefPtr;
+  const uint32_t refId;
+};
 
 namespace {
 std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
@@ -25,6 +58,8 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
     relootTime = std::chrono::hours(1);
   } else if (!strcmp(baseType_, "DOOR")) {
     relootTime = std::chrono::seconds(3);
+  } else if (espm::IsItem(baseType_)) {
+    relootTime = std::chrono::hours(1);
   }
 }
 
@@ -88,59 +123,26 @@ void MpObjectReference::SetAngle(const NiPoint3& newAngle)
 
 void MpObjectReference::SetHarvested(bool harvested)
 {
-  if (harvested == isHarvested)
-    return;
-  isHarvested = harvested;
-
-  nlohmann::json j{ { "idx", GetIdx() },
-                    { "t", MsgType::UpdateProperty },
-                    { "propName", "isHarvested" },
-                    { "data", harvested } };
-  std::string str;
-  str += Networking::MinPacketId;
-  str += j.dump();
-
-  for (auto listener : GetListeners())
-    listener->SendToUser(str.data(), str.size(), true);
+  if (harvested != isHarvested) {
+    isHarvested = harvested;
+    SendPropertyToListeners("isHarvested", harvested);
+  }
 }
 
 void MpObjectReference::SetOpen(bool open)
 {
-  if (open == isOpen)
-    return;
-  isOpen = open;
-
-  nlohmann::json j{ { "idx", GetIdx() },
-                    { "t", MsgType::UpdateProperty },
-                    { "propName", "isOpen" },
-                    { "data", open } };
-  std::string str;
-  str += Networking::MinPacketId;
-  str += j.dump();
-
-  for (auto listener : GetListeners())
-    listener->SendToUser(str.data(), str.size(), true);
+  if (open != isOpen) {
+    isOpen = open;
+    SendPropertyToListeners("isOpen", open);
+  }
 }
 
-void MpObjectReference::Activate(
-  MpActor& activationSource, espm::Loader& loader,
-  espm::CompressedFieldsCache& compressedFieldsCache)
+void MpObjectReference::Activate(MpActor& activationSource)
 {
-  auto casterWorld =
-    loader.GetBrowser().LookupById(activationSource.GetCellOrWorld()).rec;
-  auto targetWorld = loader.GetBrowser().LookupById(GetCellOrWorld()).rec;
+  auto& loader = GetParent()->GetEspm();
+  auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
-  if (targetWorld != casterWorld) {
-    const char* casterWorldName =
-      casterWorld ? casterWorld->GetEditorId(&compressedFieldsCache) : "";
-
-    const char* targetWorldName =
-      targetWorld ? targetWorld->GetEditorId(&compressedFieldsCache) : "";
-    std::stringstream ss;
-    ss << "WorldSpace doesn't match: caster is in " << casterWorldName
-       << ", target is in " << targetWorldName;
-    throw std::runtime_error(ss.str());
-  }
+  CheckInteractionAbility(activationSource);
 
   auto base = loader.GetBrowser().LookupById(GetBaseId());
   if (!base.rec || !GetBaseId()) {
@@ -151,14 +153,23 @@ void MpObjectReference::Activate(
 
   auto t = base.rec->GetType();
 
-  if (t == espm::TREE::type || t == espm::FLOR::type) {
-    espm::FLOR::Data data;
-    if (t == espm::TREE::type)
-      data = espm::Convert<espm::TREE>(base.rec)->GetData();
-    else
-      data = espm::Convert<espm::FLOR>(base.rec)->GetData();
+  if (t == espm::TREE::type || t == espm::FLOR::type || espm::IsItem(t)) {
+    auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
 
-    activationSource.AddItem(data.resultItem, 1);
+    uint32_t resultItem = 0;
+    if (t == espm::TREE::type) {
+      espm::FLOR::Data data;
+      data = espm::Convert<espm::TREE>(base.rec)->GetData();
+      resultItem = espm::GetMappedId(data.resultItem, *mapping);
+    } else if (t == espm::FLOR::type) {
+      espm::FLOR::Data data;
+      data = espm::Convert<espm::FLOR>(base.rec)->GetData();
+      resultItem = espm::GetMappedId(data.resultItem, *mapping);
+    } else {
+      resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
+    }
+
+    activationSource.AddItem(resultItem, 1);
     SetHarvested(true);
     RequestReloot();
   } else if (t == espm::DOOR::type) {
@@ -199,7 +210,48 @@ void MpObjectReference::Activate(
     } else {
       SetOpen(!IsOpen());
     }
+  } else if (t == espm::CONT::type) {
+    EnsureBaseContainerAdded(loader);
+    if (!this->occupant) {
+      SetOpen(true);
+      SendPropertyTo("inventory", GetInventory().ToJson(), activationSource);
+      activationSource.SendOpenContainer(GetFormId());
+
+      this->occupant = &activationSource;
+
+      this->occupantDestroySink.reset(
+        new OccupantDestroyEventSink(*GetParent(), this));
+      this->occupant->AddEventSink(occupantDestroySink);
+    } else if (this->occupant == &activationSource) {
+      SetOpen(false);
+      this->occupant->RemoveEventSink(this->occupantDestroySink);
+      this->occupant = nullptr;
+    }
   }
+}
+
+void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
+{
+  CheckInteractionAbility(ac);
+  if (this->occupant != &ac) {
+    std::stringstream err;
+    err << std::hex << "Actor 0x" << ac.GetFormId() << " doesn't occupy ref 0x"
+        << GetFormId();
+    throw std::runtime_error(err.str());
+  }
+  ac.RemoveItems({ e }, this);
+}
+
+void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
+{
+  CheckInteractionAbility(ac);
+  if (this->occupant != &ac) {
+    std::stringstream err;
+    err << std::hex << "Actor 0x" << ac.GetFormId() << " doesn't occupy ref 0x"
+        << GetFormId();
+    throw std::runtime_error(err.str());
+  }
+  RemoveItems({ e }, &ac);
 }
 
 void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
@@ -216,20 +268,33 @@ void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
   cellOrWorld = newWorldOrCell;
 }
 
+void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
+{
+  chanceNoneOverride.reset(new uint8_t(newChanceNone));
+}
+
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
 {
   inv.AddItem(baseId, count);
+  SendInventoryUpdate();
+}
 
-  auto actor = dynamic_cast<MpActor*>(this);
-  if (actor) {
-    std::string msg;
-    msg += Networking::MinPacketId;
-    msg += nlohmann::json{
-      { "inventory", actor->GetInventory().ToJson() },
-      { "type", "setInventory" }
-    }.dump();
-    actor->SendToUser(msg.data(), msg.size(), true);
+void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
+{
+  if (entries.size() > 0) {
+    inv.AddItems(entries);
+    SendInventoryUpdate();
   }
+}
+
+void MpObjectReference::RemoveItems(
+  const std::vector<Inventory::Entry>& entries, MpObjectReference* target)
+{
+  inv.RemoveItems(entries);
+  if (target)
+    target->AddItems(entries);
+
+  SendInventoryUpdate();
 }
 
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
@@ -289,8 +354,125 @@ void MpObjectReference::RequestReloot()
   GetParent()->RequestReloot(*this);
 }
 
+void MpObjectReference::SendInventoryUpdate()
+{
+  auto actor = dynamic_cast<MpActor*>(this);
+  if (actor) {
+    std::string msg;
+    msg += Networking::MinPacketId;
+    msg += nlohmann::json{
+      { "inventory", actor->GetInventory().ToJson() },
+      { "type", "setInventory" }
+    }.dump();
+    actor->SendToUser(msg.data(), msg.size(), true);
+  }
+}
+
+void MpObjectReference::SendOpenContainer(uint32_t targetId)
+{
+  auto actor = dynamic_cast<MpActor*>(this);
+  if (actor) {
+    std::string msg;
+    msg += Networking::MinPacketId;
+    msg += nlohmann::json{
+      { "target", targetId }, { "type", "openContainer" }
+    }.dump();
+    actor->SendToUser(msg.data(), msg.size(), true);
+  }
+}
+
+void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
+{
+  if (this->baseContainerAdded)
+    return;
+
+  constexpr uint32_t pcLevel = 1;
+
+  std::map<uint32_t, uint32_t> itemsToAdd;
+
+  auto lookupRes = espm.GetBrowser().LookupById(GetBaseId());
+  auto baseContainer = espm::Convert<espm::CONT>(lookupRes.rec);
+  if (baseContainer) {
+    auto data = baseContainer->GetData();
+    for (auto& entry : data.objects) {
+      auto formLookupRes = espm.GetBrowser().LookupById(entry.formId);
+      auto leveledItem = espm::Convert<espm::LVLI>(formLookupRes.rec);
+      if (leveledItem) {
+        auto map = LeveledListUtils::EvaluateListRecurse(
+          espm.GetBrowser(), formLookupRes, 1, pcLevel,
+          chanceNoneOverride.get());
+        for (auto& p : map)
+          itemsToAdd[p.first] += p.second;
+      } else
+        itemsToAdd[entry.formId] += entry.count;
+    }
+  }
+
+  std::vector<Inventory::Entry> entries;
+  for (auto& p : itemsToAdd)
+    entries.push_back({ p.first, p.second });
+  AddItems(entries);
+
+  this->baseContainerAdded = true;
+}
+
+void MpObjectReference::CheckInteractionAbility(MpActor& ac)
+{
+  auto& loader = GetParent()->GetEspm();
+  auto& compressedFieldsCache = GetParent()->GetEspmCache();
+
+  auto casterWorld = loader.GetBrowser().LookupById(ac.GetCellOrWorld()).rec;
+  auto targetWorld = loader.GetBrowser().LookupById(GetCellOrWorld()).rec;
+
+  if (targetWorld != casterWorld) {
+    const char* casterWorldName =
+      casterWorld ? casterWorld->GetEditorId(&compressedFieldsCache) : "";
+
+    const char* targetWorldName =
+      targetWorld ? targetWorld->GetEditorId(&compressedFieldsCache) : "";
+    std::stringstream ss;
+    ss << "WorldSpace doesn't match: caster is in " << casterWorldName
+       << ", target is in " << targetWorldName;
+    throw std::runtime_error(ss.str());
+  }
+}
+
+namespace {
+std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
+                                  const nlohmann::json& value)
+{
+  nlohmann::json j{ { "idx", self->GetIdx() },
+                    { "t", MsgType::UpdateProperty },
+                    { "propName", name },
+                    { "data", value } };
+  std::string str;
+  str += Networking::MinPacketId;
+  str += j.dump();
+  return str;
+}
+}
+
+void MpObjectReference::SendPropertyToListeners(const char* name,
+                                                const nlohmann::json& value)
+{
+  auto str = CreatePropertyMessage(this, name, value);
+  for (auto listener : GetListeners())
+    listener->SendToUser(str.data(), str.size(), true);
+}
+
+void MpObjectReference::SendPropertyTo(const char* name,
+                                       const nlohmann::json& value,
+                                       MpActor& target)
+{
+  auto str = CreatePropertyMessage(this, name, value);
+  target.SendToUser(str.data(), str.size(), true);
+}
+
 void MpObjectReference::BeforeDestroy()
 {
+  if (this->occupant && this->occupantDestroySink)
+    this->occupant->RemoveEventSink(this->occupantDestroySink);
+
   MpForm::BeforeDestroy();
 
   GetParent()->grids[cellOrWorld].Forget(this);

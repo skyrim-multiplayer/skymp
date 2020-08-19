@@ -44,9 +44,6 @@ public:
     friend bool operator==(const EntryExtras& r, const EntryExtras& l);
   };
 
-  void AddItem(uint32_t baseId, uint32_t count);
-  bool HasItem(uint32_t baseId) const;
-
   nlohmann::json ToJson() const;
 
   // Doesn't parse extra data currently
@@ -60,7 +57,17 @@ public:
     uint32_t baseId = 0;
     uint32_t count = 0;
     EntryExtras extra;
+
+    static Entry FromJson(simdjson::dom::element& e);
   };
+
+  void AddItem(uint32_t baseId, uint32_t count);
+  void AddItems(const std::vector<Entry>& entries);
+  void RemoveItems(const std::vector<Entry>& entries);
+  bool HasItem(uint32_t baseId) const;
+  uint32_t GetItemCount(uint32_t baseId) const;
+  uint32_t GetTotalItemCount() const;
+  bool IsEmpty() const;
 
   std::vector<Entry> entries;
 };

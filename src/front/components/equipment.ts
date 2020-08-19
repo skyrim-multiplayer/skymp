@@ -32,6 +32,7 @@ export const isBadMenuShown = (): boolean => {
   return (
     Ui.isMenuOpen("InventoryMenu") ||
     Ui.isMenuOpen("FavoritesMenu") ||
-    Ui.isMenuOpen("MagicMenu")
+    Ui.isMenuOpen("MagicMenu") ||
+    Ui.isMenuOpen("ContainerMenu")
   );
 };

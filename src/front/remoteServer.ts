@@ -20,6 +20,7 @@ import {
   ObjectReference,
   Form,
   on,
+  Ui,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./components/inventory";
@@ -66,20 +67,52 @@ if (storage["taskVerifySourceCode"] === true) {
   storage["taskVerifySourceCode"] = false;
 }
 
-let pcInv: Inventory = null;
+export const getPcInventory = (): Inventory => {
+  const res = storage["pcInv"];
+  if (typeof res === "object" && res["entries"]) {
+    return res;
+  }
+  return null;
+};
+
+const setPcInventory = (inv: Inventory): void => {
+  storage["pcInv"] = inv;
+};
+
 let pcInvLastApply = 0;
 on("update", () => {
   if (Date.now() - pcInvLastApply > 5000 && !isBadMenuShown()) {
     pcInvLastApply = Date.now();
-    if (pcInv) applyInventory(Game.getPlayer(), pcInv, false);
+    const pcInv = getPcInventory();
+    if (pcInv) applyInventory(Game.getPlayer(), pcInv, false, true);
   }
 });
 
 export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   setInventory(msg: messages.SetInventory): void {
     once("update", () => {
-      pcInv = msg.inventory;
+      setPcInventory(msg.inventory);
       pcInvLastApply = 0;
+    });
+  }
+
+  openContainer(msg: messages.OpenContainer): void {
+    once("update", () => {
+      ObjectReference.from(Game.getFormEx(msg.target)).activate(
+        Game.getPlayer(),
+        true
+      );
+      (async () => {
+        while (!Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
+        while (Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
+        networking.send(
+          {
+            t: messages.MsgType.Activate,
+            data: { caster: 0x14, target: msg.target },
+          },
+          true
+        );
+      })();
     });
   }
 
@@ -125,6 +158,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.worldModel.forms[i] = {
       movement,
       numMovementChanges: 0,
+      numLookChanges: 0,
       baseId: msg.baseId,
       refrId: msg.refrId,
     };
@@ -157,6 +191,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         msg.inventory ? msg.inventory : { entries: [] },
         false
       );
+      if (msg.inventory)
+        this.setInventory({ type: "setInventory", inventory: msg.inventory });
     };
 
     if (msg.isMe) {
@@ -230,6 +266,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   UpdateLook(msg: messages.UpdateLookMessage): void {
     const i = msg.idx;
     this.worldModel.forms[i].look = msg.data;
+    if (!this.worldModel.forms[i].numLookChanges) {
+      this.worldModel.forms[i].numLookChanges = 0;
+    }
+    this.worldModel.forms[i].numLookChanges++;
   }
 
   UpdateEquipment(msg: messages.UpdateEquipmentMessage): void {

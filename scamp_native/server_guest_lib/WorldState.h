@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <memory>
 #include <sparsepp/spp.h>
 #include <sstream>
 
@@ -99,6 +100,9 @@ public:
     forms.erase(it);
   };
 
+  espm::Loader& GetEspm() const;
+  espm::CompressedFieldsCache& GetEspmCache();
+
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridImpl<MpObjectReference*>> grids;
@@ -108,4 +112,5 @@ private:
     std::list<std::pair<uint32_t, std::chrono::steady_clock::time_point>>>
     relootTimers;
   espm::Loader* espm = nullptr;
+  std::unique_ptr<espm::CompressedFieldsCache> espmCache;
 };

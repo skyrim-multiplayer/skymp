@@ -160,7 +160,8 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                                       st](MpActor* actor, const void* data,
                                           size_t size, bool reliable) {
     auto targetuserId = st->UserByActor(actor);
-    if (targetuserId != Networking::InvalidUserId)
+    if (targetuserId != Networking::InvalidUserId &&
+        st->disconnectingUserId != targetuserId)
       sendTarget->Send(targetuserId,
                        reinterpret_cast<Networking::PacketData>(data), size,
                        reliable);
@@ -295,7 +296,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
         continue;
 
       espm::Type t = base.rec->GetType();
-      if (t != "DOOR" && t != "CONT" &&
+      if (!espm::IsItem(t) && t != "DOOR" && t != "CONT" &&
           (t != "FLOR" ||
            !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
           (t != "TREE" ||
@@ -353,6 +354,11 @@ void PartOne::AttachEspm(espm::Loader* espm,
   }
 
   printf("AttachEspm took %d ticks\n", int(clock() - was));
+}
+
+espm::Loader& PartOne::GetEspm() const
+{
+  return worldState.GetEspm();
 }
 
 namespace {
@@ -541,6 +547,22 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
 
       break;
     }
+    case MsgType::PutItem:
+    case MsgType::TakeItem: {
+      MpActor* actor = serverState.ActorByUser(userId);
+      if (actor && pImpl->espm) {
+        uint32_t target;
+        ReadEx(jMessage, "target", &target);
+        auto e = Inventory::Entry::FromJson(jMessage);
+        auto& ref = worldState.GetFormAt<MpObjectReference>(target);
+
+        if (type == MsgType::PutItem)
+          ref.PutItem(*actor, e);
+        else
+          ref.TakeItem(*actor, e);
+      }
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }
@@ -567,5 +589,5 @@ void PartOne::HandleActivate(Networking::UserId userId, uint32_t caster,
   if (!refPtr)
     return;
 
-  refPtr->Activate(*ac, *pImpl->espm, pImpl->compressedFieldsCache);
+  refPtr->Activate(*ac);
 }

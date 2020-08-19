@@ -43,6 +43,7 @@ public:
   std::string GetActorName(uint32_t actorFormId);
   NiPoint3 GetActorPos(uint32_t actorFormId);
   void AttachEspm(espm::Loader* espm, Networking::ISendTarget* sendTarget);
+  espm::Loader& GetEspm() const;
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,

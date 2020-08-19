@@ -3,7 +3,7 @@
 
 std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
   const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
-  uint32_t pcLevel)
+  uint32_t pcLevel, uint8_t* chanceNoneOverride)
 {
   auto leveledList = espm::Convert<espm::LVLI>(lookupRes.rec);
   if (!leveledList)
@@ -13,6 +13,8 @@ std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
   std::vector<Entry> res;
 
   int chanceNone = data.chanceNoneGlobalId ? 100 : data.chanceNone;
+  if (chanceNoneOverride)
+    chanceNone = *chanceNoneOverride;
 
   std::random_device rd;
   std::mt19937 mt(rd());
@@ -45,7 +47,7 @@ std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
 
 std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
   const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
-  uint32_t countMult, uint32_t pcLevel)
+  uint32_t countMult, uint32_t pcLevel, uint8_t* chanceNoneOverride)
 {
   auto leveledList = espm::Convert<espm::LVLI>(lookupRes.rec);
   bool calcForEach = leveledList &&
@@ -63,7 +65,7 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
   }
 
   std::map<uint32_t, uint32_t> res;
-  auto firstEvalRes = EvaluateList(br, lookupRes, pcLevel);
+  auto firstEvalRes = EvaluateList(br, lookupRes, pcLevel, chanceNoneOverride);
   for (auto& e : firstEvalRes) {
     auto eLookupRes = br.LookupById(e.formId);
     if (!eLookupRes.rec)

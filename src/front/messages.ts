@@ -12,11 +12,18 @@ export enum MsgType {
   UpdateEquipment = 5,
   Activate = 6,
   UpdateProperty = 7,
+  PutItem = 8,
+  TakeItem = 9,
 }
 
 export interface SetInventory {
   type: "setInventory";
   inventory: Inventory;
+}
+
+export interface OpenContainer {
+  type: "openContainer";
+  target: number;
 }
 
 export interface Teleport {

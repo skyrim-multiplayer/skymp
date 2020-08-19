@@ -11,6 +11,7 @@ void WorldState::Clear()
 void WorldState::AttachEspm(espm::Loader* espm_)
 {
   espm = espm_;
+  espmCache.reset(new espm::CompressedFieldsCache);
 }
 
 void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
@@ -71,4 +72,18 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
     return g_null;
   }
   return it->second;
+}
+
+espm::Loader& WorldState::GetEspm() const
+{
+  if (!espm)
+    throw std::runtime_error("No espm attached");
+  return *espm;
+}
+
+espm::CompressedFieldsCache& WorldState::GetEspmCache()
+{
+  if (!espmCache)
+    throw std::runtime_error("No espm cache found");
+  return *espmCache;
 }

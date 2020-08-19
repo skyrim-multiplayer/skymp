@@ -156,20 +156,21 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     Napi::Number port = info[0].As<Napi::Number>(),
                  maxConnections = info[1].As<Napi::Number>();
 
-    auto realServer = Networking::CreateServer(
-      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
-
     serverMock = std::make_shared<Networking::MockServer>();
-
-    server = Networking::CreateCombinedServer({ realServer, serverMock });
 
     std::string dataDir =
       "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special "
       "Edition\\Data";
+#ifndef WIN32
+    dataDir = "/skyrim_data_dir";
+#endif
 
     auto espm = new espm::Loader(dataDir,
                                  { "Skyrim.esm", "Update.esm", "Dawnguard.esm",
                                    "HearthFires.esm", "Dragonborn.esm" });
+    auto realServer = Networking::CreateServer(
+      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
+    server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->AttachEspm(espm, server.get());
 
     auto res =

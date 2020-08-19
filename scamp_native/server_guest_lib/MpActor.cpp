@@ -24,10 +24,20 @@ void MpActor::SetEquipment(const std::string& jsonString)
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
-  if (this->sendToUser)
-    this->sendToUser(this, data, size, reliable);
+  if (sendToUser)
+    sendToUser(this, data, size, reliable);
   else
     throw std::runtime_error("sendToUser is nullptr");
+}
+
+void MpActor::AddEventSink(std::shared_ptr<DestroyEventSink> sink)
+{
+  destroyEventSinks.insert(sink);
+}
+
+void MpActor::RemoveEventSink(std::shared_ptr<DestroyEventSink> sink)
+{
+  destroyEventSinks.erase(sink);
 }
 
 MpActor::Tint MpActor::Tint::FromJson(simdjson::dom::element& j)
@@ -121,6 +131,9 @@ void MpActor::UnsubscribeFromAll()
 
 void MpActor::BeforeDestroy()
 {
+  for (auto& sink : destroyEventSinks)
+    sink->BeforeDestroy(*this);
+
   MpObjectReference::BeforeDestroy();
 
   UnsubscribeFromAll();

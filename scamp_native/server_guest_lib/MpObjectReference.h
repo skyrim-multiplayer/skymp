@@ -35,12 +35,15 @@ struct GridPosInfo
 
 class MpActor;
 class WorldState;
+class OccupantDestroyEventSink;
 
 class MpObjectReference
   : public MpForm
   , protected LocationalData
   , public FormIndex
 {
+  friend class OccupantDestroyEventSink;
+
 public:
   using SubscribeCallback =
     std::function<void(MpObjectReference* emitter, MpActor* listener)>;
@@ -68,12 +71,17 @@ public:
   void SetAngle(const NiPoint3& newAngle);
   void SetHarvested(bool harvested);
   void SetOpen(bool open);
-  void Activate(MpActor& activationSource, espm::Loader& loader,
-                espm::CompressedFieldsCache& compressedFieldsCache);
+  void Activate(MpActor& activationSource);
+  void PutItem(MpActor& actor, const Inventory::Entry& entry);
+  void TakeItem(MpActor& actor, const Inventory::Entry& entry);
   void SetRelootTime(std::chrono::milliseconds newRelootTime);
   void SetCellOrWorld(uint32_t worldOrCell);
+  void SetChanceNoneOverride(uint8_t chanceNone);
 
   void AddItem(uint32_t baseId, uint32_t count);
+  void AddItems(const std::vector<Inventory::Entry>& entries);
+  void RemoveItems(const std::vector<Inventory::Entry>& entries,
+                   MpObjectReference* target = nullptr);
 
   static void Subscribe(MpObjectReference* emitter, MpActor* listener);
   static void Unsubscribe(MpObjectReference* emitter, MpActor* listener);
@@ -87,6 +95,13 @@ private:
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void InitListenersAndEmitters();
   void RequestReloot();
+  void SendInventoryUpdate();
+  void SendOpenContainer(uint32_t refId);
+  void EnsureBaseContainerAdded(espm::Loader& espm);
+  void CheckInteractionAbility(MpActor& ac);
+  void SendPropertyToListeners(const char* name, const nlohmann::json& value);
+  void SendPropertyTo(const char* name, const nlohmann::json& value,
+                      MpActor& target);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpActor*>> listeners;
@@ -100,7 +115,11 @@ private:
   const char* const baseType;
   bool isHarvested = false;
   bool isOpen = false;
+  MpActor* occupant = nullptr;
+  std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
   std::chrono::milliseconds relootTime{ 3000 };
+  bool baseContainerAdded = false;
+  std::unique_ptr<uint8_t> chanceNoneOverride;
 
 protected:
   void BeforeDestroy() override;
