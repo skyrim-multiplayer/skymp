@@ -262,11 +262,7 @@ export class SkympClient {
       }
       storage.view = view;
     });
-    let counter = 0;
     on("update", () => {
-      ++counter;
-      if (counter === 1000000) counter = 0;
-      //if (counter % 20 !== 0) return;
       if (!this.singlePlayer) view.update(this.modelSource.getWorldModel());
     });
   }
