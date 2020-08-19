@@ -28,7 +28,7 @@ jobs:
             git reset --hard FETCH_HEAD
             docker build -t skymp5-server:${GITHUB_REF##*/} .
             rm -rf $GITHUB_SHA
-            docker run skymp5-server:${GITHUB_REF##*/} npm run test
+            docker run -v ~/skyrim_data_dir:/skyrim_data_dir skymp5-server:${GITHUB_REF##*/} npm run test
           envs: GITHUB_SHA,GITHUB_REPOSITORY,DNOHUB_USERNAME,DNOHUB_PASSWORD,MASTER_URL,GITHUB_REF
           script_stop: true
           command_timeout: 6h

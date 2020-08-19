@@ -24,12 +24,6 @@ RUN mv vcpkg /root/.local/share/pmm/1.4.2/vcpkg-bff594f7ff8e023592f366b67fd7f57f
 RUN apt-get update && apt-get upgrade -y && apt-get install -y build-essential
 RUN gcc --version
 
-RUN apt-get install unzip \
-  && mkdir /skyrim_data_dir \ 
-  && curl https://transfer.sh/fpQqF/Data.zip -o /skyrim_data_dir/Data.zip \
-  && cd /skyrim_data_dir \
-  && unzip Data.zip
-
 COPY package*.json ./
 RUN npm i
 

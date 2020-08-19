@@ -29,7 +29,7 @@ jobs:
             docker build -t skymp5-server .
             rm -rf $GITHUB_SHA
             docker rm -f scamp || true
-            docker run -p 8080:8080/tcp -p 3000:3000/tcp -p 7777:7777/udp --name scamp --restart always -dit skymp5-server npm run start-prod -- --master $MASTER_URL --name Nirnroot --maxPlayers 100
+            docker run -v ~/skyrim_data_dir:/skyrim_data_dir -p 8080:8080/tcp -p 3000:3000/tcp -p 7777:7777/udp --name scamp --restart always -dit skymp5-server npm run start-prod -- --master $MASTER_URL --name Nirnroot --maxPlayers 100
           envs: GITHUB_SHA,GITHUB_REPOSITORY,DNOHUB_USERNAME,DNOHUB_PASSWORD,MASTER_URL
           script_stop: true
           command_timeout: 6h
