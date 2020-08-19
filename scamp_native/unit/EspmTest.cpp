@@ -7,6 +7,15 @@
 
 extern espm::Loader l;
 
+TEST_CASE("Loads refr from Update.esm", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto refr = br.LookupById(0x0100122a);
+  REQUIRE(refr.rec);
+  REQUIRE(refr.rec->GetType() == "REFR");
+}
+
 TEST_CASE("Loads Iron Sword", "[espm]")
 {
   auto& br = l.GetBrowser();
