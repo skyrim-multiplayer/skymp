@@ -45,6 +45,9 @@ public:
   std::pair<espm::RecordHeader**, size_t> FindNavMeshes(
     uint32_t worldSpaceId, CellOrGridPos cellOrGridPos) const noexcept;
 
+  const std::vector<espm::RecordHeader*>& GetRecordsByType(
+    const char* type) const;
+
 private:
   struct Impl;
   Impl* const pImpl;
@@ -127,18 +130,25 @@ public:
     return !memcmp(type, rhs, 4);
   }
 
+  bool operator!=(const char* rhs) const noexcept { return !(*this == rhs); }
+
   std::string ToString() const noexcept { return std::string(type, 4); }
 
 private:
   const char* type;
 };
 
+class RecordHeaderAccess;
+
 class RecordHeader
 {
   friend class espm::Browser;
+  friend class RecordHeaderAccess;
 
 public:
   uint32_t GetId() const noexcept;
+  const char* GetEditorId(espm::CompressedFieldsCache* compressedFieldsCache =
+                            nullptr) const noexcept;
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;
 
@@ -164,13 +174,6 @@ private:
   RecordHeader() = delete;
   RecordHeader(const RecordHeader&) = delete;
   void operator=(const RecordHeader&) = delete;
-
-protected:
-  using FieldVisitor =
-    std::function<void(const char* type, uint32_t dataSize, const char* data)>;
-  void ForEachField(const FieldVisitor& f,
-                    CompressedFieldsCache* optionalCompressedFieldsCache =
-                      nullptr) const noexcept;
 };
 static_assert(sizeof(RecordHeader) == 16);
 
@@ -198,6 +201,31 @@ inline GroupHeader* GetCellGroup(const RecordHeader* rec)
     return gr;
   }
   return nullptr;
+}
+
+inline uint32_t GetWorldOrCell(const RecordHeader* rec)
+{
+  auto world = espm::GetExteriorWorldGroup(rec);
+  auto cell = espm::GetCellGroup(rec);
+
+  uint32_t worldOrCell;
+
+  if (!world || !world->GetParentWRLD(worldOrCell))
+    worldOrCell = 0;
+
+  if (!worldOrCell) {
+    if (!cell->GetParentCELL(worldOrCell)) {
+      return 0;
+    }
+  }
+
+  return worldOrCell;
+}
+
+inline bool IsItem(Type t) noexcept
+{
+  return t == "AMMO" || t == "ARMO" || t == "BOOK" || t == "INGR" ||
+    t == "ALCH" || t == "SCRL" || t == "SLGM" || t == "WEAP" || t == "MISC";
 }
 }
 
@@ -250,16 +278,129 @@ public:
     float rotRadians[3];
   };
 
+  struct DoorTeleport
+  {
+    uint32_t destinationDoor = 0;
+    float pos[3];
+    float rotRadians[3];
+  };
+
   struct Data
   {
     uint32_t baseId = 0;
     float scale = 1;
     const LocationalData* loc = nullptr;
+    const DoorTeleport* teleport = nullptr;
   };
 
   Data GetData() const noexcept;
 };
 static_assert(sizeof(REFR) == sizeof(RecordHeader));
+
+class CONT : public RecordHeader
+{
+public:
+  static constexpr auto type = "CONT";
+
+  struct ContainerObject
+  {
+    uint32_t formId = 0;
+    uint32_t count = 0;
+  };
+
+  struct Data
+  {
+    const char* editorId = "";
+    const char* fullName = "";
+    std::vector<ContainerObject> objects;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(CONT) == sizeof(RecordHeader));
+
+struct ObjectBounds
+{
+  int16_t pos1[3] = { 0, 0, 0 };
+  int16_t pos2[3] = { 0, 0, 0 };
+};
+static_assert(sizeof(ObjectBounds) == 12);
+
+class TREE : public RecordHeader
+{
+public:
+  static constexpr auto type = "TREE";
+
+  struct Data
+  {
+    const char* editorId = "";
+    const char* fullName = "";
+    const ObjectBounds* bounds = nullptr;
+    uint32_t resultItem = 0;
+    uint32_t useSound = 0;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(TREE) == sizeof(RecordHeader));
+
+class FLOR : public RecordHeader
+{
+public:
+  static constexpr auto type = "FLOR";
+
+  using Data = TREE::Data;
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(TREE) == sizeof(RecordHeader));
+
+class DOOR : public RecordHeader
+{
+public:
+  static constexpr auto type = "DOOR";
+};
+static_assert(sizeof(DOOR) == sizeof(RecordHeader));
+
+class LVLI : public RecordHeader
+{
+public:
+  static constexpr auto type = "LVLI";
+
+  enum LeveledItemFlags
+  {
+    AllLevels = 0x01, //(sets it to calculate for all entries < player level,
+                      // choosing randomly from all the entries under)
+    Each = 0x02, // (sets it to repeat a check every time the list is called
+                 // (if it's called multiple times), otherwise it will use the
+                 // same result for all counts.)
+    UseAll = 0x04, // (use all entries when the list is called)
+    SpecialLoot = 0x08,
+  };
+
+  struct Entry
+  {
+    char type[4] = { 'L', 'V', 'L', 'O' };
+    uint16_t dataSize = 0;
+    uint32_t level = 0;
+    uint32_t formId = 0;
+    uint32_t count = 0;
+  };
+
+  struct Data
+  {
+    const char* editorId = "";
+    uint8_t chanceNone = 0;
+    uint8_t leveledItemFlags;
+    uint32_t chanceNoneGlobalId = 0;
+    uint8_t numEntries = 0;
+    Entry* entries = nullptr;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(LVLI) == sizeof(RecordHeader));
+static_assert(sizeof(LVLI::Entry) == 18);
 
 class NAVM : public RecordHeader
 {

@@ -4,6 +4,7 @@
 #include "NiPoint3.h"
 #include "ServerState.h"
 #include "WorldState.h"
+#include <Loader.h>
 #include <memory>
 #include <simdjson.h>
 
@@ -25,8 +26,8 @@ public:
   ~PartOne();
 
   void AddListener(std::shared_ptr<Listener> listener);
-
   bool IsConnected(Networking::UserId userId) const;
+  void Tick();
 
   // API
   void CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
@@ -39,12 +40,10 @@ public:
                        Networking::ISendTarget* sendTarget);
   void SendCustomPacket(Networking::UserId userId, const std::string& jContent,
                         Networking::ISendTarget* sendTarget);
-
   std::string GetActorName(uint32_t actorFormId);
   NiPoint3 GetActorPos(uint32_t actorFormId);
-
-  Networking::UserId ConnectBot();
-  void DisconnectBot(Networking::UserId id);
+  void AttachEspm(espm::Loader* espm, Networking::ISendTarget* sendTarget);
+  espm::Loader& GetEspm() const;
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
@@ -71,6 +70,9 @@ private:
 
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
+
+  void HandleActivate(Networking::UserId userId, uint32_t caster,
+                      uint32_t target);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

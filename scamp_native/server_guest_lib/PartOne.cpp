@@ -12,11 +12,104 @@ struct PartOne::Impl
 {
   simdjson::dom::parser parser;
   std::vector<std::shared_ptr<Listener>> listeners;
+  espm::Loader* espm = nullptr;
+
+  std::function<void(Networking::ISendTarget*sendTarget,
+                     MpObjectReference*emitter, MpActor*listener)>
+    onSubscribe, onUnsubscribe;
+
+  espm::CompressedFieldsCache compressedFieldsCache;
 };
 
 PartOne::PartOne()
 {
   pImpl.reset(new Impl);
+
+  pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
+                              MpObjectReference* emitter, MpActor* listener) {
+    if (!emitter)
+      throw std::runtime_error("nullptr emitter in onSubscribe");
+
+    auto& emitterPos = emitter->GetPos();
+    auto& emitterRot = emitter->GetAngle();
+
+    bool isMe = emitter == listener;
+
+    auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
+
+    const char *lookPrefix = "", *look = "";
+    if (emitterAsActor) {
+      auto& jLook = emitterAsActor->GetLookAsJson();
+      if (!jLook.empty()) {
+        lookPrefix = R"(, "look": )";
+        look = jLook.data();
+      }
+    }
+
+    const char *equipmentPrefix = "", *equipment = "";
+    if (emitterAsActor) {
+      auto& jEquipment = emitterAsActor->GetEquipmentAsJson();
+      if (!jEquipment.empty()) {
+        equipmentPrefix = R"(, "equipment": )";
+        equipment = jEquipment.data();
+      }
+    }
+
+    const char* refrIdPrefix = "";
+    char refrId[32] = { 0 };
+    if (!emitterAsActor) {
+      refrIdPrefix = R"(, "refrId": )";
+      sprintf(refrId, "%d", emitter->GetFormId());
+    }
+
+    const char* baseIdPrefix = "";
+    char baseId[32] = { 0 };
+    if (emitter->GetBaseId() != 0) {
+      baseIdPrefix = R"(, "baseId": )";
+      sprintf(baseId, "%d", emitter->GetBaseId());
+    }
+
+    std::string props;
+
+    const char *propsPrefix = "", *propsPostfix = "";
+    emitter->VisitProperties([&](const char* propName, const char* jsonValue) {
+      propsPrefix = R"(, "props": { )";
+      propsPostfix = R"( })";
+
+      if (props.size() > 0)
+        props += R"(, ")";
+      else
+        props += '"';
+      props += propName;
+      props += R"(": )";
+      props += jsonValue;
+    });
+
+    const char* method = "createActor";
+
+    auto listenerUserId = serverState.UserByActor(listener);
+    if (listenerUserId != Networking::InvalidUserId)
+      Networking::SendFormatted(
+        sendTarget, listenerUserId,
+        R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
+        method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
+        emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
+        emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix,
+        equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
+        props.data(), propsPostfix);
+  };
+
+  pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
+                                MpObjectReference* emitter,
+                                MpActor* listener) {
+    auto listenerUserId = serverState.UserByActor(listener);
+    if (listenerUserId != Networking::InvalidUserId &&
+        listenerUserId != serverState.disconnectingUserId)
+      Networking::SendFormatted(sendTarget, listenerUserId,
+                                R"({"type": "destroyActor", "idx": %u})",
+                                emitter->GetIdx());
+  };
 }
 
 PartOne::PartOne(std::shared_ptr<Listener> listener)
@@ -42,57 +135,42 @@ bool PartOne::IsConnected(Networking::UserId userId) const
   return serverState.IsConnected(userId);
 }
 
+void PartOne::Tick()
+{
+  worldState.TickTimers();
+}
+
 void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                           uint32_t cellOrWorld,
                           Networking::ISendTarget* sendTarget)
 {
   auto st = &serverState;
 
-  auto onSubscribe = [sendTarget, st](MpActor* emitter, MpActor* listener) {
-    auto& emitterPos = emitter->GetPos();
-    auto& emitterRot = emitter->GetAngle();
+  MpActor::SubscribeCallback
+    subscribe =
+      [sendTarget, this](MpObjectReference*emitter, MpActor*listener) {
+        return pImpl->onSubscribe(sendTarget, emitter, listener);
+      },
+    unsubscribe = [sendTarget, this](MpObjectReference*emitter,
+                                     MpActor*listener) {
+      return pImpl->onUnsubscribe(sendTarget, emitter, listener);
+    };
 
-    bool isMe = emitter == listener;
-
-    const char *lookPrefix = "", *look = "";
-    auto& jLook = emitter->GetLookAsJson();
-    if (!jLook.empty()) {
-      lookPrefix = R"(, "look": )";
-      look = jLook.data();
-    }
-
-    const char *equipmentPrefix = "", *equipment = "";
-    auto& jEquipment = emitter->GetEquipmentAsJson();
-    if (!jEquipment.empty()) {
-      equipmentPrefix = R"(, "equipment": )";
-      equipment = jEquipment.data();
-    }
-
-    auto listenerUserId = st->UserByActor(listener);
-    if (listenerUserId != Networking::InvalidUserId)
-      Networking::SendFormatted(
-        sendTarget, listenerUserId,
-        R"({"type": "createActor", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s})",
-        emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x, emitterPos.y,
-        emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-        emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix,
-        equipment);
+  MpActor::SendToUserFn sendToUser = [sendTarget,
+                                      st](MpActor* actor, const void* data,
+                                          size_t size, bool reliable) {
+    auto targetuserId = st->UserByActor(actor);
+    if (targetuserId != Networking::InvalidUserId &&
+        st->disconnectingUserId != targetuserId)
+      sendTarget->Send(targetuserId,
+                       reinterpret_cast<Networking::PacketData>(data), size,
+                       reliable);
   };
 
-  auto onUnsubscribe = [sendTarget, st](MpActor* emitter, MpActor* listener) {
-    auto listenerUserId = st->UserByActor(listener);
-    if (listenerUserId != Networking::InvalidUserId &&
-        listenerUserId != st->disconnectingUserId)
-      Networking::SendFormatted(sendTarget, listenerUserId,
-                                R"({"type": "destroyActor", "idx": %u})",
-                                emitter->GetIdx());
-  };
-
-  worldState.AddForm(
-    std::unique_ptr<MpActor>(new MpActor(
-      { pos, { 0, 0, angleZ }, cellOrWorld }, onSubscribe, onUnsubscribe)),
-    formId);
+  worldState.AddForm(std::unique_ptr<MpActor>(
+                       new MpActor({ pos, { 0, 0, angleZ }, cellOrWorld },
+                                   subscribe, unsubscribe, sendToUser)),
+                     formId);
 }
 
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
@@ -174,13 +252,113 @@ NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
   return ac.GetPos();
 }
 
-Networking::UserId PartOne::ConnectBot()
+namespace {
+inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
 {
-  return -1;
+  return *reinterpret_cast<const NiPoint3*>(locationalData->pos);
 }
 
-void PartOne::DisconnectBot(Networking::UserId id)
+inline NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
 {
+  static const auto g_pi = std::acos(-1.f);
+  return { locationalData->rotRadians[0] / g_pi * 180.f,
+           locationalData->rotRadians[1] / g_pi * 180.f,
+           locationalData->rotRadians[2] / g_pi * 180.f };
+}
+
+}
+
+void PartOne::AttachEspm(espm::Loader* espm,
+                         Networking::ISendTarget* sendTarget)
+{
+  pImpl->espm = espm;
+  pImpl->espm->GetBrowser();
+  worldState.AttachEspm(espm);
+
+  clock_t was = clock();
+
+  auto refrRecords = espm->GetBrowser().GetRecordsByType("REFR");
+  for (size_t i = 0; i < refrRecords.size(); ++i) {
+    auto& subVector = refrRecords[i];
+    auto mapping = espm->GetBrowser().GetMapping(i);
+
+    printf("starting %d\n", static_cast<int>(i));
+
+    for (auto& refrRecord : *subVector) {
+      auto refr = reinterpret_cast<espm::REFR*>(refrRecord);
+      auto data = refr->GetData();
+
+      auto baseId = espm::GetMappedId(data.baseId, *mapping);
+      auto base = espm->GetBrowser().LookupById(baseId);
+      if (!base.rec)
+        printf("baseId %x %p\n", baseId, base.rec);
+      if (!base.rec)
+        continue;
+
+      espm::Type t = base.rec->GetType();
+      if (!espm::IsItem(t) && t != "DOOR" && t != "CONT" &&
+          (t != "FLOR" ||
+           !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
+          (t != "TREE" ||
+           !reinterpret_cast<espm::TREE*>(base.rec)->GetData().resultItem))
+        continue;
+
+      auto formId = espm::GetMappedId(refrRecord->GetId(), *mapping);
+      auto locationalData = data.loc;
+
+      auto world = espm::GetExteriorWorldGroup(refrRecord);
+      auto cell = espm::GetCellGroup(refrRecord);
+
+      uint32_t worldOrCell;
+
+      if (!world || !world->GetParentWRLD(worldOrCell))
+        worldOrCell = 0;
+
+      if (!worldOrCell) {
+        if (!cell->GetParentCELL(worldOrCell)) {
+          printf("Anomally: refr without world/cell\n");
+          continue;
+        }
+      }
+
+      auto existing = i ? worldState.LookupFormById(formId).get()
+                        : reinterpret_cast<MpForm*>(0);
+      if (existing) {
+        auto existingAsRefr = reinterpret_cast<MpObjectReference*>(existing);
+
+        if (locationalData) {
+          existingAsRefr->SetPos(GetPos(locationalData));
+          existingAsRefr->SetAngle(GetRot(locationalData));
+        }
+
+      } else {
+        if (!locationalData) {
+          printf("Anomally: refr without locationalData\n");
+          continue;
+        }
+
+        auto typeStr = t.ToString();
+        worldState.AddForm(
+          std::unique_ptr<MpObjectReference>(new MpObjectReference(
+            { GetPos(locationalData), GetRot(locationalData), worldOrCell },
+            [sendTarget, this](MpObjectReference* emitter, MpActor* listener) {
+              return pImpl->onSubscribe(sendTarget, emitter, listener);
+            },
+            [sendTarget, this](MpObjectReference* emitter, MpActor* listener) {
+              return pImpl->onUnsubscribe(sendTarget, emitter, listener);
+            },
+            baseId, typeStr.data())),
+          formId, true);
+      }
+    }
+  }
+
+  printf("AttachEspm took %d ticks\n", int(clock() - was));
+}
+
+espm::Loader& PartOne::GetEspm() const
+{
+  return worldState.GetEspm();
 }
 
 namespace {
@@ -330,15 +508,86 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
       break;
     }
     case MsgType::UpdateEquipment: {
-      auto actor = SendToNeighbours(jMessage, userId, data, length, true);
+
+      MpActor* actor = serverState.ActorByUser(userId);
       if (actor) {
         simdjson::dom::element data_;
-        Read(jMessage, "data", &data_);
-        actor->SetEquipment(simdjson::minify(data_));
+        ReadEx(jMessage, "data", &data_);
+        simdjson::dom::element inv;
+        ReadEx(data_, "inv", &inv);
+
+        auto equipmentInv = Inventory::FromJson(inv);
+
+        bool badEq = false;
+        for (auto& e : equipmentInv.entries) {
+          if (!actor->GetInventory().HasItem(e.baseId)) {
+            badEq = true;
+            break;
+          }
+        }
+
+        if (!badEq) {
+          SendToNeighbours(jMessage, userId, data, length, true);
+
+          simdjson::dom::element data_;
+          Read(jMessage, "data", &data_);
+          actor->SetEquipment(simdjson::minify(data_));
+        }
+      }
+      break;
+    }
+    case MsgType::Activate: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, "data", &data_);
+      uint32_t caster, target;
+      ReadEx(data_, "caster", &caster);
+      ReadEx(data_, "target", &target);
+
+      HandleActivate(userId, caster, target);
+
+      break;
+    }
+    case MsgType::PutItem:
+    case MsgType::TakeItem: {
+      MpActor* actor = serverState.ActorByUser(userId);
+      if (actor && pImpl->espm) {
+        uint32_t target;
+        ReadEx(jMessage, "target", &target);
+        auto e = Inventory::Entry::FromJson(jMessage);
+        auto& ref = worldState.GetFormAt<MpObjectReference>(target);
+
+        if (type == MsgType::PutItem)
+          ref.PutItem(*actor, e);
+        else
+          ref.TakeItem(*actor, e);
       }
       break;
     }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }
+}
+
+void PartOne::HandleActivate(Networking::UserId userId, uint32_t caster,
+                             uint32_t target)
+{
+  if (!pImpl->espm)
+    throw std::runtime_error("No loaded esm or esp files are found");
+
+  const auto ac = serverState.ActorByUser(userId);
+  if (!ac)
+    throw std::runtime_error("Can't do this without Actor attached");
+
+  if (caster != 0x14) {
+    std::stringstream ss;
+    ss << "Bad caster (0x" << std::hex << caster << ")";
+    throw std::runtime_error(ss.str());
+  }
+
+  auto refPtr = std::dynamic_pointer_cast<MpObjectReference>(
+    worldState.LookupFormById(target));
+  if (!refPtr)
+    return;
+
+  refPtr->Activate(*ac);
 }

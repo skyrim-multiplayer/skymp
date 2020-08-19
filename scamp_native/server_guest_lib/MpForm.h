@@ -11,6 +11,8 @@ class MpForm
   friend class WorldState;
 
 public:
+  static const char* Type() { return "Form"; }
+
   static const char* PrettifyType(const char* typeidName)
   {
 #ifdef WIN32
@@ -46,11 +48,16 @@ protected:
   auto GetParent() const { return parent; }
 
   // See WorldState::AddForm
-  virtual void Init(uint32_t formId) { id = formId; };
+  virtual void Init(WorldState* parent_, uint32_t formId_)
+  {
+    parent = parent_;
+    id = formId_;
+  };
 
 private:
-  virtual void BeforeDestroy(){};
-
   uint32_t id = 0;
   WorldState* parent = nullptr;
+
+protected:
+  virtual void BeforeDestroy(){};
 };

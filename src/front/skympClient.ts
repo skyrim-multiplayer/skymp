@@ -6,27 +6,23 @@ import {
   settings,
   Game,
   Ui,
-  Utility,
-  findConsoleCommand,
 } from "skyrimPlatform";
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
 import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
-import { applyInventory } from "./components/inventory";
+import { getDiff, getInventory, Inventory } from "./components/inventory";
 import { MsgType } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
-import { RemoteServer } from "./remoteServer";
+import { RemoteServer, getPcInventory } from "./remoteServer";
 import { SendTarget } from "./sendTarget";
 import * as networking from "./networking";
 import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
-import { consoleCommands, scriptCommands } from "./consoleCommands";
 import * as deathSystem from "./deathSystem";
-import { verifyVersion } from "./version";
-import * as browser from "./browser";
+import { count } from "console";
 
 interface AnyMessage {
   type?: string;
@@ -91,6 +87,56 @@ export class SkympClient {
     on("update", () => {
       if (!this.singlePlayer) {
         this.sendInputs();
+      }
+    });
+
+    let lastInv: Inventory;
+
+    on("activate", (e) => {
+      lastInv = getInventory(Game.getPlayer());
+      const caster = e.caster ? e.caster.getFormID() : 0;
+      const target = e.target ? e.target.getFormID() : 0;
+
+      if (caster !== 0x14) return;
+
+      if (!target || target >= 0xff000000) return;
+
+      this.sendTarget.send(
+        { t: MsgType.Activate, data: { caster, target } },
+        true
+      );
+      printConsole("sendActi", { caster, target });
+    });
+
+    on("containerChanged", (e) => {
+      if (e.oldContainer && e.newContainer) {
+        if (
+          e.oldContainer.getFormID() === 0x14 ||
+          e.newContainer.getFormID() === 0x14
+        ) {
+          printConsole(1);
+          if (!lastInv) lastInv = getPcInventory();
+          if (lastInv) {
+            printConsole(2);
+            const newInv = getInventory(Game.getPlayer());
+            const diff = getDiff(lastInv, newInv, true);
+            printConsole({ diff });
+            diff.entries.forEach((entry) => {
+              if (entry.count !== 0) {
+                const msg = JSON.parse(JSON.stringify(entry));
+                delete msg["name"]; // Extra name works too strange
+                msg["t"] = entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
+                msg["count"] = Math.abs(msg["count"]);
+                msg["target"] =
+                  e.oldContainer.getFormID() === 0x14
+                    ? e.newContainer.getFormID()
+                    : e.oldContainer.getFormID();
+                this.sendTarget.send(msg, true);
+              }
+            });
+            lastInv = newInv;
+          }
+        }
       }
     });
 
@@ -216,7 +262,11 @@ export class SkympClient {
       }
       storage.view = view;
     });
+    let counter = 0;
     on("update", () => {
+      ++counter;
+      if (counter === 1000000) counter = 0;
+      //if (counter % 20 !== 0) return;
       if (!this.singlePlayer) view.update(this.modelSource.getWorldModel());
     });
   }

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <espm.h>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -44,8 +45,12 @@ class CombineBrowser
 public:
   // Returns default constructed LookupResult on failure
   LookupResult LookupById(uint32_t formId) const noexcept;
-  std::pair<espm::RecordHeader**, size_t>  FindNavMeshes(uint32_t worldSpaceId,
-                           espm::CellOrGridPos cellOrGridPos) const noexcept;
+
+  std::pair<espm::RecordHeader**, size_t> FindNavMeshes(
+    uint32_t worldSpaceId, espm::CellOrGridPos cellOrGridPos) const noexcept;
+
+  std::vector<const std::vector<espm::RecordHeader*>*> GetRecordsByType(
+    const char* type) const;
 
   // Returns nullptr on failure
   const espm::IdMapping* GetMapping(size_t fileIndex) const noexcept;
