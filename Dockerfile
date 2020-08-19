@@ -26,7 +26,7 @@ RUN gcc --version
 
 RUN apt-get install unzip \
   && mkdir /skyrim_data_dir \ 
-  && curl https://downloader.disk.yandex.ru/disk/b0bd6d250a38af5f493f53c3dd720dbad9e17340e404c9d4ae4d728a32f42019/5f3d836c/VQ6HMMpmBmS5h50I-EPS3siVF5_BZAkJJnl-bZjkAmkynRz-5mDdoFnkSC7A3oQHfua3BPArX1mb67SNmJnRPg%3D%3D?uid=0&filename=Data.zip&disposition=attachment&hash=zFVmg9FGlZJUklfISQgqDOZCre1KAnGuKxhnMAotHqLsXETuzbZtOhIkPGLa6nPFq/J6bpmRyOJonT3VoXnDag%3D%3D&limit=0&content_type=application%2Fzip&owner_uid=1026578774&fsize=264080548&hid=cdfc4976ebc1a8db691ce794476c99af&media_type=compressed&tknv=v2 -o /skyrim_data_dir/Data.zip \
+  && curl "https://downloader.disk.yandex.ru/disk/b0bd6d250a38af5f493f53c3dd720dbad9e17340e404c9d4ae4d728a32f42019/5f3d836c/VQ6HMMpmBmS5h50I-EPS3siVF5_BZAkJJnl-bZjkAmkynRz-5mDdoFnkSC7A3oQHfua3BPArX1mb67SNmJnRPg%3D%3D?uid=0&filename=Data.zip&disposition=attachment&hash=zFVmg9FGlZJUklfISQgqDOZCre1KAnGuKxhnMAotHqLsXETuzbZtOhIkPGLa6nPFq/J6bpmRyOJonT3VoXnDag%3D%3D&limit=0&content_type=application%2Fzip&owner_uid=1026578774&fsize=264080548&hid=cdfc4976ebc1a8db691ce794476c99af&media_type=compressed&tknv=v2" -o /skyrim_data_dir/Data.zip \
   && cd /skyrim_data_dir \
   && unzip Data.zip
 
