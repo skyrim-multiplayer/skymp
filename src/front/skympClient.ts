@@ -22,7 +22,6 @@ import * as networking from "./networking";
 import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import * as deathSystem from "./deathSystem";
-import { count } from "console";
 
 interface AnyMessage {
   type?: string;

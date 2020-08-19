@@ -193,11 +193,9 @@ export class FormView implements View<FormModel> {
         }
       }
     } else {
-      const AADeleteWhenDoneTestJeremyRegular = 0x0010d13e;
       const base =
-        getFormEx(+model.baseId) ||
-        getFormEx(this.getLookBasedBase()) ||
-        getFormEx(AADeleteWhenDoneTestJeremyRegular);
+        getFormEx(+model.baseId) || getFormEx(this.getLookBasedBase());
+      if (!base) return;
 
       let refr = ObjectReference.from(Game.getFormEx(this.refrId));
       const respawnRequired =

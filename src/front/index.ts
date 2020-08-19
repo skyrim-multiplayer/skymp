@@ -8,7 +8,6 @@ import {
   on,
   once,
   GlobalVariable,
-  printConsole,
   ObjectReference,
   Weather,
 } from "skyrimPlatform";
