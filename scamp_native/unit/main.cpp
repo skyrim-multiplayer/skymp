@@ -5,9 +5,13 @@
 
 #include <Loader.h>
 
-#define DATA_DIR                                                              \
-  "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special "        \
-  "Edition\\Data"
+#ifndef WIN32
+#  define DATA_DIR = "/skyrim_data_dir";
+#else
+#  define DATA_DIR                                                            \
+    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special "      \
+    "Edition\\Data"
+#endif
 
 espm::Loader l(DATA_DIR,
                { "Skyrim.esm", "Update.esm", "Dawnguard.esm",
