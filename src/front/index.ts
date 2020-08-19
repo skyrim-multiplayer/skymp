@@ -19,7 +19,6 @@ new SkympClient();
 
 const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
-  Game.enableFastTravel(false);
 };
 
 once("update", enforceLimitations);
@@ -30,6 +29,7 @@ once("update", () => {
 });
 on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);
+  Game.enableFastTravel(false);
 });
 
 browser.main();
