@@ -4,6 +4,7 @@
 #include "PartOne.h"
 #include <catch2/catch.hpp>
 #include <nlohmann/json.hpp>
+#include <thread>
 
 using namespace Catch;
 
@@ -68,10 +69,11 @@ static const auto jLook = nlohmann::json{
       { "presets", nlohmann::json::array({ 0, 0, 0, 0 }) } } } // size=4
 };
 
-static const auto jEquipment =
-  nlohmann::json{ { "t", MsgType::UpdateEquipment },
-                  { "idx", 0 },
-                  { "data", { { "armor", nlohmann::json::array() } } } };
+static const auto jEquipment = nlohmann::json{
+  { "t", MsgType::UpdateEquipment },
+  { "idx", 0 },
+  { "data", { { "inv", { { "entries", nlohmann::json::array() } } } } }
+};
 
 void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
                       Networking::UserId userId)
@@ -123,7 +125,14 @@ public:
             size_t length, bool reliable) override
   {
     std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
-    Message m{ nlohmann::json::parse(s), targetUserId, reliable };
+    Message m;
+    try {
+      m = Message{ nlohmann::json::parse(s), targetUserId, reliable };
+    } catch (std::exception& e) {
+      std::stringstream ss;
+      ss << e.what() << std::endl << "`" << s << "`";
+      throw std::runtime_error(ss.str());
+    }
     messages.push_back(m);
   }
 

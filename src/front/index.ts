@@ -13,13 +13,13 @@ import {
   Weather,
 } from "skyrimPlatform";
 import { verifyVersion } from "./version";
-import { applyInventory } from "./components/inventory";
 import { updateWc } from "./worldCleaner";
 
 new SkympClient();
 
 const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
+  Game.enableFastTravel(false);
 };
 
 once("update", enforceLimitations);
@@ -32,32 +32,6 @@ on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);
 });
 
-loadGameManager.addLoadGameListener((e) => {
-  if (!e.isCausedBySkyrimPlatform) return;
-
-  applyInventory(Game.getPlayer(), { entries: [] }, false);
-  Utility.wait(0.4).then(() => {
-    [
-      [0x00012e49, 1],
-      [0x00012e4b, 1],
-      [0x00012e46, 1],
-      [0x00012e4d, 1],
-      [0x00012eb6, 1],
-      [0x0001397d, 100],
-      [0x0003b562, 1],
-      [0x0001359d, 1],
-      [0x02000800, 1],
-      [0x02000801, 2],
-      [0x00012eb7, 1],
-      [0x00013982, 1],
-      [0x00029b8b, 1],
-      [0x0004dee3, 1],
-    ].forEach((p) => {
-      Game.getPlayer().addItem(Game.getFormEx(p[0]), p[1], true);
-    });
-  });
-});
-
 browser.main();
 blockConsole();
 
@@ -67,13 +41,13 @@ on("update", () => updateWc());
 
 let lastTimeUpd = 0;
 on("update", () => {
-  if (Date.now() - lastTimeUpd <= 5000) return;
+  if (Date.now() - lastTimeUpd <= 2000) return;
   lastTimeUpd = Date.now();
 
   // Also update weather to be always clear
   const w = Weather.findWeather(0);
   if (w) {
-    w.forceActive(false);
+    w.setActive(false, false);
   }
 
   const gameHourId = 0x38;
@@ -112,4 +86,24 @@ on("update", () => {
   if (!refr) return;
   refr.lock(false, false);
   riftenUnlocked = true;
+});
+
+const n = 10;
+let k = 0;
+let zeroKMoment = 0;
+let lastFps = 0;
+on("update", () => {
+  ++k;
+  if (k == n) {
+    k = 0;
+    if (zeroKMoment) {
+      const timePassed = (Date.now() - zeroKMoment) * 0.001;
+      const fps = Math.round(n / timePassed);
+      if (lastFps != fps) {
+        lastFps = fps;
+        //printConsole(`Current FPS is ${fps}`);
+      }
+    }
+    zeroKMoment = Date.now();
+  }
 });

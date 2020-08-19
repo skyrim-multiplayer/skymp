@@ -3,9 +3,13 @@
 #include "Grid.h"
 #include "GridElement.h"
 #include "NiPoint3.h"
+#include <Loader.h>
 #include <MakeID.h>
 #include <MpForm.h>
 #include <algorithm>
+#include <list>
+#include <map>
+#include <memory>
 #include <sparsepp/spp.h>
 #include <sstream>
 
@@ -13,10 +17,12 @@
 #  undef AddForm
 #endif
 
+class MpObjectReference;
 class MpActor;
 
 class WorldState
 {
+  friend class MpObjectReference;
   friend class MpActor;
 
 public:
@@ -26,7 +32,14 @@ public:
 
   void Clear();
 
-  void AddForm(std::unique_ptr<MpForm> form, uint32_t formId);
+  void AttachEspm(espm::Loader* espm);
+
+  void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
+               bool skipChecks = false);
+
+  void TickTimers();
+
+  void RequestReloot(MpObjectReference& ref);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
@@ -42,10 +55,8 @@ public:
 
     auto typedForm = std::dynamic_pointer_cast<F>(form);
     if (!typedForm) {
-      const char* formType = typeid(F).name() + strlen("class Mp");
-
       std::stringstream ss;
-      ss << "Form with id " << std::hex << formId << " is not " << formType;
+      ss << "Form with id " << std::hex << formId << " is not " << F::Type();
       throw std::runtime_error(ss.str());
     }
 
@@ -87,8 +98,17 @@ public:
     forms.erase(it);
   };
 
+  espm::Loader& GetEspm() const;
+  espm::CompressedFieldsCache& GetEspmCache();
+
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
-  spp::sparse_hash_map<uint32_t, GridImpl<MpActor*>> grids;
+  spp::sparse_hash_map<uint32_t, GridImpl<MpObjectReference*>> grids;
   std::unique_ptr<MakeID> formIdxManager;
+  std::map<
+    std::chrono::milliseconds,
+    std::list<std::pair<uint32_t, std::chrono::steady_clock::time_point>>>
+    relootTimers;
+  espm::Loader* espm = nullptr;
+  std::unique_ptr<espm::CompressedFieldsCache> espmCache;
 };

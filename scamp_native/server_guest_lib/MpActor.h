@@ -1,28 +1,13 @@
 #pragma once
-#include "FormIndex.h"
-#include "JsonUtils.h"
-#include "MpForm.h"
-#include <nlohmann/json.hpp>
+#include "MpObjectReference.h"
 #include <set>
-#include <simdjson.h>
-#include <vector>
 
 class WorldState;
 
-struct LocationalData
-{
-  NiPoint3 pos, rot;
-  uint32_t cellOrWorld;
-};
-
-class MpActor
-  : public MpForm
-  , private LocationalData
-  , public FormIndex
+class MpActor : public MpObjectReference
 {
 public:
-  using SubscribeCallback =
-    std::function<void(MpActor* emitter, MpActor* listener)>;
+  static const char* Type() { return "Actor"; }
 
   struct Tint
   {
@@ -52,50 +37,55 @@ public:
     std::string name;
   };
 
+  constexpr static uint32_t nullBaseId = 0;
+
+  using SendToUserFn = std::function<void(MpActor* actor, const void* data,
+                                          size_t size, bool reliable)>;
+
   MpActor(const LocationalData& locationalData_,
           const SubscribeCallback& onSubscribe_,
-          const SubscribeCallback& onUnsubscribe_)
-    : onSubscribe(onSubscribe_)
-    , onUnsubscribe(onUnsubscribe_)
+          const SubscribeCallback& onUnsubscribe_,
+          const SendToUserFn& sendToUser_)
+    : MpObjectReference(locationalData_, onSubscribe_, onUnsubscribe_,
+                        nullBaseId, "ACHR")
+    , sendToUser(sendToUser_)
   {
-    static_cast<LocationalData&>(*this) = locationalData_;
   }
 
   ~MpActor() = default;
 
-  const auto& GetPos() const { return pos; }
-  const auto& GetAngle() const { return rot; }
-  const auto& GetCellOrWorld() const { return cellOrWorld; }
   const auto& IsRaceMenuOpen() const { return isRaceMenuOpen; }
   auto GetLook() const { return look.get(); }
-
+  const std::string& GetLookAsJson();
   const std::string& GetEquipmentAsJson() { return jEquipmentCache; };
 
-  void SetPos(const NiPoint3& newPos);
-  void SetAngle(const NiPoint3& newAngle);
   void SetRaceMenuOpen(bool isOpen);
   void SetLook(const Look* newLook);
   void SetEquipment(const std::string& jsonString);
 
-  const std::string& GetLookAsJson();
+  void SendToUser(const void* data, size_t size, bool reliable);
 
-  static void Subscribe(MpActor* emitter, MpActor* listener);
-  static void Unsubscribe(MpActor* emitter, MpActor* listener);
+  class DestroyEventSink
+  {
+  public:
+    virtual ~DestroyEventSink() = default;
+    virtual void BeforeDestroy(MpActor& actor) = 0;
+  };
 
-  auto& GetListeners() const { return listeners; }
+  void AddEventSink(std::shared_ptr<DestroyEventSink> sink);
+  void RemoveEventSink(std::shared_ptr<DestroyEventSink> sink);
 
 private:
   void UnsubscribeFromAll();
-  void BeforeDestroy() override;
 
-  bool isOnGrid = false;
-  std::set<MpActor*> listeners;
-  std::set<MpActor*> emitters;
-  const SubscribeCallback onSubscribe, onUnsubscribe;
+  const SendToUserFn sendToUser;
 
   bool isRaceMenuOpen = false;
   std::unique_ptr<Look> look;
-
   std::string jLookCache;
   std::string jEquipmentCache;
+  std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
+
+protected:
+  void BeforeDestroy() override;
 };

@@ -17,12 +17,15 @@ import {
   storage,
   getPluginSourceCode,
   browser,
+  ObjectReference,
+  Form,
+  on,
+  Ui,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
-
-interface FormModelInfo extends FormModel {
-  dummy: undefined;
-}
+import { applyInventory, Inventory } from "./components/inventory";
+import { isBadMenuShown } from "./components/equipment";
+import { Movement } from "./components/movement";
 
 class SpawnTask {
   running = false;
@@ -64,14 +67,81 @@ if (storage["taskVerifySourceCode"] === true) {
   storage["taskVerifySourceCode"] = false;
 }
 
+export const getPcInventory = (): Inventory => {
+  const res = storage["pcInv"];
+  if (typeof res === "object" && res["entries"]) {
+    return res;
+  }
+  return null;
+};
+
+const setPcInventory = (inv: Inventory): void => {
+  storage["pcInv"] = inv;
+};
+
+let pcInvLastApply = 0;
+on("update", () => {
+  if (Date.now() - pcInvLastApply > 5000 && !isBadMenuShown()) {
+    pcInvLastApply = Date.now();
+    const pcInv = getPcInventory();
+    if (pcInv) applyInventory(Game.getPlayer(), pcInv, false, true);
+  }
+});
+
 export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
+  setInventory(msg: messages.SetInventory): void {
+    once("update", () => {
+      setPcInventory(msg.inventory);
+      pcInvLastApply = 0;
+    });
+  }
+
+  openContainer(msg: messages.OpenContainer): void {
+    once("update", () => {
+      ObjectReference.from(Game.getFormEx(msg.target)).activate(
+        Game.getPlayer(),
+        true
+      );
+      (async () => {
+        while (!Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
+        while (Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
+        networking.send(
+          {
+            t: messages.MsgType.Activate,
+            data: { caster: 0x14, target: msg.target },
+          },
+          true
+        );
+      })();
+    });
+  }
+
+  teleport(msg: messages.Teleport): void {
+    once("update", () => {
+      TESModPlatform.moveRefrToPosition(
+        Game.getPlayer(),
+        Cell.from(Game.getFormEx(msg.worldOrCell)),
+        WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
+        msg.pos[0],
+        msg.pos[1],
+        msg.pos[2],
+        msg.rot[0],
+        msg.rot[1],
+        msg.rot[2]
+      );
+      Utility.wait(0.2).then(() => {
+        Game.getPlayer().setAngle(msg.rot[0], msg.rot[1], msg.rot[2]);
+      });
+    });
+  }
+
   createActor(msg: messages.CreateActorMessage): void {
     const i = msg.idx;
-    if (this.forms.length <= i) this.forms.length = i + 1;
+    if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
 
-    this.forms[i] = {
-      dummy: undefined,
-      movement: {
+    let movement: Movement = null;
+    if (!msg.refrId) {
+      movement = {
         pos: msg.transform.pos,
         rot: msg.transform.rot,
         worldOrCell: msg.transform.worldOrCell,
@@ -82,19 +152,49 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isBlocking: false,
         isWeapDrawn: false,
         healthPercentage: 1.0,
-      },
+      };
+    }
+
+    this.worldModel.forms[i] = {
+      movement,
+      numMovementChanges: 0,
+      numLookChanges: 0,
+      baseId: msg.baseId,
+      refrId: msg.refrId,
     };
     if (msg.look) {
-      this.forms[i].look = msg.look;
+      this.worldModel.forms[i].look = msg.look;
     }
 
     if (msg.equipment) {
-      this.forms[i].equipment = msg.equipment;
+      this.worldModel.forms[i].equipment = msg.equipment;
     }
 
-    if (msg.isMe) this.myActorIndex = i;
+    if (msg.props) {
+      for (const propName in msg.props) {
+        this.UpdateProperty({
+          t: messages.MsgType.UpdateProperty,
+          propName,
+          data: msg.props[propName],
+          idx: i,
+        });
+      }
+    }
+
+    if (msg.isMe) this.worldModel.playerCharacterFormIdx = i;
 
     // TODO: move to a separate module
+
+    const applyPcInv = () => {
+      applyInventory(
+        Game.getPlayer(),
+        msg.inventory ? msg.inventory : { entries: [] },
+        false
+      );
+      if (msg.inventory)
+        this.setInventory({ type: "setInventory", inventory: msg.inventory });
+    };
+
     if (msg.isMe) {
       const task = new SpawnTask();
       once("update", () => {
@@ -112,6 +212,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
             msg.transform.rot[1],
             msg.transform.rot[2]
           );
+          // Unfortunatelly it requires two calls to work
+          Utility.wait(1).then(applyPcInv);
+          Utility.wait(1.3).then(applyPcInv);
         }
       });
       once("tick", () => {
@@ -124,6 +227,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               msg.transform.rot,
               msg.transform.worldOrCell
             );
+            once("update", () => {
+              applyPcInv();
+              Utility.wait(0.3).then(applyPcInv);
+            });
           }
         });
       });
@@ -132,10 +239,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   destroyActor(msg: messages.DestroyActorMessage): void {
     const i = msg.idx;
-    this.forms[i] = null;
+    this.worldModel.forms[i] = null;
 
-    if (this.myActorIndex === msg.idx) {
-      this.myActorIndex = -1;
+    if (this.worldModel.playerCharacterFormIdx === msg.idx) {
+      this.worldModel.playerCharacterFormIdx = -1;
 
       // TODO: move to a separate module
       Game.quitToMainMenu();
@@ -144,31 +251,41 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   UpdateMovement(msg: messages.UpdateMovementMessage): void {
     const i = msg.idx;
-    this.forms[i].movement = msg.data;
-    if (!this.forms[i].numMovementChanges) {
-      this.forms[i].numMovementChanges = 0;
+    this.worldModel.forms[i].movement = msg.data;
+    if (!this.worldModel.forms[i].numMovementChanges) {
+      this.worldModel.forms[i].numMovementChanges = 0;
     }
-    this.forms[i].numMovementChanges++;
+    this.worldModel.forms[i].numMovementChanges++;
   }
 
   UpdateAnimation(msg: messages.UpdateAnimationMessage): void {
     const i = msg.idx;
-    this.forms[i].animation = msg.data;
+    this.worldModel.forms[i].animation = msg.data;
   }
 
   UpdateLook(msg: messages.UpdateLookMessage): void {
     const i = msg.idx;
-    this.forms[i].look = msg.data;
+    this.worldModel.forms[i].look = msg.data;
+    if (!this.worldModel.forms[i].numLookChanges) {
+      this.worldModel.forms[i].numLookChanges = 0;
+    }
+    this.worldModel.forms[i].numLookChanges++;
   }
 
   UpdateEquipment(msg: messages.UpdateEquipmentMessage): void {
     const i = msg.idx;
-    this.forms[i].equipment = msg.data;
+    this.worldModel.forms[i].equipment = msg.data;
+  }
+
+  UpdateProperty(msg: messages.UpdatePropertyMessage): void {
+    const i = msg.idx;
+    (this.worldModel.forms[i] as Record<string, unknown>)[msg.propName] =
+      msg.data;
   }
 
   handleConnectionAccepted(): void {
-    this.forms = [];
-    this.myActorIndex = -1;
+    this.worldModel.forms = [];
+    this.worldModel.playerCharacterFormIdx = -1;
 
     verifySourceCode();
     sendBrowserToken();
@@ -206,20 +323,19 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   getWorldModel(): WorldModel {
-    return { forms: this.forms, playerCharacterFormIdx: this.myActorIndex };
+    return this.worldModel;
   }
 
   getMyActorIndex(): number {
-    return this.myActorIndex;
+    return this.worldModel.playerCharacterFormIdx;
   }
 
   send(msg: Record<string, unknown>, reliable: boolean): void {
-    if (this.myActorIndex === -1) return;
+    if (this.worldModel.playerCharacterFormIdx === -1) return;
 
-    msg.idx = this.myActorIndex;
+    msg.idx = this.worldModel.playerCharacterFormIdx;
     networking.send(msg, reliable);
   }
 
-  private forms = new Array<FormModelInfo>();
-  private myActorIndex = -1;
+  private worldModel: WorldModel = { forms: [], playerCharacterFormIdx: -1 };
 }
