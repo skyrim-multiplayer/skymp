@@ -6,7 +6,7 @@
 #include <Loader.h>
 
 #ifndef WIN32
-#  define DATA_DIR = "/skyrim_data_dir";
+#  define DATA_DIR "/skyrim_data_dir"
 #else
 #  define DATA_DIR                                                            \
     "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special "      \
