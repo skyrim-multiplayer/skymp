@@ -1,0 +1,10 @@
+.github/*
+.vscode/*
+build/*
+cmake/*
+coverage/*
+dist_back/*
+dist_front/*
+dist_ui/*
+node_modules/*
+scamp_native/*

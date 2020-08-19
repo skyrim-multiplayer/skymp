@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "build": "babel src --out-dir build-server",
+    "serve": "SET NODE_ENV=production && node src/app.js"
+  }
+}

@@ -11,3 +11,8 @@ coverage/*
 /src/types/
 
 src/skyrim-platform/*
+
+dist_back/*
+dist_front/*
+dist_ui/*
+scamp_native/*
