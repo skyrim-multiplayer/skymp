@@ -24,9 +24,11 @@ RUN mv vcpkg /root/.local/share/pmm/1.4.2/vcpkg-bff594f7ff8e023592f366b67fd7f57f
 RUN apt-get update && apt-get upgrade -y && apt-get install -y build-essential
 RUN gcc --version
 
-RUN mkdir /skyrim_data_dir \
-  && git clone https://gitlab.com/pospelov/skyrim-dlcs.git skyrim-dlcs \
-  && mv skyrim-dlcs/* /skyrim_data_dir
+RUN apt-get install unzip \
+  && mkdir /skyrim_data_dir \ 
+  && curl https://srv-file7.gofile.io/download/TM02cR/Data.zip -o /skyrim_data_dir/Data.zip \
+  && cd /skyrim_data_dir \
+  && unzip Data.zip
 
 COPY package*.json ./
 RUN npm i
