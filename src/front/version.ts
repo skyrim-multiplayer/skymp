@@ -7,7 +7,7 @@ import {
   Ui,
 } from "skyrimPlatform";
 
-const requiredVersion = ["0.7.0+build1", "0.7.0+build2"];
+const requiredVersion = "0.7.0+build2";
 
 const realVersion =
   typeof getPlatformVersion === "function" ? getPlatformVersion() : "unknown";

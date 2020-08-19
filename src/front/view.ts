@@ -134,12 +134,6 @@ const getDefaultLookState = (): LookState => {
   return { lastNumChanges: 0, look: null };
 };
 
-let pcActivatedSomething = false;
-
-on("activate", (e) => {
-  if (e.caster && e.caster.getFormID() === 0x14) pcActivatedSomething = true;
-});
-
 export class FormView implements View<FormModel> {
   update(model: FormModel): void {
     // Other players mutate into PC clones when moving to another location
@@ -281,17 +275,18 @@ export class FormView implements View<FormModel> {
         if (isHarvested != wasHarvested) {
           let ac: Actor;
           if (isHarvested)
-            ac = Game.findClosestActor(
-              refr.getPositionX(),
-              refr.getPositionY(),
-              refr.getPositionZ(),
-              256
-            );
-          if (
-            isHarvested &&
-            ac &&
-            (pcActivatedSomething || ac.getFormID() !== 0x14)
-          ) {
+            for (let i = 0; i < 20; ++i) {
+              ac = Game.findRandomActor(
+                refr.getPositionX(),
+                refr.getPositionY(),
+                refr.getPositionZ(),
+                10000
+              );
+              if (ac && ac.getFormID() !== 0x14) {
+                break;
+              }
+            }
+          if (isHarvested && ac && ac.getFormID() !== 0x14) {
             refr.activate(ac, true);
           } else {
             refr.setHarvested(isHarvested);
