@@ -7,6 +7,8 @@ class WorldState;
 class MpActor : public MpObjectReference
 {
 public:
+  static const char* Type() { return "Actor"; }
+
   struct Tint
   {
     static Tint FromJson(simdjson::dom::element& j);

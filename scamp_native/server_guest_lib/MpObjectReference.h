@@ -45,6 +45,8 @@ class MpObjectReference
   friend class OccupantDestroyEventSink;
 
 public:
+  static const char* Type() { return "ObjectReference"; }
+
   using SubscribeCallback =
     std::function<void(MpObjectReference* emitter, MpActor* listener)>;
 

@@ -55,10 +55,8 @@ public:
 
     auto typedForm = std::dynamic_pointer_cast<F>(form);
     if (!typedForm) {
-      const char* formType = typeid(F).name() + strlen("class Mp");
-
       std::stringstream ss;
-      ss << "Form with id " << std::hex << formId << " is not " << formType;
+      ss << "Form with id " << std::hex << formId << " is not " << F::Type();
       throw std::runtime_error(ss.str());
     }
 

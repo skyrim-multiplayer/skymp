@@ -11,6 +11,8 @@ class MpForm
   friend class WorldState;
 
 public:
+  static const char* Type() { return "Form"; }
+
   static const char* PrettifyType(const char* typeidName)
   {
 #ifdef WIN32
