@@ -104,7 +104,7 @@ TEST_CASE("Activation of unexisting ref doesn't throw anything", "[PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne]")
+/*TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne]")
 {
   auto& partOne = GetPartOne();
   g_tgt = {};
@@ -130,7 +130,7 @@ TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne]")
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
   refr.SetHarvested(false);
-}
+}*/
 
 TEST_CASE("See open DisplayCaseSmFlat01 in Whiterun", "[PartOne]")
 {
