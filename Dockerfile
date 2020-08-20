@@ -29,7 +29,7 @@ RUN apt-get update -yq \
 
 # GDB
 RUN wget "http://ftp.gnu.org/gnu/gdb/gdb-9.2.tar.gz" && tar -xvzf gdb-9.2.tar.gz && \
-  cd gdb-9.2 && ./configure && make && make install && gdb --version
+  mkdir build && cd build && ../gdb-9.2/configure && make && make install && gdb --version
 
 WORKDIR /usr/src/app
 
