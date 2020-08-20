@@ -47,3 +47,4 @@ COPY . .
 RUN npm run build-ts
 
 CMD [ "npm", "run", "start" ]
+#trigger ci plz
