@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - master
+      - "feature/*"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,10 +26,9 @@ jobs:
             git remote add origin https://$DNOHUB_USERNAME:$DNOHUB_PASSWORD@github.com/$GITHUB_REPOSITORY.git
             git fetch origin $GITHUB_SHA
             git reset --hard FETCH_HEAD
-            docker build -t skymp5-server .
+            docker build -t skymp5-server:${GITHUB_REF##*/} .
             rm -rf $GITHUB_SHA
-            docker rm -f scamp || true
-            docker run -v ~/skyrim_data_dir:/skyrim_data_dir -p 8080:8080/tcp -p 3000:3000/tcp -p 7777:7777/udp --name scamp --restart always -dit skymp5-server npm run start-prod -- --master $MASTER_URL --name Nirnroot --maxPlayers 100
-          envs: GITHUB_SHA,GITHUB_REPOSITORY,DNOHUB_USERNAME,DNOHUB_PASSWORD,MASTER_URL
+            docker run -v ~/skyrim_data_dir:/skyrim_data_dir skymp5-server:${GITHUB_REF##*/} npm run test
+          envs: GITHUB_SHA,GITHUB_REPOSITORY,DNOHUB_USERNAME,DNOHUB_PASSWORD,MASTER_URL,GITHUB_REF
           script_stop: true
           command_timeout: 6h
