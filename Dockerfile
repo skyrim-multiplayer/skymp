@@ -28,6 +28,8 @@ RUN apt-get update -yq \
   && apt-get install -yq nodejs
 
 # GDB
+RUN apt-get update -yq && \
+  apt-get install texinfo -yq
 RUN wget "http://ftp.gnu.org/gnu/gdb/gdb-9.2.tar.gz" && tar -xvzf gdb-9.2.tar.gz && \
   mkdir build && cd build && ../gdb-9.2/configure && make && make install && gdb --version
 
