@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
-      - run: mkdir dist_codegen && cd src/platform_se/codegen && node index.js && mv skyrimPlatform.ts ../../../dist_codegen/
+      - run: mkdir dist_codegen && cd src/platform_se/codegen && node index.js && mv skyrimPlatform.ts ../../../dist_codegen/index.ts
       - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
