@@ -129,3 +129,5 @@ main().catch((e) => {
 });
 
 process.on("unhandledRejection", console.error);
+
+console.log("PUMPED UP KICKS");
