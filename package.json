@@ -1,7 +1,7 @@
 {
   "name": "@skymp/skyrim-platform",
   "main": "dist_codegen/index.ts",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "A modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript",
   "contributors": [
     {
@@ -27,6 +27,5 @@
     "skyrim platform",
     "skyrim",
     "typescript declaration"
-  ],
-  "license": "ISC"
+  ]
 }
