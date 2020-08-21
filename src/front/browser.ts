@@ -6,7 +6,7 @@ import {
   printConsole,
   settings,
   Ui,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
 
 export const main = (): void => {
   const F2 = 0x3c;

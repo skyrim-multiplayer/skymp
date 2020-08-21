@@ -5,11 +5,12 @@ import {
   hooks,
   Actor,
   printConsole,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
+
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
-
 import * as structures from "../../lib/structures/animation";
+
 export type Animation = structures.Animation;
 
 export interface AnimationApplyState {

@@ -21,6 +21,7 @@
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
+    "@skymp/skyrim-platform": "^0.7.1",
     "@types/argparse": "^1.0.38",
     "@types/axios": "^0.14.0",
     "@types/chai": "^4.2.12",

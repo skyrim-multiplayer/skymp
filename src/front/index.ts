@@ -1,17 +1,17 @@
-import { SkympClient } from "./skympClient";
-import { blockConsole } from "./console";
-import * as browser from "./browser";
-import * as loadGameManager from "./loadGameManager";
 import {
   Game,
   Utility,
   on,
   once,
   GlobalVariable,
-  printConsole,
   ObjectReference,
   Weather,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
+
+import { SkympClient } from "./skympClient";
+import { blockConsole } from "./console";
+import * as browser from "./browser";
+import * as loadGameManager from "./loadGameManager";
 import { verifyVersion } from "./version";
 import { applyInventory } from "./components/inventory";
 import { updateWc } from "./worldCleaner";

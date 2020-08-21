@@ -1,4 +1,9 @@
-import { settings, printConsole, findConsoleCommand } from "skyrimPlatform";
+import {
+  settings,
+  printConsole,
+  findConsoleCommand,
+} from "@skymp/skyrim-platform";
+
 import { consoleCommands, scriptCommands } from "./consoleCommands";
 
 export const blockConsole = (): void => {

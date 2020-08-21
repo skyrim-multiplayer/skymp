@@ -1,4 +1,4 @@
-import { Game, Actor } from "skyrimPlatform";
+import { Game, Actor } from "@skymp/skyrim-platform";
 
 const protection = new Map<number, number>();
 

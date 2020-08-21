@@ -10,7 +10,7 @@ import {
   WorldSpace,
   Faction,
   on,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
 
 const spawnPosition = [227, 239, 53];
 const spawnRotation = [0, 0, 0];

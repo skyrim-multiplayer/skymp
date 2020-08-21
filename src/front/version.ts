@@ -5,7 +5,7 @@ import {
   on,
   Game,
   Ui,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
 
 const requiredVersion = ["0.7.0+build1", "0.7.0+build2"];
 

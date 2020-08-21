@@ -1,7 +1,8 @@
-import { Actor, Game, Ammo, Ui } from "skyrimPlatform";
-import { Inventory, getInventory, applyInventory, Entry } from "./inventory";
+import { Actor, Game, Ammo, Ui } from "@skymp/skyrim-platform";
 
+import { Inventory, getInventory, applyInventory, Entry } from "./inventory";
 import * as structures from "../../lib/structures/equipment";
+
 export type Equipment = structures.Equipment;
 
 const filterWorn = (inv: Inventory): Inventory => {

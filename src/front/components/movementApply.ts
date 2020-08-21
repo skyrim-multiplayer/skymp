@@ -4,7 +4,8 @@ import {
   Game,
   TESModPlatform,
   Debug,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
+
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {

@@ -1,12 +1,11 @@
-import { mpClientPlugin, PacketType } from "skyrimPlatform";
-import * as sp from "skyrimPlatform";
+import { mpClientPlugin, PacketType, on as spOn } from "@skymp/skyrim-platform";
 
 type Handler = (messageOrError: Record<string, unknown> | string) => void;
 const handlersMap = new Map<PacketType, Handler[]>();
 let lastHostname = "";
 let lastPort = 0;
 
-sp.on("tick", () => {
+spOn("tick", () => {
   mpClientPlugin.tick((packetType, jsonContent, error) => {
     const handlers = handlersMap.get(packetType) || [];
     handlers.forEach((handler) => {

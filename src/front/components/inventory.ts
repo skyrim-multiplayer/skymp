@@ -17,9 +17,10 @@ import {
   Potion,
   Actor,
   Ammo,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
 
 import * as structures from "../../lib/structures/inventory";
+
 export type Inventory = structures.Inventory;
 export type Entry = structures.Entry;
 export type BasicEntry = structures.BasicEntry;

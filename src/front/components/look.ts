@@ -8,9 +8,10 @@ import {
   TextureSet,
   printConsole,
   VoiceType,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
 
 import * as structures from "../../lib/structures/look";
+
 export type Look = structures.Look;
 export type Tint = structures.Tint;
 

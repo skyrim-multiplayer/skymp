@@ -1,10 +1,4 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import * as networking from "./networking";
-import { FormModel, WorldModel } from "./model";
-import { MsgHandler } from "./msgHandler";
-import { ModelSource } from "./modelSource";
-import { SendTarget } from "./sendTarget";
-import * as messages from "./messages";
 import {
   Game,
   once,
@@ -17,7 +11,14 @@ import {
   storage,
   getPluginSourceCode,
   browser,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
+
+import * as networking from "./networking";
+import { FormModel, WorldModel } from "./model";
+import { MsgHandler } from "./msgHandler";
+import { ModelSource } from "./modelSource";
+import { SendTarget } from "./sendTarget";
+import * as messages from "./messages";
 import * as loadGameManager from "./loadGameManager";
 
 interface FormModelInfo extends FormModel {

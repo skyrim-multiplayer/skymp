@@ -1,4 +1,3 @@
-import { FormModel, WorldModel } from "./model";
 import {
   ObjectReference,
   Game,
@@ -11,8 +10,10 @@ import {
   on,
   Utility,
   worldPointToScreenPoint,
-} from "skyrimPlatform";
-import * as sp from "skyrimPlatform";
+  NetImmerse,
+} from "@skymp/skyrim-platform";
+
+import { FormModel, WorldModel } from "./model";
 
 import { applyMovement, NiPoint3 } from "./components/movement";
 import { applyAnimation } from "./components/animation";
@@ -240,11 +241,11 @@ export class FormView implements View<FormModel> {
         this.lastPcWorldOrCell = id;
       }
 
-      const ni = (sp as any)["NetImmerse"];
+      const ni = NetImmerse;
       const headPos = [
-        ni.GetNodeWorldPositionX(actor, "NPC Head [Head]", false),
-        ni.GetNodeWorldPositionY(actor, "NPC Head [Head]", false),
-        ni.GetNodeWorldPositionZ(actor, "NPC Head [Head]", false),
+        ni.getNodeWorldPositionX(actor, "NPC Head [Head]", false),
+        ni.getNodeWorldPositionY(actor, "NPC Head [Head]", false),
+        ni.getNodeWorldPositionZ(actor, "NPC Head [Head]", false),
       ];
       const [screenPoint] = worldPointToScreenPoint(headPos);
       const isOnScreen =

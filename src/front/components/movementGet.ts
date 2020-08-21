@@ -1,4 +1,5 @@
-import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
+import { ObjectReference, Actor, TESModPlatform } from "@skymp/skyrim-platform";
+
 import { Movement, RunMode } from "./movement";
 
 export const getMovement = (refr: ObjectReference): Movement => {

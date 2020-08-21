@@ -5,28 +5,23 @@ import {
   storage,
   settings,
   Game,
+  Debug,
   Ui,
-  Utility,
-  findConsoleCommand,
-} from "skyrimPlatform";
+} from "@skymp/skyrim-platform";
+
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
 import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
-import { applyInventory } from "./components/inventory";
 import { MsgType } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
 import { RemoteServer } from "./remoteServer";
 import { SendTarget } from "./sendTarget";
 import * as networking from "./networking";
-import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
-import { consoleCommands, scriptCommands } from "./consoleCommands";
 import * as deathSystem from "./deathSystem";
-import { verifyVersion } from "./version";
-import * as browser from "./browser";
 
 interface AnyMessage {
   type?: string;
@@ -66,7 +61,7 @@ export class SkympClient {
     this.resetRemoteServer();
     setupHooks();
 
-    sp.printConsole("SkympClient ctor");
+    printConsole("SkympClient ctor");
 
     networking.on("connectionFailed", () => {
       printConsole("Connection failed");
@@ -104,7 +99,7 @@ export class SkympClient {
 
     loadGameManager.addLoadGameListener((e: loadGameManager.GameLoadEvent) => {
       if (!e.isCausedBySkyrimPlatform && !this.singlePlayer) {
-        sp.Debug.messageBox(
+        Debug.messageBox(
           "Save has been loaded in multiplayer, switching to the single-player mode"
         );
         networking.close();
