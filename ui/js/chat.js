@@ -1,5 +1,6 @@
 const ipAndPort = window.location.href.split("/")[2];
 const ip = ipAndPort.split(":")[0];
+const uiPort = parseInt(ipAndPort.split(":")[1]);
 
 const chat_size = 50, // сколько сообщений помещаем в чат
   common_chat_size = 100, // размер общего чата
@@ -371,7 +372,7 @@ const socketOpenListener = (event) => {
 };
 
 const socketCloseListener = (event) => {
-  var wsendpoint = "ws://" + ip + ":8080";
+  var wsendpoint = "ws://" + ip + ":" + (uiPort === 3000 ? 8080 : uiPort + 1);
   console.log("Connecting to " + wsendpoint);
   connection = new WebSocket(wsendpoint);
   connection.addEventListener("open", socketOpenListener);

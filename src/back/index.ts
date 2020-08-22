@@ -14,6 +14,7 @@ import { MasterClient } from "./systems/masterClient";
 import { Spawn } from "./systems/spawn";
 import { EventEmitter } from "events";
 import { NativeGameServer } from "./nativeGameServer";
+import { pid } from "process";
 
 const log = console.log;
 const systems = new Array<System>();
@@ -129,3 +130,5 @@ main().catch((e) => {
 });
 
 process.on("unhandledRejection", console.error);
+
+console.log(`Current process ID is ${pid}`);

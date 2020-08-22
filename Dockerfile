@@ -1,12 +1,12 @@
-FROM node:12
+FROM gcc:10.2.0
 
-WORKDIR /usr/src/app
-
+# CMake
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.15.2/cmake-3.15.2.tar.gz
 RUN tar -zxvf cmake-3.15.2.tar.gz
 RUN cd cmake-3.15.2 && ./bootstrap && make && make install
 RUN cmake --version
 
+# vcpkg
 RUN mkdir -p /root/.local/share/pmm/1.4.2/vcpkg-tmp && cd /root/.local/share/pmm/1.4.2/vcpkg-tmp
 RUN git clone https://github.com/microsoft/vcpkg.git \
   && cd vcpkg \
@@ -21,8 +21,19 @@ RUN cd vcpkg && ./vcpkg install sparsepp:x64-linux
 RUN cd vcpkg && ./vcpkg install nlohmann-json:x64-linux
 RUN mv vcpkg /root/.local/share/pmm/1.4.2/vcpkg-bff594f7ff8e023592f366b67fd7f57f4fe035e7
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y build-essential
-RUN gcc --version
+# NodeJS
+RUN apt-get update -yq \
+  && apt-get install curl gnupg -yq \
+  && curl -sL https://deb.nodesource.com/setup_14.x | bash \
+  && apt-get install -yq nodejs
+
+# GDB
+RUN apt-get update -yq && \
+  apt-get install texinfo -yq
+RUN wget "http://ftp.gnu.org/gnu/gdb/gdb-9.2.tar.gz" && tar -xvzf gdb-9.2.tar.gz && \
+  mkdir build && cd build && ../gdb-9.2/configure && make && make install && gdb --version
+
+WORKDIR /usr/src/app
 
 COPY package*.json ./
 RUN npm i

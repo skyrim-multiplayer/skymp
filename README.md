@@ -11,3 +11,6 @@ Enable coverage calculation for C++ code (Windows-only, OpenCppCoverage must be 
 
 Run tests:
 `npm run test`
+
+Debugging with GDB (Linux):
+`docker exec -ti --privileged <container_name> gdb -p 24`
