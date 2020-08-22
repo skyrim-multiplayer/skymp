@@ -139,6 +139,9 @@ void MpObjectReference::SetOpen(bool open)
 
 void MpObjectReference::Activate(MpActor& activationSource)
 {
+  std::cout << "Activate " << this->GetFormId() << " by "
+            << activationSource.GetFormId() << std::endl;
+
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
@@ -232,6 +235,9 @@ void MpObjectReference::Activate(MpActor& activationSource)
 
 void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
 {
+  std::cout << "PutItem into " << this->GetFormId() << " by " << ac.GetFormId()
+            << std::endl;
+
   CheckInteractionAbility(ac);
   if (this->occupant != &ac) {
     std::stringstream err;
@@ -244,6 +250,9 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
 
 void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
 {
+  std::cout << "TakeItem from " << this->GetFormId() << " by " << ac.GetFormId()
+            << std::endl;
+
   CheckInteractionAbility(ac);
   if (this->occupant != &ac) {
     std::stringstream err;
