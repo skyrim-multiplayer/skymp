@@ -28,6 +28,7 @@ public:
   void AddListener(std::shared_ptr<Listener> listener);
   bool IsConnected(Networking::UserId userId) const;
   void Tick();
+  void EnableProductionHacks();
 
   // API
   void CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
