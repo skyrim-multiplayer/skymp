@@ -23,23 +23,24 @@ std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
   bool none = dist(mt) < chanceNone;
   if (!none) {
 
-    std::uniform_int_distribution<int> dist(0, data.numEntries - 1);
-
-    int idx = (data.leveledItemFlags & espm::LVLI::UseAll) ? -1 : dist(mt);
-
-    while (idx != -1 && pcLevel && data.entries[idx].level > pcLevel)
-      idx = dist(mt);
-
+    std::vector<const espm::LVLI::Entry*> entriesAllowed;
     for (size_t i = 0; i < data.numEntries; ++i) {
-      if (pcLevel && data.entries[i].level > pcLevel)
-        continue;
+      if (!pcLevel || data.entries[i].level <= pcLevel)
+        entriesAllowed.push_back(&data.entries[i]);
+    }
 
-      if (idx != -1 && idx != i)
-        continue;
+    bool useRandomEntry = !(data.leveledItemFlags & espm::LVLI::UseAll);
+    if (useRandomEntry && !entriesAllowed.empty()) {
+      std::uniform_int_distribution<int> dist(0, entriesAllowed.size() - 1);
+      auto entry = entriesAllowed[dist(mt)];
 
-      uint32_t formId = lookupRes.ToGlobalId(data.entries[i].formId);
-
-      res.push_back({ formId, data.entries[i].count });
+      uint32_t formId = lookupRes.ToGlobalId(entry->formId);
+      res.push_back({ formId, entry->count });
+    } else {
+      for (auto entry : entriesAllowed) {
+        uint32_t formId = lookupRes.ToGlobalId(entry->formId);
+        res.push_back({ formId, entry->count });
+      }
     }
   }
   return res;
