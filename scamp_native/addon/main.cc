@@ -151,6 +151,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 {
   try {
     partOne.reset(new PartOne);
+    partOne->EnableProductionHacks();
     listener.reset(new ScampServerListener(*this));
     partOne->AddListener(listener);
     Napi::Number port = info[0].As<Napi::Number>(),

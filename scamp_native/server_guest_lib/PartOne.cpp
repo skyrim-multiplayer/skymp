@@ -19,6 +19,7 @@ struct PartOne::Impl
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
+  bool enableProductionHacks = false;
 };
 
 PartOne::PartOne()
@@ -172,18 +173,25 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                                    subscribe, unsubscribe, sendToUser)),
                      formId);
 
-  auto& ac = worldState.GetFormAt<MpActor>(formId);
-  auto defaultItems = { 0x00013922, 0x0003619E, 0x00013921, 0x00013920,
-                        0x00013EDC, 0x000136D5, 0x000136D4, 0x000136D6,
-                        0x000135BA, 0x000F6F23, 0x0001397E, 0x0012EB7,
-                        0x00013790, 0x00013982, 0x0001359D, 0x00013980,
-                        0x000D3DEA, 0x000A6D7B, 0x000A6D7F, 0x0006F39B,
-                        0x000D3DEA };
-  std::vector<Inventory::Entry> entries;
-  for (uint32_t item : defaultItems) {
-    entries.push_back({ item, 1 });
+  if (pImpl->enableProductionHacks) {
+    auto& ac = worldState.GetFormAt<MpActor>(formId);
+    auto defaultItems = { 0x00013922, 0x0003619E, 0x00013921, 0x00013920,
+                          0x00013EDC, 0x000136D5, 0x000136D4, 0x000136D6,
+                          0x000135BA, 0x000F6F23, 0x0001397E, 0x0012EB7,
+                          0x00013790, 0x00013982, 0x0001359D, 0x00013980,
+                          0x000D3DEA, 0x000A6D7B, 0x000A6D7F, 0x0006F39B,
+                          0x000D3DEA };
+    std::vector<Inventory::Entry> entries;
+    for (uint32_t item : defaultItems) {
+      entries.push_back({ item, 1 });
+    }
+    ac.AddItems(entries);
   }
-  ac.AddItems(entries);
+}
+
+void PartOne::EnableProductionHacks()
+{
+  pImpl->enableProductionHacks = true;
 }
 
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
