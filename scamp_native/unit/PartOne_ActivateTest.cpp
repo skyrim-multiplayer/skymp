@@ -409,6 +409,39 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
+TEST_CASE("Server creates and destroys an object for user correcly",
+          "[PartOne]")
+{
+  auto& partOne = GetPartOne();
+  g_tgt = {};
+
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000ABC, { 16230, -8377, -4564 }, 180.f, 0x3c,
+                      &g_tgt);
+  partOne.SetUserActor(0, 0xff000ABC, &g_tgt);
+
+  auto refId = 0x01000f69;
+  REQUIRE(std::find_if(g_tgt.messages.begin(), g_tgt.messages.end(),
+                       [&](FakeSendTarget::Message m) {
+                         return m.j["type"] == "createActor" && m.reliable &&
+                           m.userId == 0 && m.j["refrId"] == 0x01000f69;
+                       }) != g_tgt.messages.end());
+
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000ABC);
+  ac.SetPos({ 0, 0, 0 });
+
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(refId);
+
+  REQUIRE(std::find_if(g_tgt.messages.begin(), g_tgt.messages.end(),
+                       [&](FakeSendTarget::Message m) {
+                         return m.j["type"] == "destroyActor" && m.reliable &&
+                           m.userId == 0 && m.j["idx"] == ref.GetIdx();
+                       }) != g_tgt.messages.end());
+
+  DoDisconnect(partOne, 0);
+  partOne.DestroyActor(0xff000ABC);
+}
+
 TEST_CASE("Activate BarrelFood01 in Whiterun (open/close)", "[PartOne]")
 {
   auto& partOne = GetPartOne();

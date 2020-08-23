@@ -18,7 +18,6 @@ import {
   getPluginSourceCode,
   browser,
   ObjectReference,
-  Form,
   on,
   Ui,
 } from "skyrimPlatform";
@@ -26,6 +25,7 @@ import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./components/inventory";
 import { isBadMenuShown } from "./components/equipment";
 import { Movement } from "./components/movement";
+import { IdManager } from "../lib/idManager";
 
 class SpawnTask {
   running = false;
@@ -136,7 +136,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   createActor(msg: messages.CreateActorMessage): void {
-    const i = msg.idx;
+    const i = this.getIdManager().allocateIdFor(msg.idx);
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
 
     let movement: Movement = null;
@@ -238,19 +238,29 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   destroyActor(msg: messages.DestroyActorMessage): void {
-    const i = msg.idx;
+    const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i] = null;
 
-    if (this.worldModel.playerCharacterFormIdx === msg.idx) {
+    // Shrink to fit
+    while (1) {
+      const length = this.worldModel.forms.length;
+      if (!length) break;
+      if (this.worldModel.forms[length - 1]) break;
+      this.worldModel.forms.length = length - 1;
+    }
+
+    if (this.worldModel.playerCharacterFormIdx === i) {
       this.worldModel.playerCharacterFormIdx = -1;
 
       // TODO: move to a separate module
       Game.quitToMainMenu();
     }
+
+    this.getIdManager().freeIdFor(msg.idx);
   }
 
   UpdateMovement(msg: messages.UpdateMovementMessage): void {
-    const i = msg.idx;
+    const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].movement = msg.data;
     if (!this.worldModel.forms[i].numMovementChanges) {
       this.worldModel.forms[i].numMovementChanges = 0;
@@ -259,12 +269,12 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   UpdateAnimation(msg: messages.UpdateAnimationMessage): void {
-    const i = msg.idx;
+    const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].animation = msg.data;
   }
 
   UpdateLook(msg: messages.UpdateLookMessage): void {
-    const i = msg.idx;
+    const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].look = msg.data;
     if (!this.worldModel.forms[i].numLookChanges) {
       this.worldModel.forms[i].numLookChanges = 0;
@@ -273,12 +283,12 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   UpdateEquipment(msg: messages.UpdateEquipmentMessage): void {
-    const i = msg.idx;
+    const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].equipment = msg.data;
   }
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
-    const i = msg.idx;
+    const i = this.getIdManager().getId(msg.idx);
     (this.worldModel.forms[i] as Record<string, unknown>)[msg.propName] =
       msg.data;
   }
@@ -333,9 +343,17 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   send(msg: Record<string, unknown>, reliable: boolean): void {
     if (this.worldModel.playerCharacterFormIdx === -1) return;
 
-    msg.idx = this.worldModel.playerCharacterFormIdx;
+    msg.idx = this.getIdManager().getValueById(
+      this.worldModel.playerCharacterFormIdx
+    );
     networking.send(msg, reliable);
   }
 
+  private getIdManager() {
+    if (!this.idManager_) this.idManager_ = new IdManager();
+    return this.idManager_;
+  }
+
   private worldModel: WorldModel = { forms: [], playerCharacterFormIdx: -1 };
+  private idManager_ = new IdManager();
 }

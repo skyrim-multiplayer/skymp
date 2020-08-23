@@ -91,27 +91,19 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
     std::vector<MpObjectReference*> toRemove;
     std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
                         std::inserter(toRemove, toRemove.begin()));
-
-    auto thisAsActor = dynamic_cast<MpActor*>(this);
-
     for (auto listener : toRemove) {
-      auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-      if (listenerAsActor)
-        Unsubscribe(this, listenerAsActor);
-
-      if (thisAsActor && listener != this)
-        Unsubscribe(listener, thisAsActor);
+      Unsubscribe(this, listener);
+      if (this != listener)
+        Unsubscribe(listener, this);
     }
 
     std::vector<MpObjectReference*> toAdd;
     std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
                         std::inserter(toAdd, toAdd.begin()));
     for (auto listener : toAdd) {
-      auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-      if (listenerAsActor)
-        Subscribe(this, listenerAsActor);
-      if (thisAsActor && listener != this)
-        Subscribe(listener, thisAsActor);
+      Subscribe(this, listener);
+      if (this != listener)
+        Subscribe(listener, this);
     }
   }
 }
@@ -250,8 +242,8 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
 
 void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
 {
-  std::cout << "TakeItem from " << this->GetFormId() << " by " << ac.GetFormId()
-            << std::endl;
+  std::cout << "TakeItem from " << this->GetFormId() << " by "
+            << ac.GetFormId() << std::endl;
 
   CheckInteractionAbility(ac);
   if (this->occupant != &ac) {
@@ -307,8 +299,13 @@ void MpObjectReference::RemoveItems(
 }
 
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
-                                  MpActor* listener)
+                                  MpObjectReference* listener)
 {
+  bool bothNonActors =
+    !dynamic_cast<MpActor*>(emitter) && !dynamic_cast<MpActor*>(listener);
+  if (bothNonActors)
+    return;
+
   emitter->InitListenersAndEmitters();
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
@@ -317,16 +314,21 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 }
 
 void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
-                                    MpActor* listener)
+                                    MpObjectReference* listener)
 {
+  bool bothNonActors =
+    !dynamic_cast<MpActor*>(emitter) && !dynamic_cast<MpActor*>(listener);
+  if (bothNonActors)
+    return;
+
   emitter->onUnsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
   listener->emitters->erase(emitter);
 }
 
-const std::set<MpActor*>& MpObjectReference::GetListeners() const
+const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
 {
-  static const std::set<MpActor*> g_emptyListeners;
+  static const std::set<MpObjectReference*> g_emptyListeners;
   return listeners ? *listeners : g_emptyListeners;
 }
 
@@ -353,7 +355,7 @@ void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
 void MpObjectReference::InitListenersAndEmitters()
 {
   if (!listeners) {
-    listeners.reset(new std::set<MpActor*>);
+    listeners.reset(new std::set<MpObjectReference*>);
     emitters.reset(new std::set<MpObjectReference*>);
   }
 }
@@ -465,8 +467,11 @@ void MpObjectReference::SendPropertyToListeners(const char* name,
                                                 const nlohmann::json& value)
 {
   auto str = CreatePropertyMessage(this, name, value);
-  for (auto listener : GetListeners())
-    listener->SendToUser(str.data(), str.size(), true);
+  for (auto listener : GetListeners()) {
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (listenerAsActor)
+      listenerAsActor->SendToUser(str.data(), str.size(), true);
+  }
 }
 
 void MpObjectReference::SendPropertyTo(const char* name,
