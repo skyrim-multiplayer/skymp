@@ -485,6 +485,10 @@ export class WorldView implements View<WorldModel> {
   update(model: WorldModel): void {
     if (!this.allowUpdate) return;
 
+    // Skip 50% of updates
+    this.counter = !this.counter;
+    if (this.counter) return;
+
     this.resize(model.forms.length);
 
     const showMe = settings["skymp5-client"]["show-me"];
@@ -561,5 +565,5 @@ export class WorldView implements View<WorldModel> {
   private formViews = new Array<FormView>();
   private allowUpdate = false;
   private pcWorldOrCell = 0;
-  private updateCounter = 0;
+  private counter = false;
 }
