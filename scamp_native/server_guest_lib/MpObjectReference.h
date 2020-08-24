@@ -47,8 +47,8 @@ class MpObjectReference
 public:
   static const char* Type() { return "ObjectReference"; }
 
-  using SubscribeCallback =
-    std::function<void(MpObjectReference* emitter, MpActor* listener)>;
+  using SubscribeCallback = std::function<void(MpObjectReference* emitter,
+                                               MpObjectReference* listener)>;
 
   MpObjectReference(const LocationalData& locationalData_,
                     const SubscribeCallback& onSubscribe_,
@@ -85,10 +85,12 @@ public:
   void RemoveItems(const std::vector<Inventory::Entry>& entries,
                    MpObjectReference* target = nullptr);
 
-  static void Subscribe(MpObjectReference* emitter, MpActor* listener);
-  static void Unsubscribe(MpObjectReference* emitter, MpActor* listener);
+  static void Subscribe(MpObjectReference* emitter,
+                        MpObjectReference* listener);
+  static void Unsubscribe(MpObjectReference* emitter,
+                          MpObjectReference* listener);
 
-  const std::set<MpActor*>& GetListeners() const;
+  const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;
 
 private:
@@ -106,7 +108,7 @@ private:
                       MpActor& target);
 
   bool everSubscribedOrListened = false;
-  std::unique_ptr<std::set<MpActor*>> listeners;
+  std::unique_ptr<std::set<MpObjectReference*>> listeners;
   const SubscribeCallback onSubscribe, onUnsubscribe;
 
   // Should be empty for non-actor refs

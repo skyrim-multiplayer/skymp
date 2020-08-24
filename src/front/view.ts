@@ -134,12 +134,6 @@ const getDefaultLookState = (): LookState => {
   return { lastNumChanges: 0, look: null };
 };
 
-let pcActivatedSomething = false;
-
-on("activate", (e) => {
-  if (e.caster && e.caster.getFormID() === 0x14) pcActivatedSomething = true;
-});
-
 export class FormView implements View<FormModel> {
   update(model: FormModel): void {
     // Other players mutate into PC clones when moving to another location
@@ -199,11 +193,9 @@ export class FormView implements View<FormModel> {
         }
       }
     } else {
-      const AADeleteWhenDoneTestJeremyRegular = 0x0010d13e;
       const base =
-        getFormEx(+model.baseId) ||
-        getFormEx(this.getLookBasedBase()) ||
-        getFormEx(AADeleteWhenDoneTestJeremyRegular);
+        getFormEx(+model.baseId) || getFormEx(this.getLookBasedBase());
+      if (!base) return;
 
       let refr = ObjectReference.from(Game.getFormEx(this.refrId));
       const respawnRequired =
@@ -281,17 +273,18 @@ export class FormView implements View<FormModel> {
         if (isHarvested != wasHarvested) {
           let ac: Actor;
           if (isHarvested)
-            ac = Game.findClosestActor(
-              refr.getPositionX(),
-              refr.getPositionY(),
-              refr.getPositionZ(),
-              256
-            );
-          if (
-            isHarvested &&
-            ac &&
-            (pcActivatedSomething || ac.getFormID() !== 0x14)
-          ) {
+            for (let i = 0; i < 20; ++i) {
+              ac = Game.findRandomActor(
+                refr.getPositionX(),
+                refr.getPositionY(),
+                refr.getPositionZ(),
+                10000
+              );
+              if (ac && ac.getFormID() !== 0x14) {
+                break;
+              }
+            }
+          if (isHarvested && ac && ac.getFormID() !== 0x14) {
             refr.activate(ac, true);
           } else {
             refr.setHarvested(isHarvested);
@@ -320,7 +313,8 @@ export class FormView implements View<FormModel> {
     }
   }
 
-  private wasOpenAtSomeMoment = false;
+  private wasOpen: null | boolean = null;
+  private lastOpenReapply = 0;
 
   private applyOpen(refr: ObjectReference, isOpen: boolean) {
     if (refr.getOpenState() !== 0) refr.setOpen(isOpen);
@@ -334,9 +328,14 @@ export class FormView implements View<FormModel> {
       this.applyHarvested(refr, !!model.isHarvested);
     }
 
-    if (model.isOpen) this.wasOpenAtSomeMoment = true;
-    if (this.wasOpenAtSomeMoment) {
-      this.applyOpen(refr, !!model.isOpen);
+    const isOpen = !!model.isOpen;
+    if (this.wasOpen !== isOpen) {
+      this.applyOpen(refr, isOpen);
+      this.wasOpen = isOpen;
+    }
+    if (Date.now() - this.lastOpenReapply > 1000) {
+      this.lastOpenReapply = Date.now();
+      this.wasOpen = null;
     }
 
     if (
@@ -492,6 +491,10 @@ export class WorldView implements View<WorldModel> {
   update(model: WorldModel): void {
     if (!this.allowUpdate) return;
 
+    // Skip 50% of updates
+    this.counter = !this.counter;
+    if (this.counter) return;
+
     this.resize(model.forms.length);
 
     const showMe = settings["skymp5-client"]["show-me"];
@@ -568,5 +571,5 @@ export class WorldView implements View<WorldModel> {
   private formViews = new Array<FormView>();
   private allowUpdate = false;
   private pcWorldOrCell = 0;
-  private updateCounter = 0;
+  private counter = false;
 }

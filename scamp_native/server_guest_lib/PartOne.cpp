@@ -15,10 +15,11 @@ struct PartOne::Impl
   espm::Loader* espm = nullptr;
 
   std::function<void(Networking::ISendTarget*sendTarget,
-                     MpObjectReference*emitter, MpActor*listener)>
+                     MpObjectReference*emitter, MpObjectReference*listener)>
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
+  bool enableProductionHacks = false;
 };
 
 PartOne::PartOne()
@@ -26,7 +27,8 @@ PartOne::PartOne()
   pImpl.reset(new Impl);
 
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
-                              MpObjectReference* emitter, MpActor* listener) {
+                              MpObjectReference* emitter,
+                              MpObjectReference* listener) {
     if (!emitter)
       throw std::runtime_error("nullptr emitter in onSubscribe");
 
@@ -87,23 +89,30 @@ PartOne::PartOne()
 
     const char* method = "createActor";
 
-    auto listenerUserId = serverState.UserByActor(listener);
-    if (listenerUserId != Networking::InvalidUserId)
-      Networking::SendFormatted(
-        sendTarget, listenerUserId,
-        R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (listenerAsActor) {
+      auto listenerUserId = serverState.UserByActor(listenerAsActor);
+      if (listenerUserId != Networking::InvalidUserId)
+        Networking::SendFormatted(
+          sendTarget, listenerUserId,
+          R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
-        method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
-        emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-        emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix,
-        equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
-        props.data(), propsPostfix);
+          method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
+          emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
+          emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix,
+          equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
+          props.data(), propsPostfix);
+    }
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
                                 MpObjectReference* emitter,
-                                MpActor* listener) {
-    auto listenerUserId = serverState.UserByActor(listener);
+                                MpObjectReference* listener) {
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (!listenerAsActor)
+      return;
+
+    auto listenerUserId = serverState.UserByActor(listenerAsActor);
     if (listenerUserId != Networking::InvalidUserId &&
         listenerUserId != serverState.disconnectingUserId)
       Networking::SendFormatted(sendTarget, listenerUserId,
@@ -146,15 +155,18 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
 {
   auto st = &serverState;
 
-  MpActor::SubscribeCallback
-    subscribe =
-      [sendTarget, this](MpObjectReference*emitter, MpActor*listener) {
-        return pImpl->onSubscribe(sendTarget, emitter, listener);
-      },
-    unsubscribe = [sendTarget, this](MpObjectReference*emitter,
-                                     MpActor*listener) {
-      return pImpl->onUnsubscribe(sendTarget, emitter, listener);
-    };
+  MpActor::SubscribeCallback subscribe =
+                               [sendTarget, this](MpObjectReference*emitter,
+                                                  MpObjectReference*listener) {
+                                 return pImpl->onSubscribe(sendTarget, emitter,
+                                                           listener);
+                               },
+                             unsubscribe = [sendTarget,
+                                            this](MpObjectReference*emitter,
+                                                  MpObjectReference*listener) {
+                               return pImpl->onUnsubscribe(sendTarget, emitter,
+                                                           listener);
+                             };
 
   MpActor::SendToUserFn sendToUser = [sendTarget,
                                       st](MpActor* actor, const void* data,
@@ -171,6 +183,26 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                        new MpActor({ pos, { 0, 0, angleZ }, cellOrWorld },
                                    subscribe, unsubscribe, sendToUser)),
                      formId);
+
+  if (pImpl->enableProductionHacks) {
+    auto& ac = worldState.GetFormAt<MpActor>(formId);
+    auto defaultItems = { 0x00013922, 0x0003619E, 0x00013921, 0x00013920,
+                          0x00013EDC, 0x000136D5, 0x000136D4, 0x000136D6,
+                          0x000135BA, 0x000F6F23, 0x0001397E, 0x0012EB7,
+                          0x00013790, 0x00013982, 0x0001359D, 0x00013980,
+                          0x000D3DEA, 0x000A6D7B, 0x000A6D7F, 0x0006F39B,
+                          0x000D3DEA };
+    std::vector<Inventory::Entry> entries;
+    for (uint32_t item : defaultItems) {
+      entries.push_back({ item, 1 });
+    }
+    ac.AddItems(entries);
+  }
+}
+
+void PartOne::EnableProductionHacks()
+{
+  pImpl->enableProductionHacks = true;
 }
 
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
@@ -341,10 +373,12 @@ void PartOne::AttachEspm(espm::Loader* espm,
         worldState.AddForm(
           std::unique_ptr<MpObjectReference>(new MpObjectReference(
             { GetPos(locationalData), GetRot(locationalData), worldOrCell },
-            [sendTarget, this](MpObjectReference* emitter, MpActor* listener) {
+            [sendTarget, this](MpObjectReference* emitter,
+                               MpObjectReference* listener) {
               return pImpl->onSubscribe(sendTarget, emitter, listener);
             },
-            [sendTarget, this](MpObjectReference* emitter, MpActor* listener) {
+            [sendTarget, this](MpObjectReference* emitter,
+                               MpObjectReference* listener) {
               return pImpl->onUnsubscribe(sendTarget, emitter, listener);
             },
             baseId, typeStr.data())),
@@ -430,9 +464,12 @@ MpActor* PartOne::SendToNeighbours(const simdjson::dom::element& jMessage,
     }
 
     for (auto listener : actor->GetListeners()) {
-      auto targetuserId = serverState.UserByActor(listener);
-      if (targetuserId != Networking::InvalidUserId)
-        pushedSendTarget->Send(targetuserId, data, length, reliable);
+      auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+      if (listenerAsActor) {
+        auto targetuserId = serverState.UserByActor(listenerAsActor);
+        if (targetuserId != Networking::InvalidUserId)
+          pushedSendTarget->Send(targetuserId, data, length, reliable);
+      }
     }
   }
 

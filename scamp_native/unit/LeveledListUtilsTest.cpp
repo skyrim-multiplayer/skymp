@@ -1,7 +1,9 @@
 #include "LeveledListUtils.h"
 #include <algorithm>
+#include <atomic>
 #include <catch2/catch.hpp>
 #include <numeric>
+#include <thread>
 
 #include <espm.h>
 
@@ -10,6 +12,47 @@
 extern espm::Loader l;
 
 using namespace LeveledListUtils;
+using namespace std::chrono_literals;
+
+TEST_CASE("Bug", "[espm]")
+{
+  auto chestId = 0x774bf;
+
+  std::atomic<bool> finished = false;
+
+  std::thread([&] {
+    auto was = std::chrono::steady_clock::now();
+
+    while (finished.load() == false) {
+      std::this_thread::sleep_for(1ms);
+
+      auto now = std::chrono::steady_clock::now();
+      if (now - was > 10s) {
+        printf(
+          "EvaluateListRecurse didn't finish for a single container after 10s "
+          "of waiting. Consider it's an infinite loop\n");
+        std::abort();
+      }
+    }
+  }).detach();
+
+  auto chest =
+    espm::Convert<espm::CONT>(l.GetBrowser().LookupById(chestId).rec);
+  auto objects = chest->GetData().objects;
+  std::vector<espm::LookupResult> leveled;
+  for (auto obj : objects) {
+    leveled.push_back(l.GetBrowser().LookupById(obj.formId));
+  }
+
+  for (auto lvli : leveled) {
+    for (int i = 0; i < 100; ++i) {
+      const int pcLevel = 1, count = 1;
+      auto result =
+        EvaluateListRecurse(l.GetBrowser(), lvli, count, pcLevel, nullptr);
+    }
+  }
+  finished = true;
+}
 
 TEST_CASE("Evaluate LItemFoodCabbage75", "[espm]")
 {

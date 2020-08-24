@@ -8,7 +8,6 @@ import {
   on,
   once,
   GlobalVariable,
-  printConsole,
   ObjectReference,
   Weather,
 } from "skyrimPlatform";
@@ -30,6 +29,7 @@ once("update", () => {
 });
 on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);
+  Game.enableFastTravel(false);
 });
 
 browser.main();
