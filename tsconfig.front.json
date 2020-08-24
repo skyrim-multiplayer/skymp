@@ -8,8 +8,9 @@
     "rootDir": "",
     "lib": ["ES2015"],
     "paths": {
-      "chai": ["./node_modules/@types/chai"]
-    }
+      "*": ["node_modules/*", "src/types/*"]
+    },
+    "baseUrl": "."
   },
   "exclude": ["src/back"]
 }
