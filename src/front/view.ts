@@ -313,7 +313,8 @@ export class FormView implements View<FormModel> {
     }
   }
 
-  private wasOpenAtSomeMoment = false;
+  private wasOpen: null | boolean = null;
+  private lastOpenReapply = 0;
 
   private applyOpen(refr: ObjectReference, isOpen: boolean) {
     if (refr.getOpenState() !== 0) refr.setOpen(isOpen);
@@ -327,9 +328,14 @@ export class FormView implements View<FormModel> {
       this.applyHarvested(refr, !!model.isHarvested);
     }
 
-    if (model.isOpen) this.wasOpenAtSomeMoment = true;
-    if (this.wasOpenAtSomeMoment) {
-      this.applyOpen(refr, !!model.isOpen);
+    const isOpen = !!model.isOpen;
+    if (this.wasOpen !== isOpen) {
+      this.applyOpen(refr, isOpen);
+      this.wasOpen = isOpen;
+    }
+    if (Date.now() - this.lastOpenReapply > 1000) {
+      this.lastOpenReapply = Date.now();
+      this.wasOpen = null;
     }
 
     if (
