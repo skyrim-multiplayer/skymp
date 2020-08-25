@@ -45,7 +45,11 @@ RUN npm run configure
 RUN npm run build-cpp
 
 COPY . .
-RUN npm i
+RUN mv ./package.json ./_package.json \
+  && mv ./src/back/api/package.json ./package.json \
+  && npm i \
+  && rm ./package.json \
+  && mv ./_package.json ./package.json
 
 RUN npm run build-ts
 
