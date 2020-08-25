@@ -10,5 +10,5 @@
     "js": "babel-node"
   },
   "ext": ".js,.json,.gql",
-  "watch": "./backend"
+  "watch": "./src"
 }

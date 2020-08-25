@@ -15,5 +15,5 @@
     },
     "skipLibCheck": true
   },
-  "exclude": ["src/front"]
+  "exclude": ["src/front", "src/back/api"]
 }

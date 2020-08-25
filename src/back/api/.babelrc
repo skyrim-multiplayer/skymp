@@ -1,0 +1,13 @@
+{
+  "env": {
+      "dev": {
+          "retainLines": true,
+          "sourceMaps": "inline"
+      }
+  },
+  "presets": [
+      [
+          "@babel/preset-env"
+      ]
+  ]
+}

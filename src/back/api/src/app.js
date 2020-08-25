@@ -11,9 +11,7 @@ const config = require("./config");
 
 const server = new ApolloServer({
   schema,
-  // :5000/api
-  // playground: process.env.NODE_ENV === "development",
-  playground: true,
+  playground: process.env.NODE_ENV === "development",
   context: (ctx) => ({ user: ctx.req.user }),
 });
 
