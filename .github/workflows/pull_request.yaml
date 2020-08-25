@@ -33,7 +33,6 @@ jobs:
             git remote add origin https://$DNOHUB_USERNAME:$DNOHUB_PASSWORD@github.com/$GITHUB_REPOSITORY.git
             git fetch origin $GITHUB_SHA
             git reset --hard $GITHUB_SHA
-            echo 'JWT_SECRET="['213EfDRTSD-w3hm(-20%$23!)]"' > a.txt
             docker build -t skymp5-server:$(echo "${GITHUB_REF//[\/pullrefmerge]/}") .
             rm -rf $GITHUB_SHA
             docker run -v ~/skyrim_data_dir:/skyrim_data_dir skymp5-server:$(echo "${GITHUB_REF//[\/pullrefmerge]/}") npm run test
