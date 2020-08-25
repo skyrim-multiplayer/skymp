@@ -4,7 +4,7 @@ if (result.error) {
   console.log("dotenv failed with error:", result.error);
 }
 
-module.exports = {
+const cfg = {
   db: {
     username: process.env.AUTH_DB_USERNAME,
     password: process.env.AUTH_DB_PASSWORD,
@@ -30,3 +30,7 @@ module.exports = {
   },
   port: 5000,
 };
+
+console.log("cfg:", JSON.stringify(cfg, null, 2));
+
+module.exports = cfg;

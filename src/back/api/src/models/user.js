@@ -3,33 +3,33 @@ const mongoose = require("mongoose");
 const verifyCodeSchema = new mongoose.Schema({
   value: {
     type: String,
-    required: true
+    required: true,
   },
   expiresTime: {
     type: Date,
     default: () => new Date(+new Date() + 10 * 60 * 1000),
-    required: true
-  }
+    required: true,
+  },
 });
 
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
 
   // hashed
   email: {
     type: String,
     requred: true,
-    unique: true
+    unique: true,
   },
 
   // hashed
   password: {
     type: String,
-    required: true
+    required: true,
   },
 
   auth: {
@@ -39,9 +39,10 @@ const userSchema = new mongoose.Schema({
     isVerified: {
       type: Boolean,
       required: true,
-      default: false
+      default: false,
     },
 
+    // TODO: Do it automatically
     /* for auto delete you should create collection index:
      *  db.users.createIndex(
           { 'auth.verificationExpires': 1 },
@@ -54,18 +55,18 @@ const userSchema = new mongoose.Schema({
     verificationExpires: {
       type: Date,
       default: () => new Date(+new Date() + 10 * 60 * 1000), // 3m
-      required: true
+      required: true,
     },
     /**
      * send to email for verification
      */
     verificationCodes: {
       signup: verifyCodeSchema,
-      recovery: verifyCodeSchema
-    }
+      recovery: verifyCodeSchema,
+    },
   },
 
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model("User", userSchema, "users");
