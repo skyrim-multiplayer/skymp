@@ -271,6 +271,7 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne]")
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 22572, -8634, -3597 }, 0, 0x1a26f, &g_tgt);
   partOne.SetUserActor(0, 0xff000000, &g_tgt);
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
   const auto refrId = 0x0100122a;
   const auto MountainFlower01Purple = 0x77e1e;
@@ -309,6 +310,11 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne]")
   REQUIRE(g_tgt.messages[1].j["propName"] == "isHarvested");
 
   REQUIRE(ref.IsHarvested());
+
+  // We should not be able to harvest already harvested items
+  REQUIRE(ac.GetInventory().GetTotalItemCount() == 1);
+  ref.Activate(ac);
+  REQUIRE(ac.GetInventory().GetTotalItemCount() == 1);
 
   partOne.Tick();
   REQUIRE(ref.IsHarvested());

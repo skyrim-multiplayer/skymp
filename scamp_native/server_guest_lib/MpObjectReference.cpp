@@ -149,24 +149,25 @@ void MpObjectReference::Activate(MpActor& activationSource)
   auto t = base.rec->GetType();
 
   if (t == espm::TREE::type || t == espm::FLOR::type || espm::IsItem(t)) {
-    auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
+    if (!IsHarvested()) {
+      auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
+      uint32_t resultItem = 0;
+      if (t == espm::TREE::type) {
+        espm::FLOR::Data data;
+        data = espm::Convert<espm::TREE>(base.rec)->GetData();
+        resultItem = espm::GetMappedId(data.resultItem, *mapping);
+      } else if (t == espm::FLOR::type) {
+        espm::FLOR::Data data;
+        data = espm::Convert<espm::FLOR>(base.rec)->GetData();
+        resultItem = espm::GetMappedId(data.resultItem, *mapping);
+      } else {
+        resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
+      }
 
-    uint32_t resultItem = 0;
-    if (t == espm::TREE::type) {
-      espm::FLOR::Data data;
-      data = espm::Convert<espm::TREE>(base.rec)->GetData();
-      resultItem = espm::GetMappedId(data.resultItem, *mapping);
-    } else if (t == espm::FLOR::type) {
-      espm::FLOR::Data data;
-      data = espm::Convert<espm::FLOR>(base.rec)->GetData();
-      resultItem = espm::GetMappedId(data.resultItem, *mapping);
-    } else {
-      resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
+      activationSource.AddItem(resultItem, 1);
+      SetHarvested(true);
+      RequestReloot();
     }
-
-    activationSource.AddItem(resultItem, 1);
-    SetHarvested(true);
-    RequestReloot();
   } else if (t == espm::DOOR::type) {
 
     auto refrRecord = espm::Convert<espm::REFR>(
