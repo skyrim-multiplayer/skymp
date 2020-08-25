@@ -36,7 +36,11 @@ RUN wget "http://ftp.gnu.org/gnu/gdb/gdb-9.2.tar.gz" && tar -xvzf gdb-9.2.tar.gz
 WORKDIR /usr/src/app
 
 COPY package*.json ./
+COPY ./src/back/api/package.json ./src/back/api/
 RUN npm i
+RUN ls ./node_modules
+RUN ls ./src/back/api/node_modules
+RUN cp ./src/back/api/node_modules ./node_modules
 
 COPY ./CMakeLists.txt ./CMakeLists.txt
 COPY ./cmake ./cmake
@@ -45,11 +49,6 @@ RUN npm run configure
 RUN npm run build-cpp
 
 COPY . .
-RUN mv ./package.json ./_package.json \
-  && mv ./src/back/api/package.json ./package.json \
-  && npm i \
-  && rm ./package.json \
-  && mv ./_package.json ./package.json
 
 RUN npm run build-ts
 
