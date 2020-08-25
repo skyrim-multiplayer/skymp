@@ -2,6 +2,7 @@
 
 Install:
 `npm install`
+`npm run configure`
 
 Enable copying `MpClientPlugin.dll` to your Skyrim Special Edition Installation:
 `npm run configure -- --CDSKYRIM_DIR="..."`
