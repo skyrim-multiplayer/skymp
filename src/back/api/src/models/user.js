@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema({
       default: false,
     },
 
+    // TODO: Do it automatically
     /* for auto delete you should create collection index:
      *  db.users.createIndex(
           { 'auth.verificationExpires': 1 },

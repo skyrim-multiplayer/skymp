@@ -32,7 +32,7 @@ app.use(authMiddleware);
 server.applyMiddleware({ app, path: "/api" });
 
 mongoose
-  .connect(`mongodb+srv://${config.db.host}`, {
+  /*.connect(`mongodb+srv://${config.db.host}`, {
     user: config.db.username,
     pass: config.db.password,
     dbName: config.db.database,
@@ -40,7 +40,8 @@ mongoose
     useUnifiedTopology: true,
     useCreateIndex: true,
     useFindAndModify: false,
-  })
+  })*/
+  .connect("mongodb://user:sZsxjmRYDDBJ9v@89.208.221.191/MongoDB-3994")
   .then(() => {
     app.listen(config.port, () => {
       console.log("Server is started on port: ", config.port);

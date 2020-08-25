@@ -1,31 +1,36 @@
 const result = require("dotenv").config();
 if (result.error) {
-  throw result.error;
+  // We don't throw error here since Docker container doesn't use dotenv at all
+  console.log("dotenv failed with error:", result.error);
 }
 
-module.exports = {
+const cfg = {
   db: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST
+    username: process.env.AUTH_DB_USERNAME,
+    password: process.env.AUTH_DB_PASSWORD,
+    database: process.env.AUTH_DB_NAME,
+    host: process.env.AUTH_DB_HOST,
   },
   jwt: {
-    salt: +process.env.JWT_SALT,
-    secret: process.env.JWT_SECRET,
-    lifetime: process.env.JWT_LIFE_TIME
+    salt: 10,
+    secret: process.env.AUTH_JWT_SECRET,
+    lifetime: "10d",
   },
   aes: {
-    algorithm: process.env.AES_ALGORITHM,
-    key: process.env.AES_KEY,
-    iv: process.env.AES_IV
+    algorithm: "aes256",
+    key: process.env.AUTH_AES_KEY,
+    iv: process.env.AUTH_AES_IV,
   },
   verifyCode: {
-    length: +process.env.VERIFY_CODE_LENGTH
+    length: 6,
   },
   nodemailer: {
-    user: process.env.EMAIL_USER,
-    password: process.env.EMAIL_PASSWORD
+    user: process.env.AUTH_EMAIL_USER,
+    password: process.env.AUTH_EMAIL_PASSWORD,
   },
-  port: process.env.PORT
+  port: 5000,
 };
+
+console.log("cfg:", JSON.stringify(cfg, null, 2));
+
+module.exports = cfg;

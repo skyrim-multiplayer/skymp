@@ -7,6 +7,15 @@ jobs:
       DNOHUB_USERNAME: ${{ secrets.DNOHUB_USERNAME }}
       DNOHUB_PASSWORD: ${{ secrets.DNOHUB_PASSWORD }}
       MASTER_URL: ${{ secrets.MASTER_URL }}
+      AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
+      AUTH_AES_KEY: ${{ secrets.AUTH_AES_KEY }}
+      AUTH_AES_IV: ${{ secrets.AUTH_AES_IV }}
+      AUTH_EMAIL_USER: ${{ secrets.AUTH_EMAIL_USER }}
+      AUTH_EMAIL_PASSWORD: ${{ secrets.AUTH_EMAIL_PASSWORD }}
+      AUTH_DB_USERNAME: ${{ secrets.AUTH_DB_USERNAME }}
+      AUTH_DB_PASSWORD: ${{ secrets.AUTH_DB_PASSWORD }}
+      AUTH_DB_NAME: ${{ secrets.AUTH_DB_NAME }}
+      AUTH_DB_HOST: ${{ secrets.AUTH_DB_HOST }}
     steps:
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
@@ -29,7 +38,16 @@ jobs:
             docker run -v ~/skyrim_data_dir:/skyrim_data_dir skymp5-server:$(echo "${GITHUB_REF//[\/pullrefmerge]/}") npm run test
             docker rm -f scamp_$(echo "${GITHUB_REF//[\/]/_}") || true
             docker rm -f scamp_$(echo "${GITHUB_REF//[\/pullrefmerge]/}") || true
-            docker run -v ~/skyrim_data_dir:/skyrim_data_dir -p $(expr 10002 + $(echo $GITHUB_RUN_NUMBER)):8080/tcp -p $(expr 10001 + $(echo $GITHUB_RUN_NUMBER)):3000/tcp -p $(expr 10000 + $(echo $GITHUB_RUN_NUMBER)):$(expr 10000 + $(echo $GITHUB_RUN_NUMBER))/udp --name scamp_$(echo "${GITHUB_REF//[\/pullrefmerge]/}") --restart always -dit skymp5-server:$(echo "${GITHUB_REF//[\/pullrefmerge]/}") npm run start-prod -- --master $MASTER_URL --name "test:$(echo "${GITHUB_REF//[\/pullrefmerge]/}")" --maxPlayers 50 --port $(expr 10000 + $(echo $GITHUB_RUN_NUMBER))
-          envs: GITHUB_SHA,GITHUB_REPOSITORY,DNOHUB_USERNAME,DNOHUB_PASSWORD,MASTER_URL,GITHUB_REF,GITHUB_RUN_NUMBER
+            export AUTH_JWT_SECRET
+            export AUTH_AES_KEY
+            export AUTH_AES_IV
+            export AUTH_EMAIL_USER 
+            export AUTH_EMAIL_PASSWORD
+            export AUTH_DB_USERNAME
+            export AUTH_DB_PASSWORD
+            export AUTH_DB_NAME
+            export AUTH_DB_HOST
+            docker run -e AUTH_DB_USERNAME -e AUTH_DB_PASSWORD -e AUTH_DB_NAME -e AUTH_DB_HOST -e AUTH_JWT_SECRET -e AUTH_AES_KEY -e AUTH_AES_IV -e AUTH_EMAIL_USER -e AUTH_EMAIL_PASSWORD -v ~/skyrim_data_dir:/skyrim_data_dir -p $(expr 10002 + $(echo $GITHUB_RUN_NUMBER)):8080/tcp -p $(expr 10001 + $(echo $GITHUB_RUN_NUMBER)):3000/tcp -p $(expr 10000 + $(echo $GITHUB_RUN_NUMBER)):$(expr 10000 + $(echo $GITHUB_RUN_NUMBER))/udp --name scamp_$(echo "${GITHUB_REF//[\/pullrefmerge]/}") --restart always -dit skymp5-server:$(echo "${GITHUB_REF//[\/pullrefmerge]/}") npm run start-prod -- --master $MASTER_URL --name "test:$(echo "${GITHUB_REF//[\/pullrefmerge]/}")" --maxPlayers 50 --port $(expr 10000 + $(echo $GITHUB_RUN_NUMBER))
+          envs: GITHUB_SHA,GITHUB_REPOSITORY,DNOHUB_USERNAME,DNOHUB_PASSWORD,MASTER_URL,GITHUB_REF,GITHUB_RUN_NUMBER,AUTH_JWT_SECRET,AUTH_AES_KEY,AUTH_AES_IV,AUTH_EMAIL_USER,AUTH_EMAIL_PASSWORD,AUTH_DB_HOST,AUTH_DB_NAME,AUTH_DB_PASSWORD,AUTH_DB_USERNAME
           script_stop: true
           command_timeout: 6h
