@@ -45,6 +45,7 @@ RUN npm run configure
 RUN npm run build-cpp
 
 COPY . .
+RUN npm i
 
 RUN npm run build-ts
 
