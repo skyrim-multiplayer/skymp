@@ -31,6 +31,4 @@ const cfg = {
   port: 5000,
 };
 
-console.log("cfg:", JSON.stringify(cfg, null, 2));
-
 module.exports = cfg;
