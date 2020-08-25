@@ -2,6 +2,10 @@ import * as ui from "./ui";
 ui.main();
 console.log("ui main called");
 
+import * as auth from "./auth";
+auth.main();
+console.log("auth main called");
+
 import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install();
 
