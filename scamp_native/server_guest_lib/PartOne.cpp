@@ -1,8 +1,10 @@
 #include "PartOne.h"
+#include "ActionListener.h"
 #include "Exceptions.h"
 #include "IdManager.h"
 #include "JsonUtils.h"
 #include "MsgType.h"
+#include "PacketParser.h"
 #include <array>
 #include <cassert>
 #include <type_traits>
@@ -20,6 +22,9 @@ struct PartOne::Impl
 
   espm::CompressedFieldsCache compressedFieldsCache;
   bool enableProductionHacks = false;
+
+  std::shared_ptr<PacketParser> packetParser;
+  std::shared_ptr<IActionListener> actionListener;
 };
 
 PartOne::PartOne()
@@ -445,186 +450,20 @@ void PartOne::AddUser(Networking::UserId userId, UserType type)
     listener->OnConnect(userId);
 }
 
-MpActor* PartOne::SendToNeighbours(const simdjson::dom::element& jMessage,
-                                   Networking::UserId userId,
-                                   Networking::PacketData data, size_t length,
-                                   bool reliable)
-{
-  int64_t idx;
-  Read(jMessage, "idx", &idx);
-
-  MpActor* actor = serverState.ActorByUser(userId);
-
-  if (actor) {
-    if (idx != actor->GetIdx()) {
-      std::stringstream ss;
-      ss << std::hex << "You aren't able to update actor with idx " << idx
-         << " (your actor's idx is " << actor->GetIdx() << ')';
-      throw PublicError(ss.str());
-    }
-
-    for (auto listener : actor->GetListeners()) {
-      auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-      if (listenerAsActor) {
-        auto targetuserId = serverState.UserByActor(listenerAsActor);
-        if (targetuserId != Networking::InvalidUserId)
-          pushedSendTarget->Send(targetuserId, data, length, reliable);
-      }
-    }
-  }
-
-  return actor;
-}
-
 void PartOne::HandleMessagePacket(Networking::UserId userId,
                                   Networking::PacketData data, size_t length)
 {
   if (!serverState.IsConnected(userId))
     throw std::runtime_error("User with id " + std::to_string(userId) +
                              " doesn't exist");
-  auto& user = *serverState.userInfo[userId];
+  if (!pImpl->packetParser)
+    pImpl->packetParser.reset(new PacketParser);
 
-  if (!length)
-    throw std::runtime_error("Zero-length message packets are not allowed");
-  auto jMessage = pImpl->parser.parse(data + 1, length - 1).value();
+  if (!pImpl->actionListener)
+    pImpl->actionListener.reset(
+      new ActionListener(worldState, serverState, pImpl->listeners,
+                         pImpl->espm, pushedSendTarget));
 
-  using TypeInt = std::underlying_type<MsgType>::type;
-  auto type = MsgType::Invalid;
-  Read(jMessage, "t", reinterpret_cast<TypeInt*>(&type));
-
-  switch (type) {
-    case MsgType::CustomPacket: {
-      simdjson::dom::element content;
-      Read(jMessage, "content", &content);
-      for (auto& listener : pImpl->listeners) {
-        listener->OnCustomPacket(userId, content);
-      }
-      break;
-    }
-    case MsgType::UpdateAnimation: {
-      SendToNeighbours(jMessage, userId, data, length);
-      break;
-    }
-
-    case MsgType::UpdateLook: {
-      simdjson::dom::element jData;
-      Read(jMessage, "data", &jData);
-
-      auto look = MpActor::Look::FromJson(jData);
-      // TODO: validate
-
-      auto actor = SendToNeighbours(jMessage, userId, data, length, true);
-
-      if (actor) {
-        actor->SetLook(&look);
-      }
-      break;
-    }
-    case MsgType::UpdateMovement: {
-      simdjson::dom::element data_;
-      Read(jMessage, "data", &data_);
-
-      auto actor = SendToNeighbours(jMessage, userId, data, length);
-
-      if (actor) {
-        simdjson::dom::element jPos;
-        Read(data_, "pos", &jPos);
-        double pos[3];
-        for (int i = 0; i < 3; ++i)
-          Read(jPos, i, &pos[i]);
-        actor->SetPos({ (float)pos[0], (float)pos[1], (float)pos[2] });
-      }
-      if (actor) {
-        simdjson::dom::element jRot;
-        Read(data_, "rot", &jRot);
-        double rot[3];
-        for (int i = 0; i < 3; ++i)
-          Read(jRot, i, &rot[i]);
-        actor->SetAngle({ (float)rot[0], (float)rot[1], (float)rot[2] });
-      }
-      break;
-    }
-    case MsgType::UpdateEquipment: {
-
-      MpActor* actor = serverState.ActorByUser(userId);
-      if (actor) {
-        simdjson::dom::element data_;
-        ReadEx(jMessage, "data", &data_);
-        simdjson::dom::element inv;
-        ReadEx(data_, "inv", &inv);
-
-        auto equipmentInv = Inventory::FromJson(inv);
-
-        bool badEq = false;
-        for (auto& e : equipmentInv.entries) {
-          if (!actor->GetInventory().HasItem(e.baseId)) {
-            badEq = true;
-            break;
-          }
-        }
-
-        if (!badEq) {
-          SendToNeighbours(jMessage, userId, data, length, true);
-
-          simdjson::dom::element data_;
-          Read(jMessage, "data", &data_);
-          actor->SetEquipment(simdjson::minify(data_));
-        }
-      }
-      break;
-    }
-    case MsgType::Activate: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, "data", &data_);
-      uint32_t caster, target;
-      ReadEx(data_, "caster", &caster);
-      ReadEx(data_, "target", &target);
-
-      HandleActivate(userId, caster, target);
-
-      break;
-    }
-    case MsgType::PutItem:
-    case MsgType::TakeItem: {
-      MpActor* actor = serverState.ActorByUser(userId);
-      if (actor && pImpl->espm) {
-        uint32_t target;
-        ReadEx(jMessage, "target", &target);
-        auto e = Inventory::Entry::FromJson(jMessage);
-        auto& ref = worldState.GetFormAt<MpObjectReference>(target);
-
-        if (type == MsgType::PutItem)
-          ref.PutItem(*actor, e);
-        else
-          ref.TakeItem(*actor, e);
-      }
-      break;
-    }
-    default:
-      throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
-  }
-}
-
-void PartOne::HandleActivate(Networking::UserId userId, uint32_t caster,
-                             uint32_t target)
-{
-  if (!pImpl->espm)
-    throw std::runtime_error("No loaded esm or esp files are found");
-
-  const auto ac = serverState.ActorByUser(userId);
-  if (!ac)
-    throw std::runtime_error("Can't do this without Actor attached");
-
-  if (caster != 0x14) {
-    std::stringstream ss;
-    ss << "Bad caster (0x" << std::hex << caster << ")";
-    throw std::runtime_error(ss.str());
-  }
-
-  auto refPtr = std::dynamic_pointer_cast<MpObjectReference>(
-    worldState.LookupFormById(target));
-  if (!refPtr)
-    return;
-
-  refPtr->Activate(*ac);
+  pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
+                                                 *pImpl->actionListener);
 }
