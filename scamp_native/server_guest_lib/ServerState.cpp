@@ -32,3 +32,26 @@ bool ServerState::IsConnected(Networking::UserId userId) const
 {
   return userId < std::size(userInfo) && userInfo[userId];
 }
+
+MpActor* ServerState::ActorByUser(Networking::UserId userId)
+{
+  auto it = actorsMap.left.find(userId);
+  if (it == actorsMap.left.end())
+    return nullptr;
+  return it->second;
+}
+
+Networking::UserId ServerState::UserByActor(MpActor* actor)
+{
+  auto it = actorsMap.right.find(actor);
+  if (it == actorsMap.right.end())
+    return Networking::InvalidUserId;
+  return it->second;
+}
+
+void ServerState::EnsureUserExists(Networking::UserId userId)
+{
+  if (userInfo.size() <= userId || !userInfo[userId])
+    throw std::runtime_error("User with id " + std::to_string(userId) +
+                             " doesn't exist");
+}
