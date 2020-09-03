@@ -27,7 +27,7 @@ public:
                                  uint32_t idx) = 0;
 
   virtual void OnUpdateLook(const RawMessageData& rawMsgData, uint32_t idx,
-                            const MpActor::Look& look) = 0;
+                            const Look& look) = 0;
 
   virtual void OnUpdateEquipment(const RawMessageData& rawMsgData,
                                  uint32_t idx, simdjson::dom::element& data,
@@ -36,9 +36,9 @@ public:
   virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
                           uint32_t target) = 0;
 
-  virtual void OnPutItem(const RawMessageData& rawMsgData,
-                         uint32_t target, const Inventory::Entry& entry) = 0;
+  virtual void OnPutItem(const RawMessageData& rawMsgData, uint32_t target,
+                         const Inventory::Entry& entry) = 0;
 
-  virtual void OnTakeItem(const RawMessageData& rawMsgData,
-                          uint32_t target, const Inventory::Entry& entry) = 0;
+  virtual void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
+                          const Inventory::Entry& entry) = 0;
 };

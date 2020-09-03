@@ -63,7 +63,7 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnUpdateLook(const RawMessageData& rawMsgData,
-                                  uint32_t idx, const MpActor::Look& look)
+                                  uint32_t idx, const Look& look)
 { // TODO: validate
   // TODO: check if isRaceMenuOpen is true
 

@@ -32,7 +32,7 @@ public:
                          uint32_t idx) override;
 
   void OnUpdateLook(const RawMessageData& rawMsgData, uint32_t idx,
-                    const MpActor::Look& look) override;
+                    const Look& look) override;
 
   void OnUpdateEquipment(const RawMessageData& rawMsgData, uint32_t idx,
                          simdjson::dom::element& data,
