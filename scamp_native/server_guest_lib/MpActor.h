@@ -1,4 +1,5 @@
 #pragma once
+#include "Look.h"
 #include "MpObjectReference.h"
 #include <set>
 
@@ -8,34 +9,6 @@ class MpActor : public MpObjectReference
 {
 public:
   static const char* Type() { return "Actor"; }
-
-  struct Tint
-  {
-    static Tint FromJson(simdjson::dom::element& j);
-
-    std::string texturePath;
-    int32_t argb = 0;
-    int32_t type = 0;
-  };
-
-  struct Look
-  {
-    static Look FromJson(const nlohmann::json& j);
-    static Look FromJson(simdjson::dom::element& j);
-    std::string ToJson() const;
-
-    bool isFemale = false;
-    uint32_t raceId = 0;
-    float weight = 0.f;
-    int32_t skinColor = 0;
-    int32_t hairColor = 0;
-    std::vector<uint32_t> headpartIds;
-    uint32_t headTextureSetId = 0;
-    std::vector<float> faceMorphs;
-    std::vector<float> facePresets;
-    std::vector<Tint> tints;
-    std::string name;
-  };
 
   constexpr static uint32_t nullBaseId = 0;
 

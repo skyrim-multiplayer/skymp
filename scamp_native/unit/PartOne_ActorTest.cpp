@@ -93,7 +93,7 @@ TEST_CASE("createActor message contains look", "[PartOne]")
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
   partOne.SetUserActor(0, 0xff000ABC, &tgt);
-  const MpActor::Look look = MpActor::Look::FromJson(jLook["data"]);
+  const Look look = Look::FromJson(jLook["data"]);
   partOne.worldState.GetFormAt<MpActor>(0xff000ABC).SetLook(&look);
 
   DoConnect(partOne, 1);

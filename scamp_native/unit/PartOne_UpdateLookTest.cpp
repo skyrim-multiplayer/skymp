@@ -65,7 +65,7 @@ TEST_CASE("Look <=> JSON casts", "[PartOne]")
 {
   simdjson::dom::parser p;
   auto jLookSimd = p.parse(jLook["data"].dump());
-  auto look = MpActor::Look::FromJson(jLookSimd.value());
+  auto look = Look::FromJson(jLookSimd.value());
 
   REQUIRE(nlohmann::json::parse(look.ToJson()) == jLook["data"]);
 }

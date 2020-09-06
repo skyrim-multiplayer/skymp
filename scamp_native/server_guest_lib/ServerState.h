@@ -29,27 +29,7 @@ public:
   void Connect(Networking::UserId userId);
   void Disconnect(Networking::UserId userId) noexcept;
   bool IsConnected(Networking::UserId userId) const;
-
-  MpActor* ActorByUser(Networking::UserId userId)
-  {
-    auto it = actorsMap.left.find(userId);
-    if (it == actorsMap.left.end())
-      return nullptr;
-    return it->second;
-  }
-
-  Networking::UserId UserByActor(MpActor* actor)
-  {
-    auto it = actorsMap.right.find(actor);
-    if (it == actorsMap.right.end())
-      return Networking::InvalidUserId;
-    return it->second;
-  }
-
-  void EnsureUserExists(Networking::UserId userId)
-  {
-    if (userInfo.size() <= userId || !userInfo[userId])
-      throw std::runtime_error("User with id " + std::to_string(userId) +
-                               " doesn't exist");
-  }
+  MpActor* ActorByUser(Networking::UserId userId);
+  Networking::UserId UserByActor(MpActor* actor);
+  void EnsureUserExists(Networking::UserId userId);
 };

@@ -251,20 +251,7 @@ export class FormView implements View<FormModel> {
     }
   }
 
-  private wasHarvestedAtSomeMoment = false;
-  private lastPeriodicHarvestedUpdate = 0;
-  private wasHarvested: boolean | null = null;
-
   private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
-    if (this.wasHarvested !== isHarvested) {
-      this.wasHarvested = isHarvested;
-      this.lastPeriodicHarvestedUpdate = 0;
-    }
-    if (Date.now() - this.lastPeriodicHarvestedUpdate < 5000) {
-      return;
-    }
-    this.lastPeriodicHarvestedUpdate = Date.now();
-
     const base = refr.getBaseObject();
     if (base) {
       const t = base.getType();
@@ -313,29 +300,24 @@ export class FormView implements View<FormModel> {
     }
   }
 
-  private wasOpen: null | boolean = null;
-  private lastOpenReapply = 0;
-
-  private applyOpen(refr: ObjectReference, isOpen: boolean) {
-    if (refr.getOpenState() !== 0) refr.setOpen(isOpen);
-  }
+  private lastHarvestedApply = 0;
+  private lastOpenApply = 0;
 
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
 
-    if (model.isHarvested) this.wasHarvestedAtSomeMoment = true;
-    if (this.wasHarvestedAtSomeMoment) {
+    if (gCrosshairRefId === this.refrId) {
+      this.lastHarvestedApply = 0;
+      this.lastOpenApply = 0;
+    }
+    const now = Date.now();
+    if (now - this.lastHarvestedApply > 666) {
+      this.lastHarvestedApply = now;
       this.applyHarvested(refr, !!model.isHarvested);
     }
-
-    const isOpen = !!model.isOpen;
-    if (this.wasOpen !== isOpen) {
-      this.applyOpen(refr, isOpen);
-      this.wasOpen = isOpen;
-    }
-    if (Date.now() - this.lastOpenReapply > 1000) {
-      this.lastOpenReapply = Date.now();
-      this.wasOpen = null;
+    if (now - this.lastOpenApply > 133) {
+      this.lastOpenApply = now;
+      refr.setOpen(!!model.isOpen);
     }
 
     if (

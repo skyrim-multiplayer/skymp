@@ -63,17 +63,8 @@ private:
 
   void AddUser(Networking::UserId userId, UserType userType);
 
-  // Returns user's actor if exists
-  MpActor* SendToNeighbours(const simdjson::dom::element& jMessage,
-                            Networking::UserId userId,
-                            Networking::PacketData data, size_t length,
-                            bool reliable = false);
-
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
-
-  void HandleActivate(Networking::UserId userId, uint32_t caster,
-                      uint32_t target);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
