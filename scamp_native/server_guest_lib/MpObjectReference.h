@@ -84,6 +84,7 @@ public:
   void AddItems(const std::vector<Inventory::Entry>& entries);
   void RemoveItems(const std::vector<Inventory::Entry>& entries,
                    MpObjectReference* target = nullptr);
+  void RelootContainer();
 
   static void Subscribe(MpObjectReference* emitter,
                         MpObjectReference* listener);

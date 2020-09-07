@@ -60,6 +60,8 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
     relootTime = std::chrono::seconds(3);
   } else if (espm::IsItem(baseType_)) {
     relootTime = std::chrono::hours(1);
+  } else if (!strcmp(baseType_, "CONT")) {
+    relootTime = std::chrono::hours(1);
   }
 }
 
@@ -254,6 +256,10 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
   RemoveItems({ e }, &ac);
+
+  if (GetInventory().IsEmpty()) {
+    RequestReloot();
+  }
 }
 
 void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
@@ -297,6 +303,12 @@ void MpObjectReference::RemoveItems(
     target->AddItems(entries);
 
   SendInventoryUpdate();
+}
+
+void MpObjectReference::RelootContainer()
+{
+  baseContainerAdded = false;
+  EnsureBaseContainerAdded(*GetParent()->espm);
 }
 
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
