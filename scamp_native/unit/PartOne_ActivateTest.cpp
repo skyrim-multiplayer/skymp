@@ -415,8 +415,9 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne]")
 
   // Reloot check
   {
-    // Take the last sword from barrel. This action forces reloot.
-    ref.TakeItem(actor, { 0x12eb7, 1 });
+    // Take all items from the barrel. This action forces reloot.
+    for (auto e : ref.GetInventory().entries)
+      ref.TakeItem(actor, e);
 
     REQUIRE(ref.GetInventory().IsEmpty() == true);
 
