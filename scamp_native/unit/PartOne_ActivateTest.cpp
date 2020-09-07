@@ -338,6 +338,8 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne]")
   auto& partOne = GetPartOne();
   auto refrId = 0x20570;
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
+  ref.SetRelootTime(std::chrono::milliseconds(25));
+
   REQUIRE(ref.GetInventory().IsEmpty());
 
   DoConnect(partOne, 0);
@@ -410,6 +412,19 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne]")
   REQUIRE(g_tgt.messages[0].j["type"] == "setInventory");
   REQUIRE(ref.GetInventory().GetItemCount(0x12eb7) == 1);
   REQUIRE(actor.GetInventory().GetItemCount(0x12eb7) == 1);
+
+  // Reloot check
+  {
+    // Take the last sword from barrel. This action forces reloot.
+    ref.TakeItem(actor, { 0x12eb7, 1 });
+
+    REQUIRE(ref.GetInventory().IsEmpty() == true);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    partOne.Tick();
+
+    REQUIRE(ref.GetInventory().IsEmpty() == false);
+  }
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
