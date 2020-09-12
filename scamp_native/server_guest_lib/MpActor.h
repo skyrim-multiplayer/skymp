@@ -18,19 +18,12 @@ public:
   MpActor(const LocationalData& locationalData_,
           const SubscribeCallback& onSubscribe_,
           const SubscribeCallback& onUnsubscribe_,
-          const SendToUserFn& sendToUser_)
-    : MpObjectReference(locationalData_, onSubscribe_, onUnsubscribe_,
-                        nullBaseId, "ACHR")
-    , sendToUser(sendToUser_)
-  {
-  }
+          const SendToUserFn& sendToUser_);
 
-  ~MpActor() = default;
-
-  const auto& IsRaceMenuOpen() const { return isRaceMenuOpen; }
-  auto GetLook() const { return look.get(); }
-  const std::string& GetLookAsJson();
-  const std::string& GetEquipmentAsJson() { return jEquipmentCache; };
+  const bool& IsRaceMenuOpen() const;
+  Look* GetLook() const;
+  std::string GetLookAsJson();
+  std::string GetEquipmentAsJson();
 
   void SetRaceMenuOpen(bool isOpen);
   void SetLook(const Look* newLook);
@@ -48,16 +41,16 @@ public:
   void AddEventSink(std::shared_ptr<DestroyEventSink> sink);
   void RemoveEventSink(std::shared_ptr<DestroyEventSink> sink);
 
+  MpChangeForm GetChangeForm() const override;
+
 private:
   void UnsubscribeFromAll();
 
   const SendToUserFn sendToUser;
-
-  bool isRaceMenuOpen = false;
-  std::unique_ptr<Look> look;
-  std::string jLookCache;
-  std::string jEquipmentCache;
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
+
+  struct Impl;
+  std::shared_ptr<Impl> pImpl;
 
 protected:
   void BeforeDestroy() override;

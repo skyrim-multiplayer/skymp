@@ -4,19 +4,69 @@
 #include <ctime>
 #include <simdjson.h>
 
-std::string MpChangeForm::GetInventoryDump() const
+namespace {
+template <class T>
+T DumpToStruct(const std::string& dump)
+{
+  if (dump.size() > 0) {
+    simdjson::dom::parser p;
+    auto element = p.parse(dump).value();
+    return T::FromJson(element);
+  }
+  return T();
+}
+}
+
+std::string MpChangeForm::GetInventory() const
 {
   return inv.ToJson().dump();
 }
 
-void MpChangeForm::SetInventoryDump(const std::string& inventoryDump)
+void MpChangeForm::SetInventory(const std::string& inventoryDump)
 {
-  if (inventoryDump.size() > 0) {
-    simdjson::dom::parser p;
-    auto element = p.parse(inventoryDump).value();
-    inv = Inventory::FromJson(element);
-  } else
-    inv = {};
+  inv = DumpToStruct<Inventory>(inventoryDump);
+}
+
+std::string MpChangeForm::GetEquipment() const
+{
+  if (equipment)
+    return equipment->ToJson().dump();
+  else
+    return "";
+}
+
+void MpChangeForm::SetEquipment(const std::string& equipmentDump)
+{
+  if (equipmentDump.size() > 0)
+    equipment = DumpToStruct<Equipment>(equipmentDump);
+  else
+    equipment.reset();
+}
+
+std::string MpChangeForm::GetFormDesc() const
+{
+  return formDesc.ToString();
+}
+
+void MpChangeForm::SetFormDesc(const std::string& newFormDesc)
+{
+  formDesc = FormDesc::FromString(newFormDesc);
+}
+
+std::string MpChangeForm::GetLook() const
+{
+  if (look)
+    return look->ToJson();
+  else
+    return "";
+}
+
+void MpChangeForm::SetLook(const std::string& lookDump)
+{
+  if (lookDump.size() > 0)
+    look = DumpToStruct<Look>(lookDump);
+  else
+    look.reset();
 }
 
 /*void MpChangeForm::Load(MpChangeForm source, WorldState* parentWorldState)

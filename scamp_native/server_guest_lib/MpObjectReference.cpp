@@ -445,6 +445,8 @@ MpChangeForm MpObjectReference::GetChangeForm() const
 {
   MpChangeForm res;
   static_cast<MpChangeFormREFR&>(res) = pImpl->changeForm;
+  res.formDesc =
+    FormDesc::FromFormId(this->GetFormId(), GetParent()->espm->GetFileNames());
   return res;
 }
 

@@ -44,9 +44,11 @@ PartOne::PartOne()
 
     auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
 
+    std::string jEquipment, jLook;
+
     const char *lookPrefix = "", *look = "";
     if (emitterAsActor) {
-      auto& jLook = emitterAsActor->GetLookAsJson();
+      jLook = emitterAsActor->GetLookAsJson();
       if (!jLook.empty()) {
         lookPrefix = R"(, "look": )";
         look = jLook.data();
@@ -55,7 +57,7 @@ PartOne::PartOne()
 
     const char *equipmentPrefix = "", *equipment = "";
     if (emitterAsActor) {
-      auto& jEquipment = emitterAsActor->GetEquipmentAsJson();
+      jEquipment = emitterAsActor->GetEquipmentAsJson();
       if (!jEquipment.empty()) {
         equipmentPrefix = R"(, "equipment": )";
         equipment = jEquipment.data();
