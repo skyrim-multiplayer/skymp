@@ -96,8 +96,8 @@ public:
 
   void RequestReloot();
   void DoReloot();
-  std::chrono::time_point<std::chrono::system_clock>* GetNextRelootMoment()
-    const;
+  std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
+  GetNextRelootMoment() const;
 
   virtual MpChangeForm GetChangeForm() const;
 

@@ -408,27 +408,37 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 
 void MpObjectReference::RequestReloot()
 {
-  if (!relootMoment) {
-    relootMoment.reset(new std::chrono::time_point<std::chrono::system_clock>(
-      std::chrono::system_clock::now() + GetRelootTime()));
+  if (!pImpl->changeForm.nextRelootDatetime) {
+    std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
+      timePoint(new std::chrono::time_point<std::chrono::system_clock>(
+        std::chrono::system_clock::now() + GetRelootTime()));
+
+    pImpl->changeForm.nextRelootDatetime =
+      std::chrono::system_clock::to_time_t(*timePoint);
+
     GetParent()->RequestReloot(*this);
   }
 }
 
 void MpObjectReference::DoReloot()
 {
-  if (relootMoment) {
-    relootMoment.reset();
+  if (pImpl->changeForm.nextRelootDatetime) {
+    pImpl->changeForm.nextRelootDatetime = 0;
     SetOpen(false);
     SetHarvested(false);
     RelootContainer();
   }
 }
 
-std::chrono::time_point<std::chrono::system_clock>*
+std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
 MpObjectReference::GetNextRelootMoment() const
 {
-  return relootMoment.get();
+  std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>> res;
+  if (pImpl->changeForm.nextRelootDatetime)
+    res.reset(new std::chrono::time_point<std::chrono::system_clock>(
+      std::chrono::system_clock::from_time_t(
+        pImpl->changeForm.nextRelootDatetime)));
+  return res;
 }
 
 MpChangeForm MpObjectReference::GetChangeForm() const

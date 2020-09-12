@@ -19,7 +19,7 @@ public:
   Inventory inv;              //
   bool isHarvested = false;   //
   bool isOpen = false;        //
-  uint64_t nextRelootDatetime;
+  uint64_t nextRelootDatetime = 0;
 };
 
 class MpChangeFormACHR
