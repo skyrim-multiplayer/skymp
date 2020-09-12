@@ -26,7 +26,7 @@ class WorldState
   friend class MpActor;
 
 public:
-  WorldState() = default;
+  WorldState();
   WorldState(const WorldState&) = delete;
   WorldState& operator=(const WorldState&) = delete;
 
@@ -107,8 +107,11 @@ private:
   std::unique_ptr<MakeID> formIdxManager;
   std::map<
     std::chrono::milliseconds,
-    std::list<std::pair<uint32_t, std::chrono::steady_clock::time_point>>>
+    std::list<std::pair<uint32_t, std::chrono::system_clock::time_point>>>
     relootTimers;
   espm::Loader* espm = nullptr;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
+
+  struct Impl;
+  std::shared_ptr<Impl> pImpl;
 };

@@ -1,6 +1,7 @@
 #include "MpObjectReference.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
+#include "MpChangeForms.h"
 #include "WorldState.h"
 #include <MsgType.h>
 
@@ -43,6 +44,11 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 }
 }
 
+struct MpObjectReference::Impl
+{
+  MpChangeFormREFR changeForm;
+};
+
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
                                      const SubscribeCallback& onSubscribe_,
                                      const SubscribeCallback& onUnsubscribe_,
@@ -52,7 +58,12 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
   , baseId(baseId_)
   , baseType(baseType_)
 {
-  static_cast<LocationalData&>(*this) = locationalData_;
+  pImpl.reset(new Impl);
+  for (int i = 0; i < 3; ++i) {
+    pImpl->changeForm.pos[i] = locationalData_.pos[i];
+    pImpl->changeForm.rot[i] = locationalData_.rot[i];
+  }
+  pImpl->changeForm.worldOrCell = locationalData_.cellOrWorld;
 
   if (!strcmp(baseType_, "FLOR") || !strcmp(baseType_, "TREE")) {
     relootTime = std::chrono::hours(1);
@@ -65,6 +76,46 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
   }
 }
 
+const NiPoint3& MpObjectReference::GetPos() const
+{
+  return reinterpret_cast<const NiPoint3&>(pImpl->changeForm.pos);
+}
+
+const NiPoint3& MpObjectReference::GetAngle() const
+{
+  return reinterpret_cast<const NiPoint3&>(pImpl->changeForm.rot);
+}
+
+const uint32_t& MpObjectReference::GetCellOrWorld() const
+{
+  return pImpl->changeForm.worldOrCell;
+}
+
+const uint32_t& MpObjectReference::GetBaseId() const
+{
+  return baseId;
+}
+
+const Inventory& MpObjectReference::GetInventory() const
+{
+  return pImpl->changeForm.inv;
+}
+
+const bool& MpObjectReference::IsHarvested() const
+{
+  return pImpl->changeForm.isHarvested;
+}
+
+const bool& MpObjectReference::IsOpen() const
+{
+  return pImpl->changeForm.isOpen;
+}
+
+const std::chrono::milliseconds& MpObjectReference::GetRelootTime() const
+{
+  return relootTime;
+}
+
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
 {
   if (IsHarvested())
@@ -75,11 +126,12 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
-  auto& grid = GetParent()->grids[cellOrWorld];
+  auto& grid = GetParent()->grids[GetCellOrWorld()];
 
-  auto oldGridPos = GetGridPos(pos);
+  auto oldGridPos =
+    GetGridPos(reinterpret_cast<NiPoint3&>(pImpl->changeForm.pos));
   auto newGridPos = GetGridPos(newPos);
-  pos = newPos;
+  reinterpret_cast<NiPoint3&>(pImpl->changeForm.pos) = newPos;
   if (oldGridPos != newGridPos || !everSubscribedOrListened) {
     everSubscribedOrListened = true;
 
@@ -112,21 +164,21 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
 {
-  rot = newAngle;
+  reinterpret_cast<NiPoint3&>(pImpl->changeForm.rot) = newAngle;
 }
 
 void MpObjectReference::SetHarvested(bool harvested)
 {
-  if (harvested != isHarvested) {
-    isHarvested = harvested;
+  if (harvested != pImpl->changeForm.isHarvested) {
+    pImpl->changeForm.isHarvested = harvested;
     SendPropertyToListeners("isHarvested", harvested);
   }
 }
 
 void MpObjectReference::SetOpen(bool open)
 {
-  if (open != isOpen) {
-    isOpen = open;
+  if (open != pImpl->changeForm.isOpen) {
+    pImpl->changeForm.isOpen = open;
     SendPropertyToListeners("isOpen", open);
   }
 }
@@ -270,10 +322,10 @@ void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
 void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
 {
   everSubscribedOrListened = false;
-  auto& grid = GetParent()->grids[cellOrWorld];
+  auto& grid = GetParent()->grids[pImpl->changeForm.worldOrCell];
   grid.Forget(this);
 
-  cellOrWorld = newWorldOrCell;
+  pImpl->changeForm.worldOrCell = newWorldOrCell;
 }
 
 void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
@@ -283,14 +335,16 @@ void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
 
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
 {
-  inv.AddItem(baseId, count);
+  this->baseContainerAdded = true;
+  pImpl->changeForm.inv.AddItem(baseId, count);
   SendInventoryUpdate();
 }
 
 void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
 {
   if (entries.size() > 0) {
-    inv.AddItems(entries);
+    this->baseContainerAdded = true;
+    pImpl->changeForm.inv.AddItems(entries);
     SendInventoryUpdate();
   }
 }
@@ -298,7 +352,8 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
 void MpObjectReference::RemoveItems(
   const std::vector<Inventory::Entry>& entries, MpObjectReference* target)
 {
-  inv.RemoveItems(entries);
+  pImpl->changeForm.inv.RemoveItems(entries);
+
   if (target)
     target->AddItems(entries);
 
@@ -351,17 +406,49 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
   return emitters ? *emitters : g_emptyEmitters;
 }
 
+void MpObjectReference::RequestReloot()
+{
+  if (!relootMoment) {
+    relootMoment.reset(new std::chrono::time_point<std::chrono::system_clock>(
+      std::chrono::system_clock::now() + GetRelootTime()));
+    GetParent()->RequestReloot(*this);
+  }
+}
+
+void MpObjectReference::DoReloot()
+{
+  if (relootMoment) {
+    relootMoment.reset();
+    SetOpen(false);
+    SetHarvested(false);
+    RelootContainer();
+  }
+}
+
+std::chrono::time_point<std::chrono::system_clock>*
+MpObjectReference::GetNextRelootMoment() const
+{
+  return relootMoment.get();
+}
+
+MpChangeForm MpObjectReference::GetChangeForm() const
+{
+  MpChangeForm res;
+  static_cast<MpChangeFormREFR&>(res) = pImpl->changeForm;
+  return res;
+}
+
 void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
   MpForm::Init(parent, formId);
 
-  auto& grid = GetParent()->grids[cellOrWorld];
+  auto& grid = GetParent()->grids[pImpl->changeForm.worldOrCell];
   MoveOnGrid(grid);
 }
 
 void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
 {
-  auto newGridPos = GetGridPos(pos);
+  auto newGridPos = GetGridPos(GetPos());
   grid.Move(this, newGridPos.first, newGridPos.second);
 }
 
@@ -371,11 +458,6 @@ void MpObjectReference::InitListenersAndEmitters()
     listeners.reset(new std::set<MpObjectReference*>);
     emitters.reset(new std::set<MpObjectReference*>);
   }
-}
-
-void MpObjectReference::RequestReloot()
-{
-  GetParent()->RequestReloot(*this);
 }
 
 void MpObjectReference::SendInventoryUpdate()
@@ -502,7 +584,7 @@ void MpObjectReference::BeforeDestroy()
 
   MpForm::BeforeDestroy();
 
-  GetParent()->grids[cellOrWorld].Forget(this);
+  GetParent()->grids[GetCellOrWorld()].Forget(this);
 
   auto listenersCopy = GetListeners();
   for (auto listener : listenersCopy)

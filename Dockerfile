@@ -15,6 +15,7 @@ RUN git clone https://github.com/microsoft/vcpkg.git \
   && ./bootstrap-vcpkg.sh
 RUN cd vcpkg && ./vcpkg install boost-bimap:x64-linux
 RUN cd vcpkg && ./vcpkg install slikenet:x64-linux
+RUN cd vcpkg && ./vcpkg install sqlite-orm:x64-linux
 RUN cd vcpkg && ./vcpkg install spdlog:x64-linux
 RUN cd vcpkg && ./vcpkg install catch2:x64-linux
 RUN cd vcpkg && ./vcpkg install sparsepp:x64-linux

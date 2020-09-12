@@ -27,3 +27,8 @@ TEST_CASE("DestroyForm failures", "[WorldState]")
     worldState.DestroyForm<MpActor>(0x12345678),
     Contains("Expected form 12345678 to be Actor, but got Form"));
 }
+
+TEST_CASE("Load", "[WorldState]")
+{
+
+}

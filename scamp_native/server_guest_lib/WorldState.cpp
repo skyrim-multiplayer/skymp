@@ -1,5 +1,17 @@
 #include "WorldState.h"
 #include "MpActor.h"
+#include "MpChangeForms.h"
+#include <unordered_map>
+
+struct WorldState::Impl
+{
+  std::unordered_map<int32_t, MpChangeForm> changes;
+};
+
+WorldState::WorldState()
+{
+  pImpl.reset(new Impl);
+}
 
 void WorldState::Clear()
 {
@@ -39,7 +51,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
 
 void WorldState::TickTimers()
 {
-  auto now = std::chrono::steady_clock::now();
+  auto now = std::chrono::system_clock::now();
 
   for (auto& p : relootTimers) {
     auto& list = p.second;
@@ -47,11 +59,8 @@ void WorldState::TickTimers()
       uint32_t relootTargetId = list.begin()->first;
       auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
         LookupFormById(relootTargetId));
-      if (relootTarget) {
-        relootTarget->SetOpen(false);
-        relootTarget->SetHarvested(false);
-        relootTarget->RelootContainer();
-      }
+      if (relootTarget)
+        relootTarget->DoReloot();
 
       list.pop_front();
     }
@@ -62,7 +71,7 @@ void WorldState::RequestReloot(MpObjectReference& ref)
 {
   auto& list = relootTimers[ref.GetRelootTime()];
   list.push_back({ ref.GetFormId(),
-                   std::chrono::steady_clock::now() + ref.GetRelootTime() });
+                   std::chrono::system_clock::now() + ref.GetRelootTime() });
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)

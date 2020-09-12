@@ -18,6 +18,7 @@ set(ports
   slikenet:${triplet}
   boost-bimap:${triplet}
   zlib:${triplet}
+  sqlite-orm:${triplet}
 )
 if (WIN32)
   list(APPEND ports simdjson:${triplet})

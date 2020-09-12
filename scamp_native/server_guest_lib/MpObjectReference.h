@@ -3,6 +3,7 @@
 #include "Grid.h"
 #include "Inventory.h"
 #include "JsonUtils.h"
+#include "MpChangeForms.h"
 #include "MpForm.h"
 #include <Loader.h>
 #include <chrono>
@@ -39,7 +40,6 @@ class OccupantDestroyEventSink;
 
 class MpObjectReference
   : public MpForm
-  , protected LocationalData
   , public FormIndex
 {
   friend class OccupantDestroyEventSink;
@@ -55,14 +55,14 @@ public:
                     const SubscribeCallback& onUnsubscribe_, uint32_t baseId,
                     const char* baseType);
 
-  const auto& GetPos() const { return pos; }
-  const auto& GetAngle() const { return rot; }
-  const auto& GetCellOrWorld() const { return cellOrWorld; }
-  const auto& GetBaseId() const { return baseId; }
-  const auto& GetInventory() const { return inv; }
-  const auto& IsHarvested() const { return isHarvested; }
-  const auto& IsOpen() const { return isOpen; };
-  const auto& GetRelootTime() const { return relootTime; }
+  const NiPoint3& GetPos() const;
+  const NiPoint3& GetAngle() const;
+  const uint32_t& GetCellOrWorld() const;
+  const uint32_t& GetBaseId() const;
+  const Inventory& GetInventory() const;
+  const bool& IsHarvested() const;
+  const bool& IsOpen() const;
+  const std::chrono::milliseconds& GetRelootTime() const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
@@ -94,12 +94,18 @@ public:
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;
 
+  void RequestReloot();
+  void DoReloot();
+  std::chrono::time_point<std::chrono::system_clock>* GetNextRelootMoment()
+    const;
+
+  virtual MpChangeForm GetChangeForm() const;
+
 private:
   void Init(WorldState* parent, uint32_t formId) override;
 
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void InitListenersAndEmitters();
-  void RequestReloot();
   void SendInventoryUpdate();
   void SendOpenContainer(uint32_t refId);
   void EnsureBaseContainerAdded(espm::Loader& espm);
@@ -115,16 +121,16 @@ private:
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
 
-  Inventory inv;
   uint32_t baseId = 0;
   const char* const baseType;
-  bool isHarvested = false;
-  bool isOpen = false;
   MpActor* occupant = nullptr;
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
   std::chrono::milliseconds relootTime{ 3000 };
   bool baseContainerAdded = false;
   std::unique_ptr<uint8_t> chanceNoneOverride;
+
+  struct Impl;
+  std::shared_ptr<Impl> pImpl;
 
 protected:
   void BeforeDestroy() override;
