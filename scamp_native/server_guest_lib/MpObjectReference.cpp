@@ -450,6 +450,29 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   return res;
 }
 
+void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
+{
+  if (pImpl->changeForm.formDesc != changeForm.formDesc) {
+    throw std::runtime_error("Expected formDesc to be " +
+                             pImpl->changeForm.formDesc.ToString() +
+                             ", but found" + changeForm.formDesc.ToString());
+  }
+  pImpl->changeForm = static_cast<const MpChangeFormREFR&>(changeForm);
+
+  if (changeForm.nextRelootDatetime) {
+    const auto tp =
+      std::chrono::system_clock::from_time_t(changeForm.nextRelootDatetime);
+
+    if (tp < std::chrono::system_clock::now()) {
+      const auto prevRelootTime = GetRelootTime();
+      SetRelootTime(std::chrono::duration_cast<std::chrono::milliseconds>(
+        tp - std::chrono::system_clock::now()));
+      RequestReloot();
+      SetRelootTime(prevRelootTime);
+    }
+  }
+}
+
 void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
   MpForm::Init(parent, formId);

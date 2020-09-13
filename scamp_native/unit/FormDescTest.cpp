@@ -17,7 +17,7 @@ TEST_CASE("ToString/FromString", "[FormDesc]")
 
 TEST_CASE("ToFormId/FromFormId", "[FormDesc]")
 {
-  std::vector<std::filesystem::path> list = { "Skyrim.esm", "Update.esm" };
+  std::vector<std::string> list = { "Skyrim.esm", "Update.esm" };
 
   REQUIRE(FormDesc::FromFormId(0x01000001, list) ==
           FormDesc(0x1, "Update.esm"));

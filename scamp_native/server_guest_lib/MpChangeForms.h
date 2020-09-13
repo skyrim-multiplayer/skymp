@@ -39,11 +39,6 @@ class MpChangeForm
   , public MpChangeFormACHR
 {
 public:
-  static void Load(MpChangeForm source, WorldState* parentWorldState);
-
-  static MpChangeForm Save(MpObjectReference* refr,
-                           WorldState* parentWorldState);
-
   std::string GetInventory() const;
   void SetInventory(const std::string& inventoryDump);
 

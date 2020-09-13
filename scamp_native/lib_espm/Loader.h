@@ -87,7 +87,14 @@ public:
     return *combineBrowser;
   }
 
-  const std::vector<fs::path>& GetFileNames() const noexcept { return files; }
+  std::vector<std::string> GetFileNames() const noexcept
+  {
+    std::vector<std::string> res;
+    res.reserve(files.size());
+    for (auto& p : files)
+      res.push_back(p.string());
+    return res;
+  }
 
 private:
   struct Entry

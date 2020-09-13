@@ -22,8 +22,7 @@ FormDesc FormDesc::FromString(std::string str)
   return res;
 }
 
-uint32_t FormDesc::ToFormId(
-  const std::vector<std::filesystem::path>& files) const
+uint32_t FormDesc::ToFormId(const std::vector<std::string>& files) const
 {
   uint32_t realFormId;
   if (file.empty()) {
@@ -32,7 +31,7 @@ uint32_t FormDesc::ToFormId(
 
     int fileIdx = -1;
     for (int i = 0; i < files.size(); ++i) {
-      if (files[i].string() == file) {
+      if (files[i] == file) {
         fileIdx = i;
         break;
       }
@@ -46,12 +45,12 @@ uint32_t FormDesc::ToFormId(
 }
 
 FormDesc FormDesc::FromFormId(uint32_t formId,
-                              const std::vector<std::filesystem::path>& files)
+                              const std::vector<std::string>& files)
 {
   FormDesc res;
   if (formId < 0xff000000) {
     int fileIdx = formId / 0x01000000;
-    res.file = files[fileIdx].string();
+    res.file = files[fileIdx];
     res.shortFormId = formId % 0x01000000;
   } else {
     res.shortFormId = formId - 0xff000000;

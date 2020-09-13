@@ -100,6 +100,7 @@ public:
   GetNextRelootMoment() const;
 
   virtual MpChangeForm GetChangeForm() const;
+  virtual void ApplyChangeForm(const MpChangeForm& changeForm);
 
 private:
   void Init(WorldState* parent, uint32_t formId) override;

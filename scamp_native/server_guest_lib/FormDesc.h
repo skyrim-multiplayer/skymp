@@ -18,9 +18,9 @@ public:
   std::string ToString() const;
   static FormDesc FromString(std::string str);
 
-  uint32_t ToFormId(const std::vector<std::filesystem::path>& files) const;
+  uint32_t ToFormId(const std::vector<std::string>& files) const;
   static FormDesc FromFormId(uint32_t formId,
-                             const std::vector<std::filesystem::path>& files);
+                             const std::vector<std::string>& files);
 
   friend bool operator==(const FormDesc& left, const FormDesc& right)
   {
