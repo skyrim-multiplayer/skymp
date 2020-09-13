@@ -13,7 +13,9 @@ class WorldState;
 class MpChangeFormREFR
 {
 public:
+  std::string recType;
   FormDesc formDesc;
+  FormDesc baseDesc;
   float pos[3] = { 0, 0, 0 };
   float rot[3] = { 0, 0, 0 };
   uint32_t worldOrCell = 0;
@@ -47,6 +49,9 @@ public:
 
   std::string GetFormDesc() const;
   void SetFormDesc(const std::string& formDesc);
+
+  std::string GetBaseFormDesc() const;
+  void SetBaseFormDesc(const std::string& formDesc);
 
   std::string GetLook() const;
   void SetLook(const std::string& lookDump);

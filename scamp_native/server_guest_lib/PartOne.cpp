@@ -5,6 +5,7 @@
 #include "JsonUtils.h"
 #include "MsgType.h"
 #include "PacketParser.h"
+#include "SqliteStorage.h"
 #include <array>
 #include <cassert>
 #include <type_traits>
@@ -160,35 +161,10 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                           uint32_t cellOrWorld,
                           Networking::ISendTarget* sendTarget)
 {
-  auto st = &serverState;
-
-  MpActor::SubscribeCallback subscribe =
-                               [sendTarget, this](MpObjectReference*emitter,
-                                                  MpObjectReference*listener) {
-                                 return pImpl->onSubscribe(sendTarget, emitter,
-                                                           listener);
-                               },
-                             unsubscribe = [sendTarget,
-                                            this](MpObjectReference*emitter,
-                                                  MpObjectReference*listener) {
-                               return pImpl->onUnsubscribe(sendTarget, emitter,
-                                                           listener);
-                             };
-
-  MpActor::SendToUserFn sendToUser = [sendTarget,
-                                      st](MpActor* actor, const void* data,
-                                          size_t size, bool reliable) {
-    auto targetuserId = st->UserByActor(actor);
-    if (targetuserId != Networking::InvalidUserId &&
-        st->disconnectingUserId != targetuserId)
-      sendTarget->Send(targetuserId,
-                       reinterpret_cast<Networking::PacketData>(data), size,
-                       reliable);
-  };
-
-  worldState.AddForm(std::unique_ptr<MpActor>(
-                       new MpActor({ pos, { 0, 0, angleZ }, cellOrWorld },
-                                   subscribe, unsubscribe, sendToUser)),
+  auto cbs = CreateActorCallbacks(sendTarget);
+  worldState.AddForm(std::unique_ptr<MpActor>(new MpActor(
+                       { pos, { 0, 0, angleZ }, cellOrWorld }, cbs.subscribe,
+                       cbs.unsubscribe, cbs.sendToUser)),
                      formId);
 
   if (pImpl->enableProductionHacks) {
@@ -397,6 +373,45 @@ void PartOne::AttachEspm(espm::Loader* espm,
   printf("AttachEspm took %d ticks\n", int(clock() - was));
 }
 
+void PartOne::LoadChangeForms(const char* fileName,
+                              Networking::ISendTarget* sendTarget)
+{
+  auto storage = MakeSqliteStorage(fileName);
+  for (auto& changeForm : storage.iterate<MpChangeForm>()) {
+    auto formId = changeForm.formDesc.ToFormId(GetEspm().GetFileNames());
+    /*
+    bool isCreatedForm = changeForm.formDesc.file.empty();
+
+    if (espm::Type(changeForm.recordType) == "ACHR") {
+      if (isCreatedForm) {
+        CreateActor(formId, { 0, 0, 0 }, 0, 0x3c, sendTarget);
+      }
+      auto& ac = worldState.GetFormAt<MpActor>(formId);
+      ac.ApplyChangeForm(changeForm);
+    } else if (espm::Type(changeForm.recordType) == "REFR") {
+      if (isCreatedForm) {
+        auto cbs = CreateActorCallbacks(sendTarget);
+
+        auto base = GetEspm().GetBrowser().LookupById(
+          changeForm.baseDesc.ToFormId(GetEspm().GetFileNames()));
+
+        std::string baseType = base.rec->GetType().ToString();
+
+        if (base.rec)
+          worldState.AddForm(
+            std::unique_ptr<MpObjectReference>(new MpObjectReference(
+              { { 0, 0, 0 }, { 0, 0, 0 }, 0x3c }, cbs.subscribe,
+              cbs.unsubscribe,
+              changeForm.baseDesc.ToFormId(GetEspm().GetFileNames()),
+              baseType.data())),
+            formId);
+      }
+    } else
+      throw std::runtime_error("Unknown record type " +
+                               (espm::Type(changeForm.recordType).ToString()));*/
+  }
+}
+
 espm::Loader& PartOne::GetEspm() const
 {
   return worldState.GetEspm();
@@ -443,6 +458,38 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
       throw std::runtime_error("Unexpected PacketType: " +
                                std::to_string((int)packetType));
   }
+}
+
+PartOne::ActorCallbacks PartOne::CreateActorCallbacks(
+  Networking::ISendTarget* sendTarget)
+{
+  auto st = &serverState;
+
+  MpActor::SubscribeCallback subscribe =
+                               [sendTarget, this](MpObjectReference*emitter,
+                                                  MpObjectReference*listener) {
+                                 return pImpl->onSubscribe(sendTarget, emitter,
+                                                           listener);
+                               },
+                             unsubscribe = [sendTarget,
+                                            this](MpObjectReference*emitter,
+                                                  MpObjectReference*listener) {
+                               return pImpl->onUnsubscribe(sendTarget, emitter,
+                                                           listener);
+                             };
+
+  MpActor::SendToUserFn sendToUser = [sendTarget,
+                                      st](MpActor* actor, const void* data,
+                                          size_t size, bool reliable) {
+    auto targetuserId = st->UserByActor(actor);
+    if (targetuserId != Networking::InvalidUserId &&
+        st->disconnectingUserId != targetuserId)
+      sendTarget->Send(targetuserId,
+                       reinterpret_cast<Networking::PacketData>(data), size,
+                       reliable);
+  };
+
+  return { subscribe, unsubscribe, sendToUser };
 }
 
 void PartOne::AddUser(Networking::UserId userId, UserType type)

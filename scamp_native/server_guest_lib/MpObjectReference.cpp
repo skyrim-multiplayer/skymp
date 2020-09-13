@@ -447,16 +447,27 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   static_cast<MpChangeFormREFR&>(res) = pImpl->changeForm;
   res.formDesc =
     FormDesc::FromFormId(this->GetFormId(), GetParent()->espm->GetFileNames());
+  res.recType = "REFR";
   return res;
 }
 
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
+  if (GetBaseId() !=
+      changeForm.baseDesc.ToFormId(GetParent()->GetEspm().GetFileNames())) {
+    throw std::runtime_error("Anomally, baseId should never change");
+  }
+
   if (pImpl->changeForm.formDesc != changeForm.formDesc) {
     throw std::runtime_error("Expected formDesc to be " +
                              pImpl->changeForm.formDesc.ToString() +
                              ", but found" + changeForm.formDesc.ToString());
   }
+
+  // Perform all required grid operations
+  SetCellOrWorld(changeForm.worldOrCell);
+  SetPos({ changeForm.pos[0], changeForm.pos[1], changeForm.pos[2] });
+
   pImpl->changeForm = static_cast<const MpChangeFormREFR&>(changeForm);
 
   if (changeForm.nextRelootDatetime) {

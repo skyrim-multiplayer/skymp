@@ -53,6 +53,16 @@ void MpChangeForm::SetFormDesc(const std::string& newFormDesc)
   formDesc = FormDesc::FromString(newFormDesc);
 }
 
+std::string MpChangeForm::GetBaseFormDesc() const
+{
+  return baseDesc.ToString();
+}
+
+void MpChangeForm::SetBaseFormDesc(const std::string& newFormDesc)
+{
+  baseDesc = FormDesc::FromString(newFormDesc);
+}
+
 std::string MpChangeForm::GetLook() const
 {
   if (look)

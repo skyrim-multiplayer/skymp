@@ -122,8 +122,8 @@ private:
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
 
-  uint32_t baseId = 0;
   const char* const baseType;
+  uint32_t baseId = 0;
   MpActor* occupant = nullptr;
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
   std::chrono::milliseconds relootTime{ 3000 };

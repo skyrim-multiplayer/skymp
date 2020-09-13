@@ -44,6 +44,8 @@ public:
   std::string GetActorName(uint32_t actorFormId);
   NiPoint3 GetActorPos(uint32_t actorFormId);
   void AttachEspm(espm::Loader* espm, Networking::ISendTarget* sendTarget);
+  void LoadChangeForms(const char* fileName,
+                       Networking::ISendTarget* sendTarget);
   espm::Loader& GetEspm() const;
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
@@ -60,6 +62,14 @@ private:
     User,
     Bot
   };
+
+  struct ActorCallbacks
+  {
+    MpActor::SubscribeCallback subscribe, unsubscribe;
+    MpActor::SendToUserFn sendToUser;
+  };
+
+  ActorCallbacks CreateActorCallbacks(Networking::ISendTarget* sendTarget);
 
   void AddUser(Networking::UserId userId, UserType userType);
 
