@@ -79,6 +79,66 @@ void MpChangeForm::SetLook(const std::string& lookDump)
     look.reset();
 }
 
+float MpChangeForm::GetX() const
+{
+  return position.x;
+}
+
+void MpChangeForm::SetX(float v)
+{
+  position.x = v;
+}
+
+float MpChangeForm::GetY() const
+{
+  return position.y;
+}
+
+void MpChangeForm::SetY(float v)
+{
+  position.y = v;
+}
+
+float MpChangeForm::GetZ() const
+{
+  return position.z;
+}
+
+void MpChangeForm::SetZ(float v)
+{
+  position.z = v;
+}
+
+float MpChangeForm::GetAngleX() const
+{
+  return angle.x;
+}
+
+void MpChangeForm::SetAngleX(float v)
+{
+  angle.x = v;
+}
+
+float MpChangeForm::GetAngleY() const
+{
+  return angle.y;
+}
+
+void MpChangeForm::SetAngleY(float v)
+{
+  angle.y = v;
+}
+
+float MpChangeForm::GetAngleZ() const
+{
+  return angle.z;
+}
+
+void MpChangeForm::SetAngleZ(float v)
+{
+  angle.z = v;
+}
+
 /*void MpChangeForm::Load(MpChangeForm source, WorldState* parentWorldState)
 {
   auto& espm = parentWorldState->GetEspm();

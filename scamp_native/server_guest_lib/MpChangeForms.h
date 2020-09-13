@@ -3,6 +3,7 @@
 #include "FormDesc.h"
 #include "Inventory.h"
 #include "Look.h"
+#include "NiPoint3.h"
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -13,11 +14,17 @@ class WorldState;
 class MpChangeFormREFR
 {
 public:
-  std::string recType;
+  enum RecType
+  {
+    REFR = 0,
+    ACHR = 1,
+  };
+
+  int recType = RecType::REFR;
   FormDesc formDesc;
   FormDesc baseDesc;
-  float pos[3] = { 0, 0, 0 };
-  float rot[3] = { 0, 0, 0 };
+  NiPoint3 position = { 0, 0, 0 };
+  NiPoint3 angle = { 0, 0, 0 };
   uint32_t worldOrCell = 0;
   Inventory inv;
   bool isHarvested = false;
@@ -55,4 +62,18 @@ public:
 
   std::string GetLook() const;
   void SetLook(const std::string& lookDump);
+
+  float GetX() const;
+  void SetX(float v);
+  float GetY() const;
+  void SetY(float v);
+  float GetZ() const;
+  void SetZ(float v);
+
+  float GetAngleX() const;
+  void SetAngleX(float v);
+  float GetAngleY() const;
+  void SetAngleY(float v);
+  float GetAngleZ() const;
+  void SetAngleZ(float v);
 };

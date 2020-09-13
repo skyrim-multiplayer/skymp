@@ -59,10 +59,8 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
   , baseType(baseType_)
 {
   pImpl.reset(new Impl);
-  for (int i = 0; i < 3; ++i) {
-    pImpl->changeForm.pos[i] = locationalData_.pos[i];
-    pImpl->changeForm.rot[i] = locationalData_.rot[i];
-  }
+  pImpl->changeForm.position = locationalData_.pos;
+  pImpl->changeForm.angle = locationalData_.rot;
   pImpl->changeForm.worldOrCell = locationalData_.cellOrWorld;
 
   if (!strcmp(baseType_, "FLOR") || !strcmp(baseType_, "TREE")) {
@@ -78,12 +76,12 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
 
 const NiPoint3& MpObjectReference::GetPos() const
 {
-  return reinterpret_cast<const NiPoint3&>(pImpl->changeForm.pos);
+  return reinterpret_cast<const NiPoint3&>(pImpl->changeForm.position);
 }
 
 const NiPoint3& MpObjectReference::GetAngle() const
 {
-  return reinterpret_cast<const NiPoint3&>(pImpl->changeForm.rot);
+  return reinterpret_cast<const NiPoint3&>(pImpl->changeForm.angle);
 }
 
 const uint32_t& MpObjectReference::GetCellOrWorld() const
@@ -128,10 +126,9 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
   auto& grid = GetParent()->grids[GetCellOrWorld()];
 
-  auto oldGridPos =
-    GetGridPos(reinterpret_cast<NiPoint3&>(pImpl->changeForm.pos));
+  auto oldGridPos = GetGridPos(pImpl->changeForm.position);
   auto newGridPos = GetGridPos(newPos);
-  reinterpret_cast<NiPoint3&>(pImpl->changeForm.pos) = newPos;
+  pImpl->changeForm.position = newPos;
   if (oldGridPos != newGridPos || !everSubscribedOrListened) {
     everSubscribedOrListened = true;
 
@@ -164,7 +161,7 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
 {
-  reinterpret_cast<NiPoint3&>(pImpl->changeForm.rot) = newAngle;
+  pImpl->changeForm.angle = newAngle;
 }
 
 void MpObjectReference::SetHarvested(bool harvested)
@@ -409,12 +406,9 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 void MpObjectReference::RequestReloot()
 {
   if (!pImpl->changeForm.nextRelootDatetime) {
-    std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
-      timePoint(new std::chrono::time_point<std::chrono::system_clock>(
-        std::chrono::system_clock::now() + GetRelootTime()));
-
     pImpl->changeForm.nextRelootDatetime =
-      std::chrono::system_clock::to_time_t(*timePoint);
+      std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() +
+                                           GetRelootTime());
 
     GetParent()->RequestReloot(*this);
   }
@@ -447,7 +441,6 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   static_cast<MpChangeFormREFR&>(res) = pImpl->changeForm;
   res.formDesc =
     FormDesc::FromFormId(this->GetFormId(), GetParent()->espm->GetFileNames());
-  res.recType = "REFR";
   return res;
 }
 
@@ -466,7 +459,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 
   // Perform all required grid operations
   SetCellOrWorld(changeForm.worldOrCell);
-  SetPos({ changeForm.pos[0], changeForm.pos[1], changeForm.pos[2] });
+  SetPos(changeForm.position);
 
   pImpl->changeForm = static_cast<const MpChangeFormREFR&>(changeForm);
 

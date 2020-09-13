@@ -64,15 +64,15 @@ MpChangeForm MpActor::GetChangeForm() const
 {
   auto res = MpObjectReference::GetChangeForm();
   static_cast<MpChangeFormACHR&>(res) = pImpl->changeForm;
-  res.recType = "ACHR";
+  res.recType = MpChangeForm::ACHR;
   return res;
 }
 
 void MpActor::ApplyChangeForm(const MpChangeForm& changeForm)
 {
-  if (changeForm.recType != "ACHR") {
-    throw std::runtime_error("Expected record type to be ACHR, but found " +
-                             changeForm.recType);
+  if (changeForm.recType != MpChangeForm::ACHR) {
+    throw std::runtime_error(
+      "Expected record type to be ACHR, but found REFR");
   }
   MpObjectReference::ApplyChangeForm(changeForm);
   pImpl->changeForm = static_cast<const MpChangeFormACHR&>(changeForm);
