@@ -41,6 +41,8 @@ public:
 
   void RequestReloot(MpObjectReference& ref);
 
+  void RequestSave(MpObjectReference& ref);
+
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
   template <class F>

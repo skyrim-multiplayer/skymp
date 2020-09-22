@@ -5,7 +5,6 @@
 #include "JsonUtils.h"
 #include "MsgType.h"
 #include "PacketParser.h"
-#include "SqliteStorage.h"
 #include <array>
 #include <cassert>
 #include <type_traits>
@@ -371,47 +370,6 @@ void PartOne::AttachEspm(espm::Loader* espm,
   }
 
   printf("AttachEspm took %d ticks\n", int(clock() - was));
-}
-
-void PartOne::LoadChangeForms(const char* fileName,
-                              Networking::ISendTarget* sendTarget)
-{
-  auto storage = MakeSqliteStorage(fileName);
-  storage.get_all<MpChangeForm>();
-
-  // for (auto& changeForm : storage.iterate<MpChangeForm>()) {
-  // auto formId = changeForm.formDesc.ToFormId(GetEspm().GetFileNames());
-  /*
-  bool isCreatedForm = changeForm.formDesc.file.empty();
-
-  if (espm::Type(changeForm.recordType) == "ACHR") {
-    if (isCreatedForm) {
-      CreateActor(formId, { 0, 0, 0 }, 0, 0x3c, sendTarget);
-    }
-    auto& ac = worldState.GetFormAt<MpActor>(formId);
-    ac.ApplyChangeForm(changeForm);
-  } else if (espm::Type(changeForm.recordType) == "REFR") {
-    if (isCreatedForm) {
-      auto cbs = CreateActorCallbacks(sendTarget);
-
-      auto base = GetEspm().GetBrowser().LookupById(
-        changeForm.baseDesc.ToFormId(GetEspm().GetFileNames()));
-
-      std::string baseType = base.rec->GetType().ToString();
-
-      if (base.rec)
-        worldState.AddForm(
-          std::unique_ptr<MpObjectReference>(new MpObjectReference(
-            { { 0, 0, 0 }, { 0, 0, 0 }, 0x3c }, cbs.subscribe,
-            cbs.unsubscribe,
-            changeForm.baseDesc.ToFormId(GetEspm().GetFileNames()),
-            baseType.data())),
-          formId);
-    }
-  } else
-    throw std::runtime_error("Unknown record type " +
-                             (espm::Type(changeForm.recordType).ToString()));*/
-  //}
 }
 
 espm::Loader& PartOne::GetEspm() const

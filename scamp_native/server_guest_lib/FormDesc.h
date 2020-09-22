@@ -33,6 +33,12 @@ public:
     return !(left == right);
   }
 
+  friend bool operator<(const FormDesc& left, const FormDesc& right)
+  {
+    return std::make_tuple(left.shortFormId, left.file) <
+      std::make_tuple(right.shortFormId, right.file);
+  }
+
   uint32_t shortFormId = 0;
   std::string file;
 };

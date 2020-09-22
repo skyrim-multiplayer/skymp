@@ -5,7 +5,6 @@
 
 struct WorldState::Impl
 {
-  std::unordered_map<int32_t, MpChangeForm> changes;
 };
 
 WorldState::WorldState()
@@ -51,8 +50,8 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
 
 void WorldState::TickTimers()
 {
+  // Tick Reloot
   auto now = std::chrono::system_clock::now();
-
   for (auto& p : relootTimers) {
     auto& list = p.second;
     while (!list.empty() && list.begin()->second <= now) {
@@ -65,6 +64,8 @@ void WorldState::TickTimers()
       list.pop_front();
     }
   }
+
+  // TODO: Tick Save
 }
 
 void WorldState::RequestReloot(MpObjectReference& ref)
@@ -72,6 +73,13 @@ void WorldState::RequestReloot(MpObjectReference& ref)
   auto& list = relootTimers[ref.GetRelootTime()];
   list.push_back({ ref.GetFormId(),
                    std::chrono::system_clock::now() + ref.GetRelootTime() });
+}
+
+void WorldState::RequestSave(MpObjectReference& ref)
+{
+  /*if (!pImpl->changes)
+    pImpl->changes.reset(new WorldSaver::ChangeFormsMap);
+  (*pImpl->changes)[ref.GetFormId()] = ref.GetChangeForm();*/
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)

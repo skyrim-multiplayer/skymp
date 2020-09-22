@@ -16,6 +16,8 @@ import { EventEmitter } from "events";
 import { NativeGameServer } from "./nativeGameServer";
 import { pid } from "process";
 
+console.log(`Current process ID is ${pid}`);
+
 const log = console.log;
 const systems = new Array<System>();
 systems.push(
@@ -130,5 +132,3 @@ main().catch((e) => {
 });
 
 process.on("unhandledRejection", console.error);
-
-console.log(`Current process ID is ${pid}`);

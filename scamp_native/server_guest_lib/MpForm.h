@@ -13,6 +13,8 @@ class MpForm
 public:
   static const char* Type() { return "Form"; }
 
+  auto GetParent() const { return parent; }
+
   static const char* PrettifyType(const char* typeidName)
   {
 #ifdef WIN32
@@ -45,8 +47,6 @@ public:
   MpForm& operator=(const MpForm&) = delete;
 
 protected:
-  auto GetParent() const { return parent; }
-
   // See WorldState::AddForm
   virtual void Init(WorldState* parent_, uint32_t formId_)
   {

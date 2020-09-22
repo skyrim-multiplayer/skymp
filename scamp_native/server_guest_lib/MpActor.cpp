@@ -1,10 +1,14 @@
 #include "MpActor.h"
+#include "ChangeFormGuard.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 
-struct MpActor::Impl
+struct MpActor::Impl : public ChangeFormGuard<MpChangeFormACHR>
 {
-  MpChangeFormACHR changeForm;
+  Impl(MpChangeFormACHR changeForm_, MpObjectReference* self_)
+    : ChangeFormGuard(changeForm_, self_)
+  {
+  }
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -15,31 +19,35 @@ MpActor::MpActor(const LocationalData& locationalData_,
                       nullBaseId, "ACHR")
   , sendToUser(sendToUser_)
 {
-  pImpl.reset(new Impl);
+  pImpl.reset(new Impl{ MpChangeFormACHR(), this });
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
-  pImpl->changeForm.isRaceMenuOpen = isOpen;
+  pImpl->EditChangeForm(
+    [&](MpChangeFormACHR& changeForm) { changeForm.isRaceMenuOpen = isOpen; });
 }
 
 void MpActor::SetLook(const Look* newLook)
 {
-  if (newLook) {
-    pImpl->changeForm.look = *newLook;
-  } else {
-    pImpl->changeForm.look.reset();
-  }
+  pImpl->EditChangeForm([&](MpChangeFormACHR& changeForm) {
+    if (newLook)
+      changeForm.look = *newLook;
+    else
+      changeForm.look.reset();
+  });
 }
 
 void MpActor::SetEquipment(const std::string& jsonString)
 {
-  if (jsonString.size() > 0) {
-    simdjson::dom::parser p;
-    auto element = p.parse(jsonString).value();
-    pImpl->changeForm.equipment = Equipment::FromJson(element);
-  } else
-    pImpl->changeForm.equipment.reset();
+  pImpl->EditChangeForm([&](MpChangeFormACHR& changeForm) {
+    if (jsonString.size() > 0) {
+      simdjson::dom::parser p;
+      auto element = p.parse(jsonString).value();
+      changeForm.equipment = Equipment::FromJson(element);
+    } else
+      changeForm.equipment.reset();
+  });
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
@@ -63,7 +71,7 @@ void MpActor::RemoveEventSink(std::shared_ptr<DestroyEventSink> sink)
 MpChangeForm MpActor::GetChangeForm() const
 {
   auto res = MpObjectReference::GetChangeForm();
-  static_cast<MpChangeFormACHR&>(res) = pImpl->changeForm;
+  static_cast<MpChangeFormACHR&>(res) = pImpl->ChangeForm();
   res.recType = MpChangeForm::ACHR;
   return res;
 }
@@ -75,17 +83,24 @@ void MpActor::ApplyChangeForm(const MpChangeForm& changeForm)
       "Expected record type to be ACHR, but found REFR");
   }
   MpObjectReference::ApplyChangeForm(changeForm);
-  pImpl->changeForm = static_cast<const MpChangeFormACHR&>(changeForm);
+  pImpl->EditChangeForm(
+    [&](MpChangeFormACHR& changeForm) {
+      changeForm = static_cast<const MpChangeFormACHR&>(changeForm);
+    },
+    Impl::Mode::NoRequestSave);
 }
 
 const bool& MpActor::IsRaceMenuOpen() const
 {
-  return pImpl->changeForm.isRaceMenuOpen;
+  return pImpl->ChangeForm().isRaceMenuOpen;
 }
 
-Look* MpActor::GetLook() const
+const Look* MpActor::GetLook() const
 {
-  return pImpl->changeForm.look ? &*pImpl->changeForm.look : nullptr;
+  auto& changeForm = pImpl->ChangeForm();
+  if (changeForm.look)
+    return &*changeForm.look;
+  return nullptr;
 }
 
 std::string MpActor::GetLookAsJson()
@@ -97,8 +112,8 @@ std::string MpActor::GetLookAsJson()
 
 std::string MpActor::GetEquipmentAsJson()
 {
-  if (pImpl->changeForm.equipment)
-    return pImpl->changeForm.equipment->ToJson().dump();
+  if (pImpl->ChangeForm().equipment)
+    return pImpl->ChangeForm().equipment->ToJson().dump();
   else
     return "";
 };

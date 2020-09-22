@@ -21,7 +21,7 @@ public:
           const SendToUserFn& sendToUser_);
 
   const bool& IsRaceMenuOpen() const;
-  Look* GetLook() const;
+  const Look* GetLook() const;
   std::string GetLookAsJson();
   std::string GetEquipmentAsJson();
 
