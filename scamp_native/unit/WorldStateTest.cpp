@@ -28,7 +28,49 @@ TEST_CASE("DestroyForm failures", "[WorldState]")
     Contains("Expected form 12345678 to be Actor, but got Form"));
 }
 
-TEST_CASE("Load", "[WorldState]")
+TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
 {
+  WorldState worldState;
+  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
+  MpChangeForm changeForm;
+  changeForm.recType = MpChangeForm::ACHR;
+  changeForm.position = { 1, 2, 3 };
+  changeForm.worldOrCell = 0x3c;
+  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+
+  worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
+
+  auto& refr = worldState.GetFormAt<MpActor>(0xff000000);
+  REQUIRE(refr.GetFormId() == 0xff000000);
+  REQUIRE(refr.GetChangeForm().formDesc.ToString() == "0");
+  REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
+  REQUIRE(refr.GetCellOrWorld() == 0x3c);
+  REQUIRE(refr.GetBaseId() == 0x0100abcd);
+}
+
+TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Skyrim.esm" };
+
+  MpChangeForm changeForm;
+  changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
+  changeForm.position = { 1, 2, 3 };
+  changeForm.worldOrCell = 0x3c;
+  changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
+
+  auto newRefr = new MpObjectReference(
+    LocationalData(), FormCallbacks::DoNothing(), 0x0000abcd, "STAT");
+  worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
+
+  worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
+  auto& refr = worldState.GetFormAt<MpObjectReference>(0xeeee);
+  REQUIRE(refr.GetFormId() == 0xeeee);
+  REQUIRE(refr.GetChangeForm().formDesc.ToString() == "eeee:Skyrim.esm");
+  REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
+  REQUIRE(refr.GetCellOrWorld() == 0x3c);
+  REQUIRE(refr.GetBaseId() == 0x0000abcd);
+  REQUIRE(refr.Type() == std::string("ObjectReference"));
+  REQUIRE(&refr == newRefr);
 }

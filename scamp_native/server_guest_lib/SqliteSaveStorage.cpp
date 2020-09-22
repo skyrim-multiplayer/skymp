@@ -6,6 +6,8 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <thread>
 
+using namespace sqlite_orm;
+
 namespace {
 auto MakeSqliteStorage(const char* name)
 {
@@ -14,8 +16,9 @@ auto MakeSqliteStorage(const char* name)
   auto storage = make_storage(
     name,
     make_table<SqliteChangeForm>(
-      "MpChangeForm",
-      make_column("primary", &SqliteChangeForm::primary, primary_key()),
+      "SqliteChangeForm",
+      make_column("primary", &SqliteChangeForm::primary, autoincrement(),
+                  primary_key()),
       make_column("record_type", &SqliteChangeForm::recType),
       make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,
                   &SqliteChangeForm::SetBaseFormDesc),
@@ -47,6 +50,12 @@ auto MakeSqliteStorage(const char* name)
 }
 
 using SqliteStorage = decltype(MakeSqliteStorage(""));
+
+struct UpsertTask
+{
+  std::vector<MpChangeForm> changeForms;
+  std::function<void()> callback;
+};
 }
 
 struct SqliteSaveStorage::Impl
@@ -65,8 +74,15 @@ struct SqliteSaveStorage::Impl
 
   struct
   {
-
+    std::list<UpsertTask> upsertTasks;
+    std::mutex m;
   } share3;
+
+  struct
+  {
+    std::vector<std::function<void()>> upsertCallbacksToFire;
+    std::mutex m;
+  } share4;
 
   std::unique_ptr<std::thread> thr;
   std::atomic<bool> destroyed = false;
@@ -93,6 +109,58 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     try {
 
+      decltype(pImpl->share3.upsertTasks) tasks;
+      {
+        std::lock_guard l(pImpl->share3.m);
+        tasks = std::move(pImpl->share3.upsertTasks);
+        pImpl->share3.upsertTasks.clear();
+      }
+
+      std::vector<std::function<void()>> callbacksToFire;
+
+      {
+        std::lock_guard l(pImpl->share.m);
+        auto g = pImpl->share.storage->transaction_guard();
+        for (auto& t : tasks) {
+          std::map<FormDesc, int> existingFormDescs;
+          for (auto& changeForm :
+               pImpl->share.storage->iterate<SqliteChangeForm>()) {
+            existingFormDescs.insert(
+              { changeForm.formDesc, changeForm.primary });
+          }
+
+          std::vector<SqliteChangeForm> toInsert, toUpdate;
+
+          for (auto& changeForm : t.changeForms) {
+            SqliteChangeForm f;
+            std::vector<SqliteChangeForm>* target;
+
+            if (auto it = existingFormDescs.find(changeForm.formDesc);
+                it != existingFormDescs.end()) {
+              f.primary = it->second;
+              target = &toUpdate;
+            } else {
+              f.primary = -1;
+              target = &toInsert;
+            }
+
+            static_cast<MpChangeForm&>(f) = std::move(changeForm);
+            target->push_back(f);
+          }
+
+          pImpl->share.storage->insert_range(toInsert.begin(), toInsert.end());
+          for (auto& v : toUpdate)
+            pImpl->share.storage->update(v);
+          callbacksToFire.push_back(t.callback);
+        }
+        g.commit();
+      }
+
+      {
+        std::lock_guard l(pImpl->share4.m);
+        for (auto& cb : callbacksToFire)
+          pImpl->share4.upsertCallbacksToFire.push_back(cb);
+      }
     } catch (...) {
       std::lock_guard l(pImpl->share2.m);
       auto exceptionPtr = std::current_exception();
@@ -111,7 +179,8 @@ void SqliteSaveStorage::IterateSync(const IterateSyncCallback& cb)
 void SqliteSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
                                const UpsertCallback& cb)
 {
-  std::lock_guard l(pImpl->share.m);
+  std::lock_guard l(pImpl->share3.m);
+  pImpl->share3.upsertTasks.push_back({ changeForms, cb });
 }
 
 void SqliteSaveStorage::Tick()
@@ -124,4 +193,13 @@ void SqliteSaveStorage::Tick()
       std::rethrow_exception(exceptionPtr);
     }
   }
+
+  decltype(pImpl->share4.upsertCallbacksToFire) upsertCallbacksToFire;
+  {
+    std::lock_guard l(pImpl->share4.m);
+    upsertCallbacksToFire = std::move(pImpl->share4.upsertCallbacksToFire);
+    pImpl->share4.upsertCallbacksToFire.clear();
+  }
+  for (auto& cb : upsertCallbacksToFire)
+    cb();
 }

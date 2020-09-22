@@ -2,6 +2,7 @@
 #include "FormIndex.h"
 #include "Grid.h"
 #include "GridElement.h"
+#include "MpChangeForms.h"
 #include "NiPoint3.h"
 #include <Loader.h>
 #include <MakeID.h>
@@ -19,6 +20,8 @@
 
 class MpObjectReference;
 class MpActor;
+class FormCallbacks;
+class MpChangeForm;
 
 class WorldState
 {
@@ -35,7 +38,11 @@ public:
   void AttachEspm(espm::Loader* espm);
 
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
-               bool skipChecks = false);
+               bool skipChecks = false,
+               const MpChangeForm* optionalChangeFormToApply = nullptr);
+
+  void LoadChangeForm(const MpChangeForm& changeForm,
+                      const FormCallbacks& callbacks);
 
   void TickTimers();
 
@@ -102,6 +109,7 @@ public:
 
   espm::Loader& GetEspm() const;
   espm::CompressedFieldsCache& GetEspmCache();
+  std::vector<std::string> espmFiles;
 
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;

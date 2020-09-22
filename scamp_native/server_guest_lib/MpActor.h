@@ -10,15 +10,8 @@ class MpActor : public MpObjectReference
 public:
   static const char* Type() { return "Actor"; }
 
-  constexpr static uint32_t nullBaseId = 0;
-
-  using SendToUserFn = std::function<void(MpActor* actor, const void* data,
-                                          size_t size, bool reliable)>;
-
   MpActor(const LocationalData& locationalData_,
-          const SubscribeCallback& onSubscribe_,
-          const SubscribeCallback& onUnsubscribe_,
-          const SendToUserFn& sendToUser_);
+          const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
 
   const bool& IsRaceMenuOpen() const;
   const Look* GetLook() const;
@@ -47,7 +40,6 @@ public:
 private:
   void UnsubscribeFromAll();
 
-  const SendToUserFn sendToUser;
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 
   struct Impl;

@@ -160,10 +160,9 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                           uint32_t cellOrWorld,
                           Networking::ISendTarget* sendTarget)
 {
-  auto cbs = CreateActorCallbacks(sendTarget);
-  worldState.AddForm(std::unique_ptr<MpActor>(new MpActor(
-                       { pos, { 0, 0, angleZ }, cellOrWorld }, cbs.subscribe,
-                       cbs.unsubscribe, cbs.sendToUser)),
+  worldState.AddForm(std::unique_ptr<MpActor>(
+                       new MpActor({ pos, { 0, 0, angleZ }, cellOrWorld },
+                                   CreateFormCallbacks(sendTarget))),
                      formId);
 
   if (pImpl->enableProductionHacks) {
@@ -355,15 +354,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
         worldState.AddForm(
           std::unique_ptr<MpObjectReference>(new MpObjectReference(
             { GetPos(locationalData), GetRot(locationalData), worldOrCell },
-            [sendTarget, this](MpObjectReference* emitter,
-                               MpObjectReference* listener) {
-              return pImpl->onSubscribe(sendTarget, emitter, listener);
-            },
-            [sendTarget, this](MpObjectReference* emitter,
-                               MpObjectReference* listener) {
-              return pImpl->onUnsubscribe(sendTarget, emitter, listener);
-            },
-            baseId, typeStr.data())),
+            CreateFormCallbacks(sendTarget), baseId, typeStr.data())),
           formId, true);
       }
     }
@@ -420,7 +411,7 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
   }
 }
 
-PartOne::ActorCallbacks PartOne::CreateActorCallbacks(
+FormCallbacks PartOne::CreateFormCallbacks(
   Networking::ISendTarget* sendTarget)
 {
   auto st = &serverState;

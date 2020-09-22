@@ -61,13 +61,7 @@ private:
     Bot
   };
 
-  struct ActorCallbacks
-  {
-    MpActor::SubscribeCallback subscribe, unsubscribe;
-    MpActor::SendToUserFn sendToUser;
-  };
-
-  ActorCallbacks CreateActorCallbacks(Networking::ISendTarget* sendTarget);
+  FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
 
   void AddUser(Networking::UserId userId, UserType userType);
 

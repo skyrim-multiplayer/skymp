@@ -55,11 +55,9 @@ public:
 };
 
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
-                                     const SubscribeCallback& onSubscribe_,
-                                     const SubscribeCallback& onUnsubscribe_,
+                                     const FormCallbacks& callbacks_,
                                      uint32_t baseId_, const char* baseType_)
-  : onSubscribe(onSubscribe_)
-  , onUnsubscribe(onUnsubscribe_)
+  : callbacks(new FormCallbacks(callbacks_))
   , baseId(baseId_)
   , baseType(baseType_)
 {
@@ -395,7 +393,7 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
   listener->emitters->insert(emitter);
-  emitter->onSubscribe(emitter, listener);
+  emitter->callbacks->subscribe(emitter, listener);
 }
 
 void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
@@ -406,7 +404,7 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   if (bothNonActors)
     return;
 
-  emitter->onUnsubscribe(emitter, listener);
+  emitter->callbacks->unsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
   listener->emitters->erase(emitter);
 }
@@ -463,11 +461,9 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   MpChangeForm res;
   static_cast<MpChangeFormREFR&>(res) = pImpl->ChangeForm();
 
-  if (GetParent()->espm) {
-    res.formDesc =
-      FormDesc::FromFormId(GetFormId(), GetParent()->espm->GetFileNames());
-    res.baseDesc =
-      FormDesc::FromFormId(GetBaseId(), GetParent()->espm->GetFileNames());
+  if (!GetParent()->espmFiles.empty()) {
+    res.formDesc = FormDesc::FromFormId(GetFormId(), GetParent()->espmFiles);
+    res.baseDesc = FormDesc::FromFormId(GetBaseId(), GetParent()->espmFiles);
   } else
     res.formDesc = res.baseDesc = FormDesc(GetFormId(), "");
 
@@ -477,8 +473,7 @@ MpChangeForm MpObjectReference::GetChangeForm() const
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
   const auto currentBaseId = GetBaseId();
-  const auto newBaseId =
-    changeForm.baseDesc.ToFormId(GetParent()->GetEspm().GetFileNames());
+  const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
   if (currentBaseId != newBaseId) {
     std::stringstream ss;
     ss << "Anomally, baseId should never change (";
@@ -489,7 +484,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   if (pImpl->ChangeForm().formDesc != changeForm.formDesc) {
     throw std::runtime_error("Expected formDesc to be " +
                              pImpl->ChangeForm().formDesc.ToString() +
-                             ", but found" + changeForm.formDesc.ToString());
+                             ", but found " + changeForm.formDesc.ToString());
   }
 
   // Perform all required grid operations
@@ -522,6 +517,13 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 
   auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
   MoveOnGrid(grid);
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) {
+      changeForm.formDesc =
+        FormDesc::FromFormId(formId, GetParent()->espmFiles);
+    },
+    Impl::Mode::NoRequestSave);
 }
 
 void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)

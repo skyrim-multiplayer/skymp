@@ -1,6 +1,7 @@
 #include "WorldState.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
+#include "MpObjectReference.h"
 #include <unordered_map>
 
 struct WorldState::Impl
@@ -23,10 +24,12 @@ void WorldState::AttachEspm(espm::Loader* espm_)
 {
   espm = espm_;
   espmCache.reset(new espm::CompressedFieldsCache);
+  espmFiles = espm->GetFileNames();
 }
 
 void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
-                         bool skipChecks)
+                         bool skipChecks,
+                         const MpChangeForm* optionalChangeFormToApply)
 {
   if (!skipChecks && forms.find(formId) != forms.end()) {
 
@@ -45,7 +48,17 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
       throw std::runtime_error("CreateID failed");
   }
 
-  forms.insert({ formId, std::move(form) });
+  auto it = forms.insert({ formId, std::move(form) }).first;
+
+  if (optionalChangeFormToApply) {
+    auto refr = dynamic_cast<MpObjectReference*>(it->second.get());
+    if (!refr) {
+      forms.erase(it); // Rollback changes due to exception
+      throw std::runtime_error(
+        "Unable to apply ChangeForm, cast to ObjectReference failed");
+    }
+    refr->ApplyChangeForm(*optionalChangeFormToApply);
+  }
 }
 
 void WorldState::TickTimers()
@@ -66,6 +79,44 @@ void WorldState::TickTimers()
   }
 
   // TODO: Tick Save
+}
+
+void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
+                                const FormCallbacks& callbacks)
+{
+  std::unique_ptr<MpObjectReference> form;
+
+  const auto baseId = changeForm.baseDesc.ToFormId(espmFiles);
+  const auto formId = changeForm.formDesc.ToFormId(espmFiles);
+
+  std::string baseType = "STAT";
+  if (espm) {
+    const auto rec = espm->GetBrowser().LookupById(baseId).rec;
+
+    if (!rec) {
+      std::stringstream ss;
+      ss << std::hex << "Unable to find record " << baseId;
+      throw std::runtime_error(ss.str());
+    }
+    baseType = rec->GetType().ToString();
+  }
+
+  if (formId < 0xff000000)
+    return GetFormAt<MpObjectReference>(formId).ApplyChangeForm(changeForm);
+
+  switch (changeForm.recType) {
+    case MpChangeForm::ACHR:
+      form.reset(new MpActor(LocationalData(), callbacks, baseId));
+      break;
+    case MpChangeForm::REFR:
+      form.reset(new MpObjectReference(LocationalData(), callbacks, baseId,
+                                       baseType.data()));
+      break;
+    default:
+      throw std::runtime_error("Unknown ChangeForm type: " +
+                               std::to_string(changeForm.recType));
+  }
+  AddForm(std::move(form), formId, false, &changeForm);
 }
 
 void WorldState::RequestReloot(MpObjectReference& ref)

@@ -12,12 +12,8 @@ struct MpActor::Impl : public ChangeFormGuard<MpChangeFormACHR>
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
-                 const SubscribeCallback& onSubscribe_,
-                 const SubscribeCallback& onUnsubscribe_,
-                 const SendToUserFn& sendToUser_)
-  : MpObjectReference(locationalData_, onSubscribe_, onUnsubscribe_,
-                      nullBaseId, "ACHR")
-  , sendToUser(sendToUser_)
+                 const FormCallbacks& callbacks_, uint32_t optBaseId)
+  : MpObjectReference(locationalData_, callbacks_, optBaseId, "NPC_")
 {
   pImpl.reset(new Impl{ MpChangeFormACHR(), this });
 }
@@ -52,8 +48,8 @@ void MpActor::SetEquipment(const std::string& jsonString)
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
-  if (sendToUser)
-    sendToUser(this, data, size, reliable);
+  if (callbacks->sendToUser)
+    callbacks->sendToUser(this, data, size, reliable);
   else
     throw std::runtime_error("sendToUser is nullptr");
 }

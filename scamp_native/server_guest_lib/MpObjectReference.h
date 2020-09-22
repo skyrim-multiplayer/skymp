@@ -38,6 +38,8 @@ class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
 
+class FormCallbacks;
+
 class MpObjectReference
   : public MpForm
   , public FormIndex
@@ -49,10 +51,11 @@ public:
 
   using SubscribeCallback = std::function<void(MpObjectReference* emitter,
                                                MpObjectReference* listener)>;
+  using SendToUserFn = std::function<void(MpActor* actor, const void* data,
+                                          size_t size, bool reliable)>;
 
-  MpObjectReference(const LocationalData& locationalData_,
-                    const SubscribeCallback& onSubscribe_,
-                    const SubscribeCallback& onUnsubscribe_, uint32_t baseId,
+  MpObjectReference(const LocationalData& locationalData,
+                    const FormCallbacks& callbacks, uint32_t baseId,
                     const char* baseType);
 
   const NiPoint3& GetPos() const;
@@ -117,7 +120,6 @@ private:
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
-  const SubscribeCallback onSubscribe, onUnsubscribe;
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
@@ -135,4 +137,19 @@ private:
 
 protected:
   void BeforeDestroy() override;
+
+  const std::shared_ptr<FormCallbacks> callbacks;
+};
+
+class FormCallbacks
+{
+public:
+  MpObjectReference::SubscribeCallback subscribe, unsubscribe;
+  MpObjectReference::SendToUserFn sendToUser;
+
+  static FormCallbacks DoNothing()
+  {
+    return { [](auto, auto) {}, [](auto, auto) {},
+             [](auto, auto, auto, auto) {} };
+  }
 };
