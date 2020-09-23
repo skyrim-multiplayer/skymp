@@ -122,6 +122,8 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
       {
         std::lock_guard l(pImpl->share.m);
         auto g = pImpl->share.storage->transaction_guard();
+        int numChangeForms = 0;
+        auto was = clock();
         for (auto& t : tasks) {
           std::map<FormDesc, int> existingFormDescs;
           for (auto& changeForm :
@@ -144,6 +146,7 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
               f.primary = -1;
               target = &toInsert;
             }
+            numChangeForms++;
 
             static_cast<MpChangeForm&>(f) = std::move(changeForm);
             target->push_back(f);
@@ -155,6 +158,9 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
           callbacksToFire.push_back(t.callback);
         }
         g.commit();
+        if (numChangeForms > 0)
+          printf("Saved %d ChangeForms in %d ticks\n", numChangeForms,
+                 clock() - was);
       }
 
       {

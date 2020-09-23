@@ -88,19 +88,21 @@ void WorldState::TickTimers()
   }
 
   // Tick Save Storage
-  pImpl->saveStorage->Tick();
+  if (pImpl->saveStorage) {
+    pImpl->saveStorage->Tick();
 
-  if (!pImpl->saveStorageBusy && !pImpl->changes.empty()) {
-    pImpl->saveStorageBusy = true;
-    std::vector<MpChangeForm> changeForms;
-    changeForms.reserve(pImpl->changes.size());
-    for (auto [formId, changeForm] : pImpl->changes)
-      changeForms.push_back(changeForm);
-    pImpl->changes.clear();
+    if (!pImpl->saveStorageBusy && !pImpl->changes.empty()) {
+      pImpl->saveStorageBusy = true;
+      std::vector<MpChangeForm> changeForms;
+      changeForms.reserve(pImpl->changes.size());
+      for (auto [formId, changeForm] : pImpl->changes)
+        changeForms.push_back(changeForm);
+      pImpl->changes.clear();
 
-    auto pImpl_ = pImpl;
-    pImpl->saveStorage->Upsert(changeForms,
-                               [pImpl_] { pImpl_->saveStorageBusy = false; });
+      auto pImpl_ = pImpl;
+      pImpl->saveStorage->Upsert(
+        changeForms, [pImpl_] { pImpl_->saveStorageBusy = false; });
+    }
   }
 }
 

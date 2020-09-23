@@ -13,6 +13,10 @@ export class Spawn implements System {
     ctx.gm.on("spawnAllowed", (userId: number) => {
       const formId = 0xff000001 + userId;
 
+      try {
+        ctx.svr.destroyActor(formId);
+      } catch (e) {}
+
       const spawnpoints = [
         { pos: [22659, -8697, -3594], worldOrCell: 0x1a26f, angleZ: 268 },
       ];

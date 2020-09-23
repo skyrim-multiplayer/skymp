@@ -5,3 +5,4 @@ dist_front
 dist
 coverage
 .clinic
+world.sqlite
