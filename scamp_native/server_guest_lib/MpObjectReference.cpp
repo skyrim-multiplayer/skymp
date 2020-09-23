@@ -345,8 +345,8 @@ void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
 
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
 {
-  this->baseContainerAdded = true;
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    changeForm.baseContainerAdded = true;
     changeForm.inv.AddItem(baseId, count);
   });
   SendInventoryUpdate();
@@ -355,9 +355,10 @@ void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
 void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
 {
   if (entries.size() > 0) {
-    this->baseContainerAdded = true;
-    pImpl->EditChangeForm(
-      [&](MpChangeFormREFR& changeForm) { changeForm.inv.AddItems(entries); });
+    pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+      changeForm.baseContainerAdded = true;
+      changeForm.inv.AddItems(entries);
+    });
     SendInventoryUpdate();
   }
 }
@@ -377,7 +378,11 @@ void MpObjectReference::RemoveItems(
 
 void MpObjectReference::RelootContainer()
 {
-  baseContainerAdded = false;
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) {
+      changeForm.baseContainerAdded = false;
+    },
+    Impl::Mode::NoRequestSave);
   EnsureBaseContainerAdded(*GetParent()->espm);
 }
 
@@ -573,7 +578,7 @@ void MpObjectReference::SendOpenContainer(uint32_t targetId)
 
 void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
 {
-  if (this->baseContainerAdded)
+  if (pImpl->ChangeForm().baseContainerAdded)
     return;
 
   constexpr uint32_t pcLevel = 1;
@@ -603,7 +608,11 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
     entries.push_back({ p.first, p.second });
   AddItems(entries);
 
-  this->baseContainerAdded = true;
+  if (!pImpl->ChangeForm().baseContainerAdded) {
+    pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+      changeForm.baseContainerAdded = true;
+    });
+  }
 }
 
 void MpObjectReference::CheckInteractionAbility(MpActor& ac)

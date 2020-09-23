@@ -29,6 +29,7 @@ public:
   Inventory inv;
   bool isHarvested = false;
   bool isOpen = false;
+  bool baseContainerAdded = false;
   uint64_t nextRelootDatetime = 0;
 };
 

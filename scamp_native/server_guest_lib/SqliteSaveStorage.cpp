@@ -44,7 +44,36 @@ auto MakeSqliteStorage(const char* name)
       make_column("look_dump", &SqliteChangeForm::GetLook,
                   &SqliteChangeForm::SetLook),
       make_column("equipment_dump", &SqliteChangeForm::GetEquipment,
-                  &SqliteChangeForm::SetEquipment)));
+                  &SqliteChangeForm::SetEquipment),
+      make_column("base_container_added",
+                  &SqliteChangeForm::baseContainerAdded)));
+  auto res = storage.sync_schema_simulate(true);
+
+  std::vector<std::string> destructiveActions;
+
+  for (auto [str, result] : res) {
+    const char* action = "";
+    switch (result) {
+      case sync_schema_result::dropped_and_recreated:
+        action = "dropped_and_recreated";
+        break;
+      case sync_schema_result::new_columns_added_and_old_columns_removed:
+        action = "new_columns_added_and_old_columns_removed";
+        break;
+      case sync_schema_result::old_columns_removed:
+        action = "old_columns_removed";
+        break;
+    }
+    if (action[0])
+      destructiveActions.push_back(action + (" (target is " + str + ")"));
+  }
+  if (destructiveActions.size()) {
+    std::stringstream ss;
+    ss << "Sqlite is going to take some destructive actions: ";
+    for (auto v : destructiveActions)
+      ss << v << "; ";
+    throw std::runtime_error(ss.str());
+  }
   storage.sync_schema(true);
   return storage;
 }

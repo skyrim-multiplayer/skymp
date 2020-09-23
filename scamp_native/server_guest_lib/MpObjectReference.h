@@ -129,7 +129,6 @@ private:
   MpActor* occupant = nullptr;
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
   std::chrono::milliseconds relootTime{ 3000 };
-  bool baseContainerAdded = false;
   std::unique_ptr<uint8_t> chanceNoneOverride;
 
   struct Impl;

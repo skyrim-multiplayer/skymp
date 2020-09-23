@@ -36,6 +36,12 @@ PartOne::PartOne()
                               MpObjectReference* listener) {
     if (!emitter)
       throw std::runtime_error("nullptr emitter in onSubscribe");
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (!listenerAsActor)
+      return;
+    auto listenerUserId = serverState.UserByActor(listenerAsActor);
+    if (listenerUserId == Networking::InvalidUserId)
+      return;
 
     auto& emitterPos = emitter->GetPos();
     auto& emitterRot = emitter->GetAngle();
@@ -96,20 +102,15 @@ PartOne::PartOne()
 
     const char* method = "createActor";
 
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor) {
-      auto listenerUserId = serverState.UserByActor(listenerAsActor);
-      if (listenerUserId != Networking::InvalidUserId)
-        Networking::SendFormatted(
-          sendTarget, listenerUserId,
-          R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
+    Networking::SendFormatted(
+      sendTarget, listenerUserId,
+      R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
-          method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
-          emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-          emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix,
-          equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
-          props.data(), propsPostfix);
-    }
+      method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
+      emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
+      emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix, equipment,
+      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
+      propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
