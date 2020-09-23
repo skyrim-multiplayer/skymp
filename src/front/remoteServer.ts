@@ -173,12 +173,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
     if (msg.props) {
       for (const propName in msg.props) {
-        this.UpdateProperty({
-          t: messages.MsgType.UpdateProperty,
-          propName,
-          data: msg.props[propName],
-          idx: i,
-        });
+        const i = this.getIdManager().getId(msg.idx);
+        (this.worldModel.forms[i] as Record<string, unknown>)[propName] =
+          msg.props[propName];
       }
     }
 
