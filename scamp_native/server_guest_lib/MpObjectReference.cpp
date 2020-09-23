@@ -518,12 +518,16 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
   auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
   MoveOnGrid(grid);
 
+  // We should queue created form for saving as soon as it is initialized
+  const auto mode =
+    formId >= 0xff000000 ? Impl::Mode::RequestSave : Impl::Mode::NoRequestSave;
+
   pImpl->EditChangeForm(
     [&](MpChangeFormREFR& changeForm) {
       changeForm.formDesc =
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
-    Impl::Mode::NoRequestSave);
+    mode);
 }
 
 void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)

@@ -86,6 +86,7 @@ struct SqliteSaveStorage::Impl
 
   std::unique_ptr<std::thread> thr;
   std::atomic<bool> destroyed = false;
+  uint32_t numFinishedUpserts = 0;
 };
 
 SqliteSaveStorage::SqliteSaveStorage(const char* filename)
@@ -183,6 +184,11 @@ void SqliteSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
   pImpl->share3.upsertTasks.push_back({ changeForms, cb });
 }
 
+uint32_t SqliteSaveStorage::GetNumFinishedUpserts() const
+{
+  return pImpl->numFinishedUpserts;
+}
+
 void SqliteSaveStorage::Tick()
 {
   {
@@ -200,6 +206,8 @@ void SqliteSaveStorage::Tick()
     upsertCallbacksToFire = std::move(pImpl->share4.upsertCallbacksToFire);
     pImpl->share4.upsertCallbacksToFire.clear();
   }
-  for (auto& cb : upsertCallbacksToFire)
+  for (auto& cb : upsertCallbacksToFire) {
+    pImpl->numFinishedUpserts++;
     cb();
+  }
 }

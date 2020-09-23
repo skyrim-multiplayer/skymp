@@ -74,3 +74,21 @@ TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
   REQUIRE(refr.Type() == std::string("ObjectReference"));
   REQUIRE(&refr == newRefr);
 }
+
+TEST_CASE("Load ChangeForm of modified object with changed baseType",
+          "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Skyrim.esm" };
+  auto newRefr = new MpObjectReference(
+    LocationalData(), FormCallbacks::DoNothing(), 0x0000ded0, "STAT");
+  worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
+
+  MpChangeForm changeForm;
+  changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
+  changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
+
+  REQUIRE_THROWS_WITH(
+    worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing()),
+    Contains("Anomally, baseId should never change (ded0 => abcd)"));
+}

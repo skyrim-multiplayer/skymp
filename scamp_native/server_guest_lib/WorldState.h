@@ -22,6 +22,7 @@ class MpObjectReference;
 class MpActor;
 class FormCallbacks;
 class MpChangeForm;
+class ISaveStorage;
 
 class WorldState
 {
@@ -36,6 +37,7 @@ public:
   void Clear();
 
   void AttachEspm(espm::Loader* espm);
+  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
 
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                bool skipChecks = false,

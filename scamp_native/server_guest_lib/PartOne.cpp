@@ -363,6 +363,23 @@ void PartOne::AttachEspm(espm::Loader* espm,
   printf("AttachEspm took %d ticks\n", int(clock() - was));
 }
 
+void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
+                                Networking::ISendTarget* sendTarget)
+{
+  worldState.AttachSaveStorage(saveStorage);
+
+  clock_t was = clock();
+
+  int n = 0;
+  saveStorage->IterateSync([&](const MpChangeForm& changeForm) {
+    n++;
+    worldState.LoadChangeForm(changeForm, CreateFormCallbacks(sendTarget));
+  });
+
+  printf("AttachSaveStorage took %d ticks, loaded %d ChangeForms\n",
+         int(clock() - was), n);
+}
+
 espm::Loader& PartOne::GetEspm() const
 {
   return worldState.GetEspm();
@@ -411,8 +428,7 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
   }
 }
 
-FormCallbacks PartOne::CreateFormCallbacks(
-  Networking::ISendTarget* sendTarget)
+FormCallbacks PartOne::CreateFormCallbacks(Networking::ISendTarget* sendTarget)
 {
   auto st = &serverState;
 

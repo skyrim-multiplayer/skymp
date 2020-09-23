@@ -34,6 +34,21 @@ void UpsertSync(ISaveStorage& st, std::vector<MpChangeForm> changeForms)
   }
 }
 
+void WaitForNextUpsert(ISaveStorage& st, WorldState& wst)
+{
+  uint32_t n = st.GetNumFinishedUpserts();
+
+  int i = 0;
+  while (n == st.GetNumFinishedUpserts()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    wst.TickTimers(); // should include st.Tick()
+
+    ++i;
+    if (i > 2000)
+      throw std::runtime_error("Timeout exceeded");
+  }
+}
+
 TEST_CASE("ChangeForm is saved correctly", "[save]")
 {
   auto st = MakeSaveStorage();
@@ -70,4 +85,41 @@ TEST_CASE("Upsert affects the number of change forms in the database in the "
                CreateChangeForm("2"), CreateChangeForm("3") });
 
   REQUIRE(ISaveStorageUtils::CountSync(*st) == 4);
+}
+
+TEST_CASE("AttachSaveStorage forces loading", "[save]")
+{
+  FakeSendTarget tgt;
+  PartOne p;
+  p.worldState.espmFiles = { "AaAaAa.esm" };
+  p.worldState.AddForm(
+    std::unique_ptr<MpObjectReference>(new MpObjectReference(
+      LocationalData(), FormCallbacks::DoNothing(), 0xaaaa, "STAT")),
+    0xee);
+
+  auto& refr = p.worldState.GetFormAt<MpObjectReference>(0xee);
+  REQUIRE(refr.GetPos() == NiPoint3(0, 0, 0));
+
+  auto st = MakeSaveStorage();
+  auto f = CreateChangeForm("ee:AaAaAa.esm");
+  f.position = { 1, 1, 1 };
+  f.baseDesc = FormDesc::FromString("aaaa:AaAaAa.esm");
+  UpsertSync(*st, { f });
+  p.AttachSaveStorage(st, &tgt);
+
+  REQUIRE(refr.GetPos() == NiPoint3(1, 1, 1));
+}
+
+TEST_CASE("Changes are transferred to SaveStorage", "[save]")
+{
+  FakeSendTarget tgt;
+  PartOne p;
+  auto st = MakeSaveStorage();
+  p.AttachSaveStorage(st, &tgt);
+
+  REQUIRE(ISaveStorageUtils::CountSync(*st) == 0);
+  p.CreateActor(0xffaaaeee, { 1, 1, 1 }, 1, 0x3c, &tgt);
+
+  WaitForNextUpsert(*st, p.worldState);
+  REQUIRE(ISaveStorageUtils::CountSync(*st) == 1);
 }

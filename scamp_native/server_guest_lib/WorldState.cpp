@@ -1,4 +1,5 @@
 #include "WorldState.h"
+#include "ISaveStorage.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MpObjectReference.h"
@@ -6,6 +7,9 @@
 
 struct WorldState::Impl
 {
+  std::unordered_map<uint32_t, MpChangeForm> changes;
+  std::shared_ptr<ISaveStorage> saveStorage;
+  bool saveStorageBusy = false;
 };
 
 WorldState::WorldState()
@@ -25,6 +29,11 @@ void WorldState::AttachEspm(espm::Loader* espm_)
   espm = espm_;
   espmCache.reset(new espm::CompressedFieldsCache);
   espmFiles = espm->GetFileNames();
+}
+
+void WorldState::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
+{
+  pImpl->saveStorage = saveStorage;
 }
 
 void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
@@ -78,7 +87,21 @@ void WorldState::TickTimers()
     }
   }
 
-  // TODO: Tick Save
+  // Tick Save Storage
+  pImpl->saveStorage->Tick();
+
+  if (!pImpl->saveStorageBusy && !pImpl->changes.empty()) {
+    pImpl->saveStorageBusy = true;
+    std::vector<MpChangeForm> changeForms;
+    changeForms.reserve(pImpl->changes.size());
+    for (auto [formId, changeForm] : pImpl->changes)
+      changeForms.push_back(changeForm);
+    pImpl->changes.clear();
+
+    auto pImpl_ = pImpl;
+    pImpl->saveStorage->Upsert(changeForms,
+                               [pImpl_] { pImpl_->saveStorageBusy = false; });
+  }
 }
 
 void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
@@ -128,9 +151,7 @@ void WorldState::RequestReloot(MpObjectReference& ref)
 
 void WorldState::RequestSave(MpObjectReference& ref)
 {
-  /*if (!pImpl->changes)
-    pImpl->changes.reset(new WorldSaver::ChangeFormsMap);
-  (*pImpl->changes)[ref.GetFormId()] = ref.GetChangeForm();*/
+  pImpl->changes[ref.GetFormId()] = ref.GetChangeForm();
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)

@@ -11,6 +11,7 @@ public:
   void IterateSync(const IterateSyncCallback& cb) override;
   void Upsert(const std::vector<MpChangeForm>& changeForms,
               const UpsertCallback& cb) override;
+  uint32_t GetNumFinishedUpserts() const override;
   void Tick() override;
 
 private:
