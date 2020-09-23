@@ -97,7 +97,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   openContainer(msg: messages.OpenContainer): void {
-    once("update", () => {
+    once("update", async () => {
+      await Utility.wait(0.1); // Give a chance to update inventory
       ObjectReference.from(Game.getFormEx(msg.target)).activate(
         Game.getPlayer(),
         true
