@@ -1,0 +1,12 @@
+on:
+  push: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag skymp5-server:$GITHUB_SHA
