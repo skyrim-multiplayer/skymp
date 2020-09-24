@@ -1,6 +1,10 @@
 #pragma once
 #include "MpObjectReference.h"
 
+namespace ChangeFormGuard_ {
+void RequestSave(MpObjectReference* self);
+}
+
 template <class T>
 class ChangeFormGuard
 {
@@ -22,7 +26,7 @@ public:
   {
     f(changeForm);
     if (mode == Mode::RequestSave)
-      self->GetParent()->RequestSave(*self);
+      ChangeFormGuard_::RequestSave(self);
   }
 
   const T& ChangeForm() const noexcept { return changeForm; }
