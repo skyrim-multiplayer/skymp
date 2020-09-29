@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - master
+      - [master, improve-github-actions]
 jobs:
   build:
     runs-on: ubuntu-latest
