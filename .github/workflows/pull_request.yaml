@@ -4,6 +4,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - run: mkdir -p ~/skyrim_data_dir
       - name: Download data files
         run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/{Dawnguard.esm,Dragonborn.esm,HearthFires.esm,Skyrim.esm,Update.esm} -o "#1"
         working-directory: ~/skyrim_data_dir
