@@ -4,10 +4,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - run: mkdir -p ~/skyrim_data_dir
       - name: Download data files
         run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/{Dawnguard.esm,Dragonborn.esm,HearthFires.esm,Skyrim.esm,Update.esm} -o "#1"
-        working-directory: ~/skyrim_data_dir
       - uses: actions/checkout@master
       - name: Pull from ECR
         uses: jwalton/gh-ecr-push@v1
@@ -20,4 +18,4 @@ jobs:
           local-image: skymp5-server
           direction: pull
       - run: docker build --cache-from skymp5-server --tag skymp5-server .
-      - run: docker run -v ~/skyrim_data_dir:/skyrim_data_dir skymp5-server npm run test
+      - run: docker run -v $(pwd):/skyrim_data_dir skymp5-server npm run test
