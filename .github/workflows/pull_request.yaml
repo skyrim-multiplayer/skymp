@@ -4,11 +4,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dawnguard.esm > Dawnguard.esm
-      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dragonborn.esm > Dragonborn.esm
-      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/HearthFires.esm > HearthFires.esm
-      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Skyrim.esm > Skyrim.esm
-      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Update.esm > Update.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dawnguard.esm > ./Dawnguard.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dragonborn.esm > ./Dragonborn.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/HearthFires.esm > ./HearthFires.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Skyrim.esm > ./Skyrim.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Update.esm > ./Update.esm
+      - run: ls
       - uses: actions/checkout@master
       - name: Pull from ECR
         uses: jwalton/gh-ecr-push@v1
@@ -21,4 +22,5 @@ jobs:
           local-image: skymp5-server
           direction: pull
       - run: docker build --cache-from skymp5-server --tag skymp5-server .
+      - run: ls
       - run: docker run -v $(pwd):/skyrim_data_dir skymp5-server npm run test
