@@ -4,8 +4,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Download data files
-        run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/{Dawnguard.esm,Dragonborn.esm,HearthFires.esm,Skyrim.esm,Update.esm} -q -o "#1"
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dawnguard.esm > Dawnguard.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dragonborn.esm > Dragonborn.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/HearthFires.esm > HearthFires.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Skyrim.esm > Skyrim.esm
+      - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Update.esm > Update.esm
       - uses: actions/checkout@master
       - name: Pull from ECR
         uses: jwalton/gh-ecr-push@v1
