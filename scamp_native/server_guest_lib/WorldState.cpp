@@ -50,6 +50,7 @@ void WorldState::TickTimers()
       if (relootTarget) {
         relootTarget->SetOpen(false);
         relootTarget->SetHarvested(false);
+        relootTarget->RelootContainer();
       }
 
       list.pop_front();
