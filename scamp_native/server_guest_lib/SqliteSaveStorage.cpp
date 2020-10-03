@@ -9,7 +9,17 @@
 using namespace sqlite_orm;
 
 namespace {
-auto MakeSqliteStorage(const char* name)
+
+struct StorageInterface
+{
+  std::function<sqlite_orm::internal::transaction_guard_t()> transaction_guard;
+  std::function<void(std::function<void(const SqliteChangeForm&)>)> iterate;
+  std::function<void(const SqliteChangeForm*, const SqliteChangeForm*)>
+    insert_range;
+  std::function<void(const SqliteChangeForm&)> update;
+};
+
+StorageInterface MakeSqliteStorage(const char* name)
 {
   using namespace sqlite_orm;
 
@@ -75,10 +85,27 @@ auto MakeSqliteStorage(const char* name)
     throw std::runtime_error(ss.str());
   }
   storage.sync_schema(true);
-  return storage;
-}
 
-using SqliteStorage = decltype(MakeSqliteStorage(""));
+  StorageInterface si;
+  si.transaction_guard = [storage]() {
+    return ((internal::storage_base&)storage).transaction_guard();
+  };
+  si.iterate = [storage](std::function<void(const SqliteChangeForm&)> cb) {
+    auto st = storage;
+    for (auto& v : st.iterate<SqliteChangeForm>())
+      cb(v);
+  };
+  si.insert_range = [storage](const SqliteChangeForm* begin,
+                              const SqliteChangeForm* end) {
+    auto st = storage;
+    st.insert_range(begin, end);
+  };
+  si.update = [storage](const SqliteChangeForm& v) {
+    auto st = storage;
+    st.update(v);
+  };
+  return si;
+}
 
 struct UpsertTask
 {
@@ -91,7 +118,7 @@ struct SqliteSaveStorage::Impl
 {
   struct
   {
-    std::unique_ptr<SqliteStorage> storage;
+    std::unique_ptr<StorageInterface> storage;
     std::mutex m;
   } share;
 
@@ -121,7 +148,8 @@ struct SqliteSaveStorage::Impl
 SqliteSaveStorage::SqliteSaveStorage(const char* filename)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
-  pImpl->share.storage.reset(new SqliteStorage(MakeSqliteStorage(filename)));
+  pImpl->share.storage.reset(
+    new StorageInterface(MakeSqliteStorage(filename)));
 
   auto p = this->pImpl.get();
   pImpl->thr.reset(new std::thread([p] { SaverThreadMain(p); }));
@@ -155,11 +183,11 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
         auto was = clock();
         for (auto& t : tasks) {
           std::map<FormDesc, int> existingFormDescs;
-          for (auto& changeForm :
-               pImpl->share.storage->iterate<SqliteChangeForm>()) {
-            existingFormDescs.insert(
-              { changeForm.formDesc, changeForm.primary });
-          }
+          pImpl->share.storage->iterate(
+            [&](const SqliteChangeForm& changeForm) {
+              existingFormDescs.insert(
+                { changeForm.formDesc, changeForm.primary });
+            });
 
           std::vector<SqliteChangeForm> toInsert, toUpdate;
 
@@ -181,7 +209,8 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
             target->push_back(f);
           }
 
-          pImpl->share.storage->insert_range(toInsert.begin(), toInsert.end());
+          pImpl->share.storage->insert_range(
+            toInsert.data(), toInsert.data() + toInsert.size());
           for (auto& v : toUpdate)
             pImpl->share.storage->update(v);
           callbacksToFire.push_back(t.callback);
@@ -208,8 +237,7 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
 void SqliteSaveStorage::IterateSync(const IterateSyncCallback& cb)
 {
   std::lock_guard l(pImpl->share.m);
-  for (auto& changeForm : pImpl->share.storage->iterate<SqliteChangeForm>())
-    cb(changeForm);
+  pImpl->share.storage->iterate(cb);
 }
 
 void SqliteSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
