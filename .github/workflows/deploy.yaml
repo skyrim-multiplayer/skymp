@@ -5,31 +5,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      DNOHUB_USERNAME: ${{ secrets.DNOHUB_USERNAME }}
-      DNOHUB_PASSWORD: ${{ secrets.DNOHUB_PASSWORD }}
-      MASTER_URL: ${{ secrets.MASTER_URL }}
     steps:
-      - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@master
+      - uses: actions/checkout@master
+      - name: Pull from ECR
+        uses: jwalton/gh-ecr-push@v1
+        continue-on-error: true
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          port: ${{ secrets.PORT }}
-          script: |
-            mkdir -p skymp5-server
-            cd skymp5-server
-            mkdir -p $GITHUB_SHA && cd $GITHUB_SHA
-            rm -rf .git
-            git init
-            git remote add origin https://$DNOHUB_USERNAME:$DNOHUB_PASSWORD@github.com/$GITHUB_REPOSITORY.git
-            git fetch origin $GITHUB_SHA
-            git reset --hard FETCH_HEAD
-            docker build -t skymp5-server .
-            rm -rf $GITHUB_SHA
-            docker rm -f scamp || true
-            docker run -v ~/skyrim_data_dir:/skyrim_data_dir -p 8080:8080/tcp -p 3000:3000/tcp -p 7777:7777/udp --name scamp --restart always -dit skymp5-server npm run start-prod -- --master $MASTER_URL --name Nirnroot --maxPlayers 100
-          envs: GITHUB_SHA,GITHUB_REPOSITORY,DNOHUB_USERNAME,DNOHUB_PASSWORD,MASTER_URL
-          script_stop: true
-          command_timeout: 6h
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: eu-west-3
+          image: skymp5-server:latest
+          local-image: skymp5-server
+          direction: pull
+      - run: docker build --cache-from skymp5-server --tag skymp5-server .
+      - name: Push to ECR
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: eu-west-3
+          local-image: skymp5-server
+          image: skymp5-server:latest
