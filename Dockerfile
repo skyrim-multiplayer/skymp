@@ -8,7 +8,7 @@ RUN git clone https://github.com/microsoft/vcpkg.git \
   && git reset --hard bff594f7ff8e023592f366b67fd7f57f4fe035e7 \
   && chmod 777 bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh --useSystemBinaries
-RUN cd vcpkg && ./vcpkg install boost-bimap:x64-linux
+RUN cd vcpkg && ./vcpkg install boost-bimap
 RUN cd vcpkg && ./vcpkg install slikenet:x64-linux
 RUN cd vcpkg && ./vcpkg install sqlite-orm:x64-linux
 RUN cd vcpkg && ./vcpkg install spdlog:x64-linux
