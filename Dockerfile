@@ -1,5 +1,5 @@
 FROM node:14.13.1-alpine3.10
-RUN apk add --no-cache gcc musl-dev g++ cmake gdb git
+RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar
 
 # vcpkg
 RUN mkdir -p /root/.local/share/pmm/1.4.2/vcpkg-tmp && cd /root/.local/share/pmm/1.4.2/vcpkg-tmp
