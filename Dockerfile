@@ -9,12 +9,12 @@ RUN git clone https://github.com/microsoft/vcpkg.git \
   && chmod 777 bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh --useSystemBinaries
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux boost-bimap
-RUN cd vcpkg && ./vcpkg install slikenet:x64-linux
-RUN cd vcpkg && ./vcpkg install sqlite-orm:x64-linux
-RUN cd vcpkg && ./vcpkg install spdlog:x64-linux
-RUN cd vcpkg && ./vcpkg install catch2:x64-linux
-RUN cd vcpkg && ./vcpkg install sparsepp:x64-linux
-RUN cd vcpkg && ./vcpkg install nlohmann-json:x64-linux
+RUN cd vcpkg && ./vcpkg install --triplet x64-linux slikenet
+RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlite-orm
+RUN cd vcpkg && ./vcpkg install --triplet x64-linux spdlog
+RUN cd vcpkg && ./vcpkg install --triplet x64-linux catch2
+RUN cd vcpkg && ./vcpkg install --triplet x64-linux sparsepp
+RUN cd vcpkg && ./vcpkg install --triplet x64-linux nlohmann-json
 RUN mv vcpkg /root/.local/share/pmm/1.4.2/vcpkg-bff594f7ff8e023592f366b67fd7f57f4fe035e7
 
 WORKDIR /usr/src/app
