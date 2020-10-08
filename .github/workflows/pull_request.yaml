@@ -12,5 +12,6 @@ jobs:
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Skyrim.esm > ./Data/Skyrim.esm
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Update.esm > ./Data/Update.esm
       - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
       - run: docker build --cache-from skymp5-server --tag skymp5-server .
       - run: docker run -v $(pwd)/Data:/skyrim_data_dir skymp5-server npm run test
