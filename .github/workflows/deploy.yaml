@@ -7,16 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - name: Pull from ECR
-        uses: jwalton/gh-ecr-push@v1
-        continue-on-error: true
-        with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: eu-west-3
-          image: skymp5-server:latest
-          local-image: skymp5-server
-          direction: pull
+      - uses: satackey/action-docker-layer-caching@v0.0.8
       - run: docker build --cache-from skymp5-server --tag skymp5-server .
       - name: Push to ECR
         uses: jwalton/gh-ecr-push@v1

@@ -11,15 +11,6 @@ jobs:
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/HearthFires.esm > ./Data/HearthFires.esm
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Skyrim.esm > ./Data/Skyrim.esm
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Update.esm > ./Data/Update.esm
-      - name: Pull from ECR
-        uses: jwalton/gh-ecr-push@v1
-        continue-on-error: true
-        with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: eu-west-3
-          image: skymp5-server:latest
-          local-image: skymp5-server
-          direction: pull
+      - uses: satackey/action-docker-layer-caching@v0.0.8
       - run: docker build --cache-from skymp5-server --tag skymp5-server .
       - run: docker run -v $(pwd)/Data:/skyrim_data_dir skymp5-server npm run test
