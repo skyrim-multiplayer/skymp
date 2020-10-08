@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: satackey/action-docker-layer-caching@v0.0.8
         continue-on-error: true
-      - run: docker build --cache-from skymp5-server --tag skymp5-server .
+      - run: docker build --tag skymp5-server .
       - name: Push to ECR
         uses: jwalton/gh-ecr-push@v1
         with:
