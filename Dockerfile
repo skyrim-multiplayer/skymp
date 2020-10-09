@@ -23,14 +23,14 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm i
 
-#COPY ./CMakeLists.txt ./CMakeLists.txt
-#COPY ./cmake ./cmake
-#COPY ./scamp_native ./scamp_native
-#RUN npm run configure
-#RUN npm run build-cpp
+COPY ./CMakeLists.txt ./CMakeLists.txt
+COPY ./cmake ./cmake
+COPY ./scamp_native ./scamp_native
+RUN npm run configure
+RUN npm run build-cpp
 
-#COPY . .
+COPY . .
 
-#RUN npm run build-ts
+RUN npm run build-ts
 
-#CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "start" ]
