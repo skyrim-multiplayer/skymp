@@ -5,13 +5,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+      - run: docker build --tag skymp5-server .
       - run: mkdir Data
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dawnguard.esm > ./Data/Dawnguard.esm
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dragonborn.esm > ./Data/Dragonborn.esm
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/HearthFires.esm > ./Data/HearthFires.esm
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Skyrim.esm > ./Data/Skyrim.esm
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Update.esm > ./Data/Update.esm
-      - uses: satackey/action-docker-layer-caching@v0.0.8
-        continue-on-error: true
-      - run: docker build --tag skymp5-server .
       - run: docker run -v $(pwd)/Data:/skyrim_data_dir skymp5-server npm run test
