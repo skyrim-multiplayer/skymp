@@ -2,6 +2,7 @@
 #include "ISaveStorage.h"
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 class DbImpl
@@ -14,11 +15,11 @@ public:
   virtual void Iterate(const IterateCallback& iterateCallback) = 0;
 };
 
-class SqliteSaveStorage : public ISaveStorage
+class AsyncSaveStorage : public ISaveStorage
 {
 public:
-  SqliteSaveStorage(std::shared_ptr<DbImpl> dbImpl);
-  ~SqliteSaveStorage();
+  AsyncSaveStorage(const std::shared_ptr<DbImpl>& dbImpl);
+  ~AsyncSaveStorage();
 
   void IterateSync(const IterateSyncCallback& cb) override;
   void Upsert(const std::vector<MpChangeForm>& changeForms,
@@ -31,4 +32,13 @@ private:
   std::unique_ptr<Impl, void (*)(Impl*)> pImpl;
 
   static void SaverThreadMain(Impl*);
+};
+
+class SqliteSaveStorage : public AsyncSaveStorage
+{
+public:
+  SqliteSaveStorage(std::string filename);
+
+private:
+  std::shared_ptr<DbImpl> CreateDbImpl();
 };

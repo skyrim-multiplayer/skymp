@@ -6,6 +6,25 @@
 #include <sqlpp11/sqlpp11.h>
 #include <thread>
 
+/*namespace TabSample_ {
+struct Primary
+{
+  struct _name_t
+  {
+    static constexpr const char* _get_name() { return "primary"; }
+    template <typename T>
+    struct _member_t
+    {
+      T primary;
+    };
+  };
+  using _value_type = sqlpp::integer;
+  struct _column_type
+  {
+  };
+};
+}*/
+
 /*using namespace sqlite_orm;
 
 #define MAKE_STORAGE(name)                                                    \
@@ -51,7 +70,7 @@ struct UpsertTask
   std::function<void()> callback;
 };
 
-struct SqliteSaveStorage::Impl
+struct AsyncSaveStorage::Impl
 {
   struct
   {
@@ -82,7 +101,7 @@ struct SqliteSaveStorage::Impl
   uint32_t numFinishedUpserts = 0;
 };
 
-SqliteSaveStorage::SqliteSaveStorage(std::shared_ptr<DbImpl> dbImpl)
+AsyncSaveStorage::AsyncSaveStorage(const std::shared_ptr<DbImpl>& dbImpl)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
   pImpl->share.dbImpl = dbImpl;
@@ -124,13 +143,13 @@ SqliteSaveStorage::SqliteSaveStorage(std::shared_ptr<DbImpl> dbImpl)
   pImpl->thr.reset(new std::thread([p] { SaverThreadMain(p); }));
 }
 
-SqliteSaveStorage::~SqliteSaveStorage()
+AsyncSaveStorage::~AsyncSaveStorage()
 {
   pImpl->destroyed = true;
   pImpl->thr->join();
 }
 
-void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
+void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
 {
   while (!pImpl->destroyed) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -213,7 +232,7 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
   }
 }
 
-void SqliteSaveStorage::IterateSync(const IterateSyncCallback& cb)
+void AsyncSaveStorage::IterateSync(const IterateSyncCallback& cb)
 {
   std::lock_guard l(pImpl->share.m);
   pImpl->share.dbImpl->Iterate(cb);
@@ -225,19 +244,19 @@ void SqliteSaveStorage::IterateSync(const IterateSyncCallback& cb)
   // TODO
 }
 
-void SqliteSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
-                               const UpsertCallback& cb)
+void AsyncSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
+                              const UpsertCallback& cb)
 {
   std::lock_guard l(pImpl->share3.m);
   pImpl->share3.upsertTasks.push_back({ changeForms, cb });
 }
 
-uint32_t SqliteSaveStorage::GetNumFinishedUpserts() const
+uint32_t AsyncSaveStorage::GetNumFinishedUpserts() const
 {
   return pImpl->numFinishedUpserts;
 }
 
-void SqliteSaveStorage::Tick()
+void AsyncSaveStorage::Tick()
 {
   {
     std::lock_guard l(pImpl->share2.m);
@@ -258,4 +277,26 @@ void SqliteSaveStorage::Tick()
     pImpl->numFinishedUpserts++;
     cb();
   }
+}
+
+namespace {
+class SqliteDbImpl : public DbImpl
+{
+public:
+  size_t Upsert(const std::vector<MpChangeForm>& changeForms) override
+  {
+    return 0;
+  }
+  void Iterate(const IterateCallback& iterateCallback) override {}
+};
+}
+
+SqliteSaveStorage::SqliteSaveStorage(std::string filename)
+  : AsyncSaveStorage(CreateDbImpl())
+{
+}
+
+std::shared_ptr<DbImpl> SqliteSaveStorage::CreateDbImpl()
+{
+  return std::shared_ptr<SqliteDbImpl>(new SqliteDbImpl);
 }
