@@ -1,6 +1,5 @@
-FROM node:14.13.1-alpine3.10
-RUN apk update && \
-  apk add --no-cache "cmake>3.18.4-r0" gcc musl-dev g++ gdb git curl unzip tar ninja perl
+FROM node:14.13.1-alpine3.12
+RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar ninja perl
 
 # vcpkg
 RUN mkdir -p /root/.local/share/pmm/1.4.2/vcpkg-tmp && cd /root/.local/share/pmm/1.4.2/vcpkg-tmp
