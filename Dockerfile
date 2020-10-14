@@ -12,6 +12,8 @@ RUN cd vcpkg && ./vcpkg install --triplet x64-linux boost-bimap
 RUN apk add --no-cache make
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux slikenet
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlite-orm
+RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlpp11
+RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlpp11-connector-sqlite3
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux spdlog
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux catch2
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux sparsepp

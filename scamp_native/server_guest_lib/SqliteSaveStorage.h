@@ -1,11 +1,23 @@
 #pragma once
 #include "ISaveStorage.h"
+#include <functional>
 #include <memory>
+#include <vector>
+
+class DbImpl
+{
+public:
+  using IterateCallback = std::function<void(const MpChangeForm&)>;
+
+  virtual ~DbImpl() = default;
+  virtual size_t Upsert(const std::vector<MpChangeForm>& changeForms) = 0;
+  virtual void Iterate(const IterateCallback& iterateCallback) = 0;
+};
 
 class SqliteSaveStorage : public ISaveStorage
 {
 public:
-  SqliteSaveStorage(const char* filename);
+  SqliteSaveStorage(std::shared_ptr<DbImpl> dbImpl);
   ~SqliteSaveStorage();
 
   void IterateSync(const IterateSyncCallback& cb) override;

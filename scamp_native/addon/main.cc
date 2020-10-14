@@ -175,7 +175,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->AttachEspm(espm, server.get());
     partOne->AttachSaveStorage(
-      std::make_shared<SqliteSaveStorage>("world.sqlite"), server.get());
+      std::make_shared<SqliteSaveStorage>("world.sqlite"),
+      server.get()); // TODO
 
     auto res =
       info.Env().RunScript("let require = global.require || "

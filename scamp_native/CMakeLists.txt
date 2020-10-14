@@ -19,6 +19,8 @@ set(ports
   boost-bimap:${triplet}
   zlib:${triplet}
   sqlite-orm:${triplet}
+  sqlpp11:${triplet}
+  sqlpp11-connector-sqlite3:${triplet}
 )
 if (WIN32)
   list(APPEND ports simdjson:${triplet})

@@ -3,10 +3,10 @@
 #include <atomic>
 #include <list>
 #include <mutex>
-#include <sqlite_orm/sqlite_orm.h>
+#include <sqlpp11/sqlpp11.h>
 #include <thread>
 
-using namespace sqlite_orm;
+/*using namespace sqlite_orm;
 
 #define MAKE_STORAGE(name)                                                    \
   auto storage = make_storage(                                                \
@@ -43,6 +43,7 @@ using namespace sqlite_orm;
                   &SqliteChangeForm::SetEquipment),                           \
       make_column("base_container_added",                                     \
                   &SqliteChangeForm::baseContainerAdded)));
+*/
 
 struct UpsertTask
 {
@@ -54,7 +55,7 @@ struct SqliteSaveStorage::Impl
 {
   struct
   {
-    std::string storageName;
+    std::shared_ptr<DbImpl> dbImpl;
     std::mutex m;
   } share;
 
@@ -81,10 +82,13 @@ struct SqliteSaveStorage::Impl
   uint32_t numFinishedUpserts = 0;
 };
 
-SqliteSaveStorage::SqliteSaveStorage(const char* filename)
+SqliteSaveStorage::SqliteSaveStorage(std::shared_ptr<DbImpl> dbImpl)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
-  MAKE_STORAGE(filename);
+  pImpl->share.dbImpl = dbImpl;
+  // TODO
+
+  /*MAKE_STORAGE(filename);
 
   auto res = storage.sync_schema_simulate(true);
 
@@ -113,9 +117,9 @@ SqliteSaveStorage::SqliteSaveStorage(const char* filename)
       ss << v << "; ";
     throw std::runtime_error(ss.str());
   }
-  storage.sync_schema(true);
+  storage.sync_schema(true);*/
 
-  pImpl->share.storageName = filename;
+  // pImpl->share.storageName = filename;
   auto p = this->pImpl.get();
   pImpl->thr.reset(new std::thread([p] { SaverThreadMain(p); }));
 }
@@ -143,7 +147,17 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
 
       {
         std::lock_guard l(pImpl->share.m);
-        MAKE_STORAGE(pImpl->share.storageName.data());
+        auto was = clock();
+        size_t numChangeForms = 0;
+        for (auto& t : tasks) {
+          numChangeForms += pImpl->share.dbImpl->Upsert(t.changeForms);
+        }
+        if (numChangeForms > 0)
+          printf("Saved %d ChangeForms in %d ticks\n",
+                 static_cast<int>(numChangeForms), clock() - was);
+
+        // TODO
+        /*MAKE_STORAGE(pImpl->share.storageName.data());
         auto g = storage.transaction_guard();
         int numChangeForms = 0;
         auto was = clock();
@@ -183,7 +197,7 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
         g.commit();
         if (numChangeForms > 0)
           printf("Saved %d ChangeForms in %d ticks\n", numChangeForms,
-                 clock() - was);
+                 clock() - was);*/
       }
 
       {
@@ -202,10 +216,13 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
 void SqliteSaveStorage::IterateSync(const IterateSyncCallback& cb)
 {
   std::lock_guard l(pImpl->share.m);
-  MAKE_STORAGE(pImpl->share.storageName.data());
+  pImpl->share.dbImpl->Iterate(cb);
+
+  /*MAKE_STORAGE(pImpl->share.storageName.data());
   for (auto v : storage.iterate<SqliteChangeForm>()) {
     cb(v);
-  }
+  }*/
+  // TODO
 }
 
 void SqliteSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
