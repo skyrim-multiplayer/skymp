@@ -3,7 +3,7 @@
 #include <atomic>
 #include <list>
 #include <mutex>
-#include <sqlite_orm/sqlite_orm.h>
+#include <sqlite_orm.h>
 #include <thread>
 
 using namespace sqlite_orm;
