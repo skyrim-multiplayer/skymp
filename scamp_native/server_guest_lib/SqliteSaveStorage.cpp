@@ -8,83 +8,47 @@
 
 using namespace sqlite_orm;
 
-namespace {
-auto MakeSqliteStorage(const char* name)
-{
-  using namespace sqlite_orm;
-
-  auto storage = make_storage(
-    name,
-    make_table<SqliteChangeForm>(
-      "SqliteChangeForm",
-      make_column("primary", &SqliteChangeForm::primary, autoincrement(),
-                  primary_key()),
-      make_column("record_type", &SqliteChangeForm::recType),
-      make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,
-                  &SqliteChangeForm::SetBaseFormDesc),
-      make_column("form_desc", &SqliteChangeForm::GetFormDesc,
-                  &SqliteChangeForm::SetFormDesc),
-      make_column("x", &SqliteChangeForm::GetX, &SqliteChangeForm::SetX),
-      make_column("y", &SqliteChangeForm::GetY, &SqliteChangeForm::SetY),
-      make_column("z", &SqliteChangeForm::GetZ, &SqliteChangeForm::SetZ),
-      make_column("angle_x", &SqliteChangeForm::GetAngleX,
-                  &SqliteChangeForm::SetAngleX),
-      make_column("angle_y", &SqliteChangeForm::GetAngleY,
-                  &SqliteChangeForm::SetAngleY),
-      make_column("angle_z", &SqliteChangeForm::GetAngleZ,
-                  &SqliteChangeForm::SetAngleZ),
-      make_column("inventory_dump", &SqliteChangeForm::GetInventory,
-                  &SqliteChangeForm::SetInventory),
-      make_column("is_harvested", &SqliteChangeForm::isHarvested),
-      make_column("is_open", &SqliteChangeForm::isOpen),
-      make_column("next_reloot_datetime",
-                  &SqliteChangeForm::nextRelootDatetime),
-      make_column("world_or_cell", &SqliteChangeForm::worldOrCell),
-      make_column("is_race_menu_open", &SqliteChangeForm::isRaceMenuOpen),
-      make_column("look_dump", &SqliteChangeForm::GetLook,
-                  &SqliteChangeForm::SetLook),
-      make_column("equipment_dump", &SqliteChangeForm::GetEquipment,
-                  &SqliteChangeForm::SetEquipment),
-      make_column("base_container_added",
+#define MAKE_STORAGE(name)                                                    \
+  auto storage = make_storage(                                                \
+    name,                                                                     \
+    make_table<SqliteChangeForm>(                                             \
+      "SqliteChangeForm",                                                     \
+      make_column("primary", &SqliteChangeForm::primary, autoincrement(),     \
+                  primary_key()),                                             \
+      make_column("record_type", &SqliteChangeForm::recType),                 \
+      make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,            \
+                  &SqliteChangeForm::SetBaseFormDesc),                        \
+      make_column("form_desc", &SqliteChangeForm::GetFormDesc,                \
+                  &SqliteChangeForm::SetFormDesc),                            \
+      make_column("x", &SqliteChangeForm::GetX, &SqliteChangeForm::SetX),     \
+      make_column("y", &SqliteChangeForm::GetY, &SqliteChangeForm::SetY),     \
+      make_column("z", &SqliteChangeForm::GetZ, &SqliteChangeForm::SetZ),     \
+      make_column("angle_x", &SqliteChangeForm::GetAngleX,                    \
+                  &SqliteChangeForm::SetAngleX),                              \
+      make_column("angle_y", &SqliteChangeForm::GetAngleY,                    \
+                  &SqliteChangeForm::SetAngleY),                              \
+      make_column("angle_z", &SqliteChangeForm::GetAngleZ,                    \
+                  &SqliteChangeForm::SetAngleZ),                              \
+      make_column("inventory_dump", &SqliteChangeForm::GetInventory,          \
+                  &SqliteChangeForm::SetInventory),                           \
+      make_column("is_harvested", &SqliteChangeForm::isHarvested),            \
+      make_column("is_open", &SqliteChangeForm::isOpen),                      \
+      make_column("next_reloot_datetime",                                     \
+                  &SqliteChangeForm::nextRelootDatetime),                     \
+      make_column("world_or_cell", &SqliteChangeForm::worldOrCell),           \
+      make_column("is_race_menu_open", &SqliteChangeForm::isRaceMenuOpen),    \
+      make_column("look_dump", &SqliteChangeForm::GetLook,                    \
+                  &SqliteChangeForm::SetLook),                                \
+      make_column("equipment_dump", &SqliteChangeForm::GetEquipment,          \
+                  &SqliteChangeForm::SetEquipment),                           \
+      make_column("base_container_added",                                     \
                   &SqliteChangeForm::baseContainerAdded)));
-  auto res = storage.sync_schema_simulate(true);
-
-  std::vector<std::string> destructiveActions;
-
-  for (auto [str, result] : res) {
-    const char* action = "";
-    switch (result) {
-      case sync_schema_result::dropped_and_recreated:
-        action = "dropped_and_recreated";
-        break;
-      case sync_schema_result::new_columns_added_and_old_columns_removed:
-        action = "new_columns_added_and_old_columns_removed";
-        break;
-      case sync_schema_result::old_columns_removed:
-        action = "old_columns_removed";
-        break;
-    }
-    if (action[0])
-      destructiveActions.push_back(action + (" (target is " + str + ")"));
-  }
-  if (destructiveActions.size()) {
-    std::stringstream ss;
-    ss << "Sqlite is going to take some destructive actions: ";
-    for (auto v : destructiveActions)
-      ss << v << "; ";
-    throw std::runtime_error(ss.str());
-  }
-  storage.sync_schema(true);
-
-  return storage;
-}
 
 struct UpsertTask
 {
   std::vector<MpChangeForm> changeForms;
   std::function<void()> callback;
 };
-}
 
 struct SqliteSaveStorage::Impl
 {
@@ -120,8 +84,38 @@ struct SqliteSaveStorage::Impl
 SqliteSaveStorage::SqliteSaveStorage(const char* filename)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
-  pImpl->share.storageName = filename;
+  MAKE_STORAGE(filename);
 
+  auto res = storage.sync_schema_simulate(true);
+
+  std::vector<std::string> destructiveActions;
+
+  for (auto [str, result] : res) {
+    const char* action = "";
+    switch (result) {
+      case sync_schema_result::dropped_and_recreated:
+        action = "dropped_and_recreated";
+        break;
+      case sync_schema_result::new_columns_added_and_old_columns_removed:
+        action = "new_columns_added_and_old_columns_removed";
+        break;
+      case sync_schema_result::old_columns_removed:
+        action = "old_columns_removed";
+        break;
+    }
+    if (action[0])
+      destructiveActions.push_back(action + (" (target is " + str + ")"));
+  }
+  if (destructiveActions.size()) {
+    std::stringstream ss;
+    ss << "Sqlite is going to take some destructive actions: ";
+    for (auto v : destructiveActions)
+      ss << v << "; ";
+    throw std::runtime_error(ss.str());
+  }
+  storage.sync_schema(true);
+
+  pImpl->share.storageName = filename;
   auto p = this->pImpl.get();
   pImpl->thr.reset(new std::thread([p] { SaverThreadMain(p); }));
 }
@@ -149,7 +143,7 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
 
       {
         std::lock_guard l(pImpl->share.m);
-        auto storage = MakeSqliteStorage(pImpl->share.storageName.data());
+        MAKE_STORAGE(pImpl->share.storageName.data());
         auto g = storage.transaction_guard();
         int numChangeForms = 0;
         auto was = clock();
@@ -208,7 +202,7 @@ void SqliteSaveStorage::SaverThreadMain(Impl* pImpl)
 void SqliteSaveStorage::IterateSync(const IterateSyncCallback& cb)
 {
   std::lock_guard l(pImpl->share.m);
-  auto storage = MakeSqliteStorage(pImpl->share.storageName.data());
+  MAKE_STORAGE(pImpl->share.storageName.data());
   for (auto v : storage.iterate<SqliteChangeForm>()) {
     cb(v);
   }
