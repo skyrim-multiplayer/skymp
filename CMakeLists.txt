@@ -2,7 +2,7 @@ if (UNIX)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-if (MSVC)
+if (WIN32)
   cmake_minimum_required(VERSION 3.15.2)
 else()
   cmake_minimum_required(VERSION 3.14.5)
