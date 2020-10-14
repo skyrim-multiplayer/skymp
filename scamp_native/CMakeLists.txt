@@ -3,10 +3,10 @@ include(${CMAKE_SOURCE_DIR}/cmake/third_party/pmm.cmake)
 # (also for subprojects like platform_se)
 if (UNIX)
   # See also Dockerfile
-  set(VCPKG_REVISION bff594f7ff8e023592f366b67fd7f57f4fe035e7)
+  set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
   set(triplet x64-linux)
 else()
-  set(VCPKG_REVISION cb8a9fe7157f8ad2423742f893955ed9ced05910)
+  set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
   set(triplet x64-windows-static)
 endif()
 # Download vcpkg dependencies

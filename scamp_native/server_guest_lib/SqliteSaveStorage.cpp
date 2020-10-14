@@ -3,29 +3,10 @@
 #include <atomic>
 #include <list>
 #include <mutex>
-#include <sqlpp11/sqlpp11.h>
+#include <sqlite_orm/sqlite_orm.h>
 #include <thread>
 
-/*namespace TabSample_ {
-struct Primary
-{
-  struct _name_t
-  {
-    static constexpr const char* _get_name() { return "primary"; }
-    template <typename T>
-    struct _member_t
-    {
-      T primary;
-    };
-  };
-  using _value_type = sqlpp::integer;
-  struct _column_type
-  {
-  };
-};
-}*/
-
-/*using namespace sqlite_orm;
+using namespace sqlite_orm;
 
 #define MAKE_STORAGE(name)                                                    \
   auto storage = make_storage(                                                \
@@ -62,7 +43,6 @@ struct Primary
                   &SqliteChangeForm::SetEquipment),                           \
       make_column("base_container_added",                                     \
                   &SqliteChangeForm::baseContainerAdded)));
-*/
 
 struct UpsertTask
 {
@@ -105,40 +85,7 @@ AsyncSaveStorage::AsyncSaveStorage(const std::shared_ptr<DbImpl>& dbImpl)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
   pImpl->share.dbImpl = dbImpl;
-  // TODO
 
-  /*MAKE_STORAGE(filename);
-
-  auto res = storage.sync_schema_simulate(true);
-
-  std::vector<std::string> destructiveActions;
-
-  for (auto [str, result] : res) {
-    const char* action = "";
-    switch (result) {
-      case sync_schema_result::dropped_and_recreated:
-        action = "dropped_and_recreated";
-        break;
-      case sync_schema_result::new_columns_added_and_old_columns_removed:
-        action = "new_columns_added_and_old_columns_removed";
-        break;
-      case sync_schema_result::old_columns_removed:
-        action = "old_columns_removed";
-        break;
-    }
-    if (action[0])
-      destructiveActions.push_back(action + (" (target is " + str + ")"));
-  }
-  if (destructiveActions.size()) {
-    std::stringstream ss;
-    ss << "Sqlite is going to take some destructive actions: ";
-    for (auto v : destructiveActions)
-      ss << v << "; ";
-    throw std::runtime_error(ss.str());
-  }
-  storage.sync_schema(true);*/
-
-  // pImpl->share.storageName = filename;
   auto p = this->pImpl.get();
   pImpl->thr.reset(new std::thread([p] { SaverThreadMain(p); }));
 }
@@ -170,53 +117,11 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
         size_t numChangeForms = 0;
         for (auto& t : tasks) {
           numChangeForms += pImpl->share.dbImpl->Upsert(t.changeForms);
+          callbacksToFire.push_back(t.callback);
         }
         if (numChangeForms > 0)
           printf("Saved %d ChangeForms in %d ticks\n",
                  static_cast<int>(numChangeForms), clock() - was);
-
-        // TODO
-        /*MAKE_STORAGE(pImpl->share.storageName.data());
-        auto g = storage.transaction_guard();
-        int numChangeForms = 0;
-        auto was = clock();
-        for (auto& t : tasks) {
-          std::map<FormDesc, int> existingFormDescs;
-          for (auto changeForm : storage.iterate<SqliteChangeForm>()) {
-            existingFormDescs.insert(
-              { changeForm.formDesc, changeForm.primary });
-          }
-
-          std::vector<SqliteChangeForm> toInsert, toUpdate;
-
-          for (auto& changeForm : t.changeForms) {
-            SqliteChangeForm f;
-            std::vector<SqliteChangeForm>* target;
-
-            if (auto it = existingFormDescs.find(changeForm.formDesc);
-                it != existingFormDescs.end()) {
-              f.primary = it->second;
-              target = &toUpdate;
-            } else {
-              f.primary = -1;
-              target = &toInsert;
-            }
-            numChangeForms++;
-
-            static_cast<MpChangeForm&>(f) = std::move(changeForm);
-            target->push_back(f);
-          }
-
-          storage.insert_range(toInsert.data(),
-                               toInsert.data() + toInsert.size());
-          for (auto& v : toUpdate)
-            storage.update(v);
-          callbacksToFire.push_back(t.callback);
-        }
-        g.commit();
-        if (numChangeForms > 0)
-          printf("Saved %d ChangeForms in %d ticks\n", numChangeForms,
-                 clock() - was);*/
       }
 
       {
@@ -236,12 +141,6 @@ void AsyncSaveStorage::IterateSync(const IterateSyncCallback& cb)
 {
   std::lock_guard l(pImpl->share.m);
   pImpl->share.dbImpl->Iterate(cb);
-
-  /*MAKE_STORAGE(pImpl->share.storageName.data());
-  for (auto v : storage.iterate<SqliteChangeForm>()) {
-    cb(v);
-  }*/
-  // TODO
 }
 
 void AsyncSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
@@ -283,20 +182,98 @@ namespace {
 class SqliteDbImpl : public DbImpl
 {
 public:
+  SqliteDbImpl(std::string filename_)
+    : filename(filename_)
+  {
+    MAKE_STORAGE(filename.data());
+
+    auto res = storage.sync_schema_simulate(true);
+
+    std::vector<std::string> destructiveActions;
+
+    for (auto [str, result] : res) {
+      const char* action = "";
+      switch (result) {
+        case sync_schema_result::dropped_and_recreated:
+          action = "dropped_and_recreated";
+          break;
+        case sync_schema_result::new_columns_added_and_old_columns_removed:
+          action = "new_columns_added_and_old_columns_removed";
+          break;
+        case sync_schema_result::old_columns_removed:
+          action = "old_columns_removed";
+          break;
+      }
+      if (action[0])
+        destructiveActions.push_back(action + (" (target is " + str + ")"));
+    }
+    if (destructiveActions.size()) {
+      std::stringstream ss;
+      ss << "Sqlite is going to take some destructive actions: ";
+      for (auto v : destructiveActions)
+        ss << v << "; ";
+      throw std::runtime_error(ss.str());
+    }
+    storage.sync_schema(true);
+  }
+
   size_t Upsert(const std::vector<MpChangeForm>& changeForms) override
   {
+    MAKE_STORAGE(filename.data());
+
+    auto g = storage.transaction_guard();
+    int numChangeForms = 0;
+    auto was = clock();
+    std::map<FormDesc, int> existingFormDescs;
+    for (auto changeForm : storage.iterate<SqliteChangeForm>()) {
+      existingFormDescs.insert({ changeForm.formDesc, changeForm.primary });
+    }
+
+    std::vector<SqliteChangeForm> toInsert, toUpdate;
+
+    for (auto& changeForm : changeForms) {
+      SqliteChangeForm f;
+      std::vector<SqliteChangeForm>* target;
+
+      if (auto it = existingFormDescs.find(changeForm.formDesc);
+          it != existingFormDescs.end()) {
+        f.primary = it->second;
+        target = &toUpdate;
+      } else {
+        f.primary = -1;
+        target = &toInsert;
+      }
+      numChangeForms++;
+
+      static_cast<MpChangeForm&>(f) = std::move(changeForm);
+      target->push_back(f);
+    }
+
+    storage.insert_range(toInsert.data(), toInsert.data() + toInsert.size());
+    for (auto& v : toUpdate)
+      storage.update(v);
+    g.commit();
     return 0;
   }
-  void Iterate(const IterateCallback& iterateCallback) override {}
+
+  void Iterate(const IterateCallback& iterateCallback) override
+  {
+    MAKE_STORAGE(filename.data());
+    for (auto v : storage.iterate<SqliteChangeForm>())
+      iterateCallback(v);
+  }
+
+private:
+  const std::string filename;
 };
 }
 
 SqliteSaveStorage::SqliteSaveStorage(std::string filename)
-  : AsyncSaveStorage(CreateDbImpl())
+  : AsyncSaveStorage(CreateDbImpl(filename))
 {
 }
 
-std::shared_ptr<DbImpl> SqliteSaveStorage::CreateDbImpl()
+std::shared_ptr<DbImpl> SqliteSaveStorage::CreateDbImpl(std::string filename)
 {
-  return std::shared_ptr<SqliteDbImpl>(new SqliteDbImpl);
+  return std::shared_ptr<SqliteDbImpl>(new SqliteDbImpl(filename));
 }

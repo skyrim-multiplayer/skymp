@@ -40,5 +40,5 @@ public:
   SqliteSaveStorage(std::string filename);
 
 private:
-  std::shared_ptr<DbImpl> CreateDbImpl();
+  std::shared_ptr<DbImpl> CreateDbImpl(std::string filename);
 };
