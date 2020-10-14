@@ -5,7 +5,7 @@ RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar ninja perl
 RUN mkdir -p /root/.local/share/pmm/1.4.2/vcpkg-tmp && cd /root/.local/share/pmm/1.4.2/vcpkg-tmp
 RUN git clone https://github.com/microsoft/vcpkg.git \
   && cd vcpkg \
-  && git reset --hard bff594f7ff8e023592f366b67fd7f57f4fe035e7 \
+  && git reset --hard 790910f79f653978f90aadd958abf3c407215552 \
   && chmod 777 bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh --useSystemBinaries
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux boost-bimap
@@ -18,7 +18,7 @@ RUN cd vcpkg && ./vcpkg install --triplet x64-linux spdlog
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux catch2
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux sparsepp
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux nlohmann-json
-RUN mv vcpkg /root/.local/share/pmm/1.4.2/vcpkg-bff594f7ff8e023592f366b67fd7f57f4fe035e7
+RUN mv vcpkg /root/.local/share/pmm/1.4.2/vcpkg-790910f79f653978f90aadd958abf3c407215552
 
 WORKDIR /usr/src/app
 
