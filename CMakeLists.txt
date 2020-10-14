@@ -1,17 +1,8 @@
-if (POLICY CMP0091)
-  cmake_policy(SET CMP0091 NEW)
-endif()
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
 if (UNIX)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-if (NOT MSVC)
-  cmake_minimum_required(VERSION 3.14.5)
-else()
-  cmake_minimum_required(VERSION 3.17.0)
-endif()
+cmake_minimum_required(VERSION 3.15.2)
 project(scamp_native)
 enable_testing()
 
