@@ -271,6 +271,28 @@ const char* espm::RecordHeader::GetEditorId(
   return result;
 }
 
+void espm::RecordHeader::GetScriptData(ScriptData* out) const noexcept
+{
+  ScriptData res;
+
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "VMAD", 4)) {
+        res.version = *reinterpret_cast<const uint16_t*>(data);
+        res.objFormat = *reinterpret_cast<const uint16_t*>(
+          (reinterpret_cast<const uint8_t*>(data) + 2));
+        const uint16_t scriptCount = *reinterpret_cast<const uint16_t*>(
+          (reinterpret_cast<const uint8_t*>(data) + 4));
+
+        auto p = reinterpret_cast<const uint8_t*>(data) + 6;
+        res.scripts.resize(scriptCount);
+        FillScriptArray(p, res.scripts, res.objFormat);
+      }
+    });
+
+  *out = res;
+}
+
 espm::Type espm::RecordHeader::GetType() const noexcept
 {
   return ((char*)this) - 8;
@@ -628,20 +650,6 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
 espm::ACTI::Data espm::ACTI::GetData() const noexcept
 {
   Data result;
-  espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!memcmp(type, "VMAD", 4)) {
-        result.scriptData.version = *reinterpret_cast<const uint16_t*>(data);
-        result.scriptData.objFormat = *reinterpret_cast<const uint16_t*>(
-          (reinterpret_cast<const uint8_t*>(data) + 2));
-        const uint16_t scriptCount = *reinterpret_cast<const uint16_t*>(
-          (reinterpret_cast<const uint8_t*>(data) + 4));
-
-        auto p = reinterpret_cast<const uint8_t*>(data) + 6;
-        result.scriptData.scripts.resize(scriptCount);
-        FillScriptArray(p, result.scriptData.scripts,
-                        result.scriptData.objFormat);
-      }
-    });
+  GetScriptData(&result.scriptData);
   return result;
 }

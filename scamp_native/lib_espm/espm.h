@@ -11,7 +11,6 @@
 #pragma pack(push, 1)
 
 namespace espm {
-
 class CompressedFieldsCache
 {
 public:
@@ -34,6 +33,7 @@ union CellOrGridPos
 
 class GroupHeader;
 class RecordHeader;
+class ScriptData;
 
 class Browser
 {
@@ -150,6 +150,8 @@ public:
   uint32_t GetId() const noexcept;
   const char* GetEditorId(espm::CompressedFieldsCache* compressedFieldsCache =
                             nullptr) const noexcept;
+  void GetScriptData(ScriptData* out) const noexcept;
+
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;
 

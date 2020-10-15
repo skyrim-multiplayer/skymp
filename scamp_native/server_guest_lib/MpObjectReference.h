@@ -108,6 +108,7 @@ public:
 private:
   void Init(WorldState* parent, uint32_t formId) override;
 
+  void InitScripts();
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void InitListenersAndEmitters();
   void SendInventoryUpdate();

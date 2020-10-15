@@ -533,6 +533,27 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
     mode);
+
+  InitScripts();
+}
+
+void MpObjectReference::InitScripts()
+{
+  auto baseId = GetBaseId();
+  if (!baseId || !GetParent()->espm)
+    return;
+
+  auto& br = GetParent()->espm->GetBrowser();
+  auto base = br.LookupById(baseId);
+  if (!base.rec)
+    return;
+
+  espm::ScriptData scriptData;
+  base.rec->GetScriptData(&scriptData);
+  for (auto& script : scriptData.scripts) {
+  }
+
+  // auto br = GetParent()->GetEspm().GetBrowser();
 }
 
 void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
