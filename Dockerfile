@@ -9,6 +9,7 @@ RUN git clone https://github.com/microsoft/vcpkg.git \
   && chmod 777 bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh --useSystemBinaries -disableMetrics
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux boost-bimap
+RUN apk add --no-cache linux-headers
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux slikenet
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlite-orm
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlpp11
