@@ -1,27 +1,31 @@
 include(${CMAKE_SOURCE_DIR}/cmake/third_party/pmm.cmake)
 # Clear CMake cache after changing this
 # (also for subprojects like platform_se)
+set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
+set(triplet x64-windows-static)
+
 if (UNIX)
-  # See also Dockerfile
-  set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
-  set(triplet x64-linux)
+  set(VCPKG_PATH "/vcpkg")
+  if (NOT EXISTS "${VCPKG_PATH}/bootstrap-vcpkg.sh")
+    message(FATAL_ERROR "VCPKG_PATH ('${VCPKG_PATH}') is not a valid vcpkg path")
+  endif()
 else()
-  set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
-  set(triplet x64-windows-static)
+  # Download vcpkg dependencies
+  set(ports
+    catch2:${triplet}
+    sparsepp:${triplet}
+    nlohmann-json:${triplet}
+    spdlog:${triplet}
+    slikenet:${triplet}
+    boost-bimap:${triplet}
+    zlib:${triplet}
+    sqlite-orm:${triplet}
+    sqlpp11:${triplet}
+    sqlpp11-connector-sqlite3:${triplet}
+  )
+  set(VCPKG_PATH _VCPKG_ROOT_DIR)
 endif()
-# Download vcpkg dependencies
-set(ports
-  catch2:${triplet}
-  sparsepp:${triplet}
-  nlohmann-json:${triplet}
-  spdlog:${triplet}
-  slikenet:${triplet}
-  boost-bimap:${triplet}
-  zlib:${triplet}
-  sqlite-orm:${triplet}
-  sqlpp11:${triplet}
-  sqlpp11-connector-sqlite3:${triplet}
-)
+
 if (WIN32)
   list(APPEND ports simdjson:${triplet})
 endif()
@@ -109,7 +113,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/tests_unit.cmake)
 
 integrate_vcpkg(
   TARGETS ${VCPKG_DEPENDENT}
-  VCPKG_PATH "${_VCPKG_ROOT_DIR}"
+  VCPKG_PATH "${VCPKG_PATH}"
 )
 
 if(UNIX)

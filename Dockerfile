@@ -1,15 +1,14 @@
 FROM node:14.13.1-alpine3.12
-RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar ninja perl
+RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar ninja perl make
 
 # vcpkg
-RUN mkdir -p /root/.local/share/pmm/1.4.2/vcpkg-tmp && cd /root/.local/share/pmm/1.4.2/vcpkg-tmp
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 RUN git clone https://github.com/microsoft/vcpkg.git \
   && cd vcpkg \
   && git reset --hard 790910f79f653978f90aadd958abf3c407215552 \
   && chmod 777 bootstrap-vcpkg.sh \
-  && VCPKG_FORCE_SYSTEM_BINARIES=1 ./bootstrap-vcpkg.sh
+  && ./bootstrap-vcpkg.sh --useSystemBinaries -disableMetrics
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux boost-bimap
-RUN apk add --no-cache make
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux slikenet
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlite-orm
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlpp11
@@ -18,7 +17,6 @@ RUN cd vcpkg && ./vcpkg install --triplet x64-linux spdlog
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux catch2
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux sparsepp
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux nlohmann-json
-RUN mv vcpkg /root/.local/share/pmm/1.4.2/vcpkg-790910f79f653978f90aadd958abf3c407215552
 
 WORKDIR /usr/src/app
 
