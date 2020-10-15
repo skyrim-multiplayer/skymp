@@ -14,7 +14,7 @@ using namespace sqlite_orm;
     make_table<SqliteChangeForm>(                                             \
       "SqliteChangeForm",                                                     \
       make_column("primary", &SqliteChangeForm::primary, autoincrement(),     \
-                  primary_key())/*,                                             \
+                  primary_key()),                                             \
       make_column("record_type", &SqliteChangeForm::recType),                 \
       make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,            \
                   &SqliteChangeForm::SetBaseFormDesc),                        \
@@ -42,7 +42,7 @@ using namespace sqlite_orm;
       make_column("equipment_dump", &SqliteChangeForm::GetEquipment,          \
                   &SqliteChangeForm::SetEquipment),                           \
       make_column("base_container_added",                                     \
-                  &SqliteChangeForm::baseContainerAdded)*/));
+                  &SqliteChangeForm::baseContainerAdded)));
 
 struct UpsertTask
 {
