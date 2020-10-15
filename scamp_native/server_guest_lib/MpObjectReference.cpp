@@ -3,7 +3,9 @@
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
+#include "Reader.h"
 #include "ScriptStorage.h"
+#include "VirtualMachine.h"
 #include "WorldState.h"
 #include <MsgType.h>
 
@@ -46,13 +48,24 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 }
 }
 
-struct MpObjectReference::Impl : public ChangeFormGuard<MpChangeFormREFR>
+struct MpObjectReference::Impl
+  : public ChangeFormGuard<MpChangeFormREFR>
+  , public std::enable_shared_from_this<Impl>
+  , public IGameObject
 {
 public:
   Impl(MpChangeFormREFR changeForm_, MpObjectReference* self_)
     : ChangeFormGuard(changeForm_, self_)
   {
+    stringId = "[ObjectReference " + ChangeForm().formDesc.ToString() + "]";
   }
+
+  std::shared_ptr<IGameObject> GetGameObject() { return shared_from_this(); }
+
+  const char* GetStringID() override { return stringId.data(); };
+
+  std::unique_ptr<VirtualMachine> vm;
+  std::string stringId;
 };
 
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
@@ -286,6 +299,10 @@ void MpObjectReference::Activate(MpActor& activationSource)
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
     }
+  }
+
+  if (pImpl->vm) {
+    pImpl->vm->SendEvent()
   }
 }
 
@@ -538,6 +555,20 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
   InitScripts();
 }
 
+namespace {
+VarForBuildActivePex BuildScriptProperties(const espm::ScriptData& scriptData)
+{
+  VarForBuildActivePex res;
+  for (auto& entry : scriptData.scripts) {
+    auto& resultProps = res[entry.scriptName];
+    for (auto& prop : entry.properties) {
+      resultProps.push_back;
+    }
+  }
+  return res;
+}
+}
+
 void MpObjectReference::InitScripts()
 {
   auto baseId = GetBaseId();
@@ -555,9 +586,23 @@ void MpObjectReference::InitScripts()
 
   espm::ScriptData scriptData;
   base.rec->GetScriptData(&scriptData);
+
+  std::vector<std::shared_ptr<PexScript>> pexStructures;
+  std::vector<std::string> scriptNames;
+
   for (auto& script : scriptData.scripts) {
+    scriptNames.push_back(script.scriptName);
+
     auto pex = scriptStorage->GetScriptPex(script.scriptName.data());
+    auto pexStructure = Reader(pex).GetSourceStructures();
+    assert(pexStructure.size() == 1);
+    pexStructures.push_back(pexStructure.at(0));
   }
+
+  if (!pexStructures.empty())
+    pImpl->vm.reset(new VirtualMachine(pexStructures));
+
+  pImpl->vm->AddObject(pImpl->GetGameObject(), scriptNames, )
 
   // auto br = GetParent()->GetEspm().GetBrowser();
 }

@@ -54,4 +54,5 @@ class Reader
 public:
   std::vector<std::shared_ptr<PexScript>> GetSourceStructures();
   Reader(std::vector<std::string> vectorPath);
+  Reader(std::vector<uint8_t> pex);
 };
