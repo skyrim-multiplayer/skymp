@@ -16,7 +16,7 @@ using namespace sqlite_orm;
       make_column("primary", &SqliteChangeForm::primary, autoincrement(),     \
                   primary_key()),                                             \
       make_column("record_type", &SqliteChangeForm::recType),                 \
-      make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,            \
+      /*make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,            \
                   &SqliteChangeForm::SetBaseFormDesc),                        \
       make_column("form_desc", &SqliteChangeForm::GetFormDesc,                \
                   &SqliteChangeForm::SetFormDesc),                            \
@@ -30,17 +30,17 @@ using namespace sqlite_orm;
       make_column("angle_z", &SqliteChangeForm::GetAngleZ,                    \
                   &SqliteChangeForm::SetAngleZ),                              \
       make_column("inventory_dump", &SqliteChangeForm::GetInventory,          \
-                  &SqliteChangeForm::SetInventory),                           \
+                  &SqliteChangeForm::SetInventory),*/                           \
       make_column("is_harvested", &SqliteChangeForm::isHarvested),            \
       make_column("is_open", &SqliteChangeForm::isOpen),                      \
       make_column("next_reloot_datetime",                                     \
                   &SqliteChangeForm::nextRelootDatetime),                     \
       make_column("world_or_cell", &SqliteChangeForm::worldOrCell),           \
       make_column("is_race_menu_open", &SqliteChangeForm::isRaceMenuOpen),    \
-      make_column("look_dump", &SqliteChangeForm::GetLook,                    \
+      /*make_column("look_dump", &SqliteChangeForm::GetLook,                    \
                   &SqliteChangeForm::SetLook),                                \
       make_column("equipment_dump", &SqliteChangeForm::GetEquipment,          \
-                  &SqliteChangeForm::SetEquipment),                           \
+                  &SqliteChangeForm::SetEquipment),*/                           \
       make_column("base_container_added",                                     \
                   &SqliteChangeForm::baseContainerAdded)));
 
