@@ -1,5 +1,5 @@
 FROM node:14.13.1-alpine3.12
-RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar ninja perl make zip pkgconfig
+RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar ninja perl make zip pkgconfig linux-headers
 
 # vcpkg
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
@@ -8,16 +8,17 @@ RUN git clone https://github.com/microsoft/vcpkg.git \
   && git reset --hard 790910f79f653978f90aadd958abf3c407215552 \
   && chmod 777 bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh --useSystemBinaries -disableMetrics
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux boost-bimap
-RUN apk add --no-cache linux-headers
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux slikenet
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlite-orm
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlpp11
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux sqlpp11-connector-sqlite3
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux spdlog
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux catch2
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux sparsepp
-RUN cd vcpkg && ./vcpkg install --triplet x64-linux nlohmann-json
+RUN cd vcpkg && \
+  ./vcpkg install --triplet x64-linux \
+    boost-bimap \
+    slikenet \
+    sqlite-orm \
+    sqlpp11 \
+    sqlpp11-connector-sqlite3 \
+    spdlog \
+    catch2 \
+    sparsepp \
+    nlohmann-json
 
 WORKDIR /usr/src/app
 
