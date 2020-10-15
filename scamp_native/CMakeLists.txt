@@ -33,8 +33,8 @@ foreach(port ${ports})
   message(STATUS "Installing ${port}")
   pmm(VCPKG REVISION ${VCPKG_REVISION} REQUIRES ${port})
 endforeach()
-if ("${_VCPKG_ROOT_DIR}" STREQUAL "")
-  message(FATAL_ERROR "Expected _VCPKG_ROOT_DIR variable to be set by pmm")
+if ("${VCPKG_PATH}" STREQUAL "")
+  message(FATAL_ERROR "Expected VCPKG_PATH variable to be set")
 endif()
 
 # TODO: Check SHA512
