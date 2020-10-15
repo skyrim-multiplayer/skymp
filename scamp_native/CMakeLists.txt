@@ -23,7 +23,7 @@ else()
     sqlpp11:${triplet}
     sqlpp11-connector-sqlite3:${triplet}
   )
-  set(VCPKG_PATH _VCPKG_ROOT_DIR)
+  set(VCPKG_PATH ${_VCPKG_ROOT_DIR})
 endif()
 
 if (WIN32)

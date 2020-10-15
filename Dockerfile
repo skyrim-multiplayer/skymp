@@ -1,5 +1,5 @@
 FROM node:14.13.1-alpine3.12
-RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar ninja perl make zip
+RUN apk add --no-cache gcc musl-dev g++ cmake gdb git curl unzip tar ninja perl make zip pkgconfig
 
 # vcpkg
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
