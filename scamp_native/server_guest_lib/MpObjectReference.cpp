@@ -302,7 +302,8 @@ void MpObjectReference::Activate(MpActor& activationSource)
   }
 
   if (pImpl->vm) {
-    pImpl->vm->SendEvent()
+    std::vector<VarValue> arguments;
+    pImpl->vm->SendEvent(pImpl->GetGameObject(), "OnActivate", arguments);
   }
 }
 
@@ -556,13 +557,29 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 }
 
 namespace {
+/*VarValue CastProperty(const espm::Property& prop)
+{
+  switch (prop.propertyType) {
+    case espm::PropertyType::Object:
+      break;
+    case espm::PropertyType::String:
+      break;
+    case espm::PropertyType::Int:
+      break;
+    case espm::PropertyType::Float:
+      break;
+    case espm::PropertyType::Bool:
+      break;
+  }
+}*/
+
 VarForBuildActivePex BuildScriptProperties(const espm::ScriptData& scriptData)
 {
   VarForBuildActivePex res;
   for (auto& entry : scriptData.scripts) {
     auto& resultProps = res[entry.scriptName];
     for (auto& prop : entry.properties) {
-      resultProps.push_back;
+      // resultProps.push_back;
     }
   }
   return res;
@@ -602,7 +619,8 @@ void MpObjectReference::InitScripts()
   if (!pexStructures.empty())
     pImpl->vm.reset(new VirtualMachine(pexStructures));
 
-  pImpl->vm->AddObject(pImpl->GetGameObject(), scriptNames, )
+  pImpl->vm->AddObject(pImpl->GetGameObject(), scriptNames,
+                       BuildScriptProperties(scriptData));
 
   // auto br = GetParent()->GetEspm().GetBrowser();
 }
