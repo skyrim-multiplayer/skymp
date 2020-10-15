@@ -9,6 +9,7 @@ struct WorldState::Impl
 {
   std::unordered_map<uint32_t, MpChangeForm> changes;
   std::shared_ptr<ISaveStorage> saveStorage;
+  std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
 };
 
@@ -34,6 +35,12 @@ void WorldState::AttachEspm(espm::Loader* espm_)
 void WorldState::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 {
   pImpl->saveStorage = saveStorage;
+}
+
+void WorldState::AttachScriptStorage(
+  std::shared_ptr<IScriptStorage> scriptStorage)
+{
+  pImpl->scriptStorage = scriptStorage;
 }
 
 void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
@@ -178,4 +185,9 @@ espm::CompressedFieldsCache& WorldState::GetEspmCache()
   if (!espmCache)
     throw std::runtime_error("No espm cache found");
   return *espmCache;
+}
+
+IScriptStorage* WorldState::GetScriptStorage() const
+{
+  return pImpl->scriptStorage.get();
 }

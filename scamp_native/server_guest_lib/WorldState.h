@@ -23,6 +23,7 @@ class MpActor;
 class FormCallbacks;
 class MpChangeForm;
 class ISaveStorage;
+class IScriptStorage;
 
 class WorldState
 {
@@ -38,6 +39,7 @@ public:
 
   void AttachEspm(espm::Loader* espm);
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
+  void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
 
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                bool skipChecks = false,
@@ -111,6 +113,7 @@ public:
 
   espm::Loader& GetEspm() const;
   espm::CompressedFieldsCache& GetEspmCache();
+  IScriptStorage* GetScriptStorage() const;
   std::vector<std::string> espmFiles;
 
 private:

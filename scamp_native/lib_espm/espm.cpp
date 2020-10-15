@@ -271,6 +271,89 @@ const char* espm::RecordHeader::GetEditorId(
   return result;
 }
 
+std::wstring ReadWstring(const uint8_t* ptr)
+{
+  const uint16_t scriptNameSize = *reinterpret_cast<const uint16_t*>(ptr);
+  const wchar_t* scriptName = reinterpret_cast<const wchar_t*>(ptr + 2);
+  return std::wstring(scriptName, scriptNameSize / 2);
+}
+
+const uint8_t* ReadPropertyValue(const uint8_t* p, espm::Property* prop,
+                                 uint16_t objFormat)
+{
+  const auto t = prop->propertyType;
+  switch (t) {
+    case espm::PropertyType::Object:
+      if (objFormat == 1)
+        prop->value.formId = *reinterpret_cast<const uint32_t*>(p);
+      else if (objFormat == 2)
+        prop->value.formId = *reinterpret_cast<const uint32_t*>(p + 4);
+      else
+        throw std::runtime_error("Unknown objFormat (" +
+                                 std::to_string(objFormat) + ")");
+      return p + 8;
+    case espm::PropertyType::Int:
+      prop->value.integer = *reinterpret_cast<const int32_t*>(p);
+      return p + 4;
+    case espm::PropertyType::Float:
+      prop->value.floatingPoint = *reinterpret_cast<const float*>(p);
+      return p + 4;
+    case espm::PropertyType::Bool:
+      prop->value.boolean = *reinterpret_cast<const int8_t*>(p);
+      return p + 1;
+    case espm::PropertyType::String: {
+      uint16_t length = *reinterpret_cast<const uint16_t*>(p);
+      p += 2;
+      prop->value.str = { reinterpret_cast<const char*>(p), length };
+      p += length;
+      return p;
+    }
+    case espm::PropertyType::ObjectArray: {
+      uint32_t arrayLength = *reinterpret_cast<const uint32_t*>(p);
+      p += 4;
+      for (uint32_t i = 0; i < arrayLength; ++i) {
+        p += 8;
+        // TODO: Read values
+      }
+      return p;
+    }
+    default:
+      throw std::runtime_error("Script properties with type " +
+                               std::to_string(static_cast<int>(t)) +
+                               " are not yet supported");
+  }
+}
+
+void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
+                     uint16_t objFormat)
+{
+  for (uint16_t i = 0; i < out.size(); ++i) {
+    const uint16_t length = *reinterpret_cast<const uint16_t*>(p);
+    p += 2;
+    out[i].scriptName = reinterpret_cast<const char*>(p);
+    p += length;
+    out[i].status = *p;
+    p++;
+    const uint16_t numProperties = *reinterpret_cast<const uint16_t*>(p);
+    p += 2;
+    out[i].properties.resize(numProperties);
+    for (uint16_t j = 0; j < numProperties; ++j) {
+      const uint16_t length = *reinterpret_cast<const uint16_t*>(p);
+      p += 2;
+
+      auto& prop = out[i].properties[j];
+      prop.propertyName =
+        std::string(reinterpret_cast<const char*>(p), length);
+      p += length;
+      prop.propertyType = static_cast<espm::PropertyType>(*p);
+      p++;
+      prop.status = *p;
+      p++;
+      p = ReadPropertyValue(p, &prop, objFormat);
+    }
+  }
+}
+
 void espm::RecordHeader::GetScriptData(ScriptData* out) const noexcept
 {
   ScriptData res;
@@ -582,69 +665,6 @@ espm::NAVM::Data espm::NAVM::GetData(
     },
     &compressedFieldsCache);
   return result;
-}
-
-std::wstring ReadWstring(const uint8_t* ptr)
-{
-  const uint16_t scriptNameSize = *reinterpret_cast<const uint16_t*>(ptr);
-  const wchar_t* scriptName = reinterpret_cast<const wchar_t*>(ptr + 2);
-  return std::wstring(scriptName, scriptNameSize / 2);
-}
-
-const uint8_t* ReadPropertyValue(const uint8_t* p, espm::Property* prop,
-                                 uint16_t objFormat)
-{
-  const auto t = prop->propertyType;
-  switch (t) {
-    case espm::PropertyType::Object:
-      if (objFormat == 1)
-        prop->value.formId = *reinterpret_cast<const uint32_t*>(p);
-      else if (objFormat == 2)
-        prop->value.formId = *reinterpret_cast<const uint32_t*>(p + 4);
-      else
-        throw std::runtime_error("Unknown objFormat (" +
-                                 std::to_string(objFormat) + ")");
-      return p + 8;
-    default:
-      throw std::runtime_error("Script properties with type " +
-                               std::to_string(static_cast<int>(t)) +
-                               "are not yet supported");
-  }
-}
-
-void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
-                     uint16_t objFormat)
-{
-  for (uint16_t i = 0; i < out.size(); ++i) {
-    const uint16_t length = *reinterpret_cast<const uint16_t*>(p);
-    p += 2;
-    out[i].scriptName = reinterpret_cast<const char*>(p);
-    p += length;
-    out[i].status = *p;
-    p++;
-    const uint16_t numProperties = *reinterpret_cast<const uint16_t*>(p);
-    p += 2;
-    out[i].properties.resize(numProperties);
-    for (uint16_t j = 0; j < numProperties; ++j) {
-      const uint16_t length = *reinterpret_cast<const uint16_t*>(p);
-      p += 2;
-
-      auto& prop = out[i].properties[j];
-      prop.propertyName =
-        std::string(reinterpret_cast<const char*>(p), length);
-      p += length;
-      prop.propertyType = static_cast<espm::PropertyType>(*p);
-      p++;
-      prop.status = *p;
-      p++;
-      try {
-        p = ReadPropertyValue(p, &prop, objFormat);
-      } catch (std::exception& e) {
-        assert(0 && "ReadPropertyValue failed");
-        return out.clear();
-      }
-    }
-  }
 }
 
 espm::ACTI::Data espm::ACTI::GetData() const noexcept

@@ -491,21 +491,27 @@ struct Property
 
   union Value
   {
-    uint32_t formId = 0;
+    uint32_t formId;
     int32_t integer;
     int8_t boolean;
     float floatingPoint;
+
+    struct Str
+    {
+      const char* data;
+      size_t length;
+    } str = { 0, 0 };
   } value;
 
   uint8_t status = StatusEdited;
 
   friend bool operator==(const Property& lhs, const Property& rhs)
   {
-    static_assert(sizeof(Value) == sizeof(Value::formId));
     return std::make_tuple(lhs.propertyName, lhs.propertyType,
-                           lhs.value.formId, lhs.status) ==
-      std::make_tuple(rhs.propertyName, rhs.propertyType, rhs.value.formId,
-                      rhs.status);
+                           lhs.value.str.data, lhs.value.str.length,
+                           lhs.status) ==
+      std::make_tuple(rhs.propertyName, rhs.propertyType, rhs.value.str.data,
+                      lhs.value.str.length, rhs.status);
   }
 
   friend bool operator!=(const Property& lhs, const Property& rhs)

@@ -3,6 +3,7 @@
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
+#include "ScriptStorage.h"
 #include "WorldState.h"
 #include <MsgType.h>
 
@@ -548,9 +549,14 @@ void MpObjectReference::InitScripts()
   if (!base.rec)
     return;
 
+  auto scriptStorage = GetParent()->GetScriptStorage();
+  if (!scriptStorage)
+    return;
+
   espm::ScriptData scriptData;
   base.rec->GetScriptData(&scriptData);
   for (auto& script : scriptData.scripts) {
+    auto pex = scriptStorage->GetScriptPex(script.scriptName.data());
   }
 
   // auto br = GetParent()->GetEspm().GetBrowser();
