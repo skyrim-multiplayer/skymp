@@ -7,7 +7,7 @@ RUN git clone https://github.com/microsoft/vcpkg.git \
   && cd vcpkg \
   && git reset --hard 790910f79f653978f90aadd958abf3c407215552 \
   && chmod 777 bootstrap-vcpkg.sh \
-  && ./bootstrap-vcpkg.sh --useSystemBinaries
+  && VCPKG_FORCE_SYSTEM_BINARIES=1 ./bootstrap-vcpkg.sh
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux boost-bimap
 RUN apk add --no-cache make
 RUN cd vcpkg && ./vcpkg install --triplet x64-linux slikenet
