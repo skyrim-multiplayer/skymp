@@ -310,7 +310,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
         continue;
 
       espm::Type t = base.rec->GetType();
-      if (!espm::IsItem(t) && t != "DOOR" && t != "CONT" &&
+      if (t != "ACTI" && !espm::IsItem(t) && t != "DOOR" && t != "CONT" &&
           (t != "FLOR" ||
            !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
           (t != "TREE" ||

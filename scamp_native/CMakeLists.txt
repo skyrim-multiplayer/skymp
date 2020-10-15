@@ -109,6 +109,25 @@ if (WIN32)
   )
 endif()
 
+file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib/*" "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(papyrus-vm-lib STATIC ${src})
+apply_default_settings(TARGETS papyrus-vm-lib)
+
+file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_main/*" "${CMAKE_SOURCE_DIR}/.clang-format")
+add_executable(papyrus-vm-main ${src})
+target_link_libraries(papyrus-vm-main PUBLIC papyrus-vm-lib)
+target_include_directories(papyrus-vm-main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib")
+list(APPEND VCPKG_DEPENDENT papyrus-vm-main)
+set(VM_MAIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/papyrus-vm-main.exe)
+apply_default_settings(TARGETS papyrus-vm-main)
+
+if (NOT SKYRIM_DIR)
+  message(WARNING "SKYRIM_DIR is not specified, Papyrus sources will not be built")
+else()
+  include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library.cmake)
+  add_papyrus_library(NAME papyrus_test_files DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files)
+endif()
+
 include(${CMAKE_SOURCE_DIR}/cmake/tests_unit.cmake)
 
 integrate_vcpkg(

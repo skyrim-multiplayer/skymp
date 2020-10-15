@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #pragma pack(push, 1)
@@ -431,6 +432,113 @@ public:
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 static_assert(sizeof(REFR) == sizeof(RecordHeader));
+
+enum class PropertyType
+{
+  Invalid = 0,
+  Object = 1,
+  String = 2,
+  Int = 3,
+  Float = 4,
+  Bool = 5,
+  ObjectArray = 11,
+  StringArray = 12,
+  IntArray = 13,
+  FloatArray = 14,
+  BoolArray = 15
+};
+
+struct Property
+{
+  enum : uint8_t
+  {
+    StatusEdited = 1,
+    StatusRemoved = 3
+  };
+
+  static Property Object(std::string propertyName, uint32_t formId)
+  {
+    Property res{ propertyName, PropertyType::Object };
+    res.value.formId = formId;
+    return res;
+  }
+
+  static Property Int(std::string propertyName, int32_t integer)
+  {
+    Property res{ propertyName, PropertyType::Int };
+    res.value.integer = integer;
+    return res;
+  }
+
+  static Property Bool(std::string propertyName, bool boolean)
+  {
+    Property res{ propertyName, PropertyType::Bool };
+    res.value.boolean = boolean ? 1 : 0;
+    return res;
+  }
+
+  static Property Float(std::string propertyName, float floatingPoint)
+  {
+    Property res{ propertyName, PropertyType::Float };
+    res.value.floatingPoint = floatingPoint;
+    return res;
+  }
+
+  std::string propertyName;
+  PropertyType propertyType = PropertyType::Invalid;
+
+  union Value
+  {
+    uint32_t formId = 0;
+    int32_t integer;
+    int8_t boolean;
+    float floatingPoint;
+  } value;
+
+  uint8_t status = StatusEdited;
+
+  friend bool operator==(const Property& lhs, const Property& rhs)
+  {
+    static_assert(sizeof(Value) == sizeof(Value::formId));
+    return std::make_tuple(lhs.propertyName, lhs.propertyType,
+                           lhs.value.formId, lhs.status) ==
+      std::make_tuple(rhs.propertyName, rhs.propertyType, rhs.value.formId,
+                      rhs.status);
+  }
+
+  friend bool operator!=(const Property& lhs, const Property& rhs)
+  {
+    return !(lhs == rhs);
+  }
+};
+
+struct Script
+{
+  std::string scriptName;
+  uint8_t status = 0;
+  std::vector<Property> properties;
+};
+
+struct ScriptData
+{
+  int16_t version = 0;   // [2..5]
+  int16_t objFormat = 0; // [1..2]
+  std::vector<Script> scripts;
+};
+
+class ACTI : public RecordHeader
+{
+public:
+  static constexpr auto type = "ACTI";
+
+  struct Data
+  {
+    ScriptData scriptData;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(ACTI) == sizeof(RecordHeader));
 }
 
 #pragma pack(pop)
