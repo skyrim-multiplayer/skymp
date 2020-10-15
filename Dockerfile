@@ -18,7 +18,8 @@ RUN cd vcpkg && \
     spdlog \
     catch2 \
     sparsepp \
-    nlohmann-json
+    nlohmann-json \
+  && rm -rf ./buildtrees/*
 
 WORKDIR /usr/src/app
 

@@ -6,7 +6,7 @@
 #include <sqlite_orm.h>
 #include <thread>
 
-/*using namespace sqlite_orm;
+using namespace sqlite_orm;
 
 #define MAKE_STORAGE(name)                                                    \
   auto storage = make_storage(                                                \
@@ -14,7 +14,7 @@
     make_table<SqliteChangeForm>(                                             \
       "SqliteChangeForm",                                                     \
       make_column("primary", &SqliteChangeForm::primary, autoincrement(),     \
-                  primary_key()),                                             \
+                  primary_key())/*,                                             \
       make_column("record_type", &SqliteChangeForm::recType),                 \
       make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,            \
                   &SqliteChangeForm::SetBaseFormDesc),                        \
@@ -42,8 +42,8 @@
       make_column("equipment_dump", &SqliteChangeForm::GetEquipment,          \
                   &SqliteChangeForm::SetEquipment),                           \
       make_column("base_container_added",                                     \
-                  &SqliteChangeForm::baseContainerAdded)));
-                  */
+                  &SqliteChangeForm::baseContainerAdded)*/));
+
 struct UpsertTask
 {
   std::vector<MpChangeForm> changeForms;
@@ -185,6 +185,7 @@ public:
   SqliteDbImpl(std::string filename_)
     : filename(filename_)
   {
+    MAKE_STORAGE(filename.data());
     /*MAKE_STORAGE(filename.data());
 
     auto res = storage.sync_schema_simulate(true);
