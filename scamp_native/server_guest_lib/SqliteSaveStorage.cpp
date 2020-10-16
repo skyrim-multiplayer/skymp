@@ -16,9 +16,9 @@ using namespace sqlite_orm;
       make_column("primary", &SqliteChangeForm::primary, autoincrement(),     \
                   primary_key()),                                             \
       make_column("record_type", &SqliteChangeForm::recType),                 \
-      /*make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,            \
+      make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,            \
                   &SqliteChangeForm::SetBaseFormDesc),                        \
-      make_column("form_desc", &SqliteChangeForm::GetFormDesc,                \
+      /*make_column("form_desc", &SqliteChangeForm::GetFormDesc,                \
                   &SqliteChangeForm::SetFormDesc),                            \
       make_column("x", &SqliteChangeForm::GetX, &SqliteChangeForm::SetX),     \
       make_column("y", &SqliteChangeForm::GetY, &SqliteChangeForm::SetY),     \
