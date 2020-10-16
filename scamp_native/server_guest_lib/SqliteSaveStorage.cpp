@@ -18,7 +18,7 @@ using namespace sqlite_orm;
       make_column("record_type", &SqliteChangeForm::recType),                 \
       make_column("base_desc", &SqliteChangeForm::GetBaseFormDesc,            \
                   &SqliteChangeForm::SetBaseFormDesc),                        \
-      /*make_column("form_desc", &SqliteChangeForm::GetFormDesc,                \
+      make_column("form_desc", &SqliteChangeForm::GetFormDesc,                \
                   &SqliteChangeForm::SetFormDesc),                            \
       make_column("x", &SqliteChangeForm::GetX, &SqliteChangeForm::SetX),     \
       make_column("y", &SqliteChangeForm::GetY, &SqliteChangeForm::SetY),     \
@@ -29,7 +29,7 @@ using namespace sqlite_orm;
                   &SqliteChangeForm::SetAngleY),                              \
       make_column("angle_z", &SqliteChangeForm::GetAngleZ,                    \
                   &SqliteChangeForm::SetAngleZ),                              \
-      make_column("inventory_dump", &SqliteChangeForm::GetInventory,          \
+      /*make_column("inventory_dump", &SqliteChangeForm::GetInventory,          \
                   &SqliteChangeForm::SetInventory),*/                           \
       make_column("is_harvested", &SqliteChangeForm::isHarvested),            \
       make_column("is_open", &SqliteChangeForm::isOpen),                      \
