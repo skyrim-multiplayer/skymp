@@ -30,35 +30,45 @@ char* my_strsep(char** stringp, const char* delim)
   }
   return token_start;
 }
+
+constexpr auto g_sep = "|";
 }
 
 std::string SqliteChangeForm::GetJsonData() const
 {
-  return inv.ToJson().dump() + '|' + lookDump + '|' + equipmentDump;
+  return "v01:" + inv.ToJson().dump() + g_sep + lookDump + g_sep +
+    equipmentDump;
 }
 
 void SqliteChangeForm::SetJsonData(const std::string& jsonData)
 {
-  const char* myString = jsonData.data();
-  char *token, *str, *tofree;
-  int doing = 0;
+  static const auto versionLength = strlen("v01:");
 
-  tofree = str = strdup(myString);
-  while ((token = my_strsep(&str, "|"))) {
-    switch (doing) {
-      case 0:
-        inv = DumpToStruct<Inventory>(token);
-        break;
-      case 1:
-        lookDump = token;
-        break;
-      case 2:
-        equipmentDump = token;
-        break;
+  if (!memcmp(jsonData.data(), "v01:", versionLength)) {
+    std::string myString = jsonData.data() + versionLength;
+    char *token, *str;
+    int doing = 0;
+
+    str = myString.data();
+    while ((token = my_strsep(&str, g_sep))) {
+      switch (doing) {
+        case 0:
+          inv = DumpToStruct<Inventory>(token);
+          break;
+        case 1:
+          lookDump = token;
+          break;
+        case 2:
+          equipmentDump = token;
+          break;
+      }
+      ++doing;
     }
-    ++doing;
+  } else {
+    std::stringstream ss;
+    ss << "Bad jsonData version: '" << jsonData << "'";
+    throw std::runtime_error(ss.str());
   }
-  free(tofree); // TODO: Ensure memory is always freed
 }
 
 std::string SqliteChangeForm::GetFormDesc() const
