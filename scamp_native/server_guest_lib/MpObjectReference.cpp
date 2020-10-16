@@ -702,6 +702,19 @@ void Register(VirtualMachine& vm)
 }
 }
 
+namespace PapyrusGame {
+VarValue IncrementStat(VarValue self, const std::vector<VarValue>& arguments)
+{
+  return VarValue::None();
+}
+
+void Register(VirtualMachine& vm)
+{
+  vm.RegisterFunction("game", "IncrementStat", FunctionType::GlobalFunction,
+                      IncrementStat);
+}
+}
+
 void MpObjectReference::InitScripts()
 {
   auto baseId = GetBaseId();
@@ -748,6 +761,7 @@ void MpObjectReference::InitScripts()
     pImpl->vm.reset(new VirtualMachine(pexStructures));
 
     PapyrusObjectReference::Register(*pImpl->vm);
+    PapyrusGame::Register(*pImpl->vm);
 
     pImpl->vm->AddObject(pImpl->GetGameObject(), scriptNames,
                          BuildScriptProperties(scriptData));
