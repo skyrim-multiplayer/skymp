@@ -1,4 +1,4 @@
-FROM skymp/skymp-base:v1
+FROM skymp/skymp-base:v2
 
 WORKDIR /usr/src/app
 
