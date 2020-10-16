@@ -18,24 +18,13 @@ void VirtualMachine::RegisterFunction(std::string className,
                                       std::string functionName,
                                       FunctionType type, NativeFunction fn)
 {
-  auto loadedScript =
-    std::find_if(this->allLoadedScripts.begin(), this->allLoadedScripts.end(),
-                 [&className](const std::shared_ptr<PexScript>& pex) {
-                   return !stricmp(pex->source.data(), className.data());
-                 });
-  if (loadedScript == this->allLoadedScripts.end())
-    throw std::runtime_error(
-      "Unable to register function in unexisting script");
-
-  const std::string& classNameInNeededCase = (*loadedScript)->source;
-
   switch (type) {
     case FunctionType::GlobalFunction:
 
-      nativeStaticFunctions[classNameInNeededCase][ToLower(functionName)] = fn;
+      nativeStaticFunctions[ToLower(className)][ToLower(functionName)] = fn;
       break;
     case FunctionType::Method:
-      nativeFunctions[classNameInNeededCase][ToLower(functionName)] = fn;
+      nativeFunctions[ToLower(className)][ToLower(functionName)] = fn;
       break;
   }
 }
@@ -99,7 +88,7 @@ VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
   auto it = instance;
   while (it && !f) {
     std::string className = it->sourcePex->source;
-    f = nativeFunctions[className][ToLower(methodName)];
+    f = nativeFunctions[ToLower(className)][ToLower(methodName)];
     if (!f) {
       it = it->parentInstance.get();
     }
@@ -121,8 +110,9 @@ VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
   if (function.valid) {
     return instance->StartFunction(function, arguments);
   }
-  throw std::runtime_error("Method not found - '" + std::string(methodName) +
-                           "'");
+  throw std::runtime_error("Method not found - '" +
+                           instance->sourcePex->source + "." +
+                           std::string(methodName) + "'");
 }
 
 VarValue VirtualMachine::CallStatic(std::string className,
@@ -133,8 +123,8 @@ VarValue VirtualMachine::CallStatic(std::string className,
   FunctionInfo function;
 
   auto functionNameLower = ToLower(functionName);
-  auto f = nativeStaticFunctions[className][functionNameLower]
-    ? nativeStaticFunctions[className][functionNameLower]
+  auto f = nativeStaticFunctions[ToLower(className)][functionNameLower]
+    ? nativeStaticFunctions[ToLower(className)][functionNameLower]
     : nativeStaticFunctions[""][functionNameLower];
 
   if (f) {

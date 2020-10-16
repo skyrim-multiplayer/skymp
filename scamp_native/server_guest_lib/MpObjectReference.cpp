@@ -302,9 +302,6 @@ void MpObjectReference::Activate(MpActor& activationSource)
   }
 
   if (pImpl->vm) {
-    /*std::vector<VarValue> arguments;
-    pImpl->vm->SendEvent(pImpl->GetGameObject(), "OnReset", arguments);*/
-
     std::vector<VarValue> activateArguments{ VarValue::None() };
     pImpl->vm->SendEvent(pImpl->GetGameObject(), "OnActivate",
                          activateArguments);
@@ -671,18 +668,36 @@ VarValue EnableNoWait(VarValue self, const std::vector<VarValue>& arguments)
   return VarValue::None();
 }
 
+VarValue DisableNoWait(VarValue self, const std::vector<VarValue>& arguments)
+{
+  return VarValue::None();
+}
+
+VarValue Delete(VarValue self, const std::vector<VarValue>& arguments)
+{
+  return VarValue::None();
+}
+
 VarValue AddItem(VarValue self, const std::vector<VarValue>& arguments)
 {
+  printf("ENTER AddItem\n");
+
   if (arguments.size() < 2)
     return VarValue::None();
   auto item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
+
+  printf("AddItem selfRefr=%p itemRec=%p count=%d\n", selfRefr, item.rec,
+         count);
+
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
   auto itemId = item.ToGlobalId(item.rec->GetId());
   selfRefr->AddItem(itemId, count);
+
+  printf("EXIT AddItem\n");
 
   return VarValue::None();
 }
@@ -696,9 +711,13 @@ void Register(VirtualMachine& vm)
   vm.RegisterFunction("objectreference", "SetScale", FunctionType::Method,
                       SetScale);
   vm.RegisterFunction("objectreference", "EnableNoWait", FunctionType::Method,
-                      SetScale);
+                      EnableNoWait);
+  vm.RegisterFunction("objectreference", "DisableNoWait", FunctionType::Method,
+                      DisableNoWait);
+  vm.RegisterFunction("objectreference", "Delete", FunctionType::Method,
+                      Delete);
   vm.RegisterFunction("objectreference", "AddItem", FunctionType::Method,
-                      SetScale);
+                      AddItem);
 }
 }
 
