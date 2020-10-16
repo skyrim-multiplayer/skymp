@@ -29,16 +29,14 @@ using namespace sqlite_orm;
                   &SqliteChangeForm::SetAngleY),                              \
       make_column("angle_z", &SqliteChangeForm::GetAngleZ,                    \
                   &SqliteChangeForm::SetAngleZ),                              \
-      make_column("inventory_dump", &SqliteChangeForm::GetInventory,          \
-                  &SqliteChangeForm::SetInventory),                           \
+      make_column("json_data", &SqliteChangeForm::GetJsonData,          \
+                  &SqliteChangeForm::SetJsonData),                           \
       make_column("is_harvested", &SqliteChangeForm::isHarvested),            \
       make_column("is_open", &SqliteChangeForm::isOpen),                      \
       make_column("next_reloot_datetime",                                     \
                   &SqliteChangeForm::nextRelootDatetime),                     \
       make_column("world_or_cell", &SqliteChangeForm::worldOrCell),           \
       make_column("is_race_menu_open", &SqliteChangeForm::isRaceMenuOpen),    \
-      make_column("look_dump", &SqliteChangeForm::lookDump),                  \
-      make_column("equipment_dump", &SqliteChangeForm::equipmentDump),        \
       make_column("base_container_added",                                     \
                   &SqliteChangeForm::baseContainerAdded)));
 

@@ -56,6 +56,9 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   MpChangeForm f1, f2;
   f1.formDesc = { 1, "" };
   f1.position = { 1, 2, 3 };
+  f1.lookDump = "{}";
+  f1.inv.AddItem(0xf, 1000);
+  f1.equipmentDump = "[]";
   f2.formDesc = { 2, "" };
   f2.position = { 2, 4, 6 };
   UpsertSync(*st, { f1, f2 });
@@ -63,6 +66,9 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   auto res = ISaveStorageUtils::FindAllSync(*st);
   REQUIRE(res.size() == 2);
   REQUIRE(res[{ 1, "" }].position == NiPoint3(1, 2, 3));
+  REQUIRE(res[{ 1, "" }].lookDump == "{}");
+  REQUIRE(res[{ 1, "" }].equipmentDump == "[]");
+  REQUIRE(res[{ 1, "" }].inv == Inventory().AddItem(0xf, 1000));
   REQUIRE(res[{ 2, "" }].position == NiPoint3(2, 4, 6));
 }
 

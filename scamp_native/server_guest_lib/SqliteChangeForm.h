@@ -7,8 +7,8 @@ class SqliteChangeForm : public MpChangeForm
 public:
   int primary = 0;
 
-  std::string GetInventory() const;
-  void SetInventory(const std::string& inventoryDump);
+  std::string GetJsonData() const;
+  void SetJsonData(const std::string& jsonData);
 
   std::string GetFormDesc() const;
   void SetFormDesc(const std::string& formDesc);

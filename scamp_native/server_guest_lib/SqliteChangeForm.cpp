@@ -15,16 +15,50 @@ T DumpToStruct(const std::string& dump)
   }
   return T();
 }
+
+// https://stackoverflow.com/questions/9210528/split-string-with-delimiters-in-c
+char* my_strsep(char** stringp, const char* delim)
+{
+  if (*stringp == NULL) {
+    return NULL;
+  }
+  char* token_start = *stringp;
+  *stringp = strpbrk(token_start, delim);
+  if (*stringp) {
+    **stringp = '\0';
+    (*stringp)++;
+  }
+  return token_start;
+}
 }
 
-std::string SqliteChangeForm::GetInventory() const
+std::string SqliteChangeForm::GetJsonData() const
 {
-  return inv.ToJson().dump();
+  return inv.ToJson().dump() + '|' + lookDump + '|' + equipmentDump;
 }
 
-void SqliteChangeForm::SetInventory(const std::string& inventoryDump)
+void SqliteChangeForm::SetJsonData(const std::string& jsonData)
 {
-  inv = DumpToStruct<Inventory>(inventoryDump);
+  const char* myString = jsonData.data();
+  char *token, *str, *tofree;
+  int doing = 0;
+
+  tofree = str = strdup(myString);
+  while ((token = my_strsep(&str, "|"))) {
+    switch (doing) {
+      case 0:
+        inv = DumpToStruct<Inventory>(token);
+        break;
+      case 1:
+        lookDump = token;
+        break;
+      case 2:
+        equipmentDump = token;
+        break;
+    }
+    ++doing;
+  }
+  free(tofree); // TODO: Ensure memory is always freed
 }
 
 std::string SqliteChangeForm::GetFormDesc() const

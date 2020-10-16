@@ -13,27 +13,28 @@ bool operator==(const Inventory::EntryExtras& r,
                     l.chargePercent, l.name, l.soul, l.worn);
 }
 
-void Inventory::AddItem(uint32_t baseId, uint32_t count)
+Inventory& Inventory::AddItem(uint32_t baseId, uint32_t count)
 {
   return AddItems({ { baseId, count } });
 }
 
-void Inventory::AddItems(const std::vector<Entry>& toAdd)
+Inventory& Inventory::AddItems(const std::vector<Entry>& toAdd)
 {
   for (auto& entryToAdd : toAdd) {
     for (auto& entry : entries) {
       if (entry.baseId == entryToAdd.baseId &&
           entry.extra == entryToAdd.extra) {
         entry.count += entryToAdd.count;
-        return;
+        return *this; // TODO: It seems there is a bug
       }
     }
     entries.push_back(
       Entry{ entryToAdd.baseId, entryToAdd.count, entryToAdd.extra });
   }
+  return *this;
 }
 
-void Inventory::RemoveItems(const std::vector<Entry>& entries)
+Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
 {
   auto copy = *this;
 
@@ -63,6 +64,7 @@ void Inventory::RemoveItems(const std::vector<Entry>& entries)
   }
 
   *this = copy;
+  return *this;
 }
 
 bool Inventory::HasItem(uint32_t baseId) const

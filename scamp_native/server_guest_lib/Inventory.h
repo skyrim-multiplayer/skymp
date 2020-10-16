@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 #include <string>
+#include <tuple>
 #include <vector>
 
 class Inventory
@@ -42,6 +43,11 @@ public:
     Worn worn = Worn::None;
 
     friend bool operator==(const EntryExtras& r, const EntryExtras& l);
+
+    friend bool operator!=(const EntryExtras& r, const EntryExtras& l)
+    {
+      return !(r == l);
+    }
   };
 
   nlohmann::json ToJson() const;
@@ -59,15 +65,36 @@ public:
     EntryExtras extra;
 
     static Entry FromJson(simdjson::dom::element& e);
+
+    friend bool operator==(const Entry& lhs, const Entry& rhs)
+    {
+      return std::make_tuple(lhs.baseId, lhs.count, lhs.extra) ==
+        std::make_tuple(rhs.baseId, rhs.count, rhs.extra);
+    }
+
+    friend bool operator!=(const Entry& lhs, const Entry& rhs)
+    {
+      return !(lhs == rhs);
+    }
   };
 
-  void AddItem(uint32_t baseId, uint32_t count);
-  void AddItems(const std::vector<Entry>& entries);
-  void RemoveItems(const std::vector<Entry>& entries);
+  Inventory& AddItem(uint32_t baseId, uint32_t count);
+  Inventory& AddItems(const std::vector<Entry>& entries);
+  Inventory& RemoveItems(const std::vector<Entry>& entries);
   bool HasItem(uint32_t baseId) const;
   uint32_t GetItemCount(uint32_t baseId) const;
   uint32_t GetTotalItemCount() const;
   bool IsEmpty() const;
 
   std::vector<Entry> entries;
+
+  friend bool operator==(const Inventory& lhs, const Inventory& rhs)
+  {
+    return lhs.entries == rhs.entries;
+  }
+
+  friend bool operator!=(const Inventory& lhs, const Inventory& rhs)
+  {
+    return !(lhs == rhs);
+  }
 };
