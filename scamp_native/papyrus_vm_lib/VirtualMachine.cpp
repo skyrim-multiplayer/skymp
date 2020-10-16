@@ -12,14 +12,24 @@ void VirtualMachine::RegisterFunction(std::string className,
                                       std::string functionName,
                                       FunctionType type, NativeFunction fn)
 {
+  auto loadedScript =
+    std::find_if(this->allLoadedScripts.begin(), this->allLoadedScripts.end(),
+                 [&className](const std::shared_ptr<PexScript>& pex) {
+                   return !stricmp(pex->source.data(), className.data());
+                 });
+  if (loadedScript == this->allLoadedScripts.end())
+    throw std::runtime_error(
+      "Unable to register function in unexisting script");
+
+  const std::string& classNameInNeededCase = (*loadedScript)->source;
 
   switch (type) {
     case FunctionType::GlobalFunction:
 
-      nativeStaticFunctions[className][functionName] = fn;
+      nativeStaticFunctions[classNameInNeededCase][functionName] = fn;
       break;
     case FunctionType::Method:
-      nativeFunctions[className][functionName] = fn;
+      nativeFunctions[classNameInNeededCase][functionName] = fn;
       break;
   }
 }
@@ -49,12 +59,18 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
                                std::vector<VarValue>& arguments)
 {
 
+  printf("1 StartFunction %s\n", eventName);
   for (auto& object : gameObjects) {
+    printf("2 StartFunction %s\n", eventName);
     if (object.first == self) {
+      printf("3 StartFunction %s\n", eventName);
       for (auto& scriptInstance : object.second) {
+        printf("4 StartFunction %s\n", eventName);
         auto fn = scriptInstance.GetFunctionByName(
           eventName, scriptInstance.GetActiveStateName());
+        printf("5 StartFunction %s\n", eventName);
         if (fn.valid) {
+          printf("6 StartFunction %s\n", eventName);
           scriptInstance.StartFunction(fn, arguments);
         }
       }
@@ -78,6 +94,18 @@ VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
                                     IGameObject* self, const char* methodName,
                                     std::vector<VarValue>& arguments)
 {
+  NativeFunction f;
+  auto it = instance;
+  while (it && !f) {
+    std::string className = it->sourcePex->source;
+    f = nativeFunctions[className][methodName];
+    if (!f) {
+      it = it->parentInstance.get();
+    }
+  }
+  if (f)
+    return f(VarValue(self), arguments);
+
   FunctionInfo function;
 
   std::string nameGoToState = "GotoState";
@@ -92,8 +120,8 @@ VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
   if (function.valid) {
     return instance->StartFunction(function, arguments);
   }
-  assert(false);
-  return VarValue::None();
+  throw std::runtime_error("Method not found - '" + std::string(methodName) +
+                           "'");
 }
 
 VarValue VirtualMachine::CallStatic(std::string className,

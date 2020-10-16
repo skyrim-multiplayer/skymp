@@ -303,7 +303,12 @@ void MpObjectReference::Activate(MpActor& activationSource)
 
   if (pImpl->vm) {
     std::vector<VarValue> arguments;
-    pImpl->vm->SendEvent(pImpl->GetGameObject(), "OnActivate", arguments);
+    pImpl->vm->SendEvent(pImpl->GetGameObject(), "OnReset", arguments);
+
+    std::vector<VarValue> activateArguments{ VarValue(
+      static_cast<IGameObject*>(0)) };
+    pImpl->vm->SendEvent(pImpl->GetGameObject(), "OnActivate",
+                         activateArguments);
   }
 }
 
@@ -609,18 +614,37 @@ void MpObjectReference::InitScripts()
 
   for (auto& script : scriptData.scripts) {
     scriptNames.push_back(script.scriptName);
-
     auto pex = scriptStorage->GetScriptPex(script.scriptName.data());
-    auto pexStructure = Reader(pex).GetSourceStructures();
-    assert(pexStructure.size() == 1);
-    pexStructures.push_back(pexStructure.at(0));
+    if (!pex.empty()) {
+
+      std::vector<std::vector<uint8_t>> pexVec = { pex };
+
+      for (auto required : { "form", "objectreference" }) {
+        auto requiredPex = scriptStorage->GetScriptPex(required);
+        if (requiredPex.empty())
+          throw std::runtime_error("'" + std::string(required) +
+                                   "' is a strictly required script");
+        pexVec.push_back(requiredPex);
+      }
+
+      auto pexStructure = Reader(pexVec).GetSourceStructures();
+      for (auto& v : pexStructure)
+        pexStructures.push_back(v);
+    }
   }
 
-  if (!pexStructures.empty())
+  if (!pexStructures.empty()) {
     pImpl->vm.reset(new VirtualMachine(pexStructures));
 
-  pImpl->vm->AddObject(pImpl->GetGameObject(), scriptNames,
-                       BuildScriptProperties(scriptData));
+    pImpl->vm->RegisterFunction(
+      "objectreference", "IsDisabled", FunctionType::Method,
+      [](VarValue self, std::vector<VarValue> arguments) {
+        return VarValue(false);
+      });
+
+    pImpl->vm->AddObject(pImpl->GetGameObject(), scriptNames,
+                         BuildScriptProperties(scriptData));
+  }
 
   // auto br = GetParent()->GetEspm().GetBrowser();
 }

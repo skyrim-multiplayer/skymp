@@ -41,9 +41,10 @@ Reader::Reader(std::vector<std::string> vectorPath)
   }
 }
 
-Reader::Reader(std::vector<uint8_t> pex)
+Reader::Reader(std::vector<std::vector<uint8_t>> pexVector)
 {
-  CreateScriptStructure(pex);
+  for (auto& pex : pexVector)
+    CreateScriptStructure(pex);
 }
 
 void Reader::CreateScriptStructure(std::vector<uint8_t> arrayBytes)

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype> // tolower
 #include <functional>
+#include <stdexcept>
 
 ActivePexInstance::ActivePexInstance()
 {
@@ -49,7 +50,8 @@ std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstanse(
   }
 
   if (nameNeedScript != "")
-    assert(0);
+    throw std::runtime_error("Unable to find parent script '" +
+                             nameNeedScript + "'");
   return nullptr;
 }
 

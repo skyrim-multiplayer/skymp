@@ -1,3 +1,4 @@
+#include "ScriptStorage.h"
 #include "TestUtils.hpp"
 
 extern espm::Loader l;
@@ -10,6 +11,8 @@ PartOne& GetPartOne()
   static std::unique_ptr<PartOne> g_partOne;
   if (!g_partOne) {
     g_partOne.reset(new PartOne);
+    g_partOne->worldState.AttachScriptStorage(
+      std::make_shared<DirectoryScriptStorage>(TEST_PEX_DIR));
     g_partOne->AttachEspm(&l, &g_tgt);
     g_partOne->pushedSendTarget = &g_tgt;
   }

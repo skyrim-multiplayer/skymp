@@ -22,10 +22,14 @@ public:
 
   std::vector<uint8_t> GetScriptPex(const char* scriptName) override
   {
-    std::ifstream f(pexDir / scriptName, std::ios::binary);
+    const auto path = pexDir / (scriptName + std::string(".pex"));
+
+    if (!std::filesystem::exists(path))
+      return {};
+
+    std::ifstream f(path, std::ios::binary);
     if (!f.is_open())
-      throw std::runtime_error((pexDir / scriptName).string() +
-                               " is failed to open");
+      throw std::runtime_error(path.string() + " is failed to open");
     std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(f), {});
     return buffer;
   }
