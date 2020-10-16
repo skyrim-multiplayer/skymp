@@ -27,22 +27,6 @@ void SqliteChangeForm::SetInventory(const std::string& inventoryDump)
   inv = DumpToStruct<Inventory>(inventoryDump);
 }
 
-std::string SqliteChangeForm::GetEquipment() const
-{
-  if (equipment)
-    return equipment->ToJson().dump();
-  else
-    return "";
-}
-
-void SqliteChangeForm::SetEquipment(const std::string& equipmentDump)
-{
-  if (equipmentDump.size() > 0)
-    equipment = DumpToStruct<Equipment>(equipmentDump);
-  else
-    equipment.reset();
-}
-
 std::string SqliteChangeForm::GetFormDesc() const
 {
   return formDesc.ToString();
@@ -61,22 +45,6 @@ std::string SqliteChangeForm::GetBaseFormDesc() const
 void SqliteChangeForm::SetBaseFormDesc(const std::string& newFormDesc)
 {
   baseDesc = FormDesc::FromString(newFormDesc);
-}
-
-std::string SqliteChangeForm::GetLook() const
-{
-  if (look)
-    return look->ToJson();
-  else
-    return "";
-}
-
-void SqliteChangeForm::SetLook(const std::string& lookDump)
-{
-  if (lookDump.size() > 0)
-    look = DumpToStruct<Look>(lookDump);
-  else
-    look.reset();
 }
 
 float SqliteChangeForm::GetX() const

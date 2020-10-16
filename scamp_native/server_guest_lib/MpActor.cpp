@@ -28,21 +28,16 @@ void MpActor::SetLook(const Look* newLook)
 {
   pImpl->EditChangeForm([&](MpChangeFormACHR& changeForm) {
     if (newLook)
-      changeForm.look = *newLook;
+      changeForm.lookDump = newLook->ToJson();
     else
-      changeForm.look.reset();
+      changeForm.lookDump.clear();
   });
 }
 
 void MpActor::SetEquipment(const std::string& jsonString)
 {
   pImpl->EditChangeForm([&](MpChangeFormACHR& changeForm) {
-    if (jsonString.size() > 0) {
-      simdjson::dom::parser p;
-      auto element = p.parse(jsonString).value();
-      changeForm.equipment = Equipment::FromJson(element);
-    } else
-      changeForm.equipment.reset();
+    changeForm.equipmentDump = jsonString;
   });
 }
 
@@ -91,27 +86,28 @@ const bool& MpActor::IsRaceMenuOpen() const
   return pImpl->ChangeForm().isRaceMenuOpen;
 }
 
-const Look* MpActor::GetLook() const
+std::unique_ptr<const Look> MpActor::GetLook() const
 {
   auto& changeForm = pImpl->ChangeForm();
-  if (changeForm.look)
-    return &*changeForm.look;
+  if (changeForm.lookDump.size() > 0) {
+    simdjson::dom::parser p;
+    auto doc = p.parse(changeForm.lookDump).value();
+
+    std::unique_ptr<const Look> res;
+    res.reset(new Look(Look::FromJson(doc)));
+    return res;
+  }
   return nullptr;
 }
 
-std::string MpActor::GetLookAsJson()
+const std::string& MpActor::GetLookAsJson()
 {
-  if (GetLook())
-    return GetLook()->ToJson();
-  return "";
+  return pImpl->ChangeForm().lookDump;
 }
 
-std::string MpActor::GetEquipmentAsJson()
+const std::string& MpActor::GetEquipmentAsJson()
 {
-  if (pImpl->ChangeForm().equipment)
-    return pImpl->ChangeForm().equipment->ToJson().dump();
-  else
-    return "";
+  return pImpl->ChangeForm().equipmentDump;
 };
 
 void MpActor::UnsubscribeFromAll()

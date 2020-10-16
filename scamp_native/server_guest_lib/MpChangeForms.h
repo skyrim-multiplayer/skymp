@@ -37,11 +37,11 @@ class MpChangeFormACHR
 {
 public:
   bool isRaceMenuOpen = false;
-  std::optional<Look> look;
 
+  // 'lookDump' and 'equipmentDump' can be empty. it means nullopt.
   // "unexisting" equipment and equipment with zero entries are different
-  // values in skymp due to poor design
-  std::optional<Equipment> equipment;
+  // values in skymp due to poor designs
+  std::string lookDump, equipmentDump;
 };
 
 class MpChangeForm
