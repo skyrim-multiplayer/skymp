@@ -74,8 +74,10 @@ std::vector<ObjectTable::Object::VarInfo> ActivePexInstance::FillVariables(
 
   // Creating temp variable for save State ActivePexInstance and
   // transition between them
-  ObjectTable::Object::VarInfo variableForState = { "::State", "String", 0,
-                                                    VarValue("") };
+  ObjectTable::Object::VarInfo variableForState = {
+    "::State", "String", 0,
+    VarValue(sourcePex->objectTable.m_data[0].autoStateName.data())
+  };
 
   result.push_back(variableForState);
 
@@ -107,7 +109,7 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
     for (auto& state : object.states) {
       if (state.name == stateName) {
         for (auto& func : state.functions) {
-          if (func.name == name) {
+          if (!stricmp(func.name.data(), name)) {
             function = func.function;
             function.valid = true;
             return function;

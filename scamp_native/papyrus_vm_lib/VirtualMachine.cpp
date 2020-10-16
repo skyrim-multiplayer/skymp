@@ -58,19 +58,14 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
                                const char* eventName,
                                std::vector<VarValue>& arguments)
 {
-
-  printf("1 StartFunction %s\n", eventName);
   for (auto& object : gameObjects) {
-    printf("2 StartFunction %s\n", eventName);
     if (object.first == self) {
-      printf("3 StartFunction %s\n", eventName);
       for (auto& scriptInstance : object.second) {
-        printf("4 StartFunction %s\n", eventName);
+        auto name = scriptInstance.GetActiveStateName();
+
         auto fn = scriptInstance.GetFunctionByName(
           eventName, scriptInstance.GetActiveStateName());
-        printf("5 StartFunction %s\n", eventName);
         if (fn.valid) {
-          printf("6 StartFunction %s\n", eventName);
           scriptInstance.StartFunction(fn, arguments);
         }
       }
