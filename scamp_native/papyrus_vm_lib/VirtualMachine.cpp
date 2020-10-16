@@ -8,6 +8,12 @@ VirtualMachine::VirtualMachine(
   this->allLoadedScripts = loadedScripts;
 }
 
+std::string ToLower(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), tolower);
+  return s;
+}
+
 void VirtualMachine::RegisterFunction(std::string className,
                                       std::string functionName,
                                       FunctionType type, NativeFunction fn)
@@ -26,10 +32,10 @@ void VirtualMachine::RegisterFunction(std::string className,
   switch (type) {
     case FunctionType::GlobalFunction:
 
-      nativeStaticFunctions[classNameInNeededCase][functionName] = fn;
+      nativeStaticFunctions[classNameInNeededCase][ToLower(functionName)] = fn;
       break;
     case FunctionType::Method:
-      nativeFunctions[classNameInNeededCase][functionName] = fn;
+      nativeFunctions[classNameInNeededCase][ToLower(functionName)] = fn;
       break;
   }
 }
@@ -93,7 +99,7 @@ VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
   auto it = instance;
   while (it && !f) {
     std::string className = it->sourcePex->source;
-    f = nativeFunctions[className][methodName];
+    f = nativeFunctions[className][ToLower(methodName)];
     if (!f) {
       it = it->parentInstance.get();
     }
@@ -123,13 +129,13 @@ VarValue VirtualMachine::CallStatic(std::string className,
                                     std::string functionName,
                                     std::vector<VarValue>& arguments)
 {
-
   VarValue result = VarValue::None();
   FunctionInfo function;
 
-  auto f = nativeStaticFunctions[className][functionName]
-    ? nativeStaticFunctions[className][functionName]
-    : nativeStaticFunctions[""][functionName];
+  auto functionNameLower = ToLower(functionName);
+  auto f = nativeStaticFunctions[className][functionNameLower]
+    ? nativeStaticFunctions[className][functionNameLower]
+    : nativeStaticFunctions[""][functionNameLower];
 
   if (f) {
     NativeFunction func = f;
@@ -140,11 +146,11 @@ VarValue VirtualMachine::CallStatic(std::string className,
   auto it =
     std::find_if(this->allLoadedScripts.begin(), this->allLoadedScripts.end(),
                  [&](std::shared_ptr<PexScript> a) -> bool {
-                   return a->source == className;
+                   return !stricmp(a->source.data(), className.data());
                  });
 
   if (it == this->allLoadedScripts.end())
-    throw std::runtime_error("script not found");
+    throw std::runtime_error("script not found - '" + className + "'");
 
   ActivePexInstance instance = ActivePexInstance(*it, VarForBuildActivePex({}),
                                                  this, VarValue::None(), "");
@@ -153,6 +159,10 @@ VarValue VirtualMachine::CallStatic(std::string className,
                                         instance.GetActiveStateName());
 
   if (function.valid) {
+    if (function.IsNative())
+      throw std::runtime_error("Function not found - '" +
+                               std::string(functionName) + "'");
+
     result = instance.StartFunction(function, arguments);
   }
   if (!function.valid)

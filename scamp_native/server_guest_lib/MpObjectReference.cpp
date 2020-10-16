@@ -626,7 +626,7 @@ public:
 };
 
 template <class T>
-T* GetFormPtr(VarValue papyrusObject)
+T* GetFormPtr(const VarValue& papyrusObject)
 {
   if (papyrusObject.GetType() != VarValue::kType_Object)
     return nullptr;
@@ -639,19 +639,15 @@ T* GetFormPtr(VarValue papyrusObject)
 
 const espm::LookupResult& GetRecordPtr(VarValue papyrusObject)
 {
+  static const espm::LookupResult emptyResult;
+
   if (papyrusObject.GetType() != VarValue::kType_Object)
-    return {};
+    return emptyResult;
   auto gameObject = static_cast<IGameObject*>(papyrusObject);
   auto espmGameObject = dynamic_cast<EspmGameObject*>(gameObject);
   if (!espmGameObject)
-    return {};
+    return emptyResult;
   return espmGameObject->record;
-}
-
-MpForm* GetFormPtr(IGameObject* gameObject)
-{
-  if (!gameObject)
-    return nullptr;
 }
 
 namespace PapyrusObjectReference {
@@ -734,7 +730,7 @@ void MpObjectReference::InitScripts()
 
       std::vector<std::vector<uint8_t>> pexVec = { pex };
 
-      for (auto required : { "form", "objectreference" }) {
+      for (auto required : { "game", "form", "objectreference" }) {
         auto requiredPex = scriptStorage->GetScriptPex(required);
         if (requiredPex.empty())
           throw std::runtime_error("'" + std::string(required) +
@@ -756,8 +752,6 @@ void MpObjectReference::InitScripts()
     pImpl->vm->AddObject(pImpl->GetGameObject(), scriptNames,
                          BuildScriptProperties(scriptData));
   }
-
-  // auto br = GetParent()->GetEspm().GetBrowser();
 }
 
 void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
