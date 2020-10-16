@@ -62,7 +62,7 @@ MpChangeForm MpActor::GetChangeForm() const
 {
   auto res = pImpl->ChangeForm();
   static_cast<MpChangeFormREFR&>(res) =
-    static_cast<MpChangeFormREFR&>(MpObjectReference::GetChangeForm());
+    static_cast<MpChangeFormREFR>(MpObjectReference::GetChangeForm());
 
   res.recType = MpChangeForm::ACHR;
   return res;
