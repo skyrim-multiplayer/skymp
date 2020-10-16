@@ -37,10 +37,8 @@ using namespace sqlite_orm;
                   &SqliteChangeForm::nextRelootDatetime),                     \
       make_column("world_or_cell", &SqliteChangeForm::worldOrCell),           \
       make_column("is_race_menu_open", &SqliteChangeForm::isRaceMenuOpen),    \
-      /*make_column("look_dump", &SqliteChangeForm::GetLook,                    \
-                  &SqliteChangeForm::SetLook),                                \
-      make_column("equipment_dump", &SqliteChangeForm::GetEquipment,          \
-                  &SqliteChangeForm::SetEquipment),*/                           \
+      make_column("look_dump", &SqliteChangeForm::lookDump),                  \
+      make_column("equipment_dump", &SqliteChangeForm::equipmentDump),        \
       make_column("base_container_added",                                     \
                   &SqliteChangeForm::baseContainerAdded)));
 
@@ -121,7 +119,8 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
         }
         if (numChangeForms > 0)
           printf("Saved %d ChangeForms in %d ticks\n",
-                 static_cast<int>(numChangeForms), clock() - was);
+                 static_cast<int>(numChangeForms),
+                 static_cast<int>(clock() - was));
       }
 
       {
@@ -185,7 +184,7 @@ public:
   SqliteDbImpl(std::string filename_)
     : filename(filename_)
   {
-    //MAKE_STORAGE(filename.data());
+    // MAKE_STORAGE(filename.data());
     MAKE_STORAGE(filename.data());
 
     auto res = storage.sync_schema_simulate(true);
@@ -254,7 +253,7 @@ public:
     for (auto& v : toUpdate)
       storage.update(v);
     g.commit();
-    return 0; // TODO: return actual number of upserted
+    return toUpdate.size() + toInsert.size();
   }
 
   void Iterate(const IterateCallback& iterateCallback) override
