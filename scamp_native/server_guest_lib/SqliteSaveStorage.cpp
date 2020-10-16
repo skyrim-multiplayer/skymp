@@ -29,8 +29,8 @@ using namespace sqlite_orm;
                   &SqliteChangeForm::SetAngleY),                              \
       make_column("angle_z", &SqliteChangeForm::GetAngleZ,                    \
                   &SqliteChangeForm::SetAngleZ),                              \
-      /*make_column("inventory_dump", &SqliteChangeForm::GetInventory,          \
-                  &SqliteChangeForm::SetInventory),*/                           \
+      make_column("inventory_dump", &SqliteChangeForm::GetInventory,          \
+                  &SqliteChangeForm::SetInventory),                           \
       make_column("is_harvested", &SqliteChangeForm::isHarvested),            \
       make_column("is_open", &SqliteChangeForm::isOpen),                      \
       make_column("next_reloot_datetime",                                     \
