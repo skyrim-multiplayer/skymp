@@ -3,9 +3,9 @@
 #include "WorldState.h"
 #include <NiPoint3.h>
 
-struct MpActor::Impl : public ChangeFormGuard<MpChangeFormACHR>
+struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 {
-  Impl(MpChangeFormACHR changeForm_, MpObjectReference* self_)
+  Impl(MpChangeForm changeForm_, MpObjectReference* self_)
     : ChangeFormGuard(changeForm_, self_)
   {
   }
@@ -15,18 +15,18 @@ MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
   : MpObjectReference(locationalData_, callbacks_, optBaseId, "NPC_")
 {
-  pImpl.reset(new Impl{ MpChangeFormACHR(), this });
+  pImpl.reset(new Impl{ MpChangeForm(), this });
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   pImpl->EditChangeForm(
-    [&](MpChangeFormACHR& changeForm) { changeForm.isRaceMenuOpen = isOpen; });
+    [&](MpChangeForm& changeForm) { changeForm.isRaceMenuOpen = isOpen; });
 }
 
 void MpActor::SetLook(const Look* newLook)
 {
-  pImpl->EditChangeForm([&](MpChangeFormACHR& changeForm) {
+  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
     if (newLook)
       changeForm.lookDump = newLook->ToJson();
     else
@@ -36,9 +36,8 @@ void MpActor::SetLook(const Look* newLook)
 
 void MpActor::SetEquipment(const std::string& jsonString)
 {
-  pImpl->EditChangeForm([&](MpChangeFormACHR& changeForm) {
-    changeForm.equipmentDump = jsonString;
-  });
+  pImpl->EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
@@ -61,8 +60,10 @@ void MpActor::RemoveEventSink(std::shared_ptr<DestroyEventSink> sink)
 
 MpChangeForm MpActor::GetChangeForm() const
 {
-  auto res = MpObjectReference::GetChangeForm();
-  static_cast<MpChangeFormACHR&>(res) = pImpl->ChangeForm();
+  auto res = pImpl->ChangeForm();
+  static_cast<MpChangeFormREFR&>(res) =
+    static_cast<MpChangeFormREFR&>(MpObjectReference::GetChangeForm());
+
   res.recType = MpChangeForm::ACHR;
   return res;
 }
@@ -75,8 +76,8 @@ void MpActor::ApplyChangeForm(const MpChangeForm& changeForm)
   }
   MpObjectReference::ApplyChangeForm(changeForm);
   pImpl->EditChangeForm(
-    [&](MpChangeFormACHR& changeForm) {
-      changeForm = static_cast<const MpChangeFormACHR&>(changeForm);
+    [&](MpChangeForm& changeForm) {
+      changeForm = static_cast<const MpChangeForm&>(changeForm);
     },
     Impl::Mode::NoRequestSave);
 }

@@ -33,7 +33,7 @@ public:
   uint64_t nextRelootDatetime = 0;
 };
 
-class MpChangeFormACHR
+class MpChangeForm : public MpChangeFormREFR
 {
 public:
   bool isRaceMenuOpen = false;
@@ -42,10 +42,4 @@ public:
   // "unexisting" equipment and equipment with zero entries are different
   // values in skymp due to poor designs
   std::string lookDump, equipmentDump;
-};
-
-class MpChangeForm
-  : public MpChangeFormREFR
-  , public MpChangeFormACHR
-{
 };
