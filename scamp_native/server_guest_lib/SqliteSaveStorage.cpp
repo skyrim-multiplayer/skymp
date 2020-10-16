@@ -185,8 +185,8 @@ public:
   SqliteDbImpl(std::string filename_)
     : filename(filename_)
   {
+    //MAKE_STORAGE(filename.data());
     MAKE_STORAGE(filename.data());
-    /*MAKE_STORAGE(filename.data());
 
     auto res = storage.sync_schema_simulate(true);
 
@@ -215,12 +215,12 @@ public:
         ss << v << "; ";
       throw std::runtime_error(ss.str());
     }
-    storage.sync_schema(true);*/
+    storage.sync_schema(true);
   }
 
   size_t Upsert(const std::vector<MpChangeForm>& changeForms) override
   {
-    /*MAKE_STORAGE(filename.data());
+    MAKE_STORAGE(filename.data());
 
     auto g = storage.transaction_guard();
     int numChangeForms = 0;
@@ -253,15 +253,15 @@ public:
     storage.insert_range(toInsert.data(), toInsert.data() + toInsert.size());
     for (auto& v : toUpdate)
       storage.update(v);
-    g.commit();*/
+    g.commit();
     return 0; // TODO: return actual number of upserted
   }
 
   void Iterate(const IterateCallback& iterateCallback) override
   {
-    /*MAKE_STORAGE(filename.data());
+    MAKE_STORAGE(filename.data());
     for (auto v : storage.iterate<SqliteChangeForm>())
-      iterateCallback(v);*/
+      iterateCallback(v);
   }
 
 private:
