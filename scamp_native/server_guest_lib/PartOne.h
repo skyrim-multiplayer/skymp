@@ -1,4 +1,5 @@
 #pragma once
+#include "ISaveStorage.h"
 #include "MpActor.h"
 #include "Networking.h"
 #include "NiPoint3.h"
@@ -44,6 +45,8 @@ public:
   std::string GetActorName(uint32_t actorFormId);
   NiPoint3 GetActorPos(uint32_t actorFormId);
   void AttachEspm(espm::Loader* espm, Networking::ISendTarget* sendTarget);
+  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
+                         Networking::ISendTarget* sendTarget);
   espm::Loader& GetEspm() const;
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
@@ -60,6 +63,8 @@ private:
     User,
     Bot
   };
+
+  FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
 
   void AddUser(Networking::UserId userId, UserType userType);
 

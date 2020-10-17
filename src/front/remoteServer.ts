@@ -97,7 +97,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   openContainer(msg: messages.OpenContainer): void {
-    once("update", () => {
+    once("update", async () => {
+      await Utility.wait(0.1); // Give a chance to update inventory
       ObjectReference.from(Game.getFormEx(msg.target)).activate(
         Game.getPlayer(),
         true
@@ -172,12 +173,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
     if (msg.props) {
       for (const propName in msg.props) {
-        this.UpdateProperty({
-          t: messages.MsgType.UpdateProperty,
-          propName,
-          data: msg.props[propName],
-          idx: i,
-        });
+        const i = this.getIdManager().getId(msg.idx);
+        (this.worldModel.forms[i] as Record<string, unknown>)[propName] =
+          msg.props[propName];
       }
     }
 

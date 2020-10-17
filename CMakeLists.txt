@@ -2,7 +2,11 @@ if (UNIX)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-cmake_minimum_required(VERSION 3.15.2)
+if (WIN32)
+  cmake_minimum_required(VERSION 3.15.2)
+else()
+  cmake_minimum_required(VERSION 3.14.5)
+endif()
 project(scamp_native)
 enable_testing()
 

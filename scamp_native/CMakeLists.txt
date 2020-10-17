@@ -1,24 +1,31 @@
 include(${CMAKE_SOURCE_DIR}/cmake/third_party/pmm.cmake)
 # Clear CMake cache after changing this
 # (also for subprojects like platform_se)
+set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
+set(triplet x64-windows-static)
+
 if (UNIX)
-  # See also Dockerfile
-  set(VCPKG_REVISION bff594f7ff8e023592f366b67fd7f57f4fe035e7)
-  set(triplet x64-linux)
+  set(VCPKG_PATH "/vcpkg")
+  if (NOT EXISTS "${VCPKG_PATH}/bootstrap-vcpkg.sh")
+    message(FATAL_ERROR "VCPKG_PATH ('${VCPKG_PATH}') is not a valid vcpkg path")
+  endif()
 else()
-  set(VCPKG_REVISION cb8a9fe7157f8ad2423742f893955ed9ced05910)
-  set(triplet x64-windows-static)
+  # Download vcpkg dependencies
+  set(ports
+    catch2:${triplet}
+    sparsepp:${triplet}
+    nlohmann-json:${triplet}
+    spdlog:${triplet}
+    slikenet:${triplet}
+    boost-bimap:${triplet}
+    zlib:${triplet}
+    sqlite-orm:${triplet}
+    sqlpp11:${triplet}
+    sqlpp11-connector-sqlite3:${triplet}
+  )
+  set(VCPKG_PATH ${_VCPKG_ROOT_DIR})
 endif()
-# Download vcpkg dependencies
-set(ports
-  catch2:${triplet}
-  sparsepp:${triplet}
-  nlohmann-json:${triplet}
-  spdlog:${triplet}
-  slikenet:${triplet}
-  boost-bimap:${triplet}
-  zlib:${triplet}
-)
+
 if (WIN32)
   list(APPEND ports simdjson:${triplet})
 endif()
@@ -26,8 +33,8 @@ foreach(port ${ports})
   message(STATUS "Installing ${port}")
   pmm(VCPKG REVISION ${VCPKG_REVISION} REQUIRES ${port})
 endforeach()
-if ("${_VCPKG_ROOT_DIR}" STREQUAL "")
-  message(FATAL_ERROR "Expected _VCPKG_ROOT_DIR variable to be set by pmm")
+if ("${VCPKG_PATH}" STREQUAL "")
+  message(FATAL_ERROR "Expected VCPKG_PATH variable to be set")
 endif()
 
 # TODO: Check SHA512
@@ -106,7 +113,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/tests_unit.cmake)
 
 integrate_vcpkg(
   TARGETS ${VCPKG_DEPENDENT}
-  VCPKG_PATH "${_VCPKG_ROOT_DIR}"
+  VCPKG_PATH "${VCPKG_PATH}"
 )
 
 if(UNIX)

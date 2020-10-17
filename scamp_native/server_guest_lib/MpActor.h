@@ -1,6 +1,7 @@
 #pragma once
 #include "Look.h"
 #include "MpObjectReference.h"
+#include <memory>
 #include <set>
 
 class WorldState;
@@ -10,27 +11,13 @@ class MpActor : public MpObjectReference
 public:
   static const char* Type() { return "Actor"; }
 
-  constexpr static uint32_t nullBaseId = 0;
-
-  using SendToUserFn = std::function<void(MpActor* actor, const void* data,
-                                          size_t size, bool reliable)>;
-
   MpActor(const LocationalData& locationalData_,
-          const SubscribeCallback& onSubscribe_,
-          const SubscribeCallback& onUnsubscribe_,
-          const SendToUserFn& sendToUser_)
-    : MpObjectReference(locationalData_, onSubscribe_, onUnsubscribe_,
-                        nullBaseId, "ACHR")
-    , sendToUser(sendToUser_)
-  {
-  }
+          const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
 
-  ~MpActor() = default;
-
-  const auto& IsRaceMenuOpen() const { return isRaceMenuOpen; }
-  auto GetLook() const { return look.get(); }
+  const bool& IsRaceMenuOpen() const;
+  std::unique_ptr<const Look> GetLook() const;
   const std::string& GetLookAsJson();
-  const std::string& GetEquipmentAsJson() { return jEquipmentCache; };
+  const std::string& GetEquipmentAsJson();
 
   void SetRaceMenuOpen(bool isOpen);
   void SetLook(const Look* newLook);
@@ -48,16 +35,16 @@ public:
   void AddEventSink(std::shared_ptr<DestroyEventSink> sink);
   void RemoveEventSink(std::shared_ptr<DestroyEventSink> sink);
 
+  MpChangeForm GetChangeForm() const override;
+  void ApplyChangeForm(const MpChangeForm& changeForm) override;
+
 private:
   void UnsubscribeFromAll();
 
-  const SendToUserFn sendToUser;
-
-  bool isRaceMenuOpen = false;
-  std::unique_ptr<Look> look;
-  std::string jLookCache;
-  std::string jEquipmentCache;
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
+
+  struct Impl;
+  std::shared_ptr<Impl> pImpl;
 
 protected:
   void BeforeDestroy() override;

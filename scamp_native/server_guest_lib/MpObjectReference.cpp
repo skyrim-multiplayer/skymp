@@ -1,6 +1,8 @@
 #include "MpObjectReference.h"
+#include "ChangeFormGuard.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
+#include "MpChangeForms.h"
 #include "WorldState.h"
 #include <MsgType.h>
 
@@ -43,16 +45,27 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 }
 }
 
+struct MpObjectReference::Impl : public ChangeFormGuard<MpChangeFormREFR>
+{
+public:
+  Impl(MpChangeFormREFR changeForm_, MpObjectReference* self_)
+    : ChangeFormGuard(changeForm_, self_)
+  {
+  }
+};
+
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
-                                     const SubscribeCallback& onSubscribe_,
-                                     const SubscribeCallback& onUnsubscribe_,
+                                     const FormCallbacks& callbacks_,
                                      uint32_t baseId_, const char* baseType_)
-  : onSubscribe(onSubscribe_)
-  , onUnsubscribe(onUnsubscribe_)
+  : callbacks(new FormCallbacks(callbacks_))
   , baseId(baseId_)
   , baseType(baseType_)
 {
-  static_cast<LocationalData&>(*this) = locationalData_;
+  MpChangeFormREFR changeForm;
+  changeForm.position = locationalData_.pos;
+  changeForm.angle = locationalData_.rot;
+  changeForm.worldOrCell = locationalData_.cellOrWorld;
+  pImpl.reset(new Impl{ changeForm, this });
 
   if (!strcmp(baseType_, "FLOR") || !strcmp(baseType_, "TREE")) {
     relootTime = std::chrono::hours(1);
@@ -65,6 +78,46 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
   }
 }
 
+const NiPoint3& MpObjectReference::GetPos() const
+{
+  return pImpl->ChangeForm().position;
+}
+
+const NiPoint3& MpObjectReference::GetAngle() const
+{
+  return pImpl->ChangeForm().angle;
+}
+
+const uint32_t& MpObjectReference::GetCellOrWorld() const
+{
+  return pImpl->ChangeForm().worldOrCell;
+}
+
+const uint32_t& MpObjectReference::GetBaseId() const
+{
+  return baseId;
+}
+
+const Inventory& MpObjectReference::GetInventory() const
+{
+  return pImpl->ChangeForm().inv;
+}
+
+const bool& MpObjectReference::IsHarvested() const
+{
+  return pImpl->ChangeForm().isHarvested;
+}
+
+const bool& MpObjectReference::IsOpen() const
+{
+  return pImpl->ChangeForm().isOpen;
+}
+
+const std::chrono::milliseconds& MpObjectReference::GetRelootTime() const
+{
+  return relootTime;
+}
+
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
 {
   if (IsHarvested())
@@ -75,11 +128,14 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
-  auto& grid = GetParent()->grids[cellOrWorld];
+  auto& grid = GetParent()->grids[GetCellOrWorld()];
 
-  auto oldGridPos = GetGridPos(pos);
+  auto oldGridPos = GetGridPos(pImpl->ChangeForm().position);
   auto newGridPos = GetGridPos(newPos);
-  pos = newPos;
+
+  pImpl->EditChangeForm(
+    [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; });
+
   if (oldGridPos != newGridPos || !everSubscribedOrListened) {
     everSubscribedOrListened = true;
 
@@ -112,21 +168,25 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
 {
-  rot = newAngle;
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.angle = newAngle; });
 }
 
 void MpObjectReference::SetHarvested(bool harvested)
 {
-  if (harvested != isHarvested) {
-    isHarvested = harvested;
+  if (harvested != pImpl->ChangeForm().isHarvested) {
+    pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+      changeForm.isHarvested = harvested;
+    });
     SendPropertyToListeners("isHarvested", harvested);
   }
 }
 
 void MpObjectReference::SetOpen(bool open)
 {
-  if (open != isOpen) {
-    isOpen = open;
+  if (open != pImpl->ChangeForm().isOpen) {
+    pImpl->EditChangeForm(
+      [&](MpChangeFormREFR& changeForm) { changeForm.isOpen = open; });
     SendPropertyToListeners("isOpen", open);
   }
 }
@@ -270,10 +330,12 @@ void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
 void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
 {
   everSubscribedOrListened = false;
-  auto& grid = GetParent()->grids[cellOrWorld];
+  auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
   grid.Forget(this);
 
-  cellOrWorld = newWorldOrCell;
+  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    changeForm.worldOrCell = newWorldOrCell;
+  });
 }
 
 void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
@@ -283,14 +345,20 @@ void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
 
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
 {
-  inv.AddItem(baseId, count);
+  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    changeForm.baseContainerAdded = true;
+    changeForm.inv.AddItem(baseId, count);
+  });
   SendInventoryUpdate();
 }
 
 void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
 {
   if (entries.size() > 0) {
-    inv.AddItems(entries);
+    pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+      changeForm.baseContainerAdded = true;
+      changeForm.inv.AddItems(entries);
+    });
     SendInventoryUpdate();
   }
 }
@@ -298,7 +366,10 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
 void MpObjectReference::RemoveItems(
   const std::vector<Inventory::Entry>& entries, MpObjectReference* target)
 {
-  inv.RemoveItems(entries);
+  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    changeForm.inv.RemoveItems(entries);
+  });
+
   if (target)
     target->AddItems(entries);
 
@@ -307,7 +378,11 @@ void MpObjectReference::RemoveItems(
 
 void MpObjectReference::RelootContainer()
 {
-  baseContainerAdded = false;
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) {
+      changeForm.baseContainerAdded = false;
+    },
+    Impl::Mode::NoRequestSave);
   EnsureBaseContainerAdded(*GetParent()->espm);
 }
 
@@ -323,7 +398,7 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
   listener->emitters->insert(emitter);
-  emitter->onSubscribe(emitter, listener);
+  emitter->callbacks->subscribe(emitter, listener);
 }
 
 void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
@@ -334,7 +409,7 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   if (bothNonActors)
     return;
 
-  emitter->onUnsubscribe(emitter, listener);
+  emitter->callbacks->unsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
   listener->emitters->erase(emitter);
 }
@@ -351,17 +426,118 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
   return emitters ? *emitters : g_emptyEmitters;
 }
 
+void MpObjectReference::RequestReloot()
+{
+  if (!pImpl->ChangeForm().nextRelootDatetime) {
+    pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+      changeForm.nextRelootDatetime = std::chrono::system_clock::to_time_t(
+        std::chrono::system_clock::now() + GetRelootTime());
+    });
+
+    GetParent()->RequestReloot(*this);
+  }
+}
+
+void MpObjectReference::DoReloot()
+{
+  if (pImpl->ChangeForm().nextRelootDatetime) {
+    pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+      changeForm.nextRelootDatetime = 0;
+    });
+    SetOpen(false);
+    SetHarvested(false);
+    RelootContainer();
+  }
+}
+
+std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
+MpObjectReference::GetNextRelootMoment() const
+{
+  std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>> res;
+  if (pImpl->ChangeForm().nextRelootDatetime)
+    res.reset(new std::chrono::time_point<std::chrono::system_clock>(
+      std::chrono::system_clock::from_time_t(
+        pImpl->ChangeForm().nextRelootDatetime)));
+  return res;
+}
+
+MpChangeForm MpObjectReference::GetChangeForm() const
+{
+  MpChangeForm res;
+  static_cast<MpChangeFormREFR&>(res) = pImpl->ChangeForm();
+
+  if (!GetParent()->espmFiles.empty()) {
+    res.formDesc = FormDesc::FromFormId(GetFormId(), GetParent()->espmFiles);
+    res.baseDesc = FormDesc::FromFormId(GetBaseId(), GetParent()->espmFiles);
+  } else
+    res.formDesc = res.baseDesc = FormDesc(GetFormId(), "");
+
+  return res;
+}
+
+void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
+{
+  const auto currentBaseId = GetBaseId();
+  const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
+  if (currentBaseId != newBaseId) {
+    std::stringstream ss;
+    ss << "Anomally, baseId should never change (";
+    ss << std::hex << currentBaseId << " => " << newBaseId << ")";
+    throw std::runtime_error(ss.str());
+  }
+
+  if (pImpl->ChangeForm().formDesc != changeForm.formDesc) {
+    throw std::runtime_error("Expected formDesc to be " +
+                             pImpl->ChangeForm().formDesc.ToString() +
+                             ", but found " + changeForm.formDesc.ToString());
+  }
+
+  // Perform all required grid operations
+  SetCellOrWorld(changeForm.worldOrCell);
+  SetPos(changeForm.position);
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& f) {
+      f = static_cast<const MpChangeFormREFR&>(changeForm);
+    },
+    Impl::Mode::NoRequestSave);
+
+  if (changeForm.nextRelootDatetime) {
+    const auto tp =
+      std::chrono::system_clock::from_time_t(changeForm.nextRelootDatetime);
+
+    if (tp < std::chrono::system_clock::now()) {
+      const auto prevRelootTime = GetRelootTime();
+      SetRelootTime(std::chrono::duration_cast<std::chrono::milliseconds>(
+        tp - std::chrono::system_clock::now()));
+      RequestReloot();
+      SetRelootTime(prevRelootTime);
+    }
+  }
+}
+
 void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
   MpForm::Init(parent, formId);
 
-  auto& grid = GetParent()->grids[cellOrWorld];
+  auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
   MoveOnGrid(grid);
+
+  // We should queue created form for saving as soon as it is initialized
+  const auto mode =
+    formId >= 0xff000000 ? Impl::Mode::RequestSave : Impl::Mode::NoRequestSave;
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) {
+      changeForm.formDesc =
+        FormDesc::FromFormId(formId, GetParent()->espmFiles);
+    },
+    mode);
 }
 
 void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
 {
-  auto newGridPos = GetGridPos(pos);
+  auto newGridPos = GetGridPos(GetPos());
   grid.Move(this, newGridPos.first, newGridPos.second);
 }
 
@@ -371,11 +547,6 @@ void MpObjectReference::InitListenersAndEmitters()
     listeners.reset(new std::set<MpObjectReference*>);
     emitters.reset(new std::set<MpObjectReference*>);
   }
-}
-
-void MpObjectReference::RequestReloot()
-{
-  GetParent()->RequestReloot(*this);
 }
 
 void MpObjectReference::SendInventoryUpdate()
@@ -407,7 +578,7 @@ void MpObjectReference::SendOpenContainer(uint32_t targetId)
 
 void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
 {
-  if (this->baseContainerAdded)
+  if (pImpl->ChangeForm().baseContainerAdded)
     return;
 
   constexpr uint32_t pcLevel = 1;
@@ -437,7 +608,11 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
     entries.push_back({ p.first, p.second });
   AddItems(entries);
 
-  this->baseContainerAdded = true;
+  if (!pImpl->ChangeForm().baseContainerAdded) {
+    pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+      changeForm.baseContainerAdded = true;
+    });
+  }
 }
 
 void MpObjectReference::CheckInteractionAbility(MpActor& ac)
@@ -502,7 +677,7 @@ void MpObjectReference::BeforeDestroy()
 
   MpForm::BeforeDestroy();
 
-  GetParent()->grids[cellOrWorld].Forget(this);
+  GetParent()->grids[GetCellOrWorld()].Forget(this);
 
   auto listenersCopy = GetListeners();
   for (auto listener : listenersCopy)

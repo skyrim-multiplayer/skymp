@@ -36,6 +36,12 @@ PartOne::PartOne()
                               MpObjectReference* listener) {
     if (!emitter)
       throw std::runtime_error("nullptr emitter in onSubscribe");
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (!listenerAsActor)
+      return;
+    auto listenerUserId = serverState.UserByActor(listenerAsActor);
+    if (listenerUserId == Networking::InvalidUserId)
+      return;
 
     auto& emitterPos = emitter->GetPos();
     auto& emitterRot = emitter->GetAngle();
@@ -44,9 +50,11 @@ PartOne::PartOne()
 
     auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
 
+    std::string jEquipment, jLook;
+
     const char *lookPrefix = "", *look = "";
     if (emitterAsActor) {
-      auto& jLook = emitterAsActor->GetLookAsJson();
+      jLook = emitterAsActor->GetLookAsJson();
       if (!jLook.empty()) {
         lookPrefix = R"(, "look": )";
         look = jLook.data();
@@ -55,7 +63,7 @@ PartOne::PartOne()
 
     const char *equipmentPrefix = "", *equipment = "";
     if (emitterAsActor) {
-      auto& jEquipment = emitterAsActor->GetEquipmentAsJson();
+      jEquipment = emitterAsActor->GetEquipmentAsJson();
       if (!jEquipment.empty()) {
         equipmentPrefix = R"(, "equipment": )";
         equipment = jEquipment.data();
@@ -94,20 +102,15 @@ PartOne::PartOne()
 
     const char* method = "createActor";
 
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor) {
-      auto listenerUserId = serverState.UserByActor(listenerAsActor);
-      if (listenerUserId != Networking::InvalidUserId)
-        Networking::SendFormatted(
-          sendTarget, listenerUserId,
-          R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
+    Networking::SendFormatted(
+      sendTarget, listenerUserId,
+      R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
-          method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
-          emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-          emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix,
-          equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
-          props.data(), propsPostfix);
-    }
+      method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
+      emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
+      emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix, equipment,
+      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
+      propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
@@ -158,35 +161,9 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                           uint32_t cellOrWorld,
                           Networking::ISendTarget* sendTarget)
 {
-  auto st = &serverState;
-
-  MpActor::SubscribeCallback subscribe =
-                               [sendTarget, this](MpObjectReference*emitter,
-                                                  MpObjectReference*listener) {
-                                 return pImpl->onSubscribe(sendTarget, emitter,
-                                                           listener);
-                               },
-                             unsubscribe = [sendTarget,
-                                            this](MpObjectReference*emitter,
-                                                  MpObjectReference*listener) {
-                               return pImpl->onUnsubscribe(sendTarget, emitter,
-                                                           listener);
-                             };
-
-  MpActor::SendToUserFn sendToUser = [sendTarget,
-                                      st](MpActor* actor, const void* data,
-                                          size_t size, bool reliable) {
-    auto targetuserId = st->UserByActor(actor);
-    if (targetuserId != Networking::InvalidUserId &&
-        st->disconnectingUserId != targetuserId)
-      sendTarget->Send(targetuserId,
-                       reinterpret_cast<Networking::PacketData>(data), size,
-                       reliable);
-  };
-
   worldState.AddForm(std::unique_ptr<MpActor>(
                        new MpActor({ pos, { 0, 0, angleZ }, cellOrWorld },
-                                   subscribe, unsubscribe, sendToUser)),
+                                   CreateFormCallbacks(sendTarget))),
                      formId);
 
   if (pImpl->enableProductionHacks) {
@@ -378,21 +355,30 @@ void PartOne::AttachEspm(espm::Loader* espm,
         worldState.AddForm(
           std::unique_ptr<MpObjectReference>(new MpObjectReference(
             { GetPos(locationalData), GetRot(locationalData), worldOrCell },
-            [sendTarget, this](MpObjectReference* emitter,
-                               MpObjectReference* listener) {
-              return pImpl->onSubscribe(sendTarget, emitter, listener);
-            },
-            [sendTarget, this](MpObjectReference* emitter,
-                               MpObjectReference* listener) {
-              return pImpl->onUnsubscribe(sendTarget, emitter, listener);
-            },
-            baseId, typeStr.data())),
+            CreateFormCallbacks(sendTarget), baseId, typeStr.data())),
           formId, true);
       }
     }
   }
 
   printf("AttachEspm took %d ticks\n", int(clock() - was));
+}
+
+void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
+                                Networking::ISendTarget* sendTarget)
+{
+  worldState.AttachSaveStorage(saveStorage);
+
+  clock_t was = clock();
+
+  int n = 0;
+  saveStorage->IterateSync([&](const MpChangeForm& changeForm) {
+    n++;
+    worldState.LoadChangeForm(changeForm, CreateFormCallbacks(sendTarget));
+  });
+
+  printf("AttachSaveStorage took %d ticks, loaded %d ChangeForms\n",
+         int(clock() - was), n);
 }
 
 espm::Loader& PartOne::GetEspm() const
@@ -441,6 +427,37 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
       throw std::runtime_error("Unexpected PacketType: " +
                                std::to_string((int)packetType));
   }
+}
+
+FormCallbacks PartOne::CreateFormCallbacks(Networking::ISendTarget* sendTarget)
+{
+  auto st = &serverState;
+
+  MpActor::SubscribeCallback subscribe =
+                               [sendTarget, this](MpObjectReference*emitter,
+                                                  MpObjectReference*listener) {
+                                 return pImpl->onSubscribe(sendTarget, emitter,
+                                                           listener);
+                               },
+                             unsubscribe = [sendTarget,
+                                            this](MpObjectReference*emitter,
+                                                  MpObjectReference*listener) {
+                               return pImpl->onUnsubscribe(sendTarget, emitter,
+                                                           listener);
+                             };
+
+  MpActor::SendToUserFn sendToUser = [sendTarget,
+                                      st](MpActor* actor, const void* data,
+                                          size_t size, bool reliable) {
+    auto targetuserId = st->UserByActor(actor);
+    if (targetuserId != Networking::InvalidUserId &&
+        st->disconnectingUserId != targetuserId)
+      sendTarget->Send(targetuserId,
+                       reinterpret_cast<Networking::PacketData>(data), size,
+                       reliable);
+  };
+
+  return { subscribe, unsubscribe, sendToUser };
 }
 
 void PartOne::AddUser(Networking::UserId userId, UserType type)

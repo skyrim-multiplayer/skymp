@@ -2,6 +2,7 @@
 #include "FormIndex.h"
 #include "Grid.h"
 #include "GridElement.h"
+#include "MpChangeForms.h"
 #include "NiPoint3.h"
 #include <Loader.h>
 #include <MakeID.h>
@@ -19,6 +20,9 @@
 
 class MpObjectReference;
 class MpActor;
+class FormCallbacks;
+class MpChangeForm;
+class ISaveStorage;
 
 class WorldState
 {
@@ -26,20 +30,27 @@ class WorldState
   friend class MpActor;
 
 public:
-  WorldState() = default;
+  WorldState();
   WorldState(const WorldState&) = delete;
   WorldState& operator=(const WorldState&) = delete;
 
   void Clear();
 
   void AttachEspm(espm::Loader* espm);
+  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
 
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
-               bool skipChecks = false);
+               bool skipChecks = false,
+               const MpChangeForm* optionalChangeFormToApply = nullptr);
+
+  void LoadChangeForm(const MpChangeForm& changeForm,
+                      const FormCallbacks& callbacks);
 
   void TickTimers();
 
   void RequestReloot(MpObjectReference& ref);
+
+  void RequestSave(MpObjectReference& ref);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
@@ -100,6 +111,7 @@ public:
 
   espm::Loader& GetEspm() const;
   espm::CompressedFieldsCache& GetEspmCache();
+  std::vector<std::string> espmFiles;
 
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
@@ -107,8 +119,11 @@ private:
   std::unique_ptr<MakeID> formIdxManager;
   std::map<
     std::chrono::milliseconds,
-    std::list<std::pair<uint32_t, std::chrono::steady_clock::time_point>>>
+    std::list<std::pair<uint32_t, std::chrono::system_clock::time_point>>>
     relootTimers;
   espm::Loader* espm = nullptr;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
+
+  struct Impl;
+  std::shared_ptr<Impl> pImpl;
 };

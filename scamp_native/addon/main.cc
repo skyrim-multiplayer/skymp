@@ -2,6 +2,7 @@
 #include "NetworkingCombined.h"
 #include "NetworkingMock.h"
 #include "PartOne.h"
+#include "SqliteSaveStorage.h"
 #include <cassert>
 #include <memory>
 #include <napi.h>
@@ -173,6 +174,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->AttachEspm(espm, server.get());
+    partOne->AttachSaveStorage(
+      std::make_shared<SqliteSaveStorage>("world.sqlite"),
+      server.get()); // TODO
 
     auto res =
       info.Env().RunScript("let require = global.require || "

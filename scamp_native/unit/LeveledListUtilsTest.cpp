@@ -21,12 +21,12 @@ TEST_CASE("Bug", "[espm]")
   std::atomic<bool> finished = false;
 
   std::thread([&] {
-    auto was = std::chrono::steady_clock::now();
+    auto was = std::chrono::system_clock::now();
 
     while (finished.load() == false) {
       std::this_thread::sleep_for(1ms);
 
-      auto now = std::chrono::steady_clock::now();
+      auto now = std::chrono::system_clock::now();
       if (now - was > 10s) {
         printf(
           "EvaluateListRecurse didn't finish for a single container after 10s "

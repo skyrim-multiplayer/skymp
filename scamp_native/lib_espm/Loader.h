@@ -32,8 +32,9 @@ public:
   using OnProgress = std::function<void(std::string fileName, float readDur,
                                         float parseDur, uintmax_t fileSize)>;
 
-  Loader(const fs::path& dataDir, const std::vector<fs::path>& files,
+  Loader(const fs::path& dataDir, const std::vector<fs::path>& files_,
          OnProgress onProgress = nullptr)
+    : files(files_)
   {
     std::stringstream err;
     if (!fs::exists(dataDir)) {
@@ -86,6 +87,15 @@ public:
     return *combineBrowser;
   }
 
+  std::vector<std::string> GetFileNames() const noexcept
+  {
+    std::vector<std::string> res;
+    res.reserve(files.size());
+    for (auto& p : files)
+      res.push_back(p.string());
+    return res;
+  }
+
 private:
   struct Entry
   {
@@ -101,5 +111,6 @@ private:
   std::vector<Entry> entries;
   std::unique_ptr<espm::Combiner> combiner;
   std::unique_ptr<espm::CombineBrowser> combineBrowser;
+  const std::vector<fs::path> files;
 };
 }
