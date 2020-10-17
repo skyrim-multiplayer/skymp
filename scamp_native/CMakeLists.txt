@@ -114,6 +114,9 @@ file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib/*" "${CMAKE_SOURCE_DIR
 add_library(papyrus-vm-lib STATIC ${src})
 apply_default_settings(TARGETS papyrus-vm-lib)
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib")
+if (UNIX)
+  target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
+endif()
 
 file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_main/*" "${CMAKE_SOURCE_DIR}/.clang-format")
 add_executable(papyrus-vm-main ${src})
