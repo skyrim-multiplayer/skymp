@@ -61,5 +61,16 @@ VarValue PapyrusObjectReference::AddItem(
 VarValue PapyrusObjectReference::GetItemCount(
   VarValue self, const std::vector<VarValue>& arguments)
 {
+  if (arguments.size() >= 1) {
+    auto selfRefr = GetFormPtr<MpObjectReference>(self);
+    auto& form = GetRecordPtr(arguments[0]);
+
+    const uint32_t formId = form.ToGlobalId(form.rec->GetId());
+
+    if (selfRefr) {
+      return VarValue(
+        static_cast<int>(selfRefr->GetInventory().GetItemCount(formId)));
+    }
+  }
   return VarValue(0);
 }

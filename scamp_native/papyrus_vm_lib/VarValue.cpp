@@ -324,7 +324,7 @@ VarValue& VarValue::operator=(const VarValue& argument2)
   return *this;
 }
 
-bool VarValue::operator==(const VarValue& argument2)
+bool VarValue::operator==(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -364,7 +364,7 @@ bool VarValue::operator==(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator!");
 }
 
-bool VarValue::operator>(const VarValue& argument2)
+bool VarValue::operator>(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -379,7 +379,7 @@ bool VarValue::operator>(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator>");
 }
 
-bool VarValue::operator>=(const VarValue& argument2)
+bool VarValue::operator>=(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -394,7 +394,7 @@ bool VarValue::operator>=(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator>=");
 }
 
-bool VarValue::operator<(const VarValue& argument2)
+bool VarValue::operator<(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -409,7 +409,7 @@ bool VarValue::operator<(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator<");
 }
 
-bool VarValue::operator<=(const VarValue& argument2)
+bool VarValue::operator<=(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -422,4 +422,34 @@ bool VarValue::operator<=(const VarValue& argument2)
       return this->CastToBool().data.b <= argument2.CastToBool().data.b;
   }
   throw std::runtime_error("Wrong type in operator<=");
+}
+
+std::ostream& operator<<(std::ostream& os, const VarValue& varValue)
+{
+  switch (varValue.type) {
+    case VarValue::kType_Object:
+      os << "[Object '"
+         << (varValue.data.id ? varValue.data.id->GetStringID() : "None")
+         << "']";
+      break;
+    case VarValue::kType_Identifier:
+      os << "[Identifier '" << varValue.data.string << "']";
+      break;
+    case VarValue::kType_String:
+      os << "[String '" << varValue.data.string << "']";
+      break;
+    case VarValue::kType_Integer:
+      os << "[Integer '" << varValue.data.i << "']";
+      break;
+    case VarValue::kType_Float:
+      os << "[Float '" << varValue.data.f << "']";
+      break;
+    case VarValue::kType_Bool:
+      os << "[Bool '" << varValue.data.b << "']";
+      break;
+    default:
+      os << "[VarValue]";
+      break;
+  }
+  return os;
 }
