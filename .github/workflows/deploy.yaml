@@ -7,8 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: satackey/action-docker-layer-caching@v0.0.8
-        continue-on-error: true
       - run: docker build --tag skymp5-server .
       - name: Push to ECR
         uses: jwalton/gh-ecr-push@v1

@@ -44,6 +44,8 @@ struct PropertyValuesMap;
 
 class FormCallbacks;
 
+class FormCallbacks;
+
 class MpObjectReference
   : public MpForm
   , public FormIndex

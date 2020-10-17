@@ -6,7 +6,7 @@
 #include <sqlite_orm.h>
 #include <thread>
 
-/*using namespace sqlite_orm;
+using namespace sqlite_orm;
 
 #define MAKE_STORAGE(name)                                                    \
   auto storage = make_storage(                                                \
@@ -29,21 +29,17 @@
                   &SqliteChangeForm::SetAngleY),                              \
       make_column("angle_z", &SqliteChangeForm::GetAngleZ,                    \
                   &SqliteChangeForm::SetAngleZ),                              \
-      make_column("inventory_dump", &SqliteChangeForm::GetInventory,          \
-                  &SqliteChangeForm::SetInventory),                           \
+      make_column("json_data", &SqliteChangeForm::GetJsonData,          \
+                  &SqliteChangeForm::SetJsonData),                           \
       make_column("is_harvested", &SqliteChangeForm::isHarvested),            \
       make_column("is_open", &SqliteChangeForm::isOpen),                      \
       make_column("next_reloot_datetime",                                     \
                   &SqliteChangeForm::nextRelootDatetime),                     \
       make_column("world_or_cell", &SqliteChangeForm::worldOrCell),           \
       make_column("is_race_menu_open", &SqliteChangeForm::isRaceMenuOpen),    \
-      make_column("look_dump", &SqliteChangeForm::GetLook,                    \
-                  &SqliteChangeForm::SetLook),                                \
-      make_column("equipment_dump", &SqliteChangeForm::GetEquipment,          \
-                  &SqliteChangeForm::SetEquipment),                           \
       make_column("base_container_added",                                     \
                   &SqliteChangeForm::baseContainerAdded)));
-                  */
+
 struct UpsertTask
 {
   std::vector<MpChangeForm> changeForms;
@@ -121,7 +117,8 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
         }
         if (numChangeForms > 0)
           printf("Saved %d ChangeForms in %d ticks\n",
-                 static_cast<int>(numChangeForms), clock() - was);
+                 static_cast<int>(numChangeForms),
+                 static_cast<int>(clock() - was));
       }
 
       {
@@ -185,7 +182,8 @@ public:
   SqliteDbImpl(std::string filename_)
     : filename(filename_)
   {
-    /*MAKE_STORAGE(filename.data());
+    // MAKE_STORAGE(filename.data());
+    MAKE_STORAGE(filename.data());
 
     auto res = storage.sync_schema_simulate(true);
 
@@ -214,12 +212,12 @@ public:
         ss << v << "; ";
       throw std::runtime_error(ss.str());
     }
-    storage.sync_schema(true);*/
+    storage.sync_schema(true);
   }
 
   size_t Upsert(const std::vector<MpChangeForm>& changeForms) override
   {
-    /*MAKE_STORAGE(filename.data());
+    MAKE_STORAGE(filename.data());
 
     auto g = storage.transaction_guard();
     int numChangeForms = 0;
@@ -252,15 +250,15 @@ public:
     storage.insert_range(toInsert.data(), toInsert.data() + toInsert.size());
     for (auto& v : toUpdate)
       storage.update(v);
-    g.commit();*/
-    return 0; // TODO: return actual number of upserted
+    g.commit();
+    return toUpdate.size() + toInsert.size();
   }
 
   void Iterate(const IterateCallback& iterateCallback) override
   {
-    /*MAKE_STORAGE(filename.data());
+    MAKE_STORAGE(filename.data());
     for (auto v : storage.iterate<SqliteChangeForm>())
-      iterateCallback(v);*/
+      iterateCallback(v);
   }
 
 private:

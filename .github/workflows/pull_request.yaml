@@ -5,8 +5,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: satackey/action-docker-layer-caching@v0.0.8
-        continue-on-error: true
       - run: docker build --tag skymp5-server .
       - run: mkdir Data
       - run: curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dawnguard.esm > ./Data/Dawnguard.esm

@@ -15,32 +15,60 @@ T DumpToStruct(const std::string& dump)
   }
   return T();
 }
+
+// https://stackoverflow.com/questions/9210528/split-string-with-delimiters-in-c
+char* my_strsep(char** stringp, const char* delim)
+{
+  if (*stringp == NULL) {
+    return NULL;
+  }
+  char* token_start = *stringp;
+  *stringp = strpbrk(token_start, delim);
+  if (*stringp) {
+    **stringp = '\0';
+    (*stringp)++;
+  }
+  return token_start;
 }
 
-std::string SqliteChangeForm::GetInventory() const
-{
-  return inv.ToJson().dump();
+constexpr auto g_sep = "|";
 }
 
-void SqliteChangeForm::SetInventory(const std::string& inventoryDump)
+std::string SqliteChangeForm::GetJsonData() const
 {
-  inv = DumpToStruct<Inventory>(inventoryDump);
+  return "v01:" + inv.ToJson().dump() + g_sep + lookDump + g_sep +
+    equipmentDump;
 }
 
-std::string SqliteChangeForm::GetEquipment() const
+void SqliteChangeForm::SetJsonData(const std::string& jsonData)
 {
-  if (equipment)
-    return equipment->ToJson().dump();
-  else
-    return "";
-}
+  static const auto versionLength = strlen("v01:");
 
-void SqliteChangeForm::SetEquipment(const std::string& equipmentDump)
-{
-  if (equipmentDump.size() > 0)
-    equipment = DumpToStruct<Equipment>(equipmentDump);
-  else
-    equipment.reset();
+  if (!memcmp(jsonData.data(), "v01:", versionLength)) {
+    std::string myString = jsonData.data() + versionLength;
+    char *token, *str;
+    int doing = 0;
+
+    str = myString.data();
+    while ((token = my_strsep(&str, g_sep))) {
+      switch (doing) {
+        case 0:
+          inv = DumpToStruct<Inventory>(token);
+          break;
+        case 1:
+          lookDump = token;
+          break;
+        case 2:
+          equipmentDump = token;
+          break;
+      }
+      ++doing;
+    }
+  } else {
+    std::stringstream ss;
+    ss << "Bad jsonData version: '" << jsonData << "'";
+    throw std::runtime_error(ss.str());
+  }
 }
 
 std::string SqliteChangeForm::GetFormDesc() const
@@ -61,22 +89,6 @@ std::string SqliteChangeForm::GetBaseFormDesc() const
 void SqliteChangeForm::SetBaseFormDesc(const std::string& newFormDesc)
 {
   baseDesc = FormDesc::FromString(newFormDesc);
-}
-
-std::string SqliteChangeForm::GetLook() const
-{
-  if (look)
-    return look->ToJson();
-  else
-    return "";
-}
-
-void SqliteChangeForm::SetLook(const std::string& lookDump)
-{
-  if (lookDump.size() > 0)
-    look = DumpToStruct<Look>(lookDump);
-  else
-    look.reset();
 }
 
 float SqliteChangeForm::GetX() const

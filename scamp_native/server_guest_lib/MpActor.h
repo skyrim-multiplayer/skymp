@@ -1,6 +1,7 @@
 #pragma once
 #include "Look.h"
 #include "MpObjectReference.h"
+#include <memory>
 #include <set>
 
 class WorldState;
@@ -15,9 +16,9 @@ public:
           const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
 
   const bool& IsRaceMenuOpen() const;
-  const Look* GetLook() const;
-  std::string GetLookAsJson();
-  std::string GetEquipmentAsJson();
+  std::unique_ptr<const Look> GetLook() const;
+  const std::string& GetLookAsJson();
+  const std::string& GetEquipmentAsJson();
 
   void SetRaceMenuOpen(bool isOpen);
   void SetLook(const Look* newLook);

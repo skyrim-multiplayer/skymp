@@ -21,6 +21,8 @@ public:
 
   auto GetParent() const { return parent; }
 
+  auto GetParent() const { return parent; }
+
   static const char* PrettifyType(const char* typeidName)
   {
 #ifdef WIN32

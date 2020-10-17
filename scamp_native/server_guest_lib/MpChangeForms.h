@@ -31,21 +31,16 @@ public:
   bool isOpen = false;
   bool baseContainerAdded = false;
   uint64_t nextRelootDatetime = 0;
+
+  bool isRaceMenuOpen = false;
+
+  // 'lookDump' and 'equipmentDump' can be empty. it means nullopt.
+  // "unexisting" equipment and equipment with zero entries are different
+  // values in skymp due to poor designs
+  std::string lookDump, equipmentDump;
 };
 
-class MpChangeFormACHR
+class MpChangeForm : public MpChangeFormREFR
 {
 public:
-  bool isRaceMenuOpen = false;
-  std::optional<Look> look;
-
-  // "unexisting" equipment and equipment with zero entries are different
-  // values in skymp due to poor design
-  std::optional<Equipment> equipment;
-};
-
-class MpChangeForm
-  : public MpChangeFormREFR
-  , public MpChangeFormACHR
-{
 };
