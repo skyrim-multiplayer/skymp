@@ -336,12 +336,11 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
     p++;
     const uint16_t numProperties = *reinterpret_cast<const uint16_t*>(p);
     p += 2;
-    out[i].properties.resize(numProperties);
     for (uint16_t j = 0; j < numProperties; ++j) {
       const uint16_t length = *reinterpret_cast<const uint16_t*>(p);
       p += 2;
 
-      auto& prop = out[i].properties[j];
+      espm::Property prop;
       prop.propertyName =
         std::string(reinterpret_cast<const char*>(p), length);
       p += length;
@@ -350,6 +349,7 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
       prop.status = *p;
       p++;
       p = ReadPropertyValue(p, &prop, objFormat);
+      out[i].properties.insert(prop);
     }
   }
 }

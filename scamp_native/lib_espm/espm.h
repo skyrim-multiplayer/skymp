@@ -4,6 +4,7 @@
 #include <cstring> // memcmp
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -486,6 +487,30 @@ struct Property
     return res;
   }
 
+  friend std::ostream& operator<<(std::ostream& os, const Property& prop)
+  {
+    os << "[" << prop.propertyName;
+    switch (prop.propertyType) {
+      case PropertyType::Bool:
+        os << "=" << (prop.value.boolean ? "true" : "false");
+        break;
+      case PropertyType::Int:
+        os << "=" << prop.value.integer;
+        break;
+      case PropertyType::Float:
+        os << "=" << prop.value.floatingPoint;
+        break;
+      case PropertyType::Object:
+        os << "=FormID_" << std::hex << prop.value.formId << std::dec;
+        break;
+      default:
+        os << "=...";
+        break;
+    }
+    os << ", status=" << static_cast<int>(prop.status) << "]";
+    return os;
+  }
+
   std::string propertyName;
   PropertyType propertyType = PropertyType::Invalid;
 
@@ -505,18 +530,26 @@ struct Property
 
   uint8_t status = StatusEdited;
 
+  auto ToTuple() const
+  {
+    return std::make_tuple(propertyName, propertyType, value.str.data,
+                           value.str.length, status);
+  }
+
   friend bool operator==(const Property& lhs, const Property& rhs)
   {
-    return std::make_tuple(lhs.propertyName, lhs.propertyType,
-                           lhs.value.str.data, lhs.value.str.length,
-                           lhs.status) ==
-      std::make_tuple(rhs.propertyName, rhs.propertyType, rhs.value.str.data,
-                      lhs.value.str.length, rhs.status);
+    bool equal = lhs.ToTuple() == rhs.ToTuple();
+    return equal;
   }
 
   friend bool operator!=(const Property& lhs, const Property& rhs)
   {
     return !(lhs == rhs);
+  }
+
+  friend bool operator<(const Property& lhs, const Property& rhs)
+  {
+    return lhs.ToTuple() < rhs.ToTuple();
   }
 };
 
@@ -524,7 +557,7 @@ struct Script
 {
   std::string scriptName;
   uint8_t status = 0;
-  std::vector<Property> properties;
+  std::set<Property> properties;
 };
 
 struct ScriptData

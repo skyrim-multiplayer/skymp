@@ -98,16 +98,19 @@ TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
   REQUIRE(data.scriptData.version == 5);
   REQUIRE(data.scriptData.objFormat == 2);
   REQUIRE(data.scriptData.scripts.size() == 1);
-  REQUIRE(data.scriptData.scripts[0].scriptName == "sovngardestatuescript");
-  REQUIRE(data.scriptData.scripts[0].properties.size() == 1);
-  REQUIRE(data.scriptData.scripts[0].properties[0].propertyName == "MQ305");
-  REQUIRE(data.scriptData.scripts[0].properties[0].propertyType ==
+  REQUIRE(data.scriptData.scripts.front().scriptName ==
+          "sovngardestatuescript");
+  REQUIRE(data.scriptData.scripts.front().properties.size() == 1);
+  REQUIRE(data.scriptData.scripts.front().properties.begin()->propertyName ==
+          "MQ305");
+  REQUIRE(data.scriptData.scripts.front().properties.begin()->propertyType ==
           espm::PropertyType::Object);
-  REQUIRE(data.scriptData.scripts[0].properties[0].status == 1);
-  REQUIRE(data.scriptData.scripts[0].properties[0].value.formId == 0x46ef2);
+  REQUIRE(data.scriptData.scripts.front().properties.begin()->status == 1);
+  REQUIRE(data.scriptData.scripts.front().properties.begin()->value.formId ==
+          0x46ef2);
 }
 
-TEST_CASE("Loads script-related subrecords for BearTrap01")
+TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
 {
   auto& br = l.GetBrowser();
   auto form = br.LookupById(0x7144d);
@@ -121,7 +124,7 @@ TEST_CASE("Loads script-related subrecords for BearTrap01")
 
   REQUIRE(data.scriptData.scripts[0].scriptName == "TrapBear");
   REQUIRE(data.scriptData.scripts[0].properties ==
-          std::vector<espm::Property>{
+          std::set<espm::Property>{
             espm::Property::Object("LightFoot", 0x5820c),
             espm::Property::Object("LightFootTriggerPercent", 0x67194),
             espm::Property::Int("LvlDamage1", 20),
@@ -138,7 +141,7 @@ TEST_CASE("Loads script-related subrecords for BearTrap01")
 
   REQUIRE(data.scriptData.scripts[1].scriptName == "TrapHitBase");
   REQUIRE(data.scriptData.scripts[1].properties ==
-          std::vector<espm::Property>{
+          std::set<espm::Property>{
             espm::Property::Bool("canDisease", true),
             espm::Property::Object("GhostAbility", 0x5030b),
             espm::Property::Bool("hitOnlyOnce", true),
@@ -148,7 +151,7 @@ TEST_CASE("Loads script-related subrecords for BearTrap01")
             espm::Property::Float("staggerAmount", 0.5f),
             espm::Property::Bool("trapCausesStagger", true),
             espm::Property::Object("TrapDiseaseAtaxia", 0x10a24a),
-            espm::Property::Object("TrapDiseaseBoneBreakForever", 0x10a24c),
+            espm::Property::Object("TrapDiseaseBoneBreakFever", 0x10a24c),
             espm::Property::Object("TrapDiseaseBrainRot", 0x10a24d),
             espm::Property::Object("TrapDiseaseRattles", 0x10a24e),
             espm::Property::Object("TrapDiseaseRockjoint", 0x10a24f),
