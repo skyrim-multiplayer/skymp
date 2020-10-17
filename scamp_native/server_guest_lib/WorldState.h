@@ -4,6 +4,7 @@
 #include "GridElement.h"
 #include "MpChangeForms.h"
 #include "NiPoint3.h"
+#include "VirtualMachine.h"
 #include <Loader.h>
 #include <MakeID.h>
 #include <MpForm.h>
@@ -114,6 +115,8 @@ public:
   espm::Loader& GetEspm() const;
   espm::CompressedFieldsCache& GetEspmCache();
   IScriptStorage* GetScriptStorage() const;
+  VirtualMachine& GetPapyrusVm();
+
   std::vector<std::string> espmFiles;
 
 private:

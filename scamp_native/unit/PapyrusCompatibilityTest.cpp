@@ -23,8 +23,10 @@ TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus]")
     NirnrootIngr = 0x59b86
   };
   REQUIRE(actor.GetInventory().GetItemCount(NirnrootIngr) == 0);
-
   nirnrootRef.Activate(actor);
-
   REQUIRE(actor.GetInventory().GetItemCount(NirnrootIngr) == 1);
+  nirnrootRef.Activate(actor);
+  REQUIRE(actor.GetInventory().GetItemCount(NirnrootIngr) == 1);
+
+  partOne.worldState.DestroyForm(0xff000000);
 }

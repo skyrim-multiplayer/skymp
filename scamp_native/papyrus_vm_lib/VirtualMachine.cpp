@@ -31,7 +31,7 @@ void VirtualMachine::RegisterFunction(std::string className,
 
 void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
                                std::vector<std::string> scripts,
-                               VarForBuildActivePex vars)
+                               PropertyValuesMap vars)
 {
   std::vector<ActivePexInstance> scriptsForObject;
 
@@ -40,7 +40,7 @@ void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
       if (baseScript->source == nameNeedScript) {
 
         ActivePexInstance scriptInstance(
-          baseScript, vars, this, VarValue((IGameObject*)self.get()), "");
+          baseScript, vars.data, this, VarValue((IGameObject*)self.get()), "");
         scriptsForObject.push_back(scriptInstance);
       }
     }

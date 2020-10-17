@@ -1,8 +1,8 @@
 #include "Reader.h"
 #include "VirtualMachine.h"
+#include "tests.h"
 #include <cstdint>
 #include <ctime>
-#include "tests.h"
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
@@ -73,9 +73,10 @@ int main(int argc, char* argv[])
                           }
                           return VarValue::None();
                         });
-    vm.RegisterFunction("OpcodesTest", "TestFunction", FunctionType::GlobalFunction,
+    vm.RegisterFunction("OpcodesTest", "TestFunction",
+                        FunctionType::GlobalFunction,
                         [=](VarValue self, std::vector<VarValue> args) {
-                          return VarValue(42); //random integer
+                          return VarValue(42); // random integer
                         });
 
     class TestObject : public IGameObject
@@ -97,7 +98,7 @@ int main(int argc, char* argv[])
 
     vars["OpcodesTest"] = mapArgs;
 
-    vm.AddObject(testObject, { "AAATestObject", "OpcodesTest" }, vars);
+    vm.AddObject(testObject, { "AAATestObject", "OpcodesTest" }, { vars });
 
     std::vector<VarValue> functionArgs;
     vm.SendEvent(testObject, "Main", functionArgs);

@@ -3,6 +3,10 @@
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MpObjectReference.h"
+#include "PapyrusGame.h"
+#include "PapyrusObjectReference.h"
+#include "Reader.h"
+#include "ScriptStorage.h"
 #include <unordered_map>
 
 struct WorldState::Impl
@@ -11,6 +15,7 @@ struct WorldState::Impl
   std::shared_ptr<ISaveStorage> saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
+  std::shared_ptr<VirtualMachine> vm;
 };
 
 WorldState::WorldState()
@@ -190,4 +195,39 @@ espm::CompressedFieldsCache& WorldState::GetEspmCache()
 IScriptStorage* WorldState::GetScriptStorage() const
 {
   return pImpl->scriptStorage.get();
+}
+
+VirtualMachine& WorldState::GetPapyrusVm()
+{
+  if (!pImpl->vm) {
+    std::vector<std::shared_ptr<PexScript>> pexStructures;
+    std::vector<std::string> scriptNames;
+
+    std::vector<std::vector<uint8_t>> pexVec;
+
+    auto scriptStorage = GetScriptStorage();
+    if (!scriptStorage)
+      throw std::runtime_error("Required scriptStorage to be non-null");
+
+    auto& scripts = scriptStorage->ListScripts();
+    for (auto& required : scripts) {
+      auto requiredPex = scriptStorage->GetScriptPex(required.data());
+      if (requiredPex.empty())
+        throw std::runtime_error(
+          "'" + std::string(required) +
+          "' is listed but failed to load from the storage");
+      pexVec.push_back(requiredPex);
+    }
+
+    auto pexStructure = Reader(pexVec).GetSourceStructures();
+    for (auto& v : pexStructure)
+      pexStructures.push_back(v);
+
+    if (!pexStructures.empty()) {
+      pImpl->vm.reset(new VirtualMachine(pexStructures));
+      PapyrusObjectReference::Register(*pImpl->vm);
+      PapyrusGame::Register(*pImpl->vm);
+    }
+  }
+  return *pImpl->vm;
 }

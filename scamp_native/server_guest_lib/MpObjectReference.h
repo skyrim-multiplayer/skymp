@@ -8,10 +8,12 @@
 #include <Loader.h>
 #include <chrono>
 #include <functional>
+#include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <set>
 #include <simdjson.h>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -37,6 +39,8 @@ struct GridPosInfo
 class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
+struct VarValue;
+struct PropertyValuesMap;
 
 class FormCallbacks;
 
@@ -48,6 +52,7 @@ class MpObjectReference
 
 public:
   static const char* Type() { return "ObjectReference"; }
+  const char* GetFormType() const override { return "ObjectReference"; }
 
   using SubscribeCallback = std::function<void(MpObjectReference* emitter,
                                                MpObjectReference* listener)>;
@@ -118,6 +123,13 @@ private:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
+
+  void CastProperty(const espm::CombineBrowser& br, const espm::Property& prop,
+                    VarValue* out);
+
+  void BuildScriptProperties(const espm::CombineBrowser& br,
+                             const espm::ScriptData& scriptData,
+                             PropertyValuesMap* out);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

@@ -15,6 +15,9 @@ class IGameObject
 public:
   virtual ~IGameObject() = default;
   virtual const char* GetStringID() { return "Virtual Implementation"; };
+
+  // 'Actor', 'ObjectReference' and so on. Used for dynamic casts
+  virtual const char* GetParentNativeScript() { return ""; }
 };
 
 enum class FunctionType
@@ -116,6 +119,11 @@ using NativeFunction =
 
 using VarForBuildActivePex =
   std::map<std::string, std::vector<std::pair<std::string, VarValue>>>;
+
+struct PropertyValuesMap
+{
+  VarForBuildActivePex data;
+};
 
 struct FunctionCode
 {

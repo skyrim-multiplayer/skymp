@@ -1,8 +1,11 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
+#include "EspmGameObject.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
+#include "PapyrusGame.h"
+#include "PapyrusObjectReference.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
 #include "VirtualMachine.h"
@@ -46,26 +49,26 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 {
   return { int16_t(pos.x / 4096), int16_t(pos.y / 4096) };
 }
+
+struct ScriptsState
+{
+  std::map<uint32_t, std::shared_ptr<EspmGameObject>> espmObjectsHolder;
+  std::map<std::string, std::shared_ptr<std::string>> propStringValues;
+};
+
 }
 
-struct MpObjectReference::Impl
-  : public ChangeFormGuard<MpChangeFormREFR>
-  , public std::enable_shared_from_this<Impl>
-  , public IGameObject
+struct MpObjectReference::Impl : public ChangeFormGuard<MpChangeFormREFR>
 {
 public:
   Impl(MpChangeFormREFR changeForm_, MpObjectReference* self_)
     : ChangeFormGuard(changeForm_, self_)
   {
-    stringId = "[ObjectReference " + ChangeForm().formDesc.ToString() + "]";
   }
 
-  std::shared_ptr<IGameObject> GetGameObject() { return shared_from_this(); }
+  std::unique_ptr<ScriptsState> scriptsState;
 
-  const char* GetStringID() override { return stringId.data(); };
-
-  std::unique_ptr<VirtualMachine> vm;
-  std::string stringId;
+  bool HasScripts() const noexcept { return !!scriptsState; }
 };
 
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
@@ -301,10 +304,10 @@ void MpObjectReference::Activate(MpActor& activationSource)
     }
   }
 
-  if (pImpl->vm) {
-    std::vector<VarValue> activateArguments{ VarValue::None() };
-    pImpl->vm->SendEvent(pImpl->GetGameObject(), "OnActivate",
-                         activateArguments);
+  if (pImpl->HasScripts()) {
+    std::vector<VarValue> activateArguments{ activationSource.ToVarValue() };
+    GetParent()->GetPapyrusVm().SendEvent(ToGameObject(), "OnActivate",
+                                          activateArguments);
   }
 }
 
@@ -557,181 +560,52 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
   InitScripts();
 }
 
-namespace {
-/*VarValue CastProperty(const espm::Property& prop)
+void MpObjectReference::CastProperty(const espm::CombineBrowser& br,
+                                     const espm::Property& prop, VarValue* out)
 {
   switch (prop.propertyType) {
-    case espm::PropertyType::Object:
+    case espm::PropertyType::Object: {
+      auto& gameObject =
+        pImpl->scriptsState->espmObjectsHolder[prop.value.formId];
+      if (!gameObject)
+        gameObject.reset(new EspmGameObject(br.LookupById(prop.value.formId)));
+      *out = VarValue(gameObject.get());
       break;
-    case espm::PropertyType::String:
+    }
+    case espm::PropertyType::String: {
+      std::string str(prop.value.str.data, prop.value.str.length);
+      auto& stringPtr = pImpl->scriptsState->propStringValues[str];
+      if (!stringPtr)
+        stringPtr.reset(new std::string(str));
+      *out = VarValue(stringPtr->data());
       break;
+    }
     case espm::PropertyType::Int:
+      *out = VarValue(prop.value.integer);
       break;
     case espm::PropertyType::Float:
+      *out = VarValue(prop.value.floatingPoint);
       break;
     case espm::PropertyType::Bool:
+      *out = VarValue(prop.value.boolean);
       break;
   }
-}*/
+}
 
-VarForBuildActivePex BuildScriptProperties(const espm::ScriptData& scriptData)
+void MpObjectReference::BuildScriptProperties(
+  const espm::CombineBrowser& br, const espm::ScriptData& scriptData,
+  PropertyValuesMap* out)
 {
-  VarForBuildActivePex res;
+  PropertyValuesMap res;
   for (auto& entry : scriptData.scripts) {
-    auto& resultProps = res[entry.scriptName];
+    auto& resultProps = res.data[entry.scriptName];
     for (auto& prop : entry.properties) {
-      // resultProps.push_back;
+      VarValue value;
+      CastProperty(br, prop, &value);
+      resultProps.push_back({ prop.propertyName, value });
     }
   }
-  return res;
-}
-}
-
-class MpFormGameObject : public IGameObject
-{
-public:
-  MpFormGameObject(MpForm* form_)
-    : form(form_)
-    , parent(form_ ? form_->GetParent() : nullptr)
-    , formId(form_ ? form_->GetFormId() : 0)
-  {
-  }
-
-  MpForm* GetFormPtr() const noexcept
-  {
-    bool formStillValid = parent->LookupFormById(formId).get() == form;
-    if (!formStillValid)
-      return nullptr;
-    return form;
-  }
-
-private:
-  WorldState* const parent;
-  MpForm* const form;
-  const uint32_t formId;
-};
-
-class EspmGameObject : public IGameObject
-{
-public:
-  EspmGameObject(const espm::LookupResult& record_)
-    : record(record_)
-  {
-  }
-
-  const espm::LookupResult record;
-};
-
-template <class T>
-T* GetFormPtr(const VarValue& papyrusObject)
-{
-  if (papyrusObject.GetType() != VarValue::kType_Object)
-    return nullptr;
-  auto gameObject = static_cast<IGameObject*>(papyrusObject);
-  auto mpFormGameObject = dynamic_cast<MpFormGameObject*>(gameObject);
-  if (!mpFormGameObject)
-    return nullptr;
-  return dynamic_cast<T*>(mpFormGameObject->GetFormPtr());
-}
-
-const espm::LookupResult& GetRecordPtr(VarValue papyrusObject)
-{
-  static const espm::LookupResult emptyResult;
-
-  if (papyrusObject.GetType() != VarValue::kType_Object)
-    return emptyResult;
-  auto gameObject = static_cast<IGameObject*>(papyrusObject);
-  auto espmGameObject = dynamic_cast<EspmGameObject*>(gameObject);
-  if (!espmGameObject)
-    return emptyResult;
-  return espmGameObject->record;
-}
-
-namespace PapyrusObjectReference {
-VarValue IsDisabled(VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue(false);
-}
-
-VarValue GetScale(VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue(1.f);
-}
-
-VarValue SetScale(VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue::None();
-}
-
-VarValue EnableNoWait(VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue::None();
-}
-
-VarValue DisableNoWait(VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue::None();
-}
-
-VarValue Delete(VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue::None();
-}
-
-VarValue AddItem(VarValue self, const std::vector<VarValue>& arguments)
-{
-  printf("ENTER AddItem\n");
-
-  if (arguments.size() < 2)
-    return VarValue::None();
-  auto item = GetRecordPtr(arguments[0]);
-  auto count = static_cast<int>(arguments[1]);
-  auto selfRefr = GetFormPtr<MpObjectReference>(self);
-
-  printf("AddItem selfRefr=%p itemRec=%p count=%d\n", selfRefr, item.rec,
-         count);
-
-  if (!selfRefr || !item.rec || count <= 0)
-    return VarValue::None();
-
-  auto itemId = item.ToGlobalId(item.rec->GetId());
-  selfRefr->AddItem(itemId, count);
-
-  printf("EXIT AddItem\n");
-
-  return VarValue::None();
-}
-
-void Register(VirtualMachine& vm)
-{
-  vm.RegisterFunction("objectreference", "IsDisabled", FunctionType::Method,
-                      IsDisabled);
-  vm.RegisterFunction("objectreference", "GetScale", FunctionType::Method,
-                      GetScale);
-  vm.RegisterFunction("objectreference", "SetScale", FunctionType::Method,
-                      SetScale);
-  vm.RegisterFunction("objectreference", "EnableNoWait", FunctionType::Method,
-                      EnableNoWait);
-  vm.RegisterFunction("objectreference", "DisableNoWait", FunctionType::Method,
-                      DisableNoWait);
-  vm.RegisterFunction("objectreference", "Delete", FunctionType::Method,
-                      Delete);
-  vm.RegisterFunction("objectreference", "AddItem", FunctionType::Method,
-                      AddItem);
-}
-}
-
-namespace PapyrusGame {
-VarValue IncrementStat(VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue::None();
-}
-
-void Register(VirtualMachine& vm)
-{
-  vm.RegisterFunction("game", "IncrementStat", FunctionType::GlobalFunction,
-                      IncrementStat);
-}
+  *out = res;
 }
 
 void MpObjectReference::InitScripts()
@@ -749,41 +623,23 @@ void MpObjectReference::InitScripts()
   if (!scriptStorage)
     return;
 
+  std::vector<std::string> scriptNames;
   espm::ScriptData scriptData;
   base.rec->GetScriptData(&scriptData);
-
-  std::vector<std::shared_ptr<PexScript>> pexStructures;
-  std::vector<std::string> scriptNames;
-
   for (auto& script : scriptData.scripts) {
-    scriptNames.push_back(script.scriptName);
-    auto pex = scriptStorage->GetScriptPex(script.scriptName.data());
-    if (!pex.empty()) {
-
-      std::vector<std::vector<uint8_t>> pexVec = { pex };
-
-      for (auto required : { "game", "form", "objectreference" }) {
-        auto requiredPex = scriptStorage->GetScriptPex(required);
-        if (requiredPex.empty())
-          throw std::runtime_error("'" + std::string(required) +
-                                   "' is a strictly required script");
-        pexVec.push_back(requiredPex);
-      }
-
-      auto pexStructure = Reader(pexVec).GetSourceStructures();
-      for (auto& v : pexStructure)
-        pexStructures.push_back(v);
-    }
+    if (GetParent()->GetScriptStorage()->ListScripts().count(
+          script.scriptName))
+      scriptNames.push_back(script.scriptName);
   }
 
-  if (!pexStructures.empty()) {
-    pImpl->vm.reset(new VirtualMachine(pexStructures));
+  if (!scriptNames.empty()) {
+    pImpl->scriptsState.reset(new ScriptsState);
 
-    PapyrusObjectReference::Register(*pImpl->vm);
-    PapyrusGame::Register(*pImpl->vm);
+    PropertyValuesMap props;
+    BuildScriptProperties(GetParent()->GetEspm().GetBrowser(), scriptData,
+                          &props);
 
-    pImpl->vm->AddObject(pImpl->GetGameObject(), scriptNames,
-                         BuildScriptProperties(scriptData));
+    GetParent()->GetPapyrusVm().AddObject(ToGameObject(), scriptNames, props);
   }
 }
 

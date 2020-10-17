@@ -18,7 +18,7 @@ public:
   VirtualMachine(std::vector<std::shared_ptr<PexScript>> loadedScripts);
 
   void AddObject(std::shared_ptr<IGameObject> self,
-                 std::vector<std::string> scripts, VarForBuildActivePex vars);
+                 std::vector<std::string> scripts, PropertyValuesMap vars);
 
   void RegisterFunction(std::string className, std::string functionName,
                         FunctionType type, NativeFunction fn);

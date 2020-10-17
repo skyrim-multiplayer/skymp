@@ -812,41 +812,34 @@ void ActivePexInstance::CastObjectToObject(
   std::string objectToCastTypeName = scriptToCastOwner->objectType;
   std::string resultTypeName = result->objectType;
 
-  for (auto& var : locals) {
-    if (resultTypeName == var.first) {
-      resultTypeName = var.second.objectType;
-      break;
+  auto object = static_cast<IGameObject*>(*scriptToCastOwner);
+  if (object) {
+    std::string scriptName = object->GetParentNativeScript();
+    while (1) {
+      if (scriptName.empty())
+        break;
+      if (!stricmp(resultTypeName.data(), scriptName.data())) {
+        *result = *scriptToCastOwner;
+        return;
+      }
+
+      // TODO: Test this with attention
+      // Here is the case when i.e. variable with type 'Form' casts to
+      // 'ObjectReference' while it's actually an Actor
+
+      auto myScriptPex = std::find_if(
+        parentVM->allLoadedScripts.begin(), parentVM->allLoadedScripts.end(),
+        [&](const std::shared_ptr<PexScript>& pexScript) {
+          return !stricmp(pexScript->source.data(), scriptName.data());
+        });
+      if (myScriptPex == parentVM->allLoadedScripts.end())
+        scriptName.clear();
+      else
+        scriptName = (*myScriptPex)->objectTable.m_data[0].parentClassName;
     }
   }
 
-  if (resultTypeName != "" && objectToCastTypeName != "") {
-
-    auto scriptOwner = std::find_if(
-      parentVM->gameObjects.begin(), parentVM->gameObjects.end(),
-      [&](
-        std::pair<std::shared_ptr<IGameObject>, std::vector<ActivePexInstance>>
-          i) { return ((IGameObject*)*scriptToCastOwner) == i.first.get(); });
-
-    ActivePexInstance* ptrScriptToCast = nullptr;
-
-    if (scriptOwner != parentVM->gameObjects.end()) {
-
-      for (auto& activeScript : scriptOwner->second) {
-        if (activeScript.sourcePex->source == objectToCastTypeName) {
-          ptrScriptToCast = &activeScript;
-          break;
-        }
-      }
-    }
-
-    if (HasParent(ptrScriptToCast, resultTypeName) ||
-        HasChild(ptrScriptToCast, resultTypeName)) {
-      *result = *scriptToCastOwner;
-      return;
-    } else
-      *result = VarValue::None();
-  } else
-    *result = VarValue::None();
+  *result = VarValue::None();
 }
 
 bool ActivePexInstance::HasParent(ActivePexInstance* script,
