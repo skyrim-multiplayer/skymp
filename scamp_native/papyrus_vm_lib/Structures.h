@@ -16,6 +16,8 @@ public:
   virtual ~IGameObject() = default;
   virtual const char* GetStringID() { return "Virtual Implementation"; };
 
+  using Ptr = std::shared_ptr<IGameObject>;
+
   // 'Actor', 'ObjectReference' and so on. Used for dynamic casts
   virtual const char* GetParentNativeScript() { return ""; }
 };
@@ -43,6 +45,8 @@ private:
 
 public:
   std::string objectType;
+
+  using Ptr = std::shared_ptr<VarValue>;
 
   enum valueTypes
   {
@@ -340,6 +344,7 @@ struct ScriptHeader
 
 struct PexScript
 {
+  using Ptr = std::shared_ptr<PexScript>;
 
   ScriptHeader header;
   StringTable stringTable;
@@ -354,27 +359,17 @@ struct PexScript
 
 struct ActivePexInstance
 {
-
-  std::string childrenName;
-
-  std::shared_ptr<PexScript> sourcePex = nullptr;
-  VarValue activeInstanceOwner = VarValue::None();
-  VirtualMachine* parentVM = nullptr;
-
-  std::shared_ptr<ActivePexInstance> parentInstance;
-
-  std::vector<ObjectTable::Object::VarInfo> variables;
-
-  std::vector<std::shared_ptr<VarValue>> identifiersValueNameCache;
-  std::vector<std::shared_ptr<std::string>> instanceStringTable;
+public:
+  using Ptr = std::shared_ptr<ActivePexInstance>;
 
   ActivePexInstance();
-  ActivePexInstance(std::shared_ptr<PexScript> sourcePex,
+  ActivePexInstance(PexScript::Ptr sourcePex,
                     VarForBuildActivePex mapForFillPropertys,
                     VirtualMachine* parentVM, VarValue activeInstanceOwner,
                     std::string childrenName);
 
-  FunctionInfo GetFunctionByName(const char* name, std::string stateName);
+  FunctionInfo GetFunctionByName(const char* name,
+                                 std::string stateName) const;
 
   VarValue& GetVariableValueByName(
     std::vector<std::pair<std::string, VarValue>>& locals, std::string name);
@@ -388,18 +383,27 @@ struct ActivePexInstance
                          std::vector<VarValue>& arguments);
 
   uint8_t GetTypeByName(std::string typeRef);
-  std::string GetActiveStateName();
+  std::string GetActiveStateName() const;
 
-private:
-  ObjectTable::Object::PropInfo* GetProperty(ActivePexInstance* scriptInstance,
-                                             std::string nameProperty,
-                                             uint8_t flag);
+  bool IsValid() const { return _IsValid; };
 
-  ActivePexInstance* GetActivePexInObject(VarValue* object,
+  ActivePexInstance& GetActivePexInObject(VarValue* object,
                                           std::string& scriptType);
 
+  const std::string& const GetSoucePexName() const;
+
+  const ActivePexInstance::Ptr GetParentInstance() const
+  {
+    return parentInstance;
+  };
+
+private:
+  ObjectTable::Object::PropInfo* GetProperty(
+    const ActivePexInstance& const scriptInstance, std::string nameProperty,
+    uint8_t flag);
+
   std::vector<ObjectTable::Object::VarInfo> FillVariables(
-    std::shared_ptr<PexScript> sourcePex,
+    PexScript::Ptr sourcePex,
     std::vector<std::pair<std::string, VarValue>> argsForFillPropertys);
 
   uint8_t GetArrayElementType(uint8_t type);
@@ -411,9 +415,24 @@ private:
   bool HasParent(ActivePexInstance* script, std::string castToTypeName);
   bool HasChild(ActivePexInstance* script, std::string castToTypeName);
 
-  std::shared_ptr<ActivePexInstance> FillParentInstanse(
+  ActivePexInstance::Ptr FillParentInstanse(
     std::string nameNeedScript, VarValue activeInstanceOwner,
     VarForBuildActivePex mapForFillPropertys);
 
   VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type);
+
+  bool _IsValid = false;
+
+  std::string childrenName;
+
+  PexScript::Ptr sourcePex = nullptr;
+  VirtualMachine* parentVM = nullptr;
+
+  VarValue activeInstanceOwner = VarValue::None();
+
+  ActivePexInstance::Ptr parentInstance;
+
+  std::vector<ObjectTable::Object::VarInfo> variables;
+  std::vector<VarValue::Ptr> identifiersValueNameCache;
+  std::vector<std::shared_ptr<std::string>> instanceStringTable;
 };

@@ -2,8 +2,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-VirtualMachine::VirtualMachine(
-  std::vector<std::shared_ptr<PexScript>> loadedScripts)
+VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
 {
   this->allLoadedScripts = loadedScripts;
 }
@@ -29,7 +28,7 @@ void VirtualMachine::RegisterFunction(std::string className,
   }
 }
 
-void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
+void VirtualMachine::AddObject(IGameObject::Ptr self,
                                std::vector<std::string> scripts,
                                PropertyValuesMap vars)
 {
@@ -49,8 +48,7 @@ void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
   gameObjects[self] = scriptsForObject;
 }
 
-void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
-                               const char* eventName,
+void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
                                std::vector<VarValue>& arguments)
 {
   for (auto& object : gameObjects) {
@@ -80,39 +78,59 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
   }
 }
 
-VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
-                                    IGameObject* self, const char* methodName,
+VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
+                                    VarValue* self, const char* methodName,
                                     std::vector<VarValue>& arguments)
 {
-  NativeFunction f;
-  auto it = instance;
-  while (it && !f) {
-    std::string className = it->sourcePex->source;
-    f = nativeFunctions[ToLower(className)][ToLower(methodName)];
-    if (!f) {
-      it = it->parentInstance.get();
-    }
-  }
-  if (f)
-    return f(VarValue(self), arguments);
+  NativeFunction function;
 
-  FunctionInfo function;
+  auto& activeSctipt = GetActivePexInObject(self, activeInstanceName);
+
+  if (!activeSctipt.IsValid()) {
+
+    std::string error =
+      "activeScript: " + activeSctipt.GetSoucePexName() + " not valid!";
+
+    throw std::runtime_error(error);
+  }
+
+  ActivePexInstance::Ptr currentParent = activeSctipt.GetParentInstance();
+  std::string className = activeSctipt.GetSoucePexName();
+
+  do {
+
+    function = nativeFunctions[ToLower(className)][ToLower(methodName)];
+
+    if (!function && currentParent->IsValid()) {
+
+      className = currentParent->GetSoucePexName();
+      currentParent = currentParent->GetParentInstance();
+    }
+
+  } while (!function && currentParent->IsValid());
+
+  if (function)
+    return function(VarValue(self), arguments);
+
+  FunctionInfo functionInfo;
 
   std::string nameGoToState = "GotoState";
   std::string nameGetState = "GetState";
 
   if (methodName == nameGoToState || methodName == nameGetState) {
-    function = instance->GetFunctionByName(methodName, "");
+    functionInfo = activeSctipt.GetFunctionByName(methodName, "");
   } else
-    function =
-      instance->GetFunctionByName(methodName, instance->GetActiveStateName());
+    functionInfo = activeSctipt.GetFunctionByName(
+      methodName, activeSctipt.GetActiveStateName());
 
-  if (function.valid) {
-    return instance->StartFunction(function, arguments);
+  if (functionInfo.valid) {
+    return activeSctipt.StartFunction(functionInfo, arguments);
   }
-  throw std::runtime_error("Method not found - '" +
-                           instance->sourcePex->source + "." +
-                           std::string(methodName) + "'");
+
+  std::string name = "Method not found - '" + activeSctipt.GetSoucePexName() +
+    "." + std::string(methodName) + "'";
+
+  throw std::runtime_error(name);
 }
 
 VarValue VirtualMachine::CallStatic(std::string className,
@@ -161,6 +179,68 @@ VarValue VirtualMachine::CallStatic(std::string className,
   return result;
 }
 
-void VirtualMachine::RemoveObject(std::shared_ptr<IGameObject> self)
+ActivePexInstance& VirtualMachine::GetActivePexInObject(
+  VarValue* object, const std::string& scriptType)
+{
+  static ActivePexInstance notValidInstance = ActivePexInstance();
+
+  auto it = std::find_if(gameObjects.begin(), gameObjects.end(),
+                         [&](RegisteredGameOgject& _object) {
+                           for (auto& instance : _object.second) {
+                             if (instance.GetSoucePexName() == scriptType) {
+                               return true;
+                             }
+                           }
+                         });
+
+  if (it == gameObjects.end()) {
+    return notValidInstance;
+  }
+
+  for (auto& instance : it->second) {
+    if (instance.GetSoucePexName() == scriptType) {
+      return instance;
+    }
+  }
+
+  return notValidInstance;
+}
+
+PexScript::Ptr VirtualMachine::GetPexByName(const std::string& name)
+{
+  auto myScriptPex =
+    std::find_if(allLoadedScripts.begin(), allLoadedScripts.end(),
+                 [&](const std::shared_ptr<PexScript>& pexScript) {
+                   return !stricmp(pexScript->source.data(), name.data());
+                 });
+
+  if (myScriptPex == allLoadedScripts.end())
+    return nullptr;
+
+  return myScriptPex.operator*();
+}
+
+ActivePexInstance::Ptr VirtualMachine::CreateActivePexInstance(
+  const std::string& pexScriptName, VarValue activeInstanceOwner,
+  VarForBuildActivePex mapForFillPropertys, std::string childrenName)
+{
+  for (auto& baseScript : allLoadedScripts) {
+    if (baseScript->source == pexScriptName) {
+      ActivePexInstance scriptInstance(baseScript, mapForFillPropertys, this,
+                                       activeInstanceOwner, childrenName);
+      return std::make_shared<ActivePexInstance>(scriptInstance);
+    }
+  }
+
+  static const ActivePexInstance::Ptr notValidInstance =
+    std::make_shared<ActivePexInstance>();
+
+  if (pexScriptName != "")
+    throw std::runtime_error("Unable to find script '" + pexScriptName + "'");
+
+  return notValidInstance;
+}
+
+void VirtualMachine::RemoveObject(IGameObject::Ptr self)
 {
 }

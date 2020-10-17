@@ -5,33 +5,49 @@
 
 class VirtualMachine
 {
-  void RemoveObject(std::shared_ptr<IGameObject> self); // ?
 
 public:
-  std::map<std::shared_ptr<IGameObject>, std::vector<ActivePexInstance>>
-    gameObjects;
-  std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
-    nativeStaticFunctions;
+  VirtualMachine(std::vector<PexScript::Ptr> loadedScripts);
 
-  std::vector<std::shared_ptr<PexScript>> allLoadedScripts;
+  void AddObject(IGameObject::Ptr self, std::vector<std::string> scripts,
+                 PropertyValuesMap vars);
 
-  VirtualMachine(std::vector<std::shared_ptr<PexScript>> loadedScripts);
-
-  void AddObject(std::shared_ptr<IGameObject> self,
-                 std::vector<std::string> scripts, PropertyValuesMap vars);
+  void RemoveObject(IGameObject::Ptr self); // ?
 
   void RegisterFunction(std::string className, std::string functionName,
                         FunctionType type, NativeFunction fn);
 
-  void SendEvent(std::shared_ptr<IGameObject> self, const char* eventName,
+  void SendEvent(IGameObject::Ptr self, const char* eventName,
                  std::vector<VarValue>& arguments);
+
   void SendEvent(ActivePexInstance* instance, const char* eventName,
                  std::vector<VarValue>& arguments);
 
-  VarValue CallMethod(ActivePexInstance* instance, IGameObject* self,
+  VarValue CallMethod(const std::string& ActiveInstanceName, VarValue* self,
                       const char* methodName,
                       std::vector<VarValue>& arguments);
 
   VarValue CallStatic(std::string className, std::string functionName,
                       std::vector<VarValue>& arguments);
+
+  ActivePexInstance& GetActivePexInObject(VarValue* object,
+                                          const std::string& scriptType);
+
+  PexScript::Ptr GetPexByName(const std::string& name);
+
+  ActivePexInstance::Ptr CreateActivePexInstance(
+    const std::string& pexScriptName, VarValue activeInstanceOwner,
+    VarForBuildActivePex mapForFillPropertys, std::string childrenName);
+
+  std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
+    nativeStaticFunctions;
+
+protected:
+  std::map<IGameObject::Ptr, std::vector<ActivePexInstance>> gameObjects;
+
+  std::vector<PexScript::Ptr> allLoadedScripts;
+
+private:
+  using RegisteredGameOgject =
+    std::pair<const IGameObject::Ptr, std::vector<ActivePexInstance>>;
 };
