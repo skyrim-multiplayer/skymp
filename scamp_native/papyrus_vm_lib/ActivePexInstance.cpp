@@ -11,7 +11,7 @@ ActivePexInstance::ActivePexInstance()
   this->sourcePex = nullptr;
 }
 
-ActivePexInstance::ActivePexInstance(std::shared_ptr<PexScript> sourcePex,
+ActivePexInstance::ActivePexInstance(PexScript::Ptr sourcePex,
                                      VarForBuildActivePex mapForFillPropertys,
                                      VirtualMachine* parentVM,
                                      VarValue activeInstanceOwner,
@@ -34,29 +34,21 @@ ActivePexInstance::ActivePexInstance(std::shared_ptr<PexScript> sourcePex,
   }
 
   variables = FillVariables(sourcePex, argsForFillPropertys);
+
+  this->_IsValid = true;
 }
 
-std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstanse(
+ActivePexInstance::Ptr ActivePexInstance::FillParentInstanse(
   std::string nameNeedScript, VarValue activeInstanceOwner,
   VarForBuildActivePex mapForFillPropertys)
 {
-  for (auto& baseScript : parentVM->allLoadedScripts) {
-    if (baseScript->source == nameNeedScript) {
-      ActivePexInstance scriptInstance(baseScript, mapForFillPropertys,
-                                       parentVM, activeInstanceOwner,
-                                       this->sourcePex->source);
-      return std::make_shared<ActivePexInstance>(scriptInstance);
-    }
-  }
-
-  if (nameNeedScript != "")
-    throw std::runtime_error("Unable to find parent script '" +
-                             nameNeedScript + "'");
-  return nullptr;
+  return parentVM->CreateActivePexInstance(nameNeedScript, activeInstanceOwner,
+                                           mapForFillPropertys,
+                                           this->sourcePex->source);
 }
 
 std::vector<ObjectTable::Object::VarInfo> ActivePexInstance::FillVariables(
-  std::shared_ptr<PexScript> sourcePex,
+  PexScript::Ptr sourcePex,
   std::vector<std::pair<std::string, VarValue>> argsForFillPropertys)
 {
   std::vector<ObjectTable::Object::VarInfo> result;
@@ -101,7 +93,7 @@ std::vector<ObjectTable::Object::VarInfo> ActivePexInstance::FillVariables(
 }
 
 FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
-                                                  std::string stateName)
+                                                  std::string stateName) const
 {
 
   FunctionInfo function;
@@ -121,7 +113,7 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
   return function;
 }
 
-std::string ActivePexInstance::GetActiveStateName()
+std::string ActivePexInstance::GetActiveStateName() const
 {
   std::string stateName;
 
@@ -136,26 +128,26 @@ std::string ActivePexInstance::GetActiveStateName()
 }
 
 ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
-  ActivePexInstance* scriptInstance, std::string nameProperty, uint8_t flag)
+  const ActivePexInstance& const scriptInstance, std::string nameProperty,
+  uint8_t flag)
 {
+  if (!scriptInstance.IsValid())
+    return nullptr;
 
-  if (scriptInstance != nullptr) {
+  if (flag == ObjectTable::Object::PropInfo::kFlags_Read) {
 
-    if (flag == ObjectTable::Object::PropInfo::kFlags_Read) {
-
-      for (auto& object : scriptInstance->sourcePex->objectTable.m_data) {
-        for (auto& prop : object.properties) {
-          if (prop.name == nameProperty &&
-              (prop.flags & 5) == prop.kFlags_Read) {
-            return &prop;
-          }
+    for (auto& object : scriptInstance.sourcePex->objectTable.m_data) {
+      for (auto& prop : object.properties) {
+        if (prop.name == nameProperty &&
+            (prop.flags & 5) == prop.kFlags_Read) {
+          return &prop;
         }
       }
     }
 
     if (flag == ObjectTable::Object::PropInfo::kFlags_Write) {
 
-      for (auto& object : scriptInstance->sourcePex->objectTable.m_data) {
+      for (auto& object : scriptInstance.sourcePex->objectTable.m_data) {
         for (auto& prop : object.properties) {
           if (prop.name == nameProperty &&
               (prop.flags & 6) == prop.kFlags_Write) {
@@ -169,26 +161,20 @@ ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
   return nullptr;
 }
 
-ActivePexInstance* ActivePexInstance::GetActivePexInObject(
+ActivePexInstance& ActivePexInstance::GetActivePexInObject(
   VarValue* object, std::string& scriptType)
 {
+  return parentVM->GetActivePexInObject(object, scriptType);
+}
 
-  auto itObject = std::find_if(
-    parentVM->gameObjects.begin(), parentVM->gameObjects.end(),
-    [&](std::pair<std::shared_ptr<IGameObject>, std::vector<ActivePexInstance>>
-          i) { return ((IGameObject*)object == i.first.get()); });
-
-  if (itObject != parentVM->gameObjects.end()) {
-
-    for (auto& instance : itObject->second) {
-      if (instance.sourcePex->source == scriptType) {
-        return &instance;
-        break;
-      }
-    }
+const std::string& const ActivePexInstance::GetSoucePexName() const
+{
+  if (!sourcePex) {
+    static const std::string empty = "";
+    return empty;
   }
 
-  return nullptr;
+  return sourcePex->source;
 }
 
 VarValue ActivePexInstance::CastToString(const VarValue& var)
@@ -548,7 +534,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
 
       case OpcodesImplementation::Opcodes::op_CallMethod: {
 
-        IGameObject* object = (IGameObject*)(*opCode[line].second[1]);
+        VarValue* object = opCode[line].second[1];
         std::string functionName = (const char*)(*opCode[line].second[0]);
 
         static const std::string nameOnBeginState = "onBeginState";
@@ -558,21 +544,25 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             functionName == nameOnEndState) {
           parentVM->SendEvent(this, functionName.c_str(), argsForCall);
           break;
+
         } else
+
           *opCode[line].second[2] = parentVM->CallMethod(
-            this, (IGameObject*)object, functionName.c_str(), argsForCall);
+            GetSoucePexName(), object, functionName.c_str(), argsForCall);
       }
 
       break;
 
-      case OpcodesImplementation::Opcodes::op_CallParent:
+      case OpcodesImplementation::Opcodes::op_CallParent: {
+        const std::string& parentName =
+          parentInstance ? parentInstance->GetSoucePexName() : "";
 
         *opCode[line].second[1] = parentVM->CallMethod(
-          parentInstance.get(), (IGameObject*)activeInstanceOwner,
+          parentName, &activeInstanceOwner,
           (const char*)(*opCode[line].second[0]), argsForCall);
 
         break;
-
+      }
       case OpcodesImplementation::Opcodes::op_CallStatic: {
 
         const char* className = (const char*)(*opCode[line].second[0]);
@@ -600,7 +590,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
 
           std::string nameProperty = (const char*)*opCode[line].second[0];
 
-          ActivePexInstance* ptrPex = GetActivePexInObject(
+          auto& ptrPex = GetActivePexInObject(
             opCode[line].second[1], opCode[line].second[1]->objectType);
 
           ObjectTable::Object::PropInfo* runProperty = GetProperty(
@@ -608,7 +598,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
 
           if (runProperty != nullptr) {
             *opCode[line].second[2] =
-              ptrPex->StartFunction(runProperty->readHandler, argsForCall);
+              ptrPex.StartFunction(runProperty->readHandler, argsForCall);
           }
 
         } else
@@ -622,14 +612,14 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
 
           std::string nameProperty = (const char*)*opCode[line].second[0];
 
-          ActivePexInstance* ptrPex = GetActivePexInObject(
+          auto& ptrPex = GetActivePexInObject(
             opCode[line].second[1], opCode[line].second[1]->objectType);
 
           ObjectTable::Object::PropInfo* runProperty = GetProperty(
             ptrPex, nameProperty, ObjectTable::Object::PropInfo::kFlags_Write);
 
           if (runProperty != nullptr) {
-            ptrPex->StartFunction(runProperty->writeHandler, argsForCall);
+            ptrPex.StartFunction(runProperty->writeHandler, argsForCall);
           }
 
         } else
@@ -827,15 +817,15 @@ void ActivePexInstance::CastObjectToObject(
       // Here is the case when i.e. variable with type 'Form' casts to
       // 'ObjectReference' while it's actually an Actor
 
-      auto myScriptPex = std::find_if(
-        parentVM->allLoadedScripts.begin(), parentVM->allLoadedScripts.end(),
-        [&](const std::shared_ptr<PexScript>& pexScript) {
-          return !stricmp(pexScript->source.data(), scriptName.data());
-        });
-      if (myScriptPex == parentVM->allLoadedScripts.end())
+      auto myScriptPex = parentVM->GetPexByName(scriptName);
+
+      if (myScriptPex) {
+
         scriptName.clear();
-      else
-        scriptName = (*myScriptPex)->objectTable.m_data[0].parentClassName;
+
+      } else {
+        scriptName = myScriptPex->objectTable.m_data[0].parentClassName;
+      }
     }
   }
 
@@ -906,7 +896,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(
     }
   }
 
-  auto at = parentVM->nativeFunctions.find(this->sourcePex->source);
+  auto at = parentVM->nativeFunctions.find(GetSoucePexName());
 
   if (at != parentVM->nativeFunctions.end()) {
     for (auto& func : at->second) {
