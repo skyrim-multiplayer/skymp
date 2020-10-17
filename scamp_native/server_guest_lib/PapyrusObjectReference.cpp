@@ -57,3 +57,9 @@ VarValue PapyrusObjectReference::AddItem(
 
   return VarValue::None();
 }
+
+VarValue PapyrusObjectReference::GetItemCount(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  return VarValue(0);
+}

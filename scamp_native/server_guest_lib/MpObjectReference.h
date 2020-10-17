@@ -20,7 +20,7 @@
 struct LocationalData
 {
   NiPoint3 pos, rot;
-  uint32_t cellOrWorld;
+  uint32_t cellOrWorld = 0;
 };
 
 struct GridPosInfo
