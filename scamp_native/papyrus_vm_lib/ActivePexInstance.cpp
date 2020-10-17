@@ -128,7 +128,7 @@ std::string ActivePexInstance::GetActiveStateName() const
 }
 
 ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
-  const ActivePexInstance& const scriptInstance, std::string nameProperty,
+  const ActivePexInstance& scriptInstance, std::string nameProperty,
   uint8_t flag)
 {
   if (!scriptInstance.IsValid())
@@ -167,7 +167,7 @@ ActivePexInstance& ActivePexInstance::GetActivePexInObject(
   return parentVM->GetActivePexInObject(object, scriptType);
 }
 
-const std::string& const ActivePexInstance::GetSoucePexName() const
+const std::string& ActivePexInstance::GetSourcePexName() const
 {
   if (!sourcePex) {
     static const std::string empty = "";
@@ -548,14 +548,14 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
         } else
 
           *opCode[line].second[2] = parentVM->CallMethod(
-            GetSoucePexName(), object, functionName.c_str(), argsForCall);
+            GetSourcePexName(), object, functionName.c_str(), argsForCall);
       }
 
       break;
 
       case OpcodesImplementation::Opcodes::op_CallParent: {
         const std::string& parentName =
-          parentInstance ? parentInstance->GetSoucePexName() : "";
+          parentInstance ? parentInstance->GetSourcePexName() : "";
 
         *opCode[line].second[1] = parentVM->CallMethod(
           parentName, &activeInstanceOwner,
@@ -806,8 +806,10 @@ void ActivePexInstance::CastObjectToObject(
   if (object) {
     std::string scriptName = object->GetParentNativeScript();
     while (1) {
-      if (scriptName.empty())
+      if (scriptName.empty()) {
         break;
+      }
+
       if (!stricmp(resultTypeName.data(), scriptName.data())) {
         *result = *scriptToCastOwner;
         return;
@@ -819,13 +821,11 @@ void ActivePexInstance::CastObjectToObject(
 
       auto myScriptPex = parentVM->GetPexByName(scriptName);
 
-      if (myScriptPex) {
-
-        scriptName.clear();
-
-      } else {
-        scriptName = myScriptPex->objectTable.m_data[0].parentClassName;
+      if (!myScriptPex) {
+        break;
       }
+
+      scriptName = myScriptPex->objectTable.m_data[0].parentClassName;
     }
   }
 
@@ -896,42 +896,33 @@ VarValue& ActivePexInstance::GetVariableValueByName(
     }
   }
 
-  auto at = parentVM->nativeFunctions.find(GetSoucePexName());
+  if (parentVM->IsNativeFunctionByNameExisted(GetSourcePexName())) {
 
-  if (at != parentVM->nativeFunctions.end()) {
-    for (auto& func : at->second) {
-      if (func.first == name) {
-        identifiersValueNameCache.push_back(
-          std::make_shared<VarValue>(func.first.c_str()));
-        return *identifiersValueNameCache[(identifiersValueNameCache.size() -
-                                           1)];
-      }
-    }
-  }
+    VarValue::Ptr functionName =
+      std::make_shared<VarValue>((new std::string(name))->c_str());
 
-  auto it = parentVM->nativeStaticFunctions.find(name);
-
-  if (it != parentVM->nativeStaticFunctions.end()) {
-    identifiersValueNameCache.push_back(
-      std::make_shared<VarValue>(it->first.c_str()));
-    return *identifiersValueNameCache[(identifiersValueNameCache.size() - 1)];
+    identifiersValueNameCache.push_back(functionName);
+    return *functionName;
   }
 
   for (auto& _string : sourcePex->stringTable.m_data) {
     if (_string == name) {
-      identifiersValueNameCache.push_back(
-        std::make_shared<VarValue>(_string.c_str()));
-      return *identifiersValueNameCache[(identifiersValueNameCache.size() -
-                                         1)];
+      VarValue::Ptr stringTableValue =
+        std::make_shared<VarValue>((new std::string(name))->c_str());
+
+      identifiersValueNameCache.push_back(stringTableValue);
+      return *stringTableValue;
     }
   }
 
   for (auto& _string : parentInstance->sourcePex->stringTable.m_data) {
     if (_string == name) {
-      identifiersValueNameCache.push_back(
-        std::make_shared<VarValue>(_string.c_str()));
-      return *identifiersValueNameCache[(identifiersValueNameCache.size() -
-                                         1)];
+
+      VarValue::Ptr stringTableParentValue =
+        std::make_shared<VarValue>((new std::string(name))->c_str());
+
+      identifiersValueNameCache.push_back(stringTableParentValue);
+      return *stringTableParentValue;
     }
   }
 

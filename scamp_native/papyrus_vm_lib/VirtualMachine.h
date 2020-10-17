@@ -39,15 +39,16 @@ public:
     const std::string& pexScriptName, VarValue activeInstanceOwner,
     VarForBuildActivePex mapForFillPropertys, std::string childrenName);
 
-  std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
-    nativeStaticFunctions;
-
-protected:
-  std::map<IGameObject::Ptr, std::vector<ActivePexInstance>> gameObjects;
-
-  std::vector<PexScript::Ptr> allLoadedScripts;
+  bool IsNativeFunctionByNameExisted(const std::string& name) const;
 
 private:
   using RegisteredGameOgject =
     std::pair<const IGameObject::Ptr, std::vector<ActivePexInstance>>;
+
+ std::map<IGameObject::Ptr, std::vector<ActivePexInstance>> gameObjects;
+
+  std::vector<PexScript::Ptr> allLoadedScripts;
+
+  std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
+    nativeStaticFunctions;
 };

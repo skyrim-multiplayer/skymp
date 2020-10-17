@@ -86,16 +86,16 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
 
   auto& activeSctipt = GetActivePexInObject(self, activeInstanceName);
 
-  if (!activeSctipt.IsValid()) {
+  if (!activeSctipt.IsValid() || !self) {
 
     std::string error =
-      "activeScript: " + activeSctipt.GetSoucePexName() + " not valid!";
+      "ActiveScript or self not valid!";
 
     throw std::runtime_error(error);
   }
 
   ActivePexInstance::Ptr currentParent = activeSctipt.GetParentInstance();
-  std::string className = activeSctipt.GetSoucePexName();
+  std::string className = activeSctipt.GetSourcePexName();
 
   do {
 
@@ -103,14 +103,14 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
 
     if (!function && currentParent->IsValid()) {
 
-      className = currentParent->GetSoucePexName();
+      className = currentParent->GetSourcePexName();
       currentParent = currentParent->GetParentInstance();
     }
 
   } while (!function && currentParent->IsValid());
 
   if (function)
-    return function(VarValue(self), arguments);
+    return function(*self, arguments);
 
   FunctionInfo functionInfo;
 
@@ -127,7 +127,7 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
     return activeSctipt.StartFunction(functionInfo, arguments);
   }
 
-  std::string name = "Method not found - '" + activeSctipt.GetSoucePexName() +
+  std::string name = "Method not found - '" + activeSctipt.GetSourcePexName() +
     "." + std::string(methodName) + "'";
 
   throw std::runtime_error(name);
@@ -187,10 +187,11 @@ ActivePexInstance& VirtualMachine::GetActivePexInObject(
   auto it = std::find_if(gameObjects.begin(), gameObjects.end(),
                          [&](RegisteredGameOgject& _object) {
                            for (auto& instance : _object.second) {
-                             if (instance.GetSoucePexName() == scriptType) {
+                             if (instance.GetSourcePexName() == scriptType) {
                                return true;
                              }
                            }
+                           return false;
                          });
 
   if (it == gameObjects.end()) {
@@ -198,7 +199,7 @@ ActivePexInstance& VirtualMachine::GetActivePexInObject(
   }
 
   for (auto& instance : it->second) {
-    if (instance.GetSoucePexName() == scriptType) {
+    if (instance.GetSourcePexName() == scriptType) {
       return instance;
     }
   }
@@ -239,6 +240,23 @@ ActivePexInstance::Ptr VirtualMachine::CreateActivePexInstance(
     throw std::runtime_error("Unable to find script '" + pexScriptName + "'");
 
   return notValidInstance;
+}
+
+bool VirtualMachine::IsNativeFunctionByNameExisted(
+  const std::string& name) const
+{
+  for (auto& staticFunction : nativeStaticFunctions) {
+    if (staticFunction.first == name)
+      return true;
+  }
+
+  for (auto& metod : nativeFunctions) {
+    for (auto& func : metod.second)
+      if (func.first == name)
+        return true;
+  }
+   
+  return false;
 }
 
 void VirtualMachine::RemoveObject(IGameObject::Ptr self)

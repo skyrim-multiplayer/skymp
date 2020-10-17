@@ -390,7 +390,7 @@ public:
   ActivePexInstance& GetActivePexInObject(VarValue* object,
                                           std::string& scriptType);
 
-  const std::string& const GetSoucePexName() const;
+  const std::string& GetSourcePexName() const;
 
   const ActivePexInstance::Ptr GetParentInstance() const
   {
@@ -399,7 +399,7 @@ public:
 
 private:
   ObjectTable::Object::PropInfo* GetProperty(
-    const ActivePexInstance& const scriptInstance, std::string nameProperty,
+    const ActivePexInstance& scriptInstance, std::string nameProperty,
     uint8_t flag);
 
   std::vector<ObjectTable::Object::VarInfo> FillVariables(
