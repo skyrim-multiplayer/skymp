@@ -1,4 +1,5 @@
 #include "VirtualMachine.h"
+#include "Utils.h"
 #include <algorithm>
 #include <stdexcept>
 
@@ -88,8 +89,7 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
 
   if (!activeSctipt.IsValid() || !self) {
 
-    std::string error =
-      "ActiveScript or self not valid!";
+    std::string error = "ActiveScript or self not valid!";
 
     throw std::runtime_error(error);
   }
@@ -154,7 +154,7 @@ VarValue VirtualMachine::CallStatic(std::string className,
   auto it =
     std::find_if(this->allLoadedScripts.begin(), this->allLoadedScripts.end(),
                  [&](std::shared_ptr<PexScript> a) -> bool {
-                   return !stricmp(a->source.data(), className.data());
+                   return !Utils::stricmp(a->source.data(), className.data());
                  });
 
   if (it == this->allLoadedScripts.end())
@@ -209,11 +209,11 @@ ActivePexInstance& VirtualMachine::GetActivePexInObject(
 
 PexScript::Ptr VirtualMachine::GetPexByName(const std::string& name)
 {
-  auto myScriptPex =
-    std::find_if(allLoadedScripts.begin(), allLoadedScripts.end(),
-                 [&](const std::shared_ptr<PexScript>& pexScript) {
-                   return !stricmp(pexScript->source.data(), name.data());
-                 });
+  auto myScriptPex = std::find_if(
+    allLoadedScripts.begin(), allLoadedScripts.end(),
+    [&](const std::shared_ptr<PexScript>& pexScript) {
+      return !Utils::stricmp(pexScript->source.data(), name.data());
+    });
 
   if (myScriptPex == allLoadedScripts.end())
     return nullptr;

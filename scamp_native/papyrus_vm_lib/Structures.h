@@ -3,6 +3,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -81,7 +82,7 @@ public:
   explicit VarValue(float value);
   explicit VarValue(bool value);
 
-  VarValue::VarValue(uint8_t type, const char* value);
+  VarValue(uint8_t type, const char* value);
 
   static VarValue None() { return VarValue(); }
 

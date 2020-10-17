@@ -43,24 +43,17 @@ VarValue PapyrusObjectReference::Delete(VarValue self,
 VarValue PapyrusObjectReference::AddItem(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  printf("ENTER AddItem\n");
-
   if (arguments.size() < 2)
     return VarValue::None();
   auto item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
 
-  printf("AddItem selfRefr=%p itemRec=%p count=%d\n", selfRefr, item.rec,
-         count);
-
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
   auto itemId = item.ToGlobalId(item.rec->GetId());
   selfRefr->AddItem(itemId, count);
-
-  printf("EXIT AddItem\n");
 
   return VarValue::None();
 }

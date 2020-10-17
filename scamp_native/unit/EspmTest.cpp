@@ -156,12 +156,4 @@ TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
             espm::Property::Object("TrapDiseaseRattles", 0x10a24e),
             espm::Property::Object("TrapDiseaseRockjoint", 0x10a24f),
             espm::Property::Object("TrapDiseaseWitbane", 0x10a250) });
-
-  /*REQUIRE(data.scriptData.scripts[0].scriptName == "sovngardestatuescript");
-  REQUIRE(data.scriptData.scripts[0].properties.size() == 1);
-  REQUIRE(data.scriptData.scripts[0].properties[0].propertyName == "MQ305");
-  REQUIRE(data.scriptData.scripts[0].properties[0].propertyType ==
-          espm::PropertyType::Object);
-  REQUIRE(data.scriptData.scripts[0].properties[0].status == 1);
-  REQUIRE(data.scriptData.scripts[0].properties[0].value.formId == 0x46ef2);*/
 }

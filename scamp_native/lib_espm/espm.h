@@ -4,6 +4,7 @@
 #include <cstring> // memcmp
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <string>
 #include <tuple>
@@ -538,8 +539,7 @@ struct Property
 
   friend bool operator==(const Property& lhs, const Property& rhs)
   {
-    bool equal = lhs.ToTuple() == rhs.ToTuple();
-    return equal;
+    return lhs.ToTuple() == rhs.ToTuple();
   }
 
   friend bool operator!=(const Property& lhs, const Property& rhs)

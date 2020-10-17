@@ -1,4 +1,5 @@
 #include "OpcodesImplementation.h"
+#include "Utils.h"
 #include "VirtualMachine.h"
 #include <algorithm>
 #include <cctype> // tolower
@@ -101,7 +102,7 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
     for (auto& state : object.states) {
       if (state.name == stateName) {
         for (auto& func : state.functions) {
-          if (!stricmp(func.name.data(), name)) {
+          if (!Utils::stricmp(func.name.data(), name)) {
             function = func.function;
             function.valid = true;
             return function;
@@ -810,7 +811,7 @@ void ActivePexInstance::CastObjectToObject(
         break;
       }
 
-      if (!stricmp(resultTypeName.data(), scriptName.data())) {
+      if (!Utils::stricmp(resultTypeName.data(), scriptName.data())) {
         *result = *scriptToCastOwner;
         return;
       }
