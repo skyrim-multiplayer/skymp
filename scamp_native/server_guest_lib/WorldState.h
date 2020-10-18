@@ -59,6 +59,9 @@ public:
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
+  void SendPapyrusEvent(MpForm* form, const char* eventName,
+                        const VarValue* arguments, size_t argumentsCount);
+
   template <class F>
   F& GetFormAt(uint32_t formId)
   {

@@ -11,9 +11,11 @@ MpFormGameObject::MpFormGameObject(MpForm* form_)
 
 MpForm* MpFormGameObject::GetFormPtr() const noexcept
 {
-  bool formStillValid = parent->LookupFormById(formId).get() == form;
-  if (!formStillValid)
-    return nullptr;
+  if (parent) {
+    bool formStillValid = parent->LookupFormById(formId).get() == form;
+    if (!formStillValid)
+      return nullptr;
+  }
   return form;
 }
 

@@ -18,8 +18,9 @@ VarValue PapyrusDebug::Notification(VarValue self,
     std::stringstream ss;
     ss << '[' << nlohmann::json(str).dump() << ']';
     auto s = ss.str();
-    SpSnippet("Debug", "Notification", s.data())
-      .Send(compatibilityPolicy->GetDefaultActor());
+
+    if (auto actor = compatibilityPolicy->GetDefaultActor())
+      SpSnippet("Debug", "Notification", s.data()).Send(actor);
   }
 
   return VarValue::None();

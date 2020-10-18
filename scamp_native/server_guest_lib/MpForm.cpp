@@ -21,8 +21,7 @@ void MpForm::Update()
 void MpForm::SendPapyrusEvent(const char* eventName, const VarValue* arguments,
                               size_t argumentsCount)
 {
-  GetParent()->GetPapyrusVm().SendEvent(
-    ToGameObject(), eventName, { arguments, arguments + argumentsCount });
+  GetParent()->SendPapyrusEvent(this, eventName, arguments, argumentsCount);
 }
 
 VarValue MpForm::ToVarValue() const

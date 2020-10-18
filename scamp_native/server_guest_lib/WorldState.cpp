@@ -1,4 +1,5 @@
 #include "WorldState.h"
+#include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
@@ -29,6 +30,7 @@ struct WorldState::Impl
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
   std::deque<SingleUpdateEntry> singleUpdates;
+  HeuristicPolicy policy;
 };
 
 WorldState::WorldState()
@@ -221,6 +223,16 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
     return g_null;
   }
   return it->second;
+}
+
+void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
+                                  const VarValue* arguments,
+                                  size_t argumentsCount)
+{
+  pImpl->policy.BeforeSendPapyrusEvent(form, eventName, arguments,
+                                       argumentsCount);
+  return GetPapyrusVm().SendEvent(form->ToGameObject(), eventName,
+                                  { arguments, arguments + argumentsCount });
 }
 
 espm::Loader& WorldState::GetEspm() const

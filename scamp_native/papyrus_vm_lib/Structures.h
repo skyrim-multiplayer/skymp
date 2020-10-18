@@ -107,11 +107,13 @@ public:
 
   VarValue& operator=(const VarValue& argument2);
 
-  bool operator==(const VarValue& argument2);
-  bool operator>(const VarValue& argument2);
-  bool operator>=(const VarValue& argument2);
-  bool operator<(const VarValue& argument2);
-  bool operator<=(const VarValue& argument2);
+  bool operator==(const VarValue& argument2) const;
+  bool operator>(const VarValue& argument2) const;
+  bool operator>=(const VarValue& argument2) const;
+  bool operator<(const VarValue& argument2) const;
+  bool operator<=(const VarValue& argument2) const;
+
+  friend std::ostream& operator<<(std::ostream& os, const VarValue& varValue);
 
   VarValue CastToInt() const;
   VarValue CastToFloat() const;
