@@ -4,6 +4,7 @@
 #include "MpChangeForms.h"
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
+#include "PapyrusForm.h"
 #include "PapyrusGame.h"
 #include "PapyrusObjectReference.h"
 #include "Reader.h"
@@ -269,8 +270,13 @@ VirtualMachine& WorldState::GetPapyrusVm()
 
     if (!pexStructures.empty()) {
       pImpl->vm.reset(new VirtualMachine(pexStructures));
-      PapyrusObjectReference::Register(*pImpl->vm);
-      PapyrusGame::Register(*pImpl->vm);
+
+      std::vector<IPapyrusClassBase*> classes;
+      classes.emplace_back(new PapyrusObjectReference);
+      classes.emplace_back(new PapyrusGame);
+      classes.emplace_back(new PapyrusForm);
+      for (auto cl : classes)
+        cl->Register(*pImpl->vm, nullptr);
     }
   }
   return *pImpl->vm;

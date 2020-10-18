@@ -1,11 +1,11 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
-#include "PapyrusGame.h"
+#include "PapyrusForm.h"
 
 using namespace std::chrono_literals;
 
-TEST_CASE("RegisterForSingleUpdate", "[Papyrus][Game]")
+TEST_CASE("RegisterForSingleUpdate", "[Papyrus][Form]")
 {
   class CustomForm : public MpForm
   {
@@ -20,7 +20,8 @@ TEST_CASE("RegisterForSingleUpdate", "[Papyrus][Game]")
 
   auto& form = p.worldState.GetFormAt<CustomForm>(0xff000000);
 
-  PapyrusGame::RegisterForSingleUpdate(form.ToVarValue(), { VarValue(0.05f) });
+  PapyrusForm().RegisterForSingleUpdate(form.ToVarValue(),
+                                        { VarValue(0.05f) });
   REQUIRE(form.counter == 0);
   p.worldState.TickTimers();
   REQUIRE(form.counter == 0);
@@ -45,7 +46,7 @@ TEST_CASE("RegisterForSingleUpdate", "[Papyrus][Game]")
 }
 
 TEST_CASE("RegisterForSingleUpdate triggers Papyrus OnUpdate event",
-          "[Papyrus][Game]")
+          "[Papyrus][Form]")
 {
   class CustomForm : public MpForm
   {
@@ -64,13 +65,13 @@ TEST_CASE("RegisterForSingleUpdate triggers Papyrus OnUpdate event",
   p.worldState.AddForm(std::make_unique<CustomForm>(), 0xff000000);
 
   auto& form = p.worldState.GetFormAt<CustomForm>(0xff000000);
-  PapyrusGame::RegisterForSingleUpdate(form.ToVarValue(), { VarValue(0.f) });
+  PapyrusForm().RegisterForSingleUpdate(form.ToVarValue(), { VarValue(0.f) });
 
   p.worldState.TickTimers();
   REQUIRE(form.sent);
 }
 
-TEST_CASE("RegisterForSingleUpdate order", "[Papyrus][Game]")
+TEST_CASE("RegisterForSingleUpdate order", "[Papyrus][Form]")
 {
   class OrderCountingForm : public MpForm
   {
@@ -89,16 +90,16 @@ TEST_CASE("RegisterForSingleUpdate order", "[Papyrus][Game]")
     p.worldState.AddForm(std::make_unique<OrderCountingForm>(), id);
 
   auto& form0 = p.worldState.GetFormAt<OrderCountingForm>(0xff000000);
-  PapyrusGame::RegisterForSingleUpdate(form0.ToVarValue(),
-                                       { VarValue(0.010f) });
+  PapyrusForm().RegisterForSingleUpdate(form0.ToVarValue(),
+                                        { VarValue(0.010f) });
 
   auto& form2 = p.worldState.GetFormAt<OrderCountingForm>(0xff000002);
-  PapyrusGame::RegisterForSingleUpdate(form2.ToVarValue(),
-                                       { VarValue(0.012f) });
+  PapyrusForm().RegisterForSingleUpdate(form2.ToVarValue(),
+                                        { VarValue(0.012f) });
 
   auto& form1 = p.worldState.GetFormAt<OrderCountingForm>(0xff000001);
-  PapyrusGame::RegisterForSingleUpdate(form1.ToVarValue(),
-                                       { VarValue(0.011f) });
+  PapyrusForm().RegisterForSingleUpdate(form1.ToVarValue(),
+                                        { VarValue(0.011f) });
 
   std::this_thread::sleep_for(12ms * 2);
   p.worldState.TickTimers();

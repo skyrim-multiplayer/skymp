@@ -1,4 +1,5 @@
 #pragma once
+#include "IPapyrusCompatibilityPolicy.h"
 #include "MpActor.h"
 #include "MsgType.h"
 #include "PartOne.h"
@@ -145,4 +146,19 @@ public:
 
   std::vector<Message> messages;
 };
+
+class PapyrusCompatibilityPolicy : public IPapyrusCompatibilityPolicy
+{
+public:
+  PapyrusCompatibilityPolicy(MpActor* ac_)
+    : ac(ac_)
+  {
+  }
+
+  MpActor* GetDefaultActor() const override { return ac; }
+
+private:
+  MpActor* const ac;
+};
+
 }

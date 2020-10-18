@@ -1,18 +1,16 @@
 #pragma once
-#include "VirtualMachine.h"
-#include <vector>
+#include "IPapyrusClass.h"
 
-namespace PapyrusGame {
-VarValue IncrementStat(VarValue self, const std::vector<VarValue>& arguments);
-VarValue RegisterForSingleUpdate(VarValue self,
-                                 const std::vector<VarValue>& arguments);
-
-inline void Register(VirtualMachine& vm)
+class PapyrusGame : public IPapyrusClass<PapyrusGame>
 {
-  vm.RegisterFunction("game", "IncrementStat", FunctionType::GlobalFunction,
-                      IncrementStat);
-  vm.RegisterFunction("game", "RegisterForSingleUpdate",
-                      FunctionType::GlobalFunction, RegisterForSingleUpdate);
-}
+  const char* GetName() override { return "game"; }
 
-}
+  VarValue IncrementStat(VarValue self,
+                         const std::vector<VarValue>& arguments);
+
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy>) override
+  {
+    AddStatic(vm, "IncrementStat", &PapyrusGame::IncrementStat);
+  }
+};

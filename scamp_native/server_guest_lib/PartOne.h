@@ -30,6 +30,7 @@ public:
   bool IsConnected(Networking::UserId userId) const;
   void Tick();
   void EnableProductionHacks();
+  FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
 
   // API
   void CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
@@ -63,8 +64,6 @@ private:
     User,
     Bot
   };
-
-  FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
 
   void AddUser(Networking::UserId userId, UserType userType);
 

@@ -59,10 +59,8 @@ public:
   virtual void Tick(OnPacket onPacket, void* state) = 0;
 };
 
-template <class... Ts>
-inline void SendFormatted(Networking::ISendTarget* sendTarget,
-                          Networking::UserId userId, const char* format,
-                          Ts... args)
+template <class FormatCallback, class... Ts>
+inline void Format(const FormatCallback& cb, const char* format, Ts... args)
 {
   auto textSize = (size_t)snprintf(nullptr, 0, format, args...);
 
@@ -72,8 +70,16 @@ inline void SendFormatted(Networking::ISendTarget* sendTarget,
   buf[0] = MinPacketId;
   auto len = (size_t)snprintf(buf.data() + 1, n - 1, format, args...);
 
-  sendTarget->Send(userId,
-                   reinterpret_cast<Networking::PacketData>(buf.data()),
-                   len + 1, true);
+  cb(reinterpret_cast<Networking::PacketData>(buf.data()), len + 1);
+}
+
+template <class... Ts>
+inline void SendFormatted(Networking::ISendTarget* sendTarget,
+                          Networking::UserId userId, const char* format,
+                          Ts... args)
+{
+  Format([&](Networking::PacketData data,
+             size_t length) { sendTarget->Send(userId, data, length, true); },
+         format, args...);
 }
 }
