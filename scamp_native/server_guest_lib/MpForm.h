@@ -1,17 +1,23 @@
 #pragma once
 #include "NiPoint3.h"
 #include <cstdint>
+#include <memory>
 #include <string.h>
 #include <typeinfo>
 
 class WorldState;
+class VarValue;
+class IGameObject;
 
 class MpForm
 {
   friend class WorldState;
 
 public:
+  MpForm();
+
   static const char* Type() { return "Form"; }
+  virtual const char* GetFormType() const { return "Form"; }
 
   auto GetParent() const { return parent; }
 
@@ -26,6 +32,9 @@ public:
     return name + 2;
 #endif
   }
+
+  VarValue ToVarValue() const;
+  std::shared_ptr<IGameObject> ToGameObject() const;
 
   template <class F>
   static const char* GetFormType()
@@ -42,7 +51,6 @@ public:
 
   auto GetFormId() const noexcept { return id; }
 
-  MpForm() = default;
   MpForm(const MpForm&) = delete;
   MpForm& operator=(const MpForm&) = delete;
 
@@ -55,8 +63,11 @@ protected:
   };
 
 private:
+  using GameObjectPtr = std::shared_ptr<IGameObject>;
+
   uint32_t id = 0;
   WorldState* parent = nullptr;
+  mutable GameObjectPtr gameObject;
 
 protected:
   virtual void BeforeDestroy(){};

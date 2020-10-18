@@ -10,6 +10,7 @@ class MpActor : public MpObjectReference
 {
 public:
   static const char* Type() { return "Actor"; }
+  const char* GetFormType() const override { return "Actor"; }
 
   MpActor(const LocationalData& locationalData_,
           const FormCallbacks& calbacks_, uint32_t optBaseId = 0);

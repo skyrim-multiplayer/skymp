@@ -1,6 +1,24 @@
+#include "ScriptStorage.h"
 #include "TestUtils.hpp"
 
 extern espm::Loader l;
+
+// Actually, there are a few utils
+espm::CompressedFieldsCache g_dummyCache;
+FakeSendTarget g_tgt;
+PartOne& GetPartOne()
+{
+  static std::unique_ptr<PartOne> g_partOne;
+  if (!g_partOne) {
+    g_partOne.reset(new PartOne);
+    g_partOne->worldState.AttachScriptStorage(
+      std::make_shared<DirectoryScriptStorage>(TEST_PEX_DIR));
+    g_partOne->AttachEspm(&l, &g_tgt);
+    g_partOne->pushedSendTarget = &g_tgt;
+  }
+  return *g_partOne;
+}
+
 constexpr auto barrelInWhiterun = 0x4cc2d;
 
 TEST_CASE("Activate without espm attached", "[PartOne]")
@@ -14,22 +32,6 @@ TEST_CASE("Activate without espm attached", "[PartOne]")
       nlohmann::json{ { "t", MsgType::Activate },
                       { "data", { { "caster", 0x15 }, { "target", 0 } } } }),
     Contains("No loaded esm or esp files are found"));
-}
-
-namespace {
-static espm::CompressedFieldsCache g_dummyCache;
-static FakeSendTarget g_tgt;
-
-static PartOne& GetPartOne()
-{
-  static std::unique_ptr<PartOne> g_partOne;
-  if (!g_partOne) {
-    g_partOne.reset(new PartOne);
-    g_partOne->AttachEspm(&l, &g_tgt);
-    g_partOne->pushedSendTarget = &g_tgt;
-  }
-  return *g_partOne;
-}
 }
 
 TEST_CASE("Activate without Actor attached", "[PartOne]")

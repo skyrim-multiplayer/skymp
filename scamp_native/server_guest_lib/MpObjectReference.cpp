@@ -1,8 +1,14 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
+#include "EspmGameObject.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
+#include "PapyrusGame.h"
+#include "PapyrusObjectReference.h"
+#include "Reader.h"
+#include "ScriptStorage.h"
+#include "VirtualMachine.h"
 #include "WorldState.h"
 #include <MsgType.h>
 
@@ -43,6 +49,13 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 {
   return { int16_t(pos.x / 4096), int16_t(pos.y / 4096) };
 }
+
+struct ScriptsState
+{
+  std::map<uint32_t, std::shared_ptr<EspmGameObject>> espmObjectsHolder;
+  std::map<std::string, std::shared_ptr<std::string>> propStringValues;
+};
+
 }
 
 struct MpObjectReference::Impl : public ChangeFormGuard<MpChangeFormREFR>
@@ -52,6 +65,10 @@ public:
     : ChangeFormGuard(changeForm_, self_)
   {
   }
+
+  std::unique_ptr<ScriptsState> scriptsState;
+
+  bool HasScripts() const noexcept { return !!scriptsState; }
 };
 
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
@@ -285,6 +302,12 @@ void MpObjectReference::Activate(MpActor& activationSource)
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
     }
+  }
+
+  if (pImpl->HasScripts()) {
+    std::vector<VarValue> activateArguments{ activationSource.ToVarValue() };
+    GetParent()->GetPapyrusVm().SendEvent(ToGameObject(), "OnActivate",
+                                          activateArguments);
   }
 }
 
@@ -533,6 +556,91 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
     mode);
+
+  InitScripts();
+}
+
+void MpObjectReference::CastProperty(const espm::CombineBrowser& br,
+                                     const espm::Property& prop, VarValue* out)
+{
+  switch (prop.propertyType) {
+    case espm::PropertyType::Object: {
+      auto& gameObject =
+        pImpl->scriptsState->espmObjectsHolder[prop.value.formId];
+      if (!gameObject)
+        gameObject.reset(new EspmGameObject(br.LookupById(prop.value.formId)));
+      *out = VarValue(gameObject.get());
+      break;
+    }
+    case espm::PropertyType::String: {
+      std::string str(prop.value.str.data, prop.value.str.length);
+      auto& stringPtr = pImpl->scriptsState->propStringValues[str];
+      if (!stringPtr)
+        stringPtr.reset(new std::string(str));
+      *out = VarValue(stringPtr->data());
+      break;
+    }
+    case espm::PropertyType::Int:
+      *out = VarValue(prop.value.integer);
+      break;
+    case espm::PropertyType::Float:
+      *out = VarValue(prop.value.floatingPoint);
+      break;
+    case espm::PropertyType::Bool:
+      *out = VarValue(prop.value.boolean);
+      break;
+  }
+}
+
+void MpObjectReference::BuildScriptProperties(
+  const espm::CombineBrowser& br, const espm::ScriptData& scriptData,
+  PropertyValuesMap* out)
+{
+  PropertyValuesMap res;
+  for (auto& entry : scriptData.scripts) {
+    auto& resultProps = res.data[entry.scriptName];
+    for (auto& prop : entry.properties) {
+      VarValue value;
+      CastProperty(br, prop, &value);
+      resultProps.push_back({ prop.propertyName, value });
+    }
+  }
+  *out = res;
+}
+
+void MpObjectReference::InitScripts()
+{
+  auto baseId = GetBaseId();
+  if (!baseId || !GetParent()->espm)
+    return;
+
+  auto& br = GetParent()->espm->GetBrowser();
+  auto base = br.LookupById(baseId);
+  if (!base.rec)
+    return;
+
+  auto scriptStorage = GetParent()->GetScriptStorage();
+  if (!scriptStorage)
+    return;
+
+  std::vector<std::string> scriptNames;
+  espm::ScriptData scriptData;
+  base.rec->GetScriptData(&scriptData);
+  for (auto& script : scriptData.scripts) {
+    if (GetParent()->GetScriptStorage()->ListScripts().count(
+          script.scriptName))
+      scriptNames.push_back(script.scriptName);
+  }
+
+  if (!scriptNames.empty()) {
+    pImpl->scriptsState.reset(new ScriptsState);
+
+    PropertyValuesMap props;
+    BuildScriptProperties(GetParent()->GetEspm().GetBrowser(), scriptData,
+                          &props);
+
+    GetParent()->GetPapyrusVm().AddObject(ToGameObject(), scriptNames, props);
+  }
 }
 
 void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)

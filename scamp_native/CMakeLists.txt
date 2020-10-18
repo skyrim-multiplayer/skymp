@@ -80,6 +80,10 @@ target_link_libraries(unit PRIVATE server_guest_lib)
 target_include_directories(unit PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/mp_common")
 apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
+target_compile_definitions(unit PRIVATE
+  TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
+  BUILT_PEX_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/pex\"
+)
 
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/mp_common/*" "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(mp_common STATIC ${src})
@@ -97,7 +101,7 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC mp_common espm)
+target_link_libraries(server_guest_lib PUBLIC mp_common espm papyrus-vm-lib)
 if (WIN32)
   file(COPY
     ${CMAKE_SOURCE_DIR}/cmake/ctest.bat
@@ -107,6 +111,21 @@ if (WIN32)
   file(APPEND ${CMAKE_BINARY_DIR}/before_ctest.cmake
     "\n\n# This file was copied from cmake/before_ctest.cmake, do not modify"
   )
+endif()
+
+file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib/*" "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(papyrus-vm-lib STATIC ${src})
+apply_default_settings(TARGETS papyrus-vm-lib)
+target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib")
+if (UNIX)
+  target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
+endif()
+
+if (NOT SKYRIM_DIR)
+  message(WARNING "SKYRIM_DIR is not specified, Papyrus sources will not be built")
+else()
+  include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library.cmake)
+  add_papyrus_library(NAME papyrus_test_files DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/tests_unit.cmake)
