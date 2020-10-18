@@ -15,7 +15,13 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
   std::vector<std::string> allPath;
   std::vector<fs::path> pexFiles;
 
-  const fs::path pathTo = fs::current_path();
+  if (!std::filesystem::exists(BUILT_PEX_DIR)) {
+    std::cerr
+      << "It seems this machine didn't compile .psc files. Skipping the test"
+      << std::endl;
+    return;
+  }
+
   fs::directory_iterator begin(BUILT_PEX_DIR);
   fs::directory_iterator end;
 
