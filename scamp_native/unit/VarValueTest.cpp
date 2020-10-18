@@ -1,10 +1,11 @@
-#pragma once
-#define CATCH_CONFIG_RUNNER
-#include "Reader.h"
-#include "VirtualMachine.h"
+#include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
-TEST_CASE("test bool operators (<, <=, >, >=)", "[vm]")
+#include "Structures.h"
+#include <cstdint>
+#include <stdexcept>
+
+TEST_CASE("test bool operators (<, <=, >, >=)", "[VarValue]")
 {
   VarValue bool1(false);
   VarValue bool2(true);
@@ -14,9 +15,8 @@ TEST_CASE("test bool operators (<, <=, >, >=)", "[vm]")
   REQUIRE(bool(bool2 >= bool1));
 }
 
-TEST_CASE("VarValue Identifier", "[vm]")
+TEST_CASE("VarValue Identifier", "[VarValue]")
 {
-
   VarValue IdentifierConstructor = VarValue(uint8_t(1));
   VarValue Identifier = VarValue(uint8_t(1), "kType_Identifier");
   std::string err = "";
@@ -54,7 +54,7 @@ TEST_CASE("VarValue Identifier", "[vm]")
   err = "";
 }
 
-TEST_CASE("VarValue with nonexistent Type", "[vm]")
+TEST_CASE("VarValue with nonexistent Type", "[VarValue]")
 {
   std::string err = "";
 
@@ -67,7 +67,7 @@ TEST_CASE("VarValue with nonexistent Type", "[vm]")
   err = "";
 }
 
-TEST_CASE("wrong types", "[vm]")
+TEST_CASE("wrong types", "[VarValue]")
 {
   VarValue str1("string1");
   VarValue str2("string2");
