@@ -18,10 +18,10 @@ public:
                         FunctionType type, NativeFunction fn);
 
   void SendEvent(IGameObject::Ptr self, const char* eventName,
-                 std::vector<VarValue>& arguments);
+                 const std::vector<VarValue>& arguments);
 
   void SendEvent(ActivePexInstance* instance, const char* eventName,
-                 std::vector<VarValue>& arguments);
+                 const std::vector<VarValue>& arguments);
 
   VarValue CallMethod(const std::string& ActiveInstanceName, VarValue* self,
                       const char* methodName,
@@ -45,7 +45,7 @@ private:
   using RegisteredGameOgject =
     std::pair<const IGameObject::Ptr, std::vector<ActivePexInstance>>;
 
- std::map<IGameObject::Ptr, std::vector<ActivePexInstance>> gameObjects;
+  std::map<IGameObject::Ptr, std::vector<ActivePexInstance>> gameObjects;
 
   std::vector<PexScript::Ptr> allLoadedScripts;
 

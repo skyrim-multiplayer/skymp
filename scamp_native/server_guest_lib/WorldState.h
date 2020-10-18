@@ -55,6 +55,8 @@ public:
 
   void RequestSave(MpObjectReference& ref);
 
+  void RegisterForSingleUpdate(const VarValue& self, float seconds);
+
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
   template <class F>

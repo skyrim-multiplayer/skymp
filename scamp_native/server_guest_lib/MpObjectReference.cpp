@@ -305,9 +305,8 @@ void MpObjectReference::Activate(MpActor& activationSource)
   }
 
   if (pImpl->HasScripts()) {
-    std::vector<VarValue> activateArguments{ activationSource.ToVarValue() };
-    GetParent()->GetPapyrusVm().SendEvent(ToGameObject(), "OnActivate",
-                                          activateArguments);
+    auto arg = activationSource.ToVarValue();
+    SendPapyrusEvent("OnActivate", &arg, 1);
   }
 }
 

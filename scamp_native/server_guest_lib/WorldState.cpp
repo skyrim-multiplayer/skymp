@@ -2,12 +2,23 @@
 #include "ISaveStorage.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
+#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "PapyrusGame.h"
 #include "PapyrusObjectReference.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
+#include <algorithm>
+#include <deque>
 #include <unordered_map>
+
+namespace {
+struct SingleUpdateEntry
+{
+  VarValue self;
+  std::chrono::system_clock::time_point finish;
+};
+}
 
 struct WorldState::Impl
 {
@@ -16,6 +27,7 @@ struct WorldState::Impl
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
+  std::deque<SingleUpdateEntry> singleUpdates;
 };
 
 WorldState::WorldState()
@@ -84,8 +96,9 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
 
 void WorldState::TickTimers()
 {
+  const auto now = std::chrono::system_clock::now();
+
   // Tick Reloot
-  auto now = std::chrono::system_clock::now();
   for (auto& p : relootTimers) {
     auto& list = p.second;
     while (!list.empty() && list.begin()->second <= now) {
@@ -115,6 +128,15 @@ void WorldState::TickTimers()
       pImpl->saveStorage->Upsert(
         changeForms, [pImpl_] { pImpl_->saveStorageBusy = false; });
     }
+  }
+
+  // Tick RegisterForSingleUpdate
+  while (!pImpl->singleUpdates.empty() &&
+         now >= pImpl->singleUpdates.front().finish) {
+    auto front = std::move(pImpl->singleUpdates.front());
+    pImpl->singleUpdates.pop_front();
+    if (auto form = GetFormPtr<MpForm>(front.self))
+      form->Update();
   }
 }
 
@@ -166,6 +188,28 @@ void WorldState::RequestReloot(MpObjectReference& ref)
 void WorldState::RequestSave(MpObjectReference& ref)
 {
   pImpl->changes[ref.GetFormId()] = ref.GetChangeForm();
+}
+
+void WorldState::RegisterForSingleUpdate(const VarValue& self, float seconds)
+{
+  auto finish = std::chrono::system_clock::now() +
+    std::chrono::milliseconds(static_cast<int>(seconds * 1000));
+
+  bool sortRequired = false;
+
+  if (!pImpl->singleUpdates.empty() &&
+      finish > pImpl->singleUpdates.front().finish) {
+    sortRequired = true;
+  }
+
+  pImpl->singleUpdates.push_front({ self, finish });
+
+  if (sortRequired) {
+    std::sort(pImpl->singleUpdates.begin(), pImpl->singleUpdates.end(),
+              [](const SingleUpdateEntry& lhs, const SingleUpdateEntry& rhs) {
+                return lhs.finish < rhs.finish;
+              });
+  }
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)

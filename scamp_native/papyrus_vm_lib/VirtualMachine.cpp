@@ -50,7 +50,7 @@ void VirtualMachine::AddObject(IGameObject::Ptr self,
 }
 
 void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
-                               std::vector<VarValue>& arguments)
+                               const std::vector<VarValue>& arguments)
 {
   for (auto& object : gameObjects) {
     if (object.first == self) {
@@ -60,7 +60,8 @@ void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
         auto fn = scriptInstance.GetFunctionByName(
           eventName, scriptInstance.GetActiveStateName());
         if (fn.valid) {
-          scriptInstance.StartFunction(fn, arguments);
+          scriptInstance.StartFunction(
+            fn, const_cast<std::vector<VarValue>&>(arguments));
         }
       }
     }
@@ -69,13 +70,13 @@ void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
 
 void VirtualMachine::SendEvent(ActivePexInstance* instance,
                                const char* eventName,
-                               std::vector<VarValue>& arguments)
+                               const std::vector<VarValue>& arguments)
 {
 
   auto fn =
     instance->GetFunctionByName(eventName, instance->GetActiveStateName());
   if (fn.valid) {
-    instance->StartFunction(fn, arguments);
+    instance->StartFunction(fn, const_cast<std::vector<VarValue>&>(arguments));
   }
 }
 
@@ -255,7 +256,7 @@ bool VirtualMachine::IsNativeFunctionByNameExisted(
       if (func.first == name)
         return true;
   }
-   
+
   return false;
 }
 
