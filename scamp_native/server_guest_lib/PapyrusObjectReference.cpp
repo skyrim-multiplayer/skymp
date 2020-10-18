@@ -58,6 +58,29 @@ VarValue PapyrusObjectReference::AddItem(
   return VarValue::None();
 }
 
+VarValue PapyrusObjectReference::RemoveItem(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 3)
+    return VarValue::None();
+
+  auto item = GetRecordPtr(arguments[0]);
+  auto count = static_cast<int>(arguments[1]);
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  auto refrToAdd = GetFormPtr<MpObjectReference>(arguments[2]);
+
+  if (!selfRefr || !item.rec)
+    return VarValue::None();
+
+  auto itemId = item.ToGlobalId(item.rec->GetId());
+  auto realCount = selfRefr->GetInventory().GetItemCount(itemId);
+  count = count > realCount ? realCount : count;
+
+  selfRefr->RemoveItem(itemId, count, refrToAdd);
+
+  return VarValue::None();
+}
+
 VarValue PapyrusObjectReference::GetItemCount(
   VarValue self, const std::vector<VarValue>& arguments)
 {

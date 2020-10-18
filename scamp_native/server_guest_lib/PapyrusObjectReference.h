@@ -10,6 +10,7 @@ VarValue EnableNoWait(VarValue self, const std::vector<VarValue>& arguments);
 VarValue DisableNoWait(VarValue self, const std::vector<VarValue>& arguments);
 VarValue Delete(VarValue self, const std::vector<VarValue>& arguments);
 VarValue AddItem(VarValue self, const std::vector<VarValue>& arguments);
+VarValue RemoveItem(VarValue self, const std::vector<VarValue>& arguments);
 VarValue GetItemCount(VarValue self, const std::vector<VarValue>& arguments);
 
 inline void Register(VirtualMachine& vm)
@@ -28,6 +29,8 @@ inline void Register(VirtualMachine& vm)
                       Delete);
   vm.RegisterFunction("objectreference", "AddItem", FunctionType::Method,
                       AddItem);
+  vm.RegisterFunction("objectreference", "RemoveItem", FunctionType::Method,
+                      RemoveItem);
   vm.RegisterFunction("objectreference", "GetItemCount", FunctionType::Method,
                       GetItemCount);
 }

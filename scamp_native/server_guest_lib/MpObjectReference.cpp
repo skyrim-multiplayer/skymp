@@ -385,6 +385,12 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
   }
 }
 
+void MpObjectReference::RemoveItem(uint32_t baseId, uint32_t count,
+                                   MpObjectReference* target)
+{
+  RemoveItems({ { baseId, count } }, target);
+}
+
 void MpObjectReference::RemoveItems(
   const std::vector<Inventory::Entry>& entries, MpObjectReference* target)
 {
