@@ -4,7 +4,6 @@
 #include <iostream>
 #include <map>
 #include <memory>
-#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -108,13 +107,11 @@ public:
 
   VarValue& operator=(const VarValue& argument2);
 
-  bool operator==(const VarValue& argument2) const;
-  bool operator>(const VarValue& argument2) const;
-  bool operator>=(const VarValue& argument2) const;
-  bool operator<(const VarValue& argument2) const;
-  bool operator<=(const VarValue& argument2) const;
-
-  friend std::ostream& operator<<(std::ostream& os, const VarValue& varValue);
+  bool operator==(const VarValue& argument2);
+  bool operator>(const VarValue& argument2);
+  bool operator>=(const VarValue& argument2);
+  bool operator<(const VarValue& argument2);
+  bool operator<=(const VarValue& argument2);
 
   VarValue CastToInt() const;
   VarValue CastToFloat() const;

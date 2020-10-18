@@ -80,7 +80,10 @@ target_link_libraries(unit PRIVATE server_guest_lib)
 target_include_directories(unit PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/mp_common")
 apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
-target_compile_definitions(unit PRIVATE TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\")
+target_compile_definitions(unit PRIVATE
+  TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
+  BUILT_PEX_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/pex\"
+)
 
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/mp_common/*" "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(mp_common STATIC ${src})
@@ -114,13 +117,9 @@ file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib/*" "${CMAKE_SOURCE_DIR
 add_library(papyrus-vm-lib STATIC ${src})
 apply_default_settings(TARGETS papyrus-vm-lib)
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib")
-
-file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_main/*" "${CMAKE_SOURCE_DIR}/.clang-format")
-add_executable(papyrus-vm-main ${src})
-target_link_libraries(papyrus-vm-main PUBLIC papyrus-vm-lib)
-list(APPEND VCPKG_DEPENDENT papyrus-vm-main)
-set(VM_MAIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/papyrus-vm-main.exe)
-apply_default_settings(TARGETS papyrus-vm-main)
+if (UNIX)
+  target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
+endif()
 
 if (NOT SKYRIM_DIR)
   message(WARNING "SKYRIM_DIR is not specified, Papyrus sources will not be built")
