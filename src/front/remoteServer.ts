@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import * as networking from "./networking";
-import { FormModel, WorldModel } from "./model";
+import { WorldModel } from "./model";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
 import { SendTarget } from "./sendTarget";
@@ -20,13 +20,13 @@ import {
   ObjectReference,
   on,
   Ui,
+  settings,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./components/inventory";
 import { isBadMenuShown } from "./components/equipment";
 import { Movement } from "./components/movement";
 import { IdManager } from "../lib/idManager";
-
 class SpawnTask {
   running = false;
 }
@@ -50,7 +50,24 @@ const verifySourceCode = () => {
   networking.send(
     {
       t: messages.MsgType.CustomPacket,
-      content: { customPacketType: "clientVersion", src },
+      content: {
+        customPacketType: "clientVersion",
+        src,
+      },
+    },
+    true
+  );
+};
+
+const loginWithSkympIoCredentials = () => {
+  printConsole("Logging in as skymp.io user");
+  networking.send(
+    {
+      t: messages.MsgType.CustomPacket,
+      content: {
+        customPacketType: "loginWithSkympIo",
+        gameData: settings["skymp5-client"]["gameData"],
+      },
     },
     true
   );
@@ -313,6 +330,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   customPacket(msg: messages.CustomPacket): void {
     switch (msg.content.customPacketType) {
+      case "loginRequired":
+        loginWithSkympIoCredentials();
+        break;
       case "newClientVersion":
         if (typeof msg.content.src !== "string")
           throw new Error(`'${msg.content.src}' is not a string`);

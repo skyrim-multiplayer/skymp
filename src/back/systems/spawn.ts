@@ -11,7 +11,7 @@ export class Spawn implements System {
 
   async initAsync(ctx: SystemContext): Promise<void> {
     ctx.gm.on("spawnAllowed", (userId: number) => {
-      const formId = 0xff000001 + userId;
+      /*const formId = 0xff000001 + userId;
 
       try {
         ctx.svr.destroyActor(formId);
@@ -30,7 +30,7 @@ export class Spawn implements System {
       );
 
       ctx.svr.setUserActor(userId, formId);
-      ctx.svr.setRaceMenuOpen(formId, true);
+      ctx.svr.setRaceMenuOpen(formId, true);*/
     });
   }
 
