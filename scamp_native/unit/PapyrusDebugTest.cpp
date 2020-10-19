@@ -29,14 +29,14 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   REQUIRE(tgt.messages[1].reliable);
   REQUIRE(tgt.messages[1].j ==
           nlohmann::json{ { "type", "spSnippet" },
-                          { "class", "Debug" },
+                          { "class", "debug" },
                           { "function", "Notification" },
                           { "arguments", { "Hello, world!" } } });
   REQUIRE(tgt.messages[2].userId == 3);
   REQUIRE(tgt.messages[2].reliable);
   REQUIRE(tgt.messages[2].j ==
           nlohmann::json{ { "type", "spSnippet" },
-                          { "class", "Debug" },
+                          { "class", "debug" },
                           { "function", "Notification" },
                           { "arguments", { "Hello, \"world!\"" } } });
 
