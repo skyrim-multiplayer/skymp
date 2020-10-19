@@ -460,6 +460,12 @@ FormCallbacks PartOne::CreateFormCallbacks(Networking::ISendTarget* sendTarget)
   return { subscribe, unsubscribe, sendToUser };
 }
 
+IActionListener& PartOne::GetActionListener()
+{
+  InitActionListener();
+  return *pImpl->actionListener;
+}
+
 void PartOne::AddUser(Networking::UserId userId, UserType type)
 {
   serverState.Connect(userId);
@@ -476,11 +482,16 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
   if (!pImpl->packetParser)
     pImpl->packetParser.reset(new PacketParser);
 
+  InitActionListener();
+
+  pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
+                                                 *pImpl->actionListener);
+}
+
+void PartOne::InitActionListener()
+{
   if (!pImpl->actionListener)
     pImpl->actionListener.reset(
       new ActionListener(worldState, serverState, pImpl->listeners,
                          pImpl->espm, pushedSendTarget));
-
-  pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
-                                                 *pImpl->actionListener);
 }

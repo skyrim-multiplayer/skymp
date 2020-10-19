@@ -11,6 +11,7 @@
 #include "VirtualMachine.h"
 #include "WorldState.h"
 #include <MsgType.h>
+#include <map>
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
 {
@@ -56,6 +57,11 @@ struct ScriptsState
   std::map<std::string, std::shared_ptr<std::string>> propStringValues;
 };
 
+struct AnimGraphHolder
+{
+  std::set<std::string> animationVariablesBool;
+};
+
 }
 
 struct MpObjectReference::Impl : public ChangeFormGuard<MpChangeFormREFR>
@@ -67,6 +73,7 @@ public:
   }
 
   std::unique_ptr<ScriptsState> scriptsState;
+  std::unique_ptr<AnimGraphHolder> animGraphHolder;
 
   bool HasScripts() const noexcept { return !!scriptsState; }
 };
@@ -133,6 +140,12 @@ const bool& MpObjectReference::IsOpen() const
 const std::chrono::milliseconds& MpObjectReference::GetRelootTime() const
 {
   return relootTime;
+}
+
+bool MpObjectReference::GetAnimationVariableBool(const char* name) const
+{
+  return pImpl->animGraphHolder &&
+    pImpl->animGraphHolder->animationVariablesBool.count(name) > 0;
 }
 
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
@@ -363,6 +376,16 @@ void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
 void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
 {
   chanceNoneOverride.reset(new uint8_t(newChanceNone));
+}
+
+void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
+{
+  if (!pImpl->animGraphHolder)
+    pImpl->animGraphHolder.reset(new AnimGraphHolder);
+  if (value)
+    pImpl->animGraphHolder->animationVariablesBool.insert(name);
+  else
+    pImpl->animGraphHolder->animationVariablesBool.erase(name);
 }
 
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)

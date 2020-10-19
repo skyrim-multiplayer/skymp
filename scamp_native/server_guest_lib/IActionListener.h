@@ -21,7 +21,8 @@ public:
                               simdjson::dom::element& content) = 0;
 
   virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
-                                const NiPoint3& pos, const NiPoint3& rot) = 0;
+                                const NiPoint3& pos, const NiPoint3& rot,
+                                bool isInJumpState) = 0;
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
                                  uint32_t idx) = 0;

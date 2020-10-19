@@ -73,6 +73,7 @@ public:
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
   const std::chrono::milliseconds& GetRelootTime() const;
+  bool GetAnimationVariableBool(const char* name) const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
@@ -89,6 +90,7 @@ public:
   void SetRelootTime(std::chrono::milliseconds newRelootTime);
   void SetCellOrWorld(uint32_t worldOrCell);
   void SetChanceNoneOverride(uint8_t chanceNone);
+  void SetAnimationVariableBool(const char* name, bool value);
 
   void AddItem(uint32_t baseId, uint32_t count);
   void AddItems(const std::vector<Inventory::Entry>& entries);

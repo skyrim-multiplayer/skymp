@@ -16,6 +16,8 @@ public:
   VarValue AddItem(VarValue self, const std::vector<VarValue>& arguments);
   VarValue RemoveItem(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetItemCount(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetAnimationVariableBool(VarValue self,
+                                    const std::vector<VarValue>& arguments);
 
   void Register(
     VirtualMachine& vm,
@@ -30,5 +32,7 @@ public:
     AddMethod(vm, "AddItem", &PapyrusObjectReference::AddItem);
     AddMethod(vm, "RemoveItem", &PapyrusObjectReference::RemoveItem);
     AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
+    AddMethod(vm, "GetAnimationVariableBool",
+              &PapyrusObjectReference::GetAnimationVariableBool);
   }
 };

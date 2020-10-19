@@ -26,7 +26,8 @@ public:
                       simdjson::dom::element& content) override;
 
   void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
-                        const NiPoint3& pos, const NiPoint3& rot) override;
+                        const NiPoint3& pos, const NiPoint3& rot,
+                        bool isInJumpState) override;
 
   void OnUpdateAnimation(const RawMessageData& rawMsgData,
                          uint32_t idx) override;

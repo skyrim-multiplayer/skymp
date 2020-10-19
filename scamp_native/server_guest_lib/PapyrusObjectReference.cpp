@@ -3,6 +3,7 @@
 #include "EspmGameObject.h"
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
+#include <cstring>
 
 VarValue PapyrusObjectReference::IsDisabled(
   VarValue self, const std::vector<VarValue>& arguments)
@@ -96,4 +97,17 @@ VarValue PapyrusObjectReference::GetItemCount(
     }
   }
   return VarValue(0);
+}
+
+VarValue PapyrusObjectReference::GetAnimationVariableBool(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+
+  if (arguments.size() >= 1 &&
+      arguments[0].GetType() == VarValue::kType_String) {
+    auto animVarName = static_cast<const char*>(arguments[0]);
+    return VarValue(selfRefr->GetAnimationVariableBool(animVarName));
+  }
+  return VarValue(false);
 }

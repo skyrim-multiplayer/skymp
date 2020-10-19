@@ -9,6 +9,8 @@
 #include <memory>
 #include <simdjson.h>
 
+class IActionListener;
+
 class PartOne
 {
 public:
@@ -31,6 +33,7 @@ public:
   void Tick();
   void EnableProductionHacks();
   FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
+  IActionListener& GetActionListener();
 
   // API
   void CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
@@ -69,6 +72,8 @@ private:
 
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
+
+  void InitActionListener();
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

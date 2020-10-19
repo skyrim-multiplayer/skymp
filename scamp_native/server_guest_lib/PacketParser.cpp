@@ -58,9 +58,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       for (int i = 0; i < 3; ++i)
         ReadEx(jRot, i, &rot[i]);
 
-      actionListener.OnUpdateMovement(rawMsgData, idx,
-                                      { pos[0], pos[1], pos[2] },
-                                      { rot[0], rot[1], rot[2] });
+      bool isInJumpState = false;
+      Read(data_, "isInJumpState", &isInJumpState);
+
+      actionListener.OnUpdateMovement(
+        rawMsgData, idx, { pos[0], pos[1], pos[2] },
+        { rot[0], rot[1], rot[2] }, isInJumpState);
 
     } break;
     case MsgType::UpdateAnimation: {
