@@ -25,11 +25,20 @@ TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
   p.SetUserActor(0, 0xff000001, &tgt);
   DoUpdateMovement(p, 0xff000001, 0);
 
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000001);
   // p.worldState.GetFormAt<MpActor>(0xff000001).SetPos(1);
 
-  REQUIRE(ref.GetListeners().size() == -1);
-  // ref.Disable();
-  // REQUIRE(ref.GetListeners().size() == 0);
+  REQUIRE(ref.GetListeners() == std::set<MpObjectReference*>{ &ac });
+  ref.Disable();
+  REQUIRE(ref.GetListeners() == std::set<MpObjectReference*>{});
+
+  ref.SetPos(ref.GetPos());
+  ref.SetPos(ref.GetPos() + NiPoint3{ 10000, 10000, 10000 });
+  REQUIRE(ref.GetListeners() == std::set<MpObjectReference*>{});
+  ref.SetPos(ref.GetPos() - NiPoint3{ 10000, 10000, 10000 });
+
+  ref.Enable();
+  REQUIRE(ref.GetListeners() == std::set<MpObjectReference*>{ &ac });
 }
 
 TEST_CASE("Enable makes ref visible", "[ObjectReference]")

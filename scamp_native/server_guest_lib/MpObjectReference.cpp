@@ -130,6 +130,11 @@ const bool& MpObjectReference::IsOpen() const
   return pImpl->ChangeForm().isOpen;
 }
 
+const bool& MpObjectReference::IsDisabled() const
+{
+  return pImpl->ChangeForm().isDisabled;
+}
+
 const std::chrono::milliseconds& MpObjectReference::GetRelootTime() const
 {
   return relootTime;
@@ -153,33 +158,36 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
   pImpl->EditChangeForm(
     [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; });
 
-  if (oldGridPos != newGridPos || !everSubscribedOrListened) {
-    everSubscribedOrListened = true;
+  if (IsDisabled())
+    return;
+  if (oldGridPos == newGridPos && everSubscribedOrListened)
+    return;
 
-    InitListenersAndEmitters();
+  everSubscribedOrListened = true;
 
-    MoveOnGrid(grid);
+  InitListenersAndEmitters();
 
-    auto& was = *this->listeners;
-    auto& now = grid.GetNeighboursAndMe(this);
+  MoveOnGrid(grid);
 
-    std::vector<MpObjectReference*> toRemove;
-    std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
-                        std::inserter(toRemove, toRemove.begin()));
-    for (auto listener : toRemove) {
-      Unsubscribe(this, listener);
-      if (this != listener)
-        Unsubscribe(listener, this);
-    }
+  auto& was = *this->listeners;
+  auto& now = grid.GetNeighboursAndMe(this);
 
-    std::vector<MpObjectReference*> toAdd;
-    std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
-                        std::inserter(toAdd, toAdd.begin()));
-    for (auto listener : toAdd) {
-      Subscribe(this, listener);
-      if (this != listener)
-        Subscribe(listener, this);
-    }
+  std::vector<MpObjectReference*> toRemove;
+  std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
+                      std::inserter(toRemove, toRemove.begin()));
+  for (auto listener : toRemove) {
+    Unsubscribe(this, listener);
+    if (this != listener)
+      Unsubscribe(listener, this);
+  }
+
+  std::vector<MpObjectReference*> toAdd;
+  std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
+                      std::inserter(toAdd, toAdd.begin()));
+  for (auto listener : toAdd) {
+    Subscribe(this, listener);
+    if (this != listener)
+      Subscribe(listener, this);
   }
 }
 
@@ -280,7 +288,7 @@ void MpObjectReference::Activate(MpActor& activationSource)
       }.dump();
       activationSource.SendToUser(msg.data(), msg.size(), true);
 
-      activationSource.SetCellOrWorld(teleportWorldOrCell);
+      activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
 
     } else {
       SetOpen(!IsOpen());
@@ -350,28 +358,36 @@ void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
   relootTime = newRelootTime;
 }
 
-void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
-{
-  everSubscribedOrListened = false;
-  auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
-  grid.Forget(this);
-
-  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    changeForm.worldOrCell = newWorldOrCell;
-  });
-}
-
 void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
 {
   chanceNoneOverride.reset(new uint8_t(newChanceNone));
 }
 
+void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
+{
+  SetCellOrWorldObsolete(newWorldOrCell);
+  SetPos(GetPos());
+}
+
 void MpObjectReference::Disable()
 {
+  if (pImpl->ChangeForm().isDisabled)
+    return;
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = true; });
+  RemoveFromGrid();
 }
 
 void MpObjectReference::Enable()
 {
+  if (!pImpl->ChangeForm().isDisabled)
+    return;
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = false; });
+  everSubscribedOrListened = false;
+  SetPos(GetPos());
 }
 
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
@@ -524,7 +540,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   }
 
   // Perform all required grid operations
-  SetCellOrWorld(changeForm.worldOrCell);
+  SetCellOrWorldObsolete(changeForm.worldOrCell);
   SetPos(changeForm.position);
 
   pImpl->EditChangeForm(
@@ -545,6 +561,17 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
       SetRelootTime(prevRelootTime);
     }
   }
+}
+
+void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
+{
+  everSubscribedOrListened = false;
+  auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
+  grid.Forget(this);
+
+  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    changeForm.worldOrCell = newWorldOrCell;
+  });
 }
 
 void MpObjectReference::Init(WorldState* parent, uint32_t formId)
@@ -624,6 +651,8 @@ void MpObjectReference::RemoveFromGrid()
   for (auto listener : listenersCopy)
     if (this != listener)
       Unsubscribe(this, listener);
+
+  everSubscribedOrListened = false;
 }
 
 void MpObjectReference::InitScripts()

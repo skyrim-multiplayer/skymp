@@ -31,6 +31,7 @@ public:
   bool isOpen = false;
   bool baseContainerAdded = false;
   uint64_t nextRelootDatetime = 0;
+  bool isDisabled = false;
 
   bool isRaceMenuOpen = false;
 

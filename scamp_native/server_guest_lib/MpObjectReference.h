@@ -72,6 +72,7 @@ public:
   const Inventory& GetInventory() const;
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
+  const bool& IsDisabled() const;
   const std::chrono::milliseconds& GetRelootTime() const;
 
   using PropertiesVisitor =
@@ -87,8 +88,8 @@ public:
   void PutItem(MpActor& actor, const Inventory::Entry& entry);
   void TakeItem(MpActor& actor, const Inventory::Entry& entry);
   void SetRelootTime(std::chrono::milliseconds newRelootTime);
-  void SetCellOrWorld(uint32_t worldOrCell);
   void SetChanceNoneOverride(uint8_t chanceNone);
+  void SetCellOrWorld(uint32_t worldOrCell);
   void Disable();
   void Enable();
 
@@ -113,6 +114,10 @@ public:
 
   virtual MpChangeForm GetChangeForm() const;
   virtual void ApplyChangeForm(const MpChangeForm& changeForm);
+
+  // This method removes ObjectReference from a current grid and doesn't attach
+  // to another grid
+  void SetCellOrWorldObsolete(uint32_t worldOrCell);
 
 private:
   void Init(WorldState* parent, uint32_t formId) override;
