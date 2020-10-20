@@ -366,6 +366,14 @@ void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
   chanceNoneOverride.reset(new uint8_t(newChanceNone));
 }
 
+void MpObjectReference::Disable()
+{
+}
+
+void MpObjectReference::Enable()
+{
+}
+
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
 {
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
@@ -608,6 +616,16 @@ void MpObjectReference::BuildScriptProperties(
   *out = res;
 }
 
+void MpObjectReference::RemoveFromGrid()
+{
+  GetParent()->grids[GetCellOrWorld()].Forget(this);
+
+  auto listenersCopy = GetListeners();
+  for (auto listener : listenersCopy)
+    if (this != listener)
+      Unsubscribe(this, listener);
+}
+
 void MpObjectReference::InitScripts()
 {
   auto baseId = GetBaseId();
@@ -785,10 +803,5 @@ void MpObjectReference::BeforeDestroy()
 
   MpForm::BeforeDestroy();
 
-  GetParent()->grids[GetCellOrWorld()].Forget(this);
-
-  auto listenersCopy = GetListeners();
-  for (auto listener : listenersCopy)
-    if (this != listener)
-      Unsubscribe(this, listener);
+  RemoveFromGrid();
 }

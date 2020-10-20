@@ -20,7 +20,7 @@
 struct LocationalData
 {
   NiPoint3 pos, rot;
-  uint32_t cellOrWorld;
+  uint32_t cellOrWorld = 0;
 };
 
 struct GridPosInfo
@@ -89,6 +89,8 @@ public:
   void SetRelootTime(std::chrono::milliseconds newRelootTime);
   void SetCellOrWorld(uint32_t worldOrCell);
   void SetChanceNoneOverride(uint8_t chanceNone);
+  void Disable();
+  void Enable();
 
   void AddItem(uint32_t baseId, uint32_t count);
   void AddItems(const std::vector<Inventory::Entry>& entries);
@@ -125,13 +127,12 @@ private:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
-
   void CastProperty(const espm::CombineBrowser& br, const espm::Property& prop,
                     VarValue* out);
-
   void BuildScriptProperties(const espm::CombineBrowser& br,
                              const espm::ScriptData& scriptData,
                              PropertyValuesMap* out);
+  void RemoveFromGrid();
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
