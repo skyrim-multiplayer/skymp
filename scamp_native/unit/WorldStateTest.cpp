@@ -49,6 +49,27 @@ TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
   REQUIRE(refr.GetBaseId() == 0x0100abcd);
 }
 
+TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
+          "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
+
+  MpChangeForm changeForm;
+  changeForm.recType = MpChangeForm::ACHR;
+  changeForm.worldOrCell = 0xdead;
+  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+  changeForm.isDisabled = true;
+
+  worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
+
+  auto& refr = worldState.GetFormAt<MpActor>(0xff000000);
+  REQUIRE(refr.IsDisabled());
+
+  // Disabled actors should not pollute grids during load process
+  REQUIRE(worldState.GetGrids().count(0xdead) == 0);
+}
+
 TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
 {
   WorldState worldState;

@@ -150,8 +150,6 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
-  auto& grid = GetParent()->grids[GetCellOrWorld()];
-
   auto oldGridPos = GetGridPos(pImpl->ChangeForm().position);
   auto newGridPos = GetGridPos(newPos);
 
@@ -167,6 +165,7 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 
   InitListenersAndEmitters();
 
+  auto& grid = GetParent()->grids[GetCellOrWorld()];
   MoveOnGrid(grid);
 
   auto& was = *this->listeners;
@@ -540,6 +539,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   }
 
   // Perform all required grid operations
+  changeForm.isDisabled ? Disable() : Enable();
   SetCellOrWorldObsolete(changeForm.worldOrCell);
   SetPos(changeForm.position);
 
@@ -566,8 +566,9 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
 {
   everSubscribedOrListened = false;
-  auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
-  grid.Forget(this);
+  auto gridIterator = GetParent()->grids.find(pImpl->ChangeForm().worldOrCell);
+  if (gridIterator != GetParent()->grids.end())
+    gridIterator->second.Forget(this);
 
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
     changeForm.worldOrCell = newWorldOrCell;
@@ -578,8 +579,10 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
   MpForm::Init(parent, formId);
 
-  auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
-  MoveOnGrid(grid);
+  if (!IsDisabled()) {
+    auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
+    MoveOnGrid(grid);
+  }
 
   // We should queue created form for saving as soon as it is initialized
   const auto mode =
@@ -645,7 +648,9 @@ void MpObjectReference::BuildScriptProperties(
 
 void MpObjectReference::RemoveFromGrid()
 {
-  GetParent()->grids[GetCellOrWorld()].Forget(this);
+  auto gridIterator = GetParent()->grids.find(GetCellOrWorld());
+  if (gridIterator != GetParent()->grids.end())
+    gridIterator->second.Forget(this);
 
   auto listenersCopy = GetListeners();
   for (auto listener : listenersCopy)

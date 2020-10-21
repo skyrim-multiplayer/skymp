@@ -29,10 +29,11 @@ using namespace sqlite_orm;
                   &SqliteChangeForm::SetAngleY),                              \
       make_column("angle_z", &SqliteChangeForm::GetAngleZ,                    \
                   &SqliteChangeForm::SetAngleZ),                              \
-      make_column("json_data", &SqliteChangeForm::GetJsonData,          \
-                  &SqliteChangeForm::SetJsonData),                           \
+      make_column("json_data", &SqliteChangeForm::GetJsonData,                \
+                  &SqliteChangeForm::SetJsonData),                            \
       make_column("is_harvested", &SqliteChangeForm::isHarvested),            \
       make_column("is_open", &SqliteChangeForm::isOpen),                      \
+      make_column("is_disabled", &SqliteChangeForm::isDisabled),              \
       make_column("next_reloot_datetime",                                     \
                   &SqliteChangeForm::nextRelootDatetime),                     \
       make_column("world_or_cell", &SqliteChangeForm::worldOrCell),           \

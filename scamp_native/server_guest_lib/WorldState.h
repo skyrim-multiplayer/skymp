@@ -119,6 +119,9 @@ public:
 
   std::vector<std::string> espmFiles;
 
+  // Only for tests
+  auto& GetGrids() { return grids; }
+
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridImpl<MpObjectReference*>> grids;
