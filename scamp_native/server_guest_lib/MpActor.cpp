@@ -111,13 +111,6 @@ const std::string& MpActor::GetEquipmentAsJson()
   return pImpl->ChangeForm().equipmentDump;
 };
 
-void MpActor::UnsubscribeFromAll()
-{
-  auto emittersCopy = GetEmitters();
-  for (auto emitter : emittersCopy)
-    Unsubscribe(emitter, this);
-}
-
 void MpActor::BeforeDestroy()
 {
   for (auto& sink : destroyEventSinks)

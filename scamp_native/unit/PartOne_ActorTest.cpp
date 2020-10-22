@@ -205,3 +205,16 @@ TEST_CASE("SetUserActor doesn't work with disabled actors", "[PartOne]")
     partOne.SetUserActor(Networking::InvalidUserId, 0, nullptr),
     Contains("User with id 65535 doesn't exist"));
 }
+
+/*TEST_CASE("Bug with subscription", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  auto& partOne = GetPartOne();
+  DoConnect(partOne, 0);
+
+  partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c, &tgt);
+  partOne.SetUserActor(0, 0xff000000, &tgt);
+
+  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(tgt.messages[0].j["type"] == "createActor");
+}*/

@@ -39,8 +39,6 @@ public:
   MpChangeForm GetChangeForm() const override;
   void ApplyChangeForm(const MpChangeForm& changeForm) override;
 
-  void UnsubscribeFromAll();
-
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 

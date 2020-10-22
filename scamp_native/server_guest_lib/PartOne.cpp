@@ -211,7 +211,11 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
       throw std::runtime_error(ss.str());
     }
 
+    // Both functions are required here, but it is NOT covered by unit tests
+    // properly. If you do something wrong here, players would not be able to
+    // interact with items in the same cell after reconnecting.
     actor.UnsubscribeFromAll();
+    actor.RemoveFromGrid();
 
     serverState.actorsMap.insert({ userId, &actor });
 

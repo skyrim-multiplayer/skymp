@@ -93,6 +93,11 @@ public:
   void Disable();
   void Enable();
   void ForceSubscriptionsUpdate();
+
+  // If you want to completely remove ObjectReference from the grid you need
+  // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these
+  // functions without another in new code if you have no good reason for this.
+  void UnsubscribeFromAll();
   void RemoveFromGrid();
 
   void AddItem(uint32_t baseId, uint32_t count);

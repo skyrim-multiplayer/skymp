@@ -682,6 +682,13 @@ void MpObjectReference::RemoveFromGrid()
   everSubscribedOrListened = false;
 }
 
+void MpObjectReference::UnsubscribeFromAll()
+{
+  auto emittersCopy = GetEmitters();
+  for (auto emitter : emittersCopy)
+    Unsubscribe(emitter, this);
+}
+
 void MpObjectReference::InitScripts()
 {
   auto baseId = GetBaseId();
