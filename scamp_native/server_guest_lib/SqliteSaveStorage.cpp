@@ -33,10 +33,6 @@ using namespace sqlite_orm;
                   &SqliteChangeForm::SetJsonData),                            \
       make_column("is_harvested", &SqliteChangeForm::isHarvested),            \
       make_column("is_open", &SqliteChangeForm::isOpen),                      \
-      make_column("is_disabled", &SqliteChangeForm::isDisabled,               \
-                  default_value(false)),                                      \
-      make_column("profile_id", &SqliteChangeForm::profileId,                 \
-                  default_value(-1)),                                         \
       make_column("next_reloot_datetime",                                     \
                   &SqliteChangeForm::nextRelootDatetime),                     \
       make_column("world_or_cell", &SqliteChangeForm::worldOrCell),           \

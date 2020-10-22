@@ -3,6 +3,7 @@
 #include "WorldState.h"
 #include <ctime>
 #include <simdjson.h>
+#include <string>
 
 namespace {
 template <class T>
@@ -37,7 +38,8 @@ constexpr auto g_sep = "|";
 std::string SqliteChangeForm::GetJsonData() const
 {
   return "v01:" + inv.ToJson().dump() + g_sep + lookDump + g_sep +
-    equipmentDump;
+    equipmentDump + g_sep + std::to_string(static_cast<int>(isDisabled)) +
+    g_sep + std::to_string(profileId);
 }
 
 void SqliteChangeForm::SetJsonData(const std::string& jsonData)
@@ -60,6 +62,12 @@ void SqliteChangeForm::SetJsonData(const std::string& jsonData)
           break;
         case 2:
           equipmentDump = token;
+          break;
+        case 3:
+          isDisabled = *token == '1';
+          break;
+        case 4:
+          profileId = std::stoi(token);
           break;
       }
       ++doing;
