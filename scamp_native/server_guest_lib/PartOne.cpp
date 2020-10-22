@@ -157,14 +157,22 @@ void PartOne::Tick()
   worldState.TickTimers();
 }
 
-void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
-                          uint32_t cellOrWorld,
-                          Networking::ISendTarget* sendTarget)
+uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
+                              float angleZ, uint32_t cellOrWorld,
+                              Networking::ISendTarget* sendTarget,
+                              ProfileId profileId)
 {
+  if (!formId) {
+    formId = worldState.GenerateFormId();
+  }
   worldState.AddForm(std::unique_ptr<MpActor>(
                        new MpActor({ pos, { 0, 0, angleZ }, cellOrWorld },
                                    CreateFormCallbacks(sendTarget))),
                      formId);
+  if (profileId >= 0) {
+    auto& ac = worldState.GetFormAt<MpActor>(formId);
+    ac.RegisterProfileId(profileId);
+  }
 
   if (pImpl->enableProductionHacks) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
@@ -180,6 +188,8 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
     }
     ac.AddItems(entries);
   }
+
+  return formId;
 }
 
 void PartOne::EnableProductionHacks()
@@ -194,11 +204,11 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
 
   if (actorFormId > 0) {
     auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
+    actor.UnsubscribeFromAll();
 
     serverState.actorsMap.insert({ userId, &actor });
 
-    // Hacky way to force self-subscribing
-    actor.SetPos(actor.GetPos());
+    actor.ForceSubscriptionsUpdate();
   } else {
     serverState.actorsMap.left.erase(userId);
   }
@@ -264,6 +274,17 @@ NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
 {
   auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
   return ac.GetPos();
+}
+
+const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
+{
+  return worldState.GetActorsByProfileId(profileId);
+}
+
+void PartOne::SetEnabled(uint32_t actorFormId, bool enabled)
+{
+  auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
+  enabled ? ac.Enable() : ac.Disable();
 }
 
 namespace {

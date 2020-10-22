@@ -17,7 +17,7 @@ export class NativeGameServer implements ServerInterface {
   setRaceMenuOpen(...args: unknown[]): void {
     return this.svr.setRaceMenuOpen.call(this.svr, ...args);
   }
-  createActor(...args: unknown[]): void {
+  createActor(...args: unknown[]): number {
     return this.svr.createActor.call(this.svr, ...args);
   }
 
@@ -31,5 +31,13 @@ export class NativeGameServer implements ServerInterface {
 
   getUserActor(...args: unknown[]): number {
     return this.svr.getUserActor.call(this.svr, ...args);
+  }
+
+  setEnabled(...args: unknown[]): void {
+    return this.svr.setEnabled.call(this.svr, ...args);
+  }
+
+  getActorsByProfileId(...args: unknown[]): number[] {
+    return this.svr.getActorsByProfileId.call(this.svr, ...args);
   }
 }

@@ -62,6 +62,7 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   f2.formDesc = { 2, "" };
   f2.position = { 2, 4, 6 };
   f2.isDisabled = true;
+  f2.profileId = 10;
   UpsertSync(*st, { f1, f2 });
 
   auto res = ISaveStorageUtils::FindAllSync(*st);
@@ -71,8 +72,10 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   REQUIRE(res[{ 1, "" }].equipmentDump == "[]");
   REQUIRE(res[{ 1, "" }].inv == Inventory().AddItem(0xf, 1000));
   REQUIRE(res[{ 1, "" }].isDisabled == false);
+  REQUIRE(res[{ 1, "" }].profileId == -1);
   REQUIRE(res[{ 2, "" }].position == NiPoint3(2, 4, 6));
   REQUIRE(res[{ 2, "" }].isDisabled == true);
+  REQUIRE(res[{ 2, "" }].profileId == 10);
 }
 
 TEST_CASE("Upsert affects the number of change forms in the database in the "

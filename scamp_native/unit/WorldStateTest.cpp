@@ -70,6 +70,26 @@ TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
   REQUIRE(worldState.GetGrids().count(0xdead) == 0);
 }
 
+TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
+
+  MpChangeForm changeForm;
+  changeForm.recType = MpChangeForm::ACHR;
+  changeForm.worldOrCell = 0xdead;
+  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+  changeForm.isDisabled = true;
+  changeForm.profileId = 100;
+
+  REQUIRE(worldState.GetActorsByProfileId(100).empty());
+  worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
+
+  REQUIRE(worldState.GetGrids().count(0xdead) == 0);
+  REQUIRE(worldState.GetActorsByProfileId(100) ==
+          std::set<uint32_t>({ 0xff000000 }));
+}
+
 TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
 {
   WorldState worldState;

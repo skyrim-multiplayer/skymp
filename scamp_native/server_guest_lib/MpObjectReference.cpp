@@ -156,38 +156,8 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
   pImpl->EditChangeForm(
     [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; });
 
-  if (IsDisabled())
-    return;
-  if (oldGridPos == newGridPos && everSubscribedOrListened)
-    return;
-
-  everSubscribedOrListened = true;
-
-  InitListenersAndEmitters();
-
-  auto& grid = GetParent()->grids[GetCellOrWorld()];
-  MoveOnGrid(grid);
-
-  auto& was = *this->listeners;
-  auto& now = grid.GetNeighboursAndMe(this);
-
-  std::vector<MpObjectReference*> toRemove;
-  std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
-                      std::inserter(toRemove, toRemove.begin()));
-  for (auto listener : toRemove) {
-    Unsubscribe(this, listener);
-    if (this != listener)
-      Unsubscribe(listener, this);
-  }
-
-  std::vector<MpObjectReference*> toAdd;
-  std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
-                      std::inserter(toAdd, toAdd.begin()));
-  for (auto listener : toAdd) {
-    Subscribe(this, listener);
-    if (this != listener)
-      Subscribe(listener, this);
-  }
+  if (oldGridPos != newGridPos || !everSubscribedOrListened)
+    ForceSubscriptionsUpdate();
 }
 
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
@@ -365,7 +335,7 @@ void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
 void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
 {
   SetCellOrWorldObsolete(newWorldOrCell);
-  SetPos(GetPos());
+  ForceSubscriptionsUpdate();
 }
 
 void MpObjectReference::Disable()
@@ -385,8 +355,44 @@ void MpObjectReference::Enable()
 
   pImpl->EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = false; });
-  everSubscribedOrListened = false;
-  SetPos(GetPos());
+  ForceSubscriptionsUpdate();
+}
+
+void MpObjectReference::ForceSubscriptionsUpdate()
+{
+  if (IsDisabled())
+    return;
+  InitListenersAndEmitters();
+
+  auto& grid = GetParent()->grids[GetCellOrWorld()];
+  MoveOnGrid(grid);
+
+  auto& was = *this->listeners;
+  auto& now = grid.GetNeighboursAndMe(this);
+
+  std::vector<MpObjectReference*> toRemove;
+  std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
+                      std::inserter(toRemove, toRemove.begin()));
+  for (auto listener : toRemove) {
+    Unsubscribe(this, listener);
+    // Unsubscribe from self is NEEDED. See comment below
+    if (this != listener)
+      Unsubscribe(listener, this);
+  }
+
+  std::vector<MpObjectReference*> toAdd;
+  std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
+                      std::inserter(toAdd, toAdd.begin()));
+  for (auto listener : toAdd) {
+    Subscribe(this, listener);
+    // Note: Self-subscription is OK this check is performed as we don't want
+    // to self-subscribe twice! We have already been subscribed to self in the
+    // last line of code
+    if (this != listener)
+      Subscribe(listener, this);
+  }
+
+  everSubscribedOrListened = true;
 }
 
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
@@ -432,12 +438,25 @@ void MpObjectReference::RelootContainer()
   EnsureBaseContainerAdded(*GetParent()->espm);
 }
 
+void MpObjectReference::RegisterProfileId(int32_t profileId)
+{
+  if (profileId < 0)
+    throw std::runtime_error("Invalid profileId passed to RegisterProfileId");
+
+  if (pImpl->ChangeForm().profileId >= 0)
+    throw std::runtime_error("Already has a valid profileId");
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.profileId = profileId; });
+  GetParent()->actorIdByProfileId[profileId].insert(GetFormId());
+}
+
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
                                   MpObjectReference* listener)
 {
-  bool bothNonActors =
-    !dynamic_cast<MpActor*>(emitter) && !dynamic_cast<MpActor*>(listener);
-  if (bothNonActors)
+  const bool emitterIsActor = !!dynamic_cast<MpActor*>(emitter);
+  const bool listenerIsActor = !!dynamic_cast<MpActor*>(listener);
+  if (!emitterIsActor && !listenerIsActor)
     return;
 
   emitter->InitListenersAndEmitters();
@@ -542,6 +561,10 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   changeForm.isDisabled ? Disable() : Enable();
   SetCellOrWorldObsolete(changeForm.worldOrCell);
   SetPos(changeForm.position);
+  // TODO: Is explicit call to ForceSubscriptionsUpdate() required here?
+
+  if (changeForm.profileId >= 0)
+    RegisterProfileId(changeForm.profileId);
 
   pImpl->EditChangeForm(
     [&](MpChangeFormREFR& f) {
@@ -654,8 +677,7 @@ void MpObjectReference::RemoveFromGrid()
 
   auto listenersCopy = GetListeners();
   for (auto listener : listenersCopy)
-    if (this != listener)
-      Unsubscribe(this, listener);
+    Unsubscribe(this, listener);
 
   everSubscribedOrListened = false;
 }

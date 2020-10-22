@@ -92,12 +92,15 @@ public:
   void SetCellOrWorld(uint32_t worldOrCell);
   void Disable();
   void Enable();
+  void ForceSubscriptionsUpdate();
+  void RemoveFromGrid();
 
   void AddItem(uint32_t baseId, uint32_t count);
   void AddItems(const std::vector<Inventory::Entry>& entries);
   void RemoveItems(const std::vector<Inventory::Entry>& entries,
                    MpObjectReference* target = nullptr);
   void RelootContainer();
+  void RegisterProfileId(int32_t profileId);
 
   static void Subscribe(MpObjectReference* emitter,
                         MpObjectReference* listener);
@@ -137,7 +140,6 @@ private:
   void BuildScriptProperties(const espm::CombineBrowser& br,
                              const espm::ScriptData& scriptData,
                              PropertyValuesMap* out);
-  void RemoveFromGrid();
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

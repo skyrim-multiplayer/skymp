@@ -115,8 +115,7 @@ void MpActor::UnsubscribeFromAll()
 {
   auto emittersCopy = GetEmitters();
   for (auto emitter : emittersCopy)
-    if (emitter != this)
-      Unsubscribe(emitter, this);
+    Unsubscribe(emitter, this);
 }
 
 void MpActor::BeforeDestroy()

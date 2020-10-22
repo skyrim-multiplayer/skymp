@@ -65,6 +65,8 @@ public:
   Napi::Value GetActorName(const Napi::CallbackInfo& info);
   Napi::Value DestroyActor(const Napi::CallbackInfo& info);
   Napi::Value SetRaceMenuOpen(const Napi::CallbackInfo& info);
+  Napi::Value GetActorsByProfileId(const Napi::CallbackInfo& info);
+  Napi::Value SetEnabled(const Napi::CallbackInfo& info);
   Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
 
@@ -139,6 +141,9 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod<&ScampServer::DestroyActor>("destroyActor"),
       InstanceMethod<&ScampServer::SetRaceMenuOpen>("setRaceMenuOpen"),
       InstanceMethod<&ScampServer::SendCustomPacket>("sendCustomPacket"),
+      InstanceMethod<&ScampServer::GetActorsByProfileId>(
+        "getActorsByProfileId"),
+      InstanceMethod<&ScampServer::SetEnabled>("setEnabled"),
       InstanceMethod<&ScampServer::CreateBot>("createBot") });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
@@ -215,12 +220,17 @@ Napi::Value ScampServer::CreateActor(const Napi::CallbackInfo& info)
   auto pos = NapiValueToNiPoint3(info[1]);
   auto angleZ = info[2].As<Napi::Number>().FloatValue();
   auto cellOrWorld = info[3].As<Napi::Number>().Uint32Value();
+
+  int32_t userProfileId = -1;
+  if (info[4].IsNumber())
+    userProfileId = info[4].As<Napi::Number>().Int32Value();
   try {
-    partOne->CreateActor(formId, pos, angleZ, cellOrWorld, server.get());
+    uint32_t res = partOne->CreateActor(formId, pos, angleZ, cellOrWorld,
+                                        server.get(), userProfileId);
+    return Napi::Number::New(info.Env(), res);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
-  return info.Env().Undefined();
 }
 
 Napi::Value ScampServer::SetUserActor(const Napi::CallbackInfo& info)
@@ -289,6 +299,37 @@ Napi::Value ScampServer::SetRaceMenuOpen(const Napi::CallbackInfo& info)
   auto open = info[1].As<Napi::Boolean>().operator bool();
   try {
     partOne->SetRaceMenuOpen(formId, open, server.get());
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::GetActorsByProfileId(const Napi::CallbackInfo& info)
+{
+  auto profileId = info[0].As<Napi::Number>().Int32Value();
+  try {
+    auto& actors = partOne->GetActorsByProfileId(profileId);
+
+    auto result = Napi::Array::New(info.Env(), actors.size());
+    uint32_t counter = 0;
+    for (auto& ac : actors) {
+      result.Set(counter, ac);
+      ++counter;
+    }
+    return result;
+
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+}
+
+Napi::Value ScampServer::SetEnabled(const Napi::CallbackInfo& info)
+{
+  auto actorFormId = info[0].As<Napi::Number>().Uint32Value();
+  auto enabled = static_cast<bool>(info[1].As<Napi::Boolean>());
+  try {
+    partOne->SetEnabled(actorFormId, enabled);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

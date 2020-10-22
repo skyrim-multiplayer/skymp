@@ -116,8 +116,11 @@ public:
   espm::CompressedFieldsCache& GetEspmCache();
   IScriptStorage* GetScriptStorage() const;
   VirtualMachine& GetPapyrusVm();
+  const std::set<uint32_t>& GetActorsByProfileId(int32_t profileId) const;
+  uint32_t GenerateFormId();
 
   std::vector<std::string> espmFiles;
+  std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
 
   // Only for tests
   auto& GetGrids() { return grids; }

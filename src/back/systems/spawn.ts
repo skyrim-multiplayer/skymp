@@ -15,9 +15,10 @@ export class Spawn implements System {
 
   async initAsync(ctx: SystemContext): Promise<void> {
     ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number) => {
-      let actorId = ctx.svr.getActorByProfileId(userProfileId);
+      let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
       if (actorId) {
-        ctx.svr.setEnabled(actorId, true);
+        this.log("Loading character", actorId.toString(16));
+        //ctx.svr.setEnabled(actorId, true);
         ctx.svr.setUserActor(userId, actorId);
       } else {
         const idx = randomInteger(0, spawnpoints.length - 1);
@@ -28,14 +29,15 @@ export class Spawn implements System {
           spawnpoints[idx].worldOrCell,
           userProfileId
         );
+        this.log("Creating character", actorId.toString(16));
         ctx.svr.setUserActor(userId, actorId);
         ctx.svr.setRaceMenuOpen(actorId, true);
       }
     });
   }
 
-  disconnect(userId: number, ctx: SystemContext): void {
+  /*disconnect(userId: number, ctx: SystemContext): void {
     const actorId = ctx.svr.getUserActor(userId);
     if (actorId !== 0) ctx.svr.setEnabled(actorId, false);
-  }
+  }*/
 }

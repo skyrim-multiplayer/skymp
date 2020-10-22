@@ -172,3 +172,24 @@ TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
   DoDisconnect(partOne, 1);
   REQUIRE(partOne.serverState.UserByActor(&ac) == Networking::InvalidUserId);
 }
+
+// PartOne_ActivateTest.cpp
+PartOne& GetPartOne();
+
+TEST_CASE("Bug with subscription", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  auto& partOne = GetPartOne();
+  DoConnect(partOne, 0);
+
+  partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c, &tgt);
+  partOne.SetEnabled(0xff000000, true);
+  partOne.SetEnabled(0xff000000, false);
+  partOne.SetEnabled(0xff000000, true);
+  partOne.SetEnabled(0xff000000, false);
+  partOne.SetEnabled(0xff000000, true);
+  partOne.SetUserActor(0, 0xff000000, &tgt);
+
+  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(tgt.messages[0].j["type"] == "createActor");
+}

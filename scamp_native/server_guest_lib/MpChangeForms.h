@@ -32,6 +32,7 @@ public:
   bool baseContainerAdded = false;
   uint64_t nextRelootDatetime = 0;
   bool isDisabled = false;
+  int32_t profileId = -1;
 
   bool isRaceMenuOpen = false;
 
