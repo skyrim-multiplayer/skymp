@@ -204,6 +204,13 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
 
   if (actorFormId > 0) {
     auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
+
+    if (actor.IsDisabled()) {
+      std::stringstream ss;
+      ss << "Actor with id " << std::hex << actorFormId << " is disabled";
+      throw std::runtime_error(ss.str());
+    }
+
     actor.UnsubscribeFromAll();
 
     serverState.actorsMap.insert({ userId, &actor });

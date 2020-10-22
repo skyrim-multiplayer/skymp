@@ -18,7 +18,7 @@ export class Spawn implements System {
       let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
       if (actorId) {
         this.log("Loading character", actorId.toString(16));
-        //ctx.svr.setEnabled(actorId, true);
+        ctx.svr.setEnabled(actorId, true);
         ctx.svr.setUserActor(userId, actorId);
       } else {
         const idx = randomInteger(0, spawnpoints.length - 1);
@@ -36,8 +36,8 @@ export class Spawn implements System {
     });
   }
 
-  /*disconnect(userId: number, ctx: SystemContext): void {
+  disconnect(userId: number, ctx: SystemContext): void {
     const actorId = ctx.svr.getUserActor(userId);
     if (actorId !== 0) ctx.svr.setEnabled(actorId, false);
-  }*/
+  }
 }

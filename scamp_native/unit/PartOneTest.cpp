@@ -12,6 +12,19 @@ TEST_CASE("PartOne API doesn't crash when bad userId passed", "[PartOne]")
     Contains("User with id 65535 doesn't exist"));
 }
 
+TEST_CASE("SetUserActor doesn't accept disabled actors", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0.0, 0x3c, &tgt);
+  partOne.SetEnabled(0xff000000, false);
+
+  DoConnect(partOne, 0);
+
+  REQUIRE_THROWS_WITH(partOne.SetUserActor(0, 0xff000000, nullptr),
+                      Contains("Actor with id ff000000 is disabled"));
+}
+
 TEST_CASE("OnConnect/OnDisconnect", "[PartOne]")
 {
   auto lst = FakeListener::New();

@@ -193,3 +193,15 @@ TEST_CASE("Bug with subscription", "[PartOne]")
   REQUIRE(tgt.messages.size() == 1);
   REQUIRE(tgt.messages[0].j["type"] == "createActor");
 }
+
+TEST_CASE("SetUserActor doesn't work with disabled actors", "[PartOne]")
+{
+  PartOne partOne;
+
+  REQUIRE_THROWS_WITH(partOne.GetUserActor(Networking::InvalidUserId),
+                      Contains("User with id 65535 doesn't exist"));
+
+  REQUIRE_THROWS_WITH(
+    partOne.SetUserActor(Networking::InvalidUserId, 0, nullptr),
+    Contains("User with id 65535 doesn't exist"));
+}
