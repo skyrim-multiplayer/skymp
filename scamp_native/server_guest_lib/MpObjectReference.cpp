@@ -140,12 +140,17 @@ const std::chrono::milliseconds& MpObjectReference::GetRelootTime() const
   return relootTime;
 }
 
-void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
+void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
+                                        VisitPropertiesMode mode)
 {
   if (IsHarvested())
     visitor("isHarvested", "true");
   if (IsOpen())
     visitor("isOpen", "true");
+  if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
+    auto inventoryDump = GetInventory().ToJson().dump();
+    visitor("inventory", inventoryDump.data());
+  }
 }
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)

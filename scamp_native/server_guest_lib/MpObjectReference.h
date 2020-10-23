@@ -46,6 +46,12 @@ class FormCallbacks;
 
 class FormCallbacks;
 
+enum class VisitPropertiesMode
+{
+  OnlyPublic,
+  All
+};
+
 class MpObjectReference
   : public MpForm
   , public FormIndex
@@ -78,7 +84,8 @@ public:
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
 
-  void VisitProperties(const PropertiesVisitor& visitor);
+  void VisitProperties(const PropertiesVisitor& visitor,
+                       VisitPropertiesMode mode);
 
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);

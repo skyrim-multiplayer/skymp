@@ -86,19 +86,25 @@ PartOne::PartOne()
 
     std::string props;
 
-    const char *propsPrefix = "", *propsPostfix = "";
-    emitter->VisitProperties([&](const char* propName, const char* jsonValue) {
-      propsPrefix = R"(, "props": { )";
-      propsPostfix = R"( })";
+    auto mode = VisitPropertiesMode::OnlyPublic;
+    if (emitter == listener)
+      mode = VisitPropertiesMode::All;
 
-      if (props.size() > 0)
-        props += R"(, ")";
-      else
-        props += '"';
-      props += propName;
-      props += R"(": )";
-      props += jsonValue;
-    });
+    const char *propsPrefix = "", *propsPostfix = "";
+    emitter->VisitProperties(
+      [&](const char* propName, const char* jsonValue) {
+        propsPrefix = R"(, "props": { )";
+        propsPostfix = R"( })";
+
+        if (props.size() > 0)
+          props += R"(, ")";
+        else
+          props += '"';
+        props += propName;
+        props += R"(": )";
+        props += jsonValue;
+      },
+      mode);
 
     const char* method = "createActor";
 

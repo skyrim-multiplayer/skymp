@@ -21,7 +21,7 @@ import {
   on,
   Ui,
   settings,
-  ActorBase,
+  Armor,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./components/inventory";
@@ -101,7 +101,8 @@ const setPcInventory = (inv: Inventory): void => {
 
 let pcInvLastApply = 0;
 on("update", () => {
-  if (Date.now() - pcInvLastApply > 5000 && !isBadMenuShown()) {
+  if (isBadMenuShown()) return;
+  if (Date.now() - pcInvLastApply > 5000) {
     pcInvLastApply = Date.now();
     const pcInv = getPcInventory();
     if (pcInv) applyInventory(Game.getPlayer(), pcInv, false, true);
@@ -206,11 +207,20 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     const applyPcInv = () => {
       applyInventory(
         Game.getPlayer(),
-        msg.inventory ? msg.inventory : { entries: [] },
+        msg.equipment
+          ? {
+              entries: msg.equipment.inv.entries.filter(
+                (x) => !!Armor.from(Game.getFormEx(x.baseId))
+              ),
+            }
+          : { entries: [] },
         false
       );
-      if (msg.inventory)
-        this.setInventory({ type: "setInventory", inventory: msg.inventory });
+      if (msg.props.inventory)
+        this.setInventory({
+          type: "setInventory",
+          inventory: msg.props.inventory as Inventory,
+        });
     };
 
     if (msg.isMe) {

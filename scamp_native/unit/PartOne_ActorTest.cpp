@@ -173,13 +173,10 @@ TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
   REQUIRE(partOne.serverState.UserByActor(&ac) == Networking::InvalidUserId);
 }
 
-// PartOne_ActivateTest.cpp
-PartOne& GetPartOne();
-
 TEST_CASE("Bug with subscription", "[PartOne]")
 {
   FakeSendTarget tgt;
-  auto& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 0);
 
   partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c, &tgt);
@@ -206,15 +203,19 @@ TEST_CASE("SetUserActor doesn't work with disabled actors", "[PartOne]")
     Contains("User with id 65535 doesn't exist"));
 }
 
-/*TEST_CASE("Bug with subscription", "[PartOne]")
+TEST_CASE("Actor should see its inventory in 'createActor' message",
+          "[PartOne]")
 {
   FakeSendTarget tgt;
-  auto& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 0);
 
   partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c, &tgt);
+  partOne.worldState.GetFormAt<MpActor>(0xff000000).AddItem(0x12eb7, 3);
   partOne.SetUserActor(0, 0xff000000, &tgt);
 
   REQUIRE(tgt.messages.size() == 1);
   REQUIRE(tgt.messages[0].j["type"] == "createActor");
-}*/
+  REQUIRE(tgt.messages[0].j["props"]["inventory"] ==
+          Inventory().AddItem(0x12eb7, 3).ToJson());
+}
