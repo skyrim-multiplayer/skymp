@@ -16,7 +16,7 @@ endif()
 
 # Clear CMake cache after changing this
 # (also for subprojects like platform_se)
-set(VCPKG_REVISION cb8a9fe7157f8ad2423742f893955ed9ced05910)
+set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
 # Download vcpkg dependencies
 include(${SKYRIM_MP_ROOT}/pmm.cmake)
 set(ports

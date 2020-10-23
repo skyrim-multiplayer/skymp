@@ -32,7 +32,21 @@ export declare function once(eventName: 'update', callback: () => void): void;
 export declare function on(eventName: 'tick', callback: () => void): void;
 export declare function once(eventName: 'tick', callback: () => void): void;
 
-export declare function loadGame(pos: number[], angle: number[], worldOrCell: number): void;
+export interface Face {
+	hairColor: number;
+	bodySkinColor: number;
+	headTextureSetId: number;
+	headPartIds: number[];
+	presets: number[];
+}
+
+export interface ChangeFormNpc {
+	raceId?: number;
+	name?: string;
+	face?: face;
+}
+
+export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc): void;
 
 export declare function worldPointToScreenPoint(...args: number[][]): number[][];
 

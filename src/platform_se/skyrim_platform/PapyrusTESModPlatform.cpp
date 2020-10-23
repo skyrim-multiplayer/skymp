@@ -412,7 +412,8 @@ void TESModPlatform::SetFormIdUnsafe(RE::BSScript::IVirtualMachine* vm,
                                      RE::StaticFunctionTag*, RE::TESForm* form,
                                      UInt32 newId)
 {
-  form->formID = newId;
+  if (form)
+    form->formID = newId;
 }
 
 void TESModPlatform::ClearTintMasks(RE::BSScript::IVirtualMachine* vm,

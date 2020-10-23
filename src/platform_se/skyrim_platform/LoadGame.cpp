@@ -74,10 +74,7 @@ public:
 
 extern bool g_allowHideMainMenu;
 
-void LoadGame::Run(const std::array<float, 3>& pos,
-                   const std::array<float, 3>& angle, uint32_t cellOrWorld,
-                   Time* time, SaveFile_::Weather* _weather,
-                   SaveFile_::ChangeFormNPC_* changeFormNPC)
+std::shared_ptr<SaveFile_::SaveFile> LoadGame::PrepareSaveFile()
 {
   cmrc::file file;
   try {
@@ -93,9 +90,16 @@ void LoadGame::Run(const std::array<float, 3>& pos,
       ss << entry.filename() << std::endl;
     throw std::runtime_error(ss.str());
   }
-  auto save =
-    SaveFile_::Reader((uint8_t*)(file.begin()), file.size()).GetStructure();
+  return SaveFile_::Reader((uint8_t*)(file.begin()), file.size())
+    .GetStructure();
+}
 
+void LoadGame::Run(std::shared_ptr<SaveFile_::SaveFile> save,
+                   const std::array<float, 3>& pos,
+                   const std::array<float, 3>& angle, uint32_t cellOrWorld,
+                   Time* time, SaveFile_::Weather* _weather,
+                   SaveFile_::ChangeFormNPC_* changeFormNPC)
+{
   if (!save)
     throw std::runtime_error("Bad SaveFile");
 

@@ -40,7 +40,10 @@ public:
     bool hasData = false;
   };
 
-  static void Run(const std::array<float, 3>& pos,
+  static std::shared_ptr<SaveFile_::SaveFile> PrepareSaveFile();
+
+  static void Run(std::shared_ptr<SaveFile_::SaveFile> baseSavefile,
+                  const std::array<float, 3>& pos,
                   const std::array<float, 3>& angle, uint32_t cellOrWorld,
                   Time* time = nullptr, SaveFile_::Weather* _weather = nullptr,
                   SaveFile_::ChangeFormNPC_* changeFormNPC = nullptr);
