@@ -21,12 +21,15 @@ import {
   on,
   Ui,
   settings,
+  ActorBase,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./components/inventory";
 import { isBadMenuShown } from "./components/equipment";
 import { Movement } from "./components/movement";
 import { IdManager } from "../lib/idManager";
+import { applyLookToPlayer } from "./components/look";
+
 class SpawnTask {
   running = false;
 }
@@ -237,14 +240,37 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           if (!task.running) {
             task.running = true;
             printConsole("Using loadGame to spawn player");
+            printConsole(
+              "skinColorFromServer:",
+              msg.look ? msg.look.skinColor.toString(16) : undefined
+            );
             loadGameManager.loadGame(
               msg.transform.pos,
               msg.transform.rot,
-              msg.transform.worldOrCell
+              msg.transform.worldOrCell,
+              msg.look
+                ? {
+                    name: msg.look.name,
+                    raceId: msg.look.raceId,
+                    face: {
+                      hairColor: msg.look.hairColor,
+                      bodySkinColor: msg.look.skinColor,
+                      headTextureSetId: msg.look.headTextureSetId,
+                      headPartIds: msg.look.headpartIds,
+                      presets: msg.look.presets,
+                    },
+                  }
+                : undefined
             );
             once("update", () => {
               applyPcInv();
               Utility.wait(0.3).then(applyPcInv);
+              if (msg.look) {
+                applyLookToPlayer(msg.look);
+                if (msg.look.isFemale)
+                  // Fix gender-related walking anim
+                  Game.getPlayer().resurrect();
+              }
             });
           }
         });

@@ -15,6 +15,7 @@ export class Spawn implements System {
 
   async initAsync(ctx: SystemContext): Promise<void> {
     ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number) => {
+      // TODO: Show race menu if character is not created after relogging
       let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
       if (actorId) {
         this.log("Loading character", actorId.toString(16));

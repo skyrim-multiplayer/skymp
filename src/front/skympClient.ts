@@ -34,7 +34,7 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     (m: AnyMessage) => void
   >;
   const f = handler[msgType];
-  if (msgType !== "UpdateMovement") printConsole(msgType, msgAny);
+  //if (msgType !== "UpdateMovement") printConsole(msgType, msgAny);
   if (f && typeof f === "function") handler[msgType](msgAny);
 };
 
