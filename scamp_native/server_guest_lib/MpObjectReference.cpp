@@ -71,6 +71,15 @@ public:
   bool HasScripts() const noexcept { return !!scriptsState; }
 };
 
+namespace {
+auto Mode(bool isLocationSaveNeeded)
+{
+  return isLocationSaveNeeded
+    ? ChangeFormGuard<MpChangeFormREFR>::Mode::RequestSave
+    : ChangeFormGuard<MpChangeFormREFR>::Mode::NoRequestSave;
+}
+}
+
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
                                      const FormCallbacks& callbacks_,
                                      uint32_t baseId_, const char* baseType_)
@@ -159,7 +168,8 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
   auto newGridPos = GetGridPos(newPos);
 
   pImpl->EditChangeForm(
-    [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; });
+    [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; },
+    Mode(IsLocationSavingNeeded()));
 
   if (oldGridPos != newGridPos || !everSubscribedOrListened)
     ForceSubscriptionsUpdate();
@@ -168,7 +178,8 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
 {
   pImpl->EditChangeForm(
-    [&](MpChangeFormREFR& changeForm) { changeForm.angle = newAngle; });
+    [&](MpChangeFormREFR& changeForm) { changeForm.angle = newAngle; },
+    Mode(IsLocationSavingNeeded()));
 }
 
 void MpObjectReference::SetHarvested(bool harvested)
@@ -676,6 +687,13 @@ void MpObjectReference::BuildScriptProperties(
     }
   }
   *out = res;
+}
+
+bool MpObjectReference::IsLocationSavingNeeded() const
+{
+  auto last = pImpl->GetLastSaveRequestMoment();
+  return !last ||
+    std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
 }
 
 void MpObjectReference::RemoveFromGrid()

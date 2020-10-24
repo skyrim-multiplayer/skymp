@@ -152,6 +152,7 @@ private:
   void BuildScriptProperties(const espm::CombineBrowser& br,
                              const espm::ScriptData& scriptData,
                              PropertyValuesMap* out);
+  bool IsLocationSavingNeeded() const;
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

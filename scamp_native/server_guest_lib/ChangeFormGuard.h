@@ -1,5 +1,7 @@
 #pragma once
 #include "MpObjectReference.h"
+#include <chrono>
+#include <optional>
 
 namespace ChangeFormGuard_ {
 void RequestSave(MpObjectReference* self);
@@ -25,13 +27,18 @@ public:
   void EditChangeForm(F f, Mode mode = Mode::RequestSave)
   {
     f(changeForm);
-    if (mode == Mode::RequestSave)
+    if (mode == Mode::RequestSave) {
+      lastSaveRequest = std::chrono::system_clock::now();
       ChangeFormGuard_::RequestSave(self);
+    }
   }
 
   const T& ChangeForm() const noexcept { return changeForm; }
 
+  auto GetLastSaveRequestMoment() const { return lastSaveRequest; }
+
 private:
   T changeForm;
   MpObjectReference* const self;
+  std::optional<std::chrono::system_clock::time_point> lastSaveRequest;
 };
