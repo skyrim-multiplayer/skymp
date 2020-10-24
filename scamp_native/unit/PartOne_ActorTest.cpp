@@ -219,3 +219,19 @@ TEST_CASE("Actor should see its inventory in 'createActor' message",
   REQUIRE(tgt.messages[0].j["props"]["inventory"] ==
           Inventory().AddItem(0x12eb7, 3).ToJson());
 }
+
+TEST_CASE("'isRaceMenuOpen' property should present in 'createActor'",
+          "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  DoConnect(partOne, 0);
+
+  partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c, &tgt);
+  partOne.worldState.GetFormAt<MpActor>(0xff000000).SetRaceMenuOpen(true);
+  partOne.SetUserActor(0, 0xff000000, &tgt);
+
+  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(tgt.messages[0].j["type"] == "createActor");
+  REQUIRE(tgt.messages[0].j["props"]["isRaceMenuOpen"] == true);
+}

@@ -84,8 +84,8 @@ public:
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
 
-  void VisitProperties(const PropertiesVisitor& visitor,
-                       VisitPropertiesMode mode);
+  virtual void VisitProperties(const PropertiesVisitor& visitor,
+                               VisitPropertiesMode mode);
 
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);

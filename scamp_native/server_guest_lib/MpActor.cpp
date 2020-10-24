@@ -40,6 +40,14 @@ void MpActor::SetEquipment(const std::string& jsonString)
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
 }
 
+void MpActor::VisitProperties(const PropertiesVisitor& visitor,
+                              VisitPropertiesMode mode)
+{
+  MpObjectReference::VisitProperties(visitor, mode);
+  if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
+    visitor("isRaceMenuOpen", "true");
+}
+
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
   if (callbacks->sendToUser)

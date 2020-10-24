@@ -204,6 +204,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
     // TODO: move to a separate module
 
+    if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
+      this.setRaceMenuOpen({ type: "setRaceMenuOpen", open: true });
+
     const applyPcInv = () => {
       applyInventory(
         Game.getPlayer(),

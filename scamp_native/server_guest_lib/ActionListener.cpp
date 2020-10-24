@@ -65,11 +65,14 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
 void ActionListener::OnUpdateLook(const RawMessageData& rawMsgData,
                                   uint32_t idx, const Look& look)
 { // TODO: validate
-  // TODO: check if isRaceMenuOpen is true
 
-  auto actor = SendToNeighbours(idx, rawMsgData, true);
-  if (actor)
-    actor->SetLook(&look);
+  MpActor* actor = serverState.ActorByUser(rawMsgData.userId);
+  if (!actor || !actor->IsRaceMenuOpen())
+    return;
+
+  actor->SetRaceMenuOpen(false);
+  actor->SetLook(&look);
+  SendToNeighbours(idx, rawMsgData, true);
 }
 
 void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
