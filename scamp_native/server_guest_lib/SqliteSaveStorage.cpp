@@ -182,7 +182,6 @@ public:
   SqliteDbImpl(std::string filename_)
     : filename(filename_)
   {
-    // MAKE_STORAGE(filename.data());
     MAKE_STORAGE(filename.data());
 
     auto res = storage.sync_schema_simulate(true);

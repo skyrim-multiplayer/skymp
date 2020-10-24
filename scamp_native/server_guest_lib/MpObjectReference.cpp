@@ -365,7 +365,7 @@ void MpObjectReference::Enable()
 
 void MpObjectReference::ForceSubscriptionsUpdate()
 {
-  if (IsDisabled())
+  if (!GetParent() || IsDisabled())
     return;
   InitListenersAndEmitters();
 
@@ -536,7 +536,7 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   MpChangeForm res;
   static_cast<MpChangeFormREFR&>(res) = pImpl->ChangeForm();
 
-  if (!GetParent()->espmFiles.empty()) {
+  if (GetParent() && !GetParent()->espmFiles.empty()) {
     res.formDesc = FormDesc::FromFormId(GetFormId(), GetParent()->espmFiles);
     res.baseDesc = FormDesc::FromFormId(GetBaseId(), GetParent()->espmFiles);
   } else
@@ -593,9 +593,13 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 
 void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
 {
+  auto worldState = GetParent();
+  if (!worldState)
+    return;
+
   everSubscribedOrListened = false;
-  auto gridIterator = GetParent()->grids.find(pImpl->ChangeForm().worldOrCell);
-  if (gridIterator != GetParent()->grids.end())
+  auto gridIterator = worldState->grids.find(pImpl->ChangeForm().worldOrCell);
+  if (gridIterator != worldState->grids.end())
     gridIterator->second.Forget(this);
 
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {

@@ -38,8 +38,11 @@ public:
 
   // 'lookDump' and 'equipmentDump' can be empty. it means nullopt.
   // "unexisting" equipment and equipment with zero entries are different
-  // values in skymp due to poor designs
+  // values in skymp due to poor design
   std::string lookDump, equipmentDump;
+
+  // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
+  // adding new Actor-related rows
 };
 
 class MpChangeForm : public MpChangeFormREFR
