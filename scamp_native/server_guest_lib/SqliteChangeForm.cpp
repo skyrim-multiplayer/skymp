@@ -1,45 +1,19 @@
 #include "SqliteChangeForm.h"
+#include "JsonUtils.h"
 #include "MpActor.h"
 #include "WorldState.h"
 #include <ctime>
 #include <simdjson.h>
 #include <string>
 
-namespace {
-template <class T>
-T DumpToStruct(const std::string& dump)
-{
-  if (dump.size() > 0) {
-    simdjson::dom::parser p;
-    auto element = p.parse(dump).value();
-    return T::FromJson(element);
-  }
-  return T();
-}
-
-// https://stackoverflow.com/questions/9210528/split-string-with-delimiters-in-c
-char* my_strsep(char** stringp, const char* delim)
-{
-  if (*stringp == NULL) {
-    return NULL;
-  }
-  char* token_start = *stringp;
-  *stringp = strpbrk(token_start, delim);
-  if (*stringp) {
-    **stringp = '\0';
-    (*stringp)++;
-  }
-  return token_start;
-}
-
-constexpr auto g_sep = "|";
-}
-
 std::string SqliteChangeForm::GetJsonData() const
 {
-  return "v01:" + inv.ToJson().dump() + g_sep + lookDump + g_sep +
-    equipmentDump + g_sep + std::to_string(static_cast<int>(isDisabled)) +
-    g_sep + std::to_string(profileId);
+  auto j = nlohmann::json::object({ { "inv", inv.ToJson() },
+                                    { "lookDump", lookDump },
+                                    { "equipmentDump", equipmentDump },
+                                    { "isDisabled", isDisabled },
+                                    { "profileId", profileId } });
+  return "v01:" + j.dump();
 }
 
 void SqliteChangeForm::SetJsonData(const std::string& jsonData)
@@ -48,30 +22,28 @@ void SqliteChangeForm::SetJsonData(const std::string& jsonData)
 
   if (!memcmp(jsonData.data(), "v01:", versionLength)) {
     std::string myString = jsonData.data() + versionLength;
-    char *token, *str;
-    int doing = 0;
 
-    str = myString.data();
-    while ((token = my_strsep(&str, g_sep))) {
-      switch (doing) {
-        case 0:
-          inv = DumpToStruct<Inventory>(token);
-          break;
-        case 1:
-          lookDump = token;
-          break;
-        case 2:
-          equipmentDump = token;
-          break;
-        case 3:
-          isDisabled = *token == '1';
-          break;
-        case 4:
-          profileId = std::stoi(token);
-          break;
-      }
-      ++doing;
+    simdjson::dom::parser p;
+
+    auto j = p.parse(myString).value();
+    {
+      simdjson::dom::element jInv;
+      ReadEx(j, "inv", &jInv);
+      inv = Inventory::FromJson(jInv);
     }
+    {
+      const char* jLookDump;
+      ReadEx(j, "lookDump", &jLookDump);
+      lookDump = jLookDump;
+    }
+    {
+      const char* jEquipmentDump;
+      ReadEx(j, "equipmentDump", &jEquipmentDump);
+      equipmentDump = jEquipmentDump;
+    }
+    ReadEx(j, "isDisabled", &isDisabled);
+    ReadEx(j, "profileId", &profileId);
+
   } else {
     std::stringstream ss;
     ss << "Bad jsonData version: '" << jsonData << "'";
