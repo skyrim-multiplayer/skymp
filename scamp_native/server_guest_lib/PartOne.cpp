@@ -29,6 +29,7 @@ struct PartOne::Impl
 
 PartOne::PartOne()
 {
+  logger.reset(new spdlog::logger{ "empty logger" });
   pImpl.reset(new Impl);
 
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
@@ -334,7 +335,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
     auto& subVector = refrRecords[i];
     auto mapping = espm->GetBrowser().GetMapping(i);
 
-    printf("starting %d\n", static_cast<int>(i));
+    logger->info("starting {}", i);
 
     for (auto& refrRecord : *subVector) {
       auto refr = reinterpret_cast<espm::REFR*>(refrRecord);
@@ -343,7 +344,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
       auto baseId = espm::GetMappedId(data.baseId, *mapping);
       auto base = espm->GetBrowser().LookupById(baseId);
       if (!base.rec)
-        printf("baseId %x %p\n", baseId, base.rec);
+        logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
       if (!base.rec)
         continue;
 
@@ -368,7 +369,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
 
       if (!worldOrCell) {
         if (!cell->GetParentCELL(worldOrCell)) {
-          printf("Anomally: refr without world/cell\n");
+          logger->info("Anomally: refr without world/cell");
           continue;
         }
       }
@@ -385,7 +386,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
 
       } else {
         if (!locationalData) {
-          printf("Anomally: refr without locationalData\n");
+          logger->info("Anomally: refr without locationalData");
           continue;
         }
 
@@ -399,7 +400,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
     }
   }
 
-  printf("AttachEspm took %d ticks\n", int(clock() - was));
+  logger->info("AttachEspm took {} ticks", clock() - was);
 }
 
 void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
@@ -410,13 +411,17 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
   clock_t was = clock();
 
   int n = 0;
+  int numPlayerCharacters = 0;
   saveStorage->IterateSync([&](const MpChangeForm& changeForm) {
     n++;
     worldState.LoadChangeForm(changeForm, CreateFormCallbacks(sendTarget));
+    if (changeForm.profileId >= 0)
+      ++numPlayerCharacters;
   });
 
-  printf("AttachSaveStorage took %d ticks, loaded %d ChangeForms\n",
-         int(clock() - was), n);
+  logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
+               "(Including {} player characters)",
+               clock() - was, n, numPlayerCharacters);
 }
 
 espm::Loader& PartOne::GetEspm() const

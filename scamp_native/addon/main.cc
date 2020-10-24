@@ -6,6 +6,7 @@
 #include <cassert>
 #include <memory>
 #include <napi.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace {
 inline NiPoint3 NapiValueToNiPoint3(Napi::Value v)
@@ -172,6 +173,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     dataDir = "/skyrim_data_dir";
 #endif
 
+    auto logger = spdlog::stdout_color_mt("console");
+    partOne->logger = logger;
     auto espm = new espm::Loader(dataDir,
                                  { "Skyrim.esm", "Update.esm", "Dawnguard.esm",
                                    "HearthFires.esm", "Dragonborn.esm" });
@@ -180,7 +183,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->AttachEspm(espm, server.get());
     partOne->AttachSaveStorage(
-      std::make_shared<SqliteSaveStorage>("world.sqlite"),
+      std::make_shared<SqliteSaveStorage>("world.sqlite", logger),
       server.get()); // TODO
 
     auto res =

@@ -48,6 +48,8 @@ struct UpsertTask
 
 struct AsyncSaveStorage::Impl
 {
+  std::shared_ptr<spdlog::logger> logger;
+
   struct
   {
     std::shared_ptr<DbImpl> dbImpl;
@@ -77,9 +79,11 @@ struct AsyncSaveStorage::Impl
   uint32_t numFinishedUpserts = 0;
 };
 
-AsyncSaveStorage::AsyncSaveStorage(const std::shared_ptr<DbImpl>& dbImpl)
+AsyncSaveStorage::AsyncSaveStorage(const std::shared_ptr<DbImpl>& dbImpl,
+                                   std::shared_ptr<spdlog::logger> logger)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
+  pImpl->logger = logger;
   pImpl->share.dbImpl = dbImpl;
 
   auto p = this->pImpl.get();
@@ -115,10 +119,9 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
           numChangeForms += pImpl->share.dbImpl->Upsert(t.changeForms);
           callbacksToFire.push_back(t.callback);
         }
-        if (numChangeForms > 0)
-          printf("Saved %d ChangeForms in %d ticks\n",
-                 static_cast<int>(numChangeForms),
-                 static_cast<int>(clock() - was));
+        if (numChangeForms > 0 && pImpl->logger)
+          pImpl->logger->info("Saved {} ChangeForms in {} ticks",
+                              numChangeForms, clock() - was);
       }
 
       {
@@ -265,8 +268,9 @@ private:
 };
 }
 
-SqliteSaveStorage::SqliteSaveStorage(std::string filename)
-  : AsyncSaveStorage(CreateDbImpl(filename))
+SqliteSaveStorage::SqliteSaveStorage(std::string filename,
+                                     std::shared_ptr<spdlog::logger> logger)
+  : AsyncSaveStorage(CreateDbImpl(filename), logger)
 {
 }
 

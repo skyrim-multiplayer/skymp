@@ -9,6 +9,7 @@
 #include <memory>
 #include <set>
 #include <simdjson.h>
+#include <spdlog/logger.h>
 #include <unordered_map>
 
 using ProfileId = int32_t;
@@ -65,6 +66,7 @@ public:
   WorldState worldState;
   ServerState serverState;
   Networking::ISendTarget* pushedSendTarget = nullptr;
+  std::shared_ptr<spdlog::logger> logger;
 
 private:
   enum class UserType
