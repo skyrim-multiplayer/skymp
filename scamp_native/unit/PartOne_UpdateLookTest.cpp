@@ -97,12 +97,10 @@ TEST_CASE("UpdateLook1", "[PartOne]")
                            m.j["data"] == jLook["data"];
                        }) != tgt.messages.end());
 
-  REQUIRE(partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLook() !=
-          nullptr);
-  REQUIRE(
-    nlohmann::json::parse(
-      partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLookAsJson()) ==
-    jLook["data"]);
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000ABC);
+  REQUIRE(ac.GetLook() != nullptr);
+  REQUIRE(nlohmann::json::parse(ac.GetLookAsJson()) == jLook["data"]);
+  REQUIRE(ac.IsRaceMenuOpen() == false);
 }
 
 TEST_CASE("UpdateLook2", "[PartOne]")

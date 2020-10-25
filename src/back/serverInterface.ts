@@ -10,10 +10,13 @@ export interface ServerInterface {
     formId: number,
     pos: number[],
     angleZ: number,
-    cellOrWorld: number
-  ): void;
+    cellOrWorld: number,
+    userProfileId?: number
+  ): number;
 
   destroyActor(formId: number): void;
   setUserActor(userId: number, actorFormId: number): void;
   getUserActor(userId: number): number;
+  getActorsByProfileId(profileId: number): number[];
+  setEnabled(formId: number, enabled: boolean): void;
 }

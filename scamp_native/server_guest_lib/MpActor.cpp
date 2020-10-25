@@ -40,6 +40,14 @@ void MpActor::SetEquipment(const std::string& jsonString)
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
 }
 
+void MpActor::VisitProperties(const PropertiesVisitor& visitor,
+                              VisitPropertiesMode mode)
+{
+  MpObjectReference::VisitProperties(visitor, mode);
+  if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
+    visitor("isRaceMenuOpen", "true");
+}
+
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
   if (callbacks->sendToUser)
@@ -60,24 +68,26 @@ void MpActor::RemoveEventSink(std::shared_ptr<DestroyEventSink> sink)
 
 MpChangeForm MpActor::GetChangeForm() const
 {
-  auto res = pImpl->ChangeForm();
-  static_cast<MpChangeFormREFR&>(res) =
-    static_cast<MpChangeFormREFR>(MpObjectReference::GetChangeForm());
+  auto res = MpObjectReference::GetChangeForm();
+  auto& achr = pImpl->ChangeForm();
+  res.lookDump = achr.lookDump;
+  res.isRaceMenuOpen = achr.isRaceMenuOpen;
+  res.equipmentDump = achr.equipmentDump;
 
   res.recType = MpChangeForm::ACHR;
   return res;
 }
 
-void MpActor::ApplyChangeForm(const MpChangeForm& changeForm)
+void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
 {
-  if (changeForm.recType != MpChangeForm::ACHR) {
+  if (newChangeForm.recType != MpChangeForm::ACHR) {
     throw std::runtime_error(
       "Expected record type to be ACHR, but found REFR");
   }
-  MpObjectReference::ApplyChangeForm(changeForm);
+  MpObjectReference::ApplyChangeForm(newChangeForm);
   pImpl->EditChangeForm(
-    [&](MpChangeForm& changeForm) {
-      changeForm = static_cast<const MpChangeForm&>(changeForm);
+    [&](MpChangeForm& cf) {
+      cf = static_cast<const MpChangeForm&>(newChangeForm);
     },
     Impl::Mode::NoRequestSave);
 }
@@ -110,14 +120,6 @@ const std::string& MpActor::GetEquipmentAsJson()
 {
   return pImpl->ChangeForm().equipmentDump;
 };
-
-void MpActor::UnsubscribeFromAll()
-{
-  auto emittersCopy = GetEmitters();
-  for (auto emitter : emittersCopy)
-    if (emitter != this)
-      Unsubscribe(emitter, this);
-}
 
 void MpActor::BeforeDestroy()
 {

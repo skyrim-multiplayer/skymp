@@ -44,6 +44,8 @@ export declare class ScampServer {
   getActorPos(actorId: number): number[];
   setRaceMenuOpen(formId: number, open: boolean): void;
   sendCustomPacket(userId: number, jsonContent: string): void;
+  setEnabled(actorId: number, enabled: boolean): void;
+  getActorsByProfileId(profileId: number): number[];
   createBot(): Bot;
 }
 

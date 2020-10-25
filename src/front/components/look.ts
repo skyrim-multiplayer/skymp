@@ -95,19 +95,18 @@ export const applyTints = (actor: Actor, look: Look): void => {
 
   const playerBaseId = Game.getPlayer().getBaseObject().getFormID();
 
-  TESModPlatform.setFormIdUnsafe(actor.getBaseObject(), playerBaseId);
+  if (actor)
+    TESModPlatform.setFormIdUnsafe(actor.getBaseObject(), playerBaseId);
 };
 
 export const silentVoiceTypeId = 0x0002f7c3;
 
-export const applyLook = (look: Look): ActorBase => {
+const applyLookCommon = (look: Look, npc: ActorBase): void => {
   const race = Race.from(Game.getFormEx(look.raceId));
   const headparts = look.headpartIds
     .map((id) => HeadPart.from(Game.getFormEx(id)))
     .filter((headpart) => !!headpart);
 
-  const npc: ActorBase = TESModPlatform.createNpc();
-  if (!npc) throw new Error("createNpc returned null");
   TESModPlatform.setNpcSex(npc, look.isFemale ? 1 : 0);
   if (race) TESModPlatform.setNpcRace(npc, race);
   npc.setWeight(look.weight);
@@ -125,6 +124,17 @@ export const applyLook = (look: Look): ActorBase => {
     // for undefined or empty name
     npc.setName(" ");
   }
+};
 
+export const applyLook = (look: Look): ActorBase => {
+  const npc: ActorBase = TESModPlatform.createNpc();
+  if (!npc) throw new Error("createNpc returned null");
+  applyLookCommon(look, npc);
   return npc;
+};
+
+export const applyLookToPlayer = (look: Look): void => {
+  applyLookCommon(look, ActorBase.from(Game.getPlayer().getBaseObject()));
+  applyTints(null, look);
+  Game.getPlayer().queueNiNodeUpdate();
 };

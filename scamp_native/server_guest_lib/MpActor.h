@@ -24,6 +24,9 @@ public:
   void SetLook(const Look* newLook);
   void SetEquipment(const std::string& jsonString);
 
+  void VisitProperties(const PropertiesVisitor& visitor,
+                       VisitPropertiesMode mode) override;
+
   void SendToUser(const void* data, size_t size, bool reliable);
 
   class DestroyEventSink
@@ -40,8 +43,6 @@ public:
   void ApplyChangeForm(const MpChangeForm& changeForm) override;
 
 private:
-  void UnsubscribeFromAll();
-
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 
   struct Impl;

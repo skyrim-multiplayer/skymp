@@ -12,6 +12,7 @@ import { System } from "./systems/system";
 import { ClientVerify } from "./systems/clientVerify";
 import { MasterClient } from "./systems/masterClient";
 import { Spawn } from "./systems/spawn";
+import { Login } from "./systems/login";
 import { EventEmitter } from "events";
 import { NativeGameServer } from "./nativeGameServer";
 import { pid } from "process";
@@ -34,7 +35,13 @@ systems.push(
     "./dist_front/skymp5-client.js",
     Settings.get().maxPlayers
   ),
-  new Spawn(log)
+  new Spawn(log),
+  new Login(
+    log,
+    Settings.get().maxPlayers,
+    "https://skymp.io",
+    Settings.get().port
+  )
 );
 
 const main = async () => {

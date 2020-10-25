@@ -29,6 +29,7 @@ struct PartOne::Impl
 
 PartOne::PartOne()
 {
+  logger.reset(new spdlog::logger{ "empty logger" });
   pImpl.reset(new Impl);
 
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
@@ -86,19 +87,25 @@ PartOne::PartOne()
 
     std::string props;
 
-    const char *propsPrefix = "", *propsPostfix = "";
-    emitter->VisitProperties([&](const char* propName, const char* jsonValue) {
-      propsPrefix = R"(, "props": { )";
-      propsPostfix = R"( })";
+    auto mode = VisitPropertiesMode::OnlyPublic;
+    if (emitter == listener)
+      mode = VisitPropertiesMode::All;
 
-      if (props.size() > 0)
-        props += R"(, ")";
-      else
-        props += '"';
-      props += propName;
-      props += R"(": )";
-      props += jsonValue;
-    });
+    const char *propsPrefix = "", *propsPostfix = "";
+    emitter->VisitProperties(
+      [&](const char* propName, const char* jsonValue) {
+        propsPrefix = R"(, "props": { )";
+        propsPostfix = R"( })";
+
+        if (props.size() > 0)
+          props += R"(, ")";
+        else
+          props += '"';
+        props += propName;
+        props += R"(": )";
+        props += jsonValue;
+      },
+      mode);
 
     const char* method = "createActor";
 
@@ -157,14 +164,22 @@ void PartOne::Tick()
   worldState.TickTimers();
 }
 
-void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
-                          uint32_t cellOrWorld,
-                          Networking::ISendTarget* sendTarget)
+uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
+                              float angleZ, uint32_t cellOrWorld,
+                              Networking::ISendTarget* sendTarget,
+                              ProfileId profileId)
 {
+  if (!formId) {
+    formId = worldState.GenerateFormId();
+  }
   worldState.AddForm(std::unique_ptr<MpActor>(
                        new MpActor({ pos, { 0, 0, angleZ }, cellOrWorld },
                                    CreateFormCallbacks(sendTarget))),
                      formId);
+  if (profileId >= 0) {
+    auto& ac = worldState.GetFormAt<MpActor>(formId);
+    ac.RegisterProfileId(profileId);
+  }
 
   if (pImpl->enableProductionHacks) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
@@ -180,6 +195,8 @@ void PartOne::CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
     }
     ac.AddItems(entries);
   }
+
+  return formId;
 }
 
 void PartOne::EnableProductionHacks()
@@ -195,10 +212,21 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
   if (actorFormId > 0) {
     auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
 
+    if (actor.IsDisabled()) {
+      std::stringstream ss;
+      ss << "Actor with id " << std::hex << actorFormId << " is disabled";
+      throw std::runtime_error(ss.str());
+    }
+
+    // Both functions are required here, but it is NOT covered by unit tests
+    // properly. If you do something wrong here, players would not be able to
+    // interact with items in the same cell after reconnecting.
+    actor.UnsubscribeFromAll();
+    actor.RemoveFromGrid();
+
     serverState.actorsMap.insert({ userId, &actor });
 
-    // Hacky way to force self-subscribing
-    actor.SetPos(actor.GetPos());
+    actor.ForceSubscriptionsUpdate();
   } else {
     serverState.actorsMap.left.erase(userId);
   }
@@ -266,6 +294,17 @@ NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
   return ac.GetPos();
 }
 
+const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
+{
+  return worldState.GetActorsByProfileId(profileId);
+}
+
+void PartOne::SetEnabled(uint32_t actorFormId, bool enabled)
+{
+  auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
+  enabled ? ac.Enable() : ac.Disable();
+}
+
 namespace {
 inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
 {
@@ -296,7 +335,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
     auto& subVector = refrRecords[i];
     auto mapping = espm->GetBrowser().GetMapping(i);
 
-    printf("starting %d\n", static_cast<int>(i));
+    logger->info("starting {}", i);
 
     for (auto& refrRecord : *subVector) {
       auto refr = reinterpret_cast<espm::REFR*>(refrRecord);
@@ -305,7 +344,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
       auto baseId = espm::GetMappedId(data.baseId, *mapping);
       auto base = espm->GetBrowser().LookupById(baseId);
       if (!base.rec)
-        printf("baseId %x %p\n", baseId, base.rec);
+        logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
       if (!base.rec)
         continue;
 
@@ -330,7 +369,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
 
       if (!worldOrCell) {
         if (!cell->GetParentCELL(worldOrCell)) {
-          printf("Anomally: refr without world/cell\n");
+          logger->info("Anomally: refr without world/cell");
           continue;
         }
       }
@@ -347,7 +386,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
 
       } else {
         if (!locationalData) {
-          printf("Anomally: refr without locationalData\n");
+          logger->info("Anomally: refr without locationalData");
           continue;
         }
 
@@ -361,7 +400,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
     }
   }
 
-  printf("AttachEspm took %d ticks\n", int(clock() - was));
+  logger->info("AttachEspm took {} ticks", clock() - was);
 }
 
 void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
@@ -372,13 +411,17 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
   clock_t was = clock();
 
   int n = 0;
+  int numPlayerCharacters = 0;
   saveStorage->IterateSync([&](const MpChangeForm& changeForm) {
     n++;
     worldState.LoadChangeForm(changeForm, CreateFormCallbacks(sendTarget));
+    if (changeForm.profileId >= 0)
+      ++numPlayerCharacters;
   });
 
-  printf("AttachSaveStorage took %d ticks, loaded %d ChangeForms\n",
-         int(clock() - was), n);
+  logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
+               "(Including {} player characters)",
+               clock() - was, n, numPlayerCharacters);
 }
 
 espm::Loader& PartOne::GetEspm() const

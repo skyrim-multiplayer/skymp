@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import * as networking from "./networking";
-import { FormModel, WorldModel } from "./model";
+import { WorldModel } from "./model";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
 import { SendTarget } from "./sendTarget";
@@ -20,12 +20,15 @@ import {
   ObjectReference,
   on,
   Ui,
+  settings,
+  Armor,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./components/inventory";
 import { isBadMenuShown } from "./components/equipment";
 import { Movement } from "./components/movement";
 import { IdManager } from "../lib/idManager";
+import { applyLookToPlayer } from "./components/look";
 
 class SpawnTask {
   running = false;
@@ -50,7 +53,24 @@ const verifySourceCode = () => {
   networking.send(
     {
       t: messages.MsgType.CustomPacket,
-      content: { customPacketType: "clientVersion", src },
+      content: {
+        customPacketType: "clientVersion",
+        src,
+      },
+    },
+    true
+  );
+};
+
+const loginWithSkympIoCredentials = () => {
+  printConsole("Logging in as skymp.io user");
+  networking.send(
+    {
+      t: messages.MsgType.CustomPacket,
+      content: {
+        customPacketType: "loginWithSkympIo",
+        gameData: settings["skymp5-client"]["gameData"],
+      },
     },
     true
   );
@@ -81,7 +101,8 @@ const setPcInventory = (inv: Inventory): void => {
 
 let pcInvLastApply = 0;
 on("update", () => {
-  if (Date.now() - pcInvLastApply > 5000 && !isBadMenuShown()) {
+  if (isBadMenuShown()) return;
+  if (Date.now() - pcInvLastApply > 5000) {
     pcInvLastApply = Date.now();
     const pcInv = getPcInventory();
     if (pcInv) applyInventory(Game.getPlayer(), pcInv, false, true);
@@ -183,14 +204,26 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
     // TODO: move to a separate module
 
+    if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
+      this.setRaceMenuOpen({ type: "setRaceMenuOpen", open: true });
+
     const applyPcInv = () => {
       applyInventory(
         Game.getPlayer(),
-        msg.inventory ? msg.inventory : { entries: [] },
+        msg.equipment
+          ? {
+              entries: msg.equipment.inv.entries.filter(
+                (x) => !!Armor.from(Game.getFormEx(x.baseId))
+              ),
+            }
+          : { entries: [] },
         false
       );
-      if (msg.inventory)
-        this.setInventory({ type: "setInventory", inventory: msg.inventory });
+      if (msg.props.inventory)
+        this.setInventory({
+          type: "setInventory",
+          inventory: msg.props.inventory as Inventory,
+        });
     };
 
     if (msg.isMe) {
@@ -220,14 +253,37 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           if (!task.running) {
             task.running = true;
             printConsole("Using loadGame to spawn player");
+            printConsole(
+              "skinColorFromServer:",
+              msg.look ? msg.look.skinColor.toString(16) : undefined
+            );
             loadGameManager.loadGame(
               msg.transform.pos,
               msg.transform.rot,
-              msg.transform.worldOrCell
+              msg.transform.worldOrCell,
+              msg.look
+                ? {
+                    name: msg.look.name,
+                    raceId: msg.look.raceId,
+                    face: {
+                      hairColor: msg.look.hairColor,
+                      bodySkinColor: msg.look.skinColor,
+                      headTextureSetId: msg.look.headTextureSetId,
+                      headPartIds: msg.look.headpartIds,
+                      presets: msg.look.presets,
+                    },
+                  }
+                : undefined
             );
             once("update", () => {
               applyPcInv();
               Utility.wait(0.3).then(applyPcInv);
+              if (msg.look) {
+                applyLookToPlayer(msg.look);
+                if (msg.look.isFemale)
+                  // Fix gender-related walking anim
+                  Game.getPlayer().resurrect();
+              }
             });
           }
         });
@@ -313,6 +369,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   customPacket(msg: messages.CustomPacket): void {
     switch (msg.content.customPacketType) {
+      case "loginRequired":
+        loginWithSkympIoCredentials();
+        break;
       case "newClientVersion":
         if (typeof msg.content.src !== "string")
           throw new Error(`'${msg.content.src}' is not a string`);

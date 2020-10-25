@@ -27,8 +27,9 @@ export const addLoadGameListener = (onGameLoad: OnGameLoad): void => {
 export const loadGame = (
   pos: number[],
   rot: number[],
-  worldOrCell: number
+  worldOrCell: number,
+  changeFormNpc?: sp.ChangeFormNpc
 ): void => {
-  sp.loadGame(pos, rot, worldOrCell);
+  sp.loadGame(pos, rot, worldOrCell, changeFormNpc);
   isCausedBySkyrimPlatform = true;
 };
