@@ -29,6 +29,7 @@ struct WorldState::Impl
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
+  uint32_t nextId = 0xff000000;
   std::deque<SingleUpdateEntry> singleUpdates;
   HeuristicPolicy policy;
 };
@@ -292,4 +293,23 @@ VirtualMachine& WorldState::GetPapyrusVm()
     }
   }
   return *pImpl->vm;
+}
+
+const std::set<uint32_t>& WorldState::GetActorsByProfileId(
+  int32_t profileId) const
+{
+  static const std::set<uint32_t> g_emptySet;
+
+  auto it = actorIdByProfileId.find(profileId);
+  if (it == actorIdByProfileId.end())
+    return g_emptySet;
+  return it->second;
+}
+
+uint32_t WorldState::GenerateFormId()
+{
+  while (LookupFormById(pImpl->nextId)) {
+    ++pImpl->nextId;
+  }
+  return pImpl->nextId++;
 }

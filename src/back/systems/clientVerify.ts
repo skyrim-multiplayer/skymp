@@ -54,7 +54,7 @@ export class ClientVerify implements System {
     if (content["src"] === this.compiledFront) {
       this.hashVerified[userId] = true;
       this.log(`Verified front source code for ${userId}`);
-      ctx.gm.emit("spawnAllowed", userId);
+      ctx.gm.emit("loginRequired", userId);
     } else {
       this.log(
         `Sending new front for ${userId} (${content["src"].length} !== ${this.compiledFront.length})`

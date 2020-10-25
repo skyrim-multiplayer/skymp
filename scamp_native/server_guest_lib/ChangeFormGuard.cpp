@@ -3,5 +3,6 @@
 
 void ChangeFormGuard_::RequestSave(MpObjectReference* self)
 {
-  self->GetParent()->RequestSave(*self);
+  if (auto worldState = self->GetParent())
+    worldState->RequestSave(*self);
 }

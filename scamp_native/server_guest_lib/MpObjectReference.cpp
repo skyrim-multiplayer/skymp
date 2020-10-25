@@ -78,6 +78,15 @@ public:
   bool HasScripts() const noexcept { return !!scriptsState; }
 };
 
+namespace {
+auto Mode(bool isLocationSaveNeeded)
+{
+  return isLocationSaveNeeded
+    ? ChangeFormGuard<MpChangeFormREFR>::Mode::RequestSave
+    : ChangeFormGuard<MpChangeFormREFR>::Mode::NoRequestSave;
+}
+}
+
 MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
                                      const FormCallbacks& callbacks_,
                                      uint32_t baseId_, const char* baseType_)
@@ -137,6 +146,11 @@ const bool& MpObjectReference::IsOpen() const
   return pImpl->ChangeForm().isOpen;
 }
 
+const bool& MpObjectReference::IsDisabled() const
+{
+  return pImpl->ChangeForm().isDisabled;
+}
+
 const std::chrono::milliseconds& MpObjectReference::GetRelootTime() const
 {
   return relootTime;
@@ -147,59 +161,37 @@ bool MpObjectReference::GetAnimationVariableBool(const char* name) const
   return pImpl->animGraphHolder &&
     pImpl->animGraphHolder->animationVariablesBool.count(name) > 0;
 }
-
-void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor)
+void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
+                                        VisitPropertiesMode mode)
 {
   if (IsHarvested())
     visitor("isHarvested", "true");
   if (IsOpen())
     visitor("isOpen", "true");
+  if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
+    auto inventoryDump = GetInventory().ToJson().dump();
+    visitor("inventory", inventoryDump.data());
+  }
 }
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
-  auto& grid = GetParent()->grids[GetCellOrWorld()];
-
   auto oldGridPos = GetGridPos(pImpl->ChangeForm().position);
   auto newGridPos = GetGridPos(newPos);
 
   pImpl->EditChangeForm(
-    [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; });
+    [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; },
+    Mode(IsLocationSavingNeeded()));
 
-  if (oldGridPos != newGridPos || !everSubscribedOrListened) {
-    everSubscribedOrListened = true;
-
-    InitListenersAndEmitters();
-
-    MoveOnGrid(grid);
-
-    auto& was = *this->listeners;
-    auto& now = grid.GetNeighboursAndMe(this);
-
-    std::vector<MpObjectReference*> toRemove;
-    std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
-                        std::inserter(toRemove, toRemove.begin()));
-    for (auto listener : toRemove) {
-      Unsubscribe(this, listener);
-      if (this != listener)
-        Unsubscribe(listener, this);
-    }
-
-    std::vector<MpObjectReference*> toAdd;
-    std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
-                        std::inserter(toAdd, toAdd.begin()));
-    for (auto listener : toAdd) {
-      Subscribe(this, listener);
-      if (this != listener)
-        Subscribe(listener, this);
-    }
-  }
+  if (oldGridPos != newGridPos || !everSubscribedOrListened)
+    ForceSubscriptionsUpdate();
 }
 
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
 {
   pImpl->EditChangeForm(
-    [&](MpChangeFormREFR& changeForm) { changeForm.angle = newAngle; });
+    [&](MpChangeFormREFR& changeForm) { changeForm.angle = newAngle; },
+    Mode(IsLocationSavingNeeded()));
 }
 
 void MpObjectReference::SetHarvested(bool harvested)
@@ -223,9 +215,6 @@ void MpObjectReference::SetOpen(bool open)
 
 void MpObjectReference::Activate(MpActor& activationSource)
 {
-  std::cout << "Activate " << this->GetFormId() << " by "
-            << activationSource.GetFormId() << std::endl;
-
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
@@ -293,7 +282,7 @@ void MpObjectReference::Activate(MpActor& activationSource)
       }.dump();
       activationSource.SendToUser(msg.data(), msg.size(), true);
 
-      activationSource.SetCellOrWorld(teleportWorldOrCell);
+      activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
 
     } else {
       SetOpen(!IsOpen());
@@ -325,9 +314,6 @@ void MpObjectReference::Activate(MpActor& activationSource)
 
 void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
 {
-  std::cout << "PutItem into " << this->GetFormId() << " by " << ac.GetFormId()
-            << std::endl;
-
   CheckInteractionAbility(ac);
   if (this->occupant != &ac) {
     std::stringstream err;
@@ -340,9 +326,6 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
 
 void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
 {
-  std::cout << "TakeItem from " << this->GetFormId() << " by "
-            << ac.GetFormId() << std::endl;
-
   CheckInteractionAbility(ac);
   if (this->occupant != &ac) {
     std::stringstream err;
@@ -362,20 +345,72 @@ void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
   relootTime = newRelootTime;
 }
 
-void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
-{
-  everSubscribedOrListened = false;
-  auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
-  grid.Forget(this);
-
-  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    changeForm.worldOrCell = newWorldOrCell;
-  });
-}
-
 void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
 {
   chanceNoneOverride.reset(new uint8_t(newChanceNone));
+}
+
+void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
+{
+  SetCellOrWorldObsolete(newWorldOrCell);
+  ForceSubscriptionsUpdate();
+}
+
+void MpObjectReference::Disable()
+{
+  if (pImpl->ChangeForm().isDisabled)
+    return;
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = true; });
+  RemoveFromGrid();
+}
+
+void MpObjectReference::Enable()
+{
+  if (!pImpl->ChangeForm().isDisabled)
+    return;
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = false; });
+  ForceSubscriptionsUpdate();
+}
+
+void MpObjectReference::ForceSubscriptionsUpdate()
+{
+  if (!GetParent() || IsDisabled())
+    return;
+  InitListenersAndEmitters();
+
+  auto& grid = GetParent()->grids[GetCellOrWorld()];
+  MoveOnGrid(grid);
+
+  auto& was = *this->listeners;
+  auto& now = grid.GetNeighboursAndMe(this);
+
+  std::vector<MpObjectReference*> toRemove;
+  std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
+                      std::inserter(toRemove, toRemove.begin()));
+  for (auto listener : toRemove) {
+    Unsubscribe(this, listener);
+    // Unsubscribe from self is NEEDED. See comment below
+    if (this != listener)
+      Unsubscribe(listener, this);
+  }
+
+  std::vector<MpObjectReference*> toAdd;
+  std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
+                      std::inserter(toAdd, toAdd.begin()));
+  for (auto listener : toAdd) {
+    Subscribe(this, listener);
+    // Note: Self-subscription is OK this check is performed as we don't want
+    // to self-subscribe twice! We have already been subscribed to self in the
+    // last line of code
+    if (this != listener)
+      Subscribe(listener, this);
+  }
+
+  everSubscribedOrListened = true;
 }
 
 void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
@@ -437,12 +472,25 @@ void MpObjectReference::RelootContainer()
   EnsureBaseContainerAdded(*GetParent()->espm);
 }
 
+void MpObjectReference::RegisterProfileId(int32_t profileId)
+{
+  if (profileId < 0)
+    throw std::runtime_error("Invalid profileId passed to RegisterProfileId");
+
+  if (pImpl->ChangeForm().profileId >= 0)
+    throw std::runtime_error("Already has a valid profileId");
+
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.profileId = profileId; });
+  GetParent()->actorIdByProfileId[profileId].insert(GetFormId());
+}
+
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
                                   MpObjectReference* listener)
 {
-  bool bothNonActors =
-    !dynamic_cast<MpActor*>(emitter) && !dynamic_cast<MpActor*>(listener);
-  if (bothNonActors)
+  const bool emitterIsActor = !!dynamic_cast<MpActor*>(emitter);
+  const bool listenerIsActor = !!dynamic_cast<MpActor*>(listener);
+  if (!emitterIsActor && !listenerIsActor)
     return;
 
   emitter->InitListenersAndEmitters();
@@ -517,7 +565,7 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   MpChangeForm res;
   static_cast<MpChangeFormREFR&>(res) = pImpl->ChangeForm();
 
-  if (!GetParent()->espmFiles.empty()) {
+  if (GetParent() && !GetParent()->espmFiles.empty()) {
     res.formDesc = FormDesc::FromFormId(GetFormId(), GetParent()->espmFiles);
     res.baseDesc = FormDesc::FromFormId(GetBaseId(), GetParent()->espmFiles);
   } else
@@ -544,8 +592,13 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   }
 
   // Perform all required grid operations
-  SetCellOrWorld(changeForm.worldOrCell);
+  changeForm.isDisabled ? Disable() : Enable();
+  SetCellOrWorldObsolete(changeForm.worldOrCell);
   SetPos(changeForm.position);
+  // TODO: Is explicit call to ForceSubscriptionsUpdate() required here?
+
+  if (changeForm.profileId >= 0)
+    RegisterProfileId(changeForm.profileId);
 
   pImpl->EditChangeForm(
     [&](MpChangeFormREFR& f) {
@@ -567,12 +620,30 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   }
 }
 
+void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
+{
+  auto worldState = GetParent();
+  if (!worldState)
+    return;
+
+  everSubscribedOrListened = false;
+  auto gridIterator = worldState->grids.find(pImpl->ChangeForm().worldOrCell);
+  if (gridIterator != worldState->grids.end())
+    gridIterator->second.Forget(this);
+
+  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    changeForm.worldOrCell = newWorldOrCell;
+  });
+}
+
 void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
   MpForm::Init(parent, formId);
 
-  auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
-  MoveOnGrid(grid);
+  if (!IsDisabled()) {
+    auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
+    MoveOnGrid(grid);
+  }
 
   // We should queue created form for saving as soon as it is initialized
   const auto mode =
@@ -634,6 +705,33 @@ void MpObjectReference::BuildScriptProperties(
     }
   }
   *out = res;
+}
+
+bool MpObjectReference::IsLocationSavingNeeded() const
+{
+  auto last = pImpl->GetLastSaveRequestMoment();
+  return !last ||
+    std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
+}
+
+void MpObjectReference::RemoveFromGrid()
+{
+  auto gridIterator = GetParent()->grids.find(GetCellOrWorld());
+  if (gridIterator != GetParent()->grids.end())
+    gridIterator->second.Forget(this);
+
+  auto listenersCopy = GetListeners();
+  for (auto listener : listenersCopy)
+    Unsubscribe(this, listener);
+
+  everSubscribedOrListened = false;
+}
+
+void MpObjectReference::UnsubscribeFromAll()
+{
+  auto emittersCopy = GetEmitters();
+  for (auto emitter : emittersCopy)
+    Unsubscribe(emitter, this);
 }
 
 void MpObjectReference::InitScripts()
@@ -813,10 +911,5 @@ void MpObjectReference::BeforeDestroy()
 
   MpForm::BeforeDestroy();
 
-  GetParent()->grids[GetCellOrWorld()].Forget(this);
-
-  auto listenersCopy = GetListeners();
-  for (auto listener : listenersCopy)
-    if (this != listener)
-      Unsubscribe(this, listener);
+  RemoveFromGrid();
 }

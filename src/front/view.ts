@@ -325,7 +325,12 @@ export class FormView implements View<FormModel> {
       gCrosshairRefId == this.refrId &&
       !isBadMenuShown()
     ) {
-      applyInventory(refr, model.inventory, false, true);
+      // Do not let actors breaking their equipment via inventory apply
+      // However, actually, actors do not have inventory in their models
+      // Except your clone.
+      if (!Actor.from(refr)) {
+        applyInventory(refr, model.inventory, false, true);
+      }
     }
 
     if (model.animation) {

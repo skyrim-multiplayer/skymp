@@ -2,6 +2,7 @@
 #include "ISaveStorage.h"
 #include <functional>
 #include <memory>
+#include <spdlog/logger.h>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,9 @@ public:
 class AsyncSaveStorage : public ISaveStorage
 {
 public:
-  AsyncSaveStorage(const std::shared_ptr<DbImpl>& dbImpl);
+  // logger must support multithreaded writing
+  AsyncSaveStorage(const std::shared_ptr<DbImpl>& dbImpl,
+                   std::shared_ptr<spdlog::logger> logger = nullptr);
   ~AsyncSaveStorage();
 
   void IterateSync(const IterateSyncCallback& cb) override;
@@ -37,7 +40,9 @@ private:
 class SqliteSaveStorage : public AsyncSaveStorage
 {
 public:
-  SqliteSaveStorage(std::string filename);
+  // logger must support multithreaded writing
+  SqliteSaveStorage(std::string filename,
+                    std::shared_ptr<spdlog::logger> logger = nullptr);
 
 private:
   std::shared_ptr<DbImpl> CreateDbImpl(std::string filename);

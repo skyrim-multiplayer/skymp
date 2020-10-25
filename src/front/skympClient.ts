@@ -6,6 +6,7 @@ import {
   settings,
   Game,
   Ui,
+  Utility,
 } from "skyrimPlatform";
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
@@ -34,7 +35,7 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     (m: AnyMessage) => void
   >;
   const f = handler[msgType];
-  if (msgType !== "UpdateMovement") printConsole(msgType, msgAny);
+  //if (msgType !== "UpdateMovement") printConsole(msgType, msgAny);
   if (f && typeof f === "function") handler[msgType](msgAny);
 };
 
@@ -145,6 +146,11 @@ export class SkympClient {
     });
     on("unequip", (e) => {
       if (e.actor.getFormID() === playerFormId) this.equipmentChanged = true;
+    });
+    on("loadGame", () => {
+      // Currently only armor is equipped after relogging (see remoteServer.ts)
+      // This hack forces sending /equipment without weapons/ back to the server
+      Utility.wait(3).then(() => (this.equipmentChanged = true));
     });
 
     loadGameManager.addLoadGameListener((e: loadGameManager.GameLoadEvent) => {

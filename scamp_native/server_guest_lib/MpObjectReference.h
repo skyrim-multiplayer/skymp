@@ -46,6 +46,12 @@ class FormCallbacks;
 
 class FormCallbacks;
 
+enum class VisitPropertiesMode
+{
+  OnlyPublic,
+  All
+};
+
 class MpObjectReference
   : public MpForm
   , public FormIndex
@@ -72,13 +78,15 @@ public:
   const Inventory& GetInventory() const;
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
+  const bool& IsDisabled() const;
   const std::chrono::milliseconds& GetRelootTime() const;
   bool GetAnimationVariableBool(const char* name) const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
 
-  void VisitProperties(const PropertiesVisitor& visitor);
+  virtual void VisitProperties(const PropertiesVisitor& visitor,
+                               VisitPropertiesMode mode);
 
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);
@@ -88,9 +96,18 @@ public:
   void PutItem(MpActor& actor, const Inventory::Entry& entry);
   void TakeItem(MpActor& actor, const Inventory::Entry& entry);
   void SetRelootTime(std::chrono::milliseconds newRelootTime);
-  void SetCellOrWorld(uint32_t worldOrCell);
   void SetChanceNoneOverride(uint8_t chanceNone);
+  void SetCellOrWorld(uint32_t worldOrCell);
   void SetAnimationVariableBool(const char* name, bool value);
+  void Disable();
+  void Enable();
+  void ForceSubscriptionsUpdate();
+
+  // If you want to completely remove ObjectReference from the grid you need
+  // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these
+  // functions without another in new code if you have no good reason for this.
+  void UnsubscribeFromAll();
+  void RemoveFromGrid();
 
   void AddItem(uint32_t baseId, uint32_t count);
   void AddItems(const std::vector<Inventory::Entry>& entries);
@@ -98,6 +115,7 @@ public:
   void RemoveItems(const std::vector<Inventory::Entry>& entries,
                    MpObjectReference* target = nullptr);
   void RelootContainer();
+  void RegisterProfileId(int32_t profileId);
 
   static void Subscribe(MpObjectReference* emitter,
                         MpObjectReference* listener);
@@ -115,6 +133,10 @@ public:
   virtual MpChangeForm GetChangeForm() const;
   virtual void ApplyChangeForm(const MpChangeForm& changeForm);
 
+  // This method removes ObjectReference from a current grid and doesn't attach
+  // to another grid
+  void SetCellOrWorldObsolete(uint32_t worldOrCell);
+
 private:
   void Init(WorldState* parent, uint32_t formId) override;
 
@@ -128,13 +150,12 @@ private:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
-
   void CastProperty(const espm::CombineBrowser& br, const espm::Property& prop,
                     VarValue* out);
-
   void BuildScriptProperties(const espm::CombineBrowser& br,
                              const espm::ScriptData& scriptData,
                              PropertyValuesMap* out);
+  bool IsLocationSavingNeeded() const;
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

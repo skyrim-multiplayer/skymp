@@ -172,3 +172,66 @@ TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
   DoDisconnect(partOne, 1);
   REQUIRE(partOne.serverState.UserByActor(&ac) == Networking::InvalidUserId);
 }
+
+TEST_CASE("Bug with subscription", "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  DoConnect(partOne, 0);
+
+  partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c, &tgt);
+  partOne.SetEnabled(0xff000000, true);
+  partOne.SetEnabled(0xff000000, false);
+  partOne.SetEnabled(0xff000000, true);
+  partOne.SetEnabled(0xff000000, false);
+  partOne.SetEnabled(0xff000000, true);
+  partOne.SetUserActor(0, 0xff000000, &tgt);
+
+  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(tgt.messages[0].j["type"] == "createActor");
+}
+
+TEST_CASE("SetUserActor doesn't work with disabled actors", "[PartOne]")
+{
+  PartOne partOne;
+
+  REQUIRE_THROWS_WITH(partOne.GetUserActor(Networking::InvalidUserId),
+                      Contains("User with id 65535 doesn't exist"));
+
+  REQUIRE_THROWS_WITH(
+    partOne.SetUserActor(Networking::InvalidUserId, 0, nullptr),
+    Contains("User with id 65535 doesn't exist"));
+}
+
+TEST_CASE("Actor should see its inventory in 'createActor' message",
+          "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  DoConnect(partOne, 0);
+
+  partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c, &tgt);
+  partOne.worldState.GetFormAt<MpActor>(0xff000000).AddItem(0x12eb7, 3);
+  partOne.SetUserActor(0, 0xff000000, &tgt);
+
+  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(tgt.messages[0].j["type"] == "createActor");
+  REQUIRE(tgt.messages[0].j["props"]["inventory"] ==
+          Inventory().AddItem(0x12eb7, 3).ToJson());
+}
+
+TEST_CASE("'isRaceMenuOpen' property should present in 'createActor'",
+          "[PartOne]")
+{
+  FakeSendTarget tgt;
+  PartOne partOne;
+  DoConnect(partOne, 0);
+
+  partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c, &tgt);
+  partOne.worldState.GetFormAt<MpActor>(0xff000000).SetRaceMenuOpen(true);
+  partOne.SetUserActor(0, 0xff000000, &tgt);
+
+  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(tgt.messages[0].j["type"] == "createActor");
+  REQUIRE(tgt.messages[0].j["props"]["isRaceMenuOpen"] == true);
+}
