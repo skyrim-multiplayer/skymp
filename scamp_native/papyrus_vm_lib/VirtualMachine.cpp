@@ -3,11 +3,21 @@
 #include <algorithm>
 #include <stdexcept>
 
+VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
+{
+  for (auto& script : loadedScripts) {
+    allLoadedScripts[CIString{ script.source.begin(), script.source.end() }] =
+      script;
+  }
+}
+
 VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
 {
   for (auto& script : loadedScripts) {
     allLoadedScripts[CIString{ script->source.begin(),
-                               script->source.end() }] = script;
+                               script->source.end() }] = {
+      script->source, [script] { return script; }
+    };
   }
 }
 
@@ -203,12 +213,12 @@ ActivePexInstance& VirtualMachine::GetActivePexInObject(
   return notValidInstance;
 }
 
-PexScript::Ptr VirtualMachine::GetPexByName(const std::string& name)
+PexScript::Lazy VirtualMachine::GetPexByName(const std::string& name)
 {
   auto it = allLoadedScripts.find(CIString{ name.begin(), name.end() });
   if (it != allLoadedScripts.end())
     return it->second;
-  return nullptr;
+  return PexScript::Lazy();
 }
 
 ActivePexInstance::Ptr VirtualMachine::CreateActivePexInstance(

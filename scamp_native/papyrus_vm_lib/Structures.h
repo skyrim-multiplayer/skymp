@@ -349,6 +349,12 @@ struct PexScript
 {
   using Ptr = std::shared_ptr<PexScript>;
 
+  struct Lazy
+  {
+    std::string source;
+    std::function<std::shared_ptr<PexScript>()> fn;
+  };
+
   ScriptHeader header;
   StringTable stringTable;
   DebugInfo debugInfo;
@@ -367,7 +373,7 @@ public:
 
   ActivePexInstance();
   ActivePexInstance(
-    PexScript::Ptr sourcePex,
+    PexScript::Lazy sourcePex,
     const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
     VirtualMachine* parentVM, VarValue activeInstanceOwner,
     std::string childrenName);
@@ -425,7 +431,7 @@ private:
 
   std::string childrenName;
 
-  PexScript::Ptr sourcePex = nullptr;
+  PexScript::Lazy sourcePex;
   VirtualMachine* parentVM = nullptr;
 
   VarValue activeInstanceOwner = VarValue::None();

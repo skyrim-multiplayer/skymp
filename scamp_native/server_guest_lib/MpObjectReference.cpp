@@ -72,10 +72,9 @@ public:
   {
   }
 
+  bool scriptsInited = false;
   std::unique_ptr<ScriptState> scriptState;
   std::unique_ptr<AnimGraphHolder> animGraphHolder;
-
-  bool HasScripts() const noexcept { return !!scriptState; }
 };
 
 namespace {
@@ -306,7 +305,7 @@ void MpObjectReference::Activate(MpActor& activationSource)
     }
   }
 
-  if (pImpl->HasScripts()) {
+  if (HasScripts()) {
     auto arg = activationSource.ToVarValue();
     SendPapyrusEvent("OnActivate", &arg, 1);
   }
@@ -655,8 +654,6 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
     mode);
-
-  InitScripts();
 }
 
 bool MpObjectReference::IsLocationSavingNeeded() const
@@ -664,6 +661,15 @@ bool MpObjectReference::IsLocationSavingNeeded() const
   auto last = pImpl->GetLastSaveRequestMoment();
   return !last ||
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
+}
+
+bool MpObjectReference::HasScripts()
+{
+  if (!pImpl->scriptsInited) {
+    InitScripts();
+    pImpl->scriptsInited = true;
+  }
+  return !!pImpl->scriptState;
 }
 
 void MpObjectReference::RemoveFromGrid()

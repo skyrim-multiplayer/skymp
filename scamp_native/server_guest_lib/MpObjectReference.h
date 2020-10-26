@@ -150,6 +150,7 @@ private:
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
   bool IsLocationSavingNeeded() const;
+  bool HasScripts(); // Perform lazy loading
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

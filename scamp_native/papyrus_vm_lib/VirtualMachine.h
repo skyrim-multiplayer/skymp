@@ -13,6 +13,7 @@ public:
     std::shared_ptr<IVariablesHolder> vars;
   };
 
+  VirtualMachine(std::vector<PexScript::Lazy> loadedScripts);
   VirtualMachine(std::vector<PexScript::Ptr> loadedScripts);
 
   void AddObject(IGameObject::Ptr self,
@@ -39,7 +40,7 @@ public:
   ActivePexInstance& GetActivePexInObject(VarValue* object,
                                           const std::string& scriptType);
 
-  PexScript::Ptr GetPexByName(const std::string& name);
+  PexScript::Lazy GetPexByName(const std::string& name);
 
   ActivePexInstance::Ptr CreateActivePexInstance(
     const std::string& pexScriptName, VarValue activeInstanceOwner,
@@ -54,7 +55,7 @@ private:
 
   std::map<IGameObject::Ptr, std::vector<ActivePexInstance>> gameObjects;
 
-  CIMap<PexScript::Ptr> allLoadedScripts;
+  CIMap<PexScript::Lazy> allLoadedScripts;
 
   std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
     nativeStaticFunctions;
