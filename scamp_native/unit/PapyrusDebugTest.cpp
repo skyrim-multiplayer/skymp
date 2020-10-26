@@ -29,6 +29,8 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   REQUIRE(tgt.messages[1].reliable);
   REQUIRE(tgt.messages[1].j ==
           nlohmann::json{ { "type", "spSnippet" },
+                          { "snippetIdx", 0 },
+                          { "selfId", 0 },
                           { "class", "debug" },
                           { "function", "Notification" },
                           { "arguments", { "Hello, world!" } } });
@@ -36,6 +38,8 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   REQUIRE(tgt.messages[2].reliable);
   REQUIRE(tgt.messages[2].j ==
           nlohmann::json{ { "type", "spSnippet" },
+                          { "snippetIdx", 1 },
+                          { "selfId", 0 },
                           { "class", "debug" },
                           { "function", "Notification" },
                           { "arguments", { "Hello, \"world!\"" } } });
