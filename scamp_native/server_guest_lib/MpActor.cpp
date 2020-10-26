@@ -9,6 +9,9 @@ struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
     : ChangeFormGuard(changeForm_, self_)
   {
   }
+
+  std::map<uint32_t, std::function<void(nlohmann::json)>> snippetCallbacks;
+  uint32_t snippetIndex = 0;
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -90,6 +93,15 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
       cf = static_cast<const MpChangeForm&>(newChangeForm);
     },
     Impl::Mode::NoRequestSave);
+}
+
+uint32_t MpActor::NextSnippetIndex(
+  std::function<void(nlohmann::json)> callback)
+{
+  auto res = pImpl->snippetIndex++;
+  if (callback)
+    pImpl->snippetCallbacks[res] = callback;
+  return res;
 }
 
 const bool& MpActor::IsRaceMenuOpen() const

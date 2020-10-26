@@ -13,6 +13,8 @@ const char* EspmGameObject::GetParentNativeScript()
       return "ingredient";
     if (t == "MISC")
       return "miscobject";
+    if (t == "MESG")
+      return "message";
     throw std::runtime_error("Unable to find native script for record type '" +
                              t.ToString() + "'");
   }

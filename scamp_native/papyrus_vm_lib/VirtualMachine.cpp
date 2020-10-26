@@ -95,7 +95,10 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
                                     VarValue* self, const char* methodName,
                                     std::vector<VarValue>& arguments)
 {
-  NativeFunction function;
+  // This function was implemented incorrectly. It searches for methods in
+  // activeInstanceName, not in self. Only native method calls are fixed for
+  // now. Unfortunately, the current test suite is unable to detect problems
+  // here
 
   auto& activeSctipt = GetActivePexInObject(self, activeInstanceName);
 
@@ -106,23 +109,32 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
     throw std::runtime_error(error);
   }
 
-  ActivePexInstance::Ptr currentParent = activeSctipt.GetParentInstance();
-  std::string className = activeSctipt.GetSourcePexName();
+  if (activeSctipt.IsValid() && (!self || *self == VarValue::None())) {
+    self = &activeSctipt.GetVariableValueByName(nullptr, "self");
+  }
 
-  do {
+  const char* nativeClass = "";
 
-    function = nativeFunctions[ToLower(className)][ToLower(methodName)];
+  if (self && *self != VarValue::None()) {
+    nativeClass = static_cast<IGameObject*>(*self)->GetParentNativeScript();
+  } else if (activeSctipt.IsValid()) {
+    nativeClass = activeSctipt.GetSourcePexName().data();
+  }
 
-    if (!function && currentParent->IsValid()) {
-
-      className = currentParent->GetSourcePexName();
-      currentParent = currentParent->GetParentInstance();
+  const char* base = nativeClass;
+  while (1) {
+    if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
+      return f(*self, arguments);
     }
+    auto it = allLoadedScripts.find(base);
+    if (it == allLoadedScripts.end())
+      break;
+    base = it->second.fn()->objectTable.m_data[0].parentClassName.data();
+    if (!base[0])
+      break;
+  }
 
-  } while (!function && currentParent->IsValid());
-
-  if (function)
-    return function(*self, arguments);
+  ActivePexInstance::Ptr currentParent = activeSctipt.GetParentInstance();
 
   FunctionInfo functionInfo;
 
@@ -139,10 +151,10 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
     return activeSctipt.StartFunction(functionInfo, arguments);
   }
 
-  std::string name = "Method not found - '" + activeSctipt.GetSourcePexName() +
-    "." + std::string(methodName) + "'";
-
-  throw std::runtime_error(name);
+  std::string e = "Method not found - '";
+  e += nativeClass;
+  e += (nativeClass[0] ? "." : "") + std::string(methodName) + "'";
+  throw std::runtime_error(e);
 }
 
 VarValue VirtualMachine::CallStatic(std::string className,

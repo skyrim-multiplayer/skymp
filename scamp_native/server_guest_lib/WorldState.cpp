@@ -268,29 +268,30 @@ VirtualMachine& WorldState::GetPapyrusVm()
     std::vector<PexScript::Lazy> pexStructures;
     std::vector<std::string> scriptNames;
 
-    auto scriptStorage = GetScriptStorage();
+    auto scriptStorage = pImpl->scriptStorage;
     if (!scriptStorage)
       throw std::runtime_error("Required scriptStorage to be non-null");
 
     auto& scripts = scriptStorage->ListScripts();
     for (auto& required : scripts) {
-      auto requiredPex = scriptStorage->GetScriptPex(required.data());
-      if (requiredPex.empty()) {
-        logger->warn("'{}' is listed but failed to load from the storage",
-                     std::string({ required.begin(), required.end() }));
-      } else {
-        std::shared_ptr<LazyState> lazyState(new LazyState);
-        PexScript::Lazy lazy;
-        lazy.source = required.data();
-        lazy.fn = [lazyState, requiredPex]() {
-          if (!lazyState->pex) {
-            auto pexStructure = Reader({ requiredPex }).GetSourceStructures();
-            lazyState->pex = pexStructure[0];
+      std::shared_ptr<LazyState> lazyState(new LazyState);
+      PexScript::Lazy lazy;
+      lazy.source = required.data();
+      lazy.fn = [lazyState, scriptStorage, required]() {
+        if (!lazyState->pex) {
+          auto requiredPex = scriptStorage->GetScriptPex(required.data());
+          if (requiredPex.empty()) {
+            throw std::runtime_error(
+              "'" + std::string({ required.begin(), required.end() }) +
+              "' is listed but failed to "
+              "load from the storage");
           }
-          return lazyState->pex;
-        };
-        pexStructures.push_back(lazy);
-      }
+          auto pexStructure = Reader({ requiredPex }).GetSourceStructures();
+          lazyState->pex = pexStructure[0];
+        }
+        return lazyState->pex;
+      };
+      pexStructures.push_back(lazy);
     }
 
     if (!pexStructures.empty()) {

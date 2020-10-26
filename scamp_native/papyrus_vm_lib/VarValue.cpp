@@ -364,6 +364,11 @@ bool VarValue::operator==(const VarValue& argument2) const
   throw std::runtime_error("Wrong type in operator!");
 }
 
+bool VarValue::operator!=(const VarValue& argument2) const
+{
+  return !(*this == argument2);
+}
+
 bool VarValue::operator>(const VarValue& argument2) const
 {
 

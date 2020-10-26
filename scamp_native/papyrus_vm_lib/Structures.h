@@ -108,6 +108,7 @@ public:
   VarValue& operator=(const VarValue& argument2);
 
   bool operator==(const VarValue& argument2) const;
+  bool operator!=(const VarValue& argument2) const;
   bool operator>(const VarValue& argument2) const;
   bool operator>=(const VarValue& argument2) const;
   bool operator<(const VarValue& argument2) const;
@@ -382,7 +383,8 @@ public:
                                  std::string stateName) const;
 
   VarValue& GetVariableValueByName(
-    std::vector<std::pair<std::string, VarValue>>& locals, std::string name);
+    std::vector<std::pair<std::string, VarValue>>* optionalLocals,
+    std::string name);
 
   VarValue& GetIndentifierValue(
     std::vector<std::pair<std::string, VarValue>>& locals, VarValue& value);

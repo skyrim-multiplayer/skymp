@@ -42,6 +42,8 @@ public:
   MpChangeForm GetChangeForm() const override;
   void ApplyChangeForm(const MpChangeForm& changeForm) override;
 
+  uint32_t NextSnippetIndex(std::function<void(nlohmann::json)> callback);
+
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 

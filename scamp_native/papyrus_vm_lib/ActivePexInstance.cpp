@@ -658,7 +658,7 @@ VarValue& ActivePexInstance::GetIndentifierValue(
       (const char*)value != nullptr) {
     std::string temp;
     temp = temp + (const char*)value;
-    return GetVariableValueByName(locals, temp);
+    return GetVariableValueByName(&locals, temp);
   } else
     return value;
 }
@@ -813,18 +813,19 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
 }
 
 VarValue& ActivePexInstance::GetVariableValueByName(
-  std::vector<std::pair<std::string, VarValue>>& locals, std::string name)
+  std::vector<std::pair<std::string, VarValue>>* locals, std::string name)
 {
 
   if (name == "self") {
     return activeInstanceOwner;
   }
 
-  for (auto& var : locals) {
-    if (var.first == name) {
-      return var.second;
+  if (locals)
+    for (auto& var : *locals) {
+      if (var.first == name) {
+        return var.second;
+      }
     }
-  }
 
   auto var = this->variables->GetVariableByName(name.data(), *sourcePex.fn());
   if (var)
