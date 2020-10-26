@@ -1,4 +1,5 @@
 #pragma once
+#include "CIString.h"
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -13,7 +14,7 @@ public:
 
   virtual std::vector<uint8_t> GetScriptPex(const char* scriptName) = 0;
 
-  virtual const std::set<std::string>& ListScripts() = 0;
+  virtual const std::set<CIString>& ListScripts() = 0;
 };
 
 class DirectoryScriptStorage : public IScriptStorage
@@ -23,8 +24,8 @@ public:
 
   std::vector<uint8_t> GetScriptPex(const char* scriptName) override;
 
-  const std::set<std::string>& ListScripts() override;
+  const std::set<CIString>& ListScripts() override;
 
   const std::filesystem::path pexDir;
-  std::set<std::string> scripts;
+  std::set<CIString> scripts;
 };

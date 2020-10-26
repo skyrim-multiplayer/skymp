@@ -1,16 +1,22 @@
 #pragma once
+#include "CIString.h"
 #include "Structures.h"
 #include <functional>
 #include <map>
 
 class VirtualMachine
 {
-
 public:
+  struct ScriptInfo
+  {
+    std::string name;
+    std::shared_ptr<IVariablesHolder> vars;
+  };
+
   VirtualMachine(std::vector<PexScript::Ptr> loadedScripts);
 
-  void AddObject(IGameObject::Ptr self, std::vector<std::string> scripts,
-                 PropertyValuesMap vars);
+  void AddObject(IGameObject::Ptr self,
+                 const std::vector<ScriptInfo>& scripts);
 
   void RemoveObject(IGameObject::Ptr self); // ?
 
@@ -37,7 +43,8 @@ public:
 
   ActivePexInstance::Ptr CreateActivePexInstance(
     const std::string& pexScriptName, VarValue activeInstanceOwner,
-    VarForBuildActivePex mapForFillPropertys, std::string childrenName);
+    const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+    std::string childrenName);
 
   bool IsNativeFunctionByNameExisted(const std::string& name) const;
 
@@ -47,7 +54,7 @@ private:
 
   std::map<IGameObject::Ptr, std::vector<ActivePexInstance>> gameObjects;
 
-  std::vector<PexScript::Ptr> allLoadedScripts;
+  CIMap<PexScript::Ptr> allLoadedScripts;
 
   std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
     nativeStaticFunctions;

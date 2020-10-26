@@ -13,6 +13,7 @@
 #include <map>
 #include <memory>
 #include <sparsepp/spp.h>
+#include <spdlog/spdlog.h>
 #include <sstream>
 
 #ifdef AddForm
@@ -126,6 +127,7 @@ public:
 
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
+  std::shared_ptr<spdlog::logger> logger;
 
   // Only for tests
   auto& GetGrids() { return grids; }

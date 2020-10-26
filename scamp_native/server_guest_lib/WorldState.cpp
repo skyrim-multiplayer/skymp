@@ -7,6 +7,7 @@
 #include "MpObjectReference.h"
 #include "PapyrusForm.h"
 #include "PapyrusGame.h"
+#include "PapyrusMessage.h"
 #include "PapyrusObjectReference.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
@@ -37,6 +38,7 @@ struct WorldState::Impl
 WorldState::WorldState()
 {
   pImpl.reset(new Impl);
+  logger.reset(new spdlog::logger("empty logger"));
 }
 
 void WorldState::Clear()
@@ -270,11 +272,11 @@ VirtualMachine& WorldState::GetPapyrusVm()
     auto& scripts = scriptStorage->ListScripts();
     for (auto& required : scripts) {
       auto requiredPex = scriptStorage->GetScriptPex(required.data());
-      if (requiredPex.empty())
-        throw std::runtime_error(
-          "'" + std::string(required) +
-          "' is listed but failed to load from the storage");
-      pexVec.push_back(requiredPex);
+      if (requiredPex.empty()) {
+        logger->warn("'{}' is listed but failed to load from the storage",
+                     std::string({ required.begin(), required.end() }));
+      } else
+        pexVec.push_back(requiredPex);
     }
 
     auto pexStructure = Reader(pexVec).GetSourceStructures();
@@ -288,6 +290,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       classes.emplace_back(new PapyrusObjectReference);
       classes.emplace_back(new PapyrusGame);
       classes.emplace_back(new PapyrusForm);
+      classes.emplace_back(new PapyrusMessage);
       for (auto cl : classes)
         cl->Register(*pImpl->vm, nullptr);
     }

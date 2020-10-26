@@ -6,3 +6,5 @@ dist
 coverage
 .clinic
 world.sqlite
+server-settings.json
+data

@@ -2,6 +2,7 @@
 #include <catch2/catch.hpp>
 
 #include "Reader.h"
+#include "ScriptVariablesHolder.h"
 #include "VirtualMachine.h"
 #include <cstdint>
 #include <ctime>
@@ -86,19 +87,39 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
     const char* GetStringID() override { return MY_ID.c_str(); };
   };
 
-  std::shared_ptr<IGameObject> testObject(new TestObject);
+  class MyScriptVariablesHolder : public ScriptVariablesHolder
+  {
+  public:
+    MyScriptVariablesHolder(const char* scriptName)
+      : ScriptVariablesHolder(scriptName, nullptr, nullptr)
+    {
+      testObject.reset(new TestObject);
+      var = VarValue(testObject.get());
+    }
 
-  VarForBuildActivePex vars;
+    VarValue* GetVariableByName(const char* name,
+                                const PexScript& pex) override
+    {
+      auto res = ScriptVariablesHolder::GetVariableByName(name, pex);
+      if (name == std::string("::OpcodeRef_var")) {
+        return &var;
+      }
+      return res;
+    }
 
-  std::vector<std::pair<std::string, VarValue>> mapArgs;
+    std::shared_ptr<IGameObject> testObject;
+    VarValue var;
+  };
 
-  mapArgs.push_back(std::make_pair<std::string, VarValue>(
-    "OpcodeRef", VarValue(testObject.get())));
-
-  vars["OpcodesTest"] = mapArgs;
-
-  vm.AddObject(testObject, { "AAATestObject", "OpcodesTest" }, { vars });
+  std::vector<VirtualMachine::ScriptInfo> scripts;
+  scripts.push_back({ "AAATestObject",
+                      std::shared_ptr<ScriptVariablesHolder>(
+                        new MyScriptVariablesHolder("AAATestObject")) });
+  auto holder = std::shared_ptr<MyScriptVariablesHolder>(
+    new MyScriptVariablesHolder("OpcodesTest"));
+  scripts.push_back({ "OpcodesTest", holder });
+  vm.AddObject(holder->testObject, scripts);
 
   std::vector<VarValue> functionArgs;
-  vm.SendEvent(testObject, "Main", functionArgs);
+  vm.SendEvent(holder->testObject, "Main", functionArgs);
 }

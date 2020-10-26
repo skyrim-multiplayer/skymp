@@ -40,7 +40,6 @@ class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
 struct VarValue;
-struct PropertyValuesMap;
 
 class FormCallbacks;
 
@@ -150,11 +149,6 @@ private:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
-  void CastProperty(const espm::CombineBrowser& br, const espm::Property& prop,
-                    VarValue* out);
-  void BuildScriptProperties(const espm::CombineBrowser& br,
-                             const espm::ScriptData& scriptData,
-                             PropertyValuesMap* out);
   bool IsLocationSavingNeeded() const;
 
   bool everSubscribedOrListened = false;

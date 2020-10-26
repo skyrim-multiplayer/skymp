@@ -10,8 +10,11 @@ const char* EspmGameObject::GetParentNativeScript()
   if (record.rec) {
     auto t = record.rec->GetType();
     if (t == "INGR")
-      return "Ingredient";
-    // TODO
+      return "ingredient";
+    if (t == "MISC")
+      return "miscobject";
+    throw std::runtime_error("Unable to find native script for record type '" +
+                             t.ToString() + "'");
   }
   return "";
 }

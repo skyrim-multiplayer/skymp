@@ -34,7 +34,7 @@ DirectoryScriptStorage::DirectoryScriptStorage(
 
     std::string s = GetFileName(p.path());
     if (auto fileNameWe = RemoveExtension(s); !fileNameWe.empty())
-      scripts.insert(fileNameWe);
+      scripts.insert({ fileNameWe.begin(), fileNameWe.end() });
   }
 }
 
@@ -53,7 +53,7 @@ std::vector<uint8_t> DirectoryScriptStorage::GetScriptPex(
   return buffer;
 }
 
-const std::set<std::string>& DirectoryScriptStorage::ListScripts()
+const std::set<CIString>& DirectoryScriptStorage::ListScripts()
 {
   return scripts;
 }

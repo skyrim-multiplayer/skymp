@@ -62,6 +62,7 @@ public:
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
                          Networking::ISendTarget* sendTarget);
   espm::Loader& GetEspm() const;
+  void AttachLogger(std::shared_ptr<spdlog::logger> logger);
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
@@ -70,7 +71,6 @@ public:
   WorldState worldState;
   ServerState serverState;
   Networking::ISendTarget* pushedSendTarget = nullptr;
-  std::shared_ptr<spdlog::logger> logger;
 
 private:
   enum class UserType

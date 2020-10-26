@@ -317,6 +317,17 @@ const uint8_t* ReadPropertyValue(const uint8_t* p, espm::Property* prop,
       }
       return p;
     }
+    case espm::PropertyType::IntArray: {
+      uint32_t arrayLength = *reinterpret_cast<const uint32_t*>(p);
+      p += 4;
+      for (uint32_t i = 0; i < arrayLength; ++i) {
+        p += 4;
+        espm::Property::Value v;
+        v.integer = *reinterpret_cast<const int32_t*>(p);
+        prop->array.push_back(v);
+      }
+      return p;
+    }
     default:
       throw std::runtime_error("Script properties with type " +
                                std::to_string(static_cast<int>(t)) +

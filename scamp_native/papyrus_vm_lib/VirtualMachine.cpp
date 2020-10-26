@@ -5,7 +5,10 @@
 
 VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
 {
-  this->allLoadedScripts = loadedScripts;
+  for (auto& script : loadedScripts) {
+    allLoadedScripts[CIString{ script->source.begin(),
+                               script->source.end() }] = script;
+  }
 }
 
 std::string ToLower(std::string s)
@@ -30,19 +33,17 @@ void VirtualMachine::RegisterFunction(std::string className,
 }
 
 void VirtualMachine::AddObject(IGameObject::Ptr self,
-                               std::vector<std::string> scripts,
-                               PropertyValuesMap vars)
+                               const std::vector<ScriptInfo>& scripts)
 {
   std::vector<ActivePexInstance> scriptsForObject;
 
-  for (auto& baseScript : allLoadedScripts) {
-    for (auto& nameNeedScript : scripts) {
-      if (baseScript->source == nameNeedScript) {
-
-        ActivePexInstance scriptInstance(
-          baseScript, vars.data, this, VarValue((IGameObject*)self.get()), "");
-        scriptsForObject.push_back(scriptInstance);
-      }
+  for (auto& s : scripts) {
+    CIString ciNameNeedScript{ s.name.begin(), s.name.end() };
+    auto it = allLoadedScripts.find(ciNameNeedScript);
+    if (it != allLoadedScripts.end()) {
+      ActivePexInstance scriptInstance(it->second, s.vars, this,
+                                       VarValue((IGameObject*)self.get()), "");
+      scriptsForObject.push_back(scriptInstance);
     }
   }
 
@@ -153,19 +154,13 @@ VarValue VirtualMachine::CallStatic(std::string className,
   }
 
   auto it =
-    std::find_if(this->allLoadedScripts.begin(), this->allLoadedScripts.end(),
-                 [&](std::shared_ptr<PexScript> a) -> bool {
-                   return !Utils::stricmp(a->source.data(), className.data());
-                 });
-
-  if (it == this->allLoadedScripts.end())
+    allLoadedScripts.find(CIString{ className.begin(), className.end() });
+  if (it == allLoadedScripts.end())
     throw std::runtime_error("script not found - '" + className + "'");
 
-  ActivePexInstance instance = ActivePexInstance(*it, VarForBuildActivePex({}),
-                                                 this, VarValue::None(), "");
+  ActivePexInstance instance(it->second, nullptr, this, VarValue::None(), "");
 
-  function = instance.GetFunctionByName(functionName.c_str(),
-                                        instance.GetActiveStateName());
+  function = instance.GetFunctionByName(functionName.c_str(), "");
 
   if (function.valid) {
     if (function.IsNative())
@@ -210,28 +205,24 @@ ActivePexInstance& VirtualMachine::GetActivePexInObject(
 
 PexScript::Ptr VirtualMachine::GetPexByName(const std::string& name)
 {
-  auto myScriptPex = std::find_if(
-    allLoadedScripts.begin(), allLoadedScripts.end(),
-    [&](const std::shared_ptr<PexScript>& pexScript) {
-      return !Utils::stricmp(pexScript->source.data(), name.data());
-    });
-
-  if (myScriptPex == allLoadedScripts.end())
-    return nullptr;
-
-  return myScriptPex.operator*();
+  auto it = allLoadedScripts.find(CIString{ name.begin(), name.end() });
+  if (it != allLoadedScripts.end())
+    return it->second;
+  return nullptr;
 }
 
 ActivePexInstance::Ptr VirtualMachine::CreateActivePexInstance(
   const std::string& pexScriptName, VarValue activeInstanceOwner,
-  VarForBuildActivePex mapForFillPropertys, std::string childrenName)
+  const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+  std::string childrenName)
 {
-  for (auto& baseScript : allLoadedScripts) {
-    if (baseScript->source == pexScriptName) {
-      ActivePexInstance scriptInstance(baseScript, mapForFillPropertys, this,
-                                       activeInstanceOwner, childrenName);
-      return std::make_shared<ActivePexInstance>(scriptInstance);
-    }
+
+  auto it = allLoadedScripts.find(
+    CIString{ pexScriptName.begin(), pexScriptName.end() });
+  if (it != allLoadedScripts.end()) {
+    ActivePexInstance scriptInstance(it->second, mapForFillPropertys, this,
+                                     activeInstanceOwner, childrenName);
+    return std::make_shared<ActivePexInstance>(scriptInstance);
   }
 
   static const ActivePexInstance::Ptr notValidInstance =

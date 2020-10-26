@@ -124,12 +124,12 @@ using NativeFunction =
   std::function<VarValue(VarValue self, // will be None for global functions
                          std::vector<VarValue> arguments)>;
 
-using VarForBuildActivePex =
-  std::map<std::string, std::vector<std::pair<std::string, VarValue>>>;
-
-struct PropertyValuesMap
+class IVariablesHolder
 {
-  VarForBuildActivePex data;
+public:
+  virtual ~IVariablesHolder() = default;
+  virtual VarValue* GetVariableByName(const char* name,
+                                      const PexScript& pex) = 0;
 };
 
 struct FunctionCode
@@ -366,10 +366,11 @@ public:
   using Ptr = std::shared_ptr<ActivePexInstance>;
 
   ActivePexInstance();
-  ActivePexInstance(PexScript::Ptr sourcePex,
-                    VarForBuildActivePex mapForFillPropertys,
-                    VirtualMachine* parentVM, VarValue activeInstanceOwner,
-                    std::string childrenName);
+  ActivePexInstance(
+    PexScript::Ptr sourcePex,
+    const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+    VirtualMachine* parentVM, VarValue activeInstanceOwner,
+    std::string childrenName);
 
   FunctionInfo GetFunctionByName(const char* name,
                                  std::string stateName) const;
@@ -385,7 +386,7 @@ public:
   VarValue StartFunction(FunctionInfo& function,
                          std::vector<VarValue>& arguments);
 
-  uint8_t GetTypeByName(std::string typeRef);
+  static uint8_t GetTypeByName(std::string typeRef);
   std::string GetActiveStateName() const;
 
   bool IsValid() const { return _IsValid; };
@@ -405,10 +406,6 @@ private:
     const ActivePexInstance& scriptInstance, std::string nameProperty,
     uint8_t flag);
 
-  std::vector<ObjectTable::Object::VarInfo> FillVariables(
-    PexScript::Ptr sourcePex,
-    std::vector<std::pair<std::string, VarValue>> argsForFillPropertys);
-
   uint8_t GetArrayElementType(uint8_t type);
 
   void CastObjectToObject(
@@ -420,7 +417,7 @@ private:
 
   ActivePexInstance::Ptr FillParentInstanse(
     std::string nameNeedScript, VarValue activeInstanceOwner,
-    VarForBuildActivePex mapForFillPropertys);
+    const std::shared_ptr<IVariablesHolder>& mapForFillPropertys);
 
   VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type);
 
@@ -435,7 +432,7 @@ private:
 
   ActivePexInstance::Ptr parentInstance;
 
-  std::vector<ObjectTable::Object::VarInfo> variables;
+  std::shared_ptr<IVariablesHolder> variables;
   std::vector<VarValue::Ptr> identifiersValueNameCache;
   std::vector<std::shared_ptr<std::string>> instanceStringTable;
 };

@@ -283,3 +283,8 @@ export class SkympClient {
   private equipmentChanged = false;
   private numEquipmentChanges = 0;
 }
+
+once("update", () => {
+  // Is it racing with OnInit in Papyrus?
+  sp.TESModPlatform.blockPapyrusEvents(true);
+});

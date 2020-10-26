@@ -12,11 +12,11 @@ ActivePexInstance::ActivePexInstance()
   this->sourcePex = nullptr;
 }
 
-ActivePexInstance::ActivePexInstance(PexScript::Ptr sourcePex,
-                                     VarForBuildActivePex mapForFillPropertys,
-                                     VirtualMachine* parentVM,
-                                     VarValue activeInstanceOwner,
-                                     std::string childrenName)
+ActivePexInstance::ActivePexInstance(
+  PexScript::Ptr sourcePex,
+  const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+  VirtualMachine* parentVM, VarValue activeInstanceOwner,
+  std::string childrenName)
 {
   this->childrenName = childrenName;
   this->activeInstanceOwner = activeInstanceOwner;
@@ -26,71 +26,18 @@ ActivePexInstance::ActivePexInstance(PexScript::Ptr sourcePex,
     FillParentInstanse(sourcePex->objectTable.m_data[0].parentClassName,
                        activeInstanceOwner, mapForFillPropertys);
 
-  auto at = mapForFillPropertys.find(sourcePex->source);
-
-  std::vector<std::pair<std::string, VarValue>> argsForFillPropertys;
-
-  if (at != mapForFillPropertys.end()) {
-    argsForFillPropertys = at->second;
-  }
-
-  variables = FillVariables(sourcePex, argsForFillPropertys);
+  this->variables = mapForFillPropertys;
 
   this->_IsValid = true;
 }
 
 ActivePexInstance::Ptr ActivePexInstance::FillParentInstanse(
   std::string nameNeedScript, VarValue activeInstanceOwner,
-  VarForBuildActivePex mapForFillPropertys)
+  const std::shared_ptr<IVariablesHolder>& mapForFillPropertys)
 {
   return parentVM->CreateActivePexInstance(nameNeedScript, activeInstanceOwner,
                                            mapForFillPropertys,
                                            this->sourcePex->source);
-}
-
-std::vector<ObjectTable::Object::VarInfo> ActivePexInstance::FillVariables(
-  PexScript::Ptr sourcePex,
-  std::vector<std::pair<std::string, VarValue>> argsForFillPropertys)
-{
-  std::vector<ObjectTable::Object::VarInfo> result;
-
-  for (auto object : sourcePex->objectTable.m_data) {
-    for (auto var : object.variables) {
-      ObjectTable::Object::VarInfo varInfo;
-      varInfo = var;
-      if ((const char*)varInfo.value == nullptr) {
-        varInfo.value = VarValue(GetTypeByName(var.typeName));
-      }
-      result.push_back(varInfo);
-    }
-  }
-
-  // Creating temp variable for save State ActivePexInstance and
-  // transition between them
-  ObjectTable::Object::VarInfo variableForState = {
-    "::State", "String", 0,
-    VarValue(sourcePex->objectTable.m_data[0].autoStateName.data())
-  };
-
-  result.push_back(variableForState);
-
-  for (auto& object : sourcePex->objectTable.m_data) {
-    for (auto& prop : object.properties) {
-      for (auto var : argsForFillPropertys) {
-        if (prop.name == var.first) {
-          for (auto& varInfo : result) {
-            if (prop.autoVarName == varInfo.name) {
-              varInfo.value = var.second;
-              varInfo.value.objectType = varInfo.typeName;
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return result;
 }
 
 FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
@@ -116,16 +63,11 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
 
 std::string ActivePexInstance::GetActiveStateName() const
 {
-  std::string stateName;
-
-  for (auto var : this->variables) {
-    if (var.name == "::State") {
-      stateName = (const char*)var.value;
-      break;
-    }
-  }
-
-  return stateName;
+  auto var = variables->GetVariableByName("::State", *sourcePex);
+  if (!var)
+    throw std::runtime_error(
+      "'::State' variable doesn't exist in ActivePexInstance");
+  return static_cast<const char*>(*var);
 }
 
 ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
@@ -885,11 +827,9 @@ VarValue& ActivePexInstance::GetVariableValueByName(
     }
   }
 
-  for (auto& var : this->variables) {
-    if (var.name == name) {
-      return var.value;
-    }
-  }
+  auto var = this->variables->GetVariableByName(name.data(), *sourcePex);
+  if (var)
+    return *var;
 
   for (auto& _name : identifiersValueNameCache) {
     if ((const char*)(*_name) == name) {

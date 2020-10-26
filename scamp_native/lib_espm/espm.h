@@ -529,6 +529,8 @@ struct Property
     } str = { 0, 0 };
   } value;
 
+  std::vector<Value> array;
+
   uint8_t status = StatusEdited;
 
   auto ToTuple() const

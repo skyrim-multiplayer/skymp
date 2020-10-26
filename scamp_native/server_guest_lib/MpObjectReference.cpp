@@ -8,6 +8,7 @@
 #include "PapyrusObjectReference.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
+#include "ScriptVariablesHolder.h"
 #include "VirtualMachine.h"
 #include "WorldState.h"
 #include <MsgType.h>
@@ -51,15 +52,14 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
   return { int16_t(pos.x / 4096), int16_t(pos.y / 4096) };
 }
 
-struct ScriptsState
-{
-  std::map<uint32_t, std::shared_ptr<EspmGameObject>> espmObjectsHolder;
-  std::map<std::string, std::shared_ptr<std::string>> propStringValues;
-};
-
 struct AnimGraphHolder
 {
   std::set<std::string> animationVariablesBool;
+};
+
+struct ScriptState
+{
+  std::map<std::string, std::shared_ptr<ScriptVariablesHolder>> varHolders;
 };
 
 }
@@ -72,10 +72,10 @@ public:
   {
   }
 
-  std::unique_ptr<ScriptsState> scriptsState;
+  std::unique_ptr<ScriptState> scriptState;
   std::unique_ptr<AnimGraphHolder> animGraphHolder;
 
-  bool HasScripts() const noexcept { return !!scriptsState; }
+  bool HasScripts() const noexcept { return !!scriptState; }
 };
 
 namespace {
@@ -659,54 +659,6 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
   InitScripts();
 }
 
-void MpObjectReference::CastProperty(const espm::CombineBrowser& br,
-                                     const espm::Property& prop, VarValue* out)
-{
-  switch (prop.propertyType) {
-    case espm::PropertyType::Object: {
-      auto& gameObject =
-        pImpl->scriptsState->espmObjectsHolder[prop.value.formId];
-      if (!gameObject)
-        gameObject.reset(new EspmGameObject(br.LookupById(prop.value.formId)));
-      *out = VarValue(gameObject.get());
-      break;
-    }
-    case espm::PropertyType::String: {
-      std::string str(prop.value.str.data, prop.value.str.length);
-      auto& stringPtr = pImpl->scriptsState->propStringValues[str];
-      if (!stringPtr)
-        stringPtr.reset(new std::string(str));
-      *out = VarValue(stringPtr->data());
-      break;
-    }
-    case espm::PropertyType::Int:
-      *out = VarValue(prop.value.integer);
-      break;
-    case espm::PropertyType::Float:
-      *out = VarValue(prop.value.floatingPoint);
-      break;
-    case espm::PropertyType::Bool:
-      *out = VarValue(prop.value.boolean);
-      break;
-  }
-}
-
-void MpObjectReference::BuildScriptProperties(
-  const espm::CombineBrowser& br, const espm::ScriptData& scriptData,
-  PropertyValuesMap* out)
-{
-  PropertyValuesMap res;
-  for (auto& entry : scriptData.scripts) {
-    auto& resultProps = res.data[entry.scriptName];
-    for (auto& prop : entry.properties) {
-      VarValue value;
-      CastProperty(br, prop, &value);
-      resultProps.push_back({ prop.propertyName, value });
-    }
-  }
-  *out = res;
-}
-
 bool MpObjectReference::IsLocationSavingNeeded() const
 {
   auto last = pImpl->GetLastSaveRequestMoment();
@@ -752,20 +704,27 @@ void MpObjectReference::InitScripts()
   std::vector<std::string> scriptNames;
   espm::ScriptData scriptData;
   base.rec->GetScriptData(&scriptData);
+  auto& scriptsInStorage = GetParent()->GetScriptStorage()->ListScripts();
   for (auto& script : scriptData.scripts) {
-    if (GetParent()->GetScriptStorage()->ListScripts().count(
-          script.scriptName))
+    if (scriptsInStorage.count(
+          { script.scriptName.begin(), script.scriptName.end() }))
       scriptNames.push_back(script.scriptName);
+    else if (auto wst = GetParent())
+      wst->logger->warn("Script '{}' not found in the script storage",
+                        script.scriptName);
   }
 
   if (!scriptNames.empty()) {
-    pImpl->scriptsState.reset(new ScriptsState);
+    pImpl->scriptState.reset(new ScriptState);
 
-    PropertyValuesMap props;
-    BuildScriptProperties(GetParent()->GetEspm().GetBrowser(), scriptData,
-                          &props);
+    std::vector<VirtualMachine::ScriptInfo> scriptInfo;
+    for (auto& scriptName : scriptNames) {
+      auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
+        scriptName, base.rec, base.parent);
+      scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
+    }
 
-    GetParent()->GetPapyrusVm().AddObject(ToGameObject(), scriptNames, props);
+    GetParent()->GetPapyrusVm().AddObject(ToGameObject(), scriptInfo);
   }
 }
 

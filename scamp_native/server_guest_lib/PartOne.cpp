@@ -25,12 +25,14 @@ struct PartOne::Impl
 
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<IActionListener> actionListener;
+
+  std::shared_ptr<spdlog::logger> logger;
 };
 
 PartOne::PartOne()
 {
-  logger.reset(new spdlog::logger{ "empty logger" });
   pImpl.reset(new Impl);
+  pImpl->logger.reset(new spdlog::logger{ "empty logger" });
 
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
                               MpObjectReference* emitter,
@@ -335,7 +337,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
     auto& subVector = refrRecords[i];
     auto mapping = espm->GetBrowser().GetMapping(i);
 
-    logger->info("starting {}", i);
+    pImpl->logger->info("starting {}", worldState.espmFiles[i]);
 
     for (auto& refrRecord : *subVector) {
       auto refr = reinterpret_cast<espm::REFR*>(refrRecord);
@@ -344,7 +346,8 @@ void PartOne::AttachEspm(espm::Loader* espm,
       auto baseId = espm::GetMappedId(data.baseId, *mapping);
       auto base = espm->GetBrowser().LookupById(baseId);
       if (!base.rec)
-        logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
+        pImpl->logger->info("baseId {} {}", baseId,
+                            static_cast<void*>(base.rec));
       if (!base.rec)
         continue;
 
@@ -354,6 +357,13 @@ void PartOne::AttachEspm(espm::Loader* espm,
            !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
           (t != "TREE" ||
            !reinterpret_cast<espm::TREE*>(base.rec)->GetData().resultItem))
+        continue;
+
+      enum
+      {
+        InitiallyDisabled = 0x800
+      };
+      if (refr->GetFlags() & InitiallyDisabled)
         continue;
 
       auto formId = espm::GetMappedId(refrRecord->GetId(), *mapping);
@@ -369,7 +379,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
 
       if (!worldOrCell) {
         if (!cell->GetParentCELL(worldOrCell)) {
-          logger->info("Anomally: refr without world/cell");
+          pImpl->logger->info("Anomally: refr without world/cell");
           continue;
         }
       }
@@ -386,7 +396,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
 
       } else {
         if (!locationalData) {
-          logger->info("Anomally: refr without locationalData");
+          pImpl->logger->info("Anomally: refr without locationalData");
           continue;
         }
 
@@ -400,7 +410,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
     }
   }
 
-  logger->info("AttachEspm took {} ticks", clock() - was);
+  pImpl->logger->info("AttachEspm took {} ticks", clock() - was);
 }
 
 void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
@@ -419,14 +429,20 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
       ++numPlayerCharacters;
   });
 
-  logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
-               "(Including {} player characters)",
-               clock() - was, n, numPlayerCharacters);
+  pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
+                      "(Including {} player characters)",
+                      clock() - was, n, numPlayerCharacters);
 }
 
 espm::Loader& PartOne::GetEspm() const
 {
   return worldState.GetEspm();
+}
+
+void PartOne::AttachLogger(std::shared_ptr<spdlog::logger> logger)
+{
+  pImpl->logger = logger;
+  worldState.logger = logger;
 }
 
 namespace {
