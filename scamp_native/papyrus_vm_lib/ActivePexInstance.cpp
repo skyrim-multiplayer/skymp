@@ -242,7 +242,7 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
 
 struct ActivePexInstance::ExecutionContext
 {
-  std::vector<std::pair<uint8_t, std::vector<VarValue*>>> opCode;
+  std::vector<FunctionCode::Instruction> opCode;
   std::shared_ptr<Locals> locals;
   bool needReturn = false;
   bool needJump = false;
@@ -535,10 +535,11 @@ std::shared_ptr<ActivePexInstance::Locals> ActivePexInstance::MakeLocals(
   return locals;
 }
 
-namespace {
 // Basically, makes vector<VarValue *> from vector<VarValue>
-std::vector<std::pair<uint8_t, std::vector<VarValue*>>> TransformInstructions(
-  std::vector<FunctionCode::Instruction>& sourceOpCode)
+std::vector<std::pair<uint8_t, std::vector<VarValue*>>>
+ActivePexInstance::TransformInstructions(
+  std::vector<FunctionCode::Instruction>& sourceOpCode,
+  std::shared_ptr<Locals> locals)
 {
   std::vector<std::pair<uint8_t, std::vector<VarValue*>>> opCode;
   for (size_t i = 0; i < sourceOpCode.size(); ++i) {
@@ -551,15 +552,23 @@ std::vector<std::pair<uint8_t, std::vector<VarValue*>>> TransformInstructions(
     }
     opCode.push_back(temp);
   }
+
+  // Dereference identifiers
+  for (auto& op : opCode)
+    for (auto& arg : op.second)
+      arg = &(GetIndentifierValue(*locals, *arg));
+
   return opCode;
-}
 }
 
 VarValue ActivePexInstance::ExecuteAll(ExecutionContext& ctx)
 {
-  for (; ctx.line < ctx.opCode.size(); ++ctx.line) {
-    ExecuteOpCode(&ctx, ctx.opCode[ctx.line].first,
-                  ctx.opCode[ctx.line].second);
+  auto opCode = TransformInstructions(ctx.opCode, ctx.locals);
+
+  assert(opCode.size() == ctx.opCode.size());
+
+  for (; ctx.line < opCode.size(); ++ctx.line) {
+    ExecuteOpCode(&ctx, opCode[ctx.line].first, opCode[ctx.line].second);
 
     if (ctx.needReturn) {
       ctx.needReturn = false;
@@ -578,14 +587,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
                                           std::vector<VarValue>& arguments)
 {
   auto locals = MakeLocals(function, arguments);
-  auto opCode = TransformInstructions(function.code.instructions);
-
-  // Dereference identifiers
-  for (auto& op : opCode)
-    for (auto& arg : op.second)
-      arg = &(GetIndentifierValue(*locals, *arg));
-
-  ExecutionContext ctx{ opCode, locals };
+  ExecutionContext ctx{ function.code.instructions, locals };
   return ExecuteAll(ctx);
 }
 

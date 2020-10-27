@@ -180,16 +180,20 @@ VarValue VirtualMachine::CallStatic(std::string className,
   if (it == allLoadedScripts.end())
     throw std::runtime_error("script not found - '" + className + "'");
 
-  ActivePexInstance instance(it->second, nullptr, this, VarValue::None(), "");
+  auto& instance = instancesForStaticCalls[className];
+  if (!instance) {
+    instance = std::make_shared<ActivePexInstance>(it->second, nullptr, this,
+                                                   VarValue::None(), "");
+  }
 
-  function = instance.GetFunctionByName(functionName.c_str(), "");
+  function = instance->GetFunctionByName(functionName.c_str(), "");
 
   if (function.valid) {
     if (function.IsNative())
       throw std::runtime_error("Function not found - '" +
                                std::string(functionName) + "'");
 
-    result = instance.StartFunction(function, arguments);
+    result = instance->StartFunction(function, arguments);
   }
   if (!function.valid)
     throw std::runtime_error("function is not valid");

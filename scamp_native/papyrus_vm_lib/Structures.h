@@ -415,6 +415,10 @@ public:
 private:
   struct ExecutionContext;
 
+  std::vector<std::pair<uint8_t, std::vector<VarValue*>>>
+  TransformInstructions(std::vector<FunctionCode::Instruction>& sourceOpCode,
+                        std::shared_ptr<Locals> locals);
+
   std::shared_ptr<Locals> MakeLocals(FunctionInfo& function,
                                      std::vector<VarValue>& arguments);
 

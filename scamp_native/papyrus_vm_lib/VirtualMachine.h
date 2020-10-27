@@ -59,4 +59,6 @@ private:
 
   std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
     nativeStaticFunctions;
+
+  std::map<std::string, ActivePexInstance::Ptr> instancesForStaticCalls;
 };
