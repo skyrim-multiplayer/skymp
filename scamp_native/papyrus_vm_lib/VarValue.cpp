@@ -318,18 +318,6 @@ VarValue VarValue::operator!()
   }
 }
 
-VarValue& VarValue::operator=(const VarValue& argument2)
-{
-  this->data = argument2.data;
-  this->type = argument2.type;
-
-  if (argument2.type >= argument2._ArraysStart &&
-      argument2.type < argument2._ArraysEnd)
-    this->pArray = argument2.pArray;
-
-  return *this;
-}
-
 bool VarValue::operator==(const VarValue& argument2) const
 {
 

@@ -242,11 +242,13 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
 
 struct ActivePexInstance::ExecutionContext
 {
+  std::vector<std::pair<uint8_t, std::vector<VarValue*>>> opCode;
   std::shared_ptr<Locals> locals;
   bool needReturn = false;
   bool needJump = false;
   int jumpStep = 0;
   VarValue returnValue = VarValue::None();
+  size_t line = 0;
 };
 
 std::vector<VarValue> GetArgsForCall(uint8_t op,
@@ -264,6 +266,25 @@ std::vector<VarValue> GetArgsForCall(uint8_t op,
     }
   }
   return argsForCall;
+}
+
+bool ActivePexInstance::EnsureCallResultIsSynchronous(
+  const VarValue& callResult, ExecutionContext* ctx)
+{
+  if (!callResult.promise)
+    return true;
+
+  Viet::Promise<VarValue> currentFnPr;
+
+  auto ctxCopy = *ctx;
+  callResult.promise->Then([this, ctxCopy, currentFnPr](VarValue v) {
+    auto ctx = ctxCopy;
+    currentFnPr.Resolve(ExecuteAll(ctx));
+  });
+
+  ctx->needReturn = true;
+  ctx->returnValue = VarValue(currentFnPr);
+  return false;
 }
 
 void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
@@ -377,25 +398,25 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       } else {
         auto res = parentVM->CallMethod(GetSourcePexName(), object,
                                         functionName.c_str(), argsForCall);
-        if (res.promise) {
-          res.promise->Then([](VarValue res) {
-            // ...
-          });
-        }
-        *args[2] = res;
+        if (EnsureCallResultIsSynchronous(res, ctx))
+          *args[2] = res;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_CallParent: {
       const std::string& parentName =
         parentInstance ? parentInstance->GetSourcePexName() : "";
-      *args[1] = parentVM->CallMethod(parentName, &activeInstanceOwner,
+      auto res = parentVM->CallMethod(parentName, &activeInstanceOwner,
                                       (const char*)(*args[0]), argsForCall);
+      if (EnsureCallResultIsSynchronous(res, ctx))
+        *args[1] = res;
       break;
     }
     case OpcodesImplementation::Opcodes::op_CallStatic: {
       const char* className = (const char*)(*args[0]);
       const char* functionName = (const char*)(*args[1]);
-      *args[2] = parentVM->CallStatic(className, functionName, argsForCall);
+      auto res = parentVM->CallStatic(className, functionName, argsForCall);
+      if (EnsureCallResultIsSynchronous(res, ctx))
+        *args[2] = res;
     } break;
     case OpcodesImplementation::Opcodes::op_Return:
       ctx->returnValue = *args[0];
@@ -534,6 +555,25 @@ std::vector<std::pair<uint8_t, std::vector<VarValue*>>> TransformInstructions(
 }
 }
 
+VarValue ActivePexInstance::ExecuteAll(ExecutionContext& ctx)
+{
+  for (; ctx.line < ctx.opCode.size(); ++ctx.line) {
+    ExecuteOpCode(&ctx, ctx.opCode[ctx.line].first,
+                  ctx.opCode[ctx.line].second);
+
+    if (ctx.needReturn) {
+      ctx.needReturn = false;
+      return ctx.returnValue;
+    }
+
+    if (ctx.needJump) {
+      ctx.needJump = false;
+      ctx.line += ctx.jumpStep;
+    }
+  }
+  return ctx.returnValue;
+}
+
 VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
                                           std::vector<VarValue>& arguments)
 {
@@ -545,23 +585,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
     for (auto& arg : op.second)
       arg = &(GetIndentifierValue(*locals, *arg));
 
-  ExecutionContext ctx{ locals };
-
-  for (size_t line = 0; line < opCode.size(); ++line) {
-
-    ExecuteOpCode(&ctx, opCode[line].first, opCode[line].second);
-
-    if (ctx.needReturn) {
-      ctx.needReturn = false;
-      return ctx.returnValue;
-    }
-
-    if (ctx.needJump) {
-      ctx.needJump = false;
-      line += ctx.jumpStep;
-    }
-  }
-  return ctx.returnValue;
+  ExecutionContext ctx{ opCode, locals };
+  return ExecuteAll(ctx);
 }
 
 VarValue& ActivePexInstance::GetIndentifierValue(Locals& locals,
@@ -740,9 +765,9 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
       }
     }
 
-  auto var = this->variables->GetVariableByName(name.data(), *sourcePex.fn());
-  if (var)
-    return *var;
+  if (variables)
+    if (auto var = variables->GetVariableByName(name.data(), *sourcePex.fn()))
+      return *var;
 
   for (auto& _name : identifiersValueNameCache) {
     if ((const char*)(*_name) == name) {

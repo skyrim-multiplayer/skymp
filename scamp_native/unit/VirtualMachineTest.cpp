@@ -122,4 +122,33 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
 
   std::vector<VarValue> functionArgs;
   vm.SendEvent(holder->testObject, "Main", functionArgs);
+
+  // Latent test
+  auto latentHolder = std::make_shared<MyScriptVariablesHolder>("LatentTest");
+  vm.AddObject(latentHolder->testObject, { { "LatentTest", latentHolder } });
+
+  int nonLatentCalls = 0;
+
+  vm.RegisterFunction("LatentTest", "NonLatentFunc",
+                      FunctionType::GlobalFunction,
+                      [&](VarValue self, std::vector<VarValue> args) {
+                        nonLatentCalls++;
+                        return VarValue::None();
+                      });
+
+  Viet::Promise<VarValue> promise;
+
+  vm.RegisterFunction("LatentTest", "LatentFunc", FunctionType::GlobalFunction,
+                      [promise](VarValue self, std::vector<VarValue> args) {
+                        return VarValue(promise);
+                      });
+
+  std::vector<VarValue> args;
+  vm.CallStatic("LatentTest", "Main", args);
+
+  REQUIRE(nonLatentCalls == 1);
+
+  promise.Resolve(VarValue(108));
+
+  REQUIRE(nonLatentCalls == 2);
 }

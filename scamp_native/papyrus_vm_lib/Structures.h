@@ -109,8 +109,6 @@ public:
   VarValue operator%(const VarValue& argument2);
   VarValue operator!();
 
-  VarValue& operator=(const VarValue& argument2);
-
   bool operator==(const VarValue& argument2) const;
   bool operator!=(const VarValue& argument2) const;
   bool operator>(const VarValue& argument2) const;
@@ -189,6 +187,7 @@ struct FunctionCode
 
 struct FunctionInfo
 {
+
 
   bool valid = false;
 
@@ -419,8 +418,13 @@ private:
   std::shared_ptr<Locals> MakeLocals(FunctionInfo& function,
                                      std::vector<VarValue>& arguments);
 
+  VarValue ExecuteAll(ExecutionContext& ctx);
+
   void ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                      const std::vector<VarValue*>& arguments);
+
+  bool EnsureCallResultIsSynchronous(const VarValue& callResult,
+                                     ExecutionContext* ctx);
 
   ObjectTable::Object::PropInfo* GetProperty(
     const ActivePexInstance& scriptInstance, std::string nameProperty,
