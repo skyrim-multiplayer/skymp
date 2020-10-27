@@ -188,7 +188,6 @@ struct FunctionCode
 struct FunctionInfo
 {
 
-
   bool valid = false;
 
   enum
@@ -462,4 +461,7 @@ private:
   std::shared_ptr<IVariablesHolder> variables;
   std::vector<VarValue::Ptr> identifiersValueNameCache;
   std::vector<std::shared_ptr<std::string>> instanceStringTable;
+
+  uint64_t promiseIdx = 0;
+  std::map<uint64_t, std::shared_ptr<Viet::Promise<VarValue>>> promises;
 };

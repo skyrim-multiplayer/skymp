@@ -144,7 +144,11 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
                       });
 
   std::vector<VarValue> args;
-  vm.CallStatic("LatentTest", "Main", args);
+  vm.CallStatic("LatentTest", "Main", args).promise->Then([](VarValue v) {
+    std::stringstream ss;
+    ss << "Main promise resolved with " << v << std::endl;
+    std::cout << ss.str();
+  });
 
   REQUIRE(nonLatentCalls == 1);
 

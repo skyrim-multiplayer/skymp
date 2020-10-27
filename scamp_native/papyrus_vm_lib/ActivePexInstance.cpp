@@ -276,10 +276,28 @@ bool ActivePexInstance::EnsureCallResultIsSynchronous(
 
   Viet::Promise<VarValue> currentFnPr;
 
+  // auto idx = promiseIdx++;
+  // promises[idx] = callResult.promise;
+
+  /*static auto asdsdaasd = callResult.promise;
+  static std::vector<VarValue> asdasd;
+  asdasd.push_back(callResult);*/
+
   auto ctxCopy = *ctx;
   callResult.promise->Then([this, ctxCopy, currentFnPr](VarValue v) {
-    auto ctx = ctxCopy;
-    currentFnPr.Resolve(ExecuteAll(ctx));
+    // Copy all thing from lambda to stack since ExecuteAll destroys our lambda
+    auto currentFnPr_ = currentFnPr;
+    auto this_ = this;
+    auto ctxCopy_ = ctxCopy;
+    auto v_ = v;
+
+    ctxCopy_.line++;
+    auto res = ExecuteAll(ctxCopy_);
+
+    if (res.promise)
+      res.promise->Then(currentFnPr_);
+    else
+      currentFnPr_.Resolve(res);
   });
 
   ctx->needReturn = true;
