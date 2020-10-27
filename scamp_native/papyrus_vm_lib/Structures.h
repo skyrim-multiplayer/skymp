@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -121,6 +122,8 @@ public:
   VarValue CastToInt() const;
   VarValue CastToFloat() const;
   VarValue CastToBool() const;
+
+  void Then(std::function<void(VarValue)> cb);
 };
 
 using NativeFunction =
@@ -421,7 +424,9 @@ private:
   std::shared_ptr<Locals> MakeLocals(FunctionInfo& function,
                                      std::vector<VarValue>& arguments);
 
-  VarValue ExecuteAll(ExecutionContext& ctx);
+  VarValue ExecuteAll(
+    ExecutionContext& ctx,
+    std::optional<VarValue> previousCallResult = std::nullopt);
 
   void ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                      const std::vector<VarValue*>& arguments);

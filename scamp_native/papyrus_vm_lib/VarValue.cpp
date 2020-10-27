@@ -84,6 +84,13 @@ VarValue VarValue::CastToBool() const
   }
 }
 
+void VarValue::Then(std::function<void(VarValue)> cb)
+{
+  if (!promise)
+    throw std::runtime_error("Not a promise");
+  promise->Then(cb);
+}
+
 VarValue::VarValue(uint8_t type)
 {
   static std::string emptyLine;

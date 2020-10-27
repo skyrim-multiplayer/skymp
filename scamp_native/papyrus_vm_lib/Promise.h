@@ -118,7 +118,7 @@ public:
 private:
   struct Impl
   {
-    ThenCallback thenCb = [](const auto&) { assert(0 && "No then callback"); };
+    ThenCallback thenCb = [](const auto&) {};
     ErrorCallback errorCb = [](const auto&) {
       assert(0 && "Unhandled error");
     };

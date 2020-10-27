@@ -276,28 +276,16 @@ bool ActivePexInstance::EnsureCallResultIsSynchronous(
 
   Viet::Promise<VarValue> currentFnPr;
 
-  // auto idx = promiseIdx++;
-  // promises[idx] = callResult.promise;
-
-  /*static auto asdsdaasd = callResult.promise;
-  static std::vector<VarValue> asdasd;
-  asdasd.push_back(callResult);*/
-
   auto ctxCopy = *ctx;
   callResult.promise->Then([this, ctxCopy, currentFnPr](VarValue v) {
-    // Copy all thing from lambda to stack since ExecuteAll destroys our lambda
-    auto currentFnPr_ = currentFnPr;
-    auto this_ = this;
     auto ctxCopy_ = ctxCopy;
-    auto v_ = v;
-
     ctxCopy_.line++;
-    auto res = ExecuteAll(ctxCopy_);
+    auto res = ExecuteAll(ctxCopy_, v);
 
     if (res.promise)
-      res.promise->Then(currentFnPr_);
+      res.promise->Then(currentFnPr);
     else
-      currentFnPr_.Resolve(res);
+      currentFnPr.Resolve(res);
   });
 
   ctx->needReturn = true;
@@ -579,9 +567,18 @@ ActivePexInstance::TransformInstructions(
   return opCode;
 }
 
-VarValue ActivePexInstance::ExecuteAll(ExecutionContext& ctx)
+VarValue ActivePexInstance::ExecuteAll(
+  ExecutionContext& ctx, std::optional<VarValue> previousCallResult)
 {
   auto opCode = TransformInstructions(ctx.opCode, ctx.locals);
+
+  if (previousCallResult) {
+    int i = ctx.line - 1;
+    int resultIdx =
+      opCode[i].first == OpcodesImplementation::Opcodes::op_CallParent ? 1 : 2;
+
+    *opCode[i].second[resultIdx] = *previousCallResult;
+  }
 
   assert(opCode.size() == ctx.opCode.size());
 

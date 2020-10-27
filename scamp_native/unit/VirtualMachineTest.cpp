@@ -123,7 +123,10 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
   std::vector<VarValue> functionArgs;
   vm.SendEvent(holder->testObject, "Main", functionArgs);
 
-  // Latent test
+  //
+  // Simple Latent test
+  //
+
   auto latentHolder = std::make_shared<MyScriptVariablesHolder>("LatentTest");
   vm.AddObject(latentHolder->testObject, { { "LatentTest", latentHolder } });
 
@@ -143,16 +146,36 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
                         return VarValue(promise);
                       });
 
-  std::vector<VarValue> args;
-  vm.CallStatic("LatentTest", "Main", args).promise->Then([](VarValue v) {
-    std::stringstream ss;
-    ss << "Main promise resolved with " << v << std::endl;
-    std::cout << ss.str();
-  });
+  std::vector<VarValue> argsMain;
+  vm.CallStatic("LatentTest", "Main", argsMain);
 
   REQUIRE(nonLatentCalls == 1);
 
-  promise.Resolve(VarValue(108));
+  promise.Resolve(VarValue::None());
 
   REQUIRE(nonLatentCalls == 2);
+
+  //
+  // Return Value Latent test
+  //
+
+  auto result = VarValue::None();
+
+  Viet::Promise<VarValue> pr;
+  std::vector<VarValue> argsLatentAdd;
+
+  vm.RegisterFunction("LatentTest", "LatentAdd", FunctionType::GlobalFunction,
+                      [&](VarValue self, std::vector<VarValue> args) {
+                        argsLatentAdd = args;
+                        return VarValue(pr);
+                      });
+
+  std::vector<VarValue> argsMain2;
+  vm.CallStatic("LatentTest", "Main2", argsMain2).Then([&](VarValue v) {
+    result = v;
+  });
+
+  REQUIRE(result == VarValue::None());
+  pr.Resolve(argsLatentAdd[0] + argsLatentAdd[1]);
+  REQUIRE(result == VarValue(5));
 }
