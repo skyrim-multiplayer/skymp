@@ -1,4 +1,5 @@
 #pragma once
+#include "Promise.h"
 #include <cassert>
 #include <functional>
 #include <iostream>
@@ -81,6 +82,7 @@ public:
   explicit VarValue(const char* value);
   explicit VarValue(float value);
   explicit VarValue(bool value);
+  explicit VarValue(Viet::Promise<VarValue> promise);
 
   VarValue(uint8_t type, const char* value);
 
@@ -97,6 +99,8 @@ public:
   explicit operator const char*() const { return this->data.string; }
 
   std::shared_ptr<std::vector<VarValue>> pArray;
+
+  std::shared_ptr<Viet::Promise<VarValue>> promise;
 
   VarValue operator+(const VarValue& argument2);
   VarValue operator-(const VarValue& argument2);
@@ -348,6 +352,11 @@ struct ScriptHeader
 
 struct PexScript
 {
+  // Copying PexScript breaks VarValues with strings
+  PexScript() = default;
+  PexScript(const PexScript&) = delete;
+  PexScript& operator=(const PexScript&) = delete;
+
   using Ptr = std::shared_ptr<PexScript>;
 
   struct Lazy
@@ -410,6 +419,11 @@ public:
   };
 
 private:
+  struct ExecutionContext;
+
+  void ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
+                     const std::vector<VarValue*>& arguments);
+
   ObjectTable::Object::PropInfo* GetProperty(
     const ActivePexInstance& scriptInstance, std::string nameProperty,
     uint8_t flag);

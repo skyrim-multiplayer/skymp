@@ -1,9 +1,22 @@
 #include "SpSnippetFunctionGen.h"
 
+#include "EspmGameObject.h"
+#include "MpFormGameObject.h"
 #include "SpSnippet.h"
 #include "WorldState.h"
 #include <nlohmann/json.hpp>
 #include <sstream>
+
+uint32_t SpSnippetFunctionGen::GetFormId(VarValue varValue)
+{
+  if (auto form = GetFormPtr<MpForm>(varValue))
+    return form->GetFormId();
+  if (auto record = GetRecordPtr(varValue); record.rec)
+    return record.ToGlobalId(record.rec->GetId());
+  std::stringstream ss;
+  ss << varValue << " is not a valid Papyrus object";
+  throw std::runtime_error(ss.str());
+}
 
 std::string SpSnippetFunctionGen::SerializeArguments(
   const std::vector<VarValue>& arguments)

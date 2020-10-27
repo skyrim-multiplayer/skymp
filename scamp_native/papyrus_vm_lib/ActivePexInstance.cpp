@@ -240,28 +240,259 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
     instanceStringTable[instanceStringTable.size() - 1]->c_str());
 }
 
-VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
-                                          std::vector<VarValue>& arguments)
+struct ActivePexInstance::ExecutionContext
 {
-  std::vector<std::pair<std::string, VarValue>> locals;
-
+  std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> locals;
   bool needReturn = false;
   bool needJump = false;
   int jumpStep = 0;
   VarValue returnValue = VarValue::None();
+};
+
+std::vector<VarValue> GetArgsForCall(uint8_t op,
+                                     const std::vector<VarValue*>& opcodeArgs)
+{
+  std::vector<VarValue> argsForCall;
+  if (opcodeArgs.size() > 4) {
+    for (size_t i = 4; i < opcodeArgs.size(); ++i) {
+      argsForCall.push_back(*opcodeArgs[i]);
+    }
+  }
+  if (op == FunctionCode::kOp_CallParent && opcodeArgs.size() > 3) {
+    for (size_t i = 3; i < opcodeArgs.size(); ++i) {
+      argsForCall.push_back(*opcodeArgs[i]);
+    }
+  }
+  return argsForCall;
+}
+
+void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
+                                      const std::vector<VarValue*>& args)
+{
+  auto argsForCall = GetArgsForCall(op, args);
+
+  switch (op) {
+    case OpcodesImplementation::Opcodes::op_Nop:
+      break;
+    case OpcodesImplementation::Opcodes::op_iAdd:
+      *args[0] = *args[1] + (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_fAdd:
+      *args[0] = *args[1] + (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_iSub:
+      *args[0] = *args[1] - (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_fSub:
+      *args[0] = *args[1] - (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_iMul:
+      *args[0] = *args[1] * (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_fMul:
+      *args[0] = *args[1] * (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_iDiv:
+      *args[0] = *args[1] / (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_fDiv:
+      *args[0] = *args[1] / (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_iMod:
+      *args[0] = *args[1] % (*args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_Not:
+      *args[0] = !(*args[1]);
+      break;
+    case OpcodesImplementation::Opcodes::op_iNeg:
+      *args[0] = *args[1] * VarValue(-1);
+      break;
+    case OpcodesImplementation::Opcodes::op_fNeg:
+      *args[0] = *args[1] * VarValue(-1.0f);
+      break;
+    case OpcodesImplementation::Opcodes::op_Assign:
+      *args[0] = *args[1];
+      break;
+    case OpcodesImplementation::Opcodes::op_Cast:
+      switch ((*args[0]).GetType()) {
+        case VarValue::kType_Object:
+
+          CastObjectToObject(args[0], args[1], *ctx->locals);
+          break;
+        case VarValue::kType_Integer:
+          *args[0] = (*args[1]).CastToInt();
+          break;
+        case VarValue::kType_Float:
+          *args[0] = (*args[1]).CastToFloat();
+          break;
+        case VarValue::kType_Bool:
+          *args[0] = (*args[1]).CastToBool();
+          break;
+        case VarValue::kType_String:
+          *args[0] = CastToString(*args[1]);
+          break;
+        default:
+          assert(0);
+      }
+      break;
+    case OpcodesImplementation::op_Cmp_eq:
+      *args[0] = VarValue((*args[1]) == (*args[2]));
+      break;
+    case OpcodesImplementation::Opcodes::op_Cmp_lt:
+      *args[0] = VarValue(*args[1] < *args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_Cmp_le:
+      *args[0] = VarValue(*args[1] <= *args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_Cmp_gt:
+      *args[0] = VarValue(*args[1] > *args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_Cmp_ge:
+      *args[0] = VarValue(*args[1] >= *args[2]);
+      break;
+    case OpcodesImplementation::Opcodes::op_Jmp:
+      ctx->jumpStep = (int)(*args[0]) - 1;
+      ctx->needJump = true;
+      break;
+    case OpcodesImplementation::Opcodes::op_Jmpt:
+      if ((bool)(*args[0])) {
+        ctx->jumpStep = (int)(*args[1]) - 1;
+        ctx->needJump = true;
+      }
+      break;
+    case OpcodesImplementation::Opcodes::op_Jmpf:
+      if ((bool)(!(*args[0]))) {
+        ctx->jumpStep = (int)(*args[1]) - 1;
+        ctx->needJump = true;
+      }
+      break;
+    case OpcodesImplementation::Opcodes::op_CallMethod: {
+      VarValue* object = args[1];
+      std::string functionName = (const char*)(*args[0]);
+      static const std::string nameOnBeginState = "onBeginState";
+      static const std::string nameOnEndState = "onEndState";
+      if (functionName == nameOnBeginState || functionName == nameOnEndState) {
+        parentVM->SendEvent(this, functionName.c_str(), argsForCall);
+        break;
+      } else {
+        auto res = parentVM->CallMethod(GetSourcePexName(), object,
+                                        functionName.c_str(), argsForCall);
+        if (res.promise) {
+          res.promise->Then([](VarValue res) {
+            // ...
+          });
+        }
+        *args[2] = res;
+      }
+    } break;
+    case OpcodesImplementation::Opcodes::op_CallParent: {
+      const std::string& parentName =
+        parentInstance ? parentInstance->GetSourcePexName() : "";
+      *args[1] = parentVM->CallMethod(parentName, &activeInstanceOwner,
+                                      (const char*)(*args[0]), argsForCall);
+      break;
+    }
+    case OpcodesImplementation::Opcodes::op_CallStatic: {
+      const char* className = (const char*)(*args[0]);
+      const char* functionName = (const char*)(*args[1]);
+      *args[2] = parentVM->CallStatic(className, functionName, argsForCall);
+    } break;
+    case OpcodesImplementation::Opcodes::op_Return:
+      ctx->returnValue = *args[0];
+      ctx->needReturn = true;
+      break;
+    case OpcodesImplementation::Opcodes::op_StrCat:
+      OpcodesImplementation::strCat(*args[0], *args[1], *args[2],
+                                    this->sourcePex.fn()->stringTable);
+      break;
+    case OpcodesImplementation::Opcodes::op_PropGet:
+      if (args[1] != nullptr) {
+        std::string nameProperty = (const char*)*args[0];
+        auto& ptrPex = GetActivePexInObject(args[1], args[1]->objectType);
+        ObjectTable::Object::PropInfo* runProperty = GetProperty(
+          ptrPex, nameProperty, ObjectTable::Object::PropInfo::kFlags_Read);
+        if (runProperty != nullptr) {
+          *args[2] =
+            ptrPex.StartFunction(runProperty->readHandler, argsForCall);
+        }
+      } else
+        assert(false);
+      break;
+    case OpcodesImplementation::Opcodes::op_PropSet:
+      if (args[1] != nullptr) {
+        argsForCall.push_back(*args[2]);
+        std::string nameProperty = (const char*)*args[0];
+        auto& ptrPex = GetActivePexInObject(args[1], args[1]->objectType);
+        ObjectTable::Object::PropInfo* runProperty = GetProperty(
+          ptrPex, nameProperty, ObjectTable::Object::PropInfo::kFlags_Write);
+        if (runProperty != nullptr) {
+          ptrPex.StartFunction(runProperty->writeHandler, argsForCall);
+        }
+      } else
+        assert(false);
+      break;
+    case OpcodesImplementation::Opcodes::op_Array_Create:
+      (*args[0]).pArray =
+        std::shared_ptr<std::vector<VarValue>>(new std::vector<VarValue>);
+      if ((int32_t)(*args[1]) > 0) {
+        (*args[0]).pArray->resize((int32_t)(*args[1]));
+        uint8_t type = GetArrayElementType((*args[0]).GetType());
+        for (auto& element : *(*args[0]).pArray) {
+          element = VarValue(type);
+        }
+      } else
+        assert(0);
+      break;
+    case OpcodesImplementation::Opcodes::op_Array_Length:
+      if ((*args[1]).pArray != nullptr) {
+        if ((*args[0]).GetType() == VarValue::kType_Integer)
+          *args[0] = VarValue((int32_t)(*args[1]).pArray->size());
+      } else
+        *args[0] = VarValue((int32_t)0);
+      break;
+    case OpcodesImplementation::Opcodes::op_Array_GetElement:
+      if ((*args[1]).pArray != nullptr) {
+        *args[0] = (*args[1]).pArray->at((int32_t)(*args[2]));
+      } else
+        assert(0);
+      break;
+    case OpcodesImplementation::Opcodes::op_Array_SetElement:
+      if ((*args[0]).pArray != nullptr) {
+        (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
+      } else
+        assert(0);
+      break;
+    case OpcodesImplementation::Opcodes::op_Array_FindElement:
+      OpcodesImplementation::arrayFindElement(*args[0], *args[1], *args[2],
+                                              *args[3]);
+      break;
+    case OpcodesImplementation::Opcodes::op_Array_RfindElement:
+      OpcodesImplementation::arrayRFindElement(*args[0], *args[1], *args[2],
+                                               *args[3]);
+      break;
+    default:
+      assert(0);
+  }
+}
+
+VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
+                                          std::vector<VarValue>& arguments)
+{
+  auto locals =
+    std::make_shared<std::vector<std::pair<std::string, VarValue>>>();
 
   for (auto& var : function.locals) {
     VarValue temp = VarValue(GetTypeByName(var.type));
     temp.objectType = var.type;
-    locals.push_back({ var.name, temp });
+    locals->push_back({ var.name, temp });
   }
 
   for (size_t i = 0; i < arguments.size(); ++i) {
     VarValue temp = arguments[i];
     temp.objectType = function.params[i].type;
 
-    locals.push_back({ function.params[i].name, temp });
-    assert(locals.back().second.GetType() == arguments[i].GetType());
+    locals->push_back({ function.params[i].name, temp });
+    assert(locals->back().second.GetType() == arguments[i].GetType());
   }
 
   for (size_t i = arguments.size(); i < function.params.size(); ++i) {
@@ -270,11 +501,11 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
     VarValue temp = VarValue(GetTypeByName(var_.type));
     temp.objectType = var_.type;
 
-    locals.push_back({ var_.name, temp });
+    locals->push_back({ var_.name, temp });
   }
 
-  for (auto& var : locals) {
-    var.second = GetIndentifierValue(locals, var.second);
+  for (auto& var : *locals) {
+    var.second = GetIndentifierValue(*locals, var.second);
   }
 
   auto& sourceOpCode = function.code.instructions;
@@ -295,360 +526,27 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
   for (auto& op : opCode) {
 
     for (auto& arg : op.second) {
-      arg = &(GetIndentifierValue(locals, *arg));
+      arg = &(GetIndentifierValue(*locals, *arg));
     }
   }
+
+  ExecutionContext ctx{ locals };
 
   for (size_t line = 0; line < opCode.size(); ++line) {
 
-    std::vector<VarValue> argsForCall;
+    ExecuteOpCode(&ctx, opCode[line].first, opCode[line].second);
 
-    if (opCode[line].second.size() > 4) {
-      for (size_t i = 4; i < opCode[line].second.size(); ++i) {
-        argsForCall.push_back(*opCode[line].second[i]);
-      }
+    if (ctx.needReturn) {
+      ctx.needReturn = false;
+      return ctx.returnValue;
     }
 
-    if (opCode[line].first == FunctionCode::kOp_CallParent &&
-        opCode[line].second.size() > 3) {
-      for (size_t i = 3; i < opCode[line].second.size(); ++i) {
-        argsForCall.push_back(*opCode[line].second[i]);
-      }
-    }
-
-    switch (opCode[line].first) {
-      case OpcodesImplementation::Opcodes::op_Nop:
-        break;
-
-      case OpcodesImplementation::Opcodes::op_iAdd:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] + (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_fAdd:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] + (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_iSub:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] - (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_fSub:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] - (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_iMul:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] * (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_fMul:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] * (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_iDiv:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] / (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_fDiv:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] / (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_iMod:
-
-        *opCode[line].second[0] =
-          *opCode[line].second[1] % (*opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Not:
-
-        *opCode[line].second[0] = !(*opCode[line].second[1]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_iNeg:
-
-        *opCode[line].second[0] = *opCode[line].second[1] * VarValue(-1);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_fNeg:
-
-        *opCode[line].second[0] = *opCode[line].second[1] * VarValue(-1.0f);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Assign:
-
-        *opCode[line].second[0] = *opCode[line].second[1];
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Cast:
-
-        switch ((*opCode[line].second[0]).GetType()) {
-          case VarValue::kType_Object:
-
-            CastObjectToObject(opCode[line].second[0], opCode[line].second[1],
-                               locals);
-            break;
-          case VarValue::kType_Integer:
-            *opCode[line].second[0] = (*opCode[line].second[1]).CastToInt();
-            break;
-          case VarValue::kType_Float:
-            *opCode[line].second[0] = (*opCode[line].second[1]).CastToFloat();
-            break;
-          case VarValue::kType_Bool:
-            *opCode[line].second[0] = (*opCode[line].second[1]).CastToBool();
-            break;
-          case VarValue::kType_String:
-            *opCode[line].second[0] = CastToString(*opCode[line].second[1]);
-            break;
-          default:
-            assert(0);
-        }
-
-        break;
-
-      case OpcodesImplementation::op_Cmp_eq:
-
-        *opCode[line].second[0] =
-          VarValue((*opCode[line].second[1]) == (*opCode[line].second[2]));
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Cmp_lt:
-
-        *opCode[line].second[0] =
-          VarValue(*opCode[line].second[1] < *opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Cmp_le:
-
-        *opCode[line].second[0] =
-          VarValue(*opCode[line].second[1] <= *opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Cmp_gt:
-
-        *opCode[line].second[0] =
-          VarValue(*opCode[line].second[1] > *opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Cmp_ge:
-
-        *opCode[line].second[0] =
-          VarValue(*opCode[line].second[1] >= *opCode[line].second[2]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Jmp:
-
-        jumpStep = (int)(*opCode[line].second[0]) - 1;
-
-        needJump = true;
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Jmpt:
-
-        if ((bool)(*opCode[line].second[0])) {
-          jumpStep = (int)(*opCode[line].second[1]) - 1;
-
-          needJump = true;
-        }
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Jmpf:
-
-        if ((bool)(!(*opCode[line].second[0]))) {
-          jumpStep = (int)(*opCode[line].second[1]) - 1;
-          needJump = true;
-        }
-        break;
-
-      case OpcodesImplementation::Opcodes::op_CallMethod: {
-
-        VarValue* object = opCode[line].second[1];
-        std::string functionName = (const char*)(*opCode[line].second[0]);
-
-        static const std::string nameOnBeginState = "onBeginState";
-        static const std::string nameOnEndState = "onEndState";
-
-        if (functionName == nameOnBeginState ||
-            functionName == nameOnEndState) {
-          parentVM->SendEvent(this, functionName.c_str(), argsForCall);
-          break;
-
-        } else
-
-          *opCode[line].second[2] = parentVM->CallMethod(
-            GetSourcePexName(), object, functionName.c_str(), argsForCall);
-      }
-
-      break;
-
-      case OpcodesImplementation::Opcodes::op_CallParent: {
-        const std::string& parentName =
-          parentInstance ? parentInstance->GetSourcePexName() : "";
-
-        *opCode[line].second[1] = parentVM->CallMethod(
-          parentName, &activeInstanceOwner,
-          (const char*)(*opCode[line].second[0]), argsForCall);
-
-        break;
-      }
-      case OpcodesImplementation::Opcodes::op_CallStatic: {
-
-        const char* className = (const char*)(*opCode[line].second[0]);
-        const char* functionName = (const char*)(*opCode[line].second[1]);
-
-        *opCode[line].second[2] =
-          parentVM->CallStatic(className, functionName, argsForCall);
-      } break;
-
-      case OpcodesImplementation::Opcodes::op_Return:
-
-        returnValue = *opCode[line].second[0];
-        needReturn = true;
-        break;
-
-      case OpcodesImplementation::Opcodes::op_StrCat:
-
-        OpcodesImplementation::strCat(
-          *opCode[line].second[0], *opCode[line].second[1],
-          *opCode[line].second[2], this->sourcePex.fn()->stringTable);
-        break;
-      case OpcodesImplementation::Opcodes::op_PropGet:
-
-        if (opCode[line].second[1] != nullptr) {
-
-          std::string nameProperty = (const char*)*opCode[line].second[0];
-
-          auto& ptrPex = GetActivePexInObject(
-            opCode[line].second[1], opCode[line].second[1]->objectType);
-
-          ObjectTable::Object::PropInfo* runProperty = GetProperty(
-            ptrPex, nameProperty, ObjectTable::Object::PropInfo::kFlags_Read);
-
-          if (runProperty != nullptr) {
-            *opCode[line].second[2] =
-              ptrPex.StartFunction(runProperty->readHandler, argsForCall);
-          }
-
-        } else
-          assert(false);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_PropSet:
-
-        if (opCode[line].second[1] != nullptr) {
-          argsForCall.push_back(*opCode[line].second[2]);
-
-          std::string nameProperty = (const char*)*opCode[line].second[0];
-
-          auto& ptrPex = GetActivePexInObject(
-            opCode[line].second[1], opCode[line].second[1]->objectType);
-
-          ObjectTable::Object::PropInfo* runProperty = GetProperty(
-            ptrPex, nameProperty, ObjectTable::Object::PropInfo::kFlags_Write);
-
-          if (runProperty != nullptr) {
-            ptrPex.StartFunction(runProperty->writeHandler, argsForCall);
-          }
-
-        } else
-          assert(false);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Array_Create:
-
-        (*opCode[line].second[0]).pArray =
-          std::shared_ptr<std::vector<VarValue>>(new std::vector<VarValue>);
-        if ((int32_t)(*opCode[line].second[1]) > 0) {
-
-          (*opCode[line].second[0])
-            .pArray->resize((int32_t)(*opCode[line].second[1]));
-
-          uint8_t type =
-            GetArrayElementType((*opCode[line].second[0]).GetType());
-
-          for (auto& element : *(*opCode[line].second[0]).pArray) {
-            element = VarValue(type);
-          }
-
-        } else
-          assert(0);
-
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Array_Length:
-
-        if ((*opCode[line].second[1]).pArray != nullptr) {
-          if ((*opCode[line].second[0]).GetType() == VarValue::kType_Integer)
-            *opCode[line].second[0] =
-              VarValue((int32_t)(*opCode[line].second[1]).pArray->size());
-
-        } else
-          *opCode[line].second[0] = VarValue((int32_t)0);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Array_GetElement:
-
-        if ((*opCode[line].second[1]).pArray != nullptr) {
-          *opCode[line].second[0] =
-            (*opCode[line].second[1])
-              .pArray->at((int32_t)(*opCode[line].second[2]));
-        } else
-          assert(0);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Array_SetElement:
-
-        if ((*opCode[line].second[0]).pArray != nullptr) {
-          (*opCode[line].second[0])
-            .pArray->at((int32_t)(*opCode[line].second[1])) =
-            *opCode[line].second[2];
-        } else
-          assert(0);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Array_FindElement:
-
-        OpcodesImplementation::arrayFindElement(
-          *opCode[line].second[0], *opCode[line].second[1],
-          *opCode[line].second[2], *opCode[line].second[3]);
-        break;
-
-      case OpcodesImplementation::Opcodes::op_Array_RfindElement:
-
-        OpcodesImplementation::arrayRFindElement(
-          *opCode[line].second[0], *opCode[line].second[1],
-          *opCode[line].second[2], *opCode[line].second[3]);
-        break;
-
-      default:
-        assert(0);
-    }
-
-    if (needReturn) {
-      needReturn = false;
-      return returnValue;
-    }
-
-    if (needJump) {
-      needJump = false;
-      line += jumpStep;
+    if (ctx.needJump) {
+      ctx.needJump = false;
+      line += ctx.jumpStep;
     }
   }
-  return returnValue;
+  return ctx.returnValue;
 }
 
 VarValue& ActivePexInstance::GetIndentifierValue(

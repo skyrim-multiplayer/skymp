@@ -12,9 +12,11 @@ SpSnippet::SpSnippet(const char* cl_, const char* func_, const char* args_,
 {
 }
 
-void SpSnippet::Send(MpActor* actor, std::function<void(nlohmann::json)> cb)
+Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 {
-  auto snippetIdx = actor->NextSnippetIndex(cb);
+  Viet::Promise<VarValue> promise;
+
+  auto snippetIdx = actor->NextSnippetIndex(promise);
 
   Networking::Format(
     [&](Networking::PacketData data, size_t len) {
@@ -22,4 +24,6 @@ void SpSnippet::Send(MpActor* actor, std::function<void(nlohmann::json)> cb)
     },
     R"({"type": "spSnippet", "class": "%s", "function": "%s", "arguments": %s, "selfId": %u, "snippetIdx": %u})",
     cl, func, args, selfId, snippetIdx);
+
+  return promise;
 }

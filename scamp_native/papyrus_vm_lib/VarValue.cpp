@@ -163,6 +163,12 @@ VarValue::VarValue(bool value)
   this->data.b = value;
 }
 
+VarValue::VarValue(Viet::Promise<VarValue> promise)
+{
+  this->type = this->kType_Object;
+  this->promise.reset(new Viet::Promise<VarValue>(promise));
+}
+
 VarValue VarValue::operator+(const VarValue& argument2)
 {
   VarValue var;

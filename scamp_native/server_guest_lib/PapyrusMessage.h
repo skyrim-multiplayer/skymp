@@ -1,20 +1,21 @@
 #pragma once
 #include "IPapyrusClass.h"
+#include "SpSnippetFunctionGen.h"
 
 class PapyrusMessage : public IPapyrusClass<PapyrusMessage>
 {
 public:
   const char* GetName() override { return "message"; }
 
-  VarValue Show(VarValue self, const std::vector<VarValue>& arguments)
-  {
-    assert(0 && "SHOW!!!");
-    return VarValue::None();
-  }
+  DEFINE_METHOD_SPSNIPPET(Show);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy>) override
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
+    compatibilityPolicy = policy;
+
     AddMethod(vm, "Show", &PapyrusMessage::Show);
   }
+
+  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

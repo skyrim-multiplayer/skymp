@@ -10,7 +10,7 @@ struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
   {
   }
 
-  std::map<uint32_t, std::function<void(nlohmann::json)>> snippetCallbacks;
+  std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
   uint32_t snippetIndex = 0;
 };
 
@@ -96,12 +96,22 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
 }
 
 uint32_t MpActor::NextSnippetIndex(
-  std::function<void(nlohmann::json)> callback)
+  std::optional<Viet::Promise<VarValue>> promise)
 {
   auto res = pImpl->snippetIndex++;
-  if (callback)
-    pImpl->snippetCallbacks[res] = callback;
+  if (promise)
+    pImpl->snippetPromises[res] = *promise;
   return res;
+}
+
+void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
+{
+  auto it = pImpl->snippetPromises.find(snippetIdx);
+  if (it != pImpl->snippetPromises.end()) {
+    auto& promise = it->second;
+    promise.Resolve(v);
+    pImpl->snippetPromises.erase(it);
+  }
 }
 
 const bool& MpActor::IsRaceMenuOpen() const

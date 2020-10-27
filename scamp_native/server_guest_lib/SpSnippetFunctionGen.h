@@ -5,19 +5,35 @@
 #include "VirtualMachine.h"
 #include <cstdio>
 
-#define DEFINE_STATIC_SPSNIPPET(name)                                         \
-  VarValue name(VarValue self, const std::vector<VarValue>& arguments)        \
-  {                                                                           \
-    auto s = SpSnippetFunctionGen::SerializeArguments(arguments);             \
-    if (auto actor = compatibilityPolicy->GetDefaultActor())                  \
-      SpSnippet(GetName(), (#name), s.data()).Send(actor);                    \
-                                                                              \
-    return VarValue::None();                                                  \
-  }
-
 class SpSnippetFunctionGen
 {
 public:
   static std::string SerializeArguments(
     const std::vector<VarValue>& arguments);
+
+  static uint32_t GetFormId(VarValue varValue);
 };
+
+#define DEFINE_STATIC_SPSNIPPET(name)                                         \
+  VarValue name(VarValue self, const std::vector<VarValue>& arguments)        \
+  {                                                                           \
+    auto s = SpSnippetFunctionGen::SerializeArguments(arguments);             \
+    if (auto actor = compatibilityPolicy->GetDefaultActor())                  \
+      SpSnippet(GetName(), (#name), s.data()).Execute(actor);                 \
+                                                                              \
+    return VarValue::None();                                                  \
+  }
+
+#define DEFINE_METHOD_SPSNIPPET(name)                                         \
+  VarValue name(VarValue self, const std::vector<VarValue>& arguments)        \
+  {                                                                           \
+    auto s = SpSnippetFunctionGen::SerializeArguments(arguments);             \
+    if (auto actor = compatibilityPolicy->GetDefaultActor()) {                \
+      auto promise = SpSnippet(GetName(), (#name), s.data(),                  \
+                               SpSnippetFunctionGen::GetFormId(self))         \
+                       .Execute(actor);                                       \
+      return VarValue(promise);                                               \
+    }                                                                         \
+                                                                              \
+    return VarValue::None();                                                  \
+  }

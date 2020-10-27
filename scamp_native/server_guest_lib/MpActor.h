@@ -1,7 +1,9 @@
 #pragma once
 #include "Look.h"
 #include "MpObjectReference.h"
+#include "Structures.h"
 #include <memory>
+#include <optional>
 #include <set>
 
 class WorldState;
@@ -42,7 +44,10 @@ public:
   MpChangeForm GetChangeForm() const override;
   void ApplyChangeForm(const MpChangeForm& changeForm) override;
 
-  uint32_t NextSnippetIndex(std::function<void(nlohmann::json)> callback);
+  uint32_t NextSnippetIndex(
+    std::optional<Viet::Promise<VarValue>> promise = std::nullopt);
+
+  void ResolveSnippet(uint32_t snippetIdx, VarValue v);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
