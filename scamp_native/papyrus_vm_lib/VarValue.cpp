@@ -459,3 +459,28 @@ std::ostream& operator<<(std::ostream& os, const VarValue& varValue)
   }
   return os;
 }
+
+VarValue& VarValue::operator=(const VarValue& arg2)
+{
+  // DO NOT DO THIS:
+  /// objectType = arg2.objectType;
+
+  // Object dynamic cast is relying on the current implementation (See first
+  // argument in CastObjectToObject). Once you try to remove this operator
+  // overload or copy 'objectType', you would run into issues with casting
+  // between Papyrus object types.
+
+  // At the moment when this comment has been written,
+  // there was no unit test able to reproduce it.Good luck with debugging.
+
+  data = arg2.data;
+  type = arg2.type;
+
+  // TODO: Is this check actually needed?
+  if (arg2.type >= arg2._ArraysStart && arg2.type < arg2._ArraysEnd)
+    pArray = arg2.pArray;
+
+  promise = arg2.promise;
+
+  return *this;
+}

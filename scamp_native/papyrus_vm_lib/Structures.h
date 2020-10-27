@@ -119,6 +119,8 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const VarValue& varValue);
 
+  VarValue& operator=(const VarValue& arg2);
+
   VarValue CastToInt() const;
   VarValue CastToFloat() const;
   VarValue CastToBool() const;
