@@ -242,7 +242,7 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
 
 struct ActivePexInstance::ExecutionContext
 {
-  std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> locals;
+  std::shared_ptr<Locals> locals;
   bool needReturn = false;
   bool needJump = false;
   int jumpStep = 0;
@@ -475,18 +475,19 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
   }
 }
 
-VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
-                                          std::vector<VarValue>& arguments)
+std::shared_ptr<ActivePexInstance::Locals> ActivePexInstance::MakeLocals(
+  FunctionInfo& function, std::vector<VarValue>& arguments)
 {
-  auto locals =
-    std::make_shared<std::vector<std::pair<std::string, VarValue>>>();
+  auto locals = std::make_shared<Locals>();
 
+  // Fill with function locals
   for (auto& var : function.locals) {
     VarValue temp = VarValue(GetTypeByName(var.type));
     temp.objectType = var.type;
     locals->push_back({ var.name, temp });
   }
 
+  // Fill with function args
   for (size_t i = 0; i < arguments.size(); ++i) {
     VarValue temp = arguments[i];
     temp.objectType = function.params[i].type;
@@ -495,6 +496,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
     assert(locals->back().second.GetType() == arguments[i].GetType());
   }
 
+  // ?
   for (size_t i = arguments.size(); i < function.params.size(); ++i) {
     const auto& var_ = function.params[i];
 
@@ -504,14 +506,20 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
     locals->push_back({ var_.name, temp });
   }
 
+  // Dereference identifiers
   for (auto& var : *locals) {
     var.second = GetIndentifierValue(*locals, var.second);
   }
 
-  auto& sourceOpCode = function.code.instructions;
+  return locals;
+}
 
+namespace {
+// Basically, makes vector<VarValue *> from vector<VarValue>
+std::vector<std::pair<uint8_t, std::vector<VarValue*>>> TransformInstructions(
+  std::vector<FunctionCode::Instruction>& sourceOpCode)
+{
   std::vector<std::pair<uint8_t, std::vector<VarValue*>>> opCode;
-
   for (size_t i = 0; i < sourceOpCode.size(); ++i) {
 
     std::pair<uint8_t, std::vector<VarValue*>> temp;
@@ -522,13 +530,20 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
     }
     opCode.push_back(temp);
   }
+  return opCode;
+}
+}
 
-  for (auto& op : opCode) {
+VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
+                                          std::vector<VarValue>& arguments)
+{
+  auto locals = MakeLocals(function, arguments);
+  auto opCode = TransformInstructions(function.code.instructions);
 
-    for (auto& arg : op.second) {
+  // Dereference identifiers
+  for (auto& op : opCode)
+    for (auto& arg : op.second)
       arg = &(GetIndentifierValue(*locals, *arg));
-    }
-  }
 
   ExecutionContext ctx{ locals };
 
@@ -549,8 +564,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
   return ctx.returnValue;
 }
 
-VarValue& ActivePexInstance::GetIndentifierValue(
-  std::vector<std::pair<std::string, VarValue>>& locals, VarValue& value)
+VarValue& ActivePexInstance::GetIndentifierValue(Locals& locals,
+                                                 VarValue& value)
 {
   if (value.GetType() == VarValue::kType_Identifier &&
       (const char*)value != nullptr) {
@@ -635,9 +650,9 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
   return returnType;
 }
 
-void ActivePexInstance::CastObjectToObject(
-  VarValue* result, VarValue* scriptToCastOwner,
-  std::vector<std::pair<std::string, VarValue>>& locals)
+void ActivePexInstance::CastObjectToObject(VarValue* result,
+                                           VarValue* scriptToCastOwner,
+                                           Locals& locals)
 {
   std::string objectToCastTypeName = scriptToCastOwner->objectType;
   std::string resultTypeName = result->objectType;
@@ -710,8 +725,8 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
   return false;
 }
 
-VarValue& ActivePexInstance::GetVariableValueByName(
-  std::vector<std::pair<std::string, VarValue>>* locals, std::string name)
+VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
+                                                    std::string name)
 {
 
   if (name == "self") {

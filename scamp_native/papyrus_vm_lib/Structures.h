@@ -181,13 +181,10 @@ struct FunctionCode
   struct Instruction
   {
     uint8_t op = 0;
-
-    typedef std::vector<VarValue> VarTable;
-    VarTable args;
+    std::vector<VarValue> args;
   };
 
-  typedef std::vector<Instruction> InstructionList;
-  InstructionList instructions;
+  std::vector<Instruction> instructions;
 };
 
 struct FunctionInfo
@@ -380,6 +377,7 @@ struct ActivePexInstance
 {
 public:
   using Ptr = std::shared_ptr<ActivePexInstance>;
+  using Locals = std::vector<std::pair<std::string, VarValue>>;
 
   ActivePexInstance();
   ActivePexInstance(
@@ -391,12 +389,9 @@ public:
   FunctionInfo GetFunctionByName(const char* name,
                                  std::string stateName) const;
 
-  VarValue& GetVariableValueByName(
-    std::vector<std::pair<std::string, VarValue>>* optionalLocals,
-    std::string name);
+  VarValue& GetVariableValueByName(Locals* optionalLocals, std::string name);
 
-  VarValue& GetIndentifierValue(
-    std::vector<std::pair<std::string, VarValue>>& locals, VarValue& value);
+  VarValue& GetIndentifierValue(Locals& locals, VarValue& value);
 
   VarValue CastToString(const VarValue& var);
 
@@ -421,6 +416,9 @@ public:
 private:
   struct ExecutionContext;
 
+  std::shared_ptr<Locals> MakeLocals(FunctionInfo& function,
+                                     std::vector<VarValue>& arguments);
+
   void ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                      const std::vector<VarValue*>& arguments);
 
@@ -430,9 +428,8 @@ private:
 
   uint8_t GetArrayElementType(uint8_t type);
 
-  void CastObjectToObject(
-    VarValue* result, VarValue* objectType,
-    std::vector<std::pair<std::string, VarValue>>& locals);
+  void CastObjectToObject(VarValue* result, VarValue* objectType,
+                          Locals& locals);
 
   bool HasParent(ActivePexInstance* script, std::string castToTypeName);
   bool HasChild(ActivePexInstance* script, std::string castToTypeName);
