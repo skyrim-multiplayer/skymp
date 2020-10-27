@@ -48,6 +48,9 @@ public:
   void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
                   const Inventory::Entry& entry) override;
 
+  void OnFinishSpSnippet(const RawMessageData& rawMsgData, uint32_t snippetIdx,
+                         simdjson::dom::element& returnValue) override;
+
 private:
   // Returns user's actor if exists
   MpActor* SendToNeighbours(uint32_t idx,

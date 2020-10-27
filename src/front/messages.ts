@@ -14,6 +14,7 @@ export enum MsgType {
   UpdateProperty = 7,
   PutItem = 8,
   TakeItem = 9,
+  FinishSpSnippet = 10,
 }
 
 export interface SetInventory {
@@ -90,4 +91,13 @@ export interface SetRaceMenuOpenMessage {
 export interface CustomPacket {
   type: "customPacket";
   content: Record<string, unknown>;
+}
+
+export interface SpSnippet {
+  type: "spSnippet";
+  class: string;
+  function: string;
+  arguments: any[];
+  selfId: number;
+  snippetIdx: number;
 }

@@ -23,6 +23,7 @@ import {
   settings,
   Armor,
 } from "skyrimPlatform";
+import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./components/inventory";
 import { isBadMenuShown } from "./components/equipment";
@@ -388,6 +389,44 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         break;
     }
   }
+
+  spSnippet(msg: messages.SpSnippet): void {
+    printConsole("!!!!!!!!", msg);
+
+    const spAny = sp as Record<string, any>;
+    /*const func: () => any = (sp as Record<string, any>)[msg.class][
+      msg.function
+    ];
+    func.apply()*/
+
+    once("update", async () => {
+      if (msg.selfId !== 0) {
+        const self = Game.getFormEx(msg.selfId);
+        if (self) {
+          const selfCasted = spAny[msg.class].from(self);
+          const f: () => any = selfCasted[msg.function];
+          const promise: Promise<any> = f.apply(selfCasted, msg.arguments);
+          let returnValue = await promise;
+          if (returnValue === undefined) returnValue = null;
+          this.send(
+            {
+              t: messages.MsgType.FinishSpSnippet,
+              returnValue,
+              snippetIdx: msg.snippetIdx,
+            },
+            true
+          );
+          printConsole("!!!! returnValue=" + returnValue);
+        } else {
+          printConsole("!!!! self not found");
+        }
+      } else {
+        printConsole("!!!! static not implemented");
+      }
+    });
+  }
+
+  /** Packet handlers end **/
 
   getWorldModel(): WorldModel {
     return this.worldModel;

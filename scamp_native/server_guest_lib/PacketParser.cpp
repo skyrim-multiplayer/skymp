@@ -110,6 +110,17 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       else
         actionListener.OnTakeItem(rawMsgData, target, e);
     } break;
+    case MsgType::FinishSpSnippet: {
+      uint32_t snippetIdx;
+      ReadEx(jMessage, "snippetIdx", &snippetIdx);
+
+      simdjson::dom::element returnValue;
+      ReadEx(jMessage, "returnValue", &returnValue);
+
+      actionListener.OnFinishSpSnippet(rawMsgData, snippetIdx, returnValue);
+
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }

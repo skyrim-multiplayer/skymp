@@ -144,3 +144,36 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
     return; // TODO: Throw error instead
   ref.TakeItem(*actor, entry);
 }
+
+namespace {
+VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
+                          const simdjson::dom::element& element)
+{
+  auto key = "returnValue";
+
+  // TODO: DOUBLE, STRING, NULL_VALUE ...
+  switch (element.type()) {
+    case simdjson::dom::element_type::INT64:
+    case simdjson::dom::element_type::UINT64: {
+      int32_t v;
+      ReadEx(parentMsg, key, &v);
+      return VarValue(v);
+    }
+  }
+  throw std::runtime_error("VarValueFromJson - Unsupported json type " +
+                           std::to_string(static_cast<int>(element.type())));
+}
+}
+void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
+                                       uint32_t snippetIdx,
+                                       simdjson::dom::element& returnValue)
+{
+  MpActor* actor = serverState.ActorByUser(rawMsgData.userId);
+  if (!actor)
+    throw std::runtime_error(
+      "Unable to finish SpSnippet: No Actor found for user " +
+      std::to_string(rawMsgData.userId));
+
+  actor->ResolveSnippet(snippetIdx,
+                        VarValueFromJson(rawMsgData.parsed, returnValue));
+}

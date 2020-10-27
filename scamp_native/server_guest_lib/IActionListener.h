@@ -42,4 +42,8 @@ public:
 
   virtual void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
                           const Inventory::Entry& entry) = 0;
+
+  virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
+                                 uint32_t snippetIdx,
+                                 simdjson::dom::element& returnValue) = 0;
 };

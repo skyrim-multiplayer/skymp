@@ -32,12 +32,13 @@ struct WorldState::Impl
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
   std::deque<SingleUpdateEntry> singleUpdates;
-  HeuristicPolicy policy;
+  std::shared_ptr<HeuristicPolicy> policy;
 };
 
 WorldState::WorldState()
 {
   pImpl.reset(new Impl);
+  pImpl->policy.reset(new HeuristicPolicy);
   logger.reset(new spdlog::logger("empty logger"));
 }
 
@@ -232,8 +233,8 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
                                   const VarValue* arguments,
                                   size_t argumentsCount)
 {
-  pImpl->policy.BeforeSendPapyrusEvent(form, eventName, arguments,
-                                       argumentsCount);
+  pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
+                                        argumentsCount);
   return GetPapyrusVm().SendEvent(form->ToGameObject(), eventName,
                                   { arguments, arguments + argumentsCount });
 }
@@ -303,7 +304,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       classes.emplace_back(new PapyrusForm);
       classes.emplace_back(new PapyrusMessage);
       for (auto cl : classes)
-        cl->Register(*pImpl->vm, nullptr);
+        cl->Register(*pImpl->vm, pImpl->policy);
     }
   }
   return *pImpl->vm;
