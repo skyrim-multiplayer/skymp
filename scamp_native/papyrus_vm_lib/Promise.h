@@ -69,7 +69,7 @@ public:
     this->Catch([=](const char* err) { promise.Reject(err); });
   }
 
-  void Resolve(const T& value) const noexcept
+  void Resolve(const T& value) const
   {
     if (pImpl->pending) {
       pImpl->pending = false;
@@ -77,7 +77,7 @@ public:
     }
   }
 
-  void Reject(const char* error) const noexcept
+  void Reject(const char* error) const
   {
     if (pImpl->pending) {
       pImpl->pending = false;

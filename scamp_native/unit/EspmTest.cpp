@@ -157,3 +157,14 @@ TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
             espm::Property::Object("TrapDiseaseRockjoint", 0x10a24f),
             espm::Property::Object("TrapDiseaseWitbane", 0x10a250) });
 }
+
+TEST_CASE("Loads FormList", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(0x21e81);
+  REQUIRE(form.rec->GetType() == "FLST");
+
+  auto data = reinterpret_cast<espm::FLST*>(form.rec)->GetData();
+  REQUIRE(data.formIds == std::vector<uint32_t>({ 0x3eab9, 0x4e4bb }));
+}

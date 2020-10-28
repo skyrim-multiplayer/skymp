@@ -437,6 +437,20 @@ public:
 };
 static_assert(sizeof(REFR) == sizeof(RecordHeader));
 
+class FLST : public RecordHeader
+{
+public:
+  static constexpr auto type = "FLST";
+
+  struct Data
+  {
+    std::vector<uint32_t> formIds;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(FLST) == sizeof(RecordHeader));
+
 enum class PropertyType
 {
   Invalid = 0,

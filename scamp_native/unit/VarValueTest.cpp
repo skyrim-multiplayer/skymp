@@ -15,6 +15,18 @@ TEST_CASE("test bool operators (<, <=, >, >=)", "[VarValue]")
   REQUIRE(bool(bool2 >= bool1));
 }
 
+TEST_CASE("operator= for owning objects", "[VarValue]")
+{
+  class MyObject : public IGameObject
+  {
+  };
+
+  VarValue var;
+  var = VarValue(std::make_shared<MyObject>());
+
+  REQUIRE(dynamic_cast<MyObject*>(static_cast<IGameObject*>(var)));
+}
+
 TEST_CASE("VarValue Identifier", "[VarValue]")
 {
   VarValue IdentifierConstructor = VarValue(uint8_t(1));

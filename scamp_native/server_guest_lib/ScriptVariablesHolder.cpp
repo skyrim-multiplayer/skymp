@@ -37,7 +37,11 @@ void ScriptVariablesHolder::FillProperties(const espm::Script& script)
   for (auto& prop : script.properties) {
     VarValue out;
     CastProperty(*browser, prop, &out, scriptsCache.get());
-    (*vars)["::" + prop.propertyName + "_var"] = out;
+    CIString fullVarName;
+    fullVarName += "::";
+    fullVarName += prop.propertyName.data();
+    fullVarName += "_var";
+    (*vars)[fullVarName] = out;
   }
 }
 
@@ -51,7 +55,7 @@ void ScriptVariablesHolder::FillNormalVariables(const PexScript& pex)
         varInfo.value =
           VarValue(ActivePexInstance::GetTypeByName(var.typeName));
       }
-      (*vars)[var.name] = varInfo.value;
+      (*vars)[CIString{ var.name.begin(), var.name.end() }] = varInfo.value;
     }
   }
 }
@@ -64,7 +68,8 @@ void ScriptVariablesHolder::FillState(const PexScript& pex)
     "::State", "String", 0,
     VarValue(pex.objectTable.m_data[0].autoStateName.data())
   };
-  (*vars)[variableForState.name] = variableForState.value;
+  (*vars)[CIString{ variableForState.name.begin(),
+                    variableForState.name.end() }] = variableForState.value;
 }
 
 espm::Script ScriptVariablesHolder::GetScript()
@@ -88,9 +93,20 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
 {
   switch (type) {
     case espm::PropertyType::Object: {
+      if (!propValue.formId)
+        return VarValue::None();
       auto& gameObject = st.espmObjectsHolder[propValue.formId];
-      if (!gameObject)
-        gameObject.reset(new EspmGameObject(br.LookupById(propValue.formId)));
+      if (!gameObject) {
+        auto formId = propValue.formId;
+        auto lookupResult = br.LookupById(formId);
+        if (!lookupResult.rec) {
+          std::stringstream ss;
+          ss << "CastPrimitivePropertyValue - Record with id " << std::hex
+             << formId << " not found";
+          throw std::runtime_error(ss.str());
+        }
+        gameObject.reset(new EspmGameObject(lookupResult));
+      }
       return VarValue(gameObject.get());
     }
     case espm::PropertyType::String: {

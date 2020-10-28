@@ -1,4 +1,5 @@
 #pragma once
+#include "CIString.h"
 #include "Loader.h"
 #include "VirtualMachine.h"
 
@@ -19,7 +20,7 @@ private:
   void FillState(const PexScript& pex);
   espm::Script GetScript();
 
-  using VarsMap = std::map<std::string, VarValue>;
+  using VarsMap = CIMap<VarValue>;
   using EspmObjectsHolder =
     std::map<uint32_t, std::shared_ptr<EspmGameObject>>;
   using PropStringValues = std::map<std::string, std::shared_ptr<std::string>>;

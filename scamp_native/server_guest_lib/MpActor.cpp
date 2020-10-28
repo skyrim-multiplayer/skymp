@@ -91,6 +91,11 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
   pImpl->EditChangeForm(
     [&](MpChangeForm& cf) {
       cf = static_cast<const MpChangeForm&>(newChangeForm);
+
+      // Actor without look would not be visible so we force player to choose
+      // appearance
+      if (cf.lookDump.empty())
+        cf.isRaceMenuOpen = true;
     },
     Impl::Mode::NoRequestSave);
 }

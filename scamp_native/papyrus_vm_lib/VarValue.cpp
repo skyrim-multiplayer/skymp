@@ -176,6 +176,12 @@ VarValue::VarValue(Viet::Promise<VarValue> promise)
   this->promise.reset(new Viet::Promise<VarValue>(promise));
 }
 
+VarValue::VarValue(IGameObject::Ptr object)
+  : VarValue(object.get())
+{
+  owningObject = object;
+}
+
 VarValue VarValue::operator+(const VarValue& argument2)
 {
   VarValue var;
@@ -475,6 +481,7 @@ VarValue& VarValue::operator=(const VarValue& arg2)
 
   data = arg2.data;
   type = arg2.type;
+  owningObject = arg2.owningObject;
 
   // TODO: Is this check actually needed?
   if (arg2.type >= arg2._ArraysStart && arg2.type < arg2._ArraysEnd)

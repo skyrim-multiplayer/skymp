@@ -6,6 +6,7 @@
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "PapyrusForm.h"
+#include "PapyrusFormList.h"
 #include "PapyrusGame.h"
 #include "PapyrusMessage.h"
 #include "PapyrusObjectReference.h"
@@ -303,6 +304,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       classes.emplace_back(new PapyrusGame);
       classes.emplace_back(new PapyrusForm);
       classes.emplace_back(new PapyrusMessage);
+      classes.emplace_back(new PapyrusFormList);
       for (auto cl : classes)
         cl->Register(*pImpl->vm, pImpl->policy);
     }

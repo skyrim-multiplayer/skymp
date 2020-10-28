@@ -46,6 +46,8 @@ private:
     bool b;
   } data;
 
+  std::shared_ptr<IGameObject> owningObject;
+
 public:
   std::string objectType;
 
@@ -84,6 +86,7 @@ public:
   explicit VarValue(float value);
   explicit VarValue(bool value);
   explicit VarValue(Viet::Promise<VarValue> promise);
+  explicit VarValue(IGameObject::Ptr object);
 
   VarValue(uint8_t type, const char* value);
 

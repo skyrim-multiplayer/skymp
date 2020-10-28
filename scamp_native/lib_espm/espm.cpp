@@ -1,4 +1,5 @@
 #include "ZlibUtils.h"
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <memory>
@@ -278,6 +279,11 @@ std::wstring ReadWstring(const uint8_t* ptr)
   return std::wstring(scriptName, scriptNameSize / 2);
 }
 
+espm::PropertyType GetElementType(espm::PropertyType arrayType)
+{
+  return static_cast<espm::PropertyType>(static_cast<int>(arrayType) - 10);
+}
+
 const uint8_t* ReadPropertyValue(const uint8_t* p, espm::Property* prop,
                                  uint16_t objFormat)
 {
@@ -308,23 +314,18 @@ const uint8_t* ReadPropertyValue(const uint8_t* p, espm::Property* prop,
       p += length;
       return p;
     }
-    case espm::PropertyType::ObjectArray: {
+    case espm::PropertyType::ObjectArray:
+    case espm::PropertyType::IntArray:
+    case espm::PropertyType::FloatArray:
+    case espm::PropertyType::BoolArray:
+    case espm::PropertyType::StringArray: {
       uint32_t arrayLength = *reinterpret_cast<const uint32_t*>(p);
       p += 4;
       for (uint32_t i = 0; i < arrayLength; ++i) {
-        p += 8;
-        // TODO: Read values
-      }
-      return p;
-    }
-    case espm::PropertyType::IntArray: {
-      uint32_t arrayLength = *reinterpret_cast<const uint32_t*>(p);
-      p += 4;
-      for (uint32_t i = 0; i < arrayLength; ++i) {
-        p += 4;
-        espm::Property::Value v;
-        v.integer = *reinterpret_cast<const int32_t*>(p);
-        prop->array.push_back(v);
+        espm::Property element;
+        element.propertyType = GetElementType(t);
+        p = ReadPropertyValue(p, &element, objFormat);
+        prop->array.push_back(element.value);
       }
       return p;
     }
@@ -675,6 +676,20 @@ espm::NAVM::Data espm::NAVM::GetData(
       }
     },
     &compressedFieldsCache);
+  return result;
+}
+
+espm::FLST::Data espm::FLST::GetData() const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "LNAM", 4)) {
+        const auto formId = *reinterpret_cast<const uint32_t*>(data);
+        result.formIds.push_back(formId);
+      }
+    });
+  std::reverse(result.formIds.begin(), result.formIds.end());
   return result;
 }
 
