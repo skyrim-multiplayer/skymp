@@ -51,6 +51,8 @@ public:
   void OnFinishSpSnippet(const RawMessageData& rawMsgData, uint32_t snippetIdx,
                          simdjson::dom::element& returnValue) override;
 
+  void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId) override;
+
 private:
   // Returns user's actor if exists
   MpActor* SendToNeighbours(uint32_t idx,

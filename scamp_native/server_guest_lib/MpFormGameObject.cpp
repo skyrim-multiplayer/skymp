@@ -25,3 +25,11 @@ const char* MpFormGameObject::GetParentNativeScript()
     return form->GetFormType();
   return "";
 }
+
+bool MpFormGameObject::EqualsByValue(const IGameObject& obj) const
+{
+  if (auto form = dynamic_cast<const MpFormGameObject*>(&obj)) {
+    return form->formId == formId;
+  }
+  return false;
+}

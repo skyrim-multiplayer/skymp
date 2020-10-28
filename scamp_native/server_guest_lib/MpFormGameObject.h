@@ -9,6 +9,7 @@ public:
   MpForm* GetFormPtr() const noexcept;
 
   const char* GetParentNativeScript() override;
+  bool EqualsByValue(const IGameObject& obj) const override;
 
 private:
   WorldState* const parent;

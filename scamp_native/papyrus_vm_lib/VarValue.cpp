@@ -337,16 +337,10 @@ bool VarValue::operator==(const VarValue& argument2) const
   switch (this->type) {
 
     case VarValue::kType_Object: {
-      IGameObject* id1 = nullptr;
-      IGameObject* id2 = nullptr;
-
-      if (this->data.id != nullptr)
-        id1 = this->data.id;
-
-      if (argument2.data.id != nullptr)
-        id2 = argument2.data.id;
-
-      return id1 == id2;
+      return argument2.type == VarValue::kType_Object &&
+        (argument2.data.id == data.id ||
+         (argument2.data.id && data.id &&
+          data.id->EqualsByValue(*argument2.data.id)));
     }
     case VarValue::kType_Identifier:
     case VarValue::kType_String: {

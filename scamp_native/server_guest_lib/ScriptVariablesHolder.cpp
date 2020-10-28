@@ -5,10 +5,12 @@
 
 ScriptVariablesHolder::ScriptVariablesHolder(
   const std::string& myScriptName_, espm::RecordHeader* recordWithScripts_,
-  const espm::CombineBrowser* browser_)
+  const espm::CombineBrowser* browser_,
+  espm::CompressedFieldsCache* compressedFieldsCache_)
   : recordWithScripts(recordWithScripts_)
   , myScriptName(myScriptName_)
   , browser(browser_)
+  , compressedFieldsCache(compressedFieldsCache_)
 {
 }
 
@@ -75,7 +77,7 @@ void ScriptVariablesHolder::FillState(const PexScript& pex)
 espm::Script ScriptVariablesHolder::GetScript()
 {
   espm::ScriptData scriptData;
-  recordWithScripts->GetScriptData(&scriptData);
+  recordWithScripts->GetScriptData(&scriptData, compressedFieldsCache);
   auto matchingScriptData = std::find_if(
     scriptData.scripts.begin(), scriptData.scripts.end(),
     [&](const espm::Script& script) {

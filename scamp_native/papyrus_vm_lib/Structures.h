@@ -23,6 +23,8 @@ public:
 
   // 'Actor', 'ObjectReference' and so on. Used for dynamic casts
   virtual const char* GetParentNativeScript() { return ""; }
+
+  virtual bool EqualsByValue(const IGameObject& obj) const { return false; }
 };
 
 enum class FunctionType

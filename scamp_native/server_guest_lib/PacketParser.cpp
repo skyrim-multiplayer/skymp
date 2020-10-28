@@ -121,6 +121,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
       break;
     }
+    case MsgType::OnEquip: {
+      uint32_t baseId;
+      ReadEx(jMessage, "baseId", &baseId);
+      actionListener.OnEquip(rawMsgData, baseId);
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }

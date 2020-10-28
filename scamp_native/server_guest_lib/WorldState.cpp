@@ -5,6 +5,7 @@
 #include "MpChangeForms.h"
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
+#include "PapyrusDebug.h"
 #include "PapyrusForm.h"
 #include "PapyrusFormList.h"
 #include "PapyrusGame.h"
@@ -38,9 +39,10 @@ struct WorldState::Impl
 
 WorldState::WorldState()
 {
-  pImpl.reset(new Impl);
-  pImpl->policy.reset(new HeuristicPolicy);
   logger.reset(new spdlog::logger("empty logger"));
+
+  pImpl.reset(new Impl);
+  pImpl->policy.reset(new HeuristicPolicy(logger));
 }
 
 void WorldState::Clear()
@@ -305,6 +307,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       classes.emplace_back(new PapyrusForm);
       classes.emplace_back(new PapyrusMessage);
       classes.emplace_back(new PapyrusFormList);
+      classes.emplace_back(new PapyrusDebug);
       for (auto cl : classes)
         cl->Register(*pImpl->vm, pImpl->policy);
     }

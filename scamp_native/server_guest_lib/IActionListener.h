@@ -46,4 +46,6 @@ public:
   virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                  uint32_t snippetIdx,
                                  simdjson::dom::element& returnValue) = 0;
+
+  virtual void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId) = 0;
 };

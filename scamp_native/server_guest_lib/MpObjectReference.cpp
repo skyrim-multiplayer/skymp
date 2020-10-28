@@ -707,9 +707,11 @@ void MpObjectReference::InitScripts()
   if (!scriptStorage)
     return;
 
+  auto compressedFieldsCache = &GetParent()->GetEspmCache();
+
   std::vector<std::string> scriptNames;
   espm::ScriptData scriptData;
-  base.rec->GetScriptData(&scriptData);
+  base.rec->GetScriptData(&scriptData, compressedFieldsCache);
   auto& scriptsInStorage = GetParent()->GetScriptStorage()->ListScripts();
   for (auto& script : scriptData.scripts) {
     if (scriptsInStorage.count(
@@ -726,7 +728,7 @@ void MpObjectReference::InitScripts()
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
       auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
-        scriptName, base.rec, base.parent);
+        scriptName, base.rec, base.parent, compressedFieldsCache);
       scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
     }
 

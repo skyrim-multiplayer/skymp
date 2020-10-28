@@ -1,5 +1,6 @@
 #include "MpActor.h"
 #include "ChangeFormGuard.h"
+#include "EspmGameObject.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 
@@ -16,7 +17,8 @@ struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 
 MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
-  : MpObjectReference(locationalData_, callbacks_, optBaseId, "NPC_")
+  : MpObjectReference(locationalData_, callbacks_,
+                      optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
 {
   pImpl.reset(new Impl{ MpChangeForm(), this });
 }
@@ -57,6 +59,28 @@ void MpActor::SendToUser(const void* data, size_t size, bool reliable)
     callbacks->sendToUser(this, data, size, reliable);
   else
     throw std::runtime_error("sendToUser is nullptr");
+}
+
+void MpActor::OnEquip(uint32_t baseId)
+{
+  if (GetInventory().GetItemCount(baseId) == 0)
+    return;
+  auto& espm = GetParent()->GetEspm();
+  auto lookupRes = espm.GetBrowser().LookupById(baseId);
+  if (!lookupRes.rec)
+    return;
+  auto t = lookupRes.rec->GetType();
+  if (t == "INGR" || t == "ALCH") {
+    // Eat item
+    RemoveItem(baseId, 1, nullptr);
+
+    if (HasScripts()) {
+      VarValue args[] = {
+        VarValue(std::make_shared<EspmGameObject>(lookupRes)), VarValue::None()
+      };
+      SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
+    }
+  }
 }
 
 void MpActor::AddEventSink(std::shared_ptr<DestroyEventSink> sink)

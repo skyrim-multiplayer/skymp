@@ -366,12 +366,15 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
   }
 }
 
-void espm::RecordHeader::GetScriptData(ScriptData* out) const noexcept
+void espm::RecordHeader::GetScriptData(
+  ScriptData* out, espm::CompressedFieldsCache* compressedFieldsCache) const
+  noexcept
 {
   ScriptData res;
 
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "VMAD", 4)) {
         res.version = *reinterpret_cast<const uint16_t*>(data);
         res.objFormat = *reinterpret_cast<const uint16_t*>(
@@ -383,7 +386,8 @@ void espm::RecordHeader::GetScriptData(ScriptData* out) const noexcept
         res.scripts.resize(scriptCount);
         FillScriptArray(p, res.scripts, res.objFormat);
       }
-    });
+    },
+    compressedFieldsCache);
 
   *out = res;
 }

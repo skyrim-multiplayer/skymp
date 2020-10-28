@@ -27,6 +27,30 @@ TEST_CASE("operator= for owning objects", "[VarValue]")
   REQUIRE(dynamic_cast<MyObject*>(static_cast<IGameObject*>(var)));
 }
 
+TEST_CASE("operator== for objects", "[VarValue]")
+{
+  class MyObject : public IGameObject
+  {
+  public:
+    MyObject(int i) { this->i = i; }
+
+    bool EqualsByValue(const IGameObject& rhs) const override
+    {
+      if (auto rhsMy = dynamic_cast<const MyObject*>(&rhs))
+        return i == rhsMy->i;
+      return false;
+    }
+
+  private:
+    int i;
+  };
+
+  REQUIRE(VarValue(std::make_shared<MyObject>(1)) ==
+          VarValue(std::make_shared<MyObject>(1)));
+  REQUIRE(VarValue(std::make_shared<MyObject>(1)) !=
+          VarValue(std::make_shared<MyObject>(2)));
+}
+
 TEST_CASE("VarValue Identifier", "[VarValue]")
 {
   VarValue IdentifierConstructor = VarValue(uint8_t(1));

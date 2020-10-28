@@ -152,7 +152,9 @@ public:
   uint32_t GetId() const noexcept;
   const char* GetEditorId(espm::CompressedFieldsCache* compressedFieldsCache =
                             nullptr) const noexcept;
-  void GetScriptData(ScriptData* out) const noexcept;
+  void GetScriptData(ScriptData* out,
+                     espm::CompressedFieldsCache* compressedFieldsCache =
+                       nullptr) const noexcept;
 
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;

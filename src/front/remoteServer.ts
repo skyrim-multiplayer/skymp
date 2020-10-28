@@ -30,6 +30,7 @@ import { isBadMenuShown } from "./components/equipment";
 import { Movement } from "./components/movement";
 import { IdManager } from "../lib/idManager";
 import { applyLookToPlayer } from "./components/look";
+import * as spSnippet from "./spSnippet";
 
 class SpawnTask {
   running = false;
@@ -391,38 +392,22 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   spSnippet(msg: messages.SpSnippet): void {
-    printConsole("!!!!!!!!", msg);
-
-    const spAny = sp as Record<string, any>;
-    /*const func: () => any = (sp as Record<string, any>)[msg.class][
-      msg.function
-    ];
-    func.apply()*/
-
+    printConsole("!!!", msg);
     once("update", async () => {
-      if (msg.selfId !== 0) {
-        const self = Game.getFormEx(msg.selfId);
-        if (self) {
-          const selfCasted = spAny[msg.class].from(self);
-          const f: () => any = selfCasted[msg.function];
-          const promise: Promise<any> = f.apply(selfCasted, msg.arguments);
-          let returnValue = await promise;
-          if (returnValue === undefined) returnValue = null;
+      spSnippet
+        .run(msg)
+        .then((res) => {
+          if (res === undefined) res = null;
           this.send(
             {
               t: messages.MsgType.FinishSpSnippet,
-              returnValue,
+              returnValue: res,
               snippetIdx: msg.snippetIdx,
             },
             true
           );
-          printConsole("!!!! returnValue=" + returnValue);
-        } else {
-          printConsole("!!!! self not found");
-        }
-      } else {
-        printConsole("!!!! static not implemented");
-      }
+        })
+        .catch((e) => printConsole("!!! SpSnippet failed", e));
     });
   }
 

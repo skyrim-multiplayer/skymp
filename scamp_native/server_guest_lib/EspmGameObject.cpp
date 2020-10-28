@@ -5,10 +5,6 @@ EspmGameObject::EspmGameObject(const espm::LookupResult& record_)
 {
 }
 
-/*
-return t == "AMMO" || t == "ARMO" || t == "BOOK" || t == "INGR" ||
-    t == "ALCH" || t == "SCRL" || t == "SLGM" || t == "WEAP" || t == "MISC";
-*/
 const char* EspmGameObject::GetParentNativeScript()
 {
   if (record.rec) {
@@ -40,6 +36,14 @@ const char* EspmGameObject::GetParentNativeScript()
                              t.ToString() + "'");
   }
   return "";
+}
+
+bool EspmGameObject::EqualsByValue(const IGameObject& obj) const
+{
+  if (auto espmObj = dynamic_cast<const EspmGameObject*>(&obj)) {
+    return espmObj->record.rec == record.rec;
+  }
+  return false;
 }
 
 const espm::LookupResult& GetRecordPtr(const VarValue& papyrusObject)

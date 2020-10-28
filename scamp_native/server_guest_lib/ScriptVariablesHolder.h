@@ -10,7 +10,8 @@ class ScriptVariablesHolder : public IVariablesHolder
 public:
   ScriptVariablesHolder(const std::string& myScriptName,
                         espm::RecordHeader* recordWithScripts,
-                        const espm::CombineBrowser* browser);
+                        const espm::CombineBrowser* browser,
+                        espm::CompressedFieldsCache* compressedFieldsCache);
 
   VarValue* GetVariableByName(const char* name, const PexScript& pex) override;
 
@@ -45,4 +46,5 @@ private:
   const espm::CombineBrowser* const browser;
   std::unique_ptr<VarsMap> vars;
   std::unique_ptr<ScriptsCache> scriptsCache;
+  espm::CompressedFieldsCache* const compressedFieldsCache;
 };
