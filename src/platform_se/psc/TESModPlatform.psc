@@ -39,3 +39,5 @@ Function AddItemEx(ObjectReference containerRefr, Form item, Int countDelta, Flo
 Function UpdateEquipment(Actor actor, Form item, Bool leftHand) global native
 
 Function ResetContainer(Form container) global native
+
+Function BlockPapyrusEvents(Bool block) global native

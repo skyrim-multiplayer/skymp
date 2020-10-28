@@ -60,6 +60,7 @@ struct
   std::unordered_map<uint32_t, int> weapDrawnMode;
   std::recursive_mutex m;
 } share;
+std::atomic<bool> papyrusEventsBlocked;
 
 struct
 {
@@ -747,6 +748,13 @@ void TESModPlatform::ResetContainer(RE::BSScript::IVirtualMachine* vm,
   pContainer->entries = nullptr;
 }
 
+void TESModPlatform::BlockPapyrusEvents(RE::BSScript::IVirtualMachine* vm,
+                                        RE::VMStackID stackId,
+                                        RE::StaticFunctionTag*, bool blocked)
+{
+  papyrusEventsBlocked = blocked;
+}
+
 int TESModPlatform::GetWeapDrawnMode(uint32_t actorId)
 {
   std::lock_guard l(share.m);
@@ -796,6 +804,11 @@ std::shared_ptr<RE::BSTArray<RE::TintMask*>> TESModPlatform::GetTintsFor(
   if (i >= share2.actorsTints.size())
     return nullptr;
   return share2.actorsTints[i];
+}
+
+bool TESModPlatform::GetPapyrusEventsBlocked()
+{
+  return papyrusEventsBlocked;
 }
 
 bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
@@ -916,6 +929,11 @@ bool TESModPlatform::Register(RE::BSScript::IVirtualMachine* vm)
     new RE::BSScript::NativeFunction<true, decltype(ResetContainer), void,
                                      RE::StaticFunctionTag*, RE::TESForm*>(
       "ResetContainer", "TESModPlatform", ResetContainer));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(BlockPapyrusEvents), void,
+                                     RE::StaticFunctionTag*, bool>(
+      "BlockPapyrusEvents", "TESModPlatform", BlockPapyrusEvents));
 
   static LoadGameEvent loadGameEvent;
 

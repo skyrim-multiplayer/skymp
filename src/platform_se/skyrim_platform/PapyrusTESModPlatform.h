@@ -105,11 +105,16 @@ void UpdateEquipment(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
 void ResetContainer(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
                     RE::StaticFunctionTag*, RE::TESForm* container);
 
+void BlockPapyrusEvents(RE::BSScript::IVirtualMachine* vm,
+                        RE::VMStackID stackId, RE::StaticFunctionTag*,
+                        bool blocked);
+
 // Threadsafe
 void BlockMoveRefrToPosition(bool blocked);
 int GetWeapDrawnMode(uint32_t actorId);
 uint64_t GetNumPapyrusUpdates();
 std::shared_ptr<RE::BSTArray<RE::TintMask*>> GetTintsFor(uint32_t actorId);
+bool GetPapyrusEventsBlocked();
 
 void Update();
 

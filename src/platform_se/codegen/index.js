@@ -43,7 +43,7 @@ export interface Face {
 export interface ChangeFormNpc {
 	raceId?: number;
 	name?: string;
-	face?: face;
+	face?: Face;
 }
 
 export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc): void;

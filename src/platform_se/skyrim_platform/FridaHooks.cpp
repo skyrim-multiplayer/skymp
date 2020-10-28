@@ -36,7 +36,9 @@ enum _ExampleHookId
   DRAW_SHEATHE_WEAPON_PC,
   QUEUE_NINODE_UPDATE,
   APPLY_MASKS_TO_RENDER_TARGET,
-  RENDER_MAIN_MENU
+  RENDER_MAIN_MENU,
+  SEND_EVENT,
+  SEND_EVENT_ALL
 };
 
 static void example_listener_iface_init(gpointer g_iface, gpointer iface_data);
@@ -97,6 +99,8 @@ void SetupFridaHooks()
   w.Attach(listener, 6893840, QUEUE_NINODE_UPDATE);
   w.Attach(listener, 4043808, APPLY_MASKS_TO_RENDER_TARGET);
   w.Attach(listener, 5367792, RENDER_MAIN_MENU);
+  w.Attach(listener, 19244800, SEND_EVENT);
+  w.Attach(listener, 19245744, SEND_EVENT_ALL);
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
@@ -113,6 +117,23 @@ static void example_listener_on_enter(GumInvocationListener* listener,
   auto _ic = (_GumInvocationContext*)ic;
 
   switch ((size_t)hook_id) {
+    case SEND_EVENT: {
+      int argIdx = 2;
+
+      auto eventName =
+        (char**)gum_invocation_context_get_nth_argument(ic, argIdx);
+
+      bool blockEvents = TESModPlatform::GetPapyrusEventsBlocked();
+      if (blockEvents) {
+        static const auto fsEmpty = new RE::BSFixedString("");
+        gum_invocation_context_replace_nth_argument(ic, argIdx, fsEmpty);
+      }
+      break;
+    }
+    case SEND_EVENT_ALL:
+      if (auto c = RE::ConsoleLog::GetSingleton())
+        c->Print("SendEventAll");
+      break;
     case DRAW_SHEATHE_WEAPON_PC: {
       auto refr =
         _ic->cpu_context->rcx ? (RE::Actor*)(_ic->cpu_context->rcx) : nullptr;
