@@ -26,12 +26,12 @@ void MpForm::SendPapyrusEvent(const char* eventName, const VarValue* arguments,
 
 VarValue MpForm::ToVarValue() const
 {
-  if (!gameObject)
-    gameObject.reset(new MpFormGameObject(const_cast<MpForm*>(this)));
-  return VarValue(gameObject.get());
+  return VarValue(ToGameObject().get());
 }
 
 std::shared_ptr<IGameObject> MpForm::ToGameObject() const
 {
+  if (!gameObject)
+    gameObject.reset(new MpFormGameObject(const_cast<MpForm*>(this)));
   return gameObject;
 }
