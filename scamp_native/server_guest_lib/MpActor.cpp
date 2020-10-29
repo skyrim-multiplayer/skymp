@@ -169,6 +169,11 @@ const std::string& MpActor::GetEquipmentAsJson()
   return pImpl->ChangeForm().equipmentDump;
 };
 
+bool MpActor::IsWeaponDrawn() const
+{
+  return GetAnimationVariableBool("_skymp_isWeapDrawn");
+}
+
 void MpActor::BeforeDestroy()
 {
   for (auto& sink : destroyEventSinks)

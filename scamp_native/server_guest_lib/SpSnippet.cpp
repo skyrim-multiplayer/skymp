@@ -18,12 +18,15 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 
   auto snippetIdx = actor->NextSnippetIndex(promise);
 
+  // Player character is always 0x14 on client, but 0xff000000+ in our server
+  auto targetSelfId = selfId < 0xff000000 ? selfId : 0x14;
+
   Networking::Format(
     [&](Networking::PacketData data, size_t len) {
       actor->SendToUser(data, len, true);
     },
     R"({"type": "spSnippet", "class": "%s", "function": "%s", "arguments": %s, "selfId": %u, "snippetIdx": %u})",
-    cl, func, args, selfId, snippetIdx);
+    cl, func, args, targetSelfId, snippetIdx);
 
   return promise;
 }

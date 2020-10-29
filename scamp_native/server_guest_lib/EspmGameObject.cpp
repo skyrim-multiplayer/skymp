@@ -31,6 +31,8 @@ const char* EspmGameObject::GetParentNativeScript()
       return "message";
     if (t == "FLST")
       return "formlist";
+    if (t == "IDLE")
+      return "idle";
 
     throw std::runtime_error("Unable to find native script for record type '" +
                              t.ToString() + "'");

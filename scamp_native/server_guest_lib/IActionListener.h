@@ -22,7 +22,7 @@ public:
 
   virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
                                 const NiPoint3& pos, const NiPoint3& rot,
-                                bool isInJumpState) = 0;
+                                bool isInJumpState, bool isWeapDrawn) = 0;
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
                                  uint32_t idx) = 0;

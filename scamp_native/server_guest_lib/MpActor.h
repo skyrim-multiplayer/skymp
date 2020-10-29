@@ -21,6 +21,7 @@ public:
   std::unique_ptr<const Look> GetLook() const;
   const std::string& GetLookAsJson();
   const std::string& GetEquipmentAsJson();
+  bool IsWeaponDrawn() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetLook(const Look* newLook);

@@ -28,6 +28,14 @@ std::string SpSnippetFunctionGen::SerializeArguments(
       ss << ", ";
 
     switch (arg.GetType()) {
+      case VarValue::kType_Object: {
+        auto formId = GetFormId(arg);
+        auto obj = static_cast<IGameObject*>(arg);
+        auto type = obj ? obj->GetParentNativeScript() : "";
+        ss
+          << nlohmann::json({ { "formId", formId }, { "type", type } }).dump();
+        break;
+      }
       case VarValue::kType_String:
         ss << nlohmann::json(static_cast<const char*>(arg)).dump();
         break;

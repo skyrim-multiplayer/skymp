@@ -47,13 +47,15 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
 
 void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
-                                      const NiPoint3& rot, bool isInJumpState)
+                                      const NiPoint3& rot, bool isInJumpState,
+                                      bool isWeapDrawn)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
     actor->SetPos(pos);
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
+    actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
   }
 }
 
@@ -156,6 +158,11 @@ VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
     case simdjson::dom::element_type::INT64:
     case simdjson::dom::element_type::UINT64: {
       int32_t v;
+      ReadEx(parentMsg, key, &v);
+      return VarValue(v);
+    }
+    case simdjson::dom::element_type::BOOL: {
+      bool v;
       ReadEx(parentMsg, key, &v);
       return VarValue(v);
     }
