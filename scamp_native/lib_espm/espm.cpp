@@ -558,11 +558,13 @@ espm::REFR::Data espm::REFR::GetData() const noexcept
       if (!memcmp(type, "NAME", 4))
         result.baseId = *(uint32_t*)data;
       else if (!memcmp(type, "XSCL", 4))
-        result.scale = *(float*)data;
+        result.scale = *reinterpret_cast<const float*>(data);
       else if (!memcmp(type, "DATA", 4))
         result.loc = (LocationalData*)data;
       else if (!memcmp(type, "XTEL", 4))
         result.teleport = (DoorTeleport*)data;
+      else if (!memcmp(type, "XPRM", 4))
+        result.boundsDiv2 = reinterpret_cast<const float*>(data);
     });
   return result;
 }

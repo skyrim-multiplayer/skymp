@@ -1,0 +1,45 @@
+#include "Primitive.h"
+#include "GeoPolygon.h"
+#include "GeoPolygonProc.h"
+#include <cmath>
+
+std::vector<NiPoint3> Primitive::GetVertices(const espm::REFR* refr)
+{
+  std::vector<NiPoint3> res;
+
+  auto data = refr->GetData();
+  NiPoint3 pos = { data.loc->pos[0], data.loc->pos[1], data.loc->pos[2] };
+  NiPoint3 rotRad = { data.loc->rotRadians[0], data.loc->rotRadians[1],
+                      data.loc->rotRadians[2] };
+
+  static const float pi = acosf(-1);
+
+  for (auto zk : { -1, 1 })
+    for (auto k : { 1, -1 }) {
+      for (auto a : { pi / 2, -pi / 2 }) {
+        auto p = pos;
+        p.x += k * cos(rotRad.z) * data.boundsDiv2[1];
+        p.x += k * cos(rotRad.z + a) * data.boundsDiv2[0];
+        p.y += k * sin(rotRad.z) * data.boundsDiv2[1];
+        p.y += k * sin(rotRad.z + a) * data.boundsDiv2[0];
+        p.z += zk * data.boundsDiv2[2];
+        res.push_back(p);
+      }
+    }
+
+  return res;
+}
+
+bool Primitive::IsInside(const NiPoint3& point,
+                         const std::vector<NiPoint3>& niVertices)
+{
+  std::vector<GeoProc::GeoPoint> vertices;
+  vertices.reserve(niVertices.size());
+  for (auto& v : niVertices)
+    vertices.push_back(GeoProc::GeoPoint(v.x, v.y, v.z));
+
+  GeoProc::GeoPolygon polygonObj = GeoProc::GeoPolygon(vertices);
+  GeoProc::GeoPolygonProc procObj = GeoProc::GeoPolygonProc(polygonObj);
+
+  return procObj.PointInside3DPolygon(point.x, point.y, point.z);
+}

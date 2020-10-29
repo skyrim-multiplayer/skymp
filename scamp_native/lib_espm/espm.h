@@ -298,6 +298,7 @@ public:
     float scale = 1;
     const LocationalData* loc = nullptr;
     const DoorTeleport* teleport = nullptr;
+    const float* boundsDiv2 = nullptr;
   };
 
   Data GetData() const noexcept;
