@@ -142,7 +142,9 @@ public:
   void SetCellOrWorldObsolete(uint32_t worldOrCell);
 
 protected:
-  bool HasScripts(); // Perform lazy loading
+  void SendPapyrusEvent(const char* eventName,
+                        const VarValue* arguments = nullptr,
+                        size_t argumentsCount = 0) override;
 
 private:
   void Init(WorldState* parent, uint32_t formId) override;

@@ -359,10 +359,8 @@ void MpObjectReference::Activate(MpActor& activationSource)
     }
   }
 
-  if (HasScripts()) {
-    auto arg = activationSource.ToVarValue();
-    SendPapyrusEvent("OnActivate", &arg, 1);
-  }
+  auto arg = activationSource.ToVarValue();
+  SendPapyrusEvent("OnActivate", &arg, 1);
 }
 
 void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
@@ -707,6 +705,17 @@ void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
   });
 }
 
+void MpObjectReference::SendPapyrusEvent(const char* eventName,
+                                         const VarValue* arguments,
+                                         size_t argumentsCount)
+{
+  if (!pImpl->scriptsInited) {
+    InitScripts();
+    pImpl->scriptsInited = true;
+  }
+  return MpForm::SendPapyrusEvent(eventName, arguments, argumentsCount);
+}
+
 void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
   MpForm::Init(parent, formId);
@@ -735,15 +744,6 @@ bool MpObjectReference::IsLocationSavingNeeded() const
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
 }
 
-bool MpObjectReference::HasScripts()
-{
-  if (!pImpl->scriptsInited) {
-    InitScripts();
-    pImpl->scriptsInited = true;
-  }
-  return !!pImpl->scriptState;
-}
-
 void MpObjectReference::RemoveFromGrid()
 {
   auto gridIterator = GetParent()->grids.find(GetCellOrWorld());
@@ -770,11 +770,6 @@ void MpObjectReference::InitScripts()
   if (!baseId || !GetParent()->espm)
     return;
 
-  auto& br = GetParent()->espm->GetBrowser();
-  auto base = br.LookupById(baseId);
-  if (!base.rec)
-    return;
-
   auto scriptStorage = GetParent()->GetScriptStorage();
   if (!scriptStorage)
     return;
@@ -782,16 +777,34 @@ void MpObjectReference::InitScripts()
   auto compressedFieldsCache = &GetParent()->GetEspmCache();
 
   std::vector<std::string> scriptNames;
-  espm::ScriptData scriptData;
-  base.rec->GetScriptData(&scriptData, compressedFieldsCache);
-  auto& scriptsInStorage = GetParent()->GetScriptStorage()->ListScripts();
-  for (auto& script : scriptData.scripts) {
-    if (scriptsInStorage.count(
-          { script.scriptName.begin(), script.scriptName.end() }))
-      scriptNames.push_back(script.scriptName);
-    else if (auto wst = GetParent())
-      wst->logger->warn("Script '{}' not found in the script storage",
-                        script.scriptName);
+
+  auto& br = GetParent()->espm->GetBrowser();
+  auto base = br.LookupById(baseId);
+  auto refr = br.LookupById(GetFormId());
+  for (auto record : { base.rec, refr.rec }) {
+    if (!record)
+      continue;
+    espm::ScriptData scriptData;
+    record->GetScriptData(&scriptData, compressedFieldsCache);
+
+    auto& scriptsInStorage = GetParent()->GetScriptStorage()->ListScripts();
+    for (auto& script : scriptData.scripts) {
+      if (scriptsInStorage.count(
+            { script.scriptName.begin(), script.scriptName.end() })) {
+
+        if (std::count(scriptNames.begin(), scriptNames.end(),
+                       script.scriptName) != 0) {
+          std::stringstream ss;
+          ss << "Script '" << script.scriptName
+             << "' has already been added to form " << std::hex << GetFormId();
+          throw std::runtime_error(ss.str());
+        }
+
+        scriptNames.push_back(script.scriptName);
+      } else if (auto wst = GetParent())
+        wst->logger->warn("Script '{}' not found in the script storage",
+                          script.scriptName);
+    }
   }
 
   if (!scriptNames.empty()) {
@@ -800,7 +813,7 @@ void MpObjectReference::InitScripts()
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
       auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
-        scriptName, base.rec, base.parent, compressedFieldsCache);
+        scriptName, base.rec, refr.rec, base.parent, compressedFieldsCache);
       scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
     }
 

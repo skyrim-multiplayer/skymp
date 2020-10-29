@@ -4,10 +4,12 @@
 #include "Utils.h"
 
 ScriptVariablesHolder::ScriptVariablesHolder(
-  const std::string& myScriptName_, espm::RecordHeader* recordWithScripts_,
+  const std::string& myScriptName_, espm::RecordHeader* baseRecordWithScripts_,
+  espm::RecordHeader* refrRecordWithScripts_,
   const espm::CombineBrowser* browser_,
   espm::CompressedFieldsCache* compressedFieldsCache_)
-  : recordWithScripts(recordWithScripts_)
+  : baseRecordWithScripts(baseRecordWithScripts_)
+  , refrRecordWithScripts(refrRecordWithScripts_)
   , myScriptName(myScriptName_)
   , browser(browser_)
   , compressedFieldsCache(compressedFieldsCache_)
@@ -23,7 +25,7 @@ VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
   if (!vars) {
     vars.reset(new VarsMap);
     FillNormalVariables(pex);
-    if (recordWithScripts)
+    if (baseRecordWithScripts || refrRecordWithScripts)
       FillProperties(GetScript());
     FillState(pex);
   }
@@ -76,17 +78,22 @@ void ScriptVariablesHolder::FillState(const PexScript& pex)
 
 espm::Script ScriptVariablesHolder::GetScript()
 {
-  espm::ScriptData scriptData;
-  recordWithScripts->GetScriptData(&scriptData, compressedFieldsCache);
-  auto matchingScriptData = std::find_if(
-    scriptData.scripts.begin(), scriptData.scripts.end(),
-    [&](const espm::Script& script) {
-      return !Utils::stricmp(script.scriptName.data(), myScriptName.data());
-    });
-  if (matchingScriptData == scriptData.scripts.end())
-    throw std::runtime_error("ScriptData doesn't contain script with name '" +
-                             myScriptName + "'");
-  return std::move(*matchingScriptData);
+  // Scripts on REFR is in priority due to property values override
+  for (auto rec : { refrRecordWithScripts, baseRecordWithScripts }) {
+    if (!rec)
+      continue;
+    espm::ScriptData scriptData;
+    rec->GetScriptData(&scriptData, compressedFieldsCache);
+    auto matchingScriptData = std::find_if(
+      scriptData.scripts.begin(), scriptData.scripts.end(),
+      [&](const espm::Script& script) {
+        return !Utils::stricmp(script.scriptName.data(), myScriptName.data());
+      });
+    if (matchingScriptData != scriptData.scripts.end())
+      return std::move(*matchingScriptData);
+  }
+  throw std::runtime_error("ScriptData doesn't contain script with name '" +
+                           myScriptName + "'");
 }
 
 VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(

@@ -74,12 +74,9 @@ void MpActor::OnEquip(uint32_t baseId)
     // Eat item
     RemoveItem(baseId, 1, nullptr);
 
-    if (HasScripts()) {
-      VarValue args[] = {
-        VarValue(std::make_shared<EspmGameObject>(lookupRes)), VarValue::None()
-      };
-      SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
-    }
+    VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
+                        VarValue::None() };
+    SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
   }
 }
 

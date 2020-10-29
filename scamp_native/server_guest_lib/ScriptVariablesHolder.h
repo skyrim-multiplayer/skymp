@@ -9,7 +9,8 @@ class ScriptVariablesHolder : public IVariablesHolder
 {
 public:
   ScriptVariablesHolder(const std::string& myScriptName,
-                        espm::RecordHeader* recordWithScripts,
+                        espm::RecordHeader* baseRecordWithScripts,
+                        espm::RecordHeader* refrRecordWithScripts,
                         const espm::CombineBrowser* browser,
                         espm::CompressedFieldsCache* compressedFieldsCache);
 
@@ -41,7 +42,8 @@ private:
   static espm::PropertyType ScriptVariablesHolder::GetElementType(
     espm::PropertyType arrayType);
 
-  espm::RecordHeader* const recordWithScripts;
+  espm::RecordHeader* const baseRecordWithScripts;
+  espm::RecordHeader* const refrRecordWithScripts;
   const std::string myScriptName;
   const espm::CombineBrowser* const browser;
   std::unique_ptr<VarsMap> vars;

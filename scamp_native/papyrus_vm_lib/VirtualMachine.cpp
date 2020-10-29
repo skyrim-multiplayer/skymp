@@ -103,10 +103,7 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
   auto& activeSctipt = GetActivePexInObject(self, activeInstanceName);
 
   if (!activeSctipt.IsValid() || !self) {
-
-    std::string error = "ActiveScript or self not valid!";
-
-    throw std::runtime_error(error);
+    throw std::runtime_error("ActiveScript or self not valid!");
   }
 
   if (activeSctipt.IsValid() && (!self || *self == VarValue::None())) {
@@ -143,9 +140,12 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
 
   if (methodName == nameGoToState || methodName == nameGetState) {
     functionInfo = activeSctipt.GetFunctionByName(methodName, "");
-  } else
+  } else {
     functionInfo = activeSctipt.GetFunctionByName(
       methodName, activeSctipt.GetActiveStateName());
+    if (!functionInfo.valid)
+      functionInfo = activeSctipt.GetFunctionByName(methodName, "");
+  }
 
   if (functionInfo.valid) {
     return activeSctipt.StartFunction(functionInfo, arguments);
