@@ -58,7 +58,7 @@ export class Login implements System {
     const gameData = content["gameData"];
     if (gameData && gameData.session) {
       this.getUserProfileId(gameData.session).then((res) => {
-        if (!res.data.user || res.data.user.id === undefined)
+        if (!res.data || !res.data.user || res.data.user.id === undefined)
           this.log("Bad master answer");
         else {
           this.userProfileIds[userId] = res.data.user.id;

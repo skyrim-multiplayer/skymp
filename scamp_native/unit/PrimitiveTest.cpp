@@ -38,7 +38,9 @@ TEST_CASE("IsInsidePrimitive", "[primitive]")
   REQUIRE(refr);
 
   REQUIRE(Primitive::IsInside({ 24000.0000f, -10176.0000f, -3392.0000f },
-                              Primitive::GetVertices(refr)) == true);
+                              Primitive::CreateGeoPolygonProc(
+                                Primitive::GetVertices(refr))) == true);
   REQUIRE(Primitive::IsInside({ 23872.0000f, -10176.0000f, -3392.0000f },
-                              Primitive::GetVertices(refr)) == false);
+                              Primitive::CreateGeoPolygonProc(
+                                Primitive::GetVertices(refr))) == false);
 }

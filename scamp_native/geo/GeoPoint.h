@@ -1,32 +1,29 @@
 #pragma once
 
-namespace GeoProc
+namespace GeoProc {
+// A 3D Geometry Point
+class GeoPoint
 {
-	// A 3D Geometry Point 
-	class GeoPoint
-	{			
 
-	public:
-	
-		double x;		
-		double y;
-		double z;	
+public:
+  float x = 0.f;
+  float y = 0.f;
+  float z = 0.f;
 
-		__declspec(dllexport) GeoPoint(void);
-		__declspec(dllexport) ~GeoPoint(void);
+  GeoPoint(void);
+  ~GeoPoint(void);
 
-		__declspec(dllexport) GeoPoint(double x, double y, double z)		
-		{
-			this->x = x;
-			this->y = y;
-			this->z = z;	
-		}	
+  GeoPoint(float x_, float y_, float z_)
+    : x(x_)
+    , y(y_)
+    , z(z_)
+  {
+  }
 
-		__declspec(dllexport) friend GeoPoint operator+(const GeoPoint& p0, const GeoPoint& p1) 
-		{
-			return GeoPoint(p0.x + p1.x, p0.y + p1.y, p0.z + p1.z);
-		}
-	
-	};
+  friend GeoPoint operator+(const GeoPoint& p0, const GeoPoint& p1)
+  {
+    return GeoPoint(p0.x + p1.x, p0.y + p1.y, p0.z + p1.z);
+  }
+};
 
 }

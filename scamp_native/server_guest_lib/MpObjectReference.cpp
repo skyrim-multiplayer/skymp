@@ -6,6 +6,7 @@
 #include "MpChangeForms.h"
 #include "PapyrusGame.h"
 #include "PapyrusObjectReference.h"
+#include "Primitive.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
@@ -13,6 +14,7 @@
 #include "WorldState.h"
 #include <MsgType.h>
 #include <map>
+#include <optional>
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
 {
@@ -62,6 +64,12 @@ struct ScriptState
   std::map<std::string, std::shared_ptr<ScriptVariablesHolder>> varHolders;
 };
 
+struct PrimitiveData
+{
+  NiPoint3 boundsDiv2;
+  GeoProc::GeoPolygonProc polygonProc;
+};
+
 }
 
 struct MpObjectReference::Impl : public ChangeFormGuard<MpChangeFormREFR>
@@ -75,6 +83,7 @@ public:
   bool scriptsInited = false;
   std::unique_ptr<ScriptState> scriptState;
   std::unique_ptr<AnimGraphHolder> animGraphHolder;
+  std::optional<PrimitiveData> primitive;
 };
 
 namespace {
@@ -160,6 +169,20 @@ bool MpObjectReference::GetAnimationVariableBool(const char* name) const
   return pImpl->animGraphHolder &&
     pImpl->animGraphHolder->animationVariablesBool.count(name) > 0;
 }
+
+bool MpObjectReference::IsPointInsidePrimitive(const NiPoint3& point) const
+{
+  if (pImpl->primitive) {
+    return Primitive::IsInside(point, pImpl->primitive->polygonProc);
+  }
+  return false;
+}
+
+bool MpObjectReference::HasPrimitive() const
+{
+  return pImpl->primitive.has_value();
+}
+
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
                                         VisitPropertiesMode mode)
 {
@@ -184,6 +207,31 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 
   if (oldGridPos != newGridPos || !everSubscribedOrListened)
     ForceSubscriptionsUpdate();
+
+  if (emittersWithPrimitives) {
+    if (!primitivesWeAreInside)
+      primitivesWeAreInside.reset(new std::set<MpObjectReference*>);
+
+    for (auto& [emitter, wasInside] : *emittersWithPrimitives) {
+      bool inside = emitter->IsPointInsidePrimitive(newPos);
+      if (wasInside != inside) {
+        wasInside = inside;
+        auto me = ToVarValue();
+        emitter->SendPapyrusEvent(inside ? "OnTriggerEnter" : "OnTriggerLeave",
+                                  &me, 1);
+        if (inside)
+          primitivesWeAreInside->insert(emitter);
+        else
+          primitivesWeAreInside->erase(emitter);
+      }
+    }
+  }
+
+  if (primitivesWeAreInside) {
+    auto me = ToVarValue();
+    for (auto emitter : *primitivesWeAreInside)
+      emitter->SendPapyrusEvent("OnTrigger", &me, 1);
+  }
 }
 
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
@@ -412,6 +460,13 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   everSubscribedOrListened = true;
 }
 
+void MpObjectReference::SetPrimitive(const NiPoint3& boundsDiv2)
+{
+  auto vertices = Primitive::GetVertices(GetPos(), GetAngle(), boundsDiv2);
+  pImpl->primitive =
+    PrimitiveData{ boundsDiv2, Primitive::CreateGeoPolygonProc(vertices) };
+}
+
 void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
 {
   if (!pImpl->animGraphHolder)
@@ -497,6 +552,13 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   emitter->listeners->insert(listener);
   listener->emitters->insert(emitter);
   emitter->callbacks->subscribe(emitter, listener);
+
+  if (emitter->HasPrimitive()) {
+    if (!listener->emittersWithPrimitives)
+      listener->emittersWithPrimitives.reset(
+        new std::map<MpObjectReference*, bool>);
+    listener->emittersWithPrimitives->insert({ emitter, false });
+  }
 }
 
 void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
@@ -510,6 +572,10 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   emitter->callbacks->unsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
   listener->emitters->erase(emitter);
+
+  if (listener->emittersWithPrimitives && emitter->HasPrimitive()) {
+    listener->emittersWithPrimitives->erase(emitter);
+  }
 }
 
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const

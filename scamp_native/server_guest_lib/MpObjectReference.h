@@ -80,6 +80,8 @@ public:
   const bool& IsDisabled() const;
   const std::chrono::milliseconds& GetRelootTime() const;
   bool GetAnimationVariableBool(const char* name) const;
+  bool IsPointInsidePrimitive(const NiPoint3& point) const;
+  bool HasPrimitive() const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
@@ -101,6 +103,7 @@ public:
   void Disable();
   void Enable();
   void ForceSubscriptionsUpdate();
+  void SetPrimitive(const NiPoint3& boundsDiv2);
 
   // If you want to completely remove ObjectReference from the grid you need
   // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these
@@ -159,6 +162,8 @@ private:
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
+  std::unique_ptr<std::map<MpObjectReference*, bool>> emittersWithPrimitives;
+  std::unique_ptr<std::set<MpObjectReference*>> primitivesWeAreInside;
 
   const char* const baseType;
   uint32_t baseId = 0;

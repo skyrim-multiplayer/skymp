@@ -82,7 +82,8 @@ PartOne::PartOne()
 
     const char* baseIdPrefix = "";
     char baseId[32] = { 0 };
-    if (emitter->GetBaseId() != 0) {
+    if (emitter->GetBaseId() != 0x00000000 &&
+        emitter->GetBaseId() != 0x00000007) {
       baseIdPrefix = R"(, "baseId": )";
       sprintf(baseId, "%d", emitter->GetBaseId());
     }

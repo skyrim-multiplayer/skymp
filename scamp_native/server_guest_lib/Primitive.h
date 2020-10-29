@@ -1,4 +1,5 @@
 #pragma once
+#include "GeoPolygonProc.h"
 #include "NiPoint3.h"
 #include "espm.h"
 #include <vector>
@@ -7,7 +8,11 @@
 class Primitive
 {
 public:
-  static std::vector<NiPoint3> Primitive::GetVertices(const espm::REFR* refr);
+  static std::vector<NiPoint3> GetVertices(NiPoint3 pos, NiPoint3 rotRad,
+                                           NiPoint3 boundsDiv2);
+  static std::vector<NiPoint3> GetVertices(const espm::REFR* refr);
+  static GeoProc::GeoPolygonProc CreateGeoPolygonProc(
+    const std::vector<NiPoint3>& vertices);
   static bool IsInside(const NiPoint3& point,
-                       const std::vector<NiPoint3>& vertices);
+                       GeoProc::GeoPolygonProc& geoPolygonProc);
 };
