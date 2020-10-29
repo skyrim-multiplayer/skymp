@@ -401,11 +401,17 @@ void PartOne::AttachEspm(espm::Loader* espm,
           continue;
         }
 
+        std::optional<NiPoint3> primitiveBoundsDiv2;
+        if (data.boundsDiv2)
+          primitiveBoundsDiv2 = NiPoint3(
+            data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+
         auto typeStr = t.ToString();
         worldState.AddForm(
           std::unique_ptr<MpObjectReference>(new MpObjectReference(
             { GetPos(locationalData), GetRot(locationalData), worldOrCell },
-            CreateFormCallbacks(sendTarget), baseId, typeStr.data())),
+            CreateFormCallbacks(sendTarget), baseId, typeStr.data(),
+            primitiveBoundsDiv2)),
           formId, true);
       }
     }

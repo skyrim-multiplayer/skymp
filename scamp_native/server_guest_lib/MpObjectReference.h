@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <set>
 #include <simdjson.h>
 #include <string>
@@ -66,9 +67,10 @@ public:
   using SendToUserFn = std::function<void(MpActor* actor, const void* data,
                                           size_t size, bool reliable)>;
 
-  MpObjectReference(const LocationalData& locationalData,
-                    const FormCallbacks& callbacks, uint32_t baseId,
-                    const char* baseType);
+  MpObjectReference(
+    const LocationalData& locationalData, const FormCallbacks& callbacks,
+    uint32_t baseId, const char* baseType,
+    std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt);
 
   const NiPoint3& GetPos() const;
   const NiPoint3& GetAngle() const;

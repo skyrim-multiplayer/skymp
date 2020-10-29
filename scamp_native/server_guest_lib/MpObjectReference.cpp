@@ -95,9 +95,10 @@ auto Mode(bool isLocationSaveNeeded)
 }
 }
 
-MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
-                                     const FormCallbacks& callbacks_,
-                                     uint32_t baseId_, const char* baseType_)
+MpObjectReference::MpObjectReference(
+  const LocationalData& locationalData_, const FormCallbacks& callbacks_,
+  uint32_t baseId_, const char* baseType_,
+  std::optional<NiPoint3> primitiveBoundsDiv2)
   : callbacks(new FormCallbacks(callbacks_))
   , baseId(baseId_)
   , baseType(baseType_)
@@ -117,6 +118,9 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
   } else if (!strcmp(baseType_, "CONT")) {
     relootTime = std::chrono::hours(1);
   }
+
+  if (primitiveBoundsDiv2)
+    SetPrimitive(*primitiveBoundsDiv2);
 }
 
 const NiPoint3& MpObjectReference::GetPos() const
@@ -208,29 +212,31 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
   if (oldGridPos != newGridPos || !everSubscribedOrListened)
     ForceSubscriptionsUpdate();
 
-  if (emittersWithPrimitives) {
-    if (!primitivesWeAreInside)
-      primitivesWeAreInside.reset(new std::set<MpObjectReference*>);
+  if (!IsDisabled()) {
+    if (emittersWithPrimitives) {
+      if (!primitivesWeAreInside)
+        primitivesWeAreInside.reset(new std::set<MpObjectReference*>);
 
-    for (auto& [emitter, wasInside] : *emittersWithPrimitives) {
-      bool inside = emitter->IsPointInsidePrimitive(newPos);
-      if (wasInside != inside) {
-        wasInside = inside;
-        auto me = ToVarValue();
-        emitter->SendPapyrusEvent(inside ? "OnTriggerEnter" : "OnTriggerLeave",
-                                  &me, 1);
-        if (inside)
-          primitivesWeAreInside->insert(emitter);
-        else
-          primitivesWeAreInside->erase(emitter);
+      for (auto& [emitter, wasInside] : *emittersWithPrimitives) {
+        bool inside = emitter->IsPointInsidePrimitive(newPos);
+        if (wasInside != inside) {
+          wasInside = inside;
+          auto me = ToVarValue();
+          emitter->SendPapyrusEvent(
+            inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
+          if (inside)
+            primitivesWeAreInside->insert(emitter);
+          else
+            primitivesWeAreInside->erase(emitter);
+        }
       }
     }
-  }
 
-  if (primitivesWeAreInside) {
-    auto me = ToVarValue();
-    for (auto emitter : *primitivesWeAreInside)
-      emitter->SendPapyrusEvent("OnTrigger", &me, 1);
+    if (primitivesWeAreInside) {
+      auto me = ToVarValue();
+      for (auto emitter : *primitivesWeAreInside)
+        emitter->SendPapyrusEvent("OnTrigger", &me, 1);
+    }
   }
 }
 
