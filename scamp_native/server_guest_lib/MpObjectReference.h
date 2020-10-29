@@ -141,6 +141,9 @@ public:
   // to another grid
   void SetCellOrWorldObsolete(uint32_t worldOrCell);
 
+  using Visitor = std::function<void(MpObjectReference*)>;
+  void VisitNeighbours(const Visitor& visitor);
+
 protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,

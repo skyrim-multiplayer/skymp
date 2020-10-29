@@ -13,6 +13,8 @@ public:
 
   VarValue IncrementStat(VarValue self,
                          const std::vector<VarValue>& arguments);
+  VarValue FindClosestReferenceOfAnyTypeInListFromRef(
+    VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
@@ -24,6 +26,8 @@ public:
     AddStatic(vm, "DisablePlayerControls",
               &PapyrusGame::DisablePlayerControls);
     AddStatic(vm, "EnablePlayerControls", &PapyrusGame::EnablePlayerControls);
+    AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
+              &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

@@ -705,6 +705,25 @@ void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
   });
 }
 
+void MpObjectReference::VisitNeighbours(const Visitor& visitor)
+{
+  if (IsDisabled())
+    return;
+
+  auto worldState = GetParent();
+  if (!worldState)
+    return;
+
+  auto gridIterator = worldState->grids.find(pImpl->ChangeForm().worldOrCell);
+  if (gridIterator == worldState->grids.end())
+    return;
+
+  auto& grid = gridIterator->second;
+  auto& neighbours = grid.GetNeighboursAndMe(this);
+  for (auto neighbour : neighbours)
+    visitor(neighbour);
+}
+
 void MpObjectReference::SendPapyrusEvent(const char* eventName,
                                          const VarValue* arguments,
                                          size_t argumentsCount)
