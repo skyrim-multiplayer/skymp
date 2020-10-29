@@ -33,6 +33,8 @@ const char* EspmGameObject::GetParentNativeScript()
       return "formlist";
     if (t == "IDLE")
       return "idle";
+    if (t == "ACTI")
+      return "activator";
 
     throw std::runtime_error("Unable to find native script for record type '" +
                              t.ToString() + "'");

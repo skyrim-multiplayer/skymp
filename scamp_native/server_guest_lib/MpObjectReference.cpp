@@ -80,6 +80,7 @@ public:
   {
   }
 
+  bool onInitEventSent = false;
   bool scriptsInited = false;
   std::unique_ptr<ScriptState> scriptState;
   std::unique_ptr<AnimGraphHolder> animGraphHolder;
@@ -562,6 +563,11 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
       listener->emittersWithPrimitives.reset(
         new std::map<MpObjectReference*, bool>);
     listener->emittersWithPrimitives->insert({ emitter, false });
+  }
+
+  if (!emitter->pImpl->onInitEventSent) {
+    emitter->pImpl->onInitEventSent = true;
+    emitter->SendPapyrusEvent("OnInit");
   }
 }
 

@@ -30,6 +30,12 @@ std::string SpSnippetFunctionGen::SerializeArguments(
     switch (arg.GetType()) {
       case VarValue::kType_Object: {
         auto formId = GetFormId(arg);
+
+        // Player character is always 0x14 on client, but 0xff000000+ in our
+        // server
+        // See also SpSnippet.cpp
+        formId = formId < 0xff000000 ? formId : 0x14;
+
         auto obj = static_cast<IGameObject*>(arg);
         auto type = obj ? obj->GetParentNativeScript() : "";
         ss

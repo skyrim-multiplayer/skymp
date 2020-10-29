@@ -12,7 +12,7 @@ public:
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy>) override
   {
-    AddStatic(vm, "RegisterForSingleUpdate",
+    AddMethod(vm, "RegisterForSingleUpdate",
               &PapyrusForm::RegisterForSingleUpdate);
   }
 };
