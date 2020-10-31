@@ -392,7 +392,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   spSnippet(msg: messages.SpSnippet): void {
-    printConsole("!!!", msg);
     once("update", async () => {
       spSnippet
         .run(msg)

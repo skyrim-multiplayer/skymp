@@ -69,7 +69,7 @@ public:
 
   MpObjectReference(
     const LocationalData& locationalData, const FormCallbacks& callbacks,
-    uint32_t baseId, const char* baseType,
+    uint32_t baseId, std::string baseType,
     std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt);
 
   const NiPoint3& GetPos() const;
@@ -84,6 +84,7 @@ public:
   bool GetAnimationVariableBool(const char* name) const;
   bool IsPointInsidePrimitive(const NiPoint3& point) const;
   bool HasPrimitive() const;
+  FormCallbacks GetCallbacks() const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
@@ -172,7 +173,7 @@ private:
   std::unique_ptr<std::map<MpObjectReference*, bool>> emittersWithPrimitives;
   std::unique_ptr<std::set<MpObjectReference*>> primitivesWeAreInside;
 
-  const char* const baseType;
+  std::string baseType;
   uint32_t baseId = 0;
   MpActor* occupant = nullptr;
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;

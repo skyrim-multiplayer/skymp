@@ -98,7 +98,7 @@ auto Mode(bool isLocationSaveNeeded)
 
 MpObjectReference::MpObjectReference(
   const LocationalData& locationalData_, const FormCallbacks& callbacks_,
-  uint32_t baseId_, const char* baseType_,
+  uint32_t baseId_, std::string baseType_,
   std::optional<NiPoint3> primitiveBoundsDiv2)
   : callbacks(new FormCallbacks(callbacks_))
   , baseId(baseId_)
@@ -110,13 +110,13 @@ MpObjectReference::MpObjectReference(
   changeForm.worldOrCell = locationalData_.cellOrWorld;
   pImpl.reset(new Impl{ changeForm, this });
 
-  if (!strcmp(baseType_, "FLOR") || !strcmp(baseType_, "TREE")) {
+  if (!strcmp(baseType.data(), "FLOR") || !strcmp(baseType.data(), "TREE")) {
     relootTime = std::chrono::hours(1);
-  } else if (!strcmp(baseType_, "DOOR")) {
+  } else if (!strcmp(baseType.data(), "DOOR")) {
     relootTime = std::chrono::seconds(3);
-  } else if (espm::IsItem(baseType_)) {
+  } else if (espm::IsItem(baseType.data())) {
     relootTime = std::chrono::hours(1);
-  } else if (!strcmp(baseType_, "CONT")) {
+  } else if (!strcmp(baseType.data(), "CONT")) {
     relootTime = std::chrono::hours(1);
   }
 
@@ -186,6 +186,13 @@ bool MpObjectReference::IsPointInsidePrimitive(const NiPoint3& point) const
 bool MpObjectReference::HasPrimitive() const
 {
   return pImpl->primitive.has_value();
+}
+
+FormCallbacks MpObjectReference::GetCallbacks() const
+{
+  if (!callbacks)
+    return FormCallbacks::DoNothing();
+  return *callbacks;
 }
 
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
@@ -552,6 +559,15 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   if (!emitterIsActor && !listenerIsActor)
     return;
 
+  try {
+    if (!emitter->pImpl->onInitEventSent) {
+      emitter->pImpl->onInitEventSent = true;
+      emitter->SendPapyrusEvent("OnInit");
+    }
+  } catch (std::exception& e) {
+    emitter->GetParent()->logger->error("{}", e.what());
+  }
+
   emitter->InitListenersAndEmitters();
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
@@ -563,11 +579,6 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
       listener->emittersWithPrimitives.reset(
         new std::map<MpObjectReference*, bool>);
     listener->emittersWithPrimitives->insert({ emitter, false });
-  }
-
-  if (!emitter->pImpl->onInitEventSent) {
-    emitter->pImpl->onInitEventSent = true;
-    emitter->SendPapyrusEvent("OnInit");
   }
 }
 

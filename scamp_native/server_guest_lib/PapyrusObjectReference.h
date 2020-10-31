@@ -18,6 +18,9 @@ public:
   VarValue GetItemCount(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetAnimationVariableBool(VarValue self,
                                     const std::vector<VarValue>& arguments);
+  VarValue PlaceAtMe(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue SetAngle(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue Disable(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(
     VirtualMachine& vm,
@@ -34,5 +37,8 @@ public:
     AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
     AddMethod(vm, "GetAnimationVariableBool",
               &PapyrusObjectReference::GetAnimationVariableBool);
+    AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
+    AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
+    AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
   }
 };

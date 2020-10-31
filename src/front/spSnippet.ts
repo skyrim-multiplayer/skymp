@@ -1,6 +1,5 @@
 import { Game } from "../skyrim-platform/skyrimPlatform";
 import * as sp from "../skyrim-platform/skyrimPlatform";
-import { deserialize } from "v8";
 
 const spAny = sp as Record<string, any>;
 

@@ -3,6 +3,7 @@
 #include "EspmGameObject.h"
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
+#include "WorldState.h"
 #include <cstring>
 
 VarValue PapyrusObjectReference::IsDisabled(
@@ -110,4 +111,60 @@ VarValue PapyrusObjectReference::GetAnimationVariableBool(
     return VarValue(selfRefr->GetAnimationVariableBool(animVarName));
   }
   return VarValue(false);
+}
+
+VarValue PapyrusObjectReference::PlaceAtMe(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+
+  if (selfRefr && arguments.size() >= 4) {
+    auto akFormToPlace = GetRecordPtr(arguments[0]);
+    int aiCount = static_cast<int>(arguments[1].CastToInt());
+    bool abForcePersist = static_cast<bool>(arguments[2].CastToBool());
+    bool abInitiallyDisabled = static_cast<bool>(arguments[3].CastToBool());
+
+    if (akFormToPlace.rec) {
+      auto baseId = akFormToPlace.ToGlobalId(akFormToPlace.rec->GetId());
+      if (akFormToPlace.rec->GetType() != "NPC_") {
+        LocationalData locationalData = { selfRefr->GetPos(),
+                                          selfRefr->GetAngle(),
+                                          selfRefr->GetCellOrWorld() };
+        FormCallbacks callbacks = selfRefr->GetCallbacks();
+        std::string type = akFormToPlace.rec->GetType().ToString();
+        auto newRefr = std::make_unique<MpObjectReference>(
+          locationalData, callbacks, baseId, type);
+
+        auto worldState = selfRefr->GetParent();
+        auto newRefrId = worldState->GenerateFormId();
+        worldState->AddForm(std::move(newRefr), newRefrId);
+
+        auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
+        refr.ForceSubscriptionsUpdate();
+        return VarValue(std::make_shared<MpFormGameObject>(&refr));
+      }
+    }
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::SetAngle(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr && arguments.size() >= 3) {
+    selfRefr->SetAngle({ static_cast<float>(arguments[0].CastToFloat()),
+                         static_cast<float>(arguments[1].CastToFloat()),
+                         static_cast<float>(arguments[2].CastToFloat()) });
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::Disable(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr)
+    selfRefr->Disable();
+  return VarValue::None();
 }

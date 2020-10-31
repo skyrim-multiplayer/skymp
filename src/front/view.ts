@@ -193,6 +193,7 @@ export class FormView implements View<FormModel> {
         }
       }
     } else {
+      //printConsole("lol", model.movement);
       const base =
         getFormEx(+model.baseId) || getFormEx(this.getLookBasedBase());
       if (!base) return;
