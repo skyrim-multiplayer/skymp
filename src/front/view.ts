@@ -135,6 +135,8 @@ const getDefaultLookState = (): LookState => {
 };
 
 export class FormView implements View<FormModel> {
+  constructor(private remoteRefrId?: number) {}
+
   update(model: FormModel): void {
     // Other players mutate into PC clones when moving to another location
     if (model.movement) {
@@ -180,7 +182,8 @@ export class FormView implements View<FormModel> {
       }
     }
 
-    const refId = model.refrId;
+    const refId =
+      model.refrId && model.refrId < 0xff000000 ? model.refrId : undefined;
     if (refId) {
       if (this.refrId !== refId) {
         this.destroy();
@@ -434,6 +437,14 @@ export class FormView implements View<FormModel> {
     return this.lookBasedBaseId;
   }
 
+  getLocalRefrId(): number {
+    return this.refrId;
+  }
+
+  getRemoteRefrId(): number {
+    return this.remoteRefrId;
+  }
+
   private refrId = 0;
   private ready = false;
   private animState = { lastNumChanges: 0 };
@@ -474,6 +485,15 @@ export class WorldView implements View<WorldModel> {
         printConsole("Update is now allowed");
       });
     });
+  }
+
+  getRemoteRefrId(clientsideRefrId: number): number {
+    if (clientsideRefrId < 0xff000000)
+      throw new Error("This function is only for 0xff forms");
+    const formView = this.formViews.find((formView: FormView) => {
+      return formView && formView.getLocalRefrId() === clientsideRefrId;
+    });
+    return formView ? formView.getRemoteRefrId() : 0;
   }
 
   update(model: WorldModel): void {
@@ -533,7 +553,7 @@ export class WorldView implements View<WorldModel> {
   private updateForm(form: FormModel, i: number) {
     const view = this.formViews[i];
     if (!view) {
-      this.formViews[i] = new FormView();
+      this.formViews[i] = new FormView(form.refrId);
     } else {
       view.update(form);
     }

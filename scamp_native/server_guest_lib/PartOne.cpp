@@ -75,10 +75,8 @@ PartOne::PartOne()
 
     const char* refrIdPrefix = "";
     char refrId[32] = { 0 };
-    if (emitter->GetFormId() < 0xff000000) {
-      refrIdPrefix = R"(, "refrId": )";
-      sprintf(refrId, "%u", emitter->GetFormId());
-    }
+    refrIdPrefix = R"(, "refrId": )";
+    sprintf(refrId, "%u", emitter->GetFormId());
 
     const char* baseIdPrefix = "";
     char baseId[32] = { 0 };
