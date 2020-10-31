@@ -47,6 +47,7 @@ private:
   const std::string myScriptName;
   const espm::CombineBrowser* const browser;
   std::unique_ptr<VarsMap> vars;
+  VarValue state;
   std::unique_ptr<ScriptsCache> scriptsCache;
   espm::CompressedFieldsCache* const compressedFieldsCache;
 };

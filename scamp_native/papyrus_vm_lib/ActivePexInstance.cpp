@@ -62,7 +62,14 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
 
 std::string ActivePexInstance::GetActiveStateName() const
 {
-  auto var = variables->GetVariableByName("::State", *sourcePex.fn());
+  VarValue* var = nullptr;
+  try {
+    var = variables->GetVariableByName("::State", *sourcePex.fn());
+  } catch (...) {
+    assert(0 &&
+           "GetVariableByName must never throw when '::State' variable is "
+           "requested");
+  }
   if (!var)
     throw std::runtime_error(
       "'::State' variable doesn't exist in ActivePexInstance");
@@ -398,31 +405,53 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
       static const std::string nameOnEndState = "onEndState";
-      if (functionName == nameOnBeginState || functionName == nameOnEndState) {
-        parentVM->SendEvent(this, functionName.c_str(), argsForCall);
-        break;
-      } else {
-        auto res = parentVM->CallMethod(GetSourcePexName(), object,
-                                        functionName.c_str(), argsForCall);
-        if (EnsureCallResultIsSynchronous(res, ctx))
-          *args[2] = res;
+      try {
+        if (functionName == nameOnBeginState ||
+            functionName == nameOnEndState) {
+          parentVM->SendEvent(this, functionName.c_str(), argsForCall);
+          break;
+        } else {
+          auto res = parentVM->CallMethod(GetSourcePexName(), object,
+                                          functionName.c_str(), argsForCall);
+          if (EnsureCallResultIsSynchronous(res, ctx))
+            *args[2] = res;
+        }
+      } catch (std::exception& e) {
+        if (auto handler = parentVM->GetExceptionHandler())
+          handler(e.what());
+        else
+          throw;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_CallParent: {
       const std::string& parentName =
         parentInstance ? parentInstance->GetSourcePexName() : "";
-      auto res = parentVM->CallMethod(parentName, &activeInstanceOwner,
-                                      (const char*)(*args[0]), argsForCall);
-      if (EnsureCallResultIsSynchronous(res, ctx))
-        *args[1] = res;
+      try {
+        auto res = parentVM->CallMethod(parentName, &activeInstanceOwner,
+                                        (const char*)(*args[0]), argsForCall);
+        if (EnsureCallResultIsSynchronous(res, ctx))
+          *args[1] = res;
+      } catch (std::exception& e) {
+        if (auto handler = parentVM->GetExceptionHandler())
+          handler(e.what());
+        else
+          throw;
+      }
       break;
     }
     case OpcodesImplementation::Opcodes::op_CallStatic: {
       const char* className = (const char*)(*args[0]);
       const char* functionName = (const char*)(*args[1]);
-      auto res = parentVM->CallStatic(className, functionName, argsForCall);
-      if (EnsureCallResultIsSynchronous(res, ctx))
-        *args[2] = res;
+      try {
+        auto res = parentVM->CallStatic(className, functionName, argsForCall);
+        if (EnsureCallResultIsSynchronous(res, ctx))
+          *args[2] = res;
+      } catch (std::exception& e) {
+        if (auto handler = parentVM->GetExceptionHandler())
+          handler(e.what());
+        else
+          throw;
+      }
     } break;
     case OpcodesImplementation::Opcodes::op_Return:
       ctx->returnValue = *args[0];
@@ -782,9 +811,19 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
       }
     }
 
-  if (variables)
-    if (auto var = variables->GetVariableByName(name.data(), *sourcePex.fn()))
-      return *var;
+  try {
+    if (variables)
+      if (auto var =
+            variables->GetVariableByName(name.data(), *sourcePex.fn()))
+        return *var;
+  } catch (std::exception& e) {
+    if (auto handler = parentVM->GetExceptionHandler()) {
+      noneVar = VarValue::None();
+      handler(e.what());
+      return noneVar;
+    } else
+      throw;
+  }
 
   for (auto& _name : identifiersValueNameCache) {
     if ((const char*)(*_name) == name) {

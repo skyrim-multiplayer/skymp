@@ -17,10 +17,10 @@ TEST_CASE("HeuristicPolicy", "[HeuristicPolicy]")
 
   std::vector<VarValue> args = { actorVarValue };
 
-  REQUIRE(policy.GetDefaultActor() == nullptr);
+  REQUIRE(policy.GetDefaultActor("", "") == nullptr);
 
   policy.BeforeSendPapyrusEvent(nullptr, "OnACTivatE", args.data(),
                                 args.size());
 
-  REQUIRE(policy.GetDefaultActor() == &actor);
+  REQUIRE(policy.GetDefaultActor("", "") == &actor);
 }

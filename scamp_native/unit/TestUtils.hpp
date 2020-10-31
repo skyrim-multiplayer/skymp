@@ -155,7 +155,10 @@ public:
   {
   }
 
-  MpActor* GetDefaultActor() const override { return ac; }
+  MpActor* GetDefaultActor(const char*, const char*) const override
+  {
+    return ac;
+  }
 
 private:
   MpActor* const ac;

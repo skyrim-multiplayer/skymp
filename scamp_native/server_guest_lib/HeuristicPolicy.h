@@ -12,7 +12,10 @@ class HeuristicPolicy : public IPapyrusCompatibilityPolicy
 public:
   explicit HeuristicPolicy(const std::shared_ptr<spdlog::logger>& logger);
 
-  MpActor* GetDefaultActor() const override;
+  MpActor* GetDefaultActor(const char* className,
+                           const char* funcName) const override;
+
+  void SetDefaultActor(MpActor* actor);
 
   void BeforeSendPapyrusEvent(MpForm* form, const char* eventName,
                               const VarValue* arguments,
@@ -21,4 +24,5 @@ public:
 private:
   MpActor* actor = nullptr;
   const std::shared_ptr<spdlog::logger>& logger;
+  const char* currentEventName = "";
 };

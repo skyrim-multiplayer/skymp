@@ -12,6 +12,7 @@
 #include "PapyrusGame.h"
 #include "PapyrusMessage.h"
 #include "PapyrusObjectReference.h"
+#include "PapyrusSkymp.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
 #include <algorithm>
@@ -274,8 +275,11 @@ VirtualMachine& WorldState::GetPapyrusVm()
     std::vector<std::string> scriptNames;
 
     auto scriptStorage = pImpl->scriptStorage;
-    if (!scriptStorage)
-      throw std::runtime_error("Required scriptStorage to be non-null");
+    if (!scriptStorage) {
+      logger->error("Required scriptStorage to be non-null");
+      pImpl->vm.reset(new VirtualMachine(std::vector<PexScript::Ptr>()));
+      return *pImpl->vm;
+    }
 
     auto& scripts = scriptStorage->ListScripts();
     for (auto& required : scripts) {
@@ -301,6 +305,8 @@ VirtualMachine& WorldState::GetPapyrusVm()
 
     if (!pexStructures.empty()) {
       pImpl->vm.reset(new VirtualMachine(pexStructures));
+      pImpl->vm->SetExceptionHandler(
+        [&](const std::string& error) { logger->error("{}", error); });
 
       std::vector<IPapyrusClassBase*> classes;
       classes.emplace_back(new PapyrusObjectReference);
@@ -310,6 +316,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       classes.emplace_back(new PapyrusFormList);
       classes.emplace_back(new PapyrusDebug);
       classes.emplace_back(new PapyrusActor);
+      classes.emplace_back(new PapyrusSkymp);
       for (auto cl : classes)
         cl->Register(*pImpl->vm, pImpl->policy);
     }

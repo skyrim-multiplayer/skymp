@@ -21,6 +21,11 @@ VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
   }
 }
 
+void VirtualMachine::SetExceptionHandler(const ExceptionHandler& handler)
+{
+  this->handler = handler;
+}
+
 std::string ToLower(std::string s)
 {
   std::transform(s.begin(), s.end(), s.begin(), tolower);
@@ -170,9 +175,7 @@ VarValue VirtualMachine::CallStatic(std::string className,
     : nativeStaticFunctions[""][functionNameLower];
 
   if (f) {
-    NativeFunction func = f;
-    result = func(VarValue::None(), arguments);
-    return result;
+    return f(VarValue::None(), arguments);
   }
 
   auto it =
@@ -275,6 +278,11 @@ bool VirtualMachine::IsNativeFunctionByNameExisted(
   }
 
   return false;
+}
+
+VirtualMachine::ExceptionHandler VirtualMachine::GetExceptionHandler() const
+{
+  return handler;
 }
 
 void VirtualMachine::RemoveObject(IGameObject::Ptr self)

@@ -22,12 +22,17 @@ VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
   if (!scriptsCache)
     scriptsCache.reset(new ScriptsCache);
 
+  if (!Utils::stricmp(name, "::State")) {
+    if (state == VarValue::None())
+      FillState(pex);
+    return &state;
+  }
+
   if (!vars) {
     vars.reset(new VarsMap);
     FillNormalVariables(pex);
     if (baseRecordWithScripts || refrRecordWithScripts)
       FillProperties(GetScript());
-    FillState(pex);
   }
 
   auto it = vars->find(name);
@@ -68,12 +73,7 @@ void ScriptVariablesHolder::FillState(const PexScript& pex)
 {
   // Creating temp variable for save State ActivePexInstance and
   // transition between them
-  ObjectTable::Object::VarInfo variableForState = {
-    "::State", "String", 0,
-    VarValue(pex.objectTable.m_data[0].autoStateName.data())
-  };
-  (*vars)[CIString{ variableForState.name.begin(),
-                    variableForState.name.end() }] = variableForState.value;
+  state = VarValue(pex.objectTable.m_data[0].autoStateName.data());
 }
 
 espm::Script ScriptVariablesHolder::GetScript()

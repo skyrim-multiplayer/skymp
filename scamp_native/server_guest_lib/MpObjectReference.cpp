@@ -559,13 +559,9 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   if (!emitterIsActor && !listenerIsActor)
     return;
 
-  try {
-    if (!emitter->pImpl->onInitEventSent) {
-      emitter->pImpl->onInitEventSent = true;
-      emitter->SendPapyrusEvent("OnInit");
-    }
-  } catch (std::exception& e) {
-    emitter->GetParent()->logger->error("{}", e.what());
+  if (!emitter->pImpl->onInitEventSent) {
+    emitter->pImpl->onInitEventSent = true;
+    emitter->SendPapyrusEvent("OnInit");
   }
 
   emitter->InitListenersAndEmitters();

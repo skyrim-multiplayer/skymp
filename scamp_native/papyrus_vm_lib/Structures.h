@@ -141,6 +141,8 @@ class IVariablesHolder
 {
 public:
   virtual ~IVariablesHolder() = default;
+
+  // Must guarantee that no exception would be thrown for '::State' variable
   virtual VarValue* GetVariableByName(const char* name,
                                       const PexScript& pex) = 0;
 };
@@ -476,4 +478,6 @@ private:
 
   uint64_t promiseIdx = 0;
   std::map<uint64_t, std::shared_ptr<Viet::Promise<VarValue>>> promises;
+
+  VarValue noneVar = VarValue::None();
 };

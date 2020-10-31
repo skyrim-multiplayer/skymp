@@ -164,7 +164,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
 
     let movement: Movement = null;
-    if (!msg.refrId) {
+    if (msg.refrId >= 0xff000000) {
       movement = {
         pos: msg.transform.pos,
         rot: msg.transform.rot,

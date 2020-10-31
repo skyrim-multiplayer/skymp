@@ -8,7 +8,9 @@ public:
   const char* GetName() { return "debug"; }
 
   DEFINE_STATIC_SPSNIPPET(Notification);
-  DEFINE_STATIC_SPSNIPPET(SendAnimationEvent);
+
+  VarValue SendAnimationEvent(VarValue self,
+                              const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override

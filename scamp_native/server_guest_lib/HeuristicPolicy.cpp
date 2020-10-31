@@ -1,13 +1,24 @@
 #include "HeuristicPolicy.h"
 
+#include "MpFormGameObject.h"
+
 HeuristicPolicy::HeuristicPolicy(
   const std::shared_ptr<spdlog::logger>& logger_)
   : logger(logger_)
 {
 }
 
-MpActor* HeuristicPolicy::GetDefaultActor() const
+void HeuristicPolicy::SetDefaultActor(MpActor* newActor)
 {
+  actor = newActor;
+}
+
+MpActor* HeuristicPolicy::GetDefaultActor(const char* className,
+                                          const char* funcName) const
+{
+  if (!actor)
+    logger->warn("Unable to determine Actor for '{}.{}' in '{}'", className,
+                 funcName, currentEventName);
   return actor;
 }
 
@@ -31,7 +42,5 @@ void HeuristicPolicy::BeforeSendPapyrusEvent(MpForm* form,
     actor = GetFormPtr<MpActor>(arguments[0]);
   }
 
-  if (!actor)
-    logger->warn("Unable to determine Actor for static call in '{}'",
-                 eventName);
+  currentEventName = eventName;
 }

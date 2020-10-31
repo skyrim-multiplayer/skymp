@@ -128,7 +128,7 @@ VarValue PapyrusObjectReference::PlaceAtMe(
       auto baseId = akFormToPlace.ToGlobalId(akFormToPlace.rec->GetId());
       if (akFormToPlace.rec->GetType() != "NPC_") {
         LocationalData locationalData = { selfRefr->GetPos(),
-                                          selfRefr->GetAngle(),
+                                          { 0, 0, selfRefr->GetAngle().z },
                                           selfRefr->GetCellOrWorld() };
         FormCallbacks callbacks = selfRefr->GetCallbacks();
         std::string type = akFormToPlace.rec->GetType().ToString();

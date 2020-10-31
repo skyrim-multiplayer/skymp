@@ -7,6 +7,8 @@
 class VirtualMachine
 {
 public:
+  using ExceptionHandler = std::function<void(std::string)>;
+
   struct ScriptInfo
   {
     std::string name;
@@ -15,6 +17,8 @@ public:
 
   VirtualMachine(std::vector<PexScript::Lazy> loadedScripts);
   VirtualMachine(std::vector<PexScript::Ptr> loadedScripts);
+
+  void SetExceptionHandler(const ExceptionHandler& handler);
 
   void AddObject(IGameObject::Ptr self,
                  const std::vector<ScriptInfo>& scripts);
@@ -49,6 +53,8 @@ public:
 
   bool IsNativeFunctionByNameExisted(const std::string& name) const;
 
+  ExceptionHandler GetExceptionHandler() const;
+
 private:
   using RegisteredGameOgject =
     std::pair<const IGameObject::Ptr, std::vector<ActivePexInstance>>;
@@ -61,4 +67,6 @@ private:
     nativeStaticFunctions;
 
   std::map<std::string, ActivePexInstance::Ptr> instancesForStaticCalls;
+
+  ExceptionHandler handler;
 };
