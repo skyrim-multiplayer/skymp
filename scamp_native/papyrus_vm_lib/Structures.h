@@ -12,9 +12,13 @@
 
 class VirtualMachine;
 struct PexScript;
+class ActivePexInstance;
 
 class IGameObject
 {
+  friend class VirtualMachine;
+  friend class ActivePexInstance;
+
 public:
   virtual ~IGameObject() = default;
   virtual const char* GetStringID() { return "Virtual Implementation"; };
@@ -25,6 +29,9 @@ public:
   virtual const char* GetParentNativeScript() { return ""; }
 
   virtual bool EqualsByValue(const IGameObject& obj) const { return false; }
+
+private:
+  std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
 };
 
 enum class FunctionType
@@ -412,9 +419,6 @@ public:
   std::string GetActiveStateName() const;
 
   bool IsValid() const { return _IsValid; };
-
-  ActivePexInstance& GetActivePexInObject(VarValue* object,
-                                          std::string& scriptType);
 
   const std::string& GetSourcePexName() const;
 

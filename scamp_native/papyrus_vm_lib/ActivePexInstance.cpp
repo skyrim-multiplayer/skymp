@@ -110,12 +110,6 @@ ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
   return nullptr;
 }
 
-ActivePexInstance& ActivePexInstance::GetActivePexInObject(
-  VarValue* object, std::string& scriptType)
-{
-  return parentVM->GetActivePexInObject(object, scriptType);
-}
-
 const std::string& ActivePexInstance::GetSourcePexName() const
 {
   if (!sourcePex.fn()) {
@@ -400,6 +394,22 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         ctx->needJump = true;
       }
       break;
+    case OpcodesImplementation::Opcodes::op_CallParent: {
+      auto parentName =
+        parentInstance ? parentInstance->GetSourcePexName() : "";
+      try {
+        auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
+        auto res = parentVM->CallMethod(gameObject, (const char*)(*args[0]),
+                                        argsForCall);
+        if (EnsureCallResultIsSynchronous(res, ctx))
+          *args[1] = res;
+      } catch (std::exception& e) {
+        if (auto handler = parentVM->GetExceptionHandler())
+          handler(e.what());
+        else
+          throw;
+      }
+    } break;
     case OpcodesImplementation::Opcodes::op_CallMethod: {
       VarValue* object = args[1];
       std::string functionName = (const char*)(*args[0]);
@@ -411,8 +421,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           parentVM->SendEvent(this, functionName.c_str(), argsForCall);
           break;
         } else {
-          auto res = parentVM->CallMethod(GetSourcePexName(), object,
-                                          functionName.c_str(), argsForCall);
+          auto gameObject = static_cast<IGameObject*>(*object);
+          if (!gameObject)
+            gameObject = static_cast<IGameObject*>(activeInstanceOwner);
+          auto res = parentVM->CallMethod(gameObject, functionName.c_str(),
+                                          argsForCall);
           if (EnsureCallResultIsSynchronous(res, ctx))
             *args[2] = res;
         }
@@ -423,22 +436,6 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           throw;
       }
     } break;
-    case OpcodesImplementation::Opcodes::op_CallParent: {
-      const std::string& parentName =
-        parentInstance ? parentInstance->GetSourcePexName() : "";
-      try {
-        auto res = parentVM->CallMethod(parentName, &activeInstanceOwner,
-                                        (const char*)(*args[0]), argsForCall);
-        if (EnsureCallResultIsSynchronous(res, ctx))
-          *args[1] = res;
-      } catch (std::exception& e) {
-        if (auto handler = parentVM->GetExceptionHandler())
-          handler(e.what());
-        else
-          throw;
-      }
-      break;
-    }
     case OpcodesImplementation::Opcodes::op_CallStatic: {
       const char* className = (const char*)(*args[0]);
       const char* functionName = (const char*)(*args[1]);
@@ -462,14 +459,21 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                     this->sourcePex.fn()->stringTable);
       break;
     case OpcodesImplementation::Opcodes::op_PropGet:
+      // PropGet/Set seems to work only in very simple cases covered by unit
+      // tests
       if (args[1] != nullptr) {
         std::string nameProperty = (const char*)*args[0];
-        auto& ptrPex = GetActivePexInObject(args[1], args[1]->objectType);
-        ObjectTable::Object::PropInfo* runProperty = GetProperty(
-          ptrPex, nameProperty, ObjectTable::Object::PropInfo::kFlags_Read);
-        if (runProperty != nullptr) {
-          *args[2] =
-            ptrPex.StartFunction(runProperty->readHandler, argsForCall);
+        auto object = static_cast<IGameObject*>(*args[1]);
+        if (!object)
+          object = static_cast<IGameObject*>(activeInstanceOwner);
+        if (object && object->activePexInstances.size() > 0) {
+          auto inst = object->activePexInstances.back();
+          ObjectTable::Object::PropInfo* runProperty = GetProperty(
+            *inst, nameProperty, ObjectTable::Object::PropInfo::kFlags_Read);
+          if (runProperty != nullptr) {
+            *args[2] =
+              inst->StartFunction(runProperty->readHandler, argsForCall);
+          }
         }
       } else
         assert(false);
@@ -478,11 +482,16 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if (args[1] != nullptr) {
         argsForCall.push_back(*args[2]);
         std::string nameProperty = (const char*)*args[0];
-        auto& ptrPex = GetActivePexInObject(args[1], args[1]->objectType);
-        ObjectTable::Object::PropInfo* runProperty = GetProperty(
-          ptrPex, nameProperty, ObjectTable::Object::PropInfo::kFlags_Write);
-        if (runProperty != nullptr) {
-          ptrPex.StartFunction(runProperty->writeHandler, argsForCall);
+        auto object = static_cast<IGameObject*>(*args[1]);
+        if (!object)
+          object = static_cast<IGameObject*>(activeInstanceOwner);
+        if (object && object->activePexInstances.size() > 0) {
+          auto inst = object->activePexInstances.back();
+          ObjectTable::Object::PropInfo* runProperty = GetProperty(
+            *inst, nameProperty, ObjectTable::Object::PropInfo::kFlags_Write);
+          if (runProperty != nullptr) {
+            inst->StartFunction(runProperty->writeHandler, argsForCall);
+          }
         }
       } else
         assert(false);
@@ -599,6 +608,8 @@ ActivePexInstance::TransformInstructions(
 VarValue ActivePexInstance::ExecuteAll(
   ExecutionContext& ctx, std::optional<VarValue> previousCallResult)
 {
+  auto pipex = sourcePex.fn();
+
   auto opCode = TransformInstructions(ctx.opCode, ctx.locals);
 
   if (previousCallResult) {

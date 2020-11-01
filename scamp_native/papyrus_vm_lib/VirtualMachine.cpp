@@ -1,6 +1,7 @@
 #include "VirtualMachine.h"
 #include "Utils.h"
 #include <algorithm>
+#include <sstream>
 #include <stdexcept>
 
 VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
@@ -50,36 +51,38 @@ void VirtualMachine::RegisterFunction(std::string className,
 void VirtualMachine::AddObject(IGameObject::Ptr self,
                                const std::vector<ScriptInfo>& scripts)
 {
-  std::vector<ActivePexInstance> scriptsForObject;
+  std::vector<ActivePexInstance::Ptr> scriptsForObject;
 
   for (auto& s : scripts) {
     CIString ciNameNeedScript{ s.name.begin(), s.name.end() };
     auto it = allLoadedScripts.find(ciNameNeedScript);
     if (it != allLoadedScripts.end()) {
-      ActivePexInstance scriptInstance(it->second, s.vars, this,
-                                       VarValue((IGameObject*)self.get()), "");
+      auto scriptInstance = std::make_shared<ActivePexInstance>(
+        it->second, s.vars, this, VarValue((IGameObject*)self.get()), "");
       scriptsForObject.push_back(scriptInstance);
     }
   }
 
-  gameObjects[self] = scriptsForObject;
+  self->activePexInstances = scriptsForObject;
+  gameObjectsHolder.insert(self);
 }
 
 void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
                                const std::vector<VarValue>& arguments)
 {
-  for (auto& object : gameObjects) {
-    if (object.first == self) {
-      for (auto& scriptInstance : object.second) {
-        auto name = scriptInstance.GetActiveStateName();
+  if (!stricmp("onupdate", eventName)) {
+    if (eventName == (char*)1)
+      throw 12;
+  }
 
-        auto fn = scriptInstance.GetFunctionByName(
-          eventName, scriptInstance.GetActiveStateName());
-        if (fn.valid) {
-          scriptInstance.StartFunction(
-            fn, const_cast<std::vector<VarValue>&>(arguments));
-        }
-      }
+  for (auto& scriptInstance : self->activePexInstances) {
+    auto name = scriptInstance->GetActiveStateName();
+
+    auto fn = scriptInstance->GetFunctionByName(
+      eventName, scriptInstance->GetActiveStateName());
+    if (fn.valid) {
+      scriptInstance->StartFunction(
+        fn, const_cast<std::vector<VarValue>&>(arguments));
     }
   }
 }
@@ -96,37 +99,21 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
   }
 }
 
-VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
-                                    VarValue* self, const char* methodName,
+VarValue VirtualMachine::CallMethod(IGameObject* self, const char* methodName,
                                     std::vector<VarValue>& arguments)
 {
-  // This function was implemented incorrectly. It searches for methods in
-  // activeInstanceName, not in self. Only native method calls are fixed for
-  // now. Unfortunately, the current test suite is unable to detect problems
-  // here
-
-  auto& activeSctipt = GetActivePexInObject(self, activeInstanceName);
-
-  if (!activeSctipt.IsValid() || !self) {
-    throw std::runtime_error("ActiveScript or self not valid!");
+  if (!self) {
+    std::stringstream ss;
+    ss << '\'' << methodName
+       << "' requires self argument to be a valid object";
+    throw std::runtime_error(ss.str());
   }
 
-  if (activeSctipt.IsValid() && (!self || *self == VarValue::None())) {
-    self = &activeSctipt.GetVariableValueByName(nullptr, "self");
-  }
-
-  const char* nativeClass = "";
-
-  if (self && *self != VarValue::None()) {
-    nativeClass = static_cast<IGameObject*>(*self)->GetParentNativeScript();
-  } else if (activeSctipt.IsValid()) {
-    nativeClass = activeSctipt.GetSourcePexName().data();
-  }
-
+  const char* nativeClass = self->GetParentNativeScript();
   const char* base = nativeClass;
   while (1) {
     if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
-      return f(*self, arguments);
+      return f(VarValue(self), arguments);
     }
     auto it = allLoadedScripts.find(base);
     if (it == allLoadedScripts.end())
@@ -136,29 +123,29 @@ VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
       break;
   }
 
-  ActivePexInstance::Ptr currentParent = activeSctipt.GetParentInstance();
+  const char* classToPrint = "";
 
-  FunctionInfo functionInfo;
+  for (auto& activeScript : self->activePexInstances) {
+    FunctionInfo functionInfo;
 
-  std::string nameGoToState = "GotoState";
-  std::string nameGetState = "GetState";
+    if (!Utils::stricmp(methodName, "GotoState") ||
+        !Utils::stricmp(methodName, "GetState")) {
+      functionInfo = activeScript->GetFunctionByName(methodName, "");
+    } else {
+      functionInfo = activeScript->GetFunctionByName(
+        methodName, activeScript->GetActiveStateName());
+      if (!functionInfo.valid)
+        functionInfo = activeScript->GetFunctionByName(methodName, "");
+    }
 
-  if (methodName == nameGoToState || methodName == nameGetState) {
-    functionInfo = activeSctipt.GetFunctionByName(methodName, "");
-  } else {
-    functionInfo = activeSctipt.GetFunctionByName(
-      methodName, activeSctipt.GetActiveStateName());
-    if (!functionInfo.valid)
-      functionInfo = activeSctipt.GetFunctionByName(methodName, "");
-  }
-
-  if (functionInfo.valid) {
-    return activeSctipt.StartFunction(functionInfo, arguments);
+    if (functionInfo.valid) {
+      return activeScript->StartFunction(functionInfo, arguments);
+    }
   }
 
   std::string e = "Method not found - '";
-  e += nativeClass;
-  e += (nativeClass[0] ? "." : "") + std::string(methodName) + "'";
+  e += classToPrint;
+  e += (classToPrint[0] ? "." : "") + std::string(methodName) + "'";
   throw std::runtime_error(e);
 }
 
@@ -202,34 +189,6 @@ VarValue VirtualMachine::CallStatic(std::string className,
     throw std::runtime_error("function is not valid");
 
   return result;
-}
-
-ActivePexInstance& VirtualMachine::GetActivePexInObject(
-  VarValue* object, const std::string& scriptType)
-{
-  static ActivePexInstance notValidInstance = ActivePexInstance();
-
-  auto it = std::find_if(gameObjects.begin(), gameObjects.end(),
-                         [&](RegisteredGameOgject& _object) {
-                           for (auto& instance : _object.second) {
-                             if (instance.GetSourcePexName() == scriptType) {
-                               return true;
-                             }
-                           }
-                           return false;
-                         });
-
-  if (it == gameObjects.end()) {
-    return notValidInstance;
-  }
-
-  for (auto& instance : it->second) {
-    if (instance.GetSourcePexName() == scriptType) {
-      return instance;
-    }
-  }
-
-  return notValidInstance;
 }
 
 PexScript::Lazy VirtualMachine::GetPexByName(const std::string& name)

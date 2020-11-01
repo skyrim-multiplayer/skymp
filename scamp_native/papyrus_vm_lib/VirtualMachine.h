@@ -3,6 +3,7 @@
 #include "Structures.h"
 #include <functional>
 #include <map>
+#include <set>
 
 class VirtualMachine
 {
@@ -34,15 +35,11 @@ public:
   void SendEvent(ActivePexInstance* instance, const char* eventName,
                  const std::vector<VarValue>& arguments);
 
-  VarValue CallMethod(const std::string& ActiveInstanceName, VarValue* self,
-                      const char* methodName,
+  VarValue CallMethod(IGameObject* self, const char* methodName,
                       std::vector<VarValue>& arguments);
 
   VarValue CallStatic(std::string className, std::string functionName,
                       std::vector<VarValue>& arguments);
-
-  ActivePexInstance& GetActivePexInObject(VarValue* object,
-                                          const std::string& scriptType);
 
   PexScript::Lazy GetPexByName(const std::string& name);
 
@@ -59,14 +56,14 @@ private:
   using RegisteredGameOgject =
     std::pair<const IGameObject::Ptr, std::vector<ActivePexInstance>>;
 
-  std::map<IGameObject::Ptr, std::vector<ActivePexInstance>> gameObjects;
-
   CIMap<PexScript::Lazy> allLoadedScripts;
 
   std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
     nativeStaticFunctions;
 
   std::map<std::string, ActivePexInstance::Ptr> instancesForStaticCalls;
+
+  std::set<IGameObject::Ptr> gameObjectsHolder;
 
   ExceptionHandler handler;
 };

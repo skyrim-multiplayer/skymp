@@ -11,7 +11,8 @@
 
 namespace fs = std::filesystem;
 
-TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
+namespace {
+std::shared_ptr<VirtualMachine> CreateVirtualMachine()
 {
   std::vector<std::string> allPath;
   std::vector<fs::path> pexFiles;
@@ -20,7 +21,7 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
     std::cerr
       << "It seems this machine didn't compile .psc files. Skipping the test"
       << std::endl;
-    return;
+    return nullptr;
   }
 
   fs::directory_iterator begin(BUILT_PEX_DIR);
@@ -42,74 +43,82 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
   std::vector<std::shared_ptr<PexScript>> vector =
     reader.GetSourceStructures();
 
-  VirtualMachine vm(vector);
+  auto vm = std::make_shared<VirtualMachine>(vector);
 
   std::shared_ptr<int> assertId(new int(1));
-  vm.RegisterFunction("", "Print", FunctionType::GlobalFunction,
-                      [=](VarValue self, const std::vector<VarValue> args) {
-                        if (args.size() >= 1) {
-                          std::string showString = (const char*)args[0];
-                          std::cout << std::endl
-                                    << "[!] Papyrus says: " << showString
-                                    << std::endl
-                                    << std::endl;
-                          (*assertId) = 1;
-                        }
-                        return VarValue::None();
-                      });
+  vm->RegisterFunction("", "Print", FunctionType::GlobalFunction,
+                       [=](VarValue self, const std::vector<VarValue> args) {
+                         if (args.size() >= 1) {
+                           std::string showString = (const char*)args[0];
+                           std::cout << std::endl
+                                     << "[!] Papyrus says: " << showString
+                                     << std::endl
+                                     << std::endl;
+                           (*assertId) = 1;
+                         }
+                         return VarValue::None();
+                       });
 
-  vm.RegisterFunction("", "Assert", FunctionType::GlobalFunction,
-                      [=](VarValue self, std::vector<VarValue> args) {
-                        if (args.size() >= 1) {
-                          bool success = (bool)args[0];
-                          std::string message = "\t Assertion " +
-                            std::string(success ? "succeed" : "failed") +
-                            " (" + std::to_string(*assertId) + ")";
-                          (*assertId)++;
-                          if (!success) {
-                            throw std::runtime_error(message);
-                          }
-                          std::cout << message << std::endl;
-                        }
-                        return VarValue::None();
-                      });
-  vm.RegisterFunction("OpcodesTest", "TestFunction",
-                      FunctionType::GlobalFunction,
-                      [=](VarValue self, std::vector<VarValue> args) {
-                        return VarValue(42); // random integer
-                      });
+  vm->RegisterFunction("", "Assert", FunctionType::GlobalFunction,
+                       [=](VarValue self, std::vector<VarValue> args) {
+                         if (args.size() >= 1) {
+                           bool success = (bool)args[0];
+                           std::string message = "\t Assertion " +
+                             std::string(success ? "succeed" : "failed") +
+                             " (" + std::to_string(*assertId) + ")";
+                           (*assertId)++;
+                           if (!success) {
+                             throw std::runtime_error(message);
+                           }
+                           std::cout << message << std::endl;
+                         }
+                         return VarValue::None();
+                       });
+  vm->RegisterFunction("OpcodesTest", "TestFunction",
+                       FunctionType::GlobalFunction,
+                       [=](VarValue self, std::vector<VarValue> args) {
+                         return VarValue(42); // random integer
+                       });
 
-  class TestObject : public IGameObject
+  return vm;
+}
+
+class TestObject : public IGameObject
+{
+public:
+  std::string myId = "0x006AFF2E";
+
+  const char* GetStringID() override { return myId.c_str(); };
+};
+
+class MyScriptVariablesHolder : public ScriptVariablesHolder
+{
+public:
+  MyScriptVariablesHolder(const char* scriptName)
+    : ScriptVariablesHolder(scriptName, nullptr, nullptr, nullptr, nullptr)
   {
-    const std::string MY_ID = "0x006AFF2E";
+    testObject.reset(new TestObject);
+    var = VarValue(testObject.get());
+  }
 
-  public:
-    const char* GetStringID() override { return MY_ID.c_str(); };
-  };
-
-  class MyScriptVariablesHolder : public ScriptVariablesHolder
+  VarValue* GetVariableByName(const char* name, const PexScript& pex) override
   {
-  public:
-    MyScriptVariablesHolder(const char* scriptName)
-      : ScriptVariablesHolder(scriptName, nullptr, nullptr, nullptr, nullptr)
-    {
-      testObject.reset(new TestObject);
-      var = VarValue(testObject.get());
+    auto res = ScriptVariablesHolder::GetVariableByName(name, pex);
+    if (name == std::string("::OpcodeRef_var")) {
+      return &var;
     }
+    return res;
+  }
 
-    VarValue* GetVariableByName(const char* name,
-                                const PexScript& pex) override
-    {
-      auto res = ScriptVariablesHolder::GetVariableByName(name, pex);
-      if (name == std::string("::OpcodeRef_var")) {
-        return &var;
-      }
-      return res;
-    }
+  std::shared_ptr<IGameObject> testObject;
+  VarValue var;
+};
 
-    std::shared_ptr<IGameObject> testObject;
-    VarValue var;
-  };
+}
+
+TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
+{
+  auto vm = CreateVirtualMachine();
 
   std::vector<VirtualMachine::ScriptInfo> scripts;
   scripts.push_back({ "AAATestObject",
@@ -118,36 +127,37 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
   auto holder = std::shared_ptr<MyScriptVariablesHolder>(
     new MyScriptVariablesHolder("OpcodesTest"));
   scripts.push_back({ "OpcodesTest", holder });
-  vm.AddObject(holder->testObject, scripts);
+  vm->AddObject(holder->testObject, scripts);
 
   std::vector<VarValue> functionArgs;
-  vm.SendEvent(holder->testObject, "Main", functionArgs);
+  vm->SendEvent(holder->testObject, "Main", functionArgs);
 
   //
   // Simple Latent test
   //
 
   auto latentHolder = std::make_shared<MyScriptVariablesHolder>("LatentTest");
-  vm.AddObject(latentHolder->testObject, { { "LatentTest", latentHolder } });
+  vm->AddObject(latentHolder->testObject, { { "LatentTest", latentHolder } });
 
   int nonLatentCalls = 0;
 
-  vm.RegisterFunction("LatentTest", "NonLatentFunc",
-                      FunctionType::GlobalFunction,
-                      [&](VarValue self, std::vector<VarValue> args) {
-                        nonLatentCalls++;
-                        return VarValue::None();
-                      });
+  vm->RegisterFunction("LatentTest", "NonLatentFunc",
+                       FunctionType::GlobalFunction,
+                       [&](VarValue self, std::vector<VarValue> args) {
+                         nonLatentCalls++;
+                         return VarValue::None();
+                       });
 
   Viet::Promise<VarValue> promise;
 
-  vm.RegisterFunction("LatentTest", "LatentFunc", FunctionType::GlobalFunction,
-                      [promise](VarValue self, std::vector<VarValue> args) {
-                        return VarValue(promise);
-                      });
+  vm->RegisterFunction("LatentTest", "LatentFunc",
+                       FunctionType::GlobalFunction,
+                       [promise](VarValue self, std::vector<VarValue> args) {
+                         return VarValue(promise);
+                       });
 
   std::vector<VarValue> argsMain;
-  vm.CallStatic("LatentTest", "Main", argsMain);
+  vm->CallStatic("LatentTest", "Main", argsMain);
 
   REQUIRE(nonLatentCalls == 1);
 
@@ -164,14 +174,14 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
   Viet::Promise<VarValue> pr;
   std::vector<VarValue> argsLatentAdd;
 
-  vm.RegisterFunction("LatentTest", "LatentAdd", FunctionType::GlobalFunction,
-                      [&](VarValue self, std::vector<VarValue> args) {
-                        argsLatentAdd = args;
-                        return VarValue(pr);
-                      });
+  vm->RegisterFunction("LatentTest", "LatentAdd", FunctionType::GlobalFunction,
+                       [&](VarValue self, std::vector<VarValue> args) {
+                         argsLatentAdd = args;
+                         return VarValue(pr);
+                       });
 
   std::vector<VarValue> argsMain2;
-  vm.CallStatic("LatentTest", "Main2", argsMain2).Then([&](VarValue v) {
+  vm->CallStatic("LatentTest", "Main2", argsMain2).Then([&](VarValue v) {
     result = v;
   });
 
