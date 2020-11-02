@@ -1,15 +1,11 @@
 #include "GeoVector.h"
-namespace GeoProc
+namespace GeoProc {
+GeoVector::GeoVector(void)
 {
-	GeoVector::GeoVector(void)
-	{
-	}
-
-	GeoVector::~GeoVector(void)
-	{
-	}
-
-	
 }
 
+GeoVector::~GeoVector(void)
+{
+}
 
+}

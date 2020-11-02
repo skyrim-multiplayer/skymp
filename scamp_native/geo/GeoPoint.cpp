@@ -1,17 +1,11 @@
 #include "GeoPoint.h"
 
-namespace GeoProc
+namespace GeoProc {
+GeoPoint::GeoPoint(void)
 {
-	GeoPoint::GeoPoint(void)
-	{
-	}
-
-	GeoPoint::~GeoPoint(void)
-	{
-	}
 }
 
-
-
-
-
+GeoPoint::~GeoPoint(void)
+{
+}
+}

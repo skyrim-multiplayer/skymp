@@ -1,9 +1,7 @@
 #include "GeoFace.h"
 
-namespace GeoProc
+namespace GeoProc {
+GeoFace::GeoFace(void)
 {
-	GeoFace::GeoFace(void)
-	{
-	}
 }
-
+}

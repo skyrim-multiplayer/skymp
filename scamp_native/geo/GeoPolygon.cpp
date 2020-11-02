@@ -1,11 +1,9 @@
 #include "GeoPolygon.h"
 
-namespace GeoProc
+namespace GeoProc {
+
+GeoPolygon::GeoPolygon(void)
 {
-
-	GeoPolygon::GeoPolygon(void)
-	{
-	}
-
 }
 
+}
