@@ -51,5 +51,6 @@ GeoProc::GeoPolygonProc Primitive::CreateGeoPolygonProc(
 bool Primitive::IsInside(const NiPoint3& point,
                          const GeoProc::GeoPolygonProc& procObj)
 {
-  return procObj.PointInside3DPolygon(point.x, point.y, point.z);
+  return const_cast<GeoProc::GeoPolygonProc&>(procObj).PointInside3DPolygon(
+    point.x, point.y, point.z);
 }
