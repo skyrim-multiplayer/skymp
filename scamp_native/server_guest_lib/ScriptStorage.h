@@ -1,7 +1,6 @@
 #pragma once
 #include "CIString.h"
 #include <cstdint>
-#include <filesystem>
 #include <fstream>
 #include <regex>
 #include <set>
@@ -20,12 +19,12 @@ public:
 class DirectoryScriptStorage : public IScriptStorage
 {
 public:
-  DirectoryScriptStorage(const std::filesystem::path& pexDir_);
+  DirectoryScriptStorage(const std::string& pexDir_);
 
   std::vector<uint8_t> GetScriptPex(const char* scriptName) override;
 
   const std::set<CIString>& ListScripts() override;
 
-  const std::filesystem::path pexDir;
+  const std::string pexDir;
   std::set<CIString> scripts;
 };

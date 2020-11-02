@@ -198,7 +198,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     }
 
     std::shared_ptr<DirectoryScriptStorage> scriptStorage(
-      new DirectoryScriptStorage(espm::fs::path(dataDir) / "scripts"));
+      new DirectoryScriptStorage(
+        (espm::fs::path(dataDir) / "scripts").string()));
 
     auto espm = new espm::Loader(dataDir, plugins);
     auto realServer = Networking::CreateServer(
