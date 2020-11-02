@@ -70,11 +70,6 @@ void VirtualMachine::AddObject(IGameObject::Ptr self,
 void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
                                const std::vector<VarValue>& arguments)
 {
-  if (!stricmp("onupdate", eventName)) {
-    if (eventName == (char*)1)
-      throw 12;
-  }
-
   for (auto& scriptInstance : self->activePexInstances) {
     auto name = scriptInstance->GetActiveStateName();
 
