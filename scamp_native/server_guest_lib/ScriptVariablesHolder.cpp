@@ -37,14 +37,6 @@ VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
 
   auto it = vars->find(name);
   if (it != vars->end()) {
-    if (!stricmp(name, "::NeedtimeToGrowth_var")) {
-      if (name == (char*)123)
-        throw 2;
-    }
-    if (!stricmp(name, "lastTimeWatered")) {
-      if (name == (char*)123)
-        throw 2;
-    }
     return &it->second;
   }
   return nullptr;
