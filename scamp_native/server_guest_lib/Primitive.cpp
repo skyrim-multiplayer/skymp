@@ -49,7 +49,7 @@ GeoProc::GeoPolygonProc Primitive::CreateGeoPolygonProc(
 }
 
 bool Primitive::IsInside(const NiPoint3& point,
-                         GeoProc::GeoPolygonProc& procObj)
+                         const GeoProc::GeoPolygonProc& procObj)
 {
   return procObj.PointInside3DPolygon(point.x, point.y, point.z);
 }

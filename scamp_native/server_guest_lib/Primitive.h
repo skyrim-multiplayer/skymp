@@ -14,5 +14,5 @@ public:
   static GeoProc::GeoPolygonProc CreateGeoPolygonProc(
     const std::vector<NiPoint3>& vertices);
   static bool IsInside(const NiPoint3& point,
-                       GeoProc::GeoPolygonProc& geoPolygonProc);
+                       const GeoProc::GeoPolygonProc& geoPolygonProc);
 };

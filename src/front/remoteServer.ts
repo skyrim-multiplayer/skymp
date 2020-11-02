@@ -23,7 +23,6 @@ import {
   settings,
   Armor,
 } from "skyrimPlatform";
-import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./components/inventory";
 import { isBadMenuShown } from "./components/equipment";

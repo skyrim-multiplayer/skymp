@@ -210,6 +210,14 @@ export class FormView implements View<FormModel> {
       if (respawnRequired) {
         this.destroy();
         refr = Game.getPlayer().placeAtMe(base, 1, true, true);
+        const kTypeNpc = 43;
+        if (base.getType() !== kTypeNpc) {
+          refr.setAngle(
+            model.movement.rot[0],
+            model.movement.rot[1],
+            model.movement.rot[2]
+          );
+        }
         modWcProtection(refr.getFormID(), 1);
 
         // TODO: reset all states?
