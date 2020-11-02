@@ -15,27 +15,26 @@ export class Login implements System {
     private log: Log,
     private maxPlayers: number,
     private masterUrl: string | null,
-    private serverPort: number
+    private serverPort: number,
+    private ip: string
   ) {}
 
   private async getUserProfileId(session: string): Promise<any> {
-    let res;
-    for (const addr of [`${this.myIp}:${this.serverPort}`, "127.0.0.1:7777"])
-      try {
-        res = await Axios.get(
-          `${this.masterUrl}/api/servers/${addr}/sessions/${session}`
-        );
-        break;
-      } catch (e) {}
-
-    return res;
+    return await Axios.get(
+      `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
+    );
   }
 
   async initAsync(ctx: SystemContext): Promise<void> {
     this.userProfileIds.length = this.maxPlayers;
     this.userProfileIds.fill(undefined);
 
-    this.myIp = await getMyPublicIp();
+    if (this.ip && this.ip != "null")
+      this.myAddr = this.ip + ":" + this.serverPort;
+    else this.myAddr = (await getMyPublicIp()) + ":" + this.serverPort;
+    this.log(
+      `Login system assumed that ${this.myAddr} is our address on master`
+    );
 
     ctx.gm.on("loginRequired", (userId: number) => {
       ctx.svr.sendCustomPacket(userId, "loginRequired", {});
@@ -58,6 +57,7 @@ export class Login implements System {
     const gameData = content["gameData"];
     if (gameData && gameData.session) {
       this.getUserProfileId(gameData.session).then((res) => {
+        console.log("getUserProfileId", res);
         if (!res.data || !res.data.user || res.data.user.id === undefined)
           this.log("Bad master answer");
         else {
@@ -72,5 +72,5 @@ export class Login implements System {
   }
 
   private userProfileIds = new Array<undefined | number>();
-  private myIp: string;
+  private myAddr: string;
 }

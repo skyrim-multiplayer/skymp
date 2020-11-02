@@ -40,7 +40,8 @@ systems.push(
     log,
     Settings.get().maxPlayers,
     "https://skymp.io",
-    Settings.get().port
+    Settings.get().port,
+    Settings.get().ip
   )
 );
 

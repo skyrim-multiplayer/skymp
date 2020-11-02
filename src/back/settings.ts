@@ -1,6 +1,7 @@
 import { ArgumentParser } from "argparse";
 
 export class Settings {
+  ip: string | null = null;
   port = 7777;
   maxPlayers = 100;
   master: string | null = null;
@@ -14,6 +15,7 @@ export class Settings {
     res.maxPlayers = +args["maxPlayers"] || res.maxPlayers;
     res.master = args["master"];
     res.name = "" + args["name"] || res.name;
+    res.ip = "" + args["ip"] || null;
 
     return res;
   }
@@ -28,6 +30,7 @@ export class Settings {
     parser.addArgument(["--master"], {});
     parser.addArgument(["--name"], {});
     parser.addArgument(["--port"], {});
+    parser.addArgument(["--ip"], {});
     return parser.parseArgs();
   }
 }
