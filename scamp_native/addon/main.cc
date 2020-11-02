@@ -186,10 +186,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     }
     logger->info("Using data dir '{}'", dataDir);
 
-    std::vector<std::filesystem::path> plugins = { "Skyrim.esm", "Update.esm",
-                                                   "Dawnguard.esm",
-                                                   "HearthFires.esm",
-                                                   "Dragonborn.esm" };
+    std::vector<espm::fs::path> plugins = { "Skyrim.esm", "Update.esm",
+                                            "Dawnguard.esm", "HearthFires.esm",
+                                            "Dragonborn.esm" };
     if (serverSettings["loadOrder"].is_array()) {
       plugins.clear();
       for (size_t i = 0; i < serverSettings["loadOrder"].size(); ++i) {
@@ -199,7 +198,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     }
 
     std::shared_ptr<DirectoryScriptStorage> scriptStorage(
-      new DirectoryScriptStorage(std::filesystem::path(dataDir) / "scripts"));
+      new DirectoryScriptStorage(espm::fs::path(dataDir) / "scripts"));
 
     auto espm = new espm::Loader(dataDir, plugins);
     auto realServer = Networking::CreateServer(
