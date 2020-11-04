@@ -96,12 +96,18 @@ if (WIN32)
   target_link_libraries(mp_common PUBLIC ws2_32.lib)
 endif()
 
+# https://www.codeproject.com/Articles/1065730/Point-Inside-Convex-Polygon-in-Cplusplus
+file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/geo/*" "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(geo STATIC ${src})
+target_include_directories(geo PUBLIC "${CMAKE_CURRENT_LIST_DIR}/geo")
+apply_default_settings(TARGETS geo)
+
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/server_guest_lib/*" "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC mp_common espm papyrus-vm-lib)
+target_link_libraries(server_guest_lib PUBLIC mp_common espm papyrus-vm-lib geo)
 if (WIN32)
   file(COPY
     ${CMAKE_SOURCE_DIR}/cmake/ctest.bat
@@ -117,6 +123,7 @@ file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib/*" "${CMAKE_SOURCE_DIR
 add_library(papyrus-vm-lib STATIC ${src})
 apply_default_settings(TARGETS papyrus-vm-lib)
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib")
+target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
 if (UNIX)
   target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
 endif()

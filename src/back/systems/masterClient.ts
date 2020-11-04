@@ -17,6 +17,7 @@ export class MasterClient implements System {
     private masterUrl: string | null,
     private maxPlayers: number,
     private name: string,
+    private ip: string,
     private updateIntervalMs = 5000
   ) {}
 
@@ -25,8 +26,11 @@ export class MasterClient implements System {
 
     this.log(`Using master server on ${this.masterUrl}`);
 
-    const serverIp = await getMyPublicIp();
-    this.endpoint = `${this.masterUrl}/api/servers/${serverIp}:${this.serverPort}`;
+    let myAddr: string;
+    if (this.ip && this.ip != "null") myAddr = this.ip + ":" + this.serverPort;
+    else myAddr = (await getMyPublicIp()) + ":" + this.serverPort;
+
+    this.endpoint = `${this.masterUrl}/api/servers/${myAddr}`;
     this.log(`Our endpoint on master is ${this.endpoint}`);
   }
 

@@ -39,6 +39,7 @@ TEST_CASE("SetUserActor", "[PartOne]")
   REQUIRE(tgt.messages.size() == 1);
   REQUIRE(tgt.messages.at(0).j.dump() ==
           nlohmann::json{ { "type", "createActor" },
+                          { "refrId", 0xff000ABC },
                           { "idx", 0 },
                           { "isMe", true },
                           { "transform",

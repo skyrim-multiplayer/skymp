@@ -14,6 +14,8 @@
 
 using ProfileId = int32_t;
 
+class IActionListener;
+
 class PartOne
 {
 public:
@@ -35,6 +37,8 @@ public:
   bool IsConnected(Networking::UserId userId) const;
   void Tick();
   void EnableProductionHacks();
+  FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
+  IActionListener& GetActionListener();
 
   // API
   uint32_t CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
@@ -58,6 +62,7 @@ public:
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
                          Networking::ISendTarget* sendTarget);
   espm::Loader& GetEspm() const;
+  void AttachLogger(std::shared_ptr<spdlog::logger> logger);
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
@@ -66,7 +71,6 @@ public:
   WorldState worldState;
   ServerState serverState;
   Networking::ISendTarget* pushedSendTarget = nullptr;
-  std::shared_ptr<spdlog::logger> logger;
 
 private:
   enum class UserType
@@ -75,12 +79,12 @@ private:
     Bot
   };
 
-  FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
-
   void AddUser(Networking::UserId userId, UserType userType);
 
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
+
+  void InitActionListener();
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

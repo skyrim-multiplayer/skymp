@@ -26,7 +26,8 @@ public:
                       simdjson::dom::element& content) override;
 
   void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
-                        const NiPoint3& pos, const NiPoint3& rot) override;
+                        const NiPoint3& pos, const NiPoint3& rot,
+                        bool isInJumpState, bool isWeapDrawn) override;
 
   void OnUpdateAnimation(const RawMessageData& rawMsgData,
                          uint32_t idx) override;
@@ -46,6 +47,11 @@ public:
 
   void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
                   const Inventory::Entry& entry) override;
+
+  void OnFinishSpSnippet(const RawMessageData& rawMsgData, uint32_t snippetIdx,
+                         simdjson::dom::element& returnValue) override;
+
+  void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId) override;
 
 private:
   // Returns user's actor if exists

@@ -55,12 +55,12 @@ public:
   MpForm& operator=(const MpForm&) = delete;
 
 protected:
-  // See WorldState::AddForm
-  virtual void Init(WorldState* parent_, uint32_t formId_)
-  {
-    parent = parent_;
-    id = formId_;
-  };
+  virtual void Init(WorldState* parent_,
+                    uint32_t formId_); // See WorldState::AddForm
+  virtual void Update();
+  virtual void SendPapyrusEvent(const char* eventName,
+                                const VarValue* arguments = nullptr,
+                                size_t argumentsCount = 0);
 
 private:
   using GameObjectPtr = std::shared_ptr<IGameObject>;

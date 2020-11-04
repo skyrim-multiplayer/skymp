@@ -15,7 +15,7 @@
     "watch": "concurrently -k -p \"[{name}]\" -n \"backend tsc,frontend tsc,node\" -c \"cyan.bold,cyan.bold,green.bold\" \"npm run watch-ts-back\" \"npm run watch-ts-front\" \"npm run watch-node\"",
     "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
     "start": "node ./dist_back/back/index.js",
-    "nexe": "nexe ./dist/index.js",
+    "nexe": "nexe ./dist_back/back/index.js",
     "start-prod": "cross-env NODE_ENV=production node ./dist_back/back/index.js",
     "clinic": "clinic flame -- node ./dist_back/back/index.js"
   },

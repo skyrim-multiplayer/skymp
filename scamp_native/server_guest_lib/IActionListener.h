@@ -21,7 +21,8 @@ public:
                               simdjson::dom::element& content) = 0;
 
   virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
-                                const NiPoint3& pos, const NiPoint3& rot) = 0;
+                                const NiPoint3& pos, const NiPoint3& rot,
+                                bool isInJumpState, bool isWeapDrawn) = 0;
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
                                  uint32_t idx) = 0;
@@ -41,4 +42,10 @@ public:
 
   virtual void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
                           const Inventory::Entry& entry) = 0;
+
+  virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
+                                 uint32_t snippetIdx,
+                                 simdjson::dom::element& returnValue) = 0;
+
+  virtual void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId) = 0;
 };

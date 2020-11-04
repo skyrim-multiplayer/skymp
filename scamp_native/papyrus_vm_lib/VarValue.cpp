@@ -1,4 +1,5 @@
 #include "Structures.h"
+#include "VirtualMachine.h"
 
 VarValue VarValue::CastToInt() const
 {
@@ -84,6 +85,13 @@ VarValue VarValue::CastToBool() const
   }
 }
 
+void VarValue::Then(std::function<void(VarValue)> cb)
+{
+  if (!promise)
+    throw std::runtime_error("Not a promise");
+  promise->Then(cb);
+}
+
 VarValue::VarValue(uint8_t type)
 {
   static std::string emptyLine;
@@ -161,6 +169,37 @@ VarValue::VarValue(bool value)
 {
   this->type = this->kType_Bool;
   this->data.b = value;
+}
+
+VarValue::VarValue(Viet::Promise<VarValue> promise)
+{
+  this->type = this->kType_Object;
+  this->promise.reset(new Viet::Promise<VarValue>(promise));
+}
+
+VarValue::VarValue(IGameObject::Ptr object)
+  : VarValue(object.get())
+{
+  owningObject = object;
+}
+
+int32_t VarValue::GetMetaStackId() const
+{
+  if (stackId < 0)
+    throw std::runtime_error("This VarValue has no metadata");
+  return stackId;
+}
+
+void VarValue::SetMetaStackIdHolder(
+  std::shared_ptr<StackIdHolder> stackIdHolder_)
+{
+  stackId = stackIdHolder_->GetStackId();
+}
+
+VarValue VarValue::AttachTestStackId(VarValue original, int32_t stackId)
+{
+  original.stackId = stackId;
+  return original;
 }
 
 VarValue VarValue::operator+(const VarValue& argument2)
@@ -312,34 +351,16 @@ VarValue VarValue::operator!()
   }
 }
 
-VarValue& VarValue::operator=(const VarValue& argument2)
-{
-  this->data = argument2.data;
-  this->type = argument2.type;
-
-  if (argument2.type >= argument2._ArraysStart &&
-      argument2.type < argument2._ArraysEnd)
-    this->pArray = argument2.pArray;
-
-  return *this;
-}
-
-bool VarValue::operator==(const VarValue& argument2)
+bool VarValue::operator==(const VarValue& argument2) const
 {
 
   switch (this->type) {
 
     case VarValue::kType_Object: {
-      IGameObject* id1 = nullptr;
-      IGameObject* id2 = nullptr;
-
-      if (this->data.id != nullptr)
-        id1 = this->data.id;
-
-      if (argument2.data.id != nullptr)
-        id2 = argument2.data.id;
-
-      return id1 == id2;
+      return argument2.type == VarValue::kType_Object &&
+        (argument2.data.id == data.id ||
+         (argument2.data.id && data.id &&
+          data.id->EqualsByValue(*argument2.data.id)));
     }
     case VarValue::kType_Identifier:
     case VarValue::kType_String: {
@@ -364,7 +385,12 @@ bool VarValue::operator==(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator!");
 }
 
-bool VarValue::operator>(const VarValue& argument2)
+bool VarValue::operator!=(const VarValue& argument2) const
+{
+  return !(*this == argument2);
+}
+
+bool VarValue::operator>(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -379,7 +405,7 @@ bool VarValue::operator>(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator>");
 }
 
-bool VarValue::operator>=(const VarValue& argument2)
+bool VarValue::operator>=(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -394,7 +420,7 @@ bool VarValue::operator>=(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator>=");
 }
 
-bool VarValue::operator<(const VarValue& argument2)
+bool VarValue::operator<(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -409,7 +435,7 @@ bool VarValue::operator<(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator<");
 }
 
-bool VarValue::operator<=(const VarValue& argument2)
+bool VarValue::operator<=(const VarValue& argument2) const
 {
 
   switch (this->type) {
@@ -422,4 +448,60 @@ bool VarValue::operator<=(const VarValue& argument2)
       return this->CastToBool().data.b <= argument2.CastToBool().data.b;
   }
   throw std::runtime_error("Wrong type in operator<=");
+}
+
+std::ostream& operator<<(std::ostream& os, const VarValue& varValue)
+{
+  switch (varValue.type) {
+    case VarValue::kType_Object:
+      os << "[Object '"
+         << (varValue.data.id ? varValue.data.id->GetStringID() : "None")
+         << "']";
+      break;
+    case VarValue::kType_Identifier:
+      os << "[Identifier '" << varValue.data.string << "']";
+      break;
+    case VarValue::kType_String:
+      os << "[String '" << varValue.data.string << "']";
+      break;
+    case VarValue::kType_Integer:
+      os << "[Integer '" << varValue.data.i << "']";
+      break;
+    case VarValue::kType_Float:
+      os << "[Float '" << varValue.data.f << "']";
+      break;
+    case VarValue::kType_Bool:
+      os << "[Bool '" << varValue.data.b << "']";
+      break;
+    default:
+      os << "[VarValue]";
+      break;
+  }
+  return os;
+}
+
+VarValue& VarValue::operator=(const VarValue& arg2)
+{
+  // DO NOT DO THIS:
+  /// objectType = arg2.objectType;
+
+  // Object dynamic cast is relying on the current implementation (See first
+  // argument in CastObjectToObject). Once you try to remove this operator
+  // overload or copy 'objectType', you would run into issues with casting
+  // between Papyrus object types.
+
+  // At the moment when this comment has been written,
+  // there was no unit test able to reproduce it.Good luck with debugging.
+
+  data = arg2.data;
+  type = arg2.type;
+  owningObject = arg2.owningObject;
+
+  // TODO: Is this check actually needed?
+  if (arg2.type >= arg2._ArraysStart && arg2.type < arg2._ArraysEnd)
+    pArray = arg2.pArray;
+
+  promise = arg2.promise;
+
+  return *this;
 }

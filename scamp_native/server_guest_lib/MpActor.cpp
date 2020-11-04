@@ -1,5 +1,6 @@
 #include "MpActor.h"
 #include "ChangeFormGuard.h"
+#include "EspmGameObject.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 
@@ -9,11 +10,15 @@ struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
     : ChangeFormGuard(changeForm_, self_)
   {
   }
+
+  std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
+  uint32_t snippetIndex = 0;
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
-  : MpObjectReference(locationalData_, callbacks_, optBaseId, "NPC_")
+  : MpObjectReference(locationalData_, callbacks_,
+                      optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
 {
   pImpl.reset(new Impl{ MpChangeForm(), this });
 }
@@ -56,6 +61,25 @@ void MpActor::SendToUser(const void* data, size_t size, bool reliable)
     throw std::runtime_error("sendToUser is nullptr");
 }
 
+void MpActor::OnEquip(uint32_t baseId)
+{
+  if (GetInventory().GetItemCount(baseId) == 0)
+    return;
+  auto& espm = GetParent()->GetEspm();
+  auto lookupRes = espm.GetBrowser().LookupById(baseId);
+  if (!lookupRes.rec)
+    return;
+  auto t = lookupRes.rec->GetType();
+  if (t == "INGR" || t == "ALCH") {
+    // Eat item
+    RemoveItem(baseId, 1, nullptr);
+
+    VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
+                        VarValue::None() };
+    SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
+  }
+}
+
 void MpActor::AddEventSink(std::shared_ptr<DestroyEventSink> sink)
 {
   destroyEventSinks.insert(sink);
@@ -88,8 +112,32 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
   pImpl->EditChangeForm(
     [&](MpChangeForm& cf) {
       cf = static_cast<const MpChangeForm&>(newChangeForm);
+
+      // Actor without look would not be visible so we force player to choose
+      // appearance
+      if (cf.lookDump.empty())
+        cf.isRaceMenuOpen = true;
     },
     Impl::Mode::NoRequestSave);
+}
+
+uint32_t MpActor::NextSnippetIndex(
+  std::optional<Viet::Promise<VarValue>> promise)
+{
+  auto res = pImpl->snippetIndex++;
+  if (promise)
+    pImpl->snippetPromises[res] = *promise;
+  return res;
+}
+
+void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
+{
+  auto it = pImpl->snippetPromises.find(snippetIdx);
+  if (it != pImpl->snippetPromises.end()) {
+    auto& promise = it->second;
+    promise.Resolve(v);
+    pImpl->snippetPromises.erase(it);
+  }
 }
 
 const bool& MpActor::IsRaceMenuOpen() const
@@ -120,6 +168,11 @@ const std::string& MpActor::GetEquipmentAsJson()
 {
   return pImpl->ChangeForm().equipmentDump;
 };
+
+bool MpActor::IsWeaponDrawn() const
+{
+  return GetAnimationVariableBool("_skymp_isWeapDrawn");
+}
 
 void MpActor::BeforeDestroy()
 {

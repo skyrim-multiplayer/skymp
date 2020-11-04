@@ -6,11 +6,15 @@
 #include "MpChangeForms.h"
 #include "PapyrusGame.h"
 #include "PapyrusObjectReference.h"
+#include "Primitive.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
+#include "ScriptVariablesHolder.h"
 #include "VirtualMachine.h"
 #include "WorldState.h"
 #include <MsgType.h>
+#include <map>
+#include <optional>
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
 {
@@ -50,10 +54,20 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
   return { int16_t(pos.x / 4096), int16_t(pos.y / 4096) };
 }
 
-struct ScriptsState
+struct AnimGraphHolder
 {
-  std::map<uint32_t, std::shared_ptr<EspmGameObject>> espmObjectsHolder;
-  std::map<std::string, std::shared_ptr<std::string>> propStringValues;
+  std::set<std::string> animationVariablesBool;
+};
+
+struct ScriptState
+{
+  std::map<std::string, std::shared_ptr<ScriptVariablesHolder>> varHolders;
+};
+
+struct PrimitiveData
+{
+  NiPoint3 boundsDiv2;
+  GeoProc::GeoPolygonProc polygonProc;
 };
 
 }
@@ -66,9 +80,11 @@ public:
   {
   }
 
-  std::unique_ptr<ScriptsState> scriptsState;
-
-  bool HasScripts() const noexcept { return !!scriptsState; }
+  bool onInitEventSent = false;
+  bool scriptsInited = false;
+  std::unique_ptr<ScriptState> scriptState;
+  std::unique_ptr<AnimGraphHolder> animGraphHolder;
+  std::optional<PrimitiveData> primitive;
 };
 
 namespace {
@@ -80,9 +96,10 @@ auto Mode(bool isLocationSaveNeeded)
 }
 }
 
-MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
-                                     const FormCallbacks& callbacks_,
-                                     uint32_t baseId_, const char* baseType_)
+MpObjectReference::MpObjectReference(
+  const LocationalData& locationalData_, const FormCallbacks& callbacks_,
+  uint32_t baseId_, std::string baseType_,
+  std::optional<NiPoint3> primitiveBoundsDiv2)
   : callbacks(new FormCallbacks(callbacks_))
   , baseId(baseId_)
   , baseType(baseType_)
@@ -93,15 +110,18 @@ MpObjectReference::MpObjectReference(const LocationalData& locationalData_,
   changeForm.worldOrCell = locationalData_.cellOrWorld;
   pImpl.reset(new Impl{ changeForm, this });
 
-  if (!strcmp(baseType_, "FLOR") || !strcmp(baseType_, "TREE")) {
+  if (!strcmp(baseType.data(), "FLOR") || !strcmp(baseType.data(), "TREE")) {
     relootTime = std::chrono::hours(1);
-  } else if (!strcmp(baseType_, "DOOR")) {
+  } else if (!strcmp(baseType.data(), "DOOR")) {
     relootTime = std::chrono::seconds(3);
-  } else if (espm::IsItem(baseType_)) {
+  } else if (espm::IsItem(baseType.data())) {
     relootTime = std::chrono::hours(1);
-  } else if (!strcmp(baseType_, "CONT")) {
+  } else if (!strcmp(baseType.data(), "CONT")) {
     relootTime = std::chrono::hours(1);
   }
+
+  if (primitiveBoundsDiv2)
+    SetPrimitive(*primitiveBoundsDiv2);
 }
 
 const NiPoint3& MpObjectReference::GetPos() const
@@ -149,6 +169,32 @@ const std::chrono::milliseconds& MpObjectReference::GetRelootTime() const
   return relootTime;
 }
 
+bool MpObjectReference::GetAnimationVariableBool(const char* name) const
+{
+  return pImpl->animGraphHolder &&
+    pImpl->animGraphHolder->animationVariablesBool.count(name) > 0;
+}
+
+bool MpObjectReference::IsPointInsidePrimitive(const NiPoint3& point) const
+{
+  if (pImpl->primitive) {
+    return Primitive::IsInside(point, pImpl->primitive->polygonProc);
+  }
+  return false;
+}
+
+bool MpObjectReference::HasPrimitive() const
+{
+  return pImpl->primitive.has_value();
+}
+
+FormCallbacks MpObjectReference::GetCallbacks() const
+{
+  if (!callbacks)
+    return FormCallbacks::DoNothing();
+  return *callbacks;
+}
+
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
                                         VisitPropertiesMode mode)
 {
@@ -162,6 +208,15 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 }
 
+void MpObjectReference::Activate(MpActor& activationSource)
+{
+  if (!activationBlocked)
+    ProcessActivate(activationSource);
+
+  auto arg = activationSource.ToVarValue();
+  SendPapyrusEvent("OnActivate", &arg, 1);
+}
+
 void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
   auto oldGridPos = GetGridPos(pImpl->ChangeForm().position);
@@ -173,6 +228,33 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 
   if (oldGridPos != newGridPos || !everSubscribedOrListened)
     ForceSubscriptionsUpdate();
+
+  if (!IsDisabled()) {
+    if (emittersWithPrimitives) {
+      if (!primitivesWeAreInside)
+        primitivesWeAreInside.reset(new std::set<MpObjectReference*>);
+
+      for (auto& [emitter, wasInside] : *emittersWithPrimitives) {
+        bool inside = emitter->IsPointInsidePrimitive(newPos);
+        if (wasInside != inside) {
+          wasInside = inside;
+          auto me = ToVarValue();
+          emitter->SendPapyrusEvent(
+            inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
+          if (inside)
+            primitivesWeAreInside->insert(emitter);
+          else
+            primitivesWeAreInside->erase(emitter);
+        }
+      }
+    }
+
+    if (primitivesWeAreInside) {
+      auto me = ToVarValue();
+      for (auto emitter : *primitivesWeAreInside)
+        emitter->SendPapyrusEvent("OnTrigger", &me, 1);
+    }
+  }
 }
 
 void MpObjectReference::SetAngle(const NiPoint3& newAngle)
@@ -198,106 +280,6 @@ void MpObjectReference::SetOpen(bool open)
     pImpl->EditChangeForm(
       [&](MpChangeFormREFR& changeForm) { changeForm.isOpen = open; });
     SendPropertyToListeners("isOpen", open);
-  }
-}
-
-void MpObjectReference::Activate(MpActor& activationSource)
-{
-  auto& loader = GetParent()->GetEspm();
-  auto& compressedFieldsCache = GetParent()->GetEspmCache();
-
-  CheckInteractionAbility(activationSource);
-
-  auto base = loader.GetBrowser().LookupById(GetBaseId());
-  if (!base.rec || !GetBaseId()) {
-    std::stringstream ss;
-    ss << std::hex << GetFormId() << " doesn't have base form";
-    throw std::runtime_error(ss.str());
-  }
-
-  auto t = base.rec->GetType();
-
-  if (t == espm::TREE::type || t == espm::FLOR::type || espm::IsItem(t)) {
-    if (!IsHarvested()) {
-      auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
-      uint32_t resultItem = 0;
-      if (t == espm::TREE::type) {
-        espm::FLOR::Data data;
-        data = espm::Convert<espm::TREE>(base.rec)->GetData();
-        resultItem = espm::GetMappedId(data.resultItem, *mapping);
-      } else if (t == espm::FLOR::type) {
-        espm::FLOR::Data data;
-        data = espm::Convert<espm::FLOR>(base.rec)->GetData();
-        resultItem = espm::GetMappedId(data.resultItem, *mapping);
-      } else {
-        resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
-      }
-
-      activationSource.AddItem(resultItem, 1);
-      SetHarvested(true);
-      RequestReloot();
-    }
-  } else if (t == espm::DOOR::type) {
-
-    auto refrRecord = espm::Convert<espm::REFR>(
-      loader.GetBrowser().LookupById(GetFormId()).rec);
-    auto teleport = refrRecord->GetData().teleport;
-    if (teleport) {
-      if (!IsOpen()) {
-        SetOpen(true);
-        RequestReloot();
-      }
-
-      auto destinationRecord = espm::Convert<espm::REFR>(
-        loader.GetBrowser().LookupById(teleport->destinationDoor).rec);
-      if (!destinationRecord)
-        throw std::runtime_error(
-          "No destination found for this teleport door");
-
-      auto teleportWorldOrCell = espm::GetWorldOrCell(destinationRecord);
-
-      static const auto g_pi = std::acos(-1.f);
-      std::string msg;
-      msg += Networking::MinPacketId;
-      msg += nlohmann::json{
-        { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
-        { "rot",
-          { teleport->rotRadians[0] / g_pi * 180,
-            teleport->rotRadians[1] / g_pi * 180,
-            teleport->rotRadians[2] / g_pi * 180 } },
-        { "worldOrCell", teleportWorldOrCell },
-        { "type", "teleport" }
-      }.dump();
-      activationSource.SendToUser(msg.data(), msg.size(), true);
-
-      activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
-
-    } else {
-      SetOpen(!IsOpen());
-    }
-  } else if (t == espm::CONT::type) {
-    EnsureBaseContainerAdded(loader);
-    if (!this->occupant) {
-      SetOpen(true);
-      SendPropertyTo("inventory", GetInventory().ToJson(), activationSource);
-      activationSource.SendOpenContainer(GetFormId());
-
-      this->occupant = &activationSource;
-
-      this->occupantDestroySink.reset(
-        new OccupantDestroyEventSink(*GetParent(), this));
-      this->occupant->AddEventSink(occupantDestroySink);
-    } else if (this->occupant == &activationSource) {
-      SetOpen(false);
-      this->occupant->RemoveEventSink(this->occupantDestroySink);
-      this->occupant = nullptr;
-    }
-  }
-
-  if (pImpl->HasScripts()) {
-    std::vector<VarValue> activateArguments{ activationSource.ToVarValue() };
-    GetParent()->GetPapyrusVm().SendEvent(ToGameObject(), "OnActivate",
-                                          activateArguments);
   }
 }
 
@@ -365,6 +347,12 @@ void MpObjectReference::Enable()
   ForceSubscriptionsUpdate();
 }
 
+void MpObjectReference::SetActivationBlocked(bool blocked)
+{
+  // TODO: Save
+  activationBlocked = blocked;
+}
+
 void MpObjectReference::ForceSubscriptionsUpdate()
 {
   if (!GetParent() || IsDisabled())
@@ -402,6 +390,23 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   everSubscribedOrListened = true;
 }
 
+void MpObjectReference::SetPrimitive(const NiPoint3& boundsDiv2)
+{
+  auto vertices = Primitive::GetVertices(GetPos(), GetAngle(), boundsDiv2);
+  pImpl->primitive =
+    PrimitiveData{ boundsDiv2, Primitive::CreateGeoPolygonProc(vertices) };
+}
+
+void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
+{
+  if (!pImpl->animGraphHolder)
+    pImpl->animGraphHolder.reset(new AnimGraphHolder);
+  if (value)
+    pImpl->animGraphHolder->animationVariablesBool.insert(name);
+  else
+    pImpl->animGraphHolder->animationVariablesBool.erase(name);
+}
+
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
 {
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
@@ -420,6 +425,12 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
     });
     SendInventoryUpdate();
   }
+}
+
+void MpObjectReference::RemoveItem(uint32_t baseId, uint32_t count,
+                                   MpObjectReference* target)
+{
+  RemoveItems({ { baseId, count } }, target);
 }
 
 void MpObjectReference::RemoveItems(
@@ -466,11 +477,23 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   if (!emitterIsActor && !listenerIsActor)
     return;
 
+  if (!emitter->pImpl->onInitEventSent) {
+    emitter->pImpl->onInitEventSent = true;
+    emitter->SendPapyrusEvent("OnInit");
+  }
+
   emitter->InitListenersAndEmitters();
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
   listener->emitters->insert(emitter);
   emitter->callbacks->subscribe(emitter, listener);
+
+  if (emitter->HasPrimitive()) {
+    if (!listener->emittersWithPrimitives)
+      listener->emittersWithPrimitives.reset(
+        new std::map<MpObjectReference*, bool>);
+    listener->emittersWithPrimitives->insert({ emitter, false });
+  }
 }
 
 void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
@@ -484,6 +507,10 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   emitter->callbacks->unsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
   listener->emitters->erase(emitter);
+
+  if (listener->emittersWithPrimitives && emitter->HasPrimitive()) {
+    listener->emittersWithPrimitives->erase(emitter);
+  }
 }
 
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
@@ -609,6 +636,36 @@ void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
   });
 }
 
+void MpObjectReference::VisitNeighbours(const Visitor& visitor)
+{
+  if (IsDisabled())
+    return;
+
+  auto worldState = GetParent();
+  if (!worldState)
+    return;
+
+  auto gridIterator = worldState->grids.find(pImpl->ChangeForm().worldOrCell);
+  if (gridIterator == worldState->grids.end())
+    return;
+
+  auto& grid = gridIterator->second;
+  auto& neighbours = grid.GetNeighboursAndMe(this);
+  for (auto neighbour : neighbours)
+    visitor(neighbour);
+}
+
+void MpObjectReference::SendPapyrusEvent(const char* eventName,
+                                         const VarValue* arguments,
+                                         size_t argumentsCount)
+{
+  if (!pImpl->scriptsInited) {
+    InitScripts();
+    pImpl->scriptsInited = true;
+  }
+  return MpForm::SendPapyrusEvent(eventName, arguments, argumentsCount);
+}
+
 void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
   MpForm::Init(parent, formId);
@@ -628,56 +685,6 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
     mode);
-
-  InitScripts();
-}
-
-void MpObjectReference::CastProperty(const espm::CombineBrowser& br,
-                                     const espm::Property& prop, VarValue* out)
-{
-  switch (prop.propertyType) {
-    case espm::PropertyType::Object: {
-      auto& gameObject =
-        pImpl->scriptsState->espmObjectsHolder[prop.value.formId];
-      if (!gameObject)
-        gameObject.reset(new EspmGameObject(br.LookupById(prop.value.formId)));
-      *out = VarValue(gameObject.get());
-      break;
-    }
-    case espm::PropertyType::String: {
-      std::string str(prop.value.str.data, prop.value.str.length);
-      auto& stringPtr = pImpl->scriptsState->propStringValues[str];
-      if (!stringPtr)
-        stringPtr.reset(new std::string(str));
-      *out = VarValue(stringPtr->data());
-      break;
-    }
-    case espm::PropertyType::Int:
-      *out = VarValue(prop.value.integer);
-      break;
-    case espm::PropertyType::Float:
-      *out = VarValue(prop.value.floatingPoint);
-      break;
-    case espm::PropertyType::Bool:
-      *out = VarValue(prop.value.boolean);
-      break;
-  }
-}
-
-void MpObjectReference::BuildScriptProperties(
-  const espm::CombineBrowser& br, const espm::ScriptData& scriptData,
-  PropertyValuesMap* out)
-{
-  PropertyValuesMap res;
-  for (auto& entry : scriptData.scripts) {
-    auto& resultProps = res.data[entry.scriptName];
-    for (auto& prop : entry.properties) {
-      VarValue value;
-      CastProperty(br, prop, &value);
-      resultProps.push_back({ prop.propertyName, value });
-    }
-  }
-  *out = res;
 }
 
 bool MpObjectReference::IsLocationSavingNeeded() const
@@ -685,6 +692,100 @@ bool MpObjectReference::IsLocationSavingNeeded() const
   auto last = pImpl->GetLastSaveRequestMoment();
   return !last ||
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
+}
+
+void MpObjectReference::ProcessActivate(MpActor& activationSource)
+{
+  auto& loader = GetParent()->GetEspm();
+  auto& compressedFieldsCache = GetParent()->GetEspmCache();
+
+  CheckInteractionAbility(activationSource);
+
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (!base.rec || !GetBaseId()) {
+    std::stringstream ss;
+    ss << std::hex << GetFormId() << " doesn't have base form";
+    throw std::runtime_error(ss.str());
+  }
+
+  auto t = base.rec->GetType();
+
+  if (t == espm::TREE::type || t == espm::FLOR::type || espm::IsItem(t)) {
+    if (!IsHarvested()) {
+      auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
+      uint32_t resultItem = 0;
+      if (t == espm::TREE::type) {
+        espm::FLOR::Data data;
+        data = espm::Convert<espm::TREE>(base.rec)->GetData();
+        resultItem = espm::GetMappedId(data.resultItem, *mapping);
+      } else if (t == espm::FLOR::type) {
+        espm::FLOR::Data data;
+        data = espm::Convert<espm::FLOR>(base.rec)->GetData();
+        resultItem = espm::GetMappedId(data.resultItem, *mapping);
+      } else {
+        resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
+      }
+
+      activationSource.AddItem(resultItem, 1);
+      SetHarvested(true);
+      RequestReloot();
+    }
+  } else if (t == espm::DOOR::type) {
+
+    auto refrRecord = espm::Convert<espm::REFR>(
+      loader.GetBrowser().LookupById(GetFormId()).rec);
+    auto teleport = refrRecord->GetData().teleport;
+    if (teleport) {
+      if (!IsOpen()) {
+        SetOpen(true);
+        RequestReloot();
+      }
+
+      auto destinationRecord = espm::Convert<espm::REFR>(
+        loader.GetBrowser().LookupById(teleport->destinationDoor).rec);
+      if (!destinationRecord)
+        throw std::runtime_error(
+          "No destination found for this teleport door");
+
+      auto teleportWorldOrCell = espm::GetWorldOrCell(destinationRecord);
+
+      static const auto g_pi = std::acos(-1.f);
+      std::string msg;
+      msg += Networking::MinPacketId;
+      msg += nlohmann::json{
+        { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
+        { "rot",
+          { teleport->rotRadians[0] / g_pi * 180,
+            teleport->rotRadians[1] / g_pi * 180,
+            teleport->rotRadians[2] / g_pi * 180 } },
+        { "worldOrCell", teleportWorldOrCell },
+        { "type", "teleport" }
+      }.dump();
+      activationSource.SendToUser(msg.data(), msg.size(), true);
+
+      activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
+
+    } else {
+      SetOpen(!IsOpen());
+    }
+  } else if (t == espm::CONT::type) {
+    EnsureBaseContainerAdded(loader);
+    if (!this->occupant) {
+      SetOpen(true);
+      SendPropertyTo("inventory", GetInventory().ToJson(), activationSource);
+      activationSource.SendOpenContainer(GetFormId());
+
+      this->occupant = &activationSource;
+
+      this->occupantDestroySink.reset(
+        new OccupantDestroyEventSink(*GetParent(), this));
+      this->occupant->AddEventSink(occupantDestroySink);
+    } else if (this->occupant == &activationSource) {
+      SetOpen(false);
+      this->occupant->RemoveEventSink(this->occupantDestroySink);
+      this->occupant = nullptr;
+    }
+  }
 }
 
 void MpObjectReference::RemoveFromGrid()
@@ -713,32 +814,54 @@ void MpObjectReference::InitScripts()
   if (!baseId || !GetParent()->espm)
     return;
 
-  auto& br = GetParent()->espm->GetBrowser();
-  auto base = br.LookupById(baseId);
-  if (!base.rec)
-    return;
-
   auto scriptStorage = GetParent()->GetScriptStorage();
   if (!scriptStorage)
     return;
 
+  auto compressedFieldsCache = &GetParent()->GetEspmCache();
+
   std::vector<std::string> scriptNames;
-  espm::ScriptData scriptData;
-  base.rec->GetScriptData(&scriptData);
-  for (auto& script : scriptData.scripts) {
-    if (GetParent()->GetScriptStorage()->ListScripts().count(
-          script.scriptName))
-      scriptNames.push_back(script.scriptName);
+
+  auto& br = GetParent()->espm->GetBrowser();
+  auto base = br.LookupById(baseId);
+  auto refr = br.LookupById(GetFormId());
+  for (auto record : { base.rec, refr.rec }) {
+    if (!record)
+      continue;
+    espm::ScriptData scriptData;
+    record->GetScriptData(&scriptData, compressedFieldsCache);
+
+    auto& scriptsInStorage = GetParent()->GetScriptStorage()->ListScripts();
+    for (auto& script : scriptData.scripts) {
+      if (scriptsInStorage.count(
+            { script.scriptName.begin(), script.scriptName.end() })) {
+
+        if (std::count(scriptNames.begin(), scriptNames.end(),
+                       script.scriptName) != 0) {
+          std::stringstream ss;
+          ss << "Script '" << script.scriptName
+             << "' has already been added to form " << std::hex << GetFormId();
+          throw std::runtime_error(ss.str());
+        }
+
+        scriptNames.push_back(script.scriptName);
+      } else if (auto wst = GetParent())
+        wst->logger->warn("Script '{}' not found in the script storage",
+                          script.scriptName);
+    }
   }
 
   if (!scriptNames.empty()) {
-    pImpl->scriptsState.reset(new ScriptsState);
+    pImpl->scriptState.reset(new ScriptState);
 
-    PropertyValuesMap props;
-    BuildScriptProperties(GetParent()->GetEspm().GetBrowser(), scriptData,
-                          &props);
+    std::vector<VirtualMachine::ScriptInfo> scriptInfo;
+    for (auto& scriptName : scriptNames) {
+      auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
+        scriptName, base.rec, refr.rec, base.parent, compressedFieldsCache);
+      scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
+    }
 
-    GetParent()->GetPapyrusVm().AddObject(ToGameObject(), scriptNames, props);
+    GetParent()->GetPapyrusVm().AddObject(ToGameObject(), scriptInfo);
   }
 }
 

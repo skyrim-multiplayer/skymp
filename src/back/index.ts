@@ -19,15 +19,18 @@ import { pid } from "process";
 
 console.log(`Current process ID is ${pid}`);
 
+const master = Settings.get().master || "https://skymp.io";
+
 const log = console.log;
 const systems = new Array<System>();
 systems.push(
   new MasterClient(
     log,
     Settings.get().port,
-    Settings.get().master,
+    master,
     Settings.get().maxPlayers,
     Settings.get().name,
+    Settings.get().ip,
     5000
   ),
   new ClientVerify(
@@ -39,8 +42,9 @@ systems.push(
   new Login(
     log,
     Settings.get().maxPlayers,
-    "https://skymp.io",
-    Settings.get().port
+    master,
+    Settings.get().port,
+    Settings.get().ip
   )
 );
 

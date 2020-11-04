@@ -1,13 +1,32 @@
 #include "WorldState.h"
+#include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
+#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
+#include "PapyrusActor.h"
+#include "PapyrusDebug.h"
+#include "PapyrusForm.h"
+#include "PapyrusFormList.h"
 #include "PapyrusGame.h"
+#include "PapyrusMessage.h"
 #include "PapyrusObjectReference.h"
+#include "PapyrusSkymp.h"
+#include "PapyrusUtility.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
+#include <algorithm>
+#include <deque>
 #include <unordered_map>
+
+namespace {
+struct TimerEntry
+{
+  Viet::Promise<Viet::Void> promise;
+  std::chrono::system_clock::time_point finish;
+};
+}
 
 struct WorldState::Impl
 {
@@ -17,11 +36,16 @@ struct WorldState::Impl
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
+  std::deque<TimerEntry> timers;
+  std::shared_ptr<HeuristicPolicy> policy;
 };
 
 WorldState::WorldState()
 {
+  logger.reset(new spdlog::logger("empty logger"));
+
   pImpl.reset(new Impl);
+  pImpl->policy.reset(new HeuristicPolicy(logger, this));
 }
 
 void WorldState::Clear()
@@ -85,8 +109,9 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
 
 void WorldState::TickTimers()
 {
+  const auto now = std::chrono::system_clock::now();
+
   // Tick Reloot
-  auto now = std::chrono::system_clock::now();
   for (auto& p : relootTimers) {
     auto& list = p.second;
     while (!list.empty() && list.begin()->second <= now) {
@@ -116,6 +141,13 @@ void WorldState::TickTimers()
       pImpl->saveStorage->Upsert(
         changeForms, [pImpl_] { pImpl_->saveStorageBusy = false; });
     }
+  }
+
+  // Tick RegisterForSingleUpdate
+  while (!pImpl->timers.empty() && now >= pImpl->timers.front().finish) {
+    auto front = std::move(pImpl->timers.front());
+    pImpl->timers.pop_front();
+    front.promise.Resolve(Viet::Void());
   }
 }
 
@@ -169,6 +201,39 @@ void WorldState::RequestSave(MpObjectReference& ref)
   pImpl->changes[ref.GetFormId()] = ref.GetChangeForm();
 }
 
+void WorldState::RegisterForSingleUpdate(const VarValue& self, float seconds)
+{
+  SetTimer(seconds).Then([self](Viet::Void) {
+    if (auto form = GetFormPtr<MpForm>(self))
+      form->Update();
+  });
+}
+
+Viet::Promise<Viet::Void> WorldState::SetTimer(float seconds)
+{
+  Viet::Promise<Viet::Void> promise;
+
+  auto finish = std::chrono::system_clock::now() +
+    std::chrono::milliseconds(static_cast<int>(seconds * 1000));
+
+  bool sortRequired = false;
+
+  if (!pImpl->timers.empty() && finish > pImpl->timers.front().finish) {
+    sortRequired = true;
+  }
+
+  pImpl->timers.push_front({ promise, finish });
+
+  if (sortRequired) {
+    std::sort(pImpl->timers.begin(), pImpl->timers.end(),
+              [](const TimerEntry& lhs, const TimerEntry& rhs) {
+                return lhs.finish < rhs.finish;
+              });
+  }
+
+  return promise;
+}
+
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 {
   auto it = forms.find(formId);
@@ -177,6 +242,19 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
     return g_null;
   }
   return it->second;
+}
+
+void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
+                                  const VarValue* arguments,
+                                  size_t argumentsCount)
+{
+  VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {
+    pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
+                                          argumentsCount, holder.GetStackId());
+  };
+  return GetPapyrusVm().SendEvent(form->ToGameObject(), eventName,
+                                  { arguments, arguments + argumentsCount },
+                                  onEnter);
 }
 
 espm::Loader& WorldState::GetEspm() const
@@ -198,36 +276,63 @@ IScriptStorage* WorldState::GetScriptStorage() const
   return pImpl->scriptStorage.get();
 }
 
+struct LazyState
+{
+  std::shared_ptr<PexScript> pex;
+};
+
 VirtualMachine& WorldState::GetPapyrusVm()
 {
   if (!pImpl->vm) {
-    std::vector<std::shared_ptr<PexScript>> pexStructures;
+    std::vector<PexScript::Lazy> pexStructures;
     std::vector<std::string> scriptNames;
 
-    std::vector<std::vector<uint8_t>> pexVec;
-
-    auto scriptStorage = GetScriptStorage();
-    if (!scriptStorage)
-      throw std::runtime_error("Required scriptStorage to be non-null");
+    auto scriptStorage = pImpl->scriptStorage;
+    if (!scriptStorage) {
+      logger->error("Required scriptStorage to be non-null");
+      pImpl->vm.reset(new VirtualMachine(std::vector<PexScript::Ptr>()));
+      return *pImpl->vm;
+    }
 
     auto& scripts = scriptStorage->ListScripts();
     for (auto& required : scripts) {
-      auto requiredPex = scriptStorage->GetScriptPex(required.data());
-      if (requiredPex.empty())
-        throw std::runtime_error(
-          "'" + std::string(required) +
-          "' is listed but failed to load from the storage");
-      pexVec.push_back(requiredPex);
+      std::shared_ptr<LazyState> lazyState(new LazyState);
+      PexScript::Lazy lazy;
+      lazy.source = required.data();
+      lazy.fn = [lazyState, scriptStorage, required]() {
+        if (!lazyState->pex) {
+          auto requiredPex = scriptStorage->GetScriptPex(required.data());
+          if (requiredPex.empty()) {
+            throw std::runtime_error(
+              "'" + std::string({ required.begin(), required.end() }) +
+              "' is listed but failed to "
+              "load from the storage");
+          }
+          auto pexStructure = Reader({ requiredPex }).GetSourceStructures();
+          lazyState->pex = pexStructure[0];
+        }
+        return lazyState->pex;
+      };
+      pexStructures.push_back(lazy);
     }
-
-    auto pexStructure = Reader(pexVec).GetSourceStructures();
-    for (auto& v : pexStructure)
-      pexStructures.push_back(v);
 
     if (!pexStructures.empty()) {
       pImpl->vm.reset(new VirtualMachine(pexStructures));
-      PapyrusObjectReference::Register(*pImpl->vm);
-      PapyrusGame::Register(*pImpl->vm);
+      pImpl->vm->SetExceptionHandler(
+        [&](const std::string& error) { logger->error("{}", error); });
+
+      std::vector<IPapyrusClassBase*> classes;
+      classes.emplace_back(new PapyrusObjectReference);
+      classes.emplace_back(new PapyrusGame);
+      classes.emplace_back(new PapyrusForm);
+      classes.emplace_back(new PapyrusMessage);
+      classes.emplace_back(new PapyrusFormList);
+      classes.emplace_back(new PapyrusDebug);
+      classes.emplace_back(new PapyrusActor);
+      classes.emplace_back(new PapyrusSkymp);
+      classes.emplace_back(new PapyrusUtility);
+      for (auto cl : classes)
+        cl->Register(*pImpl->vm, pImpl->policy);
     }
   }
   return *pImpl->vm;

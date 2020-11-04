@@ -58,9 +58,15 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       for (int i = 0; i < 3; ++i)
         ReadEx(jRot, i, &rot[i]);
 
-      actionListener.OnUpdateMovement(rawMsgData, idx,
-                                      { pos[0], pos[1], pos[2] },
-                                      { rot[0], rot[1], rot[2] });
+      bool isInJumpState = false;
+      Read(data_, "isInJumpState", &isInJumpState);
+
+      bool isWeapDrawn = false;
+      Read(data_, "isWeapDrawn", &isWeapDrawn);
+
+      actionListener.OnUpdateMovement(
+        rawMsgData, idx, { pos[0], pos[1], pos[2] },
+        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn);
 
     } break;
     case MsgType::UpdateAnimation: {
@@ -107,6 +113,23 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       else
         actionListener.OnTakeItem(rawMsgData, target, e);
     } break;
+    case MsgType::FinishSpSnippet: {
+      uint32_t snippetIdx;
+      ReadEx(jMessage, "snippetIdx", &snippetIdx);
+
+      simdjson::dom::element returnValue;
+      ReadEx(jMessage, "returnValue", &returnValue);
+
+      actionListener.OnFinishSpSnippet(rawMsgData, snippetIdx, returnValue);
+
+      break;
+    }
+    case MsgType::OnEquip: {
+      uint32_t baseId;
+      ReadEx(jMessage, "baseId", &baseId);
+      actionListener.OnEquip(rawMsgData, baseId);
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }

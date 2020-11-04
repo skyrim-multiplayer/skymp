@@ -3,6 +3,7 @@ import { Look } from "../lib/structures/look";
 import { Animation } from "../lib/structures/animation";
 import { Equipment } from "../lib/structures/equipment";
 import { Inventory } from "../lib/structures/inventory";
+import * as spSnippet from "./spSnippet";
 
 export enum MsgType {
   CustomPacket = 1,
@@ -14,6 +15,8 @@ export enum MsgType {
   UpdateProperty = 7,
   PutItem = 8,
   TakeItem = 9,
+  FinishSpSnippet = 10,
+  OnEquip = 11,
 }
 
 export interface SetInventory {
@@ -91,3 +94,9 @@ export interface CustomPacket {
   type: "customPacket";
   content: Record<string, unknown>;
 }
+
+interface SpSnippetMsgBase {
+  type: "spSnippet";
+}
+
+export type SpSnippet = SpSnippetMsgBase & spSnippet.Snippet;

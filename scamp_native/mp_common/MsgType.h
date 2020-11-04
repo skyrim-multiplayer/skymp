@@ -12,5 +12,7 @@ enum class MsgType : int64_t
   Activate = 6,
   UpdateProperty = 7,
   PutItem = 8,
-  TakeItem = 9
+  TakeItem = 9,
+  FinishSpSnippet = 10,
+  OnEquip = 11
 };

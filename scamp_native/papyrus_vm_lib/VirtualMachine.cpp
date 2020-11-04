@@ -1,11 +1,39 @@
 #include "VirtualMachine.h"
 #include "Utils.h"
+#include <MakeID.h>
 #include <algorithm>
+#include <sstream>
 #include <stdexcept>
+
+namespace {
+constexpr uint32_t g_maxStackId = 100'000;
+}
+
+VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
+{
+  stackIdMaker.reset(new MakeID(g_maxStackId));
+
+  for (auto& script : loadedScripts) {
+    allLoadedScripts[CIString{ script.source.begin(), script.source.end() }] =
+      script;
+  }
+}
 
 VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
 {
-  this->allLoadedScripts = loadedScripts;
+  stackIdMaker.reset(new MakeID(g_maxStackId));
+
+  for (auto& script : loadedScripts) {
+    allLoadedScripts[CIString{ script->source.begin(),
+                               script->source.end() }] = {
+      script->source, [script] { return script; }
+    };
+  }
+}
+
+void VirtualMachine::SetExceptionHandler(const ExceptionHandler& handler)
+{
+  this->handler = handler;
 }
 
 std::string ToLower(std::string s)
@@ -30,113 +58,144 @@ void VirtualMachine::RegisterFunction(std::string className,
 }
 
 void VirtualMachine::AddObject(IGameObject::Ptr self,
-                               std::vector<std::string> scripts,
-                               PropertyValuesMap vars)
+                               const std::vector<ScriptInfo>& scripts)
 {
-  std::vector<ActivePexInstance> scriptsForObject;
+  std::vector<ActivePexInstance::Ptr> scriptsForObject;
 
-  for (auto& baseScript : allLoadedScripts) {
-    for (auto& nameNeedScript : scripts) {
-      if (baseScript->source == nameNeedScript) {
-
-        ActivePexInstance scriptInstance(
-          baseScript, vars.data, this, VarValue((IGameObject*)self.get()), "");
-        scriptsForObject.push_back(scriptInstance);
-      }
+  for (auto& s : scripts) {
+    CIString ciNameNeedScript{ s.name.begin(), s.name.end() };
+    auto it = allLoadedScripts.find(ciNameNeedScript);
+    if (it != allLoadedScripts.end()) {
+      auto scriptInstance = std::make_shared<ActivePexInstance>(
+        it->second, s.vars, this, VarValue((IGameObject*)self.get()), "");
+      scriptsForObject.push_back(scriptInstance);
     }
   }
 
-  gameObjects[self] = scriptsForObject;
+  self->activePexInstances = scriptsForObject;
+  gameObjectsHolder.insert(self);
 }
 
 void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
-                               std::vector<VarValue>& arguments)
+                               const std::vector<VarValue>& arguments,
+                               OnEnter enter)
 {
-  for (auto& object : gameObjects) {
-    if (object.first == self) {
-      for (auto& scriptInstance : object.second) {
-        auto name = scriptInstance.GetActiveStateName();
+  for (auto& scriptInstance : self->activePexInstances) {
+    auto name = scriptInstance->GetActiveStateName();
 
-        auto fn = scriptInstance.GetFunctionByName(
-          eventName, scriptInstance.GetActiveStateName());
-        if (fn.valid) {
-          scriptInstance.StartFunction(fn, arguments);
-        }
-      }
+    auto fn = scriptInstance->GetFunctionByName(
+      eventName, scriptInstance->GetActiveStateName());
+    if (fn.valid) {
+      auto stackIdHolder = std::make_shared<StackIdHolder>(*this);
+      if (enter)
+        enter(*stackIdHolder);
+      scriptInstance->StartFunction(
+        fn, const_cast<std::vector<VarValue>&>(arguments), stackIdHolder);
     }
   }
 }
 
 void VirtualMachine::SendEvent(ActivePexInstance* instance,
                                const char* eventName,
-                               std::vector<VarValue>& arguments)
+                               const std::vector<VarValue>& arguments)
 {
 
   auto fn =
     instance->GetFunctionByName(eventName, instance->GetActiveStateName());
   if (fn.valid) {
-    instance->StartFunction(fn, arguments);
+    instance->StartFunction(fn, const_cast<std::vector<VarValue>&>(arguments),
+                            std::make_shared<StackIdHolder>(*this));
   }
 }
 
-VarValue VirtualMachine::CallMethod(const std::string& activeInstanceName,
-                                    VarValue* self, const char* methodName,
-                                    std::vector<VarValue>& arguments)
+StackIdHolder::StackIdHolder(VirtualMachine& vm_)
+  : makeId(vm_.stackIdMaker)
 {
-  NativeFunction function;
+  if (!makeId->CreateID(*reinterpret_cast<uint32_t*>(&stackId))) {
+    throw std::runtime_error("CreateID failed to create id for stack");
+  }
+}
 
-  auto& activeSctipt = GetActivePexInObject(self, activeInstanceName);
+StackIdHolder::~StackIdHolder()
+{
+  bool destroyed = makeId->DestroyID(stackId);
+  (void)destroyed;
+  assert(destroyed);
+}
 
-  if (!activeSctipt.IsValid() || !self) {
+int32_t StackIdHolder::GetStackId() const
+{
+  return stackId;
+}
 
-    std::string error = "ActiveScript or self not valid!";
-
-    throw std::runtime_error(error);
+VarValue VirtualMachine::CallMethod(
+  IGameObject* selfObj, const char* methodName,
+  std::vector<VarValue>& arguments,
+  std::shared_ptr<StackIdHolder> stackIdHolder)
+{
+  if (!stackIdHolder) {
+    stackIdHolder.reset(new StackIdHolder(*this));
   }
 
-  ActivePexInstance::Ptr currentParent = activeSctipt.GetParentInstance();
-  std::string className = activeSctipt.GetSourcePexName();
+  if (!selfObj) {
+    std::stringstream ss;
+    ss << '\'' << methodName
+       << "' requires self argument to be a valid object";
+    throw std::runtime_error(ss.str());
+  }
 
-  do {
+  const char* nativeClass = selfObj->GetParentNativeScript();
+  const char* base = nativeClass;
+  while (1) {
+    if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
+      auto self = VarValue(selfObj);
+      self.SetMetaStackIdHolder(stackIdHolder);
+      return f(self, arguments);
+    }
+    auto it = allLoadedScripts.find(base);
+    if (it == allLoadedScripts.end())
+      break;
+    base = it->second.fn()->objectTable.m_data[0].parentClassName.data();
+    if (!base[0])
+      break;
+  }
 
-    function = nativeFunctions[ToLower(className)][ToLower(methodName)];
+  const char* classToPrint = "";
 
-    if (!function && currentParent->IsValid()) {
+  for (auto& activeScript : selfObj->activePexInstances) {
+    FunctionInfo functionInfo;
 
-      className = currentParent->GetSourcePexName();
-      currentParent = currentParent->GetParentInstance();
+    if (!Utils::stricmp(methodName, "GotoState") ||
+        !Utils::stricmp(methodName, "GetState")) {
+      functionInfo = activeScript->GetFunctionByName(methodName, "");
+    } else {
+      functionInfo = activeScript->GetFunctionByName(
+        methodName, activeScript->GetActiveStateName());
+      if (!functionInfo.valid)
+        functionInfo = activeScript->GetFunctionByName(methodName, "");
     }
 
-  } while (!function && currentParent->IsValid());
-
-  if (function)
-    return function(*self, arguments);
-
-  FunctionInfo functionInfo;
-
-  std::string nameGoToState = "GotoState";
-  std::string nameGetState = "GetState";
-
-  if (methodName == nameGoToState || methodName == nameGetState) {
-    functionInfo = activeSctipt.GetFunctionByName(methodName, "");
-  } else
-    functionInfo = activeSctipt.GetFunctionByName(
-      methodName, activeSctipt.GetActiveStateName());
-
-  if (functionInfo.valid) {
-    return activeSctipt.StartFunction(functionInfo, arguments);
+    if (functionInfo.valid) {
+      return activeScript->StartFunction(functionInfo, arguments,
+                                         stackIdHolder);
+    }
   }
 
-  std::string name = "Method not found - '" + activeSctipt.GetSourcePexName() +
-    "." + std::string(methodName) + "'";
-
-  throw std::runtime_error(name);
+  std::string e = "Method not found - '";
+  e += classToPrint;
+  e += (classToPrint[0] ? "." : "") + std::string(methodName) + "'";
+  throw std::runtime_error(e);
 }
 
-VarValue VirtualMachine::CallStatic(std::string className,
-                                    std::string functionName,
-                                    std::vector<VarValue>& arguments)
+VarValue VirtualMachine::CallStatic(
+  std::string className, std::string functionName,
+  std::vector<VarValue>& arguments,
+  std::shared_ptr<StackIdHolder> stackIdHolder)
 {
+  if (!stackIdHolder) {
+    stackIdHolder.reset(new StackIdHolder(*this));
+  }
+
   VarValue result = VarValue::None();
   FunctionInfo function;
 
@@ -146,32 +205,30 @@ VarValue VirtualMachine::CallStatic(std::string className,
     : nativeStaticFunctions[""][functionNameLower];
 
   if (f) {
-    NativeFunction func = f;
-    result = func(VarValue::None(), arguments);
-    return result;
+    auto self = VarValue::None();
+    self.SetMetaStackIdHolder(stackIdHolder);
+    return f(self, arguments);
   }
 
   auto it =
-    std::find_if(this->allLoadedScripts.begin(), this->allLoadedScripts.end(),
-                 [&](std::shared_ptr<PexScript> a) -> bool {
-                   return !Utils::stricmp(a->source.data(), className.data());
-                 });
-
-  if (it == this->allLoadedScripts.end())
+    allLoadedScripts.find(CIString{ className.begin(), className.end() });
+  if (it == allLoadedScripts.end())
     throw std::runtime_error("script not found - '" + className + "'");
 
-  ActivePexInstance instance = ActivePexInstance(*it, VarForBuildActivePex({}),
-                                                 this, VarValue::None(), "");
+  auto& instance = instancesForStaticCalls[className];
+  if (!instance) {
+    instance = std::make_shared<ActivePexInstance>(it->second, nullptr, this,
+                                                   VarValue::None(), "");
+  }
 
-  function = instance.GetFunctionByName(functionName.c_str(),
-                                        instance.GetActiveStateName());
+  function = instance->GetFunctionByName(functionName.c_str(), "");
 
   if (function.valid) {
     if (function.IsNative())
       throw std::runtime_error("Function not found - '" +
                                std::string(functionName) + "'");
 
-    result = instance.StartFunction(function, arguments);
+    result = instance->StartFunction(function, arguments, stackIdHolder);
   }
   if (!function.valid)
     throw std::runtime_error("function is not valid");
@@ -179,58 +236,26 @@ VarValue VirtualMachine::CallStatic(std::string className,
   return result;
 }
 
-ActivePexInstance& VirtualMachine::GetActivePexInObject(
-  VarValue* object, const std::string& scriptType)
+PexScript::Lazy VirtualMachine::GetPexByName(const std::string& name)
 {
-  static ActivePexInstance notValidInstance = ActivePexInstance();
-
-  auto it = std::find_if(gameObjects.begin(), gameObjects.end(),
-                         [&](RegisteredGameOgject& _object) {
-                           for (auto& instance : _object.second) {
-                             if (instance.GetSourcePexName() == scriptType) {
-                               return true;
-                             }
-                           }
-                           return false;
-                         });
-
-  if (it == gameObjects.end()) {
-    return notValidInstance;
-  }
-
-  for (auto& instance : it->second) {
-    if (instance.GetSourcePexName() == scriptType) {
-      return instance;
-    }
-  }
-
-  return notValidInstance;
-}
-
-PexScript::Ptr VirtualMachine::GetPexByName(const std::string& name)
-{
-  auto myScriptPex = std::find_if(
-    allLoadedScripts.begin(), allLoadedScripts.end(),
-    [&](const std::shared_ptr<PexScript>& pexScript) {
-      return !Utils::stricmp(pexScript->source.data(), name.data());
-    });
-
-  if (myScriptPex == allLoadedScripts.end())
-    return nullptr;
-
-  return myScriptPex.operator*();
+  auto it = allLoadedScripts.find(CIString{ name.begin(), name.end() });
+  if (it != allLoadedScripts.end())
+    return it->second;
+  return PexScript::Lazy();
 }
 
 ActivePexInstance::Ptr VirtualMachine::CreateActivePexInstance(
   const std::string& pexScriptName, VarValue activeInstanceOwner,
-  VarForBuildActivePex mapForFillPropertys, std::string childrenName)
+  const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+  std::string childrenName)
 {
-  for (auto& baseScript : allLoadedScripts) {
-    if (baseScript->source == pexScriptName) {
-      ActivePexInstance scriptInstance(baseScript, mapForFillPropertys, this,
-                                       activeInstanceOwner, childrenName);
-      return std::make_shared<ActivePexInstance>(scriptInstance);
-    }
+
+  auto it = allLoadedScripts.find(
+    CIString{ pexScriptName.begin(), pexScriptName.end() });
+  if (it != allLoadedScripts.end()) {
+    ActivePexInstance scriptInstance(it->second, mapForFillPropertys, this,
+                                     activeInstanceOwner, childrenName);
+    return std::make_shared<ActivePexInstance>(scriptInstance);
   }
 
   static const ActivePexInstance::Ptr notValidInstance =
@@ -255,8 +280,13 @@ bool VirtualMachine::IsNativeFunctionByNameExisted(
       if (func.first == name)
         return true;
   }
-   
+
   return false;
+}
+
+VirtualMachine::ExceptionHandler VirtualMachine::GetExceptionHandler() const
+{
+  return handler;
 }
 
 void VirtualMachine::RemoveObject(IGameObject::Ptr self)

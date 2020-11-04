@@ -1,7 +1,9 @@
 #pragma once
 #include "Look.h"
 #include "MpObjectReference.h"
+#include "Structures.h"
 #include <memory>
+#include <optional>
 #include <set>
 
 class WorldState;
@@ -19,6 +21,7 @@ public:
   std::unique_ptr<const Look> GetLook() const;
   const std::string& GetLookAsJson();
   const std::string& GetEquipmentAsJson();
+  bool IsWeaponDrawn() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetLook(const Look* newLook);
@@ -28,6 +31,8 @@ public:
                        VisitPropertiesMode mode) override;
 
   void SendToUser(const void* data, size_t size, bool reliable);
+
+  void OnEquip(uint32_t baseId);
 
   class DestroyEventSink
   {
@@ -41,6 +46,11 @@ public:
 
   MpChangeForm GetChangeForm() const override;
   void ApplyChangeForm(const MpChangeForm& changeForm) override;
+
+  uint32_t NextSnippetIndex(
+    std::optional<Viet::Promise<VarValue>> promise = std::nullopt);
+
+  void ResolveSnippet(uint32_t snippetIdx, VarValue v);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;

@@ -144,5 +144,6 @@ export const update = (): void => {
   handleDeath();
 
   const whiterunExit = ObjectReference.from(Game.getFormEx(0x1b1f3));
-  if (whiterunExit) whiterunExit.lock(false, false);
+  // isLocked check prevents OnLockStateChanged spamming
+  if (whiterunExit && whiterunExit.isLocked()) whiterunExit.lock(false, false);
 };

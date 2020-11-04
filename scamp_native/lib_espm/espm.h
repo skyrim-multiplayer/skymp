@@ -152,7 +152,9 @@ public:
   uint32_t GetId() const noexcept;
   const char* GetEditorId(espm::CompressedFieldsCache* compressedFieldsCache =
                             nullptr) const noexcept;
-  void GetScriptData(ScriptData* out) const noexcept;
+  void GetScriptData(ScriptData* out,
+                     espm::CompressedFieldsCache* compressedFieldsCache =
+                       nullptr) const noexcept;
 
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;
@@ -296,6 +298,7 @@ public:
     float scale = 1;
     const LocationalData* loc = nullptr;
     const DoorTeleport* teleport = nullptr;
+    const float* boundsDiv2 = nullptr;
   };
 
   Data GetData() const noexcept;
@@ -437,6 +440,20 @@ public:
 };
 static_assert(sizeof(REFR) == sizeof(RecordHeader));
 
+class FLST : public RecordHeader
+{
+public:
+  static constexpr auto type = "FLST";
+
+  struct Data
+  {
+    std::vector<uint32_t> formIds;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(FLST) == sizeof(RecordHeader));
+
 enum class PropertyType
 {
   Invalid = 0,
@@ -528,6 +545,8 @@ struct Property
       size_t length;
     } str = { 0, 0 };
   } value;
+
+  std::vector<Value> array;
 
   uint8_t status = StatusEdited;
 

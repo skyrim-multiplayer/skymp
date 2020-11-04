@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <set>
 #include <simdjson.h>
 #include <string>
@@ -40,7 +41,6 @@ class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
 struct VarValue;
-struct PropertyValuesMap;
 
 class FormCallbacks;
 
@@ -67,9 +67,10 @@ public:
   using SendToUserFn = std::function<void(MpActor* actor, const void* data,
                                           size_t size, bool reliable)>;
 
-  MpObjectReference(const LocationalData& locationalData,
-                    const FormCallbacks& callbacks, uint32_t baseId,
-                    const char* baseType);
+  MpObjectReference(
+    const LocationalData& locationalData, const FormCallbacks& callbacks,
+    uint32_t baseId, std::string baseType,
+    std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt);
 
   const NiPoint3& GetPos() const;
   const NiPoint3& GetAngle() const;
@@ -80,26 +81,33 @@ public:
   const bool& IsOpen() const;
   const bool& IsDisabled() const;
   const std::chrono::milliseconds& GetRelootTime() const;
+  bool GetAnimationVariableBool(const char* name) const;
+  bool IsPointInsidePrimitive(const NiPoint3& point) const;
+  bool HasPrimitive() const;
+  FormCallbacks GetCallbacks() const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
 
   virtual void VisitProperties(const PropertiesVisitor& visitor,
                                VisitPropertiesMode mode);
+  virtual void Activate(MpActor& activationSource);
 
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);
   void SetHarvested(bool harvested);
   void SetOpen(bool open);
-  void Activate(MpActor& activationSource);
   void PutItem(MpActor& actor, const Inventory::Entry& entry);
   void TakeItem(MpActor& actor, const Inventory::Entry& entry);
   void SetRelootTime(std::chrono::milliseconds newRelootTime);
   void SetChanceNoneOverride(uint8_t chanceNone);
   void SetCellOrWorld(uint32_t worldOrCell);
+  void SetAnimationVariableBool(const char* name, bool value);
   void Disable();
   void Enable();
+  void SetActivationBlocked(bool blocked);
   void ForceSubscriptionsUpdate();
+  void SetPrimitive(const NiPoint3& boundsDiv2);
 
   // If you want to completely remove ObjectReference from the grid you need
   // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these
@@ -109,6 +117,7 @@ public:
 
   void AddItem(uint32_t baseId, uint32_t count);
   void AddItems(const std::vector<Inventory::Entry>& entries);
+  void RemoveItem(uint32_t baseId, uint32_t count, MpObjectReference* target);
   void RemoveItems(const std::vector<Inventory::Entry>& entries,
                    MpObjectReference* target = nullptr);
   void RelootContainer();
@@ -134,6 +143,14 @@ public:
   // to another grid
   void SetCellOrWorldObsolete(uint32_t worldOrCell);
 
+  using Visitor = std::function<void(MpObjectReference*)>;
+  void VisitNeighbours(const Visitor& visitor);
+
+protected:
+  void SendPapyrusEvent(const char* eventName,
+                        const VarValue* arguments = nullptr,
+                        size_t argumentsCount = 0) override;
+
 private:
   void Init(WorldState* parent, uint32_t formId) override;
 
@@ -147,25 +164,24 @@ private:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
-  void CastProperty(const espm::CombineBrowser& br, const espm::Property& prop,
-                    VarValue* out);
-  void BuildScriptProperties(const espm::CombineBrowser& br,
-                             const espm::ScriptData& scriptData,
-                             PropertyValuesMap* out);
   bool IsLocationSavingNeeded() const;
+  void ProcessActivate(MpActor& activationSource);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
+  std::unique_ptr<std::map<MpObjectReference*, bool>> emittersWithPrimitives;
+  std::unique_ptr<std::set<MpObjectReference*>> primitivesWeAreInside;
 
-  const char* const baseType;
+  std::string baseType;
   uint32_t baseId = 0;
   MpActor* occupant = nullptr;
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
   std::chrono::milliseconds relootTime{ 3000 };
   std::unique_ptr<uint8_t> chanceNoneOverride;
+  bool activationBlocked = false;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

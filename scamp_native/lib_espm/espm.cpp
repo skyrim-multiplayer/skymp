@@ -1,4 +1,5 @@
 #include "ZlibUtils.h"
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <memory>
@@ -278,6 +279,11 @@ std::wstring ReadWstring(const uint8_t* ptr)
   return std::wstring(scriptName, scriptNameSize / 2);
 }
 
+espm::PropertyType GetElementType(espm::PropertyType arrayType)
+{
+  return static_cast<espm::PropertyType>(static_cast<int>(arrayType) - 10);
+}
+
 const uint8_t* ReadPropertyValue(const uint8_t* p, espm::Property* prop,
                                  uint16_t objFormat)
 {
@@ -308,12 +314,18 @@ const uint8_t* ReadPropertyValue(const uint8_t* p, espm::Property* prop,
       p += length;
       return p;
     }
-    case espm::PropertyType::ObjectArray: {
+    case espm::PropertyType::ObjectArray:
+    case espm::PropertyType::IntArray:
+    case espm::PropertyType::FloatArray:
+    case espm::PropertyType::BoolArray:
+    case espm::PropertyType::StringArray: {
       uint32_t arrayLength = *reinterpret_cast<const uint32_t*>(p);
       p += 4;
       for (uint32_t i = 0; i < arrayLength; ++i) {
-        p += 8;
-        // TODO: Read values
+        espm::Property element;
+        element.propertyType = GetElementType(t);
+        p = ReadPropertyValue(p, &element, objFormat);
+        prop->array.push_back(element.value);
       }
       return p;
     }
@@ -354,12 +366,15 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
   }
 }
 
-void espm::RecordHeader::GetScriptData(ScriptData* out) const noexcept
+void espm::RecordHeader::GetScriptData(
+  ScriptData* out, espm::CompressedFieldsCache* compressedFieldsCache) const
+  noexcept
 {
   ScriptData res;
 
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "VMAD", 4)) {
         res.version = *reinterpret_cast<const uint16_t*>(data);
         res.objFormat = *reinterpret_cast<const uint16_t*>(
@@ -371,7 +386,8 @@ void espm::RecordHeader::GetScriptData(ScriptData* out) const noexcept
         res.scripts.resize(scriptCount);
         FillScriptArray(p, res.scripts, res.objFormat);
       }
-    });
+    },
+    compressedFieldsCache);
 
   *out = res;
 }
@@ -542,11 +558,13 @@ espm::REFR::Data espm::REFR::GetData() const noexcept
       if (!memcmp(type, "NAME", 4))
         result.baseId = *(uint32_t*)data;
       else if (!memcmp(type, "XSCL", 4))
-        result.scale = *(float*)data;
+        result.scale = *reinterpret_cast<const float*>(data);
       else if (!memcmp(type, "DATA", 4))
         result.loc = (LocationalData*)data;
       else if (!memcmp(type, "XTEL", 4))
         result.teleport = (DoorTeleport*)data;
+      else if (!memcmp(type, "XPRM", 4))
+        result.boundsDiv2 = reinterpret_cast<const float*>(data);
     });
   return result;
 }
@@ -664,6 +682,20 @@ espm::NAVM::Data espm::NAVM::GetData(
       }
     },
     &compressedFieldsCache);
+  return result;
+}
+
+espm::FLST::Data espm::FLST::GetData() const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "LNAM", 4)) {
+        const auto formId = *reinterpret_cast<const uint32_t*>(data);
+        result.formIds.push_back(formId);
+      }
+    });
+  std::reverse(result.formIds.begin(), result.formIds.end());
   return result;
 }
 

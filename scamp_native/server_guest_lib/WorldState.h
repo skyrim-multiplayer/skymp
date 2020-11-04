@@ -13,6 +13,7 @@
 #include <map>
 #include <memory>
 #include <sparsepp/spp.h>
+#include <spdlog/spdlog.h>
 #include <sstream>
 
 #ifdef AddForm
@@ -55,7 +56,14 @@ public:
 
   void RequestSave(MpObjectReference& ref);
 
+  void RegisterForSingleUpdate(const VarValue& self, float seconds);
+
+  Viet::Promise<Viet::Void> SetTimer(float seconds);
+
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
+
+  void SendPapyrusEvent(MpForm* form, const char* eventName,
+                        const VarValue* arguments, size_t argumentsCount);
 
   template <class F>
   F& GetFormAt(uint32_t formId)
@@ -121,6 +129,7 @@ public:
 
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
+  std::shared_ptr<spdlog::logger> logger;
 
   // Only for tests
   auto& GetGrids() { return grids; }

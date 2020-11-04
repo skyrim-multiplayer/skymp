@@ -1,9 +1,6 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
-
-#include <espm.h>
-
 #include <Loader.h>
+#include <catch2/catch.hpp>
 
 extern espm::Loader l;
 
@@ -156,4 +153,29 @@ TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
             espm::Property::Object("TrapDiseaseRattles", 0x10a24e),
             espm::Property::Object("TrapDiseaseRockjoint", 0x10a24f),
             espm::Property::Object("TrapDiseaseWitbane", 0x10a250) });
+}
+
+TEST_CASE("Loads FormList", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(0x21e81);
+  REQUIRE(form.rec->GetType() == "FLST");
+
+  auto data = reinterpret_cast<espm::FLST*>(form.rec)->GetData();
+  REQUIRE(data.formIds == std::vector<uint32_t>({ 0x3eab9, 0x4e4bb }));
+}
+
+TEST_CASE("Loads refr with primitive", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto refr = br.LookupById(0xc07f0);
+  REQUIRE(refr.rec);
+  REQUIRE(refr.rec->GetType() == "REFR");
+
+  auto data = reinterpret_cast<espm::REFR*>(refr.rec)->GetData();
+  REQUIRE(abs(data.boundsDiv2[0] - 334.1504f) < 0.1);
+  REQUIRE(abs(data.boundsDiv2[1] - 262.88865f) < 0.1);
+  REQUIRE(abs(data.boundsDiv2[2] - 221.2002f) < 0.1);
 }

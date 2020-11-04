@@ -18,3 +18,11 @@ Debugging with GDB (Linux):
    `docker exec -ti <container_name> ps -eaf`
 2. Attach
    `docker exec -ti --privileged <container_name> gdb -p <node_pid>`
+
+Debugging unit tests (Linux):
+
+1. Start debugging `docker run -it <image_name> gdb build/scamp_native/unit`
+2. Type `r` to run
+
+Useful links (RU):
+- https://eax.me/gdb/

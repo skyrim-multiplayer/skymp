@@ -33,7 +33,6 @@ export interface Face {
 
 export interface ChangeFormNpc {
   raceId?: number;
-  weight?: number;
   name?: string;
   face?: Face;
 }
@@ -2618,6 +2617,7 @@ export declare class TESModPlatform {
     poison: Potion,
     poisonCount: number
   ): void;
+  static blockPapyrusEvents(block: boolean): void;
   static clearTintMasks(targetActor: Actor): void;
   static createNpc(): ActorBase;
   static getNthVtableElement(

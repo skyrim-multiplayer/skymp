@@ -35,7 +35,13 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     (m: AnyMessage) => void
   >;
   const f = handler[msgType];
-  //if (msgType !== "UpdateMovement") printConsole(msgType, msgAny);
+  if (msgType !== "UpdateMovement") {
+    printConsole();
+    for (const key in msgAny) {
+      const v = (msgAny as Record<string, any>)[key];
+      printConsole(`${key}=${JSON.stringify(v)}`);
+    }
+  }
   if (f && typeof f === "function") handler[msgType](msgAny);
 };
 
@@ -95,11 +101,20 @@ export class SkympClient {
     on("activate", (e) => {
       lastInv = getInventory(Game.getPlayer());
       const caster = e.caster ? e.caster.getFormID() : 0;
-      const target = e.target ? e.target.getFormID() : 0;
+      let target = e.target ? e.target.getFormID() : 0;
 
       if (caster !== 0x14) return;
+      if (!target) return;
 
-      if (!target || target >= 0xff000000) return;
+      if (target >= 0xff000000) {
+        const view = this.getView();
+        if (!view) return;
+        target = view.getRemoteRefrId(target);
+        if (!target)
+          return printConsole(
+            `View not found for formId ${target.toString(16)}`
+          );
+      }
 
       this.sendTarget.send(
         { t: MsgType.Activate, data: { caster, target } },
@@ -142,10 +157,20 @@ export class SkympClient {
 
     const playerFormId = 0x14;
     on("equip", (e) => {
-      if (e.actor.getFormID() === playerFormId) this.equipmentChanged = true;
+      if (!e.actor || !e.baseObj) return;
+      if (e.actor.getFormID() === playerFormId) {
+        this.equipmentChanged = true;
+        this.sendTarget.send(
+          { t: MsgType.OnEquip, baseId: e.baseObj.getFormID() },
+          false
+        );
+      }
     });
     on("unequip", (e) => {
-      if (e.actor.getFormID() === playerFormId) this.equipmentChanged = true;
+      if (!e.actor || !e.baseObj) return;
+      if (e.actor.getFormID() === playerFormId) {
+        this.equipmentChanged = true;
+      }
     });
     on("loadGame", () => {
       // Currently only armor is equipped after relogging (see remoteServer.ts)
@@ -272,6 +297,12 @@ export class SkympClient {
     });
   }
 
+  private getView(): WorldView | undefined {
+    const res = storage.view as WorldView;
+    if (typeof res === "object") return res;
+    return undefined;
+  }
+
   private playerAnimSource?: AnimationSource;
   private lastSendMovementMoment = 0;
   private lastAnimationSent?: Animation;
@@ -283,3 +314,8 @@ export class SkympClient {
   private equipmentChanged = false;
   private numEquipmentChanges = 0;
 }
+
+once("update", () => {
+  // Is it racing with OnInit in Papyrus?
+  sp.TESModPlatform.blockPapyrusEvents(true);
+});

@@ -29,6 +29,7 @@ import { isBadMenuShown } from "./components/equipment";
 import { Movement } from "./components/movement";
 import { IdManager } from "../lib/idManager";
 import { applyLookToPlayer } from "./components/look";
+import * as spSnippet from "./spSnippet";
 
 class SpawnTask {
   running = false;
@@ -162,7 +163,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
 
     let movement: Movement = null;
-    if (!msg.refrId) {
+    if (msg.refrId >= 0xff000000) {
       movement = {
         pos: msg.transform.pos,
         rot: msg.transform.rot,
@@ -388,6 +389,27 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         break;
     }
   }
+
+  spSnippet(msg: messages.SpSnippet): void {
+    once("update", async () => {
+      spSnippet
+        .run(msg)
+        .then((res) => {
+          if (res === undefined) res = null;
+          this.send(
+            {
+              t: messages.MsgType.FinishSpSnippet,
+              returnValue: res,
+              snippetIdx: msg.snippetIdx,
+            },
+            true
+          );
+        })
+        .catch((e) => printConsole("!!! SpSnippet failed", e));
+    });
+  }
+
+  /** Packet handlers end **/
 
   getWorldModel(): WorldModel {
     return this.worldModel;

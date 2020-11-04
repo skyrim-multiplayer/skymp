@@ -196,7 +196,7 @@ Assert(!(6.0 == 5.0))
 AAATestObject strFormId1 = OpcodeRef as AAATestObject
 AAATestObject strFormId2 = OpcodeRef as AAATestObject
 Assert(strFormId1 == strFormId2)
-AAATestObject EmptyFormId 
+AAATestObject EmptyFormId
 Assert(EmptyFormId == False)
 
 Assert(5 != 4)
@@ -232,7 +232,7 @@ EndFunction
 
 Function ReturnTest()
 Print(" Start Return Test!")
-	
+
   Assert(5 == returnValue(5))
   Assert(42 == TestFunction())
 
@@ -339,10 +339,10 @@ Assert(-1 == index)
 _arrayStr[2] = "Three"
 
 index = _arrayStr.Find("Three", 2)
-Assert(2 == index) 
+Assert(2 == index)
 
 index = _arrayStr.Find("Four")
-Assert(-1 == index) 
+Assert(-1 == index)
 
 index = _arrayStr.RFind("Three")
 Assert(3 == index)
@@ -483,7 +483,7 @@ Int Function returnValue(Int v) global
   Return v
 EndFunction
 
-Int Function Factorial(Int n); function for recursion tests 
+Int Function Factorial(Int n); function for recursion tests
 
   If n < 1
     Return 1

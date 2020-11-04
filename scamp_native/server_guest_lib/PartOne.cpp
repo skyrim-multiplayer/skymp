@@ -25,12 +25,14 @@ struct PartOne::Impl
 
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<IActionListener> actionListener;
+
+  std::shared_ptr<spdlog::logger> logger;
 };
 
 PartOne::PartOne()
 {
-  logger.reset(new spdlog::logger{ "empty logger" });
   pImpl.reset(new Impl);
+  pImpl->logger.reset(new spdlog::logger{ "empty logger" });
 
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
                               MpObjectReference* emitter,
@@ -73,14 +75,13 @@ PartOne::PartOne()
 
     const char* refrIdPrefix = "";
     char refrId[32] = { 0 };
-    if (!emitterAsActor) {
-      refrIdPrefix = R"(, "refrId": )";
-      sprintf(refrId, "%d", emitter->GetFormId());
-    }
+    refrIdPrefix = R"(, "refrId": )";
+    sprintf(refrId, "%u", emitter->GetFormId());
 
     const char* baseIdPrefix = "";
     char baseId[32] = { 0 };
-    if (emitter->GetBaseId() != 0) {
+    if (emitter->GetBaseId() != 0x00000000 &&
+        emitter->GetBaseId() != 0x00000007) {
       baseIdPrefix = R"(, "baseId": )";
       sprintf(baseId, "%d", emitter->GetBaseId());
     }
@@ -335,7 +336,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
     auto& subVector = refrRecords[i];
     auto mapping = espm->GetBrowser().GetMapping(i);
 
-    logger->info("starting {}", i);
+    pImpl->logger->info("starting {}", worldState.espmFiles[i]);
 
     for (auto& refrRecord : *subVector) {
       auto refr = reinterpret_cast<espm::REFR*>(refrRecord);
@@ -344,7 +345,8 @@ void PartOne::AttachEspm(espm::Loader* espm,
       auto baseId = espm::GetMappedId(data.baseId, *mapping);
       auto base = espm->GetBrowser().LookupById(baseId);
       if (!base.rec)
-        logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
+        pImpl->logger->info("baseId {} {}", baseId,
+                            static_cast<void*>(base.rec));
       if (!base.rec)
         continue;
 
@@ -354,6 +356,13 @@ void PartOne::AttachEspm(espm::Loader* espm,
            !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
           (t != "TREE" ||
            !reinterpret_cast<espm::TREE*>(base.rec)->GetData().resultItem))
+        continue;
+
+      enum
+      {
+        InitiallyDisabled = 0x800
+      };
+      if (refr->GetFlags() & InitiallyDisabled)
         continue;
 
       auto formId = espm::GetMappedId(refrRecord->GetId(), *mapping);
@@ -369,7 +378,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
 
       if (!worldOrCell) {
         if (!cell->GetParentCELL(worldOrCell)) {
-          logger->info("Anomally: refr without world/cell");
+          pImpl->logger->info("Anomally: refr without world/cell");
           continue;
         }
       }
@@ -386,21 +395,27 @@ void PartOne::AttachEspm(espm::Loader* espm,
 
       } else {
         if (!locationalData) {
-          logger->info("Anomally: refr without locationalData");
+          pImpl->logger->info("Anomally: refr without locationalData");
           continue;
         }
+
+        std::optional<NiPoint3> primitiveBoundsDiv2;
+        if (data.boundsDiv2)
+          primitiveBoundsDiv2 = NiPoint3(
+            data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
 
         auto typeStr = t.ToString();
         worldState.AddForm(
           std::unique_ptr<MpObjectReference>(new MpObjectReference(
             { GetPos(locationalData), GetRot(locationalData), worldOrCell },
-            CreateFormCallbacks(sendTarget), baseId, typeStr.data())),
+            CreateFormCallbacks(sendTarget), baseId, typeStr.data(),
+            primitiveBoundsDiv2)),
           formId, true);
       }
     }
   }
 
-  logger->info("AttachEspm took {} ticks", clock() - was);
+  pImpl->logger->info("AttachEspm took {} ticks", clock() - was);
 }
 
 void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
@@ -419,14 +434,20 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
       ++numPlayerCharacters;
   });
 
-  logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
-               "(Including {} player characters)",
-               clock() - was, n, numPlayerCharacters);
+  pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
+                      "(Including {} player characters)",
+                      clock() - was, n, numPlayerCharacters);
 }
 
 espm::Loader& PartOne::GetEspm() const
 {
   return worldState.GetEspm();
+}
+
+void PartOne::AttachLogger(std::shared_ptr<spdlog::logger> logger)
+{
+  pImpl->logger = logger;
+  worldState.logger = logger;
 }
 
 namespace {
@@ -503,6 +524,12 @@ FormCallbacks PartOne::CreateFormCallbacks(Networking::ISendTarget* sendTarget)
   return { subscribe, unsubscribe, sendToUser };
 }
 
+IActionListener& PartOne::GetActionListener()
+{
+  InitActionListener();
+  return *pImpl->actionListener;
+}
+
 void PartOne::AddUser(Networking::UserId userId, UserType type)
 {
   serverState.Connect(userId);
@@ -519,11 +546,16 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
   if (!pImpl->packetParser)
     pImpl->packetParser.reset(new PacketParser);
 
+  InitActionListener();
+
+  pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
+                                                 *pImpl->actionListener);
+}
+
+void PartOne::InitActionListener()
+{
   if (!pImpl->actionListener)
     pImpl->actionListener.reset(
       new ActionListener(worldState, serverState, pImpl->listeners,
                          pImpl->espm, pushedSendTarget));
-
-  pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
-                                                 *pImpl->actionListener);
 }

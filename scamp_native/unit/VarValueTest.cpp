@@ -1,6 +1,7 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
+#include "OpcodesImplementation.h"
 #include "Structures.h"
 #include <cstdint>
 #include <stdexcept>
@@ -13,6 +14,42 @@ TEST_CASE("test bool operators (<, <=, >, >=)", "[VarValue]")
   REQUIRE(bool(bool1 <= bool2));
   REQUIRE(bool(bool2 > bool1));
   REQUIRE(bool(bool2 >= bool1));
+}
+
+TEST_CASE("operator= for owning objects", "[VarValue]")
+{
+  class MyObject : public IGameObject
+  {
+  };
+
+  VarValue var;
+  var = VarValue(std::make_shared<MyObject>());
+
+  REQUIRE(dynamic_cast<MyObject*>(static_cast<IGameObject*>(var)));
+}
+
+TEST_CASE("operator== for objects", "[VarValue]")
+{
+  class MyObject : public IGameObject
+  {
+  public:
+    MyObject(int i) { this->i = i; }
+
+    bool EqualsByValue(const IGameObject& rhs) const override
+    {
+      if (auto rhsMy = dynamic_cast<const MyObject*>(&rhs))
+        return i == rhsMy->i;
+      return false;
+    }
+
+  private:
+    int i;
+  };
+
+  REQUIRE(VarValue(std::make_shared<MyObject>(1)) ==
+          VarValue(std::make_shared<MyObject>(1)));
+  REQUIRE(VarValue(std::make_shared<MyObject>(1)) !=
+          VarValue(std::make_shared<MyObject>(2)));
 }
 
 TEST_CASE("VarValue Identifier", "[VarValue]")
@@ -165,4 +202,12 @@ TEST_CASE("wrong types", "[VarValue]")
   }
   REQUIRE(err != "");
   err = "";
+}
+
+TEST_CASE("strcat implicit casts", "[VarValue]")
+{
+  StringTable stringTable;
+  auto res = OpcodesImplementation::StrCat(VarValue::None(), VarValue("_abc"),
+                                           stringTable);
+  REQUIRE(res == VarValue("None_abc"));
 }

@@ -1,18 +1,25 @@
 #pragma once
+#include "Promise.h"
 #include <cassert>
 #include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 class VirtualMachine;
 struct PexScript;
+class ActivePexInstance;
+class StackIdHolder;
 
 class IGameObject
 {
+  friend class VirtualMachine;
+  friend class ActivePexInstance;
+
 public:
   virtual ~IGameObject() = default;
   virtual const char* GetStringID() { return "Virtual Implementation"; };
@@ -21,6 +28,11 @@ public:
 
   // 'Actor', 'ObjectReference' and so on. Used for dynamic casts
   virtual const char* GetParentNativeScript() { return ""; }
+
+  virtual bool EqualsByValue(const IGameObject& obj) const { return false; }
+
+private:
+  std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
 };
 
 enum class FunctionType
@@ -43,6 +55,9 @@ private:
     float f;
     bool b;
   } data;
+
+  std::shared_ptr<IGameObject> owningObject;
+  int32_t stackId = -1;
 
 public:
   std::string objectType;
@@ -81,6 +96,8 @@ public:
   explicit VarValue(const char* value);
   explicit VarValue(float value);
   explicit VarValue(bool value);
+  explicit VarValue(Viet::Promise<VarValue> promise);
+  explicit VarValue(IGameObject::Ptr object);
 
   VarValue(uint8_t type, const char* value);
 
@@ -98,6 +115,13 @@ public:
 
   std::shared_ptr<std::vector<VarValue>> pArray;
 
+  std::shared_ptr<Viet::Promise<VarValue>> promise;
+
+  int32_t GetMetaStackId() const;
+  void SetMetaStackIdHolder(std::shared_ptr<StackIdHolder> stackIdHolder);
+  static VarValue AttachTestStackId(VarValue original = VarValue::None(),
+                                    int32_t stackId = 108);
+
   VarValue operator+(const VarValue& argument2);
   VarValue operator-(const VarValue& argument2);
   VarValue operator*(const VarValue& argument2);
@@ -105,29 +129,36 @@ public:
   VarValue operator%(const VarValue& argument2);
   VarValue operator!();
 
-  VarValue& operator=(const VarValue& argument2);
+  bool operator==(const VarValue& argument2) const;
+  bool operator!=(const VarValue& argument2) const;
+  bool operator>(const VarValue& argument2) const;
+  bool operator>=(const VarValue& argument2) const;
+  bool operator<(const VarValue& argument2) const;
+  bool operator<=(const VarValue& argument2) const;
 
-  bool operator==(const VarValue& argument2);
-  bool operator>(const VarValue& argument2);
-  bool operator>=(const VarValue& argument2);
-  bool operator<(const VarValue& argument2);
-  bool operator<=(const VarValue& argument2);
+  friend std::ostream& operator<<(std::ostream& os, const VarValue& varValue);
+
+  VarValue& operator=(const VarValue& arg2);
 
   VarValue CastToInt() const;
   VarValue CastToFloat() const;
   VarValue CastToBool() const;
+
+  void Then(std::function<void(VarValue)> cb);
 };
 
 using NativeFunction =
   std::function<VarValue(VarValue self, // will be None for global functions
                          std::vector<VarValue> arguments)>;
 
-using VarForBuildActivePex =
-  std::map<std::string, std::vector<std::pair<std::string, VarValue>>>;
-
-struct PropertyValuesMap
+class IVariablesHolder
 {
-  VarForBuildActivePex data;
+public:
+  virtual ~IVariablesHolder() = default;
+
+  // Must guarantee that no exception would be thrown for '::State' variable
+  virtual VarValue* GetVariableByName(const char* name,
+                                      const PexScript& pex) = 0;
 };
 
 struct FunctionCode
@@ -174,13 +205,10 @@ struct FunctionCode
   struct Instruction
   {
     uint8_t op = 0;
-
-    typedef std::vector<VarValue> VarTable;
-    VarTable args;
+    std::vector<VarValue> args;
   };
 
-  typedef std::vector<Instruction> InstructionList;
-  InstructionList instructions;
+  std::vector<Instruction> instructions;
 };
 
 struct FunctionInfo
@@ -320,10 +348,13 @@ struct DebugInfo
   Storage m_data;
 };
 
+// it's inside pex, but mutable. Mutated by strcat
 struct StringTable
 {
   typedef std::vector<std::string> Storage;
   Storage m_data;
+
+  std::vector<std::shared_ptr<std::string>> instanceStringTable;
 };
 
 struct ScriptHeader
@@ -345,7 +376,18 @@ struct ScriptHeader
 
 struct PexScript
 {
+  // Copying PexScript breaks VarValues with strings
+  PexScript() = default;
+  PexScript(const PexScript&) = delete;
+  PexScript& operator=(const PexScript&) = delete;
+
   using Ptr = std::shared_ptr<PexScript>;
+
+  struct Lazy
+  {
+    std::string source;
+    std::function<std::shared_ptr<PexScript>()> fn;
+  };
 
   ScriptHeader header;
   StringTable stringTable;
@@ -362,34 +404,30 @@ struct ActivePexInstance
 {
 public:
   using Ptr = std::shared_ptr<ActivePexInstance>;
+  using Locals = std::vector<std::pair<std::string, VarValue>>;
 
   ActivePexInstance();
-  ActivePexInstance(PexScript::Ptr sourcePex,
-                    VarForBuildActivePex mapForFillPropertys,
-                    VirtualMachine* parentVM, VarValue activeInstanceOwner,
-                    std::string childrenName);
+  ActivePexInstance(
+    PexScript::Lazy sourcePex,
+    const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+    VirtualMachine* parentVM, VarValue activeInstanceOwner,
+    std::string childrenName);
 
   FunctionInfo GetFunctionByName(const char* name,
                                  std::string stateName) const;
 
-  VarValue& GetVariableValueByName(
-    std::vector<std::pair<std::string, VarValue>>& locals, std::string name);
+  VarValue& GetVariableValueByName(Locals* optionalLocals, std::string name);
 
-  VarValue& GetIndentifierValue(
-    std::vector<std::pair<std::string, VarValue>>& locals, VarValue& value);
-
-  VarValue CastToString(const VarValue& var);
+  VarValue& GetIndentifierValue(Locals& locals, VarValue& value);
 
   VarValue StartFunction(FunctionInfo& function,
-                         std::vector<VarValue>& arguments);
+                         std::vector<VarValue>& arguments,
+                         std::shared_ptr<StackIdHolder> stackIdHolder);
 
-  uint8_t GetTypeByName(std::string typeRef);
+  static uint8_t GetTypeByName(std::string typeRef);
   std::string GetActiveStateName() const;
 
   bool IsValid() const { return _IsValid; };
-
-  ActivePexInstance& GetActivePexInObject(VarValue* object,
-                                          std::string& scriptType);
 
   const std::string& GetSourcePexName() const;
 
@@ -399,41 +437,61 @@ public:
   };
 
 private:
+  struct ExecutionContext;
+
+  std::vector<std::pair<uint8_t, std::vector<VarValue*>>>
+  TransformInstructions(std::vector<FunctionCode::Instruction>& sourceOpCode,
+                        std::shared_ptr<Locals> locals);
+
+  std::shared_ptr<Locals> MakeLocals(FunctionInfo& function,
+                                     std::vector<VarValue>& arguments);
+
+  VarValue ExecuteAll(
+    ExecutionContext& ctx,
+    std::optional<VarValue> previousCallResult = std::nullopt);
+
+  void ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
+                     const std::vector<VarValue*>& arguments);
+
+  bool EnsureCallResultIsSynchronous(const VarValue& callResult,
+                                     ExecutionContext* ctx);
+
   ObjectTable::Object::PropInfo* GetProperty(
     const ActivePexInstance& scriptInstance, std::string nameProperty,
     uint8_t flag);
 
-  std::vector<ObjectTable::Object::VarInfo> FillVariables(
-    PexScript::Ptr sourcePex,
-    std::vector<std::pair<std::string, VarValue>> argsForFillPropertys);
-
   uint8_t GetArrayElementType(uint8_t type);
 
-  void CastObjectToObject(
-    VarValue* result, VarValue* objectType,
-    std::vector<std::pair<std::string, VarValue>>& locals);
+  void CastObjectToObject(VarValue* result, VarValue* objectType,
+                          Locals& locals);
 
   bool HasParent(ActivePexInstance* script, std::string castToTypeName);
   bool HasChild(ActivePexInstance* script, std::string castToTypeName);
 
   ActivePexInstance::Ptr FillParentInstanse(
     std::string nameNeedScript, VarValue activeInstanceOwner,
-    VarForBuildActivePex mapForFillPropertys);
-
-  VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type);
+    const std::shared_ptr<IVariablesHolder>& mapForFillPropertys);
 
   bool _IsValid = false;
 
   std::string childrenName;
 
-  PexScript::Ptr sourcePex = nullptr;
+  PexScript::Lazy sourcePex;
   VirtualMachine* parentVM = nullptr;
 
   VarValue activeInstanceOwner = VarValue::None();
 
   ActivePexInstance::Ptr parentInstance;
 
-  std::vector<ObjectTable::Object::VarInfo> variables;
+  std::shared_ptr<IVariablesHolder> variables;
   std::vector<VarValue::Ptr> identifiersValueNameCache;
-  std::vector<std::shared_ptr<std::string>> instanceStringTable;
+
+  uint64_t promiseIdx = 0;
+  std::map<uint64_t, std::shared_ptr<Viet::Promise<VarValue>>> promises;
+
+  VarValue noneVar = VarValue::None();
 };
+
+VarValue CastToString(const VarValue& var, StringTable& stringTable);
+VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
+                                  StringTable& stringTable);

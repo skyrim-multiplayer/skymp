@@ -2,6 +2,7 @@
 #include "NetworkingCombined.h"
 #include "NetworkingMock.h"
 #include "PartOne.h"
+#include "ScriptStorage.h"
 #include "SqliteSaveStorage.h"
 #include <cassert>
 #include <memory>
@@ -174,17 +175,41 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 #endif
 
     auto logger = spdlog::stdout_color_mt("console");
-    partOne->logger = logger;
-    auto espm = new espm::Loader(dataDir,
-                                 { "Skyrim.esm", "Update.esm", "Dawnguard.esm",
-                                   "HearthFires.esm", "Dragonborn.esm" });
+    partOne->AttachLogger(logger);
+
+    std::ifstream f("server-settings.json");
+    std::stringstream buffer;
+    buffer << f.rdbuf();
+    auto serverSettings = nlohmann::json::parse(buffer.str());
+    if (serverSettings["dataDir"] != nullptr) {
+      dataDir = serverSettings["dataDir"];
+    }
+    logger->info("Using data dir '{}'", dataDir);
+
+    std::vector<espm::fs::path> plugins = { "Skyrim.esm", "Update.esm",
+                                            "Dawnguard.esm", "HearthFires.esm",
+                                            "Dragonborn.esm" };
+    if (serverSettings["loadOrder"].is_array()) {
+      plugins.clear();
+      for (size_t i = 0; i < serverSettings["loadOrder"].size(); ++i) {
+        auto s = static_cast<std::string>(serverSettings["loadOrder"][i]);
+        plugins.push_back(s);
+      }
+    }
+
+    std::shared_ptr<DirectoryScriptStorage> scriptStorage(
+      new DirectoryScriptStorage(
+        (espm::fs::path(dataDir) / "scripts").string()));
+
+    auto espm = new espm::Loader(dataDir, plugins);
     auto realServer = Networking::CreateServer(
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
     server = Networking::CreateCombinedServer({ realServer, serverMock });
+    partOne->worldState.AttachScriptStorage(scriptStorage);
     partOne->AttachEspm(espm, server.get());
     partOne->AttachSaveStorage(
       std::make_shared<SqliteSaveStorage>("world.sqlite", logger),
-      server.get()); // TODO
+      server.get());
 
     auto res =
       info.Env().RunScript("let require = global.require || "
