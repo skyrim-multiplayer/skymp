@@ -1,5 +1,16 @@
 FROM skymp/skymp-base:v2
 
+RUN mkdir /skyrim_data_dir \
+  && cd /skyrim_data_dir \
+  && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dawnguard.esm > Dawnguard.esm \
+  && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Dragonborn.esm > Dragonborn.esm \
+  && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/HearthFires.esm > HearthFires.esm \
+  && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Skyrim.esm > Skyrim.esm \
+  && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Update.esm > Update.esm \
+  && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/scripts.zip > scripts.zip \
+  && unzip scripts.zip \
+  && rm scripts.zip
+
 WORKDIR /usr/src/app
 
 COPY package*.json ./
