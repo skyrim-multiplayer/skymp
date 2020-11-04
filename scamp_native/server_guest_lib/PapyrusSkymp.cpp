@@ -12,7 +12,8 @@ VarValue PapyrusSkymp::SetDefaultActor(VarValue self,
       "Current compatibility policy doesn't support SetDefaultActor");
 
   if (arguments.size() >= 1)
-    heuristicPolicy->SetDefaultActor(GetFormPtr<MpActor>(arguments[0]));
+    heuristicPolicy->SetDefaultActor(self.GetMetaStackId(),
+                                     GetFormPtr<MpActor>(arguments[0]));
 
   return VarValue::None();
 }

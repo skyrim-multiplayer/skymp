@@ -18,7 +18,8 @@ public:
   VarValue name(VarValue self, const std::vector<VarValue>& arguments)        \
   {                                                                           \
     auto s = SpSnippetFunctionGen::SerializeArguments(arguments);             \
-    if (auto actor = compatibilityPolicy->GetDefaultActor(GetName(), #name))  \
+    if (auto actor = compatibilityPolicy->GetDefaultActor(                    \
+          GetName(), #name, self.GetMetaStackId()))                           \
       SpSnippet(GetName(), (#name), s.data()).Execute(actor);                 \
                                                                               \
     return VarValue::None();                                                  \
@@ -28,8 +29,8 @@ public:
   VarValue name(VarValue self, const std::vector<VarValue>& arguments)        \
   {                                                                           \
     auto s = SpSnippetFunctionGen::SerializeArguments(arguments);             \
-    if (auto actor =                                                          \
-          compatibilityPolicy->GetDefaultActor(GetName(), #name)) {           \
+    if (auto actor = compatibilityPolicy->GetDefaultActor(                    \
+          GetName(), #name, self.GetMetaStackId())) {                         \
       auto promise = SpSnippet(GetName(), (#name), s.data(),                  \
                                SpSnippetFunctionGen::GetFormId(self))         \
                        .Execute(actor);                                       \

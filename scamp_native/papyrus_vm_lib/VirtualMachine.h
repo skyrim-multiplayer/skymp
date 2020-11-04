@@ -1,13 +1,34 @@
 #pragma once
 #include "CIString.h"
 #include "Structures.h"
+#include <MakeID.h>
 #include <functional>
 #include <map>
 #include <set>
 
-class VirtualMachine
+class VirtualMachine;
+
+class StackIdHolder
 {
 public:
+  StackIdHolder(VirtualMachine& vm_);
+  ~StackIdHolder();
+  int32_t GetStackId() const;
+
+  StackIdHolder& operator=(const StackIdHolder&) = delete;
+  StackIdHolder(const StackIdHolder&) = delete;
+
+private:
+  int32_t stackId;
+  VirtualMachine& vm;
+};
+
+class VirtualMachine
+{
+  friend class StackIdHolder;
+
+public:
+  using OnEnter = std::function<void(const StackIdHolder&)>;
   using ExceptionHandler = std::function<void(std::string)>;
 
   struct ScriptInfo
@@ -30,16 +51,19 @@ public:
                         FunctionType type, NativeFunction fn);
 
   void SendEvent(IGameObject::Ptr self, const char* eventName,
-                 const std::vector<VarValue>& arguments);
+                 const std::vector<VarValue>& arguments,
+                 OnEnter enter = nullptr);
 
   void SendEvent(ActivePexInstance* instance, const char* eventName,
                  const std::vector<VarValue>& arguments);
 
   VarValue CallMethod(IGameObject* self, const char* methodName,
-                      std::vector<VarValue>& arguments);
+                      std::vector<VarValue>& arguments,
+                      std::shared_ptr<StackIdHolder> stackIdHolder = nullptr);
 
   VarValue CallStatic(std::string className, std::string functionName,
-                      std::vector<VarValue>& arguments);
+                      std::vector<VarValue>& arguments,
+                      std::shared_ptr<StackIdHolder> stackIdHolder = nullptr);
 
   PexScript::Lazy GetPexByName(const std::string& name);
 
@@ -66,4 +90,6 @@ private:
   std::set<IGameObject::Ptr> gameObjectsHolder;
 
   ExceptionHandler handler;
+
+  MakeID stackIdMaker;
 };

@@ -235,6 +235,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
 
 struct ActivePexInstance::ExecutionContext
 {
+  std::shared_ptr<StackIdHolder> stackIdHolder;
   std::vector<FunctionCode::Instruction> opCode;
   std::shared_ptr<Locals> locals;
   bool needReturn = false;
@@ -417,7 +418,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           if (!gameObject)
             gameObject = static_cast<IGameObject*>(activeInstanceOwner);
           auto res = parentVM->CallMethod(gameObject, functionName.c_str(),
-                                          argsForCall);
+                                          argsForCall, ctx->stackIdHolder);
           if (EnsureCallResultIsSynchronous(res, ctx))
             *args[2] = res;
         }
@@ -432,7 +433,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       const char* className = (const char*)(*args[0]);
       const char* functionName = (const char*)(*args[1]);
       try {
-        auto res = parentVM->CallStatic(className, functionName, argsForCall);
+        auto res = parentVM->CallStatic(className, functionName, argsForCall,
+                                        ctx->stackIdHolder);
         if (EnsureCallResultIsSynchronous(res, ctx))
           *args[2] = res;
       } catch (std::exception& e) {
@@ -463,8 +465,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           ObjectTable::Object::PropInfo* runProperty = GetProperty(
             *inst, nameProperty, ObjectTable::Object::PropInfo::kFlags_Read);
           if (runProperty != nullptr) {
-            *args[2] =
-              inst->StartFunction(runProperty->readHandler, argsForCall);
+            *args[2] = inst->StartFunction(runProperty->readHandler,
+                                           argsForCall, ctx->stackIdHolder);
           }
         }
       } else
@@ -482,7 +484,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           ObjectTable::Object::PropInfo* runProperty = GetProperty(
             *inst, nameProperty, ObjectTable::Object::PropInfo::kFlags_Write);
           if (runProperty != nullptr) {
-            inst->StartFunction(runProperty->writeHandler, argsForCall);
+            inst->StartFunction(runProperty->writeHandler, argsForCall,
+                                ctx->stackIdHolder);
           }
         }
       } else
@@ -630,11 +633,14 @@ VarValue ActivePexInstance::ExecuteAll(
   return ctx.returnValue;
 }
 
-VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
-                                          std::vector<VarValue>& arguments)
+VarValue ActivePexInstance::StartFunction(
+  FunctionInfo& function, std::vector<VarValue>& arguments,
+  std::shared_ptr<StackIdHolder> stackIdHolder)
 {
+  if (!stackIdHolder)
+    throw std::runtime_error("An empty stackIdHolder passed to StartFunction");
   auto locals = MakeLocals(function, arguments);
-  ExecutionContext ctx{ function.code.instructions, locals };
+  ExecutionContext ctx{ stackIdHolder, function.code.instructions, locals };
   return ExecuteAll(ctx);
 }
 

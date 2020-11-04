@@ -13,6 +13,7 @@
 class VirtualMachine;
 struct PexScript;
 class ActivePexInstance;
+class StackIdHolder;
 
 class IGameObject
 {
@@ -56,6 +57,7 @@ private:
   } data;
 
   std::shared_ptr<IGameObject> owningObject;
+  int32_t stackId = -1;
 
 public:
   std::string objectType;
@@ -114,6 +116,11 @@ public:
   std::shared_ptr<std::vector<VarValue>> pArray;
 
   std::shared_ptr<Viet::Promise<VarValue>> promise;
+
+  int32_t GetMetaStackId() const;
+  void SetMetaStackIdHolder(std::shared_ptr<StackIdHolder> stackIdHolder);
+  static VarValue AttachTestStackId(VarValue original = VarValue::None(),
+                                    int32_t stackId = 108);
 
   VarValue operator+(const VarValue& argument2);
   VarValue operator-(const VarValue& argument2);
@@ -414,7 +421,8 @@ public:
   VarValue& GetIndentifierValue(Locals& locals, VarValue& value);
 
   VarValue StartFunction(FunctionInfo& function,
-                         std::vector<VarValue>& arguments);
+                         std::vector<VarValue>& arguments,
+                         std::shared_ptr<StackIdHolder> stackIdHolder);
 
   static uint8_t GetTypeByName(std::string typeRef);
   std::string GetActiveStateName() const;

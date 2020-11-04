@@ -9,17 +9,33 @@ HeuristicPolicy::HeuristicPolicy(
 {
 }
 
-void HeuristicPolicy::SetDefaultActor(MpActor* newActor)
+void HeuristicPolicy::SetDefaultActor(int32_t stackId, MpActor* newActor)
 {
-  actor = newActor;
+  if (stackId < 0)
+    throw std::runtime_error("Invalid stackId was passed to SetDefaultActor");
+
+  if (stackInfo.size() <= stackId)
+    stackInfo.resize(stackId + 1);
+  stackInfo[stackId].ac = newActor;
 }
 
 MpActor* HeuristicPolicy::GetDefaultActor(const char* className,
-                                          const char* funcName) const
+                                          const char* funcName,
+                                          int32_t stackId) const
 {
+  if (stackId < 0 || stackId >= stackInfo.size())
+    throw std::runtime_error(
+      "Invalid stackId was passed to GetDefaultActor (" +
+      std::to_string(stackId) + ")");
+
+  auto& info = stackInfo[stackId];
+
+  MpActor* actor = stackId < stackInfo.size() ? stackInfo[stackId].ac
+                                              : static_cast<MpActor*>(nullptr);
+
   if (!actor && logger)
     logger->warn("Unable to determine Actor for '{}.{}' in '{}'", className,
-                 funcName, currentEventName);
+                 funcName, info.currentEventName);
   return actor;
 }
 
@@ -31,9 +47,10 @@ WorldState* HeuristicPolicy::GetWorldState() const
 void HeuristicPolicy::BeforeSendPapyrusEvent(MpForm* form,
                                              const char* eventName,
                                              const VarValue* arguments,
-                                             size_t argumentsCount)
+                                             size_t argumentsCount,
+                                             int32_t stackId)
 {
-  actor = nullptr;
+  MpActor* actor = nullptr;
 
   if (!Utils::stricmp(eventName, "OnActivate") && argumentsCount >= 1) {
     actor = GetFormPtr<MpActor>(arguments[0]);
@@ -48,5 +65,7 @@ void HeuristicPolicy::BeforeSendPapyrusEvent(MpForm* form,
     actor = GetFormPtr<MpActor>(arguments[0]);
   }
 
-  currentEventName = eventName;
+  if (stackInfo.size() <= stackId)
+    stackInfo.resize(stackId + 1);
+  stackInfo[stackId] = { actor, eventName };
 }

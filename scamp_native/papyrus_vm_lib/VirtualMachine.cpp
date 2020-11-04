@@ -1,10 +1,16 @@
 #include "VirtualMachine.h"
 #include "Utils.h"
+#include <MakeID.h>
 #include <algorithm>
 #include <sstream>
 #include <stdexcept>
 
+namespace {
+constexpr uint32_t g_maxStackId = 100'000;
+}
+
 VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
+  : stackIdMaker(g_maxStackId)
 {
   for (auto& script : loadedScripts) {
     allLoadedScripts[CIString{ script.source.begin(), script.source.end() }] =
@@ -13,6 +19,7 @@ VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
 }
 
 VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
+  : stackIdMaker(g_maxStackId)
 {
   for (auto& script : loadedScripts) {
     allLoadedScripts[CIString{ script->source.begin(),
@@ -68,7 +75,8 @@ void VirtualMachine::AddObject(IGameObject::Ptr self,
 }
 
 void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
-                               const std::vector<VarValue>& arguments)
+                               const std::vector<VarValue>& arguments,
+                               OnEnter enter)
 {
   for (auto& scriptInstance : self->activePexInstances) {
     auto name = scriptInstance->GetActiveStateName();
@@ -76,8 +84,11 @@ void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
     auto fn = scriptInstance->GetFunctionByName(
       eventName, scriptInstance->GetActiveStateName());
     if (fn.valid) {
+      auto stackIdHolder = std::make_shared<StackIdHolder>(*this);
+      if (enter)
+        enter(*stackIdHolder);
       scriptInstance->StartFunction(
-        fn, const_cast<std::vector<VarValue>&>(arguments));
+        fn, const_cast<std::vector<VarValue>&>(arguments), stackIdHolder);
     }
   }
 }
@@ -90,25 +101,54 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
   auto fn =
     instance->GetFunctionByName(eventName, instance->GetActiveStateName());
   if (fn.valid) {
-    instance->StartFunction(fn, const_cast<std::vector<VarValue>&>(arguments));
+    instance->StartFunction(fn, const_cast<std::vector<VarValue>&>(arguments),
+                            std::make_shared<StackIdHolder>(*this));
   }
 }
 
-VarValue VirtualMachine::CallMethod(IGameObject* self, const char* methodName,
-                                    std::vector<VarValue>& arguments)
+StackIdHolder::StackIdHolder(VirtualMachine& vm_)
+  : vm(vm_)
 {
-  if (!self) {
+  if (!vm.stackIdMaker.CreateID(*reinterpret_cast<uint32_t*>(&stackId))) {
+    throw std::runtime_error("CreateID failed to create id for stack");
+  }
+}
+
+StackIdHolder::~StackIdHolder()
+{
+  bool destroyed = vm.stackIdMaker.DestroyID(stackId);
+  (void)destroyed;
+  assert(destroyed);
+}
+
+int32_t StackIdHolder::GetStackId() const
+{
+  return stackId;
+}
+
+VarValue VirtualMachine::CallMethod(
+  IGameObject* selfObj, const char* methodName,
+  std::vector<VarValue>& arguments,
+  std::shared_ptr<StackIdHolder> stackIdHolder)
+{
+  if (!stackIdHolder) {
+    stackIdHolder.reset(new StackIdHolder(*this));
+  }
+
+  if (!selfObj) {
     std::stringstream ss;
     ss << '\'' << methodName
        << "' requires self argument to be a valid object";
     throw std::runtime_error(ss.str());
   }
 
-  const char* nativeClass = self->GetParentNativeScript();
+  const char* nativeClass = selfObj->GetParentNativeScript();
   const char* base = nativeClass;
   while (1) {
     if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
-      return f(VarValue(self), arguments);
+      auto self = VarValue(selfObj);
+      self.SetMetaStackIdHolder(stackIdHolder);
+      return f(self, arguments);
     }
     auto it = allLoadedScripts.find(base);
     if (it == allLoadedScripts.end())
@@ -120,7 +160,7 @@ VarValue VirtualMachine::CallMethod(IGameObject* self, const char* methodName,
 
   const char* classToPrint = "";
 
-  for (auto& activeScript : self->activePexInstances) {
+  for (auto& activeScript : selfObj->activePexInstances) {
     FunctionInfo functionInfo;
 
     if (!Utils::stricmp(methodName, "GotoState") ||
@@ -134,7 +174,8 @@ VarValue VirtualMachine::CallMethod(IGameObject* self, const char* methodName,
     }
 
     if (functionInfo.valid) {
-      return activeScript->StartFunction(functionInfo, arguments);
+      return activeScript->StartFunction(functionInfo, arguments,
+                                         stackIdHolder);
     }
   }
 
@@ -144,10 +185,15 @@ VarValue VirtualMachine::CallMethod(IGameObject* self, const char* methodName,
   throw std::runtime_error(e);
 }
 
-VarValue VirtualMachine::CallStatic(std::string className,
-                                    std::string functionName,
-                                    std::vector<VarValue>& arguments)
+VarValue VirtualMachine::CallStatic(
+  std::string className, std::string functionName,
+  std::vector<VarValue>& arguments,
+  std::shared_ptr<StackIdHolder> stackIdHolder)
 {
+  if (!stackIdHolder) {
+    stackIdHolder.reset(new StackIdHolder(*this));
+  }
+
   VarValue result = VarValue::None();
   FunctionInfo function;
 
@@ -157,7 +203,9 @@ VarValue VirtualMachine::CallStatic(std::string className,
     : nativeStaticFunctions[""][functionNameLower];
 
   if (f) {
-    return f(VarValue::None(), arguments);
+    auto self = VarValue::None();
+    self.SetMetaStackIdHolder(stackIdHolder);
+    return f(self, arguments);
   }
 
   auto it =
@@ -178,7 +226,7 @@ VarValue VirtualMachine::CallStatic(std::string className,
       throw std::runtime_error("Function not found - '" +
                                std::string(functionName) + "'");
 
-    result = instance->StartFunction(function, arguments);
+    result = instance->StartFunction(function, arguments, stackIdHolder);
   }
   if (!function.valid)
     throw std::runtime_error("function is not valid");

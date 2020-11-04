@@ -1,4 +1,5 @@
 #include "Structures.h"
+#include "VirtualMachine.h"
 
 VarValue VarValue::CastToInt() const
 {
@@ -180,6 +181,25 @@ VarValue::VarValue(IGameObject::Ptr object)
   : VarValue(object.get())
 {
   owningObject = object;
+}
+
+int32_t VarValue::GetMetaStackId() const
+{
+  if (stackId < 0)
+    throw std::runtime_error("This VarValue has no metadata");
+  return stackId;
+}
+
+void VarValue::SetMetaStackIdHolder(
+  std::shared_ptr<StackIdHolder> stackIdHolder_)
+{
+  stackId = stackIdHolder_->GetStackId();
+}
+
+VarValue VarValue::AttachTestStackId(VarValue original, int32_t stackId)
+{
+  original.stackId = stackId;
+  return original;
 }
 
 VarValue VarValue::operator+(const VarValue& argument2)

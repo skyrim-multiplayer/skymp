@@ -247,10 +247,13 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
                                   const VarValue* arguments,
                                   size_t argumentsCount)
 {
-  pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
-                                        argumentsCount);
+  VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {
+    pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
+                                          argumentsCount, holder.GetStackId());
+  };
   return GetPapyrusVm().SendEvent(form->ToGameObject(), eventName,
-                                  { arguments, arguments + argumentsCount });
+                                  { arguments, arguments + argumentsCount },
+                                  onEnter);
 }
 
 espm::Loader& WorldState::GetEspm() const

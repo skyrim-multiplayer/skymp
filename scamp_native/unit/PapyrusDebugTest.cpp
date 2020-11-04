@@ -21,8 +21,10 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   DoConnect(p, 3);
   p.SetUserActor(3, 0xff000000, &tgt);
 
-  debug.Notification(VarValue::None(), { VarValue("Hello, world!") });
-  debug.Notification(VarValue::None(), { VarValue("Hello, \"world!\"") });
+  debug.Notification(VarValue::AttachTestStackId(),
+                     { VarValue("Hello, world!") });
+  debug.Notification(VarValue::AttachTestStackId(),
+                     { VarValue("Hello, \"world!\"") });
 
   REQUIRE(tgt.messages.size() == 3);
   REQUIRE(tgt.messages[1].userId == 3);

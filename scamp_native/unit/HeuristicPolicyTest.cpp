@@ -17,10 +17,15 @@ TEST_CASE("HeuristicPolicy", "[HeuristicPolicy]")
 
   std::vector<VarValue> args = { actorVarValue };
 
-  REQUIRE(policy.GetDefaultActor("", "") == nullptr);
+  REQUIRE_THROWS_WITH(
+    policy.GetDefaultActor("", "", 0),
+    Catch::Contains("Invalid stackId was passed to GetDefaultActor (0)"));
+
+  policy.SetDefaultActor(0, nullptr);
+  REQUIRE(policy.GetDefaultActor("", "", 0) == nullptr);
 
   policy.BeforeSendPapyrusEvent(nullptr, "OnACTivatE", args.data(),
-                                args.size());
+                                args.size(), 0);
 
-  REQUIRE(policy.GetDefaultActor("", "") == &actor);
+  REQUIRE(policy.GetDefaultActor("", "", 0) == &actor);
 }
