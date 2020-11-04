@@ -120,13 +120,12 @@ const std::string& ActivePexInstance::GetSourcePexName() const
   return sourcePex.fn()->source;
 }
 
-VarValue ActivePexInstance::CastToString(const VarValue& var)
+VarValue CastToString(const VarValue& var, StringTable& stringTable)
 {
   std::string temp;
-  size_t _size = this->sourcePex.fn()->stringTable.m_data.size();
+  size_t _size = stringTable.m_data.size();
 
   switch (var.GetType()) {
-
     case var.kType_Object: {
       IGameObject* ptr = ((IGameObject*)var);
       if (ptr)
@@ -139,36 +138,31 @@ VarValue ActivePexInstance::CastToString(const VarValue& var)
     case var.kType_Identifier:
       assert(false);
       return VarValue();
-
+    case var.kType_String:
+      return var;
     case var.kType_Integer:
 
       temp = std::to_string((int)var);
-      for (auto& str : this->sourcePex.fn()->stringTable.m_data) {
+      for (auto& str : stringTable.m_data) {
         if (str.data() == temp) {
           return VarValue(str.data());
         }
       }
 
-      this->sourcePex.fn()->stringTable.m_data.push_back(temp);
-      return VarValue(this->sourcePex.fn()->stringTable.m_data[_size].data());
-
+      stringTable.m_data.push_back(temp);
+      return VarValue(stringTable.m_data[_size].data());
     case var.kType_Float:
-
       temp = std::to_string((float)var);
-      for (auto& str : this->sourcePex.fn()->stringTable.m_data) {
+      for (auto& str : stringTable.m_data) {
         if (str.data() == temp) {
           return VarValue(str.data());
         }
       }
-
-      this->sourcePex.fn()->stringTable.m_data.push_back(temp);
-      return VarValue(this->sourcePex.fn()->stringTable.m_data[_size].data());
-
+      stringTable.m_data.push_back(temp);
+      return VarValue(stringTable.m_data[_size].data());
     case var.kType_Bool: {
-
       const static std::string boolTrue = "True";
       const static std::string boolFalse = "False";
-
       temp = std::to_string((bool)var);
       if (temp == "0")
         return VarValue(boolFalse.c_str());
@@ -176,28 +170,23 @@ VarValue ActivePexInstance::CastToString(const VarValue& var)
         return VarValue(boolTrue.c_str());
     }
     case var.kType_ObjectArray:
-      return GetElementsArrayAtString(var, var.kType_ObjectArray);
-
+      return GetElementsArrayAtString(var, var.kType_ObjectArray, stringTable);
     case var.kType_StringArray:
-      return GetElementsArrayAtString(var, var.kType_StringArray);
-
+      return GetElementsArrayAtString(var, var.kType_StringArray, stringTable);
     case var.kType_IntArray:
-      return GetElementsArrayAtString(var, var.kType_IntArray);
-
+      return GetElementsArrayAtString(var, var.kType_IntArray, stringTable);
     case var.kType_FloatArray:
-      return GetElementsArrayAtString(var, var.kType_FloatArray);
-
+      return GetElementsArrayAtString(var, var.kType_FloatArray, stringTable);
     case var.kType_BoolArray:
-      return GetElementsArrayAtString(var, var.kType_BoolArray);
-
+      return GetElementsArrayAtString(var, var.kType_BoolArray, stringTable);
     default:
       assert(false);
       return VarValue();
   }
 }
 
-VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
-                                                     uint8_t type)
+VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
+                                  StringTable& stringTable)
 {
   std::string returnValue = "[";
 
@@ -223,7 +212,7 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
 
       case array.kType_BoolArray: {
         VarValue& temp = ((*array.pArray)[i]);
-        returnValue += (const char*)(CastToString(temp));
+        returnValue += (const char*)(CastToString(temp, stringTable));
         break;
       }
       default:
@@ -236,9 +225,12 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
       returnValue += "]";
   }
 
-  instanceStringTable.push_back(std::make_shared<std::string>(returnValue));
+  stringTable.instanceStringTable.push_back(
+    std::make_shared<std::string>(returnValue));
   return VarValue(
-    instanceStringTable[instanceStringTable.size() - 1]->c_str());
+    stringTable
+      .instanceStringTable[stringTable.instanceStringTable.size() - 1]
+      ->c_str());
 }
 
 struct ActivePexInstance::ExecutionContext
@@ -357,7 +349,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           *args[0] = (*args[1]).CastToBool();
           break;
         case VarValue::kType_String:
-          *args[0] = CastToString(*args[1]);
+          *args[0] = CastToString(*args[1], this->sourcePex.fn()->stringTable);
           break;
         default:
           assert(0);
@@ -455,8 +447,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       ctx->needReturn = true;
       break;
     case OpcodesImplementation::Opcodes::op_StrCat:
-      OpcodesImplementation::strCat(*args[0], *args[1], *args[2],
-                                    this->sourcePex.fn()->stringTable);
+      *args[0] = OpcodesImplementation::StrCat(
+        *args[1], *args[2], this->sourcePex.fn()->stringTable);
       break;
     case OpcodesImplementation::Opcodes::op_PropGet:
       // PropGet/Set seems to work only in very simple cases covered by unit
@@ -528,11 +520,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         assert(0);
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
-      OpcodesImplementation::arrayFindElement(*args[0], *args[1], *args[2],
+      OpcodesImplementation::ArrayFindElement(*args[0], *args[1], *args[2],
                                               *args[3]);
       break;
     case OpcodesImplementation::Opcodes::op_Array_RfindElement:
-      OpcodesImplementation::arrayRFindElement(*args[0], *args[1], *args[2],
+      OpcodesImplementation::ArrayRFindElement(*args[0], *args[1], *args[2],
                                                *args[3]);
       break;
     default:

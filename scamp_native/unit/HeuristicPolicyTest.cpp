@@ -9,7 +9,7 @@ TEST_CASE("HeuristicPolicy", "[HeuristicPolicy]")
 {
   auto logger = std::make_shared<spdlog::logger>("empty logger");
   WorldState wst;
-  HeuristicPolicy policy(logger);
+  HeuristicPolicy policy(logger, &wst);
 
   MpActor actor(LocationalData(), FormCallbacks::DoNothing());
   MpFormGameObject actorGameObject(&actor);

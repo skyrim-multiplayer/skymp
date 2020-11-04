@@ -58,6 +58,8 @@ public:
 
   void RegisterForSingleUpdate(const VarValue& self, float seconds);
 
+  Viet::Promise<Viet::Void> SetTimer(float seconds);
+
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
   void SendPapyrusEvent(MpForm* form, const char* eventName,

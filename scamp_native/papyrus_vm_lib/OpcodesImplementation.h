@@ -43,10 +43,10 @@ enum Opcodes
   op_Array_RfindElement = 0x23
 };
 
-void strCat(VarValue& result, VarValue& s1, VarValue& s2, StringTable& table);
+VarValue StrCat(const VarValue& s1, const VarValue& s2, StringTable& table);
 
-void arrayFindElement(VarValue& array, VarValue& result, VarValue& needValue,
+void ArrayFindElement(VarValue& array, VarValue& result, VarValue& needValue,
                       VarValue& startIndex);
-void arrayRFindElement(VarValue& array, VarValue& result, VarValue& needValue,
+void ArrayRFindElement(VarValue& array, VarValue& result, VarValue& needValue,
                        VarValue& startIndex);
 }

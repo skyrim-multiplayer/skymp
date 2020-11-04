@@ -3,8 +3,9 @@
 #include "MpFormGameObject.h"
 
 HeuristicPolicy::HeuristicPolicy(
-  const std::shared_ptr<spdlog::logger>& logger_)
+  const std::shared_ptr<spdlog::logger>& logger_, WorldState* worldState_)
   : logger(logger_)
+  , worldState(worldState_)
 {
 }
 
@@ -16,10 +17,15 @@ void HeuristicPolicy::SetDefaultActor(MpActor* newActor)
 MpActor* HeuristicPolicy::GetDefaultActor(const char* className,
                                           const char* funcName) const
 {
-  if (!actor)
+  if (!actor && logger)
     logger->warn("Unable to determine Actor for '{}.{}' in '{}'", className,
                  funcName, currentEventName);
   return actor;
+}
+
+WorldState* HeuristicPolicy::GetWorldState() const
+{
+  return worldState;
 }
 
 void HeuristicPolicy::BeforeSendPapyrusEvent(MpForm* form,

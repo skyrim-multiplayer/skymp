@@ -20,9 +20,9 @@
 #include <unordered_map>
 
 namespace {
-struct SingleUpdateEntry
+struct TimerEntry
 {
-  VarValue self;
+  Viet::Promise<Viet::Void> promise;
   std::chrono::system_clock::time_point finish;
 };
 }
@@ -35,7 +35,7 @@ struct WorldState::Impl
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
-  std::deque<SingleUpdateEntry> singleUpdates;
+  std::deque<TimerEntry> timers;
   std::shared_ptr<HeuristicPolicy> policy;
 };
 
@@ -44,7 +44,7 @@ WorldState::WorldState()
   logger.reset(new spdlog::logger("empty logger"));
 
   pImpl.reset(new Impl);
-  pImpl->policy.reset(new HeuristicPolicy(logger));
+  pImpl->policy.reset(new HeuristicPolicy(logger, this));
 }
 
 void WorldState::Clear()
@@ -143,12 +143,10 @@ void WorldState::TickTimers()
   }
 
   // Tick RegisterForSingleUpdate
-  while (!pImpl->singleUpdates.empty() &&
-         now >= pImpl->singleUpdates.front().finish) {
-    auto front = std::move(pImpl->singleUpdates.front());
-    pImpl->singleUpdates.pop_front();
-    if (auto form = GetFormPtr<MpForm>(front.self))
-      form->Update();
+  while (!pImpl->timers.empty() && now >= pImpl->timers.front().finish) {
+    auto front = std::move(pImpl->timers.front());
+    pImpl->timers.pop_front();
+    front.promise.Resolve(Viet::Void());
   }
 }
 
@@ -204,24 +202,35 @@ void WorldState::RequestSave(MpObjectReference& ref)
 
 void WorldState::RegisterForSingleUpdate(const VarValue& self, float seconds)
 {
+  SetTimer(seconds).Then([self](Viet::Void) {
+    if (auto form = GetFormPtr<MpForm>(self))
+      form->Update();
+  });
+}
+
+Viet::Promise<Viet::Void> WorldState::SetTimer(float seconds)
+{
+  Viet::Promise<Viet::Void> promise;
+
   auto finish = std::chrono::system_clock::now() +
     std::chrono::milliseconds(static_cast<int>(seconds * 1000));
 
   bool sortRequired = false;
 
-  if (!pImpl->singleUpdates.empty() &&
-      finish > pImpl->singleUpdates.front().finish) {
+  if (!pImpl->timers.empty() && finish > pImpl->timers.front().finish) {
     sortRequired = true;
   }
 
-  pImpl->singleUpdates.push_front({ self, finish });
+  pImpl->timers.push_front({ promise, finish });
 
   if (sortRequired) {
-    std::sort(pImpl->singleUpdates.begin(), pImpl->singleUpdates.end(),
-              [](const SingleUpdateEntry& lhs, const SingleUpdateEntry& rhs) {
+    std::sort(pImpl->timers.begin(), pImpl->timers.end(),
+              [](const TimerEntry& lhs, const TimerEntry& rhs) {
                 return lhs.finish < rhs.finish;
               });
   }
+
+  return promise;
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)

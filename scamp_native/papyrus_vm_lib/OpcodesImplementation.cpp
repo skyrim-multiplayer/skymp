@@ -1,25 +1,28 @@
 #include "OpcodesImplementation.h"
 
-void OpcodesImplementation::strCat(VarValue& result, VarValue& s1,
-                                   VarValue& s2, StringTable& table)
+VarValue OpcodesImplementation::StrCat(const VarValue& s1, const VarValue& s2,
+                                       StringTable& table)
 {
 
   std::string temp;
-  temp = temp + (const char*)s1 + (const char*)s2;
+
+  for (auto param : { &s1, &s2 }) {
+    auto str = CastToString(*param, table);
+    temp += static_cast<const char*>(str);
+  }
 
   for (auto& str : table.m_data) {
     if (str == temp) {
-      result = VarValue(str.data());
-      return;
+      return VarValue(str.data());
     }
   }
 
   size_t _size = table.m_data.size();
   table.m_data.push_back(temp);
-  result = VarValue(table.m_data[_size].data());
+  return VarValue(table.m_data[_size].data());
 }
 
-void OpcodesImplementation::arrayFindElement(VarValue& array, VarValue& result,
+void OpcodesImplementation::ArrayFindElement(VarValue& array, VarValue& result,
                                              VarValue& needValue,
                                              VarValue& startIndex)
 {
@@ -40,7 +43,7 @@ void OpcodesImplementation::arrayFindElement(VarValue& array, VarValue& result,
   }
 }
 
-void OpcodesImplementation::arrayRFindElement(VarValue& array,
+void OpcodesImplementation::ArrayRFindElement(VarValue& array,
                                               VarValue& result,
                                               VarValue& needValue,
                                               VarValue& startIndex)

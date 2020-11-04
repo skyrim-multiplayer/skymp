@@ -39,8 +39,7 @@ private:
   static void CastProperty(const espm::CombineBrowser& br,
                            const espm::Property& prop, VarValue* out,
                            ScriptsCache* scriptsCache);
-  static espm::PropertyType ScriptVariablesHolder::GetElementType(
-    espm::PropertyType arrayType);
+  static espm::PropertyType GetElementType(espm::PropertyType arrayType);
 
   espm::RecordHeader* const baseRecordWithScripts;
   espm::RecordHeader* const refrRecordWithScripts;

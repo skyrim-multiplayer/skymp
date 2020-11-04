@@ -1,6 +1,7 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
+#include "OpcodesImplementation.h"
 #include "Structures.h"
 #include <cstdint>
 #include <stdexcept>
@@ -201,4 +202,12 @@ TEST_CASE("wrong types", "[VarValue]")
   }
   REQUIRE(err != "");
   err = "";
+}
+
+TEST_CASE("strcat implicit casts", "[VarValue]")
+{
+  StringTable stringTable;
+  auto res = OpcodesImplementation::StrCat(VarValue::None(), VarValue("_abc"),
+                                           stringTable);
+  REQUIRE(res == VarValue("None_abc"));
 }

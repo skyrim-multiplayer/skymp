@@ -1,6 +1,7 @@
 #pragma once
 
 class MpActor;
+class WorldState;
 
 class IPapyrusCompatibilityPolicy
 {
@@ -12,4 +13,6 @@ public:
   // non-singleplayer environment (like Debug.Notification)
   virtual MpActor* GetDefaultActor(const char* className,
                                    const char* funcName) const = 0;
+
+  virtual WorldState* GetWorldState() const { return nullptr; }
 };

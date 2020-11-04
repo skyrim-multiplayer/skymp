@@ -341,10 +341,13 @@ struct DebugInfo
   Storage m_data;
 };
 
+// it's inside pex, but mutable. Mutated by strcat
 struct StringTable
 {
   typedef std::vector<std::string> Storage;
   Storage m_data;
+
+  std::vector<std::shared_ptr<std::string>> instanceStringTable;
 };
 
 struct ScriptHeader
@@ -410,8 +413,6 @@ public:
 
   VarValue& GetIndentifierValue(Locals& locals, VarValue& value);
 
-  VarValue CastToString(const VarValue& var);
-
   VarValue StartFunction(FunctionInfo& function,
                          std::vector<VarValue>& arguments);
 
@@ -463,8 +464,6 @@ private:
     std::string nameNeedScript, VarValue activeInstanceOwner,
     const std::shared_ptr<IVariablesHolder>& mapForFillPropertys);
 
-  VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type);
-
   bool _IsValid = false;
 
   std::string childrenName;
@@ -478,10 +477,13 @@ private:
 
   std::shared_ptr<IVariablesHolder> variables;
   std::vector<VarValue::Ptr> identifiersValueNameCache;
-  std::vector<std::shared_ptr<std::string>> instanceStringTable;
 
   uint64_t promiseIdx = 0;
   std::map<uint64_t, std::shared_ptr<Viet::Promise<VarValue>>> promises;
 
   VarValue noneVar = VarValue::None();
 };
+
+VarValue CastToString(const VarValue& var, StringTable& stringTable);
+VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
+                                  StringTable& stringTable);

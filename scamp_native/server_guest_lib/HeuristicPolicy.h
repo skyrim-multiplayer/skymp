@@ -10,10 +10,13 @@
 class HeuristicPolicy : public IPapyrusCompatibilityPolicy
 {
 public:
-  explicit HeuristicPolicy(const std::shared_ptr<spdlog::logger>& logger);
+  explicit HeuristicPolicy(const std::shared_ptr<spdlog::logger>& logger,
+                           WorldState* worldState_);
 
   MpActor* GetDefaultActor(const char* className,
                            const char* funcName) const override;
+
+  WorldState* GetWorldState() const override;
 
   void SetDefaultActor(MpActor* actor);
 
@@ -25,4 +28,5 @@ private:
   MpActor* actor = nullptr;
   const std::shared_ptr<spdlog::logger>& logger;
   const char* currentEventName = "";
+  WorldState* const worldState;
 };

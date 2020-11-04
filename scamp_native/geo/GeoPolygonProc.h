@@ -32,14 +32,13 @@ class GeoPolygonProc
   // face plane if its distance is less than this error
   double _MaxDisError;
 
-  void GeoPolygonProc::Set3DPolygonBoundary();
+  void Set3DPolygonBoundary();
 
-  void GeoPolygonProc::Set3DPolygonUnitError();
+  void Set3DPolygonUnitError();
 
-  void GeoPolygonProc::SetConvex3DFaces();
+  void SetConvex3DFaces();
 
 public:
-  GeoPolygonProc(void) {}
   ~GeoPolygonProc(void) {}
 
   GeoPolygonProc(GeoPolygon polygon)
