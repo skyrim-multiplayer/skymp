@@ -119,6 +119,8 @@ public:
 TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
 {
   auto vm = CreateVirtualMachine();
+  if (!vm)
+    return;
 
   std::vector<VirtualMachine::ScriptInfo> scripts;
   scripts.push_back({ "AAATestObject",
