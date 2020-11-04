@@ -21,5 +21,8 @@ Debugging with GDB (Linux):
 
 Debugging unit tests (Linux):
 
-1. Start debugging `docker run -it exp2 gdb build/scamp_native/unit`
+1. Start debugging `docker run -it <image_name> gdb build/scamp_native/unit`
 2. Type `r` to run
+
+Useful links (RU):
+- https://eax.me/gdb/
