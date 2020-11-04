@@ -8,6 +8,7 @@
 #include <ctime>
 #include <filesystem>
 #include <iterator>
+#include <list>
 
 namespace fs = std::filesystem;
 
@@ -190,4 +191,41 @@ TEST_CASE("Real pex parsing and execution", "[VirtualMachine]")
   REQUIRE(result == VarValue::None());
   pr.Resolve(argsLatentAdd[0] + argsLatentAdd[1]);
   REQUIRE(result == VarValue(5));
+}
+
+TEST_CASE("Test nested latent calls", "[VirtualMachine]")
+{
+  auto vm = CreateVirtualMachine();
+  if (!vm)
+    return;
+
+  struct DoubleTask
+  {
+    int arg = 0;
+    Viet::Promise<VarValue> pr;
+  };
+  std::list<DoubleTask> t;
+
+  vm->RegisterFunction(
+    "LatentTest", "LatentDouble", FunctionType::GlobalFunction,
+    [&](VarValue self, const std::vector<VarValue>& args) {
+      Viet::Promise<VarValue> pr;
+      t.push_back({ static_cast<int>(args[0].CastToInt()), pr });
+      return VarValue(pr);
+    });
+
+  VarValue result;
+  std::vector<VarValue> args;
+  vm->CallStatic("LatentTest", "Main3", args).Then([&](VarValue v) {
+    result = v;
+  });
+
+  REQUIRE(result == VarValue::None());
+
+  while (t.size() > 0) {
+    t.front().pr.Resolve(VarValue(t.front().arg * 2));
+    t.pop_front();
+  }
+
+  REQUIRE(result == VarValue(6));
 }
