@@ -1,8 +1,10 @@
 #include "PapyrusObjectReference.h"
 
 #include "EspmGameObject.h"
+#include "MpActor.h"
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
+#include "SpSnippetFunctionGen.h"
 #include "WorldState.h"
 #include <cstring>
 
@@ -45,10 +47,11 @@ VarValue PapyrusObjectReference::Delete(VarValue self,
 VarValue PapyrusObjectReference::AddItem(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 2)
+  if (arguments.size() < 3)
     return VarValue::None();
   auto item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
+  bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
 
   if (!selfRefr || !item.rec || count <= 0)
@@ -57,19 +60,26 @@ VarValue PapyrusObjectReference::AddItem(
   auto itemId = item.ToGlobalId(item.rec->GetId());
   selfRefr->AddItem(itemId, count);
 
+  if (!silent && count > 0) {
+    if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
+      auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
+      (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(actor);
+    }
+  }
   return VarValue::None();
 }
 
 VarValue PapyrusObjectReference::RemoveItem(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 3)
+  if (arguments.size() < 4)
     return VarValue::None();
 
   auto item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
-  auto refrToAdd = GetFormPtr<MpObjectReference>(arguments[2]);
+  bool silent = static_cast<bool>(arguments[2].CastToBool());
+  auto refrToAdd = GetFormPtr<MpObjectReference>(arguments[3]);
 
   if (!selfRefr || !item.rec)
     return VarValue::None();
@@ -79,6 +89,13 @@ VarValue PapyrusObjectReference::RemoveItem(
   count = count > realCount ? realCount : count;
 
   selfRefr->RemoveItem(itemId, count, refrToAdd);
+
+  if (!silent && count > 0) {
+    if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
+      auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
+      (void)SpSnippet("SkympHacks", "RemoveItem", args.data()).Execute(actor);
+    }
+  }
 
   return VarValue::None();
 }
@@ -166,5 +183,18 @@ VarValue PapyrusObjectReference::Disable(
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
   if (selfRefr)
     selfRefr->Disable();
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::BlockActivation(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1)
+    throw std::runtime_error("BlockActivation requires at least one argument");
+  bool block = static_cast<bool>(arguments[0].CastToBool());
+
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr)
+    selfRefr->SetActivationBlocked(block);
   return VarValue::None();
 }

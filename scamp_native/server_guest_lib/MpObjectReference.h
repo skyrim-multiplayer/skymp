@@ -91,12 +91,12 @@ public:
 
   virtual void VisitProperties(const PropertiesVisitor& visitor,
                                VisitPropertiesMode mode);
+  virtual void Activate(MpActor& activationSource);
 
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);
   void SetHarvested(bool harvested);
   void SetOpen(bool open);
-  void Activate(MpActor& activationSource);
   void PutItem(MpActor& actor, const Inventory::Entry& entry);
   void TakeItem(MpActor& actor, const Inventory::Entry& entry);
   void SetRelootTime(std::chrono::milliseconds newRelootTime);
@@ -105,6 +105,7 @@ public:
   void SetAnimationVariableBool(const char* name, bool value);
   void Disable();
   void Enable();
+  void SetActivationBlocked(bool blocked);
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);
 
@@ -164,6 +165,7 @@ private:
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
   bool IsLocationSavingNeeded() const;
+  void ProcessActivate(MpActor& activationSource);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
@@ -179,6 +181,7 @@ private:
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
   std::chrono::milliseconds relootTime{ 3000 };
   std::unique_ptr<uint8_t> chanceNoneOverride;
+  bool activationBlocked = false;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

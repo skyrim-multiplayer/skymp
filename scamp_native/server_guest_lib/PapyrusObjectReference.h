@@ -21,6 +21,8 @@ public:
   VarValue PlaceAtMe(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetAngle(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Disable(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue BlockActivation(VarValue self,
+                           const std::vector<VarValue>& arguments);
 
   void Register(
     VirtualMachine& vm,
@@ -40,5 +42,6 @@ public:
     AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
     AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
     AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
+    AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
   }
 };

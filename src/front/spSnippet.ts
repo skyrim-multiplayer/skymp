@@ -1,4 +1,4 @@
-import { Game } from "../skyrim-platform/skyrimPlatform";
+import { Game, Form } from "../skyrim-platform/skyrimPlatform";
 import * as sp from "../skyrim-platform/skyrimPlatform";
 
 const spAny = sp as Record<string, any>;
@@ -46,5 +46,21 @@ const runStatic = async (snippet: Snippet): Promise<any> => {
 };
 
 export const run = async (snippet: Snippet): Promise<any> => {
+  if (snippet.class === "SkympHacks") {
+    if (snippet.function === "AddItem" || snippet.function === "RemoveItem") {
+      const form = Form.from(deserializeArg(snippet.arguments[0]));
+      const sign = snippet.function === "AddItem" ? "+" : "-";
+      const count = snippet.arguments[1];
+
+      let soundId = 0x334ab;
+      if (form.getFormID() !== 0xf) soundId = 0x14115;
+
+      sp.Sound.from(Game.getFormEx(soundId)).play(Game.getPlayer());
+
+      if (count > 0)
+        sp.Debug.notification(sign + " " + form.getName() + " (" + count + ")");
+    } else throw new Error("Unknown SkympHack - " + snippet.function);
+    return;
+  }
   return snippet.selfId ? runMethod(snippet) : runStatic(snippet);
 };

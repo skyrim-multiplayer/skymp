@@ -13,6 +13,8 @@ uint32_t SpSnippetFunctionGen::GetFormId(VarValue varValue)
     return form->GetFormId();
   if (auto record = GetRecordPtr(varValue); record.rec)
     return record.ToGlobalId(record.rec->GetId());
+  if (varValue == VarValue::None())
+    return 0;
   std::stringstream ss;
   ss << varValue << " is not a valid Papyrus object";
   throw std::runtime_error(ss.str());

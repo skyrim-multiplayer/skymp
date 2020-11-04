@@ -36,6 +36,12 @@ const char* EspmGameObject::GetParentNativeScript()
     if (t == "ACTI")
       return "activator";
 
+    // there is some code outside espm that relies on these types
+    if (t == "REFR")
+      return "objectreference";
+    if (t == "ACHR")
+      return "actor";
+
     throw std::runtime_error("Unable to find native script for record type '" +
                              t.ToString() + "'");
   }

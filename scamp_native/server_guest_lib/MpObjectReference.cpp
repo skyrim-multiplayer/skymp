@@ -208,6 +208,15 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 }
 
+void MpObjectReference::Activate(MpActor& activationSource)
+{
+  if (!activationBlocked)
+    ProcessActivate(activationSource);
+
+  auto arg = activationSource.ToVarValue();
+  SendPapyrusEvent("OnActivate", &arg, 1);
+}
+
 void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
   auto oldGridPos = GetGridPos(pImpl->ChangeForm().position);
@@ -274,103 +283,6 @@ void MpObjectReference::SetOpen(bool open)
   }
 }
 
-void MpObjectReference::Activate(MpActor& activationSource)
-{
-  auto& loader = GetParent()->GetEspm();
-  auto& compressedFieldsCache = GetParent()->GetEspmCache();
-
-  CheckInteractionAbility(activationSource);
-
-  auto base = loader.GetBrowser().LookupById(GetBaseId());
-  if (!base.rec || !GetBaseId()) {
-    std::stringstream ss;
-    ss << std::hex << GetFormId() << " doesn't have base form";
-    throw std::runtime_error(ss.str());
-  }
-
-  auto t = base.rec->GetType();
-
-  if (t == espm::TREE::type || t == espm::FLOR::type || espm::IsItem(t)) {
-    if (!IsHarvested()) {
-      auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
-      uint32_t resultItem = 0;
-      if (t == espm::TREE::type) {
-        espm::FLOR::Data data;
-        data = espm::Convert<espm::TREE>(base.rec)->GetData();
-        resultItem = espm::GetMappedId(data.resultItem, *mapping);
-      } else if (t == espm::FLOR::type) {
-        espm::FLOR::Data data;
-        data = espm::Convert<espm::FLOR>(base.rec)->GetData();
-        resultItem = espm::GetMappedId(data.resultItem, *mapping);
-      } else {
-        resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
-      }
-
-      activationSource.AddItem(resultItem, 1);
-      SetHarvested(true);
-      RequestReloot();
-    }
-  } else if (t == espm::DOOR::type) {
-
-    auto refrRecord = espm::Convert<espm::REFR>(
-      loader.GetBrowser().LookupById(GetFormId()).rec);
-    auto teleport = refrRecord->GetData().teleport;
-    if (teleport) {
-      if (!IsOpen()) {
-        SetOpen(true);
-        RequestReloot();
-      }
-
-      auto destinationRecord = espm::Convert<espm::REFR>(
-        loader.GetBrowser().LookupById(teleport->destinationDoor).rec);
-      if (!destinationRecord)
-        throw std::runtime_error(
-          "No destination found for this teleport door");
-
-      auto teleportWorldOrCell = espm::GetWorldOrCell(destinationRecord);
-
-      static const auto g_pi = std::acos(-1.f);
-      std::string msg;
-      msg += Networking::MinPacketId;
-      msg += nlohmann::json{
-        { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
-        { "rot",
-          { teleport->rotRadians[0] / g_pi * 180,
-            teleport->rotRadians[1] / g_pi * 180,
-            teleport->rotRadians[2] / g_pi * 180 } },
-        { "worldOrCell", teleportWorldOrCell },
-        { "type", "teleport" }
-      }.dump();
-      activationSource.SendToUser(msg.data(), msg.size(), true);
-
-      activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
-
-    } else {
-      SetOpen(!IsOpen());
-    }
-  } else if (t == espm::CONT::type) {
-    EnsureBaseContainerAdded(loader);
-    if (!this->occupant) {
-      SetOpen(true);
-      SendPropertyTo("inventory", GetInventory().ToJson(), activationSource);
-      activationSource.SendOpenContainer(GetFormId());
-
-      this->occupant = &activationSource;
-
-      this->occupantDestroySink.reset(
-        new OccupantDestroyEventSink(*GetParent(), this));
-      this->occupant->AddEventSink(occupantDestroySink);
-    } else if (this->occupant == &activationSource) {
-      SetOpen(false);
-      this->occupant->RemoveEventSink(this->occupantDestroySink);
-      this->occupant = nullptr;
-    }
-  }
-
-  auto arg = activationSource.ToVarValue();
-  SendPapyrusEvent("OnActivate", &arg, 1);
-}
-
 void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
 {
   CheckInteractionAbility(ac);
@@ -433,6 +345,12 @@ void MpObjectReference::Enable()
   pImpl->EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = false; });
   ForceSubscriptionsUpdate();
+}
+
+void MpObjectReference::SetActivationBlocked(bool blocked)
+{
+  // TODO: Save
+  activationBlocked = blocked;
 }
 
 void MpObjectReference::ForceSubscriptionsUpdate()
@@ -774,6 +692,100 @@ bool MpObjectReference::IsLocationSavingNeeded() const
   auto last = pImpl->GetLastSaveRequestMoment();
   return !last ||
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
+}
+
+void MpObjectReference::ProcessActivate(MpActor& activationSource)
+{
+  auto& loader = GetParent()->GetEspm();
+  auto& compressedFieldsCache = GetParent()->GetEspmCache();
+
+  CheckInteractionAbility(activationSource);
+
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (!base.rec || !GetBaseId()) {
+    std::stringstream ss;
+    ss << std::hex << GetFormId() << " doesn't have base form";
+    throw std::runtime_error(ss.str());
+  }
+
+  auto t = base.rec->GetType();
+
+  if (t == espm::TREE::type || t == espm::FLOR::type || espm::IsItem(t)) {
+    if (!IsHarvested()) {
+      auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
+      uint32_t resultItem = 0;
+      if (t == espm::TREE::type) {
+        espm::FLOR::Data data;
+        data = espm::Convert<espm::TREE>(base.rec)->GetData();
+        resultItem = espm::GetMappedId(data.resultItem, *mapping);
+      } else if (t == espm::FLOR::type) {
+        espm::FLOR::Data data;
+        data = espm::Convert<espm::FLOR>(base.rec)->GetData();
+        resultItem = espm::GetMappedId(data.resultItem, *mapping);
+      } else {
+        resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
+      }
+
+      activationSource.AddItem(resultItem, 1);
+      SetHarvested(true);
+      RequestReloot();
+    }
+  } else if (t == espm::DOOR::type) {
+
+    auto refrRecord = espm::Convert<espm::REFR>(
+      loader.GetBrowser().LookupById(GetFormId()).rec);
+    auto teleport = refrRecord->GetData().teleport;
+    if (teleport) {
+      if (!IsOpen()) {
+        SetOpen(true);
+        RequestReloot();
+      }
+
+      auto destinationRecord = espm::Convert<espm::REFR>(
+        loader.GetBrowser().LookupById(teleport->destinationDoor).rec);
+      if (!destinationRecord)
+        throw std::runtime_error(
+          "No destination found for this teleport door");
+
+      auto teleportWorldOrCell = espm::GetWorldOrCell(destinationRecord);
+
+      static const auto g_pi = std::acos(-1.f);
+      std::string msg;
+      msg += Networking::MinPacketId;
+      msg += nlohmann::json{
+        { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
+        { "rot",
+          { teleport->rotRadians[0] / g_pi * 180,
+            teleport->rotRadians[1] / g_pi * 180,
+            teleport->rotRadians[2] / g_pi * 180 } },
+        { "worldOrCell", teleportWorldOrCell },
+        { "type", "teleport" }
+      }.dump();
+      activationSource.SendToUser(msg.data(), msg.size(), true);
+
+      activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
+
+    } else {
+      SetOpen(!IsOpen());
+    }
+  } else if (t == espm::CONT::type) {
+    EnsureBaseContainerAdded(loader);
+    if (!this->occupant) {
+      SetOpen(true);
+      SendPropertyTo("inventory", GetInventory().ToJson(), activationSource);
+      activationSource.SendOpenContainer(GetFormId());
+
+      this->occupant = &activationSource;
+
+      this->occupantDestroySink.reset(
+        new OccupantDestroyEventSink(*GetParent(), this));
+      this->occupant->AddEventSink(occupantDestroySink);
+    } else if (this->occupant == &activationSource) {
+      SetOpen(false);
+      this->occupant->RemoveEventSink(this->occupantDestroySink);
+      this->occupant = nullptr;
+    }
+  }
 }
 
 void MpObjectReference::RemoveFromGrid()

@@ -1,5 +1,6 @@
 #pragma once
 #include "CIString.h"
+#include "MakeID.h"
 #include "Structures.h"
 #include <MakeID.h>
 #include <functional>
@@ -20,7 +21,7 @@ public:
 
 private:
   int32_t stackId;
-  VirtualMachine& vm;
+  std::shared_ptr<MakeID> makeId;
 };
 
 class VirtualMachine
@@ -91,5 +92,5 @@ private:
 
   ExceptionHandler handler;
 
-  MakeID stackIdMaker;
+  std::shared_ptr<MakeID> stackIdMaker;
 };

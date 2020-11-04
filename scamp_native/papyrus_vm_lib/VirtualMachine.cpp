@@ -10,8 +10,9 @@ constexpr uint32_t g_maxStackId = 100'000;
 }
 
 VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
-  : stackIdMaker(g_maxStackId)
 {
+  stackIdMaker.reset(new MakeID(g_maxStackId));
+
   for (auto& script : loadedScripts) {
     allLoadedScripts[CIString{ script.source.begin(), script.source.end() }] =
       script;
@@ -19,8 +20,9 @@ VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
 }
 
 VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
-  : stackIdMaker(g_maxStackId)
 {
+  stackIdMaker.reset(new MakeID(g_maxStackId));
+
   for (auto& script : loadedScripts) {
     allLoadedScripts[CIString{ script->source.begin(),
                                script->source.end() }] = {
@@ -107,16 +109,16 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
 }
 
 StackIdHolder::StackIdHolder(VirtualMachine& vm_)
-  : vm(vm_)
+  : makeId(vm_.stackIdMaker)
 {
-  if (!vm.stackIdMaker.CreateID(*reinterpret_cast<uint32_t*>(&stackId))) {
+  if (!makeId->CreateID(*reinterpret_cast<uint32_t*>(&stackId))) {
     throw std::runtime_error("CreateID failed to create id for stack");
   }
 }
 
 StackIdHolder::~StackIdHolder()
 {
-  bool destroyed = vm.stackIdMaker.DestroyID(stackId);
+  bool destroyed = makeId->DestroyID(stackId);
   (void)destroyed;
   assert(destroyed);
 }

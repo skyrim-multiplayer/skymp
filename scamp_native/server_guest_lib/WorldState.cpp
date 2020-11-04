@@ -13,6 +13,7 @@
 #include "PapyrusMessage.h"
 #include "PapyrusObjectReference.h"
 #include "PapyrusSkymp.h"
+#include "PapyrusUtility.h"
 #include "Reader.h"
 #include "ScriptStorage.h"
 #include <algorithm>
@@ -329,6 +330,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       classes.emplace_back(new PapyrusDebug);
       classes.emplace_back(new PapyrusActor);
       classes.emplace_back(new PapyrusSkymp);
+      classes.emplace_back(new PapyrusUtility);
       for (auto cl : classes)
         cl->Register(*pImpl->vm, pImpl->policy);
     }

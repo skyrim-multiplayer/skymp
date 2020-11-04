@@ -9,13 +9,39 @@
 extern espm::Loader l;
 
 namespace {
-void CreateMpObjectReference(WorldState& worldState, uint32_t id)
+
+class TestReference : public MpObjectReference
 {
-  auto refr = std::make_unique<MpObjectReference>(
+public:
+  TestReference(const LocationalData& locationalData,
+                const FormCallbacks& callbacks, uint32_t baseId,
+                std::string baseType,
+                std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt)
+    : MpObjectReference(locationalData, callbacks, baseId, baseType,
+                        primitiveBoundsDiv2)
+  {
+  }
+
+  void SendPapyrusEvent(const char* eventName,
+                        const VarValue* arguments = nullptr,
+                        size_t argumentsCount = 0) override
+  {
+    events.push_back(eventName);
+    return MpObjectReference::SendPapyrusEvent(eventName, arguments,
+                                               argumentsCount);
+  }
+
+  std::vector<std::string> events;
+};
+
+TestReference& CreateMpObjectReference(WorldState& worldState, uint32_t id)
+{
+  auto refr = std::make_unique<TestReference>(
     LocationalData(), FormCallbacks::DoNothing(), 0, "CONT");
   worldState.AddForm(std::move(refr), id);
+  return worldState.GetFormAt<TestReference>(id);
 }
-void CreateMpObjectReference(PartOne& partOne, uint32_t id)
+TestReference& CreateMpObjectReference(PartOne& partOne, uint32_t id)
 {
   return CreateMpObjectReference(partOne.worldState, id);
 }
@@ -70,14 +96,16 @@ TEST_CASE("RemoveItem", "[Papyrus][ObjectReference]")
   REQUIRE(PapyrusObjectReference().GetItemCount(refr.ToVarValue(), { item }) ==
           VarValue(10));
 
-  PapyrusObjectReference().RemoveItem(refr.ToVarValue(),
-                                      { item, VarValue(5), VarValue::None() });
+  PapyrusObjectReference().RemoveItem(
+    refr.ToVarValue(),
+    { item, VarValue(5), VarValue(true), VarValue::None() });
 
   REQUIRE(PapyrusObjectReference().GetItemCount(refr.ToVarValue(), { item }) ==
           VarValue(5));
 
   PapyrusObjectReference().RemoveItem(
-    refr.ToVarValue(), { item, VarValue(-1), refr2.ToVarValue() });
+    refr.ToVarValue(),
+    { item, VarValue(-1), VarValue(true), refr2.ToVarValue() });
 
   REQUIRE(PapyrusObjectReference().GetItemCount(refr.ToVarValue(), { item }) ==
           VarValue(0));
@@ -105,4 +133,29 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
 
   REQUIRE(PapyrusObjectReference().GetAnimationVariableBool(
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(true));
+}
+
+TEST_CASE("BlockActivation", "[Papyrus][ObjectReference]")
+{
+  PartOne p;
+  p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c, nullptr);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000001);
+
+  auto& refr = CreateMpObjectReference(p, 0xff000000);
+
+  // Trying to perform activation and fails due to unattached espm
+  REQUIRE_THROWS_WITH(refr.Activate(ac), Contains("No espm attached"));
+
+  PapyrusObjectReference().BlockActivation(refr.ToVarValue(),
+                                           { VarValue(true) });
+
+  refr.events.clear();
+  // Nothing happens, but event is fired
+  refr.Activate(ac);
+  REQUIRE(refr.events.size() == 1);
+  REQUIRE(refr.events[0] == "OnActivate");
+
+  PapyrusObjectReference().BlockActivation(refr.ToVarValue(),
+                                           { VarValue(false) });
+  REQUIRE_THROWS_WITH(refr.Activate(ac), Contains("No espm attached"));
 }
