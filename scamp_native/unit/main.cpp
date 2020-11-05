@@ -27,3 +27,5 @@ espm::Loader l(DATA_DIR,
                { "Skyrim.esm", "Update.esm", "Dawnguard.esm",
                  "HearthFires.esm", "Dragonborn.esm" },
                OnProgress);
+
+std::string dataDir = DATA_DIR;

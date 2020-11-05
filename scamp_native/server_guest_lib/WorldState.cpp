@@ -313,6 +313,9 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
         return lazyState->pex;
       };
+      if (lazyMode == LazyMode::Disabled) {
+        (void)lazy.fn();
+      }
       pexStructures.push_back(lazy);
     }
 

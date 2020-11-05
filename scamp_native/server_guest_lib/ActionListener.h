@@ -10,15 +10,8 @@ class WorldState;
 class ActionListener : public IActionListener
 {
 public:
-  ActionListener(
-    WorldState& worldState_, ServerState& serverState_,
-    std::vector<std::shared_ptr<PartOne::Listener>>& partOneListeners_,
-    espm::Loader*& espm_, Networking::ISendTarget*& pushedSendTarget_)
-    : worldState(worldState_)
-    , serverState(serverState_)
-    , partOneListeners(partOneListeners_)
-    , espm(espm_)
-    , pushedSendTarget(pushedSendTarget_)
+  ActionListener(PartOne& partOne_)
+    : partOne(partOne_)
   {
   }
 
@@ -64,9 +57,5 @@ private:
   MpActor* SendToNeighbours(uint32_t idx, const RawMessageData& rawMsgData,
                             bool reliable = false);
 
-  WorldState& worldState;
-  ServerState& serverState;
-  std::vector<std::shared_ptr<PartOne::Listener>>& partOneListeners;
-  espm::Loader*& espm;
-  Networking::ISendTarget*& pushedSendTarget;
+  PartOne& partOne;
 };

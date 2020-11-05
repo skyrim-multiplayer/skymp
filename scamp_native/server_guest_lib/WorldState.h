@@ -27,6 +27,12 @@ class MpChangeForm;
 class ISaveStorage;
 class IScriptStorage;
 
+enum class LazyMode
+{
+  Enabled,
+  Disabled
+};
+
 class WorldState
 {
   friend class MpObjectReference;
@@ -133,6 +139,9 @@ public:
 
   // Only for tests
   auto& GetGrids() { return grids; }
+
+  // You may want to disable lazy loading for testing
+  LazyMode lazyMode = LazyMode::Enabled;
 
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;

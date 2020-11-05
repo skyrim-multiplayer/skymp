@@ -39,6 +39,7 @@ public:
   void EnableProductionHacks();
   FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
   IActionListener& GetActionListener();
+  const std::vector<std::shared_ptr<Listener>>& GetListeners() const;
 
   // API
   uint32_t CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
@@ -62,6 +63,7 @@ public:
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
                          Networking::ISendTarget* sendTarget);
   espm::Loader& GetEspm() const;
+  bool HasEspm() const;
   void AttachLogger(std::shared_ptr<spdlog::logger> logger);
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
@@ -73,6 +75,8 @@ public:
   Networking::ISendTarget* pushedSendTarget = nullptr;
 
 private:
+  void Init();
+
   enum class UserType
   {
     User,

@@ -31,115 +31,12 @@ struct PartOne::Impl
 
 PartOne::PartOne()
 {
-  pImpl.reset(new Impl);
-  pImpl->logger.reset(new spdlog::logger{ "empty logger" });
-
-  pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
-                              MpObjectReference* emitter,
-                              MpObjectReference* listener) {
-    if (!emitter)
-      throw std::runtime_error("nullptr emitter in onSubscribe");
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor)
-      return;
-    auto listenerUserId = serverState.UserByActor(listenerAsActor);
-    if (listenerUserId == Networking::InvalidUserId)
-      return;
-
-    auto& emitterPos = emitter->GetPos();
-    auto& emitterRot = emitter->GetAngle();
-
-    bool isMe = emitter == listener;
-
-    auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
-
-    std::string jEquipment, jLook;
-
-    const char *lookPrefix = "", *look = "";
-    if (emitterAsActor) {
-      jLook = emitterAsActor->GetLookAsJson();
-      if (!jLook.empty()) {
-        lookPrefix = R"(, "look": )";
-        look = jLook.data();
-      }
-    }
-
-    const char *equipmentPrefix = "", *equipment = "";
-    if (emitterAsActor) {
-      jEquipment = emitterAsActor->GetEquipmentAsJson();
-      if (!jEquipment.empty()) {
-        equipmentPrefix = R"(, "equipment": )";
-        equipment = jEquipment.data();
-      }
-    }
-
-    const char* refrIdPrefix = "";
-    char refrId[32] = { 0 };
-    refrIdPrefix = R"(, "refrId": )";
-    sprintf(refrId, "%u", emitter->GetFormId());
-
-    const char* baseIdPrefix = "";
-    char baseId[32] = { 0 };
-    if (emitter->GetBaseId() != 0x00000000 &&
-        emitter->GetBaseId() != 0x00000007) {
-      baseIdPrefix = R"(, "baseId": )";
-      sprintf(baseId, "%d", emitter->GetBaseId());
-    }
-
-    std::string props;
-
-    auto mode = VisitPropertiesMode::OnlyPublic;
-    if (emitter == listener)
-      mode = VisitPropertiesMode::All;
-
-    const char *propsPrefix = "", *propsPostfix = "";
-    emitter->VisitProperties(
-      [&](const char* propName, const char* jsonValue) {
-        propsPrefix = R"(, "props": { )";
-        propsPostfix = R"( })";
-
-        if (props.size() > 0)
-          props += R"(, ")";
-        else
-          props += '"';
-        props += propName;
-        props += R"(": )";
-        props += jsonValue;
-      },
-      mode);
-
-    const char* method = "createActor";
-
-    Networking::SendFormatted(
-      sendTarget, listenerUserId,
-      R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
-      method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
-      emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix, equipment,
-      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
-      propsPostfix);
-  };
-
-  pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
-                                MpObjectReference* emitter,
-                                MpObjectReference* listener) {
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor)
-      return;
-
-    auto listenerUserId = serverState.UserByActor(listenerAsActor);
-    if (listenerUserId != Networking::InvalidUserId &&
-        listenerUserId != serverState.disconnectingUserId)
-      Networking::SendFormatted(sendTarget, listenerUserId,
-                                R"({"type": "destroyActor", "idx": %u})",
-                                emitter->GetIdx());
-  };
+  Init();
 }
 
 PartOne::PartOne(std::shared_ptr<Listener> listener)
-  : PartOne()
 {
+  Init();
   AddListener(listener);
 }
 
@@ -444,6 +341,11 @@ espm::Loader& PartOne::GetEspm() const
   return worldState.GetEspm();
 }
 
+bool PartOne::HasEspm() const
+{
+  return !worldState.espmFiles.empty();
+}
+
 void PartOne::AttachLogger(std::shared_ptr<spdlog::logger> logger)
 {
   pImpl->logger = logger;
@@ -530,6 +432,120 @@ IActionListener& PartOne::GetActionListener()
   return *pImpl->actionListener;
 }
 
+const std::vector<std::shared_ptr<PartOne::Listener>>& PartOne::GetListeners()
+  const
+{
+  return pImpl->listeners;
+}
+
+void PartOne::Init()
+{
+  pImpl.reset(new Impl);
+  pImpl->logger.reset(new spdlog::logger{ "empty logger" });
+
+  pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
+                              MpObjectReference* emitter,
+                              MpObjectReference* listener) {
+    if (!emitter)
+      throw std::runtime_error("nullptr emitter in onSubscribe");
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (!listenerAsActor)
+      return;
+    auto listenerUserId = serverState.UserByActor(listenerAsActor);
+    if (listenerUserId == Networking::InvalidUserId)
+      return;
+
+    auto& emitterPos = emitter->GetPos();
+    auto& emitterRot = emitter->GetAngle();
+
+    bool isMe = emitter == listener;
+
+    auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
+
+    std::string jEquipment, jLook;
+
+    const char *lookPrefix = "", *look = "";
+    if (emitterAsActor) {
+      jLook = emitterAsActor->GetLookAsJson();
+      if (!jLook.empty()) {
+        lookPrefix = R"(, "look": )";
+        look = jLook.data();
+      }
+    }
+
+    const char *equipmentPrefix = "", *equipment = "";
+    if (emitterAsActor) {
+      jEquipment = emitterAsActor->GetEquipmentAsJson();
+      if (!jEquipment.empty()) {
+        equipmentPrefix = R"(, "equipment": )";
+        equipment = jEquipment.data();
+      }
+    }
+
+    const char* refrIdPrefix = "";
+    char refrId[32] = { 0 };
+    refrIdPrefix = R"(, "refrId": )";
+    sprintf(refrId, "%u", emitter->GetFormId());
+
+    const char* baseIdPrefix = "";
+    char baseId[32] = { 0 };
+    if (emitter->GetBaseId() != 0x00000000 &&
+        emitter->GetBaseId() != 0x00000007) {
+      baseIdPrefix = R"(, "baseId": )";
+      sprintf(baseId, "%d", emitter->GetBaseId());
+    }
+
+    std::string props;
+
+    auto mode = VisitPropertiesMode::OnlyPublic;
+    if (emitter == listener)
+      mode = VisitPropertiesMode::All;
+
+    const char *propsPrefix = "", *propsPostfix = "";
+    emitter->VisitProperties(
+      [&](const char* propName, const char* jsonValue) {
+        propsPrefix = R"(, "props": { )";
+        propsPostfix = R"( })";
+
+        if (props.size() > 0)
+          props += R"(, ")";
+        else
+          props += '"';
+        props += propName;
+        props += R"(": )";
+        props += jsonValue;
+      },
+      mode);
+
+    const char* method = "createActor";
+
+    Networking::SendFormatted(
+      sendTarget, listenerUserId,
+      R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
+      method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
+      emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
+      emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix, equipment,
+      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
+      propsPostfix);
+  };
+
+  pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
+                                MpObjectReference* emitter,
+                                MpObjectReference* listener) {
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (!listenerAsActor)
+      return;
+
+    auto listenerUserId = serverState.UserByActor(listenerAsActor);
+    if (listenerUserId != Networking::InvalidUserId &&
+        listenerUserId != serverState.disconnectingUserId)
+      Networking::SendFormatted(sendTarget, listenerUserId,
+                                R"({"type": "destroyActor", "idx": %u})",
+                                emitter->GetIdx());
+  };
+}
+
 void PartOne::AddUser(Networking::UserId userId, UserType type)
 {
   serverState.Connect(userId);
@@ -555,7 +571,5 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
 void PartOne::InitActionListener()
 {
   if (!pImpl->actionListener)
-    pImpl->actionListener.reset(
-      new ActionListener(worldState, serverState, pImpl->listeners,
-                         pImpl->espm, pushedSendTarget));
+    pImpl->actionListener.reset(new ActionListener(*this));
 }

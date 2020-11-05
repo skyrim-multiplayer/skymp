@@ -1,7 +1,8 @@
+#include "WorldState.h"
+#include "MpActor.h"
+#include "MpForm.h"
 #include "MsgType.h"
-#include <MpActor.h>
-#include <MpForm.h>
-#include <WorldState.h>
+#include "PartOne.h"
 #include <catch2/catch.hpp>
 #include <nlohmann/json.hpp>
 
@@ -132,4 +133,12 @@ TEST_CASE("Load ChangeForm of modified object with changed baseType",
   REQUIRE_THROWS_WITH(
     worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing()),
     Contains("Anomally, baseId should never change (ded0 => abcd)"));
+}
+
+extern PartOne& GetPartOne();
+
+TEST_CASE("Loads VirtualMachine with all scripts", "[WorldState]")
+{
+  auto& p = GetPartOne();
+  p.worldState.GetPapyrusVm();
 }
