@@ -15,4 +15,4 @@ jobs:
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: eu-west-3
           local-image: skymp5-server
-          image: skymp5-server:latest
+          image: skymp5-server:$GITHUB_SHA
