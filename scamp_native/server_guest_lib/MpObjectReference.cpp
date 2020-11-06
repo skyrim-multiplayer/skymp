@@ -232,27 +232,44 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
   if (!IsDisabled()) {
     if (emittersWithPrimitives) {
       if (!primitivesWeAreInside)
-        primitivesWeAreInside.reset(new std::set<MpObjectReference*>);
+        primitivesWeAreInside.reset(new std::set<uint32_t>);
 
-      for (auto& [emitter, wasInside] : *emittersWithPrimitives) {
-        bool inside = emitter->IsPointInsidePrimitive(newPos);
+      for (auto& [emitterId, wasInside] : *emittersWithPrimitives) {
+        auto& emitter = GetParent()->LookupFormById(emitterId);
+        auto emitterRefr =
+          std::dynamic_pointer_cast<MpObjectReference>(emitter);
+        if (!emitterRefr) {
+          GetParent()->logger->error("Emitter not found ({0:x})", emitterId);
+          continue;
+        }
+        bool inside = emitterRefr->IsPointInsidePrimitive(newPos);
         if (wasInside != inside) {
           wasInside = inside;
           auto me = ToVarValue();
-          emitter->SendPapyrusEvent(
+          emitterRefr->SendPapyrusEvent(
             inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
           if (inside)
-            primitivesWeAreInside->insert(emitter);
+            primitivesWeAreInside->insert(emitterId);
           else
-            primitivesWeAreInside->erase(emitter);
+            primitivesWeAreInside->erase(emitterId);
         }
       }
     }
 
     if (primitivesWeAreInside) {
       auto me = ToVarValue();
-      for (auto emitter : *primitivesWeAreInside)
-        emitter->SendPapyrusEvent("OnTrigger", &me, 1);
+      for (auto emitterId : *primitivesWeAreInside) {
+        auto& emitter = GetParent()->LookupFormById(emitterId);
+        auto emitterRefr =
+          std::dynamic_pointer_cast<MpObjectReference>(emitter);
+        if (!emitterRefr) {
+          GetParent()->logger->error(
+            "Emitter not found ({0:x}) when trying to send OnTrigger event",
+            emitterId);
+          continue;
+        }
+        emitterRefr->SendPapyrusEvent("OnTrigger", &me, 1);
+      }
     }
   }
 }
@@ -490,9 +507,8 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 
   if (emitter->HasPrimitive()) {
     if (!listener->emittersWithPrimitives)
-      listener->emittersWithPrimitives.reset(
-        new std::map<MpObjectReference*, bool>);
-    listener->emittersWithPrimitives->insert({ emitter, false });
+      listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>);
+    listener->emittersWithPrimitives->insert({ emitter->GetFormId(), false });
   }
 }
 
@@ -509,7 +525,7 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   listener->emitters->erase(emitter);
 
   if (listener->emittersWithPrimitives && emitter->HasPrimitive()) {
-    listener->emittersWithPrimitives->erase(emitter);
+    listener->emittersWithPrimitives->erase(emitter->GetFormId());
   }
 }
 

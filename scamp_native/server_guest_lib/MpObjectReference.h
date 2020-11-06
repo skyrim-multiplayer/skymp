@@ -172,8 +172,8 @@ private:
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
-  std::unique_ptr<std::map<MpObjectReference*, bool>> emittersWithPrimitives;
-  std::unique_ptr<std::set<MpObjectReference*>> primitivesWeAreInside;
+  std::unique_ptr<std::map<uint32_t, bool>> emittersWithPrimitives;
+  std::unique_ptr<std::set<uint32_t>> primitivesWeAreInside;
 
   std::string baseType;
   uint32_t baseId = 0;
