@@ -853,14 +853,9 @@ void MpObjectReference::InitScripts()
             { script.scriptName.begin(), script.scriptName.end() })) {
 
         if (std::count(scriptNames.begin(), scriptNames.end(),
-                       script.scriptName) != 0) {
-          std::stringstream ss;
-          ss << "Script '" << script.scriptName
-             << "' has already been added to form " << std::hex << GetFormId();
-          throw std::runtime_error(ss.str());
+                       script.scriptName) == 0) {
+          scriptNames.push_back(script.scriptName);
         }
-
-        scriptNames.push_back(script.scriptName);
       } else if (auto wst = GetParent())
         wst->logger->warn("Script '{}' not found in the script storage",
                           script.scriptName);
