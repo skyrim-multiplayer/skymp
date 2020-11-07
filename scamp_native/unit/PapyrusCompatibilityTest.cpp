@@ -30,3 +30,20 @@ TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus]")
 
   partOne.worldState.DestroyForm(0xff000000);
 }
+
+TEST_CASE("Server crash", "[Papyrus]")
+{
+
+  // dunFortSnowhawkActivateIfUnlocked
+  auto& partOne = GetPartOne();
+  auto& ref =
+    partOne.worldState.GetFormAt<MpObjectReference>(/*215554*/ 887189);
+  partOne.worldState.AddForm(
+    std::make_unique<MpActor>(
+      LocationalData{ ref.GetPos(), NiPoint3(), ref.GetCellOrWorld() },
+      FormCallbacks::DoNothing()),
+    0xff000000);
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+
+  ref.Activate(actor);
+}

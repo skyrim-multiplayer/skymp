@@ -418,7 +418,8 @@ public:
 
   VarValue& GetVariableValueByName(Locals* optionalLocals, std::string name);
 
-  VarValue& GetIndentifierValue(Locals& locals, VarValue& value);
+  VarValue& GetIndentifierValue(Locals& locals, VarValue& value,
+                                bool treatStringsAsIdentifiers = false);
 
   VarValue StartFunction(FunctionInfo& function,
                          std::vector<VarValue>& arguments,
