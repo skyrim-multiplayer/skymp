@@ -466,7 +466,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       // tests
       if (args[1] != nullptr) {
         std::string nameProperty = (const char*)*args[0];
-        auto object = static_cast<IGameObject*>(*args[1]);
+        auto object = static_cast<IGameObject*>(
+          IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
         if (!object)
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
@@ -485,7 +486,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if (args[1] != nullptr) {
         argsForCall.push_back(*args[2]);
         std::string nameProperty = (const char*)*args[0];
-        auto object = static_cast<IGameObject*>(*args[1]);
+        auto object = static_cast<IGameObject*>(
+          IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
         if (!object)
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
