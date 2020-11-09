@@ -18,8 +18,14 @@ function processOneActor(): void {
   if (!actor || actorId === 0x14 || actor.isDisabled() || actor.isDeleted())
     return;
 
+  if (actor.isInDialogueWithPlayer()) {
+    // Deleting actor in dialogue crashes Skyrim
+    actor.setPosition(0, 0, 0);
+    return;
+  }
   actor.disable(false).then(() => {
     const ac = Actor.from(Game.getFormEx(actorId));
+    if (ac.getDialogueTarget() != null) return;
     if (ac) ac.delete();
   });
 }
