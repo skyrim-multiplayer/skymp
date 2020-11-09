@@ -20,6 +20,7 @@ function processOneActor(): void {
 
   if (actor.isInDialogueWithPlayer()) {
     // Deleting actor in dialogue crashes Skyrim
+    // https://github.com/skyrim-multiplayer/issue-tracker/issues/13
     actor.setPosition(0, 0, 0);
     return;
   }

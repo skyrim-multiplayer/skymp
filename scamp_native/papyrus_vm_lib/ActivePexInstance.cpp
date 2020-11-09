@@ -407,7 +407,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           *args[1] = res;
       } catch (std::exception& e) {
         if (auto handler = parentVM->GetExceptionHandler())
-          handler(e.what());
+          handler({ e.what(), sourcePex.fn()->source });
         else
           throw;
       }
@@ -423,17 +423,16 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           parentVM->SendEvent(this, functionName.c_str(), argsForCall);
           break;
         } else {
-          auto gameObject = static_cast<IGameObject*>(*object);
-          if (!gameObject)
-            gameObject = static_cast<IGameObject*>(activeInstanceOwner);
-          auto res = parentVM->CallMethod(gameObject, functionName.c_str(),
-                                          argsForCall, ctx->stackIdHolder);
+          auto nullableGameObject = static_cast<IGameObject*>(*object);
+          auto res =
+            parentVM->CallMethod(nullableGameObject, functionName.c_str(),
+                                 argsForCall, ctx->stackIdHolder);
           if (EnsureCallResultIsSynchronous(res, ctx))
             *args[2] = res;
         }
       } catch (std::exception& e) {
         if (auto handler = parentVM->GetExceptionHandler())
-          handler(e.what());
+          handler({ e.what(), sourcePex.fn()->source });
         else
           throw;
       }
@@ -448,7 +447,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           *args[2] = res;
       } catch (std::exception& e) {
         if (auto handler = parentVM->GetExceptionHandler())
-          handler(e.what());
+          handler({ e.what(), sourcePex.fn()->source });
         else
           throw;
       }
@@ -842,7 +841,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
   } catch (std::exception& e) {
     if (auto handler = parentVM->GetExceptionHandler()) {
       noneVar = VarValue::None();
-      handler(e.what());
+      handler({ e.what(), sourcePex.fn()->source });
       return noneVar;
     } else
       throw;

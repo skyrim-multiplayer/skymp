@@ -321,8 +321,11 @@ VirtualMachine& WorldState::GetPapyrusVm()
 
     if (!pexStructures.empty()) {
       pImpl->vm.reset(new VirtualMachine(pexStructures));
-      pImpl->vm->SetExceptionHandler(
-        [&](const std::string& error) { logger->error("{}", error); });
+      pImpl->vm->SetExceptionHandler([&](const VmExceptionInfo& errorData) {
+        std::string sourcePex = errorData.sourcePex;
+        std::string what = errorData.what;
+        logger->error(sourcePex + ": " + what);
+      });
 
       std::vector<IPapyrusClassBase*> classes;
       classes.emplace_back(new PapyrusObjectReference);

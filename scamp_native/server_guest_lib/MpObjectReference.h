@@ -85,13 +85,16 @@ public:
   bool IsPointInsidePrimitive(const NiPoint3& point) const;
   bool HasPrimitive() const;
   FormCallbacks GetCallbacks() const;
+  bool HasScript(const char* name) const;
+  bool IsActivationBlocked() const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
 
   virtual void VisitProperties(const PropertiesVisitor& visitor,
                                VisitPropertiesMode mode);
-  virtual void Activate(MpActor& activationSource);
+  virtual void Activate(MpObjectReference& activationSource,
+                        bool defaultProcessingOnly = false);
 
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);
@@ -160,12 +163,12 @@ private:
   void SendInventoryUpdate();
   void SendOpenContainer(uint32_t refId);
   void EnsureBaseContainerAdded(espm::Loader& espm);
-  void CheckInteractionAbility(MpActor& ac);
+  void CheckInteractionAbility(MpObjectReference& ac);
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
   bool IsLocationSavingNeeded() const;
-  void ProcessActivate(MpActor& activationSource);
+  void ProcessActivate(MpObjectReference& activationSource);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

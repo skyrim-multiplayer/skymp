@@ -215,6 +215,16 @@ FormCallbacks MpObjectReference::GetCallbacks() const
   return *callbacks;
 }
 
+bool MpObjectReference::HasScript(const char* name) const
+{
+  return ToGameObject()->HasScript(name);
+}
+
+bool MpObjectReference::IsActivationBlocked() const
+{
+  return activationBlocked;
+}
+
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
                                         VisitPropertiesMode mode)
 {
@@ -228,9 +238,10 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 }
 
-void MpObjectReference::Activate(MpActor& activationSource)
+void MpObjectReference::Activate(MpObjectReference& activationSource,
+                                 bool defaultProcessingOnly)
 {
-  if (!activationBlocked)
+  if (!activationBlocked || defaultProcessingOnly)
     ProcessActivate(activationSource);
 
   auto arg = activationSource.ToVarValue();
@@ -760,8 +771,10 @@ bool MpObjectReference::IsLocationSavingNeeded() const
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
 }
 
-void MpObjectReference::ProcessActivate(MpActor& activationSource)
+void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 {
+  auto actorActivator = dynamic_cast<MpActor*>(&activationSource);
+
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
@@ -827,21 +840,22 @@ void MpObjectReference::ProcessActivate(MpActor& activationSource)
         { "worldOrCell", teleportWorldOrCell },
         { "type", "teleport" }
       }.dump();
-      activationSource.SendToUser(msg.data(), msg.size(), true);
+      if (actorActivator)
+        actorActivator->SendToUser(msg.data(), msg.size(), true);
 
       activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
 
     } else {
       SetOpen(!IsOpen());
     }
-  } else if (t == espm::CONT::type) {
+  } else if (t == espm::CONT::type && actorActivator) {
     EnsureBaseContainerAdded(loader);
     if (!this->occupant) {
       SetOpen(true);
-      SendPropertyTo("inventory", GetInventory().ToJson(), activationSource);
+      SendPropertyTo("inventory", GetInventory().ToJson(), *actorActivator);
       activationSource.SendOpenContainer(GetFormId());
 
-      this->occupant = &activationSource;
+      this->occupant = actorActivator;
 
       this->occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
@@ -1006,12 +1020,12 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
   }
 }
 
-void MpObjectReference::CheckInteractionAbility(MpActor& ac)
+void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
 {
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
-  auto casterWorld = loader.GetBrowser().LookupById(ac.GetCellOrWorld()).rec;
+  auto casterWorld = loader.GetBrowser().LookupById(refr.GetCellOrWorld()).rec;
   auto targetWorld = loader.GetBrowser().LookupById(GetCellOrWorld()).rec;
 
   if (targetWorld != casterWorld) {

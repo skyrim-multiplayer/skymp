@@ -123,7 +123,7 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   if (!refPtr)
     return;
 
-  refPtr->Activate(*ac);
+  refPtr->Activate(*ac, false);
 }
 
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,

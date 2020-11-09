@@ -198,3 +198,26 @@ VarValue PapyrusObjectReference::BlockActivation(
     selfRefr->SetActivationBlocked(block);
   return VarValue::None();
 }
+
+VarValue PapyrusObjectReference::IsActivationBlocked(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  return VarValue(selfRefr && selfRefr->IsActivationBlocked());
+}
+
+VarValue PapyrusObjectReference::Activate(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 2)
+      throw std::runtime_error("Activate requires at least two arguments");
+    auto akActivator = GetFormPtr<MpObjectReference>(arguments[0]);
+    if (!akActivator)
+      throw std::runtime_error("Activate didn't recognize akActivator");
+    bool abDefaultProcessingOnly =
+      static_cast<bool>(arguments[1].CastToBool());
+    selfRefr->Activate(*akActivator, abDefaultProcessingOnly);
+  }
+  return VarValue::None();
+}

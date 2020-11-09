@@ -23,6 +23,9 @@ public:
   VarValue Disable(VarValue self, const std::vector<VarValue>& arguments);
   VarValue BlockActivation(VarValue self,
                            const std::vector<VarValue>& arguments);
+  VarValue IsActivationBlocked(VarValue self,
+                               const std::vector<VarValue>& arguments);
+  VarValue Activate(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(
     VirtualMachine& vm,
@@ -43,5 +46,8 @@ public:
     AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
     AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
     AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
+    AddMethod(vm, "IsActivationBlocked",
+              &PapyrusObjectReference::IsActivationBlocked);
+    AddMethod(vm, "Activate", &PapyrusObjectReference::Activate);
   }
 };

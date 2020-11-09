@@ -24,13 +24,19 @@ private:
   std::shared_ptr<MakeID> makeId;
 };
 
+struct VmExceptionInfo
+{
+  std::string what;
+  std::string sourcePex;
+};
+
 class VirtualMachine
 {
   friend class StackIdHolder;
 
 public:
   using OnEnter = std::function<void(const StackIdHolder&)>;
-  using ExceptionHandler = std::function<void(std::string)>;
+  using ExceptionHandler = std::function<void(VmExceptionInfo)>;
 
   struct ScriptInfo
   {
