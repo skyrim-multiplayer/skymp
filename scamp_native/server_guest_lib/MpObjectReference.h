@@ -152,7 +152,7 @@ protected:
                         size_t argumentsCount = 0) override;
 
 private:
-  void Init(WorldState* parent, uint32_t formId) override;
+  void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 
   void InitScripts();
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);

@@ -286,8 +286,13 @@ void PartOne::AttachEspm(espm::Loader* espm,
         auto existingAsRefr = reinterpret_cast<MpObjectReference*>(existing);
 
         if (locationalData) {
-          existingAsRefr->SetPos(GetPos(locationalData));
-          existingAsRefr->SetAngle(GetRot(locationalData));
+          // Not just SetPos/SetAngle since we do not need to request save
+          auto changeForm = existingAsRefr->GetChangeForm();
+          changeForm.position = GetPos(locationalData);
+          changeForm.angle = GetRot(locationalData);
+          existingAsRefr->ApplyChangeForm(changeForm);
+
+          assert(existingAsRefr->GetPos() == NiPoint3(GetPos(locationalData)));
         }
 
       } else {

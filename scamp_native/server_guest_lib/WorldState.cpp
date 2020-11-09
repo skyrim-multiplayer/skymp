@@ -85,7 +85,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                                             << formId << " already exists")
         .str());
   }
-  form->Init(this, formId);
+  form->Init(this, formId, optionalChangeFormToApply != nullptr);
 
   if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
     if (!formIdxManager)

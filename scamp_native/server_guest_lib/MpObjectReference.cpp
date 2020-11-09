@@ -16,6 +16,26 @@
 #include <map>
 #include <optional>
 
+namespace {
+class ScopedTask
+{
+public:
+  using Callback = void (*)(void*);
+
+  ScopedTask(Callback f_, void* state_)
+    : f(f_)
+    , state(state_)
+  {
+  }
+
+  ~ScopedTask() { f(state); }
+
+private:
+  const Callback f;
+  void* const state;
+};
+}
+
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
 {
 public:
@@ -615,6 +635,11 @@ MpChangeForm MpObjectReference::GetChangeForm() const
 
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
+  pImpl->blockSaving = true;
+  ScopedTask unblockTask(
+    [](void* ptr) { reinterpret_cast<Impl*>(ptr)->blockSaving = false; },
+    pImpl.get());
+
   const auto currentBaseId = GetBaseId();
   const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
   if (currentBaseId != newBaseId) {
@@ -705,9 +730,10 @@ void MpObjectReference::SendPapyrusEvent(const char* eventName,
   return MpForm::SendPapyrusEvent(eventName, arguments, argumentsCount);
 }
 
-void MpObjectReference::Init(WorldState* parent, uint32_t formId)
+void MpObjectReference::Init(WorldState* parent, uint32_t formId,
+                             bool hasChangeForm)
 {
-  MpForm::Init(parent, formId);
+  MpForm::Init(parent, formId, hasChangeForm);
 
   if (!IsDisabled()) {
     auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
@@ -715,8 +741,9 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
   }
 
   // We should queue created form for saving as soon as it is initialized
-  const auto mode =
-    formId >= 0xff000000 ? Impl::Mode::RequestSave : Impl::Mode::NoRequestSave;
+  const auto mode = (!hasChangeForm && formId >= 0xff000000)
+    ? Impl::Mode::RequestSave
+    : Impl::Mode::NoRequestSave;
 
   pImpl->EditChangeForm(
     [&](MpChangeFormREFR& changeForm) {
