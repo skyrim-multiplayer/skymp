@@ -16,6 +16,26 @@
 #include <map>
 #include <optional>
 
+namespace {
+class ScopedTask
+{
+public:
+  using Callback = void (*)(void*);
+
+  ScopedTask(Callback f_, void* state_)
+    : f(f_)
+    , state(state_)
+  {
+  }
+
+  ~ScopedTask() { f(state); }
+
+private:
+  const Callback f;
+  void* const state;
+};
+}
+
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
 {
 public:
@@ -195,6 +215,16 @@ FormCallbacks MpObjectReference::GetCallbacks() const
   return *callbacks;
 }
 
+bool MpObjectReference::HasScript(const char* name) const
+{
+  return ToGameObject()->HasScript(name);
+}
+
+bool MpObjectReference::IsActivationBlocked() const
+{
+  return activationBlocked;
+}
+
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
                                         VisitPropertiesMode mode)
 {
@@ -208,9 +238,10 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 }
 
-void MpObjectReference::Activate(MpActor& activationSource)
+void MpObjectReference::Activate(MpObjectReference& activationSource,
+                                 bool defaultProcessingOnly)
 {
-  if (!activationBlocked)
+  if (!activationBlocked || defaultProcessingOnly)
     ProcessActivate(activationSource);
 
   auto arg = activationSource.ToVarValue();
@@ -232,27 +263,67 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
   if (!IsDisabled()) {
     if (emittersWithPrimitives) {
       if (!primitivesWeAreInside)
-        primitivesWeAreInside.reset(new std::set<MpObjectReference*>);
+        primitivesWeAreInside.reset(new std::set<uint32_t>);
 
-      for (auto& [emitter, wasInside] : *emittersWithPrimitives) {
-        bool inside = emitter->IsPointInsidePrimitive(newPos);
+      for (auto& [emitterId, wasInside] : *emittersWithPrimitives) {
+        auto& emitter = GetParent()->LookupFormById(emitterId);
+        auto emitterRefr =
+          std::dynamic_pointer_cast<MpObjectReference>(emitter);
+        if (!emitterRefr) {
+          GetParent()->logger->error("Emitter not found ({0:x})", emitterId);
+          continue;
+        }
+        bool inside = emitterRefr->IsPointInsidePrimitive(newPos);
         if (wasInside != inside) {
           wasInside = inside;
           auto me = ToVarValue();
-          emitter->SendPapyrusEvent(
-            inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
+
+          auto wst = GetParent();
+          auto id = emitterId;
+          auto myId = GetFormId();
+          wst->SetTimer(0).Then([wst, id, inside, me, myId, this](Viet::Void) {
+            if (wst->LookupFormById(myId).get() != this) {
+              wst->logger->error("Refr pointer expired", id);
+              return;
+            }
+
+            auto& emitter = wst->LookupFormById(id);
+            auto emitterRefr =
+              std::dynamic_pointer_cast<MpObjectReference>(emitter);
+            if (!emitterRefr) {
+              wst->logger->error("Emitter not found in timer ({0:x})", id);
+              return;
+            }
+            emitterRefr->SendPapyrusEvent(
+              inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
+          });
+
           if (inside)
-            primitivesWeAreInside->insert(emitter);
+            primitivesWeAreInside->insert(emitterId);
           else
-            primitivesWeAreInside->erase(emitter);
+            primitivesWeAreInside->erase(emitterId);
         }
       }
     }
 
     if (primitivesWeAreInside) {
       auto me = ToVarValue();
-      for (auto emitter : *primitivesWeAreInside)
-        emitter->SendPapyrusEvent("OnTrigger", &me, 1);
+
+      // May be modified inside loop, so copying
+      const auto map = *primitivesWeAreInside;
+
+      for (auto emitterId : map) {
+        auto& emitter = GetParent()->LookupFormById(emitterId);
+        auto emitterRefr =
+          std::dynamic_pointer_cast<MpObjectReference>(emitter);
+        if (!emitterRefr) {
+          GetParent()->logger->error(
+            "Emitter not found ({0:x}) when trying to send OnTrigger event",
+            emitterId);
+          continue;
+        }
+        emitterRefr->SendPapyrusEvent("OnTrigger", &me, 1);
+      }
     }
   }
 }
@@ -490,9 +561,8 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 
   if (emitter->HasPrimitive()) {
     if (!listener->emittersWithPrimitives)
-      listener->emittersWithPrimitives.reset(
-        new std::map<MpObjectReference*, bool>);
-    listener->emittersWithPrimitives->insert({ emitter, false });
+      listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>);
+    listener->emittersWithPrimitives->insert({ emitter->GetFormId(), false });
   }
 }
 
@@ -509,7 +579,7 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   listener->emitters->erase(emitter);
 
   if (listener->emittersWithPrimitives && emitter->HasPrimitive()) {
-    listener->emittersWithPrimitives->erase(emitter);
+    listener->emittersWithPrimitives->erase(emitter->GetFormId());
   }
 }
 
@@ -576,6 +646,11 @@ MpChangeForm MpObjectReference::GetChangeForm() const
 
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
+  pImpl->blockSaving = true;
+  ScopedTask unblockTask(
+    [](void* ptr) { reinterpret_cast<Impl*>(ptr)->blockSaving = false; },
+    pImpl.get());
+
   const auto currentBaseId = GetBaseId();
   const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
   if (currentBaseId != newBaseId) {
@@ -666,9 +741,10 @@ void MpObjectReference::SendPapyrusEvent(const char* eventName,
   return MpForm::SendPapyrusEvent(eventName, arguments, argumentsCount);
 }
 
-void MpObjectReference::Init(WorldState* parent, uint32_t formId)
+void MpObjectReference::Init(WorldState* parent, uint32_t formId,
+                             bool hasChangeForm)
 {
-  MpForm::Init(parent, formId);
+  MpForm::Init(parent, formId, hasChangeForm);
 
   if (!IsDisabled()) {
     auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
@@ -676,8 +752,9 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
   }
 
   // We should queue created form for saving as soon as it is initialized
-  const auto mode =
-    formId >= 0xff000000 ? Impl::Mode::RequestSave : Impl::Mode::NoRequestSave;
+  const auto mode = (!hasChangeForm && formId >= 0xff000000)
+    ? Impl::Mode::RequestSave
+    : Impl::Mode::NoRequestSave;
 
   pImpl->EditChangeForm(
     [&](MpChangeFormREFR& changeForm) {
@@ -694,8 +771,10 @@ bool MpObjectReference::IsLocationSavingNeeded() const
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
 }
 
-void MpObjectReference::ProcessActivate(MpActor& activationSource)
+void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 {
+  auto actorActivator = dynamic_cast<MpActor*>(&activationSource);
+
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
@@ -761,21 +840,22 @@ void MpObjectReference::ProcessActivate(MpActor& activationSource)
         { "worldOrCell", teleportWorldOrCell },
         { "type", "teleport" }
       }.dump();
-      activationSource.SendToUser(msg.data(), msg.size(), true);
+      if (actorActivator)
+        actorActivator->SendToUser(msg.data(), msg.size(), true);
 
       activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
 
     } else {
       SetOpen(!IsOpen());
     }
-  } else if (t == espm::CONT::type) {
+  } else if (t == espm::CONT::type && actorActivator) {
     EnsureBaseContainerAdded(loader);
     if (!this->occupant) {
       SetOpen(true);
-      SendPropertyTo("inventory", GetInventory().ToJson(), activationSource);
+      SendPropertyTo("inventory", GetInventory().ToJson(), *actorActivator);
       activationSource.SendOpenContainer(GetFormId());
 
-      this->occupant = &activationSource;
+      this->occupant = actorActivator;
 
       this->occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
@@ -837,14 +917,9 @@ void MpObjectReference::InitScripts()
             { script.scriptName.begin(), script.scriptName.end() })) {
 
         if (std::count(scriptNames.begin(), scriptNames.end(),
-                       script.scriptName) != 0) {
-          std::stringstream ss;
-          ss << "Script '" << script.scriptName
-             << "' has already been added to form " << std::hex << GetFormId();
-          throw std::runtime_error(ss.str());
+                       script.scriptName) == 0) {
+          scriptNames.push_back(script.scriptName);
         }
-
-        scriptNames.push_back(script.scriptName);
       } else if (auto wst = GetParent())
         wst->logger->warn("Script '{}' not found in the script storage",
                           script.scriptName);
@@ -945,12 +1020,12 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
   }
 }
 
-void MpObjectReference::CheckInteractionAbility(MpActor& ac)
+void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
 {
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
-  auto casterWorld = loader.GetBrowser().LookupById(ac.GetCellOrWorld()).rec;
+  auto casterWorld = loader.GetBrowser().LookupById(refr.GetCellOrWorld()).rec;
   auto targetWorld = loader.GetBrowser().LookupById(GetCellOrWorld()).rec;
 
   if (targetWorld != casterWorld) {

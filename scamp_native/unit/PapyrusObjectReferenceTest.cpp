@@ -128,6 +128,7 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
   REQUIRE(PapyrusObjectReference().GetAnimationVariableBool(
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(false));
 
+
   p.GetActionListener().OnUpdateMovement(GetDummyMessageData(), 0, { 0, 0, 0 },
                                          { 0, 0, 0 }, true, false);
 

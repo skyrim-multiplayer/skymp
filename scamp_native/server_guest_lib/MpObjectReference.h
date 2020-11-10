@@ -85,13 +85,16 @@ public:
   bool IsPointInsidePrimitive(const NiPoint3& point) const;
   bool HasPrimitive() const;
   FormCallbacks GetCallbacks() const;
+  bool HasScript(const char* name) const;
+  bool IsActivationBlocked() const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
 
   virtual void VisitProperties(const PropertiesVisitor& visitor,
                                VisitPropertiesMode mode);
-  virtual void Activate(MpActor& activationSource);
+  virtual void Activate(MpObjectReference& activationSource,
+                        bool defaultProcessingOnly = false);
 
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);
@@ -152,7 +155,7 @@ protected:
                         size_t argumentsCount = 0) override;
 
 private:
-  void Init(WorldState* parent, uint32_t formId) override;
+  void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 
   void InitScripts();
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
@@ -160,20 +163,20 @@ private:
   void SendInventoryUpdate();
   void SendOpenContainer(uint32_t refId);
   void EnsureBaseContainerAdded(espm::Loader& espm);
-  void CheckInteractionAbility(MpActor& ac);
+  void CheckInteractionAbility(MpObjectReference& ac);
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
   bool IsLocationSavingNeeded() const;
-  void ProcessActivate(MpActor& activationSource);
+  void ProcessActivate(MpObjectReference& activationSource);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
-  std::unique_ptr<std::map<MpObjectReference*, bool>> emittersWithPrimitives;
-  std::unique_ptr<std::set<MpObjectReference*>> primitivesWeAreInside;
+  std::unique_ptr<std::map<uint32_t, bool>> emittersWithPrimitives;
+  std::unique_ptr<std::set<uint32_t>> primitivesWeAreInside;
 
   std::string baseType;
   uint32_t baseId = 0;

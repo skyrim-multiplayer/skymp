@@ -85,7 +85,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                                             << formId << " already exists")
         .str());
   }
-  form->Init(this, formId);
+  form->Init(this, formId, optionalChangeFormToApply != nullptr);
 
   if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
     if (!formIdxManager)
@@ -252,9 +252,9 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
     pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
                                           argumentsCount, holder.GetStackId());
   };
-  return GetPapyrusVm().SendEvent(form->ToGameObject(), eventName,
-                                  { arguments, arguments + argumentsCount },
-                                  onEnter);
+  auto& vm = GetPapyrusVm();
+  std::vector<VarValue> args = { arguments, arguments + argumentsCount };
+  return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
 }
 
 espm::Loader& WorldState::GetEspm() const
@@ -313,13 +313,19 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
         return lazyState->pex;
       };
+      if (lazyMode == LazyMode::Disabled) {
+        (void)lazy.fn();
+      }
       pexStructures.push_back(lazy);
     }
 
     if (!pexStructures.empty()) {
       pImpl->vm.reset(new VirtualMachine(pexStructures));
-      pImpl->vm->SetExceptionHandler(
-        [&](const std::string& error) { logger->error("{}", error); });
+      pImpl->vm->SetExceptionHandler([&](const VmExceptionInfo& errorData) {
+        std::string sourcePex = errorData.sourcePex;
+        std::string what = errorData.what;
+        logger->error(sourcePex + ": " + what);
+      });
 
       std::vector<IPapyrusClassBase*> classes;
       classes.emplace_back(new PapyrusObjectReference);

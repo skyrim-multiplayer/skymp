@@ -31,6 +31,8 @@ public:
 
   virtual bool EqualsByValue(const IGameObject& obj) const { return false; }
 
+  bool HasScript(const char* name) const;
+
 private:
   std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
 };
@@ -418,7 +420,8 @@ public:
 
   VarValue& GetVariableValueByName(Locals* optionalLocals, std::string name);
 
-  VarValue& GetIndentifierValue(Locals& locals, VarValue& value);
+  VarValue& GetIndentifierValue(Locals& locals, VarValue& value,
+                                bool treatStringsAsIdentifiers = false);
 
   VarValue StartFunction(FunctionInfo& function,
                          std::vector<VarValue>& arguments,

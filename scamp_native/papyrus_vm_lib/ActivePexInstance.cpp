@@ -6,6 +6,14 @@
 #include <functional>
 #include <stdexcept>
 
+namespace {
+bool IsSelfStr(const VarValue& v)
+{
+  return v.GetType() == VarValue::kType_String &&
+    !Utils::stricmp("self", static_cast<const char*>(v));
+}
+}
+
 ActivePexInstance::ActivePexInstance()
 {
   this->parentVM = nullptr;
@@ -336,10 +344,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       break;
     case OpcodesImplementation::Opcodes::op_Cast:
       switch ((*args[0]).GetType()) {
-        case VarValue::kType_Object:
-
-          CastObjectToObject(args[0], args[1], *ctx->locals);
-          break;
+        case VarValue::kType_Object: {
+          auto to = args[0];
+          auto from = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
+          CastObjectToObject(to, from, *ctx->locals);
+        } break;
         case VarValue::kType_Integer:
           *args[0] = (*args[1]).CastToInt();
           break;
@@ -398,13 +407,13 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           *args[1] = res;
       } catch (std::exception& e) {
         if (auto handler = parentVM->GetExceptionHandler())
-          handler(e.what());
+          handler({ e.what(), sourcePex.fn()->source });
         else
           throw;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_CallMethod: {
-      VarValue* object = args[1];
+      VarValue* object = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
       static const std::string nameOnEndState = "onEndState";
@@ -414,17 +423,16 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           parentVM->SendEvent(this, functionName.c_str(), argsForCall);
           break;
         } else {
-          auto gameObject = static_cast<IGameObject*>(*object);
-          if (!gameObject)
-            gameObject = static_cast<IGameObject*>(activeInstanceOwner);
-          auto res = parentVM->CallMethod(gameObject, functionName.c_str(),
-                                          argsForCall, ctx->stackIdHolder);
+          auto nullableGameObject = static_cast<IGameObject*>(*object);
+          auto res =
+            parentVM->CallMethod(nullableGameObject, functionName.c_str(),
+                                 argsForCall, ctx->stackIdHolder);
           if (EnsureCallResultIsSynchronous(res, ctx))
             *args[2] = res;
         }
       } catch (std::exception& e) {
         if (auto handler = parentVM->GetExceptionHandler())
-          handler(e.what());
+          handler({ e.what(), sourcePex.fn()->source });
         else
           throw;
       }
@@ -439,7 +447,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           *args[2] = res;
       } catch (std::exception& e) {
         if (auto handler = parentVM->GetExceptionHandler())
-          handler(e.what());
+          handler({ e.what(), sourcePex.fn()->source });
         else
           throw;
       }
@@ -457,7 +465,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       // tests
       if (args[1] != nullptr) {
         std::string nameProperty = (const char*)*args[0];
-        auto object = static_cast<IGameObject*>(*args[1]);
+        auto object = static_cast<IGameObject*>(
+          IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
         if (!object)
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
@@ -476,7 +485,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if (args[1] != nullptr) {
         argsForCall.push_back(*args[2]);
         std::string nameProperty = (const char*)*args[0];
-        auto object = static_cast<IGameObject*>(*args[1]);
+        auto object = static_cast<IGameObject*>(
+          IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
         if (!object)
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
@@ -644,16 +654,19 @@ VarValue ActivePexInstance::StartFunction(
   return ExecuteAll(ctx);
 }
 
-VarValue& ActivePexInstance::GetIndentifierValue(Locals& locals,
-                                                 VarValue& value)
+VarValue& ActivePexInstance::GetIndentifierValue(
+  Locals& locals, VarValue& value, bool treatStringsAsIdentifiers)
 {
-  if (value.GetType() == VarValue::kType_Identifier &&
-      (const char*)value != nullptr) {
-    std::string temp;
-    temp = temp + (const char*)value;
-    return GetVariableValueByName(&locals, temp);
-  } else
-    return value;
+  if (auto valueAsString = static_cast<const char*>(value)) {
+    if (treatStringsAsIdentifiers &&
+        value.GetType() == VarValue::kType_String) {
+      return GetVariableValueByName(&locals, valueAsString);
+    }
+    if (value.GetType() == VarValue::kType_Identifier) {
+      return GetVariableValueByName(&locals, valueAsString);
+    }
+  }
+  return value;
 }
 
 uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
@@ -828,7 +841,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
   } catch (std::exception& e) {
     if (auto handler = parentVM->GetExceptionHandler()) {
       noneVar = VarValue::None();
-      handler(e.what());
+      handler({ e.what(), sourcePex.fn()->source });
       return noneVar;
     } else
       throw;

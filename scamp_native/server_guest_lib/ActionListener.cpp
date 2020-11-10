@@ -6,7 +6,7 @@ MpActor* ActionListener::SendToNeighbours(
   Networking::UserId userId, Networking::PacketData data, size_t length,
   bool reliable)
 {
-  MpActor* actor = serverState.ActorByUser(userId);
+  MpActor* actor = partOne.serverState.ActorByUser(userId);
 
   if (actor) {
     if (idx != actor->GetIdx()) {
@@ -19,9 +19,10 @@ MpActor* ActionListener::SendToNeighbours(
     for (auto listener : actor->GetListeners()) {
       auto listenerAsActor = dynamic_cast<MpActor*>(listener);
       if (listenerAsActor) {
-        auto targetuserId = serverState.UserByActor(listenerAsActor);
-        if (targetuserId != Networking::InvalidUserId)
-          pushedSendTarget->Send(targetuserId, data, length, reliable);
+        auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
+        if (targetuserId != Networking::InvalidUserId) {
+          partOne.pushedSendTarget->Send(targetuserId, data, length, reliable);
+        }
       }
     }
   }
@@ -41,7 +42,7 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
 void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
                                     simdjson::dom::element& content)
 {
-  for (auto& listener : partOneListeners)
+  for (auto& listener : partOne.GetListeners())
     listener->OnCustomPacket(rawMsgData.userId, content);
 }
 
@@ -69,7 +70,7 @@ void ActionListener::OnUpdateLook(const RawMessageData& rawMsgData,
                                   uint32_t idx, const Look& look)
 { // TODO: validate
 
-  MpActor* actor = serverState.ActorByUser(rawMsgData.userId);
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor || !actor->IsRaceMenuOpen())
     return;
 
@@ -83,7 +84,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
                                        simdjson::dom::element& data,
                                        const Inventory& equipmentInv)
 {
-  MpActor* actor = serverState.ActorByUser(rawMsgData.userId);
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor)
     return;
 
@@ -104,10 +105,10 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,
                                 uint32_t caster, uint32_t target)
 {
-  if (!espm)
+  if (!partOne.HasEspm())
     throw std::runtime_error("No loaded esm or esp files are found");
 
-  const auto ac = serverState.ActorByUser(rawMsgData.userId);
+  const auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac)
     throw std::runtime_error("Can't do this without Actor attached");
 
@@ -118,20 +119,20 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   }
 
   auto refPtr = std::dynamic_pointer_cast<MpObjectReference>(
-    worldState.LookupFormById(target));
+    partOne.worldState.LookupFormById(target));
   if (!refPtr)
     return;
 
-  refPtr->Activate(*ac);
+  refPtr->Activate(*ac, false);
 }
 
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
-  MpActor* actor = serverState.ActorByUser(rawMsgData.userId);
-  auto& ref = worldState.GetFormAt<MpObjectReference>(target);
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
-  if (!actor || !espm)
+  if (!actor)
     return; // TODO: Throw error instead
   ref.PutItem(*actor, entry);
 }
@@ -139,10 +140,10 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
 void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
                                 uint32_t target, const Inventory::Entry& entry)
 {
-  MpActor* actor = serverState.ActorByUser(rawMsgData.userId);
-  auto& ref = worldState.GetFormAt<MpObjectReference>(target);
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
-  if (!actor || !espm)
+  if (!actor)
     return; // TODO: Throw error instead
   ref.TakeItem(*actor, entry);
 }
@@ -177,7 +178,7 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                        uint32_t snippetIdx,
                                        simdjson::dom::element& returnValue)
 {
-  MpActor* actor = serverState.ActorByUser(rawMsgData.userId);
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor)
     throw std::runtime_error(
       "Unable to finish SpSnippet: No Actor found for user " +
@@ -189,7 +190,7 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
 
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
 {
-  MpActor* actor = serverState.ActorByUser(rawMsgData.userId);
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor)
     throw std::runtime_error(
       "Unable to finish SpSnippet: No Actor found for user " +

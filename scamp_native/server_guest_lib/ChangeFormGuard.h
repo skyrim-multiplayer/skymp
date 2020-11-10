@@ -27,7 +27,7 @@ public:
   void EditChangeForm(F f, Mode mode = Mode::RequestSave)
   {
     f(changeForm);
-    if (mode == Mode::RequestSave) {
+    if (!blockSaving && mode == Mode::RequestSave) {
       lastSaveRequest = std::chrono::system_clock::now();
       ChangeFormGuard_::RequestSave(self);
     }
@@ -36,6 +36,8 @@ public:
   const T& ChangeForm() const noexcept { return changeForm; }
 
   auto GetLastSaveRequestMoment() const { return lastSaveRequest; }
+
+  bool blockSaving = false;
 
 private:
   T changeForm;

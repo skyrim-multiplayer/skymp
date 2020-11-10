@@ -140,6 +140,7 @@ const main = async () => {
 main().catch((e) => {
   log(`Main function threw an error: ${e}`);
   if (e["stack"]) log(e["stack"]);
+  process.exit(-1);
 });
 
 process.on("unhandledRejection", console.error);

@@ -61,3 +61,11 @@ VarValue PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef(
   }
   return VarValue::None();
 }
+
+VarValue PapyrusGame::GetPlayer(VarValue self,
+                                const std::vector<VarValue>& arguments)
+{
+  auto actor = compatibilityPolicy->GetDefaultActor("Game", "GetPlayer",
+                                                    self.GetMetaStackId());
+  return VarValue(std::make_shared<MpFormGameObject>(actor));
+}

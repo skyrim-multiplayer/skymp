@@ -15,6 +15,7 @@ public:
                          const std::vector<VarValue>& arguments);
   VarValue FindClosestReferenceOfAnyTypeInListFromRef(
     VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetPlayer(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
@@ -28,6 +29,7 @@ public:
     AddStatic(vm, "EnablePlayerControls", &PapyrusGame::EnablePlayerControls);
     AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
               &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
+    AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

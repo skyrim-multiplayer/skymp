@@ -7,7 +7,7 @@ MpForm::MpForm()
 {
 }
 
-void MpForm::Init(WorldState* parent_, uint32_t formId_)
+void MpForm::Init(WorldState* parent_, uint32_t formId_, bool hasChangeForm)
 {
   parent = parent_;
   id = formId_;

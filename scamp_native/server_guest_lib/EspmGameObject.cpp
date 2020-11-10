@@ -42,8 +42,10 @@ const char* EspmGameObject::GetParentNativeScript()
     if (t == "ACHR")
       return "actor";
 
-    throw std::runtime_error("Unable to find native script for record type '" +
-                             t.ToString() + "'");
+    // TODO: warning or proper handling
+    // throw std::runtime_error("Unable to find native script for record type
+    // '" +
+    //                         t.ToString() + "'");
   }
   return "";
 }
