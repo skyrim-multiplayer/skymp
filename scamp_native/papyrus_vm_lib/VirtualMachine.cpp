@@ -138,10 +138,7 @@ VarValue VirtualMachine::CallMethod(
   }
 
   if (!selfObj) {
-    std::stringstream ss;
-    ss << '\'' << methodName
-       << "' requires self argument to be a valid object";
-    throw std::runtime_error(ss.str());
+    return VarValue::None();
   }
 
   const char* nativeClass = selfObj->GetParentNativeScript();
