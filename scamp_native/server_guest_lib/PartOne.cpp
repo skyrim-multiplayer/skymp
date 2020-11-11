@@ -34,7 +34,7 @@ struct PartOne::Impl
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
 {
   Init();
-  pImpl->sendTarget = sendTarget;
+  SetSendTarget(sendTarget);
 }
 
 PartOne::PartOne(std::shared_ptr<Listener> listener,
@@ -42,7 +42,7 @@ PartOne::PartOne(std::shared_ptr<Listener> listener,
 {
   Init();
   AddListener(listener);
-  pImpl->sendTarget = sendTarget;
+  SetSendTarget(sendTarget);
 }
 
 PartOne::~PartOne()
@@ -50,6 +50,11 @@ PartOne::~PartOne()
   // worldState may depend on serverState (actorsMap), we should reset it first
   worldState.Clear();
   serverState = {};
+}
+
+void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
+{
+  pImpl->sendTarget = sendTarget;
 }
 
 void PartOne::AddListener(std::shared_ptr<Listener> listener)
@@ -398,6 +403,13 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
       throw std::runtime_error("Unexpected PacketType: " +
                                std::to_string((int)packetType));
   }
+}
+
+Networking::ISendTarget& PartOne::GetSendTarget() const
+{
+  if (!pImpl->sendTarget)
+    throw std::runtime_error("No send target found");
+  return *pImpl->sendTarget;
 }
 
 FormCallbacks PartOne::CreateFormCallbacks()

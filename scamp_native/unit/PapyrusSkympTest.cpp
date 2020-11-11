@@ -7,7 +7,7 @@
 TEST_CASE("SetDefaultActor should store actor per stack", "[Papyrus][Skymp]")
 {
   PartOne p;
-  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c, nullptr);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
   auto logger = std::make_shared<spdlog::logger>("empty logger");

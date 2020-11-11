@@ -34,6 +34,7 @@ public:
           Networking::ISendTarget* sendTarget = nullptr);
   ~PartOne();
 
+  void SetSendTarget(Networking::ISendTarget* sendTarget);
   void AddListener(std::shared_ptr<Listener> listener);
   bool IsConnected(Networking::UserId userId) const;
   void Tick();
@@ -68,6 +69,8 @@ public:
 
   WorldState worldState;
   ServerState serverState;
+
+  Networking::ISendTarget& GetSendTarget() const;
 
 private:
   void Init();

@@ -205,11 +205,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto realServer = Networking::CreateServer(
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
     server = Networking::CreateCombinedServer({ realServer, serverMock });
+    partOne->SetSendTarget(server.get());
     partOne->worldState.AttachScriptStorage(scriptStorage);
-    partOne->AttachEspm(espm, server.get());
+    partOne->AttachEspm(espm);
     partOne->AttachSaveStorage(
-      std::make_shared<SqliteSaveStorage>("world.sqlite", logger),
-      server.get());
+      std::make_shared<SqliteSaveStorage>("world.sqlite", logger));
 
     auto res =
       info.Env().RunScript("let require = global.require || "
@@ -226,7 +226,6 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
 {
   try {
     tickEnv = info.Env();
-    partOne->pushedSendTarget = server.get();
     server->Tick(PartOne::HandlePacket, partOne.get());
     partOne->Tick();
   } catch (std::exception& e) {
@@ -253,8 +252,8 @@ Napi::Value ScampServer::CreateActor(const Napi::CallbackInfo& info)
   if (info[4].IsNumber())
     userProfileId = info[4].As<Napi::Number>().Int32Value();
   try {
-    uint32_t res = partOne->CreateActor(formId, pos, angleZ, cellOrWorld,
-                                        server.get(), userProfileId);
+    uint32_t res =
+      partOne->CreateActor(formId, pos, angleZ, cellOrWorld, userProfileId);
     return Napi::Number::New(info.Env(), res);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
@@ -266,7 +265,7 @@ Napi::Value ScampServer::SetUserActor(const Napi::CallbackInfo& info)
   auto userId = info[0].As<Napi::Number>().Uint32Value();
   auto actorFormId = info[1].As<Napi::Number>().Uint32Value();
   try {
-    partOne->SetUserActor(userId, actorFormId, server.get());
+    partOne->SetUserActor(userId, actorFormId);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
@@ -326,7 +325,7 @@ Napi::Value ScampServer::SetRaceMenuOpen(const Napi::CallbackInfo& info)
   auto formId = info[0].As<Napi::Number>().Uint32Value();
   auto open = info[1].As<Napi::Boolean>().operator bool();
   try {
-    partOne->SetRaceMenuOpen(formId, open, server.get());
+    partOne->SetRaceMenuOpen(formId, open);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
@@ -369,7 +368,7 @@ Napi::Value ScampServer::SendCustomPacket(const Napi::CallbackInfo& info)
   auto userId = info[0].As<Napi::Number>().Uint32Value();
   auto string = info[1].As<Napi::String>().operator std::string();
   try {
-    partOne->SendCustomPacket(userId, string, server.get());
+    partOne->SendCustomPacket(userId, string);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

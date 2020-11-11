@@ -5,26 +5,25 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
           "[PartOne]")
 {
   FakeSendTarget tgt;
-  PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
+  PartOne partOne(&tgt);
 
   constexpr uint32_t n = 20;
   static_assert(n <= MAX_PLAYERS - 1);
 
   for (uint32_t i = 0; i < n; ++i) {
-    partOne.CreateActor(i + 0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+    partOne.CreateActor(i + 0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
     if (i % 2 == 0)
       continue;
 
     DoConnect(partOne, i + 1);
-    partOne.SetUserActor(i + 1, i + 0xff000000, &tgt);
+    partOne.SetUserActor(i + 1, i + 0xff000000);
 
     DoUpdateMovement(partOne, i + 0xff000000, i + 1);
   }
 
   DoConnect(partOne, 0);
-  partOne.CreateActor(0xffffffff, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-  partOne.SetUserActor(0, 0xffffffff, &tgt);
+  partOne.CreateActor(0xffffffff, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+  partOne.SetUserActor(0, 0xffffffff);
   tgt = {};
 
   DoUpdateMovement(partOne, 0xffffffff, 0);
@@ -34,13 +33,12 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
 TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
 {
   FakeSendTarget tgt;
-  PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
+  PartOne partOne(&tgt);
 
   for (int i = 0; i < 2; ++i) {
     DoConnect(partOne, i);
-    partOne.CreateActor(i + 0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-    partOne.SetUserActor(i, i + 0xff000ABC, &tgt);
+    partOne.CreateActor(i + 0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+    partOne.SetUserActor(i, i + 0xff000ABC);
     auto m = jMovement;
     m["idx"] = i;
     DoMessage(partOne, i, m);
@@ -58,8 +56,7 @@ TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
 TEST_CASE("UpdateMovement", "[PartOne]")
 {
   FakeSendTarget tgt;
-  PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
+  PartOne partOne(&tgt);
 
   auto doMovement = [&] { DoMessage(partOne, 0, jMovement); };
 
@@ -68,8 +65,8 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   doMovement();
   REQUIRE(tgt.messages.size() == 0); // No actor - no movement
 
-  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-  partOne.SetUserActor(0, 0xff000ABC, &tgt);
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+  partOne.SetUserActor(0, 0xff000ABC);
   tgt = {};
   doMovement();
   REQUIRE(tgt.messages.size() == 1);
@@ -85,9 +82,9 @@ TEST_CASE("UpdateMovement", "[PartOne]")
 
   // Another player connects and see us
   DoConnect(partOne, 1);
-  partOne.CreateActor(0xff00ABCD, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.CreateActor(0xff00ABCD, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
   tgt = {};
-  partOne.SetUserActor(1, 0xff00ABCD, &tgt);
+  partOne.SetUserActor(1, 0xff00ABCD);
   REQUIRE(tgt.messages.size() == 3);
   // Create idx 1 for user 0, then idx 0 for 1, then idx 1 for 1 (self
   // streaming)

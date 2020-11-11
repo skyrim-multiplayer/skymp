@@ -137,7 +137,7 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
 TEST_CASE("BlockActivation", "[Papyrus][ObjectReference]")
 {
   PartOne p;
-  p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c, nullptr);
+  p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000001);
 
   auto& refr = CreateMpObjectReference(p, 0xff000000);

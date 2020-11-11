@@ -6,10 +6,10 @@
 TEST_CASE("Notification", "[Papyrus][Debug]")
 {
   FakeSendTarget tgt;
-  PartOne p;
+  PartOne p(&tgt);
   {
     auto ac =
-      std::make_unique<MpActor>(LocationalData(), p.CreateFormCallbacks(&tgt));
+      std::make_unique<MpActor>(LocationalData(), p.CreateFormCallbacks());
     p.worldState.AddForm(std::move(ac), 0xff000000);
   }
 
@@ -19,7 +19,7 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   debug.compatibilityPolicy.reset(new PapyrusCompatibilityPolicy(&ac));
 
   DoConnect(p, 3);
-  p.SetUserActor(3, 0xff000000, &tgt);
+  p.SetUserActor(3, 0xff000000);
 
   debug.Notification(VarValue::AttachTestStackId(),
                      { VarValue("Hello, world!") });

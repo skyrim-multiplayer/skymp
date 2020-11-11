@@ -50,8 +50,8 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
-  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c, &g_tgt);
-  p.SetUserActor(0, 0xff000000, &g_tgt);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   ac.RegisterProfileId(MpActor::ProfileIds::kProfileId_Pospelov);
 

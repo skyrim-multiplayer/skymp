@@ -3,40 +3,38 @@
 TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 {
   FakeSendTarget tgt;
-  PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
+  PartOne partOne(&tgt);
 
-  partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
 
   REQUIRE_THROWS_WITH(
-    partOne.SetRaceMenuOpen(0xff000000, true, &tgt),
+    partOne.SetRaceMenuOpen(0xff000000, true),
     Contains("Actor with id ff000000 is not attached to any of users"));
 
-  REQUIRE_THROWS_WITH(partOne.SetRaceMenuOpen(0xffffffff, true, &tgt),
+  REQUIRE_THROWS_WITH(partOne.SetRaceMenuOpen(0xffffffff, true),
                       Contains("Form with id ffffffff doesn't exist"));
 
   partOne.worldState.AddForm(std::make_unique<MpForm>(), 0xffffffff);
 
-  REQUIRE_THROWS_WITH(partOne.SetRaceMenuOpen(0xffffffff, true, &tgt),
+  REQUIRE_THROWS_WITH(partOne.SetRaceMenuOpen(0xffffffff, true),
                       Contains("Form with id ffffffff is not Actor"));
 }
 
 TEST_CASE("SetRaceMenuOpen", "[PartOne]")
 {
   FakeSendTarget tgt;
-  PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
+  PartOne partOne(&tgt);
 
   DoConnect(partOne, 1);
-  partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+  partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
   auto actor = std::dynamic_pointer_cast<MpActor>(
     partOne.worldState.LookupFormById(0xff000000));
-  partOne.SetUserActor(1, 0xff000000, &tgt);
+  partOne.SetUserActor(1, 0xff000000);
   tgt = {};
 
   REQUIRE(actor->IsRaceMenuOpen() == false);
 
-  partOne.SetRaceMenuOpen(0xff000000, true, &tgt);
+  partOne.SetRaceMenuOpen(0xff000000, true);
 
   REQUIRE(actor->IsRaceMenuOpen() == true);
   REQUIRE(tgt.messages.size() == 1);
@@ -46,10 +44,10 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
   REQUIRE(tgt.messages[0].reliable);
 
   for (int i = 0; i < 3; ++i)
-    partOne.SetRaceMenuOpen(0xff000000, true, &tgt);
+    partOne.SetRaceMenuOpen(0xff000000, true);
   REQUIRE(tgt.messages.size() == 1);
 
-  partOne.SetRaceMenuOpen(0xff000000, false, &tgt);
+  partOne.SetRaceMenuOpen(0xff000000, false);
   REQUIRE(tgt.messages.size() == 2);
   REQUIRE(tgt.messages[1].j ==
           nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", false } });
@@ -57,7 +55,7 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
   REQUIRE(tgt.messages[1].reliable);
 
   for (int i = 0; i < 3; ++i)
-    partOne.SetRaceMenuOpen(0xff000000, false, &tgt);
+    partOne.SetRaceMenuOpen(0xff000000, false);
   REQUIRE(tgt.messages.size() == 2);
 }
 
@@ -73,17 +71,16 @@ TEST_CASE("Look <=> JSON casts", "[PartOne]")
 TEST_CASE("UpdateLook1", "[PartOne]")
 {
   FakeSendTarget tgt;
-  PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
+  PartOne partOne(&tgt);
 
   DoConnect(partOne, 0);
-  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-  partOne.SetUserActor(0, 0xff000ABC, &tgt);
-  partOne.SetRaceMenuOpen(0xff000ABC, true, &tgt);
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+  partOne.SetUserActor(0, 0xff000ABC);
+  partOne.SetRaceMenuOpen(0xff000ABC, true);
 
   DoConnect(partOne, 1);
-  partOne.CreateActor(0xffABCABC, { 11.f, 22.f, 33.f }, 180.f, 0x3c, &tgt);
-  partOne.SetUserActor(1, 0xffABCABC, &tgt);
+  partOne.CreateActor(0xffABCABC, { 11.f, 22.f, 33.f }, 180.f, 0x3c);
+  partOne.SetUserActor(1, 0xffABCABC);
 
   tgt = {};
   auto doLook = [&] { DoMessage(partOne, 0, jLook); };
@@ -106,17 +103,16 @@ TEST_CASE("UpdateLook1", "[PartOne]")
 TEST_CASE("UpdateLook2", "[PartOne]")
 {
   FakeSendTarget tgt;
-  PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
+  PartOne partOne(&tgt);
 
   DoConnect(partOne, 0);
-  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-  partOne.SetUserActor(0, 0xff000ABC, &tgt);
-  partOne.SetRaceMenuOpen(0xff000ABC, true, &tgt);
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+  partOne.SetUserActor(0, 0xff000ABC);
+  partOne.SetRaceMenuOpen(0xff000ABC, true);
 
   DoConnect(partOne, 1);
-  partOne.CreateActor(0xffABCABC, { 11.f, 22.f, 33.f }, 180.f, 0x3c, &tgt);
-  partOne.SetUserActor(1, 0xffABCABC, &tgt);
+  partOne.CreateActor(0xffABCABC, { 11.f, 22.f, 33.f }, 180.f, 0x3c);
+  partOne.SetUserActor(1, 0xffABCABC);
 
   tgt = {};
   auto doLook = [&] { DoMessage(partOne, 0, jLook); };
