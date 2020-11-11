@@ -125,34 +125,6 @@ private:
   std::stringstream ss;
 };
 
-class FakeSendTarget : public Networking::ISendTarget
-{
-public:
-  void Send(Networking::UserId targetUserId, Networking::PacketData data,
-            size_t length, bool reliable) override
-  {
-    std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
-    Message m;
-    try {
-      m = Message{ nlohmann::json::parse(s), targetUserId, reliable };
-    } catch (std::exception& e) {
-      std::stringstream ss;
-      ss << e.what() << std::endl << "`" << s << "`";
-      throw std::runtime_error(ss.str());
-    }
-    messages.push_back(m);
-  }
-
-  struct Message
-  {
-    nlohmann::json j;
-    Networking::UserId userId = Networking::InvalidUserId;
-    bool reliable = false;
-  };
-
-  std::vector<Message> messages;
-};
-
 class PapyrusCompatibilityPolicy : public IPapyrusCompatibilityPolicy
 {
 public:

@@ -10,6 +10,29 @@
 #include <type_traits>
 #include <vector>
 
+namespace {
+class FakeSendTarget : public Networking::ISendTarget
+{
+public:
+  void Send(Networking::UserId targetUserId, Networking::PacketData data,
+            size_t length, bool reliable) override
+  {
+    std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
+    PartOne::Message m;
+    try {
+      m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliable };
+    } catch (std::exception& e) {
+      std::stringstream ss;
+      ss << e.what() << std::endl << "`" << s << "`";
+      throw std::runtime_error(ss.str());
+    }
+    messages.push_back(m);
+  }
+
+  std::vector<PartOne::Message> messages;
+};
+}
+
 struct PartOne::Impl
 {
   simdjson::dom::parser parser;
@@ -29,6 +52,7 @@ struct PartOne::Impl
   std::shared_ptr<spdlog::logger> logger;
 
   Networking::ISendTarget* sendTarget = nullptr;
+  FakeSendTarget fakeSendTarget;
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -54,7 +78,7 @@ PartOne::~PartOne()
 
 void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
 {
-  pImpl->sendTarget = sendTarget;
+  pImpl->sendTarget = sendTarget ? sendTarget : &pImpl->fakeSendTarget;
 }
 
 void PartOne::AddListener(std::shared_ptr<Listener> listener)
@@ -451,6 +475,11 @@ const std::vector<std::shared_ptr<PartOne::Listener>>& PartOne::GetListeners()
   const
 {
   return pImpl->listeners;
+}
+
+std::vector<PartOne::Message>& PartOne::Messages()
+{
+  return pImpl->fakeSendTarget.messages;
 }
 
 void PartOne::Init()

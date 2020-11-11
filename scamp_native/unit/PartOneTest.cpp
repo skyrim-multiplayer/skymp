@@ -13,7 +13,7 @@ TEST_CASE("PartOne API doesn't crash when bad userId passed", "[PartOne]")
 
 TEST_CASE("SetUserActor doesn't accept disabled actors", "[PartOne]")
 {
-  FakeSendTarget tgt;
+  
   PartOne partOne;
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0.0, 0x3c);
   partOne.SetEnabled(0xff000000, false);
@@ -107,17 +107,17 @@ TEST_CASE("Disconnect event sent before user actually disconnects",
 
 TEST_CASE("Server custom packet", "[PartOne]")
 {
-  FakeSendTarget tgt;
-  PartOne partOne(&tgt);
+  
+  PartOne partOne;
 
   DoConnect(partOne, 1);
 
   partOne.SendCustomPacket(1, nlohmann::json({ { "x", "y" } }).dump());
-  REQUIRE(tgt.messages.size() == 1);
-  REQUIRE(tgt.messages[0].j.dump() ==
+  REQUIRE(partOne.Messages().size() == 1);
+  REQUIRE(partOne.Messages()[0].j.dump() ==
           nlohmann::json{ { "type", "customPacket" },
                           { "content", { { "x", "y" } } } }
             .dump());
-  REQUIRE(tgt.messages[0].userId == 1);
-  REQUIRE(tgt.messages[0].reliable);
+  REQUIRE(partOne.Messages()[0].userId == 1);
+  REQUIRE(partOne.Messages()[0].reliable);
 }

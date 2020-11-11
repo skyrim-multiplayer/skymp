@@ -13,8 +13,8 @@ MpObjectReference& CreateMpObjectReference(WorldState& worldState, uint32_t id)
 
 TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
 {
-  FakeSendTarget tgt;
-  PartOne p(&tgt);
+  
+  PartOne p;
 
   auto& ref = CreateMpObjectReference(p.worldState, 0xff000000);
   ref.SetCellOrWorld(0x3c);

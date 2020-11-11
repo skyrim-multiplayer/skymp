@@ -4,7 +4,6 @@
 #include "PacketParser.h"
 
 PartOne& GetPartOne();
-extern FakeSendTarget g_tgt;
 
 TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
@@ -46,32 +45,30 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
   REQUIRE(listener.rawMsgData->userId == 122);
 }
 
-/*TEST_CASE("AddItem executes", "[ConsoleCommand]")
+TEST_CASE("AddItem executes", "[ConsoleCommand]")
 {
   PartOne& p = GetPartOne();
+
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   ac.RegisterProfileId(MpActor::ProfileIds::kProfileId_Pospelov);
 
-  g_tgt = {};
-
   IActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
-  
-  p.pushedSendTarget = nullptr;
+  p.Messages().clear();
   p.GetActionListener().OnConsoleCommand(msgData, "additem",
                                          { 0x14, 0x12eb7, 0x108 });
 
   nlohmann::json expectedInv{
     { "entries", { { { "baseId", 0x12eb7 }, { "count", 0x108 } } } }
   };
-  REQUIRE(g_tgt.messages.size() == 1);
-  REQUIRE(g_tgt.messages[0].j["type"] == "setInventory");
-  REQUIRE(g_tgt.messages[0].j["inventory"].dump() == expectedInv.dump());
+  REQUIRE(p.Messages().size() >= 1);
+  REQUIRE(p.Messages()[0].j["type"] == "setInventory");
+  REQUIRE(p.Messages()[0].j["inventory"].dump() == expectedInv.dump());
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
-}*/
+}

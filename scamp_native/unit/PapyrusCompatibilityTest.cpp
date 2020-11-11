@@ -3,7 +3,6 @@
 
 // PartOne_ActivateTest.cpp
 extern espm::CompressedFieldsCache g_dummyCache;
-extern FakeSendTarget g_tgt;
 PartOne& GetPartOne();
 
 TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus]")

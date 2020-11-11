@@ -7,6 +7,7 @@
 #include "WorldState.h"
 #include <Loader.h>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <simdjson.h>
 #include <spdlog/logger.h>
@@ -19,6 +20,13 @@ class IActionListener;
 class PartOne
 {
 public:
+  struct Message
+  {
+    nlohmann::json j;
+    Networking::UserId userId = Networking::InvalidUserId;
+    bool reliable = false;
+  };
+
   class Listener
   {
   public:
@@ -42,6 +50,7 @@ public:
   FormCallbacks CreateFormCallbacks();
   IActionListener& GetActionListener();
   const std::vector<std::shared_ptr<Listener>>& GetListeners() const;
+  std::vector<Message>& Messages();
 
   // API
   uint32_t CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,

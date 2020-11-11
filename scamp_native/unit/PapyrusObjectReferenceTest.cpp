@@ -116,8 +116,8 @@ TEST_CASE("RemoveItem", "[Papyrus][ObjectReference]")
 
 TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
 {
-  FakeSendTarget tgt;
-  PartOne p(&tgt);
+  
+  PartOne p;
 
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   DoConnect(p, 1);
