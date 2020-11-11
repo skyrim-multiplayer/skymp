@@ -2,6 +2,9 @@ import { Game, Actor } from "skyrimPlatform";
 
 const protection = new Map<number, number>();
 
+const isInDialogue = (ac: Actor): boolean =>
+  ac.isInDialogueWithPlayer() || !!ac.getDialogueTarget();
+
 function processOneActor(): void {
   const pc = Game.getPlayer();
   const actor = Game.findRandomActor(
@@ -18,7 +21,7 @@ function processOneActor(): void {
   if (!actor || actorId === 0x14 || actor.isDisabled() || actor.isDeleted())
     return;
 
-  if (actor.isInDialogueWithPlayer()) {
+  if (isInDialogue(actor)) {
     // Deleting actor in dialogue crashes Skyrim
     // https://github.com/skyrim-multiplayer/issue-tracker/issues/13
     actor.setPosition(0, 0, 0);
@@ -26,8 +29,8 @@ function processOneActor(): void {
   }
   actor.disable(false).then(() => {
     const ac = Actor.from(Game.getFormEx(actorId));
-    if (ac.getDialogueTarget() != null) return;
-    if (ac) ac.delete();
+    if (!ac || isInDialogue(ac)) return;
+    ac.delete();
   });
 }
 

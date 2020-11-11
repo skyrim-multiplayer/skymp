@@ -1,5 +1,8 @@
 #include "ActionListener.h"
+#include "EspmGameObject.h"
 #include "Exceptions.h"
+#include "PapyrusObjectReference.h"
+#include "Utils.h"
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -197,4 +200,34 @@ void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
       std::to_string(rawMsgData.userId));
 
   actor->OnEquip(baseId);
+}
+
+void ActionListener::OnConsoleCommand(
+  const RawMessageData& rawMsgData, const std::string& consoleCommandName,
+  const std::vector<ConsoleCommands::Argument>& args)
+{
+  if (!Utils::stricmp(consoleCommandName.data(), "AddItem")) {
+    const auto targetId = static_cast<uint32_t>(args[0].GetInteger());
+    const auto itemId = static_cast<uint32_t>(args[1].GetInteger());
+    const auto count = static_cast<int32_t>(args[2].GetInteger());
+
+    MpObjectReference* target = nullptr;
+    if (targetId == 0x14) {
+      target = partOne.serverState.ActorByUser(rawMsgData.userId);
+      if (!target)
+        throw std::runtime_error("No actor found for user " +
+                                 std::to_string(rawMsgData.userId));
+    } else
+      target = &partOne.worldState.GetFormAt<MpObjectReference>(targetId);
+
+    auto& br = partOne.GetEspm().GetBrowser();
+
+    PapyrusObjectReference papyrusObjectReference;
+    std::vector<VarValue> args;
+    args.push_back(
+      VarValue(std::make_shared<EspmGameObject>(br.LookupById(itemId))));
+    args.push_back(VarValue(count));
+    args.push_back(VarValue(false));
+    papyrusObjectReference.AddItem(target->ToVarValue(), args);
+  }
 }

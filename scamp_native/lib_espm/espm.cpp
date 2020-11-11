@@ -705,3 +705,25 @@ espm::ACTI::Data espm::ACTI::GetData() const noexcept
   GetScriptData(&result.scriptData);
   return result;
 }
+
+espm::COBJ::Data espm::COBJ::GetData() const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "CNTO", 4)) {
+        result.inputObjects.push_back(
+          *reinterpret_cast<const InputObject*>(data));
+      } else if (!memcmp(type, "CNAM", 4)) {
+        const auto formId = *reinterpret_cast<const uint32_t*>(data);
+        result.outputObjectFormId = formId;
+      } else if (!memcmp(type, "BNAM", 4)) {
+        const auto formId = *reinterpret_cast<const uint32_t*>(data);
+        result.benchKeywordId = formId;
+      } else if (!memcmp(type, "NAM1", 4)) {
+        const auto count = *reinterpret_cast<const uint16_t*>(data);
+        result.outputCount = count;
+      }
+    });
+  return result;
+}

@@ -14,5 +14,6 @@ enum class MsgType : int64_t
   PutItem = 8,
   TakeItem = 9,
   FinishSpSnippet = 10,
-  OnEquip = 11
+  OnEquip = 11,
+  ConsoleCommand = 12
 };

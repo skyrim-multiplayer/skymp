@@ -179,3 +179,29 @@ TEST_CASE("Loads refr with primitive", "[espm]")
   REQUIRE(abs(data.boundsDiv2[1] - 262.88865f) < 0.1);
   REQUIRE(abs(data.boundsDiv2[2] - 221.2002f) < 0.1);
 }
+
+TEST_CASE("Loads ConstructibleObject", "[espm]")
+{
+  enum
+  {
+    CraftingSmithingForge = 0x00088105
+  };
+
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(0xdb89e);
+  REQUIRE(form.rec->GetType() == "COBJ");
+
+  auto data = reinterpret_cast<espm::COBJ*>(form.rec)->GetData();
+  REQUIRE(data.benchKeywordId == CraftingSmithingForge);
+  REQUIRE(data.outputObjectFormId == 0x1398a);
+  REQUIRE(data.outputCount == 1);
+
+  REQUIRE(data.inputObjects.size() == 3);
+  REQUIRE(data.inputObjects[0].formId == 0x5ace4);
+  REQUIRE(data.inputObjects[0].count == 1);
+  REQUIRE(data.inputObjects[1].formId == 0x800e4);
+  REQUIRE(data.inputObjects[1].count == 3);
+  REQUIRE(data.inputObjects[2].formId == 0x5ace5);
+  REQUIRE(data.inputObjects[2].count == 4);
+}

@@ -111,6 +111,7 @@ public:
   void SetActivationBlocked(bool blocked);
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);
+  // void CraftItem(MpActor& crafter);
 
   // If you want to completely remove ObjectReference from the grid you need
   // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these

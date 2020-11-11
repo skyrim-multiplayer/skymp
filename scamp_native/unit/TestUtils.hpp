@@ -11,12 +11,18 @@ using namespace Catch;
 
 // Utilities for testing
 namespace {
-void DoMessage(PartOne& partOne, Networking::UserId id,
-               const nlohmann::json& j)
+std::string MakeMessage(const nlohmann::json& j)
 {
   std::string s;
   s += (char)Networking::MinPacketId;
   s += j.dump();
+  return s;
+}
+
+void DoMessage(PartOne& partOne, Networking::UserId id,
+               const nlohmann::json& j)
+{
+  std::string s = MakeMessage(j);
   PartOne* ptr = &partOne;
   PartOne::HandlePacket(ptr, id, Networking::PacketType::Message,
                         reinterpret_cast<Networking::PacketData>(s.data()),

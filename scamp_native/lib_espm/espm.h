@@ -599,6 +599,30 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(ACTI) == sizeof(RecordHeader));
+
+class COBJ : public RecordHeader
+{
+public:
+  static constexpr auto type = "COBJ";
+
+  struct InputObject
+  {
+    uint32_t formId = 0;
+    uint32_t count = 0;
+  };
+  static_assert(sizeof(InputObject) == 8);
+
+  struct Data
+  {
+    std::vector<InputObject> inputObjects;
+    uint32_t outputObjectFormId = 0;
+    uint32_t benchKeywordId = 0;
+    uint32_t outputCount = 0;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(COBJ) == sizeof(RecordHeader));
 }
 
 #pragma pack(pop)

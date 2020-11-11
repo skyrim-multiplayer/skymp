@@ -130,6 +130,36 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnEquip(rawMsgData, baseId);
       break;
     }
+    case MsgType::ConsoleCommand: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, "data", &data_);
+      const char* commandName;
+      ReadEx(data_, "commandName", &commandName);
+      simdjson::dom::element args;
+      ReadEx(data_, "args", &args);
+
+      auto arr = args.get_array().value();
+
+      std::vector<ConsoleCommands::Argument> consoleArgs;
+      consoleArgs.resize(arr.size());
+      for (size_t i = 0; i < arr.size(); ++i) {
+        simdjson::dom::element el;
+        ReadEx(args, i, &el);
+
+        std::string s = simdjson::minify(el);
+        if (!s.empty() && s[0] == '"') {
+          const char* s;
+          ReadEx(args, i, &s);
+          consoleArgs[i] = std::string(s);
+        } else {
+          int64_t ingeter;
+          ReadEx(args, i, &ingeter);
+          consoleArgs[i] = ingeter;
+        }
+      }
+      actionListener.OnConsoleCommand(rawMsgData, commandName, consoleArgs);
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }
