@@ -29,39 +29,35 @@ public:
                                 const simdjson::dom::element& content) = 0;
   };
 
-  PartOne();
-  PartOne(std::shared_ptr<Listener> listener);
+  PartOne(Networking::ISendTarget* sendTarget = nullptr);
+  PartOne(std::shared_ptr<Listener> listener,
+          Networking::ISendTarget* sendTarget = nullptr);
   ~PartOne();
 
   void AddListener(std::shared_ptr<Listener> listener);
   bool IsConnected(Networking::UserId userId) const;
   void Tick();
   void EnableProductionHacks();
-  FormCallbacks CreateFormCallbacks(Networking::ISendTarget* sendTarget);
+  FormCallbacks CreateFormCallbacks();
   IActionListener& GetActionListener();
   const std::vector<std::shared_ptr<Listener>>& GetListeners() const;
 
   // API
   uint32_t CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
-                       uint32_t cellOrWorld,
-                       Networking::ISendTarget* sendTarget,
-                       ProfileId profileId = -1);
-  void SetUserActor(Networking::UserId userId, uint32_t actorFormId,
-                    Networking::ISendTarget* sendTarget);
+                       uint32_t cellOrWorld, ProfileId profileId = -1);
+  void SetUserActor(Networking::UserId userId, uint32_t actorFormId);
   uint32_t GetUserActor(Networking::UserId userId);
   void DestroyActor(uint32_t actorFormId);
-  void SetRaceMenuOpen(uint32_t formId, bool open,
-                       Networking::ISendTarget* sendTarget);
-  void SendCustomPacket(Networking::UserId userId, const std::string& jContent,
-                        Networking::ISendTarget* sendTarget);
+  void SetRaceMenuOpen(uint32_t formId, bool open);
+  void SendCustomPacket(Networking::UserId userId,
+                        const std::string& jContent);
   std::string GetActorName(uint32_t actorFormId);
   NiPoint3 GetActorPos(uint32_t actorFormId);
   const std::set<uint32_t>& GetActorsByProfileId(ProfileId profileId);
   void SetEnabled(uint32_t actorFormId, bool enabled);
 
-  void AttachEspm(espm::Loader* espm, Networking::ISendTarget* sendTarget);
-  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
-                         Networking::ISendTarget* sendTarget);
+  void AttachEspm(espm::Loader* espm);
+  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
   espm::Loader& GetEspm() const;
   bool HasEspm() const;
   void AttachLogger(std::shared_ptr<spdlog::logger> logger);
@@ -72,7 +68,6 @@ public:
 
   WorldState worldState;
   ServerState serverState;
-  Networking::ISendTarget* pushedSendTarget = nullptr;
 
 private:
   void Init();

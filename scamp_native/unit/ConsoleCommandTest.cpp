@@ -46,7 +46,7 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
   REQUIRE(listener.rawMsgData->userId == 122);
 }
 
-TEST_CASE("AddItem executes", "[ConsoleCommand]")
+/*TEST_CASE("AddItem executes", "[ConsoleCommand]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
@@ -74,4 +74,4 @@ TEST_CASE("AddItem executes", "[ConsoleCommand]")
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
-}
+}*/
