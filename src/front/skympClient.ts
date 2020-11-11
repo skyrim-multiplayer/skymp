@@ -147,8 +147,55 @@ export class SkympClient {
       printConsole("sendActi", { caster, target });
     });
 
+    type FurnitureId = number;
+    const furnitureStreak = new Map<FurnitureId, Inventory>();
+
     on("containerChanged", (e) => {
-      printConsole("EEE", JSON.stringify(e));
+      const oldContainerId = e.oldContainer ? e.oldContainer.getFormID() : 0;
+      const newContainerId = e.newContainer ? e.newContainer.getFormID() : 0;
+      const baseObjId = e.baseObj ? e.baseObj.getFormID() : 0;
+      if (oldContainerId !== 0x14 && newContainerId !== 0x14) return;
+
+      const furnitureRef = Game.getPlayer().getFurnitureReference();
+      if (!furnitureRef) return;
+
+      const furrnitureId = furnitureRef.getFormID();
+
+      if (oldContainerId === 0x14 && newContainerId === 0) {
+        let craftInputObjects = furnitureStreak.get(furrnitureId);
+        if (!craftInputObjects) {
+          craftInputObjects = { entries: [] };
+        }
+        craftInputObjects.entries.push({
+          baseId: baseObjId,
+          count: e.numItems,
+        });
+        furnitureStreak.set(furrnitureId, craftInputObjects);
+        printConsole(
+          `Adding ${baseObjId.toString(16)} (${e.numItems}) to recipe`
+        );
+      } else if (oldContainerId === 0 && newContainerId === 0x14) {
+        printConsole("Flushing recipe");
+        const craftInputObjects = furnitureStreak.get(furrnitureId);
+        if (craftInputObjects && craftInputObjects.entries.length) {
+          furnitureStreak.delete(furrnitureId);
+          const workbench = this.localIdToRemoteId(furrnitureId);
+          if (!workbench) return printConsole("localIdToRemoteId returned 0");
+
+          this.sendTarget.send(
+            {
+              t: MsgType.CraftItem,
+              data: { workbench, craftInputObjects, resultObjectId: baseObjId },
+            },
+            true
+          );
+          printConsole("sendCraft", {
+            workbench,
+            craftInputObjects,
+            resultObjectId: baseObjId,
+          });
+        }
+      }
     });
 
     on("containerChanged", (e) => {

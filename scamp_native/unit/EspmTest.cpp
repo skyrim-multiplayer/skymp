@@ -205,3 +205,23 @@ TEST_CASE("Loads ConstructibleObject", "[espm]")
   REQUIRE(data.inputObjects[2].formId == 0x5ace5);
   REQUIRE(data.inputObjects[2].count == 4);
 }
+
+TEST_CASE("Loads Furniture", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(0xbbcf1);
+
+  REQUIRE(form.rec->GetType() == "FURN");
+
+  auto keywordIds = form.rec->GetKeywordIds();
+  std::set<std::string> keywords;
+  for (auto id : keywordIds) {
+    keywords.insert(br.LookupById(id).rec->GetEditorId());
+  }
+  REQUIRE(keywords ==
+          std::set<std::string>(
+            { "CraftingSmithingForge", "CraftingSmithingSkyforge",
+              "FurnitureForce3rdPerson", "FurnitureSpecial",
+              "isBlacksmithForge", "RaceToScale", "WICraftingSmithing" }));
+}

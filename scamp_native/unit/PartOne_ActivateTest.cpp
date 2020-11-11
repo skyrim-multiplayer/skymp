@@ -118,17 +118,13 @@ TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne]")
   partOne.CreateActor(0xff000000, { 22572, -8634, -3597 }, 0, 0x1a26f);
   partOne.SetUserActor(0, 0xff000000);
 
-  std::cout << "SUCK " << partOne.Messages().size() << std::endl;
-  for (auto m : partOne.Messages())
-    std::cout << "SUCK " << m.j << std::endl;
-
   auto it = std::find_if(
     partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
       return m.reliable && m.userId == 0 && m.j["type"] == "createActor" &&
         m.j["refrId"] == refrId &&
         m.j["props"] == nlohmann::json{ { "isHarvested", true } };
     });
-  // REQUIRE(it != partOne.Messages().end());
+  REQUIRE(it != partOne.Messages().end());
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);

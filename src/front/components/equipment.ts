@@ -33,6 +33,7 @@ export const isBadMenuShown = (): boolean => {
     Ui.isMenuOpen("InventoryMenu") ||
     Ui.isMenuOpen("FavoritesMenu") ||
     Ui.isMenuOpen("MagicMenu") ||
-    Ui.isMenuOpen("ContainerMenu")
+    Ui.isMenuOpen("ContainerMenu") ||
+    Ui.isMenuOpen("Crafting Menu") // Actually I don't think it causes crashes
   );
 };

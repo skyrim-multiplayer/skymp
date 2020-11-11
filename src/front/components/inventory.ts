@@ -328,7 +328,7 @@ export const applyInventory = (
 
       const f = Game.getFormEx(e.baseId);
 
-      if (!f) printConsole(`Bad form id ${e.baseId.toString(16)}`);
+      if (!f) printConsole(`Bad form ID ${e.baseId.toString(16)}`);
       else
         TESModPlatform.addItemEx(
           refr,

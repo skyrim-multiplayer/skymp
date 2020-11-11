@@ -15,12 +15,12 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
       const std::string& consoleCommandName_,
       const std::vector<ConsoleCommands::Argument>& args_) override
     {
-      rawMsgData = &rawMsgData_;
+      rawMsgData = rawMsgData_;
       consoleCommandName = consoleCommandName_;
       args = args_;
     }
 
-    const RawMessageData* rawMsgData = nullptr;
+    RawMessageData rawMsgData;
     std::string consoleCommandName;
     std::vector<ConsoleCommands::Argument> args;
   };
@@ -42,7 +42,28 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
   REQUIRE(listener.args ==
           std::vector<ConsoleCommands::Argument>({ 0x14, 0x12eb7, 0x1 }));
   REQUIRE(listener.consoleCommandName == "additem");
-  REQUIRE(listener.rawMsgData->userId == 122);
+  REQUIRE(listener.rawMsgData.userId == 122);
+}
+
+TEST_CASE("AddItem doesn't execute for non-privilleged users",
+          "[ConsoleCommand]")
+{
+  PartOne& p = GetPartOne();
+
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  IActionListener::RawMessageData msgData;
+  msgData.userId = 0;
+
+  REQUIRE_THROWS_WITH(p.GetActionListener().OnConsoleCommand(
+                        msgData, "additem", { 0x14, 0x12eb7, 0x108 }),
+                      Contains("Not enough permissions to use this command"));
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
 }
 
 TEST_CASE("AddItem executes", "[ConsoleCommand]")
@@ -72,10 +93,6 @@ TEST_CASE("AddItem executes", "[ConsoleCommand]")
   REQUIRE(
     p.Messages()[1].j.dump() ==
     R"({"arguments":[{"formId":77495,"type":"weapon"},264,false],"class":"SkympHacks","function":"AddItem","selfId":0,"snippetIdx":0,"type":"spSnippet"})");
-
-  for (auto msg : p.Messages()) {
-    std::cout << msg.j << std::endl;
-  }
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

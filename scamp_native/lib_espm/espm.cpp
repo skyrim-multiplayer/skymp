@@ -392,6 +392,28 @@ void espm::RecordHeader::GetScriptData(
   *out = res;
 }
 
+std::vector<uint32_t> espm::RecordHeader::GetKeywordIds(
+  espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
+{
+  std::vector<uint32_t> res;
+  uint32_t count = 0;
+
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "KSIZ", 4)) {
+        count = *reinterpret_cast<const uint32_t*>(data);
+      }
+      if (!memcmp(type, "KWDA", 4)) {
+        for (uint32_t i = 0; i < count; ++i)
+          res.push_back(reinterpret_cast<const uint32_t*>(data)[i]);
+      }
+    },
+    compressedFieldsCache);
+
+  return res;
+}
+
 espm::Type espm::RecordHeader::GetType() const noexcept
 {
   return ((char*)this) - 8;
@@ -425,6 +447,7 @@ struct espm::Browser::Impl
   spp::sparse_hash_map<uint32_t, RecordHeader*> recById;
   spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>> navmeshes;
   std::vector<RecordHeader*> objectReferences;
+  std::vector<RecordHeader*> constructibleObjects;
 
   GroupStack grStack;
   std::vector<std::unique_ptr<GroupStack>> grStackCopies;
@@ -473,8 +496,11 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsByType(
   if (!strcmp(type, "REFR")) {
     return pImpl->objectReferences;
   }
+  if (!strcmp(type, "COBJ")) {
+    return pImpl->constructibleObjects;
+  }
   throw std::runtime_error(
-    "GetRecordsByType currently supports only REFR records");
+    "GetRecordsByType currently supports only REFR and COBJ records");
 }
 
 bool espm::Browser::ReadAny(void* parentGrStack)
@@ -518,6 +544,9 @@ bool espm::Browser::ReadAny(void* parentGrStack)
 
     if (recHeader->GetType() == "REFR")
       pImpl->objectReferences.push_back(recHeader);
+
+    if (recHeader->GetType() == "COBJ")
+      pImpl->constructibleObjects.push_back(recHeader);
 
     if (recHeader->GetType() == "NAVM") {
       auto nvnm = reinterpret_cast<NAVM*>(recHeader);

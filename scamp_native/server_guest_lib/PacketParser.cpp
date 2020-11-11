@@ -160,6 +160,20 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnConsoleCommand(rawMsgData, commandName, consoleArgs);
       break;
     }
+    case MsgType::CraftItem: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, "data", &data_);
+      uint32_t workbench;
+      ReadEx(data_, "workbench", &workbench);
+      uint32_t resultObjectId;
+      ReadEx(data_, "resultObjectId", &resultObjectId);
+      simdjson::dom::element craftInputObjects;
+      ReadEx(data_, "craftInputObjects", &craftInputObjects);
+      actionListener.OnCraftItem(rawMsgData,
+                                 Inventory::FromJson(craftInputObjects),
+                                 workbench, resultObjectId);
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }

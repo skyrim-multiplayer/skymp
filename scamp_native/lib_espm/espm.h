@@ -155,6 +155,9 @@ public:
   void GetScriptData(ScriptData* out,
                      espm::CompressedFieldsCache* compressedFieldsCache =
                        nullptr) const noexcept;
+  std::vector<uint32_t> GetKeywordIds(
+    espm::CompressedFieldsCache* compressedFieldsCache = nullptr) const
+    noexcept;
 
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;
@@ -624,5 +627,4 @@ public:
 };
 static_assert(sizeof(COBJ) == sizeof(RecordHeader));
 }
-
 #pragma pack(pop)

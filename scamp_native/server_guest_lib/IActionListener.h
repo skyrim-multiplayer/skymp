@@ -74,4 +74,10 @@ public:
     const std::vector<ConsoleCommands::Argument>& args)
   {
   }
+
+  virtual void OnCraftItem(const RawMessageData& rawMsgData,
+                           const Inventory& inputObjects, uint32_t workbenchId,
+                           uint32_t resultObjectId)
+  {
+  }
 };
