@@ -21,7 +21,7 @@ espm::COBJ* FindRecipe(const espm::CombineBrowser& br,
                        const Inventory& inputObjects, uint32_t resultObjectId,
                        int* optionalOutEspmIdx)
 {
-  auto& allRecipes = br.GetRecordsByType("COBJ");
+  auto allRecipes = br.GetRecordsByType("COBJ");
 
   espm::COBJ* recipeUsed = nullptr;
 
