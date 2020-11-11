@@ -31,6 +31,28 @@ import { IdManager } from "../lib/idManager";
 import { applyLookToPlayer } from "./components/look";
 import * as spSnippet from "./spSnippet";
 
+const maxVerifyDelayDefault = 1000;
+let verifyStartMoment = 0;
+let loggingStartMoment = 0;
+let maxVerifyDelay = maxVerifyDelayDefault;
+
+on("tick", () => {
+  const maxLoggingDelay = 5000;
+  if (verifyStartMoment && Date.now() - verifyStartMoment > maxVerifyDelay) {
+    maxVerifyDelay *= 2;
+    printConsole(
+      "Verify failed. Reconnecting. Calculated delay is " + maxVerifyDelay
+    );
+    networking.reconnect();
+    verifyStartMoment = 0;
+  }
+  if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
+    printConsole("Logging in failed. Reconnecting.");
+    networking.reconnect();
+    loggingStartMoment = 0;
+  }
+});
+
 class SpawnTask {
   running = false;
 }
@@ -49,6 +71,7 @@ const sendBrowserToken = () => {
 };
 
 const verifySourceCode = () => {
+  verifyStartMoment = Date.now();
   const src = getPluginSourceCode("skymp5-client");
   printConsole(`Verifying current source code (${src.length} bytes)`);
   networking.send(
@@ -64,6 +87,7 @@ const verifySourceCode = () => {
 };
 
 const loginWithSkympIoCredentials = () => {
+  loggingStartMoment = Date.now();
   printConsole("Logging in as skymp.io user");
   networking.send(
     {
@@ -159,6 +183,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   createActor(msg: messages.CreateActorMessage): void {
+    loggingStartMoment = 0;
+
     const i = this.getIdManager().allocateIdFor(msg.idx);
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
 
@@ -371,6 +397,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   customPacket(msg: messages.CustomPacket): void {
     switch (msg.content.customPacketType) {
       case "loginRequired":
+        verifyStartMoment = 0;
+        maxVerifyDelay = maxVerifyDelayDefault;
         loginWithSkympIoCredentials();
         break;
       case "newClientVersion":
