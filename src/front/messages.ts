@@ -17,6 +17,8 @@ export enum MsgType {
   TakeItem = 9,
   FinishSpSnippet = 10,
   OnEquip = 11,
+  ConsoleCommand = 12,
+  CraftItem = 13,
 }
 
 export interface SetInventory {

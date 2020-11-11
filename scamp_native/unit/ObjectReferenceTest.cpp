@@ -13,16 +13,15 @@ MpObjectReference& CreateMpObjectReference(WorldState& worldState, uint32_t id)
 
 TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
 {
-  FakeSendTarget tgt;
+  
   PartOne p;
-  p.pushedSendTarget = &tgt;
 
   auto& ref = CreateMpObjectReference(p.worldState, 0xff000000);
   ref.SetCellOrWorld(0x3c);
 
-  p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c, &tgt);
+  p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c);
   DoConnect(p, 0);
-  p.SetUserActor(0, 0xff000001, &tgt);
+  p.SetUserActor(0, 0xff000001);
   DoUpdateMovement(p, 0xff000001, 0);
 
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000001);

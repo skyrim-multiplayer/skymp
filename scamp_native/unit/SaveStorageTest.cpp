@@ -101,7 +101,7 @@ TEST_CASE("Upsert affects the number of change forms in the database in the "
 
 TEST_CASE("AttachSaveStorage forces loading", "[save]")
 {
-  FakeSendTarget tgt;
+  
   PartOne p;
   p.worldState.espmFiles = { "AaAaAa.esm" };
   p.worldState.AddForm(
@@ -117,20 +117,20 @@ TEST_CASE("AttachSaveStorage forces loading", "[save]")
   f.position = { 1, 1, 1 };
   f.baseDesc = FormDesc::FromString("aaaa:AaAaAa.esm");
   UpsertSync(*st, { f });
-  p.AttachSaveStorage(st, &tgt);
+  p.AttachSaveStorage(st);
 
   REQUIRE(refr.GetPos() == NiPoint3(1, 1, 1));
 }
 
 TEST_CASE("Changes are transferred to SaveStorage", "[save]")
 {
-  FakeSendTarget tgt;
+  
   PartOne p;
   auto st = MakeSaveStorage();
-  p.AttachSaveStorage(st, &tgt);
+  p.AttachSaveStorage(st);
 
   REQUIRE(ISaveStorageUtils::CountSync(*st) == 0);
-  p.CreateActor(0xffaaaeee, { 1, 1, 1 }, 1, 0x3c, &tgt);
+  p.CreateActor(0xffaaaeee, { 1, 1, 1 }, 1, 0x3c);
 
   WaitForNextUpsert(*st, p.worldState);
   REQUIRE(ISaveStorageUtils::CountSync(*st) == 1);

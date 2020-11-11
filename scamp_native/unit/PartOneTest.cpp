@@ -7,21 +7,20 @@ TEST_CASE("PartOne API doesn't crash when bad userId passed", "[PartOne]")
   REQUIRE_THROWS_WITH(partOne.GetUserActor(Networking::InvalidUserId),
                       Contains("User with id 65535 doesn't exist"));
 
-  REQUIRE_THROWS_WITH(
-    partOne.SetUserActor(Networking::InvalidUserId, 0, nullptr),
-    Contains("User with id 65535 doesn't exist"));
+  REQUIRE_THROWS_WITH(partOne.SetUserActor(Networking::InvalidUserId, 0),
+                      Contains("User with id 65535 doesn't exist"));
 }
 
 TEST_CASE("SetUserActor doesn't accept disabled actors", "[PartOne]")
 {
-  FakeSendTarget tgt;
+  
   PartOne partOne;
-  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0.0, 0x3c, &tgt);
+  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0.0, 0x3c);
   partOne.SetEnabled(0xff000000, false);
 
   DoConnect(partOne, 0);
 
-  REQUIRE_THROWS_WITH(partOne.SetUserActor(0, 0xff000000, nullptr),
+  REQUIRE_THROWS_WITH(partOne.SetUserActor(0, 0xff000000),
                       Contains("Actor with id ff000000 is disabled"));
 }
 
@@ -108,18 +107,17 @@ TEST_CASE("Disconnect event sent before user actually disconnects",
 
 TEST_CASE("Server custom packet", "[PartOne]")
 {
-  FakeSendTarget tgt;
+  
   PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
 
   DoConnect(partOne, 1);
 
-  partOne.SendCustomPacket(1, nlohmann::json({ { "x", "y" } }).dump(), &tgt);
-  REQUIRE(tgt.messages.size() == 1);
-  REQUIRE(tgt.messages[0].j.dump() ==
+  partOne.SendCustomPacket(1, nlohmann::json({ { "x", "y" } }).dump());
+  REQUIRE(partOne.Messages().size() == 1);
+  REQUIRE(partOne.Messages()[0].j.dump() ==
           nlohmann::json{ { "type", "customPacket" },
                           { "content", { { "x", "y" } } } }
             .dump());
-  REQUIRE(tgt.messages[0].userId == 1);
-  REQUIRE(tgt.messages[0].reliable);
+  REQUIRE(partOne.Messages()[0].userId == 1);
+  REQUIRE(partOne.Messages()[0].reliable);
 }

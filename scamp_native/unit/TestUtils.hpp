@@ -11,12 +11,18 @@ using namespace Catch;
 
 // Utilities for testing
 namespace {
-void DoMessage(PartOne& partOne, Networking::UserId id,
-               const nlohmann::json& j)
+std::string MakeMessage(const nlohmann::json& j)
 {
   std::string s;
   s += (char)Networking::MinPacketId;
   s += j.dump();
+  return s;
+}
+
+void DoMessage(PartOne& partOne, Networking::UserId id,
+               const nlohmann::json& j)
+{
+  std::string s = MakeMessage(j);
   PartOne* ptr = &partOne;
   PartOne::HandlePacket(ptr, id, Networking::PacketType::Message,
                         reinterpret_cast<Networking::PacketData>(s.data()),
@@ -117,34 +123,6 @@ public:
 
 private:
   std::stringstream ss;
-};
-
-class FakeSendTarget : public Networking::ISendTarget
-{
-public:
-  void Send(Networking::UserId targetUserId, Networking::PacketData data,
-            size_t length, bool reliable) override
-  {
-    std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
-    Message m;
-    try {
-      m = Message{ nlohmann::json::parse(s), targetUserId, reliable };
-    } catch (std::exception& e) {
-      std::stringstream ss;
-      ss << e.what() << std::endl << "`" << s << "`";
-      throw std::runtime_error(ss.str());
-    }
-    messages.push_back(m);
-  }
-
-  struct Message
-  {
-    nlohmann::json j;
-    Networking::UserId userId = Networking::InvalidUserId;
-    bool reliable = false;
-  };
-
-  std::vector<Message> messages;
 };
 
 class PapyrusCompatibilityPolicy : public IPapyrusCompatibilityPolicy

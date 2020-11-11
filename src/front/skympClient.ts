@@ -7,6 +7,7 @@ import {
   Game,
   Ui,
   Utility,
+  findConsoleCommand,
 } from "skyrimPlatform";
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
@@ -63,6 +64,16 @@ if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
 }
 
 export class SkympClient {
+  private localIdToRemoteId(localFormId: number): number {
+    if (localFormId >= 0xff000000) {
+      const view = this.getView();
+      if (!view) return 0;
+      localFormId = view.getRemoteRefrId(localFormId);
+      if (!localFormId) return 0;
+    }
+    return localFormId;
+  }
+
   constructor() {
     this.resetView();
     this.resetRemoteServer();
@@ -98,6 +109,26 @@ export class SkympClient {
 
     let lastInv: Inventory;
 
+    once("update", () => {
+      const commandName = "additem";
+      const command = findConsoleCommand(commandName);
+      if (command) {
+        command.execute = (...args: number[] | string[]) => {
+          if (args.length >= 1 && typeof args[0] === "number") {
+            args[0] = this.localIdToRemoteId(args[0]);
+            if (!args[0]) printConsole("localIdToRemoteId returned 0");
+          }
+
+          args.forEach((arg: unknown) => printConsole(arg, typeof arg));
+          this.sendTarget.send(
+            { t: MsgType.ConsoleCommand, data: { commandName, args } },
+            true
+          );
+          return false;
+        };
+      }
+    });
+
     on("activate", (e) => {
       lastInv = getInventory(Game.getPlayer());
       const caster = e.caster ? e.caster.getFormID() : 0;
@@ -106,21 +137,65 @@ export class SkympClient {
       if (caster !== 0x14) return;
       if (!target) return;
 
-      if (target >= 0xff000000) {
-        const view = this.getView();
-        if (!view) return;
-        target = view.getRemoteRefrId(target);
-        if (!target)
-          return printConsole(
-            `View not found for formId ${target.toString(16)}`
-          );
-      }
+      target = this.localIdToRemoteId(target);
+      if (!target) return printConsole("localIdToRemoteId returned 0");
 
       this.sendTarget.send(
         { t: MsgType.Activate, data: { caster, target } },
         true
       );
       printConsole("sendActi", { caster, target });
+    });
+
+    type FurnitureId = number;
+    const furnitureStreak = new Map<FurnitureId, Inventory>();
+
+    on("containerChanged", (e) => {
+      const oldContainerId = e.oldContainer ? e.oldContainer.getFormID() : 0;
+      const newContainerId = e.newContainer ? e.newContainer.getFormID() : 0;
+      const baseObjId = e.baseObj ? e.baseObj.getFormID() : 0;
+      if (oldContainerId !== 0x14 && newContainerId !== 0x14) return;
+
+      const furnitureRef = Game.getPlayer().getFurnitureReference();
+      if (!furnitureRef) return;
+
+      const furrnitureId = furnitureRef.getFormID();
+
+      if (oldContainerId === 0x14 && newContainerId === 0) {
+        let craftInputObjects = furnitureStreak.get(furrnitureId);
+        if (!craftInputObjects) {
+          craftInputObjects = { entries: [] };
+        }
+        craftInputObjects.entries.push({
+          baseId: baseObjId,
+          count: e.numItems,
+        });
+        furnitureStreak.set(furrnitureId, craftInputObjects);
+        printConsole(
+          `Adding ${baseObjId.toString(16)} (${e.numItems}) to recipe`
+        );
+      } else if (oldContainerId === 0 && newContainerId === 0x14) {
+        printConsole("Flushing recipe");
+        const craftInputObjects = furnitureStreak.get(furrnitureId);
+        if (craftInputObjects && craftInputObjects.entries.length) {
+          furnitureStreak.delete(furrnitureId);
+          const workbench = this.localIdToRemoteId(furrnitureId);
+          if (!workbench) return printConsole("localIdToRemoteId returned 0");
+
+          this.sendTarget.send(
+            {
+              t: MsgType.CraftItem,
+              data: { workbench, craftInputObjects, resultObjectId: baseObjId },
+            },
+            true
+          );
+          printConsole("sendCraft", {
+            workbench,
+            craftInputObjects,
+            resultObjectId: baseObjId,
+          });
+        }
+      }
     });
 
     on("containerChanged", (e) => {

@@ -116,18 +116,16 @@ TEST_CASE("RemoveItem", "[Papyrus][ObjectReference]")
 
 TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
 {
-  FakeSendTarget tgt;
+  
   PartOne p;
-  p.pushedSendTarget = &tgt;
 
-  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c, &tgt);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   DoConnect(p, 1);
-  p.SetUserActor(1, 0xff000000, &tgt);
+  p.SetUserActor(1, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
   REQUIRE(PapyrusObjectReference().GetAnimationVariableBool(
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(false));
-
 
   p.GetActionListener().OnUpdateMovement(GetDummyMessageData(), 0, { 0, 0, 0 },
                                          { 0, 0, 0 }, true, false);
@@ -139,7 +137,7 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
 TEST_CASE("BlockActivation", "[Papyrus][ObjectReference]")
 {
   PartOne p;
-  p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c, nullptr);
+  p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000001);
 
   auto& refr = CreateMpObjectReference(p, 0xff000000);

@@ -130,6 +130,50 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnEquip(rawMsgData, baseId);
       break;
     }
+    case MsgType::ConsoleCommand: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, "data", &data_);
+      const char* commandName;
+      ReadEx(data_, "commandName", &commandName);
+      simdjson::dom::element args;
+      ReadEx(data_, "args", &args);
+
+      auto arr = args.get_array().value();
+
+      std::vector<ConsoleCommands::Argument> consoleArgs;
+      consoleArgs.resize(arr.size());
+      for (size_t i = 0; i < arr.size(); ++i) {
+        simdjson::dom::element el;
+        ReadEx(args, i, &el);
+
+        std::string s = simdjson::minify(el);
+        if (!s.empty() && s[0] == '"') {
+          const char* s;
+          ReadEx(args, i, &s);
+          consoleArgs[i] = std::string(s);
+        } else {
+          int64_t ingeter;
+          ReadEx(args, i, &ingeter);
+          consoleArgs[i] = ingeter;
+        }
+      }
+      actionListener.OnConsoleCommand(rawMsgData, commandName, consoleArgs);
+      break;
+    }
+    case MsgType::CraftItem: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, "data", &data_);
+      uint32_t workbench;
+      ReadEx(data_, "workbench", &workbench);
+      uint32_t resultObjectId;
+      ReadEx(data_, "resultObjectId", &resultObjectId);
+      simdjson::dom::element craftInputObjects;
+      ReadEx(data_, "craftInputObjects", &craftInputObjects);
+      actionListener.OnCraftItem(rawMsgData,
+                                 Inventory::FromJson(craftInputObjects),
+                                 workbench, resultObjectId);
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }

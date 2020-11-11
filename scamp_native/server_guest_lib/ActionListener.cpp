@@ -1,5 +1,9 @@
 #include "ActionListener.h"
+#include "EspmGameObject.h"
 #include "Exceptions.h"
+#include "FindRecipe.h"
+#include "PapyrusObjectReference.h"
+#include "Utils.h"
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -21,7 +25,7 @@ MpActor* ActionListener::SendToNeighbours(
       if (listenerAsActor) {
         auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
         if (targetuserId != Networking::InvalidUserId) {
-          partOne.pushedSendTarget->Send(targetuserId, data, length, reliable);
+          partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
         }
       }
     }
@@ -197,4 +201,81 @@ void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
       std::to_string(rawMsgData.userId));
 
   actor->OnEquip(baseId);
+}
+
+void ActionListener::OnConsoleCommand(
+  const RawMessageData& rawMsgData, const std::string& consoleCommandName,
+  const std::vector<ConsoleCommands::Argument>& args)
+{
+  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
+  int profileId = me ? me->GetChangeForm().profileId : -1;
+  if (profileId != MpActor::kProfileId_Pospelov)
+    throw std::runtime_error("Not enough permissions to use this command");
+
+  if (!Utils::stricmp(consoleCommandName.data(), "AddItem")) {
+    const auto targetId = static_cast<uint32_t>(args[0].GetInteger());
+    const auto itemId = static_cast<uint32_t>(args[1].GetInteger());
+    const auto count = static_cast<int32_t>(args[2].GetInteger());
+
+    MpObjectReference* target = nullptr;
+    if (targetId == 0x14) {
+      target = partOne.serverState.ActorByUser(rawMsgData.userId);
+      if (!target)
+        throw std::runtime_error("No actor found for user " +
+                                 std::to_string(rawMsgData.userId));
+    } else
+      target = &partOne.worldState.GetFormAt<MpObjectReference>(targetId);
+
+    auto& br = partOne.GetEspm().GetBrowser();
+
+    PapyrusObjectReference papyrusObjectReference;
+    std::vector<VarValue> args;
+    args.push_back(
+      VarValue(std::make_shared<EspmGameObject>(br.LookupById(itemId))));
+    args.push_back(VarValue(count));
+    args.push_back(VarValue(false));
+    papyrusObjectReference.AddItem(target->ToVarValue(), args);
+  }
+}
+
+void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
+                    const espm::CombineBrowser& br, int espmIdx)
+{
+  auto mapping = br.GetMapping(espmIdx);
+  std::vector<Inventory::Entry> entries;
+  for (auto& entry : recipeData.inputObjects) {
+    auto formId = espm::GetMappedId(entry.formId, *mapping);
+    entries.push_back({ formId, entry.count });
+  }
+  me->RemoveItems(entries);
+  me->AddItem(espm::GetMappedId(recipeData.outputObjectFormId, *mapping),
+              recipeData.outputCount);
+}
+
+void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
+                                 const Inventory& inputObjects,
+                                 uint32_t workbenchId, uint32_t resultObjectId)
+{
+  auto& workbench =
+    partOne.worldState.GetFormAt<MpObjectReference>(workbenchId);
+
+  auto& br = partOne.worldState.GetEspm().GetBrowser();
+  auto base = br.LookupById(workbench.GetBaseId());
+
+  if (base.rec->GetType() != "FURN")
+    throw std::runtime_error("Unable to use " +
+                             base.rec->GetType().ToString() + " as workbench");
+
+  int espmIdx = 0;
+  auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
+
+  if (!recipeUsed)
+    throw std::runtime_error("Recipe not found");
+
+  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!me)
+    throw std::runtime_error("Unable to craft without Actor attached");
+
+  auto recipeData = recipeUsed->GetData();
+  UseCraftRecipe(me, recipeData, br, espmIdx);
 }

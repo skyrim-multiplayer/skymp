@@ -10,6 +10,29 @@
 #include <type_traits>
 #include <vector>
 
+namespace {
+class FakeSendTarget : public Networking::ISendTarget
+{
+public:
+  void Send(Networking::UserId targetUserId, Networking::PacketData data,
+            size_t length, bool reliable) override
+  {
+    std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
+    PartOne::Message m;
+    try {
+      m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliable };
+    } catch (std::exception& e) {
+      std::stringstream ss;
+      ss << e.what() << std::endl << "`" << s << "`";
+      throw std::runtime_error(ss.str());
+    }
+    messages.push_back(m);
+  }
+
+  std::vector<PartOne::Message> messages;
+};
+}
+
 struct PartOne::Impl
 {
   simdjson::dom::parser parser;
@@ -27,17 +50,23 @@ struct PartOne::Impl
   std::shared_ptr<IActionListener> actionListener;
 
   std::shared_ptr<spdlog::logger> logger;
+
+  Networking::ISendTarget* sendTarget = nullptr;
+  FakeSendTarget fakeSendTarget;
 };
 
-PartOne::PartOne()
+PartOne::PartOne(Networking::ISendTarget* sendTarget)
 {
   Init();
+  SetSendTarget(sendTarget);
 }
 
-PartOne::PartOne(std::shared_ptr<Listener> listener)
+PartOne::PartOne(std::shared_ptr<Listener> listener,
+                 Networking::ISendTarget* sendTarget)
 {
   Init();
   AddListener(listener);
+  SetSendTarget(sendTarget);
 }
 
 PartOne::~PartOne()
@@ -45,6 +74,11 @@ PartOne::~PartOne()
   // worldState may depend on serverState (actorsMap), we should reset it first
   worldState.Clear();
   serverState = {};
+}
+
+void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
+{
+  pImpl->sendTarget = sendTarget ? sendTarget : &pImpl->fakeSendTarget;
 }
 
 void PartOne::AddListener(std::shared_ptr<Listener> listener)
@@ -64,16 +98,15 @@ void PartOne::Tick()
 
 uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
                               float angleZ, uint32_t cellOrWorld,
-                              Networking::ISendTarget* sendTarget,
                               ProfileId profileId)
 {
   if (!formId) {
     formId = worldState.GenerateFormId();
   }
-  worldState.AddForm(std::unique_ptr<MpActor>(
-                       new MpActor({ pos, { 0, 0, angleZ }, cellOrWorld },
-                                   CreateFormCallbacks(sendTarget))),
-                     formId);
+  worldState.AddForm(
+    std::unique_ptr<MpActor>(new MpActor(
+      { pos, { 0, 0, angleZ }, cellOrWorld }, CreateFormCallbacks())),
+    formId);
   if (profileId >= 0) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
     ac.RegisterProfileId(profileId);
@@ -81,12 +114,12 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
 
   if (pImpl->enableProductionHacks) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
-    auto defaultItems = { 0x00013922, 0x0003619E, 0x00013921, 0x00013920,
-                          0x00013EDC, 0x000136D5, 0x000136D4, 0x000136D6,
-                          0x000135BA, 0x000F6F23, 0x0001397E, 0x0012EB7,
-                          0x00013790, 0x00013982, 0x0001359D, 0x00013980,
-                          0x000D3DEA, 0x000A6D7B, 0x000A6D7F, 0x0006F39B,
-                          0x000D3DEA };
+    std::vector<uint32_t> defaultItems = {
+      0x00013922, 0x0003619E, 0x00013921, 0x00013920, 0x00013EDC, 0x000136D5,
+      0x000136D4, 0x000136D6, 0x000135BA, 0x000F6F23, 0x0001397E, 0x0012EB7,
+      0x00013790, 0x00013982, 0x0001359D, 0x00013980, 0x000D3DEA, 0x000A6D7B,
+      0x000A6D7F, 0x0006F39B, 0x000D3DEA
+    };
     std::vector<Inventory::Entry> entries;
     for (uint32_t item : defaultItems) {
       entries.push_back({ item, 1 });
@@ -102,8 +135,7 @@ void PartOne::EnableProductionHacks()
   pImpl->enableProductionHacks = true;
 }
 
-void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId,
-                           Networking::ISendTarget* sendTarget)
+void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
 {
   serverState.EnsureUserExists(userId);
 
@@ -148,8 +180,7 @@ void PartOne::DestroyActor(uint32_t actorFormId)
   serverState.actorsMap.right.erase(destroyedForm.get());
 }
 
-void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open,
-                              Networking::ISendTarget* sendTarget)
+void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open)
 {
   auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
 
@@ -166,16 +197,15 @@ void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open,
     throw std::runtime_error(ss.str());
   }
 
-  Networking::SendFormatted(sendTarget, userId,
+  Networking::SendFormatted(pImpl->sendTarget, userId,
                             R"({"type": "setRaceMenuOpen", "open": %s})",
                             open ? "true" : "false");
 }
 
 void PartOne::SendCustomPacket(Networking::UserId userId,
-                               const std::string& jContent,
-                               Networking::ISendTarget* sendTarget)
+                               const std::string& jContent)
 {
-  Networking::SendFormatted(sendTarget, userId,
+  Networking::SendFormatted(pImpl->sendTarget, userId,
                             R"({"type": "customPacket", "content":%s})",
                             jContent.data());
 }
@@ -219,8 +249,7 @@ inline NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
 
 }
 
-void PartOne::AttachEspm(espm::Loader* espm,
-                         Networking::ISendTarget* sendTarget)
+void PartOne::AttachEspm(espm::Loader* espm)
 {
   pImpl->espm = espm;
   pImpl->espm->GetBrowser();
@@ -248,7 +277,8 @@ void PartOne::AttachEspm(espm::Loader* espm,
         continue;
 
       espm::Type t = base.rec->GetType();
-      if (t != "ACTI" && !espm::IsItem(t) && t != "DOOR" && t != "CONT" &&
+      if (t != "FURN" && t != "ACTI" && !espm::IsItem(t) && t != "DOOR" &&
+          t != "CONT" &&
           (t != "FLOR" ||
            !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
           (t != "TREE" ||
@@ -310,7 +340,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
         worldState.AddForm(
           std::unique_ptr<MpObjectReference>(new MpObjectReference(
             { GetPos(locationalData), GetRot(locationalData), worldOrCell },
-            CreateFormCallbacks(sendTarget), baseId, typeStr.data(),
+            CreateFormCallbacks(), baseId, typeStr.data(),
             primitiveBoundsDiv2)),
           formId, true);
       }
@@ -320,8 +350,7 @@ void PartOne::AttachEspm(espm::Loader* espm,
   pImpl->logger->info("AttachEspm took {} ticks", clock() - was);
 }
 
-void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
-                                Networking::ISendTarget* sendTarget)
+void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 {
   worldState.AttachSaveStorage(saveStorage);
 
@@ -331,7 +360,7 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage,
   int numPlayerCharacters = 0;
   saveStorage->IterateSync([&](const MpChangeForm& changeForm) {
     n++;
-    worldState.LoadChangeForm(changeForm, CreateFormCallbacks(sendTarget));
+    worldState.LoadChangeForm(changeForm, CreateFormCallbacks());
     if (changeForm.profileId >= 0)
       ++numPlayerCharacters;
   });
@@ -400,33 +429,38 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
   }
 }
 
-FormCallbacks PartOne::CreateFormCallbacks(Networking::ISendTarget* sendTarget)
+Networking::ISendTarget& PartOne::GetSendTarget() const
+{
+  if (!pImpl->sendTarget)
+    throw std::runtime_error("No send target found");
+  return *pImpl->sendTarget;
+}
+
+FormCallbacks PartOne::CreateFormCallbacks()
 {
   auto st = &serverState;
 
   MpActor::SubscribeCallback subscribe =
-                               [sendTarget, this](MpObjectReference*emitter,
-                                                  MpObjectReference*listener) {
-                                 return pImpl->onSubscribe(sendTarget, emitter,
-                                                           listener);
+                               [this](MpObjectReference*emitter,
+                                      MpObjectReference*listener) {
+                                 return pImpl->onSubscribe(pImpl->sendTarget,
+                                                           emitter, listener);
                                },
-                             unsubscribe = [sendTarget,
-                                            this](MpObjectReference*emitter,
+                             unsubscribe = [this](MpObjectReference*emitter,
                                                   MpObjectReference*listener) {
-                               return pImpl->onUnsubscribe(sendTarget, emitter,
-                                                           listener);
+                               return pImpl->onUnsubscribe(pImpl->sendTarget,
+                                                           emitter, listener);
                              };
 
-  MpActor::SendToUserFn sendToUser = [sendTarget,
-                                      st](MpActor* actor, const void* data,
-                                          size_t size, bool reliable) {
-    auto targetuserId = st->UserByActor(actor);
-    if (targetuserId != Networking::InvalidUserId &&
-        st->disconnectingUserId != targetuserId)
-      sendTarget->Send(targetuserId,
-                       reinterpret_cast<Networking::PacketData>(data), size,
-                       reliable);
-  };
+  MpActor::SendToUserFn sendToUser =
+    [this, st](MpActor* actor, const void* data, size_t size, bool reliable) {
+      auto targetuserId = st->UserByActor(actor);
+      if (targetuserId != Networking::InvalidUserId &&
+          st->disconnectingUserId != targetuserId)
+        pImpl->sendTarget->Send(targetuserId,
+                                reinterpret_cast<Networking::PacketData>(data),
+                                size, reliable);
+    };
 
   return { subscribe, unsubscribe, sendToUser };
 }
@@ -441,6 +475,11 @@ const std::vector<std::shared_ptr<PartOne::Listener>>& PartOne::GetListeners()
   const
 {
   return pImpl->listeners;
+}
+
+std::vector<PartOne::Message>& PartOne::Messages()
+{
+  return pImpl->fakeSendTarget.messages;
 }
 
 void PartOne::Init()

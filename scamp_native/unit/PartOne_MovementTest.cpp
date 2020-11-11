@@ -4,76 +4,73 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
           "user present",
           "[PartOne]")
 {
-  FakeSendTarget tgt;
+  
   PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
 
   constexpr uint32_t n = 20;
   static_assert(n <= MAX_PLAYERS - 1);
 
   for (uint32_t i = 0; i < n; ++i) {
-    partOne.CreateActor(i + 0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
+    partOne.CreateActor(i + 0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
     if (i % 2 == 0)
       continue;
 
     DoConnect(partOne, i + 1);
-    partOne.SetUserActor(i + 1, i + 0xff000000, &tgt);
+    partOne.SetUserActor(i + 1, i + 0xff000000);
 
     DoUpdateMovement(partOne, i + 0xff000000, i + 1);
   }
 
   DoConnect(partOne, 0);
-  partOne.CreateActor(0xffffffff, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-  partOne.SetUserActor(0, 0xffffffff, &tgt);
-  tgt = {};
+  partOne.CreateActor(0xffffffff, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+  partOne.SetUserActor(0, 0xffffffff);
+  partOne.Messages().clear();
 
   DoUpdateMovement(partOne, 0xffffffff, 0);
-  REQUIRE(tgt.messages.size() == 11); // Me and 10 other users created in loop
+  REQUIRE(partOne.Messages().size() == 11); // Me and 10 other users created in loop
 }
 
 TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
 {
-  FakeSendTarget tgt;
+  
   PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
 
   for (int i = 0; i < 2; ++i) {
     DoConnect(partOne, i);
-    partOne.CreateActor(i + 0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-    partOne.SetUserActor(i, i + 0xff000ABC, &tgt);
+    partOne.CreateActor(i + 0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+    partOne.SetUserActor(i, i + 0xff000ABC);
     auto m = jMovement;
     m["idx"] = i;
     DoMessage(partOne, i, m);
   }
 
-  tgt = {};
+  partOne.Messages().clear();
 
   DoDisconnect(partOne, 1);
 
-  tgt = {};
+  partOne.Messages().clear();
   DoMessage(partOne, 0, jMovement);
-  REQUIRE(tgt.messages.size() == 1);
+  REQUIRE(partOne.Messages().size() == 1);
 }
 
 TEST_CASE("UpdateMovement", "[PartOne]")
 {
-  FakeSendTarget tgt;
+  
   PartOne partOne;
-  partOne.pushedSendTarget = &tgt;
 
   auto doMovement = [&] { DoMessage(partOne, 0, jMovement); };
 
   DoConnect(partOne, 0);
 
   doMovement();
-  REQUIRE(tgt.messages.size() == 0); // No actor - no movement
+  REQUIRE(partOne.Messages().size() == 0); // No actor - no movement
 
-  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-  partOne.SetUserActor(0, 0xff000ABC, &tgt);
-  tgt = {};
+  partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+  partOne.SetUserActor(0, 0xff000ABC);
+  partOne.Messages().clear();
   doMovement();
-  REQUIRE(tgt.messages.size() == 1);
-  REQUIRE(tgt.messages.at(0).j.dump() == jMovement.dump());
+  REQUIRE(partOne.Messages().size() == 1);
+  REQUIRE(partOne.Messages().at(0).j.dump() == jMovement.dump());
 
   // UpdateMovement actually changes position and rotation
   REQUIRE(
@@ -85,54 +82,54 @@ TEST_CASE("UpdateMovement", "[PartOne]")
 
   // Another player connects and see us
   DoConnect(partOne, 1);
-  partOne.CreateActor(0xff00ABCD, { 1.f, 2.f, 3.f }, 180.f, 0x3c, &tgt);
-  tgt = {};
-  partOne.SetUserActor(1, 0xff00ABCD, &tgt);
-  REQUIRE(tgt.messages.size() == 3);
+  partOne.CreateActor(0xff00ABCD, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
+  partOne.Messages().clear();
+  partOne.SetUserActor(1, 0xff00ABCD);
+  REQUIRE(partOne.Messages().size() == 3);
   // Create idx 1 for user 0, then idx 0 for 1, then idx 1 for 1 (self
   // streaming)
-  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
-                       [&](FakeSendTarget::Message m) {
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
                          return m.j["type"] == "createActor" &&
                            m.j["idx"] == 1 && m.reliable && m.userId == 0;
-                       }) != tgt.messages.end());
-  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
-                       [&](FakeSendTarget::Message m) {
+                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
                          return m.j["type"] == "createActor" &&
                            m.j["idx"] == 0 && m.reliable && m.userId == 1;
-                       }) != tgt.messages.end());
-  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
-                       [&](FakeSendTarget::Message m) {
+                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
                          return m.j["type"] == "createActor" &&
                            m.j["idx"] == 1 && m.reliable && m.userId == 1;
-                       }) != tgt.messages.end());
+                       }) != partOne.Messages().end());
 
   // Look must be empty by default
-  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
-                       [&](FakeSendTarget::Message m) {
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
                          return m.j["look"] != nullptr;
-                       }) == tgt.messages.end());
+                       }) == partOne.Messages().end());
 
-  tgt = {};
+  partOne.Messages().clear();
   doMovement();
-  REQUIRE(tgt.messages.size() == 2);
-  REQUIRE(tgt.messages.at(0).j.dump() == jMovement.dump());
-  REQUIRE(tgt.messages.at(1).j.dump() == jMovement.dump());
+  REQUIRE(partOne.Messages().size() == 2);
+  REQUIRE(partOne.Messages().at(0).j.dump() == jMovement.dump());
+  REQUIRE(partOne.Messages().at(1).j.dump() == jMovement.dump());
 
   // Another player is being moved away and now doesn't see our movement
   auto acAbcd = dynamic_cast<MpActor*>(
     partOne.worldState.LookupFormById(0xff00ABCD).get());
-  tgt = {};
+  partOne.Messages().clear();
   acAbcd->SetPos({ 100000, 0, 0 });
-  REQUIRE(tgt.messages.size() == 2);
-  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
-                       [&](FakeSendTarget::Message m) {
+  REQUIRE(partOne.Messages().size() == 2);
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
                          return m.j["type"] == "destroyActor" &&
                            m.j["idx"] == 1 && m.reliable && m.userId == 0;
-                       }) != tgt.messages.end());
-  REQUIRE(std::find_if(tgt.messages.begin(), tgt.messages.end(),
-                       [&](FakeSendTarget::Message m) {
+                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
                          return m.j["type"] == "destroyActor" &&
                            m.j["idx"] == 0 && m.reliable && m.userId == 1;
-                       }) != tgt.messages.end());
+                       }) != partOne.Messages().end());
 }

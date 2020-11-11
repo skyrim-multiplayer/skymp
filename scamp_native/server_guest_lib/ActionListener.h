@@ -46,6 +46,14 @@ public:
 
   void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId) override;
 
+  void OnConsoleCommand(
+    const RawMessageData& rawMsgData, const std::string& consoleCommandName,
+    const std::vector<ConsoleCommands::Argument>& args) override;
+
+  void OnCraftItem(const RawMessageData& rawMsgData,
+                   const Inventory& inputObjects, uint32_t workbenchId,
+                   uint32_t resultObjectId) override;
+
 private:
   // Returns user's actor if exists
   MpActor* SendToNeighbours(uint32_t idx,
