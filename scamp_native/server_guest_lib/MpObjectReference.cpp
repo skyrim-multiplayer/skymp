@@ -553,13 +553,16 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
     emitter->SendPapyrusEvent("OnInit");
   }
 
+  const bool hasPrimitive = emitter->HasPrimitive();
+
   emitter->InitListenersAndEmitters();
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
   listener->emitters->insert(emitter);
-  emitter->callbacks->subscribe(emitter, listener);
+  if (!hasPrimitive)
+    emitter->callbacks->subscribe(emitter, listener);
 
-  if (emitter->HasPrimitive()) {
+  if (hasPrimitive) {
     if (!listener->emittersWithPrimitives)
       listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>);
     listener->emittersWithPrimitives->insert({ emitter->GetFormId(), false });
@@ -574,11 +577,14 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   if (bothNonActors)
     return;
 
-  emitter->callbacks->unsubscribe(emitter, listener);
+  const bool hasPrimitive = emitter->HasPrimitive();
+
+  if (!hasPrimitive)
+    emitter->callbacks->unsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
   listener->emitters->erase(emitter);
 
-  if (listener->emittersWithPrimitives && emitter->HasPrimitive()) {
+  if (listener->emittersWithPrimitives && hasPrimitive) {
     listener->emittersWithPrimitives->erase(emitter->GetFormId());
   }
 }
