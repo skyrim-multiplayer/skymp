@@ -1,5 +1,7 @@
 import { System, Log } from "./system";
 import Axios from "axios";
+import { SystemContext } from "./system";
+import { ServerInterface } from "../serverInterface";
 
 const getMyPublicIp = async (): Promise<string> => {
   const res = await Axios.request({
@@ -38,27 +40,37 @@ export class MasterClient implements System {
     return;
   }
 
-  async updateAsync(): Promise<void> {
+  async updateAsync(ctx: SystemContext): Promise<void> {
     await new Promise((r) => setTimeout(r, this.updateIntervalMs));
 
     if (this.endpoint) {
-      const { name, maxPlayers, online } = this;
+      const { name, maxPlayers } = this;
+      const online = this.getCurrentOnline(ctx.svr);
       await Axios.post(this.endpoint, { name, maxPlayers, online });
     }
   }
 
-  connect(): void {
-    ++this.online;
-  }
-
-  disconnect(): void {
-    --this.online;
+  // connect/disconnect events are not reliable so we do full recalculate
+  private getCurrentOnline(serverInterface: ServerInterface): number {
+    let online = 0;
+    for (let i = 0; i < this.maxPlayers; ++i) {
+      try {
+        if (serverInterface.getUserActor(i) != 0) {
+          ++online;
+        }
+      } catch (e) {
+        const error: Error = e;
+        if (!error.message.includes("User with id " + i + " doesn't exist")) {
+          throw e;
+        }
+      }
+    }
+    return online;
   }
 
   customPacket(): void {
     return;
   }
 
-  private online = 0;
   private endpoint: string;
 }
