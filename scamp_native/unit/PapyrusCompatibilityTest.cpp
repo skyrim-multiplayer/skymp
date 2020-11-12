@@ -85,3 +85,23 @@ TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne]")
 
   REQUIRE(ref.HasScript("DefaultNoEnemiesFollowDoorScript"));
 }
+
+TEST_CASE("OnTriggerEnter crash in MovarthsLairExterior01", "[PartOne]")
+{
+  auto& partOne = GetPartOne();
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(464472);
+
+  partOne.worldState.AddForm(
+    std::make_unique<MpActor>(
+      LocationalData{ { 0, 0, 0 }, NiPoint3(), ref.GetCellOrWorld() },
+      FormCallbacks::DoNothing()),
+    0xff000000);
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+
+  actor.SetPos(ref.GetPos());
+  partOne.worldState.TickTimers();
+
+  partOne.worldState.DestroyForm(0xff000000);
+
+  REQUIRE(ref.HasScript("ms14ghoruunentrance"));
+}
