@@ -1086,6 +1086,9 @@ void MpObjectReference::BeforeDestroy()
   if (this->occupant && this->occupantDestroySink)
     this->occupant->RemoveEventSink(this->occupantDestroySink);
 
+  // Move far far away calling OnTriggerExit, unsubscribing, etc
+  SetPos({ -1'000'000'000, 0, 0 });
+
   MpForm::BeforeDestroy();
 
   RemoveFromGrid();

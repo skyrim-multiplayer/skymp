@@ -97,3 +97,36 @@ TEST_CASE("AddItem executes", "[ConsoleCommand]")
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
 }
+
+TEST_CASE("PlaceAtMe executes", "[ConsoleCommand]")
+{
+  enum
+  {
+    EncGiant01 = 0x00023aae
+  };
+
+  PartOne& p = GetPartOne();
+
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+  ac.RegisterProfileId(MpActor::ProfileIds::kProfileId_Pospelov);
+
+  IActionListener::RawMessageData msgData;
+  msgData.userId = 0;
+
+  p.Messages().clear();
+  p.GetActionListener().OnConsoleCommand(msgData, "placeatme",
+                                         { 0x14, EncGiant01 });
+
+  auto& refr = p.worldState.GetFormAt<MpActor>(0xff000001);
+  REQUIRE(refr.GetBaseId() == EncGiant01);
+  REQUIRE(refr.GetPos() == ac.GetPos());
+  REQUIRE(refr.GetAngle() == NiPoint3(0, 0, 0));
+  REQUIRE(refr.GetCellOrWorld() == ac.GetCellOrWorld());
+  p.worldState.DestroyForm(0xff000001);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
+}

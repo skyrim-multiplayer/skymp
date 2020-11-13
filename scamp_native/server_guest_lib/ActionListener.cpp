@@ -203,6 +203,51 @@ void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
   actor->OnEquip(baseId);
 }
 
+void ExecuteAddItem(MpActor& caller,
+                    const std::vector<ConsoleCommands::Argument>& args)
+{
+  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
+  const auto itemId = static_cast<uint32_t>(args.at(1).GetInteger());
+  const auto count = static_cast<int32_t>(args.at(2).GetInteger());
+
+  MpObjectReference& target = (targetId == 0x14)
+    ? caller
+    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
+
+  auto& br = caller.GetParent()->GetEspm().GetBrowser();
+
+  PapyrusObjectReference papyrusObjectReference;
+  auto aItem =
+    VarValue(std::make_shared<EspmGameObject>(br.LookupById(itemId)));
+  auto aCount = VarValue(count);
+  auto aSilent = VarValue(false);
+  (void)papyrusObjectReference.AddItem(target.ToVarValue(),
+                                       { aItem, aCount, aSilent });
+}
+
+void ExecutePlaceAtMe(MpActor& caller,
+                      const std::vector<ConsoleCommands::Argument>& args)
+{
+  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
+  const auto baseFormId = static_cast<uint32_t>(args.at(1).GetInteger());
+
+  MpObjectReference& target = (targetId == 0x14)
+    ? caller
+    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
+
+  auto& br = caller.GetParent()->GetEspm().GetBrowser();
+
+  PapyrusObjectReference papyrusObjectReference;
+  auto aBaseForm =
+    VarValue(std::make_shared<EspmGameObject>(br.LookupById(baseFormId)));
+  auto aCount = VarValue(1);
+  auto aForcePersist = VarValue(false);
+  auto aInitiallyDisabled = VarValue(false);
+  (void)papyrusObjectReference.PlaceAtMe(
+    target.ToVarValue(),
+    { aBaseForm, aCount, aForcePersist, aInitiallyDisabled });
+}
+
 void ActionListener::OnConsoleCommand(
   const RawMessageData& rawMsgData, const std::string& consoleCommandName,
   const std::vector<ConsoleCommands::Argument>& args)
@@ -213,29 +258,12 @@ void ActionListener::OnConsoleCommand(
     throw std::runtime_error("Not enough permissions to use this command");
 
   if (!Utils::stricmp(consoleCommandName.data(), "AddItem")) {
-    const auto targetId = static_cast<uint32_t>(args[0].GetInteger());
-    const auto itemId = static_cast<uint32_t>(args[1].GetInteger());
-    const auto count = static_cast<int32_t>(args[2].GetInteger());
-
-    MpObjectReference* target = nullptr;
-    if (targetId == 0x14) {
-      target = partOne.serverState.ActorByUser(rawMsgData.userId);
-      if (!target)
-        throw std::runtime_error("No actor found for user " +
-                                 std::to_string(rawMsgData.userId));
-    } else
-      target = &partOne.worldState.GetFormAt<MpObjectReference>(targetId);
-
-    auto& br = partOne.GetEspm().GetBrowser();
-
-    PapyrusObjectReference papyrusObjectReference;
-    std::vector<VarValue> args;
-    args.push_back(
-      VarValue(std::make_shared<EspmGameObject>(br.LookupById(itemId))));
-    args.push_back(VarValue(count));
-    args.push_back(VarValue(false));
-    papyrusObjectReference.AddItem(target->ToVarValue(), args);
-  }
+    ExecuteAddItem(*me, args);
+  } else if (!Utils::stricmp(consoleCommandName.data(), "PlaceAtMe")) {
+    ExecutePlaceAtMe(*me, args);
+  } else
+    throw std::runtime_error("Unknown command name '" + consoleCommandName +
+                             "'");
 }
 
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,

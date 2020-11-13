@@ -24,6 +24,7 @@ import * as networking from "./networking";
 import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import * as deathSystem from "./deathSystem";
+import { setUpConsoleCommands } from "./console";
 
 interface AnyMessage {
   type?: string;
@@ -110,23 +111,13 @@ export class SkympClient {
     let lastInv: Inventory;
 
     once("update", () => {
-      const commandName = "additem";
-      const command = findConsoleCommand(commandName);
-      if (command) {
-        command.execute = (...args: number[] | string[]) => {
-          if (args.length >= 1 && typeof args[0] === "number") {
-            args[0] = this.localIdToRemoteId(args[0]);
-            if (!args[0]) printConsole("localIdToRemoteId returned 0");
-          }
-
-          args.forEach((arg: unknown) => printConsole(arg, typeof arg));
-          this.sendTarget.send(
-            { t: MsgType.ConsoleCommand, data: { commandName, args } },
-            true
-          );
-          return false;
-        };
-      }
+      const send = (msg: Record<string, unknown>) => {
+        this.sendTarget.send(msg, true);
+      };
+      const localIdToRemoteId = (localId: number) => {
+        return this.localIdToRemoteId(localId);
+      };
+      setUpConsoleCommands(send, localIdToRemoteId);
     });
 
     on("activate", (e) => {

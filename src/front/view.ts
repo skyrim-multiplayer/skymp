@@ -196,7 +196,6 @@ export class FormView implements View<FormModel> {
         }
       }
     } else {
-      //printConsole("lol", model.movement);
       const base =
         getFormEx(+model.baseId) || getFormEx(this.getLookBasedBase());
       if (!base) return;
@@ -354,6 +353,19 @@ export class FormView implements View<FormModel> {
     }
 
     if (model.movement) {
+      const playerAllyFaction = sp.Faction.from(Game.getFormEx(0x0005a1a4));
+      const ac = Actor.from(refr);
+      if (ac) {
+        if (ac.getDistance(Game.getPlayer()) < 256) {
+          ac.setFactionRank(playerAllyFaction, 1);
+          printConsole("ally");
+          ac.stopCombat();
+        } else {
+          printConsole("not ally");
+          ac.removeFromFaction(playerAllyFaction);
+        }
+      }
+
       if (+model.numMovementChanges !== this.movState.lastNumChanges) {
         const backup = model.movement.isWeapDrawn;
         if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
