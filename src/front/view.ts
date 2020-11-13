@@ -356,13 +356,15 @@ export class FormView implements View<FormModel> {
       const playerAllyFaction = sp.Faction.from(Game.getFormEx(0x0005a1a4));
       const ac = Actor.from(refr);
       if (ac) {
-        if (ac.getDistance(Game.getPlayer()) < 256) {
-          ac.setFactionRank(playerAllyFaction, 1);
-          printConsole("ally");
-          ac.stopCombat();
-        } else {
-          printConsole("not ally");
-          ac.removeFromFaction(playerAllyFaction);
+        printConsole(model.isHostedByMe);
+        if (model.isHostedByMe !== this.wasHostedByMe) {
+          this.wasHostedByMe = model.isHostedByMe;
+          if (model.isHostedByMe) {
+            ac.removeFromFaction(playerAllyFaction);
+          } else {
+            ac.setFactionRank(playerAllyFaction, 1);
+            ac.stopCombat();
+          }
         }
       }
 
@@ -476,68 +478,34 @@ export class FormView implements View<FormModel> {
   private lastPcWorldOrCell = 0;
   private lastWorldOrCell = 0;
   private spawnMoment = 0;
+  private wasHostedByMe: boolean | undefined = undefined;
 }
 
-export class WorldView implements View<WorldModel> {
-  constructor() {
-    // Work around showRaceMenu issue
-    // Default nord in Race Menu will have very ugly face
-    // If other players are spawning when we show this menu
-    on("update", () => {
-      const pc = Game.getPlayer();
-      const pcWorldOrCell = (
-        pc.getWorldSpace() || pc.getParentCell()
-      ).getFormID();
-      if (this.pcWorldOrCell !== pcWorldOrCell) {
-        if (this.pcWorldOrCell) {
-          printConsole("Reset all form views");
-          for (let i = 0; i < this.formViews.length; ++i) {
-            this.destroyForm(i);
-          }
-        }
-        this.pcWorldOrCell = pcWorldOrCell;
-      }
-    });
-    once("update", () => {
-      // Wait 1s game time (time spent in Race Menu isn't counted)
-      Utility.wait(1).then(() => {
-        this.allowUpdate = true;
-        printConsole("Update is now allowed");
-      });
-    });
+class FormViewArray {
+  updateForm(form: FormModel, i: number) {
+    const view = this.formViews[i];
+    if (!view) {
+      this.formViews[i] = new FormView(form.refrId);
+    } else {
+      view.update(form);
+    }
   }
 
-  getRemoteRefrId(clientsideRefrId: number): number {
-    if (clientsideRefrId < 0xff000000)
-      throw new Error("This function is only for 0xff forms");
-    const formView = this.formViews.find((formView: FormView) => {
-      return formView && formView.getLocalRefrId() === clientsideRefrId;
-    });
-    return formView ? formView.getRemoteRefrId() : 0;
+  destroyForm(i: number) {
+    if (!this.formViews[i]) return;
+    this.formViews[i].destroy();
+    this.formViews[i] = undefined;
   }
 
-  update(model: WorldModel): void {
-    if (!this.allowUpdate) return;
+  resize(newSize: number) {
+    if (this.formViews.length > newSize) {
+      this.formViews.slice(newSize).forEach((v) => v && v.destroy());
+    }
+    this.formViews.length = newSize;
+  }
 
-    // Skip 50% of updates
-    this.counter = !this.counter;
-    if (this.counter) return;
-
-    this.resize(model.forms.length);
-
-    const showMe = settings["skymp5-client"]["show-me"];
-
+  updateAll(model: WorldModel, showMe: boolean, isCloneView: boolean) {
     const toDestroy = new Array<number>();
-
-    const crosshair = Game.getCurrentCrosshairRef();
-    gCrosshairRefId = crosshair ? crosshair.getFormID() : 0;
-
-    gPcInJumpState = Game.getPlayer().getAnimationVariableBool("bInJumpState");
-
-    const pcWorldOrCell =
-      Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
-    gPcWorldOrCellId = pcWorldOrCell ? pcWorldOrCell.getFormID() : 0;
-
     const forms = model.forms;
     const n = forms.length;
     for (let i = 0; i < n; ++i) {
@@ -548,12 +516,20 @@ export class WorldView implements View<WorldModel> {
       const form = forms[i];
 
       let realPos: NiPoint3;
-      if (model.playerCharacterFormIdx === i && form.movement) {
+      if (
+        form.movement &&
+        (model.playerCharacterFormIdx === i || isCloneView)
+      ) {
         realPos = form.movement.pos;
         form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
       }
       try {
-        this.updateForm(form, i);
+        if (isCloneView) {
+          const isHostedByMeBackup = form.isHostedByMe;
+          form.isHostedByMe = false;
+          this.updateForm(form, i);
+          form.isHostedByMe = isHostedByMeBackup;
+        } else this.updateForm(form, i);
       } catch (err) {
         if (err.message.includes("needs to be respawned")) {
           toDestroy.push(i);
@@ -570,33 +546,86 @@ export class WorldView implements View<WorldModel> {
     for (const i of toDestroy) this.destroyForm(i);
   }
 
-  private updateForm(form: FormModel, i: number) {
-    const view = this.formViews[i];
-    if (!view) {
-      this.formViews[i] = new FormView(form.refrId);
-    } else {
-      view.update(form);
-    }
-  }
-
-  private destroyForm(i: number) {
-    if (!this.formViews[i]) return;
-    this.formViews[i].destroy();
-    this.formViews[i] = undefined;
-  }
-
-  private resize(newSize: number) {
-    if (this.formViews.length > newSize) {
-      this.formViews.slice(newSize).forEach((v) => v && v.destroy());
-    }
-    this.formViews.length = newSize;
-  }
-
-  destroy(): void {
-    this.resize(0);
+  getRemoteRefrId(clientsideRefrId: number): number {
+    if (clientsideRefrId < 0xff000000)
+      throw new Error("This function is only for 0xff forms");
+    const formView = this.formViews.find((formView: FormView) => {
+      return formView && formView.getLocalRefrId() === clientsideRefrId;
+    });
+    return formView ? formView.getRemoteRefrId() : 0;
   }
 
   private formViews = new Array<FormView>();
+}
+
+export class WorldView implements View<WorldModel> {
+  constructor() {
+    // Work around showRaceMenu issue
+    // Default nord in Race Menu will have very ugly face
+    // If other players are spawning when we show this menu
+    on("update", () => {
+      const pc = Game.getPlayer();
+      const pcWorldOrCell = (
+        pc.getWorldSpace() || pc.getParentCell()
+      ).getFormID();
+      if (this.pcWorldOrCell !== pcWorldOrCell) {
+        if (this.pcWorldOrCell) {
+          printConsole("Reset all form views");
+          this.formViews.resize(0);
+          this.cloneFormViews.resize(0);
+        }
+        this.pcWorldOrCell = pcWorldOrCell;
+      }
+    });
+    once("update", () => {
+      // Wait 1s game time (time spent in Race Menu isn't counted)
+      Utility.wait(1).then(() => {
+        this.allowUpdate = true;
+        printConsole("Update is now allowed");
+      });
+    });
+  }
+
+  getRemoteRefrId(clientsideRefrId: number): number {
+    return this.formViews.getRemoteRefrId(clientsideRefrId);
+  }
+
+  update(model: WorldModel): void {
+    if (!this.allowUpdate) return;
+
+    // Skip 50% of updates
+    this.counter = !this.counter;
+    if (this.counter) return;
+
+    this.formViews.resize(model.forms.length);
+
+    const showMe = settings["skymp5-client"]["show-me"];
+    const showClones = settings["skymp5-client"]["show-clones"];
+
+    const crosshair = Game.getCurrentCrosshairRef();
+    gCrosshairRefId = crosshair ? crosshair.getFormID() : 0;
+
+    gPcInJumpState = Game.getPlayer().getAnimationVariableBool("bInJumpState");
+
+    const pcWorldOrCell =
+      Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
+    gPcWorldOrCellId = pcWorldOrCell ? pcWorldOrCell.getFormID() : 0;
+
+    this.formViews.updateAll(model, showMe, false);
+
+    if (showClones) {
+      this.cloneFormViews.updateAll(model, false, true);
+    } else {
+      this.cloneFormViews.resize(0);
+    }
+  }
+
+  destroy(): void {
+    this.formViews.resize(0);
+  }
+
+  private formViews = new FormViewArray();
+  private cloneFormViews = new FormViewArray();
   private allowUpdate = false;
   private pcWorldOrCell = 0;
   private counter = false;
