@@ -750,6 +750,12 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
   std::string objectToCastTypeName = scriptToCastOwner->objectType;
   std::string resultTypeName = result->objectType;
 
+  if (scriptToCastOwner->GetType() != VarValue::kType_Object ||
+      *scriptToCastOwner == VarValue::None()) {
+    *result = VarValue::None();
+    return;
+  }
+
   auto object = static_cast<IGameObject*>(*scriptToCastOwner);
   if (object) {
     std::string scriptName = object->GetParentNativeScript();
