@@ -21,6 +21,7 @@ import { Look, applyLook, applyTints } from "./components/look";
 import { applyEquipment, isBadMenuShown } from "./components/equipment";
 import { modWcProtection } from "./worldCleaner";
 import { applyInventory } from "./components/inventory";
+import { tryHost } from "./hostAttempts";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -353,17 +354,15 @@ export class FormView implements View<FormModel> {
     }
 
     if (model.movement) {
-      const playerAllyFaction = sp.Faction.from(Game.getFormEx(0x0005a1a4));
       const ac = Actor.from(refr);
       if (ac) {
-        //printConsole(model.isHostedByMe);
-        if (model.isHostedByMe !== this.wasHostedByMe) {
-          this.wasHostedByMe = model.isHostedByMe;
-          if (model.isHostedByMe) {
-            ac.removeFromFaction(playerAllyFaction);
+        if (model.isHostedByOther !== this.wasHostedByOther) {
+          this.wasHostedByOther = model.isHostedByOther;
+          this.movState.lastApply = 0;
+          if (model.isHostedByOther) {
           } else {
-            ac.setFactionRank(playerAllyFaction, 1);
-            ac.stopCombat();
+            ac.clearKeepOffsetFromActor();
+            sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
           }
         }
       }
@@ -373,14 +372,19 @@ export class FormView implements View<FormModel> {
         Date.now() - this.movState.lastApply > 2000
       ) {
         this.movState.lastApply = Date.now();
-        const backup = model.movement.isWeapDrawn;
-        if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
-          model.movement.isWeapDrawn = forcedWeapDrawn;
-        }
-        applyMovement(refr, model.movement);
-        model.movement.isWeapDrawn = backup;
+        if (model.isHostedByOther) {
+          const backup = model.movement.isWeapDrawn;
+          if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
+            model.movement.isWeapDrawn = forcedWeapDrawn;
+          }
+          applyMovement(refr, model.movement);
+          model.movement.isWeapDrawn = backup;
 
-        this.movState.lastNumChanges = +model.numMovementChanges;
+          this.movState.lastNumChanges = +model.numMovementChanges;
+        } else {
+          const remoteId = this.remoteRefrId;
+          if (ac && remoteId) tryHost(remoteId);
+        }
       }
     }
     if (model.animation) applyAnimation(refr, model.animation, this.animState);
@@ -482,7 +486,7 @@ export class FormView implements View<FormModel> {
   private lastPcWorldOrCell = 0;
   private lastWorldOrCell = 0;
   private spawnMoment = 0;
-  private wasHostedByMe: boolean | undefined = undefined;
+  private wasHostedByOther: boolean | undefined = undefined;
 }
 
 class FormViewArray {
@@ -528,10 +532,10 @@ class FormViewArray {
       }
       try {
         if (isCloneView) {
-          const isHostedByMeBackup = form.isHostedByMe;
-          form.isHostedByMe = false;
+          const backup = form.isHostedByOther;
+          form.isHostedByOther = true;
           this.updateForm(form, i);
-          form.isHostedByMe = isHostedByMeBackup;
+          form.isHostedByOther = backup;
         } else this.updateForm(form, i);
       } catch (err) {
         if (err.message.includes("needs to be respawned")) {

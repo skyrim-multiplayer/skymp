@@ -25,6 +25,7 @@ import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import * as deathSystem from "./deathSystem";
 import { setUpConsoleCommands } from "./console";
+import { nextHostAttempt } from "./hostAttempts";
 
 interface AnyMessage {
   type?: string;
@@ -310,11 +311,19 @@ export class SkympClient {
     }
   }
 
+  private sendHostAttempts() {
+    const remoteId = nextHostAttempt();
+    if (!remoteId) return;
+
+    this.sendTarget.send({ t: MsgType.Host, remoteId }, false);
+  }
+
   private sendInputs() {
     this.sendMovement();
     this.sendAnimation();
     this.sendLook();
     this.sendEquipment();
+    this.sendHostAttempts();
   }
 
   private resetRemoteServer() {

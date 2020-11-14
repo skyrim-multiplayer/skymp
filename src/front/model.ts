@@ -16,6 +16,7 @@ export interface FormModel {
   isHarvested?: boolean;
   isOpen?: boolean;
   inventory?: Inventory;
+  isHostedByOther?: boolean;
   isHostedByMe?: boolean;
 }
 

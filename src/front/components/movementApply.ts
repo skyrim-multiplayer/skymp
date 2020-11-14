@@ -4,7 +4,6 @@ import {
   Game,
   TESModPlatform,
   Debug,
-  printConsole,
 } from "skyrimPlatform";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
