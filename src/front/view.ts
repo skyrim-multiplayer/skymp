@@ -356,7 +356,7 @@ export class FormView implements View<FormModel> {
       const playerAllyFaction = sp.Faction.from(Game.getFormEx(0x0005a1a4));
       const ac = Actor.from(refr);
       if (ac) {
-        printConsole(model.isHostedByMe);
+        //printConsole(model.isHostedByMe);
         if (model.isHostedByMe !== this.wasHostedByMe) {
           this.wasHostedByMe = model.isHostedByMe;
           if (model.isHostedByMe) {
@@ -368,7 +368,11 @@ export class FormView implements View<FormModel> {
         }
       }
 
-      if (+model.numMovementChanges !== this.movState.lastNumChanges) {
+      if (
+        +model.numMovementChanges !== this.movState.lastNumChanges ||
+        Date.now() - this.movState.lastApply > 2000
+      ) {
+        this.movState.lastApply = Date.now();
         const backup = model.movement.isWeapDrawn;
         if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
           model.movement.isWeapDrawn = forcedWeapDrawn;
@@ -470,7 +474,7 @@ export class FormView implements View<FormModel> {
   private refrId = 0;
   private ready = false;
   private animState = { lastNumChanges: 0 };
-  private movState = { lastNumChanges: 0 };
+  private movState = { lastNumChanges: 0, lastApply: 0 };
   private lookState = getDefaultLookState();
   private eqState = getDefaultEquipState();
   private lookBasedBaseId = 0;
@@ -516,10 +520,9 @@ class FormViewArray {
       const form = forms[i];
 
       let realPos: NiPoint3;
-      if (
-        form.movement &&
-        (model.playerCharacterFormIdx === i || isCloneView)
-      ) {
+      const offset =
+        form.movement && (model.playerCharacterFormIdx === i || isCloneView);
+      if (offset) {
         realPos = form.movement.pos;
         form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
       }
@@ -538,7 +541,7 @@ class FormViewArray {
           throw err;
         }
       }
-      if (model.playerCharacterFormIdx === i && form.movement) {
+      if (offset) {
         form.movement.pos = realPos;
       }
     }

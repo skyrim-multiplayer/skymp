@@ -4,11 +4,13 @@ import {
   Game,
   TESModPlatform,
   Debug,
+  printConsole,
 } from "skyrimPlatform";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {
   if (teleportIfNeed(refr, m)) return;
+
   translateTo(refr, m);
 
   const ac = Actor.from(refr);
