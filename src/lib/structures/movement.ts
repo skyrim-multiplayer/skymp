@@ -16,6 +16,7 @@ export interface AnimationVariables {
   isBlocking: boolean;
   isWeapDrawn: boolean;
   healthPercentage: number;
+  lookAt?: NiPoint3;
 }
 
 export type Movement = Transform & AnimationVariables;

@@ -19,6 +19,7 @@ import { applyMovement, NiPoint3 } from "./components/movement";
 import { applyAnimation } from "./components/animation";
 import { Look, applyLook, applyTints } from "./components/look";
 import { applyEquipment, isBadMenuShown } from "./components/equipment";
+import { setAttackAnimsBlocked } from "./components/animation";
 import { modWcProtection } from "./worldCleaner";
 import { applyInventory } from "./components/inventory";
 import { tryHost } from "./hostAttempts";
@@ -361,9 +362,11 @@ export class FormView implements View<FormModel> {
           this.wasHostedByOther = model.isHostedByOther;
           this.movState.lastApply = 0;
           if (model.isHostedByOther) {
+            setAttackAnimsBlocked(ac.getFormID(), true);
           } else {
             ac.clearKeepOffsetFromActor();
             sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
+            setAttackAnimsBlocked(ac.getFormID(), false);
           }
         }
       }

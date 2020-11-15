@@ -316,8 +316,33 @@ export class SkympClient {
   }
 
   private sendAnimation(_refrId?: number) {
-    if (_refrId) return;
-    if (!this.playerAnimSource) {
+    const owner = this.getInputOwner(_refrId);
+    if (!owner) return;
+
+    const refrIdStr = `${_refrId}`;
+
+    let animSource = this.playerAnimSource.get(refrIdStr);
+    if (!animSource) {
+      animSource = new AnimationSource(owner);
+      this.playerAnimSource.set(refrIdStr, animSource);
+    }
+    const anim = animSource.getAnimation();
+
+    const lastAnimationSent = this.lastAnimationSent.get(refrIdStr);
+    if (
+      !lastAnimationSent ||
+      anim.numChanges !== lastAnimationSent.numChanges
+    ) {
+      if (anim.animEventName !== "") {
+        this.lastAnimationSent.set(refrIdStr, anim);
+        this.sendTarget.send(
+          { t: MsgType.UpdateAnimation, data: anim, _refrId },
+          false
+        );
+      }
+    }
+
+    /*if (!this.playerAnimSource) {
       this.playerAnimSource = new AnimationSource(Game.getPlayer());
     }
     const anim = this.playerAnimSource.getAnimation();
@@ -332,7 +357,7 @@ export class SkympClient {
           false
         );
       }
-    }
+    }*/
   }
 
   private sendLook(_refrId?: number) {
@@ -441,9 +466,9 @@ export class SkympClient {
     return undefined;
   }
 
-  private playerAnimSource?: AnimationSource;
+  private playerAnimSource = new Map<string, AnimationSource>();
   private lastSendMovementMoment = new Map<string, number>();
-  private lastAnimationSent?: Animation;
+  private lastAnimationSent = new Map<string, Animation>();
   private msgHandler?: MsgHandler;
   private modelSource?: ModelSource;
   private sendTarget?: SendTarget;
