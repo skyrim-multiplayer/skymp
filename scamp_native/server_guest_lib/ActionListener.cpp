@@ -10,23 +10,34 @@ MpActor* ActionListener::SendToNeighbours(
   Networking::UserId userId, Networking::PacketData data, size_t length,
   bool reliable)
 {
-  MpActor* actor = partOne.serverState.ActorByUser(userId);
+  MpActor* myActor = partOne.serverState.ActorByUser(userId);
+  if (!myActor)
+    throw std::runtime_error(
+      "SendToNeighbours - no actor is attached to user");
 
-  if (actor) {
-    if (idx != actor->GetIdx()) {
-      std::stringstream ss;
-      ss << std::hex << "You aren't able to update actor with idx " << idx
-         << " (your actor's idx is " << actor->GetIdx() << ')';
-      throw PublicError(ss.str());
-    }
+  MpActor* actor =
+    dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
+  if (!actor)
+    throw std::runtime_error("SendToNeighbours - target actor doesn't exist");
 
-    for (auto listener : actor->GetListeners()) {
-      auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-      if (listenerAsActor) {
-        auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
-        if (targetuserId != Networking::InvalidUserId) {
-          partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
-        }
+  auto hosterIterator = partOne.worldState.hosters.find(actor->GetFormId());
+  uint32_t hosterId = hosterIterator != partOne.worldState.hosters.end()
+    ? hosterIterator->second
+    : 0;
+
+  if (idx != actor->GetIdx() && hosterId != myActor->GetFormId()) {
+    std::stringstream ss;
+    ss << std::hex << "You aren't able to update actor with idx " << idx
+       << " (your actor's idx is " << actor->GetIdx() << ')';
+    throw PublicError(ss.str());
+  }
+
+  for (auto listener : actor->GetListeners()) {
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (listenerAsActor) {
+      auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
+      if (targetuserId != Networking::InvalidUserId) {
+        partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
       }
     }
   }
@@ -306,4 +317,29 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
 
   auto recipeData = recipeUsed->GetData();
   UseCraftRecipe(me, recipeData, br, espmIdx);
+}
+
+void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
+                                   uint32_t remoteId)
+{
+  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!me)
+    throw std::runtime_error("Unable to host without actor attached");
+
+  auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
+
+  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
+  if (user != Networking::InvalidUserId)
+    return;
+
+  auto& hoster = partOne.worldState.hosters[remoteId];
+  if (hoster == 0) {
+    std::cout << "STARTS TO HOST" << std::endl;
+    hoster = me->GetFormId();
+    remote.UpdateHoster(hoster);
+
+    Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId,
+                              R"({ "type": "hostStart", "target": %u })",
+                              remote.GetFormId());
+  }
 }

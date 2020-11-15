@@ -111,6 +111,7 @@ public:
   void SetActivationBlocked(bool blocked);
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);
+  void UpdateHoster(uint32_t newHosterId);
 
   // If you want to completely remove ObjectReference from the grid you need
   // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these
@@ -167,6 +168,7 @@ private:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
+  void SendPropertyTo(const std::string& preparedPropMsg, MpActor& target);
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
 

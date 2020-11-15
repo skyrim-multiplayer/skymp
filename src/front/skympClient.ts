@@ -7,7 +7,7 @@ import {
   Game,
   Ui,
   Utility,
-  findConsoleCommand,
+  Actor,
 } from "skyrimPlatform";
 import { WorldView } from "./view";
 import { getMovement } from "./components/movement";
@@ -15,7 +15,7 @@ import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
 import { getDiff, getInventory, Inventory } from "./components/inventory";
-import { MsgType } from "./messages";
+import { MsgType, HostStartMessage } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
 import { RemoteServer, getPcInventory } from "./remoteServer";
@@ -45,6 +45,25 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
       printConsole(`${key}=${JSON.stringify(v)}`);
     }
   }*/
+
+  if (msgType === "hostStart") {
+    const msg = msgAny as HostStartMessage;
+    const target = msg.target;
+    printConsole("hostStart", target.toString(16));
+
+    let hosted = storage["hosted"];
+    if (typeof hosted !== typeof []) {
+      // if you try to switch to Set checkout .concat usage.
+      // concat compiles but doesn't work as expected
+      hosted = new Array<number>();
+      storage["hosted"] = hosted;
+    }
+
+    if (!hosted.includes(target)) {
+      hosted.push(target);
+    }
+  }
+
   if (f && typeof f === "function") handler[msgType](msgAny);
 };
 
@@ -74,6 +93,16 @@ export class SkympClient {
       if (!localFormId) return 0;
     }
     return localFormId;
+  }
+
+  private remoteIdToLocalId(remoteFormId: number): number {
+    if (remoteFormId >= 0xff000000) {
+      const view = this.getView();
+      if (!view) return 0;
+      remoteFormId = view.getLocalRefrId(remoteFormId);
+      if (!remoteFormId) return 0;
+    }
+    return remoteFormId;
   }
 
   constructor() {
@@ -258,19 +287,36 @@ export class SkympClient {
     on("update", () => deathSystem.update());
   }
 
-  private sendMovement() {
+  // May return null
+  private getInputOwner(_refrId?: number) {
+    return _refrId
+      ? Actor.from(Game.getFormEx(this.remoteIdToLocalId(_refrId)))
+      : Game.getPlayer();
+  }
+
+  private sendMovement(_refrId?: number) {
+    const owner = this.getInputOwner(_refrId);
+    if (!owner) return;
+
+    const refrIdStr = `${_refrId}`;
     const sendMovementRateMs = 130;
     const now = Date.now();
-    if (now - this.lastSendMovementMoment > sendMovementRateMs) {
+    const last = this.lastSendMovementMoment.get(refrIdStr);
+    if (!last || now - last > sendMovementRateMs) {
       this.sendTarget.send(
-        { t: MsgType.UpdateMovement, data: getMovement(Game.getPlayer()) },
+        {
+          t: MsgType.UpdateMovement,
+          data: getMovement(owner),
+          _refrId,
+        },
         false
       );
-      this.lastSendMovementMoment = now;
+      this.lastSendMovementMoment.set(refrIdStr, now);
     }
   }
 
-  private sendAnimation() {
+  private sendAnimation(_refrId?: number) {
+    if (_refrId) return;
     if (!this.playerAnimSource) {
       this.playerAnimSource = new AnimationSource(Game.getPlayer());
     }
@@ -281,12 +327,16 @@ export class SkympClient {
     ) {
       if (anim.animEventName !== "") {
         this.lastAnimationSent = anim;
-        this.sendTarget.send({ t: MsgType.UpdateAnimation, data: anim }, false);
+        this.sendTarget.send(
+          { t: MsgType.UpdateAnimation, data: anim, _refrId },
+          false
+        );
       }
     }
   }
 
-  private sendLook() {
+  private sendLook(_refrId?: number) {
+    if (_refrId) return;
     const shown = Ui.isMenuOpen("RaceSex Menu");
     if (shown != this.isRaceSexMenuShown) {
       this.isRaceSexMenuShown = shown;
@@ -294,19 +344,26 @@ export class SkympClient {
         printConsole("Exited from race menu");
 
         const look = getLook(Game.getPlayer());
-        this.sendTarget.send({ t: MsgType.UpdateLook, data: look }, true);
+        this.sendTarget.send(
+          { t: MsgType.UpdateLook, data: look, _refrId },
+          true
+        );
       }
     }
   }
 
-  private sendEquipment() {
+  private sendEquipment(_refrId?: number) {
+    if (_refrId) return;
     if (this.equipmentChanged) {
       this.equipmentChanged = false;
 
       ++this.numEquipmentChanges;
 
       const eq = getEquipment(Game.getPlayer(), this.numEquipmentChanges);
-      this.sendTarget.send({ t: MsgType.UpdateEquipment, data: eq }, true);
+      this.sendTarget.send(
+        { t: MsgType.UpdateEquipment, data: eq, _refrId },
+        true
+      );
       printConsole({ eq });
     }
   }
@@ -319,10 +376,16 @@ export class SkympClient {
   }
 
   private sendInputs() {
-    this.sendMovement();
-    this.sendAnimation();
-    this.sendLook();
-    this.sendEquipment();
+    const hosted =
+      typeof storage["hosted"] === typeof [] ? storage["hosted"] : [];
+    const targets = [undefined].concat(hosted);
+    //printConsole({ targets });
+    targets.forEach((target) => {
+      this.sendMovement(target);
+      this.sendAnimation(target);
+      this.sendLook(target);
+      this.sendEquipment(target);
+    });
     this.sendHostAttempts();
   }
 
@@ -379,7 +442,7 @@ export class SkympClient {
   }
 
   private playerAnimSource?: AnimationSource;
-  private lastSendMovementMoment = 0;
+  private lastSendMovementMoment = new Map<string, number>();
   private lastAnimationSent?: Animation;
   private msgHandler?: MsgHandler;
   private modelSource?: ModelSource;

@@ -210,6 +210,7 @@ export class FormView implements View<FormModel> {
       if (respawnRequired) {
         this.destroy();
         refr = Game.getPlayer().placeAtMe(base, 1, true, true);
+        delete this.wasHostedByOther;
         const kTypeNpc = 43;
         if (base.getType() !== kTypeNpc) {
           refr.setAngle(
@@ -562,6 +563,15 @@ class FormViewArray {
     return formView ? formView.getRemoteRefrId() : 0;
   }
 
+  getLocalRefrId(remoteRefrId: number): number {
+    if (remoteRefrId < 0xff000000)
+      throw new Error("This function is only for 0xff forms");
+    const formView = this.formViews.find((formView: FormView) => {
+      return formView && formView.getRemoteRefrId() === remoteRefrId;
+    });
+    return formView ? formView.getLocalRefrId() : 0;
+  }
+
   private formViews = new Array<FormView>();
 }
 
@@ -595,6 +605,10 @@ export class WorldView implements View<WorldModel> {
 
   getRemoteRefrId(clientsideRefrId: number): number {
     return this.formViews.getRemoteRefrId(clientsideRefrId);
+  }
+
+  getLocalRefrId(remoteRefrId: number): number {
+    return this.formViews.getLocalRefrId(remoteRefrId);
   }
 
   update(model: WorldModel): void {

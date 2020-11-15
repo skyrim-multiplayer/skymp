@@ -103,3 +103,8 @@ interface SpSnippetMsgBase {
 }
 
 export type SpSnippet = SpSnippetMsgBase & spSnippet.Snippet;
+
+export interface HostStartMessage {
+  type: "hostStart";
+  target: number;
+}

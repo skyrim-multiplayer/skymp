@@ -17,6 +17,21 @@
 #include <optional>
 
 namespace {
+std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
+                                  const nlohmann::json& value)
+{
+  nlohmann::json j{ { "idx", self->GetIdx() },
+                    { "t", MsgType::UpdateProperty },
+                    { "propName", name },
+                    { "data", value } };
+  std::string str;
+  str += Networking::MinPacketId;
+  str += j.dump();
+  return str;
+}
+}
+
+namespace {
 class ScopedTask
 {
 public:
@@ -466,6 +481,21 @@ void MpObjectReference::SetPrimitive(const NiPoint3& boundsDiv2)
   auto vertices = Primitive::GetVertices(GetPos(), GetAngle(), boundsDiv2);
   pImpl->primitive =
     PrimitiveData{ boundsDiv2, Primitive::CreateGeoPolygonProc(vertices) };
+}
+
+void MpObjectReference::UpdateHoster(uint32_t newHosterId)
+{
+  auto hostedMsg = CreatePropertyMessage(this, "isHostedByOther", true);
+  auto notHostedMsg = CreatePropertyMessage(this, "isHostedByOther", false);
+  for (auto listener : this->GetListeners()) {
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (listenerAsActor)
+      this->SendPropertyTo(newHosterId != 0 &&
+                               newHosterId != listener->GetFormId()
+                             ? hostedMsg
+                             : notHostedMsg,
+                           *listenerAsActor);
+  }
 }
 
 void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
@@ -1047,21 +1077,6 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
   }
 }
 
-namespace {
-std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
-                                  const nlohmann::json& value)
-{
-  nlohmann::json j{ { "idx", self->GetIdx() },
-                    { "t", MsgType::UpdateProperty },
-                    { "propName", name },
-                    { "data", value } };
-  std::string str;
-  str += Networking::MinPacketId;
-  str += j.dump();
-  return str;
-}
-}
-
 void MpObjectReference::SendPropertyToListeners(const char* name,
                                                 const nlohmann::json& value)
 {
@@ -1078,7 +1093,13 @@ void MpObjectReference::SendPropertyTo(const char* name,
                                        MpActor& target)
 {
   auto str = CreatePropertyMessage(this, name, value);
-  target.SendToUser(str.data(), str.size(), true);
+  SendPropertyTo(str, target);
+}
+
+void MpObjectReference::SendPropertyTo(const std::string& preparedPropMsg,
+                                       MpActor& target)
+{
+  target.SendToUser(preparedPropMsg.data(), preparedPropMsg.size(), true);
 }
 
 void MpObjectReference::BeforeDestroy()

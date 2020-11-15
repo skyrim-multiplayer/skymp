@@ -68,6 +68,8 @@ public:
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
+  MpForm* LookupFormByIdx(int idx);
+
   void SendPapyrusEvent(MpForm* form, const char* eventName,
                         const VarValue* arguments, size_t argumentsCount);
 
@@ -143,10 +145,13 @@ public:
   // You may want to disable lazy loading for testing
   LazyMode lazyMode = LazyMode::Enabled;
 
+  std::map<uint32_t, uint32_t> hosters;
+
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridImpl<MpObjectReference*>> grids;
   std::unique_ptr<MakeID> formIdxManager;
+  std::vector<MpForm*> formByIdxUnreliable;
   std::map<
     std::chrono::milliseconds,
     std::list<std::pair<uint32_t, std::chrono::system_clock::time_point>>>
