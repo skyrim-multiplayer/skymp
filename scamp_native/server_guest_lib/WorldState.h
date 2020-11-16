@@ -9,9 +9,11 @@
 #include <MakeID.h>
 #include <MpForm.h>
 #include <algorithm>
+#include <chrono>
 #include <list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <sparsepp/spp.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
@@ -146,6 +148,8 @@ public:
   LazyMode lazyMode = LazyMode::Enabled;
 
   std::map<uint32_t, uint32_t> hosters;
+  std::vector<std::optional<std::chrono::system_clock::time_point>>
+    lastMovUpdateByIdx;
 
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;

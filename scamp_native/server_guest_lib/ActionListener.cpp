@@ -72,6 +72,13 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
+
+    if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
+      auto newSize = static_cast<size_t>(idx) + 1;
+      partOne.worldState.lastMovUpdateByIdx.resize(newSize);
+    }
+    partOne.worldState.lastMovUpdateByIdx[idx] =
+      std::chrono::system_clock::now();
   }
 }
 
@@ -333,13 +340,38 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     return;
 
   auto& hoster = partOne.worldState.hosters[remoteId];
-  if (hoster == 0) {
-    std::cout << "STARTS TO HOST" << std::endl;
+  const uint32_t prevHoster = hoster;
+
+  auto remoteIdx = remote.GetIdx();
+
+  std::optional<std::chrono::system_clock::time_point> lastRemoteUpdate;
+  if (partOne.worldState.lastMovUpdateByIdx.size() > remoteIdx) {
+    lastRemoteUpdate = partOne.worldState.lastMovUpdateByIdx[remoteIdx];
+  }
+
+  const auto hostResetTimeout = std::chrono::seconds(2);
+
+  if (hoster == 0 || !lastRemoteUpdate ||
+      std::chrono::system_clock::now() - *lastRemoteUpdate >
+        hostResetTimeout) {
+    partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
+                             me->GetFormId());
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
 
     Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId,
                               R"({ "type": "hostStart", "target": %u })",
                               remote.GetFormId());
+
+    if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
+          partOne.worldState.LookupFormById(prevHoster).get())) {
+      auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
+      if (prevHosterUser != Networking::InvalidUserId &&
+          prevHosterUser != rawMsgData.userId) {
+        Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser,
+                                  R"({ "type": "hostStop", "target": %u })",
+                                  remote.GetFormId());
+      }
+    }
   }
 }

@@ -386,6 +386,11 @@ void PartOne::AttachLogger(std::shared_ptr<spdlog::logger> logger)
   worldState.logger = logger;
 }
 
+spdlog::logger& PartOne::GetLogger()
+{
+  return *pImpl->logger;
+}
+
 namespace {
 class ScopedTask
 {

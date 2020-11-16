@@ -15,7 +15,7 @@ import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
 import { getDiff, getInventory, Inventory } from "./components/inventory";
-import { MsgType, HostStartMessage } from "./messages";
+import { MsgType, HostStartMessage, HostStopMessage } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
 import { RemoteServer, getPcInventory } from "./remoteServer";
@@ -61,6 +61,17 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
 
     if (!hosted.includes(target)) {
       hosted.push(target);
+    }
+  }
+
+  if (msgType === "hostStop") {
+    const msg = msgAny as HostStopMessage;
+    const target = msg.target;
+    printConsole("hostStop", target.toString(16));
+
+    const hosted = storage["hosted"] as Array<number>;
+    if (typeof hosted === typeof []) {
+      storage["hosted"] = hosted.filter((x) => x !== target);
     }
   }
 

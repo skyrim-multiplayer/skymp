@@ -108,3 +108,8 @@ export interface HostStartMessage {
   type: "hostStart";
   target: number;
 }
+
+export interface HostStopMessage {
+  type: "hostStop";
+  target: number;
+}
