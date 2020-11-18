@@ -7,6 +7,7 @@
 #include "PacketParser.h"
 #include <array>
 #include <cassert>
+#include <graphics.h>
 #include <type_traits>
 #include <vector>
 
@@ -277,8 +278,8 @@ void PartOne::AttachEspm(espm::Loader* espm)
         continue;
 
       espm::Type t = base.rec->GetType();
-      if (t != "FURN" && t != "ACTI" && !espm::IsItem(t) && t != "DOOR" &&
-          t != "CONT" &&
+      if (/*t != "NPC_" &&*/ t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
+          t != "DOOR" && t != "CONT" &&
           (t != "FLOR" ||
            !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
           (t != "TREE" ||

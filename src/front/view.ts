@@ -19,7 +19,6 @@ import { applyMovement, NiPoint3 } from "./components/movement";
 import { applyAnimation } from "./components/animation";
 import { Look, applyLook, applyTints } from "./components/look";
 import { applyEquipment, isBadMenuShown } from "./components/equipment";
-import { setAttackAnimsBlocked } from "./components/animation";
 import { modWcProtection } from "./worldCleaner";
 import { applyInventory } from "./components/inventory";
 import { tryHost } from "./hostAttempts";
@@ -362,12 +361,22 @@ export class FormView implements View<FormModel> {
           this.wasHostedByOther = model.isHostedByOther;
           this.movState.lastApply = 0;
           if (model.isHostedByOther) {
-            setAttackAnimsBlocked(ac.getFormID(), true);
           } else {
             ac.clearKeepOffsetFromActor();
             sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
-            setAttackAnimsBlocked(ac.getFormID(), false);
           }
+        }
+      }
+
+      if (
+        this.movState.lastApply &&
+        Date.now() - this.movState.lastApply > 1500
+      ) {
+        if (Date.now() - this.movState.lastRehost > 1000) {
+          this.movState.lastRehost = Date.now();
+          const remoteId = this.remoteRefrId;
+          tryHost(remoteId);
+          printConsole("try to rehost");
         }
       }
 
@@ -482,7 +491,7 @@ export class FormView implements View<FormModel> {
   private refrId = 0;
   private ready = false;
   private animState = { lastNumChanges: 0 };
-  private movState = { lastNumChanges: 0, lastApply: 0 };
+  private movState = { lastNumChanges: 0, lastApply: 0, lastRehost: 0 };
   private lookState = getDefaultLookState();
   private eqState = getDefaultEquipState();
   private lookBasedBaseId = 0;

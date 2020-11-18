@@ -36,6 +36,7 @@ type CmdName = "additem" | "placeatme";
 const schemas = {
   additem: [CmdArgument.ObjectReference, CmdArgument.BaseForm, CmdArgument.Int],
   placeatme: [CmdArgument.ObjectReference, CmdArgument.BaseForm],
+  disable: [CmdArgument.ObjectReference],
 };
 
 export const setUpConsoleCommands = (

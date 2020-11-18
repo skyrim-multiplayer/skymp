@@ -16,8 +16,7 @@ export interface AnimationApplyState {
   lastNumChanges: number;
 }
 
-const blockedAttackAnims = new Set<number>();
-const allowAttack = new Set<number>();
+const allowAttack = new Map<number, number>();
 
 const isIdle = (animEventName: string) => {
   return (
@@ -51,7 +50,7 @@ export const applyAnimation = (
   } else {
     Debug.sendAnimationEvent(refr, anim.animEventName);
     if (anim.animEventName.toLowerCase().includes("attack"))
-      allowAttack.add(refr.getFormID());
+      allowAttack.set(refr.getFormID(), Date.now() + 500);
   }
 };
 
@@ -136,28 +135,9 @@ const ignoredAnims = new Set<string>([
   "TurnRight",
 ]);
 
-export const setAttackAnimsBlocked = (
-  refrId: number,
-  blocked: boolean
-): void => {
-  if (blocked) blockedAttackAnims.add(refrId);
-  else blockedAttackAnims.delete(refrId);
-};
-
 export const setupHooks = (): void => {
   hooks.sendAnimationEvent.add({
     enter: (ctx) => {
-      const forceAllow = allowAttack.has(ctx.selfId);
-
-      if (!forceAllow && blockedAttackAnims.has(ctx.selfId)) {
-        if (ctx.animEventName.toLowerCase().includes("attack")) {
-          ctx.animEventName = "";
-          return;
-        }
-      }
-
-      allowAttack.delete(ctx.selfId);
-
       // ShowRaceMenu forces this anim
       if (ctx.animEventName === "OffsetBoundStandingPlayerInstant") {
         return (ctx.animEventName = "");

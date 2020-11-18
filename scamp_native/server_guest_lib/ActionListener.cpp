@@ -266,6 +266,19 @@ void ExecutePlaceAtMe(MpActor& caller,
     { aBaseForm, aCount, aForcePersist, aInitiallyDisabled });
 }
 
+void ExecuteDisable(MpActor& caller,
+                    const std::vector<ConsoleCommands::Argument>& args)
+{
+  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
+
+  MpObjectReference& target = (targetId == 0x14)
+    ? caller
+    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
+
+  // TODO: handle disabling actors with user attached
+  target.Disable();
+}
+
 void ActionListener::OnConsoleCommand(
   const RawMessageData& rawMsgData, const std::string& consoleCommandName,
   const std::vector<ConsoleCommands::Argument>& args)
@@ -279,6 +292,8 @@ void ActionListener::OnConsoleCommand(
     ExecuteAddItem(*me, args);
   } else if (!Utils::stricmp(consoleCommandName.data(), "PlaceAtMe")) {
     ExecutePlaceAtMe(*me, args);
+  } else if (!Utils::stricmp(consoleCommandName.data(), "Disable")) {
+    ExecuteDisable(*me, args);
   } else
     throw std::runtime_error("Unknown command name '" + consoleCommandName +
                              "'");
