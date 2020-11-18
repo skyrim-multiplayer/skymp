@@ -64,8 +64,9 @@ endfunction
 
 function removeSatietyPoint(float value)
 	float tempSatietyValue = satietyValue - value
-	if (isLess(tempSatietyValue, _satietyStages[1]))
-		satietyValue = _satietyStages[1]
+	float lowerAllowableSatietyValue = _satietyStages[1]
+	if (isLess(tempSatietyValue, lowerAllowableSatietyValue ))
+		satietyValue = lowerAllowableSatietyValue 
 	else
 		if (isOvereat())
 			satietyValue = removeSatietyAfterOvereat(value)
