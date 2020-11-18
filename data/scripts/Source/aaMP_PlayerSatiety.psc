@@ -5,7 +5,6 @@ ScriptName aaMP_PlayerSatiety extends Actor
 float property _satietyUpdateTimeUnit = 5.0 auto
 float property _satietyPointRemovePerTimeUnit = 6.0 auto
 
-float property _startSatietyValue = 100.0 auto
 float property _satietyValueAfterDeath = 70.0 auto
 
 float property _foodEffectivenessMultiplier = 1.0 auto
@@ -23,7 +22,7 @@ int property _statusCheckKeyCode = 49 auto
 
 ; ======== Variables ========
 
-float satietyValue
+float satietyValue = 100.0
 float lowerThresholdValueForCurrentStage
 float higherThresholdValueForCurrentStage
 
@@ -33,7 +32,6 @@ event onInit()
 	addToFaction(_aaMPf_SatietyFaction)
 	registerForSingleUpdate(_satietyUpdateTimeUnit)
 	registerForKey(_statusCheckKeyCode)
-	satietyValue = _startSatietyValue
 endevent
 
 
@@ -91,7 +89,6 @@ float function removeSatietyAfterOvereat(float value)
 	else
 		return _starveMultiplierLimit
 	endif
-	return satietyValue
 endfunction
 
 
