@@ -16,7 +16,9 @@ export interface AnimationApplyState {
   lastNumChanges: number;
 }
 
-const allowAttack = new Map<number, number>();
+const allowedIdles = new Array<[number, string]>();
+const refsWithDefaultAnimsDisabled = new Set<number>();
+const allowedAnims = new Set<string>();
 
 const isIdle = (animEventName: string) => {
   return (
@@ -26,8 +28,6 @@ const isIdle = (animEventName: string) => {
       animEventName !== "IdleForceDefaultState")
   );
 };
-
-const allowedIdles = new Array<[number, string]>();
 
 export const applyAnimation = (
   refr: ObjectReference,
@@ -48,10 +48,21 @@ export const applyAnimation = (
     const ac = Actor.from(refr);
     if (ac) applyWeapDrawn(ac, false);
   } else {
+    if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
+      if (anim.animEventName.toLowerCase().includes("attack")) {
+        allowedAnims.add(refr.getFormID() + ":" + anim.animEventName);
+      }
+    }
     Debug.sendAnimationEvent(refr, anim.animEventName);
-    if (anim.animEventName.toLowerCase().includes("attack"))
-      allowAttack.set(refr.getFormID(), Date.now() + 500);
   }
+};
+
+export const setDefaultAnimsDisabled = (
+  refrId: number,
+  disabled: boolean
+): void => {
+  if (disabled) refsWithDefaultAnimsDisabled.add(refrId);
+  else refsWithDefaultAnimsDisabled.delete(refrId);
 };
 
 export class AnimationSource {
@@ -62,6 +73,7 @@ export class AnimationSource {
       leave: (ctx) => {
         if (ctx.selfId !== this.refrId) return;
         if (!ctx.animationSucceeded) return;
+        if (ctx.selfId != 0x14) printConsole(ctx.animEventName);
         this.onSendAnimationEvent(ctx.animEventName);
       },
     });
@@ -138,6 +150,18 @@ const ignoredAnims = new Set<string>([
 export const setupHooks = (): void => {
   hooks.sendAnimationEvent.add({
     enter: (ctx) => {
+      if (refsWithDefaultAnimsDisabled.has(ctx.selfId)) {
+        if (ctx.animEventName.toLowerCase().includes("attack")) {
+          const animKey = ctx.selfId + ":" + ctx.animEventName;
+          //printConsole(animKey);
+          if (allowedAnims.has(animKey)) {
+            allowedAnims.delete(animKey);
+          } else {
+            return (ctx.animEventName = "");
+          }
+        }
+      }
+
       // ShowRaceMenu forces this anim
       if (ctx.animEventName === "OffsetBoundStandingPlayerInstant") {
         return (ctx.animEventName = "");

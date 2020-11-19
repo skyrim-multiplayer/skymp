@@ -335,6 +335,7 @@ export class SkympClient {
     let animSource = this.playerAnimSource.get(refrIdStr);
     if (!animSource) {
       animSource = new AnimationSource(owner);
+      printConsole("NEW ANIMATION SOURCE");
       this.playerAnimSource.set(refrIdStr, animSource);
     }
     const anim = animSource.getAnimation();

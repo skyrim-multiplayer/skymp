@@ -16,7 +16,10 @@ import {
 import * as sp from "skyrimPlatform";
 
 import { applyMovement, NiPoint3 } from "./components/movement";
-import { applyAnimation } from "./components/animation";
+import {
+  applyAnimation,
+  setDefaultAnimsDisabled,
+} from "./components/animation";
 import { Look, applyLook, applyTints } from "./components/look";
 import { applyEquipment, isBadMenuShown } from "./components/equipment";
 import { modWcProtection } from "./worldCleaner";
@@ -358,12 +361,13 @@ export class FormView implements View<FormModel> {
       const ac = Actor.from(refr);
       if (ac) {
         if (model.isHostedByOther !== this.wasHostedByOther) {
+          printConsole("Host changed");
           this.wasHostedByOther = model.isHostedByOther;
           this.movState.lastApply = 0;
           if (model.isHostedByOther) {
+            setDefaultAnimsDisabled(ac.getFormID(), true);
           } else {
-            ac.clearKeepOffsetFromActor();
-            sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
+            setDefaultAnimsDisabled(ac.getFormID(), false);
           }
         }
       }
@@ -385,7 +389,7 @@ export class FormView implements View<FormModel> {
         Date.now() - this.movState.lastApply > 2000
       ) {
         this.movState.lastApply = Date.now();
-        if (model.isHostedByOther) {
+        if (model.isHostedByOther || !this.movState.everApplied) {
           const backup = model.movement.isWeapDrawn;
           if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
             model.movement.isWeapDrawn = forcedWeapDrawn;
@@ -394,7 +398,10 @@ export class FormView implements View<FormModel> {
           model.movement.isWeapDrawn = backup;
 
           this.movState.lastNumChanges = +model.numMovementChanges;
+          this.movState.everApplied = true;
         } else {
+          ac.clearKeepOffsetFromActor();
+          sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
           const remoteId = this.remoteRefrId;
           if (ac && remoteId) tryHost(remoteId);
         }
@@ -491,7 +498,12 @@ export class FormView implements View<FormModel> {
   private refrId = 0;
   private ready = false;
   private animState = { lastNumChanges: 0 };
-  private movState = { lastNumChanges: 0, lastApply: 0, lastRehost: 0 };
+  private movState = {
+    lastNumChanges: 0,
+    lastApply: 0,
+    lastRehost: 0,
+    everApplied: false,
+  };
   private lookState = getDefaultLookState();
   private eqState = getDefaultEquipState();
   private lookBasedBaseId = 0;

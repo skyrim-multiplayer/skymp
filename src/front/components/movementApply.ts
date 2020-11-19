@@ -15,8 +15,28 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
   const ac = Actor.from(refr);
 
   if (ac) {
-    ac.setHeadTracking(false);
-    ac.stopCombat();
+    let lookAt: Actor | null;
+    if (m.lookAt) {
+      try {
+        lookAt = Game.findClosestActor(
+          m.lookAt[0],
+          m.lookAt[1],
+          m.lookAt[2],
+          128
+        );
+      } catch (e) {
+        lookAt = null;
+      }
+    }
+
+    if (lookAt) {
+      ac.setHeadTracking(true);
+      ac.setLookAt(lookAt, false);
+    } else {
+      ac.setHeadTracking(false);
+    }
+
+    // ac.stopCombat();
     ac.blockActivation(true);
 
     keepOffsetFromActor(ac, m);
