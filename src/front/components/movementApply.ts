@@ -107,9 +107,10 @@ const applySneaking = (ac: Actor, isSneaking: boolean) => {
 };
 
 export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
-  if (ac.isWeaponDrawn() !== isWeapDrawn) {
-    TESModPlatform.setWeaponDrawnMode(ac, isWeapDrawn ? 1 : 0);
-  }
+  // Commenting this check fixes npc attack unsync after hot reload
+  //if (ac.isWeaponDrawn() !== isWeapDrawn) {
+  TESModPlatform.setWeaponDrawnMode(ac, isWeapDrawn ? 1 : 0);
+  //}
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
