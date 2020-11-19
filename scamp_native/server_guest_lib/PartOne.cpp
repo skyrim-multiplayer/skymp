@@ -7,7 +7,6 @@
 #include "PacketParser.h"
 #include <array>
 #include <cassert>
-#include <graphics.h>
 #include <type_traits>
 #include <vector>
 

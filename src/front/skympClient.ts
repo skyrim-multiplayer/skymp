@@ -330,12 +330,12 @@ export class SkympClient {
     const owner = this.getInputOwner(_refrId);
     if (!owner) return;
 
-    const refrIdStr = `${_refrId}`;
+    // Extermly important that it's a local id since AnimationSource depends on it
+    const refrIdStr = owner.getFormID().toString(16);
 
     let animSource = this.playerAnimSource.get(refrIdStr);
     if (!animSource) {
       animSource = new AnimationSource(owner);
-      printConsole("NEW ANIMATION SOURCE");
       this.playerAnimSource.set(refrIdStr, animSource);
     }
     const anim = animSource.getAnimation();
@@ -353,23 +353,6 @@ export class SkympClient {
         );
       }
     }
-
-    /*if (!this.playerAnimSource) {
-      this.playerAnimSource = new AnimationSource(Game.getPlayer());
-    }
-    const anim = this.playerAnimSource.getAnimation();
-    if (
-      !this.lastAnimationSent ||
-      anim.numChanges !== this.lastAnimationSent.numChanges
-    ) {
-      if (anim.animEventName !== "") {
-        this.lastAnimationSent = anim;
-        this.sendTarget.send(
-          { t: MsgType.UpdateAnimation, data: anim, _refrId },
-          false
-        );
-      }
-    }*/
   }
 
   private sendLook(_refrId?: number) {

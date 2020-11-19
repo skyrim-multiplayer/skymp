@@ -73,7 +73,6 @@ export class AnimationSource {
       leave: (ctx) => {
         if (ctx.selfId !== this.refrId) return;
         if (!ctx.animationSucceeded) return;
-        if (ctx.selfId != 0x14) printConsole(ctx.animEventName);
         this.onSendAnimationEvent(ctx.animEventName);
       },
     });
@@ -157,6 +156,7 @@ export const setupHooks = (): void => {
           if (allowedAnims.has(animKey)) {
             allowedAnims.delete(animKey);
           } else {
+            printConsole("block anim " + ctx.animEventName);
             return (ctx.animEventName = "");
           }
         }

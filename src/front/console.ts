@@ -31,7 +31,7 @@ enum CmdArgument {
   String,
 }
 
-type CmdName = "additem" | "placeatme";
+type CmdName = "additem" | "placeatme" | "disable";
 
 const schemas = {
   additem: [CmdArgument.ObjectReference, CmdArgument.BaseForm, CmdArgument.Int],
@@ -62,6 +62,7 @@ export const setUpConsoleCommands = (
             break;
         }
       }
+      printConsole("sent");
       send({ t: MsgType.ConsoleCommand, data: { commandName, args } });
       return false;
     };

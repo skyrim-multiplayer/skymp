@@ -361,7 +361,6 @@ export class FormView implements View<FormModel> {
       const ac = Actor.from(refr);
       if (ac) {
         if (model.isHostedByOther !== this.wasHostedByOther) {
-          printConsole("Host changed");
           this.wasHostedByOther = model.isHostedByOther;
           this.movState.lastApply = 0;
           if (model.isHostedByOther) {

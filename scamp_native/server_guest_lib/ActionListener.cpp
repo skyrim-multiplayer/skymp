@@ -275,7 +275,6 @@ void ExecuteDisable(MpActor& caller,
     ? caller
     : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
 
-  // TODO: handle disabling actors with user attached
   target.Disable();
 }
 
