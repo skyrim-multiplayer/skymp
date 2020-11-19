@@ -15,9 +15,10 @@ float property _starveMultiplier = 5.0 auto
 float property _starveMultiplierLimit = 100.0 auto
 
 float[] property _satietyStages auto
+int[] property _stagesDescriptions auto
 Faction property _aaMPf_SatietyFaction auto
 Spell property _aaMPs_SatietyStatus auto
-int property _satietyStatusMagicEffectId = 0 auto
+
 int property _statusCheckKeyCode = 49 auto
 
 ; ======== Variables ========
@@ -44,8 +45,10 @@ event onUpdate()
 	if (isSatietyOnDeathLimit())
 		handlePlayerSturveDeath()
 	endIf
-	updateCurrentSatietyStage()
 	registerForSingleUpdate(_satietyUpdateTimeUnit)
+
+	showSatietyStatus()
+
 endevent
 
 
@@ -58,7 +61,7 @@ endevent
 ; ======== Functions ========
 
 function showSatietyStatus()
-	Debug.notification("You satiety is " + Math.floor(satietyValue) + " points.")
+	Debug.notification("You satiety is " + Math.floor(satietyValue) + " points. " + GetFactionRank(_aaMPf_SatietyFaction))
 endfunction
 
 
@@ -74,7 +77,7 @@ function removeSatietyPoint(float value)
 			satietyValue = tempSatietyValue
 		endif
 	endif
-	updateSatietyStatusMagicEffect()
+	handleSatietyChanges()
 endfunction
 
 
@@ -106,21 +109,14 @@ endfunction
 
 function addSatietyPoint(float value)
 	float tempSatietyValue = satietyValue + (value * calculateSatietyMultiplier())
-	float higherAllowableSatietyValue = _satietyStages[_satietyStages.length - 1]
+	float higherAllowableSatietyValue = _satietyStages[_satietyStages.length - 2]
 	if (isMore(tempSatietyValue, higherAllowableSatietyValue))
 		satietyValue = higherAllowableSatietyValue
 	else 
 		satietyValue = tempSatietyValue
 	endIf
-	updateSatietyStatusMagicEffect()
+	handleSatietyChanges()
 	showSatietyStatus()
-endfunction
-
-
-function updateSatietyStatusMagicEffect()
-	_aaMPs_SatietyStatus.setNthEffectMagnitude(_satietyStatusMagicEffectId, satietyValue)
-	removeSpell(_aaMPs_SatietyStatus)
-	addSpell(_aaMPs_SatietyStatus, false)
 endfunction
 
 
@@ -134,7 +130,27 @@ endfunction
 
 
 float function calculateSatietyMultiplier()
-	return _foodEffectivenessMultiplier + ((_foodEffectivenessMultiplierLimit - satietyValue) * _foodEffectivenessMultiplierPerValue)
+	if (isMoreOrEqual(satietyValue, _foodEffectivenessMultiplierLimit))
+		return _foodEffectivenessMultiplier 
+	else
+		return _foodEffectivenessMultiplier + ((_foodEffectivenessMultiplierLimit - satietyValue) * _foodEffectivenessMultiplierPerValue)
+	endif
+endfunction
+
+
+function handleSatietyChanges()
+	updateCurrentSatietyStage()
+	updateSatietyStatusMagicEffect()
+endfunction
+
+
+function updateSatietyStatusMagicEffect()
+	int descriptionId = _stagesDescriptions[getFactionRank(_aaMPf_SatietyFaction)]
+	if (descriptionId != -1)
+		_aaMPs_SatietyStatus.setNthEffectMagnitude(descriptionId, satietyValue)
+		removeSpell(_aaMPs_SatietyStatus)
+		addSpell(_aaMPs_SatietyStatus, false)
+	endif
 endfunction
 
 
@@ -186,4 +202,9 @@ endfunction
 
 bool function isLessOrEqual(float value, float lessAndEqualThen)
 	return value <= lessAndEqualThen;
+endfunction
+
+
+bool function isMoreOrEqual(float value, float moreAndEqualThen)
+	return value >= moreAndEqualThen;
 endfunction

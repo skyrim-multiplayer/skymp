@@ -7,5 +7,4 @@ Scriptname aaMP_SatietyRestoreEffect extends ActiveMagicEffect
 /;
 event onEffectStart(Actor akTarget, Actor akCaster)
 	(akCaster as aaMp_PlayerSatiety).addSatietyPoint(GetMagnitude())
-	(akCaster as aaMp_PlayerSatiety).updateCurrentSatietyStage()
 endEvent
