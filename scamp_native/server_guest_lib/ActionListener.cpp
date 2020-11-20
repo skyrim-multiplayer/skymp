@@ -11,9 +11,9 @@ MpActor* ActionListener::SendToNeighbours(
   bool reliable)
 {
   MpActor* myActor = partOne.serverState.ActorByUser(userId);
+  // The old behavior is doing nothing in that case. This is covered by tests
   if (!myActor)
-    throw std::runtime_error(
-      "SendToNeighbours - no actor is attached to user");
+    return nullptr;
 
   MpActor* actor =
     dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));

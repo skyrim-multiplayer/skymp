@@ -37,16 +37,18 @@ TEST_CASE("SetUserActor", "[PartOne]")
   partOne.SetUserActor(0, 0xff000ABC);
   REQUIRE(partOne.GetUserActor(0) == 0xff000ABC);
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages().at(0).j.dump() ==
-          nlohmann::json{ { "type", "createActor" },
-                          { "refrId", 0xff000ABC },
-                          { "idx", 0 },
-                          { "isMe", true },
-                          { "transform",
-                            nlohmann::json{ { "pos", { 1.f, 2.f, 3.f } },
-                                            { "rot", { 0.f, 0.f, 180.f } },
-                                            { "worldOrCell", 0x3c } } } }
-            .dump());
+  REQUIRE(
+    partOne.Messages().at(0).j.dump() ==
+    nlohmann::json{ { "type", "createActor" },
+                    { "refrId", 0xff000ABC },
+                    { "idx", 0 },
+                    { "isMe", true },
+                    { "props", nlohmann::json{ { "isHostedByOther", true } } },
+                    { "transform",
+                      nlohmann::json{ { "pos", { 1.f, 2.f, 3.f } },
+                                      { "rot", { 0.f, 0.f, 180.f } },
+                                      { "worldOrCell", 0x3c } } } }
+      .dump());
 
   // Trying to destroy actor:
   partOne.DestroyActor(0xff000ABC);
@@ -100,12 +102,11 @@ TEST_CASE("createActor message contains look", "[PartOne]")
   partOne.CreateActor(0xff000FFF, { 100.f, 200.f, 300.f }, 180.f, 0x3c);
   partOne.SetUserActor(1, 0xff000FFF);
 
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
-                           m.j["look"] == jLook["data"];
-                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["type"] == "createActor" && m.j["idx"] == 0 &&
+                m.reliable && m.userId == 1 && m.j["look"] == jLook["data"];
+            }) != partOne.Messages().end());
 
   /*REQUIRE_THROWS_WITH(
     doLook(), Contains("Unable to update appearance, RaceMenu is not open"));
