@@ -9,13 +9,34 @@ import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {
   if (teleportIfNeed(refr, m)) return;
+
   translateTo(refr, m);
 
   const ac = Actor.from(refr);
 
   if (ac) {
-    ac.setHeadTracking(false);
-    ac.stopCombat();
+    let lookAt: Actor | null;
+    if (m.lookAt) {
+      try {
+        lookAt = Game.findClosestActor(
+          m.lookAt[0],
+          m.lookAt[1],
+          m.lookAt[2],
+          128
+        );
+      } catch (e) {
+        lookAt = null;
+      }
+    }
+
+    if (lookAt) {
+      ac.setHeadTracking(true);
+      ac.setLookAt(lookAt, false);
+    } else {
+      ac.setHeadTracking(false);
+    }
+
+    // ac.stopCombat();
     ac.blockActivation(true);
 
     keepOffsetFromActor(ac, m);
@@ -86,9 +107,10 @@ const applySneaking = (ac: Actor, isSneaking: boolean) => {
 };
 
 export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
-  if (ac.isWeaponDrawn() !== isWeapDrawn) {
-    TESModPlatform.setWeaponDrawnMode(ac, isWeapDrawn ? 1 : 0);
-  }
+  // Commenting this check fixes npc attack unsync after hot reload
+  //if (ac.isWeaponDrawn() !== isWeapDrawn) {
+  TESModPlatform.setWeaponDrawnMode(ac, isWeapDrawn ? 1 : 0);
+  //}
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {

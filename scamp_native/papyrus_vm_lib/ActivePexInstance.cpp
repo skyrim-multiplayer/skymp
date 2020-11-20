@@ -414,6 +414,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
     } break;
     case OpcodesImplementation::Opcodes::op_CallMethod: {
       VarValue* object = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
+
+      // BYOHRelationshipAdoptionPetDoorTrigger
+      if (args[0]->GetType() != VarValue::kType_String)
+        throw std::runtime_error("Anomally in CallMethod. String expected");
+
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
       static const std::string nameOnEndState = "onEndState";

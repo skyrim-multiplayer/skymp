@@ -16,6 +16,10 @@ export interface AnimationApplyState {
   lastNumChanges: number;
 }
 
+const allowedIdles = new Array<[number, string]>();
+const refsWithDefaultAnimsDisabled = new Set<number>();
+const allowedAnims = new Set<string>();
+
 const isIdle = (animEventName: string) => {
   return (
     animEventName === "MotionDrivenIdle" ||
@@ -24,8 +28,6 @@ const isIdle = (animEventName: string) => {
       animEventName !== "IdleForceDefaultState")
   );
 };
-
-const allowedIdles = new Array<[number, string]>();
 
 export const applyAnimation = (
   refr: ObjectReference,
@@ -46,8 +48,21 @@ export const applyAnimation = (
     const ac = Actor.from(refr);
     if (ac) applyWeapDrawn(ac, false);
   } else {
+    if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
+      if (anim.animEventName.toLowerCase().includes("attack")) {
+        allowedAnims.add(refr.getFormID() + ":" + anim.animEventName);
+      }
+    }
     Debug.sendAnimationEvent(refr, anim.animEventName);
   }
+};
+
+export const setDefaultAnimsDisabled = (
+  refrId: number,
+  disabled: boolean
+): void => {
+  if (disabled) refsWithDefaultAnimsDisabled.add(refrId);
+  else refsWithDefaultAnimsDisabled.delete(refrId);
 };
 
 export class AnimationSource {
@@ -134,6 +149,19 @@ const ignoredAnims = new Set<string>([
 export const setupHooks = (): void => {
   hooks.sendAnimationEvent.add({
     enter: (ctx) => {
+      if (refsWithDefaultAnimsDisabled.has(ctx.selfId)) {
+        if (ctx.animEventName.toLowerCase().includes("attack")) {
+          const animKey = ctx.selfId + ":" + ctx.animEventName;
+          //printConsole(animKey);
+          if (allowedAnims.has(animKey)) {
+            allowedAnims.delete(animKey);
+          } else {
+            printConsole("block anim " + ctx.animEventName);
+            return (ctx.animEventName = "");
+          }
+        }
+      }
+
       // ShowRaceMenu forces this anim
       if (ctx.animEventName === "OffsetBoundStandingPlayerInstant") {
         return (ctx.animEventName = "");

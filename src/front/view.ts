@@ -16,11 +16,15 @@ import {
 import * as sp from "skyrimPlatform";
 
 import { applyMovement, NiPoint3 } from "./components/movement";
-import { applyAnimation } from "./components/animation";
+import {
+  applyAnimation,
+  setDefaultAnimsDisabled,
+} from "./components/animation";
 import { Look, applyLook, applyTints } from "./components/look";
 import { applyEquipment, isBadMenuShown } from "./components/equipment";
 import { modWcProtection } from "./worldCleaner";
 import { applyInventory } from "./components/inventory";
+import { tryHost } from "./hostAttempts";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -196,7 +200,6 @@ export class FormView implements View<FormModel> {
         }
       }
     } else {
-      //printConsole("lol", model.movement);
       const base =
         getFormEx(+model.baseId) || getFormEx(this.getLookBasedBase());
       if (!base) return;
@@ -210,6 +213,7 @@ export class FormView implements View<FormModel> {
       if (respawnRequired) {
         this.destroy();
         refr = Game.getPlayer().placeAtMe(base, 1, true, true);
+        delete this.wasHostedByOther;
         const kTypeNpc = 43;
         if (base.getType() !== kTypeNpc) {
           refr.setAngle(
@@ -354,15 +358,52 @@ export class FormView implements View<FormModel> {
     }
 
     if (model.movement) {
-      if (+model.numMovementChanges !== this.movState.lastNumChanges) {
-        const backup = model.movement.isWeapDrawn;
-        if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
-          model.movement.isWeapDrawn = forcedWeapDrawn;
+      const ac = Actor.from(refr);
+      if (ac) {
+        if (model.isHostedByOther !== this.wasHostedByOther) {
+          this.wasHostedByOther = model.isHostedByOther;
+          this.movState.lastApply = 0;
+          if (model.isHostedByOther) {
+            setDefaultAnimsDisabled(ac.getFormID(), true);
+          } else {
+            setDefaultAnimsDisabled(ac.getFormID(), false);
+          }
         }
-        applyMovement(refr, model.movement);
-        model.movement.isWeapDrawn = backup;
+      }
 
-        this.movState.lastNumChanges = +model.numMovementChanges;
+      if (
+        this.movState.lastApply &&
+        Date.now() - this.movState.lastApply > 1500
+      ) {
+        if (Date.now() - this.movState.lastRehost > 1000) {
+          this.movState.lastRehost = Date.now();
+          const remoteId = this.remoteRefrId;
+          tryHost(remoteId);
+          printConsole("try to rehost");
+        }
+      }
+
+      if (
+        +model.numMovementChanges !== this.movState.lastNumChanges ||
+        Date.now() - this.movState.lastApply > 2000
+      ) {
+        this.movState.lastApply = Date.now();
+        if (model.isHostedByOther || !this.movState.everApplied) {
+          const backup = model.movement.isWeapDrawn;
+          if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
+            model.movement.isWeapDrawn = forcedWeapDrawn;
+          }
+          applyMovement(refr, model.movement);
+          model.movement.isWeapDrawn = backup;
+
+          this.movState.lastNumChanges = +model.numMovementChanges;
+          this.movState.everApplied = true;
+        } else {
+          ac.clearKeepOffsetFromActor();
+          sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
+          const remoteId = this.remoteRefrId;
+          if (ac && remoteId) tryHost(remoteId);
+        }
       }
     }
     if (model.animation) applyAnimation(refr, model.animation, this.animState);
@@ -456,7 +497,12 @@ export class FormView implements View<FormModel> {
   private refrId = 0;
   private ready = false;
   private animState = { lastNumChanges: 0 };
-  private movState = { lastNumChanges: 0 };
+  private movState = {
+    lastNumChanges: 0,
+    lastApply: 0,
+    lastRehost: 0,
+    everApplied: false,
+  };
   private lookState = getDefaultLookState();
   private eqState = getDefaultEquipState();
   private lookBasedBaseId = 0;
@@ -464,6 +510,92 @@ export class FormView implements View<FormModel> {
   private lastPcWorldOrCell = 0;
   private lastWorldOrCell = 0;
   private spawnMoment = 0;
+  private wasHostedByOther: boolean | undefined = undefined;
+}
+
+class FormViewArray {
+  updateForm(form: FormModel, i: number) {
+    const view = this.formViews[i];
+    if (!view) {
+      this.formViews[i] = new FormView(form.refrId);
+    } else {
+      view.update(form);
+    }
+  }
+
+  destroyForm(i: number) {
+    if (!this.formViews[i]) return;
+    this.formViews[i].destroy();
+    this.formViews[i] = undefined;
+  }
+
+  resize(newSize: number) {
+    if (this.formViews.length > newSize) {
+      this.formViews.slice(newSize).forEach((v) => v && v.destroy());
+    }
+    this.formViews.length = newSize;
+  }
+
+  updateAll(model: WorldModel, showMe: boolean, isCloneView: boolean) {
+    const toDestroy = new Array<number>();
+    const forms = model.forms;
+    const n = forms.length;
+    for (let i = 0; i < n; ++i) {
+      if (!forms[i] || (model.playerCharacterFormIdx === i && !showMe)) {
+        this.destroyForm(i);
+        continue;
+      }
+      const form = forms[i];
+
+      let realPos: NiPoint3;
+      const offset =
+        form.movement && (model.playerCharacterFormIdx === i || isCloneView);
+      if (offset) {
+        realPos = form.movement.pos;
+        form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
+      }
+      try {
+        if (isCloneView) {
+          const backup = form.isHostedByOther;
+          form.isHostedByOther = true;
+          this.updateForm(form, i);
+          form.isHostedByOther = backup;
+        } else this.updateForm(form, i);
+      } catch (err) {
+        if (err.message.includes("needs to be respawned")) {
+          toDestroy.push(i);
+          printConsole("destroying");
+        } else {
+          throw err;
+        }
+      }
+      if (offset) {
+        form.movement.pos = realPos;
+      }
+    }
+
+    for (const i of toDestroy) this.destroyForm(i);
+  }
+
+  getRemoteRefrId(clientsideRefrId: number): number {
+    if (clientsideRefrId < 0xff000000)
+      throw new Error("This function is only for 0xff forms");
+    const formView = this.formViews.find((formView: FormView) => {
+      return formView && formView.getLocalRefrId() === clientsideRefrId;
+    });
+    return formView ? formView.getRemoteRefrId() : 0;
+  }
+
+  getLocalRefrId(remoteRefrId: number): number {
+    if (remoteRefrId < 0xff000000)
+      throw new Error("This function is only for 0xff forms");
+    const formView = this.formViews.find((formView: FormView) => {
+      return formView && formView.getRemoteRefrId() === remoteRefrId;
+    });
+    return formView ? formView.getLocalRefrId() : 0;
+  }
+
+  private formViews = new Array<FormView>();
 }
 
 export class WorldView implements View<WorldModel> {
@@ -479,9 +611,8 @@ export class WorldView implements View<WorldModel> {
       if (this.pcWorldOrCell !== pcWorldOrCell) {
         if (this.pcWorldOrCell) {
           printConsole("Reset all form views");
-          for (let i = 0; i < this.formViews.length; ++i) {
-            this.destroyForm(i);
-          }
+          this.formViews.resize(0);
+          this.cloneFormViews.resize(0);
         }
         this.pcWorldOrCell = pcWorldOrCell;
       }
@@ -496,12 +627,11 @@ export class WorldView implements View<WorldModel> {
   }
 
   getRemoteRefrId(clientsideRefrId: number): number {
-    if (clientsideRefrId < 0xff000000)
-      throw new Error("This function is only for 0xff forms");
-    const formView = this.formViews.find((formView: FormView) => {
-      return formView && formView.getLocalRefrId() === clientsideRefrId;
-    });
-    return formView ? formView.getRemoteRefrId() : 0;
+    return this.formViews.getRemoteRefrId(clientsideRefrId);
+  }
+
+  getLocalRefrId(remoteRefrId: number): number {
+    return this.formViews.getLocalRefrId(remoteRefrId);
   }
 
   update(model: WorldModel): void {
@@ -511,11 +641,10 @@ export class WorldView implements View<WorldModel> {
     this.counter = !this.counter;
     if (this.counter) return;
 
-    this.resize(model.forms.length);
+    this.formViews.resize(model.forms.length);
 
     const showMe = settings["skymp5-client"]["show-me"];
-
-    const toDestroy = new Array<number>();
+    const showClones = settings["skymp5-client"]["show-clones"];
 
     const crosshair = Game.getCurrentCrosshairRef();
     gCrosshairRefId = crosshair ? crosshair.getFormID() : 0;
@@ -526,65 +655,21 @@ export class WorldView implements View<WorldModel> {
       Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
     gPcWorldOrCellId = pcWorldOrCell ? pcWorldOrCell.getFormID() : 0;
 
-    const forms = model.forms;
-    const n = forms.length;
-    for (let i = 0; i < n; ++i) {
-      if (!forms[i] || (model.playerCharacterFormIdx === i && !showMe)) {
-        this.destroyForm(i);
-        continue;
-      }
-      const form = forms[i];
+    this.formViews.updateAll(model, showMe, false);
 
-      let realPos: NiPoint3;
-      if (model.playerCharacterFormIdx === i && form.movement) {
-        realPos = form.movement.pos;
-        form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
-      }
-      try {
-        this.updateForm(form, i);
-      } catch (err) {
-        if (err.message.includes("needs to be respawned")) {
-          toDestroy.push(i);
-          printConsole("destroying");
-        } else {
-          throw err;
-        }
-      }
-      if (model.playerCharacterFormIdx === i && form.movement) {
-        form.movement.pos = realPos;
-      }
-    }
-
-    for (const i of toDestroy) this.destroyForm(i);
-  }
-
-  private updateForm(form: FormModel, i: number) {
-    const view = this.formViews[i];
-    if (!view) {
-      this.formViews[i] = new FormView(form.refrId);
+    if (showClones) {
+      this.cloneFormViews.updateAll(model, false, true);
     } else {
-      view.update(form);
+      this.cloneFormViews.resize(0);
     }
-  }
-
-  private destroyForm(i: number) {
-    if (!this.formViews[i]) return;
-    this.formViews[i].destroy();
-    this.formViews[i] = undefined;
-  }
-
-  private resize(newSize: number) {
-    if (this.formViews.length > newSize) {
-      this.formViews.slice(newSize).forEach((v) => v && v.destroy());
-    }
-    this.formViews.length = newSize;
   }
 
   destroy(): void {
-    this.resize(0);
+    this.formViews.resize(0);
   }
 
-  private formViews = new Array<FormView>();
+  private formViews = new FormViewArray();
+  private cloneFormViews = new FormViewArray();
   private allowUpdate = false;
   private pcWorldOrCell = 0;
   private counter = false;

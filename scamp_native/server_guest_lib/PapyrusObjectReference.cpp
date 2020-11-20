@@ -143,23 +143,30 @@ VarValue PapyrusObjectReference::PlaceAtMe(
 
     if (akFormToPlace.rec) {
       auto baseId = akFormToPlace.ToGlobalId(akFormToPlace.rec->GetId());
-      if (akFormToPlace.rec->GetType() != "NPC_") {
-        LocationalData locationalData = { selfRefr->GetPos(),
-                                          { 0, 0, selfRefr->GetAngle().z },
-                                          selfRefr->GetCellOrWorld() };
-        FormCallbacks callbacks = selfRefr->GetCallbacks();
-        std::string type = akFormToPlace.rec->GetType().ToString();
-        auto newRefr = std::make_unique<MpObjectReference>(
-          locationalData, callbacks, baseId, type);
 
-        auto worldState = selfRefr->GetParent();
-        auto newRefrId = worldState->GenerateFormId();
-        worldState->AddForm(std::move(newRefr), newRefrId);
+      LocationalData locationalData = {
+        selfRefr->GetPos(),
+        { 0, 0, selfRefr->GetAngle().z }, // TODO: fix Degrees/radians mismatch
+        selfRefr->GetCellOrWorld()
+      };
+      FormCallbacks callbacks = selfRefr->GetCallbacks();
+      std::string type = akFormToPlace.rec->GetType().ToString();
 
-        auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
-        refr.ForceSubscriptionsUpdate();
-        return VarValue(std::make_shared<MpFormGameObject>(&refr));
-      }
+      std::unique_ptr<MpObjectReference> newRefr;
+
+      if (akFormToPlace.rec->GetType() == "NPC_")
+        newRefr.reset(new MpActor(locationalData, callbacks, baseId));
+      else
+        newRefr.reset(
+          new MpObjectReference(locationalData, callbacks, baseId, type));
+
+      auto worldState = selfRefr->GetParent();
+      auto newRefrId = worldState->GenerateFormId();
+      worldState->AddForm(std::move(newRefr), newRefrId);
+
+      auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
+      refr.ForceSubscriptionsUpdate();
+      return VarValue(std::make_shared<MpFormGameObject>(&refr));
     }
   }
   return VarValue::None();

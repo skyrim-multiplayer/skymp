@@ -17,6 +17,21 @@
 #include <optional>
 
 namespace {
+std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
+                                  const nlohmann::json& value)
+{
+  nlohmann::json j{ { "idx", self->GetIdx() },
+                    { "t", MsgType::UpdateProperty },
+                    { "propName", name },
+                    { "data", value } };
+  std::string str;
+  str += Networking::MinPacketId;
+  str += j.dump();
+  return str;
+}
+}
+
+namespace {
 class ScopedTask
 {
 public:
@@ -468,6 +483,21 @@ void MpObjectReference::SetPrimitive(const NiPoint3& boundsDiv2)
     PrimitiveData{ boundsDiv2, Primitive::CreateGeoPolygonProc(vertices) };
 }
 
+void MpObjectReference::UpdateHoster(uint32_t newHosterId)
+{
+  auto hostedMsg = CreatePropertyMessage(this, "isHostedByOther", true);
+  auto notHostedMsg = CreatePropertyMessage(this, "isHostedByOther", false);
+  for (auto listener : this->GetListeners()) {
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (listenerAsActor)
+      this->SendPropertyTo(newHosterId != 0 &&
+                               newHosterId != listener->GetFormId()
+                             ? hostedMsg
+                             : notHostedMsg,
+                           *listenerAsActor);
+  }
+}
+
 void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
 {
   if (!pImpl->animGraphHolder)
@@ -553,13 +583,16 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
     emitter->SendPapyrusEvent("OnInit");
   }
 
+  const bool hasPrimitive = emitter->HasPrimitive();
+
   emitter->InitListenersAndEmitters();
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
   listener->emitters->insert(emitter);
-  emitter->callbacks->subscribe(emitter, listener);
+  if (!hasPrimitive)
+    emitter->callbacks->subscribe(emitter, listener);
 
-  if (emitter->HasPrimitive()) {
+  if (hasPrimitive) {
     if (!listener->emittersWithPrimitives)
       listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>);
     listener->emittersWithPrimitives->insert({ emitter->GetFormId(), false });
@@ -574,11 +607,14 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   if (bothNonActors)
     return;
 
-  emitter->callbacks->unsubscribe(emitter, listener);
+  const bool hasPrimitive = emitter->HasPrimitive();
+
+  if (!hasPrimitive)
+    emitter->callbacks->unsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
   listener->emitters->erase(emitter);
 
-  if (listener->emittersWithPrimitives && emitter->HasPrimitive()) {
+  if (listener->emittersWithPrimitives && hasPrimitive) {
     listener->emittersWithPrimitives->erase(emitter->GetFormId());
   }
 }
@@ -1041,21 +1077,6 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
   }
 }
 
-namespace {
-std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
-                                  const nlohmann::json& value)
-{
-  nlohmann::json j{ { "idx", self->GetIdx() },
-                    { "t", MsgType::UpdateProperty },
-                    { "propName", name },
-                    { "data", value } };
-  std::string str;
-  str += Networking::MinPacketId;
-  str += j.dump();
-  return str;
-}
-}
-
 void MpObjectReference::SendPropertyToListeners(const char* name,
                                                 const nlohmann::json& value)
 {
@@ -1072,13 +1093,22 @@ void MpObjectReference::SendPropertyTo(const char* name,
                                        MpActor& target)
 {
   auto str = CreatePropertyMessage(this, name, value);
-  target.SendToUser(str.data(), str.size(), true);
+  SendPropertyTo(str, target);
+}
+
+void MpObjectReference::SendPropertyTo(const std::string& preparedPropMsg,
+                                       MpActor& target)
+{
+  target.SendToUser(preparedPropMsg.data(), preparedPropMsg.size(), true);
 }
 
 void MpObjectReference::BeforeDestroy()
 {
   if (this->occupant && this->occupantDestroySink)
     this->occupant->RemoveEventSink(this->occupantDestroySink);
+
+  // Move far far away calling OnTriggerExit, unsubscribing, etc
+  SetPos({ -1'000'000'000, 0, 0 });
 
   MpForm::BeforeDestroy();
 

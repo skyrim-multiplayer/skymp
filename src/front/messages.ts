@@ -19,6 +19,7 @@ export enum MsgType {
   OnEquip = 11,
   ConsoleCommand = 12,
   CraftItem = 13,
+  Host = 14,
 }
 
 export interface SetInventory {
@@ -102,3 +103,13 @@ interface SpSnippetMsgBase {
 }
 
 export type SpSnippet = SpSnippetMsgBase & spSnippet.Snippet;
+
+export interface HostStartMessage {
+  type: "hostStart";
+  target: number;
+}
+
+export interface HostStopMessage {
+  type: "hostStop";
+  target: number;
+}

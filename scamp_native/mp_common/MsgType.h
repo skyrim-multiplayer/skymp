@@ -16,5 +16,6 @@ enum class MsgType : int64_t
   FinishSpSnippet = 10,
   OnEquip = 11,
   ConsoleCommand = 12,
-  CraftItem = 13
+  CraftItem = 13,
+  Host = 14
 };

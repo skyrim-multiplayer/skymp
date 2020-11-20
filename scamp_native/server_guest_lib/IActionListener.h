@@ -80,4 +80,9 @@ public:
                            uint32_t resultObjectId)
   {
   }
+
+  virtual void OnHostAttempt(const RawMessageData& rawMsgData,
+                             uint32_t remoteId)
+  {
+  }
 };

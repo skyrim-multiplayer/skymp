@@ -174,6 +174,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                  workbench, resultObjectId);
       break;
     }
+    case MsgType::Host: {
+      uint32_t remoteId;
+      ReadEx(jMessage, "remoteId", &remoteId);
+      actionListener.OnHostAttempt(rawMsgData, remoteId);
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }

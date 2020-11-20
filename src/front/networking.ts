@@ -8,7 +8,12 @@ let lastPort = 0;
 
 const createClientSafe = (hostname: string, port: number): void => {
   sp.printConsole("createClientSafe " + hostname + ":" + port);
-  return mpClientPlugin.createClient(hostname, port);
+  // Client sometimes call this function with bad parameters.
+  // It causes assertion failure in Debug mode, but doesn't lead to anything on a regular player's machine.
+  // It seems that this function will be called with the valid parameters later
+  if (hostname !== "" && lastPort !== 0) {
+    mpClientPlugin.createClient(hostname, port);
+  }
 };
 
 sp.on("tick", () => {

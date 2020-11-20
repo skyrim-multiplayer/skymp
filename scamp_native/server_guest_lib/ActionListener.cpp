@@ -10,23 +10,34 @@ MpActor* ActionListener::SendToNeighbours(
   Networking::UserId userId, Networking::PacketData data, size_t length,
   bool reliable)
 {
-  MpActor* actor = partOne.serverState.ActorByUser(userId);
+  MpActor* myActor = partOne.serverState.ActorByUser(userId);
+  if (!myActor)
+    throw std::runtime_error(
+      "SendToNeighbours - no actor is attached to user");
 
-  if (actor) {
-    if (idx != actor->GetIdx()) {
-      std::stringstream ss;
-      ss << std::hex << "You aren't able to update actor with idx " << idx
-         << " (your actor's idx is " << actor->GetIdx() << ')';
-      throw PublicError(ss.str());
-    }
+  MpActor* actor =
+    dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
+  if (!actor)
+    throw std::runtime_error("SendToNeighbours - target actor doesn't exist");
 
-    for (auto listener : actor->GetListeners()) {
-      auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-      if (listenerAsActor) {
-        auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
-        if (targetuserId != Networking::InvalidUserId) {
-          partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
-        }
+  auto hosterIterator = partOne.worldState.hosters.find(actor->GetFormId());
+  uint32_t hosterId = hosterIterator != partOne.worldState.hosters.end()
+    ? hosterIterator->second
+    : 0;
+
+  if (idx != actor->GetIdx() && hosterId != myActor->GetFormId()) {
+    std::stringstream ss;
+    ss << std::hex << "You aren't able to update actor with idx " << idx
+       << " (your actor's idx is " << actor->GetIdx() << ')';
+    throw PublicError(ss.str());
+  }
+
+  for (auto listener : actor->GetListeners()) {
+    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+    if (listenerAsActor) {
+      auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
+      if (targetuserId != Networking::InvalidUserId) {
+        partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
       }
     }
   }
@@ -61,6 +72,13 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
+
+    if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
+      auto newSize = static_cast<size_t>(idx) + 1;
+      partOne.worldState.lastMovUpdateByIdx.resize(newSize);
+    }
+    partOne.worldState.lastMovUpdateByIdx[idx] =
+      std::chrono::system_clock::now();
   }
 }
 
@@ -203,6 +221,63 @@ void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
   actor->OnEquip(baseId);
 }
 
+void ExecuteAddItem(MpActor& caller,
+                    const std::vector<ConsoleCommands::Argument>& args)
+{
+  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
+  const auto itemId = static_cast<uint32_t>(args.at(1).GetInteger());
+  const auto count = static_cast<int32_t>(args.at(2).GetInteger());
+
+  MpObjectReference& target = (targetId == 0x14)
+    ? caller
+    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
+
+  auto& br = caller.GetParent()->GetEspm().GetBrowser();
+
+  PapyrusObjectReference papyrusObjectReference;
+  auto aItem =
+    VarValue(std::make_shared<EspmGameObject>(br.LookupById(itemId)));
+  auto aCount = VarValue(count);
+  auto aSilent = VarValue(false);
+  (void)papyrusObjectReference.AddItem(target.ToVarValue(),
+                                       { aItem, aCount, aSilent });
+}
+
+void ExecutePlaceAtMe(MpActor& caller,
+                      const std::vector<ConsoleCommands::Argument>& args)
+{
+  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
+  const auto baseFormId = static_cast<uint32_t>(args.at(1).GetInteger());
+
+  MpObjectReference& target = (targetId == 0x14)
+    ? caller
+    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
+
+  auto& br = caller.GetParent()->GetEspm().GetBrowser();
+
+  PapyrusObjectReference papyrusObjectReference;
+  auto aBaseForm =
+    VarValue(std::make_shared<EspmGameObject>(br.LookupById(baseFormId)));
+  auto aCount = VarValue(1);
+  auto aForcePersist = VarValue(false);
+  auto aInitiallyDisabled = VarValue(false);
+  (void)papyrusObjectReference.PlaceAtMe(
+    target.ToVarValue(),
+    { aBaseForm, aCount, aForcePersist, aInitiallyDisabled });
+}
+
+void ExecuteDisable(MpActor& caller,
+                    const std::vector<ConsoleCommands::Argument>& args)
+{
+  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
+
+  MpObjectReference& target = (targetId == 0x14)
+    ? caller
+    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
+
+  target.Disable();
+}
+
 void ActionListener::OnConsoleCommand(
   const RawMessageData& rawMsgData, const std::string& consoleCommandName,
   const std::vector<ConsoleCommands::Argument>& args)
@@ -213,29 +288,14 @@ void ActionListener::OnConsoleCommand(
     throw std::runtime_error("Not enough permissions to use this command");
 
   if (!Utils::stricmp(consoleCommandName.data(), "AddItem")) {
-    const auto targetId = static_cast<uint32_t>(args[0].GetInteger());
-    const auto itemId = static_cast<uint32_t>(args[1].GetInteger());
-    const auto count = static_cast<int32_t>(args[2].GetInteger());
-
-    MpObjectReference* target = nullptr;
-    if (targetId == 0x14) {
-      target = partOne.serverState.ActorByUser(rawMsgData.userId);
-      if (!target)
-        throw std::runtime_error("No actor found for user " +
-                                 std::to_string(rawMsgData.userId));
-    } else
-      target = &partOne.worldState.GetFormAt<MpObjectReference>(targetId);
-
-    auto& br = partOne.GetEspm().GetBrowser();
-
-    PapyrusObjectReference papyrusObjectReference;
-    std::vector<VarValue> args;
-    args.push_back(
-      VarValue(std::make_shared<EspmGameObject>(br.LookupById(itemId))));
-    args.push_back(VarValue(count));
-    args.push_back(VarValue(false));
-    papyrusObjectReference.AddItem(target->ToVarValue(), args);
-  }
+    ExecuteAddItem(*me, args);
+  } else if (!Utils::stricmp(consoleCommandName.data(), "PlaceAtMe")) {
+    ExecutePlaceAtMe(*me, args);
+  } else if (!Utils::stricmp(consoleCommandName.data(), "Disable")) {
+    ExecuteDisable(*me, args);
+  } else
+    throw std::runtime_error("Unknown command name '" + consoleCommandName +
+                             "'");
 }
 
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
@@ -278,4 +338,54 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
 
   auto recipeData = recipeUsed->GetData();
   UseCraftRecipe(me, recipeData, br, espmIdx);
+}
+
+void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
+                                   uint32_t remoteId)
+{
+  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!me)
+    throw std::runtime_error("Unable to host without actor attached");
+
+  auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
+
+  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
+  if (user != Networking::InvalidUserId)
+    return;
+
+  auto& hoster = partOne.worldState.hosters[remoteId];
+  const uint32_t prevHoster = hoster;
+
+  auto remoteIdx = remote.GetIdx();
+
+  std::optional<std::chrono::system_clock::time_point> lastRemoteUpdate;
+  if (partOne.worldState.lastMovUpdateByIdx.size() > remoteIdx) {
+    lastRemoteUpdate = partOne.worldState.lastMovUpdateByIdx[remoteIdx];
+  }
+
+  const auto hostResetTimeout = std::chrono::seconds(2);
+
+  if (hoster == 0 || !lastRemoteUpdate ||
+      std::chrono::system_clock::now() - *lastRemoteUpdate >
+        hostResetTimeout) {
+    partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
+                             me->GetFormId());
+    hoster = me->GetFormId();
+    remote.UpdateHoster(hoster);
+
+    Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId,
+                              R"({ "type": "hostStart", "target": %u })",
+                              remote.GetFormId());
+
+    if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
+          partOne.worldState.LookupFormById(prevHoster).get())) {
+      auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
+      if (prevHosterUser != Networking::InvalidUserId &&
+          prevHosterUser != rawMsgData.userId) {
+        Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser,
+                                  R"({ "type": "hostStop", "target": %u })",
+                                  remote.GetFormId());
+      }
+    }
+  }
 }

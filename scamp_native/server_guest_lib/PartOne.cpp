@@ -277,8 +277,8 @@ void PartOne::AttachEspm(espm::Loader* espm)
         continue;
 
       espm::Type t = base.rec->GetType();
-      if (t != "FURN" && t != "ACTI" && !espm::IsItem(t) && t != "DOOR" &&
-          t != "CONT" &&
+      if (/*t != "NPC_" &&*/ t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
+          t != "DOOR" && t != "CONT" &&
           (t != "FLOR" ||
            !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
           (t != "TREE" ||
@@ -384,6 +384,11 @@ void PartOne::AttachLogger(std::shared_ptr<spdlog::logger> logger)
 {
   pImpl->logger = logger;
   worldState.logger = logger;
+}
+
+spdlog::logger& PartOne::GetLogger()
+{
+  return *pImpl->logger;
 }
 
 namespace {
@@ -546,20 +551,30 @@ void PartOne::Init()
       mode = VisitPropertiesMode::All;
 
     const char *propsPrefix = "", *propsPostfix = "";
-    emitter->VisitProperties(
-      [&](const char* propName, const char* jsonValue) {
-        propsPrefix = R"(, "props": { )";
-        propsPostfix = R"( })";
+    auto visitor = [&](const char* propName, const char* jsonValue) {
+      propsPrefix = R"(, "props": { )";
+      propsPostfix = R"( })";
 
-        if (props.size() > 0)
-          props += R"(, ")";
-        else
-          props += '"';
-        props += propName;
-        props += R"(": )";
-        props += jsonValue;
-      },
-      mode);
+      if (props.size() > 0)
+        props += R"(, ")";
+      else
+        props += '"';
+      props += propName;
+      props += R"(": )";
+      props += jsonValue;
+    };
+    emitter->VisitProperties(visitor, mode);
+
+    const bool hasUser = emitterAsActor &&
+      serverState.UserByActor(emitterAsActor) != Networking::InvalidUserId;
+    auto hosterIterator = worldState.hosters.find(emitter->GetFormId());
+
+    if (hasUser ||
+        (hosterIterator != worldState.hosters.end() &&
+         hosterIterator->second != 0 &&
+         hosterIterator->second != listener->GetFormId())) {
+      visitor("isHostedByOther", "true");
+    }
 
     const char* method = "createActor";
 

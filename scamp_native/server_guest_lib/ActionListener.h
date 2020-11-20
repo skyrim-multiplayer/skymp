@@ -54,6 +54,9 @@ public:
                    const Inventory& inputObjects, uint32_t workbenchId,
                    uint32_t resultObjectId) override;
 
+  void OnHostAttempt(const RawMessageData& rawMsgData,
+                     uint32_t remoteId) override;
+
 private:
   // Returns user's actor if exists
   MpActor* SendToNeighbours(uint32_t idx,

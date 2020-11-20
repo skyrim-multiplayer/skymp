@@ -71,6 +71,7 @@ public:
   espm::Loader& GetEspm() const;
   bool HasEspm() const;
   void AttachLogger(std::shared_ptr<spdlog::logger> logger);
+  spdlog::logger& GetLogger();
 
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,

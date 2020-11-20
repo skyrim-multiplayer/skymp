@@ -1,4 +1,5 @@
 import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
+import { NiPoint3 } from "../../lib/structures/movement";
 import { Movement, RunMode } from "./movement";
 
 export const getMovement = (refr: ObjectReference): Movement => {
@@ -11,6 +12,18 @@ export const getMovement = (refr: ObjectReference): Movement => {
   let healthPercentage = ac && ac.getActorValuePercentage("health");
   if (ac && ac.isDead()) {
     healthPercentage = 0;
+  }
+
+  let lookAt: undefined | NiPoint3 = undefined;
+  if (ac.getFormID() !== 0x14) {
+    const combatTarget = ac.getCombatTarget();
+    if (combatTarget) {
+      lookAt = [
+        combatTarget.getPositionX(),
+        combatTarget.getPositionY(),
+        combatTarget.getPositionZ(),
+      ];
+    }
   }
 
   return {
@@ -27,6 +40,7 @@ export const getMovement = (refr: ObjectReference): Movement => {
     isBlocking: ac && ac.getAnimationVariableBool("IsBlocking"),
     isWeapDrawn: ac && ac.isWeaponDrawn(),
     healthPercentage,
+    lookAt,
   };
 };
 
@@ -44,7 +58,7 @@ const getRunMode = (ac: Actor): RunMode => {
     if (!TESModPlatform.isPlayerRunningEnabled() || speed < 150)
       isRunning = false;
   } else {
-    if (!ac.isRunning()) isRunning = false;
+    if (!ac.isRunning() || speed < 150) isRunning = false;
   }
 
   if (ac.getAnimationVariableFloat("IsBlocking")) {

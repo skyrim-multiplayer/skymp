@@ -231,6 +231,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
     // TODO: move to a separate module
 
+    if (msg.props && !msg.props.isHostedByOther) {
+    }
+
     if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
       this.setRaceMenuOpen({ type: "setRaceMenuOpen", open: true });
 
@@ -450,9 +453,16 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   send(msg: Record<string, unknown>, reliable: boolean): void {
     if (this.worldModel.playerCharacterFormIdx === -1) return;
 
-    msg.idx = this.getIdManager().getValueById(
-      this.worldModel.playerCharacterFormIdx
-    );
+    //printConsole("sendMovement2", msg._refrId);
+
+    const refrId = msg._refrId as number | undefined;
+
+    const idxInModel = refrId
+      ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId)
+      : this.worldModel.playerCharacterFormIdx;
+    msg.idx = this.getIdManager().getValueById(idxInModel);
+
+    delete msg._refrId;
     networking.send(msg, reliable);
   }
 
