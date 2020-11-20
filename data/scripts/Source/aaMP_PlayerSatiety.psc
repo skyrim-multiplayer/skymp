@@ -47,7 +47,7 @@ event onUpdate()
 	endIf
 	registerForSingleUpdate(_satietyUpdateTimeUnit)
 
-	showSatietyStatus()
+	Debug.notification("You satiety is " + Math.floor(satietyValue) + " points. " + GetFactionRank(_aaMPf_SatietyFaction))
 
 endevent
 
@@ -61,7 +61,7 @@ endevent
 ; ======== Functions ========
 
 function showSatietyStatus()
-	Debug.notification("You satiety is " + Math.floor(satietyValue) + " points. " + GetFactionRank(_aaMPf_SatietyFaction))
+	Debug.notification("You satiety is " + Math.floor(satietyValue) + " points.")
 endfunction
 
 
@@ -145,10 +145,11 @@ endfunction
 
 
 function updateSatietyStatusMagicEffect()
+	removeSpell(_aaMPs_SatietyStatus)
 	int descriptionId = _stagesDescriptions[getFactionRank(_aaMPf_SatietyFaction)]
 	if (descriptionId != -1)
 		_aaMPs_SatietyStatus.setNthEffectMagnitude(descriptionId, satietyValue)
-		removeSpell(_aaMPs_SatietyStatus)
+		;_aaMPs_SatietyStatus.cast((self as Actor), (self as Actor))
 		addSpell(_aaMPs_SatietyStatus, false)
 	endif
 endfunction
@@ -171,7 +172,7 @@ int function getActualSatietyStage()
 	while (!comparePointInInterval(satietyValue, _satietyStages[cycleIteration], _satietyStages[cycleIteration + 1]))
 		cycleIteration += 1
 		if (cycleIteration == _satietyStages.length)
-			return 0
+			return -1
 		endif
 	endwhile
 	updateThresholdValues(cycleIteration)
