@@ -33,6 +33,7 @@ event onInit()
 	addToFaction(_aaMPf_SatietyFaction)
 	registerForSingleUpdate(_satietyUpdateTimeUnit)
 	registerForKey(_statusCheckKeyCode)
+	handleSatietyChanges()
 endevent
 
 
@@ -46,9 +47,6 @@ event onUpdate()
 		handlePlayerSturveDeath()
 	endIf
 	registerForSingleUpdate(_satietyUpdateTimeUnit)
-
-	Debug.notification("You satiety is " + Math.floor(satietyValue) + " points. " + GetFactionRank(_aaMPf_SatietyFaction))
-
 endevent
 
 
