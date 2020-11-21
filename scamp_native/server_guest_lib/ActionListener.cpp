@@ -221,63 +221,6 @@ void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
   actor->OnEquip(baseId);
 }
 
-void ExecuteAddItem(MpActor& caller,
-                    const std::vector<ConsoleCommands::Argument>& args)
-{
-  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
-  const auto itemId = static_cast<uint32_t>(args.at(1).GetInteger());
-  const auto count = static_cast<int32_t>(args.at(2).GetInteger());
-
-  MpObjectReference& target = (targetId == 0x14)
-    ? caller
-    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
-
-  auto& br = caller.GetParent()->GetEspm().GetBrowser();
-
-  PapyrusObjectReference papyrusObjectReference;
-  auto aItem =
-    VarValue(std::make_shared<EspmGameObject>(br.LookupById(itemId)));
-  auto aCount = VarValue(count);
-  auto aSilent = VarValue(false);
-  (void)papyrusObjectReference.AddItem(target.ToVarValue(),
-                                       { aItem, aCount, aSilent });
-}
-
-void ExecutePlaceAtMe(MpActor& caller,
-                      const std::vector<ConsoleCommands::Argument>& args)
-{
-  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
-  const auto baseFormId = static_cast<uint32_t>(args.at(1).GetInteger());
-
-  MpObjectReference& target = (targetId == 0x14)
-    ? caller
-    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
-
-  auto& br = caller.GetParent()->GetEspm().GetBrowser();
-
-  PapyrusObjectReference papyrusObjectReference;
-  auto aBaseForm =
-    VarValue(std::make_shared<EspmGameObject>(br.LookupById(baseFormId)));
-  auto aCount = VarValue(1);
-  auto aForcePersist = VarValue(false);
-  auto aInitiallyDisabled = VarValue(false);
-  (void)papyrusObjectReference.PlaceAtMe(
-    target.ToVarValue(),
-    { aBaseForm, aCount, aForcePersist, aInitiallyDisabled });
-}
-
-void ExecuteDisable(MpActor& caller,
-                    const std::vector<ConsoleCommands::Argument>& args)
-{
-  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
-
-  MpObjectReference& target = (targetId == 0x14)
-    ? caller
-    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
-
-  target.Disable();
-}
-
 void ActionListener::OnConsoleCommand(
   const RawMessageData& rawMsgData, const std::string& consoleCommandName,
   const std::vector<ConsoleCommands::Argument>& args)
@@ -287,15 +230,7 @@ void ActionListener::OnConsoleCommand(
   if (profileId != MpActor::kProfileId_Pospelov)
     throw std::runtime_error("Not enough permissions to use this command");
 
-  if (!Utils::stricmp(consoleCommandName.data(), "AddItem")) {
-    ExecuteAddItem(*me, args);
-  } else if (!Utils::stricmp(consoleCommandName.data(), "PlaceAtMe")) {
-    ExecutePlaceAtMe(*me, args);
-  } else if (!Utils::stricmp(consoleCommandName.data(), "Disable")) {
-    ExecuteDisable(*me, args);
-  } else
-    throw std::runtime_error("Unknown command name '" + consoleCommandName +
-                             "'");
+  ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,

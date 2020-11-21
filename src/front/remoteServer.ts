@@ -337,7 +337,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       this.worldModel.playerCharacterFormIdx = -1;
 
       // TODO: move to a separate module
-      Game.quitToMainMenu();
+      once("update", () => Game.quitToMainMenu());
     }
 
     this.getIdManager().freeIdFor(msg.idx);
@@ -452,8 +452,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   send(msg: Record<string, unknown>, reliable: boolean): void {
     if (this.worldModel.playerCharacterFormIdx === -1) return;
-
-    //printConsole("sendMovement2", msg._refrId);
 
     const refrId = msg._refrId as number | undefined;
 

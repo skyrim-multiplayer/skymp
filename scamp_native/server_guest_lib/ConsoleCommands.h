@@ -3,6 +3,9 @@
 #include <stdexcept>
 #include <string>
 #include <variant>
+#include <vector>
+
+class MpActor;
 
 namespace ConsoleCommands {
 class Argument
@@ -30,4 +33,7 @@ public:
 private:
   std::variant<int64_t, std::string> data;
 };
+
+void Execute(MpActor& me, const std::string& consoleCommandName,
+             const std::vector<ConsoleCommands::Argument>& args);
 }
