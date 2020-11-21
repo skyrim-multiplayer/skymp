@@ -226,11 +226,8 @@ void ActionListener::OnConsoleCommand(
   const std::vector<ConsoleCommands::Argument>& args)
 {
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  int profileId = me ? me->GetChangeForm().profileId : -1;
-  if (profileId != MpActor::kProfileId_Pospelov)
-    throw std::runtime_error("Not enough permissions to use this command");
-
-  ConsoleCommands::Execute(*me, consoleCommandName, args);
+  if (me)
+    ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,

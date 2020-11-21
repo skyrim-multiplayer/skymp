@@ -5,6 +5,12 @@
 #include "Utils.h"
 #include "WorldState.h"
 
+enum ProfileIds
+{
+  kProfileId_Pospelov = 20,
+  kProfileId_Xccane = 35
+};
+
 ConsoleCommands::Argument::Argument()
 {
   data = 0;
@@ -47,9 +53,18 @@ const std::string& ConsoleCommands::Argument::GetString() const
 
 namespace {
 
+void EnsureIsOneOf(MpActor& me, std::set<ProfileIds> allowed)
+{
+  auto profileId = static_cast<ProfileIds>(me.GetChangeForm().profileId);
+  if (allowed.count(profileId) == 0)
+    throw std::runtime_error("Not enough permissions to use this command");
+}
+
 void ExecuteAddItem(MpActor& caller,
                     const std::vector<ConsoleCommands::Argument>& args)
 {
+  EnsureIsOneOf(caller, { kProfileId_Pospelov });
+
   const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
   const auto itemId = static_cast<uint32_t>(args.at(1).GetInteger());
   const auto count = static_cast<int32_t>(args.at(2).GetInteger());
@@ -72,6 +87,8 @@ void ExecuteAddItem(MpActor& caller,
 void ExecutePlaceAtMe(MpActor& caller,
                       const std::vector<ConsoleCommands::Argument>& args)
 {
+  EnsureIsOneOf(caller, { kProfileId_Pospelov });
+
   const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
   const auto baseFormId = static_cast<uint32_t>(args.at(1).GetInteger());
 
@@ -95,13 +112,15 @@ void ExecutePlaceAtMe(MpActor& caller,
 void ExecuteDisable(MpActor& caller,
                     const std::vector<ConsoleCommands::Argument>& args)
 {
+  EnsureIsOneOf(caller, { kProfileId_Xccane });
+
   const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
 
   MpObjectReference& target = (targetId == 0x14)
     ? caller
     : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
 
-  if (target.GetFormId() <= 0xff000000)
+  if (target.GetFormId() >= 0xff000000)
     target.Disable();
 }
 

@@ -5,6 +5,8 @@
 
 PartOne& GetPartOne();
 
+int pospelov = 20;
+
 TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
   class MyActionListener : public IActionListener
@@ -74,7 +76,7 @@ TEST_CASE("AddItem executes", "[ConsoleCommand]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RegisterProfileId(MpActor::ProfileIds::kProfileId_Pospelov);
+  ac.RegisterProfileId(pospelov);
 
   IActionListener::RawMessageData msgData;
   msgData.userId = 0;
@@ -111,7 +113,7 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RegisterProfileId(MpActor::ProfileIds::kProfileId_Pospelov);
+  ac.RegisterProfileId(pospelov);
 
   IActionListener::RawMessageData msgData;
   msgData.userId = 0;

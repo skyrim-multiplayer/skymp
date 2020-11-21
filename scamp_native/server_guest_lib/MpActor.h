@@ -11,11 +11,6 @@ class WorldState;
 class MpActor : public MpObjectReference
 {
 public:
-  enum ProfileIds
-  {
-    kProfileId_Pospelov = 20
-  };
-
   static const char* Type() { return "Actor"; }
   const char* GetFormType() const override { return "Actor"; }
 
