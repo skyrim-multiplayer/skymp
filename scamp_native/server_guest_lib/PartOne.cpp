@@ -136,12 +136,30 @@ void PartOne::EnableProductionHacks()
   pImpl->enableProductionHacks = true;
 }
 
+namespace {
+std::string GetName(MpActor& actor)
+{
+  std::string defaultName = "Prisoner";
+  return actor.GetLook() ? actor.GetLook()->name : defaultName;
+}
+
+bool IsBanned(MpActor& actor)
+{
+  return GetName(actor) == "Pospelove";
+}
+}
+
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
 {
   serverState.EnsureUserExists(userId);
 
   if (actorFormId > 0) {
     auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
+
+    if (IsBanned(actor)) {
+      pImpl->logger->info("{} is banned", GetName(actor));
+      return;
+    }
 
     if (actor.IsDisabled()) {
       std::stringstream ss;
