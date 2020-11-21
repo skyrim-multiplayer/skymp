@@ -1,6 +1,7 @@
 #include "PapyrusObjectReference.h"
 
 #include "EspmGameObject.h"
+#include "FormCallbacks.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"

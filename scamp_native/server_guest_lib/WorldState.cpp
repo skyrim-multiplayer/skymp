@@ -1,4 +1,5 @@
 #include "WorldState.h"
+#include "FormCallbacks.h"
 #include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
@@ -15,6 +16,7 @@
 #include "PapyrusSkymp.h"
 #include "PapyrusUtility.h"
 #include "Reader.h"
+#include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include <algorithm>
 #include <deque>
@@ -28,6 +30,21 @@ struct TimerEntry
 };
 }
 
+namespace {
+inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
+{
+  return *reinterpret_cast<const NiPoint3*>(locationalData->pos);
+}
+
+inline NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
+{
+  static const auto g_pi = std::acos(-1.f);
+  return { locationalData->rotRadians[0] / g_pi * 180.f,
+           locationalData->rotRadians[1] / g_pi * 180.f,
+           locationalData->rotRadians[2] / g_pi * 180.f };
+}
+}
+
 struct WorldState::Impl
 {
   std::unordered_map<uint32_t, MpChangeForm> changes;
@@ -38,6 +55,8 @@ struct WorldState::Impl
   uint32_t nextId = 0xff000000;
   std::deque<TimerEntry> timers;
   std::shared_ptr<HeuristicPolicy> policy;
+  std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
+  bool chunkLoadingInProgress = false;
 };
 
 WorldState::WorldState()
@@ -55,9 +74,11 @@ void WorldState::Clear()
   formIdxManager.reset();
 }
 
-void WorldState::AttachEspm(espm::Loader* espm_)
+void WorldState::AttachEspm(espm::Loader* espm_,
+                            const FormCallbacksFactory& formCallbacksFactory_)
 {
   espm = espm_;
+  formCallbacksFactory = formCallbacksFactory_;
   espmCache.reset(new espm::CompressedFieldsCache);
   espmFiles = espm->GetFileNames();
 }
@@ -175,8 +196,18 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     baseType = rec->GetType().ToString();
   }
 
-  if (formId < 0xff000000)
-    return GetFormAt<MpObjectReference>(formId).ApplyChangeForm(changeForm);
+  if (formId < 0xff000000) {
+    auto it = forms.find(formId);
+    if (it != forms.end()) {
+      auto refr = std::dynamic_pointer_cast<MpObjectReference>(it->second);
+      if (refr) {
+        refr->ApplyChangeForm(changeForm);
+      }
+    } else {
+      pImpl->changeFormsForDeferredLoad[formId] = changeForm;
+    }
+    return;
+  }
 
   switch (changeForm.recType) {
     case MpChangeForm::ACHR:
@@ -243,9 +274,119 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
   auto it = forms.find(formId);
   if (it == forms.end()) {
     static const std::shared_ptr<MpForm> g_null;
+    if (formId < 0xff000000) {
+      if (LoadForm(formId)) {
+        it = forms.find(formId);
+        return it == forms.end() ? g_null : it->second;
+      }
+    }
     return g_null;
   }
   return it->second;
+}
+
+bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
+                                  espm::RecordHeader* record,
+                                  const espm::IdMapping& mapping)
+{
+  auto refr = reinterpret_cast<espm::REFR*>(record);
+  auto data = refr->GetData();
+
+  auto baseId = espm::GetMappedId(data.baseId, mapping);
+  auto base = br.LookupById(baseId);
+  if (!base.rec)
+    logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
+  if (!base.rec)
+    return false;
+
+  espm::Type t = base.rec->GetType();
+  if (/*t != "NPC_" &&*/ t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
+      t != "DOOR" && t != "CONT" &&
+      (t != "FLOR" ||
+       !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
+      (t != "TREE" ||
+       !reinterpret_cast<espm::TREE*>(base.rec)->GetData().resultItem))
+    return false;
+
+  enum
+  {
+    InitiallyDisabled = 0x800
+  };
+  if (refr->GetFlags() & InitiallyDisabled)
+    return false;
+
+  auto formId = espm::GetMappedId(record->GetId(), mapping);
+  auto locationalData = data.loc;
+
+  uint32_t worldOrCell = espm::GetWorldOrCell(record);
+  if (!worldOrCell) {
+    logger->info("Anomally: refr without world/cell");
+    return false;
+  }
+
+  // This function dosen't use LookupFormById to prevent recursion
+  auto existing = forms.find(formId);
+
+  if (existing != forms.end()) {
+    auto existingAsRefr =
+      reinterpret_cast<MpObjectReference*>(existing->second.get());
+
+    if (locationalData) {
+      // Not just SetPos/SetAngle since we do not need to request save
+      auto changeForm = existingAsRefr->GetChangeForm();
+      changeForm.position = GetPos(locationalData);
+      changeForm.angle = GetRot(locationalData);
+      existingAsRefr->ApplyChangeForm(changeForm);
+
+      assert(existingAsRefr->GetPos() == NiPoint3(GetPos(locationalData)));
+    }
+
+  } else {
+    if (!locationalData) {
+      logger->info("Anomally: refr without locationalData");
+      return false;
+    }
+
+    std::optional<NiPoint3> primitiveBoundsDiv2;
+    if (data.boundsDiv2)
+      primitiveBoundsDiv2 =
+        NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+
+    auto typeStr = t.ToString();
+    AddForm(
+      std::unique_ptr<MpObjectReference>(new MpObjectReference(
+        { GetPos(locationalData), GetRot(locationalData), worldOrCell },
+        formCallbacksFactory(), baseId, typeStr.data(), primitiveBoundsDiv2)),
+      formId, true);
+  }
+
+  return true;
+}
+
+bool WorldState::LoadForm(uint32_t formId)
+{
+  bool atLeastOneLoaded = false;
+  auto& br = GetEspm().GetBrowser();
+  auto lookupResults = br.LookupByIdAll(formId);
+  for (auto& lookupRes : lookupResults) {
+    auto mapping = br.GetMapping(lookupRes.fileIdx);
+    if (AttachEspmRecord(br, lookupRes.rec, *mapping)) {
+      atLeastOneLoaded = true;
+    }
+  }
+
+  if (atLeastOneLoaded) {
+    auto& refr = GetFormAt<MpObjectReference>(formId);
+    auto it = pImpl->changeFormsForDeferredLoad.find(formId);
+    if (it != pImpl->changeFormsForDeferredLoad.end()) {
+      refr.ApplyChangeForm(it->second);
+      pImpl->changeFormsForDeferredLoad.erase(it);
+    }
+
+    refr.ForceSubscriptionsUpdate();
+  }
+
+  return atLeastOneLoaded;
 }
 
 void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
@@ -259,6 +400,44 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
   auto& vm = GetPapyrusVm();
   std::vector<VarValue> args = { arguments, arguments + argumentsCount };
   return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
+}
+
+const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
+  uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
+{
+  auto& gridData = grids[cellOrWorld];
+
+  if (espm && !pImpl->chunkLoadingInProgress) {
+    ScopedTask task(
+      [](void* st) {
+        auto ptr = reinterpret_cast<bool*>(st);
+        *ptr = false;
+      },
+      &pImpl->chunkLoadingInProgress);
+    pImpl->chunkLoadingInProgress = true;
+
+    auto& br = espm->GetBrowser();
+    for (int16_t x = cellX - 1; x <= cellX + 1; ++x) {
+      for (int16_t y = cellY - 1; y <= cellY + 1; ++y) {
+        auto& loaded = gridData.loadedChunks[x][y];
+        if (!loaded) {
+          auto records = br.GetRecordsAtPos(cellOrWorld, x, y);
+          for (size_t i = 0; i < espmFiles.size(); ++i) {
+            auto mapping = br.GetMapping(i);
+            for (auto rec : *records[i]) {
+              auto mappedId = espm::GetMappedId(rec->GetId(), *mapping);
+              assert(mappedId < 0xff000000);
+              LoadForm(mappedId);
+            }
+          }
+          loaded = true;
+        }
+      }
+    }
+  }
+
+  auto& neighbours = gridData.grid.GetNeighboursByPosition(cellX, cellY);
+  return neighbours;
 }
 
 MpForm* WorldState::LookupFormByIdx(int idx)

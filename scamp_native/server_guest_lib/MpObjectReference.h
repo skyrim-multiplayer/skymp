@@ -62,11 +62,6 @@ public:
   static const char* Type() { return "ObjectReference"; }
   const char* GetFormType() const override { return "ObjectReference"; }
 
-  using SubscribeCallback = std::function<void(MpObjectReference* emitter,
-                                               MpObjectReference* listener)>;
-  using SendToUserFn = std::function<void(MpActor* actor, const void* data,
-                                          size_t size, bool reliable)>;
-
   MpObjectReference(
     const LocationalData& locationalData, const FormCallbacks& callbacks,
     uint32_t baseId, std::string baseType,
@@ -195,17 +190,4 @@ protected:
   void BeforeDestroy() override;
 
   const std::shared_ptr<FormCallbacks> callbacks;
-};
-
-class FormCallbacks
-{
-public:
-  MpObjectReference::SubscribeCallback subscribe, unsubscribe;
-  MpObjectReference::SendToUserFn sendToUser;
-
-  static FormCallbacks DoNothing()
-  {
-    return { [](auto, auto) {}, [](auto, auto) {},
-             [](auto, auto, auto, auto) {} };
-  }
 };

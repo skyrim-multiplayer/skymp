@@ -51,6 +51,10 @@ public:
   const std::vector<espm::RecordHeader*>& GetRecordsByType(
     const char* type) const;
 
+  const std::vector<espm::RecordHeader*>& GetRecordsAtPos(uint32_t cellOrWorld,
+                                                          int16_t cellX,
+                                                          int16_t cellY);
+
 private:
   struct Impl;
   Impl* const pImpl;

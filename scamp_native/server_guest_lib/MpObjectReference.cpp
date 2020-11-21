@@ -1,6 +1,7 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
+#include "FormCallbacks.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
@@ -8,6 +9,7 @@
 #include "PapyrusObjectReference.h"
 #include "Primitive.h"
 #include "Reader.h"
+#include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
 #include "VirtualMachine.h"
@@ -29,26 +31,6 @@ std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
   str += j.dump();
   return str;
 }
-}
-
-namespace {
-class ScopedTask
-{
-public:
-  using Callback = void (*)(void*);
-
-  ScopedTask(Callback f_, void* state_)
-    : f(f_)
-    , state(state_)
-  {
-  }
-
-  ~ScopedTask() { f(state); }
-
-private:
-  const Callback f;
-  void* const state;
-};
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
@@ -445,11 +427,13 @@ void MpObjectReference::ForceSubscriptionsUpdate()
     return;
   InitListenersAndEmitters();
 
-  auto& grid = GetParent()->grids[GetCellOrWorld()];
-  MoveOnGrid(grid);
+  auto& gridInfo = GetParent()->grids[GetCellOrWorld()];
+  MoveOnGrid(gridInfo.grid);
 
   auto& was = *this->listeners;
-  auto& now = grid.GetNeighboursAndMe(this);
+  auto pos = GetGridPos(GetPos());
+  auto& now = GetParent()->GetReferencesAtPosition(GetCellOrWorld(), pos.first,
+                                                   pos.second);
 
   std::vector<MpObjectReference*> toRemove;
   std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
@@ -740,7 +724,7 @@ void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
   everSubscribedOrListened = false;
   auto gridIterator = worldState->grids.find(pImpl->ChangeForm().worldOrCell);
   if (gridIterator != worldState->grids.end())
-    gridIterator->second.Forget(this);
+    gridIterator->second.grid.Forget(this);
 
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
     changeForm.worldOrCell = newWorldOrCell;
@@ -761,7 +745,9 @@ void MpObjectReference::VisitNeighbours(const Visitor& visitor)
     return;
 
   auto& grid = gridIterator->second;
-  auto& neighbours = grid.GetNeighboursAndMe(this);
+  auto pos = GetGridPos(GetPos());
+  auto& neighbours = worldState->GetReferencesAtPosition(
+    GetCellOrWorld(), pos.first, pos.second);
   for (auto neighbour : neighbours)
     visitor(neighbour);
 }
@@ -783,8 +769,8 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
   MpForm::Init(parent, formId, hasChangeForm);
 
   if (!IsDisabled()) {
-    auto& grid = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
-    MoveOnGrid(grid);
+    auto& gridInfo = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
+    MoveOnGrid(gridInfo.grid);
   }
 
   // We should queue created form for saving as soon as it is initialized
@@ -908,7 +894,7 @@ void MpObjectReference::RemoveFromGrid()
 {
   auto gridIterator = GetParent()->grids.find(GetCellOrWorld());
   if (gridIterator != GetParent()->grids.end())
-    gridIterator->second.Forget(this);
+    gridIterator->second.grid.Forget(this);
 
   auto listenersCopy = GetListeners();
   for (auto listener : listenersCopy)

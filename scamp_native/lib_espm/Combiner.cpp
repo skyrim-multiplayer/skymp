@@ -119,6 +119,23 @@ espm::LookupResult espm::CombineBrowser::LookupById(uint32_t combFormId) const
   return resRec ? LookupResult(this, resRec, resFileIdx) : LookupResult();
 }
 
+std::vector<espm::LookupResult> espm::CombineBrowser::LookupByIdAll(
+  uint32_t combFormId) const noexcept
+{
+  std::vector<espm::LookupResult> res;
+  for (size_t i = 0; i < pImpl->numSources; ++i) {
+    auto& src = pImpl->sources[i];
+    const uint32_t rawFormId = espm::GetMappedId(combFormId, *src.toRaw);
+    if (rawFormId >= 0xff000000)
+      continue;
+    auto rec = src.br->LookupById(rawFormId);
+    if (rec) {
+      res.push_back({ this, rec, static_cast<uint8_t>(i) });
+    }
+  }
+  return res;
+}
+
 std::pair<espm::RecordHeader**, size_t> espm::CombineBrowser::FindNavMeshes(
   uint32_t worldSpaceId, espm::CellOrGridPos cellOrGridPos) const noexcept
 {
@@ -143,6 +160,18 @@ espm::CombineBrowser::GetRecordsByType(const char* type) const
   std::vector<const std::vector<espm::RecordHeader*>*> res;
   for (size_t i = 0; i < pImpl->numSources; ++i) {
     res.push_back(&pImpl->sources[i].br->GetRecordsByType(type));
+  }
+  return res;
+}
+
+std::vector<const std::vector<espm::RecordHeader*>*>
+espm::CombineBrowser::GetRecordsAtPos(uint32_t cellOrWorld, int16_t cellX,
+                                      int16_t cellY) const
+{
+  std::vector<const std::vector<espm::RecordHeader*>*> res;
+  for (size_t i = 0; i < pImpl->numSources; ++i) {
+    res.push_back(
+      &pImpl->sources[i].br->GetRecordsAtPos(cellOrWorld, cellX, cellY));
   }
   return res;
 }

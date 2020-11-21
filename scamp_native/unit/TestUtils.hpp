@@ -1,4 +1,5 @@
 #pragma once
+#include "FormCallbacks.h"
 #include "IPapyrusCompatibilityPolicy.h"
 #include "MpActor.h"
 #include "MsgType.h"

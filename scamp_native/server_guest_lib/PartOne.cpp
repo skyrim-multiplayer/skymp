@@ -1,6 +1,7 @@
 #include "PartOne.h"
 #include "ActionListener.h"
 #include "Exceptions.h"
+#include "FormCallbacks.h"
 #include "IdManager.h"
 #include "JsonUtils.h"
 #include "MsgType.h"
@@ -233,119 +234,27 @@ void PartOne::SetEnabled(uint32_t actorFormId, bool enabled)
   enabled ? ac.Enable() : ac.Disable();
 }
 
-namespace {
-inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
-{
-  return *reinterpret_cast<const NiPoint3*>(locationalData->pos);
-}
-
-inline NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
-{
-  static const auto g_pi = std::acos(-1.f);
-  return { locationalData->rotRadians[0] / g_pi * 180.f,
-           locationalData->rotRadians[1] / g_pi * 180.f,
-           locationalData->rotRadians[2] / g_pi * 180.f };
-}
-
-}
-
 void PartOne::AttachEspm(espm::Loader* espm)
 {
   pImpl->espm = espm;
   pImpl->espm->GetBrowser();
-  worldState.AttachEspm(espm);
+  worldState.AttachEspm(espm, [this] { return CreateFormCallbacks(); });
 
   clock_t was = clock();
 
-  auto refrRecords = espm->GetBrowser().GetRecordsByType("REFR");
+  auto& br = espm->GetBrowser();
+
+  /*auto refrRecords = br.GetRecordsByType("REFR");
   for (size_t i = 0; i < refrRecords.size(); ++i) {
     auto& subVector = refrRecords[i];
-    auto mapping = espm->GetBrowser().GetMapping(i);
+    auto mapping = br.GetMapping(i);
 
     pImpl->logger->info("starting {}", worldState.espmFiles[i]);
 
     for (auto& refrRecord : *subVector) {
-      auto refr = reinterpret_cast<espm::REFR*>(refrRecord);
-      auto data = refr->GetData();
-
-      auto baseId = espm::GetMappedId(data.baseId, *mapping);
-      auto base = espm->GetBrowser().LookupById(baseId);
-      if (!base.rec)
-        pImpl->logger->info("baseId {} {}", baseId,
-                            static_cast<void*>(base.rec));
-      if (!base.rec)
-        continue;
-
-      espm::Type t = base.rec->GetType();
-      if (/*t != "NPC_" &&*/ t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
-          t != "DOOR" && t != "CONT" &&
-          (t != "FLOR" ||
-           !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
-          (t != "TREE" ||
-           !reinterpret_cast<espm::TREE*>(base.rec)->GetData().resultItem))
-        continue;
-
-      enum
-      {
-        InitiallyDisabled = 0x800
-      };
-      if (refr->GetFlags() & InitiallyDisabled)
-        continue;
-
-      auto formId = espm::GetMappedId(refrRecord->GetId(), *mapping);
-      auto locationalData = data.loc;
-
-      auto world = espm::GetExteriorWorldGroup(refrRecord);
-      auto cell = espm::GetCellGroup(refrRecord);
-
-      uint32_t worldOrCell;
-
-      if (!world || !world->GetParentWRLD(worldOrCell))
-        worldOrCell = 0;
-
-      if (!worldOrCell) {
-        if (!cell->GetParentCELL(worldOrCell)) {
-          pImpl->logger->info("Anomally: refr without world/cell");
-          continue;
-        }
-      }
-
-      auto existing = i ? worldState.LookupFormById(formId).get()
-                        : reinterpret_cast<MpForm*>(0);
-      if (existing) {
-        auto existingAsRefr = reinterpret_cast<MpObjectReference*>(existing);
-
-        if (locationalData) {
-          // Not just SetPos/SetAngle since we do not need to request save
-          auto changeForm = existingAsRefr->GetChangeForm();
-          changeForm.position = GetPos(locationalData);
-          changeForm.angle = GetRot(locationalData);
-          existingAsRefr->ApplyChangeForm(changeForm);
-
-          assert(existingAsRefr->GetPos() == NiPoint3(GetPos(locationalData)));
-        }
-
-      } else {
-        if (!locationalData) {
-          pImpl->logger->info("Anomally: refr without locationalData");
-          continue;
-        }
-
-        std::optional<NiPoint3> primitiveBoundsDiv2;
-        if (data.boundsDiv2)
-          primitiveBoundsDiv2 = NiPoint3(
-            data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
-
-        auto typeStr = t.ToString();
-        worldState.AddForm(
-          std::unique_ptr<MpObjectReference>(new MpObjectReference(
-            { GetPos(locationalData), GetRot(locationalData), worldOrCell },
-            CreateFormCallbacks(), baseId, typeStr.data(),
-            primitiveBoundsDiv2)),
-          formId, true);
-      }
+      AttachEspmRecord(br, refrRecord, *mapping, i == 0);
     }
-  }
+  }*/
 
   pImpl->logger->info("AttachEspm took {} ticks", clock() - was);
 }
@@ -445,19 +354,17 @@ FormCallbacks PartOne::CreateFormCallbacks()
 {
   auto st = &serverState;
 
-  MpActor::SubscribeCallback subscribe =
-                               [this](MpObjectReference*emitter,
-                                      MpObjectReference*listener) {
-                                 return pImpl->onSubscribe(pImpl->sendTarget,
-                                                           emitter, listener);
-                               },
-                             unsubscribe = [this](MpObjectReference*emitter,
-                                                  MpObjectReference*listener) {
-                               return pImpl->onUnsubscribe(pImpl->sendTarget,
-                                                           emitter, listener);
-                             };
+  FormCallbacks::SubscribeCallback
+    subscribe =
+      [this](MpObjectReference*emitter, MpObjectReference*listener) {
+        return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
+      },
+    unsubscribe = [this](MpObjectReference*emitter,
+                         MpObjectReference*listener) {
+      return pImpl->onUnsubscribe(pImpl->sendTarget, emitter, listener);
+    };
 
-  MpActor::SendToUserFn sendToUser =
+  FormCallbacks::SendToUserFn sendToUser =
     [this, st](MpActor* actor, const void* data, size_t size, bool reliable) {
       auto targetuserId = st->UserByActor(actor);
       if (targetuserId != Networking::InvalidUserId &&

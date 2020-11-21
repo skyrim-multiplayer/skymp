@@ -1,6 +1,7 @@
 #include "MpActor.h"
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
+#include "FormCallbacks.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 

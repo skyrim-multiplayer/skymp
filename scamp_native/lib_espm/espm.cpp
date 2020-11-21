@@ -28,6 +28,35 @@ public:
 private:
   const uint64_t v;
 };
+
+class RefrKey
+{
+public:
+  RefrKey(uint32_t cellOrWorld, int16_t x, int16_t y)
+    : v(InitValue(cellOrWorld, x, y))
+  {
+  }
+
+  operator uint64_t() const noexcept { return v; }
+
+private:
+  static uint64_t InitValue(uint32_t cellOrWorld, int16_t x_, int16_t y_)
+  {
+    union
+    {
+      struct
+      {
+        int16_t x, y;
+      };
+      uint32_t unsignedInt;
+    } myUnion;
+    myUnion.x = x_;
+    myUnion.y = y_;
+    return MakeUInt64(cellOrWorld, myUnion.unsignedInt);
+  }
+
+  const uint64_t v;
+};
 }
 
 namespace espm {
@@ -439,13 +468,15 @@ struct espm::Browser::Impl
 {
   Impl() { objectReferences.reserve(100'000); }
 
-  char* buf;
-  size_t length;
+  char* buf = nullptr;
+  size_t length = 0;
 
   size_t pos = 0;
   uint32_t fiDataSizeOverride = 0;
   spp::sparse_hash_map<uint32_t, RecordHeader*> recById;
   spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>> navmeshes;
+  spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>>
+    cellOrWorldChildren;
   std::vector<RecordHeader*> objectReferences;
   std::vector<RecordHeader*> constructibleObjects;
 
@@ -503,6 +534,12 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsByType(
     "GetRecordsByType currently supports only REFR and COBJ records");
 }
 
+const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsAtPos(
+  uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
+{
+  return pImpl->cellOrWorldChildren[RefrKey(cellOrWorld, cellX, cellY)];
+}
+
 bool espm::Browser::ReadAny(void* parentGrStack)
 {
   if (pImpl->pos >= pImpl->length)
@@ -542,8 +579,18 @@ bool espm::Browser::ReadAny(void* parentGrStack)
 
     pImpl->recById[recHeader->id] = recHeader;
 
-    if (recHeader->GetType() == "REFR")
+    if (recHeader->GetType() == "REFR") {
       pImpl->objectReferences.push_back(recHeader);
+      const auto refr = reinterpret_cast<REFR*>(recHeader);
+      const auto data = refr->GetData();
+      if (data.loc) {
+        const int16_t x = static_cast<int16_t>(data.loc->pos[0] / 4096);
+        const int16_t y = static_cast<int16_t>(data.loc->pos[1] / 4096);
+        const auto cellOrWorld = GetWorldOrCell(refr);
+        const RefrKey refrKey(cellOrWorld, x, y);
+        pImpl->cellOrWorldChildren[refrKey].push_back(refr);
+      }
+    }
 
     if (recHeader->GetType() == "COBJ")
       pImpl->constructibleObjects.push_back(recHeader);

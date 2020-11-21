@@ -1,4 +1,5 @@
 #include "WorldState.h"
+#include "FormCallbacks.h"
 #include "MpActor.h"
 #include "MpForm.h"
 #include "MsgType.h"

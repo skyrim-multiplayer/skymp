@@ -44,13 +44,20 @@ class CombineBrowser
 
 public:
   // Returns default constructed LookupResult on failure
+  // Gets record from the last file in the load order
   LookupResult LookupById(uint32_t formId) const noexcept;
+
+  // Returns a record for each file adding/editing record with such id
+  std::vector<LookupResult> LookupByIdAll(uint32_t formId) const noexcept;
 
   std::pair<espm::RecordHeader**, size_t> FindNavMeshes(
     uint32_t worldSpaceId, espm::CellOrGridPos cellOrGridPos) const noexcept;
 
   std::vector<const std::vector<espm::RecordHeader*>*> GetRecordsByType(
     const char* type) const;
+
+  std::vector<const std::vector<espm::RecordHeader*>*> GetRecordsAtPos(
+    uint32_t cellOrWorld, int16_t cellX, int16_t cellY) const;
 
   // Returns nullptr on failure
   const espm::IdMapping* GetMapping(size_t fileIndex) const noexcept;

@@ -10,6 +10,7 @@
 #include <MpForm.h>
 #include <algorithm>
 #include <chrono>
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -41,13 +42,16 @@ class WorldState
   friend class MpActor;
 
 public:
+  using FormCallbacksFactory = std::function<FormCallbacks()>;
+
   WorldState();
   WorldState(const WorldState&) = delete;
   WorldState& operator=(const WorldState&) = delete;
 
   void Clear();
 
-  void AttachEspm(espm::Loader* espm);
+  void AttachEspm(espm::Loader* espm,
+                  const FormCallbacksFactory& formCallbacksFactory);
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
   void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
 
@@ -74,6 +78,9 @@ public:
 
   void SendPapyrusEvent(MpForm* form, const char* eventName,
                         const VarValue* arguments, size_t argumentsCount);
+
+  const std::set<MpObjectReference*>& GetReferencesAtPosition(
+    uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
 
   template <class F>
   F& GetFormAt(uint32_t formId)
@@ -152,8 +159,14 @@ public:
     lastMovUpdateByIdx;
 
 private:
+  struct GridInfo
+  {
+    GridImpl<MpObjectReference*> grid;
+    std::map<int16_t, std::map<int16_t, bool>> loadedChunks;
+  };
+
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
-  spp::sparse_hash_map<uint32_t, GridImpl<MpObjectReference*>> grids;
+  spp::sparse_hash_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
   std::map<
@@ -161,7 +174,14 @@ private:
     std::list<std::pair<uint32_t, std::chrono::system_clock::time_point>>>
     relootTimers;
   espm::Loader* espm = nullptr;
+  FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
+
+  bool AttachEspmRecord(const espm::CombineBrowser& br,
+                        espm::RecordHeader* record,
+                        const espm::IdMapping& mapping);
+
+  bool LoadForm(uint32_t formId);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
