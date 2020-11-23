@@ -80,8 +80,7 @@ export const setUpConsoleCommands = (
 
   Object.keys(schemas).forEach((commandName: CmdName) => {
     const command = findConsoleCommand(commandName);
-    if (!command || nonVanilaCommands.includes(commandName))
-      return printConsole(`Unable to find '${commandName}' command`);
+    if (!command || nonVanilaCommands.includes(commandName)) return;
     command.execute = getCommandExecutor(commandName, send, localIdToRemoteId);
   });
 };

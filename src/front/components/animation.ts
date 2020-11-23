@@ -98,10 +98,6 @@ export class AnimationSource {
     if (ignoredAnims.has(animEventName)) return;
 
     const lower = animEventName.toLowerCase();
-    if (lower.includes("spell")) {
-      printConsole("spell animation has been blocked");
-      return;
-    }
 
     const isTorchEvent = lower.includes("torch");
     if (animEventName.toLowerCase().includes("unequip") && !isTorchEvent) {
@@ -152,7 +148,6 @@ export const setupHooks = (): void => {
       if (refsWithDefaultAnimsDisabled.has(ctx.selfId)) {
         if (ctx.animEventName.toLowerCase().includes("attack")) {
           const animKey = ctx.selfId + ":" + ctx.animEventName;
-          //printConsole(animKey);
           if (allowedAnims.has(animKey)) {
             allowedAnims.delete(animKey);
           } else {
