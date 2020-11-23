@@ -112,7 +112,7 @@ void ExecutePlaceAtMe(MpActor& caller,
 void ExecuteDisable(MpActor& caller,
                     const std::vector<ConsoleCommands::Argument>& args)
 {
-  EnsureIsOneOf(caller, { kProfileId_Xccane });
+  EnsureIsOneOf(caller, { kProfileId_Xccane, kProfileId_Pospelov });
 
   const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
 
