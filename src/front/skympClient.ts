@@ -247,7 +247,10 @@ export class SkympClient {
             printConsole(2);
             const newInv = getInventory(Game.getPlayer());
             const diff = getDiff(lastInv, newInv, true);
-            printConsole({ diff });
+            printConsole("diff:");
+            for (let i = 0; i < diff.entries.length; ++i) {
+              printConsole(`[${i}] ${JSON.stringify(diff.entries[i])}`);
+            }
             diff.entries.forEach((entry) => {
               if (entry.count !== 0) {
                 const msg = JSON.parse(JSON.stringify(entry));

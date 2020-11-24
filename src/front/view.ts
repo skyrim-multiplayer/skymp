@@ -562,11 +562,16 @@ class FormViewArray {
       }
       try {
         if (isCloneView) {
-          const backup = form.isHostedByOther;
-          form.isHostedByOther = true;
+          // Prevent using the same refr by normal and clone views
+          if (!form.refrId || form.refrId >= 0xff000000) {
+            const backup = form.isHostedByOther;
+            form.isHostedByOther = true;
+            this.updateForm(form, i);
+            form.isHostedByOther = backup;
+          }
+        } else {
           this.updateForm(form, i);
-          form.isHostedByOther = backup;
-        } else this.updateForm(form, i);
+        }
       } catch (err) {
         if (err.message.includes("needs to be respawned")) {
           toDestroy.push(i);
