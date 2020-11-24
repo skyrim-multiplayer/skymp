@@ -246,12 +246,19 @@ export class SkympClient {
           if (lastInv) {
             printConsole(2);
             const newInv = getInventory(Game.getPlayer());
-            const diff = getDiff(lastInv, newInv, true);
+
+            // It seems that 'ignoreWorn = false' fixes this:
+            // https://github.com/skyrim-multiplayer/issue-tracker/issues/43
+            // For some reason excess diff is produced when 'ignoreWorn = true'
+            // I thought that it would be vice versa but that's how it works
+            const ignoreWorn = false;
+            const diff = getDiff(lastInv, newInv, ignoreWorn);
+
             printConsole("diff:");
             for (let i = 0; i < diff.entries.length; ++i) {
               printConsole(`[${i}] ${JSON.stringify(diff.entries[i])}`);
             }
-            diff.entries.forEach((entry) => {
+            const msgs = diff.entries.map((entry) => {
               if (entry.count !== 0) {
                 const msg = JSON.parse(JSON.stringify(entry));
                 delete msg["name"]; // Extra name works too strange
@@ -261,10 +268,10 @@ export class SkympClient {
                   e.oldContainer.getFormID() === 0x14
                     ? e.newContainer.getFormID()
                     : e.oldContainer.getFormID();
-                this.sendTarget.send(msg, true);
+                return msg;
               }
             });
-            lastInv = newInv;
+            msgs.forEach((msg) => this.sendTarget.send(msg, true));
           }
         }
       }
