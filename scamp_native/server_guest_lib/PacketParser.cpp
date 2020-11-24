@@ -64,9 +64,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       bool isWeapDrawn = false;
       Read(data_, "isWeapDrawn", &isWeapDrawn);
 
+      uint32_t worldOrCell = 0;
+      ReadEx(data_, "worldOrCell", &worldOrCell);
+
       actionListener.OnUpdateMovement(
         rawMsgData, idx, { pos[0], pos[1], pos[2] },
-        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn);
+        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, worldOrCell);
 
     } break;
     case MsgType::UpdateAnimation: {

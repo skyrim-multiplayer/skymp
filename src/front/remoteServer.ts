@@ -165,6 +165,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   teleport(msg: messages.Teleport): void {
     once("update", () => {
+      printConsole("Teleporting...");
       TESModPlatform.moveRefrToPosition(
         Game.getPlayer(),
         Cell.from(Game.getFormEx(msg.worldOrCell)),

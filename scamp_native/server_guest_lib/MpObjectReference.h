@@ -1,6 +1,7 @@
 #pragma once
 #include "FormIndex.h"
 #include "Grid.h"
+#include "IWorldObject.h"
 #include "Inventory.h"
 #include "JsonUtils.h"
 #include "MpChangeForms.h"
@@ -55,6 +56,7 @@ enum class VisitPropertiesMode
 class MpObjectReference
   : public MpForm
   , public FormIndex
+  , public IWorldObject
 {
   friend class OccupantDestroyEventSink;
 
@@ -67,9 +69,9 @@ public:
     uint32_t baseId, std::string baseType,
     std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt);
 
-  const NiPoint3& GetPos() const;
-  const NiPoint3& GetAngle() const;
-  const uint32_t& GetCellOrWorld() const;
+  const NiPoint3& GetPos() const override;
+  const NiPoint3& GetAngle() const override;
+  const uint32_t& GetCellOrWorld() const override;
   const uint32_t& GetBaseId() const;
   const Inventory& GetInventory() const;
   const bool& IsHarvested() const;

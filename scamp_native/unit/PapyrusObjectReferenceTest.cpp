@@ -116,7 +116,7 @@ TEST_CASE("RemoveItem", "[Papyrus][ObjectReference]")
 
 TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
 {
-  
+
   PartOne p;
 
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
@@ -128,7 +128,7 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(false));
 
   p.GetActionListener().OnUpdateMovement(GetDummyMessageData(), 0, { 0, 0, 0 },
-                                         { 0, 0, 0 }, true, false);
+                                         { 0, 0, 0 }, true, false, 0x3c);
 
   REQUIRE(PapyrusObjectReference().GetAnimationVariableBool(
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(true));

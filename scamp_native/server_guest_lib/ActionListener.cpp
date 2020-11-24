@@ -2,8 +2,10 @@
 #include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
+#include "MovementValidation.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
+#include "UserMessageOutput.h"
 #include "Utils.h"
 
 MpActor* ActionListener::SendToNeighbours(
@@ -65,10 +67,15 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
 void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
-                                      bool isWeapDrawn)
+                                      bool isWeapDrawn, uint32_t worldOrCell)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
+    UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
+    if (!MovementValidation::Validate(*actor, pos, worldOrCell, msgOutput)) {
+      return;
+    }
+
     actor->SetPos(pos);
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);

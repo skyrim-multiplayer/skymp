@@ -20,7 +20,8 @@ public:
 
   void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
                         const NiPoint3& pos, const NiPoint3& rot,
-                        bool isInJumpState, bool isWeapDrawn) override;
+                        bool isInJumpState, bool isWeapDrawn,
+                        uint32_t worldOrCell) override;
 
   void OnUpdateAnimation(const RawMessageData& rawMsgData,
                          uint32_t idx) override;

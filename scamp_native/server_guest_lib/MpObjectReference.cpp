@@ -857,14 +857,15 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       auto teleportWorldOrCell = espm::GetWorldOrCell(destinationRecord);
 
       static const auto g_pi = std::acos(-1.f);
+      const NiPoint3 rot = { teleport->rotRadians[0] / g_pi * 180,
+                             teleport->rotRadians[1] / g_pi * 180,
+                             teleport->rotRadians[2] / g_pi * 180 };
+
       std::string msg;
       msg += Networking::MinPacketId;
       msg += nlohmann::json{
         { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
-        { "rot",
-          { teleport->rotRadians[0] / g_pi * 180,
-            teleport->rotRadians[1] / g_pi * 180,
-            teleport->rotRadians[2] / g_pi * 180 } },
+        { "rot", { rot[0], rot[1], rot[2] } },
         { "worldOrCell", teleportWorldOrCell },
         { "type", "teleport" }
       }.dump();
@@ -872,6 +873,9 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         actorActivator->SendToUser(msg.data(), msg.size(), true);
 
       activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
+      activationSource.SetPos(
+        { teleport->pos[0], teleport->pos[1], teleport->pos[2] });
+      activationSource.SetAngle(rot);
 
     } else {
       SetOpen(!IsOpen());

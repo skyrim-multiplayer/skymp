@@ -249,11 +249,12 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne]")
   std::this_thread::sleep_for(std::chrono::milliseconds(50));
   partOne.Tick();
 
-  REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages()[0].j["data"] == false);
-  REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
-  REQUIRE(partOne.Messages()[0].j["propName"] == "isOpen");
-  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
+  REQUIRE(ref.IsOpen() == false);
+
+  REQUIRE((ac.GetPos() -
+           NiPoint3(19243.53515625, -7427.3427734375, -3595.4052734375))
+            .Length() < 5);
+  REQUIRE(ac.GetAngle() == NiPoint3{ 0.0, -0.0, -89.99922180175781 });
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
