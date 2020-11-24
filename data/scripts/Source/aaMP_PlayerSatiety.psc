@@ -8,8 +8,8 @@ float property _satietyPointRemovePerTimeUnit = 6.0 auto
 float property _satietyValueAfterDeath = 70.0 auto
 
 float property _foodEffectivenessMultiplier = 1.0 auto
-float property _foodEffectivenessMultiplierPerValue = 0.05 auto
-float property _foodEffectivenessMultiplierLimit = 90.0 auto
+float property _multiplierBonusForHungry = 0.05 auto
+float property _satietyConsideredHungry = 90.0 auto
 
 float property _overeatStarveMultiplier = 5.0 auto
 float property _overeatStarveMultiplierLimit = 100.0 auto
@@ -86,20 +86,11 @@ function addSatietyPoint(float value)
 endfunction
 
 
-float function getActualSatietyMultiplier()
-	if(_satietyValue.getValue() >= _foodEffectivenessMultiplierLimit)
+float function calculateSatietyMultiplier()
+	if (_satietyValue.getValue() >= _satietyConsideredHungry)
 		return _foodEffectivenessMultiplier
 	else
-		return calculateSatietyMultiplier()
-	endif
-endfunction
-
-
-float function calculateSatietyMultiplier()
-	if (_satietyValue.getValue() >= _foodEffectivenessMultiplierLimit)
-		return _foodEffectivenessMultiplier 
-	else
-		return _foodEffectivenessMultiplier + ((_foodEffectivenessMultiplierLimit - _satietyValue.getValue()) * _foodEffectivenessMultiplierPerValue)
+		return _foodEffectivenessMultiplier+ ((_satietyConsideredHungry - _satietyValue.getValue()) * _multiplierBonusForHungry)
 	endif
 endfunction
 
@@ -108,7 +99,7 @@ float function min(float a, float b)
 	if (a > b)
 		return b
 	endif 
-		return a
+	return a
 endfunction
 
 
@@ -116,5 +107,5 @@ float function max(float a, float b)
 	if (a > b)
 		return a
 	endif 
-		return b
+	return b
 endfunction
