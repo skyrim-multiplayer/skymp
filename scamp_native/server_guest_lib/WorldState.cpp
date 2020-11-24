@@ -461,6 +461,11 @@ espm::Loader& WorldState::GetEspm() const
   return *espm;
 }
 
+bool WorldState::HasEspm() const
+{
+  return !!espm;
+}
+
 espm::CompressedFieldsCache& WorldState::GetEspmCache()
 {
   if (!espmCache)

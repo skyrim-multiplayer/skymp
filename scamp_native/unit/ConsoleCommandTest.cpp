@@ -77,6 +77,7 @@ TEST_CASE("AddItem executes", "[ConsoleCommand]")
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   ac.RegisterProfileId(pospelov);
+  ac.RemoveAllItems();
 
   IActionListener::RawMessageData msgData;
   msgData.userId = 0;

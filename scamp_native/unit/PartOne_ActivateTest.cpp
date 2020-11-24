@@ -61,7 +61,8 @@ TEST_CASE("Activate with bad caster", "[PartOne]")
       partOne, 0,
       nlohmann::json{ { "t", MsgType::Activate },
                       { "data", { { "caster", 0x15 }, { "target", 0 } } } }),
-    Contains("Bad caster (0x15)"));
+    Contains("Bad hoster is attached to caster 0x15, expected 0xff000000, but "
+             "found 0x0"));
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
@@ -268,6 +269,7 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne]")
   partOne.CreateActor(0xff000000, { 22572, -8634, -3597 }, 0, 0x1a26f);
   partOne.SetUserActor(0, 0xff000000);
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+  ac.RemoveAllItems();
 
   const auto refrId = 0x0100122a;
   const auto MountainFlower01Purple = 0x77e1e;
@@ -342,6 +344,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne]")
   partOne.SetUserActor(0, 0xff000000);
 
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+  actor.RemoveAllItems();
 
   REQUIRE_THROWS_WITH(ref.PutItem(actor, { 0x12eb7, 2 }),
                       Contains("Actor 0xff000000 doesn't occupy ref 0x20570"));

@@ -5,6 +5,8 @@ import {
   hooks,
   Actor,
   printConsole,
+  Utility,
+  Game,
 } from "skyrimPlatform";
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
@@ -47,6 +49,12 @@ export const applyAnimation = (
   } else if (anim.animEventName === "SkympFakeUnequip") {
     const ac = Actor.from(refr);
     if (ac) applyWeapDrawn(ac, false);
+  } else if (anim.animEventName === "Ragdoll") {
+    const ac = Actor.from(refr);
+    if (ac) {
+      ac.pushActorAway(ac, 0);
+      ac.setActorValue("Variable10", -1000);
+    }
   } else {
     if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
       if (anim.animEventName.toLowerCase().includes("attack")) {
@@ -54,6 +62,13 @@ export const applyAnimation = (
       }
     }
     Debug.sendAnimationEvent(refr, anim.animEventName);
+    if (anim.animEventName === "GetUpBegin") {
+      const refrId = refr.getFormID();
+      Utility.wait(1).then(() => {
+        const ac = Actor.from(Game.getFormEx(refrId));
+        if (ac) ac.setActorValue("Variable10", 1000);
+      });
+    }
   }
 };
 
@@ -117,7 +132,9 @@ export class AnimationSource {
       return;
     }
 
-    if (animEventName === "Ragdoll") return;
+    //if (animEventName === "Ragdoll") return;
+
+    if (animEventName === "IdleForceDefaultState") return;
 
     this.numChanges++;
     this.animEventName = animEventName;

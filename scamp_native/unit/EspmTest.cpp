@@ -225,3 +225,49 @@ TEST_CASE("Loads Furniture", "[espm]")
               "FurnitureForce3rdPerson", "FurnitureSpecial",
               "isBlacksmithForge", "RaceToScale", "WICraftingSmithing" }));
 }
+
+TEST_CASE("Loads Outfit", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(0x10fe82);
+  REQUIRE(form.rec);
+  REQUIRE(form.rec->GetType() == espm::OTFT::type);
+
+  auto outfit = espm::Convert<espm::OTFT>(form.rec);
+  REQUIRE(outfit->GetData().count == 2);
+  REQUIRE(outfit->GetData().formIds[0] == 0xabf4a);
+  REQUIRE(outfit->GetData().formIds[1] == 0x10fe83);
+}
+
+TEST_CASE("Loads Npc", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(0x7);
+  REQUIRE(form.rec);
+  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+
+  auto npc = espm::Convert<espm::NPC_>(form.rec);
+
+  espm::CompressedFieldsCache compressedFieldsCache;
+  REQUIRE(npc->GetData(compressedFieldsCache).defaultOutfitId == 0x1697c);
+  REQUIRE(npc->GetData(compressedFieldsCache).sleepOutfitId == 0x0);
+  REQUIRE(npc->GetData(compressedFieldsCache).objects.size() == 16);
+}
+
+TEST_CASE("Loads Weapon", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(0x12eb7);
+  REQUIRE(form.rec);
+  REQUIRE(form.rec->GetType() == espm::WEAP::type);
+
+  auto npc = espm::Convert<espm::WEAP>(form.rec);
+
+  REQUIRE(npc->GetData().weapData);
+  REQUIRE(npc->GetData().weapData->damage == 7);
+  REQUIRE(npc->GetData().weapData->value == 25);
+  REQUIRE(npc->GetData().weapData->weight == 9.f);
+}

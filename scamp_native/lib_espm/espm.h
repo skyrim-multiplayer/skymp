@@ -630,5 +630,58 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(COBJ) == sizeof(RecordHeader));
+
+class OTFT : public RecordHeader
+{
+public:
+  static constexpr auto type = "OTFT";
+
+  struct Data
+  {
+    const uint32_t* formIds = nullptr;
+    uint32_t count = 0;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(OTFT) == sizeof(RecordHeader));
+
+class NPC_ : public RecordHeader
+{
+public:
+  static constexpr auto type = "NPC_";
+
+  struct Data
+  {
+    uint32_t defaultOutfitId = 0;
+    uint32_t sleepOutfitId = 0;
+    std::vector<CONT::ContainerObject> objects;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+};
+static_assert(sizeof(NPC_) == sizeof(RecordHeader));
+
+class WEAP : public RecordHeader
+{
+public:
+  static constexpr auto type = "WEAP";
+
+  struct WeapData
+  {
+    int32_t value = 0;
+    float weight = 0.f;
+    int16_t damage = 0;
+  };
+  static_assert(sizeof(WeapData) == 10);
+
+  struct Data
+  {
+    const WeapData* weapData = nullptr;
+  };
+
+  Data GetData() const noexcept;
+};
+static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 }
 #pragma pack(pop)

@@ -184,3 +184,12 @@ void MpActor::BeforeDestroy()
 
   UnsubscribeFromAll();
 }
+
+void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
+{
+  MpObjectReference::Init(worldState, formId, hasChangeForm);
+
+  if (worldState->HasEspm()) {
+    EnsureBaseContainerAdded(GetParent()->GetEspm());
+  }
+}

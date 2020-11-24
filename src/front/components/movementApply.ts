@@ -152,6 +152,8 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
     angleDiff > 80
   ) {
     const actor = Actor.from(refr);
+    if (actor && actor.getActorValue("Variable10") < -999) return;
+
     if (!actor || !actor.isDead()) {
       refr.translateTo(
         m.pos[0],

@@ -2,6 +2,7 @@
 #include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
+#include "MsgType.h"
 #include "PapyrusObjectReference.h"
 #include "Utils.h"
 
@@ -124,6 +125,74 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   }
 }
 
+Equipment GetEquipment(MpActor& ac)
+{
+  std::string equipment = ac.GetEquipmentAsJson();
+  simdjson::dom::parser p;
+  auto parseResult = p.parse(equipment);
+  return Equipment::FromJson(parseResult.value());
+}
+
+void RecalculateWorn(MpObjectReference& refr)
+{
+  if (!refr.GetParent()->HasEspm())
+    return;
+  auto& loader = refr.GetParent()->GetEspm();
+
+  auto ac = dynamic_cast<MpActor*>(&refr);
+  if (!ac)
+    return;
+
+  const Equipment eq = GetEquipment(*ac);
+
+  Equipment newEq;
+  newEq.numChanges = eq.numChanges + 1;
+  for (auto& entry : eq.inv.entries) {
+    bool isEquipped = entry.extra.worn != Inventory::Worn::None;
+    bool isWeap = !!espm::Convert<espm::WEAP>(
+      loader.GetBrowser().LookupById(entry.baseId).rec);
+    if (isEquipped && isWeap)
+      continue;
+    newEq.inv.AddItems({ entry });
+  }
+
+  const Inventory inv = ac->GetInventory();
+  Inventory::Entry bestEntry;
+  int16_t bestDamage = -1;
+  for (auto& entry : inv.entries) {
+    if (entry.baseId) {
+      auto lookupRes = loader.GetBrowser().LookupById(entry.baseId);
+      if (auto weap = espm::Convert<espm::WEAP>(lookupRes.rec)) {
+        if (!bestEntry.count ||
+            weap->GetData().weapData->damage > bestDamage) {
+          bestEntry = entry;
+          bestDamage = weap->GetData().weapData->damage;
+        }
+      }
+    }
+  }
+
+  if (bestEntry.count > 0) {
+    bestEntry.extra.worn = Inventory::Worn::Right;
+    newEq.inv.AddItems({ bestEntry });
+  }
+
+  ac->SetEquipment(newEq.ToJson().dump());
+  for (auto listener : ac->GetListeners()) {
+    auto actor = dynamic_cast<MpActor*>(listener);
+    if (!actor)
+      continue;
+    std::string s;
+    s += Networking::MinPacketId;
+    s += nlohmann::json{
+      { "t", MsgType::UpdateEquipment },
+      { "idx", ac->GetIdx() },
+      { "data", newEq.ToJson() }
+    }.dump();
+    actor->SendToUser(s.data(), s.size(), true);
+  }
+}
+
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,
                                 uint32_t caster, uint32_t target)
 {
@@ -134,18 +203,29 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   if (!ac)
     throw std::runtime_error("Can't do this without Actor attached");
 
+  auto it = partOne.worldState.hosters.find(caster);
+  auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
+
   if (caster != 0x14) {
-    std::stringstream ss;
-    ss << "Bad caster (0x" << std::hex << caster << ")";
-    throw std::runtime_error(ss.str());
+    if (hosterId != ac->GetFormId()) {
+      std::stringstream ss;
+      ss << std::hex << "Bad hoster is attached to caster 0x" << caster
+         << ", expected 0x" << ac->GetFormId() << ", but found 0x" << hosterId;
+      throw std::runtime_error(ss.str());
+    }
   }
 
-  auto refPtr = std::dynamic_pointer_cast<MpObjectReference>(
+  auto targetPtr = std::dynamic_pointer_cast<MpObjectReference>(
     partOne.worldState.LookupFormById(target));
-  if (!refPtr)
+  if (!targetPtr)
     return;
 
-  refPtr->Activate(*ac, false);
+  targetPtr->Activate(
+    caster == 0x14 ? *ac
+                   : partOne.worldState.GetFormAt<MpObjectReference>(caster));
+  if (hosterId) {
+    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
+  }
 }
 
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
@@ -304,6 +384,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                              me->GetFormId());
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
+    RecalculateWorn(remote);
 
     Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId,
                               R"({ "type": "hostStart", "target": %u })",

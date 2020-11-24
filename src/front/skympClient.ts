@@ -163,14 +163,19 @@ export class SkympClient {
 
     on("activate", (e) => {
       lastInv = getInventory(Game.getPlayer());
-      const caster = e.caster ? e.caster.getFormID() : 0;
+      let caster = e.caster ? e.caster.getFormID() : 0;
       let target = e.target ? e.target.getFormID() : 0;
 
-      if (caster !== 0x14) return;
-      if (!target) return;
+      if (!target || !caster) return;
+
+      // Actors never have non-ff ids locally in skymp
+      if (caster !== 0x14 && caster < 0xff000000) return;
 
       target = this.localIdToRemoteId(target);
-      if (!target) return printConsole("localIdToRemoteId returned 0");
+      if (!target) return printConsole("localIdToRemoteId returned 0 (target)");
+
+      caster = this.localIdToRemoteId(caster);
+      if (!caster) return printConsole("localIdToRemoteId returned 0 (caster)");
 
       this.sendTarget.send(
         { t: MsgType.Activate, data: { caster, target } },

@@ -645,6 +645,26 @@ espm::REFR::Data espm::REFR::GetData() const noexcept
   return result;
 }
 
+namespace {
+std::vector<espm::CONT::ContainerObject> GetContainerObjects(
+  const espm::RecordHeader* rec,
+  espm::CompressedFieldsCache* compressedFieldsCache)
+{
+  std::vector<espm::CONT::ContainerObject> objects;
+  espm::RecordHeaderAccess::IterateFields(
+    rec,
+    [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "CNTO", 4))
+        objects.push_back(*(espm::CONT::ContainerObject*)data);
+      else if (!memcmp(type, "COED", 4)) {
+        // Not supported
+      }
+    },
+    compressedFieldsCache);
+  return objects;
+}
+}
+
 espm::CONT::Data espm::CONT::GetData() const noexcept
 {
   Data result;
@@ -654,12 +674,8 @@ espm::CONT::Data espm::CONT::GetData() const noexcept
         result.editorId = data;
       else if (!memcmp(type, "FULL", 4))
         result.fullName = data;
-      else if (!memcmp(type, "CNTO", 4))
-        result.objects.push_back(*(ContainerObject*)data);
-      else if (!memcmp(type, "COED", 4)) {
-        // Not supported
-      }
     });
+  result.objects = GetContainerObjects(this, nullptr);
   return result;
 }
 
@@ -799,6 +815,49 @@ espm::COBJ::Data espm::COBJ::GetData() const noexcept
       } else if (!memcmp(type, "NAM1", 4)) {
         const auto count = *reinterpret_cast<const uint16_t*>(data);
         result.outputCount = count;
+      }
+    });
+  return result;
+}
+
+espm::OTFT::Data espm::OTFT::GetData() const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "INAM", 4)) {
+        result.formIds = reinterpret_cast<const uint32_t*>(data);
+        result.count = dataSize / sizeof(dataSize);
+      }
+    });
+  return result;
+}
+
+espm::NPC_::Data espm::NPC_::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "DOFT", 4)) {
+        result.defaultOutfitId = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!memcmp(type, "SOFT", 4)) {
+        result.sleepOutfitId = *reinterpret_cast<const uint32_t*>(data);
+      }
+    },
+    &compressedFieldsCache);
+  result.objects = GetContainerObjects(this, &compressedFieldsCache);
+  return result;
+}
+
+espm::WEAP::Data espm::WEAP::GetData() const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        result.weapData = reinterpret_cast<const WeapData*>(data);
       }
     });
   return result;

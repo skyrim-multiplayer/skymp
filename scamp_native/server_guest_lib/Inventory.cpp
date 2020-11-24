@@ -136,6 +136,28 @@ Inventory::Entry Inventory::Entry::FromJson(simdjson::dom::element& jEntry)
   Entry e;
   ReadEx(jEntry, "baseId", &e.baseId);
   ReadEx(jEntry, "count", &e.count);
+
+  bool worn;
+  try {
+    ReadEx(jEntry, "worn", &worn);
+  } catch (JsonIndexException&) {
+    worn = false;
+  }
+
+  bool wornLeft;
+  try {
+    ReadEx(jEntry, "wornLeft", &wornLeft);
+  } catch (JsonIndexException&) {
+    wornLeft = false;
+  }
+
+  if (wornLeft)
+    e.extra.worn = Inventory::Worn::Left;
+  else if (worn)
+    e.extra.worn = Inventory::Worn::Right;
+
+  // TODO: Other extras
+
   return e;
 }
 

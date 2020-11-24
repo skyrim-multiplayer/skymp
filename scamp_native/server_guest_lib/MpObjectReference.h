@@ -119,6 +119,7 @@ public:
   void RemoveItem(uint32_t baseId, uint32_t count, MpObjectReference* target);
   void RemoveItems(const std::vector<Inventory::Entry>& entries,
                    MpObjectReference* target = nullptr);
+  void RemoveAllItems(MpObjectReference* target = nullptr);
   void RelootContainer();
   void RegisterProfileId(int32_t profileId);
 
@@ -149,16 +150,18 @@ protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
                         size_t argumentsCount = 0) override;
-
-private:
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 
+  void EnsureBaseContainerAdded(espm::Loader& espm);
+
+private:
+  void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
+                          std::map<uint32_t, uint32_t>* itemsToAdd);
   void InitScripts();
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void InitListenersAndEmitters();
   void SendInventoryUpdate();
   void SendOpenContainer(uint32_t refId);
-  void EnsureBaseContainerAdded(espm::Loader& espm);
   void CheckInteractionAbility(MpObjectReference& ac);
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,

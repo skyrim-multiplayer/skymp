@@ -60,4 +60,5 @@ private:
 
 protected:
   void BeforeDestroy() override;
+  void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 };

@@ -138,6 +138,7 @@ public:
   };
 
   espm::Loader& GetEspm() const;
+  bool HasEspm() const;
   espm::CompressedFieldsCache& GetEspmCache();
   IScriptStorage* GetScriptStorage() const;
   VirtualMachine& GetPapyrusVm();

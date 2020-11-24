@@ -531,6 +531,12 @@ void MpObjectReference::RemoveItems(
   SendInventoryUpdate();
 }
 
+void MpObjectReference::RemoveAllItems(MpObjectReference* target)
+{
+  auto prevInv = GetInventory();
+  RemoveItems(prevInv.entries, target);
+}
+
 void MpObjectReference::RelootContainer()
 {
   pImpl->EditChangeForm(
@@ -1003,31 +1009,97 @@ void MpObjectReference::SendOpenContainer(uint32_t targetId)
   }
 }
 
+std::vector<espm::CONT::ContainerObject> GetOutfitObjects(
+  const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
+  espm::CompressedFieldsCache& compressedFieldsCache)
+{
+  std::vector<espm::CONT::ContainerObject> res;
+
+  if (auto baseNpc = espm::Convert<espm::NPC_>(lookupRes.rec)) {
+    auto data = baseNpc->GetData(compressedFieldsCache);
+
+    auto outfitId = lookupRes.ToGlobalId(data.defaultOutfitId);
+    auto outfit = espm::Convert<espm::OTFT>(br.LookupById(outfitId).rec);
+    auto outfitData = outfit ? outfit->GetData() : espm::OTFT::Data();
+
+    for (uint32_t i = 0; i != outfitData.count; ++i) {
+      auto outfitElementId = lookupRes.ToGlobalId(outfitData.formIds[i]);
+      res.push_back({ outfitElementId, 1 });
+    }
+  }
+  return res;
+}
+
+std::vector<espm::CONT::ContainerObject> GetInventoryObjects(
+  const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
+  espm::CompressedFieldsCache& compressedFieldsCache)
+{
+  auto baseContainer = espm::Convert<espm::CONT>(lookupRes.rec);
+  if (baseContainer)
+    return baseContainer->GetData().objects;
+
+  auto baseNpc = espm::Convert<espm::NPC_>(lookupRes.rec);
+  if (baseNpc) {
+    return baseNpc->GetData(compressedFieldsCache).objects;
+  }
+
+  return {};
+}
+
+void MpObjectReference::AddContainerObject(
+  const espm::CONT::ContainerObject& entry,
+  std::map<uint32_t, uint32_t>* itemsToAdd)
+{
+  constexpr uint32_t pcLevel = 1;
+
+  auto& espm = GetParent()->GetEspm();
+  auto formLookupRes = espm.GetBrowser().LookupById(entry.formId);
+  auto leveledItem = espm::Convert<espm::LVLI>(formLookupRes.rec);
+  if (leveledItem) {
+    auto map = LeveledListUtils::EvaluateListRecurse(
+      espm.GetBrowser(), formLookupRes, 1, pcLevel, chanceNoneOverride.get());
+    for (auto& p : map)
+      (*itemsToAdd)[p.first] += p.second;
+  } else
+    (*itemsToAdd)[entry.formId] += entry.count;
+}
+
 void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
 {
   if (pImpl->ChangeForm().baseContainerAdded)
     return;
 
-  constexpr uint32_t pcLevel = 1;
-
-  std::map<uint32_t, uint32_t> itemsToAdd;
+  auto worldState = GetParent();
+  if (!worldState)
+    return;
 
   auto lookupRes = espm.GetBrowser().LookupById(GetBaseId());
-  auto baseContainer = espm::Convert<espm::CONT>(lookupRes.rec);
-  if (baseContainer) {
-    auto data = baseContainer->GetData();
-    for (auto& entry : data.objects) {
-      auto formLookupRes = espm.GetBrowser().LookupById(entry.formId);
-      auto leveledItem = espm::Convert<espm::LVLI>(formLookupRes.rec);
-      if (leveledItem) {
-        auto map = LeveledListUtils::EvaluateListRecurse(
-          espm.GetBrowser(), formLookupRes, 1, pcLevel,
-          chanceNoneOverride.get());
-        for (auto& p : map)
-          itemsToAdd[p.first] += p.second;
-      } else
-        itemsToAdd[entry.formId] += entry.count;
+
+  std::map<uint32_t, uint32_t> itemsToAdd, itemsToEquip;
+
+  auto inventoryObjects = GetInventoryObjects(espm.GetBrowser(), lookupRes,
+                                              worldState->GetEspmCache());
+  for (auto& entry : inventoryObjects) {
+    AddContainerObject(entry, &itemsToAdd);
+  }
+
+  auto outfitObjects =
+    GetOutfitObjects(espm.GetBrowser(), lookupRes, worldState->GetEspmCache());
+  for (auto& entry : outfitObjects) {
+    AddContainerObject(entry, &itemsToAdd);
+    AddContainerObject(entry, &itemsToEquip);
+  }
+  if (auto actor = dynamic_cast<MpActor*>(this)) {
+    Equipment eq;
+    eq.numChanges = 0;
+    for (auto p : itemsToEquip) {
+      Inventory::Entry e;
+      e.baseId = p.first;
+      e.count = p.second;
+      e.extra.worn = Inventory::Worn::Right;
+      eq.inv.AddItems({ e });
     }
+    actor->SetEquipment(eq.ToJson().dump());
   }
 
   std::vector<Inventory::Entry> entries;

@@ -155,9 +155,10 @@ VarValue PapyrusObjectReference::PlaceAtMe(
 
       std::unique_ptr<MpObjectReference> newRefr;
 
-      if (akFormToPlace.rec->GetType() == "NPC_")
-        newRefr.reset(new MpActor(locationalData, callbacks, baseId));
-      else
+      if (akFormToPlace.rec->GetType() == "NPC_") {
+        auto actor = new MpActor(locationalData, callbacks, baseId);
+        newRefr.reset(actor);
+      } else
         newRefr.reset(
           new MpObjectReference(locationalData, callbacks, baseId, type));
 

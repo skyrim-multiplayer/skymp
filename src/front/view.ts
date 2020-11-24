@@ -264,6 +264,10 @@ export class FormView implements View<FormModel> {
     if (this.refrId >= 0xff000000) {
       if (refr) refr.delete();
       modWcProtection(this.refrId, -1);
+      const ac = Actor.from(refr);
+      if (ac) {
+        sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
+      }
     }
   }
 
@@ -378,8 +382,10 @@ export class FormView implements View<FormModel> {
         if (Date.now() - this.movState.lastRehost > 1000) {
           this.movState.lastRehost = Date.now();
           const remoteId = this.remoteRefrId;
-          tryHost(remoteId);
-          printConsole("try to rehost");
+          if (ac) {
+            tryHost(remoteId);
+            printConsole("try to rehost");
+          }
         }
       }
 
@@ -399,8 +405,8 @@ export class FormView implements View<FormModel> {
           this.movState.lastNumChanges = +model.numMovementChanges;
           this.movState.everApplied = true;
         } else {
-          ac.clearKeepOffsetFromActor();
-          sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
+          if (ac) ac.clearKeepOffsetFromActor();
+          if (ac) sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
           const remoteId = this.remoteRefrId;
           if (ac && remoteId) tryHost(remoteId);
         }
