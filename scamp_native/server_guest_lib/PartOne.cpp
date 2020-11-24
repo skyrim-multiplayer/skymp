@@ -238,6 +238,12 @@ NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
   return ac.GetPos();
 }
 
+uint32_t PartOne::GetActorCellOrWorld(uint32_t actorFormId)
+{
+  auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
+  return ac.GetCellOrWorld();
+}
+
 const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
 {
   return worldState.GetActorsByProfileId(profileId);

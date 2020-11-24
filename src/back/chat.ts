@@ -54,23 +54,21 @@ export const main = (server: scampNative.ScampServer): void => {
         clients.find((v) => v === ws).token = dataObj.token;
       } else if (dataObj.type === "chatMessage") {
         const token = clients.find((v) => v === ws).token;
-        //console.log({ token });
 
         const authoruserId = tokenByUserId.findIndex((v) => v === token);
 
-        //dataObj.author = "user" + authoruserId.toString();
         const actorId = getUserActorOrZero(server, authoruserId);
         if (!actorId) return;
         dataObj.author = server.getActorName(actorId);
 
         const auhtorPos = server.getActorPos(actorId);
+        const authorCellOrWorld = server.getActorCellOrWorld(actorId);
 
         const nonRp = 2;
         if (dataObj.channelIdx === nonRp && dataObj.text !== "") {
           dataObj.text = "(( " + dataObj.text + " ))";
         }
 
-        // sends the data to all connected clients
         svr.clients.forEach((client) => {
           if (client.readyState !== WebSocket.OPEN) return;
 
@@ -86,7 +84,12 @@ export const main = (server: scampNative.ScampServer): void => {
           const actorPos = server.getActorPos(id);
           const d = distance(actorPos, auhtorPos);
 
-          if (d >= 70 * 20 && dataObj.channelIdx !== nonRp) return;
+          if (
+            (d >= 70 * 20 ||
+              server.getActorCellOrWorld(id) !== authorCellOrWorld) &&
+            dataObj.channelIdx !== nonRp
+          )
+            return;
 
           client.send(JSON.stringify(dataObj));
         });

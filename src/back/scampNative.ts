@@ -42,6 +42,7 @@ export declare class ScampServer {
   getUserActor(userId: number): number;
   getActorName(actorId: number): string;
   getActorPos(actorId: number): number[];
+  getActorCellOrWorld(actorId: number): number;
   setRaceMenuOpen(formId: number, open: boolean): void;
   sendCustomPacket(userId: number, jsonContent: string): void;
   setEnabled(actorId: number, enabled: boolean): void;
