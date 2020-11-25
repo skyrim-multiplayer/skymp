@@ -86,7 +86,14 @@ function dealWithRef(ref: ObjectReference, base: Form): void {
     ref.lock(false, false);
   }
 
-  if (isItem(t)) ref.setMotionType(MotionType.Keyframed, false);
+  if (isItem(t)) {
+    ref.setMotionType(MotionType.Keyframed, false);
+  }
+  // https://github.com/skyrim-multiplayer/issue-tracker/issues/36
+  if (isFlora) {
+    const hasIngr = sp.Flora.from(base).getIngredient() != null;
+    if (hasIngr) ref.setMotionType(MotionType.Keyframed, false);
+  }
 }
 
 class SpawnProcess {
