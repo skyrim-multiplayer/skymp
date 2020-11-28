@@ -1,3 +1,4 @@
+#include "MongoSaveStorage.h"
 #include "Networking.h"
 #include "NetworkingCombined.h"
 #include "NetworkingMock.h"
@@ -155,6 +156,38 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
   return exports;
 }
 
+namespace {
+std::shared_ptr<ISaveStorage> CreateSaveStorage(
+  nlohmann::json serverSettings, std::shared_ptr<spdlog::logger> logger)
+{
+  auto databaseDriver = serverSettings.count("databaseDriver")
+    ? serverSettings["databaseDriver"].get<std::string>()
+    : std::string("sqlite");
+
+  if (databaseDriver == "sqlite") {
+    auto databaseName = serverSettings.count("databaseName")
+      ? serverSettings["databaseName"].get<std::string>()
+      : std::string("world.sqlite");
+
+    logger->info("Using sqlite with name '" + databaseName + "'");
+    return std::make_shared<SqliteSaveStorage>(databaseName, logger);
+  }
+
+  if (databaseDriver == "mongodb") {
+    auto databaseName = serverSettings.count("databaseName")
+      ? serverSettings["databaseName"].get<std::string>()
+      : std::string("db");
+
+    auto databaseUri = serverSettings["databaseUri"].get<std::string>();
+    logger->info("Using mongodb with name '" + databaseName + "'");
+    return std::make_shared<MongoSaveStorage>(databaseUri, databaseName,
+                                              logger);
+  }
+
+  throw std::runtime_error("Unrecognized databaseDriver: " + databaseDriver);
+}
+}
+
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
   : ObjectWrap(info)
   , tickEnv(info.Env())
@@ -210,8 +243,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->SetSendTarget(server.get());
     partOne->worldState.AttachScriptStorage(scriptStorage);
     partOne->AttachEspm(espm);
-    partOne->AttachSaveStorage(
-      std::make_shared<SqliteSaveStorage>("world.sqlite", logger));
+    partOne->AttachSaveStorage(CreateSaveStorage(serverSettings, logger));
 
     auto res =
       info.Env().RunScript("let require = global.require || "

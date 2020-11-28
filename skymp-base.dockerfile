@@ -30,6 +30,7 @@ RUN apk add --no-cache \
     spdlog \
     catch2 \
     sparsepp \
-    nlohmann-json
-# docker build . -t skymp/skymp-base:v1
-# docker push skymp-base:v1
+    nlohmann-json \
+    mongo-cxx-driver
+# docker build . -t skymp/skymp-base:v3
+# docker push skymp/skymp-base:v3

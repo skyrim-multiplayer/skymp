@@ -22,6 +22,7 @@ else()
     sqlite-orm:${triplet}
     sqlpp11:${triplet}
     sqlpp11-connector-sqlite3:${triplet}
+    mongo-cxx-driver:${triplet} # Doesn't build on Windows without this https://github.com/microsoft/vcpkg/pull/14825
   )
   set(VCPKG_PATH ${_VCPKG_ROOT_DIR})
 endif()
@@ -145,6 +146,12 @@ integrate_vcpkg(
 if(UNIX)
   foreach(target ${VCPKG_DEPENDENT})
     target_link_libraries(${target} PUBLIC pthread)
+  endforeach()
+endif()
+
+if(WIN32)
+  foreach(target ${VCPKG_DEPENDENT})
+    target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
   endforeach()
 endif()
 

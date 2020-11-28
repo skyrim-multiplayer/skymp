@@ -1,4 +1,4 @@
-FROM skymp/skymp-base:v2
+FROM skymp/skymp-base:v3
 
 RUN mkdir /skyrim_data_dir \
   && cd /skyrim_data_dir \
