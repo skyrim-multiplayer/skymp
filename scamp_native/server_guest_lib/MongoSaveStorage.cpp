@@ -33,8 +33,18 @@ nlohmann::json ToJson(const MpChangeForm& changeForm)
   res["isDisabled"] = changeForm.isDisabled;
   res["profileId"] = changeForm.profileId;
   res["isRaceMenuOpen"] = changeForm.isRaceMenuOpen;
-  res["lookDump"] = changeForm.lookDump;
-  res["equipmentDump"] = changeForm.equipmentDump;
+
+  if (changeForm.lookDump.empty()) {
+    res["lookDump"] = nullptr;
+  } else {
+    res["lookDump"] = nlohmann::json::parse(changeForm.lookDump);
+  }
+
+  if (changeForm.equipmentDump.empty()) {
+    res["equipmentDump"] = nullptr;
+  } else {
+    res["equipmentDump"] = nlohmann::json::parse(changeForm.equipmentDump);
+  }
   return res;
 }
 
@@ -73,11 +83,15 @@ MpChangeForm JsonToChangeForm(simdjson::dom::element& element)
   ReadEx(element, "profileId", &res.profileId);
   ReadEx(element, "isRaceMenuOpen", &res.isRaceMenuOpen);
 
-  ReadEx(element, "lookDump", &tmp);
-  res.lookDump = tmp;
+  ReadEx(element, "lookDump", &jTmp);
+  res.lookDump = simdjson::minify(jTmp);
+  if (res.lookDump == "null")
+    res.lookDump.clear();
 
-  ReadEx(element, "equipmentDump", &tmp);
-  res.equipmentDump = tmp;
+  ReadEx(element, "equipmentDump", &jTmp);
+  res.equipmentDump = simdjson::minify(jTmp);
+  if (res.equipmentDump == "null")
+    res.equipmentDump.clear();
 
   return res;
 }
