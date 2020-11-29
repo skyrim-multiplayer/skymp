@@ -25,17 +25,23 @@ endevent
 
 
 event onUpdate()
+	handlePlayerSatietyOnUpdate()
+	registerForSingleUpdate(_satietyUpdateTimeUnit)
+endevent
+
+
+; ======== Functions ========
+
+
+function handlePlayerSatietyOnUpdate()
 	if (isEnabled())
 		removeSatietyPoint(_satietyPointRemovePerTimeUnit)
 		if (isSatietyOnDeathLimit())
 			handlePlayerSturveDeath()
 		endIf
 	endIf
-	registerForSingleUpdate(_satietyUpdateTimeUnit)
-endevent
+endfunction
 
-
-; ======== Functions ========
 
 function showSatietyStatus()
 	Debug.notification("Сытость: " + Math.floor(_satietyValue.getValue()))
