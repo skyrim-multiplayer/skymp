@@ -12,18 +12,20 @@ nlohmann::json Equipment::ToJson() const
 
 Equipment Equipment::FromJson(simdjson::dom::element& element)
 {
-  simdjson::dom::element inv;
-  ReadEx(element, "inv", &inv);
+  static const JsonPointer inv("inv"), numChanges("numChanges");
 
-  uint32_t numChanges;
+  simdjson::dom::element jInv;
+  ReadEx(element, inv, &jInv);
+
+  uint32_t numChangesValue;
   try {
-    ReadEx(element, "numChanges", &numChanges);
+    ReadEx(element, numChanges, &numChangesValue);
   } catch (std::exception& e) {
-    numChanges = 0;
+    numChangesValue = 0;
   }
 
   Equipment res;
-  res.inv = Inventory::FromJson(inv);
-  res.numChanges = numChanges;
+  res.inv = Inventory::FromJson(jInv);
+  res.numChanges = numChangesValue;
   return res;
 }

@@ -261,7 +261,7 @@ namespace {
 VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                           const simdjson::dom::element& element)
 {
-  auto key = "returnValue";
+  static const auto key = JsonPointer("returnValue");
 
   // TODO: DOUBLE, STRING ...
   switch (element.type()) {

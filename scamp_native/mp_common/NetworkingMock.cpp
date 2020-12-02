@@ -4,14 +4,16 @@
 #include <string>
 #include <vector>
 
-namespace {
+namespace NetworkingMock {
 struct Packet
 {
   Networking::PacketType type;
   std::vector<uint8_t> data;
   const char* error = "";
 };
+}
 
+namespace {
 class MockClient;
 
 typedef void (*SendFn)(Networking::MockServer*, Networking::UserId id,
@@ -28,7 +30,7 @@ public:
   {
   }
 
-  void AddPacket(std::unique_ptr<Packet> p)
+  void AddPacket(std::unique_ptr<NetworkingMock::Packet> p)
   {
     packets.push_back(std::move(p));
   }
@@ -60,15 +62,17 @@ public:
 private:
   Networking::MockServer* const parent;
   const SendFn sendFn;
-  std::vector<std::unique_ptr<Packet>> packets;
-  Networking::UserId id;
+  std::vector<std::unique_ptr<NetworkingMock::Packet>> packets;
+  Networking::UserId id = Networking::InvalidUserId;
 };
 }
 
 struct Networking::MockServer::Impl
 {
   std::vector<std::weak_ptr<MockClient>> clients;
-  std::vector<std::pair<Networking::UserId, std::unique_ptr<Packet>>> packets;
+  std::vector<
+    std::pair<Networking::UserId, std::unique_ptr<NetworkingMock::Packet>>>
+    packets;
 };
 
 Networking::MockServer::MockServer()
@@ -83,10 +87,10 @@ std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
                      size_t length, bool reliable) {
     parent->pImpl->packets.push_back(
       { id,
-        std::unique_ptr<Packet>(
-          new Packet({ type,
-                       data ? std::vector<uint8_t>(data, data + length)
-                            : std::vector<uint8_t>() })) });
+        std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
+          { type,
+            data ? std::vector<uint8_t>(data, data + length)
+                 : std::vector<uint8_t>() })) });
   };
 
   auto it = std::find_if(pImpl->clients.begin(), pImpl->clients.end(),
@@ -109,11 +113,12 @@ std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
 
   pImpl->packets.push_back(
     { myId,
-      std::unique_ptr<Packet>(
-        new Packet({ Networking::PacketType::ServerSideUserConnect })) });
+      std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
+        { Networking::PacketType::ServerSideUserConnect })) });
 
-  cl->AddPacket(std::unique_ptr<Packet>(
-    new Packet({ Networking::PacketType::ClientSideConnectionAccepted })));
+  cl->AddPacket(
+    std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
+      { Networking::PacketType::ClientSideConnectionAccepted })));
 
   return cl;
 }
@@ -128,9 +133,10 @@ void Networking::MockServer::Send(UserId targetUserId, PacketData data,
                              std::to_string(targetUserId) +
                              " found on MockServer");
   auto cl = pImpl->clients[targetUserId].lock();
-  cl->AddPacket(std::unique_ptr<Packet>(
-    new Packet({ Networking::PacketType::Message,
-                 std::vector<uint8_t>(data, data + length) })));
+  cl->AddPacket(
+    std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
+      { Networking::PacketType::Message,
+        std::vector<uint8_t>(data, data + length) })));
 }
 
 void Networking::MockServer::Tick(OnPacket onPacket, void* state)

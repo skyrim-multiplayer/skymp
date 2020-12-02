@@ -2,7 +2,8 @@
 #include <catch2/catch.hpp>
 
 namespace {
-MpObjectReference& CreateMpObjectReference(WorldState& worldState, uint32_t id)
+MpObjectReference& CreateMpObjectReference_(WorldState& worldState,
+                                            uint32_t id)
 {
   auto refr = std::make_unique<MpObjectReference>(
     LocationalData(), FormCallbacks::DoNothing(), 0, "CONT");
@@ -13,10 +14,10 @@ MpObjectReference& CreateMpObjectReference(WorldState& worldState, uint32_t id)
 
 TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
 {
-  
+
   PartOne p;
 
-  auto& ref = CreateMpObjectReference(p.worldState, 0xff000000);
+  auto& ref = CreateMpObjectReference_(p.worldState, 0xff000000);
   ref.SetCellOrWorld(0x3c);
 
   p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c);

@@ -1,5 +1,6 @@
 if (UNIX)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
+  set(CMAKE_TOOLCHAIN_FILE /vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 endif()
 
 if (WIN32)

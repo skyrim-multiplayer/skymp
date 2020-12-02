@@ -138,10 +138,59 @@ endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/tests_unit.cmake)
 
-integrate_vcpkg(
-  TARGETS ${VCPKG_DEPENDENT}
-  VCPKG_PATH "${VCPKG_PATH}"
-)
+if(UNIX)
+  # On Linux we use CMAKE_TOOLCHAIN_FILE, see root CMakeLists.txt
+
+  foreach(target ${VCPKG_DEPENDENT})
+    find_package(Catch2 CONFIG REQUIRED)
+    target_link_libraries(${target} PUBLIC Catch2::Catch2)
+
+    find_path(SPARSEPP_INCLUDE_DIR NAMES spp.h PATH_SUFFIXES sparsepp)
+    get_filename_component(SPARSEPP_INCLUDE_DIR ${SPARSEPP_INCLUDE_DIR} DIRECTORY)
+    target_include_directories(${target} PUBLIC ${SPARSEPP_INCLUDE_DIR})
+
+    find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
+    get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
+    target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
+
+    find_package(spdlog CONFIG REQUIRED)
+    target_link_libraries(${target} PUBLIC spdlog::spdlog)
+
+    find_package(simdjson CONFIG REQUIRED)
+    target_link_libraries(${target} PUBLIC simdjson::simdjson)
+
+    find_package(slikenet CONFIG REQUIRED)
+    target_link_libraries(${target} PUBLIC SLikeNet)
+
+    find_package(Boost REQUIRED)
+    target_include_directories(${target} PUBLIC ${Boost_INCLUDE_DIRS})
+    target_link_libraries(${target} PUBLIC ${Boost_LIBRARIES})
+
+    find_package(ZLIB REQUIRED)
+    target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
+
+    find_path(SQLITEORM_INCLUDE_DIR NAMES sqlite_orm.h REQUIRED)
+    target_include_directories(${target} PUBLIC ${SQLITEORM_INCLUDE_DIR})
+
+    find_package(unofficial-sqlite3 CONFIG REQUIRED)
+    target_link_libraries(${target} PUBLIC unofficial::sqlite3::sqlite3)
+
+    find_package(libmongocxx REQUIRED)
+    find_package(libbsoncxx REQUIRED)
+    find_package(libmongoc-1.0 CONFIG REQUIRED)
+    target_link_libraries(${target} PUBLIC ${LIBMONGOCXX_LIBRARIES} ${LIBBSONCXX_LIBRARIES} ${MONGOC_LIBRARIES} ${MONGOC_STATIC_LIBRARIES})
+    find_package(OpenSSL REQUIRED)
+    target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+    target_link_libraries(${target} PUBLIC pthread resolv rt m) # sasl2 ?
+
+  endforeach()
+
+else()
+  integrate_vcpkg(
+    TARGETS ${VCPKG_DEPENDENT}
+    VCPKG_PATH "${VCPKG_PATH}"
+  )
+endif()
 
 if(UNIX)
   foreach(target ${VCPKG_DEPENDENT})
@@ -152,27 +201,5 @@ endif()
 if(WIN32)
   foreach(target ${VCPKG_DEPENDENT})
     target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
-  endforeach()
-endif()
-
-# For now we are unable to install simdjson from vcpkg on linux
-if(UNIX)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/simdjson)
-  file(DOWNLOAD
-    https://raw.githubusercontent.com/simdjson/simdjson/d0ce2f0b5a6b93707bf6872cc591f32cf5d9eef2/singleheader/simdjson.h
-    ${CMAKE_CURRENT_BINARY_DIR}/simdjson/simdjson.h
-  )
-  file(DOWNLOAD
-    https://raw.githubusercontent.com/simdjson/simdjson/d0ce2f0b5a6b93707bf6872cc591f32cf5d9eef2/singleheader/simdjson.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/simdjson/simdjson.cpp
-  )
-  foreach(target ${VCPKG_DEPENDENT})
-    target_sources(${target} PUBLIC
-      ${CMAKE_CURRENT_BINARY_DIR}/simdjson/simdjson.h
-      ${CMAKE_CURRENT_BINARY_DIR}/simdjson/simdjson.cpp
-    )
-    target_include_directories(${target} PUBLIC
-      ${CMAKE_CURRENT_BINARY_DIR}/simdjson
-    )
   endforeach()
 endif()

@@ -16,6 +16,7 @@ RUN apk add --no-cache \
     zip \
     pkgconfig \
     linux-headers \
+    libsasl \
   && git clone https://github.com/microsoft/vcpkg.git \
   && cd vcpkg \
   && git reset --hard 790910f79f653978f90aadd958abf3c407215552 \
@@ -31,6 +32,7 @@ RUN apk add --no-cache \
     catch2 \
     sparsepp \
     nlohmann-json \
-    mongo-cxx-driver
-# docker build . -t skymp/skymp-base:v3
-# docker push skymp/skymp-base:v3
+    mongo-cxx-driver \
+    simdjson
+# docker build . -t skymp/skymp-base:v4
+# docker push skymp/skymp-base:v4

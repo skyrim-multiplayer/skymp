@@ -1,4 +1,4 @@
-FROM skymp/skymp-base:v3
+FROM skymp/skymp-base:v4
 
 RUN mkdir /skyrim_data_dir \
   && cd /skyrim_data_dir \
@@ -8,7 +8,7 @@ RUN mkdir /skyrim_data_dir \
   && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Skyrim.esm > Skyrim.esm \
   && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/Update.esm > Update.esm \
   && curl https://skyrim-data-files.s3.eu-west-3.amazonaws.com/scripts.zip > scripts.zip \
-  && unzip scripts.zip \
+  && unzip -qq scripts.zip \
   && rm scripts.zip
 
 WORKDIR /usr/src/app

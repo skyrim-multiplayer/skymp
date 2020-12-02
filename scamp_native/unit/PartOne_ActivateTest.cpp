@@ -7,14 +7,15 @@ extern espm::Loader l;
 espm::CompressedFieldsCache g_dummyCache;
 PartOne& GetPartOne()
 {
-  static std::unique_ptr<PartOne> g_partOne;
-  if (!g_partOne) {
-    g_partOne.reset(new PartOne);
-    g_partOne->worldState.AttachScriptStorage(
-      std::make_shared<DirectoryScriptStorage>(TEST_PEX_DIR));
-    g_partOne->AttachEspm(&l);
-  }
-  return *g_partOne;
+  auto instance = std::make_shared<PartOne>();
+
+  instance->worldState.AttachScriptStorage(
+    std::make_shared<DirectoryScriptStorage>(TEST_PEX_DIR));
+  instance->AttachEspm(&l);
+
+  static std::vector<std::shared_ptr<PartOne>> g_partOneInstances;
+  g_partOneInstances.push_back(instance);
+  return *g_partOneInstances.back();
 }
 
 constexpr auto barrelInWhiterun = 0x4cc2d;
@@ -491,22 +492,8 @@ TEST_CASE("Activate BarrelFood01 in Whiterun (open/close)", "[PartOne]")
               { "data", { { "caster", 0x14 }, { "target", refrId } } } });
   REQUIRE(ref.IsOpen());
 
-  class MyListener : public PartOne::Listener
-  {
-  public:
-    void OnConnect(Networking::UserId userId) {}
-    void OnDisconnect(Networking::UserId userId)
-    {
-      GetPartOne().DestroyActor(0xff000000);
-    }
-    void OnCustomPacket(Networking::UserId userId,
-                        const simdjson::dom::element& content)
-    {
-    }
-  };
-
-  partOne.AddListener(std::make_shared<MyListener>());
   DoDisconnect(partOne, 0);
+  partOne.DestroyActor(0xff000000);
 
   // Actor destruction forces contaner close
   REQUIRE(!ref.IsOpen());

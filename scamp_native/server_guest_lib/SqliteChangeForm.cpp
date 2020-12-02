@@ -18,6 +18,10 @@ std::string SqliteChangeForm::GetJsonData() const
 
 void SqliteChangeForm::SetJsonData(const std::string& jsonData)
 {
+  static const JsonPointer inv("inv"), lookDump("lookDump"),
+    equipmentDump("equipmentDump"), isDisabled("isDisabled"),
+    profileId("profileId");
+
   static const auto versionLength = strlen("v01:");
 
   if (!memcmp(jsonData.data(), "v01:", versionLength)) {
@@ -28,21 +32,21 @@ void SqliteChangeForm::SetJsonData(const std::string& jsonData)
     auto j = p.parse(myString).value();
     {
       simdjson::dom::element jInv;
-      ReadEx(j, "inv", &jInv);
-      inv = Inventory::FromJson(jInv);
+      ReadEx(j, inv, &jInv);
+      this->inv = Inventory::FromJson(jInv);
     }
     {
       const char* jLookDump;
-      ReadEx(j, "lookDump", &jLookDump);
-      lookDump = jLookDump;
+      ReadEx(j, lookDump, &jLookDump);
+      this->lookDump = jLookDump;
     }
     {
       const char* jEquipmentDump;
-      ReadEx(j, "equipmentDump", &jEquipmentDump);
-      equipmentDump = jEquipmentDump;
+      ReadEx(j, equipmentDump, &jEquipmentDump);
+      this->equipmentDump = jEquipmentDump;
     }
-    ReadEx(j, "isDisabled", &isDisabled);
-    ReadEx(j, "profileId", &profileId);
+    ReadEx(j, isDisabled, &this->isDisabled);
+    ReadEx(j, profileId, &this->profileId);
 
   } else {
     std::stringstream ss;

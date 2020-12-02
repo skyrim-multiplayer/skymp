@@ -1,15 +1,14 @@
 #include "AsyncSaveStorage.h"
-
-namespace {
-struct UpsertTask
-{
-  std::vector<MpChangeForm> changeForms;
-  std::function<void()> callback;
-};
-}
+#include <thread>
 
 struct AsyncSaveStorage::Impl
 {
+  struct UpsertTask
+  {
+    std::vector<MpChangeForm> changeForms;
+    std::function<void()> callback;
+  };
+
   std::shared_ptr<spdlog::logger> logger;
 
   struct

@@ -3,12 +3,15 @@
 
 Tint Tint::FromJson(simdjson::dom::element& j)
 {
+  static const JsonPointer argb("argb"), type("type"),
+    texturePath("texturePath");
+
   Tint res;
-  ReadEx(j, "argb", &res.argb);
-  ReadEx(j, "type", &res.type);
+  ReadEx(j, argb, &res.argb);
+  ReadEx(j, type, &res.type);
 
   const char* texturePathCstr = "";
-  ReadEx(j, "texturePath", &texturePathCstr);
+  ReadEx(j, texturePath, &texturePathCstr);
   res.texturePath = texturePathCstr;
 
   return res;
@@ -23,27 +26,32 @@ Look Look::FromJson(const nlohmann::json& j)
 
 Look Look::FromJson(simdjson::dom::element& j)
 {
-  Look res;
-  ReadEx(j, "isFemale", &res.isFemale);
-  ReadEx(j, "raceId", &res.raceId);
-  ReadEx(j, "weight", &res.weight);
-  ReadEx(j, "skinColor", &res.skinColor);
-  ReadEx(j, "hairColor", &res.hairColor);
-  ReadVector(j, "headpartIds", &res.headpartIds);
-  ReadEx(j, "headTextureSetId", &res.headTextureSetId);
-  ReadVector(j, "options", &res.faceMorphs);
-  ReadVector(j, "presets", &res.facePresets);
+  static const JsonPointer isFemale("isFemale"), raceId("raceId"),
+    weight("weight"), skinColor("skinColor"), hairColor("hairColor"),
+    headpartIds("headpartIds"), headTextureSetId("headTextureSetId"),
+    options("options"), presets("presets"), name("name"), tints("tints");
 
-  const char* name;
+  Look res;
+  ReadEx(j, isFemale, &res.isFemale);
+  ReadEx(j, raceId, &res.raceId);
+  ReadEx(j, weight, &res.weight);
+  ReadEx(j, skinColor, &res.skinColor);
+  ReadEx(j, hairColor, &res.hairColor);
+  ReadVector(j, headpartIds, &res.headpartIds);
+  ReadEx(j, headTextureSetId, &res.headTextureSetId);
+  ReadVector(j, options, &res.faceMorphs);
+  ReadVector(j, presets, &res.facePresets);
+
+  const char* myName;
   try {
-    Read(j, "name", &name);
+    Read(j, name, &myName);
   } catch (std::exception&) {
-    name = "";
+    myName = "";
   }
-  res.name = name;
+  res.name = myName;
 
   simdjson::dom::element jTints;
-  ReadEx(j, "tints", &jTints);
+  ReadEx(j, tints, &jTints);
 
   res.tints.reserve(30);
   auto jTintsArr = jTints.operator simdjson::dom::array();

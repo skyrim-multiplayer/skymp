@@ -1,6 +1,8 @@
 #pragma once
+#include <ostream>
 #include <simdjson.h>
 #include <stdexcept>
+#include <string>
 #include <typeinfo>
 
 class JsonIndexException : public std::runtime_error
@@ -25,7 +27,27 @@ private:
   }
 };
 
-template <class Key, class Value, bool AorB>
+class IJsonPointer
+{
+public:
+  virtual ~IJsonPointer() = default;
+
+  virtual const char* GetData() const = 0;
+};
+
+inline simdjson::simdjson_result<simdjson::dom::element> GetValueFromJson(
+  const simdjson::dom::element& j, const IJsonPointer& jsonPointer)
+{
+  return j.at_pointer(jsonPointer.GetData());
+}
+
+inline simdjson::simdjson_result<simdjson::dom::element> GetValueFromJson(
+  const simdjson::dom::element& j, size_t idx)
+{
+  return j.at(idx);
+}
+
+template <class Key, class Value, bool isSimdjsonValue>
 struct ReadHelper;
 
 template <class Key, class Value>
@@ -33,7 +55,7 @@ struct ReadHelper<Key, Value, true>
 {
   static void Read(const simdjson::dom::element& j, Key key, Value* out)
   {
-    auto v = j.at(key);
+    auto v = GetValueFromJson(j, key);
     if (v.error() != simdjson::error_code::SUCCESS)
       throw JsonIndexException(j, key, v.error());
 
@@ -41,12 +63,39 @@ struct ReadHelper<Key, Value, true>
   }
 };
 
+class JsonPointer : public IJsonPointer
+{
+public:
+  JsonPointer(const std::string& key)
+  {
+    if (!key.empty()) {
+      jsonPointer = "/" + key;
+    }
+  }
+
+  const char* GetData() const override { return jsonPointer.data(); }
+
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const JsonPointer& jsonPointer_)
+  {
+    return os << RemoveFirstSymbol(jsonPointer_.GetData());
+  }
+
+private:
+  static const char* RemoveFirstSymbol(const char* str)
+  {
+    return str[0] ? str + 1 : str;
+  }
+
+  std::string jsonPointer;
+};
+
 template <class Key, class Value>
 struct ReadHelper<Key, Value, false>
 {
   static void Read(const simdjson::dom::element& j, Key key, Value* out)
   {
-    auto v = j.at(key);
+    auto v = GetValueFromJson(j, key);
     if (v.error() != simdjson::error_code::SUCCESS)
       throw JsonIndexException(j, key, v.error());
 
@@ -75,7 +124,7 @@ inline void Read(const simdjson::dom::element& j, Key key, Value* out)
 }
 
 template <class Value>
-inline void ReadEx(const simdjson::dom::element& j, const char* key,
+inline void ReadEx(const simdjson::dom::element& j, const JsonPointer& key,
                    Value* out)
 {
   return Read(j, key, out);
@@ -105,13 +154,14 @@ inline void ReadEx(const simdjson::dom::element& j, size_t key, Value* out)
   }
 
 DeclareReadEx(uint32_t, size_t);
-DeclareReadEx(uint32_t, const char*);
+DeclareReadEx(uint32_t, const JsonPointer&);
 DeclareReadEx(int32_t, size_t);
-DeclareReadEx(int32_t, const char*);
+DeclareReadEx(int32_t, const JsonPointer&);
+#undef DeclareReadEx
 
 template <>
-inline void ReadEx<float>(const simdjson::dom::element& j, const char* key,
-                          float* out)
+inline void ReadEx<float>(const simdjson::dom::element& j,
+                          const JsonPointer& key, float* out)
 {
   double v;
   Read(j, key, &v);
@@ -128,7 +178,7 @@ inline void ReadEx<float>(const simdjson::dom::element& j, size_t key,
 }
 
 template <class Vector>
-inline void ReadVector(const simdjson::dom::element& j, const char* key,
+inline void ReadVector(const simdjson::dom::element& j, const JsonPointer& key,
                        Vector* out)
 {
   Vector res;

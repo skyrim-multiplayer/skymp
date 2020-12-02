@@ -133,27 +133,30 @@ nlohmann::json Inventory::Entry::ToJson() const
 
 Inventory::Entry Inventory::Entry::FromJson(simdjson::dom::element& jEntry)
 {
+  static JsonPointer baseId("baseId"), count("count"), worn("worn"),
+    wornLeft("wornLeft");
+
   Entry e;
-  ReadEx(jEntry, "baseId", &e.baseId);
-  ReadEx(jEntry, "count", &e.count);
+  ReadEx(jEntry, baseId, &e.baseId);
+  ReadEx(jEntry, count, &e.count);
 
-  bool worn;
+  bool wornValue;
   try {
-    ReadEx(jEntry, "worn", &worn);
+    ReadEx(jEntry, worn, &wornValue);
   } catch (JsonIndexException&) {
-    worn = false;
+    wornValue = false;
   }
 
-  bool wornLeft;
+  bool wornLeftValue;
   try {
-    ReadEx(jEntry, "wornLeft", &wornLeft);
+    ReadEx(jEntry, wornLeft, &wornLeftValue);
   } catch (JsonIndexException&) {
-    wornLeft = false;
+    wornLeftValue = false;
   }
 
-  if (wornLeft)
+  if (wornLeftValue)
     e.extra.worn = Inventory::Worn::Left;
-  else if (worn)
+  else if (wornValue)
     e.extra.worn = Inventory::Worn::Right;
 
   // TODO: Other extras
@@ -171,13 +174,15 @@ nlohmann::json Inventory::ToJson() const
 
 Inventory Inventory::FromJson(simdjson::dom::element& j)
 {
-  std::vector<simdjson::dom::element> entries;
-  ReadVector(j, "entries", &entries);
+  static const JsonPointer entries("entries");
+
+  std::vector<simdjson::dom::element> parsedEntries;
+  ReadVector(j, entries, &parsedEntries);
 
   Inventory res;
-  res.entries.resize(entries.size());
+  res.entries.resize(parsedEntries.size());
   for (size_t i = 0; i != res.entries.size(); ++i) {
-    auto& jEntry = entries[i];
+    auto& jEntry = parsedEntries[i];
     auto& e = res.entries[i];
     e = Entry::FromJson(jEntry);
   }

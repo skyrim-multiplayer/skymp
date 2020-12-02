@@ -5,6 +5,16 @@
 #include <MsgType.h>
 #include <simdjson.h>
 
+namespace JsonPointers {
+static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
+  pos("pos"), rot("rot"), isInJumpState("isInJumpState"),
+  isWeapDrawn("isWeapDrawn"), worldOrCell("worldOrCell"), inv("inv"),
+  caster("caster"), target("target"), snippetIdx("snippetIdx"),
+  returnValue("returnValue"), baseId("baseId"), commandName("commandName"),
+  args("args"), workbench("workbench"), resultObjectId("resultObjectId"),
+  craftInputObjects("craftInputObjects"), remoteId("remoteId");
+}
+
 struct PacketParser::Impl
 {
   simdjson::dom::parser parser;
@@ -27,7 +37,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
   using TypeInt = std::underlying_type<MsgType>::type;
   auto type = MsgType::Invalid;
-  Read(jMessage, "t", reinterpret_cast<TypeInt*>(&type));
+  Read(jMessage, JsonPointers::t, reinterpret_cast<TypeInt*>(&type));
 
   IActionListener::RawMessageData rawMsgData{ data, length, jMessage, userId };
 
@@ -36,36 +46,36 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     case MsgType::CustomPacket: {
       simdjson::dom::element content;
-      Read(jMessage, "content", &content);
+      Read(jMessage, JsonPointers::content, &content);
       actionListener.OnCustomPacket(rawMsgData, content);
     } break;
     case MsgType::UpdateMovement: {
       uint32_t idx;
-      ReadEx(jMessage, "idx", &idx);
+      ReadEx(jMessage, JsonPointers::idx, &idx);
 
       simdjson::dom::element data_;
-      Read(jMessage, "data", &data_);
+      Read(jMessage, JsonPointers::data, &data_);
 
       simdjson::dom::element jPos;
-      Read(data_, "pos", &jPos);
+      Read(data_, JsonPointers::pos, &jPos);
       float pos[3];
       for (int i = 0; i < 3; ++i)
         ReadEx(jPos, i, &pos[i]);
 
       simdjson::dom::element jRot;
-      Read(data_, "rot", &jRot);
+      Read(data_, JsonPointers::rot, &jRot);
       float rot[3];
       for (int i = 0; i < 3; ++i)
         ReadEx(jRot, i, &rot[i]);
 
       bool isInJumpState = false;
-      Read(data_, "isInJumpState", &isInJumpState);
+      Read(data_, JsonPointers::isInJumpState, &isInJumpState);
 
       bool isWeapDrawn = false;
-      Read(data_, "isWeapDrawn", &isWeapDrawn);
+      Read(data_, JsonPointers::isWeapDrawn, &isWeapDrawn);
 
       uint32_t worldOrCell = 0;
-      ReadEx(data_, "worldOrCell", &worldOrCell);
+      ReadEx(data_, JsonPointers::worldOrCell, &worldOrCell);
 
       actionListener.OnUpdateMovement(
         rawMsgData, idx, { pos[0], pos[1], pos[2] },
@@ -74,34 +84,34 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     } break;
     case MsgType::UpdateAnimation: {
       uint32_t idx;
-      ReadEx(jMessage, "idx", &idx);
+      ReadEx(jMessage, JsonPointers::idx, &idx);
       actionListener.OnUpdateAnimation(rawMsgData, idx);
     } break;
     case MsgType::UpdateLook: {
       uint32_t idx;
-      ReadEx(jMessage, "idx", &idx);
+      ReadEx(jMessage, JsonPointers::idx, &idx);
       simdjson::dom::element jData;
-      Read(jMessage, "data", &jData);
+      Read(jMessage, JsonPointers::data, &jData);
 
       actionListener.OnUpdateLook(rawMsgData, idx, Look::FromJson(jData));
     } break;
     case MsgType::UpdateEquipment: {
       uint32_t idx;
-      ReadEx(jMessage, "idx", &idx);
+      ReadEx(jMessage, JsonPointers::idx, &idx);
       simdjson::dom::element data_;
-      ReadEx(jMessage, "data", &data_);
+      ReadEx(jMessage, JsonPointers::data, &data_);
       simdjson::dom::element inv;
-      ReadEx(data_, "inv", &inv);
+      ReadEx(data_, JsonPointers::inv, &inv);
 
       actionListener.OnUpdateEquipment(rawMsgData, idx, data_,
                                        Inventory::FromJson(inv));
     } break;
     case MsgType::Activate: {
       simdjson::dom::element data_;
-      ReadEx(jMessage, "data", &data_);
+      ReadEx(jMessage, JsonPointers::data, &data_);
       uint32_t caster, target;
-      ReadEx(data_, "caster", &caster);
-      ReadEx(data_, "target", &target);
+      ReadEx(data_, JsonPointers::caster, &caster);
+      ReadEx(data_, JsonPointers::target, &target);
       actionListener.OnActivate(rawMsgData, caster, target);
     } break;
     case MsgType::UpdateProperty:
@@ -109,7 +119,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     case MsgType::PutItem:
     case MsgType::TakeItem: {
       uint32_t target;
-      ReadEx(jMessage, "target", &target);
+      ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
       if (type == MsgType::PutItem)
         actionListener.OnPutItem(rawMsgData, target, e);
@@ -118,10 +128,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     } break;
     case MsgType::FinishSpSnippet: {
       uint32_t snippetIdx;
-      ReadEx(jMessage, "snippetIdx", &snippetIdx);
+      ReadEx(jMessage, JsonPointers::snippetIdx, &snippetIdx);
 
       simdjson::dom::element returnValue;
-      ReadEx(jMessage, "returnValue", &returnValue);
+      ReadEx(jMessage, JsonPointers::returnValue, &returnValue);
 
       actionListener.OnFinishSpSnippet(rawMsgData, snippetIdx, returnValue);
 
@@ -129,17 +139,17 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     }
     case MsgType::OnEquip: {
       uint32_t baseId;
-      ReadEx(jMessage, "baseId", &baseId);
+      ReadEx(jMessage, JsonPointers::baseId, &baseId);
       actionListener.OnEquip(rawMsgData, baseId);
       break;
     }
     case MsgType::ConsoleCommand: {
       simdjson::dom::element data_;
-      ReadEx(jMessage, "data", &data_);
+      ReadEx(jMessage, JsonPointers::data, &data_);
       const char* commandName;
-      ReadEx(data_, "commandName", &commandName);
+      ReadEx(data_, JsonPointers::commandName, &commandName);
       simdjson::dom::element args;
-      ReadEx(data_, "args", &args);
+      ReadEx(data_, JsonPointers::args, &args);
 
       auto arr = args.get_array().value();
 
@@ -165,13 +175,13 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     }
     case MsgType::CraftItem: {
       simdjson::dom::element data_;
-      ReadEx(jMessage, "data", &data_);
+      ReadEx(jMessage, JsonPointers::data, &data_);
       uint32_t workbench;
-      ReadEx(data_, "workbench", &workbench);
+      ReadEx(data_, JsonPointers::workbench, &workbench);
       uint32_t resultObjectId;
-      ReadEx(data_, "resultObjectId", &resultObjectId);
+      ReadEx(data_, JsonPointers::resultObjectId, &resultObjectId);
       simdjson::dom::element craftInputObjects;
-      ReadEx(data_, "craftInputObjects", &craftInputObjects);
+      ReadEx(data_, JsonPointers::craftInputObjects, &craftInputObjects);
       actionListener.OnCraftItem(rawMsgData,
                                  Inventory::FromJson(craftInputObjects),
                                  workbench, resultObjectId);
@@ -179,7 +189,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     }
     case MsgType::Host: {
       uint32_t remoteId;
-      ReadEx(jMessage, "remoteId", &remoteId);
+      ReadEx(jMessage, JsonPointers::remoteId, &remoteId);
       actionListener.OnHostAttempt(rawMsgData, remoteId);
       break;
     }

@@ -70,6 +70,7 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 {
   return { int16_t(pos.x / 4096), int16_t(pos.y / 4096) };
 }
+}
 
 struct AnimGraphHolder
 {
@@ -86,8 +87,6 @@ struct PrimitiveData
   NiPoint3 boundsDiv2;
   GeoProc::GeoPolygonProc polygonProc;
 };
-
-}
 
 struct MpObjectReference::Impl : public ChangeFormGuard<MpChangeFormREFR>
 {

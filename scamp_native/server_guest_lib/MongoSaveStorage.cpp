@@ -50,45 +50,53 @@ nlohmann::json ToJson(const MpChangeForm& changeForm)
 
 MpChangeForm JsonToChangeForm(simdjson::dom::element& element)
 {
+  static const JsonPointer recType("recType"), formDesc("formDesc"),
+    baseDesc("baseDesc"), position("position"), angle("angle"),
+    worldOrCell("worldOrCell"), inv("inv"), isHarvested("isHarvested"),
+    isOpen("isOpen"), baseContainerAdded("baseContainerAdded"),
+    nextRelootDatetime("nextRelootDatetime"), isDisabled("isDisabled"),
+    profileId("profileId"), isRaceMenuOpen("isRaceMenuOpen"),
+    lookDump("lookDump"), equipmentDump("equipmentDump");
+
   MpChangeForm res;
-  ReadEx(element, "recType", &res.recType);
+  ReadEx(element, recType, &res.recType);
 
   const char* tmp;
   simdjson::dom::element jTmp;
 
-  ReadEx(element, "formDesc", &tmp);
+  ReadEx(element, formDesc, &tmp);
   res.formDesc = FormDesc::FromString(tmp);
 
-  ReadEx(element, "baseDesc", &tmp);
+  ReadEx(element, baseDesc, &tmp);
   res.baseDesc = FormDesc::FromString(tmp);
 
-  ReadEx(element, "position", &jTmp);
+  ReadEx(element, position, &jTmp);
   for (int i = 0; i < 3; ++i)
     ReadEx(jTmp, i, &res.position[i]);
 
-  ReadEx(element, "angle", &jTmp);
+  ReadEx(element, angle, &jTmp);
   for (int i = 0; i < 3; ++i)
     ReadEx(jTmp, i, &res.angle[i]);
 
-  ReadEx(element, "worldOrCell", &res.worldOrCell);
+  ReadEx(element, worldOrCell, &res.worldOrCell);
 
-  ReadEx(element, "inv", &jTmp);
+  ReadEx(element, inv, &jTmp);
   res.inv = Inventory::FromJson(jTmp);
 
-  ReadEx(element, "isHarvested", &res.isHarvested);
-  ReadEx(element, "isOpen", &res.isOpen);
-  ReadEx(element, "baseContainerAdded", &res.baseContainerAdded);
-  ReadEx(element, "nextRelootDatetime", &res.nextRelootDatetime);
-  ReadEx(element, "isDisabled", &res.isDisabled);
-  ReadEx(element, "profileId", &res.profileId);
-  ReadEx(element, "isRaceMenuOpen", &res.isRaceMenuOpen);
+  ReadEx(element, isHarvested, &res.isHarvested);
+  ReadEx(element, isOpen, &res.isOpen);
+  ReadEx(element, baseContainerAdded, &res.baseContainerAdded);
+  ReadEx(element, nextRelootDatetime, &res.nextRelootDatetime);
+  ReadEx(element, isDisabled, &res.isDisabled);
+  ReadEx(element, profileId, &res.profileId);
+  ReadEx(element, isRaceMenuOpen, &res.isRaceMenuOpen);
 
-  ReadEx(element, "lookDump", &jTmp);
+  ReadEx(element, lookDump, &jTmp);
   res.lookDump = simdjson::minify(jTmp);
   if (res.lookDump == "null")
     res.lookDump.clear();
 
-  ReadEx(element, "equipmentDump", &jTmp);
+  ReadEx(element, equipmentDump, &jTmp);
   res.equipmentDump = simdjson::minify(jTmp);
   if (res.equipmentDump == "null")
     res.equipmentDump.clear();
