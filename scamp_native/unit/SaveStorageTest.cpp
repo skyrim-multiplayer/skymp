@@ -1,7 +1,8 @@
 #include "TestUtils.hpp"
 
+#include "AsyncSaveStorage.h"
 #include "MpChangeForms.h"
-#include "SqliteSaveStorage.h"
+#include "SqliteDatabase.h"
 #include <filesystem>
 
 std::shared_ptr<ISaveStorage> MakeSaveStorage()
@@ -9,7 +10,9 @@ std::shared_ptr<ISaveStorage> MakeSaveStorage()
   auto fileName = "unit.sqlite";
   if (std::filesystem::exists(fileName))
     std::filesystem::remove(fileName);
-  return std::make_shared<SqliteSaveStorage>(fileName);
+
+  return std::make_shared<AsyncSaveStorage>(
+    std::make_shared<SqliteDatabase>(fileName));
 }
 
 MpChangeForm CreateChangeForm(const char* descStr)
@@ -101,7 +104,7 @@ TEST_CASE("Upsert affects the number of change forms in the database in the "
 
 TEST_CASE("AttachSaveStorage forces loading", "[save]")
 {
-  
+
   PartOne p;
   p.worldState.espmFiles = { "AaAaAa.esm" };
   p.worldState.AddForm(
@@ -124,7 +127,7 @@ TEST_CASE("AttachSaveStorage forces loading", "[save]")
 
 TEST_CASE("Changes are transferred to SaveStorage", "[save]")
 {
-  
+
   PartOne p;
   auto st = MakeSaveStorage();
   p.AttachSaveStorage(st);

@@ -1,10 +1,11 @@
-#include "MongoSaveStorage.h"
+#include "AsyncSaveStorage.h"
+#include "MongoDatabase.h"
 #include "Networking.h"
 #include "NetworkingCombined.h"
 #include "NetworkingMock.h"
 #include "PartOne.h"
 #include "ScriptStorage.h"
-#include "SqliteSaveStorage.h"
+#include "SqliteDatabase.h"
 #include <cassert>
 #include <memory>
 #include <napi.h>
@@ -157,7 +158,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 }
 
 namespace {
-std::shared_ptr<ISaveStorage> CreateSaveStorage(
+std::shared_ptr<IDatabase> CreateDatabase(
   nlohmann::json serverSettings, std::shared_ptr<spdlog::logger> logger)
 {
   auto databaseDriver = serverSettings.count("databaseDriver")
@@ -170,7 +171,7 @@ std::shared_ptr<ISaveStorage> CreateSaveStorage(
       : std::string("world.sqlite");
 
     logger->info("Using sqlite with name '" + databaseName + "'");
-    return std::make_shared<SqliteSaveStorage>(databaseName, logger);
+    return std::make_shared<SqliteDatabase>(databaseName);
   }
 
   if (databaseDriver == "mongodb") {
@@ -180,12 +181,18 @@ std::shared_ptr<ISaveStorage> CreateSaveStorage(
 
     auto databaseUri = serverSettings["databaseUri"].get<std::string>();
     logger->info("Using mongodb with name '" + databaseName + "'");
-    return std::make_shared<MongoSaveStorage>(databaseUri, databaseName,
-                                              logger);
+    return std::make_shared<MongoDatabase>(databaseUri, databaseName);
   }
 
   throw std::runtime_error("Unrecognized databaseDriver: " + databaseDriver);
 }
+
+std::shared_ptr<ISaveStorage> CreateSaveStorage(
+  std::shared_ptr<IDatabase> db, std::shared_ptr<spdlog::logger> logger)
+{
+  return std::make_shared<AsyncSaveStorage>(db, logger);
+}
+
 }
 
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
@@ -243,7 +250,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->SetSendTarget(server.get());
     partOne->worldState.AttachScriptStorage(scriptStorage);
     partOne->AttachEspm(espm);
-    partOne->AttachSaveStorage(CreateSaveStorage(serverSettings, logger));
+    partOne->AttachSaveStorage(
+      CreateSaveStorage(CreateDatabase(serverSettings, logger), logger));
 
     auto res =
       info.Env().RunScript("let require = global.require || "

@@ -1,4 +1,4 @@
-#include "MongoSaveStorage.h"
+#include "MongoDatabase.h"
 
 #include "JsonUtils.h"
 #include <bsoncxx/builder/stream/document.hpp>
@@ -103,77 +103,65 @@ MpChangeForm JsonToChangeForm(simdjson::dom::element& element)
 
   return res;
 }
+}
 
-class MongoDbImpl : public IDatabase
+struct MongoDatabase::Impl
 {
-public:
-  MongoDbImpl(std::string uri_, std::string name_)
-    : uri(uri_)
-    , name(name_)
-  {
-    client.reset(new mongocxx::client(mongocxx::uri(uri.data())));
-    db.reset(new mongocxx::database((*client)[name]));
-    changeFormsCollection.reset(
-      new mongocxx::collection((*db)[collectionName]));
-  }
+  const std::string uri;
+  const std::string name;
 
-  size_t Upsert(const std::vector<MpChangeForm>& changeForms)
-  {
-    auto bulk = changeFormsCollection->create_bulk_write();
-    for (auto& changeForm : changeForms) {
-      auto jChangeForm = ToJson(changeForm);
-
-      auto filter = nlohmann::json::object();
-      filter["formDesc"] = changeForm.formDesc.ToString();
-
-      auto upd = nlohmann::json::object();
-      upd["$set"] = jChangeForm;
-
-      bulk.append(mongocxx::model::update_one(
-                    { std::move(bsoncxx::from_json(filter.dump())),
-                      std::move(bsoncxx::from_json(upd.dump())) })
-                    .upsert(true));
-    }
-
-    (void)bulk.execute();
-    return changeForms.size(); // Should take data from mongo instead?
-  }
-
-  void Iterate(const IterateCallback& iterateCallback)
-  {
-    auto emptyFilter = nlohmann::json::object();
-    auto emptyFilterBson = bsoncxx::from_json(emptyFilter.dump());
-
-    simdjson::dom::parser p;
-
-    auto cursor = changeFormsCollection->find(std::move(emptyFilterBson));
-    for (auto& documentView : cursor) {
-      auto document = p.parse(bsoncxx::to_json(documentView)).value();
-      auto changeForm = JsonToChangeForm(document);
-      iterateCallback(changeForm);
-    }
-  }
-
-private:
-  const std::string uri, name;
   const char* const collectionName = "changeForms";
 
   std::shared_ptr<mongocxx::client> client;
   std::shared_ptr<mongocxx::database> db;
   std::shared_ptr<mongocxx::collection> changeFormsCollection;
 };
-}
 
-MongoSaveStorage::MongoSaveStorage(std::string uri, std::string name,
-                                   std::shared_ptr<spdlog::logger> logger)
-  : AsyncSaveStorage(CreateDbImpl(uri, name), logger)
-{
-}
-
-std::shared_ptr<IDatabase> MongoSaveStorage::CreateDbImpl(std::string uri,
-                                                          std::string name)
+MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
 {
   static mongocxx::instance g_instance;
 
-  return std::make_shared<MongoDbImpl>(uri, name);
+  pImpl.reset(new Impl{ uri_, name_ });
+
+  pImpl->client.reset(new mongocxx::client(mongocxx::uri(pImpl->uri.data())));
+  pImpl->db.reset(new mongocxx::database((*pImpl->client)[pImpl->name]));
+  pImpl->changeFormsCollection.reset(
+    new mongocxx::collection((*pImpl->db)[pImpl->collectionName]));
+}
+
+size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
+{
+  auto bulk = pImpl->changeFormsCollection->create_bulk_write();
+  for (auto& changeForm : changeForms) {
+    auto jChangeForm = ToJson(changeForm);
+
+    auto filter = nlohmann::json::object();
+    filter["formDesc"] = changeForm.formDesc.ToString();
+
+    auto upd = nlohmann::json::object();
+    upd["$set"] = jChangeForm;
+
+    bulk.append(mongocxx::model::update_one(
+                  { std::move(bsoncxx::from_json(filter.dump())),
+                    std::move(bsoncxx::from_json(upd.dump())) })
+                  .upsert(true));
+  }
+
+  (void)bulk.execute();
+  return changeForms.size(); // Should take data from mongo instead?
+}
+
+void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
+{
+  auto emptyFilter = nlohmann::json::object();
+  auto emptyFilterBson = bsoncxx::from_json(emptyFilter.dump());
+
+  simdjson::dom::parser p;
+
+  auto cursor = pImpl->changeFormsCollection->find(std::move(emptyFilterBson));
+  for (auto& documentView : cursor) {
+    auto document = p.parse(bsoncxx::to_json(documentView)).value();
+    auto changeForm = JsonToChangeForm(document);
+    iterateCallback(changeForm);
+  }
 }
