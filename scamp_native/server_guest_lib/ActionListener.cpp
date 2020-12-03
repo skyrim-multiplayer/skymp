@@ -35,6 +35,37 @@ MpActor* ActionListener::SendToNeighbours(
     throw PublicError(ss.str());
   }
 
+#ifdef SKYMP_LITE
+  for (size_t i = 0; i < partOne.serverState.userInfo.size(); ++i) {
+    if (!partOne.serverState.userInfo[i])
+      continue;
+
+    MpActor* targetActor = nullptr;
+    for (auto& p : partOne.serverState.actorsMap.left) {
+      if (p.first == i) {
+        targetActor = p.second;
+      }
+    }
+
+    if (!targetActor)
+      continue;
+
+    std::vector<MpObjectReference*> myListeners = {
+      myActor->GetListeners().begin(), myActor->GetListeners().end()
+    };
+    if (std::count(myListeners.begin(), myListeners.end(), targetActor) == 0)
+      continue;
+
+    for (auto& p : partOne.serverState.actorsMap.right) {
+      if (p.first == targetActor) {
+        std::vector<uint8_t> dataCopy{ data, data + length };
+        partOne.GetSendTarget().Send(p.second, dataCopy.data(),
+                                     dataCopy.size(), reliable);
+      }
+    }
+  }
+
+#else
   for (auto listener : actor->GetListeners()) {
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
     if (listenerAsActor) {
@@ -44,6 +75,7 @@ MpActor* ActionListener::SendToNeighbours(
       }
     }
   }
+#endif
 
   return actor;
 }
