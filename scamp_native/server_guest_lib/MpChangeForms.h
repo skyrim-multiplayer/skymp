@@ -6,7 +6,9 @@
 #include "NiPoint3.h"
 #include <cstdint>
 #include <optional>
+#include <ostream>
 #include <string>
+#include <tuple>
 
 class MpObjectReference;
 class WorldState;
@@ -48,4 +50,36 @@ public:
 class MpChangeForm : public MpChangeFormREFR
 {
 public:
+  auto ToTuple() const
+  {
+    return std::make_tuple(recType, formDesc, baseDesc, position.x, position.y,
+                           position.z, angle.x, angle.y, angle.z, worldOrCell,
+                           inv.ToJson(), isHarvested, isOpen,
+                           baseContainerAdded, nextRelootDatetime, isDisabled,
+                           profileId, isRaceMenuOpen, lookDump, equipmentDump);
+  }
 };
+
+inline bool operator==(const MpChangeForm& lhs, const MpChangeForm& rhs)
+{
+  return lhs.ToTuple() == rhs.ToTuple();
+}
+
+inline bool operator!=(const MpChangeForm& lhs, const MpChangeForm& rhs)
+{
+  return !(lhs == rhs);
+}
+
+inline bool operator<(const MpChangeForm& lhs, const MpChangeForm& rhs)
+{
+  return lhs.ToTuple() < rhs.ToTuple();
+}
+
+inline std::ostream& operator<<(std::ostream& os,
+                                const MpChangeForm& changeForm)
+{
+  return os << "{" << changeForm.formDesc.ToString() << ", "
+            << "[" << changeForm.position.x << ", " << changeForm.position.y
+            << ", " << changeForm.position.z << "] "
+            << "}";
+}

@@ -41,6 +41,7 @@ std::string dataDir = DATA_DIR;
 #include "HeuristicPolicyTest.h"
 #include "IdManagerTest.h"
 #include "LeveledListUtilsTest.h"
+#include "MigrationDatabaseTest.h"
 #include "MovementValidationTest.h"
 #include "NetworkingTest.h"
 #include "Networking_CombinedTest.h"
