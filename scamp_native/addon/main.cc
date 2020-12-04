@@ -1,4 +1,5 @@
 #include "AsyncSaveStorage.h"
+#include "MigrationDatabase.h"
 #include "MongoDatabase.h"
 #include "Networking.h"
 #include "NetworkingCombined.h"
@@ -159,15 +160,15 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 
 namespace {
 std::shared_ptr<IDatabase> CreateDatabase(
-  nlohmann::json serverSettings, std::shared_ptr<spdlog::logger> logger)
+  nlohmann::json settings, std::shared_ptr<spdlog::logger> logger)
 {
-  auto databaseDriver = serverSettings.count("databaseDriver")
-    ? serverSettings["databaseDriver"].get<std::string>()
+  auto databaseDriver = settings.count("databaseDriver")
+    ? settings["databaseDriver"].get<std::string>()
     : std::string("sqlite");
 
   if (databaseDriver == "sqlite") {
-    auto databaseName = serverSettings.count("databaseName")
-      ? serverSettings["databaseName"].get<std::string>()
+    auto databaseName = settings.count("databaseName")
+      ? settings["databaseName"].get<std::string>()
       : std::string("world.sqlite");
 
     logger->info("Using sqlite with name '" + databaseName + "'");
@@ -175,13 +176,21 @@ std::shared_ptr<IDatabase> CreateDatabase(
   }
 
   if (databaseDriver == "mongodb") {
-    auto databaseName = serverSettings.count("databaseName")
-      ? serverSettings["databaseName"].get<std::string>()
+    auto databaseName = settings.count("databaseName")
+      ? settings["databaseName"].get<std::string>()
       : std::string("db");
 
-    auto databaseUri = serverSettings["databaseUri"].get<std::string>();
+    auto databaseUri = settings["databaseUri"].get<std::string>();
     logger->info("Using mongodb with name '" + databaseName + "'");
     return std::make_shared<MongoDatabase>(databaseUri, databaseName);
+  }
+
+  if (databaseDriver == "migration") {
+    auto from = settings.at("databaseOld");
+    auto to = settings.at("databaseNew");
+    auto oldDatabase = CreateDatabase(from, logger);
+    auto newDatabase = CreateDatabase(to, logger);
+    return std::make_shared<MigrationDatabase>(newDatabase, oldDatabase);
   }
 
   throw std::runtime_error("Unrecognized databaseDriver: " + databaseDriver);
