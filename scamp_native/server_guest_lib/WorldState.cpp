@@ -22,13 +22,11 @@
 #include <deque>
 #include <unordered_map>
 
-namespace {
 struct TimerEntry
 {
   Viet::Promise<Viet::Void> promise;
   std::chrono::system_clock::time_point finish;
 };
-}
 
 namespace {
 inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)

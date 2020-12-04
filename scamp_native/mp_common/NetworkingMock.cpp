@@ -13,7 +13,7 @@ struct Packet
 };
 }
 
-namespace {
+namespace NetworkingMock {
 class MockClient;
 
 typedef void (*SendFn)(Networking::MockServer*, Networking::UserId id,
@@ -69,7 +69,7 @@ private:
 
 struct Networking::MockServer::Impl
 {
-  std::vector<std::weak_ptr<MockClient>> clients;
+  std::vector<std::weak_ptr<NetworkingMock::MockClient>> clients;
   std::vector<
     std::pair<Networking::UserId, std::unique_ptr<NetworkingMock::Packet>>>
     packets;
@@ -82,23 +82,25 @@ Networking::MockServer::MockServer()
 
 std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
 {
-  SendFn sendFn = [](Networking::MockServer* parent, Networking::UserId id,
-                     Networking::PacketType type, Networking::PacketData data,
-                     size_t length, bool reliable) {
-    parent->pImpl->packets.push_back(
-      { id,
-        std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
-          { type,
-            data ? std::vector<uint8_t>(data, data + length)
-                 : std::vector<uint8_t>() })) });
-  };
+  NetworkingMock::SendFn sendFn =
+    [](Networking::MockServer* parent, Networking::UserId id,
+       Networking::PacketType type, Networking::PacketData data, size_t length,
+       bool reliable) {
+      parent->pImpl->packets.push_back(
+        { id,
+          std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
+            { type,
+              data ? std::vector<uint8_t>(data, data + length)
+                   : std::vector<uint8_t>() })) });
+    };
 
-  auto it = std::find_if(pImpl->clients.begin(), pImpl->clients.end(),
-                         [&](const std::weak_ptr<MockClient>& cl) {
-                           return cl.expired() || !cl.lock().get();
-                         });
+  auto it =
+    std::find_if(pImpl->clients.begin(), pImpl->clients.end(),
+                 [&](const std::weak_ptr<NetworkingMock::MockClient>& cl) {
+                   return cl.expired() || !cl.lock().get();
+                 });
 
-  auto cl = std::make_shared<MockClient>(this, sendFn);
+  auto cl = std::make_shared<NetworkingMock::MockClient>(this, sendFn);
 
   Networking::UserId myId;
   if (it != pImpl->clients.end()) {

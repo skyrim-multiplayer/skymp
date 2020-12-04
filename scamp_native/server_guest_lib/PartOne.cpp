@@ -11,7 +11,6 @@
 #include <type_traits>
 #include <vector>
 
-namespace {
 class FakeSendTarget : public Networking::ISendTarget
 {
 public:
@@ -32,7 +31,6 @@ public:
 
   std::vector<PartOne::Message> messages;
 };
-}
 
 struct PartOne::Impl
 {
