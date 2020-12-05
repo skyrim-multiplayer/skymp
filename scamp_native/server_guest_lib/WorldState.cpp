@@ -55,6 +55,7 @@ struct WorldState::Impl
   std::shared_ptr<HeuristicPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
+  bool formLoadingInProgress = false;
 };
 
 WorldState::WorldState()
@@ -177,6 +178,14 @@ void WorldState::TickTimers()
 void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
                                 const FormCallbacks& callbacks)
 {
+  ScopedTask task(
+    [](void* st) {
+      auto ptr = reinterpret_cast<bool*>(st);
+      *ptr = false;
+    },
+    &pImpl->formLoadingInProgress);
+  pImpl->formLoadingInProgress = true;
+
   std::unique_ptr<MpObjectReference> form;
 
   const auto baseId = changeForm.baseDesc.ToFormId(espmFiles);
@@ -219,7 +228,19 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
       throw std::runtime_error("Unknown ChangeForm type: " +
                                std::to_string(changeForm.recType));
   }
+
   AddForm(std::move(form), formId, false, &changeForm);
+
+  // EnsureBaseContainerAdded forces saving here.
+  // We do not want characters to save when they are load partially
+  // This behaviour results in
+  // https://github.com/skyrim-multiplayer/issue-tracker/issues/64
+
+  // So we expect that RequestSave does nothing in this case:
+  assert(pImpl->changes.count(formId) == 0);
+
+  // For Release configuration we just manually remove formId from changes
+  pImpl->changes.erase(formId);
 }
 
 void WorldState::RequestReloot(MpObjectReference& ref)
@@ -231,7 +252,9 @@ void WorldState::RequestReloot(MpObjectReference& ref)
 
 void WorldState::RequestSave(MpObjectReference& ref)
 {
-  pImpl->changes[ref.GetFormId()] = ref.GetChangeForm();
+  if (!pImpl->formLoadingInProgress) {
+    pImpl->changes[ref.GetFormId()] = ref.GetChangeForm();
+  }
 }
 
 void WorldState::RegisterForSingleUpdate(const VarValue& self, float seconds)

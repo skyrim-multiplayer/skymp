@@ -54,6 +54,8 @@ TEST_CASE("SendToNeighbours", "[Benchmarks]")
   ExecuteBenchmark(50);
   ExecuteBenchmark(100);
   ExecuteBenchmark(200);
+#ifdef NDEBUG
   ExecuteBenchmark(500);
   ExecuteBenchmark(1000);
+#endif
 }

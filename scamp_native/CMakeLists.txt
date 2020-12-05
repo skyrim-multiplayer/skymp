@@ -85,6 +85,7 @@ target_compile_definitions(unit PRIVATE
   TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
   BUILT_PEX_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/pex\"
 )
+target_compile_options(unit PRIVATE "/bigobj")
 
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/mp_common/*" "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(mp_common STATIC ${src})
