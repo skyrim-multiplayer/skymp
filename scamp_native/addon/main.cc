@@ -262,6 +262,15 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->AttachSaveStorage(
       CreateSaveStorage(CreateDatabase(serverSettings, logger), logger));
 
+    auto reloot = serverSettings["reloot"];
+    for (auto it = reloot.begin(); it != reloot.end(); ++it) {
+      std::string recordType = it.key();
+      auto timeMs = static_cast<int>(it.value());
+      auto time = std::chrono::milliseconds(1) * timeMs;
+      partOne->worldState.SetRelootTime(recordType, time);
+      logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
+    }
+
     auto res =
       info.Env().RunScript("let require = global.require || "
                            "global.process.mainModule.constructor._load; let "

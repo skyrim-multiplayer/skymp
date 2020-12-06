@@ -56,6 +56,8 @@ struct WorldState::Impl
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
+  std::map<std::string, std::chrono::system_clock::duration>
+    relootTimeForTypes;
 };
 
 WorldState::WorldState()
@@ -243,11 +245,11 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
   pImpl->changes.erase(formId);
 }
 
-void WorldState::RequestReloot(MpObjectReference& ref)
+void WorldState::RequestReloot(MpObjectReference& ref,
+                               std::chrono::system_clock::duration time)
 {
-  auto& list = relootTimers[ref.GetRelootTime()];
-  list.push_back({ ref.GetFormId(),
-                   std::chrono::system_clock::now() + ref.GetRelootTime() });
+  auto& list = relootTimers[time];
+  list.push_back({ ref.GetFormId(), std::chrono::system_clock::now() + time });
 }
 
 void WorldState::RequestSave(MpObjectReference& ref)
@@ -584,4 +586,20 @@ uint32_t WorldState::GenerateFormId()
     ++pImpl->nextId;
   }
   return pImpl->nextId++;
+}
+
+void WorldState::SetRelootTime(std::string recordType,
+                               std::chrono::system_clock::duration dur)
+{
+  pImpl->relootTimeForTypes[recordType] = dur;
+}
+
+std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
+  std::string recordType) const
+{
+  try {
+    return pImpl->relootTimeForTypes.at(recordType);
+  } catch (...) {
+    return std::nullopt;
+  }
 }

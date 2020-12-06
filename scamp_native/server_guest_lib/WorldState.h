@@ -64,7 +64,8 @@ public:
 
   void TickTimers();
 
-  void RequestReloot(MpObjectReference& ref);
+  void RequestReloot(MpObjectReference& ref,
+                     std::chrono::system_clock::duration time);
 
   void RequestSave(MpObjectReference& ref);
 
@@ -144,6 +145,10 @@ public:
   VirtualMachine& GetPapyrusVm();
   const std::set<uint32_t>& GetActorsByProfileId(int32_t profileId) const;
   uint32_t GenerateFormId();
+  void SetRelootTime(std::string recordType,
+                     std::chrono::system_clock::duration dur);
+  std::optional<std::chrono::system_clock::duration> GetRelootTime(
+    std::string recordType) const;
 
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
@@ -171,7 +176,7 @@ private:
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
   std::map<
-    std::chrono::milliseconds,
+    std::chrono::system_clock::duration,
     std::list<std::pair<uint32_t, std::chrono::system_clock::time_point>>>
     relootTimers;
   espm::Loader* espm = nullptr;

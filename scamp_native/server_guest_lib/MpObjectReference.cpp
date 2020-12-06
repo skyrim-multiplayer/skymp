@@ -126,16 +126,6 @@ MpObjectReference::MpObjectReference(
   changeForm.worldOrCell = locationalData_.cellOrWorld;
   pImpl.reset(new Impl{ changeForm, this });
 
-  if (!strcmp(baseType.data(), "FLOR") || !strcmp(baseType.data(), "TREE")) {
-    relootTime = std::chrono::hours(1);
-  } else if (!strcmp(baseType.data(), "DOOR")) {
-    relootTime = std::chrono::seconds(3);
-  } else if (espm::IsItem(baseType.data())) {
-    relootTime = std::chrono::hours(1);
-  } else if (!strcmp(baseType.data(), "CONT")) {
-    relootTime = std::chrono::hours(1);
-  }
-
   if (primitiveBoundsDiv2)
     SetPrimitive(*primitiveBoundsDiv2);
 }
@@ -180,9 +170,25 @@ const bool& MpObjectReference::IsDisabled() const
   return pImpl->ChangeForm().isDisabled;
 }
 
-const std::chrono::milliseconds& MpObjectReference::GetRelootTime() const
+std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
 {
-  return relootTime;
+  if (relootTimeOverride)
+    return *relootTimeOverride;
+
+  if (auto time = GetParent()->GetRelootTime(baseType))
+    return *time;
+
+  if (!strcmp(baseType.data(), "FLOR") || !strcmp(baseType.data(), "TREE")) {
+    return std::chrono::hours(1);
+  } else if (!strcmp(baseType.data(), "DOOR")) {
+    return std::chrono::seconds(3);
+  } else if (espm::IsItem(baseType.data())) {
+    return std::chrono::hours(1);
+  } else if (!strcmp(baseType.data(), "CONT")) {
+    return std::chrono::hours(1);
+  }
+
+  return std::chrono::hours(0);
 }
 
 bool MpObjectReference::GetAnimationVariableBool(const char* name) const
@@ -378,9 +384,10 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
   }
 }
 
-void MpObjectReference::SetRelootTime(std::chrono::milliseconds newRelootTime)
+void MpObjectReference::SetRelootTime(
+  std::chrono::system_clock::duration newRelootTime)
 {
-  relootTime = newRelootTime;
+  relootTimeOverride = newRelootTime;
 }
 
 void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
@@ -620,15 +627,19 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
   return emitters ? *emitters : g_emptyEmitters;
 }
 
-void MpObjectReference::RequestReloot()
+void MpObjectReference::RequestReloot(
+  std::optional<std::chrono::system_clock::duration> time)
 {
+  if (!time)
+    time = GetRelootTime();
+
   if (!pImpl->ChangeForm().nextRelootDatetime) {
     pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
       changeForm.nextRelootDatetime = std::chrono::system_clock::to_time_t(
         std::chrono::system_clock::now() + GetRelootTime());
     });
 
-    GetParent()->RequestReloot(*this);
+    GetParent()->RequestReloot(*this, *time);
   }
 }
 
@@ -695,28 +706,31 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   changeForm.isDisabled ? Disable() : Enable();
   SetCellOrWorldObsolete(changeForm.worldOrCell);
   SetPos(changeForm.position);
-  // TODO: Is explicit call to ForceSubscriptionsUpdate() required here?
 
   if (changeForm.profileId >= 0)
     RegisterProfileId(changeForm.profileId);
 
+  // See https://github.com/skyrim-multiplayer/issue-tracker/issues/42
   pImpl->EditChangeForm(
     [&](MpChangeFormREFR& f) {
       f = static_cast<const MpChangeFormREFR&>(changeForm);
+
+      // Fix: RequestReloot doesn't work with non-zero 'nextRelootDatetime'
+      f.nextRelootDatetime = 0;
     },
     Impl::Mode::NoRequestSave);
-
   if (changeForm.nextRelootDatetime) {
-    const auto tp =
+    auto tp =
       std::chrono::system_clock::from_time_t(changeForm.nextRelootDatetime);
 
+    // Fix: Handle situations when the server is stopped at the 'tp' moment
     if (tp < std::chrono::system_clock::now()) {
-      const auto prevRelootTime = GetRelootTime();
-      SetRelootTime(std::chrono::duration_cast<std::chrono::milliseconds>(
-        tp - std::chrono::system_clock::now()));
-      RequestReloot();
-      SetRelootTime(prevRelootTime);
+      tp = std::chrono::system_clock::now() + std::chrono::milliseconds(1);
     }
+
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+      tp - std::chrono::system_clock::now());
+    RequestReloot(ms);
   }
 }
 

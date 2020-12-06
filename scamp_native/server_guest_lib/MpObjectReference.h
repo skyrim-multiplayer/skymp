@@ -77,7 +77,7 @@ public:
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
   const bool& IsDisabled() const;
-  const std::chrono::milliseconds& GetRelootTime() const;
+  std::chrono::system_clock::duration GetRelootTime() const;
   bool GetAnimationVariableBool(const char* name) const;
   bool IsPointInsidePrimitive(const NiPoint3& point) const;
   bool HasPrimitive() const;
@@ -99,7 +99,7 @@ public:
   void SetOpen(bool open);
   void PutItem(MpActor& actor, const Inventory::Entry& entry);
   void TakeItem(MpActor& actor, const Inventory::Entry& entry);
-  void SetRelootTime(std::chrono::milliseconds newRelootTime);
+  void SetRelootTime(std::chrono::system_clock::duration newRelootTime);
   void SetChanceNoneOverride(uint8_t chanceNone);
   void SetCellOrWorld(uint32_t worldOrCell);
   void SetAnimationVariableBool(const char* name, bool value);
@@ -133,7 +133,9 @@ public:
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;
 
-  void RequestReloot();
+  // uses default reloot time if nullopt passed
+  void RequestReloot(
+    std::optional<std::chrono::system_clock::duration> time = std::nullopt);
   void DoReloot();
   std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
   GetNextRelootMoment() const;
@@ -184,7 +186,7 @@ private:
   uint32_t baseId = 0;
   MpActor* occupant = nullptr;
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
-  std::chrono::milliseconds relootTime{ 3000 };
+  std::optional<std::chrono::system_clock::duration> relootTimeOverride;
   std::unique_ptr<uint8_t> chanceNoneOverride;
   bool activationBlocked = false;
 
