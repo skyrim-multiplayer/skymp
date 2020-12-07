@@ -392,7 +392,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (msg.open) {
       // wait 0.3s cause we can see visual bugs when teleporting
       // and showing this menu at the same time in onConnect
-      once("update", () => Utility.wait(0.3).then(() => Game.showRaceMenu()));
+      once("update", () =>
+        Utility.wait(0.3).then(() => {
+          const ironHelment = Armor.from(Game.getFormEx(0x00012e4d));
+          Game.getPlayer().unequipItem(ironHelment, false, true);
+          Game.showRaceMenu();
+        })
+      );
     } else {
       // TODO: Implement closeMenu in SkyrimPlatform
     }
