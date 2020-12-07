@@ -271,3 +271,44 @@ TEST_CASE("Loads Weapon", "[espm]")
   REQUIRE(npc->GetData().weapData->value == 25);
   REQUIRE(npc->GetData().weapData->weight == 9.f);
 }
+
+TEST_CASE("Loads NPC factions", "[espm]")
+{
+  enum
+  {
+    GuardWhiterunImperialGuardhouseSleep = 0x1000ef
+  };
+
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(GuardWhiterunImperialGuardhouseSleep);
+  REQUIRE(form.rec);
+  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+
+  auto npc = espm::Convert<espm::NPC_>(form.rec);
+
+  espm::CompressedFieldsCache compressedFieldsCache;
+  REQUIRE(npc->GetData(compressedFieldsCache).factions.size() == 8);
+  REQUIRE(npc->GetData(compressedFieldsCache).factions[0].formId == 0x28848);
+  REQUIRE(npc->GetData(compressedFieldsCache).factions[0].rank == 72);
+}
+
+TEST_CASE("Loads NPC flags", "[espm]")
+{
+  enum
+  {
+    MQ304Kodlak = 0x9700e
+  };
+
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(MQ304Kodlak);
+  REQUIRE(form.rec);
+  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+
+  auto npc = espm::Convert<espm::NPC_>(form.rec);
+
+  espm::CompressedFieldsCache compressedFieldsCache;
+  REQUIRE(npc->GetData(compressedFieldsCache).isEssential == true);
+  REQUIRE(npc->GetData(compressedFieldsCache).isProtected == false);
+}

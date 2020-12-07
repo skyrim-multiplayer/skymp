@@ -323,7 +323,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
 
   espm::Type t = base.rec->GetType();
-  if (/*t != "NPC_" &&*/ t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
+  if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
       t != "DOOR" && t != "CONT" &&
       (t != "FLOR" ||
        !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
@@ -331,12 +331,42 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
        !reinterpret_cast<espm::TREE*>(base.rec)->GetData().resultItem))
     return false;
 
+  // TODO: Load disabled references
   enum
   {
     InitiallyDisabled = 0x800
   };
   if (refr->GetFlags() & InitiallyDisabled)
     return false;
+
+  if (t == "NPC_") {
+    auto npcData =
+      reinterpret_cast<espm::NPC_*>(base.rec)->GetData(GetEspmCache());
+    if (npcData.isEssential || npcData.isProtected)
+      return false;
+
+    enum
+    {
+      CrimeFactionsList = 0x26953
+    };
+
+    auto formListLookupRes = br.LookupById(CrimeFactionsList);
+    auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
+    auto formIds = formList->GetData().formIds;
+    for (auto& formId : formIds) {
+      formId = formListLookupRes.ToGlobalId(formId);
+    }
+
+    for (auto fact : npcData.factions) {
+      auto it = std::find(formIds.begin(), formIds.end(),
+                          base.ToGlobalId(fact.formId));
+      if (it != formIds.end()) {
+        logger->info("Skipping actor {0:x} because it's in faction {0:x}",
+                     record->GetId(), *it);
+        return false;
+      }
+    }
+  }
 
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
@@ -376,11 +406,19 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
 
     auto typeStr = t.ToString();
-    AddForm(
-      std::unique_ptr<MpObjectReference>(new MpObjectReference(
-        { GetPos(locationalData), GetRot(locationalData), worldOrCell },
-        formCallbacksFactory(), baseId, typeStr.data(), primitiveBoundsDiv2)),
-      formId, true);
+    std::unique_ptr<MpForm> form;
+    LocationalData formLocationalData = { GetPos(locationalData),
+                                          GetRot(locationalData),
+                                          worldOrCell };
+    if (t != "NPC_") {
+      form.reset(new MpObjectReference(formLocationalData,
+                                       formCallbacksFactory(), baseId,
+                                       typeStr.data(), primitiveBoundsDiv2));
+    } else {
+      form.reset(
+        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+    }
+    AddForm(std::move(form), formId, true);
   }
 
   return true;

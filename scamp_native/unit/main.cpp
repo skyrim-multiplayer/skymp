@@ -49,6 +49,7 @@ std::string dataDir = DATA_DIR;
 #include "Networking_HandlePacketClientsideTest.h"
 #include "Networking_HandlePacketServersideTest.h"
 #include "Networking_MockTest.h"
+#include "NpcExists.h"
 #include "ObjectReferenceTest.h"
 #include "PapyrusCompatibilityTest.h"
 #include "PapyrusDebugTest.h"

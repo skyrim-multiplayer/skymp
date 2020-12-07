@@ -433,9 +433,14 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     remote.UpdateHoster(hoster);
     RecalculateWorn(remote);
 
+    uint64_t longFormId = remote.GetFormId();
+    if (dynamic_cast<MpActor*>(&remote) && longFormId < 0xff000000) {
+      longFormId += 0x100000000;
+    }
+
     Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId,
-                              R"({ "type": "hostStart", "target": %u })",
-                              remote.GetFormId());
+                              R"({ "type": "hostStart", "target": %llu })",
+                              longFormId);
 
     if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
           partOne.worldState.LookupFormById(prevHoster).get())) {
@@ -443,8 +448,8 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
       if (prevHosterUser != Networking::InvalidUserId &&
           prevHosterUser != rawMsgData.userId) {
         Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser,
-                                  R"({ "type": "hostStop", "target": %u })",
-                                  remote.GetFormId());
+                                  R"({ "type": "hostStop", "target": %llu })",
+                                  longFormId);
       }
     }
   }

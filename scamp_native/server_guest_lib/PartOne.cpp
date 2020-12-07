@@ -460,7 +460,12 @@ void PartOne::Init()
     const char* refrIdPrefix = "";
     char refrId[32] = { 0 };
     refrIdPrefix = R"(, "refrId": )";
-    sprintf(refrId, "%u", emitter->GetFormId());
+
+    uint64_t longFormId = emitter->GetFormId();
+    if (emitterAsActor && longFormId < 0xff000000) {
+      longFormId += 0x100000000;
+    }
+    sprintf(refrId, "%llu", longFormId);
 
     const char* baseIdPrefix = "";
     char baseId[32] = { 0 };

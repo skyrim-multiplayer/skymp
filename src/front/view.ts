@@ -25,6 +25,7 @@ import { applyEquipment, isBadMenuShown } from "./components/equipment";
 import { modWcProtection } from "./worldCleaner";
 import { applyInventory } from "./components/inventory";
 import { tryHost } from "./hostAttempts";
+import { getMovement } from "./components/movementGet";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -62,6 +63,21 @@ function isItem(t: number) {
     isMisc;
   return isItem;
 }
+
+const lastTryHost: Record<number, number> = {};
+
+const tryHostIfNeed = (ac: Actor, remoteId: number) => {
+  const last = lastTryHost[remoteId];
+  if (!last || Date.now() - last >= 1000) {
+    lastTryHost[remoteId] = Date.now();
+
+    if (
+      getMovement(ac).worldOrCell === getMovement(Game.getPlayer()).worldOrCell
+    ) {
+      return tryHost(remoteId);
+    }
+  }
+};
 
 function dealWithRef(ref: ObjectReference, base: Form): void {
   const t = base.getType();
@@ -389,8 +405,8 @@ export class FormView implements View<FormModel> {
         if (Date.now() - this.movState.lastRehost > 1000) {
           this.movState.lastRehost = Date.now();
           const remoteId = this.remoteRefrId;
-          if (ac) {
-            tryHost(remoteId);
+          if (ac && ac.is3DLoaded()) {
+            tryHostIfNeed(ac, remoteId);
             printConsole("try to rehost");
           }
         }
@@ -415,7 +431,7 @@ export class FormView implements View<FormModel> {
           if (ac) ac.clearKeepOffsetFromActor();
           if (ac) sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
           const remoteId = this.remoteRefrId;
-          if (ac && remoteId) tryHost(remoteId);
+          if (ac && remoteId && ac.is3DLoaded()) tryHostIfNeed(ac, remoteId);
         }
       }
     }

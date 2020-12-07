@@ -281,6 +281,7 @@ public:
 };
 static_assert(sizeof(TES4) == sizeof(RecordHeader));
 
+// reinterpret_cast<REFR *> must be safe for ACHR records
 class REFR : public RecordHeader
 {
 public:
@@ -651,11 +652,20 @@ class NPC_ : public RecordHeader
 public:
   static constexpr auto type = "NPC_";
 
+  struct Faction
+  {
+    uint32_t formId = 0;
+    int8_t rank = 0;
+  };
+
   struct Data
   {
     uint32_t defaultOutfitId = 0;
     uint32_t sleepOutfitId = 0;
     std::vector<CONT::ContainerObject> objects;
+    std::vector<Faction> factions;
+    bool isEssential = false;
+    bool isProtected = false;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;

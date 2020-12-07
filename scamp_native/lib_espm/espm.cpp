@@ -579,7 +579,8 @@ bool espm::Browser::ReadAny(void* parentGrStack)
 
     pImpl->recById[recHeader->id] = recHeader;
 
-    if (recHeader->GetType() == "REFR") {
+    auto t = recHeader->GetType();
+    if (t == "REFR" || t == "ACHR") {
       pImpl->objectReferences.push_back(recHeader);
       const auto refr = reinterpret_cast<REFR*>(recHeader);
       const auto data = refr->GetData();
@@ -844,6 +845,14 @@ espm::NPC_::Data espm::NPC_::GetData(
         result.defaultOutfitId = *reinterpret_cast<const uint32_t*>(data);
       } else if (!memcmp(type, "SOFT", 4)) {
         result.sleepOutfitId = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!memcmp(type, "SNAM", 4)) {
+        uint32_t formId = *reinterpret_cast<const uint32_t*>(data);
+        int8_t rank = *reinterpret_cast<const int8_t*>(data);
+        result.factions.push_back({ formId, rank });
+      } else if (!memcmp(type, "ACBS", 4)) {
+        uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
+        result.isEssential = !!(flags & 0x02);
+        result.isProtected = !!(flags & 0x800);
       }
     },
     &compressedFieldsCache);

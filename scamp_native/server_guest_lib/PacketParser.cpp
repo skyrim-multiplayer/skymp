@@ -5,6 +5,15 @@
 #include <MsgType.h>
 #include <simdjson.h>
 
+namespace FormIdCasts {
+uint32_t LongToNormal(uint64_t longFormId)
+{
+  if (longFormId < 0x100000000)
+    return static_cast<uint32_t>(longFormId);
+  return static_cast<uint32_t>(longFormId % 0x100000000);
+}
+}
+
 namespace JsonPointers {
 static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   pos("pos"), rot("rot"), isInJumpState("isInJumpState"),
@@ -109,10 +118,11 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     case MsgType::Activate: {
       simdjson::dom::element data_;
       ReadEx(jMessage, JsonPointers::data, &data_);
-      uint32_t caster, target;
+      uint64_t caster, target;
       ReadEx(data_, JsonPointers::caster, &caster);
       ReadEx(data_, JsonPointers::target, &target);
-      actionListener.OnActivate(rawMsgData, caster, target);
+      actionListener.OnActivate(rawMsgData, FormIdCasts::LongToNormal(caster),
+                                FormIdCasts::LongToNormal(target));
     } break;
     case MsgType::UpdateProperty:
       break;
@@ -188,9 +198,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     }
     case MsgType::Host: {
-      uint32_t remoteId;
+      uint64_t remoteId;
       ReadEx(jMessage, JsonPointers::remoteId, &remoteId);
-      actionListener.OnHostAttempt(rawMsgData, remoteId);
+      actionListener.OnHostAttempt(rawMsgData,
+                                   FormIdCasts::LongToNormal(remoteId));
       break;
     }
     default:
