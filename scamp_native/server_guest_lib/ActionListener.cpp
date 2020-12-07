@@ -1,4 +1,5 @@
 #include "ActionListener.h"
+#include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
@@ -103,8 +104,15 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
+    DummyMessageOutput msgOutputDummy;
     UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
-    if (!MovementValidation::Validate(*actor, pos, worldOrCell, msgOutput)) {
+
+    bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
+
+    if (!MovementValidation::Validate(
+          *actor, pos, worldOrCell,
+          isMe ? static_cast<IMessageOutput&>(msgOutput)
+               : static_cast<IMessageOutput&>(msgOutputDummy))) {
       return;
     }
 
