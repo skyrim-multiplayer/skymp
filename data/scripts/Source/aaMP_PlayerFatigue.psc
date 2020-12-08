@@ -33,11 +33,6 @@ endevent
 
 ; ======== Functions ========
 
-
-function showFatigueStatus()
-	Debug.notification("Усталость: " + Math.floor(_fatigueValue.getValue()))
-endfunction
-
 function handlePlayerFatigueUpdateEvent()
 	if (isEnabled())
 		if (isFatigueAccumulationAllow)
