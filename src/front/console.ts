@@ -1,4 +1,9 @@
-import { settings, printConsole, findConsoleCommand } from "skyrimPlatform";
+import {
+  settings,
+  printConsole,
+  findConsoleCommand,
+  storage,
+} from "skyrimPlatform";
 import { consoleCommands, scriptCommands } from "./consoleCommands";
 import { MsgType } from "./messages";
 
@@ -63,6 +68,18 @@ const getCommandExecutor = (
     }
     printConsole("sent");
     send({ t: MsgType.ConsoleCommand, data: { commandName, args } });
+    if (
+      storage["_api_onConsoleCommand"] &&
+      storage["_api_onConsoleCommand"]["callback"]
+    ) {
+      if (commandName === "mp") {
+        try {
+          storage["_api_onConsoleCommand"]["callback"](...args);
+        } catch (e) {
+          printConsole("'_api_onConsoleCommand' - ", e);
+        }
+      }
+    }
     return false;
   };
 };

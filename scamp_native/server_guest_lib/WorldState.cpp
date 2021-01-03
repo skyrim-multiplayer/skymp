@@ -131,6 +131,13 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
     }
     refr->ApplyChangeForm(*optionalChangeFormToApply);
   }
+
+  for (auto& listener : listeners) {
+    thread_local simdjson::dom::parser p;
+    thread_local const auto emptyArgs = p.parse(std::string("[]")).value();
+
+    listener->OnMpApiEvent("onInit", emptyArgs, formId);
+  }
 }
 
 void WorldState::TickTimers()
@@ -466,8 +473,6 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
 const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
   uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
 {
-  auto& gridData = grids[cellOrWorld];
-
   if (espm && !pImpl->chunkLoadingInProgress) {
     ScopedTask task(
       [](void* st) {
@@ -480,7 +485,7 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
     auto& br = espm->GetBrowser();
     for (int16_t x = cellX - 1; x <= cellX + 1; ++x) {
       for (int16_t y = cellY - 1; y <= cellY + 1; ++y) {
-        auto& loaded = gridData.loadedChunks[x][y];
+        const bool loaded = grids[cellOrWorld].loadedChunks[x][y];
         if (!loaded) {
           auto records = br.GetRecordsAtPos(cellOrWorld, x, y);
           for (size_t i = 0; i < espmFiles.size(); ++i) {
@@ -491,13 +496,16 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
               LoadForm(mappedId);
             }
           }
-          loaded = true;
+          // Do not keep "loaded" reference here since LoadForm would
+          // invalidate this reference
+          grids[cellOrWorld].loadedChunks[x][y] = true;
         }
       }
     }
   }
 
-  auto& neighbours = gridData.grid.GetNeighboursByPosition(cellX, cellY);
+  auto& neighbours =
+    grids[cellOrWorld].grid->GetNeighboursByPosition(cellX, cellY);
   return neighbours;
 }
 

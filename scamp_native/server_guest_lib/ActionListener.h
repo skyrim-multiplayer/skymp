@@ -58,6 +58,9 @@ public:
   void OnHostAttempt(const RawMessageData& rawMsgData,
                      uint32_t remoteId) override;
 
+  void OnCustomEvent(const RawMessageData& rawMsgData, const char* eventName,
+                     simdjson::dom::element& e) override;
+
 private:
   // Returns user's actor if exists
   MpActor* SendToNeighbours(uint32_t idx,

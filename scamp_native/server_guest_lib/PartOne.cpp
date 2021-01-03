@@ -35,7 +35,6 @@ public:
 struct PartOne::Impl
 {
   simdjson::dom::parser parser;
-  std::vector<std::shared_ptr<Listener>> listeners;
   espm::Loader* espm = nullptr;
 
   std::function<void(Networking::ISendTarget*sendTarget,
@@ -52,6 +51,9 @@ struct PartOne::Impl
 
   Networking::ISendTarget* sendTarget = nullptr;
   FakeSendTarget fakeSendTarget;
+
+  GamemodeApi::State gamemodeApiState;
+  std::string updateGamemodeDataMsg;
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -82,7 +84,7 @@ void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
 
 void PartOne::AddListener(std::shared_ptr<Listener> listener)
 {
-  pImpl->listeners.push_back(listener);
+  worldState.listeners.push_back(listener);
 }
 
 bool PartOne::IsConnected(Networking::UserId userId) const
@@ -350,7 +352,7 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
       });
 
       this_->serverState.disconnectingUserId = userId;
-      for (auto& listener : this_->pImpl->listeners)
+      for (auto& listener : this_->worldState.listeners)
         listener->OnDisconnect(userId);
       return;
     }
@@ -367,6 +369,43 @@ Networking::ISendTarget& PartOne::GetSendTarget() const
   if (!pImpl->sendTarget)
     throw std::runtime_error("No send target found");
   return *pImpl->sendTarget;
+}
+
+void PartOne::NotifyGamemodeApiStateChanged(
+  const GamemodeApi::State& newState) noexcept
+{
+  nlohmann::json j{ { "type", "updateGamemodeData" },
+                    { "eventSources", nlohmann::json::object() },
+                    { "updateOwnerFunctions", nlohmann::json::object() } };
+  for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
+    j["eventSources"][eventName] = eventSourceInfo.functionBody;
+  }
+  for (auto [propertyName, propertyInfo] : newState.createdProperties) {
+    //  From docs: isVisibleByNeighbors considered to be always false for
+    //  properties with `isVisibleByOwner == false`, in that case, actual
+    //  flag value is ignored.
+    const bool actuallyVisibleByNeighbor =
+      propertyInfo.isVisibleByNeighbors && propertyInfo.isVisibleByOwner;
+
+    j["updateOwnerFunctions"][propertyName] =
+      propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "";
+    j["updateNeighborFunctions"][propertyName] =
+      actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "";
+  }
+
+  std::string m;
+  m += Networking::MinPacketId;
+  m += j.dump();
+  pImpl->updateGamemodeDataMsg = m;
+
+  for (Networking::UserId i = 0; i <= serverState.maxConnectedId; ++i) {
+    if (!serverState.IsConnected(i))
+      continue;
+    GetSendTarget().Send(i, reinterpret_cast<Networking::PacketData>(m.data()),
+                         m.size(), true);
+  }
+
+  pImpl->gamemodeApiState = newState;
 }
 
 FormCallbacks PartOne::CreateFormCallbacks()
@@ -405,7 +444,7 @@ IActionListener& PartOne::GetActionListener()
 const std::vector<std::shared_ptr<PartOne::Listener>>& PartOne::GetListeners()
   const
 {
-  return pImpl->listeners;
+  return worldState.listeners;
 }
 
 std::vector<PartOne::Message>& PartOne::Messages()
@@ -461,7 +500,7 @@ void PartOne::Init()
     char refrId[32] = { 0 };
     refrIdPrefix = R"(, "refrId": )";
 
-    uint64_t longFormId = emitter->GetFormId();
+    long long unsigned int longFormId = emitter->GetFormId();
     if (emitterAsActor && longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
@@ -475,14 +514,30 @@ void PartOne::Init()
       sprintf(baseId, "%d", emitter->GetBaseId());
     }
 
+    const bool isOwner = emitter == listener;
+
     std::string props;
 
     auto mode = VisitPropertiesMode::OnlyPublic;
-    if (emitter == listener)
+    if (isOwner)
       mode = VisitPropertiesMode::All;
 
     const char *propsPrefix = "", *propsPostfix = "";
     auto visitor = [&](const char* propName, const char* jsonValue) {
+      auto it = pImpl->gamemodeApiState.createdProperties.find(propName);
+      if (it != pImpl->gamemodeApiState.createdProperties.end()) {
+        if (!it->second.isVisibleByOwner) {
+          //  From docs: isVisibleByNeighbors considered to be always false for
+          //  properties with `isVisibleByOwner == false`, in that case, actual
+          //  flag value is ignored.
+          return;
+        }
+
+        if (!it->second.isVisibleByNeighbors && !isOwner) {
+          return;
+        }
+      }
+
       propsPrefix = R"(, "props": { )";
       propsPostfix = R"( })";
 
@@ -539,8 +594,15 @@ void PartOne::Init()
 void PartOne::AddUser(Networking::UserId userId, UserType type)
 {
   serverState.Connect(userId);
-  for (auto& listener : pImpl->listeners)
+  for (auto& listener : worldState.listeners)
     listener->OnConnect(userId);
+
+  if (!pImpl->updateGamemodeDataMsg.empty()) {
+    GetSendTarget().Send(userId,
+                         reinterpret_cast<Networking::PacketData>(
+                           pImpl->updateGamemodeDataMsg.data()),
+                         pImpl->updateGamemodeDataMsg.size(), true);
+  }
 }
 
 void PartOne::HandleMessagePacket(Networking::UserId userId,

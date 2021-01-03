@@ -9,7 +9,12 @@ import {
   Utility,
   Actor,
 } from "skyrimPlatform";
-import { WorldView } from "./view";
+import {
+  WorldView,
+  getViewFromStorage,
+  localIdToRemoteId,
+  remoteIdToLocalId,
+} from "./view";
 import { getMovement } from "./components/movement";
 import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
@@ -26,6 +31,7 @@ import * as loadGameManager from "./loadGameManager";
 import * as deathSystem from "./deathSystem";
 import { setUpConsoleCommands } from "./console";
 import { nextHostAttempt } from "./hostAttempts";
+import * as updateOwner from "./updateOwner";
 
 interface AnyMessage {
   type?: string;
@@ -96,30 +102,11 @@ if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
 }
 
 export class SkympClient {
-  private localIdToRemoteId(localFormId: number): number {
-    if (localFormId >= 0xff000000) {
-      const view = this.getView();
-      if (!view) return 0;
-      localFormId = view.getRemoteRefrId(localFormId);
-      if (!localFormId) return 0;
-    }
-    return localFormId;
-  }
-
-  private remoteIdToLocalId(remoteFormId: number): number {
-    if (remoteFormId >= 0xff000000) {
-      const view = this.getView();
-      if (!view) return 0;
-      remoteFormId = view.getLocalRefrId(remoteFormId);
-      if (!remoteFormId) return 0;
-    }
-    return remoteFormId;
-  }
-
   constructor() {
     this.resetView();
     this.resetRemoteServer();
     setupHooks();
+    updateOwner.setup();
 
     sp.printConsole("SkympClient ctor");
 
@@ -366,6 +353,19 @@ export class SkympClient {
           { t: MsgType.UpdateAnimation, data: anim, _refrId },
           false
         );
+        if (
+          storage._api_onAnimationEvent &&
+          storage._api_onAnimationEvent.callback
+        ) {
+          try {
+            storage._api_onAnimationEvent.callback(
+              _refrId ? _refrId : 0x14,
+              anim.animEventName
+            );
+          } catch (e) {
+            printConsole("'_api_onAnimationEvent' -", e);
+          }
+        }
       }
     }
   }
@@ -471,9 +471,15 @@ export class SkympClient {
   }
 
   private getView(): WorldView | undefined {
-    const res = storage.view as WorldView;
-    if (typeof res === "object") return res;
-    return undefined;
+    return getViewFromStorage();
+  }
+
+  private localIdToRemoteId(localFormId: number): number {
+    return localIdToRemoteId(localFormId);
+  }
+
+  private remoteIdToLocalId(remoteFormId: number): number {
+    return remoteIdToLocalId(remoteFormId);
   }
 
   private playerAnimSource = new Map<string, AnimationSource>();

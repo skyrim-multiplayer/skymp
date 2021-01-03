@@ -33,6 +33,7 @@ nlohmann::json ToJson(const MpChangeForm& changeForm)
   res["isDisabled"] = changeForm.isDisabled;
   res["profileId"] = changeForm.profileId;
   res["isRaceMenuOpen"] = changeForm.isRaceMenuOpen;
+  res["dynamicFields"] = changeForm.dynamicFields;
 
   if (changeForm.lookDump.empty()) {
     res["lookDump"] = nullptr;
@@ -56,7 +57,8 @@ MpChangeForm JsonToChangeForm(simdjson::dom::element& element)
     isOpen("isOpen"), baseContainerAdded("baseContainerAdded"),
     nextRelootDatetime("nextRelootDatetime"), isDisabled("isDisabled"),
     profileId("profileId"), isRaceMenuOpen("isRaceMenuOpen"),
-    lookDump("lookDump"), equipmentDump("equipmentDump");
+    lookDump("lookDump"), equipmentDump("equipmentDump"),
+    dynamicFields("dynamicFields");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -100,6 +102,16 @@ MpChangeForm JsonToChangeForm(simdjson::dom::element& element)
   res.equipmentDump = simdjson::minify(jTmp);
   if (res.equipmentDump == "null")
     res.equipmentDump.clear();
+
+  try {
+    simdjson::dom::element jDynamicFields;
+    ReadEx(element, dynamicFields, &jDynamicFields);
+    res.dynamicFields = nlohmann::json::parse(
+      static_cast<std::string>(simdjson::minify(jDynamicFields)));
+  } catch (JsonIndexException&) {
+  } catch (...) {
+    throw;
+  }
 
   return res;
 }

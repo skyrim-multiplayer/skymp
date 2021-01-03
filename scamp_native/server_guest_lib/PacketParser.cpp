@@ -21,7 +21,8 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   caster("caster"), target("target"), snippetIdx("snippetIdx"),
   returnValue("returnValue"), baseId("baseId"), commandName("commandName"),
   args("args"), workbench("workbench"), resultObjectId("resultObjectId"),
-  craftInputObjects("craftInputObjects"), remoteId("remoteId");
+  craftInputObjects("craftInputObjects"), remoteId("remoteId"),
+  eventName("eventName");
 }
 
 struct PacketParser::Impl
@@ -202,6 +203,14 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       ReadEx(jMessage, JsonPointers::remoteId, &remoteId);
       actionListener.OnHostAttempt(rawMsgData,
                                    FormIdCasts::LongToNormal(remoteId));
+      break;
+    }
+    case MsgType::CustomEvent: {
+      simdjson::dom::element args;
+      ReadEx(jMessage, JsonPointers::args, &args);
+      const char* eventName;
+      ReadEx(jMessage, JsonPointers::eventName, &eventName);
+      actionListener.OnCustomEvent(rawMsgData, eventName, args);
       break;
     }
     default:

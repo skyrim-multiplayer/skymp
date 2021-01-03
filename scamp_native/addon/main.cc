@@ -1,4 +1,5 @@
 #include "AsyncSaveStorage.h"
+#include "GamemodeApi.h"
 #include "MigrationDatabase.h"
 #include "MongoDatabase.h"
 #include "Networking.h"
@@ -11,6 +12,10 @@
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+
+#ifndef NAPI_CPP_EXCEPTIONS
+#  error NAPI_CPP_EXCEPTIONS must be defined or throwing from JS code would crash!
+#endif
 
 namespace {
 inline NiPoint3 NapiValueToNiPoint3(Napi::Value v)
@@ -61,6 +66,7 @@ public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   ScampServer(const Napi::CallbackInfo& info);
 
+  Napi::Value AttachSaveStorage(const Napi::CallbackInfo& info);
   Napi::Value Tick(const Napi::CallbackInfo& info);
   Napi::Value On(const Napi::CallbackInfo& info);
   Napi::Value CreateActor(const Napi::CallbackInfo& info);
@@ -75,15 +81,19 @@ public:
   Napi::Value SetEnabled(const Napi::CallbackInfo& info);
   Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
+  Napi::Value GetMpApi(const Napi::CallbackInfo& info);
 
 private:
-  std::unique_ptr<PartOne> partOne;
+  std::shared_ptr<PartOne> partOne;
   std::shared_ptr<Networking::IServer> server;
   std::shared_ptr<Networking::MockServer> serverMock;
   std::shared_ptr<ScampServerListener> listener;
   Napi::Env tickEnv;
   Napi::ObjectReference emitter;
   Napi::FunctionReference emit;
+  std::optional<Napi::ObjectReference> mp;
+  std::shared_ptr<spdlog::logger> logger;
+  nlohmann::json serverSettings;
 
   static Napi::FunctionReference constructor;
 };
@@ -127,6 +137,58 @@ public:
                 Napi::String::New(env, contentStr) });
   }
 
+  bool OnMpApiEvent(const char* eventName, const simdjson::dom::element& args,
+                    std::optional<uint32_t> formId) override
+  {
+    if (server.mp == std::nullopt)
+      return true;
+
+    auto f = server.mp->Get(eventName);
+    if (!f.IsFunction())
+      return true;
+
+    auto& env = server.tickEnv;
+
+    if (!args.is_array())
+      return true;
+    auto& argsArray = args.get_array().value();
+
+    std::vector<Napi::Value> argumentsInNapiFormat;
+    if (formId != std::nullopt) {
+      argumentsInNapiFormat.push_back(Napi::Number::New(env, *formId));
+    }
+
+    for (size_t i = 0; i < argsArray.size(); ++i) {
+      std::string elementString = simdjson::minify(argsArray.at(i));
+      auto builtinJson = env.Global().Get("JSON").As<Napi::Object>();
+      auto parse = builtinJson.Get("parse").As<Napi::Function>();
+      Napi::Value resultOfParsing =
+        parse.Call(builtinJson, { Napi::String::New(env, elementString) });
+      argumentsInNapiFormat.push_back(resultOfParsing);
+    }
+
+    std::vector<napi_value> argumentsInNodeFormat;
+    argumentsInNodeFormat.reserve(argumentsInNapiFormat.size());
+    for (auto& arg : argumentsInNapiFormat) {
+      argumentsInNodeFormat.push_back(arg);
+    }
+
+    try {
+      auto callResult = f.As<Napi::Function>().Call(
+        env.Undefined(), argumentsInNodeFormat.size(),
+        argumentsInNodeFormat.data());
+
+      if (callResult.IsUndefined())
+        return true;
+
+      return static_cast<bool>(callResult.ToBoolean());
+    } catch (Napi::Error& e) {
+      std::cout << "[" << eventName << "] "
+                << " " << e.Message() << std::endl;
+      return true;
+    }
+  }
+
 private:
   ScampServer& server;
 };
@@ -137,7 +199,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(
     env, "ScampServer",
-    { InstanceMethod<&ScampServer::Tick>("tick"),
+    { InstanceMethod<&ScampServer::AttachSaveStorage>("attachSaveStorage"),
+      InstanceMethod<&ScampServer::Tick>("tick"),
       InstanceMethod<&ScampServer::On>("on"),
       InstanceMethod<&ScampServer::CreateActor>("createActor"),
       InstanceMethod<&ScampServer::SetUserActor>("setUserActor"),
@@ -151,7 +214,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod<&ScampServer::GetActorsByProfileId>(
         "getActorsByProfileId"),
       InstanceMethod<&ScampServer::SetEnabled>("setEnabled"),
-      InstanceMethod<&ScampServer::CreateBot>("createBot") });
+      InstanceMethod<&ScampServer::CreateBot>("createBot"),
+      InstanceMethod<&ScampServer::GetMpApi>("getMpApi") });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -259,8 +323,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->SetSendTarget(server.get());
     partOne->worldState.AttachScriptStorage(scriptStorage);
     partOne->AttachEspm(espm);
-    partOne->AttachSaveStorage(
-      CreateSaveStorage(CreateDatabase(serverSettings, logger), logger));
+    this->serverSettings = serverSettings;
+    this->logger = logger;
 
     auto reloot = serverSettings["reloot"];
     for (auto it = reloot.begin(); it != reloot.end(); ++it) {
@@ -280,6 +344,17 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
+}
+
+Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
+{
+  try {
+    partOne->AttachSaveStorage(
+      CreateSaveStorage(CreateDatabase(serverSettings, logger), logger));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
 }
 
 Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
@@ -480,6 +555,334 @@ Napi::Value ScampServer::CreateBot(const Napi::CallbackInfo& info)
     }));
 
   return jBot;
+}
+
+void Err(const Napi::Env& env, std::string msg)
+{
+  throw Napi::Error::New(env, msg);
+}
+
+void Err(const Napi::CallbackInfo& info, std::string msg)
+{
+  Err(info.Env(), msg);
+}
+
+std::string GetPropertyAlphabet()
+{
+  std::string alphabet;
+  for (char c = 'a'; c <= 'z'; c++)
+    alphabet += c;
+  for (char c = 'A'; c <= 'Z'; c++)
+    alphabet += c;
+  for (char c = '0'; c <= '9'; c++)
+    alphabet += c;
+  alphabet += '_';
+  return alphabet;
+}
+
+uint32_t GetFormId(Napi::Value v)
+{
+  if (v.IsNumber()) {
+    double formId = static_cast<double>(v.As<Napi::Number>());
+    constexpr auto max =
+      static_cast<double>(std::numeric_limits<uint32_t>::max());
+    if (std::isfinite(formId) && formId >= 0 && formId < max) {
+      return static_cast<uint32_t>(floor(formId));
+    }
+  }
+  return 0;
+}
+
+std::string ExtractPropertyName(Napi::Value v)
+{
+  if (!v.IsString()) {
+    std::stringstream ss;
+    ss << "Expected 'propertyName' to be string, but got '";
+    ss << static_cast<std::string>(v.ToString().As<Napi::String>());
+    ss << "'";
+    Err(v.Env(), ss.str());
+  }
+  return static_cast<std::string>(v.As<Napi::String>());
+}
+
+uint32_t ExtractFormId(Napi::Value v)
+{
+  if (!v.IsNumber()) {
+    std::stringstream ss;
+    ss << "Expected 'formId' to be number, but got '";
+    ss << static_cast<std::string>(v.ToString().As<Napi::String>());
+    ss << "'";
+    Err(v.Env(), ss.str());
+  }
+  return GetFormId(v);
+}
+
+nlohmann::json ExtractNewValue(Napi::Value v)
+{
+  auto builtinJson = v.Env().Global().Get("JSON").As<Napi::Object>();
+  auto stringify = builtinJson.Get("stringify").As<Napi::Function>();
+  std::string dump = stringify.Call(builtinJson, { v }).As<Napi::String>();
+  return nlohmann::json::parse(dump);
+}
+
+void EnsurePropertyExists(Napi::Env env,
+                          const std::shared_ptr<GamemodeApi::State>& state,
+                          const std::string& propertyName)
+{
+  if (!state->createdProperties.count(propertyName)) {
+    std::stringstream ss;
+    ss << "Property '" << propertyName << "' doesn't exist";
+    Err(env, ss.str());
+  }
+}
+
+Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
+{
+  Napi::Object mp = Napi::Object::New(info.Env());
+  if (this->mp != std::nullopt) {
+    return this->mp->Value();
+  }
+  this->mp = Napi::Persistent(mp);
+
+  auto state = std::make_shared<GamemodeApi::State>();
+
+  auto update = [this, state] {
+    partOne->NotifyGamemodeApiStateChanged(*state);
+  };
+
+  mp.Set("clear",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+             *state = GamemodeApi::State();
+             update();
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
+  mp.Set(
+    "makeProperty",
+    Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+      try {
+        auto propertyName = ExtractPropertyName(info[0]);
+        if (propertyName.size() < 1 || propertyName.size() > 128) {
+          std::stringstream ss;
+          ss << "The length of 'propertyName' must be between 1 and 128, but "
+                "it "
+                "is '";
+          ss << propertyName.size();
+          ss << "'";
+          Err(info, ss.str());
+        }
+
+        auto alphabet = GetPropertyAlphabet();
+        if (propertyName.find_first_not_of(alphabet.data()) !=
+            std::string::npos) {
+          std::stringstream ss;
+          ss << "'propertyName' may contain only Latin characters, numbers, "
+                "and underscore";
+          Err(info, ss.str());
+        }
+
+        if (state->createdProperties.count(propertyName)) {
+          std::stringstream ss;
+          ss << "'propertyName' must be unique";
+          Err(info, ss.str());
+        }
+
+        GamemodeApi::PropertyInfo propertyInfo;
+
+        if (!info[1].IsObject()) {
+          std::stringstream ss;
+          ss << "Expected 'options' to be object, but got '";
+          ss << static_cast<std::string>(
+            info[1].ToString().As<Napi::String>());
+          ss << "'";
+          Err(info, ss.str());
+        }
+
+        auto options = info[1].As<Napi::Object>();
+
+        std::vector<std::pair<std::string, bool*>> booleans{
+          { "isVisibleByOwner", &propertyInfo.isVisibleByOwner },
+          { "isVisibleByNeighbors", &propertyInfo.isVisibleByNeighbors }
+        };
+        for (auto [optionName, ptr] : booleans) {
+          auto v = options.Get(optionName.data());
+          if (!v.IsBoolean()) {
+            std::stringstream ss;
+            ss << "Expected 'options." << optionName;
+            ss << "' to be boolean, but got '";
+            ss << static_cast<std::string>(v.ToString().As<Napi::String>());
+            ss << "'";
+            Err(info, ss.str());
+          }
+          *ptr = static_cast<bool>(v.As<Napi::Boolean>());
+        }
+
+        std::vector<std::pair<std::string, std::string*>> strings{
+          { "updateNeighbor", &propertyInfo.updateNeighbor },
+          { "updateOwner", &propertyInfo.updateOwner }
+        };
+        for (auto [optionName, ptr] : strings) {
+          auto v = options.Get(optionName.data());
+          if (!v.IsString()) {
+            std::stringstream ss;
+            ss << "Expected 'options." << optionName;
+            ss << "' to be string, but got '";
+            ss << static_cast<std::string>(v.ToString().As<Napi::String>());
+            ss << "'";
+            Err(info, ss.str());
+          }
+          *ptr = static_cast<std::string>(v.As<Napi::String>());
+        }
+
+        state->createdProperties[propertyName] = propertyInfo;
+
+        update();
+      } catch (std::exception& e) {
+        throw Napi::Error::New(info.Env(), (std::string)e.what());
+      }
+    }));
+
+  mp.Set("makeEventSource",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+
+             if (!info[0].IsString()) {
+               std::stringstream ss;
+               ss << "Expected 'eventName' to be string, but got '";
+               ss << static_cast<std::string>(
+                 info[0].ToString().As<Napi::String>());
+               ss << "'";
+               Err(info, ss.str());
+             }
+
+             auto eventName =
+               static_cast<std::string>(info[0].As<Napi::String>());
+
+             if (state->createdEventSources.count(eventName)) {
+               std::stringstream ss;
+               ss << "Expected 'eventName' to be string, but got '";
+               ss << static_cast<std::string>(
+                 info[0].ToString().As<Napi::String>());
+               ss << "'";
+               Err(info, ss.str());
+             }
+
+             if (!info[1].IsString()) {
+               std::stringstream ss;
+               ss << "Expected 'functionBody' to be string, but got '";
+               ss << static_cast<std::string>(
+                 info[1].ToString().As<Napi::String>());
+               ss << "'";
+               Err(info, ss.str());
+             }
+
+             auto functionBody =
+               static_cast<std::string>(info[1].As<Napi::String>());
+             state->createdEventSources[eventName] = { functionBody };
+
+             update();
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
+  mp.Set("get",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+             auto propertyName = ExtractPropertyName(info[1]);
+             auto formId = ExtractFormId(info[0]);
+
+             auto& refr =
+               partOne->worldState.GetFormAt<MpObjectReference>(formId);
+
+             Napi::Value res = info.Env().Undefined();
+
+             if (propertyName == "type") {
+               if (dynamic_cast<MpActor*>(&refr)) {
+                 res = Napi::String::New(info.Env(), "MpActor");
+               } else {
+                 res = Napi::String::New(info.Env(), "MpObjectReference");
+               }
+             } else if (propertyName == "pos" || propertyName == "angle") {
+               auto niPoint3 =
+                 propertyName == "pos" ? refr.GetPos() : refr.GetAngle();
+               auto arr = Napi::Array::New(info.Env(), 3);
+               for (uint32_t i = 0; i < 3; ++i) {
+                 arr.Set(i, Napi::Number::New(info.Env(), niPoint3[i]));
+               }
+               res = arr;
+             } else if (propertyName == "worldOrCellDesc") {
+               auto desc = FormDesc::FromFormId(refr.GetCellOrWorld(),
+                                                partOne->worldState.espmFiles);
+               res = Napi::String::New(info.Env(), desc.ToString());
+             } else {
+               EnsurePropertyExists(info.Env(), state, propertyName);
+
+               auto fields = refr.GetChangeForm().dynamicFields;
+
+               auto it = fields.find(propertyName);
+               if (it != fields.end()) {
+                 auto dump = it->dump();
+                 auto builtinJson =
+                   info.Env().Global().Get("JSON").As<Napi::Object>();
+                 auto parse = builtinJson.Get("parse").As<Napi::Function>();
+                 res = parse.Call({ Napi::String::New(info.Env(), dump) });
+               }
+             }
+
+             return res;
+
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
+  mp.Set("set",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+             auto formId = ExtractFormId(info[0]);
+             auto propertyName = ExtractPropertyName(info[1]);
+             auto newValue = ExtractNewValue(info[2]);
+
+             auto& refr =
+               partOne->worldState.GetFormAt<MpObjectReference>(formId);
+
+             if (propertyName == "pos") {
+               float x = newValue[0].get<float>();
+               float y = newValue[1].get<float>();
+               float z = newValue[2].get<float>();
+               refr.SetPos({ x, y, z });
+               refr.SetTeleportFlag(true);
+             } else if (propertyName == "angle") {
+               float x = newValue[0].get<float>();
+               float y = newValue[1].get<float>();
+               float z = newValue[2].get<float>();
+               refr.SetAngle({ x, y, z });
+               refr.SetTeleportFlag(true);
+             } else if (propertyName == "worldOrCellDesc") {
+               std::string str = newValue.get<std::string>();
+               uint32_t formId = FormDesc::FromString(str).ToFormId(
+                 partOne->worldState.espmFiles);
+               refr.SetCellOrWorld(formId);
+             } else {
+
+               EnsurePropertyExists(info.Env(), state, propertyName);
+
+               auto& info = state->createdProperties[propertyName];
+
+               refr.SetProperty(propertyName, newValue, info.isVisibleByOwner,
+                                info.isVisibleByNeighbors);
+             }
+
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
+  return mp;
 }
 
 Napi::String Method(const Napi::CallbackInfo& info)

@@ -17,5 +17,6 @@ enum class MsgType : int64_t
   OnEquip = 11,
   ConsoleCommand = 12,
   CraftItem = 13,
-  Host = 14
+  Host = 14,
+  CustomEvent = 15
 };

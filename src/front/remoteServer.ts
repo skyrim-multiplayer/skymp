@@ -30,6 +30,38 @@ import { Movement } from "./components/movement";
 import { IdManager } from "../lib/idManager";
 import { applyLookToPlayer } from "./components/look";
 import * as spSnippet from "./spSnippet";
+import * as sp from "skyrimPlatform";
+import { localIdToRemoteId, remoteIdToLocalId } from "./view";
+import * as updateOwner from "./updateOwner";
+
+//
+// eventSource system
+//
+
+const setupEventSource = (ctx: any) => {
+  once("update", () => {
+    try {
+      ctx._fn(ctx);
+      printConsole(`'eventSources.${ctx._eventName}' - Added`);
+    } catch (e) {
+      printConsole(`'eventSources.${ctx._eventName}' -`, e);
+    }
+  });
+};
+
+// Handle hot reload for eventSoucres
+if (Array.isArray(storage["eventSourceContexts"])) {
+  storage["eventSourceContexts"] = storage["eventSourceContexts"].filter(
+    (ctx) => !ctx._expired
+  );
+  storage["eventSourceContexts"].forEach((ctx: any) => {
+    setupEventSource(ctx);
+  });
+}
+
+//
+//
+//
 
 const maxVerifyDelayDefault = 1000;
 let verifyStartMoment = 0;
@@ -165,7 +197,12 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   teleport(msg: messages.Teleport): void {
     once("update", () => {
-      printConsole("Teleporting...");
+      printConsole(
+        "Teleporting...",
+        msg.pos,
+        "cell/world is",
+        msg.worldOrCell.toString(16)
+      );
       TESModPlatform.moveRefrToPosition(
         Game.getPlayer(),
         Cell.from(Game.getFormEx(msg.worldOrCell)),
@@ -212,6 +249,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       baseId: msg.baseId,
       refrId: msg.refrId,
     };
+    if (msg.isMe) {
+      updateOwner.setOwnerModel(this.worldModel.forms[i]);
+    }
+
     if (msg.look) {
       this.worldModel.forms[i].look = msg.look;
     }
@@ -444,6 +485,92 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           );
         })
         .catch((e) => printConsole("!!! SpSnippet failed", e));
+    });
+  }
+
+  private updateGamemodeUpdateFunctions(
+    storageVar: string,
+    functionSources: Record<string, string>
+  ): void {
+    storage[storageVar] = JSON.parse(JSON.stringify(functionSources));
+    for (const propName of Object.keys(functionSources)) {
+      try {
+        storage[storageVar][propName] = new Function(
+          "ctx",
+          storage[storageVar][propName]
+        );
+        const emptyFunction = functionSources[propName] === "";
+        if (emptyFunction) {
+          delete storage[storageVar][propName];
+          printConsole(`'${storageVar}.${propName}' -`, "Added empty");
+        } else {
+          printConsole(`'${storageVar}.${propName}' -`, "Added");
+        }
+      } catch (e) {
+        printConsole(`'${storageVar}.${propName}' -`, e);
+      }
+    }
+    storage[`${storageVar}_keys`] = Object.keys(storage[storageVar]);
+  }
+
+  updateGamemodeData(msg: messages.UpdateGamemodeDataMessage): void {
+    //
+    // updateOwnerFunctions/updateNeighborFunctions
+    //
+    storage["updateNeighborFunctions"] = undefined;
+    storage["updateOwnerFunctions"] = undefined;
+
+    this.updateGamemodeUpdateFunctions(
+      "updateNeighborFunctions",
+      msg.updateNeighborFunctions || {}
+    );
+    this.updateGamemodeUpdateFunctions(
+      "updateOwnerFunctions",
+      msg.updateOwnerFunctions || {}
+    );
+
+    //
+    // EventSource
+    //
+    if (!Array.isArray(storage["eventSourceContexts"])) {
+      storage["eventSourceContexts"] = [];
+    } else {
+      storage["eventSourceContexts"].forEach((ctx) => {
+        ctx.sendEvent = () => {};
+        ctx._expired = true;
+      });
+    }
+    const eventNames = Object.keys(msg.eventSources);
+    eventNames.forEach((eventName) => {
+      try {
+        const fn = new Function("ctx", msg.eventSources[eventName]);
+        const ctx = {
+          sp,
+          sendEvent: (...args: unknown[]) => {
+            this.send(
+              {
+                t: messages.MsgType.CustomEvent,
+                args,
+                eventName,
+              },
+              true
+            );
+          },
+          getFormIdInServerFormat: (clientsideFormId: number) => {
+            return localIdToRemoteId(clientsideFormId);
+          },
+          getFormIdInClientFormat: (serversideFormId: number) => {
+            return remoteIdToLocalId(serversideFormId);
+          },
+          _fn: fn,
+          _eventName: eventName,
+          state: {},
+        };
+        storage["eventSourceContexts"].push(ctx);
+        setupEventSource(ctx);
+      } catch (e) {
+        printConsole(`'eventSources.${eventName}' -`, e);
+      }
     });
   }
 

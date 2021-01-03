@@ -98,6 +98,8 @@ MpChangeForm MpActor::GetChangeForm() const
   res.lookDump = achr.lookDump;
   res.isRaceMenuOpen = achr.isRaceMenuOpen;
   res.equipmentDump = achr.equipmentDump;
+  // achr.dynamicFields isn't really used so I decided to comment this line:
+  // res.dynamicFields.merge_patch(achr.dynamicFields);
 
   res.recType = MpChangeForm::ACHR;
   return res;

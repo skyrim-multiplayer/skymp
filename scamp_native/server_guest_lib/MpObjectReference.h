@@ -84,6 +84,7 @@ public:
   FormCallbacks GetCallbacks() const;
   bool HasScript(const char* name) const;
   bool IsActivationBlocked() const;
+  bool GetTeleportFlag() const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
@@ -109,6 +110,10 @@ public:
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
+  void SetProperty(const std::string& propertyName,
+                   const nlohmann::json& newValue, bool isVisibleByOwner,
+                   bool isVisibleByNeighbor);
+  void SetTeleportFlag(bool value);
 
   // If you want to completely remove ObjectReference from the grid you need
   // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these

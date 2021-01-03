@@ -28,6 +28,7 @@ export declare class ScampServer {
     event: "customPacket",
     handler: (userId: number, content: string) => void
   ): void;
+  attachSaveStorage(): void;
   tick(): void;
 
   createActor(
@@ -48,6 +49,8 @@ export declare class ScampServer {
   setEnabled(actorId: number, enabled: boolean): void;
   getActorsByProfileId(profileId: number): number[];
   createBot(): Bot;
+
+  getMpApi(): Record<string, unknown>;
 }
 
 module.exports.ScampServer = scampNativeNode.ScampServer;

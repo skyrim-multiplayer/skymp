@@ -45,6 +45,8 @@ public:
 
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
+
+  nlohmann::json dynamicFields = nlohmann::json::object();
 };
 
 class MpChangeForm : public MpChangeFormREFR

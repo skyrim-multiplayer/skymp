@@ -12,6 +12,7 @@ import {
   Utility,
   worldPointToScreenPoint,
   Form,
+  storage,
 } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
 
@@ -30,6 +31,18 @@ import { getMovement } from "./components/movementGet";
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
 let gPcWorldOrCellId = 0;
+let gUpdateNeighborFunctionsKeys = new Array<string>();
+let gUpdateNeighborFunctions: Record<string, any> = {};
+
+on("tick", () => {
+  const keys = storage["updateNeighborFunctions_keys"] as Array<string>;
+  if (keys && Array.isArray(keys)) {
+    gUpdateNeighborFunctionsKeys = keys;
+  } else {
+    gUpdateNeighborFunctionsKeys = [];
+  }
+  gUpdateNeighborFunctions = storage["updateNeighborFunctions"];
+});
 
 export interface View<T> {
   update(model: T): void;
@@ -161,6 +174,33 @@ const getDefaultLookState = (): LookState => {
   return { lastNumChanges: 0, look: null };
 };
 
+const undefinedRefr: ObjectReference = undefined;
+const unknownValue: unknown = undefined;
+const undefinedFormModel: FormModel = undefined;
+const undefinedObject: Record<string, unknown> = undefined;
+const undefinedView: FormViewArray = undefined;
+const ctx = {
+  refr: undefinedRefr,
+  value: unknownValue,
+  _model: undefinedFormModel,
+  sp: sp,
+  state: undefinedObject,
+  _view: undefinedView,
+  i: -1,
+  getFormIdInServerFormat: (clientsideFormId: number) => {
+    return localIdToRemoteId(clientsideFormId);
+  },
+  getFormIdInClientFormat: (serversideFormId: number) => {
+    return remoteIdToLocalId(serversideFormId);
+  },
+  get(propName: string) {
+    return this._model[propName];
+  },
+  respawn() {
+    this._view.destroyForm(this.i);
+  },
+};
+
 export class FormView implements View<FormModel> {
   constructor(private remoteRefrId?: number) {}
 
@@ -236,6 +276,7 @@ export class FormView implements View<FormModel> {
       if (respawnRequired) {
         this.destroy();
         refr = Game.getPlayer().placeAtMe(base, 1, true, true);
+        this.state = {};
         delete this.wasHostedByOther;
         const kTypeNpc = 43;
         if (base.getType() !== kTypeNpc) {
@@ -277,6 +318,33 @@ export class FormView implements View<FormModel> {
     const refr = ObjectReference.from(Game.getFormEx(this.refrId));
     if (refr) {
       this.applyAll(refr, model);
+      for (const key of gUpdateNeighborFunctionsKeys) {
+        const v = (model as Record<string, unknown>)[key];
+        // From docs:
+        // In `updateOwner`/`updateNeighbor` equals to a value of a currently processed property.
+        // Can't be `undefined` here, since updates are not received for `undefined` property values.
+        // In other contexts is always `undefined`.
+        if (v !== undefined) {
+          if (this.refrId >= 0xff000000) {
+            /*printConsole(
+              "upd",
+              this.refrId.toString(16),
+              `${key}=${JSON.stringify(v)}`
+            );*/
+          }
+          ctx.refr = refr;
+          ctx.value = v;
+          ctx._model = model;
+          ctx.state = this.state;
+          const f = gUpdateNeighborFunctions[key];
+          // Actually, 'f' should always be a valid function, but who knows
+          try {
+            if (f) f(ctx);
+          } catch (e) {
+            printConsole(`'updateNeighbor.${key}' - `, e);
+          }
+        }
+      }
     }
   }
 
@@ -540,6 +608,7 @@ export class FormView implements View<FormModel> {
   private lastWorldOrCell = 0;
   private spawnMoment = 0;
   private wasHostedByOther: boolean | undefined = undefined;
+  private state = {};
 }
 
 class FormViewArray {
@@ -566,7 +635,7 @@ class FormViewArray {
   }
 
   updateAll(model: WorldModel, showMe: boolean, isCloneView: boolean) {
-    const toDestroy = new Array<number>();
+    ctx._view = this;
     const forms = model.forms;
     const n = forms.length;
     for (let i = 0; i < n; ++i) {
@@ -583,32 +652,23 @@ class FormViewArray {
         realPos = form.movement.pos;
         form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
       }
-      try {
-        if (isCloneView) {
-          // Prevent using the same refr by normal and clone views
-          if (!form.refrId || form.refrId >= 0xff000000) {
-            const backup = form.isHostedByOther;
-            form.isHostedByOther = true;
-            this.updateForm(form, i);
-            form.isHostedByOther = backup;
-          }
-        } else {
+      if (isCloneView) {
+        // Prevent using the same refr by normal and clone views
+        if (!form.refrId || form.refrId >= 0xff000000) {
+          const backup = form.isHostedByOther;
+          form.isHostedByOther = true;
           this.updateForm(form, i);
+          form.isHostedByOther = backup;
         }
-      } catch (err) {
-        if (err.message.includes("needs to be respawned")) {
-          toDestroy.push(i);
-          printConsole("destroying");
-        } else {
-          throw err;
-        }
+      } else {
+        ctx.i = i;
+        this.updateForm(form, i);
       }
+
       if (offset) {
         form.movement.pos = realPos;
       }
     }
-
-    for (const i of toDestroy) this.destroyForm(i);
   }
 
   getRemoteRefrId(clientsideRefrId: number): number {
@@ -708,3 +768,33 @@ export class WorldView implements View<WorldModel> {
   private pcWorldOrCell = 0;
   private counter = false;
 }
+
+export const getViewFromStorage = (): WorldView | undefined => {
+  const res = storage.view as WorldView;
+  if (typeof res === "object") return res;
+  return undefined;
+};
+
+export const localIdToRemoteId = (localFormId: number): number => {
+  if (localFormId >= 0xff000000) {
+    const view = getViewFromStorage();
+    if (!view) return 0;
+    localFormId = view.getRemoteRefrId(localFormId);
+    if (!localFormId) return 0;
+    // serverside ids are 64bit
+    if (localFormId >= 0x100000000) {
+      localFormId -= 0x100000000;
+    }
+  }
+  return localFormId;
+};
+
+export const remoteIdToLocalId = (remoteFormId: number): number => {
+  if (remoteFormId >= 0xff000000) {
+    const view = getViewFromStorage();
+    if (!view) return 0;
+    remoteFormId = view.getLocalRefrId(remoteFormId);
+    if (!remoteFormId) return 0;
+  }
+  return remoteFormId;
+};

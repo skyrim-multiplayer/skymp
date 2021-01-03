@@ -118,6 +118,12 @@ public:
        << ")" << std::endl;
   }
 
+  bool OnMpApiEvent(const char* eventName, const simdjson::dom::element& args,
+                    std::optional<uint32_t> formId) override
+  {
+    return true;
+  }
+
   std::string str() { return ss.str(); }
 
   void clear() { ss = std::stringstream(); }

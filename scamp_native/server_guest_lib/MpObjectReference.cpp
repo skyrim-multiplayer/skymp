@@ -101,6 +101,7 @@ public:
   std::unique_ptr<ScriptState> scriptState;
   std::unique_ptr<AnimGraphHolder> animGraphHolder;
   std::optional<PrimitiveData> primitive;
+  bool teleportFlag = false;
 };
 
 namespace {
@@ -227,6 +228,11 @@ bool MpObjectReference::IsActivationBlocked() const
   return activationBlocked;
 }
 
+bool MpObjectReference::GetTeleportFlag() const
+{
+  return pImpl->teleportFlag;
+}
+
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
                                         VisitPropertiesMode mode)
 {
@@ -237,6 +243,14 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
     auto inventoryDump = GetInventory().ToJson().dump();
     visitor("inventory", inventoryDump.data());
+  }
+
+  // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
+  // by a visitor
+  auto& dynamicFields = pImpl->ChangeForm().dynamicFields;
+  for (auto it = dynamicFields.begin(); it != dynamicFields.end(); ++it) {
+    std::string dump = it.value().dump();
+    visitor(it.key().data(), dump.data());
   }
 }
 
@@ -434,7 +448,7 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   InitListenersAndEmitters();
 
   auto& gridInfo = GetParent()->grids[GetCellOrWorld()];
-  MoveOnGrid(gridInfo.grid);
+  MoveOnGrid(*gridInfo.grid);
 
   auto& was = *this->listeners;
   auto pos = GetGridPos(GetPos());
@@ -486,6 +500,28 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
                              : notHostedMsg,
                            *listenerAsActor);
   }
+}
+
+void MpObjectReference::SetProperty(const std::string& propertyName,
+                                    const nlohmann::json& newValue,
+                                    bool isVisibleByOwner,
+                                    bool isVisibleByNeighbor)
+{
+  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    changeForm.dynamicFields[propertyName] = newValue;
+  });
+  if (isVisibleByNeighbor) {
+    SendPropertyToListeners(propertyName.data(), newValue);
+  } else if (isVisibleByOwner) {
+    if (auto ac = dynamic_cast<MpActor*>(this)) {
+      SendPropertyTo(propertyName.data(), newValue, *ac);
+    }
+  }
+}
+
+void MpObjectReference::SetTeleportFlag(bool value)
+{
+  pImpl->teleportFlag = value;
 }
 
 void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
@@ -743,7 +779,7 @@ void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
   everSubscribedOrListened = false;
   auto gridIterator = worldState->grids.find(pImpl->ChangeForm().worldOrCell);
   if (gridIterator != worldState->grids.end())
-    gridIterator->second.grid.Forget(this);
+    gridIterator->second.grid->Forget(this);
 
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
     changeForm.worldOrCell = newWorldOrCell;
@@ -789,7 +825,7 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
 
   if (!IsDisabled()) {
     auto& gridInfo = GetParent()->grids[pImpl->ChangeForm().worldOrCell];
-    MoveOnGrid(gridInfo.grid);
+    MoveOnGrid(*gridInfo.grid);
   }
 
   // We should queue created form for saving as soon as it is initialized
@@ -917,7 +953,7 @@ void MpObjectReference::RemoveFromGrid()
 {
   auto gridIterator = GetParent()->grids.find(GetCellOrWorld());
   if (gridIterator != GetParent()->grids.end())
-    gridIterator->second.grid.Forget(this);
+    gridIterator->second.grid->Forget(this);
 
   auto listenersCopy = GetListeners();
   for (auto listener : listenersCopy)

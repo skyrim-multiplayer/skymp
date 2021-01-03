@@ -12,7 +12,8 @@ std::string SqliteChangeForm::GetJsonData() const
                                     { "lookDump", lookDump },
                                     { "equipmentDump", equipmentDump },
                                     { "isDisabled", isDisabled },
-                                    { "profileId", profileId } });
+                                    { "profileId", profileId },
+                                    { "dynamicFields", dynamicFields } });
   return "v01:" + j.dump();
 }
 
@@ -20,7 +21,7 @@ void SqliteChangeForm::SetJsonData(const std::string& jsonData)
 {
   static const JsonPointer inv("inv"), lookDump("lookDump"),
     equipmentDump("equipmentDump"), isDisabled("isDisabled"),
-    profileId("profileId");
+    profileId("profileId"), dynamicFields("dynamicFields");
 
   static const auto versionLength = strlen("v01:");
 
@@ -47,6 +48,11 @@ void SqliteChangeForm::SetJsonData(const std::string& jsonData)
     }
     ReadEx(j, isDisabled, &this->isDisabled);
     ReadEx(j, profileId, &this->profileId);
+
+    simdjson::dom::element dynamicFieldsValue;
+    ReadEx(j, dynamicFields, &dynamicFieldsValue);
+    this->dynamicFields = nlohmann::json::parse(
+      static_cast<std::string>(simdjson::minify(dynamicFieldsValue)));
 
   } else {
     std::stringstream ss;

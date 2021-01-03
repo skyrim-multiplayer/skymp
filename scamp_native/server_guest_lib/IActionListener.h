@@ -86,4 +86,9 @@ public:
                              uint32_t remoteId)
   {
   }
+
+  virtual void OnCustomEvent(const RawMessageData& rawMsgData,
+                             const char* eventName, simdjson::dom::element& e)
+  {
+  }
 };

@@ -4,6 +4,7 @@
 #include "GridElement.h"
 #include "MpChangeForms.h"
 #include "NiPoint3.h"
+#include "PartOneListener.h"
 #include "VirtualMachine.h"
 #include <Loader.h>
 #include <MakeID.h>
@@ -153,6 +154,7 @@ public:
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
   std::shared_ptr<spdlog::logger> logger;
+  std::vector<std::shared_ptr<PartOneListener>> listeners;
 
   // Only for tests
   auto& GetGrids() { return grids; }
@@ -167,7 +169,8 @@ public:
 private:
   struct GridInfo
   {
-    GridImpl<MpObjectReference*> grid;
+    std::shared_ptr<GridImpl<MpObjectReference*>> grid =
+      std::make_shared<GridImpl<MpObjectReference*>>();
     std::map<int16_t, std::map<int16_t, bool>> loadedChunks;
   };
 

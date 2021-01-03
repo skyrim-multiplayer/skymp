@@ -1,8 +1,10 @@
 #pragma once
+#include "GamemodeApi.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
 #include "Networking.h"
 #include "NiPoint3.h"
+#include "PartOneListener.h"
 #include "ServerState.h"
 #include "WorldState.h"
 #include <Loader.h>
@@ -27,15 +29,7 @@ public:
     bool reliable = false;
   };
 
-  class Listener
-  {
-  public:
-    virtual ~Listener() = default;
-    virtual void OnConnect(Networking::UserId userId) = 0;
-    virtual void OnDisconnect(Networking::UserId userId) = 0;
-    virtual void OnCustomPacket(Networking::UserId userId,
-                                const simdjson::dom::element& content) = 0;
-  };
+  using Listener = PartOneListener;
 
   PartOne(Networking::ISendTarget* sendTarget = nullptr);
   PartOne(std::shared_ptr<Listener> listener,
@@ -82,6 +76,9 @@ public:
   ServerState serverState;
 
   Networking::ISendTarget& GetSendTarget() const;
+
+  void NotifyGamemodeApiStateChanged(
+    const GamemodeApi::State& newState) noexcept;
 
 private:
   void Init();

@@ -20,6 +20,7 @@ export enum MsgType {
   ConsoleCommand = 12,
   CraftItem = 13,
   Host = 14,
+  CustomEvent = 15,
 }
 
 export interface SetInventory {
@@ -112,4 +113,11 @@ export interface HostStartMessage {
 export interface HostStopMessage {
   type: "hostStop";
   target: number;
+}
+
+export interface UpdateGamemodeDataMessage {
+  type: "updateGamemodeData";
+  eventSources: Record<string, string>;
+  updateOwnerFunctions: Record<string, string>;
+  updateNeighborFunctions: Record<string, string>;
 }

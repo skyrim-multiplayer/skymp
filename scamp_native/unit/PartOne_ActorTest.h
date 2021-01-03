@@ -2,7 +2,7 @@
 
 TEST_CASE("CreateActor/DestroyActor", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   // Create:
@@ -28,7 +28,7 @@ TEST_CASE("CreateActor/DestroyActor", "[PartOne]")
 
 TEST_CASE("SetUserActor", "[PartOne]")
 {
-  
+
   PartOne partOne;
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
   DoConnect(partOne, 0);
@@ -59,7 +59,7 @@ TEST_CASE("SetUserActor", "[PartOne]")
 
 TEST_CASE("Use SetUserActor with 0 formId argument", "[PartOne]")
 {
-  
+
   PartOne partOne;
   DoConnect(partOne, 1);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
@@ -89,7 +89,7 @@ TEST_CASE("SetUserActor failures", "[PartOne]")
 
 TEST_CASE("createActor message contains look", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   DoConnect(partOne, 0);
@@ -117,7 +117,7 @@ TEST_CASE("createActor message contains look", "[PartOne]")
 
 TEST_CASE("GetUserActor", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   DoConnect(partOne, 0);
@@ -140,7 +140,7 @@ TEST_CASE("GetUserActor", "[PartOne]")
 
 TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
 {
-  
+
   static PartOne partOne;
 
   DoConnect(partOne, 0);
@@ -163,6 +163,12 @@ TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
                         const simdjson::dom::element& content) override
     {
     }
+    bool OnMpApiEvent(const char* eventName,
+                      const simdjson::dom::element& args,
+                      std::optional<uint32_t> formId) override
+    {
+      return true;
+    }
   };
 
   partOne.AddListener(std::shared_ptr<PartOne::Listener>(new Listener));
@@ -174,7 +180,7 @@ TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
 
 TEST_CASE("Bug with subscription", "[PartOne]")
 {
-  
+
   PartOne partOne;
   DoConnect(partOne, 0);
 
@@ -204,7 +210,7 @@ TEST_CASE("SetUserActor doesn't work with disabled actors", "[PartOne]")
 TEST_CASE("Actor should see its inventory in 'createActor' message",
           "[PartOne]")
 {
-  
+
   PartOne partOne;
   DoConnect(partOne, 0);
 
@@ -221,7 +227,7 @@ TEST_CASE("Actor should see its inventory in 'createActor' message",
 TEST_CASE("'isRaceMenuOpen' property should present in 'createActor'",
           "[PartOne]")
 {
-  
+
   PartOne partOne;
   DoConnect(partOne, 0);
 

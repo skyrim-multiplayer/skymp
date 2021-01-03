@@ -109,8 +109,17 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 
     bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
 
+    bool teleportFlag = actor->GetTeleportFlag();
+    actor->SetTeleportFlag(false);
+
+    static const NiPoint3 reallyWrongPos = {
+      std::numeric_limits<float>::infinity(),
+      std::numeric_limits<float>::infinity(),
+      std::numeric_limits<float>::infinity()
+    };
+
     if (!MovementValidation::Validate(
-          *actor, pos, worldOrCell,
+          *actor, teleportFlag ? reallyWrongPos : pos, worldOrCell,
           isMe ? static_cast<IMessageOutput&>(msgOutput)
                : static_cast<IMessageOutput&>(msgOutputDummy))) {
       return;
@@ -452,5 +461,21 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                                   longFormId);
       }
     }
+  }
+}
+
+void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
+                                   const char* eventName,
+                                   simdjson::dom::element& args)
+{
+  auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!ac)
+    return;
+
+  if (eventName[0] != '_')
+    return;
+
+  for (auto& listener : partOne.GetListeners()) {
+    listener->OnMpApiEvent(eventName, args, ac->GetFormId());
   }
 }

@@ -16,6 +16,7 @@ import { Login } from "./systems/login";
 import { EventEmitter } from "events";
 import { NativeGameServer } from "./nativeGameServer";
 import { pid } from "process";
+import * as fs from "fs";
 
 console.log(`Current process ID is ${pid}`);
 
@@ -135,6 +136,30 @@ const main = async () => {
         break;
     }
   });
+
+  const g = (global as unknown) as Record<string, unknown>;
+  const mp = server.getMpApi();
+  g.mp = mp;
+
+  const clear = mp.clear as () => void;
+
+  if (fs.existsSync("./gamemode.js")) {
+    try {
+      clear();
+      eval(fs.readFileSync("./gamemode.js", "utf8"));
+    } catch (e) {
+      console.error(e);
+    }
+    fs.watch("./gamemode.js", {}, () => {
+      try {
+        clear();
+        eval(fs.readFileSync("./gamemode.js", "utf8"));
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  }
+  server.attachSaveStorage();
 };
 
 main().catch((e) => {
@@ -143,4 +168,6 @@ main().catch((e) => {
   process.exit(-1);
 });
 
-process.on("unhandledRejection", console.error);
+process.on("unhandledRejection", (...args) => {
+  console.error(...args);
+});

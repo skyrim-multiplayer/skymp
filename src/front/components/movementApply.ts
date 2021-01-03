@@ -113,28 +113,7 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
-  if (ac.isDead()) {
-    if (healthPercentage > 0) throw new Error("needs to be respawned");
-  } else {
-    if (healthPercentage <= 0) {
-      ac.endDeferredKill();
-      ac.kill(null);
-    } else {
-      ac.startDeferredKill();
-      const base = 99999999;
-      ac.setActorValue("health", base);
-
-      healthPercentage = Math.max(healthPercentage, 0.005);
-
-      const currentPercentage = ac.getActorValuePercentage("health");
-      const mod = base * (healthPercentage - currentPercentage);
-      if (mod > 0) {
-        ac.restoreActorValue("health", mod);
-      } else if (mod < 0) {
-        ac.damageActorValue("health", mod);
-      }
-    }
-  }
+  // ...
 };
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
