@@ -632,11 +632,7 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
       const auto emitterFormId = emitter->GetFormId();
       wst->SetTimer(0.f).Then([wst, emitterFormId](Viet::Void) {
         for (auto& listener : wst->listeners) {
-          thread_local simdjson::dom::parser p;
-          thread_local const auto emptyArgs =
-            p.parse(std::string("[]")).value();
-
-          listener->OnMpApiEvent("onInit", emptyArgs, emitterFormId);
+          listener->OnMpApiEvent("onInit", std::nullopt, emitterFormId);
         }
       });
     }
