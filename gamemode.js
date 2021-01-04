@@ -24,9 +24,18 @@ const utils = {};
     }
     const prev = mp[eventName];
     mp[eventName] = (...args) => {
-      const prevRes = prev ? prev(...args) : undefined;
-      const callbackRes = callback(...args);
-      return callbackRes !== undefined ? callbackRes : prevRes;
+      try {
+        const prevRes = prev ? prev(...args) : undefined;
+        const callbackRes = callback(...args);
+        return callbackRes !== undefined ? callbackRes : prevRes;
+      }
+      catch (e) {
+        utils.log(`'${eventName}' threw an error: ${e}`);
+        if (e["stack"]) {
+          utils.log(e["stack"]);
+        }
+        return undefined;
+      }
     };
   };
 })();
@@ -373,7 +382,12 @@ const actorValues = {};
     get(formId, avName, modifierName) {
       typeCheck.avModifier("modifierName", modifierName);
       const propName = "av_" + avName.toLowerCase();
-      return mp.get(formId, propName)[modifierName] || 0;
+      const propValue = mp.get(formId, propName);
+      if (propValue === undefined) {
+        const s = `'${propName}' was '${propValue}' for ${formId.toString(16)}`;
+        throw new Error(s);
+      }
+      return propValue[modifierName] || 0;
     }
   };
 
@@ -521,8 +535,16 @@ const actorValues = {};
         }
       }
       for (const avName of ["mp_healthdrain", "mp_magickadrain", "mp_staminadrain"]) {
+        //if (formId == 0x9b7a2) console.log(avName, 1);
         if (!mp.get(formId, "av_" + avName) || force) {
+          //if (formId == 0x9b7a2) console.log(avName, 2);
           mp.set(formId, "av_" + avName, { base: 0 });
+          if (formId == 0x9b7a2) require('fs').writeFileSync("kekekek", "" + mp.get(formId, "av_" + avName));
+          if (formId == 0x9b7a2) {
+            setTimeout(() => {
+              require('fs').writeFileSync("kekekek1", "" + mp.get(formId, "av_" + avName));
+            }, 100);
+          }
         }
       }
     }
@@ -531,10 +553,12 @@ const actorValues = {};
   utils.hook("onReinit", (formId, options) => {
     actorValues.setDefaults(formId, options);
 
-    const wouldDie = actorValues.getCurrent(formId, "Health") <= 0;
-    if (wouldDie && !mp.get(formId, "isDead")) {
-      mp.onDeath(formId);
-    }
+    /*if (utils.isActor(formId)) {
+      const wouldDie = actorValues.getCurrent(formId, "Health") <= 0;
+      if (wouldDie && !mp.get(formId, "isDead")) {
+        mp.onDeath(formId);
+      }
+    }*/
   });
 
   utils.hook("_onHit", (pcFormId, eventData) => {

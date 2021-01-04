@@ -830,6 +830,8 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
                    info.Env().Global().Get("JSON").As<Napi::Object>();
                  auto parse = builtinJson.Get("parse").As<Napi::Function>();
                  res = parse.Call({ Napi::String::New(info.Env(), dump) });
+                 /*std::cout << propertyName << " " << dump
+                           << (std::string)res.ToString() << std::endl;*/
                }
              }
 
