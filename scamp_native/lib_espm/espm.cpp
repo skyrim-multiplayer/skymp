@@ -163,8 +163,8 @@ bool espm::GroupHeader::GetBlockNumber(int32_t& outBlockNum) const noexcept
   return true;
 }
 
-bool espm::GroupHeader::GetSubBlockNumber(int32_t& outSubBlockNum) const
-  noexcept
+bool espm::GroupHeader::GetSubBlockNumber(
+  int32_t& outSubBlockNum) const noexcept
 {
   if (grType != GroupType::INTERIOR_CELL_SUBBLOCK)
     return false;
@@ -396,8 +396,8 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
 }
 
 void espm::RecordHeader::GetScriptData(
-  ScriptData* out, espm::CompressedFieldsCache* compressedFieldsCache) const
-  noexcept
+  ScriptData* out,
+  espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
 {
   ScriptData res;
 
@@ -867,6 +867,159 @@ espm::WEAP::Data espm::WEAP::GetData() const noexcept
     this, [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
         result.weapData = reinterpret_cast<const WeapData*>(data);
+      }
+    });
+  return result;
+}
+
+uint8_t espm::QUST::Property::ReadData(const char* data)
+{
+  switch (propertyType) {
+    case PropertyType::Object: {
+      return sizeof(int64_t);
+    }
+    case PropertyType::String: {
+      auto length = *reinterpret_cast<const uint16_t*>(data);
+      return (sizeof(char) * length) + sizeof(length);
+    }
+    case PropertyType::Integer: {
+      return sizeof(int32_t);
+    }
+    case PropertyType::Float: {
+      return sizeof(float);
+    }
+    case PropertyType::Bool: {
+      return sizeof(bool);
+    }
+    case PropertyType::ObjectArray: {
+      auto length = *reinterpret_cast<const uint32_t*>(data);
+      return (sizeof(int64_t) * length) + sizeof(length);
+    }
+    case PropertyType::StringArray: {
+      // TODO
+      return 0;
+    }
+    case PropertyType::IntArray: {
+      auto length = *reinterpret_cast<const uint32_t*>(data);
+      return (sizeof(int32_t) * length) + sizeof(length);
+    }
+    case PropertyType::FloatArray: {
+      auto length = *reinterpret_cast<const uint32_t*>(data);
+      return (sizeof(float) * length) + sizeof(length);
+    }
+    case PropertyType::BoolArray: {
+      auto length = *reinterpret_cast<const uint32_t*>(data);
+      return (sizeof(bool) * length) + sizeof(length);
+    }
+  }
+}
+
+espm::QUST::QUSTData espm::QUST::GetData() const noexcept
+{
+
+  constexpr uint8_t offsetObjFormat = sizeof(int16_t);
+
+  constexpr uint8_t offsetNumScripts = sizeof(int16_t) + offsetObjFormat;
+
+  constexpr uint8_t offsetScriptName = sizeof(uint16_t) + offsetNumScripts;
+
+  QUSTData result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "EDID", 4)) {
+        result.editorId = data;
+      } else if (!memcmp(type, "FULL", 4)) {
+        result.fullName = data;
+      } else if (!memcmp(type, "DNAM", 4)) {
+        result.type = *reinterpret_cast<const QuestType*>(data + dataSize -
+                                                          sizeof(uint32_t));
+      } else if (!memcmp(type, "INDX", 4)) {
+        auto stage = *reinterpret_cast<const QuestStage*>(data);
+        result.questStages.push_back(stage);
+      } else if (!memcmp(type, "QOBJ", 4)) {
+        auto objective = *reinterpret_cast<const QuestObjective*>(data);
+        result.questObjectives.push_back(objective);
+      } else if (!memcmp(type, "VMAD", 4)) {
+        result.objFormat =
+          *reinterpret_cast<const uint16_t*>(data + offsetObjFormat);
+
+        result.numScripts =
+          *reinterpret_cast<const uint16_t*>(data + offsetNumScripts);
+
+        uint32_t offsetPreviousScripts = 0;
+
+        for (int i = 0; i < result.numScripts; ++i) {
+          Script script;
+
+          uint16_t scriptNameSize = *reinterpret_cast<const uint16_t*>(
+            data + offsetScriptName + offsetPreviousScripts);
+
+          script.scriptName = reinterpret_cast<const char*>(
+            data + offsetScriptName + sizeof(uint16_t) +
+            offsetPreviousScripts);
+
+          uint8_t offsetScriptStatus =
+            sizeof(uint16_t) + offsetScriptName + scriptNameSize;
+
+          uint8_t offsetPropertyCount = sizeof(uint8_t) + offsetScriptStatus;
+
+          script.status = *reinterpret_cast<const uint8_t*>(
+            data + offsetScriptStatus + offsetPreviousScripts);
+
+          script.propertyCount = *reinterpret_cast<const uint16_t*>(
+            data + offsetPropertyCount + offsetPreviousScripts);
+
+          uint32_t offsetPreviousPropertys = 0;
+
+          for (int i = 0; i < script.propertyCount; ++i) {
+            Property _property;
+
+            uint8_t offsetPropertyName =
+              sizeof(uint16_t) + offsetPropertyCount;
+
+            uint16_t PropNameSize = *reinterpret_cast<const uint16_t*>(
+              data + offsetPropertyName + offsetPreviousScripts +
+              offsetPreviousPropertys);
+
+            const char* begin = data + offsetPropertyName + sizeof(uint16_t) +
+              offsetPreviousScripts + offsetPreviousPropertys;
+            const char* end = begin + PropNameSize;
+
+            _property.propertyName.resize(PropNameSize);
+            std::copy(begin, end, _property.propertyName.data());
+
+            uint8_t offsetPropertyType =
+              sizeof(uint16_t) + offsetPropertyName + PropNameSize;
+
+            uint8_t offsetPropertyStatus =
+              sizeof(uint8_t) + offsetPropertyType;
+
+            uint8_t offsetPropertyData =
+              sizeof(uint8_t) + offsetPropertyStatus;
+
+            _property.propertyType = *reinterpret_cast<const PropertyType*>(
+              data + offsetPropertyType + offsetPreviousScripts +
+              offsetPreviousPropertys);
+
+            _property.status = *reinterpret_cast<const PropertyStatus*>(
+              data + offsetPropertyStatus + offsetPreviousScripts +
+              offsetPreviousPropertys);
+
+            auto dataSize = _property.ReadData(data + offsetPropertyData +
+                                               offsetPreviousScripts +
+                                               offsetPreviousPropertys);
+
+            offsetPreviousPropertys += sizeof(uint16_t) + PropNameSize +
+              sizeof(uint8_t) + sizeof(uint8_t) + dataSize;
+
+            script.propertys.push_back(_property);
+          }
+
+          offsetPreviousScripts += sizeof(uint16_t) + scriptNameSize +
+            sizeof(uint8_t) + sizeof(uint16_t) + offsetPreviousPropertys;
+
+          result.scripts.push_back(script);
+        }
       }
     });
   return result;

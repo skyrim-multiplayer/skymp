@@ -3,7 +3,9 @@
 #include <cstdint>
 #include <cstring> // memcmp
 #include <functional>
+#include <list>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <set>
 #include <string>
@@ -95,8 +97,8 @@ public:
   bool GetParentDIAL(uint32_t& outId) const noexcept;
 
   using RecordVisitor = std::function<bool(espm::RecordHeader*)>;
-  void ForEachRecord(const RecordVisitor& visitor) const
-    noexcept; // Return true from visitor to break loop
+  void ForEachRecord(const RecordVisitor& visitor)
+    const noexcept; // Return true from visitor to break loop
 
   GroupType GetGroupType() const noexcept { return grType; }
 
@@ -160,8 +162,8 @@ public:
                      espm::CompressedFieldsCache* compressedFieldsCache =
                        nullptr) const noexcept;
   std::vector<uint32_t> GetKeywordIds(
-    espm::CompressedFieldsCache* compressedFieldsCache = nullptr) const
-    noexcept;
+    espm::CompressedFieldsCache* compressedFieldsCache =
+      nullptr) const noexcept;
 
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;
@@ -693,5 +695,135 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+
+class QUST : public RecordHeader
+{
+public:
+  static constexpr auto type = "QUST";
+
+  enum class QuestType : uint32_t
+  {
+    None, //(Quest does not appear in quest log)
+    MainQuest,
+    MagesGuild,
+    ThievesGuild,
+    DarkBrotherhood,
+    CompanionQuests,
+    Miscellaneous, // (Quest appears in Miscellaneous section of quest log;
+                   // quest name is hidden and only quest objectives are shown
+                   // to player)
+    DaedricQuests,
+    SideQuests,
+    CivilWar,
+    DLC01Vampire,
+    DLC02Dragonborn
+  };
+
+  enum class QSFlags : uint8_t
+  {
+    StartUpStage = 0x02,
+    ShutDownStage = 0x04,
+    KeepInstanceDataFromHereOn = 0x08,
+  };
+
+  struct QuestStage
+  {
+    uint16_t actualIndexQuestStage = 0;
+    QSFlags flags;
+  };
+
+  struct QuestObjective
+  {
+    uint16_t actualIndexQuestObjectives = 0;
+  };
+
+  enum class PropertyType : uint8_t
+  {
+    None,
+    Object,
+    String,
+    Integer,
+    Float,
+    Bool,
+    ObjectArray = 11,
+    StringArray = 12,
+    IntArray = 13,
+    FloatArray = 14,
+    BoolArray = 15,
+  };
+  enum class PropertyStatus : uint8_t
+  {
+    None,
+    Edited = 1,
+    Removed = 3
+  };
+
+  struct Property
+  {
+    uint8_t ReadData(const char* data);
+
+    bool IsArray() const noexcept
+    {
+      return propertyType >= PropertyType::ObjectArray &&
+        propertyType <= PropertyType::BoolArray;
+    };
+
+    bool IsNone() const noexcept
+    {
+      return propertyType == PropertyType::None;
+    };
+
+    struct Object
+    {
+      // TODO
+      Object(uint16_t objFormat, int64_t data);
+
+      uint32_t formId = 0;
+      int16_t alias = 0;
+    };
+
+    union Data
+    {
+      const Object* _object;
+      const char* _string;
+      int32_t _int;
+      float _float;
+      bool _bool;
+    };
+
+    std::string propertyName = "";
+
+    PropertyType propertyType = PropertyType::None;
+    PropertyStatus status = PropertyStatus::None;
+
+    std::optional<Data> _data;
+    std::optional<std::vector<Data>> _array;
+  };
+
+  struct Script
+  {
+    const char* scriptName = "";
+    uint8_t status = 0;
+    uint16_t propertyCount = 0;
+    std::list<Property> propertys;
+  };
+
+  struct QUSTData
+  {
+    const char* editorId = "";
+    const char* fullName = "";
+
+    QuestType type = QuestType(0);
+    uint16_t numScripts = 0;
+    uint16_t objFormat = 0;
+
+    std::list<QuestStage> questStages;
+    std::list<QuestObjective> questObjectives;
+    std::list<Script> scripts;
+  };
+
+  QUSTData GetData() const noexcept;
+};
+static_assert(sizeof(QUST) == sizeof(RecordHeader));
 }
 #pragma pack(pop)
