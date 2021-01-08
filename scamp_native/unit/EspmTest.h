@@ -318,7 +318,8 @@ TEST_CASE("Loads QuestObject", "[espm]")
 {
   enum
   {
-    BeforeTheStorm = 0x0004E50D //  QUest ID MQ102
+    BeforeTheStorm = 0x0004E50D, //  QUest ID MQ102
+    AlduinStartMarker = 0x000BECD1 // ObjectReference
   };
 
   auto& br = l.GetBrowser();
@@ -330,28 +331,26 @@ TEST_CASE("Loads QuestObject", "[espm]")
 
   REQUIRE(data.type == espm::QUST::QuestType::MainQuest);
 
-  std::string editotId(data.editorId);
-  REQUIRE(editotId == "MQ102");
+  REQUIRE(data.editorId == "MQ102");
 
-  //REQUIRE(stricmp(data.fullName, "Before the Storm") == 0); Dont Work
+  //REQUIRE(data.fullName == "Before the Storm"); // Dont Work, now result == "&."
 
   REQUIRE(data.questStages.size() == 27);
-  REQUIRE(data.questStages.front().actualIndexQuestStage == 0);
+  REQUIRE(data.questStages[0].actualIndexQuestStage == 0);
 
   REQUIRE(data.questObjectives.size() == 3);
-  REQUIRE(data.questObjectives.front().actualIndexQuestObjectives == 10);
+  REQUIRE(data.questObjectives[0].actualIndexQuestObjectives == 10);
 
-  REQUIRE(data.numScripts == data.scripts.size());
-  REQUIRE(data.numScripts == 1);
+  REQUIRE(data.scripts.scripts.size() == 1);
   
-  REQUIRE(stricmp(data.scripts.front().scriptName, "QF_MQ102_0004E50D") == 0);
+  REQUIRE(data.scripts.scripts[0].scriptName == "QF_MQ102_0004E50D");
 
-  REQUIRE(data.scripts.front().propertyCount == 34);
+  REQUIRE(data.scripts.scripts[0].properties.size() == 34);
 
-   REQUIRE(data.scripts.front().propertys.size() ==
-          data.scripts.front().propertyCount);
+  REQUIRE(data.scripts.scripts[0].properties.begin()->propertyType ==
+          espm::PropertyType::Object);
 
-   REQUIRE(data.scripts.front().propertys.front().propertyType == espm::QUST::PropertyType::Object);
-
-   REQUIRE(data.scripts.front().propertys.front().propertyName == "MQ00");
+  REQUIRE(data.scripts.scripts[0].properties.begin()->propertyName == "AlduinStartMarker");
+  REQUIRE(data.scripts.scripts[0].properties.begin()->value.formId ==
+          AlduinStartMarker);
 }

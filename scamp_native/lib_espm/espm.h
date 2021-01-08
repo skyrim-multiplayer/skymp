@@ -3,9 +3,7 @@
 #include <cstdint>
 #include <cstring> // memcmp
 #include <functional>
-#include <list>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <set>
 #include <string>
@@ -737,92 +735,20 @@ public:
     uint16_t actualIndexQuestObjectives = 0;
   };
 
-  enum class PropertyType : uint8_t
+  struct Data
   {
-    None,
-    Object,
-    String,
-    Integer,
-    Float,
-    Bool,
-    ObjectArray = 11,
-    StringArray = 12,
-    IntArray = 13,
-    FloatArray = 14,
-    BoolArray = 15,
-  };
-  enum class PropertyStatus : uint8_t
-  {
-    None,
-    Edited = 1,
-    Removed = 3
+    std::string editorId = "";
+    std::string fullName = "";
+
+    QuestType type = QuestType::None;
+
+    std::vector<QuestStage> questStages;
+    std::vector<QuestObjective> questObjectives;
+    ScriptData scripts;
   };
 
-  struct Property
-  {
-    uint8_t ReadData(const char* data);
-
-    bool IsArray() const noexcept
-    {
-      return propertyType >= PropertyType::ObjectArray &&
-        propertyType <= PropertyType::BoolArray;
-    };
-
-    bool IsNone() const noexcept
-    {
-      return propertyType == PropertyType::None;
-    };
-
-    struct Object
-    {
-      // TODO
-      Object(uint16_t objFormat, int64_t data);
-
-      uint32_t formId = 0;
-      int16_t alias = 0;
-    };
-
-    union Data
-    {
-      const Object* _object;
-      const char* _string;
-      int32_t _int;
-      float _float;
-      bool _bool;
-    };
-
-    std::string propertyName = "";
-
-    PropertyType propertyType = PropertyType::None;
-    PropertyStatus status = PropertyStatus::None;
-
-    std::optional<Data> _data;
-    std::optional<std::vector<Data>> _array;
-  };
-
-  struct Script
-  {
-    const char* scriptName = "";
-    uint8_t status = 0;
-    uint16_t propertyCount = 0;
-    std::list<Property> propertys;
-  };
-
-  struct QUSTData
-  {
-    const char* editorId = "";
-    const char* fullName = "";
-
-    QuestType type = QuestType(0);
-    uint16_t numScripts = 0;
-    uint16_t objFormat = 0;
-
-    std::list<QuestStage> questStages;
-    std::list<QuestObjective> questObjectives;
-    std::list<Script> scripts;
-  };
-
-  QUSTData GetData() const noexcept;
+  Data GetData(espm::CompressedFieldsCache* compressedFieldsCache =
+                 nullptr) const noexcept;
 };
 static_assert(sizeof(QUST) == sizeof(RecordHeader));
 }
