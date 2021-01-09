@@ -102,6 +102,7 @@ public:
   std::unique_ptr<AnimGraphHolder> animGraphHolder;
   std::optional<PrimitiveData> primitive;
   bool teleportFlag = false;
+  bool setPropertyCalled = false;
 };
 
 namespace {
@@ -517,11 +518,23 @@ void MpObjectReference::SetProperty(const std::string& propertyName,
       SendPropertyTo(propertyName.data(), newValue, *ac);
     }
   }
+  pImpl->setPropertyCalled = true;
 }
 
 void MpObjectReference::SetTeleportFlag(bool value)
 {
   pImpl->teleportFlag = value;
+}
+
+void MpObjectReference::SetPosAndAngleSilent(const NiPoint3& pos,
+                                             const NiPoint3& rot)
+{
+  pImpl->EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) {
+      changeForm.position = pos;
+      changeForm.angle = rot;
+    },
+    Impl::Mode::NoRequestSave);
 }
 
 void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
@@ -610,9 +623,19 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   if (!emitterIsActor && !listenerIsActor)
     return;
 
-  if (!emitter->pImpl->onInitEventSent) {
+  if (!emitter->pImpl->onInitEventSent &&
+      listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
     emitter->SendPapyrusEvent("OnInit");
+
+    if (auto wst = emitter->GetParent()) {
+      const auto emitterFormId = emitter->GetFormId();
+      wst->SetTimer(0.f).Then([wst, emitterFormId](Viet::Void) {
+        for (auto& listener : wst->listeners) {
+          listener->OnMpApiEvent("onInit", std::nullopt, emitterFormId);
+        }
+      });
+    }
   }
 
   const bool hasPrimitive = emitter->HasPrimitive();
@@ -718,6 +741,11 @@ MpChangeForm MpObjectReference::GetChangeForm() const
 
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
+  if (pImpl->setPropertyCalled) {
+    GetParent()->logger->critical("ApplyChangeForm called after SetProperty");
+    std::terminate();
+  }
+
   pImpl->blockSaving = true;
   ScopedTask unblockTask(
     [](void* ptr) { reinterpret_cast<Impl*>(ptr)->blockSaving = false; },

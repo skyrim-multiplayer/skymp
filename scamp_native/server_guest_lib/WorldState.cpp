@@ -131,13 +131,6 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
     }
     refr->ApplyChangeForm(*optionalChangeFormToApply);
   }
-
-  for (auto& listener : listeners) {
-    thread_local simdjson::dom::parser p;
-    thread_local const auto emptyArgs = p.parse(std::string("[]")).value();
-
-    listener->OnMpApiEvent("onInit", emptyArgs, formId);
-  }
 }
 
 void WorldState::TickTimers()
@@ -392,11 +385,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       reinterpret_cast<MpObjectReference*>(existing->second.get());
 
     if (locationalData) {
-      // Not just SetPos/SetAngle since we do not need to request save
-      auto changeForm = existingAsRefr->GetChangeForm();
-      changeForm.position = GetPos(locationalData);
-      changeForm.angle = GetRot(locationalData);
-      existingAsRefr->ApplyChangeForm(changeForm);
+      existingAsRefr->SetPosAndAngleSilent(GetPos(locationalData),
+                                           GetRot(locationalData));
 
       assert(existingAsRefr->GetPos() == NiPoint3(GetPos(locationalData)));
     }
@@ -426,6 +416,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         new MpActor(formLocationalData, formCallbacksFactory(), baseId));
     }
     AddForm(std::move(form), formId, true);
+    // Do not TriggerFormInitEvent here, doing it later after changeForm apply
   }
 
   return true;

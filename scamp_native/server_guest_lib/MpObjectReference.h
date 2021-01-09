@@ -114,6 +114,7 @@ public:
                    const nlohmann::json& newValue, bool isVisibleByOwner,
                    bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
+  void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
 
   // If you want to completely remove ObjectReference from the grid you need
   // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these

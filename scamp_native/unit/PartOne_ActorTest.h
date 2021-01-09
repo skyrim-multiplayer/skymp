@@ -164,7 +164,7 @@ TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
     {
     }
     bool OnMpApiEvent(const char* eventName,
-                      const simdjson::dom::element& args,
+                      std::optional<simdjson::dom::element> args,
                       std::optional<uint32_t> formId) override
     {
       return true;

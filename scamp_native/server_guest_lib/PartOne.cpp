@@ -288,7 +288,12 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 
   int n = 0;
   int numPlayerCharacters = 0;
-  saveStorage->IterateSync([&](const MpChangeForm& changeForm) {
+  saveStorage->IterateSync([&](MpChangeForm changeForm) {
+    // Do not let players become NPCs
+    if (changeForm.profileId != -1 && !changeForm.isDisabled) {
+      changeForm.isDisabled = true;
+    }
+
     n++;
     worldState.LoadChangeForm(changeForm, CreateFormCallbacks());
     if (changeForm.profileId >= 0)

@@ -137,7 +137,8 @@ public:
                 Napi::String::New(env, contentStr) });
   }
 
-  bool OnMpApiEvent(const char* eventName, const simdjson::dom::element& args,
+  bool OnMpApiEvent(const char* eventName,
+                    std::optional<simdjson::dom::element> args,
                     std::optional<uint32_t> formId) override
   {
     if (server.mp == std::nullopt)
@@ -149,22 +150,24 @@ public:
 
     auto& env = server.tickEnv;
 
-    if (!args.is_array())
+    if (args && !args->is_array())
       return true;
-    auto& argsArray = args.get_array().value();
 
     std::vector<Napi::Value> argumentsInNapiFormat;
     if (formId != std::nullopt) {
       argumentsInNapiFormat.push_back(Napi::Number::New(env, *formId));
     }
 
-    for (size_t i = 0; i < argsArray.size(); ++i) {
-      std::string elementString = simdjson::minify(argsArray.at(i));
-      auto builtinJson = env.Global().Get("JSON").As<Napi::Object>();
-      auto parse = builtinJson.Get("parse").As<Napi::Function>();
-      Napi::Value resultOfParsing =
-        parse.Call(builtinJson, { Napi::String::New(env, elementString) });
-      argumentsInNapiFormat.push_back(resultOfParsing);
+    if (args) {
+      auto& argsArray = args->get_array().value();
+      for (size_t i = 0; i < argsArray.size(); ++i) {
+        std::string elementString = simdjson::minify(argsArray.at(i));
+        auto builtinJson = env.Global().Get("JSON").As<Napi::Object>();
+        auto parse = builtinJson.Get("parse").As<Napi::Function>();
+        Napi::Value resultOfParsing =
+          parse.Call(builtinJson, { Napi::String::New(env, elementString) });
+        argumentsInNapiFormat.push_back(resultOfParsing);
+      }
     }
 
     std::vector<napi_value> argumentsInNodeFormat;
