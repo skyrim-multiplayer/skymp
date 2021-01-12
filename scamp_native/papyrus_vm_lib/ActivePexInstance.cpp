@@ -304,26 +304,18 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
     case OpcodesImplementation::Opcodes::op_Nop:
       break;
     case OpcodesImplementation::Opcodes::op_iAdd:
-      *args[0] = *args[1] + (*args[2]);
-      break;
     case OpcodesImplementation::Opcodes::op_fAdd:
       *args[0] = *args[1] + (*args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_iSub:
-      *args[0] = *args[1] - (*args[2]);
-      break;
     case OpcodesImplementation::Opcodes::op_fSub:
       *args[0] = *args[1] - (*args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_iMul:
-      *args[0] = *args[1] * (*args[2]);
-      break;
     case OpcodesImplementation::Opcodes::op_fMul:
       *args[0] = *args[1] * (*args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_iDiv:
-      *args[0] = *args[1] / (*args[2]);
-      break;
     case OpcodesImplementation::Opcodes::op_fDiv:
       *args[0] = *args[1] / (*args[2]);
       break;
@@ -507,8 +499,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         assert(false);
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
-      (*args[0]).pArray =
-        std::shared_ptr<std::vector<VarValue>>(new std::vector<VarValue>);
+      (*args[0]).pArray = std::make_shared<std::vector<VarValue>>();
       if ((int32_t)(*args[1]) > 0) {
         (*args[0]).pArray->resize((int32_t)(*args[1]));
         uint8_t type = GetArrayElementType((*args[0]).GetType());
@@ -624,7 +615,7 @@ VarValue ActivePexInstance::ExecuteAll(
 
   if (previousCallResult) {
     int i = ctx.line - 1;
-    int resultIdx =
+    size_t resultIdx =
       opCode[i].first == OpcodesImplementation::Opcodes::op_CallParent ? 1 : 2;
 
     *opCode[i].second[resultIdx] = *previousCallResult;
@@ -753,7 +744,7 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
                                            Locals& locals)
 {
   std::string objectToCastTypeName = scriptToCastOwner->objectType;
-  std::string resultTypeName = result->objectType;
+  const std::string &resultTypeName = result->objectType;
 
   if (scriptToCastOwner->GetType() != VarValue::kType_Object ||
       *scriptToCastOwner == VarValue::None()) {

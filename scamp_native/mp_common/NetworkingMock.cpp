@@ -7,7 +7,7 @@
 namespace NetworkingMock {
 struct Packet
 {
-  Networking::PacketType type;
+  Networking::PacketType type = Networking::PacketType::Invalid;
   std::vector<uint8_t> data;
   const char* error = "";
 };

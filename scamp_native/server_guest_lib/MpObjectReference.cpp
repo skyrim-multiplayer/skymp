@@ -1172,7 +1172,6 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
   }
   if (auto actor = dynamic_cast<MpActor*>(this)) {
     Equipment eq;
-    eq.numChanges = 0;
     for (auto p : itemsToEquip) {
       Inventory::Entry e;
       e.baseId = p.first;

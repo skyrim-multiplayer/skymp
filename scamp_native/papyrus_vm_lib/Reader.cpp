@@ -52,7 +52,7 @@ void Reader::CreateScriptStructure(std::vector<uint8_t> arrayBytes)
   this->arrayBytes = arrayBytes;
   currentReadPositionInFile = 0;
 
-  this->structure = std::shared_ptr<PexScript>(new PexScript);
+  this->structure = std::make_shared<PexScript>();
 
   structure->header = FillHeader();
 

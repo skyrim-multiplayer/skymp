@@ -51,9 +51,9 @@ private:
 
   union
   {
-    IGameObject* id;
+    IGameObject* id = nullptr;
     const char* string;
-    int32_t i = 0;
+    int32_t i;
     float f;
     bool b;
   } data;

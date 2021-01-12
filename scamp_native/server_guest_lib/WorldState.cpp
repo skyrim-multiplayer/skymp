@@ -155,13 +155,14 @@ void WorldState::TickTimers()
   if (pImpl->saveStorage) {
     pImpl->saveStorage->Tick();
 
-    if (!pImpl->saveStorageBusy && !pImpl->changes.empty()) {
+    auto& changes = pImpl->changes;
+    if (!pImpl->saveStorageBusy && !changes.empty()) {
       pImpl->saveStorageBusy = true;
       std::vector<MpChangeForm> changeForms;
-      changeForms.reserve(pImpl->changes.size());
-      for (auto [formId, changeForm] : pImpl->changes)
+      changeForms.reserve(changes.size());
+      for (auto [formId, changeForm] : changes)
         changeForms.push_back(changeForm);
-      pImpl->changes.clear();
+      changes.clear();
 
       auto pImpl_ = pImpl;
       pImpl->saveStorage->Upsert(
@@ -170,9 +171,10 @@ void WorldState::TickTimers()
   }
 
   // Tick RegisterForSingleUpdate
-  while (!pImpl->timers.empty() && now >= pImpl->timers.front().finish) {
-    auto front = std::move(pImpl->timers.front());
-    pImpl->timers.pop_front();
+  auto& timers = pImpl->timers;
+  while (!timers.empty() && now >= timers.front().finish) {
+    auto front = std::move(timers.front());
+    timers.pop_front();
     front.promise.Resolve(Viet::Void());
   }
 }
@@ -317,10 +319,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   auto baseId = espm::GetMappedId(data.baseId, mapping);
   auto base = br.LookupById(baseId);
-  if (!base.rec)
+  if (!base.rec) {
     logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
-  if (!base.rec)
     return false;
+  }
 
   espm::Type t = base.rec->GetType();
   if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
@@ -558,7 +560,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
 
     auto& scripts = scriptStorage->ListScripts();
     for (auto& required : scripts) {
-      std::shared_ptr<LazyState> lazyState(new LazyState);
+      auto lazyState = std::make_shared<LazyState>();
       PexScript::Lazy lazy;
       lazy.source = required.data();
       lazy.fn = [lazyState, scriptStorage, required]() {

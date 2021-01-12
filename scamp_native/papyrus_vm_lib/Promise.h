@@ -86,7 +86,7 @@ public:
   }
 
   static Promise<std::vector<T>> All(
-    const std::vector<Promise<T>>& promises) noexcept
+    const std::vector<Promise<T>>& promises)
   {
     Promise<std::vector<T>> res;
 
@@ -95,7 +95,7 @@ public:
       std::vector<T> returnValues;
       size_t numDone = 0;
     };
-    std::shared_ptr<Progress> pr(new Progress);
+    auto pr = std::make_shared<Progress>();
     pr->returnValues.resize(promises.size());
 
     for (size_t p = 0; p < promises.size(); ++p) {
@@ -125,6 +125,6 @@ private:
     bool pending = true;
   };
 
-  std::shared_ptr<Impl> pImpl = std::shared_ptr<Impl>(new Impl);
+  std::shared_ptr<Impl> pImpl = std::make_shared<Impl>();
 };
 }

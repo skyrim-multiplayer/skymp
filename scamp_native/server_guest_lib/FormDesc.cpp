@@ -50,7 +50,7 @@ FormDesc FormDesc::FromFormId(uint32_t formId,
   FormDesc res;
   if (formId < 0xff000000) {
     int fileIdx = formId / 0x01000000;
-    if (fileIdx < 0 || fileIdx >= static_cast<int>(files.size()))
+    if (fileIdx >= static_cast<int>(files.size()))
       throw std::runtime_error("FromFormId failed due to invalid file index " +
                                std::to_string(fileIdx));
     res.file = files[fileIdx];

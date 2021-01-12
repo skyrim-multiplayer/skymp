@@ -152,8 +152,8 @@ void GeoPolygonProc::SetConvex3DFaces()
   for (int i = 0; i < this->_NumberOfFaces; i++) {
 
     // set face planes
-    this->_FacePlanes.push_back(GeoPlane(fpOutward[i].a, fpOutward[i].b,
-                                         fpOutward[i].c, fpOutward[i].d));
+    this->_FacePlanes.emplace_back(fpOutward[i].a, fpOutward[i].b,
+                                   fpOutward[i].c, fpOutward[i].d);
 
     // face vertices
     std::vector<GeoPoint> v;
@@ -167,12 +167,12 @@ void GeoPolygonProc::SetConvex3DFaces()
     for (int j = 0; j < count; j++) {
       idx.push_back(faceVerticeIndex[i][j]);
 
-      v.push_back(
-        GeoPoint(vertices[idx[j]].x, vertices[idx[j]].y, vertices[idx[j]].z));
+      v.emplace_back(vertices[idx[j]].x, vertices[idx[j]].y,
+                     vertices[idx[j]].z);
     }
 
     // set faces
-    this->_Faces.push_back(GeoFace(v, idx));
+    this->_Faces.emplace_back(v, idx);
   }
 
   // free local memory

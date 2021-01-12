@@ -25,7 +25,7 @@ struct AsyncSaveStorage::Impl
 
   struct
   {
-    std::list<UpsertTask> upsertTasks;
+    std::vector<UpsertTask> upsertTasks;
     std::mutex m;
   } share3;
 

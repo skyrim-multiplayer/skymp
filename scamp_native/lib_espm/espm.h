@@ -407,7 +407,7 @@ public:
   {
     const char* editorId = "";
     uint8_t chanceNone = 0;
-    uint8_t leveledItemFlags;
+    uint8_t leveledItemFlags = 0;
     uint32_t chanceNoneGlobalId = 0;
     uint8_t numEntries = 0;
     Entry* entries = nullptr;
@@ -441,7 +441,7 @@ public:
   {
     std::unique_ptr<Vertices> vertices;
     uint32_t worldSpaceId = 0;
-    CellOrGridPos cellOrGridPos;
+    CellOrGridPos cellOrGridPos = { 0 };
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;

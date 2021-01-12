@@ -253,7 +253,7 @@ public:
         const uint32_t* decompSize = reinterpret_cast<const uint32_t*>(ptr);
         ptr += sizeof(uint32_t);
 
-        std::shared_ptr<std::vector<uint8_t>> out(new std::vector<uint8_t>);
+        auto out = std::make_shared<std::vector<uint8_t>>();
         out->resize(*decompSize);
         try {
           const auto inSize = rec->GetFieldsSizeSum() - sizeof(uint32_t);

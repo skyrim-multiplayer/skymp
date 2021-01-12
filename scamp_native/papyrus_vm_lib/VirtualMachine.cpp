@@ -157,8 +157,6 @@ VarValue VirtualMachine::CallMethod(
       break;
   }
 
-  const char* classToPrint = "";
-
   for (auto& activeScript : selfObj->activePexInstances) {
     FunctionInfo functionInfo;
 
@@ -179,8 +177,8 @@ VarValue VirtualMachine::CallMethod(
   }
 
   std::string e = "Method not found - '";
-  e += classToPrint;
-  e += (classToPrint[0] ? "." : "") + std::string(methodName) + "'";
+  e += base;
+  e += (base[0] ? "." : "") + std::string(methodName) + "'";
   throw std::runtime_error(e);
 }
 

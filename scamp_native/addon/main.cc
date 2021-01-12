@@ -315,9 +315,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       }
     }
 
-    std::shared_ptr<DirectoryScriptStorage> scriptStorage(
-      new DirectoryScriptStorage(
-        (espm::fs::path(dataDir) / "scripts").string()));
+    auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
+      (espm::fs::path(dataDir) / "scripts").string());
 
     auto espm = new espm::Loader(dataDir, plugins);
     auto realServer = Networking::CreateServer(
@@ -530,7 +529,7 @@ Napi::Value ScampServer::CreateBot(const Napi::CallbackInfo& info)
   if (!this->serverMock)
     throw Napi::Error::New(info.Env(), "Bad serverMock");
 
-  std::shared_ptr<Bot> bot(new Bot(this->serverMock->CreateClient()));
+  auto bot = std::make_shared<Bot>(this->serverMock->CreateClient());
 
   auto jBot = Napi::Object::New(info.Env());
 

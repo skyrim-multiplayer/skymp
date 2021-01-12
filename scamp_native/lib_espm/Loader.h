@@ -43,7 +43,7 @@ public:
     }
 
     for (const auto& file : files) {
-      entries.push_back(Entry());
+      entries.emplace_back();
       auto& entry = entries.back();
 
       const fs::path p = dataDir / file;

@@ -174,6 +174,7 @@ VarValue::VarValue(bool value)
 VarValue::VarValue(Viet::Promise<VarValue> promise)
 {
   this->type = this->kType_Object;
+  this->data.id = nullptr;
   this->promise.reset(new Viet::Promise<VarValue>(promise));
 }
 

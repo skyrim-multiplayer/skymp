@@ -22,7 +22,7 @@ struct espm::CombineBrowser::Impl
   // returns index of sources array or -1 if not found
   int GetFileIndex(const char* fileName) const noexcept
   {
-    if (strlen(fileName) > 0) {
+    if (fileName[0] != '\0') {
       for (int i = 0; i < (int)sources.size(); ++i) {
         if (sources[i].fileName == fileName)
           return i;
@@ -68,9 +68,9 @@ std::unique_ptr<espm::CombineBrowser> espm::Combiner::Combine()
       throw CombineError(src.fileName + " doesn't have TES4 record");
     const auto masters = tes4->GetData().masters;
 
-    auto toComb = new IdMapping;
+    auto toComb = std::make_unique<IdMapping>();
     toComb->fill(0xff);
-    auto toRaw = new IdMapping;
+    auto toRaw = std::make_unique<IdMapping>();
     toRaw->fill(0xff);
     size_t m = 0;
     for (m = 0; m < masters.size(); ++m) {
@@ -83,8 +83,8 @@ std::unique_ptr<espm::CombineBrowser> espm::Combiner::Combine()
     }
     (*toComb)[m] = (uint8_t)i;
     (*toRaw)[i] = (uint8_t)m;
-    src.toComb.reset(toComb);
-    src.toRaw.reset(toRaw);
+    src.toComb = std::move(toComb);
+    src.toRaw = std::move(toRaw);
   }
 
   std::unique_ptr<espm::CombineBrowser> res(new espm::CombineBrowser);

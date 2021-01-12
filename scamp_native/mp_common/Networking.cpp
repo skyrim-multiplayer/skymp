@@ -212,7 +212,7 @@ void Networking::HandlePacketClientside(Networking::IClient::OnPacket onPacket,
   } else if (packetId == ID_CONNECTION_REQUEST_ACCEPTED) {
     onPacket(state, Networking::PacketType::ClientSideConnectionAccepted,
              nullptr, 0, "");
-  } else if (err && err[0]) {
+  } else if (err[0]) {
     onPacket(state, Networking::PacketType::ClientSideConnectionDenied,
              nullptr, 0, err);
   }
