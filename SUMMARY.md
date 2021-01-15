@@ -10,3 +10,4 @@
 - [Clientside Scripting Reference](docs_clientside_scripting_reference.md)
 - [Properties System](docs_properties_system.md)
 - [Events System](docs_events_system.md)
+- [Skyrim Platform](docs_skyrim_platform.md)

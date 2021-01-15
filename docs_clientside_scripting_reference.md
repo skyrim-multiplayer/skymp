@@ -4,7 +4,7 @@ In Skyrim Multiplayer there are no dedicated clientside scripts. Code snippets t
 
 ## ctx.sp
 
-Refers to Skyrim Platform API.
+Refers to Skyrim Platform API. See [Skyrim Platform](docs_skyrim_platform.md) page.
 
 ```typescript
 // Print to console
