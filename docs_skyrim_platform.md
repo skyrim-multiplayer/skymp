@@ -221,7 +221,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 ### Custom SkyrimPlatform Methods and Properties
 
 - There are methods such as `printConsole ()` that can be called immediately after import. They do not belong to any of the game types.
-- `printConsole (... arguments: any []): void` - output to the game console, opened by the`~`key.
+- `printConsole (... arguments: any []): void` - output to the game console, opened by the `~` key.
 
   ```typescript
   import { printConsole, Game } from "../skyrimPlatform";
