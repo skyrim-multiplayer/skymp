@@ -6,3 +6,4 @@
 - [Server Command Line Api](docs_server_command_line_api.md)
 - [Server Ports Usage](docs_server_ports_usage.md)
 - [Database Drivers](docs_database_drivers.md)
+- [Serverside Scripting Reference](docs_serverside_scripting_reference.md)
