@@ -1,6 +1,6 @@
 # Clientside Scripting Reference
 
-In Skyrim Multiplayer there are no dedicated clientside scripts. Code snippets that runs client-side are passed as strings to `makeProperty`, `updateOwner` and `updateNeighbor` which are described in [Serverside Scripting Reference](!docs_serverside_scripting_reference.md).
+In Skyrim Multiplayer there are no dedicated clientside scripts. Code snippets that runs client-side are passed as strings to `makeProperty`, `updateOwner` and `updateNeighbor` which are described in [Serverside Scripting Reference](docs_serverside_scripting_reference.md).
 
 ## ctx.sp
 
