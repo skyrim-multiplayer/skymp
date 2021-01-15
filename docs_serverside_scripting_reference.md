@@ -5,7 +5,7 @@ This page contains the list of `mp` object methods available to use in scripts.
 
 ## mp.makeProperty()
 
-Creates a new property that would be attached to all instances of `MpActor` and `MpObjectReference`. Values are saved to database automatically.
+Creates a new property that would be attached to all instances of `MpActor` and `MpObjectReference`. Values are saved to database automatically. See [Properties System](docs_properties_system.md) for more information.
 
 ```typescript
 /* Definition */
@@ -41,7 +41,7 @@ mp.makeProperty("playerLevel", {
 
 ## mp.makeEventSource()
 
-Creates a new event source allowing you to catch specific game situations and pass them to a server as events.
+Creates a new event source allowing you to catch specific game situations and pass them to a server as events. See [Events System](docs_events_system.md) for more information.
 
 ```typescript
 /* Definition */

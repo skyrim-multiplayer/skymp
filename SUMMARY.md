@@ -9,3 +9,4 @@
 - [Serverside Scripting Reference](docs_serverside_scripting_reference.md)
 - [Clientside Scripting Reference](docs_clientside_scripting_reference.md)
 - [Properties System](properties_system.md)
+- [Events System](events_system.md)
