@@ -14,7 +14,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 ### Native functions
 
-- Most types have a list of native functions, they are divided into static functions (`Native Global` in Papyrus) and methods (` Native`).
+- Most types have a list of native functions, they are divided into static functions (`Native Global` in Papyrus) and methods (`Native`).
 
 - Static functions are called on the type:
 
