@@ -123,8 +123,8 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - `resizeTintsArray` - resizes the main character's TintMasks array.
 - `setFormIdUnsafe` - changes the form ID. Unsafe, use at your own risk.
 
-* `clearTintMasks` - remove TintMasks for the given Actor or YY if the Actor is not passed.
-* `pushTintMask` - add TintMask with def. parameters for the given Actor or YY, if Actor is not passed.
+* `clearTintMasks` - remove TintMasks for the given Actor or the Player Character if the Actor is not passed.
+* `pushTintMask` - add TintMask with def. parameters for the given Actor or the Player Character, if Actor is not passed.
 * `pushWornState`,` addItemEx` - add / remove items from def. ExtraData.
 * `updateEquipment` - update equipment (unstable).
 * `resetContainer` - clear the base container.
