@@ -48,6 +48,14 @@ A writable object that is used to store data between `updateOwner`/`updateNeighb
 ctx.state.x = "y";
 ```
 
+## ctx.get()
+
+Get the value of the specified property. Built-in properties are not supported properly, so getting them is undefined behavior.
+
+```typescript
+const v = ctx.get("myAwesomeProperty");
+```
+
 ## ctx.getFormIdInServerFormat()
 
 Gets serverside formId by clientside formId or `0` if not found.
@@ -62,14 +70,6 @@ Opposite to `getFormIdInServerFormat`. Gets clientside formId by serverside form
 
 ```typescript
 const clientsideFormId = ctx.getFormIdInClientFormat(0xff000000);
-```
-
-## ctx.get()
-
-Get the value of the specified property. Built-in properties are not supported properly, so getting them is undefined behavior.
-
-```typescript
-const v = ctx.get("myAwesomeProperty");
 ```
 
 ## ctx.respawn()
