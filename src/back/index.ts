@@ -17,10 +17,17 @@ import { EventEmitter } from "events";
 import { NativeGameServer } from "./nativeGameServer";
 import { pid } from "process";
 import * as fs from "fs";
+import * as chokidar from "chokidar";
+import * as path from "path";
 
 console.log(`Current process ID is ${pid}`);
 
 const master = Settings.get().master || "https://skymp.io";
+
+function requireUncached(module: string): Record<string, unknown> | undefined {
+  delete require.cache[require.resolve(module)];
+  return require(module) as Record<string, unknown> | undefined;
+}
 
 const log = console.log;
 const systems = new Array<System>();
@@ -143,20 +150,54 @@ const main = async () => {
 
   const clear = mp.clear as () => void;
 
-  if (fs.existsSync("./gamemode.js")) {
+  const toAbsolute = (p: string) => {
+    if (path.isAbsolute(p)) return p;
+    return path.resolve("", p);
+  };
+
+  const gamemodePath = toAbsolute(Settings.get().gamemodePath);
+  log(`Gamemode path is'${gamemodePath}'`);
+
+  if (!fs.existsSync(gamemodePath)) {
+    log(
+      `Error during loading a gamemode from '${gamemodePath}' - file or directory does not exist`
+    );
+  } else {
     try {
       clear();
-      eval(fs.readFileSync("./gamemode.js", "utf8"));
+      requireUncached(gamemodePath);
     } catch (e) {
       console.error(e);
     }
-    fs.watch("./gamemode.js", {}, () => {
+  }
+
+  if (fs.existsSync(gamemodePath)) {
+    try {
+      clear();
+      requireUncached(gamemodePath);
+    } catch (e) {
+      console.error(e);
+    }
+
+    const watcher = chokidar.watch(gamemodePath, {
+      ignored: /^\./,
+      persistent: true,
+      awaitWriteFinish: true,
+    });
+    const reloadGamemode = () => {
       try {
         clear();
-        eval(fs.readFileSync("./gamemode.js", "utf8"));
+        requireUncached(gamemodePath);
       } catch (e) {
         console.error(e);
       }
+    };
+    watcher.on("add", reloadGamemode);
+    watcher.on("addDir", reloadGamemode);
+    watcher.on("change", reloadGamemode);
+    watcher.on("unlink", reloadGamemode);
+    watcher.on("error", function (error) {
+      console.error("Error happened in chokidar watch", error);
     });
   }
   server.attachSaveStorage();

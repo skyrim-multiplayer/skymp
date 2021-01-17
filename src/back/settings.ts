@@ -7,16 +7,19 @@ export class Settings {
   maxPlayers = 100;
   master: string | null = null;
   name = "Yet Another Server";
+  gamemodePath = "./gamemode.js";
 
   constructor() {
     if (fs.existsSync("./server-settings.json")) {
       const parsed = JSON.parse(
         fs.readFileSync("./server-settings.json", "utf-8")
       );
-      ["ip", "port", "maxPlayers", "master", "name"].forEach((prop) => {
-        if (parsed[prop])
-          (this as Record<string, unknown>)[prop] = parsed[prop];
-      });
+      ["ip", "port", "maxPlayers", "master", "name", "gamemodePath"].forEach(
+        (prop) => {
+          if (parsed[prop])
+            (this as Record<string, unknown>)[prop] = parsed[prop];
+        }
+      );
     }
   }
 

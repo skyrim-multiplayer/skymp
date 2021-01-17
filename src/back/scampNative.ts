@@ -11,7 +11,7 @@ if (fs.existsSync(process.cwd() + "/scamp_native.node")) {
       ? "Debug"
       : "Release";
   console.log(`Using scamp_native config ${config}`);
-  scampNativeNode = require(`../../build/${config}/scamp_native.node`);
+  scampNativeNode = require(`../build/${config}/scamp_native.node`);
 }
 
 export declare interface Bot {
