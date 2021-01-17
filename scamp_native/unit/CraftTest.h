@@ -93,6 +93,43 @@ TEST_CASE("Player is able to craft item", "[Craft]")
   DoDisconnect(p, 0);
 }
 
+TEST_CASE(
+  "Player is unable to craft an artifact item by using a tempering recipe",
+  "[Craft]")
+{
+  auto DeerPelt = 0x000CF89E;
+  auto LeatherStrips = 0x000800E4;
+  auto WolfPelt = 0x0003AD74;
+  auto Leather = 0x000DB5D2;
+  const Inventory requiredItems =
+    Inventory()
+      .AddItem(DeerPelt, 1)
+      .AddItem(LeatherStrips, 2)
+      .AddItem(WolfPelt, 1)
+      .AddItem(Leather, 1); // Required for temper in vanila
+
+  PartOne& p = GetPartOne();
+  const auto workbenchId = 0x1ad6e;
+  auto& workbench = p.worldState.GetFormAt<MpObjectReference>(workbenchId);
+
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, workbench.GetPos(), 0, workbench.GetCellOrWorld());
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+  for (auto entry : requiredItems.entries)
+    ac.AddItem(entry.baseId, entry.count);
+
+  const uint32_t wrongResultObject = 0xd8d4e;
+
+  IActionListener::RawMessageData msgData;
+  msgData.userId = 0;
+
+  REQUIRE_THROWS_WITH(p.GetActionListener().OnCraftItem(msgData, requiredItems,
+                                                        workbenchId,
+                                                        wrongResultObject),
+                      Contains("Recipe not found"));
+}
+
 TEST_CASE("DLC Dragonborn recipes are working", "[Craft]")
 {
 

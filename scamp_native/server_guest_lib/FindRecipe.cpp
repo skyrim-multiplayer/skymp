@@ -5,6 +5,17 @@ bool RecipeMatches(const espm::IdMapping* mapping, const espm::COBJ* recipe,
                    const Inventory& inputObjects, uint32_t resultObjectId)
 {
   auto recipeData = recipe->GetData();
+
+  enum
+  {
+    ArmorTable = 0xadb78,
+    SharpeningWheel = 0x88108
+  };
+  const bool isTemper = recipeData.benchKeywordId == ArmorTable ||
+    recipeData.benchKeywordId == SharpeningWheel;
+  if (isTemper)
+    return false;
+
   auto thisInputObjects = recipeData.inputObjects;
   for (auto& entry : thisInputObjects) {
     auto formId = espm::GetMappedId(entry.formId, *mapping);
