@@ -6,6 +6,16 @@ const handlersMap = new Map<PacketType, Handler[]>();
 let lastHostname = "";
 let lastPort = 0;
 
+const createClientSafe = (hostname: string, port: number): void => {
+  sp.printConsole("createClientSafe " + hostname + ":" + port);
+  // Client sometimes call this function with bad parameters.
+  // It causes assertion failure in Debug mode, but doesn't lead to anything on a regular player's machine.
+  // It seems that this function will be called with the valid parameters later
+  if (hostname !== "" && lastPort !== 0) {
+    mpClientPlugin.createClient(hostname, port);
+  }
+};
+
 sp.on("tick", () => {
   mpClientPlugin.tick((packetType, jsonContent, error) => {
     const handlers = handlersMap.get(packetType) || [];
@@ -25,7 +35,7 @@ sp.on("tick", () => {
 export const connect = (hostname: string, port: number): void => {
   lastHostname = hostname;
   lastPort = port;
-  mpClientPlugin.createClient(hostname, port);
+  createClientSafe(hostname, port);
 };
 
 export const close = (): void => {
@@ -43,7 +53,7 @@ export const send = (msg: Record<string, unknown>, reliable: boolean): void => {
 };
 
 // Reconnect automatically
-const reconnect = () => mpClientPlugin.createClient(lastHostname, lastPort);
+export const reconnect = (): void => createClientSafe(lastHostname, lastPort);
 on("connectionFailed", reconnect);
 on("connectionDenied", reconnect);
 on("disconnect", reconnect);

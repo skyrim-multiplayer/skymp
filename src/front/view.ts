@@ -11,73 +11,118 @@ import {
   on,
   Utility,
   worldPointToScreenPoint,
+  Form,
+  storage,
 } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
 
 import { applyMovement, NiPoint3 } from "./components/movement";
-import { applyAnimation } from "./components/animation";
 import {
-  Look,
-  applyLook,
-  applyTints,
-  silentVoiceTypeId,
-} from "./components/look";
+  applyAnimation,
+  setDefaultAnimsDisabled,
+} from "./components/animation";
+import { Look, applyLook, applyTints } from "./components/look";
 import { applyEquipment, isBadMenuShown } from "./components/equipment";
+import { modWcProtection } from "./worldCleaner";
+import { applyInventory } from "./components/inventory";
+import { tryHost } from "./hostAttempts";
+import { getMovement } from "./components/movementGet";
+
+let gCrosshairRefId = 0;
+let gPcInJumpState = false;
+let gPcWorldOrCellId = 0;
+let gUpdateNeighborFunctionsKeys = new Array<string>();
+let gUpdateNeighborFunctions: Record<string, any> = {};
+
+on("tick", () => {
+  const keys = storage["updateNeighborFunctions_keys"] as Array<string>;
+  if (keys && Array.isArray(keys)) {
+    gUpdateNeighborFunctionsKeys = keys;
+  } else {
+    gUpdateNeighborFunctionsKeys = [];
+  }
+  gUpdateNeighborFunctions = storage["updateNeighborFunctions"];
+});
 
 export interface View<T> {
   update(model: T): void;
   destroy(): void;
 }
 
-// https://stackoverflow.com/questions/201183/how-to-determine-equality-for-two-javascript-objects
-function objectEquals(x: any, y: any): boolean {
-  "use strict";
+const getFormEx = Game.getFormEx;
 
-  if (x === null || x === undefined || y === null || y === undefined) {
-    return x === y;
+function isItem(t: number) {
+  const isAmmo = t === 42;
+  const isArmor = t === 26;
+  const isBook = t === 27;
+  const isIngredient = t === 30;
+  const isLight = t === 31;
+  const isPotion = t === 46;
+  const isScroll = t === 23;
+  const isSoulGem = t === 52;
+  const isWeapon = t === 41;
+  const isMisc = t === 32;
+
+  const isItem =
+    isAmmo ||
+    isArmor ||
+    isBook ||
+    isIngredient ||
+    isLight ||
+    isPotion ||
+    isScroll ||
+    isSoulGem ||
+    isWeapon ||
+    isMisc;
+  return isItem;
+}
+
+const lastTryHost: Record<number, number> = {};
+
+const tryHostIfNeed = (ac: Actor, remoteId: number) => {
+  const last = lastTryHost[remoteId];
+  if (!last || Date.now() - last >= 1000) {
+    lastTryHost[remoteId] = Date.now();
+
+    if (
+      getMovement(ac).worldOrCell === getMovement(Game.getPlayer()).worldOrCell
+    ) {
+      return tryHost(remoteId);
+    }
   }
-  // after this just checking type of one would be enough
-  if (x.constructor !== y.constructor) {
-    return false;
-  }
-  // if they are functions, they should exactly refer to same one (because of closures)
-  if (x instanceof Function) {
-    return x === y;
-  }
-  // if they are regexps, they should exactly refer to same one (it is hard to better equality check on current ES)
-  if (x instanceof RegExp) {
-    return x === y;
-  }
-  if (x === y || x.valueOf() === y.valueOf()) {
-    return true;
-  }
-  if (Array.isArray(x) && x.length !== y.length) {
-    return false;
+};
+
+function dealWithRef(ref: ObjectReference, base: Form): void {
+  const t = base.getType();
+  const isContainer = t === 28;
+
+  const isFlora = t === 39;
+  const isTree = t === 38;
+
+  const isIngredientSource = isFlora || isTree;
+
+  const isMovableStatic = t === 36;
+  const isNpc = t === 43;
+  const isDoor = t === 29;
+
+  if (isContainer || isItem(t) || isIngredientSource || isNpc || isDoor) {
+    ref.blockActivation(true);
+  } else {
+    ref.blockActivation(false);
   }
 
-  // if they are dates, they must had equal valueOf
-  if (x instanceof Date) {
-    return false;
+  if (ref.isLocked()) {
+    ref.lock(false, false);
   }
 
-  // if they are strictly equal, they both need to be object at least
-  if (!(x instanceof Object)) {
-    return false;
+  if (isItem(t)) {
+    ref.setMotionType(MotionType.Keyframed, false);
   }
-  if (!(y instanceof Object)) {
-    return false;
+  // https://github.com/skyrim-multiplayer/issue-tracker/issues/36
+  if (isFlora) {
+    const hasIngr = sp.Flora.from(base).getIngredient() != null;
+    if (hasIngr) ref.setMotionType(MotionType.Keyframed, false);
   }
-
-  // recursive object equality check
-  const p = Object.keys(x);
-  return (
-    Object.keys(y).every(function (i) {
-      return p.indexOf(i) !== -1;
-    }) &&
-    p.every(function (i) {
-      return objectEquals(x[i], y[i]);
-    })
-  );
 }
 
 class SpawnProcess {
@@ -117,91 +162,287 @@ class SpawnProcess {
 }
 
 const getDefaultEquipState = () => {
-  return { lastNumChanges: 0, isBadMenuShown: false };
+  return { lastNumChanges: 0, isBadMenuShown: false, lastEqMoment: 0 };
+};
+
+interface LookState {
+  lastNumChanges: number;
+  look: Look;
+}
+
+const getDefaultLookState = (): LookState => {
+  return { lastNumChanges: 0, look: null };
+};
+
+const undefinedRefr: ObjectReference = undefined;
+const unknownValue: unknown = undefined;
+const undefinedFormModel: FormModel = undefined;
+const undefinedObject: Record<string, unknown> = undefined;
+const undefinedView: FormViewArray = undefined;
+const ctx = {
+  refr: undefinedRefr,
+  value: unknownValue,
+  _model: undefinedFormModel,
+  sp: sp,
+  state: undefinedObject,
+  _view: undefinedView,
+  i: -1,
+  getFormIdInServerFormat: (clientsideFormId: number) => {
+    return localIdToRemoteId(clientsideFormId);
+  },
+  getFormIdInClientFormat: (serversideFormId: number) => {
+    return remoteIdToLocalId(serversideFormId);
+  },
+  get(propName: string) {
+    return this._model[propName];
+  },
+  respawn() {
+    this._view.destroyForm(this.i);
+  },
 };
 
 export class FormView implements View<FormModel> {
-  update(model: FormModel): void {
-    if (!model.movement) {
-      throw new Error("FormModel without Movement component, is it a mistake?");
-    }
+  constructor(private remoteRefrId?: number) {}
 
+  update(model: FormModel): void {
     // Other players mutate into PC clones when moving to another location
-    if (!this.lastWorldOrCell)
-      this.lastWorldOrCell = model.movement.worldOrCell;
-    if (this.lastWorldOrCell !== model.movement.worldOrCell) {
-      printConsole(
-        `[1] worldOrCell changed, destroying FormView ${this.lastWorldOrCell.toString(
-          16
-        )} => ${model.movement.worldOrCell.toString(16)}`
-      );
-      this.lastWorldOrCell = model.movement.worldOrCell;
-      this.destroy();
-      this.refrId = 0;
-      this.lookBasedBaseId = 0;
-      return;
+    if (model.movement) {
+      if (!this.lastWorldOrCell)
+        this.lastWorldOrCell = model.movement.worldOrCell;
+      if (this.lastWorldOrCell !== model.movement.worldOrCell) {
+        printConsole(
+          `[1] worldOrCell changed, destroying FormView ${this.lastWorldOrCell.toString(
+            16
+          )} => ${model.movement.worldOrCell.toString(16)}`
+        );
+        this.lastWorldOrCell = model.movement.worldOrCell;
+        this.destroy();
+        this.refrId = 0;
+        this.lookBasedBaseId = 0;
+        return;
+      }
     }
 
     // Players with different worldOrCell should be invisible
-    const worldOrCell =
-      Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
-    if (worldOrCell && model.movement.worldOrCell !== worldOrCell.getFormID()) {
-      this.destroy();
-      this.refrId = 0;
-      return;
+    if (model.movement) {
+      const worldOrCell =
+        Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
+      if (
+        worldOrCell &&
+        model.movement.worldOrCell !== worldOrCell.getFormID()
+      ) {
+        this.destroy();
+        this.refrId = 0;
+        return;
+      }
     }
 
     // Apply look before base form selection to prevent double-spawn
     if (model.look) {
-      if (!this.look || !objectEquals(model.look, this.look)) {
-        this.look = model.look;
+      if (
+        !this.lookState.look ||
+        model.numLookChanges !== this.lookState.lastNumChanges
+      ) {
+        this.lookState.look = model.look;
+        this.lookState.lastNumChanges = model.numLookChanges;
         this.lookBasedBaseId = 0;
       }
     }
 
-    const AADeleteWhenDoneTestJeremyRegular = 0x0010d13e;
-    const base =
-      Game.getFormEx(+model.baseId) ||
-      Game.getFormEx(this.getLookBasedBase()) ||
-      Game.getFormEx(AADeleteWhenDoneTestJeremyRegular);
+    const refId =
+      model.refrId && model.refrId < 0xff000000 ? model.refrId : undefined;
+    if (refId) {
+      if (this.refrId !== refId) {
+        this.destroy();
+        this.refrId = model.refrId;
+        this.ready = true;
+        const refr = ObjectReference.from(Game.getFormEx(this.refrId));
+        if (refr) {
+          const base = refr.getBaseObject();
+          if (base) dealWithRef(refr, base);
+        }
+      }
+    } else {
+      const base =
+        getFormEx(+model.baseId) || getFormEx(this.getLookBasedBase());
+      if (!base) return;
 
-    let refr = ObjectReference.from(Game.getFormEx(this.refrId));
-    const respawnRequired =
-      !refr ||
-      !refr.getBaseObject() ||
-      refr.getBaseObject().getFormID() !== base.getFormID();
+      let refr = ObjectReference.from(Game.getFormEx(this.refrId));
+      const respawnRequired =
+        !refr ||
+        !refr.getBaseObject() ||
+        refr.getBaseObject().getFormID() !== base.getFormID();
 
-    if (respawnRequired) {
-      this.destroy();
-      refr = Game.getPlayer().placeAtMe(base, 1, true, true);
+      if (respawnRequired) {
+        this.destroy();
+        refr = Game.getPlayer().placeAtMe(base, 1, true, true);
+        this.state = {};
+        delete this.wasHostedByOther;
+        const kTypeNpc = 43;
+        if (base.getType() !== kTypeNpc) {
+          refr.setAngle(
+            model.movement.rot[0],
+            model.movement.rot[1],
+            model.movement.rot[2]
+          );
+        }
+        modWcProtection(refr.getFormID(), 1);
 
-      // TODO: reset all states?
-      this.eqState = getDefaultEquipState();
+        // TODO: reset all states?
+        this.eqState = getDefaultEquipState();
 
-      this.ready = false;
-      new SpawnProcess(
-        this.look,
-        model.movement.pos,
-        refr.getFormID(),
-        () => (this.ready = true)
-      );
-      if (model.look && model.look.name)
-        refr.setDisplayName("" + model.look.name, true);
+        this.ready = false;
+        new SpawnProcess(
+          this.lookState.look,
+          model.movement
+            ? model.movement.pos
+            : [
+                Game.getPlayer().getPositionX(),
+                Game.getPlayer().getPositionY(),
+                Game.getPlayer().getPositionZ(),
+              ],
+          refr.getFormID(),
+          () => {
+            this.ready = true;
+            this.spawnMoment = Date.now();
+          }
+        );
+        if (model.look && model.look.name)
+          refr.setDisplayName("" + model.look.name, true);
+      }
+      this.refrId = refr.getFormID();
     }
-    this.refrId = refr.getFormID();
 
     if (!this.ready) return;
-    this.applyAll(refr, model);
+
+    const refr = ObjectReference.from(Game.getFormEx(this.refrId));
+    if (refr) {
+      this.applyAll(refr, model);
+      for (const key of gUpdateNeighborFunctionsKeys) {
+        const v = (model as Record<string, unknown>)[key];
+        // From docs:
+        // In `updateOwner`/`updateNeighbor` equals to a value of a currently processed property.
+        // Can't be `undefined` here, since updates are not received for `undefined` property values.
+        // In other contexts is always `undefined`.
+        if (v !== undefined) {
+          if (this.refrId >= 0xff000000) {
+            /*printConsole(
+              "upd",
+              this.refrId.toString(16),
+              `${key}=${JSON.stringify(v)}`
+            );*/
+          }
+          ctx.refr = refr;
+          ctx.value = v;
+          ctx._model = model;
+          ctx.state = this.state;
+          const f = gUpdateNeighborFunctions[key];
+          // Actually, 'f' should always be a valid function, but who knows
+          try {
+            if (f) f(ctx);
+          } catch (e) {
+            printConsole(`'updateNeighbor.${key}' - `, e);
+          }
+        }
+      }
+    }
   }
 
   destroy(): void {
     this.isOnScreen = false;
+    this.spawnMoment = 0;
     const refr = ObjectReference.from(Game.getFormEx(this.refrId));
-    if (refr) refr.delete();
+    if (this.refrId >= 0xff000000) {
+      if (refr) refr.delete();
+      modWcProtection(this.refrId, -1);
+      const ac = Actor.from(refr);
+      if (ac) {
+        sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
+      }
+    }
   }
+
+  private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
+    const base = refr.getBaseObject();
+    if (base) {
+      const t = base.getType();
+      if (t >= 38 && t <= 39) {
+        const wasHarvested = refr.isHarvested();
+        if (isHarvested != wasHarvested) {
+          let ac: Actor;
+          if (isHarvested)
+            for (let i = 0; i < 20; ++i) {
+              ac = Game.findRandomActor(
+                refr.getPositionX(),
+                refr.getPositionY(),
+                refr.getPositionZ(),
+                10000
+              );
+              if (ac && ac.getFormID() !== 0x14) {
+                break;
+              }
+            }
+          if (isHarvested && ac && ac.getFormID() !== 0x14) {
+            refr.activate(ac, true);
+          } else {
+            refr.setHarvested(isHarvested);
+            const id = refr.getFormID();
+            refr.disable(false).then(() => {
+              const restoredRefr = ObjectReference.from(Game.getFormEx(id));
+              if (restoredRefr) restoredRefr.enable(false);
+            });
+          }
+        }
+      } else {
+        const wasHarvested = refr.isDisabled();
+        if (isHarvested != wasHarvested) {
+          if (isHarvested) {
+            const id = refr.getFormID();
+            refr.disable(false).then(() => {
+              const restoredRefr = ObjectReference.from(Game.getFormEx(id));
+              if (restoredRefr && !restoredRefr.isDisabled()) {
+                restoredRefr.delete();
+                // Deletion takes time, so in practice this would be called a lot of times
+              }
+            });
+          } else refr.enable(true);
+        }
+      }
+    }
+  }
+
+  private lastHarvestedApply = 0;
+  private lastOpenApply = 0;
 
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
+
+    if (gCrosshairRefId === this.refrId) {
+      this.lastHarvestedApply = 0;
+      this.lastOpenApply = 0;
+    }
+    const now = Date.now();
+    if (now - this.lastHarvestedApply > 666) {
+      this.lastHarvestedApply = now;
+      this.applyHarvested(refr, !!model.isHarvested);
+    }
+    if (now - this.lastOpenApply > 133) {
+      this.lastOpenApply = now;
+      refr.setOpen(!!model.isOpen);
+    }
+
+    if (
+      model.inventory &&
+      gCrosshairRefId == this.refrId &&
+      !isBadMenuShown()
+    ) {
+      // Do not let actors breaking their equipment via inventory apply
+      // However, actually, actors do not have inventory in their models
+      // Except your clone.
+      if (!Actor.from(refr)) {
+        applyInventory(refr, model.inventory, false, true);
+      }
+    }
 
     if (model.animation) {
       if (model.animation.animEventName === "SkympFakeUnequip") {
@@ -212,55 +453,92 @@ export class FormView implements View<FormModel> {
     }
 
     if (model.movement) {
-      if (+model.numMovementChanges !== this.movState.lastNumChanges) {
-        const backup = model.movement.isWeapDrawn;
-        if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
-          model.movement.isWeapDrawn = forcedWeapDrawn;
+      const ac = Actor.from(refr);
+      if (ac) {
+        if (model.isHostedByOther !== this.wasHostedByOther) {
+          this.wasHostedByOther = model.isHostedByOther;
+          this.movState.lastApply = 0;
+          if (model.isHostedByOther) {
+            setDefaultAnimsDisabled(ac.getFormID(), true);
+          } else {
+            setDefaultAnimsDisabled(ac.getFormID(), false);
+          }
         }
-        applyMovement(refr, model.movement);
-        model.movement.isWeapDrawn = backup;
+      }
 
-        this.movState.lastNumChanges = +model.numMovementChanges;
+      if (
+        this.movState.lastApply &&
+        Date.now() - this.movState.lastApply > 1500
+      ) {
+        if (Date.now() - this.movState.lastRehost > 1000) {
+          this.movState.lastRehost = Date.now();
+          const remoteId = this.remoteRefrId;
+          if (ac && ac.is3DLoaded()) {
+            tryHostIfNeed(ac, remoteId);
+            printConsole("try to rehost");
+          }
+        }
+      }
+
+      if (
+        +model.numMovementChanges !== this.movState.lastNumChanges ||
+        Date.now() - this.movState.lastApply > 2000
+      ) {
+        this.movState.lastApply = Date.now();
+        if (model.isHostedByOther || !this.movState.everApplied) {
+          const backup = model.movement.isWeapDrawn;
+          if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
+            model.movement.isWeapDrawn = forcedWeapDrawn;
+          }
+          applyMovement(refr, model.movement);
+          model.movement.isWeapDrawn = backup;
+
+          this.movState.lastNumChanges = +model.numMovementChanges;
+          this.movState.everApplied = true;
+        } else {
+          if (ac) ac.clearKeepOffsetFromActor();
+          if (ac) sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
+          const remoteId = this.remoteRefrId;
+          if (ac && remoteId && ac.is3DLoaded()) tryHostIfNeed(ac, remoteId);
+        }
       }
     }
     if (model.animation) applyAnimation(refr, model.animation, this.animState);
 
-    const actor = Actor.from(refr);
-    if (actor && !Game.getPlayer().getAnimationVariableBool("bInJumpState")) {
-      const pcWorldOrCell =
-        Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
-      if (pcWorldOrCell) {
-        const id = pcWorldOrCell.getFormID();
-        if (this.lastPcWorldOrCell && id !== this.lastPcWorldOrCell) {
-          // Redraw tints if PC world/cell changed
-          this.isOnScreen = false;
-          /*this.destroy();
-          this.refrId = 0;
-          this.lastPcWorldOrCell = id;
-          return;*/
+    if (model.look) {
+      const actor = Actor.from(refr);
+      if (actor && !gPcInJumpState) {
+        if (gPcWorldOrCellId) {
+          if (
+            this.lastPcWorldOrCell &&
+            gPcWorldOrCellId !== this.lastPcWorldOrCell
+          ) {
+            // Redraw tints if PC world/cell changed
+            this.isOnScreen = false;
+          }
+          this.lastPcWorldOrCell = gPcWorldOrCellId;
         }
-        this.lastPcWorldOrCell = id;
-      }
 
-      const ni = (sp as any)["NetImmerse"];
-      const headPos = [
-        ni.GetNodeWorldPositionX(actor, "NPC Head [Head]", false),
-        ni.GetNodeWorldPositionY(actor, "NPC Head [Head]", false),
-        ni.GetNodeWorldPositionZ(actor, "NPC Head [Head]", false),
-      ];
-      const [screenPoint] = worldPointToScreenPoint(headPos);
-      const isOnScreen =
-        screenPoint[0] > 0 &&
-        screenPoint[1] > 0 &&
-        screenPoint[2] > 0 &&
-        screenPoint[0] < 1 &&
-        screenPoint[1] < 1 &&
-        screenPoint[2] < 1;
-      if (isOnScreen != this.isOnScreen) {
-        this.isOnScreen = isOnScreen;
-        if (isOnScreen) {
-          actor.queueNiNodeUpdate();
-          Game.getPlayer().queueNiNodeUpdate();
+        const ni = (sp as any)["NetImmerse"];
+        const headPos = [
+          ni.GetNodeWorldPositionX(actor, "NPC Head [Head]", false),
+          ni.GetNodeWorldPositionY(actor, "NPC Head [Head]", false),
+          ni.GetNodeWorldPositionZ(actor, "NPC Head [Head]", false),
+        ];
+        const [screenPoint] = worldPointToScreenPoint(headPos);
+        const isOnScreen =
+          screenPoint[0] > 0 &&
+          screenPoint[1] > 0 &&
+          screenPoint[2] > 0 &&
+          screenPoint[0] < 1 &&
+          screenPoint[1] < 1 &&
+          screenPoint[2] < 1;
+        if (isOnScreen != this.isOnScreen) {
+          this.isOnScreen = isOnScreen;
+          if (isOnScreen) {
+            actor.queueNiNodeUpdate();
+            Game.getPlayer().queueNiNodeUpdate();
+          }
         }
       }
     }
@@ -272,31 +550,146 @@ export class FormView implements View<FormModel> {
         if (!isShown) this.eqState.lastNumChanges = -1;
       }
       if (this.eqState.lastNumChanges !== model.equipment.numChanges) {
-        this.eqState.lastNumChanges = model.equipment.numChanges;
         const ac = Actor.from(refr);
-        if (ac) applyEquipment(ac, model.equipment);
+        // If we do not block inventory here, we will be able to reproduce the bug:
+        // 1. Place ~90 bots and force them to reequip iron swords to the left hand (rate should be ~50ms)
+        // 2. Open your inventory and reequip different items fast
+        // 3. After 1-2 minutes close your inventory and see that HUD disappeared
+        if (
+          ac &&
+          !isBadMenuShown() &&
+          Date.now() - this.eqState.lastEqMoment > 500 &&
+          Date.now() - this.spawnMoment > -1 &&
+          this.spawnMoment > 0
+        ) {
+          //if (this.spawnMoment > 0 && Date.now() - this.spawnMoment > 5000) {
+          if (applyEquipment(ac, model.equipment)) {
+            this.eqState.lastNumChanges = model.equipment.numChanges;
+          }
+          this.eqState.lastEqMoment = Date.now();
+          //}
+          //const res: boolean = applyEquipment(ac, model.equipment);
+          //if (res) this.eqState.lastNumChanges = model.equipment.numChanges;
+        }
       }
     }
   }
 
   private getLookBasedBase(): number {
     const base = ActorBase.from(Game.getFormEx(this.lookBasedBaseId));
-    if (!base && this.look) {
-      this.lookBasedBaseId = applyLook(this.look).getFormID();
+    if (!base && this.lookState.look) {
+      this.lookBasedBaseId = applyLook(this.lookState.look).getFormID();
     }
     return this.lookBasedBaseId;
+  }
+
+  getLocalRefrId(): number {
+    return this.refrId;
+  }
+
+  getRemoteRefrId(): number {
+    return this.remoteRefrId;
   }
 
   private refrId = 0;
   private ready = false;
   private animState = { lastNumChanges: 0 };
-  private movState = { lastNumChanges: 0 };
+  private movState = {
+    lastNumChanges: 0,
+    lastApply: 0,
+    lastRehost: 0,
+    everApplied: false,
+  };
+  private lookState = getDefaultLookState();
   private eqState = getDefaultEquipState();
   private lookBasedBaseId = 0;
-  private look?: Look;
   private isOnScreen = false;
   private lastPcWorldOrCell = 0;
   private lastWorldOrCell = 0;
+  private spawnMoment = 0;
+  private wasHostedByOther: boolean | undefined = undefined;
+  private state = {};
+}
+
+class FormViewArray {
+  updateForm(form: FormModel, i: number) {
+    const view = this.formViews[i];
+    if (!view) {
+      this.formViews[i] = new FormView(form.refrId);
+    } else {
+      view.update(form);
+    }
+  }
+
+  destroyForm(i: number) {
+    if (!this.formViews[i]) return;
+    this.formViews[i].destroy();
+    this.formViews[i] = undefined;
+  }
+
+  resize(newSize: number) {
+    if (this.formViews.length > newSize) {
+      this.formViews.slice(newSize).forEach((v) => v && v.destroy());
+    }
+    this.formViews.length = newSize;
+  }
+
+  updateAll(model: WorldModel, showMe: boolean, isCloneView: boolean) {
+    ctx._view = this;
+    const forms = model.forms;
+    const n = forms.length;
+    for (let i = 0; i < n; ++i) {
+      if (!forms[i] || (model.playerCharacterFormIdx === i && !showMe)) {
+        this.destroyForm(i);
+        continue;
+      }
+      const form = forms[i];
+
+      let realPos: NiPoint3;
+      const offset =
+        form.movement && (model.playerCharacterFormIdx === i || isCloneView);
+      if (offset) {
+        realPos = form.movement.pos;
+        form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
+      }
+      if (isCloneView) {
+        // Prevent using the same refr by normal and clone views
+        if (!form.refrId || form.refrId >= 0xff000000) {
+          const backup = form.isHostedByOther;
+          form.isHostedByOther = true;
+          this.updateForm(form, i);
+          form.isHostedByOther = backup;
+        }
+      } else {
+        ctx.i = i;
+        this.updateForm(form, i);
+      }
+
+      if (offset) {
+        form.movement.pos = realPos;
+      }
+    }
+  }
+
+  getRemoteRefrId(clientsideRefrId: number): number {
+    if (clientsideRefrId < 0xff000000)
+      throw new Error("This function is only for 0xff forms");
+    const formView = this.formViews.find((formView: FormView) => {
+      return formView && formView.getLocalRefrId() === clientsideRefrId;
+    });
+    return formView ? formView.getRemoteRefrId() : 0;
+  }
+
+  getLocalRefrId(remoteRefrId: number): number {
+    if (remoteRefrId < 0xff000000)
+      throw new Error("This function is only for 0xff forms");
+    const formView = this.formViews.find((formView: FormView) => {
+      return formView && formView.getRemoteRefrId() === remoteRefrId;
+    });
+    return formView ? formView.getLocalRefrId() : 0;
+  }
+
+  private formViews = new Array<FormView>();
 }
 
 export class WorldView implements View<WorldModel> {
@@ -312,9 +705,8 @@ export class WorldView implements View<WorldModel> {
       if (this.pcWorldOrCell !== pcWorldOrCell) {
         if (this.pcWorldOrCell) {
           printConsole("Reset all form views");
-          for (let i = 0; i < this.formViews.length; ++i) {
-            this.destroyForm(i);
-          }
+          this.formViews.resize(0);
+          this.cloneFormViews.resize(0);
         }
         this.pcWorldOrCell = pcWorldOrCell;
       }
@@ -328,66 +720,81 @@ export class WorldView implements View<WorldModel> {
     });
   }
 
+  getRemoteRefrId(clientsideRefrId: number): number {
+    return this.formViews.getRemoteRefrId(clientsideRefrId);
+  }
+
+  getLocalRefrId(remoteRefrId: number): number {
+    return this.formViews.getLocalRefrId(remoteRefrId);
+  }
+
   update(model: WorldModel): void {
     if (!this.allowUpdate) return;
 
-    this.resize(model.forms.length);
+    // Skip 50% of updates
+    this.counter = !this.counter;
+    if (this.counter) return;
+
+    this.formViews.resize(model.forms.length);
 
     const showMe = settings["skymp5-client"]["show-me"];
+    const showClones = settings["skymp5-client"]["show-clones"];
 
-    const toDestroy = new Array<number>();
+    const crosshair = Game.getCurrentCrosshairRef();
+    gCrosshairRefId = crosshair ? crosshair.getFormID() : 0;
 
-    model.forms.forEach((form, i) => {
-      if (!form || (model.playerCharacterFormIdx === i && !showMe)) {
-        return this.destroyForm(i);
-      }
+    gPcInJumpState = Game.getPlayer().getAnimationVariableBool("bInJumpState");
 
-      let realPos: NiPoint3;
-      if (model.playerCharacterFormIdx === i && form.movement) {
-        realPos = form.movement.pos;
-        form.movement.pos = [realPos[0] + 128, realPos[1] + 128, realPos[2]];
-      }
-      try {
-        this.updateForm(form, i);
-      } catch (err) {
-        if (err.message.includes("needs to be respawned")) {
-          toDestroy.push(i);
-          printConsole("destroying");
-        } else {
-          throw err;
-        }
-      }
-      if (model.playerCharacterFormIdx === i && form.movement) {
-        form.movement.pos = realPos;
-      }
-    });
+    const pcWorldOrCell =
+      Game.getPlayer().getWorldSpace() || Game.getPlayer().getParentCell();
+    gPcWorldOrCellId = pcWorldOrCell ? pcWorldOrCell.getFormID() : 0;
 
-    toDestroy.forEach((i) => this.destroyForm(i));
-  }
+    this.formViews.updateAll(model, showMe, false);
 
-  private updateForm(form: FormModel, i: number) {
-    if (!this.formViews[i]) this.formViews[i] = new FormView();
-    this.formViews[i].update(form);
-  }
-
-  private destroyForm(i: number) {
-    if (!this.formViews[i]) return;
-    this.formViews[i].destroy();
-    this.formViews[i] = undefined;
-  }
-
-  private resize(newSize: number) {
-    if (this.formViews.length > newSize) {
-      this.formViews.slice(newSize).forEach((v) => v && v.destroy());
+    if (showClones) {
+      this.cloneFormViews.updateAll(model, false, true);
+    } else {
+      this.cloneFormViews.resize(0);
     }
-    this.formViews.length = newSize;
   }
 
   destroy(): void {
-    this.resize(0);
+    this.formViews.resize(0);
   }
 
-  private formViews = new Array<FormView>();
+  private formViews = new FormViewArray();
+  private cloneFormViews = new FormViewArray();
   private allowUpdate = false;
   private pcWorldOrCell = 0;
+  private counter = false;
 }
+
+export const getViewFromStorage = (): WorldView | undefined => {
+  const res = storage.view as WorldView;
+  if (typeof res === "object") return res;
+  return undefined;
+};
+
+export const localIdToRemoteId = (localFormId: number): number => {
+  if (localFormId >= 0xff000000) {
+    const view = getViewFromStorage();
+    if (!view) return 0;
+    localFormId = view.getRemoteRefrId(localFormId);
+    if (!localFormId) return 0;
+    // serverside ids are 64bit
+    if (localFormId >= 0x100000000) {
+      localFormId -= 0x100000000;
+    }
+  }
+  return localFormId;
+};
+
+export const remoteIdToLocalId = (remoteFormId: number): number => {
+  if (remoteFormId >= 0xff000000) {
+    const view = getViewFromStorage();
+    if (!view) return 0;
+    remoteFormId = view.getLocalRefrId(remoteFormId);
+    if (!remoteFormId) return 0;
+  }
+  return remoteFormId;
+};

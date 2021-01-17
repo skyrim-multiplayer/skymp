@@ -5,18 +5,22 @@ import {
   hooks,
   Actor,
   printConsole,
+  Utility,
+  Game,
 } from "skyrimPlatform";
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
 
-export interface Animation {
-  animEventName: string;
-  numChanges: number;
-}
+import * as structures from "../../lib/structures/animation";
+export type Animation = structures.Animation;
 
 export interface AnimationApplyState {
   lastNumChanges: number;
 }
+
+const allowedIdles = new Array<[number, string]>();
+const refsWithDefaultAnimsDisabled = new Set<number>();
+const allowedAnims = new Set<string>();
 
 const isIdle = (animEventName: string) => {
   return (
@@ -26,8 +30,6 @@ const isIdle = (animEventName: string) => {
       animEventName !== "IdleForceDefaultState")
   );
 };
-
-const allowedIdles = new Array<[number, string]>();
 
 export const applyAnimation = (
   refr: ObjectReference,
@@ -47,9 +49,35 @@ export const applyAnimation = (
   } else if (anim.animEventName === "SkympFakeUnequip") {
     const ac = Actor.from(refr);
     if (ac) applyWeapDrawn(ac, false);
+  } else if (anim.animEventName === "Ragdoll") {
+    const ac = Actor.from(refr);
+    if (ac) {
+      ac.pushActorAway(ac, 0);
+      ac.setActorValue("Variable10", -1000);
+    }
   } else {
+    if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
+      if (anim.animEventName.toLowerCase().includes("attack")) {
+        allowedAnims.add(refr.getFormID() + ":" + anim.animEventName);
+      }
+    }
     Debug.sendAnimationEvent(refr, anim.animEventName);
+    if (anim.animEventName === "GetUpBegin") {
+      const refrId = refr.getFormID();
+      Utility.wait(1).then(() => {
+        const ac = Actor.from(Game.getFormEx(refrId));
+        if (ac) ac.setActorValue("Variable10", 1000);
+      });
+    }
   }
+};
+
+export const setDefaultAnimsDisabled = (
+  refrId: number,
+  disabled: boolean
+): void => {
+  if (disabled) refsWithDefaultAnimsDisabled.add(refrId);
+  else refsWithDefaultAnimsDisabled.delete(refrId);
 };
 
 export class AnimationSource {
@@ -85,10 +113,6 @@ export class AnimationSource {
     if (ignoredAnims.has(animEventName)) return;
 
     const lower = animEventName.toLowerCase();
-    if (lower.includes("spell")) {
-      printConsole("spell animation has been blocked");
-      return;
-    }
 
     const isTorchEvent = lower.includes("torch");
     if (animEventName.toLowerCase().includes("unequip") && !isTorchEvent) {
@@ -108,7 +132,9 @@ export class AnimationSource {
       return;
     }
 
-    if (animEventName === "Ragdoll") return;
+    //if (animEventName === "Ragdoll") return;
+
+    if (animEventName === "IdleForceDefaultState") return;
 
     this.numChanges++;
     this.animEventName = animEventName;
@@ -136,6 +162,18 @@ const ignoredAnims = new Set<string>([
 export const setupHooks = (): void => {
   hooks.sendAnimationEvent.add({
     enter: (ctx) => {
+      if (refsWithDefaultAnimsDisabled.has(ctx.selfId)) {
+        if (ctx.animEventName.toLowerCase().includes("attack")) {
+          const animKey = ctx.selfId + ":" + ctx.animEventName;
+          if (allowedAnims.has(animKey)) {
+            allowedAnims.delete(animKey);
+          } else {
+            printConsole("block anim " + ctx.animEventName);
+            return (ctx.animEventName = "");
+          }
+        }
+      }
+
       // ShowRaceMenu forces this anim
       if (ctx.animEventName === "OffsetBoundStandingPlayerInstant") {
         return (ctx.animEventName = "");

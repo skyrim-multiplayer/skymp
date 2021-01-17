@@ -1,24 +1,9 @@
-export type NiPoint3 = [number, number, number];
-
-export interface Transform {
-  worldOrCell: number;
-  pos: NiPoint3;
-  rot: NiPoint3;
-}
-
-export type RunMode = "Standing" | "Walking" | "Running" | "Sprinting";
-
-export interface AnimationVariables {
-  runMode: RunMode;
-  direction: number;
-  isInJumpState: boolean;
-  isSneaking: boolean;
-  isBlocking: boolean;
-  isWeapDrawn: boolean;
-  healthPercentage: number;
-}
-
-export type Movement = Transform & AnimationVariables;
+import * as structures from "../../lib/structures/movement";
+export type Movement = structures.Movement;
+export type RunMode = structures.RunMode;
+export type AnimationVariables = structures.AnimationVariables;
+export type Transform = structures.Transform;
+export type NiPoint3 = structures.NiPoint3;
 
 // // This doesn't work in SkyrimPlatform 0.5.0:
 // export * from './movementApply';

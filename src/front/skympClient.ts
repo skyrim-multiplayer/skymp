@@ -7,21 +7,31 @@ import {
   Game,
   Ui,
   Utility,
-  findConsoleCommand,
+  Actor,
 } from "skyrimPlatform";
-import { WorldView } from "./view";
+import {
+  WorldView,
+  getViewFromStorage,
+  localIdToRemoteId,
+  remoteIdToLocalId,
+} from "./view";
 import { getMovement } from "./components/movement";
 import { getLook } from "./components/look";
 import { AnimationSource, Animation, setupHooks } from "./components/animation";
 import { getEquipment } from "./components/equipment";
-import { MsgType } from "./messages";
+import { getDiff, getInventory, Inventory } from "./components/inventory";
+import { MsgType, HostStartMessage, HostStopMessage } from "./messages";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
-import { RemoteServer } from "./remoteServer";
+import { RemoteServer, getPcInventory } from "./remoteServer";
 import { SendTarget } from "./sendTarget";
 import * as networking from "./networking";
 import * as sp from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
+import * as deathSystem from "./deathSystem";
+import { setUpConsoleCommands } from "./console";
+import { nextHostAttempt } from "./hostAttempts";
+import * as updateOwner from "./updateOwner";
 
 interface AnyMessage {
   type?: string;
@@ -34,7 +44,43 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     (m: AnyMessage) => void
   >;
   const f = handler[msgType];
-  if (msgType !== "UpdateMovement") printConsole(msgType, msgAny);
+  /*if (msgType !== "UpdateMovement") {
+    printConsole();
+    for (const key in msgAny) {
+      const v = (msgAny as Record<string, any>)[key];
+      printConsole(`${key}=${JSON.stringify(v)}`);
+    }
+  }*/
+
+  if (msgType === "hostStart") {
+    const msg = msgAny as HostStartMessage;
+    const target = msg.target;
+    printConsole("hostStart", target.toString(16));
+
+    let hosted = storage["hosted"];
+    if (typeof hosted !== typeof []) {
+      // if you try to switch to Set checkout .concat usage.
+      // concat compiles but doesn't work as expected
+      hosted = new Array<number>();
+      storage["hosted"] = hosted;
+    }
+
+    if (!hosted.includes(target)) {
+      hosted.push(target);
+    }
+  }
+
+  if (msgType === "hostStop") {
+    const msg = msgAny as HostStopMessage;
+    const target = msg.target;
+    printConsole("hostStop", target.toString(16));
+
+    const hosted = storage["hosted"] as Array<number>;
+    if (typeof hosted === typeof []) {
+      storage["hosted"] = hosted.filter((x) => x !== target);
+    }
+  }
+
   if (f && typeof f === "function") handler[msgType](msgAny);
 };
 
@@ -60,6 +106,7 @@ export class SkympClient {
     this.resetView();
     this.resetRemoteServer();
     setupHooks();
+    updateOwner.setup();
 
     sp.printConsole("SkympClient ctor");
 
@@ -89,12 +136,155 @@ export class SkympClient {
       }
     });
 
+    let lastInv: Inventory;
+
+    once("update", () => {
+      const send = (msg: Record<string, unknown>) => {
+        this.sendTarget.send(msg, true);
+      };
+      const localIdToRemoteId = (localId: number) => {
+        return this.localIdToRemoteId(localId);
+      };
+      setUpConsoleCommands(send, localIdToRemoteId);
+    });
+
+    on("activate", (e) => {
+      lastInv = getInventory(Game.getPlayer());
+      let caster = e.caster ? e.caster.getFormID() : 0;
+      let target = e.target ? e.target.getFormID() : 0;
+
+      if (!target || !caster) return;
+
+      // Actors never have non-ff ids locally in skymp
+      if (caster !== 0x14 && caster < 0xff000000) return;
+
+      target = this.localIdToRemoteId(target);
+      if (!target) return printConsole("localIdToRemoteId returned 0 (target)");
+
+      caster = this.localIdToRemoteId(caster);
+      if (!caster) return printConsole("localIdToRemoteId returned 0 (caster)");
+
+      this.sendTarget.send(
+        { t: MsgType.Activate, data: { caster, target } },
+        true
+      );
+      printConsole("sendActi", { caster, target });
+    });
+
+    type FurnitureId = number;
+    const furnitureStreak = new Map<FurnitureId, Inventory>();
+
+    on("containerChanged", (e) => {
+      const oldContainerId = e.oldContainer ? e.oldContainer.getFormID() : 0;
+      const newContainerId = e.newContainer ? e.newContainer.getFormID() : 0;
+      const baseObjId = e.baseObj ? e.baseObj.getFormID() : 0;
+      if (oldContainerId !== 0x14 && newContainerId !== 0x14) return;
+
+      const furnitureRef = Game.getPlayer().getFurnitureReference();
+      if (!furnitureRef) return;
+
+      const furrnitureId = furnitureRef.getFormID();
+
+      if (oldContainerId === 0x14 && newContainerId === 0) {
+        let craftInputObjects = furnitureStreak.get(furrnitureId);
+        if (!craftInputObjects) {
+          craftInputObjects = { entries: [] };
+        }
+        craftInputObjects.entries.push({
+          baseId: baseObjId,
+          count: e.numItems,
+        });
+        furnitureStreak.set(furrnitureId, craftInputObjects);
+        printConsole(
+          `Adding ${baseObjId.toString(16)} (${e.numItems}) to recipe`
+        );
+      } else if (oldContainerId === 0 && newContainerId === 0x14) {
+        printConsole("Flushing recipe");
+        const craftInputObjects = furnitureStreak.get(furrnitureId);
+        if (craftInputObjects && craftInputObjects.entries.length) {
+          furnitureStreak.delete(furrnitureId);
+          const workbench = this.localIdToRemoteId(furrnitureId);
+          if (!workbench) return printConsole("localIdToRemoteId returned 0");
+
+          this.sendTarget.send(
+            {
+              t: MsgType.CraftItem,
+              data: { workbench, craftInputObjects, resultObjectId: baseObjId },
+            },
+            true
+          );
+          printConsole("sendCraft", {
+            workbench,
+            craftInputObjects,
+            resultObjectId: baseObjId,
+          });
+        }
+      }
+    });
+
+    on("containerChanged", (e) => {
+      if (e.oldContainer && e.newContainer) {
+        if (
+          e.oldContainer.getFormID() === 0x14 ||
+          e.newContainer.getFormID() === 0x14
+        ) {
+          printConsole(1);
+          if (!lastInv) lastInv = getPcInventory();
+          if (lastInv) {
+            printConsole(2);
+            const newInv = getInventory(Game.getPlayer());
+
+            // It seems that 'ignoreWorn = false' fixes this:
+            // https://github.com/skyrim-multiplayer/issue-tracker/issues/43
+            // For some reason excess diff is produced when 'ignoreWorn = true'
+            // I thought that it would be vice versa but that's how it works
+            const ignoreWorn = false;
+            const diff = getDiff(lastInv, newInv, ignoreWorn);
+
+            printConsole("diff:");
+            for (let i = 0; i < diff.entries.length; ++i) {
+              printConsole(`[${i}] ${JSON.stringify(diff.entries[i])}`);
+            }
+            const msgs = diff.entries.map((entry) => {
+              if (entry.count !== 0) {
+                const msg = JSON.parse(JSON.stringify(entry));
+                delete msg["name"]; // Extra name works too strange
+                msg["t"] = entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
+                msg["count"] = Math.abs(msg["count"]);
+                msg["target"] =
+                  e.oldContainer.getFormID() === 0x14
+                    ? e.newContainer.getFormID()
+                    : e.oldContainer.getFormID();
+                return msg;
+              }
+            });
+            msgs.forEach((msg) => this.sendTarget.send(msg, true));
+          }
+        }
+      }
+    });
+
     const playerFormId = 0x14;
     on("equip", (e) => {
-      if (e.actor.getFormID() === playerFormId) this.equipmentChanged = true;
+      if (!e.actor || !e.baseObj) return;
+      if (e.actor.getFormID() === playerFormId) {
+        this.equipmentChanged = true;
+        this.sendTarget.send(
+          { t: MsgType.OnEquip, baseId: e.baseObj.getFormID() },
+          false
+        );
+      }
     });
     on("unequip", (e) => {
-      if (e.actor.getFormID() === playerFormId) this.equipmentChanged = true;
+      if (!e.actor || !e.baseObj) return;
+      if (e.actor.getFormID() === playerFormId) {
+        this.equipmentChanged = true;
+      }
+    });
+    on("loadGame", () => {
+      // Currently only armor is equipped after relogging (see remoteServer.ts)
+      // This hack forces sending /equipment without weapons/ back to the server
+      Utility.wait(3).then(() => (this.equipmentChanged = true));
     });
 
     loadGameManager.addLoadGameListener((e: loadGameManager.GameLoadEvent) => {
@@ -107,37 +297,81 @@ export class SkympClient {
         Game.setInChargen(false, false, false);
       }
     });
+    on("update", () => deathSystem.update());
   }
 
-  private sendMovement() {
+  // May return null
+  private getInputOwner(_refrId?: number) {
+    return _refrId
+      ? Actor.from(Game.getFormEx(this.remoteIdToLocalId(_refrId)))
+      : Game.getPlayer();
+  }
+
+  private sendMovement(_refrId?: number) {
+    const owner = this.getInputOwner(_refrId);
+    if (!owner) return;
+
+    const refrIdStr = `${_refrId}`;
     const sendMovementRateMs = 130;
     const now = Date.now();
-    if (now - this.lastSendMovementMoment > sendMovementRateMs) {
+    const last = this.lastSendMovementMoment.get(refrIdStr);
+    if (!last || now - last > sendMovementRateMs) {
       this.sendTarget.send(
-        { t: MsgType.UpdateMovement, data: getMovement(Game.getPlayer()) },
+        {
+          t: MsgType.UpdateMovement,
+          data: getMovement(owner),
+          _refrId,
+        },
         false
       );
-      this.lastSendMovementMoment = now;
+      this.lastSendMovementMoment.set(refrIdStr, now);
     }
   }
 
-  private sendAnimation() {
-    if (!this.playerAnimSource) {
-      this.playerAnimSource = new AnimationSource(Game.getPlayer());
+  private sendAnimation(_refrId?: number) {
+    const owner = this.getInputOwner(_refrId);
+    if (!owner) return;
+
+    // Extermly important that it's a local id since AnimationSource depends on it
+    const refrIdStr = owner.getFormID().toString(16);
+
+    let animSource = this.playerAnimSource.get(refrIdStr);
+    if (!animSource) {
+      animSource = new AnimationSource(owner);
+      this.playerAnimSource.set(refrIdStr, animSource);
     }
-    const anim = this.playerAnimSource.getAnimation();
+    const anim = animSource.getAnimation();
+
+    const lastAnimationSent = this.lastAnimationSent.get(refrIdStr);
     if (
-      !this.lastAnimationSent ||
-      anim.numChanges !== this.lastAnimationSent.numChanges
+      !lastAnimationSent ||
+      anim.numChanges !== lastAnimationSent.numChanges
     ) {
       if (anim.animEventName !== "") {
-        this.lastAnimationSent = anim;
-        this.sendTarget.send({ t: MsgType.UpdateAnimation, data: anim }, false);
+        this.lastAnimationSent.set(refrIdStr, anim);
+        this.sendTarget.send(
+          { t: MsgType.UpdateAnimation, data: anim, _refrId },
+          false
+        );
+        if (
+          storage._api_onAnimationEvent &&
+          storage._api_onAnimationEvent.callback
+        ) {
+          try {
+            storage._api_onAnimationEvent.callback(
+              _refrId ? _refrId : 0x14,
+              anim.animEventName
+            );
+          } catch (e) {
+            printConsole("'_api_onAnimationEvent' -", e);
+          }
+        }
       }
     }
   }
 
-  private sendLook() {
+  private sendLook(_refrId?: number) {
+    if (_refrId) return;
     const shown = Ui.isMenuOpen("RaceSex Menu");
     if (shown != this.isRaceSexMenuShown) {
       this.isRaceSexMenuShown = shown;
@@ -145,28 +379,49 @@ export class SkympClient {
         printConsole("Exited from race menu");
 
         const look = getLook(Game.getPlayer());
-        this.sendTarget.send({ t: MsgType.UpdateLook, data: look }, true);
+        this.sendTarget.send(
+          { t: MsgType.UpdateLook, data: look, _refrId },
+          true
+        );
       }
     }
   }
 
-  private sendEquipment() {
+  private sendEquipment(_refrId?: number) {
+    if (_refrId) return;
     if (this.equipmentChanged) {
       this.equipmentChanged = false;
 
       ++this.numEquipmentChanges;
 
       const eq = getEquipment(Game.getPlayer(), this.numEquipmentChanges);
-      this.sendTarget.send({ t: MsgType.UpdateEquipment, data: eq }, true);
+      this.sendTarget.send(
+        { t: MsgType.UpdateEquipment, data: eq, _refrId },
+        true
+      );
       printConsole({ eq });
     }
   }
 
+  private sendHostAttempts() {
+    const remoteId = nextHostAttempt();
+    if (!remoteId) return;
+
+    this.sendTarget.send({ t: MsgType.Host, remoteId }, false);
+  }
+
   private sendInputs() {
-    this.sendMovement();
-    this.sendAnimation();
-    this.sendLook();
-    this.sendEquipment();
+    const hosted =
+      typeof storage["hosted"] === typeof [] ? storage["hosted"] : [];
+    const targets = [undefined].concat(hosted);
+    //printConsole({ targets });
+    targets.forEach((target) => {
+      this.sendMovement(target);
+      this.sendAnimation(target);
+      this.sendLook(target);
+      this.sendEquipment(target);
+    });
+    this.sendHostAttempts();
   }
 
   private resetRemoteServer() {
@@ -215,9 +470,21 @@ export class SkympClient {
     });
   }
 
-  private playerAnimSource?: AnimationSource;
-  private lastSendMovementMoment = 0;
-  private lastAnimationSent?: Animation;
+  private getView(): WorldView | undefined {
+    return getViewFromStorage();
+  }
+
+  private localIdToRemoteId(localFormId: number): number {
+    return localIdToRemoteId(localFormId);
+  }
+
+  private remoteIdToLocalId(remoteFormId: number): number {
+    return remoteIdToLocalId(remoteFormId);
+  }
+
+  private playerAnimSource = new Map<string, AnimationSource>();
+  private lastSendMovementMoment = new Map<string, number>();
+  private lastAnimationSent = new Map<string, Animation>();
   private msgHandler?: MsgHandler;
   private modelSource?: ModelSource;
   private sendTarget?: SendTarget;
@@ -227,102 +494,7 @@ export class SkympClient {
   private numEquipmentChanges = 0;
 }
 
-findConsoleCommand("showracemenu").execute = () => {
-  printConsole("bope");
-  return false;
-};
-
-findConsoleCommand("tim").execute = () => {
-  printConsole("nope");
-  return false;
-};
-
-// TODO: remove this
 once("update", () => {
-  Game.getPlayer().unequipAll();
-  Game.getPlayer().addItem(Game.getFormEx(0x0001397d), 100, true);
-});
-
-const enforceLimitations = () => {
-  Game.setInChargen(true, true, false);
-};
-
-once("update", enforceLimitations);
-loadGameManager.addLoadGameListener(enforceLimitations);
-
-const Input = (sp as Record<string, any>)["Input"];
-const F2 = 0x3c;
-const F6 = 0x40;
-const Escape = 0x01;
-
-const badMenus = [
-  "BarterMenu",
-  "Book Menu",
-  "ContainerMenu",
-  "Crafting Menu",
-  "GiftMenu",
-  "InventoryMenu",
-  "Journal Menu",
-  "Lockpicking Menu",
-  "Loading Menu",
-  "MapMenu",
-  "RaceSex Menu",
-  "StatsMenu",
-  "TweenMenu",
-];
-
-sp.browser.setVisible(false);
-let visible = false;
-let noBadMenuOpen = true;
-let lastBadMenuCheck = 0;
-
-once("update", () => {
-  visible = true;
-  sp.browser.setVisible(true);
-});
-
-{
-  let pressedWas = false;
-
-  on("update", () => {
-    const pressed = Input.isKeyPressed(F2);
-    if (pressedWas !== pressed) {
-      pressedWas = pressed;
-      if (pressed) {
-        visible = !visible;
-      }
-    }
-
-    if (Date.now() - lastBadMenuCheck > 200) {
-      lastBadMenuCheck = Date.now();
-      noBadMenuOpen = badMenus.findIndex((menu) => Ui.isMenuOpen(menu)) === -1;
-    }
-
-    sp.browser.setVisible(visible && noBadMenuOpen);
-  });
-}
-
-{
-  let focused = false;
-  let pressedWas = false;
-
-  on("update", () => {
-    const pressed =
-      Input.isKeyPressed(F6) || (focused && Input.isKeyPressed(Escape));
-    if (pressedWas !== pressed) {
-      pressedWas = pressed;
-      if (pressed) {
-        focused = !focused;
-        sp.browser.setFocused(focused);
-      }
-    }
-  });
-}
-
-const url = `http://${settings["skymp5-client"]["server-ip"]}:3000/chat.html`;
-printConsole(`loading url ${url}`);
-sp.browser.loadUrl(url);
-
-once("update", () => {
-  Utility.setINIBool("bAlwaysActive:General", true);
+  // Is it racing with OnInit in Papyrus?
+  sp.TESModPlatform.blockPapyrusEvents(true);
 });

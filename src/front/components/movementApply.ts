@@ -9,13 +9,34 @@ import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {
   if (teleportIfNeed(refr, m)) return;
+
   translateTo(refr, m);
 
   const ac = Actor.from(refr);
 
   if (ac) {
-    ac.setHeadTracking(false);
-    ac.stopCombat();
+    let lookAt: Actor | null;
+    if (m.lookAt) {
+      try {
+        lookAt = Game.findClosestActor(
+          m.lookAt[0],
+          m.lookAt[1],
+          m.lookAt[2],
+          128
+        );
+      } catch (e) {
+        lookAt = null;
+      }
+    }
+
+    if (lookAt) {
+      ac.setHeadTracking(true);
+      ac.setLookAt(lookAt, false);
+    } else {
+      ac.setHeadTracking(false);
+    }
+
+    // ac.stopCombat();
     ac.blockActivation(true);
 
     keepOffsetFromActor(ac, m);
@@ -92,28 +113,7 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
-  if (ac.isDead()) {
-    if (healthPercentage > 0) throw new Error("needs to be respawned");
-  } else {
-    if (healthPercentage <= 0) {
-      ac.endDeferredKill();
-      ac.kill(null);
-    } else {
-      ac.startDeferredKill();
-      const base = 99999999;
-      ac.setActorValue("health", base);
-
-      healthPercentage = Math.max(healthPercentage, 0.005);
-
-      const currentPercentage = ac.getActorValuePercentage("health");
-      const mod = base * (healthPercentage - currentPercentage);
-      if (mod > 0) {
-        ac.restoreActorValue("health", mod);
-      } else if (mod < 0) {
-        ac.damageActorValue("health", mod);
-      }
-    }
-  }
+  // ...
 };
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
@@ -131,7 +131,9 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
     angleDiff > 80
   ) {
     const actor = Actor.from(refr);
-    if (!actor.isDead()) {
+    if (actor && actor.getActorValue("Variable10") < -999) return;
+
+    if (!actor || !actor.isDead()) {
       refr.translateTo(
         m.pos[0],
         m.pos[1],
