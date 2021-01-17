@@ -547,6 +547,15 @@ void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
     pImpl->animGraphHolder->animationVariablesBool.erase(name);
 }
 
+void MpObjectReference::SetInventory(const Inventory& inv)
+{
+  pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    changeForm.baseContainerAdded = true;
+    changeForm.inv = inv;
+  });
+  SendInventoryUpdate();
+}
+
 void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
 {
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {

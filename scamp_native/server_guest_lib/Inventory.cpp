@@ -188,3 +188,10 @@ Inventory Inventory::FromJson(simdjson::dom::element& j)
   }
   return res;
 }
+
+Inventory Inventory::FromJson(const nlohmann::json& j)
+{
+  simdjson::dom::parser p;
+  simdjson::dom::element parsed = p.parse(j.dump());
+  return FromJson(parsed);
+}

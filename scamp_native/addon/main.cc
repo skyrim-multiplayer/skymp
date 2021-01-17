@@ -638,6 +638,13 @@ void EnsurePropertyExists(Napi::Env env,
   }
 }
 
+Napi::Value ParseJson(const Napi::CallbackInfo& info, const std::string& dump)
+{
+  auto builtinJson = info.Env().Global().Get("JSON").As<Napi::Object>();
+  auto parse = builtinJson.Get("parse").As<Napi::Function>();
+  return parse.Call({ Napi::String::New(info.Env(), dump) });
+}
+
 Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
 {
   Napi::Object mp = Napi::Object::New(info.Env());
@@ -820,6 +827,42 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
                auto desc = FormDesc::FromFormId(refr.GetCellOrWorld(),
                                                 partOne->worldState.espmFiles);
                res = Napi::String::New(info.Env(), desc.ToString());
+             } else if (propertyName == "baseDesc") {
+               auto desc = FormDesc::FromFormId(refr.GetBaseId(),
+                                                partOne->worldState.espmFiles);
+               res = Napi::String::New(info.Env(), desc.ToString());
+             } else if (propertyName == "isOpen") {
+               res = Napi::Boolean::New(info.Env(), refr.IsOpen());
+             } else if (propertyName == "appearance") {
+               if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+                 auto& dump = actor->GetLookAsJson();
+                 if (dump.size() > 0) {
+                   res = ParseJson(info, dump);
+                 }
+               }
+             } else if (propertyName == "inventory") {
+               res = ParseJson(info, refr.GetInventory().ToJson().dump());
+             } else if (propertyName == "equipment") {
+               if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+                 auto& dump = actor->GetEquipmentAsJson();
+                 if (dump.size() > 0) {
+                   res = ParseJson(info, dump);
+                 }
+               }
+             } else if (propertyName == "isOnline") {
+               res = Napi::Boolean::New(info.Env(), false);
+               if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+                 auto userId = partOne->serverState.UserByActor(actor);
+                 if (userId != Networking::InvalidUserId) {
+                   res = Napi::Boolean::New(info.Env(), true);
+                 }
+               }
+             } else if (propertyName == "formDesc") {
+               auto desc = FormDesc::FromFormId(refr.GetFormId(),
+                                                partOne->worldState.espmFiles);
+               res = Napi::String::New(info.Env(), desc.ToString());
+             } else if (propertyName == "isDisabled") {
+               res = Napi::Boolean::New(info.Env(), refr.IsDisabled());
              } else {
                EnsurePropertyExists(info.Env(), state, propertyName);
 
@@ -828,10 +871,7 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
                auto it = fields.find(propertyName);
                if (it != fields.end()) {
                  auto dump = it->dump();
-                 auto builtinJson =
-                   info.Env().Global().Get("JSON").As<Napi::Object>();
-                 auto parse = builtinJson.Get("parse").As<Napi::Function>();
-                 res = parse.Call({ Napi::String::New(info.Env(), dump) });
+                 res = ParseJson(info, dump);
                }
              }
 
@@ -842,47 +882,79 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
            }
          }));
 
-  mp.Set("set",
-         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
-           try {
-             auto formId = ExtractFormId(info[0]);
-             auto propertyName = ExtractPropertyName(info[1]);
-             auto newValue = ExtractNewValue(info[2]);
+  mp.Set(
+    "set",
+    Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+      try {
+        auto formId = ExtractFormId(info[0]);
+        auto propertyName = ExtractPropertyName(info[1]);
+        auto newValue = ExtractNewValue(info[2]);
 
-             auto& refr =
-               partOne->worldState.GetFormAt<MpObjectReference>(formId);
+        auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-             if (propertyName == "pos") {
-               float x = newValue[0].get<float>();
-               float y = newValue[1].get<float>();
-               float z = newValue[2].get<float>();
-               refr.SetPos({ x, y, z });
-               refr.SetTeleportFlag(true);
-             } else if (propertyName == "angle") {
-               float x = newValue[0].get<float>();
-               float y = newValue[1].get<float>();
-               float z = newValue[2].get<float>();
-               refr.SetAngle({ x, y, z });
-               refr.SetTeleportFlag(true);
-             } else if (propertyName == "worldOrCellDesc") {
-               std::string str = newValue.get<std::string>();
-               uint32_t formId = FormDesc::FromString(str).ToFormId(
-                 partOne->worldState.espmFiles);
-               refr.SetCellOrWorld(formId);
-             } else {
+        if (propertyName == "pos") {
+          float x = newValue[0].get<float>();
+          float y = newValue[1].get<float>();
+          float z = newValue[2].get<float>();
+          refr.SetPos({ x, y, z });
+          refr.SetTeleportFlag(true);
+        } else if (propertyName == "angle") {
+          float x = newValue[0].get<float>();
+          float y = newValue[1].get<float>();
+          float z = newValue[2].get<float>();
+          refr.SetAngle({ x, y, z });
+          refr.SetTeleportFlag(true);
+        } else if (propertyName == "worldOrCellDesc") {
+          std::string str = newValue.get<std::string>();
+          uint32_t formId =
+            FormDesc::FromString(str).ToFormId(partOne->worldState.espmFiles);
+          refr.SetCellOrWorld(formId);
+        } else if (propertyName == "isOpen") {
+          refr.SetOpen(newValue.get<bool>());
+        } else if (propertyName == "appearance") {
+          if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+            // TODO: Live update of look
+            if (newValue.is_object()) {
+              auto look = Look::FromJson(newValue);
+              actor->SetLook(&look);
+            } else {
+              actor->SetLook(nullptr);
+            }
+          }
+        } else if (propertyName == "inventory") {
+          if (newValue.is_object()) {
+            auto inv = Inventory::FromJson(newValue);
+            refr.SetInventory(inv);
+          } else {
+            refr.SetInventory(Inventory());
+          }
+        } else if (propertyName == "equipment") {
+          // TODO: Implement this
+          throw std::runtime_error(
+            "mp.set is not implemented for 'equipment'");
+        } else if (propertyName == "isOnline") {
+          throw std::runtime_error("mp.set is not implemented for 'isOnline'");
+        } else if (propertyName == "formDesc") {
+          throw std::runtime_error("mp.set is not implemented for 'formDesc'");
+        } else if (propertyName == "isDisabled") {
+          if (refr.GetFormId() < 0xff000000)
+            throw std::runtime_error(
+              "'isDisabled' is not usable for non-FF forms");
+          newValue.get<bool>() ? refr.Disable() : refr.Enable();
+        } else {
 
-               EnsurePropertyExists(info.Env(), state, propertyName);
+          EnsurePropertyExists(info.Env(), state, propertyName);
 
-               auto& info = state->createdProperties[propertyName];
+          auto& info = state->createdProperties[propertyName];
 
-               refr.SetProperty(propertyName, newValue, info.isVisibleByOwner,
-                                info.isVisibleByNeighbors);
-             }
+          refr.SetProperty(propertyName, newValue, info.isVisibleByOwner,
+                           info.isVisibleByNeighbors);
+        }
 
-           } catch (std::exception& e) {
-             throw Napi::Error::New(info.Env(), (std::string)e.what());
-           }
-         }));
+      } catch (std::exception& e) {
+        throw Napi::Error::New(info.Env(), (std::string)e.what());
+      }
+    }));
 
   return mp;
 }
