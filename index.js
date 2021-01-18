@@ -67,3 +67,29 @@ if (traceAnims) {
     }
   );
 }
+
+mp.makeEventSource(
+  "_onActivate",
+  `
+  ctx.sp.on("activate", (e) => {
+    const target = ctx.getFormIdInServerFormat(e.target.getFormId());
+    const caster = ctx.getFormIdInServerFormat(e.caster.getFormId());
+    if (caster !== 0x14) return;
+    ctx.sendEvent({
+      target
+    });
+  });
+`
+);
+
+modulesLoaded.utils.hook("_onActivate", (pcFormId, event) => {
+  modulesLoaded.consoleOutput.print(pcFormId, event);
+
+  if (event.target === 0x74ee2) {
+    /*modulesLoaded.consoleOutput.evalClient(
+      pcFormId,
+      "ctx.sp.Debug.SendAnimationEvent(ctx.sp.Game.getPlayer(), 'jumpstandingstart')"
+    );*/
+    // ...
+  }
+});

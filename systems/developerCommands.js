@@ -93,6 +93,21 @@ module.exports = (modules) => {
     );
   };
 
+  const playanim = (pcFormId, selectedFormId) => {
+    const targetFormId = chooseFormId(pcFormId, selectedFormId);
+    const tip = chooseTip(pcFormId, selectedFormId);
+
+    consoleOutput.print(
+      targetFormId,
+      `Playing anim for ${targetFormId.toString(16)} ${tip}`
+    );
+
+    consoleOutput.evalClient(
+      targetFormId,
+      "ctx.sp.Debug.SendAnimationEvent(ctx.sp.Game.getPlayer(), 'jumpstandingstart')"
+    );
+  };
+
   utils.hook("_onConsoleCommand", (pcFormId, ...args) => {
     const selectedFormId = args[0] !== 0x14 ? args[0] : pcFormId;
     const sub = args[1];
@@ -110,6 +125,8 @@ module.exports = (modules) => {
       spawnpoint(pcFormId, selectedFormId);
     } else if (sub === "equipsword") {
       equipsword(pcFormId, selectedFormId);
+    } else if (sub === "playanim") {
+      playanim(pcFormId, selectedFormId);
     }
   });
 };
