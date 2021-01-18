@@ -4,6 +4,7 @@ module.exports = () => {
   const printTargets = {
     consoleOutput: "ctx.sp.printConsole(...ctx.value.args)",
     notification: "ctx.sp.Debug.notification(...ctx.value.args)",
+    eval: "eval(...ctx.value.args)",
   };
 
   for (const propName of Object.keys(printTargets)) {
@@ -35,6 +36,7 @@ module.exports = () => {
 
   consoleOutput.print = (...args) => genericPrint("consoleOutput", ...args);
   consoleOutput.printNote = (...args) => genericPrint("notification", ...args);
+  consoleOutput.evalClient = (...args) => genericPrint("eval", ...args);
 
   return consoleOutput;
 };

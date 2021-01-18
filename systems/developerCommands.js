@@ -70,6 +70,29 @@ module.exports = (modules) => {
     );
   };
 
+  const equipsword = (pcFormId, selectedFormId) => {
+    const targetFormId = chooseFormId(pcFormId, selectedFormId);
+    const tip = chooseTip(pcFormId, selectedFormId);
+
+    consoleOutput.print(
+      targetFormId,
+      `Equipping iron sword for ${targetFormId.toString(16)} ${tip}`
+    );
+
+    consoleOutput.evalClient(
+      targetFormId,
+      `
+      let sword = ctx.sp.Game.getFormEx(0x12eb7); 
+      let pl = ctx.sp.Game.getPlayer(); 
+      if (!pl.isEquipped(sword)) {
+        pl.equipItem(sword, false, false);
+      }
+      else {
+        pl.unequipItem(sword, false, false);
+      }`
+    );
+  };
+
   utils.hook("_onConsoleCommand", (pcFormId, ...args) => {
     const selectedFormId = args[0] !== 0x14 ? args[0] : pcFormId;
     const sub = args[1];
@@ -85,6 +108,8 @@ module.exports = (modules) => {
       spawn(pcFormId, selectedFormId);
     } else if (sub === "spawnpoint") {
       spawnpoint(pcFormId, selectedFormId);
+    } else if (sub === "equipsword") {
+      equipsword(pcFormId, selectedFormId);
     }
   });
 };
