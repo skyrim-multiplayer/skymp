@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
-const { Module } = require("module");
+const utils = require("./utility/utils");
+const consoleOutput = require("./properties/consoleOutput");
 
 const requireUncached = (module) => {
   delete require.cache[require.resolve(module)];
@@ -39,3 +40,30 @@ const modulesLoaded = {};
 modulesLoaded.utils.hook("onInit", (pcFormId) => {
   mp.onReinit(pcFormId);
 });
+
+const traceAnims = false;
+if (traceAnims) {
+  mp.makeEventSource(
+    "_onAnimationEvent",
+    `
+        const next = ctx.sp.storage._api_onAnimationEvent;
+        ctx.sp.storage._api_onAnimationEvent = {
+          callback(...args) {
+            const [serversideFormId, animEventName] = args;
+            ctx.sendEvent(serversideFormId, animEventName);
+            if (typeof next.callback === "function") {
+              next.callback(...args);
+            }
+          }
+        };
+      `
+  );
+
+  modulesLoaded.utils.hook(
+    "_onAnimationEvent",
+    (pcFormId, serversideFormId, animEventName) => {
+      if (serversideFormId !== 0x14) return;
+      modulesLoaded.consoleOutput.print(pcFormId, animEventName);
+    }
+  );
+}
