@@ -18,6 +18,7 @@
     "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
     "start": "node ./dist_back/index.js",
     "nexe": "nexe ./dist_back/index.js",
+    "pack": "npm run nexe && node pack.js",
     "start-prod": "cross-env NODE_ENV=production node ./dist_back/index.js",
     "clinic": "clinic flame -- node ./dist_back/index.js"
   },
