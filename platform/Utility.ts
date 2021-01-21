@@ -1,0 +1,45 @@
+import * as skyrimPlatform from './skyrimPlatform';
+
+export interface Utility {
+	from: (form: skyrimPlatform.Form) => Utility;
+	captureFrameRate: (numFrames: number) => string;
+	createAliasArray: (size: number, fill: skyrimPlatform.Alias) => object[];
+	createBoolArray: (size: number, fill: boolean) => boolean[];
+	createFloatArray: (size: number, fill: number) => number[];
+	createFormArray: (size: number, fill: skyrimPlatform.Form) => object[];
+	createIntArray: (size: number, fill: number) => number[];
+	createStringArray: (size: number, fill: string) => string[];
+	endFrameRateCapture: () => void;
+	gameTimeToString: (afGameTime: number) => Promise<string>;
+	getAverageFrameRate: () => number;
+	getBudgetCount: () => number;
+	getBudgetName: (aiBudgetNumber: number) => string;
+	getCurrentBudget: (aiBudgetNumber: number) => number;
+	getCurrentGameTime: () => number;
+	getCurrentMemory: () => number;
+	getCurrentRealTime: () => number;
+	getINIBool: (ini: string) => boolean;
+	getINIFloat: (ini: string) => number;
+	getINIInt: (ini: string) => number;
+	getINIString: (ini: string) => string;
+	getMaxFrameRate: () => number;
+	getMinFrameRate: () => number;
+	isInMenuMode: () => boolean;
+	overBudget: (aiBudgetNumber: number) => boolean;
+	randomFloat: (afMin: number, afMax: number) => number;
+	randomInt: (aiMin: number, aiMax: number) => number;
+	resizeAliasArray: (source: object[], size: number, fill: skyrimPlatform.Alias) => object[];
+	resizeBoolArray: (source: boolean[], size: number, fill: boolean) => boolean[];
+	resizeFloatArray: (source: number[], size: number, fill: number) => number[];
+	resizeFormArray: (source: object[], size: number, fill: skyrimPlatform.Form) => object[];
+	resizeIntArray: (source: number[], size: number, fill: number) => number[];
+	resizeStringArray: (source: string[], size: number, fill: string) => string[];
+	setINIBool: (ini: string, value: boolean) => void;
+	setINIFloat: (ini: string, value: number) => void;
+	setINIInt: (ini: string, value: number) => void;
+	setINIString: (ini: string, value: string) => void;
+	startFrameRateCapture: () => void;
+	wait: (afSeconds: number) => Promise<void>;
+	waitGameTime: (afHours: number) => Promise<void>;
+	waitMenuMode: (afSeconds: number) => Promise<void>;
+}
