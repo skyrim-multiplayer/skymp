@@ -7,6 +7,29 @@ const makeDirectory = (p) => {
   }
 };
 
+// https://stackoverflow.com/questions/13786160/copy-folder-recursively-in-node-js
+/**
+ * Look ma, it's cp -R.
+ * @param {string} src  The path to the thing to copy.
+ * @param {string} dest The path to the new copy.
+ */
+var copyRecursiveSync = function (src, dest) {
+  var exists = fs.existsSync(src);
+  var stats = exists && fs.statSync(src);
+  var isDirectory = exists && stats.isDirectory();
+  if (isDirectory) {
+    makeDirectory(dest); // fix
+    fs.readdirSync(src).forEach(function (childItemName) {
+      copyRecursiveSync(
+        path.join(src, childItemName),
+        path.join(dest, childItemName)
+      );
+    });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+};
+
 const packWin32 = () => {
   const packPath = "./pack";
   makeDirectory(packPath);
@@ -53,6 +76,8 @@ const packWin32 = () => {
 
   makeDirectory(path.join(packPath, "data"));
   makeDirectory(path.join(packPath, "data/scripts"));
+
+  copyRecursiveSync("./ui", path.join(packPath, "data/ui"));
 };
 
 if (process.platform === "win32") {

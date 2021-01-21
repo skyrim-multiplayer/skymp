@@ -5,7 +5,7 @@ import { Settings } from "./settings";
 export const main = (): void => {
   const app = new Koa();
 
-  app.use(serve("ui"));
+  app.use(serve("data"));
 
   const settings = Settings.get();
 
