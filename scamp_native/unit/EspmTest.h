@@ -312,3 +312,16 @@ TEST_CASE("Loads NPC flags", "[espm]")
   REQUIRE(npc->GetData(compressedFieldsCache).isEssential == true);
   REQUIRE(npc->GetData(compressedFieldsCache).isProtected == false);
 }
+
+TEST_CASE("Loads script names", "[espm]")
+{
+  auto& br = l.GetBrowser();
+  auto res = br.LookupById(788464);
+
+  REQUIRE(res.rec);
+  espm::ScriptData scr;
+  res.rec->GetScriptData(&scr);
+
+  REQUIRE(scr.scripts.size() == 1);
+  REQUIRE(scr.scripts[0].scriptName == "defaultsetStageTrigSCRIPT");
+}

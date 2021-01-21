@@ -371,7 +371,7 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
   for (uint16_t i = 0; i < out.size(); ++i) {
     const uint16_t length = *reinterpret_cast<const uint16_t*>(p);
     p += 2;
-    out[i].scriptName = reinterpret_cast<const char*>(p);
+    out[i].scriptName = std::string(reinterpret_cast<const char*>(p), length);
     p += length;
     out[i].status = *p;
     p++;
