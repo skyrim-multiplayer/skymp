@@ -1,4 +1,4 @@
-import { helloWorld } from "../src/lib/helloWorld";
+const helloWorld = () => "hello world!";
 
 describe("helloWorld", () => {
   it("should return 'hello world!'", () => {
