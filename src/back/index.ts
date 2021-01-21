@@ -184,18 +184,31 @@ const main = async () => {
       persistent: true,
       awaitWriteFinish: true,
     });
+
+    const numReloads = { n: 0 };
+
     const reloadGamemode = () => {
       try {
         clear();
         requireUncached(gamemodePath);
+        numReloads.n++;
       } catch (e) {
         console.error(e);
       }
     };
-    watcher.on("add", reloadGamemode);
-    watcher.on("addDir", reloadGamemode);
-    watcher.on("change", reloadGamemode);
-    watcher.on("unlink", reloadGamemode);
+
+    const reloadGamemodeTimeout = function () {
+      const n = numReloads.n;
+      setTimeout(
+        () => (n === numReloads.n ? reloadGamemode() : undefined),
+        1000
+      );
+    };
+
+    watcher.on("add", reloadGamemodeTimeout);
+    watcher.on("addDir", reloadGamemodeTimeout);
+    watcher.on("change", reloadGamemodeTimeout);
+    watcher.on("unlink", reloadGamemodeTimeout);
     watcher.on("error", function (error) {
       console.error("Error happened in chokidar watch", error);
     });
