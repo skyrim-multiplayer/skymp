@@ -87,7 +87,7 @@ export const main = (): void => {
 
   const uiPort = cfg.port === 7777 ? 3000 : cfg.port + 1;
 
-  const url = `http://${cfg.ip}:${uiPort}/chat.html`;
+  const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
   printConsole(`loading url ${url}`);
   browser.loadUrl(url);
 };
