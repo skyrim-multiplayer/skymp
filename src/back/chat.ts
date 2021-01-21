@@ -1,5 +1,6 @@
 import * as WebSocket from "ws";
 import * as scampNative from "./scampNative";
+import { Settings } from "./settings";
 
 const tokenByUserId = new Array<string | undefined>();
 let clients = new Array<Record<string, unknown>>();
@@ -34,7 +35,7 @@ const getUserActorOrZero = (
 
 export const main = (server: scampNative.ScampServer): void => {
   const svr = new WebSocket.Server({
-    port: 8080,
+    port: Settings.get().port === 7777 ? 8080 : Settings.get().port + 2,
   });
   console.log("websocket server up");
 
