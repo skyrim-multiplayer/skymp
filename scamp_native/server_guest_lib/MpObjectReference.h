@@ -180,6 +180,7 @@ private:
   void SendPropertyTo(const std::string& preparedPropMsg, MpActor& target);
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
+  void MpApiOnInit();
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

@@ -637,14 +637,7 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
     emitter->pImpl->onInitEventSent = true;
     emitter->SendPapyrusEvent("OnInit");
 
-    if (auto wst = emitter->GetParent()) {
-      const auto emitterFormId = emitter->GetFormId();
-      wst->SetTimer(0.f).Then([wst, emitterFormId](Viet::Void) {
-        for (auto& listener : wst->listeners) {
-          listener->OnMpApiEvent("onInit", std::nullopt, emitterFormId);
-        }
-      });
-    }
+    emitter->MpApiOnInit();
   }
 
   const bool hasPrimitive = emitter->HasPrimitive();
@@ -805,6 +798,8 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
       tp - std::chrono::system_clock::now());
     RequestReloot(ms);
   }
+
+  MpApiOnInit();
 }
 
 void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
@@ -982,6 +977,16 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       SetOpen(false);
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
+    }
+  }
+}
+
+void MpObjectReference::MpApiOnInit()
+{
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      listener->OnMpApiEvent("onInit", std::nullopt, id);
     }
   }
 }
