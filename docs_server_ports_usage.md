@@ -27,3 +27,16 @@ Used by the embedded browser to communicate with the backend.
 - Default value is 8080
 - Non-configurable
 - Equals `(Main Port + 2)` if its value is non-default
+
+## WebPack DevServer Port
+
+If you run the WebPack dev server and the skymp server on the same machine, the skymp server would proxy UI requests to the WebPack dev server.
+This feature allows you to use frontend live reload to test game systems.
+
+- Non-configurable, assumed to always be 1234
+
+## Chromium DevTools
+
+Actually, this is not a serverside port.
+You may need to know that the embedded browser exposes port 9000 for remote DevTools.
+Just type `localhost:9000` in your *real* browser to open Chromium DevTools for the in-game browser.

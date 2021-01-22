@@ -27,3 +27,4 @@ These properties can NOT be modified by a script with `mp.set`.
 - formDesc (`"0"`, `"1"`, `"14:Skyrim.esm"`)
 - equipment
 - isOnline
+- neighbors ([0xff000000, 0xff000001, ...])

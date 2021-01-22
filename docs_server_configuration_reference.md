@@ -116,3 +116,16 @@ A time before a game object restores its original state in milliseconds. Unlike 
   // ...
 }
 ```
+
+## gamemodePath
+
+Contains a relative or an absolute path to a file or directory with a gamemode.
+Searches for `index.js` if a directory specified.
+
+```json
+{
+  // ...
+  "gamemodePath": "gamemode.js"
+  // ...
+}
+```
