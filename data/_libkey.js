@@ -13,8 +13,7 @@ let interval;
 let handlers = {};
 
 const handleOpen = () => {
-  const handlers = handlers["open"] || [];
-  handlers.forEach((handler) => {
+  (handlers["open"] || []).forEach((handler) => {
     try {
       handler();
     } catch (e) {
@@ -24,8 +23,7 @@ const handleOpen = () => {
 };
 
 const handleClose = () => {
-  const handlers = handlers["close"] || [];
-  handlers.forEach((handler) => {
+  (handlers["close"] || []).forEach((handler) => {
     try {
       handler();
     } catch (e) {
@@ -35,8 +33,7 @@ const handleClose = () => {
 };
 
 const handleError = (str) => {
-  const handlers = handlers["error"] || [];
-  handlers.forEach((handler) => {
+  (handlers["error"] || []).forEach((handler) => {
     try {
       handler(str);
     } catch (e) {
@@ -52,8 +49,7 @@ const handleError = (str) => {
 };
 
 const handleMessage = (message) => {
-  const handlers = handlers["message"] || [];
-  handlers.forEach((handler) => {
+  (handlers["message"] || []).forEach((handler) => {
     try {
       handler(message);
     } catch (e) {
@@ -87,6 +83,7 @@ const on = (event, handler) => {
   handlers[event].push(handler);
 };
 
+window.skymp = {};
 window.skymp.send = sendMsg;
 window.skymp.on = on;
 
