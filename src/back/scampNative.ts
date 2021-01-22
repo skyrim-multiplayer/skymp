@@ -49,6 +49,7 @@ export declare class ScampServer {
   setEnabled(actorId: number, enabled: boolean): void;
   getActorsByProfileId(profileId: number): number[];
   createBot(): Bot;
+  getUserByActor(formId: number): number;
 
   getMpApi(): Record<string, unknown>;
 }

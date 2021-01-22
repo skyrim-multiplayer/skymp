@@ -147,6 +147,13 @@ const main = async () => {
   const g = (global as unknown) as Record<string, unknown>;
   const mp = server.getMpApi();
   g.mp = mp;
+  chat.attachMpApi(mp);
+  mp.sendUiMessage = (formId: number, message: Record<string, unknown>) => {
+    if (typeof message !== "object") {
+      throw new TypeError("Messages must be objects");
+    }
+    chat.sendMsg(server, formId, message);
+  };
 
   const clear = mp.clear as () => void;
 

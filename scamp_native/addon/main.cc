@@ -81,6 +81,7 @@ public:
   Napi::Value SetEnabled(const Napi::CallbackInfo& info);
   Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
+  Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
   Napi::Value GetMpApi(const Napi::CallbackInfo& info);
 
 private:
@@ -218,6 +219,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
         "getActorsByProfileId"),
       InstanceMethod<&ScampServer::SetEnabled>("setEnabled"),
       InstanceMethod<&ScampServer::CreateBot>("createBot"),
+      InstanceMethod<&ScampServer::GetUserByActor>("getUserByActor"),
       InstanceMethod<&ScampServer::GetMpApi>("getMpApi") });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
@@ -559,6 +561,17 @@ Napi::Value ScampServer::CreateBot(const Napi::CallbackInfo& info)
   return jBot;
 }
 
+Napi::Value ScampServer::GetUserByActor(const Napi::CallbackInfo& info)
+{
+  auto formId = info[0].As<Napi::Number>().Uint32Value();
+  try {
+    return Napi::Number::New(info.Env(), partOne->GetUserByActor(formId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
 void Err(const Napi::Env& env, std::string msg)
 {
   throw Napi::Error::New(env, msg);
@@ -861,6 +874,21 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
                auto desc = FormDesc::FromFormId(refr.GetFormId(),
                                                 partOne->worldState.espmFiles);
                res = Napi::String::New(info.Env(), desc.ToString());
+             } else if (propertyName == "neighbors") {
+               std::set<uint32_t> ids;
+               for (auto listener : refr.GetListeners()) {
+                 ids.insert(listener->GetFormId());
+               }
+               for (auto emitter : refr.GetEmitters()) {
+                 ids.insert(emitter->GetFormId());
+               }
+               auto arr = Napi::Array::New(info.Env(), ids.size());
+               size_t i = 0;
+               for (auto id : ids) {
+                 arr.Set(i, id);
+                 ++i;
+               }
+               res = arr;
              } else if (propertyName == "isDisabled") {
                res = Napi::Boolean::New(info.Env(), refr.IsDisabled());
              } else {
@@ -936,6 +964,9 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
           throw std::runtime_error("mp.set is not implemented for 'isOnline'");
         } else if (propertyName == "formDesc") {
           throw std::runtime_error("mp.set is not implemented for 'formDesc'");
+        } else if (propertyName == "neighbors") {
+          throw std::runtime_error(
+            "mp.set is not implemented for 'neighbors'");
         } else if (propertyName == "isDisabled") {
           if (refr.GetFormId() < 0xff000000)
             throw std::runtime_error(

@@ -64,7 +64,7 @@ const sendMsg = (message) => {
   }
   connection.send(
     JSON.stringify({
-      type: "apiMsg",
+      type: "uiEvent",
       msg: message,
     })
   );

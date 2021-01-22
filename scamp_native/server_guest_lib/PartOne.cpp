@@ -188,6 +188,15 @@ uint32_t PartOne::GetUserActor(Networking::UserId userId)
   return actor->GetFormId();
 }
 
+Networking::UserId PartOne::GetUserByActor(uint32_t formId)
+{
+  auto& form = worldState.LookupFormById(formId);
+  if (auto ac = dynamic_cast<MpActor*>(form.get())) {
+    return serverState.UserByActor(ac);
+  }
+  return Networking::InvalidUserId;
+}
+
 void PartOne::DestroyActor(uint32_t actorFormId)
 {
   std::shared_ptr<MpActor> destroyedForm;

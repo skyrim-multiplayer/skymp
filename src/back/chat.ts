@@ -4,6 +4,10 @@ import { Settings } from "./settings";
 
 const tokenByUserId = new Array<string | undefined>();
 let clients = new Array<Record<string, unknown>>();
+let mp: Record<string, unknown> = {};
+let clientByUserId = new Array<undefined | Record<string, unknown>>();
+
+clientByUserId.length = 2000; // Hard user limit
 
 export const onBrowserTokenChange = (
   userId: number,
@@ -33,6 +37,29 @@ const getUserActorOrZero = (
   }
 };
 
+export const sendMsg = (
+  server: scampNative.ScampServer,
+  formId: number,
+  msg: Record<string, unknown>
+): void => {
+  const userId = server.getUserByActor(formId);
+  const invalidUserId = 65535;
+  if (userId === invalidUserId) return;
+
+  const ws = clientByUserId[userId];
+  if (!ws) return;
+
+  (ws as WebSocket).send(
+    JSON.stringify({
+      message: msg,
+    })
+  );
+};
+
+export const attachMpApi = (_mp: Record<string, unknown>): void => {
+  mp = _mp;
+};
+
 export const main = (server: scampNative.ScampServer): void => {
   const svr = new WebSocket.Server({
     port: Settings.get().port === 7777 ? 8080 : Settings.get().port + 2,
@@ -41,6 +68,7 @@ export const main = (server: scampNative.ScampServer): void => {
 
   svr.on("close", (ws: Record<string, unknown>) => {
     clients = clients.filter((cl) => cl !== ws);
+    clientByUserId = clientByUserId.map((x) => (x === ws ? undefined : x));
   });
 
   svr.on("connection", (ws) => {
@@ -53,6 +81,15 @@ export const main = (server: scampNative.ScampServer): void => {
       const dataObj = JSON.parse(data as string);
       if (dataObj.type === "token") {
         clients.find((v) => v === ws).token = dataObj.token;
+      } else if (dataObj.type === "uiEvent") {
+        const token = clients.find((v) => v === ws).token;
+        const authoruserId = tokenByUserId.findIndex((v) => v === token);
+        const actorId = getUserActorOrZero(server, authoruserId);
+        clientByUserId[authoruserId] = ws;
+        const f = mp["onUiEvent"];
+        if (typeof f === "function") {
+          f(actorId, dataObj.msg);
+        }
       } else if (dataObj.type === "chatMessage") {
         const token = clients.find((v) => v === ws).token;
 
