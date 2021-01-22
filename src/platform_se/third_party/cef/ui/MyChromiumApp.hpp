@@ -71,6 +71,7 @@ private:
   CefRefPtr<OverlayClient> m_pGameClient;
   std::unique_ptr<RenderProvider> m_pRenderProvider;
   std::wstring m_processName;
+  mutable int m_wasFocused = -1;
 
   mutable struct
   {

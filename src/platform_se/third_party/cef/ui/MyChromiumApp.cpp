@@ -92,7 +92,7 @@ void MyChromiumApp::Initialize() noexcept
   browserSettings.file_access_from_file_urls = STATE_ENABLED;
   browserSettings.universal_access_from_file_urls = STATE_ENABLED;
   browserSettings.web_security = STATE_DISABLED;
-  browserSettings.windowless_frame_rate = 30;
+  browserSettings.windowless_frame_rate = 60;
 
   CefWindowInfo info;
   info.SetAsWindowless(m_pRenderProvider->GetWindow());
@@ -192,6 +192,12 @@ void MyChromiumApp::InjectMouseMove(const float aX, const float aY,
 
     if (isBrowserFocused && aX >= 0 && aY >= 0)
       m_pGameClient->GetBrowser()->GetHost()->SendMouseMoveEvent(ev, false);
+
+    int isFocusedInt = isBrowserFocused ? 1 : 0;
+    if (isFocusedInt != m_wasFocused) {
+      m_wasFocused = isFocusedInt;
+      m_pGameClient->GetBrowser()->GetHost()->SetFocus(isBrowserFocused);
+    }
   }
 }
 

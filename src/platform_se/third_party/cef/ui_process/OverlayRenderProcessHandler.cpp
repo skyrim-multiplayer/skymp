@@ -31,9 +31,12 @@ void OverlayRenderProcessHandler::OnContextReleased(
   TP_UNUSED(browser);
   TP_UNUSED(frame);
 
-  context->GetGlobal()->DeleteValue(m_coreObjectName);
+  // - SkyimPlatformCEF.exe eats ~30% of CPU
+  // - The render stops
+  // - Debugger says there is an access violation
 
-  m_pCoreObject = nullptr;
+  // context->GetGlobal()->DeleteValue(m_coreObjectName);
+  // m_pCoreObject = nullptr;
 }
 
 bool OverlayRenderProcessHandler::OnProcessMessageReceived(
