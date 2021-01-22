@@ -18,3 +18,4 @@ data/*.esm
 data/*.bsa
 data/*.pex
 data/*.psc
+data/manifest.json

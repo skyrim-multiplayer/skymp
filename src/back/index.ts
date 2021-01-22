@@ -1,6 +1,5 @@
 import * as ui from "./ui";
 ui.main();
-console.log("ui main called");
 
 import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install();
@@ -19,6 +18,9 @@ import { pid } from "process";
 import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
+
+import * as manifestGen from "./manifestGen";
+manifestGen.generateManifest(Settings.get());
 
 console.log(`Current process ID is ${pid}`);
 
@@ -127,8 +129,6 @@ const main = async () => {
       }
     }
   });
-
-  // TODO: Transform Chat into system
 
   chat.main(server);
 
