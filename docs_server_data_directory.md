@@ -19,6 +19,7 @@ The server generates `manifest.json` during startup. Do not modify that file, co
 
 `"versionMajor"` is a major version of the Manifest, currently, `1`.
 `"mods"` is an array of objects with fields `"crc32"`, `"filename"` and `"size"`.
+`"loadOrder"` is a load order of mods (taken from `server-settings.json` directly).
 
 ## _libkey.js
 
