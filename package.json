@@ -48,6 +48,8 @@
     "jest": "^26.1.0",
     "koa": "^2.13.0",
     "koa-bodyparser": "^4.3.0",
+    "koa-proxy": "^1.0.0-alpha.3",
+    "koa-router": "^10.0.0",
     "koa-static": "^5.0.0",
     "nexe": "^3.3.7",
     "node-addon-api": "^3.0.0",

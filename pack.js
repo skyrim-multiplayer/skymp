@@ -78,6 +78,9 @@ const packWin32 = () => {
   makeDirectory(path.join(packPath, "data/scripts"));
 
   copyRecursiveSync("./ui", path.join(packPath, "data/ui"));
+
+  const libkey = "data/_libkey.js";
+  fs.writeFileSync(path.join(packPath, libkey), fs.readFileSync(libkey));
 };
 
 if (process.platform === "win32") {

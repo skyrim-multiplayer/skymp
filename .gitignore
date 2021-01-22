@@ -7,6 +7,14 @@ coverage
 .clinic
 world.sqlite
 server-settings.json
-data
 skymp5-server.exe
 pack
+
+# data/_libkey.js must present in the source tree
+data/scripts
+data/ui
+data/*.esp
+data/*.esm
+data/*.bsa
+data/*.pex
+data/*.psc
