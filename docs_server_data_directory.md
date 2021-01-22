@@ -17,6 +17,9 @@ Please note that currently .bsa archives are used only on the client-side. If yo
 
 The server generates `manifest.json` during startup. Do not modify that file, consider modifying `server-settings.json` instead.
 
+`"versionMajor"` is a major version of the Manifest, currently, `1`.
+`"mods"` is an array of objects with fields `"crc32"`, `"filename"` and `"size"`.
+
 ## _libkey.js
 
 Data directory also contains `_libkey.js`. This file is used as a script embedded into the CEF page in-game.
