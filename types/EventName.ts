@@ -1,7 +1,7 @@
 /**
  * Built-in events
  */
-type SystemEventName = 'onDeath' | 'onInit' | 'onReinit';
+type SystemEventName = 'onDeath' | 'onInit' | 'onReinit' | 'onUiEvent';
 
 /**
  * Custom events

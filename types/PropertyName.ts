@@ -13,7 +13,8 @@ type SystemPropertyName =
 	| 'baseDesc'
 	| 'formDesc'
 	| 'equipment'
-	| 'isOnline';
+	| 'isOnline'
+	| 'neighbors';
 
 /**
  * Custom Properties

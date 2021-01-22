@@ -47,5 +47,13 @@ export interface MP {
 	 * clear
 	 */
 	clear(): void;
+
+	/**
+	 * Send a message to the running embedded browser
+	 * @param formId unique identifier
+	 * @param message serializable object representing a message
+	 */
+	sendUiMessage(formId: number, message: Record<string, unknown>): void;
+
 	[key: string]: (...args: any[]) => void;
 }
