@@ -1,3 +1,6 @@
 [submodule "skymp5-client"]
 	path = skymp5-client
 	url = https://github.com/skyrim-multiplayer/skymp5-client.git
+[submodule "skymp5-gamemode"]
+	path = skymp5-gamemode
+	url = https://github.com/skyrim-multiplayer/skymp5-gamemode.git

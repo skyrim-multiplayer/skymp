@@ -7,7 +7,7 @@ export class Settings {
   maxPlayers = 100;
   master: string | null = null;
   name = "Yet Another Server";
-  gamemodePath = "./gamemode.js";
+  gamemodePath = "./skymp5-gamemode/gamemode.js";
   loadOrder = new Array<string>();
   dataDir = "./data";
 
