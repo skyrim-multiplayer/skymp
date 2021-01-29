@@ -1,1 +1,1 @@
-http://opensource.spotify.com/cefbuilds/cef_binary_84.3.7%2Bg97011bc%2Bchromium-84.0.4147.89_windows64.tar.bz2
+see url in .github/workflows/deploy.yml

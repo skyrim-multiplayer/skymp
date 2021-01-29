@@ -4,11 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --ignore dist/ ."
+    "dev": "nodemon --ignore dist/ .",
+    "pack": "cross-env DEV_SERVICE_ONLY_ONCE=yes DEV_SERVICE_NO_GAME=yes node ."
   },
   "keywords": [],
   "author": "Pospelov",
   "dependencies": {
+    "cross-env": "^7.0.3",
     "fs-extra": "^9.0.0",
     "nodemon": "^2.0.3"
   }

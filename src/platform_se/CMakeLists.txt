@@ -189,6 +189,11 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
 
   function(add_papyrus_library)
+    if(NOT SKYRIM_DIR)
+      message(WARNING "add_papyrus_library does nothing due to missing SKYRIM_DIR")
+      return()
+    endif()
+
     set(options)
     set(oneValueArgs NAME DIRECTORY)
     set(multiValueArgs)
@@ -198,7 +203,7 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
     file(GLOB src ${A_DIRECTORY}/*.psc)
 
-    set(OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/pex)
+    set(OUTPUT_DIR ${CMAKE_SOURCE_DIR}/pex)
     add_custom_target(${A_NAME} ALL
       COMMAND "${SKYRIM_DIR}\\Papyrus Compiler\\PapyrusCompiler.exe"
         ${A_DIRECTORY} -output=${OUTPUT_DIR} -import=${A_DIRECTORY} -all
@@ -207,15 +212,20 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   endfunction()
 
   add_papyrus_library(NAME TESModPlatformPsc DIRECTORY "${CMAKE_SOURCE_DIR}/psc")
-  add_dependencies(TESModPlatformPsc skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
+  if(TARGET TESModPlatformPsc)
+    add_dependencies(TESModPlatformPsc skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
+  endif()
 
   # For dev_service
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt ${CEF_DIR})
 
-  add_custom_command(
-    TARGET TESModPlatformPsc POST_BUILD COMMAND
-    ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>
-  )
+  if(TARGET TESModPlatformPsc)
+    add_custom_command(
+      TARGET TESModPlatformPsc POST_BUILD COMMAND
+      ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>
+    )
+  endif()
+
   add_custom_target(codegen ALL
     COMMAND node ${CMAKE_SOURCE_DIR}/codegen/index.js
     WORKING_DIRECTORY ${wdir}

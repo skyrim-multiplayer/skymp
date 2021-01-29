@@ -1,0 +1,54 @@
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      buildDir: "${{ github.workspace }}/build/"
+    steps:
+      - uses: actions/checkout@master
+        with:
+          submodules: "recursive"
+      - uses: suisei-cn/actions-download-file@v1
+        id: downloadfile # Remember to give an ID if you need the output
+        name: Download the file
+        with:
+          url: "https://cef-builds.spotifycdn.com/cef_binary_84.3.7%2Bg97011bc%2Bchromium-84.0.4147.89_windows64.tar.bz2"
+          target: cef_download/
+      - run: ls cef_download/
+      - run: 7z x cef_binary_84.3.7%2Bg97011bc%2Bchromium-84.0.4147.89_windows64.tar.bz2
+        working-directory: cef_download/
+      - run: 7z x cef_binary_84.3.7%2Bg97011bc%2Bchromium-84.0.4147.89_windows64.tar
+        working-directory: cef_download/
+      - run: ls cef_download/
+      #-uses: actions/cache@v1   <===== YOU DO NOT NEED THIS!
+
+      # Install latest CMake.
+      - uses: lukka/get-cmake@latest
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+      - name: Install dev_service dependencies
+        working-directory: ./tools/dev_service
+        run: npm install
+
+      - name: Run CMake to generate project file and build the project
+        uses: lukka/run-cmake@v3
+        with:
+          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+          cmakeListsTxtPath: "CMakeLists.txt"
+          buildDirectory: ${{ env.buildDir }}
+          # This input tells run-cmake to consume the vcpkg.cmake toolchain file set by run-vcpkg.
+          useVcpkgToolchainFile: true
+          buildWithCMake: true
+          buildWithCMakeArgs: "--config Release"
+      - name: Use dev_service to pack everything into a dist directory
+        working-directory: ./tools/dev_service
+        run: npm run pack
+      - uses: actions/upload-artifact@v2
+        with:
+          name: skyrim-platform-dist
+          path: ./tools/dev_service/dist
