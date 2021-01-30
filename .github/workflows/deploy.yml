@@ -11,6 +11,7 @@ jobs:
       - uses: actions/checkout@master
         with:
           submodules: "recursive"
+          fetch-depth: 0
       - uses: suisei-cn/actions-download-file@v1
         id: downloadfile # Remember to give an ID if you need the output
         name: Download the file
@@ -48,7 +49,29 @@ jobs:
       - name: Use dev_service to pack everything into a dist directory
         working-directory: ./tools/dev_service
         run: npm run pack
-      - uses: actions/upload-artifact@v2
+
+      - name: Get Previous tag
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - name: Get SHA short
+        id: vars
+        shell: bash
+        run: |
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Create an archive
+        shell: bash
+        run: |
+          mkdir ./builds
+          7z a -t7z -mx=9 ./builds/skyrim-platform-${{ steps.previoustag.outputs.tag }}-${{ steps.vars.outputs.sha_short }}.7z ./tools/dev_service/dist/*
+      - run: ls .
+      - run: ls ./tools/dev_service/dist
+      - uses: shallwefootball/s3-upload-action@master
+        name: Upload S3
+        id: S3
         with:
-          name: skyrim-platform-dist
-          path: ./tools/dev_service/dist
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_bucket: "skyrim-platform-builds"
+          source_dir: "./builds"
+          destination_dir: ""
