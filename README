@@ -1,0 +1,27 @@
+Skyrim Multiplayer (SkyMP) - Lite Binary Distribution for Windows
+-------------------------------------------------------------------------------
+
+Date:                         !!DATE!!
+
+project version:              !!PROJECT_VERSION!!
+
+skymp5-client version:        !!CLIENT_VERSION!!
+skymp5-gamemode version:      !!GAMEMODE_VERSION!!
+skyrim-platform version:      !!SKYRIM_PLATFORM_VERSION!!
+
+This distribution contains all components necessary to run a server on the Windows platform. 
+Please see the LICENSING section of this document for licensing terms and conditions.
+
+USAGE
+-----
+
+Please visit the skymp.io Website for additional usage information.
+
+https://skymp.io
+
+LICENSING
+---------
+
+Copyright (c) 2015-2021 Leonid Pospelov
+
+Use of the server is subject to the Skymp Service Agreement provided on the Skyrim Multiplayer website at the following URL: https://skymp.io/terms.html

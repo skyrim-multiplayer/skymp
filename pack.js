@@ -67,6 +67,13 @@ const packWin32 = () => {
     fs.readFileSync(path.join("build/Release", addon))
   );
 
+  // Required by client but builds with the server
+  const mpClientPlugin = "MpClientPlugin.dll";
+  fs.writeFileSync(
+    path.join(packPath, mpClientPlugin),
+    fs.readFileSync(path.join("build/Release", mpClientPlugin))
+  );
+
   const gm = "gamemode.js";
   fs.writeFileSync(path.join(packPath, gm), "/* TODO: Add gamemode */");
 
@@ -81,6 +88,44 @@ const packWin32 = () => {
 
   const libkey = "data/_libkey.js";
   fs.writeFileSync(path.join(packPath, libkey), fs.readFileSync(libkey));
+
+  const packageJson = JSON.parse(
+    fs.readFileSync("package.json", { encoding: "utf-8" })
+  );
+
+  const readme = "README";
+  let readmeContent = fs.readFileSync(readme, "utf-8");
+  readmeContent = readmeContent.replace("!!DATE!!", new Date());
+
+  const projectVersionTag = require("child_process")
+    .execSync("git describe --tags")
+    .toString()
+    .trim();
+  readmeContent = readmeContent.replace(
+    "!!PROJECT_VERSION!!",
+    projectVersionTag
+  );
+
+  const clientRevision = require("child_process")
+    .execSync("git rev-parse HEAD", { cwd: "./skymp5-client" })
+    .toString()
+    .trim();
+  readmeContent = readmeContent.replace("!!CLIENT_VERSION!!", clientRevision);
+
+  const gamemodeRevision = require("child_process")
+    .execSync("git rev-parse HEAD", { cwd: "./skymp5-gamemode" })
+    .toString()
+    .trim();
+  readmeContent = readmeContent.replace(
+    "!!GAMEMODE_VERSION!!",
+    gamemodeRevision
+  );
+
+  readmeContent = readmeContent.replace(
+    "!!SKYRIM_PLATFORM_VERSION!!",
+    packageJson.versionSkyrimPlatform
+  );
+  fs.writeFileSync(path.join(packPath, readme), readmeContent);
 };
 
 if (process.platform === "win32") {

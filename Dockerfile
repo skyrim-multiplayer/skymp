@@ -14,7 +14,9 @@ RUN mkdir /skyrim_data_dir \
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm i
+RUN npm i \
+  && npm i -g parcel
+# ^ skymp5-gamemode requires parcel
 
 COPY ./CMakeLists.txt ./CMakeLists.txt
 COPY ./cmake ./cmake
