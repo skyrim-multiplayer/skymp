@@ -14,17 +14,30 @@ const tab = '    ';
 const ignored = ['TESModPlatform.Add', 'Math', 'MpClientPlugin' /*obsolete*/];
 const functionNameOverrides = {'getplayer': 'getPlayer'};
 
+const mode = 'module'; // 'interface' | 'module'
+// TODO: Implement interface mode correctly
+
+const getPrefix = () => mode === 'interface' ? 'export interface SkyrimPlatform {\n' : '';
+const getPostfix = () => mode === 'interface' ? '}\n' : '';
+
 let output = `
+/* eslint-disable @typescript-eslint/adjacent-overload-signatures */
+/* eslint-disable @typescript-eslint/no-namespace */
 // Generated automatically. Do not edit.
-export declare function printConsole(...arguments: any[]): void;
+${getPrefix()}
+declare class PapyrusObject {
+	static from(papyrusObject: PapyrusObject | null): PapyrusObject | null;
+}
+export type PapyrusValue = PapyrusObject | number | string | boolean | null | PapyrusValue[];
+export declare function printConsole(...arguments: unknown[]): void;
 export declare function writeScript(scriptName: string, src: string): void;
-export declare function callNative(className: string, functionName: string, self?: object, ...args: any): any;
+export declare function callNative(className: string, functionName: string, self?: PapyrusObject, ...args: PapyrusValue[]): PapyrusValue;
 export declare function getJsMemoryUsage(): number;
 export declare function getPluginSourceCode(pluginName: string): string;
 export declare function writePlugin(pluginName: string, newSources: string): string;
 export declare function getPlatformVersion(): string;
-export declare let storage: any;
-export declare let settings: any;
+export declare let storage: Record<string, unknown>;
+export declare let settings: Record<string, Record<string, unknown>>;
 
 export declare function on(eventName: 'update', callback: () => void): void;
 export declare function once(eventName: 'update', callback: () => void): void;
@@ -303,11 +316,11 @@ declare class ConsoleComand {
     longName: string;
     shortName: string;
     numArgs: number;
-    execute: (...arguments: any[]) => boolean;
+    execute: (...arguments: unknown[]) => boolean;
 }
 export declare function findConsoleCommand(cmdName: string): ConsoleComand;
 
-export enum MotionType {
+export const enum MotionType {
     Dynamic = 1,
     SphereInertia = 2,
     BoxInertia = 3,
@@ -315,14 +328,14 @@ export enum MotionType {
     Fixed = 5,
     ThinBoxInertia = 6,
     Character = 7
-};
+}
 
 export declare namespace SendAnimationEventHook {
     class Context {
         selfId: number;
         animEventName: string;
 
-        storage: Map<string, any>;
+        storage: Map<string, unknown>;
     }
 
     class LeaveContext extends Context {
@@ -334,6 +347,7 @@ export declare namespace SendAnimationEventHook {
         leave(ctx: LeaveContext): void;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     class Target {
         add(handler: Handler): void;
     }
@@ -367,17 +381,17 @@ let parseReturnValue = (v) => {
             return 'string';
         case 'IntArray':
         case 'FloatArray':
-            return 'number[]';
+            return 'number[] | null';
         case 'BoolArray':
-            return 'boolean[]';
+            return 'boolean[] | null';
         case 'StringArray':
-            return 'string[]';
+            return 'string[] | null';
         case 'None':
             return 'void';
         case 'Object':
-            return prettify(source.types[v.objectTypeName] ? v.objectTypeName : 'Form');
+            return prettify(source.types[v.objectTypeName] ? v.objectTypeName : 'Form') + ' | null';
         case 'ObjectArray':
-            return 'object[]';
+            return 'PapyrusObject[] | null';
     }
     throw new Error(`Unknown type ${v.rawType}`);
 };
@@ -429,9 +443,9 @@ let dumpType = (data) => {
 
     output += data.parent
         ? `export declare class ${prettify(data.name)} extends ${prettify(data.parent.name)} {\n`
-        : `export declare class ${prettify(data.name)} {\n`;
+        : `export declare class ${prettify(data.name)} extends PapyrusObject {\n`;
 
-    output += tab + `static from(form: Form): ${prettify(data.name)};\n`;
+    output += tab + `static from(papyrusObject: PapyrusObject | null): ${prettify(data.name)} | null;\n`;
 
     data.memberFunctions.forEach(f => dumpFunction(data.name, f, false));
     data.globalFunctions.forEach(f => dumpFunction(data.name, f, true));
@@ -461,5 +475,7 @@ for (typeName in source.types) {
     let data = source.types[typeName];
     dumpType(data);
 }
+
+output += getPostfix();
 
 fs.writeFileSync('skyrimPlatform.ts', output);
