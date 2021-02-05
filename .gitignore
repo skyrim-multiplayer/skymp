@@ -9,6 +9,7 @@ world.sqlite
 server-settings.json
 skymp5-server.exe
 pack
+pack-client
 
 # data/_libkey.js must present in the source tree
 data/scripts
@@ -19,3 +20,4 @@ data/*.bsa
 data/*.pex
 data/*.psc
 data/manifest.json
+push-s3-cfg.json

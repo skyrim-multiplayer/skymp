@@ -1,5 +1,9 @@
+// 7 Zip Must be in PATH:
+// C:\\Program Files\\7-Zip\\
+
 const fs = require("fs");
 const path = require("path");
+const Seven = require("node-7z");
 
 const makeDirectory = (p) => {
   if (!fs.existsSync(p)) {
@@ -30,8 +34,11 @@ var copyRecursiveSync = function (src, dest) {
   }
 };
 
-const packWin32 = () => {
+const packWin32 = async () => {
   const packPath = "./pack";
+  if (fs.existsSync(packPath)) {
+    fs.rmdirSync(packPath, { recursive: true });
+  }
   makeDirectory(packPath);
 
   const exe = "skymp5-server.exe";
@@ -75,7 +82,10 @@ const packWin32 = () => {
   );
 
   const gm = "gamemode.js";
-  fs.writeFileSync(path.join(packPath, gm), "/* TODO: Add gamemode */");
+  fs.writeFileSync(
+    path.join(packPath, gm),
+    fs.readFileSync("./skymp5-gamemode/gamemode.js")
+  );
 
   makeDirectory(path.join(packPath, "dist_front"));
   const client = "dist_front/skymp5-client.js";
@@ -101,6 +111,7 @@ const packWin32 = () => {
     .execSync("git describe --tags")
     .toString()
     .trim();
+
   readmeContent = readmeContent.replace(
     "!!PROJECT_VERSION!!",
     projectVersionTag
@@ -126,10 +137,31 @@ const packWin32 = () => {
     packageJson.versionSkyrimPlatform
   );
   fs.writeFileSync(path.join(packPath, readme), readmeContent);
+
+  //
+  // Create an archive
+  //
+
+  if (fs.existsSync(`build/skymp-server-lite-win32-${projectVersionTag}.7z`)) {
+    fs.unlinkSync(`build/skymp-server-lite-win32-${projectVersionTag}.7z`);
+  }
+  const myStreamWrite = Seven.add(
+    `build/skymp-server-lite-win32-${projectVersionTag}.7z`,
+    packPath + "/*",
+    {
+      recursive: true,
+    }
+  );
+  await new Promise((resolve, reject) => {
+    myStreamWrite.on("end", function () {
+      resolve();
+    });
+    myStreamWrite.on("error", (err) => reject(err));
+  });
 };
 
 if (process.platform === "win32") {
-  packWin32();
+  packWin32().then("Done packing server");
 } else {
   throw new Error(`pack.js - Unsupported platform '${process.platform}'`);
 }

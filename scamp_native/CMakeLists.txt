@@ -2,7 +2,13 @@ include(${CMAKE_SOURCE_DIR}/cmake/third_party/pmm.cmake)
 # Clear CMake cache after changing this
 # (also for subprojects like platform_se)
 set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
+if(NOT "$ENV{VCPKG_REVISION_OVERRIDE}" STREQUAL "")
+  set(VCPKG_REVISION $ENV{VCPKG_REVISION_OVERRIDE})
+endif()
 set(triplet x64-windows-static)
+
+message(STATUS "Using vcpkg revision ${VCPKG_REVISION}")
+message(STATUS "Using vcpkg triplet ${triplet}")
 
 if (UNIX)
   set(VCPKG_PATH "/vcpkg")
@@ -24,7 +30,6 @@ else()
     sqlpp11-connector-sqlite3:${triplet}
     mongo-cxx-driver:${triplet} # Doesn't build on Windows without this https://github.com/microsoft/vcpkg/pull/14825
   )
-  set(VCPKG_PATH ${_VCPKG_ROOT_DIR})
 endif()
 
 if (WIN32)
@@ -33,6 +38,7 @@ endif()
 foreach(port ${ports})
   message(STATUS "Installing ${port}")
   pmm(VCPKG REVISION ${VCPKG_REVISION} REQUIRES ${port})
+  set(VCPKG_PATH ${_VCPKG_ROOT_DIR})
 endforeach()
 if ("${VCPKG_PATH}" STREQUAL "")
   message(FATAL_ERROR "Expected VCPKG_PATH variable to be set")
