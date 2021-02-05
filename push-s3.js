@@ -26,6 +26,7 @@ const uploadFile = (fileName, bucketName, key) => {
     Bucket: bucketName,
     Key: key, // File name you want to save as in S3
     Body: fileContent,
+    ACL: "public-read",
   };
 
   // Uploading files to the bucket
@@ -52,7 +53,7 @@ uploadFile(
 );
 
 uploadFile(
-  `build/skymp-server-lite-win32-${projectVersionTag}.zip`,
+  `build/skymp-server-lite-win32-${projectVersionTag}.7z`,
   "skymp-server-lite-win32-builds",
-  `skymp-server-lite-win32-${projectVersionTag}.zip`
+  `skymp-server-lite-win32-${projectVersionTag}.7z`
 );
