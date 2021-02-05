@@ -1,50 +1,9 @@
 const defaultState = {
   show: true,
-  open: false,
-  page: 0,
-  groups: [0, 1, 2, 3],
-  lists: [
-    [
-      [1, "Roma1212", "Продам капусту, писать в лс!!!"],
-      [
-        0,
-        "Yaan12",
-        "Соображения высшего порядка, а также повышение уровня гражданского сознания обеспечивает актуальность экономической целесообразности принимаемых решений?",
-      ],
-      [2, "Daniil2012", "Продам дом, начальна цена 7к!"],
-      [0, "Вы", "А зачем"],
-      [1, "Roma1212", "Продам капусту, писать в лс!!!"],
-      [
-        0,
-        "Yaan12",
-        "Соображения высшего порядка, а также повышение уровня гражданского сознания обеспечивает актуальность экономической целесообразности принимаемых решений?",
-      ],
-      [2, "Daniil2012", "Продам дом, начальна цена 7к!"],
-      [0, "Вы", "А зачем"],
-      [1, "Roma1212", "Продам капусту, писать в лс!!!"],
-      [
-        0,
-        "Yaan12",
-        "Соображения высшего порядка, а также повышение уровня гражданского сознания обеспечивает актуальность экономической целесообразности принимаемых решений?",
-      ],
-      [2, "Daniil2012", "Продам дом, начальна цена 7к!"],
-      [0, "Вы", "А зачем"],
-    ], // 0
-    [
-      [1, "Test_Nick", "Какое то сообщение"],
-      [0, "Вы", "Внятный ответ"],
-      [2, "Murena", "Угрозы, строгие, но справедливые"],
-      [1, "Test_Nick", "Мольба о пощаде"],
-      [0, "Вы", "Мольба о пощаде"],
-    ], // 1
-    [
-      [1, "Вы", "Куплю 3 меча"],
-      [0, "Test_Nick", "Крепких?"],
-      [1, "Вы", "Не важно"],
-      [2, "Murena", "Важно"],
-    ], // 2
-    [], // 3
+  list: [
+    '${ffFF00}Aloha'
   ],
+  showInput: 'auto',
   input: "",
 };
 
@@ -54,32 +13,35 @@ export const chatReducer = (state = defaultState, action) => {
       return {
         ...state,
         show: action.data,
-      };
+      }
     }
-    case "UPDATE_CHAT_OPEN": {
+    
+    case "UPDATE_CHAT_LIST": {
       return {
         ...state,
-        open: action.data,
+        list: action.data,
       };
     }
-    case "UPDATE_CHAT_PAGE": {
+    
+    case "ADD_CHAT_MSG": {
+      const list = [...state.list]
+      list.push(action.data)
+      if(list.length > 50) 
+        list.shift()
+
       return {
         ...state,
-        page: action.data,
+        list,
       };
     }
-    case "UPDATE_CHAT_GROUPS": {
+    
+    case "UPDATE_CHAT_SHOWINPUT": {
       return {
         ...state,
-        groups: action.data,
-      };
+        showInput: action.data,
+      }
     }
-    case "UPDATE_CHAT_LISTS": {
-      return {
-        ...state,
-        lists: action.data,
-      };
-    }
+    
     case "UPDATE_CHAT_INPUT": {
       return {
         ...state,

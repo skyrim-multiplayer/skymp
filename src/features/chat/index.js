@@ -5,145 +5,122 @@ import "./styles.sass";
 
 class Chat extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
+
+    this.state = {
+      isInputFocus: false,
+    }
+
+    this.ref_input = React.createRef()
   }
 
   componentDidMount() {
-    const intervalId = setInterval(() => {
-      const lists = this.props.realLists;
-      this.props.updateLists([...lists]);
-    }, 100);
-    this.setState({ intervalId: intervalId });
+    document.addEventListener('keydown', this.onKeyDown.bind(this))
 
-    document.onkeydown = (event) => {
-      switch (event.key) {
-        case "Enter": {
-          if (this.props.show && this.props.open) this.onClickSend();
-        }
-      }
-    };
+    this.scrollToLastMessage()
   }
 
-  componentWillUnmount() {
-    clearInterval(this.state.intervalId);
+  componentDidUpdate(prevProps, prevState) {
+    if(prevProps.list !== this.props.list)
+      this.scrollToLastMessage()
+
+    if(this.getInputShowBool())
+      this.ref_input.current.focus()
+  }
+
+  onKeyDown(e) {
+    const isInputFocus = this.state.isInputFocus
+
+    switch (e.keyCode) {
+      case 13: // Enter
+        return this.onClickEnter()
+
+      case 27: // Escape
+        return this.onUpdateInputShow('false')
+    }
   }
 
   scrollToLastMessage() {
-    const list = document.querySelector("#chat > .body > .list > .content");
+    const list = document.querySelector("#chat > .list");
     list.scrollTop = list.offsetHeight * list.offsetHeight;
   }
 
-  componentDidUpdate(prevProps) {
-    if (
-      prevProps.page != this.props.page ||
-      prevProps.open != this.props.open ||
-      prevProps.realLists != this.props.realLists
-    )
-      this.scrollToLastMessage();
+  onUpdateInputShow(string) {
+    this.props.updateShowInput(string)
   }
 
-  onClickHeaderButton(id) {
-    if (!this.props.open) this.props.updateOpen(true);
+  onClickEnter() {
+    const input = this.props.input
 
-    if (this.props.page != id) this.props.updatePage(id);
+    if(input) {
+      window.mp.send('cef::chat:send', input)
+      this.props.updateInput('')
+    }
   }
 
-  getHeaderButtons() {
-    return this.props.groups.map((item, index) => (
-      <div
-        className={`btn header-${item} ${this.getHeaderButtonStatus(item)}`}
-        key={`headerButton-${index}`}
-        onClick={this.onClickHeaderButton.bind(this, item)}
-      />
-    ));
-  }
-
-  getHeaderButtonStatus(id) {
-    return id == this.props.page ? "active" : "";
-  }
-
-  getPrefix(id) {
-    let color = "";
-    let name = "";
-
-    switch (id) {
+  getMessageColorClass(color) {
+    switch (color) {
       case 0:
-        color = "#808080";
-        name = "Игрок";
-        break;
-
+        return 'default'
+      
       case 1:
-        color = "#BEC056";
-        name = "VIP";
-        break;
+        return 'action'
 
       case 2:
-        color = "#56A7C0";
-        name = "Админ";
-        break;
+        return 'admin'
+    }
+  }
+
+  getList() {
+    return this.props.list.map((msg, index) => (
+      <div 
+        className='msg'
+        key={`msg-${index}`}
+        dangerouslySetInnerHTML={{__html: this.getMessageText(msg)}}
+      />
+    ))
+  }
+
+  getMessageText(text) {
+    let hexCount = 0
+
+    for (let i = 0; i < text.length; i++) {
+      if(i + 1 !== text.length && text[i] === '$' && text[i + 1] === '{') {
+        const hex = text.substring(i + 2, i + 8)
+        hexCount++
+        text = text.substring(0, i) + `<span style=color:#${hex}>` + text.substring(i + 9, text.length)
+      }
     }
 
-    return (
-      <div className="prefix" style={{ color }}>
-        [{name}]
-      </div>
-    );
-  }
-
-  getMessageList() {
-    const list = this.props.realLists[this.props.page] || [];
-    return list.map((item, index) => (
-      <div className="message" key={`message-${this.props.page}-${index}`}>
-        {this.getPrefix(item[0])}
-        <div className="nickname">{item[1]}:</div>
-        <div className="text">{item[2]}</div>
-      </div>
-    ));
-  }
-
-  onChangeInput(text) {
-    this.props.updateInput(text);
-  }
-
-  onClickOpen() {
-    this.props.updateOpen(!this.props.open);
-    this.onClickHeaderButton(this.props.page);
-  }
-
-  onClickSend() {
-    if (this.props.input) {
-      this.props.sendChatMessage(this.props.page, this.props.input);
-      this.props.updateInput("");
+    for (let i = 0; i < hexCount; i++) {
+      text += '</span>'
     }
+    
+    return text
+  }
+
+  getInputShowBool() {
+    return this.props.showInput == 'true' || (this.props.showInput === 'auto' && this.props.isBrowserFocus)
   }
 
   render() {
     return (
       this.props.show && (
         <div id="chat">
-          <div className="header">
-            <div className="buttons">{this.getHeaderButtons()}</div>
-            <div
-              className={`btn ${this.props.open ? "hide" : "open"}`}
-              onClick={this.onClickOpen.bind(this)}
-            />
+          <div className="list">
+            {this.getList()}
           </div>
-          <div className={`body ${this.props.open ? "open" : "hidden"}`}>
-            <div className="list">
-              <div className="content">{this.getMessageList()}</div>
-            </div>
-            <div className="input">
-              <input
-                type="text"
-                placeholder="Напишите сообщение..."
-                value={this.props.input}
-                onChange={(event) => this.onChangeInput(event.target.value)}
-              />
-              <div className="btn send" onClick={this.onClickSend.bind(this)}>
-                Отправить
-              </div>
-            </div>
-          </div>
+
+          <input 
+            className={`${this.getInputShowBool() && 'show'}`}
+            type="text"
+            placeholder='Напишите сообщение'
+            value={this.props.input}
+            onChange={(e) => this.props.updateInput(e.target.value)}
+            onFocus={(e) => this.setState({ isInputFocus: true })}
+            onBlur={(e) => this.setState({ isInputFocus: false })}
+            ref={this.ref_input}
+          />
         </div>
       )
     );
@@ -154,13 +131,10 @@ const mapStateToProps = (state) => {
   const defaultState = state.chatReducer;
   return {
     show: defaultState.show,
-    open: defaultState.open,
-    page: defaultState.page,
-    groups: defaultState.groups,
-    lists: defaultState.lists,
+    list: defaultState.list,
     input: defaultState.input,
-    nickname: state.characterReducer.nickname,
-    prefix: state.characterReducer.prefix,
+    showInput: defaultState.showInput,
+    isBrowserFocus: state.appReducer.isBrowserFocus,
   };
 };
 
@@ -170,21 +144,19 @@ const mapDispatchToProps = (dispatch) => ({
       type: "UPDATE_CHAT_SHOW",
       data,
     }),
-  updateOpen: (data) =>
-    dispatch({
-      type: "UPDATE_CHAT_OPEN",
-      data,
-    }),
-  updatePage: (data) =>
-    dispatch({
-      type: "UPDATE_CHAT_PAGE",
-      data,
-    }),
+
   updateLists: (data) =>
     dispatch({
-      type: "UPDATE_CHAT_LISTS",
+      type: "UPDATE_CHAT_LIST",
       data,
     }),
+
+  updateShowInput: (data) =>
+    dispatch({
+      type: "UPDATE_CHAT_SHOWINPUT",
+      data,
+    }),
+
   updateInput: (data) =>
     dispatch({
       type: "UPDATE_CHAT_INPUT",

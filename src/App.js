@@ -1,46 +1,70 @@
-import React from "react";
-import { connect } from "react-redux";
+import React from "react"
+import { connect } from "react-redux"
 
-import Chat from "./features/chat";
+import Chat from './features/chat'
 
-window.skymp.on("error", console.error);
-
-let gLists = [];
-
-window.skymp.on("message", (msg) => {
-  if (msg.type === "chatMessage") {
-    const { pageIndex, text, tagIndex, name } = msg;
-    if (typeof pageIndex !== "number") return;
-    if (pageIndex < 0 || pageIndex >= 4 || !Number.isFinite(pageIndex)) return;
-
-    if (pageIndex >= gLists.length) {
-      gLists.length = pageIndex + 1;
-    }
-    if (!gLists[pageIndex]) {
-      gLists[pageIndex] = [];
-    }
-    gLists[pageIndex].push([tagIndex || 0, name + "", text + ""]);
-  }
-});
-
-const sendChatMessage = (pageIndex, text) => {
-  window.skymp.send({
-    type: "chatMessage",
-    pageIndex: pageIndex,
-    text: text,
-  });
-};
-
-export default class App extends React.Component {
+class App extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
+  }
+
+  componentDidMount() {
+    window.addEventListener('focus', this.onWindowFocus.bind(this))
+    window.addEventListener('blur', this.onWindowFocus.bind(this))
+
+    window.mp = {
+      send: (type, data) => {
+        try {
+          window.skymp.send({
+            type,
+            data
+          })
+        } catch {
+          console.log(type, data)
+        }
+      }
+    }
+
+    try {
+      window.skymp.on("error", console.error)
+      window.skymp.on("message", (action) => {
+        window.storage.dispatch(action)
+      })
+    } catch {}
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('focus', this.onWindowFocus.bind(this))
+    window.removeEventListener('blur', this.onWindowFocus.bind(this))
+  }
+
+  onWindowFocus(e) {
+    const focus = document.hasFocus()
+    this.props.updateBrowserFocus(focus)
   }
 
   render() {
     return (
       <div className="App">
-        <Chat sendChatMessage={sendChatMessage} realLists={gLists} />
+        <Chat />
       </div>
-    );
+    )
   }
 }
+
+
+const mapStateToProps = (state) => {
+  return {
+    isBrowserFocus: state.appReducer.isBrowserFocus,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => ({
+  updateBrowserFocus: (data) =>
+    dispatch({
+      type: "UPDATE_APP_BROWSERFOCUS",
+      data,
+    }),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);
