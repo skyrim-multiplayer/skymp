@@ -248,6 +248,28 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     return ObjectPtr();
   }
 
+  bool isClearDestruction = (!stricmp(className.data(), "ObjectReference") &&
+                          !stricmp(classFunc.data(), "ClearDestruction"));
+  if (isClearDestruction) {
+    if (!rawSelf)
+      return ObjectPtr();
+
+    auto formId = rawSelf->GetFormID();
+
+    gameThrQ.AddTask([formId] { 
+       if (auto refr = reinterpret_cast<RE::TESObjectREFR*>(LookupFormByID(formId))) {
+        if (refr->GetFormID() == formId &&
+          refr->GetFormType() == RE::FormType::Reference) {
+
+          typedef float (*myfunc)(void*, void*, RE::TESObjectREFR*);
+          RelocAddr<myfunc> func(10041056);
+          func(nullptr, nullptr, refr);
+        }
+       }
+    });
+    return ObjectPtr();
+  }
+
   bool isQueueNiNodeUpdate = !stricmp(classFunc.data(), "queueNiNodeUpdate");
   if (isQueueNiNodeUpdate) {
     CallNative::ObjectPtr _self = self;
