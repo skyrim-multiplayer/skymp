@@ -8,11 +8,29 @@ class AnimList extends React.Component {
     super(props)
   }
 
+  componentDidMount() {
+    document.addEventListener('keydown', this.onKeyDown.bind(this))
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.onKeyDown.bind(this))
+  }
+
+  onKeyDown(e) {
+    switch (e.keyCode) {
+      case 27: // Escape
+        return this.props.updateShow({show: false})
+    }
+  }
+
   getAnimList() {
     return this.props.list.map((anim, index) => (
       <div 
         className="anim"
         key={`anim-${index}`}
+        onClick={() => {
+          window.mp.send('cef::chat:send', `/anim ${index}`)
+        }}
       >
         {anim.name}
       </div>

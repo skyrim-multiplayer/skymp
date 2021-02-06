@@ -1,15 +1,6 @@
 const defaultState = {
   show: false,
-  list: [
-    {
-      id: 0,
-      name: 'Лежать',
-    },
-    {
-      id: 1,
-      name: 'Сидеть',
-    }
-  ],
+  list: [],
 };
 
 export const animListReducer = (state = defaultState, action) => {
@@ -17,7 +8,8 @@ export const animListReducer = (state = defaultState, action) => {
     case "UPDATE_ANIMLIST_SHOW": {
       return {
         ...state,
-        show: action.data,
+        show: action.data.show,
+        list: action.data.list != null ? action.data.list : [],
       }
     }
   }

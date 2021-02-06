@@ -1,8 +1,6 @@
 const defaultState = {
   show: true,
-  list: [
-    '${ffFF00}Aloha'
-  ],
+  list: [],
   showInput: 'auto',
   input: "",
 };

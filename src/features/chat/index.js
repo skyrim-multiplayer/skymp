@@ -20,7 +20,7 @@ class Chat extends React.Component {
     this.scrollToLastMessage()
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps) {
     if(prevProps.list !== this.props.list)
       this.scrollToLastMessage()
 
