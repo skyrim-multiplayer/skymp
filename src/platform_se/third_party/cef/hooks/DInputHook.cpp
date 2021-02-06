@@ -247,40 +247,27 @@ HRESULT _stdcall FakeIDirectInputDevice8A::GetDeviceState(DWORD outDataLen,
     // TODO: destroy everything
     return DI_OK;
   }
-  bool keyboard = instanceInfo.guidInstance == GUID_SysKeyboard;
 
-  if (keyboard) {
-    uint8_t rawData[256];
-    // HRESULT hr = m_pDevice->GetDeviceState(256, rawData);
-    HRESULT hr = IDirectInputDevice8_GetDeviceState(m_pDevice, 256, rawData);
-    if (hr != DI_OK)
-      return hr;
+  HRESULT ret =
+    IDirectInputDevice8_GetDeviceState(m_pDevice, outDataLen, outData);
 
-    ProcessKeyboardData(rawData);
-
-    memcpy(outData, rawData, outDataLen < 256 ? outDataLen : 256);
-
-  } else {
-    HRESULT ret =
-      IDirectInputDevice8_GetDeviceState(m_pDevice, outDataLen, outData);
-
-    bool isMouseButtonsEnabled = true;
-    if (isMouseButtonsEnabled == false) {
-      DIMOUSESTATE2 fakeMouseState;
-      memcpy(&fakeMouseState, outData, outDataLen);
-      for (int i = 0; i < std::size(fakeMouseState.rgbButtons); ++i) {
-        fakeMouseState.rgbButtons[i] = 0;
-      }
-      memcpy(outData, &fakeMouseState, outDataLen);
+  bool isMouseButtonsEnabled = true;
+  if (isMouseButtonsEnabled == false) {
+    DIMOUSESTATE2 fakeMouseState;
+    memcpy(&fakeMouseState, outData, outDataLen);
+    for (int i = 0; i < std::size(fakeMouseState.rgbButtons); ++i) {
+      fakeMouseState.rgbButtons[i] = 0;
     }
-
-    if (ret != DI_OK)
-      return ret;
-
-    DIMOUSESTATE2* mouseState = (DIMOUSESTATE2*)outData;
-
-    ProcessMouseData(mouseState);
+    memcpy(outData, &fakeMouseState, outDataLen);
   }
+
+  if (ret != DI_OK)
+    return ret;
+
+  DIMOUSESTATE2* mouseState = (DIMOUSESTATE2*)outData;
+
+  ProcessMouseData(mouseState);
+
   if (DInputHook::ChromeFocus()) {
     // std::memset(outData, 0, outDataLen);
     DIMOUSESTATE2* mouseState = (DIMOUSESTATE2*)outData;
@@ -312,16 +299,6 @@ HRESULT _stdcall FakeIDirectInputDevice8A::GetDeviceData(
   }
 
   if (instanceInfo.guidInstance == GUID_SysKeyboard) {
-    /*for (DWORD i = 0; i < *outDataLen; ++i) {
-      if (input.IsToggleKey(outData[i].dwOfs) && outData[i].dwData & 0x80) {
-        DInputHook::Get().SetEnabled(true);
-      }
-    }*/
-
-    // if (!InputHook::GetInstance()->IsInputEnabled()) {
-    //  *outDataLen = 0;
-    //}
-
     uint8_t rawData[256];
     HRESULT hr = IDirectInputDevice8_GetDeviceState(m_pDevice, 256, rawData);
     if (hr == DI_OK) {
