@@ -1,3 +1,4 @@
+#include <DInputHook.hpp>
 #include <Filesystem.hpp>
 #include <MyChromiumApp.hpp>
 #include <filesystem>
@@ -192,12 +193,6 @@ void MyChromiumApp::InjectMouseMove(const float aX, const float aY,
 
     if (isBrowserFocused && aX >= 0 && aY >= 0)
       m_pGameClient->GetBrowser()->GetHost()->SendMouseMoveEvent(ev, false);
-
-    int isFocusedInt = isBrowserFocused ? 1 : 0;
-    if (isFocusedInt != m_wasFocused) {
-      m_wasFocused = isFocusedInt;
-      m_pGameClient->GetBrowser()->GetHost()->SetFocus(isBrowserFocused);
-    }
   }
 }
 
@@ -227,6 +222,13 @@ bool MyChromiumApp::LoadUrl(const char* url) noexcept
 
 void MyChromiumApp::RunTasks()
 {
+  bool isBrowserFocused = CEFUtils::DInputHook::ChromeFocus();
+
+  int isFocusedInt = isBrowserFocused ? 1 : 0;
+  if (isFocusedInt != m_wasFocused) {
+    m_wasFocused = isFocusedInt;
+    m_pGameClient->GetBrowser()->GetHost()->SetFocus(isBrowserFocused);
+  }
 }
 
 void MyChromiumApp::OnBeforeCommandLineProcessing(
