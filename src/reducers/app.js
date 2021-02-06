@@ -1,7 +1,5 @@
 const defaultState = {
   isBrowserFocus: false,
-  // nickname: 'My_Nickname',
-  // prefix: 0,
 }
 
 export const appReducer = (state = defaultState, action) => {
