@@ -18,8 +18,6 @@ class AnimList extends React.Component {
 
   onKeyDown(e) {
     switch (e.keyCode) {
-      case 27: // Escape
-        return this.props.updateShow({show: false})
     }
   }
 
@@ -29,6 +27,7 @@ class AnimList extends React.Component {
         className="anim"
         key={`anim-${index}`}
         onClick={() => {
+          this.props.updateShow({show: false})
           window.mp.send('cef::chat:send', `/anim ${index}`)
         }}
       >
