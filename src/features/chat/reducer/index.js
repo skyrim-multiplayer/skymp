@@ -24,9 +24,9 @@ export const chatReducer = (state = defaultState, action) => {
     }
     
     case "ADD_CHAT_MSG": {
-      const list = [...state.list]
+      let list = [...state.list]
       if(Array.isArray(action.data)) {
-        list.push([...action.data])
+        list = [...list, ...action.data]
       } else {
         list.push(action.data)
       }
