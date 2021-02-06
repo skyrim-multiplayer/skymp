@@ -2,6 +2,7 @@ import React from "react"
 import { connect } from "react-redux"
 
 import Chat from './features/chat'
+import AnimList from './features/animList'
 
 class App extends React.Component {
   constructor(props) {
@@ -47,6 +48,7 @@ class App extends React.Component {
     return (
       <div className="App">
         <Chat />
+        <AnimList />
       </div>
     )
   }

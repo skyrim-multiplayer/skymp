@@ -25,8 +25,12 @@ export const chatReducer = (state = defaultState, action) => {
     
     case "ADD_CHAT_MSG": {
       const list = [...state.list]
-      list.push(action.data)
-      if(list.length > 50) 
+      if(Array.isArray(action.data)) {
+        list.push([...action.data])
+      } else {
+        list.push(action.data)
+      }
+      while (list.length > 50) 
         list.shift()
 
       return {
