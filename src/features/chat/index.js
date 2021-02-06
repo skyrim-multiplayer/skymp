@@ -35,8 +35,8 @@ class Chat extends React.Component {
       case 13: // Enter
         return this.onClickEnter()
 
-      case 27: // Escape
-        return this.onUpdateInputShow('false')
+      // case 27: // Escape
+        // return this.onUpdateInputShow('false')
     }
   }
 
