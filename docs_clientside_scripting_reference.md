@@ -32,7 +32,7 @@ ctx.sp.Game.getPlayer().kill();
 
 In `makeProperty` is always `undefined`.
 
-In updateOwner / updateNeighbor is equal to the value of a property that is processed currently or undefined if there is no value or it's not visible due to flags.
+In `updateOwner` / `updateNeighbor` is equal to the value of a property that is processed currently or `undefined` if there is no value or it's not visible due to flags.
 
 ```typescript
 ctx.sp.Game.setPlayerLevel(ctx.value || 1);
@@ -50,7 +50,7 @@ ctx.state.x = "y";
 
 ## ctx.get()
 
-Get the value of the specified property. Built-in properties are not supported properly, so getting them is undefined behavior.
+Get the value of the specified property. Built-in properties are not supported properly, so attempts getting them are leading to the undefined behavior.
 
 ```typescript
 const v = ctx.get("myAwesomeProperty");
@@ -78,4 +78,12 @@ Respawns `ctx.refr` immediately.
 
 ```typescript
 ctx.respawn();
+```
+
+## ctx.sendEvent()
+
+Available only in `makeProperty` context. Sends an event to the server.
+
+```typescript
+ctx.sendEvent({ foo: 'bar' });
 ```
