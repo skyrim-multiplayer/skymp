@@ -1,0 +1,39 @@
+.animation
+  cursor: pointer
+
+  display: flex
+  flex-direction: row
+  justify-content: space-between
+  align-items: center
+
+  min-height: 40px
+
+  font-size: 16px
+  line-height: 1
+
+  padding: 10px 0
+
+  border-bottom: 1px solid #505050
+
+  &--group
+    transition: color .3s
+
+    &:hover
+      color: #7F7F7F
+
+  &:last-child
+    border: none
+
+  &__count
+    color: #7F7F7F
+
+  &__mark
+    color: #1F1F1D
+
+    transition: color .3s
+
+    &.active
+      color: #fff
+
+    &:hover
+      color: #fff

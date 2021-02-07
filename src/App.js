@@ -4,6 +4,7 @@ import { connect } from "react-redux"
 import Chat from './features/chat'
 import AnimList from './features/animList'
 import ChatHIVE from './features/chat_HIVE'
+import AnimListHIVE from './features/animList_HIVE'
 
 class App extends React.Component {
   constructor(props) {
@@ -51,6 +52,7 @@ class App extends React.Component {
         <ChatHIVE />
         <AnimList />
         <Chat />
+        <AnimListHIVE />
       </div>
     )
   }
