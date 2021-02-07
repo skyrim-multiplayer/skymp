@@ -52,7 +52,12 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
           return res;
         }
 
-        bool isNotForm = obj->GetType() == std::string("ActiveMagicEffect");
+        bool isNotForm = obj->GetType() == std::string("ActiveMagicEffect") ||
+          obj->GetType() == std::string("ColorComponent") ||
+          obj->GetType() == std::string("Alias") ||
+          obj->GetType() == std::string("ReferenceAlias") ||
+          obj->GetType() == std::string("LocationAlias");
+
         RE::VMTypeID id = 0;
 
         if (isNotForm) {
@@ -75,7 +80,8 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
           throw NullPointerException("nativePtrRaw");
         }
 
-        id = isNotForm ? id : static_cast<RE::VMTypeID>(nativePtrRaw->formType);
+        id =
+          isNotForm ? id : static_cast<RE::VMTypeID>(nativePtrRaw->formType);
 
         RE::BSScript::PackHandle(&res, nativePtrRaw, id);
         return res;
