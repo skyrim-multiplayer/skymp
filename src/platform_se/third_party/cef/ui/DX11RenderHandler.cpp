@@ -1,12 +1,12 @@
 #include <DX11RenderHandler.hpp>
 #include <OverlayClient.hpp>
 
-#include <CommonStates.h>
-#include <DDSTextureLoader.h>
 #include <DirectXColors.h>
-#include <SimpleMath.h>
-#include <SpriteBatch.h>
-#include <WICTextureLoader.h>
+#include <DirectXTK/CommonStates.h>
+#include <DirectXTK/DDSTextureLoader.h>
+#include <DirectXTK/SimpleMath.h>
+#include <DirectXTK/SpriteBatch.h>
+#include <DirectXTK/WICTextureLoader.h>
 #include <cmrc/cmrc.hpp>
 
 #include <iostream>

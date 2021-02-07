@@ -32,11 +32,11 @@ void HttpClient::Get(const char* host, const char* path, OnComplete callback)
 
   auto pImpl_ = pImpl;
   auto future = pImpl->pool.Push([cl, path_, callback, pImpl_](int) {
-    auto response = cl->Get(path_.data());
-    pImpl_->q.AddTask([=] {
-      callback(response ? std::vector<uint8_t>(response->body.begin(),
-                                               response->body.end())
-                        : std::vector<uint8_t>());
-    });
+    httplib::Result res = cl->Get(path_.data());
+    std::vector<uint8_t> resultVector = res
+      ? std::vector<uint8_t>(res->body.begin(), res->body.end())
+      : std::vector<uint8_t>();
+
+    pImpl_->q.AddTask([callback, resultVector] { callback(resultVector); });
   });
 }

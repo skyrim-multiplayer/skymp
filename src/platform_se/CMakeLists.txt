@@ -16,7 +16,7 @@ endif()
 
 # Clear CMake cache after changing this
 # (also for subprojects like platform_se)
-set(VCPKG_REVISION 790910f79f653978f90aadd958abf3c407215552)
+set(VCPKG_REVISION 5eea585548058540c3b73d087eb101c033b5fa85)
 # Download vcpkg dependencies
 include(${SKYRIM_MP_ROOT}/pmm.cmake)
 set(ports
@@ -26,6 +26,7 @@ set(ports
   zlib:x64-windows
   mimalloc:x64-windows-static
   mhook:x64-windows-static
+  directxtk:x64-windows-static
 )
 foreach(port ${ports})
   message(STATUS "Installing ${port}")
@@ -123,8 +124,8 @@ file(GLOB_RECURSE ui_src "${third_party}/cef/ui/*")
 add_library(ui STATIC ${ui_src})
 target_link_libraries(ui PUBLIC ${CEF_LIBRARIES} core_library hooks reverse)
 target_include_directories(ui PUBLIC ${CEF_INCLUDE})
-target_include_directories(ui PRIVATE ${third_party}/cef/ui ${third_party}/directxtk/include)
-target_link_libraries(ui PUBLIC "${third_party}/directxtk/lib/x64/DirectXTK.lib" "d3d11.lib" "dxguid.lib")
+target_include_directories(ui PRIVATE ${third_party}/cef/ui )
+target_link_libraries(ui PUBLIC "d3d11.lib" "dxguid.lib")
 target_link_libraries(ui PUBLIC skyrim_plugin_resources)
 integrate_vcpkg(
   TARGETS ui
