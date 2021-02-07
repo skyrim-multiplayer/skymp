@@ -6,8 +6,10 @@ import { chatReducer } from '../features/chat/reducer'
 import { animListReducer } from '../features/animList/reducer'
 import { chatHiveReducer } from '../features/chat_HIVE/reducer'
 import { animListHiveReducer } from '../features/animList_HIVE/reducer'
+import { spawnHiveReducer } from '../features/spawn_HIVE/reducer'
 
 export const rootReducer = combineReducers({
+  spawnHiveReducer,
   animListHiveReducer,
   chatHiveReducer,
   commandReducer,
