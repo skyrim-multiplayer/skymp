@@ -2,7 +2,7 @@
 import re
 import sys
 
-allowed_tags = ["FIX", "INTERNAL", "PUBLISH", "TESTS", "REFACT", "OPTIMIZE", "MAJOR", "MINOR"]
+allowed_tags = ["DOCS", "INTERNAL", "TESTS", "REFACT", "OPTIMIZE", "MAJOR", "MINOR", "FIX"]
 try:
     data = open(sys.argv[1]).read()
     tags = re.findall(r"\[(.+)\]", data)
@@ -10,7 +10,7 @@ try:
     if len(tags) == 1 and tags[0] in allowed_tags:
         sys.exit(0)
     else:
-        print("Aborting commit. sYour commit message does not follow the rules specified in CommitNaming_RU.md1")
+        print("Aborting commit. Your commit message does not follow the rules specified in CommitNaming_RU.md")
         sys.exit(-1)
 except IndexError:
     print("IndexError")
