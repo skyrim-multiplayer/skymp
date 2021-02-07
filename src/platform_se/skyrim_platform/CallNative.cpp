@@ -8,6 +8,7 @@
 #include "VmCall.h"
 #include "VmCallback.h"
 #include <RE/Actor.h>
+#include <RE/BSScript/Internal/VirtualMachine.h>
 #include <RE/BSScript/PackUnpack.h>
 #include <RE/BSScript/StackFrame.h>
 #include <RE/SkyrimVM.h>
@@ -28,41 +29,61 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
     return res;
   }
   return std::visit(
-    overloaded{ [&](double f) {
-                 RE::BSScript::Variable res;
-                 treatNumberAsInt ? res.SetSInt((int)floor(f))
-                                  : res.SetFloat((float)f);
-                 return res;
-               },
-                [](bool b) {
-                  RE::BSScript::Variable res;
-                  res.SetBool(b);
-                  return res;
-                },
-                [](const std::string& s) {
-                  RE::BSScript::Variable res;
-                  res.SetString(StringHolder::ThreadSingleton()[s]);
-                  return res;
-                },
-                [](const CallNative::ObjectPtr& obj) {
-                  RE::BSScript::Variable res;
-                  res.SetNone();
-                  if (!obj) {
-                    return res;
-                  }
-                  auto nativePtrRaw = (RE::TESForm*)obj->GetNativeObjectPtr();
-                  if (!nativePtrRaw)
-                    throw NullPointerException("nativePtrRaw");
+    overloaded{
+      [&](double f) {
+        RE::BSScript::Variable res;
+        treatNumberAsInt ? res.SetSInt((int)floor(f)) : res.SetFloat((float)f);
+        return res;
+      },
+      [](bool b) {
+        RE::BSScript::Variable res;
+        res.SetBool(b);
+        return res;
+      },
+      [](const std::string& s) {
+        RE::BSScript::Variable res;
+        res.SetString(StringHolder::ThreadSingleton()[s]);
+        return res;
+      },
+      [](const CallNative::ObjectPtr& obj) {
+        RE::BSScript::Variable res;
+        res.SetNone();
+        if (!obj) {
+          return res;
+        }
 
-                  RE::BSScript::PackHandle(
-                    &res, nativePtrRaw,
-                    static_cast<RE::VMTypeID>(nativePtrRaw->formType));
-                  return res;
-                },
-                [](auto) -> RE::BSScript::Variable {
-                  throw std::runtime_error(
-                    "Unable to cast the argument to RE::BSScript::Variable");
-                } },
+        bool isNotForm = obj->GetType() == std::string("ActiveMagicEffect");
+        RE::VMTypeID id = 0;
+
+        if (isNotForm) {
+          auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+
+          if (!vm) {
+            return res;
+          }
+
+          bool isValid = vm->GetTypeIDForScriptObject(obj->GetType(), id);
+
+          if (!isValid) {
+            return res;
+          }
+        }
+
+        auto nativePtrRaw =
+          reinterpret_cast<RE::TESForm*>(obj->GetNativeObjectPtr());
+        if (!nativePtrRaw) {
+          throw NullPointerException("nativePtrRaw");
+        }
+
+        id = isNotForm ? id : static_cast<RE::VMTypeID>(nativePtrRaw->formType);
+
+        RE::BSScript::PackHandle(&res, nativePtrRaw, id);
+        return res;
+      },
+      [](auto) -> RE::BSScript::Variable {
+        throw std::runtime_error(
+          "Unable to cast the argument to RE::BSScript::Variable");
+      } },
     v);
 }
 
@@ -249,23 +270,24 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   }
 
   bool isClearDestruction = (!stricmp(className.data(), "ObjectReference") &&
-                          !stricmp(classFunc.data(), "ClearDestruction"));
+                             !stricmp(classFunc.data(), "ClearDestruction"));
   if (isClearDestruction) {
     if (!rawSelf)
       return ObjectPtr();
 
     auto formId = rawSelf->GetFormID();
 
-    gameThrQ.AddTask([formId] { 
-       if (auto refr = reinterpret_cast<RE::TESObjectREFR*>(LookupFormByID(formId))) {
+    gameThrQ.AddTask([formId] {
+      if (auto refr =
+            reinterpret_cast<RE::TESObjectREFR*>(LookupFormByID(formId))) {
         if (refr->GetFormID() == formId &&
-          refr->GetFormType() == RE::FormType::Reference) {
+            refr->GetFormType() == RE::FormType::Reference) {
 
           typedef float (*myfunc)(void*, void*, RE::TESObjectREFR*);
           RelocAddr<myfunc> func(10041056);
           func(nullptr, nullptr, refr);
         }
-       }
+      }
     });
     return ObjectPtr();
   }
