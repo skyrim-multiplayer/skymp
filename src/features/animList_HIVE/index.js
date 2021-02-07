@@ -1,0 +1,118 @@
+import React, { useEffect } from 'react';
+
+import { connect } from 'react-redux';
+
+import Animation from './components/Animation';
+
+import './styles.sass';
+
+const initKeyCodes = [115, 1099]; // s - на англ., ы - на рус. 
+
+const AnimListHIVE = (props) => {
+
+  useEffect(() => {
+    const onKeypress = (event) => {
+      // Если ввод был внутри input
+      let isInput = String(event.target).includes('Input');
+
+      if (initKeyCodes.includes(event.keyCode) && !isInput) {
+        props.toggleWindow();
+      }
+    }
+
+    document.addEventListener('keypress', onKeypress);
+  
+    return () => {
+      document.removeEventListener('keypress', onKeypress);
+    }
+  });
+
+  // При вводе
+  const handleChange = (event) => {
+    let searchValue = event.target.value.toLowerCase();
+
+    props.updateSearch(searchValue);
+  }
+
+  // Получаем отфильтрованные анимации
+  const getAnimations = () => {
+    let items;
+
+    if (props.search && !props.groupIsSelected) {
+      items = props.animations.items.filter(animation => animation.name.toLowerCase().includes(props.search));
+    } else {
+      if (props.groupIsSelected) {
+        items = props.animations.items.filter(animation => animation.parents.includes(props.selectedGroup));
+        items = items.filter(animation => animation.name.toLowerCase().includes(props.search));
+      } else {
+        items = props.animations.groups;
+      }
+    }
+
+    return items;
+  }
+
+  const AnimationComponents = getAnimations().map((animation, index) => {
+    return <Animation key={index} data={animation} />;
+  });
+  
+  return (
+    props.windowIsOpen &&
+    <div id="animations">
+      <div className="animations__inner">
+        <div className="animations__header">
+          <h1 className="title">{ props.groupIsSelected ? props.selectedGroup : 'Анимации' }</h1>
+          <button className="close" onClick={props.toggleWindow}>&times;</button>
+          <input type="text" value={props.search} placeholder="Поиск анимаций" onChange={handleChange} />
+        </div>
+        <div className="animations__list">
+          { AnimationComponents.length ?
+            AnimationComponents :
+            <p>Список анимаций пуст</p>
+          }
+        </div>
+        { (props.groupIsSelected) &&
+          <span className="back" onClick={props.goBack}>Назад</span>
+        }
+      </div>
+    </div>
+  );
+
+}
+
+const mapStateToProps = (state) => {
+  const defaultState = state.animListHiveReducer;
+
+  return {
+    animations: defaultState.animations,
+    selectedGroup: defaultState.selectedGroup,
+    groupIsSelected: defaultState.groupIsSelected,
+    windowIsOpen: defaultState.windowIsOpen,
+    search: defaultState.search
+  }
+}
+
+const mapDispatchToProps = (dispatch) => ({
+  selectGroup: (data) =>
+    dispatch({
+      type: 'SELECT_GROUP',
+      data
+    }),
+  toggleWindow: (data) =>
+    dispatch({
+      type: 'TOGGLE_WINDOW',
+      data
+    }),
+  goBack: (data) =>
+    dispatch({
+      type: 'GO_BACK',
+      data
+    }),
+  updateSearch: (data) =>
+    dispatch({
+      type: 'UPDATE_SEARCH',
+      data
+    })
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(AnimListHIVE);
