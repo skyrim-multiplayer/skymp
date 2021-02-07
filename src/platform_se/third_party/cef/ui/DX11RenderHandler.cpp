@@ -20,6 +20,7 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
   // So we need to lock this until we have the window dimension as a background
   // CEF thread will attempt to get it before we have it
   m_createLock.lock();
+  isCreateLock = true;
 }
 
 DX11RenderHandler::~DX11RenderHandler() = default;
@@ -192,9 +193,12 @@ void DX11RenderHandler::GetRenderTargetSize()
       if ((m_width != desc.Width || m_height != desc.Height) && m_pParent) {
         m_width = desc.Width;
         m_height = desc.Height;
-
-        // We now know the size of the viewport, we can let CEF get it
-        m_createLock.unlock();
+        
+        if (isCreateLock) {
+          // We now know the size of the viewport, we can let CEF get it
+          m_createLock.unlock();
+          isCreateLock = false;
+        }
 
         {
           std::unique_lock<std::mutex> _(m_textureLock);
