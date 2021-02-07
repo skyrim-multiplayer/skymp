@@ -532,13 +532,23 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
 
   auto activeEffectBaseId = activeEffectBase ? activeEffectBase->formID : 0;
 
-  g_taskQueue.AddTask([casterId, targetId, isApplied, activeEffectBaseId,
+  g_taskQueue.AddTask([casterId, targetId, isApplied, activeEffect,
+                       activeEffectUniqueID, activeEffectBaseId,
                        caster, target] {
+
     auto obj = JsValue::Object();
+
+    bool isEffectValid = activeEffect
+      ? (activeEffect->usUniqueID == activeEffectUniqueID)
+      : false;
 
     obj.SetProperty("effect",
                     CreateObject("MagicEffect",
                                  RE::TESForm::LookupByID(activeEffectBaseId)));
+
+    obj.SetProperty("activeEffect",
+                    CreateObject("ActiveMagicEffect", isEffectValid ? activeEffect
+                                 : nullptr));
 
     auto casterLocal = RE::TESForm::LookupByID(casterId);
     casterLocal = casterLocal == caster ? casterLocal : nullptr;
