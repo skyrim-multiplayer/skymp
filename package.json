@@ -31,6 +31,7 @@
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
+    "7zip-bin": "^5.0.3",
     "@types/argparse": "^1.0.38",
     "@types/axios": "^0.14.0",
     "@types/chai": "^4.2.12",
@@ -71,5 +72,9 @@
     "ts-jest": "^26.1.1",
     "typescript": "^3.9.5",
     "ws": "^7.3.1"
+  },
+  "devDependencies": {
+    "@types/node-7z": "^2.1.0",
+    "@types/progress": "^2.0.3"
   }
 }

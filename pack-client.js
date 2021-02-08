@@ -1,11 +1,9 @@
-// 7 Zip Must be in PATH:
-// C:\\Program Files\\7-Zip\\
-
 const fs = require("fs");
 const path = require("path");
 const Axios = require("axios");
 const ProgressBar = require("progress");
 const Seven = require("node-7z");
+const sevenZipBin = require("7zip-bin");
 
 const makeDirectory = (p) => {
   if (!fs.existsSync(p)) {
@@ -101,6 +99,7 @@ const packWin32 = async () => {
   console.log("Extracting Skyrim Platform " + spVersion);
   const myStream = Seven.extractFull("./build/tmp-sp.7z", packPath, {
     $progress: true,
+    $bin: sevenZipBin.path7za,
   });
   await new Promise((resolve, reject) => {
     myStream.on("end", function () {

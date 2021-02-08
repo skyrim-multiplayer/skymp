@@ -1,5 +1,4 @@
 import * as ui from "./ui";
-ui.main();
 
 import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install();
@@ -18,9 +17,9 @@ import { pid } from "process";
 import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
+import { ensureMastersAndScriptsPresent } from "./dataDownloader";
 
 import * as manifestGen from "./manifestGen";
-manifestGen.generateManifest(Settings.get());
 
 console.log(`Current process ID is ${pid}`);
 
@@ -59,6 +58,13 @@ systems.push(
 );
 
 const main = async () => {
+  await ensureMastersAndScriptsPresent(
+    Settings.get().dataDir,
+    Settings.get().loadOrder
+  );
+  manifestGen.generateManifest(Settings.get());
+  ui.main();
+
   const server = new scampNative.ScampServer(
     Settings.get().port,
     Settings.get().maxPlayers

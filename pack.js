@@ -1,9 +1,7 @@
-// 7 Zip Must be in PATH:
-// C:\\Program Files\\7-Zip\\
-
 const fs = require("fs");
 const path = require("path");
 const Seven = require("node-7z");
+const sevenZipBin = require("7zip-bin");
 
 const makeDirectory = (p) => {
   if (!fs.existsSync(p)) {
@@ -99,6 +97,12 @@ const packWin32 = async () => {
   const libkey = "data/_libkey.js";
   fs.writeFileSync(path.join(packPath, libkey), fs.readFileSync(libkey));
 
+  makeDirectory(path.join(packPath, "bin"));
+  fs.writeFileSync(
+    path.join(packPath, "bin/7za.exe"),
+    fs.readFileSync(sevenZipBin.path7za)
+  );
+
   const packageJson = JSON.parse(
     fs.readFileSync("package.json", { encoding: "utf-8" })
   );
@@ -149,6 +153,7 @@ const packWin32 = async () => {
     `build/skymp-server-lite-win32-${projectVersionTag}.7z`,
     packPath + "/*",
     {
+      $bin: sevenZipBin.path7za,
       recursive: true,
     }
   );
