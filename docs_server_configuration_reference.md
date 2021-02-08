@@ -21,7 +21,7 @@ This IP-address would be used by player clients to connect to your server. Do no
 ```json
 {
   // ...
-  "dataDir": "127.0.0.1"
+  "ip": "127.0.0.1"
   // ...
 }
 ```
