@@ -580,6 +580,13 @@ struct Property
   }
 };
 
+using IterateFieldsCallback =
+  std::function<void(const char* type, uint32_t size, const char* data)>;
+
+void IterateFields_(
+  const espm::RecordHeader* rec, const espm::IterateFieldsCallback& f,
+  espm::CompressedFieldsCache* compressedFieldsCache = nullptr);
+
 struct Script
 {
   std::string scriptName;

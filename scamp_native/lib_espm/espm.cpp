@@ -287,6 +287,13 @@ public:
   }
 };
 
+void espm::IterateFields_(const espm::RecordHeader* rec,
+                          const espm::IterateFieldsCallback& f,
+                          espm::CompressedFieldsCache* compressedFieldsCache)
+{
+  espm::RecordHeaderAccess::IterateFields(rec, f, compressedFieldsCache);
+}
+
 const char* espm::RecordHeader::GetEditorId(
   espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
 {

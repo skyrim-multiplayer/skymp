@@ -620,11 +620,11 @@ std::string ExtractPropertyName(Napi::Value v)
   return static_cast<std::string>(v.As<Napi::String>());
 }
 
-uint32_t ExtractFormId(Napi::Value v)
+uint32_t ExtractFormId(Napi::Value v, const char* argName = "formId")
 {
   if (!v.IsNumber()) {
     std::stringstream ss;
-    ss << "Expected 'formId' to be number, but got '";
+    ss << "Expected '" << argName << "' to be number, but got '";
     ss << static_cast<std::string>(v.ToString().As<Napi::String>());
     ss << "'";
     Err(v.Env(), ss.str());
@@ -981,6 +981,61 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
           refr.SetProperty(propertyName, newValue, info.isVisibleByOwner,
                            info.isVisibleByNeighbors);
         }
+
+      } catch (std::exception& e) {
+        throw Napi::Error::New(info.Env(), (std::string)e.what());
+      }
+    }));
+
+  mp.Set(
+    "lookupEspmRecordById",
+    Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+      try {
+        auto globalRecordId = ExtractFormId(info[0], "globalRecordId");
+
+        auto espmLookupResult = Napi::Object::New(info.Env());
+
+        auto lookupRes =
+          partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+        if (lookupRes.rec) {
+          auto fields = Napi::Array::New(info.Env(), 0);
+
+          espm::IterateFields_(
+            lookupRes.rec,
+            [&](const char* type, uint32_t size, const char* data) {
+              auto uint8arr = Napi::Uint8Array::New(info.Env(), size);
+              memcpy(uint8arr.Data(), data, size);
+
+              auto push = fields.Get("push").As<Napi::Function>();
+              auto field = Napi::Object::New(info.Env());
+              field.Set("type",
+                        Napi::String::New(info.Env(), std::string(type, 4)));
+              field.Set("data", uint8arr);
+              push.Call(fields, { field });
+            },
+            &partOne->worldState.GetEspmCache());
+
+          auto id = Napi::Number::New(info.Env(), lookupRes.rec->GetId());
+          auto edid =
+            Napi::String::New(info.Env(), lookupRes.rec->GetEditorId());
+          auto type =
+            Napi::String::New(info.Env(), lookupRes.rec->GetType().ToString());
+          auto flags =
+            Napi::Number::New(info.Env(), lookupRes.rec->GetFlags());
+
+          auto record = Napi::Object::New(info.Env());
+          record.Set("id", id);
+          record.Set("editorId", edid);
+          record.Set("type", type);
+          record.Set("flags", flags);
+          record.Set("fields", fields);
+          espmLookupResult.Set("record", record);
+
+          espmLookupResult.Set(
+            "fileIndex", Napi::Number::New(info.Env(), lookupRes.fileIdx));
+        }
+
+        return espmLookupResult;
 
       } catch (std::exception& e) {
         throw Napi::Error::New(info.Env(), (std::string)e.what());
