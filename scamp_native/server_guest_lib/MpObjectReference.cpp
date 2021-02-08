@@ -258,7 +258,10 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 void MpObjectReference::Activate(MpObjectReference& activationSource,
                                  bool defaultProcessingOnly)
 {
-  if (!activationBlocked || defaultProcessingOnly)
+  bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
+
+  if (!activationBlockedByMpApi &&
+      (!activationBlocked || defaultProcessingOnly))
     ProcessActivate(activationSource);
 
   auto arg = activationSource.ToVarValue();
@@ -989,6 +992,27 @@ void MpObjectReference::MpApiOnInit()
       listener->OnMpApiEvent("onInit", std::nullopt, id);
     }
   }
+}
+
+bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
+{
+  simdjson::dom::parser parser;
+
+  std::string s = "[" + std::to_string(caster.GetFormId()) + " ]";
+  auto args = parser.parse(s).value();
+
+  bool activationBlocked = false;
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      if (listener->OnMpApiEvent("onActivate", args, id) == false) {
+        activationBlocked = true;
+      }
+    }
+  }
+
+  return activationBlocked;
 }
 
 void MpObjectReference::RemoveFromGrid()

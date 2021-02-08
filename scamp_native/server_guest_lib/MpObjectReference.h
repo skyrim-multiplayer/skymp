@@ -181,6 +181,7 @@ private:
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
   void MpApiOnInit();
+  bool MpApiOnActivate(MpObjectReference& caster);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
