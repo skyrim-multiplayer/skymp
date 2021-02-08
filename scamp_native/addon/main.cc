@@ -1082,6 +1082,21 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
       }
     }));
 
+  mp.Set("getEspmLoadOrder",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+             auto fileNames = partOne->GetEspm().GetFileNames();
+             auto arr = Napi::Array::New(info.Env(), fileNames.size());
+             for (uint32_t i = 0; i < static_cast<uint32_t>(fileNames.size());
+                  ++i) {
+               arr[i] = fileNames[i];
+             }
+             return arr;
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
   return mp;
 }
 
