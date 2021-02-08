@@ -164,6 +164,17 @@ export class SkympClient {
       caster = this.localIdToRemoteId(caster);
       if (!caster) return printConsole("localIdToRemoteId returned 0 (caster)");
 
+      const openState = e.target.getOpenState();
+      const enum OpenState {
+        None,
+        Open,
+        Opening,
+        Closed,
+        Closing,
+      }
+      if (openState === OpenState.Opening || openState === OpenState.Closing)
+        return;
+
       this.sendTarget.send(
         { t: MsgType.Activate, data: { caster, target } },
         true
