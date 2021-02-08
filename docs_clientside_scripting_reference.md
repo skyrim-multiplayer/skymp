@@ -22,10 +22,11 @@ In `updateOwner` is similar to `ctx.sp.Game.getPlayer()`.
 In `updateNeighbor` refers to neighbor synchronized `ObjectReference` or `Actor`.
 
 ```typescript
-// Print to console
-ctx.sp.printConsole("Hello Skyrim Platform!");
-// Kill player character (locally)
-ctx.sp.Game.getPlayer().kill();
+const pos = [
+  ctx.refr.getPositionX(),
+  ctx.refr.getPositionY(),
+  ctx.refr.getPositionZ()
+];
 ```
 
 ## ctx.value
