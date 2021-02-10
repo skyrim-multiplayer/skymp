@@ -1,0 +1,304 @@
+// Variables
+$font--futurapt-cm: 'Futura-pt CM'
+$font--alternative: sans-serif
+
+$color--background: rgba(0, 0, 0, .8)
+$color--border: rgba(128, 128, 128, .5)
+  
+#trade
+  padding: 3px
+
+  color: #fff
+  background-color: $color--background
+
+  font-family: $font--futurapt-cm, $font--alternative
+  font-size: 20px
+
+  z-index: 2
+
+  div::-webkit-scrollbar
+    width: 3px
+  
+    background-color: transparent
+
+  div::-webkit-scrollbar-thumb
+    background-color: #737373
+
+  .item
+    cursor: pointer
+
+    position: relative
+
+    display: flex
+    flex-direction: row
+    align-items: center
+
+    margin-bottom: 12.5px
+
+    &:hover
+      .dropdown
+        opacity: 1
+
+    &:last-child
+      margin-bottom: 0px
+
+    .item__icon
+      display: flex
+      align-items: center
+      justify-content: center
+
+      color: #fff
+
+      margin-right: 10px
+
+      .icon
+        width: 25px
+        height: 25px
+
+    .item__additional
+      display: flex
+      align-items: center
+      justify-content: center
+
+      margin-left: 6px
+
+      .icon
+        width: 15px
+        height: 15px
+
+    .dropdown
+      position: absolute
+      left: 120px
+      bottom: 0
+      z-index: 2
+
+      pointer-events: none
+
+      transform: translateY(100%)
+
+      width: 225px
+
+      font-size: 16px
+      text-align: center
+
+      padding: 3px
+
+      background-color: $color--background
+      color: #979797
+
+      opacity: 0
+
+      transition: opacity .5s
+
+      &__inner
+        display: flex
+        flex-direction: column
+        align-items: center
+
+        padding: 20px 15px
+
+        border: 2px solid $color--border
+
+        .value
+          color: #fff
+
+        .dropdown__title
+          font-size: 20px
+
+          color: #fff
+
+        .dropdown__divider
+          height: 1px
+          width: 100%
+
+          margin: 6px 0
+
+          background-color: $color--border
+
+        .dropdown__info
+          display: flex
+          flex-direction: row
+          justify-content: space-between
+          align-items: center
+
+          width: 100%
+
+        .dropdown__additional
+          margin-top: 5px
+
+  .trade__inner
+    display: flex
+    flex-direction: column
+
+    height: 100%
+
+    border: 2px solid $color--border
+
+    .trade__body
+      display: flex
+      flex-direction: row
+
+      padding: 40px
+
+      .trade__divider
+        width: 100%
+        height: 2px
+
+        margin: 10px 0
+
+        background-color: #6B6965
+
+      .trade__inventory
+        width: 400px
+
+        margin-right: 60px
+
+        .trade__title
+          display: block
+
+          font-size: 24px
+
+          margin-bottom: 15px
+
+        .inventory__tabs
+          display: flex
+          flex-direction: row
+          justify-content: space-between
+          align-items: center
+
+          .tab
+            display: flex
+            align-items: center
+            justify-content: center
+
+            cursor: pointer
+
+            color: #8F8C8B
+
+            transition: color .3s
+
+            &:hover
+              color: #fff
+
+            &.active
+              color: #fff
+
+            .icon
+              width: 30px
+              height: 30px
+
+        .inventory__list
+          display: flex
+          flex-direction: column
+
+          max-height: calc(((26px + 12.5px) * 11) - 12.5px) // 26px - высота предмета, 12.5px - отступ снизу, 10 - количество в области видимости
+
+          overflow-y: auto
+
+      .trade__area
+        display: flex
+        flex-direction: column
+        justify-content: space-between
+
+        width: 400px
+
+        .suggestion
+          display: flex
+          flex-direction: column
+
+          &__header
+            display: flex
+            flex-direction: row
+            align-items: center
+
+            font-size: 24px
+            line-height: 1
+
+            color: #979797
+
+            .icon
+              cursor: pointer
+
+              width: 20px
+              height: 26px
+
+              margin-right: 12.5px
+
+              transition: transform .3s
+
+              &:hover
+                transform: scale(1.1)
+
+            .suggestion__person
+              color: #fff
+
+          &__list
+            display: flex
+            flex-direction: column
+
+            max-height: calc(((26px + 12.5px) * 5) - 12.5px) // 26px - высота предмета, 12.5px - отступ снизу, 5 - количество в области видимости
+
+            overflow-y: auto
+
+    .trade__footer
+      padding: 20px
+
+      border-top: 2px solid $color--border
+
+      .trade__actions
+        display: flex
+        flex-direction: row
+        align-items: center
+
+        .action
+          display: flex
+          flex-direction: row
+          align-items: center
+
+          font-size: 22px
+          line-height: 1
+
+          margin-right: 30px
+
+          color: #7B7B7B
+
+          transition: color .3s
+
+          &.active
+            color: #fff
+
+            .button__inner
+              color: #fff
+
+          &:last-child
+            margin-right: 0
+
+          &__button
+            width: 30px
+            height: 30px
+
+            margin-right: 5px
+            padding: 2px
+
+            border-radius: 5px
+
+            background-color: #000
+
+            .button__inner
+              display: flex
+              align-items: center
+              justify-content: center
+
+              width: 100%
+              height: 100%
+
+              font-size: 22px
+              text-transform: uppercase
+              line-height: 1
+
+              border: 2px solid $color--border
+              border-radius: 5px
+
+              color: #777777
+
+              transition: color .3s

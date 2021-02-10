@@ -7,6 +7,7 @@ import ChatHIVE from './features/chat_HIVE'
 import AnimListHIVE from './features/animList_HIVE'
 import SpawnHIVE from './features/spawn_HIVE'
 import WatermarkHIVE from './features/watermark_HIVE'
+import TradeHIVE from './features/trade_HIVE'
 
 class App extends React.Component {
   constructor(props) {
@@ -57,6 +58,7 @@ class App extends React.Component {
         <AnimListHIVE />
         <SpawnHIVE />
         <WatermarkHIVE />
+        <TradeHIVE />
       </div>
     )
   }
