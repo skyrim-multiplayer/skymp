@@ -1,5 +1,6 @@
 // Variables
 $font--futurapt-cm: 'Futura-pt CM'
+$font--futurapt-cb: 'Futura-pt CB'
 $font--alternative: sans-serif
 
 $color--background: rgba(0, 0, 0, .8)
@@ -19,7 +20,7 @@ $color--border: rgba(128, 128, 128, .5)
   div::-webkit-scrollbar
     width: 3px
   
-    background-color: transparent
+    background-color: rgba(138, 138, 138, .3)
 
   div::-webkit-scrollbar-thumb
     background-color: #737373
@@ -156,6 +157,7 @@ $color--border: rgba(128, 128, 128, .5)
         .trade__title
           display: block
 
+          font-family: $font--futurapt-cb
           font-size: 24px
 
           margin-bottom: 15px
@@ -183,10 +185,6 @@ $color--border: rgba(128, 128, 128, .5)
             &.active
               color: #fff
 
-            .icon
-              width: 30px
-              height: 30px
-
         .inventory__list
           display: flex
           flex-direction: column
@@ -211,6 +209,7 @@ $color--border: rgba(128, 128, 128, .5)
             flex-direction: row
             align-items: center
 
+            font-family: $font--futurapt-cb
             font-size: 24px
             line-height: 1
 
@@ -255,6 +254,9 @@ $color--border: rgba(128, 128, 128, .5)
           flex-direction: row
           align-items: center
 
+          cursor: pointer
+
+          font-family: $font--futurapt-cb
           font-size: 22px
           line-height: 1
 
@@ -263,6 +265,12 @@ $color--border: rgba(128, 128, 128, .5)
           color: #7B7B7B
 
           transition: color .3s
+
+          &:hover
+            color: #B2B2B2
+
+            .button__inner
+              color: #B2B2B2
 
           &.active
             color: #fff
@@ -292,6 +300,7 @@ $color--border: rgba(128, 128, 128, .5)
               width: 100%
               height: 100%
 
+              font-family: $font--futurapt-cm
               font-size: 22px
               text-transform: uppercase
               line-height: 1
