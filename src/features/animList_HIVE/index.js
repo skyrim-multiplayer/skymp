@@ -85,8 +85,12 @@ const AnimListHIVE = (props) => {
                 let top = clientY - window.moveWindowTranslateY
                 if(left + window.moveWindowWidth > window.innerWidth)
                   left = window.innerWidth - window.moveWindowWidth
+                else if(left < 0)
+                  left = 0
                 if(top + window.moveWindowHeight > window.innerHeight)
                   top = window.innerHeight - window.moveWindowHeight
+                else if(top < 0)
+                  top = 0
                 setWindowX(left)
                 setWindowY(top)
               }
