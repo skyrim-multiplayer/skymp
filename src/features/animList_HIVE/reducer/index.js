@@ -4,7 +4,7 @@ const defaultState = {
   animations: data,
   selectedGroup: '',
   groupIsSelected: false,
-  windowIsOpen: true,
+  windowIsOpen: false,
   search: ''
 }
 
