@@ -609,16 +609,21 @@ uint32_t GetFormId(Napi::Value v)
   return 0;
 }
 
-std::string ExtractPropertyName(Napi::Value v)
+std::string ExtractString(Napi::Value v, const char* argName)
 {
   if (!v.IsString()) {
     std::stringstream ss;
-    ss << "Expected 'propertyName' to be string, but got '";
+    ss << "Expected '" << argName << "' to be string, but got '";
     ss << static_cast<std::string>(v.ToString().As<Napi::String>());
     ss << "'";
     Err(v.Env(), ss.str());
   }
   return static_cast<std::string>(v.As<Napi::String>());
+}
+
+std::string ExtractPropertyName(Napi::Value v)
+{
+  return ExtractString(v, "propertyName");
 }
 
 uint32_t ExtractFormId(Napi::Value v, const char* argName = "formId")
@@ -1092,6 +1097,33 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
                arr[i] = fileNames[i];
              }
              return arr;
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
+  mp.Set("getDescFromId",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+             auto formId = ExtractFormId(info[0]);
+             auto espmFileNames = partOne->GetEspm().GetFileNames();
+             auto formDesc = FormDesc::FromFormId(formId, espmFileNames);
+
+             return Napi::String::New(info.Env(), formDesc.ToString());
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
+  mp.Set("getIdFromDesc",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+             auto str = ExtractString(info[0], "formDesc");
+             auto espmFileNames = partOne->GetEspm().GetFileNames();
+             auto formDesc = FormDesc::FromString(str);
+
+             return Napi::Number::New(info.Env(),
+                                      formDesc.ToFormId(espmFileNames));
            } catch (std::exception& e) {
              throw Napi::Error::New(info.Env(), (std::string)e.what());
            }
