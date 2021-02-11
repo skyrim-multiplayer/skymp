@@ -3,7 +3,7 @@ const defaultState = {
   stats: {
     show: true,
     hunger: 100,
-    thirst: 30,
+    thirst: 100,
   }
 }
 
