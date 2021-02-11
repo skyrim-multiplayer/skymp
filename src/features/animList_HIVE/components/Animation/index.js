@@ -19,13 +19,13 @@ const Animation = (props) => {
     if (props.data.type === 'group') {
       props.selectGroup(props.data.name);
     } else {
-      initAnimation(props.data.name);
+      initAnimation(props.data.code);
     }
   }
 
   // Инициализация анимации (демонстративно)
-  const initAnimation = (name) => {
-    alert(`Запустилась анимация: ${name}`);
+  const initAnimation = (code) => {
+    window.mp.send('cef::animListHIVE:send', { code })
   }
 
   // При добавлении/удалении анимации из "Избранное"
