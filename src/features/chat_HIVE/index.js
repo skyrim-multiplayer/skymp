@@ -8,7 +8,12 @@ class ChatHIVE extends React.Component {
     super(props)
     this.state = {
       isInputFocus: false,
+
+      windowX: 30,
+      windowY: window.innerHeight - (this.props.toggle ? 366 : 48) - 30,
     }
+
+    this.windowBlock = React.createRef()
   }
 
   componentDidMount() {
@@ -124,8 +129,31 @@ class ChatHIVE extends React.Component {
   render() {
     return (
       this.props.show && (
-        <div id='chatHIVE' className={this.getToggleClassName()}>
-          <div className="header">
+        <div
+          id='chatHIVE'
+          className={this.getToggleClassName()}
+          style={{
+            left: this.state.windowX,
+            top: this.state.windowY
+          }}
+          ref={this.windowBlock}
+        >
+          <div
+            className="header"
+            onMouseDown={(e) => {
+              window.isMoveWindow = true
+              window.moveWindowTranslateX = e.clientX - this.windowBlock.current.offsetLeft
+              window.moveWindowTranslateY = e.clientY - this.windowBlock.current.offsetTop
+              window.moveWindow = (clientX, clientY) => {
+                const windowX = clientX - window.moveWindowTranslateX
+                const windowY = clientY - window.moveWindowTranslateY
+                this.setState({
+                  windowX,
+                  windowY,
+                })
+              }
+            }}
+          >
             <div className="groups">
               {this.getGroups()}
             </div>
