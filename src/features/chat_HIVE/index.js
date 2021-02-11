@@ -10,7 +10,7 @@ class ChatHIVE extends React.Component {
       isInputFocus: false,
 
       windowX: 30,
-      windowY: window.innerHeight - (this.props.toggle ? 366 : 48) - 30,
+      windowY: 30,
     }
 
     this.windowBlock = React.createRef()
@@ -134,22 +134,34 @@ class ChatHIVE extends React.Component {
           className={this.getToggleClassName()}
           style={{
             left: this.state.windowX,
-            top: this.state.windowY
+            bottom: this.state.windowY
           }}
           ref={this.windowBlock}
         >
           <div
             className="header"
             onMouseDown={(e) => {
+              // window.innerHeight - e.clientY отступ снизу
               window.isMoveWindow = true
               window.moveWindowTranslateX = e.clientX - this.windowBlock.current.offsetLeft
-              window.moveWindowTranslateY = e.clientY - this.windowBlock.current.offsetTop
+              window.moveWindowTranslateY = this.windowBlock.current.offsetTop + (this.props.toggle ? 366 : 48) - e.clientY
+              window.moveWindowWidth = this.windowBlock.current.clientWidth
+              window.moveWindowHeight = (this.props.toggle ? 366 : 48)
+              window.moveWindowBotOffset = window.innerHeight - e.clientY
               window.moveWindow = (clientX, clientY) => {
-                const windowX = clientX - window.moveWindowTranslateX
-                const windowY = clientY - window.moveWindowTranslateY
+                let left = clientX - window.moveWindowTranslateX
+                let bot = window.innerHeight - clientY - window.moveWindowTranslateY
+                if(left + window.moveWindowWidth > window.innerWidth)
+                  left = window.innerWidth - window.moveWindowWidth
+                else if(left < 0)
+                  left = 0
+                if(bot + window.moveWindowHeight > window.innerHeight)
+                  bot = window.innerHeight - window.moveWindowHeight
+                else if(bot < 0)
+                  bot = 0
                 this.setState({
-                  windowX,
-                  windowY,
+                  windowX: left,
+                  windowY: bot,
                 })
               }
             }}
