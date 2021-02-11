@@ -78,12 +78,18 @@ const AnimListHIVE = (props) => {
               window.isMoveWindow = true
               window.moveWindowTranslateX = e.clientX - windowBlock.current.offsetLeft
               window.moveWindowTranslateY = e.clientY - windowBlock.current.offsetTop
-                window.moveWindow = (clientX, clientY) => {
-                  setWindowX(clientX - window.moveWindowTranslateX)
-                  setWindowY(clientY - window.moveWindowTranslateY)
+              window.moveWindowWidth = windowBlock.current.clientWidth
+              window.moveWindowHeight = windowBlock.current.clientHeight
+              window.moveWindow = (clientX, clientY) => {
+                let left = clientX - window.moveWindowTranslateX
+                let top = clientY - window.moveWindowTranslateY
+                if(left + window.moveWindowWidth > window.innerWidth)
+                  left = window.innerWidth - window.moveWindowWidth
+                if(top + window.moveWindowHeight > window.innerHeight)
+                  top = window.innerHeight - window.moveWindowHeight
+                setWindowX(left)
+                setWindowY(top)
               }
-
-              console.log(e.clientY - windowBlock.current.offsetTop)
             }}
           >{ props.groupIsSelected ? props.selectedGroup : 'Анимации' }</h1>
           <button className="close" onClick={props.toggleWindow}>&times;</button>
