@@ -9,8 +9,10 @@ import { animListHiveReducer } from '../features/animList_HIVE/reducer'
 import { spawnHiveReducer } from '../features/spawn_HIVE/reducer'
 import { watermarkHiveReducer } from '../features/watermark_HIVE/reducer'
 import { tradeHiveReducer } from '../features/trade_HIVE/reducer'
+import { hudHiveReducer } from '../features/hud_HIVE/reducer'
 
 export const rootReducer = combineReducers({
+  hudHiveReducer,
   tradeHiveReducer,
   watermarkHiveReducer,
   spawnHiveReducer,
