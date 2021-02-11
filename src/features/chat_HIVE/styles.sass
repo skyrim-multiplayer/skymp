@@ -49,7 +49,9 @@ $borderMain: 2px solid #8A8A8A88
       background-image: url('./img/toggle_false.svg')
       background-repeat: no-repeat
       background-position: 50%
-      transition: background-image $speedChangeToggle ease-in-out
+      transition: all $speedChangeToggle ease-in-out
+      &:hover
+        background-color: #80808066
       &.active
         background-image: url('./img/toggle_true.svg')
 
