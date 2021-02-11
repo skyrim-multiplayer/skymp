@@ -8,6 +8,7 @@ import AnimListHIVE from './features/animList_HIVE'
 import SpawnHIVE from './features/spawn_HIVE'
 import WatermarkHIVE from './features/watermark_HIVE'
 import TradeHIVE from './features/trade_HIVE'
+import HudHIVE from './features/hud_HIVE'
 
 class App extends React.Component {
   constructor(props) {
@@ -51,7 +52,8 @@ class App extends React.Component {
 
   render() {
     return (
-      <div className="App">
+      <div className={`App ${!window.hasOwnProperty('skymp') ? 'bg' : ''}`}>
+        <HudHIVE />
         <ChatHIVE />
         <AnimList />
         <Chat />

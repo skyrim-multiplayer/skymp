@@ -1,5 +1,5 @@
 const defaultState = {
-  show: true, // По умолчанию.
+  show: false, // По умолчанию.
 };
 
 export const tradeHiveReducer = (state = defaultState, action) => {

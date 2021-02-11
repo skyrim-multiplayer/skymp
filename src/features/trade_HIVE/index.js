@@ -329,7 +329,7 @@ const TradeHIVE = (props) => {
 }
 
 const mapStateToProps = (state) => {
-  const defaultState = state.watermarkHiveReducer;
+  const defaultState = state.tradeHiveReducer;
 
   return {
     show: defaultState.show
