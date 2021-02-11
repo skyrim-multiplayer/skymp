@@ -10,6 +10,10 @@ const initKeyCodes = [115, 1099]; // s - на англ., ы - на рус.
 
 const AnimListHIVE = (props) => {
 
+  const [windowX, setWindowX] = React.useState(window.innerWidth - 350 - 40)
+  const [windowY, setWindowY] = React.useState(window.innerHeight / 2 - 425 / 2)
+  const windowBlock = React.useRef(null)
+
   useEffect(() => {
     const onKeypress = (event) => {
       // Если ввод был внутри input
@@ -58,10 +62,30 @@ const AnimListHIVE = (props) => {
   
   return (
     props.windowIsOpen &&
-    <div id="animations">
+    <div
+      id="animations"
+      ref={windowBlock}
+      style={{
+        left: windowX,
+        top: windowY,
+      }}
+    >
       <div className="animations__inner">
         <div className="animations__header">
-          <h1 className="title">{ props.groupIsSelected ? props.selectedGroup : 'Анимации' }</h1>
+          <h1
+            className="title"
+            onMouseDown={(e) => {
+              window.isMoveWindow = true
+              window.moveWindowTranslateX = e.clientX - windowBlock.current.offsetLeft
+              window.moveWindowTranslateY = e.clientY - windowBlock.current.offsetTop
+                window.moveWindow = (clientX, clientY) => {
+                  setWindowX(clientX - window.moveWindowTranslateX)
+                  setWindowY(clientY - window.moveWindowTranslateY)
+              }
+
+              console.log(e.clientY - windowBlock.current.offsetTop)
+            }}
+          >{ props.groupIsSelected ? props.selectedGroup : 'Анимации' }</h1>
           <button className="close" onClick={props.toggleWindow}>&times;</button>
           <input type="text" value={props.search} placeholder="Поиск анимаций" onChange={handleChange} />
         </div>

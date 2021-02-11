@@ -95,7 +95,7 @@ const defaultState = {
   },
   selectedGroup: '',
   groupIsSelected: false,
-  windowIsOpen: false,
+  windowIsOpen: true,
   search: ''
 }
 

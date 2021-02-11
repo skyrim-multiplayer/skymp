@@ -38,16 +38,34 @@ class App extends React.Component {
         window.storage.dispatch(action)
       })
     } catch {}
+
+    window.isMoveWindow = false
+    window.addEventListener('mousemove', this.onMoveWindow)
+    window.addEventListener('mouseup', this.onMouseUp)
   }
 
   componentWillUnmount() {
     window.removeEventListener('focus', this.onWindowFocus.bind(this))
     window.removeEventListener('blur', this.onWindowFocus.bind(this))
+    window.addEventListener('mousemove', this.onMoveWindow)
   }
 
   onWindowFocus(e) {
     const focus = document.hasFocus()
     this.props.updateBrowserFocus(focus)
+  }
+
+  onMoveWindow(e) {
+    if(window.isMoveWindow && typeof window.moveWindow == 'function') {
+      // console.log(e)
+      window.moveWindow(e.clientX, e.clientY)
+    }
+  }
+
+  onMouseUp() {
+    if(window.isMoveWindow)
+      window.isMoveWindow = false
+    window.moveWindow = null
   }
 
   render() {
