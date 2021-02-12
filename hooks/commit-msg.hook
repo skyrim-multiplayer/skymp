@@ -2,7 +2,7 @@
 import re
 import sys
 
-allowed_tags = ["DOCS", "INTERNAL", "TESTS", "REFACT", "OPTIMIZE", "MAJOR", "MINOR", "FIX"]
+allowed_tags = ["PUBLISH", "DOCS", "INTERNAL", "TESTS", "REFACT", "OPTIMIZE", "MAJOR", "MINOR", "FIX"]
 try:
     data = open(sys.argv[1]).read()
     tags = re.findall(r"\[(.+)\]", data)
