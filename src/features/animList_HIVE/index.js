@@ -9,10 +9,11 @@ import './styles.sass';
 const initKeyCodes = [115, 1099]; // s - на англ., ы - на рус. 
 
 const AnimListHIVE = (props) => {
-
-  const [windowX, setWindowX] = React.useState(window.innerWidth - 350 - 40)
-  const [windowY, setWindowY] = React.useState(window.innerHeight / 2 - 425 / 2)
   const windowBlock = React.useRef(null)
+
+
+  const [windowX, setWindowX] = React.useState(window.innerWidth - (window.innerWidth * 0.19) - 40)
+  const [windowY, setWindowY] = React.useState(window.innerHeight / 2 - (window.innerWidth * 0.25) / 2)
 
   useEffect(() => {
     const onKeypress = (event) => {
