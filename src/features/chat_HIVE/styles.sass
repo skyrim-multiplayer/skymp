@@ -1,41 +1,39 @@
 $speedChangeToggle: .5s
-$borderMain: 2px solid #8A8A8A88
+$borderMain: 0.104vw solid #8A8A8A88
 
 #chatHIVE
-  width: 576px
-  height: 48px
+  width: 30vw
+  height: 2.5vw
   position: absolute
-  bottom: 30px
-  left: 30px
   display: flex
   flex-direction: column
   justify-content: center
   align-items: center
   font-family: Din-pro
-  font-size: 14px
+  font-size: 0.729vw
   background: rgba(0, 0, 0, .8)
   transition: height $speedChangeToggle ease-in-out
   &.active
-    height: 366px
+    height: 19.063vw
 
   > .header
-    width: 568px
-    height: 40px
+    width: 29.583vw
+    height: 2.083vw
     border: $borderMain
     display: flex
     justify-content: space-between
     align-items: center
-    padding: 0 10px 0 15px
+    padding: 0 0.521vw 0 0.781vw
     cursor: pointer
 
     > .groups
-      width: 510px
-      height: 17px
+      width: 26.563vw
+      height: 0.885vw
       display: flex
       align-items: center
 
       > .group
-        margin-right: 25px
+        margin-right: 1.302vw
         color: #808080
         cursor: pointer
         transition: color .2s ease-in-out
@@ -43,8 +41,8 @@ $borderMain: 2px solid #8A8A8A88
           color: #F8F8F8
 
     > .toggle
-      width: 20px
-      height: 20px
+      width: 1.042vw
+      height: 1.042vw
       border: $borderMain
       cursor: pointer
       background-image: url('./img/toggle_false.svg')
@@ -57,7 +55,7 @@ $borderMain: 2px solid #8A8A8A88
         background-image: url('./img/toggle_true.svg')
 
   > .body
-    width: 568px
+    width: 29.583vw
     height: 0
     display: flex
     flex-direction: column
@@ -69,17 +67,17 @@ $borderMain: 2px solid #8A8A8A88
     border-bottom-width: 0
     overflow: hidden
     &.active
-      padding-top: 10px
-      height: 318px
-      border-bottom-width: 2px
+      padding-top: 0.521vw
+      height: 16.563vw
+      border-bottom-width: 0.104vw
 
     > .list
-      width: 541px
-      height: 247px
+      width: 28.177vw
+      height: 12.865vw
       overflow-y: auto
       &::-webkit-scrollbar
         background: transparent
-        width: 4px
+        width: 0.208vw
       &::-webkit-scrollbar-track
         background: #8A8A8A55
       &::-webkit-scrollbar-thumb
@@ -88,30 +86,30 @@ $borderMain: 2px solid #8A8A8A88
       > .message
         font-weight: 500
         color: #F8F8F8
-        margin-bottom: 7px
-        line-height: 17px
+        margin-bottom: 0.365vw
+        line-height: 0.885vw
 
     > .input
-      width: 564px
-      height: 42px
+      width: 29.375vw
+      height: 2.188vw
       border-top: $borderMain
       overflow: hidden
       display: flex
 
       > input
-        width: 456px
-        height: 40px
+        width: 23.750vw
+        height: 2.083vw
         background-color: transparent
         color: #f8f8f8
         font-family: Din-pro
-        padding-left: 15px
-        font-size: 14px
+        padding-left: 0.781vw
+        font-size: 0.729vw
         &:disabled
           opacity: 0
 
       > .send
-        width: 108px
-        height: 40px
+        width: 5.625vw
+        height: 2.083vw
         border-left: $borderMain
         background-color: #3f3f3f00
         display: flex
