@@ -1,7 +1,7 @@
 const defaultState = {
   show: true,
   list: [],
-  showInput: "auto",
+  showInput: 'auto',
   input: "",
 };
 

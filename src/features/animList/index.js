@@ -8,11 +8,34 @@ class AnimList extends React.Component {
     super(props)
   }
 
+<<<<<<< HEAD
+=======
+  componentDidMount() {
+    document.addEventListener('keydown', this.onKeyDown.bind(this))
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.onKeyDown.bind(this))
+  }
+
+  onKeyDown(e) {
+    switch (e.keyCode) {
+    }
+  }
+
+>>>>>>> davinchi59-devv
   getAnimList() {
     return this.props.list.map((anim, index) => (
       <div 
         className="anim"
         key={`anim-${index}`}
+<<<<<<< HEAD
+=======
+        onClick={() => {
+          this.props.updateShow({show: false})
+          window.mp.send('cef::chat:send', `/anim ${index}`)
+        }}
+>>>>>>> davinchi59-devv
       >
         {anim.name}
       </div>
@@ -46,4 +69,8 @@ const mapDispatchToProps = (dispatch) => ({
     }),
 })
 
+<<<<<<< HEAD
 export default connect(mapStateToProps, mapDispatchToProps)(AnimList)
+=======
+export default connect(mapStateToProps, mapDispatchToProps)(AnimList)
+>>>>>>> davinchi59-devv
