@@ -141,3 +141,15 @@ A boolean setting that enables to turn on or turn off hot reload for compiled Pa
   // ...
 }
 ```
+
+## locale
+
+The name of a localizaiton file in `data/localization` that would be used by `M.GetText` Papyrus function (without extension).
+
+```json
+{
+  // ...
+  "locale": "ru-RU"
+  // ...
+}
+```
