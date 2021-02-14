@@ -129,3 +129,15 @@ Searches for `index.js` if a directory specified.
   // ...
 }
 ```
+
+## isPapyrusHotReloadEnabled
+
+A boolean setting that enables to turn on or turn off hot reload for compiled Papyrus scripts (.pex)
+
+```json
+{
+  // ...
+  "isPapyrusHotReloadEnabled": false
+  // ...
+}
+```
