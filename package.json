@@ -1,7 +1,7 @@
 {
   "name": "skymp5-server",
   "version": "0.0.0",
-  "versionSkyrimPlatform": "1.0.0",
+  "versionSkyrimPlatform": "1.1.0",
   "description": "",
   "scripts": {
     "install": "npm run configure && npm run build && cd skymp5-gamemode && npm i && cd ../skymp5-client && npm i",
