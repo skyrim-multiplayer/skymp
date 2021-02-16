@@ -1,30 +1,17 @@
-To build the project, you will need a ts file collector. I use for example parcel. You can use any other one.
-First install Parcel using npm:
-
+Installation
 ```
 npm install parcel-bundler -D
-```
-
-To install all necessary dependencies run
-
-```
 npm install
 ```
-
-To build, run the command
-
+Building
 ```
 npm run build
 ```
-
-To make the build happen every time the files are changed run the command
-
+Watch for changes and build
 ```
 npm run serve
 ```
-
-Если не устанавливается parcel-bundler попробуйте очистить кэш (На свой страх и риск)
-
+Running tests
 ```
-npm cache clean --force
+npm run test
 ```
