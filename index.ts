@@ -1,89 +1,33 @@
-import { MP } from './types';
-import { initUtils, utils } from './utility';
+import { Mp } from './src/types/mp';
 
-// import init functions
-import { initActorValue, initConsoleOutput, initIsDead, initSpawnPoint } from './properties';
-import {
-	initAnimationEvent,
-	initActorValueFlushRequiredEvent,
-	initBashEvent,
-	initConsoleCommandEvent,
-	initHitEvent,
-	initPowerAttacksEvent,
-	initSprintStateChangeEvent,
-} from './events';
-import { initDevCommands } from './systems';
+declare const mp: Mp;
 
-declare const mp: MP;
+import * as multiplayer from './src/papyrus/multiplayer';
+import * as events from './src/papyrus/events';
+import * as stringUtil from './src/papyrus/stringUtil';
+import * as actor from './src/papyrus/actor';
+import * as objectReference from './src/papyrus/objectReference';
+import * as utility from './src/papyrus/utility';
 
-// init creates events, properties
-// "utility/utils",
-initUtils();
-// "events/onHit",
-initHitEvent();
+import { LocalizationProvider } from './src/utils/localizationProvider';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// "properties/isDead",
-initIsDead();
+const config = JSON.parse(fs.readFileSync('server-settings.json', { encoding: 'utf-8' }));
+const locale = config.locale;
+const data = config.dataDir;
+const isPapyrusHotReloadEnabled = config.isPapyrusHotReloadEnabled;
 
-// "events/onSprintStateChange",
-initSprintStateChangeEvent();
+const localizationProvider = new LocalizationProvider(
+  path.join(data, 'localization', locale + '.json'),
+  isPapyrusHotReloadEnabled ? 'hotreload' : 'once'
+);
 
-// "events/onPowerAttack",
-initPowerAttacksEvent();
+multiplayer.register(mp, localizationProvider);
+events.register(mp);
+stringUtil.register(mp);
+actor.register(mp);
+objectReference.register(mp);
+utility.register(mp);
 
-// "events/onBash",
-initBashEvent();
-
-// "properties/consoleOutput",
-initConsoleOutput();
-
-// "properties/actorValues",
-initActorValue();
-
-// "events/onActorValueFlushRequired",
-initActorValueFlushRequiredEvent();
-
-// "properties/spawnSystem",
-initSpawnPoint();
-
-// "events/onConsoleCommand",
-initConsoleCommandEvent();
-
-// "systems/developerCommands"
-initDevCommands();
-
-// "events/onAnimationEvent"
-initAnimationEvent();
-
-utils.hook('onInit', (pcFormId: number) => {
-	mp.onReinit(pcFormId);
-});
-
-const getDistance = (a: number[], b: number[]) => {
-	return Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2) + Math.pow(a[2] - b[2], 2));
-};
-
-utils.hook('onUiEvent', (formId: number, msg: Record<string, unknown>) => {
-	switch (msg.type) {
-		case 'chatMessage':
-			const myName = mp.get(formId, 'appearance').name;
-			const myPos: number[] = mp.get(formId, 'pos');
-			let neighbors: number[] = mp.get(formId, 'neighbors');
-			neighbors = neighbors.filter((x) => mp.get(x, 'type') === 'MpActor');
-			neighbors.forEach((neiFormId) => {
-				const pos: number[] = mp.get(neiFormId, 'pos');
-				const distance = getDistance(myPos, pos);
-				if (distance >= 0 && distance < 1000) {
-					mp.sendUiMessage(neiFormId, {
-						pageIndex: msg.pageIndex,
-						text: msg.text,
-						name: myName,
-						tagIndex: 0,
-						type: 'chatMessage',
-					});
-					utils.log('Chat message handled', msg);
-				}
-			});
-			break;
-	}
-});
+setTimeout(() => mp.callPapyrusFunction('global', 'GM_Main', '_OnPapyrusRegister', null, []), 0);
