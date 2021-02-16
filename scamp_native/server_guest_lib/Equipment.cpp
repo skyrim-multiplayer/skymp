@@ -18,9 +18,10 @@ Equipment Equipment::FromJson(simdjson::dom::element& element)
   ReadEx(element, inv, &jInv);
 
   uint32_t numChangesValue;
-  try {
+  if (element.at_pointer(numChanges.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
     ReadEx(element, numChanges, &numChangesValue);
-  } catch (std::exception& e) {
+  } else {
     numChangesValue = 0;
   }
 

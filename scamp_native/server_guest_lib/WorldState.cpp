@@ -543,7 +543,49 @@ IScriptStorage* WorldState::GetScriptStorage() const
 struct LazyState
 {
   std::shared_ptr<PexScript> pex;
+  std::vector<uint8_t> pexBin;
+
+  // With Papyrus hotreload enabled, this variable hold references to previous
+  // versions of pex files. This prevents the invalidation of string/identifier
+  // types of VarValue
+  std::vector<std::shared_ptr<PexScript>> oldPexHolder;
 };
+
+PexScript::Lazy CreatePexScriptLazy(
+  const CIString& required, std::shared_ptr<IScriptStorage> scriptStorage,
+  std::shared_ptr<spdlog::logger> logger, bool enableHotReload)
+{
+  auto lazyState = std::make_shared<LazyState>();
+
+  PexScript::Lazy lazy;
+  lazy.source = required.data();
+  lazy.fn = [lazyState, scriptStorage, required, logger, enableHotReload]() {
+    if (enableHotReload) {
+      auto requiredPex = scriptStorage->GetScriptPex(required.data());
+      if (requiredPex != lazyState->pexBin) {
+        lazyState->oldPexHolder.push_back(lazyState->pex);
+        lazyState->pex.reset();
+        lazyState->pexBin = requiredPex;
+        logger->info("Papyrus script {} has been reloaded", required);
+      }
+    }
+
+    if (!lazyState->pex) {
+      auto requiredPex = scriptStorage->GetScriptPex(required.data());
+      if (requiredPex.empty()) {
+        throw std::runtime_error(
+          "'" + std::string({ required.begin(), required.end() }) +
+          "' is listed but failed to "
+          "load from the storage");
+      }
+      auto pexStructure = Reader({ requiredPex }).GetSourceStructures();
+      lazyState->pex = pexStructure[0];
+    }
+    return lazyState->pex;
+  };
+
+  return lazy;
+}
 
 VirtualMachine& WorldState::GetPapyrusVm()
 {
@@ -558,34 +600,30 @@ VirtualMachine& WorldState::GetPapyrusVm()
       return *pImpl->vm;
     }
 
-    auto& scripts = scriptStorage->ListScripts();
+    auto& scripts = scriptStorage->ListScripts(false);
     for (auto& required : scripts) {
-      auto lazyState = std::make_shared<LazyState>();
-      PexScript::Lazy lazy;
-      lazy.source = required.data();
-      lazy.fn = [lazyState, scriptStorage, required]() {
-        if (!lazyState->pex) {
-          auto requiredPex = scriptStorage->GetScriptPex(required.data());
-          if (requiredPex.empty()) {
-            throw std::runtime_error(
-              "'" + std::string({ required.begin(), required.end() }) +
-              "' is listed but failed to "
-              "load from the storage");
-          }
-          auto pexStructure = Reader({ requiredPex }).GetSourceStructures();
-          lazyState->pex = pexStructure[0];
-        }
-        return lazyState->pex;
-      };
-      if (lazyMode == LazyMode::Disabled) {
-        (void)lazy.fn();
-      }
+      auto lazy = CreatePexScriptLazy(required, scriptStorage, this->logger,
+                                      this->isPapyrusHotReloadEnabled);
       pexStructures.push_back(lazy);
     }
 
     if (!pexStructures.empty()) {
       pImpl->vm.reset(new VirtualMachine(pexStructures));
-      pImpl->vm->SetExceptionHandler([&](const VmExceptionInfo& errorData) {
+
+      pImpl->vm->SetMissingScriptHandler(
+        [scriptStorage, this](std::string className) {
+          std::optional<PexScript::Lazy> result;
+
+          CIString classNameCi = { className.begin(), className.end() };
+          if (scriptStorage->ListScripts(true).count(classNameCi)) {
+            result =
+              CreatePexScriptLazy(classNameCi, scriptStorage, this->logger,
+                                  this->isPapyrusHotReloadEnabled);
+          }
+          return result;
+        });
+
+      pImpl->vm->SetExceptionHandler([this](const VmExceptionInfo& errorData) {
         std::string sourcePex = errorData.sourcePex;
         std::string what = errorData.what;
         std::string loggerMsg = sourcePex + ": " + what;
@@ -612,6 +650,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
         cl->Register(*pImpl->vm, pImpl->policy);
     }
   }
+
   return *pImpl->vm;
 }
 
@@ -643,9 +682,9 @@ void WorldState::SetRelootTime(std::string recordType,
 std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   std::string recordType) const
 {
-  try {
-    return pImpl->relootTimeForTypes.at(recordType);
-  } catch (...) {
+  auto it = pImpl->relootTimeForTypes.find(recordType);
+  if (it == pImpl->relootTimeForTypes.end()) {
     return std::nullopt;
   }
+  return it->second;
 }

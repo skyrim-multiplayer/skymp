@@ -31,12 +31,6 @@ class MpChangeForm;
 class ISaveStorage;
 class IScriptStorage;
 
-enum class LazyMode
-{
-  Enabled,
-  Disabled
-};
-
 class WorldState
 {
   friend class MpObjectReference;
@@ -159,12 +153,11 @@ public:
   // Only for tests
   auto& GetGrids() { return grids; }
 
-  // You may want to disable lazy loading for testing
-  LazyMode lazyMode = LazyMode::Enabled;
-
   std::map<uint32_t, uint32_t> hosters;
   std::vector<std::optional<std::chrono::system_clock::time_point>>
     lastMovUpdateByIdx;
+
+  bool isPapyrusHotReloadEnabled = false;
 
 private:
   struct GridInfo

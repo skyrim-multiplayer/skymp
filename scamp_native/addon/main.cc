@@ -1,8 +1,10 @@
 #include "AsyncSaveStorage.h"
+#include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
 #include "MigrationDatabase.h"
 #include "MongoDatabase.h"
+#include "MpFormGameObject.h"
 #include "Networking.h"
 #include "NetworkingCombined.h"
 #include "NetworkingMock.h"
@@ -302,6 +304,14 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     std::stringstream buffer;
     buffer << f.rdbuf();
     auto serverSettings = nlohmann::json::parse(buffer.str());
+
+    partOne->worldState.isPapyrusHotReloadEnabled =
+      serverSettings.count("isPapyrusHotReloadEnabled") != 0 &&
+      serverSettings.at("isPapyrusHotReloadEnabled").get<bool>();
+    logger->info("Hot reload is {} for Papyrus",
+                 partOne->worldState.isPapyrusHotReloadEnabled ? "enabled"
+                                                               : "disabled");
+
     if (serverSettings["dataDir"] != nullptr) {
       dataDir = serverSettings["dataDir"];
     }
@@ -621,6 +631,18 @@ std::string ExtractString(Napi::Value v, const char* argName)
   return static_cast<std::string>(v.As<Napi::String>());
 }
 
+Napi::Function ExtractFunction(Napi::Value v, const char* argName)
+{
+  if (!v.IsFunction()) {
+    std::stringstream ss;
+    ss << "Expected '" << argName << "' to be function, but got '";
+    ss << static_cast<std::string>(v.ToString().As<Napi::String>());
+    ss << "'";
+    Err(v.Env(), ss.str());
+  }
+  return v.As<Napi::Function>();
+}
+
 std::string ExtractPropertyName(Napi::Value v)
 {
   return ExtractString(v, "propertyName");
@@ -662,6 +684,201 @@ Napi::Value ParseJson(const Napi::CallbackInfo& info, const std::string& dump)
   auto builtinJson = info.Env().Global().Get("JSON").As<Napi::Object>();
   auto parse = builtinJson.Get("parse").As<Napi::Function>();
   return parse.Call({ Napi::String::New(info.Env(), dump) });
+}
+
+Napi::Value GetJsObjectFromPapyrusObject(
+  const VarValue& value, Napi::Env env,
+  const std::vector<std::string>& espmFilenames)
+{
+  auto ptr = static_cast<IGameObject*>(value);
+  if (!ptr) {
+    return env.Null();
+  }
+
+  if (auto concrete = dynamic_cast<EspmGameObject*>(ptr)) {
+    auto rawId = concrete->record.rec->GetId();
+    auto id = concrete->record.ToGlobalId(rawId);
+
+    auto desc = FormDesc::FromFormId(id, espmFilenames).ToString();
+
+    auto result = Napi::Object::New(env);
+    result.Set("type", Napi::String::New(env, "espm"));
+    result.Set("desc", Napi::String::New(env, desc));
+    return result;
+  }
+
+  if (auto concrete = dynamic_cast<MpFormGameObject*>(ptr)) {
+    auto formId =
+      concrete->GetFormPtr() ? concrete->GetFormPtr()->GetFormId() : 0;
+
+    auto desc = FormDesc::FromFormId(formId, espmFilenames).ToString();
+
+    auto result = Napi::Object::New(env);
+    result.Set("type", Napi::String::New(env, "form"));
+    result.Set("desc", Napi::String::New(env, desc));
+    return result;
+  }
+
+  throw std::runtime_error("This type of IGameObject is not supported in JS");
+}
+
+Napi::Value GetJsValueFromPapyrusValue(
+  const VarValue& value, Napi::Env env,
+  const std::vector<std::string>& espmFilenames)
+{
+  if (value.promise)
+    throw std::runtime_error("Papyrus Promise to JS Promise convertion "
+                             "is not supported currently");
+  switch (value.GetType()) {
+    case VarValue::kType_Object:
+      return GetJsObjectFromPapyrusObject(value, env, espmFilenames);
+    case VarValue::kType_Identifier:
+      throw std::runtime_error(
+        "Unexpected convertion from Papyrus identifier");
+    case VarValue::kType_String: {
+      std::string str = static_cast<const char*>(value);
+      return Napi::String::New(env, str);
+    }
+    case VarValue::kType_Integer: {
+      auto v = static_cast<int32_t>(value);
+      return Napi::Number::New(env, v);
+    }
+    case VarValue::kType_Float: {
+      auto v = static_cast<float>(value);
+      return Napi::Number::New(env, v);
+    }
+    case VarValue::kType_Bool: {
+      auto v = static_cast<bool>(value);
+      return Napi::Boolean::New(env, v);
+    }
+
+    case VarValue::kType_ObjectArray:
+    case VarValue::kType_StringArray:
+    case VarValue::kType_IntArray:
+    case VarValue::kType_FloatArray:
+    case VarValue::kType_BoolArray: {
+      if (value.pArray == nullptr)
+        return env.Null();
+      auto arr = Napi::Array::New(env, value.pArray->size());
+      for (size_t i = 0; i < arr.Length(); ++i) {
+        arr[i] =
+          GetJsValueFromPapyrusValue(value.pArray->at(i), env, espmFilenames);
+      }
+      return arr;
+    }
+  }
+  std::stringstream ss;
+  ss << "Could not convert a Papyrus value " << value << " to JS format";
+  throw std::runtime_error(ss.str());
+}
+
+VarValue GetPapyrusValueFromJsValue(Napi::Value v, bool treatNumberAsInt,
+                                    WorldState& wst)
+{
+  napi_valuetype t = v.Type();
+  switch (t) {
+    case napi_valuetype::napi_boolean:
+      return VarValue(static_cast<bool>(v));
+    case napi_valuetype::napi_null: {
+      return VarValue::None();
+    }
+    // undefined is not a valid value in Papyrus
+    // But TypeScript should be able to return void, so:
+    case napi_valuetype::napi_undefined: {
+      return VarValue::None();
+    }
+    case napi_valuetype::napi_number: {
+      auto number = static_cast<double>(v.As<Napi::Number>());
+      return treatNumberAsInt ? VarValue(static_cast<int32_t>(number))
+                              : VarValue(static_cast<float>(number));
+    }
+    case napi_valuetype::napi_object: {
+      if (v.IsPromise()) {
+        /*auto pr = v.As<Napi::Promise::Deferred>();
+
+        std::shared_ptr<Napi::Reference<Napi::Promise::Deferred>> jsPromiseRef;
+        jsPromiseRef.reset(
+          new Napi::Reference<Napi::Promise::Deferred>(Napi::Persistent(pr)));
+
+        auto vietPromise = std::make_shared<Viet::Promise<VarValue>>();
+        vietPromise->Then([jsPromiseRef](VarValue result) {
+          auto jsPromise = jsPromiseRef->Value().Resolve();
+        });
+
+        VarValue res = VarValue::None();
+        res.promise = vietPromise;
+        return res;*/
+        throw std::runtime_error("JS Promise to Papyrus Promise convertion "
+                                 "is not supported currently");
+      }
+
+      if (v.IsArray()) {
+        auto arr = v.As<Napi::Array>();
+        if (arr.Length() == 0) {
+          // Treat zero-length arrays as kType_ObjectArray ("none array")
+          VarValue papyrusArray(VarValue::kType_ObjectArray);
+          papyrusArray.pArray.reset(new std::vector<VarValue>);
+          return papyrusArray;
+        }
+
+        auto arrayContents = std::make_shared<std::vector<VarValue>>();
+        uint8_t type = ~0;
+
+        for (size_t i = 0; i < arr.Length(); ++i) {
+          arrayContents->push_back(
+            GetPapyrusValueFromJsValue(arr[i], treatNumberAsInt, wst));
+
+          auto extractedType = arrayContents->back().GetType();
+          if (type == static_cast<uint8_t>(~0)) {
+            type = extractedType;
+          } else if (extractedType != type) {
+            throw std::runtime_error(
+              "Papyrus doesn't support heterogeneous arrays");
+          }
+        }
+
+        VarValue papyrusArray(
+          ActivePexInstance::GetArrayTypeByElementType(type));
+        papyrusArray.pArray = arrayContents;
+
+        return papyrusArray;
+      }
+
+      auto obj = v.As<Napi::Object>();
+      auto desc = static_cast<std::string>(obj.Get("desc").As<Napi::String>());
+      auto type = static_cast<std::string>(obj.Get("type").As<Napi::String>());
+
+      const auto espmFileNames = wst.GetEspm().GetFileNames();
+      uint32_t id = FormDesc::FromString(desc).ToFormId(espmFileNames);
+
+      if (type == "form") {
+        MpObjectReference& refr = wst.GetFormAt<MpObjectReference>(id);
+        return VarValue(std::make_shared<MpFormGameObject>(&refr));
+      }
+
+      if (type == "espm") {
+        auto lookupRes = wst.GetEspm().GetBrowser().LookupById(id);
+        if (!lookupRes.rec) {
+          std::stringstream ss;
+          ss << "ESPM record with id " << std::hex << id << " doesn't exist";
+          throw std::runtime_error(ss.str());
+        }
+        return VarValue(std::make_shared<EspmGameObject>(lookupRes));
+      }
+
+      std::stringstream ss;
+      ss << "Unknown object type '" << type << "', must be 'form' | 'espm'";
+      throw std::runtime_error(ss.str());
+    }
+    case napi_valuetype::napi_string: {
+      auto str = static_cast<std::string>(v.As<Napi::String>());
+      VarValue res(str);
+      return res;
+    }
+  }
+  std::stringstream ss;
+  ss << "JS type " << t << " is not castable to any of Papyrus types";
+  throw std::runtime_error(ss.str());
 }
 
 Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
@@ -823,6 +1040,28 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
              auto propertyName = ExtractPropertyName(info[1]);
              auto formId = ExtractFormId(info[0]);
 
+             // Global properties
+             if (formId == 0 && propertyName == "onlinePlayers") {
+
+               auto n = partOne->serverState.userInfo.size();
+               std::vector<uint32_t> ids;
+               ids.reserve(n);
+
+               for (size_t i = 0; i < n; ++i) {
+                 if (auto actor = partOne->serverState.ActorByUser(i)) {
+                   ids.push_back(actor->GetFormId());
+                 }
+               }
+
+               auto arr = Napi::Array::New(info.Env(), ids.size());
+               size_t i = 0;
+               for (auto id : ids) {
+                 arr.Set(i, id);
+                 ++i;
+               }
+               return static_cast<Napi::Value>(arr);
+             }
+
              auto& refr =
                partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
@@ -970,6 +1209,9 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
           throw std::runtime_error("mp.set is not implemented for 'isOnline'");
         } else if (propertyName == "formDesc") {
           throw std::runtime_error("mp.set is not implemented for 'formDesc'");
+        } else if (propertyName == "onlinePlayers") {
+          throw std::runtime_error(
+            "mp.set is not implemented for 'onlinePlayers'");
         } else if (propertyName == "neighbors") {
           throw std::runtime_error(
             "mp.set is not implemented for 'neighbors'");
@@ -1124,6 +1366,102 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
 
              return Napi::Number::New(info.Env(),
                                       formDesc.ToFormId(espmFileNames));
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
+  mp.Set("callPapyrusFunction",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+             auto callType = ExtractString(info[0], "callType");
+             auto className = ExtractString(info[1], "className");
+             auto functionName = ExtractString(info[2], "functionName");
+             auto self = GetPapyrusValueFromJsValue(info[3], info.Env(),
+                                                    partOne->worldState);
+
+             auto arr = info[4].As<Napi::Array>();
+
+             bool treatNumberAsInt = false; // TODO?
+
+             std::vector<VarValue> args;
+             args.resize(arr.Length());
+             for (size_t i = 0; i < arr.Length(); ++i) {
+               args[i] = GetPapyrusValueFromJsValue(arr[i], treatNumberAsInt,
+                                                    partOne->worldState);
+             }
+
+             VarValue res;
+
+             auto& vm = partOne->worldState.GetPapyrusVm();
+             if (callType == "method") {
+               res = vm.CallMethod(static_cast<IGameObject*>(self),
+                                   functionName.data(), args);
+             } else if (callType == "global") {
+               res = vm.CallStatic(className, functionName, args);
+             } else {
+
+               throw std::runtime_error("Unknown callType " + callType);
+             }
+
+             return GetJsValueFromPapyrusValue(res, info.Env(),
+                                               partOne->worldState.espmFiles);
+
+           } catch (std::exception& e) {
+             throw Napi::Error::New(info.Env(), (std::string)e.what());
+           }
+         }));
+
+  mp.Set("registerPapyrusFunction",
+         Napi::Function::New(info.Env(), [=](const Napi::CallbackInfo& info) {
+           try {
+             auto callType = ExtractString(info[0], "callType");
+             auto className = ExtractString(info[1], "className");
+             auto functionName = ExtractString(info[2], "functionName");
+             auto f = ExtractFunction(info[3], "f");
+
+             std::shared_ptr<Napi::FunctionReference> functionReference(
+               new Napi::FunctionReference(Napi::Persistent(f)));
+
+             auto& vm = partOne->worldState.GetPapyrusVm();
+
+             auto* wst = &partOne->worldState;
+
+             FunctionType fType;
+
+             if (callType == "method") {
+               fType = FunctionType::Method;
+             } else if (callType == "global") {
+               fType = FunctionType::GlobalFunction;
+             } else {
+
+               throw std::runtime_error("Unknown callType " + callType);
+             }
+
+             vm.RegisterFunction(
+               className, functionName, fType,
+               [functionReference, wst](VarValue self,
+                                        const std::vector<VarValue>& args) {
+                 auto& f = *functionReference;
+
+                 Napi::Value jsSelf =
+                   GetJsValueFromPapyrusValue(self, f.Env(), wst->espmFiles);
+
+                 auto jsArgs = Napi::Array::New(
+                   f.Env(), static_cast<uint32_t>(args.size()));
+                 for (size_t i = 0; i < args.size(); ++i) {
+                   jsArgs[i] = GetJsValueFromPapyrusValue(args[i], f.Env(),
+                                                          wst->espmFiles);
+                 }
+
+                 auto jsResult = f.Call({ jsSelf, jsArgs });
+
+                 bool treatResultAsInt = false; // TODO?
+
+                 return GetPapyrusValueFromJsValue(jsResult, treatResultAsInt,
+                                                   *wst);
+               });
+
            } catch (std::exception& e) {
              throw Napi::Error::New(info.Env(), (std::string)e.what());
            }

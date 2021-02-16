@@ -96,6 +96,7 @@ public:
   explicit VarValue(IGameObject* object);
   explicit VarValue(int32_t value);
   explicit VarValue(const char* value);
+  explicit VarValue(const std::string& value);
   explicit VarValue(float value);
   explicit VarValue(bool value);
   explicit VarValue(Viet::Promise<VarValue> promise);
@@ -118,6 +119,8 @@ public:
   std::shared_ptr<std::vector<VarValue>> pArray;
 
   std::shared_ptr<Viet::Promise<VarValue>> promise;
+
+  std::shared_ptr<std::string> stringHolder;
 
   int32_t GetMetaStackId() const;
   void SetMetaStackIdHolder(std::shared_ptr<StackIdHolder> stackIdHolder);
@@ -350,13 +353,22 @@ struct DebugInfo
   Storage m_data;
 };
 
-// it's inside pex, but mutable. Mutated by strcat
-struct StringTable
+class StringTable
 {
-  typedef std::vector<std::string> Storage;
-  Storage m_data;
+public:
+  // Do NOT mutate storage after pex loading. reallocation would make string
+  // VarValues invalid
+  void SetStorage(std::vector<std::string> newStorage)
+  {
+    storage = std::move(newStorage);
+  }
 
   std::vector<std::shared_ptr<std::string>> instanceStringTable;
+
+  const std::vector<std::string>& GetStorage() const { return storage; }
+
+private:
+  std::vector<std::string> storage;
 };
 
 struct ScriptHeader
@@ -439,6 +451,9 @@ public:
     return parentInstance;
   };
 
+  static uint8_t GetArrayElementType(uint8_t type);
+  static uint8_t GetArrayTypeByElementType(uint8_t type);
+
 private:
   struct ExecutionContext;
 
@@ -462,8 +477,6 @@ private:
   ObjectTable::Object::PropInfo* GetProperty(
     const ActivePexInstance& scriptInstance, std::string nameProperty,
     uint8_t flag);
-
-  uint8_t GetArrayElementType(uint8_t type);
 
   void CastObjectToObject(VarValue* result, VarValue* objectType,
                           Locals& locals);

@@ -11,15 +11,7 @@ VarValue OpcodesImplementation::StrCat(const VarValue& s1, const VarValue& s2,
     temp += static_cast<const char*>(str);
   }
 
-  for (auto& str : table.m_data) {
-    if (str == temp) {
-      return VarValue(str.data());
-    }
-  }
-
-  size_t _size = table.m_data.size();
-  table.m_data.push_back(temp);
-  return VarValue(table.m_data[_size].data());
+  return VarValue(temp);
 }
 
 void OpcodesImplementation::ArrayFindElement(VarValue& array, VarValue& result,

@@ -25,9 +25,19 @@ console.log(`Current process ID is ${pid}`);
 
 const master = Settings.get().master || "https://skymp.io";
 
-function requireUncached(module: string): Record<string, unknown> | undefined {
+const gamemodeCache = new Map<string, string>();
+
+function requireUncached(module: string): void {
   delete require.cache[require.resolve(module)];
-  return require(module) as Record<string, unknown> | undefined;
+
+  const gamemodeContents = fs.readFileSync(require.resolve(module), "utf8");
+
+  // Reload gamemode.js only if there are real changes
+  const gamemodeContentsOld = gamemodeCache.get(module);
+  if (gamemodeContentsOld !== gamemodeContents) {
+    gamemodeCache.set(module, gamemodeContents);
+    require(module);
+  }
 }
 
 const log = console.log;

@@ -187,13 +187,8 @@ TEST_CASE("wrong types", "[VarValue]")
 
   // Cast Functions
 
-  try {
-    auto t = str1.CastToInt();
-  } catch (std::exception& e) {
-    err = e.what();
-  }
-  REQUIRE(err != "");
-  err = "";
+  REQUIRE(str1.CastToInt() == VarValue(0));
+  REQUIRE(VarValue("3").CastToInt() == VarValue(3));
 
   try {
     auto t = str1.CastToFloat();
@@ -210,4 +205,13 @@ TEST_CASE("strcat implicit casts", "[VarValue]")
   auto res = OpcodesImplementation::StrCat(VarValue::None(), VarValue("_abc"),
                                            stringTable);
   REQUIRE(res == VarValue("None_abc"));
+}
+
+TEST_CASE("String assign", "[VarValue]")
+{
+  VarValue x(std::string("123"));
+  VarValue y;
+  y = x;
+  *x.stringHolder = "456";
+  REQUIRE(static_cast<const char*>(y) == std::string("123"));
 }

@@ -162,6 +162,7 @@ Assert(3.0 * 2.5 == 7.5)
 Assert(integerNumber as Float * 2.0 == 381.0 * 2)
 Assert(27.5 / 5.0 == 5.5)
 Assert(-(-100.7) == 100.7)
+Assert(0.0 / 1212.0 == 0.0)
 
 Assert(0.5 == True)
 Assert(!6.6 == False)

@@ -13,7 +13,7 @@ public:
 
   virtual std::vector<uint8_t> GetScriptPex(const char* scriptName) = 0;
 
-  virtual const std::set<CIString>& ListScripts() = 0;
+  virtual const std::set<CIString>& ListScripts(bool forceReloadScripts) = 0;
 };
 
 class DirectoryScriptStorage : public IScriptStorage
@@ -23,8 +23,9 @@ public:
 
   std::vector<uint8_t> GetScriptPex(const char* scriptName) override;
 
-  const std::set<CIString>& ListScripts() override;
+  const std::set<CIString>& ListScripts(bool forceReloadScripts) override;
 
+private:
   const std::string pexDir;
   std::set<CIString> scripts;
 };

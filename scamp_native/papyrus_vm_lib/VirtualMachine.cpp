@@ -31,6 +31,12 @@ VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
   }
 }
 
+void VirtualMachine::SetMissingScriptHandler(
+  const MissingScriptHandler& handler)
+{
+  this->missingScriptHandler = handler;
+}
+
 void VirtualMachine::SetExceptionHandler(const ExceptionHandler& handler)
 {
   this->handler = handler;
@@ -205,10 +211,18 @@ VarValue VirtualMachine::CallStatic(
     return f(self, arguments);
   }
 
-  auto it =
-    allLoadedScripts.find(CIString{ className.begin(), className.end() });
-  if (it == allLoadedScripts.end())
-    throw std::runtime_error("script not found - '" + className + "'");
+  auto classNameCi = CIString{ className.begin(), className.end() };
+  auto it = allLoadedScripts.find(classNameCi);
+  if (it == allLoadedScripts.end()) {
+    if (this->missingScriptHandler) {
+      if (auto newScript = this->missingScriptHandler(className)) {
+        allLoadedScripts[classNameCi] = *newScript;
+      }
+    }
+    it = allLoadedScripts.find(classNameCi);
+    if (it == allLoadedScripts.end())
+      throw std::runtime_error("script is missing - '" + className + "'");
+  }
 
   auto& instance = instancesForStaticCalls[className];
   if (!instance) {

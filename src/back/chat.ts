@@ -13,6 +13,13 @@ export const onBrowserTokenChange = (
   userId: number,
   newToken: string
 ): void => {
+  // This cleanup actually matters when players reconnect:
+  // userIds may change in this case, while tokens remain the same
+  const previousUserId = tokenByUserId.findIndex((x) => x === newToken);
+  if (previousUserId !== -1) {
+    tokenByUserId[previousUserId] = undefined;
+  }
+
   if (tokenByUserId.length <= userId) {
     tokenByUserId.length = userId + 1;
   }

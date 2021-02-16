@@ -141,16 +141,18 @@ Inventory::Entry Inventory::Entry::FromJson(simdjson::dom::element& jEntry)
   ReadEx(jEntry, count, &e.count);
 
   bool wornValue;
-  try {
+  if (jEntry.at_pointer(worn.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
     ReadEx(jEntry, worn, &wornValue);
-  } catch (JsonIndexException&) {
+  } else {
     wornValue = false;
   }
 
   bool wornLeftValue;
-  try {
+  if (jEntry.at_pointer(wornLeft.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
     ReadEx(jEntry, wornLeft, &wornLeftValue);
-  } catch (JsonIndexException&) {
+  } else {
     wornLeftValue = false;
   }
 

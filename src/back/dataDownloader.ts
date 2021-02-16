@@ -105,11 +105,17 @@ export const ensureMastersPresent = async (
 
 const ensureScriptsPresent = async (dataDir: string): Promise<void> => {
   const scriptsDir = path.join(dataDir, "scripts");
-  if (
-    !fs.existsSync(path.join(scriptsDir, "Actor.pex")) &&
-    !fs.existsSync(path.join(scriptsDir, "actor.pex"))
-  ) {
-    console.log("`Actor.pex` is missing, reinstalling scripts");
+  const actorPexFound =
+    fs.existsSync(path.join(scriptsDir, "Actor.pex")) ||
+    fs.existsSync(path.join(scriptsDir, "actor.pex"));
+  const stringUtilPexFound =
+    fs.existsSync(path.join(scriptsDir, "StringUtil.pex")) ||
+    fs.existsSync(path.join(scriptsDir, "stringutil.pex"));
+
+  if (!actorPexFound || !stringUtilPexFound) {
+    console.log(
+      "Some of standard Papyrus scripts are missing, reinstalling scripts"
+    );
 
     if (!fs.existsSync(scriptsDir)) {
       fs.mkdirSync(scriptsDir);

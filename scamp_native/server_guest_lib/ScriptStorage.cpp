@@ -23,11 +23,11 @@ std::string RemoveExtension(std::string s)
   }
   return "";
 }
-}
 
-DirectoryScriptStorage::DirectoryScriptStorage(const std::string& pexDirPath_)
-  : pexDir(pexDirPath_)
+std::set<CIString> GetScriptsInDirectory(std::string pexDir)
 {
+  std::set<CIString> scripts;
+
   for (auto& p : std::filesystem::directory_iterator(pexDir)) {
     if (p.is_directory())
       continue;
@@ -36,6 +36,15 @@ DirectoryScriptStorage::DirectoryScriptStorage(const std::string& pexDirPath_)
     if (auto fileNameWe = RemoveExtension(s); !fileNameWe.empty())
       scripts.insert({ fileNameWe.begin(), fileNameWe.end() });
   }
+
+  return scripts;
+}
+}
+
+DirectoryScriptStorage::DirectoryScriptStorage(const std::string& pexDirPath_)
+  : pexDir(pexDirPath_)
+{
+  scripts = GetScriptsInDirectory(pexDir);
 }
 
 std::vector<uint8_t> DirectoryScriptStorage::GetScriptPex(
@@ -54,7 +63,11 @@ std::vector<uint8_t> DirectoryScriptStorage::GetScriptPex(
   return buffer;
 }
 
-const std::set<CIString>& DirectoryScriptStorage::ListScripts()
+const std::set<CIString>& DirectoryScriptStorage::ListScripts(
+  bool forceReloadScripts)
 {
+  if (forceReloadScripts) {
+    scripts = GetScriptsInDirectory(pexDir);
+  }
   return scripts;
 }

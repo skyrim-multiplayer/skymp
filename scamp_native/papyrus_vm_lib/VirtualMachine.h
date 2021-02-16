@@ -37,6 +37,8 @@ class VirtualMachine
 public:
   using OnEnter = std::function<void(const StackIdHolder&)>;
   using ExceptionHandler = std::function<void(VmExceptionInfo)>;
+  using MissingScriptHandler =
+    std::function<std::optional<PexScript::Lazy>(std::string)>;
 
   struct ScriptInfo
   {
@@ -46,6 +48,8 @@ public:
 
   VirtualMachine(std::vector<PexScript::Lazy> loadedScripts);
   VirtualMachine(std::vector<PexScript::Ptr> loadedScripts);
+
+  void SetMissingScriptHandler(const MissingScriptHandler& handler);
 
   void SetExceptionHandler(const ExceptionHandler& handler);
 
@@ -96,6 +100,7 @@ private:
 
   std::set<IGameObject::Ptr> gameObjectsHolder;
 
+  MissingScriptHandler missingScriptHandler;
   ExceptionHandler handler;
 
   std::shared_ptr<MakeID> stackIdMaker;

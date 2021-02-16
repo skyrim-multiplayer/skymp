@@ -3,22 +3,15 @@
 
 VarValue VarValue::CastToInt() const
 {
-
   switch (this->type) {
-
-    case kType_Object:
-    case kType_Identifier:
-      throw std::runtime_error("Wrong type in CastToInt");
-
+    case kType_String:
+      return VarValue((int32_t)atoi(this->data.string));
     case kType_Integer:
       return VarValue((int32_t)this->data.i);
-
     case kType_Float:
       return VarValue((int32_t)this->data.f);
-
     case kType_Bool:
       return VarValue((int32_t)this->data.b);
-
     default:
       throw std::runtime_error("Wrong type in CastToInt");
   }
@@ -159,6 +152,13 @@ VarValue::VarValue(const char* value)
   this->data.string = value;
 }
 
+VarValue::VarValue(const std::string& value)
+{
+  this->type = this->kType_String;
+  this->stringHolder.reset(new std::string(value));
+  this->data.string = this->stringHolder->data();
+}
+
 VarValue::VarValue(float value)
 {
   this->type = this->kType_Float;
@@ -223,6 +223,35 @@ VarValue VarValue::operator+(const VarValue& argument2)
   throw std::runtime_error("Wrong type in operator+");
 }
 
+namespace {
+inline bool IsNumber(const VarValue& v)
+{
+  return v.GetType() == VarValue::kType_Integer ||
+    v.GetType() == VarValue::kType_Float;
+}
+
+inline double ToDouble(const VarValue& v)
+{
+  switch (v.GetType()) {
+    case VarValue::kType_Integer:
+      return static_cast<double>(static_cast<int32_t>(v));
+    case VarValue::kType_Float:
+      return static_cast<double>(static_cast<int32_t>(v));
+  }
+  throw std::runtime_error("Wrong type in ToDouble");
+}
+
+inline VarValue ConstructArithmeticResult(const VarValue& op1,
+                                          const VarValue& op2, double res)
+{
+  if (op1.GetType() == VarValue::kType_Float ||
+      op2.GetType() == VarValue::kType_Float) {
+    return VarValue(static_cast<float>(res));
+  }
+  return VarValue(static_cast<int32_t>(floor(res)));
+}
+}
+
 VarValue VarValue::operator-(const VarValue& argument2)
 {
   VarValue var;
@@ -240,6 +269,12 @@ VarValue VarValue::operator-(const VarValue& argument2)
         return var;
     }
   }
+
+  if (IsNumber(*this) && IsNumber(argument2)) {
+    return ConstructArithmeticResult(*this, argument2,
+                                     ToDouble(*this) - ToDouble(argument2));
+  }
+
   throw std::runtime_error("Wrong type in operator-");
 }
 
@@ -259,6 +294,12 @@ VarValue VarValue::operator*(const VarValue& argument2)
         return var;
     }
   }
+
+  if (IsNumber(*this) && IsNumber(argument2)) {
+    return ConstructArithmeticResult(*this, argument2,
+                                     ToDouble(*this) * ToDouble(argument2));
+  }
+
   throw std::runtime_error("Wrong type in operator*");
 }
 
@@ -277,12 +318,18 @@ VarValue VarValue::operator/(const VarValue& argument2)
         return var;
       case VarValue::kType_Float:
         var.data.f = 1.0f;
-        if (argument2.data.f != float(0) && this->data.f != float(0))
+        if (argument2.data.f != float(0))
           var.data.f = this->data.f / argument2.data.f;
         var.type = this->kType_Float;
         return var;
     }
   }
+
+  if (IsNumber(*this) && IsNumber(argument2)) {
+    return ConstructArithmeticResult(*this, argument2,
+                                     ToDouble(*this) / ToDouble(argument2));
+  }
+
   throw std::runtime_error("Wrong type in operator/");
 }
 
@@ -503,6 +550,13 @@ VarValue& VarValue::operator=(const VarValue& arg2)
     pArray = arg2.pArray;
 
   promise = arg2.promise;
+
+  if (arg2.stringHolder) {
+    stringHolder.reset(new std::string(*arg2.stringHolder));
+    data.string = stringHolder->data();
+  } else {
+    stringHolder.reset();
+  }
 
   return *this;
 }
