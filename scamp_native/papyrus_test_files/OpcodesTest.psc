@@ -90,7 +90,23 @@ CallParentTest()
 PropertyTest()
 FactorialTest()
 StateTest()
+IdentifierResolutionTest()
 
+EndFunction
+
+Int Function Foo()
+Return 108
+EndFunction
+Int Function Bar() global
+Return 2077
+EndFunction
+
+Function IdentifierResolutionTest()
+Print(" Start IdentifierResolution Test!")
+Int foo = 1
+Assert(Foo() == 108)
+Int bar = 1
+Assert(Bar() == 2077)
 EndFunction
 
 Function StateTest()

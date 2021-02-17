@@ -219,7 +219,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
 struct ActivePexInstance::ExecutionContext
 {
   std::shared_ptr<StackIdHolder> stackIdHolder;
-  std::vector<FunctionCode::Instruction> opCode;
+  std::vector<FunctionCode::Instruction> instructions;
   std::shared_ptr<Locals> locals;
   bool needReturn = false;
   bool needJump = false;
@@ -386,7 +386,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       VarValue* object = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
 
       // BYOHRelationshipAdoptionPetDoorTrigger
-      if (args[0]->GetType() != VarValue::kType_String)
+      if (args[0]->GetType() != VarValue::kType_String &&
+          args[0]->GetType() != VarValue::kType_Identifier)
         throw std::runtime_error("Anomally in CallMethod. String expected");
 
       std::string functionName = (const char*)(*args[0]);
@@ -562,25 +563,46 @@ std::shared_ptr<ActivePexInstance::Locals> ActivePexInstance::MakeLocals(
 // Basically, makes vector<VarValue *> from vector<VarValue>
 std::vector<std::pair<uint8_t, std::vector<VarValue*>>>
 ActivePexInstance::TransformInstructions(
-  std::vector<FunctionCode::Instruction>& sourceOpCode,
+  std::vector<FunctionCode::Instruction>& instructions,
   std::shared_ptr<Locals> locals)
 {
   std::vector<std::pair<uint8_t, std::vector<VarValue*>>> opCode;
-  for (size_t i = 0; i < sourceOpCode.size(); ++i) {
+  for (size_t i = 0; i < instructions.size(); ++i) {
 
     std::pair<uint8_t, std::vector<VarValue*>> temp;
-    temp.first = sourceOpCode[i].op;
+    temp.first = instructions[i].op;
 
-    for (size_t j = 0; j < sourceOpCode[i].args.size(); ++j) {
-      temp.second.push_back(&sourceOpCode[i].args[j]);
+    for (size_t j = 0; j < instructions[i].args.size(); ++j) {
+      temp.second.push_back(&instructions[i].args[j]);
     }
     opCode.push_back(temp);
   }
 
   // Dereference identifiers
-  for (auto& op : opCode)
-    for (auto& arg : op.second)
+  for (auto& [opcodeId, opcodeArgs] : opCode) {
+    size_t dereferenceStart;
+    switch (opcodeId) {
+      case OpcodesImplementation::Opcodes::op_CallMethod:
+        // Do not dereference functionName
+        dereferenceStart = 1;
+        break;
+      case OpcodesImplementation::Opcodes::op_CallStatic:
+        // Do not dereference className and functionName
+        dereferenceStart = 2;
+        break;
+      case OpcodesImplementation::Opcodes::op_CallParent:
+        // TODO?
+        dereferenceStart = 0;
+        break;
+      default:
+        dereferenceStart = 0;
+        break;
+    }
+    for (size_t i = dereferenceStart; i < opcodeArgs.size(); ++i) {
+      auto& arg = opcodeArgs[i];
       arg = &(GetIndentifierValue(*locals, *arg));
+    }
+  }
 
   return opCode;
 }
@@ -590,7 +612,7 @@ VarValue ActivePexInstance::ExecuteAll(
 {
   auto pipex = sourcePex.fn();
 
-  auto opCode = TransformInstructions(ctx.opCode, ctx.locals);
+  auto opCode = TransformInstructions(ctx.instructions, ctx.locals);
 
   if (previousCallResult) {
     int i = ctx.line - 1;
@@ -600,10 +622,11 @@ VarValue ActivePexInstance::ExecuteAll(
     *opCode[i].second[resultIdx] = *previousCallResult;
   }
 
-  assert(opCode.size() == ctx.opCode.size());
+  assert(opCode.size() == ctx.instructions.size());
 
   for (; ctx.line < opCode.size(); ++ctx.line) {
-    ExecuteOpCode(&ctx, opCode[ctx.line].first, opCode[ctx.line].second);
+    auto& [op, args] = opCode[ctx.line];
+    ExecuteOpCode(&ctx, op, args);
 
     if (ctx.needReturn) {
       ctx.needReturn = false;
@@ -887,7 +910,8 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
     }
   }
 
-  for (auto& _string : parentInstance->sourcePex.fn()->stringTable.GetStorage()) {
+  for (auto& _string :
+       parentInstance->sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
 
       VarValue::Ptr stringTableParentValue =

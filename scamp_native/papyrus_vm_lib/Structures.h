@@ -47,11 +47,9 @@ struct VarValue
 {
 
 private:
-  uint8_t type = 0;
-
   union
   {
-    IGameObject* id = nullptr;
+    IGameObject* id;
     const char* string;
     int32_t i;
     float f;
@@ -66,7 +64,7 @@ public:
 
   using Ptr = std::shared_ptr<VarValue>;
 
-  enum valueTypes
+  enum Type : uint8_t
   {
     kType_Object = 0, // 0 null?
     kType_Identifier, // 1 identifier
@@ -84,12 +82,12 @@ public:
     _ArraysEnd = 16,
   };
 
-  uint8_t GetType() const { return this->type; }
+  uint8_t GetType() const { return static_cast<uint8_t>(this->type); }
 
   VarValue()
   {
-    this->type = 0;
-    this->data.id = nullptr;
+    data.id = nullptr;
+    type = Type::kType_Object;
   }
 
   explicit VarValue(uint8_t type);
@@ -150,6 +148,9 @@ public:
   VarValue CastToBool() const;
 
   void Then(std::function<void(VarValue)> cb);
+
+private:
+  Type type;
 };
 
 using NativeFunction =

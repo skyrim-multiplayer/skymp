@@ -1,6 +1,8 @@
 #include "Structures.h"
 #include "VirtualMachine.h"
 
+#include <cmath>
+
 VarValue VarValue::CastToInt() const
 {
   switch (this->type) {
@@ -119,7 +121,7 @@ VarValue::VarValue(uint8_t type)
     case kType_IntArray:
     case kType_FloatArray:
     case kType_BoolArray:
-      this->type = type;
+      this->type = static_cast<Type>(type);
       this->pArray = nullptr;
       break;
 
