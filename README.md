@@ -33,8 +33,13 @@ SkyMP also had limited server-side Papyrus support, which allowed to run scripts
 
 ## Solution
 
-
 We introduce `skymp5-functions-lib`, a collection of Papyrus functions that mimic vanilla/SKSE functions or being added especially for SkyMP (like `M.GetPlayersOnline`).
+
+- Papyrus is simple for modmakers and generally simple.
+- Papyrus doesn't have access to filesystem, eval, networking.
+- Clientside scripting isn't exposed to Papyrus.
+- Functions lib is covered with tests decreasing bugs.
+- Standardized library of functions reduces incompatibilities and also prevents rewriting the same basic features for different game servers.
 
 ## Getting started
 
