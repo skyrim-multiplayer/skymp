@@ -1,4 +1,4 @@
-import * as sprintf from 'sprintf-js';
+import { sprintf } from '../../lib/sprintf-js';
 import { Mp, PapyrusValue, PapyrusObject } from '../types/mp';
 import { getObject, getString, getStringArray } from '../utils/papyrusArgs';
 
@@ -32,7 +32,7 @@ const log = (mp: Mp, self: null, args: PapyrusValue[]): void => {
 const format = (mp: Mp, self: null, args: PapyrusValue[]): string => {
   const format = getString(args, 0);
   const tokens = getStringArray(args, 1);
-  return sprintf.sprintf(format, ...tokens);
+  return sprintf(format, ...tokens);
 };
 
 const getText = (localization: Localization, mp: Mp, self: null, args: PapyrusValue[]): string => {

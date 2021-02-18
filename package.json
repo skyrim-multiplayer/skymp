@@ -5,6 +5,7 @@
 	"main": "index.ts",
 	"scripts": {
 		"serve": "parcel serve index.ts --out-dir ./ --out-file gamemode.js --no-source-maps --no-cache --target node",
+		"serve:server": "parcel serve index.ts --out-dir ../skymp-server-lite --out-file gamemode.js --no-source-maps --no-cache --target node",
 		"build": "parcel build index.ts --out-dir ./ --out-file gamemode.js --no-source-maps --no-cache --target node",
 		"test": "jest --forceExit --coverage --verbose"
 	},
@@ -20,7 +21,9 @@
 	},
 	"homepage": "https://github.com/alekcey0211/skymp5-gamemode#readme",
 	"devDependencies": {
+		"@types/mocha": "^8.2.0",
 		"@types/node": "^14.14.20",
+		"@types/sprintf-js": "^1.1.2",
 		"jest": "^26.6.3",
 		"parcel-bundler": "^1.12.4",
 		"ts-jest": "^26.5.0",
@@ -30,7 +33,9 @@
 		"@types/gettext-parser": "^4.0.0",
 		"@types/node-gettext": "^3.0.1",
 		"gettext-parser": "^4.0.4",
-		"node-gettext": "^3.0.0"
+		"node-gettext": "^3.0.0",
+		"parcel-plugin-wrapper": "^0.2.3",
+		"sprintf-js": "^1.1.2"
 	},
 	"prettier": {
 		"bracketSpacing": true,
