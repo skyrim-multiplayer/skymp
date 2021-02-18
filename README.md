@@ -17,6 +17,7 @@ A set of scripts for RolePlay experience in Skyrim Multiplayer.
 3. After the server is finally started, stop it and verify that `./data/scripts` contains `.pex` files and `./data/scripts/source` contains `.psc` files.
 4. Open `skyrimse.ppj` and change `Output` to an absolute path to server's `./data/scripts`.
 5. Set `isPapyrusHotReloadEnabled` to true in your `server-settings.json`. Turn it off before letting the real users join the server since that feature affects the server's performance.
+6. Specify a valid `gamePath` in `.vscode/tasks.json`.
 
 ### Development
 
