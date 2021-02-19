@@ -1,7 +1,8 @@
+export const src = `
+
 /*
   _libkey.js defines 'window.skymp' object.
-  This is a part of the skymp server. 
-  If you modify this file, unexpected bad things may happen.
+  DO NOT MODIFY. ANY MODIFICATIONS WILL BE OVERWRITTEN.
 */
 
 const ipAndPort = window.location.href.split("/")[2];
@@ -17,7 +18,9 @@ const handleOpen = () => {
     try {
       handler();
     } catch (e) {
-      handleError(`Handler of the 'open' event failed with '${e.message}'`);
+      handleError(
+        "Handler of the 'open' event failed with '" + e.message + "'"
+      );
     }
   });
 };
@@ -27,7 +30,9 @@ const handleClose = () => {
     try {
       handler();
     } catch (e) {
-      handleError(`Handler of the 'close' event failed with '${e.message}'`);
+      handleError(
+        "Handler of the 'close' event failed with '" + e.message + "'"
+      );
     }
   });
 };
@@ -40,7 +45,7 @@ const handleError = (str) => {
       setTimeout(
         () =>
           handleError(
-            `Handler of the 'error' event failed with '${e.message}'`
+            "Handler of the 'error' event failed with '" + e.message + "'"
           ),
         267
       );
@@ -53,7 +58,9 @@ const handleMessage = (message) => {
     try {
       handler(message);
     } catch (e) {
-      handleError(`Handler of the 'message' event failed with '${e.message}'`);
+      handleError(
+        "Handler of the 'message' event failed with '" + e.message + "'"
+      );
     }
   });
 };
@@ -77,7 +84,7 @@ const on = (event, handler) => {
     event !== "message" &&
     event !== "error"
   ) {
-    return handleError(`Unknown event '${event}'`);
+    return handleError("Unknown event '" + event + "'");
   }
   if (!handlers[event]) handlers[event] = [];
   handlers[event].push(handler);
@@ -92,13 +99,13 @@ const socketMessageListener = (event) => {
   try {
     obj = JSON.parse(event.data);
   } catch (e) {
-    handleError(`JSON.parse failed with '${e.message}'`);
+    handleError("JSON.parse failed with '" + e.message + "'");
   }
 
   const { message } = obj;
   if (typeof message !== "object") {
     return handleError(
-      `Expected message to be an object, but got '${message}'`
+      "Expected message to be an object, but got '" + message + "'"
     );
   }
 
@@ -133,3 +140,6 @@ const init = () => {
 };
 
 init();
+
+
+`;

@@ -18,6 +18,7 @@ import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
 import { ensureMastersAndScriptsPresent } from "./dataDownloader";
+import * as libkey from "./libkey";
 
 import * as manifestGen from "./manifestGen";
 
@@ -67,7 +68,30 @@ systems.push(
   )
 );
 
+const handleLibkeyJs = () => {
+  fs.writeFileSync("data/_libkey.js", libkey.src);
+  setTimeout(async () => {
+    while (1) {
+      await new Promise((r) => setTimeout(r, 5000));
+
+      const data = await new Promise<string>((resolve) =>
+        fs.readFile("data/_libkey.js", { encoding: "utf-8" }, (err, data) => {
+          err ? resolve("") : resolve(data);
+        })
+      );
+
+      if (data !== libkey.src) {
+        await new Promise<void>((r) =>
+          fs.writeFile("data/_libkey.js", libkey.src, () => r())
+        );
+      }
+    }
+  }, 1);
+};
+
 const main = async () => {
+  handleLibkeyJs();
+
   await ensureMastersAndScriptsPresent(
     Settings.get().dataDir,
     Settings.get().loadOrder
