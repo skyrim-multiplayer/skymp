@@ -7,6 +7,16 @@ import { Settings } from "./settings";
 import Axios from "axios";
 import { AddressInfo } from "net";
 
+const createApp = () => {
+  const app = new Koa();
+  const router = new Router();
+  router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
+
+  app.use(router.routes()).use(router.allowedMethods());
+  app.use(serve("data"));
+  return app;
+};
+
 export const main = (): void => {
   const settings = Settings.get();
 
@@ -21,8 +31,7 @@ export const main = (): void => {
     .then(() => {
       console.log(`UI dev server has been detected on port ${devServerPort}`);
 
-      const appStatic = new Koa();
-      appStatic.use(serve("data"));
+      const appStatic = createApp();
       const srv = http.createServer(appStatic.callback());
       srv.listen(0, () => {
         const { port } = srv.address() as AddressInfo;
@@ -44,8 +53,7 @@ export const main = (): void => {
       });
     })
     .catch(() => {
-      const app = new Koa();
-      app.use(serve("data"));
+      const app = createApp();
       console.log(`Server resources folder is listening on ${uiPort}`);
       require("http").createServer(app.callback()).listen(uiPort);
     });
