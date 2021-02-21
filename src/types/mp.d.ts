@@ -79,6 +79,8 @@ export interface Mp {
   get(formId: number, propertyName: 'appearance'): Record<string, unknown>;
   get(formId: number, propertyName: 'pos'): [number, number, number];
   get(formId: number, propertyName: 'angle'): [number, number, number];
+  get(formId: number, propertyName: 'inventory'): Inventory;
+  get(formId: number, propertyName: 'baseDesc'): string;
   get(formId: 0, propertyName: 'onlinePlayers'): number[];
 
   /**
@@ -88,6 +90,7 @@ export interface Mp {
    * @param newValue A new value for the property.
    */
   set(formId: number, propertyName: string, newValue: JsonSerializable): void;
+  set(formId: number, propertyName: 'inventory', newValue: Inventory): void;
 
   /**
    * Creates a new property that would be attached to all instances of

@@ -8,6 +8,7 @@ import * as stringUtil from './src/papyrus/stringUtil';
 import * as actor from './src/papyrus/actor';
 import * as objectReference from './src/papyrus/objectReference';
 import * as utility from './src/papyrus/utility';
+import * as game from './src/papyrus/game';
 
 import { LocalizationProvider } from './src/utils/localizationProvider';
 import * as fs from 'fs';
@@ -29,5 +30,6 @@ stringUtil.register(mp);
 actor.register(mp);
 objectReference.register(mp);
 utility.register(mp);
+game.register(mp);
 
 setTimeout(() => mp.callPapyrusFunction('global', 'GM_Main', '_OnPapyrusRegister', null, []), 0);

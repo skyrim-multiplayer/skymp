@@ -35,6 +35,11 @@ export const getNumber = (args: PapyrusValue[], index: number): number => {
   return typeof x === 'number' ? x : err(index, x, 'number');
 };
 
+export const getBoolean = (args: PapyrusValue[], index: number): boolean => {
+  const x = args[index];
+  return typeof x === 'boolean' ? x : err(index, x, 'boolean');
+};
+
 export const getNumberArray = (args: PapyrusValue[], index: number): number[] => {
   return getArray(args, index, 'number') as number[];
 };

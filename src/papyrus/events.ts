@@ -9,7 +9,6 @@ export const register = (mp: Mp): void => {
       case 'cef::chat:send': {
         const text = uiEvent.data;
         if (typeof text === 'string') {
-          //console.log(mp.getDescFromId(pcFormId), pcFormId);
           const ac: PapyrusObject = { type: 'form', desc: mp.getDescFromId(pcFormId) };
           mp.callPapyrusFunction('global', 'GM_Main', '_OnChatInput', null, [ac, text]);
         }

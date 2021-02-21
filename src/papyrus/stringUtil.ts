@@ -25,9 +25,15 @@ const getLength = (mp: Mp, self: null, args: PapyrusValue[]) => {
   return s.length;
 };
 
+const toLower = (mp: Mp, self: null, args: PapyrusValue[]) => {
+  const s = getString(args, 0);
+  return s.toLowerCase();
+};
+
 export const register = (mp: Mp): void => {
   mp.registerPapyrusFunction('global', 'StringUtil', 'GetNthChar', (self, args) => getNthChar(mp, self, args));
   mp.registerPapyrusFunction('global', 'StringUtil', 'Split', (self, args) => split(mp, self, args));
   mp.registerPapyrusFunction('global', 'StringUtil', 'Substring', (self, args) => substring(mp, self, args));
   mp.registerPapyrusFunction('global', 'StringUtil', 'GetLength', (self, args) => getLength(mp, self, args));
+  mp.registerPapyrusFunction('global', 'StringUtil', 'ToLower', (self, args) => toLower(mp, self, args));
 };

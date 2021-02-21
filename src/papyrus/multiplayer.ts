@@ -61,6 +61,15 @@ const getOnlinePlayers = (mp: Mp): PapyrusObject[] => {
   return res;
 };
 
+const asPerk = (mp: Mp, self: null, args: PapyrusValue[]) => {
+  return getObject(args, 0);
+};
+
+// TODO: In papyrus 0xff000000 As Int return 0, so i create M.HexToInt
+const hexToInt = (mp: Mp, self: null, args: PapyrusValue[]) => {
+  return +getString(args, 0);
+};
+
 export const localizationDefault: Localization = { getText: (x) => x };
 
 export const register = (mp: Mp, localization: Localization = localizationDefault): void => {
@@ -80,6 +89,10 @@ export const register = (mp: Mp, localization: Localization = localizationDefaul
     );
 
     mp.registerPapyrusFunction('global', className, 'GetOnlinePlayers', () => getOnlinePlayers(mp));
+
+    mp.registerPapyrusFunction('global', className, 'AsPerk', (self, args) => asPerk(mp, self, args));
+
+    mp.registerPapyrusFunction('global', className, 'HexToInt', (self, args) => hexToInt(mp, self, args));
   }
 };
 
