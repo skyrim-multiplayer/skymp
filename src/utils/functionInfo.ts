@@ -6,8 +6,17 @@ export class FunctionInfo<F extends { toString: () => string }> {
     return funcString.replace(new RegExp('^.+?{', 'm'), '').trim();
   }
 
+  tryCatch() {
+    return `
+      try {
+        ${this.body}
+      } catch(err) {
+        ctx.sp.printConsole('[CTX ERROR]', err, '\\n', ${this.f});
+      }`;
+  }
+
   getText(args?: Record<string, unknown>): string {
-    let result = this.body;
+    let result = this.tryCatch();
 
     for (let name in args) {
       switch (typeof args[name]) {

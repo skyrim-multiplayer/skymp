@@ -9,6 +9,8 @@ import * as actor from './src/papyrus/actor';
 import * as objectReference from './src/papyrus/objectReference';
 import * as utility from './src/papyrus/utility';
 import * as game from './src/papyrus/game';
+import * as form from './src/papyrus/form';
+import * as perks from './src/properties/perks';
 
 import { LocalizationProvider } from './src/utils/localizationProvider';
 import * as fs from 'fs';
@@ -24,8 +26,12 @@ const localizationProvider = new LocalizationProvider(
   isPapyrusHotReloadEnabled ? 'hotreload' : 'once'
 );
 
-multiplayer.register(mp, localizationProvider);
+perks.register(mp);
+
 events.register(mp);
+
+form.register(mp);
+multiplayer.register(mp, localizationProvider);
 stringUtil.register(mp);
 actor.register(mp);
 objectReference.register(mp);

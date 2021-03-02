@@ -28,7 +28,7 @@ export interface MakePropertyOptions {
 }
 
 export type JsonSerializablePrimitive = string | number | null;
-export type JsonSerializable = JsonSerializablePrimitive | JsonSerializable[] | { [key: string]: JsonSerializable };
+export type JsonSerializable = JsonSerializablePrimitive | JsonSerializable[] | { [key: string]: JsonSerializable } | Record<string, JsonSerializable>;
 
 export interface EspmField {
   readonly type: string;
@@ -65,6 +65,15 @@ export type PapyrusGlobalFunction = (
   self: null,
   args: PapyrusValue[]
 ) => PapyrusValue | Promise<PapyrusValue> | void | Promise<void>;
+
+export interface Inventory {
+  entries: InventoryItem[];
+}
+
+export interface InventoryItem {
+  baseId: number;
+  count: number;
+}
 
 export interface Mp {
   /**

@@ -1,12 +1,18 @@
 import { FunctionInfo } from './functionInfo';
 
+// TODO: remake tests to use try catch block
 describe('FunctionInfo', () => {
   it('should be able to get the body of an arrow function', () => {
     const f = (a: number, b: number) => {
       return a + b;
     };
     const functionInfo = new FunctionInfo(f);
-    expect(functionInfo.body).toEqual('return a + b;');
+    expect(functionInfo.body).toEqual(`
+    try {
+      ${'return a + b;'}
+    } catch(err) {
+      ctx.sp.printConsole('[CTX ERROR]', err);
+    }`);
   });
 
   it('should be able to get the body of an arrow function in a short form', () => {

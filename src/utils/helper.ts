@@ -42,3 +42,39 @@ export const isArrayEqual = (arr1: any, arr2: any): boolean => {
 
   return true;
 };
+
+/**
+ * get random number in range
+ * @param min min range (inclusive)
+ * @param max max range (inclusive)
+ */
+export const randomInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+/**
+ * Check if point in polygon
+ * @param x x coordinate of point
+ * @param y y coordinate of point
+ * @param xp all x coordinate of polygon
+ * @param yp all y coordinate of polygon
+ */
+let cacheInPoly: { [key: string]: boolean } = {};
+export const inPoly = (x: number, y: number, xp: number[], yp: number[]) => {
+  const index = x.toString() + y.toString() + xp.join('') + yp.join('');
+  if (cacheInPoly[index]) {
+    return cacheInPoly[index];
+  }
+  let npol = xp.length;
+  let j = npol - 1;
+  let c = false;
+  for (let i = 0; i < npol; i++) {
+    if (
+      ((yp[i] <= y && y < yp[j]) || (yp[j] <= y && y < yp[i])) &&
+      x > ((xp[j] - xp[i]) * (y - yp[i])) / (yp[j] - yp[i]) + xp[i]
+    ) {
+      c = !c;
+    }
+    j = i;
+  }
+  cacheInPoly[index] = c;
+  return c;
+};

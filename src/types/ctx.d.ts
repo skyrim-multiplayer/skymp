@@ -2,7 +2,7 @@ import { JsonSerializable } from './mp';
 
 import * as skyrimPlatform from './skyrimPlatform';
 
-export interface Ctx {
+export interface Ctx<S = Record<string, JsonSerializable>, V = JsonSerializable> {
   /**
    * Refers to Skyrim Platform API.
    */
@@ -20,13 +20,13 @@ export interface Ctx {
    * In `updateOwner` / `updateNeighbor` is equal to the value of a property that is
    * processed currently or `undefined` if there is no value or it's not visible due to flags.
    */
-  readonly value?: JsonSerializable;
+  readonly value?: V;
 
   /**
    * A writable object that is used to store data between `updateOwner`/`updateNeighbor`
    * calls or `makeProperty` initializations. `state` is currently shared between properties.
    */
-  readonly state: Record<string, unknown>;
+  readonly state: S;
 
   /**
    * Get the value of the specified property. Built-in properties are not supported properly,
