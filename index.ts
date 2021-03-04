@@ -11,6 +11,7 @@ import * as utility from './src/papyrus/utility';
 import * as game from './src/papyrus/game';
 import * as form from './src/papyrus/form';
 import * as perks from './src/properties/perks';
+import * as evalProp from './src/properties/eval';
 
 import { LocalizationProvider } from './src/utils/localizationProvider';
 import * as fs from 'fs';
@@ -27,7 +28,7 @@ const localizationProvider = new LocalizationProvider(
 );
 
 perks.register(mp);
-
+evalProp.register(mp);
 events.register(mp);
 
 form.register(mp);
