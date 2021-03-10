@@ -1,0 +1,14 @@
+{
+    "name": "skyrim-platform",
+    "version-string": "",
+    "homepage": "https://skymp.io",
+    "description": "A modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript.",
+    "dependencies": [
+      "chakracore",
+      "nlohmann-json",
+      "cpp-httplib",
+      "zlib",
+      "mhook",
+      "directxtk"
+    ]
+}

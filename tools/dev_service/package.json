@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --ignore dist/ .",
+    "watch": "nodemon --ignore dist/ .",
+    "dev": "npm run watch",
     "pack": "cross-env DEV_SERVICE_ONLY_ONCE=yes DEV_SERVICE_NO_GAME=yes node ."
   },
   "keywords": [],

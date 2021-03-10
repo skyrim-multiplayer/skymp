@@ -26,6 +26,5 @@
 *.app
 
 build
-vcpkg
 node_modules
 dist_codegen

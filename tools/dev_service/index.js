@@ -37,9 +37,12 @@ const watchCallback = (_eventType, fileName) => {
     if (fileName === "touch_Release" || fileName === "touch_Debug") {
       let buildCfg = fileName === "touch_Release" ? "Release" : "Debug";
 
-      console.log("Skyrim Platform " + buildCfg + " x64 updated. Exiting game");
+      console.log("Skyrim Platform " + buildCfg + " x64 updated.");
 
-      game.kill();
+      if (!process.env.DEV_SERVICE_NO_GAME) {
+        console.log("Stopping Skyrim SE...");
+        game.kill();
+      }
 
       if (fs.existsSync("./dist")) {
         fs.removeSync("./dist");
@@ -155,7 +158,7 @@ const watchCallback = (_eventType, fileName) => {
       fs.unlinkSync("./dist/SkyrimPlatformImpl.pdb");
 
       if (!process.env.DEV_SERVICE_NO_GAME) {
-        console.log("Restarting");
+        console.log(`Starting ${config.SkyrimSEFolder}`);
         game.launch(config.SkyrimSEFolder).catch((e) => console.error(e));
       }
     }
@@ -165,5 +168,6 @@ const watchCallback = (_eventType, fileName) => {
 if (process.env.DEV_SERVICE_ONLY_ONCE) {
   watchCallback(undefined, "touch_Release");
 } else {
+  console.log(`Watching for changes in ${bin}`)
   fs.watch(bin, watchCallback);
 }

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.19.1)
 
 if ("${CMAKE_PROJECT_NAME}" STREQUAL "" OR "${CMAKE_PROJECT_NAME}" STREQUAL "platform_se")
   set(CMAKE_SYSTEM_VERSION "10.0.17763.0" CACHE STRING INTERNAL FORCE)
@@ -14,44 +14,14 @@ if (NOT EXISTS "${cmake_dir}")
   message(FATAL_ERROR "\"${cmake_dir}\" does not exist")
 endif()
 
-# Clear CMake cache after changing this
-# (also for subprojects like platform_se)
-set(VCPKG_REVISION 5eea585548058540c3b73d087eb101c033b5fa85)
-# Download vcpkg dependencies
-include(${SKYRIM_MP_ROOT}/pmm.cmake)
-set(ports
-  chakracore:x64-windows
-  nlohmann-json:x64-windows
-  cpp-httplib:x64-windows
-  zlib:x64-windows
-  mimalloc:x64-windows-static
-  mhook:x64-windows-static
-  directxtk:x64-windows-static
-)
-foreach(port ${ports})
-  message(STATUS "Installing ${port}")
-  pmm(VCPKG REVISION ${VCPKG_REVISION} REQUIRES ${port})
-endforeach()
-if ("${_VCPKG_ROOT_DIR}" STREQUAL "")
-  message(FATAL_ERROR "Expected _VCPKG_ROOT_DIR variable to be set by pmm")
-endif()
-set(VCPKG_ROOT ${_VCPKG_ROOT_DIR})
+include(${cmake_dir}/apply_default_settings.cmake)
 
-if ("${CEF_DIR}" STREQUAL "")
-  message(FATAL_ERROR "CEF_DIR is not specified")
-endif()
-set(CEF_ROOT ${CEF_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
 find_package(CEF REQUIRED)
 add_subdirectory(${CEF_LIBCEF_DLL_WRAPPER_PATH} libcef_dll_wrapper)
-set(CEF_LIBRARIES
-  ${CEF_DIR}/$<CONFIG>/cef_sandbox.lib
-  ${CEF_DIR}/$<CONFIG>/libcef.lib
-  libcef_dll_wrapper
-)
-set(CEF_INCLUDE
-  ${CEF_DIR}
-)
+add_library(cef INTERFACE)
+target_link_libraries(cef INTERFACE ${CEF_ROOT}/$<CONFIG>/cef_sandbox.lib ${CEF_ROOT}/$<CONFIG>/libcef.lib libcef_dll_wrapper)
+target_include_directories(cef INTERFACE ${CEF_ROOT})
 
 set(lib_root "${SKYRIM_MP_ROOT}/submodules/CommonLibSSE")
 set(third_party "${SKYRIM_MP_ROOT}/src/platform_se/third_party")
@@ -79,63 +49,36 @@ target_include_directories(skse64 PUBLIC "${third_party}/common" "${third_party}
 target_compile_definitions(skse64 PRIVATE RUNTIME=1 RUNTIME_VERSION=0x01050610)
 target_link_libraries(skse64 PUBLIC common skse64_common)
 
-include(${cmake_dir}/apply_default_settings.cmake)
-include(${cmake_dir}/integrate_vcpkg.cmake)
-
 file(GLOB_RECURSE core_library_src "${third_party}/cef/core_library/*")
 add_library(core_library STATIC ${core_library_src})
 target_include_directories(core_library PUBLIC "${third_party}/cef/core_library")
-integrate_vcpkg(
-  TARGETS core_library
-  VCPKG_PATH "${VCPKG_ROOT}"
-)
-integrate_vcpkg(
-  STATIC
-  IGNORE .*boost.*
-  TARGETS core_library
-  VCPKG_PATH "${VCPKG_ROOT}"
-)
+list(APPEND VCPKG_DEPENDENT core_library)
 
 file(GLOB_RECURSE reverse_src "${third_party}/cef/reverse/*")
 add_library(reverse STATIC ${reverse_src})
 target_include_directories(reverse PUBLIC "${third_party}/cef/reverse")
 target_link_libraries(reverse PUBLIC core_library)
-integrate_vcpkg(
-  TARGETS reverse
-  VCPKG_PATH "${VCPKG_ROOT}"
-)
-integrate_vcpkg(
-  STATIC
-  IGNORE .*boost.*
-  TARGETS reverse
-  VCPKG_PATH "${VCPKG_ROOT}"
-)
+list(APPEND VCPKG_DEPENDENT reverse)
 
 file(GLOB_RECURSE hooks_src "${third_party}/cef/hooks/*")
 add_library(hooks STATIC ${hooks_src})
 target_include_directories(hooks PUBLIC "${third_party}/cef/hooks")
 target_link_libraries(hooks PUBLIC core_library reverse)
-integrate_vcpkg(
-  TARGETS hooks
-  VCPKG_PATH "${VCPKG_ROOT}"
-)
+list(APPEND VCPKG_DEPENDENT hooks)
 
 file(GLOB_RECURSE ui_src "${third_party}/cef/ui/*")
 add_library(ui STATIC ${ui_src})
-target_link_libraries(ui PUBLIC ${CEF_LIBRARIES} core_library hooks reverse)
-target_include_directories(ui PUBLIC ${CEF_INCLUDE})
+target_link_libraries(ui PUBLIC core_library hooks reverse)
 target_include_directories(ui PRIVATE ${third_party}/cef/ui )
 target_link_libraries(ui PUBLIC "d3d11.lib" "dxguid.lib")
 target_link_libraries(ui PUBLIC skyrim_plugin_resources)
-integrate_vcpkg(
-  TARGETS ui
-  VCPKG_PATH "${VCPKG_ROOT}"
-)
+target_link_libraries(ui PUBLIC cef)
+list(APPEND VCPKG_DEPENDENT ui)
 
 file(GLOB_RECURSE ui_process_src "${third_party}/cef/ui_process/*")
 add_executable(SkyrimPlatformCEF ${ui_process_src})
-target_link_libraries(SkyrimPlatformCEF PUBLIC ${CEF_LIBRARIES} core_library)
-target_include_directories(SkyrimPlatformCEF PUBLIC ${CEF_INCLUDE})
+target_link_libraries(SkyrimPlatformCEF PUBLIC core_library)
+target_link_libraries(SkyrimPlatformCEF PUBLIC cef)
 set_target_properties(SkyrimPlatformCEF PROPERTIES WIN32_EXECUTABLE TRUE)
 
 if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
@@ -144,8 +87,8 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
   # assets
   set(ASSET_FILES
-    ${CMAKE_SOURCE_DIR}/skyrim_platform/savefile/template.ess
-    ${CMAKE_SOURCE_DIR}/skyrim_platform/assets/cursor.png
+    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/savefile/template.ess
+    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/cursor.png
   )
   cmrc_add_resource_library(skyrim_plugin_resources ${ASSET_FILES}
     ALIAS assets NAMESPACE skyrim_plugin_resources WHENCE skyrim_platform
@@ -165,17 +108,20 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     COMMAND install tsc-watch@4.2.3 typescript@3.8.3 --save
   )
 
+  npm_execute_command(
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/tools/dev_service"
+    COMMAND install
+  )
+
   file(GLOB_RECURSE platform_src "skyrim_platform/*" "${SKYRIM_MP_ROOT}/.clang-format")
   add_library(skyrim_platform SHARED ${platform_src})
   target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE skyrim_plugin_resources ui)
   set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
   target_include_directories(skyrim_platform PRIVATE "${third_party}")
   target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
+  target_link_libraries(skyrim_platform PRIVATE cef)
   apply_default_settings(TARGETS skyrim_platform)
-  integrate_vcpkg(
-    TARGETS skyrim_platform
-    VCPKG_PATH "${VCPKG_ROOT}"
-  )
+  list(APPEND VCPKG_DEPENDENT skyrim_platform)
 
   file(GLOB_RECURSE platform_entry_src "skyrim_platform_entry/*")
   list(APPEND platform_entry_src "${SKYRIM_MP_ROOT}/.clang-format")
@@ -190,11 +136,6 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
 
   function(add_papyrus_library)
-    if(NOT SKYRIM_DIR)
-      message(WARNING "add_papyrus_library does nothing due to missing SKYRIM_DIR")
-      return()
-    endif()
-
     set(options)
     set(oneValueArgs NAME DIRECTORY)
     set(multiValueArgs)
@@ -205,11 +146,13 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(GLOB src ${A_DIRECTORY}/*.psc)
 
     set(OUTPUT_DIR ${CMAKE_SOURCE_DIR}/pex)
-    add_custom_target(${A_NAME} ALL
-      COMMAND "${SKYRIM_DIR}\\Papyrus Compiler\\PapyrusCompiler.exe"
+    if(SKYRIM_DIR)
+      add_custom_target(${A_NAME} ALL
+        COMMAND "${SKYRIM_DIR}\\Papyrus Compiler\\PapyrusCompiler.exe"
         ${A_DIRECTORY} -output=${OUTPUT_DIR} -import=${A_DIRECTORY} -all
-      SOURCES ${src}
-    )
+        SOURCES ${src}
+      )
+    endif()
   endfunction()
 
   add_papyrus_library(NAME TESModPlatformPsc DIRECTORY "${CMAKE_SOURCE_DIR}/psc")
@@ -218,17 +161,11 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   endif()
 
   # For dev_service
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt ${CEF_DIR})
-
-  if(TARGET TESModPlatformPsc)
-    add_custom_command(
-      TARGET TESModPlatformPsc POST_BUILD COMMAND
-      ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>
-    )
-  endif()
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt ${CEF_ROOT})
+  add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
 
   add_custom_target(codegen ALL
-    COMMAND node ${CMAKE_SOURCE_DIR}/codegen/index.js
+    COMMAND node ${CMAKE_SOURCE_DIR}/src/platform_se/codegen/index.js
     WORKING_DIRECTORY ${wdir}
   )
 endif()
@@ -238,10 +175,28 @@ apply_default_settings(TARGETS
   core_library hooks reverse ui SkyrimPlatformCEF
 )
 
-foreach(tgt SkyrimPlatformCEF ui hooks reverse core_library)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(${tgt} PRIVATE "/GR-")
-  else()
-    message(FATAL_ERROR "Disabling RTTI is not implemented for this compiler")
-  endif()
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/src/cmake/modules)
+
+foreach(target ${VCPKG_DEPENDENT})
+  find_package(ChakraCore REQUIRED)
+  target_link_libraries(${target} PUBLIC ChakraCore::ChakraCore)
+
+  find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
+  get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
+  target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
+
+  find_path(HTTPLIB_INCLUDE_DIR NAMES httplib.h PATH_SUFFIXES include)
+  get_filename_component(HTTPLIB_INCLUDE_DIR ${HTTPLIB_INCLUDE_DIR} DIRECTORY)
+  target_include_directories(${target} PUBLIC ${HTTPLIB_INCLUDE_DIR})
+
+  find_package(ZLIB REQUIRED)
+  target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
+
+  find_library(MHOOH_LIBRARIES mhook)
+  find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib)
+  target_link_libraries(${target} PUBLIC ${MHOOH_LIBRARIES})
+  target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
+
+  find_package(directxtk CONFIG REQUIRED)
+  target_link_libraries(${target} PUBLIC Microsoft::DirectXTK)
 endforeach()
