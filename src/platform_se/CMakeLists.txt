@@ -155,14 +155,17 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     endif()
   endfunction()
 
+  set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
+
   add_papyrus_library(NAME TESModPlatformPsc DIRECTORY "${CMAKE_SOURCE_DIR}/psc")
   if(TARGET TESModPlatformPsc)
-    add_dependencies(TESModPlatformPsc skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
+    add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
   endif()
 
   # For dev_service
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt ${CEF_ROOT})
   add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
+  add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 
   add_custom_target(codegen ALL
     COMMAND node ${CMAKE_SOURCE_DIR}/src/platform_se/codegen/index.js
