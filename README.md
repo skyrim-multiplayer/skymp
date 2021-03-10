@@ -60,7 +60,7 @@ SkyrimPlatform is technically an SKSE plugin written in C++. When writing script
 SkyrimPlatform supports imports/exports thanks to its own module loader which mimics [systemjs](https://github.com/systemjs/systemjs).
 
 ### In-game Browser
-SkyrimPlatform
+SkyrimPlatform comes with Chromium Embedded Framework which allows us to use standard HTML5/CSS3/JavaScript for the UI.
 
 ## Built With
 
