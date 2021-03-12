@@ -10,8 +10,10 @@ export let main = () => {
         let gold = Game.getForm(0xf);
         let darkwood = Game.getDialogueTarget();
 
-        if (darkwood && Game.getPlayer().getItemCount(gold) >= 100) {
-            Game.getPlayer().removeItem(gold, 100, true, darkwood);
+        let player = Game.getPlayer();
+
+        if (player && darkwood && player.getItemCount(gold) >= 100) {
+            player.removeItem(gold, 100, true, darkwood);
             Debug.notification('Thanks for your support');
         }
     });

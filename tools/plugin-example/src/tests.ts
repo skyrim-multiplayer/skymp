@@ -22,17 +22,17 @@ let testCallStaticNoArgs = () => {
     Game.setPerkPoints(0);
             
     expect(Game.getPlayer()).not.to.eql(null);
-    expect(Game.getPlayer().getFormID()).to.eql(0x14);
+    expect(Game.getPlayer()?.getFormID()).to.eql(0x14);
         
     expect(Game.getFormEx(0x14)).not.to.eql(null);
     expect(Game.getForm(0x14)).not.to.eql(null);
             
-    expect(Game.getForm(0x14).getFormID()).to.eql(Game.getPlayer().getFormID());
-    expect(Game.getFormEx(0x14).getFormID()).to.eql(Game.getPlayer().getFormID());
+    expect(Game.getForm(0x14)?.getFormID()).to.eql(Game.getPlayer()?.getFormID());
+    expect(Game.getFormEx(0x14)?.getFormID()).to.eql(Game.getPlayer()?.getFormID());
     expect(Game.getFormEx(-0x14)).to.eql(null);
         
     expect(Game.getForm(0x7)).not.to.eql(null);
-    expect(Game.getPlayer().getBaseObject().getFormID()).to.eql(Game.getForm(0x7).getFormID());
+    expect(Game.getPlayer()?.getBaseObject()?.getFormID()).to.eql(Game.getForm(0x7)?.getFormID());
 
     Game.enableFastTravel(false);
     expect(Game.isFastTravelEnabled()).to.be.false;
@@ -47,10 +47,10 @@ let testCallStaticNoArgs = () => {
     Game.modPerkPoints(-3);
     expect(Game.getPerkPoints()).to.eql(0);
             
-    let x = Game.getPlayer().getPositionX();
-    let y = Game.getPlayer().getPositionY();
-    let z = Game.getPlayer().getPositionZ();
-    expect(Game.findClosestActor(x, y, z, 1000).getFormID()).to.be.equal(Game.getPlayer().getFormID());
+    let x = Game.getPlayer()?.getPositionX() || 0;
+    let y = Game.getPlayer()?.getPositionY() || 0;
+    let z = Game.getPlayer()?.getPositionZ() || 0;
+    expect(Game.findClosestActor(x, y, z, 1000)?.getFormID()).to.be.equal(Game.getPlayer()?.getFormID());
     expect(Game.findClosestActor(x, y, z + 200, 10)).to.be.null;
 
     expect(Game.from(null)).to.be.null;
@@ -69,46 +69,46 @@ let testCallStaticNoArgs = () => {
     expect(Form.from(Spell.from(Game.getForm(0x6f953)))).not.to.be.null;
     expect(ObjectReference.from(Game.getForm(0x14))).not.to.be.null;
 
-    Game.getPlayer().getBaseObject().setName('Сергей Бубович');
-    expect(Game.getPlayer().getBaseObject().getName()).to.be.eql('Сергей Бубович');
-    Game.getPlayer().getBaseObject().setName('Pepe');
-    expect(Game.getPlayer().getBaseObject().getName()).to.be.eql('Pepe');
+    Game.getPlayer()?.getBaseObject()?.setName('Сергей Бубович');
+    expect(Game.getPlayer()?.getBaseObject()?.getName()).to.be.eql('Сергей Бубович');
+    Game.getPlayer()?.getBaseObject()?.setName('Pepe');
+    expect(Game.getPlayer()?.getBaseObject()?.getName()).to.be.eql('Pepe');
     
     Debug.sendAnimationEvent(Game.getPlayer(), "jumpstandingstart");
 
-    let ffRefr = Game.getPlayer().placeAtMe(Game.getPlayer().getBaseObject(), 1, false, true);
-    let ffRefrId = ffRefr.getFormID();
+    let ffRefr = Game.getPlayer()?.placeAtMe(Game.getPlayer()?.getBaseObject() || null, 1, false, true);
+    let ffRefrId = ffRefr?.getFormID() || 0;
     expect(ffRefrId).to.be.greaterThan(0xff000000);
     expect(Game.getFormEx(ffRefrId)).not.to.be.null;
-    expect(Game.getFormEx(ffRefrId).getFormID()).to.be.eql(ffRefrId);
+    expect(Game.getFormEx(ffRefrId)?.getFormID()).to.be.eql(ffRefrId);
 
     let ironSword = Game.getFormEx(0x12eb7);
-    let n = Game.getPlayer().getItemCount(ironSword);
-    let addItemReturnValue = Game.getPlayer().addItem(ironSword, 1, true);
-    expect(Game.getPlayer().getItemCount(ironSword)).to.be.eql(n + 1);
+    let n = Game.getPlayer()?.getItemCount(ironSword) || 0;
+    let addItemReturnValue = Game.getPlayer()?.addItem(ironSword, 1, true);
+    expect(Game.getPlayer()?.getItemCount(ironSword)).to.be.eql(n + 1);
     expect(addItemReturnValue).to.be.null;
 
     let barrel = Game.getFormEx(0x60752);
-    let barrelRef = Game.getPlayer().placeAtMe(barrel, 1, true,false);
+    let barrelRef = Game.getPlayer()?.placeAtMe(barrel, 1, true,false) || null;
     expect(barrelRef).to.not.be.null;
 
-    expect(barrelRef.getItemCount(ironSword)).to.be.eql(0);
-    barrelRef.addItem(ironSword, 10, false);
-    expect(barrelRef.getItemCount(ironSword)).to.be.eql(10);
-    barrelRef.removeItem(ironSword, 5, true, Game.getPlayer());
-    expect(barrelRef.getItemCount(ironSword)).to.be.eql(5);
-    expect(Game.getPlayer().getItemCount(ironSword)).to.eql(5 + n + 1);
+    expect(barrelRef?.getItemCount(ironSword)).to.be.eql(0);
+    barrelRef?.addItem(ironSword, 10, false);
+    expect(barrelRef?.getItemCount(ironSword)).to.be.eql(10);
+    barrelRef?.removeItem(ironSword, 5, true, Game.getPlayer());
+    expect(barrelRef?.getItemCount(ironSword)).to.be.eql(5);
+    expect(Game.getPlayer()?.getItemCount(ironSword)).to.eql(5 + n + 1);
 
-    Game.getPlayer().addItem(barrelRef, 10, false);
-    Game.getPlayer().removeItem(barrelRef, 10, false, null);
+    Game.getPlayer()?.addItem(barrelRef, 10, false);
+    Game.getPlayer()?.removeItem(barrelRef, 10, false, null);
 
     let blackreachWeather = Game.getFormEx(0x48c14);
-    Game.getPlayer().addItem(blackreachWeather, 1, false);
-    Game.getPlayer().removeItem(blackreachWeather, 1, false, null);
+    Game.getPlayer()?.addItem(blackreachWeather, 1, false);
+    Game.getPlayer()?.removeItem(blackreachWeather, 1, false, null);
 
-    expect(barrelRef.getItemCount(ironSword)).to.not.eql(0);
-    barrelRef.removeItem(ironSword, -1, true, null);
-    expect(barrelRef.getItemCount(ironSword)).to.be.eql(0);
+    expect(barrelRef?.getItemCount(ironSword)).to.not.eql(0);
+    barrelRef?.removeItem(ironSword, -1, true, null);
+    expect(barrelRef?.getItemCount(ironSword)).to.be.eql(0);
 
     printConsole('Test passed');
 };
@@ -116,7 +116,8 @@ let testCallStaticNoArgs = () => {
 export let main = () => {
     let cmd = findConsoleCommand(' ConfigureUM');
     cmd.shortName = cmd.longName = 'test';
-    cmd.execute = (selectedRefId: number, testName: string) => {
+    cmd.execute = (...args: unknown[]) => {
+        const [selectedRefId, testName] = args;
         if (testName === 'all') {
             once('update', () => runTest(testCallStaticNoArgs));
         }

@@ -74,6 +74,10 @@ SkyrimPlatform comes with Chromium Embedded Framework which allows us to use sta
 
 You can download a latest build [here](https://skymp.io/nightly/index.html) An archive contains the Skyrim Platform distribution and the plugin example.
 
+## Writing Mods
+
+See [plugin example](https://github.com/skyrim-multiplayer/skyrim-platform/tree/master/tools/plugin-example).
+
 ## Building From Source
 
 You can find instructions on setting up the project locally below.

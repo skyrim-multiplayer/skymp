@@ -1,17 +1,23 @@
 # skyrimplatform-plugin-example
 
-## Инструкция
+## Setting Up
 
-1. Скачайте zip-архивом или с помощью Git данный репозиторий.
-2. Используйте `npm i` в командной строке, чтобы установить зависимости.
-3) Запустите `npm run dev`. Вы увидите ошибку. В файле `tsc/config.js` поменяйте `seRoot` на корректный путь к директории со Skyrim Special Edition. Путь должен такие слэши: `/` (не `\\`).
-4) Перезапустите `npm run dev`. В случае успеха появится надпись `Found 0 errors, installing plugin-example.js`
-5) Авторизируйтесь в Steam и запустите игру с помощью `skse64_loader.exe`.
+1. Run `npm i` on the command line to install the dependencies.
+2. Create a file `tsc/config.js` with the following contents:
+   ```js
+   module.exports = {
+       // Change `seRoot` to the correct path to the Skyrim SE folder. The path should have slashes like this: `/` (not `\\`).
+       seRoot: "C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
+   };
+   ```
 
-В консоли должен быть следующий вывод (консоль открывается на `~` в игре).
-```
+3. Run `npm run dev`. If everything is ok, the message `Found 0 errors, installing plugin-example.js` will appear.
+4. Log in to Steam and start the game with `skse64_loader.exe`.
+
+The console should display the following output (console opens to `~` in game).
+``,
 Hello SE
 [Script] Hello Platform
-```
+``,
 
-Убедитесь, что `src/example.ts` работает. Для этого в командной строке напишите `coc riverwood`. Вы телепортируетесь в локацию. Заговорите с Фендалом. У вас должны отняться 100 золотых и появиться надпись `Thanks for support`. Это пример скрипта.
+Make sure `src/example.ts` is working. To do this, write `coc riverwood` on the command line. You will be teleported to the location. Talk to Fendal. You should take away 100 gold and the inscription `Thanks for support` will appear. This is a sample script.
