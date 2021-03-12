@@ -28,7 +28,11 @@ export interface MakePropertyOptions {
 }
 
 export type JsonSerializablePrimitive = string | number | null;
-export type JsonSerializable = JsonSerializablePrimitive | JsonSerializable[] | { [key: string]: JsonSerializable } | Record<string, JsonSerializable>;
+export type JsonSerializable =
+  | JsonSerializablePrimitive
+  | JsonSerializable[]
+  | { [key: string]: JsonSerializable }
+  | Record<string, JsonSerializable>;
 
 export interface EspmField {
   readonly type: string;
@@ -69,10 +73,21 @@ export type PapyrusGlobalFunction = (
 export interface Inventory {
   entries: InventoryItem[];
 }
-
 export interface InventoryItem {
   baseId: number;
   count: number;
+}
+export interface InventoryEq {
+  entries: InventoryItemEq[];
+}
+export interface InventoryItemEq {
+  baseId: number;
+  count: number;
+  worn: boolean;
+}
+export interface Equipment {
+  inv: InventoryEq;
+  numChanges: number;
 }
 
 export interface Mp {
@@ -89,6 +104,7 @@ export interface Mp {
   get(formId: number, propertyName: 'pos'): [number, number, number];
   get(formId: number, propertyName: 'angle'): [number, number, number];
   get(formId: number, propertyName: 'inventory'): Inventory;
+  get(formId: number, propertyName: 'equipment'): Equipment;
   get(formId: number, propertyName: 'baseDesc'): string;
   get(formId: 0, propertyName: 'onlinePlayers'): number[];
 
@@ -100,6 +116,7 @@ export interface Mp {
    */
   set(formId: number, propertyName: string, newValue: JsonSerializable): void;
   set(formId: number, propertyName: 'inventory', newValue: Inventory): void;
+  set(formId: number, propertyName: 'pos' | 'angle', newValue: [number, number, number]): void;
 
   /**
    * Creates a new property that would be attached to all instances of

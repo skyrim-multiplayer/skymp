@@ -78,3 +78,7 @@ export const inPoly = (x: number, y: number, xp: number[], yp: number[]) => {
   cacheInPoly[index] = c;
   return c;
 };
+
+export const uint8arrayToStringMethod = (myUint8Arr: Uint8Array) => {
+  return String.fromCharCode.apply(null, [...myUint8Arr]);
+};

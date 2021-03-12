@@ -1,5 +1,5 @@
 import { Mp, PapyrusValue, PapyrusObject } from '../types/mp';
-import { getBoolean, getNumber, getObject } from '../utils/papyrusArgs';
+import { getNumber, getObject } from '../utils/papyrusArgs';
 
 const getDistance = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): number => {
   const target = getObject(args, 0);

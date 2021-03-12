@@ -1,6 +1,6 @@
 import { sprintf } from '../../lib/sprintf-js';
 import { Mp, PapyrusValue, PapyrusObject } from '../types/mp';
-import { getObject, getString, getStringArray } from '../utils/papyrusArgs';
+import { getBoolean, getObject, getString, getStringArray } from '../utils/papyrusArgs';
 
 const executeUiCommand = (mp: Mp, self: null, args: PapyrusValue[]): void => {
   const actor = getObject(args, 0);
@@ -61,13 +61,20 @@ const getOnlinePlayers = (mp: Mp): PapyrusObject[] => {
   return res;
 };
 
-const asPerk = (mp: Mp, self: null, args: PapyrusValue[]) => {
-  return getObject(args, 0);
+const asConvert = (mp: Mp, self: null, args: PapyrusValue[]): PapyrusValue => getObject(args, 0);
+
+const stringToInt = (mp: Mp, self: null, args: PapyrusValue[]): number => +getString(args, 0);
+
+const setBrowserVisible = (mp: Mp, self: null, args: PapyrusValue[]) => {
+  const ac = getObject(args, 0);
+  const visible = getBoolean(args, 1);
+  mp.set(mp.getIdFromDesc(ac.desc), 'browserVisible', visible);
 };
 
-// TODO: In papyrus 0xff000000 As Int return 0, so i create M.HexToInt
-const hexToInt = (mp: Mp, self: null, args: PapyrusValue[]) => {
-  return +getString(args, 0);
+const setBrowserFocused = (mp: Mp, self: null, args: PapyrusValue[]) => {
+  const ac = getObject(args, 0);
+  const focused = getBoolean(args, 1);
+  mp.set(mp.getIdFromDesc(ac.desc), 'browserFocused', focused);
 };
 
 export const localizationDefault: Localization = { getText: (x) => x };
@@ -90,9 +97,16 @@ export const register = (mp: Mp, localization: Localization = localizationDefaul
 
     mp.registerPapyrusFunction('global', className, 'GetOnlinePlayers', () => getOnlinePlayers(mp));
 
-    mp.registerPapyrusFunction('global', className, 'AsPerk', (self, args) => asPerk(mp, self, args));
+    mp.registerPapyrusFunction('global', className, 'AsPerk', (self, args) => asConvert(mp, self, args));
 
-    mp.registerPapyrusFunction('global', className, 'HexToInt', (self, args) => hexToInt(mp, self, args));
+    mp.registerPapyrusFunction('global', className, 'StringToInt', (self, args) => stringToInt(mp, self, args));
+
+    mp.registerPapyrusFunction('global', className, 'SetBrowserVisible', (self, args) =>
+      setBrowserVisible(mp, self, args)
+    );
+    mp.registerPapyrusFunction('global', className, 'SetBrowserFocused', (self, args) =>
+      setBrowserFocused(mp, self, args)
+    );
   }
 };
 
