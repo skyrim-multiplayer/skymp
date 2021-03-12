@@ -217,4 +217,7 @@ foreach(target ${VCPKG_DEPENDENT})
 
   find_package(directxtk CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC Microsoft::DirectXTK)
+  
+  find_package(spdlog CONFIG REQUIRED)
+  target_link_libraries(${target} PUBLIC spdlog::spdlog)
 endforeach()

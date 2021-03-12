@@ -1,6 +1,8 @@
 #include "ConsoleApi.h"
+#include "InGameConsolePrinter.h"
 #include "NullPointerException.h"
 #include "ThreadPoolWrapper.h"
+#include "WindowsConsolePrinter.h"
 #include <RE/CommandTable.h>
 #include <RE/ConsoleLog.h>
 #include <RE/Script.h>
@@ -8,6 +10,7 @@
 #include <RE/TESObjectREFR.h>
 #include <cstdlib>
 #include <ctpl/ctpl_stl.h>
+#include <iostream>
 #include <map>
 #include <skse64/ObScript.h>
 #include <skse64_common/SafeWrite.h>
@@ -15,6 +18,11 @@
 
 extern ThreadPoolWrapper g_pool;
 extern TaskQueue g_taskQueue;
+
+namespace {
+// TODO: Add printers switching
+static std::shared_ptr<IConsolePrinter> g_printer(new InGameConsolePrinter);
+}
 
 namespace {
 struct ConsoleComand
@@ -40,30 +48,7 @@ bool AreCommandNamesValidAndEqual(const std::string& first,
 
 JsValue ConsoleApi::PrintConsole(const JsFunctionArguments& args)
 {
-  auto console = RE::ConsoleLog::GetSingleton();
-  if (!console)
-    throw NullPointerException("console");
-
-  std::string s;
-
-  for (size_t i = 1; i < args.GetSize(); ++i) {
-    JsValue str = args[i];
-    if (args[i].GetType() == JsValue::Type::Object &&
-        !args[i].GetExternalData()) {
-
-      JsValue json = JsValue::GlobalObject().GetProperty("JSON");
-      str = json.GetProperty("stringify").Call({ json, args[i] });
-    }
-    s += str.ToString() + ' ';
-  }
-
-  int maxSize = 128;
-  if (s.size() > maxSize) {
-    s.resize(maxSize);
-    s += "...";
-  }
-  console->Print("[Script] %s", s.data());
-
+  g_printer->Print(args);
   return JsValue::Undefined();
 }
 

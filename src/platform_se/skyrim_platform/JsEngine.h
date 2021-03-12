@@ -113,6 +113,7 @@ private:
   void* value = nullptr;
 };
 
+// 'this' arg is at index 0
 class JsFunctionArguments
 {
 public:

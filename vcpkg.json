@@ -9,6 +9,7 @@
       "cpp-httplib",
       "zlib",
       "mhook",
-      "directxtk"
+      "directxtk",
+      "spdlog"
     ]
 }
