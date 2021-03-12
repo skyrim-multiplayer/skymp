@@ -6,7 +6,10 @@
   "scripts": {
     "watch": "nodemon --ignore dist/ .",
     "dev": "npm run watch",
-    "pack": "cross-env DEV_SERVICE_ONLY_ONCE=yes DEV_SERVICE_NO_GAME=yes node ."
+    "pack": "cross-env DEV_SERVICE_ONLY_ONCE=yes DEV_SERVICE_NO_GAME=yes node .",
+    "pack-debug": "cross-env DEFAULT_CONFIG=Debug DEV_SERVICE_ONLY_ONCE=yes DEV_SERVICE_NO_GAME=yes node .",
+    "start": "cross-env DEV_SERVICE_ONLY_ONCE=yes node .",
+    "start-debug": "cross-env DEFAULT_CONFIG=Debug DEV_SERVICE_ONLY_ONCE=yes node ."
   },
   "keywords": [],
   "author": "Pospelov",

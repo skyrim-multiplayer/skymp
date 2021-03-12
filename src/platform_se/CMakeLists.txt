@@ -146,7 +146,7 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(GLOB src ${A_DIRECTORY}/*.psc)
 
     set(OUTPUT_DIR ${CMAKE_SOURCE_DIR}/pex)
-    if(SKYRIM_DIR)
+    if(EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
       add_custom_target(${A_NAME} ALL
         COMMAND "${SKYRIM_DIR}\\Papyrus Compiler\\PapyrusCompiler.exe"
         ${A_DIRECTORY} -output=${OUTPUT_DIR} -import=${A_DIRECTORY} -all
@@ -162,8 +162,14 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
   endif()
 
-  # For dev_service
+  if(TARGET TESModPlatformPsc)
+    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
+  endif()
+
+  # cef_dir.txt is used by dev_service in any mode
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt ${CEF_ROOT})
+
+  # touch dev_service in watch mode
   add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
   add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 
@@ -171,6 +177,15 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     COMMAND node ${CMAKE_SOURCE_DIR}/src/platform_se/codegen/index.js
     WORKING_DIRECTORY ${wdir}
   )
+  list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
+
+  add_dependencies(vs_startup_project ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+
+  add_custom_target(pack ALL
+    COMMAND npm run pack$<$<CONFIG:Debug>:-debug>
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tools/dev_service
+  )
+  add_dependencies(pack ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 endif()
 
 apply_default_settings(TARGETS

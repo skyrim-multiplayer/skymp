@@ -166,7 +166,8 @@ const watchCallback = (_eventType, fileName) => {
 };
 
 if (process.env.DEV_SERVICE_ONLY_ONCE) {
-  watchCallback(undefined, "touch_Release");
+  const defaultConfig = process.env.DEFAULT_CONFIG === "Debug" ? "Debug" : "Release";
+  watchCallback(undefined, `touch_${defaultConfig}`);
 } else {
   console.log(`Watching for changes in ${bin}`)
   fs.watch(bin, watchCallback);

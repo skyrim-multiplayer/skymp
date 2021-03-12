@@ -93,7 +93,7 @@ Before your start make sure that your system meets the conditions:
 * [NodeJS 12.x](https://nodejs.org/en/download/) or higher
 * [CMake 3.20](https://cmake.org/download/) or higher
 
-### Configuring Project
+### Configuring and Building
 
 1. Clone the repo, including submodules
    ```sh
@@ -103,49 +103,14 @@ Before your start make sure that your system meets the conditions:
    ```sh
    mkdir build
    ```
-3. Generate project files with CMake
+3. Generate project files with CMake (replace path with your actual Skyrim SE folder)
    ```sh
    cd build
-   cmake ..
+   cmake .. -DSKYRIM_DIR="C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
    ```
-
-### Building
-
-1. Open `build/platform_se.sln` with Visual Studio, then `Build -> Build Solution`
-2. Form a SkyrimPlatform distribution with dev_service
-   ```sh
-   cd tools/dev_service
-   npm run pack
-   ```
-   Normally you would see something like
-   ```
-   > dev_service@1.0.0 pack c:\projects\skyrim-platform\tools\dev_service
-   > cross-env DEV_SERVICE_ONLY_ONCE=yes DEV_SERVICE_NO_GAME=yes node .
-
-   Dev service started
-   Binary dir is 'c:\projects\skyrim-platform\build'
-   Source dir is 'c:\projects\skyrim-platform'
-   Skyrim Platform Release x64 updated.
-   ```
-3. Copy contents of `tools/dev_service/dist` folder to the Skyrim SE root
-
-### Building in Watch Mode
-
-Copying binaries and restarting the game on each compilation may be boring and frustrating. Let's turn on the watch mode letting dev_service doing its job.
-
-1. Create `tools/dev_service/config.js` with `SkyrimSEFolder` specified like in the example below
-   ```js
-   module.exports = {
-     SkyrimSEFolder:
-       "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition",
-   };
-   ```
-2. Launch dev_service in watch mode
-   ```sh
-   cd tools/dev_service
-   npm run watch
-   ```
-After doing these steps you would see that dev_service restarts your game automatically every time you compile Skyrim Platform.
+4. Open `build/platform_se.sln` with Visual Studio, then `Build -> Build Solution`.
+   All build artifacts would be placed into `tools/dev_service/dist`.
+   Tip: `Debug -> Start Without Debugging` would copy everything to your `SKYRIM_DIR` and launch/restart the game.
 
 <!-- USAGE EXAMPLES -->
 ## Real World Usage
