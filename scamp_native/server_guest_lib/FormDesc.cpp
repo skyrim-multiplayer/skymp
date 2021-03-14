@@ -1,19 +1,19 @@
 #include "FormDesc.h"
 #include <sstream>
 
-std::string FormDesc::ToString() const
+std::string FormDesc::ToString(char delimiter) const
 {
   std::stringstream ss;
   ss << std::hex << shortFormId;
   if (!file.empty())
-    ss << ':' << file;
+    ss << delimiter << file;
   return ss.str();
 }
 
-FormDesc FormDesc::FromString(std::string str)
+FormDesc FormDesc::FromString(std::string str, char delimiter)
 {
   for (auto& ch : str)
-    if (ch == ':')
+    if (ch == delimiter)
       ch = ' ';
 
   std::istringstream ss(str);

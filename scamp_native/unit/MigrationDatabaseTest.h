@@ -1,14 +1,14 @@
+#include "FileDatabase.h"
 #include "MigrationDatabase.h"
-#include "SqliteDatabase.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
-inline std::shared_ptr<IDatabase> MakeDatabase(const char* fileName)
+inline std::shared_ptr<IDatabase> MakeDatabase(const char* directory)
 {
-  if (std::filesystem::exists(fileName))
-    std::filesystem::remove(fileName);
+  if (std::filesystem::exists(directory))
+    std::filesystem::remove_all(directory);
 
-  return std::make_shared<SqliteDatabase>(fileName);
+  return std::make_shared<FileDatabase>(directory, spdlog::default_logger());
 }
 
 inline MpChangeForm CreateChangeForm_(const char* descStr,
@@ -29,12 +29,12 @@ inline std::set<MpChangeForm> GetAllChangeForms(std::shared_ptr<IDatabase> db)
 
 TEST_CASE("Moves data from one database from another", "[MigrationDatabase]")
 {
-  auto oldDatabase = MakeDatabase("unit.sqlite");
+  auto oldDatabase = MakeDatabase("unit");
   oldDatabase->Upsert({ CreateChangeForm_("0") });
   oldDatabase->Upsert({ CreateChangeForm_("1") });
   oldDatabase->Upsert({ CreateChangeForm_("2") });
 
-  auto newDatabase = MakeDatabase("unit1.sqlite");
+  auto newDatabase = MakeDatabase("unit1");
   std::vector<MpChangeForm> initialNewDatabase = {
     CreateChangeForm_("3"), CreateChangeForm_("4"),
     CreateChangeForm_("0", { 1, 2, 3 })

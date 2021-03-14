@@ -51,7 +51,7 @@ public:
                        uint32_t cellOrWorld, ProfileId profileId = -1);
   void SetUserActor(Networking::UserId userId, uint32_t actorFormId);
   uint32_t GetUserActor(Networking::UserId userId);
-  Networking::UserId PartOne::GetUserByActor(uint32_t formId);
+  Networking::UserId GetUserByActor(uint32_t formId);
   void DestroyActor(uint32_t actorFormId);
   void SetRaceMenuOpen(uint32_t formId, bool open);
   void SendCustomPacket(Networking::UserId userId,

@@ -99,19 +99,11 @@ struct ReadHelper<Key, Value, false>
     if (v.error() != simdjson::error_code::SUCCESS)
       throw JsonIndexException(j, key, v.error());
 
-      // We use different versions of simdjson on linux and windows
-#ifdef WIN32
-    auto res = v.get<typename Value>();
-    if (res.error() != simdjson::error_code::SUCCESS)
-      throw JsonIndexException(j, key, res.error());
-    *out = res.first;
-#else
     Value result;
     auto ec = v.get(result);
     if (ec != simdjson::error_code::SUCCESS)
       throw JsonIndexException(j, key, ec);
     *out = result;
-#endif
   }
 };
 

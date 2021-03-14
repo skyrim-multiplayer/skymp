@@ -1,18 +1,19 @@
 #include "TestUtils.hpp"
 
 #include "AsyncSaveStorage.h"
+#include "FileDatabase.h"
 #include "MpChangeForms.h"
-#include "SqliteDatabase.h"
 #include <filesystem>
 
 std::shared_ptr<ISaveStorage> MakeSaveStorage()
 {
-  auto fileName = "unit.sqlite";
-  if (std::filesystem::exists(fileName))
-    std::filesystem::remove(fileName);
+  auto directory = "unit";
+
+  if (std::filesystem::exists(directory))
+    std::filesystem::remove_all(directory);
 
   return std::make_shared<AsyncSaveStorage>(
-    std::make_shared<SqliteDatabase>(fileName));
+    std::make_shared<FileDatabase>(directory, spdlog::default_logger()));
 }
 
 MpChangeForm CreateChangeForm(const char* descStr)

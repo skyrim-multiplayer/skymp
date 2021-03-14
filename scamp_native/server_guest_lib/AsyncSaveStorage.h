@@ -1,6 +1,7 @@
 #pragma once
 #include "IDatabase.h"
 #include "ISaveStorage.h"
+#include <list>
 #include <spdlog/logger.h>
 
 class AsyncSaveStorage : public ISaveStorage

@@ -1,4 +1,3 @@
-#pragma once
 #include "Structures.h"
 #include "Utils.h"
 

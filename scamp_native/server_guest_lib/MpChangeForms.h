@@ -60,6 +60,9 @@ public:
                            baseContainerAdded, nextRelootDatetime, isDisabled,
                            profileId, isRaceMenuOpen, lookDump, equipmentDump);
   }
+
+  static nlohmann::json ToJson(const MpChangeForm& changeForm);
+  static MpChangeForm JsonToChangeForm(simdjson::dom::element& element);
 };
 
 inline bool operator==(const MpChangeForm& lhs, const MpChangeForm& rhs)

@@ -1,3 +1,4 @@
+vcpkg_installed
 node_modules
 build
 dist_back

@@ -1,5 +1,6 @@
 #include "AsyncSaveStorage.h"
 #include "EspmGameObject.h"
+#include "FileDatabase.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
 #include "MigrationDatabase.h"
@@ -163,9 +164,9 @@ public:
     }
 
     if (args) {
-      auto& argsArray = args->get_array().value();
-      for (size_t i = 0; i < argsArray.size(); ++i) {
-        std::string elementString = simdjson::minify(argsArray.at(i));
+      auto argsArray = args->get_array();
+      for (size_t i = 0; i < argsArray.value().size(); ++i) {
+        std::string elementString = simdjson::minify(argsArray.value().at(i));
         auto builtinJson = env.Global().Get("JSON").As<Napi::Object>();
         auto parse = builtinJson.Get("parse").As<Napi::Function>();
         Napi::Value resultOfParsing =
@@ -236,7 +237,7 @@ std::shared_ptr<IDatabase> CreateDatabase(
 {
   auto databaseDriver = settings.count("databaseDriver")
     ? settings["databaseDriver"].get<std::string>()
-    : std::string("sqlite");
+    : std::string("file");
 
   if (databaseDriver == "sqlite") {
     auto databaseName = settings.count("databaseName")
@@ -245,6 +246,15 @@ std::shared_ptr<IDatabase> CreateDatabase(
 
     logger->info("Using sqlite with name '" + databaseName + "'");
     return std::make_shared<SqliteDatabase>(databaseName);
+  }
+
+  if (databaseDriver == "file") {
+    auto databaseName = settings.count("databaseName")
+      ? settings["databaseName"].get<std::string>()
+      : std::string("world");
+
+    logger->info("Using file with name '" + databaseName + "'");
+    return std::make_shared<FileDatabase>(databaseName, logger);
   }
 
   if (databaseDriver == "mongodb") {

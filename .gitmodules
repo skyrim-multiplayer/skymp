@@ -4,3 +4,6 @@
 [submodule "skymp5-gamemode"]
 	path = skymp5-gamemode
 	url = https://github.com/skyrim-multiplayer/skymp5-gamemode.git
+[submodule "vcpkg"]
+	path = vcpkg
+	url = https://github.com/skyrim-multiplayer/vcpkg.git

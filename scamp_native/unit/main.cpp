@@ -3,8 +3,6 @@
 #include <catch2/catch.hpp>
 #include <iostream>
 
-#include <sqlite_orm.h>
-
 #ifndef WIN32
 #  define DATA_DIR "/skyrim_data_dir"
 #else
