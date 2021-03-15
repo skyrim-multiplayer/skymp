@@ -81,6 +81,7 @@ COPY ./tsconfig.back.json ./tsconfig.back.json
 COPY ./jest.config.js ./jest.config.js
 COPY ./skymp5-client ./skymp5-client
 COPY ./skymp5-gamemode ./skymp5-gamemode
-RUN npm run build-ts
+RUN npm i -g parcel@1.12.3 \
+  && npm run build-ts
 
 CMD [ "npm", "run", "start" ]
