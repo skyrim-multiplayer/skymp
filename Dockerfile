@@ -66,6 +66,7 @@ COPY ./scamp_native ./scamp_native
 RUN mkdir build \
   && cd build \ 
   && cmake .. -DSKYMP_DANGER_ENABLE_PARTNER_FEATURES=ON -DCMAKE_TOOLCHAIN_PATH=/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-linux \
+  && cd .. \
   && npm run build-cpp-prod
 
 # Build TypeScript part
