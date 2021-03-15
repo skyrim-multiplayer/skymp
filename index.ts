@@ -10,7 +10,6 @@ import * as objectReference from './src/papyrus/objectReference';
 import * as utility from './src/papyrus/utility';
 import * as game from './src/papyrus/game';
 import * as form from './src/papyrus/form';
-import * as browser from './src/papyrus/browser';
 
 import * as perks from './src/properties/perks';
 import * as avSkill from './src/properties/actorValues/skill';
@@ -47,6 +46,5 @@ actor.register(mp);
 objectReference.register(mp);
 utility.register(mp);
 game.register(mp);
-browser.register(mp);
 
 setTimeout(() => mp.callPapyrusFunction('global', 'GM_Main', '_OnPapyrusRegister', null, []), 0);
