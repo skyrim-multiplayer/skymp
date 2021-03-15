@@ -57,7 +57,9 @@ RUN wget -O node-headers.tar.gz https://nodejs.org/dist/v14.13.1/node-v14.13.1-h
 
 # Install npm dependencies
 COPY ./package.json ./package.json
-RUN npm i && npm i -g parcel@1.12.4
+COPY ./skymp5-client/package.json ./skymp5-client/package.json
+COPY ./skymp5-gamemode/package.json ./skymp5-gamemode/package.json
+RUN npm i
 
 # Build scamp_native (except node addon)
 COPY ./CMakeLists.txt ./CMakeLists.txt
