@@ -57,7 +57,7 @@ RUN wget -O node-headers.tar.gz https://nodejs.org/dist/v14.13.1/node-v14.13.1-h
 
 # Install npm dependencies
 COPY ./package.json ./package.json
-RUN npm i && npm i -g parcel
+RUN npm i && npm i -g parcel@1.12.4
 
 # Build scamp_native (except node addon)
 COPY ./CMakeLists.txt ./CMakeLists.txt
