@@ -11,4 +11,4 @@ jobs:
       - uses: satackey/action-docker-layer-caching@v0.0.8
         continue-on-error: true
       - run: docker build --tag skymp5-server .
-      - run: docker run skymp5-server npm run test
+      - run: docker run skymp5-server npm run test-prod
