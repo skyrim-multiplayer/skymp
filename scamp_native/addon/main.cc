@@ -793,7 +793,10 @@ VarValue GetPapyrusValueFromJsValue(Napi::Value v, bool treatNumberAsInt,
   napi_valuetype t = v.Type();
   switch (t) {
     case napi_valuetype::napi_boolean:
-      return VarValue(static_cast<bool>(v));
+      if (std::string(v.ToString())[0] == 't') {
+        return VarValue(true);
+      }
+      return VarValue(false);
     case napi_valuetype::napi_null: {
       return VarValue::None();
     }
