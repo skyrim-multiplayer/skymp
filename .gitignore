@@ -11,6 +11,5 @@ server-settings.json
 skymp5-server.exe
 pack
 pack-client
-
-data
+world
 push-s3-cfg.json
