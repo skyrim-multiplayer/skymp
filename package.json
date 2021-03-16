@@ -4,7 +4,7 @@
   "versionSkyrimPlatform": "1.1.0",
   "description": "",
   "scripts": {
-    "install": "cd skymp5-gamemode && npm i && cd ../skymp5-client && npm i && cd ../skymp5-front && npm i",
+    "install": "cd skymp5-gamemode && npm i && cd ../skymp5-client && npm i && cd ../skymp5-front && npm i --only=dev && npm i --only=prod",
     "configure": "cmake-js configure",
     "print-configure": "cmake-js print-configure",
     "build": "npm run build-ts && npm run build-cpp",
