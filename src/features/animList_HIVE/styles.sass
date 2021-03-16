@@ -1,0 +1,131 @@
+// Fonts
+$font--dinpro: 'Din-pro'
+$font--alternative: sans-serif
+
+// Colors
+$color--background: rgba(0, 0, 0, .8)
+$color--border: rgba(128, 128, 128, .5)
+$color--text: rgba(255, 255, 255, .6)
+
+// Transitions
+$transition--default: .3s
+  
+#animations
+  font-family: $font--dinpro, $font--alternative
+  font-size: 0.729vw
+  font-weight: normal
+  font-style: normal
+
+  position: absolute
+
+  width: 18.229vw
+
+  padding: 0.156vw
+
+  color: #fff
+  background-color: $color--background
+
+  div::-webkit-scrollbar
+    width: 0.156vw
+  
+    background-color: rgba(138, 138, 138, .3)
+
+  div::-webkit-scrollbar-thumb
+    background-color: #737373
+
+  & > .animations__inner
+    padding: 1.563vw
+
+    border: 0.104vw solid $color--border
+
+    .animations__header
+      display: flex
+      flex-direction: row
+      flex-wrap: wrap
+      justify-content: space-between
+      align-items: center
+
+      .title
+        font-size: 0.938vw
+        font-weight: bold
+        line-height: 1.172vw
+
+        color: #fff
+
+        cursor: pointer
+
+      .close
+        background: none
+
+        cursor: pointer
+
+        display: flex
+        align-items: center
+        justify-content: center
+
+        font-size: 1.042vw
+        line-height: 1
+
+        color: #c4c4c4
+
+        width: 1.354vw
+        height: 1.354vw
+
+        border: 0.104vw solid $color--border
+
+        transition: color $transition--default, background-color $transition--default
+
+        &:hover
+          color: #fff
+          background-color: $color--border
+
+      input
+        width: 100%
+        height: 1.563vw
+
+        font-size: 0.73vw
+
+        margin-top: 0.521vw
+        padding: 0 0.521vw
+
+        color: #858585
+        background-color: #ffffff1a
+
+        &::placeholder
+          color: #858585
+
+    .animations__list
+      display: flex
+      flex-direction: column
+
+      overflow-y: auto 
+
+      padding-right: 0.521vw
+      margin-top: 0.521vw
+
+      max-height: calc(7 * 2.083vw) // 7 - items count in view, 40px - item height
+
+    .back
+      cursor: pointer
+
+      display: block
+
+      font-size: 0.833vw
+
+      width: fit-content
+
+      margin-top: 0.521vw
+
+      color: #858585
+
+      transition: color $transition--default
+
+      &:hover
+        color: #fff
+    
+    p
+      text-align: center
+
+      margin: 1.042vw 0
+
+      color: #858585

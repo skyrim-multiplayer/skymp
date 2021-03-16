@@ -1,0 +1,55 @@
+// Fonts
+$font--dinpro: 'Din-pro'
+$font--alternative: sans-serif
+
+// Colors
+$color--background: rgba(0, 0, 0, .8)
+$color--border: rgba(128, 128, 128, .5)
+$color--text: rgba(255, 255, 255, .6)
+  
+#spawn
+  font-family: $font--dinpro, $font--alternative
+  font-size: 14px
+  font-weight: normal
+  font-style: normal
+
+  padding: 3px
+
+  max-width: 1180px
+
+  color: $color--text
+  background-color: $color--background
+
+  .spawn__inner
+    display: flex
+    flex-direction: column
+    align-items: center
+
+    padding: 75px 75px 25px 75px
+
+    border: 2px solid $color--border
+
+    .spawn__heading
+      font-size: 28px
+      font-weight: 500
+      line-height: 35px
+
+      margin-bottom: 10px
+
+      color: #fff
+
+    .spawn__question
+      font-size: 18px
+      line-height: 22px
+
+      text-align: center
+
+    .spawn__list
+      display: flex
+      flex-direction: row
+      flex-wrap: wrap
+      justify-content: space-between
+
+      margin-top: 50px
+
+      width: 100%

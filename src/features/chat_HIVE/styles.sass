@@ -1,0 +1,122 @@
+$speedChangeToggle: .5s
+$borderMain: 0.104vw solid #8A8A8A88
+
+#chatHIVE
+  width: 30vw
+  height: 2.5vw
+  position: absolute
+  display: flex
+  flex-direction: column
+  justify-content: center
+  align-items: center
+  font-family: Din-pro
+  font-size: 0.729vw
+  background: rgba(0, 0, 0, .8)
+  transition: height $speedChangeToggle ease-in-out
+  &.active
+    height: 19.063vw
+
+  > .header
+    width: 29.583vw
+    height: 2.083vw
+    border: $borderMain
+    display: flex
+    justify-content: space-between
+    align-items: center
+    padding: 0 0.521vw 0 0.781vw
+    cursor: pointer
+
+    > .groups
+      width: 26.563vw
+      height: 0.885vw
+      display: flex
+      align-items: center
+
+      > .group
+        margin-right: 1.302vw
+        color: #808080
+        cursor: pointer
+        transition: color .2s ease-in-out
+        &:hover, &.active
+          color: #F8F8F8
+
+    > .toggle
+      width: 1.042vw
+      height: 1.042vw
+      border: $borderMain
+      cursor: pointer
+      background-image: url('./img/toggle_false.svg')
+      background-repeat: no-repeat
+      background-position: 50%
+      transition: all $speedChangeToggle ease-in-out
+      &:hover
+        background-color: #80808066
+      &.active
+        background-image: url('./img/toggle_true.svg')
+
+  > .body
+    width: 29.583vw
+    height: 0
+    display: flex
+    flex-direction: column
+    justify-content: space-between
+    align-items: center
+    border: $borderMain
+    border-top: none
+    transition: all $speedChangeToggle ease-in-out
+    border-bottom-width: 0
+    overflow: hidden
+    &.active
+      padding-top: 0.521vw
+      height: 16.563vw
+      border-bottom-width: 0.104vw
+
+    > .list
+      width: 28.177vw
+      height: 12.865vw
+      overflow-y: auto
+      &::-webkit-scrollbar
+        background: transparent
+        width: 0.208vw
+      &::-webkit-scrollbar-track
+        background: #8A8A8A55
+      &::-webkit-scrollbar-thumb
+        background: #8A8A8A
+
+      > .message
+        font-weight: 500
+        color: #F8F8F8
+        margin-bottom: 0.365vw
+        line-height: 0.885vw
+
+    > .input
+      width: 29.375vw
+      height: 2.188vw
+      border-top: $borderMain
+      overflow: hidden
+      display: flex
+
+      > input
+        width: 23.750vw
+        height: 2.083vw
+        background-color: transparent
+        color: #f8f8f8
+        font-family: Din-pro
+        padding-left: 0.781vw
+        font-size: 0.729vw
+        &:disabled
+          opacity: 0
+
+      > .send
+        width: 5.625vw
+        height: 2.083vw
+        border-left: $borderMain
+        background-color: #3f3f3f00
+        display: flex
+        justify-content: center
+        align-items: center
+        color: #E3E3E3
+        cursor: pointer
+        transition: background-color .08s ease-in-out
+        &:hover
+          background-color: #3f3f3f

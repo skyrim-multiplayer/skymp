@@ -5,38 +5,36 @@ import "./styles.sass";
 
 class Chat extends React.Component {
   constructor(props) {
-    super(props)
+    super(props);
 
     this.state = {
       isInputFocus: false,
-    }
+    };
 
-    this.ref_input = React.createRef()
+    this.ref_input = React.createRef();
   }
 
   componentDidMount() {
-    document.addEventListener('keydown', this.onKeyDown.bind(this))
+    document.addEventListener("keydown", this.onKeyDown.bind(this));
 
-    this.scrollToLastMessage()
+    this.scrollToLastMessage();
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if(prevProps.list !== this.props.list)
-      this.scrollToLastMessage()
+  componentDidUpdate(prevProps) {
+    if (prevProps.list !== this.props.list) this.scrollToLastMessage();
 
-    if(this.getInputShowBool())
-      this.ref_input.current.focus()
+    if (this.getInputShowBool()) this.ref_input.current.focus();
   }
 
   onKeyDown(e) {
-    const isInputFocus = this.state.isInputFocus
+    const isInputFocus = this.state.isInputFocus;
 
     switch (e.keyCode) {
       case 13: // Enter
-        return this.onClickEnter()
+        return this.onClickEnter();
 
-      case 27: // Escape
-        return this.onUpdateInputShow('false')
+      // case 27: // Escape
+      // return this.onUpdateInputShow('false')
     }
   }
 
@@ -46,75 +44,79 @@ class Chat extends React.Component {
   }
 
   onUpdateInputShow(string) {
-    this.props.updateShowInput(string)
+    this.props.updateShowInput(string);
   }
 
   onClickEnter() {
-    const input = this.props.input
+    const input = this.props.input;
 
-    if(input) {
-      window.mp.send('cef::chat:send', input)
-      this.props.updateInput('')
+    if (input) {
+      window.mp.send("cef::chat:send", input);
+      this.props.updateInput("");
     }
   }
 
   getMessageColorClass(color) {
     switch (color) {
       case 0:
-        return 'default'
-      
+        return "default";
+
       case 1:
-        return 'action'
+        return "action";
 
       case 2:
-        return 'admin'
+        return "admin";
     }
   }
 
   getList() {
     return this.props.list.map((msg, index) => (
-      <div 
-        className='msg'
+      <div
+        className="msg"
         key={`msg-${index}`}
-        dangerouslySetInnerHTML={{__html: this.getMessageText(msg)}}
+        dangerouslySetInnerHTML={{ __html: this.getMessageText(msg) }}
       />
-    ))
+    ));
   }
 
   getMessageText(text) {
-    let hexCount = 0
+    let hexCount = 0;
 
     for (let i = 0; i < text.length; i++) {
-      if(i + 1 !== text.length && text[i] === '$' && text[i + 1] === '{') {
-        const hex = text.substring(i + 2, i + 8)
-        hexCount++
-        text = text.substring(0, i) + `<span style=color:#${hex}>` + text.substring(i + 9, text.length)
+      if (i + 1 !== text.length && text[i] === "#" && text[i + 1] === "{") {
+        const hex = text.substring(i + 2, i + 8);
+        hexCount++;
+        text =
+          text.substring(0, i) +
+          `<span style=color:#${hex}>` +
+          text.substring(i + 9, text.length);
       }
     }
 
     for (let i = 0; i < hexCount; i++) {
-      text += '</span>'
+      text += "</span>";
     }
-    
-    return text
+
+    return text;
   }
 
   getInputShowBool() {
-    return this.props.showInput == 'true' || (this.props.showInput === 'auto' && this.props.isBrowserFocus)
+    return (
+      this.props.showInput == "true" ||
+      (this.props.showInput === "auto" && this.props.isBrowserFocus)
+    );
   }
 
   render() {
     return (
       this.props.show && (
         <div id="chat">
-          <div className="list">
-            {this.getList()}
-          </div>
+          <div className="list">{this.getList()}</div>
 
-          <input 
-            className={`${this.getInputShowBool() && 'show'}`}
+          <input
+            className={`${this.getInputShowBool() && "show"}`}
             type="text"
-            placeholder='Напишите сообщение'
+            placeholder="Напишите сообщение"
             value={this.props.input}
             onChange={(e) => this.props.updateInput(e.target.value)}
             onFocus={(e) => this.setState({ isInputFocus: true })}
