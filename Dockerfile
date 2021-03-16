@@ -77,6 +77,7 @@ COPY ./tsconfig.json ./tsconfig.back.json ./jest.config.js ./
 COPY ./skymp5-client ./skymp5-client
 COPY ./skymp5-gamemode ./skymp5-gamemode
 COPY ./skymp5-front ./skymp5-front
-RUN npm run build-ts
+RUN npm install \
+  && npm run build-ts
 
 CMD [ "npm", "run", "start-prod" ]
