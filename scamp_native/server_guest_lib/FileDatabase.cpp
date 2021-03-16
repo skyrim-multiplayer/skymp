@@ -46,8 +46,9 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
 
   for (auto& entry : std::filesystem::directory_iterator(p)) {
     try {
-      std::string jsonDump;
-      std::ifstream(entry.path()) >> jsonDump;
+      std::ifstream t(entry.path());
+      std::string jsonDump((std::istreambuf_iterator<char>(t)),
+                           std::istreambuf_iterator<char>());
 
       auto result = parser.parse(jsonDump).value();
       iterateCallback(MpChangeForm::JsonToChangeForm(result));

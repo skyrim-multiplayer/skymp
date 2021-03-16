@@ -18,6 +18,7 @@ SqliteDatabase::SqliteDatabase(std::string filename_)
 size_t SqliteDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
   Throw();
+  return 0;
 }
 
 void SqliteDatabase::Iterate(const IterateCallback& iterateCallback)

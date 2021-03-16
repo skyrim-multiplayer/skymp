@@ -53,6 +53,26 @@ void WaitForNextUpsert(ISaveStorage& st, WorldState& wst)
   }
 }
 
+TEST_CASE("ChangeForm with spaces is saved correctly", "[save]")
+{
+  auto st = MakeSaveStorage();
+
+  MpChangeForm f1;
+  f1.formDesc = { 1, "" };
+
+  Look look;
+  look.name = "La La La";
+  look.weight = 0.1;
+
+  f1.lookDump = look.ToJson();
+
+  UpsertSync(*st, { f1 });
+
+  auto res = ISaveStorageUtils::FindAllSync(*st);
+  REQUIRE(res.size() == 1);
+  REQUIRE(res[{ 1, "" }].lookDump == look.ToJson());
+}
+
 TEST_CASE("ChangeForm is saved correctly", "[save]")
 {
   auto st = MakeSaveStorage();

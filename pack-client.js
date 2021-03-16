@@ -130,6 +130,7 @@ const packWin32 = async () => {
     {
       recursive: true,
       archiveType: "zip",
+      $bin: sevenZipBin.path7za
     }
   );
   await new Promise((resolve, reject) => {
