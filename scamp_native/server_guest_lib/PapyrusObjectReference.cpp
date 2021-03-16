@@ -179,9 +179,10 @@ VarValue PapyrusObjectReference::SetAngle(
 {
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
   if (selfRefr && arguments.size() >= 3) {
-    selfRefr->SetAngle({ static_cast<float>(arguments[0].CastToFloat()),
-                         static_cast<float>(arguments[1].CastToFloat()),
-                         static_cast<float>(arguments[2].CastToFloat()) });
+    selfRefr->SetAngle(
+      { (float)static_cast<double>(arguments[0].CastToFloat()),
+        (float)static_cast<double>(arguments[1].CastToFloat()),
+        (float)static_cast<double>(arguments[2].CastToFloat()) });
   }
   return VarValue::None();
 }

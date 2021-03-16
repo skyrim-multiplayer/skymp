@@ -54,7 +54,7 @@ std::string SpSnippetFunctionGen::SerializeArguments(
         ss << static_cast<int>(arg);
         break;
       case VarValue::kType_Float:
-        ss << static_cast<float>(arg);
+        ss << static_cast<double>(arg);
         break;
       default: {
         std::stringstream err;

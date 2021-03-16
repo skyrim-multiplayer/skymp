@@ -7,11 +7,18 @@ export class Settings {
   maxPlayers = 100;
   master: string | null = null;
   name = "Yet Another Server";
-  gamemodePath = "./gamemode.js";
+  gamemodePath = "...";
   loadOrder = new Array<string>();
   dataDir = "./data";
 
   constructor() {
+    if (fs.existsSync("./skymp5-gamemode")) {
+      this.gamemodePath = "./skymp5-gamemode/gamemode.js";
+    }
+    else {
+      this.gamemodePath = "./gamemode.js";
+    }
+
     if (fs.existsSync("./server-settings.json")) {
       const parsed = JSON.parse(
         fs.readFileSync("./server-settings.json", "utf-8")

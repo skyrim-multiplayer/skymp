@@ -148,7 +148,7 @@ VarValue CastToString(const VarValue& var, StringTable& stringTable)
     case var.kType_Integer:
       return VarValue(std::to_string(static_cast<int32_t>(var)));
     case var.kType_Float:
-      return VarValue(std::to_string(static_cast<float>(var)));
+      return VarValue(std::to_string(static_cast<double>(var)));
     case var.kType_Bool: {
       return VarValue(static_cast<bool>(var) ? "True" : "False");
     }
@@ -190,7 +190,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
         break;
 
       case array.kType_FloatArray:
-        returnValue += std::to_string((float)((*array.pArray)[i]));
+        returnValue += std::to_string((double)((*array.pArray)[i]));
         break;
 
       case array.kType_BoolArray: {

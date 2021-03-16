@@ -92,7 +92,7 @@ const packWin32 = async () => {
   makeDirectory(path.join(packPath, "data"));
   makeDirectory(path.join(packPath, "data/scripts"));
 
-  copyRecursiveSync("./ui", path.join(packPath, "data/ui"));
+  copyRecursiveSync("./skymp5-front/dist", path.join(packPath, "data/ui"));
 
   const libkey = "data/_libkey.js";
   fs.writeFileSync(path.join(packPath, libkey), fs.readFileSync(libkey));

@@ -203,7 +203,7 @@ const main = async () => {
   };
 
   const gamemodePath = toAbsolute(Settings.get().gamemodePath);
-  log(`Gamemode path is'${gamemodePath}'`);
+  log(`Gamemode path is '${gamemodePath}'`);
 
   if (!fs.existsSync(gamemodePath)) {
     log(

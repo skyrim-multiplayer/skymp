@@ -7,7 +7,7 @@ VarValue PapyrusUtility::Wait(VarValue self,
 {
   if (arguments.size() < 1)
     throw std::runtime_error("Wait requires at least 1 argument");
-  float seconds = static_cast<float>(arguments[0].CastToFloat());
+  double seconds = static_cast<double>(arguments[0].CastToFloat());
   auto worldState = compatibilityPolicy->GetWorldState();
   if (!worldState)
     throw std::runtime_error("worldState not found");

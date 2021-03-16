@@ -29,13 +29,13 @@ VarValue VarValue::CastToFloat() const
       throw std::runtime_error("Wrong type in CastToFloat");
 
     case kType_Integer:
-      return VarValue((float)this->data.i);
+      return VarValue((double)this->data.i);
 
     case kType_Float:
-      return VarValue((float)this->data.f);
+      return VarValue((double)this->data.f);
 
     case kType_Bool:
-      return VarValue((float)this->data.b);
+      return VarValue((double)this->data.b);
 
     default:
       throw std::runtime_error("Wrong type in CastToFloat");
@@ -161,7 +161,7 @@ VarValue::VarValue(const std::string& value)
   this->data.string = this->stringHolder->data();
 }
 
-VarValue::VarValue(float value)
+VarValue::VarValue(double value)
 {
   this->type = this->kType_Float;
   this->data.f = value;

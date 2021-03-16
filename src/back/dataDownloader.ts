@@ -114,7 +114,7 @@ const ensureScriptsPresent = async (dataDir: string): Promise<void> => {
 
   if (!actorPexFound || !stringUtilPexFound) {
     console.log(
-      "Some of standard Papyrus scripts are missing, reinstalling scripts"
+      "Some of standard Papyrus scripts are missing, installing them"
     );
 
     if (!fs.existsSync(scriptsDir)) {

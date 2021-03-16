@@ -311,8 +311,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->AttachLogger(logger);
 
     std::ifstream f("server-settings.json");
+    if (!f.good()) {
+      throw std::runtime_error("server-settings.json is missing");
+    }
+
     std::stringstream buffer;
     buffer << f.rdbuf();
+
     auto serverSettings = nlohmann::json::parse(buffer.str());
 
     partOne->worldState.isPapyrusHotReloadEnabled =
@@ -754,7 +759,7 @@ Napi::Value GetJsValueFromPapyrusValue(
       return Napi::Number::New(env, v);
     }
     case VarValue::kType_Float: {
-      auto v = static_cast<float>(value);
+      auto v = static_cast<double>(value);
       return Napi::Number::New(env, v);
     }
     case VarValue::kType_Bool: {
@@ -798,9 +803,9 @@ VarValue GetPapyrusValueFromJsValue(Napi::Value v, bool treatNumberAsInt,
       return VarValue::None();
     }
     case napi_valuetype::napi_number: {
-      auto number = static_cast<double>(v.As<Napi::Number>());
+      double number = static_cast<double>(v.As<Napi::Number>());
       return treatNumberAsInt ? VarValue(static_cast<int32_t>(number))
-                              : VarValue(static_cast<float>(number));
+                              : VarValue(number);
     }
     case napi_valuetype::napi_object: {
       if (v.IsPromise()) {
