@@ -52,6 +52,7 @@ RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \
 COPY ./package.json ./package.json
 COPY ./skymp5-client/package.json ./skymp5-client/package.json
 COPY ./skymp5-gamemode/package.json ./skymp5-gamemode/package.json
+COPY ./skymp5-front/package.json ./skymp5-front/package.json
 RUN wget -O node-headers.tar.gz https://nodejs.org/dist/v14.13.1/node-v14.13.1-headers.tar.gz \
   && tar -xzf node-headers.tar.gz \
   && rm -r node-headers.tar.gz \
@@ -76,6 +77,7 @@ COPY ./ui ./ui
 COPY ./tsconfig.json ./tsconfig.back.json ./jest.config.js ./
 COPY ./skymp5-client ./skymp5-client
 COPY ./skymp5-gamemode ./skymp5-gamemode
+COPY ./skymp5-front ./skymp5-front
 RUN npm run build-ts
 
 CMD [ "npm", "run", "start-prod" ]

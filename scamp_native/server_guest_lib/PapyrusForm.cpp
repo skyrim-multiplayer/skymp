@@ -9,7 +9,7 @@ VarValue PapyrusForm::RegisterForSingleUpdate(
 {
   if (arguments.size() >= 1) {
     if (auto form = GetFormPtr<MpForm>(self)) {
-      float seconds = static_cast<float>(arguments[0]);
+      double seconds = static_cast<double>(arguments[0]);
       form->GetParent()->RegisterForSingleUpdate(self, seconds);
     }
   }

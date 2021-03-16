@@ -33,7 +33,7 @@ VarValue PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef(
   if (arguments.size() >= 3) {
     auto arBaseObjects = arguments[0];
     auto arCenter = GetFormPtr<MpObjectReference>(arguments[1]);
-    float afRadius = static_cast<float>(arguments[2].CastToFloat());
+    double afRadius = static_cast<double>(arguments[2].CastToFloat());
 
     if (arBaseObjects && arCenter && afRadius >= 0) {
 
