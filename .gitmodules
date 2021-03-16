@@ -7,3 +7,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/skyrim-multiplayer/vcpkg.git
+[submodule "skymp5-front"]
+	path = skymp5-front
+	url = https://github.com/skyrim-multiplayer/skymp5-front.git

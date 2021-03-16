@@ -52,7 +52,7 @@ private:
     IGameObject* id;
     const char* string;
     int32_t i;
-    float f;
+    double f;
     bool b;
   } data;
 
@@ -95,7 +95,7 @@ public:
   explicit VarValue(int32_t value);
   explicit VarValue(const char* value);
   explicit VarValue(const std::string& value);
-  explicit VarValue(float value);
+  explicit VarValue(double value);
   explicit VarValue(bool value);
   explicit VarValue(Viet::Promise<VarValue> promise);
   explicit VarValue(IGameObject::Ptr object);
@@ -110,7 +110,7 @@ public:
 
   explicit operator int() const { return this->CastToInt().data.i; }
 
-  explicit operator float() const { return this->CastToFloat().data.f; }
+  explicit operator double() const { return this->CastToFloat().data.f; }
 
   explicit operator const char*() const { return this->data.string; }
 

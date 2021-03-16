@@ -759,7 +759,7 @@ Napi::Value GetJsValueFromPapyrusValue(
       return Napi::Number::New(env, v);
     }
     case VarValue::kType_Float: {
-      auto v = static_cast<float>(value);
+      auto v = static_cast<double>(value);
       return Napi::Number::New(env, v);
     }
     case VarValue::kType_Bool: {
@@ -803,9 +803,9 @@ VarValue GetPapyrusValueFromJsValue(Napi::Value v, bool treatNumberAsInt,
       return VarValue::None();
     }
     case napi_valuetype::napi_number: {
-      auto number = static_cast<double>(v.As<Napi::Number>());
+      double number = static_cast<double>(v.As<Napi::Number>());
       return treatNumberAsInt ? VarValue(static_cast<int32_t>(number))
-                              : VarValue(static_cast<float>(number));
+                              : VarValue(number);
     }
     case napi_valuetype::napi_object: {
       if (v.IsPromise()) {
