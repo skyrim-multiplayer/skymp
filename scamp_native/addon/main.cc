@@ -311,8 +311,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->AttachLogger(logger);
 
     std::ifstream f("server-settings.json");
+    if (!f.good()) {
+      throw std::runtime_error("server-settings.json is missing");
+    }
+
     std::stringstream buffer;
     buffer << f.rdbuf();
+
     auto serverSettings = nlohmann::json::parse(buffer.str());
 
     partOne->worldState.isPapyrusHotReloadEnabled =
