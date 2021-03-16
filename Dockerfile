@@ -73,7 +73,6 @@ RUN mkdir build \
 # Build TypeScript part
 COPY ./src/back ./src/back
 COPY ./test ./test
-COPY ./ui ./ui
 COPY ./tsconfig.json ./tsconfig.back.json ./jest.config.js ./
 COPY ./skymp5-client ./skymp5-client
 COPY ./skymp5-gamemode ./skymp5-gamemode
