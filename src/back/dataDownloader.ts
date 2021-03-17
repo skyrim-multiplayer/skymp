@@ -9,6 +9,9 @@ import { path7za } from "7zip-bin";
 import { extractFull } from "node-7z";
 
 const getSevenZipPath = (): string => {
+  if (process.platform === "linux") {
+    return "7z";
+  }
   if (fs.existsSync("./bin/7za.exe")) {
     return path.resolve("./bin/7za.exe");
   }
@@ -76,6 +79,7 @@ export const ensureMastersPresent = async (
     "HearthFires.esm",
     "Dragonborn.esm",
   ];
+
   if (
     JSON.stringify(loadOrder.slice(0, expectedFirstMasters.length)) !==
     JSON.stringify(expectedFirstMasters)

@@ -77,7 +77,11 @@ COPY ./tsconfig.json ./tsconfig.back.json ./jest.config.js ./
 COPY ./skymp5-client ./skymp5-client
 COPY ./skymp5-gamemode ./skymp5-gamemode
 COPY ./skymp5-front ./skymp5-front
-RUN npm install \
-  && npm run build-ts
+RUN cd skymp5-front \
+  && npm install \
+  && cd .. \
+  && npm run build-ts \
+  && mv build/scamp_native.node scamp_native.node \
+  && apk add --no-cache p7zip
 
 CMD [ "npm", "run", "start-prod" ]
