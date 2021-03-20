@@ -190,13 +190,9 @@ TEST_CASE("wrong types", "[VarValue]")
   REQUIRE(str1.CastToInt() == VarValue(0));
   REQUIRE(VarValue("3").CastToInt() == VarValue(3));
 
-  try {
-    auto t = str1.CastToFloat();
-  } catch (std::exception& e) {
-    err = e.what();
-  }
-  REQUIRE(err != "");
-  err = "";
+  VarValue floatStr("1.02345");
+  REQUIRE(abs(static_cast<double>(floatStr.CastToFloat()) - 1.02345) <=
+          std::numeric_limits<double>::epsilon());
 }
 
 TEST_CASE("strcat implicit casts", "[VarValue]")

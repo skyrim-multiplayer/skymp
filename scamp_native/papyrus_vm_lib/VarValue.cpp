@@ -2,6 +2,7 @@
 #include "VirtualMachine.h"
 
 #include <cmath>
+#include <sstream>
 
 VarValue VarValue::CastToInt() const
 {
@@ -21,22 +22,20 @@ VarValue VarValue::CastToInt() const
 
 VarValue VarValue::CastToFloat() const
 {
-
   switch (this->type) {
-
-    case kType_Object:
-    case kType_Identifier:
-      throw std::runtime_error("Wrong type in CastToFloat");
-
+    case kType_String: {
+      std::string str = static_cast<const char*>(*this);
+      std::istringstream ss(str);
+      double d = 0.0;
+      ss >> d;
+      return VarValue(d);
+    }
     case kType_Integer:
-      return VarValue((double)this->data.i);
-
+      return VarValue(static_cast<double>(this->data.i));
     case kType_Float:
-      return VarValue((double)this->data.f);
-
+      return VarValue(static_cast<double>(this->data.f));
     case kType_Bool:
-      return VarValue((double)this->data.b);
-
+      return VarValue(static_cast<double>(this->data.b));
     default:
       throw std::runtime_error("Wrong type in CastToFloat");
   }
