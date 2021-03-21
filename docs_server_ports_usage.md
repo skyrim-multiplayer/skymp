@@ -8,7 +8,7 @@ Used to perform synchronization and other basic networking.
 
 - Protocol is UDP
 - Default value is 7777
-- Configurable via [configuration file](!docs_server_configuration_reference.md) or [command line API](!docs_server_command_line_api.md)
+- Configurable via [configuration file](docs_server_configuration_reference.md) or [command line API](docs_server_command_line_api.md)
 
 ## UI Port
 
