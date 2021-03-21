@@ -741,9 +741,29 @@ Napi::Value GetJsValueFromPapyrusValue(
   const VarValue& value, Napi::Env env,
   const std::vector<std::string>& espmFilenames)
 {
-  if (value.promise)
-    throw std::runtime_error("Papyrus Promise to JS Promise convertion "
-                             "is not supported currently");
+  if (value.promise) {
+    auto promiseCallback = Napi::Function::New(
+      env, [value, espmFilenames](const Napi::CallbackInfo& info) {
+        auto resolve = info[0].As<Napi::Function>();
+        // auto reject = info[1];
+
+        struct Ref
+        {
+          Napi::FunctionReference f;
+        };
+
+        auto resolveRef = std::make_shared<Ref>();
+        resolveRef->f = Napi::Persistent(resolve);
+
+        value.promise->Then([resolveRef, espmFilenames](VarValue v) {
+          auto resolve = resolveRef->f.Value().As<Napi::Function>();
+          resolve.Call(
+            { GetJsValueFromPapyrusValue(v, resolve.Env(), espmFilenames) });
+        });
+
+        // TODO: catch/reject?
+      });
+  }
   switch (value.GetType()) {
     case VarValue::kType_Object:
       return GetJsObjectFromPapyrusObject(value, env, espmFilenames);
@@ -812,22 +832,22 @@ VarValue GetPapyrusValueFromJsValue(Napi::Value v, bool treatNumberAsInt,
     }
     case napi_valuetype::napi_object: {
       if (v.IsPromise()) {
-        /*auto pr = v.As<Napi::Promise::Deferred>();
-
-        std::shared_ptr<Napi::Reference<Napi::Promise::Deferred>> jsPromiseRef;
-        jsPromiseRef.reset(
-          new Napi::Reference<Napi::Promise::Deferred>(Napi::Persistent(pr)));
-
-        auto vietPromise = std::make_shared<Viet::Promise<VarValue>>();
-        vietPromise->Then([jsPromiseRef](VarValue result) {
-          auto jsPromise = jsPromiseRef->Value().Resolve();
-        });
-
         VarValue res = VarValue::None();
-        res.promise = vietPromise;
-        return res;*/
-        throw std::runtime_error("JS Promise to Papyrus Promise convertion "
-                                 "is not supported currently");
+        res.promise = std::make_shared<Viet::Promise<VarValue>>();
+
+        auto then = v.As<Napi::Object>().Get("then").As<Napi::Function>();
+
+        auto wst_ = &wst;
+        then.Call(v,
+                  { Napi::Function::New(
+                    v.Env(), [res, wst_](const Napi::CallbackInfo& info) {
+                      bool treatNumberAsInt = false;
+                      res.promise->Resolve(GetPapyrusValueFromJsValue(
+                        info[0], treatNumberAsInt, *wst_));
+                    }) });
+        // TODO: catch/reject?
+
+        return res;
       }
 
       if (v.IsArray()) {
