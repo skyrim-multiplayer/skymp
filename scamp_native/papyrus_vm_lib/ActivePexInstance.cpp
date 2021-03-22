@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cctype> // tolower
 #include <functional>
+#include <sstream>
 #include <stdexcept>
 
 namespace {
@@ -128,7 +129,7 @@ const std::string& ActivePexInstance::GetSourcePexName() const
   return sourcePex.fn()->source;
 }
 
-VarValue CastToString(const VarValue& var, StringTable& stringTable)
+VarValue CastToString(const VarValue& var)
 {
   switch (var.GetType()) {
     case var.kType_Object: {
@@ -147,35 +148,35 @@ VarValue CastToString(const VarValue& var, StringTable& stringTable)
       return var;
     case var.kType_Integer:
       return VarValue(std::to_string(static_cast<int32_t>(var)));
-    case var.kType_Float:
-      return VarValue(std::to_string(static_cast<double>(var)));
+    case var.kType_Float: {
+      std::stringstream ss;
+      ss << static_cast<double>(var);
+      return VarValue(ss.str());
+    }
     case var.kType_Bool: {
       return VarValue(static_cast<bool>(var) ? "True" : "False");
     }
     case var.kType_ObjectArray:
-      return GetElementsArrayAtString(var, var.kType_ObjectArray, stringTable);
+      return GetElementsArrayAtString(var, var.kType_ObjectArray);
     case var.kType_StringArray:
-      return GetElementsArrayAtString(var, var.kType_StringArray, stringTable);
+      return GetElementsArrayAtString(var, var.kType_StringArray);
     case var.kType_IntArray:
-      return GetElementsArrayAtString(var, var.kType_IntArray, stringTable);
+      return GetElementsArrayAtString(var, var.kType_IntArray);
     case var.kType_FloatArray:
-      return GetElementsArrayAtString(var, var.kType_FloatArray, stringTable);
+      return GetElementsArrayAtString(var, var.kType_FloatArray);
     case var.kType_BoolArray:
-      return GetElementsArrayAtString(var, var.kType_BoolArray, stringTable);
+      return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
       assert(false);
       return VarValue();
   }
 }
 
-VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
-                                  StringTable& stringTable)
+VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
 {
   std::string returnValue = "[";
 
   for (size_t i = 0; i < array.pArray->size(); ++i) {
-    // returnValue += " ";
-
     switch (type) {
       case array.kType_ObjectArray:
         returnValue += ((IGameObject*)((*array.pArray)[i]))->GetStringID();
@@ -195,7 +196,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
 
       case array.kType_BoolArray: {
         VarValue& temp = ((*array.pArray)[i]);
-        returnValue += (const char*)(CastToString(temp, stringTable));
+        returnValue += (const char*)(CastToString(temp));
         break;
       }
       default:
@@ -208,12 +209,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
       returnValue += "]";
   }
 
-  stringTable.instanceStringTable.push_back(
-    std::make_shared<std::string>(returnValue));
-  return VarValue(
-    stringTable
-      .instanceStringTable[stringTable.instanceStringTable.size() - 1]
-      ->c_str());
+  return VarValue(returnValue);
 }
 
 struct ActivePexInstance::ExecutionContext
@@ -326,7 +322,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           *args[0] = (*args[1]).CastToBool();
           break;
         case VarValue::kType_String:
-          *args[0] = CastToString(*args[1], this->sourcePex.fn()->stringTable);
+          *args[0] = CastToString(*args[1]);
           break;
         default:
           // assert(0);

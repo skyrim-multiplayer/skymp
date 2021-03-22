@@ -221,3 +221,9 @@ TEST_CASE("Mixed arithmetics", "[VarValue]")
   ss << (VarValue(2.0) / VarValue(2)) << std::endl;
   REQUIRE(ss.str() == "[Float '3']\n[Float '-1']\n[Float '4']\n[Float '1']\n");
 }
+
+TEST_CASE("Cast to string", "[VarValue]")
+{
+  auto s = CastToString(VarValue(5.0));
+  REQUIRE(static_cast<const char*>(s) == std::string("5"));
+}

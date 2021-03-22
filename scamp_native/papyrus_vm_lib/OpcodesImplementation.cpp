@@ -1,13 +1,13 @@
 #include "OpcodesImplementation.h"
 
 VarValue OpcodesImplementation::StrCat(const VarValue& s1, const VarValue& s2,
-                                       StringTable& table)
+                                       StringTable&)
 {
 
   std::string temp;
 
   for (auto param : { &s1, &s2 }) {
-    auto str = CastToString(*param, table);
+    auto str = CastToString(*param);
     temp += static_cast<const char*>(str);
   }
 

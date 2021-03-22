@@ -509,6 +509,5 @@ private:
   VarValue noneVar = VarValue::None();
 };
 
-VarValue CastToString(const VarValue& var, StringTable& stringTable);
-VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type,
-                                  StringTable& stringTable);
+VarValue CastToString(const VarValue& var);
+VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type);

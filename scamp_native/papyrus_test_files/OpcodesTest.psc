@@ -434,7 +434,7 @@ Assert(5 == 5.5 as Int)
 Assert(5 as Float == 5.0)
 
 Assert("5" == 5 as String)
-Assert("5.000000" == 5.0 as String)
+Assert("5" == 5.0 as String)
 Assert("True" == true as String)
 Assert("False" == false as String)
 
