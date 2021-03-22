@@ -204,26 +204,6 @@ VarValue VarValue::AttachTestStackId(VarValue original, int32_t stackId)
   return original;
 }
 
-VarValue VarValue::operator+(const VarValue& argument2)
-{
-  VarValue var;
-  if (this->type == argument2.type) {
-
-    switch (this->type) {
-
-      case VarValue::kType_Integer:
-        var.data.i = this->data.i + argument2.data.i;
-        var.type = this->kType_Integer;
-        return var;
-      case VarValue::kType_Float:
-        var.data.f = this->data.f + argument2.data.f;
-        var.type = this->kType_Float;
-        return var;
-    }
-  }
-  throw std::runtime_error("Wrong type in operator+");
-}
-
 namespace {
 inline bool IsNumber(const VarValue& v)
 {
@@ -253,13 +233,35 @@ inline VarValue ConstructArithmeticResult(const VarValue& op1,
 }
 }
 
+VarValue VarValue::operator+(const VarValue& argument2)
+{
+  VarValue var;
+  if (this->type == argument2.type) {
+    switch (this->type) {
+      case VarValue::kType_Integer:
+        var.data.i = this->data.i + argument2.data.i;
+        var.type = this->kType_Integer;
+        return var;
+      case VarValue::kType_Float:
+        var.data.f = this->data.f + argument2.data.f;
+        var.type = this->kType_Float;
+        return var;
+    }
+  }
+
+  if (IsNumber(*this) && IsNumber(argument2)) {
+    return ConstructArithmeticResult(*this, argument2,
+                                     ToDouble(*this) + ToDouble(argument2));
+  }
+
+  throw std::runtime_error("Wrong type in operator+");
+}
+
 VarValue VarValue::operator-(const VarValue& argument2)
 {
   VarValue var;
   if (this->type == argument2.type) {
-
     switch (this->type) {
-
       case VarValue::kType_Integer:
         var.data.i = this->data.i - argument2.data.i;
         var.type = this->kType_Integer;

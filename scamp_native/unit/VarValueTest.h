@@ -211,3 +211,13 @@ TEST_CASE("String assign", "[VarValue]")
   *x.stringHolder = "456";
   REQUIRE(static_cast<const char*>(y) == std::string("123"));
 }
+
+TEST_CASE("Mixed arithmetics", "[VarValue]")
+{
+  std::stringstream ss;
+  ss << (VarValue(1.0) + VarValue(2)) << std::endl;
+  ss << (VarValue(1.0) - VarValue(2)) << std::endl;
+  ss << (VarValue(2.0) * VarValue(2)) << std::endl;
+  ss << (VarValue(2.0) / VarValue(2)) << std::endl;
+  REQUIRE(ss.str() == "[Float '3']\n[Float '-1']\n[Float '4']\n[Float '1']\n");
+}
