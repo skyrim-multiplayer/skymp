@@ -4,15 +4,15 @@ Skyrim Multiplayer mimics the original game behavior, so unlike many multiplayer
 
 This page describes the differences between database drivers and their functionality.
 
-## sqlite
+## file
 
-Skyrim Multiplayer uses `sqlite` driver by default. Default `databaseName` is `world.sqlite`. So if you change nothing in the config file, the server would save all data using SQLite 3 in the world.sqlite server in the server directory. Only relative paths are supported.
+Skyrim Multiplayer uses `file` driver by default. Default `databaseName` is `world`. So if you change nothing in the config file, the server would save all data using `world` subdirectory of the server folder. Only relative paths are supported.
 
 ```json
 {
   // ...
-  "databaseDriver": "sqlite",
-  "databaseName": "world.sqlite"
+  "databaseDriver": "file",
+  "databaseName": "world"
   // ...
 }
 ```
