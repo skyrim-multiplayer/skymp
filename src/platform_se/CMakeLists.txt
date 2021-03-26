@@ -145,7 +145,7 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
     file(GLOB src ${A_DIRECTORY}/*.psc)
 
-    set(OUTPUT_DIR ${CMAKE_SOURCE_DIR}/pex)
+    set(OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pex)
     if(EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
       add_custom_target(${A_NAME} ALL
         COMMAND "${SKYRIM_DIR}\\Papyrus Compiler\\PapyrusCompiler.exe"
@@ -157,7 +157,7 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
   set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
-  add_papyrus_library(NAME TESModPlatformPsc DIRECTORY "${CMAKE_SOURCE_DIR}/psc")
+  add_papyrus_library(NAME TESModPlatformPsc DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc")
   if(TARGET TESModPlatformPsc)
     add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
   endif()
