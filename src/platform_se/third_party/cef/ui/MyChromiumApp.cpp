@@ -234,5 +234,6 @@ void MyChromiumApp::RunTasks()
 void MyChromiumApp::OnBeforeCommandLineProcessing(
   const CefString& aProcessType, CefRefPtr<CefCommandLine> aCommandLine)
 {
+  aCommandLine->AppendSwitch("enable-media-stream");
 }
 }
