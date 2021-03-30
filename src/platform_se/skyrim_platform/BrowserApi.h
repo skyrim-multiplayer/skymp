@@ -13,6 +13,8 @@ JsValue SetVisible(const JsFunctionArguments& args);
 JsValue SetFocused(const JsFunctionArguments& args);
 JsValue LoadUrl(const JsFunctionArguments& args, std::shared_ptr<State> state);
 JsValue GetToken(const JsFunctionArguments& args);
+JsValue ExecuteJavaScript(const JsFunctionArguments& args,
+                          std::shared_ptr<State> state);
 
 inline void Register(JsValue& exports, std::shared_ptr<State> state)
 {
@@ -25,6 +27,11 @@ inline void Register(JsValue& exports, std::shared_ptr<State> state)
       return LoadUrl(args, state);
     }));
   browser.SetProperty("getToken", JsValue::Function(GetToken));
+  browser.SetProperty(
+    "executeJavaScript",
+    JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
+      return ExecuteJavaScript(args, state);
+    }));
   exports.SetProperty("browser", browser);
 }
 }

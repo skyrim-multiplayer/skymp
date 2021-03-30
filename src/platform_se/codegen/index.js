@@ -81,6 +81,7 @@ export interface Browser {
   setFocused(focused: boolean): void;
   loadUrl(url: string): void;
   getToken(): string;
+  executeJavaScript(src: string): void;
 }
 export declare let browser: Browser;
 

@@ -7,6 +7,19 @@
 
 namespace {
 thread_local bool g_cursorIsOpenByFocus = false;
+
+inline CEFUtils::MyChromiumApp& GetApp(
+  const std::shared_ptr<BrowserApi::State>& state)
+{
+  if (!state)
+    throw NullPointerException("state");
+  if (!state->overlayService)
+    throw NullPointerException("MyChromiumApp");
+  auto app = state->overlayService->GetMyChromiumApp();
+  if (!app)
+    throw NullPointerException("app");
+  return *app;
+}
 }
 
 JsValue BrowserApi::SetVisible(const JsFunctionArguments& args)
@@ -50,19 +63,19 @@ JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
 JsValue BrowserApi::LoadUrl(const JsFunctionArguments& args,
                             std::shared_ptr<State> state)
 {
-  if (!state)
-    throw NullPointerException("state");
-  if (!state->overlayService)
-    throw NullPointerException("MyChromiumApp");
-  auto app = state->overlayService->GetMyChromiumApp();
-  if (!app)
-    throw NullPointerException("app");
-
-  auto str = (std::string)args[1];
-  return JsValue::Bool(app->LoadUrl(str.data()));
+  auto str = static_cast<std::string>(args[1]);
+  return JsValue::Bool(GetApp(state).LoadUrl(str.data()));
 }
 
 JsValue BrowserApi::GetToken(const JsFunctionArguments& args)
 {
   return MyChromiumApp::GetCurrentSpToken();
+}
+
+JsValue BrowserApi::ExecuteJavaScript(const JsFunctionArguments& args,
+                                      std::shared_ptr<State> state)
+{
+  auto str = static_cast<std::string>(args[1]);
+  GetApp(state).ExecuteJavaScript(str);
+  return JsValue::Undefined();
 }

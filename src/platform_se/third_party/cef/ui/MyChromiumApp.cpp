@@ -174,14 +174,16 @@ void MyChromiumApp::InjectMouseMove(const float aX, const float aY,
   }
 
   if (m_pGameClient && m_pGameClient->IsReady()) {
-
-    auto script = "window.spBrowserToken = '" + GetCurrentSpToken() + "';";
-    if (url.size() > 0)
-      script += " if (window.location.href !== '" + url +
-        "') window.location.href = '" + url + "';";
-
-    m_pGameClient->GetBrowser()->GetMainFrame()->ExecuteJavaScript(
-      script, "my mind", 0);
+    thread_local clock_t g_lastExecute = 0;
+    if (clock() - g_lastExecute > CLOCKS_PER_SEC) {
+      g_lastExecute = clock();
+      auto script = "window.spBrowserToken = '" + GetCurrentSpToken() + "';";
+      if (url.size() > 0)
+        script += " if (window.location.href !== '" + url +
+          "') window.location.href = '" + url + "';";
+      m_pGameClient->GetBrowser()->GetMainFrame()->ExecuteJavaScript(
+        script, "my mind", 0);
+    }
 
     CefMouseEvent ev;
 
@@ -208,6 +210,14 @@ void MyChromiumApp::InjectMouseWheel(const uint16_t aX, const uint16_t aY,
     ev.modifiers = aModifier;
 
     m_pGameClient->GetBrowser()->GetHost()->SendMouseWheelEvent(ev, 0, aDelta);
+  }
+}
+
+void MyChromiumApp::ExecuteJavaScript(const std::string& src) const noexcept
+{
+  if (m_pGameClient && m_pGameClient->IsReady()) {
+    m_pGameClient->GetBrowser()->GetMainFrame()->ExecuteJavaScript(
+      src, "my mind", 0);
   }
 }
 

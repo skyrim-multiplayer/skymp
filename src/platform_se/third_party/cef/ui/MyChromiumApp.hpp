@@ -32,9 +32,9 @@ struct MyChromiumApp : CefApp
   TP_NOCOPYMOVE(MyChromiumApp);
 
   void Initialize() noexcept;
-  void ExecuteAsync(const std::string& acFunction,
-                    const CefRefPtr<CefListValue>& apArguments = nullptr) const
-    noexcept;
+  void ExecuteAsync(
+    const std::string& acFunction,
+    const CefRefPtr<CefListValue>& apArguments = nullptr) const noexcept;
 
   [[nodiscard]] OverlayClient* GetClient() const noexcept
   {
@@ -50,6 +50,7 @@ struct MyChromiumApp : CefApp
                        bool isBrowserFocused) const noexcept;
   void InjectMouseWheel(uint16_t aX, uint16_t aY, int16_t aDelta,
                         uint32_t aModifier) const noexcept;
+  void ExecuteJavaScript(const std::string& src) const noexcept;
 
   bool LoadUrl(const char* url) noexcept;
 
