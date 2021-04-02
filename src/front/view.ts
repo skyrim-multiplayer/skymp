@@ -13,6 +13,7 @@ import {
   worldPointToScreenPoint,
   Form,
   storage,
+  NetImmerse,
 } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
 
@@ -519,11 +520,10 @@ export class FormView implements View<FormModel> {
           this.lastPcWorldOrCell = gPcWorldOrCellId;
         }
 
-        const ni = (sp as any)["NetImmerse"];
         const headPos = [
-          ni.GetNodeWorldPositionX(actor, "NPC Head [Head]", false),
-          ni.GetNodeWorldPositionY(actor, "NPC Head [Head]", false),
-          ni.GetNodeWorldPositionZ(actor, "NPC Head [Head]", false),
+          NetImmerse.getNodeWorldPositionX(actor, "NPC Head [Head]", false),
+          NetImmerse.getNodeWorldPositionY(actor, "NPC Head [Head]", false),
+          NetImmerse.getNodeWorldPositionZ(actor, "NPC Head [Head]", false),
         ];
         const [screenPoint] = worldPointToScreenPoint(headPos);
         const isOnScreen =
