@@ -15,7 +15,7 @@ A set of scripts for RolePlay experience in Skyrim Multiplayer.
 1. Download and extract a latest server build. Make sure that `./data/scripts` is empty.
 2. Start the server and wait for scripts download. 
 3. After the server is finally started, stop it and verify that `./data/scripts` contains `.pex` files and `./data/scripts/source` contains `.psc` files.
-4. Open `skyrimse.ppj` and change `Output` to an absolute path to server's `./data/scripts`.
+4. In `skyrimse.ppj` change `Output` to an absolute path to server's `./data/scripts` and change `<Import>C:/projects/skymp5-server/data/Scripts/Source</Import>` to an absolute path to server's `./data/scripts/Source`.
 5. Set `isPapyrusHotReloadEnabled` to true in your `server-settings.json`. Turn it off before letting the real users join the server since that feature affects the server's performance.
 6. Specify a valid `gamePath` in `.vscode/tasks.json`.
 
