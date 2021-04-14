@@ -147,7 +147,7 @@ void JsTick(bool gameFunctionsAvailable)
 
       if (!engine) {
         engine.reset(new JsEngine);
-        engine->ResetContext(&g_taskQueue);
+        engine->ResetContext(g_taskQueue);
       }
 
       thread_local JsValue g_jAllSettings = JsValue::Object();
