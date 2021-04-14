@@ -10,6 +10,7 @@
       "zlib",
       "mhook",
       "directxtk",
-      "spdlog"
+      "spdlog",
+      "jsengine"
     ]
 }
