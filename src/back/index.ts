@@ -19,6 +19,7 @@ import * as chokidar from "chokidar";
 import * as path from "path";
 import { ensureMastersAndScriptsPresent } from "./dataDownloader";
 import * as libkey from "./libkey";
+import { NodeVM } from "vm2";
 
 import * as manifestGen from "./manifestGen";
 
@@ -28,16 +29,60 @@ const master = Settings.get().master || "https://skymp.io";
 
 const gamemodeCache = new Map<string, string>();
 
-function requireUncached(module: string): void {
-  delete require.cache[require.resolve(module)];
+// https://stackoverflow.com/questions/37521893/determine-if-a-path-is-subdirectory-of-another-in-node-js
+const isChildOf = (child: string, parent: string) => {
+  child = path.resolve(child);
+  parent = path.resolve(parent);
+  if (child === parent) return false;
+  const parentTokens = parent.split("/").filter((i) => i.length);
+  return parentTokens.every((t, i) => child.split("/")[i] === t);
+};
 
+const runGamemodeWithVm = (gamemodeContents: string) => {
+  const vm = new NodeVM({
+    sandbox: {
+      mp: ((global as unknown) as Record<string, unknown>)["mp"],
+    },
+    require: {
+      builtin: ["path"],
+      mock: {
+        fs: {
+          readFileSync(
+            p: fs.PathLike | number,
+            options?: { encoding?: null; flag?: string } | null
+          ) {
+            if (typeof p !== "string") {
+              throw new Error("fs.readFileSync: only string paths available");
+            }
+
+            if (
+              !isChildOf(p, "./data") &&
+              path.resolve("server-settings.json") !== path.resolve(p)
+            ) {
+              throw new Error("fs.readFileSync: access denied " + p);
+            }
+
+            return fs.readFileSync(p, options);
+          },
+        },
+      },
+    },
+  });
+  vm.run(gamemodeContents);
+};
+
+function requireUncached(module: string, clear: () => void): void {
+  delete require.cache[require.resolve(module)];
   const gamemodeContents = fs.readFileSync(require.resolve(module), "utf8");
 
   // Reload gamemode.js only if there are real changes
   const gamemodeContentsOld = gamemodeCache.get(module);
   if (gamemodeContentsOld !== gamemodeContents) {
+    clear();
     gamemodeCache.set(module, gamemodeContents);
-    require(module);
+
+    const isWin32 = process.platform === "win32";
+    isWin32 ? require(module) : runGamemodeWithVm(gamemodeContents);
   }
 }
 
@@ -211,8 +256,7 @@ const main = async () => {
     );
   } else {
     try {
-      clear();
-      requireUncached(gamemodePath);
+      requireUncached(gamemodePath, clear);
     } catch (e) {
       console.error(e);
     }
@@ -220,8 +264,7 @@ const main = async () => {
 
   if (fs.existsSync(gamemodePath)) {
     try {
-      clear();
-      requireUncached(gamemodePath);
+      requireUncached(gamemodePath, clear);
     } catch (e) {
       console.error(e);
     }
@@ -236,8 +279,7 @@ const main = async () => {
 
     const reloadGamemode = () => {
       try {
-        clear();
-        requireUncached(gamemodePath);
+        requireUncached(gamemodePath, clear);
         numReloads.n++;
       } catch (e) {
         console.error(e);

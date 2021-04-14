@@ -15,7 +15,7 @@ export class ClientVerify implements System {
     this.hashVerified.fill(false);
 
     fs.watch(this.compiledFrontPath, {}, () => {
-      this.log("Front changed, reloading");
+      this.log("skymp5-client.js has been modified, reloading");
       this.reloadFront();
       this.connectedUserIds.forEach((userId) => {
         ctx.svr.sendCustomPacket(userId, "newClientVersion", {

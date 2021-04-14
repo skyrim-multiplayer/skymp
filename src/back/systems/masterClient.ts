@@ -52,7 +52,6 @@ export class MasterClient implements System {
 
   // connect/disconnect events are not reliable so we do full recalculate
   private getCurrentOnline(serverInterface: ServerInterface): number {
-    return 0;
     let online = 0;
     for (let i = 0; i < this.maxPlayers; ++i) {
       try {

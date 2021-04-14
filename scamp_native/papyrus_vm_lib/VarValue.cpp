@@ -415,6 +415,10 @@ bool VarValue::operator==(const VarValue& argument2) const
     }
     case VarValue::kType_Identifier:
     case VarValue::kType_String: {
+      if (argument2.type != VarValue::kType_String) {
+        return false;
+      }
+
       std::string s1;
       std::string s2;
 

@@ -149,9 +149,9 @@ VarValue CastToString(const VarValue& var)
     case var.kType_Integer:
       return VarValue(std::to_string(static_cast<int32_t>(var)));
     case var.kType_Float: {
-      std::stringstream ss;
-      ss << static_cast<double>(var);
-      return VarValue(ss.str());
+      char buffer[128];
+      snprintf(buffer, sizeof(buffer), "%.*g", 9000, static_cast<double>(var));
+      return VarValue(std::string(buffer));
     }
     case var.kType_Bool: {
       return VarValue(static_cast<bool>(var) ? "True" : "False");
@@ -178,9 +178,11 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
 
   for (size_t i = 0; i < array.pArray->size(); ++i) {
     switch (type) {
-      case array.kType_ObjectArray:
-        returnValue += ((IGameObject*)((*array.pArray)[i]))->GetStringID();
+      case array.kType_ObjectArray: {
+        auto object = (static_cast<IGameObject*>((*array.pArray)[i]));
+        returnValue += object ? object->GetStringID() : "None";
         break;
+      }
 
       case array.kType_StringArray:
         returnValue += (const char*)((*array.pArray)[i]);
@@ -204,7 +206,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
     }
 
     if (i < array.pArray->size() - 1)
-      returnValue += " , ";
+      returnValue += ", ";
     else
       returnValue += "]";
   }
@@ -486,8 +488,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
       if ((*args[1]).pArray != nullptr) {
-        if ((*args[0]).GetType() == VarValue::kType_Integer)
+        if ((*args[0]).GetType() == VarValue::kType_Integer) {
           *args[0] = VarValue((int32_t)(*args[1]).pArray->size());
+        } else if ((*args[0]).GetType() == VarValue::kType_Float) {
+          *args[0] = VarValue((double)(*args[1]).pArray->size());
+        }
       } else
         *args[0] = VarValue((int32_t)0);
       break;

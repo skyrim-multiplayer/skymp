@@ -95,8 +95,8 @@ public:
   bool GetParentDIAL(uint32_t& outId) const noexcept;
 
   using RecordVisitor = std::function<bool(espm::RecordHeader*)>;
-  void ForEachRecord(const RecordVisitor& visitor) const
-    noexcept; // Return true from visitor to break loop
+  void ForEachRecord(const RecordVisitor& visitor)
+    const noexcept; // Return true from visitor to break loop
 
   GroupType GetGroupType() const noexcept { return grType; }
 
@@ -141,6 +141,11 @@ public:
 
   std::string ToString() const noexcept { return std::string(type, 4); }
 
+  uint32_t ToUint32() const noexcept
+  {
+    return *reinterpret_cast<const uint32_t*>(type);
+  }
+
 private:
   const char* type;
 };
@@ -160,8 +165,8 @@ public:
                      espm::CompressedFieldsCache* compressedFieldsCache =
                        nullptr) const noexcept;
   std::vector<uint32_t> GetKeywordIds(
-    espm::CompressedFieldsCache* compressedFieldsCache = nullptr) const
-    noexcept;
+    espm::CompressedFieldsCache* compressedFieldsCache =
+      nullptr) const noexcept;
 
   Type GetType() const noexcept;
   const GroupStack& GetParentGroups() const noexcept;

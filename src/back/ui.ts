@@ -7,10 +7,19 @@ import { Settings } from "./settings";
 import Axios from "axios";
 import { AddressInfo } from "net";
 
-const createApp = () => {
+const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
   const router = new Router();
   router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
+
+  const wrapperPort = process.env.WRAPPER_PORT;
+
+  app.use(
+    proxy({
+      host: `http://localhost:${wrapperPort}`,
+      match: /^\/rcon\/.*/,
+    })
+  );
 
   app.use(router.routes()).use(router.allowedMethods());
   app.use(serve("data"));
@@ -31,10 +40,13 @@ export const main = (): void => {
     .then(() => {
       console.log(`UI dev server has been detected on port ${devServerPort}`);
 
-      const appStatic = createApp();
+      const state = { port: 0 };
+
+      const appStatic = createApp(() => state.port);
       const srv = http.createServer(appStatic.callback());
       srv.listen(0, () => {
         const { port } = srv.address() as AddressInfo;
+        state.port = port;
         const appProxy = new Koa();
         appProxy.use(
           proxy({
@@ -53,8 +65,9 @@ export const main = (): void => {
       });
     })
     .catch(() => {
-      const app = createApp();
+      const app = createApp(() => uiPort);
       console.log(`Server resources folder is listening on ${uiPort}`);
-      require("http").createServer(app.callback()).listen(uiPort);
+      const server = require("http").createServer(app.callback());
+      server.listen(uiPort);
     });
 };

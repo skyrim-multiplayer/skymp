@@ -224,6 +224,18 @@ TEST_CASE("Mixed arithmetics", "[VarValue]")
 
 TEST_CASE("Cast to string", "[VarValue]")
 {
-  auto s = CastToString(VarValue(5.0));
-  REQUIRE(static_cast<const char*>(s) == std::string("5"));
+  REQUIRE(CastToString(VarValue(5.0)) == VarValue("5"));
+  REQUIRE(CastToString(VarValue(4278190080.0)) == VarValue("4278190080"));
+
+  VarValue arr(VarValue::kType_ObjectArray);
+  arr.pArray.reset(new std::vector<VarValue>);
+  arr.pArray->resize(2, VarValue::None());
+  REQUIRE(CastToString(arr) == VarValue("[None, None]"));
+}
+
+TEST_CASE("operator==", "[VarValue]")
+{
+  REQUIRE(VarValue("123") == VarValue("123"));
+  REQUIRE(VarValue("123") != VarValue(123));
+  REQUIRE(VarValue("123") != VarValue(999));
 }

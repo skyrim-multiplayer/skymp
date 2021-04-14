@@ -1418,13 +1418,15 @@ Napi::Value ScampServer::GetMpApi(const Napi::CallbackInfo& info)
              auto self = GetPapyrusValueFromJsValue(info[3], info.Env(),
                                                     partOne->worldState);
 
-             auto arr = info[4].As<Napi::Array>();
+             auto arr = info[4].As<Napi::Object>();
+             auto arrSize =
+               static_cast<uint32_t>(arr.Get("length").As<Napi::Number>());
 
              bool treatNumberAsInt = false; // TODO?
 
              std::vector<VarValue> args;
-             args.resize(arr.Length());
-             for (size_t i = 0; i < arr.Length(); ++i) {
+             args.resize(arrSize);
+             for (size_t i = 0; i < arrSize; ++i) {
                args[i] = GetPapyrusValueFromJsValue(arr[i], treatNumberAsInt,
                                                     partOne->worldState);
              }
