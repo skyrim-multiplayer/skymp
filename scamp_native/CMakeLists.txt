@@ -142,9 +142,13 @@ include(${CMAKE_SOURCE_DIR}/cmake/tests_unit.cmake)
 # Link vcpkg deps
 #
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+
 foreach(target ${VCPKG_DEPENDENT})
-  find_package(Catch2 CONFIG REQUIRED)
-  target_link_libraries(${target} PUBLIC Catch2::Catch2)
+  find_path(CATCH_INCLUDE_DIR NAMES catch.hpp PATH_SUFFIXES catch2)
+  get_filename_component(CATCH_INCLUDE_DIR ${CATCH_INCLUDE_DIR} DIRECTORY)
+  target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
+  message(STATUS "CATCH_INCLUDE_DIR=${CATCH_INCLUDE_DIR}")
 
   find_path(SPARSEPP_INCLUDE_DIR NAMES spp.h PATH_SUFFIXES sparsepp)
   get_filename_component(SPARSEPP_INCLUDE_DIR ${SPARSEPP_INCLUDE_DIR} DIRECTORY)
@@ -197,3 +201,7 @@ foreach(target ${VCPKG_DEPENDENT})
   target_link_libraries(${target} PUBLIC ${Boost_LIBRARIES})
   target_include_directories(${target} PUBLIC ${Boost_INCLUDE_DIRS})
 endforeach()
+
+find_package(ChakraCore REQUIRED)
+# don't want to link against MpClientPlugin for example..
+target_link_libraries(server_guest_lib PUBLIC ChakraCore::ChakraCore)

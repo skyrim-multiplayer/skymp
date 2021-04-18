@@ -53,6 +53,7 @@ export class MasterClient implements System {
   // connect/disconnect events are not reliable so we do full recalculate
   private getCurrentOnline(serverInterface: ServerInterface): number {
     let online = 0;
+    return online;
     for (let i = 0; i < this.maxPlayers; ++i) {
       try {
         if (serverInterface.getUserActor(i) != 0) {

@@ -11,7 +11,7 @@ Win32 (PowerShell): cd vcpkg && ./bootstrap-vcpkg.bat
 
 4. Install vcpkg dependencies:
 
-Win32 (PowerShell): vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-windows-static
+Win32 (PowerShell): vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-windows-sp --overlay-triplets=overlay_triplets --overlay-ports=overlay_ports
 
 5. Install npm dependencies:
 

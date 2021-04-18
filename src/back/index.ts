@@ -19,7 +19,6 @@ import * as chokidar from "chokidar";
 import * as path from "path";
 import { ensureMastersAndScriptsPresent } from "./dataDownloader";
 import * as libkey from "./libkey";
-import { NodeVM } from "vm2";
 
 import * as manifestGen from "./manifestGen";
 
@@ -38,51 +37,40 @@ const isChildOf = (child: string, parent: string) => {
   return parentTokens.every((t, i) => child.split("/")[i] === t);
 };
 
-const runGamemodeWithVm = (gamemodeContents: string) => {
-  const vm = new NodeVM({
-    sandbox: {
-      mp: ((global as unknown) as Record<string, unknown>)["mp"],
-    },
-    require: {
-      builtin: ["path"],
-      mock: {
-        fs: {
-          readFileSync(
-            p: fs.PathLike | number,
-            options?: { encoding?: null; flag?: string } | null
-          ) {
-            if (typeof p !== "string") {
-              throw new Error("fs.readFileSync: only string paths available");
-            }
-
-            if (
-              !isChildOf(p, "./data") &&
-              path.resolve("server-settings.json") !== path.resolve(p)
-            ) {
-              throw new Error("fs.readFileSync: access denied " + p);
-            }
-
-            return fs.readFileSync(p, options);
-          },
-        },
-      },
-    },
-  });
-  vm.run(gamemodeContents);
+const runGamemodeWithVm = (
+  gamemodeContents: string,
+  server: scampNative.ScampServer
+) => {
+  server.executeJavaScriptOnChakra(gamemodeContents);
 };
 
-function requireUncached(module: string, clear: () => void): void {
+function requireUncached(
+  module: string,
+  clear: () => void,
+  server: scampNative.ScampServer
+): void {
   delete require.cache[require.resolve(module)];
-  const gamemodeContents = fs.readFileSync(require.resolve(module), "utf8");
+  let gamemodeContents = fs.readFileSync(require.resolve(module), "utf8");
 
   // Reload gamemode.js only if there are real changes
   const gamemodeContentsOld = gamemodeCache.get(module);
   if (gamemodeContentsOld !== gamemodeContents) {
-    clear();
     gamemodeCache.set(module, gamemodeContents);
 
-    const isWin32 = process.platform === "win32";
-    isWin32 ? require(module) : runGamemodeWithVm(gamemodeContents);
+    while (1) {
+      try {
+        clear();
+        runGamemodeWithVm(gamemodeContents, server);
+        return;
+      } catch (e) {
+        if (`${e}`.indexOf("'JsRun' returned error 0x30002") === -1) {
+          throw e;
+        } else {
+          console.log("Bad syntax, ignoring");
+          return;
+        }
+      }
+    }
   }
 }
 
@@ -229,18 +217,16 @@ const main = async () => {
     }
   });
 
-  const g = (global as unknown) as Record<string, unknown>;
-  const mp = server.getMpApi();
-  g.mp = mp;
-  chat.attachMpApi(mp);
-  mp.sendUiMessage = (formId: number, message: Record<string, unknown>) => {
+  chat.attachMpApi((formId, msg) => server.onUiEvent(formId, msg));
+  const sendUiMessage = (formId: number, message: Record<string, unknown>) => {
     if (typeof message !== "object") {
       throw new TypeError("Messages must be objects");
     }
     chat.sendMsg(server, formId, message);
   };
+  server.setSendUiMessageImplementation(sendUiMessage);
 
-  const clear = mp.clear as () => void;
+  const clear = () => server.clear();
 
   const toAbsolute = (p: string) => {
     if (path.isAbsolute(p)) return p;
@@ -256,7 +242,7 @@ const main = async () => {
     );
   } else {
     try {
-      requireUncached(gamemodePath, clear);
+      requireUncached(gamemodePath, clear, server);
     } catch (e) {
       console.error(e);
     }
@@ -264,7 +250,7 @@ const main = async () => {
 
   if (fs.existsSync(gamemodePath)) {
     try {
-      requireUncached(gamemodePath, clear);
+      requireUncached(gamemodePath, clear, server);
     } catch (e) {
       console.error(e);
     }
@@ -279,7 +265,7 @@ const main = async () => {
 
     const reloadGamemode = () => {
       try {
-        requireUncached(gamemodePath, clear);
+        requireUncached(gamemodePath, clear, server);
         numReloads.n++;
       } catch (e) {
         console.error(e);

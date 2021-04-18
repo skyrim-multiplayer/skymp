@@ -989,12 +989,13 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
 void MpObjectReference::MpApiOnInit()
 {
-  if (auto wst = GetParent()) {
+  // nice API (91% of cpu in profiler when spawning player)
+  /*if (auto wst = GetParent()) {
     const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
       listener->OnMpApiEvent("onInit", std::nullopt, id);
     }
-  }
+  }*/
 }
 
 bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
@@ -1061,7 +1062,8 @@ void MpObjectReference::InitScripts()
     espm::ScriptData scriptData;
     record->GetScriptData(&scriptData, compressedFieldsCache);
 
-    auto& scriptsInStorage = GetParent()->GetScriptStorage()->ListScripts(false);
+    auto& scriptsInStorage =
+      GetParent()->GetScriptStorage()->ListScripts(false);
     for (auto& script : scriptData.scripts) {
       if (scriptsInStorage.count(
             { script.scriptName.begin(), script.scriptName.end() })) {

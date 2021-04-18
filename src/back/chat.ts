@@ -2,9 +2,11 @@ import * as WebSocket from "ws";
 import * as scampNative from "./scampNative";
 import { Settings } from "./settings";
 
+export type OnUiEvent = (formId: number, msg: Record<string, unknown>) => void;
+
 const tokenByUserId = new Array<string | undefined>();
 let clients = new Array<Record<string, unknown>>();
-let mp: Record<string, unknown> = {};
+let onUiEvent: OnUiEvent = () => undefined;
 let clientByUserId = new Array<undefined | Record<string, unknown>>();
 
 clientByUserId.length = 2000; // Hard user limit
@@ -63,8 +65,8 @@ export const sendMsg = (
   );
 };
 
-export const attachMpApi = (_mp: Record<string, unknown>): void => {
-  mp = _mp;
+export const attachMpApi = (_onUiEvent: OnUiEvent): void => {
+  onUiEvent = _onUiEvent;
 };
 
 export const main = (server: scampNative.ScampServer): void => {
@@ -93,10 +95,7 @@ export const main = (server: scampNative.ScampServer): void => {
         const authoruserId = tokenByUserId.findIndex((v) => v === token);
         const actorId = getUserActorOrZero(server, authoruserId);
         clientByUserId[authoruserId] = ws;
-        const f = mp["onUiEvent"];
-        if (typeof f === "function") {
-          f(actorId, dataObj.msg);
-        }
+        onUiEvent(actorId, dataObj.msg);
       } else if (dataObj.type === "chatMessage") {
         const token = clients.find((v) => v === ws).token;
 

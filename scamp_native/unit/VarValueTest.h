@@ -227,7 +227,7 @@ TEST_CASE("Cast to string", "[VarValue]")
   REQUIRE(CastToString(VarValue(5.0)) == VarValue("5"));
   REQUIRE(CastToString(VarValue(4278190080.0)) == VarValue("4278190080"));
 
-  VarValue arr(VarValue::kType_ObjectArray);
+  VarValue arr((uint8_t)VarValue::kType_ObjectArray);
   arr.pArray.reset(new std::vector<VarValue>);
   arr.pArray->resize(2, VarValue::None());
   REQUIRE(CastToString(arr) == VarValue("[None, None]"));

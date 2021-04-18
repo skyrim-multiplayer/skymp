@@ -11,6 +11,8 @@
         "sqlite-orm",
         "mongo-cxx-driver",
         "simdjson",
-        "boost-bimap"
+        "boost-bimap",
+        "chakracore",
+		"jsengine"
     ]
 }
