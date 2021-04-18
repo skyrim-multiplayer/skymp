@@ -1,20 +1,13 @@
-import * as fs from 'fs';
-
-const getFileContents = (path: string): string => {
-  if (fs.existsSync(path)) {
-    return fs.readFileSync(path, { encoding: 'utf-8' });
-  }
-  return '';
-};
+import { Mp } from '../types/mp';
 
 export class LocalizationProvider {
-  constructor(private localizationFilePath: string, private mode: 'hotreload' | 'once') {
+  constructor(private mp: Mp, private localizationFilePath: string, private mode: 'hotreload' | 'once') {
     this.localization = {};
   }
 
   getText(msgId: string): string {
     if (Object.keys(this.localization).length === 0) {
-      const contents = getFileContents(this.localizationFilePath);
+      const contents = this.mp.readDataFile(this.localizationFilePath);
       try {
         this.localization = JSON.parse(contents);
       } catch (e) {

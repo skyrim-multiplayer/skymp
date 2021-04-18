@@ -18,16 +18,14 @@ import * as evalProp from './src/properties/eval';
 import * as browserProp from './src/properties/browser';
 
 import { LocalizationProvider } from './src/utils/localizationProvider';
-import * as fs from 'fs';
-import * as path from 'path';
 
-const config = JSON.parse(fs.readFileSync('server-settings.json', { encoding: 'utf-8' }));
+const config = mp.getServerSettings();
 const locale = config.locale;
-const data = config.dataDir;
 const isPapyrusHotReloadEnabled = config.isPapyrusHotReloadEnabled;
 
 const localizationProvider = new LocalizationProvider(
-  path.join(data, 'localization', locale + '.json'),
+  mp,
+  'localization/' + locale + '.json',
   isPapyrusHotReloadEnabled ? 'hotreload' : 'once'
 );
 

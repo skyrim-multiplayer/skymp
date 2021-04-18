@@ -175,5 +175,9 @@ export interface Mp {
     args: PapyrusValue[]
   ): PapyrusValue;
 
+  getServerSettings(): Record<string, unknown>;
+  readDataDirectory(): string[];
+  readDataFile(path: string): string;
+
   [key: string]: unknown;
 }
