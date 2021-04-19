@@ -243,6 +243,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     }
 
     this.worldModel.forms[i] = {
+      idx: msg.idx,
       movement,
       numMovementChanges: 0,
       numLookChanges: 0,
@@ -593,7 +594,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     const idxInModel = refrId
       ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId)
       : this.worldModel.playerCharacterFormIdx;
-    msg.idx = this.getIdManager().getValueById(idxInModel);
+    msg.idx = this.worldModel.forms[idxInModel].idx;
 
     delete msg._refrId;
     networking.send(msg, reliable);

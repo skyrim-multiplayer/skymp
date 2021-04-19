@@ -5,6 +5,7 @@ import { Equipment } from "./components/equipment";
 import { Inventory } from "./components/inventory";
 
 export interface FormModel {
+  idx?: number;
   baseId?: number;
   refrId?: number;
   movement?: Movement;
