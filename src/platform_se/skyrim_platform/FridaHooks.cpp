@@ -18,6 +18,9 @@
 #include <skse64/GameData.h>
 #include <skse64/GameTypes.h>
 
+#include <RE/BSScript/Object.h>
+#include <RE/BSScript/ObjectTypeInfo.h>
+
 #include <sstream>
 #include <windows.h>
 
@@ -120,10 +123,43 @@ static void example_listener_on_enter(GumInvocationListener* listener,
     case SEND_EVENT: {
       int argIdx = 2;
 
-      auto eventName =
-        (char**)gum_invocation_context_get_nth_argument(ic, argIdx);
+      auto eventName = (char**)gum_invocation_context_get_nth_argument(ic, argIdx);
 
+      auto handle = (RE::VMHandle)gum_invocation_context_get_nth_argument(ic, 1);
+      auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
       bool blockEvents = TESModPlatform::GetPapyrusEventsBlocked();
+
+      if (strcmp(*eventName, "OnUpdate") != 0 && vm) {
+        vm->attachedScriptsLock.Lock();
+        auto it = vm->attachedScripts.find(handle);
+        
+        if (it != vm->attachedScripts.end())
+        {
+          auto& scripts = it->second;
+
+          for (size_t i = 0; i < scripts.size(); i++)
+          {
+            auto script = scripts[i].get();
+            auto info = script->GetTypeInfo();
+            auto name = info->GetName();
+
+            const char* skyui_name = "SKI_"; //start skyui object name
+
+            if (strlen(name) >= 4
+              && name[0] == skyui_name[0]
+              && name[1] == skyui_name[1]
+              && name[2] == skyui_name[2]
+              && name[3] == skyui_name[3])
+            {
+              blockEvents = false;
+              break;
+            }
+          }
+        }
+
+        vm->attachedScriptsLock.Unlock();
+      }
+
       if (blockEvents) {
         static const auto fsEmpty = new RE::BSFixedString("");
         gum_invocation_context_replace_nth_argument(ic, argIdx, fsEmpty);
