@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#define F(func) func, #func
+#define JS_ENGINE_F(func) func, #func
 
 class JsValueAccess;
 class JsEngine;
@@ -56,21 +56,21 @@ public:
   static JsValue Undefined()
   {
     JsValueRef v;
-    SafeCall(F(JsGetUndefinedValue), &v);
+    SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &v);
     return JsValue(v);
   }
 
   static JsValue Null()
   {
     JsValueRef v;
-    SafeCall(F(JsGetNullValue), &v);
+    SafeCall(JS_ENGINE_F(JsGetNullValue), &v);
     return JsValue(v);
   }
 
   static JsValue Object()
   {
     JsValueRef v;
-    SafeCall(F(JsCreateObject), &v);
+    SafeCall(JS_ENGINE_F(JsCreateObject), &v);
     return JsValue(v);
   }
 
@@ -78,7 +78,7 @@ public:
   {
     JsValueRef v;
     SafeCall(
-      F(JsCreateExternalObject), data,
+      JS_ENGINE_F(JsCreateExternalObject), data,
       [](void* data_) {
         delete reinterpret_cast<JsExternalObjectBase*>(data_);
       },
@@ -89,49 +89,58 @@ public:
   static JsValue Array(uint32_t n)
   {
     JsValueRef v;
-    SafeCall(F(JsCreateArray), n, &v);
+    SafeCall(JS_ENGINE_F(JsCreateArray), n, &v);
     return JsValue(v);
   }
 
   static JsValue GlobalObject()
   {
     JsValueRef v;
-    SafeCall(F(JsGetGlobalObject), &v);
+    SafeCall(JS_ENGINE_F(JsGetGlobalObject), &v);
     return JsValue(v);
   }
 
   static JsValue Bool(bool arg)
   {
     JsValueRef v;
-    SafeCall(F(JsBoolToBoolean), arg, &v);
+    SafeCall(JS_ENGINE_F(JsBoolToBoolean), arg, &v);
     return JsValue(v);
   }
 
   static JsValue String(const std::string& arg)
   {
     JsValueRef v;
-    SafeCall(F(JsCreateString), arg.data(), arg.size(), &v);
+    SafeCall(JS_ENGINE_F(JsCreateString), arg.data(), arg.size(), &v);
+    return JsValue(v);
+  }
+
+  static JsValue String(const std::u16string& arg)
+  {
+    JsValueRef v;
+    SafeCall(JS_ENGINE_F(JsCreateStringUtf16),
+             reinterpret_cast<const uint16_t*>(arg.data()), arg.size(), &v);
     return JsValue(v);
   }
 
   static JsValue Int(int arg)
   {
     JsValueRef v;
-    SafeCall(F(JsIntToNumber), arg, &v);
+    SafeCall(JS_ENGINE_F(JsIntToNumber), arg, &v);
     return JsValue(v);
   }
 
   static JsValue Double(double arg)
   {
     JsValueRef v;
-    SafeCall(F(JsDoubleToNumber), arg, &v);
+    SafeCall(JS_ENGINE_F(JsDoubleToNumber), arg, &v);
     return JsValue(v);
   }
 
   static JsValue Function(const FunctionT& arg)
   {
     JsValueRef v;
-    SafeCall(F(JsCreateFunction), NativeFunctionImpl, new FunctionT(arg), &v);
+    SafeCall(JS_ENGINE_F(JsCreateFunction), NativeFunctionImpl,
+             new FunctionT(arg), &v);
     return JsValue(v);
   }
 
@@ -139,9 +148,29 @@ public:
   {
     JsValueRef v;
     auto jsName = JsValue::String(name);
-    SafeCall(F(JsCreateNamedFunction), jsName.value, NativeFunctionImpl,
-             new FunctionT(arg), &v);
+    SafeCall(JS_ENGINE_F(JsCreateNamedFunction), jsName.value,
+             NativeFunctionImpl, new FunctionT(arg), &v);
     return JsValue(v);
+  }
+
+  static JsValue Uint8Array(uint32_t length)
+  {
+    JsValueRef v;
+    SafeCall(JS_ENGINE_F(JsCreateTypedArray),
+             JsTypedArrayType::JsArrayTypeUint8, JS_INVALID_REFERENCE, 0,
+             length, &v);
+    return JsValue(v);
+  }
+
+  void* GetTypedArrayData() const
+  {
+    ChakraBytePtr chakraBytePtr = nullptr;
+    unsigned int bufferLength = 0;
+    JsTypedArrayType typedArrayType = JsTypedArrayType::JsArrayTypeFloat32;
+    int elementSize = 0;
+    SafeCall(JS_ENGINE_F(JsGetTypedArrayStorage), value, &chakraBytePtr,
+             &bufferLength, &typedArrayType, &elementSize);
+    return chakraBytePtr;
   }
 
   JsValue() { *this = Undefined(); }
@@ -172,25 +201,26 @@ public:
   std::string ToString() const
   {
     JsValueRef res;
-    SafeCall(F(JsConvertValueToString), value, &res);
+    SafeCall(JS_ENGINE_F(JsConvertValueToString), value, &res);
     return (std::string)JsValue(res);
   }
 
   operator bool() const
   {
     bool res;
-    SafeCall(F(JsBooleanToBool), value, &res);
+    SafeCall(JS_ENGINE_F(JsBooleanToBool), value, &res);
     return res;
   }
 
   operator std::string() const
   {
     size_t outLength;
-    SafeCall(F(JsCopyString), value, nullptr, 0, &outLength);
+    SafeCall(JS_ENGINE_F(JsCopyString), value, nullptr, 0, &outLength);
 
     std::string res;
     res.resize(outLength);
-    SafeCall(F(JsCopyString), value, res.data(), outLength, &outLength);
+    SafeCall(JS_ENGINE_F(JsCopyString), value, res.data(), outLength,
+             &outLength);
     return res;
   }
 
@@ -198,28 +228,28 @@ public:
   {
     const wchar_t* stringPtr;
     size_t stringSize;
-    SafeCall(F(JsStringToPointer), value, &stringPtr, &stringSize);
+    SafeCall(JS_ENGINE_F(JsStringToPointer), value, &stringPtr, &stringSize);
     return std::wstring(stringPtr, stringSize);
   }
 
   operator int() const
   {
     int res;
-    SafeCall(F(JsNumberToInt), value, &res);
+    SafeCall(JS_ENGINE_F(JsNumberToInt), value, &res);
     return res;
   }
 
   operator double() const
   {
     double res;
-    SafeCall(F(JsNumberToDouble), value, &res);
+    SafeCall(JS_ENGINE_F(JsNumberToDouble), value, &res);
     return res;
   }
 
   Type GetType() const
   {
     JsValueType type;
-    SafeCall(F(JsGetValueType), value, &type);
+    SafeCall(JS_ENGINE_F(JsGetValueType), value, &type);
     return static_cast<JsValue::Type>(type);
   }
 
@@ -228,11 +258,11 @@ public:
     void* externalData;
     bool hasExternslData;
 
-    SafeCall(F(JsHasExternalData), value, &hasExternslData);
+    SafeCall(JS_ENGINE_F(JsHasExternalData), value, &hasExternslData);
     if (!hasExternslData)
       return nullptr;
 
-    SafeCall(F(JsGetExternalData), value, &externalData);
+    SafeCall(JS_ENGINE_F(JsGetExternalData), value, &externalData);
     return reinterpret_cast<JsExternalObjectBase*>(externalData);
   }
 
@@ -263,15 +293,18 @@ public:
   {
     switch (key.GetType()) {
       case Type::Number: {
-        SafeCall(F(JsSetIndexedProperty), value, key.value, newValue.value);
+        SafeCall(JS_ENGINE_F(JsSetIndexedProperty), value, key.value,
+                 newValue.value);
       } break;
       case Type::String: {
 
         auto str = (std::string)key;
 
         JsPropertyIdRef propId;
-        SafeCall(F(JsCreatePropertyId), str.data(), str.size(), &propId);
-        SafeCall(F(JsSetProperty), value, propId, newValue.value, true);
+        SafeCall(JS_ENGINE_F(JsCreatePropertyId), str.data(), str.size(),
+                 &propId);
+        SafeCall(JS_ENGINE_F(JsSetProperty), value, propId, newValue.value,
+                 true);
       } break;
       default:
         throw std::runtime_error("SetProperty: Bad key type (" +
@@ -290,7 +323,7 @@ public:
     if (setter)
       descriptor.SetProperty("set", JsValue::Function(setter));
     bool result;
-    SafeCall(F(JsObjectDefineProperty), this->value, propName.value,
+    SafeCall(JS_ENGINE_F(JsObjectDefineProperty), this->value, propName.value,
              descriptor.value, &result);
   }
 
@@ -299,7 +332,7 @@ public:
     switch (key.GetType()) {
       case Type::Number: {
         JsValueRef res;
-        SafeCall(F(JsGetIndexedProperty), value, key.value, &res);
+        SafeCall(JS_ENGINE_F(JsGetIndexedProperty), value, key.value, &res);
         return JsValue(res);
       } break;
       case Type::String: {
@@ -314,17 +347,18 @@ public:
 #else
         const wchar_t* stringPtr;
         size_t stringSize;
-        SafeCall(F(JsStringToPointer), key.value, &stringPtr, &stringSize);
-        SafeCall(F(JsGetPropertyIdFromName), stringPtr, &propId);
+        SafeCall(JS_ENGINE_F(JsStringToPointer), key.value, &stringPtr,
+                 &stringSize);
+        SafeCall(JS_ENGINE_F(JsGetPropertyIdFromName), stringPtr, &propId);
 #endif
-        SafeCall(F(JsGetProperty), value, propId, &res);
+        SafeCall(JS_ENGINE_F(JsGetProperty), value, propId, &res);
         return JsValue(res);
       } break;
       case Type::Symbol: {
         JsValueRef res;
         JsPropertyIdRef propId;
-        SafeCall(F(JsGetPropertyIdFromSymbol), key.value, &propId);
-        SafeCall(F(JsGetProperty), value, propId, &res);
+        SafeCall(JS_ENGINE_F(JsGetPropertyIdFromSymbol), key.value, &propId);
+        SafeCall(JS_ENGINE_F(JsGetProperty), value, propId, &res);
         return JsValue(res);
       }
       default:
@@ -350,7 +384,7 @@ private:
     JsValueRefGuard(JsValueRef v)
       : value(v)
     {
-      SafeCall(F(JsAddRef), value, nullptr);
+      SafeCall(JS_ENGINE_F(JsAddRef), value, nullptr);
     }
     ~JsValueRefGuard() { JsRelease(value, nullptr); }
 
@@ -427,7 +461,7 @@ private:
   void AddRef()
   {
     if (value) {
-      SafeCall(F(JsAddRef), value, nullptr);
+      SafeCall(JS_ENGINE_F(JsAddRef), value, nullptr);
     }
   }
 
@@ -469,14 +503,14 @@ public:
     pImpl->scriptSrcHolder.push_back(std::make_shared<std::string>(src));
 
     JsValueRef scriptSource;
-    JsValue::SafeCall(F(JsCreateExternalArrayBuffer),
+    JsValue::SafeCall(JS_ENGINE_F(JsCreateExternalArrayBuffer),
                       (void*)pImpl->scriptSrcHolder.back()->data(),
                       (unsigned int)pImpl->scriptSrcHolder.back()->size(),
                       nullptr, nullptr, &scriptSource);
 
     JsValueRef fname;
-    JsValue::SafeCall(F(JsCreateString), fileName.data(), fileName.size(),
-                      &fname);
+    JsValue::SafeCall(JS_ENGINE_F(JsCreateString), fileName.data(),
+                      fileName.size(), &fname);
 
     JsValueRef result = nullptr;
     auto jsRunRes = JsRun(scriptSource, pImpl->currentSourceContext++, fname,
@@ -506,11 +540,12 @@ public:
 
   void ResetContext(TaskQueue& taskQueue)
   {
-    JsValue::SafeCall(F(JsCreateContext), pImpl->runtime, &pImpl->context);
-    JsValue::SafeCall(F(JsSetCurrentContext), pImpl->context);
+    JsValue::SafeCall(JS_ENGINE_F(JsCreateContext), pImpl->runtime,
+                      &pImpl->context);
+    JsValue::SafeCall(JS_ENGINE_F(JsSetCurrentContext), pImpl->context);
 
     JsValue::SafeCall(
-      F(JsSetPromiseContinuationCallback),
+      JS_ENGINE_F(JsSetPromiseContinuationCallback),
       [](JsValueRef task, void* state) {
         std::shared_ptr<JsValue> taskPtr(
           new JsValue(JsValueAccess::Ctor(task)));
@@ -520,7 +555,7 @@ public:
       &taskQueue);
 
     JsValue::SafeCall(
-      F(JsSetHostPromiseRejectionTracker),
+      JS_ENGINE_F(JsSetHostPromiseRejectionTracker),
       [](JsValueRef promise, JsValueRef reason_, bool handled, void* state) {
         if (handled)
           return;
@@ -540,7 +575,8 @@ public:
   size_t GetMemoryUsage() const
   {
     size_t res;
-    JsValue::SafeCall(F(JsGetRuntimeMemoryUsage), pImpl->runtime, &res);
+    JsValue::SafeCall(JS_ENGINE_F(JsGetRuntimeMemoryUsage), pImpl->runtime,
+                      &res);
     return res;
   }
 
