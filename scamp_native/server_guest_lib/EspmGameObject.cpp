@@ -71,7 +71,7 @@ const char* EspmGameObject::GetParentNativeScript()
     if (t == "LIGH")
       return "light";
     if (t == "MISC")
-      return "misc";
+      return "miscobject";
     if (t == "APPA")
       return "apparatus";
     if (t == "STAT")
