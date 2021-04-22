@@ -20,7 +20,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["isDisabled"] = changeForm.isDisabled;
   res["profileId"] = changeForm.profileId;
   res["isRaceMenuOpen"] = changeForm.isRaceMenuOpen;
-  res["dynamicFields"] = changeForm.dynamicFields;
+  res["dynamicFields"] = changeForm.dynamicFields.GetAsJson();
 
   if (changeForm.lookDump.empty()) {
     res["lookDump"] = nullptr;
@@ -93,8 +93,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   try {
     simdjson::dom::element jDynamicFields;
     ReadEx(element, dynamicFields, &jDynamicFields);
-    res.dynamicFields = nlohmann::json::parse(
-      static_cast<std::string>(simdjson::minify(jDynamicFields)));
+    res.dynamicFields = DynamicFields::FromJson(nlohmann::json::parse(
+      static_cast<std::string>(simdjson::minify(jDynamicFields))));
   } catch (JsonIndexException&) {
   } catch (...) {
     throw;

@@ -1,4 +1,5 @@
 #pragma once
+#include "DynamicFields.h"
 #include "Equipment.h"
 #include "FormDesc.h"
 #include "Inventory.h"
@@ -46,7 +47,7 @@ public:
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
 
-  nlohmann::json dynamicFields = nlohmann::json::object();
+  DynamicFields dynamicFields;
 };
 
 class MpChangeForm : public MpChangeFormREFR

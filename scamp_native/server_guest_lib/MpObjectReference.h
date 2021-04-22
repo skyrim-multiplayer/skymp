@@ -42,6 +42,7 @@ class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
 struct VarValue;
+class JsValue;
 
 class FormCallbacks;
 
@@ -111,7 +112,8 @@ public:
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
   void SetProperty(const std::string& propertyName,
-                   const nlohmann::json& newValue, bool isVisibleByOwner,
+                   const nlohmann::json& newValue,
+                   const JsValue& newValueChakra, bool isVisibleByOwner,
                    bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
@@ -149,6 +151,7 @@ public:
 
   virtual MpChangeForm GetChangeForm() const;
   virtual void ApplyChangeForm(const MpChangeForm& changeForm);
+  const DynamicFields& GetDynamicFields() const;
 
   // This method removes ObjectReference from a current grid and doesn't attach
   // to another grid

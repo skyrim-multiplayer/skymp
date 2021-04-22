@@ -93,7 +93,7 @@ public:
   Napi::Value Clear(const Napi::CallbackInfo& info);
 
 private:
-  void RegisterChakraApi();
+  void RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine);
 
   std::shared_ptr<PartOne> partOne;
   std::shared_ptr<Networking::IServer> server;
@@ -947,7 +947,7 @@ std::string GetDataDirSafe(nlohmann::json serverSettings)
   return dataDir;
 }
 
-void ScampServer::RegisterChakraApi()
+void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 {
   JsValue mp = JsValue::Object();
 
@@ -1222,14 +1222,7 @@ void ScampServer::RegisterChakraApi()
         res = JsValue(refr.IsDisabled());
       } else {
         EnsurePropertyExists(gamemodeApiState, propertyName);
-
-        auto fields = refr.GetChangeForm().dynamicFields;
-
-        auto it = fields.find(propertyName);
-        if (it != fields.end()) {
-          auto dump = it->dump();
-          res = ParseJsonChakra(dump);
-        }
+        res = refr.GetDynamicFields().Get(propertyName);
       }
 
       return res;
@@ -1240,6 +1233,7 @@ void ScampServer::RegisterChakraApi()
       auto formId = ExtractFormId(args[1]);
       auto propertyName = ExtractString(args[2], "propertyName");
       auto newValue = ExtractNewValue(args[3]);
+      auto newValueChakra = args[3];
 
       auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
@@ -1302,8 +1296,8 @@ void ScampServer::RegisterChakraApi()
 
         auto& info = gamemodeApiState.createdProperties[propertyName];
 
-        refr.SetProperty(propertyName, newValue, info.isVisibleByOwner,
-                         info.isVisibleByNeighbors);
+        refr.SetProperty(propertyName, newValue, newValueChakra,
+                         info.isVisibleByOwner, info.isVisibleByNeighbors);
       }
       return JsValue::Undefined();
     }));
@@ -1539,7 +1533,9 @@ void ScampServer::RegisterChakraApi()
         s += str.ToString() + ' ';
       }
 
-      std::cout << s << std::endl;
+      auto console = Env().Global().Get("console").As<Napi::Object>();
+      auto log = console.Get("log").As<Napi::Function>();
+      log.Call(console, { Napi::String::New(Env(), s) });
 
       return JsValue::Undefined();
     }));
@@ -1558,6 +1554,36 @@ void ScampServer::RegisterChakraApi()
   });
 
   JsValue::GlobalObject().SetProperty("setTimeout", setTimeout);
+
+  auto textDecoder =
+    JsValue::Function([this](const JsFunctionArguments& args) {
+      auto self = args[0];
+      self.SetProperty(
+        "decode", JsValue::Function([this](const JsFunctionArguments& args) {
+          int n = static_cast<int>(args[1].GetProperty("length"));
+          std::string src = "require('fs').writeFileSync('kek', new "
+                            "TextDecoder('utf-8').decode(new Uint8Array([";
+          for (int i = 0; i < n; ++i) {
+            int byte = static_cast<int>(args[1].GetProperty(JsValue(i)));
+            if (i) {
+              src += ", ";
+            }
+            src += std::to_string(byte);
+          }
+          src += "]))    )";
+
+          Env().RunScript(src);
+
+          std::ifstream t("kek");
+          std::stringstream buffer;
+          buffer << t.rdbuf();
+
+          return JsValue::String(buffer.str());
+        }));
+      return self;
+    });
+
+  JsValue::GlobalObject().SetProperty("TextDecoder", textDecoder);
 }
 
 Napi::Value ScampServer::ExecuteJavaScriptOnChakra(
@@ -1568,9 +1594,9 @@ Napi::Value ScampServer::ExecuteJavaScriptOnChakra(
       chakraEngine.reset(new JsEngine);
       chakraEngine->ResetContext(chakraTaskQueue);
     }
-    std::string src = static_cast<std::string>(info[0].As<Napi::String>());
+    auto src = static_cast<std::string>(info[0].As<Napi::String>());
 
-    RegisterChakraApi();
+    RegisterChakraApi(chakraEngine);
 
     chakraEngine->RunScript(src, "skymp5-gamemode/gamemode.js");
   } catch (std::exception& e) {
