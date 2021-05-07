@@ -172,6 +172,10 @@ void JsTick(bool gameFunctionsAvailable)
           continue;
         }
 
+        if (EndsWith(p.wstring(), L"-logs.txt")) {
+          continue;
+        }
+
         scriptsToExecute.push_back(p);
       }
 

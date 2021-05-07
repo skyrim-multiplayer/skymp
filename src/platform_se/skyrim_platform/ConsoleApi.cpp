@@ -10,6 +10,7 @@
 #include <RE/TESObjectREFR.h>
 #include <cstdlib>
 #include <ctpl/ctpl_stl.h>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <skse64/ObScript.h>
@@ -329,4 +330,32 @@ JsValue ConsoleApi::FindConsoleComand(const JsFunctionArguments& args)
                      comandName);
 
   return res;
+}
+
+JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
+{
+  auto pluginName = args[1].ToString();
+
+  static std::map<std::string, std::unique_ptr<std::ofstream>> m;
+
+  if (m[pluginName] == nullptr) {
+    m[pluginName].reset(new std::ofstream("Data\\Platform\\Plugins\\" +
+                                          pluginName + "-logs.txt"));
+  }
+
+  std::string s;
+
+  for (size_t i = 2; i < args.GetSize(); ++i) {
+    JsValue str = args[i];
+    if (args[i].GetType() == JsValue::Type::Object &&
+        !args[i].GetExternalData()) {
+
+      JsValue json = JsValue::GlobalObject().GetProperty("JSON");
+      str = json.GetProperty("stringify").Call({ json, args[i] });
+    }
+    s += str.ToString() + ' ';
+  }
+
+  (*m[pluginName]) << s << std::endl;
+  return JsValue::Undefined();
 }
