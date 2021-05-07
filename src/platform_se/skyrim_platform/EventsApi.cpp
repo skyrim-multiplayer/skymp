@@ -7,7 +7,9 @@
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "ThreadPoolWrapper.h"
+#include <algorithm>
 #include <map>
+#include <optional>
 #include <set>
 #include <unordered_map>
 
@@ -16,47 +18,273 @@
 extern ThreadPoolWrapper g_pool;
 extern TaskQueue g_taskQueue;
 
+namespace {
+enum class PatternType
+{
+  Exact,
+  StartsWith,
+  EndsWith
+};
+
+class Pattern
+{
+public:
+  static Pattern Parse(const std::string& str)
+  {
+    auto count = std::count(str.begin(), str.end(), '*');
+    if (count == 0) {
+      return { PatternType::Exact, str };
+    }
+    if (count > 1) {
+      throw std::runtime_error(
+        "Patterns can contain only one '*' at the beginning/end of string");
+    }
+
+    auto pos = str.find('*');
+    if (pos == 0) {
+      return { PatternType::EndsWith,
+               std::string(str.begin() + 1, str.end()) };
+    }
+    if (pos == str.size() - 1) {
+      return { PatternType::StartsWith,
+               std::string(str.begin(), str.end() - 1) };
+    }
+    throw std::runtime_error(
+      "In patterns '*' must be at the beginning/end of string");
+  }
+
+  PatternType type;
+  std::string str;
+};
+
+class Handler
+{
+public:
+  Handler() = default;
+
+  Handler(const JsValue& handler_, std::optional<double> minSelfId_,
+          std::optional<double> maxSelfId_, std::optional<Pattern> pattern_)
+    : enter(handler_.GetProperty("enter"))
+    , leave(handler_.GetProperty("leave"))
+    , minSelfId(minSelfId_)
+    , maxSelfId(maxSelfId_)
+    , pattern(pattern_)
+  {
+  }
+
+  bool Matches(uint32_t selfId, const std::string& eventName)
+  {
+    if (minSelfId.has_value() && selfId < minSelfId.value()) {
+      return false;
+    }
+    if (maxSelfId.has_value() && selfId > maxSelfId.value()) {
+      return false;
+    }
+    if (pattern.has_value()) {
+      switch (pattern->type) {
+        case PatternType::Exact:
+          return eventName == pattern->str;
+        case PatternType::StartsWith:
+          return eventName.size() >= pattern->str.size() &&
+            !memcmp(eventName.data(), pattern->str.data(),
+                    pattern->str.size());
+        case PatternType::EndsWith:
+          return eventName.size() >= pattern->str.size() &&
+            !memcmp(eventName.data() +
+                      (eventName.size() - pattern->str.size()),
+                    pattern->str.data(), pattern->str.size());
+      }
+    }
+    return true;
+  }
+
+  // PerThread structure is unique for each thread
+  struct PerThread
+  {
+    JsValue storage, context;
+    bool matchesCondition = false;
+  };
+  std::unordered_map<DWORD, PerThread> perThread;
+
+  // Shared between threads
+  const JsValue enter, leave;
+  const std::optional<Pattern> pattern;
+  const std::optional<double> minSelfId;
+  const std::optional<double> maxSelfId;
+};
+
+class Hook
+{
+public:
+  Hook(std::string hookName_, std::string eventNameVariableName_,
+       std::optional<std::string> succeededVariableName_)
+    : hookName(hookName_)
+    , eventNameVariableName(eventNameVariableName_)
+    , succeededVariableName(succeededVariableName_)
+  {
+  }
+
+  // Chakra thread only
+  void AddHandler(const Handler& handler) { handlers.push_back(handler); }
+
+  // Thread-safe, but it isn't too useful actually
+  std::string GetName() const { return hookName; }
+
+  // Hooks are set on game functions that are being called from multiple
+  // threads. So Enter/Leave methods are thread-safe, but all private methods
+  // are for Chakra thread only
+
+  void Enter(uint32_t selfId, std::string& eventName)
+  {
+    DWORD owningThread = GetCurrentThreadId();
+
+    if (hookName == "sendPapyrusEvent") {
+      // If there are no handlers, do not do g_taskQueue
+      bool anyMatch = false;
+      for (auto& h : handlers) {
+        if (h.Matches(selfId, eventName)) {
+          anyMatch = true;
+          break;
+        }
+      }
+      if (!anyMatch) {
+        return;
+      }
+
+      return g_taskQueue.AddTask([=] {
+        std::string s = eventName;
+        HandleEnter(owningThread, selfId, s);
+      });
+    }
+
+    auto f = [&](int) {
+      try {
+        if (inProgressThreads.count(owningThread))
+          throw std::runtime_error("'" + hookName + "' is already processing");
+        inProgressThreads.insert(owningThread);
+        HandleEnter(owningThread, selfId, eventName);
+      } catch (std::exception& e) {
+        auto err = std::string(e.what()) + " (while performing enter on '" +
+          hookName + "')";
+        g_taskQueue.AddTask([err] { throw std::runtime_error(err); });
+      }
+    };
+    g_pool.Push(f).wait();
+  }
+
+  void Leave(bool succeeded)
+  {
+    DWORD owningThread = GetCurrentThreadId();
+
+    if (hookName == "sendPapyrusEvent") {
+      return;
+    }
+
+    auto f = [&](int) {
+      try {
+        if (!inProgressThreads.count(owningThread))
+          throw std::runtime_error("'" + hookName + "' is not processing");
+        inProgressThreads.erase(owningThread);
+        HandleLeave(owningThread, succeeded);
+      } catch (std::exception& e) {
+        std::string what = e.what();
+        g_taskQueue.AddTask([what] {
+          throw std::runtime_error(what + " (in SendAnimationEventLeave)");
+        });
+      }
+    };
+    g_pool.Push(f).wait();
+  }
+
+private:
+  void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName)
+  {
+    for (auto& h : handlers) {
+      auto& perThread = h.perThread[owningThread];
+      perThread.matchesCondition = h.Matches(selfId, eventName);
+      if (!perThread.matchesCondition) {
+        continue;
+      }
+
+      PrepareContext(perThread);
+      ClearContextStorage(perThread);
+
+      perThread.context.SetProperty("selfId", static_cast<double>(selfId));
+      perThread.context.SetProperty(eventNameVariableName, eventName);
+      h.enter.Call({ JsValue::Undefined(), perThread.context });
+
+      eventName = static_cast<std::string>(
+        perThread.context.GetProperty(eventNameVariableName));
+    }
+  }
+
+  void PrepareContext(Handler::PerThread& h)
+  {
+    if (h.context.GetType() != JsValue::Type::Object) {
+      h.context = JsValue::Object();
+    }
+
+    thread_local auto g_standardMap =
+      JsValue::GlobalObject().GetProperty("Map");
+    if (h.storage.GetType() != JsValue::Type::Object) {
+      h.storage = g_standardMap.Constructor({ g_standardMap });
+      h.context.SetProperty("storage", h.storage);
+    }
+  }
+
+  void ClearContextStorage(Handler::PerThread& h)
+  {
+    thread_local auto g_standardMap =
+      JsValue::GlobalObject().GetProperty("Map");
+    thread_local auto g_clear =
+      g_standardMap.GetProperty("prototype").GetProperty("clear");
+    g_clear.Call({ h.storage });
+  }
+
+  void HandleLeave(DWORD owningThread, bool succeeded)
+  {
+    for (auto& h : handlers) {
+      auto& perThread = h.perThread.at(owningThread);
+      if (!perThread.matchesCondition) {
+        continue;
+      }
+
+      PrepareContext(perThread);
+
+      if (succeededVariableName.has_value()) {
+        perThread.context.SetProperty(succeededVariableName.value(),
+                                      JsValue::Bool(succeeded));
+      }
+      h.leave.Call({ JsValue::Undefined(), perThread.context });
+
+      h.perThread.erase(owningThread);
+    }
+  }
+
+  const std::string hookName;
+  const std::string eventNameVariableName;
+  const std::optional<std::string> succeededVariableName;
+  std::set<DWORD> inProgressThreads;
+  std::vector<Handler> handlers;
+};
+}
+
 struct EventsGlobalState
 {
+  EventsGlobalState()
+  {
+    sendAnimationEvent.reset(
+      new Hook("sendAnimationEvent", "animEventName", "animationSucceeded"));
+    sendPapyrusEvent.reset(
+      new Hook("sendPapyrusEvent", "papyrusEventName", std::nullopt));
+  }
+
   using Callbacks = std::map<std::string, std::vector<JsValue>>;
   Callbacks callbacks;
   Callbacks callbacksOnce;
-
-  class Handler
-  {
-  public:
-    Handler() = default;
-
-    Handler(const JsValue& handler_)
-      : enter(handler_.GetProperty("enter"))
-      , leave(handler_.GetProperty("leave"))
-    {
-    }
-
-    JsValue enter, leave;
-
-    struct PerThread
-    {
-      JsValue storage, context;
-    };
-
-    std::unordered_map<DWORD, PerThread> perThread;
-  };
-
-  struct HookInfo
-  {
-    std::set<DWORD> inProgressThreads;
-    std::vector<Handler> handlers;
-  };
-  HookInfo sendAnimationEvent;
+  std::shared_ptr<Hook> sendAnimationEvent;
+  std::shared_ptr<Hook> sendPapyrusEvent;
 } g;
-
-namespace {
-struct SendAnimationEventTag
-{
-  static constexpr auto name = "sendAnimationEvent";
-};
-}
 
 namespace {
 void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
@@ -86,37 +314,12 @@ void EventsApi::Clear()
   g = {};
 }
 
-namespace {
-enum class ClearStorage
-{
-  Yes,
-  No
-};
-
-void PrepareContext(EventsGlobalState::Handler::PerThread& h,
-                    ClearStorage clearStorage)
-{
-  if (h.context.GetType() != JsValue::Type::Object) {
-    h.context = JsValue::Object();
-  }
-
-  thread_local auto g_standardMap = JsValue::GlobalObject().GetProperty("Map");
-  thread_local auto g_clear =
-    g_standardMap.GetProperty("prototype").GetProperty("clear");
-  if (h.storage.GetType() != JsValue::Type::Object) {
-    h.storage = g_standardMap.Constructor({ g_standardMap });
-    h.context.SetProperty("storage", h.storage);
-  }
-
-  if (clearStorage == ClearStorage::Yes)
-    g_clear.Call({ h.storage });
-}
-}
-
 void EventsApi::SendAnimationEventEnter(uint32_t selfId,
                                         std::string& animEventName) noexcept
 {
-  DWORD owningThread = GetCurrentThreadId();
+  g.sendAnimationEvent->Enter(selfId, animEventName);
+
+  /*DWORD owningThread = GetCurrentThreadId();
   auto f = [&](int) {
     try {
       if (g.sendAnimationEvent.inProgressThreads.count(owningThread))
@@ -144,12 +347,13 @@ void EventsApi::SendAnimationEventEnter(uint32_t selfId,
       });
     }
   };
-  g_pool.Push(f).wait();
+  g_pool.Push(f).wait();*/
 }
 
 void EventsApi::SendAnimationEventLeave(bool animationSucceeded) noexcept
 {
-  DWORD owningThread = GetCurrentThreadId();
+  g.sendAnimationEvent->Leave(animationSucceeded);
+  /*DWORD owningThread = GetCurrentThreadId();
   auto f = [&](int) {
     try {
       if (!g.sendAnimationEvent.inProgressThreads.count(owningThread))
@@ -173,17 +377,61 @@ void EventsApi::SendAnimationEventLeave(bool animationSucceeded) noexcept
       });
     }
   };
-  g_pool.Push(f).wait();
+  g_pool.Push(f).wait();*/
+}
+
+void EventsApi::SendPapyrusEventEnter(uint32_t selfId,
+                                      std::string& papyrusEventName) noexcept
+{
+  g.sendPapyrusEvent->Enter(selfId, papyrusEventName);
+  /*DWORD owningThread = GetCurrentThreadId();
+  auto f = [&](int) {
+    try {
+      if (!g.sendPapyrusEvent.inProgressThreads.count(owningThread))
+        throw std::runtime_error("'sendPapyrusEvent' is already processing");
+      g.sendPapyrusEvent.inProgressThreads.insert(owningThread);
+
+    } catch (std::exception& e) {
+      std::string what = e.what();
+      g_taskQueue.AddTask([what] {
+        throw std::runtime_error(what + " (in SendPapyrusEventEnter)");
+      });
+    }
+  };
+  g_pool.Push(f).wait();*/
+}
+
+void EventsApi::SendPapyrusEventLeave() noexcept
+{
+  g.sendPapyrusEvent->Leave(true);
 }
 
 namespace {
-JsValue CreateHook(EventsGlobalState::HookInfo* hookInfo)
+JsValue CreateHookApi(std::shared_ptr<Hook> hookInfo)
 {
   auto hook = JsValue::Object();
   hook.SetProperty(
     "add", JsValue::Function([hookInfo](const JsFunctionArguments& args) {
       auto handlerObj = args[1];
-      hookInfo->handlers.push_back(EventsGlobalState::Handler(handlerObj));
+
+      std::optional<double> minSelfId;
+      if (args[2].GetType() == JsValue::Type::Number) {
+        minSelfId = static_cast<double>(args[2]);
+      }
+
+      std::optional<double> maxSelfId;
+      if (args[3].GetType() == JsValue::Type::Number) {
+        maxSelfId = static_cast<double>(args[3]);
+      }
+
+      std::optional<Pattern> pattern;
+      if (args[4].GetType() == JsValue::Type::String) {
+        pattern = Pattern::Parse(static_cast<std::string>(args[4]));
+      }
+
+      Handler handler(handlerObj, minSelfId, maxSelfId, pattern);
+      hookInfo->AddHandler(handler);
+
       return JsValue::Undefined();
     }));
   return hook;
@@ -192,14 +440,11 @@ JsValue CreateHook(EventsGlobalState::HookInfo* hookInfo)
 
 JsValue EventsApi::GetHooks()
 {
-  std::map<std::string, EventsGlobalState::HookInfo*> hooksMap = {
-    { "sendAnimationEvent", &g.sendAnimationEvent }
-  };
-
-  auto hooks = JsValue::Object();
-  for (auto [name, hookInfo] : hooksMap)
-    hooks.SetProperty(name, CreateHook(hookInfo));
-  return hooks;
+  auto res = JsValue::Object();
+  for (auto& hook : { g.sendAnimationEvent, g.sendPapyrusEvent }) {
+    res.SetProperty(hook->GetName(), CreateHookApi(hook));
+  }
+  return res;
 }
 
 namespace {

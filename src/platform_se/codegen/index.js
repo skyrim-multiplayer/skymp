@@ -336,14 +336,14 @@ export const enum MotionType {
 
 export declare namespace SendAnimationEventHook {
     class Context {
-        selfId: number;
+        readonly selfId: number;
         animEventName: string;
 
-        storage: Map<string, unknown>;
+        readonly storage: Map<string, unknown>;
     }
 
     class LeaveContext extends Context {
-        animationSucceeded: boolean;
+        readonly animationSucceeded: boolean;
     }
 
     class Handler {
@@ -353,11 +353,31 @@ export declare namespace SendAnimationEventHook {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     class Target {
-        add(handler: Handler): void;
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
     }
 }
+
+export declare namespace SendPapyrusEventHook {
+    class Context {
+        readonly selfId: number;
+        readonly papyrusEventName: string;
+
+        readonly storage: Map<string, unknown>;
+    }
+
+    class Handler {
+        enter(ctx: Context): void;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    class Target {
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+    }
+}
+
 export declare class Hooks {
     sendAnimationEvent: SendAnimationEventHook.Target;
+    sendPapyrusEvent: SendPapyrusEventHook.Target;
 }
 
 export declare let hooks: Hooks;

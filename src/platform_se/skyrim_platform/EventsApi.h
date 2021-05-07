@@ -12,9 +12,14 @@ void SendEvent(const char* eventName, const std::vector<JsValue>& arguments);
 void Clear();
 
 // Exceptions will be pushed to g_taskQueue
+
 void SendAnimationEventEnter(uint32_t selfId,
                              std::string& animEventName) noexcept;
 void SendAnimationEventLeave(bool animationSucceeded) noexcept;
+
+void SendPapyrusEventEnter(uint32_t selfId,
+                           std::string& papyrusEventName) noexcept;
+void SendPapyrusEventLeave() noexcept;
 
 JsValue GetHooks();
 

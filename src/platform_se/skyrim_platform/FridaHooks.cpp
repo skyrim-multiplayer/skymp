@@ -20,6 +20,7 @@
 
 #include <RE/BSScript/Object.h>
 #include <RE/BSScript/ObjectTypeInfo.h>
+#include <RE/SkyrimScript/HandlePolicy.h>
 
 #include <sstream>
 #include <windows.h>
@@ -123,34 +124,50 @@ static void example_listener_on_enter(GumInvocationListener* listener,
     case SEND_EVENT: {
       int argIdx = 2;
 
-      auto eventName = (char**)gum_invocation_context_get_nth_argument(ic, argIdx);
+      auto eventName =
+        (char**)gum_invocation_context_get_nth_argument(ic, argIdx);
 
-      auto handle = (RE::VMHandle)gum_invocation_context_get_nth_argument(ic, 1);
+      auto handle =
+        (RE::VMHandle)gum_invocation_context_get_nth_argument(ic, 1);
       auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
       bool blockEvents = TESModPlatform::GetPapyrusEventsBlocked();
+
+      uint32_t selfId = 0;
+
+      auto policy = vm->GetObjectHandlePolicy();
+      if (policy) {
+        if (auto actor = policy->GetObjectForHandle(
+              RE::FormType::ActorCharacter, handle)) {
+          selfId = actor->GetFormID();
+        }
+        if (auto refr =
+              policy->GetObjectForHandle(RE::FormType::Reference, handle)) {
+          selfId = refr->GetFormID();
+        }
+      }
+
+      std::string eventNameStr = *eventName;
+      EventsApi::SendPapyrusEventEnter(selfId, eventNameStr);
 
       if (strcmp(*eventName, "OnUpdate") != 0 && vm) {
         vm->attachedScriptsLock.Lock();
         auto it = vm->attachedScripts.find(handle);
-        
-        if (it != vm->attachedScripts.end())
-        {
+
+        if (it != vm->attachedScripts.end()) {
           auto& scripts = it->second;
 
-          for (size_t i = 0; i < scripts.size(); i++)
-          {
+          for (size_t i = 0; i < scripts.size(); i++) {
             auto script = scripts[i].get();
             auto info = script->GetTypeInfo();
             auto name = info->GetName();
 
-            const char* skyui_name = "SKI_"; //start skyui object name
+            const char* skyui_name = "SKI_"; // start skyui object name
 
-            if (strlen(name) >= 4
-              && name[0] == skyui_name[0]
-              && name[1] == skyui_name[1]
-              && name[2] == skyui_name[2]
-              && name[3] == skyui_name[3])
-            {
+            // RE::ConsoleLog::GetSingleton()->Print(name);
+
+            if (strlen(name) >= 4 && name[0] == skyui_name[0] &&
+                name[1] == skyui_name[1] && name[2] == skyui_name[2] &&
+                name[3] == skyui_name[3]) {
               blockEvents = false;
               break;
             }
@@ -298,6 +315,10 @@ static void example_listener_on_leave(GumInvocationListener* listener,
             *viewPtr = g_prevMainMenuView;
             g_prevMainMenuView = nullptr;
           }
+      break;
+    }
+    case SEND_EVENT: {
+      EventsApi::SendPapyrusEventLeave();
       break;
     }
   }
