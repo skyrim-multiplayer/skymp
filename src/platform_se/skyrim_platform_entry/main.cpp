@@ -5,8 +5,15 @@
 #include <string>
 #include <vector>
 
+typedef void (*IpcMessageCallback)(const uint8_t* data, uint32_t length);
+
 typedef bool (*SKSEPlugin_Query_Impl)(void*, void*);
 typedef bool (*SKSEPlugin_Load_Impl)(void*);
+typedef uint32_t (*SkyrimPlatform_IpcSubscribe_Impl)(const char*,
+                                                     IpcMessageCallback);
+typedef void (*SkyrimPlatform_IpcUnsubscribe_Impl)(uint32_t);
+typedef void (*SkyrimPlatform_IpcSend_Impl)(const char*, const uint8_t*,
+                                            uint32_t);
 
 class PlatformImplInterface
 {
@@ -20,6 +27,21 @@ public:
   bool Query(void* skse, void* pluginInfo) { return query(skse, pluginInfo); }
 
   bool Load(void* skse) { return load(skse); }
+
+  uint32_t IpcSubscribe(const char* systemName, IpcMessageCallback callback)
+  {
+    return ipcSubscribe(systemName, callback);
+  }
+
+  void IpcUnsubscribe(uint32_t subscriptionId)
+  {
+    return ipcUnsubscribe(subscriptionId);
+  }
+
+  void IpcSend(const char* systemName, const uint8_t* data, uint32_t length)
+  {
+    return ipcSend(systemName, data, length);
+  }
 
 private:
   PlatformImplInterface()
@@ -47,13 +69,64 @@ private:
       throw std::runtime_error("Unable to find SKSEPlugin_Load_Impl: Error " +
                                std::to_string(GetLastError()));
     }
+
+    ipcSubscribe = reinterpret_cast<SkyrimPlatform_IpcSubscribe_Impl>(
+      GetProcAddress(skyrimPlatformImpl, "SkyrimPlatform_IpcSubscribe_Impl"));
+    if (!ipcSubscribe) {
+      throw std::runtime_error(
+        "Unable to find SkyrimPlatform_IpcSubscribe_Impl: Error " +
+        std::to_string(GetLastError()));
+    }
+
+    ipcSend = reinterpret_cast<SkyrimPlatform_IpcSend_Impl>(
+      GetProcAddress(skyrimPlatformImpl, "SkyrimPlatform_IpcSend_Impl"));
+    if (!ipcSend) {
+      throw std::runtime_error(
+        "Unable to find SkyrimPlatform_IpcSend_Impl: Error " +
+        std::to_string(GetLastError()));
+    }
+
+    ipcUnsubscribe =
+      reinterpret_cast<SkyrimPlatform_IpcUnsubscribe_Impl>(GetProcAddress(
+        skyrimPlatformImpl, "SkyrimPlatform_IpcUnsubscribe_Impl"));
+    if (!ipcUnsubscribe) {
+      throw std::runtime_error(
+        "Unable to find SkyrimPlatform_IpcUnsubscribe_Impl: Error " +
+        std::to_string(GetLastError()));
+    }
   }
 
   SKSEPlugin_Query_Impl query = nullptr;
   SKSEPlugin_Load_Impl load = nullptr;
+  SkyrimPlatform_IpcSubscribe_Impl ipcSubscribe = nullptr;
+  SkyrimPlatform_IpcSend_Impl ipcSend = nullptr;
+  SkyrimPlatform_IpcUnsubscribe_Impl ipcUnsubscribe = nullptr;
 };
 
 extern "C" {
+
+__declspec(dllexport) uint32_t
+  SkyrimPlatform_IpcSubscribe(const char* systemName,
+                              IpcMessageCallback callback)
+{
+  return PlatformImplInterface::GetSingleton().IpcSubscribe(systemName,
+                                                            callback);
+}
+
+__declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe(
+  uint32_t subscriptionId)
+{
+  return PlatformImplInterface::GetSingleton().IpcUnsubscribe(subscriptionId);
+}
+
+__declspec(dllexport) void SkyrimPlatform_IpcSend(const char* systemName,
+                                                  const uint8_t* data,
+                                                  uint32_t length)
+{
+  return PlatformImplInterface::GetSingleton().IpcSend(systemName, data,
+                                                       length);
+}
+
 __declspec(dllexport) bool SKSEPlugin_Query(void* skse, void* pluginInfo)
 {
   try {

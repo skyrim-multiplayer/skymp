@@ -294,6 +294,26 @@ void OnPapyrusUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
 }
 
 extern "C" {
+__declspec(dllexport) uint32_t
+  SkyrimPlatform_IpcSubscribe_Impl(const char* systemName,
+                                   EventsApi::IpcMessageCallback callback)
+{
+  return EventsApi::IpcSubscribe(systemName, callback);
+}
+
+__declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe_Impl(
+  uint32_t subscriptionId)
+{
+  return EventsApi::IpcUnsubscribe(subscriptionId);
+}
+
+__declspec(dllexport) void SkyrimPlatform_IpcSend_Impl(const char* systemName,
+                                                       const uint8_t* data,
+                                                       uint32_t length)
+{
+  return EventsApi::IpcSend(systemName, data, length);
+}
+
 __declspec(dllexport) bool SKSEPlugin_Query_Impl(
   const SKSE::QueryInterface* skse, SKSE::PluginInfo* info)
 {

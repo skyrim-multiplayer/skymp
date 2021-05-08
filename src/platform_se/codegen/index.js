@@ -37,6 +37,7 @@ export declare function getJsMemoryUsage(): number;
 export declare function getPluginSourceCode(pluginName: string): string;
 export declare function writePlugin(pluginName: string, newSources: string): string;
 export declare function getPlatformVersion(): string;
+export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void;
 export declare let storage: Record<string, unknown>;
 export declare let settings: Record<string, Record<string, unknown>>;
 
@@ -45,6 +46,14 @@ export declare function once(eventName: 'update', callback: () => void): void;
 
 export declare function on(eventName: 'tick', callback: () => void): void;
 export declare function once(eventName: 'tick', callback: () => void): void;
+
+export interface IpcMessageEvent {
+    sourceSystemName: string;
+    message: ArrayBuffer;
+}
+
+export declare function on(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): void;
+export declare function once(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): void;
 
 export interface Face {
 	hairColor: number;

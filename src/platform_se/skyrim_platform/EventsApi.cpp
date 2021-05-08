@@ -286,6 +286,15 @@ struct EventsGlobalState
   std::shared_ptr<Hook> sendPapyrusEvent;
 } g;
 
+struct IpcShare
+{
+  std::recursive_mutex m;
+  std::vector<std::pair<std::string, EventsApi::IpcMessageCallback>>
+    ipcCallbacks;
+} g_ipcShare;
+
+std::atomic<uint32_t> g_chakraThreadId = 0;
+
 namespace {
 void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
                   bool isOnce = false)
@@ -311,6 +320,7 @@ void EventsApi::SendEvent(const char* eventName,
 
 void EventsApi::Clear()
 {
+  g_chakraThreadId = GetCurrentThreadId();
   g = {};
 }
 
@@ -318,87 +328,17 @@ void EventsApi::SendAnimationEventEnter(uint32_t selfId,
                                         std::string& animEventName) noexcept
 {
   g.sendAnimationEvent->Enter(selfId, animEventName);
-
-  /*DWORD owningThread = GetCurrentThreadId();
-  auto f = [&](int) {
-    try {
-      if (g.sendAnimationEvent.inProgressThreads.count(owningThread))
-        throw std::runtime_error("'sendAnimationEvent' is already processing");
-
-      // This should always be done before calling throwing functions
-      g.sendAnimationEvent.inProgressThreads.insert(owningThread);
-
-      for (auto& h : g.sendAnimationEvent.handlers) {
-        auto& perThread = h.perThread[owningThread];
-        PrepareContext(perThread, ClearStorage::Yes);
-
-        perThread.context.SetProperty("selfId", (double)selfId);
-        perThread.context.SetProperty("animEventName", animEventName);
-
-        h.enter.Call({ JsValue::Undefined(), perThread.context });
-
-        animEventName =
-          (std::string)perThread.context.GetProperty("animEventName");
-      }
-    } catch (std::exception& e) {
-      std::string what = e.what();
-      g_taskQueue.AddTask([what] {
-        throw std::runtime_error(what + " (in SendAnimationEventEnter)");
-      });
-    }
-  };
-  g_pool.Push(f).wait();*/
 }
 
 void EventsApi::SendAnimationEventLeave(bool animationSucceeded) noexcept
 {
   g.sendAnimationEvent->Leave(animationSucceeded);
-  /*DWORD owningThread = GetCurrentThreadId();
-  auto f = [&](int) {
-    try {
-      if (!g.sendAnimationEvent.inProgressThreads.count(owningThread))
-        throw std::runtime_error("'sendAnimationEvent' is not processing");
-      g.sendAnimationEvent.inProgressThreads.erase(owningThread);
-
-      for (auto& h : g.sendAnimationEvent.handlers) {
-        auto& perThread = h.perThread.at(owningThread);
-        PrepareContext(perThread, ClearStorage::No);
-
-        perThread.context.SetProperty("animationSucceeded",
-                                      JsValue::Bool(animationSucceeded));
-        h.leave.Call({ JsValue::Undefined(), perThread.context });
-
-        h.perThread.erase(owningThread);
-      }
-    } catch (std::exception& e) {
-      std::string what = e.what();
-      g_taskQueue.AddTask([what] {
-        throw std::runtime_error(what + " (in SendAnimationEventLeave)");
-      });
-    }
-  };
-  g_pool.Push(f).wait();*/
 }
 
 void EventsApi::SendPapyrusEventEnter(uint32_t selfId,
                                       std::string& papyrusEventName) noexcept
 {
   g.sendPapyrusEvent->Enter(selfId, papyrusEventName);
-  /*DWORD owningThread = GetCurrentThreadId();
-  auto f = [&](int) {
-    try {
-      if (!g.sendPapyrusEvent.inProgressThreads.count(owningThread))
-        throw std::runtime_error("'sendPapyrusEvent' is already processing");
-      g.sendPapyrusEvent.inProgressThreads.insert(owningThread);
-
-    } catch (std::exception& e) {
-      std::string what = e.what();
-      g_taskQueue.AddTask([what] {
-        throw std::runtime_error(what + " (in SendPapyrusEventEnter)");
-      });
-    }
-  };
-  g_pool.Push(f).wait();*/
 }
 
 void EventsApi::SendPapyrusEventLeave() noexcept
@@ -447,6 +387,52 @@ JsValue EventsApi::GetHooks()
   return res;
 }
 
+uint32_t EventsApi::IpcSubscribe(const char* systemName,
+                                 IpcMessageCallback callback)
+{
+  // Maybe they decide calling IpcSubscribe from multiple threads...
+  std::lock_guard l(g_ipcShare.m);
+
+  auto it =
+    std::find(g_ipcShare.ipcCallbacks.begin(), g_ipcShare.ipcCallbacks.end(),
+              std::pair<std::string, IpcMessageCallback>{ "", nullptr });
+  if (it == g_ipcShare.ipcCallbacks.end()) {
+    g_ipcShare.ipcCallbacks.push_back({ systemName, callback });
+    return g_ipcShare.ipcCallbacks.size() - 1;
+  }
+
+  it->first = systemName;
+  it->second = callback;
+  return static_cast<uint32_t>(it - g_ipcShare.ipcCallbacks.begin());
+}
+
+void EventsApi::IpcUnsubscribe(uint32_t subscriptionId)
+{
+  std::lock_guard l(g_ipcShare.m);
+  if (g_ipcShare.ipcCallbacks.size() > subscriptionId) {
+    g_ipcShare.ipcCallbacks[subscriptionId] = { "", nullptr };
+  }
+  // TODO: pop_back for empty subscriptions?
+}
+
+void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
+                        uint32_t length)
+{
+  const DWORD currentThreadId = GetCurrentThreadId();
+  if (currentThreadId != g_chakraThreadId) {
+    assert(0 && "IpcSend is only available in Chakra thread");
+    return;
+  }
+
+  auto typedArray = JsValue::Uint8Array(length);
+  memcpy(typedArray.GetTypedArrayData(), data, length);
+
+  auto ipcMessageEvent = JsValue::Object();
+  ipcMessageEvent.SetProperty("sourceSystemName", systemName);
+  ipcMessageEvent.SetProperty("message", typedArray);
+  SendEvent("ipcMessage", { JsValue::Undefined(), ipcMessageEvent });
+}
+
 namespace {
 JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
@@ -479,7 +465,8 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "moveAttachDetach",
                                    "objectLoaded",
                                    "waitStop",
-                                   "activate" };
+                                   "activate",
+                                   "ipcMessage" };
 
   if (events.count(eventName) == 0)
     throw InvalidArgumentException("eventName", eventName);
@@ -498,4 +485,35 @@ JsValue EventsApi::On(const JsFunctionArguments& args)
 JsValue EventsApi::Once(const JsFunctionArguments& args)
 {
   return AddCallback(args, true);
+}
+
+JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
+{
+  auto targetSystemName = static_cast<std::string>(args[1]);
+  auto message = args[2].GetArrayBufferData();
+  auto messageLength = args[2].GetArrayBufferLength();
+
+  if (!message || messageLength == 0) {
+    throw std::runtime_error(
+      "sendIpcMessage expects a valid ArrayBuffer instance");
+  }
+
+  std::vector<IpcMessageCallback> callbacks;
+  {
+    std::lock_guard l(g_ipcShare.m);
+    for (auto& [systemName, cb] : g_ipcShare.ipcCallbacks) {
+      if (systemName == targetSystemName) {
+        callbacks.push_back(cb);
+      }
+    }
+  }
+
+  // Want to call callbacks with g_ipcShare.m unlocked
+  for (auto& cb : callbacks) {
+    if (cb) {
+      cb(reinterpret_cast<uint8_t*>(message), messageLength);
+    }
+  }
+
+  return JsValue::Undefined();
 }
