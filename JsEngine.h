@@ -173,6 +173,35 @@ public:
     return chakraBytePtr;
   }
 
+  uint32_t GetTypedArrayBufferLength() const
+  {
+    ChakraBytePtr chakraBytePtr = nullptr;
+    unsigned int bufferLength = 0;
+    JsTypedArrayType typedArrayType = JsTypedArrayType::JsArrayTypeFloat32;
+    int elementSize = 0;
+    SafeCall(JS_ENGINE_F(JsGetTypedArrayStorage), value, &chakraBytePtr,
+             &bufferLength, &typedArrayType, &elementSize);
+    return bufferLength;
+  }
+
+  void* GetArrayBufferData() const
+  {
+    ChakraBytePtr chakraBytePtr = nullptr;
+    unsigned int bufferLength = 0;
+    SafeCall(JS_ENGINE_F(JsGetArrayBufferStorage), value, &chakraBytePtr,
+             &bufferLength);
+    return chakraBytePtr;
+  }
+
+  uint32_t GetArrayBufferLength() const
+  {
+    ChakraBytePtr chakraBytePtr = nullptr;
+    unsigned int bufferLength = 0;
+    SafeCall(JS_ENGINE_F(JsGetArrayBufferStorage), value, &chakraBytePtr,
+             &bufferLength);
+    return bufferLength;
+  }
+
   JsValue() { *this = Undefined(); }
   JsValue(const std::string& arg) { *this = String(arg); }
   JsValue(const char* arg) { *this = String(arg); }
