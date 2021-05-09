@@ -11,6 +11,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <tuple>
 #include <unordered_map>
 
 #include <RE\ConsoleLog.h>
@@ -286,11 +287,34 @@ struct EventsGlobalState
   std::shared_ptr<Hook> sendPapyrusEvent;
 } g;
 
+class IpcCallbackData
+{
+public:
+  IpcCallbackData() = default;
+  IpcCallbackData(std::string systemName_,
+                  EventsApi::IpcMessageCallback callback_, void* state_)
+    : systemName(systemName_)
+    , callback(callback_)
+    , state(state_)
+  {
+  }
+
+  friend bool operator==(const IpcCallbackData& lhs,
+                         const IpcCallbackData& rhs)
+  {
+    return std::make_tuple(lhs.systemName, lhs.callback, lhs.state) ==
+      std::make_tuple(rhs.systemName, rhs.callback, rhs.state);
+  }
+
+  std::string systemName;
+  EventsApi::IpcMessageCallback callback;
+  void* state = nullptr;
+};
+
 struct IpcShare
 {
   std::recursive_mutex m;
-  std::vector<std::pair<std::string, EventsApi::IpcMessageCallback>>
-    ipcCallbacks;
+  std::vector<IpcCallbackData> ipcCallbacks;
 } g_ipcShare;
 
 std::atomic<uint32_t> g_chakraThreadId = 0;
@@ -388,29 +412,29 @@ JsValue EventsApi::GetHooks()
 }
 
 uint32_t EventsApi::IpcSubscribe(const char* systemName,
-                                 IpcMessageCallback callback)
+                                 IpcMessageCallback callback, void* state)
 {
   // Maybe they decide calling IpcSubscribe from multiple threads...
   std::lock_guard l(g_ipcShare.m);
 
-  auto it =
-    std::find(g_ipcShare.ipcCallbacks.begin(), g_ipcShare.ipcCallbacks.end(),
-              std::pair<std::string, IpcMessageCallback>{ "", nullptr });
-  if (it == g_ipcShare.ipcCallbacks.end()) {
-    g_ipcShare.ipcCallbacks.push_back({ systemName, callback });
-    return g_ipcShare.ipcCallbacks.size() - 1;
-  }
+  IpcCallbackData ipcCallbackData(systemName, callback, state);
 
-  it->first = systemName;
-  it->second = callback;
-  return static_cast<uint32_t>(it - g_ipcShare.ipcCallbacks.begin());
+  auto it = std::find(g_ipcShare.ipcCallbacks.begin(),
+                      g_ipcShare.ipcCallbacks.end(), IpcCallbackData());
+  if (it == g_ipcShare.ipcCallbacks.end()) {
+    g_ipcShare.ipcCallbacks.push_back(ipcCallbackData);
+    return g_ipcShare.ipcCallbacks.size() - 1;
+  } else {
+    *it = ipcCallbackData;
+    return static_cast<uint32_t>(it - g_ipcShare.ipcCallbacks.begin());
+  }
 }
 
 void EventsApi::IpcUnsubscribe(uint32_t subscriptionId)
 {
   std::lock_guard l(g_ipcShare.m);
   if (g_ipcShare.ipcCallbacks.size() > subscriptionId) {
-    g_ipcShare.ipcCallbacks[subscriptionId] = { "", nullptr };
+    g_ipcShare.ipcCallbacks[subscriptionId] = IpcCallbackData();
   }
   // TODO: pop_back for empty subscriptions?
 }
@@ -498,20 +522,21 @@ JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
       "sendIpcMessage expects a valid ArrayBuffer instance");
   }
 
-  std::vector<IpcMessageCallback> callbacks;
+  std::vector<IpcCallbackData> callbacks;
   {
     std::lock_guard l(g_ipcShare.m);
-    for (auto& [systemName, cb] : g_ipcShare.ipcCallbacks) {
-      if (systemName == targetSystemName) {
-        callbacks.push_back(cb);
+    for (auto& callbackData : g_ipcShare.ipcCallbacks) {
+      if (callbackData.systemName == targetSystemName) {
+        callbacks.push_back(callbackData);
       }
     }
   }
 
   // Want to call callbacks with g_ipcShare.m unlocked
-  for (auto& cb : callbacks) {
-    if (cb) {
-      cb(reinterpret_cast<uint8_t*>(message), messageLength);
+  for (auto& callbackData : callbacks) {
+    if (callbackData.callback) {
+      callbackData.callback(reinterpret_cast<uint8_t*>(message), messageLength,
+                            callbackData.state);
     }
   }
 

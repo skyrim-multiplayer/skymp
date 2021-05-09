@@ -22,8 +22,10 @@ void SendPapyrusEventLeave() noexcept;
 
 JsValue GetHooks();
 
-typedef void (*IpcMessageCallback)(const uint8_t* data, uint32_t length);
-uint32_t IpcSubscribe(const char* systemName, IpcMessageCallback callback);
+typedef void (*IpcMessageCallback)(const uint8_t* data, uint32_t length,
+                                   void* state);
+uint32_t IpcSubscribe(const char* systemName, IpcMessageCallback callback,
+                      void* state);
 void IpcUnsubscribe(uint32_t subscriptionId);
 void IpcSend(const char* systemName, const uint8_t* data, uint32_t length);
 

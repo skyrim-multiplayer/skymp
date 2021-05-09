@@ -296,9 +296,10 @@ void OnPapyrusUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
 extern "C" {
 __declspec(dllexport) uint32_t
   SkyrimPlatform_IpcSubscribe_Impl(const char* systemName,
-                                   EventsApi::IpcMessageCallback callback)
+                                   EventsApi::IpcMessageCallback callback,
+                                   void* state)
 {
-  return EventsApi::IpcSubscribe(systemName, callback);
+  return EventsApi::IpcSubscribe(systemName, callback, state);
 }
 
 __declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe_Impl(

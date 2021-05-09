@@ -5,12 +5,14 @@
 #include <string>
 #include <vector>
 
-typedef void (*IpcMessageCallback)(const uint8_t* data, uint32_t length);
+typedef void (*IpcMessageCallback)(const uint8_t* data, uint32_t length,
+                                   void* state);
 
 typedef bool (*SKSEPlugin_Query_Impl)(void*, void*);
 typedef bool (*SKSEPlugin_Load_Impl)(void*);
 typedef uint32_t (*SkyrimPlatform_IpcSubscribe_Impl)(const char*,
-                                                     IpcMessageCallback);
+                                                     IpcMessageCallback,
+                                                     void*);
 typedef void (*SkyrimPlatform_IpcUnsubscribe_Impl)(uint32_t);
 typedef void (*SkyrimPlatform_IpcSend_Impl)(const char*, const uint8_t*,
                                             uint32_t);
@@ -28,9 +30,10 @@ public:
 
   bool Load(void* skse) { return load(skse); }
 
-  uint32_t IpcSubscribe(const char* systemName, IpcMessageCallback callback)
+  uint32_t IpcSubscribe(const char* systemName, IpcMessageCallback callback,
+                        void* state)
   {
-    return ipcSubscribe(systemName, callback);
+    return ipcSubscribe(systemName, callback, state);
   }
 
   void IpcUnsubscribe(uint32_t subscriptionId)
@@ -107,10 +110,10 @@ extern "C" {
 
 __declspec(dllexport) uint32_t
   SkyrimPlatform_IpcSubscribe(const char* systemName,
-                              IpcMessageCallback callback)
+                              IpcMessageCallback callback, void* state)
 {
   return PlatformImplInterface::GetSingleton().IpcSubscribe(systemName,
-                                                            callback);
+                                                            callback, state);
 }
 
 __declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe(
