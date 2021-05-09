@@ -5,6 +5,7 @@
 #include "DevApi.h"
 #include "DirectoryMonitor.h"
 #include "DumpFunctions.h"
+#include "EncodingApi.h"
 #include "EventsApi.h"
 #include "FlowManager.h"
 #include "HttpClient.h"
@@ -188,6 +189,7 @@ void JsTick(bool gameFunctionsAvailable)
           devApi, &engine,
           { { "skyrimPlatform",
               [fileDir](JsValue e) {
+                EncodingApi::Register(e);
                 LoadGameApi::Register(e);
                 CameraApi::Register(e);
                 MpClientPluginApi::Register(e);
