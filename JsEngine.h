@@ -162,6 +162,13 @@ public:
     return JsValue(v);
   }
 
+  static JsValue ArrayBuffer(uint32_t length)
+  {
+    JsValueRef v;
+    SafeCall(JS_ENGINE_F(JsCreateArrayBuffer), length, &v);
+    return JsValue(v);
+  }
+
   void* GetTypedArrayData() const
   {
     ChakraBytePtr chakraBytePtr = nullptr;
