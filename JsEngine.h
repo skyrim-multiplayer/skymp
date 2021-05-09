@@ -429,12 +429,28 @@ private:
     }
   }
 
+  static std::string ConvertJsExceptionToString(JsValueRef exception)
+  {
+    try {
+      auto stack = JsValue(exception).GetProperty("stack").ToString();
+      if (stack == "undefined") {
+        throw 1;
+      }
+      return stack;
+    } catch (...) {
+      std::stringstream ss;
+      ss << JsValue(exception).ToString() << std::endl;
+      ss << "<unable to get stack>";
+      return ss.str();
+    }
+  }
+
   static std::string GetJsExceptionMessage(const char* opName, JsErrorCode ec)
   {
     std::stringstream ss;
     JsValueRef exception;
     if (JsGetAndClearException(&exception) == JsNoError) {
-      ss << JsValue(exception).ToString();
+      ss << ConvertJsExceptionToString(exception);
     } else {
       ss << "'" << opName << "' returned error 0x" << std::hex << int(ec);
     }
@@ -547,18 +563,8 @@ public:
     if (jsRunRes != JsNoError) {
       JsValueRef exception = nullptr;
       if (JsGetAndClearException(&exception) == JsNoError) {
-        std::stringstream ss;
-        try {
-          auto stack =
-            JsValueAccess::Ctor(exception).GetProperty("stack").ToString();
-          ss << ((stack == "undefined")
-                   ? JsValue::GetJsExceptionMessage("JsRun", jsRunRes)
-                   : stack);
-        } catch (...) {
-          ss << JsValueAccess::Ctor(exception).ToString() << std::endl
-             << "<unable to get stack>";
-        }
-        throw std::runtime_error(ss.str());
+        std::string str = JsValue::ConvertJsExceptionToString(exception);
+        throw std::runtime_error(str);
       } else {
         throw std::runtime_error("JsRun failed");
       }
