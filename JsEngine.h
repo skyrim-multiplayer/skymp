@@ -627,4 +627,4 @@ private:
   Impl* const pImpl;
 };
 
-#undef F
+#undef JS_ENGINE_F
