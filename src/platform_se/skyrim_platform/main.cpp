@@ -119,26 +119,12 @@ void JsTick(bool gameFunctionsAvailable)
 
     auto fileDir = std::filesystem::path("Data/Platform/Plugins");
     static auto monitor = new DirectoryMonitor(fileDir);
-    static uint32_t lastNumUpdates = 0;
 
     static uint32_t tickId = 0;
     tickId++;
 
-    const auto n = monitor->GetNumUpdates();
-    bool scriptsUpdated = false;
-    if (lastNumUpdates != n) {
-      lastNumUpdates = n;
-      scriptsUpdated = true;
-    }
-
-    if (auto ec = monitor->GetErrorCode()) {
-      static bool thrown = false;
-      if (!thrown) {
-        thrown = true;
-        throw std::runtime_error("DirectoryMonitor failed with code " +
-                                 std::to_string(ec));
-      }
-    }
+    bool scriptsUpdated = monitor->Updated();
+    monitor->ThrowOnceIfHasError();
 
     if (tickId == 1 || scriptsUpdated) {
       ConsoleApi::Clear();

@@ -1,6 +1,6 @@
 #include "EventsApi.h"
 
-#include "EventSinks.h"
+#include "GameEventSinks.h"
 #include "InvalidArgumentException.h"
 #include "MyUpdateTask.h"
 #include "NativeObject.h"
@@ -13,8 +13,6 @@
 #include <set>
 #include <tuple>
 #include <unordered_map>
-
-#include <RE\ConsoleLog.h>
 
 extern ThreadPoolWrapper g_pool;
 extern TaskQueue g_taskQueue;
@@ -270,6 +268,11 @@ private:
 };
 }
 
+struct EventsGlobalStatePersistent
+{
+  std::shared_ptr<GameEventSinks> gameEventSinks;
+} gPersistent;
+
 struct EventsGlobalState
 {
   EventsGlobalState()
@@ -460,7 +463,9 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
 namespace {
 JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
-  static EventSinks g_sinks;
+  if (!gPersistent.gameEventSinks) {
+    gPersistent.gameEventSinks.reset(new GameEventSinks(g_taskQueue));
+  }
 
   auto eventName = args[1].ToString();
   auto callback = args[2];

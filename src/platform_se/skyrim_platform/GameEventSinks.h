@@ -21,7 +21,9 @@
 #include <RE/TESUniqueIDChangeEvent.h>
 #include <RE/TESWaitStopEvent.h>
 
-class EventSinks
+class TaskQueue;
+
+class GameEventSinks
   : public RE::BSTEventSink<RE::TESActiveEffectApplyRemoveEvent>
   , public RE::BSTEventSink<RE::TESLoadGameEvent>
   , public RE::BSTEventSink<RE::TESEquipEvent>
@@ -45,7 +47,8 @@ class EventSinks
 
 {
 public:
-  EventSinks()
+  GameEventSinks(TaskQueue& taskQueue_)
+    : taskQueue(taskQueue_)
   {
     auto holder = RE::ScriptEventSourceHolder::GetSingleton();
     if (!holder)
@@ -194,4 +197,6 @@ private:
   RE::BSEventNotifyControl ProcessEvent(
     const RE::TESMagicEffectApplyEvent* event_,
     RE::BSTEventSource<RE::TESMagicEffectApplyEvent>* eventSource) override;
+
+  TaskQueue& taskQueue;
 };

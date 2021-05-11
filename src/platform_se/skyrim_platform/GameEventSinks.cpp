@@ -1,13 +1,12 @@
-#include "EventSinks.h"
+#include "GameEventSinks.h"
 #include "EventsApi.h"
 #include "JsEngine.h"
 #include "NativeValueCasts.h"
+#include "TaskQueue.h"
 #include <RE/ActiveEffect.h>
 #include <RE/Actor.h>
 #include <RE/EffectSetting.h>
 #include <RE/TESObjectCELL.h>
-
-extern TaskQueue g_taskQueue;
 
 struct RE::TESActivateEvent
 {
@@ -24,7 +23,7 @@ JsValue CreateObject(const char* type, void* form)
 }
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESActivateEvent* event_,
   RE::BSTEventSource<RE::TESActivateEvent>* eventSource)
 {
@@ -34,7 +33,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   auto targetId = targetRefr ? targetRefr->formID : 0;
   auto casterId = casterRefr ? casterRefr->formID : 0;
 
-  g_taskQueue.AddTask([targetId, casterId, targetRefr, casterRefr] {
+  taskQueue.AddTask([targetId, casterId, targetRefr, casterRefr] {
     auto obj = JsValue::Object();
 
     auto target = RE::TESForm::LookupByID(targetId);
@@ -58,7 +57,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESMoveAttachDetachEvent* event_,
   RE::BSTEventSource<RE::TESMoveAttachDetachEvent>* eventSource)
 {
@@ -67,7 +66,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   auto targetId = movedRef ? movedRef->formID : 0;
   auto isCellAttached = event_ ? event_->isCellAttached : 0;
 
-  g_taskQueue.AddTask([targetId, isCellAttached, movedRef] {
+  taskQueue.AddTask([targetId, isCellAttached, movedRef] {
     auto obj = JsValue::Object();
 
     auto target = RE::TESForm::LookupByID(targetId);
@@ -81,13 +80,13 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESWaitStopEvent* event_,
   RE::BSTEventSource<RE::TESWaitStopEvent>* eventSource)
 {
   auto interrupted = event_ ? event_->interrupted : 0;
 
-  g_taskQueue.AddTask([interrupted] {
+  taskQueue.AddTask([interrupted] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("isInterrupted", JsValue::Bool(interrupted));
@@ -98,14 +97,14 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESObjectLoadedEvent* event_,
   RE::BSTEventSource<RE::TESObjectLoadedEvent>* eventSource)
 {
   auto objectId = event_ ? event_->formID : 0;
   auto loaded = event_ ? event_->loaded : 0;
 
-  g_taskQueue.AddTask([objectId, loaded] {
+  taskQueue.AddTask([objectId, loaded] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("object",
@@ -119,14 +118,14 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESLockChangedEvent* event_,
   RE::BSTEventSource<RE::TESLockChangedEvent>* eventSource)
 {
   auto lockedObject = event_ ? event_->lockedObject : nullptr;
   auto lockedObjectId = lockedObject ? lockedObject->formID : 0;
 
-  g_taskQueue.AddTask([lockedObjectId, lockedObject] {
+  taskQueue.AddTask([lockedObjectId, lockedObject] {
     auto obj = JsValue::Object();
 
     auto lockedObject = RE::TESForm::LookupByID(lockedObjectId);
@@ -140,14 +139,14 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESCellFullyLoadedEvent* event_,
   RE::BSTEventSource<RE::TESCellFullyLoadedEvent>* eventSource)
 {
   auto cell = event_ ? event_->cell : nullptr;
   auto cellId = cell ? cell->formID : 0;
 
-  g_taskQueue.AddTask([cellId, cell] {
+  taskQueue.AddTask([cellId, cell] {
     auto obj = JsValue::Object();
 
     auto cell_ = RE::TESForm::LookupByID(cellId);
@@ -160,7 +159,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESGrabReleaseEvent* event_,
   RE::BSTEventSource<RE::TESGrabReleaseEvent>* eventSource)
 {
@@ -168,7 +167,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   auto refId = ref ? ref->formID : 0;
   auto grabbed = event_ ? event_->grabbed : 0;
 
-  g_taskQueue.AddTask([refId, grabbed, ref] {
+  taskQueue.AddTask([refId, grabbed, ref] {
     auto obj = JsValue::Object();
 
     auto reference = RE::TESForm::LookupByID(refId);
@@ -183,24 +182,24 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESLoadGameEvent* event_,
   RE::BSTEventSource<RE::TESLoadGameEvent>* eventSource)
 {
-  g_taskQueue.AddTask(
+  taskQueue.AddTask(
     [] { EventsApi::SendEvent("loadGame", { JsValue::Undefined() }); });
 
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESSwitchRaceCompleteEvent* event_,
   RE::BSTEventSource<RE::TESSwitchRaceCompleteEvent>* eventSource)
 {
   auto subject = event_ ? event_->subject.get() : nullptr;
   auto subjectId = subject ? subject->formID : 0;
 
-  g_taskQueue.AddTask([subjectId, subject] {
+  taskQueue.AddTask([subjectId, subject] {
     auto obj = JsValue::Object();
 
     auto subjectLocal = RE::TESForm::LookupByID(subjectId);
@@ -212,7 +211,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESUniqueIDChangeEvent* event_,
   RE::BSTEventSource<RE::TESUniqueIDChangeEvent>* eventSource)
 {
@@ -222,7 +221,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   auto oldBaseID = event_ ? event_->oldBaseID : 0;
   auto newBaseID = event_ ? event_->newBaseID : 0;
 
-  g_taskQueue.AddTask([oldUniqueID, newUniqueID, oldBaseID, newBaseID] {
+  taskQueue.AddTask([oldUniqueID, newUniqueID, oldBaseID, newBaseID] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("oldBaseID", JsValue::Double(oldBaseID));
@@ -235,14 +234,14 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESTrackedStatsEvent* event_,
   RE::BSTEventSource<RE::TESTrackedStatsEvent>* eventSource)
 {
   std::string statName = event_ ? event_->stat.data() : "";
   auto value = event_ ? event_->value : 0;
 
-  g_taskQueue.AddTask([statName, value] {
+  taskQueue.AddTask([statName, value] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("statName", JsValue::String(statName));
@@ -253,14 +252,14 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESInitScriptEvent* event_,
   RE::BSTEventSource<RE::TESInitScriptEvent>* eventSource)
 {
   auto objectInitialized = event_ ? event_->objectInitialized.get() : nullptr;
   auto objectInitializedId = objectInitialized ? objectInitialized->formID : 0;
 
-  g_taskQueue.AddTask([objectInitializedId, objectInitialized] {
+  taskQueue.AddTask([objectInitializedId, objectInitialized] {
     auto obj = JsValue::Object();
 
     auto objectInitializedLocal = RE::TESForm::LookupByID(objectInitializedId);
@@ -276,14 +275,14 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESResetEvent* event_,
   RE::BSTEventSource<RE::TESResetEvent>* eventSource)
 {
   auto object = event_ ? event_->object.get() : nullptr;
   auto objectId = object ? object->formID : 0;
 
-  g_taskQueue.AddTask([objectId, object] {
+  taskQueue.AddTask([objectId, object] {
     auto obj = JsValue::Object();
 
     auto objectIdLocal = RE::TESForm::LookupByID(objectId);
@@ -297,7 +296,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kStop;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESCombatEvent* event_,
   RE::BSTEventSource<RE::TESCombatEvent>* eventSource)
 {
@@ -309,7 +308,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
 
   auto state = event_ ? (uint32_t)event_->state : 0;
 
-  g_taskQueue.AddTask(
+  taskQueue.AddTask(
     [targetActorId, actorId, state, targetActorRefr, actorRefr] {
       auto obj = JsValue::Object();
 
@@ -337,7 +336,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESDeathEvent* event_,
   RE::BSTEventSource<RE::TESDeathEvent>* eventSource)
 {
@@ -349,7 +348,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
 
   auto dead = event_ ? event_->dead : 0;
 
-  g_taskQueue.AddTask(
+  taskQueue.AddTask(
     [actorDyingId, actorKillerId, dead, actorDyingRefr, actorKillerRefr] {
       auto obj = JsValue::Object();
 
@@ -371,7 +370,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESContainerChangedEvent* event_,
   RE::BSTEventSource<RE::TESContainerChangedEvent>* eventSource)
 {
@@ -384,8 +383,8 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   auto reference = event_ ? event_->reference.get() : nullptr;
   auto referenceId = reference ? reference->formID : 0;
 
-  g_taskQueue.AddTask([oldContainerId, newContainerId, baseObjId, itemCount,
-                       uniqueID, referenceId] {
+  taskQueue.AddTask([oldContainerId, newContainerId, baseObjId, itemCount,
+                     uniqueID, referenceId] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("oldContainer",
@@ -411,7 +410,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESHitEvent* event_,
   RE::BSTEventSource<RE::TESHitEvent>* eventSource)
 {
@@ -425,7 +424,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   auto projectileId = event_ ? event_->projectile : 0;
   uint8_t flags = event_ ? (uint8_t)event_->flags : 0;
 
-  g_taskQueue.AddTask(
+  taskQueue.AddTask(
     [targetId, causeId, sourceId, projectileId, flags, targetRefr, causeRefr] {
       auto obj = JsValue::Object();
 
@@ -465,7 +464,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESEquipEvent* event_,
   RE::BSTEventSource<RE::TESEquipEvent>* eventSource)
 {
@@ -477,8 +476,8 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   auto equipped = event_ ? event_->equipped : 0;
   auto uniqueId = event_ ? event_->uniqueID : 0;
 
-  g_taskQueue.AddTask([actorId, baseObjectId, equipped, uniqueId,
-                       originalRefrId, actorRefr] {
+  taskQueue.AddTask([actorId, baseObjectId, equipped, uniqueId, originalRefrId,
+                     actorRefr] {
     auto obj = JsValue::Object();
 
     auto actorLocal = RE::TESForm::LookupByID(actorId);
@@ -501,7 +500,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESActiveEffectApplyRemoveEvent* event_,
   RE::BSTEventSource<RE::TESActiveEffectApplyRemoveEvent>* eventSource)
 {
@@ -532,10 +531,9 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
 
   auto activeEffectBaseId = activeEffectBase ? activeEffectBase->formID : 0;
 
-  g_taskQueue.AddTask([casterId, targetId, isApplied, activeEffect,
-                       activeEffectUniqueID, activeEffectBaseId,
-                       caster, target] {
-
+  taskQueue.AddTask([casterId, targetId, isApplied, activeEffect,
+                     activeEffectUniqueID, activeEffectBaseId, caster,
+                     target] {
     auto obj = JsValue::Object();
 
     bool isEffectValid = activeEffect
@@ -547,8 +545,8 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
                                  RE::TESForm::LookupByID(activeEffectBaseId)));
 
     obj.SetProperty("activeEffect",
-                    CreateObject("ActiveMagicEffect", isEffectValid ? activeEffect
-                                 : nullptr));
+                    CreateObject("ActiveMagicEffect",
+                                 isEffectValid ? activeEffect : nullptr));
 
     auto casterLocal = RE::TESForm::LookupByID(casterId);
     casterLocal = casterLocal == caster ? casterLocal : nullptr;
@@ -567,7 +565,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl EventSinks::ProcessEvent(
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESMagicEffectApplyEvent* event_,
   RE::BSTEventSource<RE::TESMagicEffectApplyEvent>* eventSource)
 {
@@ -579,7 +577,7 @@ RE::BSEventNotifyControl EventSinks::ProcessEvent(
   auto casterId = caster ? caster->formID : 0;
   auto targetId = target ? target->formID : 0;
 
-  g_taskQueue.AddTask([effectId, casterId, targetId, caster, target] {
+  taskQueue.AddTask([effectId, casterId, targetId, caster, target] {
     auto obj = JsValue::Object();
 
     auto effect = RE::TESForm::LookupByID(effectId);
