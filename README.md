@@ -24,15 +24,16 @@
 </p>
 
 ```typescript
-printConsole('Hello Platform');
+printConsole("Hello Platform");
 
-on('update', () => {
+on("update", () => {
   const gold = Game.getForm(0xf);
   const target = Game.getDialogueTarget();
-  
-  if (target && Game.getPlayer().getItemCount(gold) >= 100) {
-    Game.getPlayer().removeItem(gold, 100, true, target);
-    Debug.notification('You have just paid to an NPC');
+  const player = Game.getPlayer();
+
+  if (target && player && player.getItemCount(gold) >= 100) {
+    player.removeItem(gold, 100, true, target);
+    Debug.notification("You have just paid to an NPC");
   }
 });
 ```
