@@ -34,8 +34,9 @@ RUN apk add --no-cache \
 # (vcpkg/refs/heads/master contains vcpkg version)
 COPY .git/modules/vcpkg/refs/heads/master \
   ./vcpkg.json \
-  x64-linux-musl.cmake \
+  ./x64-linux-musl.cmake \
   ./
+COPY ./overlay_ports ./overlay_ports
 RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \ 
   && cd vcpkg \
   && git checkout $(cat master) \
@@ -43,7 +44,7 @@ RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \
   && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics \
   && mv ../x64-linux-musl.cmake ./triplets/x64-linux-musl.cmake \
   && cd .. \
-  && vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux \
+  && vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux --overlay-ports=/overlay_ports \
   && rm -r vcpkg/buildtrees \
   && rm -r vcpkg/packages \
   && rm -r vcpkg/downloads
