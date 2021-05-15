@@ -1,6 +1,6 @@
 {
     "name": "jsengine",
-    "version-string": "2021-04-14",
+    "version-string": "2021-05-09-1",
     "homepage": "https://github.com/skyrim-multiplayer/JsEngine",
     "license": "MIT",
     "dependencies": []
