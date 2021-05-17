@@ -82,6 +82,11 @@ class Chat extends React.Component {
   getMessageText(text) {
     let hexCount = 0;
 
+    while (text.indexOf("<") != -1 || text.indexOf(">") != -1) {
+      text = text.replace(">", "");
+      text = text.replace("<", "");
+    }
+
     for (let i = 0; i < text.length; i++) {
       if (i + 1 !== text.length && text[i] === "#" && text[i + 1] === "{") {
         const hex = text.substring(i + 2, i + 8);
