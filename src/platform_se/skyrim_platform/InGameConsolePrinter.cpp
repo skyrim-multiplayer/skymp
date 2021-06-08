@@ -1,4 +1,5 @@
 #include "InGameConsolePrinter.h"
+#include "ConsoleApi.h"
 #include "JsEngine.h"
 #include "NullPointerException.h"
 #include <RE/ConsoleLog.h>
@@ -27,5 +28,7 @@ void InGameConsolePrinter::Print(const JsFunctionArguments& args)
     s.resize(maxSize);
     s += "...";
   }
-  console->Print("[Script] %s", s.data());
+
+  const char* prefix = ConsoleApi::GetScriptPrefix();
+  console->Print("%s%s", prefix, s.data());
 }

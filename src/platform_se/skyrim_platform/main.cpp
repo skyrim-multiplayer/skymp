@@ -89,7 +89,8 @@ void SafePrint(std::string what)
       msg.resize(128);
       msg += '...';
     }
-    console->Print("%s%s", (i ? "" : "[Exception] "), msg.data());
+    const char* prefix = ConsoleApi::GetExceptionPrefix();
+    console->Print("%s%s", (i ? "" : prefix), msg.data());
     ++i;
   };
 

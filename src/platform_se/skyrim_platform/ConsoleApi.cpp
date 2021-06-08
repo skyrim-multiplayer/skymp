@@ -37,6 +37,7 @@ struct ConsoleComand
   ObScriptCommand myOriginalData;
 };
 static std::map<std::string, ConsoleComand> replacedConsoleCmd;
+static bool printConsolePrefixesEnabled = true;
 
 bool AreCommandNamesValidAndEqual(const std::string& first,
                                   const std::string& second)
@@ -61,6 +62,16 @@ void ConsoleApi::Clear()
   }
 
   replacedConsoleCmd.clear();
+}
+
+const char* ConsoleApi::GetScriptPrefix()
+{
+  return printConsolePrefixesEnabled ? "[Script] " : "";
+}
+
+const char* ConsoleApi::GetExceptionPrefix()
+{
+  return printConsolePrefixesEnabled ? "[Exception] " : "";
 }
 
 namespace {
@@ -357,5 +368,12 @@ JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
   }
 
   (*m[pluginName]) << s << std::endl;
+  return JsValue::Undefined();
+}
+
+JsValue ConsoleApi::SetPrintConsolePrefixesEnabled(
+  const JsFunctionArguments& args)
+{
+  printConsolePrefixesEnabled = static_cast<bool>(args[1]);
   return JsValue::Undefined();
 }
