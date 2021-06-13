@@ -163,10 +163,14 @@ if (NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   add_papyrus_library(NAME TESModPlatformPsc DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc")
   if(TARGET TESModPlatformPsc)
     add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
-  endif()
-
-  if(TARGET TESModPlatformPsc)
     list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
+    file(GLOB papyrus_sources "${CMAKE_CURRENT_SOURCE_DIR}/psc/*.psc")
+    set(def "")
+    foreach(source_path ${papyrus_sources})
+        get_filename_component(source_path ${source_path} NAME)
+        string(APPEND def "${source_path} ")
+    endforeach()
+    target_compile_definitions(skyrim_platform PUBLIC PAPYRUS_SOURCES=\"${def}\")
   endif()
 
   # cef_dir.txt is used by dev_service in any mode

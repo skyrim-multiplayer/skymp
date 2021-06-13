@@ -1,5 +1,7 @@
 #include "PapyrusTESModPlatform.h"
 #include "CallNativeApi.h"
+#include "ConsoleApi.h"
+#include "ExceptionPrinter.h"
 #include "NullPointerException.h"
 #include <RE/AIProcess.h>
 #include <RE/ActorEquipManager.h>
@@ -33,6 +35,7 @@
 #include <atomic>
 #include <map>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <re/BGSEquipSlot.h>
 #include <re/Offsets_RTTI.h>
 #include <skse64/Colors.h>
@@ -763,6 +766,39 @@ int TESModPlatform::GetWeapDrawnMode(uint32_t actorId)
                                          : it->second;
 }
 
+class PapyrusSourcesChecker
+{
+public:
+  PapyrusSourcesChecker()
+  {
+    auto missing = GetMissingFiles();
+    if (!missing.empty()) {
+      std::stringstream ss;
+      ss << "Missing files: " << nlohmann::json(missing).dump(2)
+         << ", reinstalling SkyrimPlatform may fix that";
+      throw std::runtime_error(ss.str());
+    }
+  }
+
+  std::vector<std::string> GetMissingFiles()
+  {
+    std::vector<std::string> missing;
+    std::istringstream stream(PAPYRUS_SOURCES);
+    std::string tmp;
+    while (std::getline(stream, tmp, ' ')) {
+      tmp.replace(tmp.begin() + tmp.find(".psc"), tmp.end(), ".pex");
+      std::filesystem::path path;
+      path /= "Data";
+      path /= "Scripts";
+      path /= tmp;
+      if (!std::filesystem::exists(path)) {
+        missing.push_back(tmp);
+      }
+    }
+    return missing;
+  }
+};
+
 void TESModPlatform::Update()
 {
   if (!vmCallAllowed)
@@ -783,9 +819,22 @@ void TESModPlatform::Update()
   RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> functor(
     new StackCallbackFunctor);
 
-  RE::BSFixedString className("TESModPlatform");
-  RE::BSFixedString funcName("Add");
-  vm->impl->DispatchStaticCall(className, funcName, &args, functor);
+  // Prevents calling DispatchStaticCall by throwing an exception if we know
+  // it's going to crash
+  try {
+    static PapyrusSourcesChecker checker;
+
+    // DispatchStaticCall is gonna crash if TESModPlatform.pex or any of its
+    // dependencies (like Actor.pex) is missing
+    RE::BSFixedString className("TESModPlatform");
+    RE::BSFixedString funcName("Add");
+    vm->impl->DispatchStaticCall(className, funcName, &args, functor);
+  } catch (std::exception& e) {
+    // We are not interested in crashing the game thread, so just printing
+    ExceptionPrinter printer(ConsoleApi::GetExceptionPrefix());
+    static std::once_flag flag;
+    std::call_once(flag, [&] { printer.PrintException(e.what()); });
+  }
 }
 
 uint64_t TESModPlatform::GetNumPapyrusUpdates()

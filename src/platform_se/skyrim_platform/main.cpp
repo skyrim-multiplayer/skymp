@@ -7,6 +7,7 @@
 #include "DumpFunctions.h"
 #include "EncodingApi.h"
 #include "EventsApi.h"
+#include "ExceptionPrinter.h"
 #include "FlowManager.h"
 #include "HttpClient.h"
 #include "HttpClientApi.h"
@@ -74,38 +75,6 @@ bool EndsWith(const std::wstring& value, const std::wstring& ending)
   return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
-void SafePrint(std::string what)
-{
-  std::string tmp;
-
-  auto console = RE::ConsoleLog::GetSingleton();
-  if (!console)
-    return;
-
-  size_t i = 0;
-
-  auto safePrint = [what, console, &i](std::string msg) {
-    if (msg.size() > 128) {
-      msg.resize(128);
-      msg += '...';
-    }
-    const char* prefix = ConsoleApi::GetExceptionPrefix();
-    console->Print("%s%s", (i ? "" : prefix), msg.data());
-    ++i;
-  };
-
-  for (size_t i = 0; i < what.size(); ++i) {
-    if (what[i] == '\n') {
-      safePrint(tmp);
-      tmp.clear();
-    } else {
-      tmp += what[i];
-    }
-  }
-  if (!tmp.empty())
-    safePrint(tmp);
-}
-
 void JsTick(bool gameFunctionsAvailable)
 {
   if (auto console = RE::ConsoleLog::GetSingleton()) {
@@ -150,8 +119,12 @@ void JsTick(bool gameFunctionsAvailable)
           s.resize(s.size() - strlen("-settings.txt"));
 
           auto pluginName = std::filesystem::path(s).string();
-          SafePrint("Found settings file: " + p.string() + " for plugin " +
-                    pluginName);
+
+          // Why do we treat it as an exception actually?
+          std::string what =
+            "Found settings file: " + p.string() + " for plugin " + pluginName;
+          ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
+            .PrintException(what.data());
 
           auto standardJson = JsValue::GlobalObject().GetProperty("JSON");
           auto parsedSettings = standardJson.GetProperty("parse").Call(
@@ -238,8 +211,8 @@ void JsTick(bool gameFunctionsAvailable)
              !memcmp(what.data(), "Error: ", sizeof("Error: ") - 1)) {
         what = { what.begin() + sizeof("Error: ") - 1, what.end() };
       }
-
-      SafePrint(what);
+      ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
+        .PrintException(what.data());
     }
   }
 }
