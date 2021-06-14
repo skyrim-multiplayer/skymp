@@ -128,25 +128,9 @@ const watchCallback = (_eventType, fileName) => {
         binPath("SkyrimPlatformImpl.dll"),
         "./dist/Data/Platform/Distribution/RuntimeDependencies"
       );
-      [
-        "Actor",
-        "ActorBase",
-        "Cell",
-        "ColorForm",
-        "Enchantment",
-        "Form",
-        "HeadPart",
-        "ObjectReference",
-        "Potion",
-        "Race",
-        "Actor",
-        "TESModPlatform",
-        "WorldSpace",
-      ].forEach((script) =>
-        cp(
-          path.join(sourceDir, `src/platform_se/pex/${script}.pex`),
-          "./dist/Data/Scripts"
-        )
+      cp(
+        path.join(sourceDir, `src/platform_se/pex/TESModPlatform.pex`),
+        "./dist/Data/Scripts"
       );
       cp(
         path.join(bin, `_codegen/skyrimPlatform.ts`),
@@ -182,10 +166,9 @@ const watchCallback = (_eventType, fileName) => {
 };
 
 if (process.env.DEV_SERVICE_ONLY_ONCE) {
-  const defaultConfig =
-    process.env.DEFAULT_CONFIG === "Debug" ? "Debug" : "Release";
+  const defaultConfig = process.env.DEFAULT_CONFIG === "Debug" ? "Debug" : "Release";
   watchCallback(undefined, `touch_${defaultConfig}`);
 } else {
-  console.log(`Watching for changes in ${bin}`);
+  console.log(`Watching for changes in ${bin}`)
   fs.watch(bin, watchCallback);
 }
