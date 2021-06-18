@@ -3,6 +3,7 @@
 #include "ServerState.h"
 #include <simdjson.h>
 
+//TODO: Remove this
 class IMessage
 {
 public:

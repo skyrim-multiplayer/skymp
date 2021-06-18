@@ -12,9 +12,11 @@ public:
 
   IdManager(userid maxConnections_);
 
+
+  /// \return IServer::invalidUserId on failure
   userid allocateId(
     const RakNetGUID&
-      guid) noexcept; // returns IServer::invalidUserId on failure
+      guid) noexcept;
   void freeId(userid id) noexcept;
   userid find(const RakNetGUID& guid) const noexcept;
   RakNetGUID find(userid id) const noexcept;

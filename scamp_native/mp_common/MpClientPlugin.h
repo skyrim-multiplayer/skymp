@@ -3,6 +3,8 @@
 #include <cstdint>
 
 namespace MpClientPlugin {
+
+// Callback for process handling
 typedef void (*OnPacket)(int32_t type, const char* jsonContent,
                          const char* error, void* state_);
 

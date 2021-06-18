@@ -1,6 +1,6 @@
 /*
  * Base networking staff
- * */
+ */
 
 #pragma once
 #include <cstddef>
