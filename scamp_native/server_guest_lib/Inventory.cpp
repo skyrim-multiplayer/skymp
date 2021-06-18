@@ -169,8 +169,8 @@ Inventory::Entry Inventory::Entry::FromJson(simdjson::dom::element& jEntry)
 nlohmann::json Inventory::ToJson() const
 {
   auto r = nlohmann::json::array();
-  for (int i = 0; i < static_cast<int>(entries.size()); ++i)
-    r.push_back(entries[i].ToJson());
+  for (const auto & entry : entries)
+    r.push_back(entry.ToJson());
   return { { "entries", r } };
 }
 

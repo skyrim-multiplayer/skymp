@@ -6,12 +6,12 @@ class GridElement
 public:
   static GridElement NewProducer(uint32_t formId)
   {
-    return GridElement(formId, true);
+    return {formId, true};
   }
 
   static GridElement NewConsumer(Networking::UserId userId)
   {
-    return GridElement(userId, false);
+    return {userId, false};
   }
 
   bool IsProducer() const noexcept { return isProducer; }

@@ -10,7 +10,7 @@ class IdManager
 public:
   using userid = Networking::UserId;
 
-  IdManager(userid maxConnections_);
+  explicit IdManager(userid maxConnections_);
 
 
   /// \return IServer::invalidUserId on failure

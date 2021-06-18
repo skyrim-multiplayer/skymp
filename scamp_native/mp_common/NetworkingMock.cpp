@@ -1,5 +1,6 @@
 #include "NetworkingMock.h"
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -77,7 +78,7 @@ struct Networking::MockServer::Impl
 
 Networking::MockServer::MockServer()
 {
-  pImpl.reset(new Impl);
+  pImpl = std::make_shared<Impl>();
 }
 
 std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
@@ -86,12 +87,11 @@ std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
     [](Networking::MockServer* parent, Networking::UserId id,
        Networking::PacketType type, Networking::PacketData data, size_t length,
        bool reliable) {
-      parent->pImpl->packets.push_back(
-        { id,
+      parent->pImpl->packets.emplace_back( id,
           std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
             { type,
               data ? std::vector<uint8_t>(data, data + length)
-                   : std::vector<uint8_t>() })) });
+                   : std::vector<uint8_t>() })) );
     };
 
   auto it =
@@ -113,10 +113,9 @@ std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
 
   cl->SetId(myId);
 
-  pImpl->packets.push_back(
-    { myId,
+  pImpl->packets.emplace_back( myId,
       std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
-        { Networking::PacketType::ServerSideUserConnect })) });
+        { Networking::PacketType::ServerSideUserConnect })) );
 
   cl->AddPacket(
     std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(

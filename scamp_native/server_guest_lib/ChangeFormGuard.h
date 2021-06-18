@@ -42,5 +42,5 @@ public:
 private:
   T changeForm;
   MpObjectReference* const self;
-  std::optional<std::chrono::system_clock::time_point> lastSaveRequest;
+  std::optional<std::chrono::system_clock::time_point> lastSaveRequest{};
 };

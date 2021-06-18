@@ -1,6 +1,7 @@
 #include "NetworkingCombined.h"
 #include <MakeID.h>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -8,10 +9,10 @@ namespace {
 class ServerCombined : public Networking::IServer
 {
 public:
-  ServerCombined(const Networking::ServersVec& childs_)
+  explicit ServerCombined(const Networking::ServersVec& childs_)
     : childs(childs_)
   {
-    makeId.reset(new MakeID(std::numeric_limits<uint32_t>::max()));
+    makeId = std::make_unique<MakeID>(std::numeric_limits<uint32_t>::max());
     childData.resize(childs_.size());
   }
 
@@ -83,12 +84,14 @@ public:
       case Networking::PacketType::Message:
         id = combinedIdByReal[userId];
         break;
+      default:
+        break;
     }
 
     this_->st.onPacket(this_->st.state, id, packetType, data, length);
   }
 
-  Networking::UserId CreateId()
+  Networking::UserId CreateId() const
   {
     uint32_t id;
     if (!makeId->CreateID(id))
@@ -96,7 +99,7 @@ public:
     return id;
   }
 
-  void FreeId(Networking::UserId id)
+  void FreeId(Networking::UserId id) const
   {
     if (!makeId->DestroyID(id))
       std::terminate();

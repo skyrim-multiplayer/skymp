@@ -66,7 +66,7 @@ struct ReadHelper<Key, Value, true>
 class JsonPointer : public IJsonPointer
 {
 public:
-  JsonPointer(const std::string& key)
+  explicit JsonPointer(const std::string& key)
   {
     if (!key.empty()) {
       jsonPointer = "/" + key;
