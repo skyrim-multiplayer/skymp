@@ -18,20 +18,13 @@ enum class MovementFlags
   IsWeapDrawn = 1 << 4
 };
 
-enum class MovementDirection
-{
-  Left,
-  Right,
-  Forward,
-  Back,
-  RotateInPlace,
-};
-
+#pragma pack(push, 1)
 struct Movement
 {
   int x, y, z;                 // 4 bytes at var
   short int angleZ;            // 2 bytes
-  MovementDirection direction; // 4 bytes
+  int direction;               // 4 bytes
   MovementFlags movementFlags; // 4 bytes
   int worldOrCell;             // 4 bytes
 };                             // total 26 bytes
+#pragma pack(pop)
