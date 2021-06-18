@@ -1,4 +1,5 @@
 #pragma once
+#include "NetworkingInterface.h"
 #include <cstdint>
 
 enum class MsgType : int64_t
@@ -19,4 +20,10 @@ enum class MsgType : int64_t
   CraftItem = 13,
   Host = 14,
   CustomEvent = 15
+};
+
+enum class BinaryMsgType : uint8_t
+{
+  Invalid = Networking::MinPacketId,
+  UpdateMovement [[maybe_unused]]
 };

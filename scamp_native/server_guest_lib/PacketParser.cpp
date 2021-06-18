@@ -221,5 +221,17 @@ void PacketParser::TransformDataPacketInfoAction(
   Networking::UserId userId, Networking::PacketData packetData,
   size_t packetLength, IActionListener& actionListener)
 {
-  
+  if (!packetLength)
+    throw std::runtime_error("Zero-length message packets are not allowed");
+
+  auto type = static_cast<BinaryMsgType>(packetData[0]);
+
+  switch (type) {
+    case BinaryMsgType::UpdateMovement:
+
+      //actionListener.OnUpdateMovement()
+      break;
+    default:
+      break;
+  }
 }

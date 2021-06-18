@@ -4,6 +4,9 @@
 #include <functional>
 #include <nlohmann/json.hpp>
 
+#include "Promise.h"
+#include "scamp_native/unit/VarValueTest.h"
+
 class MpActor;
 
 class SpSnippet

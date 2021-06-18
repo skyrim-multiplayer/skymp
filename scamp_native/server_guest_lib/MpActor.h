@@ -1,10 +1,12 @@
 #pragma once
 #include "Look.h"
 #include "MpObjectReference.h"
-#include "Structures.h"
+//#include "Structures.h"
 #include <memory>
 #include <optional>
 #include <set>
+
+#include "Promise.h"
 
 class WorldState;
 
