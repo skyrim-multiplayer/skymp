@@ -91,7 +91,7 @@ Before your start make sure that your system meets the conditions:
 * Windows 7 or higher *([Windows 10](https://www.microsoft.com/en-us/software-download/windows10) is recommended)*
 * [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
 * .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
-* [NodeJS 12.x](https://nodejs.org/en/download/) or higher
+* [NodeJS 12.x](https://nodejs.org/en/download/) or higher + npm
 * [CMake 3.20](https://cmake.org/download/) or higher
 
 ### Configuring and Building
@@ -110,6 +110,11 @@ Before your start make sure that your system meets the conditions:
    ```sh
    cd build
    cmake .. -DSKYRIM_DIR="C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
+   ```
+   Or if you don't have Skyrim SE on your machine, just use (some features will lack):
+   ```sh
+   cd build
+   cmake ..
    ```
 4. Open `build/platform_se.sln` with Visual Studio, then `Build -> Build Solution`.
    All build artifacts would be placed into `tools/dev_service/dist`.
