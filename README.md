@@ -98,7 +98,9 @@ Before your start make sure that your system meets the conditions:
 
 1. Clone the repo, including submodules
    ```sh
-   git clone --recursive https://github.com/skyrim-multiplayer/skyrim-platform.git
+   git clone https://github.com/skyrim-multiplayer/skyrim-platform.git
+   git submodule init
+   git submodule update
    ```
 2. Make a build directory (used for project files, cache, artifacts, etc)
    ```sh
