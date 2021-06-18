@@ -13,6 +13,11 @@ public:
                                  size_t packetLength,
                                  IActionListener& actionListener);
 
+  void TransformDataPacketInfoAction(Networking::UserId userId,
+                                     Networking::PacketData packetData,
+                                     size_t packetLength,
+                                     IActionListener& actionListener);
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;

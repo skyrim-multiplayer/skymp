@@ -630,8 +630,11 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
 
   InitActionListener();
 
-  pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
+  if (data[0] == Networking::MinPacketId)
+    pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
                                                  *pImpl->actionListener);
+  //else
+
 }
 
 void PartOne::InitActionListener()
