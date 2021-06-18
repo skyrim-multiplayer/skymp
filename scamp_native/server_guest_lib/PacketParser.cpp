@@ -217,3 +217,9 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }
 }
+void PacketParser::TransformDataPacketInfoAction(
+  Networking::UserId userId, Networking::PacketData packetData,
+  size_t packetLength, IActionListener& actionListener)
+{
+  
+}
