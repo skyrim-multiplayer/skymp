@@ -13,3 +13,4 @@ pack
 pack-client
 world
 push-s3-cfg.json
+.idea
