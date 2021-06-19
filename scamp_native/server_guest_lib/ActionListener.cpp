@@ -53,7 +53,7 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                                           const RawMessageData& rawMsgData,
                                           bool reliable)
 {
-  return SendToNeighbours(idx, rawMsgData.parsed, rawMsgData.userId,
+  return SendToNeighbours(idx, rawMsgData.parsed.value(), rawMsgData.userId,
                           rawMsgData.unparsed, rawMsgData.unparsedLength,
                           reliable);
 }
@@ -103,7 +103,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       partOne.worldState.lastMovUpdateByIdx.resize(newSize);
     }
     partOne.worldState.lastMovUpdateByIdx[idx] =
-      std::chrono::system_clock::now();
+      std::chrono::system_clock::now(); //TODO: Review this
   }
 }
 
@@ -311,7 +311,7 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
       std::to_string(rawMsgData.userId));
 
   actor->ResolveSnippet(snippetIdx,
-                        VarValueFromJson(rawMsgData.parsed, returnValue));
+                        VarValueFromJson(rawMsgData.parsed.value(), returnValue));
 }
 
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)

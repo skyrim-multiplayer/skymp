@@ -2,6 +2,7 @@
 #include "NetworkingInterface.h"
 #include "NiPoint3.h"
 #include <nlohmann/json.hpp>
+#include "Structures.h"
 #include <string>
 
 bool MovementValidation::Validate(const IWorldObject& worldObject,
@@ -15,15 +16,7 @@ bool MovementValidation::Validate(const IWorldObject& worldObject,
   float maxDistance = 4096;
   if (currentCellOrWorld != newCellOrWorld ||
       (currentPos - newPos).Length() >= maxDistance) {
-    std::string s;
-    s += Networking::MinPacketId;
-    s += nlohmann::json{
-      { "type", "teleport" },
-      { "pos", { currentPos[0], currentPos[1], currentPos[2] } },
-      { "rot", { currentRot[0], currentRot[1], currentRot[2] } },
-      { "worldOrCell", currentCellOrWorld }
-    }.dump();
-    tgt.Send(reinterpret_cast<uint8_t*>(s.data()), s.length(), true);
+    // a long time ago, in far, far legacy, there was a player movement correction using teleport
     return false;
   }
   return true;

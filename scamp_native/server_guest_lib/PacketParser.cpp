@@ -5,6 +5,8 @@
 #include <MsgType.h>
 #include <simdjson.h>
 
+#include "Structures.h"
+
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)
 {
@@ -225,12 +227,28 @@ void PacketParser::TransformDataPacketInfoAction(
     throw std::runtime_error("Zero-length message packets are not allowed");
 
   auto type = static_cast<BinaryMsgType>(packetData[0]);
+  IActionListener::RawMessageData rawMsgData{
+    packetData, packetLength,
+    std::optional<simdjson::dom::element>(), userId };
+  auto newData = &packetData[1];
 
   switch (type) {
     case BinaryMsgType::UpdateMovement:
+      if (packetLength - 1 != Structures::MovementSize)
+        throw std::runtime_error("Packet length is invalid");
+      auto movement = static_cast<Structures::Movement*>((void*)newData);
 
-      //actionListener.OnUpdateMovement()
+      actionListener.OnUpdateMovement(
+        rawMsgData, userId,
+        { (float)movement->x, (float)movement->y, (float)movement->z },
+        { 0, 0, movement->angleZ / 65535.f * 360.f },
+        movement->movementFlags &
+          static_cast<int>(Structures::MovementFlags::IsInJumpState),
+        movement->movementFlags & static_cast<int>(Structures::MovementFlags::IsWeapDrawn),
+        movement->worldOrCell);
+
       break;
+
     default:
       break;
   }
