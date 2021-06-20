@@ -15,7 +15,14 @@ public:
   {
     Networking::PacketData unparsed = nullptr;
     size_t unparsedLength = 0;
-    std::optional<simdjson::dom::element> parsed;
+    simdjson::dom::element parsed;
+    Networking::UserId userId = Networking::InvalidUserId;
+  };
+
+  struct RawMessageBinaryData
+  {
+    Networking::PacketData unparsed = nullptr;
+    size_t unparsedLength = 0;
     Networking::UserId userId = Networking::InvalidUserId;
   };
 
@@ -24,7 +31,7 @@ public:
   {
   }
 
-  virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
+  virtual void OnUpdateMovement(const RawMessageBinaryData& rawMsgData, uint32_t idx,
                                 const NiPoint3& pos, const NiPoint3& rot,
                                 bool isInJumpState, bool isWeapDrawn,
                                 uint32_t worldOrCell)

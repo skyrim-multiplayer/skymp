@@ -10,7 +10,7 @@
 #include "Utils.h"
 
 MpActor* ActionListener::SendToNeighbours(
-  uint32_t idx, const simdjson::dom::element& jMessage,
+  uint32_t idx,
   Networking::UserId userId, Networking::PacketData data, size_t length,
   bool reliable)
 {
@@ -53,9 +53,15 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                                           const RawMessageData& rawMsgData,
                                           bool reliable)
 {
-  return SendToNeighbours(idx, rawMsgData.parsed.value(), rawMsgData.userId,
-                          rawMsgData.unparsed, rawMsgData.unparsedLength,
-                          reliable);
+  return SendToNeighbours(idx, rawMsgData.userId, rawMsgData.unparsed,
+                          rawMsgData.unparsedLength, reliable);
+}
+
+MpActor* ActionListener::SendToNeighbours(uint32_t idx,
+  const RawMessageBinaryData& rawMsgData, bool reliable)
+{
+  return SendToNeighbours(idx, rawMsgData.userId, rawMsgData.unparsed,
+                          rawMsgData.unparsedLength, reliable);
 }
 
 void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
@@ -65,7 +71,7 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
     listener->OnCustomPacket(rawMsgData.userId, content);
 }
 
-void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
+void ActionListener::OnUpdateMovement(const RawMessageBinaryData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
                                       bool isWeapDrawn, uint32_t worldOrCell)
@@ -311,7 +317,7 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
       std::to_string(rawMsgData.userId));
 
   actor->ResolveSnippet(snippetIdx,
-                        VarValueFromJson(rawMsgData.parsed.value(), returnValue));
+                        VarValueFromJson(rawMsgData.parsed,returnValue));
 }
 
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)

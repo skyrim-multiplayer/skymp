@@ -18,7 +18,7 @@ public:
   void OnCustomPacket(const RawMessageData& rawMsgData,
                       simdjson::dom::element& content) override;
 
-  void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
+  void OnUpdateMovement(const RawMessageBinaryData& rawMsgData, uint32_t idx,
                         const NiPoint3& pos, const NiPoint3& rot,
                         bool isInJumpState, bool isWeapDrawn,
                         uint32_t worldOrCell) override;
@@ -62,14 +62,19 @@ public:
                      simdjson::dom::element& e) override;
 
 private:
-  // Returns user's actor if exists
+
+  /// <returns> User actor if exist </returns>
   MpActor* SendToNeighbours(uint32_t idx,
-                            const simdjson::dom::element& jMessage,
                             Networking::UserId userId,
                             Networking::PacketData data, size_t length,
                             bool reliable);
 
+  /// <returns> User actor if exist </returns>
   MpActor* SendToNeighbours(uint32_t idx, const RawMessageData& rawMsgData,
+                            bool reliable = false);
+
+  /// <returns> User actor if exist </returns>
+  MpActor* SendToNeighbours(uint32_t idx, const RawMessageBinaryData& rawMsgData,
                             bool reliable = false);
 
   PartOne& partOne;
