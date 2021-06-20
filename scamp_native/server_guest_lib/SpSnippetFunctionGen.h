@@ -1,9 +1,8 @@
 #pragma once
 #include "MpActor.h"
-#include "SpSnippet.h"
-#include "SpSnippetFunctionGen.h"
 #include "VirtualMachine.h"
-#include <cstdio>
+#include "SpSnippet.h"
+
 
 class SpSnippetFunctionGen
 {

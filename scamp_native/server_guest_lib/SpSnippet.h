@@ -1,10 +1,8 @@
 #pragma once
 #include <cstdint>
-#include <functional>
-#include <nlohmann/json.hpp>
 
-#include "Promise.h"
-#include "scamp_native/papyrus_vm_lib/Structures.h"
+#include "Structures.h"
+
 
 class MpActor;
 

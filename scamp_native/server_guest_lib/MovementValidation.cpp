@@ -1,9 +1,5 @@
 #include "MovementValidation.h"
-#include "NetworkingInterface.h"
 #include "NiPoint3.h"
-#include <nlohmann/json.hpp>
-#include "BinaryStructures.h"
-#include <string>
 
 bool MovementValidation::Validate(const IWorldObject& worldObject,
                                   const NiPoint3& newPos,
