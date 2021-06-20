@@ -30,6 +30,7 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
   REQUIRE(partOne.Messages().size() == 11); // Me and 10 other users created in loop
 }
 
+//TODO: FIX TESTS лллл
 TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
 {
   

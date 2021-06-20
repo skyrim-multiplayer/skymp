@@ -7,8 +7,7 @@
 #  define DATA_DIR "/skyrim_data_dir"
 #else
 #  define DATA_DIR                                                            \
-    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special "      \
-    "Edition\\Data"
+    "D:\\Games\\The Elder Scrolls V Skyrim - Special Edition\\Data"
 #endif
 
 namespace {
