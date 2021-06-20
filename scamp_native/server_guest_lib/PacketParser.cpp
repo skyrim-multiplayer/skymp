@@ -5,7 +5,7 @@
 #include <MsgType.h>
 #include <simdjson.h>
 
-#include "Structures.h"
+#include "BinaryStructures.h"
 
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)

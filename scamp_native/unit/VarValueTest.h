@@ -2,7 +2,7 @@
 #include <catch2/catch.hpp>
 
 #include "OpcodesImplementation.h"
-#include "Structures.h"
+#include "BinaryStructures.h"
 #include <cstdint>
 #include <stdexcept>
 

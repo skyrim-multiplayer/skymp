@@ -2,7 +2,7 @@
 #include "NetworkingInterface.h"
 #include "NiPoint3.h"
 #include <nlohmann/json.hpp>
-#include "Structures.h"
+#include "BinaryStructures.h"
 #include <string>
 
 bool MovementValidation::Validate(const IWorldObject& worldObject,
