@@ -1,0 +1,48 @@
+{
+	"name": "skymp5-gamemode",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.ts",
+	"scripts": {
+		"serve": "parcel serve index.ts --out-dir ./ --out-file gamemode.js --no-source-maps --no-cache --target node",
+		"serve:server": "parcel serve index.ts --out-dir ../skymp-server-lite --out-file gamemode.js --no-source-maps --no-cache --target node",
+		"build": "parcel build index.ts --out-dir ./ --out-file gamemode.js --no-source-maps --no-cache --target node",
+		"test": "jest --forceExit --coverage --verbose"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alekcey0211/skymp5-gamemode.git"
+	},
+	"keywords": [],
+	"author": "Leonid Pospelov <pospelovlm@yandex.ru>",
+	"license": "SEE LICENSE IN 'LICENSE'",
+	"bugs": {
+		"url": "https://github.com/alekcey0211/skymp5-gamemode/issues"
+	},
+	"homepage": "https://github.com/alekcey0211/skymp5-gamemode#readme",
+	"devDependencies": {
+		"@types/mocha": "^8.2.0",
+		"@types/node": "^14.14.20",
+		"@types/sprintf-js": "^1.1.2",
+		"jest": "^26.6.3",
+		"parcel-plugin-wrapper": "^0.2.3",
+		"parcel-bundler": "1.12.3",
+		"ts-jest": "^26.5.0",
+		"typescript": "^4.1.3"
+	},
+	"dependencies": {
+		"@types/gettext-parser": "^4.0.0",
+		"@types/node-gettext": "^3.0.1",
+		"gettext-parser": "^4.0.4",
+		"node-gettext": "^3.0.0",
+		"sprintf-js": "^1.1.2"
+	},
+	"prettier": {
+		"bracketSpacing": true,
+		"printWidth": 120,
+		"semi": true,
+		"singleQuote": true,
+		"tabWidth": 2,
+		"useTabs": false
+	}
+}
