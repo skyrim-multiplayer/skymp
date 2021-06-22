@@ -1,6 +1,6 @@
 [submodule "submodules/CommonLibSSE"]
-	path = submodules/CommonLibSSE
+	path = skyrim-platform/submodules/CommonLibSSE
 	url = https://github.com/Ryan-rsm-McKenzie/CommonLibSSE.git
 [submodule "vcpkg"]
-	path = vcpkg
+	path = skyrim-platform/vcpkg
 	url = https://github.com/skyrim-multiplayer/vcpkg.git
