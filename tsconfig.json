@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "baseUrl": "./src/skyrim-platform"
+  },
+  "include": ["src"]
+}
