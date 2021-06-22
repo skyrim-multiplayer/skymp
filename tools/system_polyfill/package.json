@@ -1,0 +1,15 @@
+{
+  "name": "system_polyfill",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsc-watch"
+  },
+  "keywords": [],
+  "author": "",
+  "dependencies": {
+    "tsc-watch": "^4.2.3",
+    "typescript": "^3.8.3"
+  }
+}

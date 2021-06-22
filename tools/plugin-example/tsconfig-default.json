@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strict": true,
+        "strictBindCallApply": true,
+        "strictFunctionTypes": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "module": "System",
+        "target": "ES5",
+        "outFile": "./dist/plugin-example.js",
+        "rootDir": "",
+        "lib": [
+            "ES2015"
+        ],
+        "paths": {
+            "chai": ["./node_modules/@types/chai"]
+        }
+    },
+    "include": ["./*.ts"]   
+}
