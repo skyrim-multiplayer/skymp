@@ -1,0 +1,1 @@
+# skymp5-client
