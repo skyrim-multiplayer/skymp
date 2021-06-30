@@ -11,16 +11,6 @@ const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
   const router = new Router();
   router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
-
-  const wrapperPort = process.env.WRAPPER_PORT;
-
-  app.use(
-    proxy({
-      host: `http://localhost:${wrapperPort}`,
-      match: /^\/rcon\/.*/,
-    })
-  );
-
   app.use(router.routes()).use(router.allowedMethods());
   app.use(serve("data"));
   return app;

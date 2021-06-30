@@ -17,7 +17,6 @@ import { pid } from "process";
 import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
-import { ensureMastersAndScriptsPresent } from "./dataDownloader";
 import * as libkey from "./libkey";
 
 import * as manifestGen from "./manifestGen";
@@ -125,10 +124,6 @@ const handleLibkeyJs = () => {
 const main = async () => {
   handleLibkeyJs();
 
-  await ensureMastersAndScriptsPresent(
-    Settings.get().dataDir,
-    Settings.get().loadOrder
-  );
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
