@@ -1,9 +1,10 @@
-import { hooks, Game, printConsole,Actor } from "skyrimPlatform";
+import { hooks, Game, printConsole, Actor } from "skyrimPlatform";
 
 let gAllowGetUp = true;
 
 export const update = (): void => {
-  gAllowGetUp = (Game.getPlayer() as Actor).getActorValuePercentage("health") >= 0.05;
+  gAllowGetUp =
+    (Game.getPlayer() as Actor).getActorValuePercentage("health") >= 0.05;
 };
 
 hooks.sendAnimationEvent.add({

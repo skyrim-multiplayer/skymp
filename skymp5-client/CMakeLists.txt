@@ -8,7 +8,7 @@ npm_execute_command(
   COMMAND install
 )
 
-file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/src/*.ts)
+file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/src/*)
 
 add_custom_target(skymp5-client ALL
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}

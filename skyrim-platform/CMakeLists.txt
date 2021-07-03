@@ -16,11 +16,12 @@ if (SKYRIM_DIR)
   endif()
 endif()
 
+string(REPLACE "\\" "\\\\" SKYRIM_DIR_NORMAL ${SKYRIM_DIR})
 set(DEV_SERVICE_CFG_PATH "tools/dev_service/config.js")
 file(WRITE ${DEV_SERVICE_CFG_PATH} "")
 file(APPEND ${DEV_SERVICE_CFG_PATH} "module.exports = {\n")
 file(APPEND ${DEV_SERVICE_CFG_PATH} "  SkyrimSEFolder:\n")
-file(APPEND ${DEV_SERVICE_CFG_PATH} "    '${SKYRIM_DIR}',\n")
+file(APPEND ${DEV_SERVICE_CFG_PATH} "    '${SKYRIM_DIR_NORMAL}',\n")
 file(APPEND ${DEV_SERVICE_CFG_PATH} "};\n")
 
 set(README_HASH_EXPECTED 

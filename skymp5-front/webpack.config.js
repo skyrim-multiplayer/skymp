@@ -1,16 +1,11 @@
 const path = require("path");
 const fs = require("fs");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-
-if (!fs.existsSync("config.js")) {
-  fs.writeFileSync("config.js", fs.readFileSync("config-default.js"));
-}
-
 const config = require("./config");
 
-const distPath = path.isAbsolute(config.ui.outputPath)
-  ? config.ui.outputPath
-  : path.resolve(__dirname, config.ui.outputPath);
+const distPath = path.isAbsolute(config.outputPath)
+  ? config.outputPath
+  : path.resolve(__dirname, config.outputPath);
 
 module.exports = {
   entry: path.resolve(__dirname, "src/index.js"),
