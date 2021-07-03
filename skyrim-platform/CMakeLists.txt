@@ -1,8 +1,3 @@
-set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
-set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
-set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-
 cmake_minimum_required(VERSION 3.19.1)
 project(platform_se)
 
@@ -52,5 +47,5 @@ endif()
 message(STATUS "Found CEF: ${CEF_ROOT}")
 list(APPEND CMAKE_MODULE_PATH "${CEF_ROOT}/cmake")
 
-set(SKYRIM_MP_ROOT ${CMAKE_SOURCE_DIR})
+set(SKYRIM_MP_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(src/platform_se _platform_se)

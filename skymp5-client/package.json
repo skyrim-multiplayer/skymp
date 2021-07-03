@@ -1,0 +1,14 @@
+{
+  "name": "skymp5-client",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "watch": "tsc -w",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "Leonid Pospelov <pospelovlm@yandex.ru> (https://skymp.io)",
+  "devDependencies": {
+    "typescript": "^4.1.3"
+  }
+}

@@ -1,0 +1,15 @@
+{
+    "name": "skymp",
+    "version-string": "",
+    "homepage": "https://skymp.io",
+    "description": "Online mod for Skyrim SE.",
+    "dependencies": [
+      "chakracore",
+      "nlohmann-json",
+      "cpp-httplib",
+      "zlib",
+      "mhook",
+      "directxtk",
+      "spdlog"
+    ]
+}
