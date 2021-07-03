@@ -1,5 +1,7 @@
 {
 	"compilerOptions": {
+		"baseUrl": "../build/dist/client/Data/Platform/Modules",
+
 		/* Visit https://aka.ms/tsconfig.json to read more about this file */
 
 		/* Basic Options */
