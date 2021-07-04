@@ -1,15 +1,28 @@
 {
-    "name": "skymp",
-    "version-string": "",
-    "homepage": "https://skymp.io",
-    "description": "Online mod for Skyrim SE.",
-    "dependencies": [
-      "chakracore",
-      "nlohmann-json",
-      "cpp-httplib",
-      "zlib",
-      "mhook",
-      "directxtk",
-      "spdlog"
-    ]
+  "name": "skymp",
+  "version-string": "",
+  "homepage": "https://skymp.io",
+  "description": "Online mod for Skyrim SE.",
+  "dependencies": [
+    "chakracore",
+    "nlohmann-json",
+    "cpp-httplib",
+    "zlib",
+    "spdlog",
+    "catch2",
+    "sparsepp",
+    "slikenet",
+    "sqlite-orm",
+    "mongo-cxx-driver",
+    "simdjson",
+    "boost-bimap",
+    {
+      "name": "directxtk",
+      "platform": "windows"
+    },
+    {
+      "name": "mhook",
+      "platform": "windows"
+    }
+  ]
 }

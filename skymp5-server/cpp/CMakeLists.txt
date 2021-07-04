@@ -1,19 +1,11 @@
-option(SKYRIM_DIR "Path to Skyrim" OFF)
-
-include(${CMAKE_SOURCE_DIR}/cmake/third_party/cmake_scripts_collection.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
 #
 # MpClientPlugin
 #
 
 if(WIN32)
-  if (NOT SKYRIM_DIR)
-    message(WARNING "SKYRIM_DIR is not specified, MpClientPlugin will not be installed")
-  endif()
-  if (SKYRIM_DIR AND NOT EXISTS ${SKYRIM_DIR}/SkyrimSE.exe)
-    message(FATAL_ERROR "Bad SKYRIM_DIR: ${SKYRIM_DIR}")
-  endif()
-  
   file(GLOB_RECURSE src "client/*")
   list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
   add_library(MpClientPlugin SHARED ${src})
@@ -22,12 +14,11 @@ if(WIN32)
   apply_default_settings(TARGETS MpClientPlugin)
   list(APPEND VCPKG_DEPENDENT MpClientPlugin)
   
-  if(SKYRIM_DIR)
-    add_custom_command(
-      TARGET MpClientPlugin POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MpClientPlugin> ${SKYRIM_DIR}/Data/SKSE/plugins
-    )
-  endif()
+  add_custom_command(
+    TARGET MpClientPlugin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MpClientPlugin> ${CMAKE_BINARY_DIR}/dist/client/Data/SKSE/plugins
+  )
+  add_dependencies(MpClientPlugin skyrim-platform)
 endif()
 
 #
@@ -51,7 +42,7 @@ apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
 target_compile_definitions(unit PRIVATE
   TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
-  BUILT_PEX_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/pex\"
+  BUILT_PEX_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/pex/papyrus_test_files\"
 )
 if (WIN32)
   target_compile_options(unit PRIVATE "/bigobj")
@@ -94,7 +85,7 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC mp_common espm papyrus-vm-lib geo)
+target_link_libraries(server_guest_lib PUBLIC mp_common espm papyrus-vm-lib geo chakra-wrapper)
 
 #
 # papyrus-vm-lib
@@ -106,7 +97,7 @@ add_library(papyrus-vm-lib STATIC ${src})
 apply_default_settings(TARGETS papyrus-vm-lib)
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib")
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
-if (UNIX)
+if(UNIX)
   target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
 endif()
 
@@ -119,15 +110,21 @@ if(NOT SKYRIM_DIR)
 elseif(NOT EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
   message(WARNING "PapyrusCompiler.exe not found, Papyrus sources will not be built")
 else()
-  include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library.cmake)
-  add_papyrus_library(NAME papyrus_test_files DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files)
+  add_papyrus_library_ck(
+    NAME papyrus_test_files 
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files 
+    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+  )
 endif()
 
 #
 # Add tests
 #
 
-include(${CMAKE_SOURCE_DIR}/cmake/tests_unit.cmake)
+add_test(
+  NAME test_unit
+  COMMAND $<TARGET_FILE:unit>
+)
 
 #
 # Link vcpkg deps

@@ -1,8 +1,0 @@
-{
-  "typescript.format.enable": false,
-  "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "editor.formatOnSave": true,
-  "git.ignoreLimitWarning": true
-}

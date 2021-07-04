@@ -15,6 +15,7 @@ if(NOT EXISTS "${cmake_dir}")
 endif()
 
 include(${cmake_dir}/apply_default_settings.cmake)
+include(${cmake_dir}/add_papyrus_library_ck.cmake)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
 find_package(CEF REQUIRED)
@@ -139,29 +140,13 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     PDB_OUTPUT_DIRECTORY "bin"
   )
 
-  function(add_papyrus_library)
-    set(options)
-    set(oneValueArgs NAME DIRECTORY)
-    set(multiValueArgs)
-    cmake_parse_arguments(A
-      "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN}
-    )
-
-    file(GLOB src ${A_DIRECTORY}/*.psc)
-
-    set(OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pex)
-    if(EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
-      add_custom_target(${A_NAME} ALL
-        COMMAND "${SKYRIM_DIR}\\Papyrus Compiler\\PapyrusCompiler.exe"
-        ${A_DIRECTORY} -output=${OUTPUT_DIR} -import=${A_DIRECTORY} -all
-        SOURCES ${src}
-      )
-    endif()
-  endfunction()
-
   set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
-  add_papyrus_library(NAME TESModPlatformPsc DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc")
+  add_papyrus_library_ck(
+    NAME TESModPlatformPsc 
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
+    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+  )
   if(TARGET TESModPlatformPsc)
     add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
     list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
