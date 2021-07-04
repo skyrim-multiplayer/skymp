@@ -4,7 +4,7 @@ project(skymp5-server)
 enable_testing()
 
 add_subdirectory(cpp)
-#add_subdirectory(ts)
+add_subdirectory(ts)
 
 #add_library(node INTERFACE)
 #if (UNIX)
