@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "build-ts": "tsc"
+    "build-ts": "tsc",
+    "cmake-js-fetch": "cmake-js configure --directory cmake-js-fetch --out cmake-js-fetch-build"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
