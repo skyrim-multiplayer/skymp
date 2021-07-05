@@ -116,8 +116,8 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
   file(GLOB_RECURSE platform_src "skyrim_platform/*")
   list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
-  # list(APPEND platform_src "codegen/index.js")
-  # list(APPEND platform_src "codegen/FunctionsDump.txt")
+  list(APPEND platform_src "codegen/index.js")
+  list(APPEND platform_src "codegen/FunctionsDump.txt")
   add_library(skyrim_platform SHARED ${platform_src})
   target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE skyrim_plugin_resources ui)
   set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
@@ -168,15 +168,11 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
   add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 
-  # add_custom_target(codegen ALL
-  #   COMMAND node ${PROJECT_SOURCE_DIR}/src/platform_se/codegen/index.js
-  #   WORKING_DIRECTORY ${wdir}
-  # )
-  # list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
-
-  add_executable(TSConverter ${CMAKE_SOURCE_DIR}/codegen/TSConverter.cpp) 
-  target_link_libraries(TSConverter nlohmann_json)
-  list(APPEND VCPKG_DEPENDENT TSConverter)
+  add_custom_target(codegen ALL
+    COMMAND node ${PROJECT_SOURCE_DIR}/src/platform_se/codegen/index.js
+    WORKING_DIRECTORY ${wdir}
+  )
+  list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
 
   add_dependencies(vs_startup_project ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 
