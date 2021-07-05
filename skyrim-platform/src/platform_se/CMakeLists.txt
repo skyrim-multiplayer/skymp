@@ -168,11 +168,15 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
   add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 
-  add_custom_target(codegen ALL
-    COMMAND node ${PROJECT_SOURCE_DIR}/src/platform_se/codegen/index.js
-    WORKING_DIRECTORY ${wdir}
-  )
-  list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
+  # add_custom_target(codegen ALL
+  #   COMMAND node ${PROJECT_SOURCE_DIR}/src/platform_se/codegen/index.js
+  #   WORKING_DIRECTORY ${wdir}
+  # )
+  # list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
+
+  add_executable(TSConverter ${CMAKE_SOURCE_DIR}/codegen/TSConverter.cpp) 
+  target_link_libraries(TSConverter nlohmann_json)
+  list(APPEND VCPKG_DEPENDENT TSConverter)
 
   add_dependencies(vs_startup_project ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 
