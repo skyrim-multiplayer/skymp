@@ -10,6 +10,9 @@ export class Settings {
   gamemodePath = "...";
   loadOrder = new Array<string>();
   dataDir = "./data";
+  startPoints = [
+		{ pos: [22659, -8697, -3594], worldOrCell: '0x1a26f', angleZ: 268 },
+	];
 
   constructor() {
     if (fs.existsSync("./skymp5-gamemode")) {
@@ -32,6 +35,7 @@ export class Settings {
         "gamemodePath",
         "loadOrder",
         "dataDir",
+				'startPoints',
       ].forEach((prop) => {
         if (parsed[prop])
           (this as Record<string, unknown>)[prop] = parsed[prop];
