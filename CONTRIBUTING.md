@@ -28,4 +28,6 @@ Also, accepting and agreeing to release any contribution under the same license.
 
 - **No offensive language in code** - Let's code and comment in ways that do not hurt anyone.
 
+- **Resolve merge conflicts** - Your branch should not conflict with main branch.
+
 **Happy coding**!
