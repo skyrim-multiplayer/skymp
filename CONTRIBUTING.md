@@ -10,6 +10,8 @@ Also, accepting and agreeing to release any contribution under the same license.
 
 ## Pull Requests
 
+- **Your branch must be buildable** - The project's build system must be able to build repo with your changes.
+
 - **Create feature branches** - Don't ask us to pull from your master branch.
 
 - **One pull request per feature** - If you want to do more than one thing, send multiple pull requests.
