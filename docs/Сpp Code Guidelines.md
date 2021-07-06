@@ -4,6 +4,18 @@
 
 The project uses standard C++17.
 
+## Code Style
+
+Code blocks require braces.
+```c++
+// ok
+if (foo) {
+  bar();
+}
+// not ok
+if (foo) bar();
+```
+
 ## Naming
 
 ### Variables
