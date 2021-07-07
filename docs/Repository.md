@@ -18,4 +18,12 @@ Commit types used (sorted by priority):
 * docs - changes in text files.
 * internal - fixes or changes in the build system, catalog structure, or anything that doesn't execute on the user's machine.
 
+Repo subdirectories are used to name commit scopes. Commits without scope are allowed.
+
+Examples:
+```
+feat(skymp5-server): add feature to choose default spawn points
+internal: make server's node addon buildable via top-level CMakeLists
+```
+
 Note that `BREAKING CHANGE` footer isn't used. Only `!` sign.
