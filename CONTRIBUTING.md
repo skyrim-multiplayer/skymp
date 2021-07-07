@@ -20,7 +20,7 @@ Also, accepting and agreeing to release any contribution under the same license.
 
 - **Format your C++ code** - Make sure that you format your C++ code with rules in `.clang-format`.
 
-- **Format your TypeScript code** - For now, keep the same formatting as modified documents have (`RMB -> Format Document` in VS Code).
+- **Format your TypeScript code** - For now, keep the same formatting as modified documents have (`RMB -> Format Document` in VS Code). Double quotes (" ") are used to represent a string in TypeScript code.
 
 - **Prefer spaces over tabs** - To prevent inconsistent formatting. Applies to all languages.
 
