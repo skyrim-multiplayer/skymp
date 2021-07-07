@@ -11,7 +11,11 @@ export class Settings {
   loadOrder = new Array<string>();
   dataDir = "./data";
   startPoints = [
-		{ pos: [22659, -8697, -3594], worldOrCell: '0x1a26f', angleZ: 268 },
+    { 
+      pos: [22659, -8697, -3594],
+      worldOrCell: '0x1a26f',
+      angleZ: 268 
+    },
 	];
 
   constructor() {
