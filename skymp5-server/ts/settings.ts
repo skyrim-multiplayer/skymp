@@ -39,7 +39,7 @@ export class Settings {
         "gamemodePath",
         "loadOrder",
         "dataDir",
-        'startPoints',
+        "startPoints",
       ].forEach((prop) => {
         if (parsed[prop])
           (this as Record<string, unknown>)[prop] = parsed[prop];
