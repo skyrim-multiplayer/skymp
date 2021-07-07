@@ -16,7 +16,7 @@ export class Settings {
       worldOrCell: '0x1a26f',
       angleZ: 268 
     },
-	];
+  ];
 
   constructor() {
     if (fs.existsSync("./skymp5-gamemode")) {
@@ -39,7 +39,7 @@ export class Settings {
         "gamemodePath",
         "loadOrder",
         "dataDir",
-				'startPoints',
+        'startPoints',
       ].forEach((prop) => {
         if (parsed[prop])
           (this as Record<string, unknown>)[prop] = parsed[prop];

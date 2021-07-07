@@ -21,13 +21,13 @@ export class Spawn implements System {
         ctx.svr.setUserActor(userId, actorId);
       } else {
         const idx = randomInteger(0, startPoints.length - 1);
-				actorId = ctx.svr.createActor(
-					0,
-					startPoints[idx].pos,
-					startPoints[idx].angleZ,
-					+startPoints[idx].worldOrCell,
-					userProfileId
-				);
+        actorId = ctx.svr.createActor(
+          0,
+          startPoints[idx].pos,
+          startPoints[idx].angleZ,
+          +startPoints[idx].worldOrCell,
+          userProfileId
+        );
         this.log("Creating character", actorId.toString(16));
         ctx.svr.setUserActor(userId, actorId);
         ctx.svr.setRaceMenuOpen(actorId, true);
