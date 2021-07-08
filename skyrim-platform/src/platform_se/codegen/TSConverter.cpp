@@ -12,15 +12,9 @@
 
 int main(int argc, char* argv[])
 {
-#ifdef _DEBUG
-	const std::filesystem::path pathToJsonFile = "ConvertFiles/FunctionsDump.txt"; //argv[1];
-	const std::filesystem::path pathToPapyrusClassesFile = "ConvertFiles/papyrusDefaultClasses.ts"; //argv[1];
-	const std::filesystem::path pathToTypeScriptFile = "ConvertFiles/skyrimPlatform.ts";//argv[3];
-#else // DEBUG
 	const std::filesystem::path pathToJsonFile = argv[1];
 	const std::filesystem::path pathToPapyrusClassesFile = argv[2];
 	const std::filesystem::path pathToTypeScriptFile = argv[3];
-#endif 
 
 	if (!std::filesystem::exists(pathToJsonFile))
 	{
@@ -77,7 +71,6 @@ int main(int argc, char* argv[])
 
 	auto parseReturnValue = [&](std::string rawType, std::string objectTypeName) -> std::string
 	{
-		// Fuck C++ Strings types 
 		if (rawType == "Int" || rawType == "Float")				return "number";
 		if (rawType == "Bool")									return "boolean";
 		if (rawType == "String")								return "string";
@@ -87,7 +80,7 @@ int main(int argc, char* argv[])
 		if (rawType == "None")									return "void";
 		if (rawType == "Object")								return (!objectTypeName.empty() ? prettify(objectTypeName) : "Form") + " | null";
 		if (rawType == "ObjectArray")							return "PapyrusObject[] | null";
-		//TODO: fix return value with bat rawType
+          return "";
 	};
 
 	auto dumpFunction = [&](std::string className, nlohmann::json f, bool isGlobal)
@@ -195,14 +188,6 @@ int main(int argc, char* argv[])
 
 	for (auto& typeName : j.at("types").items()) 
 	{
-		// We don't need copy json data anymore
-		//if (typeName.value().contains("parent"))
-		//{
-		//	// TODO: hofix strange and illogical behavior with parent-child linking, we forget parent.name
-		//	//auto parentName = typeName.value().at("parent").get<std::string>();
-		//	//typeName.value().at("parent") = j.at("types").at(typeName.value().at("parent").get<std::string>());
-		//	//typeName.value().at("parent")["name"] = parentName;
-		//}
 		typeName.value()["name"] = typeName.key();
 	}
 
