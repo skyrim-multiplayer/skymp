@@ -98,16 +98,16 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
   include(${cmake_dir}/npm.cmake)
 
-  # set(wdir "${CMAKE_CURRENT_BINARY_DIR}/_codegen")
-  # file(MAKE_DIRECTORY ${wdir})
-  # npm_execute_command(
-  #   WORKING_DIRECTORY ${wdir}
-  #   COMMAND init -y
-  # )
-  # npm_execute_command(
-  #   WORKING_DIRECTORY ${wdir}
-  #   COMMAND install tsc-watch@4.2.3 typescript@3.8.3 --save
-  # )
+   set(wdir "${CMAKE_CURRENT_BINARY_DIR}/_codegen")
+   file(MAKE_DIRECTORY ${wdir})
+   npm_execute_command(
+     WORKING_DIRECTORY ${wdir}
+     COMMAND init -y
+   )
+   npm_execute_command(
+     WORKING_DIRECTORY ${wdir}
+     COMMAND install tsc-watch@4.2.3 typescript@3.8.3 --save
+   )
     npm_execute_command(
      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tools/dev_service"
      COMMAND install
@@ -174,11 +174,11 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     )
   list(APPEND VCPKG_DEPENDENT TSConverter)
   
-  set(CONVERT_FILES_DIR ${CMAKE_SOURCE_DIR}/skyrim-platform/src/platform_se/codegen/ConvertFiles/)
+  set(CONVERT_FILES_DIR ${CMAKE_SOURCE_DIR}/skyrim-platform/src/platform_se/codegen/convert-files/)
   list(APPEND CODEGEN_ARGS
   ${CONVERT_FILES_DIR}/FunctionsDump.txt
-  ${CONVERT_FILES_DIR}/papyrusDefaultClasses.ts
-  ${CMAKE_BINARY_DIR}/dist/client/Data/Platform/Modules/skyrimPlatform.ts
+  ${CONVERT_FILES_DIR}/papyrusDefaultClasses.txt
+  ${CMAKE_CURRENT_BINARY_DIR}/_codegen/skyrimPlatform.ts
   )
   add_custom_target(codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
   add_dependencies(codegen TSConverter)
