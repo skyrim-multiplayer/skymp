@@ -52,6 +52,10 @@ No I-prefix is used to indicate abstract classes.
 
 Class name should be a non-verb noun whenever possible.
 
+### Enums
+
+Enum names must start with an upper case: `enum SomeEnum`. This rule is also applied to enum constants.
+
 ### Functions
 
 Functions must start with an upper case: `void LaunchOpenBeta();`.
