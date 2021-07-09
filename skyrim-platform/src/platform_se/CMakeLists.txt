@@ -115,8 +115,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
   file(GLOB_RECURSE platform_src "skyrim_platform/*")
   list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
-  # list(APPEND platform_src "codegen/index.js")
-  # list(APPEND platform_src "codegen/FunctionsDump.txt")
   add_library(skyrim_platform SHARED ${platform_src})
   target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE skyrim_plugin_resources ui)
   set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
