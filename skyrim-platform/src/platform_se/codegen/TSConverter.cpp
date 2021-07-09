@@ -13,39 +13,39 @@
 int main(int argc, char* argv[])
 {
   const std::filesystem::path pathToJsonFile = argv[1];
-  const std::filesystem::path pathToPapyrusClassesFile = argv[2];
+  const std::filesystem::path pathToDefinitionsFile = argv[2];
   const std::filesystem::path pathToTypeScriptFile = argv[3];
 
   if (!std::filesystem::exists(pathToJsonFile)) {
     std::cout << "Json file: " << pathToJsonFile << " dosn't exits, check it.";
     return 1;
   }
-  if (!std::filesystem::exists(pathToPapyrusClassesFile)) {
-    std::cout << "Default papyrus classes file: " << pathToPapyrusClassesFile
+  if (!std::filesystem::exists(pathToDefinitionsFile)) {
+    std::cout << "Default papyrus classes file: " << pathToDefinitionsFile
               << " dosn't exits, check it.";
     return 2;
   }
 
   std::ifstream input(pathToJsonFile);
-  std::ifstream papyrusClasses(pathToPapyrusClassesFile);
+  std::ifstream papyrusClasses(pathToDefinitionsFile);
   std::ofstream output(pathToTypeScriptFile);
 
-  enum class mode
+  enum class Mode
   {
-    module = 0,
-    interface
+    Module = 0,
+    Interface
   };
 
-  const mode currentMode = mode::module; // 'interface' | 'module'
+  const Mode currentMode = Mode::Module; // 'interface' | 'module'
   // TODO: Implement interface mode correctly
 
   const auto getPrefix = [&currentMode]() -> std::string {
-    return currentMode == mode::interface ? "export interface SkyrimPlatform "
+    return currentMode == Mode::Interface ? "export interface SkyrimPlatform "
                                             "{ \n"
                                           : "";
   };
   const auto getPostfix = [&currentMode]() -> std::string {
-    return currentMode == mode::interface ? "}\n" : "";
+    return currentMode == Mode::Interface ? "}\n" : "";
   };
 
   nlohmann::json j;
@@ -84,25 +84,34 @@ int main(int argc, char* argv[])
 
   auto parseReturnValue = [&](std::string rawType,
                               std::string objectTypeName) -> std::string {
-    if (rawType == "Int" || rawType == "Float")
+    if (rawType == "Int" || rawType == "Float") {
       return "number";
-    if (rawType == "Bool")
+    }
+    if (rawType == "Bool") {
       return "boolean";
-    if (rawType == "String")
+    }
+    if (rawType == "String") {
       return "string";
-    if (rawType == "IntArray" || rawType == "FloatArray")
+    }
+    if (rawType == "IntArray" || rawType == "FloatArray") {
       return "number[] | null";
-    if (rawType == "BoolArray")
+    }
+    if (rawType == "BoolArray") {
       return "boolean[] | null";
-    if (rawType == "StringArray")
+    }
+    if (rawType == "StringArray") {
       return "string[] | null";
-    if (rawType == "None")
+    }
+    if (rawType == "None") {
       return "void";
-    if (rawType == "Object")
+    }
+    if (rawType == "Object") {
       return (!objectTypeName.empty() ? prettify(objectTypeName) : "Form") +
         " | null";
-    if (rawType == "ObjectArray")
+    }
+    if (rawType == "ObjectArray") {
       return "PapyrusObject[] | null";
+    }
     return "";
   };
 
