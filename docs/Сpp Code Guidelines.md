@@ -82,6 +82,15 @@ Const methods must be thread-safe.
 
 Prefer `int32_t` over `int`, `int16_t` over `short`, etc.
 
+### Macros
+
+`#endif` must be followed by a comment:
+```c++
+#ifdef _DEBUG
+    auto debugFunctionJson = f.dump();
+#endif // _DEBUG
+```
+
 ## Application to Existing Code
 
 Project codebase may violate the rules above in some places. If you work with code that violates the rules consider fixing it.
