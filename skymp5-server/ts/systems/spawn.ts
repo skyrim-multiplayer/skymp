@@ -1,8 +1,5 @@
+import { Settings } from "../settings";
 import { System, Log, SystemContext } from "./system";
-
-const spawnpoints = [
-  { pos: [22659, -8697, -3594], worldOrCell: 0x1a26f, angleZ: 268 },
-];
 
 function randomInteger(min: number, max: number) {
   const rand = min + Math.random() * (max + 1 - min);
@@ -15,6 +12,7 @@ export class Spawn implements System {
 
   async initAsync(ctx: SystemContext): Promise<void> {
     ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number) => {
+      const { startPoints } = Settings.get();
       // TODO: Show race menu if character is not created after relogging
       let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
       if (actorId) {
@@ -22,12 +20,12 @@ export class Spawn implements System {
         ctx.svr.setEnabled(actorId, true);
         ctx.svr.setUserActor(userId, actorId);
       } else {
-        const idx = randomInteger(0, spawnpoints.length - 1);
+        const idx = randomInteger(0, startPoints.length - 1);
         actorId = ctx.svr.createActor(
           0,
-          spawnpoints[idx].pos,
-          spawnpoints[idx].angleZ,
-          spawnpoints[idx].worldOrCell,
+          startPoints[idx].pos,
+          startPoints[idx].angleZ,
+          +startPoints[idx].worldOrCell,
           userProfileId
         );
         this.log("Creating character", actorId.toString(16));
