@@ -22,6 +22,8 @@ Repo subdirectories are used to name commit scopes. Commits without scope are al
 
 In practice, you should use `skymp5-server` as the scope of your commit if all changes are in the `skymp5-server` folder, etc.
 
+`docs` commit type must not have scope.
+
 Examples:
 ```
 feat(skymp5-server): add feature to choose default spawn points
