@@ -180,6 +180,9 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
   add_custom_target(codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
   add_dependencies(codegen TSConverter)
+  
+  # force "skyrim-platform" custom target to be built strictly after codegen
+  list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
 
   add_dependencies(vs_startup_project ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 

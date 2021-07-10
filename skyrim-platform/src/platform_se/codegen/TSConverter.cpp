@@ -25,6 +25,8 @@ int main(int argc, char* argv[])
               << " dosn't exits, check it.";
     return 2;
   }
+  
+  std::filesystem::create_directories(pathToTypeScriptFile.parent_path());
 
   std::ifstream input(pathToJsonFile);
   std::ifstream papyrusClasses(pathToDefinitionsFile);
@@ -256,5 +258,12 @@ int main(int argc, char* argv[])
   }
 
   output << getPostfix();
+  
+  output.close();
+  if (!output) {
+	std::cout << "TSConverter failed to write to " << pathToTypeScriptFile << std::endl;  
+    return 3;	  
+  }
+  
   return 0;
 }
