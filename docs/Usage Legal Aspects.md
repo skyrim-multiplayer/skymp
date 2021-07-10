@@ -28,9 +28,9 @@ In practice it means that you at least:
 * Must add attribution in the following format to your license file. You may use our license file as an example: since we use third-party GPLv3 code, it contains attributions in the footer.
 
 ```
-This software uses skymp:
+This software uses SkyMP:
 
-Copyright (c) 2021 Skyrim Multiplayer. All Rights Reserved.
+Copyright (c) 2021 Leonid Pospelov. All Rights Reserved.
 
 All materials are made available on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. Do not remove or modify any license notices.
 ```
