@@ -1,0 +1,33 @@
+# Repository
+
+Maintainers are responsible for enforcing the rules in this document. So, if you just want to contribute you may have no idea about what's going on in this document.
+
+## Tree
+
+Merge commits are avoided in the source tree like in [microsoft/vcpkg](https://github.com/microsoft/vcpkg).
+
+## Commit Names
+
+Commit names follow [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/).
+
+Commit types used (sorted by priority):
+* feat - API or functionality change, both backward-compatible or not.
+* fix - bugfix or crash fix.
+* tests - changes in tests.
+* perf - changes in code that target improving performance.
+* docs - changes in text files.
+* internal - fixes or changes in the build system, catalog structure, or anything that doesn't execute on the user's machine.
+
+Repo subdirectories are used to name commit scopes. Commits without scope are allowed.
+
+In practice, you should use `skymp5-server` as the scope of your commit if all changes are in the `skymp5-server` folder, etc.
+
+`docs` commit type must not have scope.
+
+Examples:
+```
+feat(skymp5-server): add feature to choose default spawn points
+internal: make server's node addon buildable via top-level CMakeLists
+```
+
+Note that `BREAKING CHANGE` footer isn't used. Only `!` sign.

@@ -1,6 +1,17 @@
 # Table of contents
 
 - [Home](README.md)
+
+## Working With SkyMP Source Code
+
+- [Cpp Code Guidelines](docs_cpp_code_guidelines.md)
+- [CMake Workflow](docs_cmake_workflow.md)
+- [Usage Legal Aspects](docs_usage_legal_aspects.md)
+- [Repository](docs_repository.md)
+- [Repository Structure](docs_repository_structure.md)
+
+## Server Usage
+
 - [Running A Server](docs_running_a_server.md)
 - [Server Configuration Reference](docs_server_configuration_reference.md)
 - [Server Command Line Api](docs_server_command_line_api.md)
