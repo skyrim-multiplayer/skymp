@@ -40,6 +40,7 @@ Before your start make sure that your system meets the conditions:
 1. Clone the repo, including submodules
    ```sh
    git clone https://github.com/skyrim-multiplayer/skymp.git
+   cd skymp
    git submodule init
    git submodule update
    ```
