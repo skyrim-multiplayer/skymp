@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions are welcome and will be fully credited.
+Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Contributions are welcome and will be fully credited.
 
 We welcome all contributions, there is no minor things to contribute with, even one letter typo fixes are welcome.
 
@@ -33,5 +33,13 @@ Also, accepting and agreeing to release any contribution under the same license.
 - **No offensive language in code** - Let's code and comment in ways that do not hurt anyone.
 
 - **Resolve merge conflicts** - Your branch should not conflict with main branch.
+
+## Step By Step
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/my-awesome-feature`)
+3. Commit your Changes (`git commit -m 'Add some my-awesome-feature'`)
+4. Push to the Branch (`git push origin feature/my-awesome-feature`)
+5. Open a Pull Request
 
 **Happy coding**!

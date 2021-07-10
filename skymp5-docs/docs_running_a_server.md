@@ -10,10 +10,7 @@ The server requires `Windows 8.1` / `Windows Server 2012` or higher. It may stil
 
 You obviously need to have 64-bit Windows version since the server is 64-bit program.
 
-1. Create a new directory for server installation.
-2. Download the latest server build from the project's [website](https://skymp.io/).
-3. Extract everything into a previously created directory.
-4. The main executable is `skymp5-server.exe`. It's a command line app so you are free to launch it via `cmd.exe` / `powershell` or your custom `.bat` script.
+You are able to build whole project from sources. Server build would be in `build/dist/server`
 
 ### Linux
 
