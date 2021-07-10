@@ -28,9 +28,9 @@ In practice it means that you at least:
 * Must add attribution in the following format to your license file. You may use our license file as an example: since we use third-party GPLv3 code, it contains attributions in the footer.
 
 ```
-This software uses SkyMP:
+This software uses skymp:
 
-Copyright (c) 2021 Leonid Pospelov. All Rights Reserved.
+Copyright (c) 2021 SkyMP Team. All Rights Reserved.
 
 All materials are made available on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. Do not remove or modify any license notices.
 ```
@@ -47,7 +47,7 @@ If you publish your work on Nexus, be aware of setting correct permissions. This
 * **Asset use permission in mods/files that are being sold** - This permission is in fact also being granted. GPLv3 doesn't restrict making money but prohibits closed-source projects.
 * **Asset use permission in mods/files that earn donation points** - Same as for previous permission. It's legal to make money on GPLv3 software as long as you meet other requirements of this license.
 
-You are responsible for informing your users about permissions correctly. Choosing the wrong permissions doesn't have any effect on the real legal state of your work.
+You are responsible for informing your users about permissions correctly. Choosing the wrong permissions doesn't have any effect on the real legal state of your work and doesn't shadow the GPLv3 license.
 
 ### File Credits
 
