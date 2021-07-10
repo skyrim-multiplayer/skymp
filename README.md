@@ -10,7 +10,7 @@
   <p align="center">
     A general-purpose multiplayer mod for Skyrim SE. 
     <br>
-    <a href="https://github.com/skyrim-multiplayer/skymp/tree/main/skymp5-docs">Explore Docs</a>
+    <a href="https://github.com/skyrim-multiplayer/skymp/tree/main/docs">Explore Docs</a>
     ·
     <a href="https://github.com/skyrim-multiplayer/skymp/issues">Report Bug</a>
     ·
