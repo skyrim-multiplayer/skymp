@@ -11,8 +11,8 @@ We would greatly appreciate you if you add links to our resources.
 
 But avoid positioning yourself as SkyMP, Skyrim Multiplayer, or SkyMP Team, etc. We are strictly against it, and also against using our logo, project name to promote yourself. The reason is we want to control the public positioning of our project.
 
-* Do NOT use the SkyMP logo as your main logo.
-* Do NOT start your project description with "SkyMP is bla-bla-bla". Tell about your project rather than SkyMP.
+* Please do not use the SkyMP logo as your main logo.
+* Do not start your project description with "SkyMP is ...". Tell about your project first.
 * Consider not starting your project name with SkyMP: `"Immersive Foo Bar Project - SkyMP Server"` is ok. `"SkyMP - Immersive Foo Bar Project"` is not.
 
 ## License
