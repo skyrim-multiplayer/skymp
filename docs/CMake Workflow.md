@@ -38,3 +38,17 @@ When generating project files with CMake, errors are dumped into the console. If
 ```
 
 It is necessary to look above and find `CMake Error at...`. There would be a path and a line number. By the way, VS Code is able to highlight this.
+
+## Troubleshooting
+
+```
+ CMake Error at vcpkg/scripts/buildsystems/vcpkg.cmake:857 (_find_package):
+   Could not find a configuration file for package "directxtk" that is
+   compatible with requested version "".
+```
+This error has been reported by VS Code user. Solution:
+1. It seems that `amd64_x86` kit is selected. SkyMP doesn't support `x86` builds currently. Change the active kit to `amd64`.
+   ![image](https://user-images.githubusercontent.com/37947786/125172169-cb8e4080-e1c0-11eb-8e72-b16b47908e39.png)
+   ![image](https://user-images.githubusercontent.com/37947786/125172181-df39a700-e1c0-11eb-9d75-d576cf563c22.png)
+2. Remove `build/CMakeCache.txt` and `build/CMakeFiles`
+3. Re-generate project files.
