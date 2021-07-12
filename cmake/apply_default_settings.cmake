@@ -12,12 +12,10 @@ function(apply_default_settings)
       CXX_EXTENSIONS OFF
       CXX_STANDARD 17
     )
-    if (MSVC)
+    if(MSVC)
       set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS_RELEASE " /DEBUG /OPT:REF ")
       target_compile_options(${target} PUBLIC "/MP")
       target_compile_options(${target} PUBLIC "$<$<CONFIG:Release>:/Zi>")
-      #target_compile_options(${target} PUBLIC "/permissive-")
     endif()
   endforeach()
-
 endfunction()
