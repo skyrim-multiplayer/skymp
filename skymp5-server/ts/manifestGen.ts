@@ -27,7 +27,7 @@ export const generateManifest = (settings: Settings): void => {
   const manifest: Manifest = {
     mods: [],
     versionMajor: 1,
-    loadOrder: settings.loadOrder,
+    loadOrder: settings.loadOrder.map(x => path.basename(x)),
   };
 
   settings.loadOrder.forEach((loadOrderElement) => {
