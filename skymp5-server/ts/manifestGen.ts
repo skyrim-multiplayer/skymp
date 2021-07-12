@@ -30,8 +30,14 @@ export const generateManifest = (settings: Settings): void => {
     loadOrder: settings.loadOrder,
   };
 
-  settings.loadOrder.forEach((espmName) => {
-    const espmPath = path.join(settings.dataDir, espmName);
+  settings.loadOrder.forEach((loadOrderElement) => {
+    const espmName = path.isAbsolute(loadOrderElement)
+      ? path.basename(loadOrderElement)
+      : loadOrderElement;
+
+    const espmPath = path.isAbsolute(loadOrderElement)
+      ? loadOrderElement
+      : path.join(settings.dataDir, espmName);
 
     const buf: Uint8Array = fs.readFileSync(espmPath);
     manifest.mods.push({

@@ -1,5 +1,6 @@
 include(${CMAKE_SOURCE_DIR}/cmake/npm.cmake)
 
+# initialize npm dependencies in skymp5-server/node_modules
 npm_execute_command(
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   COMMAND install
