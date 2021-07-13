@@ -306,12 +306,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     serverMock = std::make_shared<Networking::MockServer>();
 
-    std::string dataDir =
-      "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special "
-      "Edition\\Data";
-#ifndef WIN32
-    dataDir = "/skyrim_data_dir";
-#endif
+    std::string dataDir;
 
     auto logger = spdlog::stdout_color_mt("console");
     partOne->AttachLogger(logger);
@@ -335,24 +330,35 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     if (serverSettings["dataDir"] != nullptr) {
       dataDir = serverSettings["dataDir"];
+    } else {
+      throw std::runtime_error("missing 'dataDir' in server-settings.json");
     }
     logger->info("Using data dir '{}'", dataDir);
 
-    std::vector<espm::fs::path> plugins = { "Skyrim.esm", "Update.esm",
-                                            "Dawnguard.esm", "HearthFires.esm",
-                                            "Dragonborn.esm" };
+    std::vector<espm::fs::path> pluginPaths = {
+      std::filesystem::path(dataDir) / "Skyrim.esm",
+      std::filesystem::path(dataDir) / "Update.esm",
+      std::filesystem::path(dataDir) / "Dawnguard.esm",
+      std::filesystem::path(dataDir) / "HearthFires.esm",
+      std::filesystem::path(dataDir) / "Dragonborn.esm"
+    };
     if (serverSettings["loadOrder"].is_array()) {
-      plugins.clear();
+      pluginPaths.clear();
       for (size_t i = 0; i < serverSettings["loadOrder"].size(); ++i) {
-        auto s = static_cast<std::string>(serverSettings["loadOrder"][i]);
-        plugins.push_back(s);
+        std::filesystem::path loadOrderElement =
+          static_cast<std::string>(serverSettings["loadOrder"][i]);
+        if (loadOrderElement.is_absolute()) {
+          pluginPaths.push_back(loadOrderElement);
+        } else {
+          pluginPaths.push_back(dataDir / loadOrderElement);
+        }
       }
     }
 
     auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
       (espm::fs::path(dataDir) / "scripts").string());
 
-    auto espm = new espm::Loader(dataDir, plugins);
+    auto espm = new espm::Loader(pluginPaths);
     auto realServer = Networking::CreateServer(
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
     server = Networking::CreateCombinedServer({ realServer, serverMock });

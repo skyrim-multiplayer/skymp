@@ -137,7 +137,6 @@ foreach(target ${VCPKG_DEPENDENT})
   find_path(CATCH_INCLUDE_DIR NAMES catch.hpp PATH_SUFFIXES catch2)
   get_filename_component(CATCH_INCLUDE_DIR ${CATCH_INCLUDE_DIR} DIRECTORY)
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
-  message(STATUS "CATCH_INCLUDE_DIR=${CATCH_INCLUDE_DIR}")
 
   find_path(SPARSEPP_INCLUDE_DIR NAMES spp.h PATH_SUFFIXES sparsepp)
   get_filename_component(SPARSEPP_INCLUDE_DIR ${SPARSEPP_INCLUDE_DIR} DIRECTORY)

@@ -52,7 +52,17 @@ Sets player limit of the server. Visible in launcher and on skymp.io.
 
 ## dataDir
 
-Contains relative path to a directory with vanilla Skyrim data (mods in esp/esm format, compiled Papyrus scripts in pex format).
+Contains relative or absolute path to a "data" directory which contains:
+* vanilla Skyrim master files (Skyrim.esm, Update.esm, etc)
+* plugin files (mods in .esp format)
+* compiled Papyrus scripts in .pex format
+
+This directory is exposed to `uiPort` and available via http.
+
+At this moment, the server uses this directory for non-vanilla needs too:
+* storing `_libkey.js`
+* storing web-based GUI in `${dataDir}/ui`
+* storing auto-generated manifest describing .esm/.esp files used and CRC32 of them
 
 ```json
 {
@@ -64,7 +74,11 @@ Contains relative path to a directory with vanilla Skyrim data (mods in esp/esm 
 
 ## loadOrder
 
-A list of esp/esm files which would be loaded by the server during startup in the same order as Skyrim SE loads them. The server looks for files in `${dataDir}` directory.
+A list of relative or absolute paths to .esp/.esm files which would be loaded by the server during startup in the same order as Skyrim SE loads them. 
+
+Relative paths are searched in `${dataDir}` directory.
+
+Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn't be able to download them from the server.
 
 ```json
 {
