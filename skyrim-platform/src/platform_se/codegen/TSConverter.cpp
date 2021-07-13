@@ -86,46 +86,36 @@ int main(int argc, char* argv[])
 
   auto parseReturnValue = [&](std::string rawType,
                               std::string objectTypeName) -> std::string {
-    switch (rawType)
-    {
-    case "Int":
+
+    if (rawType == "Int" || rawType == "Float") {
       return "number";
-      break;
-    case "Float":
-      return "number";
-      break;
-    case "Bool":
+    }
+    if (rawType == "Bool") {
       return "boolean";
-      break;
-    case "String":
+    }
+    if (rawType == "String") {
       return "string";
-      break;
-    case "IntArray":
+    }
+    if (rawType == "IntArray" || rawType == "FloatArray") {
       return "number[] | null";
-      break;
-    case "FloatArray":
-      return "number[] | null"
-      break;
-    case "BoolArray":
+    }
+    if (rawType == "BoolArray") {
       return "boolean[] | null";
-      break;
-    case "StringArray":
-      return "string[] | null"
-      break;
-    case "None":
+    }
+    if (rawType == "StringArray") {
+      return "string[] | null";
+    }
+    if (rawType == "None") {
       return "void";
-      break;
-    case "Object":
+    }
+    if (rawType == "Object") {
       return (!objectTypeName.empty() ? prettify(objectTypeName) : "Form") +
         " | null";
-      break;
-    case "ObjectArray":
-      return "PapyrusObject[] | null";
-      break;
-    default:
-      return "";
-      break;
     }
+    if (rawType == "ObjectArray") {
+      return "PapyrusObject[] | null";
+    }
+    return "";
   };
 
   auto dumpFunction = [&](std::string className, nlohmann::json f,
@@ -195,7 +185,6 @@ int main(int argc, char* argv[])
     [&](nlohmann::json data) -> void {
 
     std::string name = data.at("name").get<std::string>();
-    std::string dataName = data["name"].get<std::string>();
     std::string parent = data["parent"].get<std::string>();
 
     if (ignored.contains(name) || dumped.contains(name)) {
@@ -208,20 +197,20 @@ int main(int argc, char* argv[])
 
 #ifdef _DEBUG
     auto debugTypeJson = data.dump();
-    auto debugName = prettify(dataName);
+    auto debugName = prettify(name);
     auto debugParent =
       (data.contains("parent") ? prettify(parent)
                                : "PapyrusObject");
 #endif // _DEBUG
 
-    output << "\n// Based on " << prettify(dataName)
+    output << "\n// Based on " << prettify(name)
            << ".pex\n";
     output << "export declare class "
-           << prettify(dataName) << " extends "
+           << prettify(name) << " extends "
            << (data.contains("parent") ? prettify(parent) : "PapyrusObject")
            << "{\n";
     output << tab << "static from(papyrusObject: PapyrusObject | null) : "
-           << prettify(dataName) << "| null; \n";
+           << prettify(name) << "| null; \n";
 
     for (auto& function : data.at("memberFunctions")) {
       dumpFunction(name, function, false);
@@ -231,7 +220,7 @@ int main(int argc, char* argv[])
     }
 
     output << "}\n";
-    dumped.insert(dataName);
+    dumped.insert(name);
   };
 
 #ifdef _DEBUG
