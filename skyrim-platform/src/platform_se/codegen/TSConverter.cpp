@@ -17,12 +17,12 @@ int main(int argc, char* argv[])
   const std::filesystem::path pathToTypeScriptFile = argv[3];
 
   if (!std::filesystem::exists(pathToJsonFile)) {
-    std::cout << "Json file: " << pathToJsonFile << " dosn't exits, check it.";
+    std::cout << "Json file: " << pathToJsonFile << " doesn't exits, check it.";
     return 1;
   }
   if (!std::filesystem::exists(pathToDefinitionsFile)) {
     std::cout << "Default papyrus classes file: " << pathToDefinitionsFile
-              << " dosn't exits, check it.";
+              << " doesn't exits, check it.";
     return 2;
   }
 
@@ -86,48 +86,59 @@ int main(int argc, char* argv[])
 
   auto parseReturnValue = [&](std::string rawType,
                               std::string objectTypeName) -> std::string {
-    if (rawType == "Int" || rawType == "Float") {
+    switch (rawType)
+    {
+    case "Int":
       return "number";
-    }
-    if (rawType == "Bool") {
+      break;
+    case "Float":
+      return "number";
+      break;
+    case "Bool":
       return "boolean";
-    }
-    if (rawType == "String") {
+      break;
+    case "String":
       return "string";
-    }
-    if (rawType == "IntArray" || rawType == "FloatArray") {
+      break;
+    case "IntArray":
       return "number[] | null";
-    }
-    if (rawType == "BoolArray") {
+      break;
+    case "FloatArray":
+      return "number[] | null"
+      break;
+    case "BoolArray":
       return "boolean[] | null";
-    }
-    if (rawType == "StringArray") {
-      return "string[] | null";
-    }
-    if (rawType == "None") {
+      break;
+    case "StringArray":
+      return "string[] | null"
+      break;
+    case "None":
       return "void";
-    }
-    if (rawType == "Object") {
+      break;
+    case "Object":
       return (!objectTypeName.empty() ? prettify(objectTypeName) : "Form") +
         " | null";
-    }
-    if (rawType == "ObjectArray") {
+      break;
+    case "ObjectArray":
       return "PapyrusObject[] | null";
+      break;
+    default:
+      return "";
+      break;
     }
-    return "";
   };
 
   auto dumpFunction = [&](std::string className, nlohmann::json f,
                           bool isGlobal) {
+    std::string name = f["name"].get<std::string>();        
     if (ignored.contains(
-          (className + "." + f["name"].get<std::string>()).c_str())) {
+          (className + "." + name).c_str())) {
       return;
     }
 
     auto funcName =
-      functionNameOverrides.contains(f["name"].get<std::string>())
-      ? functionNameOverrides.at(f["name"].get<std::string>())
-      : f["name"].get<std::string>();
+      functionNameOverrides.contains(name)
+      ? functionNameOverrides.at(name) : name;
 
     output << tab << (isGlobal ? "static " : "")
            << prettify(funcName, ::tolower);
@@ -182,43 +193,45 @@ int main(int argc, char* argv[])
 
   std::function<void(nlohmann::json)> dumpType =
     [&](nlohmann::json data) -> void {
-    if (ignored.contains(data.at("name").get<std::string>()) ||
-        dumped.contains(data.at("name").get<std::string>())) {
+
+    std::string name = data.at("name").get<std::string>();
+    std::string dataName = data["name"].get<std::string>();
+    std::string parent = data["parent"].get<std::string>();
+
+    if (ignored.contains(name) || dumped.contains(name)) {
       return;
     }
 
     if (data.contains("parent")) {
-      dumpType(j["types"].at(data["parent"].get<std::string>()));
+      dumpType(j["types"].at(parent));
     }
 
 #ifdef _DEBUG
     auto debugTypeJson = data.dump();
-    auto debugName = prettify(data["name"].get<std::string>());
+    auto debugName = prettify(dataName);
     auto debugParent =
-      (data.contains("parent") ? prettify(data["parent"].get<std::string>())
+      (data.contains("parent") ? prettify(parent)
                                : "PapyrusObject");
 #endif // _DEBUG
 
-    output << "\n// Based on " << prettify(data["name"].get<std::string>())
+    output << "\n// Based on " << prettify(dataName)
            << ".pex\n";
     output << "export declare class "
-           << prettify(data["name"].get<std::string>()) << " extends "
-           << (data.contains("parent")
-                 ? prettify(data["parent"].get<std::string>())
-                 : "PapyrusObject")
+           << prettify(dataName) << " extends "
+           << (data.contains("parent") ? prettify(parent) : "PapyrusObject")
            << "{\n";
     output << tab << "static from(papyrusObject: PapyrusObject | null) : "
-           << prettify(data["name"].get<std::string>()) << "| null; \n";
+           << prettify(dataName) << "| null; \n";
 
     for (auto& function : data.at("memberFunctions")) {
-      dumpFunction(data.at("name").get<std::string>(), function, false);
+      dumpFunction(name, function, false);
     }
     for (auto& function : data.at("globalFunctions")) {
-      dumpFunction(data.at("name").get<std::string>(), function, true);
+      dumpFunction(name, function, true);
     }
 
     output << "}\n";
-    dumped.insert(data["name"].get<std::string>());
+    dumped.insert(dataName);
   };
 
 #ifdef _DEBUG
