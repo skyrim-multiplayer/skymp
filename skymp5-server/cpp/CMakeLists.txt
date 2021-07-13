@@ -43,6 +43,7 @@ list(APPEND VCPKG_DEPENDENT unit)
 target_compile_definitions(unit PRIVATE
   TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
   BUILT_PEX_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/pex/papyrus_test_files\"
+  SKYRIM_DIR=\"${SKYRIM_DIR}\"
 )
 if (WIN32)
   target_compile_options(unit PRIVATE "/bigobj")

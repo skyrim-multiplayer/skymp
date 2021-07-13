@@ -6,9 +6,7 @@
 #ifndef WIN32
 #  define DATA_DIR "/skyrim_data_dir"
 #else
-#  define DATA_DIR                                                            \
-    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special "      \
-    "Edition\\Data"
+#  define DATA_DIR SKYRIM_DIR "/Data"
 #endif
 
 namespace {
