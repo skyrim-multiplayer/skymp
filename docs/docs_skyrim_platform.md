@@ -4,7 +4,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 ### Papyrus types from the original game
 
-- All types in SkyrimPlatform have the same name as in Papyrus, for example: `Game`,` Actor`, `Form`,` Spell`, `Perk`, etc.
+- All types in SkyrimPlatform have the same name as in Papyrus, for example: `Game`, `Actor`, `Form`, `Spell`, `Perk`, etc.
 
 - To use types from Papyrus, including calling methods and static functions that they have, they need to be imported:
 
@@ -35,9 +35,9 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 ### Form
 
-- Form (`Form`) is inherited by most game types, which have methods such as` Actor`, `Weapon`, etc.
+- Form (`Form`) is inherited by most game types, which have methods such as `Actor`, `Weapon`, etc.
 - Each form has an ID, which is a 32-bit unsigned number (`uint32_t`). In SkyrimPlatform, represented by the type `number`.
-- If you need to find a form by its ID, use `Game.getFormEx`. Note that it is `Game.getFormEx`, not` Game.getForm`. The latter always returns `null` for IDs above 0x80000000 (the behavior of the original game).
+- If you need to find a form by its ID, use `Game.getFormEx`. Note that it is `Game.getFormEx`, not `Game.getForm`. The latter always returns `null` for IDs above 0x80000000 (the behavior of the original game).
 - You can get the form ID using the `getFormID` method. It is guaranteed that `Game.getFormEx` will find the form by the ID returned by this method if the form was not destroyed by the game.
 
 ### Safe use of objects
@@ -55,7 +55,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   if (!actor) return;
   let isInCombat = actor.isInCombat();
   ```
-- It is guaranteed that `Game.getPlayer` never returns` null`.
+- It is guaranteed that `Game.getPlayer` never returns `null`.
 
 ### Unhandled exceptions
 
@@ -74,7 +74,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 ### Casting objects to string
 
-- Types ported from Papyrus have limited support for a number of operations normal for regular JS objects such as `toString`,` toJSON`.
+- Types ported from Papyrus have limited support for a number of operations normal for regular JS objects such as `toString`, `toJSON`.
   ```typescript
   Game.getPlayer().ToString(); // '[object Actor]'
   JSON.stringify(Game.getPlayer()); // `{}`
@@ -82,13 +82,13 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 ### Cast
 
-- If you have a `Form` object that is a weapon, and you need a` Weapon` object, you can use casting:
+- If you have a `Form` object that is a weapon, and you need a `Weapon` object, you can use casting:
   ```typescript
   let sword = Game.getFormEx(swordId); // Get Form
   let weapon = Weapon.from(sword); // Cast to Weapon
   ```
-- If you specify an ID for a form that is not actually a weapon, the `weapon` variable will be` null`.
-- Passing `null` to the function for casting types as an argument will not throw an exception, but will return` null`:
+- If you specify an ID for a form that is not actually a weapon, the `weapon` variable will be `null`.
+- Passing `null` to the function for casting types as an argument will not throw an exception, but will return `null`:
   ```typescript
   ObjectReference.from(null); // null
   ```
@@ -125,7 +125,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 * `clearTintMasks` - remove TintMasks for the given Actor or the Player Character if the Actor is not passed.
 * `pushTintMask` - add TintMask with def. parameters for the given Actor or the Player Character, if Actor is not passed.
-* `pushWornState`,` addItemEx` - add / remove items from def. ExtraData.
+* `pushWornState`, `addItemEx` - add / remove items from def. ExtraData.
 * `updateEquipment` - update equipment (unstable).
 * `resetContainer` - clear the base container.
 
@@ -148,7 +148,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   printConsole(`Will be displayed immediately, not after a second`);
   printConsole(`Should have used then`);
   ```
-- You can use `async` /` await` to make the code look synchronous:
+- You can use `async`/`await` to make the code look synchronous:
   ```typescript
   let f = async () => {
     await Utility.wait(1);
@@ -177,7 +177,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
     // No access to game methods here.
   });
   ```
-- And also for game events such as `effectStart`,` effectFinish`, `magicEffectApply`,` equip`, `unequip`,` hit`, `containerChanged`,` deathStart`, `deathEnd`,` loadGame`, ` combatState`, `reset`,` scriptInit`, `trackedStats`,` uniqueIdChange`, `switchRaceComplete`,` cellFullyLoaded`, `grabRelease`,` lockChanged`, `moveAttachDetach`,` objectLoaded`, `waitStop`,` activate` ...
+- And also for game events such as `effectStart`, `effectFinish`, `magicEffectApply`, `equip`, `unequip`, `hit`, `containerChanged`, `deathStart`, `deathEnd`, `loadGame`,  `combatState`, `reset`, `scriptInit`, `trackedStats`, `uniqueIdChange`, `switchRaceComplete`, `cellFullyLoaded`, `grabRelease`, `lockChanged`, `moveAttachDetach`, `objectLoaded`, `waitStop`, `activate` ...
 
 - With `on`, you can subscribe to the event forever.
   ```typescript
@@ -259,7 +259,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   let getAV = findConsoleCommand("GetAVInfo");
   ```
 
-- Having received such an object, you can change the short (`shortName`) or long (` longName`) command name, as well as the number of accepted arguments (`numArgs`) and the function (` execute`) that will be executed when this console command is called via game console.
+- Having received such an object, you can change the short (`shortName`) or long (`longName`) command name, as well as the number of accepted arguments (`numArgs`) and the function (`execute`) that will be executed when this console command is called via game console.
 
   ```typescript
   getAV.longName = "printArg";
@@ -272,7 +272,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 - The return value of your new implementation indicates whether the original function of this command will be executed.
 - The first argument is the FormId of the object on which the console command is called, or 0 if it is absent.
-- The rest of the parameters will be the arguments with which the console command was called, of type `string` or` number`.
+- The rest of the parameters will be the arguments with which the console command was called, of type `string` or `number`.
 - Since game functions are not available in this context, you must register an `update` event handler with` once` if you want to call a game function when you invoke a console command:
 
 ```typescript
