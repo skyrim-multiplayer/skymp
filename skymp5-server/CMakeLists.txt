@@ -5,6 +5,8 @@ include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 
 enable_testing()
 
+set(SKYMP5_SERVER_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
+
 # Add C++ part of the server (except cpp/addon)
 add_subdirectory(cpp)
 
@@ -46,7 +48,7 @@ target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
 # Great. Now we have CMake target called "node".
 # We can link our target against it.
 
-file(GLOB_RECURSE sources "${PROJECT_SOURCE_DIR}/cpp/addon/*")
+file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
 if(MSVC)
   list(APPEND sources "${CMAKE_SOURCE_DIR}/.clang-format")
 endif()
@@ -73,7 +75,7 @@ apply_default_settings(TARGETS ${PROJECT_NAME})
 # On Windows create launch_server.bat in build/dist/server
 # This .bat file is for launching the server
 if(WIN32)
-  set(bat "set NODE_PATH=${PROJECT_SOURCE_DIR}/node_modules\n")
+  set(bat "set NODE_PATH=${SKYMP5_SERVER_SOURCE_DIR}/node_modules\n")
   set(bat "${bat}node dist_back/index.js\n")
   set(bat "${bat}pause\n")
   

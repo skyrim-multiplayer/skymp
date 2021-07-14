@@ -6,9 +6,6 @@ if("${CMAKE_PROJECT_NAME}" STREQUAL "" OR "${CMAKE_PROJECT_NAME}" STREQUAL "plat
   project(platform_se)
 endif()
 
-if("${SKYRIM_MP_ROOT}" STREQUAL "")
-  message(FATAL_ERROR "SKYRIM_MP_ROOT is not specified")
-endif()
 set(cmake_dir "${CMAKE_SOURCE_DIR}/cmake")
 if(NOT EXISTS "${cmake_dir}")
   message(FATAL_ERROR "\"${cmake_dir}\" does not exist")
@@ -24,8 +21,8 @@ add_library(cef INTERFACE)
 target_link_libraries(cef INTERFACE ${CEF_ROOT}/$<CONFIG>/cef_sandbox.lib ${CEF_ROOT}/$<CONFIG>/libcef.lib libcef_dll_wrapper)
 target_include_directories(cef INTERFACE ${CEF_ROOT})
 
-set(lib_root "${SKYRIM_MP_ROOT}/submodules/CommonLibSSE")
-set(third_party "${SKYRIM_MP_ROOT}/src/platform_se/third_party")
+set(lib_root "${SKYRIM_PLATFORM_SOURCE_DIR}/submodules/CommonLibSSE")
+set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/platform_se/third_party")
 
 file(GLOB_RECURSE lib_src "${lib_root}/src/*" "${lib_root}/include/*")
 add_library(CommonLibSSE STATIC ${lib_src})
@@ -109,7 +106,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
      COMMAND install tsc-watch@4.2.3 typescript@3.8.3 --save
    )
     npm_execute_command(
-     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tools/dev_service"
+     WORKING_DIRECTORY "${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service"
      COMMAND install
    )
 
@@ -190,7 +187,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # so we can use add_dependencies(x skyrim-platform) in other projects
   add_custom_target(skyrim-platform ALL
     COMMAND npm run pack$<$<CONFIG:Debug>:-debug>
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tools/dev_service
+    WORKING_DIRECTORY ${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service
   )
   add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 endif()
