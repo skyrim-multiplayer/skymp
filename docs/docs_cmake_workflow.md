@@ -4,6 +4,8 @@ Our build system is CMake-based. This document describes some caveats of our CMa
 
 When you switch between commits, you should run `cmake .. ` in the `build` directory. This action is called "CMake re-generation".
 
+Only `Visual Studio 16 2019` generator is supported on Windows.
+
 ## Adding Source Files
 
 * **Visual Studio**: `Add -> New Item -> /a meaningful source directory, not the build directory/`. No need to re-generate project files.
