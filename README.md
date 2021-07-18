@@ -4,8 +4,7 @@
   <a href="https://skymp.io">
     <img src="skymp.jpg" alt="Logo" width="200" height="200">
   </a>
-
-  <h3 align="center">SKYRIM MULTIPLAYER</h3>
+  <h3 align="center">SkyMP</h3>
 
   <p align="center">
     A general-purpose multiplayer mod for Skyrim SE. 
