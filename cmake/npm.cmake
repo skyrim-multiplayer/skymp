@@ -6,6 +6,11 @@ function(npm_execute_command)
     endif()
   endforeach()
 
+  # https://github.com/skyrim-multiplayer/skymp/issues/55
+  if(NOT IS_ABSOLUTE "${A_WORKING_DIRECTORY}")
+    message(FATAL_ERROR "Expected WORKING_DIRECTORY to be an absolute path, but got: ${A_WORKING_DIRECTORY}")
+  endif()
+
   if(WIN32)
     set(temp_bat "${CMAKE_CURRENT_BINARY_DIR}/temp.bat")
     set(npm_cmd ${temp_bat})
