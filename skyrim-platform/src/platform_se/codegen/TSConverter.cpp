@@ -86,7 +86,6 @@ int main(int argc, char* argv[])
 
   auto parseReturnValue = [&](std::string rawType,
                               std::string objectTypeName) -> std::string {
-
     if (rawType == "Int" || rawType == "Float") {
       return "number";
     }
