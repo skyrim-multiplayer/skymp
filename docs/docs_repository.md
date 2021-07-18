@@ -22,12 +22,15 @@ Repo subdirectories are used to name commit scopes. Commits without scope are al
 
 In practice, you should use `skymp5-server` as the scope of your commit if all changes are in the `skymp5-server` folder, etc.
 
-`docs` commit type must not have scope.
+`docs` and `tests` commit types must not have scope.
+
+All commit types except `fix` requires to start with verbs (add, make, etc).
 
 Examples:
 ```
 feat(skymp5-server): add feature to choose default spawn points
 internal: make server's node addon buildable via top-level CMakeLists
+fix: server startup
 ```
 
 Note that `BREAKING CHANGE` footer isn't used. Only `!` sign.
