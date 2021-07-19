@@ -11,6 +11,19 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.c
 cmake_minimum_required(VERSION 3.19.1)
 project(skymp)
 
+option(SKYRIM_DIR "Path to Skyrim" OFF)
+if(NOT SKYRIM_DIR)
+  message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
+endif()
+
+string(REPLACE "\\" "/" SKYRIM_DIR ${SKYRIM_DIR})
+
+if(SKYRIM_DIR)
+  if (NOT EXISTS ${SKYRIM_DIR}/SkyrimSE.exe)
+    message(FATAL_ERROR "Bad SKYRIM_DIR: ${SKYRIM_DIR}")
+  endif()
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

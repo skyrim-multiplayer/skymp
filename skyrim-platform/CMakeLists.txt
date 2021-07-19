@@ -5,23 +5,11 @@ add_executable(vs_startup_project src/platform_se/vs_startup_project/main.cpp)
 set_target_properties(vs_startup_project PROPERTIES WIN32_EXECUTABLE true CXX_STANDARD 17)
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT vs_startup_project) 
 
-option(SKYRIM_DIR "Path to Skyrim" OFF)
-if(NOT SKYRIM_DIR)
-  message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
-endif()
-
-if(SKYRIM_DIR)
-  if (NOT EXISTS ${SKYRIM_DIR}/SkyrimSE.exe)
-    message(FATAL_ERROR "Bad SKYRIM_DIR: ${SKYRIM_DIR}")
-  endif()
-endif()
-
-string(REPLACE "\\" "\\\\" SKYRIM_DIR_NORMAL ${SKYRIM_DIR})
 set(DEV_SERVICE_CFG_PATH "tools/dev_service/config.js")
 file(WRITE ${DEV_SERVICE_CFG_PATH} "")
 file(APPEND ${DEV_SERVICE_CFG_PATH} "module.exports = {\n")
 file(APPEND ${DEV_SERVICE_CFG_PATH} "  SkyrimSEFolder:\n")
-file(APPEND ${DEV_SERVICE_CFG_PATH} "    '${SKYRIM_DIR_NORMAL}',\n")
+file(APPEND ${DEV_SERVICE_CFG_PATH} "    '${SKYRIM_DIR}',\n")
 file(APPEND ${DEV_SERVICE_CFG_PATH} "};\n")
 
 set(README_HASH_EXPECTED 
