@@ -27,7 +27,7 @@ if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
   endif()
 endif()
 
-if($ENV{VCPKG_BINARY_SOURCES})
+if("$ENV{VCPKG_BINARY_SOURCES}")
   message(STATUS "Env VCPKG_BINARY_SOURCES is non-empty")
   message(STATUS "Setting up nuget source")
 endif()
