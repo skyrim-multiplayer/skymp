@@ -39,10 +39,12 @@ You also need ~10 GB on your hard drive and some free time.
 
 ### Configuring and Building
 
-1. Clone the repo
+1. Clone the repo, including submodules
    ```sh
    git clone https://github.com/skyrim-multiplayer/skymp.git
    cd skymp
+   git submodule init
+   git submodule update
    ```
 2. Make a build directory (used for project files, cache, artifacts, etc)
    ```sh
