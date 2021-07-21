@@ -21,23 +21,25 @@ matrix:
       mono: 'mono'
       bootstrap-vcpkg-cmd: './vcpkg/bootstrap-vcpkg.sh'
 
-steps:
-  - run: ${{ matrix.bootstrap-vcpkg-cmd }}
+jobs:
+  build:
+    steps:
+      - run: ${{ matrix.bootstrap-vcpkg-cmd }}
 
-  - name: 'Setup NuGet Credentials'
-    shell: 'bash'
-    # Replace <OWNER> with your organization name
-    run: >
-      ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
-      sources add
-      -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
-      -storepasswordincleartext
-      -name "GitHub"
-      -username "skyrim-multiplayer"
-      -password "${{ secrets.GITHUB_TOKEN }}"
+      - name: 'Setup NuGet Credentials'
+        shell: 'bash'
+        # Replace <OWNER> with your organization name
+        run: >
+          ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+          sources add
+          -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
+          -storepasswordincleartext
+          -name "GitHub"
+          -username "skyrim-multiplayer"
+          -password "${{ secrets.GITHUB_TOKEN }}"
 
-  # Omit this step if you're using manifests
-  - name: 'vcpkg package restore'
-    shell: 'bash'
-    run: >
-      ./vcpkg/vcpkg install nlohmann-json --triplet ${{ matrix.triplet }}
+      # Omit this step if you're using manifests
+      - name: 'vcpkg package restore'
+        shell: 'bash'
+        run: >
+         ./vcpkg/vcpkg install nlohmann-json --triplet ${{ matrix.triplet }}
