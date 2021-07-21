@@ -45,4 +45,4 @@ jobs:
     - name: 'vcpkg package restore'
       shell: 'bash'
       run: >
-       ./vcpkg/vcpkg install --overlay-ports=overlay_ports
+       ./vcpkg/vcpkg install --debug --overlay-ports=overlay_ports
