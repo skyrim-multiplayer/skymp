@@ -29,6 +29,8 @@ jobs:
 
     - run: nuget sources add -Source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json" -UserName "GitHub" -Password "${{ secrets.GITHUB_TOKEN }}" -StorePasswordInClearText
     - run: gcc --version
+    - run: g++ --version
+    - run: make --help
 
     #- name: 'Boostrap vcpkg'
     #  run: ./vcpkg/bootstrap-vcpkg
