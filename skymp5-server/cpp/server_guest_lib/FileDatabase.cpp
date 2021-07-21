@@ -22,6 +22,7 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
   auto p = pImpl->changeFormsDirectory;
   size_t nUpserted = 0;
+
   for (auto& changeForm : changeForms) {
     auto filePath = p / changeForm.formDesc.ToString('_');
     std::ofstream f(filePath);
