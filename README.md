@@ -29,6 +29,7 @@ To get a local copy up and running follow these simple example steps.
 Before your start make sure that your system meets the conditions:
 
 * Windows 7 or higher *([Windows 10](https://www.microsoft.com/en-us/software-download/windows10) is recommended)*
+* [Git](https://git-scm.com/downloads)
 * [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
 * .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
 * 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x or higher + npm
@@ -38,12 +39,10 @@ You also need ~10 GB on your hard drive and some free time.
 
 ### Configuring and Building
 
-1. Clone the repo, including submodules
+1. Clone the repo
    ```sh
    git clone https://github.com/skyrim-multiplayer/skymp.git
    cd skymp
-   git submodule init
-   git submodule update
    ```
 2. Make a build directory (used for project files, cache, artifacts, etc)
    ```sh
