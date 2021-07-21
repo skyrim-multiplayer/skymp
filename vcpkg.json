@@ -4,7 +4,10 @@
   "homepage": "https://skymp.io",
   "description": "Online mod for Skyrim SE.",
   "dependencies": [
-    "chakracore",
+    {
+      "name": "chakracore",
+      "platform": "windows"
+    },
     "nlohmann-json",
     "cpp-httplib",
     "zlib",

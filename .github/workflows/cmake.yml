@@ -38,4 +38,4 @@ jobs:
     - name: 'vcpkg package restore'
       shell: 'bash'
       run: >
-       ./vcpkg/vcpkg install nlohmann-json
+       ./vcpkg/vcpkg install
