@@ -10,6 +10,18 @@
     "spdlog",
     "catch2",
     "sparsepp",
-    "slikenet"
+    "slikenet",
+    "sqlite-orm",
+    "mongo-cxx-driver",
+    "simdjson",
+    "boost-bimap",
+    {
+      "name": "directxtk",
+      "platform": "windows"
+    },
+    {
+      "name": "mhook",
+      "platform": "windows"
+    }
   ]
 }
