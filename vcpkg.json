@@ -15,7 +15,7 @@
     "sqlite-orm",
     "mongo-cxx-driver",
     "simdjson",
-    "boost-bimap",
+
     
     {
       "name": "mhook",
