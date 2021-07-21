@@ -5,60 +5,39 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
   VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
-  VCPKG_FORCE_SYSTEM_BINARIES: '1' # vcpkg didn't want to use system nuget
 
-jobs:
-  build:
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
+matrix:
+  os: ['windows-2019', 'ubuntu-20.04']
+  include:
+    - os: 'windows-2019'
+      triplet: 'x86-windows'
+      mono: ''
+      bootstrap-vcpkg-cmd: './vcpkg/bootstrap-vcpkg.bat'
+    - os: 'ubuntu-20.04'
+      triplet: 'x64-linux'
+      # To run `nuget.exe` on non-Windows platforms, we must use `mono`.
+      mono: 'mono'
+      bootstrap-vcpkg-cmd: './vcpkg/bootstrap-vcpkg.sh'
 
-    steps:
-    - uses: actions/checkout@v2
+steps:
+  - run: ${{ matrix.bootstrap-vcpkg-cmd }}
 
-    - uses: nuget/setup-nuget@v1
-      with:
-        nuget-version: '5.5.1'
+  - name: 'Setup NuGet Credentials'
+    shell: 'bash'
+    # Replace <OWNER> with your organization name
+    run: >
+      ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+      sources add
+      -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
+      -storepasswordincleartext
+      -name "GitHub"
+      -username "skyrim-multiplayer"
+      -password "${{ secrets.GITHUB_TOKEN }}"
 
-    - run: nuget sources add -Source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json" -UserName "GitHub" -Password "${{ secrets.GITHUB_TOKEN }}" -StorePasswordInClearText
-    - run: gcc --version
-    - run: g++ --version
-    - run: make --help
-
-    #- name: 'Boostrap vcpkg'
-    #  run: ./vcpkg/bootstrap-vcpkg
-
-    # This step assumes `vcpkg` has been bootstrapped (run `./vcpkg/bootstrap-vcpkg`)
-    #- name: 'Setup NuGet Credentials'
-    #  shell: 'bash'
-    #  run: >
-    #    ${{ matrix.mono }} `vcpkg/vcpkg fetch nuget | tail -n 1`
-    #    sources add
-    #    -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
-    #    -storepasswordincleartext
-    #    -name "GitHub"
-    #    -username "skyrim-multiplayer"
-    #    -password "${{ secrets.GITHUB_TOKEN }}"
-
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-    - name: Build
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}}
-      
+  # Omit this step if you're using manifests
+  - name: 'vcpkg package restore'
+    shell: 'bash'
+    run: >
+      ./vcpkg/vcpkg install nlohmann-json --triplet ${{ matrix.triplet }}
