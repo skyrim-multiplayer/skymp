@@ -5,28 +5,25 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-env:
-  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
 
-matrix:
-  os: ['windows-2019', 'ubuntu-20.04']
-  include:
-    - os: 'windows-2019'
-      triplet: 'x86-windows'
-      mono: ''
-      bootstrap-vcpkg-cmd: './vcpkg/bootstrap-vcpkg.bat'
-    - os: 'ubuntu-20.04'
-      triplet: 'x64-linux'
-      # To run `nuget.exe` on non-Windows platforms, we must use `mono`.
-      mono: 'mono'
-      bootstrap-vcpkg-cmd: './vcpkg/bootstrap-vcpkg.sh'
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_SYSTEM_BINARIES: '1' # vcpkg didn't want to use system nuget
 
 jobs:
   build:
-    steps:
-      - run: ${{ matrix.bootstrap-vcpkg-cmd }}
+    runs-on: ubuntu-latest
 
-      - name: 'Setup NuGet Credentials'
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+
+    - run: ./vcpkg/bootstrap-vcpkg.sh
+
+    - name: 'Setup NuGet Credentials'
         shell: 'bash'
         # Replace <OWNER> with your organization name
         run: >
@@ -42,4 +39,4 @@ jobs:
       - name: 'vcpkg package restore'
         shell: 'bash'
         run: >
-         ./vcpkg/vcpkg install nlohmann-json --triplet ${{ matrix.triplet }}
+         ./vcpkg/vcpkg install nlohmann-json
