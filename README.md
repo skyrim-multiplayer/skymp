@@ -15,7 +15,7 @@
     ·
     <a href="https://github.com/skyrim-multiplayer/skymp/issues">Request Feature</a> 
     ·
-    <a href="https://discord.gg/VK9zNfnZug">Join Discord</a>
+    <a href="https://discord.gg/k39uQ9Yudt">Join Discord</a>
   </p>
 </p>
 
