@@ -1,8 +1,8 @@
 #pragma once
+#include "ActorsMap.h"
 #include "Config.h"
 #include <Networking.h>
 #include <array>
-#include <boost/bimap.hpp>
 #include <memory>
 #include <simdjson.h>
 #include <unordered_map>
@@ -13,8 +13,6 @@ struct UserInfo
 {
   bool isDisconnecting = false;
 };
-
-using ActorsMap = boost::bimaps::bimap<Networking::UserId, MpActor*>;
 
 class ServerState
 {
