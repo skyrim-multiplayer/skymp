@@ -33,6 +33,7 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
       ++nUpserted;
     }
   }
+
   return nUpserted;
 }
 
