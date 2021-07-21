@@ -6,6 +6,10 @@
   "dependencies": [
     "nlohmann-json",
     "cpp-httplib",
-    "zlib"
+    "zlib",
+    "spdlog",
+    "catch2",
+    "sparsepp",
+    "slikenet"
   ]
 }
