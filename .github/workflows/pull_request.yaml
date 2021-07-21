@@ -1,0 +1,36 @@
+on: "pull_request"
+
+# Vcpkg has been added as a submodule (`git submodule add https://github.com/Microsoft/vcpkg`).
+env:
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+
+matrix:
+  os: ['windows-2019', 'ubuntu-20.04']
+  include:
+    - os: 'windows-2019'
+      triplet: 'x86-windows'
+      mono: ''
+    - os: 'ubuntu-20.04'
+      triplet: 'x64-linux'
+      # To run `nuget.exe` on non-Windows platforms, we must use `mono`.
+      mono: 'mono'
+
+steps:
+  # This step assumes `vcpkg` has been bootstrapped (run `./vcpkg/bootstrap-vcpkg`)
+  - name: 'Setup NuGet Credentials'
+    shell: 'bash'
+    # Replace <OWNER> with your organization name
+    run: >
+      ${{ matrix.mono }} `vcpkg/vcpkg fetch nuget | tail -n 1`
+      sources add
+      -source "https://nuget.pkg.github.com/<OWNER>/index.json"
+      -storepasswordincleartext
+      -name "GitHub"
+      -username "<OWNER>"
+      -password "${{ secrets.GITHUB_TOKEN }}"
+
+  # Omit this step if you're using manifests
+  - name: 'vcpkg package restore'
+    shell: 'bash'
+    run: >
+      vcpkg/vcpkg install sqlite3 cpprestsdk --triplet ${{ matrix.triplet }}
