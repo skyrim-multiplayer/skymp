@@ -9,7 +9,7 @@ public:
 
   virtual ~IDatabase() = default;
 
-  // Returns numbers of change forms inserted or updated (Suitable for logging).
+  // Returns numbers of change forms inserted or updated successfully (Suitable for logging).
   // In practice, it should be equal to `changeForms.size()` when saving succeed.
   virtual size_t Upsert(const std::vector<MpChangeForm>& changeForms) = 0;
   
