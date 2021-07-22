@@ -10,13 +10,18 @@ constexpr auto g_dataDir = SKYRIM_DIR "/Data";
 #endif
 
 namespace {
-inline void OnProgress(std::string fileName, float readDuration,
+inline void OnProgress(const std::string& fileName, float readDuration,
                        float parseDuration, uintmax_t fileSize)
 {
   std::cout << "[ESPM] " << fileName << " read in " << readDuration
             << "s, parsed in " << parseDuration << "s, size is "
             << (fileSize / 1024 / 1024) << "Mb" << std::endl;
 }
+}
+
+bool IsSkyrimDirValid(const std::string& skyrimDir)
+{
+  return !skyrimDir.empty() && skyrimDir != "OFF";
 }
 
 espm::Loader CreateEspmLoader()
@@ -29,7 +34,7 @@ espm::Loader CreateEspmLoader()
 
     std::filesystem::path dataDir = std::filesystem::u8path(g_dataDir);
 
-    if (std::string(SKYRIM_DIR).empty()) {
+    if (!IsSkyrimDirValid(SKYRIM_DIR)) {
       files.clear();
       dataDir = std::filesystem::current_path();
     }
@@ -48,7 +53,7 @@ int main(int argc, char* argv[])
 {
   std::vector<const char*> args = { argv, argv + argc };
 
-  if (std::string(SKYRIM_DIR).empty()) {
+  if (!IsSkyrimDirValid(SKYRIM_DIR)) {
     args.push_back("~[espm]");
   }
 
