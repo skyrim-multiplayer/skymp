@@ -13,8 +13,8 @@ env:
   VCPKG_FEATURE_FLAGS: 'manifests'
 
 jobs:
-  if: "!contains(github.event.head_commit.message, 'skip ci')"
   build:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: windows-2019
 
     steps:
