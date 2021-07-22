@@ -3,7 +3,7 @@ name: Build Docker
 on:
   push:
     branches: [ main ]
-  pull_request:
+  pull_request_target:
     branches: [ main ]
 
 jobs:
@@ -36,4 +36,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: skymp/skymp:latest
+          tags: skymp/skymp:pr
