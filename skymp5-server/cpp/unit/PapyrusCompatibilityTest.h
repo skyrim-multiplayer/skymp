@@ -5,7 +5,7 @@
 extern espm::CompressedFieldsCache g_dummyCache;
 PartOne& GetPartOne();
 
-TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus]")
+TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus][espm]")
 {
   auto& partOne = GetPartOne();
   auto& nirnrootRef = partOne.worldState.GetFormAt<MpObjectReference>(0xa4de9);
@@ -30,7 +30,7 @@ TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus]")
   partOne.worldState.DestroyForm(0xff000000);
 }
 
-TEST_CASE("Server crash in CallMethod", "[Papyrus]")
+TEST_CASE("Server crash in CallMethod", "[Papyrus][espm]")
 {
   auto& partOne = GetPartOne();
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(0xd8995);
@@ -47,7 +47,7 @@ TEST_CASE("Server crash in CallMethod", "[Papyrus]")
   REQUIRE(ref.HasScript("dunFortSnowhawkActivateIfUnlocked"));
 }
 
-TEST_CASE("Server crash in PropGet", "[Papyrus]")
+TEST_CASE("Server crash in PropGet", "[Papyrus][espm]")
 {
   auto& partOne = GetPartOne();
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(0xabb6f);
@@ -65,7 +65,7 @@ TEST_CASE("Server crash in PropGet", "[Papyrus]")
 }
 
 // https://github.com/skyrim-multiplayer/issue-tracker/issues/11
-TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne]")
+TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(87048);
@@ -86,7 +86,7 @@ TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne]")
   REQUIRE(ref.HasScript("DefaultNoEnemiesFollowDoorScript"));
 }
 
-TEST_CASE("OnTriggerEnter crash in MovarthsLairExterior01", "[PartOne]")
+TEST_CASE("OnTriggerEnter crash in MovarthsLairExterior01", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(464472);

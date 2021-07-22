@@ -20,7 +20,7 @@ PartOne& GetPartOne()
 
 constexpr auto barrelInWhiterun = 0x4cc2d;
 
-TEST_CASE("Activate without espm attached", "[PartOne]")
+TEST_CASE("Activate without espm attached", "[PartOne][espm]")
 {
   PartOne partOne;
   DoConnect(partOne, 0);
@@ -33,7 +33,7 @@ TEST_CASE("Activate without espm attached", "[PartOne]")
     Contains("No loaded esm or esp files are found"));
 }
 
-TEST_CASE("Activate without Actor attached", "[PartOne]")
+TEST_CASE("Activate without Actor attached", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
 
@@ -49,7 +49,7 @@ TEST_CASE("Activate without Actor attached", "[PartOne]")
   DoDisconnect(partOne, 0);
 }
 
-TEST_CASE("Activate with bad caster", "[PartOne]")
+TEST_CASE("Activate with bad caster", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
 
@@ -69,7 +69,7 @@ TEST_CASE("Activate with bad caster", "[PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("Activate with incorrect WorldSpace", "[PartOne]")
+TEST_CASE("Activate with incorrect WorldSpace", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
 
@@ -90,7 +90,7 @@ TEST_CASE("Activate with incorrect WorldSpace", "[PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("Activation of unexisting ref doesn't throw anything", "[PartOne]")
+TEST_CASE("Activation of unexisting ref doesn't throw anything", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   DoConnect(partOne, 0);
@@ -106,7 +106,7 @@ TEST_CASE("Activation of unexisting ref doesn't throw anything", "[PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne]")
+TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   partOne.Messages().clear();
@@ -133,7 +133,7 @@ TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne]")
   refr.SetHarvested(false);
 }
 
-TEST_CASE("See open DisplayCaseSmFlat01 in Whiterun", "[PartOne]")
+TEST_CASE("See open DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   partOne.Messages().clear();
@@ -161,7 +161,7 @@ TEST_CASE("See open DisplayCaseSmFlat01 in Whiterun", "[PartOne]")
   refr.SetOpen(false);
 }
 
-TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne]")
+TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
 {
 
   auto& partOne = GetPartOne();
@@ -211,7 +211,7 @@ TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne]")
+TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
 
@@ -261,7 +261,7 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne]")
+TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
 
@@ -331,7 +331,7 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne]")
+TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   auto refrId = 0x20570;
@@ -431,7 +431,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne]")
 }
 
 TEST_CASE("Server creates and destroys an object for user correcly",
-          "[PartOne]")
+          "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   partOne.Messages().clear();
@@ -462,7 +462,7 @@ TEST_CASE("Server creates and destroys an object for user correcly",
   partOne.DestroyActor(0xff000ABC);
 }
 
-TEST_CASE("Activate BarrelFood01 in Whiterun (open/close)", "[PartOne]")
+TEST_CASE("Activate BarrelFood01 in Whiterun (open/close)", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
 

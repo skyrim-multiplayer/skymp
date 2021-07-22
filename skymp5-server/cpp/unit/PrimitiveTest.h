@@ -14,7 +14,7 @@ std::string Str(NiPoint3 p)
   return ss.str();
 }
 
-TEST_CASE("GetPrimitiveVertices", "[primitive]")
+TEST_CASE("GetPrimitiveVertices", "[primitive][espm]")
 {
   auto& br = l.GetBrowser();
   auto refr = espm::Convert<espm::REFR>(br.LookupById(0xeeb).rec);
@@ -31,7 +31,7 @@ TEST_CASE("GetPrimitiveVertices", "[primitive]")
   REQUIRE(Str(vertices[7]) == Str(NiPoint3(23678, -10450, -3270)));
 }
 
-TEST_CASE("IsInsidePrimitive", "[primitive]")
+TEST_CASE("IsInsidePrimitive", "[primitive][espm]")
 {
   auto& br = l.GetBrowser();
   auto refr = espm::Convert<espm::REFR>(br.LookupById(0xeeb).rec);

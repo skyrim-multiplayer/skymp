@@ -60,7 +60,7 @@ auto GetDummyMessageData()
 };
 }
 
-TEST_CASE("GetItemCount/AddItem", "[Papyrus][ObjectReference]")
+TEST_CASE("GetItemCount/AddItem", "[Papyrus][ObjectReference][espm]")
 {
   PartOne p;
 
@@ -79,7 +79,7 @@ TEST_CASE("GetItemCount/AddItem", "[Papyrus][ObjectReference]")
           VarValue(10));
 }
 
-TEST_CASE("RemoveItem", "[Papyrus][ObjectReference]")
+TEST_CASE("RemoveItem", "[Papyrus][ObjectReference][espm]")
 {
   PartOne p;
 
@@ -114,7 +114,7 @@ TEST_CASE("RemoveItem", "[Papyrus][ObjectReference]")
                                                 { item }) == VarValue(5));
 }
 
-TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
+TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference][espm]")
 {
 
   PartOne p;
@@ -134,7 +134,7 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference]")
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(true));
 }
 
-TEST_CASE("BlockActivation", "[Papyrus][ObjectReference]")
+TEST_CASE("BlockActivation", "[Papyrus][ObjectReference][espm]")
 {
   PartOne p;
   p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c);
