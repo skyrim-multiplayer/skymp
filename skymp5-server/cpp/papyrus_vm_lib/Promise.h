@@ -85,8 +85,7 @@ public:
     }
   }
 
-  static Promise<std::vector<T>> All(
-    const std::vector<Promise<T>>& promises)
+  static Promise<std::vector<T>> All(const std::vector<Promise<T>>& promises)
   {
     Promise<std::vector<T>> res;
 

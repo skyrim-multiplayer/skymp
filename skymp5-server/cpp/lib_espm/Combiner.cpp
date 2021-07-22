@@ -100,8 +100,8 @@ uint32_t espm::BrowserInfo::ToGlobalId(uint32_t rawId) const noexcept
   return espm::GetMappedId(rawId, *mapping);
 }
 
-espm::LookupResult espm::CombineBrowser::LookupById(uint32_t combFormId) const
-  noexcept
+espm::LookupResult espm::CombineBrowser::LookupById(
+  uint32_t combFormId) const noexcept
 {
   RecordHeader* resRec = nullptr;
   uint8_t resFileIdx = 0;
@@ -176,8 +176,8 @@ espm::CombineBrowser::GetRecordsAtPos(uint32_t cellOrWorld, int16_t cellX,
   return res;
 }
 
-const espm::IdMapping* espm::CombineBrowser::GetMapping(size_t fileIndex) const
-  noexcept
+const espm::IdMapping* espm::CombineBrowser::GetMapping(
+  size_t fileIndex) const noexcept
 {
   if (fileIndex >= pImpl->numSources)
     return nullptr;

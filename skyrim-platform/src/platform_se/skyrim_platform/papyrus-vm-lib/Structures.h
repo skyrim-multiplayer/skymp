@@ -3,9 +3,9 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
 
 class VirtualMachine;
 struct PexScript;
@@ -98,7 +98,6 @@ public:
   VarValue operator!();
 
   VarValue& operator=(const VarValue& argument2);
-
 
   bool operator==(const VarValue& argument2);
   bool operator>(const VarValue& argument2);
