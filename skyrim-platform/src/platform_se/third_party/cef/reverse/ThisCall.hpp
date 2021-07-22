@@ -40,4 +40,3 @@ namespace CEFUtils
 #define TP_THIS_FUNCTION(typeName, retName, className, ...) using typeName = retName (__fastcall)(className*, __VA_ARGS__);
 #define TP_MAKE_THISCALL(functionName, className, ...) __fastcall functionName(className* apThis, __VA_ARGS__)
 #endif
-

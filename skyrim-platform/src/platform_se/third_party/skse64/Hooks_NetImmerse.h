@@ -5,4 +5,3 @@
 
 void Hooks_NetImmerse_Init(void);
 void Hooks_NetImmerse_Commit(void);
-
