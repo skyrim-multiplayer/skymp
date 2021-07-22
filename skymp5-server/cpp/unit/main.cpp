@@ -21,19 +21,25 @@ inline void OnProgress(std::string fileName, float readDuration,
 
 espm::Loader CreateEspmLoader()
 {
-  std::vector<std::filesystem::path> files = { "Skyrim.esm", "Update.esm",
-                                               "Dawnguard.esm",
-                                               "HearthFires.esm",
-                                               "Dragonborn.esm" };
+  try {
+    std::vector<std::filesystem::path> files = { "Skyrim.esm", "Update.esm",
+                                                 "Dawnguard.esm",
+                                                 "HearthFires.esm",
+                                                 "Dragonborn.esm" };
 
-  std::filesystem::path dataDir = std::filesystem::u8path(g_dataDir);
+    std::filesystem::path dataDir = std::filesystem::u8path(g_dataDir);
 
-  if (std::string(SKYRIM_DIR).empty()) {
-    files.clear();
-    dataDir = std::filesystem::current_path();
+    if (std::string(SKYRIM_DIR).empty()) {
+      files.clear();
+      dataDir = std::filesystem::current_path();
+    }
+
+    return espm::Loader(dataDir, files, OnProgress);
+  } catch (std::exception& e) {
+    std::cout << "Exception in CreateEspmLoader:" << std::endl;
+    std::cout << e.what() << std::endl;
+    std::exit(1);
   }
-
-  return espm::Loader(dataDir, files, OnProgress);
 }
 
 espm::Loader l = CreateEspmLoader();
