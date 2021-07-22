@@ -32,7 +32,7 @@ Before your start make sure that your system meets the conditions:
 * [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
 * .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
 * 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x or higher + npm
-* [CMake 3.19.1-3.20](https://cmake.org/download/) *(Higher probably wouldn't work, see [#62](https://github.com/skyrim-multiplayer/skymp/issues/62))*
+* [CMake 3.19.1](https://cmake.org/download/) or higher
 
 You also need ~10 GB on your hard drive and some free time.
 
