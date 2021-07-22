@@ -1,12 +1,16 @@
 name: Formatting check
 on: [push, pull_request]
 jobs:
-  formatting-check:
-    name: Formatting Check
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Run clang-format style check for C/C++ programs.
-      uses: jidicula/clang-format-action@v3.4.0
-      with:
-        clang-format-version: '11'
+    formatting-check:
+        name: Formatting Check
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v2
+          - name: Linelint
+            uses: actions/linelint@v0.0.6
+            id: linelint
+          #- name: Run clang-format style check for C/C++ programs.
+          #  uses: jidicula/clang-format-action@v3.4.0
+          #  with:
+          #    clang-format-version: '11'
