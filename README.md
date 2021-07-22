@@ -54,11 +54,15 @@ You also need ~10 GB on your hard drive and some free time.
    cd build
    cmake .. -DSKYRIM_DIR="C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
    ```
-   Or if you don't have Skyrim SE on your machine, just use (some features will lack):
+   For Linux users or users who don't have Skyrim SE installed:
    ```sh
    cd build
    cmake ..
    ```
+   * Some tests would be skipped
+   * The server would require manual installation of Skyrim.esm and other master files
+   * Papyrus scripts that require Bethesda's compiler would not be compiled, prebuilts would be used
+
 4. Open `build/skymp.sln` with Visual Studio, then `Build -> Build Solution`.
    All build artifacts would be placed into `build/dist`.
 
