@@ -20,7 +20,7 @@ Only Windows builds are supported currently.
 
 Once you build the server, you should be able to launch it. But default config values are only usable to verify that server works. After launching the server you will see a server called `My Server` in the master list: https://skymp.io/api/servers. You also will be able to connect, but players from the Internet will not. You need to change the `ip` field in `server-settings.json` to get this functionality to work. This file is placed into `build/dist/server` directory during build.
 
-```json
+```json5
 {
   "dataDir": "data",
   "loadOrder": [
