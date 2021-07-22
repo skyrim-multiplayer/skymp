@@ -8,7 +8,7 @@ jobs:
           - name: Checkout
             uses: actions/checkout@v2
           - name: Linelint
-            uses: actions/linelint@v0.0.6
+            uses: fernandrone/linelint@v0.0.6
             id: linelint
           #- name: Run clang-format style check for C/C++ programs.
           #  uses: jidicula/clang-format-action@v3.4.0
