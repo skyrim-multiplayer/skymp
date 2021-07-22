@@ -8,15 +8,25 @@ set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
+# File from vcpkg submodule. This indicates inability to find this file or checkout submodules.
+if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
+  set(msg "${CMAKE_TOOLCHAIN_FILE} doesn't exist. It seems that vcpkg submodule is not initialized.")
+  set(msg "${msg}\nUse commands below to initialize:")
+  set(msg "${msg}\n  git submodule init")
+  set(msg "${msg}\n  git submodule update")
+  message(FATAL_ERROR "${msg}")
+endif()
+
 cmake_minimum_required(VERSION 3.19.1)
 project(skymp)
+enable_testing()
 
 option(SKYRIM_DIR "Path to Skyrim" OFF)
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
 endif()
 
-string(REPLACE "\\" "/" SKYRIM_DIR ${SKYRIM_DIR})
+string(REPLACE "\\" "/" SKYRIM_DIR "${SKYRIM_DIR}")
 
 if(SKYRIM_DIR)
   if (NOT EXISTS ${SKYRIM_DIR}/SkyrimSE.exe)

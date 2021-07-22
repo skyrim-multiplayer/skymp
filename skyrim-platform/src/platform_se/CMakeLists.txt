@@ -218,6 +218,7 @@ foreach(target ${VCPKG_DEPENDENT})
   target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
 
   find_package(directxtk CONFIG REQUIRED)
+  find_package(directxmath CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC Microsoft::DirectXTK)
   
   find_package(spdlog CONFIG REQUIRED)

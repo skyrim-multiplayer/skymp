@@ -129,6 +129,6 @@ private:
   std::vector<Entry> entries;
   std::unique_ptr<espm::Combiner> combiner;
   std::unique_ptr<espm::CombineBrowser> combineBrowser;
-  const std::vector<fs::path> filePaths;
+  std::vector<fs::path> filePaths;
 };
 }

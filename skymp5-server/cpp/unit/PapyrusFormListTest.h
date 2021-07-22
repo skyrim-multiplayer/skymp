@@ -6,7 +6,7 @@
 
 extern espm::Loader l;
 
-TEST_CASE("GetSize/GetAt", "[Papyrus][FormList]")
+TEST_CASE("GetSize/GetAt", "[Papyrus][FormList][espm]")
 {
   auto& br = l.GetBrowser();
 

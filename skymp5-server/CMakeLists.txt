@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.19.1)
 project(skymp5-server)
+enable_testing()
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
-
-enable_testing()
 
 set(SKYMP5_SERVER_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
