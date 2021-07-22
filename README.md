@@ -21,20 +21,31 @@
 
 ## Building From Source
 
-You can find instructions on setting up the project locally below.
-To get a local copy up and running follow these simple example steps.
+You can find instructions on setting up the project locally below. To get a local copy up and running follow these simple example steps. You need ~10 GB on your hard drive and some free time.
 
-### Prerequisites
+## Prerequisites
+
+### Common
+
+These tools required regardless of your system:
+
+* 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x or higher + npm
+* [CMake 3.19.1](https://cmake.org/download/) or higher
+
+### Windows
 
 Before your start make sure that your system meets the conditions:
 
 * Windows 7 or higher *([Windows 10](https://www.microsoft.com/en-us/software-download/windows10) is recommended)*
 * [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
 * .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
-* 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x or higher + npm
-* [CMake 3.19.1](https://cmake.org/download/) or higher
 
-You also need ~10 GB on your hard drive and some free time.
+### Linux
+
+Playing on Linux isn't supported currently, but a full-featured server is.
+
+* Ubuntu *(Some other distributions may also work, but we know that Alpine doesn't)*
+* Clang 11 or higher *(GCC is not supported)*
 
 ### Configuring and Building
 
@@ -54,7 +65,7 @@ You also need ~10 GB on your hard drive and some free time.
    cd build
    cmake .. -DSKYRIM_DIR="C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
    ```
-   For Linux users or users who don't have Skyrim SE installed:
+   For Linux users and users who don't have Skyrim SE installed:
    ```sh
    cd build
    cmake ..
@@ -63,7 +74,12 @@ You also need ~10 GB on your hard drive and some free time.
    * The server would require manual installation of Skyrim.esm and other master files
    * Papyrus scripts that require Bethesda's compiler would not be compiled, prebuilts would be used
 
-4. Open `build/skymp.sln` with Visual Studio, then `Build -> Build Solution`.
+4. Build with CMake:
+   ```sh
+   cmake --build .
+   ```
+   On Windows you also can open `build/skymp.sln` with Visual Studio, then `Build -> Build Solution`.
+
    All build artifacts would be placed into `build/dist`.
 
 ## License
