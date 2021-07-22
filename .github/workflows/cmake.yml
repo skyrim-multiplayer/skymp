@@ -35,12 +35,6 @@ jobs:
         -username "skyrim-multiplayer"
         -password "${{ secrets.GITHUB_TOKEN }}"
 
-    # Omit this step if you're using manifests
-    - name: 'vcpkg package restore'
-      shell: 'bash'
-      run: >
-       ./vcpkg/vcpkg install --debug --triplet x64-windows --overlay-ports=overlay_ports
-
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
