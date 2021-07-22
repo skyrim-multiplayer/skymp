@@ -228,3 +228,4 @@ extern RelocAddr<_CreateShaderMaterial> CreateShaderMaterial;
 // This is actually vtable+8 but it has no dependency on the 'this' ptr
 typedef BSLightingShaderMaterialFacegenTint * (*_CreateFacegenTintMaterial)();
 extern RelocAddr<_CreateFacegenTintMaterial> CreateFacegenTintMaterial;
+
