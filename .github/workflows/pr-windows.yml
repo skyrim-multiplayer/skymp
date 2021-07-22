@@ -3,12 +3,8 @@ name: PR Windows
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - 'Dockerfile'
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - 'Dockerfile'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
