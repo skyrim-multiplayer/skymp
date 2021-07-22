@@ -26,7 +26,7 @@ if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
 endif()
 
-string(REPLACE "\\" "/" SKYRIM_DIR ${SKYRIM_DIR})
+string(REPLACE "\\" "/" SKYRIM_DIR "${SKYRIM_DIR}")
 
 if(SKYRIM_DIR)
   if (NOT EXISTS ${SKYRIM_DIR}/SkyrimSE.exe)
