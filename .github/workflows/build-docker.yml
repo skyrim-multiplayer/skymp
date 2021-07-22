@@ -1,0 +1,15 @@
+name: Build Docker
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+      - run: docker build --tag skymp .
