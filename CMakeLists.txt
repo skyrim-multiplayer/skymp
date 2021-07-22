@@ -19,6 +19,7 @@ endif()
 
 cmake_minimum_required(VERSION 3.19.1)
 project(skymp)
+enable_testing()
 
 option(SKYRIM_DIR "Path to Skyrim" OFF)
 if(NOT SKYRIM_DIR)
