@@ -1,9 +1,7 @@
-name: Build Docker
+name: Push Docker
 
 on:
   push:
-    branches: [ main ]
-  pull_request_target:
     branches: [ main ]
 
 jobs:
@@ -30,10 +28,10 @@ jobs:
         uses: docker/login-action@v1 
         with:
           username: skymp
-          password: ${{ secrets.ORG_DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: skymp/skymp:pr
+          tags: skymp/skymp:latest

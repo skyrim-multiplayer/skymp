@@ -1,0 +1,32 @@
+name: PR Docker
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+      - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+
+      # action can be useful if you want to add emulation support with QEMU to be able to build against more platforms.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      # action will create and boot a builder using by default the docker-container builder driver. 
+      # this is not required but recommended using it to be able to build multi-platform images, export cache, etc.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: skymp
+          password: ${{ secrets.ORG_DOCKERHUB_TOKEN }}
+      - run: docker run build -t skymp:test .
