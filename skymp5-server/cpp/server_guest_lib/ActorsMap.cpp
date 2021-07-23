@@ -24,7 +24,7 @@ void ActorsMap::Set(Networking::UserId userId, MpActor* actor)
     throw std::runtime_error(ss.str());
   }
   Erase(userId);
-  Erase(actor);
+  // Erase(actor);
   actorByUserId[userId] = actor;
   userIdByActor[actor] = userId;
 }
