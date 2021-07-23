@@ -31,7 +31,10 @@ jobs:
         `./vcpkg/vcpkg fetch nuget | tail -n 1`
         sources add
         -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
+        -storepasswordincleartext
         -name "GitHub"
+        -username "${{ github.actor }}"
+        -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
