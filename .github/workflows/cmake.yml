@@ -33,7 +33,7 @@ jobs:
         -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
         -storepasswordincleartext
         -name "GitHub"
-        -username "skyrim-multiplayer"
+        -username "${{ github.actor }}"
         -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
