@@ -17,13 +17,13 @@ ENV LD=/usr/bin/ld.lld-12
 
 # Install vcpkg and ports
 # (vcpkg/refs/heads/master contains vcpkg version)
-COPY .git/modules/vcpkg/refs/heads/main \
+COPY .git/modules/vcpkg/refs/heads/master \
   ./vcpkg.json \
   ./
 COPY ./overlay_ports ./overlay_ports
 RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \ 
   && cd vcpkg \
-  && git checkout $(cat main) \
+  && git checkout $(cat master) \
   && chmod 777 ./bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics \
   && cd .. \
