@@ -18,9 +18,6 @@ RUN apt-get update && apt-get install -y \
   perl \
   make \
   zip \
-  pkgconfig \
-  linux-headers \
-  libsasl \
   && rm -rf /var/lib/apt/lists/*
 
 ENV CC=/usr/bin/clang-12
