@@ -1,10 +1,10 @@
 #include "CallNativeApi.h"
 
 #include "CallNative.h"
+#include "CreatePromise.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "VmProvider.h"
-#include "CreatePromise.h"
 
 JsValue CallNativeApi::CallNative(
   const JsFunctionArguments& args,
@@ -48,7 +48,8 @@ JsValue CallNativeApi::CallNative(
   };
 
   auto f = provider.GetFunctionInfo(className, functionName);
-  auto isAddOrRemove = (functionName == "removeItem") || (functionName == "addItem");
+  auto isAddOrRemove =
+    (functionName == "removeItem") || (functionName == "addItem");
 
   if (f && f->IsLatent() && !isAddOrRemove) {
 

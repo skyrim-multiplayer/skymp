@@ -90,7 +90,8 @@ TEST_CASE("Activate with incorrect WorldSpace", "[PartOne][espm]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("Activation of unexisting ref doesn't throw anything", "[PartOne][espm]")
+TEST_CASE("Activation of unexisting ref doesn't throw anything",
+          "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   DoConnect(partOne, 0);

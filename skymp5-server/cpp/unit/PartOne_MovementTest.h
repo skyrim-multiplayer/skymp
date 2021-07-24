@@ -4,7 +4,7 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
           "user present",
           "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   constexpr uint32_t n = 20;
@@ -27,12 +27,13 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
   partOne.Messages().clear();
 
   DoUpdateMovement(partOne, 0xffffffff, 0);
-  REQUIRE(partOne.Messages().size() == 11); // Me and 10 other users created in loop
+  REQUIRE(partOne.Messages().size() ==
+          11); // Me and 10 other users created in loop
 }
 
 TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   for (int i = 0; i < 2; ++i) {
@@ -55,7 +56,7 @@ TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
 
 TEST_CASE("UpdateMovement", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   auto doMovement = [&] { DoMessage(partOne, 0, jMovement); };
@@ -106,9 +107,8 @@ TEST_CASE("UpdateMovement", "[PartOne]")
 
   // Look must be empty by default
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["look"] != nullptr;
-                       }) == partOne.Messages().end());
+                       [&](auto m) { return m.j["look"] != nullptr; }) ==
+          partOne.Messages().end());
 
   partOne.Messages().clear();
   doMovement();

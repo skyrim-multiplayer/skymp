@@ -5,7 +5,7 @@
 
 TEST_CASE("Notification", "[Papyrus][Debug]")
 {
-  
+
   PartOne p;
   {
     auto ac =

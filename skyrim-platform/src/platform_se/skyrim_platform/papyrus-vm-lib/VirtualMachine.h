@@ -10,8 +10,8 @@ class VirtualMachine
 public:
   std::map<std::shared_ptr<IGameObject>, std::vector<ActivePexInstance>>
     gameObjects;
-  std::map<std::string, std::map<std::string, NativeFunction>>
-    nativeFunctions, nativeStaticFunctions;
+  std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
+    nativeStaticFunctions;
 
   std::vector<std::shared_ptr<PexScript>> allLoadedScripts;
 

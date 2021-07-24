@@ -49,8 +49,8 @@ bool KeyForValueChange(std::vector<uint8_t>& vec, const std::string& key,
 }
 }
 
-std::pair<uint32_t, std::vector<uint8_t>> SaveFile_::ChangeFormACHR_::ToBinary() const
-  noexcept
+std::pair<uint32_t, std::vector<uint8_t>>
+SaveFile_::ChangeFormACHR_::ToBinary() const noexcept
 {
   std::pair<uint32_t, std::vector<uint8_t>> res;
 

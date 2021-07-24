@@ -13,7 +13,7 @@ TEST_CASE("PartOne API doesn't crash when bad userId passed", "[PartOne]")
 
 TEST_CASE("SetUserActor doesn't accept disabled actors", "[PartOne]")
 {
-  
+
   PartOne partOne;
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0.0, 0x3c);
   partOne.SetEnabled(0xff000000, false);
@@ -107,7 +107,7 @@ TEST_CASE("Disconnect event sent before user actually disconnects",
 
 TEST_CASE("Server custom packet", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   DoConnect(partOne, 1);

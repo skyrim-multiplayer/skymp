@@ -4,7 +4,7 @@
 TEST_CASE("Should generate id when zero id is passed to CreateActor",
           "[IdGen]")
 {
-  
+
   PartOne p;
 
   uint32_t actorId = p.CreateActor(0, { 1, 2, 3 }, 4, 0x3c, -1);
@@ -15,7 +15,7 @@ TEST_CASE("Should generate id when zero id is passed to CreateActor",
 
 TEST_CASE("Should not generate duplicates", "[IdGen]")
 {
-  
+
   PartOne p;
 
   p.CreateActor(0xff000000, { 1, 2, 3 }, 4, 0x3c, -1);
