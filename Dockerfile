@@ -12,6 +12,16 @@ RUN apt-get update && apt-get install -y \
   git \
   cmake \
   ninja-build \
+  curl \
+  unzip \
+  tar \
+  ninja \
+  perl \
+  make \
+  zip \
+  pkgconfig \
+  linux-headers \
+  libsasl \
   && rm -rf /var/lib/apt/lists/*
 
 ENV CC=/usr/bin/clang-12
