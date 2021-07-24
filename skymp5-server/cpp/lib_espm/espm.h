@@ -81,6 +81,36 @@ enum class GroupType : uint32_t
 };
 static_assert((int)GroupType::CELL_VISIBLE_DISTANT_CHILDREN == 10);
 
+inline std::string ToString(GroupType groupType)
+{
+  switch (groupType) {
+    case GroupType::TOP:
+      return "TOP";
+    case GroupType::WORLD_CHILDREN:
+      return "WORLD_CHILDREN";
+    case GroupType::INTERIOR_CELL_BLOCK:
+      return "INTERIOR_CELL_BLOCK";
+    case GroupType::INTERIOR_CELL_SUBBLOCK:
+      return "INTERIOR_CELL_SUBBLOCK";
+    case GroupType::EXTERIOR_CELL_BLOCK:
+      return "EXTERIOR_CELL_BLOCK";
+    case GroupType::EXTERIOR_CELL_SUBBLOCK:
+      return "EXTERIOR_CELL_SUBBLOCK";
+    case GroupType::CELL_CHILDREN:
+      return "CELL_CHILDREN";
+    case GroupType::TOPIC_CHILDREN:
+      return "TOPIC_CHILDREN";
+    case GroupType::CELL_PERSISTENT_CHILDREN:
+      return "CELL_PERSISTENT_CHILDREN";
+    case GroupType::CELL_TEMPORARY_CHILDREN:
+      return "CELL_TEMPORARY_CHILDREN";
+    case GroupType::CELL_VISIBLE_DISTANT_CHILDREN:
+      return "CELL_VISIBLE_DISTANT_CHILDREN";
+    default:
+      throw std::runtime_error("unhandled case in ToString");
+  }
+}
+
 class GroupHeader
 {
   friend class Browser;
@@ -94,11 +124,15 @@ public:
   bool GetParentCELL(uint32_t& outId) const noexcept;
   bool GetParentDIAL(uint32_t& outId) const noexcept;
 
+  // TODO: const
   using RecordVisitor = std::function<bool(espm::RecordHeader*)>;
+  
+  // Accepts a visitor, which can contain custom code used to iterate child records.
+  // Return true from visitor to break loop.
   void ForEachRecord(const RecordVisitor& visitor)
-    const noexcept; // Return true from visitor to break loop
+    const noexcept;
 
-  std::string GetGroupLabel() const noexcept { return {label, 4}; }
+  uint32_t GetGroupLabelAsUint() const noexcept { return *reinterpret_cast<const uint32_t*>(label); }
   GroupType GetGroupType() const noexcept { return grType; }
 
 private:

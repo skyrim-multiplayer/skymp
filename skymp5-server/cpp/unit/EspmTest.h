@@ -230,16 +230,65 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
 {
   auto& br = l.GetBrowser();
 
-  auto form = br.LookupById(0xdb89e);
+  auto form = br.LookupById(0xc07f0);
   REQUIRE(form.rec);
 
-  std::vector<std::string> parentGroupLabels;
+  std::vector<std::string> parentGroupTypeLabels;
   for (const auto groupPtr : form.rec->GetParentGroups()) {
     // parentGroupIds.emplace_back(groupPtr->GetId());
-    parentGroupLabels.emplace_back(groupPtr->GetGroupLabel());
+    parentGroupTypeLabels.emplace_back(ToString(groupPtr->GetGroupType()) + ":" + std::to_string( groupPtr->GetGroupLabelAsUint()));
   }
   // REQUIRE(parentGroupIds == std::vector<uint32_t>{});
-  REQUIRE(parentGroupLabels == std::vector<std::string>{});
+  REQUIRE(parentGroupTypeLabels ==  // v WRLD
+          std::vector<std::string>{ "TOP:1145852503", "WORLD_CHILDREN:107119",
+                                    "CELL_CHILDREN:107120",
+                                    "CELL_PERSISTENT_CHILDREN:107120", });
+
+  const auto root = form.rec->GetParentGroups()[0];
+  REQUIRE(root);
+  std::vector<uint32_t> records;
+  root->ForEachRecord([&records](espm::RecordHeader* rec) {
+    records.emplace_back(rec->GetId());
+    return false;
+  });
+  REQUIRE(records ==
+          std::vector<uint32_t>{ 0x3c,
+                                 0x1691d,
+                                 0x16bb4,
+                                 0x16d71,
+                                 0x1a26f,
+                                 0x1b44a,
+                                 0x1cdd3,
+                                 0x1cdd9,
+                                 0x1e49d,
+                                 0x1ee62,
+                                 0x1fae2,
+                                 0x204c7,
+                                 0x20bfe,
+                                 0x20dcb,
+                                 0x21edb,
+                                 0x243de,
+                                 0x278dd,
+                                 0x29ab7,
+                                 0x2a9d8,
+                                 0x2b101,
+                                0x2c965,
+                                0x2ee41,
+                                0x34240,
+                                0x35699,
+                                0x37edf,
+                                0x3a9d6,
+                                0x419e1,
+                                0x46033,
+                                0x4f838,
+                                0x50015,
+                                0x69857,
+                                0x6ed38,
+                                0x94b35,
+                                0xc350d,
+                                0xc97eb,
+                                0xd45f0,
+                                0x104217 });
 }
 
 TEST_CASE("Loads Outfit", "[espm]")

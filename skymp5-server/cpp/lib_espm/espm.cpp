@@ -457,7 +457,7 @@ espm::Type espm::RecordHeader::GetType() const noexcept
 
 const espm::GroupStack& espm::RecordHeader::GetParentGroups() const noexcept
 {
-  return *(espm::GroupStack*)GroupStackPtrStorage();
+  return *(espm::GroupStack*)GroupStackPtrStorage();//
 }
 
 uint32_t espm::RecordHeader::GetFlags() const noexcept
