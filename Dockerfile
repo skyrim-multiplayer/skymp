@@ -1,5 +1,7 @@
 FROM ubuntu:21.10
 
+WORKDIR /usr/src/skymp
+
 # Prevent apt-get from asking us about timezone
 # London is UTC+0:00
 ENV TZ=Europe/London
@@ -23,7 +25,8 @@ COPY ./vcpkg.json ./
 COPY ./overlay_ports ./overlay_ports
 RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \ 
   && cd vcpkg \
-  && git checkout $(cat ./master) \
+  && git checkout $(cat /usr/src/skymp/master) \
+  && rm /usr/src/skymp/master
   && chmod 777 ./bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics \
   && cd .. \
