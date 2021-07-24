@@ -98,6 +98,7 @@ public:
   void ForEachRecord(const RecordVisitor& visitor)
     const noexcept; // Return true from visitor to break loop
 
+  std::string GetGroupLabel() const noexcept { return {label, 4}; }
   GroupType GetGroupType() const noexcept { return grType; }
 
 private:

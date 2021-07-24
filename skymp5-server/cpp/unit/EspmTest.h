@@ -226,6 +226,22 @@ TEST_CASE("Loads Furniture", "[espm]")
               "isBlacksmithForge", "RaceToScale", "WICraftingSmithing" }));
 }
 
+TEST_CASE("Correctly parses tree structure", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(0xdb89e);
+  REQUIRE(form.rec);
+
+  std::vector<std::string> parentGroupLabels;
+  for (const auto groupPtr : form.rec->GetParentGroups()) {
+    // parentGroupIds.emplace_back(groupPtr->GetId());
+    parentGroupLabels.emplace_back(groupPtr->GetGroupLabel());
+  }
+  // REQUIRE(parentGroupIds == std::vector<uint32_t>{});
+  REQUIRE(parentGroupLabels == std::vector<std::string>{});
+}
+
 TEST_CASE("Loads Outfit", "[espm]")
 {
   auto& br = l.GetBrowser();
