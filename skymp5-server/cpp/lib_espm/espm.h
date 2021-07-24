@@ -126,13 +126,15 @@ public:
 
   // TODO: const
   using RecordVisitor = std::function<bool(espm::RecordHeader*)>;
-  
-  // Accepts a visitor, which can contain custom code used to iterate child records.
-  // Return true from visitor to break loop.
-  void ForEachRecord(const RecordVisitor& visitor)
-    const noexcept;
 
-  uint32_t GetGroupLabelAsUint() const noexcept { return *reinterpret_cast<const uint32_t*>(label); }
+  // Accepts a visitor, which can contain custom code used to iterate child
+  // records. Return true from visitor to break loop.
+  void ForEachRecord(const RecordVisitor& visitor) const noexcept;
+
+  uint32_t GetGroupLabelAsUint() const noexcept
+  {
+    return *reinterpret_cast<const uint32_t*>(label);
+  }
   GroupType GetGroupType() const noexcept { return grType; }
 
 private:
