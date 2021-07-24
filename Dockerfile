@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y \
   curl \
   unzip \
   tar \
-  ninja \
   perl \
   make \
   zip \
