@@ -68,7 +68,7 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
   DoDisconnect(p, 0);
 }
 
-TEST_CASE("AddItem executes", "[ConsoleCommand]")
+TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
 {
   PartOne& p = GetPartOne();
 
@@ -101,7 +101,7 @@ TEST_CASE("AddItem executes", "[ConsoleCommand]")
   DoDisconnect(p, 0);
 }
 
-TEST_CASE("PlaceAtMe executes", "[ConsoleCommand]")
+TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
 {
   enum
   {

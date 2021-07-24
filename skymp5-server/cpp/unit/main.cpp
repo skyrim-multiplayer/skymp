@@ -1,30 +1,64 @@
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_RUNNER
 #include <Loader.h>
 #include <catch2/catch.hpp>
 #include <iostream>
 
 #ifndef WIN32
-#  define DATA_DIR "/skyrim_data_dir"
+constexpr auto g_dataDir = "/skyrim_data_dir";
 #else
-#  define DATA_DIR SKYRIM_DIR "/Data"
+constexpr auto g_dataDir = SKYRIM_DIR "/Data";
 #endif
 
 namespace {
-inline void OnProgress(std::string fileName, float readDur, float parseDur,
-                       uintmax_t fileSize)
+inline void OnProgress(const std::string& fileName, float readDuration,
+                       float parseDuration, uintmax_t fileSize)
 {
-  std::cout << "[ESPM] " << fileName << " read in " << readDur
-            << "s, parsed in " << parseDur << "s, size is "
+  std::cout << "[ESPM] " << fileName << " read in " << readDuration
+            << "s, parsed in " << parseDuration << "s, size is "
             << (fileSize / 1024 / 1024) << "Mb" << std::endl;
 }
 }
 
-espm::Loader l(DATA_DIR,
-               { "Skyrim.esm", "Update.esm", "Dawnguard.esm",
-                 "HearthFires.esm", "Dragonborn.esm" },
-               OnProgress);
+bool IsSkyrimDirValid(const std::string& skyrimDir)
+{
+  return !skyrimDir.empty() && skyrimDir != "OFF";
+}
 
-std::string dataDir = DATA_DIR;
+espm::Loader CreateEspmLoader()
+{
+  try {
+    std::vector<std::filesystem::path> files = { "Skyrim.esm", "Update.esm",
+                                                 "Dawnguard.esm",
+                                                 "HearthFires.esm",
+                                                 "Dragonborn.esm" };
+
+    std::filesystem::path dataDir = std::filesystem::u8path(g_dataDir);
+
+    if (!IsSkyrimDirValid(SKYRIM_DIR)) {
+      files.clear();
+      dataDir = std::filesystem::current_path();
+    }
+
+    return espm::Loader(dataDir, files, OnProgress);
+  } catch (std::exception& e) {
+    std::cout << "Exception in CreateEspmLoader:" << std::endl;
+    std::cout << e.what() << std::endl;
+    std::exit(1);
+  }
+}
+
+espm::Loader l = CreateEspmLoader();
+
+int main(int argc, char* argv[])
+{
+  std::vector<const char*> args = { argv, argv + argc };
+
+  if (!IsSkyrimDirValid(SKYRIM_DIR)) {
+    args.push_back("~[espm]");
+  }
+
+  return Catch::Session().run(args.size(), args.data());
+}
 
 #include "ActorTest.h"
 #include "Benchmarks.h"

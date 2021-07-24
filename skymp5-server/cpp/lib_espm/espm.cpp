@@ -163,8 +163,8 @@ bool espm::GroupHeader::GetBlockNumber(int32_t& outBlockNum) const noexcept
   return true;
 }
 
-bool espm::GroupHeader::GetSubBlockNumber(int32_t& outSubBlockNum) const
-  noexcept
+bool espm::GroupHeader::GetSubBlockNumber(
+  int32_t& outSubBlockNum) const noexcept
 {
   if (grType != GroupType::INTERIOR_CELL_SUBBLOCK)
     return false;
@@ -403,8 +403,8 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
 }
 
 void espm::RecordHeader::GetScriptData(
-  ScriptData* out, espm::CompressedFieldsCache* compressedFieldsCache) const
-  noexcept
+  ScriptData* out,
+  espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
 {
   ScriptData res;
 

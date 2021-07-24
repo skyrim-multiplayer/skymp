@@ -4,14 +4,14 @@
 
 PartOne& GetPartOne();
 
-TEST_CASE("Whiterun cow 0x10ebaf exists", "[NpcExists]")
+TEST_CASE("Whiterun cow 0x10ebaf exists", "[NpcExists][espm]")
 {
   auto& partOne = GetPartOne();
 
   auto& cow = partOne.worldState.GetFormAt<MpActor>(0x10ebaf);
 }
 
-TEST_CASE("Whiterun cow 0x10ebaf is visible to players", "[NpcExists]")
+TEST_CASE("Whiterun cow 0x10ebaf is visible to players", "[NpcExists][espm]")
 {
   auto& partOne = GetPartOne();
 

@@ -1,3 +1,5 @@
+enable_testing()
+
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 

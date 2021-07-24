@@ -8,7 +8,7 @@ This page describes the differences between database drivers and their functiona
 
 Skyrim Multiplayer uses `file` driver by default. Default `databaseName` is `world`. So if you change nothing in the config file, the server would save all data using `world` subdirectory of the server folder. Only relative paths are supported.
 
-```json
+```json5
 {
   // ...
   "databaseDriver": "file",
@@ -25,7 +25,7 @@ Uses MongoDB to store data. Built for servers targeting real-world players from 
 
 We recommend [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) as a cloud database service.
 
-```json
+```json5
 {
   // ...
   "databaseDriver": "mongodb",
@@ -39,7 +39,7 @@ We recommend [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) as a cloud dat
 
 A special database driver is used to move from one type of database to another on the fly. Do not forget to backup everything before using this.
 
-```json
+```json5
 {
   // ...
   "databaseDriver": "migration",

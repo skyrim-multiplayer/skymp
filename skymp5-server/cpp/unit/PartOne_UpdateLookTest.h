@@ -2,7 +2,7 @@
 
 TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
@@ -22,7 +22,7 @@ TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 
 TEST_CASE("SetRaceMenuOpen", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   DoConnect(partOne, 1);
@@ -70,7 +70,7 @@ TEST_CASE("Look <=> JSON casts", "[PartOne]")
 
 TEST_CASE("UpdateLook1", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   DoConnect(partOne, 0);
@@ -87,12 +87,11 @@ TEST_CASE("UpdateLook1", "[PartOne]")
   doLook();
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["t"] == MsgType::UpdateLook &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
-                           m.j["data"] == jLook["data"];
-                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["t"] == MsgType::UpdateLook && m.j["idx"] == 0 &&
+                m.reliable && m.userId == 1 && m.j["data"] == jLook["data"];
+            }) != partOne.Messages().end());
 
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000ABC);
   REQUIRE(ac.GetLook() != nullptr);
@@ -102,7 +101,7 @@ TEST_CASE("UpdateLook1", "[PartOne]")
 
 TEST_CASE("UpdateLook2", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   DoConnect(partOne, 0);
@@ -119,12 +118,11 @@ TEST_CASE("UpdateLook2", "[PartOne]")
   doLook();
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["t"] == MsgType::UpdateLook &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
-                           m.j["data"] == jLook["data"];
-                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["t"] == MsgType::UpdateLook && m.j["idx"] == 0 &&
+                m.reliable && m.userId == 1 && m.j["data"] == jLook["data"];
+            }) != partOne.Messages().end());
 
   REQUIRE(partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLook() !=
           nullptr);

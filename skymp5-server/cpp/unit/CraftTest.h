@@ -6,7 +6,7 @@
 
 PartOne& GetPartOne();
 
-TEST_CASE("CraftItem packet is parsed", "[Craft]")
+TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
 {
   class MyActionListener : public IActionListener
   {
@@ -50,7 +50,7 @@ TEST_CASE("CraftItem packet is parsed", "[Craft]")
   REQUIRE(listener.rawMsgData.userId == 122);
 }
 
-TEST_CASE("Player is able to craft item", "[Craft]")
+TEST_CASE("Player is able to craft item", "[Craft][espm]")
 {
   const Inventory requiredItems =
     Inventory().AddItem(0x5ace4, 1).AddItem(0x800e4, 3).AddItem(0x5ace5, 4);
@@ -95,7 +95,7 @@ TEST_CASE("Player is able to craft item", "[Craft]")
 
 TEST_CASE(
   "Player is unable to craft an artifact item by using a tempering recipe",
-  "[Craft]")
+  "[Craft][espm]")
 {
   auto DeerPelt = 0x000CF89E;
   auto LeatherStrips = 0x000800E4;
@@ -130,7 +130,7 @@ TEST_CASE(
                       Contains("Recipe not found"));
 }
 
-TEST_CASE("DLC Dragonborn recipes are working", "[Craft]")
+TEST_CASE("DLC Dragonborn recipes are working", "[Craft][espm]")
 {
 
   PartOne& p = GetPartOne();
@@ -144,7 +144,7 @@ TEST_CASE("DLC Dragonborn recipes are working", "[Craft]")
   REQUIRE(form->GetId() == 0x0203d581);
 }
 
-TEST_CASE("DLC Hearthfires recipes are working", "[Craft]")
+TEST_CASE("DLC Hearthfires recipes are working", "[Craft][espm]")
 {
   PartOne& p = GetPartOne();
 

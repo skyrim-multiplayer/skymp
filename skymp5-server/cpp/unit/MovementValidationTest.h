@@ -44,8 +44,8 @@ TEST_CASE(
   DummyWorldObject obj({ 1, -1, 1 }, { 123, 111, 123 }, 0x3c);
   DummyMessageOutput messageOutput;
 
-  bool res = MovementValidation::Validate(
-    obj, obj.GetPos(), 0x00ffffff, messageOutput);
+  bool res =
+    MovementValidation::Validate(obj, obj.GetPos(), 0x00ffffff, messageOutput);
   REQUIRE(!res);
   REQUIRE(messageOutput.messages.size() == 1);
   REQUIRE(messageOutput.messages[0].j ==
