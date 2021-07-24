@@ -25,20 +25,33 @@ ENV CPP=/usr/bin/clang-cpp-12
 ENV CXX=/usr/bin/clang++-12
 ENV LD=/usr/bin/ld.lld-12
 
-# Install vcpkg and ports
+# Bootstrap vcpkg
 # (vcpkg/refs/heads/master contains vcpkg version)
 COPY .git/modules/vcpkg/refs/heads/master ./master
-RUN ls .
-COPY ./vcpkg.json ./
-COPY ./overlay_ports ./overlay_ports
 RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \ 
   && cd vcpkg \
   && git checkout $(cat /usr/src/skymp/master) \
   && rm /usr/src/skymp/master \
   && chmod 777 ./bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics \
-  && cd .. \
-  && vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux --overlay-ports=./overlay_ports \
+
+# Currently needed for Chakracore
+# TODO: Update to latest vcpkg where our Chakracore port fix has been shipped
+COPY ./overlay_ports ./overlay_ports
+
+# Install heavy ports first. Currently only Chakracore
+RUN vcpkg/vcpkg \
+  --feature-flags=binarycaching \
+  --triplet x64-linux \
+  --overlay-ports=./overlay_ports \
+  install chakracore \
+  && rm -r vcpkg/buildtrees \
+  && rm -r vcpkg/packages \
+  && rm -r vcpkg/downloads
+
+COPY ./vcpkg.json ./
+
+RUN vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux --overlay-ports=./overlay_ports \
   && rm -r vcpkg/buildtrees \
   && rm -r vcpkg/packages \
   && rm -r vcpkg/downloads
