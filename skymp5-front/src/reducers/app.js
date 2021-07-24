@@ -14,4 +14,3 @@ export const appReducer = (state = defaultState, action) => {
 
   return state
 }
-

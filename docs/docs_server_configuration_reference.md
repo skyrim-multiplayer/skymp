@@ -6,7 +6,7 @@ The recommended way to configure the server is setting up all required values in
 
 Server's name. Displayed on skymp.io and in launcher.
 
-```json
+```json5
 {
   // ...
   "name": "My Server"
@@ -18,7 +18,7 @@ Server's name. Displayed on skymp.io and in launcher.
 
 This IP-address would be used by player clients to connect to your server. Do not try to type `"0.0.0.0"`, just remove this option from document if you want to use your current public IP.
 
-```json
+```json5
 {
   // ...
   "ip": "127.0.0.1"
@@ -30,7 +30,7 @@ This IP-address would be used by player clients to connect to your server. Do no
 
 This port would be used by player clients to connect to your server. At the current version of Skyrim Multiplayer servers use multiple ports and different protocols to manage different sorts of packets. See [Server Ports Usage](docs_server_ports_usage.md) page to learn more.
 
-```json
+```json5
 {
   // ...
   "port": 7777
@@ -42,7 +42,7 @@ This port would be used by player clients to connect to your server. At the curr
 
 Sets player limit of the server. Visible in launcher and on skymp.io.
 
-```json
+```json5
 {
   // ...
   "maxPlayers": 108
@@ -64,7 +64,7 @@ At this moment, the server uses this directory for non-vanilla needs too:
 * storing web-based GUI in `${dataDir}/ui`
 * storing auto-generated manifest describing .esm/.esp files used and CRC32 of them
 
-```json
+```json5
 {
   // ...
   "dataDir": "data"
@@ -80,7 +80,7 @@ Relative paths are searched in `${dataDir}` directory.
 
 Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn't be able to download them from the server.
 
-```json
+```json5
 {
   // ...
   "loadOrder": [
@@ -98,7 +98,7 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 
 Name of a database driver which would be used to store server data. `sqlite` by default. There are also related options like `"databaseName"`. See [Database Drivers](docs_database_drivers.md) page to learn more.
 
-```json
+```json5
 {
   // ...
   "databaseDriver": "sqlite"
@@ -110,7 +110,7 @@ Name of a database driver which would be used to store server data. `sqlite` by 
 
 A time before a game object restores its original state in milliseconds. Unlike Skyrim SE, Skyrim Multiplayer doesn't have a built-in Cell Reset mechanism. The server resets every object in the world every hour instead. With this option, you can change this time interval for every kind of game object. `"CONT"`, for example, means "Container" - chests, barrels, etc. See "record types" on [UESP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format).
 
-```json
+```json5
 {
   // ...
   "reloot": {
@@ -136,7 +136,7 @@ A time before a game object restores its original state in milliseconds. Unlike 
 Contains a relative or an absolute path to a file or directory with a gamemode.
 Searches for `index.js` if a directory specified.
 
-```json
+```json5
 {
   // ...
   "gamemodePath": "gamemode.js"
@@ -148,7 +148,7 @@ Searches for `index.js` if a directory specified.
 
 A boolean setting that enables to turn on or turn off hot reload for compiled Papyrus scripts (.pex)
 
-```json
+```json5
 {
   // ...
   "isPapyrusHotReloadEnabled": false
@@ -160,7 +160,7 @@ A boolean setting that enables to turn on or turn off hot reload for compiled Pa
 
 The name of a localizaiton file in `data/localization` that would be used by `M.GetText` Papyrus function (without extension).
 
-```json
+```json5
 {
   // ...
   "locale": "ru-RU"

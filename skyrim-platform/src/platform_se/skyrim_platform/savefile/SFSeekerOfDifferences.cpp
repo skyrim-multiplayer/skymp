@@ -26,7 +26,8 @@ void ReportFlags(uint32_t v, std::ostream& out) noexcept
 
 void SaveFile_::SeekerOfDifferences::ZlibDecompress(const uint8_t* in,
                                                     size_t inSize,
-                                         uint8_t* out, size_t outSize)
+                                                    uint8_t* out,
+                                                    size_t outSize)
 {
   z_stream infstream;
   infstream.zalloc = Z_NULL;
@@ -52,7 +53,8 @@ void SaveFile_::SeekerOfDifferences::ZlibDecompress(const uint8_t* in,
 
 size_t SaveFile_::SeekerOfDifferences::ZlibCompress(const uint8_t* in,
                                                     size_t inSize,
-                                         uint8_t* out, size_t outMaxSize)
+                                                    uint8_t* out,
+                                                    size_t outMaxSize)
 {
   z_stream defstream;
   defstream.zalloc = Z_NULL;
@@ -131,7 +133,7 @@ SaveFile_::SeekerOfDifferences::StartCompare()
                       res.resize(formObjs[i]->length2);
                       ZlibDecompress(formObjs[i]->data.data(),
       formObjs[i]->length1, res.data(), res.size());
-                      
+
                       result[i].value = res;
               }
               else {
