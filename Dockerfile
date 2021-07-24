@@ -1,4 +1,9 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
+
+RUN apt-get update && apt-get install -y \
+  clang-12 \
+  git \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install vcpkg and ports
 # (vcpkg/refs/heads/master contains vcpkg version)
