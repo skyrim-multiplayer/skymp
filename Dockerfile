@@ -10,6 +10,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && apt-get install -y \
   clang \
   git \
+  cmake \
+  ninja-build \
   && rm -rf /var/lib/apt/lists/*
 
 ENV CC=/usr/bin/clang-12
