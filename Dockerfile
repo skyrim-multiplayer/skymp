@@ -10,23 +10,20 @@ RUN apt-get update && apt-get install -y \
   git \
   && rm -rf /var/lib/apt/lists/*
 
-RUN clang --version
-RUN ls /usr/bin/
-
-ENV CC=/usr/bin/clang-10
-ENV CPP=/usr/bin/clang-cpp-10
-ENV CXX=/usr/bin/clang++-10
-ENV LD=/usr/bin/ld.lld-10
+ENV CC=/usr/bin/clang-12
+ENV CPP=/usr/bin/clang-cpp-12
+ENV CXX=/usr/bin/clang++-12
+ENV LD=/usr/bin/ld.lld-12
 
 # Install vcpkg and ports
 # (vcpkg/refs/heads/master contains vcpkg version)
-COPY .git/modules/vcpkg/refs/heads/master \
+COPY .git/modules/vcpkg/refs/heads/main \
   ./vcpkg.json \
   ./
 COPY ./overlay_ports ./overlay_ports
 RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \ 
   && cd vcpkg \
-  && git checkout $(cat master) \
+  && git checkout $(cat main) \
   && chmod 777 ./bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics \
   && cd .. \
@@ -38,7 +35,14 @@ RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \
 # Build the project
 COPY ./CMakeLists.txt ./.clang-format ./
 COPY ./cmake ./cmake
-COPY ./scamp_native ./scamp_native
+COPY ./chakra-wrapper ./chakra-wrapper
+COPY ./skyrim-platform ./skyrim-platform
+COPY ./skymp5-client ./skymp5-client
+COPY ./skymp5-front ./skymp5-front
+COPY ./skymp5-functions-lib ./skymp5-functions-lib
+COPY ./skymp5-scripts ./skymp5-scripts
+COPY ./client-deps ./client-deps
+COPY ./skymp5-server ./skymp5-server
 RUN mkdir build \
   && cd build \ 
   && cmake .. \
