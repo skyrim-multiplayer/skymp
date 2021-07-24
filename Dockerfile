@@ -26,7 +26,7 @@ COPY ./overlay_ports ./overlay_ports
 RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \ 
   && cd vcpkg \
   && git checkout $(cat /usr/src/skymp/master) \
-  && rm /usr/src/skymp/master
+  && rm /usr/src/skymp/master \
   && chmod 777 ./bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics \
   && cd .. \
