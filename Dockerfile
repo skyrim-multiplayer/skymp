@@ -1,5 +1,10 @@
 FROM ubuntu:21.10
 
+# Prevent apt-get from asking us about timezone
+# London is UTC+0:00
+ENV TZ=Europe/London
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN apt-get update && apt-get install -y \
   clang \
   git \
