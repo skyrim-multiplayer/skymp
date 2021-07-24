@@ -1,9 +1,17 @@
 FROM ubuntu:18.04
 
 RUN apt-get update && apt-get install -y \
-  clang-12 \
+  clang \
   git \
   && rm -rf /var/lib/apt/lists/*
+
+RUN clang --version
+RUN ls /usr/bin/
+
+ENV CC=/usr/bin/clang-10
+ENV CPP=/usr/bin/clang-cpp-10
+ENV CXX=/usr/bin/clang++-10
+ENV LD=/usr/bin/ld.lld-10
 
 # Install vcpkg and ports
 # (vcpkg/refs/heads/master contains vcpkg version)
