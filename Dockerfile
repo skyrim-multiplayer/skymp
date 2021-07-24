@@ -33,7 +33,7 @@ RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \
   && git checkout $(cat /usr/src/skymp/master) \
   && rm /usr/src/skymp/master \
   && chmod 777 ./bootstrap-vcpkg.sh \
-  && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics \
+  && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics
 
 # Currently needed for Chakracore
 # TODO: Update to latest vcpkg where our Chakracore port fix has been shipped
