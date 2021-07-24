@@ -38,7 +38,7 @@ RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \
   && chmod 777 ./bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics \
   && cd .. \
-  && vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux --overlay-ports=/overlay_ports \
+  && vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux --overlay-ports=./overlay_ports \
   && rm -r vcpkg/buildtrees \
   && rm -r vcpkg/packages \
   && rm -r vcpkg/downloads
