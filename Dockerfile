@@ -23,7 +23,8 @@ RUN apt-get update && apt-get install -y \
   perl \
   make \
   zip \
-  pkg-config \ 
+  pkg-config \
+  upx-ucl \
   && rm -rf /var/lib/apt/lists/*
 
 ENV CC=/usr/bin/clang-12
@@ -73,9 +74,6 @@ RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
 ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
-
-# TODO: Move higher
-RUN apt-get install -y upx-ucl
 
 # Build the project
 COPY ./CMakeLists.txt ./.clang-format ./
