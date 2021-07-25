@@ -4,6 +4,24 @@
   "homepage": "https://skymp.io",
   "description": "Online mod for Skyrim SE.",
   "dependencies": [
-"chakracore"
+    "chakracore",
+    "nlohmann-json",
+    "cpp-httplib",
+    "zlib",
+    "spdlog",
+    "catch2",
+    "sparsepp",
+    "slikenet",
+    "sqlite-orm",
+    "mongo-cxx-driver",
+    "simdjson",
+    {
+      "name": "directxtk",
+      "platform": "windows"
+    },
+    {
+      "name": "mhook",
+      "platform": "windows"
+    }
   ]
 }

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19.1)
+cmake_minimum_required(VERSION 3.18.4)
 project(chakra-wrapper)
 
 add_library(chakra-wrapper INTERFACE)

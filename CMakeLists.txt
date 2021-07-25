@@ -17,7 +17,7 @@ if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
   message(FATAL_ERROR "${msg}")
 endif()
 
-cmake_minimum_required(VERSION 3.19.1)
+cmake_minimum_required(VERSION 3.18.4)
 project(skymp)
 enable_testing()
 
