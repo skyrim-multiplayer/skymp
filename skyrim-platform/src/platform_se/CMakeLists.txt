@@ -183,19 +183,12 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # force "skyrim-platform" custom target to be built strictly after codegen
   list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
 
-  if(MSVC)
-    # this target was originally called pack, now it is called skyrim-platform
-    # so we can use add_dependencies(x skyrim-platform) in other projects
-    add_custom_target(skyrim-platform ALL
-      COMMAND npm run pack$<$<CONFIG:Debug>:-debug>
-      WORKING_DIRECTORY ${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service
-    )
-  else()
-    # on mon-MSVC just make sure that codegen was run and do nothing
-    add_custom_target(skyrim-platform ALL
-      COMMAND ${CMAKE_COMMAND} -E sleep 0
-    )
-  endif()
+  # this target was originally called pack, now it is called skyrim-platform
+  # so we can use add_dependencies(x skyrim-platform) in other projects
+  add_custom_target(skyrim-platform ALL
+    COMMAND npm run pack$<$<CONFIG:Debug>:-debug>
+    WORKING_DIRECTORY ${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service
+  )
   add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 endif()
 
