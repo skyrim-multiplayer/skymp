@@ -215,6 +215,21 @@ void espm::GroupHeader::ForEachRecordRecursive(
   }
 }
 
+uint32_t espm::GroupHeader::GetGroupLabelAsUint() const noexcept
+{
+  return *reinterpret_cast<const uint32_t*>(label);
+}
+
+GroupType espm::GroupHeader::GetGroupType() const noexcept
+{
+  return grType;
+}
+
+uint64_t& espm::GroupHeader::GroupDataPtrStorage() const noexcept
+{
+  return *reinterpret_cast<uint64_t*>(&day);
+}
+
 uint32_t espm::GetMappedId(uint32_t id,
                            const espm::IdMapping& mapping) noexcept
 {

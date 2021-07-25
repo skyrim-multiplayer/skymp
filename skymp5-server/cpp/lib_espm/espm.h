@@ -131,11 +131,8 @@ public:
   // visitor to break loop.
   void ForEachRecordRecursive(const RecordVisitor& visitor) const noexcept;
 
-  uint32_t GetGroupLabelAsUint() const noexcept
-  {
-    return *reinterpret_cast<const uint32_t*>(label);
-  }
-  GroupType GetGroupType() const noexcept { return grType; }
+  uint32_t GetGroupLabelAsUint() const noexcept;
+  GroupType GetGroupType() const noexcept;
 
 private:
   char label[4];
@@ -148,7 +145,7 @@ private:
   uint16_t unknown2;
 
   // We write pointer to GroupDataInternal here
-  uint64_t& GroupDataPtrStorage() const noexcept { return *(uint64_t*)&day; }
+  uint64_t& GroupDataPtrStorage() const noexcept;
 
   GroupHeader() = delete;
   GroupHeader(const GroupHeader&) = delete;
