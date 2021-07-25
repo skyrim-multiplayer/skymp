@@ -208,7 +208,8 @@ void espm::GroupHeader::ForEachRecordRecursive(
     if (!memcmp(sub, "GRUP", 4)) {
       continue; // It's group, skipping
     }
-    if (f((const espm::RecordHeader*)((int8_t*)sub + 8))) {
+    if (f(reinterpret_cast<const espm::RecordHeader*>(
+          reinterpret_cast<int8_t*> sub + 8))) {
       break;
     }
   }
