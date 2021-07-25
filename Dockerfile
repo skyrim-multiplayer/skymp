@@ -8,9 +8,10 @@ ENV TZ=Europe/London
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install system dependencies via apt-get
-# Python 2.7 is required to build Chakracore
+# python2 and libicu-dev are required to build Chakracore
 RUN apt-get update && apt-get install -y \
   python2 \
+  libicu-dev \
   clang \
   git \
   cmake \
