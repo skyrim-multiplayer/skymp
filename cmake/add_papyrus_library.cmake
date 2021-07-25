@@ -44,8 +44,13 @@ function(add_papyrus_library)
       INPUT ${CMAKE_CURRENT_BINARY_DIR}/papyrus-compiler.zip
       DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/papyrus-compiler
     )
+    if(MSVC)
+      set(VLANG_COMPILER msvc)
+    else()
+      set(VLANG_COMPILER clang)
+    endif()
     execute_process(
-      COMMAND "${CMAKE_CURRENT_BINARY_DIR}/vlang/v/${V_EXECUTABLE_NAME}" -cc msvc -m64 -os ${V_OS} -o "${PAPYRUS_EXECUTABLE_PATH}" -prod -compress -path "@vlib|@vmodules|modules" "compiler"
+      COMMAND "${CMAKE_CURRENT_BINARY_DIR}/vlang/v/${V_EXECUTABLE_NAME}" -cc ${VLANG_COMPILER} -m64 -os ${V_OS} -o "${PAPYRUS_EXECUTABLE_PATH}" -prod -compress -path "@vlib|@vmodules|modules" "compiler"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/papyrus-compiler/papyrus-compiler-${PAPYRUS_COMMIT}
     )
   else()
