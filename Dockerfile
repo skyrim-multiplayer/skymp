@@ -43,6 +43,8 @@ RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \
 # TODO: Update to latest vcpkg where our Chakracore port fix has been shipped
 COPY ./overlay_ports ./overlay_ports
 
+RUN python --version
+
 # Install heavy ports first. Currently only Chakracore
 RUN vcpkg/vcpkg \
   --feature-flags=binarycaching \
