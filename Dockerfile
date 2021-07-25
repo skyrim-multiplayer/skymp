@@ -65,6 +65,15 @@ RUN vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-li
   && rm -r vcpkg/packages \
   && rm -r vcpkg/downloads
 
+# Install NodeJS via Node Version Manager
+ENV NODE_VERSION=14.16.0
+ENV NVM_DIR=/root/.nvm
+RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
+RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
+ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+
 # Build the project
 COPY ./CMakeLists.txt ./.clang-format ./
 COPY ./cmake ./cmake
