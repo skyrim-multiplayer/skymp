@@ -200,14 +200,17 @@ bool espm::GroupHeader::GetParentDIAL(uint32_t& outId) const noexcept
   return true;
 }
 
-void espm::GroupHeader::ForEachRecord(const RecordVisitor& f) const noexcept
+void espm::GroupHeader::ForEachRecordRecursive(
+  const RecordVisitor& f) const noexcept
 {
-  auto grData = (GroupDataInternal*)GroupDataPtrStorage();
-  for (void* sub : grData->subs) {
-    if (!memcmp(sub, "GRUP", 4))
+  const auto grData = (const GroupDataInternal*)GroupDataPtrStorage();
+  for (const void* sub : grData->subs) {
+    if (!memcmp(sub, "GRUP", 4)) {
       continue; // It's group, skipping
-    if (f((espm::RecordHeader*)((int8_t*)sub + 8)))
+    }
+    if (f((const espm::RecordHeader*)((int8_t*)sub + 8))) {
       break;
+    }
   }
 }
 

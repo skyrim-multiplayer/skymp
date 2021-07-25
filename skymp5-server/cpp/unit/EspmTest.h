@@ -341,7 +341,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   }
   REQUIRE(parentGroupTypeLabels ==
           std::vector<std::string>{
-            "TOP:1145852503",  // WRLD
+            "TOP:1145852503", // WRLD
             "WORLD_CHILDREN:107119",
             "CELL_CHILDREN:107120",
             "CELL_PERSISTENT_CHILDREN:107120",
@@ -350,7 +350,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   const auto root = form.rec->GetParentGroups()[0];
   REQUIRE(root);
   std::vector<uint32_t> records;
-  root->ForEachRecord([&records](const espm::RecordHeader* rec) {
+  root->ForEachRecordRecursive([&records](const espm::RecordHeader* rec) {
     records.emplace_back(rec->GetId());
     return false;
   });

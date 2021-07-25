@@ -126,8 +126,9 @@ public:
 
   using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
 
-  // Accepts a visitor, which can contain custom code used to recursively iterate child
-  // records. All tree leafs will be visited. Return true from visitor to break loop.
+  // Accepts a visitor, which can contain custom code used to recursively
+  // iterate child records. All tree leafs will be visited. Return true from
+  // visitor to break loop.
   void ForEachRecordRecursive(const RecordVisitor& visitor) const noexcept;
 
   uint32_t GetGroupLabelAsUint() const noexcept

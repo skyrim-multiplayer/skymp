@@ -102,11 +102,12 @@ private:
 
 // Helpers/utilities
 
-inline RecordHeader* FindInGroup(const BrowserInfo& brInf,
-                                 const GroupHeader* gr, uint32_t globFormId)
+inline const RecordHeader* FindInGroup(const BrowserInfo& brInf,
+                                       const GroupHeader* gr,
+                                       uint32_t globFormId)
 {
-  RecordHeader* res = nullptr;
-  gr->ForEachRecord([&](espm::RecordHeader* rec) {
+  const RecordHeader* res = nullptr;
+  gr->ForEachRecordRecursive([&](const espm::RecordHeader* rec) {
     if (brInf.ToGlobalId(rec->GetId()) != globFormId)
       return false;
     res = rec;
