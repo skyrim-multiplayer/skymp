@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
 }
 
 #include "ActorTest.h"
+#include "ActorsMapTest.h"
 #include "Benchmarks.h"
 #include "ConsoleCommandTest.h"
 #include "CraftTest.h"
