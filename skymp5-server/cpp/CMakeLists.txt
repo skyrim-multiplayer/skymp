@@ -183,13 +183,6 @@ foreach(target ${VCPKG_DEPENDENT})
   if(WIN32)
     target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
   endif()
-
-  set(Boost_USE_STATIC_LIBS ON) 
-  set(Boost_USE_MULTITHREADED ON)  
-  set(Boost_USE_STATIC_RUNTIME OFF) 
-  find_package(Boost)
-  target_link_libraries(${target} PUBLIC ${Boost_LIBRARIES})
-  target_include_directories(${target} PUBLIC ${Boost_INCLUDE_DIRS})
 endforeach()
 
 find_package(ChakraCore REQUIRED)
