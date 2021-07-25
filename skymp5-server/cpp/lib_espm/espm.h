@@ -81,6 +81,36 @@ enum class GroupType : uint32_t
 };
 static_assert((int)GroupType::CELL_VISIBLE_DISTANT_CHILDREN == 10);
 
+inline std::string ToString(GroupType groupType)
+{
+  switch (groupType) {
+    case GroupType::TOP:
+      return "TOP";
+    case GroupType::WORLD_CHILDREN:
+      return "WORLD_CHILDREN";
+    case GroupType::INTERIOR_CELL_BLOCK:
+      return "INTERIOR_CELL_BLOCK";
+    case GroupType::INTERIOR_CELL_SUBBLOCK:
+      return "INTERIOR_CELL_SUBBLOCK";
+    case GroupType::EXTERIOR_CELL_BLOCK:
+      return "EXTERIOR_CELL_BLOCK";
+    case GroupType::EXTERIOR_CELL_SUBBLOCK:
+      return "EXTERIOR_CELL_SUBBLOCK";
+    case GroupType::CELL_CHILDREN:
+      return "CELL_CHILDREN";
+    case GroupType::TOPIC_CHILDREN:
+      return "TOPIC_CHILDREN";
+    case GroupType::CELL_PERSISTENT_CHILDREN:
+      return "CELL_PERSISTENT_CHILDREN";
+    case GroupType::CELL_TEMPORARY_CHILDREN:
+      return "CELL_TEMPORARY_CHILDREN";
+    case GroupType::CELL_VISIBLE_DISTANT_CHILDREN:
+      return "CELL_VISIBLE_DISTANT_CHILDREN";
+    default:
+      throw std::runtime_error("unhandled case in ToString");
+  }
+}
+
 class GroupHeader
 {
   friend class Browser;
@@ -94,11 +124,15 @@ public:
   bool GetParentCELL(uint32_t& outId) const noexcept;
   bool GetParentDIAL(uint32_t& outId) const noexcept;
 
-  using RecordVisitor = std::function<bool(espm::RecordHeader*)>;
-  void ForEachRecord(const RecordVisitor& visitor)
-    const noexcept; // Return true from visitor to break loop
+  using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
 
-  GroupType GetGroupType() const noexcept { return grType; }
+  // Accepts a visitor, which can contain custom code used to recursively
+  // iterate child records. All tree leafs will be visited. Return true from
+  // visitor to break loop.
+  void ForEachRecordRecursive(const RecordVisitor& visitor) const noexcept;
+
+  uint32_t GetGroupLabelAsUint() const noexcept;
+  GroupType GetGroupType() const noexcept;
 
 private:
   char label[4];
@@ -111,7 +145,8 @@ private:
   uint16_t unknown2;
 
   // We write pointer to GroupDataInternal here
-  uint64_t& GroupDataPtrStorage() const noexcept { return *(uint64_t*)&day; }
+  uint64_t& GroupDataPtrStorage() noexcept;
+  const uint64_t& GroupDataPtrStorage() const noexcept;
 
   GroupHeader() = delete;
   GroupHeader(const GroupHeader&) = delete;
