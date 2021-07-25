@@ -9,6 +9,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install system dependencies via apt-get
 # python2 and libicu-dev are required to build Chakracore
+# pkg-config is required for zlib
 RUN apt-get update && apt-get install -y \
   python2 \
   libicu-dev \
@@ -22,6 +23,7 @@ RUN apt-get update && apt-get install -y \
   perl \
   make \
   zip \
+  pkg-config \ 
   && rm -rf /var/lib/apt/lists/*
 
 ENV CC=/usr/bin/clang-12
