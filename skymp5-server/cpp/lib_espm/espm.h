@@ -124,12 +124,11 @@ public:
   bool GetParentCELL(uint32_t& outId) const noexcept;
   bool GetParentDIAL(uint32_t& outId) const noexcept;
 
-  // TODO: const
-  using RecordVisitor = std::function<bool(espm::RecordHeader*)>;
+  using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
 
-  // Accepts a visitor, which can contain custom code used to iterate child
-  // records. Return true from visitor to break loop.
-  void ForEachRecord(const RecordVisitor& visitor) const noexcept;
+  // Accepts a visitor, which can contain custom code used to recursively iterate child
+  // records. All tree leafs will be visited. Return true from visitor to break loop.
+  void ForEachRecordRecursive(const RecordVisitor& visitor) const noexcept;
 
   uint32_t GetGroupLabelAsUint() const noexcept
   {

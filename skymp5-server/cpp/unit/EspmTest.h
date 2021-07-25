@@ -350,7 +350,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   const auto root = form.rec->GetParentGroups()[0];
   REQUIRE(root);
   std::vector<uint32_t> records;
-  root->ForEachRecord([&records](espm::RecordHeader* rec) {
+  root->ForEachRecord([&records](const espm::RecordHeader* rec) {
     records.emplace_back(rec->GetId());
     return false;
   });
