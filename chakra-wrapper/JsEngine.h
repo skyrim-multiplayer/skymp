@@ -379,8 +379,9 @@ public:
         // Hot path. Platform-specific functions on Windows are faster than the
         // cross-platform equivalents
 #ifndef WIN32
-        auto str = (std::string)key;
-        SafeCall(JS_ENGINE_F(JsCreatePropertyId), str.data(), str.size(), &propId);
+        auto str = static_cast<std::string>(key);
+        SafeCall(JS_ENGINE_F(JsCreatePropertyId), str.data(), str.size(),
+                 &propId);
 #else
         const wchar_t* stringPtr;
         size_t stringSize;
