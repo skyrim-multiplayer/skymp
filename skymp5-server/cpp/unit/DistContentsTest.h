@@ -138,6 +138,7 @@ TEST_CASE("Distribution folder must contain all requested files",
     "client\\Data\\Platform\\Plugins\\skymp5-client.js",
     "client\\Data\\Scripts\\MpClientPlugin.pex",
     "client\\Data\\Scripts\\TESModPlatform.pex",
+    "client\\Data\\SKSE\\Plugins\\MpClientPlugin.dll",
     "client\\Data\\SKSE\\Plugins\\SkyrimPlatform.dll",
     "client\\Data\\SKSE\\Plugins\\SkyrimSoulsRE.dll",
     "client\\Data\\SKSE\\Plugins\\SkyrimSoulsRE.ini",
@@ -205,7 +206,11 @@ TEST_CASE("Distribution folder must contain all requested files",
     "server\\dist_front\\skymp5-client.js",
     "server\\gamemode.js",
     "server\\launch_server.bat",
+#ifndef NDEBUG
+    "server\\scamp_native.ilk",
+#endif
     "server\\scamp_native.node",
+    "server\\scamp_native.pdb",
     "server\\server-settings.json"
   };
 

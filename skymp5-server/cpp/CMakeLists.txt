@@ -16,11 +16,10 @@ if(WIN32)
   apply_default_settings(TARGETS MpClientPlugin)
   list(APPEND VCPKG_DEPENDENT MpClientPlugin)
   
-  add_custom_command(
-    TARGET MpClientPlugin POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MpClientPlugin> ${CMAKE_BINARY_DIR}/dist/client/Data/SKSE/plugins
-  )
-  add_dependencies(MpClientPlugin skyrim-platform)
+  # Not mistake that skyrim-platform depends on MpClientPlugin
+  # skyrim-platform is a logical target that invokes dev_service
+  # dev_service wants to access built MpClientPlugin.dll
+  add_dependencies(skyrim-platform MpClientPlugin)
 endif()
 
 #

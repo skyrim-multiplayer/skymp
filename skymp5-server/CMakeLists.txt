@@ -60,9 +60,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scamp_native")
 
 # Put build artifacts into build/dist/server
-add_custom_command(
-  TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "${CMAKE_BINARY_DIR}/dist/server/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/dist/server"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/dist/server"
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE node mp_common server_guest_lib)
