@@ -35,13 +35,11 @@ bool ServerState::IsConnected(Networking::UserId userId) const
 
 MpActor* ServerState::ActorByUser(Networking::UserId userId)
 {
-  // May return nullptr
   return actorsMap.Find(userId);
 }
 
 Networking::UserId ServerState::UserByActor(MpActor* actor)
 {
-  // May return Networking::InvalidUserId
   return actorsMap.Find(actor);
 }
 
