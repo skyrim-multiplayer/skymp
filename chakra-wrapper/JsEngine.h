@@ -7,7 +7,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
+#include <cstring>
 #define JS_ENGINE_F(func) func, #func
 
 class JsValueAccess;
@@ -379,7 +379,7 @@ public:
         // cross-platform equivalents
 #ifndef WIN32
         auto str = (std::string)key;
-        SafeCall(F(JsCreatePropertyId), str.data(), str.size(), &propId);
+        SafeCall(JS_ENGINE_F(JsCreatePropertyId), str.data(), str.size(), &propId);
 #else
         const wchar_t* stringPtr;
         size_t stringSize;
