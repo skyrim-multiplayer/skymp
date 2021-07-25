@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.18.4)
 project(platform_se)
 
-add_executable(vs_startup_project src/platform_se/vs_startup_project/main.cpp)
-set_target_properties(vs_startup_project PROPERTIES WIN32_EXECUTABLE true CXX_STANDARD 17)
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT vs_startup_project) 
-
 set(DEV_SERVICE_CFG_PATH "tools/dev_service/config.js")
 file(WRITE ${DEV_SERVICE_CFG_PATH} "")
 file(APPEND ${DEV_SERVICE_CFG_PATH} "module.exports = {\n")

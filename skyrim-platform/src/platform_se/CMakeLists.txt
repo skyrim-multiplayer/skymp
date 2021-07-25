@@ -183,8 +183,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # force "skyrim-platform" custom target to be built strictly after codegen
   list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
 
-  add_dependencies(vs_startup_project ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
-
   if(MSVC)
     # this target was originally called pack, now it is called skyrim-platform
     # so we can use add_dependencies(x skyrim-platform) in other projects
