@@ -209,7 +209,7 @@ void espm::GroupHeader::ForEachRecordRecursive(
       continue; // It's group, skipping
     }
     if (f(reinterpret_cast<const espm::RecordHeader*>(
-          reinterpret_cast<int8_t*> sub + 8))) {
+          reinterpret_cast<const int8_t*>(sub) + 8))) {
       break;
     }
   }
@@ -220,14 +220,19 @@ uint32_t espm::GroupHeader::GetGroupLabelAsUint() const noexcept
   return *reinterpret_cast<const uint32_t*>(label);
 }
 
-GroupType espm::GroupHeader::GetGroupType() const noexcept
+espm::GroupType espm::GroupHeader::GetGroupType() const noexcept
 {
   return grType;
 }
 
-uint64_t& espm::GroupHeader::GroupDataPtrStorage() const noexcept
+uint64_t& espm::GroupHeader::GroupDataPtrStorage() noexcept
 {
   return *reinterpret_cast<uint64_t*>(&day);
+}
+
+const uint64_t& espm::GroupHeader::GroupDataPtrStorage() const noexcept
+{
+  return *reinterpret_cast<const uint64_t*>(&day);
 }
 
 uint32_t espm::GetMappedId(uint32_t id,

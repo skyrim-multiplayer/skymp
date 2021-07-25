@@ -145,7 +145,8 @@ private:
   uint16_t unknown2;
 
   // We write pointer to GroupDataInternal here
-  uint64_t& GroupDataPtrStorage() const noexcept;
+  uint64_t& GroupDataPtrStorage() noexcept;
+  const uint64_t& GroupDataPtrStorage() const noexcept;
 
   GroupHeader() = delete;
   GroupHeader(const GroupHeader&) = delete;
