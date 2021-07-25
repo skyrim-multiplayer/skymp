@@ -67,96 +67,110 @@ const watchCallback = (_eventType, fileName) => {
         );
       let binPath = (file) => path.join(bin, `bin/${buildCfg}/${file}`);
 
-      let cefDir = fs
-        .readFileSync(path.join(bin, `cef_dir.txt`))
-        .toString("utf-8");
-      [
-        "chrome_elf.dll",
-        "d3dcompiler_47.dll",
-        "libcef.dll",
-        "libEGL.dll",
-        "libGLESv2.dll",
-        "snapshot_blob.bin",
-        "v8_context_snapshot.bin",
-      ].forEach((item, i) => {
-        cp(
-          path.join(cefDir, "Release", item),
-          path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+      if (process.platform === "win32") {
+        let cefDir = fs
+          .readFileSync(path.join(bin, `cef_dir.txt`))
+          .toString("utf-8");
+        [
+          "chrome_elf.dll",
+          "d3dcompiler_47.dll",
+          "libcef.dll",
+          "libEGL.dll",
+          "libGLESv2.dll",
+          "snapshot_blob.bin",
+          "v8_context_snapshot.bin",
+        ].forEach((item, i) => {
+          cp(
+            path.join(cefDir, "Release", item),
+            path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+          );
+        });
+        ["libEGL.dll", "libGLESv2.dll"].forEach((item, i) => {
+          cp(
+            path.join(cefDir, "Release/swiftshader", item),
+            path.join(
+              distDir,
+              "Data/Platform/Distribution/RuntimeDependencies/swiftshader"
+            )
+          );
+        });
+        ["icudtl.dat"].forEach((item, i) => {
+          cp(
+            path.join(cefDir, "Resources", item),
+            path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+          );
+        });
+        [
+          "cef.pak",
+          "cef_100_percent.pak",
+          "cef_200_percent.pak",
+          "cef_extensions.pak",
+          "devtools_resources.pak",
+        ].forEach((item, i) => {
+          cp(
+            path.join(cefDir, "Resources", item),
+            path.join(distDir, "Data/Platform/Distribution/CEF")
+          );
+        });
+        fs.copySync(
+          path.join(cefDir, "Resources/locales"),
+          path.join(distDir, "Data/Platform/Distribution/CEF/locales")
         );
-      });
-      ["libEGL.dll", "libGLESv2.dll"].forEach((item, i) => {
-        cp(
-          path.join(cefDir, "Release/swiftshader", item),
-          path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies/swiftshader")
-        );
-      });
-      ["icudtl.dat"].forEach((item, i) => {
-        cp(
-          path.join(cefDir, "Resources", item),
-          path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
-        );
-      });
-      [
-        "cef.pak",
-        "cef_100_percent.pak",
-        "cef_200_percent.pak",
-        "cef_extensions.pak",
-        "devtools_resources.pak",
-      ].forEach((item, i) => {
-        cp(
-          path.join(cefDir, "Resources", item),
-          path.join(distDir, "Data/Platform/Distribution/CEF")
-        );
-      });
-      fs.copySync(
-        path.join(cefDir, "Resources/locales"),
-        path.join(distDir, "Data/Platform/Distribution/CEF/locales")
-      );
 
-      cp(binPath("SkyrimPlatform.pdb"), distDir);
-      cp(binPath("SkyrimPlatformImpl.pdb"), distDir);
-      cp(
-        binPath("ChakraCore.dll"),
-        path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
-      );
-      cp(
-        binPath("SkyrimPlatformCEF.exe"),
-        path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
-      );
-      cp(binPath("SkyrimPlatformCEF.pdb"), distDir);
-      cp(binPath("SkyrimPlatform.dll"), path.join(distDir, "Data/SKSE/Plugins"));
-      cp(
-        binPath("SkyrimPlatformImpl.dll"),
-        path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
-      );
-      cp(
-        path.join(sourceDir, `src/platform_se/pex/TESModPlatform.pex`),
-        path.join(distDir, "Data/Scripts")
-      );
+        cp(binPath("SkyrimPlatform.pdb"), distDir);
+        cp(binPath("SkyrimPlatformImpl.pdb"), distDir);
+        cp(
+          binPath("ChakraCore.dll"),
+          path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+        );
+        cp(
+          binPath("SkyrimPlatformCEF.exe"),
+          path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+        );
+        cp(binPath("SkyrimPlatformCEF.pdb"), distDir);
+        cp(
+          binPath("SkyrimPlatform.dll"),
+          path.join(distDir, "Data/SKSE/Plugins")
+        );
+        cp(
+          binPath("SkyrimPlatformImpl.dll"),
+          path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+        );
+        cp(
+          path.join(sourceDir, `src/platform_se/pex/TESModPlatform.pex`),
+          path.join(distDir, "Data/Scripts")
+        );
+        cp(
+          path.join(
+            sourceDir,
+            "tools/system_polyfill/dist/___systemPolyfill.js"
+          ),
+          path.join(distDir, "Data/Platform/Distribution")
+        );
+        fs.copySync(
+          path.join(sourceDir, "tools/plugin-example"),
+          path.join(distDir, "Data/Platform/plugin-example")
+        );
+        fs.copySync(path.join(sourceDir, "requirements"), distDir);
+        fs.removeSync(
+          path.join(distDir, "Data/Platform/plugin-example/node_modules")
+        );
+        fs.removeSync(path.join(distDir, "Data/Platform/plugin-example/dist"));
+
+        if (!process.env.DEV_SERVICE_NO_GAME) {
+          fs.copySync(distDir, config.SkyrimSEFolder);
+        }
+
+        // No need to release pdb to the public
+        fs.unlinkSync(path.join(distDir, "SkyrimPlatform.pdb"));
+        fs.unlinkSync(path.join(distDir, "SkyrimPlatformCEF.pdb"));
+        fs.unlinkSync(path.join(distDir, "SkyrimPlatformImpl.pdb"));
+      }
+
       cp(
         path.join(bin, `_codegen/skyrimPlatform.ts`),
         path.join(distDir, "Data/Platform/Modules")
       );
-      cp(
-        path.join(sourceDir, "tools/system_polyfill/dist/___systemPolyfill.js"),
-        path.join(distDir, "Data/Platform/Distribution")
-      );
-      fs.copySync(
-        path.join(sourceDir, "tools/plugin-example"),
-        path.join(distDir, "Data/Platform/plugin-example")
-      );
-      fs.copySync(path.join(sourceDir, "requirements"), distDir);
-      fs.removeSync(path.join(distDir, "Data/Platform/plugin-example/node_modules"));
-      fs.removeSync(path.join(distDir, "Data/Platform/plugin-example/dist"));
-
-      if (!process.env.DEV_SERVICE_NO_GAME) {
-        fs.copySync(distDir, config.SkyrimSEFolder);
-      }
-
-      // No need to release pdb to the public
-      fs.unlinkSync(path.join(distDir, "SkyrimPlatform.pdb"));
-      fs.unlinkSync(path.join(distDir, "SkyrimPlatformCEF.pdb"));
-      fs.unlinkSync(path.join(distDir, "SkyrimPlatformImpl.pdb"));
 
       if (!process.env.DEV_SERVICE_NO_GAME) {
         console.log(`Starting ${config.SkyrimSEFolder}`);
@@ -167,9 +181,10 @@ const watchCallback = (_eventType, fileName) => {
 };
 
 if (process.env.DEV_SERVICE_ONLY_ONCE) {
-  const defaultConfig = process.env.DEFAULT_CONFIG === "Debug" ? "Debug" : "Release";
+  const defaultConfig =
+    process.env.DEFAULT_CONFIG === "Debug" ? "Debug" : "Release";
   watchCallback(undefined, `touch_${defaultConfig}`);
 } else {
-  console.log(`Watching for changes in ${bin}`)
+  console.log(`Watching for changes in ${bin}`);
   fs.watch(bin, watchCallback);
 }
