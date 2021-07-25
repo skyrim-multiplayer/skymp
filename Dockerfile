@@ -67,8 +67,8 @@ RUN vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-li
 
 # Install NodeJS via Node Version Manager
 ENV NODE_VERSION=14.16.0
-ENV NVM_DIR=/root/.nvm
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
+ENV NVM_DIR=/root/.nvm
 RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
