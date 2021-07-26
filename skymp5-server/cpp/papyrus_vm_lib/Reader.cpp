@@ -445,7 +445,7 @@ uint8_t Reader::Read8_bit()
 
 uint16_t Reader::Read16_bit()
 {
-  uint16_t temp = NULL;
+  uint16_t temp = 0;
 
   for (int i = 0; i < 2; i++) {
     temp = temp * 256 + arrayBytes[currentReadPositionInFile];
@@ -457,7 +457,7 @@ uint16_t Reader::Read16_bit()
 
 uint32_t Reader::Read32_bit()
 {
-  uint32_t temp = NULL;
+  uint32_t temp = 0;
 
   for (int i = 0; i < 4; i++) {
     temp = temp * 256 + arrayBytes[currentReadPositionInFile];
@@ -468,7 +468,7 @@ uint32_t Reader::Read32_bit()
 
 uint64_t Reader::Read64_bit()
 {
-  uint64_t temp = NULL;
+  uint64_t temp = 0;
 
   for (int i = 0; i < 8; i++) {
     temp = temp * 256 + arrayBytes[currentReadPositionInFile];
@@ -479,7 +479,7 @@ uint64_t Reader::Read64_bit()
 
 std::string Reader::ReadString(int Size)
 {
-  std::string temp = "";
+  std::string temp;
 
   for (int i = 0; i < Size; i++) {
     temp += (char)arrayBytes[currentReadPositionInFile];
