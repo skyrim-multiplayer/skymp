@@ -22,6 +22,7 @@ jobs:
       - run: docker build --file skymp5-server/dependencies.dockerfile --tag skymp-dependencies:latest .
   build-server:
     runs-on: ubuntu-latest
+    needs: build-dependencies
     steps:
       - uses: actions/checkout@v2
         with:
