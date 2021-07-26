@@ -2,6 +2,10 @@
 
 - [Home](README.md)
 
+## Project History
+
+- [Project History](docs_project_history.md)
+
 ## Working With SkyMP Source Code
 
 - [Cpp Code Guidelines](docs_cpp_code_guidelines.md)
