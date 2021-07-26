@@ -33,6 +33,25 @@ let bin = path.join(getBinaryDir(), "skyrim-platform/_platform_se");
 let sourceDir = path.join(getSourceDir());
 let distDir = path.join(getBinaryDir(), "dist/client");
 
+const createDirectory = (path) => {
+  if (!fs.existsSync(path)) {
+    while (true)
+      try {
+        fs.mkdirSync(path, { recursive: true });
+        break;
+      } catch (e) {
+        // Temporary EPERM errors encountered on Windows. They disappear if we retry.
+        // With Linux, we don't want to experiment and give our CI a chance to stuck in an infinite loop
+        if (
+          process.platform !== "win32" ||
+          e.toString().indexOf("EPERM") === -1
+        ) {
+          throw e;
+        }
+      }
+  }
+};
+
 const watchCallback = (_eventType, fileName) => {
   {
     if (fileName === "touch_Release" || fileName === "touch_Debug") {
@@ -48,17 +67,7 @@ const watchCallback = (_eventType, fileName) => {
       if (fs.existsSync(distDir)) {
         fs.removeSync(distDir);
       }
-      if (!fs.existsSync(distDir)) {
-        while (true)
-          try {
-            fs.mkdirSync(distDir, { recursive: true });
-            break;
-          } catch (e) {
-            if (e.toString().indexOf("EPERM") === -1) {
-              throw e;
-            }
-          }
-      }
+      createDirectory(distDir);
       let getFileName = (p) => p.replace(/^.*[\\\/]/, "");
       let cp = (from, targetDir) =>
         writeFileSyncRecursive(
@@ -167,6 +176,8 @@ const watchCallback = (_eventType, fileName) => {
         fs.unlinkSync(path.join(distDir, "SkyrimPlatformImpl.pdb"));
       }
 
+      // On Linux, we would not have this directory created yet
+      createDirectory(path.join(distDir, "Data/Platform/Modules"));
       cp(
         path.join(bin, `_codegen/skyrimPlatform.ts`),
         path.join(distDir, "Data/Platform/Modules")
