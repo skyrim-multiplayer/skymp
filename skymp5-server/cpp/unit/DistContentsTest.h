@@ -4,8 +4,7 @@
 namespace {
 size_t PrintMissing(const std::set<std::filesystem::path>& whatIsMissing,
                     const std::set<std::filesystem::path>& whereIsMissing,
-                    const char* whatIsMissingName,
-                    const char* whereIsMissingName)
+                    char sign, std::ostream& out)
 {
   std::vector<std::filesystem::path> missing;
   for (auto& p : whatIsMissing) {
@@ -14,10 +13,8 @@ size_t PrintMissing(const std::set<std::filesystem::path>& whatIsMissing,
     }
   }
   if (!missing.empty()) {
-    std::cout << "Missing some elements of '" << whatIsMissingName << "' in '"
-              << whereIsMissingName << "':\n";
     for (auto& p : missing) {
-      std::cout << " - " << p << "\n";
+      out << ' ' << sign << ' ' << p << "\n";
     }
   }
   return missing.size();
@@ -215,8 +212,15 @@ TEST_CASE("Distribution folder must contain all requested files",
   };
 
   size_t totalMissing = 0;
-  totalMissing += PrintMissing(paths, expectedPaths, "paths", "expectedPaths");
-  totalMissing += PrintMissing(expectedPaths, paths, "expectedPaths", "paths");
+  std::stringstream ss;
+  totalMissing += PrintMissing(paths, expectedPaths, '+', ss);
+  totalMissing += PrintMissing(expectedPaths, paths, '-', ss);
 
-  REQUIRE(totalMissing == 0);
+  if (totalMissing > 0) {
+    std::stringstream err;
+    err << "Contents of '" << DIST_DIR
+        << "' have differences to expected contents:" << std::endl;
+    err << ss.str() << std::endl;
+    throw std::runtime_error(err.str());
+  }
 }
