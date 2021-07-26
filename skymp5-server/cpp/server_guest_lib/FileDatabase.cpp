@@ -26,10 +26,14 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
   for (auto& changeForm : changeForms) {
     auto filePath = p / changeForm.formDesc.ToString('_');
     std::ofstream f(filePath);
+    if (f) {
+      f << MpChangeForm::ToJson(changeForm).dump();
+    }
     if (!f.is_open()) {
       pImpl->logger->error("Unable to open file {}", filePath.string());
+    } else if (!f) {
+      pImpl->logger->error("Unknown error while writing file {}", filePath.string());
     } else {
-      f << MpChangeForm::ToJson(changeForm).dump();
       ++nUpserted;
     }
   }
