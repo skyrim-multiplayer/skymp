@@ -163,8 +163,8 @@ bool espm::GroupHeader::GetBlockNumber(int32_t& outBlockNum) const noexcept
   return true;
 }
 
-bool espm::GroupHeader::GetSubBlockNumber(int32_t& outSubBlockNum) const
-  noexcept
+bool espm::GroupHeader::GetSubBlockNumber(
+  int32_t& outSubBlockNum) const noexcept
 {
   if (grType != GroupType::INTERIOR_CELL_SUBBLOCK)
     return false;
@@ -200,15 +200,39 @@ bool espm::GroupHeader::GetParentDIAL(uint32_t& outId) const noexcept
   return true;
 }
 
-void espm::GroupHeader::ForEachRecord(const RecordVisitor& f) const noexcept
+void espm::GroupHeader::ForEachRecordRecursive(
+  const RecordVisitor& f) const noexcept
 {
-  auto grData = (GroupDataInternal*)GroupDataPtrStorage();
-  for (void* sub : grData->subs) {
-    if (!memcmp(sub, "GRUP", 4))
+  const auto grData = (const GroupDataInternal*)GroupDataPtrStorage();
+  for (const void* sub : grData->subs) {
+    if (!memcmp(sub, "GRUP", 4)) {
       continue; // It's group, skipping
-    if (f((espm::RecordHeader*)((int8_t*)sub + 8)))
+    }
+    if (f(reinterpret_cast<const espm::RecordHeader*>(
+          reinterpret_cast<const int8_t*>(sub) + 8))) {
       break;
+    }
   }
+}
+
+uint32_t espm::GroupHeader::GetGroupLabelAsUint() const noexcept
+{
+  return *reinterpret_cast<const uint32_t*>(label);
+}
+
+espm::GroupType espm::GroupHeader::GetGroupType() const noexcept
+{
+  return grType;
+}
+
+uint64_t& espm::GroupHeader::GroupDataPtrStorage() noexcept
+{
+  return *reinterpret_cast<uint64_t*>(&day);
+}
+
+const uint64_t& espm::GroupHeader::GroupDataPtrStorage() const noexcept
+{
+  return *reinterpret_cast<const uint64_t*>(&day);
 }
 
 uint32_t espm::GetMappedId(uint32_t id,
@@ -403,8 +427,8 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
 }
 
 void espm::RecordHeader::GetScriptData(
-  ScriptData* out, espm::CompressedFieldsCache* compressedFieldsCache) const
-  noexcept
+  ScriptData* out,
+  espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
 {
   ScriptData res;
 

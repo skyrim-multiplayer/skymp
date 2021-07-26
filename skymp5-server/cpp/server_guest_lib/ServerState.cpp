@@ -25,7 +25,7 @@ void ServerState::Disconnect(Networking::UserId userId) noexcept
       maxConnectedId = 0;
   }
 
-  actorsMap.left.erase(userId);
+  actorsMap.Erase(userId);
 }
 
 bool ServerState::IsConnected(Networking::UserId userId) const
@@ -35,18 +35,12 @@ bool ServerState::IsConnected(Networking::UserId userId) const
 
 MpActor* ServerState::ActorByUser(Networking::UserId userId)
 {
-  auto it = actorsMap.left.find(userId);
-  if (it == actorsMap.left.end())
-    return nullptr;
-  return it->second;
+  return actorsMap.Find(userId);
 }
 
 Networking::UserId ServerState::UserByActor(MpActor* actor)
 {
-  auto it = actorsMap.right.find(actor);
-  if (it == actorsMap.right.end())
-    return Networking::InvalidUserId;
-  return it->second;
+  return actorsMap.Find(actor);
 }
 
 void ServerState::EnsureUserExists(Networking::UserId userId)

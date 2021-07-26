@@ -170,11 +170,11 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
     actor.UnsubscribeFromAll();
     actor.RemoveFromGrid();
 
-    serverState.actorsMap.insert({ userId, &actor });
+    serverState.actorsMap.Set(userId, &actor);
 
     actor.ForceSubscriptionsUpdate();
   } else {
-    serverState.actorsMap.left.erase(userId);
+    serverState.actorsMap.Erase(userId);
   }
 }
 
@@ -202,7 +202,7 @@ void PartOne::DestroyActor(uint32_t actorFormId)
   std::shared_ptr<MpActor> destroyedForm;
   worldState.DestroyForm<MpActor>(actorFormId, &destroyedForm);
 
-  serverState.actorsMap.right.erase(destroyedForm.get());
+  serverState.actorsMap.Erase(destroyedForm.get());
 }
 
 void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open)

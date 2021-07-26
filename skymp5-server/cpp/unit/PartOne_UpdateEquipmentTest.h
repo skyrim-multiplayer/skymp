@@ -2,7 +2,7 @@
 
 TEST_CASE("UpdateEquipment", "[PartOne]")
 {
-  
+
   PartOne partOne;
 
   DoConnect(partOne, 0);

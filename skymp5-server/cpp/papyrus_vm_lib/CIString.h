@@ -1,9 +1,9 @@
 #pragma once
+#include <algorithm>
 #include <cctype>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <algorithm>
 
 // https://stackoverflow.com/questions/11635/case-insensitive-string-comparison-in-c
 struct CICharTraits : public std::char_traits<char>

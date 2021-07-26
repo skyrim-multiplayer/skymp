@@ -10,6 +10,10 @@
 - [Repository](docs_repository.md)
 - [Repository Structure](docs_repository_structure.md)
 
+## Client Usage
+
+- [Client Installation](docs_client_installation.md)
+
 ## Server Usage
 
 - [Running A Server](docs_running_a_server.md)
