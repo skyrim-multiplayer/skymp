@@ -1,4 +1,4 @@
-name: Push Docker
+name: Push Ubuntu Docker
 
 on:
   push:

@@ -1,0 +1,37 @@
+name: PR Ubuntu Docker
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+      - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+        with:
+          key: images-docker-cached-${{ github.workflow }}
+          restore-keys: |
+            images-docker-cached-
+
+      - run: docker build --file skymp5-server/dependencies.dockerfile --tag skymp-dependencies:latest .
+  build-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+      - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+        with:
+          key: images-docker-cached-${{ github.workflow }}
+          restore-keys: |
+            images-docker-cached-
+
+      - run: docker build --file skymp5-server/server.dockerfile --tag skymp:test .

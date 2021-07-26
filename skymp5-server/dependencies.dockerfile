@@ -74,19 +74,3 @@ RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
 ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
-
-# Build the project
-COPY ./CMakeLists.txt ./.clang-format ./
-COPY ./cmake ./cmake
-COPY ./chakra-wrapper ./chakra-wrapper
-COPY ./skyrim-platform ./skyrim-platform
-COPY ./skymp5-client ./skymp5-client
-COPY ./skymp5-front ./skymp5-front
-COPY ./skymp5-functions-lib ./skymp5-functions-lib
-COPY ./skymp5-scripts ./skymp5-scripts
-COPY ./client-deps ./client-deps
-COPY ./skymp5-server ./skymp5-server
-RUN mkdir build \
-  && cd build \ 
-  && cmake .. \
-  && cmake --build . --config Release
