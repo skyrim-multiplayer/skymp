@@ -95,9 +95,10 @@ you don't specify Skyrim installation path during build.
 In order to avoid potential errors, make sure:
 
 1. You have Skyrim SE installed and specified its' path on step 3 of build (`-DSKYRIM_DIR`)
-2. You have installed it using Steam and it's up to date (currently last update was on Nov 20, 2019).
-   See [SteamDB](https://steamdb.info/depot/489832/history/?changeid=M:8702665189575304780)
-   for hashes and update history.
+2. You have installed it using Steam and it's up to date (currently last update was on
+   [Nov 20, 2019](https://steamdb.info/depot/489832/history/?changeid=M:8702665189575304780)).
+   See SteamDB for [hashes](https://steamdb.info/depot/489832/?show_hashes) and
+   [update history](https://steamdb.info/depot/489832/history/).
 3. You did not modify `Skyrim.esm`, `Update.esm`, `Dawnguard.esm`, `HearthFires.esm` and `Dragonborn.esm`.
    (Ideally, you should have pure Vanilla version installed.)
 
