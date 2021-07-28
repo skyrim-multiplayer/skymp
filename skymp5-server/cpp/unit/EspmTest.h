@@ -4,6 +4,10 @@
 
 extern espm::Loader l;
 
+// These tests depend on the most recent files shipped with Skyrim SE.
+// See README.md in project root for details.
+// TODO(#107): make sure hashes of files match expected ones.
+
 TEST_CASE("Loads refr from Update.esm", "[espm]")
 {
   auto& br = l.GetBrowser();
