@@ -149,7 +149,7 @@ VarValue CastToString(const VarValue& var)
     case var.kType_Integer:
       return VarValue(std::to_string(static_cast<int32_t>(var)));
     case var.kType_Float: {
-      char buffer[128];
+      char buffer[512];
       snprintf(buffer, sizeof(buffer), "%.*g", 9000, static_cast<double>(var));
       return VarValue(std::string(buffer));
     }

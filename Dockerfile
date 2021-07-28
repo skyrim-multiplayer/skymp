@@ -59,8 +59,8 @@ RUN vcpkg/vcpkg \
   && rm -r vcpkg/packages \
   && rm -r vcpkg/downloads
 
+# Install ports specified in vcpkg.json
 COPY ./vcpkg.json ./
-
 RUN vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux --overlay-ports=./overlay_ports \
   && rm -r vcpkg/buildtrees \
   && rm -r vcpkg/packages \
@@ -74,3 +74,24 @@ RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
 ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+
+# Currently, we have only one overlay triplet and it is for Windows
+# But missing directory would break CMake build
+COPY ./overlay_triplets ./overlay_triplets
+
+# Build the project and install missing vcpkg dependencies if any
+COPY ./CMakeLists.txt ./.clang-format ./
+COPY ./cmake ./cmake
+COPY ./chakra-wrapper ./chakra-wrapper
+COPY ./skyrim-platform ./skyrim-platform
+COPY ./skymp5-client ./skymp5-client
+COPY ./skymp5-front ./skymp5-front
+COPY ./skymp5-functions-lib ./skymp5-functions-lib
+COPY ./skymp5-scripts ./skymp5-scripts
+COPY ./client-deps ./client-deps
+COPY ./skymp5-server ./skymp5-server
+RUN rm -rf ./skymp5-server/cmake-js-fetch-build || true \
+  && mkdir build \
+  && cd build \ 
+  && cmake .. \
+  && cmake --build . --config Release

@@ -32,7 +32,7 @@ function(add_papyrus_library)
     message(STATUS "Found vlang compiler")
   endif()
 
-  set(PAPYRUS_COMMIT "fc309359f4f8a1362c124fc15daef8ece18f23d9")
+  set(PAPYRUS_COMMIT "598fd4c72a05eef12a67512ee0f4355b74271bbb")
   set(PAPYRUS_EXECUTABLE_PATH "${CMAKE_CURRENT_BINARY_DIR}/papyrus-compiler/papyrus-compiler-${PAPYRUS_COMMIT}/papyrus${EXECUTABLE_SUFFIX}")
   if(NOT EXISTS ${PAPYRUS_EXECUTABLE_PATH})
     message(STATUS "Building papyrus compiler")
@@ -63,7 +63,10 @@ function(add_papyrus_library)
   endif()
   add_custom_target(${A_NAME} ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/tmp-papyrus-builtin"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/papyrus-compiler/papyrus-compiler-${PAPYRUS_COMMIT}/bin" "${CMAKE_CURRENT_BINARY_DIR}/tmp-papyrus-builtin"
     COMMAND "${PAPYRUS_EXECUTABLE_PATH}" -compile -nocache -input "${A_DIRECTORY}" -output "${OUTPUT_DIR}"
     SOURCES ${src}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp-papyrus-builtin"
   )
 endfunction()
