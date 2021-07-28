@@ -5,10 +5,8 @@
 extern espm::Loader l;
 
 // These tests depend on the most recent files shipped with Skyrim SE.
-// More specifically, this version:
-// https://steamdb.info/depot/489832/history/?changeid=M:8702665189575304780
-// Dated: 20 November 2019 – 21:45:03 UTC
-// Make sure you have a Skyrim copy locally in order to run this.
+// See README.md in project root for details.
+// TODO(#107): make sure hashes of files match expected ones.
 
 TEST_CASE("Loads refr from Update.esm", "[espm]")
 {

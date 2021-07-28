@@ -65,7 +65,7 @@ Playing on Linux isn't supported currently, but a full-featured server is.
    cd build
    cmake .. -DSKYRIM_DIR="C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
    ```
-   For Linux users and users who don't have Skyrim SE installed:
+   For users who don't have Skyrim SE installed:
    ```sh
    cd build
    cmake ..
@@ -81,6 +81,25 @@ Playing on Linux isn't supported currently, but a full-featured server is.
    On Windows you also can open `build/skymp.sln` with Visual Studio, then `Build -> Build Solution`.
 
    All build artifacts would be placed into `build/dist`.
+
+If you wish, you can also run unit tests (and you should, if have you modified any C++ code):
+
+```sh
+./skymp5-server/cpp/Debug/unit.exe
+```
+
+Note: running some tests ([ESPMTest](https://github.com/skyrim-multiplayer/skymp/blob/main/skymp5-server/cpp/unit/EspmTest.h))
+requires some game data shipped with Skyrim SE. These tests will be skipped if
+you don't specify Skyrim installation path during build.
+
+In order to avoid potential errors, make sure:
+
+1. You have Skyrim SE installed and specified its' path on step 3 of build (`-DSKYRIM_DIR`)
+2. You have installed it using Steam and it's up to date (currently last update was on Nov 20, 2019).
+   See [SteamDB](https://steamdb.info/depot/489832/history/?changeid=M:8702665189575304780)
+   for hashes and update history.
+3. You did not modify `Skyrim.esm`, `Update.esm`, `Dawnguard.esm`, `HearthFires.esm` and `Dragonborn.esm`.
+   (Ideally, you should have pure Vanilla version installed.)
 
 ## License
 
