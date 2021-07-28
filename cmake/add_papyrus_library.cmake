@@ -63,10 +63,7 @@ function(add_papyrus_library)
   endif()
   add_custom_target(${A_NAME} ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/tmp-papyrus-builtin"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/papyrus-compiler/papyrus-compiler-${PAPYRUS_COMMIT}/bin" "${CMAKE_CURRENT_BINARY_DIR}/tmp-papyrus-builtin"
     COMMAND "${PAPYRUS_EXECUTABLE_PATH}" -compile -nocache -input "${A_DIRECTORY}" -output "${OUTPUT_DIR}"
     SOURCES ${src}
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp-papyrus-builtin"
   )
 endfunction()
