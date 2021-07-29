@@ -139,6 +139,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   add_papyrus_library_ck(
     NAME TESModPlatformPsc 
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
+    OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
     COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
   )
   if(TARGET TESModPlatformPsc)
