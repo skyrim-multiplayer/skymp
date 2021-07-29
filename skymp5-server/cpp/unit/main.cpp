@@ -65,6 +65,7 @@ int main(int argc, char* argv[])
 #include "Benchmarks.h"
 #include "ConsoleCommandTest.h"
 #include "CraftTest.h"
+#include "DistContentsTest.h"
 #include "EspmTest.h"
 #include "FormDescTest.h"
 #include "GridTest.h"

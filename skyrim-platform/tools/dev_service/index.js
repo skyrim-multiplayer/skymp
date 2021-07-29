@@ -179,6 +179,28 @@ const watchCallback = (_eventType, fileName) => {
       // On Linux, we would not have this directory created yet
       createDirectory(path.join(distDir, "Data/Platform/Modules"));
       cp(
+        binPath("ChakraCore.dll"),
+        path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+      );
+      cp(
+        binPath("SkyrimPlatformCEF.exe"),
+        path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+      );
+      cp(binPath("SkyrimPlatformCEF.pdb"), distDir);
+      cp(binPath("SkyrimPlatform.dll"), path.join(distDir, "Data/SKSE/Plugins"));
+      cp(
+        binPath("SkyrimPlatformImpl.dll"),
+        path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+      );
+      cp(
+        `${getBinaryDir()}/skymp5-server/cpp/${buildCfg}/MpClientPlugin.dll`,
+        path.join(distDir, "Data/SKSE/plugins")
+      );
+      cp(
+        path.join(sourceDir, `src/platform_se/pex/TESModPlatform.pex`),
+        path.join(distDir, "Data/Scripts")
+      );
+      cp(
         path.join(bin, `_codegen/skyrimPlatform.ts`),
         path.join(distDir, "Data/Platform/Modules")
       );
