@@ -91,6 +91,7 @@ COPY ./skymp5-scripts ./skymp5-scripts
 COPY ./client-deps ./client-deps
 COPY ./skymp5-server ./skymp5-server
 RUN rm -rf ./skymp5-server/cmake-js-fetch-build || true \
+  && npm cache verify \
   && mkdir build \
   && cd build \ 
   && cmake .. \
