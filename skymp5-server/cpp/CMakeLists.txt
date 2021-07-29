@@ -16,11 +16,10 @@ if(WIN32)
   apply_default_settings(TARGETS MpClientPlugin)
   list(APPEND VCPKG_DEPENDENT MpClientPlugin)
   
-  add_custom_command(
-    TARGET MpClientPlugin POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MpClientPlugin> ${CMAKE_BINARY_DIR}/dist/client/Data/SKSE/plugins
-  )
-  add_dependencies(MpClientPlugin skyrim-platform)
+  # Not mistake that skyrim-platform depends on MpClientPlugin
+  # skyrim-platform is a logical target that invokes dev_service
+  # dev_service wants to access built MpClientPlugin.dll
+  add_dependencies(skyrim-platform MpClientPlugin)
 endif()
 
 #
@@ -44,8 +43,9 @@ apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
 target_compile_definitions(unit PRIVATE
   TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
-  BUILT_PEX_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/pex/papyrus_test_files\"
+  BUILT_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex\"
   SKYRIM_DIR=\"${SKYRIM_DIR}\"
+  DIST_DIR=\"${CMAKE_BINARY_DIR}/dist\"
 )
 if (WIN32)
   target_compile_options(unit PRIVATE "/bigobj")
@@ -115,7 +115,8 @@ elseif(NOT EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
 else()
   add_papyrus_library_ck(
     NAME papyrus_test_files 
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files 
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files
+    OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex
     COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
   )
 endif()
