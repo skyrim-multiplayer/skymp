@@ -44,7 +44,7 @@ apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
 target_compile_definitions(unit PRIVATE
   TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
-  BUILT_PEX_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/pex/papyrus_test_files\"
+  BUILT_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex\"
   SKYRIM_DIR=\"${SKYRIM_DIR}\"
 )
 if (WIN32)
@@ -116,7 +116,7 @@ else()
   add_papyrus_library_ck(
     NAME papyrus_test_files 
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files
-    OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/pex/papyrus_test_files
+    OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex
     COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
   )
 endif()

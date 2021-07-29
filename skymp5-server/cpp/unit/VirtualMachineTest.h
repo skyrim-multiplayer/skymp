@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <iterator>
 #include <list>
+#include <stdexcept>
 
 namespace fs = std::filesystem;
 
@@ -19,10 +20,8 @@ std::shared_ptr<VirtualMachine> CreateVirtualMachine()
   std::vector<fs::path> pexFiles;
 
   if (!std::filesystem::exists(BUILT_PEX_DIR)) {
-    std::cerr
-      << "It seems this machine didn't compile .psc files. Skipping the test"
-      << std::endl;
-    return nullptr;
+    throw std::runtime_error(
+      "It seems this machine didn't compile .psc files");
   }
 
   fs::directory_iterator begin(BUILT_PEX_DIR);
