@@ -21,17 +21,25 @@ FileDatabase::FileDatabase(std::string directory_,
 size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
   auto p = pImpl->changeFormsDirectory;
+  size_t nUpserted = 0;
 
   for (auto& changeForm : changeForms) {
     auto filePath = p / changeForm.formDesc.ToString('_');
     std::ofstream f(filePath);
+    if (f) {
+      f << MpChangeForm::ToJson(changeForm).dump();
+    }
     if (!f.is_open()) {
       pImpl->logger->error("Unable to open file {}", filePath.string());
+    } else if (!f) {
+      pImpl->logger->error("Unknown error while writing file {}",
+                           filePath.string());
+    } else {
+      ++nUpserted;
     }
-    f << MpChangeForm::ToJson(changeForm).dump();
   }
 
-  return changeForms.size();
+  return nUpserted;
 }
 
 void FileDatabase::Iterate(const IterateCallback& iterateCallback)
