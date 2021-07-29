@@ -4,7 +4,7 @@
 namespace {
 size_t PrintMissing(const std::set<std::filesystem::path>& whatIsMissing,
                     const std::set<std::filesystem::path>& whereIsMissing,
-                    char sign, std::ostream& out)
+                    char sign, const char* tip, std::ostream& out)
 {
   std::vector<std::filesystem::path> missing;
   for (auto& p : whatIsMissing) {
@@ -13,35 +13,42 @@ size_t PrintMissing(const std::set<std::filesystem::path>& whatIsMissing,
     }
   }
   if (!missing.empty()) {
+    out << tip << ':' << std::endl;
     for (auto& p : missing) {
-      out << ' ' << sign << ' ' << p << "\n";
+      out << ' ' << sign << ' ' << p << std::endl;
     }
   }
   return missing.size();
 }
 
+bool IsSubsetOf(const nlohmann::json& subset,
+                const std::set<std::string>& superset)
+{
+  for (auto& element : subset) {
+    auto str = element.get<std::string>();
+    if (!superset.count(str)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 auto GetExpectedPaths(const nlohmann::json& j)
 {
   std::set<std::filesystem::path> res;
+  std::set<std::string> configurationTags;
 
 #ifdef NDEBUG
-  constexpr auto currentConfig = "Release";
+  configurationTags.insert("Release");
 #else
-  constexpr auto currentConfig = "Debug";
+  configurationTags.insert("Debug");
 #endif
 
   for (auto& entry : j) {
-    std::string path;
-    std::string config;
-    if (entry.is_string()) {
-      path = entry.get<std::string>();
-    } else {
-      path = entry["path"];
-      config =
-        entry.contains("config") ? entry["config"].get<std::string>() : "";
-    }
-    if (config.empty() || config == currentConfig) {
-      res.insert(path);
+    if (IsSubsetOf(entry["configurationTags"], configurationTags)) {
+      for (auto& file : entry["expectedFiles"]) {
+        res.insert(file.get<std::string>());
+      }
     }
   }
 
@@ -74,14 +81,15 @@ TEST_CASE("Distribution folder must contain all requested files",
 
   size_t totalMissing = 0;
   std::stringstream ss;
-  totalMissing += PrintMissing(paths, expectedPaths, '+', ss);
-  totalMissing += PrintMissing(expectedPaths, paths, '-', ss);
+  totalMissing += PrintMissing(paths, expectedPaths, '+', "Excess files", ss);
+  totalMissing += PrintMissing(expectedPaths, paths, '-', "Missing files", ss);
 
   if (totalMissing > 0) {
     std::stringstream err;
-    err << "Contents of '" << DIST_DIR
-        << "' have differences to expected contents:" << std::endl;
+    err << "Unexpected contents of '" << DIST_DIR << "', see diff"
+        << std::endl;
     err << ss.str() << std::endl;
+    err << std::endl;
     throw std::runtime_error(err.str());
   }
 }
