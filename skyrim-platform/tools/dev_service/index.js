@@ -130,6 +130,10 @@ const watchCallback = (_eventType, fileName) => {
         path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
       );
       cp(
+        `${getBinaryDir()}/skymp5-server/cpp/${buildCfg}/MpClientPlugin.dll`,
+        path.join(distDir, "Data/SKSE/plugins")
+      );
+      cp(
         path.join(sourceDir, `src/platform_se/pex/TESModPlatform.pex`),
         path.join(distDir, "Data/Scripts")
       );
