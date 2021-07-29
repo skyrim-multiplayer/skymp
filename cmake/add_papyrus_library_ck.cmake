@@ -22,14 +22,18 @@ function(add_papyrus_library_ck)
 
       add_custom_command(
         OUTPUT ${out}
-        COMMAND "${A_COMPILER_EXECUTABLE_PATH}" ${A_DIRECTORY} -output=${A_OUTPUT_DIR} -import=${A_DIRECTORY} -all
+        COMMAND "${A_COMPILER_EXECUTABLE_PATH}" ${A_DIRECTORY} -flags=${CMAKE_SOURCE_DIR}/cmake/TESV_Papyrus_Flags.flg -output=${A_OUTPUT_DIR} -import=${A_DIRECTORY} -all
         DEPENDS ${src}
       )
-      add_custom_target(${A_NAME}
+      add_custom_target(${A_NAME} ALL
         DEPENDS ${out}
         SOURCES ${src}
       )
     else()
+      # dummy target for post build events
+      add_custom_target(${A_NAME} ALL
+        COMMAND ${CMAKE_COMMAND} -E sleep 0
+      )
       message(WARNING "Missing Papyrus Compiler at ${A_COMPILER_EXECUTABLE_PATH}. Target ${A_NAME} wouldn't be built")
     endif()
   endfunction()
