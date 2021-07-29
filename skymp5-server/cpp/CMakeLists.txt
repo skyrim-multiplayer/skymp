@@ -115,7 +115,8 @@ elseif(NOT EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
 else()
   add_papyrus_library_ck(
     NAME papyrus_test_files 
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files 
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files
+    OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/pex/papyrus_test_files
     COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
   )
 endif()
