@@ -46,7 +46,7 @@ target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
 
 # Great. Now we have CMake target called "node".
 # We can link our target against it.
-
+include_directories("../chakra-wrapper")
 file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
 if(MSVC)
   list(APPEND sources "${CMAKE_SOURCE_DIR}/.clang-format")
