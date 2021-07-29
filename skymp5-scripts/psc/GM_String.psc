@@ -21,5 +21,3 @@ String Function ReplaceAll(String str, String from, String to) global
     EndWhile
     Return res
 EndFunction
-
-
