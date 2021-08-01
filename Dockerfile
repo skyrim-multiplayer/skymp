@@ -1,4 +1,3 @@
-# docker push skymp/skymp-base:v1
 FROM ubuntu:21.10
 
 WORKDIR /usr/src/skymp
@@ -88,3 +87,11 @@ RUN mkdir -p build/dist/server/data \
   && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm \
   && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm
   
+# Build the project and install missing vcpkg dependencies if any
+COPY . .
+RUN rm -rf ./skymp5-server/cmake-js-fetch-build || true \
+  && npm cache verify \
+  && mkdir -p build \
+  && cd build \ 
+  && cmake .. -DCMAKE_BUILD_TYPE=Release \
+  && cmake --build . --config Release
