@@ -299,6 +299,8 @@ VarValue VarValue::operator*(const VarValue& argument2)
         var.data.f = this->data.f * argument2.data.f;
         var.type = this->kType_Float;
         return var;
+      default:
+        break;
     }
   }
 
@@ -314,9 +316,7 @@ VarValue VarValue::operator/(const VarValue& argument2)
 {
   VarValue var;
   if (this->type == argument2.type) {
-
     switch (this->type) {
-
       case VarValue::kType_Integer:
         var.data.i = 1;
         if (argument2.data.i != uint32_t(0) && this->data.i != uint32_t(0))
@@ -329,6 +329,8 @@ VarValue VarValue::operator/(const VarValue& argument2)
           var.data.f = this->data.f / argument2.data.f;
         var.type = this->kType_Float;
         return var;
+      default:
+        break;
     }
   }
 
@@ -344,15 +346,15 @@ VarValue VarValue::operator%(const VarValue& argument2)
 {
   VarValue var;
   if (this->type == argument2.type) {
-
     switch (this->type) {
-
       case VarValue::kType_Integer:
         var.data.i = 0;
         if (argument2.data.i != (uint32_t)0)
           var.data.i = this->data.i % argument2.data.i;
         var.type = this->kType_Integer;
         return var;
+      default:
+        break;
     }
   }
   throw std::runtime_error("Wrong type in operator%");
@@ -363,30 +365,24 @@ VarValue VarValue::operator!()
   VarValue var;
 
   switch (this->type) {
-
     case kType_Object:
       var.type = this->kType_Bool;
       var.data.b = (this->data.id == nullptr);
       return var;
-
     case kType_Identifier:
       throw std::runtime_error("Wrong type in operator!");
-
     case kType_Integer:
       var.type = this->kType_Bool;
       var.data.b = (this->data.i == 0);
       return var;
-
     case kType_Float:
       var.type = this->kType_Bool;
       var.data.b = (this->data.f == 0.0);
       return var;
-
     case kType_Bool:
       var.data.b = !this->data.b;
       var.type = this->kType_Bool;
       return var;
-
     case kType_String: {
       var.type = this->kType_Bool;
       static std::string emptyLine;
@@ -408,9 +404,7 @@ VarValue VarValue::operator!()
 
 bool VarValue::operator==(const VarValue& argument2) const
 {
-
   switch (this->type) {
-
     case VarValue::kType_Object: {
       return argument2.type == VarValue::kType_Object &&
         (argument2.data.id == data.id ||
@@ -426,11 +420,13 @@ bool VarValue::operator==(const VarValue& argument2) const
       std::string s1;
       std::string s2;
 
-      if (this->data.string != NULL)
+      if (this->data.string != NULL) {
         s1 = this->data.string;
+      }
 
-      if (argument2.data.string != NULL)
+      if (argument2.data.string != NULL) {
         s2 = argument2.data.string;
+      }
 
       return s1 == s2;
     }
@@ -440,6 +436,8 @@ bool VarValue::operator==(const VarValue& argument2) const
       return this->CastToFloat().data.f == argument2.CastToFloat().data.f;
     case VarValue::kType_Bool:
       return this->CastToBool().data.b == argument2.CastToBool().data.b;
+    default:
+      break;
   }
   throw std::runtime_error("Wrong type in operator!");
 }
@@ -451,60 +449,60 @@ bool VarValue::operator!=(const VarValue& argument2) const
 
 bool VarValue::operator>(const VarValue& argument2) const
 {
-
   switch (this->type) {
-
     case VarValue::kType_Integer:
       return this->CastToInt().data.i > argument2.CastToInt().data.i;
     case VarValue::kType_Float:
       return this->CastToFloat().data.f > argument2.CastToFloat().data.f;
     case VarValue::kType_Bool:
       return this->CastToBool().data.b > argument2.CastToBool().data.b;
+    default:
+      break;
   }
   throw std::runtime_error("Wrong type in operator>");
 }
 
 bool VarValue::operator>=(const VarValue& argument2) const
 {
-
   switch (this->type) {
-
     case VarValue::kType_Integer:
       return this->CastToInt().data.i >= argument2.CastToInt().data.i;
     case VarValue::kType_Float:
       return this->CastToFloat().data.f >= argument2.CastToFloat().data.f;
     case VarValue::kType_Bool:
       return this->CastToBool().data.b >= argument2.CastToBool().data.b;
+    default:
+      break;
   }
   throw std::runtime_error("Wrong type in operator>=");
 }
 
 bool VarValue::operator<(const VarValue& argument2) const
 {
-
   switch (this->type) {
-
     case VarValue::kType_Integer:
       return this->CastToInt().data.i < argument2.CastToInt().data.i;
     case VarValue::kType_Float:
       return this->CastToFloat().data.f < argument2.CastToFloat().data.f;
     case VarValue::kType_Bool:
       return this->CastToBool().data.b < argument2.CastToBool().data.b;
+    default:
+      break;
   }
   throw std::runtime_error("Wrong type in operator<");
 }
 
 bool VarValue::operator<=(const VarValue& argument2) const
 {
-
   switch (this->type) {
-
     case VarValue::kType_Integer:
       return this->CastToInt().data.i <= argument2.CastToInt().data.i;
     case VarValue::kType_Float:
       return this->CastToFloat().data.f <= argument2.CastToFloat().data.f;
     case VarValue::kType_Bool:
       return this->CastToBool().data.b <= argument2.CastToBool().data.b;
+    default:
+      break;
   }
   throw std::runtime_error("Wrong type in operator<=");
 }
