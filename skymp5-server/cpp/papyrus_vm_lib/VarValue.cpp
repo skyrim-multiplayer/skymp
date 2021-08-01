@@ -44,36 +44,34 @@ VarValue VarValue::CastToFloat() const
 VarValue VarValue::CastToBool() const
 {
   switch (this->type) {
-
     case kType_Object:
-      if (this->data.id == nullptr)
-        return VarValue((bool)false);
-      else
-        return VarValue((bool)true);
-
+      if (this->data.id == nullptr) {
+        return VarValue(false);
+      } else {
+        return VarValue(true);
+      }
     case kType_Identifier:
       throw std::runtime_error("Wrong type in CastToBool");
     case kType_String: {
       std::string str;
-      if (this->data.string == str)
-        return VarValue((bool)false);
-      else
-        return VarValue((bool)true);
+      if (this->data.string == str) {
+        return VarValue(false);
+      } else {
+        return VarValue(true);
+      }
     }
     case kType_Integer:
-      return VarValue((bool)this->data.i);
-
+      return VarValue(static_cast<bool>(this->data.i));
     case kType_Float:
-      return VarValue((bool)this->data.f);
-
+      return VarValue(static_cast<bool>(this->data.f));
     case kType_Bool:
-      return VarValue((bool)this->data.b);
+      return VarValue(static_cast<bool>(this->data.b));
     case kType_ObjectArray:
     case kType_StringArray:
     case kType_IntArray:
     case kType_FloatArray:
     case kType_BoolArray:
-      return VarValue(this->pArray && this->pArray->size());
+      return VarValue(this->pArray && this->pArray->size() > 0);
     default:
       throw std::runtime_error("Wrong type in CastToBool");
   }
@@ -81,8 +79,9 @@ VarValue VarValue::CastToBool() const
 
 void VarValue::Then(std::function<void(VarValue)> cb)
 {
-  if (!promise)
+  if (!promise) {
     throw std::runtime_error("Not a promise");
+  }
   promise->Then(cb);
 }
 
@@ -90,7 +89,6 @@ VarValue::VarValue(uint8_t type)
 {
   static std::string emptyLine;
   switch (type) {
-
     case kType_Object:
       this->type = this->kType_Object;
       this->data.id = nullptr;
@@ -187,8 +185,9 @@ VarValue::VarValue(IGameObject::Ptr object)
 
 int32_t VarValue::GetMetaStackId() const
 {
-  if (stackId < 0)
+  if (stackId < 0) {
     throw std::runtime_error("This VarValue has no metadata");
+  }
   return stackId;
 }
 
@@ -289,7 +288,6 @@ VarValue VarValue::operator*(const VarValue& argument2)
 {
   VarValue var;
   if (this->type == argument2.type) {
-
     switch (this->type) {
       case VarValue::kType_Integer:
         var.data.i = this->data.i * argument2.data.i;
@@ -319,14 +317,16 @@ VarValue VarValue::operator/(const VarValue& argument2)
     switch (this->type) {
       case VarValue::kType_Integer:
         var.data.i = 1;
-        if (argument2.data.i != uint32_t(0) && this->data.i != uint32_t(0))
+        if (argument2.data.i != 0 && this->data.i != 0) {
           var.data.i = this->data.i / argument2.data.i;
+        }
         var.type = this->kType_Integer;
         return var;
       case VarValue::kType_Float:
         var.data.f = 1.0f;
-        if (argument2.data.f != float(0))
+        if (argument2.data.f != 0.f) {
           var.data.f = this->data.f / argument2.data.f;
+        }
         var.type = this->kType_Float;
         return var;
       default:
@@ -349,8 +349,9 @@ VarValue VarValue::operator%(const VarValue& argument2)
     switch (this->type) {
       case VarValue::kType_Integer:
         var.data.i = 0;
-        if (argument2.data.i != (uint32_t)0)
+        if (argument2.data.i != 0) {
           var.data.i = this->data.i % argument2.data.i;
+        }
         var.type = this->kType_Integer;
         return var;
       default:
@@ -385,8 +386,8 @@ VarValue VarValue::operator!()
       return var;
     case kType_String: {
       var.type = this->kType_Bool;
-      static std::string emptyLine;
-      var.data.b = (this->data.string == emptyLine);
+      static const std::string g_emptyLine;
+      var.data.b = (this->data.string == g_emptyLine);
       return var;
     }
     case kType_ObjectArray:
@@ -420,11 +421,11 @@ bool VarValue::operator==(const VarValue& argument2) const
       std::string s1;
       std::string s2;
 
-      if (this->data.string != NULL) {
+      if (this->data.string != nullptr) {
         s1 = this->data.string;
       }
 
-      if (argument2.data.string != NULL) {
+      if (argument2.data.string != nullptr) {
         s2 = argument2.data.string;
       }
 
@@ -555,8 +556,9 @@ VarValue& VarValue::operator=(const VarValue& arg2)
   owningObject = arg2.owningObject;
 
   // TODO: Is this check actually needed?
-  if (arg2.type >= arg2._ArraysStart && arg2.type < arg2._ArraysEnd)
+  if (arg2.type >= arg2._ArraysStart && arg2.type < arg2._ArraysEnd) {
     pArray = arg2.pArray;
+  }
 
   promise = arg2.promise;
 
