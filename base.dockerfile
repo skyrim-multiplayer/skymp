@@ -87,3 +87,4 @@ RUN mkdir -p build/dist/server/data \
   && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm \
   && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm \
   && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm
+  
