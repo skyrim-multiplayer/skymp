@@ -44,6 +44,12 @@ auto GetExpectedPaths(const nlohmann::json& j)
   configurationTags.insert("Debug");
 #endif
 
+#ifdef WIN32
+  configurationTags.insert("Win32");
+#else
+  configurationTags.insert("Unix");
+#endif
+
   for (auto& entry : j) {
     if (IsSubsetOf(entry["configurationTags"], configurationTags)) {
       for (auto& file : entry["expectedFiles"]) {

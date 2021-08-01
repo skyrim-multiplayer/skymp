@@ -263,10 +263,13 @@ public:
 
   operator std::wstring() const
   {
-    const wchar_t* stringPtr;
-    size_t stringSize;
-    SafeCall(JS_ENGINE_F(JsStringToPointer), value, &stringPtr, &stringSize);
-    return std::wstring(stringPtr, stringSize);
+    size_t outLength;
+    SafeCall(JS_ENGINE_F(JsCopyStringUtf16), value, 0, 0, nullptr, &outLength);
+
+    std::wstring res;
+    res.resize(outLength);
+    SafeCall(JS_ENGINE_F(JsCopyStringUtf16), value, 0, outLength, reinterpret_cast<short unsigned int*>(res.data()), &outLength);
+    return res;
   }
 
   operator int() const

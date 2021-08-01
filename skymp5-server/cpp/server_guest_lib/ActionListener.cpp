@@ -295,6 +295,8 @@ VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
     }
     case simdjson::dom::element_type::NULL_VALUE:
       return VarValue::None();
+    default:
+      break;
   }
   throw std::runtime_error("VarValueFromJson - Unsupported json type " +
                            std::to_string(static_cast<int>(element.type())));

@@ -19,4 +19,4 @@ jobs:
           restore-keys: |
             images-docker-cached-
 
-      - run: docker build --tag skymp:test .
+      - run: docker build --file server.dockerfile --tag skymp/skymp-server:test .

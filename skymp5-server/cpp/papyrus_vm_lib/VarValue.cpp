@@ -246,6 +246,8 @@ VarValue VarValue::operator+(const VarValue& argument2)
         var.data.f = this->data.f + argument2.data.f;
         var.type = this->kType_Float;
         return var;
+      default:
+        break;
     }
   }
 
@@ -270,6 +272,8 @@ VarValue VarValue::operator-(const VarValue& argument2)
         var.data.f = this->data.f - argument2.data.f;
         var.type = this->kType_Float;
         return var;
+      default:
+        break;
     }
   }
 

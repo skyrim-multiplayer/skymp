@@ -1,3 +1,6 @@
+.github
+build
+docs
 skymp5-client/node_modules
 skymp5-front/node_modules
 skymp5-front/config.js
@@ -7,3 +10,4 @@ skymp5-functions-lib/gamemode.js
 skymp5-server/node_modules
 skymp5-server/cmake-js-fetch-build
 skyrim-platform/node_modules
+vcpkg
