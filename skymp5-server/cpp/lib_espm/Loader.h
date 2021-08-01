@@ -1,8 +1,8 @@
 #pragma once
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <sstream>
-#include <filesystem>
 
 namespace espm {
 namespace fs = std::filesystem;

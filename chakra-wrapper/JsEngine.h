@@ -268,7 +268,8 @@ public:
 
     std::wstring res;
     res.resize(outLength);
-    SafeCall(JS_ENGINE_F(JsCopyStringUtf16), value, 0, outLength, reinterpret_cast<short unsigned int*>(res.data()), &outLength);
+    SafeCall(JS_ENGINE_F(JsCopyStringUtf16), value, 0, outLength,
+             reinterpret_cast<short unsigned int*>(res.data()), &outLength);
     return res;
   }
 
