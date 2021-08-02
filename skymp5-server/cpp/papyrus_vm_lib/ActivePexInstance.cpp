@@ -132,7 +132,7 @@ const std::string& ActivePexInstance::GetSourcePexName() const
 VarValue CastToString(const VarValue& var)
 {
   switch (var.GetType()) {
-    case var.kType_Object: {
+    case VarValue::kType_Object: {
       IGameObject* ptr = ((IGameObject*)var);
       if (ptr)
         return VarValue(ptr->GetStringID());
@@ -141,30 +141,30 @@ VarValue CastToString(const VarValue& var)
         return VarValue(noneString.c_str());
       }
     }
-    case var.kType_Identifier:
+    case VarValue::kType_Identifier:
       assert(false);
       return VarValue();
-    case var.kType_String:
+    case VarValue::kType_String:
       return var;
-    case var.kType_Integer:
+    case VarValue::kType_Integer:
       return VarValue(std::to_string(static_cast<int32_t>(var)));
-    case var.kType_Float: {
-      char buffer[128];
+    case VarValue::kType_Float: {
+      char buffer[512];
       snprintf(buffer, sizeof(buffer), "%.*g", 9000, static_cast<double>(var));
       return VarValue(std::string(buffer));
     }
-    case var.kType_Bool: {
+    case VarValue::kType_Bool: {
       return VarValue(static_cast<bool>(var) ? "True" : "False");
     }
-    case var.kType_ObjectArray:
+    case VarValue::kType_ObjectArray:
       return GetElementsArrayAtString(var, var.kType_ObjectArray);
-    case var.kType_StringArray:
+    case VarValue::kType_StringArray:
       return GetElementsArrayAtString(var, var.kType_StringArray);
-    case var.kType_IntArray:
+    case VarValue::kType_IntArray:
       return GetElementsArrayAtString(var, var.kType_IntArray);
-    case var.kType_FloatArray:
+    case VarValue::kType_FloatArray:
       return GetElementsArrayAtString(var, var.kType_FloatArray);
-    case var.kType_BoolArray:
+    case VarValue::kType_BoolArray:
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
       assert(false);
@@ -178,25 +178,25 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
 
   for (size_t i = 0; i < array.pArray->size(); ++i) {
     switch (type) {
-      case array.kType_ObjectArray: {
+      case VarValue::kType_ObjectArray: {
         auto object = (static_cast<IGameObject*>((*array.pArray)[i]));
         returnValue += object ? object->GetStringID() : "None";
         break;
       }
 
-      case array.kType_StringArray:
+      case VarValue::kType_StringArray:
         returnValue += (const char*)((*array.pArray)[i]);
         break;
 
-      case array.kType_IntArray:
+      case VarValue::kType_IntArray:
         returnValue += std::to_string((int)((*array.pArray)[i]));
         break;
 
-      case array.kType_FloatArray:
+      case VarValue::kType_FloatArray:
         returnValue += std::to_string((double)((*array.pArray)[i]));
         break;
 
-      case array.kType_BoolArray: {
+      case VarValue::kType_BoolArray: {
         VarValue& temp = ((*array.pArray)[i]);
         returnValue += (const char*)(CastToString(temp));
         break;

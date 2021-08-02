@@ -2,6 +2,7 @@
 #include "TaskQueue.h"
 #include <ChakraCore.h>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -262,10 +263,14 @@ public:
 
   operator std::wstring() const
   {
-    const wchar_t* stringPtr;
-    size_t stringSize;
-    SafeCall(JS_ENGINE_F(JsStringToPointer), value, &stringPtr, &stringSize);
-    return std::wstring(stringPtr, stringSize);
+    size_t outLength;
+    SafeCall(JS_ENGINE_F(JsCopyStringUtf16), value, 0, 0, nullptr, &outLength);
+
+    std::wstring res;
+    res.resize(outLength);
+    SafeCall(JS_ENGINE_F(JsCopyStringUtf16), value, 0, outLength,
+             reinterpret_cast<short unsigned int*>(res.data()), &outLength);
+    return res;
   }
 
   operator int() const
@@ -378,8 +383,9 @@ public:
         // Hot path. Platform-specific functions on Windows are faster than the
         // cross-platform equivalents
 #ifndef WIN32
-        auto str = (std::string)key;
-        SafeCall(F(JsCreatePropertyId), str.data(), str.size(), &propId);
+        auto str = static_cast<std::string>(key);
+        SafeCall(JS_ENGINE_F(JsCreatePropertyId), str.data(), str.size(),
+                 &propId);
 #else
         const wchar_t* stringPtr;
         size_t stringSize;

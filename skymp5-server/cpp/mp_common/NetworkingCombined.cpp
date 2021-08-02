@@ -83,6 +83,8 @@ public:
       case Networking::PacketType::Message:
         id = combinedIdByReal[userId];
         break;
+      default:
+        break;
     }
 
     this_->st.onPacket(this_->st.state, id, packetType, data, length);

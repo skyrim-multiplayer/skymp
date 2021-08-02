@@ -335,7 +335,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     }
     logger->info("Using data dir '{}'", dataDir);
 
-    std::vector<espm::fs::path> pluginPaths = {
+    std::vector<std::filesystem::path> pluginPaths = {
       std::filesystem::path(dataDir) / "Skyrim.esm",
       std::filesystem::path(dataDir) / "Update.esm",
       std::filesystem::path(dataDir) / "Dawnguard.esm",
@@ -933,6 +933,8 @@ VarValue GetPapyrusValueFromJsValue(const JsValue& v, bool treatNumberAsInt,
       ss << "Unknown object type '" << type << "', must be 'form' | 'espm'";
       throw std::runtime_error(ss.str());
     }
+    default:
+      break;
   }
   std::stringstream ss;
   ss << "JS type " << static_cast<int>(v.GetType())

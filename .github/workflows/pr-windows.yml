@@ -1,4 +1,4 @@
-name: CMake
+name: PR Windows
 
 on:
   push:

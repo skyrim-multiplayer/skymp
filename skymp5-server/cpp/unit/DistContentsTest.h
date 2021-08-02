@@ -44,6 +44,12 @@ auto GetExpectedPaths(const nlohmann::json& j)
   configurationTags.insert("Debug");
 #endif
 
+#ifdef WIN32
+  configurationTags.insert("Win32");
+#else
+  configurationTags.insert("Unix");
+#endif
+
   for (auto& entry : j) {
     if (IsSubsetOf(entry["configurationTags"], configurationTags)) {
       for (auto& file : entry["expectedFiles"]) {
@@ -77,7 +83,20 @@ TEST_CASE("Distribution folder must contain all requested files",
                   "DistContentsExpected.json");
   f >> j;
 
-  const std::set<std::filesystem::path> expectedPaths = GetExpectedPaths(j);
+  std::set<std::filesystem::path> expectedPaths = GetExpectedPaths(j);
+
+  // There could be something like "Optional" tag in our JSON file.
+  // But this would extend tags responsibilities. Currently, they are
+  // only responsible for platform selection.
+  std::vector<std::filesystem::path> distContentsIgnore = {
+    "server/data/Dawnguard.esm", "server/data/Dragonborn.esm",
+    "server/data/HearthFires.esm", "server/data/Skyrim.esm",
+    "server/data/Update.esm"
+  };
+  for (auto& path : distContentsIgnore) {
+    expectedPaths.erase(path);
+    paths.erase(path);
+  }
 
   size_t totalMissing = 0;
   std::stringstream ss;

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19.1)
+cmake_minimum_required(VERSION 3.18.4)
 project(skymp5-scripts)
 
 include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)

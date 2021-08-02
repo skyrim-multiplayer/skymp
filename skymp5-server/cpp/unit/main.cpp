@@ -3,12 +3,6 @@
 #include <catch2/catch.hpp>
 #include <iostream>
 
-#ifndef WIN32
-constexpr auto g_dataDir = "/skyrim_data_dir";
-#else
-constexpr auto g_dataDir = SKYRIM_DIR "/Data";
-#endif
-
 namespace {
 inline void OnProgress(const std::string& fileName, float readDuration,
                        float parseDuration, uintmax_t fileSize)
@@ -17,14 +11,19 @@ inline void OnProgress(const std::string& fileName, float readDuration,
             << "s, parsed in " << parseDuration << "s, size is "
             << (fileSize / 1024 / 1024) << "Mb" << std::endl;
 }
-}
 
-bool IsSkyrimDirValid(const std::string& skyrimDir)
+inline bool IsCmakeOptionSpecified(const std::string& optionValue)
 {
-  return !skyrimDir.empty() && skyrimDir != "OFF";
+  return !optionValue.empty() && optionValue != "OFF";
 }
 
-espm::Loader CreateEspmLoader()
+inline const char* GetDataDir()
+{
+  return IsCmakeOptionSpecified(UNIT_DATA_DIR) ? UNIT_DATA_DIR
+                                               : SKYRIM_DIR "/Data";
+}
+
+inline espm::Loader CreateEspmLoader()
 {
   try {
     std::vector<std::filesystem::path> files = { "Skyrim.esm", "Update.esm",
@@ -32,9 +31,9 @@ espm::Loader CreateEspmLoader()
                                                  "HearthFires.esm",
                                                  "Dragonborn.esm" };
 
-    std::filesystem::path dataDir = std::filesystem::u8path(g_dataDir);
+    std::filesystem::path dataDir = std::filesystem::u8path(GetDataDir());
 
-    if (!IsSkyrimDirValid(SKYRIM_DIR)) {
+    if (!std::filesystem::exists(dataDir / "Skyrim.esm")) {
       files.clear();
       dataDir = std::filesystem::current_path();
     }
@@ -46,6 +45,7 @@ espm::Loader CreateEspmLoader()
     std::exit(1);
   }
 }
+}
 
 espm::Loader l = CreateEspmLoader();
 
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 {
   std::vector<const char*> args = { argv, argv + argc };
 
-  if (!IsSkyrimDirValid(SKYRIM_DIR)) {
+  if (l.GetFileNames().empty()) {
     args.push_back("~[espm]");
   }
 

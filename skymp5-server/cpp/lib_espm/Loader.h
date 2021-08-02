@@ -1,19 +1,12 @@
 #pragma once
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <sstream>
 
-#ifdef WIN32
-#  include <filesystem>
 namespace espm {
 namespace fs = std::filesystem;
 }
-#else
-#  include <experimental/filesystem>
-namespace espm {
-namespace fs = std::experimental::filesystem;
-}
-#endif
 
 #include "Combiner.h"
 #include "espm.h"

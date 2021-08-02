@@ -5,7 +5,7 @@
 class PapyrusDebug : public IPapyrusClass<PapyrusDebug>
 {
 public:
-  const char* GetName() { return "debug"; }
+  const char* GetName() override { return "debug"; }
 
   DEFINE_STATIC_SPSNIPPET(Notification);
 
