@@ -37,6 +37,8 @@ class GroupHeader;
 class RecordHeader;
 class ScriptData;
 
+using GroupStack = std::vector<espm::GroupHeader*>;
+
 class Browser
 {
 public:
@@ -53,13 +55,19 @@ public:
 
   const std::vector<espm::RecordHeader*>& GetRecordsAtPos(uint32_t cellOrWorld,
                                                           int16_t cellX,
-                                                          int16_t cellY);
+                                                          int16_t cellY) const;
+
+  const GroupStack* GetParentGroups(const RecordHeader* rec) const;
 
 private:
   struct Impl;
   Impl* const pImpl;
 
-  bool ReadAny(void* parentGrStack);
+  uint32_t GetWorldOrCell(const RecordHeader* rec) const;
+  const GroupHeader* GetExteriorWorldGroup(const RecordHeader* rec) const;
+  const GroupHeader* GetCellGroup(const RecordHeader* rec) const;
+
+  bool ReadAny(const GroupStack* parentGrStack);
 
   Browser(const Browser&) = delete;
   void operator=(const Browser&) = delete;
@@ -145,6 +153,7 @@ private:
   uint16_t unknown2;
 
   // We write pointer to GroupDataInternal here
+  // Holds pointers to child records
   uint64_t& GroupDataPtrStorage() noexcept;
   const uint64_t& GroupDataPtrStorage() const noexcept;
 
@@ -154,8 +163,6 @@ private:
 };
 static_assert(sizeof(GroupType) == 4);
 static_assert(sizeof(GroupHeader) == 16);
-
-using GroupStack = std::vector<espm::GroupHeader*>;
 
 using IdMapping = std::array<uint8_t, 256>;
 uint32_t GetMappedId(uint32_t id, const IdMapping& mapping) noexcept;
@@ -204,7 +211,6 @@ public:
       nullptr) const noexcept;
 
   Type GetType() const noexcept;
-  const GroupStack& GetParentGroups() const noexcept;
 
   // Please use for tests only
   // Do not rely on Skyrim record flags format
@@ -218,6 +224,8 @@ private:
   uint16_t unk;
 
   // We write pointer to std::vector<GroupHeader *> here
+  // Holds pointers starting to every GRUP starting from root and up to this
+  // record's parent
   uint64_t& GroupStackPtrStorage() const noexcept
   {
     return *(uint64_t*)&revision;
@@ -232,49 +240,6 @@ private:
 static_assert(sizeof(RecordHeader) == 16);
 
 // Helpers/utilities
-
-inline GroupHeader* GetExteriorWorldGroup(const RecordHeader* rec)
-{
-  for (auto gr : rec->GetParentGroups()) {
-    if (gr->GetGroupType() == GroupType::WORLD_CHILDREN)
-      return gr;
-  }
-  return nullptr;
-}
-
-inline GroupHeader* GetCellGroup(const RecordHeader* rec)
-{
-  for (auto gr : rec->GetParentGroups()) {
-    auto grType = gr->GetGroupType();
-    if (grType != GroupType::CELL_CHILDREN &&
-        grType != GroupType::CELL_PERSISTENT_CHILDREN &&
-        grType != GroupType::CELL_TEMPORARY_CHILDREN &&
-        grType != GroupType::CELL_VISIBLE_DISTANT_CHILDREN) {
-      continue;
-    }
-    return gr;
-  }
-  return nullptr;
-}
-
-inline uint32_t GetWorldOrCell(const RecordHeader* rec)
-{
-  auto world = espm::GetExteriorWorldGroup(rec);
-  auto cell = espm::GetCellGroup(rec);
-
-  uint32_t worldOrCell;
-
-  if (!world || !world->GetParentWRLD(worldOrCell))
-    worldOrCell = 0;
-
-  if (!worldOrCell) {
-    if (!cell->GetParentCELL(worldOrCell)) {
-      return 0;
-    }
-  }
-
-  return worldOrCell;
-}
 
 inline bool IsItem(Type t) noexcept
 {

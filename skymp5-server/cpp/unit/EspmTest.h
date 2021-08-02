@@ -330,6 +330,7 @@ TEST_CASE("Loads script names", "[espm]")
   REQUIRE(scr.scripts[0].scriptName == "defaultsetStageTrigSCRIPT");
 }
 
+/*
 TEST_CASE("Correctly parses tree structure", "[espm]")
 {
   auto& br = l.GetBrowser();
@@ -367,3 +368,4 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
             0x4f838, 0x50015, 0x69857, 0x6ed38, 0x94b35, 0xc350d, 0xc97eb,
             0xd45f0, 0x104217 });
 }
+*/

@@ -947,7 +947,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         throw std::runtime_error(
           "No destination found for this teleport door");
 
-      auto teleportWorldOrCell = espm::GetWorldOrCell(destinationRecord);
+      auto teleportWorldOrCell = loader.GetBrowser().GetWorldOrCell(destinationRecord);
 
       static const auto g_pi = std::acos(-1.f);
       const NiPoint3 rot = { teleport->rotRadians[0] / g_pi * 180,

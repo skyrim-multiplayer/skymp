@@ -373,7 +373,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
-  uint32_t worldOrCell = espm::GetWorldOrCell(record);
+  uint32_t worldOrCell = br.GetWorldOrCell(record);
   if (!worldOrCell) {
     logger->info("Anomally: refr without world/cell");
     return false;
