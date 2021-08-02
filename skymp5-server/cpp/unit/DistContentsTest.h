@@ -89,13 +89,11 @@ TEST_CASE("Distribution folder must contain all requested files",
   // But this would extend tags responsibilities. Currently, they are
   // only responsible for platform selection.
   std::vector<std::filesystem::path> distContentsIgnore = {
-    "server/data/Dawnguard.esm",
-    "server/data/Dragonborn.esm",
-    "server/data/HearthFires.esm",
-    "server/data/Skyrim.esm",
+    "server/data/Dawnguard.esm", "server/data/Dragonborn.esm",
+    "server/data/HearthFires.esm", "server/data/Skyrim.esm",
     "server/data/Update.esm"
   };
-  for (auto &path : distContentsIgnore) {
+  for (auto& path : distContentsIgnore) {
     expectedPaths.erase(path);
     paths.erase(path);
   }
