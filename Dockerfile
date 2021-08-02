@@ -93,5 +93,5 @@ RUN rm -rf ./skymp5-server/cmake-js-fetch-build || true \
   && npm cache verify \
   && mkdir -p build \
   && cd build \ 
-  && cmake .. -DCMAKE_BUILD_TYPE=Release \
+  && cmake .. -DCMAKE_BUILD_TYPE=Release -DUNIT_DATA_DIR=/usr/src/skymp/build/dist/server/data \
   && cmake --build . --config Release

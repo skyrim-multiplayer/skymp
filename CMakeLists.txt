@@ -21,11 +21,12 @@ cmake_minimum_required(VERSION 3.18.4)
 project(skymp)
 enable_testing()
 
-option(SKYRIM_DIR "Path to Skyrim" OFF)
+option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing" OFF)
+option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
+
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
 endif()
-
 string(REPLACE "\\" "/" SKYRIM_DIR "${SKYRIM_DIR}")
 
 if(SKYRIM_DIR)
