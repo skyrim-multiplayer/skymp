@@ -202,22 +202,6 @@ bool espm::GroupHeader::GetParentDIAL(uint32_t& outId) const noexcept
   return true;
 }
 
-void espm::GroupHeader::ForEachRecordRecursive(
-  const RecordVisitor& f) const noexcept
-{
-  // take subs?
-  const auto grData = (const GroupDataInternal*)GroupDataPtrStorage();
-  for (const void* sub : grData->subs) {
-    if (!memcmp(sub, "GRUP", 4)) {
-      continue; // It's group, skipping
-    }
-    if (f(reinterpret_cast<const espm::RecordHeader*>(
-          reinterpret_cast<const int8_t*>(sub) + 8))) {
-      break;
-    }
-  }
-}
-
 uint32_t espm::GroupHeader::GetGroupLabelAsUint() const noexcept
 {
   return *reinterpret_cast<const uint32_t*>(label);
@@ -529,6 +513,15 @@ struct espm::Browser::Impl
     }
     return it->second;
   }
+
+  // may return null
+  const std::vector<void*>* GetSubsOptional(const GroupHeader* rec) const {
+    const auto it = groupDataByGroupPtr.find(rec);
+    if (it == groupDataByGroupPtr.end()) {
+      return nullptr;
+    }
+    return &it->second->subs;
+  }
 };
 
 espm::Browser::Browser(void* fileContent, size_t length)
@@ -594,6 +587,19 @@ const GroupStack& Browser::GetParentGroupsEnsured(const RecordHeader* rec) const
   const auto opt = GetParentGroupsOptional(rec);
   if (!opt) {
     throw std::runtime_error("espm::Browser: no parent groups for record");
+  }
+  return *opt;
+}
+
+const std::vector<void*>* Browser::GetSubsOptional(const GroupHeader* group) const {
+  return pImpl->GetSubsOptional(group);
+}
+
+// XXX: rename
+const std::vector<void*>& Browser::GetSubsEnsured(const GroupHeader* group) const {
+  const auto opt = GetSubsOptional(group);
+  if (!opt) {
+    throw std::runtime_error("espm::Browser: no subs for record");
   }
   return *opt;
 }

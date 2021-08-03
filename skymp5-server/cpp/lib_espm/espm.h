@@ -60,6 +60,9 @@ public:
   const GroupStack* GetParentGroupsOptional(const RecordHeader* rec) const;
   const GroupStack& GetParentGroupsEnsured(const RecordHeader* rec) const;
 
+  const std::vector<void*>* GetSubsOptional(const GroupHeader* group) const;
+  const std::vector<void*>& GetSubsEnsured(const GroupHeader* group) const;
+
 private:
   struct Impl;
   Impl* const pImpl;
@@ -128,13 +131,6 @@ public:
   bool GetParentWRLD(uint32_t& outId) const noexcept;
   bool GetParentCELL(uint32_t& outId) const noexcept;
   bool GetParentDIAL(uint32_t& outId) const noexcept;
-
-  using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
-
-  // Accepts a visitor, which can contain custom code used to recursively
-  // iterate child records. All tree leafs will be visited. Return true from
-  // visitor to break loop.
-  void ForEachRecordRecursive(const RecordVisitor& visitor) const noexcept;
 
   uint32_t GetGroupLabelAsUint() const noexcept;
   GroupType GetGroupType() const noexcept;

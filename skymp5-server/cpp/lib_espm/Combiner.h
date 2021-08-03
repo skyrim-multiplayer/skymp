@@ -70,6 +70,7 @@ public:
 
   // TODO: move in cpp too
   const GroupStack& GetParentGroupsEnsured(const RecordHeader* rec) const;
+  const std::vector<void*>& GetSubsEnsured(const GroupHeader* group) const;
 
 private:
   struct Impl;
@@ -107,12 +108,13 @@ private:
 
 // Helpers/utilities
 
+/*
 inline const RecordHeader* FindInGroup(const BrowserInfo& brInf,
                                        const GroupHeader* gr,
                                        uint32_t globFormId)
 {
   const RecordHeader* res = nullptr;
-  gr->ForEachRecordRecursive([&](const espm::RecordHeader* rec) {
+  ForEachChildRecord(br, gr, [&](const espm::RecordHeader* rec) {
     if (brInf.ToGlobalId(rec->GetId()) != globFormId)
       return false;
     res = rec;
@@ -120,4 +122,6 @@ inline const RecordHeader* FindInGroup(const BrowserInfo& brInf,
   });
   return res;
 }
+*/
+
 }

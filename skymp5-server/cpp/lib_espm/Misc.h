@@ -47,4 +47,25 @@ uint32_t GetWorldOrCell(const TBrowser& browser, const RecordHeader* rec) {
   return worldOrCell;
 }
 
+using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
+
+// TODO: IBrowser?
+template <class TBrowser>
+void ForEachChildRecord(
+  const TBrowser& browser,
+  const GroupHeader* group,
+  const RecordVisitor& f)
+{
+  // const auto grData = (const GroupDataInternal*)GroupDataPtrStorage();
+  for (const void* sub : browser.GetSubsEnsured(group)) {
+    if (!memcmp(sub, "GRUP", 4)) {
+      continue; // It's group, skipping
+    }
+    if (f(reinterpret_cast<const espm::RecordHeader*>(
+          reinterpret_cast<const int8_t*>(sub) + 8))) {
+      break;
+    }
+  }
+}
+
 }

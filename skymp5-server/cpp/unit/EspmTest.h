@@ -1,5 +1,6 @@
 #include "TestUtils.hpp"
 #include <Loader.h>
+#include <Misc.h>  // ???
 #include <catch2/catch.hpp>
 
 extern espm::Loader l;
@@ -354,8 +355,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   const auto root = br.GetParentGroupsEnsured(form.rec)[0];
   REQUIRE(root);
   std::vector<uint32_t> records;
-  // not recursive!
-  root->ForEachRecordRecursive([&records](const espm::RecordHeader* rec) {
+  espm::ForEachChildRecord(br, root, [&records](const espm::RecordHeader* rec) {
     records.emplace_back(rec->GetId());
     return false;
   });
