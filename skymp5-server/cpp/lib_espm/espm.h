@@ -145,11 +145,6 @@ private:
   uint16_t version;
   uint16_t unknown2;
 
-  // We write pointer to GroupDataInternal here
-  // Holds pointers to child records
-  uint64_t& GroupDataPtrStorage() noexcept;
-  const uint64_t& GroupDataPtrStorage() const noexcept;
-
   GroupHeader() = delete;
   GroupHeader(const GroupHeader&) = delete;
   void operator=(const GroupHeader&) = delete;
@@ -215,14 +210,6 @@ private:
   uint32_t revision;
   uint16_t version;
   uint16_t unk;
-
-  // We write pointer to std::vector<GroupHeader *> here
-  // Holds pointers starting to every GRUP starting from root and up to this
-  // record's parent
-  uint64_t& GroupStackPtrStorage() const noexcept
-  {
-    return *(uint64_t*)&revision;
-  }
 
   uint32_t GetFieldsSizeSum() const noexcept;
 

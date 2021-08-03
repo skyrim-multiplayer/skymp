@@ -212,16 +212,6 @@ espm::GroupType espm::GroupHeader::GetGroupType() const noexcept
   return grType;
 }
 
-uint64_t& espm::GroupHeader::GroupDataPtrStorage() noexcept
-{
-  return *reinterpret_cast<uint64_t*>(&day);
-}
-
-const uint64_t& espm::GroupHeader::GroupDataPtrStorage() const noexcept
-{
-  return *reinterpret_cast<const uint64_t*>(&day);
-}
-
 uint32_t espm::GetMappedId(uint32_t id,
                            const espm::IdMapping& mapping) noexcept
 {
@@ -595,7 +585,6 @@ const std::vector<void*>* Browser::GetSubsOptional(const GroupHeader* group) con
   return pImpl->GetSubsOptional(group);
 }
 
-// XXX: rename
 const std::vector<void*>& Browser::GetSubsEnsured(const GroupHeader* group) const {
   const auto opt = GetSubsOptional(group);
   if (!opt) {
@@ -623,8 +612,6 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
 
     auto grData = new GroupDataInternal;
     pImpl->grDataHolder.emplace_back(grData);
-    // TODO
-    grHeader->GroupDataPtrStorage() = (uint64_t)grData;
     pImpl->groupDataByGroupPtr.emplace(grHeader, grData);
 
     pImpl->pos += sizeof(GroupHeader);
@@ -642,9 +629,8 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
     pImpl->grStack.pop_back();
   } else {
     // Read record header
-    const auto recHeader = (RecordHeader*)(pImpl->buf + pImpl->pos);
+    const auto recHeader = reinterpret_cast<RecordHeader*>(pImpl->buf + pImpl->pos);
     pImpl->groupStackByRecordPtr.emplace(recHeader, parentGrStack);
-    // recHeader->GroupStackPtrStorage() = (uint64_t)parentGrStack;
 
     pImpl->recById[recHeader->id] = recHeader;
 
