@@ -330,7 +330,6 @@ TEST_CASE("Loads script names", "[espm]")
   REQUIRE(scr.scripts[0].scriptName == "defaultsetStageTrigSCRIPT");
 }
 
-/*
 TEST_CASE("Correctly parses tree structure", "[espm]")
 {
   auto& br = l.GetBrowser();
@@ -339,7 +338,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   REQUIRE(form.rec);
 
   std::vector<std::string> parentGroupTypeLabels;
-  for (const auto groupPtr : form.rec->GetParentGroups()) {
+  for (const auto groupPtr : br.GetParentGroups(form.rec)) {
     parentGroupTypeLabels.emplace_back(
       ToString(groupPtr->GetGroupType()) + ":" +
       std::to_string(groupPtr->GetGroupLabelAsUint()));
@@ -352,7 +351,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
             "CELL_PERSISTENT_CHILDREN:107120",
           });
 
-  const auto root = form.rec->GetParentGroups()[0];
+  const auto root = br.GetParentGroups(form.rec)[0];
   REQUIRE(root);
   std::vector<uint32_t> records;
   root->ForEachRecordRecursive([&records](const espm::RecordHeader* rec) {
@@ -368,4 +367,3 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
             0x4f838, 0x50015, 0x69857, 0x6ed38, 0x94b35, 0xc350d, 0xc97eb,
             0xd45f0, 0x104217 });
 }
-*/
