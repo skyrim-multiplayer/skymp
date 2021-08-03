@@ -47,9 +47,11 @@ const char* GetError(unsigned char packetType)
 class Client : public Networking::IClient
 {
 public:
-  Client(const char* ip_, unsigned short port_, int timeoutMs_)
+  Client(const char* ip_, unsigned short port_, int timeoutMs_,
+         const char* password_)
     : ip(ip_)
     , port(port_)
+    , password(password_)
   {
 
     peer.reset(new RakPeer);
@@ -59,7 +61,7 @@ public:
       throw std::runtime_error("Peer startup failed with code " +
                                std::to_string((int)res));
     }
-    const auto conRes = peer->Connect(ip.data(), port, "", 0);
+    const auto conRes = peer->Connect(ip.data(), port, password.data(), 0);
     if (conRes != ConnectionAttemptResult::CONNECTION_ATTEMPT_STARTED) {
       throw std::runtime_error("Peer connect failed with code " +
                                std::to_string((int)conRes));
@@ -111,6 +113,7 @@ public:
 private:
   const std::string ip;
   const unsigned short port;
+  const std::string password;
 
   RakNetGUID serverGuid = UNASSIGNED_RAKNET_GUID;
   std::shared_ptr<RakPeerInterface> peer;
@@ -124,11 +127,14 @@ class Server : public Networking::IServer
 public:
   constexpr static int timeoutTimeMs = 6000;
 
-  Server(unsigned short port_, unsigned short maxConnections)
+  Server(unsigned short port_, unsigned short maxConnections,
+         const char* password_)
+    : password(password_)
   {
-    if (maxConnections > g_maxPlayers)
+    if (maxConnections > g_maxPlayers) {
       throw std::runtime_error("Current slots limit is " +
                                std::to_string(g_maxPlayers));
+    }
 
     idManager.reset(new IdManager(maxConnections));
     peer.reset(new RakPeer);
@@ -137,19 +143,24 @@ public:
     const auto res = peer->Startup(maxConnections, &*socket, 1);
     if (res != StartupResult::RAKNET_STARTED) {
       throw std::runtime_error("Peer startup failed with code " +
-                               std::to_string((int)res));
+                               std::to_string(static_cast<int>(res)));
     }
     peer->SetMaximumIncomingConnections(maxConnections);
     peer->SetTimeoutTime(timeoutTimeMs, {});
+    if (!password.empty()) {
+      peer->SetIncomingPassword(password.data(),
+                                static_cast<int>(password.size()));
+    }
   }
 
   void Send(Networking::UserId id, Networking::PacketData data, size_t length,
             bool reliable) override
   {
     const auto guid = idManager->find(id);
-    if (guid == RakNetGUID(-1))
+    if (guid == RakNetGUID(-1)) {
       throw std::runtime_error("User with id " + std::to_string(id) +
                                " doesn't exist");
+    }
 
     peer->Send(reinterpret_cast<const char*>(data), length, MEDIUM_PRIORITY,
                reliable ? RELIABLE_ORDERED : UNRELIABLE, 0, guid, false);
@@ -163,7 +174,6 @@ public:
         break;
       PacketGuard guard(peer.get(), packet);
       try {
-
         Networking::HandlePacketServerside(onPacket, state, packet,
                                            *this->idManager);
       } catch (PublicError& e) {
@@ -176,6 +186,7 @@ public:
   }
 
 private:
+  const std::string password;
   std::unique_ptr<RakPeerInterface> peer;
   std::unique_ptr<SocketDescriptor> socket;
   std::unique_ptr<IdManager> idManager;
@@ -183,15 +194,16 @@ private:
 }
 
 std::shared_ptr<Networking::IClient> Networking::CreateClient(
-  const char* serverIp, unsigned short serverPort, int timeoutMs)
+  const char* serverIp, unsigned short serverPort, int timeoutMs,
+  const char* password)
 {
-  return std::make_shared<Client>(serverIp, serverPort, timeoutMs);
+  return std::make_shared<Client>(serverIp, serverPort, timeoutMs, password);
 }
 
 std::shared_ptr<Networking::IServer> Networking::CreateServer(
-  unsigned short port, unsigned short maxConnections)
+  unsigned short port, unsigned short maxConnections, const char* password)
 {
-  return std::make_shared<Server>(port, maxConnections);
+  return std::make_shared<Server>(port, maxConnections, password);
 }
 
 void Networking::HandlePacketClientside(Networking::IClient::OnPacket onPacket,
@@ -228,13 +240,12 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
     case ID_DISCONNECTION_NOTIFICATION:
     case ID_CONNECTION_LOST:
       userId = idManager.find(packet->guid);
-      if (userId == Networking::InvalidUserId)
-        throw std::runtime_error(
-          static_cast<const std::stringstream&>(
-            std::stringstream()
-            << "Unexpected disconnection for system without userId (guid="
-            << packet->guid.g << ")")
-            .str());
+      if (userId == Networking::InvalidUserId) {
+        std::stringstream ss;
+        ss << "Unexpected disconnection for system without userId (guid="
+           << packet->guid.g << ")";
+        throw std::runtime_error(ss.str());
+      }
       onPacket(state, userId, Networking::PacketType::ServerSideUserDisconnect,
                nullptr, 0);
       idManager.freeId(userId);
