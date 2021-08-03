@@ -66,17 +66,14 @@ public:
   // added for usability
   espm::CompressedFieldsCache& GetCache() const noexcept;
 
-  uint32_t GetWorldOrCell(const RecordHeader* rec) const;
+  // uint32_t GetWorldOrCell(const RecordHeader* rec) const;
 
   // TODO: move in cpp too
-  const GroupStack& GetParentGroups(const RecordHeader* rec) const;
+  const GroupStack& GetParentGroupsEnsured(const RecordHeader* rec) const;
 
 private:
   struct Impl;
   Impl* pImpl;
-
-  const GroupHeader* GetExteriorWorldGroup(const RecordHeader* rec) const;
-  const GroupHeader* GetCellGroup(const RecordHeader* rec) const;
 
   CombineBrowser() = default;
   CombineBrowser(const CombineBrowser&) = delete;

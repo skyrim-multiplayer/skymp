@@ -1,6 +1,17 @@
 #!/bin/sh
 
-[ -d build ] || mkdir -v build
+eecho() {
+  echo "$@" >&2
+}
+
+if [ "`basename "$PWD"`" = "build" ]; then
+  cd ..
+fi
+
+if [ ! -d .git ]; then
+  eecho "This script should be run from either source root or build directory."
+  exit 1
+fi
 
 export VCPKG_DISABLE_METRICS=1
 
@@ -13,13 +24,42 @@ export CMAKE_C_COMPILER="$CC"
 export CMAKE_CXX_COMPILER="$CXX"
 export CMAKE_MAKE_PROGRAM="ninja"
 
-export SKYMP_CMAKE_VARS="-DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_MAKE_PROGRAM=ninja -DSKYRIM_DIR=~/.steam/debian-installation/steamapps/common/Skyrim\ Special\ Edition"
+# export SKYMP_CMAKE_VARS="-DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_MAKE_PROGRAM=ninja -DSKYRIM_DIR=~/.steam/debian-installation/steamapps/common/Skyrim\ Special\ Edition"
 
+# Some build dependencies require some strange stuff.
+# For example, Chakra needs Python 2 installed with `python` name.
+# Some other deps won't work if we can't call clang without exact version.
+# It's better to make compatibility aliases than breaking main system's root.
 export SKYMP_COMPAT_BIN="$PWD/build/skymp_compat/bin"
-mkdir -p "$SKYMP_COMPAT_BIN"
-ln -s "`which python2`" "$SKYMP_COMPAT_BIN/python"
-ln -s "$CC" "$SKYMP_COMPAT_BIN/clang" 
-ln -s "$CXX" "$SKYMP_COMPAT_BIN/clang++"
 export PATH="$SKYMP_COMPAT_BIN:$PATH"
 
-echo Variables set. Should be sourced.
+if [ ! -d build ]; then
+  mkdir -v build
+fi
+
+if [ ! -d "$SKYMP_COMPAT_BIN" ]; then
+  mkdir -pv "$SKYMP_COMPAT_BIN"
+  ln -s "`which python2`" "$SKYMP_COMPAT_BIN/python"
+  ln -s "$CC" "$SKYMP_COMPAT_BIN/clang" 
+  ln -s "$CXX" "$SKYMP_COMPAT_BIN/clang++"
+
+  echo "Set up compatibility path for build."
+fi
+
+if [ "$1" = "--configure" ]; then
+  shift && \
+    cd build && \
+    exec cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
+elif [ "$1" = "--build" ]; then
+  cd build && \
+    exec cmake --build . --config Debug
+elif [ "$1" = "--clean" ]; then
+  exec rm -rf build/
+else
+  eecho "Usage:"
+  eecho "  ./build.sh --configure <cmake args...>"
+  eecho "OR"
+  eecho "  ./build.sh --build"
+  eecho "OR"
+  eecho "  ./build.sh --clean"
+fi

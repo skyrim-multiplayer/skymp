@@ -57,15 +57,12 @@ public:
                                                           int16_t cellX,
                                                           int16_t cellY) const;
 
-  const GroupStack* GetParentGroups(const RecordHeader* rec) const;
+  const GroupStack* GetParentGroupsOptional(const RecordHeader* rec) const;
+  const GroupStack& GetParentGroupsEnsured(const RecordHeader* rec) const;
 
 private:
   struct Impl;
   Impl* const pImpl;
-
-  uint32_t GetWorldOrCell(const RecordHeader* rec) const;
-  const GroupHeader* GetExteriorWorldGroup(const RecordHeader* rec) const;
-  const GroupHeader* GetCellGroup(const RecordHeader* rec) const;
 
   bool ReadAny(const GroupStack* parentGrStack);
 

@@ -9,6 +9,7 @@
 #include "PapyrusObjectReference.h"
 #include "Primitive.h"
 #include "Reader.h"
+#include "Misc.h"  // ???
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
@@ -947,7 +948,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         throw std::runtime_error(
           "No destination found for this teleport door");
 
-      auto teleportWorldOrCell = loader.GetBrowser().GetWorldOrCell(destinationRecord);
+      auto teleportWorldOrCell = GetWorldOrCell(loader.GetBrowser(), destinationRecord);
 
       static const auto g_pi = std::acos(-1.f);
       const NiPoint3 rot = { teleport->rotRadians[0] / g_pi * 180,

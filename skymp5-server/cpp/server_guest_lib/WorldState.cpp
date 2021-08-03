@@ -16,6 +16,7 @@
 #include "PapyrusSkymp.h"
 #include "PapyrusUtility.h"
 #include "Reader.h"
+#include "Misc.h"  // ???
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include <algorithm>
@@ -373,7 +374,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
-  uint32_t worldOrCell = br.GetWorldOrCell(record);
+  uint32_t worldOrCell = GetWorldOrCell(br, record);
   if (!worldOrCell) {
     logger->info("Anomally: refr without world/cell");
     return false;

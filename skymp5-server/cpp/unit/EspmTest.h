@@ -338,7 +338,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   REQUIRE(form.rec);
 
   std::vector<std::string> parentGroupTypeLabels;
-  for (const auto groupPtr : br.GetParentGroups(form.rec)) {
+  for (const auto groupPtr : br.GetParentGroupsEnsured(form.rec)) {
     parentGroupTypeLabels.emplace_back(
       ToString(groupPtr->GetGroupType()) + ":" +
       std::to_string(groupPtr->GetGroupLabelAsUint()));
@@ -351,9 +351,10 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
             "CELL_PERSISTENT_CHILDREN:107120",
           });
 
-  const auto root = br.GetParentGroups(form.rec)[0];
+  const auto root = br.GetParentGroupsEnsured(form.rec)[0];
   REQUIRE(root);
   std::vector<uint32_t> records;
+  // not recursive!
   root->ForEachRecordRecursive([&records](const espm::RecordHeader* rec) {
     records.emplace_back(rec->GetId());
     return false;

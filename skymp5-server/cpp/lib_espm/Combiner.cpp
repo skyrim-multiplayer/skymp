@@ -192,54 +192,11 @@ espm::CompressedFieldsCache& espm::CombineBrowser::GetCache() const noexcept
 
 namespace espm {
 
-uint32_t CombineBrowser::GetWorldOrCell(const RecordHeader* rec) const
-{
-  const auto world = GetExteriorWorldGroup(rec);
-  const auto cell = GetCellGroup(rec);
-
-  uint32_t worldOrCell;
-
-  if (!world || !world->GetParentWRLD(worldOrCell))
-    worldOrCell = 0;
-
-  if (!worldOrCell) {
-    if (!cell->GetParentCELL(worldOrCell)) {
-      return 0;
-    }
-  }
-
-  return worldOrCell;
-}
-
-const GroupHeader* CombineBrowser::GetExteriorWorldGroup(const RecordHeader* rec) const
-{
-  for (auto gr : GetParentGroups(rec)) {
-    if (gr->GetGroupType() == GroupType::WORLD_CHILDREN)
-      return gr;
-  }
-  return nullptr;
-}
-
-const GroupHeader* CombineBrowser::GetCellGroup(const RecordHeader* rec) const
-{
-  for (auto gr : GetParentGroups(rec)) {
-    auto grType = gr->GetGroupType();
-    if (grType != GroupType::CELL_CHILDREN &&
-        grType != GroupType::CELL_PERSISTENT_CHILDREN &&
-        grType != GroupType::CELL_TEMPORARY_CHILDREN &&
-        grType != GroupType::CELL_VISIBLE_DISTANT_CHILDREN) {
-      continue;
-    }
-    return gr;
-  }
-  return nullptr;
-}
-
-const GroupStack& CombineBrowser::GetParentGroups(
+const GroupStack& CombineBrowser::GetParentGroupsEnsured(
   const RecordHeader* rec) const
 {
   for (size_t i = 0; i < pImpl->numSources; ++i) {
-    const auto result = pImpl->sources[i].br->GetParentGroups(rec);
+    const auto result = pImpl->sources[i].br->GetParentGroupsOptional(rec);
     if (result) {
       return *result;
     }

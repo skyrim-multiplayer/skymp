@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "espm.h"
+#include "Misc.h"
 
 static_assert(sizeof(char) == 1);
 
@@ -204,6 +205,7 @@ bool espm::GroupHeader::GetParentDIAL(uint32_t& outId) const noexcept
 void espm::GroupHeader::ForEachRecordRecursive(
   const RecordVisitor& f) const noexcept
 {
+  // take subs?
   const auto grData = (const GroupDataInternal*)GroupDataPtrStorage();
   for (const void* sub : grData->subs) {
     if (!memcmp(sub, "GRUP", 4)) {
@@ -519,7 +521,8 @@ struct espm::Browser::Impl
 
   CompressedFieldsCache dummyCache;
 
-  const GroupStack* GetParentGroups(const RecordHeader* rec) const {
+  // may return null
+  const GroupStack* GetParentGroupsOptional(const RecordHeader* rec) const {
     const auto it = groupStackByRecordPtr.find(rec);
     if (it == groupStackByRecordPtr.end()) {
       return nullptr;
@@ -583,52 +586,16 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsAtPos(
 
 namespace espm {
 
-const GroupStack* Browser::GetParentGroups(const RecordHeader* rec) const {
-  return pImpl->GetParentGroups(rec);
+const GroupStack* Browser::GetParentGroupsOptional(const RecordHeader* rec) const {
+  return pImpl->GetParentGroupsOptional(rec);
 }
 
-uint32_t Browser::GetWorldOrCell(const RecordHeader* rec) const
-{
-  const auto world = GetExteriorWorldGroup(rec);
-  const auto cell = GetCellGroup(rec);
-
-  uint32_t worldOrCell;
-
-  if (!world || !world->GetParentWRLD(worldOrCell))
-    worldOrCell = 0;
-
-  if (!worldOrCell) {
-    if (!cell->GetParentCELL(worldOrCell)) {
-      return 0;
-    }
+const GroupStack& Browser::GetParentGroupsEnsured(const RecordHeader* rec) const {
+  const auto opt = GetParentGroupsOptional(rec);
+  if (!opt) {
+    throw std::runtime_error("espm::Browser: no parent groups for record");
   }
-
-  return worldOrCell;
-}
-
-const GroupHeader* Browser::GetExteriorWorldGroup(
-  const RecordHeader* rec) const
-{
-  for (auto gr : *GetParentGroups(rec)) {
-    if (gr->GetGroupType() == GroupType::WORLD_CHILDREN)
-      return gr;
-  }
-  return nullptr;
-}
-
-const GroupHeader* Browser::GetCellGroup(const RecordHeader* rec) const
-{
-  for (auto gr : *GetParentGroups(rec)) {
-    auto grType = gr->GetGroupType();
-    if (grType != GroupType::CELL_CHILDREN &&
-        grType != GroupType::CELL_PERSISTENT_CHILDREN &&
-        grType != GroupType::CELL_TEMPORARY_CHILDREN &&
-        grType != GroupType::CELL_VISIBLE_DISTANT_CHILDREN) {
-      continue;
-    }
-    return gr;
-  }
-  return nullptr;
+  return *opt;
 }
 
 }
@@ -683,7 +650,7 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
       if (data.loc) {
         const int16_t x = static_cast<int16_t>(data.loc->pos[0] / 4096);
         const int16_t y = static_cast<int16_t>(data.loc->pos[1] / 4096);
-        const auto cellOrWorld = GetWorldOrCell(refr);
+        const auto cellOrWorld = GetWorldOrCell(*this, refr);
         const RefrKey refrKey(cellOrWorld, x, y);
         pImpl->cellOrWorldChildren[refrKey].push_back(refr);
       }
