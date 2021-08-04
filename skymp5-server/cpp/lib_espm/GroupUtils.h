@@ -5,7 +5,9 @@
 namespace espm {
 
 template <class TBrowser>
-const GroupHeader* GetExteriorWorldGroup(const TBrowser& browser, const RecordHeader* rec) {
+const GroupHeader* GetExteriorWorldGroup(const TBrowser& browser,
+                                         const RecordHeader* rec)
+{
   for (auto gr : browser.GetParentGroupsEnsured(rec)) {
     if (gr->GetGroupType() == GroupType::WORLD_CHILDREN) {
       return gr;
@@ -15,7 +17,9 @@ const GroupHeader* GetExteriorWorldGroup(const TBrowser& browser, const RecordHe
 }
 
 template <class TBrowser>
-const GroupHeader* GetCellGroup(const TBrowser& browser, const RecordHeader* rec) {
+const GroupHeader* GetCellGroup(const TBrowser& browser,
+                                const RecordHeader* rec)
+{
   for (auto gr : browser.GetParentGroupsEnsured(rec)) {
     auto grType = gr->GetGroupType();
     if (grType != GroupType::CELL_CHILDREN &&
@@ -30,7 +34,8 @@ const GroupHeader* GetCellGroup(const TBrowser& browser, const RecordHeader* rec
 }
 
 template <class TBrowser>
-uint32_t GetWorldOrCell(const TBrowser& browser, const RecordHeader* rec) {
+uint32_t GetWorldOrCell(const TBrowser& browser, const RecordHeader* rec)
+{
   const auto world = GetExteriorWorldGroup(browser, rec);
   const auto cell = GetCellGroup(browser, rec);
 
@@ -52,10 +57,8 @@ uint32_t GetWorldOrCell(const TBrowser& browser, const RecordHeader* rec) {
 using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
 
 template <class TBrowser>
-void ForEachChildRecord(
-  const TBrowser& browser,
-  const GroupHeader* group,
-  const RecordVisitor& f)
+void ForEachChildRecord(const TBrowser& browser, const GroupHeader* group,
+                        const RecordVisitor& f)
 {
   for (const void* sub : browser.GetSubsEnsured(group)) {
     if (!memcmp(sub, "GRUP", 4)) {

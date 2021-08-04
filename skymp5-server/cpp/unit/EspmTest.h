@@ -1,6 +1,6 @@
 #include "TestUtils.hpp"
-#include <Loader.h>
 #include <GroupUtils.h>
+#include <Loader.h>
 #include <catch2/catch.hpp>
 
 extern espm::Loader l;
@@ -355,10 +355,11 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   const auto root = br.GetParentGroupsEnsured(form.rec)[0];
   REQUIRE(root);
   std::vector<uint32_t> records;
-  espm::ForEachChildRecord(br, root, [&records](const espm::RecordHeader* rec) {
-    records.emplace_back(rec->GetId());
-    return false;
-  });
+  espm::ForEachChildRecord(br, root,
+                           [&records](const espm::RecordHeader* rec) {
+                             records.emplace_back(rec->GetId());
+                             return false;
+                           });
   REQUIRE(records ==
           std::vector<uint32_t>{
             0x3c,    0x1691d, 0x16bb4, 0x16d71, 0x1a26f, 0x1b44a, 0x1cdd3,

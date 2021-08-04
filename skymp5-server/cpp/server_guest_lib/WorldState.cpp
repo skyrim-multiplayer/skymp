@@ -1,5 +1,6 @@
 #include "WorldState.h"
 #include "FormCallbacks.h"
+#include "GroupUtils.h"
 #include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
@@ -16,7 +17,6 @@
 #include "PapyrusSkymp.h"
 #include "PapyrusUtility.h"
 #include "Reader.h"
-#include "GroupUtils.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include <algorithm>

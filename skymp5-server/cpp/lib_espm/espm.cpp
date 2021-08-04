@@ -2,12 +2,12 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <sparsepp/spp.h>
-#include <iostream>
 
-#include "espm.h"
 #include "GroupUtils.h"
+#include "espm.h"
 
 static_assert(sizeof(char) == 1);
 
@@ -399,7 +399,7 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
   }
 }
 
-}  // namespace
+} // namespace
 
 void espm::RecordHeader::GetScriptData(
   ScriptData* out,
@@ -478,8 +478,10 @@ struct espm::Browser::Impl
   spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>> navmeshes;
   spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>>
     cellOrWorldChildren;
-  spp::sparse_hash_map<const GroupHeader*, const GroupDataInternal*> groupDataByGroupPtr;
-  spp::sparse_hash_map<const RecordHeader*, const GroupStack*> groupStackByRecordPtr;
+  spp::sparse_hash_map<const GroupHeader*, const GroupDataInternal*>
+    groupDataByGroupPtr;
+  spp::sparse_hash_map<const RecordHeader*, const GroupStack*>
+    groupStackByRecordPtr;
   std::vector<RecordHeader*> objectReferences;
   std::vector<RecordHeader*> constructibleObjects;
 
@@ -490,7 +492,8 @@ struct espm::Browser::Impl
   CompressedFieldsCache dummyCache;
 
   // may return null
-  const GroupStack* GetParentGroupsOptional(const RecordHeader* rec) const {
+  const GroupStack* GetParentGroupsOptional(const RecordHeader* rec) const
+  {
     const auto it = groupStackByRecordPtr.find(rec);
     if (it == groupStackByRecordPtr.end()) {
       return nullptr;
@@ -499,7 +502,8 @@ struct espm::Browser::Impl
   }
 
   // may return null
-  const std::vector<void*>* GetSubsOptional(const GroupHeader* rec) const {
+  const std::vector<void*>* GetSubsOptional(const GroupHeader* rec) const
+  {
     const auto it = groupDataByGroupPtr.find(rec);
     if (it == groupDataByGroupPtr.end()) {
       return nullptr;
@@ -558,7 +562,8 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsByType(
 const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsAtPos(
   uint32_t cellOrWorld, int16_t cellX, int16_t cellY) const
 {
-  const auto it = pImpl->cellOrWorldChildren.find(RefrKey(cellOrWorld, cellX, cellY));
+  const auto it =
+    pImpl->cellOrWorldChildren.find(RefrKey(cellOrWorld, cellX, cellY));
   if (it == pImpl->cellOrWorldChildren.end()) {
     const static std::vector<espm::RecordHeader*> kDefaultValue{};
     return kDefaultValue;
@@ -568,11 +573,15 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsAtPos(
 
 namespace espm {
 
-const GroupStack* Browser::GetParentGroupsOptional(const RecordHeader* rec) const {
+const GroupStack* Browser::GetParentGroupsOptional(
+  const RecordHeader* rec) const
+{
   return pImpl->GetParentGroupsOptional(rec);
 }
 
-const GroupStack& Browser::GetParentGroupsEnsured(const RecordHeader* rec) const {
+const GroupStack& Browser::GetParentGroupsEnsured(
+  const RecordHeader* rec) const
+{
   const auto opt = GetParentGroupsOptional(rec);
   if (!opt) {
     throw std::runtime_error("espm::Browser: no parent groups for record");
@@ -580,11 +589,15 @@ const GroupStack& Browser::GetParentGroupsEnsured(const RecordHeader* rec) const
   return *opt;
 }
 
-const std::vector<void*>* Browser::GetSubsOptional(const GroupHeader* group) const {
+const std::vector<void*>* Browser::GetSubsOptional(
+  const GroupHeader* group) const
+{
   return pImpl->GetSubsOptional(group);
 }
 
-const std::vector<void*>& Browser::GetSubsEnsured(const GroupHeader* group) const {
+const std::vector<void*>& Browser::GetSubsEnsured(
+  const GroupHeader* group) const
+{
   const auto opt = GetSubsOptional(group);
   if (!opt) {
     throw std::runtime_error("espm::Browser: no subs for record");
@@ -592,7 +605,7 @@ const std::vector<void*>& Browser::GetSubsEnsured(const GroupHeader* group) cons
   return *opt;
 }
 
-}  // namespace espm
+} // namespace espm
 
 bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
 {
@@ -629,7 +642,8 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
     pImpl->grStack.pop_back();
   } else {
     // Read record header
-    const auto recHeader = reinterpret_cast<RecordHeader*>(pImpl->buf + pImpl->pos);
+    const auto recHeader =
+      reinterpret_cast<RecordHeader*>(pImpl->buf + pImpl->pos);
     pImpl->groupStackByRecordPtr.emplace(recHeader, parentGrStack);
 
     pImpl->recById[recHeader->id] = recHeader;
