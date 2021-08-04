@@ -66,9 +66,6 @@ public:
   // added for usability
   espm::CompressedFieldsCache& GetCache() const noexcept;
 
-  // uint32_t GetWorldOrCell(const RecordHeader* rec) const;
-
-  // TODO: move in cpp too
   const GroupStack& GetParentGroupsEnsured(const RecordHeader* rec) const;
   const std::vector<void*>& GetSubsEnsured(const GroupHeader* group) const;
 
