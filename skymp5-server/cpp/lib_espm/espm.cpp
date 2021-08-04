@@ -243,7 +243,6 @@ public:
         throw std::runtime_error(
           "CompressedFieldsCache is required to iterate through compressed "
           "fields");
-        return;
       }
 
       auto& decompressedFieldsHolder =
@@ -255,14 +254,9 @@ public:
 
         auto out = std::make_shared<std::vector<uint8_t>>();
         out->resize(*decompSize);
-        try {
-          const auto inSize = rec->GetFieldsSizeSum() - sizeof(uint32_t);
-          ZlibDecompress(ptr, inSize, out->data(), out->size());
-        } catch (const std::exception& e) {
-          throw std::runtime_error(std::string{ "ZlibDecompress error: " } +
-                                   e.what());
-          return;
-        }
+
+        const auto inSize = rec->GetFieldsSizeSum() - sizeof(uint32_t);
+        ZlibDecompress(ptr, inSize, out->data(), out->size());
 
         decompressedFieldsHolder = out;
       }
@@ -593,7 +587,7 @@ const std::vector<void*>& Browser::GetSubsEnsured(const GroupHeader* group) cons
   return *opt;
 }
 
-}
+}  // namespace espm
 
 bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
 {
@@ -601,12 +595,13 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
     return false;
   }
 
-  std::string pType(pImpl->buf + pImpl->pos, 4);
+  char* pType = pImpl->buf + pImpl->pos;
   pImpl->pos += 4;
   uint32_t* pDataSize = (uint32_t*)(pImpl->buf + pImpl->pos);
   pImpl->pos += 4;
 
-  if (pType == "GRUP") {
+  const bool isGrup = !memcmp(pType, "GRUP", 4);
+  if (isGrup) {
     // Read group header
     const auto grHeader = (GroupHeader*)(pImpl->buf + pImpl->pos);
 
