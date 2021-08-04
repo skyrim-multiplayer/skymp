@@ -479,7 +479,7 @@ struct espm::Browser::Impl
   spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>>
     cellOrWorldChildren;
   spp::sparse_hash_map<const GroupHeader*, const GroupDataInternal*> groupDataByGroupPtr;
-  std::unordered_map<const RecordHeader*, const GroupStack*> groupStackByRecordPtr;
+  spp::sparse_hash_map<const RecordHeader*, const GroupStack*> groupStackByRecordPtr;
   std::vector<RecordHeader*> objectReferences;
   std::vector<RecordHeader*> constructibleObjects;
 
