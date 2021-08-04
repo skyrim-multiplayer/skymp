@@ -558,7 +558,12 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsByType(
 const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsAtPos(
   uint32_t cellOrWorld, int16_t cellX, int16_t cellY) const
 {
-  return pImpl->cellOrWorldChildren[RefrKey(cellOrWorld, cellX, cellY)];
+  const auto it = pImpl->cellOrWorldChildren.find(RefrKey(cellOrWorld, cellX, cellY));
+  if (it == pImpl->cellOrWorldChildren.end()) {
+    const static std::vector<espm::RecordHeader*> kDefaultValue{};
+    return kDefaultValue;
+  }
+  return it->second;
 }
 
 namespace espm {
