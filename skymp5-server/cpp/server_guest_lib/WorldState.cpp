@@ -16,7 +16,7 @@
 #include "PapyrusSkymp.h"
 #include "PapyrusUtility.h"
 #include "Reader.h"
-#include "Misc.h"  // ???
+#include "GroupUtils.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include <algorithm>

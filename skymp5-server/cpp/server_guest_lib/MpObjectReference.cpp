@@ -9,7 +9,7 @@
 #include "PapyrusObjectReference.h"
 #include "Primitive.h"
 #include "Reader.h"
-#include "Misc.h"  // ???
+#include "GroupUtils.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
