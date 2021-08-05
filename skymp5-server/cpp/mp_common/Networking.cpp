@@ -1,5 +1,4 @@
 #include "Networking.h"
-#include "Config.h"
 #include "Exceptions.h"
 #include "IdManager.h"
 #include "RakNet.h"
@@ -59,12 +58,13 @@ public:
     const auto res = peer->Startup(1, &*socket, 1);
     if (res != StartupResult::RAKNET_STARTED) {
       throw std::runtime_error("Peer startup failed with code " +
-                               std::to_string((int)res));
+                               std::to_string(static_cast<int>(res)));
     }
-    const auto conRes = peer->Connect(ip.data(), port, password.data(), 0);
+    const auto conRes = peer->Connect(ip.data(), port, password.data(),
+                                      static_cast<int>(password.size()));
     if (conRes != ConnectionAttemptResult::CONNECTION_ATTEMPT_STARTED) {
       throw std::runtime_error("Peer connect failed with code " +
-                               std::to_string((int)conRes));
+                               std::to_string(static_cast<int>(conRes)));
     }
     peer->SetTimeoutTime(timeoutMs_, {});
   }
@@ -101,8 +101,9 @@ public:
       }
 
       if (packet->data[0] == ID_CONNECTION_LOST ||
-          packet->data[0] == ID_DISCONNECTION_NOTIFICATION)
+          packet->data[0] == ID_DISCONNECTION_NOTIFICATION) {
         isConnected = false;
+      }
 
       HandlePacketClientside(onPacket, state, packet);
     }

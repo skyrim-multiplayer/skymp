@@ -3,6 +3,18 @@ enable_testing()
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
+file(READ ${CMAKE_SOURCE_DIR}/.git/HEAD GIT_HEAD)
+if(GIT_HEAD MATCHES "^ref: .*")
+  string(SUBSTRING "${GIT_HEAD}" 5 -1 GIT_REF_TMP)
+  string(STRIP "${GIT_REF_TMP}" GIT_REF_TMP)
+  file(READ "${CMAKE_SOURCE_DIR}/.git/${GIT_REF_TMP}" GIT_COMMIT_ID)
+  string(STRIP "${GIT_COMMIT_ID}" GIT_COMMIT_ID)
+  get_filename_component(GIT_BRANCH "${GIT_REF_TMP}" NAME)
+  unset(GIT_REF_TMP)
+else()
+  message(FATAL_ERROR "Must be on a branch, not in detached state")
+endif()
+
 #
 # MpClientPlugin
 #
@@ -60,7 +72,11 @@ target_link_libraries(unit PUBLIC espm)
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/mp_common/*")
 list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(mp_common STATIC ${src})
-target_compile_definitions(mp_common PUBLIC MAX_PLAYERS=1000)
+target_compile_definitions(mp_common PUBLIC 
+  MAX_PLAYERS=1000
+  GIT_BRANCH=\"${GIT_BRANCH}\"
+  GIT_COMMIT_ID=\"${GIT_COMMIT_ID}\"
+)
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common")
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
 apply_default_settings(TARGETS mp_common)
