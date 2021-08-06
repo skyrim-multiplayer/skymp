@@ -3,16 +3,15 @@ enable_testing()
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
-file(READ ${CMAKE_SOURCE_DIR}/.git/HEAD GIT_HEAD)
-if(GIT_HEAD MATCHES "^ref: .*")
-  string(SUBSTRING "${GIT_HEAD}" 5 -1 GIT_REF_TMP)
-  string(STRIP "${GIT_REF_TMP}" GIT_REF_TMP)
-  file(READ "${CMAKE_SOURCE_DIR}/.git/${GIT_REF_TMP}" GIT_COMMIT_ID)
-  string(STRIP "${GIT_COMMIT_ID}" GIT_COMMIT_ID)
-  get_filename_component(GIT_BRANCH "${GIT_REF_TMP}" NAME)
-  unset(GIT_REF_TMP)
-else()
-  message(FATAL_ERROR "Must be on a branch, not in detached state")
+execute_process(
+  COMMAND git rev-parse HEAD
+  OUTPUT_VARIABLE GIT_COMMIT_ID
+  RESULT_VARIABLE GIT_RESULT
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+string(STRIP "${GIT_COMMIT_ID}" GIT_COMMIT_ID)
+if(NOT "${GIT_RESULT}" STREQUAL "0")
+  message(WARNING "'git rev-parse HEAD' exited with '${GIT_RESULT}'")
 endif()
 
 #
