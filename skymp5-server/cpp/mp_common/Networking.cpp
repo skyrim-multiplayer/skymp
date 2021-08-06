@@ -2,6 +2,7 @@
 #include "Exceptions.h"
 #include "IdManager.h"
 #include "RakNet.h"
+#include <fmt/format.h>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -242,10 +243,9 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
     case ID_CONNECTION_LOST:
       userId = idManager.find(packet->guid);
       if (userId == Networking::InvalidUserId) {
-        std::stringstream ss;
-        ss << "Unexpected disconnection for system without userId (guid="
-           << packet->guid.g << ")";
-        throw std::runtime_error(ss.str());
+        throw std::runtime_error(fmt::format(
+          "Unexpected disconnection for system without userId (guid={})",
+          packet->guid.g));
       }
       onPacket(state, userId, Networking::PacketType::ServerSideUserDisconnect,
                nullptr, 0);
