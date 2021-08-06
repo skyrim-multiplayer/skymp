@@ -73,7 +73,6 @@ list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(mp_common STATIC ${src})
 target_compile_definitions(mp_common PUBLIC 
   MAX_PLAYERS=1000
-  GIT_BRANCH=\"${GIT_BRANCH}\"
   GIT_COMMIT_ID=\"${GIT_COMMIT_ID}\"
 )
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common")
