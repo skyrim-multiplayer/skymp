@@ -3,12 +3,7 @@
 #include <filesystem>
 
 #ifdef WIN32
-//#include <fileapi.h>
-//#include <memoryapi.h>
-
 #  include <Windows.h>
-
-//#include <minwinbase.h>
 #endif
 
 #include "../Loader.h"

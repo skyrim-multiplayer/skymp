@@ -2,12 +2,7 @@
 
 #include <fmt/format.h>
 
-#ifdef WIN32
-#  include <Windows.h>
-//#include <fileapi.h>
-//#include <memoryapi.h>
-//#include <WinBase.h>
-#else
+#ifndef WIN32
 // Linux
 #  include <fcntl.h>
 #  include <sys/mman.h>
