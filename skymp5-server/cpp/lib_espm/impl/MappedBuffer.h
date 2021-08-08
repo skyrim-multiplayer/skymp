@@ -2,6 +2,15 @@
 
 #include <filesystem>
 
+#ifdef WIN32
+//#include <fileapi.h>
+//#include <memoryapi.h>
+
+#include <Windows.h>
+
+//#include <minwinbase.h>
+#endif
+
 #include "../Loader.h"
 #include "IBuffer.h"
 
@@ -19,7 +28,13 @@ public:
   size_t GetLength() override;
 
 private:
+#ifdef WIN32
+  HANDLE fileHandle_ = nullptr;
+  HANDLE mapHandle_ = nullptr;
+  LPVOID viewPtr_ = nullptr;
+#else
   int fd_;
+#endif
   char* data_;
   size_t size_;
 };

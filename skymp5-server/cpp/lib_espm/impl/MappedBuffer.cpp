@@ -3,6 +3,10 @@
 #include <fmt/format.h>
 
 #ifdef WIN32
+#include <Windows.h>
+//#include <fileapi.h>
+//#include <memoryapi.h>
+//#include <WinBase.h>
 #else
 // Linux
 #include <assert.h>
@@ -18,6 +22,29 @@ namespace espm::impl {
 MappedBuffer::MappedBuffer(const fs::path& path)
 {
   size_ = fs::file_size(path);
+#ifdef WIN32
+  fileHandle_ = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
+                           NULL, OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
+  if (!fileHandle_) {
+    // generic vs system?
+    throw std::system_error(std::error_code(GetLastError(), std::system_category()), "CreateFileW failed");
+  }
+
+  mapHandle_ = CreateFileMapping(fileHandle_, NULL, PAGE_READONLY, 0, 0, NULL);
+  if (!mapHandle_) {
+    throw std::system_error(
+      std::error_code(GetLastError(), std::system_category()),
+      "CreateFileMapping failed");
+  }
+
+  viewPtr_ = MapViewOfFileEx(mapHandle_, FILE_MAP_READ, 0, 0, 0, NULL);
+  if (!mapHandle_) {
+    throw std::system_error(
+      std::error_code(GetLastError(), std::system_category()),
+      "CreateFileMapping failed");
+  }
+  data_ = static_cast<char*>(viewPtr_);
+#else
   fd_ = open(path.c_str(), O_RDONLY);
   if (fd_ == -1) {
     throw std::system_error(errno, std::generic_category(),
@@ -29,14 +56,30 @@ MappedBuffer::MappedBuffer(const fs::path& path)
                             fmt::format("Can't map {}", path.string()));
   }
   data_ = static_cast<char*>(mmapResult);
+#endif
 }
 
 MappedBuffer::~MappedBuffer()
 {
+#ifdef WIN32
+  if (viewPtr_) {
+    UnmapViewOfFile(viewPtr_);
+  }
+  if (mapHandle_) {
+    CloseHandle(mapHandle_);
+  }
+  if (fileHandle_) {
+    CloseHandle(fileHandle_);
+  }
+#else
+  if (!data) {
+    return;
+  }
   int result = munmap(data_, size_);
   if (result) {
     abort();
   }
+#endif
 }
 
 char* MappedBuffer::GetData() { return data_; }
