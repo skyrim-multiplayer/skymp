@@ -12,14 +12,29 @@ namespace fs = std::filesystem;
 #include "espm.h"
 
 namespace espm {
+
+namespace impl {
+
+class IBuffer {
+public:
+  virtual ~IBuffer() = default;
+
+  virtual char* GetData() = 0;
+  virtual size_t GetLength() = 0;
+};
+
+}  // namespace impl
+
 class Loader
 {
 public:
-  class LoadError : public std::logic_error
+  class LoadError : public std::runtime_error
   {
   public:
+    using std::runtime_error::runtime_error;
+
     LoadError(std::stringstream& ss)
-      : logic_error(ss.str()){};
+      : runtime_error(ss.str()){};
   };
 
   using OnProgress = std::function<void(std::string fileName, float readDur,
@@ -44,31 +59,23 @@ public:
         err << p.string() << " doesn't exists";
         throw LoadError(err);
       }
-      std::ifstream f(p.string(), std::ios::binary);
-      const auto size = fs::file_size(p);
 
       const clock_t was = clock();
+      entry.buffer = MakeBuffer(p);
+      entry.fileName = p.filename().string();
+      entry.readDuration = float(clock() - was) / CLOCKS_PER_SEC;
+      entry.size = entry.buffer->GetLength();
 
-      entry.buffer.reset(new std::vector<char>((size_t)size));
-      if (f.read(entry.buffer->data(), size)) {
-        entry.fileName = p.filename().string();
-        entry.readDuration = float(clock() - was) / CLOCKS_PER_SEC;
-        entry.size = size;
-      } else {
-        std::stringstream err;
-        err << "Couldn't read" << p << std::endl;
-        throw LoadError(err);
-      }
       const clock_t was1 = clock();
       entry.browser.reset(
-        new espm::Browser(entry.buffer->data(), entry.buffer->size()));
+        new espm::Browser(entry.buffer->GetData(), entry.buffer->GetLength()));
       entry.parseDuration = float(clock() - was1) / CLOCKS_PER_SEC;
       if (onProgress) {
         onProgress(entry.fileName.string(), entry.readDuration,
                    entry.parseDuration, entry.size);
       }
     }
-    combiner.reset(new espm::Combiner);
+    combiner = std::make_unique<espm::Combiner>();
     for (auto& entry : entries) {
       const auto fileName = entry.fileName.string();
       combiner->AddSource(entry.browser.get(), fileName.c_str());
@@ -108,9 +115,11 @@ private:
     return res;
   }
 
+  std::unique_ptr<impl::IBuffer> MakeBuffer(const fs::path& filePath) const;
+
   struct Entry
   {
-    std::unique_ptr<std::vector<char>> buffer;
+    std::unique_ptr<impl::IBuffer> buffer;
     std::unique_ptr<espm::Browser> browser;
 
     uintmax_t size = 0;
@@ -124,4 +133,5 @@ private:
   std::unique_ptr<espm::CombineBrowser> combineBrowser;
   std::vector<fs::path> filePaths;
 };
-}
+
+}  // namespace espm
