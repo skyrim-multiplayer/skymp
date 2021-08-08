@@ -1,9 +1,13 @@
 #pragma once
+
+#include <cassert>
 #include <cstdint>
-#include <espm.h>
 #include <memory>
 #include <stdexcept>
 #include <string>
+
+#include "GroupUtils.h"
+#include "espm.h"
 
 namespace espm {
 class Browser;
@@ -105,20 +109,21 @@ private:
 
 // Helpers/utilities
 
-/*
-inline const RecordHeader* FindInGroup(const BrowserInfo& brInf,
-                                       const GroupHeader* gr,
+inline const RecordHeader* FindInGroup(const BrowserInfo& browserInfo,
+                                       const GroupHeader* group,
                                        uint32_t globFormId)
 {
   const RecordHeader* res = nullptr;
-  ForEachChildRecord(br, gr, [&](const espm::RecordHeader* rec) {
-    if (brInf.ToGlobalId(rec->GetId()) != globFormId)
-      return false;
-    res = rec;
-    return true;
-  });
+  assert(browserInfo.parent);
+  espm::ForEachChildRecord(
+    *browserInfo.parent, group, [&](const espm::RecordHeader* rec) {
+      if (browserInfo.ToGlobalId(rec->GetId()) != globFormId) {
+        return false;
+      }
+      res = rec;
+      return true;
+    });
   return res;
 }
-*/
 
 }
