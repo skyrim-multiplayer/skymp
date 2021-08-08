@@ -31,7 +31,7 @@ MappedBuffer::MappedBuffer(const fs::path& path)
       "CreateFileMapping failed");
   }
 
-  viewPtr_ = MapViewOfFileEx(mapHandle_, FILE_MAP_READ, 0, 0, 0, NULL);
+  viewPtr_ = MapViewOfFile(mapHandle_, FILE_MAP_READ, 0, 0, 0);
   if (!mapHandle_) {
     throw std::system_error(
       std::error_code(GetLastError(), std::system_category()),
