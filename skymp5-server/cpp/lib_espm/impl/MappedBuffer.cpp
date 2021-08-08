@@ -3,6 +3,8 @@
 #include <fmt/format.h>
 
 #ifndef WIN32
+#  include <iostream>
+
 // Linux
 #  include <fcntl.h>
 #  include <sys/mman.h>
@@ -69,19 +71,16 @@ MappedBuffer::~MappedBuffer()
   if (data_) {
     int result = munmap(data_, size_);
     if (result == -1) {
-      // exception will cause abort, but it's probably ok, because if we can't
-      // unmap a file, this is a strange situation
-      throw std::system_error(errno, std::generic_category(),
-                              "can't close file");
+      // XXX: no concurrency issues with strerror?
+      std::cerr << "[espm] can't unmap file: " << strerror(errno) << std::endl;
+      std::abort();
     }
   }
   if (fd_ != -1) {
     int result = close(fd_);
     if (result == -1) {
-      // exception will cause abort, but it's probably ok, because if we can't
-      // close a file, this is a strange situation
-      throw std::system_error(errno, std::generic_category(),
-                              "can't close file");
+      std::cerr << "[espm] can't close file: " << strerror(errno) << std::endl;
+      std::abort();
     }
   }
 #endif
