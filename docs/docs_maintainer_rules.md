@@ -1,6 +1,10 @@
-# Repository
+# Maintainer Rules
 
 Maintainers are responsible for enforcing the rules in this document. So, if you just want to contribute you may have no idea about what's going on in this document.
+
+## Messaging Protocol
+
+If PR changes messaging protocol, make sure that the author has updated `g_messagingProtocolVersion` in `skymp5-server/cpp/mp_common/Config.h`.
 
 ## Tree
 
