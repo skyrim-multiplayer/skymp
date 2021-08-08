@@ -15,7 +15,8 @@ namespace espm {
 
 namespace impl {
 
-class IBuffer {
+class IBuffer
+{
 public:
   virtual ~IBuffer() = default;
 
@@ -23,7 +24,7 @@ public:
   virtual size_t GetLength() = 0;
 };
 
-}  // namespace impl
+} // namespace impl
 
 class Loader
 {
@@ -134,4 +135,4 @@ private:
   std::vector<fs::path> filePaths;
 };
 
-}  // namespace espm
+} // namespace espm
