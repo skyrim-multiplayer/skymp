@@ -28,9 +28,9 @@ private:
   HANDLE mapHandle_ = nullptr;
   LPVOID viewPtr_ = nullptr;
 #else
-  int fd_;
+  int fd_ = -1;
 #endif
-  char* data_;
+  char* data_ = nullptr;
   size_t size_;
 };
 
