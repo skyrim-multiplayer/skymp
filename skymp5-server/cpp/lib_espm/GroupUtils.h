@@ -36,22 +36,19 @@ const GroupHeader* GetCellGroup(const TBrowser& browser,
 template <class TBrowser>
 uint32_t GetWorldOrCell(const TBrowser& browser, const RecordHeader* rec)
 {
+  uint32_t outWorldOrCell;
+
   const auto world = GetExteriorWorldGroup(browser, rec);
+  if (world && world->GetParentWRLD(outWorldOrCell)) {
+    return outWorldOrCell;
+  }
+
   const auto cell = GetCellGroup(browser, rec);
-
-  uint32_t worldOrCell;
-
-  if (!world || !world->GetParentWRLD(worldOrCell)) {
-    worldOrCell = 0;
+  if (cell && cell->GetParentCELL(outWorldOrCell)) {
+    return outWorldOrCell;
   }
 
-  if (!worldOrCell) {
-    if (!cell->GetParentCELL(worldOrCell)) {
-      return 0;
-    }
-  }
-
-  return worldOrCell;
+  return 0;
 }
 
 using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
