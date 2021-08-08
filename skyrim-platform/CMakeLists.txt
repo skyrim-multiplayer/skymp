@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.18.4)
 project(platform_se)
 
 set(DEV_SERVICE_CFG_PATH "tools/dev_service/config.js")

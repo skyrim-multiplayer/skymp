@@ -30,7 +30,7 @@ You can find instructions on setting up the project locally below. To get a loca
 These tools required regardless of your system:
 
 * 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x or higher + npm
-* [CMake 3.18.4](https://cmake.org/download/) or higher
+* [CMake 3.18.2](https://cmake.org/download/) or higher
 
 ### Windows
 
