@@ -1,4 +1,5 @@
 #include "TestUtils.hpp"
+#include <GroupUtils.h>
 #include <Loader.h>
 #include <catch2/catch.hpp>
 
@@ -338,7 +339,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   REQUIRE(form.rec);
 
   std::vector<std::string> parentGroupTypeLabels;
-  for (const auto groupPtr : form.rec->GetParentGroups()) {
+  for (const auto groupPtr : br.GetParentGroupsEnsured(form.rec)) {
     parentGroupTypeLabels.emplace_back(
       ToString(groupPtr->GetGroupType()) + ":" +
       std::to_string(groupPtr->GetGroupLabelAsUint()));
@@ -351,13 +352,14 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
             "CELL_PERSISTENT_CHILDREN:107120",
           });
 
-  const auto root = form.rec->GetParentGroups()[0];
+  const auto root = br.GetParentGroupsEnsured(form.rec)[0];
   REQUIRE(root);
   std::vector<uint32_t> records;
-  root->ForEachRecordRecursive([&records](const espm::RecordHeader* rec) {
-    records.emplace_back(rec->GetId());
-    return false;
-  });
+  espm::ForEachChildRecord(br, root,
+                           [&records](const espm::RecordHeader* rec) {
+                             records.emplace_back(rec->GetId());
+                             return false;
+                           });
   REQUIRE(records ==
           std::vector<uint32_t>{
             0x3c,    0x1691d, 0x16bb4, 0x16d71, 0x1a26f, 0x1b44a, 0x1cdd3,

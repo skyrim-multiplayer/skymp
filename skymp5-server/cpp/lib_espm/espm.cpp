@@ -2,9 +2,11 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <sparsepp/spp.h>
 
+#include "GroupUtils.h"
 #include "espm.h"
 
 static_assert(sizeof(char) == 1);
@@ -200,21 +202,6 @@ bool espm::GroupHeader::GetParentDIAL(uint32_t& outId) const noexcept
   return true;
 }
 
-void espm::GroupHeader::ForEachRecordRecursive(
-  const RecordVisitor& f) const noexcept
-{
-  const auto grData = (const GroupDataInternal*)GroupDataPtrStorage();
-  for (const void* sub : grData->subs) {
-    if (!memcmp(sub, "GRUP", 4)) {
-      continue; // It's group, skipping
-    }
-    if (f(reinterpret_cast<const espm::RecordHeader*>(
-          reinterpret_cast<const int8_t*>(sub) + 8))) {
-      break;
-    }
-  }
-}
-
 uint32_t espm::GroupHeader::GetGroupLabelAsUint() const noexcept
 {
   return *reinterpret_cast<const uint32_t*>(label);
@@ -223,16 +210,6 @@ uint32_t espm::GroupHeader::GetGroupLabelAsUint() const noexcept
 espm::GroupType espm::GroupHeader::GetGroupType() const noexcept
 {
   return grType;
-}
-
-uint64_t& espm::GroupHeader::GroupDataPtrStorage() noexcept
-{
-  return *reinterpret_cast<uint64_t*>(&day);
-}
-
-const uint64_t& espm::GroupHeader::GroupDataPtrStorage() const noexcept
-{
-  return *reinterpret_cast<const uint64_t*>(&day);
 }
 
 uint32_t espm::GetMappedId(uint32_t id,
@@ -263,11 +240,9 @@ public:
     if (rec->flags & RecordFlags::Compressed) {
 
       if (!compressedFieldsCache) {
-        assert(
-          0 &&
+        throw std::runtime_error(
           "CompressedFieldsCache is required to iterate through compressed "
           "fields");
-        return;
       }
 
       auto& decompressedFieldsHolder =
@@ -279,13 +254,9 @@ public:
 
         auto out = std::make_shared<std::vector<uint8_t>>();
         out->resize(*decompSize);
-        try {
-          const auto inSize = rec->GetFieldsSizeSum() - sizeof(uint32_t);
-          ZlibDecompress(ptr, inSize, out->data(), out->size());
-        } catch (std ::exception& e) {
-          assert(0 && "ZlibDecompress has thrown an error");
-          return;
-        }
+
+        const auto inSize = rec->GetFieldsSizeSum() - sizeof(uint32_t);
+        ZlibDecompress(ptr, inSize, out->data(), out->size());
 
         decompressedFieldsHolder = out;
       }
@@ -331,6 +302,8 @@ const char* espm::RecordHeader::GetEditorId(
     compressedFieldsCache);
   return result;
 }
+
+namespace {
 
 std::wstring ReadWstring(const uint8_t* ptr)
 {
@@ -426,6 +399,8 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
   }
 }
 
+} // namespace
+
 void espm::RecordHeader::GetScriptData(
   ScriptData* out,
   espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
@@ -479,11 +454,6 @@ espm::Type espm::RecordHeader::GetType() const noexcept
   return ((char*)this) - 8;
 }
 
-const espm::GroupStack& espm::RecordHeader::GetParentGroups() const noexcept
-{
-  return *(espm::GroupStack*)GroupStackPtrStorage();
-}
-
 uint32_t espm::RecordHeader::GetFlags() const noexcept
 {
   return flags;
@@ -508,6 +478,10 @@ struct espm::Browser::Impl
   spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>> navmeshes;
   spp::sparse_hash_map<uint64_t, std::vector<RecordHeader*>>
     cellOrWorldChildren;
+  spp::sparse_hash_map<const GroupHeader*, const GroupDataInternal*>
+    groupDataByGroupPtr;
+  spp::sparse_hash_map<const RecordHeader*, const GroupStack*>
+    groupStackByRecordPtr;
   std::vector<RecordHeader*> objectReferences;
   std::vector<RecordHeader*> constructibleObjects;
 
@@ -516,6 +490,26 @@ struct espm::Browser::Impl
   std::vector<std::unique_ptr<GroupDataInternal>> grDataHolder;
 
   CompressedFieldsCache dummyCache;
+
+  // may return null
+  const GroupStack* GetParentGroupsOptional(const RecordHeader* rec) const
+  {
+    const auto it = groupStackByRecordPtr.find(rec);
+    if (it == groupStackByRecordPtr.end()) {
+      return nullptr;
+    }
+    return it->second;
+  }
+
+  // may return null
+  const std::vector<void*>* GetSubsOptional(const GroupHeader* rec) const
+  {
+    const auto it = groupDataByGroupPtr.find(rec);
+    if (it == groupDataByGroupPtr.end()) {
+      return nullptr;
+    }
+    return &it->second->subs;
+  }
 };
 
 espm::Browser::Browser(void* fileContent, size_t length)
@@ -547,7 +541,7 @@ std::pair<espm::RecordHeader**, size_t> espm::Browser::FindNavMeshes(
   try {
     auto& vec = pImpl->navmeshes.at(NavMeshKey(worldSpaceId, cellOrGridPos));
     return { vec.data(), vec.size() };
-  } catch (...) {
+  } catch (const std::out_of_range&) {
     return { nullptr, 0 };
   }
 }
@@ -566,15 +560,58 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsByType(
 }
 
 const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsAtPos(
-  uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
+  uint32_t cellOrWorld, int16_t cellX, int16_t cellY) const
 {
-  return pImpl->cellOrWorldChildren[RefrKey(cellOrWorld, cellX, cellY)];
+  const auto it =
+    pImpl->cellOrWorldChildren.find(RefrKey(cellOrWorld, cellX, cellY));
+  if (it == pImpl->cellOrWorldChildren.end()) {
+    const static std::vector<espm::RecordHeader*> g_defaultValue{};
+    return g_defaultValue;
+  }
+  return it->second;
 }
 
-bool espm::Browser::ReadAny(void* parentGrStack)
+namespace espm {
+
+const GroupStack* Browser::GetParentGroupsOptional(
+  const RecordHeader* rec) const
 {
-  if (pImpl->pos >= pImpl->length)
+  return pImpl->GetParentGroupsOptional(rec);
+}
+
+const GroupStack& Browser::GetParentGroupsEnsured(
+  const RecordHeader* rec) const
+{
+  const auto opt = GetParentGroupsOptional(rec);
+  if (!opt) {
+    throw std::runtime_error("espm::Browser: no parent groups for record");
+  }
+  return *opt;
+}
+
+const std::vector<void*>* Browser::GetSubsOptional(
+  const GroupHeader* group) const
+{
+  return pImpl->GetSubsOptional(group);
+}
+
+const std::vector<void*>& Browser::GetSubsEnsured(
+  const GroupHeader* group) const
+{
+  const auto opt = GetSubsOptional(group);
+  if (!opt) {
+    throw std::runtime_error("espm::Browser: no subs for record");
+  }
+  return *opt;
+}
+
+} // namespace espm
+
+bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
+{
+  if (pImpl->pos >= pImpl->length) {
     return false;
+  }
 
   char* pType = pImpl->buf + pImpl->pos;
   pImpl->pos += 4;
@@ -588,7 +625,7 @@ bool espm::Browser::ReadAny(void* parentGrStack)
 
     auto grData = new GroupDataInternal;
     pImpl->grDataHolder.emplace_back(grData);
-    grHeader->GroupDataPtrStorage() = (uint64_t)grData;
+    pImpl->groupDataByGroupPtr.emplace(grHeader, grData);
 
     pImpl->pos += sizeof(GroupHeader);
     const size_t end = pImpl->pos + *pDataSize - 24;
@@ -605,8 +642,9 @@ bool espm::Browser::ReadAny(void* parentGrStack)
     pImpl->grStack.pop_back();
   } else {
     // Read record header
-    const auto recHeader = (RecordHeader*)(pImpl->buf + pImpl->pos);
-    recHeader->GroupStackPtrStorage() = (uint64_t)parentGrStack;
+    const auto recHeader =
+      reinterpret_cast<RecordHeader*>(pImpl->buf + pImpl->pos);
+    pImpl->groupStackByRecordPtr.emplace(recHeader, parentGrStack);
 
     pImpl->recById[recHeader->id] = recHeader;
 
@@ -618,7 +656,7 @@ bool espm::Browser::ReadAny(void* parentGrStack)
       if (data.loc) {
         const int16_t x = static_cast<int16_t>(data.loc->pos[0] / 4096);
         const int16_t y = static_cast<int16_t>(data.loc->pos[1] / 4096);
-        const auto cellOrWorld = GetWorldOrCell(refr);
+        const auto cellOrWorld = GetWorldOrCell(*this, refr);
         const RefrKey refrKey(cellOrWorld, x, y);
         pImpl->cellOrWorldChildren[refrKey].push_back(refr);
       }

@@ -2,6 +2,7 @@
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "GroupUtils.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
@@ -947,7 +948,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         throw std::runtime_error(
           "No destination found for this teleport door");
 
-      auto teleportWorldOrCell = espm::GetWorldOrCell(destinationRecord);
+      auto teleportWorldOrCell =
+        GetWorldOrCell(loader.GetBrowser(), destinationRecord);
 
       static const auto g_pi = std::acos(-1.f);
       const NiPoint3 rot = { teleport->rotRadians[0] / g_pi * 180,
