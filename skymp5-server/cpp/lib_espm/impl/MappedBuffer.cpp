@@ -6,6 +6,7 @@
 // Linux
 #  include <fcntl.h>
 #  include <sys/mman.h>
+#  include <unistd.h>
 #endif
 
 namespace espm::impl {
@@ -65,12 +66,20 @@ MappedBuffer::~MappedBuffer()
     CloseHandle(fileHandle_);
   }
 #else
-  if (!data_) {
-    return;
+  if (data_) {
+    int result = munmap(data_, size_);
+    if (result) {
+      std::abort();
+    }
   }
-  int result = munmap(data_, size_);
-  if (result) {
-    abort();
+  if (fd_ != -1) {
+    int result = close(fd_);
+    if (result == -1) {
+      // exception will cause abort, but it's probably ok, because if we can't
+      // close a file, this is a strange situation
+      throw std::system_error(errno, std::generic_category(),
+                              "can't close file");
+    }
   }
 #endif
 }
