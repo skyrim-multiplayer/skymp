@@ -68,8 +68,11 @@ MappedBuffer::~MappedBuffer()
 #else
   if (data_) {
     int result = munmap(data_, size_);
-    if (result) {
-      std::abort();
+    if (result == -1) {
+      // exception will cause abort, but it's probably ok, because if we can't
+      // unmap a file, this is a strange situation
+      throw std::system_error(errno, std::generic_category(),
+                              "can't close file");
     }
   }
   if (fd_ != -1) {
