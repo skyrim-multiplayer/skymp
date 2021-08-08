@@ -14,8 +14,14 @@ AllocatedBuffer::AllocatedBuffer(const std::filesystem::path& path)
   }
 }
 
-char* AllocatedBuffer::GetData() { return data.data(); }
+char* AllocatedBuffer::GetData()
+{
+  return data.data();
+}
 
-size_t AllocatedBuffer::GetLength() { return data.size(); }
+size_t AllocatedBuffer::GetLength()
+{
+  return data.size();
+}
 
 } // namespace espm::impl

@@ -3,18 +3,18 @@
 #include <fmt/format.h>
 
 #ifdef WIN32
-#include <Windows.h>
+#  include <Windows.h>
 //#include <fileapi.h>
 //#include <memoryapi.h>
 //#include <WinBase.h>
 #else
 // Linux
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#  include <assert.h>
+#  include <fcntl.h>
+#  include <sys/mman.h>
+#  include <sys/stat.h>
+#  include <sys/types.h>
+#  include <unistd.h>
 #endif
 
 namespace espm::impl {
@@ -23,11 +23,13 @@ MappedBuffer::MappedBuffer(const fs::path& path)
 {
   size_ = fs::file_size(path);
 #ifdef WIN32
-  fileHandle_ = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
-                           NULL, OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
+  fileHandle_ = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
+                            OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
   if (!fileHandle_) {
     // generic vs system?
-    throw std::system_error(std::error_code(GetLastError(), std::system_category()), "CreateFileW failed");
+    throw std::system_error(
+      std::error_code(GetLastError(), std::system_category()),
+      "CreateFileW failed");
   }
 
   mapHandle_ = CreateFileMapping(fileHandle_, NULL, PAGE_READONLY, 0, 0, NULL);
@@ -82,8 +84,14 @@ MappedBuffer::~MappedBuffer()
 #endif
 }
 
-char* MappedBuffer::GetData() { return data_; }
+char* MappedBuffer::GetData()
+{
+  return data_;
+}
 
-size_t MappedBuffer::GetLength() { return size_; }
+size_t MappedBuffer::GetLength()
+{
+  return size_;
+}
 
 } // namespace espm::impl
