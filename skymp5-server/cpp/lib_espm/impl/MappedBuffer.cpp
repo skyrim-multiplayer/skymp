@@ -9,10 +9,8 @@
 //#include <WinBase.h>
 #else
 // Linux
-#  include <assert.h>
 #  include <fcntl.h>
 #  include <sys/mman.h>
-#  include <sys/stat.h>
 #  include <sys/types.h>
 #  include <unistd.h>
 #endif
@@ -74,7 +72,7 @@ MappedBuffer::~MappedBuffer()
     CloseHandle(fileHandle_);
   }
 #else
-  if (!data) {
+  if (!data_) {
     return;
   }
   int result = munmap(data_, size_);
