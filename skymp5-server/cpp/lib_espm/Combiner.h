@@ -107,25 +107,4 @@ private:
   void operator=(const Combiner&) = delete;
 };
 
-// Helpers/utilities
-
-inline const RecordHeader* FindInGroup(const BrowserInfo& browserInfo,
-                                       const GroupHeader* group,
-                                       uint32_t globFormId)
-{
-  // TODO: ideally, we should be able to get browser reference here.
-  // For now, keeping CombineBrowser. Should be changed if required.
-  const RecordHeader* res = nullptr;
-  assert(browserInfo.parent);
-  espm::ForEachChildRecord(
-    *browserInfo.parent, group, [&](const espm::RecordHeader* rec) {
-      if (browserInfo.ToGlobalId(rec->GetId()) != globFormId) {
-        return false;
-      }
-      res = rec;
-      return true;
-    });
-  return res;
-}
-
 }
