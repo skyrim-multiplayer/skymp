@@ -565,8 +565,8 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsAtPos(
   const auto it =
     pImpl->cellOrWorldChildren.find(RefrKey(cellOrWorld, cellX, cellY));
   if (it == pImpl->cellOrWorldChildren.end()) {
-    const static std::vector<espm::RecordHeader*> kDefaultValue{};
-    return kDefaultValue;
+    const static std::vector<espm::RecordHeader*> g_defaultValue{};
+    return g_defaultValue;
   }
   return it->second;
 }
