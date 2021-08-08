@@ -3,17 +3,6 @@ enable_testing()
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
-execute_process(
-  COMMAND git rev-parse HEAD
-  OUTPUT_VARIABLE GIT_COMMIT_ID
-  RESULT_VARIABLE GIT_RESULT
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-)
-string(STRIP "${GIT_COMMIT_ID}" GIT_COMMIT_ID)
-if(NOT "${GIT_RESULT}" STREQUAL "0")
-  message(WARNING "'git rev-parse HEAD' exited with '${GIT_RESULT}'")
-endif()
-
 #
 # MpClientPlugin
 #
@@ -71,10 +60,7 @@ target_link_libraries(unit PUBLIC espm)
 file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/mp_common/*")
 list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(mp_common STATIC ${src})
-target_compile_definitions(mp_common PUBLIC 
-  MAX_PLAYERS=1000
-  GIT_COMMIT_ID=\"${GIT_COMMIT_ID}\"
-)
+target_compile_definitions(mp_common PUBLIC MAX_PLAYERS=1000)
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common")
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
 apply_default_settings(TARGETS mp_common)
