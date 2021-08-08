@@ -39,4 +39,8 @@ MappedBuffer::~MappedBuffer()
   }
 }
 
+char* MappedBuffer::GetData() { return data_; }
+
+size_t MappedBuffer::GetLength() { return size_; }
+
 } // namespace espm::impl

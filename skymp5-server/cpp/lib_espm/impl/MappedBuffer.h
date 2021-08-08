@@ -14,9 +14,9 @@ public:
 
   ~MappedBuffer();
 
-  char* GetData() override { return data_; }
+  char* GetData() override;
 
-  size_t GetLength() override { return size_; }
+  size_t GetLength() override;
 
 private:
   int fd_;

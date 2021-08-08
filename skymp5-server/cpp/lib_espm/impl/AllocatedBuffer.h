@@ -12,21 +12,11 @@ namespace espm::impl {
 class AllocatedBuffer : public IBuffer
 {
 public:
-  AllocatedBuffer(const std::filesystem::path& path)
-    : data()
-  {
-    const auto size = std::filesystem::file_size(path);
-    data.resize(size);
+  AllocatedBuffer(const std::filesystem::path& path);
 
-    std::ifstream f(path.string(), std::ios::binary);
-    if (!f.read(data.data(), size)) {
-      throw Loader::LoadError(fmt::format("Can't read {}", path.string()));
-    }
-  }
+  char* GetData() override;
 
-  char* GetData() override { return data.data(); }
-
-  size_t GetLength() override { return data.size(); }
+  size_t GetLength() override;
 
 private:
   std::vector<char> data;
