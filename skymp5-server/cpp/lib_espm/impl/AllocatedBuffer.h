@@ -14,9 +14,9 @@ class AllocatedBuffer : public IBuffer
 public:
   AllocatedBuffer(const std::filesystem::path& path);
 
-  char* GetData() override;
+  const char* GetData() const override;
 
-  size_t GetLength() override;
+  size_t GetLength() const override;
 
 private:
   std::vector<char> data;

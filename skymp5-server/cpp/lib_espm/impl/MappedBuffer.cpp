@@ -87,12 +87,12 @@ MappedBuffer::~MappedBuffer()
 #endif
 }
 
-char* MappedBuffer::GetData()
+const char* MappedBuffer::GetData() const
 {
   return data_;
 }
 
-size_t MappedBuffer::GetLength()
+size_t MappedBuffer::GetLength() const
 {
   return size_;
 }

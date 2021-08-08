@@ -512,9 +512,10 @@ struct espm::Browser::Impl
   }
 };
 
-espm::Browser::Browser(void* fileContent, size_t length)
+espm::Browser::Browser(const void* fileContent, size_t length)
   : pImpl(new Impl)
 {
+  // TODO (in this PR): get rid of casts to non-const stuff
   pImpl->buf = (char*)fileContent;
   pImpl->length = length;
   while (ReadAny(nullptr))

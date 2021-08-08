@@ -18,9 +18,9 @@ public:
 
   ~MappedBuffer();
 
-  char* GetData() override;
+  const char* GetData() const override;
 
-  size_t GetLength() override;
+  size_t GetLength() const override;
 
 private:
 #ifdef WIN32

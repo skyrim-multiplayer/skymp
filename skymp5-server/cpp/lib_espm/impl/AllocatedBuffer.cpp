@@ -14,12 +14,12 @@ AllocatedBuffer::AllocatedBuffer(const std::filesystem::path& path)
   }
 }
 
-char* AllocatedBuffer::GetData()
+const char* AllocatedBuffer::GetData() const
 {
   return data.data();
 }
 
-size_t AllocatedBuffer::GetLength()
+size_t AllocatedBuffer::GetLength() const
 {
   return data.size();
 }

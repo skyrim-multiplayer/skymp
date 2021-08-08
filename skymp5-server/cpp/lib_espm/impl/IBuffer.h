@@ -9,8 +9,8 @@ class IBuffer
 public:
   virtual ~IBuffer() = default;
 
-  virtual char* GetData() = 0;
-  virtual size_t GetLength() = 0;
+  virtual const char* GetData() const = 0;
+  virtual size_t GetLength() const = 0;
 };
 
 } // namespace espm::impl
