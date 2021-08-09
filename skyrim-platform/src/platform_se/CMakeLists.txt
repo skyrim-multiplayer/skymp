@@ -119,7 +119,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_include_directories(skyrim_platform PRIVATE "${third_party}")
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
     target_link_libraries(skyrim_platform PRIVATE cef)
-    target_link_libraries(skyrim_platform PRIVATE chakra-wrapper)
+    target_include_directories(skyrim_platform PRIVATE "${CMAKE_SOURCE_DIR}/chakra-wrapper")
     apply_default_settings(TARGETS skyrim_platform)
     list(APPEND VCPKG_DEPENDENT skyrim_platform)
 
