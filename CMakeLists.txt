@@ -41,7 +41,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
-add_subdirectory(chakra-wrapper)
 add_subdirectory(skyrim-platform)
 add_subdirectory(skymp5-client)
 add_subdirectory(skymp5-front)
