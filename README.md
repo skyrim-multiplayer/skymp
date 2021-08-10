@@ -53,8 +53,7 @@ Playing on Linux isn't supported currently, but a full-featured server is.
    ```sh
    git clone https://github.com/skyrim-multiplayer/skymp.git
    cd skymp
-   git submodule init
-   git submodule update
+   git submodule update --init --recursive
    ```
 2. Make a build directory (used for project files, cache, artifacts, etc)
    ```sh
