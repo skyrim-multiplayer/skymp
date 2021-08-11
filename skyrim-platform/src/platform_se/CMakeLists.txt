@@ -28,23 +28,7 @@ if(MSVC)
   target_include_directories(CommonLibSSE PUBLIC "${lib_root}/include" "${third_party}")
   target_compile_options(CommonLibSSE PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
   target_link_libraries(CommonLibSSE PUBLIC Version)
-
-  file(GLOB_RECURSE common_src "${third_party}/common/*")
-  add_library(common STATIC ${common_src})
-  target_compile_options(common PRIVATE "/FI\"IPrefix.h\"")
-  target_include_directories(common PRIVATE "${third_party}/common" "${third_party}")
-
-  file(GLOB_RECURSE skse64_common_src "${third_party}/skse64_common/*")
-  add_library(skse64_common STATIC ${skse64_common_src})
-  target_compile_options(skse64_common PRIVATE "/FI\"IPrefix.h\"")
-  target_include_directories(skse64_common PRIVATE "${third_party}/common" "${third_party}/skse64_common" "${third_party}")
-
-  file(GLOB_RECURSE skse_src "${third_party}/skse64/*")
-  add_library(skse64 STATIC ${skse_src})
-  target_compile_options(skse64 PRIVATE "/FI\"IPrefix.h\"")
-  target_include_directories(skse64 PUBLIC "${third_party}/common" "${third_party}/skse64" "${third_party}")
-  target_compile_definitions(skse64 PRIVATE RUNTIME=1 RUNTIME_VERSION=0x01050610)
-  target_link_libraries(skse64 PUBLIC common skse64_common)
+  list(APPEND VCPKG_DEPENDENT CommonLibSSE) # for xbyak
 
   file(GLOB_RECURSE core_library_src "${third_party}/cef/core_library/*")
   add_library(core_library STATIC ${core_library_src})
@@ -114,7 +98,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
     add_library(skyrim_platform SHARED ${platform_src})
-    target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE skyrim_plugin_resources ui)
+    target_link_libraries(skyrim_platform PUBLIC CommonLibSSE skyrim_plugin_resources ui)
     set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
     target_include_directories(skyrim_platform PRIVATE "${third_party}")
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
@@ -193,8 +177,7 @@ endif()
 
 if(MSVC)
   apply_default_settings(TARGETS
-    CommonLibSSE common skse64_common skse64
-    core_library hooks reverse ui SkyrimPlatformCEF
+    CommonLibSSE core_library hooks reverse ui SkyrimPlatformCEF
   )
 endif()
 
@@ -214,10 +197,29 @@ foreach(target ${VCPKG_DEPENDENT})
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
   if(MSVC)
-    find_library(MHOOH_LIBRARIES mhook)
+    find_library(MHOOH_LIBRARY_DEBUG mhook)
+    string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})
     find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib)
-    target_link_libraries(${target} PUBLIC ${MHOOH_LIBRARIES})
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
     target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
+
+    find_library(SKSE64_LIBRARY_DEBUG skse64)
+    string(REPLACE "/debug/lib/" "/lib/" SKSE64_LIBRARY_RELEASE ${SKSE64_LIBRARY_DEBUG})
+    find_path(SKSE64_INCLUDE_DIR skse64/PluginAPI.h)
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_LIBRARY_DEBUG},${SKSE64_LIBRARY_RELEASE}>")
+    target_include_directories(${target} PUBLIC ${SKSE64_INCLUDE_DIR})
+
+    find_library(SKSE64_COMMON_LIBRARY_DEBUG skse64_common)
+    string(REPLACE "/debug/lib/" "/lib/" SKSE64_COMMON_LIBRARY_RELEASE ${SKSE64_COMMON_LIBRARY_DEBUG})
+    find_path(SKSE64_COMMON_INCLUDE_DIR skse64/PluginAPI.h)
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_COMMON_LIBRARY_DEBUG},${SKSE64_COMMON_LIBRARY_RELEASE}>")
+    target_include_directories(${target} PUBLIC ${SKSE64_COMMON_INCLUDE_DIR})
+
+    find_library(COMMON_LIBRARY_DEBUG common)
+    string(REPLACE "/debug/lib/" "/lib/" COMMON_LIBRARY_RELEASE ${COMMON_LIBRARY_DEBUG})
+    find_path(COMMON_INCLUDE_DIR skse64/PluginAPI.h)
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMON_LIBRARY_DEBUG},${COMMON_LIBRARY_RELEASE}>")
+    target_include_directories(${target} PUBLIC ${COMMON_INCLUDE_DIR})
 
     find_package(directxtk CONFIG REQUIRED)
     find_package(directxmath CONFIG REQUIRED)

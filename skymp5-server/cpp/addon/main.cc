@@ -18,6 +18,79 @@
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include "Loader.h"
+
+int main()
+{
+  // Data directory. There is also constructor from absolute paths
+  std::filesystem::path dataDir = "...";
+
+  // Triggered for each loaded file
+  espm::Loader::OnProgress onProgress = nullptr;
+
+  espm::Loader loader(dataDir,
+                      { "Skyrim.esm", "Update.esm", "Dawnguard.esm",
+                        "HearthFires.esm", "Dragonborn.esm" },
+                      onProgress);
+
+  // To store zlib-decompressed fields.
+  espm::CompressedFieldsCache cache;
+
+  auto& recordBrowser = loader.GetBrowser();
+
+  // Get NavMeshes because we can
+  // Imagine the server would be able to spawn actors/items at the nearest
+  // NavMesh point
+  uint32_t Tamriel = 0x3c;
+  espm::CellOrGridPos cellOrGridPos;
+  cellOrGridPos.pos.x = 0;
+  cellOrGridPos.pos.y = 0;
+  recordBrowser.FindNavMeshes(Tamriel, cellOrGridPos);
+
+  // Works like in-game LookupById. Takes into account your load order.
+  espm::LookupResult res = recordBrowser.LookupById(0x00000007);
+
+  if (!res.rec) {
+    std::cout << "Not found" << std::endl;
+    return -1;
+  }
+
+  // Get editor id if it present or empty string otherwize
+  const char* editorId = res.rec->GetEditorId(&cache);
+
+  // Scripts and property values. In the real SkyMP server we pass these values
+  // to self-written PapyrusVM to launch vanilla scripts
+  espm::ScriptData outScriptData;
+  res.rec->GetScriptData(&outScriptData, &cache);
+
+  // Four letters representing type
+  std::string type = res.rec->GetType().ToString();
+
+  // Gets an id leaving load order (first two digits) as it is in the file
+  uint32_t rawId = res.rec->GetId();
+
+  // Fix load order for this id. Two first digits would match the load order
+  // you have passed to Loader ctor
+  uint32_t globalId = res.ToGlobalId(rawId);
+
+  // "Dynamic" casts of records
+  const espm::NPC_* npc = espm::Convert<espm::NPC_>(res.rec);
+  if (!npc) {
+    std::cout << "Not an NPC" << std::endl;
+    return -1;
+  }
+
+  // Data specific to record type
+  auto& npcData = npc->GetData(cache);
+
+  // Naming based on https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format
+  auto& factions = npcData.factions;
+  auto& outfitId = npcData.defaultOutfitId;
+  auto& objects = npcData.objects; // Inventory objects
+
+  return 0;
+}
+
 #ifndef NAPI_CPP_EXCEPTIONS
 #  error NAPI_CPP_EXCEPTIONS must be defined or throwing from JS code would crash!
 #endif
