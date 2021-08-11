@@ -182,8 +182,10 @@ if(MSVC)
 endif()
 
 foreach(target ${VCPKG_DEPENDENT})
-  find_package(ChakraCore REQUIRED)
-  target_link_libraries(${target} PUBLIC ChakraCore::ChakraCore)
+  find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
+  find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
+  string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
+  target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")
 
   find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
   get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
