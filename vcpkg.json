@@ -22,6 +22,10 @@
     {
       "name": "mhook",
       "platform": "windows"
+    },
+    {
+      "name": "skse64",
+      "platform": "windows"
     }
   ]
 }
