@@ -23,6 +23,7 @@ enable_testing()
 
 option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing" OFF)
 option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
+option(CPPCOV_PATH "Path to OpenCppCoverage" OFF)
 
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
@@ -34,6 +35,8 @@ if(SKYRIM_DIR)
     message(FATAL_ERROR "Bad SKYRIM_DIR: ${SKYRIM_DIR}")
   endif()
 endif()
+
+string(REPLACE "\\" "/" CPPCOV_PATH "${CPPCOV_PATH}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -126,8 +126,13 @@ endif()
 #
 # Add tests
 #
-
-find_program(CPPCOV_PATH OpenCppCoverage NO_CACHE)
+if(NOT CPPCOV_PATH)
+  find_program(CPPCOV_PATH OpenCppCoverage NO_CACHE)
+  if(CPPCOV_PATH)
+    # We need path to the directory containing exe, not exe itself
+    get_filename_component(CPPCOV_PATH "${CPPCOV_PATH}" DIRECTORY)
+  endif()
+endif()
 if(CPPCOV_PATH)
   set(CPPCOV ON)
 else()
@@ -140,6 +145,7 @@ add_test(
     -DEXE_PATH=$<TARGET_FILE:unit>
     -DCOVERAGE_HTML_OUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/__coverage
     -DCPPCOV=${CPPCOV}
+    -DCPPCOV_PATH=${CPPCOV_PATH}
     -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
 )
 
