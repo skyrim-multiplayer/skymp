@@ -21,6 +21,7 @@ if(MSVC)
   target_include_directories(cef INTERFACE ${CEF_ROOT})
 
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/platform_se/third_party")
+  
   file(GLOB_RECURSE core_library_src "${third_party}/cef/core_library/*")
   add_library(core_library STATIC ${core_library_src})
   target_include_directories(core_library PUBLIC "${third_party}/cef/core_library")
@@ -194,7 +195,7 @@ foreach(target ${VCPKG_DEPENDENT})
     find_library(MHOOH_LIBRARY_DEBUG mhook)
     string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})
     find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib)
-    target_link_libraries(${target} PUBLIC ${MHOOH_LIBRARIES})
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
     target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
 
     find_library(SKSE64_LIBRARY_DEBUG skse64)
