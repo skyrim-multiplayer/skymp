@@ -127,9 +127,20 @@ endif()
 # Add tests
 #
 
+find_program(CPPCOV_PATH OpenCppCoverage NO_CACHE)
+if(CPPCOV_PATH)
+  set(CPPCOV ON)
+else()
+  set(CPPCOV OFF)
+endif()
+
 add_test(
   NAME test_unit
-  COMMAND $<TARGET_FILE:unit>
+  COMMAND ${CMAKE_COMMAND}
+    -DEXE_PATH=$<TARGET_FILE:unit>
+    -DCOVERAGE_HTML_OUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/__coverage
+    -DCPPCOV=${CPPCOV}
+    -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
 )
 
 #
