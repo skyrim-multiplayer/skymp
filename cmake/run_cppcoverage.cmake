@@ -6,18 +6,18 @@ function(run_cppcoverage)
     "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN}
   )
 
-  if (NOT WIN32)
+  if(NOT WIN32)
     return()
   endif()
 
   file(REMOVE ${CMAKE_BINARY_DIR}/LastCoverageResults.log)
 
-  if (EXISTS ${A_OUTPUT_DIRECTORY}/index.html)
+  if(EXISTS ${A_OUTPUT_DIRECTORY}/index.html)
     file(REMOVE_RECURSE ${A_OUTPUT_DIRECTORY})
   endif()
 
   set(ENV{OpenCppCoverage_Attach} "")
-  if (A_ATTACH STREQUAL "TRUE")
+  if(A_ATTACH STREQUAL "TRUE")
     set(ENV{OpenCppCoverage_Attach} "1")
   endif()
 
@@ -39,12 +39,12 @@ function(run_cppcoverage)
     --export_type "${A_EXPORT_TYPE}:${A_OUTPUT_DIRECTORY}"
   )
 
-  if (NOT ${A_INPUT_COVERAGE} STREQUAL "")
+  if(NOT ${A_INPUT_COVERAGE} STREQUAL "")
     list(APPEND process_args --input_coverage ${A_INPUT_COVERAGE})
   endif()
 
   list(APPEND process_args --verbose)
-  if (NOT "${A_EXECUTABLE_PATH}" STREQUAL "")
+  if(NOT "${A_EXECUTABLE_PATH}" STREQUAL "")
     list(APPEND process_args -- ${A_EXECUTABLE_PATH})
   endif()
 
@@ -55,7 +55,7 @@ function(run_cppcoverage)
     ECHO_OUTPUT_VARIABLE
     ECHO_ERROR_VARIABLE
   )
-  if (NOT "${res}" STREQUAL "0")
+  if(NOT "${res}" STREQUAL "0")
     message(FATAL_ERROR "OpenCppCoverage exited with code ${res}")
   endif()
   message(STATUS "OpenCppCoverage exited with code ${res}")
@@ -64,7 +64,7 @@ function(run_cppcoverage)
   set(${A_OUT_EXIT_CODE} ${res} PARENT_SCOPE)
 
   file(MAKE_DIRECTORY "${A_WORKING_DIRECTORY}")
-  if (EXISTS "${A_WORKING_DIRECTORY}")
+  if(EXISTS "${A_WORKING_DIRECTORY}")
     file(WRITE ${A_WORKING_DIRECTORY}/OpenCppCoverage-stderr.log ${err})
     file(WRITE ${A_WORKING_DIRECTORY}/OpenCppCoverage-stdout.log ${out})
     file(COPY ${CMAKE_BINARY_DIR}/LastCoverageResults.log

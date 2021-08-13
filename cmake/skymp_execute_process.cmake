@@ -62,7 +62,7 @@ function(skymp_execute_process)
     set(tag_dir ${CMAKE_CURRENT_BINARY_DIR}/coverage_tag_${A_CPPCOV_TAG})
 
     set(input_cov "${tag_dir}/coverage.tmp")
-    if (NOT EXISTS "${tag_dir}/coverage.tmp")
+    if(NOT EXISTS "${tag_dir}/coverage.tmp")
       set(input_cov)
     endif()
     run_cppcoverage(
@@ -77,7 +77,7 @@ function(skymp_execute_process)
       WORKING_DIRECTORY ${A_CPPCOV_OUTPUT_DIRECTORY}
       CMDLINE ${CPPCOV_CMDLINE}
     )
-    if (NOT "${A_OUT_STDERR}" STREQUAL "")
+    if(NOT "${A_OUT_STDERR}" STREQUAL "")
       set(${A_OUT_STDERR} ${err} PARENT_SCOPE)
     endif()
 
