@@ -23,7 +23,10 @@ jobs:
         submodules: 'true'
 
     - name: Install tools
-      run: choco install opencppcoverage codecov
+      run: choco install opencppcoverage
+
+    - name: Test cppcov
+      run: OpenCppCoverage
 
     - run: ./vcpkg/bootstrap-vcpkg.bat
 
