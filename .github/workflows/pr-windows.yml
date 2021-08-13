@@ -25,6 +25,9 @@ jobs:
     - name: Install tools
       run: choco install opencppcoverage
 
+    - name: Refresh env
+      run: refreshenv
+
     - name: Test cppcov
       run: OpenCppCoverage
 
