@@ -36,7 +36,16 @@ if(SKYRIM_DIR)
   endif()
 endif()
 
+if(NOT CPPCOV_PATH)
+  message(STATUS "CPPCOV_PATH is not specified, coverage would not be calculated")
+endif()
 string(REPLACE "\\" "/" CPPCOV_PATH "${CPPCOV_PATH}")
+
+if(CPPCOV_PATH)
+  if (NOT EXISTS ${CPPCOV_PATH}/OpenCppCoverage.exe)
+    message(FATAL_ERROR "Bad CPPCOV_PATH: ${CPPCOV_PATH}")
+  endif()
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -30,7 +30,7 @@ function(skymp_execute_process)
   if(A_ATTACH)
     if(NOT A_CPPCOV)
       set(A_CPPCOV ON)
-      set(A_CPPCOV_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cppcov_out_dummy)
+      set(A_CPPCOV_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/cppcov_out_dummy)
       list(APPEND CPPCOV_CMDLINE --excluded_modules * --excluded_sources *)
       if(NOT A_CPPCOV_PATH)
         message(FATAL_ERROR "ATTACH mode requires CPPCOV_PATH argument regardless of CPPCOV argument")
@@ -59,7 +59,7 @@ function(skymp_execute_process)
 
     string(RANDOM LENGTH 16 str)
     set(str "coverage_${str}.tmp")
-    set(tag_dir ${CMAKE_CURRENT_BINARY_DIR}/coverage_tag_${A_CPPCOV_TAG})
+    set(tag_dir ${CMAKE_BINARY_DIR}/coverage_tag_${A_CPPCOV_TAG})
 
     set(input_cov "${tag_dir}/coverage.tmp")
     if(NOT EXISTS "${tag_dir}/coverage.tmp")
@@ -69,7 +69,7 @@ function(skymp_execute_process)
       ${ATTACH_OPTION}
       INPUT_COVERAGE "${input_cov}"
       OPENCPPCOV_PATH ${CPPCOV_PATH_FULL}
-      OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${str}
+      OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${str}
       EXECUTABLE_PATH ${A_EXECUTABLE_PATH}
       EXPORT_TYPE binary
       OUT_EXIT_CODE res
@@ -84,13 +84,13 @@ function(skymp_execute_process)
     run_cppcoverage(
       OPENCPPCOV_PATH ${CPPCOV_PATH_FULL}
       OUTPUT_DIRECTORY ${A_CPPCOV_OUTPUT_DIRECTORY}
-      INPUT_COVERAGE ${CMAKE_CURRENT_BINARY_DIR}/${str}
+      INPUT_COVERAGE ${CMAKE_BINARY_DIR}/${str}
       EXPORT_TYPE html
       WORKING_DIRECTORY ${A_CPPCOV_OUTPUT_DIRECTORY}
     )
 
     if(NOT "${A_CPPCOV_TAG}" STREQUAL "")
-      file(COPY ${CMAKE_CURRENT_BINARY_DIR}/${str}
+      file(COPY ${CMAKE_BINARY_DIR}/${str}
         DESTINATION ${tag_dir}
       )
       file(RENAME ${tag_dir}/${str}

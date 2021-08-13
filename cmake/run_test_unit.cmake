@@ -1,6 +1,17 @@
 include(${CMAKE_CURRENT_LIST_DIR}/skymp_execute_process.cmake)
 
-string(RANDOM LENGTH 5 tag)
+# Tags were added to skymp20 to merge coverage reports
+# Unused currently, so always use 00000 as a tag and clear temp files
+
+# Important note: 
+# In tests added by subdirectories, CMAKE_BINARY_DIR refers to subdirectory binary dir instead of the global one
+
+set(tag 00000)
+file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/coverage_tag_00000)
+file(GLOB temp_coverage "${CMAKE_BINARY_DIR}/coverage_*.tmp")
+if(temp_coverage)
+  file(REMOVE ${temp_coverage})
+endif()
 
 skymp_execute_process(
   EXECUTABLE_PATH ${EXE_PATH}
