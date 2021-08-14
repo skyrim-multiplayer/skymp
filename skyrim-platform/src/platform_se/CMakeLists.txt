@@ -20,16 +20,8 @@ if(MSVC)
   target_link_libraries(cef INTERFACE ${CEF_ROOT}/$<CONFIG>/cef_sandbox.lib ${CEF_ROOT}/$<CONFIG>/libcef.lib libcef_dll_wrapper)
   target_include_directories(cef INTERFACE ${CEF_ROOT})
 
-  set(lib_root "${SKYRIM_PLATFORM_SOURCE_DIR}/submodules/CommonLibSSE")
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/platform_se/third_party")
-
-  file(GLOB_RECURSE lib_src "${lib_root}/src/*" "${lib_root}/include/*")
-  add_library(CommonLibSSE STATIC ${lib_src})
-  target_include_directories(CommonLibSSE PUBLIC "${lib_root}/include" "${third_party}")
-  target_compile_options(CommonLibSSE PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
-  target_link_libraries(CommonLibSSE PUBLIC Version)
-  list(APPEND VCPKG_DEPENDENT CommonLibSSE) # for xbyak
-
+  
   file(GLOB_RECURSE core_library_src "${third_party}/cef/core_library/*")
   add_library(core_library STATIC ${core_library_src})
   target_include_directories(core_library PUBLIC "${third_party}/cef/core_library")
@@ -98,7 +90,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
     add_library(skyrim_platform SHARED ${platform_src})
-    target_link_libraries(skyrim_platform PUBLIC CommonLibSSE skyrim_plugin_resources ui)
+    target_link_libraries(skyrim_platform PUBLIC skyrim_plugin_resources ui)
     set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
     target_include_directories(skyrim_platform PRIVATE "${third_party}")
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
@@ -177,7 +169,7 @@ endif()
 
 if(MSVC)
   apply_default_settings(TARGETS
-    CommonLibSSE core_library hooks reverse ui SkyrimPlatformCEF
+    core_library hooks reverse ui SkyrimPlatformCEF
   )
 endif()
 
@@ -186,6 +178,7 @@ foreach(target ${VCPKG_DEPENDENT})
   find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
   string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
   target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")
+  target_include_directories(${target} PUBLIC ${ChakraCore_INCLUDE_DIR})
 
   find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
   get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
@@ -198,7 +191,7 @@ foreach(target ${VCPKG_DEPENDENT})
   find_package(ZLIB REQUIRED)
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
-  if(MSVC)
+  if(MSVC AND "${target}" MATCHES "skyrim_platform")
     find_library(MHOOH_LIBRARY_DEBUG mhook)
     string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})
     find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib)
@@ -222,6 +215,16 @@ foreach(target ${VCPKG_DEPENDENT})
     find_path(COMMON_INCLUDE_DIR skse64/PluginAPI.h)
     target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMON_LIBRARY_DEBUG},${COMMON_LIBRARY_RELEASE}>")
     target_include_directories(${target} PUBLIC ${COMMON_INCLUDE_DIR})
+
+    find_library(COMMONLIBSSE_LIBRARY_DEBUG CommonLibSSE)
+    string(REPLACE "/debug/lib/" "/lib/" COMMONLIBSSE_LIBRARY_RELEASE ${COMMONLIBSSE_LIBRARY_DEBUG})
+    find_path(COMMONLIBSSE_INCLUDE_DIR SKSE/API.h)
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMONLIBSSE_LIBRARY_DEBUG},${COMMONLIBSSE_LIBRARY_RELEASE}>")
+    target_include_directories(${target} PUBLIC ${COMMONLIBSSE_INCLUDE_DIR})
+
+    # CommonLibSSE requirement
+    target_link_libraries(${target} PUBLIC Version)
+    target_compile_options(${target} PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
 
     find_package(directxtk CONFIG REQUIRED)
     find_package(directxmath CONFIG REQUIRED)

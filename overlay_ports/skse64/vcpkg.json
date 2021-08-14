@@ -3,5 +3,5 @@
     "version-string": "2_00_19",
     "description": "Skyrim Script Extender",
     "homepage": "https://skse.silverlock.org/",
-    "supports": "windows"
+    "supports": "windows & x64"
 }
