@@ -1,7 +1,6 @@
 #include "HttpClientApi.h"
 #include "CreatePromise.h"
 #include "HttpClient.h"
-#include <RE\ConsoleLog.h>
 
 extern HttpClient g_httpClient;
 
