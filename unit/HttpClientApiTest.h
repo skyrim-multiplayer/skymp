@@ -5,10 +5,11 @@
 #include "HttpClientApi.h"
 #include "JsPromise.h"
 
+TaskQueue taskQueue;
+JsEngine engine;
+
 TEST_CASE("Should be able to fetch server list (https get)", "[HttpClientApi]")
 {
-  TaskQueue taskQueue;
-  JsEngine engine;
   engine.ResetContext(taskQueue);
 
   auto exports = JsValue::Object();
@@ -23,17 +24,21 @@ TEST_CASE("Should be able to fetch server list (https get)", "[HttpClientApi]")
 
   JsPromise promise =
     instance.GetProperty("get").Call({ instance, "/api/servers" });
-  promise.Then(
-    [&result](const JsFunctionArguments& args) { result = args[1]; });
-  promise.Catch(
-    [&error](const JsFunctionArguments& args) { error = args[1]; });
+  promise.Then([&result](const JsFunctionArguments& args) {
+    result = args[1];
+    return JsValue::Undefined();
+  });
+  promise.Catch([&error](const JsFunctionArguments& args) {
+    error = args[1];
+    return JsValue::Undefined();
+  });
 
   auto startMoment = std::chrono::system_clock::now();
   auto timeout = std::chrono::seconds(5);
 
   while (1) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    taskQueue.Update();
+    // taskQueue.Update();
     HttpClientApi::GetHttpClient().Update();
 
     if (result.GetType() != JsValue::Type::Undefined) {
