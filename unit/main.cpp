@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
 #include "GridTest.h"
 #include "Grid_MoveTest.h"
 #include "HeuristicPolicyTest.h"
+#include "HttpClientApiTest.h"
 #include "IdManagerTest.h"
 #include "LeveledListUtilsTest.h"
 #include "MigrationDatabaseTest.h"

@@ -1,10 +1,10 @@
 #include "HttpClientApi.h"
-#include "CreatePromise.h"
 #include "HttpClient.h"
-
-extern HttpClient g_httpClient;
+#include "JsPromise.h"
 
 namespace {
+HttpClient g_httpClient;
+
 template <class F>
 inline void IterateKeys(const JsValue& object, F fn)
 {
@@ -73,7 +73,7 @@ JsValue HttpClientApi::Get(const JsFunctionArguments& args)
 
       return JsValue::Undefined();
     });
-  return CreatePromise(g_resolverFn);
+  return JsPromise::New(g_resolverFn);
 }
 
 JsValue HttpClientApi::Post(const JsFunctionArguments& args)
@@ -112,5 +112,10 @@ JsValue HttpClientApi::Post(const JsFunctionArguments& args)
 
       return JsValue::Undefined();
     });
-  return CreatePromise(g_resolverFn);
+  return JsPromise::New(g_resolverFn);
+}
+
+HttpClient& HttpClientApi::GetHttpClient()
+{
+  return g_httpClient;
 }

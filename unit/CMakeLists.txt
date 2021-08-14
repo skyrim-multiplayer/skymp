@@ -21,11 +21,10 @@ endif()
 # unit executable
 #
 
-file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/*")
+file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/*")
 list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
 add_executable(unit ${src})
-target_link_libraries(unit PUBLIC server_guest_lib)
-target_include_directories(unit PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/mp_common")
+target_link_libraries(unit PUBLIC server_guest_lib platform_lib)
 apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
 target_compile_definitions(unit PRIVATE
