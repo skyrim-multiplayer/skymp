@@ -30,6 +30,10 @@
     {
       "name": "commonlibsse",
       "platform": "windows"
+    },
+    {
+      "name": "cef-prebuilt",
+      "platform": "windows"
     }
   ]
 }

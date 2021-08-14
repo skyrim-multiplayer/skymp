@@ -12,12 +12,16 @@ include(${CMAKE_SOURCE_DIR}/cmake/link_vcpkg_dependencies.cmake)
 if(MSVC)
   include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
-  find_package(CEF REQUIRED)
-  add_subdirectory(${CEF_LIBCEF_DLL_WRAPPER_PATH} libcef_dll_wrapper)
   add_library(cef INTERFACE)
-  target_link_libraries(cef INTERFACE ${CEF_ROOT}/$<CONFIG>/cef_sandbox.lib ${CEF_ROOT}/$<CONFIG>/libcef.lib libcef_dll_wrapper)
-  target_include_directories(cef INTERFACE ${CEF_ROOT})
+  find_library(CEF_LIBRARY_DEBUG libcef_dll_wrapper)
+  string(REPLACE "/debug/lib/" "/lib/" CEF_LIBRARY_RELEASE ${CEF_LIBRARY_DEBUG})
+  find_path(CEF_INCLUDE_DIR include/cef_app.h)
+  find_path(CEF_SHARE share/cef-prebuilt)
+  set(CEF_SHARE "${CEF_SHARE}/share/cef-prebuilt")
+  target_link_libraries(cef INTERFACE "$<IF:$<CONFIG:Debug>,${CEF_LIBRARY_DEBUG},${CEF_LIBRARY_RELEASE}>")
+  target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/cef_sandbox.lib")
+  target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/libcef.lib")
+  target_include_directories(cef INTERFACE ${CEF_INCLUDE_DIR})
 
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
   
@@ -130,7 +134,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_compile_definitions(skyrim_platform PUBLIC PAPYRUS_SOURCES=\"${def}\")
 
     # cef_dir.txt is used by dev_service in any mode
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt ${CEF_ROOT})
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt "${CEF_SHARE}")
 
     # touch dev_service in watch mode
     # TODO: do we actually support dev_service in watch mode? consider removing this target
