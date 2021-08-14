@@ -1,7 +1,7 @@
 #include "CallNativeApi.h"
 
 #include "CallNative.h"
-#include "JsPromise.h"
+#include "CreatePromise.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "VmProvider.h"
@@ -69,7 +69,7 @@ JsValue CallNativeApi::CallNative(
         CallNative::CallNativeSafe(*g_callNativeArgsPtr);
         return JsValue::Undefined();
       });
-    return JsPromise::New(g_promiseFn);
+    return CreatePromise(g_promiseFn);
   } else {
     return NativeValueCasts::NativeValueToJsValue(
       CallNative::CallNativeSafe(callNativeArgs));

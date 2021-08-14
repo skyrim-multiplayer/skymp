@@ -1,6 +1,6 @@
 #include "HttpClientApi.h"
+#include "CreatePromise.h"
 #include "HttpClient.h"
-#include "JsPromise.h"
 
 namespace {
 HttpClient g_httpClient;
@@ -73,7 +73,7 @@ JsValue HttpClientApi::Get(const JsFunctionArguments& args)
 
       return JsValue::Undefined();
     });
-  return JsPromise::New(g_resolverFn);
+  return CreatePromise(g_resolverFn);
 }
 
 JsValue HttpClientApi::Post(const JsFunctionArguments& args)
@@ -112,7 +112,7 @@ JsValue HttpClientApi::Post(const JsFunctionArguments& args)
 
       return JsValue::Undefined();
     });
-  return JsPromise::New(g_resolverFn);
+  return CreatePromise(g_resolverFn);
 }
 
 HttpClient& HttpClientApi::GetHttpClient()
