@@ -16,3 +16,4 @@ inline void Register(JsValue& exports)
   exports.SetProperty("HttpClient", httpClient);
 }
 }
+
