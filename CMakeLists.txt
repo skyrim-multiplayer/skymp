@@ -23,6 +23,7 @@ enable_testing()
 
 option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing" OFF)
 option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
+option(CPPCOV_PATH "Path to OpenCppCoverage" OFF)
 
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
@@ -32,6 +33,17 @@ string(REPLACE "\\" "/" SKYRIM_DIR "${SKYRIM_DIR}")
 if(SKYRIM_DIR)
   if (NOT EXISTS ${SKYRIM_DIR}/SkyrimSE.exe)
     message(FATAL_ERROR "Bad SKYRIM_DIR: ${SKYRIM_DIR}")
+  endif()
+endif()
+
+if(NOT CPPCOV_PATH)
+  message(STATUS "CPPCOV_PATH is not specified, coverage would not be calculated")
+endif()
+string(REPLACE "\\" "/" CPPCOV_PATH "${CPPCOV_PATH}")
+
+if(CPPCOV_PATH)
+  if (NOT EXISTS ${CPPCOV_PATH}/OpenCppCoverage.exe)
+    message(FATAL_ERROR "Bad CPPCOV_PATH: ${CPPCOV_PATH}")
   endif()
 endif()
 

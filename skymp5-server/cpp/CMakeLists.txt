@@ -126,10 +126,20 @@ endif()
 #
 # Add tests
 #
+if(CPPCOV_PATH)
+  set(CPPCOV ON)
+else()
+  set(CPPCOV OFF)
+endif()
 
 add_test(
   NAME test_unit
-  COMMAND $<TARGET_FILE:unit>
+  COMMAND ${CMAKE_COMMAND}
+    -DEXE_PATH=$<TARGET_FILE:unit>
+    -DCOVERAGE_HTML_OUT_DIR=${CMAKE_BINARY_DIR}/__coverage
+    -DCPPCOV=${CPPCOV}
+    -DCPPCOV_PATH=${CPPCOV_PATH}
+    -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
 )
 
 #
