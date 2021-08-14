@@ -4,11 +4,6 @@
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 
-auto src = R"(
-  const client = new HttpClient("https://skymp.io", 80);
-  client.get("/api/plz404").then((res) => resolve(JSON.stringify(res)));
-)";
-
 TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
 {
   TaskQueue taskQueue;
@@ -23,6 +18,11 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
       result = args[1];
       return JsValue::Undefined();
     }));
+
+  auto src = R"(
+    const client = new HttpClient("https://skymp.io", 80);
+    client.get("/api/plz404").then((res) => resolve(JSON.stringify(res)));
+  )";
 
   engine.RunScript(src, "");
 
