@@ -1,0 +1,5 @@
+{
+    "name": "cef-prebuilt",
+    "version-string": "1",
+    "supports": "windows & x64"
+}
