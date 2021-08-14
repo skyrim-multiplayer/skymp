@@ -233,4 +233,7 @@ foreach(target ${VCPKG_DEPENDENT})
 
   find_package(spdlog CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC spdlog::spdlog)
+  
+  find_package(OpenSSL REQUIRED)
+  target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
 endforeach()

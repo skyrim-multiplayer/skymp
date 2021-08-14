@@ -48,7 +48,7 @@ target_compile_definitions(unit PRIVATE
   UNIT_DATA_DIR=\"${UNIT_DATA_DIR}\"
   DIST_DIR=\"${CMAKE_BINARY_DIR}/dist\"
 )
-if (WIN32)
+if(WIN32)
   target_compile_options(unit PRIVATE "/bigobj")
 endif()
 target_link_libraries(unit PUBLIC espm)
@@ -65,7 +65,7 @@ target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
 apply_default_settings(TARGETS mp_common)
 list(APPEND VCPKG_DEPENDENT mp_common)
-if (WIN32)
+if(WIN32)
   target_link_libraries(mp_common PUBLIC ws2_32.lib)
 endif()
 

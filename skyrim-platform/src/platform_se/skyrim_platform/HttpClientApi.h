@@ -4,6 +4,7 @@
 namespace HttpClientApi {
 JsValue Constructor(const JsFunctionArguments& args);
 JsValue Get(const JsFunctionArguments& args);
+JsValue Post(const JsFunctionArguments& args);
 
 inline void Register(JsValue& exports)
 {
