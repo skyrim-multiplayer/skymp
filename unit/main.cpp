@@ -1,4 +1,5 @@
 #define CATCH_CONFIG_RUNNER
+#include "MiniDump.h"
 #include <Loader.h>
 #include <catch2/catch.hpp>
 #include <iostream>
@@ -51,6 +52,8 @@ espm::Loader l = CreateEspmLoader();
 
 int main(int argc, char* argv[])
 {
+  Tools::CreateMiniDumpOnUnHandledException();
+
   std::vector<const char*> args = { argv, argv + argc };
 
   if (l.GetFileNames().empty()) {
