@@ -36,6 +36,7 @@ target_compile_definitions(unit PRIVATE
 )
 if(WIN32)
   target_compile_options(unit PRIVATE "/bigobj")
+  target_link_libraries(unit PUBLIC Dbghelp.lib)
 endif()
 target_link_libraries(unit PUBLIC espm)
 

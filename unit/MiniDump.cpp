@@ -15,6 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "MiniDump.h"
+#include <Windows.h>
 #include <iostream>
 
 #ifdef WIN32
@@ -49,7 +50,7 @@ void CreateMiniDump(MINIDUMP_EXCEPTION_INFORMATION& minidumpInfo, HANDLE hFile,
               << std::endl;
     std::cerr << "\tPlease create a new issue on ";
     std::cerr << "https://github.com/skyrim-multiplayer/skymp "
-                 "and attached the memory dump ";
+                 "and attach the memory dump ";
     std::cerr << dmpFilename << std::endl;
   } else
     std::cerr << "\tFailed to create memory dump." << std::endl;
