@@ -41,21 +41,29 @@ endif()
 target_link_libraries(unit PUBLIC espm)
 
 #
-# ctest test
+# ctest tests
 #
 
-if(CPPCOV_PATH)
-  set(CPPCOV ON)
-else()
-  set(CPPCOV OFF)
-endif()
-
+# run without coverage but with dumps
 add_test(
   NAME test_unit
   COMMAND ${CMAKE_COMMAND}
     -DEXE_PATH=$<TARGET_FILE:unit>
     -DCOVERAGE_HTML_OUT_DIR=${CMAKE_BINARY_DIR}/__coverage
-    -DCPPCOV=${CPPCOV}
+    -DCPPCOV=OFF
     -DCPPCOV_PATH=${CPPCOV_PATH}
     -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
 )
+
+# run with coverage but without dumps
+if(CPPCOV_PATH)
+  add_test(
+    NAME test_unit_coverage
+    COMMAND ${CMAKE_COMMAND}
+      -DEXE_PATH=$<TARGET_FILE:unit>
+      -DCOVERAGE_HTML_OUT_DIR=${CMAKE_BINARY_DIR}/__coverage
+      -DCPPCOV=ON
+      -DCPPCOV_PATH=${CPPCOV_PATH}
+      -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
+  )
+endif()
