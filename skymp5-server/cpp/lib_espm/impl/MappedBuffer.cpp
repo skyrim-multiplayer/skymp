@@ -1,15 +1,14 @@
 #include "MappedBuffer.h"
 
-#include <fmt/format.h>
+#include <iostream>
 
 #ifndef WIN32
-#  include <iostream>
-
-// Linux
 #  include <fcntl.h>
 #  include <sys/mman.h>
 #  include <unistd.h>
 #endif
+
+#include <fmt/format.h>
 
 namespace espm::impl {
 
@@ -59,28 +58,42 @@ MappedBuffer::~MappedBuffer()
 {
 #ifdef WIN32
   if (viewPtr_) {
-    UnmapViewOfFile(viewPtr_);
+    bool result = UnmapViewOfFile(viewPtr_);
+    if (!result) {
+      std::cerr << "[espm] can't unmap file, error=" << GetLastError()
+                << std::endl;
+      std::terminate();
+    }
   }
   if (mapHandle_) {
-    CloseHandle(mapHandle_);
+    bool result = CloseHandle(mapHandle_);
+    if (!result) {
+      std::cerr << "[espm] can't close map handle, error=" << GetLastError()
+                << std::endl;
+      std::terminate();
+    }
   }
   if (fileHandle_) {
-    CloseHandle(fileHandle_);
+    bool result = CloseHandle(fileHandle_);
+    if (!result) {
+      std::cerr << "[espm] can't close file handle, error=" << GetLastError()
+                << std::endl;
+      std::terminate();
+    }
   }
 #else
   if (data_) {
     int result = munmap(data_, size_);
     if (result == -1) {
-      // XXX: no concurrency issues with strerror?
-      std::cerr << "[espm] can't unmap file: " << strerror(errno) << std::endl;
-      std::abort();
+      std::cerr << "[espm] can't unmap file, errno=" << errno << std::endl;
+      std::terminate();
     }
   }
   if (fd_ != -1) {
     int result = close(fd_);
     if (result == -1) {
-      std::cerr << "[espm] can't close file: " << strerror(errno) << std::endl;
-      std::abort();
+      std::cerr << "[espm] can't close file, errno=" << errno << std::endl;
+      std::terminate();
     }
   }
 #endif
