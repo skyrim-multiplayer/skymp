@@ -8,9 +8,14 @@ namespace espm {
 std::unique_ptr<impl::IBuffer> Loader::MakeBuffer(
   const fs::path& filePath) const
 {
-  // return std::unique_ptr<impl::IBuffer>{new
-  // impl::AllocatedBuffer(filePath)};
-  return std::unique_ptr<impl::IBuffer>{ new impl::MappedBuffer(filePath) };
+  switch (bufferType) {
+    case BufferType::AllocatedBuffer:
+      return std::make_unique<impl::AllocatedBuffer>(filePath);
+    case BufferType::MappedBuffer:
+      return std::make_unique<impl::MappedBuffer>(filePath);
+    default:
+      throw std::runtime_error("[espm] unhandled buffer type");
+  }
 }
 
 } // namespace espm

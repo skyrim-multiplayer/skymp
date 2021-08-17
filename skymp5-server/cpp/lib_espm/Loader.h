@@ -17,18 +17,27 @@ namespace espm {
 class Loader
 {
 public:
+  enum class BufferType
+  {
+    AllocatedBuffer,
+    MappedBuffer,
+  };
+
   using OnProgress = std::function<void(std::string fileName, float readDur,
                                         float parseDur, uintmax_t fileSize)>;
 
   Loader(const fs::path& dataDir, const std::vector<fs::path>& fileNames,
-         OnProgress onProgress = nullptr)
-    : Loader(MakeFilePaths(dataDir, fileNames), onProgress)
+         OnProgress onProgress = nullptr,
+         BufferType bufferType_ = BufferType::MappedBuffer)
+    : Loader(MakeFilePaths(dataDir, fileNames), onProgress, bufferType_)
   {
   }
 
   Loader(const std::vector<fs::path>& filePaths_,
-         OnProgress onProgress = nullptr)
+         OnProgress onProgress = nullptr,
+         BufferType bufferType_ = BufferType::MappedBuffer)
     : filePaths(filePaths_)
+    , bufferType(bufferType_)
   {
     for (const auto& p : filePaths) {
       entries.emplace_back();
@@ -100,6 +109,7 @@ private:
   std::unique_ptr<espm::Combiner> combiner;
   std::unique_ptr<espm::CombineBrowser> combineBrowser;
   std::vector<fs::path> filePaths;
+  BufferType bufferType;
 };
 
 } // namespace espm
