@@ -8,8 +8,6 @@
 #  include <unistd.h>
 #endif
 
-#include <fmt/format.h>
-
 namespace espm::impl {
 
 MappedBuffer::MappedBuffer(const fs::path& path)
@@ -20,35 +18,34 @@ MappedBuffer::MappedBuffer(const fs::path& path)
                             OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
   if (!fileHandle_) {
     // generic vs system?
-    throw std::system_error(
-      std::error_code(GetLastError(), std::system_category()),
-      "CreateFileW failed");
+    throw std::system_error(GetLastError(), std::system_category(),
+                            "[espm] CreateFileW failed for " + path.string());
   }
 
   mapHandle_ = CreateFileMapping(fileHandle_, NULL, PAGE_READONLY, 0, 0, NULL);
   if (!mapHandle_) {
-    throw std::system_error(
-      std::error_code(GetLastError(), std::system_category()),
-      "CreateFileMapping failed");
+    throw std::system_error(GetLastError(), std::system_category(),
+                            "[espm] CreateFileMapping failed for " +
+                              path.string());
   }
 
   viewPtr_ = MapViewOfFile(mapHandle_, FILE_MAP_READ, 0, 0, 0);
   if (!mapHandle_) {
-    throw std::system_error(
-      std::error_code(GetLastError(), std::system_category()),
-      "CreateFileMapping failed");
+    throw std::system_error(GetLastError(), std::system_category(),
+                            "[espm] CreateFileMapping failed for " +
+                              path.string());
   }
   data_ = static_cast<char*>(viewPtr_);
 #else
   fd_ = open(path.c_str(), O_RDONLY);
   if (fd_ == -1) {
     throw std::system_error(errno, std::system_category(),
-                            fmt::format("Can't read {}", path.string()));
+                            "[espm] open failed for " + path.string());
   }
   const auto mmapResult = mmap(NULL, size_, PROT_READ, MAP_SHARED, fd_, 0);
   if (mmapResult == MAP_FAILED) {
     throw std::system_error(errno, std::system_category(),
-                            fmt::format("Can't map {}", path.string()));
+                            "[espm] mmap failed for " + path.string());
   }
   data_ = static_cast<char*>(mmapResult);
 #endif

@@ -17,15 +17,6 @@ namespace espm {
 class Loader
 {
 public:
-  class LoadError : public std::runtime_error
-  {
-  public:
-    using std::runtime_error::runtime_error;
-
-    LoadError(std::stringstream& ss)
-      : runtime_error(ss.str()){};
-  };
-
   using OnProgress = std::function<void(std::string fileName, float readDur,
                                         float parseDur, uintmax_t fileSize)>;
 
@@ -42,12 +33,6 @@ public:
     for (const auto& p : filePaths) {
       entries.emplace_back();
       auto& entry = entries.back();
-
-      if (!fs::exists(p)) {
-        std::stringstream err;
-        err << p.string() << " doesn't exists";
-        throw LoadError(err);
-      }
 
       const clock_t was = clock();
       entry.buffer = MakeBuffer(p);
@@ -91,12 +76,6 @@ private:
   std::vector<fs::path> MakeFilePaths(const fs::path& dataDir,
                                       const std::vector<fs::path>& fileNames)
   {
-    if (!fs::exists(dataDir)) {
-      std::stringstream err;
-      err << dataDir.string() << " directory doesn't exists";
-      throw LoadError(err);
-    }
-
     std::vector<fs::path> res;
     for (auto& fileName : fileNames) {
       res.push_back(dataDir / fileName);
