@@ -24,10 +24,11 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
   size_t nUpserted = 0;
 
   for (auto& changeForm : changeForms) {
-    auto filePath = p / changeForm.formDesc.ToString('_');
+    std::string fileName = changeForm.formDesc.ToString('_') + ".json";
+    auto filePath = p / fileName;
     std::ofstream f(filePath);
     if (f) {
-      f << MpChangeForm::ToJson(changeForm).dump();
+      f << MpChangeForm::ToJson(changeForm).dump(2);
     }
     if (!f.is_open()) {
       pImpl->logger->error("Unable to open file {}", filePath.string());

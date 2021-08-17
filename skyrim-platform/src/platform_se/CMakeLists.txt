@@ -13,39 +13,19 @@ include(${cmake_dir}/apply_default_settings.cmake)
 if(MSVC)
   include(${cmake_dir}/add_papyrus_library_ck.cmake)
 
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
-  find_package(CEF REQUIRED)
-  add_subdirectory(${CEF_LIBCEF_DLL_WRAPPER_PATH} libcef_dll_wrapper)
   add_library(cef INTERFACE)
-  target_link_libraries(cef INTERFACE ${CEF_ROOT}/$<CONFIG>/cef_sandbox.lib ${CEF_ROOT}/$<CONFIG>/libcef.lib libcef_dll_wrapper)
-  target_include_directories(cef INTERFACE ${CEF_ROOT})
+  find_library(CEF_LIBRARY_DEBUG libcef_dll_wrapper)
+  string(REPLACE "/debug/lib/" "/lib/" CEF_LIBRARY_RELEASE ${CEF_LIBRARY_DEBUG})
+  find_path(CEF_INCLUDE_DIR include/cef_app.h)
+  find_path(CEF_SHARE share/cef-prebuilt)
+  set(CEF_SHARE "${CEF_SHARE}/share/cef-prebuilt")
+  target_link_libraries(cef INTERFACE "$<IF:$<CONFIG:Debug>,${CEF_LIBRARY_DEBUG},${CEF_LIBRARY_RELEASE}>")
+  target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/cef_sandbox.lib")
+  target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/libcef.lib")
+  target_include_directories(cef INTERFACE ${CEF_INCLUDE_DIR})
 
-  set(lib_root "${SKYRIM_PLATFORM_SOURCE_DIR}/submodules/CommonLibSSE")
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/platform_se/third_party")
-
-  file(GLOB_RECURSE lib_src "${lib_root}/src/*" "${lib_root}/include/*")
-  add_library(CommonLibSSE STATIC ${lib_src})
-  target_include_directories(CommonLibSSE PUBLIC "${lib_root}/include" "${third_party}")
-  target_compile_options(CommonLibSSE PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
-  target_link_libraries(CommonLibSSE PUBLIC Version)
-
-  file(GLOB_RECURSE common_src "${third_party}/common/*")
-  add_library(common STATIC ${common_src})
-  target_compile_options(common PRIVATE "/FI\"IPrefix.h\"")
-  target_include_directories(common PRIVATE "${third_party}/common" "${third_party}")
-
-  file(GLOB_RECURSE skse64_common_src "${third_party}/skse64_common/*")
-  add_library(skse64_common STATIC ${skse64_common_src})
-  target_compile_options(skse64_common PRIVATE "/FI\"IPrefix.h\"")
-  target_include_directories(skse64_common PRIVATE "${third_party}/common" "${third_party}/skse64_common" "${third_party}")
-
-  file(GLOB_RECURSE skse_src "${third_party}/skse64/*")
-  add_library(skse64 STATIC ${skse_src})
-  target_compile_options(skse64 PRIVATE "/FI\"IPrefix.h\"")
-  target_include_directories(skse64 PUBLIC "${third_party}/common" "${third_party}/skse64" "${third_party}")
-  target_compile_definitions(skse64 PRIVATE RUNTIME=1 RUNTIME_VERSION=0x01050610)
-  target_link_libraries(skse64 PUBLIC common skse64_common)
-
+  
   file(GLOB_RECURSE core_library_src "${third_party}/cef/core_library/*")
   add_library(core_library STATIC ${core_library_src})
   target_include_directories(core_library PUBLIC "${third_party}/cef/core_library")
@@ -114,7 +94,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
     add_library(skyrim_platform SHARED ${platform_src})
-    target_link_libraries(skyrim_platform PUBLIC skse64 CommonLibSSE skyrim_plugin_resources ui)
+    target_link_libraries(skyrim_platform PUBLIC skyrim_plugin_resources ui)
     set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
     target_include_directories(skyrim_platform PRIVATE "${third_party}")
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
@@ -157,7 +137,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_compile_definitions(skyrim_platform PUBLIC PAPYRUS_SOURCES=\"${def}\")
 
     # cef_dir.txt is used by dev_service in any mode
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt ${CEF_ROOT})
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt "${CEF_SHARE}")
 
     # touch dev_service in watch mode
     # TODO: do we actually support dev_service in watch mode? consider removing this target
@@ -193,14 +173,16 @@ endif()
 
 if(MSVC)
   apply_default_settings(TARGETS
-    CommonLibSSE common skse64_common skse64
     core_library hooks reverse ui SkyrimPlatformCEF
   )
 endif()
 
 foreach(target ${VCPKG_DEPENDENT})
-  find_package(ChakraCore REQUIRED)
-  target_link_libraries(${target} PUBLIC ChakraCore::ChakraCore)
+  find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
+  find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
+  string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
+  target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")
+  target_include_directories(${target} PUBLIC ${ChakraCore_INCLUDE_DIR})
 
   find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
   get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
@@ -213,11 +195,42 @@ foreach(target ${VCPKG_DEPENDENT})
   find_package(ZLIB REQUIRED)
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
-  if(MSVC)
-    find_library(MHOOH_LIBRARIES mhook)
+  if(MSVC AND "${target}" MATCHES "skyrim_platform")
+    find_library(MHOOH_LIBRARY_DEBUG mhook)
+    string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})
     find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib)
-    target_link_libraries(${target} PUBLIC ${MHOOH_LIBRARIES})
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
     target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
+
+    find_library(SKSE64_LIBRARY_DEBUG skse64)
+    string(REPLACE "/debug/lib/" "/lib/" SKSE64_LIBRARY_RELEASE ${SKSE64_LIBRARY_DEBUG})
+    find_path(SKSE64_INCLUDE_DIR skse64/PluginAPI.h)
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_LIBRARY_DEBUG},${SKSE64_LIBRARY_RELEASE}>")
+    target_include_directories(${target} PUBLIC ${SKSE64_INCLUDE_DIR})
+
+    find_library(SKSE64_COMMON_LIBRARY_DEBUG skse64_common)
+    string(REPLACE "/debug/lib/" "/lib/" SKSE64_COMMON_LIBRARY_RELEASE ${SKSE64_COMMON_LIBRARY_DEBUG})
+    find_path(SKSE64_COMMON_INCLUDE_DIR skse64/PluginAPI.h)
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_COMMON_LIBRARY_DEBUG},${SKSE64_COMMON_LIBRARY_RELEASE}>")
+    target_include_directories(${target} PUBLIC ${SKSE64_COMMON_INCLUDE_DIR})
+
+    find_library(COMMON_LIBRARY_DEBUG common)
+    string(REPLACE "/debug/lib/" "/lib/" COMMON_LIBRARY_RELEASE ${COMMON_LIBRARY_DEBUG})
+    find_path(COMMON_INCLUDE_DIR skse64/PluginAPI.h)
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMON_LIBRARY_DEBUG},${COMMON_LIBRARY_RELEASE}>")
+    target_include_directories(${target} PUBLIC ${COMMON_INCLUDE_DIR})
+
+    find_library(COMMONLIBSSE_LIBRARY_DEBUG CommonLibSSE)
+    string(REPLACE "/debug/lib/" "/lib/" COMMONLIBSSE_LIBRARY_RELEASE ${COMMONLIBSSE_LIBRARY_DEBUG})
+    find_path(COMMONLIBSSE_INCLUDE_DIR SKSE/API.h)
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMONLIBSSE_LIBRARY_DEBUG},${COMMONLIBSSE_LIBRARY_RELEASE}>")
+    target_include_directories(${target} PUBLIC ${COMMONLIBSSE_INCLUDE_DIR})
+
+    # CommonLibSSE requirement
+    target_link_libraries(${target} PUBLIC Version)
+    target_compile_options(${target} PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
+
+    target_link_libraries(${target} PUBLIC cef)
 
     find_package(directxtk CONFIG REQUIRED)
     find_package(directxmath CONFIG REQUIRED)

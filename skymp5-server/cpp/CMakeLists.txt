@@ -126,10 +126,20 @@ endif()
 #
 # Add tests
 #
+if(CPPCOV_PATH)
+  set(CPPCOV ON)
+else()
+  set(CPPCOV OFF)
+endif()
 
 add_test(
   NAME test_unit
-  COMMAND $<TARGET_FILE:unit>
+  COMMAND ${CMAKE_COMMAND}
+    -DEXE_PATH=$<TARGET_FILE:unit>
+    -DCOVERAGE_HTML_OUT_DIR=${CMAKE_BINARY_DIR}/__coverage
+    -DCPPCOV=${CPPCOV}
+    -DCPPCOV_PATH=${CPPCOV_PATH}
+    -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
 )
 
 #
@@ -188,6 +198,9 @@ foreach(target ${VCPKG_DEPENDENT})
   endif()
 endforeach()
 
-find_package(ChakraCore REQUIRED)
+find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
+find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
+string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
+
 # don't want to link against MpClientPlugin for example..
-target_link_libraries(server_guest_lib PUBLIC ChakraCore::ChakraCore)
+target_link_libraries(server_guest_lib PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")

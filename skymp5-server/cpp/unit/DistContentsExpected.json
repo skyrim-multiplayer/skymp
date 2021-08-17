@@ -98,15 +98,6 @@
   },
   {
     "configurationTags": [
-      "Debug",
-      "Win32"
-    ],
-    "expectedFiles": [
-      "server/scamp_native.ilk"
-    ]
-  },
-  {
-    "configurationTags": [
       "Win32"
     ],
     "expectedFiles": [
