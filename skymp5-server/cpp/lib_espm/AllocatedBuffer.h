@@ -2,10 +2,10 @@
 
 #include <filesystem>
 
-#include "../Loader.h"
+#include "Loader.h"
 #include "IBuffer.h"
 
-namespace espm::impl {
+namespace espm {
 
 class AllocatedBuffer : public IBuffer
 {
@@ -20,4 +20,4 @@ private:
   std::vector<char> data;
 };
 
-} // namespace espm::impl
+} // namespace espm

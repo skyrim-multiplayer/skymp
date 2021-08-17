@@ -6,12 +6,12 @@
 #  include <Windows.h>
 #endif
 
-#include "../Loader.h"
+#include "Loader.h"
 #include "IBuffer.h"
 
-namespace espm::impl {
+namespace espm {
 
-class MappedBuffer : public impl::IBuffer
+class MappedBuffer : public IBuffer
 {
 public:
   MappedBuffer(const fs::path& path);
@@ -34,4 +34,4 @@ private:
   size_t size_;
 };
 
-} // namespace espm::impl
+} // namespace espm

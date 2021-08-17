@@ -1,7 +1,7 @@
 #include "Loader.h"
 
-#include "impl/AllocatedBuffer.h"
-#include "impl/MappedBuffer.h"
+#include "AllocatedBuffer.h"
+#include "MappedBuffer.h"
 
 namespace espm {
 
@@ -68,14 +68,14 @@ std::vector<fs::path> Loader::MakeFilePaths(
   return res;
 }
 
-std::unique_ptr<impl::IBuffer> Loader::MakeBuffer(
+std::unique_ptr<IBuffer> Loader::MakeBuffer(
   const fs::path& filePath) const
 {
   switch (bufferType) {
     case BufferType::AllocatedBuffer:
-      return std::make_unique<impl::AllocatedBuffer>(filePath);
+      return std::make_unique<AllocatedBuffer>(filePath);
     case BufferType::MappedBuffer:
-      return std::make_unique<impl::MappedBuffer>(filePath);
+      return std::make_unique<MappedBuffer>(filePath);
     default:
       throw std::runtime_error("[espm] unhandled buffer type");
   }

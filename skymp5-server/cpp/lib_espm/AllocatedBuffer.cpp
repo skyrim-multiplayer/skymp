@@ -1,6 +1,6 @@
 #include "AllocatedBuffer.h"
 
-namespace espm::impl {
+namespace espm {
 
 AllocatedBuffer::AllocatedBuffer(const std::filesystem::path& path)
   : data()
@@ -24,4 +24,4 @@ size_t AllocatedBuffer::GetLength() const
   return data.size();
 }
 
-} // namespace espm::impl
+} // namespace espm

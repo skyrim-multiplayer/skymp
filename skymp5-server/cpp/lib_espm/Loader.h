@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 
 #include "Combiner.h"
 #include "espm.h"
-#include "impl/IBuffer.h"
+#include "IBuffer.h"
 
 namespace espm {
 
@@ -42,11 +42,11 @@ private:
   std::vector<fs::path> MakeFilePaths(const fs::path& dataDir,
                                       const std::vector<fs::path>& fileNames);
 
-  std::unique_ptr<impl::IBuffer> MakeBuffer(const fs::path& filePath) const;
+  std::unique_ptr<IBuffer> MakeBuffer(const fs::path& filePath) const;
 
   struct Entry
   {
-    std::unique_ptr<impl::IBuffer> buffer;
+    std::unique_ptr<IBuffer> buffer;
     std::unique_ptr<espm::Browser> browser;
 
     uintmax_t size = 0;

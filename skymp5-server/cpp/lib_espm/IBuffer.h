@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace espm::impl {
+namespace espm {
 
 class IBuffer
 {
@@ -13,4 +13,4 @@ public:
   virtual size_t GetLength() const = 0;
 };
 
-} // namespace espm::impl
+} // namespace espm

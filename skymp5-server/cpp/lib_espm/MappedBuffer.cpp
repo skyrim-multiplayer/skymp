@@ -8,7 +8,7 @@
 #  include <unistd.h>
 #endif
 
-namespace espm::impl {
+namespace espm {
 
 MappedBuffer::MappedBuffer(const fs::path& path)
 {
@@ -106,4 +106,4 @@ size_t MappedBuffer::GetLength() const
   return size_;
 }
 
-} // namespace espm::impl
+} // namespace espm
