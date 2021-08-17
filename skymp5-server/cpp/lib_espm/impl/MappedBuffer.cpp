@@ -8,6 +8,8 @@
 #  include <unistd.h>
 #endif
 
+#include <fmt/format.h>
+
 namespace espm::impl {
 
 MappedBuffer::MappedBuffer(const fs::path& path)
@@ -40,11 +42,13 @@ MappedBuffer::MappedBuffer(const fs::path& path)
 #else
   fd_ = open(path.c_str(), O_RDONLY);
   if (fd_ == -1) {
-    throw std::system_error(errno, std::system_category(), "open failed");
+    throw std::system_error(errno, std::system_category(),
+                            fmt::format("Can't read {}", path.string()));
   }
   const auto mmapResult = mmap(NULL, size_, PROT_READ, MAP_SHARED, fd_, 0);
   if (mmapResult == MAP_FAILED) {
-    throw std::system_error(errno, std::system_category(), "mmap failed");
+    throw std::system_error(errno, std::system_category(),
+                            fmt::format("Can't map {}", path.string()));
   }
   data_ = static_cast<char*>(mmapResult);
 #endif
