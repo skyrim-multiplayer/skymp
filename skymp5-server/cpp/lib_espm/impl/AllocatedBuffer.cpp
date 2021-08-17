@@ -10,7 +10,7 @@ AllocatedBuffer::AllocatedBuffer(const std::filesystem::path& path)
 
   std::ifstream f(path.string(), std::ios::binary);
   if (!f.read(data.data(), size)) {
-    throw std::runtime_error(fmt::format("Can't read {}", path.string()));
+    throw std::runtime_error("[espm] can't read " + path.string());
   }
 }
 

@@ -2,8 +2,6 @@
 
 #include <filesystem>
 
-#include <fmt/format.h>
-
 #include "../Loader.h"
 #include "IBuffer.h"
 
