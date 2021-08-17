@@ -17,7 +17,6 @@ MappedBuffer::MappedBuffer(const fs::path& path)
   fileHandle_ = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
                             OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
   if (!fileHandle_) {
-    // generic vs system?
     throw std::system_error(GetLastError(), std::system_category(),
                             "[espm] CreateFileW failed for " + path.string());
   }
