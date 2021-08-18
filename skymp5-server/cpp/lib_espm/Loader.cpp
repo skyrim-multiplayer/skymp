@@ -68,8 +68,7 @@ std::vector<fs::path> Loader::MakeFilePaths(
   return res;
 }
 
-std::unique_ptr<IBuffer> Loader::MakeBuffer(
-  const fs::path& filePath) const
+std::unique_ptr<IBuffer> Loader::MakeBuffer(const fs::path& filePath) const
 {
   switch (bufferType) {
     case BufferType::AllocatedBuffer:

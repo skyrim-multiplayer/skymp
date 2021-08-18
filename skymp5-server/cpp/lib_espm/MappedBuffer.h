@@ -6,8 +6,8 @@
 #  include <Windows.h>
 #endif
 
-#include "Loader.h"
 #include "IBuffer.h"
+#include "Loader.h"
 
 namespace espm {
 
