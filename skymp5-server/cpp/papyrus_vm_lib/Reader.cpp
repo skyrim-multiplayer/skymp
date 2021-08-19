@@ -5,6 +5,7 @@ void Reader::Read()
 {
 
   char temp;
+  std::streampos fl_size;
 
   arrayBytes.clear();
 
@@ -13,7 +14,9 @@ void Reader::Read()
   if (File.is_open()) {
 
     File.seekg(0, std::ios_base::end);
+    fl_size = File.tellg();
     File.seekg(0, std::ios_base::beg);
+    arrayBytes.reserve(fl_size);  // Желательно, чтобы ближайшая степень двойки была, но с лимитом в 4096
 
     while (File.get(temp)) {
       arrayBytes.push_back(temp);
