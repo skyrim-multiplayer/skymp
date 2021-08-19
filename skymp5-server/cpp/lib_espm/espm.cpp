@@ -512,7 +512,7 @@ struct espm::Browser::Impl
   }
 };
 
-espm::Browser::Browser(void* fileContent, size_t length)
+espm::Browser::Browser(const void* fileContent, size_t length)
   : pImpl(new Impl)
 {
   pImpl->buf = (char*)fileContent;
