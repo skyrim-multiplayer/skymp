@@ -5,7 +5,7 @@ void Reader::Read()
 {
 
   char temp;
-  std::streampos fl_size;
+  std::streampos fileSize;
 
   arrayBytes.clear();
 
@@ -14,9 +14,9 @@ void Reader::Read()
   if (File.is_open()) {
 
     File.seekg(0, std::ios_base::end);
-    fl_size = File.tellg();
+    fileSize = File.tellg();
     File.seekg(0, std::ios_base::beg);
-    arrayBytes.reserve(fl_size);
+    arrayBytes.reserve(fileSize);
 
     while (File.get(temp)) {
       arrayBytes.push_back(temp);
