@@ -8,41 +8,19 @@
 #include <nlohmann/json.hpp>
 #include <thread>
 
-using namespace Catch;
-
 // Utilities for testing
-namespace {
-std::string MakeMessage(const nlohmann::json& j)
-{
-  std::string s;
-  s += (char)Networking::MinPacketId;
-  s += j.dump();
-  return s;
-}
+//namespace {
+std::string MakeMessage(const nlohmann::json& j);
 
 void DoMessage(PartOne& partOne, Networking::UserId id,
-               const nlohmann::json& j)
-{
-  std::string s = MakeMessage(j);
-  PartOne* ptr = &partOne;
-  PartOne::HandlePacket(ptr, id, Networking::PacketType::Message,
-                        reinterpret_cast<Networking::PacketData>(s.data()),
-                        s.size());
-}
+               const nlohmann::json& j);
 
-void DoConnect(PartOne& partOne, Networking::UserId id)
-{
-  PartOne* ptr = &partOne;
-  PartOne::HandlePacket(ptr, id, Networking::PacketType::ServerSideUserConnect,
-                        nullptr, 0);
-}
+void DoConnect(PartOne& partOne, Networking::UserId id);
 
-void DoDisconnect(PartOne& partOne, Networking::UserId id)
-{
-  PartOne* ptr = &partOne;
-  PartOne::HandlePacket(
-    ptr, id, Networking::PacketType::ServerSideUserDisconnect, nullptr, 0);
-}
+void DoDisconnect(PartOne& partOne, Networking::UserId id);
+
+void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
+                      Networking::UserId userId);
 
 static const auto jMovement =
   nlohmann::json{ { "t", MsgType::UpdateMovement },
@@ -83,51 +61,25 @@ static const auto jEquipment = nlohmann::json{
   { "data", { { "inv", { { "entries", nlohmann::json::array() } } } } }
 };
 
-void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
-                      Networking::UserId userId)
-{
-  auto jMyMovement = jMovement;
-  jMyMovement["idx"] = dynamic_cast<MpActor*>(
-                         partOne.worldState.LookupFormById(actorFormId).get())
-                         ->GetIdx();
-  DoMessage(partOne, userId, jMyMovement);
-}
-
 class FakeListener : public PartOne::Listener
 {
 public:
-  static std::shared_ptr<FakeListener> New()
-  {
-    return std::shared_ptr<FakeListener>(new FakeListener);
-  }
+  static std::shared_ptr<FakeListener> New();
 
-  void OnConnect(Networking::UserId userId) override
-  {
-    ss << "OnConnect(" << userId << ")" << std::endl;
-  }
+  void OnConnect(Networking::UserId userId) override;
 
-  void OnDisconnect(Networking::UserId userId) override
-  {
-    ss << "OnDisconnect(" << userId << ")" << std::endl;
-  }
+  void OnDisconnect(Networking::UserId userId) override;
 
   void OnCustomPacket(Networking::UserId userId,
-                      const simdjson::dom::element& content) override
-  {
-    ss << "OnCustomPacket(" << userId << ", " << simdjson::minify(content)
-       << ")" << std::endl;
-  }
+                      const simdjson::dom::element& content) override;
 
   bool OnMpApiEvent(const char* eventName,
                     std::optional<simdjson::dom::element> args,
-                    std::optional<uint32_t> formId) override
-  {
-    return true;
-  }
+                    std::optional<uint32_t> formId) override;
 
-  std::string str() { return ss.str(); }
+  std::string str();
 
-  void clear() { ss = std::stringstream(); }
+  void clear();
 
 private:
   std::stringstream ss;
@@ -136,18 +88,12 @@ private:
 class PapyrusCompatibilityPolicy : public IPapyrusCompatibilityPolicy
 {
 public:
-  PapyrusCompatibilityPolicy(MpActor* ac_)
-    : ac(ac_)
-  {
-  }
+  PapyrusCompatibilityPolicy(MpActor* ac_);
 
-  MpActor* GetDefaultActor(const char*, const char*, int32_t) const override
-  {
-    return ac;
-  }
+  MpActor* GetDefaultActor(const char*, const char*, int32_t) const override;
 
 private:
   MpActor* const ac;
 };
 
-}
+//}
