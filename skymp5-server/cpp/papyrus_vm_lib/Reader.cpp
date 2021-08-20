@@ -121,6 +121,7 @@ StringTable Reader::FillStringTable()
   std::vector<std::string> storage;
 
   int SizeStringTable = Read16_bit();
+  storage.reserve(SizeStringTable);
 
   for (int i = 0; i < SizeStringTable; i++) {
     int SizeString = Read16_bit();
