@@ -1,9 +1,9 @@
-#include "PapyrusDebugTest.h"
-
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
 #include "PapyrusDebug.h"
+
+using namespace TestUtils;
 
 TEST_CASE("Notification", "[Papyrus][Debug]")
 {

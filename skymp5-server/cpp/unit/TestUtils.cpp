@@ -11,7 +11,7 @@
 using namespace Catch;
 
 // Utilities for testing
-//namespace {
+namespace TestUtils{
 std::string MakeMessage(const nlohmann::json& j)
 {
   std::string s;
@@ -102,4 +102,4 @@ void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
   {
     return ac;
   }
-//}
+}

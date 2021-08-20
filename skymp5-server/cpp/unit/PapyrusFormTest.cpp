@@ -1,5 +1,3 @@
-#include "PapyrusFormTest.h"
-
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 

@@ -1,4 +1,3 @@
-#include "LeveledListUtilsTest.h"
 #include "LeveledListUtils.h"
 #include <algorithm>
 #include <atomic>
@@ -10,10 +9,10 @@
 
 #include <Loader.h>
 
+extern espm::Loader l;
+
 using namespace LeveledListUtils;
 using namespace std::chrono_literals;
-
-extern espm::Loader l;
 
 TEST_CASE("Bug", "[espm]")
 {

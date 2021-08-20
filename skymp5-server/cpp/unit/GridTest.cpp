@@ -1,5 +1,3 @@
-#include "GridTest.h"
-
 // Copied from
 // https://gitlab.com/pospelov/skymp2-server/-/raw/master/src/tests/GridTest.cpp
 #include "Grid.h"

@@ -1,8 +1,12 @@
-#include "ConsoleCommandTest.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
 #include "PacketParser.h"
+
+using Catch::Matchers::Contains;
+using namespace TestUtils;
+
+PartOne& GetPartOne();
 
 int pospelov = 20;
 
@@ -61,7 +65,7 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
 
   REQUIRE_THROWS_WITH(p.GetActionListener().OnConsoleCommand(
                         msgData, "additem", { 0x14, 0x12eb7, 0x108 }),
-                      Catch::Matchers::Contains("Not enough permissions to use this command"));
+                      Contains("Not enough permissions to use this command"));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

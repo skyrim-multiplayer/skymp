@@ -1,7 +1,8 @@
 #pragma once
-#include "NpcExists.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
+
+PartOne& GetPartOne();
 
 TEST_CASE("Whiterun cow 0x10ebaf exists", "[NpcExists][espm]")
 {
@@ -14,7 +15,7 @@ TEST_CASE("Whiterun cow 0x10ebaf is visible to players", "[NpcExists][espm]")
 {
   auto& partOne = GetPartOne();
 
-  DoConnect(partOne, 0);
+  TestUtils::DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 24132, -5049, -3004 }, 0, 0x1a26f);
 
   partOne.SetUserActor(0, 0xff000000);

@@ -1,4 +1,3 @@
-#include "Grid_MoveTest.h"
 #include "Grid.h"
 #include <catch2/catch.hpp>
 

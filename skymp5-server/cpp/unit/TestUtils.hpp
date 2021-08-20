@@ -9,7 +9,7 @@
 #include <thread>
 
 // Utilities for testing
-//namespace {
+namespace TestUtils{
 std::string MakeMessage(const nlohmann::json& j);
 
 void DoMessage(PartOne& partOne, Networking::UserId id,
@@ -96,4 +96,4 @@ private:
   MpActor* const ac;
 };
 
-//}
+}

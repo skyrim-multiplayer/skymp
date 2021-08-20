@@ -1,5 +1,6 @@
-#include "PartOneTest.h"
 #include "TestUtils.hpp"
+
+using namespace TestUtils;
 
 using Catch::Matchers::Contains;
 

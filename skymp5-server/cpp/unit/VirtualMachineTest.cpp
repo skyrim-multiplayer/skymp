@@ -1,4 +1,3 @@
-#include "VirtualMachineTest.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
@@ -84,19 +83,25 @@ std::shared_ptr<VirtualMachine> CreateVirtualMachine()
   return vm;
 }
 
-  const char* TestObject::GetStringID() { 
-      return myId.c_str(); 
-  };
+class TestObject : public IGameObject
+{
+public:
+  std::string myId = "0x006AFF2E";
 
-  MyScriptVariablesHolder::MyScriptVariablesHolder(const char* scriptName)
+  const char* GetStringID() override { return myId.c_str(); };
+};
+
+class MyScriptVariablesHolder : public ScriptVariablesHolder
+{
+public:
+  MyScriptVariablesHolder(const char* scriptName)
     : ScriptVariablesHolder(scriptName, nullptr, nullptr, nullptr, nullptr)
   {
     testObject.reset(new TestObject);
     var = VarValue(testObject.get());
   }
 
-  VarValue* MyScriptVariablesHolder::GetVariableByName(
-    const char* name, const PexScript& pex) 
+  VarValue* GetVariableByName(const char* name, const PexScript& pex) override
   {
     auto res = ScriptVariablesHolder::GetVariableByName(name, pex);
     if (name == std::string("::OpcodeRef_var")) {
@@ -105,6 +110,9 @@ std::shared_ptr<VirtualMachine> CreateVirtualMachine()
     return res;
   }
 
+  std::shared_ptr<IGameObject> testObject;
+  VarValue var;
+};
 
 }
 

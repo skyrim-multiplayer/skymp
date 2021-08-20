@@ -1,4 +1,3 @@
-#include "MovementValidationTest.h"
 #include <catch2/catch.hpp>
 
 #include "DummyMessageOutput.h"

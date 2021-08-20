@@ -1,9 +1,9 @@
-#include "PapyrusCompatibilityTest.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
 // PartOne_ActivateTest.cpp
 extern espm::CompressedFieldsCache g_dummyCache;
+PartOne& GetPartOne();
 
 TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus][espm]")
 {

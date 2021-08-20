@@ -1,5 +1,3 @@
-#include "PapyrusObjectReferenceTest.h"
-
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
@@ -8,27 +6,35 @@
 #include "MpObjectReference.h"
 #include "PapyrusObjectReference.h"
 
+using Catch::Matchers::Contains;
+
 extern espm::Loader l;
 
 namespace {
 
-  TestReference::TestReference(const LocationalData& locationalData,
-                             const FormCallbacks& callbacks, uint32_t baseId,
-                             std::string baseType,
-                             std::optional<NiPoint3> primitiveBoundsDiv2)
-  : MpObjectReference(locationalData, callbacks, baseId, baseType,
-                      primitiveBoundsDiv2)
+class TestReference : public MpObjectReference
 {
-}
+public:
+  TestReference(const LocationalData& locationalData,
+                const FormCallbacks& callbacks, uint32_t baseId,
+                std::string baseType,
+                std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt)
+    : MpObjectReference(locationalData, callbacks, baseId, baseType,
+                        primitiveBoundsDiv2)
+  {
+  }
 
-  void TestReference::SendPapyrusEvent(const char* eventName,
-                        const VarValue* arguments,
-                        size_t argumentsCount) 
+  void SendPapyrusEvent(const char* eventName,
+                        const VarValue* arguments = nullptr,
+                        size_t argumentsCount = 0) override
   {
     events.push_back(eventName);
     return MpObjectReference::SendPapyrusEvent(eventName, arguments,
                                                argumentsCount);
   }
+
+  std::vector<std::string> events;
+};
 
 TestReference& CreateMpObjectReference(WorldState& worldState, uint32_t id)
 {
@@ -116,7 +122,7 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference][espm]")
   PartOne p;
 
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
-  DoConnect(p, 1);
+  TestUtils::DoConnect(p, 1);
   p.SetUserActor(1, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
@@ -139,8 +145,7 @@ TEST_CASE("BlockActivation", "[Papyrus][ObjectReference][espm]")
   auto& refr = CreateMpObjectReference(p, 0xff000000);
 
   // Trying to perform activation and fails due to unattached espm
-  REQUIRE_THROWS_WITH(refr.Activate(ac),
-                      Catch::Matchers::Contains("No espm attached"));
+  REQUIRE_THROWS_WITH(refr.Activate(ac), Contains("No espm attached"));
 
   PapyrusObjectReference().BlockActivation(refr.ToVarValue(),
                                            { VarValue(true) });
@@ -153,6 +158,5 @@ TEST_CASE("BlockActivation", "[Papyrus][ObjectReference][espm]")
 
   PapyrusObjectReference().BlockActivation(refr.ToVarValue(),
                                            { VarValue(false) });
-  REQUIRE_THROWS_WITH(refr.Activate(ac),
-                      Catch::Matchers::Contains("No espm attached"));
+  REQUIRE_THROWS_WITH(refr.Activate(ac), Contains("No espm attached"));
 }

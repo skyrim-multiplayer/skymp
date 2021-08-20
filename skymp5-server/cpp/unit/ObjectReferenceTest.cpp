@@ -1,6 +1,7 @@
-#include "ObjectReferenceTest.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
+
+using namespace TestUtils;
 
 namespace {
 MpObjectReference& CreateMpObjectReference_(WorldState& worldState,

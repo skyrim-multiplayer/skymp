@@ -1,7 +1,8 @@
-#include "PartOne_UpdateLookTest.h"
 #include "TestUtils.hpp"
 
-  using Catch::Matchers::Contains;
+using namespace TestUtils;
+
+using Catch::Matchers::Contains;
 
 TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 {

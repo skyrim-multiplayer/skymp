@@ -1,6 +1,7 @@
-#include "PartOne_ActivateTest.h"
 #include "ScriptStorage.h"
 #include "TestUtils.hpp"
+
+using namespace TestUtils;
 
 using Catch::Matchers::Contains;
 
@@ -8,9 +9,6 @@ extern espm::Loader l;
 
 // Actually, there are a few utils
 espm::CompressedFieldsCache g_dummyCache;
-
-constexpr auto barrelInWhiterun = 0x4cc2d;
-
 PartOne& GetPartOne()
 {
   auto instance = std::make_shared<PartOne>();
@@ -23,6 +21,8 @@ PartOne& GetPartOne()
   g_partOneInstances.push_back(instance);
   return *g_partOneInstances.back();
 }
+
+constexpr auto barrelInWhiterun = 0x4cc2d;
 
 TEST_CASE("Activate without espm attached", "[PartOne][espm]")
 {

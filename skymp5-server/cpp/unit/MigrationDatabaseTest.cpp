@@ -1,4 +1,3 @@
-#include "MigrationDatabaseTest.h"
 #include "FileDatabase.h"
 #include "MigrationDatabase.h"
 #include "TestUtils.hpp"
@@ -12,7 +11,8 @@ inline std::shared_ptr<IDatabase> MakeDatabase(const char* directory)
   return std::make_shared<FileDatabase>(directory, spdlog::default_logger());
 }
 
-inline MpChangeForm CreateChangeForm_(const char* descStr, NiPoint3 pos)
+inline MpChangeForm CreateChangeForm_(const char* descStr,
+                                      NiPoint3 pos = { 0, 0, 0 })
 {
   MpChangeForm res;
   res.formDesc = FormDesc::FromString(descStr);
