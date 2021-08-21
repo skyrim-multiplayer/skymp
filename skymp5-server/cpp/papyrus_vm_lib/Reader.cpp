@@ -481,6 +481,7 @@ uint64_t Reader::Read64_bit()
 std::string Reader::ReadString(int Size)
 {
   std::string temp;
+  temp.reserve(Size);
 
   for (int i = 0; i < Size; i++) {
     temp += (char)arrayBytes[currentReadPositionInFile];
