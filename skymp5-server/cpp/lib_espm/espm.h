@@ -42,7 +42,7 @@ using GroupStack = std::vector<espm::GroupHeader*>;
 class Browser
 {
 public:
-  Browser(void* fileContent, size_t length);
+  Browser(const void* fileContent, size_t length);
   ~Browser();
 
   RecordHeader* LookupById(uint32_t formId) const noexcept;
