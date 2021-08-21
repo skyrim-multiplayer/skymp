@@ -86,7 +86,7 @@ Playing on Linux isn't supported currently, but a full-featured server is.
    ```sh
    ctest -C Debug --verbose
    ```
-   Some tests ([ESPMTest](https://github.com/skyrim-multiplayer/skymp/blob/main/skymp5-server/cpp/unit/EspmTest.h)) require Skyrim SE data files and will be skipped if you didn't specify `-DSKYRIM_DIR`.
+   Some tests ([ESPMTest](https://github.com/skyrim-multiplayer/skymp/blob/main/skymp5-server/cpp/unit/EspmTest.cpp)) require Skyrim SE data files and will be skipped if you didn't specify `-DSKYRIM_DIR`.
 
    In order to avoid potential errors, make sure:
    1. You have installed it using Steam and it's up to date (currently last update was on [Nov 20, 2019](https://steamdb.info/depot/489832/history/?changeid=M:8702665189575304780)). See SteamDB for [hashes](https://steamdb.info/depot/489832/?show_hashes) and [update history](https://steamdb.info/depot/489832/history/).
