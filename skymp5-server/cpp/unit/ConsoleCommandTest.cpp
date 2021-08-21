@@ -3,6 +3,8 @@
 
 #include "PacketParser.h"
 
+using Catch::Matchers::Contains;
+
 PartOne& GetPartOne();
 
 int pospelov = 20;

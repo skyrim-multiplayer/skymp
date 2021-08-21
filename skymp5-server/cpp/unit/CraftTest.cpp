@@ -4,6 +4,8 @@
 #include "FindRecipe.h"
 #include "PacketParser.h"
 
+using Catch::Matchers::Contains;
+
 PartOne& GetPartOne();
 
 TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")

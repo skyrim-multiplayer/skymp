@@ -1,5 +1,7 @@
 #include "TestUtils.hpp"
 
+using Catch::Matchers::Contains;
+
 TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 {
 

@@ -6,6 +6,8 @@
 #include "MpObjectReference.h"
 #include "PapyrusObjectReference.h"
 
+using Catch::Matchers::Contains;
+
 extern espm::Loader l;
 
 namespace {
