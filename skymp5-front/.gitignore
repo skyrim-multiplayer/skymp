@@ -119,3 +119,5 @@ dist
 config.js
 
 .idea
+yarn.lock
+*/.DS_Store
