@@ -29,6 +29,7 @@
     "webpack-dev-server": "^3.11.0"
   },
   "dependencies": {
+    "history": "^5.0.1",
     "react": "^16.13.1",
     "react-alert": "^7.0.2",
     "react-dom": "^16.13.1"
