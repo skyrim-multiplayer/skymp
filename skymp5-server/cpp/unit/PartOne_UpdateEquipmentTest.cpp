@@ -1,7 +1,5 @@
 #include "TestUtils.hpp"
 
-using namespace TestUtils;
-
 TEST_CASE("UpdateEquipment", "[PartOne]")
 {
 

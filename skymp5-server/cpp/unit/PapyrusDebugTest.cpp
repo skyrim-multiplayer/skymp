@@ -3,8 +3,6 @@
 
 #include "PapyrusDebug.h"
 
-using namespace TestUtils;
-
 TEST_CASE("Notification", "[Papyrus][Debug]")
 {
 

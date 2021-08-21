@@ -1,8 +1,6 @@
 #include "ScriptStorage.h"
 #include "TestUtils.hpp"
 
-using namespace TestUtils;
-
 using Catch::Matchers::Contains;
 
 extern espm::Loader l;

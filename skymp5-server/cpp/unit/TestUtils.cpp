@@ -11,7 +11,7 @@
 using namespace Catch;
 
 // Utilities for testing
-namespace TestUtils{
+
 std::string MakeMessage(const nlohmann::json& j)
 {
   std::string s;
@@ -54,52 +54,52 @@ void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
   DoMessage(partOne, userId, jMyMovement);
 }
 
-  std::shared_ptr<FakeListener> FakeListener::New()
-  {
-    return std::shared_ptr<FakeListener>(new FakeListener);
-  }
+std::shared_ptr<FakeListener> FakeListener::New()
+{
+  return std::shared_ptr<FakeListener>(new FakeListener);
+}
 
-  void FakeListener::OnConnect(Networking::UserId userId) 
-  {
-    ss << "OnConnect(" << userId << ")" << std::endl;
-  }
+void FakeListener::OnConnect(Networking::UserId userId)
+{
+  ss << "OnConnect(" << userId << ")" << std::endl;
+}
 
-  void FakeListener::OnDisconnect(Networking::UserId userId) 
-  {
-    ss << "OnDisconnect(" << userId << ")" << std::endl;
-  }
+void FakeListener::OnDisconnect(Networking::UserId userId)
+{
+  ss << "OnDisconnect(" << userId << ")" << std::endl;
+}
 
-  void FakeListener::OnCustomPacket(
-    Networking::UserId userId,
-                      const simdjson::dom::element& content) 
-  {
-    ss << "OnCustomPacket(" << userId << ", " << simdjson::minify(content)
-       << ")" << std::endl;
-  }
+void FakeListener::OnCustomPacket(Networking::UserId userId,
+                                  const simdjson::dom::element& content)
+{
+  ss << "OnCustomPacket(" << userId << ", " << simdjson::minify(content) << ")"
+     << std::endl;
+}
 
-  bool FakeListener::OnMpApiEvent(const char* eventName,
-                    std::optional<simdjson::dom::element> args,
-                    std::optional<uint32_t> formId) 
-  {
-    return true;
-  }
+bool FakeListener::OnMpApiEvent(const char* eventName,
+                                std::optional<simdjson::dom::element> args,
+                                std::optional<uint32_t> formId)
+{
+  return true;
+}
 
-  std::string FakeListener::str() {
-      return ss.str(); 
-  }
+std::string FakeListener::str()
+{
+  return ss.str();
+}
 
-  void FakeListener::clear() {
-      ss = std::stringstream(); 
-  }
+void FakeListener::clear()
+{
+  ss = std::stringstream();
+}
 
-  PapyrusCompatibilityPolicy::PapyrusCompatibilityPolicy(MpActor* ac_)
-    : ac(ac_)
-  {
-  }
+PapyrusCompatibilityPolicy::PapyrusCompatibilityPolicy(MpActor* ac_)
+  : ac(ac_)
+{
+}
 
-  MpActor* PapyrusCompatibilityPolicy::GetDefaultActor(const char*, const char*,
-                                                     int32_t) const 
-  {
-    return ac;
-  }
+MpActor* PapyrusCompatibilityPolicy::GetDefaultActor(const char*, const char*,
+                                                     int32_t) const
+{
+  return ac;
 }

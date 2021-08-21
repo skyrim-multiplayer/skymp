@@ -4,8 +4,6 @@
 #include <chrono>
 #include <iostream>
 
-using namespace TestUtils;
-
 class EmptySendTarget : public Networking::ISendTarget
 {
 public:

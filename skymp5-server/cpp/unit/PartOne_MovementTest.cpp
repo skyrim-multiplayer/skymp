@@ -1,7 +1,5 @@
 #include "TestUtils.hpp"
 
-using namespace TestUtils;
-
 TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
           "user present",
           "[PartOne]")

@@ -122,7 +122,7 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference][espm]")
   PartOne p;
 
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
-  TestUtils::DoConnect(p, 1);
+  DoConnect(p, 1);
   p.SetUserActor(1, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 

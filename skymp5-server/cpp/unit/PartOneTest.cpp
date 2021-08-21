@@ -1,7 +1,5 @@
 #include "TestUtils.hpp"
 
-using namespace TestUtils;
-
 using Catch::Matchers::Contains;
 
 TEST_CASE("PartOne API doesn't crash when bad userId passed", "[PartOne]")

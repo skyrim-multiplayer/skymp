@@ -4,7 +4,6 @@
 #include "PacketParser.h"
 
 using Catch::Matchers::Contains;
-using namespace TestUtils;
 
 PartOne& GetPartOne();
 

@@ -1,7 +1,5 @@
 #include "TestUtils.hpp"
 
-using namespace TestUtils;
-
 using Catch::Matchers::Contains;
 
 TEST_CASE("CreateActor/DestroyActor", "[PartOne]")
