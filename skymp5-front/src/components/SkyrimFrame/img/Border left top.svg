@@ -1,18 +1,12 @@
-<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g filter="url(#filter0_d)">
-<path d="M10.75 64H14.15V16.95H19.85V20.25H16.95V64H68V13.05H33V10.25H68V6.05H36.2V0H4V31.2H10.75V64ZM20.95 29.35H24.4V36.5C31.3 33.1333 36.2667 27.9833 39.3 21.05H26.05V18.25H44.65L43.4 21.05C41.6333 24.45 39.4167 27.8667 36.75 31.3C34.1167 34.7667 28.85 38.4333 20.95 42.3V29.35ZM24.9 23.75H21.25V9.25H26.25V12.4H24.9V23.75ZM11.65 24.2H13V26.7H8.75V4.2H31.55V16.7H28.4V7.25H11.65V24.2ZM18.9 27.45V24.7H29.3V22.25H32.65V27.45H18.9Z" fill="black" fill-opacity="0.74902"/>
-<path d="M33 13.05H68V10.25H33V13.05ZM18.9 24.7V27.45H32.65V22.25H29.3V24.7H18.9ZM13 26.7V24.2H11.65V7.25H28.4V16.7H31.55V4.2H8.75V26.7H13ZM21.25 23.75H24.9V12.4H26.25V9.25H21.25V23.75ZM24.4 36.5V29.35H20.95V42.3C28.85 38.4333 34.1167 34.7667 36.75 31.3C39.4167 27.8667 41.6333 24.45 43.4 21.05L44.65 18.25H26.05V21.05H39.3C36.2667 27.9833 31.3 33.1333 24.4 36.5ZM14.15 64H16.95V20.25H19.85V16.95H14.15V64Z" fill="#9D9E9E" fill-opacity="0.74902"/>
-</g>
-<defs>
-<filter id="filter0_d" x="0" y="0" width="72" height="72" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-<feOffset dy="4"/>
-<feGaussianBlur stdDeviation="2"/>
-<feComposite in2="hardAlpha" operator="out"/>
-<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
-<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
-<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
-</filter>
-</defs>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 72 72" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g>
+        <g transform="matrix(1.125,0,0,1.125,-4.5,0)">
+            <path d="M10.75,64L14.15,64L14.15,16.95L19.85,16.95L19.85,20.25L16.95,20.25L16.95,64L68,64L68,13.05L33,13.05L33,10.25L68,10.25L68,6.05L36.2,6.05L36.2,0L4,0L4,31.2L10.75,31.2L10.75,64ZM20.95,29.35L24.4,29.35L24.4,36.5C31.3,33.133 36.267,27.983 39.3,21.05L26.05,21.05L26.05,18.25L44.65,18.25L43.4,21.05C41.633,24.45 39.417,27.867 36.75,31.3C34.117,34.767 28.85,38.433 20.95,42.3L20.95,29.35ZM24.9,23.75L21.25,23.75L21.25,9.25L26.25,9.25L26.25,12.4L24.9,12.4L24.9,23.75ZM11.65,24.2L13,24.2L13,26.7L8.75,26.7L8.75,4.2L31.55,4.2L31.55,16.7L28.4,16.7L28.4,7.25L11.65,7.25L11.65,24.2ZM18.9,27.45L18.9,24.7L29.3,24.7L29.3,22.25L32.65,22.25L32.65,27.45L18.9,27.45Z" style="fill-opacity:0.75;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(1.125,0,0,1.125,-4.5,0)">
+            <path d="M33,13.05L68,13.05L68,10.25L33,10.25L33,13.05ZM18.9,24.7L18.9,27.45L32.65,27.45L32.65,22.25L29.3,22.25L29.3,24.7L18.9,24.7ZM13,26.7L13,24.2L11.65,24.2L11.65,7.25L28.4,7.25L28.4,16.7L31.55,16.7L31.55,4.2L8.75,4.2L8.75,26.7L13,26.7ZM21.25,23.75L24.9,23.75L24.9,12.4L26.25,12.4L26.25,9.25L21.25,9.25L21.25,23.75ZM24.4,36.5L24.4,29.35L20.95,29.35L20.95,42.3C28.85,38.433 34.117,34.767 36.75,31.3C39.417,27.867 41.633,24.45 43.4,21.05L44.65,18.25L26.05,18.25L26.05,21.05L39.3,21.05C36.267,27.983 31.3,33.133 24.4,36.5ZM14.15,64L16.95,64L16.95,20.25L19.85,20.25L19.85,16.95L14.15,16.95L14.15,64Z" style="fill:rgb(157,158,158);fill-opacity:0.75;fill-rule:nonzero;"/>
+        </g>
+    </g>
 </svg>
