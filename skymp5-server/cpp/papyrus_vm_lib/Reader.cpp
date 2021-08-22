@@ -3,9 +3,6 @@
 
 void Reader::Read()
 {
-
-  char temp;
-
   arrayBytes.clear();
 
   std::ifstream file(path, std::ios::binary);
@@ -17,6 +14,7 @@ void Reader::Read()
     file.seekg(0, std::ios_base::beg);
     arrayBytes.reserve(fileSize);
 
+    char temp;
     while (file.get(temp)) {
       arrayBytes.push_back(temp);
     }
