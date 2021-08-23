@@ -58,7 +58,7 @@ std::vector<std::string> Loader::GetFileNames() const noexcept
   return res;
 }
 
-std::map<std::string, uint32_t> Loader::GetHashes() const 
+std::map<std::string, uint32_t> Loader::GetHashes() const
 {
   std::map<std::string, uint32_t> res;
 
