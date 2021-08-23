@@ -65,8 +65,7 @@ std::map<std::string, uint32_t> Loader::GetHashes() const noexcept
   for (auto& entry : entries) {
     auto hash =
       CalculateHashcode(entry.buffer->GetData(), entry.buffer->GetLength());
-    res.insert(std::map<std::string, uint32_t>::value_type(
-      entry.fileName.string(), hash));
+    res.emplace(entry.fileName.string(), hash);
   }
 
   return res;

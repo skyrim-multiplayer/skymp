@@ -60,12 +60,12 @@ private:
   const uint64_t v;
 };
 
-const std::map<std::string, uint32_t> g_correctHashcode = {
-  std::map<std::string, uint32_t>::value_type("Skyrim.esm", 0xaf75991dUL),
-  std::map<std::string, uint32_t>::value_type("Update.esm", 0x17ab5e20UL),
-  std::map<std::string, uint32_t>::value_type("Dawnguard.esm", 0xcc81e5d8UL),
-  std::map<std::string, uint32_t>::value_type("HearthFires.esm", 0xbad9393aUL),
-  std::map<std::string, uint32_t>::value_type("Dragonborn.esm", 0xeb10e82UL)
+const std::map<std::string, uint32_t> g_correctHashcode{
+  { "Skyrim.esm", 0xaf75991dUL },
+  { "Update.esm", 0x17ab5e20UL },
+  { "Dawnguard.esm", 0xcc81e5d8UL },
+  { "HearthFires.esm", 0xbad9393aUL },
+  { "Dragonborn.esm", 0xeb10e82UL }
 };
 }
 
