@@ -6,18 +6,16 @@
 extern espm::Loader l;
 
 // These tests depend on the most recent files shipped with Skyrim SE.
-// See README.md in project root for details.
-// TODO(#107): make sure hashes of files match expected ones.
 
 TEST_CASE("Hash check", "[espm]")
 {
   auto& files = l.GetFileNames();
   auto hashes = l.GetHashes();
 
-  for (auto& file : files) {
-    DYNAMIC_SECTION(file << " checksum test")
+  for (const auto& [filename, checksum] : hashes) {
+    DYNAMIC_SECTION(filename << " checksum test")
     {
-      REQUIRE(espm::GetCorrectHashcode(file) == hashes[file]);
+      REQUIRE(espm::GetCorrectHashcode(filename) == checksum);
     }
   }
 }

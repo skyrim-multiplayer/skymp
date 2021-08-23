@@ -60,7 +60,7 @@ private:
   const uint64_t v;
 };
 
-std::map<std::string, uint32_t> correctHeshcode = {
+const std::map<std::string, uint32_t> g_correctHashcode = {
   std::map<std::string, uint32_t>::value_type("Skyrim.esm", 0xaf75991dUL),
   std::map<std::string, uint32_t>::value_type("Update.esm", 0x17ab5e20UL),
   std::map<std::string, uint32_t>::value_type("Dawnguard.esm", 0xcc81e5d8UL),
@@ -107,7 +107,8 @@ uint32_t CalculateHashcode(const void* readBuffer, size_t length)
 
 uint32_t GetCorrectHashcode(std::string fileName)
 {
-  return correctHeshcode[fileName];
+  auto iter = g_correctHashcode.find(fileName);
+  return iter == g_correctHashcode.end() ? 0 : iter->second;
 }
 }
 
