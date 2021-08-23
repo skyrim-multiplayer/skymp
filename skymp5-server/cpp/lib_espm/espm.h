@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring> // memcmp
 #include <functional>
+#include <map>
 #include <memory>
 #include <ostream>
 #include <set>
@@ -685,5 +686,10 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+}
+
+namespace espm {
+uint32_t CalculateHashcode(const void* readBuffer, size_t length);
+uint32_t GetCorrectHashcode(std::string fileName);
 }
 #pragma pack(pop)

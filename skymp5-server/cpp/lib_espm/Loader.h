@@ -38,6 +38,8 @@ public:
 
   std::vector<std::string> GetFileNames() const noexcept;
 
+  std::map<std::string, uint32_t> GetHashes() const noexcept;
+
 private:
   std::vector<fs::path> MakeFilePaths(const fs::path& dataDir,
                                       const std::vector<fs::path>& fileNames);

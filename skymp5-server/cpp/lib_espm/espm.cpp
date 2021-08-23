@@ -59,6 +59,14 @@ private:
 
   const uint64_t v;
 };
+
+std::map<std::string, uint32_t> correctHeshcode = {
+  std::map<std::string, uint32_t>::value_type("Skyrim.esm", 0xaf75991dUL),
+  std::map<std::string, uint32_t>::value_type("Update.esm", 0x17ab5e20UL),
+  std::map<std::string, uint32_t>::value_type("Dawnguard.esm", 0xcc81e5d8UL),
+  std::map<std::string, uint32_t>::value_type("HearthFires.esm", 0xbad9393aUL),
+  std::map<std::string, uint32_t>::value_type("Dragonborn.esm", 0xeb10e82UL)
+};
 }
 
 namespace espm {
@@ -91,6 +99,16 @@ struct FieldHeader
 };
 static_assert(sizeof(FieldHeader) == 6);
 #pragma pack(pop)
+
+uint32_t CalculateHashcode(const void* readBuffer, size_t length)
+{
+  return ZlibGetCRC32Checksum(readBuffer, length);
+}
+
+uint32_t GetCorrectHashcode(std::string fileName)
+{
+  return correctHeshcode[fileName];
+}
 }
 
 enum RecordFlags : uint32_t

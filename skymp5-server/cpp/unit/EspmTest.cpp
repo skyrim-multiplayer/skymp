@@ -9,6 +9,19 @@ extern espm::Loader l;
 // See README.md in project root for details.
 // TODO(#107): make sure hashes of files match expected ones.
 
+TEST_CASE("Hash check", "[espm]")
+{
+  auto& files = l.GetFileNames();
+  auto hashes = l.GetHashes();
+
+  for (auto& file : files) {
+    DYNAMIC_SECTION(file << " checksum test")
+    {
+      REQUIRE(espm::GetCorrectHashcode(file) == hashes[file]);
+    }
+  }
+}
+
 TEST_CASE("Loads refr from Update.esm", "[espm]")
 {
   auto& br = l.GetBrowser();
