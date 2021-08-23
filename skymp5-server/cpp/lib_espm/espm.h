@@ -690,6 +690,6 @@ static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 
 namespace espm {
 uint32_t CalculateHashcode(const void* readBuffer, size_t length);
-uint32_t GetCorrectHashcode(std::string fileName);
+uint32_t GetCorrectHashcode(const std::string& fileName);
 }
 #pragma pack(pop)

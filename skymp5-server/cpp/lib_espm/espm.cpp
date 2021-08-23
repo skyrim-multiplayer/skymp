@@ -105,7 +105,7 @@ uint32_t CalculateHashcode(const void* readBuffer, size_t length)
   return ZlibGetCRC32Checksum(readBuffer, length);
 }
 
-uint32_t GetCorrectHashcode(std::string fileName)
+uint32_t GetCorrectHashcode(const std::string& fileName)
 {
   auto iter = g_correctHashcode.find(fileName);
   return iter == g_correctHashcode.end() ? 0 : iter->second;

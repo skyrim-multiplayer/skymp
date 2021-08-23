@@ -9,9 +9,7 @@ extern espm::Loader l;
 
 TEST_CASE("Hash check", "[espm]")
 {
-  auto& files = l.GetFileNames();
-  auto hashes = l.GetHashes();
-
+  const auto hashes = l.GetHashes();
   for (const auto& [filename, checksum] : hashes) {
     DYNAMIC_SECTION(filename << " checksum test")
     {
