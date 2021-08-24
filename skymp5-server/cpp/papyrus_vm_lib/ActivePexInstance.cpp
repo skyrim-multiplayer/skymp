@@ -39,7 +39,7 @@ ActivePexInstance::ActivePexInstance(
   this->_IsValid = true;
 }
 
-ActivePexInstance::Ptr ActivePexInstance::FillParentInstanse(
+std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstanse(
   std::string nameNeedScript, VarValue activeInstanceOwner,
   const std::shared_ptr<IVariablesHolder>& mapForFillPropertys)
 {
@@ -218,7 +218,7 @@ struct ActivePexInstance::ExecutionContext
 {
   std::shared_ptr<StackIdHolder> stackIdHolder;
   std::vector<FunctionCode::Instruction> instructions;
-  std::shared_ptr<Locals> locals;
+  std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> locals;
   bool needReturn = false;
   bool needJump = false;
   int jumpStep = 0;
@@ -522,10 +522,10 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
   }
 }
 
-std::shared_ptr<ActivePexInstance::Locals> ActivePexInstance::MakeLocals(
+std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> ActivePexInstance::MakeLocals(
   FunctionInfo& function, std::vector<VarValue>& arguments)
 {
-  auto locals = std::make_shared<Locals>();
+  auto locals = std::make_shared<std::vector<std::pair<std::string, VarValue>>>();
 
   // Fill with function locals
   for (auto& var : function.locals) {
@@ -565,7 +565,7 @@ std::shared_ptr<ActivePexInstance::Locals> ActivePexInstance::MakeLocals(
 std::vector<std::pair<uint8_t, std::vector<VarValue*>>>
 ActivePexInstance::TransformInstructions(
   std::vector<FunctionCode::Instruction>& instructions,
-  std::shared_ptr<Locals> locals)
+  std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> locals)
 {
   std::vector<std::pair<uint8_t, std::vector<VarValue*>>> opCode;
   for (size_t i = 0; i < instructions.size(); ++i) {
@@ -654,7 +654,7 @@ VarValue ActivePexInstance::StartFunction(
 }
 
 VarValue& ActivePexInstance::GetIndentifierValue(
-  Locals& locals, VarValue& value, bool treatStringsAsIdentifiers)
+  std::vector<std::pair<std::string, VarValue>>& locals, VarValue& value, bool treatStringsAsIdentifiers)
 {
   if (auto valueAsString = static_cast<const char*>(value)) {
     if (treatStringsAsIdentifiers &&
@@ -778,7 +778,7 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
 void ActivePexInstance::CastObjectToObject(VarValue* result,
                                            VarValue* scriptToCastOwner,
-                                           Locals& locals)
+                                           std::vector<std::pair<std::string, VarValue>>& locals)
 {
   std::string objectToCastTypeName = scriptToCastOwner->objectType;
   const std::string& resultTypeName = result->objectType;
@@ -857,7 +857,7 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
   return false;
 }
 
-VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
+VarValue& ActivePexInstance::GetVariableValueByName(std::vector<std::pair<std::string, VarValue>>* locals,
                                                     std::string name)
 {
 
@@ -894,7 +894,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
 
   if (parentVM->IsNativeFunctionByNameExisted(GetSourcePexName())) {
 
-    VarValue::Ptr functionName =
+    std::shared_ptr<VarValue> functionName =
       std::make_shared<VarValue>((new std::string(name))->c_str());
 
     identifiersValueNameCache.push_back(functionName);
@@ -903,7 +903,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
 
   for (auto& _string : sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
-      VarValue::Ptr stringTableValue =
+      std::shared_ptr<VarValue> stringTableValue =
         std::make_shared<VarValue>((new std::string(name))->c_str());
 
       identifiersValueNameCache.push_back(stringTableValue);
@@ -915,7 +915,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
        parentInstance->sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
 
-      VarValue::Ptr stringTableParentValue =
+      std::shared_ptr<VarValue> stringTableParentValue =
         std::make_shared<VarValue>((new std::string(name))->c_str());
 
       identifiersValueNameCache.push_back(stringTableParentValue);
