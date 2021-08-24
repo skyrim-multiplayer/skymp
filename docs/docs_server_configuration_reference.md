@@ -144,6 +144,24 @@ Searches for `index.js` if a directory specified.
 }
 ```
 
+## startPoints
+
+Contains list of spawn points.
+
+```json5
+{
+  // ...
+  "startPoints": [
+    {
+      "pos": [22659, -8697, -3594],
+      "worldOrCell": '0x1a26f',
+      "angleZ": 268
+    }
+  ]
+  // ...
+}
+```
+
 ## isPapyrusHotReloadEnabled
 
 A boolean setting that enables to turn on or turn off hot reload for compiled Papyrus scripts (.pex)
