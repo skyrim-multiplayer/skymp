@@ -59,7 +59,7 @@ public:
   void RemoveObject(std::shared_ptr<IGameObject> self); // ?
 
   void RegisterFunction(const std::string& className, const std::string& functionName,
-                        const FunctionType& type, const NativeFunction& fn);
+                        const FunctionType& type, const std::function<VarValue(VarValue self, std::vector<VarValue> arguments)>& fn);
 
   void SendEvent(std::shared_ptr<IGameObject> self, const char* eventName,
                  const std::vector<VarValue>& arguments,
@@ -93,7 +93,7 @@ private:
 
   CIMap<PexScript::Lazy> allLoadedScripts;
 
-  std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
+  std::map<std::string, std::map<std::string, std::function<VarValue(VarValue self, std::vector<VarValue> arguments)>>> nativeFunctions,
     nativeStaticFunctions;
 
   std::map<std::string, std::shared_ptr<ActivePexInstance>> instancesForStaticCalls;

@@ -149,10 +149,6 @@ private:
   Type type;
 };
 
-using NativeFunction =
-  std::function<VarValue(VarValue self, // will be None for global functions
-                         std::vector<VarValue> arguments)>;
-
 class IVariablesHolder
 {
 public:
@@ -404,8 +400,6 @@ struct PexScript
 struct ActivePexInstance
 {
 public:
-  //using Locals = std::vector<std::pair<std::string, VarValue>>;
-
   ActivePexInstance();
   ActivePexInstance(
     PexScript::Lazy sourcePex,
