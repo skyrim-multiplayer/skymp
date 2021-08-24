@@ -146,7 +146,7 @@ Searches for `index.js` if a directory specified.
 
 ## startPoints
 
-Contains list of spawn points.
+Contains list of random spawn points
 
 ```json5
 {
