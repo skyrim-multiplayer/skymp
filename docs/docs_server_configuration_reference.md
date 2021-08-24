@@ -146,7 +146,7 @@ Searches for `index.js` if a directory specified.
 
 ## startPoints
 
-Contains list of random spawn points.
+Contains a list of spawn points, one of which will be chosen at random.
 
 ```json5
 {
@@ -154,7 +154,7 @@ Contains list of random spawn points.
   "startPoints": [
     {
       "pos": [22659, -8697, -3594],
-      "worldOrCell": '0x1a26f',
+      "worldOrCell": "0x1a26f",
       "angleZ": 268
     }
   ]
