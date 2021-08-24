@@ -3,6 +3,7 @@
 #include <ChakraCore.h>
 #include <cstdint>
 #include <cstring>
+#include <fmt/format.h>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -25,7 +26,7 @@ inline auto& GetStringValuesStorage()
 
 inline auto& GetJsValueIdStorage()
 {
-  static std::map<void*, uint32_t> g_ids;
+  static std::map<void*, std::vector<uint32_t>> g_ids;
   return g_ids;
 }
 
@@ -235,35 +236,35 @@ public:
     *this = Undefined();
     std::cout << "[!] JsValue " << ToString() << std::endl;
     GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
   }
   JsValue(const std::string& arg)
   {
     *this = String(arg);
     std::cout << "[!] JsValue " << ToString() << std::endl;
     GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
   }
   JsValue(const char* arg)
   {
     *this = String(arg);
     std::cout << "[!] JsValue " << ToString() << std::endl;
     GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
   }
   JsValue(int arg)
   {
     *this = Int(arg);
     std::cout << "[!] JsValue " << ToString() << std::endl;
     GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
   }
   JsValue(double arg)
   {
     *this = Double(arg);
     std::cout << "[!] JsValue " << ToString() << std::endl;
     GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
   }
   JsValue(const std::vector<JsValue>& arg)
   {
@@ -273,7 +274,7 @@ public:
 
     std::cout << "[!] JsValue " << ToString() << std::endl;
     GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
   }
 
   JsValue(const JsValue& arg)
@@ -281,7 +282,7 @@ public:
     *this = arg;
     std::cout << "[!] JsValue " << ToString() << std::endl;
     GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
   }
 
   JsValue& operator=(const JsValue& arg)
@@ -295,8 +296,16 @@ public:
 
   ~JsValue()
   {
+    std::string s;
+    for (auto v : GetJsValueIdStorage()[value]) {
+      s += std::to_string(v) + ", ";
+    }
+    if (s.empty() == false)
+      s.pop_back();
+    if (s.empty() == false)
+      s.pop_back();
     std::cout << "[!] ~JsValue " << GetStringValuesStorage()[value]
-              << "; id =" << GetJsValueIdStorage()[value] << std::endl;
+              << "; id =" << s << std::endl;
     Release();
   }
 
@@ -362,7 +371,8 @@ public:
     return reinterpret_cast<JsExternalObjectBase*>(externalData);
   }
 
-  JsValue Call(const std::vector<JsValue>& arguments, bool ctor) const
+  JsValue Call(const std::vector<JsValue>& arguments, bool ctor,
+               bool noThisArg) const
   {
     JsValueRef res;
 
@@ -372,7 +382,17 @@ public:
     auto n = arguments.size();
     JsValueRef* args = nullptr;
 
-    if (n > 0) {
+    std::unique_ptr<std::vector<JsValueRef>> tmp;
+    if (noThisArg) {
+      tmp = std::make_unique<std::vector<JsValueRef>>();
+      tmp->reserve(arguments.size() + 1);
+      tmp->push_back(undefined);
+      for (auto v : arguments) {
+        tmp->push_back(v.value);
+      }
+      args = tmp->data();
+      ++n;
+    } else if (n > 0) {
       args = const_cast<JsValueRef*>(
         reinterpret_cast<const JsValueRef*>(arguments.data()));
     } else {
@@ -475,12 +495,17 @@ public:
 
   JsValue Call(const std::vector<JsValue>& arguments) const
   {
-    return Call(arguments, false);
+    return Call(arguments, false, false);
   }
 
   JsValue Constructor(const std::vector<JsValue>& arguments) const
   {
-    return Call(arguments, true);
+    return Call(arguments, true, false);
+  }
+
+  JsValue CallWithUndefinedThis(const std::vector<JsValue>& arguments) const
+  {
+    return Call(arguments, false, true);
   }
 
 private:
@@ -537,9 +562,11 @@ private:
   class JsFunctionArgumentsImpl : public JsFunctionArguments
   {
   public:
-    JsFunctionArgumentsImpl(JsValueRef* arr_, size_t n_)
+    JsFunctionArgumentsImpl(JsValueRef* arr_, size_t n_,
+                            const JsValue& missingArgValue_)
       : arr(arr_)
       , n(n_)
+      , missingArgValue(missingArgValue_)
     {
     }
 
@@ -547,12 +574,13 @@ private:
 
     const JsValue& operator[](size_t i) const noexcept
     {
-      thread_local auto g_undefined = JsValue::Undefined();
-      return i < n ? reinterpret_cast<const JsValue&>(arr[i]) : g_undefined;
+      return i < n ? reinterpret_cast<const JsValue&>(arr[i])
+                   : missingArgValue;
     }
 
   private:
     JsValueRef* const arr;
+    const JsValue& missingArgValue;
     const size_t n;
   };
 
@@ -561,15 +589,18 @@ private:
                                   unsigned short argumentsCount,
                                   void* callbackState)
   {
-    JsFunctionArgumentsImpl args(arguments, argumentsCount);
     try {
+      JsValue missingArgValue = JsValue::Undefined();
+      JsFunctionArgumentsImpl args(arguments, argumentsCount, missingArgValue);
+
       auto f = reinterpret_cast<FunctionT*>(callbackState);
       return (*f)(args).value;
     } catch (std::exception& e) {
       JsValueRef whatStr, err;
       if (JsCreateString(e.what(), strlen(e.what()), &whatStr) == JsNoError &&
-          JsCreateError(whatStr, &err) == JsNoError)
+          JsCreateError(whatStr, &err) == JsNoError) {
         JsSetException(err);
+      }
       return JS_INVALID_REFERENCE;
     }
   }
@@ -579,7 +610,7 @@ private:
   {
     AddRef();
     GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
     std::cout << "[!] JsValue " << ToString() << std::endl;
   }
 

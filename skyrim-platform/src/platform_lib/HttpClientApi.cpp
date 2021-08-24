@@ -68,10 +68,11 @@ JsValue HttpClientApi::Get(const JsFunctionArguments& args)
           JsValue::String(std::string{ res.body.begin(), res.body.end() }));
         result.SetProperty("status", res.status);
         // TODO: fix trash undefined
-        resolve->Call({ JsValue::Undefined(), result });
+        resolve->CallWithUndefinedThis({ result });
       });
 
-    return JsValue::Undefined();
+    // TODO: make null
+    return JsValue::Null();
   });
 
   auto promise = CreatePromise(resolverFn);
