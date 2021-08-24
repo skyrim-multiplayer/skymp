@@ -3,6 +3,8 @@
 #include <ChakraCore.h>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
+#include <map>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -14,6 +16,24 @@
 class JsValueAccess;
 class JsEngine;
 class JsValue;
+
+inline auto& GetStringValuesStorage()
+{
+  static std::map<void*, std::string> g_stringValues;
+  return g_stringValues;
+}
+
+inline auto& GetJsValueIdStorage()
+{
+  static std::map<void*, uint32_t> g_ids;
+  return g_ids;
+}
+
+inline auto& GetJsValueNextId()
+{
+  static uint32_t g_nextId = 0;
+  return g_nextId;
+}
 
 // 'this' arg is at index 0
 class JsFunctionArguments
@@ -210,19 +230,59 @@ public:
     return bufferLength;
   }
 
-  JsValue() { *this = Undefined(); }
-  JsValue(const std::string& arg) { *this = String(arg); }
-  JsValue(const char* arg) { *this = String(arg); }
-  JsValue(int arg) { *this = Int(arg); }
-  JsValue(double arg) { *this = Double(arg); }
+  JsValue()
+  {
+    *this = Undefined();
+    std::cout << "[!] JsValue " << ToString() << std::endl;
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+  }
+  JsValue(const std::string& arg)
+  {
+    *this = String(arg);
+    std::cout << "[!] JsValue " << ToString() << std::endl;
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+  }
+  JsValue(const char* arg)
+  {
+    *this = String(arg);
+    std::cout << "[!] JsValue " << ToString() << std::endl;
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+  }
+  JsValue(int arg)
+  {
+    *this = Int(arg);
+    std::cout << "[!] JsValue " << ToString() << std::endl;
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+  }
+  JsValue(double arg)
+  {
+    *this = Double(arg);
+    std::cout << "[!] JsValue " << ToString() << std::endl;
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+  }
   JsValue(const std::vector<JsValue>& arg)
   {
     *this = Array(arg.size());
     for (size_t i = 0; i < arg.size(); ++i)
       SetProperty(Int(i), arg[i]);
+
+    std::cout << "[!] JsValue " << ToString() << std::endl;
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
   }
 
-  JsValue(const JsValue& arg) { *this = arg; }
+  JsValue(const JsValue& arg)
+  {
+    *this = arg;
+    std::cout << "[!] JsValue " << ToString() << std::endl;
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+  }
 
   JsValue& operator=(const JsValue& arg)
   {
@@ -233,13 +293,18 @@ public:
     return *this;
   }
 
-  ~JsValue() { Release(); }
+  ~JsValue()
+  {
+    std::cout << "[!] ~JsValue " << GetStringValuesStorage()[value]
+              << "; id =" << GetJsValueIdStorage()[value] << std::endl;
+    Release();
+  }
 
   std::string ToString() const
   {
     JsValueRef res;
     SafeCall(JS_ENGINE_F(JsConvertValueToString), value, &res);
-    return (std::string)JsValue(res);
+    return GetString(res);
   }
 
   operator bool() const
@@ -249,17 +314,7 @@ public:
     return res;
   }
 
-  operator std::string() const
-  {
-    size_t outLength;
-    SafeCall(JS_ENGINE_F(JsCopyString), value, nullptr, 0, &outLength);
-
-    std::string res;
-    res.resize(outLength);
-    SafeCall(JS_ENGINE_F(JsCopyString), value, res.data(), outLength,
-             &outLength);
-    return res;
-  }
+  operator std::string() const { return GetString(value); }
 
   operator std::wstring() const
   {
@@ -311,7 +366,8 @@ public:
   {
     JsValueRef res;
 
-    thread_local auto undefined = JsValue::Undefined();
+    JsValueRef undefined;
+    SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
 
     auto n = arguments.size();
     JsValueRef* args = nullptr;
@@ -320,13 +376,21 @@ public:
       args = const_cast<JsValueRef*>(
         reinterpret_cast<const JsValueRef*>(arguments.data()));
     } else {
-      args = reinterpret_cast<JsValueRef*>(&undefined);
+      args = &undefined;
       ++n;
     }
 
     SafeCall(ctor ? JsConstructObject : JsCallFunction,
              "JsCallFunction/JsConstructObject", value, args, n, &res);
-    return JsValue(res);
+
+    // todo: remove before merging
+
+    JsValueType t;
+    SafeCall(JsGetValueType, "JsGetValueType", res, &t);
+    if (t != JsValueType::JsUndefined) {
+      return JsValue(res);
+    }
+    return JsValue::Null();
   }
 
   // SetProperty is const because this doesn't modify JsValue itself
@@ -514,6 +578,9 @@ private:
     : value(internalJsRef)
   {
     AddRef();
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value] = GetJsValueNextId()++;
+    std::cout << "[!] JsValue " << ToString() << std::endl;
   }
 
   void AddRef()
@@ -528,6 +595,18 @@ private:
     if (value) {
       JsRelease(value, nullptr);
     }
+  }
+
+  static std::string GetString(void* value)
+  {
+    size_t outLength;
+    SafeCall(JS_ENGINE_F(JsCopyString), value, nullptr, 0, &outLength);
+
+    std::string res;
+    res.resize(outLength);
+    SafeCall(JS_ENGINE_F(JsCopyString), value, res.data(), outLength,
+             &outLength);
+    return res;
   }
 
   void* value = nullptr;
@@ -595,10 +674,16 @@ public:
     JsValue::SafeCall(
       JS_ENGINE_F(JsSetPromiseContinuationCallback),
       [](JsValueRef task, void* state) {
-        std::shared_ptr<JsValue> taskPtr(
-          new JsValue(JsValueAccess::Ctor(task)));
+        JsValue::SafeCall(JS_ENGINE_F(JsAddRef), task, nullptr);
         auto q = reinterpret_cast<TaskQueue*>(state);
-        q->AddTask([taskPtr] { taskPtr->Call({}); });
+        q->AddTask([task] {
+          JsValueRef undefined, res;
+          JsValue::SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
+          JsValue::SafeCall(JsCallFunction, "JsCallFunction", task, &undefined,
+                            1, &res);
+
+          JsRelease(task, nullptr);
+        });
       },
       &taskQueue);
 

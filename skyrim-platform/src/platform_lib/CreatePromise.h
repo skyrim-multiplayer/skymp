@@ -3,7 +3,6 @@
 
 inline JsValue CreatePromise(const JsValue& resolver)
 {
-  thread_local auto g_standardPromise =
-    JsValue::GlobalObject().GetProperty("Promise");
-  return g_standardPromise.Constructor({ g_standardPromise, resolver });
+  auto standardPromise = JsValue::GlobalObject().GetProperty("Promise");
+  return standardPromise.Constructor({ standardPromise, resolver });
 }
