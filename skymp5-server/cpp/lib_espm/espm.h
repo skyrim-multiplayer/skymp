@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <cstring> // memcmp
 #include <functional>
-#include <map>
 #include <memory>
 #include <ostream>
 #include <set>

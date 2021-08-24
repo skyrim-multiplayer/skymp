@@ -6,7 +6,7 @@
 extern espm::Loader l;
 
 // These tests depend on the most recent files shipped with Skyrim SE.
-// See README.md in project root for details
+// See README.md in project root for details.
 
 TEST_CASE("Hash check", "[espm]")
 {
