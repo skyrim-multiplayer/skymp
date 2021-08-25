@@ -39,7 +39,7 @@ nlohmann::json ExecuteScript(const char* src)
   engine.RunScript(src, "");
 
   auto startMoment = std::chrono::system_clock::now();
-  auto timeout = std::chrono::seconds(5);
+  auto timeout = std::chrono::seconds(60);
 
   while (1) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
