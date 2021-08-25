@@ -4,36 +4,48 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
 
+// #define JS_ENGINE_TRACING_ENABLED
+// ^ uncomment to enable tracing
+
+// Useful for finding static JsValue variables that fail in destructor due to
+// undefined static deinitialization order (Chakra is being deinitialized
+// before JsValues are)
+
+// Normal debugging doesn't help since every static variable triggers the same
+// assert. It doesn't say anything about which line we constructed a
+// problematic variable.
+
+// How to use tracing:
+// 0. Ensure that assert fails in Chakra internals after unit tests finish
+// 1. Define JS_ENGINE_TRACING_ENABLED
+// 2. Build Debug config and launch unit tests
+// 3. Wait for assertion failure. The last output you see in console should be
+// "~JsValue <value>; ids = 1, 2, ..."
+// 4. Remember these numbers
+// 5. Set a breakpoint in GetJsValueNextId
+// 6. Restart unit tests with a debugger attached. Press "Continue" until
+// g_nextId becomes the value you have seen previously
+// 7. Now you can see where problematic variable is created in the call stack.
+// It's usually static/thread_local variable. Removing this specifier would
+// solve the problem. However, you better think about performance too: these
+// specifiers were added to initialize constants once.
+
+#ifdef JS_ENGINE_TRACING_ENABLED
+#  include <fmt/format.h>
+#  include <map>
+#endif
+
 #define JS_ENGINE_F(func) func, #func
 
 class JsValueAccess;
 class JsEngine;
 class JsValue;
-
-inline auto& GetStringValuesStorage()
-{
-  static std::map<void*, std::string> g_stringValues;
-  return g_stringValues;
-}
-
-inline auto& GetJsValueIdStorage()
-{
-  static std::map<void*, std::vector<uint32_t>> g_ids;
-  return g_ids;
-}
-
-inline auto& GetJsValueNextId()
-{
-  static uint32_t g_nextId = 0;
-  return g_nextId;
-}
 
 // 'this' arg is at index 0
 class JsFunctionArguments
@@ -233,55 +245,41 @@ public:
   JsValue()
   {
     *this = Undefined();
-    std::cout << "[!] JsValue " << ToString() << std::endl;
-    GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+    TraceConstructor();
   }
   JsValue(const std::string& arg)
   {
     *this = String(arg);
-    std::cout << "[!] JsValue " << ToString() << std::endl;
-    GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+    TraceConstructor();
   }
   JsValue(const char* arg)
   {
     *this = String(arg);
-    std::cout << "[!] JsValue " << ToString() << std::endl;
-    GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+    TraceConstructor();
   }
   JsValue(int arg)
   {
     *this = Int(arg);
-    std::cout << "[!] JsValue " << ToString() << std::endl;
-    GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+    TraceConstructor();
   }
   JsValue(double arg)
   {
     *this = Double(arg);
-    std::cout << "[!] JsValue " << ToString() << std::endl;
-    GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+    TraceConstructor();
   }
   JsValue(const std::vector<JsValue>& arg)
   {
     *this = Array(arg.size());
-    for (size_t i = 0; i < arg.size(); ++i)
+    for (size_t i = 0; i < arg.size(); ++i) {
       SetProperty(Int(i), arg[i]);
-
-    std::cout << "[!] JsValue " << ToString() << std::endl;
-    GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+    }
+    TraceConstructor();
   }
 
   JsValue(const JsValue& arg)
   {
     *this = arg;
-    std::cout << "[!] JsValue " << ToString() << std::endl;
-    GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+    TraceConstructor();
   }
 
   JsValue& operator=(const JsValue& arg)
@@ -295,16 +293,7 @@ public:
 
   ~JsValue()
   {
-    std::string s;
-    for (auto v : GetJsValueIdStorage()[value]) {
-      s += std::to_string(v) + ", ";
-    }
-    if (s.empty() == false)
-      s.pop_back();
-    if (s.empty() == false)
-      s.pop_back();
-    std::cout << "[!] ~JsValue " << GetStringValuesStorage()[value]
-              << "; id =" << s << std::endl;
+    TraceDestructor();
     Release();
   }
 
@@ -608,9 +597,7 @@ private:
     : value(internalJsRef)
   {
     AddRef();
-    GetStringValuesStorage()[value] = ToString();
-    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
-    std::cout << "[!] JsValue " << ToString() << std::endl;
+    TraceConstructor();
   }
 
   void AddRef()
@@ -638,6 +625,44 @@ private:
              &outLength);
     return res;
   }
+
+#ifdef JS_ENGINE_TRACING_ENABLED
+  void TraceConstructor()
+  {
+    fmt::print("[!] JsValue {}\n", ToString());
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+  }
+
+  void TraceDestructor()
+  {
+    auto& stringifiedValue = GetStringValuesStorage()[value];
+    auto& ids = GetJsValueIdStorage()[value];
+    fmt::print("[!] ~JsValue {}; ids = {}\n", stringifiedValue,
+               fmt::join(ids, ", "));
+  }
+
+  static std::map<void*, std::string>& GetStringValuesStorage()
+  {
+    thread_local std::map<void*, std::string> g_stringValues;
+    return g_stringValues;
+  }
+
+  static std::map<void*, std::vector<uint32_t>>& GetJsValueIdStorage()
+  {
+    thread_local std::map<void*, std::vector<uint32_t>> g_ids;
+    return g_ids;
+  }
+
+  static uint32_t& GetJsValueNextId()
+  {
+    thread_local uint32_t g_nextId = 0;
+    return g_nextId;
+  }
+#else
+  void TraceConstructor() {}
+  void TraceDestructor() {}
+#endif
 
   void* value = nullptr;
 };
