@@ -89,7 +89,7 @@ TEST_CASE("Should be able to perform a POST request", "[HttpClientApi]")
 {
   auto src = R"(
     const client = new HttpClient("https://httpbin.org");
-    const promise = client.get("/response-headers?freeform=tosg");
+    const promise = client.post("/response-headers?freeform=tosg");
     promise.then((res) => resolve(JSON.stringify(res)));
   )";
 
