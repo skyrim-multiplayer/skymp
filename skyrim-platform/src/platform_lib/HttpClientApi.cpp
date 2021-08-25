@@ -83,8 +83,7 @@ JsValue HttpClientApi::Post(const JsFunctionArguments& args)
     auto contentTypeStr = static_cast<std::string>(contentType);
     g_httpClient.Post(
       hostStr.data(), pathStr.data(), bodyStr.data(), contentTypeStr.data(),
-      JsHeadersToCppHeaders(headers),
-      [=](const HttpClient::HttpResult& res) {
+      JsHeadersToCppHeaders(headers), [=](const HttpClient::HttpResult& res) {
         auto result = JsValue::Object();
         result.SetProperty(
           "body",
