@@ -3,7 +3,6 @@
 #include <ChakraCore.h>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -359,8 +358,7 @@ public:
     return reinterpret_cast<JsExternalObjectBase*>(externalData);
   }
 
-  JsValue Call(const std::vector<JsValue>& arguments, bool ctor,
-               bool noThisArg) const
+  JsValue Call(const std::vector<JsValue>& arguments, bool ctor) const
   {
     JsValueRef res;
 
@@ -370,17 +368,7 @@ public:
     auto n = arguments.size();
     JsValueRef* args = nullptr;
 
-    std::unique_ptr<std::vector<JsValueRef>> tmp;
-    if (noThisArg) {
-      tmp = std::make_unique<std::vector<JsValueRef>>();
-      tmp->reserve(arguments.size() + 1);
-      tmp->push_back(undefined);
-      for (auto v : arguments) {
-        tmp->push_back(v.value);
-      }
-      args = tmp->data();
-      ++n;
-    } else if (n > 0) {
+    if (n > 0) {
       args = const_cast<JsValueRef*>(
         reinterpret_cast<const JsValueRef*>(arguments.data()));
     } else {
@@ -390,15 +378,7 @@ public:
 
     SafeCall(ctor ? JsConstructObject : JsCallFunction,
              "JsCallFunction/JsConstructObject", value, args, n, &res);
-
-    // todo: remove before merging
-
-    JsValueType t;
-    SafeCall(JsGetValueType, "JsGetValueType", res, &t);
-    if (t != JsValueType::JsUndefined) {
-      return JsValue(res);
-    }
-    return JsValue::Null();
+    return JsValue(res);
   }
 
   // SetProperty is const because this doesn't modify JsValue itself
@@ -483,17 +463,12 @@ public:
 
   JsValue Call(const std::vector<JsValue>& arguments) const
   {
-    return Call(arguments, false, false);
+    return Call(arguments, false);
   }
 
   JsValue Constructor(const std::vector<JsValue>& arguments) const
   {
-    return Call(arguments, true, false);
-  }
-
-  JsValue CallWithUndefinedThis(const std::vector<JsValue>& arguments) const
-  {
-    return Call(arguments, false, true);
+    return Call(arguments, true);
   }
 
 private:

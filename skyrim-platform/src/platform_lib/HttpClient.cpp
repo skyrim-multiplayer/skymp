@@ -46,10 +46,10 @@ void HttpClient::Get(const char* host, const char* path,
   }
 
   std::string path_ = path;
-  std::shared_ptr<httplib::Client> cl(new httplib::Client(host));
+  auto cl = std::make_shared<httplib::Client>(host);
 
   auto pImpl_ = pImpl;
-  auto future = pImpl->pool.Push([cl, path_, headers, callback, pImpl_](int) {
+  pImpl->pool.Push([cl, path_, headers, callback, pImpl_](int) {
     httplib::Result res = cl->Get(path_.data(), CastHeaders(headers));
     auto resultVector = res
       ? std::vector<uint8_t>(res->body.begin(), res->body.end())
@@ -73,10 +73,10 @@ void HttpClient::Post(const char* host, const char* path, const char* body,
   std::string path_ = path;
   std::string body_ = body;
   std::string contentType_ = contentType;
-  std::shared_ptr<httplib::Client> cl(new httplib::Client(host));
+  auto cl = std::make_shared<httplib::Client>(host);
 
   auto pImpl_ = pImpl;
-  auto future = pImpl->pool.Push(
+  pImpl->pool.Push(
     [cl, path_, body_, contentType_, headers, callback, pImpl_](int) {
       httplib::Result res =
         cl->Post(path_.data(), CastHeaders(headers), body_.data(),

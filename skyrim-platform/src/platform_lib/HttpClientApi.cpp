@@ -44,61 +44,15 @@ JsValue HttpClientApi::Constructor(const JsFunctionArguments& args)
 
 JsValue HttpClientApi::Get(const JsFunctionArguments& args)
 {
-  // These are gonna be read inside CreatePromise only, so it is safe
-  thread_local std::unique_ptr<JsValue> g_path, g_headers, g_host;
-  g_path = std::make_unique<JsValue>(args[1]);
-  g_headers = std::make_unique<JsValue>(args[2]);
-  g_host = std::make_unique<JsValue>(args[0].GetProperty("host"));
+  JsValue path = args[1], headers = args[2],
+          host = args[0].GetProperty("host");
 
-  auto resolverFn = JsValue::Function([](const JsFunctionArguments& args) {
+  JsValue resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
     auto resolve = std::make_shared<JsValue>(args[1]);
-    auto path = static_cast<std::string>(*g_path);
-    auto host = static_cast<std::string>(*g_host);
+    auto pathStr = static_cast<std::string>(path);
+    auto hostStr = static_cast<std::string>(host);
     g_httpClient.Get(
-      host.data(), path.data(), JsHeadersToCppHeaders(*g_headers),
-      [=](const HttpClient::HttpResult& res) {
-        auto result = JsValue::Object();
-        result.SetProperty(
-          "body",
-          JsValue::String(std::string{ res.body.begin(), res.body.end() }));
-        result.SetProperty("status", res.status);
-        // TODO: fix trash undefined
-        resolve->CallWithUndefinedThis({ result });
-      });
-
-    // TODO: make null
-    return JsValue::Null();
-  });
-
-  auto promise = CreatePromise(resolverFn);
-
-  g_path.reset();
-  g_headers.reset();
-  g_host.reset();
-
-  return promise;
-}
-
-JsValue HttpClientApi::Post(const JsFunctionArguments& args)
-{
-  // These are gonna be read inside CreatePromise only, so it is safe
-  thread_local std::unique_ptr<JsValue> g_path, g_body, g_contentType,
-    g_headers, g_host;
-  g_path = std::make_unique<JsValue>(args[1]);
-  g_body = std::make_unique<JsValue>(args[2]);
-  g_contentType = std::make_unique<JsValue>(args[3]);
-  g_headers = std::make_unique<JsValue>(args[4]);
-  g_host = std::make_unique<JsValue>(args[0].GetProperty("host"));
-
-  auto resolverFn = JsValue::Function([](const JsFunctionArguments& args) {
-    auto resolve = std::make_shared<JsValue>(args[1]);
-    auto path = static_cast<std::string>(*g_path);
-    auto body = static_cast<std::string>(*g_body);
-    auto host = static_cast<std::string>(*g_host);
-    auto contentType = static_cast<std::string>(*g_contentType);
-    g_httpClient.Post(
-      host.data(), path.data(), body.data(), contentType.data(),
-      JsHeadersToCppHeaders(*g_headers),
+      hostStr.data(), pathStr.data(), JsHeadersToCppHeaders(headers),
       [=](const HttpClient::HttpResult& res) {
         auto result = JsValue::Object();
         result.SetProperty(
@@ -113,13 +67,36 @@ JsValue HttpClientApi::Post(const JsFunctionArguments& args)
 
   auto promise = CreatePromise(resolverFn);
 
-  g_path.reset();
-  g_body.reset();
-  g_contentType.reset();
-  g_headers.reset();
-  g_host.reset();
-
   return promise;
+}
+
+JsValue HttpClientApi::Post(const JsFunctionArguments& args)
+{
+  JsValue path = args[1], body = args[2], contentType = args[3],
+          headers = args[4], host = args[0].GetProperty("host");
+
+  auto resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
+    auto resolve = std::make_shared<JsValue>(args[1]);
+    auto pathStr = static_cast<std::string>(path);
+    auto bodyStr = static_cast<std::string>(body);
+    auto hostStr = static_cast<std::string>(host);
+    auto contentTypeStr = static_cast<std::string>(contentType);
+    g_httpClient.Post(
+      hostStr.data(), pathStr.data(), bodyStr.data(), contentTypeStr.data(),
+      JsHeadersToCppHeaders(headers),
+      [=](const HttpClient::HttpResult& res) {
+        auto result = JsValue::Object();
+        result.SetProperty(
+          "body",
+          JsValue::String(std::string{ res.body.begin(), res.body.end() }));
+        result.SetProperty("status", res.status);
+        resolve->Call({ JsValue::Undefined(), result });
+      });
+
+    return JsValue::Undefined();
+  });
+
+  return CreatePromise(resolverFn);
 }
 
 HttpClient& HttpClientApi::GetHttpClient()

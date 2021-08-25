@@ -21,7 +21,7 @@ TEST_CASE("Asynchronous operations should not trigger assert during static "
   engine.RunScript(ss.str(), "");
 }
 
-TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
+nlohmann::json ExecuteScript(const char* src)
 {
   TaskQueue taskQueue;
   JsEngine engine;
@@ -35,11 +35,6 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
       result = nlohmann::json::parse(static_cast<std::string>(args[1]));
       return JsValue::Undefined();
     }));
-
-  auto src = R"(
-    const client = new HttpClient("https://api.github.com");
-    client.get("/yo").then((res) => resolve(JSON.stringify(res)));
-  )";
 
   engine.RunScript(src, "");
 
@@ -58,6 +53,17 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
       throw std::runtime_error("Timeout");
     }
   }
+  return result;
+}
+
+TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
+{
+  auto src = R"(
+    const client = new HttpClient("https://api.github.com");
+    client.get("/yo").then((res) => resolve(JSON.stringify(res)));
+  )";
+
+  auto result = ExecuteScript(src);
 
   nlohmann::json body = nlohmann::json::object();
   body["message"] = "Not Found";
@@ -65,4 +71,16 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
 
   REQUIRE(nlohmann::json::parse(result["body"].get<std::string>()) == body);
   REQUIRE(result["status"] == 404);
+}
+
+TEST_CASE("Should be able to perform Bearer authorization", "[HttpClientApi]")
+{
+  auto src = R"(
+    const client = new HttpClient("http://httpbin.org");
+    const headers = { Authorization: "Bearer 123" };
+    client.get("/bearer", headers).then((res) => resolve(JSON.stringify(res)));
+  )";
+
+  auto result = ExecuteScript(src);
+  REQUIRE(result["status"] == 200);
 }
