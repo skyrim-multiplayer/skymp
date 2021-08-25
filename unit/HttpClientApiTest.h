@@ -32,14 +32,14 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
     }));
 
   auto src = R"(
-    const client = new HttpClient("https://api.github.com", 80);
+    const client = new HttpClient("https://api.github.com");
     client.get("/yo").then((res) => resolve(JSON.stringify(res)));
   )";
 
   engine.RunScript(src, "");
 
   auto startMoment = std::chrono::system_clock::now();
-  auto timeout = std::chrono::seconds(5000);
+  auto timeout = std::chrono::seconds(5);
 
   while (1) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));

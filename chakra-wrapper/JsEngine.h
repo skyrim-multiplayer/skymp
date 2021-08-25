@@ -3,7 +3,6 @@
 #include <ChakraCore.h>
 #include <cstdint>
 #include <cstring>
-#include <fmt/format.h>
 #include <iostream>
 #include <map>
 #include <memory>

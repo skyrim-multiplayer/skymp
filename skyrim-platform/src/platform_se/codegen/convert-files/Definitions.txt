@@ -374,7 +374,7 @@ export declare class HttpResponse {
 export type HttpHeaders = Record<string, string>;
 
 export declare class HttpClient {
-    constructor(host: string, port?: number);
+    constructor(url: string);
     get(path: string, headers?: HttpHeaders): Promise<HttpResponse>;
     post(path: string, body: string, contentType: string, headers?: HttpHeaders): Promise<HttpResponse>;
 }
