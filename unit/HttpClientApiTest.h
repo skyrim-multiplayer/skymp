@@ -4,9 +4,11 @@
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 
-TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
+TEST_CASE("Asynchronous operations should not trigger assert during static "
+          "deinitialization",
+          "[JsEngine]")
 {
-  /*TaskQueue taskQueue;
+  TaskQueue taskQueue;
   JsEngine engine;
   engine.ResetContext(taskQueue);
 
@@ -16,8 +18,11 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
   ss << "p.then(() => {});";
   ss << "resolve()";
 
-  engine.RunScript(ss.str(), "");*/
+  engine.RunScript(ss.str(), "");
+}
 
+TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
+{
   TaskQueue taskQueue;
   JsEngine engine;
   engine.ResetContext(taskQueue);
@@ -28,7 +33,7 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
   JsValue::GlobalObject().SetProperty(
     "resolve", JsValue::Function([&](const JsFunctionArguments& args) {
       result = nlohmann::json::parse(static_cast<std::string>(args[1]));
-      return JsValue::Null();
+      return JsValue::Undefined();
     }));
 
   auto src = R"(
