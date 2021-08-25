@@ -42,7 +42,7 @@ using GroupStack = std::vector<espm::GroupHeader*>;
 class Browser
 {
 public:
-  Browser(void* fileContent, size_t length);
+  Browser(const void* fileContent, size_t length);
   ~Browser();
 
   RecordHeader* LookupById(uint32_t formId) const noexcept;
@@ -685,5 +685,10 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+}
+
+namespace espm {
+uint32_t CalculateHashcode(const void* readBuffer, size_t length);
+uint32_t GetCorrectHashcode(const std::string& fileName);
 }
 #pragma pack(pop)

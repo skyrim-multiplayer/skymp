@@ -1,5 +1,5 @@
-#include "FileDatabase.h"
 #include "MigrationDatabase.h"
+#include "FileDatabase.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
