@@ -58,6 +58,19 @@ std::vector<std::string> Loader::GetFileNames() const noexcept
   return res;
 }
 
+std::map<std::string, uint32_t> Loader::GetHashes() const
+{
+  std::map<std::string, uint32_t> res;
+
+  for (auto& entry : entries) {
+    auto hash =
+      CalculateHashcode(entry.buffer->GetData(), entry.buffer->GetLength());
+    res.emplace(entry.fileName.string(), hash);
+  }
+
+  return res;
+}
+
 std::vector<fs::path> Loader::MakeFilePaths(
   const fs::path& dataDir, const std::vector<fs::path>& fileNames)
 {
