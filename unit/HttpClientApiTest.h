@@ -84,3 +84,22 @@ TEST_CASE("Should be able to perform Bearer authorization", "[HttpClientApi]")
   auto result = ExecuteScript(src);
   REQUIRE(result["status"] == 200);
 }
+
+TEST_CASE("Should be able to perform a POST request", "[HttpClientApi]")
+{
+  auto src = R"(
+    const client = new HttpClient("https://httpbin.org");
+    const promise = client.get("/response-headers?freeform=tosg");
+    promise.then((res) => resolve(JSON.stringify(res)));
+  )";
+
+  auto result = ExecuteScript(src);
+
+  nlohmann::json body = nlohmann::json::object();
+  body["freeform"] = "tosg";
+  body["Content-Type"] = "application/json";
+  body["Content-Length"] = "91";
+
+  REQUIRE(nlohmann::json::parse(result["body"].get<std::string>()) == body);
+  REQUIRE(result["status"] == 200);
+}
