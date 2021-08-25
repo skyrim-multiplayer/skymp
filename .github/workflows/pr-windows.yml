@@ -60,14 +60,6 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
 
-    - name: Upload MiniDump
-      if: always()
-      uses: actions/upload-artifact@v2
-      with:
-        name: minidump
-        path: ${{github.workspace}}/build/unit/unit.dmp
-        if-no-files-found: ignore
-
     - uses: actions/upload-artifact@v2
       with:
         name: coverage
