@@ -568,7 +568,7 @@ private:
     }
   }
 
-  explicit JsValue(void* internalJsRef)
+  explicit JsValue(JsValueRef internalJsRef)
     : value(internalJsRef)
   {
     AddRef();
@@ -589,7 +589,7 @@ private:
     }
   }
 
-  static std::string GetString(void* value)
+  static std::string GetString(JsValueRef value)
   {
     size_t outLength;
     SafeCall(JS_ENGINE_F(JsCopyString), value, nullptr, 0, &outLength);
@@ -701,38 +701,11 @@ public:
                       &pImpl->context);
     JsValue::SafeCall(JS_ENGINE_F(JsSetCurrentContext), pImpl->context);
 
-    JsValue::SafeCall(
-      JS_ENGINE_F(JsSetPromiseContinuationCallback),
-      [](JsValueRef task, void* state) {
-        JsValue::SafeCall(JS_ENGINE_F(JsAddRef), task, nullptr);
-        auto q = reinterpret_cast<TaskQueue*>(state);
-        q->AddTask([task] {
-          JsValueRef undefined, res;
-          JsValue::SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
-          JsValue::SafeCall(JsCallFunction, "JsCallFunction", task, &undefined,
-                            1, &res);
+    JsValue::SafeCall(JS_ENGINE_F(JsSetPromiseContinuationCallback),
+                      OnPromiseContinuation, &taskQueue);
 
-          JsRelease(task, nullptr);
-        });
-      },
-      &taskQueue);
-
-    JsValue::SafeCall(
-      JS_ENGINE_F(JsSetHostPromiseRejectionTracker),
-      [](JsValueRef promise, JsValueRef reason_, bool handled, void* state) {
-        if (handled)
-          return;
-        auto q = reinterpret_cast<TaskQueue*>(state);
-        std::stringstream ss;
-        auto reason = JsValueAccess::Ctor(reason_);
-        auto stack = reason.GetProperty("stack").ToString();
-        ss << "Unhandled promise rejection" << std::endl;
-        ss << ((stack == "undefined") ? reason.ToString()
-                                      : reason.ToString() + "\n" + stack);
-        std::string str = ss.str();
-        q->AddTask([str] { throw std::runtime_error(str); });
-      },
-      &taskQueue);
+    JsValue::SafeCall(JS_ENGINE_F(JsSetHostPromiseRejectionTracker),
+                      OnPromiseRejection, &taskQueue);
   }
 
   size_t GetMemoryUsage() const
@@ -744,6 +717,46 @@ public:
   }
 
 private:
+  static void OnPromiseContinuation(JsValueRef task, void* state)
+  {
+    // Equivalent of JsValue::JsValue(JsValueRef *)
+    JsValue::SafeCall(JS_ENGINE_F(JsAddRef), task, nullptr);
+
+    auto taskQueue = reinterpret_cast<TaskQueue*>(state);
+
+    // Transfer internal ChakraCore value pointer. We did AddRef so Chakra
+    // isn't going to invalidate this pointer.
+    taskQueue->AddTask([task] {
+      // Equivalent of JsValue::Call({ JsValue::Undefined() })
+      JsValueRef undefined, res;
+      JsValue::SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
+      JsValue::SafeCall(JsCallFunction, "JsCallFunction", task, &undefined, 1,
+                        &res);
+
+      // Equivalent of JsValue::~JsValue()
+      JsRelease(task, nullptr);
+    });
+  }
+
+  static void OnPromiseRejection(JsValueRef promise, JsValueRef reason_,
+                                 bool handled, void* state)
+  {
+    if (handled) {
+      // This indicates that failure is handled on the JavaScript side. No
+      // meaning to do anything
+      return;
+    }
+    auto q = reinterpret_cast<TaskQueue*>(state);
+    std::stringstream ss;
+    auto reason = JsValueAccess::Ctor(reason_);
+    auto stack = reason.GetProperty("stack").ToString();
+    ss << "Unhandled promise rejection" << std::endl;
+    ss << ((stack == "undefined") ? reason.ToString()
+                                  : reason.ToString() + "\n" + stack);
+    std::string str = ss.str();
+    q->AddTask([str] { throw std::runtime_error(str); });
+  }
+
   struct Impl
   {
     JsRuntimeHandle runtime;
