@@ -294,7 +294,8 @@ At the moment only `get` and `post` are available.
 
 ```typescript
 import { HttpClient } from "../skyrimPlatfosrm";
-let http = new HttpClient("vk.com");
+let url = "https://canhazip.com:443"; // URL may contain port or not
+let http = new HttpClient(url);
 http.get("/").then((response) => printConsole(response.body));
 ```
 
