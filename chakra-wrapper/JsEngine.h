@@ -639,7 +639,7 @@ private:
   void TraceDestructor() {}
 #endif
 
-  void* value = nullptr;
+  JsValueRef value = nullptr;
 };
 
 class JsValueAccess
