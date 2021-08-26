@@ -48,7 +48,7 @@ nlohmann::json ExecuteScript(const char* src)
     taskQueue.Update();
     HttpClientApi::GetHttpClient().Update();
 
-    if (result != nullptr) {
+    if (!result.is_null()) {
       break;
     }
     if (std::chrono::system_clock::now() - startMoment > timeout) {
