@@ -38,7 +38,6 @@
 #include <nlohmann/json.hpp>
 #include <re/BGSEquipSlot.h>
 #include <re/Offsets_RTTI.h>
-#include <set>
 #include <skse64/Colors.h>
 #include <skse64/GameData.h>
 #include <skse64/GameExtraData.h>
@@ -782,9 +781,7 @@ public:
 
   std::vector<std::string> GetMissingFiles()
   {
-    // We prefer std::set here to keep strings sorted. We want the same output
-    // on different user machines
-    std::set<std::string> missing;
+    std::vector<std::string> missing;
     std::istringstream stream(PAPYRUS_SOURCES);
     std::string tmp;
     while (std::getline(stream, tmp, ' ')) {
@@ -794,12 +791,13 @@ public:
       path /= "Scripts";
       path /= tmp;
       if (!std::filesystem::exists(path)) {
-        missing.insert(tmp);
+        // WorldSpace doesn't have any functions declared so isn't required
+        if (tmp != "WorldSpace.pex") {
+          missing.push_back(tmp);
+        }
       }
     }
-    // Doesn't have any functions declared so isn't required
-    missing.erase("WorldSpace.pex");
-    return { missing.begin(), missing.end() };
+    return missing;
   }
 };
 
