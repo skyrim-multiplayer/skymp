@@ -6,7 +6,7 @@
 
 TEST_CASE("Asynchronous operations should not trigger assert during static "
           "deinitialization",
-          "[JsEngine]")
+          "[HttpClientApi]")
 {
   TaskQueue taskQueue;
   JsEngine engine;
@@ -80,7 +80,8 @@ TEST_CASE("Should be able to perform Bearer authorization", "[HttpClientApi]")
   auto src = R"(
     const client = new HttpClient("http://httpbin.org");
     const headers = { Authorization: "Bearer 123" };
-    client.get("/bearer", headers).then((res) => resolve(JSON.stringify(res)));
+    const options = { headers };
+    client.get("/bearer", options).then((res) => resolve(JSON.stringify(res)));
   )";
 
   auto result = ExecuteScript(src);
@@ -91,7 +92,8 @@ TEST_CASE("Should be able to perform a POST request", "[HttpClientApi]")
 {
   auto src = R"(
     const client = new HttpClient("https://httpbin.org");
-    const promise = client.post("/post", "{}", "application/json");
+    const options = { body: "{}", contentType: "application/json" };
+    const promise = client.post("/post", options);
     promise.then((res) => resolve(JSON.stringify(res)));
   )";
 

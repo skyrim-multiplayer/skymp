@@ -23,13 +23,16 @@ inline void IterateKeys(const JsValue& object, F fn)
   }
 }
 
-inline HttpClient::Headers JsHeadersToCppHeaders(const JsValue& headers)
+inline HttpClient::Headers GetHeaders(const JsValue& options)
 {
   HttpClient::Headers res;
-  IterateKeys(headers, [&](const JsValue& key) {
-    res.push_back({ static_cast<std::string>(key),
-                    static_cast<std::string>(headers.GetProperty(key)) });
-  });
+  auto headers = options.GetProperty("headers");
+  if (headers.GetType() == JsValue::Type::Object) {
+    IterateKeys(headers, [&](const JsValue& key) {
+      res.push_back({ static_cast<std::string>(key),
+                      static_cast<std::string>(headers.GetProperty(key)) });
+    });
+  }
   return res;
 }
 }
@@ -44,7 +47,7 @@ JsValue HttpClientApi::Constructor(const JsFunctionArguments& args)
 
 JsValue HttpClientApi::Get(const JsFunctionArguments& args)
 {
-  JsValue path = args[1], headers = args[2],
+  JsValue path = args[1], options = args[2],
           host = args[0].GetProperty("host");
 
   JsValue resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
@@ -52,7 +55,7 @@ JsValue HttpClientApi::Get(const JsFunctionArguments& args)
     auto pathStr = static_cast<std::string>(path);
     auto hostStr = static_cast<std::string>(host);
     g_httpClient.Get(
-      hostStr.data(), pathStr.data(), JsHeadersToCppHeaders(headers),
+      hostStr.data(), pathStr.data(), GetHeaders(options),
       [=](const HttpClient::HttpResult& res) {
         auto result = JsValue::Object();
         result.SetProperty(
@@ -72,18 +75,17 @@ JsValue HttpClientApi::Get(const JsFunctionArguments& args)
 
 JsValue HttpClientApi::Post(const JsFunctionArguments& args)
 {
-  JsValue path = args[1], body = args[2], contentType = args[3],
-          headers = args[4], host = args[0].GetProperty("host");
+  JsValue path = args[1], options = args[2], host = args[0].GetProperty("host");
 
   auto resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
     auto resolve = std::make_shared<JsValue>(args[1]);
     auto pathStr = static_cast<std::string>(path);
-    auto bodyStr = static_cast<std::string>(body);
     auto hostStr = static_cast<std::string>(host);
-    auto contentTypeStr = static_cast<std::string>(contentType);
+    auto bodyStr = static_cast<std::string>(options.GetProperty("body"));
+    auto type = static_cast<std::string>(options.GetProperty("contentType"));
     g_httpClient.Post(
-      hostStr.data(), pathStr.data(), bodyStr.data(), contentTypeStr.data(),
-      JsHeadersToCppHeaders(headers), [=](const HttpClient::HttpResult& res) {
+      hostStr.data(), pathStr.data(), bodyStr.data(), type.data(),
+      GetHeaders(options), [=](const HttpClient::HttpResult& res) {
         auto result = JsValue::Object();
         result.SetProperty(
           "body",
