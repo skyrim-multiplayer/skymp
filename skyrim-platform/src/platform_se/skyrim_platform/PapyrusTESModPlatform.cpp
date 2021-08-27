@@ -38,6 +38,7 @@
 #include <nlohmann/json.hpp>
 #include <re/BGSEquipSlot.h>
 #include <re/Offsets_RTTI.h>
+#include <set>
 #include <skse64/Colors.h>
 #include <skse64/GameData.h>
 #include <skse64/GameExtraData.h>
@@ -47,7 +48,6 @@
 #include <skse64/NiNodes.h>
 #include <skse64/PapyrusGame.h>
 #include <unordered_map>
-#include <unordered_set>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -775,14 +775,16 @@ public:
     if (!missing.empty()) {
       std::stringstream ss;
       ss << "Missing files: " << nlohmann::json(missing).dump(2)
-         << ", reinstalling SkyrimPlatform may fix that";
+         << ", reinstalling SkyrimPlatform or/and SKSE may fix that";
       throw std::runtime_error(ss.str());
     }
   }
 
   std::vector<std::string> GetMissingFiles()
   {
-    std::vector<std::string> missing;
+    // We prefer std::set here to keep strings sorted. We want the same output
+    // on different user machines
+    std::set<std::string> missing;
     std::istringstream stream(PAPYRUS_SOURCES);
     std::string tmp;
     while (std::getline(stream, tmp, ' ')) {
@@ -792,10 +794,12 @@ public:
       path /= "Scripts";
       path /= tmp;
       if (!std::filesystem::exists(path)) {
-        missing.push_back(tmp);
+        missing.insert(tmp);
       }
     }
-    return missing;
+    // Doesn't have any functions declared so isn't required
+    missing.erase("WorldSpace.pex");
+    return { missing.begin(), missing.end() };
   }
 };
 
