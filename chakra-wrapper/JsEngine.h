@@ -42,7 +42,6 @@
 
 #define JS_ENGINE_F(func) func, #func
 
-class JsValueAccess;
 class JsEngine;
 class JsValue;
 
@@ -63,7 +62,6 @@ public:
 class JsValue
 {
 public:
-  friend class JsValueAccess;
   friend class JsEngine;
 
   enum class Type
@@ -642,12 +640,6 @@ private:
   JsValueRef value = nullptr;
 };
 
-class JsValueAccess
-{
-public:
-  static JsValue Ctor(JsValueRef raw) { return JsValue(raw); }
-};
-
 class JsEngine
 {
 public:
@@ -692,7 +684,7 @@ public:
       }
     }
 
-    return result ? JsValueAccess::Ctor(result) : JsValue::Undefined();
+    return result ? JsValue(result) : JsValue::Undefined();
   }
 
   void ResetContext(TaskQueue& taskQueue)
@@ -747,7 +739,7 @@ private:
     }
     auto q = reinterpret_cast<TaskQueue*>(state);
     std::stringstream ss;
-    auto reason = JsValueAccess::Ctor(reason_);
+    auto reason = JsValue(reason_);
     auto stack = reason.GetProperty("stack").ToString();
     ss << "Unhandled promise rejection" << std::endl;
     ss << ((stack == "undefined") ? reason.ToString()
