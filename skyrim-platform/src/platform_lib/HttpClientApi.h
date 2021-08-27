@@ -10,7 +10,7 @@ JsValue Post(const JsFunctionArguments& args);
 
 HttpClient& GetHttpClient();
 
-inline void Register(JsValue& exports)
+inline void Register(JsValue exports)
 {
   auto httpClient = JsValue::Function(Constructor);
   exports.SetProperty("HttpClient", httpClient);

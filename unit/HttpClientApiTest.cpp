@@ -27,8 +27,7 @@ nlohmann::json ExecuteScript(const char* src)
   JsEngine engine;
   engine.ResetContext(taskQueue);
 
-  auto global = JsValue::GlobalObject();
-  HttpClientApi::Register(global);
+  HttpClientApi::Register(JsValue::GlobalObject());
 
   nlohmann::json result;
 

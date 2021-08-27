@@ -730,8 +730,7 @@ private:
       // Equivalent of JsValue::Call({ JsValue::Undefined() })
       JsValueRef undefined, res;
       JsValue::SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
-      JsValue::SafeCall(JsCallFunction, "JsCallFunction", task, &undefined, 1,
-                        &res);
+      JsValue::SafeCall(JS_ENGINE_F(JsCallFunction), task, &undefined, 1, &res);
 
       // Equivalent of JsValue::~JsValue()
       JsRelease(task, nullptr);
@@ -742,8 +741,8 @@ private:
                                  bool handled, void* state)
   {
     if (handled) {
-      // This indicates that failure is handled on the JavaScript side. No
-      // meaning to do anything
+      // This indicates that failure is handled on the JavaScript side.
+      // No sense to do anything.
       return;
     }
     auto q = reinterpret_cast<TaskQueue*>(state);
