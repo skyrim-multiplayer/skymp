@@ -95,9 +95,13 @@ It's also ok to use types that are returned from dependencies. For example, if a
 
 ### Using
 
-Prefer `using` over `typedef`.
+First of all, prefer not to use `using` at all. Especially with STL - containers and so on. Use `class` or to encapsulate something.
 
 The common pattern is to use `using` keyword when you have complex `std::function` parameter templates.
+
+### Typedef
+
+Same as for `using`, but only for function pointers.
 
 ## Application to Existing Code
 
