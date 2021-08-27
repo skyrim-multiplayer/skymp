@@ -50,7 +50,8 @@ std::string ToLower(std::string s)
 
 void VirtualMachine::RegisterFunction(const std::string& className,
                                       const std::string& functionName,
-                                      const FunctionType& type, const std::function<VarValue(VarValue self, std::vector<VarValue> arguments)>& fn)
+                                      const FunctionType& type, 
+                                      const NativeFunction& fn)
 {
   switch (type) {
     case FunctionType::GlobalFunction:

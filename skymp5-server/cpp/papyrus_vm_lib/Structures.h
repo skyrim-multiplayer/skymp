@@ -149,6 +149,9 @@ private:
   Type type;
 };
 
+using NativeFunction = std::function<VarValue(VarValue self,
+                                              std::vector<VarValue> arguments)>;
+
 class IVariablesHolder
 {
 public:
