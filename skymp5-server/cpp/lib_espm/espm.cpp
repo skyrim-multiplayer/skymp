@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sparsepp/spp.h>
 
@@ -59,6 +60,14 @@ private:
 
   const uint64_t v;
 };
+
+const std::map<std::string, uint32_t> g_correctHashcode{
+  { "Skyrim.esm", 0xaf75991dUL },
+  { "Update.esm", 0x17ab5e20UL },
+  { "Dawnguard.esm", 0xcc81e5d8UL },
+  { "HearthFires.esm", 0xbad9393aUL },
+  { "Dragonborn.esm", 0xeb10e82UL }
+};
 }
 
 namespace espm {
@@ -91,6 +100,17 @@ struct FieldHeader
 };
 static_assert(sizeof(FieldHeader) == 6);
 #pragma pack(pop)
+
+uint32_t CalculateHashcode(const void* readBuffer, size_t length)
+{
+  return ZlibGetCRC32Checksum(readBuffer, length);
+}
+
+uint32_t GetCorrectHashcode(const std::string& fileName)
+{
+  auto iter = g_correctHashcode.find(fileName);
+  return iter == g_correctHashcode.end() ? 0 : iter->second;
+}
 }
 
 enum RecordFlags : uint32_t

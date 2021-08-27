@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <map>
 #include <sstream>
 
 namespace espm {
@@ -37,6 +38,8 @@ public:
   const espm::CombineBrowser& GetBrowser() const noexcept;
 
   std::vector<std::string> GetFileNames() const noexcept;
+
+  std::map<std::string, uint32_t> GetHashes() const;
 
 private:
   std::vector<fs::path> MakeFilePaths(const fs::path& dataDir,
