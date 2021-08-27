@@ -80,7 +80,9 @@ Const methods must be thread-safe.
 
 ### Types
 
-Prefer `int32_t` over `int`, `int16_t` over `short`, etc.
+Prefer `int64_t` over `long long`, `int16_t` over `short`, etc. But `int` is ok.
+
+It's also ok to use types that are returned from dependencies. For example, if a function from library returns `unsigned int`, then you can use it as a type here.
 
 ### Macros
 
@@ -90,6 +92,12 @@ Prefer `int32_t` over `int`, `int16_t` over `short`, etc.
     auto debugFunctionJson = f.dump();
 #endif // _DEBUG
 ```
+
+### Using
+
+Prefer `using` over `typedef`.
+
+The common pattern is to use `using` keyword when you have complex `std::function` parameter templates.
 
 ## Application to Existing Code
 
