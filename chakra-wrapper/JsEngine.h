@@ -745,7 +745,9 @@ private:
     ss << ((stack == "undefined") ? reason.ToString()
                                   : reason.ToString() + "\n" + stack);
     std::string str = ss.str();
-    q->AddTask([str] { throw std::runtime_error(str); });
+    
+    // Would throw from next TaskQueue::Update call
+    q->AddTask([str = std::move(str)] { throw std::runtime_error(str); });
   }
 
   struct Impl
