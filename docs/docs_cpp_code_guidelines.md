@@ -97,11 +97,18 @@ It's also ok to use types that are returned from dependencies. For example, if a
 
 First of all, prefer not to use `using` at all. Especially with STL - containers and so on. Use `class` or to encapsulate something.
 
-The common pattern is to use `using` keyword when you have complex `std::function` parameter templates.
+Always use `using` instead of `typedef`:
+```c++
+// ok
+using Member = int(Foo::*)(int, int);
+using Pure = int(*)(int, int);
 
-### Typedef
+// not ok
+typedef int(Foo::*Member)(int, int);
+typedef int(*Pure)(int, int);
+```
 
-Same as for `using`, but only for function pointers.
+The common pattern is to use `using` keyword when you have complex `std::function` parameter templates or function pointers.
 
 ## Application to Existing Code
 
