@@ -6,7 +6,7 @@
 
 TEST_CASE("Asynchronous operations should not trigger assert during static "
           "deinitialization",
-          "[HttpClientApi]")
+          "[HttpClientApi][JsEngine]")
 {
   TaskQueue taskQueue;
   JsEngine engine;
