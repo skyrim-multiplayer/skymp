@@ -33,13 +33,14 @@ inline HttpClient::Headers GetHeaders(const JsValue& options)
   if (headers.GetType() != JsValue::Type::Object) {
     return HttpClient::Headers();
   }
-  
+
   HttpClient::Headers res;
   IterateKeys(headers, [&](const JsValue& key) {
     res.push_back({ static_cast<std::string>(key),
                     static_cast<std::string>(headers.GetProperty(key)) });
   });
   return res;
+}
 }
 
 JsValue HttpClientApi::Constructor(const JsFunctionArguments& args)
@@ -80,7 +81,8 @@ JsValue HttpClientApi::Get(const JsFunctionArguments& args)
 
 JsValue HttpClientApi::Post(const JsFunctionArguments& args)
 {
-  JsValue path = args[1], options = args[2], host = args[0].GetProperty("host");
+  JsValue path = args[1], options = args[2],
+          host = args[0].GetProperty("host");
 
   auto resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
     auto resolve = std::make_shared<JsValue>(args[1]);

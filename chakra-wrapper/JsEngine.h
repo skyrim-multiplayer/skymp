@@ -702,19 +702,20 @@ private:
     JsValue::SafeCall(JS_ENGINE_F(JsAddRef), task, nullptr);
 
     auto taskQueue = reinterpret_cast<TaskQueue*>(state);
-    
+
     // RAII doesn't work properly here. That's why we do not just use JsValue.
     // TaskQueue can be destroyed AFTER Chakra deinitialization and then try
     // destroying tasks with JsValue instances captured.
     // Also JsRelease (and JsValue dtor) MUST be called in the Chakra thread.
-    
+
     // Transfer internal ChakraCore value pointer. We did AddRef so Chakra
     // isn't going to invalidate this pointer.
     taskQueue->AddTask([task] {
       // Equivalent of JsValue::Call({ JsValue::Undefined() })
       JsValueRef undefined, res;
       JsValue::SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
-      JsValue::SafeCall(JS_ENGINE_F(JsCallFunction), task, &undefined, 1, &res);
+      JsValue::SafeCall(JS_ENGINE_F(JsCallFunction), task, &undefined, 1,
+                        &res);
 
       // Equivalent of JsValue::~JsValue()
       JsRelease(task, nullptr);
@@ -737,7 +738,7 @@ private:
     ss << ((stack == "undefined") ? reason.ToString()
                                   : reason.ToString() + "\n" + stack);
     std::string str = ss.str();
-    
+
     // Would throw from next TaskQueue::Update call
     q->AddTask([str = std::move(str)] { throw std::runtime_error(str); });
   }
