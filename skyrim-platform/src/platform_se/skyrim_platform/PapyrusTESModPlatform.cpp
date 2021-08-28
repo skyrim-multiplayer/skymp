@@ -797,6 +797,7 @@ public:
         }
       }
     }
+    std::sort(missing.begin(), myvector.end());
     return missing;
   }
 };
