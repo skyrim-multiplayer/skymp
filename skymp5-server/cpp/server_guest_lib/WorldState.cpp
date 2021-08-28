@@ -637,16 +637,16 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
       });
 
-      std::vector<IPapyrusClassBase*> classes;
-      classes.emplace_back(new PapyrusObjectReference);
-      classes.emplace_back(new PapyrusGame);
-      classes.emplace_back(new PapyrusForm);
-      classes.emplace_back(new PapyrusMessage);
-      classes.emplace_back(new PapyrusFormList);
-      classes.emplace_back(new PapyrusDebug);
-      classes.emplace_back(new PapyrusActor);
-      classes.emplace_back(new PapyrusSkymp);
-      classes.emplace_back(new PapyrusUtility);
+      std::vector<std::shared_ptr<IPapyrusClassBase>> classes;
+      classes.emplace_back(std::make_shared<PapyrusObjectReference>());
+      classes.emplace_back(std::make_shared<PapyrusGame>());
+      classes.emplace_back(std::make_shared<PapyrusForm>());
+      classes.emplace_back(std::make_shared<PapyrusMessage>());
+      classes.emplace_back(std::make_shared<PapyrusFormList>());
+      classes.emplace_back(std::make_shared<PapyrusDebug>());
+      classes.emplace_back(std::make_shared<PapyrusActor>());
+      classes.emplace_back(std::make_shared<PapyrusSkymp>());
+      classes.emplace_back(std::make_shared<PapyrusUtility>());
       for (auto cl : classes)
         cl->Register(*pImpl->vm, pImpl->policy);
     }
