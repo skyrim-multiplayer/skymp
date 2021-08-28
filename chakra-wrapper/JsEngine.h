@@ -702,7 +702,12 @@ private:
     JsValue::SafeCall(JS_ENGINE_F(JsAddRef), task, nullptr);
 
     auto taskQueue = reinterpret_cast<TaskQueue*>(state);
-
+    
+    // RAII doesn't work properly here. That's why we do not just use JsValue.
+    // TaskQueue can be destroyed AFTER Chakra deinitialization and then try
+    // destroying tasks with JsValue instances captured.
+    // Also JsRelease (and JsValue dtor) MUST be called in the Chakra thread.
+    
     // Transfer internal ChakraCore value pointer. We did AddRef so Chakra
     // isn't going to invalidate this pointer.
     taskQueue->AddTask([task] {
