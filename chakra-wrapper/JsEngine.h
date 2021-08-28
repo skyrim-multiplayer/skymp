@@ -510,26 +510,24 @@ private:
   class JsFunctionArgumentsImpl : public JsFunctionArguments
   {
   public:
-    JsFunctionArgumentsImpl(JsValueRef* arr_, size_t n_,
-                            const JsValue& missingArgValue_)
+    JsFunctionArgumentsImpl(JsValueRef* arr_, size_t n_)
       : arr(arr_)
       , n(n_)
-      , missingArgValue(missingArgValue_)
     {
+      undefined = std::make_unique<JsValue>(JsValue::Undefined());
     }
 
-    size_t GetSize() const noexcept { return n; }
+    size_t GetSize() const noexcept override { return n; }
 
-    const JsValue& operator[](size_t i) const noexcept
+    const JsValue& operator[](size_t i) const noexcept override
     {
-      return i < n ? reinterpret_cast<const JsValue&>(arr[i])
-                   : missingArgValue;
+      return i < n ? reinterpret_cast<const JsValue&>(arr[i]) : *undefined;
     }
 
   private:
     JsValueRef* const arr;
-    const JsValue& missingArgValue;
     const size_t n;
+    std::unique_ptr<JsValue> undefined;
   };
 
   static void* NativeFunctionImpl(void* callee, bool isConstructorCall,
@@ -538,8 +536,7 @@ private:
                                   void* callbackState)
   {
     try {
-      JsValue missingArgValue = JsValue::Undefined();
-      JsFunctionArgumentsImpl args(arguments, argumentsCount, missingArgValue);
+      JsFunctionArgumentsImpl args(arguments, argumentsCount);
 
       auto f = reinterpret_cast<FunctionT*>(callbackState);
       return (*f)(args).value;
