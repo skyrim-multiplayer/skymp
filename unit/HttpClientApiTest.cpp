@@ -90,6 +90,9 @@ TEST_CASE("Should be able to perform Bearer authorization", "[HttpClientApi]")
   )";
 
   auto result = ExecuteScript(src);
+  auto responseBody = nlohmann::json::parse(result["body"].get<std::string>());
+  REQUIRE(responseBody["authenticated"] == true);
+  REQUIRE(responseBody["token"] == "123");
   REQUIRE(result["status"] == 200);
 }
 
