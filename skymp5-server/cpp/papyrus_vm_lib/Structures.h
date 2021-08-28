@@ -403,6 +403,8 @@ struct PexScript
 struct ActivePexInstance
 {
 public:
+  using Local = std::pair<std::string, VarValue>;
+
   ActivePexInstance();
   ActivePexInstance(
     PexScript::Lazy sourcePex,
@@ -413,9 +415,9 @@ public:
   FunctionInfo GetFunctionByName(const char* name,
                                  std::string stateName) const;
 
-  VarValue& GetVariableValueByName(std::vector<std::pair<std::string, VarValue>>* optional, std::string name);
+  VarValue& GetVariableValueByName(std::vector<Local>* optional, std::string name);
 
-  VarValue& GetIndentifierValue(std::vector<std::pair<std::string, VarValue>>& locals, VarValue& value,
+  VarValue& GetIndentifierValue(std::vector<Local>& locals, VarValue& value,
                                 bool treatStringsAsIdentifiers = false);
 
   VarValue StartFunction(FunctionInfo& function,
@@ -442,9 +444,9 @@ private:
 
   std::vector<std::pair<uint8_t, std::vector<VarValue*>>>
   TransformInstructions(std::vector<FunctionCode::Instruction>& sourceOpCode,
-                        std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> locals);
+                        std::shared_ptr<std::vector<Local>> locals);
 
-  std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> MakeLocals(FunctionInfo& function,
+  std::shared_ptr<std::vector<ActivePexInstance::Local>> MakeLocals(FunctionInfo& function,
                                      std::vector<VarValue>& arguments);
 
   VarValue ExecuteAll(
@@ -462,7 +464,7 @@ private:
     uint8_t flag);
 
   void CastObjectToObject(VarValue* result, VarValue* objectType,
-                          std::vector<std::pair<std::string, VarValue>>& locals);
+                          std::vector<Local>& locals);
 
   bool HasParent(ActivePexInstance* script, std::string castToTypeName);
   bool HasChild(ActivePexInstance* script, std::string castToTypeName);

@@ -218,7 +218,7 @@ struct ActivePexInstance::ExecutionContext
 {
   std::shared_ptr<StackIdHolder> stackIdHolder;
   std::vector<FunctionCode::Instruction> instructions;
-  std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> locals;
+  std::shared_ptr<std::vector<Local>> locals;
   bool needReturn = false;
   bool needJump = false;
   int jumpStep = 0;
@@ -522,10 +522,10 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
   }
 }
 
-std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> ActivePexInstance::MakeLocals(
+std::shared_ptr<std::vector<ActivePexInstance::Local>> ActivePexInstance::MakeLocals(
   FunctionInfo& function, std::vector<VarValue>& arguments)
 {
-  auto locals = std::make_shared<std::vector<std::pair<std::string, VarValue>>>();
+  auto locals = std::make_shared<std::vector<Local>>();
 
   // Fill with function locals
   for (auto& var : function.locals) {
@@ -565,7 +565,7 @@ std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> ActivePexInstance
 std::vector<std::pair<uint8_t, std::vector<VarValue*>>>
 ActivePexInstance::TransformInstructions(
   std::vector<FunctionCode::Instruction>& instructions,
-  std::shared_ptr<std::vector<std::pair<std::string, VarValue>>> locals)
+  std::shared_ptr<std::vector<Local>> locals)
 {
   std::vector<std::pair<uint8_t, std::vector<VarValue*>>> opCode;
   for (size_t i = 0; i < instructions.size(); ++i) {
@@ -654,7 +654,7 @@ VarValue ActivePexInstance::StartFunction(
 }
 
 VarValue& ActivePexInstance::GetIndentifierValue(
-  std::vector<std::pair<std::string, VarValue>>& locals, VarValue& value, bool treatStringsAsIdentifiers)
+  std::vector<Local>& locals, VarValue& value, bool treatStringsAsIdentifiers)
 {
   if (auto valueAsString = static_cast<const char*>(value)) {
     if (treatStringsAsIdentifiers &&
@@ -778,7 +778,7 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
 void ActivePexInstance::CastObjectToObject(VarValue* result,
                                            VarValue* scriptToCastOwner,
-                                           std::vector<std::pair<std::string, VarValue>>& locals)
+                                           std::vector<Local>& locals)
 {
   std::string objectToCastTypeName = scriptToCastOwner->objectType;
   const std::string& resultTypeName = result->objectType;
@@ -857,7 +857,7 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
   return false;
 }
 
-VarValue& ActivePexInstance::GetVariableValueByName(std::vector<std::pair<std::string, VarValue>>* locals,
+VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
                                                     std::string name)
 {
 
