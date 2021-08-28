@@ -12,13 +12,19 @@ TEST_CASE("Asynchronous operations should not trigger assert during static "
   JsEngine engine;
   engine.ResetContext(taskQueue);
 
-  std::stringstream ss;
-  ss << "let resolve = null;";
-  ss << "let p = new Promise((f) => resolve = f);";
-  ss << "p.then(() => {});";
-  ss << "resolve()";
+  // Triggers OnPromiseContinuation that adds a task to the queue.
+  auto src = R"(
+    let resolve = null;
+    let p = new Promise((f) => resolve = f);
+    p.then(() => {});
+    resolve()
+  )";
+  engine.RunScript(src, "");
 
-  engine.RunScript(ss.str(), "");
+  // We never call TaskQueue::Update, so task never runs.
+  // TaskQueue destroys after JsEngine, tries to destroy the tasks.
+  // Tasks destroy captured things (JsValue in the old implementation).
+  // In the old implementation, JsValue dtor triggers an assert.
 }
 
 nlohmann::json ExecuteScript(const char* src)
