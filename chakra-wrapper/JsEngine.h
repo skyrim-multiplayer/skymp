@@ -522,8 +522,8 @@ private:
 
     const JsValue& operator[](size_t i) const noexcept override
     {
-      // A bit ugly reinterpret_cast, but it's a hot path. 
-      // We do not want to modify the ref counter for each argument. 
+      // A bit ugly reinterpret_cast, but it's a hot path.
+      // We do not want to modify the ref counter for each argument.
       // This is also unit tested, so we would know if it breaks.
       return i < n ? reinterpret_cast<const JsValue&>(arr[i]) : *undefined;
     }
