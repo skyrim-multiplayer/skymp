@@ -638,15 +638,15 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
       });
 
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusObjectReference>());
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusGame>());
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusForm>());
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusMessage>());
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusFormList>());
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusDebug>());
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
-	  pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusObjectReference>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusGame>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusForm>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusMessage>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusFormList>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusDebug>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
       for (auto& cl : pImpl->classes)
         cl->Register(*pImpl->vm, pImpl->policy);
     }
