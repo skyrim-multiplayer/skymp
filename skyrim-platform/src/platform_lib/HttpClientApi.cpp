@@ -25,16 +25,21 @@ inline void IterateKeys(const JsValue& object, F fn)
 
 inline HttpClient::Headers GetHeaders(const JsValue& options)
 {
-  HttpClient::Headers res;
-  auto headers = options.GetProperty("headers");
-  if (headers.GetType() == JsValue::Type::Object) {
-    IterateKeys(headers, [&](const JsValue& key) {
-      res.push_back({ static_cast<std::string>(key),
-                      static_cast<std::string>(headers.GetProperty(key)) });
-    });
+  if (options.GetType() != JsValue::Type::Object) {
+    return HttpClient::Headers();
   }
+
+  auto headers = options.GetProperty("headers");
+  if (headers.GetType() != JsValue::Type::Object) {
+    return HttpClient::Headers();
+  }
+  
+  HttpClient::Headers res;
+  IterateKeys(headers, [&](const JsValue& key) {
+    res.push_back({ static_cast<std::string>(key),
+                    static_cast<std::string>(headers.GetProperty(key)) });
+  });
   return res;
-}
 }
 
 JsValue HttpClientApi::Constructor(const JsFunctionArguments& args)
