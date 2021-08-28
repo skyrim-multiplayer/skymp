@@ -59,6 +59,7 @@ struct WorldState::Impl
   bool formLoadingInProgress = false;
   std::map<std::string, std::chrono::system_clock::duration>
     relootTimeForTypes;
+  std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
 };
 
 WorldState::WorldState()
@@ -637,17 +638,16 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
       });
 
-      std::vector<std::shared_ptr<IPapyrusClassBase>> classes;
-      classes.emplace_back(std::make_shared<PapyrusObjectReference>());
-      classes.emplace_back(std::make_shared<PapyrusGame>());
-      classes.emplace_back(std::make_shared<PapyrusForm>());
-      classes.emplace_back(std::make_shared<PapyrusMessage>());
-      classes.emplace_back(std::make_shared<PapyrusFormList>());
-      classes.emplace_back(std::make_shared<PapyrusDebug>());
-      classes.emplace_back(std::make_shared<PapyrusActor>());
-      classes.emplace_back(std::make_shared<PapyrusSkymp>());
-      classes.emplace_back(std::make_shared<PapyrusUtility>());
-      for (auto cl : classes)
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusObjectReference>());
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusGame>());
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusForm>());
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusMessage>());
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusFormList>());
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusDebug>());
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
+	  pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
+      for (auto& cl : pImpl->classes)
         cl->Register(*pImpl->vm, pImpl->policy);
     }
   }
