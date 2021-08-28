@@ -10,7 +10,8 @@
 #include <vector>
 
 // #define JS_ENGINE_TRACING_ENABLED
-// ^ uncomment to enable tracing
+// ^ uncomment or re-generate project files with -DJS_ENGINE_TRACING_ENABLED to
+// enable tracing
 
 // Useful for finding static JsValue variables that fail in destructor due to
 // undefined static deinitialization order (Chakra is being deinitialized
