@@ -470,19 +470,6 @@ public:
   }
 
 private:
-  class JsValueRefGuard
-  {
-  public:
-    JsValueRefGuard(JsValueRef v)
-      : value(v)
-    {
-      SafeCall(JS_ENGINE_F(JsAddRef), value, nullptr);
-    }
-    ~JsValueRefGuard() { JsRelease(value, nullptr); }
-
-    const JsValueRef value;
-  };
-
   template <class F, class... A>
   static void SafeCall(F func, const char* funcName, A... args)
   {
