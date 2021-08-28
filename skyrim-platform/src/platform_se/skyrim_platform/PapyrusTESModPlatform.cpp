@@ -32,6 +32,7 @@
 #include <RE/TESObjectARMO.h>
 #include <RE/TESObjectWEAP.h>
 #include <RE/UI.h>
+#include <algorithm>
 #include <atomic>
 #include <map>
 #include <mutex>
@@ -797,7 +798,7 @@ public:
         }
       }
     }
-    std::sort(missing.begin(), myvector.end());
+    std::sort(missing.begin(), missing.end());
     return missing;
   }
 };
