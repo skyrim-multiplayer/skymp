@@ -522,8 +522,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
   }
 }
 
-std::shared_ptr<std::vector<ActivePexInstance::Local>> ActivePexInstance::MakeLocals(
-  FunctionInfo& function, std::vector<VarValue>& arguments)
+std::shared_ptr<std::vector<ActivePexInstance::Local>>
+ActivePexInstance::MakeLocals(FunctionInfo& function,
+                              std::vector<VarValue>& arguments)
 {
   auto locals = std::make_shared<std::vector<Local>>();
 

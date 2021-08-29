@@ -9,7 +9,8 @@ namespace {
 constexpr uint32_t g_maxStackId = 100'000;
 }
 
-VirtualMachine::VirtualMachine(const std::vector<PexScript::Lazy>& loadedScripts)
+VirtualMachine::VirtualMachine(
+  const std::vector<PexScript::Lazy>& loadedScripts)
 {
   stackIdMaker.reset(new MakeID(g_maxStackId));
 
@@ -19,7 +20,8 @@ VirtualMachine::VirtualMachine(const std::vector<PexScript::Lazy>& loadedScripts
   }
 }
 
-VirtualMachine::VirtualMachine(const std::vector<std::shared_ptr<PexScript>>& loadedScripts)
+VirtualMachine::VirtualMachine(
+  const std::vector<std::shared_ptr<PexScript>>& loadedScripts)
 {
   stackIdMaker.reset(new MakeID(g_maxStackId));
 
@@ -50,7 +52,7 @@ std::string ToLower(std::string s)
 
 void VirtualMachine::RegisterFunction(const std::string& className,
                                       const std::string& functionName,
-                                      const FunctionType& type, 
+                                      const FunctionType& type,
                                       const NativeFunction& fn)
 {
   switch (type) {
@@ -83,7 +85,8 @@ void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
   gameObjectsHolder.insert(self);
 }
 
-void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self, const char* eventName,
+void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
+                               const char* eventName,
                                const std::vector<VarValue>& arguments,
                                OnEnter enter)
 {

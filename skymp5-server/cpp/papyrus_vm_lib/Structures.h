@@ -149,8 +149,8 @@ private:
   Type type;
 };
 
-using NativeFunction = std::function<VarValue(VarValue self,
-                                              std::vector<VarValue> arguments)>;
+using NativeFunction =
+  std::function<VarValue(VarValue self, std::vector<VarValue> arguments)>;
 
 class IVariablesHolder
 {
@@ -415,7 +415,8 @@ public:
   FunctionInfo GetFunctionByName(const char* name,
                                  std::string stateName) const;
 
-  VarValue& GetVariableValueByName(std::vector<Local>* optional, std::string name);
+  VarValue& GetVariableValueByName(std::vector<Local>* optional,
+                                   std::string name);
 
   VarValue& GetIndentifierValue(std::vector<Local>& locals, VarValue& value,
                                 bool treatStringsAsIdentifiers = false);
@@ -446,8 +447,8 @@ private:
   TransformInstructions(std::vector<FunctionCode::Instruction>& sourceOpCode,
                         std::shared_ptr<std::vector<Local>> locals);
 
-  std::shared_ptr<std::vector<ActivePexInstance::Local>> MakeLocals(FunctionInfo& function,
-                                     std::vector<VarValue>& arguments);
+  std::shared_ptr<std::vector<ActivePexInstance::Local>> MakeLocals(
+    FunctionInfo& function, std::vector<VarValue>& arguments);
 
   VarValue ExecuteAll(
     ExecutionContext& ctx,

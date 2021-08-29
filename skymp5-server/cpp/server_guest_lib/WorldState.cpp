@@ -598,7 +598,8 @@ VirtualMachine& WorldState::GetPapyrusVm()
     auto scriptStorage = pImpl->scriptStorage;
     if (!scriptStorage) {
       logger->error("Required scriptStorage to be non-null");
-      pImpl->vm.reset(new VirtualMachine(std::vector<std::shared_ptr<PexScript>>()));
+      pImpl->vm.reset(
+        new VirtualMachine(std::vector<std::shared_ptr<PexScript>>()));
       return *pImpl->vm;
     }
 
