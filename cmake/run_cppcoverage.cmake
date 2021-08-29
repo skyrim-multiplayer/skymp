@@ -35,7 +35,9 @@ function(run_cppcoverage)
     --excluded_sources *\\crts\\*
     --excluded_sources *\\vctools\\*
     --excluded_sources *\\ucrt\\*
+    --excluded_sources *\\vcruntime\\*
     --excluded_sources *\\unit\\*
+    --excluded_sources *\\third_party\\*
     --export_type "${A_EXPORT_TYPE}:${A_OUTPUT_DIRECTORY}"
   )
 
