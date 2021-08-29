@@ -66,6 +66,8 @@ std::shared_ptr<BrowserApi::State> g_browserApiState(new BrowserApi::State);
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 TaskQueue g_taskQueue;
+TaskQueue g_jsPromiseTaskQueue;
+bool g_gameFunctionsAvailableEver = false;
 
 bool EndsWith(const std::wstring& value, const std::wstring& ending)
 {
@@ -76,6 +78,10 @@ bool EndsWith(const std::wstring& value, const std::wstring& ending)
 
 void JsTick(bool gameFunctionsAvailable)
 {
+  if (gameFunctionsAvailable) {
+    g_gameFunctionsAvailableEver = true;
+  }
+
   if (auto console = RE::ConsoleLog::GetSingleton()) {
     static bool helloSaid = false;
     if (!helloSaid) {
@@ -99,11 +105,12 @@ void JsTick(bool gameFunctionsAvailable)
       ConsoleApi::Clear();
       EventsApi::Clear();
       g_taskQueue.Clear();
+      g_jsPromiseTaskQueue.Clear();
       g_nativeCallRequirements.jsThrQ->Clear();
 
       if (!engine) {
         engine.reset(new JsEngine);
-        engine->ResetContext(g_taskQueue);
+        engine->ResetContext(g_jsPromiseTaskQueue);
       }
 
       thread_local JsValue g_jAllSettings = JsValue::Object();
@@ -197,9 +204,15 @@ void JsTick(bool gameFunctionsAvailable)
       g_taskQueue.Update();
       g_nativeCallRequirements.jsThrQ->Update();
     }
-    if (!gameFunctionsAvailable) {
-      HttpClientApi::GetHttpClient().Update();
+
+    // Allow promises to be resolved/ rejected if game functions are available
+    // (so we need to process asynchronous papyrus calls) OR they were never
+    // available (so we need to process asynchronous http in main menu)
+    if (gameFunctionsAvailable || !g_gameFunctionsAvailableEver) {
+      g_jsPromiseTaskQueue.Update();
     }
+
+    HttpClientApi::GetHttpClient().Update();
     EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
 
   } catch (std::exception& e) {
