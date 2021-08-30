@@ -17,12 +17,21 @@ if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
   message(FATAL_ERROR "${msg}")
 endif()
 
-cmake_minimum_required(VERSION 3.18.4)
+cmake_minimum_required(VERSION 3.18.2)
 project(skymp)
 enable_testing()
 
+# Bool options
+option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
+
+if(JS_ENGINE_TRACING_ENABLED)
+  add_compile_definitions(JS_ENGINE_TRACING_ENABLED)
+endif()
+
+# Path options
 option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing" OFF)
 option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
+option(CPPCOV_PATH "Path to OpenCppCoverage" OFF)
 
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
@@ -35,17 +44,23 @@ if(SKYRIM_DIR)
   endif()
 endif()
 
+if(NOT CPPCOV_PATH)
+  message(STATUS "CPPCOV_PATH is not specified, coverage would not be calculated")
+endif()
+string(REPLACE "\\" "/" CPPCOV_PATH "${CPPCOV_PATH}")
+
+if(CPPCOV_PATH)
+  if (NOT EXISTS ${CPPCOV_PATH}/OpenCppCoverage.exe)
+    message(FATAL_ERROR "Bad CPPCOV_PATH: ${CPPCOV_PATH}")
+  endif()
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-if (UNIX)
-  # TODO: Fix all errors instead of passing -fpermissive
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
-endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
-add_subdirectory(chakra-wrapper)
 add_subdirectory(skyrim-platform)
 add_subdirectory(skymp5-client)
 add_subdirectory(skymp5-front)
@@ -53,3 +68,4 @@ add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(client-deps)
 add_subdirectory(skymp5-server)
+add_subdirectory(unit)

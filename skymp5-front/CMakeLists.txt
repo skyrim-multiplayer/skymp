@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.18.4)
 project(skymp5-front)
 
 include(${CMAKE_SOURCE_DIR}/cmake/npm.cmake)

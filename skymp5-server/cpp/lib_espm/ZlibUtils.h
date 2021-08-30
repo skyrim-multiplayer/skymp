@@ -54,3 +54,10 @@ inline size_t ZlibCompress(const void* in, size_t inSize, void* out,
                              std::to_string(res));
   return outputSize;
 }
+
+inline uLong ZlibGetCRC32Checksum(const void* readBuffer, z_size_t length)
+{
+  auto hash = crc32_z(0L, Z_NULL, 0);
+  hash = crc32_z(hash, static_cast<const Bytef*>(readBuffer), length);
+  return hash;
+}

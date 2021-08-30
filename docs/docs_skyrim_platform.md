@@ -287,14 +287,15 @@ getAV.execute = (refrId: number, arg: string) => {
 };
 ```
 
-### HTTP requests (experimental)
+### HTTP requests
 
-SkyrimPlatform provides limited support for HTTP requests.
-At the moment only `get` is available.
+SkyrimPlatform provides limited support for HTTP/HTTPS requests.
+At the moment only `get` and `post` are available.
 
 ```typescript
 import { HttpClient } from "../skyrimPlatfosrm";
-let http = new HttpClient("vk.com", 80);
+let url = "https://canhazip.com:443"; // URL may contain port or not
+let http = new HttpClient(url);
 http.get("/").then((response) => printConsole(response.body));
 ```
 

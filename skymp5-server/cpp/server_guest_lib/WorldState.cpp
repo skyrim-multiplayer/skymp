@@ -1,5 +1,6 @@
 #include "WorldState.h"
 #include "FormCallbacks.h"
+#include "GroupUtils.h"
 #include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
@@ -58,6 +59,7 @@ struct WorldState::Impl
   bool formLoadingInProgress = false;
   std::map<std::string, std::chrono::system_clock::duration>
     relootTimeForTypes;
+  std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
 };
 
 WorldState::WorldState()
@@ -373,7 +375,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
-  uint32_t worldOrCell = espm::GetWorldOrCell(record);
+  uint32_t worldOrCell = GetWorldOrCell(br, record);
   if (!worldOrCell) {
     logger->info("Anomally: refr without world/cell");
     return false;
@@ -636,18 +638,18 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
       });
 
-      std::vector<IPapyrusClassBase*> classes;
-      classes.emplace_back(new PapyrusObjectReference);
-      classes.emplace_back(new PapyrusGame);
-      classes.emplace_back(new PapyrusForm);
-      classes.emplace_back(new PapyrusMessage);
-      classes.emplace_back(new PapyrusFormList);
-      classes.emplace_back(new PapyrusDebug);
-      classes.emplace_back(new PapyrusActor);
-      classes.emplace_back(new PapyrusSkymp);
-      classes.emplace_back(new PapyrusUtility);
-      for (auto cl : classes)
+      pImpl->classes.emplace_back(std::make_unique<PapyrusObjectReference>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusGame>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusForm>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusMessage>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusFormList>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusDebug>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
+      for (auto& cl : pImpl->classes) {
         cl->Register(*pImpl->vm, pImpl->policy);
+      }
     }
   }
 

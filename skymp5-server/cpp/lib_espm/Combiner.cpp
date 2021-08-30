@@ -1,5 +1,6 @@
 #include "espm.h"
 #include <array>
+#include <fmt/format.h>
 #include <sparsepp/spp.h>
 #include <string>
 
@@ -187,4 +188,34 @@ const espm::IdMapping* espm::CombineBrowser::GetMapping(
 espm::CompressedFieldsCache& espm::CombineBrowser::GetCache() const noexcept
 {
   return pImpl->cache;
+}
+
+namespace espm {
+
+const GroupStack& CombineBrowser::GetParentGroupsEnsured(
+  const RecordHeader* rec) const
+{
+  for (size_t i = 0; i < pImpl->numSources; ++i) {
+    const auto result = pImpl->sources[i].br->GetParentGroupsOptional(rec);
+    if (result) {
+      return *result;
+    }
+  }
+  throw std::runtime_error(fmt::format(
+    "espm::CombineBrowser: no browsers know record id={:#x}", rec->GetId()));
+}
+
+const std::vector<void*>& CombineBrowser::GetSubsEnsured(
+  const GroupHeader* group) const
+{
+  for (size_t i = 0; i < pImpl->numSources; ++i) {
+    const auto result = pImpl->sources[i].br->GetSubsOptional(group);
+    if (result) {
+      return *result;
+    }
+  }
+  throw std::runtime_error(
+    "espm::CombineBrowser: no browsers know requested group");
+}
+
 }

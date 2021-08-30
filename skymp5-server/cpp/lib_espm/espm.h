@@ -37,10 +37,12 @@ class GroupHeader;
 class RecordHeader;
 class ScriptData;
 
+using GroupStack = std::vector<espm::GroupHeader*>;
+
 class Browser
 {
 public:
-  Browser(void* fileContent, size_t length);
+  Browser(const void* fileContent, size_t length);
   ~Browser();
 
   RecordHeader* LookupById(uint32_t formId) const noexcept;
@@ -53,13 +55,19 @@ public:
 
   const std::vector<espm::RecordHeader*>& GetRecordsAtPos(uint32_t cellOrWorld,
                                                           int16_t cellX,
-                                                          int16_t cellY);
+                                                          int16_t cellY) const;
+
+  const GroupStack* GetParentGroupsOptional(const RecordHeader* rec) const;
+  const GroupStack& GetParentGroupsEnsured(const RecordHeader* rec) const;
+
+  const std::vector<void*>* GetSubsOptional(const GroupHeader* group) const;
+  const std::vector<void*>& GetSubsEnsured(const GroupHeader* group) const;
 
 private:
   struct Impl;
   Impl* const pImpl;
 
-  bool ReadAny(void* parentGrStack);
+  bool ReadAny(const GroupStack* parentGrStack);
 
   Browser(const Browser&) = delete;
   void operator=(const Browser&) = delete;
@@ -124,13 +132,6 @@ public:
   bool GetParentCELL(uint32_t& outId) const noexcept;
   bool GetParentDIAL(uint32_t& outId) const noexcept;
 
-  using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
-
-  // Accepts a visitor, which can contain custom code used to recursively
-  // iterate child records. All tree leafs will be visited. Return true from
-  // visitor to break loop.
-  void ForEachRecordRecursive(const RecordVisitor& visitor) const noexcept;
-
   uint32_t GetGroupLabelAsUint() const noexcept;
   GroupType GetGroupType() const noexcept;
 
@@ -144,18 +145,12 @@ private:
   uint16_t version;
   uint16_t unknown2;
 
-  // We write pointer to GroupDataInternal here
-  uint64_t& GroupDataPtrStorage() noexcept;
-  const uint64_t& GroupDataPtrStorage() const noexcept;
-
   GroupHeader() = delete;
   GroupHeader(const GroupHeader&) = delete;
   void operator=(const GroupHeader&) = delete;
 };
 static_assert(sizeof(GroupType) == 4);
 static_assert(sizeof(GroupHeader) == 16);
-
-using GroupStack = std::vector<espm::GroupHeader*>;
 
 using IdMapping = std::array<uint8_t, 256>;
 uint32_t GetMappedId(uint32_t id, const IdMapping& mapping) noexcept;
@@ -204,7 +199,6 @@ public:
       nullptr) const noexcept;
 
   Type GetType() const noexcept;
-  const GroupStack& GetParentGroups() const noexcept;
 
   // Please use for tests only
   // Do not rely on Skyrim record flags format
@@ -217,12 +211,6 @@ private:
   uint16_t version;
   uint16_t unk;
 
-  // We write pointer to std::vector<GroupHeader *> here
-  uint64_t& GroupStackPtrStorage() const noexcept
-  {
-    return *(uint64_t*)&revision;
-  }
-
   uint32_t GetFieldsSizeSum() const noexcept;
 
   RecordHeader() = delete;
@@ -232,49 +220,6 @@ private:
 static_assert(sizeof(RecordHeader) == 16);
 
 // Helpers/utilities
-
-inline GroupHeader* GetExteriorWorldGroup(const RecordHeader* rec)
-{
-  for (auto gr : rec->GetParentGroups()) {
-    if (gr->GetGroupType() == GroupType::WORLD_CHILDREN)
-      return gr;
-  }
-  return nullptr;
-}
-
-inline GroupHeader* GetCellGroup(const RecordHeader* rec)
-{
-  for (auto gr : rec->GetParentGroups()) {
-    auto grType = gr->GetGroupType();
-    if (grType != GroupType::CELL_CHILDREN &&
-        grType != GroupType::CELL_PERSISTENT_CHILDREN &&
-        grType != GroupType::CELL_TEMPORARY_CHILDREN &&
-        grType != GroupType::CELL_VISIBLE_DISTANT_CHILDREN) {
-      continue;
-    }
-    return gr;
-  }
-  return nullptr;
-}
-
-inline uint32_t GetWorldOrCell(const RecordHeader* rec)
-{
-  auto world = espm::GetExteriorWorldGroup(rec);
-  auto cell = espm::GetCellGroup(rec);
-
-  uint32_t worldOrCell;
-
-  if (!world || !world->GetParentWRLD(worldOrCell))
-    worldOrCell = 0;
-
-  if (!worldOrCell) {
-    if (!cell->GetParentCELL(worldOrCell)) {
-      return 0;
-    }
-  }
-
-  return worldOrCell;
-}
 
 inline bool IsItem(Type t) noexcept
 {
@@ -740,5 +685,10 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+}
+
+namespace espm {
+uint32_t CalculateHashcode(const void* readBuffer, size_t length);
+uint32_t GetCorrectHashcode(const std::string& fileName);
 }
 #pragma pack(pop)

@@ -22,6 +22,18 @@
     {
       "name": "mhook",
       "platform": "windows"
+    },
+    {
+      "name": "skse64",
+      "platform": "windows"
+    },
+    {
+      "name": "commonlibsse",
+      "platform": "windows"
+    },
+    {
+      "name": "cef-prebuilt",
+      "platform": "windows"
     }
   ]
 }

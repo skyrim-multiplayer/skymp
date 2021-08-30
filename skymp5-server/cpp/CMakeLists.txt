@@ -1,7 +1,6 @@
 enable_testing()
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
 #
 # MpClientPlugin
@@ -31,29 +30,6 @@ list(APPEND VCPKG_DEPENDENT espm)
 apply_default_settings(TARGETS espm)
 
 #
-# unit
-#
-
-file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/unit/*")
-list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
-add_executable(unit ${src})
-target_link_libraries(unit PUBLIC server_guest_lib)
-target_include_directories(unit PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/mp_common")
-apply_default_settings(TARGETS unit)
-list(APPEND VCPKG_DEPENDENT unit)
-target_compile_definitions(unit PRIVATE
-  TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
-  BUILT_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex\"
-  SKYRIM_DIR=\"${SKYRIM_DIR}\"
-  UNIT_DATA_DIR=\"${UNIT_DATA_DIR}\"
-  DIST_DIR=\"${CMAKE_BINARY_DIR}/dist\"
-)
-if (WIN32)
-  target_compile_options(unit PRIVATE "/bigobj")
-endif()
-target_link_libraries(unit PUBLIC espm)
-
-#
 # mp_common
 #
 
@@ -65,7 +41,7 @@ target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
 apply_default_settings(TARGETS mp_common)
 list(APPEND VCPKG_DEPENDENT mp_common)
-if (WIN32)
+if(WIN32)
   target_link_libraries(mp_common PUBLIC ws2_32.lib)
 endif()
 
@@ -89,7 +65,8 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC mp_common espm papyrus-vm-lib geo chakra-wrapper)
+target_link_libraries(server_guest_lib PUBLIC mp_common espm papyrus-vm-lib geo)
+target_include_directories(server_guest_lib PUBLIC "${CMAKE_SOURCE_DIR}/chakra-wrapper")
 
 #
 # papyrus-vm-lib
@@ -104,32 +81,6 @@ target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/thir
 if(UNIX)
   target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
 endif()
-
-#
-# papyrus_test_files
-#
-
-if(NOT SKYRIM_DIR)
-  message(WARNING "SKYRIM_DIR is not specified, Papyrus sources will not be built")
-elseif(NOT EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
-  message(WARNING "PapyrusCompiler.exe not found, Papyrus sources will not be built")
-else()
-  add_papyrus_library_ck(
-    NAME papyrus_test_files 
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files
-    OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex
-    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
-  )
-endif()
-
-#
-# Add tests
-#
-
-add_test(
-  NAME test_unit
-  COMMAND $<TARGET_FILE:unit>
-)
 
 #
 # Link vcpkg deps
@@ -187,6 +138,9 @@ foreach(target ${VCPKG_DEPENDENT})
   endif()
 endforeach()
 
-find_package(ChakraCore REQUIRED)
+find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
+find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
+string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
+
 # don't want to link against MpClientPlugin for example..
-target_link_libraries(server_guest_lib PUBLIC ChakraCore::ChakraCore)
+target_link_libraries(server_guest_lib PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")

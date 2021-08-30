@@ -37,7 +37,7 @@ class Reader
   VarValue FillVariableData();
   ObjectTable::Object::PropInfo FillProperty();
   FunctionInfo FillFuncInfo();
-  FunctionCode FillFunctionCode(int CountInstructions);
+  FunctionCode FillFunctionCode(int countInstructions);
   uint8_t GetCountArguments(uint8_t item);
   ObjectTable::Object::StateInfo FillState();
   ObjectTable::Object::StateInfo::StateFunction FillStateFunction();
