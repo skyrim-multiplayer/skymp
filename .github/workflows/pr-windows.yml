@@ -44,27 +44,27 @@ jobs:
       name: Download Skyrim.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm"
-        target: ${{github.workspace}}/skyrim_data_files
+        target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
       name: Download Update.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm"
-        target: ${{github.workspace}}/skyrim_data_files
+        target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
       name: Download Dawnguard.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm"
-        target: ${{github.workspace}}/skyrim_data_files
+        target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
       name: Download HearthFires.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm"
-        target: ${{github.workspace}}/skyrim_data_files
+        target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
       name: Download Dragonborn.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
-        target: ${{github.workspace}}/skyrim_data_files
+        target: ${{github.workspace}}/skyrim_data_files/
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
