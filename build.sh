@@ -51,15 +51,16 @@ if [ "$1" = "--configure" ]; then
     cd build && \
     exec cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
 elif [ "$1" = "--build" ]; then
-  cd build && \
-    exec cmake --build . --config Debug
+  shift && \
+    cd build && \
+    exec cmake --build . "$@"
 elif [ "$1" = "--clean" ]; then
   exec rm -rf build/
 else
   eecho "Usage:"
   eecho "  ./build.sh --configure <cmake args...>"
   eecho "OR"
-  eecho "  ./build.sh --build"
+  eecho "  ./build.sh --build <cmake args...>"
   eecho "OR"
   eecho "  ./build.sh --clean"
 fi
