@@ -35,7 +35,11 @@ option(CPPCOV_PATH "Path to OpenCppCoverage" OFF)
 
 message(STATUS "UNIT_DATA_DIR=${UNIT_DATA_DIR}")
 file(GLOB_RECURSE unit_files "${UNIT_DATA_DIR}/*")
-message(FATAL_ERROR "Unit files = ${unit_files}")
+message(STATUS "unit_files:")
+foreach(v ${unit_files})
+  message(STATUS "<!> " ${v})
+endforeach()
+message(FATAL_ERROR 1)
 
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
