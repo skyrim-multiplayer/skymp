@@ -1,0 +1,23 @@
+{
+  "LOGIN": {
+    "HEADER_TEXT_LOGIN": "авторизация",
+    "HEADER_TEXT_REGISTER": "регистрация",
+    "LOGIN_BUTTON_TEXT": "посетить скайрим",
+    "REGISTER_BUTTON_TEXT": "создать аккаунт",
+    "EMAIL": "почта",
+    "PASSWORD": "пароль",
+    "PASSWORD_VERIFY": "подтвердить",
+    "PASSWORD_HINT": "",
+    "PASSWORD_VERIFY_HINT": "подтвердить пароль",
+    "GITHUB_HINT": "получи цветной ник и упоминание в новстях",
+    "PATREON_HINT": "получи цветной ник и другие бонусы",
+    "EMAIL_HINT_REGISTER": "введите ваш e-mail и пароль для регистрации",
+    "REMEMBER_PLACEHOLDER": "запомнить",
+    "REMEMBER_HINT": "поставьте “запомнить” для быстрого входа",
+    "REGISTER_HINT": "нажмите “регистрация” для создания аккаунта",
+    "PASSWORD_PLACEHOLDER": "тупа пароль",
+    "EMAIL_PLACEHOLDER": "vasyan33@gmail.com",
+    "REGISTER_BUTTON": "регистрация",
+    "REGISTER_BUTTON_HINT": "нажмите, чтобы создать аккаунт"
+  }
+}
