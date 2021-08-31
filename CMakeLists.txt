@@ -33,14 +33,6 @@ option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files req
 option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
 option(CPPCOV_PATH "Path to OpenCppCoverage" OFF)
 
-message(STATUS "UNIT_DATA_DIR=${UNIT_DATA_DIR}")
-file(GLOB_RECURSE unit_files "${UNIT_DATA_DIR}/*")
-message(STATUS "unit_files:")
-foreach(v ${unit_files})
-  message(STATUS "<!> " ${v})
-endforeach()
-message(FATAL_ERROR 1)
-
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
 endif()
