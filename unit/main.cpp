@@ -31,7 +31,7 @@ inline espm::Loader CreateEspmLoader()
                                                  "HearthFires.esm",
                                                  "Dragonborn.esm" };
 
-    std::filesystem::path dataDir = std::filesystem::u8path(GetDataDir());
+    std::filesystem::path dataDir = GetDataDir();
 
     std::filesystem::path skyrimEsm = dataDir / "Skyrim.esm";
     if (!std::filesystem::exists(skyrimEsm)) {
