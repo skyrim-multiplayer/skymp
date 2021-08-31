@@ -33,6 +33,7 @@ target_compile_definitions(unit PRIVATE
   SKYRIM_DIR=\"${SKYRIM_DIR}\"
   UNIT_DATA_DIR=\"${UNIT_DATA_DIR}\"
   DIST_DIR=\"${CMAKE_BINARY_DIR}/dist\"
+  CMAKE_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\"
 )
 if(WIN32)
   target_compile_options(unit PRIVATE "/bigobj")
