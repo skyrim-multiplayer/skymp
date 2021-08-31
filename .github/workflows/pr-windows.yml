@@ -74,7 +74,7 @@ jobs:
         cmake -B ${{github.workspace}}/build
         -DJS_ENGINE_TRACING_ENABLED=ON
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
-        -DUNIT_DATA_DIR="${{github.workspace}}/skyrim_data_files"
+        -DUNIT_DATA_DIR="skyrim_data_files"
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
