@@ -33,9 +33,11 @@ inline espm::Loader CreateEspmLoader()
 
     std::filesystem::path dataDir = std::filesystem::u8path(GetDataDir());
 
-    if (!std::filesystem::exists(dataDir / "Skyrim.esm")) {
+    std::filesystem::path skyrimEsm = dataDir / "Skyrim.esm";
+    if (!std::filesystem::exists(skyrimEsm)) {
       files.clear();
       dataDir = std::filesystem::current_path();
+      std::cout << skyrimEsm << " doesn't exist, skipping tests with [espm] tag" << std::endl;
     }
 
     return espm::Loader(dataDir, files, OnProgress);
