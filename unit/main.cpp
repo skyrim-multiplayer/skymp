@@ -37,7 +37,8 @@ inline espm::Loader CreateEspmLoader()
     if (!std::filesystem::exists(skyrimEsm)) {
       files.clear();
       dataDir = std::filesystem::current_path();
-      std::cout << skyrimEsm << " doesn't exist, skipping tests with [espm] tag" << std::endl;
+      std::cout << skyrimEsm << " doesn't exist" << std::endl;
+      std::cout << "Skipping tests with [espm] tag" << std::endl;
     }
 
     return espm::Loader(dataDir, files, OnProgress);
