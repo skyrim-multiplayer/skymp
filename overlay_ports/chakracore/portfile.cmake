@@ -42,14 +42,21 @@ else()
         set(CHAKRACORE_TARGET_ARCH x86)
     endif()
 
-    if (VCPKG_TARGET_IS_LINUX)
+    if(VCPKG_TARGET_IS_LINUX)
         message(WARNING "${PORT} requires Clang from the system package manager, this can be installed on Ubuntu systems via sudo apt install clang")
+    endif()
+
+    set(command "bash" "build.sh" "--arch=${CHAKRACORE_TARGET_ARCH}")
+
+    if(DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL})
+        list(APPEND command "--jobs=$ENV{CMAKE_BUILD_PARALLEL_LEVEL}")
     endif()
 
     if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
         list(APPEND configs "debug")
+        list(APPEND command "--debug")
         execute_process(
-            COMMAND bash "build.sh" "--arch=${CHAKRACORE_TARGET_ARCH}" "--debug"
+            COMMAND ${command}
             WORKING_DIRECTORY "${BUILDTREE_PATH}"
 
             OUTPUT_VARIABLE CHAKRA_BUILD_SH_OUT
@@ -62,7 +69,7 @@ else()
     if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
         list(APPEND configs "release")
         execute_process(
-            COMMAND bash "build.sh" "--arch=${CHAKRACORE_TARGET_ARCH}"
+            COMMAND ${command}
             WORKING_DIRECTORY "${BUILDTREE_PATH}"
             OUTPUT_VARIABLE CHAKRA_BUILD_SH_OUT
             ERROR_VARIABLE CHAKRA_BUILD_SH_ERR
