@@ -5,8 +5,9 @@
 
 inline std::shared_ptr<IDatabase> MakeDatabase(const char* directory)
 {
-  if (std::filesystem::exists(directory))
+  if (std::filesystem::exists(directory)) {
     std::filesystem::remove_all(directory);
+  }
 
   return std::make_shared<FileDatabase>(directory, spdlog::default_logger());
 }
@@ -29,12 +30,12 @@ inline std::set<MpChangeForm> GetAllChangeForms(std::shared_ptr<IDatabase> db)
 
 TEST_CASE("Moves data from one database from another", "[MigrationDatabase]")
 {
-  auto oldDatabase = MakeDatabase("unit");
+  auto oldDatabase = MakeDatabase("unit/data/a");
   oldDatabase->Upsert({ CreateChangeForm_("0") });
   oldDatabase->Upsert({ CreateChangeForm_("1") });
   oldDatabase->Upsert({ CreateChangeForm_("2") });
 
-  auto newDatabase = MakeDatabase("unit1");
+  auto newDatabase = MakeDatabase("unit/data/b");
   std::vector<MpChangeForm> initialNewDatabase = {
     CreateChangeForm_("3"), CreateChangeForm_("4"),
     CreateChangeForm_("0", { 1, 2, 3 })
