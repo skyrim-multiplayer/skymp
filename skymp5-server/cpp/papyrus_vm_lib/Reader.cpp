@@ -31,7 +31,7 @@ std::vector<std::shared_ptr<PexScript>> Reader::GetSourceStructures()
   return sourceStructures;
 }
 
-Reader::Reader(std::vector<std::string> vectorPath)
+Reader::Reader(const std::vector<std::string>& vectorPath)
 {
   for (auto path : vectorPath) {
     this->currentReadPositionInFile = 0;
@@ -41,13 +41,13 @@ Reader::Reader(std::vector<std::string> vectorPath)
   }
 }
 
-Reader::Reader(std::vector<std::vector<uint8_t>> pexVector)
+Reader::Reader(const std::vector<std::vector<uint8_t>>& pexVector)
 {
   for (auto& pex : pexVector)
     CreateScriptStructure(pex);
 }
 
-void Reader::CreateScriptStructure(std::vector<uint8_t> arrayBytes)
+void Reader::CreateScriptStructure(const std::vector<uint8_t>& arrayBytes)
 {
   this->arrayBytes = arrayBytes;
   currentReadPositionInFile = 0;
