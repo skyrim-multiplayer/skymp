@@ -90,9 +90,6 @@ public:
   ExceptionHandler GetExceptionHandler() const;
 
 private:
-  using RegisteredGameOgject = std::pair<const std::shared_ptr<IGameObject>,
-                                         std::vector<ActivePexInstance>>;
-
   CIMap<PexScript::Lazy> allLoadedScripts;
 
   std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
