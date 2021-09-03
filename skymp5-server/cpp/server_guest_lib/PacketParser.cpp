@@ -27,7 +27,7 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
 
 struct PacketParser::Impl
 {
-  simdjson::dom::parser parser;
+  simdjson::dom::parser simdjsonParser;
 };
 
 PacketParser::PacketParser()
@@ -43,7 +43,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
   if (!length)
     throw std::runtime_error("Zero-length message packets are not allowed");
 
-  auto jMessage = pImpl->parser.parse(data + 1, length - 1).value();
+  auto jMessage = pImpl->simdjsonParser.parse(data + 1, length - 1).value();
 
   using TypeInt = std::underlying_type<MsgType>::type;
   auto type = MsgType::Invalid;
