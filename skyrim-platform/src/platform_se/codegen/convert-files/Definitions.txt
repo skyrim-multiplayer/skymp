@@ -369,9 +369,12 @@ export declare let hooks: Hooks;
 
 export declare class HttpResponse {
     body: string;
+    status: number;
 }
+export type HttpHeaders = Record<string, string>;
 
 export declare class HttpClient {
-    constructor(host: string, port?: number);
-    get(path: string): Promise<HttpResponse>;
+    constructor(url: string);
+    get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
+    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
 }

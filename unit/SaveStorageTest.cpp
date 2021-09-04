@@ -7,10 +7,11 @@
 
 std::shared_ptr<ISaveStorage> MakeSaveStorage()
 {
-  auto directory = "unit";
+  auto directory = "unit/data";
 
-  if (std::filesystem::exists(directory))
+  if (std::filesystem::exists(directory)) {
     std::filesystem::remove_all(directory);
+  }
 
   return std::make_shared<AsyncSaveStorage>(
     std::make_shared<FileDatabase>(directory, spdlog::default_logger()));

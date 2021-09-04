@@ -332,13 +332,15 @@ void LoadGame::EditChangeForm(std::vector<uint8_t>& data,
                               const SaveFile_::RefID& world)
 {
   auto d = data.data();
-  *(SaveFile_::RefID*)(d + 0) = world;
+  *reinterpret_cast<SaveFile_::RefID*>(d + 0) = world;
 
-  auto& _pos = *(std::array<float, 3>*)(d + 3);
-  _pos = pos;
+  auto& changeFormPos = *reinterpret_cast<std::array<float, 3>*>(d + 3);
+  changeFormPos = pos;
 
-  float* _rot = (float*)(d + 15);
-  _rot[2] = angle[2] / 180.f * acos(-1);
+  float* changeFormAngle = reinterpret_cast<float*>(d + 15);
+  for (int i = 0; i < 3; ++i) {
+    changeFormAngle[i] = angle[i] / 180.f * acos(-1);
+  }
 }
 
 std::vector<uint8_t> LoadGame::Compress(

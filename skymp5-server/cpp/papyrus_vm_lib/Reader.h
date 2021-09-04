@@ -49,10 +49,10 @@ class Reader
   std::string ReadString(int Size);
 
   void Read();
-  void CreateScriptStructure(std::vector<uint8_t> arrayBytes);
+  void CreateScriptStructure(const std::vector<uint8_t>& arrayBytes);
 
 public:
   std::vector<std::shared_ptr<PexScript>> GetSourceStructures();
-  Reader(std::vector<std::string> vectorPath);
-  Reader(std::vector<std::vector<uint8_t>> pex);
+  Reader(const std::vector<std::string>& vectorPath);
+  Reader(const std::vector<std::vector<uint8_t>>& pex);
 };
