@@ -54,21 +54,10 @@ export class Login implements System {
   ): void {
     if (type !== "loginWithSkympIo") return;
 
-    const gameData = content["gameData"];
-    if (gameData && gameData.session) {
-      this.getUserProfileId(gameData.session).then((res) => {
-        console.log("getUserProfileId", res.data);
-        if (!res.data || !res.data.user || res.data.user.id === undefined)
-          this.log("Bad master answer");
-        else {
-          this.userProfileIds[userId] = res.data.user.id;
-          ctx.gm.emit("spawnAllowed", userId, res.data.user.id);
-          this.log("Logged as " + res.data.user.id);
-        }
-      });
-    } else {
-      this.log("No credentials found in gameData:", gameData);
-    }
+    const fakeId = userId + 20;
+
+    ctx.gm.emit("spawnAllowed", userId, fakeId);
+    this.log(userId + " logged as " + fakeId);
   }
 
   private userProfileIds = new Array<undefined | number>();
