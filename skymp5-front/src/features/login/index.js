@@ -11,7 +11,8 @@ import LoginForm from "./LoginForm";
 
 
 const LoginPage = props => {
-    const locale = props.locale ? props.locale : en
+    const locale = navigator.language !== 'ru-RU' ? en : ru
+    console.log(navigator.language)
     const [isGithubHintOpened, setGithubHintOpened] = useState(false)
     const [isPatreonHintOpened, setPatreonHintOpened] = useState(false)
     const [isRegister, setRegister] = useState(false)

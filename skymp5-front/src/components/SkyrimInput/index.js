@@ -8,7 +8,7 @@ const SkyrimInput = (props) => {
         <div
             className={`skymp-input`}
         >
-            <input type={props.type} name={props.name} placeholder={props.placeholder} onInput={(e) => props.onInput(e)}/>
+            <input type={props.type} spellCheck={'false'} name={props.name} placeholder={props.placeholder} onInput={(e) => props.onInput(e)}/>
         </div>
     )
 }

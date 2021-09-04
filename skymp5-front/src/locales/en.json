@@ -15,8 +15,8 @@
     "REMEMBER_PLACEHOLDER": "remember me",
     "REMEMBER_HINT": "check the box “remember me” for automatic autoriation ",
     "REGISTER_HINT": "click “register now” to create a new account",
-    "PASSWORD_PLACEHOLDER": "тупа пароль",
-    "EMAIL_PLACEHOLDER": "vasyan33@gmail.com",
+    "PASSWORD_PLACEHOLDER": "password, you know",
+    "EMAIL_PLACEHOLDER": "dude33@gmail.com",
     "REGISTER_BUTTON": "register now",
     "REGISTER_BUTTON_HINT": "нажмите, чтобы создать аккаунт"
   }
