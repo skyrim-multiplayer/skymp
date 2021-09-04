@@ -48,8 +48,6 @@ class App extends React.Component {
     window.isMoveWindow = false;
     window.addEventListener("mousemove", this.onMoveWindow);
     window.addEventListener("mouseup", this.onMouseUp);
-    if (!this.state.isLoggined)
-      history.push('/#/login')
   }
 
   componentWillUnmount() {
@@ -76,21 +74,17 @@ class App extends React.Component {
   }
 
   render() {
-    return (
-        <Router>
-          <Switch>
-            <Route path={'/login'}>
-              <LoginPage />
-            </Route>
-            <Route path={'/'} exact>
-              <div className={`App ${!window.hasOwnProperty("skymp") ? "bg" : ""}`}>
-                <AnimList />
-                <Chat />
-              </div>
-            </Route>
-          </Switch>
-        </Router>
-    );
+    if (this.state.isLoggined)
+      return (
+          <div className={`App ${!window.hasOwnProperty("skymp") ? "bg" : ""}`}>
+            <AnimList />
+            <Chat />
+          </div>
+      )
+    else
+      return (
+          <LoginPage />
+      )
   }
 }
 
