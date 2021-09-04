@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const config = require("./config").ui;
+const config = require("./config");
 
 const distPath = path.isAbsolute(config.outputPath)
   ? config.outputPath
