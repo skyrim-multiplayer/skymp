@@ -24,16 +24,16 @@ Loader::Loader(const std::vector<fs::path>& filePaths_, OnProgress onProgress,
     entry.buffer = MakeBuffer(p);
     entry.fileName = p.filename().string();
     const auto end = std::chrono::steady_clock::now();
-    const std::chrono::duration<float> elapsed_time = end - was;
-    entry.readDuration = elapsed_time.count();
+    const std::chrono::duration<float> elapsedTime = end - was;
+    entry.readDuration = elapsedTime.count();
     entry.size = entry.buffer->GetLength();
 
     const auto was1 = std::chrono::steady_clock::now();
     entry.browser.reset(
       new espm::Browser(entry.buffer->GetData(), entry.buffer->GetLength()));
     const auto end1 = std::chrono::steady_clock::now();
-    const std::chrono::duration<float> elapsed_time1 = end1 - was1;
-    entry.parseDuration = elapsed_time1.count() ;
+    const std::chrono::duration<float> elapsedTime1 = end1 - was1;
+    entry.parseDuration = elapsedTime1.count() ;
     if (onProgress) {
       onProgress(entry.fileName.string(), entry.readDuration,
                  entry.parseDuration, entry.size);
