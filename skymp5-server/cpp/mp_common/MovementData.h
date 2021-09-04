@@ -17,16 +17,16 @@ struct MovementData
   uint32_t worldOrCell;
   std::array<float, 3> pos;
   std::array<float, 3> rot;
-  std::optional<std::array<float, 3>> lookAt;
   float direction;
   float healthPercentage;
 
-  // packed flags
+  // flags & optionals
   RunMode runMode;
   bool isInJumpState;
   bool isSneaking;
   bool isBlocking;
   bool isWeapDrawn;
+  std::optional<std::array<float, 3>> lookAt;
 
   uint8_t GetPackedFlags() const {
     uint8_t result = 0;
