@@ -33,7 +33,7 @@ Loader::Loader(const std::vector<fs::path>& filePaths_, OnProgress onProgress,
       new espm::Browser(entry.buffer->GetData(), entry.buffer->GetLength()));
     const auto end1 = std::chrono::steady_clock::now();
     const std::chrono::duration<float> elapsedTime1 = end1 - was1;
-    entry.parseDuration = elapsedTime1.count() ;
+    entry.parseDuration = elapsedTime1.count();
     if (onProgress) {
       onProgress(entry.fileName.string(), entry.readDuration,
                  entry.parseDuration, entry.size);
