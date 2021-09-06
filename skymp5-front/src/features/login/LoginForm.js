@@ -14,6 +14,7 @@ const LoginForm = props => {
     const [isRemember, setRemember] = useState(true)
     const [isRegisterHintOpened, setRegisterHintOpened] = useState(false)
     const [isRememberHintOpened, setRememberHintOpened] = useState(false)
+    const [isPasswordShowed, setPasswordShowed] = useState(false)
     const handleInput = (e) => {
         setData({...data, [e.target.name]: e.target.value})
         if (data.email.length > 5 && data.password.length > 3) {
@@ -57,7 +58,7 @@ const LoginForm = props => {
                     <span className={'login-form--content_main__label___text'} >{props.locale.LOGIN.PASSWORD}</span>
                     <img src={require('../../img/password.svg').default} alt=""/>
                 </div>
-                <SkyrimInput defaultValue={localStorage.getItem('password')} onInput={handleInput} placeholder={props.locale.LOGIN.PASSWORD_PLACEHOLDER} type={'password'} name={'password'}/>
+                <SkyrimInput defaultValue={localStorage.getItem('password')} onInput={handleInput} placeholder={props.locale.LOGIN.PASSWORD_PLACEHOLDER} type={isPasswordShowed ? 'text' : 'password'} name={'password'}/>
             </div>
             <div className={'login-form--content_main__footer'}>
                 <div className={'login-form--content_main__label login-form--content_main__container'}>
