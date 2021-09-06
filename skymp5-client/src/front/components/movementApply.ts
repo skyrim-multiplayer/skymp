@@ -37,6 +37,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
       ac.setHeadTracking(false);
     }
 
+    // XXX
     // ac.stopCombat();
     ac.blockActivation(true);
 
@@ -115,6 +116,7 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
   // ...
+  // TODO
 };
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
@@ -154,6 +156,7 @@ const teleportIfNeed = (refr: ObjectReference, m: Transform) => {
     isInDifferentWorldOrCell(refr, m.worldOrCell) ||
     (!refr.is3DLoaded() && isInDifferentExteriorCell(refr, m.pos))
   ) {
+    // XXX: seems like todo
     throw new Error("needs to be respawned");
   }
   return false;

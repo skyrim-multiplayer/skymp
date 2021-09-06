@@ -58,6 +58,7 @@ export interface DestroyActorMessage {
   idx: number;
 }
 
+// XXX
 export interface UpdateMovementMessage {
   t: MsgType.UpdateMovement;
   idx: number;

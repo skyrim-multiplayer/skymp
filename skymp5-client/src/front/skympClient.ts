@@ -327,6 +327,7 @@ export class SkympClient {
     const now = Date.now();
     const last = this.lastSendMovementMoment.get(refrIdStr);
     if (!last || now - last > sendMovementRateMs) {
+      // XXX
       this.sendTarget.send(
         {
           t: MsgType.UpdateMovement,
@@ -421,6 +422,7 @@ export class SkympClient {
     this.sendTarget.send({ t: MsgType.Host, remoteId }, false);
   }
 
+  // XXX: ???
   private sendInputs() {
     const hosted =
       typeof storage["hosted"] === typeof [] ? storage["hosted"] : [];

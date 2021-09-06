@@ -93,6 +93,7 @@ export class AnimationSource {
     });
   }
 
+  // XXX:
   filterMovement(mov: Movement): Movement {
     if (this.weapDrawnBlocker >= Date.now()) mov.isWeapDrawn = true;
     if (this.weapNonDrawnBlocker >= Date.now()) mov.isWeapDrawn = false;

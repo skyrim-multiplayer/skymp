@@ -387,6 +387,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.getIdManager().freeIdFor(msg.idx);
   }
 
+  // XXX
   UpdateMovement(msg: messages.UpdateMovementMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].movement = msg.data;
@@ -598,6 +599,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     msg.idx = this.worldModel.forms[idxInModel].idx;
 
     delete msg._refrId;
+    // XXX
     networking.send(msg, reliable);
   }
 

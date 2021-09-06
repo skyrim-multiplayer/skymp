@@ -507,6 +507,7 @@ export class FormView implements View<FormModel> {
           if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
             model.movement.isWeapDrawn = forcedWeapDrawn;
           }
+          // XXX
           applyMovement(refr, model.movement);
           model.movement.isWeapDrawn = backup;
 
