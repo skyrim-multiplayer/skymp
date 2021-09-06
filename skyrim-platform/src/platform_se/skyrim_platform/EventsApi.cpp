@@ -2,11 +2,11 @@
 
 #include "GameEventSinks.h"
 #include "InvalidArgumentException.h"
-#include "MyUpdateTask.h"
 #include "NativeObject.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "ThreadPoolWrapper.h"
+#include "TickTask.h"
 #include <algorithm>
 #include <map>
 #include <optional>
