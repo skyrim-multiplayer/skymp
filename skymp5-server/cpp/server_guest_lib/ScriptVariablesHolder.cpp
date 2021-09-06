@@ -57,9 +57,9 @@ void ScriptVariablesHolder::FillProperties(const espm::Script& script)
 
 void ScriptVariablesHolder::FillNormalVariables(const PexScript& pex)
 {
-  for (auto& object : pex.objectTable.m_data) {
+  for (auto& object : pex.objectTable) {
     for (auto& var : object.variables) {
-      ObjectTable::Object::VarInfo varInfo;
+      Object::VarInfo varInfo;
       varInfo = var;
       if ((const char*)varInfo.value == nullptr) {
         varInfo.value =
@@ -74,7 +74,7 @@ void ScriptVariablesHolder::FillState(const PexScript& pex)
 {
   // Creating temp variable for save State ActivePexInstance and
   // transition between them
-  state = VarValue(pex.objectTable.m_data[0].autoStateName.data());
+  state = VarValue(pex.objectTable[0].autoStateName.data());
 }
 
 espm::Script ScriptVariablesHolder::GetScript()
