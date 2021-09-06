@@ -5,14 +5,13 @@ import Frame from "../../components/SkyrimFrame";
 
 import * as ru from '../../locales/ru.json';
 import * as en from '../../locales/en.json'
-import SkyrimButton from "../../components/SkyrimButton";
 import SkyrimHint from "../../components/SkyrimHint";
 import LoginForm from "./LoginForm";
+import RegisterForm from "./RegisterForm";
 
 
 const LoginPage = props => {
     const locale = navigator.language !== 'ru-RU' ? en : ru
-    console.log(navigator.language)
     const [isGithubHintOpened, setGithubHintOpened] = useState(false)
     const [isPatreonHintOpened, setPatreonHintOpened] = useState(false)
     const [isRegister, setRegister] = useState(false)
@@ -57,8 +56,8 @@ const LoginPage = props => {
                     </div>
                     {
                         isRegister ?
-                            '' :
-                            <LoginForm locale={locale}/>
+                            <RegisterForm locale={locale} setRegister={setRegister}/> :
+                            <LoginForm locale={locale} setRegister={setRegister}/>
                     }
                 </div>
                 <Frame />

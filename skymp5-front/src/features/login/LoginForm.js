@@ -7,32 +7,36 @@ import SkyrimHint from "../../components/SkyrimHint";
 
 const LoginForm = props => {
     const [data, setData] = useState({
-        email: '',
-        password: ''
+        email: localStorage.getItem('email') ? localStorage.getItem('email') : '',
+        password: localStorage.getItem('password') ? localStorage.getItem('password') : ''
     })
-    const [isButtonDisabled, setButtonDisabled] = useState(true)
+    const [isButtonDisabled, setButtonDisabled] = useState(!(localStorage.getItem('email') && localStorage.getItem('password')))
     const [isRemember, setRemember] = useState(true)
     const [isRegisterHintOpened, setRegisterHintOpened] = useState(false)
     const [isRememberHintOpened, setRememberHintOpened] = useState(false)
     const handleInput = (e) => {
         setData({...data, [e.target.name]: e.target.value})
         if (data.email.length > 5 && data.password.length > 3) {
-            console.log(true)
             setButtonDisabled(false)
         }
         else {
             setButtonDisabled(true)
         }
-        console.log(data)
+        if (e.target.value === '') {
+            setButtonDisabled(true)
+        }
     }
-    const handleSubmit = () => {
-        console.log('submit', data)
+    const handleLogin = (credentials) => {
+        console.log(credentials)
+        if (isRemember) {
+            localStorage.setItem('email', credentials.email)
+            localStorage.setItem('password', credentials.password)
+        }
     }
     useEffect(() => {
         const listener = (e) => {
-            console.log(e.key, isButtonDisabled, e.key === 'Enter')
             if (e.key === 'Enter' && !isButtonDisabled) {
-                handleSubmit()
+                handleLogin(data)
             }
         }
         document.addEventListener('keypress', listener)
@@ -45,7 +49,7 @@ const LoginForm = props => {
                     <span className={'login-form--content_main__label___text'}>{props.locale.LOGIN.EMAIL}</span>
                     <img src={require('../../img/mail.svg').default} alt=""/>
                 </div>
-                <SkyrimInput onInput={handleInput} placeholder={props.locale.LOGIN.EMAIL_PLACEHOLDER} type={'text'} name={'email'}/>
+                <SkyrimInput defaultValue={localStorage.getItem('email')} onInput={handleInput} placeholder={props.locale.LOGIN.EMAIL_PLACEHOLDER} type={'text'} name={'email'}/>
 
             </div>
             <div className={'login-form--content_main__password'}>
@@ -53,10 +57,15 @@ const LoginForm = props => {
                     <span className={'login-form--content_main__label___text'} >{props.locale.LOGIN.PASSWORD}</span>
                     <img src={require('../../img/password.svg').default} alt=""/>
                 </div>
-                <SkyrimInput onInput={handleInput} placeholder={props.locale.LOGIN.PASSWORD_PLACEHOLDER} type={'password'} name={'password'}/>
+                <SkyrimInput defaultValue={localStorage.getItem('password')} onInput={handleInput} placeholder={props.locale.LOGIN.PASSWORD_PLACEHOLDER} type={'password'} name={'password'}/>
             </div>
             <div className={'login-form--content_main__footer'}>
                 <div className={'login-form--content_main__label login-form--content_main__container'}>
+                    <SkyrimHint
+                        text={props.locale.LOGIN.REMEMBER_HINT}
+                        isOpened={isRememberHintOpened}
+                        left={true}
+                    />
                     <span className={'login-form--content_main__label___text'}>{props.locale.LOGIN.REMEMBER_PLACEHOLDER}</span>
                     <label
                             htmlFor="cbtest"
@@ -71,17 +80,18 @@ const LoginForm = props => {
                            }
                            onMouseOut={() => setRememberHintOpened(false)}
                     />
-                    <SkyrimHint
-                        text={props.locale.LOGIN.REMEMBER_HINT}
-                        isOpened={isRememberHintOpened}
-                        left={true}
-                    />
+
                 </div>
                 <div
                     className={`skymp-input button ${!isButtonDisabled ? 'disabled' : ''}`}
-                    onClick={() => console.log('switch to register')}
+                    onClick={() => {
+                        if (isButtonDisabled) {
+                            props.setRegister(true)
+                        }
+                    }}
                         onMouseOver={() => {
-                            setRegisterHintOpened(true)}
+                            if (isButtonDisabled)
+                                setRegisterHintOpened(true)}
                         }
                         onMouseOut={() => setRegisterHintOpened(false)}
                 >
@@ -94,7 +104,9 @@ const LoginForm = props => {
                 </div>
             </div>
             <div className={'login-form--content_main__button'}>
-                <SkyrimButton disabled={isButtonDisabled} onClick={(e) => {console.log(data)}} text={props.locale.LOGIN.LOGIN_BUTTON_TEXT}/>
+                <SkyrimButton disabled={isButtonDisabled} onClick={(e) => {
+                    handleLogin(data)
+                }} text={props.locale.LOGIN.LOGIN_BUTTON_TEXT}/>
             </div>
         </div>
     )

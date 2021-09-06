@@ -8,6 +8,7 @@
     "PASSWORD": "password",
     "PASSWORD_VERIFY": "confirm",
     "PASSWORD_HINT": "",
+    "BACK": "go back",
     "PASSWORD_VERIFY_HINT": "confirm your password",
     "GITHUB_HINT": "get a colored nickname and mention in news",
     "PATREON_HINT": "get a colored nickname and oter bonuses for patrons",
@@ -16,6 +17,7 @@
     "REMEMBER_HINT": "check the box “remember me” for automatic autoriation ",
     "REGISTER_HINT": "click “register now” to create a new account",
     "PASSWORD_PLACEHOLDER": "password, you know",
+    "PASSWORD_VERIFY_PLACEHOLDER": "password again",
     "EMAIL_PLACEHOLDER": "dude33@gmail.com",
     "REGISTER_BUTTON": "register now",
     "REGISTER_BUTTON_HINT": "нажмите, чтобы создать аккаунт"
