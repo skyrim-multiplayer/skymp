@@ -138,6 +138,7 @@ DebugInfo Reader::FillDebugInfo()
   debugInfo.m_sourceModificationTime = Read64_bit();
 
   int functionCount = Read16_bit();
+  debugInfo.m_data.reserve(functionCount);
 
   for (int i = 0; i < functionCount; i++) {
     DebugInfo::DebugFunction info;
@@ -195,6 +196,7 @@ std::vector<Object> Reader::FillObjectTable()
   std::vector<Object> objectTable;
 
   int objectCount = Read16_bit();
+  objectTable.reserve(objectCount);
 
   for (int i = 0; i < objectCount; i++) {
     Object object;
@@ -222,18 +224,21 @@ Object Reader::FillObject()
     this->structure->stringTable.GetStorage()[Read16_bit()];
 
   int numVariables = Read16_bit();
+  object.variables.reserve(numVariables);
 
   for (int i = 0; i < numVariables; i++) {
     object.variables.push_back(FillVariable());
   }
 
   int numProperties = Read16_bit();
+  object.properties.reserve(numProperties);
 
   for (int i = 0; i < numProperties; i++) {
     object.properties.push_back(FillProperty());
   }
 
   int numStates = Read16_bit();
+  object.states.reserve(numStates);
 
   for (int i = 0; i < numStates; i++) {
     object.states.push_back(FillState());
@@ -252,6 +257,7 @@ Object::VarInfo Reader::FillVariable()
 
   return Var;
 }
+
 VarValue Reader::FillVariableData()
 {
   VarValue Data;
