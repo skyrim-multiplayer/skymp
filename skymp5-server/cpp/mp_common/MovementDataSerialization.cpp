@@ -1,22 +1,28 @@
 #include "MovementDataSerialization.h"
 
+#include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
 
+#include "MsgType.h"
+
 namespace {
-void Write(const std::array<float, 3>& arr, SLNet::BitStream& stream){
+void Write(const std::array<float, 3>& arr, SLNet::BitStream& stream)
+{
   for (size_t i = 0; i < 3; ++i) {
     stream.Write(arr[i]);
   }
 }
 
-void ReadTo(std::array<float, 3>& arr, SLNet::BitStream& stream) {
+void ReadTo(std::array<float, 3>& arr, SLNet::BitStream& stream)
+{
   for (size_t i = 0; i < 3; ++i) {
     stream.Read(arr[i]);
   }
 }
 
 template <class T>
-T Read(SLNet::BitStream& stream) {
+T Read(SLNet::BitStream& stream)
+{
   T value;
   stream.Read(value);
   return value;
@@ -24,7 +30,8 @@ T Read(SLNet::BitStream& stream) {
 // optional
 }
 
-void Write(const MovementData& movData, SLNet::BitStream& stream) {
+void Write(const MovementData& movData, SLNet::BitStream& stream)
+{
   stream.Write(movData.idx);
   stream.Write(movData.worldOrCell);
   Write(movData.pos, stream);
@@ -47,7 +54,8 @@ void Write(const MovementData& movData, SLNet::BitStream& stream) {
   }
 }
 
-void ReadTo(MovementData& movData, SLNet::BitStream& stream) {
+void ReadTo(MovementData& movData, SLNet::BitStream& stream)
+{
   stream.Read(movData.idx);
   stream.Read(movData.worldOrCell);
   ReadTo(movData.pos, stream);
@@ -71,8 +79,8 @@ void ReadTo(MovementData& movData, SLNet::BitStream& stream) {
 }
 
 /*
-void Serialize(const MovementData& movData, SLNet::BitStream& stream, bool isWrite) {
-  stream.Serialize(movData.idx, isWrite);
+void Serialize(const MovementData& movData, SLNet::BitStream& stream, bool
+isWrite) { stream.Serialize(movData.idx, isWrite);
   stream.Serialize(movData.worldOrCell, isWrite);
   Serialize(movData.pos, stream, isWrite);
   Serialize(movData.rot, stream, isWrite);
@@ -82,3 +90,55 @@ void Serialize(const MovementData& movData, SLNet::BitStream& stream, bool isWri
   }
 }
 */
+
+MovementData MovementDataFromJson(const nlohmann::json& json)
+{
+  MovementData result;
+  result.idx = json["idx"].get<uint32_t>();
+  result.worldOrCell = json["data"]["worldOrCell"].get<uint32_t>();
+  result.pos = json["data"]["pos"].get<std::array<float, 3>>();
+  result.rot = json["data"]["rot"].get<std::array<float, 3>>();
+  result.direction = json["data"]["direction"].get<float>();
+  result.healthPercentage = json["data"]["healthPercentage"].get<float>();
+  result.runMode =
+    RunModeFromString(json["data"]["runMode"].get<std::string_view>());
+  result.isInJumpState = json["data"]["isInJumpState"].get<bool>();
+  result.isSneaking = json["data"]["isSneaking"].get<bool>();
+  result.isBlocking = json["data"]["isBlocking"].get<bool>();
+  result.isWeapDrawn = json["data"]["isWeapDrawn"].get<bool>();
+  // const auto& jsonLookAt =
+  // json["data"]["lookAt"].get<std::optional<std::array<float, 3>>>();
+  const auto& jsonLookAt = json["data"]["lookAt"];
+  if (jsonLookAt.is_array()) {
+    result.lookAt = jsonLookAt.get<std::array<float, 3>>();
+  }
+  return result;
+}
+
+nlohmann::json MovementDataToJson(const MovementData& movData)
+{
+  // nlohmann::json result;
+  // result["t"] = static_cast<int>(MsgType::UpdateMovement);
+  auto result = nlohmann::json{
+    { "t", MsgType::UpdateMovement },
+    { "idx", movData.idx },
+    {
+      "data",
+      {
+        { "worldOrCell", movData.worldOrCell },
+        { "pos", movData.pos },
+        { "rot", movData.rot },
+        { "runMode", ToString(movData.runMode) },
+        { "direction", movData.direction },
+        { "isInJumpState", movData.isInJumpState },
+        { "isSneaking", movData.isSneaking },
+        { "isBlocking", movData.isBlocking },
+        { "isWeapDrawn", movData.isWeapDrawn },
+      },
+    },
+  };
+  if (movData.lookAt) {
+    result["data"]["lookAt"] = *movData.lookAt;
+  }
+  return result;
+}

@@ -1,5 +1,9 @@
 #include "MpClientPlugin.h"
+
 #include <vector>
+
+#include "MovementData.h"
+#include "MovementDataSerialization.h"
 
 void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
                                   uint16_t targetPort)
@@ -45,8 +49,13 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
 
 void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
 {
-  if (!state.cl)
+  if (!state.cl) {
+    // XXX: ???
     return;
+  }
+
+  ;
+
   auto n = strlen(jsonContent);
   std::vector<uint8_t> buf(n + 1);
   buf[0] = Networking::MinPacketId;
