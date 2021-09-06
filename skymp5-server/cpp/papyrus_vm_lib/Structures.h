@@ -448,9 +448,8 @@ private:
   bool EnsureCallResultIsSynchronous(const VarValue& callResult,
                                      ExecutionContext* ctx);
 
-  Object::PropInfo* GetProperty(
-    const ActivePexInstance& scriptInstance, std::string nameProperty,
-    uint8_t flag);
+  Object::PropInfo* GetProperty(const ActivePexInstance& scriptInstance,
+                                std::string nameProperty, uint8_t flag);
 
   void CastObjectToObject(VarValue* result, VarValue* objectType,
                           std::vector<Local>& locals);

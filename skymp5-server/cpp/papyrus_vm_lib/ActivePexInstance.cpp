@@ -445,8 +445,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
           auto inst = object->activePexInstances.back();
-          Object::PropInfo* runProperty = GetProperty(
-            *inst, nameProperty, Object::PropInfo::kFlags_Read);
+          Object::PropInfo* runProperty =
+            GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Read);
           if (runProperty != nullptr) {
             *args[2] = inst->StartFunction(runProperty->readHandler,
                                            argsForCall, ctx->stackIdHolder);
@@ -465,8 +465,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
           auto inst = object->activePexInstances.back();
-          Object::PropInfo* runProperty = GetProperty(
-            *inst, nameProperty, Object::PropInfo::kFlags_Write);
+          Object::PropInfo* runProperty =
+            GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Write);
           if (runProperty != nullptr) {
             inst->StartFunction(runProperty->writeHandler, argsForCall,
                                 ctx->stackIdHolder);
