@@ -117,12 +117,6 @@ foreach(target ${VCPKG_DEPENDENT})
   find_package(ZLIB REQUIRED)
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
-  find_package(SqliteOrm CONFIG REQUIRED)
-  target_link_libraries(${target} PUBLIC sqlite_orm::sqlite_orm)
-
-  find_package(unofficial-sqlite3 CONFIG REQUIRED)
-  target_link_libraries(${target} PUBLIC unofficial::sqlite3::sqlite3)
-
   find_package(libmongocxx REQUIRED)
   find_package(libbsoncxx REQUIRED)
   find_package(libmongoc-1.0 CONFIG REQUIRED)

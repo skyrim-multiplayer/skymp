@@ -29,9 +29,13 @@ if(JS_ENGINE_TRACING_ENABLED)
 endif()
 
 # Path options
-option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing" OFF)
+option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing. CMAKE_SOURCE_DIR would be used to resolve a relative path if passed." OFF)
 option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
 option(CPPCOV_PATH "Path to OpenCppCoverage" OFF)
+
+if(UNIT_DATA_DIR AND NOT IS_ABSOLUTE "${UNIT_DATA_DIR}")
+  get_filename_component(UNIT_DATA_DIR "${UNIT_DATA_DIR}" ABSOLUTE BASE_DIR ${CMAKE_SOURCE_DIR})
+endif()
 
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
