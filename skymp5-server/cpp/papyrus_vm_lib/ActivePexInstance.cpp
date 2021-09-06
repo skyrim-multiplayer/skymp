@@ -31,7 +31,7 @@ ActivePexInstance::ActivePexInstance(
   this->parentVM = parentVM;
   this->sourcePex = sourcePex;
   this->parentInstance =
-    FillParentInstanse(sourcePex.fn()->objectTable.m_data[0].parentClassName,
+    FillParentInstanse(sourcePex.fn()->objectTable[0].parentClassName,
                        activeInstanceOwner, mapForFillPropertys);
 
   this->variables = mapForFillPropertys;
@@ -53,7 +53,7 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
 {
 
   FunctionInfo function;
-  for (auto& object : sourcePex.fn()->objectTable.m_data) {
+  for (auto& object : sourcePex.fn()->objectTable) {
     for (auto& state : object.states) {
       if (state.name == stateName) {
         for (auto& func : state.functions) {
@@ -85,16 +85,16 @@ std::string ActivePexInstance::GetActiveStateName() const
   return static_cast<const char*>(*var);
 }
 
-ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
+Object::PropInfo* ActivePexInstance::GetProperty(
   const ActivePexInstance& scriptInstance, std::string nameProperty,
   uint8_t flag)
 {
   if (!scriptInstance.IsValid())
     return nullptr;
 
-  if (flag == ObjectTable::Object::PropInfo::kFlags_Read) {
+  if (flag == Object::PropInfo::kFlags_Read) {
 
-    for (auto& object : scriptInstance.sourcePex.fn()->objectTable.m_data) {
+    for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
       for (auto& prop : object.properties) {
         if (prop.name == nameProperty &&
             (prop.flags & 5) == prop.kFlags_Read) {
@@ -103,9 +103,9 @@ ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
       }
     }
 
-    if (flag == ObjectTable::Object::PropInfo::kFlags_Write) {
+    if (flag == Object::PropInfo::kFlags_Write) {
 
-      for (auto& object : scriptInstance.sourcePex.fn()->objectTable.m_data) {
+      for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
         for (auto& prop : object.properties) {
           if (prop.name == nameProperty &&
               (prop.flags & 6) == prop.kFlags_Write) {
@@ -445,8 +445,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
           auto inst = object->activePexInstances.back();
-          ObjectTable::Object::PropInfo* runProperty = GetProperty(
-            *inst, nameProperty, ObjectTable::Object::PropInfo::kFlags_Read);
+          Object::PropInfo* runProperty = GetProperty(
+            *inst, nameProperty, Object::PropInfo::kFlags_Read);
           if (runProperty != nullptr) {
             *args[2] = inst->StartFunction(runProperty->readHandler,
                                            argsForCall, ctx->stackIdHolder);
@@ -465,8 +465,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
           auto inst = object->activePexInstances.back();
-          ObjectTable::Object::PropInfo* runProperty = GetProperty(
-            *inst, nameProperty, ObjectTable::Object::PropInfo::kFlags_Write);
+          Object::PropInfo* runProperty = GetProperty(
+            *inst, nameProperty, Object::PropInfo::kFlags_Write);
           if (runProperty != nullptr) {
             inst->StartFunction(runProperty->writeHandler, argsForCall,
                                 ctx->stackIdHolder);
@@ -813,7 +813,7 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
         break;
       }
 
-      scriptName = myScriptPex.fn()->objectTable.m_data[0].parentClassName;
+      scriptName = myScriptPex.fn()->objectTable[0].parentClassName;
     }
   }
 

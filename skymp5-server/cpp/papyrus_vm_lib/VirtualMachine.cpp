@@ -162,7 +162,7 @@ VarValue VirtualMachine::CallMethod(
     auto it = allLoadedScripts.find(base);
     if (it == allLoadedScripts.end())
       break;
-    base = it->second.fn()->objectTable.m_data[0].parentClassName.data();
+    base = it->second.fn()->objectTable[0].parentClassName.data();
     if (!base[0])
       break;
   }

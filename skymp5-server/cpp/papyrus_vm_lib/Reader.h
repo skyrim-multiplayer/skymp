@@ -27,20 +27,20 @@ class Reader
   ScriptHeader FillHeader();
   StringTable FillStringTable();
   DebugInfo FillDebugInfo();
-  UserFlagTable FillUserFlagTable();
-  ObjectTable FillObjectTable();
+  std::vector<UserFlag> FillUserFlagTable();
+  std::vector<Object> FillObjectTable();
 
   DebugInfo::DebugFunction FillDebugFunction();
-  UserFlagTable::UserFlag FillUserFlag();
-  ObjectTable::Object FillObject();
-  ObjectTable::Object::VarInfo FillVariable();
+  UserFlag FillUserFlag();
+  Object FillObject();
+  Object::VarInfo FillVariable();
   VarValue FillVariableData();
-  ObjectTable::Object::PropInfo FillProperty();
+  Object::PropInfo FillProperty();
   FunctionInfo FillFuncInfo();
   FunctionCode FillFunctionCode(int countInstructions);
   uint8_t GetCountArguments(uint8_t item);
-  ObjectTable::Object::StateInfo FillState();
-  ObjectTable::Object::StateInfo::StateFunction FillStateFunction();
+  Object::StateInfo FillState();
+  Object::StateInfo::StateFunction FillStateFunction();
 
   uint8_t Read8_bit();
   uint16_t Read16_bit();
