@@ -108,9 +108,10 @@ MovementData MovementDataFromJson(const nlohmann::json& json)
   result.isWeapDrawn = json.at("data").at("isWeapDrawn").get<bool>();
   // const auto& jsonLookAt =
   // json.at("data").at("lookAt").get<std::optional<std::array<float, 3>>>();
-  const auto& jsonLookAt = json.at("data").at("lookAt");
-  if (jsonLookAt.is_array()) {
-    result.lookAt = jsonLookAt.get<std::array<float, 3>>();
+  const auto& data = json.at("data");
+  const auto lookAtIt = data.find("lookAt");
+  if (lookAtIt != data.end()) {
+    result.lookAt = lookAtIt->get<std::array<float, 3>>();
   }
   return result;
 }
