@@ -64,9 +64,9 @@ void ReadTo(MovementData& movData, SLNet::BitStream& stream)
   stream.Read(movData.healthPercentage);
 
   uint8_t runMode = 0;
-  runMode |= Read<bool>(stream);
+  runMode |= static_cast<uint8_t>(Read<bool>(stream));
   runMode <<= 1;
-  runMode |= Read<bool>(stream);
+  runMode |= static_cast<uint8_t>(Read<bool>(stream));
   movData.runMode = static_cast<RunMode>(runMode);
 
   stream.Read(movData.isInJumpState);
