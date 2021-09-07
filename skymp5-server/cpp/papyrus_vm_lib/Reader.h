@@ -20,15 +20,15 @@ class Reader
 
   std::vector<uint8_t> arrayBytes;
 
-  std::string FillSource();
-  std::string FillUser();
-  std::string FillMachine();
+  void FillSource(std::string& str);
+  void FillUser(std::string& str);
+  void FillMachine(std::string& str);
 
-  ScriptHeader FillHeader();
-  StringTable FillStringTable();
-  DebugInfo FillDebugInfo();
-  std::vector<UserFlag> FillUserFlagTable();
-  std::vector<Object> FillObjectTable();
+  void FillHeader(ScriptHeader& scriptHeader);
+  void FillStringTable(StringTable& strTable);
+  void FillDebugInfo(DebugInfo& debugInfo);
+  void FillUserFlagTable(std::vector<UserFlag>& userFlagTable);
+  void FillObjectTable(std::vector<Object>& objectTable);
 
   DebugInfo::DebugFunction FillDebugFunction();
   UserFlag FillUserFlag();
