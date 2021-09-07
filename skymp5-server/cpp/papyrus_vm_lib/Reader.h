@@ -46,7 +46,7 @@ class Reader
   uint16_t Read16_bit();
   uint32_t Read32_bit();
   uint64_t Read64_bit();
-  std::string ReadString(int Size);
+  std::string ReadString(int size);
 
   void Read();
   void CreateScriptStructure(const std::vector<uint8_t>& arrayBytes);

@@ -445,12 +445,12 @@ uint64_t Reader::Read64_bit()
   return temp;
 }
 
-std::string Reader::ReadString(int Size)
+std::string Reader::ReadString(int size)
 {
   std::string temp;
-  temp.reserve(Size);
+  temp.reserve(size);
 
-  for (int i = 0; i < Size; i++) {
+  for (int i = 0; i < size; i++) {
     temp += (char)arrayBytes[currentReadPositionInFile];
     currentReadPositionInFile++;
   }
