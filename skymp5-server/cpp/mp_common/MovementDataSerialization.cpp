@@ -94,21 +94,21 @@ isWrite) { stream.Serialize(movData.idx, isWrite);
 MovementData MovementDataFromJson(const nlohmann::json& json)
 {
   MovementData result;
-  result.idx = json["idx"].get<uint32_t>();
-  result.worldOrCell = json["data"]["worldOrCell"].get<uint32_t>();
-  result.pos = json["data"]["pos"].get<std::array<float, 3>>();
-  result.rot = json["data"]["rot"].get<std::array<float, 3>>();
-  result.direction = json["data"]["direction"].get<float>();
-  result.healthPercentage = json["data"]["healthPercentage"].get<float>();
+  result.idx = json.at("idx").get<uint32_t>();
+  result.worldOrCell = json.at("data").at("worldOrCell").get<uint32_t>();
+  result.pos = json.at("data").at("pos").get<std::array<float, 3>>();
+  result.rot = json.at("data").at("rot").get<std::array<float, 3>>();
+  result.direction = json.at("data").at("direction").get<float>();
+  result.healthPercentage = json.at("data").at("healthPercentage").get<float>();
   result.runMode =
-    RunModeFromString(json["data"]["runMode"].get<std::string_view>());
-  result.isInJumpState = json["data"]["isInJumpState"].get<bool>();
-  result.isSneaking = json["data"]["isSneaking"].get<bool>();
-  result.isBlocking = json["data"]["isBlocking"].get<bool>();
-  result.isWeapDrawn = json["data"]["isWeapDrawn"].get<bool>();
+    RunModeFromString(json.at("data").at("runMode").get<std::string_view>());
+  result.isInJumpState = json.at("data").at("isInJumpState").get<bool>();
+  result.isSneaking = json.at("data").at("isSneaking").get<bool>();
+  result.isBlocking = json.at("data").at("isBlocking").get<bool>();
+  result.isWeapDrawn = json.at("data").at("isWeapDrawn").get<bool>();
   // const auto& jsonLookAt =
-  // json["data"]["lookAt"].get<std::optional<std::array<float, 3>>>();
-  const auto& jsonLookAt = json["data"]["lookAt"];
+  // json.at("data").at("lookAt").get<std::optional<std::array<float, 3>>>();
+  const auto& jsonLookAt = json.at("data").at("lookAt");
   if (jsonLookAt.is_array()) {
     result.lookAt = jsonLookAt.get<std::array<float, 3>>();
   }
@@ -130,6 +130,7 @@ nlohmann::json MovementDataToJson(const MovementData& movData)
         { "rot", movData.rot },
         { "runMode", ToString(movData.runMode) },
         { "direction", movData.direction },
+        { "healthPercentage", movData.healthPercentage },
         { "isInJumpState", movData.isInJumpState },
         { "isSneaking", movData.isSneaking },
         { "isBlocking", movData.isBlocking },

@@ -84,4 +84,13 @@ struct MovementData
     isBlocking = static_cast<bool>((flags >> 4) & 1);
     isWeapDrawn = static_cast<bool>((flags >> 5) & 1);
   }
+  
+  auto Tie() const {
+    return std::tie(idx, worldOrCell, pos, rot, direction, healthPercentage, runMode, isInJumpState,
+        isSneaking, isBlocking, isWeapDrawn, lookAt);
+  }
+
+  bool operator==(const MovementData& rhs) const {
+    return Tie() == rhs.Tie();
+  }
 };
