@@ -4,6 +4,9 @@
 
 #include "MovementData.h"
 #include "MovementDataSerialization.h"
+#include "MsgType.h"
+
+#include <nlohmann/json.hpp>
 
 void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
                                   uint16_t targetPort)
@@ -54,7 +57,19 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
     return;
   }
 
-  ;
+  const auto parsedJson = nlohmann::json::parse(jsonContent);
+  if (static_cast<MsgType>(parsedJson.at("t").get<int>()) == MsgType::UpdateMovement) {
+    const auto movData = MovementDataFromJson(parsedJson);
+    SLNet::BitStream stream;
+    Write(movData, stream);
+    
+    std::vector<uint8_t> buf(stream.GetNumberOfBytesUsed() + 1);
+    buf[0] = Networking::MinPacketId;
+    std::copy(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed(), buf.begin() + 1);
+    state.cl->Send(buf.data(), buf.size(), reliable);
+
+    return;
+  }
 
   auto n = strlen(jsonContent);
   std::vector<uint8_t> buf(n + 1);
