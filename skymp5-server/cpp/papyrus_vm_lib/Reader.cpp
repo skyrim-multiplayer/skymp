@@ -312,11 +312,14 @@ FunctionInfo Reader::FillFuncInfo()
 FunctionCode Reader::FillFunctionCode(int countInstructions)
 {
   FunctionCode funcCode;
+  funcCode.instructions.reserve(countInstructions);
+
   for (int i = 0; i < countInstructions; i++) {
     FunctionCode::Instruction item;
     item.op = Read8_bit();
 
     int numArguments = GetCountArguments(item.op);
+    item.args.reserve(numArguments);
 
     for (int i = 0; i < numArguments; i++) {
 
