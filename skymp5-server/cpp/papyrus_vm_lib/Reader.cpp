@@ -285,6 +285,7 @@ FunctionInfo Reader::FillFuncInfo()
   info.flags = Read8_bit();
 
   int countParams = Read16_bit();
+  info.params.reserve(countParams);
 
   for (int i = 0; i < countParams; i++) {
     FunctionInfo::ParamInfo temp;
@@ -294,6 +295,7 @@ FunctionInfo Reader::FillFuncInfo()
   }
 
   int countLocals = Read16_bit();
+  info.params.reserve(countLocals);
 
   for (int i = 0; i < countLocals; i++) {
     FunctionInfo::ParamInfo temp;
