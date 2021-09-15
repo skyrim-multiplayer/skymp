@@ -10,8 +10,6 @@ public:
   virtual void Register(
     VirtualMachine& vm,
     std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) = 0;
-
-  virtual ~IPapyrusClassBase() = default;
 };
 
 template <class T>
