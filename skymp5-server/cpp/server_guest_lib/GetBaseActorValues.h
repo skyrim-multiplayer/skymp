@@ -1,24 +1,21 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 struct BaseActorValues
 {
-  float health, stamina, magicka, healRate, magickaRate, staminaRate,
-    staminaRateMult, healRateMult, magickaRateMult;
+  float health = 100;
+  float stamina = 100;
+  float magicka = 100;
+  float healRate = 100;
+  float staminarRate = 100;
+  float magickaRate = 100;
+  float healRateMult = 100;
+  float staminaRateMult = 100;
+  float magickaRateMult = 100;
 };
-
 
 BaseActorValues GetBaseActorValues(uint32_t& baseId, uint32_t& raceIdOverride)
 {
   BaseActorValues baseActorValues;
-  baseActorValues.health = 100;
-  baseActorValues.stamina = 100;
-  baseActorValues.magicka = 100;
-  baseActorValues.healRate = 100;
-  baseActorValues.staminaRate = 100;
-  baseActorValues.magickaRate = 100;
-  baseActorValues.healRateMult = 100;
-  baseActorValues.magickaRateMult = 100;
-  baseActorValues.staminaRateMult = 100;
   return baseActorValues;
 }
