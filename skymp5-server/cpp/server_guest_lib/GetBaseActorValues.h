@@ -14,7 +14,8 @@ struct BaseActorValues
   float magickaRateMult = 100;
 };
 
-inline BaseActorValues GetBaseActorValues(uint32_t baseId, uint32_t raceIdOverride)
+inline BaseActorValues GetBaseActorValues(uint32_t baseId,
+                                          uint32_t raceIdOverride)
 {
   BaseActorValues baseActorValues;
   return baseActorValues;
