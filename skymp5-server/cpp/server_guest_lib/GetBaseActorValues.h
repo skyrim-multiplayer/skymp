@@ -8,7 +8,7 @@ struct BaseActorValues
 };
 
 
-BaseActorValues GetBaseActorValues(const uint32_t& baseId, const uint32_t& raceIdOverride)
+BaseActorValues GetBaseActorValues(uint32_t& baseId, uint32_t& raceIdOverride)
 {
   BaseActorValues baseActorValues;
   baseActorValues.health = 100;
