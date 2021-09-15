@@ -4,6 +4,8 @@ float CropHealthRegeneration(float newDamageModifier,
 {
   if (newDamageModifier >= 0.0f && newDamageModifier <= 1.0f) {
     return newDamageModifier;
+  } else if (newDamageModifier >= 1.0f) {
+    return 1.0f;
   } else {
     return 0.0f;
   }
