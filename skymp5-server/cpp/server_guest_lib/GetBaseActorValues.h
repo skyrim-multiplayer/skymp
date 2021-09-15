@@ -3,15 +3,8 @@
 
 struct BaseActorValues
 {
-	float health,
-		  stamina,
-		  magicka,
-		  healRate,
-		  magickaRate,
-		  staminaRate,
-		  staminaRateMult,
-		  healRateMult,
-		  magickaRateMult;
+  float health, stamina, magicka, healRate, magickaRate, staminaRate,
+    staminaRateMult, healRateMult, magickaRateMult;
 };
 
 
