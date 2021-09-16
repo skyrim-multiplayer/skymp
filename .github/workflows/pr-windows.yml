@@ -98,3 +98,7 @@ jobs:
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
+    - uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: ${{github.workspace}}/build/dist
