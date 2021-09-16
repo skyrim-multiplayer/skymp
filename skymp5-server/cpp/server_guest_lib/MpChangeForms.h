@@ -44,6 +44,7 @@ public:
   // values in skymp due to poor design
   std::string lookDump, equipmentDump;
 
+
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
 
