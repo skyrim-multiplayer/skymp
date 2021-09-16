@@ -420,7 +420,8 @@ export class SkympClient {
     if (!owner) return;
 
     const av = getActorValues(Game.getPlayer() as Actor);
-    if(this.prevValues.health == av.health && this.prevValues.stamina == av.stamina && this.prevValues.magicka == av.magicka) { 
+    let currentTime = Date.now();
+    if (this.prevValues.health === av.health && this.prevValues.stamina === av.stamina && this.prevValues.magicka === av.magicka && currentTime - this.prevActorValuesUpdateTime < 1000) {
       return;
     } else {
       this.sendTarget.send(
@@ -428,7 +429,8 @@ export class SkympClient {
         true
       );
       this.prevValues = av;
-    }    
+      this.prevActorValuesUpdateTime = currentTime;
+    }
   }
 
   private sendHostAttempts() {
@@ -520,7 +522,8 @@ export class SkympClient {
   private singlePlayer = false;
   private equipmentChanged = false;
   private numEquipmentChanges = 0;
-  private prevValues : ActorValues = {health:0,stamina:0,magicka:0};
+  private prevValues: ActorValues = { health: 0, stamina: 0, magicka: 0 };
+  private prevActorValuesUpdateTime = 0;
 }
 
 once("update", () => {
