@@ -46,7 +46,7 @@ public:
   float healthPercentage = 0;
   float magickaPercentage = 0;
   float staminaPercentage = 0;
-  
+
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
 

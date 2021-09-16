@@ -51,7 +51,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     profileId("profileId"), isRaceMenuOpen("isRaceMenuOpen"),
     lookDump("lookDump"), equipmentDump("equipmentDump"),
     dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
-    magickaPercentage("magickaPercentage"), staminaPercentage("staminaPercentage");
+    magickaPercentage("magickaPercentage"),
+    staminaPercentage("staminaPercentage");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
