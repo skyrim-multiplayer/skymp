@@ -43,8 +43,10 @@ public:
   // "unexisting" equipment and equipment with zero entries are different
   // values in skymp due to poor design
   std::string lookDump, equipmentDump;
-
-
+  float healthPercentage = 0;
+  float magickaPercentage = 0;
+  float staminaPercentage = 0;
+  
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
 
