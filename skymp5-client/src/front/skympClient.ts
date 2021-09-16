@@ -32,6 +32,7 @@ import * as deathSystem from "./deathSystem";
 import { setUpConsoleCommands } from "./console";
 import { nextHostAttempt } from "./hostAttempts";
 import * as updateOwner from "./updateOwner";
+import { ActorValues, getActorValues } from "./components/actorvalues";
 
 interface AnyMessage {
   type?: string;
@@ -414,6 +415,22 @@ export class SkympClient {
     }
   }
 
+  private sendActorValuePercentage(_refrId?: number) {
+    const owner = this.getInputOwner(_refrId);
+    if (!owner) return;
+
+    const av = getActorValues(Game.getPlayer() as Actor);
+    if(this.prevValues.health == av.health && this.prevValues.stamina == av.stamina && this.prevValues.magicka == av.magicka) { 
+      return;
+    } else {
+      this.sendTarget.send(
+        { t: MsgType.ChangeValues, data: av, _refrId },
+        true
+      );
+      this.prevValues = av;
+    }    
+  }
+
   private sendHostAttempts() {
     const remoteId = nextHostAttempt();
     if (!remoteId) return;
@@ -431,6 +448,7 @@ export class SkympClient {
       this.sendAnimation(target);
       this.sendLook(target);
       this.sendEquipment(target);
+      this.sendActorValuePercentage(target);
     });
     this.sendHostAttempts();
   }
@@ -502,6 +520,7 @@ export class SkympClient {
   private singlePlayer = false;
   private equipmentChanged = false;
   private numEquipmentChanges = 0;
+  private prevValues : ActorValues = {health:0,stamina:0,magicka:0};
 }
 
 once("update", () => {
