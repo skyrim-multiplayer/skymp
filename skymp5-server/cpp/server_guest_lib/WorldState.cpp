@@ -59,6 +59,7 @@ struct WorldState::Impl
   bool formLoadingInProgress = false;
   std::map<std::string, std::chrono::system_clock::duration>
     relootTimeForTypes;
+  std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
 };
 
 WorldState::WorldState()
@@ -597,7 +598,8 @@ VirtualMachine& WorldState::GetPapyrusVm()
     auto scriptStorage = pImpl->scriptStorage;
     if (!scriptStorage) {
       logger->error("Required scriptStorage to be non-null");
-      pImpl->vm.reset(new VirtualMachine(std::vector<PexScript::Ptr>()));
+      pImpl->vm.reset(
+        new VirtualMachine(std::vector<std::shared_ptr<PexScript>>()));
       return *pImpl->vm;
     }
 
@@ -637,18 +639,18 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
       });
 
-      std::vector<IPapyrusClassBase*> classes;
-      classes.emplace_back(new PapyrusObjectReference);
-      classes.emplace_back(new PapyrusGame);
-      classes.emplace_back(new PapyrusForm);
-      classes.emplace_back(new PapyrusMessage);
-      classes.emplace_back(new PapyrusFormList);
-      classes.emplace_back(new PapyrusDebug);
-      classes.emplace_back(new PapyrusActor);
-      classes.emplace_back(new PapyrusSkymp);
-      classes.emplace_back(new PapyrusUtility);
-      for (auto cl : classes)
+      pImpl->classes.emplace_back(std::make_unique<PapyrusObjectReference>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusGame>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusForm>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusMessage>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusFormList>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusDebug>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
+      for (auto& cl : pImpl->classes) {
         cl->Register(*pImpl->vm, pImpl->policy);
+      }
     }
   }
 

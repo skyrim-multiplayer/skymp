@@ -287,14 +287,15 @@ getAV.execute = (refrId: number, arg: string) => {
 };
 ```
 
-### HTTP requests (experimental)
+### HTTP requests
 
-SkyrimPlatform provides limited support for HTTP requests.
-At the moment only `get` is available.
+SkyrimPlatform provides limited support for HTTP/HTTPS requests.
+At the moment only `get` and `post` are available.
 
 ```typescript
 import { HttpClient } from "../skyrimPlatfosrm";
-let http = new HttpClient("vk.com", 80);
+let url = "https://canhazip.com:443"; // URL may contain port or not
+let http = new HttpClient(url);
 http.get("/").then((response) => printConsole(response.body));
 ```
 
@@ -303,7 +304,7 @@ http.get("/").then((response) => printConsole(response.body));
 ### Hot Reload
 
 - Hot Reload for SkyrimPlatform plugins is supported. Changing the contents of `Data / Platform / Plugins` will reload all plugins without restarting the game.
-- For full use, these are features, i.e. reload your plugin with Ctrl + S, take the example plugin as a basis https://github.com/skyrim-multiplayer/skyrimplatform-plugin-example
+- For using all these features, including Ctrl+S hot reload, take our example plugin as a base https://github.com/skyrim-multiplayer/skymp/tree/main/skyrim-platform/tools/plugin-example. Plugin example is also present in the archive uploaded to Nexus Mods (Data/Platform/plugin-example).
 - When reloading plugins, the added event and hook handlers are removed, asynchronous operations are interrupted and all variables are reset, except for `storage` and its properties.
 
 ### DumpFunctions

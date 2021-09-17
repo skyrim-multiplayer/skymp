@@ -62,7 +62,6 @@ void SetupFridaHooks();
 static SKSETaskInterface* g_taskInterface = nullptr;
 static SKSEMessagingInterface* g_messaging = nullptr;
 ThreadPoolWrapper g_pool;
-HttpClient g_httpClient;
 std::shared_ptr<BrowserApi::State> g_browserApiState(new BrowserApi::State);
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
@@ -199,7 +198,7 @@ void JsTick(bool gameFunctionsAvailable)
       g_nativeCallRequirements.jsThrQ->Update();
     }
     if (!gameFunctionsAvailable) {
-      g_httpClient.Update();
+      HttpClientApi::GetHttpClient().Update();
     }
     EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
 

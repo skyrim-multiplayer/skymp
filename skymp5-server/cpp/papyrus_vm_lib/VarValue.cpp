@@ -177,7 +177,7 @@ VarValue::VarValue(Viet::Promise<VarValue> promise)
   this->promise.reset(new Viet::Promise<VarValue>(promise));
 }
 
-VarValue::VarValue(IGameObject::Ptr object)
+VarValue::VarValue(std::shared_ptr<IGameObject> object)
   : VarValue(object.get())
 {
   owningObject = object;

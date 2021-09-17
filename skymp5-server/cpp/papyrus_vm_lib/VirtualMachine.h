@@ -46,22 +46,23 @@ public:
     std::shared_ptr<IVariablesHolder> vars;
   };
 
-  VirtualMachine(std::vector<PexScript::Lazy> loadedScripts);
-  VirtualMachine(std::vector<PexScript::Ptr> loadedScripts);
+  VirtualMachine(const std::vector<PexScript::Lazy>& loadedScripts);
+  VirtualMachine(const std::vector<std::shared_ptr<PexScript>>& loadedScripts);
 
   void SetMissingScriptHandler(const MissingScriptHandler& handler);
 
   void SetExceptionHandler(const ExceptionHandler& handler);
 
-  void AddObject(IGameObject::Ptr self,
+  void AddObject(std::shared_ptr<IGameObject> self,
                  const std::vector<ScriptInfo>& scripts);
 
-  void RemoveObject(IGameObject::Ptr self); // ?
+  void RemoveObject(std::shared_ptr<IGameObject> self); // ?
 
-  void RegisterFunction(std::string className, std::string functionName,
-                        FunctionType type, NativeFunction fn);
+  void RegisterFunction(const std::string& className,
+                        const std::string& functionName,
+                        const FunctionType& type, const NativeFunction& fn);
 
-  void SendEvent(IGameObject::Ptr self, const char* eventName,
+  void SendEvent(std::shared_ptr<IGameObject> self, const char* eventName,
                  const std::vector<VarValue>& arguments,
                  OnEnter enter = nullptr);
 
@@ -72,33 +73,32 @@ public:
                       std::vector<VarValue>& arguments,
                       std::shared_ptr<StackIdHolder> stackIdHolder = nullptr);
 
-  VarValue CallStatic(std::string className, std::string functionName,
+  VarValue CallStatic(const std::string& className,
+                      const std::string& functionName,
                       std::vector<VarValue>& arguments,
                       std::shared_ptr<StackIdHolder> stackIdHolder = nullptr);
 
   PexScript::Lazy GetPexByName(const std::string& name);
 
-  ActivePexInstance::Ptr CreateActivePexInstance(
+  std::shared_ptr<ActivePexInstance> CreateActivePexInstance(
     const std::string& pexScriptName, VarValue activeInstanceOwner,
     const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
-    std::string childrenName);
+    const std::string& childrenName);
 
   bool IsNativeFunctionByNameExisted(const std::string& name) const;
 
   ExceptionHandler GetExceptionHandler() const;
 
 private:
-  using RegisteredGameOgject =
-    std::pair<const IGameObject::Ptr, std::vector<ActivePexInstance>>;
-
   CIMap<PexScript::Lazy> allLoadedScripts;
 
   std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
     nativeStaticFunctions;
 
-  std::map<std::string, ActivePexInstance::Ptr> instancesForStaticCalls;
+  std::map<std::string, std::shared_ptr<ActivePexInstance>>
+    instancesForStaticCalls;
 
-  std::set<IGameObject::Ptr> gameObjectsHolder;
+  std::set<std::shared_ptr<IGameObject>> gameObjectsHolder;
 
   MissingScriptHandler missingScriptHandler;
   ExceptionHandler handler;
