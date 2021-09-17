@@ -21,6 +21,7 @@ export enum MsgType {
   CraftItem = 13,
   Host = 14,
   CustomEvent = 15,
+  ChangeValues = 16,
 }
 
 export interface SetInventory {
