@@ -84,7 +84,7 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   f1.lookDump = "{}";
   f1.inv.AddItem(0xf, 1000);
   f1.equipmentDump = "[]";
-  f1.healthPercentage = 100.0f;
+  f1.healthPercentage = 0.25f;
   f1.magickaPercentage = 0.3f;
   f1.staminaPercentage = 1.0f;
   f2.formDesc = { 2, "" };
@@ -104,7 +104,7 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   REQUIRE(res[{ 1, "" }].inv == Inventory().AddItem(0xf, 1000));
   REQUIRE(res[{ 1, "" }].isDisabled == false);
   REQUIRE(res[{ 1, "" }].profileId == -1);
-  REQUIRE(res[{ 1, "" }].healthPercentage == 100.0f);
+  REQUIRE(res[{ 1, "" }].healthPercentage == 0.25f);
   REQUIRE(res[{ 1, "" }].magickaPercentage == 0.3f);
   REQUIRE(res[{ 1, "" }].staminaPercentage == 1.0f);
   REQUIRE(res[{ 2, "" }].position == NiPoint3(2, 4, 6));

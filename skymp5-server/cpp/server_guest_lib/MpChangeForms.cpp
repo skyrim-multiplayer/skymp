@@ -97,9 +97,14 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   if (res.equipmentDump == "null")
     res.equipmentDump.clear();
 
-  ReadEx(element, healthPercentage, &res.healthPercentage);
-  ReadEx(element, magickaPercentage, &res.magickaPercentage);
-  ReadEx(element, staminaPercentage, &res.staminaPercentage);
+  try {
+    ReadEx(element, healthPercentage, &res.healthPercentage);
+    ReadEx(element, magickaPercentage, &res.magickaPercentage);
+    ReadEx(element, staminaPercentage, &res.staminaPercentage);
+  } catch (JsonIndexException&) {
+  } catch (...) {
+    throw;
+  }
 
   try {
     simdjson::dom::element jDynamicFields;
