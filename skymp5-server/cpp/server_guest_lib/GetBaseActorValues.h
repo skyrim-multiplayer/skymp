@@ -7,7 +7,7 @@ struct BaseActorValues
   float stamina = 100;
   float magicka = 100;
   float healRate = 100;
-  float staminarRate = 100;
+  float staminaRate = 100;
   float magickaRate = 100;
   float healRateMult = 100;
   float staminaRateMult = 100;
