@@ -10,3 +10,4 @@ float CropHealthRegeneration(float newDamageModifier,
     return 0.0f;
   }
 }
+
