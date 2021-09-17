@@ -1011,13 +1011,9 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       auto dataDir = GetDataDirSafe(serverSettings);
       auto filePath = std::filesystem::path(dataDir) / path;
+
       std::string stringToWrite = args[2];
-
       std::ofstream dataFile(filePath);
-
-      if (dataFile) {
-        std::remove(path.data());
-      }
 
       dataFile << stringToWrite;
 
