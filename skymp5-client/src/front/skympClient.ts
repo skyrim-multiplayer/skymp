@@ -421,9 +421,12 @@ export class SkympClient {
 
     const av = getActorValues(Game.getPlayer() as Actor);
     let currentTime = Date.now();
-    if (this.prevValues.health === av.health && this.prevValues.stamina === av.stamina && this.prevValues.magicka === av.magicka && currentTime - this.prevActorValuesUpdateTime < 1000) {
+    if (this.prevValues.health === av.health && this.prevValues.stamina === av.stamina && this.prevValues.magicka === av.magicka) {
       return;
     } else {
+      if (currentTime - this.prevActorValuesUpdateTime < 1000) {
+        return;
+      }
       this.sendTarget.send(
         { t: MsgType.ChangeValues, data: av, _refrId },
         true
