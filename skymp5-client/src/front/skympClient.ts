@@ -361,7 +361,7 @@ export class SkympClient {
     ) {
       if (anim.animEventName !== "") {
         this.lastAnimationSent.set(refrIdStr, anim);
-        this.actorValuesNeedUpdateAfterAnimation(anim.animEventName);
+        this.updateActorValuesAfterAnimation(anim.animEventName);
         this.sendTarget.send(
           { t: MsgType.UpdateAnimation, data: anim, _refrId },
           false
@@ -517,8 +517,8 @@ export class SkympClient {
     return remoteIdToLocalId(remoteFormId);
   }
 
-  private actorValuesNeedUpdateAfterAnimation(animName: string) {
-    if (animName === "JumpLand" || animName === "JumpLandDirectional" || animName === "deathanim") {
+  private updateActorValuesAfterAnimation(animName: string) {
+    if (animName === "JumpLand" || animName === "JumpLandDirectional" || animName === "DeathAnim") {
       this.actorValuesNeedUpdate = true;
     }
   }
