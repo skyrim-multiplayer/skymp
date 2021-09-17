@@ -4,6 +4,7 @@
 #include "FormCallbacks.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
+#include "GetBaseActorValues.h"
 
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 {
@@ -49,9 +50,13 @@ void MpActor::SetEquipment(const std::string& jsonString)
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
                               VisitPropertiesMode mode)
 {
+  auto baseId = MpObjectReference::GetBaseId();
+  auto look = GetLook();
+  auto baseActorValues = GetBaseActorValues(baseId, look->raceId);
+
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
-    visitor("isRaceMenuOpen", "true");
+    visitor("isRaceMenuOpen", "true");    
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
