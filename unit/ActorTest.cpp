@@ -26,6 +26,9 @@ TEST_CASE("Actor should load be able to load look, equipment and "
   changeForm.equipmentDump = R"({"inv": {"entries":[]}})";
   changeForm.lookDump = Look().ToJson();
   changeForm.recType = MpChangeForm::ACHR;
+  changeForm.healthPercentage = 1.0f;
+  changeForm.magickaPercentage = 0.9f;
+  changeForm.staminaPercentage = 0.0f;
 
   MpActor actor(LocationalData(), FormCallbacks::DoNothing(), 0xff000000);
   actor.ApplyChangeForm(changeForm);
@@ -33,4 +36,7 @@ TEST_CASE("Actor should load be able to load look, equipment and "
   REQUIRE(actor.GetChangeForm().isRaceMenuOpen == true);
   REQUIRE(actor.GetChangeForm().equipmentDump == R"({"inv": {"entries":[]}})");
   REQUIRE(actor.GetChangeForm().lookDump == Look().ToJson());
+  REQUIRE(actor.GetChangeForm().healthPercentage == 1.0f);
+  REQUIRE(actor.GetChangeForm().magickaPercentage == 0.9f);
+  REQUIRE(actor.GetChangeForm().staminaPercentage == 0.0f);
 }
