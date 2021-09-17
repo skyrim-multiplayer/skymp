@@ -361,6 +361,7 @@ export class SkympClient {
     ) {
       if (anim.animEventName !== "") {
         this.lastAnimationSent.set(refrIdStr, anim);
+        this.actorValuesNeedUpdateAfterAnimation(anim.animEventName);
         this.sendTarget.send(
           { t: MsgType.UpdateAnimation, data: anim, _refrId },
           false
@@ -420,17 +421,18 @@ export class SkympClient {
     if (!owner) return;
 
     const av = getActorValues(Game.getPlayer() as Actor);
-    let currentTime = Date.now();
-    if (this.prevValues.health === av.health && this.prevValues.stamina === av.stamina && this.prevValues.magicka === av.magicka) {
+    const currentTime = Date.now();
+    if (this.prevValues.health === av.health && this.prevValues.stamina === av.stamina && this.prevValues.magicka === av.magicka && this.actorValuesNeedUpdate === false) {
       return;
     } else {
-      if (currentTime - this.prevActorValuesUpdateTime < 1000) {
+      if (currentTime - this.prevActorValuesUpdateTime < 1000 && this.actorValuesNeedUpdate === false) {
         return;
       }
       this.sendTarget.send(
         { t: MsgType.ChangeValues, data: av, _refrId },
         true
       );
+      this.actorValuesNeedUpdate = false;
       this.prevValues = av;
       this.prevActorValuesUpdateTime = currentTime;
     }
@@ -515,6 +517,12 @@ export class SkympClient {
     return remoteIdToLocalId(remoteFormId);
   }
 
+  private actorValuesNeedUpdateAfterAnimation(animName: string) {
+    if (animName === "JumpLand" || animName === "JumpLandDirectional" || animName === "deathanim") {
+      this.actorValuesNeedUpdate = true;
+    }
+  }
+
   private playerAnimSource = new Map<string, AnimationSource>();
   private lastSendMovementMoment = new Map<string, number>();
   private lastAnimationSent = new Map<string, Animation>();
@@ -527,6 +535,7 @@ export class SkympClient {
   private numEquipmentChanges = 0;
   private prevValues: ActorValues = { health: 0, stamina: 0, magicka: 0 };
   private prevActorValuesUpdateTime = 0;
+  private actorValuesNeedUpdate = false;
 }
 
 once("update", () => {
