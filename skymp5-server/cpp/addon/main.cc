@@ -986,20 +986,45 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
     }));
 
   mp.SetProperty("readDataFile",
-                 JsValue::Function([this](const JsFunctionArguments& args) {
-                   std::string path = args[1];
-                   if (path.find("..") != std::string::npos) {
-                     throw std::runtime_error(
-                       "readDataFile doesn't support paths containing '..'");
-                   }
-                   auto dataDir = GetDataDirSafe(serverSettings);
-                   auto filePath = std::filesystem::path(dataDir) / path;
+    JsValue::Function([this](const JsFunctionArguments& args) {
+      std::string path = args[1];
+      if (path.find("..") != std::string::npos) {
+        throw std::runtime_error(
+          "readDataFile doesn't support paths containing '..'");
+      }
+      auto dataDir = GetDataDirSafe(serverSettings);
+      auto filePath = std::filesystem::path(dataDir) / path;
 
-                   std::ifstream t(filePath);
-                   std::stringstream buffer;
-                   buffer << t.rdbuf();
-                   return buffer.str();
-                 }));
+      std::ifstream t(filePath);
+      std::stringstream buffer;
+      buffer << t.rdbuf();
+      return buffer.str();
+  }));
+
+  mp.SetProperty("writeDataFile", 
+    JsValue::Function([this](const JsFunctionArguments& args) {
+      std::string path = args[1];
+
+      if (path.find("..") != std::string::npos) {
+        throw std::runtime_error("writeDataFile doesn't support paths containing '..'");
+      }
+
+      auto dataDir = GetDataDirSafe(serverSettings);
+      auto filePath = std::filesystem::path(dataDir) / path;
+      std::string stringToWrite = args[2];
+
+      std::ofstream dataFile(filePath);
+
+      if (dataFile) {
+        std::remove(path.data());
+      }
+
+      dataFile << stringToWrite;
+
+      dataFile.close();
+
+      return JsValue::Undefined();
+  }));
 
   auto update = [this] {
     partOne->NotifyGamemodeApiStateChanged(gamemodeApiState);
