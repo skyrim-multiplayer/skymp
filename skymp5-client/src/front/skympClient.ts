@@ -140,7 +140,6 @@ export class SkympClient {
     let lastInv: Inventory;
 
     once("update", () => {
-      deathSystem.MakePlayerImmortal();
       const send = (msg: Record<string, unknown>) => {
         this.sendTarget.send(msg, true);
       };
@@ -310,7 +309,9 @@ export class SkympClient {
         Game.setInChargen(false, false, false);
       }
     });
+
     on("update", () => deathSystem.update());
+    once("update", () => deathSystem.MakePlayerImmortal())
   }
 
   // May return null
