@@ -136,6 +136,7 @@ MpChangeForm MpActor::GetChangeForm() const
   return res;
 }
 
+
 void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
 {
   if (newChangeForm.recType != MpChangeForm::ACHR) {
