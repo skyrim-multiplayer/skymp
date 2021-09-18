@@ -2,9 +2,11 @@
 #include "GetBaseActorValues.h"
 #include "MpActor.h"
 
+namespace {
 float PercentToFloat(float percent)
 {
   return percent / 100.0f;
+}
 }
 
 float CropHealthRegeneration(float newDamageModifier,
