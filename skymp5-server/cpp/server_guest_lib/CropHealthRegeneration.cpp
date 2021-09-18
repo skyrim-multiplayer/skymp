@@ -10,12 +10,12 @@ float PercentToFloat(float percent)
 float CropHealthRegeneration(float newDamageModifier,
                              float secondsAfterLastRegen, MpActor* actor)
 {
-  auto baseId = actor->GetBaseId();
+  uint32_t baseId = actor->GetBaseId();
   auto look = actor->GetLook();
   uint32_t raceId = look ? look->raceId : 0;
-  auto baseValues = GetBaseActorValues(baseId, raceId);
+  BaseActorValues baseValues = GetBaseActorValues(baseId, raceId);
 
-  auto validHealthRegenerationPercentage =
+  float validHealthRegenerationPercentage =
     PercentToFloat(baseValues.healRate) *
     PercentToFloat(baseValues.healRateMult) * secondsAfterLastRegen;
 
