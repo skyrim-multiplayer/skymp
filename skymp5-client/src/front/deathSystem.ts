@@ -23,3 +23,8 @@ hooks.sendAnimationEvent.add({
     return;
   },
 });
+
+export const MakePlayerImmortal = (): void => {
+  Game.getPlayer()?.startDeferredKill();
+};
+
