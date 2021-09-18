@@ -38,6 +38,17 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["magickaPercentage"] = changeForm.magickaPercentage;
   res["staminaPercentage"] = changeForm.staminaPercentage;
 
+  res["health"] = changeForm.health;
+  res["stamina"] = changeForm.stamina;
+  res["magicka"] = changeForm.magicka;
+  res["healRate"] = changeForm.healRate;
+  res["staminaRate"] = changeForm.staminaRate;
+  res["magickaRate"] = changeForm.magickaRate;
+  res["healRateMult"] = changeForm.healRateMult;
+  res["staminaRateMult"] = changeForm.staminaRateMult;
+  res["magickaRateMult"] = changeForm.magickaRateMult;
+
+
   return res;
 }
 
