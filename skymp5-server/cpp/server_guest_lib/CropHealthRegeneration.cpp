@@ -21,9 +21,13 @@ float CropHealthRegeneration(float newDamageModifier,
     PercentToFloat(baseValues.healRate) *
     PercentToFloat(baseValues.healRateMult) * secondsAfterLastRegen;
 
-  if (newDamageModifier > validHealthRegenerationPercentage)
+  if (newDamageModifier > validHealthRegenerationPercentage) {
+
     return validHealthRegenerationPercentage;
-  if (newDamageModifier < 0)
+  }
+  if (newDamageModifier < 0) {
+
     return 0;
+  }
   return newDamageModifier;
 }
