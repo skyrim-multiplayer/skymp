@@ -2,9 +2,9 @@
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "GetBaseActorValues.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
-#include "GetBaseActorValues.h"
 
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 {
@@ -66,8 +66,10 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   std::string staminaRate = std::to_string(baseActorValues.staminaRate);
   std::string magickaRate = std::to_string(baseActorValues.magickaRate);
   std::string healRateMult = std::to_string(baseActorValues.healRateMult);
-  std::string staminaRateMult = std::to_string(baseActorValues.staminaRateMult);
-  std::string magickaRateMult = std::to_string(baseActorValues.magickaRateMult);
+  std::string staminaRateMult =
+    std::to_string(baseActorValues.staminaRateMult);
+  std::string magickaRateMult =
+    std::to_string(baseActorValues.magickaRateMult);
 
   visitor("health", health.c_str());
   visitor("stamina", stamina.c_str());
@@ -78,8 +80,6 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   visitor("healRateMult", healRateMult.c_str());
   visitor("staminaRateMult", staminaRateMult.c_str());
   visitor("magickaRatMult", magickaRateMult.c_str());
-
-  
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
@@ -135,7 +135,6 @@ MpChangeForm MpActor::GetChangeForm() const
   res.recType = MpChangeForm::ACHR;
   return res;
 }
-
 
 void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
 {

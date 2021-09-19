@@ -56,7 +56,6 @@ public:
   float healRateMult;
   float staminaRateMult;
   float magickaRateMult;
-  
 
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
