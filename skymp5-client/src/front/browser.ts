@@ -1,93 +1,102 @@
 import {
-  browser,
-  on,
-  once,
-  Input,
-  printConsole,
-  settings,
-  Ui,
+	browser,
+	on,
+	once,
+	Input,
+	printConsole,
+	settings,
+	Ui,
 } from "skyrimPlatform";
+import { DXScanCodes } from '../lib/dx-scan-codes';
+import { EventEmitter } from '../lib/event-emitter';
+import { badMenus } from '../lib/ui-menu';
+
+const getMultiBindigString = (...codes: DXScanCodes[]) => codes.sort((a, b) => a - b).join('-');
 
 export const main = (): void => {
-  const F2 = 0x3c;
-  const F6 = 0x40;
-  const Escape = 0x01;
+	const emitter = new EventEmitter();
 
-  const badMenus = [
-    "BarterMenu",
-    "Book Menu",
-    "ContainerMenu",
-    "Crafting Menu",
-    "GiftMenu",
-    "InventoryMenu",
-    "Journal Menu",
-    "Lockpicking Menu",
-    "Loading Menu",
-    "MapMenu",
-    "RaceSex Menu",
-    "StatsMenu",
-    "TweenMenu",
-  ];
+	let noBadMenuOpen = true;
+	let lastBadMenuCheck = 0;
 
-  browser.setVisible(false);
-  let visible = false;
-  let noBadMenuOpen = true;
-  let lastBadMenuCheck = 0;
+	let visible = false;
+	const browserSetVisible = (state: boolean) => {
+		visible = state;
+		browser.setVisible(state);
+	};
+	browser.setVisible(false);
+	once("update", () => {
+		visible = true;
+		browser.setVisible(true);
+	});
 
-  once("update", () => {
-    visible = true;
-    browser.setVisible(true);
-  });
+	let focused = false;
+	const browserSetFocused = (state: boolean) => {
+		focused = state;
+		browser.setFocused(state);
+	};
 
-  {
-    let pressedWas = false;
+	const inputChangeEvent = 'event:input-change';
+	const keyState: { num: number } = { num: 0 };
 
-    on("update", () => {
-      const pressed = Input.isKeyPressed(F2);
-      if (pressedWas !== pressed) {
-        pressedWas = pressed;
-        if (pressed) {
-          visible = !visible;
-        }
-      }
+	on('update', () => {
+		const numKeys = Input.getNumKeysPressed();
 
-      if (Date.now() - lastBadMenuCheck > 200) {
-        lastBadMenuCheck = Date.now();
-        noBadMenuOpen =
-          badMenus.findIndex((menu) => Ui.isMenuOpen(menu)) === -1;
-      }
+		if (keyState.num !== numKeys) {
+			keyState.num = numKeys;
+			const keyCodes = Array(numKeys)
+				.fill(null)
+				.map((_, i) => Input.getNthKeyPressed(i));
+			emitter.emit(inputChangeEvent, keyCodes);
+		}
 
-      browser.setVisible(visible && noBadMenuOpen);
-    });
-  }
+		if (Date.now() - lastBadMenuCheck > 200) {
+			lastBadMenuCheck = Date.now();
+			noBadMenuOpen = badMenus.findIndex((menu) => Ui.isMenuOpen(menu)) === -1;
+		}
 
-  {
-    let focused = false;
-    let pressedWas = false;
+		browser.setVisible(visible && noBadMenuOpen)
+	});
 
-    on("update", () => {
-      const pressed =
-        Input.isKeyPressed(F6) || (focused && Input.isKeyPressed(Escape));
-      if (pressedWas !== pressed) {
-        pressedWas = pressed;
-        if (pressed) {
-          focused = !focused;
-          browser.setFocused(focused);
-        }
-      }
-    });
-  }
+	const singleBindings: Record<number, () => void> = {
+		[DXScanCodes.F2]: () => browserSetVisible(!visible),
+		[DXScanCodes.F6]: () => browserSetFocused(!focused),
+		[DXScanCodes.Escape]: () => (focused ? browserSetFocused(false) : undefined),
+	};
 
-  const cfg = {
-    ip: settings["skymp5-client"]["server-ip"],
-    port: settings["skymp5-client"]["server-port"],
-  };
+	const multiBindings: Record<string, () => void> = {
+		[getMultiBindigString(DXScanCodes.LeftShift, DXScanCodes.Tab)]: () => {
+			// example use multi keys binding
+		},
+	};
 
-  printConsole({ cfg });
+	emitter.subscribe(inputChangeEvent, (data) => {
+		if (!Array.isArray(data)) return;
 
-  const uiPort = cfg.port === 7777 ? 3000 : cfg.port as number + 1;
+		const keycodes: number[] = data;
+		if (keycodes.length === 0) return;
 
-  const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
-  printConsole(`loading url ${url}`);
-  browser.loadUrl(url);
+		const multi: string = keycodes.join('-');
+
+		if (multiBindings[multi]) {
+			multiBindings[multi]();
+			return;
+		}
+
+		const single: number = keycodes[0];
+		if (singleBindings[single]) singleBindings[single]();
+	});
+
+	const cfg = {
+		ip: settings["skymp5-client"]["server-ip"],
+		port: settings["skymp5-client"]["server-port"],
+	};
+
+	printConsole({ cfg });
+
+	const uiPort = cfg.port === 7777 ? 3000 : cfg.port as number + 1;
+
+	const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
+	printConsole(`loading url ${url}`);
+	browser.loadUrl(url);
 };
