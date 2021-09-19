@@ -281,7 +281,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     {
       this.worldModel.forms[i].isHostedByOther = msg.props.isHostedByOther as boolean;
   
-      if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
+      if (msg.props.isRaceMenuOpen && msg.isMe)
         this.setRaceMenuOpen({ type: "setRaceMenuOpen", open: true });
     }
 

@@ -462,15 +462,12 @@ export class SkympClient {
     });
 
     forms.forEach((form) => {    
-        if(targets.includes(form.refrId as undefined))
+        if(targets.includes(form.refrId as undefined) && !form.isDeffered)
         {
-          if(!form.isDeffered)
-          {
-            let actor = this.getInputOwner(form.refrId);
+          let actor = this.getInputOwner(form.refrId);
 
-            printConsole(actor?.getDisplayName());
-            form.isDeffered = true;
-          }
+          printConsole(actor?.getDisplayName());
+          form.isDeffered = true;
         }
     });
 
