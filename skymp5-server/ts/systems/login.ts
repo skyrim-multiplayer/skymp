@@ -52,23 +52,10 @@ export class Login implements System {
     content: Content,
     ctx: SystemContext
   ): void {
-    if (type !== "loginWithSkympIo") return;
-
-    const gameData = content["gameData"];
-    if (gameData && gameData.session) {
-      this.getUserProfileId(gameData.session).then((res) => {
-        console.log("getUserProfileId", res.data);
-        if (!res.data || !res.data.user || res.data.user.id === undefined)
-          this.log("Bad master answer");
-        else {
-          this.userProfileIds[userId] = res.data.user.id;
-          ctx.gm.emit("spawnAllowed", userId, res.data.user.id);
-          this.log("Logged as " + res.data.user.id);
-        }
-      });
-    } else {
-      this.log("No credentials found in gameData:", gameData);
-    }
+      if (type !== "loginWithSkympIo")
+          return;
+      this.log('userId=' + userId + ', our id will be' + 20 + userId);
+      ctx.gm.emit("spawnAllowed", userId, 20 + userId);
   }
 
   private userProfileIds = new Array<undefined | number>();

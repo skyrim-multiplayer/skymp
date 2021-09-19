@@ -18,6 +18,8 @@ export interface FormModel {
   isOpen?: boolean;
   inventory?: Inventory;
   isHostedByOther?: boolean;
+  isMe?: boolean;
+  isDeffered?: boolean;
 }
 
 export interface WorldModel {

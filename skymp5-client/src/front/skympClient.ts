@@ -311,7 +311,6 @@ export class SkympClient {
     });
 
     on("update", () => deathSystem.update());
-    once("update", () => deathSystem.MakePlayerImmortal())
   }
 
   // May return null
@@ -451,6 +450,8 @@ export class SkympClient {
     const hosted =
       typeof storage["hosted"] === typeof [] ? storage["hosted"] : [];
     const targets = [undefined].concat(hosted as any);
+    const forms = (storage.remoteServer as RemoteServer).getWorldModel().forms;
+
     //printConsole({ targets });
     targets.forEach((target) => {
       this.sendMovement(target);
@@ -459,6 +460,20 @@ export class SkympClient {
       this.sendEquipment(target);
       this.sendActorValuePercentage(target);
     });
+
+    forms.forEach((form) => {    
+        if(targets.includes(form.refrId as undefined))
+        {
+          if(!form.isDeffered)
+          {
+            let actor = this.getInputOwner(form.refrId);
+
+            printConsole(actor?.getDisplayName());
+            form.isDeffered = true;
+          }
+        }
+    });
+
     this.sendHostAttempts();
   }
 
