@@ -19,8 +19,8 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - Static functions are called on the type:
 
   ```typescript
-  let sunX = Game.GetSunPositionX();
-  let pl = Game.GetPlayer();
+  let sunX = Game.getSunPositionX();
+  let pl = Game.getPlayer();
   Game.forceFirstPerson();
   ```
 
@@ -32,6 +32,23 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 - A list of original game types with documentation can be found here: https://www.creationkit.com/index.php?title=Category:Script_Objects
 - Calling functions from the original game is only available inside the `update` event handler (see below). If you try to do this in a different context, an exception will be thrown.
+
+### Native functions from SKSE plugins
+
+- You are able to call Papyrus functions added by SKSE plugins. This example illustrates how to use PapyrusUtil in a SkyrimPlatform plugin:
+  ```typescript
+  import * as sp from "skyrimPlatform";
+
+  sp.on("update", () => {
+    const filePath = "data/platform/plugins/plugin-example.js";
+    
+    // SkyrimPlatform doesn't contain PapyrusUtil typings so we cast to any to be able to call all functions.
+    // Here we use 'MiscUtil.ReadFromFile' native. Of course, you can use any other function.
+    const str = (sp as any).MiscUtil.readFromFile(filePath);
+
+    sp.printConsole("Read", str.length, "characters");
+  });
+  ```
 
 ### Form
 
@@ -56,6 +73,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   let isInCombat = actor.isInCombat();
   ```
 - It is guaranteed that `Game.getPlayer` never returns `null`.
+- Use the `strict` option in `tsconfig.json` to enable/disable compiler null checks and other correctness checks. Learn more here: https://www.typescriptlang.org/tsconfig#strict
 
 ### Unhandled exceptions
 
