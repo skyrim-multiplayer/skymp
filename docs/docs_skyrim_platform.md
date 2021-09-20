@@ -33,6 +33,23 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - A list of original game types with documentation can be found here: https://www.creationkit.com/index.php?title=Category:Script_Objects
 - Calling functions from the original game is only available inside the `update` event handler (see below). If you try to do this in a different context, an exception will be thrown.
 
+### Native functions from SKSE plugins
+
+- You are able to call Papyrus functions added by SKSE plugins. This example illustrates how to use PapyrusUtil in a SkyrimPlatform plugin:
+  ```typescript
+  import * as sp from "skyrimPlatform";
+
+  sp.on("update", () => {
+    const filePath = "data/platform/plugins/plugin-example.js";
+    
+    // SkyrimPlatform doesn't contain PapyrusUtil typings so we cast to any to be able to call all functions.
+    // Here we use 'MiscUtil.ReadFromFile' native. Of course, you can use any other function.
+    const str = (sp as any).MiscUtil.readFromFile(filePath);
+
+    sp.printConsole("Read", str.length, "characters");
+  });
+  ```
+
 ### Form
 
 - Form (`Form`) is inherited by most game types, which have methods such as `Actor`, `Weapon`, etc.
