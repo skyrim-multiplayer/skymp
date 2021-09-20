@@ -46,17 +46,6 @@ public:
   float healthPercentage = 1.0f;
   float magickaPercentage = 1.0f;
   float staminaPercentage = 1.0f;
-
-  float health;
-  float stamina;
-  float magicka;
-  float healRate;
-  float staminaRate;
-  float magickaRate;
-  float healRateMult;
-  float staminaRateMult;
-  float magickaRateMult;
-
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
 
