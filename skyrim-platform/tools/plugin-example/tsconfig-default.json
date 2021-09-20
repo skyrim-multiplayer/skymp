@@ -11,7 +11,6 @@
         "module": "System",
         "target": "ES5",
         "outFile": "./dist/plugin-example.js",
-        "rootDir": "",
         "lib": [
             "ES2015"
         ],
