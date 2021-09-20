@@ -37,6 +37,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["healthPercentage"] = changeForm.healthPercentage;
   res["magickaPercentage"] = changeForm.magickaPercentage;
   res["staminaPercentage"] = changeForm.staminaPercentage;
+
   return res;
 }
 

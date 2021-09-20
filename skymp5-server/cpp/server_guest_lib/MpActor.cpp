@@ -58,28 +58,33 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
     visitor("isRaceMenuOpen", "true");
-
-  std::string health = std::to_string(baseActorValues.health);
-  std::string stamina = std::to_string(baseActorValues.stamina);
-  std::string magicka = std::to_string(baseActorValues.magicka);
-  std::string healRate = std::to_string(baseActorValues.healRate);
-  std::string staminaRate = std::to_string(baseActorValues.staminaRate);
-  std::string magickaRate = std::to_string(baseActorValues.magickaRate);
-  std::string healRateMult = std::to_string(baseActorValues.healRateMult);
-  std::string staminaRateMult =
-    std::to_string(baseActorValues.staminaRateMult);
-  std::string magickaRateMult =
-    std::to_string(baseActorValues.magickaRateMult);
-
-  visitor("health", health.c_str());
-  visitor("stamina", stamina.c_str());
-  visitor("magicka", magicka.c_str());
-  visitor("healRate", healRate.c_str());
-  visitor("staminaRate", staminaRate.c_str());
-  visitor("magickaRate", magickaRate.c_str());
-  visitor("healRateMult", healRateMult.c_str());
-  visitor("staminaRateMult", staminaRateMult.c_str());
-  visitor("magickaRatMult", magickaRateMult.c_str());
+  visitor(
+    "health",
+    baseActorValues.VisitBaseActorValues(baseActorValues.health).c_str());
+  visitor(
+    "stamina",
+    baseActorValues.VisitBaseActorValues(baseActorValues.stamina).c_str());
+  visitor(
+    "magicka",
+    baseActorValues.VisitBaseActorValues(baseActorValues.magicka).c_str());
+  visitor(
+    "healRate",
+    baseActorValues.VisitBaseActorValues(baseActorValues.healRate).c_str());
+  visitor(
+    "staminaRate",
+    baseActorValues.VisitBaseActorValues(baseActorValues.staminaRate).c_str());
+  visitor(
+    "magickaRate",
+    baseActorValues.VisitBaseActorValues(baseActorValues.magickaRate).c_str());
+  visitor("healRateMult",
+          baseActorValues.VisitBaseActorValues(baseActorValues.healRateMult)
+            .c_str());
+  visitor("staminaRateMult",
+          baseActorValues.VisitBaseActorValues(baseActorValues.staminaRateMult)
+            .c_str());
+  visitor("magickaRateMult",
+          baseActorValues.VisitBaseActorValues(baseActorValues.magickaRateMult)
+            .c_str());
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)

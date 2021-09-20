@@ -12,6 +12,11 @@ struct BaseActorValues
   float healRateMult = 100;
   float staminaRateMult = 100;
   float magickaRateMult = 100;
+
+  std::string VisitBaseActorValues(float attribute) {
+    std::string visitAttribute = std::to_string(attribute);
+    return visitAttribute;
+  }
 };
 
 inline BaseActorValues GetBaseActorValues(uint32_t baseId,
