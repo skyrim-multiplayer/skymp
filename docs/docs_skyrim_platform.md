@@ -73,6 +73,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   let isInCombat = actor.isInCombat();
   ```
 - It is guaranteed that `Game.getPlayer` never returns `null`.
+- Use the `strict` option in `tsconfig.json` to enable/disable compiler null checks and other correctness checks. Learn more here: https://www.typescriptlang.org/tsconfig#strict
 
 ### Unhandled exceptions
 
