@@ -19,8 +19,8 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - Static functions are called on the type:
 
   ```typescript
-  let sunX = Game.GetSunPositionX();
-  let pl = Game.GetPlayer();
+  let sunX = Game.getSunPositionX();
+  let pl = Game.getPlayer();
   Game.forceFirstPerson();
   ```
 
