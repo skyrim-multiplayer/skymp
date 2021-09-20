@@ -13,7 +13,8 @@ struct BaseActorValues
   float staminaRateMult = 100;
   float magickaRateMult = 100;
 
-  std::string VisitBaseActorValues(float attribute) {
+  std::string VisitBaseActorValues(float attribute)
+  {
     std::string visitAttribute = std::to_string(attribute);
     return visitAttribute;
   }
