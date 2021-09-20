@@ -449,7 +449,7 @@ export class SkympClient {
   private updateData()
   {
     const hosted =
-    typeof storage["hosted"] === typeof [] ? storage["hosted"] : [];
+      typeof storage["hosted"] === typeof [] ? storage["hosted"] : [];
     const targets = [undefined].concat(hosted as any);
 
     // removing all stop hosted objects from usedRefID array
