@@ -1019,6 +1019,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       dataFile.close();
 
+
       return JsValue::Undefined();
   }));
 
