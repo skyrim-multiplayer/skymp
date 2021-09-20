@@ -59,7 +59,9 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
     visitor("isRaceMenuOpen", "true");
 
-  baseActorValues.VisitBaseActorValues(baseActorValues, visitor);
+  if (mode == VisitPropertiesMode::All) {
+    baseActorValues.VisitBaseActorValues(baseActorValues, visitor);
+  }
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
