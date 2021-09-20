@@ -309,7 +309,9 @@ export class SkympClient {
         Game.setInChargen(false, false, false);
       }
     });
+
     on("update", () => deathSystem.update());
+    once("update", () => deathSystem.MakePlayerImmortal())
   }
 
   // May return null
