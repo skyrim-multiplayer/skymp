@@ -58,33 +58,8 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
     visitor("isRaceMenuOpen", "true");
-  visitor(
-    "health",
-    baseActorValues.VisitBaseActorValues(baseActorValues.health).c_str());
-  visitor(
-    "stamina",
-    baseActorValues.VisitBaseActorValues(baseActorValues.stamina).c_str());
-  visitor(
-    "magicka",
-    baseActorValues.VisitBaseActorValues(baseActorValues.magicka).c_str());
-  visitor(
-    "healRate",
-    baseActorValues.VisitBaseActorValues(baseActorValues.healRate).c_str());
-  visitor(
-    "staminaRate",
-    baseActorValues.VisitBaseActorValues(baseActorValues.staminaRate).c_str());
-  visitor(
-    "magickaRate",
-    baseActorValues.VisitBaseActorValues(baseActorValues.magickaRate).c_str());
-  visitor("healRateMult",
-          baseActorValues.VisitBaseActorValues(baseActorValues.healRateMult)
-            .c_str());
-  visitor("staminaRateMult",
-          baseActorValues.VisitBaseActorValues(baseActorValues.staminaRateMult)
-            .c_str());
-  visitor("magickaRateMult",
-          baseActorValues.VisitBaseActorValues(baseActorValues.magickaRateMult)
-            .c_str());
+
+  baseActorValues.VisitBaseActorValues(baseActorValues, visitor);
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
