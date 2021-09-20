@@ -6,10 +6,30 @@ import {
   printConsole,
   settings,
   Ui,
+  UiMenu,
+  DxScanCodes
 } from "skyrimPlatform";
 import { DXScanCodes } from '../lib/dx-scan-codes';
 import { EventEmitter } from '../lib/event-emitter';
 import { badMenus } from '../lib/ui-menu';
+
+const badMenus: UiMenu[] = [
+	UiMenu.Barter,
+	UiMenu.Book,
+	UiMenu.Container,
+	UiMenu.Crafting,
+	UiMenu.Gift,
+	UiMenu.Inventory,
+	UiMenu.Journal,
+	UiMenu.Lockpicking,
+	UiMenu.Loading,
+	UiMenu.Map,
+	UiMenu.RaceSex,
+	UiMenu.Stats,
+	UiMenu.Tween,
+	UiMenu.Console,
+	UiMenu.Main,
+];
 
 const getMultiBindigString = (...codes: DXScanCodes[]) => codes.sort((a, b) => a - b).join('-');
 
