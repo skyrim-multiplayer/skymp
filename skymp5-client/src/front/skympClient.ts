@@ -133,7 +133,7 @@ export class SkympClient {
 
     on("update", () => {
       if (!this.singlePlayer) {
-        this.updateData();
+        this.sendInputs();
       }
     });
 
@@ -446,33 +446,19 @@ export class SkympClient {
     this.sendTarget.send({ t: MsgType.Host, remoteId }, false);
   }
 
-  private updateData()
-  {
+  private sendInputs() {
     const hosted =
       typeof storage["hosted"] === typeof [] ? storage["hosted"] : [];
     const targets = [undefined].concat(hosted as any);
-    // removing all stop hosted objects from usedRefID array
-    deathSystem.usedRefID.filter((value) => targets.includes(value))
-
+    //printConsole({ targets });
     targets.forEach((target) => {
-      this.prepareSendInputs(target);
-      this.tryMakeActorImmortal(target);
+      this.sendMovement(target);
+      this.sendAnimation(target);
+      this.sendLook(target);
+      this.sendEquipment(target);
+      this.sendActorValuePercentage(target);
     });
-
     this.sendHostAttempts();
-  }
-
-  private prepareSendInputs(target : undefined) {
-    this.sendMovement(target);
-    this.sendAnimation(target);
-    this.sendLook(target);
-    this.sendEquipment(target);
-    this.sendActorValuePercentage(target);
-  }
-
-  private tryMakeActorImmortal(target : undefined)
-  {
-    deathSystem.TryMakeActorImmortal(this.getInputOwner(target) as Actor, target);
   }
 
   private resetRemoteServer() {

@@ -29,6 +29,7 @@ import { applyInventory } from "./components/inventory";
 import { tryHost } from "./hostAttempts";
 import { getMovement } from "./components/movementGet";
 import { Movement } from "../lib/structures/movement";
+import * as deathSystem from "./deathSystem";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -327,6 +328,9 @@ export class FormView implements View<FormModel> {
           refr.setDisplayName("" + model.look.name, true);
       }
       this.refrId = (refr as ObjectReference).getFormID();
+      
+      const ac = Actor.from((refr as ObjectReference)) as Actor;
+      deathSystem.MakeActorImmortal(ac);
     }
 
     if (!this.ready) return;

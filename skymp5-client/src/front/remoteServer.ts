@@ -250,7 +250,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       numLookChanges: 0,
       baseId: msg.baseId,
       refrId: msg.refrId,
-      isMe: msg.isMe,
     };
     if (msg.isMe) {
       updateOwner.setOwnerModel(this.worldModel.forms[i]);
@@ -276,14 +275,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
     // TODO: move to a separate module
 
-    if(msg.props)
-    {
-      this.worldModel.forms[i].isHostedByOther = msg.props.isHostedByOther as boolean;
-  
-      if (msg.props.isRaceMenuOpen && msg.isMe)
-        this.setRaceMenuOpen({ type: "setRaceMenuOpen", open: true });
+    if (msg.props && !msg.props.isHostedByOther) {
     }
 
+    if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
+      this.setRaceMenuOpen({ type: "setRaceMenuOpen", open: true });
 
     const applyPcInv = () => {
       applyInventory(
