@@ -2,6 +2,8 @@ import { hooks, Game, printConsole, Actor } from "skyrimPlatform";
 
 let gAllowGetUp = true;
 
+export let usedRefID = new Array<undefined>();
+
 export const update = (): void => {
   gAllowGetUp =
     (Game.getPlayer() as Actor).getActorValuePercentage("health") >= 0.05;
@@ -24,6 +26,10 @@ hooks.sendAnimationEvent.add({
   },
 });
 
-export const MakeActorImmortal = (act: Actor): void => {
+export const TryMakeActorImmortal = (act: Actor, refrID: undefined): void => {
+  if(usedRefID.includes(refrID))
+    return;
+
   act?.startDeferredKill();
+  usedRefID.push(refrID);
 };

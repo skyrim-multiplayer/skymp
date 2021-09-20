@@ -19,7 +19,6 @@ export interface FormModel {
   inventory?: Inventory;
   isHostedByOther?: boolean;
   isMe?: boolean;
-  isDeffered?: boolean;
 }
 
 export interface WorldModel {

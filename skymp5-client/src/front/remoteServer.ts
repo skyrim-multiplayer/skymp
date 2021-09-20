@@ -251,7 +251,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       baseId: msg.baseId,
       refrId: msg.refrId,
       isMe: msg.isMe,
-      isDeffered: false
     };
     if (msg.isMe) {
       updateOwner.setOwnerModel(this.worldModel.forms[i]);
