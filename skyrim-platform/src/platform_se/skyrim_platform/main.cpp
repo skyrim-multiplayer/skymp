@@ -59,12 +59,7 @@
 #define PLUGIN_VERSION 0
 
 static SkyrimPlatform g_skyrimPlatform;
-
-void OnTick()
-{
-  g_pool.PushAndWait([=](int) { JsTick(false); });
-  TESModPlatform::Update();
-}
+static ThreadPoolWrapper g_pool;
 
 void UpdateDumpFunctions()
 {
@@ -81,15 +76,21 @@ void UpdateDumpFunctions()
   }
 }
 
-void OnPapyrusUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
+void OnTick()
+{
+  g_pool.PushAndWait([=](int) { g_skyrimPlatform.JsTick(false); });
+  TESModPlatform::Update();
+}
+
+void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
 {
   UpdateDumpFunctions();
 
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
-  g_pool.PushAndWait([=](int) { JsTick(true); });
+  g_pool.PushAndWait([=](int) { g_skyrimPlatform.JsTick(true); });
   g_nativeCallRequirements.gameThrQ->Update();
-  g_nativeCallRequirements.stackId = (RE::VMStackID)~0;
+  g_nativeCallRequirements.stackId = static_cast<RE::VMStackID>(~0);
   g_nativeCallRequirements.vm = nullptr;
 }
 
@@ -157,7 +158,7 @@ __declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
 
   papyrusInterface->Register(
     (SKSEPapyrusInterface::RegisterFunctions)TESModPlatform::Register);
-  TESModPlatform::onPapyrusUpdate = OnPapyrusUpdate;
+  TESModPlatform::onPapyrusUpdate = OnUpdate;
 
   return true;
 }

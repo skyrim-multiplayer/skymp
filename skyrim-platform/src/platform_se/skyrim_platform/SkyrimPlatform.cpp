@@ -37,17 +37,34 @@
 void SetupFridaHooks();
 
 namespace {
+void PrintExceptionToGameConsole(std::exception& e)
+{
+  if (auto console = RE::ConsoleLog::GetSingleton()) {
+    std::string what = e.what();
+
+    while (what.size() > sizeof("Error: ") - 1 &&
+           !memcmp(what.data(), "Error: ", sizeof("Error: ") - 1)) {
+      what = { what.begin() + sizeof("Error: ") - 1, what.end() };
+    }
+    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
+      .PrintException(what.data());
+  }
+}
+}
+
+namespace {
 class TickListener
 {
 public:
   virtual ~TickListener() = default;
-  virtual void Tick(bool gameFunctionsAvailable) = 0;
+  virtual void Tick() = 0;
+  virtual void Update() = 0;
 };
 
 class HelloTickListener : public TickListener
 {
 public:
-  void Tick(bool gameFunctionsAvailable) override
+  void Tick() override
   {
     if (auto console = RE::ConsoleLog::GetSingleton()) {
       if (!helloSaid) {
@@ -57,6 +74,8 @@ public:
     }
   }
 
+  void Update() override {}
+
 private:
   bool helloSaid = false;
 };
@@ -64,7 +83,7 @@ private:
 class GodListener : public TickListener
 {
 public:
-  void Tick(bool gameFunctionsAvailable) override
+  void Tick() override
   {
     try {
       auto fileDir = GetFileDir();
@@ -82,29 +101,31 @@ public:
         LoadFiles(GetPathsToLoad(fileDir));
       }
 
-      if (gameFunctionsAvailable) {
-        taskQueue.Update();
-        nativeCallRequirements.jsThrQ->Update();
-      }
+      HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
 
-      if (gameFunctionsAvailable) {
-        jsPromiseTaskQueue.Update();
-      }
+    } catch (std::exception& e) {
+      PrintExceptionToGameConsole(e);
+    }
+  }
 
-      HttpClientApi::GetHttpClient().Update();
+  void Update() override
+  {
+    try {
+      taskQueue.Update();
+      nativeCallRequirements.jsThrQ->Update();
+      jsPromiseTaskQueue.Update();
+    } catch (std::exception& e) {
+      PrintExceptionToGameConsole(e);
+    }
+  }
+
+  void Tick(bool gameFunctionsAvailable) override
+  {
+    try {
       EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
 
     } catch (std::exception& e) {
-      if (auto console = RE::ConsoleLog::GetSingleton()) {
-        std::string what = e.what();
-
-        while (what.size() > sizeof("Error: ") - 1 &&
-               !memcmp(what.data(), "Error: ", sizeof("Error: ") - 1)) {
-          what = { what.begin() + sizeof("Error: ") - 1, what.end() };
-        }
-        ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-          .PrintException(what.data());
-      }
+      PrintExceptionToGameConsole(e);
     }
   }
 
@@ -250,7 +271,6 @@ struct SkyrimPlatform::Impl
 {
   SKSETaskInterface* taskInterface = nullptr;
   SKSEMessagingInterface* messaging = nullptr;
-  ThreadPoolWrapper pool;
 
   std::vector<std::shared_ptr<TickListener>> tickListeners;
 };
