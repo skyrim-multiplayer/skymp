@@ -328,7 +328,10 @@ export class FormView implements View<FormModel> {
           refr.setDisplayName("" + model.look.name, true);
       }
       this.refrId = (refr as ObjectReference).getFormID();   
-      deathSystem.makeActorImmortal(Actor.from(refr) as Actor);
+      
+      const actor = Actor.from(refr);
+      if(actor != null)
+        deathSystem.makeActorImmortal(actor);
     }
 
     if (!this.ready) return;
