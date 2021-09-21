@@ -321,7 +321,12 @@ http.get("/").then((response) => printConsole(response.body));
 
 ### Browser
 
-SkyrimPlatform loads `Data/Platform/UI/index.html` if the file exists.
+Create `Data/Platform/UI/index.html` with contents below to test:
+```html
+<font color="white"><h1>Hello SP</h1></font>
+```
+
+SkyrimPlatform loads `Data/Platform/UI/index.html` if the file exists. It is also possible to load URLs in runtime.
 
 ```typescript
 import { browser } from "skyrimPlatform";
@@ -338,6 +343,7 @@ browser.loadUrl("");                                            // Same effect f
 browser.loadUrl("file:///Data/Platform/UI/another-file.html");  // Load another page from Data
 browser.loadUrl("https://google.com");                          // Open websites
 browser.loadUrl("http://localhost:9000");                       // Open remote dev tools. You better open them in normal browser
+browser.loadUrl("http://localhost:1234");                       // Your favorite dev server in watch mode
 
 // Execute JavaScript code in browser context
 browser.executeJavaScript("console.log('Hello CEF')");
