@@ -332,6 +332,7 @@ browser.setVisible(true);
 // Open cursor and redirect mouse and keyboard events to the browser
 browser.setFocused(true);
 
+// Load a specified URL. The current implementation loads URLs only after the user moves the mouse, except the default URL.
 browser.loadUrl("file:///Data/Platform/UI/index.html");         // Default one
 browser.loadUrl("");                                            // Same effect for empty URL
 browser.loadUrl("file:///Data/Platform/UI/another-file.html");  // Load another page from Data
