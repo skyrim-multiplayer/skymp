@@ -29,6 +29,7 @@ import { applyInventory } from "./components/inventory";
 import { tryHost } from "./hostAttempts";
 import { getMovement } from "./components/movementGet";
 import { Movement } from "../lib/structures/movement";
+import * as deathSystem from "./deathSystem";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -327,6 +328,11 @@ export class FormView implements View<FormModel> {
           refr.setDisplayName("" + model.look.name, true);
       }
       this.refrId = (refr as ObjectReference).getFormID();
+
+      const actor = Actor.from(refr);
+      if (actor) {
+        deathSystem.makeActorImmortal(actor);
+      }
     }
 
     if (!this.ready) return;
@@ -763,10 +769,13 @@ export class WorldView implements View<WorldModel> {
     const crosshair = Game.getCurrentCrosshairRef();
     gCrosshairRefId = crosshair ? crosshair.getFormID() : 0;
 
-    gPcInJumpState = (Game.getPlayer() as Actor).getAnimationVariableBool("bInJumpState");
+    gPcInJumpState = (Game.getPlayer() as Actor).getAnimationVariableBool(
+      "bInJumpState"
+    );
 
     const pcWorldOrCell =
-      (Game.getPlayer() as Actor).getWorldSpace() || (Game.getPlayer() as Actor).getParentCell();
+      (Game.getPlayer() as Actor).getWorldSpace() ||
+      (Game.getPlayer() as Actor).getParentCell();
     gPcWorldOrCellId = pcWorldOrCell ? pcWorldOrCell.getFormID() : 0;
 
     this.formViews.updateAll(model, showMe as boolean, false);
