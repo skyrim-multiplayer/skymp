@@ -6,29 +6,27 @@ import {
   printConsole,
   settings,
   Ui,
-  UiMenu,
-  DxScanCodes
+  Menu,
+  DxScanCode
 } from "skyrimPlatform";
-import { DXScanCodes } from '../lib/dx-scan-codes';
-import { badMenus } from '../lib/ui-menu';
 
 export const main = (): void => {
-  const badMenus: UiMenu[] = [
-    UiMenu.Barter,
-    UiMenu.Book,
-    UiMenu.Container,
-    UiMenu.Crafting,
-    UiMenu.Gift,
-    UiMenu.Inventory,
-    UiMenu.Journal,
-    UiMenu.Lockpicking,
-    UiMenu.Loading,
-    UiMenu.Map,
-    UiMenu.RaceSex,
-    UiMenu.Stats,
-    UiMenu.Tween,
-    UiMenu.Console,
-    UiMenu.Main,
+  const badMenus: Menu[] = [
+    Menu.Barter,
+    Menu.Book,
+    Menu.Container,
+    Menu.Crafting,
+    Menu.Gift,
+    Menu.Inventory,
+    Menu.Journal,
+    Menu.Lockpicking,
+    Menu.Loading,
+    Menu.Map,
+    Menu.RaceSex,
+    Menu.Stats,
+    Menu.Tween,
+    Menu.Console,
+    Menu.Main,
   ];
 
   let browserVisibleState = false;
@@ -59,10 +57,10 @@ export const main = (): void => {
     }
   });
 
-  const binding = new Map<DxScanCodes[], () => void>();
-  binding.set([DxScanCodes.F2], () => setBrowserVisible(!browserVisibleState));
-  binding.set([DxScanCodes.F6], () => setBrowserFocused(!browserFocusedState));
-  binding.set([DxScanCodes.Escape], () => (browserFocusedState ? setBrowserFocused(false) : undefined));
+  const binding = new Map<DxScanCode[], () => void>();
+  binding.set([DxScanCode.F2], () => setBrowserVisible(!browserVisibleState));
+  binding.set([DxScanCode.F6], () => setBrowserFocused(!browserFocusedState));
+  binding.set([DxScanCode.Escape], () => (browserFocusedState ? setBrowserFocused(false) : undefined));
 
   let lastNumKeys = 0;
   on('update', () => {
