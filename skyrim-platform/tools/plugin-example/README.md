@@ -15,9 +15,8 @@
        seRoot: "C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
    };
    ```
-6. 
-7. Run `npm run dev`. If everything is ok, the message `Found 0 errors, installing plugin-example.js` will appear.
-8. Log in to Steam and start the game with `skse64_loader.exe`.
+6. Run `npm run dev`. If everything is ok, the message `Found 0 errors, installing plugin-example.js` will appear.
+7. Log in to Steam and start the game with `skse64_loader.exe`.
 
 The console should display the following output (console opens to `~` in game).
 ``,
@@ -25,5 +24,5 @@ Hello SE
 [Script] Hello Platform
 ``,
 
-1. Make sure `src/example.ts` is working. To do this, write `coc riverwood` on the command line. You will be teleported to the location. Talk to Fendal. You should take away 100 gold and the inscription `Thanks for support` will appear. 
-2. Check that hotcode reloading works by changing the debug text in plugin-example.js and adding more gold to your inventory (open console and run player.additem f 1000) and talking to Fendal again. Now you should see your changed text in game!
+8. Make sure `src/example.ts` is working. To do this, write `coc riverwood` on the command line. You will be teleported to the location. Talk to Fendal. You should take away 100 gold and the inscription `Thanks for support` will appear. 
+9. Check that hotcode reloading works by changing the debug text in plugin-example.js and adding more gold to your inventory (open console and run player.additem f 1000) and talking to Fendal again. Now you should see your changed text in game!
