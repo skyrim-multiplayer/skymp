@@ -9,7 +9,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - To use types from Papyrus, including calling methods and static functions that they have, they need to be imported:
 
   ```typescript
-  import { Game, Actor } from "../skyrimPlatform";
+  import { Game, Actor } from "skyrimPlatform";
   ```
 
 ### Native functions
@@ -181,7 +181,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - `update` is an event that is called once for every frame in the game (60 times per second at 60 FPS) after you've loaded a save or started a new game.
 
   ```typescript
-  import { on } from "../skyrimPlatform";
+  import { on } from "skyrimPlatform";
   on("update", () => {
     // At this stage, the methods of all imported
     // types are already available.
@@ -190,7 +190,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 - `tick` is an event that is called once for every frame in the game immediately after the game starts.
   ```typescript
-  import { on } from "../skyrimPlatform";
+  import { on } from "skyrimPlatform";
   on("tick", () => {
     // No access to game methods here.
   });
@@ -199,7 +199,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 - With `on`, you can subscribe to the event forever.
   ```typescript
-  import { on } from "../skyrimPlatform";
+  import { on } from "skyrimPlatform";
   on("equip", (event) => {
     printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
     printConsole(`object: ${event.baseObj.getName()}`);
@@ -207,7 +207,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   ```
 - Using `once`, you can add a handler that will be called once the next time the event is fired.
   ```typescript
-  import { once } from "../skyrimPlatform";
+  import { once } from "skyrimPlatform";
   once("equip", (event) => {
     printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
     printConsole(`object: ${event.baseObj.getName()}`);
@@ -220,7 +220,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - Hooks allow you to intercept the start and end of some functions of the game engine.
 - Currently supported hooks: `sendAnimationEvent`
   ```typescript
-  import { hooks, printConsole } from  "../skyrimPlatform"
+  import { hooks, printConsole } from "skyrimPlatform"
   hooks.sendAnimationEvent.add({
   	enter(ctx) {
   		printConsole(ctx.animEventName);
@@ -242,7 +242,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - `printConsole (... arguments: any []): void` - output to the game console, opened by the `~` key.
 
   ```typescript
-  import { printConsole, Game } from "../skyrimPlatform";
+  import { printConsole, Game } from "skyrimPlatform";
   on("update", () => {
     printConsole(`player id = ${Game.getPlayer().getFormID()}`);
   });
@@ -260,7 +260,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 * `settings` - an object that provides access to plugin settings:
 
   ```typescript
-  import { settings, printConsole } from "../skyrimPlatform";
+  import { settings, printConsole } from "skyrimPlatform";
   let option = settings["plugin-name"]["my-option"];
   printConsole(option);
   ```
@@ -311,13 +311,47 @@ SkyrimPlatform provides limited support for HTTP/HTTPS requests.
 At the moment only `get` and `post` are available.
 
 ```typescript
-import { HttpClient } from "../skyrimPlatfosrm";
+import { HttpClient } from "skyrimPlatform";
 let url = "https://canhazip.com:443"; // URL may contain port or not
 let http = new HttpClient(url);
 http.get("/").then((response) => printConsole(response.body));
 ```
 
 - In case the request fails, `response.body` will be empty.
+
+### Browser
+
+Create `Data/Platform/UI/index.html` with contents below to test:
+```html
+<font color="white"><h1>Hello SP</h1></font>
+```
+
+SkyrimPlatform loads `Data/Platform/UI/index.html` if the file exists. It is also possible to load URLs in runtime.
+
+```typescript
+import { browser } from "skyrimPlatform";
+
+// Enable/disable browser visibility
+browser.setVisible(true);
+
+// Open cursor and redirect mouse and keyboard events to the browser
+browser.setFocused(true);
+
+// Load a specified URL. The current implementation loads URLs only after the user moves the mouse, except the default URL.
+browser.loadUrl("file:///Data/Platform/UI/index.html");         // Default one
+browser.loadUrl("");                                            // Same effect for empty URL
+browser.loadUrl("file:///Data/Platform/UI/another-file.html");  // Load another page from Data
+browser.loadUrl("https://google.com");                          // Open websites
+browser.loadUrl("http://localhost:9000");                       // Open remote dev tools. You better open them in normal browser
+browser.loadUrl("http://localhost:1234");                       // Your favorite dev server in watch mode
+
+// Execute JavaScript code in browser context
+browser.executeJavaScript("console.log('Hello CEF')");
+
+// SkyrimPlatform generates a unique token every game start
+// In browser context, it appears in `window.spBrowserToken` after some time from page load moment
+const str = browser.getToken();
+```
 
 ### Hot Reload
 
