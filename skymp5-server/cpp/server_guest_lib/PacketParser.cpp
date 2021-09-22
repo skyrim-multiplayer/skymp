@@ -22,8 +22,8 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   returnValue("returnValue"), baseId("baseId"), commandName("commandName"),
   args("args"), workbench("workbench"), resultObjectId("resultObjectId"),
   craftInputObjects("craftInputObjects"), remoteId("remoteId"),
-  eventName("eventName"), health("health"), stamina("stamina"),
-  magicka("magicka");
+  eventName("eventName"), health("health"), magicka("magicka"),
+  stamina("stamina");
 }
 
 struct PacketParser::Impl
@@ -217,7 +217,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     case MsgType::ChangeValues: {
       simdjson::dom::element data_;
       ReadEx(jMessage, JsonPointers::data, &data_);
-      // 0: healthPercentage, 1: staminaPercentage, 2: magickaPercentage
+      // 0: healthPercentage, 1: magickaPercentage, 2: staminaPercentage
       float percentage[3];
       ReadEx(data_, JsonPointers::health, &percentage[0]);
       ReadEx(data_, JsonPointers::magicka, &percentage[1]);
