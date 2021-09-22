@@ -55,7 +55,6 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 
   auto baseActorValues = GetBaseActorValues(baseId, raceId);
   MpChangeForm changeForm = GetChangeForm();
-  
 
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
