@@ -330,8 +330,7 @@ export class FormView implements View<FormModel> {
       this.refrId = (refr as ObjectReference).getFormID();
 
       const actor = Actor.from(refr);
-      if(actor) {
-
+      if (actor) {
         deathSystem.makeActorImmortal(actor);
       }
     }
@@ -770,10 +769,13 @@ export class WorldView implements View<WorldModel> {
     const crosshair = Game.getCurrentCrosshairRef();
     gCrosshairRefId = crosshair ? crosshair.getFormID() : 0;
 
-    gPcInJumpState = (Game.getPlayer() as Actor).getAnimationVariableBool("bInJumpState");
+    gPcInJumpState = (Game.getPlayer() as Actor).getAnimationVariableBool(
+      "bInJumpState"
+    );
 
     const pcWorldOrCell =
-      (Game.getPlayer() as Actor).getWorldSpace() || (Game.getPlayer() as Actor).getParentCell();
+      (Game.getPlayer() as Actor).getWorldSpace() ||
+      (Game.getPlayer() as Actor).getParentCell();
     gPcWorldOrCellId = pcWorldOrCell ? pcWorldOrCell.getFormID() : 0;
 
     this.formViews.updateAll(model, showMe as boolean, false);
