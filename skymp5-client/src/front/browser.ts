@@ -26,7 +26,7 @@ export const main = (): void => {
     Menu.Stats,
     Menu.Tween,
     Menu.Console,
-    Menu.Main,
+    Menu.Main
   ];
 
   let browserVisibleState = false;
