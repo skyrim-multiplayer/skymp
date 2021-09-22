@@ -319,7 +319,7 @@ export const enum MotionType {
     Character = 7
 }
 
-export const enum UiMenu {
+export const enum Menu {
     Barter = 'BarterMenu',
     Book = 'Book Menu',
     Console = 'Console',
@@ -358,7 +358,7 @@ export const enum UiMenu {
     Tween = 'TweenMenu',
 }
 
-export const enum DxScanCodes {
+export const enum DxScanCode {
     None,
     Escape,
     N1,
