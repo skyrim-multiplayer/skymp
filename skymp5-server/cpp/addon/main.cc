@@ -1001,6 +1001,28 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
                    return buffer.str();
                  }));
 
+  mp.SetProperty("writeDataFile",
+                 JsValue::Function([this](const JsFunctionArguments& args) {
+                   std::string path = args[1];
+
+                   if (path.find("..") != std::string::npos) {
+                     throw std::runtime_error(
+                       "writeDataFile doesn't support paths containing '..'");
+                   }
+
+                   auto dataDir = GetDataDirSafe(serverSettings);
+                   auto filePath = std::filesystem::path(dataDir) / path;
+
+                   std::string stringToWrite = args[2];
+                   std::ofstream dataFile(filePath);
+
+                   dataFile << stringToWrite;
+
+                   dataFile.close();
+
+                   return JsValue::Undefined();
+                 }));
+
   auto update = [this] {
     partOne->NotifyGamemodeApiStateChanged(gamemodeApiState);
   };
