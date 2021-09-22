@@ -13,14 +13,11 @@ struct BaseActorValues
   float staminaRateMult = 100;
   float magickaRateMult = 100;
 
-  float healthPercentage = 1.0f;
-  float magickaPercentage = 1.0f;
-  float staminaPercentage = 1.0f;
-
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
 
   void VisitBaseActorValues(BaseActorValues& baseActorValues,
+                            MpChangeForm& changeForm,
                             const PropertiesVisitor& visitor)
   {
     visitor("health", std::to_string(baseActorValues.health).c_str());
@@ -38,11 +35,11 @@ struct BaseActorValues
     visitor("magickaRateMult",
             std::to_string(baseActorValues.magickaRateMult).c_str());
     visitor("healthPercentage",
-            std::to_string(baseActorValues.healthPercentage).c_str());
+            std::to_string(changeForm.healthPercentage).c_str());
     visitor("staminaPercentage",
-            std::to_string(baseActorValues.staminaPercentage).c_str());
+            std::to_string(changeForm.staminaPercentage).c_str());
     visitor("magickaPercentage",
-            std::to_string(baseActorValues.magickaPercentage).c_str());
+            std::to_string(changeForm.magickaPercentage).c_str());
   }
 };
 

@@ -54,13 +54,15 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   uint32_t raceId = GetLook() ? GetLook()->raceId : 0;
 
   auto baseActorValues = GetBaseActorValues(baseId, raceId);
+  MpChangeForm changeForm = GetChangeForm();
+  
 
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
     visitor("isRaceMenuOpen", "true");
 
   if (mode == VisitPropertiesMode::All) {
-    baseActorValues.VisitBaseActorValues(baseActorValues, visitor);
+    baseActorValues.VisitBaseActorValues(baseActorValues, changeForm, visitor);
   }
 }
 
