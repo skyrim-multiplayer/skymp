@@ -330,8 +330,7 @@ export class FormView implements View<FormModel> {
       this.refrId = (refr as ObjectReference).getFormID();
 
       const actor = Actor.from(refr);
-      if(actor)
-      {
+      if(actor) {
         deathSystem.makeActorImmortal(actor);
       }
     }
