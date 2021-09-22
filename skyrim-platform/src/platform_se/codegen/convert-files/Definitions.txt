@@ -355,7 +355,7 @@ export const enum Menu {
     Top = 'Top Menu',
     Training = 'Training Menu',
     Tutorial = 'Tutorial Menu',
-    Tween = 'TweenMenu',
+    Tween = 'TweenMenu'
 }
 
 export const enum DxScanCode {
@@ -470,7 +470,7 @@ export const enum DxScanCode {
     MouseButton6,
     MouseButton7,
     MouseWheelUp,
-    MouseWheelDown,
+    MouseWheelDown
 }
 
 export declare namespace SendAnimationEventHook {
