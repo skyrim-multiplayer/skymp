@@ -452,8 +452,8 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
 
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                     const float healthPercentage,
-                                    const float staminaPercentage,
-                                    const float magickaPercentage)
+                                    const float magickaPercentage,
+                                    const float staminaPercentage)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {

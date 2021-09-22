@@ -94,8 +94,8 @@ public:
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
                               const float healthPercentage,
-                              const float staminaPercentage,
-                              const float magickaPercentage)
+                              const float magickaPercentage,
+                              const float staminaPercentage)
   {
   }
 };

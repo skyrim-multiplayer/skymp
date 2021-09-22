@@ -63,8 +63,8 @@ public:
 
   void OnChangeValues(const RawMessageData& rawMsgData,
                       const float healthPercentage,
-                      const float staminaPercentage,
-                      const float magickaPercentage) override;
+                      const float magickaPercentage,
+                      const float staminaPercentage) override;
 
 private:
   // Returns user's actor if exists

@@ -220,8 +220,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       // 0: healthPercentage, 1: staminaPercentage, 2: magickaPercentage
       float percentage[3];
       ReadEx(data_, JsonPointers::health, &percentage[0]);
-      ReadEx(data_, JsonPointers::stamina, &percentage[1]);
-      ReadEx(data_, JsonPointers::magicka, &percentage[2]);
+      ReadEx(data_, JsonPointers::magicka, &percentage[1]);
+      ReadEx(data_, JsonPointers::stamina, &percentage[2]);
       actionListener.OnChangeValues(rawMsgData, percentage[0], percentage[1],
                                     percentage[2]);
       break;
