@@ -311,11 +311,12 @@ export class SkympClient {
     });
 
     on("update", () => deathSystem.update());
-    once("update", () => 
-    {
+    once("update", () => {
       const player = Game.getPlayer();
-      if(player)
+      if(player) 
+      { 
         deathSystem.makeActorImmortal(player);
+      }
     });
   }
 
