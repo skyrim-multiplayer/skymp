@@ -24,4 +24,4 @@ Hello SE
 ``,
 
 7. Make sure `src/example.ts` is working. To do this, write `coc riverwood` on the command line. You will be teleported to the location. Talk to Fendal. You should take away 100 gold and the inscription `Thanks for support` will appear. 
-8. Check that hotcode reloading works by changing the debug text in `plugin-example.js` and adding more gold to your inventory (open console and run player.additem f 1000) and talking to Fendal again. Now you should see your changed text in game!
+8. Check that hot code reloading works by changing the debug text in `plugin-example.js` and adding more gold to your inventory (open console and run player.additem f 1000) and talking to Fendal again. Now you should see your changed text in game!
