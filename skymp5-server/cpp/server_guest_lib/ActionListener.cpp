@@ -459,9 +459,6 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
-  MpChangeForm changeForm = actor->GetChangeForm();
-  changeForm.healthPercentage = healthPercentage;
-  changeForm.magickaPercentage = magickaPercentage;
-  changeForm.staminaPercentage = staminaPercentage;
-  actor->ApplyChangeForm(changeForm);
+  actor->SetPercentages(healthPercentage, magickaPercentage,
+                        staminaPercentage);
 }

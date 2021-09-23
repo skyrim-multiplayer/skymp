@@ -57,7 +57,6 @@ TEST_CASE("Player attribute percentages are changing correctly",
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  // ac.RegisterProfileId(pospelov);
 
   IActionListener::RawMessageData msgData;
   msgData.userId = 0;
