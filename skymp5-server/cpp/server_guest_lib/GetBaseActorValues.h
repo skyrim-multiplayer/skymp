@@ -17,6 +17,7 @@ struct BaseActorValues
     std::function<void(const char* propName, const char* jsonValue)>;
 
   void VisitBaseActorValues(BaseActorValues& baseActorValues,
+                            MpChangeForm& changeForm,
                             const PropertiesVisitor& visitor)
   {
     visitor("health", std::to_string(baseActorValues.health).c_str());
@@ -33,6 +34,12 @@ struct BaseActorValues
             std::to_string(baseActorValues.staminaRateMult).c_str());
     visitor("magickaRateMult",
             std::to_string(baseActorValues.magickaRateMult).c_str());
+    visitor("healthPercentage",
+            std::to_string(changeForm.healthPercentage).c_str());
+    visitor("staminaPercentage",
+            std::to_string(changeForm.staminaPercentage).c_str());
+    visitor("magickaPercentage",
+            std::to_string(changeForm.magickaPercentage).c_str());
   }
 };
 
