@@ -22,7 +22,8 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   returnValue("returnValue"), baseId("baseId"), commandName("commandName"),
   args("args"), workbench("workbench"), resultObjectId("resultObjectId"),
   craftInputObjects("craftInputObjects"), remoteId("remoteId"),
-  eventName("eventName");
+  eventName("eventName"), health("health"), magicka("magicka"),
+  stamina("stamina");
 }
 
 struct PacketParser::Impl
@@ -211,6 +212,18 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       const char* eventName;
       ReadEx(jMessage, JsonPointers::eventName, &eventName);
       actionListener.OnCustomEvent(rawMsgData, eventName, args);
+      break;
+    }
+    case MsgType::ChangeValues: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, JsonPointers::data, &data_);
+      // 0: healthPercentage, 1: magickaPercentage, 2: staminaPercentage
+      float percentage[3];
+      ReadEx(data_, JsonPointers::health, &percentage[0]);
+      ReadEx(data_, JsonPointers::magicka, &percentage[1]);
+      ReadEx(data_, JsonPointers::stamina, &percentage[2]);
+      actionListener.OnChangeValues(rawMsgData, percentage[0], percentage[1],
+                                    percentage[2]);
       break;
     }
     default:
