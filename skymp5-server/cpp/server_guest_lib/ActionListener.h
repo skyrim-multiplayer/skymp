@@ -61,6 +61,11 @@ public:
   void OnCustomEvent(const RawMessageData& rawMsgData, const char* eventName,
                      simdjson::dom::element& e) override;
 
+  void OnChangeValues(const RawMessageData& rawMsgData,
+                      const float healthPercentage,
+                      const float magickaPercentage,
+                      const float staminaPercentage) override;
+
 private:
   // Returns user's actor if exists
   MpActor* SendToNeighbours(uint32_t idx,

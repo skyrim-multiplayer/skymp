@@ -24,6 +24,6 @@ hooks.sendAnimationEvent.add({
   },
 });
 
-export const MakePlayerImmortal = (): void => {
-  Game.getPlayer()?.startDeferredKill();
+export const makeActorImmortal = (act: Actor): void => {
+  act.startDeferredKill();
 };

@@ -98,11 +98,9 @@ void MyChromiumApp::Initialize() noexcept
   CefWindowInfo info;
   info.SetAsWindowless(m_pRenderProvider->GetWindow());
 
-  if (!CefBrowserHost::CreateBrowser(
-        info, m_pGameClient.get(),
-        L" "
-        L"skymp-gamemode-outdated/front/chat.html",
-        browserSettings, nullptr, nullptr)) {
+  if (!CefBrowserHost::CreateBrowser(info, m_pGameClient.get(),
+                                     L"file:///Data/Platform/UI/index.html",
+                                     browserSettings, nullptr, nullptr)) {
 
     MessageBoxA(0, "CreateBrowser failed", "Error", MB_ICONERROR);
   }
@@ -178,9 +176,21 @@ void MyChromiumApp::InjectMouseMove(const float aX, const float aY,
     if (clock() - g_lastExecute > CLOCKS_PER_SEC) {
       g_lastExecute = clock();
       auto script = "window.spBrowserToken = '" + GetCurrentSpToken() + "';";
-      if (url.size() > 0)
-        script += " if (window.location.href !== '" + url +
-          "') window.location.href = '" + url + "';";
+
+      bool urlChanged = false;
+      {
+        std::lock_guard l(share2.m);
+        std::swap(urlChanged, share2.urlChanged);
+      }
+
+      if (urlChanged) {
+        if (url.size() > 0) {
+          m_pGameClient->GetBrowser()->GetMainFrame()->LoadURL(url);
+        } else {
+          m_pGameClient->GetBrowser()->GetMainFrame()->LoadURL(
+            "file:///Data/Platform/UI/index.html");
+        }
+      }
       m_pGameClient->GetBrowser()->GetMainFrame()->ExecuteJavaScript(
         script, "my mind", 0);
     }
@@ -226,6 +236,10 @@ bool MyChromiumApp::LoadUrl(const char* url) noexcept
   {
     std::lock_guard l(share.m);
     share.url = url;
+  }
+  {
+    std::lock_guard l(share2.m);
+    share2.urlChanged = true;
   }
   return true;
 }
