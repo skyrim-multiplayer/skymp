@@ -5,10 +5,10 @@
 
 1. Grab the latest version of the Skyrim Platform from https://www.nexusmods.com/skyrimspecialedition/mods/54909?tab=files
 2. Extract the zip and place the files in your Skyrim install folder (Skyrim Special Edition\Data) 
-   ### DO NOT USE A MOD MANAGER AS HOTCODE RELOADING WILL NOT WORK WITH THE VIRTUAL DRIVE.
-3. Copy the Skyrim Special Edition\Data\Platform\Modules\SkyrimPlatform.ts file to the root Skyrim folder Skyrim Special Edition
-3. Go to the Skyrim Special Edition\Data\Platform\plugin-example folder and run `npm i` on the command line to install the dependencies.
-5. Create a file in the Skyrim Special Edition\Data\Platform\plugin-example\tsc folder named `config.js` with the following contents:
+   ### DO NOT USE A MOD MANAGER AS HOT CODE RELOADING WILL NOT WORK WITH THE VIRTUAL DRIVE.
+3. Copy the `Skyrim Special Edition\Data\Platform\Modules\SkyrimPlatform.ts` file to the root Skyrim folder Skyrim Special Edition
+3. Go to the `Skyrim Special Edition\Data\Platform\plugin-example` folder and run `npm i` on the command line to install the dependencies.
+5. Create a file in the `Skyrim Special Edition\Data\Platform\plugin-example\tsc` folder named `config.js` with the following contents:
    ```
    module.exports = {
        // Change `seRoot` to the correct path to the Skyrim SE folder. The path should have slashes like this: `/` (not `\\`).
@@ -25,4 +25,4 @@ Hello SE
 ``,
 
 8. Make sure `src/example.ts` is working. To do this, write `coc riverwood` on the command line. You will be teleported to the location. Talk to Fendal. You should take away 100 gold and the inscription `Thanks for support` will appear. 
-9. Check that hotcode reloading works by changing the debug text in plugin-example.js and adding more gold to your inventory (open console and run player.additem f 1000) and talking to Fendal again. Now you should see your changed text in game!
+9. Check that hotcode reloading works by changing the debug text in `plugin-example.js` and adding more gold to your inventory (open console and run player.additem f 1000) and talking to Fendal again. Now you should see your changed text in game!
