@@ -18,7 +18,6 @@
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-
 #ifndef NAPI_CPP_EXCEPTIONS
 #  error NAPI_CPP_EXCEPTIONS must be defined or throwing from JS code would crash!
 #endif

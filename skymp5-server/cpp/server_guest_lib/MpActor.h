@@ -54,11 +54,16 @@ public:
   void SetPercentages(float healthPercentage, float magickaPercentage,
                       float staminaPercentage);
 
+  std::chrono::steady_clock::time_point GetLastTimePoint();
+  std::chrono::duration<float> UpdateElapsedTime();
+
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
+
+  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
 
 protected:
   void BeforeDestroy() override;

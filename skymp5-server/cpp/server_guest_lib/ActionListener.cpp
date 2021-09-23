@@ -1,4 +1,5 @@
 #include "ActionListener.h"
+#include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
 #include "Exceptions.h"
@@ -459,6 +460,21 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
-  actor->SetPercentages(healthPercentage, magickaPercentage,
-                        staminaPercentage);
+  float timeAfterRegeneration = actor->UpdateElapsedTime().count();
+  MpChangeForm changeForm = actor->GetChangeForm();
+  float health = healthPercentage;
+  float magicka = magickaPercentage;
+  float stamina = staminaPercentage;
+
+  if (healthPercentage != changeForm.healthPercentage) {
+    health = CropHealthRegeneration(health, timeAfterRegeneration, actor);
+  }
+  if (magickaPercentage != changeForm.magickaPercentage) {
+    magicka = CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
+  }
+  if (staminaPercentage != changeForm.staminaPercentage) {
+    stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
+  }
+
+  actor->SetPercentages(health, magicka, stamina);
 }
