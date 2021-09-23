@@ -3,8 +3,6 @@
 
 #include "PacketParser.h"
 
-using Catch::Matchers::Contains;
-
 PartOne& GetPartOne();
 
 TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
