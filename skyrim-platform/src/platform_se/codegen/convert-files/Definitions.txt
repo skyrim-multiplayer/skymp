@@ -225,6 +225,11 @@ export interface ActiveEffectApplyRemoveEvent {
     target: ObjectReference
 }
 
+export interface MenuOpenCloseEvent {
+    type: string
+    name: string
+}
+
 export interface MagicEffectApplyEvent {
     activeEffect: ActiveMagicEffect,
     effect: MagicEffect,
@@ -300,6 +305,9 @@ export declare function once(eventName: 'effectFinish', callback: (event: Active
 
 export declare function on(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
 export declare function once(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+
+export declare function on(eventName: 'menuOpenClose', callback: (event: MenuOpenCloseEvent) => void): void;
+export declare function once(eventName: 'menuOpenClose', callback: (event: MenuOpenCloseEvent) => void): void;
 
 declare class ConsoleComand {
     longName: string;

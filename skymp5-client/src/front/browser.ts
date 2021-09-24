@@ -6,6 +6,7 @@ import {
   printConsole,
   settings,
   Ui,
+  MenuOpenCloseEvent
 } from "skyrimPlatform";
 
 export const main = (): void => {
@@ -90,4 +91,8 @@ export const main = (): void => {
   const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
   printConsole(`loading url ${url}`);
   browser.loadUrl(url);
+
+  on("menuOpenClose", (evt: MenuOpenCloseEvent) => {
+    printConsole(`Test menu ${evt.name} ${evt.type}`);
+  });
 };

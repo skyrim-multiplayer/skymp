@@ -495,7 +495,8 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "objectLoaded",
                                    "waitStop",
                                    "activate",
-                                   "ipcMessage" };
+                                   "ipcMessage",
+                                   "menuOpenClose" };
 
   if (events.count(eventName) == 0)
     throw InvalidArgumentException("eventName", eventName);

@@ -1,4 +1,5 @@
 #include "BrowserApi.h"
+#include "UiApi.h"
 #include "CallNativeApi.h"
 #include "CameraApi.h"
 #include "ConsoleApi.h"
@@ -157,6 +158,7 @@ void JsTick(bool gameFunctionsAvailable)
                 DevApi::Register(e, &engine, {}, fileDir);
                 EventsApi::Register(e);
                 BrowserApi::Register(e, g_browserApiState);
+                UiApi::Register(e);
                 InventoryApi::Register(e);
                 CallNativeApi::Register(
                   e, [] { return g_nativeCallRequirements; });
