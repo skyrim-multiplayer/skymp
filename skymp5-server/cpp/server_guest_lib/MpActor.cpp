@@ -54,13 +54,14 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   uint32_t raceId = GetLook() ? GetLook()->raceId : 0;
 
   auto baseActorValues = GetBaseActorValues(baseId, raceId);
+  MpChangeForm changeForm = GetChangeForm();
 
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
     visitor("isRaceMenuOpen", "true");
 
   if (mode == VisitPropertiesMode::All) {
-    baseActorValues.VisitBaseActorValues(baseActorValues, visitor);
+    baseActorValues.VisitBaseActorValues(baseActorValues, changeForm, visitor);
   }
 }
 
@@ -154,6 +155,16 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
     promise.Resolve(v);
     pImpl->snippetPromises.erase(it);
   }
+}
+
+void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
+                             float staminaPercentage)
+{
+  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.healthPercentage = healthPercentage;
+    changeForm.magickaPercentage = magickaPercentage;
+    changeForm.staminaPercentage = staminaPercentage;
+  });
 }
 
 const bool& MpActor::IsRaceMenuOpen() const

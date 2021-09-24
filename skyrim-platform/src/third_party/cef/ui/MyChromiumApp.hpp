@@ -79,5 +79,10 @@ private:
     mutable std::recursive_mutex m;
     std::string url;
   } share;
+  mutable struct
+  {
+    mutable std::recursive_mutex m;
+    bool urlChanged = false;
+  } share2;
 };
 }

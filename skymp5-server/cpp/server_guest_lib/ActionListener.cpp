@@ -449,3 +449,16 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
     listener->OnMpApiEvent(eventName, args, ac->GetFormId());
   }
 }
+
+void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
+                                    const float healthPercentage,
+                                    const float magickaPercentage,
+                                    const float staminaPercentage)
+{
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!actor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+  actor->SetPercentages(healthPercentage, magickaPercentage,
+                        staminaPercentage);
+}
