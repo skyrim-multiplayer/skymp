@@ -269,6 +269,29 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         (this.worldModel.forms[i] as Record<string, unknown>)[propName] =
           msg.props[propName];
       }
+
+      if(msg.refrId) {
+        let act = Actor.from(Game.getFormEx(remoteIdToLocalId(msg.refrId)));
+        if(act) {
+          act.setActorValue("healRate", msg.props.healRate as number);
+          act.setActorValue("healRateMult", msg.props.healRateMult as number);
+          act.setActorValue("health", msg.props.health as number);
+          act.setActorValue("magicka", msg.props.magicka as number);
+          act.setActorValue("magickaRate", msg.props.magickaRate as number);
+          act.setActorValue("magickaRateMult", msg.props.magickaRateMult as number);
+          act.setActorValue("stamina", msg.props.stamina as number);
+          act.setActorValue("staminaRate", msg.props.staminaRate as number);
+          act.setActorValue("staminaRateMult", msg.props.staminaRateMult as number);
+          act.setActorValue("healthPercentage", msg.props.healthPercentage as number);
+          act.setActorValue("staminaPercentage", msg.props.staminaPercentage as number);
+          act.setActorValue("magickaPercentage", msg.props.magickaPercentage as number);
+
+          printConsole(act.getActorValue("healRate") + " " + act.getActorValue("health") + " " +  
+            act.getActorValue("magicka") + " " + act.getActorValue("magickaRate") + " " + act.getActorValue("magickaRateMult") + "11111111");
+        } 
+
+      }
+
     }
 
     if (msg.isMe) this.worldModel.playerCharacterFormIdx = i;
