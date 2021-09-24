@@ -332,6 +332,11 @@ export class FormView implements View<FormModel> {
       const actor = Actor.from(refr);
       if (actor) {
         deathSystem.makeActorImmortal(actor);
+
+        printConsole("should work right");
+        model.actorValues?.forEach((value, key) => {
+            printConsole(value + " 111 " + key);
+        });
       }
     }
 
