@@ -34,22 +34,38 @@ TEST_CASE("CropRegeneration is working correctly", "[CropRegeneration]")
     baseValues.staminaRate * baseValues.staminaRateMult * time / 10000.0f;
 
   REQUIRE(CropHealthRegeneration(healthPercentage, time, &ac) == 0.0f);
-  REQUIRE(CropMagickaRegeneration(magickaPercentage, time, &ac) ==
-          expectedMagicka);
-  REQUIRE(CropMagickaRegeneration(expectedMagicka, time, &ac) ==
-          expectedMagicka);
+  REQUIRE_THAT(CropHealthRegeneration(expectedHealth, time, &ac),
+               Catch::Matchers::WithinAbs(expectedHealth, 0.000001f));
+
+  REQUIRE_THAT(CropMagickaRegeneration(magickaPercentage, time, &ac),
+               Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
+  REQUIRE_THAT(CropMagickaRegeneration(expectedMagicka, time, &ac),
+               Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
+
   REQUIRE(CropStaminaRegeneration(staminaPercentage, time, &ac) == 1.0f);
   ac.SetPercentages(0, 0, 0);
-  REQUIRE(CropStaminaRegeneration(expectedStamina, time, &ac) ==
-          expectedStamina);
+  REQUIRE_THAT(CropStaminaRegeneration(expectedStamina, time, &ac),
+               Catch::Matchers::WithinAbs(expectedStamina, 0.000001f));
 
-  ac.SetPercentages(0.1f, 0.5f, 0.3f);
-  REQUIRE(CropHealthRegeneration(expectedHealth + 0.1f, time, &ac) ==
-          expectedHealth + 0.1f);
-  REQUIRE(CropMagickaRegeneration(expectedMagicka + 0.5f, time, &ac) ==
-          expectedMagicka + 0.5f);
-  REQUIRE(CropStaminaRegeneration(expectedStamina + 0.3f, time, &ac) ==
-          expectedStamina + 0.3f);
+  REQUIRE_THAT(CropHealthRegeneration(expectedHealth + 0.1f, time, &ac),
+               Catch::Matchers::WithinAbs(expectedHealth, 0.000001f));
+  REQUIRE_THAT(CropMagickaRegeneration(expectedMagicka * (-1), time, &ac),
+               Catch::Matchers::WithinAbs(0.0f, 0.000001f));
+  REQUIRE_THAT(
+    CropStaminaRegeneration(expectedStamina * 2.0f, time * 2.0f, &ac),
+    Catch::Matchers::WithinAbs(expectedStamina * 2.0f, 0.000001f));
+
+  REQUIRE_THAT(CropStaminaRegeneration(expectedStamina, 0, &ac),
+               Catch::Matchers::WithinAbs(0.0f, 0.000001f));
+
+  ac.SetPercentages(0.5f, 0.3f, 0.01f);
+
+  REQUIRE_THAT(CropHealthRegeneration(expectedHealth + 0.5f, time, &ac),
+               Catch::Matchers::WithinAbs(expectedHealth + 0.5f, 0.000001f));
+  REQUIRE_THAT(CropMagickaRegeneration(expectedMagicka + 0.3f, time, &ac),
+               Catch::Matchers::WithinAbs(expectedMagicka + 0.3f, 0.000001f));
+  REQUIRE_THAT(CropStaminaRegeneration(expectedStamina + 0.01f, time, &ac),
+               Catch::Matchers::WithinAbs(expectedStamina + 0.01f, 0.000001f));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
