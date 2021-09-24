@@ -314,7 +314,6 @@ export class SkympClient {
     });
 
     on("update", () => deathSystem.update());
-
     once("update", () => {
       const player = Game.getPlayer();
       if (player) {
