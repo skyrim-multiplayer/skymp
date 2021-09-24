@@ -16,7 +16,7 @@ extern TaskQueue g_taskQueue;
 
 namespace RE {
 
-    //нужно обновить CommonLibSSE (нету в текущей версии)
+    //need to update CommonLibSSE (missing in the current version)
     //https://github.com/Ryan-rsm-McKenzie/CommonLibSSE/blob/238e7815d5e7e0c4a26491d15c45197390391d75/include/RE/F/FavoritesHandler.h
     struct FavoritesHandler : public MenuEventHandler
     {
@@ -32,7 +32,7 @@ namespace RE {
     };
     static_assert(sizeof(FavoritesHandler) == 0x10);
 
-    //вообще нету в CommonLibSSE
+    //missing in CommonLibSSE
     struct ConsoleOpenHandler : public MenuEventHandler
     {
     public:
@@ -45,8 +45,9 @@ namespace RE {
         virtual bool ProcessKinect(KinectEvent* a_event) = 0;  // 02
         virtual bool ProcessButton(ButtonEvent* a_event) = 0;  // 05
     };
+
     /*
-    //вообще нету в CommonLibSSE
+    //missing in CommonLibSSE
     struct QuickSaveLoadHandler : public MenuEventHandler
     {
     public:
@@ -61,7 +62,6 @@ namespace RE {
     };*/
 }
 
-//не работает с ключом типа 'char*'
 std::map<std::string, char*> keyToMenuName {
     {"Console", "Console"},
     {"Tween Menu", "TweenMenu"},
@@ -80,10 +80,7 @@ bool onMenuOpenClose(const char * keyName) {
 
     if (!lg || !mc || !ui)
         return false;
-    
 
-    //lg->Print("onMenuOpenClose '%s', '%s'", keyName, menuName);
-    
     g_taskQueue.AddTask([=] {
         auto obj = JsValue::Object();
 
@@ -205,7 +202,7 @@ private:
     T* originalHandler;
 };
 
-//переделать disableOriginalConsole() -> disableUi("Console")
+//refactoring disableOriginalConsole() -> disableUi("Console")
 void disableOriginalConsole()
 {
     auto mc = RE::MenuControls::GetSingleton();
@@ -241,8 +238,9 @@ namespace UiApi
         mc->RemoveHandler(mc->favoritesHandler.get());
         mc->AddHandler(favoritesHandler);
         mc->favoritesHandler = RE::BSTSmartPointer<RE::FavoritesHandler>((RE::FavoritesHandler*)favoritesHandler);
+        
         /*
-        //quickSaveLoadHandler
+        //quickSaveLoadHandler  <----------crash
         MyMenuHandler<RE::QuickSaveLoadHandler>* quickSaveLoadHandler = new MyMenuHandler<RE::QuickSaveLoadHandler>("QuickSaveLoad", mc->quickSaveLoadHandler.get());
         mc->RemoveHandler(mc->quickSaveLoadHandler.get());
         mc->AddHandler(quickSaveLoadHandler);
