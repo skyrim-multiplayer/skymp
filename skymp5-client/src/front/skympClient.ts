@@ -563,6 +563,7 @@ export class SkympClient {
   private actorValuesNeedUpdate = false;
 }
 
+
 once("update", () => {
   // Is it racing with OnInit in Papyrus?
   (sp.TESModPlatform as any).blockPapyrusEvents(true);
