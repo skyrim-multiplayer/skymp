@@ -39,7 +39,7 @@ interface AnyMessage {
   t?: number;
 }
 const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
-  const msgType: string = msgAny.type || (MsgType as any)[(msgAny.t as any)];
+  const msgType: string = msgAny.type || (MsgType as any)[msgAny.t as any];
   const handler = handler_ as unknown as Record<
     string,
     (m: AnyMessage) => void
@@ -128,7 +128,10 @@ export class SkympClient {
     });
 
     networking.on("message", (msgAny: Record<string, unknown> | string) => {
-      handleMessage(msgAny as Record<string, unknown>, this.msgHandler as MsgHandler);
+      handleMessage(
+        msgAny as Record<string, unknown>,
+        this.msgHandler as MsgHandler
+      );
     });
 
     on("update", () => {
@@ -311,7 +314,12 @@ export class SkympClient {
     });
 
     on("update", () => deathSystem.update());
-    once("update", () => deathSystem.MakePlayerImmortal())
+    once("update", () => {
+      const player = Game.getPlayer();
+      if (player) {
+        deathSystem.makeActorImmortal(player);
+      }
+    });
   }
 
   // May return null
@@ -409,7 +417,10 @@ export class SkympClient {
 
       ++this.numEquipmentChanges;
 
-      const eq = getEquipment(Game.getPlayer() as Actor, this.numEquipmentChanges);
+      const eq = getEquipment(
+        Game.getPlayer() as Actor,
+        this.numEquipmentChanges
+      );
       this.sendTarget.send(
         { t: MsgType.UpdateEquipment, data: eq, _refrId },
         true
@@ -424,10 +435,18 @@ export class SkympClient {
 
     const av = getActorValues(Game.getPlayer() as Actor);
     const currentTime = Date.now();
-    if (this.prevValues.health === av.health && this.prevValues.stamina === av.stamina && this.prevValues.magicka === av.magicka && this.actorValuesNeedUpdate === false) {
+    if (
+      this.prevValues.health === av.health &&
+      this.prevValues.stamina === av.stamina &&
+      this.prevValues.magicka === av.magicka &&
+      this.actorValuesNeedUpdate === false
+    ) {
       return;
     } else {
-      if (currentTime - this.prevActorValuesUpdateTime < 1000 && this.actorValuesNeedUpdate === false) {
+      if (
+        currentTime - this.prevActorValuesUpdateTime < 1000 &&
+        this.actorValuesNeedUpdate === false
+      ) {
         return;
       }
       this.sendTarget.send(
@@ -466,7 +485,7 @@ export class SkympClient {
     const prevRemoteServer: RemoteServer = storage.remoteServer as RemoteServer;
     let rs: RemoteServer;
 
-    if (prevRemoteServer && prevRemoteServer.getWorldModel as unknown) {
+    if (prevRemoteServer && (prevRemoteServer.getWorldModel as unknown)) {
       rs = prevRemoteServer;
       printConsole("Restore previous RemoteServer");
 
@@ -520,7 +539,11 @@ export class SkympClient {
   }
 
   private updateActorValuesAfterAnimation(animName: string) {
-    if (animName === "JumpLand" || animName === "JumpLandDirectional" || animName === "DeathAnim") {
+    if (
+      animName === "JumpLand" ||
+      animName === "JumpLandDirectional" ||
+      animName === "DeathAnim"
+    ) {
       this.actorValuesNeedUpdate = true;
     }
   }

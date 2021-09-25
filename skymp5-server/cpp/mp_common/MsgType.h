@@ -18,5 +18,6 @@ enum class MsgType : int64_t
   ConsoleCommand = 12,
   CraftItem = 13,
   Host = 14,
-  CustomEvent = 15
+  CustomEvent = 15,
+  ChangeValues = 16
 };
