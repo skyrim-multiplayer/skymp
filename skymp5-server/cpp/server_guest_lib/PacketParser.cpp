@@ -44,13 +44,17 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
   if (!length)
     throw std::runtime_error("Zero-length message packets are not allowed");
 
-  auto jMessage = pImpl->simdjsonParser.parse(data + 1, length - 1).value();
+  IActionListener::RawMessageData rawMsgData{ data, length, /*parsed (json)*/{}, userId, };
+
+  ;
+
+  rawMsgData.parsed = pImpl->simdjsonParser.parse(data + 1, length - 1).value();
+
+  const auto& jMessage = rawMsgData.parsed;
 
   using TypeInt = std::underlying_type<MsgType>::type;
   auto type = MsgType::Invalid;
   Read(jMessage, JsonPointers::t, reinterpret_cast<TypeInt*>(&type));
-
-  IActionListener::RawMessageData rawMsgData{ data, length, jMessage, userId };
 
   switch (type) {
     case MsgType::Invalid:
