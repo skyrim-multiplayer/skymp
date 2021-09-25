@@ -4,6 +4,9 @@
 #include "MpActor.h"
 #include <MsgType.h>
 #include <simdjson.h>
+#include "MovementData.h"
+#include "MovementDataSerialization.h"
+#include <slikenet/BitStream.h>
 
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)
@@ -41,12 +44,25 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                              size_t length,
                                              IActionListener& actionListener)
 {
-  if (!length)
+  if (!length) {
     throw std::runtime_error("Zero-length message packets are not allowed");
+  }
 
   IActionListener::RawMessageData rawMsgData{ data, length, /*parsed (json)*/{}, userId, };
 
-  ;
+  if (length > 1 && data[1] == MovementData::kHeaderByte) {
+    MovementData movData;
+    //                      vvvvvvvvvv oh shit here we go again
+    SLNet::BitStream stream(const_cast<unsigned char*>(data) + 1, length - 1, /*copyData*/false);
+    ReadTo(movData, stream);
+
+    actionListener.OnUpdateMovement(
+      rawMsgData, movData.idx, { movData.pos[0], movData.pos[1], movData.pos[2] },
+      { movData.rot[0], movData.rot[1], movData.rot[2] },
+      movData.isInJumpState, movData.isWeapDrawn, movData.worldOrCell);
+
+    return;
+  }
 
   rawMsgData.parsed = pImpl->simdjsonParser.parse(data + 1, length - 1).value();
 
