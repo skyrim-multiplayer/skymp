@@ -2,6 +2,7 @@
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "GetBaseActorValues.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 
@@ -49,9 +50,19 @@ void MpActor::SetEquipment(const std::string& jsonString)
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
                               VisitPropertiesMode mode)
 {
+  auto baseId = MpObjectReference::GetBaseId();
+  uint32_t raceId = GetLook() ? GetLook()->raceId : 0;
+
+  auto baseActorValues = GetBaseActorValues(baseId, raceId);
+  MpChangeForm changeForm = GetChangeForm();
+
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
     visitor("isRaceMenuOpen", "true");
+
+  if (mode == VisitPropertiesMode::All) {
+    baseActorValues.VisitBaseActorValues(baseActorValues, changeForm, visitor);
+  }
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
@@ -144,6 +155,16 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
     promise.Resolve(v);
     pImpl->snippetPromises.erase(it);
   }
+}
+
+void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
+                             float staminaPercentage)
+{
+  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.healthPercentage = healthPercentage;
+    changeForm.magickaPercentage = magickaPercentage;
+    changeForm.staminaPercentage = staminaPercentage;
+  });
 }
 
 const bool& MpActor::IsRaceMenuOpen() const
