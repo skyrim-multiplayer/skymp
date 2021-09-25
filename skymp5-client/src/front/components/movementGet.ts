@@ -3,6 +3,7 @@ import { NiPoint3 } from "../../lib/structures/movement";
 import { Movement, RunMode } from "./movement";
 
 export const getMovement = (refr: ObjectReference): Movement => {
+  
   const ac = Actor.from(refr) as Actor;
 
   // It is running for ObjectReferences because Standing
