@@ -6,12 +6,12 @@
 #include "savefile/SFReader.h"
 #include "savefile/SFSeekerOfDifferences.h"
 #include "savefile/SFWriter.h"
-#include <GameData.h>
 #include <RE/ScriptEventSourceHolder.h>
 #include <RE/TESLoadGameEvent.h>
 #include <filesystem>
 #include <fstream>
 #include <shlobj.h>
+#include <skse64/GameData.h>
 #include <sstream>
 #include <zlib.h>
 #pragma comment(lib, "shell32.lib")
@@ -28,8 +28,9 @@ public:
   LoadGameEventSink()
   {
     auto holder = RE::ScriptEventSourceHolder::GetSingleton();
-    if (!holder)
+    if (!holder) {
       throw NullPointerException("holder");
+    }
 
     holder->AddEventSink(
       dynamic_cast<RE::BSTEventSink<RE::TESLoadGameEvent>*>(this));
@@ -43,8 +44,9 @@ public:
       // A way to wait 5 seconds game time
       for (int i = 0; i < 50; ++i) {
         auto n = TESModPlatform::GetNumPapyrusUpdates();
-        while (n == TESModPlatform::GetNumPapyrusUpdates())
+        while (n == TESModPlatform::GetNumPapyrusUpdates()) {
           Sleep(20);
+        }
         Sleep(80);
       }
 
@@ -100,8 +102,9 @@ void LoadGame::Run(std::shared_ptr<SaveFile_::SaveFile> save,
                    Time* time, SaveFile_::Weather* _weather,
                    SaveFile_::ChangeFormNPC_* changeFormNPC)
 {
-  if (!save)
+  if (!save) {
     throw std::runtime_error("Bad SaveFile");
+  }
 
   ModifySaveTime(save, time);
   ModifySaveWeather(save, _weather);
@@ -110,16 +113,18 @@ void LoadGame::Run(std::shared_ptr<SaveFile_::SaveFile> save,
   ModifyEssStructure(save, pos, angle, cellOrWorld);
 
   auto name = g_saveFilePrefix + GenerateGuid();
-  if (!SaveFile_::Writer(save).CreateSaveFile(GetSaveFullPath(name)))
+  if (!SaveFile_::Writer(save).CreateSaveFile(GetSaveFullPath(name))) {
     throw std::runtime_error("CreateSaveFile failed");
+  }
 
   TESModPlatform::BlockMoveRefrToPosition(true);
   static LoadGameEventSink g_sink;
 
-  if (auto mgr = BGSSaveLoadManager::GetSingleton())
-    return mgr->Load(name.data());
-  else
-    throw std::runtime_error("BGSSaveLoadManager is nullptr");
+  if (auto saveLoadManager = BGSSaveLoadManager::GetSingleton()) {
+    return saveLoadManager->Load(name.data());
+  } else {
+    throw NullPointerException("saveLoadManager");
+  }
 }
 
 fs::path LoadGame::GetSaveFullPath(const std::string& name)
@@ -134,8 +139,9 @@ std::wstring LoadGame::GetPathToMyDocuments()
   PWSTR ppszPath;
   HRESULT hr = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &ppszPath);
   std::wstring myPath;
-  if (SUCCEEDED(hr))
+  if (SUCCEEDED(hr)) {
     myPath = ppszPath;
+  }
   CoTaskMemFree(ppszPath);
   return myPath;
 }
@@ -145,12 +151,14 @@ void LoadGame::ModifyPluginInfo(std::shared_ptr<SaveFile_::SaveFile>& save)
   std::vector<std::string> newPlugins;
   auto dataHandler = DataHandler::GetSingleton();
 
-  if (!dataHandler)
-    throw std::runtime_error("DataHandler::GetSingleton = nullptr");
+  if (!dataHandler) {
+    throw NullPointerException("dataHandler");
+  }
 
-  for (size_t i = 0; i < dataHandler->modList.loadedMods.count; ++i)
+  for (size_t i = 0; i < dataHandler->modList.loadedMods.count; ++i) {
     newPlugins.push_back(
       std::string(dataHandler->modList.loadedMods[i]->name));
+  }
 
   save->OverwritePluginInfo(newPlugins);
 }
@@ -158,24 +166,25 @@ void LoadGame::ModifyPluginInfo(std::shared_ptr<SaveFile_::SaveFile>& save)
 void LoadGame::ModifySaveTime(std::shared_ptr<SaveFile_::SaveFile>& save,
                               LoadGame::Time* time)
 {
-  if (!time)
+  if (!time) {
     return;
+  }
 
-  if (!time->IsSet())
+  if (!time->IsSet()) {
     throw std::runtime_error("Time data is not filled");
+  }
 
   SaveFile_::RefID gameHourID = 0x38;
 
   auto index = save->FindIndexInFormIdArray(0x38);
-
   if (index >= 0) {
-    gameHourID = SaveFile_::RefID((uint32_t)index);
+    gameHourID = SaveFile_::RefID(static_cast<uint32_t>(index));
   }
 
   auto var = save->GetGlobalvariableByRefID(gameHourID);
-
-  if (!var)
+  if (!var) {
     throw std::runtime_error("Global Varible not found");
+  }
 
   var->value =
     time->GetHours() + time->GetMinutes() / 60.0 + time->GetSeconds() / 3600.0;
@@ -184,20 +193,23 @@ void LoadGame::ModifySaveTime(std::shared_ptr<SaveFile_::SaveFile>& save,
 void LoadGame::ModifySaveWeather(std::shared_ptr<SaveFile_::SaveFile>& save,
                                  SaveFile_::Weather* _weather)
 {
-  if (!_weather)
+  if (!_weather) {
     return;
+  }
 
   SaveFile_::GlobalData& gData =
     save->globalDataTable1[SaveFile_::SaveFile::WEATHER_INDEX];
 
-  if (gData.type != SaveFile_::SaveFile::WEATHER_INDEX)
+  if (gData.type != SaveFile_::SaveFile::WEATHER_INDEX) {
     throw std::runtime_error("Wrong weather index");
+  }
 
   SaveFile_::Weather* weather =
     reinterpret_cast<SaveFile_::Weather*>(gData.data.get());
 
-  if (!weather)
-    throw std::runtime_error("weather == nullptr");
+  if (!weather) {
+    throw NullPointerException("weather");
+  }
 
   weather->climate = _weather->climate;
   weather->weather = _weather->weather;
@@ -209,8 +221,9 @@ void LoadGame::ModifyPlayerFormNPC(std::shared_ptr<SaveFile_::SaveFile> save,
                                    SaveFile_::ChangeFormNPC_* changeFormNPC)
 {
   using namespace SaveFile_;
-  if (!changeFormNPC)
+  if (!changeFormNPC) {
     return;
+  }
 
   auto form = save->GetChangeFormByRefID(RefID(RefID::PlayerBase),
                                          uint8_t(ChangeForm::Type::NPC));
@@ -218,7 +231,6 @@ void LoadGame::ModifyPlayerFormNPC(std::shared_ptr<SaveFile_::SaveFile> save,
   if (form) {
     auto newForm = changeFormNPC->ToBinary();
     FillChangeForm(save, form, newForm);
-    return;
   }
 }
 
@@ -248,8 +260,9 @@ void LoadGame::ModifyEssStructure(std::shared_ptr<SaveFile_::SaveFile> save,
                                   uint32_t cellOrWorld)
 {
   auto playerLoc = FindSectionWithPlayerLocation(save);
-  if (!playerLoc)
+  if (!playerLoc) {
     throw std::runtime_error("Couldn't find PlayerLocation in the save file");
+  }
 
   auto worldRefId = SaveFile_::RefID::CreateRefId(*save, cellOrWorld);
   *playerLoc = CreatePlayerLocation(pos, worldRefId);
@@ -257,11 +270,13 @@ void LoadGame::ModifyEssStructure(std::shared_ptr<SaveFile_::SaveFile> save,
   auto player = std::find_if(
     save->changeForms.begin(), save->changeForms.end(),
     [](auto& changeForm) { return changeForm.formID.IsPlayerID(); });
-  if (player == save->changeForms.end())
+  if (player == save->changeForms.end()) {
     throw std::runtime_error("Unable to find Player's change form");
+  }
   bool isCompressed = player->length2 > 0;
-  if (!isCompressed)
+  if (!isCompressed) {
     throw std::runtime_error("Player's ChangeForm must be compressed");
+  }
 
   auto uncompressed = Decompress(*player);
   EditChangeForm(uncompressed, pos, angle, worldRefId);
@@ -277,8 +292,9 @@ SaveFile_::PlayerLocation* LoadGame::FindSectionWithPlayerLocation(
     c.begin(), c.end(), [](const SaveFile_::GlobalData& globalData) {
       return globalData.type == SaveFile_::PlayerLocation::GlobalDataType;
     });
-  if (it == c.end())
+  if (it == c.end()) {
     return nullptr;
+  }
   return static_cast<SaveFile_::PlayerLocation*>(it->data.get());
 }
 
@@ -316,13 +332,15 @@ void LoadGame::EditChangeForm(std::vector<uint8_t>& data,
                               const SaveFile_::RefID& world)
 {
   auto d = data.data();
-  *(SaveFile_::RefID*)(d + 0) = world;
+  *reinterpret_cast<SaveFile_::RefID*>(d + 0) = world;
 
-  auto& _pos = *(std::array<float, 3>*)(d + 3);
-  _pos = pos;
+  auto& changeFormPos = *reinterpret_cast<std::array<float, 3>*>(d + 3);
+  changeFormPos = pos;
 
-  float* _rot = (float*)(d + 15);
-  _rot[2] = angle[2] / 180.f * acos(-1);
+  float* changeFormAngle = reinterpret_cast<float*>(d + 15);
+  for (int i = 0; i < 3; ++i) {
+    changeFormAngle[i] = angle[i] / 180.f * acos(-1);
+  }
 }
 
 std::vector<uint8_t> LoadGame::Compress(
@@ -367,8 +385,9 @@ std::wstring LoadGame::StringToWstring(std::string s)
 std::string LoadGame::GenerateGuid()
 {
   GUID guid;
-  if (CoCreateGuid(&guid) != S_OK)
+  if (CoCreateGuid(&guid) != S_OK) {
     throw std::runtime_error("CoCreateGuid failed");
+  }
 
   char name[MAX_PATH] = { 0 };
   sprintf_s(

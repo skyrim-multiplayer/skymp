@@ -18,7 +18,8 @@ const RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo>& FindType(
       if (!stricmp(thisClassName.data(), className.data()) != 0)
         return classInfo;
     }
-    if (!vm->ReloadType(className.data())) break;
+    if (!vm->ReloadType(className.data()))
+      break;
   }
 
   static const RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> notFound;

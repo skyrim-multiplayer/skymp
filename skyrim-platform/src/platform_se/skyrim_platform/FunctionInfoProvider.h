@@ -1,6 +1,6 @@
 #pragma once
-#include <RE/BSScript/TypeInfo.h>
 #include <RE/BSScript/IFunction.h>
+#include <RE/BSScript/TypeInfo.h>
 #include <string>
 
 class FunctionInfo

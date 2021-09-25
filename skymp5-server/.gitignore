@@ -1,15 +1,2 @@
-vcpkg_installed
 node_modules
-build
-dist_back
-dist_front
-dist
-coverage
-.clinic
-world.sqlite
-server-settings.json
-skymp5-server.exe
-pack
-pack-client
-world
-push-s3-cfg.json
+cmake-js-fetch-build

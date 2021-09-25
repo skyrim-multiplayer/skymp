@@ -4,22 +4,13 @@
 	"description": "",
 	"main": "index.ts",
 	"scripts": {
-		"serve": "parcel serve index.ts --out-dir ./ --out-file gamemode.js --no-source-maps --no-cache --target node",
-		"serve:server": "parcel serve index.ts --out-dir ../skymp-server-lite --out-file gamemode.js --no-source-maps --no-cache --target node",
-		"build": "parcel build index.ts --out-dir ./ --out-file gamemode.js --no-source-maps --no-cache --target node",
+		"serve": "parcel serve index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node",
+		"build": "parcel build index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node",
 		"test": "jest --forceExit --coverage --verbose"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/alekcey0211/skymp5-gamemode.git"
 	},
 	"keywords": [],
 	"author": "Leonid Pospelov <pospelovlm@yandex.ru>",
 	"license": "SEE LICENSE IN 'LICENSE'",
-	"bugs": {
-		"url": "https://github.com/alekcey0211/skymp5-gamemode/issues"
-	},
-	"homepage": "https://github.com/alekcey0211/skymp5-gamemode#readme",
 	"devDependencies": {
 		"@types/mocha": "^8.2.0",
 		"@types/node": "^14.14.20",

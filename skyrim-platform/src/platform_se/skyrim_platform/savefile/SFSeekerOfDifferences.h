@@ -29,9 +29,9 @@ private:
 
 public:
   static void ZlibDecompress(const uint8_t* in, size_t inSize, uint8_t* out,
-                      size_t outSize);
+                             size_t outSize);
   static size_t ZlibCompress(const uint8_t* in, size_t inSize, uint8_t* out,
-                      size_t outMaxSize);
+                             size_t outMaxSize);
   std::ofstream writer;
   void CoutVector(std::vector<uint8_t> vector, std::string nameObject);
 

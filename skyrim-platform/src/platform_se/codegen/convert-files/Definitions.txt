@@ -1,0 +1,534 @@
+declare class PapyrusObject {
+    static from(papyrusObject: PapyrusObject | null): PapyrusObject | null;
+}
+export type PapyrusValue = PapyrusObject | number | string | boolean | null | PapyrusValue[];
+export declare function printConsole(...arguments: unknown[]): void;
+export declare function writeLogs(pluginName: string, ...arguments: unknown[]): void;
+export declare function setPrintConsolePrefixesEnabled(enabled: boolean): void;
+export declare function writeScript(scriptName: string, src: string): void;
+export declare function callNative(className: string, functionName: string, self?: PapyrusObject, ...args: PapyrusValue[]): PapyrusValue;
+export declare function getJsMemoryUsage(): number;
+export declare function getPluginSourceCode(pluginName: string): string;
+export declare function writePlugin(pluginName: string, newSources: string): string;
+export declare function getPlatformVersion(): string;
+export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void;
+export declare function encodeUtf8(text: string): ArrayBuffer;
+export declare function decodeUtf8(buffer: ArrayBuffer): string;
+export declare let storage: Record<string, unknown>;
+export declare let settings: Record<string, Record<string, unknown>>;
+
+export declare function on(eventName: 'update', callback: () => void): void;
+export declare function once(eventName: 'update', callback: () => void): void;
+
+export declare function on(eventName: 'tick', callback: () => void): void;
+export declare function once(eventName: 'tick', callback: () => void): void;
+
+export interface IpcMessageEvent {
+    sourceSystemName: string;
+    message: ArrayBuffer;
+}
+
+export declare function on(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): void;
+export declare function once(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): void;
+
+export interface Face {
+    hairColor: number;
+    bodySkinColor: number;
+    headTextureSetId: number;
+    headPartIds: number[];
+    presets: number[];
+}
+
+export interface ChangeFormNpc {
+    raceId?: number;
+    name?: string;
+    face?: Face;
+}
+
+export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc): void;
+
+export declare function worldPointToScreenPoint(...args: number[][]): number[][];
+
+export type PacketType = 'message' | 'disconnect' | 'connectionAccepted' | 'connectionFailed' | 'connectionDenied';
+
+// Available only if multiplayer is installed on user's machine
+interface MpClientPlugin {
+    getVersion(): string;
+    createClient(host: string, port: number): void;
+    destroyClient(): void;
+    isConnected(): boolean;
+    tick(tickHandler: (packetType: PacketType, jsonContent: string, error: string) => void): void;
+    send(jsonContent: string, reliable: boolean): void;
+}
+export declare let mpClientPlugin: MpClientPlugin;
+
+export interface Browser {
+  setVisible(visible: boolean): void;
+  setFocused(focused: boolean): void;
+  loadUrl(url: string): void;
+  getToken(): string;
+  executeJavaScript(src: string): void;
+}
+export declare let browser: Browser;
+
+export interface ExtraData {
+  type: 'Health' | 'Count' | 'Enchantment' | 'Charge' | 'TextDisplayData' | 'Soul' | 'Poison' | 'Worn' | 'WornLeft';
+}
+export interface ExtraHealth extends ExtraData {
+  type: 'Health';
+  health: number;
+}
+export interface ExtraCount extends ExtraData {
+  type: 'Count';
+  count: number;
+}
+export interface ExtraEnchantment extends ExtraData {
+  type: 'Enchantment';
+  enchantmentId: number;
+  maxCharge: number;
+  removeOnUnequip: boolean;
+}
+export interface ExtraCharge extends ExtraData {
+  type: 'Charge';
+  charge: number;
+}
+export interface ExtraTextDisplayData extends ExtraData {
+  type: 'TextDisplayData';
+  name: string;
+}
+export interface ExtraSoul extends ExtraData {
+  type: 'Soul';
+  soul: 0 | 1 | 2 | 3 | 4 | 5;
+}
+export interface ExtraPoison extends ExtraData {
+  type: 'Poison';
+  poisonId: number;
+  count: number;
+}
+export interface ExtraWorn extends ExtraData {
+  type: 'Worn';
+}
+export interface ExtraWornLeft extends ExtraData {
+  type: 'WornLeft';
+}
+export type BaseExtraList = ExtraData[];
+export interface InventoryChangesEntry {
+  countDelta: number;
+  baseId: number;
+  extendDataList: BaseExtraList[];
+}
+export declare let getExtraContainerChanges: (objectReferenceId: number) => InventoryChangesEntry[];
+
+export interface InventoryEntry {
+  count: number;
+  baseId: number;
+}
+export declare let getContainer: (baseId: number) => InventoryEntry[];
+
+export interface ActivateEvent {
+    target: ObjectReference,
+    caster: ObjectReference,
+    isCrimeToActivate: boolean
+}
+
+export interface MoveAttachDetachEvent {
+    movedRef: ObjectReference,
+    isCellAttached: boolean
+}
+export interface WaitStopEvent {
+    isInterrupted: boolean
+}
+export interface ObjectLoadedEvent {
+    object: Form,
+    isLoaded: boolean
+}
+export interface LockChangedEvent {
+    lockedObject: ObjectReference
+}
+
+export interface CellFullyLoadedEvent {
+    cell: Cell
+}
+
+export interface GrabReleaseEvent {
+    refr: ObjectReference,
+    isGrabbed: boolean
+}
+
+export interface SwitchRaceCompleteEvent {
+    subject: ObjectReference
+}
+
+export interface UniqueIDChangeEvent {
+    oldBaseID: number,
+    newBaseID: number,
+    oldUniqueID: number,
+    newUniqueID: number
+}
+
+export interface TrackedStatsEvent {
+    statName: string,
+    newValue: number
+}
+
+export interface InitScriptEvent {
+    initializedObject: ObjectReference
+}
+
+export interface ResetEvent {
+    object: ObjectReference
+}
+
+export interface CombatEvent {
+    target: ObjectReference,
+    actor: ObjectReference,
+    isCombat: boolean,
+    isSearching: boolean
+}
+
+export interface DeathEvent {
+    actorDying: ObjectReference,
+    actorKiller: ObjectReference
+}
+
+export interface ContainerChangedEvent {
+    oldContainer: ObjectReference,
+    newContainer: ObjectReference,
+    baseObj: Form,
+    numItems: number,
+    uniqueID: number,
+    reference: ObjectReference
+}
+
+export interface HitEvent {
+    target: ObjectReference,
+    agressor: ObjectReference,
+    source: Form,
+    projectile: Projectile,
+    isPowerAttack: boolean,
+    isSneakAttack: boolean,
+    isBashAttack: boolean,
+    isHitBlocked: boolean
+}
+
+export interface EquipEvent {
+    actor: ObjectReference,
+    baseObj: Form,
+    uniqueId: number,
+    originalRefr: ObjectReference
+}
+
+export interface ActiveEffectApplyRemoveEvent {
+    activeEffect: ActiveMagicEffect,
+    effect: MagicEffect,
+    caster: ObjectReference,
+    target: ObjectReference
+}
+
+export interface MagicEffectApplyEvent {
+    activeEffect: ActiveMagicEffect,
+    effect: MagicEffect,
+    caster: ObjectReference,
+    target: ObjectReference
+}
+
+export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
+export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
+
+export declare function on(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): void;
+export declare function once(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): void;
+
+export declare function on(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): void;
+export declare function once(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): void;
+
+export declare function on(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): void;
+export declare function once(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): void;
+
+export declare function on(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): void;
+export declare function once(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): void;
+
+export declare function on(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): void;
+export declare function once(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): void;
+
+export declare function on(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): void;
+export declare function once(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): void;
+
+export declare function on(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): void;
+export declare function once(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): void;
+
+export declare function on(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): void;
+export declare function once(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): void;
+
+export declare function on(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): void;
+export declare function once(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): void;
+
+export declare function on(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): void;
+export declare function once(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): void;
+
+export declare function on(eventName: 'reset', callback: (event: ResetEvent) => void): void;
+export declare function once(eventName: 'reset', callback: (event: ResetEvent) => void): void;
+
+export declare function on(eventName: 'combatState', callback: (event: CombatEvent) => void): void;
+export declare function once(eventName: 'combatState', callback: (event: CombatEvent) => void): void;
+
+export declare function on(eventName: 'loadGame', callback: () => void): void;
+export declare function once(eventName: 'loadGame', callback: () => void): void;
+
+export declare function on(eventName: 'deathEnd', callback: (event: DeathEvent) => void): void;
+export declare function once(eventName: 'deathEnd', callback: (event: DeathEvent) => void): void;
+
+export declare function on(eventName: 'deathStart', callback: (event: DeathEvent) => void): void;
+export declare function once(eventName: 'deathStart', callback: (event: DeathEvent) => void): void;
+
+export declare function on(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): void;
+export declare function once(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): void;
+
+export declare function on(eventName: 'hit', callback: (event: HitEvent) => void): void;
+export declare function once(eventName: 'hit', callback: (event: HitEvent) => void): void;
+
+export declare function on(eventName: 'unequip', callback: (event: EquipEvent) => void): void;
+export declare function once(eventName: 'unequip', callback: (event: EquipEvent) => void): void;
+
+export declare function on(eventName: 'equip', callback: (event: EquipEvent) => void): void;
+export declare function once(eventName: 'equip', callback: (event: EquipEvent) => void): void;
+
+export declare function on(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): void;
+export declare function once(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): void;
+
+export declare function on(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+export declare function once(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+
+export declare function on(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+export declare function once(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+
+declare class ConsoleComand {
+    longName: string;
+    shortName: string;
+    numArgs: number;
+    execute: (...arguments: unknown[]) => boolean;
+}
+export declare function findConsoleCommand(cmdName: string): ConsoleComand;
+
+export const enum MotionType {
+    Dynamic = 1,
+    SphereInertia = 2,
+    BoxInertia = 3,
+    Keyframed = 4,
+    Fixed = 5,
+    ThinBoxInertia = 6,
+    Character = 7
+}
+
+export const enum Menu {
+    Barter = 'BarterMenu',
+    Book = 'Book Menu',
+    Console = 'Console',
+    ConsoleNativeUI = 'Console Native UI Menu',
+    Container = 'ContainerMenu',
+    Crafting = 'Crafting Menu',
+    Credits = 'Credits Menu',
+    Cursor = 'Cursor Menu',
+    Debug = 'Debug Text Menu',
+    Dialogue = 'Dialogue Menu',
+    Fader = 'Fader Menu',
+    Favorites = 'FavoritesMenu',
+    Gift = 'GiftMenu',
+    HUD = 'HUD Menu',
+    Inventory = 'InventoryMenu',
+    Journal = 'Journal Menu',
+    Kinect = 'Kinect Menu',
+    LevelUp = 'LevelUp Menu',
+    Loading = 'Loading Menu',
+    Main = 'Main Menu',
+    Lockpicking = 'Lockpicking Menu',
+    Magic = 'MagicMenu',
+    Map = 'MapMenu',
+    MessageBox = 'MessageBoxMenu',
+    Mist = 'Mist Menu',
+    OverlayInteraction = 'Overlay Interaction Menu',
+    Overlay = 'Overlay Menu',
+    Quantity = 'Quantity Menu',
+    RaceSex = 'RaceSex Menu',
+    Sleep = 'Sleep/Wait Menu',
+    Stats = 'StatsMenu',
+    TitleSequence = 'TitleSequence Menu',
+    Top = 'Top Menu',
+    Training = 'Training Menu',
+    Tutorial = 'Tutorial Menu',
+    Tween = 'TweenMenu'
+}
+
+export const enum DxScanCode {
+    None,
+    Escape,
+    N1,
+    N2,
+    N3,
+    N4,
+    N5,
+    N6,
+    N7,
+    N8,
+    N9,
+    N0,
+    Minus,
+    Equals,
+    Backspace,
+    Tab,
+    Q,
+    W,
+    E,
+    R,
+    T,
+    Y,
+    U,
+    I,
+    O,
+    P,
+    LeftBracket,
+    RightBracket,
+    Enter,
+    LeftControl,
+    A,
+    S,
+    D,
+    F,
+    G,
+    H,
+    J,
+    K,
+    L,
+    Semicolon,
+    Apostrophe,
+    Console,
+    LeftShift,
+    BackSlash,
+    Z,
+    X,
+    C,
+    V,
+    B,
+    N,
+    M,
+    Comma,
+    Period,
+    ForwardSlash,
+    RightShift,
+    NumMult,
+    LeftAlt,
+    Spacebar,
+    CapsLock,
+    F1,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    NumLock,
+    ScrollLock,
+    Num7,
+    Num8,
+    Num9,
+    NumMinus,
+    Num4,
+    Num5,
+    Num6,
+    NumPlus,
+    Num1,
+    Num2,
+    Num3,
+    Num0,
+    NumDot,
+    F11 = 87,
+    F12,
+    NumEnter = 156,
+    RightControl,
+    NumSlash = 181,
+    SysRqPtrScr = 183,
+    RightAlt,
+    Pause = 197,
+    Home = 199,
+    UpArrow,
+    PgUp,
+    LeftArrow = 203,
+    RightArrow = 205,
+    End = 207,
+    DownArrow,
+    PgDown,
+    Insert,
+    Delete,
+    LeftMouseButton = 256,
+    RightMouseButton,
+    MiddleMouseButton,
+    MouseButton3,
+    MouseButton4,
+    MouseButton5,
+    MouseButton6,
+    MouseButton7,
+    MouseWheelUp,
+    MouseWheelDown
+}
+
+export declare namespace SendAnimationEventHook {
+    class Context {
+        readonly selfId: number;
+        animEventName: string;
+
+        readonly storage: Map<string, unknown>;
+    }
+
+    class LeaveContext extends Context {
+        readonly animationSucceeded: boolean;
+    }
+
+    class Handler {
+        enter(ctx: Context): void;
+        leave(ctx: LeaveContext): void;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    class Target {
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+    }
+}
+
+export declare namespace SendPapyrusEventHook {
+    class Context {
+        readonly selfId: number;
+        readonly papyrusEventName: string;
+
+        readonly storage: Map<string, unknown>;
+    }
+
+    class Handler {
+        enter(ctx: Context): void;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    class Target {
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+    }
+}
+
+export declare class Hooks {
+    sendAnimationEvent: SendAnimationEventHook.Target;
+    sendPapyrusEvent: SendPapyrusEventHook.Target;
+}
+
+export declare let hooks: Hooks;
+
+export declare class HttpResponse {
+    body: string;
+    status: number;
+}
+export type HttpHeaders = Record<string, string>;
+
+export declare class HttpClient {
+    constructor(url: string);
+    get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
+    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
+}

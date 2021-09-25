@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-      "noImplicitAny": true,
-      "baseUrl": "./src/skyrim-platform",
-      "lib": ["ES2015", "es2017"],
-    },
-    "include": ["src"]
-}
-  
