@@ -32,7 +32,7 @@ enum class PacketType
 class IClient
 {
 public:
-  typedef void (*OnPacket)(void* state, PacketType packetType, PacketData data,
+  using OnPacket = void (*)(void* state, PacketType packetType, PacketData data,
                            size_t length, const char* error);
 
   virtual ~IClient() = default;
