@@ -40,8 +40,17 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
       std::string jsonContent;
 
       if (packetType == Networking::PacketType::Message && length > 1) {
-        jsonContent =
-          std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
+        if (data[1] == MovementData::kHeaderByte) {
+          MovementData movData;
+          //                      v SLikeNet <3 <3 <3 <3 <3 <3 <3
+          // (also, my code sucks too, but it's probably ok if I don't merge it)
+          SLNet::BitStream stream(const_cast<unsigned char*>(data) + 1, length - 1, /*copyData*/false);
+          ReadTo(movData, stream);
+          jsonContent = MovementDataToJson(movData);
+        } else {
+          jsonContent =
+            std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
+        }
       }
 
       onPacketAndState.first((int32_t)packetType, jsonContent.data(), error,
@@ -62,10 +71,11 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
     const auto movData = MovementDataFromJson(parsedJson);
     SLNet::BitStream stream;
     Write(movData, stream);
-    
-    std::vector<uint8_t> buf(stream.GetNumberOfBytesUsed() + 1);
+
+    std::vector<uint8_t> buf(stream.GetNumberOfBytesUsed() + 2);
     buf[0] = Networking::MinPacketId;
-    std::copy(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed(), buf.begin() + 1);
+    buf[1] = MovementData::kHeaderByte;
+    std::copy(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed(), buf.begin() + 2);
     state.cl->Send(buf.data(), buf.size(), reliable);
 
     return;

@@ -52,6 +52,8 @@ inline RunMode RunModeFromString(std::string_view str)
 
 struct MovementData
 {
+  const static char kHeaderByte = 'M';
+
   uint32_t idx;
   uint32_t worldOrCell;
   std::array<float, 3> pos;

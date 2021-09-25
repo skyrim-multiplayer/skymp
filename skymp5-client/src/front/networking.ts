@@ -49,7 +49,7 @@ export const on = (packetType: PacketType, handler: Handler): void => {
 };
 
 export const send = (msg: Record<string, unknown>, reliable: boolean): void => {
-  // XXX
+  // TODO(#175): JS object instead of JSON?
   mpClientPlugin.send(JSON.stringify(msg), reliable);
 };
 
