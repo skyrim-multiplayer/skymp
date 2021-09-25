@@ -18,3 +18,13 @@ export const getActorValues = (ac: Actor): ActorValues => {
     };
     return resultActorValue;
 }
+
+let baseActorValues: Map<string, unknown>; 
+
+export const setBaseActorValues = (baseAV: Map<string, unknown>): void => {
+    baseActorValues = baseAV;
+}
+
+export const getBaseActorValues = (): Map<string, unknown> => {
+    return baseActorValues;
+}

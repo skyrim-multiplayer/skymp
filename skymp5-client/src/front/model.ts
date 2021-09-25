@@ -18,7 +18,6 @@ export interface FormModel {
   isOpen?: boolean;
   inventory?: Inventory;
   isHostedByOther?: boolean;
-  actorValues?: Map<string, unknown>;
 }
 
 export interface WorldModel {
