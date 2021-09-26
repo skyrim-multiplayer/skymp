@@ -6,15 +6,15 @@ extern espm::Loader l;
 
 struct BaseActorValues
 {
-  float health = 100;
-  float stamina = 100;
-  float magicka = 100;
-  float healRate = 0.7;
-  float staminaRate = 5.0;
-  float magickaRate = 3.0;
-  float healRateMult = 100;
-  float staminaRateMult = 100;
-  float magickaRateMult = 100;
+  float health = 100.f;
+  float stamina = 100.f;
+  float magicka = 100.f;
+  float healRate = 0.7f;
+  float staminaRate = 5.0f;
+  float magickaRate = 3.0f;
+  float healRateMult = 100.f;
+  float staminaRateMult = 100.f;
+  float magickaRateMult = 100.f;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
