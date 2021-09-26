@@ -44,7 +44,7 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
           MovementData movData;
           //                      v SLikeNet <3 <3 <3 <3 <3 <3 <3
           // (also, my code sucks too, but it's probably ok if I don't merge it)
-          SLNet::BitStream stream(const_cast<unsigned char*>(data) + 1, length - 1, /*copyData*/false);
+          SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2, /*copyData*/false);
           ReadTo(movData, stream);
           jsonContent = MovementDataToJson(movData);
         } else {

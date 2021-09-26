@@ -53,7 +53,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
   if (length > 1 && data[1] == MovementData::kHeaderByte) {
     MovementData movData;
     //                      vvvvvvvvvv oh shit here we go again
-    SLNet::BitStream stream(const_cast<unsigned char*>(data) + 1, length - 1, /*copyData*/false);
+    SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2, /*copyData*/false);
     ReadTo(movData, stream);
 
     actionListener.OnUpdateMovement(
