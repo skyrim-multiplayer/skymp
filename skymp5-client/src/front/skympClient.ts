@@ -321,7 +321,16 @@ export class SkympClient {
 
         baseActorValues.forEach((value, key) => {
           if (typeof value === 'number') {
-            player.setActorValue(key, value);
+            if(key.includes("Percentage")) {
+              const subKey = key.replace("Percentage", "");
+              const subValue = baseActorValues.get(subKey);
+              if(typeof subValue === 'number') {
+                player.damageActorValue(subKey, subValue - (subValue * value));
+              }
+            }
+            else {
+              player.setActorValue(key, value);
+            }
           }
         });
       }
