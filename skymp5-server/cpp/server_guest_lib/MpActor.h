@@ -51,6 +51,8 @@ public:
     std::optional<Viet::Promise<VarValue>> promise = std::nullopt);
 
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
+  void SetPercentages(float healthPercentage, float magickaPercentage,
+                      float staminaPercentage);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;

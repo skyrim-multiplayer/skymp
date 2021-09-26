@@ -91,4 +91,11 @@ public:
                              const char* eventName, simdjson::dom::element& e)
   {
   }
+
+  virtual void OnChangeValues(const RawMessageData& rawMsgData,
+                              const float healthPercentage,
+                              const float magickaPercentage,
+                              const float staminaPercentage)
+  {
+  }
 };

@@ -157,6 +157,16 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
   }
 }
 
+void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
+                             float staminaPercentage)
+{
+  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.healthPercentage = healthPercentage;
+    changeForm.magickaPercentage = magickaPercentage;
+    changeForm.staminaPercentage = staminaPercentage;
+  });
+}
+
 const bool& MpActor::IsRaceMenuOpen() const
 {
   return pImpl->ChangeForm().isRaceMenuOpen;
