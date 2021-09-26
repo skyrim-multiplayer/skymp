@@ -111,7 +111,7 @@ bool OverlayClient::OnProcessMessageReceived(
 
     try {
       onProcessMessage->OnProcessMessage(eventName, eventArgs);
-    } catch (std::exception&) {
+    } catch (const std::exception&) {
       // This should never happen but if it happens, let front-end devs know
       // To simplify, we do not escape characters in e.what() and do not pass
       // the message
