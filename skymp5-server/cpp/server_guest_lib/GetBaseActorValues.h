@@ -1,5 +1,8 @@
 #pragma once
 #include <cstdint>
+#include <Loader.h>
+
+extern espm::Loader l;
 
 struct BaseActorValues
 {
@@ -8,7 +11,7 @@ struct BaseActorValues
   float magicka = 100;
   float healRate = 0.7;
   float staminaRate = 5.0;
-  float magickaRate = 3;
+  float magickaRate = 3.0;
   float healRateMult = 100;
   float staminaRateMult = 100;
   float magickaRateMult = 100;
@@ -47,5 +50,34 @@ inline BaseActorValues GetBaseActorValues(uint32_t baseId,
                                           uint32_t raceIdOverride)
 {
   BaseActorValues baseActorValues;
+  
+  auto form = l.GetBrowser().LookupById(baseId);
+
+  if (form.rec->GetType() == "NPC_") {
+    auto npc = espm::Convert<espm::NPC_>(form.rec);
+
+    espm::CompressedFieldsCache compressedFieldsCache;
+    auto raceId = npc->GetData(compressedFieldsCache).race;
+
+    auto raceInfo = l.GetBrowser().LookupById(raceId);
+
+    if (raceInfo.rec->GetType() == "RACE") {
+      auto race = espm::Convert<espm::RACE>(raceInfo.rec);
+
+      auto raceData = race->GetData(compressedFieldsCache);
+
+      baseActorValues.health = raceData.startingHealth;
+      baseActorValues.magicka = raceData.startingMagicka;
+      baseActorValues.stamina = raceData.startingStamina;
+      baseActorValues.healRate = raceData.healRegen;
+      baseActorValues.magickaRate = raceData.magickaRegen;
+      baseActorValues.staminaRate = raceData.staminaRegen;
+    } else {
+      return baseActorValues;
+    }
+  } else {
+    return baseActorValues;
+  }
+
   return baseActorValues;
 }

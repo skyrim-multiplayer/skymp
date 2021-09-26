@@ -674,7 +674,7 @@ public:
   {
     int32_t value = 0;
     float weight = 0.f;
-    int16_t damage = 0;
+    int16_t damage = 0; 
   };
   static_assert(sizeof(WeapData) == 10);
 
@@ -686,6 +686,27 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+
+class RACE : RecordHeader
+{
+public:
+  static constexpr auto type = "RACE";
+
+
+
+  struct Data
+  {
+    float startingHealth = 0.f;
+    float startingMagicka = 0.f;
+    float startingStamina = 0.f;
+    float healRegen = 0.f;
+    float magickaRegen = 0.f;
+    float staminaRegen = 0.f;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
+};
+static_assert(sizeof(RACE) == sizeof(RecordHeader));
 }
 
 namespace espm {
