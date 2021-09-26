@@ -674,7 +674,7 @@ public:
   {
     int32_t value = 0;
     float weight = 0.f;
-    int16_t damage = 0; 
+    int16_t damage = 0;
   };
   static_assert(sizeof(WeapData) == 10);
 
@@ -691,8 +691,6 @@ class RACE : RecordHeader
 {
 public:
   static constexpr auto type = "RACE";
-
-
 
   struct Data
   {
