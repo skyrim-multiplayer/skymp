@@ -232,6 +232,10 @@ export interface MagicEffectApplyEvent {
     target: ObjectReference
 }
 
+export interface BrowserMessageEvent {
+    arguments: unknown[]
+}
+
 export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 
@@ -300,6 +304,9 @@ export declare function once(eventName: 'effectFinish', callback: (event: Active
 
 export declare function on(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
 export declare function once(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+
+export declare function on(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
+export declare function once(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
 
 declare class ConsoleComand {
     longName: string;

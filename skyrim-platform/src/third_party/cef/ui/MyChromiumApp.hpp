@@ -2,6 +2,7 @@
 
 #include "MyBrowserProcessHandler.hpp"
 #include "OverlayClient.hpp"
+#include "ProcessMessageListener.hpp"
 #include <Meta.hpp>
 #include <functional>
 #include <include/cef_app.h>
@@ -23,10 +24,12 @@ struct MyChromiumApp : CefApp
 
   static std::string GetCurrentSpToken();
 
-  explicit MyChromiumApp(std::unique_ptr<RenderProvider> apRenderProvider,
-                         std::wstring aProcessName =
-                           L"Data/Platform/Distribution/RuntimeDependencies/"
-                           L"SkyrimPlatformCEF.exe") noexcept;
+  explicit MyChromiumApp(
+    std::unique_ptr<RenderProvider> apRenderProvider,
+    std::shared_ptr<ProcessMessageListener> onProcessMessage_,
+    std::wstring aProcessName =
+      L"Data/Platform/Distribution/RuntimeDependencies/"
+      L"SkyrimPlatformCEF.exe") noexcept;
   virtual ~MyChromiumApp() = default;
 
   TP_NOCOPYMOVE(MyChromiumApp);
@@ -73,6 +76,7 @@ private:
   std::unique_ptr<RenderProvider> m_pRenderProvider;
   std::wstring m_processName;
   mutable int m_wasFocused = -1;
+  std::shared_ptr<ProcessMessageListener> onProcessMessage;
 
   mutable struct
   {

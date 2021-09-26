@@ -495,10 +495,12 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "objectLoaded",
                                    "waitStop",
                                    "activate",
-                                   "ipcMessage" };
+                                   "ipcMessage",
+                                   "browserMessage" };
 
-  if (events.count(eventName) == 0)
+  if (events.count(eventName) == 0) {
     throw InvalidArgumentException("eventName", eventName);
+  }
 
   isOnce ? g.callbacksOnce[eventName].push_back(callback)
          : g.callbacks[eventName].push_back(callback);

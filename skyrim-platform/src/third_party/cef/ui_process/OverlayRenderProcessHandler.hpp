@@ -11,7 +11,7 @@ namespace CEFUtils {
 struct OverlayRenderProcessHandler : CefRenderProcessHandler
 {
   explicit OverlayRenderProcessHandler(
-    std::string aCoreObjectName = "mainObj") noexcept;
+    std::string aCoreObjectName = "skyrimPlatform") noexcept;
   ~OverlayRenderProcessHandler() = default;
 
   OverlayRenderProcessHandler(OverlayRenderProcessHandler&&) = delete;

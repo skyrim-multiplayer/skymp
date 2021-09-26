@@ -37,10 +37,13 @@ std::string MyChromiumApp::GetCurrentSpToken()
   return str;
 }
 
-MyChromiumApp::MyChromiumApp(std::unique_ptr<RenderProvider> apRenderProvider,
-                             std::wstring aProcessName) noexcept
+MyChromiumApp::MyChromiumApp(
+  std::unique_ptr<RenderProvider> apRenderProvider,
+  std::shared_ptr<ProcessMessageListener> onProcessMessage_,
+  std::wstring aProcessName) noexcept
   : m_pBrowserProcessHandler(new MyBrowserProcessHandler)
   , m_pRenderProvider(std::move(apRenderProvider))
+  , onProcessMessage(onProcessMessage_)
   , m_processName(std::move(aProcessName))
 {
 }
@@ -86,7 +89,8 @@ void MyChromiumApp::Initialize() noexcept
     MessageBoxA(0, "CefInitialize failed", "Error", MB_ICONERROR);
   }
 
-  m_pGameClient = new OverlayClient(m_pRenderProvider->Create());
+  m_pGameClient =
+    new OverlayClient(m_pRenderProvider->Create(), onProcessMessage);
 
   CefBrowserSettings browserSettings{};
 

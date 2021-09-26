@@ -2,6 +2,7 @@
 
 #include "MyLoadHandler.hpp"
 #include "MyRenderHandler.hpp"
+#include "ProcessMessageListener.hpp"
 #include <include/cef_client.h>
 
 #include <Meta.hpp>
@@ -12,7 +13,9 @@ struct OverlayClient
   , CefLifeSpanHandler
   , CefContextMenuHandler
 {
-  explicit OverlayClient(MyRenderHandler* apHandler) noexcept;
+  explicit OverlayClient(
+    MyRenderHandler* apHandler,
+    std::shared_ptr<ProcessMessageListener> onProcessMessage_) noexcept;
 
   TP_NOCOPYMOVE(OverlayClient);
 
@@ -51,5 +54,7 @@ private:
 
   std::wstring m_cursorPathPNG;
   std::wstring m_cursorPathDDS;
+
+  std::shared_ptr<ProcessMessageListener> onProcessMessage;
 };
 }
