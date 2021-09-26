@@ -101,4 +101,6 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: dist
-        path: ${{github.workspace}}/build/dist
+        path: | 
+          ${{github.workspace}}/build/dist
+          ${{github.workspace}}/skymp5-server/node_modules
