@@ -332,6 +332,7 @@ export class FormView implements View<FormModel> {
       const actor = Actor.from(refr);
       if (actor) {
         deathSystem.makeActorImmortal(actor);
+        actor.setActorValue("health", 1000000);
       }
     }
 
