@@ -473,6 +473,39 @@ export const enum DxScanCode {
     MouseWheelDown
 }
 
+export const enum ActorValue {
+    Health = 'health',
+    Magicka = 'health',
+    Stamina = 'health',
+    HealRate = 'healRate',
+    MagickaRate = 'magickaRate',
+    StaminaRate = 'staminaRate',
+    HealRateMult = 'healRateMult',
+    MagickaRateMult = 'magickaRateMult',
+    StaminaRateMult = 'staminaRateMult',
+    HealthPercentage = 'healthPercentage',
+    StaminaPercentage = 'staminaPercentage',
+    MagickaPercentage = 'magickaPercentage',
+    OneHanded = 'oneHanded',
+    TwoHanded = 'twoHanded',
+    Marksman = 'marksman',
+    Block = 'block',
+    Smithing = 'smithing',
+    HeavyArmor = 'heavyArmor',
+    LightArmor = 'lightArmor',
+    Pickpocket = 'pickpocket',
+    Lockpicking = 'lockpicking',
+    Sneak = 'sneak',
+    Alchemy = 'alchemy',
+    Speechcraft = 'speechcraft',
+    Alteration = 'alteration',
+    Conjuration = 'conjuration',
+    Destruction = 'destruction',
+    Illusion = 'illusion',
+    Restoration = 'restoration',
+    Enchanting = 'enchanting',
+}
+
 export declare namespace SendAnimationEventHook {
     class Context {
         readonly selfId: number;
