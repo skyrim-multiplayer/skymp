@@ -942,7 +942,9 @@ espm::NPC_::Data espm::NPC_::GetData(
         uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
         result.isEssential = !!(flags & 0x02);
         result.isProtected = !!(flags & 0x800);
-      }
+      } else if (!memcmp(type, "RNAM", 4)) {
+        result.race = *reinterpret_cast<const uint32_t*>(data);
+      } 
     },
     &compressedFieldsCache);
   result.objects = GetContainerObjects(this, &compressedFieldsCache);

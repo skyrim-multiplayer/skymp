@@ -658,6 +658,7 @@ public:
     std::vector<Faction> factions;
     bool isEssential = false;
     bool isProtected = false;
+    uint32_t race = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
