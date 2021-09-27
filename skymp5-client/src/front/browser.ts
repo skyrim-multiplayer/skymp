@@ -8,6 +8,7 @@ import {
   Ui,
   MenuOpenEvent,
   MenuCloseEvent,
+  skyrimUi,
   Menu,
   DxScanCode
 } from "skyrimPlatform";
@@ -97,6 +98,6 @@ export const main = (): void => {
   on("menuClose", (e: MenuCloseEvent) => {
     printConsole(`menu close - '${e.name}'`);
   });
-
-  //ui.disableMenu(Menu.Favorites);
+  
+  skyrimUi.replaceMenu(Menu.Favorites);
 };

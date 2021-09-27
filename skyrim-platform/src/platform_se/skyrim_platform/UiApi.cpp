@@ -1,6 +1,5 @@
 #include "UiApi.h"
 #include "EventsApi.h"
-#include "GameEventSinks.h"
 
 #include <RE/MenuControls.h>
 #include <RE/UI.h>
@@ -8,7 +7,6 @@
 #include <RE/ConsoleLog.h>
 #include <RE/ButtonEvent.h>
 #include <RE/MenuEventHandler.h>
-#include <RE/MenuOpenHandler.h>
 
 #include <map>
 
@@ -125,17 +123,6 @@ namespace RE {
     //>>>
 }
 
-void onMenuOpenClose(const char * menuName, bool opening) {
-    g_taskQueue.AddTask([=] {
-        auto obj = JsValue::Object();
-
-        obj.SetProperty("name", JsValue::String(menuName));
-        obj.SetProperty("type", JsValue::String( opening ? "open" : "close"));
-
-        EventsApi::SendEvent("menuOpenClose", { JsValue::Undefined(), obj });
-    });
-}
-
 class MyMenu :  public RE::IMenu,
                 public RE::MenuEventHandler
 {
@@ -143,22 +130,27 @@ public:
     using IMenu::operator new;
     using IMenu::operator delete;
 
-    MyMenu(char* cancelKeyName_, char* menuName_, RE::IMenu* originalMenu_) : cancelKeyName(cancelKeyName_), menuName(menuName_), originalMenu(originalMenu_){}
+    MyMenu(char* cancelKeyName_, char* menuName_, RE::IMenu* originalMenu_)
+      : cancelKeyName(cancelKeyName_)
+      , menuName(menuName_)
+      , originalMenu(originalMenu_)
+    {
+    }
 
     ~MyMenu() {}
 
     void Accept(CallbackProcessor * a_processor) override {
-        auto lg = RE::ConsoleLog::GetSingleton();
-        lg->Print("MyMenu::Accept");
+        //auto lg = RE::ConsoleLog::GetSingleton();
+        //lg->Print("MyMenu::Accept");
     };
 
     void PostCreate() override {};
     void Unk_03(void) override {};
 
     RE::UI_MESSAGE_RESULTS ProcessMessage(RE::UIMessage & msg) override {
-        if(strcmp(msg.menu.c_str(), "FavoritesMenu") != 0)
-            return RE::UI_MESSAGE_RESULTS::kIgnore;
-
+      if (strcmp(msg.menu.c_str(), menuName) != 0) {
+        return RE::UI_MESSAGE_RESULTS::kIgnore;
+      }
 
         auto lg = RE::ConsoleLog::GetSingleton();
         auto ui = RE::UI::GetSingleton();
@@ -169,27 +161,33 @@ public:
             lg->Print("MyMenu::ProcessMessage::kUpdate");
             break;
         case RE::UI_MESSAGE_TYPE::kShow:
+            //OpenMenu();
+            //context = Context::kFavorites;
             lg->Print("MyMenu::ProcessMessage::kShow '%u' '%u'", msg.type, msg.isPooled);
-            //return RE::UI_MESSAGE_RESULTS::kHandled;
             break;
         case RE::UI_MESSAGE_TYPE::kReshow:
             lg->Print("MyMenu::ProcessMessage::kReshow");
             break;
         case RE::UI_MESSAGE_TYPE::kHide:
-            lg->Print("MyMenu::ProcessMessage::kHide");
-            //return RE::UI_MESSAGE_RESULTS::kHandled;
+            if (OnStack()) {
+                lg->Print("MyMenu::ProcessMessage::kHide1");
+                CloseMenu();
+                return RE::UI_MESSAGE_RESULTS::kHandled;
+            }
+            else {
+                lg->Print("MyMenu::ProcessMessage::kHide2");
+                return RE::UI_MESSAGE_RESULTS::kIgnore;
+            }
             break;
         case RE::UI_MESSAGE_TYPE::kForceHide:
+            //CloseMenu();
             lg->Print("MyMenu::ProcessMessage::kForceHide");
-            //return RE::UI_MESSAGE_RESULTS::kHandled;
             break;
         case RE::UI_MESSAGE_TYPE::kScaleformEvent:
             lg->Print("MyMenu::ProcessMessage::kScaleformEvent");
-            //return RE::UI_MESSAGE_RESULTS::kHandled;
             break;
         case RE::UI_MESSAGE_TYPE::kUserEvent:
             lg->Print("MyMenu::ProcessMessage::kUserEvent");
-            //return RE::UI_MESSAGE_RESULTS::kHandled;
             break;
         case RE::UI_MESSAGE_TYPE::kInventoryUpdate:
             lg->Print("MyMenu::ProcessMessage::kInventoryUpdate");
@@ -222,10 +220,14 @@ public:
 
     bool CanProcess(RE::InputEvent* e) override {
         auto ui = RE::UI::GetSingleton();
-        auto mc = RE::MenuControls::GetSingleton();
+      auto mc = RE::MenuControls::GetSingleton();
+
+      //auto lg = RE::ConsoleLog::GetSingleton();
+      //lg->Print("MyMenu::CanProcess '%s'", e->QUserEvent().c_str());
 
         if (e->eventType != RE::INPUT_EVENT_TYPE::kButton)
-            return false;
+        return false;
+
 
         const RE::ButtonEvent* btn = static_cast<const RE::ButtonEvent*>(e);
         if (!btn->IsDown())
@@ -258,10 +260,10 @@ private:
         return RE::UI::GetSingleton()->GetMenu(menuName);
     }
 
-    void CloseMenu()
+    void OpenMenu()
     {
         auto lg = RE::ConsoleLog::GetSingleton();
-        lg->Print("MyMenu::CloseMenu");
+        lg->Print("MyMenu::OpenMenu");
         auto ui = RE::UI::GetSingleton();
 
         RE::MenuOpenCloseEvent* menu_evt = new RE::MenuOpenCloseEvent;
@@ -279,10 +281,10 @@ private:
         ui->menuStack.push_back(GetMenu());
     }
 
-    void OpenMenu()
+    void CloseMenu()
     {
         auto lg = RE::ConsoleLog::GetSingleton();
-        lg->Print("MyMenu::OpenMenu");
+        lg->Print("MyMenu::CloseMenu");
         auto ui = RE::UI::GetSingleton();
         RE::MenuOpenCloseEvent* menu_evt = new RE::MenuOpenCloseEvent;
 
@@ -303,34 +305,49 @@ private:
     }
 };
 
+
+
 RE::IMenu* creatorFavoritesMenu()
 {
     auto mc = RE::MenuControls::GetSingleton();
     auto ui = RE::UI::GetSingleton();
 
-    MyMenu* menu = new MyMenu("Favorites", "FavoritesMenu", ui->GetMenu("FavoritesMenu").get());
+    static MyMenu* menu = new MyMenu("Favorites", "FavoritesMenu", ui->GetMenu("FavoritesMenu").get());
 
-    mc->RemoveHandler(mc->favoritesHandler.get());
-    mc->favoritesHandler = RE::BSTSmartPointer<RE::FavoritesHandler>((RE::FavoritesHandler*)(RE::MenuEventHandler*)menu);
-    mc->AddHandler(mc->favoritesHandler.get());
+    auto handler = (RE::FavoritesHandler*)(RE::MenuEventHandler*)menu;
+    auto old_handler = mc->favoritesHandler.get();
+
+    mc->RemoveHandler(old_handler);
+    mc->favoritesHandler = RE::BSTSmartPointer<RE::FavoritesHandler>(handler);
+    mc->AddHandler(handler);
 
     return (RE::IMenu*)menu;
 }
 
-void disableMenu(std::string menuName)
+void replaceMenu(std::string menuName)
 {
     RE::IMenu* (*creator)(void);
     
-    if (menuName == "FavoritesMenu")
-    {
+    if (menuName == "FavoritesMenu") {
         creator = creatorFavoritesMenu;
     }
-    else
-    {
+    else {
         return;
     }
+    /*
+    auto mc = RE::MenuControls::GetSingleton();
 
-    RE::UI::GetSingleton()->menuMap.insert_or_assign({ menuName.c_str(), { nullptr, creator } });
+    auto handler = (RE::FavoritesHandler*)(RE::MenuEventHandler*)creator();
+    auto old_handler = mc->favoritesHandler.get();
+
+    auto pos = std::find(mc->handlers.begin(), mc->handlers.end(), old_handler);
+    if (pos != mc->handlers.end()) {
+        mc->handlers[pos - mc->handlers.begin()] = handler;
+    }
+
+    mc->favoritesHandler.reset(handler);
+    */
+    RE::UI::GetSingleton()->menuMap.insert_or_assign({ menuName.c_str(), { RE::GPtr<RE::IMenu>(creator()), creator } });
 }
 
 void toggleMenu(std::string menuName, bool opening)
@@ -354,17 +371,6 @@ void toggleMenu(std::string menuName, bool opening)
     */
 }
 
-class MyEventSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
-{
-public:
-    ~MyEventSink() {};
-    RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* e, RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource) override {
-        onMenuOpenClose(e->menuName.c_str(), e->opening);
-
-        return RE::BSEventNotifyControl::kContinue;
-    };
-};
-
 namespace UiApi
 {
     void Register(JsValue& exports)
@@ -373,16 +379,15 @@ namespace UiApi
         auto mc = RE::MenuControls::GetSingleton();
         auto ui = RE::UI::GetSingleton();
 
-        if (!lg || !mc || !ui)
-            return;
-
-        ui->GetEventSource<RE::MenuOpenCloseEvent>()->AddEventSink(new MyEventSink);
+        if (!lg || !mc || !ui) {
+          return;
+        }
 
         auto uiObj = JsValue::Object();
         uiObj.SetProperty(
-            "disableMenu",
+            "replaceMenu",
             JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-                disableMenu(args[1].ToString());
+            replaceMenu(args[1].ToString());
                 return JsValue::Undefined();
             })
         );
@@ -393,6 +398,6 @@ namespace UiApi
                 return JsValue::Undefined();
             })
         );
-        exports.SetProperty("ui", uiObj);
+        exports.SetProperty("skyrimUi", uiObj);
     }
 }

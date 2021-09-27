@@ -71,11 +71,11 @@ export interface Browser {
 }
 export declare let browser: Browser;
 
-export interface Ui {
-    disableMenu(menuName: string): void
+export interface SkyrimUi {
+    replaceMenu(menuName: string): void
     toggleMenu(menuName: string, opening: boolean): void
 }
-export declare let ui: Ui;
+export declare let skyrimUi: SkyrimUi;
 
 export interface ExtraData {
   type: 'Health' | 'Count' | 'Enchantment' | 'Charge' | 'TextDisplayData' | 'Soul' | 'Poison' | 'Worn' | 'WornLeft';
