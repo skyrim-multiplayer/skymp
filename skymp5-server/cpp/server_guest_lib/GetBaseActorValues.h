@@ -47,7 +47,7 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
                                           uint32_t raceIdOverride)
 {
   BaseActorValues baseActorValues;
-  
+
   auto form = espm.GetBrowser().LookupById(baseId);
 
   if (form.rec->GetType() == "NPC_") {
