@@ -26,7 +26,6 @@
 #include "TPRenderSystemD3D11.h"
 #include "TaskQueue.h"
 #include "ThreadPoolWrapper.h"
-#include "UiApi.h"
 #include <RE/ConsoleLog.h>
 #include <SKSE/API.h>
 #include <SKSE/Interfaces.h>
@@ -158,7 +157,6 @@ void JsTick(bool gameFunctionsAvailable)
                 DevApi::Register(e, &engine, {}, fileDir);
                 EventsApi::Register(e);
                 BrowserApi::Register(e, g_browserApiState);
-                UiApi::Register(e);
                 InventoryApi::Register(e);
                 CallNativeApi::Register(
                   e, [] { return g_nativeCallRequirements; });
