@@ -1,8 +1,5 @@
 #pragma once
 #include <cstdint>
-#include <Loader.h>
-
-extern espm::Loader l;
 
 struct BaseActorValues
 {
@@ -46,12 +43,12 @@ struct BaseActorValues
   }
 };
 
-inline BaseActorValues GetBaseActorValues(uint32_t baseId,
+inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
                                           uint32_t raceIdOverride)
 {
   BaseActorValues baseActorValues;
   
-  auto form = l.GetBrowser().LookupById(baseId);
+  auto form = espm.GetBrowser().LookupById(baseId);
 
   if (form.rec->GetType() == "NPC_") {
     auto npc = espm::Convert<espm::NPC_>(form.rec);
@@ -59,7 +56,7 @@ inline BaseActorValues GetBaseActorValues(uint32_t baseId,
     espm::CompressedFieldsCache compressedFieldsCache;
     auto raceId = npc->GetData(compressedFieldsCache).race;
 
-    auto raceInfo = l.GetBrowser().LookupById(raceId);
+    auto raceInfo = espm.GetBrowser().LookupById(raceId);
 
     if (raceInfo.rec->GetType() == "RACE") {
       auto race = espm::Convert<espm::RACE>(raceInfo.rec);

@@ -52,8 +52,9 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 {
   auto baseId = MpObjectReference::GetBaseId();
   uint32_t raceId = GetLook() ? GetLook()->raceId : 0;
+  auto& espm = GetParent()->GetEspm();
 
-  auto baseActorValues = GetBaseActorValues(baseId, raceId);
+  auto baseActorValues = GetBaseActorValues(espm, baseId, raceId);
   MpChangeForm changeForm = GetChangeForm();
 
   MpObjectReference::VisitProperties(visitor, mode);
