@@ -10,7 +10,7 @@ export class Settings {
   gamemodePath = "...";
   loadOrder = new Array<string>();
   dataDir = "./data";
-  offlinemode = false;
+  offlineMode = false;
   startPoints = [
     {
       pos: [22659, -8697, -3594],
@@ -41,7 +41,7 @@ export class Settings {
         "loadOrder",
         "dataDir",
         "startPoints",
-        "offlinemode",
+        "offlineMode",
       ].forEach((prop) => {
         if (parsed[prop])
           (this as Record<string, unknown>)[prop] = parsed[prop];
@@ -58,7 +58,7 @@ export class Settings {
     res.master = args["master"];
     res.name = args["name"] || res.name;
     res.ip = args["ip"] || res.ip;
-    res.offlinemode = args["offlinemode"] || res.offlinemode;
+    res.offlineMode = args["offlineMode"] || res.offlineMode;
     return res;
   }
 
@@ -73,7 +73,7 @@ export class Settings {
     parser.addArgument(["--name"], {});
     parser.addArgument(["--port"], {});
     parser.addArgument(["--ip"], {});
-    parser.addArgument(["--offlinemode"], {});
+    parser.addArgument(["--offlineMode"], {});
     return parser.parseArgs();
   }
 }

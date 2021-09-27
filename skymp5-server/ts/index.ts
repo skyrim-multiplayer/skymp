@@ -97,7 +97,7 @@ systems.push(
     master,
     Settings.get().port,
     Settings.get().ip,
-    Settings.get().offlinemode
+    Settings.get().offlineMode
   )
 );
 
