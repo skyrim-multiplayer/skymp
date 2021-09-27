@@ -55,6 +55,7 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
 
     espm::CompressedFieldsCache compressedFieldsCache;
     auto raceId = npc->GetData(compressedFieldsCache).race;
+    raceId = raceId ? raceId : 0x00013746;
 
     auto raceInfo = espm.GetBrowser().LookupById(raceId);
 

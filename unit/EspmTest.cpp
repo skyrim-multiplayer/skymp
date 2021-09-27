@@ -379,3 +379,37 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
             0x4f838, 0x50015, 0x69857, 0x6ed38, 0x94b35, 0xc350d, 0xc97eb,
             0xd45f0, 0x104217 });
 }
+
+TEST_CASE("Testing values", "[espm][GetBaseActorValues]")
+{
+  auto& br = l.GetBrowser();
+
+  auto form = br.LookupById(
+    0x0001B1DB); // Ri'saad( roving merchant from caravan. Khajiit)
+
+  REQUIRE(form.rec->GetType() == "NPC_");
+  auto npc = espm::Convert<espm::NPC_>(form.rec);
+
+  espm::CompressedFieldsCache compressedFieldCache;
+  auto raceId = npc->GetData(compressedFieldCache).race;
+  auto raceForm = br.LookupById(raceId);
+  REQUIRE(raceForm.rec->GetType() == "RACE");
+
+  auto race = espm::Convert<espm::RACE>(raceForm.rec);
+  auto data = race->GetData(compressedFieldCache);
+  float health = data.startingHealth;
+  float magicka = data.startingMagicka;
+  float stamina = data.startingStamina;
+  float healRate = data.healRegen;
+  float magickaRate = data.magickaRegen;
+  float staminaRate = data.staminaRegen;
+
+  REQUIRE(health == 50.f);
+  REQUIRE(magicka == 50.f);
+  REQUIRE(stamina == 50.f);
+  REQUIRE(healRate == 0.7f);
+  REQUIRE(magickaRate == 3.f);
+  REQUIRE(staminaRate == 5.f);
+
+  REQUIRE(raceId == 0x00013745);
+}

@@ -10,13 +10,13 @@ float PercentToFloat(float percent)
 }
 
 float CropHealthRegeneration(float newDamageModifier,
-                             float secondsAfterLastRegen, MpActor* actor)
+                             float secondsAfterLastRegen, MpActor* actor,
+                             espm::Loader& espm)
 {
   uint32_t baseId = actor->GetBaseId();
   auto look = actor->GetLook();
   uint32_t raceId = look ? look->raceId : 0;
 
-  auto& espm = actor->GetParent()->GetEspm();
   BaseActorValues baseValues = GetBaseActorValues(espm, baseId, raceId);
 
   float validHealthRegenerationPercentage =
