@@ -24,10 +24,6 @@ enable_testing()
 # Bool options
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 
-if(JS_ENGINE_TRACING_ENABLED)
-  add_compile_definitions(JS_ENGINE_TRACING_ENABLED)
-endif()
-
 # Path options
 option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing. CMAKE_SOURCE_DIR would be used to resolve a relative path if passed." OFF)
 option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
