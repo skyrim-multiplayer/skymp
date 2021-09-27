@@ -7,18 +7,6 @@
 extern TaskQueue g_taskQueue;
 
 namespace UiApi {
-void onMenuOpenClose(const char* menuName, bool opening)
-{
-  g_taskQueue.AddTask([=] {
-    auto obj = JsValue::Object();
-
-    obj.SetProperty("name", JsValue::String(menuName));
-    obj.SetProperty("type", JsValue::String(opening ? "open" : "close"));
-
-    EventsApi::SendEvent("menuOpenClose", { JsValue::Undefined(), obj });
-  });
-}
-
 class MyEventSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
 public:
@@ -27,7 +15,13 @@ public:
     const RE::MenuOpenCloseEvent* e,
     RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource) override
   {
-    onMenuOpenClose(e->menuName.c_str(), e->opening);
+    const char* menuName = e->menuName.c_str();
+
+    if (e->opening) {
+      EventsApi::SendMenuOpen(menuName);
+    } else {
+      EventsApi::SendMenuClose(menuName);
+    }
 
     return RE::BSEventNotifyControl::kContinue;
   };
