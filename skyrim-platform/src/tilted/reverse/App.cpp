@@ -1,23 +1,22 @@
 #include <App.hpp>
 
-namespace CEFUtils
+namespace CEFUtils {
+SKSEPluginBase::SKSEPluginBase() noexcept
+  : m_ready(false)
 {
-    SKSEPluginBase::SKSEPluginBase() noexcept
-        : m_ready(false)
-    {
-    }
+}
 
-    SKSEPluginBase::~SKSEPluginBase() = default;
+SKSEPluginBase::~SKSEPluginBase() = default;
 
-    void SKSEPluginBase::Start() noexcept
-    {
-        m_ready = true;
+void SKSEPluginBase::Start() noexcept
+{
+  m_ready = true;
 
-        BeginMain();
-    }
+  BeginMain();
+}
 
-    bool SKSEPluginBase::IsReady() const noexcept
-    {
-        return m_ready;
-    }
+bool SKSEPluginBase::IsReady() const noexcept
+{
+  return m_ready;
+}
 }

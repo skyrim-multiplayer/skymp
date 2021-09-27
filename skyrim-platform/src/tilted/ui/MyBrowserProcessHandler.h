@@ -2,12 +2,12 @@
 
 #include <include/cef_browser_process_handler.h>
 
-namespace CEFUtils
+namespace CEFUtils {
+struct MyBrowserProcessHandler : CefBrowserProcessHandler
 {
-    struct MyBrowserProcessHandler : CefBrowserProcessHandler
-    {
-        void OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line) override;
+  void OnBeforeChildProcessLaunch(
+    CefRefPtr<CefCommandLine> command_line) override;
 
-        IMPLEMENT_REFCOUNTING(MyBrowserProcessHandler);
-    };
+  IMPLEMENT_REFCOUNTING(MyBrowserProcessHandler);
+};
 }

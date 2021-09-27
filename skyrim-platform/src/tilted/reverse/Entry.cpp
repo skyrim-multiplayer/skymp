@@ -43,8 +43,8 @@ static int __stdcall HookedWinMain(HINSTANCE hInstance,
 
 static void SetupMainHook()
 {
-  OriginalWinMain =
-    static_cast<TWinMain*>(CEFUtils::SKSEPluginBase::GetInstance().GetMainAddress());
+  OriginalWinMain = static_cast<TWinMain*>(
+    CEFUtils::SKSEPluginBase::GetInstance().GetMainAddress());
   if (OriginalWinMain == nullptr)
     return;
 

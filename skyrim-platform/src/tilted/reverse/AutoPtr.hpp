@@ -2,37 +2,41 @@
 
 #include <Pattern.hpp>
 
-namespace CEFUtils
+namespace CEFUtils {
+struct BasicAutoPtr
 {
-    struct BasicAutoPtr
-    {
-        explicit BasicAutoPtr(Pattern aPattern) noexcept;
-        explicit BasicAutoPtr(uintptr_t aAddress) noexcept;
+  explicit BasicAutoPtr(Pattern aPattern) noexcept;
+  explicit BasicAutoPtr(uintptr_t aAddress) noexcept;
 
-        BasicAutoPtr() = delete;
-        BasicAutoPtr(BasicAutoPtr&) = delete;
-        BasicAutoPtr& operator=(BasicAutoPtr&) = delete;
+  BasicAutoPtr() = delete;
+  BasicAutoPtr(BasicAutoPtr&) = delete;
+  BasicAutoPtr& operator=(BasicAutoPtr&) = delete;
 
-        [[nodiscard]] void* GetPtr() const noexcept;
+  [[nodiscard]] void* GetPtr() const noexcept;
 
-    private:
+private:
+  void* m_pPtr;
+};
 
-        void* m_pPtr;
-    };
+template <class T>
+struct AutoPtr : BasicAutoPtr
+{
+  explicit AutoPtr(Pattern aPattren) noexcept
+    : BasicAutoPtr(std::move(aPattren))
+  {
+  }
+  explicit AutoPtr(const uintptr_t aAddress) noexcept
+    : BasicAutoPtr(aAddress)
+  {
+  }
 
-    template<class T>
-    struct AutoPtr : BasicAutoPtr
-    {
-        explicit AutoPtr(Pattern aPattren) noexcept : BasicAutoPtr(std::move(aPattren)) {}
-        explicit AutoPtr(const uintptr_t aAddress) noexcept : BasicAutoPtr(aAddress) {}
+  AutoPtr() = delete;
+  AutoPtr(AutoPtr&) = delete;
+  AutoPtr& operator=(AutoPtr&) = delete;
 
-        AutoPtr() = delete;
-        AutoPtr(AutoPtr&) = delete;
-        AutoPtr& operator=(AutoPtr&) = delete;
+  operator T*() const noexcept { return Get(); }
+  T* operator->() const noexcept { return Get(); }
 
-        operator T* () const noexcept { return Get(); }
-        T* operator->() const noexcept { return Get(); }
-
-        T* Get() const noexcept { return static_cast<T*>(GetPtr()); }
-    };
+  T* Get() const noexcept { return static_cast<T*>(GetPtr()); }
+};
 }

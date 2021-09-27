@@ -1,10 +1,9 @@
 #pragma once
 
-namespace CEFUtils
+namespace CEFUtils {
+struct Debug
 {
-    struct Debug
-    {
-        static void WaitForDebugger() noexcept;
-        static void CreateConsole() noexcept;
-    };
+  static void WaitForDebugger() noexcept;
+  static void CreateConsole() noexcept;
+};
 }

@@ -4,23 +4,21 @@
 
 #include <Meta.hpp>
 
-namespace CEFUtils
+namespace CEFUtils {
+struct WindowsHook
 {
-    struct WindowsHook
-    {
-        TP_NOCOPYMOVE(WindowsHook);
+  TP_NOCOPYMOVE(WindowsHook);
 
-        void SetCallback(WNDPROC apCallback) noexcept { m_pCallback = apCallback; }
-        [[nodiscard]] WNDPROC GetCallback() const noexcept { return m_pCallback; }
+  void SetCallback(WNDPROC apCallback) noexcept { m_pCallback = apCallback; }
+  [[nodiscard]] WNDPROC GetCallback() const noexcept { return m_pCallback; }
 
-        static void Install() noexcept;
-        static WindowsHook& Get() noexcept;
+  static void Install() noexcept;
+  static WindowsHook& Get() noexcept;
 
-    private:
+private:
+  WindowsHook() noexcept = default;
+  ~WindowsHook() noexcept = default;
 
-        WindowsHook() noexcept = default;
-        ~WindowsHook() noexcept = default;
-
-        WNDPROC m_pCallback{ nullptr };
-    };
+  WNDPROC m_pCallback{ nullptr };
+};
 }
