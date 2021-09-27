@@ -1,5 +1,6 @@
-#include <mhook-lib/mhook.h>
 #include <windows.h>
+
+#include <mhook-lib/mhook.h>
 
 #include <FunctionHook.hpp>
 #include <ProcessMemory.hpp>
