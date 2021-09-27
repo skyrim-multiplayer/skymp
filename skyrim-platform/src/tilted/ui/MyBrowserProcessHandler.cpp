@@ -1,9 +1,10 @@
 #include <MyBrowserProcessHandler.h>
 
-namespace CEFUtils
+namespace CEFUtils {
+void MyBrowserProcessHandler::OnBeforeChildProcessLaunch(
+  CefRefPtr<CefCommandLine> command_line)
 {
-    void MyBrowserProcessHandler::OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line)
-    {
-        command_line->AppendSwitchWithValue("pid", std::to_string(GetCurrentProcessId()));
-    }
+  command_line->AppendSwitchWithValue("pid",
+                                      std::to_string(GetCurrentProcessId()));
+}
 }

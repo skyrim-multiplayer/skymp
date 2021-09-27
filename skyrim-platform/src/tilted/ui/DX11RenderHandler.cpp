@@ -193,7 +193,7 @@ void DX11RenderHandler::GetRenderTargetSize()
       if ((m_width != desc.Width || m_height != desc.Height) && m_pParent) {
         m_width = desc.Width;
         m_height = desc.Height;
-        
+
         if (isCreateLock) {
           // We now know the size of the viewport, we can let CEF get it
           m_createLock.unlock();
