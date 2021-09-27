@@ -1,6 +1,6 @@
 #include <DInputHook.hpp>
 #include <Filesystem.hpp>
-#include <MyChromiumApp.hpp>
+#include <MyChromiumApp.h>
 #include <filesystem>
 #include <fstream>
 

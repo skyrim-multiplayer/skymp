@@ -4,8 +4,8 @@
 
 #include <include/cef_render_process_handler.h>
 
-#include "EventsV8Handler.hpp"
-#include "OverlayV8Handler.hpp"
+#include "EventsV8Handler.h"
+#include "OverlayV8Handler.h"
 
 namespace CEFUtils {
 struct OverlayRenderProcessHandler : CefRenderProcessHandler

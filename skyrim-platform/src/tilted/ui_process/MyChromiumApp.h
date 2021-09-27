@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OverlayRenderProcessHandler.hpp"
+#include "OverlayRenderProcessHandler.h"
 #include <functional>
 #include <include/cef_app.h>
 

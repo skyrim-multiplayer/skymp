@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MyBrowserProcessHandler.hpp"
-#include "OverlayClient.hpp"
-#include "ProcessMessageListener.hpp"
+#include "MyBrowserProcessHandler.h"
+#include "OverlayClient.h"
+#include "ProcessMessageListener.h"
 #include <Meta.hpp>
 #include <functional>
 #include <include/cef_app.h>

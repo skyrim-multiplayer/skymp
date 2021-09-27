@@ -1,4 +1,4 @@
-#include "OverlayRenderProcessHandler.hpp"
+#include "OverlayRenderProcessHandler.h"
 #include "../core_library/Platform.hpp"
 
 namespace CEFUtils {

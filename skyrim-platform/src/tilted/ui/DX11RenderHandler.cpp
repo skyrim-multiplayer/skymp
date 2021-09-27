@@ -1,5 +1,5 @@
-#include <DX11RenderHandler.hpp>
-#include <OverlayClient.hpp>
+#include <DX11RenderHandler.h>
+#include <OverlayClient.h>
 
 #include <DirectXColors.h>
 #include <DirectXTK/CommonStates.h>

@@ -1,6 +1,6 @@
 #include <Filesystem.hpp>
-#include <MyCtxHandler.hpp>
-#include <OverlayClient.hpp>
+#include <MyCtxHandler.h>
+#include <OverlayClient.h>
 #include <filesystem>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;

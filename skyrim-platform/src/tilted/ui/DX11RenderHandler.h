@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MyRenderHandler.hpp"
+#include "MyRenderHandler.h"
 #include <Signal.hpp>
 #include <mutex>
 #include <wrl.h>

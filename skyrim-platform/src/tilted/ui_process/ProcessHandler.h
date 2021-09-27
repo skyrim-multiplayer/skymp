@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core_library/Meta.hpp"
-#include "OverlayRenderProcessHandler.hpp"
+#include "OverlayRenderProcessHandler.h"
 
 struct ProcessHandler : CEFUtils::OverlayRenderProcessHandler
 {

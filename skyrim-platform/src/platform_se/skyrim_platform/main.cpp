@@ -51,8 +51,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
-#include <ui/MyChromiumApp.hpp>
-#include <ui/ProcessMessageListener.hpp>
+#include <ui/MyChromiumApp.h>
+#include <ui/ProcessMessageListener.h>
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0

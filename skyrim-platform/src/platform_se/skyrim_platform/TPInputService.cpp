@@ -2,7 +2,7 @@
 #include "TPOverlayService.h"
 #include <DInputHook.hpp>
 #include <WindowsHook.hpp>
-#include <ui/MyChromiumApp.hpp>
+#include <ui/MyChromiumApp.h>
 #include <include/internal/cef_types.h>
 
 static OverlayService* s_pOverlay = nullptr;

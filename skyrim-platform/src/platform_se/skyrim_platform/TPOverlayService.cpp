@@ -1,12 +1,12 @@
 #include "TPOverlayService.h"
 
-#include <ui/MyChromiumApp.hpp>
+#include <ui/MyChromiumApp.h>
 
 #include <D3D11Hook.hpp>
 
-#include <ui/DX11RenderHandler.hpp>
-#include <ui/MyRenderHandler.hpp>
-#include <ui/ProcessMessageListener.hpp>
+#include <ui/DX11RenderHandler.h>
+#include <ui/MyRenderHandler.h>
+#include <ui/ProcessMessageListener.h>
 
 #include "TPRenderSystemD3D11.h"
 

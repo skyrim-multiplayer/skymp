@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MyLoadHandler.hpp"
-#include "MyRenderHandler.hpp"
-#include "ProcessMessageListener.hpp"
+#include "MyLoadHandler.h"
+#include "MyRenderHandler.h"
+#include "ProcessMessageListener.h"
 #include <include/cef_client.h>
 
 #include <Meta.hpp>
