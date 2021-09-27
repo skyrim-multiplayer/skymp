@@ -6,12 +6,8 @@ import {
   printConsole,
   settings,
   Ui,
-  MenuOpenCloseEvent,
   Menu,
-  DxScanCode,
-  ActivateEvent,
-  ui,
-  HitEvent
+  DxScanCode
 } from "skyrimPlatform";
 
 export const main = (): void => {
