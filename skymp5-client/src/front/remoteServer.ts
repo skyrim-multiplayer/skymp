@@ -34,7 +34,6 @@ import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
 import { localIdToRemoteId, remoteIdToLocalId } from "./view";
 import * as updateOwner from "./updateOwner";
-import { setBaseActorValues } from "./components/actorvalues";
 
 //
 // eventSource system
@@ -302,25 +301,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     };
 
     if (msg.isMe) {
-      if(msg.props) {
-        const baseActorValues = new Map<string, unknown>([
-          ["healRate", msg.props.healRate],
-          ["healRateMult", msg.props.healRateMult],
-          ["health", msg.props.health],
-          ["magickaRate", msg.props.magickaRate],
-          ["magickaRateMult", msg.props.magickaRateMult],
-          ["magicka", msg.props.magicka],
-          ["staminaRate", msg.props.staminaRate],
-          ["staminaRateMult", msg.props.staminaRateMult],
-          ["stamina", msg.props.stamina],
-          ["healthPercentage", msg.props.healthPercentage],
-          ["staminaPercentage", msg.props.staminaPercentage],
-          ["magickaPercentage", msg.props.magickaPercentage],
-        ]);
-
-        setBaseActorValues(baseActorValues);
-      }
-
       const task = new SpawnTask();
       once("update", () => {
         if (!task.running) {
@@ -340,6 +320,41 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           // Unfortunatelly it requires two calls to work
           Utility.wait(1).then(applyPcInv);
           Utility.wait(1.3).then(applyPcInv);
+        }
+
+        if(msg.props) {
+          const baseActorValues = new Map<string, unknown>([
+            ["healRate", msg.props.healRate],
+            ["healRateMult", msg.props.healRateMult],
+            ["health", msg.props.health],
+            ["magickaRate", msg.props.magickaRate],
+            ["magickaRateMult", msg.props.magickaRateMult],
+            ["magicka", msg.props.magicka],
+            ["staminaRate", msg.props.staminaRate],
+            ["staminaRateMult", msg.props.staminaRateMult],
+            ["stamina", msg.props.stamina],
+            ["healthPercentage", msg.props.healthPercentage],
+            ["staminaPercentage", msg.props.staminaPercentage],
+            ["magickaPercentage", msg.props.magickaPercentage],
+          ]);
+
+          const player = Game.getPlayer();
+          if(player) {
+            baseActorValues.forEach((value, key) => {
+              if (typeof value === 'number') {
+                if(key.includes("Percentage")) {
+                  const subKey = key.replace("Percentage", "");
+                  const subValue = baseActorValues.get(subKey);
+                  if(typeof subValue === 'number') {
+                    player.damageActorValue(subKey, subValue - (subValue * value));
+                  }
+                }
+                else {
+                  player.setActorValue(key, value);
+                }
+              }
+            });
+          }
         }
       });
       once("tick", () => {

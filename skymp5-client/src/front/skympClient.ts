@@ -32,7 +32,7 @@ import * as deathSystem from "./deathSystem";
 import { setUpConsoleCommands } from "./console";
 import { nextHostAttempt } from "./hostAttempts";
 import * as updateOwner from "./updateOwner";
-import { ActorValues, baseActorValues, getActorValues } from "./components/actorvalues";
+import { ActorValues, getActorValues } from "./components/actorvalues";
 
 interface AnyMessage {
   type?: string;
@@ -318,21 +318,6 @@ export class SkympClient {
       const player = Game.getPlayer();
       if (player) {
         deathSystem.makeActorImmortal(player);
-
-        baseActorValues.forEach((value, key) => {
-          if (typeof value === 'number') {
-            if(key.includes("Percentage")) {
-              const subKey = key.replace("Percentage", "");
-              const subValue = baseActorValues.get(subKey);
-              if(typeof subValue === 'number') {
-                player.damageActorValue(subKey, subValue - (subValue * value));
-              }
-            }
-            else {
-              player.setActorValue(key, value);
-            }
-          }
-        });
       }
     });
   }

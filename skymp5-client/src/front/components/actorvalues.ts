@@ -18,9 +18,3 @@ export const getActorValues = (ac: Actor): ActorValues => {
     };
     return resultActorValue;
 }
-
-export let baseActorValues: Map<string, unknown>; 
-
-export const setBaseActorValues = (baseAV: Map<string, unknown>): void => {
-    baseActorValues = baseAV;
-}
