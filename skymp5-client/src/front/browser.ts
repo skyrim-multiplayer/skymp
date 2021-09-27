@@ -8,7 +8,10 @@ import {
   Ui,
   MenuOpenCloseEvent,
   Menu,
-  DxScanCode
+  DxScanCode,
+  ActivateEvent,
+  ui,
+  HitEvent
 } from "skyrimPlatform";
 
 export const main = (): void => {
@@ -92,4 +95,10 @@ export const main = (): void => {
   on("menuOpenClose", (evt: MenuOpenCloseEvent) => {
     printConsole(`Test menu ${evt.name} ${evt.type}`);
   });
+
+  ui.disableMenu(Menu.Favorites);
+
+  /*on("hit", (e: HitEvent) => {
+    ui.toggleMenu(Menu.Inventory, true);
+  })*/
 };
