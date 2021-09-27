@@ -474,36 +474,904 @@ export const enum DxScanCode {
 }
 
 export const enum ActorValue {
-    Health = 'health',
-    Magicka = 'health',
-    Stamina = 'health',
-    HealRate = 'healRate',
-    MagickaRate = 'magickaRate',
-    StaminaRate = 'staminaRate',
-    HealRateMult = 'healRateMult',
-    MagickaRateMult = 'magickaRateMult',
-    StaminaRateMult = 'staminaRateMult',
-    HealthPercentage = 'healthPercentage',
-    StaminaPercentage = 'staminaPercentage',
-    MagickaPercentage = 'magickaPercentage',
-    OneHanded = 'oneHanded',
-    TwoHanded = 'twoHanded',
-    Marksman = 'marksman',
-    Block = 'block',
-    Smithing = 'smithing',
-    HeavyArmor = 'heavyArmor',
-    LightArmor = 'lightArmor',
-    Pickpocket = 'pickpocket',
-    Lockpicking = 'lockpicking',
-    Sneak = 'sneak',
-    Alchemy = 'alchemy',
-    Speechcraft = 'speechcraft',
-    Alteration = 'alteration',
-    Conjuration = 'conjuration',
-    Destruction = 'destruction',
-    Illusion = 'illusion',
-    Restoration = 'restoration',
-    Enchanting = 'enchanting',
+    /**
+     * @param Type AI
+     * @param PossibleValues (0-3)
+     * @param ID 0x000004B0
+     * @description Enum: Unaggressive (does not initiate combat), Aggressive (attacks Enemies), Very Aggressive (attacks Enemies and Neutrals), Frenzied (attacks anyone)
+     */
+    Aggression = 'Aggression',
+    /**
+     * @param Type AI
+     * @param PossibleValues (0-4)
+     * @param ID 0x000004B1
+     * @description Willingness to fight, based on their strength vs the attacker's strength. Enum: Cowardly (always flee), Cautious, Average, Brave, Foolhardy (never flee)
+     */
+    Confidence = 'Confidence',
+    /**
+     * @param Type AI
+     * @param PossibleValues (%)
+     * @param ID 0x000004B2
+     * @description Used by sandbox AI to determine how often to perform a different sandbox behaviour
+     */
+    Energy = 'Energy',
+    /**
+     * @param Type AI
+     * @param PossibleValues (0-3)
+     * @param ID 0x000004B3
+     * @description Will this Follower comply when the player asks him/her to perform a crime? Enum: Any Crime, Violence Against Enemies, Property Crime Only, No Crime
+     */
+    Morality = 'Morality',
+    /**
+     * @param Type AI
+     * @param PossibleValues (0-7)
+     * @param ID 0x000004B4
+     * @description Unused. Enum: Neutral, Angry, Fear, Happy, Sad, Surprised, Puzzled, Disgusted
+     */
+    Mood = 'Mood',
+    /**
+     * @param Type AI
+     * @param PossibleValues (0-2)
+     * @param ID 0x000004B5
+     * @description Will this actor feel compelled to help others in combat? Enum: Helps Nobody, Helps Allies, Helps Friends and Allies
+     */
+    Assistance = 'Assistance',
+    /**
+     * @param Type Skill
+     * @param ID 0x0000044C
+     */
+    OneHanded = 'OneHanded',
+    /**
+     * @param Type Skill
+     * @param ID 0x0000044D
+     */
+    TwoHanded = 'TwoHanded',
+    /**
+     * @param Type Skill
+     * @param ID 0x0000044E
+     */
+    Marksman = 'Marksman',
+    /**
+     * @param Type Skill
+     * @param ID 0x0000044F
+     */
+    Block = 'Block',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000450
+     */
+    Smithing = 'Smithing',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000451
+     */
+    HeavyArmor = 'HeavyArmor',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000452
+     */
+    LightArmor = 'LightArmor',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000453
+     */
+    Pickpocket = 'Pickpocket',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000454
+     */
+    Lockpicking = 'Lockpicking',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000455
+     */
+    Sneak = 'Sneak',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000456
+     */
+    Alchemy = 'Alchemy',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000457
+     */
+    Speechcraft = 'Speechcraft',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000458
+     */
+    Alteration = 'Alteration',
+    /**
+     * @param Type Skill
+     * @param ID 0x00000459
+     */
+    Conjuration = 'Conjuration',
+    /**
+     * @param Type Skill
+     * @param ID 0x0000045A
+     */
+    Destruction = 'Destruction',
+    /**
+     * @param Type Skill
+     * @param ID 0x0000045B
+     */
+    Illusion = 'Illusion',
+    /**
+     * @param Type Skill
+     * @param ID 0x0000045C
+     */
+    Restoration = 'Restoration',
+    /**
+     * @param Type Skill
+     * @param ID 0x0000045D
+     */
+    Enchanting = 'Enchanting',
+    /**
+     * @param Type Attribute
+     * @param ID 0x000003E8
+     * @description Actual Current and Maximum Health, 0 results in death
+     */
+    Health = 'Health',
+    /**
+     * @param Type Attribute
+     * @param ID 0x000003E9
+     * @description Actual Current and Maximum Magicka, can not be lower than 0
+     */
+    Magicka = 'Magicka',
+    /**
+     * @param Type Attribute
+     * @param ID 0x000003EA
+     * @description Actual Current and Maximum Stamina, can not be lower than 0
+     */
+    Stamina = 'Stamina',
+    /**
+     * @param Type Mult
+     * @param ID 0x000003EB
+     * @description Percentage of max health to regenerate per second (default 0.7 for each player race)
+     */
+    HealRate = 'HealRate',
+    /**
+     * @param Type Mult
+     * @param ID 0x000003EC
+     * @description Percentage of max magicka to regenerate per second (default 3.0 for each player race)
+     */
+    MagickaRate = 'MagickaRate',
+    /**
+     * @param Type Mult
+     * @param ID 0x000003ED
+     * @description Percentage of max stamina to regenerate per second (default 5.0 for each player race)
+     */
+    StaminaRate = 'StaminaRate',
+    /**
+     * @param Type Mult
+     * @param PossibleValues (%)
+     * @param ID 0x000003EE
+     * @description Movement speed percentage (default 100)
+     */
+    SpeedMult = 'SpeedMult',
+    /**
+     * @param Type Stat
+     * @param ID 0x000003EF
+     * @description Collective weight of everything in your inventory
+     */
+    InventoryWeight = 'InventoryWeight',
+    /**
+     * @param Type Stat
+     * @param ID 0x000003F0
+     * @description Max points of weight you can carry without being forced to walk
+     */
+    CarryWeight = 'CarryWeight',
+    /**
+     * @param Type Stat
+     * @param PossibleValues (%)
+     * @param ID 0x000003F1
+     * @description Your chance to score a critical hit; critical hit damage is based on weapon stats, but can be increased through perks
+     */
+    CritChance = 'CritChance',
+    /**
+     * @param Type Stat
+     * @param ID 0x000003F2
+     * @description Modifies the listed damage of your weapons (default 0). The modifier actually affects the damage display of the weapons in your inventory. (+points)
+     */
+    MeleeDamage = 'MeleeDamage',
+    /**
+     * @param Type Stat
+     * @param ID 0x000003F3
+     * @description Modifies the damage of your fists. (+points)
+     */
+    UnarmedDamage = 'UnarmedDamage',
+    /**
+     * @param Type Stat
+     * @param ID 0x000003F4
+     * @description Hidden stat that affects staggering, etc.
+     */
+    Mass = 'Mass',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000003F5
+     * @description Unknown, is supposedly related to a pool of points from which NPCs tap when shouting, but seems to be always 0 for NPCs and 100 for the player. Probably unused
+     */
+    VoicePoints = 'VoicePoints',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000003F6
+     * @description Unknown, is supposedly related to a pool of points from which NPCs tap when shouting. Seems to be always 5. Probably unused
+     */
+    VoiceRate = 'VoiceRate',
+    /**
+     * @param Type Resist
+     * @param ID 0x000005CE
+     * @description Armor rating (points, not damage reduction %)
+     */
+    DamageResist = 'DamageResist',
+    /**
+     * @param Type Resist
+     * @param ID 0x000005CF
+     * @description Poison resistance
+     */
+    PoisonResist = 'PoisonResist',
+    /**
+     * @param Type Resist
+     * @param ID 0x000005D0
+     * @description Fire resistance
+     */
+    FireResist = 'FireResist',
+    /**
+     * @param Type Resist
+     * @param ID 0x000005D1
+     * @description Shock resistance
+     */
+    ElectricResist = 'ElectricResist',
+    /**
+     * @param Type Resist
+     * @param ID 0x000005D2
+     * @description Frost resistance
+     */
+    FrostResist = 'FrostResist',
+    /**
+     * @param Type Resist
+     * @param ID 0x000005D3
+     * @description Magic resistance (resistance against all types of damage as well as paralysis duration)
+     */
+    MagicResist = 'MagicResist',
+    /**
+     * @param Type Resist
+     * @param ID 0x000005D4
+     * @description Chance to not contract a disease
+     */
+    DiseaseResist = 'DiseaseResist',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005D5
+     */
+    PerceptionCondition = 'PerceptionCondition',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005D6
+     */
+    EnduranceCondition = 'EnduranceCondition',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005D7
+     */
+    LeftAttackCondition = 'LeftAttackCondition',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005D8
+     */
+    RightAttackCondition = 'RightAttackCondition',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005D9
+     */
+    LeftMobilityCondition = 'LeftMobilityCondition',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005DA
+     */
+    RightMobilityCondition = 'RightMobilityCondition',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005DB
+     */
+    BrainCondition = 'BrainCondition',
+    /**
+     * @param Type Status
+     * @param ID 0x000005DC
+     * @description When not 0, prevents movement and attacking
+     */
+    Paralysis = 'Paralysis',
+    /**
+     * @param Type Status
+     * @param ID 0x000005DD
+     * @description When not 0, grants invisibility (not the associated visuals)
+     */
+    Invisibility = 'Invisibility',
+    /**
+     * @param Type Obsolete?
+     * @param ID 0x000005DD
+     * @description Not actually used by the Night Eye effect
+     */
+    NightEye = 'NightEye',
+    /**
+     * @param Type Obsolete?
+     * @param ID 0x000005DD
+     * @description Werewolf version of Detect Life applies this to NPCs with a magnitude of 20; this is the only place where this is used
+     */
+    DetectLifeRange = 'DetectLifeRange',
+    /**
+     * @param Type Status
+     * @param ID 0x000005E0*
+     * @description When not 0, grants waterbreathing
+     */
+    WaterBreathing = 'WaterBreathing',
+    /**
+     * @param Type Status
+     * @param ID 0x000005E1*
+     * @description When not 0, grants waterwalking
+     */
+    WaterWalking = 'WaterWalking',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005E2
+     */
+    IgnoreCrippledLimbs = 'IgnoreCrippledLimbs',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005E3
+     */
+    Fame = 'Fame',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005E4
+     */
+    Infamy = 'Infamy',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005E5
+     * @description No effect
+     */
+    JumpingBonus = 'JumpingBonus',
+    /**
+     * @param Type Buffer
+     * @param ID 0x000005E6*
+     * @description Absorbs incoming spell damage by subtracting the damage from itself, used in ward spells. Exists as a straight bonus on Spellbreaker, or "Accum. Magnitude" (charge-up) on wards
+     */
+    WardPower = 'WardPower',
+    /**
+     * @param Type Stat
+     * @param ID 0x000005E7
+     * @description The number of charges remaining in an item equipped in the right hand (i.e. enchanted weapons, magical staffs, etc.)
+     */
+    RightItemCharge = 'RightItemCharge',
+    /**
+     * @param Type Perk
+     * @param ID 0x000005E8
+     * @description Armor rating multiplier (default 0). (0.25 = +25% armor rating)
+     */
+    ArmorPerks = 'ArmorPerks',
+    /**
+     * @param Type Obsolete?
+     * @param ID 0x000005E9
+     */
+    ShieldPerks = 'ShieldPerks',
+    /**
+     * @param Type Obsolete?
+     * @param ID 0x000005EA*
+     * @description Is 0 and does not seem to change when using wards
+     */
+    WardDeflection = 'WardDeflection',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005EB
+     */
+    Variable01 = 'Variable01',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005EC
+     */
+    Variable02 = 'Variable02',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005ED
+     */
+    Variable03 = 'Variable03',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005EE*
+     */
+    Variable04 = 'Variable04',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005EF*
+     */
+    Variable05 = 'Variable05',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005F0
+     */
+    Variable06 = 'Variable06',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005F1
+     */
+    Variable07 = 'Variable07',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005F2
+     */
+    Variable08 = 'Variable08',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005F3
+     */
+    Variable09 = 'Variable09',
+    /**
+     * @param Type User-defined
+     * @param ID 0x000005F4
+     */
+    Variable10 = 'Variable10',
+    /**
+     * @param Type Perk
+     * @param ID 0x000005F5
+     * @description Slows time when zoomed in with a bow (1 = normal time, 0.5 = half speed)
+     */
+    BowSpeedBonus = 'BowSpeedBonus',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005F6
+     */
+    FavorActive = 'FavorActive',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005F7
+     */
+    FavorsPerDay = 'FavorsPerDay',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x000005F8
+     */
+    FavorsPerDayTimer = 'FavorsPerDayTimer',
+    /**
+     * @param Type Stat
+     * @param ID 0x000005F9
+     * @description The number of charges remaining in an item equipped in the left hand (i.e. enchanted weapons, magical staffs, etc.)
+     */
+    LeftItemCharge = 'LeftItemCharge',
+    /**
+     * @param Type Stat
+     * @param PossibleValues (%)
+     * @param ID 0x000005FA
+     * @description Chance to negate an incoming spell and grant magicka equal to its base casting cost
+     */
+    AbsorbChance = 'AbsorbChance',
+    /**
+     * @param Type Stat
+     * @param PossibleValues (%)
+     * @param ID 0x000005FB
+     * @description Affects this actor's ability to spot you while sneaking and out of combat (default 0). At maximum, you can only be detected by this actor through sound, but it does not work in combat
+     */
+    Blindness = 'Blindness',
+    /**
+     * @param Type Mod
+     * @param ID 0x000005FC
+     * @description Weapon attack speed, Bow draw speed. (This is an odd modifier because the default is 0 and yet it is a multiplier, meaning 1 = 100%, 0.5 = 50%, 2 = 200% but 0 = also 100%)
+     */
+    WeaponSpeedMult = 'WeaponSpeedMult',
+    /**
+     * @param Type Mod
+     * @param ID 0x000005FD
+     * @description How much are you waiting for shout recovery. (1 = 100%, 0.5 = 50% of original time)
+     */
+    ShoutRecoveryMult = 'ShoutRecoveryMult',
+    /**
+     * @param Type Stat
+     * @param ID 0x000005FE
+     * @description Chance to stagger enemies with bow shots. (1 = Sets the stagger bonus for a heavy stagger no matter the bow's damage or how much the bow is drawn, 0.1 = a light stagger no matter the bow's damage or how much the bow's drawn. For example, if you spend a skill point on Power Shot in the Archery skill tree, it will add to the bonus.)
+     */
+    BowStaggerBonus = 'BowStaggerBonus',
+    /**
+     * @param Type Status
+     * @param ID 0x000005FF
+     * @description Is set to 1 when the Telekinesis spell is equipped, otherwise 0. Responsible for toggling the UI to display the name and stats of distant items, as well as the ability to grab distant items with Telekinesis as opposed to being limited to pick-up range. Other values are the same as 1
+     */
+    Telekinesis = 'Telekinesis',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x00000600
+     */
+    FavorPointsBonus = 'FavorPointsBonus',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x00000601
+     */
+    LastBribedIntimidated = 'LastBribedIntimidated',
+    /**
+     * @param Type Obsolete
+     * @param ID 0x00000602
+     */
+    LastFlattered = 'LastFlattered',
+    /**
+     * @param Type Stat
+     * @param ID 0x00000603
+     * @description Reduction in movement noise. (1 = no reduction, 0 = 100% reduction)
+     */
+    MovementNoiseMult = 'MovementNoiseMult',
+    /**
+     * @param Type Status
+     * @param ID 0x00000604
+     * @description Sell stolen items to any vendor
+     */
+    BypassVendorStolenCheck = 'BypassVendorStolenCheck',
+    /**
+     * @param Type Status
+     * @param ID 0x00000605
+     * @description Sell non-stolen items of any type to any vendor
+     */
+    BypassVendorKeywordCheck = 'BypassVendorKeywordCheck',
+    /**
+     * @param Type AI
+     * @param ID 0x00000606
+     * @description Returns 1 if Follower is waiting for player
+     */
+    WaitingForPlayer = 'WaitingForPlayer',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000607
+     * @description Skill modifiers[SkillMod values are changed by perks and fortify skill enchantments. The automatic perk PerkSkillBoosts translates those into actual game effects.]
+     */
+    OneHandedMod = 'OneHandedMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000608
+     */
+    TwoHandedMod = 'TwoHandedMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000609
+     * @description Bow damage
+     */
+    MarksmanMod = 'MarksmanMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000060A
+     */
+    BlockMod = 'BlockMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000060B*
+     */
+    SmithingMod = 'SmithingMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000060C
+     */
+    HeavyArmorMod = 'HeavyArmorMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000060D
+     */
+    LightArmorMod = 'LightArmorMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000060E
+     */
+    PickPocketMod = 'PickPocketMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000060F
+     */
+    LockpickingMod = 'LockpickingMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000610
+     */
+    SneakMod = 'SneakMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000611
+     */
+    AlchemyMod = 'AlchemyMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000612
+     * @description Used for price/"Haggling" enchantment calculations
+     */
+    SpeechcraftMod = 'SpeechcraftMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000613
+     */
+    AlterationMod = 'AlterationMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000614
+     */
+    ConjurationMod = 'ConjurationMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000615
+     */
+    DestructionMod = 'DestructionMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000616
+     */
+    IllusionMod = 'IllusionMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000617
+     */
+    RestorationMod = 'RestorationMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000618
+     */
+    EnchantingMod = 'EnchantingMod',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000619
+     * @description These values previously controlled the skill XP for each individual skill. As of Patch 1.9, they no longer serve that purpose and have no effect
+     */
+    OneHandedSkillAdvance = 'OneHandedSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x0000061A
+     */
+    TwoHandedSkillAdvance = 'TwoHandedSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x0000061B
+     */
+    MarksmanSkillAdvance = 'MarksmanSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x0000061C
+     */
+    BlockSkillAdvance = 'BlockSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x0000061D
+     */
+    SmithingSkillAdvance = 'SmithingSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x0000061E
+     */
+    HeavyArmorSkillAdvance = 'HeavyArmorSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x0000061F
+     */
+    LightArmorSkillAdvance = 'LightArmorSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000620
+     */
+    PickPocketSkillAdvance = 'PickPocketSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000621
+     */
+    LockpickingSkillAdvance = 'LockpickingSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000622
+     */
+    SneakSkillAdvance = 'SneakSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000623
+     */
+    AlchemySkillAdvance = 'AlchemySkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000624
+     */
+    SpeechcraftSkillAdvance = 'SpeechcraftSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000625
+     */
+    AlterationSkillAdvance = 'AlterationSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000626
+     */
+    ConjurationSkillAdvance = 'ConjurationSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000627
+     */
+    DestructionSkillAdvance = 'DestructionSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000628
+     */
+    IllusionSkillAdvance = 'IllusionSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x00000629
+     */
+    RestorationSkillAdvance = 'RestorationSkillAdvance',
+    /**
+     * @param Type Exp
+     * @param ID 0x0000062A
+     */
+    EnchantingSkillAdvance = 'EnchantingSkillAdvance',
+    /**
+     * @param Type Mult
+     * @param ID 0x0000062B
+     */
+    LeftWeaponSpeedMult = 'LeftWeaponSpeedMult',
+    /**
+     * @param Type Stat
+     * @param ID 0x0000062C
+     * @description Number of dragon souls available
+     */
+    DragonSouls = 'DragonSouls',
+    /**
+     * @param Type Mult
+     * @param ID 0x0000062D
+     * @description How much faster you heal in combat. (Default is 0, but set to 0.7 = 70% of the normal heal rate by the player ability PCHealRateCombat)
+     */
+    CombatHealthRegenMult = 'CombatHealthRegenMult',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000062E
+     * @description Does not raise skill level but approximates its effects. [SkillPowerMod values are changed by fortify skill potions. The automatic perk AlchemySkillBoosts translates those into actual game effects. The effect is usually the same as increasing the skill level of the associated skill, except for the magic schools: Alteration = duration, Conjuration = duration, Destruction = magnitude, Illusion = magnitude, Restoration = magnitude.]
+     */
+    OneHandedPowerMod = 'OneHandedPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000062F*
+     */
+    TwoHandedPowerMod = 'TwoHandedPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000630
+     */
+    MarksmanPowerMod = 'MarksmanPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000631
+     */
+    BlockPowerMod = 'BlockPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000632
+     */
+    SmithingPowerMod = 'SmithingPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000633
+     */
+    HeavyArmorPowerMod = 'HeavyArmorPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000634
+     */
+    LightArmorPowerMod = 'LightArmorPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000635
+     */
+    PickPocketPowerMod = 'PickPocketPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000636
+     */
+    LockpickingPowerMod = 'LockpickingPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000637
+     */
+    SneakPowerMod = 'SneakPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000638
+     */
+    AlchemyPowerMod = 'AlchemyPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x00000639
+     */
+    SpeechcraftPowerMod = 'SpeechcraftPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000063A
+     */
+    AlterationPowerMod = 'AlterationPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000063B
+     */
+    ConjurationPowerMod = 'ConjurationPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000063C*
+     */
+    DestructionPowerMod = 'DestructionPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000063D
+     */
+    IllusionPowerMod = 'IllusionPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000063E
+     */
+    RestorationPowerMod = 'RestorationPowerMod',
+    /**
+     * @param Type Mod
+     * @param ID 0x0000063F
+     */
+    EnchantingPowerMod = 'EnchantingPowerMod',
+    /**
+     * @param Type Toggle
+     * @param ID 0x00000640
+     */
+    DragonRend = 'DragonRend',
+    /**
+     * @param Type Mult
+     * @param ID 0x00000641
+     * @description Multiplier coefficient for all physical damage from weapons, fists, and bashing (1 = default, 2 = double damage, etc.). Affects weapon damage display in inventory screen
+     */
+    AttackDamageMult = 'AttackDamageMult',
+    /**
+     * @param Type Mult
+     * @param ID 0x00000642
+     * @description Health regen rate multiplier. Is affected by Regenerate Health (Default 100)
+     */
+    HealRateMult = 'HealRateMult',
+    /**
+     * @param Type Mult
+     * @param ID 0x00000643
+     * @description Magicka regen rate multiplier. Is affected by Regenerate Magicka (Default 100)
+     */
+    MagickaRateMult = 'MagickaRateMult',
+    /**
+     * @param Type Mult
+     * @param ID 0x00000644
+     * @description Stamina regen rate multiplier. Is affected by Regenerate Stamina (Default 100)
+     */
+    StaminaRateMult = 'StaminaRateMult',
+    /**
+     * @param Type
+     * @param ID 0x00000645
+     * @description ...
+     */
+    WerewolfPerks = 'WerewolfPerks',
+    /**
+     * @param Type
+     * @param ID 0x0000646
+     * @description ...
+     */
+    VampirePerks = 'VampirePerks',
+    /**
+     * @param Type
+     * @param ID 0x00000647
+     * @description The distance in front of the caster where the target of Vampiric Grip is held. By default 0, but is set differently by Vampire Lord form
+     */
+    GrabActorOffset = 'GrabActorOffset',
+    /**
+     * @param Type Status
+     * @param ID 0x00000648
+     * @description Does not seem to have any effect, may be used to determine which actor has been grabbed by Vampiric Grip
+     */
+    Grabbed = 'Grabbed',
+    /**
+     * @param Type
+     * @param ID 0x00000649*
+     */
+    DEPRECATED05 = 'DEPRECATED05',
+    /**
+     * @param Type Stat
+     * @param PossibleValues (%)
+     * @param ID 0x0000064A
+     * @description Chance to reflect all incoming melee damage back to the attacker. Does not reduce the damage you take
+     */
+    ReflectDamage = 'ReflectDamage',
 }
 
 export declare namespace SendAnimationEventHook {
