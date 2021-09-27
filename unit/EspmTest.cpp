@@ -380,7 +380,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
             0xd45f0, 0x104217 });
 }
 
-TEST_CASE("Testing values", "[espm][GetBaseActorValues]")
+TEST_CASE("Testing values", "[espm]")
 {
   auto& br = l.GetBrowser();
 
@@ -410,6 +410,5 @@ TEST_CASE("Testing values", "[espm][GetBaseActorValues]")
   REQUIRE(healRate == 0.7f);
   REQUIRE(magickaRate == 3.f);
   REQUIRE(staminaRate == 5.f);
-
   REQUIRE(raceId == 0x00013745);
 }

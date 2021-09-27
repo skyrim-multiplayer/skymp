@@ -17,7 +17,11 @@ float CropHealthRegeneration(float newDamageModifier,
   auto look = actor->GetLook();
   uint32_t raceId = look ? look->raceId : 0;
 
-  BaseActorValues baseValues = GetBaseActorValues(espm, baseId, raceId);
+  BaseActorValues baseValues;
+  if (actor->GetParent()->HasEspm()) {
+    auto& espm = actor->GetParent()->GetEspm();
+    baseValues = GetBaseActorValues(espm, baseId, raceId);
+  }
 
   float validHealthRegenerationPercentage =
     PercentToFloat(baseValues.healRate) *

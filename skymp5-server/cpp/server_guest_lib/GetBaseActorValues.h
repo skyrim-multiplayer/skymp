@@ -1,4 +1,6 @@
 #pragma once
+#include <Loader.h>
+#include <WorldState.h>
 #include <cstdint>
 
 struct BaseActorValues

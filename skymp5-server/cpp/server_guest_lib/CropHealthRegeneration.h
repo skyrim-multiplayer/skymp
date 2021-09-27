@@ -1,5 +1,5 @@
 #pragma once
+#include "Loader.h"
 #include "WorldState.h"
-float CropHealthRegeneration(float newDamageModifier,
-                             float secondsAfterLastRegen, MpActor* actor,
-                             espm::Loader& espm);
+float CropHealthRegeneration(espm::Loader& espm, float newDamageModifier,
+                             float secondsAfterLastRegen, MpActor* actor);
