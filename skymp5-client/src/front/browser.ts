@@ -91,14 +91,4 @@ export const main = (): void => {
   const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
   printConsole(`loading url ${url}`);
   browser.loadUrl(url);
-
-  on("menuOpenClose", (evt: MenuOpenCloseEvent) => {
-    printConsole(`Test menu ${evt.name} ${evt.type}`);
-  });
-
-  ui.disableMenu(Menu.Favorites);
-
-  /*on("hit", (e: HitEvent) => {
-    ui.toggleMenu(Menu.Inventory, true);
-  })*/
 };
