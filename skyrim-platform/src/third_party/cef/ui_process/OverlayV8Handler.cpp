@@ -16,37 +16,51 @@ bool OverlayV8Handler::Execute(const CefString& acName,
 {
   TP_UNUSED(apObject);
   TP_UNUSED(aReturnValue);
-  TP_UNUSED(aException);
 
-  Dispatch(acName, acArguments);
+  Dispatch(acName, acArguments, aException);
 
-  return false;
+  return true;
 }
 
 void OverlayV8Handler::Dispatch(const CefString& acName,
-                                const CefV8ValueList& acArguments) const
-  noexcept
+                                const CefV8ValueList& acArguments,
+                                CefString& aException) const noexcept
 {
   auto pMessage = CefProcessMessage::Create("ui-event");
 
   auto pArguments = pMessage->GetArgumentList();
   auto pArgumentsList = CefListValue::Create();
 
+  std::vector<CefRefPtr<CefV8Value>> stack;
+
   for (size_t i = 0; i < acArguments.size(); ++i) {
     pArgumentsList->SetValue(static_cast<int32_t>(i),
-                             ConvertValue(acArguments[i]));
+                             ConvertValue(acArguments[i], aException, stack));
   }
 
-  pArguments->SetString(0, acName);
-  pArguments->SetList(1, pArgumentsList);
+  if (aException.empty()) {
+    pArguments->SetString(0, acName);
+    pArguments->SetList(1, pArgumentsList);
 
-  m_pBrowser->GetMainFrame()->SendProcessMessage(PID_BROWSER, pMessage);
+    m_pBrowser->GetMainFrame()->SendProcessMessage(PID_BROWSER, pMessage);
+  }
 }
 
 CefRefPtr<CefValue> OverlayV8Handler::ConvertValue(
-  const CefRefPtr<CefV8Value>& acpValue)
+  const CefRefPtr<CefV8Value>& acpValue, CefString& aException,
+  std::vector<CefRefPtr<CefV8Value>>& stack)
 {
   auto pValue = CefValue::Create();
+  auto sameCount = std::count_if(stack.begin(), stack.end(),
+                                 [&](const CefRefPtr<CefV8Value>& stackValue) {
+                                   return stackValue->IsSame(acpValue);
+                                 });
+
+  if (sameCount > 0) {
+    // Throwing exceptions crash for some reason so just write to string
+    aException = "Serializing circular structure";
+    return pValue;
+  }
 
   if (acpValue->IsBool()) {
     pValue->SetBool(acpValue->GetBoolValue());
@@ -61,9 +75,12 @@ CefRefPtr<CefValue> OverlayV8Handler::ConvertValue(
   } else if (acpValue->IsArray()) {
     auto pList = CefListValue::Create();
 
+    stack.push_back(acpValue);
     for (int i = 0; i < acpValue->GetArrayLength(); ++i) {
-      pList->SetValue(i, ConvertValue(acpValue->GetValue(i)));
+      pList->SetValue(i,
+                      ConvertValue(acpValue->GetValue(i), aException, stack));
     }
+    stack.pop_back();
 
     pValue->SetList(pList);
   } else if (acpValue->IsObject()) {
@@ -72,9 +89,12 @@ CefRefPtr<CefValue> OverlayV8Handler::ConvertValue(
     std::vector<CefString> keys;
     acpValue->GetKeys(keys);
 
+    stack.push_back(acpValue);
     for (const auto& key : keys) {
-      pDict->SetValue(key, ConvertValue(acpValue->GetValue(key)));
+      pDict->SetValue(
+        key, ConvertValue(acpValue->GetValue(key), aException, stack));
     }
+    stack.pop_back();
 
     pValue->SetDictionary(pDict);
   }
