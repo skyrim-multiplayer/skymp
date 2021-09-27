@@ -655,12 +655,12 @@ public:
           }
           case VTYPE_LIST: {
             auto list = cefValue->GetList();
-            auto length = static_cast<uint32_t>(list->GetSize());
+            auto length = static_cast<int>(list->GetSize());
             auto result = JsValue::Array(length);
-            for (uint32_t i = 0; i < length; ++i) {
+            for (int i = 0; i < length; ++i) {
               auto cefValue = list->GetValue(i);
               auto jsValue = CefValueToJsValue(cefValue);
-              result.SetProperty(static_cast<int>(i), jsValue);
+              result.SetProperty(i, jsValue);
             }
             return result;
           }
