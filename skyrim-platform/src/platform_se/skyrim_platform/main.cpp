@@ -32,18 +32,16 @@
 #include <SKSE/Stubs.h>
 #include <Windows.h>
 #include <atomic>
-#include <cef/hooks/D3D11Hook.hpp>
-#include <cef/hooks/DInputHook.hpp>
-#include <cef/hooks/IInputListener.h>
-#include <cef/hooks/WindowsHook.hpp>
-#include <cef/reverse/App.hpp>
-#include <cef/reverse/AutoPtr.hpp>
-#include <cef/reverse/Entry.hpp>
-#include <cef/ui/MyChromiumApp.hpp>
-#include <cef/ui/ProcessMessageListener.hpp>
+#include <hooks/D3D11Hook.hpp>
+#include <hooks/DInputHook.hpp>
+#include <hooks/IInputListener.h>
+#include <hooks/WindowsHook.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <reverse/App.hpp>
+#include <reverse/AutoPtr.hpp>
+#include <reverse/Entry.hpp>
 #include <shlobj.h>
 #include <skse64/GameMenus.h>
 #include <skse64/GameReferences.h>
@@ -53,6 +51,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <ui/MyChromiumApp.hpp>
+#include <ui/ProcessMessageListener.hpp>
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0

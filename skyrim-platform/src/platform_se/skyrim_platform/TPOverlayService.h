@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cef/core_library/Meta.hpp>
-#include <cef/ui/ProcessMessageListener.hpp>
+#include <core_library/Meta.hpp>
 #include <include/cef_values.h>
 #include <include/internal/cef_ptr.h>
+#include <ui/ProcessMessageListener.hpp>
 
 namespace CEFUtils {
 struct MyChromiumApp;

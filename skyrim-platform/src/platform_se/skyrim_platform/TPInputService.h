@@ -1,5 +1,5 @@
 #pragma once
-#include <cef/core_library/Meta.hpp>
+#include <core_library/Meta.hpp>
 
 struct OverlayService;
 

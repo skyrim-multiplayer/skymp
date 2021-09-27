@@ -1,9 +1,9 @@
 #include "BrowserApi.h"
 #include "NullPointerException.h"
-#include <cef/hooks/DInputHook.hpp>
-#include <cef/ui/DX11RenderHandler.hpp>
-#include <cef/ui/MyChromiumApp.hpp>
+#include <hooks/DInputHook.hpp>
 #include <skse64/GameMenus.h>
+#include <ui/DX11RenderHandler.hpp>
+#include <ui/MyChromiumApp.hpp>
 
 namespace {
 thread_local bool g_cursorIsOpenByFocus = false;
