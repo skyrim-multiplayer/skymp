@@ -89,7 +89,7 @@ export const main = (): void => {
   const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
   printConsole(`loading url ${url}`);
   browser.loadUrl(url);
-
+  
   on("menuOpen", (e: MenuOpenEvent) => {
     printConsole(`menu open - '${e.name}'`);
   });
