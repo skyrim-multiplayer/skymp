@@ -7,6 +7,7 @@ class ProcessMessageListener
 public:
   virtual ~ProcessMessageListener() = default;
 
-  virtual void OnProcessMessage(const std::string& name,
-                                const CefRefPtr<CefListValue>& arguments) = 0;
+  virtual void OnProcessMessage(
+    const std::string& name,
+    const CefRefPtr<CefListValue>& arguments) noexcept = 0;
 };

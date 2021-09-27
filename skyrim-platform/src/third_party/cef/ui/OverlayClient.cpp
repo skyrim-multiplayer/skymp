@@ -109,15 +109,7 @@ bool OverlayClient::OnProcessMessageReceived(
     auto eventName = pArguments->GetString(0).ToString();
     auto eventArgs = pArguments->GetList(1);
 
-    try {
-      onProcessMessage->OnProcessMessage(eventName, eventArgs);
-    } catch (const std::exception&) {
-      // This should never happen but if it happens, let front-end devs know
-      // To simplify, we do not escape characters in e.what() and do not pass
-      // the message
-      GetBrowser()->GetMainFrame()->ExecuteJavaScript(
-        "console.error('onProcessMessage thrown an exception')", "", 0);
-    }
+    onProcessMessage->OnProcessMessage(eventName, eventArgs);
 
     return true;
   }

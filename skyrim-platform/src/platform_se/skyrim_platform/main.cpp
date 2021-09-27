@@ -594,8 +594,23 @@ public:
     class ProcessMessageListenerImpl : public ProcessMessageListener
     {
     public:
-      void OnProcessMessage(const std::string& name,
-                            const CefRefPtr<CefListValue>& arguments_) override
+      void OnProcessMessage(
+        const std::string& name,
+        const CefRefPtr<CefListValue>& arguments_) noexcept override
+      {
+        try {
+          HandleMessage(name, arguments_);
+        } catch (const std::exception&) {
+          auto exception = std::current_exception();
+          g_taskQueueTick.AddTask([exception = std::move(exception)] {
+            std::rethrow_exception(exception);
+          });
+        }
+      }
+
+    private:
+      void HandleMessage(const std::string& name,
+                         const CefRefPtr<CefListValue>& arguments_)
       {
         auto arguments = arguments_->Copy();
         g_taskQueueTick.AddTask([name, arguments] {
@@ -613,7 +628,6 @@ public:
         });
       }
 
-    private:
       static JsValue CefValueToJsValue(const CefRefPtr<CefValue>& cefValue)
       {
         switch (cefValue->GetType()) {
