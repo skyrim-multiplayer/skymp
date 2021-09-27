@@ -1,5 +1,5 @@
 import {
-    Actor,
+    Actor, printConsole,
 } from "skyrimPlatform";
 
 import * as structures from "../../lib/structures/actorvalues";
@@ -17,4 +17,17 @@ export const getActorValues = (ac: Actor): ActorValues => {
         magicka: magickaPercentage,
     };
     return resultActorValue;
+}
+
+export const setActorValuePercentage = (ac: Actor, avName: string, baseAV: number, percentage: number) =>
+{
+    const av = ac.getActorValue(avName);
+
+    if(baseAV != av) {
+      ac.restoreActorValue(avName, baseAV - av);
+    }
+    ac.damageActorValue(
+      avName,
+      baseAV - baseAV * percentage
+    );
 }

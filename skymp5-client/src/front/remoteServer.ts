@@ -34,6 +34,7 @@ import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
 import { localIdToRemoteId, remoteIdToLocalId } from "./view";
 import * as updateOwner from "./updateOwner";
+import { setActorValuePercentage } from "./components/actorvalues";
 
 //
 // eventSource system
@@ -178,10 +179,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   openContainer(msg: messages.OpenContainer): void {
     once("update", async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
-      (ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference).activate(
-        Game.getPlayer(),
-        true
-      );
+      (
+        ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference
+      ).activate(Game.getPlayer(), true);
       (async () => {
         while (!Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
         while (Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
@@ -216,7 +216,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         msg.rot[2]
       );
       Utility.wait(0.2).then(() => {
-        (Game.getPlayer() as Actor).setAngle(msg.rot[0], msg.rot[1], msg.rot[2]);
+        (Game.getPlayer() as Actor).setAngle(
+          msg.rot[0],
+          msg.rot[1],
+          msg.rot[2]
+        );
       });
     });
   }
@@ -228,7 +232,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
 
     let movement: Movement = null as unknown as Movement;
-    if (msg.refrId as number >= 0xff000000) {
+    if ((msg.refrId as number) >= 0xff000000) {
       movement = {
         pos: msg.transform.pos,
         rot: msg.transform.rot,
@@ -322,7 +326,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           Utility.wait(1.3).then(applyPcInv);
         }
 
-        if(msg.props) {
+        if (msg.props) {
           const baseActorValues = new Map<string, unknown>([
             ["healRate", msg.props.healRate],
             ["healRateMult", msg.props.healRateMult],
@@ -338,18 +342,19 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
             ["magickaPercentage", msg.props.magickaPercentage],
           ]);
 
+          printConsole(baseActorValues.get("healthPercentage") + " " + baseActorValues.get("staminaPercentage") + " " + baseActorValues.get("staminaPercentage"))
+
           const player = Game.getPlayer();
-          if(player) {
+          if (player) {
             baseActorValues.forEach((value, key) => {
-              if (typeof value === 'number') {
-                if(key.includes("Percentage")) {
+              if (typeof value === "number") {
+                if (key.includes("Percentage")) {
                   const subKey = key.replace("Percentage", "");
                   const subValue = baseActorValues.get(subKey);
-                  if(typeof subValue === 'number') {
-                    player.damageActorValue(subKey, subValue - (subValue * value));
+                  if (typeof subValue === "number") {
+                    setActorValuePercentage(player, subKey, subValue, value);
                   }
-                }
-                else {
+                } else {
                   player.setActorValue(key, value);
                 }
               }
