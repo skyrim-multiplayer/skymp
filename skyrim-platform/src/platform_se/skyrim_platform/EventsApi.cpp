@@ -467,7 +467,7 @@ void EventsApi::SendMenuOpen(const char* menuName)
 
     obj.SetProperty("name", JsValue::String(menuName));
 
-    EventsApi::SendEvent("menuOpen", { JsValue::Undefined(), obj });
+    SendEvent("menuOpen", { JsValue::Undefined(), obj });
   });
 }
 
@@ -478,7 +478,7 @@ void EventsApi::SendMenuClose(const char* menuName)
 
     obj.SetProperty("name", JsValue::String(menuName));
 
-    EventsApi::SendEvent("menuClose", { JsValue::Undefined(), obj });
+    SendEvent("menuClose", { JsValue::Undefined(), obj });
   });
 }
 
