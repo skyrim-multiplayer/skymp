@@ -601,3 +601,18 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   });
   return RE::BSEventNotifyControl::kContinue;
 }
+
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
+  const RE::MenuOpenCloseEvent* e,
+  RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource)
+{
+  const char* menuName = e->menuName.c_str();
+
+  if (e->opening) {
+    EventsApi::SendMenuOpen(menuName);
+  } else {
+    EventsApi::SendMenuClose(menuName);
+  }
+
+  return RE::BSEventNotifyControl::kContinue;
+};
