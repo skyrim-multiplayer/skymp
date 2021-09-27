@@ -67,7 +67,7 @@ export class Login implements System {
           this.log("Logged as " + res.data.user.id);
         }
       });
-    } else if (this.offlineMode === true && gameData && gameData.profileId) {
+    } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
       ctx.gm.emit("spawnAllowed", userId, profileId);
       this.log(userId + " logged as " + profileId);

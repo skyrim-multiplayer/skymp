@@ -96,8 +96,8 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 
 ## offlineMode
 
-Boolean variable, that shows, is server in "offline mode" (server allows clients to connect with any username they choose).
-Client must send his `"profileId"`.
+The boolean variable shows is server in "offline mode" or not (the server allows clients to connect with any profile id they choose).
+Users need to specify `"profileId"` in their `skymp5-settings.txt`.
 
 ```json5
 {
