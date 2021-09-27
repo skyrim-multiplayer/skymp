@@ -22,7 +22,7 @@ project(skymp)
 enable_testing()
 
 # Bool options
-option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
+option(JS_ENGINE_TRACING_ENABLED "Affects only unit tests. Useful for JsEngine debugging. See JsEngine.h" OFF)
 
 # Path options
 option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing. CMAKE_SOURCE_DIR would be used to resolve a relative path if passed." OFF)
