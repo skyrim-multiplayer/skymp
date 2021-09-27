@@ -8,6 +8,16 @@ float PercentToFloat(float percent)
   return percent / 100.0f;
 }
 
+BaseActorValues GetValues(MpActor* actor)
+{
+  uint32_t baseId = actor->GetBaseId();
+  auto look = actor->GetLook();
+  uint32_t raceId = look ? look->raceId : 0;
+  BaseActorValues baseValues = GetBaseActorValues(baseId, raceId);
+  return baseValues;
+}
+}
+
 float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
                        float attributeRate, float attributeRateMult,
                        float oldAttributeValue)
@@ -29,16 +39,6 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
     return 0.0f;
   }
   return newAttributeValue;
-}
-
-BaseActorValues GetValues(MpActor* actor)
-{
-  uint32_t baseId = actor->GetBaseId();
-  auto look = actor->GetLook();
-  uint32_t raceId = look ? look->raceId : 0;
-  BaseActorValues baseValues = GetBaseActorValues(baseId, raceId);
-  return baseValues;
-}
 }
 
 float CropHealthRegeneration(float newAttributeValue,
@@ -66,4 +66,16 @@ float CropStaminaRegeneration(float newAttributeValue,
   return CropRegeneration(newAttributeValue, secondsAfterLastRegen,
                           baseValues.staminaRate, baseValues.staminaRateMult,
                           actor->GetChangeForm().staminaPercentage);
+}
+
+float CropPeriodAfterLastRegen(float secondsAfterLastRegen,
+                               float maxValidPeriod, float defaultPeriod)
+{
+  if (secondsAfterLastRegen < 0.0f) {
+    return 0.0f;
+  }
+  if (secondsAfterLastRegen > maxValidPeriod) {
+    return defaultPeriod;
+  }
+  return secondsAfterLastRegen;
 }

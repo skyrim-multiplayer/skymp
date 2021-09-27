@@ -167,17 +167,23 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
   });
 }
 
-std::chrono::steady_clock::time_point MpActor::GetLastTimePoint()
+std::chrono::steady_clock::time_point
+MpActor::GetLastAttributesPercentagesUpdate()
 {
   return lastAttributesUpdateTimePoint;
 }
 
-std::chrono::duration<float> MpActor::UpdateElapsedTime()
+void MpActor::SetLastAttributesPercentagesUpdate(
+  std::chrono::steady_clock::time_point timePoint)
 {
-  auto now = std::chrono::steady_clock::now();
+  lastAttributesUpdateTimePoint = timePoint;
+}
+
+std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
+  std::chrono::steady_clock::time_point now)
+{
   std::chrono::duration<float> timeAfterRegeneration =
     now - lastAttributesUpdateTimePoint;
-  lastAttributesUpdateTimePoint = now;
   return timeAfterRegeneration;
 }
 

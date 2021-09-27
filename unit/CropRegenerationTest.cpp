@@ -1,15 +1,98 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
+#include <chrono>
 
 #include "CropRegeneration.h"
 #include "GetBaseActorValues.h"
 
 PartOne& GetPartOne();
 
-TEST_CASE("CropRegeneration is working correctly", "[CropRegeneration]")
+TEST_CASE("CropRegeneration function is working correctly",
+          "[CropRegeneration]")
 {
-  PartOne& p = GetPartOne();
+  float secondsAfterLastRegen = 1.0f;
+  float attributeRate = 0.7f;
+  float attributeRateMult = 100.0f;
+  float oldAttributeValue = 0.6f;
 
+  float validAttributeValueRegeneration = attributeRate / 100.0f *
+    attributeRateMult / 100.0f * secondsAfterLastRegen;
+
+  float newAttributeValue =
+    oldAttributeValue + validAttributeValueRegeneration;
+
+  REQUIRE(CropRegeneration(newAttributeValue, 1.0f, 0.7f, 100.0f, 0.6f) ==
+          newAttributeValue);
+}
+
+TEST_CASE(
+  "CropRegeneration returns oldAttributeValue if regeneration is not positive",
+  "[CropRegeneration]")
+{
+  float oldAttributeValue = 0.6f;
+
+  float newAttributeValue = oldAttributeValue + 0.007f;
+
+  REQUIRE(CropRegeneration(newAttributeValue, 1.0f, 0.7f, -100.0f,
+                           oldAttributeValue) == oldAttributeValue);
+}
+
+TEST_CASE(
+  "CropRegeneration returns 1 if regeneration is enough to restore attribute",
+  "[CropRegeneration]")
+{
+  REQUIRE(CropRegeneration(1.0f, 1.0f, 5.0f, 100.0f, 0.97f) == 1.0f);
+}
+
+TEST_CASE("CropRegeneration returns 1 if newAttributeValue is more then 1 "
+          "when oldAttributeValue = 1",
+          "[CropRegeneration]")
+{
+  REQUIRE(CropRegeneration(1.05f, 1.0f, 5.0f, 100.0f, 1.0f) == 1.0f);
+}
+
+TEST_CASE("CropRegeneration returns the correct value if newAttributeValue is "
+          "too large but oldAttributeValue is equal to zero",
+          "[CropRegeneration]")
+{
+  REQUIRE(CropRegeneration(1.0f, 1.0f, 5.0f, 100.0f, 0.0f) == 0.05f);
+}
+
+TEST_CASE("CropPeriodAfterLastRegen returns 0 if period < 0",
+          "[CropRegeneration]")
+{
+  REQUIRE(CropPeriodAfterLastRegen(-1.0f) == 0.0f);
+}
+
+TEST_CASE(
+  "CropPeriodAfterLastRegen returns defaultPeriod if period > maxValidPeriod",
+  "[CropRegeneration]")
+{
+  float defaultPeriod = 1.0f;
+  float maxValidPeriod = 2.0f;
+  REQUIRE(CropPeriodAfterLastRegen(2.5f, maxValidPeriod, defaultPeriod) ==
+          1.0f);
+}
+
+TEST_CASE("CropPeriodAfterLastRegen returns correct value if period is in "
+          "0...maxValidPeriod interval",
+          "[CropRegeneration]")
+{
+  float defaultPeriod = 1.0f;
+  float maxValidPeriod = 2.0f;
+  REQUIRE(CropPeriodAfterLastRegen(1.3f, maxValidPeriod, defaultPeriod) ==
+          1.3f);
+}
+
+TEST_CASE("CropHealthRegeneration, CropMagickaRegeneration and "
+          "CropStaminaRegeneration are working correctly, regeneration is not "
+          "too fast",
+          "[CropRegeneration]")
+{
+
+  using namespace std::chrono_literals;
+
+  PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
@@ -20,12 +103,14 @@ TEST_CASE("CropRegeneration is working correctly", "[CropRegeneration]")
   uint32_t raceId = look ? look->raceId : 0;
   BaseActorValues baseValues = GetBaseActorValues(baseId, raceId);
 
-  float healthPercentage = 0.0f;
-  float magickaPercentage = 1.0f;
-  float staminaPercentage = 1.5f;
-  float time = 1.0f;
+  ac.SetPercentages(0.0f, 0.0f, 0.0f);
 
-  ac.SetPercentages(0, 0, 1);
+  auto past = std::chrono::steady_clock::now();
+  auto now = past + 1s;
+  ac.SetLastAttributesPercentagesUpdate(past);
+  std::chrono::duration<float> timeDuration = now - past;
+  float time = timeDuration.count();
+
   float expectedHealth =
     baseValues.healRate * baseValues.healRateMult * time / 10000.0f;
   float expectedMagicka =
@@ -33,39 +118,12 @@ TEST_CASE("CropRegeneration is working correctly", "[CropRegeneration]")
   float expectedStamina =
     baseValues.staminaRate * baseValues.staminaRateMult * time / 10000.0f;
 
-  REQUIRE(CropHealthRegeneration(healthPercentage, time, &ac) == 0.0f);
-  REQUIRE_THAT(CropHealthRegeneration(expectedHealth, time, &ac),
+  REQUIRE_THAT(CropHealthRegeneration(1.0f, time, &ac),
                Catch::Matchers::WithinAbs(expectedHealth, 0.000001f));
-
-  REQUIRE_THAT(CropMagickaRegeneration(magickaPercentage, time, &ac),
+  REQUIRE_THAT(CropMagickaRegeneration(1.0f, time, &ac),
                Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
-  REQUIRE_THAT(CropMagickaRegeneration(expectedMagicka, time, &ac),
-               Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
-
-  REQUIRE(CropStaminaRegeneration(staminaPercentage, time, &ac) == 1.0f);
-  ac.SetPercentages(0, 0, 0);
-  REQUIRE_THAT(CropStaminaRegeneration(expectedStamina, time, &ac),
+  REQUIRE_THAT(CropStaminaRegeneration(1.0f, time, &ac),
                Catch::Matchers::WithinAbs(expectedStamina, 0.000001f));
-
-  REQUIRE_THAT(CropHealthRegeneration(expectedHealth + 0.1f, time, &ac),
-               Catch::Matchers::WithinAbs(expectedHealth, 0.000001f));
-  REQUIRE_THAT(CropMagickaRegeneration(expectedMagicka * (-1), time, &ac),
-               Catch::Matchers::WithinAbs(0.0f, 0.000001f));
-  REQUIRE_THAT(
-    CropStaminaRegeneration(expectedStamina * 2.0f, time * 2.0f, &ac),
-    Catch::Matchers::WithinAbs(expectedStamina * 2.0f, 0.000001f));
-
-  REQUIRE_THAT(CropStaminaRegeneration(expectedStamina, 0, &ac),
-               Catch::Matchers::WithinAbs(0.0f, 0.000001f));
-
-  ac.SetPercentages(0.5f, 0.3f, 0.01f);
-
-  REQUIRE_THAT(CropHealthRegeneration(expectedHealth + 0.5f, time, &ac),
-               Catch::Matchers::WithinAbs(expectedHealth + 0.5f, 0.000001f));
-  REQUIRE_THAT(CropMagickaRegeneration(expectedMagicka + 0.3f, time, &ac),
-               Catch::Matchers::WithinAbs(expectedMagicka + 0.3f, 0.000001f));
-  REQUIRE_THAT(CropStaminaRegeneration(expectedStamina + 0.01f, time, &ac),
-               Catch::Matchers::WithinAbs(expectedStamina + 0.01f, 0.000001f));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

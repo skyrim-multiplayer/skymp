@@ -460,7 +460,11 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
-  float timeAfterRegeneration = actor->UpdateElapsedTime().count();
+  auto now = std::chrono::steady_clock::now();
+
+  float timeAfterRegeneration = CropPeriodAfterLastRegen(
+    actor->GetDurationOfAttributesPercentagesUpdate(now).count());
+
   MpChangeForm changeForm = actor->GetChangeForm();
   float health = healthPercentage;
   float magicka = magickaPercentage;
@@ -477,4 +481,5 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   }
 
   actor->SetPercentages(health, magicka, stamina);
+  actor->SetLastAttributesPercentagesUpdate(now);
 }

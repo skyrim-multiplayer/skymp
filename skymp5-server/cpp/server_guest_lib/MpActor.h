@@ -54,8 +54,15 @@ public:
   void SetPercentages(float healthPercentage, float magickaPercentage,
                       float staminaPercentage);
 
-  std::chrono::steady_clock::time_point GetLastTimePoint();
-  std::chrono::duration<float> UpdateElapsedTime();
+  std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
+
+  void SetLastAttributesPercentagesUpdate(
+    std::chrono::steady_clock::time_point timePoint =
+      std::chrono::steady_clock::now());
+
+  std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
+    std::chrono::steady_clock::time_point now =
+      std::chrono::steady_clock::now());
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
