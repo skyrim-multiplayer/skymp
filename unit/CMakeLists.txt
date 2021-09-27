@@ -39,6 +39,9 @@ if(WIN32)
   target_link_libraries(unit PUBLIC Dbghelp.lib)
 endif()
 target_link_libraries(unit PUBLIC espm)
+if(JS_ENGINE_TRACING_ENABLED)
+  target_compile_definitions(unit PUBLIC JS_ENGINE_TRACING_ENABLED)
+endif()
 
 #
 # ctest tests
