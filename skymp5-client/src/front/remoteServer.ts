@@ -342,8 +342,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
             ["magickaPercentage", msg.props.magickaPercentage],
           ]);
 
-          printConsole(baseActorValues.get("healthPercentage") + " " + baseActorValues.get("staminaPercentage") + " " + baseActorValues.get("staminaPercentage"))
-
           const player = Game.getPlayer();
           if (player) {
             baseActorValues.forEach((value, key) => {
