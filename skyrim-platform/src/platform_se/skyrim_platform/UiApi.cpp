@@ -10,7 +10,6 @@ namespace UiApi {
 class MyEventSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
 public:
-  ~MyEventSink(){};
   RE::BSEventNotifyControl ProcessEvent(
     const RE::MenuOpenCloseEvent* e,
     RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource) override
@@ -31,8 +30,9 @@ void Register(JsValue& exports)
 {
   auto ui = RE::UI::GetSingleton();
 
-  if (!ui)
+  if (!ui) {
     return;
+  }
 
   ui->GetEventSource<RE::MenuOpenCloseEvent>()->AddEventSink(new MyEventSink);
 }
