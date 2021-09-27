@@ -350,7 +350,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                   const subKey = key.replace("Percentage", "");
                   const subValue = baseActorValues.get(subKey);
                   if (typeof subValue === "number") {
-                    setActorValuePercentage(player, subKey, subValue, value);
+                    setActorValuePercentage(player, subKey, value);
                   }
                 } else {
                   player.setActorValue(key, value);
