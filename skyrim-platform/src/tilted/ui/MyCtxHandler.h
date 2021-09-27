@@ -3,17 +3,19 @@
 
 #include <Meta.hpp>
 
-namespace CEFUtils
+namespace CEFUtils {
+struct MyCtxHandler final : CefContextMenuHandler
 {
-    struct MyCtxHandler final : CefContextMenuHandler
-    {
-        MyCtxHandler() = default;
-        virtual ~MyCtxHandler() = default;
+  MyCtxHandler() = default;
+  virtual ~MyCtxHandler() = default;
 
-        TP_NOCOPYMOVE(MyCtxHandler);
+  TP_NOCOPYMOVE(MyCtxHandler);
 
-        void OnBeforeContextMenu(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefContextMenuParams> params, CefRefPtr<CefMenuModel> model) override;
+  void OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
+                           CefRefPtr<CefFrame> frame,
+                           CefRefPtr<CefContextMenuParams> params,
+                           CefRefPtr<CefMenuModel> model) override;
 
-        IMPLEMENT_REFCOUNTING(MyCtxHandler);
-    };
+  IMPLEMENT_REFCOUNTING(MyCtxHandler);
+};
 }
