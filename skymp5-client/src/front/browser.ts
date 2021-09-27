@@ -6,12 +6,10 @@ import {
   printConsole,
   settings,
   Ui,
-  MenuOpenCloseEvent,
+  MenuOpenEvent,
+  MenuCloseEvent,
   Menu,
-  DxScanCode,
-  ActivateEvent,
-  ui,
-  HitEvent
+  DxScanCode
 } from "skyrimPlatform";
 
 export const main = (): void => {
@@ -92,13 +90,13 @@ export const main = (): void => {
   printConsole(`loading url ${url}`);
   browser.loadUrl(url);
 
-  on("menuOpenClose", (evt: MenuOpenCloseEvent) => {
-    printConsole(`Test menu ${evt.name} ${evt.type}`);
+  on("menuOpen", (e: MenuOpenEvent) => {
+    printConsole(`menu open - '${e.name}'`);
   });
 
-  ui.disableMenu(Menu.Favorites);
+  on("menuClose", (e: MenuCloseEvent) => {
+    printConsole(`menu close - '${e.name}'`);
+  });
 
-  /*on("hit", (e: HitEvent) => {
-    ui.toggleMenu(Menu.Inventory, true);
-  })*/
+  //ui.disableMenu(Menu.Favorites);
 };
