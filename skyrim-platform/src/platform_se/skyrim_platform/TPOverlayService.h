@@ -33,5 +33,5 @@ struct OverlayService
 
 private:
   CefRefPtr<MyChromiumApp> overlay{ nullptr };
-  std::shared_ptr<ProcessMessageListener> onProcessMessage;
+  const std::shared_ptr<ProcessMessageListener> onProcessMessage;
 };

@@ -76,7 +76,7 @@ private:
   std::unique_ptr<RenderProvider> m_pRenderProvider;
   std::wstring m_processName;
   mutable int m_wasFocused = -1;
-  std::shared_ptr<ProcessMessageListener> onProcessMessage;
+  const std::shared_ptr<ProcessMessageListener> onProcessMessage;
 
   mutable struct
   {

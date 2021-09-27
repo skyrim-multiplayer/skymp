@@ -55,6 +55,6 @@ private:
   std::wstring m_cursorPathPNG;
   std::wstring m_cursorPathDDS;
 
-  std::shared_ptr<ProcessMessageListener> onProcessMessage;
+  const std::shared_ptr<ProcessMessageListener> onProcessMessage;
 };
 }
