@@ -1,5 +1,5 @@
 import {
-    Actor, printConsole,
+    Actor,
 } from "skyrimPlatform";
 
 import * as structures from "../../lib/structures/actorvalues";
