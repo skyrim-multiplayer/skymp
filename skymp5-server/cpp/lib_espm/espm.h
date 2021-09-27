@@ -687,7 +687,7 @@ public:
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 
-class RACE : RecordHeader
+class RACE : public RecordHeader
 {
 public:
   static constexpr auto type = "RACE";

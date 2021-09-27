@@ -58,8 +58,13 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
     espm::CompressedFieldsCache compressedFieldsCache;
     auto raceId = npc->GetData(compressedFieldsCache).race;
     raceId = raceId ? raceId : 0x00013746;
+    if (raceIdOverride != 0) {
+      raceIdOverride = raceId;
+    } else {
+      raceIdOverride = 0x00013746;
+    }
 
-    auto raceInfo = espm.GetBrowser().LookupById(raceId);
+    auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
 
     if (raceInfo.rec->GetType() == "RACE") {
       auto race = espm::Convert<espm::RACE>(raceInfo.rec);
