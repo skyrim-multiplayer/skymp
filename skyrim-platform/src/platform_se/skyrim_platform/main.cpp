@@ -1,5 +1,4 @@
 #include "BrowserApi.h"
-#include "UiApi.h"
 #include "CallNativeApi.h"
 #include "CameraApi.h"
 #include "ConsoleApi.h"
@@ -27,6 +26,7 @@
 #include "TPRenderSystemD3D11.h"
 #include "TaskQueue.h"
 #include "ThreadPoolWrapper.h"
+#include "UiApi.h"
 #include <RE/ConsoleLog.h>
 #include <SKSE/API.h>
 #include <SKSE/Interfaces.h>

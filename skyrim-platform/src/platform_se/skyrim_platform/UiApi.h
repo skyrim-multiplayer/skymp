@@ -2,5 +2,5 @@
 #include "JsEngine.h"
 
 namespace UiApi {
-	void Register(JsValue& exports);
+void Register(JsValue& exports);
 }
