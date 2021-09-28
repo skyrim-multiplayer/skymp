@@ -63,6 +63,46 @@ function(link_vcpkg_dependencies)
       find_package(directxmath CONFIG REQUIRED)
       target_link_libraries(${target} PUBLIC Microsoft::DirectXTK)
     endif()
+	
+    if(MSVC AND "${target}" MATCHES "skyrim_platform_vr")
+      find_library(MHOOH_LIBRARY_DEBUG mhook)
+      string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})
+      find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib)
+      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
+      target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
+
+      find_library(SKSEVR_LIBRARY_DEBUG sksevr)
+      string(REPLACE "/debug/lib/" "/lib/" SKSEVR_LIBRARY_RELEASE ${SKSEVR_LIBRARY_DEBUG})
+      find_path(SKSEVR_INCLUDE_DIR sksevr/PluginAPI.h)
+      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSEVR_LIBRARY_DEBUG},${SKSEVR_LIBRARY_RELEASE}>")
+      target_include_directories(${target} PUBLIC ${SKSEVR_INCLUDE_DIR})
+
+      find_library(SKSEVR_COMMON_LIBRARY_DEBUG sksevr_common)
+      string(REPLACE "/debug/lib/" "/lib/" SKSEVR_COMMON_LIBRARY_RELEASE ${SKSEVR_COMMON_LIBRARY_DEBUG})
+      find_path(SKSEVR_COMMON_INCLUDE_DIR sksevr/PluginAPI.h)
+      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSEVR_COMMON_LIBRARY_DEBUG},${SKSEVR_COMMON_LIBRARY_RELEASE}>")
+      target_include_directories(${target} PUBLIC ${SKSEVR_COMMON_INCLUDE_DIR})
+
+      find_library(COMMON_LIBRARY_DEBUG common)
+      string(REPLACE "/debug/lib/" "/lib/" COMMON_LIBRARY_RELEASE ${COMMON_LIBRARY_DEBUG})
+      find_path(COMMON_INCLUDE_DIR sksevr/PluginAPI.h)
+      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMON_LIBRARY_DEBUG},${COMMON_LIBRARY_RELEASE}>")
+      target_include_directories(${target} PUBLIC ${COMMON_INCLUDE_DIR})
+
+      find_library(COMMONLIBVR_LIBRARY_DEBUG CommonLibVR)
+      string(REPLACE "/debug/lib/" "/lib/" COMMONLIBVR_LIBRARY_RELEASE ${COMMONLIBVR_LIBRARY_DEBUG})
+      find_path(COMMONLIBVR_INCLUDE_DIR SKSE/API.h)
+      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMONLIBVR_LIBRARY_DEBUG},${COMMONLIBVR_LIBRARY_RELEASE}>")
+      target_include_directories(${target} PUBLIC ${COMMONLIBVR_INCLUDE_DIR})
+
+      # CommonLibVR requirement
+      target_link_libraries(${target} PUBLIC Version)
+      target_compile_options(${target} PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
+
+      find_package(directxtk CONFIG REQUIRED)
+      find_package(directxmath CONFIG REQUIRED)
+      target_link_libraries(${target} PUBLIC Microsoft::DirectXTK)
+    endif()
 
     find_package(spdlog CONFIG REQUIRED)
     target_link_libraries(${target} PUBLIC spdlog::spdlog)

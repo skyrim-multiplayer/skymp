@@ -1,0 +1,7 @@
+{
+    "name": "sksevr",
+    "version-string": "2_00_12",
+    "description": "Skyrim Script Extender",
+    "homepage": "https://skse.silverlock.org/",
+    "supports": "windows & x64"
+}

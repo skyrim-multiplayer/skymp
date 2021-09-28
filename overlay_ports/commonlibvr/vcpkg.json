@@ -1,0 +1,11 @@
+{
+    "name": "commonlibvr",
+    "version-string": "1",
+    "description": "This is an experimental reverse engineered library for Skyrim VR (ported from CommonLibSSE)",
+    "homepage": "https://github.com/lfrazer/CommonLibVR",
+    "license": "MIT",
+    "supports": "windows & x64",
+    "dependencies": [
+        "sksevr"
+    ]
+}
