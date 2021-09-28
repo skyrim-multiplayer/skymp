@@ -74,7 +74,6 @@ export class Login implements System {
     } else {
       this.log("No credentials found in gameData:", gameData);
     }
-
   }
 
   private userProfileIds = new Array<undefined | number>();
