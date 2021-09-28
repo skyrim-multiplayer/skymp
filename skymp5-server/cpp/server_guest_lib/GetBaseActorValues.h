@@ -56,7 +56,6 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
     auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
 
     if (raceInfo.rec->GetType() == "RACE") {
-
       auto race = espm::Convert<espm::RACE>(raceInfo.rec);
 
       auto raceData = race->GetData(compressedFieldsCache);

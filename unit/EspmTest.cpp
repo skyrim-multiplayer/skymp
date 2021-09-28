@@ -383,11 +383,9 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
 TEST_CASE("Testing values", "[espm]")
 {
   auto& br = l.GetBrowser();
-  Look look;
-  uint32_t raceIdOverride = look.raceId ? look.raceId : 0x00013746;
-  REQUIRE(raceIdOverride == 0x00013746);
 
-  auto form = br.LookupById(raceIdOverride); // 0x0001B1DB Ri'saad( roving merchant from caravan. Khajiit)
+  auto form = br.LookupById(
+    0x0001B1DB); //Ri'saad(Roving merchant from Khajiit's caravan.)
 
   REQUIRE(form.rec->GetType() == "RACE");
   espm::CompressedFieldsCache compressedFieldsCache;
