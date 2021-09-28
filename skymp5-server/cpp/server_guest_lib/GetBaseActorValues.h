@@ -1,4 +1,5 @@
 #pragma once
+#include <espm.h>
 #include <Loader.h>
 #include <WorldState.h>
 #include <cstdint>
@@ -50,39 +51,26 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
 {
   BaseActorValues baseActorValues;
 
-  auto form = espm.GetBrowser().LookupById(baseId);
+  raceIdOverride = raceIdOverride ? raceIdOverride : 0x00013746;
+  espm::CompressedFieldsCache compressedFieldsCache;
 
-  if (form.rec->GetType() == "NPC_") {
-    auto npc = espm::Convert<espm::NPC_>(form.rec);
+  auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
 
-    espm::CompressedFieldsCache compressedFieldsCache;
-    auto raceId = npc->GetData(compressedFieldsCache).race;
-    raceId = raceId ? raceId : 0x00013746;
-    if (raceIdOverride != 0) {
-      raceIdOverride = raceId;
-    } else {
-      raceIdOverride = 0x00013746;
-    }
+  if (raceInfo.rec->GetType() == "RACE") {
+    auto race = espm::Convert<espm::RACE>(raceInfo.rec);
 
-    auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
+    auto raceData = race->GetData(compressedFieldsCache);
 
-    if (raceInfo.rec->GetType() == "RACE") {
-      auto race = espm::Convert<espm::RACE>(raceInfo.rec);
-
-      auto raceData = race->GetData(compressedFieldsCache);
-
-      baseActorValues.health = raceData.startingHealth;
-      baseActorValues.magicka = raceData.startingMagicka;
-      baseActorValues.stamina = raceData.startingStamina;
-      baseActorValues.healRate = raceData.healRegen;
-      baseActorValues.magickaRate = raceData.magickaRegen;
-      baseActorValues.staminaRate = raceData.staminaRegen;
-    } else {
-      return baseActorValues;
-    }
+    baseActorValues.health = raceData.startingHealth;
+    baseActorValues.magicka = raceData.startingMagicka;
+    baseActorValues.stamina = raceData.startingStamina;
+    baseActorValues.healRate = raceData.healRegen;
+    baseActorValues.magickaRate = raceData.magickaRegen;
+    baseActorValues.staminaRate = raceData.staminaRegen;
   } else {
     return baseActorValues;
   }
+
 
   return baseActorValues;
 }

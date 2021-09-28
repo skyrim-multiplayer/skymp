@@ -383,20 +383,16 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
 TEST_CASE("Testing values", "[espm]")
 {
   auto& br = l.GetBrowser();
+  Look look;
+  uint32_t raceIdOverride = look.raceId ? look.raceId : 0x00013746;
+  REQUIRE(raceIdOverride == 0x00013746);
 
-  auto form = br.LookupById(
-    0x0001B1DB); // Ri'saad( roving merchant from caravan. Khajiit)
+  auto form = br.LookupById(raceIdOverride); // 0x0001B1DB Ri'saad( roving merchant from caravan. Khajiit)
 
-  REQUIRE(form.rec->GetType() == "NPC_");
-  auto npc = espm::Convert<espm::NPC_>(form.rec);
-
-  espm::CompressedFieldsCache compressedFieldCache;
-  auto raceId = npc->GetData(compressedFieldCache).race;
-  auto raceForm = br.LookupById(raceId);
-  REQUIRE(raceForm.rec->GetType() == "RACE");
-
-  auto race = espm::Convert<espm::RACE>(raceForm.rec);
-  auto data = race->GetData(compressedFieldCache);
+  REQUIRE(form.rec->GetType() == "RACE");
+  espm::CompressedFieldsCache compressedFieldsCache;
+  auto race = espm::Convert<espm::RACE>(form.rec);
+  auto data = race->GetData(compressedFieldsCache);
   float health = data.startingHealth;
   float magicka = data.startingMagicka;
   float stamina = data.startingStamina;
@@ -410,5 +406,4 @@ TEST_CASE("Testing values", "[espm]")
   REQUIRE(healRate == 0.7f);
   REQUIRE(magickaRate == 3.f);
   REQUIRE(staminaRate == 5.f);
-  REQUIRE(raceId == 0x00013745);
 }
