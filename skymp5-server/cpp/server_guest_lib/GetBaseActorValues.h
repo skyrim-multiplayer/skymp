@@ -1,8 +1,8 @@
 #pragma once
-#include <espm.h>
 #include <Loader.h>
 #include <WorldState.h>
 #include <cstdint>
+#include <espm.h>
 
 struct BaseActorValues
 {
@@ -50,27 +50,53 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
                                           uint32_t raceIdOverride)
 {
   BaseActorValues baseActorValues;
-
-  raceIdOverride = raceIdOverride ? raceIdOverride : 0x00013746;
   espm::CompressedFieldsCache compressedFieldsCache;
 
-  auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
+  if (raceIdOverride) {
+    auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
 
-  if (raceInfo.rec->GetType() == "RACE") {
-    auto race = espm::Convert<espm::RACE>(raceInfo.rec);
+    if (raceInfo.rec->GetType() == "RACE") {
 
-    auto raceData = race->GetData(compressedFieldsCache);
+      auto race = espm::Convert<espm::RACE>(raceInfo.rec);
 
-    baseActorValues.health = raceData.startingHealth;
-    baseActorValues.magicka = raceData.startingMagicka;
-    baseActorValues.stamina = raceData.startingStamina;
-    baseActorValues.healRate = raceData.healRegen;
-    baseActorValues.magickaRate = raceData.magickaRegen;
-    baseActorValues.staminaRate = raceData.staminaRegen;
+      auto raceData = race->GetData(compressedFieldsCache);
+
+      baseActorValues.health = raceData.startingHealth;
+      baseActorValues.magicka = raceData.startingMagicka;
+      baseActorValues.stamina = raceData.startingStamina;
+      baseActorValues.healRate = raceData.healRegen;
+      baseActorValues.magickaRate = raceData.magickaRegen;
+      baseActorValues.staminaRate = raceData.staminaRegen;
+    } else {
+      return baseActorValues;
+    }
   } else {
-    return baseActorValues;
+    auto form = espm.GetBrowser().LookupById(baseId);
+    if (form.rec->GetType() == "NPC_") {
+      auto npc = espm::Convert<espm::NPC_>(form.rec);
+
+      auto raceId = npc->GetData(compressedFieldsCache).race;
+
+      auto raceInfo = espm.GetBrowser().LookupById(raceId);
+
+      if (raceInfo.rec->GetType() == "RACE") {
+
+        auto race = espm::Convert<espm::RACE>(raceInfo.rec);
+
+        auto raceData = race->GetData(compressedFieldsCache);
+
+        baseActorValues.health = raceData.startingHealth;
+        baseActorValues.magicka = raceData.startingMagicka;
+        baseActorValues.stamina = raceData.startingStamina;
+        baseActorValues.healRate = raceData.healRegen;
+        baseActorValues.magickaRate = raceData.magickaRegen;
+        baseActorValues.staminaRate = raceData.staminaRegen;
+      } else {
+        return baseActorValues;
+      }
+    } else {
+      return baseActorValues;
+    }
   }
-
-
   return baseActorValues;
 }
