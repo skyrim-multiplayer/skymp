@@ -54,10 +54,8 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
 
   if (raceIdOverride) {
     auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
-
     if (raceInfo.rec->GetType() == "RACE") {
       auto race = espm::Convert<espm::RACE>(raceInfo.rec);
-
       auto raceData = race->GetData(compressedFieldsCache);
 
       baseActorValues.health = raceData.startingHealth;
@@ -73,15 +71,10 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
     auto form = espm.GetBrowser().LookupById(baseId);
     if (form.rec->GetType() == "NPC_") {
       auto npc = espm::Convert<espm::NPC_>(form.rec);
-
       auto raceId = npc->GetData(compressedFieldsCache).race;
-
       auto raceInfo = espm.GetBrowser().LookupById(raceId);
-
       if (raceInfo.rec->GetType() == "RACE") {
-
         auto race = espm::Convert<espm::RACE>(raceInfo.rec);
-
         auto raceData = race->GetData(compressedFieldsCache);
 
         baseActorValues.health = raceData.startingHealth;
