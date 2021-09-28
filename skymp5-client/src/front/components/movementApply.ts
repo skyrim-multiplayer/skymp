@@ -114,7 +114,17 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
-  // ...
+  const currentPercentage = ac.getActorValuePercentage('health');
+  if (currentPercentage === healthPercentage) return;
+
+  const currentMax = ac.getBaseActorValue('health');
+  const deltaPercentage = healthPercentage - currentPercentage;
+  const k = 0.25;
+  if (deltaPercentage > 0) {
+    ac.restoreActorValue('health', deltaPercentage * currentMax * k);
+  } else if (deltaPercentage < 0) {
+    ac.damageActorValue('health', deltaPercentage * currentMax * k);
+  }
 };
 
 const translateTo = (refr: ObjectReference, m: Movement) => {

@@ -1,6 +1,7 @@
 #pragma once
 #include "NullPointerException.h"
 
+#include <RE/MenuOpenCloseEvent.h>
 #include <RE/ScriptEventSourceHolder.h>
 #include <RE/TESActiveEffectApplyRemoveEvent.h>
 #include <RE/TESCellFullyLoadedEvent.h>
@@ -20,6 +21,7 @@
 #include <RE/TESTrackedStatsEvent.h>
 #include <RE/TESUniqueIDChangeEvent.h>
 #include <RE/TESWaitStopEvent.h>
+#include <RE/UI.h>
 
 class TaskQueue;
 
@@ -44,6 +46,7 @@ class GameEventSinks
   , public RE::BSTEventSink<RE::TESObjectLoadedEvent>
   , public RE::BSTEventSink<RE::TESWaitStopEvent>
   , public RE::BSTEventSink<RE::TESActivateEvent>
+  , public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 
 {
 public:
@@ -114,6 +117,15 @@ public:
     holder->AddEventSink(
       dynamic_cast<RE::BSTEventSink<RE::TESActiveEffectApplyRemoveEvent>*>(
         this));
+
+    auto ui = RE::UI::GetSingleton();
+
+    if (!ui) {
+      throw NullPointerException("ui");
+    }
+
+    ui->GetEventSource<RE::MenuOpenCloseEvent>()->AddEventSink(
+      dynamic_cast<RE::BSTEventSink<RE::MenuOpenCloseEvent>*>(this));
   }
 
 private:
@@ -197,6 +209,10 @@ private:
   RE::BSEventNotifyControl ProcessEvent(
     const RE::TESMagicEffectApplyEvent* event_,
     RE::BSTEventSource<RE::TESMagicEffectApplyEvent>* eventSource) override;
+
+  RE::BSEventNotifyControl ProcessEvent(
+    const RE::MenuOpenCloseEvent* e,
+    RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource) override;
 
   TaskQueue& taskQueue;
 };

@@ -1,9 +1,9 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
+#include <chrono>
 
+#include "GetBaseActorValues.h"
 #include "PacketParser.h"
-
-using Catch::Matchers::Contains;
 
 PartOne& GetPartOne();
 
@@ -67,6 +67,54 @@ TEST_CASE("Player attribute percentages are changing correctly",
   REQUIRE(changeForm.healthPercentage == 0.75f);
   REQUIRE(changeForm.magickaPercentage == 0.0f);
   REQUIRE(changeForm.staminaPercentage == 0.7f);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
+}
+
+TEST_CASE("OnChangeValues call is cropping percentage values",
+          "[ChangeValues]")
+{
+  using namespace std::chrono_literals;
+
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  uint32_t baseId = ac.GetBaseId();
+  auto look = ac.GetLook();
+  uint32_t raceId = look ? look->raceId : 0;
+  BaseActorValues baseValues = GetBaseActorValues(baseId, raceId);
+
+  IActionListener::RawMessageData msgData;
+  msgData.userId = 0;
+
+  ac.SetPercentages(0.0f, 0.0f, 0.0f);
+  auto past = std::chrono::steady_clock::now() - 1s;
+  ac.SetLastAttributesPercentagesUpdate(past);
+  p.GetActionListener().OnChangeValues(msgData, 1.0f, 1.0f, 1.0f);
+
+  auto now = ac.GetLastAttributesPercentagesUpdate();
+  std::chrono::duration<float> timeDuration = now - past;
+  float time = timeDuration.count();
+
+  float expectedHealth =
+    baseValues.healRate * baseValues.healRateMult * time / 10000.0f;
+  float expectedMagicka =
+    baseValues.magickaRate * baseValues.magickaRateMult * time / 10000.0f;
+  float expectedStamina =
+    baseValues.staminaRate * baseValues.staminaRateMult * time / 10000.0f;
+
+  auto changeForm = ac.GetChangeForm();
+
+  REQUIRE_THAT(changeForm.healthPercentage,
+               Catch::Matchers::WithinAbs(expectedHealth, 0.000001f));
+  REQUIRE_THAT(changeForm.magickaPercentage,
+               Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
+  REQUIRE_THAT(changeForm.staminaPercentage,
+               Catch::Matchers::WithinAbs(expectedStamina, 0.000001f));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

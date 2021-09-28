@@ -32,17 +32,16 @@
 #include <SKSE/Stubs.h>
 #include <Windows.h>
 #include <atomic>
-#include <cef/hooks/D3D11Hook.hpp>
-#include <cef/hooks/DInputHook.hpp>
-#include <cef/hooks/IInputListener.h>
-#include <cef/hooks/WindowsHook.hpp>
-#include <cef/reverse/App.hpp>
-#include <cef/reverse/AutoPtr.hpp>
-#include <cef/reverse/Entry.hpp>
-#include <cef/ui/MyChromiumApp.hpp>
+#include <hooks/D3D11Hook.hpp>
+#include <hooks/DInputHook.hpp>
+#include <hooks/IInputListener.h>
+#include <hooks/WindowsHook.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <reverse/App.hpp>
+#include <reverse/AutoPtr.hpp>
+#include <reverse/Entry.hpp>
 #include <shlobj.h>
 #include <skse64/GameMenus.h>
 #include <skse64/GameReferences.h>
@@ -52,6 +51,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <ui/MyChromiumApp.h>
+#include <ui/ProcessMessageListener.h>
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
@@ -66,6 +67,7 @@ std::shared_ptr<BrowserApi::State> g_browserApiState(new BrowserApi::State);
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 TaskQueue g_taskQueue;
+TaskQueue g_taskQueueTick;
 
 bool EndsWith(const std::wstring& value, const std::wstring& ending)
 {
@@ -99,6 +101,7 @@ void JsTick(bool gameFunctionsAvailable)
       ConsoleApi::Clear();
       EventsApi::Clear();
       g_taskQueue.Clear();
+      g_taskQueueTick.Clear();
       g_nativeCallRequirements.jsThrQ->Clear();
 
       if (!engine) {
@@ -198,6 +201,7 @@ void JsTick(bool gameFunctionsAvailable)
       g_nativeCallRequirements.jsThrQ->Update();
     }
     if (!gameFunctionsAvailable) {
+      g_taskQueueTick.Update();
       HttpClientApi::GetHttpClient().Update();
     }
     EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
@@ -577,9 +581,8 @@ public:
 
   bool BeginMain() override
   {
-    inputConverter.reset(new InputConverter);
-
-    myInputListener.reset(new MyInputListener);
+    inputConverter = std::make_shared<InputConverter>();
+    myInputListener = std::make_shared<MyInputListener>();
 
     CEFUtils::D3D11Hook::Install();
     CEFUtils::DInputHook::Install(myInputListener);
@@ -588,13 +591,94 @@ public:
     CEFUtils::DInputHook::Get().SetToggleKeys({ VK_F6 });
     CEFUtils::DInputHook::Get().SetEnabled(true);
 
-    overlayService.reset(new OverlayService);
-    overlayService->GetMyChromiumApp();
+    class ProcessMessageListenerImpl : public ProcessMessageListener
+    {
+    public:
+      void OnProcessMessage(
+        const std::string& name,
+        const CefRefPtr<CefListValue>& arguments_) noexcept override
+      {
+        try {
+          HandleMessage(name, arguments_);
+        } catch (const std::exception&) {
+          auto exception = std::current_exception();
+          g_taskQueueTick.AddTask([exception = std::move(exception)] {
+            std::rethrow_exception(exception);
+          });
+        }
+      }
+
+    private:
+      void HandleMessage(const std::string& name,
+                         const CefRefPtr<CefListValue>& arguments_)
+      {
+        auto arguments = arguments_->Copy();
+        g_taskQueueTick.AddTask([name, arguments] {
+          auto length = static_cast<uint32_t>(arguments->GetSize());
+          auto argumentsArray = JsValue::Array(length);
+          for (uint32_t i = 0; i < length; ++i) {
+            argumentsArray.SetProperty(
+              static_cast<int>(i), CefValueToJsValue(arguments->GetValue(i)));
+          }
+
+          auto browserMessageEvent = JsValue::Object();
+          browserMessageEvent.SetProperty("arguments", argumentsArray);
+          EventsApi::SendEvent("browserMessage",
+                               { JsValue::Undefined(), browserMessageEvent });
+        });
+      }
+
+      static JsValue CefValueToJsValue(const CefRefPtr<CefValue>& cefValue)
+      {
+        switch (cefValue->GetType()) {
+          case VTYPE_NULL:
+            return JsValue::Null();
+          case VTYPE_BOOL:
+            return JsValue::Bool(cefValue->GetBool());
+          case VTYPE_INT:
+            return JsValue::Int(cefValue->GetInt());
+          case VTYPE_DOUBLE:
+            return JsValue::Double(cefValue->GetDouble());
+          case VTYPE_STRING:
+            return JsValue::String(cefValue->GetString());
+          case VTYPE_DICTIONARY: {
+            auto dict = cefValue->GetDictionary();
+            auto result = JsValue::Object();
+            CefDictionaryValue::KeyList keyList;
+            dict->GetKeys(keyList);
+            for (const std::string& key : keyList) {
+              auto cefValue = dict->GetValue(key);
+              auto jsValue = CefValueToJsValue(cefValue);
+              result.SetProperty(key, jsValue);
+            }
+            return result;
+          }
+          case VTYPE_LIST: {
+            auto list = cefValue->GetList();
+            auto length = static_cast<int>(list->GetSize());
+            auto result = JsValue::Array(length);
+            for (int i = 0; i < length; ++i) {
+              auto cefValue = list->GetValue(i);
+              auto jsValue = CefValueToJsValue(cefValue);
+              result.SetProperty(i, jsValue);
+            }
+            return result;
+          }
+          case VTYPE_BINARY:
+          case VTYPE_INVALID:
+            return JsValue::Undefined();
+        }
+        return JsValue::Undefined();
+      }
+    };
+
+    auto onProcessMessage = std::make_shared<ProcessMessageListenerImpl>();
+
+    overlayService = std::make_shared<OverlayService>(onProcessMessage);
     myInputListener->Init(overlayService, inputConverter);
     g_browserApiState->overlayService = overlayService;
 
-    // inputService.reset(new InputService(*overlayService));
-    renderSystem.reset(new RenderSystemD3D11(*overlayService));
+    renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
     renderSystem->m_pSwapChain = reinterpret_cast<IDXGISwapChain*>(
       BSRenderManager::GetSingleton()->swapChain);
 
@@ -603,7 +687,6 @@ public:
 
   bool EndMain() override
   {
-    // inputService.reset();
     renderSystem.reset();
     overlayService.reset();
     return true;
@@ -612,7 +695,6 @@ public:
   void Update() override {}
 
   std::shared_ptr<OverlayService> overlayService;
-  // std::shared_ptr<InputService> inputService;
   std::shared_ptr<RenderSystemD3D11> renderSystem;
   std::shared_ptr<MyInputListener> myInputListener;
   std::shared_ptr<InputConverter> inputConverter;
