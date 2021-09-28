@@ -3,7 +3,7 @@
 During the very first months of the current generation of skymp server's existence, we used command line API to configure our servers. These days we have [a configuration file](docs_server_configuration_reference.md) in JSON format, but configuring via command-line arguments is also supported.
 
 ```bash
-skymp5-server.exe --maxPlayers 108 --name "Server X" --port 7777 --ip "127.0.0.1" --offlineMode false
+--maxPlayers 108 --name "Server X" --port 7777 --ip "127.0.0.1" --offlineMode false
 ```
 
 Things you need to know about command-line arguments before using one:
