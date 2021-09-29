@@ -395,7 +395,7 @@ TEST_CASE("Testing values", "[espm]")
   uint32_t baseId = ac.GetBaseId();
   auto look = ac.GetLook();
   uint32_t raceId = look->raceId;
-  
+
   REQUIRE(raceId == 0x00013745);
   auto raceInfo = l.GetBrowser().LookupById(raceId);
 
