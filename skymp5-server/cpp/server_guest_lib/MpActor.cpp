@@ -167,6 +167,26 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
   });
 }
 
+std::chrono::steady_clock::time_point
+MpActor::GetLastAttributesPercentagesUpdate()
+{
+  return lastAttributesUpdateTimePoint;
+}
+
+void MpActor::SetLastAttributesPercentagesUpdate(
+  std::chrono::steady_clock::time_point timePoint)
+{
+  lastAttributesUpdateTimePoint = timePoint;
+}
+
+std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
+  std::chrono::steady_clock::time_point now)
+{
+  std::chrono::duration<float> timeAfterRegeneration =
+    now - lastAttributesUpdateTimePoint;
+  return timeAfterRegeneration;
+}
+
 const bool& MpActor::IsRaceMenuOpen() const
 {
   return pImpl->ChangeForm().isRaceMenuOpen;

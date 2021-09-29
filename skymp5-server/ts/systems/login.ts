@@ -16,8 +16,9 @@ export class Login implements System {
     private maxPlayers: number,
     private masterUrl: string | null,
     private serverPort: number,
-    private ip: string
-  ) {}
+    private ip: string,
+    private offlineMode: boolean
+  ) { }
 
   private async getUserProfileId(session: string): Promise<any> {
     return await Axios.get(
@@ -55,7 +56,7 @@ export class Login implements System {
     if (type !== "loginWithSkympIo") return;
 
     const gameData = content["gameData"];
-    if (gameData && gameData.session) {
+    if (this.offlineMode === false && gameData && gameData.session) {
       this.getUserProfileId(gameData.session).then((res) => {
         console.log("getUserProfileId", res.data);
         if (!res.data || !res.data.user || res.data.user.id === undefined)
@@ -66,6 +67,10 @@ export class Login implements System {
           this.log("Logged as " + res.data.user.id);
         }
       });
+    } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
+      const profileId = gameData.profileId;
+      ctx.gm.emit("spawnAllowed", userId, profileId);
+      this.log(userId + " logged as " + profileId);
     } else {
       this.log("No credentials found in gameData:", gameData);
     }
