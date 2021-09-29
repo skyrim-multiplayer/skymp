@@ -74,7 +74,7 @@ At this moment, the server uses this directory for non-vanilla needs too:
 
 ## loadOrder
 
-A list of relative or absolute paths to .esp/.esm files which would be loaded by the server during startup in the same order as Skyrim SE loads them. 
+A list of relative or absolute paths to .esp/.esm files which would be loaded by the server during startup in the same order as Skyrim SE loads them.
 
 Relative paths are searched in `${dataDir}` directory.
 
@@ -90,6 +90,19 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
     "HearthFires.esm",
     "Dragonborn.esm"
   ]
+  // ...
+}
+```
+
+## offlineMode
+
+The boolean variable shows is server in "offline mode" or not (the server allows clients to connect with any profile id they choose).
+Users need to specify `"profileId"` in their `skymp5-settings.txt`.
+
+```json5
+{
+  // ...
+  "offlineMode": true
   // ...
 }
 ```
