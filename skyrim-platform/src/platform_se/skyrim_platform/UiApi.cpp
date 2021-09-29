@@ -130,11 +130,16 @@ public:
     using IMenu::operator new;
     using IMenu::operator delete;
 
-    MyMenu(char* cancelKeyName_, char* menuName_, RE::IMenu* originalMenu_)
+    MyMenu(char* cancelKeyName_, char* menuName_, RE::IMenu* originalMenu_, RE::MenuEventHandler* originalHandler_)
       : cancelKeyName(cancelKeyName_)
       , menuName(menuName_)
       , originalMenu(originalMenu_)
+      , originalHandler(originalHandler_)
     {
+        auto lg = RE::ConsoleLog::GetSingleton();
+        lg->Print("MyMenu::MyMenu '%p'", originalHandler_);
+
+        //229200006D0
     }
 
     ~MyMenu() {}
@@ -254,6 +259,7 @@ private:
     char* cancelKeyName;
     char* menuName;
     RE::IMenu* originalMenu;
+    RE::MenuEventHandler* originalHandler;
 
     RE::GPtr<RE::IMenu> GetMenu()
     {
@@ -275,8 +281,9 @@ private:
         menu_evt->pad0C = 0;
 
         ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(menu_evt);
-
-        flags = RE::UI_MENU_FLAGS::kOnStack;
+        
+        
+        flags = RE::UI_MENU_FLAGS::kPausesGame | RE::UI_MENU_FLAGS::kUpdateUsesCursor | RE::UI_MENU_FLAGS::kInventoryItemMenu | RE::UI_MENU_FLAGS::kCustomRendering | RE::UI_MENU_FLAGS::kOnStack;
 
         ui->menuStack.push_back(GetMenu());
     }
@@ -296,7 +303,7 @@ private:
 
         ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(menu_evt);
 
-        flags = RE::UI_MENU_FLAGS::kNone;
+        flags = RE::UI_MENU_FLAGS::kPausesGame | RE::UI_MENU_FLAGS::kUpdateUsesCursor | RE::UI_MENU_FLAGS::kInventoryItemMenu | RE::UI_MENU_FLAGS::kCustomRendering;
 
         auto it = std::find(ui->menuStack.begin(), ui->menuStack.end(), GetMenu());
         if (it != ui->menuStack.end()) {
@@ -306,20 +313,24 @@ private:
 };
 
 
-
 RE::IMenu* creatorFavoritesMenu()
 {
+    static MyMenu* menu;
+
     auto mc = RE::MenuControls::GetSingleton();
     auto ui = RE::UI::GetSingleton();
 
-    static MyMenu* menu = new MyMenu("Favorites", "FavoritesMenu", ui->GetMenu("FavoritesMenu").get());
+    if (!menu) {
+         RE::MenuEventHandler* old_handler = (RE::MenuEventHandler*)mc->favoritesHandler.get();
 
-    auto handler = (RE::FavoritesHandler*)(RE::MenuEventHandler*)menu;
-    auto old_handler = mc->favoritesHandler.get();
+         menu = new MyMenu("Favorites", "FavoritesMenu", ui->GetMenu("FavoritesMenu").get(), old_handler);
 
-    mc->RemoveHandler(old_handler);
-    mc->favoritesHandler = RE::BSTSmartPointer<RE::FavoritesHandler>(handler);
-    mc->AddHandler(handler);
+         auto handler = (RE::FavoritesHandler*)(RE::MenuEventHandler*)menu;
+
+         mc->RemoveHandler(old_handler);
+         mc->favoritesHandler = RE::BSTSmartPointer<RE::FavoritesHandler>(handler);
+         mc->AddHandler(handler);
+    }
 
     return (RE::IMenu*)menu;
 }
