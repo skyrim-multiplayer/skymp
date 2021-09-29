@@ -385,7 +385,7 @@ TEST_CASE("Testing values", "[espm]")
 {
   auto& br = l.GetBrowser();
   espm::CompressedFieldsCache compressedFieldsCache;
-  
+
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0x0001B1DB, { 0, 0, 0 }, 0, 0x3c);
@@ -396,6 +396,7 @@ TEST_CASE("Testing values", "[espm]")
   auto look = ac.GetLook();
   uint32_t raceId = look->raceId;
   
+  REQUIRE(raceId == 0x00013745);
   auto raceInfo = l.GetBrowser().LookupById(raceId);
 
   REQUIRE(raceInfo.rec->GetType() == "RACE");
