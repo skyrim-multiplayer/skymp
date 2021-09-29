@@ -27,15 +27,7 @@
       "platform": "windows"
     },
     {
-      "name": "sksevr",
-      "platform": "windows"
-    },
-    {
       "name": "commonlibsse",
-      "platform": "windows"
-    },
-    {
-      "name": "commonlibvr",
       "platform": "windows"
     },
     {
