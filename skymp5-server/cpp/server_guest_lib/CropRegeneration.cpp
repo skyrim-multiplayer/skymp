@@ -16,7 +16,7 @@ BaseActorValues GetValues(MpActor* actor)
   BaseActorValues baseValues;
   if (actor->GetParent()->HasEspm()) {
     auto& espm = actor->GetParent()->GetEspm();
-    GetBaseActorValues(espm, baseId, raceId);
+    baseValues = GetBaseActorValues(espm, baseId, raceId);
   }
   return baseValues;
 }

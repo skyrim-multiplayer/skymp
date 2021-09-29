@@ -4,6 +4,7 @@
 #include <catch2/catch.hpp>
 
 extern espm::Loader l;
+PartOne& GetPartOne();
 
 // These tests depend on the most recent files shipped with Skyrim SE.
 // See README.md in project root for details.
@@ -383,16 +384,18 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
 TEST_CASE("Testing values", "[espm]")
 {
   auto& br = l.GetBrowser();
-
-  auto form = br.LookupById(
-    0x0001B1DB); // Ri'saad(Roving merchant from Khajiit's caravan.)
-
-  REQUIRE(form.rec->GetType() == "NPC_");
-
   espm::CompressedFieldsCache compressedFieldsCache;
+  
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0x0001B1DB, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0x0001B1DB);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0x0001B1DB);
 
-  auto npc = espm::Convert<espm::NPC_>(form.rec);
-  uint32_t raceId = npc->GetData(compressedFieldsCache).race;
+  uint32_t baseId = ac.GetBaseId();
+  auto look = ac.GetLook();
+  uint32_t raceId = look->raceId;
+  
   auto raceInfo = l.GetBrowser().LookupById(raceId);
 
   REQUIRE(raceInfo.rec->GetType() == "RACE");
