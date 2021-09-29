@@ -96,7 +96,8 @@ systems.push(
     Settings.get().maxPlayers,
     master,
     Settings.get().port,
-    Settings.get().ip
+    Settings.get().ip,
+    Settings.get().offlineMode
   )
 );
 
