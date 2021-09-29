@@ -302,6 +302,11 @@ VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
   throw std::runtime_error("VarValueFromJson - Unsupported json type " +
                            std::to_string(static_cast<int>(element.type())));
 }
+
+bool IsNearlyEqual(float value, float target, float margin = 1.0f / 1024.0f)
+{
+  return std::abs(target - value) < margin;
+}
 }
 void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                        uint32_t snippetIdx,
@@ -480,8 +485,9 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
 
-  if (health != healthPercentage || magicka != magickaPercentage ||
-      stamina != staminaPercentage) {
+  if (IsNearlyEqual(health, healthPercentage) == false ||
+      IsNearlyEqual(magicka, magickaPercentage) == false ||
+      IsNearlyEqual(stamina, staminaPercentage) == false) {
     std::string s;
     s += Networking::MinPacketId;
     s += nlohmann::json{
