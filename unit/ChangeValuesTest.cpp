@@ -4,8 +4,10 @@
 
 #include "GetBaseActorValues.h"
 #include "PacketParser.h"
+#include "Loader.h"
 
 PartOne& GetPartOne();
+extern espm::Loader l;
 
 TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
 {
@@ -86,7 +88,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   uint32_t baseId = ac.GetBaseId();
   auto look = ac.GetLook();
   uint32_t raceId = look ? look->raceId : 0;
-  BaseActorValues baseValues = GetBaseActorValues(baseId, raceId);
+  BaseActorValues baseValues = GetBaseActorValues(l, baseId, raceId);
 
   IActionListener::RawMessageData msgData;
   msgData.userId = 0;
