@@ -13,7 +13,8 @@ BaseActorValues GetValues(MpActor* actor)
   uint32_t baseId = actor->GetBaseId();
   auto look = actor->GetLook();
   uint32_t raceId = look ? look->raceId : 0;
-  BaseActorValues baseValues = GetBaseActorValues(baseId, raceId);
+  auto& espm = actor->GetParent()->GetEspm();
+  BaseActorValues baseValues = GetBaseActorValues(espm, baseId, raceId);
   return baseValues;
 }
 }
