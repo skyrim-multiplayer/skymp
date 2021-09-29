@@ -387,9 +387,17 @@ TEST_CASE("Testing values", "[espm]")
   auto form = br.LookupById(
     0x0001B1DB); // Ri'saad(Roving merchant from Khajiit's caravan.)
 
-  REQUIRE(form.rec->GetType() == "RACE");
+  REQUIRE(form.rec->GetType() == "NPC_");
+
   espm::CompressedFieldsCache compressedFieldsCache;
-  auto race = espm::Convert<espm::RACE>(form.rec);
+
+  auto npc = espm::Convert<espm::NPC_>(form.rec);
+  uint32_t raceId = npc->GetData(compressedFieldsCache).race;
+  auto raceInfo = l.GetBrowser().LookupById(raceId);
+
+  REQUIRE(raceInfo.rec->GetType() == "RACE");
+
+  auto race = espm::Convert<espm::RACE>(raceInfo.rec);
   auto data = race->GetData(compressedFieldsCache);
   float health = data.startingHealth;
   float magicka = data.startingMagicka;
