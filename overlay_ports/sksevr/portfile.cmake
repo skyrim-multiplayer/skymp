@@ -25,4 +25,12 @@ file(INSTALL ${sksevr_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/skse
 file(GLOB sksevr_common_include "${SOURCE_PATH}/sksevr_2_00_12/src/sksevr/skse64_common/*.h")
 file(INSTALL ${sksevr_common_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/sksevr_common")
 
+file(GLOB commonvr_include "${SOURCE_PATH}/sksevr_2_00_12/src/common/*.h")
+file(INSTALL ${commonvr_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/commonvr")
+
+# Not sure if I also need xbyak from sksevr, they look the same.
+file(GLOB xbyak_include "${SOURCE_PATH}/sksevr_2_00_12/src/sksevr/xbyak/*.h")
+file(INSTALL ${xbyak_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/xbyakvr")
+
+# Unlike skse64_2_00_19, there are no license file in sksevr_2_00_12. I used xbyak's instead as I got an error without a file.
 file(INSTALL ${SOURCE_PATH}/sksevr_2_00_12/src/sksevr/xbyak/COPYRIGHT DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT} RENAME copyright)

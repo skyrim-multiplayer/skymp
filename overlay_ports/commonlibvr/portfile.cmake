@@ -15,8 +15,7 @@ vcpkg_configure_cmake(
 vcpkg_install_cmake()
 vcpkg_copy_pdbs()
 
-#file(INSTALL "${SOURCE_PATH}/include/*.h" DESTINATION "${CURRENT_PACKAGES_DIR}/include/commonlibvr")
-file(INSTALL "${SOURCE_PATH}/include/RE" DESTINATION "${CURRENT_PACKAGES_DIR}/include/commonlibvr/RE")
-file(INSTALL "${SOURCE_PATH}/include/REL" DESTINATION "${CURRENT_PACKAGES_DIR}/include/commonlibvr/REL")
-file(INSTALL "${SOURCE_PATH}/include/SKSE" DESTINATION "${CURRENT_PACKAGES_DIR}/include/commonlibvr/SKSE")
+# Should we also move includes from CommonLibVR in include/commonlibsse ?
+file(INSTALL "${SOURCE_PATH}/include/" DESTINATION "${CURRENT_PACKAGES_DIR}/include/commonlibvr")
+
 file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
