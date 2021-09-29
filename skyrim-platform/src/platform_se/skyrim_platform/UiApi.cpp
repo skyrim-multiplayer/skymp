@@ -10,8 +10,6 @@
 
 #include <map>
 
-extern TaskQueue g_taskQueue;
-
 namespace RE {
     //need to update CommonLibSSE (missing in the current version)
     //https://github.com/Ryan-rsm-McKenzie/CommonLibSSE/blob/238e7815d5e7e0c4a26491d15c45197390391d75/include/RE/F/FavoritesHandler.h
@@ -167,7 +165,6 @@ public:
             break;
         case RE::UI_MESSAGE_TYPE::kShow:
             //OpenMenu();
-            //context = Context::kFavorites;
             lg->Print("MyMenu::ProcessMessage::kShow '%u' '%u'", msg.type, msg.isPooled);
             break;
         case RE::UI_MESSAGE_TYPE::kReshow:
@@ -225,14 +222,10 @@ public:
 
     bool CanProcess(RE::InputEvent* e) override {
         auto ui = RE::UI::GetSingleton();
-      auto mc = RE::MenuControls::GetSingleton();
-
-      //auto lg = RE::ConsoleLog::GetSingleton();
-      //lg->Print("MyMenu::CanProcess '%s'", e->QUserEvent().c_str());
+        auto mc = RE::MenuControls::GetSingleton();
 
         if (e->eventType != RE::INPUT_EVENT_TYPE::kButton)
         return false;
-
 
         const RE::ButtonEvent* btn = static_cast<const RE::ButtonEvent*>(e);
         if (!btn->IsDown())
@@ -245,8 +238,6 @@ public:
             CloseMenu();
         else
             OpenMenu();
-
-        //RequiresUpdate();
 
         return false;
     }
@@ -345,19 +336,7 @@ void replaceMenu(std::string menuName)
     else {
         return;
     }
-    /*
-    auto mc = RE::MenuControls::GetSingleton();
 
-    auto handler = (RE::FavoritesHandler*)(RE::MenuEventHandler*)creator();
-    auto old_handler = mc->favoritesHandler.get();
-
-    auto pos = std::find(mc->handlers.begin(), mc->handlers.end(), old_handler);
-    if (pos != mc->handlers.end()) {
-        mc->handlers[pos - mc->handlers.begin()] = handler;
-    }
-
-    mc->favoritesHandler.reset(handler);
-    */
     RE::UI::GetSingleton()->menuMap.insert_or_assign({ menuName.c_str(), { RE::GPtr<RE::IMenu>(creator()), creator } });
 }
 
@@ -394,21 +373,21 @@ namespace UiApi
           return;
         }
 
-        auto uiObj = JsValue::Object();
-        uiObj.SetProperty(
+        auto skyrimUi = JsValue::Object();
+        skyrimUi.SetProperty(
             "replaceMenu",
             JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-            replaceMenu(args[1].ToString());
+                replaceMenu(args[1].ToString());
                 return JsValue::Undefined();
-            })
+                })
         );
-        uiObj.SetProperty(
+        /*skyrimUi.SetProperty(
             "toggleMenu",
             JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
                 toggleMenu(args[1].ToString(), static_cast<bool>(args[2]));
                 return JsValue::Undefined();
             })
-        );
-        exports.SetProperty("skyrimUi", uiObj);
+        );*/
+        exports.SetProperty("skyrimUi", skyrimUi);
     }
 }
