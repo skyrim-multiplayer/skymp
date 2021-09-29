@@ -46,6 +46,24 @@ struct BaseActorValues
   }
 };
 
+namespace {
+void SetBaseActorValues(espm::LookupResult& result,
+                        espm::CompressedFieldsCache& compressedFieldsCache,
+                        BaseActorValues& baseActorValues)
+{
+  auto race = espm::Convert<espm::RACE>(result.rec);
+
+  auto raceData = race->GetData(compressedFieldsCache);
+
+  baseActorValues.health = raceData.startingHealth;
+  baseActorValues.magicka = raceData.startingMagicka;
+  baseActorValues.stamina = raceData.startingStamina;
+  baseActorValues.healRate = raceData.healRegen;
+  baseActorValues.magickaRate = raceData.magickaRegen;
+  baseActorValues.staminaRate = raceData.staminaRegen;
+}
+}
+
 inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
                                           uint32_t raceIdOverride)
 {
@@ -54,19 +72,13 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
 
   if (raceIdOverride) {
     auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
+
     if (raceInfo.rec->GetType() == "RACE") {
-      auto race = espm::Convert<espm::RACE>(raceInfo.rec);
-
-      auto raceData = race->GetData(compressedFieldsCache);
-
-      baseActorValues.health = raceData.startingHealth;
-      baseActorValues.magicka = raceData.startingMagicka;
-      baseActorValues.stamina = raceData.startingStamina;
-      baseActorValues.healRate = raceData.healRegen;
-      baseActorValues.magickaRate = raceData.magickaRegen;
-      baseActorValues.staminaRate = raceData.staminaRegen;
+      SetBaseActorValues(raceInfo, compressedFieldsCache, baseActorValues);
     } else {
-      return baseActorValues;
+      throw std::runtime_error(
+        "Unable to read RACE. formId: " + std::to_string(baseId) +
+        ". raceId: " + std::to_string(raceIdOverride) + ".");
     }
   } else {
     auto form = espm.GetBrowser().LookupById(baseId);
@@ -74,21 +86,10 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
       auto npc = espm::Convert<espm::NPC_>(form.rec);
       auto raceId = npc->GetData(compressedFieldsCache).race;
       auto raceInfo = espm.GetBrowser().LookupById(raceId);
-      if (raceInfo.rec->GetType() == "RACE") {
-        auto race = espm::Convert<espm::RACE>(raceInfo.rec);
-        auto raceData = race->GetData(compressedFieldsCache);
-
-        baseActorValues.health = raceData.startingHealth;
-        baseActorValues.magicka = raceData.startingMagicka;
-        baseActorValues.stamina = raceData.startingStamina;
-        baseActorValues.healRate = raceData.healRegen;
-        baseActorValues.magickaRate = raceData.magickaRegen;
-        baseActorValues.staminaRate = raceData.staminaRegen;
-      } else {
-        return baseActorValues;
-      }
+      SetBaseActorValues(raceInfo, compressedFieldsCache, baseActorValues);
     } else {
-      return baseActorValues;
+      throw std::runtime_error("Unable to read NPC_. formId: " +
+                               std::to_string(baseId));
     }
   }
   return baseActorValues;

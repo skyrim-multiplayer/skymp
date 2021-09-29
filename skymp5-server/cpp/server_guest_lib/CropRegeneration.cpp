@@ -14,7 +14,8 @@ BaseActorValues GetValues(MpActor* actor)
   auto look = actor->GetLook();
   uint32_t raceId = look ? look->raceId : 0;
   BaseActorValues baseValues;
-  if (actor->GetParent()->HasEspm()) {
+  auto* worldState = actor->GetParent();
+  if (worldState && worldState->HasEspm()) {
     auto& espm = actor->GetParent()->GetEspm();
     baseValues = GetBaseActorValues(espm, baseId, raceId);
   }
