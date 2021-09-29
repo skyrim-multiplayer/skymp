@@ -28,9 +28,8 @@ file(INSTALL ${sksevr_common_include} DESTINATION "${CURRENT_PACKAGES_DIR}/inclu
 file(GLOB commonvr_include "${SOURCE_PATH}/sksevr_2_00_12/src/common/*.h")
 file(INSTALL ${commonvr_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/commonvr")
 
-# Not sure if I also need xbyak from sksevr, they look the same.
+# We do not really need it, but since it's bundled with SKSE, we install it anyway.
 file(GLOB xbyak_include "${SOURCE_PATH}/sksevr_2_00_12/src/sksevr/xbyak/*.h")
 file(INSTALL ${xbyak_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/xbyakvr")
 
-# Unlike skse64_2_00_19, there are no license file in sksevr_2_00_12. I used xbyak's instead as I got an error without a file.
-file(INSTALL ${SOURCE_PATH}/sksevr_2_00_12/src/sksevr/xbyak/COPYRIGHT DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT} RENAME copyright)
+file(WRITE ${CURRENT_PACKAGES_DIR}/share/${PORT}/copyright "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nThank you MIT license for providing a standard boilerplate legal disclaimer. This reference does not mean SKSE is released under the MIT license.")
