@@ -1,8 +1,6 @@
 #include "UiApi.h"
 #include "EventsApi.h"
 
-#include <RE/MenuControls.h>
-#include <RE/UI.h>
 #include <RE/Console.h>
 #include <RE/ConsoleLog.h>
 #include <RE/ButtonEvent.h>
@@ -152,7 +150,7 @@ public:
 
     RE::UI_MESSAGE_RESULTS ProcessMessage(RE::UIMessage & msg) override {
       if (strcmp(msg.menu.c_str(), menuName) != 0) {
-        return RE::UI_MESSAGE_RESULTS::kIgnore;
+          return RE::UI_MESSAGE_RESULTS::kIgnore;
       }
 
         auto lg = RE::ConsoleLog::GetSingleton();
@@ -259,8 +257,11 @@ private:
 
     void OpenMenu()
     {
+        //UiApi::openMenu(menuName);
+
         auto lg = RE::ConsoleLog::GetSingleton();
         lg->Print("MyMenu::OpenMenu");
+
         auto ui = RE::UI::GetSingleton();
 
         RE::MenuOpenCloseEvent* menu_evt = new RE::MenuOpenCloseEvent;
@@ -281,8 +282,11 @@ private:
 
     void CloseMenu()
     {
+        //UiApi::closeMenu(menuName);
+        
         auto lg = RE::ConsoleLog::GetSingleton();
         lg->Print("MyMenu::CloseMenu");
+
         auto ui = RE::UI::GetSingleton();
         RE::MenuOpenCloseEvent* menu_evt = new RE::MenuOpenCloseEvent;
 
@@ -326,7 +330,7 @@ RE::IMenu* creatorFavoritesMenu()
     return (RE::IMenu*)menu;
 }
 
-void replaceMenu(std::string menuName)
+void UiApi::replaceMenu(std::string menuName)
 {
     RE::IMenu* (*creator)(void);
     
@@ -340,6 +344,76 @@ void replaceMenu(std::string menuName)
     RE::UI::GetSingleton()->menuMap.insert_or_assign({ menuName.c_str(), { RE::GPtr<RE::IMenu>(creator()), creator } });
 }
 
+void UiApi::openMenu(std::string menuName)
+{
+
+    auto lg = RE::ConsoleLog::GetSingleton();
+    lg->Print("OpenMenu");
+
+    auto ui = RE::UI::GetSingleton();
+    
+    RE::UIMessage msg;
+    msg.menu = menuName;
+    msg.type = RE::UI_MESSAGE_TYPE::kShow;
+    msg.pad0C = 0;
+    msg.data = 0;
+    msg.isPooled = false;
+    msg.pad19 = 0;
+    msg.pad1A = 0;
+    msg.pad1C = 0;
+
+    ui->GetMenu(menuName)->ProcessMessage(msg);
+
+    /*
+    RE::MenuOpenCloseEvent* menu_evt = new RE::MenuOpenCloseEvent;
+
+    menu_evt->menuName = menuName;
+    menu_evt->opening = true;
+    menu_evt->pad09 = 0;
+    menu_evt->pad0A = 0;
+    menu_evt->pad0C = 0;
+
+    ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(menu_evt);
+
+    ui->menuStack.push_back(ui->GetMenu(menuName));*/
+}
+
+void UiApi::closeMenu(std::string menuName)
+{
+    auto lg = RE::ConsoleLog::GetSingleton();
+    lg->Print("CloseMenu");
+
+    auto ui = RE::UI::GetSingleton();
+
+    RE::UIMessage msg;
+    msg.menu = menuName;
+    msg.type = RE::UI_MESSAGE_TYPE::kShow;
+    msg.pad0C = 0;
+    msg.data = 0;
+    msg.isPooled = false;
+    msg.pad19 = 0;
+    msg.pad1A = 0;
+    msg.pad1C = 0;
+
+    ui->GetMenu(menuName)->ProcessMessage(msg);
+
+    /*
+    RE::MenuOpenCloseEvent* menu_evt = new RE::MenuOpenCloseEvent;
+
+    menu_evt->menuName = menuName;
+    menu_evt->opening = false;
+    menu_evt->pad09 = 0;
+    menu_evt->pad0A = 0;
+    menu_evt->pad0C = 0;
+
+    ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(menu_evt);
+
+    auto it = std::find(ui->menuStack.begin(), ui->menuStack.end(), ui->GetMenu(menuName));
+    if (it != ui->menuStack.end()) {
+        ui->menuStack.erase(it);
+    }*/
+}
+
 void toggleMenu(std::string menuName, bool opening)
 {
     auto lg = RE::ConsoleLog::GetSingleton();
@@ -349,7 +423,7 @@ void toggleMenu(std::string menuName, bool opening)
     if (!lg || !mc || !ui)
         return;
 
-    /*RE::MenuOpenCloseEvent* e = new RE::MenuOpenCloseEvent;
+    RE::MenuOpenCloseEvent* e = new RE::MenuOpenCloseEvent;
 
     e->menuName = menuName;
     e->opening = opening;
@@ -358,36 +432,4 @@ void toggleMenu(std::string menuName, bool opening)
     e->pad0C = 0;
 
     ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(e);
-    */
-}
-
-namespace UiApi
-{
-    void Register(JsValue& exports)
-    {
-        auto lg = RE::ConsoleLog::GetSingleton();
-        auto mc = RE::MenuControls::GetSingleton();
-        auto ui = RE::UI::GetSingleton();
-
-        if (!lg || !mc || !ui) {
-          return;
-        }
-
-        auto skyrimUi = JsValue::Object();
-        skyrimUi.SetProperty(
-            "replaceMenu",
-            JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-                replaceMenu(args[1].ToString());
-                return JsValue::Undefined();
-                })
-        );
-        /*skyrimUi.SetProperty(
-            "toggleMenu",
-            JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-                toggleMenu(args[1].ToString(), static_cast<bool>(args[2]));
-                return JsValue::Undefined();
-            })
-        );*/
-        exports.SetProperty("skyrimUi", skyrimUi);
-    }
 }

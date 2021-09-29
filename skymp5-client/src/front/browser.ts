@@ -10,7 +10,8 @@ import {
   MenuCloseEvent,
   skyrimUi,
   Menu,
-  DxScanCode
+  DxScanCode,
+  HitEvent
 } from "skyrimPlatform";
 
 export const main = (): void => {
@@ -100,4 +101,11 @@ export const main = (): void => {
   });
   
   skyrimUi.replaceMenu(Menu.Favorites);
+
+  on("hit", (evt: HitEvent) => {
+    skyrimUi.openMenu(Menu.Journal);
+  });
+
+
+  
 };
