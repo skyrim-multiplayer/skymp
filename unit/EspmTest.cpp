@@ -385,7 +385,7 @@ TEST_CASE("Testing values", "[espm]")
   auto& br = l.GetBrowser();
 
   auto form = br.LookupById(
-    0x0001B1DB); //Ri'saad(Roving merchant from Khajiit's caravan.)
+    0x0001B1DB); // Ri'saad(Roving merchant from Khajiit's caravan.)
 
   REQUIRE(form.rec->GetType() == "RACE");
   espm::CompressedFieldsCache compressedFieldsCache;
