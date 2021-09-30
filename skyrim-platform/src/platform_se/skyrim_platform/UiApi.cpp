@@ -149,9 +149,9 @@ public:
     void Unk_03(void) override {};
 
     RE::UI_MESSAGE_RESULTS ProcessMessage(RE::UIMessage & msg) override {
-      if (strcmp(msg.menu.c_str(), menuName) != 0) {
-          return RE::UI_MESSAGE_RESULTS::kIgnore;
-      }
+        if (strcmp(msg.menu.c_str(), menuName) != 0) {
+            return RE::UI_MESSAGE_RESULTS::kIgnore;
+        }
 
         auto lg = RE::ConsoleLog::GetSingleton();
         auto ui = RE::UI::GetSingleton();
@@ -162,25 +162,30 @@ public:
             lg->Print("MyMenu::ProcessMessage::kUpdate");
             break;
         case RE::UI_MESSAGE_TYPE::kShow:
-            //OpenMenu();
-            lg->Print("MyMenu::ProcessMessage::kShow '%u' '%u'", msg.type, msg.isPooled);
+            lg->Print("MyMenu::ProcessMessage::kShow");
+
+            if (!IsOpened()) {
+                Open();
+                return RE::UI_MESSAGE_RESULTS::kHandled;
+            }
+            else {
+                return RE::UI_MESSAGE_RESULTS::kIgnore;
+            }
             break;
         case RE::UI_MESSAGE_TYPE::kReshow:
             lg->Print("MyMenu::ProcessMessage::kReshow");
             break;
         case RE::UI_MESSAGE_TYPE::kHide:
-            if (OnStack()) {
-                lg->Print("MyMenu::ProcessMessage::kHide1");
-                CloseMenu();
+            if (IsOpened()) {
+                Close();
                 return RE::UI_MESSAGE_RESULTS::kHandled;
             }
             else {
-                lg->Print("MyMenu::ProcessMessage::kHide2");
                 return RE::UI_MESSAGE_RESULTS::kIgnore;
             }
             break;
         case RE::UI_MESSAGE_TYPE::kForceHide:
-            //CloseMenu();
+            //Close();
             lg->Print("MyMenu::ProcessMessage::kForceHide");
             break;
         case RE::UI_MESSAGE_TYPE::kScaleformEvent:
@@ -232,10 +237,10 @@ public:
         if (strcmp(e->QUserEvent().c_str(), cancelKeyName) != 0)
             return false;
 
-        if (OnStack())
-            CloseMenu();
+        if (IsOpened())
+            Close();
         else
-            OpenMenu();
+            Open();
 
         return false;
     }
@@ -250,15 +255,18 @@ private:
     RE::IMenu* originalMenu;
     RE::MenuEventHandler* originalHandler;
 
+    bool IsOpened()
+    {
+        return OnStack();
+    }
+
     RE::GPtr<RE::IMenu> GetMenu()
     {
         return RE::UI::GetSingleton()->GetMenu(menuName);
     }
 
-    void OpenMenu()
+    void Open()
     {
-        //UiApi::openMenu(menuName);
-
         auto lg = RE::ConsoleLog::GetSingleton();
         lg->Print("MyMenu::OpenMenu");
 
@@ -274,16 +282,13 @@ private:
 
         ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(menu_evt);
         
-        
         flags = RE::UI_MENU_FLAGS::kPausesGame | RE::UI_MENU_FLAGS::kUpdateUsesCursor | RE::UI_MENU_FLAGS::kInventoryItemMenu | RE::UI_MENU_FLAGS::kCustomRendering | RE::UI_MENU_FLAGS::kOnStack;
 
         ui->menuStack.push_back(GetMenu());
     }
 
-    void CloseMenu()
+    void Close()
     {
-        //UiApi::closeMenu(menuName);
-        
         auto lg = RE::ConsoleLog::GetSingleton();
         lg->Print("MyMenu::CloseMenu");
 
@@ -344,92 +349,45 @@ void UiApi::replaceMenu(std::string menuName)
     RE::UI::GetSingleton()->menuMap.insert_or_assign({ menuName.c_str(), { RE::GPtr<RE::IMenu>(creator()), creator } });
 }
 
-void UiApi::openMenu(std::string menuName)
+class PlaceholderMenu :
+    public RE::IMenu,
+    public RE::MenuEventHandler
 {
+public:
+    using IMenu::operator new;
+    using IMenu::operator delete;
 
-    auto lg = RE::ConsoleLog::GetSingleton();
-    lg->Print("OpenMenu");
+    PlaceholderMenu() {}
 
-    auto ui = RE::UI::GetSingleton();
-    
-    RE::UIMessage msg;
-    msg.menu = menuName;
-    msg.type = RE::UI_MESSAGE_TYPE::kShow;
-    msg.pad0C = 0;
-    msg.data = 0;
-    msg.isPooled = false;
-    msg.pad19 = 0;
-    msg.pad1A = 0;
-    msg.pad1C = 0;
+    void Accept(CallbackProcessor* a_processor) override {};
+    void PostCreate() override {};
+    void Unk_03(void) override {};
+    RE::UI_MESSAGE_RESULTS ProcessMessage(RE::UIMessage& msg) override { return RE::UI_MESSAGE_RESULTS::kIgnore; };
+    void AdvanceMovie(float a_interval, UInt32 a_currentTime) override {};
+    void PostDisplay() override {};
+    void PreDisplay() override {};
+    void RefreshPlatform() override {};
 
-    ui->GetMenu(menuName)->ProcessMessage(msg);
+    bool CanProcess(RE::InputEvent* e) override { return false; }
+    bool ProcessKinect(RE::KinectEvent* a_event) override { return false; }
+    bool ProcessThumbstick(RE::ThumbstickEvent* a_event) override { return false; }
+    bool ProcessMouseMove(RE::MouseMoveEvent* a_event) override { return false; }
+    bool ProcessButton(RE::ButtonEvent* a_event) override { return false; }
+};
 
-    /*
-    RE::MenuOpenCloseEvent* menu_evt = new RE::MenuOpenCloseEvent;
-
-    menu_evt->menuName = menuName;
-    menu_evt->opening = true;
-    menu_evt->pad09 = 0;
-    menu_evt->pad0A = 0;
-    menu_evt->pad0C = 0;
-
-    ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(menu_evt);
-
-    ui->menuStack.push_back(ui->GetMenu(menuName));*/
-}
-
-void UiApi::closeMenu(std::string menuName)
+void UiApi::disableMenu(std::string menuName)
 {
-    auto lg = RE::ConsoleLog::GetSingleton();
-    lg->Print("CloseMenu");
-
-    auto ui = RE::UI::GetSingleton();
-
-    RE::UIMessage msg;
-    msg.menu = menuName;
-    msg.type = RE::UI_MESSAGE_TYPE::kShow;
-    msg.pad0C = 0;
-    msg.data = 0;
-    msg.isPooled = false;
-    msg.pad19 = 0;
-    msg.pad1A = 0;
-    msg.pad1C = 0;
-
-    ui->GetMenu(menuName)->ProcessMessage(msg);
-
-    /*
-    RE::MenuOpenCloseEvent* menu_evt = new RE::MenuOpenCloseEvent;
-
-    menu_evt->menuName = menuName;
-    menu_evt->opening = false;
-    menu_evt->pad09 = 0;
-    menu_evt->pad0A = 0;
-    menu_evt->pad0C = 0;
-
-    ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(menu_evt);
-
-    auto it = std::find(ui->menuStack.begin(), ui->menuStack.end(), ui->GetMenu(menuName));
-    if (it != ui->menuStack.end()) {
-        ui->menuStack.erase(it);
-    }*/
-}
-
-void toggleMenu(std::string menuName, bool opening)
-{
-    auto lg = RE::ConsoleLog::GetSingleton();
     auto mc = RE::MenuControls::GetSingleton();
-    auto ui = RE::UI::GetSingleton();
 
-    if (!lg || !mc || !ui)
+    if (!mc) {
         return;
+    }
 
-    RE::MenuOpenCloseEvent* e = new RE::MenuOpenCloseEvent;
+    RE::IMenu* (*creator)(void);
 
-    e->menuName = menuName;
-    e->opening = opening;
-    e->pad09 = 0;
-    e->pad0A = 0;
-    e->pad0C = 0;
+    creator = []() -> RE::IMenu* {
+        return (RE::IMenu*)new PlaceholderMenu();
+    };
 
-    ui->GetEventSource<RE::MenuOpenCloseEvent>()->SendEvent(e);
+    RE::UI::GetSingleton()->menuMap.insert_or_assign({ menuName.c_str(), { RE::GPtr<RE::IMenu>(creator()), creator } });
 }

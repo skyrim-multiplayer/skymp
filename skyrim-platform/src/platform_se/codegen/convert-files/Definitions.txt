@@ -72,9 +72,8 @@ export interface Browser {
 export declare let browser: Browser;
 
 export interface SkyrimUi {
+    disableMenu(menuName: string): void;
     replaceMenu(menuName: string): void;
-    openMenu(menuName: string): void;
-    closeMenu(menuName: string): void;
 }
 export declare let skyrimUi: SkyrimUi;
 

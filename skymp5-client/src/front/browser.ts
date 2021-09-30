@@ -100,10 +100,12 @@ export const main = (): void => {
     printConsole(`menu close - '${e.name}'`);
   });
   
-  skyrimUi.replaceMenu(Menu.Favorites);
+  //skyrimUi.replaceMenu(Menu.Favorites);
+  skyrimUi.disableMenu(Menu.Favorites);
+  skyrimUi.disableMenu(Menu.Journal);
+  skyrimUi.disableMenu(Menu.Inventory);
 
   on("hit", (evt: HitEvent) => {
-    skyrimUi.openMenu(Menu.Journal);
   });
 
 

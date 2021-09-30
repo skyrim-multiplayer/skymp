@@ -6,8 +6,7 @@
 namespace UiApi
 {
     void replaceMenu(std::string menuName);
-    void openMenu(std::string menuName);
-    void closeMenu(std::string menuName);
+    void disableMenu(std::string menuName);
 
     inline void Register(JsValue& exports)
     {
@@ -27,16 +26,9 @@ namespace UiApi
                 })
         );
         skyrimUi.SetProperty(
-            "openMenu",
+            "disableMenu",
             JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-                openMenu(args[1].ToString());
-                return JsValue::Undefined();
-                })
-        );
-        skyrimUi.SetProperty(
-            "closeMenu",
-            JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-                closeMenu(args[1].ToString());
+                disableMenu(args[1].ToString());
                 return JsValue::Undefined();
                 })
         );
