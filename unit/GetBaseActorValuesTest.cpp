@@ -10,13 +10,14 @@ PartOne& GetPartOne();
 
 TEST_CASE("GetBaseActorValues works correctly", "[GetBaseActorValues]")
 {
+  // Ri'saad is a Khajiit roving merchant from caravan.
+  const uint32_t g_risaadFormId = 0x0001B1DB;
+
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
-  p.CreateActor(
-    0x0001B1DB, { 0, 0, 0 }, 0,
-    0x3c); // Ri'saad's id. (Roving merchant from Khajiit's caravan.)
-  p.SetUserActor(0, 0x0001B1DB);
-  auto& ac = p.worldState.GetFormAt<MpActor>(0x0001B1DB);
+  p.CreateActor(g_risaadFormId, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, g_risaadFormId);
+  auto& ac = p.worldState.GetFormAt<MpActor>(g_risaadFormId);
 
   uint32_t baseId = ac.GetBaseId();
   auto look = ac.GetLook();

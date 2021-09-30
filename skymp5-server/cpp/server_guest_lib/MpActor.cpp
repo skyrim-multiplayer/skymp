@@ -53,8 +53,9 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   auto baseId = MpObjectReference::GetBaseId();
   uint32_t raceId = GetLook() ? GetLook()->raceId : 0;
   BaseActorValues baseActorValues;
-  if (GetParent()->HasEspm()) {
-    auto& espm = GetParent()->GetEspm();
+  WorldState* worldState = GetParent();
+  if (worldState && worldState->HasEspm()) {
+    auto& espm = worldState->GetEspm();
     baseActorValues = GetBaseActorValues(espm, baseId, raceId);
   }
 

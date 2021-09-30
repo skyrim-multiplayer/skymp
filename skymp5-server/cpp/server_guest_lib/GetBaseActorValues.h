@@ -3,6 +3,7 @@
 #include <WorldState.h>
 #include <cstdint>
 #include <espm.h>
+#include <fmt/format.h>
 
 struct BaseActorValues
 {
@@ -47,9 +48,9 @@ struct BaseActorValues
 };
 
 namespace {
-void SetBaseActorValues(espm::LookupResult& result,
-                        espm::CompressedFieldsCache& compressedFieldsCache,
-                        BaseActorValues& baseActorValues)
+void ExtractBaseActorValues(espm::LookupResult& result,
+                            espm::CompressedFieldsCache& compressedFieldsCache,
+                            BaseActorValues& baseActorValues)
 {
   auto race = espm::Convert<espm::RACE>(result.rec);
 
@@ -74,11 +75,11 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
     auto raceInfo = espm.GetBrowser().LookupById(raceIdOverride);
 
     if (raceInfo.rec->GetType() == "RACE") {
-      SetBaseActorValues(raceInfo, compressedFieldsCache, baseActorValues);
+      ExtractBaseActorValues(raceInfo, compressedFieldsCache, baseActorValues);
     } else {
-      throw std::runtime_error(
-        "Unable to read RACE. formId: " + std::to_string(baseId) +
-        ". raceId: " + std::to_string(raceIdOverride) + ".");
+      std::string errorMessage = fmt::format(
+        "Unable to read RACE. formId: {}, raceId: {}", baseId, raceIdOverride);
+      throw std::runtime_error(errorMessage.c_str());
     }
   } else {
     auto form = espm.GetBrowser().LookupById(baseId);
@@ -86,10 +87,11 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
       auto npc = espm::Convert<espm::NPC_>(form.rec);
       auto raceId = npc->GetData(compressedFieldsCache).race;
       auto raceInfo = espm.GetBrowser().LookupById(raceId);
-      SetBaseActorValues(raceInfo, compressedFieldsCache, baseActorValues);
+      ExtractBaseActorValues(raceInfo, compressedFieldsCache, baseActorValues);
     } else {
-      throw std::runtime_error("Unable to read NPC_. formId: " +
-                               std::to_string(baseId));
+      std::string errorMessage =
+        fmt::format("Unable to read NPC_. formId: {}", baseId);
+      throw std::runtime_error(errorMessage.c_str());
     }
   }
   return baseActorValues;
