@@ -349,14 +349,9 @@ void UiApi::replaceMenu(std::string menuName)
     RE::UI::GetSingleton()->menuMap.insert_or_assign({ menuName.c_str(), { RE::GPtr<RE::IMenu>(creator()), creator } });
 }
 
-class PlaceholderMenu :
-    public RE::IMenu,
-    public RE::MenuEventHandler
+class PlaceholderMenu : public RE::IMenu
 {
 public:
-    using IMenu::operator new;
-    using IMenu::operator delete;
-
     PlaceholderMenu() {}
 
     void Accept(CallbackProcessor* a_processor) override {};
@@ -367,12 +362,6 @@ public:
     void PostDisplay() override {};
     void PreDisplay() override {};
     void RefreshPlatform() override {};
-
-    bool CanProcess(RE::InputEvent* e) override { return false; }
-    bool ProcessKinect(RE::KinectEvent* a_event) override { return false; }
-    bool ProcessThumbstick(RE::ThumbstickEvent* a_event) override { return false; }
-    bool ProcessMouseMove(RE::MouseMoveEvent* a_event) override { return false; }
-    bool ProcessButton(RE::ButtonEvent* a_event) override { return false; }
 };
 
 void UiApi::disableMenu(std::string menuName)
