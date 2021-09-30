@@ -119,7 +119,6 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
 
   const currentMax = ac.getBaseActorValue('health');
   const deltaPercentage = healthPercentage - currentPercentage;
-  // ? @Pospelove is this correct?
   const k = 0.25;
   if (deltaPercentage > 0) {
     ac.restoreActorValue('health', deltaPercentage * currentMax * k);
