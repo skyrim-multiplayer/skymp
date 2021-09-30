@@ -48,7 +48,7 @@ struct BaseActorValues
 };
 
 namespace {
-void ExtractBaseActorValues(espm::LookupResult& result,
+void ExtractBaseActorValues(const espm::LookupResult& result,
                             espm::CompressedFieldsCache& compressedFieldsCache,
                             BaseActorValues& baseActorValues)
 {
@@ -79,7 +79,7 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
     } else {
       std::string errorMessage = fmt::format(
         "Unable to read RACE. formId: {}, raceId: {}", baseId, raceIdOverride);
-      throw std::runtime_error(errorMessage.c_str());
+      throw std::runtime_error(errorMessage);
     }
   } else {
     auto form = espm.GetBrowser().LookupById(baseId);
@@ -91,7 +91,7 @@ inline BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
     } else {
       std::string errorMessage =
         fmt::format("Unable to read NPC_. formId: {}", baseId);
-      throw std::runtime_error(errorMessage.c_str());
+      throw std::runtime_error(errorMessage);
     }
   }
   return baseActorValues;
