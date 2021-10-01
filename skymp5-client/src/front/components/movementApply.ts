@@ -5,7 +5,9 @@ import {
   TESModPlatform,
   Debug,
   Form,
+  ActorValue,
 } from "skyrimPlatform";
+import { setActorValuePercentage } from "./actorvalues";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {
@@ -114,17 +116,7 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
-  const currentPercentage = ac.getActorValuePercentage('health');
-  if (currentPercentage === healthPercentage) return;
-
-  const currentMax = ac.getBaseActorValue('health');
-  const deltaPercentage = healthPercentage - currentPercentage;
-  const k = 0.25;
-  if (deltaPercentage > 0) {
-    ac.restoreActorValue('health', deltaPercentage * currentMax * k);
-  } else if (deltaPercentage < 0) {
-    ac.damageActorValue('health', deltaPercentage * currentMax * k);
-  }
+  setActorValuePercentage(ac, ActorValue.Health, healthPercentage);
 };
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
@@ -186,7 +178,8 @@ const isInDifferentWorldOrCell = (
   worldOrCell: number
 ) => {
   return (
-    worldOrCell !== ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID()
+    worldOrCell !==
+    ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID()
   );
 };
 

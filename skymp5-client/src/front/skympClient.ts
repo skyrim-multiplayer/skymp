@@ -82,6 +82,11 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     }
   }
 
+  if (msgType !== "UpdateMovement") {
+    printConsole(msgType);
+    printConsole(msgAny);
+    printConsole(f)
+  }
   if (f && typeof f === "function") handler[msgType](msgAny);
 };
 
@@ -128,6 +133,7 @@ export class SkympClient {
     });
 
     networking.on("message", (msgAny: Record<string, unknown> | string) => {
+      // printConsole(msgAny)
       handleMessage(
         msgAny as Record<string, unknown>,
         this.msgHandler as MsgHandler

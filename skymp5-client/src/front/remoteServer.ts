@@ -469,6 +469,18 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   handleDisconnect(): void {}
 
+  UpdateActorValues(msg: messages.ChangeValuesMessage): void {
+    const i = this.getIdManager().getId(msg.idx);
+    if (!this.worldModel.forms[i].movement) return;
+    
+    printConsole('UpdateActorValues', msg.data)
+    this.worldModel.forms[i].movement!.healthPercentage = msg.data.health;
+    if (!this.worldModel.forms[i].numMovementChanges) {
+      this.worldModel.forms[i].numMovementChanges = 0;
+    }
+    (this.worldModel.forms[i].numMovementChanges as number)++;
+  }
+
   setRaceMenuOpen(msg: messages.SetRaceMenuOpenMessage): void {
     if (msg.open) {
       // wait 0.3s cause we can see visual bugs when teleporting
