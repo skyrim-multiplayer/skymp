@@ -8,7 +8,6 @@ export interface FormModel {
   idx?: number;
   baseId?: number;
   refrId?: number;
-  // XXX
   movement?: Movement;
   animation?: Animation;
   numMovementChanges?: number;

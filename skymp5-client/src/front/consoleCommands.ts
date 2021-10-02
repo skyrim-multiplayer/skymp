@@ -382,7 +382,6 @@ export const consoleCommands = [
   "StartTrackPlayerDoors",
   "StopTrackPlayerDoors",
   "CheckPlayerDoors",
-  // XXX: ????
   "ToggleSPUMovement",
   "SetInChargen",
   "ClearAchievement",

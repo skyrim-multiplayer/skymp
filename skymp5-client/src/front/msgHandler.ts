@@ -3,7 +3,6 @@ import * as msg from "./messages";
 export interface MsgHandler {
   createActor(msg: msg.CreateActorMessage): void;
   destroyActor(msg: msg.DestroyActorMessage): void;
-  // XXX:
   UpdateMovement(msg: msg.UpdateMovementMessage): void;
   UpdateAnimation(msg: msg.UpdateAnimationMessage): void;
   UpdateLook(msg: msg.UpdateLookMessage): void;

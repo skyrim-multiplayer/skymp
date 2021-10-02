@@ -93,6 +93,5 @@ JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
 
 JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
 {
-  // XXX: ?
   return "0.7.0+build3";
 }

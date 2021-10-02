@@ -37,7 +37,6 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
       ac.setHeadTracking(false);
     }
 
-    // XXX
     // ac.stopCombat();
     ac.blockActivation(true);
 
@@ -165,7 +164,6 @@ const teleportIfNeed = (refr: ObjectReference, m: Transform) => {
     isInDifferentWorldOrCell(refr, m.worldOrCell) ||
     (!refr.is3DLoaded() && isInDifferentExteriorCell(refr, m.pos))
   ) {
-    // XXX: seems like todo
     throw new Error("needs to be respawned");
   }
   return false;
