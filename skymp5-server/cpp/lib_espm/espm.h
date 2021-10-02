@@ -658,6 +658,7 @@ public:
     std::vector<Faction> factions;
     bool isEssential = false;
     bool isProtected = false;
+    uint32_t race = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
@@ -685,6 +686,25 @@ public:
   Data GetData() const noexcept;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+
+class RACE : public RecordHeader
+{
+public:
+  static constexpr auto type = "RACE";
+
+  struct Data
+  {
+    float startingHealth = 0.f;
+    float startingMagicka = 0.f;
+    float startingStamina = 0.f;
+    float healRegen = 0.f;
+    float magickaRegen = 0.f;
+    float staminaRegen = 0.f;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
+};
+static_assert(sizeof(RACE) == sizeof(RecordHeader));
 }
 
 namespace espm {
