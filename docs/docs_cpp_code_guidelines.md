@@ -4,6 +4,9 @@
 
 The project uses standard C++17.
 
+SkyrimPlatform and client code must be compilable with Microsoft Visual C++ 2019.
+Server code and unit tests must be also compilable with Clang 12.
+
 ## Code Style
 
 Code blocks require braces.
@@ -12,8 +15,13 @@ Code blocks require braces.
 if (foo) {
   bar();
 }
+
 // not ok
 if (foo) bar();
+
+// also not ok
+if (boo)
+  bar();
 ```
 
 ## Naming
@@ -22,7 +30,10 @@ if (foo) bar();
 
 The first word is lowercase, any other words must start with an uppercase: `camelCase`.
 
-Global, static and thread-local variables must be prefixed with `g_`: `static int g_foo;`
+Global, static and thread-local variables must be prefixed with `g_`: `static int g_foo;`,
+unless they are constants.
+
+Constants should be prefixed with `k`: `
 
 The prefix is should be used for boolean variables and methods (ex: `isSet`, `isFinished`, `isVisible`, `isFound`, `isOpen`).
 
@@ -40,6 +51,8 @@ public:
 Foo::Foo(int bar_) : bar(bar_) {};
 ```
 
+<!-- discussion-starter: I think that fields should end with _ -->
+
 Do not use short variable names. Prefer `server` over `svr`.
 
 Short names that are ok: `i`, `n`, `it` in loops; `lhs`/`rhs` in operator overloading; `res` for function result.
@@ -56,6 +69,8 @@ Class name should be a non-verb noun whenever possible.
 
 Enum names must start with an upper case: `enum SomeEnum`. This rule is also applied to enum constants.
 
+Declare enums as `enum class`, unless you have a really good reason to make them regular just `enum`.
+
 ### Functions
 
 Functions must start with an upper case: `void LaunchOpenBeta();`.
@@ -68,7 +83,16 @@ Functions must start with a verb.
 
 Use `constexpr` when possible.
 
-Declare class variables as const when possible. Do not declare function arguments or local variables as const. The idea is that things with small scope do not need to be const.
+Declare class fields and methods as const when possible.
+
+Rule of thumb for function arguments:
+1. Do you want to change it outside of the function? `void Func(SomeType& outVar)`
+2. Is it a primitive (`enum`, `int`, `char`, etc.)? Pass as non-const value: `void Func(int var)`
+3. Do you want to use move semantics? Use `SomeType var` for copy+move and `SomeType&& var` for move-only
+4. Otherwise, pass it as a const reference, e.g. `void Func(const std::string& message, const MyStruct& data)`
+
+Do not mark local variables or function arguments passed by value as const.
+The idea is that things with small scope do not need to be const.
 
 Prefer const global/static/thread-local variables over non-const until you have a good reason making them non-const.
 
@@ -89,6 +113,17 @@ Prefer `int32_t` over `int`, `int16_t` over `short`, etc.
 #ifdef _DEBUG
     auto debugFunctionJson = f.dump();
 #endif // _DEBUG
+```
+
+Refrain from defining your own macros, unless required logic can't be implemented with C++ templates.
+(But, even so, please think twice.) If you have to define a macro, `#undef` it as soon as it's not needed anymore.
+
+Example:
+```c++
+#define DO_MAGIC(a, b, c) ...
+DO_MAGIC(foo, bar, baz)
+DO_MAGIC(fizz, buzz, fizzbuzz)
+#undef DO_MAGIC
 ```
 
 ## Application to Existing Code
