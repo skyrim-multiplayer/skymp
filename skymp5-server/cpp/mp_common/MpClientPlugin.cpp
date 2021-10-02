@@ -32,9 +32,9 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
   std::pair<OnPacket, void*> packetAndState(onPacket, state_);
 
   state.cl->Tick(
-    [](void* state, Networking::PacketType packetType,
+    [](void* rawState, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
-      const auto& [onPacket, state] = *reinterpret_cast<std::pair<OnPacket, void*>*>(state);
+      const auto& [onPacket, state] = *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
 
       std::string jsonContent;
 
