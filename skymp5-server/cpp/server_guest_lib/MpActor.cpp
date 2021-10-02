@@ -52,8 +52,13 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 {
   auto baseId = MpObjectReference::GetBaseId();
   uint32_t raceId = GetLook() ? GetLook()->raceId : 0;
+  BaseActorValues baseActorValues;
+  WorldState* worldState = GetParent();
+  if (worldState && worldState->HasEspm()) {
+    auto& espm = worldState->GetEspm();
+    baseActorValues = GetBaseActorValues(espm, baseId, raceId);
+  }
 
-  auto baseActorValues = GetBaseActorValues(baseId, raceId);
   MpChangeForm changeForm = GetChangeForm();
 
   MpObjectReference::VisitProperties(visitor, mode);
@@ -165,6 +170,26 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
     changeForm.magickaPercentage = magickaPercentage;
     changeForm.staminaPercentage = staminaPercentage;
   });
+}
+
+std::chrono::steady_clock::time_point
+MpActor::GetLastAttributesPercentagesUpdate()
+{
+  return lastAttributesUpdateTimePoint;
+}
+
+void MpActor::SetLastAttributesPercentagesUpdate(
+  std::chrono::steady_clock::time_point timePoint)
+{
+  lastAttributesUpdateTimePoint = timePoint;
+}
+
+std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
+  std::chrono::steady_clock::time_point now)
+{
+  std::chrono::duration<float> timeAfterRegeneration =
+    now - lastAttributesUpdateTimePoint;
+  return timeAfterRegeneration;
 }
 
 const bool& MpActor::IsRaceMenuOpen() const

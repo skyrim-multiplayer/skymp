@@ -1,11 +1,13 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
+#include <chrono>
 
+#include "GetBaseActorValues.h"
+#include "Loader.h"
 #include "PacketParser.h"
 
-using Catch::Matchers::Contains;
-
 PartOne& GetPartOne();
+extern espm::Loader l;
 
 TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
 {
@@ -70,4 +72,149 @@ TEST_CASE("Player attribute percentages are changing correctly",
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
+}
+
+TEST_CASE("OnChangeValues call is cropping percentage values",
+          "[ChangeValues]")
+{
+  using namespace std::chrono_literals;
+
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  uint32_t baseId = ac.GetBaseId();
+  auto look = ac.GetLook();
+  uint32_t raceId = look ? look->raceId : 0;
+  BaseActorValues baseValues = GetBaseActorValues(l, baseId, raceId);
+
+  IActionListener::RawMessageData msgData;
+  msgData.userId = 0;
+
+  ac.SetPercentages(0.0f, 0.0f, 0.0f);
+  auto past = std::chrono::steady_clock::now() - 1s;
+  ac.SetLastAttributesPercentagesUpdate(past);
+  p.GetActionListener().OnChangeValues(msgData, 1.0f, 1.0f, 1.0f);
+
+  auto now = ac.GetLastAttributesPercentagesUpdate();
+  std::chrono::duration<float> timeDuration = now - past;
+  float time = timeDuration.count();
+
+  float expectedHealth =
+    baseValues.healRate * baseValues.healRateMult * time / 10000.0f;
+  float expectedMagicka =
+    baseValues.magickaRate * baseValues.magickaRateMult * time / 10000.0f;
+  float expectedStamina =
+    baseValues.staminaRate * baseValues.staminaRateMult * time / 10000.0f;
+
+  auto changeForm = ac.GetChangeForm();
+
+  REQUIRE_THAT(changeForm.healthPercentage,
+               Catch::Matchers::WithinAbs(expectedHealth, 0.000001f));
+  REQUIRE_THAT(changeForm.magickaPercentage,
+               Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
+  REQUIRE_THAT(changeForm.staminaPercentage,
+               Catch::Matchers::WithinAbs(expectedStamina, 0.000001f));
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
+}
+
+TEST_CASE("ChangeValues message is being delivered to client",
+          "[ChangeValues]")
+{
+  PartOne partOne;
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  partOne.SetUserActor(0, 0xff000000);
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+  partOne.Messages().clear();
+
+  nlohmann::json j = nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { { "health", 1.0f }, { "magicka", 1.0f }, { "stamina", 1.0f } } }
+  };
+  std::string s = MakeMessage(j);
+
+  ac.SendToUser(s.data(), s.size(), true);
+
+  REQUIRE(partOne.Messages().size() == 1);
+  nlohmann::json message = partOne.Messages()[0].j;
+  REQUIRE(message["data"]["health"] == 1.0f);
+  REQUIRE(message["data"]["magicka"] == 1.0f);
+  REQUIRE(message["data"]["stamina"] == 1.0f);
+
+  partOne.DestroyActor(0xff000000);
+  DoDisconnect(partOne, 0);
+}
+
+TEST_CASE("OnChangeValues function sends ChangeValues message with new "
+          "percentages if input values was incorrect",
+          "[ChangeValues]")
+{
+  using namespace std::chrono_literals;
+
+  PartOne partOne;
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  partOne.SetUserActor(0, 0xff000000);
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+  partOne.Messages().clear();
+
+  nlohmann::json j = nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { { "health", 1.0f }, { "magicka", 1.0f }, { "stamina", 1.0f } } }
+  };
+  ac.SetPercentages(0.0f, 0.0f, 0.0f);
+  auto past = std::chrono::steady_clock::now() - 1s;
+  ac.SetLastAttributesPercentagesUpdate(past);
+
+  DoMessage(partOne, 0, j);
+
+  REQUIRE(partOne.Messages().size() == 1);
+  nlohmann::json message = partOne.Messages()[0].j;
+
+  REQUIRE(message["data"]["health"] != 0.0f);
+  REQUIRE(message["data"]["health"] != 1.0f);
+  REQUIRE(message["data"]["magicka"] != 0.0f);
+  REQUIRE(message["data"]["magicka"] != 1.0f);
+  REQUIRE(message["data"]["stamina"] != 0.0f);
+  REQUIRE(message["data"]["stamina"] != 1.0f);
+
+  partOne.DestroyActor(0xff000000);
+  DoDisconnect(partOne, 0);
+}
+
+TEST_CASE("OnChangeValues function doesn't sends ChangeValues message if "
+          "input values is ok",
+          "[ChangeValues]")
+{
+  using namespace std::chrono_literals;
+
+  PartOne partOne;
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  partOne.SetUserActor(0, 0xff000000);
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+  partOne.Messages().clear();
+
+  nlohmann::json j = nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { { "health", 1.0f }, { "magicka", 1.0f }, { "stamina", 1.0f } } }
+  };
+  ac.SetPercentages(1.0f, 1.0f, 1.0f);
+  auto past = std::chrono::steady_clock::now() - 1s;
+  ac.SetLastAttributesPercentagesUpdate(past);
+
+  DoMessage(partOne, 0, j);
+
+  REQUIRE(partOne.Messages().size() == 0);
+
+  partOne.DestroyActor(0xff000000);
+  DoDisconnect(partOne, 0);
 }
