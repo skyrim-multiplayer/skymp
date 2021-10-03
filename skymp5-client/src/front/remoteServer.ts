@@ -469,7 +469,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   handleDisconnect(): void {}
 
-  UpdateActorValues(msg: messages.ChangeValuesMessage): void {
+  ChangeValues(msg: messages.ChangeValuesMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     if (!this.worldModel.forms[i].movement) return;
     

@@ -45,13 +45,6 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     (m: AnyMessage) => void
   >;
   const f = handler[msgType];
-  /*if (msgType !== "UpdateMovement") {
-    printConsole();
-    for (const key in msgAny) {
-      const v = (msgAny as Record<string, any>)[key];
-      printConsole(`${key}=${JSON.stringify(v)}`);
-    }
-  }*/
 
   if (msgType === "hostStart") {
     const msg = msgAny as HostStartMessage;
@@ -82,11 +75,6 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     }
   }
 
-  if (msgType !== "UpdateMovement") {
-    printConsole(msgType);
-    printConsole(msgAny);
-    printConsole(f)
-  }
   if (f && typeof f === "function") handler[msgType](msgAny);
 };
 
