@@ -383,6 +383,7 @@ export class FormView implements View<FormModel> {
         sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
       }
     }
+    this.localImmortal = false;
   }
 
   private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
