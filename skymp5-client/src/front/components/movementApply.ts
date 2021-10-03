@@ -5,7 +5,6 @@ import {
   TESModPlatform,
   Debug,
   Form,
-  ActorValue,
 } from "skyrimPlatform";
 import { setActorValuePercentage } from "./actorvalues";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
