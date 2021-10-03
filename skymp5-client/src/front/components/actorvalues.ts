@@ -25,8 +25,6 @@ export const setActorValuePercentage = (
   const currentPercentage = ac.getActorValuePercentage(avName);
   if (currentPercentage === percentage) return;
 
-  printConsole('setActorValuePercentage', avName, percentage)
-
   const currentMax = ac.getBaseActorValue(avName);
   const deltaPercentage = percentage - currentPercentage;
   const k = 1;

@@ -121,7 +121,6 @@ export class SkympClient {
     });
 
     networking.on("message", (msgAny: Record<string, unknown> | string) => {
-      // printConsole(msgAny)
       handleMessage(
         msgAny as Record<string, unknown>,
         this.msgHandler as MsgHandler
