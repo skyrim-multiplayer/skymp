@@ -116,7 +116,7 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
-  setActorValuePercentage(ac, ActorValue.Health, healthPercentage);
+  setActorValuePercentage(ac, 'health', healthPercentage);
 };
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
