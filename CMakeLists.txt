@@ -22,7 +22,6 @@ project(skymp)
 enable_testing()
 
 # Bool options
-# CAUTION! SkyrimPlatform crashes with that setting on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 
 if(JS_ENGINE_TRACING_ENABLED)
@@ -60,7 +59,7 @@ if(CPPCOV_PATH)
   endif()
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

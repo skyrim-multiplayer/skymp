@@ -6,6 +6,7 @@
     "license": "MIT",
     "supports": "windows & x64",
     "dependencies": [
-        "skse64"
+        "boost-stl-interfaces",
+        "spdlog"
     ]
 }
