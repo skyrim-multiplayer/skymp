@@ -13,6 +13,9 @@
 // ^ uncomment or re-generate project files with -DJS_ENGINE_TRACING_ENABLED to
 // enable tracing
 
+// CAUTION! SkyrimPlatform crashes with that setting on.
+// See https://github.com/skyrim-multiplayer/skymp/issues/266
+
 // Useful for finding static JsValue variables that fail in destructor due to
 // undefined static deinitialization order (Chakra is being deinitialized
 // before JsValues are)

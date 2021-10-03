@@ -23,7 +23,15 @@ import * as manifestGen from "./manifestGen";
 
 console.log(`Current process ID is ${pid}`);
 
-const master = Settings.get().master || "https://skymp.io";
+const {
+  master = "https://skymp.io",
+  port,
+  maxPlayers,
+  name,
+  ip,
+  gamemodePath,
+  offlineMode,
+} = Settings.get();
 
 const gamemodeCache = new Map<string, string>();
 
@@ -76,29 +84,10 @@ function requireUncached(
 const log = console.log;
 const systems = new Array<System>();
 systems.push(
-  new MasterClient(
-    log,
-    Settings.get().port,
-    master,
-    Settings.get().maxPlayers,
-    Settings.get().name,
-    Settings.get().ip,
-    5000
-  ),
-  new ClientVerify(
-    log,
-    "./dist_front/skymp5-client.js",
-    Settings.get().maxPlayers
-  ),
+  new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
+  new ClientVerify(log, "./dist_front/skymp5-client.js", maxPlayers),
   new Spawn(log),
-  new Login(
-    log,
-    Settings.get().maxPlayers,
-    master,
-    Settings.get().port,
-    Settings.get().ip,
-    Settings.get().offlineMode
-  )
+  new Login(log, maxPlayers, master, port, ip, offlineMode)
 );
 
 const handleLibkeyJs = () => {
@@ -128,10 +117,7 @@ const main = async () => {
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
-  const server = new scampNative.ScampServer(
-    Settings.get().port,
-    Settings.get().maxPlayers
-  );
+  const server = new scampNative.ScampServer(port, maxPlayers);
   const ctx = { svr: new NativeGameServer(server), gm: new EventEmitter() };
 
   (async () => {
@@ -229,29 +215,29 @@ const main = async () => {
     return path.resolve("", p);
   };
 
-  const gamemodePath = toAbsolute(Settings.get().gamemodePath);
-  log(`Gamemode path is '${gamemodePath}'`);
+  const absoluteGamemodePath = toAbsolute(gamemodePath);
+  log(`Gamemode path is "${absoluteGamemodePath}"`);
 
-  if (!fs.existsSync(gamemodePath)) {
+  if (!fs.existsSync(absoluteGamemodePath)) {
     log(
-      `Error during loading a gamemode from '${gamemodePath}' - file or directory does not exist`
+      `Error during loading a gamemode from "${absoluteGamemodePath}" - file or directory does not exist`
     );
   } else {
     try {
-      requireUncached(gamemodePath, clear, server);
+      requireUncached(absoluteGamemodePath, clear, server);
     } catch (e) {
       console.error(e);
     }
   }
 
-  if (fs.existsSync(gamemodePath)) {
+  if (fs.existsSync(absoluteGamemodePath)) {
     try {
-      requireUncached(gamemodePath, clear, server);
+      requireUncached(absoluteGamemodePath, clear, server);
     } catch (e) {
       console.error(e);
     }
 
-    const watcher = chokidar.watch(gamemodePath, {
+    const watcher = chokidar.watch(absoluteGamemodePath, {
       ignored: /^\./,
       persistent: true,
       awaitWriteFinish: true,
@@ -261,7 +247,7 @@ const main = async () => {
 
     const reloadGamemode = () => {
       try {
-        requireUncached(gamemodePath, clear, server);
+        requireUncached(absoluteGamemodePath, clear, server);
         numReloads.n++;
       } catch (e) {
         console.error(e);
