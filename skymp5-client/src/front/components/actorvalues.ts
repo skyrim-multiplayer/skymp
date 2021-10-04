@@ -1,4 +1,4 @@
-import { Actor, printConsole } from "skyrimPlatform";
+import { Actor } from "skyrimPlatform";
 
 import * as structures from "../../lib/structures/actorvalues";
 export type ActorValues = structures.ActorValues;

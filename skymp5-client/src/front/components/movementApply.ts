@@ -48,6 +48,8 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
     applySneaking(ac, m.isSneaking);
     applyWeapDrawn(ac, m.isWeapDrawn);
     applyHealthPercentage(ac, m.healthPercentage);
+    applyStaminaPercentage(ac, m.staminaPercentage);
+    applyMagickaPercentage(ac, m.magickaPercentage);
   }
 };
 
@@ -115,7 +117,13 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
-  setActorValuePercentage(ac, 'health', healthPercentage);
+  setActorValuePercentage(ac, "health", healthPercentage);
+};
+const applyStaminaPercentage = (ac: Actor, staminaPercentage: number) => {
+  setActorValuePercentage(ac, "stamina", staminaPercentage);
+};
+const applyMagickaPercentage = (ac: Actor, magickaPercentage: number) => {
+  setActorValuePercentage(ac, "magicka", magickaPercentage);
 };
 
 const translateTo = (refr: ObjectReference, m: Movement) => {

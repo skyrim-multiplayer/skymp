@@ -244,6 +244,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isBlocking: false,
         isWeapDrawn: false,
         healthPercentage: 1.0,
+        staminaPercentage: 1.0,
+        magickaPercentage: 1.0,
       };
     }
 
@@ -472,9 +474,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   ChangeValues(msg: messages.ChangeValuesMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     if (!this.worldModel.forms[i].movement) return;
-    
-    printConsole('UpdateActorValues', msg.data)
+
     this.worldModel.forms[i].movement!.healthPercentage = msg.data.health;
+    this.worldModel.forms[i].movement!.staminaPercentage = msg.data.stamina;
+    this.worldModel.forms[i].movement!.magickaPercentage = msg.data.magicka;
     if (!this.worldModel.forms[i].numMovementChanges) {
       this.worldModel.forms[i].numMovementChanges = 0;
     }
