@@ -1,12 +1,4 @@
-import {
-  ObjectReference,
-  Actor,
-  Game,
-  TESModPlatform,
-  Debug,
-  Form,
-} from "skyrimPlatform";
-import { setActorValuePercentage } from "./actorvalues";
+import { ObjectReference, Actor, Game, TESModPlatform, Debug, Form } from "skyrimPlatform";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {
@@ -20,12 +12,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
     let lookAt: Actor | null = undefined as unknown as Actor;
     if (m.lookAt) {
       try {
-        lookAt = Game.findClosestActor(
-          m.lookAt[0],
-          m.lookAt[1],
-          m.lookAt[2],
-          128
-        );
+        lookAt = Game.findClosestActor(m.lookAt[0], m.lookAt[1], m.lookAt[2], 128);
       } catch (e) {
         lookAt = null;
       }
@@ -48,8 +35,6 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
     applySneaking(ac, m.isSneaking);
     applyWeapDrawn(ac, m.isWeapDrawn);
     applyHealthPercentage(ac, m.healthPercentage);
-    applyStaminaPercentage(ac, m.staminaPercentage);
-    applyMagickaPercentage(ac, m.magickaPercentage);
   }
 };
 
@@ -66,17 +51,7 @@ const keepOffsetFromActor = (ac: Actor, m: Movement) => {
     getOffsetZ(m.runMode),
   ];
 
-  ac.keepOffsetFromActor(
-    ac,
-    offset[0],
-    offset[1],
-    offset[2],
-    0,
-    0,
-    offsetAngle,
-    m.runMode === "Walking" ? 2048 : 1,
-    1
-  );
+  ac.keepOffsetFromActor(ac, offset[0], offset[1], offset[2], 0, 0, offsetAngle, m.runMode === "Walking" ? 2048 : 1, 1);
 };
 
 const getOffsetZ = (runMode: RunMode) => {
@@ -103,8 +78,7 @@ const applyBlocking = (ac: Actor, m: AnimationVariables) => {
 };
 
 const applySneaking = (ac: Actor, isSneaking: boolean) => {
-  const currentIsSneaking =
-    ac.isSneaking() || ac.getAnimationVariableBool("IsSneaking");
+  const currentIsSneaking = ac.isSneaking() || ac.getAnimationVariableBool("IsSneaking");
   if (currentIsSneaking != isSneaking) {
     Debug.sendAnimationEvent(ac, isSneaking ? "SneakStart" : "SneakStop");
   }
@@ -117,13 +91,17 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 };
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
-  setActorValuePercentage(ac, "health", healthPercentage);
-};
-const applyStaminaPercentage = (ac: Actor, staminaPercentage: number) => {
-  setActorValuePercentage(ac, "stamina", staminaPercentage);
-};
-const applyMagickaPercentage = (ac: Actor, magickaPercentage: number) => {
-  setActorValuePercentage(ac, "magicka", magickaPercentage);
+  const currentPercentage = ac.getActorValuePercentage("health");
+  if (currentPercentage === healthPercentage) return;
+
+  const currentMax = ac.getBaseActorValue("health");
+  const deltaPercentage = healthPercentage - currentPercentage;
+  const k = 0.25;
+  if (deltaPercentage > 0) {
+    ac.restoreActorValue("health", deltaPercentage * currentMax * k);
+  } else if (deltaPercentage < 0) {
+    ac.damageActorValue("health", deltaPercentage * currentMax * k);
+  }
 };
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
@@ -134,35 +112,18 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
   const speed = distance / time;
 
   const angleDiff = Math.abs(m.rot[2] - refr.getAngleZ());
-  if (
-    m.runMode != "Standing" ||
-    m.isInJumpState ||
-    distance > 64 ||
-    angleDiff > 80
-  ) {
+  if (m.runMode != "Standing" || m.isInJumpState || distance > 64 || angleDiff > 80) {
     const actor = Actor.from(refr);
     if (actor && actor.getActorValue("Variable10") < -999) return;
 
     if (!actor || !actor.isDead()) {
-      refr.translateTo(
-        m.pos[0],
-        m.pos[1],
-        m.pos[2],
-        m.rot[0],
-        m.rot[1],
-        m.rot[2],
-        speed,
-        0
-      );
+      refr.translateTo(m.pos[0], m.pos[1], m.pos[2], m.rot[0], m.rot[1], m.rot[2], speed, 0);
     }
   }
 };
 
 const teleportIfNeed = (refr: ObjectReference, m: Transform) => {
-  if (
-    isInDifferentWorldOrCell(refr, m.worldOrCell) ||
-    (!refr.is3DLoaded() && isInDifferentExteriorCell(refr, m.pos))
-  ) {
+  if (isInDifferentWorldOrCell(refr, m.worldOrCell) || (!refr.is3DLoaded() && isInDifferentExteriorCell(refr, m.pos))) {
     throw new Error("needs to be respawned");
   }
   return false;
@@ -175,19 +136,11 @@ const isInDifferentExteriorCell = (refr: ObjectReference, pos: number[]) => {
   const playerPos = getPos(Game.getPlayer() as Actor);
   const targetDistanceToPlayer = getDistance(playerPos, pos);
   const currentDistanceToPlayer = getDistance(playerPos, currentPos);
-  return (
-    currentDistanceToPlayer > cellWidth && targetDistanceToPlayer <= cellWidth
-  );
+  return currentDistanceToPlayer > cellWidth && targetDistanceToPlayer <= cellWidth;
 };
 
-const isInDifferentWorldOrCell = (
-  refr: ObjectReference,
-  worldOrCell: number
-) => {
-  return (
-    worldOrCell !==
-    ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID()
-  );
+const isInDifferentWorldOrCell = (refr: ObjectReference, worldOrCell: number) => {
+  return worldOrCell !== ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID();
 };
 
 const getPos = (refr: ObjectReference) => {
