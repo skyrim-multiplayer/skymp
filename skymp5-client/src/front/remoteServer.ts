@@ -74,9 +74,7 @@ on("tick", () => {
   const maxLoggingDelay = 5000;
   if (verifyStartMoment && Date.now() - verifyStartMoment > maxVerifyDelay) {
     maxVerifyDelay *= 2;
-    printConsole(
-      "Verify failed. Reconnecting. Calculated delay is " + maxVerifyDelay
-    );
+    printConsole("Verify failed. Reconnecting. Calculated delay is " + maxVerifyDelay);
     networking.reconnect();
     verifyStartMoment = 0;
   }
@@ -179,9 +177,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   openContainer(msg: messages.OpenContainer): void {
     once("update", async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
-      (
-        ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference
-      ).activate(Game.getPlayer(), true);
+      (ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference).activate(Game.getPlayer(), true);
       (async () => {
         while (!Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
         while (Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
@@ -198,12 +194,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   teleport(msg: messages.Teleport): void {
     once("update", () => {
-      printConsole(
-        "Teleporting...",
-        msg.pos,
-        "cell/world is",
-        msg.worldOrCell.toString(16)
-      );
+      printConsole("Teleporting...", msg.pos, "cell/world is", msg.worldOrCell.toString(16));
       TESModPlatform.moveRefrToPosition(
         Game.getPlayer(),
         Cell.from(Game.getFormEx(msg.worldOrCell)),
@@ -216,11 +207,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         msg.rot[2]
       );
       Utility.wait(0.2).then(() => {
-        (Game.getPlayer() as Actor).setAngle(
-          msg.rot[0],
-          msg.rot[1],
-          msg.rot[2]
-        );
+        (Game.getPlayer() as Actor).setAngle(msg.rot[0], msg.rot[1], msg.rot[2]);
       });
     });
   }
@@ -244,8 +231,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isBlocking: false,
         isWeapDrawn: false,
         healthPercentage: 1.0,
-        staminaPercentage: 1.0,
-        magickaPercentage: 1.0,
       };
     }
 
@@ -272,8 +257,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (msg.props) {
       for (const propName in msg.props) {
         const i = this.getIdManager().getId(msg.idx);
-        (this.worldModel.forms[i] as Record<string, unknown>)[propName] =
-          msg.props[propName];
+        (this.worldModel.forms[i] as Record<string, unknown>)[propName] = msg.props[propName];
       }
     }
 
@@ -292,9 +276,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         Game.getPlayer() as Actor,
         msg.equipment
           ? {
-              entries: msg.equipment.inv.entries.filter(
-                (x) => !!Armor.from(Game.getFormEx(x.baseId))
-              ),
+              entries: msg.equipment.inv.entries.filter((x) => !!Armor.from(Game.getFormEx(x.baseId))),
             }
           : { entries: [] },
         false
@@ -367,10 +349,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           if (!task.running) {
             task.running = true;
             printConsole("Using loadGame to spawn player");
-            printConsole(
-              "skinColorFromServer:",
-              msg.look ? msg.look.skinColor.toString(16) : undefined
-            );
+            printConsole("skinColorFromServer:", msg.look ? msg.look.skinColor.toString(16) : undefined);
             loadGameManager.loadGame(
               msg.transform.pos,
               msg.transform.rot,
@@ -457,8 +436,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
     const i = this.getIdManager().getId(msg.idx);
-    (this.worldModel.forms[i] as Record<string, unknown>)[msg.propName] =
-      msg.data;
+    (this.worldModel.forms[i] as Record<string, unknown>)[msg.propName] = msg.data;
   }
 
   handleConnectionAccepted(): void {
@@ -472,16 +450,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   handleDisconnect(): void {}
 
   ChangeValues(msg: messages.ChangeValuesMessage): void {
-    const i = this.getIdManager().getId(msg.idx);
-    if (!this.worldModel.forms[i].movement) return;
-
-    this.worldModel.forms[i].movement!.healthPercentage = msg.data.health;
-    this.worldModel.forms[i].movement!.staminaPercentage = msg.data.stamina;
-    this.worldModel.forms[i].movement!.magickaPercentage = msg.data.magicka;
-    if (!this.worldModel.forms[i].numMovementChanges) {
-      this.worldModel.forms[i].numMovementChanges = 0;
-    }
-    (this.worldModel.forms[i].numMovementChanges as number)++;
+    const ac = Game.getPlayer();
+    if (!ac) return;
+    setActorValuePercentage(ac, "health", msg.data.health);
+    setActorValuePercentage(ac, "stamina", msg.data.stamina);
+    setActorValuePercentage(ac, "magicka", msg.data.magicka);
   }
 
   setRaceMenuOpen(msg: messages.SetRaceMenuOpenMessage): void {
@@ -508,8 +481,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         loginWithSkympIoCredentials();
         break;
       case "newClientVersion":
-        if (typeof msg.content.src !== "string")
-          throw new Error(`'${msg.content.src}' is not a string`);
+        if (typeof msg.content.src !== "string") throw new Error(`'${msg.content.src}' is not a string`);
         const src: string = msg.content.src as string;
 
         // Force reconnecting after hot reload (see skympClient.ts)
@@ -543,17 +515,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
-  private updateGamemodeUpdateFunctions(
-    storageVar: string,
-    functionSources: Record<string, string>
-  ): void {
+  private updateGamemodeUpdateFunctions(storageVar: string, functionSources: Record<string, string>): void {
     storage[storageVar] = JSON.parse(JSON.stringify(functionSources));
     for (const propName of Object.keys(functionSources)) {
       try {
-        (storage[storageVar] as any)[propName] = new Function(
-          "ctx",
-          (storage[storageVar] as any)[propName]
-        );
+        (storage[storageVar] as any)[propName] = new Function("ctx", (storage[storageVar] as any)[propName]);
         const emptyFunction = functionSources[propName] === "";
         if (emptyFunction) {
           delete (storage[storageVar] as any)[propName];
@@ -576,14 +542,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     storage["updateNeighborFunctions"] = undefined;
     storage["updateOwnerFunctions"] = undefined;
 
-    this.updateGamemodeUpdateFunctions(
-      "updateNeighborFunctions",
-      msg.updateNeighborFunctions || {}
-    );
-    this.updateGamemodeUpdateFunctions(
-      "updateOwnerFunctions",
-      msg.updateOwnerFunctions || {}
-    );
+    this.updateGamemodeUpdateFunctions("updateNeighborFunctions", msg.updateNeighborFunctions || {});
+    this.updateGamemodeUpdateFunctions("updateOwnerFunctions", msg.updateOwnerFunctions || {});
 
     //
     // EventSource
