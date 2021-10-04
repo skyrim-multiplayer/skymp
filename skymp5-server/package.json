@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "build-ts": "tsc",
-    "bundle-ts": "parcel build ts/index.ts --out-dir ../build/dist/server --out-file skymp5-server.js --no-minify --no-source-maps --no-cache --target node --bundle-node-modules",
+    "build-ts": "parcel build ts/index.ts --out-dir ../build/dist/server --out-file skymp5-server.js --no-minify --no-source-maps --no-cache --target node --bundle-node-modules",
     "cmake-js-fetch": "cmake-js configure --directory cmake-js-fetch --out cmake-js-fetch-build"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
