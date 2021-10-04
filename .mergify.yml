@@ -2,6 +2,8 @@ pull_request_rules:
   - name: Automatic merge on approval
     conditions:
       - "#approved-reviews-by>=1"
+      - check-success=Formatting check
+      - check-success=PR Windows
     actions:
       merge:
         method: squash
