@@ -51,8 +51,6 @@ public:
 Foo::Foo(int bar_) : bar(bar_) {};
 ```
 
-<!-- discussion-starter: I think that fields should end with _ -->
-
 Do not use short variable names. Prefer `server` over `svr`.
 
 Short names that are ok: `i`, `n`, `it` in loops; `lhs`/`rhs` in operator overloading; `res` for function result.
@@ -87,7 +85,7 @@ Declare class fields and methods as const when possible.
 
 Rule of thumb for function arguments:
 1. Do you want to change it outside of the function? `void Func(SomeType& outVar)`
-2. Is it a primitive (`enum`, `int`, `char`, etc.)? Pass as non-const value: `void Func(int var)`
+2. Is it a primitive (`enum`, `int64_t`, `char`, etc.)? Pass as non-const value: `void Func(int64_t var)`
 3. Do you want to use move semantics? Use `SomeType var` for copy+move and `SomeType&& var` for move-only
 4. Otherwise, pass it as a const reference, e.g. `void Func(const std::string& message, const MyStruct& data)`
 
