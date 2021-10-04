@@ -10,12 +10,8 @@ export const getMovement = (refr: ObjectReference): Movement => {
   const runMode = ac ? getRunMode(ac) : "Running";
 
   let healthPercentage = ac && ac.getActorValuePercentage("health");
-  let staminaPercentage = ac && ac.getActorValuePercentage("stamina");
-  let magickaPercentage = ac && ac.getActorValuePercentage("magicka");
   if (ac && ac.isDead()) {
     healthPercentage = 0;
-    staminaPercentage = 0;
-    magickaPercentage = 0;
   }
 
   let lookAt: undefined | NiPoint3 = undefined;
@@ -37,8 +33,6 @@ export const getMovement = (refr: ObjectReference): Movement => {
     isBlocking: (ac && ac.getAnimationVariableBool("IsBlocking")) as boolean,
     isWeapDrawn: (ac && ac.isWeaponDrawn()) as boolean,
     healthPercentage: healthPercentage as number,
-    staminaPercentage: staminaPercentage as number,
-    magickaPercentage: magickaPercentage as number,
     lookAt,
   };
 };

@@ -16,8 +16,6 @@ export interface AnimationVariables {
   isBlocking: boolean;
   isWeapDrawn: boolean;
   healthPercentage: number;
-  staminaPercentage: number;
-  magickaPercentage: number;
   lookAt?: NiPoint3;
 }
 
