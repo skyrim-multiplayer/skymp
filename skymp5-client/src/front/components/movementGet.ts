@@ -18,7 +18,11 @@ export const getMovement = (refr: ObjectReference): Movement => {
   if (ac.getFormID() !== 0x14) {
     const combatTarget = ac.getCombatTarget();
     if (combatTarget) {
-      lookAt = [combatTarget.getPositionX(), combatTarget.getPositionY(), combatTarget.getPositionZ()];
+      lookAt = [
+        combatTarget.getPositionX(),
+        combatTarget.getPositionY(),
+        combatTarget.getPositionZ(),
+      ];
     }
   }
 
@@ -27,7 +31,10 @@ export const getMovement = (refr: ObjectReference): Movement => {
     pos: [refr.getPositionX(), refr.getPositionY(), refr.getPositionZ()],
     rot: [refr.getAngleX(), refr.getAngleY(), refr.getAngleZ()],
     runMode: runMode,
-    direction: runMode !== "Standing" ? 360 * refr.getAnimationVariableFloat("Direction") : 0,
+    direction:
+      runMode !== "Standing"
+        ? 360 * refr.getAnimationVariableFloat("Direction")
+        : 0,
     isInJumpState: (ac && ac.getAnimationVariableBool("bInJumpState")) as boolean,
     isSneaking: (ac && isSneaking(ac)) as boolean,
     isBlocking: (ac && ac.getAnimationVariableBool("IsBlocking")) as boolean,
@@ -37,7 +44,8 @@ export const getMovement = (refr: ObjectReference): Movement => {
   };
 };
 
-const isSneaking = (ac: Actor) => ac.isSneaking() || ac.getAnimationVariableBool("IsSneaking");
+const isSneaking = (ac: Actor) =>
+  ac.isSneaking() || ac.getAnimationVariableBool("IsSneaking");
 
 const getRunMode = (ac: Actor): RunMode => {
   if (ac.isSprinting()) return "Sprinting";
@@ -47,7 +55,8 @@ const getRunMode = (ac: Actor): RunMode => {
 
   let isRunning = true;
   if (ac.getFormID() == 0x14) {
-    if (!TESModPlatform.isPlayerRunningEnabled() || speed < 150) isRunning = false;
+    if (!TESModPlatform.isPlayerRunningEnabled() || speed < 150)
+      isRunning = false;
   } else {
     if (!ac.isRunning() || speed < 150) isRunning = false;
   }
