@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": "../build/dist/client/Data/Platform/Modules",
-    "outFile": "../build/dist/server/dist_front/skymp5-client.js",
+    "outFile": "../build/dist/client/Data/Platform/Plugins/skymp5-client.js",
     "noImplicitAny": true,
     "lib": ["ES2015", "es2017"],
     "strict": true,
