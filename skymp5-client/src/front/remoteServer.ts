@@ -469,6 +469,14 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   handleDisconnect(): void {}
 
+  ChangeValues(msg: messages.ChangeValuesMessage): void {
+    const ac = Game.getPlayer();
+    if (!ac) return;
+    setActorValuePercentage(ac, "health", msg.data.health);
+    setActorValuePercentage(ac, "stamina", msg.data.stamina);
+    setActorValuePercentage(ac, "magicka", msg.data.magicka);
+  }
+
   setRaceMenuOpen(msg: messages.SetRaceMenuOpenMessage): void {
     if (msg.open) {
       // wait 0.3s cause we can see visual bugs when teleporting
