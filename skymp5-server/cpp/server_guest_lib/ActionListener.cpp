@@ -492,6 +492,7 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     s += Networking::MinPacketId;
     s += nlohmann::json{
       { "t", MsgType::ChangeValues },
+      { "idx", actor->GetIdx() },
       { "data",
         { { "health", health },
           { "magicka", magicka },
