@@ -1,0 +1,7 @@
+{
+  "prettier.useTabs": false,
+  "javascript.preferences.quoteStyle": "double",
+  "typescript.preferences.quoteStyle": "double",
+  "prettier.singleQuote": false,
+  "prettier.printWidth": 120
+}
