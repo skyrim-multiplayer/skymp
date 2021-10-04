@@ -93,7 +93,6 @@ export interface UpdatePropertyMessage {
 
 export interface ChangeValuesMessage {
   t: MsgType.ChangeValues;
-  idx: number;
   data: ActorValues;
 }
 
