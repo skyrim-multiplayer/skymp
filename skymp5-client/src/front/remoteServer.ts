@@ -469,12 +469,14 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   handleDisconnect(): void {}
 
-  ChangeValues(msg: messages.ChangeValuesMessage): void {
-    const ac = Game.getPlayer();
-    if (!ac) return;
-    setActorValuePercentage(ac, "health", msg.data.health);
-    setActorValuePercentage(ac, "stamina", msg.data.stamina);
-    setActorValuePercentage(ac, "magicka", msg.data.magicka);
+    ChangeValues(msg: messages.ChangeValuesMessage): void {
+    once("update", () => {
+      const ac = Game.getPlayer();
+      if (!ac) return;
+      setActorValuePercentage(ac, "health", msg.data.health);
+      setActorValuePercentage(ac, "stamina", msg.data.stamina);
+      setActorValuePercentage(ac, "magicka", msg.data.magicka);
+    });
   }
 
   setRaceMenuOpen(msg: messages.SetRaceMenuOpenMessage): void {
