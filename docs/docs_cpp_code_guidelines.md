@@ -7,6 +7,7 @@ The project uses standard C++17.
 SkyrimPlatform and client code must be compilable with Microsoft Visual C++ 2019.
 Server code and unit tests must be also compilable with Clang 12.
 
+
 ## Code Style
 
 Code blocks require braces.
@@ -24,6 +25,7 @@ if (boo)
   bar();
 ```
 
+
 ## Naming
 
 ### Variables
@@ -33,7 +35,8 @@ The first word is lowercase, any other words must start with an uppercase: `came
 Global, static and thread-local variables must be prefixed with `g_`: `static int g_foo;`,
 unless they are constants.
 
-Constants should be prefixed with `k`:
+Constants should be prefixed with `k`. When declaring constants, please keep in mind that
+[there can be side effects](#global-like-variables).
 
 The prefix is should be used for boolean variables and methods (ex: `isSet`, `isFinished`, `isVisible`, `isFound`, `isOpen`).
 
@@ -74,6 +77,36 @@ Declare enums as `enum class`, unless you have a really good reason to make them
 Functions must start with an upper case: `void LaunchOpenBeta();`.
 
 Functions must start with a verb.
+
+
+## Global-like variables
+
+Don't make any global, static or thread-local constants which have complex structure and/or destructors.
+The destruction order of globals is undefined and can lead to unexpected bugs.
+
+```c++
+// ok
+const KeyCode kDefaultChatHotkey = KeyCode::F6;  // enum
+const std::string kDefaultName = "ThisIsAVeryOriginalUsername";
+const std::unordered_map<std::string, std::string> kSomeMapping{
+  { "a", "b" },
+  { "b", "a" },
+};
+
+// not ok
+struct WrappedRef {
+  const std::string& something;
+};
+const WrappedRef kSomeWrappedRef{ kDefaultName };
+
+{
+  // ...
+  // This is very dangerous and can lead to crashes. Don't do like this!
+  // Existing places will be eventually removed.
+  thread_local JsValue g_undefined = JsValue::Undefined();
+}
+```
+
 
 ## Const Qualifier
 
@@ -123,6 +156,7 @@ DO_MAGIC(foo, bar, baz)
 DO_MAGIC(fizz, buzz, fizzbuzz)
 #undef DO_MAGIC
 ```
+
 
 ## Application to Existing Code
 
