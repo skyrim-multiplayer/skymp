@@ -33,7 +33,7 @@ The first word is lowercase, any other words must start with an uppercase: `came
 Global, static and thread-local variables must be prefixed with `g_`: `static int g_foo;`,
 unless they are constants.
 
-Constants should be prefixed with `k`: `
+Constants should be prefixed with `k`:
 
 The prefix is should be used for boolean variables and methods (ex: `isSet`, `isFinished`, `isVisible`, `isFound`, `isOpen`).
 
