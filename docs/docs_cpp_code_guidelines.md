@@ -81,7 +81,7 @@ Functions must start with a verb.
 
 ## Global-like variables
 
-Don't make any global, static or thread-local constants which have complex structure and/or destructors.
+Don't make any global, static or thread-local variables or constants which have complex structure and/or destructors.
 The destruction order of globals is undefined and can lead to unexpected bugs.
 
 ```c++
