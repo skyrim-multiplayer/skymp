@@ -326,12 +326,6 @@ export class FormView implements View<FormModel> {
         );
         if (model.look && model.look.name)
           refr.setDisplayName("" + model.look.name, true);
-
-        const actor = Actor.from(refr);
-        if (actor) {
-          deathSystem.makeActorImmortal(actor);
-          actor.setActorValue("health", 1000000);
-        }
       }
       this.refrId = (refr as ObjectReference).getFormID();
     }
@@ -340,6 +334,12 @@ export class FormView implements View<FormModel> {
 
     const refr = ObjectReference.from(Game.getFormEx(this.refrId));
     if (refr) {
+      const actor = Actor.from(refr);
+      if (actor && !this.localImmortal) {
+        deathSystem.makeActorImmortal(actor);
+        actor.setActorValue("health", 1000000);
+        this.localImmortal = true;
+      }
       this.applyAll(refr, model);
       for (const key of gUpdateNeighborFunctionsKeys) {
         const v = (model as Record<string, unknown>)[key];
@@ -383,6 +383,7 @@ export class FormView implements View<FormModel> {
         sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
       }
     }
+    this.localImmortal = false;
   }
 
   private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
@@ -632,6 +633,7 @@ export class FormView implements View<FormModel> {
   private spawnMoment = 0;
   private wasHostedByOther: boolean | undefined = undefined;
   private state = {};
+  private localImmortal = false;
 }
 
 class FormViewArray {

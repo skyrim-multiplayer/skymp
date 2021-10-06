@@ -138,9 +138,9 @@ inline void ReadEx(const simdjson::dom::element& j, size_t key, Value* out)
                                                                               \
     if (v < std::numeric_limits<intType>::min() ||                            \
         v > std::numeric_limits<intType>::max())                              \
-      throw std::runtime_error(std::to_string(v) +                            \
-                               " doesn't match numeric limits of type " +     \
-                               (std::string) typeid(intType).name());         \
+      throw std::runtime_error(                                               \
+        std::to_string(v) +                                                   \
+        " doesn't match numeric limits of type " #intType);                   \
                                                                               \
     *out = static_cast<intType>(v);                                           \
   }
