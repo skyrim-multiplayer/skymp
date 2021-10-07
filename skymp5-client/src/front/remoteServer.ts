@@ -469,7 +469,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   handleDisconnect(): void {}
 
-    ChangeValues(msg: messages.ChangeValuesMessage): void {
+  ChangeValues(msg: messages.ChangeValuesMessage): void {
     once("update", () => {
       const ac = Game.getPlayer();
       if (!ac) return;
