@@ -34,7 +34,6 @@ import { nextHostAttempt } from "./hostAttempts";
 import * as updateOwner from "./updateOwner";
 import { ActorValues, getActorValues } from "./components/actorvalues";
 import {Hit, getHitData} from "./components/hit";
-import { IdManager } from "../lib/idManager";
 
 interface AnyMessage {
   type?: string;
