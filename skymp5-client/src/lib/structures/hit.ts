@@ -1,4 +1,4 @@
-export interface Hit{
+export interface Hit {
     agressor: number;
     isBashAttack: boolean;
     isHitBlocked: boolean;
