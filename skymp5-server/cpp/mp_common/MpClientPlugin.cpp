@@ -60,7 +60,7 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
 void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
 {
   if (!state.cl) {
-    // XXX: ???
+    // TODO(#263): we probably should log something here
     return;
   }
 
