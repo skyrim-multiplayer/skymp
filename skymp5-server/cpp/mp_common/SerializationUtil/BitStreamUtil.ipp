@@ -46,7 +46,7 @@ template <class T>
 T ReadFromBitStream(SLNet::BitStream& stream)
 {
   T value;
-  stream.Read(value);
+  ReadFromBitStream(stream, value);
   return value;
 }
 
