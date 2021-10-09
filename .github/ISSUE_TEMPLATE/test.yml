@@ -3,7 +3,7 @@ description: A brief description of the problem, which allows you to quickly nav
 title: "[Bug]: "
 labels: ["bug-report"]
 assignees:
-  - aidmi
+  - SupAidmi
 body:
   - type: markdown
     attributes:
