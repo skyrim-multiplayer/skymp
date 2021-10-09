@@ -15,9 +15,18 @@ namespace SerializationUtil {
     stream.Read(data);                                                        \
   }
 
+DECLARE_RAKNET_SAFETY_WRAPPERS(uint64_t)
 DECLARE_RAKNET_SAFETY_WRAPPERS(uint32_t)
+DECLARE_RAKNET_SAFETY_WRAPPERS(uint16_t)
+DECLARE_RAKNET_SAFETY_WRAPPERS(uint8_t)
+DECLARE_RAKNET_SAFETY_WRAPPERS(int64_t)
+DECLARE_RAKNET_SAFETY_WRAPPERS(int32_t)
+DECLARE_RAKNET_SAFETY_WRAPPERS(int16_t)
+DECLARE_RAKNET_SAFETY_WRAPPERS(int8_t)
 DECLARE_RAKNET_SAFETY_WRAPPERS(float)
 DECLARE_RAKNET_SAFETY_WRAPPERS(bool)
+
+#undef DECLARE_RAKNET_SAFETY_WRAPPERS
 
 template <class T>
 void WriteToBitStream(SLNet::BitStream& stream, const std::optional<T>& opt);
