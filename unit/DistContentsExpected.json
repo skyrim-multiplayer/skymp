@@ -4,6 +4,7 @@
     "expectedFiles": [
       "client/Data/Platform/Modules/skyrimPlatform.ts",
       "client/Data/Platform/Plugins/skymp5-client.js",
+      "client/Data/Platform/Plugins/skymp5-client-settings.txt",
       "server/data/scripts/ActiveMagicEffect.pex",
       "server/data/scripts/Actor.pex",
       "server/data/scripts/ActorValueInfo.pex",
