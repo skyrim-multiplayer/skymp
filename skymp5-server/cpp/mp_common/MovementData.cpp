@@ -34,6 +34,7 @@ RunMode RunModeFromString(std::string_view str)
   } else if (str == kSprinting) {
     return RunMode::Sprinting;
   } else {
-    throw std::runtime_error("cannot parse RunMode from " + std::string{str});
+    throw std::runtime_error("cannot parse RunMode from " +
+                             std::string{ str });
   }
 }

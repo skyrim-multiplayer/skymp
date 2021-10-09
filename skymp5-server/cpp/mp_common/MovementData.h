@@ -38,13 +38,13 @@ struct MovementData
   bool isBlocking;
   bool isWeapDrawn;
   std::optional<std::array<float, 3>> lookAt;
-  
-  auto Tie() const {
-    return std::tie(idx, worldOrCell, pos, rot, direction, healthPercentage, runMode, isInJumpState,
-        isSneaking, isBlocking, isWeapDrawn, lookAt);
+
+  auto Tie() const
+  {
+    return std::tie(idx, worldOrCell, pos, rot, direction, healthPercentage,
+                    runMode, isInJumpState, isSneaking, isBlocking,
+                    isWeapDrawn, lookAt);
   }
 
-  bool operator==(const MovementData& rhs) const {
-    return Tie() == rhs.Tie();
-  }
+  bool operator==(const MovementData& rhs) const { return Tie() == rhs.Tie(); }
 };

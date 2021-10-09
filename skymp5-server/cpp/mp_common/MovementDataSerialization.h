@@ -1,7 +1,7 @@
 #pragma once
 
-#include <slikenet/types.h>
 #include <nlohmann/json_fwd.hpp>
+#include <slikenet/types.h>
 
 #include "MovementData.h"
 

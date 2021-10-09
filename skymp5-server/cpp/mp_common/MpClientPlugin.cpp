@@ -34,7 +34,8 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
   state.cl->Tick(
     [](void* rawState, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
-      const auto& [onPacket, state] = *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
+      const auto& [onPacket, state] =
+        *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
 
       std::string jsonContent;
 
@@ -42,7 +43,8 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
         if (data[1] == MovementData::kHeaderByte) {
           MovementData movData;
           // BitStream requires non-const ref even though it doesn't modify it
-          SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2, /*copyData*/false);
+          SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2,
+                                  length - 2, /*copyData*/ false);
           serialization::ReadFromBitStream(stream, movData);
           jsonContent = serialization::MovementDataToJson(movData).dump();
         } else {
@@ -52,7 +54,7 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
       }
 
       onPacket(static_cast<int32_t>(packetType), jsonContent.data(), error,
-                             state);
+               state);
     },
     &packetAndState);
 }
@@ -65,7 +67,8 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
   }
 
   const auto parsedJson = nlohmann::json::parse(jsonContent);
-  if (static_cast<MsgType>(parsedJson.at("t").get<int>()) == MsgType::UpdateMovement) {
+  if (static_cast<MsgType>(parsedJson.at("t").get<int>()) ==
+      MsgType::UpdateMovement) {
     const auto movData = serialization::MovementDataFromJson(parsedJson);
     SLNet::BitStream stream;
     serialization::WriteToBitStream(stream, movData);
@@ -73,7 +76,9 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
     std::vector<uint8_t> buf(stream.GetNumberOfBytesUsed() + 2);
     buf[0] = Networking::MinPacketId;
     buf[1] = MovementData::kHeaderByte;
-    std::copy(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed(), buf.begin() + 2);
+    std::copy(stream.GetData(),
+              stream.GetData() + stream.GetNumberOfBytesUsed(),
+              buf.begin() + 2);
     state.cl->Send(buf.data(), buf.size(), reliable);
 
     return;

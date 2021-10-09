@@ -19,8 +19,10 @@ void WriteToBitStream(SLNet::BitStream& stream, const MovementData& movData)
   WriteToBitStream(stream, movData.direction);
   WriteToBitStream(stream, movData.healthPercentage);
 
-  WriteToBitStream(stream, static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 2));
-  WriteToBitStream(stream, static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 1));
+  WriteToBitStream(
+    stream, static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 2));
+  WriteToBitStream(
+    stream, static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 1));
 
   WriteToBitStream(stream, movData.isInJumpState);
   WriteToBitStream(stream, movData.isSneaking);

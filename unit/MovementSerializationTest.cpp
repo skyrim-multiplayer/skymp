@@ -8,20 +8,21 @@
 
 namespace {
 
-MovementData MakeTestMovementData(RunMode runMode, bool hasLookAt) {
+MovementData MakeTestMovementData(RunMode runMode, bool hasLookAt)
+{
   MovementData result{
-    1337, // idx
-    0x2077, // worldOrCell
+    1337,              // idx
+    0x2077,            // worldOrCell
     { 0.25, -100, 0 }, // pos
-    { 123, 0, 45 }, // rot
-    270, // direction
-    0.5, // healthPercentage
+    { 123, 0, 45 },    // rot
+    270,               // direction
+    0.5,               // healthPercentage
     RunMode::Running,
-    true, // isInJumpState
-    true, // isSneaking
-    false, // isBlocking
-    true, // isWeapDrawn
-    {{ 1, 2, 3 }}, // lookAt
+    true,            // isInJumpState
+    true,            // isSneaking
+    false,           // isBlocking
+    true,            // isWeapDrawn
+    { { 1, 2, 3 } }, // lookAt
   };
   result.runMode = runMode;
   if (!hasLookAt) {
@@ -30,11 +31,15 @@ MovementData MakeTestMovementData(RunMode runMode, bool hasLookAt) {
   return result;
 }
 
-std::unordered_map<std::string, MovementData> MakeTestMovementDataCases() {
+std::unordered_map<std::string, MovementData> MakeTestMovementDataCases()
+{
   std::unordered_map<std::string, MovementData> result;
-  for (RunMode runMode : {RunMode::Running, RunMode::Sprinting, RunMode::Standing, RunMode::Walking}) {
-    result.emplace(fmt::format("{},{}", ToString(runMode), false), MakeTestMovementData(runMode, false));
-    result.emplace(fmt::format("{},{}", ToString(runMode), false), MakeTestMovementData(runMode, true));
+  for (RunMode runMode : { RunMode::Running, RunMode::Sprinting,
+                           RunMode::Standing, RunMode::Walking }) {
+    result.emplace(fmt::format("{},{}", ToString(runMode), false),
+                   MakeTestMovementData(runMode, false));
+    result.emplace(fmt::format("{},{}", ToString(runMode), false),
+                   MakeTestMovementData(runMode, true));
   }
   return result;
 }
@@ -45,7 +50,8 @@ TEST_CASE("MovementData correctly encoded and decoded to JSON",
           "[Serialization]")
 {
   for (const auto& [name, movData] : MakeTestMovementDataCases()) {
-    SECTION(name) {
+    SECTION(name)
+    {
       const auto json = serialization::MovementDataToJson(movData);
       const auto movData2 = serialization::MovementDataFromJson(json);
       REQUIRE(movData == movData2);
@@ -57,7 +63,8 @@ TEST_CASE("MovementData correctly encoded and decoded to BitStream",
           "[Serialization]")
 {
   for (const auto& [name, movData] : MakeTestMovementDataCases()) {
-    SECTION(name) {
+    SECTION(name)
+    {
       SLNet::BitStream stream;
       serialization::WriteToBitStream(stream, movData);
 
