@@ -10,31 +10,35 @@
 
 void WriteToBitStream(SLNet::BitStream& stream, const MovementData& movData)
 {
-  stream.Write(movData.idx);
-  stream.Write(movData.worldOrCell);
+  using SerializationUtil::WriteToBitStream;
+
+  WriteToBitStream(stream, movData.idx);
+  WriteToBitStream(stream, movData.worldOrCell);
   SerializationUtil::WriteToBitStream(stream, movData.pos);
   SerializationUtil::WriteToBitStream(stream, movData.rot);
-  stream.Write(movData.direction);
-  stream.Write(movData.healthPercentage);
+  WriteToBitStream(stream, movData.direction);
+  WriteToBitStream(stream, movData.healthPercentage);
 
-  stream.Write(static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 2));
-  stream.Write(static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 1));
+  WriteToBitStream(stream, static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 2));
+  WriteToBitStream(stream, static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 1));
 
-  stream.Write(movData.isInJumpState);
-  stream.Write(movData.isSneaking);
-  stream.Write(movData.isBlocking);
-  stream.Write(movData.isWeapDrawn);
+  WriteToBitStream(stream, movData.isInJumpState);
+  WriteToBitStream(stream, movData.isSneaking);
+  WriteToBitStream(stream, movData.isBlocking);
+  WriteToBitStream(stream, movData.isWeapDrawn);
   SerializationUtil::WriteToBitStream(stream, movData.lookAt);
 }
 
 void ReadFromBitStream(SLNet::BitStream& stream, MovementData& movData)
 {
-  stream.Read(movData.idx);
-  stream.Read(movData.worldOrCell);
+  using SerializationUtil::ReadFromBitStream;
+
+  ReadFromBitStream(stream, movData.idx);
+  ReadFromBitStream(stream, movData.worldOrCell);
   SerializationUtil::ReadFromBitStream(stream, movData.pos);
   SerializationUtil::ReadFromBitStream(stream, movData.rot);
-  stream.Read(movData.direction);
-  stream.Read(movData.healthPercentage);
+  ReadFromBitStream(stream, movData.direction);
+  ReadFromBitStream(stream, movData.healthPercentage);
 
   uint8_t runMode = 0;
   runMode |= static_cast<uint8_t>(SerializationUtil::ReadFromBitStream<bool>(stream));
@@ -42,10 +46,10 @@ void ReadFromBitStream(SLNet::BitStream& stream, MovementData& movData)
   runMode |= static_cast<uint8_t>(SerializationUtil::ReadFromBitStream<bool>(stream));
   movData.runMode = static_cast<RunMode>(runMode);
 
-  stream.Read(movData.isInJumpState);
-  stream.Read(movData.isSneaking);
-  stream.Read(movData.isBlocking);
-  stream.Read(movData.isWeapDrawn);
+  ReadFromBitStream(stream, movData.isInJumpState);
+  ReadFromBitStream(stream, movData.isSneaking);
+  ReadFromBitStream(stream, movData.isBlocking);
+  ReadFromBitStream(stream, movData.isWeapDrawn);
   if (SerializationUtil::ReadFromBitStream<bool>(stream)) {
     SerializationUtil::ReadFromBitStream(stream, movData.lookAt.emplace());
   }
