@@ -254,6 +254,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                     percentage[2]);
       break;
     }
+    case MsgType::OnHit: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, JsonPointers::data, &data_);
+      actionListener.OnHit(rawMsgData, HitData::FromJson(data_));
+      break;
+    }
     default:
       throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }
