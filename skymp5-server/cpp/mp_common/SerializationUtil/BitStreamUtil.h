@@ -31,7 +31,7 @@ void WriteToBitStream(SLNet::BitStream& stream, const std::optional<T> opt)
     WriteToBitStream(stream, true);
     WriteToBitStream(stream, *opt);
   } else {
-    WriteToBitStream(stream, true);
+    WriteToBitStream(stream, false);
   }
 }
 
