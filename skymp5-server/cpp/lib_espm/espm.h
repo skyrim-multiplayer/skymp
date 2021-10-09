@@ -661,7 +661,7 @@ public:
     uint32_t race = 0;
     uint16_t healthOffset = 0;
     uint16_t magickaOffset = 0;
-    uint16_t staminaOffset = 0; 
+    uint16_t staminaOffset = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
