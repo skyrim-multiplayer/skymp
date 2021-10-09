@@ -52,7 +52,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
   if (length > 1 && data[1] == MovementData::kHeaderByte) {
     MovementData movData;
-    //                      vvvvvvvvvv oh shit here we go again
+    // BitStream requires non-const ref even though it doesn't modify it
     SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2, /*copyData*/false);
     serialization::ReadFromBitStream(stream, movData);
 

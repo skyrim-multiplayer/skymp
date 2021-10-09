@@ -41,8 +41,7 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
       if (packetType == Networking::PacketType::Message && length > 1) {
         if (data[1] == MovementData::kHeaderByte) {
           MovementData movData;
-          //                      v SLikeNet <3 <3 <3 <3 <3 <3 <3
-          // (also, my code sucks too, but it's probably ok if I don't merge it)
+          // BitStream requires non-const ref even though it doesn't modify it
           SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2, /*copyData*/false);
           serialization::ReadFromBitStream(stream, movData);
           jsonContent = serialization::MovementDataToJson(movData).dump();
