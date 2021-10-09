@@ -6,7 +6,7 @@
 #include "MsgType.h"
 #include "SerializationUtil/BitStreamUtil.h"
 
-// namespace serialization {
+namespace serialization {
 
 void WriteToBitStream(SLNet::BitStream& stream, const MovementData& movData)
 {
@@ -104,4 +104,4 @@ nlohmann::json MovementDataToJson(const MovementData& movData)
   return result;
 }
 
-// }
+}

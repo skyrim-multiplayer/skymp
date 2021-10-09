@@ -46,8 +46,8 @@ TEST_CASE("MovementData correctly encoded and decoded to JSON",
 {
   for (const auto& [name, movData] : MakeTestMovementDataCases()) {
     SECTION(name) {
-      const auto json = MovementDataToJson(movData);
-      const auto movData2 = MovementDataFromJson(json);
+      const auto json = serialization::MovementDataToJson(movData);
+      const auto movData2 = serialization::MovementDataFromJson(json);
       REQUIRE(movData == movData2);
     }
   }
@@ -59,10 +59,10 @@ TEST_CASE("MovementData correctly encoded and decoded to BitStream",
   for (const auto& [name, movData] : MakeTestMovementDataCases()) {
     SECTION(name) {
       SLNet::BitStream stream;
-      WriteToBitStream(stream, movData);
+      serialization::WriteToBitStream(stream, movData);
 
       MovementData movData2;
-      ReadFromBitStream(stream, movData2);
+      serialization::ReadFromBitStream(stream, movData2);
 
       REQUIRE(movData == movData2);
     }
