@@ -38,7 +38,7 @@ void WriteToBitStream(SLNet::BitStream& stream, const std::optional<T> opt)
 template <class T, size_t N>
 void WriteToBitStream(SLNet::BitStream& stream, const std::array<T, N>& arr)
 {
-  for (size_t i = 0; i < 3; ++i) {
+  for (size_t i = 0; i < N; ++i) {
     stream.Write(arr[i]);
   }
 }
@@ -46,7 +46,7 @@ void WriteToBitStream(SLNet::BitStream& stream, const std::array<T, N>& arr)
 template <class T, size_t N>
 void ReadFromBitStream(SLNet::BitStream& stream, std::array<T, N>& arr)
 {
-  for (size_t i = 0; i < 3; ++i) {
+  for (size_t i = 0; i < N; ++i) {
     stream.Read(arr[i]);
   }
 }
