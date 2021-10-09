@@ -25,8 +25,8 @@ struct MovementMessage
 
   uint32_t idx{};
   uint32_t worldOrCell{};
-  std::array<float, 3> pos{};
-  std::array<float, 3> rot{};
+  std::array<float, 3> pos{ 0, 0, 0 };
+  std::array<float, 3> rot{ 0, 0, 0 };
   float direction{};
   float healthPercentage{};
 
@@ -36,7 +36,7 @@ struct MovementMessage
   bool isSneaking{};
   bool isBlocking{};
   bool isWeapDrawn{};
-  std::optional<std::array<float, 3>> lookAt{};
+  std::optional<std::array<float, 3>> lookAt{ { 0, 0, 0 } };
 
   auto Tie() const
   {
