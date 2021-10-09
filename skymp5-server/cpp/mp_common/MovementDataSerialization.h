@@ -5,11 +5,6 @@
 
 #include "MovementData.h"
 
-//namespace SLNet {
-//class RAK_DLL_EXPORT BitStream;
-//}
-
-//void Serialize(const MovementData& movData, SLNet::BitStream& stream, bool isWrite);
 void Write(const MovementData& movData, SLNet::BitStream& stream);
 void ReadTo(MovementData& movData, SLNet::BitStream& stream);
 

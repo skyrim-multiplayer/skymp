@@ -27,7 +27,6 @@ T Read(SLNet::BitStream& stream)
   stream.Read(value);
   return value;
 }
-// optional
 }
 
 void Write(const MovementData& movData, SLNet::BitStream& stream)
@@ -78,19 +77,6 @@ void ReadTo(MovementData& movData, SLNet::BitStream& stream)
   }
 }
 
-/*
-void Serialize(const MovementData& movData, SLNet::BitStream& stream, bool
-isWrite) { stream.Serialize(movData.idx, isWrite);
-  stream.Serialize(movData.worldOrCell, isWrite);
-  Serialize(movData.pos, stream, isWrite);
-  Serialize(movData.rot, stream, isWrite);
-  stream.SerializeFloat16(isWrite, )
-  if (movData.lookAt) {
-    Serialize(*movData.lookAt, stream, isWrite);
-  }
-}
-*/
-
 MovementData MovementDataFromJson(const nlohmann::json& json)
 {
   MovementData result;
@@ -106,8 +92,6 @@ MovementData MovementDataFromJson(const nlohmann::json& json)
   result.isSneaking = json.at("data").at("isSneaking").get<bool>();
   result.isBlocking = json.at("data").at("isBlocking").get<bool>();
   result.isWeapDrawn = json.at("data").at("isWeapDrawn").get<bool>();
-  // const auto& jsonLookAt =
-  // json.at("data").at("lookAt").get<std::optional<std::array<float, 3>>>();
   const auto& data = json.at("data");
   const auto lookAtIt = data.find("lookAt");
   if (lookAtIt != data.end()) {
@@ -118,8 +102,6 @@ MovementData MovementDataFromJson(const nlohmann::json& json)
 
 nlohmann::json MovementDataToJson(const MovementData& movData)
 {
-  // nlohmann::json result;
-  // result["t"] = static_cast<int>(MsgType::UpdateMovement);
   auto result = nlohmann::json{
     { "t", MsgType::UpdateMovement },
     { "idx", movData.idx },

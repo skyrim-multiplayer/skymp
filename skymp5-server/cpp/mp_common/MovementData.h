@@ -19,6 +19,7 @@ const inline std::string g_walking = "Walking";
 const inline std::string g_running = "Running";
 const inline std::string g_sprinting = "Sprinting";
 
+// XXX: move to cpp
 inline const std::string& ToString(RunMode runMode)
 {
   switch (runMode) {
@@ -50,6 +51,7 @@ inline RunMode RunModeFromString(std::string_view str)
   }
 }
 
+// XXX: rename to MovementMessage?
 struct MovementData
 {
   const static char kHeaderByte = 'M';
@@ -68,24 +70,6 @@ struct MovementData
   bool isBlocking;
   bool isWeapDrawn;
   std::optional<std::array<float, 3>> lookAt;
-
-  uint8_t GetPackedFlags() const {
-    uint8_t result = 0;
-    result = static_cast<uint8_t>(runMode);
-    result |= isInJumpState << 2;
-    result |= isSneaking << 3;
-    result |= isBlocking << 4;
-    result |= isWeapDrawn << 5;
-    return result;
-  }
-
-  void SetPackedFlags(uint8_t flags) {
-    runMode = static_cast<RunMode>(flags & 3);
-    isInJumpState = static_cast<bool>((flags >> 2) & 1);
-    isSneaking = static_cast<bool>((flags >> 3) & 1);
-    isBlocking = static_cast<bool>((flags >> 4) & 1);
-    isWeapDrawn = static_cast<bool>((flags >> 5) & 1);
-  }
   
   auto Tie() const {
     return std::tie(idx, worldOrCell, pos, rot, direction, healthPercentage, runMode, isInJumpState,
