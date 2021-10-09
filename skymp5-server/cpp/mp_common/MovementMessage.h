@@ -23,19 +23,19 @@ struct MovementMessage
 {
   const static char kHeaderByte = 'M';
 
-  uint32_t idx{};
-  uint32_t worldOrCell{};
+  uint32_t idx = 0;
+  uint32_t worldOrCell = 0;
   std::array<float, 3> pos{ 0, 0, 0 };
   std::array<float, 3> rot{ 0, 0, 0 };
-  float direction{};
-  float healthPercentage{};
+  float direction = 0;
+  float healthPercentage = 0;
 
   // flags & optionals
-  RunMode runMode{};
-  bool isInJumpState{};
-  bool isSneaking{};
-  bool isBlocking{};
-  bool isWeapDrawn{};
+  RunMode runMode = RunMode::Standing;
+  bool isInJumpState = false;
+  bool isSneaking = false;
+  bool isBlocking = false;
+  bool isWeapDrawn = false;
   std::optional<std::array<float, 3>> lookAt{ { 0, 0, 0 } };
 
   auto Tie() const
