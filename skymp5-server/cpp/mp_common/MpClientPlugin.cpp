@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "MovementData.h"
-#include "MovementDataSerialization.h"
+#include "MovementMessage.h"
+#include "MovementMessageSerialization.h"
 #include "MsgType.h"
 
 #include <nlohmann/json.hpp>
@@ -40,13 +40,13 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
       std::string jsonContent;
 
       if (packetType == Networking::PacketType::Message && length > 1) {
-        if (data[1] == MovementData::kHeaderByte) {
-          MovementData movData;
+        if (data[1] == MovementMessage::kHeaderByte) {
+          MovementMessage movData;
           // BitStream requires non-const ref even though it doesn't modify it
           SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2,
                                   length - 2, /*copyData*/ false);
           serialization::ReadFromBitStream(stream, movData);
-          jsonContent = serialization::MovementDataToJson(movData).dump();
+          jsonContent = serialization::MovementMessageToJson(movData).dump();
         } else {
           jsonContent =
             std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
@@ -69,13 +69,13 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
   const auto parsedJson = nlohmann::json::parse(jsonContent);
   if (static_cast<MsgType>(parsedJson.at("t").get<int>()) ==
       MsgType::UpdateMovement) {
-    const auto movData = serialization::MovementDataFromJson(parsedJson);
+    const auto movData = serialization::MovementMessageFromJson(parsedJson);
     SLNet::BitStream stream;
     serialization::WriteToBitStream(stream, movData);
 
     std::vector<uint8_t> buf(stream.GetNumberOfBytesUsed() + 2);
     buf[0] = Networking::MinPacketId;
-    buf[1] = MovementData::kHeaderByte;
+    buf[1] = MovementMessage::kHeaderByte;
     std::copy(stream.GetData(),
               stream.GetData() + stream.GetNumberOfBytesUsed(),
               buf.begin() + 2);

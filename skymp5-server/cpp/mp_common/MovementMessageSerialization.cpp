@@ -1,4 +1,4 @@
-#include "MovementDataSerialization.h"
+#include "MovementMessageSerialization.h"
 
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
@@ -8,7 +8,7 @@
 
 namespace serialization {
 
-void WriteToBitStream(SLNet::BitStream& stream, const MovementData& movData)
+void WriteToBitStream(SLNet::BitStream& stream, const MovementMessage& movData)
 {
   using SerializationUtil::WriteToBitStream;
 
@@ -31,7 +31,7 @@ void WriteToBitStream(SLNet::BitStream& stream, const MovementData& movData)
   WriteToBitStream(stream, movData.lookAt);
 }
 
-void ReadFromBitStream(SLNet::BitStream& stream, MovementData& movData)
+void ReadFromBitStream(SLNet::BitStream& stream, MovementMessage& movData)
 {
   using SerializationUtil::ReadFromBitStream;
 
@@ -55,9 +55,9 @@ void ReadFromBitStream(SLNet::BitStream& stream, MovementData& movData)
   ReadFromBitStream(stream, movData.lookAt);
 }
 
-MovementData MovementDataFromJson(const nlohmann::json& json)
+MovementMessage MovementMessageFromJson(const nlohmann::json& json)
 {
-  MovementData result;
+  MovementMessage result;
   result.idx = json.at("idx").get<uint32_t>();
 
   const auto& data = json.at("data");
@@ -79,7 +79,7 @@ MovementData MovementDataFromJson(const nlohmann::json& json)
   return result;
 }
 
-nlohmann::json MovementDataToJson(const MovementData& movData)
+nlohmann::json MovementMessageToJson(const MovementMessage& movData)
 {
   auto result = nlohmann::json{
     { "t", MsgType::UpdateMovement },

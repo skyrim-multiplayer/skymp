@@ -1,8 +1,8 @@
 #include "PacketParser.h"
 #include "Exceptions.h"
 #include "JsonUtils.h"
-#include "MovementData.h"
-#include "MovementDataSerialization.h"
+#include "MovementMessage.h"
+#include "MovementMessageSerialization.h"
 #include "MpActor.h"
 #include <MsgType.h>
 #include <simdjson.h>
@@ -55,8 +55,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     userId,
   };
 
-  if (length > 1 && data[1] == MovementData::kHeaderByte) {
-    MovementData movData;
+  if (length > 1 && data[1] == MovementMessage::kHeaderByte) {
+    MovementMessage movData;
     // BitStream requires non-const ref even though it doesn't modify it
     SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2,
                             /*copyData*/ false);

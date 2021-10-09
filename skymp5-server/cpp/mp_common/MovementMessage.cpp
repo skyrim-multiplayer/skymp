@@ -1,4 +1,4 @@
-#include "MovementData.h"
+#include "MovementMessage.h"
 
 namespace {
 const inline std::string kStanding = "Standing";

@@ -19,8 +19,7 @@ const std::string& ToString(RunMode runMode);
 
 RunMode RunModeFromString(std::string_view str);
 
-// XXX: rename to MovementMessage?
-struct MovementData
+struct MovementMessage
 {
   const static char kHeaderByte = 'M';
 
@@ -46,5 +45,8 @@ struct MovementData
                     isWeapDrawn, lookAt);
   }
 
-  bool operator==(const MovementData& rhs) const { return Tie() == rhs.Tie(); }
+  bool operator==(const MovementMessage& rhs) const
+  {
+    return Tie() == rhs.Tie();
+  }
 };

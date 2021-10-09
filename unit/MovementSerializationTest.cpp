@@ -3,14 +3,14 @@
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
 
-#include "MovementData.h"
-#include "MovementDataSerialization.h"
+#include "MovementMessage.h"
+#include "MovementMessageSerialization.h"
 
 namespace {
 
-MovementData MakeTestMovementData(RunMode runMode, bool hasLookAt)
+MovementMessage MakeTestMovementMessage(RunMode runMode, bool hasLookAt)
 {
-  MovementData result{
+  MovementMessage result{
     1337,              // idx
     0x2077,            // worldOrCell
     { 0.25, -100, 0 }, // pos
@@ -31,44 +31,44 @@ MovementData MakeTestMovementData(RunMode runMode, bool hasLookAt)
   return result;
 }
 
-std::unordered_map<std::string, MovementData> MakeTestMovementDataCases()
+std::unordered_map<std::string, MovementMessage> MakeTestMovementMessageCases()
 {
-  std::unordered_map<std::string, MovementData> result;
+  std::unordered_map<std::string, MovementMessage> result;
   for (RunMode runMode : { RunMode::Running, RunMode::Sprinting,
                            RunMode::Standing, RunMode::Walking }) {
     result.emplace(fmt::format("{},{}", ToString(runMode), false),
-                   MakeTestMovementData(runMode, false));
+                   MakeTestMovementMessage(runMode, false));
     result.emplace(fmt::format("{},{}", ToString(runMode), false),
-                   MakeTestMovementData(runMode, true));
+                   MakeTestMovementMessage(runMode, true));
   }
   return result;
 }
 
 }
 
-TEST_CASE("MovementData correctly encoded and decoded to JSON",
+TEST_CASE("MovementMessage correctly encoded and decoded to JSON",
           "[Serialization]")
 {
-  for (const auto& [name, movData] : MakeTestMovementDataCases()) {
+  for (const auto& [name, movData] : MakeTestMovementMessageCases()) {
     SECTION(name)
     {
-      const auto json = serialization::MovementDataToJson(movData);
-      const auto movData2 = serialization::MovementDataFromJson(json);
+      const auto json = serialization::MovementMessageToJson(movData);
+      const auto movData2 = serialization::MovementMessageFromJson(json);
       REQUIRE(movData == movData2);
     }
   }
 }
 
-TEST_CASE("MovementData correctly encoded and decoded to BitStream",
+TEST_CASE("MovementMessage correctly encoded and decoded to BitStream",
           "[Serialization]")
 {
-  for (const auto& [name, movData] : MakeTestMovementDataCases()) {
+  for (const auto& [name, movData] : MakeTestMovementMessageCases()) {
     SECTION(name)
     {
       SLNet::BitStream stream;
       serialization::WriteToBitStream(stream, movData);
 
-      MovementData movData2;
+      MovementMessage movData2;
       serialization::ReadFromBitStream(stream, movData2);
 
       REQUIRE(movData == movData2);
