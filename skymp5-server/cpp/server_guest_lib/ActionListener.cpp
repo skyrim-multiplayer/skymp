@@ -503,3 +503,32 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   actor->SetPercentages(health, magicka, stamina);
   actor->SetLastAttributesPercentagesUpdate(now);
 }
+
+namespace {
+float CalculateDamage(MpActor& actor, const HitData& hitData)
+{
+  // TODO(#200): Implement damage calculation logic
+  return 25.f;
+}
+}
+
+void ActionListener::OnHit(const RawMessageData& rawMsgData,
+                           const HitData& hitData_)
+{
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!actor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  HitData hitData = hitData_;
+  if (hitData.agressor == 0x14) {
+    hitData.agressor = actor->GetFormId();
+  }
+  if (hitData.target == 0x14) {
+    hitData.target = actor->GetFormId();
+  }
+
+  const auto damage = CalculateDamage(*actor, hitData);
+
+  // TODO(#276): Send a packet
+}
