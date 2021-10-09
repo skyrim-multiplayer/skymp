@@ -32,6 +32,7 @@
 #include <RE/TESObjectARMO.h>
 #include <RE/TESObjectWEAP.h>
 #include <RE/UI.h>
+#include <algorithm>
 #include <atomic>
 #include <map>
 #include <mutex>
@@ -47,7 +48,6 @@
 #include <skse64/NiNodes.h>
 #include <skse64/PapyrusGame.h>
 #include <unordered_map>
-#include <unordered_set>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -775,7 +775,7 @@ public:
     if (!missing.empty()) {
       std::stringstream ss;
       ss << "Missing files: " << nlohmann::json(missing).dump(2)
-         << ", reinstalling SkyrimPlatform may fix that";
+         << ", reinstalling SkyrimPlatform or/and SKSE may fix that";
       throw std::runtime_error(ss.str());
     }
   }
@@ -792,9 +792,13 @@ public:
       path /= "Scripts";
       path /= tmp;
       if (!std::filesystem::exists(path)) {
-        missing.push_back(tmp);
+        // WorldSpace doesn't have any functions declared so isn't required
+        if (tmp != "WorldSpace.pex") {
+          missing.push_back(tmp);
+        }
       }
     }
+    std::sort(missing.begin(), missing.end());
     return missing;
   }
 };

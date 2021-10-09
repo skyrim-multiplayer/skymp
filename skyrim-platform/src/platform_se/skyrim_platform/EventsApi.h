@@ -29,6 +29,9 @@ uint32_t IpcSubscribe(const char* systemName, IpcMessageCallback callback,
 void IpcUnsubscribe(uint32_t subscriptionId);
 void IpcSend(const char* systemName, const uint8_t* data, uint32_t length);
 
+void SendMenuOpen(const char* menuName);
+void SendMenuClose(const char* menuName);
+
 inline void Register(JsValue& exports)
 {
   exports.SetProperty("on", JsValue::Function(On));

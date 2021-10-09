@@ -20,16 +20,20 @@ Loader::Loader(const std::vector<fs::path>& filePaths_, OnProgress onProgress,
     entries.emplace_back();
     auto& entry = entries.back();
 
-    const clock_t was = clock();
+    const auto was = std::chrono::steady_clock::now();
     entry.buffer = MakeBuffer(p);
     entry.fileName = p.filename().string();
-    entry.readDuration = float(clock() - was) / CLOCKS_PER_SEC;
+    const auto end = std::chrono::steady_clock::now();
+    const std::chrono::duration<float> elapsedTime = end - was;
+    entry.readDuration = elapsedTime.count();
     entry.size = entry.buffer->GetLength();
 
-    const clock_t was1 = clock();
+    const auto was1 = std::chrono::steady_clock::now();
     entry.browser.reset(
       new espm::Browser(entry.buffer->GetData(), entry.buffer->GetLength()));
-    entry.parseDuration = float(clock() - was1) / CLOCKS_PER_SEC;
+    const auto end1 = std::chrono::steady_clock::now();
+    const std::chrono::duration<float> elapsedTime1 = end1 - was1;
+    entry.parseDuration = elapsedTime1.count();
     if (onProgress) {
       onProgress(entry.fileName.string(), entry.readDuration,
                  entry.parseDuration, entry.size);
@@ -55,6 +59,19 @@ std::vector<std::string> Loader::GetFileNames() const noexcept
   for (auto& p : filePaths) {
     res.push_back(p.filename().string());
   }
+  return res;
+}
+
+std::map<std::string, uint32_t> Loader::GetHashes() const
+{
+  std::map<std::string, uint32_t> res;
+
+  for (auto& entry : entries) {
+    auto hash =
+      CalculateHashcode(entry.buffer->GetData(), entry.buffer->GetLength());
+    res.emplace(entry.fileName.string(), hash);
+  }
+
   return res;
 }
 

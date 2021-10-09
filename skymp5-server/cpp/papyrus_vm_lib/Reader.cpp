@@ -3,19 +3,19 @@
 
 void Reader::Read()
 {
-
-  char temp;
-
   arrayBytes.clear();
 
-  std::ifstream File(path, std::ios::binary);
+  std::ifstream file(path, std::ios::binary);
 
-  if (File.is_open()) {
+  if (file.is_open()) {
 
-    File.seekg(0, std::ios_base::end);
-    File.seekg(0, std::ios_base::beg);
+    file.seekg(0, std::ios_base::end);
+    const std::streampos fileSize = file.tellg();
+    file.seekg(0, std::ios_base::beg);
+    arrayBytes.reserve(fileSize);
 
-    while (File.get(temp)) {
+    char temp;
+    while (file.get(temp)) {
       arrayBytes.push_back(temp);
     }
 
@@ -23,7 +23,7 @@ void Reader::Read()
     throw std::runtime_error("Error open file: " + path);
   }
 
-  File.close();
+  file.close();
 };
 
 std::vector<std::shared_ptr<PexScript>> Reader::GetSourceStructures()
@@ -31,7 +31,7 @@ std::vector<std::shared_ptr<PexScript>> Reader::GetSourceStructures()
   return sourceStructures;
 }
 
-Reader::Reader(std::vector<std::string> vectorPath)
+Reader::Reader(const std::vector<std::string>& vectorPath)
 {
   for (auto path : vectorPath) {
     this->currentReadPositionInFile = 0;
@@ -41,110 +41,89 @@ Reader::Reader(std::vector<std::string> vectorPath)
   }
 }
 
-Reader::Reader(std::vector<std::vector<uint8_t>> pexVector)
+Reader::Reader(const std::vector<std::vector<uint8_t>>& pexVector)
 {
   for (auto& pex : pexVector)
     CreateScriptStructure(pex);
 }
 
-void Reader::CreateScriptStructure(std::vector<uint8_t> arrayBytes)
+void Reader::CreateScriptStructure(const std::vector<uint8_t>& arrayBytes)
 {
   this->arrayBytes = arrayBytes;
   currentReadPositionInFile = 0;
 
   this->structure = std::make_shared<PexScript>();
 
-  structure->header = FillHeader();
+  FillHeader(structure->header);
 
-  structure->source = FillSource();
-  structure->user = FillUser();
-  structure->machine = FillMachine();
+  FillSource(structure->source);
+  FillUser(structure->user);
+  FillMachine(structure->machine);
 
-  structure->stringTable = FillStringTable();
-  structure->debugInfo = FillDebugInfo();
-  structure->userFlagTable = FillUserFlagTable();
-  structure->objectTable = FillObjectTable();
+  FillStringTable(structure->stringTable);
+  FillDebugInfo(structure->debugInfo);
+  FillUserFlagTable(structure->userFlagTable);
+  FillObjectTable(structure->objectTable);
   sourceStructures.push_back(structure);
 }
 
-ScriptHeader Reader::FillHeader()
+void Reader::FillHeader(ScriptHeader& scriptHeader)
 {
-  ScriptHeader Header;
-
-  Header.Signature = Read32_bit(); // 00	FA57C0DE
-  Header.VerMajor = Read8_bit();   // 04	03
-  Header.VerMinor = Read8_bit();   // 05	01
-  Header.GameID = Read16_bit();    // 06	0001
-  Header.BuildTime = Read64_bit(); // 08	time_t
-
-  return Header;
+  scriptHeader.Signature = Read32_bit(); // 00	FA57C0DE
+  scriptHeader.VerMajor = Read8_bit();   // 04	03
+  scriptHeader.VerMinor = Read8_bit();   // 05	01
+  scriptHeader.GameID = Read16_bit();    // 06	0001
+  scriptHeader.BuildTime = Read64_bit(); // 08	time_t
 }
 
-std::string Reader::FillSource()
+void Reader::FillSource(std::string& str)
 {
-  std::string source;
-  int SizeString = Read16_bit();
-  source = ReadString(SizeString);
+  int sizeString = Read16_bit();
+  str = ReadString(sizeString);
 
   for (int i = 0; i < 4; ++i) {
-    source.pop_back();
+    str.pop_back();
   }
-
-  return source;
 }
 
-std::string Reader::FillUser()
+void Reader::FillUser(std::string& str)
 {
-  std::string user;
-
-  int SizeString = Read16_bit();
-  user = ReadString(SizeString);
-
-  return user;
+  int sizeString = Read16_bit();
+  str = ReadString(sizeString);
 }
 
-std::string Reader::FillMachine()
+void Reader::FillMachine(std::string& str)
 {
-  std::string machine;
-
-  int SizeString = Read16_bit();
-  machine = ReadString(SizeString);
-
-  return machine;
+  int sizeString = Read16_bit();
+  str = ReadString(sizeString);
 }
 
-StringTable Reader::FillStringTable()
+void Reader::FillStringTable(StringTable& strTable)
 {
   std::vector<std::string> storage;
 
-  int SizeStringTable = Read16_bit();
+  int stringTableSize = Read16_bit();
+  storage.reserve(stringTableSize);
 
-  for (int i = 0; i < SizeStringTable; i++) {
-    int SizeString = Read16_bit();
-    storage.push_back(ReadString(SizeString));
+  for (int i = 0; i < stringTableSize; i++) {
+    int sizeString = Read16_bit();
+    storage.push_back(ReadString(sizeString));
   }
 
-  StringTable stringTable;
-  stringTable.SetStorage(storage);
-  return stringTable;
+  strTable.SetStorage(storage);
 }
 
-DebugInfo Reader::FillDebugInfo()
+void Reader::FillDebugInfo(DebugInfo& debugInfo)
 {
-  DebugInfo debugInfo;
-
   debugInfo.m_flags = Read8_bit();
   debugInfo.m_sourceModificationTime = Read64_bit();
 
-  int FunctionCount = Read16_bit();
+  int functionCount = Read16_bit();
+  debugInfo.m_data.reserve(functionCount);
 
-  for (int i = 0; i < FunctionCount; i++) {
-    DebugInfo::DebugFunction info;
-    info = FillDebugFunction();
-    debugInfo.m_data.push_back(info);
+  for (int i = 0; i < functionCount; i++) {
+    debugInfo.m_data.push_back(FillDebugFunction());
   }
-
-  return debugInfo;
 }
 
 DebugInfo::DebugFunction Reader::FillDebugFunction()
@@ -156,32 +135,26 @@ DebugInfo::DebugFunction Reader::FillDebugFunction()
   Fdebug.fnName = this->structure->stringTable.GetStorage()[Read16_bit()];
   Fdebug.type = Read8_bit();
 
-  int InstrunctionCount = Read16_bit();
-  for (int i = 0; i < InstrunctionCount; i++) {
+  int instrunctionCount = Read16_bit();
+  for (int i = 0; i < instrunctionCount; i++) {
     Fdebug.lineNumbers.push_back(Read16_bit());
   }
 
   return Fdebug;
 }
 
-UserFlagTable Reader::FillUserFlagTable()
+void Reader::FillUserFlagTable(std::vector<UserFlag>& userFlagTable)
 {
-  UserFlagTable userFlagTable;
+  int userFlagCount = Read16_bit();
 
-  int UserFlagCount = Read16_bit();
-
-  for (int i = 0; i < UserFlagCount; i++) {
-    UserFlagTable::UserFlag flag;
-    flag = FillUserFlag();
-    userFlagTable.m_data.push_back(flag);
+  for (int i = 0; i < userFlagCount; i++) {
+    userFlagTable.push_back(FillUserFlag());
   }
-
-  return userFlagTable;
 }
 
-UserFlagTable::UserFlag Reader::FillUserFlag()
+UserFlag Reader::FillUserFlag()
 {
-  UserFlagTable::UserFlag flag;
+  UserFlag flag;
 
   flag.name = this->structure->stringTable.GetStorage()[Read16_bit()];
   flag.idx = Read8_bit();
@@ -189,24 +162,19 @@ UserFlagTable::UserFlag Reader::FillUserFlag()
   return flag;
 }
 
-ObjectTable Reader::FillObjectTable()
+void Reader::FillObjectTable(std::vector<Object>& objectTable)
 {
-  ObjectTable objectTable;
+  int objectCount = Read16_bit();
+  objectTable.reserve(objectCount);
 
-  int ObjectCount = Read16_bit();
-
-  for (int i = 0; i < ObjectCount; i++) {
-    ObjectTable::Object object;
-    object = FillObject();
-    objectTable.m_data.push_back(object);
+  for (int i = 0; i < objectCount; i++) {
+    objectTable.push_back(FillObject());
   }
-
-  return objectTable;
 }
 
-ObjectTable::Object Reader::FillObject()
+Object Reader::FillObject()
 {
-  ObjectTable::Object object;
+  Object object;
 
   object.NameIndex = this->structure->stringTable.GetStorage()[Read16_bit()];
 
@@ -221,29 +189,31 @@ ObjectTable::Object Reader::FillObject()
     this->structure->stringTable.GetStorage()[Read16_bit()];
 
   int numVariables = Read16_bit();
+  object.variables.reserve(numVariables);
 
   for (int i = 0; i < numVariables; i++) {
     object.variables.push_back(FillVariable());
   }
 
   int numProperties = Read16_bit();
+  object.properties.reserve(numProperties);
 
   for (int i = 0; i < numProperties; i++) {
     object.properties.push_back(FillProperty());
   }
 
   int numStates = Read16_bit();
+  object.states.reserve(numStates);
 
   for (int i = 0; i < numStates; i++) {
     object.states.push_back(FillState());
   }
-
   return object;
 }
 
-ObjectTable::Object::VarInfo Reader::FillVariable()
+Object::VarInfo Reader::FillVariable()
 {
-  ObjectTable::Object::VarInfo Var;
+  Object::VarInfo Var;
 
   Var.name = this->structure->stringTable.GetStorage()[Read16_bit()];
   Var.typeName = this->structure->stringTable.GetStorage()[Read16_bit()];
@@ -252,6 +222,7 @@ ObjectTable::Object::VarInfo Reader::FillVariable()
 
   return Var;
 }
+
 VarValue Reader::FillVariableData()
 {
   VarValue Data;
@@ -313,39 +284,44 @@ FunctionInfo Reader::FillFuncInfo()
   info.userFlags = Read32_bit();
   info.flags = Read8_bit();
 
-  int CountParams = Read16_bit();
+  int countParams = Read16_bit();
+  info.params.reserve(countParams);
 
-  for (int i = 0; i < CountParams; i++) {
+  for (int i = 0; i < countParams; i++) {
     FunctionInfo::ParamInfo temp;
     temp.name = this->structure->stringTable.GetStorage()[Read16_bit()];
     temp.type = this->structure->stringTable.GetStorage()[Read16_bit()];
     info.params.push_back(temp);
   }
 
-  int CountLocals = Read16_bit();
+  int countLocals = Read16_bit();
+  info.params.reserve(countLocals);
 
-  for (int i = 0; i < CountLocals; i++) {
+  for (int i = 0; i < countLocals; i++) {
     FunctionInfo::ParamInfo temp;
     temp.name = this->structure->stringTable.GetStorage()[Read16_bit()];
     temp.type = this->structure->stringTable.GetStorage()[Read16_bit()];
     info.params.push_back(temp);
   }
 
-  int CountInstructions = Read16_bit();
+  int countInstructions = Read16_bit();
 
-  info.code = FillFunctionCode(CountInstructions);
+  info.code = FillFunctionCode(countInstructions);
 
   return info;
 }
 
-FunctionCode Reader::FillFunctionCode(int CountInstructions)
+FunctionCode Reader::FillFunctionCode(int countInstructions)
 {
   FunctionCode funcCode;
-  for (int i = 0; i < CountInstructions; i++) {
+  funcCode.instructions.reserve(countInstructions);
+
+  for (int i = 0; i < countInstructions; i++) {
     FunctionCode::Instruction item;
     item.op = Read8_bit();
 
     int numArguments = GetCountArguments(item.op);
+    item.args.reserve(numArguments);
 
     for (int i = 0; i < numArguments; i++) {
 
@@ -380,9 +356,9 @@ uint8_t Reader::GetCountArguments(uint8_t opcode)
   return count;
 }
 
-ObjectTable::Object::PropInfo Reader::FillProperty()
+Object::PropInfo Reader::FillProperty()
 {
-  ObjectTable::Object::PropInfo prop;
+  Object::PropInfo prop;
 
   prop.name = this->structure->stringTable.GetStorage()[Read16_bit()];
   prop.type = this->structure->stringTable.GetStorage()[Read16_bit()];
@@ -405,9 +381,9 @@ ObjectTable::Object::PropInfo Reader::FillProperty()
   return prop;
 }
 
-ObjectTable::Object::StateInfo Reader::FillState()
+Object::StateInfo Reader::FillState()
 {
-  ObjectTable::Object::StateInfo stateinfo;
+  Object::StateInfo stateinfo;
 
   stateinfo.name = this->structure->stringTable.GetStorage()[Read16_bit()];
 
@@ -420,9 +396,9 @@ ObjectTable::Object::StateInfo Reader::FillState()
   return stateinfo;
 }
 
-ObjectTable::Object::StateInfo::StateFunction Reader::FillStateFunction()
+Object::StateInfo::StateFunction Reader::FillStateFunction()
 {
-  ObjectTable::Object::StateInfo::StateFunction temp;
+  Object::StateInfo::StateFunction temp;
 
   temp.name = this->structure->stringTable.GetStorage()[Read16_bit()];
   temp.function = FillFuncInfo();
@@ -474,11 +450,12 @@ uint64_t Reader::Read64_bit()
   return temp;
 }
 
-std::string Reader::ReadString(int Size)
+std::string Reader::ReadString(int size)
 {
   std::string temp;
+  temp.reserve(size);
 
-  for (int i = 0; i < Size; i++) {
+  for (int i = 0; i < size; i++) {
     temp += (char)arrayBytes[currentReadPositionInFile];
     currentReadPositionInFile++;
   }

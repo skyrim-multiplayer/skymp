@@ -1,4 +1,5 @@
 #include "ActionListener.h"
+#include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
 #include "Exceptions.h"
@@ -301,6 +302,11 @@ VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
   throw std::runtime_error("VarValueFromJson - Unsupported json type " +
                            std::to_string(static_cast<int>(element.type())));
 }
+
+bool IsNearlyEqual(float value, float target, float margin = 1.0f / 1024.0f)
+{
+  return std::abs(target - value) < margin;
+}
 }
 void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                        uint32_t snippetIdx,
@@ -448,4 +454,52 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
   for (auto& listener : partOne.GetListeners()) {
     listener->OnMpApiEvent(eventName, args, ac->GetFormId());
   }
+}
+
+void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
+                                    const float healthPercentage,
+                                    const float magickaPercentage,
+                                    const float staminaPercentage)
+{
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!actor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+  auto now = std::chrono::steady_clock::now();
+
+  float timeAfterRegeneration = CropPeriodAfterLastRegen(
+    actor->GetDurationOfAttributesPercentagesUpdate(now).count());
+
+  MpChangeForm changeForm = actor->GetChangeForm();
+  float health = healthPercentage;
+  float magicka = magickaPercentage;
+  float stamina = staminaPercentage;
+
+  if (healthPercentage != changeForm.healthPercentage) {
+    health = CropHealthRegeneration(health, timeAfterRegeneration, actor);
+  }
+  if (magickaPercentage != changeForm.magickaPercentage) {
+    magicka = CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
+  }
+  if (staminaPercentage != changeForm.staminaPercentage) {
+    stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
+  }
+
+  if (IsNearlyEqual(health, healthPercentage) == false ||
+      IsNearlyEqual(magicka, magickaPercentage) == false ||
+      IsNearlyEqual(stamina, staminaPercentage) == false) {
+    std::string s;
+    s += Networking::MinPacketId;
+    s += nlohmann::json{
+      { "t", MsgType::ChangeValues },
+      { "data",
+        { { "health", health },
+          { "magicka", magicka },
+          { "stamina", stamina } } }
+    }.dump();
+    actor->SendToUser(s.data(), s.size(), true);
+  }
+
+  actor->SetPercentages(health, magicka, stamina);
+  actor->SetLastAttributesPercentagesUpdate(now);
 }

@@ -9,9 +9,43 @@
 #include <string>
 #include <vector>
 
+// #define JS_ENGINE_TRACING_ENABLED
+// ^ uncomment or re-generate project files with -DJS_ENGINE_TRACING_ENABLED to
+// enable tracing
+
+// CAUTION! SkyrimPlatform crashes with that setting on.
+// See https://github.com/skyrim-multiplayer/skymp/issues/266
+
+// Useful for finding static JsValue variables that fail in destructor due to
+// undefined static deinitialization order (Chakra is being deinitialized
+// before JsValues are)
+
+// Normal debugging doesn't help since every static variable triggers the same
+// assert. It doesn't say anything about which line we constructed a
+// problematic variable.
+
+// How to use tracing:
+// 0. Ensure that assert fails in Chakra internals after unit tests finish
+// 1. Define JS_ENGINE_TRACING_ENABLED
+// 2. Build Debug config and launch unit tests
+// 3. Wait for assertion failure. The last output you see in console should be
+// "~JsValue <value>; ids = 1, 2, ..."
+// 4. Remember these numbers
+// 5. Set a breakpoint in GetJsValueNextId
+// 6. Restart unit tests with a debugger attached. Press "Continue" until
+// g_nextId becomes the value you have seen previously
+// 7. Now you can see where problematic variable is created in the call stack.
+// It's usually static/thread_local variable. Removing this specifier would
+// solve the problem. However, you better think about performance too: these
+// specifiers were added to initialize constants once.
+
+#ifdef JS_ENGINE_TRACING_ENABLED
+#  include <fmt/format.h>
+#  include <map>
+#endif
+
 #define JS_ENGINE_F(func) func, #func
 
-class JsValueAccess;
 class JsEngine;
 class JsValue;
 
@@ -32,7 +66,6 @@ public:
 class JsValue
 {
 public:
-  friend class JsValueAccess;
   friend class JsEngine;
 
   enum class Type
@@ -210,19 +243,45 @@ public:
     return bufferLength;
   }
 
-  JsValue() { *this = Undefined(); }
-  JsValue(const std::string& arg) { *this = String(arg); }
-  JsValue(const char* arg) { *this = String(arg); }
-  JsValue(int arg) { *this = Int(arg); }
-  JsValue(double arg) { *this = Double(arg); }
+  JsValue()
+  {
+    *this = Undefined();
+    TraceConstructor();
+  }
+  JsValue(const std::string& arg)
+  {
+    *this = String(arg);
+    TraceConstructor();
+  }
+  JsValue(const char* arg)
+  {
+    *this = String(arg);
+    TraceConstructor();
+  }
+  JsValue(int arg)
+  {
+    *this = Int(arg);
+    TraceConstructor();
+  }
+  JsValue(double arg)
+  {
+    *this = Double(arg);
+    TraceConstructor();
+  }
   JsValue(const std::vector<JsValue>& arg)
   {
     *this = Array(arg.size());
-    for (size_t i = 0; i < arg.size(); ++i)
+    for (size_t i = 0; i < arg.size(); ++i) {
       SetProperty(Int(i), arg[i]);
+    }
+    TraceConstructor();
   }
 
-  JsValue(const JsValue& arg) { *this = arg; }
+  JsValue(const JsValue& arg)
+  {
+    *this = arg;
+    TraceConstructor();
+  }
 
   JsValue& operator=(const JsValue& arg)
   {
@@ -233,13 +292,17 @@ public:
     return *this;
   }
 
-  ~JsValue() { Release(); }
+  ~JsValue()
+  {
+    TraceDestructor();
+    Release();
+  }
 
   std::string ToString() const
   {
     JsValueRef res;
     SafeCall(JS_ENGINE_F(JsConvertValueToString), value, &res);
-    return (std::string)JsValue(res);
+    return GetString(res);
   }
 
   operator bool() const
@@ -249,17 +312,7 @@ public:
     return res;
   }
 
-  operator std::string() const
-  {
-    size_t outLength;
-    SafeCall(JS_ENGINE_F(JsCopyString), value, nullptr, 0, &outLength);
-
-    std::string res;
-    res.resize(outLength);
-    SafeCall(JS_ENGINE_F(JsCopyString), value, res.data(), outLength,
-             &outLength);
-    return res;
-  }
+  operator std::string() const { return GetString(value); }
 
   operator std::wstring() const
   {
@@ -311,7 +364,8 @@ public:
   {
     JsValueRef res;
 
-    thread_local auto undefined = JsValue::Undefined();
+    JsValueRef undefined;
+    SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
 
     auto n = arguments.size();
     JsValueRef* args = nullptr;
@@ -320,7 +374,7 @@ public:
       args = const_cast<JsValueRef*>(
         reinterpret_cast<const JsValueRef*>(arguments.data()));
     } else {
-      args = reinterpret_cast<JsValueRef*>(&undefined);
+      args = &undefined;
       ++n;
     }
 
@@ -420,19 +474,6 @@ public:
   }
 
 private:
-  class JsValueRefGuard
-  {
-  public:
-    JsValueRefGuard(JsValueRef v)
-      : value(v)
-    {
-      SafeCall(JS_ENGINE_F(JsAddRef), value, nullptr);
-    }
-    ~JsValueRefGuard() { JsRelease(value, nullptr); }
-
-    const JsValueRef value;
-  };
-
   template <class F, class... A>
   static void SafeCall(F func, const char* funcName, A... args)
   {
@@ -477,19 +518,23 @@ private:
       : arr(arr_)
       , n(n_)
     {
+      undefined = std::make_unique<JsValue>(JsValue::Undefined());
     }
 
-    size_t GetSize() const noexcept { return n; }
+    size_t GetSize() const noexcept override { return n; }
 
-    const JsValue& operator[](size_t i) const noexcept
+    const JsValue& operator[](size_t i) const noexcept override
     {
-      thread_local auto g_undefined = JsValue::Undefined();
-      return i < n ? reinterpret_cast<const JsValue&>(arr[i]) : g_undefined;
+      // A bit ugly reinterpret_cast, but it's a hot path.
+      // We do not want to modify the ref counter for each argument.
+      // This is also unit tested, so we would know if it breaks.
+      return i < n ? reinterpret_cast<const JsValue&>(arr[i]) : *undefined;
     }
 
   private:
     JsValueRef* const arr;
     const size_t n;
+    std::unique_ptr<JsValue> undefined;
   };
 
   static void* NativeFunctionImpl(void* callee, bool isConstructorCall,
@@ -497,23 +542,26 @@ private:
                                   unsigned short argumentsCount,
                                   void* callbackState)
   {
-    JsFunctionArgumentsImpl args(arguments, argumentsCount);
     try {
+      JsFunctionArgumentsImpl args(arguments, argumentsCount);
+
       auto f = reinterpret_cast<FunctionT*>(callbackState);
       return (*f)(args).value;
     } catch (std::exception& e) {
       JsValueRef whatStr, err;
       if (JsCreateString(e.what(), strlen(e.what()), &whatStr) == JsNoError &&
-          JsCreateError(whatStr, &err) == JsNoError)
+          JsCreateError(whatStr, &err) == JsNoError) {
         JsSetException(err);
+      }
       return JS_INVALID_REFERENCE;
     }
   }
 
-  explicit JsValue(void* internalJsRef)
+  explicit JsValue(JsValueRef internalJsRef)
     : value(internalJsRef)
   {
     AddRef();
+    TraceConstructor();
   }
 
   void AddRef()
@@ -530,13 +578,57 @@ private:
     }
   }
 
-  void* value = nullptr;
-};
+  static std::string GetString(JsValueRef value)
+  {
+    size_t outLength;
+    SafeCall(JS_ENGINE_F(JsCopyString), value, nullptr, 0, &outLength);
 
-class JsValueAccess
-{
-public:
-  static JsValue Ctor(JsValueRef raw) { return JsValue(raw); }
+    std::string res;
+    res.resize(outLength);
+    SafeCall(JS_ENGINE_F(JsCopyString), value, res.data(), outLength,
+             &outLength);
+    return res;
+  }
+
+#ifdef JS_ENGINE_TRACING_ENABLED
+  void TraceConstructor()
+  {
+    fmt::print("[!] JsValue {}\n", ToString());
+    GetStringValuesStorage()[value] = ToString();
+    GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
+  }
+
+  void TraceDestructor()
+  {
+    auto& stringifiedValue = GetStringValuesStorage()[value];
+    auto& ids = GetJsValueIdStorage()[value];
+    fmt::print("[!] ~JsValue {}; ids = {}\n", stringifiedValue,
+               fmt::join(ids, ", "));
+  }
+
+  static std::map<void*, std::string>& GetStringValuesStorage()
+  {
+    thread_local std::map<void*, std::string> g_stringValues;
+    return g_stringValues;
+  }
+
+  static std::map<void*, std::vector<uint32_t>>& GetJsValueIdStorage()
+  {
+    thread_local std::map<void*, std::vector<uint32_t>> g_ids;
+    return g_ids;
+  }
+
+  static uint32_t& GetJsValueNextId()
+  {
+    thread_local uint32_t g_nextId = 0;
+    return g_nextId;
+  }
+#else
+  void TraceConstructor() {}
+  void TraceDestructor() {}
+#endif
+
+  JsValueRef value = nullptr;
 };
 
 class JsEngine
@@ -583,7 +675,7 @@ public:
       }
     }
 
-    return result ? JsValueAccess::Ctor(result) : JsValue::Undefined();
+    return result ? JsValue(result) : JsValue::Undefined();
   }
 
   void ResetContext(TaskQueue& taskQueue)
@@ -592,32 +684,11 @@ public:
                       &pImpl->context);
     JsValue::SafeCall(JS_ENGINE_F(JsSetCurrentContext), pImpl->context);
 
-    JsValue::SafeCall(
-      JS_ENGINE_F(JsSetPromiseContinuationCallback),
-      [](JsValueRef task, void* state) {
-        std::shared_ptr<JsValue> taskPtr(
-          new JsValue(JsValueAccess::Ctor(task)));
-        auto q = reinterpret_cast<TaskQueue*>(state);
-        q->AddTask([taskPtr] { taskPtr->Call({}); });
-      },
-      &taskQueue);
+    JsValue::SafeCall(JS_ENGINE_F(JsSetPromiseContinuationCallback),
+                      OnPromiseContinuation, &taskQueue);
 
-    JsValue::SafeCall(
-      JS_ENGINE_F(JsSetHostPromiseRejectionTracker),
-      [](JsValueRef promise, JsValueRef reason_, bool handled, void* state) {
-        if (handled)
-          return;
-        auto q = reinterpret_cast<TaskQueue*>(state);
-        std::stringstream ss;
-        auto reason = JsValueAccess::Ctor(reason_);
-        auto stack = reason.GetProperty("stack").ToString();
-        ss << "Unhandled promise rejection" << std::endl;
-        ss << ((stack == "undefined") ? reason.ToString()
-                                      : reason.ToString() + "\n" + stack);
-        std::string str = ss.str();
-        q->AddTask([str] { throw std::runtime_error(str); });
-      },
-      &taskQueue);
+    JsValue::SafeCall(JS_ENGINE_F(JsSetHostPromiseRejectionTracker),
+                      OnPromiseRejection, &taskQueue);
   }
 
   size_t GetMemoryUsage() const
@@ -629,6 +700,53 @@ public:
   }
 
 private:
+  static void OnPromiseContinuation(JsValueRef task, void* state)
+  {
+    // Equivalent of JsValue::JsValue(JsValueRef *)
+    JsValue::SafeCall(JS_ENGINE_F(JsAddRef), task, nullptr);
+
+    auto taskQueue = reinterpret_cast<TaskQueue*>(state);
+
+    // RAII doesn't work properly here. That's why we do not just use JsValue.
+    // TaskQueue can be destroyed AFTER Chakra deinitialization and then try
+    // destroying tasks with JsValue instances captured.
+    // Also JsRelease (and JsValue dtor) MUST be called in the Chakra thread.
+
+    // Transfer internal ChakraCore value pointer. We did AddRef so Chakra
+    // isn't going to invalidate this pointer.
+    taskQueue->AddTask([task] {
+      // Equivalent of JsValue::Call({ JsValue::Undefined() })
+      JsValueRef undefined, res;
+      JsValue::SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
+      JsValue::SafeCall(JS_ENGINE_F(JsCallFunction), task, &undefined, 1,
+                        &res);
+
+      // Equivalent of JsValue::~JsValue()
+      JsRelease(task, nullptr);
+    });
+  }
+
+  static void OnPromiseRejection(JsValueRef promise, JsValueRef reason_,
+                                 bool handled, void* state)
+  {
+    if (handled) {
+      // This indicates that failure is handled on the JavaScript side.
+      // No sense to do anything.
+      return;
+    }
+    auto q = reinterpret_cast<TaskQueue*>(state);
+    std::stringstream ss;
+    auto reason = JsValue(reason_);
+    auto stack = reason.GetProperty("stack").ToString();
+    ss << "Unhandled promise rejection" << std::endl;
+    ss << ((stack == "undefined") ? reason.ToString()
+                                  : reason.ToString() + "\n" + stack);
+    std::string str = ss.str();
+
+    // Would throw from next TaskQueue::Update call
+    q->AddTask([str = std::move(str)] { throw std::runtime_error(str); });
+  }
+
   struct Impl
   {
     JsRuntimeHandle runtime;

@@ -12,7 +12,6 @@
     "catch2",
     "sparsepp",
     "slikenet",
-    "sqlite-orm",
     "mongo-cxx-driver",
     "simdjson",
     {

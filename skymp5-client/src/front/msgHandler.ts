@@ -7,6 +7,7 @@ export interface MsgHandler {
   UpdateAnimation(msg: msg.UpdateAnimationMessage): void;
   UpdateLook(msg: msg.UpdateLookMessage): void;
   UpdateEquipment(msg: msg.UpdateEquipmentMessage): void;
+  ChangeValues(msg: msg.ChangeValuesMessage): void;
   setRaceMenuOpen(msg: msg.SetRaceMenuOpenMessage): void;
   customPacket(msg: msg.CustomPacket): void;
 

@@ -6,12 +6,11 @@ if("${CMAKE_PROJECT_NAME}" STREQUAL "" OR "${CMAKE_PROJECT_NAME}" STREQUAL "plat
   project(platform_se)
 endif()
 
-set(cmake_dir "${CMAKE_SOURCE_DIR}/cmake")
-
-include(${cmake_dir}/apply_default_settings.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/link_vcpkg_dependencies.cmake)
 
 if(MSVC)
-  include(${cmake_dir}/add_papyrus_library_ck.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
   add_library(cef INTERFACE)
   find_library(CEF_LIBRARY_DEBUG libcef_dll_wrapper)
@@ -24,35 +23,36 @@ if(MSVC)
   target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/libcef.lib")
   target_include_directories(cef INTERFACE ${CEF_INCLUDE_DIR})
 
-  set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/platform_se/third_party")
+  set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
+  set(tilted "${SKYRIM_PLATFORM_SOURCE_DIR}/src/tilted")
   
-  file(GLOB_RECURSE core_library_src "${third_party}/cef/core_library/*")
+  file(GLOB_RECURSE core_library_src "${tilted}/core_library/*")
   add_library(core_library STATIC ${core_library_src})
-  target_include_directories(core_library PUBLIC "${third_party}/cef/core_library")
+  target_include_directories(core_library PUBLIC "${tilted}/core_library")
   list(APPEND VCPKG_DEPENDENT core_library)
 
-  file(GLOB_RECURSE reverse_src "${third_party}/cef/reverse/*")
+  file(GLOB_RECURSE reverse_src "${tilted}/reverse/*")
   add_library(reverse STATIC ${reverse_src})
-  target_include_directories(reverse PUBLIC "${third_party}/cef/reverse")
+  target_include_directories(reverse PUBLIC "${tilted}/reverse")
   target_link_libraries(reverse PUBLIC core_library)
   list(APPEND VCPKG_DEPENDENT reverse)
 
-  file(GLOB_RECURSE hooks_src "${third_party}/cef/hooks/*")
+  file(GLOB_RECURSE hooks_src "${tilted}/hooks/*")
   add_library(hooks STATIC ${hooks_src})
-  target_include_directories(hooks PUBLIC "${third_party}/cef/hooks")
+  target_include_directories(hooks PUBLIC "${tilted}/hooks")
   target_link_libraries(hooks PUBLIC core_library reverse)
   list(APPEND VCPKG_DEPENDENT hooks)
 
-  file(GLOB_RECURSE ui_src "${third_party}/cef/ui/*")
+  file(GLOB_RECURSE ui_src "${tilted}/ui/*")
   add_library(ui STATIC ${ui_src})
   target_link_libraries(ui PUBLIC core_library hooks reverse)
-  target_include_directories(ui PRIVATE ${third_party}/cef/ui )
+  target_include_directories(ui PRIVATE ${tilted}/ui )
   target_link_libraries(ui PUBLIC "d3d11.lib" "dxguid.lib")
   target_link_libraries(ui PUBLIC skyrim_plugin_resources)
   target_link_libraries(ui PUBLIC cef)
   list(APPEND VCPKG_DEPENDENT ui)
 
-  file(GLOB_RECURSE ui_process_src "${third_party}/cef/ui_process/*")
+  file(GLOB_RECURSE ui_process_src "${tilted}/ui_process/*")
   add_executable(SkyrimPlatformCEF ${ui_process_src})
   target_link_libraries(SkyrimPlatformCEF PUBLIC core_library)
   target_link_libraries(SkyrimPlatformCEF PUBLIC cef)
@@ -61,7 +61,7 @@ endif()
 
 if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
-  include(${cmake_dir}/CMakeRC.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/CMakeRC.cmake)
 
   # assets
   set(ASSET_FILES
@@ -73,7 +73,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
   apply_default_settings(TARGETS skyrim_plugin_resources)
 
-  include(${cmake_dir}/npm.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/npm.cmake)
 
    set(wdir "${CMAKE_CURRENT_BINARY_DIR}/_codegen")
    file(MAKE_DIRECTORY ${wdir})
@@ -94,12 +94,11 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
     add_library(skyrim_platform SHARED ${platform_src})
-    target_link_libraries(skyrim_platform PUBLIC skyrim_plugin_resources ui)
     set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
     target_include_directories(skyrim_platform PRIVATE "${third_party}")
+	target_include_directories(skyrim_platform PRIVATE "${tilted}")
+    target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib)
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
-    target_link_libraries(skyrim_platform PRIVATE cef)
-    target_include_directories(skyrim_platform PRIVATE "${CMAKE_SOURCE_DIR}/chakra-wrapper")
     apply_default_settings(TARGETS skyrim_platform)
     list(APPEND VCPKG_DEPENDENT skyrim_platform)
 
@@ -177,66 +176,4 @@ if(MSVC)
   )
 endif()
 
-foreach(target ${VCPKG_DEPENDENT})
-  find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
-  find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
-  string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
-  target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")
-  target_include_directories(${target} PUBLIC ${ChakraCore_INCLUDE_DIR})
-
-  find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
-  get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
-  target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
-
-  find_path(HTTPLIB_INCLUDE_DIR NAMES httplib.h PATH_SUFFIXES include)
-  get_filename_component(HTTPLIB_INCLUDE_DIR ${HTTPLIB_INCLUDE_DIR} DIRECTORY)
-  target_include_directories(${target} PUBLIC ${HTTPLIB_INCLUDE_DIR})
-
-  find_package(ZLIB REQUIRED)
-  target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
-
-  if(MSVC AND "${target}" MATCHES "skyrim_platform")
-    find_library(MHOOH_LIBRARY_DEBUG mhook)
-    string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})
-    find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib)
-    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
-    target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
-
-    find_library(SKSE64_LIBRARY_DEBUG skse64)
-    string(REPLACE "/debug/lib/" "/lib/" SKSE64_LIBRARY_RELEASE ${SKSE64_LIBRARY_DEBUG})
-    find_path(SKSE64_INCLUDE_DIR skse64/PluginAPI.h)
-    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_LIBRARY_DEBUG},${SKSE64_LIBRARY_RELEASE}>")
-    target_include_directories(${target} PUBLIC ${SKSE64_INCLUDE_DIR})
-
-    find_library(SKSE64_COMMON_LIBRARY_DEBUG skse64_common)
-    string(REPLACE "/debug/lib/" "/lib/" SKSE64_COMMON_LIBRARY_RELEASE ${SKSE64_COMMON_LIBRARY_DEBUG})
-    find_path(SKSE64_COMMON_INCLUDE_DIR skse64/PluginAPI.h)
-    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_COMMON_LIBRARY_DEBUG},${SKSE64_COMMON_LIBRARY_RELEASE}>")
-    target_include_directories(${target} PUBLIC ${SKSE64_COMMON_INCLUDE_DIR})
-
-    find_library(COMMON_LIBRARY_DEBUG common)
-    string(REPLACE "/debug/lib/" "/lib/" COMMON_LIBRARY_RELEASE ${COMMON_LIBRARY_DEBUG})
-    find_path(COMMON_INCLUDE_DIR skse64/PluginAPI.h)
-    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMON_LIBRARY_DEBUG},${COMMON_LIBRARY_RELEASE}>")
-    target_include_directories(${target} PUBLIC ${COMMON_INCLUDE_DIR})
-
-    find_library(COMMONLIBSSE_LIBRARY_DEBUG CommonLibSSE)
-    string(REPLACE "/debug/lib/" "/lib/" COMMONLIBSSE_LIBRARY_RELEASE ${COMMONLIBSSE_LIBRARY_DEBUG})
-    find_path(COMMONLIBSSE_INCLUDE_DIR SKSE/API.h)
-    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMONLIBSSE_LIBRARY_DEBUG},${COMMONLIBSSE_LIBRARY_RELEASE}>")
-    target_include_directories(${target} PUBLIC ${COMMONLIBSSE_INCLUDE_DIR})
-
-    # CommonLibSSE requirement
-    target_link_libraries(${target} PUBLIC Version)
-    target_compile_options(${target} PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
-
-    target_link_libraries(${target} PUBLIC cef)
-
-    find_package(directxtk CONFIG REQUIRED)
-    find_package(directxmath CONFIG REQUIRED)
-    target_link_libraries(${target} PUBLIC Microsoft::DirectXTK)
-  endif()
-
-  find_package(spdlog CONFIG REQUIRED)
-  target_link_libraries(${target} PUBLIC spdlog::spdlog)
-endforeach()
+link_vcpkg_dependencies(TARGETS ${VCPKG_DEPENDENT})

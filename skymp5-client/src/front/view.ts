@@ -29,6 +29,7 @@ import { applyInventory } from "./components/inventory";
 import { tryHost } from "./hostAttempts";
 import { getMovement } from "./components/movementGet";
 import { Movement } from "../lib/structures/movement";
+import * as deathSystem from "./deathSystem";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -333,6 +334,12 @@ export class FormView implements View<FormModel> {
 
     const refr = ObjectReference.from(Game.getFormEx(this.refrId));
     if (refr) {
+      const actor = Actor.from(refr);
+      if (actor && !this.localImmortal) {
+        deathSystem.makeActorImmortal(actor);
+        actor.setActorValue("health", 1000000);
+        this.localImmortal = true;
+      }
       this.applyAll(refr, model);
       for (const key of gUpdateNeighborFunctionsKeys) {
         const v = (model as Record<string, unknown>)[key];
@@ -376,6 +383,7 @@ export class FormView implements View<FormModel> {
         sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
       }
     }
+    this.localImmortal = false;
   }
 
   private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
@@ -625,6 +633,7 @@ export class FormView implements View<FormModel> {
   private spawnMoment = 0;
   private wasHostedByOther: boolean | undefined = undefined;
   private state = {};
+  private localImmortal = false;
 }
 
 class FormViewArray {
@@ -763,10 +772,13 @@ export class WorldView implements View<WorldModel> {
     const crosshair = Game.getCurrentCrosshairRef();
     gCrosshairRefId = crosshair ? crosshair.getFormID() : 0;
 
-    gPcInJumpState = (Game.getPlayer() as Actor).getAnimationVariableBool("bInJumpState");
+    gPcInJumpState = (Game.getPlayer() as Actor).getAnimationVariableBool(
+      "bInJumpState"
+    );
 
     const pcWorldOrCell =
-      (Game.getPlayer() as Actor).getWorldSpace() || (Game.getPlayer() as Actor).getParentCell();
+      (Game.getPlayer() as Actor).getWorldSpace() ||
+      (Game.getPlayer() as Actor).getParentCell();
     gPcWorldOrCellId = pcWorldOrCell ? pcWorldOrCell.getFormID() : 0;
 
     this.formViews.updateAll(model, showMe as boolean, false);

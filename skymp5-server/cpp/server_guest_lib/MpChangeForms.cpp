@@ -33,6 +33,11 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   } else {
     res["equipmentDump"] = nlohmann::json::parse(changeForm.equipmentDump);
   }
+
+  res["healthPercentage"] = changeForm.healthPercentage;
+  res["magickaPercentage"] = changeForm.magickaPercentage;
+  res["staminaPercentage"] = changeForm.staminaPercentage;
+
   return res;
 }
 
@@ -45,7 +50,9 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     nextRelootDatetime("nextRelootDatetime"), isDisabled("isDisabled"),
     profileId("profileId"), isRaceMenuOpen("isRaceMenuOpen"),
     lookDump("lookDump"), equipmentDump("equipmentDump"),
-    dynamicFields("dynamicFields");
+    dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
+    magickaPercentage("magickaPercentage"),
+    staminaPercentage("staminaPercentage");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -89,6 +96,15 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   res.equipmentDump = simdjson::minify(jTmp);
   if (res.equipmentDump == "null")
     res.equipmentDump.clear();
+
+  try {
+    ReadEx(element, healthPercentage, &res.healthPercentage);
+    ReadEx(element, magickaPercentage, &res.magickaPercentage);
+    ReadEx(element, staminaPercentage, &res.staminaPercentage);
+  } catch (JsonIndexException&) {
+  } catch (...) {
+    throw;
+  }
 
   try {
     simdjson::dom::element jDynamicFields;

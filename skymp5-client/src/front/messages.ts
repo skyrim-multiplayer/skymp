@@ -4,6 +4,7 @@ import { Animation } from "../lib/structures/animation";
 import { Equipment } from "../lib/structures/equipment";
 import { Inventory } from "../lib/structures/inventory";
 import * as spSnippet from "./spSnippet";
+import { ActorValues } from "../lib/structures/actorvalues";
 
 export enum MsgType {
   CustomPacket = 1,
@@ -21,6 +22,7 @@ export enum MsgType {
   CraftItem = 13,
   Host = 14,
   CustomEvent = 15,
+  ChangeValues = 16,
 }
 
 export interface SetInventory {
@@ -87,6 +89,11 @@ export interface UpdatePropertyMessage {
   idx: number;
   data: unknown;
   propName: string;
+}
+
+export interface ChangeValuesMessage {
+  t: MsgType.ChangeValues;
+  data: ActorValues;
 }
 
 export interface SetRaceMenuOpenMessage {

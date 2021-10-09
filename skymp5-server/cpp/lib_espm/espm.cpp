@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sparsepp/spp.h>
 
@@ -59,6 +60,14 @@ private:
 
   const uint64_t v;
 };
+
+const std::map<std::string, uint32_t> g_correctHashcode{
+  { "Skyrim.esm", 0xaf75991dUL },
+  { "Update.esm", 0x17ab5e20UL },
+  { "Dawnguard.esm", 0xcc81e5d8UL },
+  { "HearthFires.esm", 0xbad9393aUL },
+  { "Dragonborn.esm", 0xeb10e82UL }
+};
 }
 
 namespace espm {
@@ -91,6 +100,17 @@ struct FieldHeader
 };
 static_assert(sizeof(FieldHeader) == 6);
 #pragma pack(pop)
+
+uint32_t CalculateHashcode(const void* readBuffer, size_t length)
+{
+  return ZlibGetCRC32Checksum(readBuffer, length);
+}
+
+uint32_t GetCorrectHashcode(const std::string& fileName)
+{
+  auto iter = g_correctHashcode.find(fileName);
+  return iter == g_correctHashcode.end() ? 0 : iter->second;
+}
 }
 
 enum RecordFlags : uint32_t
@@ -922,6 +942,8 @@ espm::NPC_::Data espm::NPC_::GetData(
         uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
         result.isEssential = !!(flags & 0x02);
         result.isProtected = !!(flags & 0x800);
+      } else if (!memcmp(type, "RNAM", 4)) {
+        result.race = *reinterpret_cast<const uint32_t*>(data);
       }
     },
     &compressedFieldsCache);
@@ -936,6 +958,24 @@ espm::WEAP::Data espm::WEAP::GetData() const noexcept
     this, [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
         result.weapData = reinterpret_cast<const WeapData*>(data);
+      }
+    });
+  return result;
+}
+
+espm::RACE::Data espm::RACE::GetData(
+  CompressedFieldsCache& compressedFieldCache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t size, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        result.startingHealth = *reinterpret_cast<const float*>(data + 36);
+        result.startingMagicka = *reinterpret_cast<const float*>(data + 40);
+        result.startingStamina = *reinterpret_cast<const float*>(data + 44);
+        result.healRegen = *reinterpret_cast<const float*>(data + 84);
+        result.magickaRegen = *reinterpret_cast<const float*>(data + 88);
+        result.staminaRegen = *reinterpret_cast<const float*>(data + 92);
       }
     });
   return result;

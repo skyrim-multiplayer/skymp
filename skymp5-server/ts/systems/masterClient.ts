@@ -20,7 +20,8 @@ export class MasterClient implements System {
     private maxPlayers: number,
     private name: string,
     private ip: string,
-    private updateIntervalMs = 5000
+    private updateIntervalMs = 5000,
+    private offlineMode = false
   ) {}
 
   async initAsync(): Promise<void> {
@@ -41,6 +42,8 @@ export class MasterClient implements System {
   }
 
   async updateAsync(ctx: SystemContext): Promise<void> {
+    if (this.offlineMode) return;
+
     await new Promise((r) => setTimeout(r, this.updateIntervalMs));
 
     if (this.endpoint) {

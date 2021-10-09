@@ -2,6 +2,7 @@
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "GetBaseActorValues.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 
@@ -49,9 +50,24 @@ void MpActor::SetEquipment(const std::string& jsonString)
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
                               VisitPropertiesMode mode)
 {
+  auto baseId = MpObjectReference::GetBaseId();
+  uint32_t raceId = GetLook() ? GetLook()->raceId : 0;
+  BaseActorValues baseActorValues;
+  WorldState* worldState = GetParent();
+  if (worldState && worldState->HasEspm()) {
+    auto& espm = worldState->GetEspm();
+    baseActorValues = GetBaseActorValues(espm, baseId, raceId);
+  }
+
+  MpChangeForm changeForm = GetChangeForm();
+
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
     visitor("isRaceMenuOpen", "true");
+
+  if (mode == VisitPropertiesMode::All) {
+    baseActorValues.VisitBaseActorValues(baseActorValues, changeForm, visitor);
+  }
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
@@ -98,6 +114,9 @@ MpChangeForm MpActor::GetChangeForm() const
   res.lookDump = achr.lookDump;
   res.isRaceMenuOpen = achr.isRaceMenuOpen;
   res.equipmentDump = achr.equipmentDump;
+  res.healthPercentage = achr.healthPercentage;
+  res.magickaPercentage = achr.magickaPercentage;
+  res.staminaPercentage = achr.staminaPercentage;
   // achr.dynamicFields isn't really used so I decided to comment this line:
   // res.dynamicFields.merge_patch(achr.dynamicFields);
 
@@ -141,6 +160,36 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
     promise.Resolve(v);
     pImpl->snippetPromises.erase(it);
   }
+}
+
+void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
+                             float staminaPercentage)
+{
+  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.healthPercentage = healthPercentage;
+    changeForm.magickaPercentage = magickaPercentage;
+    changeForm.staminaPercentage = staminaPercentage;
+  });
+}
+
+std::chrono::steady_clock::time_point
+MpActor::GetLastAttributesPercentagesUpdate()
+{
+  return lastAttributesUpdateTimePoint;
+}
+
+void MpActor::SetLastAttributesPercentagesUpdate(
+  std::chrono::steady_clock::time_point timePoint)
+{
+  lastAttributesUpdateTimePoint = timePoint;
+}
+
+std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
+  std::chrono::steady_clock::time_point now)
+{
+  std::chrono::duration<float> timeAfterRegeneration =
+    now - lastAttributesUpdateTimePoint;
+  return timeAfterRegeneration;
 }
 
 const bool& MpActor::IsRaceMenuOpen() const
