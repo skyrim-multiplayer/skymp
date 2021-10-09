@@ -15,10 +15,9 @@ body:
       options:
        - Critical. A critical defect that causes some key functionality to fail. 
        - Major. A crucial error that indicates a deviation from business logic or disrupts the program, but doesn't have a vital impact on the app.
-       - Minor. A minor defect that doesn't violate the application's functionality when tested, but influences the expected result. A design error wobe one example. A bug that doesn't affect the functionality or operation of the app but can be detected visually, for example, a typo in the text.             
+       - Minor. A minor defect that doesn''t violate the application''s functionality when tested, but influences the expected result. A design error wobe one example. A bug that doesn't affect the functionality or operation of the app but can be detected visually, for example, a typo in the text.             
     validations:
       required: true
-  
   - type: dropdown
     id: priority
     attributes:
@@ -30,8 +29,7 @@ body:
        - Low. All else (typos, missing icons, layout issues, etc.).          
     validations:
       required: true
-      
-   - type: textarea
+  - type: textarea
     id: description
     attributes:
       label: Description
@@ -40,8 +38,7 @@ body:
       value: "A bug happened!"
     validations:
       required: true
-      
-   - type: input
+  - type: input
     id: environment-os
     attributes:
       label: OS
@@ -49,8 +46,7 @@ body:
       placeholder: Windows
     validations:
       required: true   
-      
-   - type: input
+  - type: input
     id: environment-os-version
     attributes:
       label: OS version
@@ -58,8 +54,7 @@ body:
       placeholder: 10
     validations:
       required: true        
-    
- - type: input
+  - type: input
     id: environment-skyrim-version
     attributes:
       label: Skyrim version
@@ -67,8 +62,7 @@ body:
       placeholder: 1.5.97.0.8
     validations:
       required: true 
-
- - type: input
+  - type: input
     id: environment-skse-version
     attributes:
       label: SKSE version
@@ -76,26 +70,23 @@ body:
       placeholder: 2.0.20
     validations:
       required: true 
-      
-   - type: input
+  - type: input
     id: environment-commit-client-hash
     attributes:
-      label: client commit's hash
+      label: client commit''s hash
       description: What verison of client do you using for?
       placeholder: a41d3ddb77df5fbb982d40d400852af32ab6fd99
     validations:
       required: true 
-      
   - type: input
     id: environment-commit-server-hash
     attributes:
-      label: server commit's hash
+      label: server commit''s hash
       description: What verison of server do you using for?
       placeholder: 60e1ad22f744b9003c8dbc40f05e2a62663ee8c7
     validations:
       required: true 
- 
-   - type: input
+  - type: input
     id: environment-videocard
     attributes:
       label: Videocard model
@@ -103,7 +94,6 @@ body:
       placeholder: Voodoo 2
     validations:
       required: true    
-   
   - type: textarea
     id: steps-to-reproduce
     attributes:
@@ -113,7 +103,6 @@ body:
       value: "A bug happened!"
     validations:
       required: true
-
   - type: textarea
     id: expected-result
     attributes:
@@ -123,7 +112,6 @@ body:
       value: "A bug happened!"
     validations:
       required: true
-      
   - type: textarea
     id: actual-result
     attributes:
@@ -133,4 +121,3 @@ body:
       value: "A bug happened!"
     validations:
       required: true
-
