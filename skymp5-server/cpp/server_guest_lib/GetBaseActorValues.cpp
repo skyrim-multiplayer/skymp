@@ -74,7 +74,8 @@ BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
 
     } else {
       std::string errorMessage = fmt::format(
-        "Unable to read RACE. formId: {}, raceId: {}", baseId, raceIdOverride);
+        "Unable to read RACE. formId: {}, raceId: {}, raceidOcerride: {}",
+        baseId, raceID, raceIdOverride);
       throw std::runtime_error(errorMessage);
     }
   } else {
