@@ -112,7 +112,8 @@ set(server_settings_json "{
     \"${esm_prefix}Dragonborn.esm\"
   ],
   \"ip\": \"127.0.0.1\",
-  \"name\": \"My Server\"
+  \"name\": \"My Server\",
+  \"offlineMode\": true
 }
 ")
 

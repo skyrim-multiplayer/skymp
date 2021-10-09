@@ -12,10 +12,10 @@ namespace Networking {
 
 std::shared_ptr<IClient> CreateClient(
   const char* serverIp, unsigned short serverPort, int timeoutMs = 4000,
-  const char* password = g_networkingPassword);
+  const char* password = kNetworkingPassword);
 std::shared_ptr<IServer> CreateServer(
   unsigned short port, unsigned short maxConnections,
-  const char* password = g_networkingPassword);
+  const char* password = kNetworkingPassword);
 
 void HandlePacketClientside(Networking::IClient::OnPacket onPacket,
                             void* state, Packet* packet);
