@@ -21,6 +21,8 @@ void ReadFromBitStream(SLNet::BitStream& stream, std::optional<T>& opt)
 {
   if (ReadFromBitStream<bool>(stream)) {
     ReadFromBitStream(stream, opt.emplace());
+  } else {
+    opt = std::nullopt;
   }
 }
 
