@@ -36,7 +36,7 @@ struct MovementMessage
   bool isSneaking = false;
   bool isBlocking = false;
   bool isWeapDrawn = false;
-  std::optional<std::array<float, 3>> lookAt{ { 0, 0, 0 } };
+  std::optional<std::array<float, 3>> lookAt = std::nullopt;
 
   auto Tie() const
   {

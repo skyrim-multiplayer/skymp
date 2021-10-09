@@ -54,6 +54,7 @@ TEST_CASE("MovementMessage correctly encoded and decoded to JSON",
     {
       const auto json = serialization::MovementMessageToJson(movData);
       const auto movData2 = serialization::MovementMessageFromJson(json);
+      INFO(json.dump());
       REQUIRE(movData == movData2);
     }
   }
