@@ -379,3 +379,23 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
             0x4f838, 0x50015, 0x69857, 0x6ed38, 0x94b35, 0xc350d, 0xc97eb,
             0xd45f0, 0x104217 });
 }
+
+TEST_CASE("Parsing RACE", "[espm]")
+{
+  auto& br = l.GetBrowser();
+
+  // Ri'saad is a Khajiit roving merchant from caravan.
+  const uint32_t g_risaadFormId = 0x0001B1DB;
+
+  auto form = br.LookupById(g_risaadFormId);
+
+  REQUIRE(form.rec->GetType() == "NPC_");
+
+  espm::CompressedFieldsCache compressedFieldsCache;
+
+  auto npc = espm::Convert<espm::NPC_>(form.rec);
+  uint32_t raceId = npc->GetData(compressedFieldsCache).race;
+  auto raceInfo = l.GetBrowser().LookupById(raceId);
+
+  REQUIRE(raceInfo.rec->GetType() == "RACE");
+}

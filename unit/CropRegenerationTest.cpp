@@ -4,8 +4,10 @@
 
 #include "CropRegeneration.h"
 #include "GetBaseActorValues.h"
+#include "Loader.h"
 
 PartOne& GetPartOne();
+extern espm::Loader l;
 
 TEST_CASE("CropRegeneration function is working correctly",
           "[CropRegeneration]")
@@ -101,7 +103,7 @@ TEST_CASE("CropHealthRegeneration, CropMagickaRegeneration and "
   uint32_t baseId = ac.GetBaseId();
   auto look = ac.GetLook();
   uint32_t raceId = look ? look->raceId : 0;
-  BaseActorValues baseValues = GetBaseActorValues(baseId, raceId);
+  BaseActorValues baseValues = GetBaseActorValues(l, baseId, raceId);
 
   ac.SetPercentages(0.0f, 0.0f, 0.0f);
 
