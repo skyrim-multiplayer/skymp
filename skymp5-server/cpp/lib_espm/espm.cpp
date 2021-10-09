@@ -942,6 +942,9 @@ espm::NPC_::Data espm::NPC_::GetData(
         uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
         result.isEssential = !!(flags & 0x02);
         result.isProtected = !!(flags & 0x800);
+        result.magickaOffset = *reinterpret_cast<const uint16_t*>(data + 4);
+        result.staminaOffset = *reinterpret_cast<const uint16_t*>(data + 6);
+        result.healthOffset = *reinterpret_cast<const uint16_t*>(data + 20);
       } else if (!memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);
       }
