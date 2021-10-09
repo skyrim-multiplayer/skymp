@@ -24,9 +24,9 @@ TEST_CASE("GetBaseActorValues works correctly", "[GetBaseActorValues]")
   uint32_t raceId = look ? look->raceId : 0;
   BaseActorValues baseValues = GetBaseActorValues(l, baseId, raceId);
 
-  REQUIRE(baseValues.health == 50.f);
-  REQUIRE(baseValues.stamina == 50.f);
-  REQUIRE(baseValues.magicka == 50.f);
+  REQUIRE(baseValues.health == 100.f);
+  REQUIRE(baseValues.stamina == 100.f);
+  REQUIRE(baseValues.magicka == 100.f);
   REQUIRE(baseValues.healRate == 0.7f);
   REQUIRE(baseValues.staminaRate == 5.f);
   REQUIRE(baseValues.magickaRate == 3.f);
