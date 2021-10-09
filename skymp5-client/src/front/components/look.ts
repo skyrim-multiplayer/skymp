@@ -8,7 +8,10 @@ import {
   TextureSet,
   printConsole,
   VoiceType,
+  once,
+  Utility,
 } from "skyrimPlatform";
+import * as deathSystem from "deathSystem";
 
 import * as structures from "../../lib/structures/look";
 export type Look = structures.Look;
@@ -140,4 +143,9 @@ export const applyLookToPlayer = (look: Look): void => {
   );
   applyTints(null, look);
   (Game.getPlayer() as Actor).queueNiNodeUpdate();
+  Utility.wait(0.0625).then(() => {
+    once("update", () => {
+      deathSystem.makeActorImmortal(Game.getPlayer() as Actor);
+    });
+  });
 };
