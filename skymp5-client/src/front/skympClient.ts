@@ -33,6 +33,7 @@ import { setUpConsoleCommands } from "./console";
 import { nextHostAttempt } from "./hostAttempts";
 import * as updateOwner from "./updateOwner";
 import { ActorValues, getActorValues } from "./components/actorvalues";
+import { Hit, getHitData } from "./components/hit";
 
 interface AnyMessage {
   type?: string;
@@ -318,6 +319,16 @@ export class SkympClient {
       const player = Game.getPlayer();
       if (player) {
         deathSystem.makeActorImmortal(player);
+      }
+    });
+
+    on("hit", (e) => {
+      if (e.target.getFormID() === playerFormId) return;
+      if (e.agressor.getFormID() !== playerFormId) return;
+      if (sp.Weapon.from(e.source) && sp.Actor.from(e.target)) {
+        this.sendTarget.send(
+          { t: MsgType.OnHit, data: getHitData(e) }, true
+        );
       }
     });
   }
