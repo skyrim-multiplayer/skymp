@@ -6,7 +6,7 @@ assignees:
   - SupAidmi
 body:
   - type: markdown
-    value: A brief description of the problem, which allows you to quickly navigate the issue and describe it with simple “What? Where? When?"
+    value: "A brief description of the problem, which allows you to quickly navigate the issue and describe it with simple “What? Where? When?""
   - type: dropdown
     id: severity
     attributes:
@@ -51,7 +51,7 @@ body:
     attributes:
       label: OS version
       description: What verison of OS do you using for?
-      placeholder: 10
+      placeholder: "10"
     validations:
       required: true        
   - type: input
