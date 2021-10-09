@@ -17,7 +17,7 @@ struct UserInfo
 class ServerState
 {
 public:
-  ServerState() { userInfo.resize(g_maxPlayers); }
+  ServerState() { userInfo.resize(kMaxPlayers); }
 
   std::vector<std::unique_ptr<UserInfo>> userInfo;
   Networking::UserId maxConnectedId = 0;
