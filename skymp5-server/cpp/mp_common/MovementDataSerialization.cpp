@@ -14,8 +14,8 @@ void WriteToBitStream(SLNet::BitStream& stream, const MovementData& movData)
 
   WriteToBitStream(stream, movData.idx);
   WriteToBitStream(stream, movData.worldOrCell);
-  SerializationUtil::WriteToBitStream(stream, movData.pos);
-  SerializationUtil::WriteToBitStream(stream, movData.rot);
+  WriteToBitStream(stream, movData.pos);
+  WriteToBitStream(stream, movData.rot);
   WriteToBitStream(stream, movData.direction);
   WriteToBitStream(stream, movData.healthPercentage);
 
@@ -26,7 +26,7 @@ void WriteToBitStream(SLNet::BitStream& stream, const MovementData& movData)
   WriteToBitStream(stream, movData.isSneaking);
   WriteToBitStream(stream, movData.isBlocking);
   WriteToBitStream(stream, movData.isWeapDrawn);
-  SerializationUtil::WriteToBitStream(stream, movData.lookAt);
+  WriteToBitStream(stream, movData.lookAt);
 }
 
 void ReadFromBitStream(SLNet::BitStream& stream, MovementData& movData)
@@ -35,24 +35,22 @@ void ReadFromBitStream(SLNet::BitStream& stream, MovementData& movData)
 
   ReadFromBitStream(stream, movData.idx);
   ReadFromBitStream(stream, movData.worldOrCell);
-  SerializationUtil::ReadFromBitStream(stream, movData.pos);
-  SerializationUtil::ReadFromBitStream(stream, movData.rot);
+  ReadFromBitStream(stream, movData.pos);
+  ReadFromBitStream(stream, movData.rot);
   ReadFromBitStream(stream, movData.direction);
   ReadFromBitStream(stream, movData.healthPercentage);
 
   uint8_t runMode = 0;
-  runMode |= static_cast<uint8_t>(SerializationUtil::ReadFromBitStream<bool>(stream));
+  runMode |= static_cast<uint8_t>(ReadFromBitStream<bool>(stream));
   runMode <<= 1;
-  runMode |= static_cast<uint8_t>(SerializationUtil::ReadFromBitStream<bool>(stream));
+  runMode |= static_cast<uint8_t>(ReadFromBitStream<bool>(stream));
   movData.runMode = static_cast<RunMode>(runMode);
 
   ReadFromBitStream(stream, movData.isInJumpState);
   ReadFromBitStream(stream, movData.isSneaking);
   ReadFromBitStream(stream, movData.isBlocking);
   ReadFromBitStream(stream, movData.isWeapDrawn);
-  if (SerializationUtil::ReadFromBitStream<bool>(stream)) {
-    SerializationUtil::ReadFromBitStream(stream, movData.lookAt.emplace());
-  }
+  ReadFromBitStream(stream, movData.lookAt);
 }
 
 MovementData MovementDataFromJson(const nlohmann::json& json)
