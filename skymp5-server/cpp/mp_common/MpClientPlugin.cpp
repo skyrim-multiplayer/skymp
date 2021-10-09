@@ -44,7 +44,7 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
           //                      v SLikeNet <3 <3 <3 <3 <3 <3 <3
           // (also, my code sucks too, but it's probably ok if I don't merge it)
           SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2, /*copyData*/false);
-          ReadTo(movData, stream);
+          ReadFromBitStream(stream, movData);
           jsonContent = MovementDataToJson(movData).dump();
         } else {
           jsonContent =
@@ -69,7 +69,7 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
   if (static_cast<MsgType>(parsedJson.at("t").get<int>()) == MsgType::UpdateMovement) {
     const auto movData = MovementDataFromJson(parsedJson);
     SLNet::BitStream stream;
-    Write(movData, stream);
+    WriteToBitStream(stream, movData);
 
     std::vector<uint8_t> buf(stream.GetNumberOfBytesUsed() + 2);
     buf[0] = Networking::MinPacketId;

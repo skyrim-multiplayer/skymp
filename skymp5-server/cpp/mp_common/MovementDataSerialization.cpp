@@ -6,7 +6,9 @@
 #include "MsgType.h"
 #include "SerializationUtil/BitStreamUtil.h"
 
-void Write(const MovementData& movData, SLNet::BitStream& stream)
+// namespace serialization {
+
+void WriteToBitStream(SLNet::BitStream& stream, const MovementData& movData)
 {
   stream.Write(movData.idx);
   stream.Write(movData.worldOrCell);
@@ -22,16 +24,10 @@ void Write(const MovementData& movData, SLNet::BitStream& stream)
   stream.Write(movData.isSneaking);
   stream.Write(movData.isBlocking);
   stream.Write(movData.isWeapDrawn);
-  if (movData.lookAt) {
-    stream.Write(true);
-    // Write(*movData.lookAt, stream);
-    SerializationUtil::WriteToBitStream(stream, *movData.lookAt);
-  } else {
-    stream.Write(false);
-  }
+  SerializationUtil::WriteToBitStream(stream, movData.lookAt);
 }
 
-void ReadTo(MovementData& movData, SLNet::BitStream& stream)
+void ReadFromBitStream(SLNet::BitStream& stream, MovementData& movData)
 {
   stream.Read(movData.idx);
   stream.Read(movData.worldOrCell);
@@ -104,3 +100,5 @@ nlohmann::json MovementDataToJson(const MovementData& movData)
   }
   return result;
 }
+
+// }

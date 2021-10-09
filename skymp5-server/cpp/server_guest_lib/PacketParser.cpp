@@ -54,7 +54,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     MovementData movData;
     //                      vvvvvvvvvv oh shit here we go again
     SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2, /*copyData*/false);
-    ReadTo(movData, stream);
+    ReadFromBitStream(stream, movData);
 
     actionListener.OnUpdateMovement(
       rawMsgData, movData.idx, { movData.pos[0], movData.pos[1], movData.pos[2] },

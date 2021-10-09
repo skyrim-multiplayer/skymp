@@ -59,10 +59,10 @@ TEST_CASE("MovementData correctly encoded and decoded to BitStream",
   for (const auto& [name, movData] : MakeTestMovementDataCases()) {
     SECTION(name) {
       SLNet::BitStream stream;
-      Write(movData, stream);
+      WriteToBitStream(stream, movData);
 
       MovementData movData2;
-      ReadTo(movData2, stream);
+      ReadFromBitStream(stream, movData2);
 
       REQUIRE(movData == movData2);
     }
