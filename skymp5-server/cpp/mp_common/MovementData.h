@@ -24,20 +24,20 @@ struct MovementData
 {
   const static char kHeaderByte = 'M';
 
-  uint32_t idx;
-  uint32_t worldOrCell;
-  std::array<float, 3> pos;
-  std::array<float, 3> rot;
-  float direction;
-  float healthPercentage;
+  uint32_t idx{};
+  uint32_t worldOrCell{};
+  std::array<float, 3> pos{};
+  std::array<float, 3> rot{};
+  float direction{};
+  float healthPercentage{};
 
   // flags & optionals
-  RunMode runMode;
-  bool isInJumpState;
-  bool isSneaking;
-  bool isBlocking;
-  bool isWeapDrawn;
-  std::optional<std::array<float, 3>> lookAt;
+  RunMode runMode{};
+  bool isInJumpState{};
+  bool isSneaking{};
+  bool isBlocking{};
+  bool isWeapDrawn{};
+  std::optional<std::array<float, 3>> lookAt{};
 
   auto Tie() const
   {
