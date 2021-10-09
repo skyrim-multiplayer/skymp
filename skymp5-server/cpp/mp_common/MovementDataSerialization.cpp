@@ -4,37 +4,14 @@
 #include <slikenet/BitStream.h>
 
 #include "MsgType.h"
-
-namespace {
-void Write(const std::array<float, 3>& arr, SLNet::BitStream& stream)
-{
-  for (size_t i = 0; i < 3; ++i) {
-    stream.Write(arr[i]);
-  }
-}
-
-void ReadTo(std::array<float, 3>& arr, SLNet::BitStream& stream)
-{
-  for (size_t i = 0; i < 3; ++i) {
-    stream.Read(arr[i]);
-  }
-}
-
-template <class T>
-T Read(SLNet::BitStream& stream)
-{
-  T value;
-  stream.Read(value);
-  return value;
-}
-}
+#include "SerializationUtil/BitStreamUtil.h"
 
 void Write(const MovementData& movData, SLNet::BitStream& stream)
 {
   stream.Write(movData.idx);
   stream.Write(movData.worldOrCell);
-  Write(movData.pos, stream);
-  Write(movData.rot, stream);
+  SerializationUtil::WriteToBitStream(stream, movData.pos);
+  SerializationUtil::WriteToBitStream(stream, movData.rot);
   stream.Write(movData.direction);
   stream.Write(movData.healthPercentage);
 
@@ -47,7 +24,8 @@ void Write(const MovementData& movData, SLNet::BitStream& stream)
   stream.Write(movData.isWeapDrawn);
   if (movData.lookAt) {
     stream.Write(true);
-    Write(*movData.lookAt, stream);
+    // Write(*movData.lookAt, stream);
+    SerializationUtil::WriteToBitStream(stream, *movData.lookAt);
   } else {
     stream.Write(false);
   }
@@ -57,23 +35,23 @@ void ReadTo(MovementData& movData, SLNet::BitStream& stream)
 {
   stream.Read(movData.idx);
   stream.Read(movData.worldOrCell);
-  ReadTo(movData.pos, stream);
-  ReadTo(movData.rot, stream);
+  SerializationUtil::ReadFromBitStream(stream, movData.pos);
+  SerializationUtil::ReadFromBitStream(stream, movData.rot);
   stream.Read(movData.direction);
   stream.Read(movData.healthPercentage);
 
   uint8_t runMode = 0;
-  runMode |= static_cast<uint8_t>(Read<bool>(stream));
+  runMode |= static_cast<uint8_t>(SerializationUtil::ReadFromBitStream<bool>(stream));
   runMode <<= 1;
-  runMode |= static_cast<uint8_t>(Read<bool>(stream));
+  runMode |= static_cast<uint8_t>(SerializationUtil::ReadFromBitStream<bool>(stream));
   movData.runMode = static_cast<RunMode>(runMode);
 
   stream.Read(movData.isInJumpState);
   stream.Read(movData.isSneaking);
   stream.Read(movData.isBlocking);
   stream.Read(movData.isWeapDrawn);
-  if (Read<bool>(stream)) {
-    ReadTo(movData.lookAt.emplace(), stream);
+  if (SerializationUtil::ReadFromBitStream<bool>(stream)) {
+    SerializationUtil::ReadFromBitStream(stream, movData.lookAt.emplace());
   }
 }
 
