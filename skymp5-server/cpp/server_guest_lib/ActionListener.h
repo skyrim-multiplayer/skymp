@@ -27,7 +27,7 @@ public:
                          uint32_t idx) override;
 
   void OnUpdateAppearance(const RawMessageData& rawMsgData, uint32_t idx,
-                    const Appearance& appearance) override;
+                          const Appearance& appearance) override;
 
   void OnUpdateEquipment(const RawMessageData& rawMsgData, uint32_t idx,
                          simdjson::dom::element& data,

@@ -1,9 +1,10 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
-TEST_CASE("Actor appearance, equipment and isRaceMenuOpen properties should present "
-          "in changeForm",
-          "[Actor]")
+TEST_CASE(
+  "Actor appearance, equipment and isRaceMenuOpen properties should present "
+  "in changeForm",
+  "[Actor]")
 {
   MpActor actor(LocationalData(), FormCallbacks::DoNothing());
   Appearance appearance;

@@ -115,7 +115,8 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
-                                  uint32_t idx, const Appearance& appearance)
+                                        uint32_t idx,
+                                        const Appearance& appearance)
 { // TODO: validate
 
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);

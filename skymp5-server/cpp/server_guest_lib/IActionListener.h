@@ -37,8 +37,8 @@ public:
   {
   }
 
-  virtual void OnUpdateAppearance(const RawMessageData& rawMsgData, uint32_t idx,
-                            const Appearance& appearance)
+  virtual void OnUpdateAppearance(const RawMessageData& rawMsgData,
+                                  uint32_t idx, const Appearance& appearance)
   {
   }
 

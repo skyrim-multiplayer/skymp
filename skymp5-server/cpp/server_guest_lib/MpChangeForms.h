@@ -1,9 +1,9 @@
 #pragma once
+#include "Appearance.h"
 #include "DynamicFields.h"
 #include "Equipment.h"
 #include "FormDesc.h"
 #include "Inventory.h"
-#include "Appearance.h"
 #include "NiPoint3.h"
 #include <cstdint>
 #include <optional>
@@ -58,11 +58,11 @@ class MpChangeForm : public MpChangeFormREFR
 public:
   auto ToTuple() const
   {
-    return std::make_tuple(recType, formDesc, baseDesc, position.x, position.y,
-                           position.z, angle.x, angle.y, angle.z, worldOrCell,
-                           inv.ToJson(), isHarvested, isOpen,
-                           baseContainerAdded, nextRelootDatetime, isDisabled,
-                           profileId, isRaceMenuOpen, appearanceDump, equipmentDump);
+    return std::make_tuple(
+      recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
+      angle.y, angle.z, worldOrCell, inv.ToJson(), isHarvested, isOpen,
+      baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
+      isRaceMenuOpen, appearanceDump, equipmentDump);
   }
 
   static nlohmann::json ToJson(const MpChangeForm& changeForm);

@@ -89,15 +89,17 @@ TEST_CASE("UpdateAppearance1", "[PartOne]")
   doAppearance();
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(
-            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-              return m.j["t"] == MsgType::UpdateAppearance && m.j["idx"] == 0 &&
-                m.reliable && m.userId == 1 && m.j["data"] == jAppearance["data"];
-            }) != partOne.Messages().end());
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
+                         return m.j["t"] == MsgType::UpdateAppearance &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["data"] == jAppearance["data"];
+                       }) != partOne.Messages().end());
 
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000ABC);
   REQUIRE(ac.GetAppearance() != nullptr);
-  REQUIRE(nlohmann::json::parse(ac.GetAppearanceAsJson()) == jAppearance["data"]);
+  REQUIRE(nlohmann::json::parse(ac.GetAppearanceAsJson()) ==
+          jAppearance["data"]);
   REQUIRE(ac.IsRaceMenuOpen() == false);
 }
 
@@ -120,16 +122,16 @@ TEST_CASE("UpdateAppearance2", "[PartOne]")
   doAppearance();
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(
-            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-              return m.j["t"] == MsgType::UpdateAppearance && m.j["idx"] == 0 &&
-                m.reliable && m.userId == 1 && m.j["data"] == jAppearance["data"];
-            }) != partOne.Messages().end());
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
+                         return m.j["t"] == MsgType::UpdateAppearance &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["data"] == jAppearance["data"];
+                       }) != partOne.Messages().end());
 
   REQUIRE(partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetAppearance() !=
           nullptr);
   REQUIRE(
-    nlohmann::json::parse(
-      partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetAppearanceAsJson()) ==
-    jAppearance["data"]);
+    nlohmann::json::parse(partOne.worldState.GetFormAt<MpActor>(0xff000ABC)
+                            .GetAppearanceAsJson()) == jAppearance["data"]);
 }

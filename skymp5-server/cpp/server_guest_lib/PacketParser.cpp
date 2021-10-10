@@ -132,7 +132,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       simdjson::dom::element jData;
       Read(jMessage, JsonPointers::data, &jData);
 
-      actionListener.OnUpdateAppearance(rawMsgData, idx, Appearance::FromJson(jData));
+      actionListener.OnUpdateAppearance(rawMsgData, idx,
+                                        Appearance::FromJson(jData));
     } break;
     case MsgType::UpdateEquipment: {
       uint32_t idx;

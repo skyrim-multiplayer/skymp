@@ -135,7 +135,8 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     [&](MpChangeForm& cf) {
       cf = static_cast<const MpChangeForm&>(newChangeForm);
 
-      // Actor without appearance would not be visible so we force player to choose appearance
+      // Actor without appearance would not be visible so we force player to
+      // choose appearance
       if (cf.appearanceDump.empty())
         cf.isRaceMenuOpen = true;
     },
