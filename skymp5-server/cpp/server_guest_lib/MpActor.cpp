@@ -31,13 +31,13 @@ void MpActor::SetRaceMenuOpen(bool isOpen)
     [&](MpChangeForm& changeForm) { changeForm.isRaceMenuOpen = isOpen; });
 }
 
-void MpActor::SetLook(const Look* newLook)
+void MpActor::SetAppearance(const Appearance* newAppearance)
 {
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
-    if (newLook)
-      changeForm.lookDump = newLook->ToJson();
+    if (newAppearance)
+      changeForm.appearanceDump = newAppearance->ToJson();
     else
-      changeForm.lookDump.clear();
+      changeForm.appearanceDump.clear();
   });
 }
 
@@ -51,7 +51,7 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
                               VisitPropertiesMode mode)
 {
   auto baseId = MpObjectReference::GetBaseId();
-  uint32_t raceId = GetLook() ? GetLook()->raceId : 0;
+  uint32_t raceId = GetAppearance() ? GetAppearance()->raceId : 0;
   BaseActorValues baseActorValues;
   WorldState* worldState = GetParent();
   if (worldState && worldState->HasEspm()) {
@@ -111,7 +111,7 @@ MpChangeForm MpActor::GetChangeForm() const
 {
   auto res = MpObjectReference::GetChangeForm();
   auto& achr = pImpl->ChangeForm();
-  res.lookDump = achr.lookDump;
+  res.appearanceDump = achr.appearanceDump;
   res.isRaceMenuOpen = achr.isRaceMenuOpen;
   res.equipmentDump = achr.equipmentDump;
   res.healthPercentage = achr.healthPercentage;
@@ -135,9 +135,8 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     [&](MpChangeForm& cf) {
       cf = static_cast<const MpChangeForm&>(newChangeForm);
 
-      // Actor without look would not be visible so we force player to choose
-      // appearance
-      if (cf.lookDump.empty())
+      // Actor without appearance would not be visible so we force player to choose appearance
+      if (cf.appearanceDump.empty())
         cf.isRaceMenuOpen = true;
     },
     Impl::Mode::NoRequestSave);
@@ -197,23 +196,23 @@ const bool& MpActor::IsRaceMenuOpen() const
   return pImpl->ChangeForm().isRaceMenuOpen;
 }
 
-std::unique_ptr<const Look> MpActor::GetLook() const
+std::unique_ptr<const Appearance> MpActor::GetAppearance() const
 {
   auto& changeForm = pImpl->ChangeForm();
-  if (changeForm.lookDump.size() > 0) {
+  if (changeForm.appearanceDump.size() > 0) {
     simdjson::dom::parser p;
-    auto doc = p.parse(changeForm.lookDump).value();
+    auto doc = p.parse(changeForm.appearanceDump).value();
 
-    std::unique_ptr<const Look> res;
-    res.reset(new Look(Look::FromJson(doc)));
+    std::unique_ptr<const Appearance> res;
+    res.reset(new Appearance(Appearance::FromJson(doc)));
     return res;
   }
   return nullptr;
 }
 
-const std::string& MpActor::GetLookAsJson()
+const std::string& MpActor::GetAppearanceAsJson()
 {
-  return pImpl->ChangeForm().lookDump;
+  return pImpl->ChangeForm().appearanceDump;
 }
 
 const std::string& MpActor::GetEquipmentAsJson()

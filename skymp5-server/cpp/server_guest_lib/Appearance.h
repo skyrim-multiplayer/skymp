@@ -13,10 +13,10 @@ struct Tint
   int32_t type = 0;
 };
 
-struct Look
+struct Appearance
 {
-  static Look FromJson(const nlohmann::json& j);
-  static Look FromJson(simdjson::dom::element& j);
+  static Appearance FromJson(const nlohmann::json& j);
+  static Appearance FromJson(simdjson::dom::element& j);
   std::string ToJson() const;
 
   bool isFemale = false;
