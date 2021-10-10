@@ -131,7 +131,8 @@ nlohmann::json Inventory::Entry::ToJson() const
   return obj;
 }
 
-Inventory::Entry Inventory::Entry::FromJson(simdjson::dom::element& jEntry)
+Inventory::Entry Inventory::Entry::FromJson(
+  const simdjson::dom::element& jEntry)
 {
   static JsonPointer baseId("baseId"), count("count"), worn("worn"),
     wornLeft("wornLeft");

@@ -385,9 +385,9 @@ TEST_CASE("Parsing RACE", "[espm]")
   auto& br = l.GetBrowser();
 
   // Ri'saad is a Khajiit roving merchant from caravan.
-  const uint32_t g_risaadFormId = 0x0001B1DB;
+  const uint32_t kRisaadFormId = 0x0001B1DB;
 
-  auto form = br.LookupById(g_risaadFormId);
+  auto form = br.LookupById(kRisaadFormId);
 
   REQUIRE(form.rec->GetType() == "NPC_");
 
