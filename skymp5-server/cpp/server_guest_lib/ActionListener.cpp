@@ -522,7 +522,11 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
                                std::to_string(raceId));
     }
 
-    //const auto raceData = espm::Convert<espm::RACE>(lookUpRace.rec)->GetData();
+    espm::CompressedFieldsCache compressedFieldCache;
+    const auto raceData =
+      espm::Convert<espm::RACE>(lookUpRace.rec)->GetData(compressedFieldCache);
+
+    return raceData.unarmedDamage;
   }
 
   const auto lookUpWeapon = browser.LookupById(hitData.source);
