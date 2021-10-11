@@ -508,7 +508,37 @@ namespace {
 float CalculateDamage(MpActor& actor, const HitData& hitData)
 {
   // TODO(#200): Implement damage calculation logic
-  return 25.f;
+  if (!actor.GetParent()->HasEspm()) {
+    throw std::runtime_error("Unable to calculate damage value without espm");
+  }
+
+  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
+
+  if (hitData.source == 0x1f4) {
+    auto raceId = actor.GetLook()->raceId;
+    const auto lookUpRace = browser.LookupById(raceId);
+    if (!lookUpRace.rec || lookUpRace.rec->GetType() != "RACE") {
+      throw std::runtime_error("Unable to get unarmed damage from " +
+                               std::to_string(raceId));
+    }
+
+    espm::CompressedFieldsCache compressedFieldCache;
+    const auto raceData =
+      espm::Convert<espm::RACE>(lookUpRace.rec)->GetData(compressedFieldCache);
+
+    return raceData.unarmedDamage;
+  }
+
+  const auto lookUpWeapon = browser.LookupById(hitData.source);
+  if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
+    throw std::runtime_error("Unable to get weapon from " +
+                             std::to_string(hitData.source));
+  }
+
+  const auto weaponData =
+    espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData().weapData;
+
+  return weaponData->damage;
 }
 }
 
