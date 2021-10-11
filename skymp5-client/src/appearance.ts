@@ -8,19 +8,38 @@ import {
   TextureSet,
   printConsole,
   VoiceType,
+  once,
+  Utility,
 } from "skyrimPlatform";
+import * as deathSystem from "./deathSystem";
 
-import * as structures from "../../lib/structures/look";
-export type Look = structures.Look;
-export type Tint = structures.Tint;
+export interface Tint {
+  texturePath: string;
+  argb: number;
+  type: number;
+}
 
-export const getLook = (actor: Actor): Look => {
+export interface Appearance {
+  isFemale: boolean;
+  raceId: number;
+  weight: number;
+  skinColor: number;
+  hairColor: number;
+  headpartIds: number[];
+  headTextureSetId: number;
+  options: number[];
+  presets: number[];
+  tints: Tint[];
+  name: string;
+}
+
+export const getAppearance = (actor: Actor): Appearance => {
   const base = ActorBase.from(actor.getBaseObject()) as ActorBase;
 
   const hairColor = base.getHairColor();
   const skinColor = TESModPlatform.getSkinColor(base);
 
-  const newLook: Look = {
+  const newAppearance: Appearance = {
     isFemale: base.getSex() === 1,
     raceId: base.getRace() ? (base.getRace() as Race).getFormID() : 0,
     weight: base.getWeight(),
@@ -39,15 +58,15 @@ export const getLook = (actor: Actor): Look => {
   const numHeadparts = base.getNumHeadParts();
   for (let i = 0; i < numHeadparts; ++i) {
     const part = base.getNthHeadPart(i);
-    if (part) newLook.headpartIds.push(part.getFormID());
+    if (part) newAppearance.headpartIds.push(part.getFormID());
   }
 
-  for (let i = 0; i < newLook.options.length; ++i) {
-    newLook.options[i] = base.getFaceMorph(i);
+  for (let i = 0; i < newAppearance.options.length; ++i) {
+    newAppearance.options[i] = base.getFaceMorph(i);
   }
 
-  for (let i = 0; i < newLook.presets.length; ++i) {
-    newLook.presets[i] = base.getFacePreset(i);
+  for (let i = 0; i < newAppearance.presets.length; ++i) {
+    newAppearance.presets[i] = base.getFacePreset(i);
   }
 
   const numTints =
@@ -60,18 +79,18 @@ export const getLook = (actor: Actor): Look => {
       type: Game.getNthTintMaskType(i),
       argb: Game.getNthTintMaskColor(i),
     };
-    newLook.tints.push(tint);
+    newAppearance.tints.push(tint);
   }
 
-  return newLook;
+  return newAppearance;
 };
 
 const isVisible = (argb: number) => argb > 0x00ffffff || argb < 0;
 
-export const applyTints = (actor: Actor | null, look: Look): void => {
-  if (!look) throw new Error("null look has been passed to applyTints");
+export const applyTints = (actor: Actor | null, appearance: Appearance): void => {
+  if (!appearance) throw new Error("null appearance has been passed to applyTints");
 
-  const tints = look.tints.filter((t) => isVisible(t.argb));
+  const tints = appearance.tints.filter((t) => isVisible(t.argb));
 
   const raceWarPaintRegex = /.*Head.+WarPaint.*/;
   const uniWarPaintRegex = /.*HeadWarPaint.*/;
@@ -101,43 +120,48 @@ export const applyTints = (actor: Actor | null, look: Look): void => {
 
 export const silentVoiceTypeId = 0x0002f7c3;
 
-const applyLookCommon = (look: Look, npc: ActorBase): void => {
-  const race = Race.from(Game.getFormEx(look.raceId));
-  const headparts = look.headpartIds
+const applyAppearanceCommon = (appearance: Appearance, npc: ActorBase): void => {
+  const race = Race.from(Game.getFormEx(appearance.raceId));
+  const headparts = appearance.headpartIds
     .map((id) => HeadPart.from(Game.getFormEx(id)))
     .filter((headpart) => !!headpart);
 
-  TESModPlatform.setNpcSex(npc, look.isFemale ? 1 : 0);
+  TESModPlatform.setNpcSex(npc, appearance.isFemale ? 1 : 0);
   if (race) TESModPlatform.setNpcRace(npc, race);
-  npc.setWeight(look.weight);
-  TESModPlatform.setNpcSkinColor(npc, look.skinColor);
-  TESModPlatform.setNpcHairColor(npc, look.hairColor);
+  npc.setWeight(appearance.weight);
+  TESModPlatform.setNpcSkinColor(npc, appearance.skinColor);
+  TESModPlatform.setNpcHairColor(npc, appearance.hairColor);
   TESModPlatform.resizeHeadpartsArray(npc, headparts.length);
   headparts.forEach((v, i) => npc.setNthHeadPart(v, i));
-  npc.setFaceTextureSet(TextureSet.from(Game.getFormEx(look.headTextureSetId))); // setFaceTextureSet supports null argument
+  npc.setFaceTextureSet(TextureSet.from(Game.getFormEx(appearance.headTextureSetId))); // setFaceTextureSet supports null argument
   npc.setVoiceType(VoiceType.from(Game.getFormEx(silentVoiceTypeId)));
-  look.options.forEach((v, i) => npc.setFaceMorph(v, i));
-  look.presets.forEach((v, i) => npc.setFacePreset(v, i));
-  if (look.name) {
-    npc.setName(look.name);
+  appearance.options.forEach((v, i) => npc.setFaceMorph(v, i));
+  appearance.presets.forEach((v, i) => npc.setFacePreset(v, i));
+  if (appearance.name) {
+    npc.setName(appearance.name);
   } else {
     // for undefined or empty name
     npc.setName(" ");
   }
 };
 
-export const applyLook = (look: Look): ActorBase => {
+export const applyAppearance = (appearance: Appearance): ActorBase => {
   const npc: ActorBase = TESModPlatform.createNpc() as ActorBase;
   if (!npc) throw new Error("createNpc returned null");
-  applyLookCommon(look, npc);
+  applyAppearanceCommon(appearance, npc);
   return npc;
 };
 
-export const applyLookToPlayer = (look: Look): void => {
-  applyLookCommon(
-    look,
+export const applyAppearanceToPlayer = (appearance: Appearance): void => {
+  applyAppearanceCommon(
+    appearance,
     ActorBase.from((Game.getPlayer() as Actor).getBaseObject()) as ActorBase
   );
-  applyTints(null, look);
+  applyTints(null, appearance);
   (Game.getPlayer() as Actor).queueNiNodeUpdate();
+  Utility.wait(0.0625).then(() => {
+    once("update", () => {
+      deathSystem.makeActorImmortal(Game.getPlayer() as Actor);
+    });
+  });
 };

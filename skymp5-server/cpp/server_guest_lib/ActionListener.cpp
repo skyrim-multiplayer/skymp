@@ -114,8 +114,9 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   SendToNeighbours(idx, rawMsgData);
 }
 
-void ActionListener::OnUpdateLook(const RawMessageData& rawMsgData,
-                                  uint32_t idx, const Look& look)
+void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
+                                        uint32_t idx,
+                                        const Appearance& appearance)
 { // TODO: validate
 
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
@@ -123,7 +124,7 @@ void ActionListener::OnUpdateLook(const RawMessageData& rawMsgData,
     return;
 
   actor->SetRaceMenuOpen(false);
-  actor->SetLook(&look);
+  actor->SetAppearance(&appearance);
   SendToNeighbours(idx, rawMsgData, true);
 }
 
@@ -502,4 +503,61 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 
   actor->SetPercentages(health, magicka, stamina);
   actor->SetLastAttributesPercentagesUpdate(now);
+}
+
+namespace {
+float CalculateDamage(MpActor& actor, const HitData& hitData)
+{
+  // TODO(#200): Implement damage calculation logic
+  if (!actor.GetParent()) {
+    throw std::runtime_error(
+      "Unable to calculate damage value without WorldState");
+  }
+
+  if (actor.GetParent()->HasEspm() == false) {
+    throw std::runtime_error("Unable to calculate damage value without espm");
+  }
+
+  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
+
+  if (hitData.source == 0x1f4) {
+    return 5.f;
+  }
+
+  const auto lookUpWeapon = browser.LookupById(hitData.source);
+  if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
+    throw std::runtime_error(
+      fmt::format("Unable to get weapon from {0:x} formId", hitData.source));
+  }
+
+  const auto weaponData =
+    espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData().weapData;
+
+  if (weaponData) {
+    return weaponData->damage;
+  } else {
+    throw std::runtime_error("Failed to read weapon data");
+  }
+}
+}
+
+void ActionListener::OnHit(const RawMessageData& rawMsgData,
+                           const HitData& hitData_)
+{
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!actor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  HitData hitData = hitData_;
+  if (hitData.agressor == 0x14) {
+    hitData.agressor = actor->GetFormId();
+  }
+  if (hitData.target == 0x14) {
+    hitData.target = actor->GetFormId();
+  }
+
+  const auto damage = CalculateDamage(*actor, hitData);
+
+  // TODO(#276): Send a packet
 }

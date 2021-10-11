@@ -1,16 +1,16 @@
-import { Movement, Transform } from "../lib/structures/movement";
-import { Look } from "../lib/structures/look";
-import { Animation } from "../lib/structures/animation";
-import { Equipment } from "../lib/structures/equipment";
-import { Inventory } from "../lib/structures/inventory";
+import { Movement, Transform } from "./movement";
+import { Appearance } from "./appearance";
+import { Animation } from "./animation";
+import { Equipment } from "./equipment";
+import { Inventory } from "./inventory";
 import * as spSnippet from "./spSnippet";
-import { ActorValues } from "../lib/structures/actorvalues";
+import { ActorValues } from "./actorvalues";
 
 export enum MsgType {
   CustomPacket = 1,
   UpdateMovement = 2,
   UpdateAnimation = 3,
-  UpdateLook = 4,
+  UpdateAppearance = 4,
   UpdateEquipment = 5,
   Activate = 6,
   UpdateProperty = 7,
@@ -23,6 +23,7 @@ export enum MsgType {
   Host = 14,
   CustomEvent = 15,
   ChangeValues = 16,
+  OnHit = 17,
 }
 
 export interface SetInventory {
@@ -48,7 +49,7 @@ export interface CreateActorMessage {
   refrId?: number;
   transform: Transform;
   isMe: boolean;
-  look?: Look;
+  appearance?: Appearance;
   equipment?: Equipment;
   inventory?: Inventory;
   baseId?: number;
@@ -72,10 +73,10 @@ export interface UpdateAnimationMessage {
   data: Animation;
 }
 
-export interface UpdateLookMessage {
-  t: MsgType.UpdateLook;
+export interface UpdateAppearanceMessage {
+  t: MsgType.UpdateAppearance;
   idx: number;
-  data: Look;
+  data: Appearance;
 }
 
 export interface UpdateEquipmentMessage {

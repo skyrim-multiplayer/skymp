@@ -65,7 +65,7 @@ public:
     uint32_t count = 0;
     EntryExtras extra;
 
-    static Entry FromJson(simdjson::dom::element& e);
+    static Entry FromJson(const simdjson::dom::element& e);
 
     friend bool operator==(const Entry& lhs, const Entry& rhs)
     {

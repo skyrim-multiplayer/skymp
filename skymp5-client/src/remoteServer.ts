@@ -25,16 +25,16 @@ import {
   Actor,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
-import { applyInventory, Inventory } from "./components/inventory";
-import { isBadMenuShown } from "./components/equipment";
-import { Movement } from "./components/movement";
-import { IdManager } from "../lib/idManager";
-import { applyLookToPlayer } from "./components/look";
+import { applyInventory, Inventory } from "./inventory";
+import { isBadMenuShown } from "./equipment";
+import { Movement } from "./movement";
+import { IdManager } from "./idManager";
+import { applyAppearanceToPlayer } from "./Appearance";
 import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
 import { localIdToRemoteId, remoteIdToLocalId } from "./view";
 import * as updateOwner from "./updateOwner";
-import { setActorValuePercentage } from "./components/actorvalues";
+import { setActorValuePercentage } from "./actorvalues";
 
 //
 // eventSource system
@@ -251,7 +251,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       idx: msg.idx,
       movement,
       numMovementChanges: 0,
-      numLookChanges: 0,
+      numAppearanceChanges: 0,
       baseId: msg.baseId,
       refrId: msg.refrId,
     };
@@ -259,8 +259,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       updateOwner.setOwnerModel(this.worldModel.forms[i]);
     }
 
-    if (msg.look) {
-      this.worldModel.forms[i].look = msg.look;
+    if (msg.appearance) {
+      this.worldModel.forms[i].appearance = msg.appearance;
     }
 
     if (msg.equipment) {
@@ -290,10 +290,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         Game.getPlayer() as Actor,
         msg.equipment
           ? {
-              entries: msg.equipment.inv.entries.filter(
-                (x) => !!Armor.from(Game.getFormEx(x.baseId))
-              ),
-            }
+            entries: msg.equipment.inv.entries.filter(
+              (x) => !!Armor.from(Game.getFormEx(x.baseId))
+            ),
+          }
           : { entries: [] },
         false
       );
@@ -367,32 +367,32 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
             printConsole("Using loadGame to spawn player");
             printConsole(
               "skinColorFromServer:",
-              msg.look ? msg.look.skinColor.toString(16) : undefined
+              msg.appearance ? msg.appearance.skinColor.toString(16) : undefined
             );
             loadGameManager.loadGame(
               msg.transform.pos,
               msg.transform.rot,
               msg.transform.worldOrCell,
-              msg.look
+              msg.appearance
                 ? {
-                    name: msg.look.name,
-                    raceId: msg.look.raceId,
-                    face: {
-                      hairColor: msg.look.hairColor,
-                      bodySkinColor: msg.look.skinColor,
-                      headTextureSetId: msg.look.headTextureSetId,
-                      headPartIds: msg.look.headpartIds,
-                      presets: msg.look.presets,
-                    },
-                  }
+                  name: msg.appearance.name,
+                  raceId: msg.appearance.raceId,
+                  face: {
+                    hairColor: msg.appearance.hairColor,
+                    bodySkinColor: msg.appearance.skinColor,
+                    headTextureSetId: msg.appearance.headTextureSetId,
+                    headPartIds: msg.appearance.headpartIds,
+                    presets: msg.appearance.presets,
+                  },
+                }
                 : undefined
             );
             once("update", () => {
               applyPcInv();
               Utility.wait(0.3).then(applyPcInv);
-              if (msg.look) {
-                applyLookToPlayer(msg.look);
-                if (msg.look.isFemale)
+              if (msg.appearance) {
+                applyAppearanceToPlayer(msg.appearance);
+                if (msg.appearance.isFemale)
                   // Fix gender-specific walking anim
                   (Game.getPlayer() as Actor).resurrect();
               }
@@ -439,13 +439,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.worldModel.forms[i].animation = msg.data;
   }
 
-  UpdateLook(msg: messages.UpdateLookMessage): void {
+  UpdateAppearance(msg: messages.UpdateAppearanceMessage): void {
     const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].look = msg.data;
-    if (!this.worldModel.forms[i].numLookChanges) {
-      this.worldModel.forms[i].numLookChanges = 0;
+    this.worldModel.forms[i].appearance = msg.data;
+    if (!this.worldModel.forms[i].numAppearanceChanges) {
+      this.worldModel.forms[i].numAppearanceChanges = 0;
     }
-    (this.worldModel.forms[i].numLookChanges as number)++;
+    (this.worldModel.forms[i].numAppearanceChanges as number)++;
   }
 
   UpdateEquipment(msg: messages.UpdateEquipmentMessage): void {
@@ -467,14 +467,16 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     sendBrowserToken();
   }
 
-  handleDisconnect(): void {}
+  handleDisconnect(): void { }
 
   ChangeValues(msg: messages.ChangeValuesMessage): void {
-    const ac = Game.getPlayer();
-    if (!ac) return;
-    setActorValuePercentage(ac, "health", msg.data.health);
-    setActorValuePercentage(ac, "stamina", msg.data.stamina);
-    setActorValuePercentage(ac, "magicka", msg.data.magicka);
+    once("update", () => {
+      const ac = Game.getPlayer();
+      if (!ac) return;
+      setActorValuePercentage(ac, "health", msg.data.health);
+      setActorValuePercentage(ac, "stamina", msg.data.stamina);
+      setActorValuePercentage(ac, "magicka", msg.data.magicka);
+    });
   }
 
   setRaceMenuOpen(msg: messages.SetRaceMenuOpenMessage): void {
@@ -562,7 +564,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   updateGamemodeData(msg: messages.UpdateGamemodeDataMessage): void {
-    storage["_api_onAnimationEvent"] = { callback() {} };
+    storage["_api_onAnimationEvent"] = { callback() { } };
     //
     // updateOwnerFunctions/updateNeighborFunctions
     //
@@ -585,7 +587,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       storage["eventSourceContexts"] = [];
     } else {
       storage["eventSourceContexts"].forEach((ctx: Record<string, unknown>) => {
-        ctx.sendEvent = () => {};
+        ctx.sendEvent = () => { };
         ctx._expired = true;
       });
     }

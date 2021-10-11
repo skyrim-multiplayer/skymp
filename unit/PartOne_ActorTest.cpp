@@ -101,7 +101,7 @@ TEST_CASE("SetUserActor failures", "[PartOne]")
                       Contains("Form with id ff000000 is not Actor"));
 }
 
-TEST_CASE("createActor message contains look", "[PartOne]")
+TEST_CASE("createActor message contains Appearance", "[PartOne]")
 {
 
   PartOne partOne;
@@ -109,24 +109,26 @@ TEST_CASE("createActor message contains look", "[PartOne]")
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
   partOne.SetUserActor(0, 0xff000ABC);
-  const Look look = Look::FromJson(jLook["data"]);
-  partOne.worldState.GetFormAt<MpActor>(0xff000ABC).SetLook(&look);
+  const Appearance appearance = Appearance::FromJson(jAppearance["data"]);
+  partOne.worldState.GetFormAt<MpActor>(0xff000ABC).SetAppearance(&appearance);
 
   DoConnect(partOne, 1);
   partOne.CreateActor(0xff000FFF, { 100.f, 200.f, 300.f }, 180.f, 0x3c);
   partOne.SetUserActor(1, 0xff000FFF);
 
-  REQUIRE(std::find_if(
-            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-              return m.j["type"] == "createActor" && m.j["idx"] == 0 &&
-                m.reliable && m.userId == 1 && m.j["look"] == jLook["data"];
-            }) != partOne.Messages().end());
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
+                         return m.j["type"] == "createActor" &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["appearance"] == jAppearance["data"];
+                       }) != partOne.Messages().end());
 
   /*REQUIRE_THROWS_WITH(
-    doLook(), Contains("Unable to update appearance, RaceMenu is not open"));
+    doAppearance(), Contains("Unable to update appearance, RaceMenu is not
+  open"));
 
   partOne.SetRaceMenuOpen(0xff000ABC, true);
-  doLook();*/
+  doAppearance();*/
 }
 
 TEST_CASE("GetUserActor", "[PartOne]")

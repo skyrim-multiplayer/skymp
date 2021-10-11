@@ -137,7 +137,7 @@ namespace {
 std::string GetName(MpActor& actor)
 {
   std::string defaultName = "Prisoner";
-  return actor.GetLook() ? actor.GetLook()->name : defaultName;
+  return actor.GetAppearance() ? actor.GetAppearance()->name : defaultName;
 }
 
 bool IsBanned(MpActor& actor)
@@ -238,7 +238,7 @@ void PartOne::SendCustomPacket(Networking::UserId userId,
 std::string PartOne::GetActorName(uint32_t actorFormId)
 {
   auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
-  return ac.GetLook() ? ac.GetLook()->name : "Prisoner";
+  return ac.GetAppearance() ? ac.GetAppearance()->name : "Prisoner";
 }
 
 NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
@@ -490,14 +490,14 @@ void PartOne::Init()
 
     auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
 
-    std::string jEquipment, jLook;
+    std::string jEquipment, jAppearance;
 
-    const char *lookPrefix = "", *look = "";
+    const char *appearancePrefix = "", *appearance = "";
     if (emitterAsActor) {
-      jLook = emitterAsActor->GetLookAsJson();
-      if (!jLook.empty()) {
-        lookPrefix = R"(, "look": )";
-        look = jLook.data();
+      jAppearance = emitterAsActor->GetAppearanceAsJson();
+      if (!jAppearance.empty()) {
+        appearancePrefix = R"(, "appearance": )";
+        appearance = jAppearance.data();
       }
     }
 
@@ -584,9 +584,9 @@ void PartOne::Init()
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix, equipment,
-      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
-      propsPostfix);
+      emitter->GetCellOrWorld(), appearancePrefix, appearance, equipmentPrefix,
+      equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
+      props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
