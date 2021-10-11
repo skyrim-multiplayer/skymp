@@ -508,7 +508,12 @@ namespace {
 float CalculateDamage(MpActor& actor, const HitData& hitData)
 {
   // TODO(#200): Implement damage calculation logic
-  if (!actor.GetParent()->HasEspm()) {
+  if (!actor.GetParent()) {
+    throw std::runtime_error(
+      "Unable to calculate damage value without WorldState");
+  }
+
+  if (actor.GetParent()->HasEspm() == false) {
     throw std::runtime_error("Unable to calculate damage value without espm");
   }
 
@@ -520,14 +525,18 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
 
   const auto lookUpWeapon = browser.LookupById(hitData.source);
   if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
-    throw std::runtime_error("Unable to get weapon from " +
-                             std::to_string(hitData.source));
+    throw std::runtime_error(
+      fmt::format("Unable to get weapon from {0:x} formId", hitData.source));
   }
 
   const auto weaponData =
     espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData().weapData;
 
-  return weaponData->damage;
+  if (weaponData) {
+    return weaponData->damage;
+  } else {
+    throw std::runtime_error("Failed to read weapon data");
+  }
 }
 }
 
