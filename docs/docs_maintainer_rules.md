@@ -4,7 +4,8 @@ Maintainers are responsible for enforcing the rules in this document. So, if you
 
 ## Messaging Protocol
 
-If PR changes messaging protocol, make sure that the author has updated `g_messagingProtocolVersion` in `skymp5-server/cpp/mp_common/Config.h`.
+If PR changes messaging protocol, make sure that the author has updated `kMessagingProtocolVersion` in `skymp5-server/cpp/mp_common/Config.h`
+and breaking change is marked in PR's name.
 
 ## Tree
 

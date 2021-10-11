@@ -1,0 +1,125 @@
+name: Bug Report
+description: A brief description of the problem, which allows you to quickly navigate the issue and describe it with simple “What? Where? When?"
+title: "[Bug]: "
+labels: ["bug-report"]
+assignees:
+  - SupAidmi
+body:
+  - type: markdown
+    attributes:
+      value: | 
+        A brief description of the problem, which allows you to quickly navigate the issue and describe it with simple What? Where? When?
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How important it is?
+      options:
+       - Critical. A critical defect that causes some key functionality to fail. 
+       - Major. A crucial error that indicates a deviation from business logic or disrupts the program, but doesn't have a vital impact on the app.
+       - Minor. A minor defect that doesn''t violate the application''s functionality when tested, but influences the expected result. A design error wobe one example. A bug that doesn't affect the functionality or operation of the app but can be detected visually, for example, a typo in the text.             
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How priory it is?
+      options:
+       - High. Anything that impacts the typical user flow or blocks app usage. 
+       - Medium. Anything that negatively affects the user experience.
+       - Low. All else (typos, missing icons, layout issues, etc.).          
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: This part elaborates on the Title field since quite often the table of contents becomes too cumbersome.
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: input
+    id: environment-os
+    attributes:
+      label: OS
+      description: What OS do you using for?
+      placeholder: Windows
+    validations:
+      required: true   
+  - type: input
+    id: environment-os-version
+    attributes:
+      label: OS version
+      description: What verison of OS do you using for?
+      placeholder: "10"
+    validations:
+      required: true        
+  - type: input
+    id: environment-skyrim-version
+    attributes:
+      label: Skyrim version
+      description: What verison of Skyrim do you using for?
+      placeholder: 1.5.97.0.8
+    validations:
+      required: true 
+  - type: input
+    id: environment-skse-version
+    attributes:
+      label: SKSE version
+      description: What verison of SKSE do you using for?
+      placeholder: 2.0.20
+    validations:
+      required: true 
+  - type: input
+    id: environment-commit-client-hash
+    attributes:
+      label: client commit''s hash
+      description: What verison of client do you using for?
+      placeholder: a41d3ddb77df5fbb982d40d400852af32ab6fd99
+    validations:
+      required: true 
+  - type: input
+    id: environment-commit-server-hash
+    attributes:
+      label: server commit''s hash
+      description: What verison of server do you using for?
+      placeholder: 60e1ad22f744b9003c8dbc40f05e2a62663ee8c7
+    validations:
+      required: true 
+  - type: input
+    id: environment-videocard
+    attributes:
+      label: Videocard model
+      description: What verison of videocard do you using for?
+      placeholder: Voodoo 2
+    validations:
+      required: true    
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: This item should contain the minimum steps that describe the entire path of reproducing the bug. 
+      placeholder: Tell us how to get this bug!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: textarea
+    id: expected-result
+    attributes:
+      label: Expected result
+      description: Be sure to describe the expected result according to the technical task.
+      placeholder: Tell us what do you expect?
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: textarea
+    id: actual-result
+    attributes:
+      label: Actual result
+      description: This field describes the actual effect of the bug.
+      placeholder: Tell us what do you get?
+      value: "A bug happened!"
+    validations:
+      required: true

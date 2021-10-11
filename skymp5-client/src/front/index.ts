@@ -1,5 +1,4 @@
 import { SkympClient } from "./skympClient";
-import { blockConsole } from "./console";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
 import {
@@ -32,7 +31,6 @@ on("update", () => {
 });
 
 browser.main();
-blockConsole();
 
 once("update", verifyVersion);
 
