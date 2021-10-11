@@ -538,9 +538,7 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
     throw std::runtime_error("Failed to read weapon data");
   }
 
-  float healthPercentage = actor.GetChangeForm().healthPercentage;
-  float currentHealthPercentage = healthPercentage - (25.f / healthPercentage);
-  return currentHealthPercentage;
+  return weaponData->damage;
 }
 }
 
@@ -560,15 +558,32 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     hitData.target = actor->GetFormId();
   }
 
-  const auto currentHealthPercentage = CalculateDamage(*actor, hitData);
+  const auto damage = CalculateDamage(*actor, hitData);
 
-  // TODO(#276): Send a packet
+  auto form = partOne.worldState.LookupFormById(hitData.target)
+    ? partOne.worldState.LookupFormById(hitData.target)
+    : throw std::runtime_error(
+        fmt::format("Unable to find an actor with id:{}", hitData.target));
+
+  MpActor* targetActor = dynamic_cast<MpActor*>(form.get());
+
+  MpChangeForm targetForm = targetActor->GetChangeForm();
+  float healthPercentage = targetForm.healthPercentage;
+  float magickaPercentage = targetForm.magickaPercentage;
+  float staminaPercentage = targetForm.staminaPercentage;
+
+  float currentHealthPercentage =
+    healthPercentage - (damage / healthPercentage);
+
   std::string s;
   s += Networking::MinPacketId;
   s += nlohmann::json{
     { "t", MsgType::ChangeValues },
-    { "data", { "health", currentHealthPercentage } }
+    { "data",
+      { "health", currentHealthPercentage },
+      { "magicka", magickaPercentage },
+      { "stamina", staminaPercentage } }
   }.dump();
 
-  actor->SendToUser(s.data(), s.size(), true);
+  targetActor->SendToUser(s.data(), s.size(), true);
 }
