@@ -5,7 +5,7 @@ function(link_vcpkg_dependencies)
       message(FATAL_ERROR "Missing ${arg} argument")
     endif()
   endforeach()
-  
+
   foreach(target ${A_TARGETS})
     find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
     find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
@@ -57,7 +57,7 @@ function(link_vcpkg_dependencies)
 
       # CommonLibSSE requirement
       target_link_libraries(${target} PUBLIC Version)
-      target_compile_options(${target} PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
+      target_compile_options(${target} PUBLIC  "/FI\"SKSE/Impl/PCH.h\"" "/FI\"SKSE/Logger.h\"")
 
       find_package(directxtk CONFIG REQUIRED)
       find_package(directxmath CONFIG REQUIRED)
@@ -66,7 +66,7 @@ function(link_vcpkg_dependencies)
 
     find_package(spdlog CONFIG REQUIRED)
     target_link_libraries(${target} PUBLIC spdlog::spdlog)
-  
+
     find_package(OpenSSL REQUIRED)
     target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
   endforeach()
