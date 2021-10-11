@@ -508,8 +508,21 @@ namespace {
 float CalculateDamage(MpActor& actor, const HitData& hitData)
 {
   // TODO(#200): Implement damage calculation logic
+  if (!actor.GetParent()->HasEspm()) {
+    throw std::runtime_error("Unable to calculate damage value without espm");
+  }
 
-  return 25.f;
+  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
+  const auto lookUpWeapon = browser.LookupById(hitData.source);
+  if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
+    throw std::runtime_error("Unable to get weapon from " +
+                             std::to_string(hitData.source));
+  }
+
+  const auto weapon = espm::Convert<espm::WEAP>(lookUpWeapon.rec);
+  float damage =
+    hitData.source == 0x1f4 ? 5 : weapon->GetData().weapData->damage;
+  return damage;
 }
 }
 
