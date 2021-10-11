@@ -505,7 +505,8 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
-float CalculateDamage(MpActor& actor, const HitData& hitData)
+float CalculateDamage(MpActor& actor, const HitData& hitData,
+                      espm::CompressedFieldsCache& compressedFieldCache)
 {
   // TODO(#200): Implement damage calculation logic
   if (!actor.GetParent()) {
@@ -523,14 +524,12 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
     auto raceId = actor.GetLook()->raceId;
     const auto lookUpRace = browser.LookupById(raceId);
     if (!lookUpRace.rec || lookUpRace.rec->GetType() != "RACE") {
-      throw std::runtime_error("Unable to get unarmed damage from " +
-                               std::to_string(raceId));
+      throw std::runtime_error(
+        fmt::format("Unable to get unarmed damage from {0:x}", raceId));
     }
 
-    espm::CompressedFieldsCache compressedFieldCache;
     const auto raceData =
       espm::Convert<espm::RACE>(lookUpRace.rec)->GetData(compressedFieldCache);
-
     return raceData.unarmedDamage;
   }
 
@@ -567,7 +566,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     hitData.target = actor->GetFormId();
   }
 
-  const auto damage = CalculateDamage(*actor, hitData);
+  auto& espmCache = partOne.worldState.GetEspmCache();
+  const auto damage = CalculateDamage(*actor, hitData, espmCache);
 
   // TODO(#276): Send a packet
 }
