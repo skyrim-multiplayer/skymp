@@ -537,12 +537,10 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   } else {
     throw std::runtime_error("Failed to read weapon data");
   }
-  
+
   float healthPercentage = actor.GetChangeForm().healthPercentage;
   float currentHealthPercentage = healthPercentage - (25.f / healthPercentage);
   return currentHealthPercentage;
-
-
 }
 }
 
@@ -568,7 +566,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   std::string s;
   s += Networking::MinPacketId;
   s += nlohmann::json{
-    { "t", MsgType::ChangeValues}, { "data", { "health", currentHealthPercentage} }
+    { "t", MsgType::ChangeValues },
+    { "data", { "health", currentHealthPercentage } }
   }.dump();
 
   actor->SendToUser(s.data(), s.size(), true);
