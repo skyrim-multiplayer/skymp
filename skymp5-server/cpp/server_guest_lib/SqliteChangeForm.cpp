@@ -10,7 +10,7 @@ std::string SqliteChangeForm::GetJsonData() const
 {
   auto j =
     nlohmann::json::object({ { "inv", inv.ToJson() },
-                             { "lookDump", lookDump },
+                             { "appearanceDump", appearanceDump },
                              { "equipmentDump", equipmentDump },
                              { "isDisabled", isDisabled },
                              { "profileId", profileId },
@@ -20,7 +20,7 @@ std::string SqliteChangeForm::GetJsonData() const
 
 void SqliteChangeForm::SetJsonData(const std::string& jsonData)
 {
-  static const JsonPointer inv("inv"), lookDump("lookDump"),
+  static const JsonPointer inv("inv"), appearanceDump("appearanceDump"),
     equipmentDump("equipmentDump"), isDisabled("isDisabled"),
     profileId("profileId"), dynamicFields("dynamicFields");
 
@@ -38,9 +38,9 @@ void SqliteChangeForm::SetJsonData(const std::string& jsonData)
       this->inv = Inventory::FromJson(jInv);
     }
     {
-      const char* jLookDump;
-      ReadEx(j, lookDump, &jLookDump);
-      this->lookDump = jLookDump;
+      const char* jAppearanceDump;
+      ReadEx(j, appearanceDump, &jAppearanceDump);
+      this->appearanceDump = jAppearanceDump;
     }
     {
       const char* jEquipmentDump;

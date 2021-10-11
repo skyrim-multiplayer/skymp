@@ -20,8 +20,8 @@ TEST_CASE("GetBaseActorValues works correctly", "[GetBaseActorValues]")
   auto& ac = p.worldState.GetFormAt<MpActor>(kRisaadFormId);
 
   uint32_t baseId = ac.GetBaseId();
-  auto look = ac.GetLook();
-  uint32_t raceId = look ? look->raceId : 0;
+  auto appearance = ac.GetAppearance();
+  uint32_t raceId = appearance ? appearance->raceId : 0;
   BaseActorValues baseValues = GetBaseActorValues(l, baseId, raceId);
 
   REQUIRE(baseValues.health == 100.f);
