@@ -513,6 +513,11 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   }
 
   const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
+
+  if (hitData.source == 0x1f4) {
+    return 5.f;
+  }
+
   const auto lookUpWeapon = browser.LookupById(hitData.source);
   if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
     throw std::runtime_error("Unable to get weapon from " +
@@ -520,9 +525,8 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   }
 
   const auto weapon = espm::Convert<espm::WEAP>(lookUpWeapon.rec);
-  float damage =
-    hitData.source == 0x1f4 ? 5 : weapon->GetData().weapData->damage;
-  return damage;
+
+  return weapon->GetData().weapData->damage;
 }
 }
 
