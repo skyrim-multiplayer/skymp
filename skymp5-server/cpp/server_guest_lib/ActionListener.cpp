@@ -530,5 +530,15 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
 
   const auto damage = CalculateDamage(*actor, hitData);
 
+  float health = actor->GetChangeForm().healthPercentage;
+  float currentHealth = health - damage;
+
   // TODO(#276): Send a packet
+  std::string s;
+  s += Networking::MinPacketId;
+  s += nlohmann::json{
+    { "t", MsgType::OnHit }, { "data", { "health", currentHealth } }
+  }.dump();
+
+  actor->SendToUser(s.data(), s.size(), true);
 }
