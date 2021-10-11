@@ -508,7 +508,9 @@ namespace {
 float CalculateDamage(MpActor& actor, const HitData& hitData)
 {
   // TODO(#200): Implement damage calculation logic
-  return 25.f;
+  float healthPercentage = actor.GetChangeForm().healthPercentage;
+  float currentHealthPercentage = healthPercentage - (25.f / healthPercentage);
+  return currentHealthPercentage;
 }
 }
 
@@ -528,16 +530,13 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     hitData.target = actor->GetFormId();
   }
 
-  const auto damage = CalculateDamage(*actor, hitData);
-
-  float health = actor->GetChangeForm().healthPercentage;
-  float currentHealth = health - damage;
+  const auto currentHealthPercentage = CalculateDamage(*actor, hitData);
 
   // TODO(#276): Send a packet
   std::string s;
   s += Networking::MinPacketId;
   s += nlohmann::json{
-    { "t", MsgType::OnHit }, { "data", { "health", currentHealth } }
+    { "t", MsgType::ChangeValues}, { "data", { "health", currentHealthPercentage} }
   }.dump();
 
   actor->SendToUser(s.data(), s.size(), true);
