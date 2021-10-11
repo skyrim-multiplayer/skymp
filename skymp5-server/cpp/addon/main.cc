@@ -11,7 +11,6 @@
 #include "NetworkingMock.h"
 #include "PartOne.h"
 #include "ScriptStorage.h"
-#include "SqliteDatabase.h"
 #include <JsEngine.h>
 #include <cassert>
 #include <memory>
@@ -244,15 +243,6 @@ std::shared_ptr<IDatabase> CreateDatabase(
   auto databaseDriver = settings.count("databaseDriver")
     ? settings["databaseDriver"].get<std::string>()
     : std::string("file");
-
-  if (databaseDriver == "sqlite") {
-    auto databaseName = settings.count("databaseName")
-      ? settings["databaseName"].get<std::string>()
-      : std::string("world.sqlite");
-
-    logger->info("Using sqlite with name '" + databaseName + "'");
-    return std::make_shared<SqliteDatabase>(databaseName);
-  }
 
   if (databaseDriver == "file") {
     auto databaseName = settings.count("databaseName")
