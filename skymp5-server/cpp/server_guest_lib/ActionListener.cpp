@@ -508,6 +508,7 @@ namespace {
 float CalculateDamage(MpActor& actor, const HitData& hitData)
 {
   // TODO(#200): Implement damage calculation logic
+
   return 25.f;
 }
 }
