@@ -531,9 +531,10 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
                              std::to_string(hitData.source));
   }
 
-  const auto weapon = espm::Convert<espm::WEAP>(lookUpWeapon.rec);
+  const auto weaponData =
+    espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData().weapData;
 
-  return weapon->GetData().weapData->damage;
+  return weaponData->damage;
 }
 }
 
