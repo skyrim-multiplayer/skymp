@@ -515,7 +515,14 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
 
   if (hitData.source == 0x1f4) {
-    return 5.f;
+    auto raceId = actor.GetLook()->raceId;
+    const auto lookUpRace = browser.LookupById(raceId);
+    if (!lookUpRace.rec || lookUpRace.rec->GetType() != "RACE") {
+      throw std::runtime_error("Unable to get unarmed damage from " +
+                               std::to_string(raceId));
+    }
+
+    //const auto raceData = espm::Convert<espm::RACE>(lookUpRace.rec)->GetData();
   }
 
   const auto lookUpWeapon = browser.LookupById(hitData.source);
