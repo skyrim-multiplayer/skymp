@@ -505,6 +505,26 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
+uint32_t GetRaceId(MpActor& actor,
+                   espm::CompressedFieldsCache& compressedFieldCache,
+                   const espm::CombineBrowser& browser)
+{
+  auto look = actor.GetLook();
+  if (look) {
+    return look->raceId;
+  }
+
+  auto baseId = actor.GetBaseId();
+  const auto lookUpNPC = browser.LookupById(baseId);
+  if (!lookUpNPC.rec || lookUpNPC.rec->GetType() != "NPC_") {
+    throw std::runtime_error(
+      fmt::format("Unable to get raceId from {0:x}", baseId));
+  }
+  return espm::Convert<espm::NPC_>(lookUpNPC.rec)
+    ->GetData(compressedFieldCache)
+    .race;
+}
+
 float CalculateDamage(MpActor& actor, const HitData& hitData,
                       espm::CompressedFieldsCache& compressedFieldCache)
 {
@@ -521,7 +541,8 @@ float CalculateDamage(MpActor& actor, const HitData& hitData,
   const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
 
   if (hitData.source == 0x1f4) {
-    auto raceId = actor.GetLook()->raceId;
+    uint32_t raceId = GetRaceId(actor, compressedFieldCache, browser);
+
     const auto lookUpRace = browser.LookupById(raceId);
     if (!lookUpRace.rec || lookUpRace.rec->GetType() != "RACE") {
       throw std::runtime_error(
