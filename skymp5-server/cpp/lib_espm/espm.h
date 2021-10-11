@@ -681,9 +681,32 @@ public:
   };
   static_assert(sizeof(WeapData) == 10);
 
+  enum AnimType : uint8_t
+  {
+    Other = 0,
+    OneHandSword = 1,
+    OneHandDagger = 2,
+    OneHandAxe = 3,
+    OneHandMace = 4,
+    TwoHandSword = 5,
+    TwoHandAxe = 6,
+    Bow = 7,
+    Staff = 8,
+    Crossbow = 9
+  };
+
+  struct DNAM
+  {
+    uint8_t animType = 0;
+    uint8_t unknown01 = 0;
+    uint16_t unknown02 = 0;
+    float speed = 0.f;
+  };
+
   struct Data
   {
     const WeapData* weapData = nullptr;
+    const DNAM* weapDNAM = nullptr;
   };
 
   Data GetData() const noexcept;

@@ -961,6 +961,8 @@ espm::WEAP::Data espm::WEAP::GetData() const noexcept
     this, [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
         result.weapData = reinterpret_cast<const WeapData*>(data);
+      } else if (!memcmp(type, "DNAM", 4)) {
+        result.weapDNAM = reinterpret_cast<const DNAM*>(data);
       }
     });
   return result;
