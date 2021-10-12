@@ -543,8 +543,12 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   return weaponData->damage;
 }
 
-float GetAttributeValue()
+float CalculateCurrentHealthPercentage(float damage, float healthPercentage)
 {
+  float health = 100.f;
+  float damagePercentage = damage / health;
+  float currentHealthPercentage = healthPercentage - damagePercentage;
+  return currentHealthPercentage;
 }
 }
 
@@ -573,7 +577,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  float currentHealthPercentage = healthPercentage - (damage / 100.f);
+  float currentHealthPercentage =
+    CalculateCurrentHealthPercentage(damage, healthPercentage);
 
   std::string s;
   s += Networking::MinPacketId;
@@ -588,4 +593,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   targetActor.SendToUser(s.data(), s.size(), true);
   targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
                              staminaPercentage);
+  auto now = std::chrono::steady_clock::now();
+  targetActor.SetLastAttributesPercentagesUpdate(now);
 }
