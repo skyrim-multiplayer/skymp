@@ -560,14 +560,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
 
   const auto damage = CalculateDamage(*actor, hitData);
 
-  auto form = partOne.worldState.LookupFormById(hitData.target)
-    ? partOne.worldState.LookupFormById(hitData.target)
-    : throw std::runtime_error(
-        fmt::format("Unable to find an actor with id:{}", hitData.target));
+  auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
 
-  MpActor* targetActor = dynamic_cast<MpActor*>(form.get());
-
-  MpChangeForm targetForm = targetActor->GetChangeForm();
+  MpChangeForm targetForm = targetActor.GetChangeForm();
   float healthPercentage = targetForm.healthPercentage;
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
@@ -585,5 +580,5 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
       { "stamina", staminaPercentage } }
   }.dump();
 
-  targetActor->SendToUser(s.data(), s.size(), true);
+  targetActor.SendToUser(s.data(), s.size(), true);
 }
