@@ -243,4 +243,7 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
   REQUIRE(changeForm.healthPercentage == 0.96f);
   REQUIRE(changeForm.magickaPercentage == 1.f);
   REQUIRE(changeForm.staminaPercentage == 1.f);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
 }
