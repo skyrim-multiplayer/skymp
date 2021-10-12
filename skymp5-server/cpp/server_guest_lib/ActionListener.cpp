@@ -2,6 +2,7 @@
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
+#include "EspmReader.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
@@ -507,40 +508,19 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
-float CalculateDamage(MpActor& actor, const HitData& hitData)
+float CalculateDamage(MpActor& actor, const HitData& hitData,
+                      std::shared_ptr<EspmReader> espmReader)
 {
   // TODO(#200): Implement damage calculation logic
-  if (!actor.GetParent()) {
-    throw std::runtime_error(
-      "Unable to calculate damage value without WorldState");
-  }
-
-  if (actor.GetParent()->HasEspm() == false) {
-    throw std::runtime_error("Unable to calculate damage value without espm");
-  }
-
-  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
-
   if (hitData.source == 0x1f4) {
-    return 5.f;
+    auto appearance = actor.GetAppearance();
+    uint32_t raceId = appearance
+      ? appearance->raceId
+      : espmReader->GetNPCData(actor.GetBaseId()).race;
+    return espmReader->GetRaceData(raceId).unarmedDamage;
   }
 
-  const auto lookUpWeapon = browser.LookupById(hitData.source);
-  if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
-    throw std::runtime_error(
-      fmt::format("Unable to get weapon from {0:x} formId", hitData.source));
-  }
-
-  const auto weaponData =
-    espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData().weapData;
-
-  if (weaponData) {
-    return weaponData->damage;
-  } else {
-    throw std::runtime_error("Failed to read weapon data");
-  }
-
-  return weaponData->damage;
+  return espmReader->GetWeaponData(hitData.source).weapData->damage;
 }
 
 float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
@@ -571,6 +551,15 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
+  if (!actor->GetParent()) {
+    throw std::runtime_error(
+      "Unable to calculate damage value without WorldState");
+  }
+
+  if (actor->GetParent()->HasEspm() == false) {
+    throw std::runtime_error("Unable to calculate damage value without espm");
+  }
+
   HitData hitData = hitData_;
   if (hitData.agressor == 0x14) {
     hitData.agressor = actor->GetFormId();
@@ -579,7 +568,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     hitData.target = actor->GetFormId();
   }
 
-  const auto damage = CalculateDamage(*actor, hitData);
+  auto espmReader = EspmReader::GetEspmReader(
+    partOne.worldState.GetEspmCache(), partOne.GetEspm().GetBrowser());
+
+  const auto damage = CalculateDamage(*actor, hitData, espmReader);
 
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
 
