@@ -686,7 +686,8 @@ public:
     const WeapData* weapData = nullptr;
   };
 
-  Data GetData() const noexcept;
+  Data GetData(CompressedFieldsCache& compressedFieldCache =
+                 CompressedFieldsCache()) const noexcept;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 

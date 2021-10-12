@@ -2,6 +2,7 @@
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
+#include "EspmReader.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
 #include "MovementValidation.h"
@@ -506,7 +507,62 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
+<<<<<<< Updated upstream
 float CalculateDamage(MpActor& actor, const HitData& hitData)
+=======
+espm::RACE::Data GetRaceData(const espm::CombineBrowser& browser,
+                             const uint32_t raceId,
+                             espm::CompressedFieldsCache& compressedFieldCache)
+{
+  const auto lookUpRace = browser.LookupById(raceId);
+  if (!lookUpRace.rec || lookUpRace.rec->GetType() != "RACE") {
+    throw std::runtime_error(
+      fmt::format("Unable to get race from {0:x}", raceId));
+  }
+  return espm::Convert<espm::RACE>(lookUpRace.rec)
+    ->GetData(compressedFieldCache);
+}
+
+espm::WEAP::Data GetWeaponData(
+  const espm::CombineBrowser& browser, const uint32_t source,
+  espm::CompressedFieldsCache& compressedFieldCache)
+{
+  const auto lookUpWeapon = browser.LookupById(source);
+  if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
+    throw std::runtime_error(
+      fmt::format("Unable to get weapon from {0:x} formId", source));
+  }
+
+  return espm::Convert<espm::WEAP>(lookUpWeapon.rec)
+    ->GetData(compressedFieldCache);
+}
+
+espm::NPC_::Data GetNPCData(const espm::CombineBrowser& browser,
+                            const uint32_t baseId,
+                            espm::CompressedFieldsCache& compressedFieldCache)
+{
+  const auto lookUpNPC = browser.LookupById(baseId);
+  if (!lookUpNPC.rec || lookUpNPC.rec->GetType() != "NPC_") {
+    throw std::runtime_error(
+      fmt::format("Unable to get raceId from {0:x}", baseId));
+  }
+  return espm::Convert<espm::NPC_>(lookUpNPC.rec)
+    ->GetData(compressedFieldCache);
+}
+
+uint32_t GetRaceId(MpActor& actor,
+                   espm::CompressedFieldsCache& compressedFieldCache,
+                   const espm::CombineBrowser& browser)
+{
+  auto look = actor.GetLook();
+  return look
+    ? look->raceId
+    : GetNPCData(browser, actor.GetBaseId(), compressedFieldCache).race;
+}
+
+float CalculateDamage(MpActor& actor, const HitData& hitData,
+                      std::shared_ptr<EspmReader> espmReader)
+>>>>>>> Stashed changes
 {
   // TODO(#200): Implement damage calculation logic
   if (!actor.GetParent()) {
@@ -521,6 +577,7 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
 
   if (hitData.source == 0x1f4) {
+<<<<<<< Updated upstream
     return 5.f;
   }
 
@@ -528,10 +585,15 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
     throw std::runtime_error(
       fmt::format("Unable to get weapon from {0:x} formId", hitData.source));
+=======
+    uint32_t raceId = GetRaceId(actor, compressedFieldCache, browser);
+
+    return GetRaceData(browser, raceId, compressedFieldCache).unarmedDamage;
+>>>>>>> Stashed changes
   }
 
   const auto weaponData =
-    espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData().weapData;
+    GetWeaponData(browser, hitData.source, compressedFieldCache).weapData;
 
   if (weaponData) {
     return weaponData->damage;
@@ -556,8 +618,14 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   if (hitData.target == 0x14) {
     hitData.target = actor->GetFormId();
   }
+  auto espmReader = EspmReader::GetEspmReader(
+    partOne.worldState.GetEspmCache(), partOne.GetEspm().GetBrowser());
 
+<<<<<<< Updated upstream
   const auto damage = CalculateDamage(*actor, hitData);
+=======
+  const auto damage = CalculateDamage(*actor, hitData, espmReader);
+>>>>>>> Stashed changes
 
   // TODO(#276): Send a packet
 }

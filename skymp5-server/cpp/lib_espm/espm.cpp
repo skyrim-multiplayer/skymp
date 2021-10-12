@@ -954,15 +954,18 @@ espm::NPC_::Data espm::NPC_::GetData(
   return result;
 }
 
-espm::WEAP::Data espm::WEAP::GetData() const noexcept
+espm::WEAP::Data espm::WEAP::GetData(
+  CompressedFieldsCache& compressedFieldCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
         result.weapData = reinterpret_cast<const WeapData*>(data);
       }
-    });
+    },
+    &compressedFieldCache);
   return result;
 }
 
@@ -971,7 +974,8 @@ espm::RACE::Data espm::RACE::GetData(
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t size, const char* data) {
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
         result.startingHealth = *reinterpret_cast<const float*>(data + 36);
         result.startingMagicka = *reinterpret_cast<const float*>(data + 40);
@@ -980,6 +984,7 @@ espm::RACE::Data espm::RACE::GetData(
         result.magickaRegen = *reinterpret_cast<const float*>(data + 88);
         result.staminaRegen = *reinterpret_cast<const float*>(data + 92);
       }
-    });
+    },
+    &compressedFieldCache);
   return result;
 }
