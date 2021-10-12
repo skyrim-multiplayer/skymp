@@ -512,7 +512,7 @@ float CalculateDamage(MpActor& actor, const HitData& hitData,
 {
   // TODO(#200): Implement damage calculation logic
   if (hitData.source == 0x1f4) {
-    auto look = actor.GetLook();
+    auto look = actor.GetAppearance();
     uint32_t raceId =
       look ? look->raceId : espmReader->GetNPCData(actor.GetBaseId()).race;
     return espmReader->GetRaceData(raceId).unarmedDamage;
