@@ -581,4 +581,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   }.dump();
 
   targetActor.SendToUser(s.data(), s.size(), true);
+  targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
+                             staminaPercentage);
 }
