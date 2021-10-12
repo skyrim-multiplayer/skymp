@@ -105,9 +105,9 @@ TEST_CASE("UpdateMovement", "[PartOne]")
                            m.j["idx"] == 1 && m.reliable && m.userId == 1;
                        }) != partOne.Messages().end());
 
-  // Look must be empty by default
+  // Appearance must be empty by default
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) { return m.j["look"] != nullptr; }) ==
+                       [&](auto m) { return m.j["appearance"] != nullptr; }) ==
           partOne.Messages().end());
 
   partOne.Messages().clear();

@@ -7,7 +7,7 @@ enum class MsgType : int64_t
   CustomPacket = 1,
   UpdateMovement = 2,
   UpdateAnimation = 3,
-  UpdateLook = 4,
+  UpdateAppearance = 4,
   UpdateEquipment = 5,
   Activate = 6,
   UpdateProperty = 7,
