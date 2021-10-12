@@ -983,6 +983,7 @@ espm::RACE::Data espm::RACE::GetData(
         result.healRegen = *reinterpret_cast<const float*>(data + 84);
         result.magickaRegen = *reinterpret_cast<const float*>(data + 88);
         result.staminaRegen = *reinterpret_cast<const float*>(data + 92);
+        result.unarmedDamage = *reinterpret_cast<const float*>(data + 96);
       }
     },
     &compressedFieldCache);
