@@ -2,9 +2,9 @@
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
-#include "EspmReader.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
+#include "GetBaseActorValues.h"
 #include "MovementValidation.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
@@ -507,19 +507,59 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
-float CalculateDamage(MpActor& actor, const HitData& hitData,
-                      std::shared_ptr<EspmReader> espmReader)
+float CalculateDamage(MpActor& actor, const HitData& hitData)
 {
   // TODO(#200): Implement damage calculation logic
-  if (hitData.source == 0x1f4) {
-    auto appearance = actor.GetAppearance();
-    uint32_t raceId = appearance
-      ? appearance->raceId
-      : espmReader->GetNPCData(actor.GetBaseId()).race;
-    return espmReader->GetRaceData(raceId).unarmedDamage;
+  if (!actor.GetParent()) {
+    throw std::runtime_error(
+      "Unable to calculate damage value without WorldState");
   }
 
-  return espmReader->GetWeaponData(hitData.source).weapData->damage;
+  if (actor.GetParent()->HasEspm() == false) {
+    throw std::runtime_error("Unable to calculate damage value without espm");
+  }
+
+  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
+
+  if (hitData.source == 0x1f4) {
+    return 5.f;
+  }
+
+  const auto lookUpWeapon = browser.LookupById(hitData.source);
+  if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
+    throw std::runtime_error(
+      fmt::format("Unable to get weapon from {0:x} formId", hitData.source));
+  }
+
+  const auto weaponData =
+    espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData().weapData;
+
+  if (weaponData) {
+    return weaponData->damage;
+  } else {
+    throw std::runtime_error("Failed to read weapon data");
+  }
+
+  return weaponData->damage;
+}
+
+float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
+                                       float healthPercentage)
+{
+  BaseActorValues baseActorValues;
+  auto* parent = actor->GetParent();
+  if (parent && parent->HasEspm()) {
+    auto& espm = parent->GetEspm();
+
+    uint32_t baseId = actor->GetBaseId();
+    auto raceIdOverride =
+      actor->GetAppearance() ? actor->GetAppearance()->raceId : 0;
+    baseActorValues = GetBaseActorValues(espm, baseId, raceIdOverride);
+  }
+
+  float damagePercentage = damage / baseActorValues.health;
+  float currentHealthPercentage = healthPercentage - damagePercentage;
+  return currentHealthPercentage;
 }
 }
 
@@ -531,15 +571,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
-  if (!actor->GetParent()) {
-    throw std::runtime_error(
-      "Unable to calculate damage value without WorldState");
-  }
-
-  if (actor->GetParent()->HasEspm() == false) {
-    throw std::runtime_error("Unable to calculate damage value without espm");
-  }
-
   HitData hitData = hitData_;
   if (hitData.agressor == 0x14) {
     hitData.agressor = actor->GetFormId();
@@ -548,10 +579,31 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     hitData.target = actor->GetFormId();
   }
 
-  auto espmReader = EspmReader::GetEspmReader(
-    partOne.worldState.GetEspmCache(), partOne.GetEspm().GetBrowser());
+  const auto damage = CalculateDamage(*actor, hitData);
 
-  const auto damage = CalculateDamage(*actor, hitData, espmReader);
+  auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
 
-  // TODO(#276): Send a packet
+  MpChangeForm targetForm = targetActor.GetChangeForm();
+  float healthPercentage = targetForm.healthPercentage;
+  float magickaPercentage = targetForm.magickaPercentage;
+  float staminaPercentage = targetForm.staminaPercentage;
+
+  float currentHealthPercentage =
+    CalculateCurrentHealthPercentage(actor, damage, healthPercentage);
+
+  std::string s;
+  s += Networking::MinPacketId;
+  s += nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { "health", currentHealthPercentage },
+      { "magicka", magickaPercentage },
+      { "stamina", staminaPercentage } }
+  }.dump();
+
+  targetActor.SendToUser(s.data(), s.size(), true);
+  targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
+                             staminaPercentage);
+  auto now = std::chrono::steady_clock::now();
+  targetActor.SetLastAttributesPercentagesUpdate(now);
 }
