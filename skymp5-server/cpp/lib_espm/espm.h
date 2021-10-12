@@ -701,6 +701,7 @@ public:
     uint8_t unknown01 = 0;
     uint16_t unknown02 = 0;
     float speed = 0.f;
+    float reach = 0.f;
   };
 
   struct Data
@@ -727,6 +728,7 @@ public:
     float magickaRegen = 0.f;
     float staminaRegen = 0.f;
     float unarmedDamage = 0.f;
+    float unarmedReach = 0.f;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;

@@ -592,6 +592,32 @@ float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
   float currentHealthPercentage = healthPercentage - damagePercentage;
   return currentHealthPercentage;
 }
+
+bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
+                     espm::CompressedFieldsCache& compressedFieldCache)
+{
+  float reach = 0.f;
+  float sqrDistance = (actor.GetPos() - targetActor.GetPos()).SqrLength();
+  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
+
+  if (hitData.source == 0x1f4) {
+    auto raceId = GetRaceId(actor, compressedFieldCache, browser);
+    if (auto rec = espm::Convert<espm::RACE>(browser.LookupById(raceId).rec)) {
+      reach = rec->GetData(compressedFieldCache).unarmedReach;
+    }
+  } else {
+    if (auto rec =
+          espm::Convert<espm::WEAP>(browser.LookupById(hitData.source).rec)) {
+      if (auto data = rec->GetData().weapDNAM) {
+        reach = rec->GetData().weapDNAM->reach;
+      } else {
+        throw std::runtime_error("Failed to read weapon DNAM");
+      }
+    }
+  }
+
+  return (reach > 0) && (sqrDistance <= reach * reach);
+}
 }
 
 void ActionListener::OnHit(const RawMessageData& rawMsgData,
@@ -611,15 +637,18 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   }
 
   auto& espmCache = partOne.worldState.GetEspmCache();
-  const auto damage = CalculateDamage(*actor, hitData, espmCache);
-
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
 
   MpChangeForm targetForm = targetActor.GetChangeForm();
+  if (IsDistanceValid(*actor, targetActor, hitData, espmCache) == false) {
+    return;
+  }
+
   float healthPercentage = targetForm.healthPercentage;
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
+  const auto damage = CalculateDamage(*actor, hitData, espmCache);
   float currentHealthPercentage =
     CalculateCurrentHealthPercentage(actor, damage, healthPercentage);
 
