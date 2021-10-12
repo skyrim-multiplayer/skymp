@@ -703,6 +703,7 @@ public:
     float healRegen = 0.f;
     float magickaRegen = 0.f;
     float staminaRegen = 0.f;
+    float unarmedDamage = 0.f;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
