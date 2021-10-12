@@ -12,12 +12,14 @@ import history from "./utils/history";
 import Chat from "./features/chat";
 import AnimList from "./features/animList";
 import LoginPage from "./features/login";
+import Constructor from "./constructor";
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoggined: false
+      isLoggined: false,
+      isChecked: false
     }
   }
 
@@ -83,7 +85,17 @@ class App extends React.Component {
       )
     else
       return (
-          <LoginPage />
+        <>
+        <input
+        style = {{width:`30px`,height:`20px`}}
+        name="shura"
+        type="checkbox"
+        checked={this.state.isChecked}
+        onChange={() => {this.setState(prev => ({isChecked: !prev.isChecked}))}} />
+        {(this.state.isChecked) ?
+          <Constructor elem={this.props.elem} />
+          : <LoginPage />
+        }</>
       )
   }
 }
