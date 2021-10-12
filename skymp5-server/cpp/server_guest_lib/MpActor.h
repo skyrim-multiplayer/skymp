@@ -1,5 +1,5 @@
 #pragma once
-#include "Look.h"
+#include "Appearance.h"
 #include "MpObjectReference.h"
 #include "Structures.h"
 #include <memory>
@@ -18,13 +18,13 @@ public:
           const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
 
   const bool& IsRaceMenuOpen() const;
-  std::unique_ptr<const Look> GetLook() const;
-  const std::string& GetLookAsJson();
+  std::unique_ptr<const Appearance> GetAppearance() const;
+  const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson();
   bool IsWeaponDrawn() const;
 
   void SetRaceMenuOpen(bool isOpen);
-  void SetLook(const Look* newLook);
+  void SetAppearance(const Appearance* newAppearance);
   void SetEquipment(const std::string& jsonString);
 
   void VisitProperties(const PropertiesVisitor& visitor,

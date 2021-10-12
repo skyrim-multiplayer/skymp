@@ -86,8 +86,8 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
   uint32_t baseId = ac.GetBaseId();
-  auto look = ac.GetLook();
-  uint32_t raceId = look ? look->raceId : 0;
+  auto appearance = ac.GetAppearance();
+  uint32_t raceId = appearance ? appearance->raceId : 0;
   BaseActorValues baseValues = GetBaseActorValues(l, baseId, raceId);
 
   IActionListener::RawMessageData msgData;
@@ -217,4 +217,33 @@ TEST_CASE("OnChangeValues function doesn't sends ChangeValues message if "
 
   partOne.DestroyActor(0xff000000);
   DoDisconnect(partOne, 0);
+}
+
+TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
+          "weapon-dependent value",
+          "[ChangeValues]")
+{
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  IActionListener::RawMessageData rawMsgData;
+  rawMsgData.userId = 0;
+  HitData hitData;
+  hitData.target = 0x14;
+  hitData.source = 0x0001397E; // iron dagger 4 damage
+
+  p.Messages().clear();
+  p.GetActionListener().OnHit(rawMsgData, hitData);
+
+  REQUIRE(p.Messages().size() == 1);
+  auto changeForm = ac.GetChangeForm();
+  REQUIRE(changeForm.healthPercentage == 0.96f);
+  REQUIRE(changeForm.magickaPercentage == 1.f);
+  REQUIRE(changeForm.staminaPercentage == 1.f);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
 }
