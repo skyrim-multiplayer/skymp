@@ -511,9 +511,9 @@ uint32_t GetRaceId(MpActor& actor,
                    espm::CompressedFieldsCache& compressedFieldCache,
                    const espm::CombineBrowser& browser)
 {
-  auto look = actor.GetLook();
-  if (look) {
-    return look->raceId;
+  auto appearance = actor.GetAppearance();
+  if (appearance) {
+    return appearance->raceId;
   }
 
   auto baseId = actor.GetBaseId();
