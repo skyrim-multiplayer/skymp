@@ -9,6 +9,7 @@
 #include "PapyrusObjectReference.h"
 #include "UserMessageOutput.h"
 #include "Utils.h"
+#include "GetBaseActorValues.h"
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -541,6 +542,11 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
 
   return weaponData->damage;
 }
+
+float GetAttributeValue()
+{
+
+}
 }
 
 void ActionListener::OnHit(const RawMessageData& rawMsgData,
@@ -567,9 +573,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   float healthPercentage = targetForm.healthPercentage;
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
-
-  float currentHealthPercentage =
-    healthPercentage - (damage / healthPercentage);
+  
+  float currentHealthPercentage = healthPercentage - ( damage / 100.f);
 
   std::string s;
   s += Networking::MinPacketId;
