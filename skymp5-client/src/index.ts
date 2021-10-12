@@ -25,6 +25,12 @@ loadGameManager.addLoadGameListener(enforceLimitations);
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
+  Game.setGameSettingFloat("fDiffMultHPToPCE", 0);
+  Game.setGameSettingFloat("fDiffMultHPToPCH", 0);
+  Game.setGameSettingFloat("fDiffMultHPToPCL", 0);
+  Game.setGameSettingFloat("fDiffMultHPToPCN", 0);
+  Game.setGameSettingFloat("fDiffMultHPToPCVE", 0);
+  Game.setGameSettingFloat("fDiffMultHPToPCVH", 0);
 });
 on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);
