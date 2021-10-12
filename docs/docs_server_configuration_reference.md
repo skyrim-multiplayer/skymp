@@ -109,12 +109,12 @@ Users need to specify `"profileId"` in their `skymp5-settings.txt`.
 
 ## databaseDriver
 
-Name of a database driver which would be used to store server data. `sqlite` by default. There are also related options like `"databaseName"`. See [Database Drivers](docs_database_drivers.md) page to learn more.
+Name of a database driver which would be used to store server data. `file` by default. There are also related options like `"databaseName"`. See [Database Drivers](docs_database_drivers.md) page to learn more.
 
 ```json5
 {
   // ...
-  "databaseDriver": "sqlite"
+  "databaseDriver": "file"
   // ...
 }
 ```
