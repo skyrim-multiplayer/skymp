@@ -44,4 +44,3 @@ espm::NPC_::Data EspmReader::GetNPCData(const uint32_t baseId)
   }
   return espm::Convert<espm::NPC_>(lookUpNPC.rec)->GetData(espmCache);
 }
-
