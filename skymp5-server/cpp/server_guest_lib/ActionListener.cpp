@@ -518,11 +518,7 @@ float CalculateDamage(MpActor& actor, const HitData& hitData,
     return espmReader->GetRaceData(raceId).unarmedDamage;
   }
 
-  if (auto weaponData = espmReader->GetWeaponData(hitData.source).weapData) {
-    return weaponData->damage;
-  } else {
-    throw std::runtime_error("Failed to read weapon data");
-  }
+  return espmReader->GetWeaponData(hitData.source).weapData->damage;
 }
 }
 

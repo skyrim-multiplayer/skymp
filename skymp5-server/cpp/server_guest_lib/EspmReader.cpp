@@ -31,8 +31,12 @@ espm::WEAP::Data EspmReader::GetWeaponData(const uint32_t source)
     throw std::runtime_error(
       fmt::format("Unable to get weapon from {0:x} formId", source));
   }
-
-  return espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData(espmCache);
+  auto data = espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData(espmCache);
+  if (!data.weapData) {
+    throw std::runtime_error(
+      fmt::format("Unable to read weapon data from {0:x} formId", source));
+  }
+  return data;
 }
 
 espm::NPC_::Data EspmReader::GetNPCData(const uint32_t baseId)
