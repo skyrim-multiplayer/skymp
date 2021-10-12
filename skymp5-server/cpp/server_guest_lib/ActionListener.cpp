@@ -543,10 +543,21 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   return weaponData->damage;
 }
 
-float CalculateCurrentHealthPercentage(float damage, float healthPercentage)
+float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
+                                       float healthPercentage)
 {
-  float health = 100.f;
-  float damagePercentage = damage / health;
+  BaseActorValues baseActorValues;
+  auto* parent = actor->GetParent();
+  if (parent && parent->HasEspm()) {
+    auto& espm = parent->GetEspm();
+
+    uint32_t baseId = actor->GetBaseId();
+    auto raceIdOverride =
+      actor->GetAppearance() ? actor->GetAppearance()->raceId : 0;
+    baseActorValues = GetBaseActorValues(espm, baseId, raceIdOverride);
+  }
+
+  float damagePercentage = damage / baseActorValues.health;
   float currentHealthPercentage = healthPercentage - damagePercentage;
   return currentHealthPercentage;
 }
@@ -578,7 +589,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   float staminaPercentage = targetForm.staminaPercentage;
 
   float currentHealthPercentage =
-    CalculateCurrentHealthPercentage(damage, healthPercentage);
+    CalculateCurrentHealthPercentage(actor, damage, healthPercentage);
 
   std::string s;
   s += Networking::MinPacketId;
