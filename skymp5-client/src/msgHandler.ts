@@ -5,7 +5,7 @@ export interface MsgHandler {
   destroyActor(msg: msg.DestroyActorMessage): void;
   UpdateMovement(msg: msg.UpdateMovementMessage): void;
   UpdateAnimation(msg: msg.UpdateAnimationMessage): void;
-  UpdateLook(msg: msg.UpdateLookMessage): void;
+  UpdateAppearance(msg: msg.UpdateAppearanceMessage): void;
   UpdateEquipment(msg: msg.UpdateEquipmentMessage): void;
   ChangeValues(msg: msg.ChangeValuesMessage): void;
   setRaceMenuOpen(msg: msg.SetRaceMenuOpenMessage): void;

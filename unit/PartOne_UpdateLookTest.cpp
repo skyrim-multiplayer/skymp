@@ -61,16 +61,16 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
   REQUIRE(partOne.Messages().size() == 2);
 }
 
-TEST_CASE("Look <=> JSON casts", "[PartOne]")
+TEST_CASE("Appearance <=> JSON casts", "[PartOne]")
 {
   simdjson::dom::parser p;
-  auto jLookSimd = p.parse(jLook["data"].dump());
-  auto look = Look::FromJson(jLookSimd.value());
+  auto jAppearanceSimd = p.parse(jAppearance["data"].dump());
+  auto appearance = Appearance::FromJson(jAppearanceSimd.value());
 
-  REQUIRE(nlohmann::json::parse(look.ToJson()) == jLook["data"]);
+  REQUIRE(nlohmann::json::parse(appearance.ToJson()) == jAppearance["data"]);
 }
 
-TEST_CASE("UpdateLook1", "[PartOne]")
+TEST_CASE("UpdateAppearance1", "[PartOne]")
 {
 
   PartOne partOne;
@@ -85,23 +85,25 @@ TEST_CASE("UpdateLook1", "[PartOne]")
   partOne.SetUserActor(1, 0xffABCABC);
 
   partOne.Messages().clear();
-  auto doLook = [&] { DoMessage(partOne, 0, jLook); };
-  doLook();
+  auto doAppearance = [&] { DoMessage(partOne, 0, jAppearance); };
+  doAppearance();
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(
-            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-              return m.j["t"] == MsgType::UpdateLook && m.j["idx"] == 0 &&
-                m.reliable && m.userId == 1 && m.j["data"] == jLook["data"];
-            }) != partOne.Messages().end());
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
+                         return m.j["t"] == MsgType::UpdateAppearance &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["data"] == jAppearance["data"];
+                       }) != partOne.Messages().end());
 
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000ABC);
-  REQUIRE(ac.GetLook() != nullptr);
-  REQUIRE(nlohmann::json::parse(ac.GetLookAsJson()) == jLook["data"]);
+  REQUIRE(ac.GetAppearance() != nullptr);
+  REQUIRE(nlohmann::json::parse(ac.GetAppearanceAsJson()) ==
+          jAppearance["data"]);
   REQUIRE(ac.IsRaceMenuOpen() == false);
 }
 
-TEST_CASE("UpdateLook2", "[PartOne]")
+TEST_CASE("UpdateAppearance2", "[PartOne]")
 {
 
   PartOne partOne;
@@ -116,20 +118,20 @@ TEST_CASE("UpdateLook2", "[PartOne]")
   partOne.SetUserActor(1, 0xffABCABC);
 
   partOne.Messages().clear();
-  auto doLook = [&] { DoMessage(partOne, 0, jLook); };
-  doLook();
+  auto doAppearance = [&] { DoMessage(partOne, 0, jAppearance); };
+  doAppearance();
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(
-            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-              return m.j["t"] == MsgType::UpdateLook && m.j["idx"] == 0 &&
-                m.reliable && m.userId == 1 && m.j["data"] == jLook["data"];
-            }) != partOne.Messages().end());
+  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
+                       [&](auto m) {
+                         return m.j["t"] == MsgType::UpdateAppearance &&
+                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["data"] == jAppearance["data"];
+                       }) != partOne.Messages().end());
 
-  REQUIRE(partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLook() !=
+  REQUIRE(partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetAppearance() !=
           nullptr);
   REQUIRE(
-    nlohmann::json::parse(
-      partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetLookAsJson()) ==
-    jLook["data"]);
+    nlohmann::json::parse(partOne.worldState.GetFormAt<MpActor>(0xff000ABC)
+                            .GetAppearanceAsJson()) == jAppearance["data"]);
 }
