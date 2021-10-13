@@ -5,10 +5,13 @@ std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
   const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
   uint32_t pcLevel, uint8_t* chanceNoneOverride)
 {
+  espm::CompressedFieldsCache dummyCache;
+
   auto leveledList = espm::Convert<espm::LVLI>(lookupRes.rec);
-  if (!leveledList)
+  if (!leveledList) {
     return {};
-  auto data = leveledList->GetData();
+  }
+  auto data = leveledList->GetData(dummyCache);
 
   std::vector<Entry> res;
 
@@ -22,7 +25,6 @@ std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
 
   bool none = dist(mt) < chanceNone;
   if (!none) {
-
     std::vector<const espm::LVLI::Entry*> entriesAllowed;
     for (size_t i = 0; i < data.numEntries; ++i) {
       if (!pcLevel || data.entries[i].level <= pcLevel)
@@ -50,9 +52,11 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
   const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
   uint32_t countMult, uint32_t pcLevel, uint8_t* chanceNoneOverride)
 {
+  espm::CompressedFieldsCache dummyCache;
+
   auto leveledList = espm::Convert<espm::LVLI>(lookupRes.rec);
   bool calcForEach = leveledList &&
-    (leveledList->GetData().leveledItemFlags & espm::LVLI::Each);
+    (leveledList->GetData(dummyCache).leveledItemFlags & espm::LVLI::Each);
 
   if (calcForEach && countMult != 1) {
     std::map<uint32_t, uint32_t> res;
@@ -69,8 +73,9 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
   auto firstEvalRes = EvaluateList(br, lookupRes, pcLevel, chanceNoneOverride);
   for (auto& e : firstEvalRes) {
     auto eLookupRes = br.LookupById(e.formId);
-    if (!eLookupRes.rec)
+    if (!eLookupRes.rec) {
       continue;
+    }
     if (eLookupRes.rec->GetType() == espm::LVLI::type) {
       auto childRes = EvaluateListRecurse(br, eLookupRes, 1, pcLevel);
       for (auto& p : childRes) {
@@ -83,8 +88,9 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
   }
 
   if (countMult != 1 && !calcForEach) {
-    for (auto& p : res)
+    for (auto& p : res) {
       p.second *= countMult;
+    }
   }
 
   return res;
