@@ -1,0 +1,23 @@
+.skymp-hint {
+  width: 158px;
+  height: 126px;
+  position: absolute;
+  right: -150px;
+  color: rgba(157, 158, 158, 0.75);
+  margin-top: -20px;
+  span {
+    margin-right: 10px;
+    margin-top: 10px;
+    margin-left: 45px;
+  }
+}
+
+.skymp-hint.left {
+  transform: scale(-1, 1);
+  left: -150px;
+  font-size: 16px;
+  span {
+    transform: scale(-1, 1);
+    margin-right: 15px;
+  }
+}

@@ -4,7 +4,8 @@
 bool RecipeMatches(const espm::IdMapping* mapping, const espm::COBJ* recipe,
                    const Inventory& inputObjects, uint32_t resultObjectId)
 {
-  auto recipeData = recipe->GetData();
+  espm::CompressedFieldsCache dummyCache;
+  auto recipeData = recipe->GetData(dummyCache);
 
   enum
   {
@@ -13,18 +14,21 @@ bool RecipeMatches(const espm::IdMapping* mapping, const espm::COBJ* recipe,
   };
   const bool isTemper = recipeData.benchKeywordId == ArmorTable ||
     recipeData.benchKeywordId == SharpeningWheel;
-  if (isTemper)
+  if (isTemper) {
     return false;
+  }
 
   auto thisInputObjects = recipeData.inputObjects;
   for (auto& entry : thisInputObjects) {
     auto formId = espm::GetMappedId(entry.formId, *mapping);
-    if (inputObjects.GetItemCount(formId) != entry.count)
+    if (inputObjects.GetItemCount(formId) != entry.count) {
       return false;
+    }
   }
   auto formId = espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
-  if (formId != resultObjectId)
+  if (formId != resultObjectId) {
     return false;
+  }
   return true;
 }
 

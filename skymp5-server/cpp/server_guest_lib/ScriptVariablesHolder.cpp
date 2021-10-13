@@ -84,7 +84,7 @@ espm::Script ScriptVariablesHolder::GetScript()
     if (!rec)
       continue;
     espm::ScriptData scriptData;
-    rec->GetScriptData(&scriptData, compressedFieldsCache);
+    rec->GetScriptData(&scriptData, *compressedFieldsCache);
     auto matchingScriptData = std::find_if(
       scriptData.scripts.begin(), scriptData.scripts.end(),
       [&](const espm::Script& script) {

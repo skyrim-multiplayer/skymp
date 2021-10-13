@@ -27,7 +27,9 @@ std::vector<NiPoint3> Primitive::GetVertices(NiPoint3 pos, NiPoint3 rotRad,
 
 std::vector<NiPoint3> Primitive::GetVertices(const espm::REFR* refr)
 {
-  auto data = refr->GetData();
+  espm::CompressedFieldsCache dummyCache;
+
+  auto data = refr->GetData(dummyCache);
   NiPoint3 pos = { data.loc->pos[0], data.loc->pos[1], data.loc->pos[2] };
   NiPoint3 rotRad = { data.loc->rotRadians[0], data.loc->rotRadians[1],
                       data.loc->rotRadians[2] };
