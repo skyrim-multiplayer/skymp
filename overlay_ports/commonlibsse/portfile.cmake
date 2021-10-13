@@ -6,8 +6,6 @@ vcpkg_from_github(
     HEAD_REF master
 )
 
-#file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
-
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
 )
