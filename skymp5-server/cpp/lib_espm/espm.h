@@ -741,7 +741,7 @@ public:
     float unarmedReach = 0.f;
   };
 
-  Data GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 static_assert(sizeof(RACE) == sizeof(RecordHeader));
 
@@ -756,7 +756,7 @@ public:
     float value = 0.f;
   };
 
-  Data GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 static_assert(sizeof(GMST) == sizeof(RecordHeader));
 }

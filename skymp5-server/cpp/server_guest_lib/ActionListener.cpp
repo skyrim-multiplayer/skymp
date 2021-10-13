@@ -614,14 +614,15 @@ float GetReach(uint32_t source,
     }
   } else {
     if (auto rec = espm::Convert<espm::WEAP>(browser.LookupById(source).rec)) {
-      if (auto data = rec->GetData().weapDNAM) {
+      if (auto data = rec->GetData(compressedFieldCache).weapDNAM) {
         auto lookUpCombatDistance = browser.LookupById(0x55640);
         float fCombatDistance =
           espm::Convert<espm::GMST>(lookUpCombatDistance.rec)
             ->GetData(compressedFieldCache)
             .value;
 
-        reach = rec->GetData().weapDNAM->reach * fCombatDistance;
+        reach =
+          rec->GetData(compressedFieldCache).weapDNAM->reach * fCombatDistance;
       } else {
         throw std::runtime_error("Failed to read weapon DNAM");
       }
@@ -649,8 +650,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
 
   HitData hitData = hitData_;
 
-  if (hitData.agressor == 0x14) {
-    hitData.agressor = aggressor->GetFormId();
+  if (hitData.aggressor == 0x14) {
+    hitData.aggressor = aggressor->GetFormId();
   } else {
     throw std::runtime_error("Events from non aggressor is not supported yet");
   }
