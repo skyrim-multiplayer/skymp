@@ -987,3 +987,32 @@ espm::RACE::Data espm::RACE::GetData(
     });
   return result;
 }
+
+namespace {
+template <typename T>
+void GetGMSTGData(espm::CompressedFieldsCache& compressedFieldCache) noexcept
+{
+  T value;
+  espm::RecordHeaderAccess::IterateFields(
+    this, [&](const char* type, uint32_t size, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        value = *reinterpret_cast<const T*>(data);
+      }
+    });
+  return value;
+}
+}
+
+template <float&>
+espm::GMST::Data<float> espm::GMST::GetData(
+  CompressedFieldsCache& compressedFieldCache) const noexcept
+{
+  return { GetGMSTGData<float>(compressedFieldCache) };
+}
+
+template <uint32_t>
+espm::GMST::Data<uint32_t> espm::GMST::GetData(
+  CompressedFieldsCache& compressedFieldCache) const noexcept
+{
+  return { GetGMSTGData<uint32_t>(compressedFieldCache) };
+}

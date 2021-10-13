@@ -609,7 +609,13 @@ bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
     if (auto rec =
           espm::Convert<espm::WEAP>(browser.LookupById(hitData.source).rec)) {
       if (auto data = rec->GetData().weapDNAM) {
-        reach = rec->GetData().weapDNAM->reach;
+        auto lookUpCombatDistance = browser.LookupById(0x55640);
+        float fCombatDistance =
+          espm::Convert<espm::GMST>(lookUpCombatDistance.rec)
+            ->GetData<float>(compressedFieldCache)
+            .value;
+
+        reach = rec->GetData().weapDNAM->reach * fCombatDistance;
       } else {
         throw std::runtime_error("Failed to read weapon DNAM");
       }

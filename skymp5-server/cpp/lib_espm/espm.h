@@ -734,6 +734,31 @@ public:
   Data GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
 };
 static_assert(sizeof(RACE) == sizeof(RecordHeader));
+
+// game settings
+class GMST : public RecordHeader
+{
+public:
+  static constexpr auto type = "GMTS";
+
+  template <typename T>
+  struct Data
+  {
+    T value = 0;
+  };
+
+  template <typename T>
+  Data<T> GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
+
+  template <float&>
+  Data<float> GetData(
+    CompressedFieldsCache& compressedFieldCache) const noexcept;
+
+  template <uint32_t>
+  Data<uint32_t> GetData(
+    CompressedFieldsCache& compressedFieldCache) const noexcept;
+};
+static_assert(sizeof(GMST) == sizeof(RecordHeader));
 }
 
 namespace espm {
