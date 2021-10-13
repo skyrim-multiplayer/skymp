@@ -616,7 +616,7 @@ bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
     }
   }
 
-  return (reach > 0) && (sqrDistance <= reach * reach);
+  return (reach > 0) && (reach * reach > sqrDistance);
 }
 }
 
@@ -639,10 +639,11 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   auto& espmCache = partOne.worldState.GetEspmCache();
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
 
-  MpChangeForm targetForm = targetActor.GetChangeForm();
   if (IsDistanceValid(*actor, targetActor, hitData, espmCache) == false) {
     return;
   }
+
+  MpChangeForm targetForm = targetActor.GetChangeForm();
 
   float healthPercentage = targetForm.healthPercentage;
   float magickaPercentage = targetForm.magickaPercentage;
