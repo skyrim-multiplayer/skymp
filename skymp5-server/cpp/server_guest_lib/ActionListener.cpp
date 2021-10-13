@@ -629,23 +629,25 @@ bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
 void ActionListener::OnHit(const RawMessageData& rawMsgData,
                            const HitData& hitData_)
 {
-  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor) {
+  MpActor* aggressor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!aggressor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
   HitData hitData = hitData_;
   if (hitData.agressor == 0x14) {
-    hitData.agressor = actor->GetFormId();
+    hitData.agressor = aggressor->GetFormId();
+  } else {
+    throw std::runtime_error("Events from non aggressor is not supported yet");
   }
   if (hitData.target == 0x14) {
-    hitData.target = actor->GetFormId();
+    hitData.target = aggressor->GetFormId();
   }
 
   auto& espmCache = partOne.worldState.GetEspmCache();
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
 
-  if (IsDistanceValid(*actor, targetActor, hitData, espmCache) == false) {
+  if (IsDistanceValid(*aggressor, targetActor, hitData, espmCache) == false) {
     return;
   }
 
@@ -655,9 +657,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  const auto damage = CalculateDamage(*actor, hitData, espmCache);
+  const auto damage = CalculateDamage(*aggressor, hitData, espmCache);
   float currentHealthPercentage =
-    CalculateCurrentHealthPercentage(actor, damage, healthPercentage);
+    CalculateCurrentHealthPercentage(&targetActor, damage, healthPercentage);
 
   std::string s;
   s += Networking::MinPacketId;

@@ -739,7 +739,7 @@ static_assert(sizeof(RACE) == sizeof(RecordHeader));
 class GMST : public RecordHeader
 {
 public:
-  static constexpr auto type = "GMTS";
+  static constexpr auto type = "GMST";
 
   struct Data
   {
