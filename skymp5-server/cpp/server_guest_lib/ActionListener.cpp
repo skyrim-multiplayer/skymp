@@ -531,7 +531,6 @@ float CalculateDamage(MpActor& actor, const HitData& hitData,
                       espm::CompressedFieldsCache& compressedFieldCache)
 {
   // TODO(#200): Implement damage calculation logic
-
   if (!actor.GetParent()) {
     throw std::runtime_error(
       "Unable to calculate damage value without WorldState");
@@ -554,7 +553,6 @@ float CalculateDamage(MpActor& actor, const HitData& hitData,
 
     const auto raceData =
       espm::Convert<espm::RACE>(lookUpRace.rec)->GetData(compressedFieldCache);
-
     return raceData.unarmedDamage;
   }
 
@@ -593,21 +591,19 @@ float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
   return currentHealthPercentage;
 }
 
-bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
-                     espm::CompressedFieldsCache& compressedFieldCache)
+float GetReach(uint32_t source,
+               espm::CompressedFieldsCache& compressedFieldCache,
+               MpActor& actor)
 {
-  float reach = 0.f;
-  float sqrDistance = (actor.GetPos() - targetActor.GetPos()).SqrLength();
   const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
-
-  if (hitData.source == 0x1f4) {
+  float reach = 0.f;
+  if (source == 0x1f4) {
     auto raceId = GetRaceId(actor, compressedFieldCache, browser);
     if (auto rec = espm::Convert<espm::RACE>(browser.LookupById(raceId).rec)) {
       reach = rec->GetData(compressedFieldCache).unarmedReach;
     }
   } else {
-    if (auto rec =
-          espm::Convert<espm::WEAP>(browser.LookupById(hitData.source).rec)) {
+    if (auto rec = espm::Convert<espm::WEAP>(browser.LookupById(source).rec)) {
       if (auto data = rec->GetData().weapDNAM) {
         auto lookUpCombatDistance = browser.LookupById(0x55640);
         float fCombatDistance =
@@ -621,7 +617,14 @@ bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
       }
     }
   }
+  return reach;
+}
 
+bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
+                     espm::CompressedFieldsCache& compressedFieldCache)
+{
+  float sqrDistance = (actor.GetPos() - targetActor.GetPos()).SqrLength();
+  float reach = GetReach(hitData.source, compressedFieldCache, actor);
   return (reach > 0) && (reach * reach > sqrDistance);
 }
 }
@@ -648,6 +651,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
 
   if (IsDistanceValid(*aggressor, targetActor, hitData, espmCache) == false) {
+    float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
+    float reach = GetReach(hitData.source, espmCache, *aggressor);
+    spdlog::debug(
+      fmt::format("{0:x} actor can't reach {1:x} target because distance {2} "
+                  "is greater then first actor' attack radius {3}"),
+      aggressor->GetFormId(), targetActor.GetFormId(), distance, reach);
     return;
   }
 
