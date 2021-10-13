@@ -29,7 +29,7 @@ import { applyInventory, Inventory } from "./inventory";
 import { isBadMenuShown } from "./equipment";
 import { Movement } from "./movement";
 import { IdManager } from "./idManager";
-import { applyAppearanceToPlayer } from "./Appearance";
+import { applyAppearanceToPlayer } from "./appearance";
 import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
 import { localIdToRemoteId, remoteIdToLocalId } from "./view";
