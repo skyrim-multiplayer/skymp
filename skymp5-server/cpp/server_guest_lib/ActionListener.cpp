@@ -4,6 +4,7 @@
 #include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
+#include "GetBaseActorValues.h"
 #include "MovementValidation.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
@@ -506,7 +507,28 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
-float CalculateDamage(MpActor& actor, const HitData& hitData)
+uint32_t GetRaceId(MpActor& actor,
+                   espm::CompressedFieldsCache& compressedFieldCache,
+                   const espm::CombineBrowser& browser)
+{
+  auto appearance = actor.GetAppearance();
+  if (appearance) {
+    return appearance->raceId;
+  }
+
+  auto baseId = actor.GetBaseId();
+  const auto lookUpNPC = browser.LookupById(baseId);
+  if (!lookUpNPC.rec || lookUpNPC.rec->GetType() != "NPC_") {
+    throw std::runtime_error(
+      fmt::format("Unable to get raceId from {0:x}", baseId));
+  }
+  return espm::Convert<espm::NPC_>(lookUpNPC.rec)
+    ->GetData(compressedFieldCache)
+    .race;
+}
+
+float CalculateDamage(MpActor& actor, const HitData& hitData,
+                      espm::CompressedFieldsCache& compressedFieldCache)
 {
   // TODO(#200): Implement damage calculation logic
   if (!actor.GetParent()) {
@@ -521,7 +543,17 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
 
   if (hitData.source == 0x1f4) {
-    return 5.f;
+    uint32_t raceId = GetRaceId(actor, compressedFieldCache, browser);
+
+    const auto lookUpRace = browser.LookupById(raceId);
+    if (!lookUpRace.rec || lookUpRace.rec->GetType() != "RACE") {
+      throw std::runtime_error(
+        fmt::format("Unable to get unarmed damage from {0:x}", raceId));
+    }
+
+    const auto raceData =
+      espm::Convert<espm::RACE>(lookUpRace.rec)->GetData(compressedFieldCache);
+    return raceData.unarmedDamage;
   }
 
   const auto lookUpWeapon = browser.LookupById(hitData.source);
@@ -538,6 +570,27 @@ float CalculateDamage(MpActor& actor, const HitData& hitData)
   } else {
     throw std::runtime_error("Failed to read weapon data");
   }
+
+  return weaponData->damage;
+}
+
+float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
+                                       float healthPercentage)
+{
+  BaseActorValues baseActorValues;
+  auto* parent = actor->GetParent();
+  if (parent && parent->HasEspm()) {
+    auto& espm = parent->GetEspm();
+
+    uint32_t baseId = actor->GetBaseId();
+    auto raceIdOverride =
+      actor->GetAppearance() ? actor->GetAppearance()->raceId : 0;
+    baseActorValues = GetBaseActorValues(espm, baseId, raceIdOverride);
+  }
+
+  float damagePercentage = damage / baseActorValues.health;
+  float currentHealthPercentage = healthPercentage - damagePercentage;
+  return currentHealthPercentage;
 }
 }
 
@@ -557,7 +610,32 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     hitData.target = actor->GetFormId();
   }
 
-  const auto damage = CalculateDamage(*actor, hitData);
+  auto& espmCache = partOne.worldState.GetEspmCache();
+  const auto damage = CalculateDamage(*actor, hitData, espmCache);
 
-  // TODO(#276): Send a packet
+  auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
+
+  MpChangeForm targetForm = targetActor.GetChangeForm();
+  float healthPercentage = targetForm.healthPercentage;
+  float magickaPercentage = targetForm.magickaPercentage;
+  float staminaPercentage = targetForm.staminaPercentage;
+
+  float currentHealthPercentage =
+    CalculateCurrentHealthPercentage(actor, damage, healthPercentage);
+
+  std::string s;
+  s += Networking::MinPacketId;
+  s += nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { "health", currentHealthPercentage },
+      { "magicka", magickaPercentage },
+      { "stamina", staminaPercentage } }
+  }.dump();
+
+  targetActor.SendToUser(s.data(), s.size(), true);
+  targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
+                             staminaPercentage);
+  auto now = std::chrono::steady_clock::now();
+  targetActor.SetLastAttributesPercentagesUpdate(now);
 }
