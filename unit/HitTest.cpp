@@ -52,7 +52,7 @@ TEST_CASE("OnHit damage character by race-dependent value", "[Hit]")
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
-  hitData.agressor = 0x14;
+  hitData.aggressor = 0x14;
   hitData.source = 0x1f4; // unarmed attack
 
   p.Messages().clear();
