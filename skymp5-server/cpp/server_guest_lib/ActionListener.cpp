@@ -613,8 +613,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   }
 
   HitData hitData = hitData_;
-  if (hitData.agressor == 0x14) {
-    hitData.agressor = actor->GetFormId();
+  if (hitData.aggressor == 0x14) {
+    hitData.aggressor = actor->GetFormId();
   }
   if (hitData.target == 0x14) {
     hitData.target = actor->GetFormId();
