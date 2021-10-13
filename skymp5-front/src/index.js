@@ -66,7 +66,7 @@ const loginEmptyCaption = {
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
-      <App elem={login} />
+      <App elem={login} height={640} width={1280}/>
     </Provider>
   </React.StrictMode>,
   document.getElementById('root')

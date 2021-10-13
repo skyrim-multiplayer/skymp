@@ -10,6 +10,9 @@ import SkyrimHint from "./components/SkyrimHint";
 import LinkButton from "./components/LinkButton"
 
 const Constructor = props => {
+  let fwidth = props.width || 512;
+  let fheight = props.height || 704;
+
   let rend = props.elem;
   let result = {
     header: rend.caption,
@@ -134,7 +137,7 @@ const Constructor = props => {
 
   return (
     <div className={'login'} >
-      <div className={'login-form'}>
+      <div className={'login-form'} style={{width:`${fwidth}px`,height:`${fheight}px`}}>
         <div className={'login-form--content'}>
           {(result.header !== undefined)
             ?
@@ -146,7 +149,7 @@ const Constructor = props => {
             :
             ""
           }
-          <div className={'login-form--content_main'}>
+          <div className={'login-form--content_main'} /*style={{width:`${fwidth}px`,height:`${fheight}px`}}*/>
             {result.body}
 
             {hints.map(hint => {
@@ -159,7 +162,7 @@ const Constructor = props => {
             })}
           </div>
         </div>
-        <Frame />
+        <Frame width={fwidth} height={fheight}/>
       </div>
     </div>
   )
