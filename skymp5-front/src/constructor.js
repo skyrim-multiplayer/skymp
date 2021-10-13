@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import './features/login/styles.scss'
 import './constructor.scss'
@@ -10,8 +10,22 @@ import SkyrimHint from "./components/SkyrimHint";
 import LinkButton from "./components/LinkButton"
 
 const Constructor = props => {
-  let fwidth = props.width || 512;
-  let fheight = props.height || 704;
+
+
+  const content_mainRef = useRef()
+
+  useEffect(() => {
+    if (props.dynamicSize) {
+      if (content_mainRef && content_mainRef.current && content_mainRef.current.clientHeight && content_mainRef.current.clientWidth) {
+        setFwidth(content_mainRef.current.clientWidth + 60);
+        setFheight(content_mainRef.current.clientHeight + 150);
+      }
+    }
+  }, [])
+
+
+  const [fwidth, setFwidth] = useState(props.width || 512);
+  const [fheight, setFheight] = useState(props.height || 704);
 
   let rend = props.elem;
   let result = {
@@ -137,7 +151,7 @@ const Constructor = props => {
 
   return (
     <div className={'login'} >
-      <div className={'login-form'} style={{width:`${fwidth}px`,height:`${fheight}px`}}>
+      <div className={'login-form'} style={{ width: `${fwidth}px`, height: `${fheight}px` }}>
         <div className={'login-form--content'}>
           {(result.header !== undefined)
             ?
@@ -149,7 +163,7 @@ const Constructor = props => {
             :
             ""
           }
-          <div className={'login-form--content_main'} /*style={{width:`${fwidth}px`,height:`${fheight}px`}}*/>
+          <div className={'login-form--content_main'} ref={content_mainRef}>
             {result.body}
 
             {hints.map(hint => {
@@ -162,7 +176,7 @@ const Constructor = props => {
             })}
           </div>
         </div>
-        <Frame width={fwidth} height={fheight}/>
+        <Frame width={fwidth} height={fheight} />
       </div>
     </div>
   )
