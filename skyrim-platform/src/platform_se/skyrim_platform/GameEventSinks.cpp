@@ -435,7 +435,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       auto causeLocal = RE::TESForm::LookupByID(causeId);
       causeLocal = causeLocal == causeRefr ? causeLocal : nullptr;
 
-      // [MAJOR RELEASE] Remove "agressor"
+      // TODO(#336): drop old name "agressor" on next major release of SP
       auto aggressor = CreateObject("ObjectReference", causeLocal);
       obj.SetProperty("agressor", aggressor);
       obj.SetProperty("aggressor", aggressor);
