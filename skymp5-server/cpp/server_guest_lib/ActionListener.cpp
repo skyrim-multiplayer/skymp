@@ -612,7 +612,7 @@ bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
         auto lookUpCombatDistance = browser.LookupById(0x55640);
         float fCombatDistance =
           espm::Convert<espm::GMST>(lookUpCombatDistance.rec)
-            ->GetData<float>(compressedFieldCache)
+            ->GetData(compressedFieldCache)
             .value;
 
         reach = rec->GetData().weapDNAM->reach * fCombatDistance;

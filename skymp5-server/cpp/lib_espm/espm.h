@@ -741,22 +741,12 @@ class GMST : public RecordHeader
 public:
   static constexpr auto type = "GMTS";
 
-  template <typename T>
   struct Data
   {
-    T value = 0;
+    float value = 0.f;
   };
 
-  template <typename T>
-  Data<T> GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
-
-  template <float&>
-  Data<float> GetData(
-    CompressedFieldsCache& compressedFieldCache) const noexcept;
-
-  template <uint32_t>
-  Data<uint32_t> GetData(
-    CompressedFieldsCache& compressedFieldCache) const noexcept;
+  Data GetData(CompressedFieldsCache& compressedFieldCache) const noexcept;
 };
 static_assert(sizeof(GMST) == sizeof(RecordHeader));
 }
