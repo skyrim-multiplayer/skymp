@@ -653,10 +653,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   if (IsDistanceValid(*aggressor, targetActor, hitData, espmCache) == false) {
     float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
     float reach = GetReach(hitData.source, espmCache, *aggressor);
+    uint32_t aggressorId = aggressor->GetFormId();
+    uint32_t targetId = targetActor.GetFormId();
     spdlog::debug(
-      fmt::format("{0:x} actor can't reach {1:x} target because distance {2} "
-                  "is greater then first actor' attack radius {3}"),
-      aggressor->GetFormId(), targetActor.GetFormId(), distance, reach);
+      fmt::format("{:x} actor can't reach {:x} target because distance {} is "
+                  "greater then first actor' attack radius {}",
+                  aggressorId, targetId, distance, reach));
     return;
   }
 
