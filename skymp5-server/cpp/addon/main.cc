@@ -1369,7 +1369,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       if (lookupRes.rec) {
         auto fields = JsValue::Array(0);
 
-        auto cache = &partOne->worldState.GetEspmCache();
+        auto& cache = partOne->worldState.GetEspmCache();
 
         espm::IterateFields_(
           lookupRes.rec,
