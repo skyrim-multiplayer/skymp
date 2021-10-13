@@ -434,7 +434,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
       auto causeLocal = RE::TESForm::LookupByID(causeId);
       causeLocal = causeLocal == causeRefr ? causeLocal : nullptr;
-      obj.SetProperty("agressor", CreateObject("ObjectReference", causeLocal));
+
+      // [MAJOR RELEASE] Remove "agressor"
+      auto aggressor = CreateObject("ObjectReference", causeLocal);
+      obj.SetProperty("agressor", aggressor);
+      obj.SetProperty("aggressor", aggressor);
 
       obj.SetProperty("source",
                       CreateObject("Form", RE::TESForm::LookupByID(sourceId)));
