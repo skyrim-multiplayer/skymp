@@ -4,6 +4,7 @@
 #include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
+#include "GetBaseActorValues.h"
 #include "MovementValidation.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
@@ -114,8 +115,9 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   SendToNeighbours(idx, rawMsgData);
 }
 
-void ActionListener::OnUpdateLook(const RawMessageData& rawMsgData,
-                                  uint32_t idx, const Look& look)
+void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
+                                        uint32_t idx,
+                                        const Appearance& appearance)
 { // TODO: validate
 
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
@@ -123,7 +125,7 @@ void ActionListener::OnUpdateLook(const RawMessageData& rawMsgData,
     return;
 
   actor->SetRaceMenuOpen(false);
-  actor->SetLook(&look);
+  actor->SetAppearance(&appearance);
   SendToNeighbours(idx, rawMsgData, true);
 }
 
@@ -160,13 +162,16 @@ Equipment GetEquipment(MpActor& ac)
 
 void RecalculateWorn(MpObjectReference& refr)
 {
-  if (!refr.GetParent()->HasEspm())
+  if (!refr.GetParent()->HasEspm()) {
     return;
+  }
   auto& loader = refr.GetParent()->GetEspm();
+  auto& cache = refr.GetParent()->GetEspmCache();
 
   auto ac = dynamic_cast<MpActor*>(&refr);
-  if (!ac)
+  if (!ac) {
     return;
+  }
 
   const Equipment eq = GetEquipment(*ac);
 
@@ -176,8 +181,9 @@ void RecalculateWorn(MpObjectReference& refr)
     bool isEquipped = entry.extra.worn != Inventory::Worn::None;
     bool isWeap = !!espm::Convert<espm::WEAP>(
       loader.GetBrowser().LookupById(entry.baseId).rec);
-    if (isEquipped && isWeap)
+    if (isEquipped && isWeap) {
       continue;
+    }
     newEq.inv.AddItems({ entry });
   }
 
@@ -189,9 +195,9 @@ void RecalculateWorn(MpObjectReference& refr)
       auto lookupRes = loader.GetBrowser().LookupById(entry.baseId);
       if (auto weap = espm::Convert<espm::WEAP>(lookupRes.rec)) {
         if (!bestEntry.count ||
-            weap->GetData().weapData->damage > bestDamage) {
+            weap->GetData(cache).weapData->damage > bestDamage) {
           bestEntry = entry;
-          bestDamage = weap->GetData().weapData->damage;
+          bestDamage = weap->GetData(cache).weapData->damage;
         }
       }
     }
@@ -205,8 +211,9 @@ void RecalculateWorn(MpObjectReference& refr)
   ac->SetEquipment(newEq.ToJson().dump());
   for (auto listener : ac->GetListeners()) {
     auto actor = dynamic_cast<MpActor*>(listener);
-    if (!actor)
+    if (!actor) {
       continue;
+    }
     std::string s;
     s += Networking::MinPacketId;
     s += nlohmann::json{
@@ -364,23 +371,27 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
     partOne.worldState.GetFormAt<MpObjectReference>(workbenchId);
 
   auto& br = partOne.worldState.GetEspm().GetBrowser();
+  auto& cache = partOne.worldState.GetEspmCache();
   auto base = br.LookupById(workbench.GetBaseId());
 
-  if (base.rec->GetType() != "FURN")
+  if (base.rec->GetType() != "FURN") {
     throw std::runtime_error("Unable to use " +
                              base.rec->GetType().ToString() + " as workbench");
+  }
 
   int espmIdx = 0;
   auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
 
-  if (!recipeUsed)
+  if (!recipeUsed) {
     throw std::runtime_error("Recipe not found");
+  }
 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!me)
+  if (!me) {
     throw std::runtime_error("Unable to craft without Actor attached");
+  }
 
-  auto recipeData = recipeUsed->GetData();
+  auto recipeData = recipeUsed->GetData(cache);
   UseCraftRecipe(me, recipeData, br, espmIdx);
 }
 
@@ -505,10 +516,91 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
-float CalculateDamage(MpActor& actor, const HitData& hitData)
+uint32_t GetRaceId(MpActor& actor,
+                   espm::CompressedFieldsCache& compressedFieldCache,
+                   const espm::CombineBrowser& browser)
+{
+  auto appearance = actor.GetAppearance();
+  if (appearance) {
+    return appearance->raceId;
+  }
+
+  auto baseId = actor.GetBaseId();
+  const auto lookUpNPC = browser.LookupById(baseId);
+  if (!lookUpNPC.rec || lookUpNPC.rec->GetType() != "NPC_") {
+    throw std::runtime_error(
+      fmt::format("Unable to get raceId from {0:x}", baseId));
+  }
+  return espm::Convert<espm::NPC_>(lookUpNPC.rec)
+    ->GetData(compressedFieldCache)
+    .race;
+}
+
+float CalculateDamage(MpActor& actor, const HitData& hitData,
+                      espm::CompressedFieldsCache& compressedFieldCache)
 {
   // TODO(#200): Implement damage calculation logic
-  return 25.f;
+  if (!actor.GetParent()) {
+    throw std::runtime_error(
+      "Unable to calculate damage value without WorldState");
+  }
+
+  if (actor.GetParent()->HasEspm() == false) {
+    throw std::runtime_error("Unable to calculate damage value without espm");
+  }
+
+  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
+  auto& cache = actor.GetParent()->GetEspmCache();
+
+  if (hitData.source == 0x1f4) {
+    uint32_t raceId = GetRaceId(actor, compressedFieldCache, browser);
+
+    const auto lookUpRace = browser.LookupById(raceId);
+    if (!lookUpRace.rec || lookUpRace.rec->GetType() != "RACE") {
+      throw std::runtime_error(
+        fmt::format("Unable to get unarmed damage from {0:x}", raceId));
+    }
+
+    const auto raceData =
+      espm::Convert<espm::RACE>(lookUpRace.rec)->GetData(compressedFieldCache);
+    return raceData.unarmedDamage;
+  }
+
+  const auto lookUpWeapon = browser.LookupById(hitData.source);
+  if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
+    throw std::runtime_error(
+      fmt::format("Unable to get weapon from {0:x} formId", hitData.source));
+  }
+
+  const auto weaponData =
+    espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData(cache).weapData;
+
+  if (weaponData) {
+    return weaponData->damage;
+  } else {
+    throw std::runtime_error("Failed to read weapon data");
+  }
+
+  return weaponData->damage;
+}
+
+float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
+                                       float healthPercentage)
+{
+  BaseActorValues baseActorValues;
+  auto* parent = actor->GetParent();
+  if (parent && parent->HasEspm()) {
+    auto& espm = parent->GetEspm();
+
+    uint32_t baseId = actor->GetBaseId();
+    auto raceIdOverride =
+      actor->GetAppearance() ? actor->GetAppearance()->raceId : 0;
+    baseActorValues = GetBaseActorValues(espm, baseId, raceIdOverride);
+  }
+
+  float damagePercentage = damage / baseActorValues.health;
+  float currentHealthPercentage = healthPercentage - damagePercentage;
+  return currentHealthPercentage;
 }
 }
 
@@ -521,14 +613,39 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   }
 
   HitData hitData = hitData_;
-  if (hitData.agressor == 0x14) {
-    hitData.agressor = actor->GetFormId();
+  if (hitData.aggressor == 0x14) {
+    hitData.aggressor = actor->GetFormId();
   }
   if (hitData.target == 0x14) {
     hitData.target = actor->GetFormId();
   }
 
-  const auto damage = CalculateDamage(*actor, hitData);
+  auto& espmCache = partOne.worldState.GetEspmCache();
+  const auto damage = CalculateDamage(*actor, hitData, espmCache);
 
-  // TODO(#276): Send a packet
+  auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
+
+  MpChangeForm targetForm = targetActor.GetChangeForm();
+  float healthPercentage = targetForm.healthPercentage;
+  float magickaPercentage = targetForm.magickaPercentage;
+  float staminaPercentage = targetForm.staminaPercentage;
+
+  float currentHealthPercentage =
+    CalculateCurrentHealthPercentage(actor, damage, healthPercentage);
+
+  std::string s;
+  s += Networking::MinPacketId;
+  s += nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { "health", currentHealthPercentage },
+      { "magicka", magickaPercentage },
+      { "stamina", staminaPercentage } }
+  }.dump();
+
+  targetActor.SendToUser(s.data(), s.size(), true);
+  targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
+                             staminaPercentage);
+  auto now = std::chrono::steady_clock::now();
+  targetActor.SetLastAttributesPercentagesUpdate(now);
 }

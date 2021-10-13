@@ -1,6 +1,5 @@
 import { ObjectReference, Actor, TESModPlatform, Form } from "skyrimPlatform";
-import { NiPoint3 } from "../../lib/structures/movement";
-import { Movement, RunMode } from "./movement";
+import { NiPoint3, Movement, RunMode } from "./movement";
 
 export const getMovement = (refr: ObjectReference): Movement => {
   const ac = Actor.from(refr) as Actor;
