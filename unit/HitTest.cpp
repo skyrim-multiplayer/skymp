@@ -97,7 +97,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
 
   HitData hitData;
   hitData.target = target;
-  hitData.agressor = 0x14;
+  hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger has
 
   // fCombatDistance global value * reach
