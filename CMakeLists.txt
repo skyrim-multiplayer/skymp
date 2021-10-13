@@ -22,6 +22,7 @@ project(skymp)
 enable_testing()
 
 # Bool options
+# CAUTION! SkyrimPlatform crashes with that setting on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 
 if(JS_ENGINE_TRACING_ENABLED)
