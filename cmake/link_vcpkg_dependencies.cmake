@@ -57,7 +57,7 @@ function(link_vcpkg_dependencies)
 
       # CommonLibSSE requirement
       target_link_libraries(${target} PUBLIC Version)
-      target_compile_options(${target} PUBLIC  "/FI\"SKSE/Impl/PCH.h\"" "/FI\"SKSE/Logger.h\"")
+      target_compile_options(${target} PUBLIC "/FI\"SKSE/Impl/PCH.h\"" "/FI\"SKSE/Logger.h\"")
 
       find_package(directxtk CONFIG REQUIRED)
       find_package(directxmath CONFIG REQUIRED)
