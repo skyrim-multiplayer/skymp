@@ -23,7 +23,7 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
-  hitData.agressor = 0x14;
+  hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
 
   p.Messages().clear();
