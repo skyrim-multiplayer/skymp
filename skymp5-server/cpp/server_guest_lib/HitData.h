@@ -4,7 +4,7 @@
 
 struct HitData
 {
-  uint32_t agressor = 0;
+  uint32_t aggressor = 0;
   bool isBashAttack = false;
   bool isHitBlocked = false;
   bool isPowerAttack = false;
@@ -15,13 +15,13 @@ struct HitData
 
   static HitData FromJson(const simdjson::dom::element& data)
   {
-    JsonPointer agressor("agressor"), target("target"),
+    JsonPointer aggressor("aggressor"), target("target"),
       isBashAttack("isBashAttack"), isHitBlocked("isHitBlocked"),
       isPowerAttack("isPowerAttack"), isSneakAttack("isSneakAttack"),
       projectile("projectile"), source("source");
 
     HitData result;
-    ReadEx(data, agressor, &result.agressor);
+    ReadEx(data, aggressor, &result.aggressor);
     ReadEx(data, target, &result.target);
     ReadEx(data, isBashAttack, &result.isBashAttack);
     ReadEx(data, isHitBlocked, &result.isHitBlocked);

@@ -324,7 +324,7 @@ export class SkympClient {
 
     on("hit", (e) => {
       if (e.target.getFormID() === playerFormId) return;
-      if (e.agressor.getFormID() !== playerFormId) return;
+      if (e.aggressor.getFormID() !== playerFormId) return;
       if (sp.Weapon.from(e.source) && sp.Actor.from(e.target)) {
         this.sendTarget.send(
           { t: MsgType.OnHit, data: getHitData(e) }, true
