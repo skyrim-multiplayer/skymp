@@ -25,5 +25,5 @@ struct BaseActorValues
                             const PropertiesVisitor& visitor);
 };
 
-BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
+BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,
                                    uint32_t raceIdOverride);

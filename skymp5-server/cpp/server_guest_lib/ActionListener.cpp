@@ -586,15 +586,11 @@ float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
                                        float healthPercentage)
 {
   BaseActorValues baseActorValues;
-  auto* parent = actor->GetParent();
-  if (parent && parent->HasEspm()) {
-    auto& espm = parent->GetEspm();
-
-    uint32_t baseId = actor->GetBaseId();
-    auto raceIdOverride =
-      actor->GetAppearance() ? actor->GetAppearance()->raceId : 0;
-    baseActorValues = GetBaseActorValues(espm, baseId, raceIdOverride);
-  }
+  uint32_t baseId = actor->GetBaseId();
+  auto appearance = actor->GetAppearance();
+  auto raceIdOverride = appearance ? appearance->raceId : 0;
+  baseActorValues =
+    GetBaseActorValues(actor->GetParent(), baseId, raceIdOverride);
 
   float damagePercentage = damage / baseActorValues.health;
   float currentHealthPercentage = healthPercentage - damagePercentage;

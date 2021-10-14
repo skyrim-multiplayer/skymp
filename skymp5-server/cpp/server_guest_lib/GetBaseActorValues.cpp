@@ -1,4 +1,5 @@
 #include "GetBaseActorValues.h"
+#include "WorldState.h"
 
 void BaseActorValues::VisitBaseActorValues(BaseActorValues& baseActorValues,
                                            MpChangeForm& changeForm,
@@ -24,64 +25,17 @@ void BaseActorValues::VisitBaseActorValues(BaseActorValues& baseActorValues,
           std::to_string(changeForm.magickaPercentage).c_str());
 }
 
-namespace {
-void ExtractBaseActorValues(const espm::LookupResult& result,
-                            espm::CompressedFieldsCache& compressedFieldsCache,
-                            BaseActorValues& baseActorValues)
-{
-  auto race = espm::Convert<espm::RACE>(result.rec);
-
-  auto raceData = race->GetData(compressedFieldsCache);
-
-  baseActorValues.health = raceData.startingHealth;
-  baseActorValues.magicka = raceData.startingMagicka;
-  baseActorValues.stamina = raceData.startingStamina;
-  baseActorValues.healRate = raceData.healRegen;
-  baseActorValues.magickaRate = raceData.magickaRegen;
-  baseActorValues.staminaRate = raceData.staminaRegen;
-}
-}
-
-BaseActorValues GetBaseActorValues(espm::Loader& espm, uint32_t baseId,
+BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,
                                    uint32_t raceIdOverride)
 {
-  BaseActorValues baseActorValues;
-  espm::CompressedFieldsCache compressedFieldsCache;
-  uint32_t raceID = raceIdOverride;
-  uint16_t healthOffset = 0;
-  uint16_t magickaOffset = 0;
-  uint16_t staminaOffset = 0;
+  auto npcData = espm::GetData<espm::NPC_>(baseId, worldState);
+  uint32_t raceID = raceIdOverride ? raceIdOverride : npcData.race;
+  auto raceData = espm::GetData<espm::RACE>(raceID, worldState);
 
-  auto& browser = espm.GetBrowser();
-  auto form = browser.LookupById(baseId);
-
-  if (form.rec && form.rec->GetType() == "NPC_") {
-    auto npcData =
-      espm::Convert<espm::NPC_>(form.rec)->GetData(compressedFieldsCache);
-    healthOffset = npcData.healthOffset;
-    magickaOffset = npcData.magickaOffset;
-    staminaOffset = npcData.staminaOffset;
-    if (!raceIdOverride) {
-      raceID = npcData.race;
-    }
-    auto raceInfo = browser.LookupById(raceID);
-
-    if (raceInfo.rec && raceInfo.rec->GetType() == "RACE") {
-      ExtractBaseActorValues(raceInfo, compressedFieldsCache, baseActorValues);
-      baseActorValues.health += healthOffset;
-      baseActorValues.magicka += magickaOffset;
-      baseActorValues.stamina += staminaOffset;
-
-    } else {
-      std::string errorMessage = fmt::format(
-        "Unable to read RACE. formId: {}, raceId: {}, raceidOcerride: {}",
-        baseId, raceID, raceIdOverride);
-      throw std::runtime_error(errorMessage);
-    }
-  } else {
-    std::string errorMessage =
-      fmt::format("Unable to read NPC_. formId: {}", baseId);
-    throw std::runtime_error(errorMessage);
-  }
-  return baseActorValues;
+  return { raceData.startingHealth + npcData.healthOffset,
+           raceData.startingMagicka + npcData.magickaOffset,
+           raceData.startingStamina + npcData.staminaOffset,
+           raceData.healRegen,
+           raceData.magickaRegen,
+           raceData.staminaRegen };
 }
