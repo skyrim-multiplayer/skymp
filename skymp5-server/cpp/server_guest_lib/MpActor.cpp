@@ -54,7 +54,11 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   uint32_t raceId = GetAppearance() ? GetAppearance()->raceId : 0;
   BaseActorValues baseActorValues;
   WorldState* worldState = GetParent();
-  baseActorValues = GetBaseActorValues(worldState, baseId, raceId);
+  // this "if" is needed for unit testing: "DoMessage" can call
+  // "VisitProperties" without espm attached that couses a tests fail
+  if (worldState && worldState->HasEspm()) {
+    baseActorValues = GetBaseActorValues(worldState, baseId, raceId);
+  }
 
   MpChangeForm changeForm = GetChangeForm();
 
