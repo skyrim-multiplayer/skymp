@@ -994,6 +994,23 @@ espm::WEAP::Data espm::WEAP::GetData(
   return result;
 }
 
+namespace espm {
+ARMO::Data ARMO::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        result.armoData = reinterpret_cast<const ArmoData*>(data);
+      }
+    },
+    compressedFieldsCache);
+  return result;
+}
+}
+
 espm::RACE::Data espm::RACE::GetData(
   CompressedFieldsCache& compressedFieldsCache) const noexcept
 {

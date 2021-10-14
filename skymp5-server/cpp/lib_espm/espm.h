@@ -603,7 +603,6 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(ACTI) == sizeof(RecordHeader));
 
@@ -628,7 +627,6 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(COBJ) == sizeof(RecordHeader));
 
@@ -644,7 +642,6 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(OTFT) == sizeof(RecordHeader));
 
@@ -706,6 +703,7 @@ public:
 
   struct DNAM
   {
+    // XXX: enum
     uint8_t animType = 0;
     uint8_t unknown01 = 0;
     uint16_t unknown02 = 0;
@@ -720,7 +718,28 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
+};
+static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+
+class ARMO : public RecordHeader
+{
+public:
+  static constexpr auto type = "ARMO";
+
+  struct ArmoData
+  {
+    uint32_t baseValue;
+    float weight;
+  };
+  static_assert(sizeof(ArmoData) == 8);
+
+  // XXX: set fields in-place would be better, gotta redo this
+  struct Data
+  {
+    const ArmoData* armoData = nullptr;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 

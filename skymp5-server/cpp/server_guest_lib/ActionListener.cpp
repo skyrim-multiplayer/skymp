@@ -539,18 +539,18 @@ uint32_t GetRaceId(MpActor& actor,
 float CalculateDamage(MpActor& actor, const HitData& hitData,
                       espm::CompressedFieldsCache& compressedFieldCache)
 {
-  // TODO(#200): Implement damage calculation logic
-  if (!actor.GetParent()) {
+  const auto worldState = actor.GetParent();
+  if (!worldState) {
     throw std::runtime_error(
       "Unable to calculate damage value without WorldState");
   }
 
-  if (actor.GetParent()->HasEspm() == false) {
+  if (!worldState->HasEspm()) {
     throw std::runtime_error("Unable to calculate damage value without espm");
   }
 
-  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
-  auto& cache = actor.GetParent()->GetEspmCache();
+  const auto& browser = worldState->GetEspm().GetBrowser();
+  auto& cache = worldState->GetEspmCache();
 
   if (hitData.source == 0x1f4) {
     uint32_t raceId = GetRaceId(actor, compressedFieldCache, browser);
@@ -572,14 +572,21 @@ float CalculateDamage(MpActor& actor, const HitData& hitData,
       fmt::format("Unable to get weapon from {0:x} formId", hitData.source));
   }
 
+  // Note: bug
   const auto weaponData =
     espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData(cache).weapData;
-
-  if (weaponData) {
-    return weaponData->damage;
-  } else {
+  if (!weaponData) {
     throw std::runtime_error("Failed to read weapon data");
   }
+
+  auto armorData = espm::GetData<espm::ARMO>(hitData.target, worldState);
+  armorData.armoData->baseValue;
+
+  auto damage = weaponData->damage;
+  if (hitData.isHitBlocked) {
+    damage /= 2;
+  }
+  return damage;
 }
 
 float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
