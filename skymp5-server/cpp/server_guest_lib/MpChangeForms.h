@@ -1,9 +1,9 @@
 #pragma once
+#include "Appearance.h"
 #include "DynamicFields.h"
 #include "Equipment.h"
 #include "FormDesc.h"
 #include "Inventory.h"
-#include "Look.h"
 #include "NiPoint3.h"
 #include <cstdint>
 #include <optional>
@@ -39,10 +39,10 @@ public:
 
   bool isRaceMenuOpen = false;
 
-  // 'lookDump' and 'equipmentDump' can be empty. it means nullopt.
+  // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.
   // "unexisting" equipment and equipment with zero entries are different
   // values in skymp due to poor design
-  std::string lookDump, equipmentDump;
+  std::string appearanceDump, equipmentDump;
   float healthPercentage = 1.0f;
   float magickaPercentage = 1.0f;
   float staminaPercentage = 1.0f;
@@ -58,11 +58,11 @@ class MpChangeForm : public MpChangeFormREFR
 public:
   auto ToTuple() const
   {
-    return std::make_tuple(recType, formDesc, baseDesc, position.x, position.y,
-                           position.z, angle.x, angle.y, angle.z, worldOrCell,
-                           inv.ToJson(), isHarvested, isOpen,
-                           baseContainerAdded, nextRelootDatetime, isDisabled,
-                           profileId, isRaceMenuOpen, lookDump, equipmentDump);
+    return std::make_tuple(
+      recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
+      angle.y, angle.z, worldOrCell, inv.ToJson(), isHarvested, isOpen,
+      baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
+      isRaceMenuOpen, appearanceDump, equipmentDump);
   }
 
   static nlohmann::json ToJson(const MpChangeForm& changeForm);

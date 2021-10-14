@@ -11,7 +11,6 @@
 #include "NetworkingMock.h"
 #include "PartOne.h"
 #include "ScriptStorage.h"
-#include "SqliteDatabase.h"
 #include <JsEngine.h>
 #include <cassert>
 #include <memory>
@@ -244,15 +243,6 @@ std::shared_ptr<IDatabase> CreateDatabase(
   auto databaseDriver = settings.count("databaseDriver")
     ? settings["databaseDriver"].get<std::string>()
     : std::string("file");
-
-  if (databaseDriver == "sqlite") {
-    auto databaseName = settings.count("databaseName")
-      ? settings["databaseName"].get<std::string>()
-      : std::string("world.sqlite");
-
-    logger->info("Using sqlite with name '" + databaseName + "'");
-    return std::make_shared<SqliteDatabase>(databaseName);
-  }
 
   if (databaseDriver == "file") {
     auto databaseName = settings.count("databaseName")
@@ -1207,7 +1197,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         res = JsValue(refr.IsOpen());
       } else if (propertyName == "appearance") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          auto& dump = actor->GetLookAsJson();
+          auto& dump = actor->GetAppearanceAsJson();
           if (dump.size() > 0) {
             res = ParseJsonChakra(dump);
           }
@@ -1288,12 +1278,12 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         refr.SetOpen(newValue.get<bool>());
       } else if (propertyName == "appearance") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          // TODO: Live update of look
+          // TODO: Live update of appearance
           if (newValue.is_object()) {
-            auto look = Look::FromJson(newValue);
-            actor->SetLook(&look);
+            auto appearance = Appearance::FromJson(newValue);
+            actor->SetAppearance(&appearance);
           } else {
-            actor->SetLook(nullptr);
+            actor->SetAppearance(nullptr);
           }
         }
       } else if (propertyName == "inventory") {
@@ -1379,7 +1369,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       if (lookupRes.rec) {
         auto fields = JsValue::Array(0);
 
-        auto cache = &partOne->worldState.GetEspmCache();
+        auto& cache = partOne->worldState.GetEspmCache();
 
         espm::IterateFields_(
           lookupRes.rec,

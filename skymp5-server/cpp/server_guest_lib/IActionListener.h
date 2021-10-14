@@ -2,7 +2,7 @@
 #include "ConsoleCommands.h"
 #include "HitData.h"
 #include "Inventory.h"
-#include "MpActor.h"             // Look
+#include "MpActor.h"             // Appearance
 #include "NetworkingInterface.h" // UserId, PacketData
 #include "NiPoint3.h"
 #include <cstdint>
@@ -37,8 +37,8 @@ public:
   {
   }
 
-  virtual void OnUpdateLook(const RawMessageData& rawMsgData, uint32_t idx,
-                            const Look& look)
+  virtual void OnUpdateAppearance(const RawMessageData& rawMsgData,
+                                  uint32_t idx, const Appearance& appearance)
   {
   }
 
