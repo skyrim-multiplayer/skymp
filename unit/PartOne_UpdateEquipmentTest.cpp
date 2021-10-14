@@ -1,9 +1,11 @@
 #include "TestUtils.hpp"
 
+PartOne& GetPartOne();
+
 TEST_CASE("UpdateEquipment", "[PartOne]")
 {
 
-  PartOne partOne;
+  PartOne& partOne = GetPartOne();
 
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);

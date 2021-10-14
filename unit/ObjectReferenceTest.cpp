@@ -1,6 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
+PartOne& GetPartOne();
+
 namespace {
 MpObjectReference& CreateMpObjectReference_(WorldState& worldState,
                                             uint32_t id)
@@ -16,6 +18,7 @@ TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
 {
 
   PartOne p;
+  p.AttachEspm(&GetPartOne().GetEspm());
 
   auto& ref = CreateMpObjectReference_(p.worldState, 0xff000000);
   ref.SetCellOrWorld(0x3c);
