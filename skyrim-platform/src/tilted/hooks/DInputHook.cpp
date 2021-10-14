@@ -45,7 +45,7 @@ void ProcessMouseData(DIMOUSESTATE2* apMouseState)
 
   if (apMouseState->lZ != 0) {
     g_listener->OnMouseWheel(apMouseState->lZ);
-    if (CEFUtils::DInputHook::ChromeFocus()) {
+    if (CEFUtils::DInputHook::ChromeFocus() && CEFUtils::DInputHook::IsMouseInputBlocked()) {
       apMouseState->lZ = 0;
     }
   }
@@ -305,7 +305,7 @@ HRESULT _stdcall FakeIDirectInputDevice8A::GetDeviceData(
       ProcessKeyboardData(rawData);
       memset(rawData, 0, 256);
     }
-    if (DInputHook::ChromeFocus()) {
+    if (DInputHook::ChromeFocus() && DInputHook::IsKeyboardInputBlocked()) {
       *outDataLen = 0;
 
       return result;

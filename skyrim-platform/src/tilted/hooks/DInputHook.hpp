@@ -15,7 +15,24 @@ struct DInputHook
     static bool chromeFocus;
     return chromeFocus;
   }
-
+  
+  /*
+    Should mouse events propagate to the game engine
+  */
+  static bool& IsMouseInputBlocked()
+  {
+    static bool mouseInputBlocked;
+    return mouseInputBlocked;
+  }
+  
+  /*
+    Should keyboard events propagate to the game engine
+  */
+  static bool& IsKeyboardInputBlocked()
+  {
+    static bool keyboardInputBlocked;
+    return keyboardInputBlocked;
+  }
   struct
   {
     std::mutex m;

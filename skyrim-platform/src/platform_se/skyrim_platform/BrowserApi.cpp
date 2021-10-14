@@ -60,6 +60,23 @@ JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
   return JsValue::Undefined();
 }
 
+JsValue BrowserApi::SetBlockMouseInput(const JsFunctionArguments& args)
+{
+  bool& v = CEFUtils::DInputHook::IsMouseInputBlocked();
+  bool newValue = (bool)args[1];
+  v = newValue;
+  return JsValue::Undefined();
+}
+
+JsValue BrowserApi::SetBlockKeyboardInput(const JsFunctionArguments& args)
+{
+  bool& v = CEFUtils::DInputHook::IsKeyboardInputBlocked();
+  bool newValue = (bool)args[1];
+  v = newValue;
+  return JsValue::Undefined();
+}
+
+
 JsValue BrowserApi::LoadUrl(const JsFunctionArguments& args,
                             std::shared_ptr<State> state)
 {

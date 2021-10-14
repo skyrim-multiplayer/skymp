@@ -386,6 +386,11 @@ class MyInputListener : public IInputListener
 {
 public:
   bool IsBrowserFocused() { return CEFUtils::DInputHook::ChromeFocus(); }
+  bool IsMouseBlocked() { return CEFUtils::DInputHook::IsMouseInputBlocked(); }
+  bool IsKeyboardBlocked()
+  {
+    return CEFUtils::DInputHook::IsKeyboardInputBlocked();
+  }
 
   MyInputListener()
   {

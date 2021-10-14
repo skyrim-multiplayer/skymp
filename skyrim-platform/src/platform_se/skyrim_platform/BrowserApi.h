@@ -11,6 +11,8 @@ struct State
 
 JsValue SetVisible(const JsFunctionArguments& args);
 JsValue SetFocused(const JsFunctionArguments& args);
+JsValue SetBlockMouseInput(const JsFunctionArguments& args);
+JsValue SetBlockKeyboardInput(const JsFunctionArguments& args);
 JsValue LoadUrl(const JsFunctionArguments& args, std::shared_ptr<State> state);
 JsValue GetToken(const JsFunctionArguments& args);
 JsValue ExecuteJavaScript(const JsFunctionArguments& args,
@@ -21,6 +23,8 @@ inline void Register(JsValue& exports, std::shared_ptr<State> state)
   auto browser = JsValue::Object();
   browser.SetProperty("setVisible", JsValue::Function(SetVisible));
   browser.SetProperty("setFocused", JsValue::Function(SetFocused));
+  browser.SetProperty("setBlockMouseInput", JsValue::Function(SetBlockMouseInput));
+  browser.SetProperty("setBlockKeyboardInput", JsValue::Function(SetBlockKeyboardInput));
   browser.SetProperty(
     "loadUrl",
     JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
