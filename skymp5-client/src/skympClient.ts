@@ -57,7 +57,7 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   if (msgType === "hostStart") {
     const msg = msgAny as HostStartMessage;
     const target = msg.target;
-    printConsole("hostStart", target.toString(16));
+    //printConsole("hostStart", target.toString(16));
 
     let hosted = storage["hosted"];
     if (typeof hosted !== typeof []) {
@@ -75,7 +75,7 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   if (msgType === "hostStop") {
     const msg = msgAny as HostStopMessage;
     const target = msg.target;
-    printConsole("hostStop", target.toString(16));
+    //printConsole("hostStop", target.toString(16));
 
     const hosted = storage["hosted"] as Array<number>;
     if (typeof hosted === typeof []) {
@@ -326,6 +326,8 @@ export class SkympClient {
       if (e.target.getFormID() === playerFormId) return;
       if (e.aggressor.getFormID() !== playerFormId) return;
       if (sp.Weapon.from(e.source) && sp.Actor.from(e.target)) {
+        const hitData = getHitData(e);
+        printConsole(`Sending hit event: ${JSON.stringify({ aggressor: hitData.aggressor, source: hitData.source, target: hitData.target })}`);
         this.sendTarget.send(
           { t: MsgType.OnHit, data: getHitData(e) }, true
         );

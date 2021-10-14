@@ -493,7 +493,7 @@ export class FormView implements View<FormModel> {
           const remoteId = this.remoteRefrId;
           if (ac && ac.is3DLoaded()) {
             tryHostIfNeed(ac, remoteId as number);
-            printConsole("try to rehost");
+            //printConsole("try to rehost");
           }
         }
       }

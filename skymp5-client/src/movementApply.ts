@@ -5,6 +5,7 @@ import {
   TESModPlatform,
   Debug,
   Form,
+  printConsole,
 } from "skyrimPlatform";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
@@ -121,8 +122,10 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
   const deltaPercentage = healthPercentage - currentPercentage;
   const k = 0.25;
   if (deltaPercentage > 0) {
+    printConsole(`Restoring "${ac.getFormID().toString(16)}" with ${deltaPercentage * currentMax * k}`)
     ac.restoreActorValue('health', deltaPercentage * currentMax * k);
   } else if (deltaPercentage < 0) {
+    printConsole(`Damaging "${ac.getFormID().toString(16)}" with ${deltaPercentage * currentMax * k}`);
     ac.damageActorValue('health', deltaPercentage * currentMax * k);
   }
 };
