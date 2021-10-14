@@ -30,6 +30,7 @@ bool ConsoleCommands::Argument::IsInteger() const noexcept
 {
   return data.index() == 0;
 }
+
 bool ConsoleCommands::Argument::IsString() const noexcept
 {
   return data.index() == 1;
@@ -124,39 +125,12 @@ void ExecuteDisable(MpActor& caller,
     target.Disable();
 }
 
-void ExecuteJudgmentDay(MpActor& caller,
-                        const std::vector<ConsoleCommands::Argument>& args)
-{
-#ifdef SKYMP_LITE
-  EnsureIsOneOf(caller, { kProfileId_Pospelov });
-
-  if (auto worldState = caller.GetParent()) {
-    auto callerId = caller.GetFormId();
-
-    auto& s = args.at(2).GetString();
-    int n = atoi(s.data());
-    if (n < 1)
-      n = 1;
-
-    for (int i = 0; i < n; ++i) {
-      worldState->SetTimer(0.0f).Then([callerId, worldState](Viet::Void) {
-        auto& caller = worldState->GetFormAt<MpActor>(callerId);
-        ExecutePlaceAtMe(caller, { 0x14, 0x12eb7 });
-      });
-    }
-  }
-#endif
-}
-
 void ExecuteMp(MpActor& caller,
                const std::vector<ConsoleCommands::Argument>& args)
 {
   auto subcmd = args.at(1).GetString();
   if (!Utils::stricmp(subcmd.data(), "disable")) {
     return ExecuteDisable(caller, args);
-  }
-  if (!Utils::stricmp(subcmd.data(), "dst")) {
-    return ExecuteJudgmentDay(caller, args);
   }
 }
 }
