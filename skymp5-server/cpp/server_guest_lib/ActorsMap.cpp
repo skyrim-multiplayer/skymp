@@ -6,7 +6,7 @@
 
 ActorsMap::ActorsMap()
 {
-  actorByUserId.resize(g_maxPlayers, nullptr);
+  actorByUserId.resize(kMaxPlayers, nullptr);
 }
 
 void ActorsMap::Set(Networking::UserId userId, MpActor* actor)

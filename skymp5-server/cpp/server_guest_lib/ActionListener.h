@@ -26,8 +26,8 @@ public:
   void OnUpdateAnimation(const RawMessageData& rawMsgData,
                          uint32_t idx) override;
 
-  void OnUpdateLook(const RawMessageData& rawMsgData, uint32_t idx,
-                    const Look& look) override;
+  void OnUpdateAppearance(const RawMessageData& rawMsgData, uint32_t idx,
+                          const Appearance& appearance) override;
 
   void OnUpdateEquipment(const RawMessageData& rawMsgData, uint32_t idx,
                          simdjson::dom::element& data,
@@ -65,6 +65,9 @@ public:
                       const float healthPercentage,
                       const float magickaPercentage,
                       const float staminaPercentage) override;
+
+  void OnHit(const RawMessageData& rawMsgData,
+             const HitData& hitData) override;
 
 private:
   // Returns user's actor if exists

@@ -61,7 +61,7 @@ private:
   const uint64_t v;
 };
 
-const std::map<std::string, uint32_t> g_correctHashcode{
+const std::map<std::string, uint32_t> kCorrectHashcode{
   { "Skyrim.esm", 0xaf75991dUL },
   { "Update.esm", 0x17ab5e20UL },
   { "Dawnguard.esm", 0xcc81e5d8UL },
@@ -108,8 +108,8 @@ uint32_t CalculateHashcode(const void* readBuffer, size_t length)
 
 uint32_t GetCorrectHashcode(const std::string& fileName)
 {
-  auto iter = g_correctHashcode.find(fileName);
-  return iter == g_correctHashcode.end() ? 0 : iter->second;
+  auto iter = kCorrectHashcode.find(fileName);
+  return iter == kCorrectHashcode.end() ? 0 : iter->second;
 }
 }
 
@@ -249,24 +249,16 @@ class espm::RecordHeaderAccess
 {
 public:
   template <class T>
-  static void IterateFields(
-    const espm::RecordHeader* rec, const T& f,
-    espm::CompressedFieldsCache* compressedFieldsCache = nullptr)
+  static void IterateFields(const espm::RecordHeader* rec, const T& f,
+                            espm::CompressedFieldsCache& compressedFieldsCache)
   {
     const int8_t* ptr = ((int8_t*)rec) + sizeof(*rec);
     const int8_t* endPtr = ptr + rec->GetFieldsSizeSum();
     uint32_t fiDataSizeOverride = 0;
 
     if (rec->flags & RecordFlags::Compressed) {
-
-      if (!compressedFieldsCache) {
-        throw std::runtime_error(
-          "CompressedFieldsCache is required to iterate through compressed "
-          "fields");
-      }
-
       auto& decompressedFieldsHolder =
-        compressedFieldsCache->pImpl->data[rec].decompressedFieldsHolder;
+        compressedFieldsCache.pImpl->data[rec].decompressedFieldsHolder;
       if (!decompressedFieldsHolder) {
 
         const uint32_t* decompSize = reinterpret_cast<const uint32_t*>(ptr);
@@ -304,13 +296,13 @@ public:
 
 void espm::IterateFields_(const espm::RecordHeader* rec,
                           const espm::IterateFieldsCallback& f,
-                          espm::CompressedFieldsCache* compressedFieldsCache)
+                          espm::CompressedFieldsCache& compressedFieldsCache)
 {
   espm::RecordHeaderAccess::IterateFields(rec, f, compressedFieldsCache);
 }
 
 const char* espm::RecordHeader::GetEditorId(
-  espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
+  espm::CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   const char* result = "";
   espm::RecordHeaderAccess::IterateFields(
@@ -423,7 +415,7 @@ void FillScriptArray(const uint8_t* p, std::vector<espm::Script>& out,
 
 void espm::RecordHeader::GetScriptData(
   ScriptData* out,
-  espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
+  espm::CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   ScriptData res;
 
@@ -448,7 +440,7 @@ void espm::RecordHeader::GetScriptData(
 }
 
 std::vector<uint32_t> espm::RecordHeader::GetKeywordIds(
-  espm::CompressedFieldsCache* compressedFieldsCache) const noexcept
+  espm::CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   std::vector<uint32_t> res;
   uint32_t count = 0;
@@ -672,7 +664,10 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
     if (t == "REFR" || t == "ACHR") {
       pImpl->objectReferences.push_back(recHeader);
       const auto refr = reinterpret_cast<REFR*>(recHeader);
-      const auto data = refr->GetData();
+
+      CompressedFieldsCache dummyCache;
+      const auto data = refr->GetData(dummyCache);
+
       if (data.loc) {
         const int16_t x = static_cast<int16_t>(data.loc->pos[0] / 4096);
         const int16_t y = static_cast<int16_t>(data.loc->pos[1] / 4096);
@@ -699,11 +694,13 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
   return true;
 }
 
-espm::TES4::Data espm::TES4::GetData() const noexcept
+espm::TES4::Data espm::TES4::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "HEDR", 4))
         result.header = (Header*)data;
       else if (!memcmp(type, "CNAM", 4))
@@ -712,15 +709,18 @@ espm::TES4::Data espm::TES4::GetData() const noexcept
         result.description = data;
       else if (!memcmp(type, "MAST", 4))
         result.masters.push_back(data);
-    });
+    },
+    compressedFieldsCache);
   return result;
 }
 
-espm::REFR::Data espm::REFR::GetData() const noexcept
+espm::REFR::Data espm::REFR::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "NAME", 4))
         result.baseId = *(uint32_t*)data;
       else if (!memcmp(type, "XSCL", 4))
@@ -731,14 +731,15 @@ espm::REFR::Data espm::REFR::GetData() const noexcept
         result.teleport = (DoorTeleport*)data;
       else if (!memcmp(type, "XPRM", 4))
         result.boundsDiv2 = reinterpret_cast<const float*>(data);
-    });
+    },
+    compressedFieldsCache);
   return result;
 }
 
 namespace {
 std::vector<espm::CONT::ContainerObject> GetContainerObjects(
   const espm::RecordHeader* rec,
-  espm::CompressedFieldsCache* compressedFieldsCache)
+  espm::CompressedFieldsCache& compressedFieldsCache)
 {
   std::vector<espm::CONT::ContainerObject> objects;
   espm::RecordHeaderAccess::IterateFields(
@@ -755,44 +756,30 @@ std::vector<espm::CONT::ContainerObject> GetContainerObjects(
 }
 }
 
-espm::CONT::Data espm::CONT::GetData() const noexcept
+espm::CONT::Data espm::CONT::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "EDID", 4))
         result.editorId = data;
       else if (!memcmp(type, "FULL", 4))
         result.fullName = data;
-    });
-  result.objects = GetContainerObjects(this, nullptr);
+    },
+    compressedFieldsCache);
+  result.objects = GetContainerObjects(this, compressedFieldsCache);
   return result;
 }
 
-espm::TREE::Data espm::TREE::GetData() const noexcept
+espm::TREE::Data espm::TREE::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!memcmp(type, "EDID", 4))
-        result.editorId = data;
-      else if (!memcmp(type, "FULL", 4))
-        result.fullName = data;
-      else if (!memcmp(type, "OBND", 4))
-        result.bounds = reinterpret_cast<const ObjectBounds*>(data);
-      else if (!memcmp(type, "PFIG", 4))
-        result.resultItem = *reinterpret_cast<const uint32_t*>(data);
-      else if (!memcmp(type, "SNAM", 4))
-        result.useSound = *reinterpret_cast<const uint32_t*>(data);
-    });
-  return result;
-}
-
-espm::FLOR::Data espm::FLOR::GetData() const noexcept
-{
-  Data result;
-  espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "EDID", 4))
         result.editorId = data;
       else if (!memcmp(type, "FULL", 4))
@@ -803,15 +790,40 @@ espm::FLOR::Data espm::FLOR::GetData() const noexcept
         result.resultItem = *reinterpret_cast<const uint32_t*>(data);
       else if (!memcmp(type, "SNAM", 4))
         result.useSound = *reinterpret_cast<const uint32_t*>(data);
-    });
+    },
+    compressedFieldsCache);
   return result;
 }
 
-espm::LVLI::Data espm::LVLI::GetData() const noexcept
+espm::FLOR::Data espm::FLOR::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "EDID", 4))
+        result.editorId = data;
+      else if (!memcmp(type, "FULL", 4))
+        result.fullName = data;
+      else if (!memcmp(type, "OBND", 4))
+        result.bounds = reinterpret_cast<const ObjectBounds*>(data);
+      else if (!memcmp(type, "PFIG", 4))
+        result.resultItem = *reinterpret_cast<const uint32_t*>(data);
+      else if (!memcmp(type, "SNAM", 4))
+        result.useSound = *reinterpret_cast<const uint32_t*>(data);
+    },
+    compressedFieldsCache);
+  return result;
+}
+
+espm::LVLI::Data espm::LVLI::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "EDID", 4))
         result.editorId = data;
       else if (!memcmp(type, "LVLF", 4))
@@ -824,7 +836,8 @@ espm::LVLI::Data espm::LVLI::GetData() const noexcept
         result.numEntries = *(uint8_t*)data;
         result.entries = (Entry*)(data + 1);
       }
-    });
+    },
+    compressedFieldsCache);
   return result;
 }
 
@@ -863,36 +876,42 @@ espm::NAVM::Data espm::NAVM::GetData(
         result.vertices.reset(new Vertices(data));
       }
     },
-    &compressedFieldsCache);
+    compressedFieldsCache);
   return result;
 }
 
-espm::FLST::Data espm::FLST::GetData() const noexcept
+espm::FLST::Data espm::FLST::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "LNAM", 4)) {
         const auto formId = *reinterpret_cast<const uint32_t*>(data);
         result.formIds.push_back(formId);
       }
-    });
+    },
+    compressedFieldsCache);
   std::reverse(result.formIds.begin(), result.formIds.end());
   return result;
 }
 
-espm::ACTI::Data espm::ACTI::GetData() const noexcept
+espm::ACTI::Data espm::ACTI::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
-  GetScriptData(&result.scriptData);
+  GetScriptData(&result.scriptData, compressedFieldsCache);
   return result;
 }
 
-espm::COBJ::Data espm::COBJ::GetData() const noexcept
+espm::COBJ::Data espm::COBJ::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "CNTO", 4)) {
         result.inputObjects.push_back(
           *reinterpret_cast<const InputObject*>(data));
@@ -906,20 +925,24 @@ espm::COBJ::Data espm::COBJ::GetData() const noexcept
         const auto count = *reinterpret_cast<const uint16_t*>(data);
         result.outputCount = count;
       }
-    });
+    },
+    compressedFieldsCache);
   return result;
 }
 
-espm::OTFT::Data espm::OTFT::GetData() const noexcept
+espm::OTFT::Data espm::OTFT::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "INAM", 4)) {
         result.formIds = reinterpret_cast<const uint32_t*>(data);
         result.count = dataSize / sizeof(dataSize);
       }
-    });
+    },
+    compressedFieldsCache);
   return result;
 }
 
@@ -942,33 +965,42 @@ espm::NPC_::Data espm::NPC_::GetData(
         uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
         result.isEssential = !!(flags & 0x02);
         result.isProtected = !!(flags & 0x800);
+        result.magickaOffset = *reinterpret_cast<const uint16_t*>(data + 4);
+        result.staminaOffset = *reinterpret_cast<const uint16_t*>(data + 6);
+        result.healthOffset = *reinterpret_cast<const uint16_t*>(data + 20);
       } else if (!memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);
       }
     },
-    &compressedFieldsCache);
-  result.objects = GetContainerObjects(this, &compressedFieldsCache);
+    compressedFieldsCache);
+  result.objects = GetContainerObjects(this, compressedFieldsCache);
   return result;
 }
 
-espm::WEAP::Data espm::WEAP::GetData() const noexcept
+espm::WEAP::Data espm::WEAP::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t dataSize, const char* data) {
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
         result.weapData = reinterpret_cast<const WeapData*>(data);
+      } else if (!memcmp(type, "DNAM", 4)) {
+        result.weapDNAM = reinterpret_cast<const DNAM*>(data);
       }
-    });
+    },
+    compressedFieldsCache);
   return result;
 }
 
 espm::RACE::Data espm::RACE::GetData(
-  CompressedFieldsCache& compressedFieldCache) const noexcept
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;
   espm::RecordHeaderAccess::IterateFields(
-    this, [&](const char* type, uint32_t size, const char* data) {
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
         result.startingHealth = *reinterpret_cast<const float*>(data + 36);
         result.startingMagicka = *reinterpret_cast<const float*>(data + 40);
@@ -976,7 +1008,25 @@ espm::RACE::Data espm::RACE::GetData(
         result.healRegen = *reinterpret_cast<const float*>(data + 84);
         result.magickaRegen = *reinterpret_cast<const float*>(data + 88);
         result.staminaRegen = *reinterpret_cast<const float*>(data + 92);
+        result.unarmedDamage = *reinterpret_cast<const float*>(data + 96);
+        result.unarmedReach = *reinterpret_cast<const float*>(data + 100);
       }
-    });
+    },
+    compressedFieldsCache);
+  return result;
+}
+
+espm::GMST::Data espm::GMST::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        result.value = *reinterpret_cast<const float*>(data);
+      }
+    },
+    compressedFieldsCache);
   return result;
 }

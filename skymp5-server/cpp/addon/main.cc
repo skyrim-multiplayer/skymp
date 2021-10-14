@@ -11,7 +11,6 @@
 #include "NetworkingMock.h"
 #include "PartOne.h"
 #include "ScriptStorage.h"
-#include "SqliteDatabase.h"
 #include <JsEngine.h>
 #include <cassert>
 #include <memory>
@@ -245,15 +244,6 @@ std::shared_ptr<IDatabase> CreateDatabase(
     ? settings["databaseDriver"].get<std::string>()
     : std::string("file");
 
-  if (databaseDriver == "sqlite") {
-    auto databaseName = settings.count("databaseName")
-      ? settings["databaseName"].get<std::string>()
-      : std::string("world.sqlite");
-
-    logger->info("Using sqlite with name '" + databaseName + "'");
-    return std::make_shared<SqliteDatabase>(databaseName);
-  }
-
   if (databaseDriver == "file") {
     auto databaseName = settings.count("databaseName")
       ? settings["databaseName"].get<std::string>()
@@ -297,9 +287,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
   , tickEnv(info.Env())
 {
   try {
-    partOne.reset(new PartOne);
-    partOne->EnableProductionHacks();
-    listener.reset(new ScampServerListener(*this));
+    partOne = std::make_shared<PartOne>();
+    listener = std::make_shared<ScampServerListener>(*this);
     partOne->AddListener(listener);
     Napi::Number port = info[0].As<Napi::Number>(),
                  maxConnections = info[1].As<Napi::Number>();
@@ -1207,7 +1196,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         res = JsValue(refr.IsOpen());
       } else if (propertyName == "appearance") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          auto& dump = actor->GetLookAsJson();
+          auto& dump = actor->GetAppearanceAsJson();
           if (dump.size() > 0) {
             res = ParseJsonChakra(dump);
           }
@@ -1288,12 +1277,12 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         refr.SetOpen(newValue.get<bool>());
       } else if (propertyName == "appearance") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          // TODO: Live update of look
+          // TODO: Live update of appearance
           if (newValue.is_object()) {
-            auto look = Look::FromJson(newValue);
-            actor->SetLook(&look);
+            auto appearance = Appearance::FromJson(newValue);
+            actor->SetAppearance(&appearance);
           } else {
-            actor->SetLook(nullptr);
+            actor->SetAppearance(nullptr);
           }
         }
       } else if (propertyName == "inventory") {
@@ -1379,7 +1368,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       if (lookupRes.rec) {
         auto fields = JsValue::Array(0);
 
-        auto cache = &partOne->worldState.GetEspmCache();
+        auto& cache = partOne->worldState.GetEspmCache();
 
         espm::IterateFields_(
           lookupRes.rec,

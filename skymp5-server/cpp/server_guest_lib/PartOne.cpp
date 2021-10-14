@@ -42,7 +42,6 @@ struct PartOne::Impl
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
-  bool enableProductionHacks = false;
 
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<IActionListener> actionListener;
@@ -113,37 +112,7 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
     ac.RegisterProfileId(profileId);
   }
 
-  if (pImpl->enableProductionHacks) {
-    auto& ac = worldState.GetFormAt<MpActor>(formId);
-    std::vector<uint32_t> defaultItems = {
-      // ...
-    };
-    std::vector<Inventory::Entry> entries;
-    for (uint32_t item : defaultItems) {
-      entries.push_back({ item, 1 });
-    }
-    ac.AddItems(entries);
-  }
-
   return formId;
-}
-
-void PartOne::EnableProductionHacks()
-{
-  pImpl->enableProductionHacks = true;
-}
-
-namespace {
-std::string GetName(MpActor& actor)
-{
-  std::string defaultName = "Prisoner";
-  return actor.GetLook() ? actor.GetLook()->name : defaultName;
-}
-
-bool IsBanned(MpActor& actor)
-{
-  return GetName(actor) == "Pospelove";
-}
 }
 
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
@@ -152,11 +121,6 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
 
   if (actorFormId > 0) {
     auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
-
-    if (IsBanned(actor)) {
-      pImpl->logger->info("{} is banned", GetName(actor));
-      return;
-    }
 
     if (actor.IsDisabled()) {
       std::stringstream ss;
@@ -238,7 +202,7 @@ void PartOne::SendCustomPacket(Networking::UserId userId,
 std::string PartOne::GetActorName(uint32_t actorFormId)
 {
   auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
-  return ac.GetLook() ? ac.GetLook()->name : "Prisoner";
+  return ac.GetAppearance() ? ac.GetAppearance()->name : "Prisoner";
 }
 
 NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
@@ -490,14 +454,14 @@ void PartOne::Init()
 
     auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
 
-    std::string jEquipment, jLook;
+    std::string jEquipment, jAppearance;
 
-    const char *lookPrefix = "", *look = "";
+    const char *appearancePrefix = "", *appearance = "";
     if (emitterAsActor) {
-      jLook = emitterAsActor->GetLookAsJson();
-      if (!jLook.empty()) {
-        lookPrefix = R"(, "look": )";
-        look = jLook.data();
+      jAppearance = emitterAsActor->GetAppearanceAsJson();
+      if (!jAppearance.empty()) {
+        appearancePrefix = R"(, "appearance": )";
+        appearance = jAppearance.data();
       }
     }
 
@@ -584,9 +548,9 @@ void PartOne::Init()
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      emitter->GetCellOrWorld(), lookPrefix, look, equipmentPrefix, equipment,
-      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
-      propsPostfix);
+      emitter->GetCellOrWorld(), appearancePrefix, appearance, equipmentPrefix,
+      equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
+      props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,

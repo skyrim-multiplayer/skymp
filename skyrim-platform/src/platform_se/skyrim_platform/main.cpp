@@ -20,7 +20,6 @@
 #include "PapyrusTESModPlatform.h"
 #include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
-#include "SystemPolyfill.h"
 #include "TPInputService.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"

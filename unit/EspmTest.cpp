@@ -39,11 +39,12 @@ TEST_CASE("Loads Iron Sword", "[espm]")
 TEST_CASE("Loads Container", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto barrel = br.LookupById(0x10cd5b);
   REQUIRE(barrel.rec->GetType() == "CONT");
 
-  auto barrelData = reinterpret_cast<espm::CONT*>(barrel.rec)->GetData();
+  auto barrelData = reinterpret_cast<espm::CONT*>(barrel.rec)->GetData(cache);
 
   REQUIRE(barrelData.editorId == std::string("BarrelFish01"));
   REQUIRE(barrelData.objects.size() == 2);
@@ -56,11 +57,12 @@ TEST_CASE("Loads Container", "[espm]")
 TEST_CASE("Loads Tree", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0xbcf3d);
   REQUIRE(form.rec->GetType() == "TREE");
 
-  auto data = reinterpret_cast<espm::TREE*>(form.rec)->GetData();
+  auto data = reinterpret_cast<espm::TREE*>(form.rec)->GetData(cache);
   REQUIRE(data.editorId == std::string("TreeFloraMountainFlower01Blue"));
   REQUIRE(data.resultItem == 0x77e1c);
   REQUIRE(data.useSound == 0x519d5);
@@ -69,11 +71,12 @@ TEST_CASE("Loads Tree", "[espm]")
 TEST_CASE("Loads Flora", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x7e8c9);
   REQUIRE(form.rec->GetType() == "FLOR");
 
-  auto data = reinterpret_cast<espm::FLOR*>(form.rec)->GetData();
+  auto data = reinterpret_cast<espm::FLOR*>(form.rec)->GetData(cache);
   REQUIRE(data.editorId == std::string("BirdsNest"));
   REQUIRE(data.resultItem == 0x7e8c8);
   REQUIRE(data.useSound == 0x100f88);
@@ -82,11 +85,12 @@ TEST_CASE("Loads Flora", "[espm]")
 TEST_CASE("Loads LeveledItem", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x10e992);
   REQUIRE(form.rec->GetType() == "LVLI");
 
-  auto data = reinterpret_cast<espm::LVLI*>(form.rec)->GetData();
+  auto data = reinterpret_cast<espm::LVLI*>(form.rec)->GetData(cache);
   REQUIRE(data.editorId == std::string("lItemGems10"));
   REQUIRE(data.leveledItemFlags == (espm::LVLI::AllLevels | espm::LVLI::Each));
   REQUIRE((int)data.numEntries == 48);
@@ -103,10 +107,11 @@ TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
           "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
   auto form = br.LookupById(0x105d05);
   REQUIRE(form.rec->GetType() == "ACTI");
 
-  auto data = reinterpret_cast<espm::ACTI*>(form.rec)->GetData();
+  auto data = reinterpret_cast<espm::ACTI*>(form.rec)->GetData(cache);
   REQUIRE(data.scriptData.version == 5);
   REQUIRE(data.scriptData.objFormat == 2);
   REQUIRE(data.scriptData.scripts.size() == 1);
@@ -125,10 +130,11 @@ TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
 TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
   auto form = br.LookupById(0x7144d);
   REQUIRE(form.rec->GetType() == "ACTI");
 
-  auto data = reinterpret_cast<espm::ACTI*>(form.rec)->GetData();
+  auto data = reinterpret_cast<espm::ACTI*>(form.rec)->GetData(cache);
   REQUIRE(data.scriptData.version == 5);
   REQUIRE(data.scriptData.objFormat == 2);
 
@@ -173,23 +179,25 @@ TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
 TEST_CASE("Loads FormList", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x21e81);
   REQUIRE(form.rec->GetType() == "FLST");
 
-  auto data = reinterpret_cast<espm::FLST*>(form.rec)->GetData();
+  auto data = reinterpret_cast<espm::FLST*>(form.rec)->GetData(cache);
   REQUIRE(data.formIds == std::vector<uint32_t>({ 0x3eab9, 0x4e4bb }));
 }
 
 TEST_CASE("Loads refr with primitive", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto refr = br.LookupById(0xc07f0);
   REQUIRE(refr.rec);
   REQUIRE(refr.rec->GetType() == "REFR");
 
-  auto data = reinterpret_cast<espm::REFR*>(refr.rec)->GetData();
+  auto data = reinterpret_cast<espm::REFR*>(refr.rec)->GetData(cache);
   REQUIRE(abs(data.boundsDiv2[0] - 334.1504f) < 0.1);
   REQUIRE(abs(data.boundsDiv2[1] - 262.88865f) < 0.1);
   REQUIRE(abs(data.boundsDiv2[2] - 221.2002f) < 0.1);
@@ -203,11 +211,12 @@ TEST_CASE("Loads ConstructibleObject", "[espm]")
   };
 
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0xdb89e);
   REQUIRE(form.rec->GetType() == "COBJ");
 
-  auto data = reinterpret_cast<espm::COBJ*>(form.rec)->GetData();
+  auto data = reinterpret_cast<espm::COBJ*>(form.rec)->GetData(cache);
   REQUIRE(data.benchKeywordId == CraftingSmithingForge);
   REQUIRE(data.outputObjectFormId == 0x1398a);
   REQUIRE(data.outputCount == 1);
@@ -224,15 +233,16 @@ TEST_CASE("Loads ConstructibleObject", "[espm]")
 TEST_CASE("Loads Furniture", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0xbbcf1);
 
   REQUIRE(form.rec->GetType() == "FURN");
 
-  auto keywordIds = form.rec->GetKeywordIds();
+  auto keywordIds = form.rec->GetKeywordIds(cache);
   std::set<std::string> keywords;
   for (auto id : keywordIds) {
-    keywords.insert(br.LookupById(id).rec->GetEditorId());
+    keywords.insert(br.LookupById(id).rec->GetEditorId(cache));
   }
   REQUIRE(keywords ==
           std::set<std::string>(
@@ -244,20 +254,22 @@ TEST_CASE("Loads Furniture", "[espm]")
 TEST_CASE("Loads Outfit", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x10fe82);
   REQUIRE(form.rec);
   REQUIRE(form.rec->GetType() == espm::OTFT::type);
 
   auto outfit = espm::Convert<espm::OTFT>(form.rec);
-  REQUIRE(outfit->GetData().count == 2);
-  REQUIRE(outfit->GetData().formIds[0] == 0xabf4a);
-  REQUIRE(outfit->GetData().formIds[1] == 0x10fe83);
+  REQUIRE(outfit->GetData(cache).count == 2);
+  REQUIRE(outfit->GetData(cache).formIds[0] == 0xabf4a);
+  REQUIRE(outfit->GetData(cache).formIds[1] == 0x10fe83);
 }
 
 TEST_CASE("Loads Npc", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x7);
   REQUIRE(form.rec);
@@ -274,6 +286,7 @@ TEST_CASE("Loads Npc", "[espm]")
 TEST_CASE("Loads Weapon", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x12eb7);
   REQUIRE(form.rec);
@@ -281,10 +294,10 @@ TEST_CASE("Loads Weapon", "[espm]")
 
   auto npc = espm::Convert<espm::WEAP>(form.rec);
 
-  REQUIRE(npc->GetData().weapData);
-  REQUIRE(npc->GetData().weapData->damage == 7);
-  REQUIRE(npc->GetData().weapData->value == 25);
-  REQUIRE(npc->GetData().weapData->weight == 9.f);
+  REQUIRE(npc->GetData(cache).weapData);
+  REQUIRE(npc->GetData(cache).weapData->damage == 7);
+  REQUIRE(npc->GetData(cache).weapData->value == 25);
+  REQUIRE(npc->GetData(cache).weapData->weight == 9.f);
 }
 
 TEST_CASE("Loads NPC factions", "[espm]")
@@ -331,11 +344,12 @@ TEST_CASE("Loads NPC flags", "[espm]")
 TEST_CASE("Loads script names", "[espm]")
 {
   auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
   auto res = br.LookupById(788464);
 
   REQUIRE(res.rec);
   espm::ScriptData scr;
-  res.rec->GetScriptData(&scr);
+  res.rec->GetScriptData(&scr, cache);
 
   REQUIRE(scr.scripts.size() == 1);
   REQUIRE(scr.scripts[0].scriptName == "defaultsetStageTrigSCRIPT");
@@ -385,9 +399,9 @@ TEST_CASE("Parsing RACE", "[espm]")
   auto& br = l.GetBrowser();
 
   // Ri'saad is a Khajiit roving merchant from caravan.
-  const uint32_t g_risaadFormId = 0x0001B1DB;
+  const uint32_t kRisaadFormId = 0x0001B1DB;
 
-  auto form = br.LookupById(g_risaadFormId);
+  auto form = br.LookupById(kRisaadFormId);
 
   REQUIRE(form.rec->GetType() == "NPC_");
 
@@ -398,4 +412,44 @@ TEST_CASE("Parsing RACE", "[espm]")
   auto raceInfo = l.GetBrowser().LookupById(raceId);
 
   REQUIRE(raceInfo.rec->GetType() == "RACE");
+}
+
+namespace {
+class MyEspmProvider
+{
+public:
+  espm::Loader& GetEspm() { return l; }
+
+  espm::CompressedFieldsCache& GetEspmCache()
+  {
+    return compressedFieldsCache;
+  };
+
+private:
+  espm::CompressedFieldsCache compressedFieldsCache;
+};
+}
+
+TEST_CASE("espm::GetData wrapper is able to get record data", "[espm]")
+{
+  MyEspmProvider provider;
+
+  constexpr uint32_t kArgonianRace = 0x00013740;
+  constexpr uint32_t kIronSword = 0x00012eb7;
+
+  REQUIRE_THROWS_WITH(
+    espm::GetData<espm::RACE>(0xDEADBEEF,
+                              static_cast<MyEspmProvider*>(nullptr)),
+    Catch::Contains("Unable to find record without EspmProvider"));
+
+  REQUIRE_THROWS_WITH(espm::GetData<espm::RACE>(0xDEADBEEF, &provider),
+                      Catch::Contains("Record deadbeef doesn't exist"));
+
+  REQUIRE_THROWS_WITH(
+    espm::GetData<espm::RACE>(kIronSword, &provider),
+    Catch::Contains("Expected record 12eb7 to be RACE, but found WEAP"));
+
+  // Verify that data wasn't default constructed
+  auto data = espm::GetData<espm::RACE>(kArgonianRace, &provider);
+  REQUIRE(abs(data.healRegen - 0.7f) < std::numeric_limits<float>::epsilon());
 }

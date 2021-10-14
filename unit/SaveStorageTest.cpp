@@ -61,17 +61,17 @@ TEST_CASE("ChangeForm with spaces is saved correctly", "[save]")
   MpChangeForm f1;
   f1.formDesc = { 1, "" };
 
-  Look look;
-  look.name = "La La La";
-  look.weight = 0.1;
+  Appearance appearance;
+  appearance.name = "La La La";
+  appearance.weight = 0.1;
 
-  f1.lookDump = look.ToJson();
+  f1.appearanceDump = appearance.ToJson();
 
   UpsertSync(*st, { f1 });
 
   auto res = ISaveStorageUtils::FindAllSync(*st);
   REQUIRE(res.size() == 1);
-  REQUIRE(res[{ 1, "" }].lookDump == look.ToJson());
+  REQUIRE(res[{ 1, "" }].appearanceDump == appearance.ToJson());
 }
 
 TEST_CASE("ChangeForm is saved correctly", "[save]")
@@ -81,7 +81,7 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   MpChangeForm f1, f2;
   f1.formDesc = { 1, "" };
   f1.position = { 1, 2, 3 };
-  f1.lookDump = "{}";
+  f1.appearanceDump = "{}";
   f1.inv.AddItem(0xf, 1000);
   f1.equipmentDump = "[]";
   f1.healthPercentage = 0.25f;
@@ -99,7 +99,7 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   auto res = ISaveStorageUtils::FindAllSync(*st);
   REQUIRE(res.size() == 2);
   REQUIRE(res[{ 1, "" }].position == NiPoint3(1, 2, 3));
-  REQUIRE(res[{ 1, "" }].lookDump == "{}");
+  REQUIRE(res[{ 1, "" }].appearanceDump == "{}");
   REQUIRE(res[{ 1, "" }].equipmentDump == "[]");
   REQUIRE(res[{ 1, "" }].inv == Inventory().AddItem(0xf, 1000));
   REQUIRE(res[{ 1, "" }].isDisabled == false);

@@ -258,14 +258,14 @@ export interface ContainerChangedEvent {
 }
 
 export interface HitEvent {
-    target: ObjectReference;
-    agressor: ObjectReference;
-    source: Form;
-    projectile: Projectile;
-    isPowerAttack: boolean;
-    isSneakAttack: boolean;
-    isBashAttack: boolean;
-    isHitBlocked: boolean;
+    target: ObjectReference,
+    aggressor: ObjectReference,
+    source: Form,
+    projectile: Projectile,
+    isPowerAttack: boolean,
+    isSneakAttack: boolean,
+    isBashAttack: boolean,
+    isHitBlocked: boolean
 }
 
 export interface EquipEvent {

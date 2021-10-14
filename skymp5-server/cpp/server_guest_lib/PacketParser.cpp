@@ -1,9 +1,12 @@
 #include "PacketParser.h"
 #include "Exceptions.h"
 #include "JsonUtils.h"
+#include "MovementMessage.h"
+#include "MovementMessageSerialization.h"
 #include "MpActor.h"
 #include <MsgType.h>
 #include <simdjson.h>
+#include <slikenet/BitStream.h>
 
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)
@@ -28,7 +31,7 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
 
 struct PacketParser::Impl
 {
-  simdjson::dom::parser parser;
+  simdjson::dom::parser simdjsonParser;
 };
 
 PacketParser::PacketParser()
@@ -41,16 +44,41 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                              size_t length,
                                              IActionListener& actionListener)
 {
-  if (!length)
+  if (!length) {
     throw std::runtime_error("Zero-length message packets are not allowed");
+  }
 
-  auto jMessage = pImpl->parser.parse(data + 1, length - 1).value();
+  IActionListener::RawMessageData rawMsgData{
+    data,
+    length,
+    /*parsed (json)*/ {},
+    userId,
+  };
+
+  if (length > 1 && data[1] == MovementMessage::kHeaderByte) {
+    MovementMessage movData;
+    // BitStream requires non-const ref even though it doesn't modify it
+    SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2,
+                            /*copyData*/ false);
+    serialization::ReadFromBitStream(stream, movData);
+
+    actionListener.OnUpdateMovement(
+      rawMsgData, movData.idx,
+      { movData.pos[0], movData.pos[1], movData.pos[2] },
+      { movData.rot[0], movData.rot[1], movData.rot[2] },
+      movData.isInJumpState, movData.isWeapDrawn, movData.worldOrCell);
+
+    return;
+  }
+
+  rawMsgData.parsed =
+    pImpl->simdjsonParser.parse(data + 1, length - 1).value();
+
+  const auto& jMessage = rawMsgData.parsed;
 
   using TypeInt = std::underlying_type<MsgType>::type;
   auto type = MsgType::Invalid;
   Read(jMessage, JsonPointers::t, reinterpret_cast<TypeInt*>(&type));
-
-  IActionListener::RawMessageData rawMsgData{ data, length, jMessage, userId };
 
   switch (type) {
     case MsgType::Invalid:
@@ -98,13 +126,14 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       ReadEx(jMessage, JsonPointers::idx, &idx);
       actionListener.OnUpdateAnimation(rawMsgData, idx);
     } break;
-    case MsgType::UpdateLook: {
+    case MsgType::UpdateAppearance: {
       uint32_t idx;
       ReadEx(jMessage, JsonPointers::idx, &idx);
       simdjson::dom::element jData;
       Read(jMessage, JsonPointers::data, &jData);
 
-      actionListener.OnUpdateLook(rawMsgData, idx, Look::FromJson(jData));
+      actionListener.OnUpdateAppearance(rawMsgData, idx,
+                                        Appearance::FromJson(jData));
     } break;
     case MsgType::UpdateEquipment: {
       uint32_t idx;
@@ -224,6 +253,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       ReadEx(data_, JsonPointers::stamina, &percentage[2]);
       actionListener.OnChangeValues(rawMsgData, percentage[0], percentage[1],
                                     percentage[2]);
+      break;
+    }
+    case MsgType::OnHit: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, JsonPointers::data, &data_);
+      actionListener.OnHit(rawMsgData, HitData::FromJson(data_));
       break;
     }
     default:
