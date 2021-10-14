@@ -40,7 +40,6 @@ public:
   void AddListener(std::shared_ptr<Listener> listener);
   bool IsConnected(Networking::UserId userId) const;
   void Tick();
-  void EnableProductionHacks();
   FormCallbacks CreateFormCallbacks();
   IActionListener& GetActionListener();
   const std::vector<std::shared_ptr<Listener>>& GetListeners() const;
