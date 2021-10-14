@@ -287,9 +287,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
   , tickEnv(info.Env())
 {
   try {
-    partOne.reset(new PartOne);
-    partOne->EnableProductionHacks();
-    listener.reset(new ScampServerListener(*this));
+    partOne = std::make_shared<PartOne>();
+    listener = std::make_shared<ScampServerListener>(*this);
     partOne->AddListener(listener);
     Napi::Number port = info[0].As<Napi::Number>(),
                  maxConnections = info[1].As<Napi::Number>();
