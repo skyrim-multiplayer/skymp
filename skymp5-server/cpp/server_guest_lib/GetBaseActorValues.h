@@ -8,14 +8,14 @@
 struct BaseActorValues
 {
   float health = 100.f;
-  float stamina = 100.f;
   float magicka = 100.f;
+  float stamina = 100.f;
   float healRate = 0.7f;
-  float staminaRate = 5.0f;
   float magickaRate = 3.0f;
+  float staminaRate = 5.0f;
   float healRateMult = 100.f;
-  float staminaRateMult = 100.f;
   float magickaRateMult = 100.f;
+  float staminaRateMult = 100.f;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
