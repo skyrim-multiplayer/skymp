@@ -42,7 +42,6 @@ struct PartOne::Impl
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
-  bool enableProductionHacks = false;
 
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<IActionListener> actionListener;
@@ -113,24 +112,7 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
     ac.RegisterProfileId(profileId);
   }
 
-  if (pImpl->enableProductionHacks) {
-    auto& ac = worldState.GetFormAt<MpActor>(formId);
-    std::vector<uint32_t> defaultItems = {
-      // ...
-    };
-    std::vector<Inventory::Entry> entries;
-    for (uint32_t item : defaultItems) {
-      entries.push_back({ item, 1 });
-    }
-    ac.AddItems(entries);
-  }
-
   return formId;
-}
-
-void PartOne::EnableProductionHacks()
-{
-  pImpl->enableProductionHacks = true;
 }
 
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
