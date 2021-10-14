@@ -6,23 +6,25 @@
         "noImplicitAny": true,
         "lib": [
             "ES2015",
-            "ES2016",
+            //"ES2016",
+            //"ES6",
             "es2017",
-            "ES2018",
+            //"ES2018",
             //"DOM"
         ],
         "removeComments": true,
         "strict": true,
         "skipLibCheck": true,
         "moduleResolution": "node",
-        "module": "System",
-        "target": "ESNext",
+        "module": "CommonJS",
+        "target": "ES5",
         //"rootDir": ""
     },
-    "exclude": [
-        "node_modules"
-    ]
+    // "exclude": [
+    //     "node_modules"
+    // ],
     // "include": [
-    //     "src"
+    //     "../build/dist/client/Data/Platform/Modules",
+    //     "src",
     // ]
 }
