@@ -986,6 +986,8 @@ espm::WEAP::Data espm::WEAP::GetData(
     [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
         result.weapData = reinterpret_cast<const WeapData*>(data);
+      } else if (!memcmp(type, "DNAM", 4)) {
+        result.weapDNAM = reinterpret_cast<const DNAM*>(data);
       }
     },
     compressedFieldsCache);
@@ -1007,6 +1009,22 @@ espm::RACE::Data espm::RACE::GetData(
         result.magickaRegen = *reinterpret_cast<const float*>(data + 88);
         result.staminaRegen = *reinterpret_cast<const float*>(data + 92);
         result.unarmedDamage = *reinterpret_cast<const float*>(data + 96);
+        result.unarmedReach = *reinterpret_cast<const float*>(data + 100);
+      }
+    },
+    compressedFieldsCache);
+  return result;
+}
+
+espm::GMST::Data espm::GMST::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        result.value = *reinterpret_cast<const float*>(data);
       }
     },
     compressedFieldsCache);
