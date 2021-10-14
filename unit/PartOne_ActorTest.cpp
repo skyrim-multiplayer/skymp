@@ -1,12 +1,11 @@
 #include "TestUtils.hpp"
 
-PartOne& GetPartOne();
 using Catch::Matchers::Contains;
 
 TEST_CASE("CreateActor/DestroyActor", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   // Create:
 
@@ -32,7 +31,7 @@ TEST_CASE("CreateActor/DestroyActor", "[PartOne]")
 TEST_CASE("SetUserActor", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
   DoConnect(partOne, 0);
 
@@ -75,7 +74,7 @@ TEST_CASE("SetUserActor", "[PartOne]")
 TEST_CASE("Use SetUserActor with 0 formId argument", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 1);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
 
@@ -105,7 +104,7 @@ TEST_CASE("SetUserActor failures", "[PartOne]")
 TEST_CASE("createActor message contains Appearance", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
@@ -135,7 +134,7 @@ TEST_CASE("createActor message contains Appearance", "[PartOne]")
 TEST_CASE("GetUserActor", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
@@ -158,7 +157,7 @@ TEST_CASE("GetUserActor", "[PartOne]")
 TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
 {
 
-  static PartOne& partOne = GetPartOne();
+  static PartOne partOne;
 
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
@@ -198,7 +197,7 @@ TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
 TEST_CASE("Bug with subscription", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 0);
 
   partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c);
@@ -215,7 +214,7 @@ TEST_CASE("Bug with subscription", "[PartOne]")
 
 TEST_CASE("SetUserActor doesn't work with disabled actors", "[PartOne]")
 {
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   REQUIRE_THROWS_WITH(partOne.GetUserActor(Networking::InvalidUserId),
                       Contains("User with id 65535 doesn't exist"));
@@ -228,7 +227,7 @@ TEST_CASE("Actor should see its inventory in 'createActor' message",
           "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 0);
 
   partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c);
@@ -245,7 +244,7 @@ TEST_CASE("'isRaceMenuOpen' property should present in 'createActor'",
           "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 0);
 
   partOne.CreateActor(0xff000000, { 1, 1, 1 }, 3, 0x3c);

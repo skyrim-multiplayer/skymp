@@ -3,8 +3,6 @@
 
 #include "PapyrusDebug.h"
 
-PartOne& GetPartOne();
-
 TEST_CASE("Notification", "[Papyrus][Debug]")
 {
 
@@ -14,7 +12,6 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
       std::make_unique<MpActor>(LocationalData(), p.CreateFormCallbacks());
     p.worldState.AddForm(std::move(ac), 0xff000000);
   }
-  p.AttachEspm(&GetPartOne().worldState.GetEspm());
 
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 

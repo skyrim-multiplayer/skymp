@@ -1,12 +1,11 @@
 #include "TestUtils.hpp"
 
 using Catch::Matchers::Contains;
-PartOne& GetPartOne();
 
 TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
 
@@ -26,7 +25,7 @@ TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 TEST_CASE("SetRaceMenuOpen", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   DoConnect(partOne, 1);
   partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
@@ -74,7 +73,7 @@ TEST_CASE("Appearance <=> JSON casts", "[PartOne]")
 TEST_CASE("UpdateAppearance1", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
@@ -107,7 +106,7 @@ TEST_CASE("UpdateAppearance1", "[PartOne]")
 TEST_CASE("UpdateAppearance2", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000ABC, { 1.f, 2.f, 3.f }, 180.f, 0x3c);

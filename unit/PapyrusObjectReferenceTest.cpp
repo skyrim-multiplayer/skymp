@@ -9,7 +9,6 @@
 using Catch::Matchers::Contains;
 
 extern espm::Loader l;
-PartOne& GetPartOne();
 
 namespace {
 
@@ -120,7 +119,7 @@ TEST_CASE("RemoveItem", "[Papyrus][ObjectReference][espm]")
 TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference][espm]")
 {
 
-  PartOne& p = GetPartOne();
+  PartOne p;
 
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   DoConnect(p, 1);

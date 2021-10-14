@@ -1,13 +1,11 @@
 #include "TestUtils.hpp"
 
-PartOne& GetPartOne();
-
 TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
           "user present",
           "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   constexpr uint32_t n = 20;
   static_assert(n <= MAX_PLAYERS - 1);
@@ -36,7 +34,7 @@ TEST_CASE("Hypothesis: UpdateMovement may send nothing when actor without "
 TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   for (int i = 0; i < 2; ++i) {
     DoConnect(partOne, i);
@@ -59,7 +57,7 @@ TEST_CASE("UpdateMovement when neighbour has been disconnected", "[PartOne]")
 TEST_CASE("UpdateMovement", "[PartOne]")
 {
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
 
   auto doMovement = [&] { DoMessage(partOne, 0, jMovement); };
 

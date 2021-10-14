@@ -126,7 +126,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
 TEST_CASE("ChangeValues message is being delivered to client",
           "[ChangeValues]")
 {
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
@@ -158,7 +158,7 @@ TEST_CASE("OnChangeValues function sends ChangeValues message with new "
 {
   using namespace std::chrono_literals;
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
@@ -196,7 +196,7 @@ TEST_CASE("OnChangeValues function doesn't sends ChangeValues message if "
 {
   using namespace std::chrono_literals;
 
-  PartOne& partOne = GetPartOne();
+  PartOne partOne;
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
