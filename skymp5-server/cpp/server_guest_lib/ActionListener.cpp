@@ -646,9 +646,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   s += nlohmann::json{
     { "t", MsgType::ChangeValues },
     { "data",
-      { "health", currentHealthPercentage },
-      { "magicka", magickaPercentage },
-      { "stamina", staminaPercentage } }
+      { { "health", currentHealthPercentage },
+        { "magicka", magickaPercentage },
+        { "stamina", staminaPercentage } } }
   }.dump();
   targetActor.SendToUser(s.data(), s.size(), true);
 }
