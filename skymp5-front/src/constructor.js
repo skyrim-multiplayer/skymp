@@ -35,7 +35,6 @@ const Constructor = props => {
   let hintsarr = [];
   let bodylines = [];
   let allElems = rend.elements;
-  console.log(allElems);
   for (let i = 0; i < allElems.length; i++) {
     let newline = true;
     let css = undefined;
@@ -57,8 +56,6 @@ const Constructor = props => {
     if (newline) bodylines.push([obj]);
     else bodylines[bodylines.length - 1].push(obj);
   }
-
-  console.log(bodylines);
 
   for (let k = 0; k < bodylines.length; k++) {
 
@@ -132,7 +129,6 @@ const Constructor = props => {
         );
     }
     result.body.push(<div className={'container'}>{arr}</div>)
-    console.log(result.body);
   }
 
   const [hints, setHints] = useState(hintsarr);
@@ -145,9 +141,6 @@ const Constructor = props => {
     });
     setHints(newArr);
   };
-
-  console.log("hints");
-  console.log(hints);
 
   return (
     <div className={'login'} >
