@@ -152,7 +152,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   }
 }
 
-Equipment GetEquipment(MpActor& ac)
+Equipment GetEquipment(const MpActor& ac)
 {
   std::string equipment = ac.GetEquipmentAsJson();
   simdjson::dom::parser p;
@@ -540,7 +540,7 @@ float CalculateDamage(const MpActor& aggressor, const MpActor& target, const Hit
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
   }
   auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
-  for (const auto& entry : target.GetInventory().entries) {
+  for (const auto& entry : GetEquipment(target).inv.entries) {
     spdlog::info("CalculateDamage {} -> {}; armor '{}', baseId={}; worn={}",
         aggressor.idx, target.idx, entry.extra.name, entry.baseId,
         static_cast<int>(entry.extra.worn));

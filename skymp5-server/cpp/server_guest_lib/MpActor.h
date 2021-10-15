@@ -20,7 +20,7 @@ public:
   const bool& IsRaceMenuOpen() const;
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
-  const std::string& GetEquipmentAsJson();
+  const std::string& GetEquipmentAsJson() const;
   bool IsWeaponDrawn() const;
 
   void SetRaceMenuOpen(bool isOpen);

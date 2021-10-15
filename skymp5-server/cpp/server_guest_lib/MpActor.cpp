@@ -217,7 +217,7 @@ const std::string& MpActor::GetAppearanceAsJson()
   return pImpl->ChangeForm().appearanceDump;
 }
 
-const std::string& MpActor::GetEquipmentAsJson()
+const std::string& MpActor::GetEquipmentAsJson() const
 {
   return pImpl->ChangeForm().equipmentDump;
 };
