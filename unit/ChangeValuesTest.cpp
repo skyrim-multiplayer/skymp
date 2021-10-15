@@ -88,7 +88,8 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   uint32_t baseId = ac.GetBaseId();
   auto appearance = ac.GetAppearance();
   uint32_t raceId = appearance ? appearance->raceId : 0;
-  BaseActorValues baseValues = GetBaseActorValues(l, baseId, raceId);
+  BaseActorValues baseValues =
+    GetBaseActorValues(&p.worldState, baseId, raceId);
 
   IActionListener::RawMessageData msgData;
   msgData.userId = 0;
@@ -157,7 +158,7 @@ TEST_CASE("OnChangeValues function sends ChangeValues message with new "
 {
   using namespace std::chrono_literals;
 
-  PartOne partOne;
+  PartOne& partOne = GetPartOne();
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
@@ -195,7 +196,7 @@ TEST_CASE("OnChangeValues function doesn't sends ChangeValues message if "
 {
   using namespace std::chrono_literals;
 
-  PartOne partOne;
+  PartOne& partOne = GetPartOne();
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);

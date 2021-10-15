@@ -85,8 +85,8 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   IActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
 
-  uint32_t aggressor = 0xff000000;
-  uint32_t target = 0xff000001;
+  const uint32_t aggressor = 0xff000000;
+  const uint32_t target = 0xff000001;
 
   p.CreateActor(aggressor, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, aggressor);
@@ -98,7 +98,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   HitData hitData;
   hitData.target = target;
   hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E; // iron dagger has
+  hitData.source = 0x0001397E;
 
   // fCombatDistance global value * reach
   const float awaitedRange = 141.f * 0.7f;

@@ -516,134 +516,78 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
-uint32_t GetRaceId(MpActor& actor,
-                   espm::CompressedFieldsCache& compressedFieldCache,
-                   const espm::CombineBrowser& browser)
+bool IsUnarmedAttack(const uint32_t sourceFormId)
+{
+  return sourceFormId == 0x1f4;
+}
+
+uint32_t GetRaceId(const MpActor& actor)
 {
   auto appearance = actor.GetAppearance();
   if (appearance) {
     return appearance->raceId;
   }
-
-  auto baseId = actor.GetBaseId();
-  const auto lookUpNPC = browser.LookupById(baseId);
-  if (!lookUpNPC.rec || lookUpNPC.rec->GetType() != "NPC_") {
-    throw std::runtime_error(
-      fmt::format("Unable to get raceId from {0:x}", baseId));
-  }
-  return espm::Convert<espm::NPC_>(lookUpNPC.rec)
-    ->GetData(compressedFieldCache)
-    .race;
+  WorldState* espmProvider = actor.GetParent();
+  uint32_t baseId = actor.GetBaseId();
+  return espm::GetData<espm::NPC_>(baseId, espmProvider).race;
 }
 
-float CalculateDamage(MpActor& actor, const HitData& hitData,
-                      espm::CompressedFieldsCache& compressedFieldCache)
+float CalculateDamage(const MpActor& actor, const HitData& hitData)
 {
   // TODO(#200): Implement damage calculation logic
-  if (!actor.GetParent()) {
-    throw std::runtime_error(
-      "Unable to calculate damage value without WorldState");
+  WorldState* espmProvider = actor.GetParent();
+  if (IsUnarmedAttack(hitData.source)) {
+    uint32_t raceId = GetRaceId(actor);
+    return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
   }
-
-  if (actor.GetParent()->HasEspm() == false) {
-    throw std::runtime_error("Unable to calculate damage value without espm");
-  }
-
-  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
-  auto& cache = actor.GetParent()->GetEspmCache();
-
-  if (hitData.source == 0x1f4) {
-    uint32_t raceId = GetRaceId(actor, compressedFieldCache, browser);
-
-    const auto lookUpRace = browser.LookupById(raceId);
-    if (!lookUpRace.rec || lookUpRace.rec->GetType() != "RACE") {
-      throw std::runtime_error(
-        fmt::format("Unable to get unarmed damage from {0:x}", raceId));
-    }
-
-    const auto raceData =
-      espm::Convert<espm::RACE>(lookUpRace.rec)->GetData(compressedFieldCache);
-    return raceData.unarmedDamage;
-  }
-
-  const auto lookUpWeapon = browser.LookupById(hitData.source);
-  if (!lookUpWeapon.rec || lookUpWeapon.rec->GetType() != "WEAP") {
-    throw std::runtime_error(
-      fmt::format("Unable to get weapon from {0:x} formId", hitData.source));
-  }
-
-  const auto weaponData =
-    espm::Convert<espm::WEAP>(lookUpWeapon.rec)->GetData(cache).weapData;
-
-  if (weaponData) {
-    return weaponData->damage;
-  } else {
-    throw std::runtime_error("Failed to read weapon data");
-  }
+  auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
+  return weapData.weapData ? weapData.weapData->damage : 0;
 }
 
-float CalculateCurrentHealthPercentage(const MpActor* actor, float damage,
+float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
                                        float healthPercentage)
 {
-  BaseActorValues baseActorValues;
-  auto* parent = actor->GetParent();
-  if (parent && parent->HasEspm()) {
-    auto& espm = parent->GetEspm();
+  uint32_t baseId = actor.GetBaseId();
+  uint32_t raceId = GetRaceId(actor);
+  WorldState* espmProvider = actor.GetParent();
+  float baseHealth = GetBaseActorValues(espmProvider, baseId, raceId).health;
 
-    uint32_t baseId = actor->GetBaseId();
-    auto raceIdOverride =
-      actor->GetAppearance() ? actor->GetAppearance()->raceId : 0;
-    baseActorValues = GetBaseActorValues(espm, baseId, raceIdOverride);
-  }
-
-  float damagePercentage = damage / baseActorValues.health;
+  float damagePercentage = damage / baseHealth;
   float currentHealthPercentage = healthPercentage - damagePercentage;
   return currentHealthPercentage;
 }
 
-float GetReach(uint32_t source,
-               espm::CompressedFieldsCache& compressedFieldCache,
-               MpActor& actor)
+float GetGlobalCombatDistance(WorldState* espmProvider)
 {
-  const auto& browser = actor.GetParent()->GetEspm().GetBrowser();
-  float reach = 0.f;
-  if (source == 0x1f4) {
-    auto raceId = GetRaceId(actor, compressedFieldCache, browser);
-    if (auto rec = espm::Convert<espm::RACE>(browser.LookupById(raceId).rec)) {
-      reach = rec->GetData(compressedFieldCache).unarmedReach;
-    }
-  } else {
-    if (auto rec = espm::Convert<espm::WEAP>(browser.LookupById(source).rec)) {
-      if (auto data = rec->GetData(compressedFieldCache).weapDNAM) {
-        auto lookUpCombatDistance = browser.LookupById(0x55640);
-        float fCombatDistance =
-          espm::Convert<espm::GMST>(lookUpCombatDistance.rec)
-            ->GetData(compressedFieldCache)
-            .value;
-
-        reach =
-          rec->GetData(compressedFieldCache).weapDNAM->reach * fCombatDistance;
-      } else {
-        throw std::runtime_error("Failed to read weapon DNAM");
-      }
-    }
-  }
-  return reach;
+  return espm::GetData<espm::GMST>(0x55640, espmProvider).value;
 }
 
-bool IsDistanceValid(MpActor& actor, MpActor& targetActor, HitData hitData,
-                     espm::CompressedFieldsCache& compressedFieldCache)
+float GetReach(const MpActor& actor, const uint32_t source)
+{
+  auto espmProvider = actor.GetParent();
+  if (IsUnarmedAttack(source)) {
+    uint32_t raceId = GetRaceId(actor);
+    return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
+  }
+  auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
+  float fCombatDistance = GetGlobalCombatDistance(espmProvider);
+  float weaponReach = weapDNAM ? weapDNAM->reach : 0;
+  return weaponReach * fCombatDistance;
+}
+
+bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
+                     const HitData& hitData)
 {
   float sqrDistance = (actor.GetPos() - targetActor.GetPos()).SqrLength();
-  float reach = GetReach(hitData.source, compressedFieldCache, actor);
-  return (reach > 0) && (reach * reach > sqrDistance);
+  float reach = GetReach(actor, hitData.source);
+  return reach * reach > sqrDistance;
 }
 }
 
-void ActionListener::OnHit(const RawMessageData& rawMsgData,
+void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
 {
-  MpActor* aggressor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  MpActor* aggressor = partOne.serverState.ActorByUser(rawMsgData_.userId);
   if (!aggressor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
@@ -659,17 +603,16 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
     hitData.target = aggressor->GetFormId();
   }
 
-  auto& espmCache = partOne.worldState.GetEspmCache();
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
 
-  if (IsDistanceValid(*aggressor, targetActor, hitData, espmCache) == false) {
+  if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
     float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
-    float reach = GetReach(hitData.source, espmCache, *aggressor);
+    float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();
     spdlog::debug(
       fmt::format("{:x} actor can't reach {:x} target because distance {} is "
-                  "greater then first actor' attack radius {}",
+                  "greater then first actor attack radius {}",
                   aggressorId, targetId, distance, reach));
     return;
   }
@@ -680,9 +623,23 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  const auto damage = CalculateDamage(*aggressor, hitData, espmCache);
+  float damage = CalculateDamage(*aggressor, hitData);
+  damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
-    CalculateCurrentHealthPercentage(&targetActor, damage, healthPercentage);
+    CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
+
+  currentHealthPercentage =
+    currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
+
+  targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
+                             staminaPercentage);
+  auto now = std::chrono::steady_clock::now();
+  targetActor.SetLastAttributesPercentagesUpdate(now);
+
+  auto userId = partOne.serverState.UserByActor(&targetActor);
+  if (userId == Networking::InvalidUserId) {
+    return;
+  }
 
   std::string s;
   s += Networking::MinPacketId;
@@ -693,10 +650,5 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
       { "magicka", magickaPercentage },
       { "stamina", staminaPercentage } }
   }.dump();
-
   targetActor.SendToUser(s.data(), s.size(), true);
-  targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
-                             staminaPercentage);
-  auto now = std::chrono::steady_clock::now();
-  targetActor.SetLastAttributesPercentagesUpdate(now);
 }
