@@ -1,23 +1,32 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
+import React from "react";
+import ReactDOM from "react-dom";
 
-import App from './App'
+import App from "./App";
 
-import { store } from './redux/store'
-import { Provider } from 'react-redux'
+import { store } from "./redux/store";
+import { Provider } from "react-redux";
 
-import './main.sass'
+import "./main.sass";
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {
     widgets: [
-      { caption: "Test?", elements: [ { type: "button", text: "Yes" }, { type: "button", text: "No" }]}
-    ]
+      {
+        caption: "Test?",
+        elements: [
+          { type: "button", text: "Yes" },
+          { type: "button", text: "No" },
+        ],
+      },
+    ],
   };
 }
 
 const getWidgetToDraw = () => {
-  if (!Array.isArray(window.skyrimPlatform.widgets) || window.skyrimPlatform.widgets.length === 0) {
+  if (
+    !Array.isArray(window.skyrimPlatform.widgets) ||
+    window.skyrimPlatform.widgets.length === 0
+  ) {
     return null;
   }
   return window.skyrimPlatform.widgets[0];
@@ -28,9 +37,9 @@ if (widget) {
   ReactDOM.render(
     <React.StrictMode>
       <Provider store={store}>
-        <App elem={widget}/>
+        <App elem={widget} />
       </Provider>
     </React.StrictMode>,
-    document.getElementById('root')
-  )
+    document.getElementById("root")
+  );
 }
