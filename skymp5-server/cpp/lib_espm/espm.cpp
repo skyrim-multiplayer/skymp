@@ -1003,7 +1003,8 @@ ARMO::Data ARMO::GetData(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
-        result.armoData = reinterpret_cast<const ArmoData*>(data);
+        result.baseValue = *reinterpret_cast<const uint32_t*>(data);
+        result.weight = *reinterpret_cast<const float*>(data + 4);
       }
     },
     compressedFieldsCache);

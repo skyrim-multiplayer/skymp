@@ -726,17 +726,10 @@ class ARMO : public RecordHeader
 public:
   static constexpr auto type = "ARMO";
 
-  struct ArmoData
+  struct Data
   {
     uint32_t baseValue;
     float weight;
-  };
-  static_assert(sizeof(ArmoData) == 8);
-
-  // XXX: set fields in-place would be better, gotta redo this
-  struct Data
-  {
-    const ArmoData* armoData = nullptr;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
