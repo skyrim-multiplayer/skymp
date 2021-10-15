@@ -557,7 +557,7 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
   return currentHealthPercentage;
 }
 
-float GetGlobalfCombatDistance(WorldState* espmProvider)
+float GetGlobalCombatDistance(WorldState* espmProvider)
 {
   return espm::GetData<espm::GMST>(0x55640, espmProvider).value;
 }
@@ -570,7 +570,7 @@ float GetReach(const MpActor& actor, const uint32_t source)
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
-  float fCombatDistance = GetGlobalfCombatDistance(espmProvider);
+  float fCombatDistance = GetGlobalCombatDistance(espmProvider);
   float weaponReach = weapDNAM ? weapDNAM->reach : 0;
   return weaponReach * fCombatDistance;
 }
