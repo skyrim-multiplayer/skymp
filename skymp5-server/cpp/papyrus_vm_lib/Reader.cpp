@@ -54,66 +54,51 @@ void Reader::CreateScriptStructure(const std::vector<uint8_t>& arrayBytes)
 
   this->structure = std::make_shared<PexScript>();
 
-  structure->header = FillHeader();
+  FillHeader(structure->header);
 
-  structure->source = FillSource();
-  structure->user = FillUser();
-  structure->machine = FillMachine();
+  FillSource(structure->source);
+  FillUser(structure->user);
+  FillMachine(structure->machine);
 
-  structure->stringTable = FillStringTable();
-  structure->debugInfo = FillDebugInfo();
-  structure->userFlagTable = FillUserFlagTable();
-  structure->objectTable = FillObjectTable();
+  FillStringTable(structure->stringTable);
+  FillDebugInfo(structure->debugInfo);
+  FillUserFlagTable(structure->userFlagTable);
+  FillObjectTable(structure->objectTable);
   sourceStructures.push_back(structure);
 }
 
-ScriptHeader Reader::FillHeader()
+void Reader::FillHeader(ScriptHeader& scriptHeader)
 {
-  ScriptHeader Header;
-
-  Header.Signature = Read32_bit(); // 00	FA57C0DE
-  Header.VerMajor = Read8_bit();   // 04	03
-  Header.VerMinor = Read8_bit();   // 05	01
-  Header.GameID = Read16_bit();    // 06	0001
-  Header.BuildTime = Read64_bit(); // 08	time_t
-
-  return Header;
+  scriptHeader.Signature = Read32_bit(); // 00	FA57C0DE
+  scriptHeader.VerMajor = Read8_bit();   // 04	03
+  scriptHeader.VerMinor = Read8_bit();   // 05	01
+  scriptHeader.GameID = Read16_bit();    // 06	0001
+  scriptHeader.BuildTime = Read64_bit(); // 08	time_t
 }
 
-std::string Reader::FillSource()
+void Reader::FillSource(std::string& str)
 {
-  std::string source;
   int sizeString = Read16_bit();
-  source = ReadString(sizeString);
+  str = ReadString(sizeString);
 
   for (int i = 0; i < 4; ++i) {
-    source.pop_back();
+    str.pop_back();
   }
-
-  return source;
 }
 
-std::string Reader::FillUser()
+void Reader::FillUser(std::string& str)
 {
-  std::string user;
-
   int sizeString = Read16_bit();
-  user = ReadString(sizeString);
-
-  return user;
+  str = ReadString(sizeString);
 }
 
-std::string Reader::FillMachine()
+void Reader::FillMachine(std::string& str)
 {
-  std::string machine;
-
   int sizeString = Read16_bit();
-  machine = ReadString(sizeString);
-
-  return machine;
+  str = ReadString(sizeString);
 }
 
-StringTable Reader::FillStringTable()
+void Reader::FillStringTable(StringTable& strTable)
 {
   std::vector<std::string> storage;
 
@@ -125,15 +110,11 @@ StringTable Reader::FillStringTable()
     storage.push_back(ReadString(sizeString));
   }
 
-  StringTable stringTable;
-  stringTable.SetStorage(storage);
-  return stringTable;
+  strTable.SetStorage(storage);
 }
 
-DebugInfo Reader::FillDebugInfo()
+void Reader::FillDebugInfo(DebugInfo& debugInfo)
 {
-  DebugInfo debugInfo;
-
   debugInfo.m_flags = Read8_bit();
   debugInfo.m_sourceModificationTime = Read64_bit();
 
@@ -141,12 +122,8 @@ DebugInfo Reader::FillDebugInfo()
   debugInfo.m_data.reserve(functionCount);
 
   for (int i = 0; i < functionCount; i++) {
-    DebugInfo::DebugFunction info;
-    info = FillDebugFunction();
-    debugInfo.m_data.push_back(info);
+    debugInfo.m_data.push_back(FillDebugFunction());
   }
-
-  return debugInfo;
 }
 
 DebugInfo::DebugFunction Reader::FillDebugFunction()
@@ -166,19 +143,13 @@ DebugInfo::DebugFunction Reader::FillDebugFunction()
   return Fdebug;
 }
 
-std::vector<UserFlag> Reader::FillUserFlagTable()
+void Reader::FillUserFlagTable(std::vector<UserFlag>& userFlagTable)
 {
-  std::vector<UserFlag> userFlagTable;
-
   int userFlagCount = Read16_bit();
 
   for (int i = 0; i < userFlagCount; i++) {
-    UserFlag flag;
-    flag = FillUserFlag();
-    userFlagTable.push_back(flag);
+    userFlagTable.push_back(FillUserFlag());
   }
-
-  return userFlagTable;
 }
 
 UserFlag Reader::FillUserFlag()
@@ -191,20 +162,14 @@ UserFlag Reader::FillUserFlag()
   return flag;
 }
 
-std::vector<Object> Reader::FillObjectTable()
+void Reader::FillObjectTable(std::vector<Object>& objectTable)
 {
-  std::vector<Object> objectTable;
-
   int objectCount = Read16_bit();
   objectTable.reserve(objectCount);
 
   for (int i = 0; i < objectCount; i++) {
-    Object object;
-    object = FillObject();
-    objectTable.push_back(object);
+    objectTable.push_back(FillObject());
   }
-
-  return objectTable;
 }
 
 Object Reader::FillObject()
@@ -320,6 +285,7 @@ FunctionInfo Reader::FillFuncInfo()
   info.flags = Read8_bit();
 
   int countParams = Read16_bit();
+  info.params.reserve(countParams);
 
   for (int i = 0; i < countParams; i++) {
     FunctionInfo::ParamInfo temp;
@@ -329,6 +295,7 @@ FunctionInfo Reader::FillFuncInfo()
   }
 
   int countLocals = Read16_bit();
+  info.params.reserve(countLocals);
 
   for (int i = 0; i < countLocals; i++) {
     FunctionInfo::ParamInfo temp;
@@ -347,11 +314,14 @@ FunctionInfo Reader::FillFuncInfo()
 FunctionCode Reader::FillFunctionCode(int countInstructions)
 {
   FunctionCode funcCode;
+  funcCode.instructions.reserve(countInstructions);
+
   for (int i = 0; i < countInstructions; i++) {
     FunctionCode::Instruction item;
     item.op = Read8_bit();
 
     int numArguments = GetCountArguments(item.op);
+    item.args.reserve(numArguments);
 
     for (int i = 0; i < numArguments; i++) {
 

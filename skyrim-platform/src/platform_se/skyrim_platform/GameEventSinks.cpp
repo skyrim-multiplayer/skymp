@@ -434,7 +434,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
       auto causeLocal = RE::TESForm::LookupByID(causeId);
       causeLocal = causeLocal == causeRefr ? causeLocal : nullptr;
-      obj.SetProperty("agressor", CreateObject("ObjectReference", causeLocal));
+
+      // TODO(#336): drop old name "agressor" on next major release of SP
+      auto aggressor = CreateObject("ObjectReference", causeLocal);
+      obj.SetProperty("agressor", aggressor);
+      obj.SetProperty("aggressor", aggressor);
 
       obj.SetProperty("source",
                       CreateObject("Form", RE::TESForm::LookupByID(sourceId)));
@@ -601,3 +605,18 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   });
   return RE::BSEventNotifyControl::kContinue;
 }
+
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
+  const RE::MenuOpenCloseEvent* e,
+  RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource)
+{
+  const char* menuName = e->menuName.c_str();
+
+  if (e->opening) {
+    EventsApi::SendMenuOpen(menuName);
+  } else {
+    EventsApi::SendMenuClose(menuName);
+  }
+
+  return RE::BSEventNotifyControl::kContinue;
+};

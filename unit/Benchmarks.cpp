@@ -31,7 +31,7 @@ void ExecuteBenchmark(int numPlayers)
   PartOne& p = GetPartOne();
   p.SetSendTarget(new EmptySendTarget);
 
-  REQUIRE(g_maxPlayers >= numPlayers);
+  REQUIRE(kMaxPlayers >= numPlayers);
   for (int i = 0; i < numPlayers; ++i) {
     DoConnect(p, i);
     p.CreateActor(0xff000000 + i, { 0, 0, 0 }, 1, 0x3c);

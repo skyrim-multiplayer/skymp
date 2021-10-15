@@ -61,17 +61,17 @@ TEST_CASE("ChangeForm with spaces is saved correctly", "[save]")
   MpChangeForm f1;
   f1.formDesc = { 1, "" };
 
-  Look look;
-  look.name = "La La La";
-  look.weight = 0.1;
+  Appearance appearance;
+  appearance.name = "La La La";
+  appearance.weight = 0.1;
 
-  f1.lookDump = look.ToJson();
+  f1.appearanceDump = appearance.ToJson();
 
   UpsertSync(*st, { f1 });
 
   auto res = ISaveStorageUtils::FindAllSync(*st);
   REQUIRE(res.size() == 1);
-  REQUIRE(res[{ 1, "" }].lookDump == look.ToJson());
+  REQUIRE(res[{ 1, "" }].appearanceDump == appearance.ToJson());
 }
 
 TEST_CASE("ChangeForm is saved correctly", "[save]")
@@ -81,26 +81,38 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   MpChangeForm f1, f2;
   f1.formDesc = { 1, "" };
   f1.position = { 1, 2, 3 };
-  f1.lookDump = "{}";
+  f1.appearanceDump = "{}";
   f1.inv.AddItem(0xf, 1000);
   f1.equipmentDump = "[]";
+  f1.healthPercentage = 0.25f;
+  f1.magickaPercentage = 0.3f;
+  f1.staminaPercentage = 1.0f;
   f2.formDesc = { 2, "" };
   f2.position = { 2, 4, 6 };
   f2.isDisabled = true;
   f2.profileId = 10;
+  f2.healthPercentage = 0;
+  f2.magickaPercentage = 0;
+  f2.staminaPercentage = 0;
   UpsertSync(*st, { f1, f2 });
 
   auto res = ISaveStorageUtils::FindAllSync(*st);
   REQUIRE(res.size() == 2);
   REQUIRE(res[{ 1, "" }].position == NiPoint3(1, 2, 3));
-  REQUIRE(res[{ 1, "" }].lookDump == "{}");
+  REQUIRE(res[{ 1, "" }].appearanceDump == "{}");
   REQUIRE(res[{ 1, "" }].equipmentDump == "[]");
   REQUIRE(res[{ 1, "" }].inv == Inventory().AddItem(0xf, 1000));
   REQUIRE(res[{ 1, "" }].isDisabled == false);
   REQUIRE(res[{ 1, "" }].profileId == -1);
+  REQUIRE(res[{ 1, "" }].healthPercentage == 0.25f);
+  REQUIRE(res[{ 1, "" }].magickaPercentage == 0.3f);
+  REQUIRE(res[{ 1, "" }].staminaPercentage == 1.0f);
   REQUIRE(res[{ 2, "" }].position == NiPoint3(2, 4, 6));
   REQUIRE(res[{ 2, "" }].isDisabled == true);
   REQUIRE(res[{ 2, "" }].profileId == 10);
+  REQUIRE(res[{ 2, "" }].healthPercentage == 0);
+  REQUIRE(res[{ 2, "" }].magickaPercentage == 0);
+  REQUIRE(res[{ 2, "" }].staminaPercentage == 0);
 }
 
 TEST_CASE("Upsert affects the number of change forms in the database in the "

@@ -917,11 +917,13 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       uint32_t resultItem = 0;
       if (t == espm::TREE::type) {
         espm::FLOR::Data data;
-        data = espm::Convert<espm::TREE>(base.rec)->GetData();
+        data =
+          espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
         resultItem = espm::GetMappedId(data.resultItem, *mapping);
       } else if (t == espm::FLOR::type) {
         espm::FLOR::Data data;
-        data = espm::Convert<espm::FLOR>(base.rec)->GetData();
+        data =
+          espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
         resultItem = espm::GetMappedId(data.resultItem, *mapping);
       } else {
         resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
@@ -935,7 +937,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
     auto refrRecord = espm::Convert<espm::REFR>(
       loader.GetBrowser().LookupById(GetFormId()).rec);
-    auto teleport = refrRecord->GetData().teleport;
+    auto teleport = refrRecord->GetData(compressedFieldsCache).teleport;
     if (teleport) {
       if (!IsOpen()) {
         SetOpen(true);
@@ -1057,7 +1059,7 @@ void MpObjectReference::InitScripts()
   if (!scriptStorage)
     return;
 
-  auto compressedFieldsCache = &GetParent()->GetEspmCache();
+  auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
   std::vector<std::string> scriptNames;
 
@@ -1092,7 +1094,7 @@ void MpObjectReference::InitScripts()
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
       auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
-        scriptName, base.rec, refr.rec, base.parent, compressedFieldsCache);
+        scriptName, base.rec, refr.rec, base.parent, &compressedFieldsCache);
       scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
     }
 
@@ -1152,7 +1154,8 @@ std::vector<espm::CONT::ContainerObject> GetOutfitObjects(
 
     auto outfitId = lookupRes.ToGlobalId(data.defaultOutfitId);
     auto outfit = espm::Convert<espm::OTFT>(br.LookupById(outfitId).rec);
-    auto outfitData = outfit ? outfit->GetData() : espm::OTFT::Data();
+    auto outfitData =
+      outfit ? outfit->GetData(compressedFieldsCache) : espm::OTFT::Data();
 
     for (uint32_t i = 0; i != outfitData.count; ++i) {
       auto outfitElementId = lookupRes.ToGlobalId(outfitData.formIds[i]);
@@ -1168,7 +1171,7 @@ std::vector<espm::CONT::ContainerObject> GetInventoryObjects(
 {
   auto baseContainer = espm::Convert<espm::CONT>(lookupRes.rec);
   if (baseContainer)
-    return baseContainer->GetData().objects;
+    return baseContainer->GetData(compressedFieldsCache).objects;
 
   auto baseNpc = espm::Convert<espm::NPC_>(lookupRes.rec);
   if (baseNpc) {
@@ -1255,10 +1258,10 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
 
   if (targetWorld != casterWorld) {
     const char* casterWorldName =
-      casterWorld ? casterWorld->GetEditorId(&compressedFieldsCache) : "";
+      casterWorld ? casterWorld->GetEditorId(compressedFieldsCache) : "";
 
     const char* targetWorldName =
-      targetWorld ? targetWorld->GetEditorId(&compressedFieldsCache) : "";
+      targetWorld ? targetWorld->GetEditorId(compressedFieldsCache) : "";
     std::stringstream ss;
     ss << "WorldSpace doesn't match: caster is in " << casterWorldName
        << ", target is in " << targetWorldName;

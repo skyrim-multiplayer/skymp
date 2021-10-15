@@ -1,0 +1,18 @@
+.Header-left {
+  margin-left: 64px;
+}
+
+.Header-right {
+  margin-right: 64px;
+}
+
+.frame {
+  width: 512px;
+  height: 704px;
+  z-index: -9999;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  top: 0;
+  position: absolute;
+}

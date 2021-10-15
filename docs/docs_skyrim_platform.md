@@ -9,7 +9,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - To use types from Papyrus, including calling methods and static functions that they have, they need to be imported:
 
   ```typescript
-  import { Game, Actor } from "../skyrimPlatform";
+  import { Game, Actor } from "skyrimPlatform";
   ```
 
 ### Native functions
@@ -19,8 +19,8 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - Static functions are called on the type:
 
   ```typescript
-  let sunX = Game.GetSunPositionX();
-  let pl = Game.GetPlayer();
+  let sunX = Game.getSunPositionX();
+  let pl = Game.getPlayer();
   Game.forceFirstPerson();
   ```
 
@@ -32,6 +32,23 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 - A list of original game types with documentation can be found here: https://www.creationkit.com/index.php?title=Category:Script_Objects
 - Calling functions from the original game is only available inside the `update` event handler (see below). If you try to do this in a different context, an exception will be thrown.
+
+### Native functions from SKSE plugins
+
+- You are able to call Papyrus functions added by SKSE plugins. This example illustrates how to use PapyrusUtil in a SkyrimPlatform plugin:
+  ```typescript
+  import * as sp from "skyrimPlatform";
+
+  sp.on("update", () => {
+    const filePath = "data/platform/plugins/plugin-example.js";
+    
+    // SkyrimPlatform doesn't contain PapyrusUtil typings so we cast to any to be able to call all functions.
+    // Here we use 'MiscUtil.ReadFromFile' native. Of course, you can use any other function.
+    const str = (sp as any).MiscUtil.readFromFile(filePath);
+
+    sp.printConsole("Read", str.length, "characters");
+  });
+  ```
 
 ### Form
 
@@ -56,6 +73,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   let isInCombat = actor.isInCombat();
   ```
 - It is guaranteed that `Game.getPlayer` never returns `null`.
+- Use the `strict` option in `tsconfig.json` to enable/disable compiler null checks and other correctness checks. Learn more here: https://www.typescriptlang.org/tsconfig#strict
 
 ### Unhandled exceptions
 
@@ -163,7 +181,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - `update` is an event that is called once for every frame in the game (60 times per second at 60 FPS) after you've loaded a save or started a new game.
 
   ```typescript
-  import { on } from "../skyrimPlatform";
+  import { on } from "skyrimPlatform";
   on("update", () => {
     // At this stage, the methods of all imported
     // types are already available.
@@ -172,7 +190,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 - `tick` is an event that is called once for every frame in the game immediately after the game starts.
   ```typescript
-  import { on } from "../skyrimPlatform";
+  import { on } from "skyrimPlatform";
   on("tick", () => {
     // No access to game methods here.
   });
@@ -181,7 +199,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 - With `on`, you can subscribe to the event forever.
   ```typescript
-  import { on } from "../skyrimPlatform";
+  import { on } from "skyrimPlatform";
   on("equip", (event) => {
     printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
     printConsole(`object: ${event.baseObj.getName()}`);
@@ -189,7 +207,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   ```
 - Using `once`, you can add a handler that will be called once the next time the event is fired.
   ```typescript
-  import { once } from "../skyrimPlatform";
+  import { once } from "skyrimPlatform";
   once("equip", (event) => {
     printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
     printConsole(`object: ${event.baseObj.getName()}`);
@@ -202,7 +220,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - Hooks allow you to intercept the start and end of some functions of the game engine.
 - Currently supported hooks: `sendAnimationEvent`
   ```typescript
-  import { hooks, printConsole } from  "../skyrimPlatform"
+  import { hooks, printConsole } from "skyrimPlatform"
   hooks.sendAnimationEvent.add({
   	enter(ctx) {
   		printConsole(ctx.animEventName);
@@ -224,7 +242,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - `printConsole (... arguments: any []): void` - output to the game console, opened by the `~` key.
 
   ```typescript
-  import { printConsole, Game } from "../skyrimPlatform";
+  import { printConsole, Game } from "skyrimPlatform";
   on("update", () => {
     printConsole(`player id = ${Game.getPlayer().getFormID()}`);
   });
@@ -242,7 +260,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 * `settings` - an object that provides access to plugin settings:
 
   ```typescript
-  import { settings, printConsole } from "../skyrimPlatform";
+  import { settings, printConsole } from "skyrimPlatform";
   let option = settings["plugin-name"]["my-option"];
   printConsole(option);
   ```
@@ -293,7 +311,7 @@ SkyrimPlatform provides limited support for HTTP/HTTPS requests.
 At the moment only `get` and `post` are available.
 
 ```typescript
-import { HttpClient } from "../skyrimPlatfosrm";
+import { HttpClient } from "skyrimPlatform";
 let url = "https://canhazip.com:443"; // URL may contain port or not
 let http = new HttpClient(url);
 http.get("/").then((response) => printConsole(response.body));
@@ -301,10 +319,79 @@ http.get("/").then((response) => printConsole(response.body));
 
 - In case the request fails, `response.body` will be empty.
 
+### Browser
+
+#### Basics
+
+Create `Data/Platform/UI/index.html` with contents below to test:
+```html
+<font color="white"><h1>Hello SP</h1></font>
+```
+
+SkyrimPlatform loads `Data/Platform/UI/index.html` if the file exists. It is also possible to load URLs in runtime.
+
+```typescript
+import { browser } from "skyrimPlatform";
+
+// Enable/disable browser visibility
+browser.setVisible(true);
+
+// Open cursor and redirect mouse and keyboard events to the browser
+browser.setFocused(true);
+
+// Load a specified URL. The current implementation loads URLs only after the user moves the mouse, except the default URL.
+browser.loadUrl("file:///Data/Platform/UI/index.html");         // Default one
+browser.loadUrl("");                                            // Same effect for empty URL
+browser.loadUrl("file:///Data/Platform/UI/another-file.html");  // Load another page from Data
+browser.loadUrl("https://google.com");                          // Open websites
+browser.loadUrl("http://localhost:9000");                       // Open remote dev tools. You better open them in normal browser
+browser.loadUrl("http://localhost:1234");                       // Your favorite dev server in watch mode
+
+// Execute JavaScript code in browser context
+browser.executeJavaScript("console.log('Hello CEF')");
+
+// SkyrimPlatform generates a unique token every game start
+// In browser context, it appears in `window.spBrowserToken` after some time from page load moment
+const str = browser.getToken();
+```
+
+#### Talking back to the game
+
+Use `window.skyrimPlatform.sendMessage` on the browser side to talk back to the game. `sendMessage` accepts zero or more JSON-serializable values.
+```js
+window.skyrimPlatform.sendMessage({ foo: 'bar' });
+window.skyrimPlatform.sendMessage(1, 2, 3, "yay");
+window.skyrimPlatform.sendMessage();
+```
+
+You can call this function whenever you want: as a button callback, etc.
+```html
+<input type="button" value="Click me" onclick="window.skyrimPlatform.sendMessage({ foo: 'bar' });">
+```
+
+Calls to `sendMessage` result in a `browserMessage` event on the SP side. You can handle these events as any others.
+```ts
+on("browserMessage", (event) => {
+  printConsole(JSON.stringify(event.arguments));
+});
+```
+
+"Ping-pong" example: SP context communicates with browser context via `executeJavaScript`, and the browser context communicates back with `window.skyrimPlatform.sendMessage`.
+```ts
+once("tick", () => {
+    browser.executeJavaScript("window.skyrimPlatform.sendMessage('yay')");
+});
+
+on("browserMessage", (event) => {
+    printConsole(JSON.stringify(event.arguments));
+    browser.executeJavaScript("window.skyrimPlatform.sendMessage('yay')");
+});
+```
+
 ### Hot Reload
 
 - Hot Reload for SkyrimPlatform plugins is supported. Changing the contents of `Data / Platform / Plugins` will reload all plugins without restarting the game.
-- For full use, these are features, i.e. reload your plugin with Ctrl + S, take the example plugin as a basis https://github.com/skyrim-multiplayer/skyrimplatform-plugin-example
+- For using all these features, including Ctrl+S hot reload, take our example plugin as a base https://github.com/skyrim-multiplayer/skymp/tree/main/skyrim-platform/tools/plugin-example. Plugin example is also present in the archive uploaded to Nexus Mods (Data/Platform/plugin-example).
 - When reloading plugins, the added event and hook handlers are removed, asynchronous operations are interrupted and all variables are reset, except for `storage` and its properties.
 
 ### DumpFunctions

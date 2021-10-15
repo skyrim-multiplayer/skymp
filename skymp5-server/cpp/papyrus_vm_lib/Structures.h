@@ -388,7 +388,7 @@ struct PexScript
   std::string machine;
 };
 
-struct ActivePexInstance
+class ActivePexInstance
 {
 public:
   using Local = std::pair<std::string, VarValue>;

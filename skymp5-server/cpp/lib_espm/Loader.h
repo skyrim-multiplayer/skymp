@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include <fmt/format.h>
 #include <fstream>
 #include <functional>
 #include <map>
@@ -64,5 +65,35 @@ private:
   std::vector<fs::path> filePaths;
   BufferType bufferType;
 };
+
+template <class RecordT, class EspmProvider>
+typename RecordT::Data GetData(uint32_t formId, EspmProvider* espmProvider)
+{
+  if (!espmProvider) {
+    throw std::runtime_error("Unable to find record without EspmProvider");
+  }
+
+  auto& espmLoader = espmProvider->GetEspm();
+
+  // That's why espmProvider is non-const: cache is mutable
+  espm::CompressedFieldsCache& espmCache = espmProvider->GetEspmCache();
+
+  const espm::LookupResult lookupResult =
+    espmLoader.GetBrowser().LookupById(formId);
+
+  if (!lookupResult.rec) {
+    throw std::runtime_error(
+      fmt::format("Record {0:x} doesn't exist", formId));
+  }
+
+  const RecordT* convertedRecord = espm::Convert<RecordT>(lookupResult.rec);
+  if (!convertedRecord) {
+    throw std::runtime_error(
+      fmt::format("Expected record {0:x} to be {1}, but found {2}", formId,
+                  RecordT::type, lookupResult.rec->GetType().ToString()));
+  }
+
+  return convertedRecord->GetData(espmCache);
+}
 
 } // namespace espm
