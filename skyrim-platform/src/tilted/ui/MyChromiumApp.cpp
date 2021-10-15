@@ -96,7 +96,6 @@ void MyChromiumApp::Initialize() noexcept
 
   browserSettings.file_access_from_file_urls = STATE_ENABLED;
   browserSettings.universal_access_from_file_urls = STATE_ENABLED;
-  browserSettings.web_security = STATE_DISABLED;
   browserSettings.windowless_frame_rate = 60;
 
   CefWindowInfo info;
