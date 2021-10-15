@@ -541,12 +541,16 @@ float CalculateDamage(const MpActor& aggressor, const MpActor& target, const Hit
   }
   auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
   for (const auto& entry : GetEquipment(target).inv.entries) {
-    spdlog::info("CalculateDamage {} -> {}; armor '{}', baseId={}; worn={}",
+    spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={}; worn={}",
         aggressor.idx, target.idx, entry.extra.name, entry.baseId,
         static_cast<int>(entry.extra.worn));
     if (entry.extra.worn != Inventory::Worn::None) {
-      auto armorData = espm::GetData<espm::ARMO>(entry.baseId, espmProvider);
-      spdlog::info("armor baseId={}: baseValue={}", entry.baseId, armorData.baseValue);
+      try {
+        auto armorData = espm::GetData<espm::ARMO>(entry.baseId, espmProvider);
+        spdlog::info("armor baseId={}: baseValue={}", entry.baseId, armorData.baseValue);
+      } catch (const std::exception& exc) {
+        spdlog::error("err: {}", exc.what());
+      }
     }
   }
 
