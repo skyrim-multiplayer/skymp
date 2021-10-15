@@ -1,5 +1,5 @@
 {
     "name": "cef-prebuilt",
-    "version-string": "1",
+    "version-string": "cef_binary_94.4.10+g38a7995+chromium-94.0.4606.81",
     "supports": "windows & x64"
 }
