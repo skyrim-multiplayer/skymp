@@ -687,6 +687,7 @@ public:
   };
   static_assert(sizeof(WeapData) == 10);
 
+  // XXX: enum class?
   enum AnimType : uint8_t
   {
     Other = 0,
@@ -728,8 +729,8 @@ public:
 
   struct Data
   {
-    uint32_t baseValue;
-    float weight;
+    uint32_t baseValue = 0;
+    float weight = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;

@@ -532,14 +532,25 @@ uint32_t GetRaceId(const MpActor& actor)
   return espm::GetData<espm::NPC_>(baseId, espmProvider).race;
 }
 
-float CalculateDamage(const MpActor& actor, const HitData& hitData)
+float CalculateDamage(const MpActor& aggressor, const MpActor& target, const HitData& hitData)
 {
-  WorldState* espmProvider = actor.GetParent();
+  WorldState* espmProvider = aggressor.GetParent();
   if (IsUnarmedAttack(hitData.source)) {
-    uint32_t raceId = GetRaceId(actor);
+    uint32_t raceId = GetRaceId(aggressor);
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
   }
   auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
+  for (const auto& entry : target.GetInventory().entries) {
+    spdlog::info("CalculateDamage {} -> {}; armor '{}', baseId={}; worn={}",
+        aggressor.idx, target.idx, entry.extra.name, entry.baseId,
+        static_cast<int>(entry.extra.worn));
+    if (entry.extra.worn != Inventory::Worn::None) {
+      auto armorData = espm::GetData<espm::ARMO>(entry.baseId, espmProvider);
+      spdlog::info("armor baseId={}: baseValue={}", entry.baseId, armorData.baseValue);
+    }
+  }
+
+  auto damage = weapData.weapData ? weapData.weapData->damage : 0;
   if (hitData.isHitBlocked) {
     damage /= 2;
   }
@@ -625,7 +636,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  float damage = CalculateDamage(*aggressor, hitData);
+  float damage = CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
     CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
