@@ -1,4 +1,5 @@
-set(CEF_URL "https://cef-builds.spotifycdn.com/cef_binary_84.3.7%2Bg97011bc%2Bchromium-84.0.4147.89_windows64.tar.bz2")
+set(CEF_URL "https://cef-builds.spotifycdn.com/cef_binary_94.4.10+g38a7995+chromium-94.0.4606.81_windows64.tar.bz2")
+string(REPLACE "+" "%2B" CEF_URL ${CEF_URL})
 
 vcpkg_download_distfile(ARCHIVE
     URLS ${CEF_URL}
