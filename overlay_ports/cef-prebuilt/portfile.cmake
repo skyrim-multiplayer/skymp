@@ -4,7 +4,7 @@ string(REPLACE "+" "%2B" CEF_URL ${CEF_URL})
 vcpkg_download_distfile(ARCHIVE
     URLS ${CEF_URL}
     FILENAME "cef.tar.bz2"
-    SHA512 3974c4f9ad2741b80bec79476ecc2af285633005f6982e77cb92cc5c8f91ca1b4f60959c8090aad28edbf61073a78e037d867c54cef1afe3e6de9db90c3184c4
+    SHA512 ae96f69a11d5b482262ebd199d31a1615b038cda0872c1fe5244aeb8b9e199590307d92c9e0052e9094db597215042e7c18ba384e0e7c7bbd6c9cb5a79ddcbb7
 )
 
 vcpkg_extract_source_archive_ex(
