@@ -218,7 +218,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 ### Hooks
 
 - Hooks allow you to intercept the start and end of some functions of the game engine.
-- Currently supported hooks: `sendAnimationEvent`
+- Currently supported hooks: `sendAnimationEvent`, `sendPapyrusEvent`
   ```typescript
   import { hooks, printConsole } from "skyrimPlatform"
   hooks.sendAnimationEvent.add({
@@ -235,6 +235,30 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - `ctx` is the same object for calls to` enter` and `leave`.
 - `ctx.storage` is used to store data between calls to` enter` and `leave`.
 - Script functions are not available inside the `enter` and` leave` handlers.
+
+### Advanced Hooking
+
+- Hooking is expensive: we need to enter the JavaScript context every time we enter/leave hooked function. So if we do not receive some kind of events or need only to react to events specific to some characters, we better check these conditions on the C++ side to prevent excess JS-C++ interop.
+  ```typescript
+  import { hooks, printConsole } from "skyrimPlatform"
+
+  // Bad. Catches all animation events in the world when we only want to catch events from the player character.
+  hooks.sendAnimationEvent.add({
+  	enter(ctx) {
+      if (ctx.selfId !== 0x14) return;
+      printConsole("Player's anim:", ctx.animEventName);
+  	},
+  	leave(ctx) {};
+  });
+
+  // Good. No JS is triggered until selfId in range `[minSelfId..maxSelfId]` found and event name matches `"*"` wildcard
+  hooks.sendAnimationEvent.add({
+  	enter(ctx) {
+      printConsole("Player's anim:", ctx.animEventName);
+  	},
+  	leave(ctx) {};
+  }, /* minSelfId = */ 0x14, /* maxSelfId = */ 0x14, /*eventPattern = */ "*");
+  ```
 
 ### Custom SkyrimPlatform Methods and Properties
 
@@ -397,3 +421,14 @@ on("browserMessage", (event) => {
 ### DumpFunctions
 
 - SkyrimPlatform has built-in functionality that allows you to output information about game functions to the file `Data / Platform / Output / DumpFunctions.txt` (key combination 9 + O + L). The game pauses for a few seconds while DumpFunctions is running.
+
+### Community Hooks
+
+You might want to extend the default hooking functionality of SP by adding custom hooks in C++.
+
+1) Hook a function https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/src/platform_se/skyrim_platform/FridaHooks.cpp
+good example is HOOK_SEND_ANIMATION_EVENT. That's enough to hook something. The next step is to add the hook to our TypeScript API.
+2) Create Enter/Leave methods in EventsApi like this https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/src/platform_se/skyrim_platform/EventsApi.cpp#L354
+3) Add your hook to the list of hooks https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/src/platform_se/skyrim_platform/EventsApi.cpp#L411
+4) Add your hook to TypeScript definitions so it would be able to appear in skyrimPlatform.ts https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/src/platform_se/codegen/convert-files/Definitions.txt#L538
+5) Pull request (see https://github.com/skyrim-multiplayer/skymp/blob/main/CONTRIBUTING.md)
