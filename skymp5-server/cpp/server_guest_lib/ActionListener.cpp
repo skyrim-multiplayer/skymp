@@ -590,11 +590,7 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData hitData,
   float speed =
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM->speed;
 
-  if (timePassed.count() >= 1.1 * speed) {
-    return true;
-  } else {
-    return false;
-  }
+  return timePassed.count() >= 1.1 * speed;
 }
 }
 
