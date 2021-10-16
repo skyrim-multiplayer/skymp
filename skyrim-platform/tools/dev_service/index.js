@@ -110,8 +110,8 @@ const watchCallback = (_eventType, fileName) => {
           );
         });
         [
-          "cef_100_percent.pak",
-          "cef_200_percent.pak"
+          "chrome_100_percent.pak",
+          "chrome_200_percent.pak"
         ].forEach((item, i) => {
           cp(
             path.join(cefDir, "Resources", item),
