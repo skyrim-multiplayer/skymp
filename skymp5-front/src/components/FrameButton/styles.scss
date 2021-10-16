@@ -1,0 +1,24 @@
+.skymp-input.button {
+    text-align: center;
+    align-items: center;
+    display: flex;
+    margin-bottom: 0;
+    cursor: pointer;
+    &.disabled {
+      opacity: 0.33;
+      * {
+        opacity: 0.33;
+      }
+    }
+  .skymp-input_text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: Bankir-Retro, serif;
+      font-style: normal;
+      font-weight: normal;
+      font-size: 30px;
+      line-height: 32px;
+      color: #9D9E9EBF;
+      margin: auto;
+    }
+}

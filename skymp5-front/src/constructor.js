@@ -7,7 +7,8 @@ import SkyrimButton from "./components/SkyrimButton";
 import Frame from "./components/SkyrimFrame";
 import SkyrimInput from "./components/SkyrimInput";
 import SkyrimHint from "./components/SkyrimHint";
-import LinkButton from "./components/LinkButton"
+import LinkButton from "./components/LinkButton";
+import FrameButton from "./components/FrameButton";
 
 const Constructor = props => {
 
@@ -78,9 +79,7 @@ const Constructor = props => {
         else if (bodylines[k][j].css == "BUTTON_STYLE_PATREON") {
           curElem = (<LinkButton href={'https://github.com/skyrim-multiplayer/skymp'} src={require('./img/patreon.svg').default} />);
         } else if (bodylines[k][j].css == "BUTTON_STYLE_FRAME") {
-          curElem = (<div className={`skymp-input button`}>
-            <span className={'skymp-input_text'}>{elemm.text}</span>
-          </div>);
+          curElem = <FrameButton text={elemm.text} />;
         }
       }
       else if (elemm.type === "text") {
@@ -158,7 +157,6 @@ const Constructor = props => {
           }
           <div className={'login-form--content_main'} ref={content_mainRef}>
             {result.body}
-
             {hints.map(hint => {
               return (
                 <SkyrimHint
