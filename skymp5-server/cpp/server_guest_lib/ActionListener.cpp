@@ -582,11 +582,25 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   float reach = GetReach(actor, hitData.source);
   return reach * reach > sqrDistance;
 }
+
+bool IsAvailableForNextAttack(const MpActor& actor, const HitData hitData,
+                              std::chrono ::duration<float>& timePassed)
+{
+  WorldState* espmProvider = actor.GetParent();
+  float speed =
+    espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM->speed;
+
+  if (timePassed.count() < 1.1 * speed)
+    return false;
+  else
+    return true;
+}
 }
 
 void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
 {
+  auto now = std::chrono::steady_clock::now();
   MpActor* aggressor = partOne.serverState.ActorByUser(rawMsgData_.userId);
   if (!aggressor) {
     throw std::runtime_error("Unable to change values without Actor attached");
@@ -604,6 +618,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
+  auto lastHitTime = targetActor.GetLastAttributesPercentagesUpdate();
+  std::chrono::duration<float> timePassed = now - lastHitTime;
+
+  if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+    return;
+  }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
     float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
