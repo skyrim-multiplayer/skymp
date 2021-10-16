@@ -426,9 +426,8 @@ on("browserMessage", (event) => {
 
 You might want to extend the default hooking functionality of SP by adding custom hooks in C++.
 
-1) Hook a function https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/src/platform_se/skyrim_platform/FridaHooks.cpp
-good example is HOOK_SEND_ANIMATION_EVENT. That's enough to hook something. The next step is to add the hook to our TypeScript API.
-2) Create Enter/Leave methods in EventsApi like this https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/src/platform_se/skyrim_platform/EventsApi.cpp#L354
-3) Add your hook to the list of hooks https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/src/platform_se/skyrim_platform/EventsApi.cpp#L411
-4) Add your hook to TypeScript definitions so it would be able to appear in skyrimPlatform.ts https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/src/platform_se/codegen/convert-files/Definitions.txt#L538
-5) Pull request (see https://github.com/skyrim-multiplayer/skymp/blob/main/CONTRIBUTING.md)
+1) Hook a function ([click](https://github.com/skyrim-multiplayer/skymp/blob/bf88abcc1922bbbfc12e177e522453f95eb60113/skyrim-platform/src/platform_se/skyrim_platform/FridaHooks.cpp)). Good example is `HOOK_SEND_ANIMATION_EVENT`. That's enough to hook something. The next step is to add the hook to our TypeScript API.
+2) Create Enter/Leave methods in EventsApi like this ([click](https://github.com/skyrim-multiplayer/skymp/blob/bf88abcc1922bbbfc12e177e522453f95eb60113/skyrim-platform/src/platform_se/skyrim_platform/EventsApi.cpp#L354))
+3) Add your hook to the list of hooks ([click](https://github.com/skyrim-multiplayer/skymp/blob/bf88abcc1922bbbfc12e177e522453f95eb60113/skyrim-platform/src/platform_se/skyrim_platform/EventsApi.cpp#L411))
+4) Add your hook to TypeScript definitions so it would be able to appear in skyrimPlatform.ts ([click](https://github.com/skyrim-multiplayer/skymp/blob/bf88abcc1922bbbfc12e177e522453f95eb60113/skyrim-platform/src/platform_se/codegen/convert-files/Definitions.txt#L538))
+5) Pull request (see [CONTRIBUTING.md](https://github.com/skyrim-multiplayer/skymp/blob/main/CONTRIBUTING.md))
