@@ -93,7 +93,7 @@ class App extends React.Component {
         checked={this.state.isChecked}
         onChange={() => {this.setState(prev => ({isChecked: !prev.isChecked}))}} />
         {(this.state.isChecked) ?
-          <Constructor elem={this.props.elem} height={this.props.height || 704} width={this.props.width || 512}/>
+          <Constructor dynamicSize={(this.props.dynamicSize!==undefined) ? this.props.dynamicSize : true} elem={this.props.elem} height={this.props.height || 704} width={this.props.width || 512}/>
           : <LoginPage />
         }</>
       )
