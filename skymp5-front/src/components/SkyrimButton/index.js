@@ -8,7 +8,7 @@ const SkyrimButton = props => {
             className={`skymp-button ${!props.disabled ? 'active' : 'disabled'}`}
             onClick={(e) => {
                 if (!props.disabled)
-                    props.onClick(e)
+                    props.onClick ? props.onClick(e) : console.log(e)
             }}
             style={{
                 backgroundImage: `url(${require(`../../img/button${!props.disabled ? '' : '_disabled'}.svg`).default})`
