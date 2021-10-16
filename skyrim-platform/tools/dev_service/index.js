@@ -110,11 +110,8 @@ const watchCallback = (_eventType, fileName) => {
           );
         });
         [
-          "cef.pak",
           "cef_100_percent.pak",
-          "cef_200_percent.pak",
-          "cef_extensions.pak",
-          "devtools_resources.pak",
+          "cef_200_percent.pak"
         ].forEach((item, i) => {
           cp(
             path.join(cefDir, "Resources", item),
