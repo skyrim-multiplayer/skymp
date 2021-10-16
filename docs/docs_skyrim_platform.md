@@ -238,7 +238,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 ### Advanced Hooking
 
-- Hooking is expensive: we need to enter the JavaScript context every time we enter/leave hooked function. So if we do not receive some kind of events or need only to react to events specific to some characters, we better check these conditions on the C++ side to prevent excess JS-C++ interop.
+- SkyrimPlatform side can filter out some events before they will reach JS code. It allows doing less expensive JS calls. So the more we can check before triggering JS callback, the better.
   ```typescript
   import { hooks, printConsole } from "skyrimPlatform"
 
