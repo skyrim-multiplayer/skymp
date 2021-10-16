@@ -422,7 +422,7 @@ on("browserMessage", (event) => {
 
 - SkyrimPlatform has built-in functionality that allows you to output information about game functions to the file `Data / Platform / Output / DumpFunctions.txt` (key combination 9 + O + L). The game pauses for a few seconds while DumpFunctions is running.
 
-### Community Hooks
+### Contributing New Hooks
 
 You might want to extend the default hooking functionality of SP by adding custom hooks in C++.
 
