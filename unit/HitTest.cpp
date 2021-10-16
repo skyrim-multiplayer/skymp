@@ -8,11 +8,13 @@
 
 PartOne& GetPartOne();
 extern espm::Loader l;
+using namespace std::chrono_literals;
 
 TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
           "weapon-dependent value",
           "[Hit]")
 {
+  
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
@@ -26,6 +28,9 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
 
+  
+  auto past = std::chrono::steady_clock::now() - 10s;
+  ac.SetLastHitTime(past);
   p.Messages().clear();
   p.GetActionListener().OnHit(rawMsgData, hitData);
 
@@ -42,8 +47,6 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
 TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
           "[ChangeValues]")
 {
-  using namespace std::chrono_literals;
-
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
@@ -58,6 +61,8 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   hitData.source = 0x0001397E; // iron dagger 4 damage
 
   p.Messages().clear();
+  auto past = std::chrono::steady_clock::now() - 2s;
+  ac.SetLastHitTime(past);
   p.GetActionListener().OnHit(rawMsgData, hitData);
 
   REQUIRE(p.Messages().size() == 1);
@@ -88,8 +93,10 @@ TEST_CASE("OnHit damage character by race-dependent value", "[Hit]")
   hitData.source = 0x1f4; // unarmed attack
 
   p.Messages().clear();
+  auto past = std::chrono::steady_clock::now() - 2s;
+  ac.SetLastHitTime(past);
   p.GetActionListener().OnHit(rawMsgData, hitData);
-
+  
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
   REQUIRE(changeForm.healthPercentage == 0.96f);
@@ -101,6 +108,8 @@ TEST_CASE("OnHit damage character by race-dependent value", "[Hit]")
   ac.SetAppearance(&appearance);
   ac.SetPercentages(1, 1, 1);
 
+  past = std::chrono::steady_clock::now() - 2s;
+  ac.SetLastHitTime(past);
   p.GetActionListener().OnHit(rawMsgData, hitData);
   changeForm = ac.GetChangeForm();
 
@@ -137,6 +146,9 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   acTarget.SetPos({ awaitedRange * 1.001f, 0, 0 });
   acTarget.SetPercentages(0.1f, 1, 1);
 
+  auto past = std::chrono::steady_clock::now() - 2s;
+  acTarget.SetLastHitTime(past);
+  acAggressor.SetLastHitTime(past);
   p.GetActionListener().OnHit(rawMsgData, hitData);
 
   auto changeForm = acTarget.GetChangeForm();
@@ -144,5 +156,52 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
 
   p.DestroyActor(aggressor);
   p.DestroyActor(target);
+  DoDisconnect(p, 0);
+}
+
+TEST_CASE("checking weapon cooldown", "[HitTest]")
+{
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  ac.SetPercentages(1.f, 1.f, 1.f);
+
+  IActionListener::RawMessageData msgData;
+  msgData.userId = 0;
+  HitData hitData;
+  hitData.target = 0x14;
+  hitData.aggressor = 0x14;
+  hitData.source = 0x0001397E;
+
+  auto past = std::chrono::steady_clock::now() - 1s;
+
+  ac.SetLastHitTime(past);
+  p.Messages().clear();
+  p.GetActionListener().OnHit(msgData, hitData);
+
+  auto current = ac.GetLastHitTime();
+  std::chrono::duration<float> duration = current - past;
+  float passedTime = duration.count();
+
+  REQUIRE(passedTime <= 1.1 * 1.3); // 1.3 is the speed of an i
+  REQUIRE(p.Messages().size() == 0);
+
+  past = std::chrono::steady_clock::now() - 3s;
+  ac.SetLastHitTime(past);
+  p.Messages().clear();
+  p.GetActionListener().OnHit(msgData, hitData);
+  current = ac.GetLastHitTime();
+  duration = current - past;
+  passedTime = duration.count();
+
+  REQUIRE(passedTime >= 1.1 * 1.3);
+  REQUIRE(p.Messages().size() == 1);
+
+
+  p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
 }

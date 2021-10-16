@@ -55,10 +55,13 @@ public:
                       float staminaPercentage);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
+  std::chrono::steady_clock::time_point GetLastHitTime();
 
   void SetLastAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point timePoint =
       std::chrono::steady_clock::now());
+  void SetLastHitTime(std::chrono::steady_clock::time_point timePoint =
+                        std::chrono::steady_clock::now());
 
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point now =
@@ -71,6 +74,7 @@ private:
   std::shared_ptr<Impl> pImpl;
 
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
+  std::chrono::steady_clock::time_point lastHitTimePoint;
 
 protected:
   void BeforeDestroy() override;

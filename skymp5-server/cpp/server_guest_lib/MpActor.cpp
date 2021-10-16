@@ -179,10 +179,20 @@ MpActor::GetLastAttributesPercentagesUpdate()
   return lastAttributesUpdateTimePoint;
 }
 
+std::chrono::steady_clock::time_point MpActor::GetLastHitTime()
+{
+  return lastHitTimePoint;
+}
+
 void MpActor::SetLastAttributesPercentagesUpdate(
   std::chrono::steady_clock::time_point timePoint)
 {
   lastAttributesUpdateTimePoint = timePoint;
+}
+
+void MpActor::SetLastHitTime(std::chrono::steady_clock::time_point timePoint)
+{
+  lastHitTimePoint = timePoint;
 }
 
 std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
