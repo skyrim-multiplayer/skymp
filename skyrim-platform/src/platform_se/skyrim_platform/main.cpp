@@ -641,7 +641,8 @@ public:
             return JsValue::Double(cefValue->GetDouble());
           case VTYPE_STRING:
             // Docs say CefString casts to utf-8 std::string
-            return JsValue::String(static_cast<std::string>(cefValue->GetString()));
+            return JsValue::String(
+              static_cast<std::string>(cefValue->GetString()));
           case VTYPE_DICTIONARY: {
             auto dict = cefValue->GetDictionary();
             auto result = JsValue::Object();
