@@ -11,10 +11,7 @@ const FrameButton = props => {
         <div
             style={{ width: `${width}px`,height: `${height}px` }}
             className={`skymp-input button`}
-            onClick={(e) => {
-                if (!props.disabled)
-                    props.onClick(e)
-            }}
+            onClick={(e) => props.onClick ? props.onClick(e) : console.log(e)}
         >
             <span className={'skymp-input_text'} style={{maxHeight:`${height}px`}}>{props.text}</span>
         </div>
