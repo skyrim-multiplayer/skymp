@@ -222,10 +222,10 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
   ```typescript
   import { hooks, printConsole } from "skyrimPlatform"
   hooks.sendAnimationEvent.add({
-  	enter(ctx) {
+    enter(ctx) {
   		printConsole(ctx.animEventName);
   	},
-  	leave(ctx) {
+    leave(ctx) {
   		if (ctx.animationSucceeded) printConsole(ctx.selfId);
   	};
   });
@@ -244,11 +244,11 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
   // Bad. Catches all animation events in the world when we only want to catch events from the player character.
   hooks.sendAnimationEvent.add({
-  	enter(ctx) {
+    enter(ctx) {
       if (ctx.selfId !== 0x14) return;
       printConsole("Player's anim:", ctx.animEventName);
   	},
-  	leave(ctx) {};
+    leave(ctx) {};
   });
 
   // Good. No JS is triggered until selfId in range `[minSelfId..maxSelfId]` found and event name matches `"*"` wildcard
