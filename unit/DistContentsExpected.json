@@ -127,11 +127,8 @@
     ],
     "expectedFiles": [
       "server/ChakraCore.dll",
-      "client/Data/Platform/Distribution/CEF/cef.pak",
-      "client/Data/Platform/Distribution/CEF/cef_100_percent.pak",
-      "client/Data/Platform/Distribution/CEF/cef_200_percent.pak",
-      "client/Data/Platform/Distribution/CEF/cef_extensions.pak",
-      "client/Data/Platform/Distribution/CEF/devtools_resources.pak",
+      "client/Data/Platform/Distribution/CEF/chrome_100_percent.pak",
+      "client/Data/Platform/Distribution/CEF/chrome_200_percent.pak",
       "client/Data/Platform/Distribution/CEF/locales/am.pak",
       "client/Data/Platform/Distribution/CEF/locales/ar.pak",
       "client/Data/Platform/Distribution/CEF/locales/bg.pak",
