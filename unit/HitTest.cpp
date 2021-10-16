@@ -14,7 +14,7 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
           "weapon-dependent value",
           "[Hit]")
 {
-  
+
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
@@ -28,7 +28,6 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
 
-  
   auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastHitTime(past);
   p.Messages().clear();
@@ -96,7 +95,7 @@ TEST_CASE("OnHit damage character by race-dependent value", "[Hit]")
   auto past = std::chrono::steady_clock::now() - 2s;
   ac.SetLastHitTime(past);
   p.GetActionListener().OnHit(rawMsgData, hitData);
-  
+
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
   REQUIRE(changeForm.healthPercentage == 0.96f);
@@ -200,7 +199,6 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
 
   REQUIRE(passedTime >= 1.1 * 1.3);
   REQUIRE(p.Messages().size() == 1);
-
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
