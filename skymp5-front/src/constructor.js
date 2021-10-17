@@ -7,7 +7,8 @@ import SkyrimButton from "./components/SkyrimButton";
 import Frame from "./components/SkyrimFrame";
 import SkyrimInput from "./components/SkyrimInput";
 import SkyrimHint from "./components/SkyrimHint";
-import LinkButton from "./components/LinkButton"
+import LinkButton from "./components/LinkButton";
+import FrameButton from "./components/FrameButton";
 
 const Constructor = props => {
 
@@ -158,7 +159,6 @@ const Constructor = props => {
           }
           <div className={'login-form--content_main'} ref={content_mainRef}>
             {result.body}
-
             {hints.map(hint => {
               return (
                 <SkyrimHint
