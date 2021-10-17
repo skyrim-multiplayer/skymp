@@ -238,7 +238,8 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 
 ### Advanced Hooking
 
-- SkyrimPlatform side can filter out some events before they will reach JS code. It allows doing less expensive JS calls. So the more we can check before triggering JS callback, the better.
+- Hooking is expensive: we need to enter the JavaScript context every time we enter/leave hooked function. SkyrimPlatform side can filter out some events before they will reach JS code. It allows doing less expensive JS calls. So the more we can check before triggering JS callback, the better.
+- In other words: specify `minSelfId`, `maxSelfId`, and `eventPattern` when possible to filter out unneeded events. It makes your code faster.
   ```typescript
   import { hooks, printConsole } from "skyrimPlatform"
 
@@ -247,16 +248,16 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
     enter(ctx) {
       if (ctx.selfId !== 0x14) return;
       printConsole("Player's anim:", ctx.animEventName);
-  	},
-    leave(ctx) {};
+    },
+    leave(ctx) {}
   });
 
   // Good. No JS is triggered until selfId in range `[minSelfId..maxSelfId]` found and event name matches `"*"` wildcard
   hooks.sendAnimationEvent.add({
-  	enter(ctx) {
+    enter(ctx) {
       printConsole("Player's anim:", ctx.animEventName);
-  	},
-  	leave(ctx) {};
+    },
+    leave(ctx) {}
   }, /* minSelfId = */ 0x14, /* maxSelfId = */ 0x14, /*eventPattern = */ "*");
   ```
 
