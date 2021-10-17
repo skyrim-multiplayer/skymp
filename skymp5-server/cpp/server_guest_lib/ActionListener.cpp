@@ -594,9 +594,8 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
     speed = weapDNAM->speed;
     return timePassed.count() >= 1.1 * speed;
   } else {
-    throw std::runtime_error(
-      fmt::format("Cannot get weapon speed from source: {}", hitData.source));
-    return false;
+    throw std::runtime_error(fmt::format(
+      "Cannot get weapon speed from source: {0:x}", hitData.source));
   }
 }
 }
