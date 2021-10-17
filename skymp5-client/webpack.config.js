@@ -1,56 +1,46 @@
 //webpack.config.js
 const path = require('path');
-//const WebpackSystemRegister = require('webpack-system-register');
 
 module.exports = {
-    mode: "development",
-    //mode: "production",
-    // entry: {
-    //     main: "./src/index.ts",
-    // },
-    entry: [
-        //"./node_modules/core-js/shim",
-        "./src/index.ts"
-    ],
-    // plugins: [
-    //     new WebpackSystemRegister({}),
+  mode: "development",
+  //mode: "production",
+  // entry: {
+  //     main: "./src/index.ts",
+  // },
+  entry: [
+    "./src/index.ts"
+  ],
+  //devtool: "inline-source-map",
+  output: {
+    libraryTarget: "commonjs",
+    //path: path.resolve(__dirname, '../build/dist/server/dist_front'),
+    path: path.resolve(__dirname, '../build/dist/client/Data/Platform/Plugins'),
+    filename: "skymp5-client.js",
+  },
+  resolve: {
+    // modules: [
+    //   path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules'),
+    //   "node_modules"
     // ],
-    devtool: "inline-source-map",
-    output: {
-        libraryTarget: "system",
-        path: path.resolve(__dirname, '../build/dist/server/dist_front'),
-        filename: "skymp5-client.js", // <--- Will be compiled to this single file
-    },
-    resolve: {
-        modules: [
-            path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules'),
-            "node_modules"
-        ],
-        extensions: [".ts", ".tsx", ".js"],
-    },
-    optimization: {
-        minimize: false
-    },
-    module: {
-        rules: [
-            // {
-            //     test: /\.tsx?$/,
-            //     include: [
-            //         path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules')
-            //     ],
-            //     use: "ts-loader"
-            // },
-            {
-                test: /\.tsx?$/,
-                // include: [
-                //     path.resolve(__dirname, 'src'),
-                //     path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules')
-                // ],
-                use: "ts-loader"
-            }
-        ]
-    },
-    // externals: {
-    //     "skyrimPlatform": path.resolve(__dirname, "../build/dist/client/Data/Platform/Modules/skyrimPlatform.ts")
-    // }
+    extensions: [".ts", ".tsx", ".js"],
+    alias: {
+      "skyrimPlatform": path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules/skyrimPlatform.ts'),
+      // "skyrimPlatform": "./spAPI.ts",
+    }
+  },
+  optimization: {
+    minimize: true
+  },
+  module: {
+    rules: [
+      {
+        test: /.*skyrimPlatform.ts$/,
+        use: path.resolve('src/loaders/skyrimPlatformLoader.js'),
+      },
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader"
+      }
+    ]
+  }
 };
