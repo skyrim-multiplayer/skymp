@@ -583,14 +583,21 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   return reach * reach > sqrDistance;
 }
 
-bool IsAvailableForNextAttack(const MpActor& actor, const HitData hitData,
+bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
                               const std::chrono::duration<float>& timePassed)
 {
   WorldState* espmProvider = actor.GetParent();
-  float speed =
-    espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM->speed;
-
-  return timePassed.count() >= 1.1 * speed;
+  float speed;
+  auto weapDNAM =
+    espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
+  if (weapDNAM) {
+    speed = weapDNAM->speed;
+    return timePassed.count() >= 1.1 * speed;
+  } else {
+    throw std::runtime_error(
+      fmt::format("Cannot get weapon speed from source: {}", hitData.source));
+    return false;
+  }
 }
 }
 
