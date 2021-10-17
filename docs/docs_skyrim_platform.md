@@ -220,14 +220,14 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
 - Hooks allow you to intercept the start and end of some functions of the game engine.
 - Currently supported hooks: `sendAnimationEvent`, `sendPapyrusEvent`
   ```typescript
-  import { hooks, printConsole } from "skyrimPlatform"
+  import { hooks, printConsole } from "skyrimPlatform";
   hooks.sendAnimationEvent.add({
     enter(ctx) {
-  		printConsole(ctx.animEventName);
-  	},
+      printConsole(ctx.animEventName);
+    },
     leave(ctx) {
-  		if (ctx.animationSucceeded) printConsole(ctx.selfId);
-  	};
+      if (ctx.animationSucceeded) printConsole(ctx.selfId);
+    }
   });
   ```
 - `enter` is called before starting the function. `ctx` contains the arguments passed to the function and also` storage` (see below).
