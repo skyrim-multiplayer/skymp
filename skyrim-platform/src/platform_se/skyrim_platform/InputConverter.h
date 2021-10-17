@@ -7,7 +7,7 @@ class InputConverter : public IInputConverter
 public:
   wchar_t VkCodeToChar(uint8_t virtualKeyCode,
                        bool capitalLetters) noexcept override;
-  void SwitchLayout() noexcept;
+  void SwitchLayout() noexcept override;
 
 private:
   void* keyboardLayout = nullptr;

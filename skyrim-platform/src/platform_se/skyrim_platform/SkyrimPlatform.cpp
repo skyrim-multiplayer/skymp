@@ -1,43 +1,27 @@
 #include "SkyrimPlatform.h"
 
+#include "BrowserApi.h"    // BrowserApi::State
+#include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
+#include "ConsoleApi.h"    // ConsoleApi::GetExceptionPrefix
+#include "DumpFunctions.h"
+#include "ExceptionPrinter.h"
+#include "PapyrusTESModPlatform.h"
 #include "ThreadPoolWrapper.h"
+#include "TickTask.h"
+#include <RE/ConsoleLog.h>
 #include <SKSE/API.h>
 #include <SKSE/Interfaces.h>
 #include <SKSE/Stubs.h>
 #include <skse64/PluginAPI.h>
 
-#include "BrowserApi.h"    // BrowserApi::State
-#include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
-
-// HelloTickListener
-#include <RE/ConsoleLog.h>
-
-// GodListener
-#include "ConsoleApi.h"
-#include "DirectoryMonitor.h"
-#include "EventsApi.h"
-#include "ExceptionPrinter.h"
-#include "HttpClient.h"
-#include "ReadFile.h"
-#include "SkyrimPlatformProxy.h"
-
-// APIs for register in GodListener
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
-#include "CameraApi.h"
-#include "ConsoleApi.h"
-#include "DevApi.h"
-#include "EncodingApi.h"
-#include "EventsApi.h"
-#include "HttpClientApi.h"
-#include "InventoryApi.h"
-#include "LoadGameApi.h"
-#include "MpClientPluginApi.h"
+// Listeners
+#include "ExecutionCommonsListener.h"
+#include "HelloListener.h"
 
 void SetupFridaHooks();
 
 namespace {
-void PrintExceptionToGameConsole(std::exception& e)
+void PrintExceptionToGameConsole(const std::exception& e)
 {
   if (auto console = RE::ConsoleLog::GetSingleton()) {
     std::string what = e.what();
@@ -50,242 +34,158 @@ void PrintExceptionToGameConsole(std::exception& e)
       .PrintException(what.data());
   }
 }
+
+void UpdateDumpFunctions()
+{
+  auto pressed = [](int key) {
+    return (GetAsyncKeyState(key) & 0x80000000) > 0;
+  };
+  const bool comb = pressed('9') && pressed('O') && pressed('L');
+  static bool g_combWas = false;
+
+  if (comb != g_combWas) {
+    g_combWas = comb;
+    if (comb) {
+      DumpFunctions::Run();
+    }
+  }
 }
-
-namespace {
-class TickListener
-{
-public:
-  virtual ~TickListener() = default;
-  virtual void Tick() = 0;
-  virtual void Update() = 0;
-};
-
-class HelloTickListener : public TickListener
-{
-public:
-  void Tick() override
-  {
-    if (auto console = RE::ConsoleLog::GetSingleton()) {
-      if (!helloSaid) {
-        helloSaid = true;
-        console->Print("Hello SE");
-      }
-    }
-  }
-
-  void Update() override {}
-
-private:
-  bool helloSaid = false;
-};
-
-class GodListener : public TickListener
-{
-public:
-  void Tick() override
-  {
-    try {
-      auto fileDir = GetFileDir();
-
-      if (!monitor) {
-        monitor = std::make_shared<DirectoryMonitor>(fileDir);
-      }
-
-      ++tickId;
-
-      bool pluginsDirectoryUpdated = monitor->Updated();
-      monitor->ThrowOnceIfHasError();
-      if (tickId == 1 || pluginsDirectoryUpdated) {
-        ClearState();
-        LoadFiles(GetPathsToLoad(fileDir));
-      }
-
-      HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
-
-    } catch (std::exception& e) {
-      PrintExceptionToGameConsole(e);
-    }
-  }
-
-  void Update() override
-  {
-    try {
-      taskQueue.Update();
-      nativeCallRequirements.jsThrQ->Update();
-      jsPromiseTaskQueue.Update();
-    } catch (std::exception& e) {
-      PrintExceptionToGameConsole(e);
-    }
-  }
-
-  void Tick(bool gameFunctionsAvailable) override
-  {
-    try {
-      EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
-
-    } catch (std::exception& e) {
-      PrintExceptionToGameConsole(e);
-    }
-  }
-
-private:
-  const char* GetFileDir() const { return "Data/Platform/Plugins"; }
-
-  void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
-  {
-    auto& engine = GetJsEngine();
-
-    for (auto& path : pathsToLoad) {
-      if (EndsWith(path.wstring(), L"-settings.txt")) {
-        LoadSettingsFile(path);
-        continue;
-      }
-      if (EndsWith(path.wstring(), L"-logs.txt")) {
-        continue;
-      }
-      LoadPluginFile(path);
-    }
-  }
-
-  void LoadSettingsFile(const std::filesystem::path& path)
-  {
-    auto s = path.filename().wstring();
-    s.resize(s.size() - strlen("-settings.txt"));
-
-    auto pluginName = std::filesystem::path(s).string();
-
-    // Why do we treat it as an exception actually?
-    std::string what =
-      "Found settings file: " + path.string() + " for plugin " + pluginName;
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-      .PrintException(what.data());
-
-    settingsByPluginName[pluginName] = ReadFile(path);
-  }
-
-  void LoadPluginFile(const std::filesystem::path& path)
-  {
-    auto scriptSrc = ReadFile(path);
-
-    getSettings = [this](const JsFunctionArguments&) {
-      auto result = JsValue::Object();
-      auto standardJson = JsValue::GlobalObject().GetProperty("JSON");
-      auto parse = standardJson.GetProperty("parse");
-      for (auto [pluginName, settings] : settingsByPluginName) {
-        result.SetProperty(pluginName, parse.Call({ standardJson, settings }));
-      }
-      return result;
-    };
-
-    // We will be able to use require()
-    JsValue devApi = JsValue::Object();
-    DevApi::Register(devApi, &engine,
-                     { { "skyrimPlatform",
-                         [this](JsValue e) {
-                           EncodingApi::Register(e);
-                           LoadGameApi::Register(e);
-                           CameraApi::Register(e);
-                           MpClientPluginApi::Register(e);
-                           HttpClientApi::Register(e);
-                           ConsoleApi::Register(e);
-                           DevApi::Register(e, &engine, {}, GetFileDir());
-                           EventsApi::Register(e);
-                           BrowserApi::Register(e, browserApiState);
-                           InventoryApi::Register(e);
-                           CallNativeApi::Register(
-                             e, [this] { return nativeCallRequirements; });
-                           e.SetProperty("settings", getSettings, nullptr);
-
-                           return SkyrimPlatformProxy::Attach(e);
-                         } } },
-                     GetFileDir());
-
-    JsValue consoleApi = JsValue::Object();
-    ConsoleApi::Register(consoleApi);
-    for (auto f : { "require", "addNativeExports" }) {
-      JsValue::GlobalObject().SetProperty(f, devApi.GetProperty(f));
-    }
-    JsValue::GlobalObject().SetProperty(
-      "log", consoleApi.GetProperty("printConsole"));
-
-    engine->RunScript(
-      ReadFile(std::filesystem::path("Data/Platform/Distribution") /
-               "___systemPolyfill.js"),
-      "___systemPolyfill.js");
-    engine->RunScript(scriptSrc, path.filename().string()).ToString();
-  }
-
-  void ClearState()
-  {
-    ConsoleApi::Clear();
-    EventsApi::Clear();
-    taskQueue.Clear();
-    jsPromiseTaskQueue.Clear();
-    nativeCallRequirements.jsThrQ->Clear();
-    settingsByPluginName.clear();
-  }
-
-  JsEngine& GetJsEngine()
-  {
-    if (!engine) {
-      engine = std::make_shared<JsEngine>();
-      engine->ResetContext(jsPromiseTaskQueue);
-    }
-    return *engine;
-  }
-
-  bool EndsWith(const std::wstring& value, const std::wstring& ending)
-  {
-    if (ending.size() > value.size()) {
-      return false;
-    }
-    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-  }
-
-  std::vector<std::filesystem::path> GetPathsToLoad(
-    const std::filesystem::path& directory)
-  {
-    std::vector<std::filesystem::path> paths;
-    for (auto& it : std::filesystem::directory_iterator(directory)) {
-      std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
-      paths.push_back(p);
-    }
-    return paths;
-  }
-
-  std::shared_ptr<JsEngine> engine;
-  std::shared_ptr<DirectoryMonitor> monitor;
-  uint32_t tickId = 0;
-  TaskQueue taskQueue;
-  TaskQueue jsPromiseTaskQueue;
-  CallNativeApi::NativeCallRequirements nativeCallRequirements;
-  std::unordered_map<std::string, std::string> settingsByPluginName;
-  std::shared_ptr<BrowserApi::State> browserApiState =
-    std::make_shared<BrowserApi::State>();
-  std::function<JsValue(const JsFunctionArguments&)> getSettings;
-};
 }
 
 struct SkyrimPlatform::Impl
 {
+  ThreadPoolWrapper pool;
+
   SKSETaskInterface* taskInterface = nullptr;
   SKSEMessagingInterface* messaging = nullptr;
 
-  std::vector<std::shared_ptr<TickListener>> tickListeners;
+  std::vector<std::shared_ptr<SkyrimPlatformListener>> listeners;
+
+  std::shared_ptr<CallNativeApi::NativeCallRequirements>
+    nativeCallRequirements;
 };
+
+void SkyrimPlatform::ForceFirstTick()
+{
+  OnTick();
+}
+
+void SkyrimPlatform::BeginMain()
+{
+  for (auto& listener : GetSingleton().pImpl->listeners) {
+    listener->BeginMain();
+  }
+}
+
+bool SkyrimPlatform::QuerySKSEPlugin(const SKSE::QueryInterface* skse,
+                                     SKSE::PluginInfo* info)
+{
+  info->infoVersion = SKSE::PluginInfo::kVersion;
+  info->name = kPluginName;
+  info->version = kPluginVersion;
+
+  if (skse->IsEditor()) {
+    _FATALERROR("loaded in editor, marking as incompatible");
+    return false;
+  }
+  return true;
+}
+
+bool SkyrimPlatform::LoadSKSEPlugin(const SKSEInterface* skse)
+{
+  auto& pImpl = GetSingleton().pImpl;
+
+  pImpl->messaging = reinterpret_cast<SKSEMessagingInterface*>(
+    skse->QueryInterface(kInterface_Messaging));
+  if (!pImpl->messaging) {
+    _FATALERROR("couldn't get messaging interface");
+    return false;
+  }
+  pImpl->taskInterface = reinterpret_cast<SKSETaskInterface*>(
+    skse->QueryInterface(kInterface_Task));
+  if (!pImpl->taskInterface) {
+    _FATALERROR("couldn't get task interface");
+    return false;
+  }
+
+  auto papyrusInterface = static_cast<SKSEPapyrusInterface*>(
+    skse->QueryInterface(kInterface_Papyrus));
+  if (!papyrusInterface) {
+    _FATALERROR("QueryInterface failed for PapyrusInterface");
+    return false;
+  }
+
+  SetupFridaHooks();
+
+  pImpl->taskInterface->AddTask(new TickTask(pImpl->taskInterface, OnTick));
+
+  papyrusInterface->Register(
+    reinterpret_cast<SKSEPapyrusInterface::RegisterFunctions>(
+      TESModPlatform::Register));
+  TESModPlatform::onPapyrusUpdate = OnUpdate;
+
+  return true;
+}
 
 SkyrimPlatform::SkyrimPlatform()
 {
   pImpl = std::make_shared<Impl>();
+  pImpl->nativeCallRequirements =
+    std::make_shared<CallNativeApi::NativeCallRequirements>();
 
-  pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
-  pImpl->tickListeners.push_back(std::make_shared<GodListener>());
+  pImpl->listeners.push_back(std::make_shared<HelloListener>());
+  pImpl->listeners.push_back(
+    std::make_shared<ExecutionCommonsListener>(pImpl->nativeCallRequirements));
 }
 
-void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
+void SkyrimPlatform::Tick()
 {
-  for (auto& listener : pImpl->tickListeners) {
-    listener->Tick(gameFunctionsAvailable);
+  for (auto& listener : pImpl->listeners) {
+    try {
+      listener->Tick();
+    } catch (const std::exception& e) {
+      PrintExceptionToGameConsole(e);
+    }
   }
+}
+
+void SkyrimPlatform::Update(RE::BSScript::IVirtualMachine* vm,
+                            RE::VMStackID stackId)
+{
+  pImpl->nativeCallRequirements->stackId = stackId;
+  pImpl->nativeCallRequirements->vm = vm;
+
+  for (auto& listener : pImpl->listeners) {
+    try {
+      listener->Update();
+    } catch (const std::exception& e) {
+      PrintExceptionToGameConsole(e);
+    }
+  }
+
+  pImpl->nativeCallRequirements->gameThrQ->Update();
+  pImpl->nativeCallRequirements->stackId = static_cast<RE::VMStackID>(~0);
+  pImpl->nativeCallRequirements->vm = nullptr;
+}
+
+SkyrimPlatform& SkyrimPlatform::GetSingleton()
+{
+  static SkyrimPlatform g_skyrimPlatform;
+  return g_skyrimPlatform;
+}
+
+void SkyrimPlatform::OnTick()
+{
+  auto& pool = GetSingleton().pImpl->pool;
+  pool.PushAndWait([=](int) { GetSingleton().Tick(); });
+  TESModPlatform::Update();
+}
+
+void SkyrimPlatform::OnUpdate(RE::BSScript::IVirtualMachine* vm,
+                              RE::VMStackID stackId)
+{
+  UpdateDumpFunctions();
+
+  auto& pool = GetSingleton().pImpl->pool;
+  pool.PushAndWait([vm, stackId](int) { GetSingleton().Update(vm, stackId); });
 }
