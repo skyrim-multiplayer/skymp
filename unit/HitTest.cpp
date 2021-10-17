@@ -199,6 +199,11 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
 
   REQUIRE(passedTime >= 1.1 * 1.3);
   REQUIRE(p.Messages().size() == 1);
+  nlohmann::json message = p.Messages()[0].j;
+  REQUIRE(message["data"]["health"] == 0.96f);
+  REQUIRE(message["data"]["magicka"] == 1.f);
+  REQUIRE(message["data"]["stamina"] == 1.f);
+  
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
