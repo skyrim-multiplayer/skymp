@@ -67,8 +67,6 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   REQUIRE(p.Messages().size() == 1);
   nlohmann::json message = p.Messages()[0].j;
 
-  uint64_t msgType = 16; // OnHit sends CahngeValues message type
-  REQUIRE(message["t"] == msgType);
   REQUIRE(message["data"]["health"] == 0.96f);
   REQUIRE(message["data"]["magicka"] == 1.0f);
   REQUIRE(message["data"]["stamina"] == 1.0f);
@@ -202,6 +200,8 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
   REQUIRE(passedTime >= 1.1 * 1.3);
   REQUIRE(p.Messages().size() == 1);
   nlohmann::json message = p.Messages()[0].j;
+  uint64_t msgType = 16; // OnHit sends ChangeValues message type
+  REQUIRE(message["t"] == msgType);
   REQUIRE(message["data"]["health"] == 0.96f);
   REQUIRE(message["data"]["magicka"] == 1.f);
   REQUIRE(message["data"]["stamina"] == 1.f);
