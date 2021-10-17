@@ -16,7 +16,7 @@ namespace {
 class ProcessMessageListenerImpl : public ProcessMessageListener
 {
 public:
-  ProcessMessageListenerImpl(std::shared_ptr<TaskQueue> onTick_)
+  ProcessMessageListenerImpl(const std::shared_ptr<TaskQueue>& onTick_)
     : onTick(onTick_)
   {
   }

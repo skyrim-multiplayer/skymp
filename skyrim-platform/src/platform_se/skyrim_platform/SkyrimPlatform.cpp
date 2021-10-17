@@ -5,6 +5,7 @@
 #include "ConsoleApi.h"    // ConsoleApi::GetExceptionPrefix
 #include "DumpFunctions.h"
 #include "ExceptionPrinter.h"
+#include "NullPointerException.h"
 #include "PapyrusTESModPlatform.h"
 #include "ThreadPoolWrapper.h"
 #include "TickTask.h"
@@ -21,11 +22,9 @@
 void SetupFridaHooks();
 
 namespace {
-void PrintExceptionToGameConsole(const std::exception& e)
+void PrintExceptionToGameConsole(std::string what)
 {
   if (auto console = RE::ConsoleLog::GetSingleton()) {
-    std::string what = e.what();
-
     while (what.size() > sizeof("Error: ") - 1 &&
            !memcmp(what.data(), "Error: ", sizeof("Error: ") - 1)) {
       what = { what.begin() + sizeof("Error: ") - 1, what.end() };
@@ -63,6 +62,8 @@ struct SkyrimPlatform::Impl
 
   std::shared_ptr<CallNativeApi::NativeCallRequirements>
     nativeCallRequirements;
+
+  TaskQueue printExceptionTasksQueue, tickTasksQueue, updateTasksQueue;
 };
 
 void SkyrimPlatform::ForceFirstTick()
@@ -127,6 +128,53 @@ bool SkyrimPlatform::LoadSKSEPlugin(const SKSEInterface* skse)
   return true;
 }
 
+const CallNativeApi::NativeCallRequirements&
+SkyrimPlatform::GetNativeCallRequirements()
+{
+  auto& pImpl = GetSingleton().pImpl;
+  if (!pImpl->nativeCallRequirements->vm) {
+    throw NullPointerException("nativeCallRequirements->vm");
+  }
+  return *pImpl->nativeCallRequirements;
+}
+
+void SkyrimPlatform::ExecuteInChakraThread(std::function<void(int)> func)
+{
+  auto& pImpl = GetSingleton().pImpl;
+  pImpl->pool.Push(func).wait();
+}
+
+void SkyrimPlatform::SendException(std::exception_ptr exceptionPtr)
+{
+  auto& pImpl = GetSingleton().pImpl;
+  pImpl->printExceptionTasksQueue.AddTask([exceptionPtr] {
+    try {
+      std::rethrow_exception(exceptionPtr);
+    } catch (const std::exception& e) {
+      PrintExceptionToGameConsole(e.what());
+    }
+  });
+}
+
+void SkyrimPlatform::SendException(const std::string& exception)
+{
+  auto& pImpl = GetSingleton().pImpl;
+  pImpl->printExceptionTasksQueue.AddTask(
+    [exception] { PrintExceptionToGameConsole(exception.data()); });
+}
+
+void SkyrimPlatform::AddUpdateTask(std::function<void()> f)
+{
+  auto& pImpl = GetSingleton().pImpl;
+  pImpl->updateTasksQueue.AddTask(f);
+}
+
+void SkyrimPlatform::AddTickTask(std::function<void()> f)
+{
+  auto& pImpl = GetSingleton().pImpl;
+  pImpl->tickTasksQueue.AddTask(f);
+}
+
 SkyrimPlatform::SkyrimPlatform()
 {
   pImpl = std::make_shared<Impl>();
@@ -144,9 +192,17 @@ void SkyrimPlatform::Tick()
     try {
       listener->Tick();
     } catch (const std::exception& e) {
-      PrintExceptionToGameConsole(e);
+      PrintExceptionToGameConsole(e.what());
     }
   }
+
+  try {
+    pImpl->tickTasksQueue.Update();
+  } catch (const std::exception& e) {
+    PrintExceptionToGameConsole(e.what());
+  }
+
+  pImpl->printExceptionTasksQueue.Update();
 }
 
 void SkyrimPlatform::Update(RE::BSScript::IVirtualMachine* vm,
@@ -159,8 +215,14 @@ void SkyrimPlatform::Update(RE::BSScript::IVirtualMachine* vm,
     try {
       listener->Update();
     } catch (const std::exception& e) {
-      PrintExceptionToGameConsole(e);
+      PrintExceptionToGameConsole(e.what());
     }
+  }
+
+  try {
+    pImpl->updateTasksQueue.Update();
+  } catch (const std::exception& e) {
+    PrintExceptionToGameConsole(e.what());
   }
 
   pImpl->nativeCallRequirements->gameThrQ->Update();

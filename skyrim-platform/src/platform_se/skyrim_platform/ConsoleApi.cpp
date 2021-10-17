@@ -1,6 +1,7 @@
 #include "ConsoleApi.h"
 #include "InGameConsolePrinter.h"
 #include "NullPointerException.h"
+#include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
 #include "WindowsConsolePrinter.h"
 #include <RE/CommandTable.h>
@@ -16,9 +17,6 @@
 #include <skse64/ObScript.h>
 #include <skse64_common/SafeWrite.h>
 #include <vector>
-
-extern ThreadPoolWrapper g_pool;
-extern TaskQueue g_taskQueue;
 
 namespace {
 // TODO: Add printers switching
@@ -274,7 +272,7 @@ bool ConsoleComand_Execute(const ObScriptParam* paramInfo,
             if (arg.GetType() == JsValue::Type::Undefined) {
               auto err = " typeId " +
                 std::to_string((uint32_t)param[i].paramType) +
-                " not yet supported";
+                " not yet supported (in ConsoleCommand_Execute)";
 
               throw std::runtime_error(err.data());
             }
@@ -286,18 +284,17 @@ bool ConsoleComand_Execute(const ObScriptParam* paramInfo,
           break;
         }
       }
-    } catch (std::exception& e) {
-      std::string what = e.what();
-      g_taskQueue.AddTask([what] {
-        throw std::runtime_error(what + " (in ConsoleComand_Execute)");
-      });
+    } catch (const std::exception&) {
+      SkyrimPlatform::SendException(std::current_exception());
     }
   };
 
-  g_pool.Push(func).wait();
-  if (iterator)
+  SkyrimPlatform::ExecuteInChakraThread(func);
+
+  if (iterator) {
     iterator->second.execute(paramInfo, scriptData, thisObj, containingObj,
                              scriptObj, locals, result, opcodeOffsetPtr);
+  }
   return true;
 }
 

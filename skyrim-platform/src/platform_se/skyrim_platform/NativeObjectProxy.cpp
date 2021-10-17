@@ -2,9 +2,8 @@
 #include "CallNative.h"
 #include "CallNativeApi.h"
 #include "ProxyGetter.h"
+#include "SkyrimPlatform.h"
 #include <sstream>
-
-extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {
 struct PerClassCache
@@ -40,8 +39,8 @@ void NativeObjectProxy::Attach(JsValue& obj, const std::string& cacheClassName,
 
           thread_local JsValue callNativeApi = [] {
             auto e = JsValue::Object();
-            CallNativeApi::Register(e,
-                                    [] { return g_nativeCallRequirements; });
+            CallNativeApi::Register(
+              e, [] { return SkyrimPlatform::GetNativeCallRequirements(); });
             return e;
           }();
 

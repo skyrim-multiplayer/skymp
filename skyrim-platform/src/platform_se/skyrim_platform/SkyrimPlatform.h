@@ -1,8 +1,11 @@
 #pragma once
+#include "CallNativeApi.h"  // CallNativeApi::NativeCallRequirements
 #include <RE/BSCoreTypes.h> // RE::VMStackID
 #include <RE/BSScript/IVirtualMachine.h>
 #include <SKSE/API.h>
+#include <exception>
 #include <skse64/PluginAPI.h>
+#include <stdexcept>
 
 class SkyrimPlatform
 {
@@ -15,6 +18,18 @@ public:
   static bool QuerySKSEPlugin(const SKSE::QueryInterface* skse,
                               SKSE::PluginInfo* info);
   static bool LoadSKSEPlugin(const SKSEInterface* skse);
+
+  // Throws if we are not in OnUpdate context
+  static const CallNativeApi::NativeCallRequirements&
+  GetNativeCallRequirements();
+
+  static void ExecuteInChakraThread(std::function<void(int)> f);
+
+  static void SendException(std::exception_ptr exceptionPtr);
+  static void SendException(const std::string& exception);
+
+  static void AddUpdateTask(std::function<void()> f);
+  static void AddTickTask(std::function<void()> f);
 
 private:
   static void OnTick();

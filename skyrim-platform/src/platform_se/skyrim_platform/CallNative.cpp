@@ -4,6 +4,7 @@
 #include "NullPointerException.h"
 #include "Overloaded.h"
 #include "SendAnimationEvent.h"
+#include "SkyrimPlatform.h"
 #include "StringHolder.h"
 #include "VmCall.h"
 #include "VmCallback.h"
@@ -17,8 +18,6 @@
 #include <skse64/GameReferences.h>
 #include <skse64/PapyrusActor.h>
 #include <skse64_common/Relocation.h>
-
-extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 RE::BSScript::Variable CallNative::AnySafeToVariable(
   const CallNative::AnySafe& v, bool treatNumberAsInt = false)
@@ -330,19 +329,21 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     const auto mag = static_cast<float>(std::get<double>(args_.args[1]));
 
     gameThrQ.AddTask([mag, nativeTargetActor, targetActorId] {
+      auto& nativeCallRequirements =
+        SkyrimPlatform::GetNativeCallRequirements();
+
       if (LookupFormByID(targetActorId) !=
-          reinterpret_cast<void*>(nativeTargetActor))
+          reinterpret_cast<void*>(nativeTargetActor)) {
         return;
-      if (!g_nativeCallRequirements.vm)
-        throw NullPointerException("g_nativeCallRequirements.vm");
+      }
 
       typedef void(PushActorAway)(void* vm, RE::VMStackID stackId,
                                   RE::Actor* self, RE::Actor* targetActor,
                                   float magnitude);
       RelocPtr<PushActorAway> pushActorAway(10052416);
-      pushActorAway.GetPtr()(g_nativeCallRequirements.vm,
-                             g_nativeCallRequirements.stackId,
-                             nativeTargetActor, nativeTargetActor, mag);
+      pushActorAway.GetPtr()(nativeCallRequirements.vm,
+                             nativeCallRequirements.stackId, nativeTargetActor,
+                             nativeTargetActor, mag);
     });
     return ObjectPtr();
   }

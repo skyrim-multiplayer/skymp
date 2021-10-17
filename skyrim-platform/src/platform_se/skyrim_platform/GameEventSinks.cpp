@@ -2,6 +2,7 @@
 #include "EventsApi.h"
 #include "JsEngine.h"
 #include "NativeValueCasts.h"
+#include "SkyrimPlatform.h"
 #include "TaskQueue.h"
 #include <RE/ActiveEffect.h>
 #include <RE/Actor.h>
@@ -33,7 +34,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto targetId = targetRefr ? targetRefr->formID : 0;
   auto casterId = casterRefr ? casterRefr->formID : 0;
 
-  taskQueue.AddTask([targetId, casterId, targetRefr, casterRefr] {
+  SkyrimPlatform::AddUpdateTask([targetId, casterId, targetRefr, casterRefr] {
     auto obj = JsValue::Object();
 
     auto target = RE::TESForm::LookupByID(targetId);
@@ -66,7 +67,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto targetId = movedRef ? movedRef->formID : 0;
   auto isCellAttached = event_ ? event_->isCellAttached : 0;
 
-  taskQueue.AddTask([targetId, isCellAttached, movedRef] {
+  SkyrimPlatform::AddUpdateTask([targetId, isCellAttached, movedRef] {
     auto obj = JsValue::Object();
 
     auto target = RE::TESForm::LookupByID(targetId);
@@ -86,7 +87,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 {
   auto interrupted = event_ ? event_->interrupted : 0;
 
-  taskQueue.AddTask([interrupted] {
+  SkyrimPlatform::AddUpdateTask([interrupted] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("isInterrupted", JsValue::Bool(interrupted));
@@ -104,7 +105,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto objectId = event_ ? event_->formID : 0;
   auto loaded = event_ ? event_->loaded : 0;
 
-  taskQueue.AddTask([objectId, loaded] {
+  SkyrimPlatform::AddUpdateTask([objectId, loaded] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("object",
@@ -125,7 +126,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto lockedObject = event_ ? event_->lockedObject : nullptr;
   auto lockedObjectId = lockedObject ? lockedObject->formID : 0;
 
-  taskQueue.AddTask([lockedObjectId, lockedObject] {
+  SkyrimPlatform::AddUpdateTask([lockedObjectId, lockedObject] {
     auto obj = JsValue::Object();
 
     auto lockedObject = RE::TESForm::LookupByID(lockedObjectId);
@@ -146,7 +147,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto cell = event_ ? event_->cell : nullptr;
   auto cellId = cell ? cell->formID : 0;
 
-  taskQueue.AddTask([cellId, cell] {
+  SkyrimPlatform::AddUpdateTask([cellId, cell] {
     auto obj = JsValue::Object();
 
     auto cell_ = RE::TESForm::LookupByID(cellId);
@@ -167,7 +168,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto refId = ref ? ref->formID : 0;
   auto grabbed = event_ ? event_->grabbed : 0;
 
-  taskQueue.AddTask([refId, grabbed, ref] {
+  SkyrimPlatform::AddUpdateTask([refId, grabbed, ref] {
     auto obj = JsValue::Object();
 
     auto reference = RE::TESForm::LookupByID(refId);
@@ -186,7 +187,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESLoadGameEvent* event_,
   RE::BSTEventSource<RE::TESLoadGameEvent>* eventSource)
 {
-  taskQueue.AddTask(
+  SkyrimPlatform::AddUpdateTask(
     [] { EventsApi::SendEvent("loadGame", { JsValue::Undefined() }); });
 
   return RE::BSEventNotifyControl::kContinue;
@@ -199,7 +200,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto subject = event_ ? event_->subject.get() : nullptr;
   auto subjectId = subject ? subject->formID : 0;
 
-  taskQueue.AddTask([subjectId, subject] {
+  SkyrimPlatform::AddUpdateTask([subjectId, subject] {
     auto obj = JsValue::Object();
 
     auto subjectLocal = RE::TESForm::LookupByID(subjectId);
@@ -221,7 +222,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto oldBaseID = event_ ? event_->oldBaseID : 0;
   auto newBaseID = event_ ? event_->newBaseID : 0;
 
-  taskQueue.AddTask([oldUniqueID, newUniqueID, oldBaseID, newBaseID] {
+  SkyrimPlatform::AddUpdateTask([oldUniqueID, newUniqueID, oldBaseID, newBaseID] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("oldBaseID", JsValue::Double(oldBaseID));
@@ -241,7 +242,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   std::string statName = event_ ? event_->stat.data() : "";
   auto value = event_ ? event_->value : 0;
 
-  taskQueue.AddTask([statName, value] {
+  SkyrimPlatform::AddUpdateTask([statName, value] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("statName", JsValue::String(statName));
@@ -259,7 +260,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto objectInitialized = event_ ? event_->objectInitialized.get() : nullptr;
   auto objectInitializedId = objectInitialized ? objectInitialized->formID : 0;
 
-  taskQueue.AddTask([objectInitializedId, objectInitialized] {
+  SkyrimPlatform::AddUpdateTask([objectInitializedId, objectInitialized] {
     auto obj = JsValue::Object();
 
     auto objectInitializedLocal = RE::TESForm::LookupByID(objectInitializedId);
@@ -282,7 +283,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto object = event_ ? event_->object.get() : nullptr;
   auto objectId = object ? object->formID : 0;
 
-  taskQueue.AddTask([objectId, object] {
+  SkyrimPlatform::AddUpdateTask([objectId, object] {
     auto obj = JsValue::Object();
 
     auto objectIdLocal = RE::TESForm::LookupByID(objectId);
@@ -308,7 +309,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   auto state = event_ ? (uint32_t)event_->state : 0;
 
-  taskQueue.AddTask(
+  SkyrimPlatform::AddUpdateTask(
     [targetActorId, actorId, state, targetActorRefr, actorRefr] {
       auto obj = JsValue::Object();
 
@@ -348,7 +349,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   auto dead = event_ ? event_->dead : 0;
 
-  taskQueue.AddTask(
+  SkyrimPlatform::AddUpdateTask(
     [actorDyingId, actorKillerId, dead, actorDyingRefr, actorKillerRefr] {
       auto obj = JsValue::Object();
 
@@ -383,7 +384,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto reference = event_ ? event_->reference.get() : nullptr;
   auto referenceId = reference ? reference->formID : 0;
 
-  taskQueue.AddTask([oldContainerId, newContainerId, baseObjId, itemCount,
+  SkyrimPlatform::AddUpdateTask([oldContainerId, newContainerId, baseObjId, itemCount,
                      uniqueID, referenceId] {
     auto obj = JsValue::Object();
 
@@ -424,7 +425,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto projectileId = event_ ? event_->projectile : 0;
   uint8_t flags = event_ ? (uint8_t)event_->flags : 0;
 
-  taskQueue.AddTask(
+  SkyrimPlatform::AddUpdateTask(
     [targetId, causeId, sourceId, projectileId, flags, targetRefr, causeRefr] {
       auto obj = JsValue::Object();
 
@@ -480,7 +481,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto equipped = event_ ? event_->equipped : 0;
   auto uniqueId = event_ ? event_->uniqueID : 0;
 
-  taskQueue.AddTask([actorId, baseObjectId, equipped, uniqueId, originalRefrId,
+  SkyrimPlatform::AddUpdateTask([actorId, baseObjectId, equipped, uniqueId, originalRefrId,
                      actorRefr] {
     auto obj = JsValue::Object();
 
@@ -535,7 +536,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   auto activeEffectBaseId = activeEffectBase ? activeEffectBase->formID : 0;
 
-  taskQueue.AddTask([casterId, targetId, isApplied, activeEffect,
+  SkyrimPlatform::AddUpdateTask([casterId, targetId, isApplied, activeEffect,
                      activeEffectUniqueID, activeEffectBaseId, caster,
                      target] {
     auto obj = JsValue::Object();
@@ -581,7 +582,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto casterId = caster ? caster->formID : 0;
   auto targetId = target ? target->formID : 0;
 
-  taskQueue.AddTask([effectId, casterId, targetId, caster, target] {
+  SkyrimPlatform::AddUpdateTask([effectId, casterId, targetId, caster, target] {
     auto obj = JsValue::Object();
 
     auto effect = RE::TESForm::LookupByID(effectId);

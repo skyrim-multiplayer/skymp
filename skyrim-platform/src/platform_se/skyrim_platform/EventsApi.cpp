@@ -5,7 +5,7 @@
 #include "NativeObject.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
-#include "ThreadPoolWrapper.h"
+#include "SkyrimPlatform.h"
 #include "TickTask.h"
 #include <algorithm>
 #include <map>
@@ -13,9 +13,6 @@
 #include <set>
 #include <tuple>
 #include <unordered_map>
-
-extern ThreadPoolWrapper g_pool;
-extern TaskQueue g_taskQueue;
 
 namespace {
 enum class PatternType
@@ -137,6 +134,7 @@ public:
   {
     DWORD owningThread = GetCurrentThreadId();
 
+    // Wow! Not a real hook, just an event
     if (hookName == "sendPapyrusEvent") {
       // If there are no handlers, do not do g_taskQueue
       bool anyMatch = false;
@@ -150,7 +148,7 @@ public:
         return;
       }
 
-      return g_taskQueue.AddTask([=] {
+      return SkyrimPlatform::AddTickTask([=] {
         std::string s = eventName;
         HandleEnter(owningThread, selfId, s);
       });
@@ -158,17 +156,18 @@ public:
 
     auto f = [&](int) {
       try {
-        if (inProgressThreads.count(owningThread))
+        if (inProgressThreads.count(owningThread)) {
           throw std::runtime_error("'" + hookName + "' is already processing");
+        }
         inProgressThreads.insert(owningThread);
         HandleEnter(owningThread, selfId, eventName);
       } catch (std::exception& e) {
         auto err = std::string(e.what()) + " (while performing enter on '" +
           hookName + "')";
-        g_taskQueue.AddTask([err] { throw std::runtime_error(err); });
+        SkyrimPlatform::SendException(err);
       }
     };
-    g_pool.Push(f).wait();
+    SkyrimPlatform::ExecuteInChakraThread(f);
   }
 
   void Leave(bool succeeded)
@@ -181,18 +180,18 @@ public:
 
     auto f = [&](int) {
       try {
-        if (!inProgressThreads.count(owningThread))
+        if (!inProgressThreads.count(owningThread)) {
           throw std::runtime_error("'" + hookName + "' is not processing");
+        }
         inProgressThreads.erase(owningThread);
         HandleLeave(owningThread, succeeded);
       } catch (std::exception& e) {
         std::string what = e.what();
-        g_taskQueue.AddTask([what] {
-          throw std::runtime_error(what + " (in SendAnimationEventLeave)");
-        });
+        what += " (in SendAnimationEventLeave)";
+        SkyrimPlatform::SendException(what);
       }
     };
-    g_pool.Push(f).wait();
+    SkyrimPlatform::ExecuteInChakraThread(f);
   }
 
 private:
@@ -462,7 +461,7 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
 
 void EventsApi::SendMenuOpen(const char* menuName)
 {
-  g_taskQueue.AddTask([=] {
+  SkyrimPlatform::AddTickTask([=] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("name", JsValue::String(menuName));
@@ -473,7 +472,7 @@ void EventsApi::SendMenuOpen(const char* menuName)
 
 void EventsApi::SendMenuClose(const char* menuName)
 {
-  g_taskQueue.AddTask([=] {
+  SkyrimPlatform::AddTickTask([=] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("name", JsValue::String(menuName));
@@ -486,7 +485,7 @@ namespace {
 JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
   if (!gPersistent.gameEventSinks) {
-    gPersistent.gameEventSinks.reset(new GameEventSinks(g_taskQueue));
+    gPersistent.gameEventSinks = std::make_shared<GameEventSinks>();
   }
 
   auto eventName = args[1].ToString();

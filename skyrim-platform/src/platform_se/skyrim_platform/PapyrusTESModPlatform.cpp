@@ -3,6 +3,7 @@
 #include "ConsoleApi.h"
 #include "ExceptionPrinter.h"
 #include "NullPointerException.h"
+#include "SkyrimPlatform.h"
 #include <RE/AIProcess.h>
 #include <RE/ActorEquipManager.h>
 #include <RE/AlchemyItem.h>
@@ -48,8 +49,6 @@
 #include <skse64/NiNodes.h>
 #include <skse64/PapyrusGame.h>
 #include <unordered_map>
-
-extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace TESModPlatform {
 bool papyrusUpdateAllowed = false;
@@ -188,9 +187,10 @@ void TESModPlatform::SetWeaponDrawnMode(RE::BSScript::IVirtualMachine* vm,
       weapDrawnMode > WEAP_DRAWN_MODE_MAX)
     return;
 
-  if (g_nativeCallRequirements.gameThrQ) {
+  auto& gameThrQ = SkyrimPlatform::GetNativeCallRequirements().gameThrQ;
+  if (gameThrQ) {
     auto formId = actor->formID;
-    g_nativeCallRequirements.gameThrQ->AddTask([=] {
+    gameThrQ->AddTask([=] {
       if (LookupFormByID(formId) != (void*)actor)
         return;
 
@@ -645,7 +645,12 @@ void TESModPlatform::AddItemEx(
     }
   }
 
-  g_nativeCallRequirements.gameThrQ->AddTask([=] {
+  auto& gameThrQ = SkyrimPlatform::GetNativeCallRequirements().gameThrQ;
+  if (!gameThrQ) {
+    return;
+  }
+
+  gameThrQ->AddTask([=] {
     if (containerRefr != (void*)LookupFormByID(refrId))
       return;
 
@@ -696,17 +701,18 @@ void TESModPlatform::AddItemEx(
 
         if (countDelta > 0) {
           g_lastEquippedExtraList[g_worn ? false : true][tuple] = extraList;
-          g_nativeCallRequirements.gameThrQ->AddTask([=] {
+          gameThrQ->AddTask([=] {
             if (actor != (void*)LookupFormByID(refrId))
               return;
             s->EquipObject(actor, boundObject, extraList, 1, slot);
           });
-        } else if (countDelta < 0)
-          g_nativeCallRequirements.gameThrQ->AddTask([=] {
+        } else if (countDelta < 0) {
+          gameThrQ->AddTask([=] {
             if (actor != (void*)LookupFormByID(refrId))
               return;
             s->UnequipObject(actor, boundObject, extraList, 1, slot);
           });
+        }
       }
     }
   }
