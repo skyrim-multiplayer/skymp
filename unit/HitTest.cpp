@@ -203,7 +203,6 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
   REQUIRE(message["data"]["health"] == 0.96f);
   REQUIRE(message["data"]["magicka"] == 1.f);
   REQUIRE(message["data"]["stamina"] == 1.f);
-  
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
