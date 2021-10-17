@@ -72,14 +72,16 @@ const Constructor = props => {
 
       if (elemm.type === "button") {
         if (bodylines[k][j].css == undefined) {
-          curElem = <SkyrimButton disabled={false} text={elemm.text || ""} />;
+          curElem = <SkyrimButton onClick={elemm.click} disabled={false} text={elemm.text || ""} />;
         } else if (bodylines[k][j].css == "BUTTON_STYLE_GITHUB") {
-          curElem = (<LinkButton href={'https://github.com/skyrim-multiplayer/skymp'} src={require('./img/github.svg').default} />);
+          curElem = (<LinkButton onClick={elemm.click} src={require('./img/github.svg').default} />);
         }
         else if (bodylines[k][j].css == "BUTTON_STYLE_PATREON") {
-          curElem = (<LinkButton href={'https://github.com/skyrim-multiplayer/skymp'} src={require('./img/patreon.svg').default} />);
+          curElem = (<LinkButton onClick={elemm.click} src={require('./img/patreon.svg').default} />);
         } else if (bodylines[k][j].css == "BUTTON_STYLE_FRAME") {
-          curElem = <FrameButton text={elemm.text} />;
+          curElem = (<div className={`skymp-input button`} onClick={elemm.click}>
+            <span className={'skymp-input_text'}>{elemm.text}</span>
+          </div>);
         }
       }
       else if (elemm.type === "text") {

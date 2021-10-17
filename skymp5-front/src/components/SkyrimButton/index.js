@@ -36,7 +36,7 @@ const SkyrimButton = props => {
             className={`skymp-button ${idDisabled ? 'disabled' : 'active'}`}
             onClick={(e) => {
                 if (!props.disabled)
-                    props.onClick(e)
+                    props.onClick ? props.onClick(e) : console.log(e)
             }}
             style={{ height: `${fheight}px`, width: `${fwidth}px` }}>
             <ButtonItem name={`button start${idDisabled ? ' disabled' : ''}`} height={fheight} />

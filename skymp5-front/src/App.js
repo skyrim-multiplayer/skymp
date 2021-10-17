@@ -19,7 +19,6 @@ class App extends React.Component {
     super(props);
     this.state = {
       isLoggined: false,
-      isChecked: false
     }
   }
 
@@ -86,16 +85,8 @@ class App extends React.Component {
     else
       return (
         <>
-        <input
-        style = {{width:`30px`,height:`20px`}}
-        name="shura"
-        type="checkbox"
-        checked={this.state.isChecked}
-        onChange={() => {this.setState(prev => ({isChecked: !prev.isChecked}))}} />
-        {(this.state.isChecked) ?
-          <Constructor dynamicSize={(this.props.dynamicSize!==undefined) ? this.props.dynamicSize : true} elem={this.props.elem} height={this.props.height || 704} width={this.props.width || 512}/>
-          : <LoginPage />
-        }</>
+          <Constructor elem={this.props.elem} height={this.props.height || 704} width={this.props.width || 512}/>
+        </>
       )
   }
 }
