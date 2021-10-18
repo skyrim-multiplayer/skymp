@@ -65,6 +65,7 @@ const Constructor = props => {
         hintsarr.push({ id: obj.index, text: obj.element.hint, isOpened: false });
         hasHint = true;
       }
+
       switch (obj.element.type) {
         case "button":
           curElem = <Button disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} onClick={obj.element.click} width={obj.element.width} height={obj.element.height} />;
