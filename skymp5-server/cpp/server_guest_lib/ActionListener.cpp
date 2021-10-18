@@ -516,6 +516,16 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
+
+// XXX: move all of this stuff to a separate file?
+/**
+ * 
+ */
+// We try to implement the formula described on UESP:
+// https://en.uesp.net/wiki/Oblivion:The_Complete_Damage_Formula
+// Some parts may be missing. If they are, there should be a TODO regarding it.
+// If there's no corresponding TODO, consider adding it and/or filing an issue.
+
 bool IsUnarmedAttack(const uint32_t sourceFormId)
 {
   return sourceFormId == 0x1f4;
@@ -532,7 +542,13 @@ uint32_t GetRaceId(const MpActor& actor)
   return espm::GetData<espm::NPC_>(baseId, espmProvider).race;
 }
 
-float CalculateDamage(const MpActor& aggressor, const MpActor& target, const HitData& hitData)
+class DamageFormula
+{
+public:
+  DamageFormula(const MpActor& aggressor_, const MpActor& target_, const HitData& hitData_)
+    : aggressor(aggressor), target(target_), hitData(hitData_) {}
+
+float CalculateDamage()
 {
   WorldState* espmProvider = aggressor.GetParent();
   if (IsUnarmedAttack(hitData.source)) {
@@ -560,6 +576,12 @@ float CalculateDamage(const MpActor& aggressor, const MpActor& target, const Hit
   }
   return damage;
 }
+
+private:
+  const MpActor& aggressor;
+  const MpActor& target;
+  const HitData& hitData;
+};
 
 float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
                                        float healthPercentage)
@@ -640,7 +662,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  float damage = CalculateDamage(*aggressor, targetActor, hitData);
+  float damage = DamageFormula(*aggressor, targetActor, hitData).CalculateDamage();
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
     CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
