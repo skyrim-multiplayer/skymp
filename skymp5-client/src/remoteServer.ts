@@ -107,17 +107,6 @@ const loginWithSkympIoCredentials = () => {
   );
 };
 
-// const taskVerifySourceCode = () => {
-//   storage["taskVerifySourceCode"] = true;
-// };
-
-// if (storage["taskVerifySourceCode"] === true) {
-//   once("tick", () => {
-//     verifySourceCode();
-//   });
-//   storage["taskVerifySourceCode"] = false;
-// }
-
 export const getPcInventory = (): Inventory => {
   const res = storage["pcInv"];
   if (typeof res === "object" && (res as any)["entries"]) {
