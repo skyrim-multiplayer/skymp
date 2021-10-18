@@ -316,8 +316,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                                   espm::RecordHeader* record,
                                   const espm::IdMapping& mapping)
 {
+  auto& cache = GetEspmCache();
   auto refr = reinterpret_cast<espm::REFR*>(record);
-  auto data = refr->GetData();
+  auto data = refr->GetData(cache);
 
   auto baseId = espm::GetMappedId(data.baseId, mapping);
   auto base = br.LookupById(baseId);
@@ -330,9 +331,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
       t != "DOOR" && t != "CONT" &&
       (t != "FLOR" ||
-       !reinterpret_cast<espm::FLOR*>(base.rec)->GetData().resultItem) &&
+       !reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem) &&
       (t != "TREE" ||
-       !reinterpret_cast<espm::TREE*>(base.rec)->GetData().resultItem))
+       !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
     return false;
 
   // TODO: Load disabled references
@@ -344,8 +345,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
 
   if (t == "NPC_") {
-    auto npcData =
-      reinterpret_cast<espm::NPC_*>(base.rec)->GetData(GetEspmCache());
+    auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
     if (npcData.isEssential || npcData.isProtected)
       return false;
 
@@ -356,7 +356,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
     auto formListLookupRes = br.LookupById(CrimeFactionsList);
     auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
-    auto formIds = formList->GetData().formIds;
+    auto formIds = formList->GetData(cache).formIds;
     for (auto& formId : formIds) {
       formId = formListLookupRes.ToGlobalId(formId);
     }
@@ -377,7 +377,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   uint32_t worldOrCell = GetWorldOrCell(br, record);
   if (!worldOrCell) {
-    logger->info("Anomally: refr without world/cell");
+    logger->error("Anomally: refr without world/cell");
     return false;
   }
 
@@ -397,7 +397,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   } else {
     if (!locationalData) {
-      logger->info("Anomally: refr without locationalData");
+      logger->error("Anomally: refr without locationalData");
       return false;
     }
 
@@ -520,8 +520,9 @@ MpForm* WorldState::LookupFormByIdx(int idx)
 
 espm::Loader& WorldState::GetEspm() const
 {
-  if (!espm)
+  if (!espm) {
     throw std::runtime_error("No espm attached");
+  }
   return *espm;
 }
 
@@ -532,8 +533,9 @@ bool WorldState::HasEspm() const
 
 espm::CompressedFieldsCache& WorldState::GetEspmCache()
 {
-  if (!espmCache)
+  if (!espmCache) {
     throw std::runtime_error("No espm cache found");
+  }
   return *espmCache;
 }
 

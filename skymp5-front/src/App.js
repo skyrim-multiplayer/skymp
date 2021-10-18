@@ -1,12 +1,25 @@
 import React from "react";
 import { connect } from "react-redux";
 
+import {
+  HashRouter as Router,
+  Switch,
+  Route,
+} from "react-router-dom";
+
+import history from "./utils/history";
+
 import Chat from "./features/chat";
 import AnimList from "./features/animList";
+import LoginPage from "./features/login";
+import Constructor from "./constructor";
 
 class App extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      isLoggined: false,
+    }
   }
 
   componentDidMount() {
@@ -62,12 +75,19 @@ class App extends React.Component {
   }
 
   render() {
-    return (
-      <div className={`App ${!window.hasOwnProperty("skymp") ? "bg" : ""}`}>
-        <AnimList />
-        <Chat />
-      </div>
-    );
+    if (this.state.isLoggined)
+      return (
+          <div className={`App ${!window.hasOwnProperty("skymp") ? "bg" : ""}`}>
+            <AnimList />
+            <Chat />
+          </div>
+      )
+    else
+      return (
+        <>
+          <Constructor elem={this.props.elem} height={this.props.height || 704} width={this.props.width || 512}/>
+        </>
+      )
   }
 }
 
