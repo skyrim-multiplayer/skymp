@@ -2,20 +2,48 @@ import React from 'react';
 
 import './styles.scss'
 
-
-const FrameButton = props => {
-    let width = props.width!=undefined ? props.width : 320;
-    let height = props.height!= undefined ? props.height : 48;
+const ButtonItem = props => {
+    const height = props.height != undefined ? props.height : 64
+    const width = props.width != undefined ? props.width : 64
     return (
-
         <div
-            style={{ width: `${width}px`,height: `${height}px` }}
-            className={`skymp-input button`}
-            onClick={(e) => props.onClick ? props.onClick(e) : console.log(e)}
+            style={{
+                backgroundImage: `url(${require(`./img/${props.name}.svg`).default})`,
+                backgroundSize: `${width}px ${height}px`,
+                backgroundRepeat: 'repeat',
+                height:`${height}px`,
+                width: `${width}px`,
+            }}
+            className={props.name.replace(' ', '-')}
         >
-            <span className={'skymp-input_text'} style={{maxHeight:`${height}px`}}>{props.text}</span>
+            {
+                (props.text)
+                    ?
+                    <span className={'button-middle--text'} style={{ maxHeight: `${height}px`, width: `${width}px` }}>{props.text}</span>
+                    :
+                    ''
+            }
         </div>
     )
 }
 
-export default FrameButton
+const FrameButton = props => {
+    let fwidth = props.width || 384;
+    let fheight = props.height || 64;
+    let idDisabled = props.disabled != undefined ? props.disabled : true;
+    return (
+        <div
+            className={`skymp-button ${idDisabled ? 'disabled' : 'active'}`}
+            onClick={(e) => {
+                if (!props.disabled)
+                    props.onClick ? props.onClick(e) : console.log(e)
+            }}
+            style={{ height: `${fheight}px`, width: `${fwidth}px` }}>
+            <ButtonItem name={`button start${idDisabled ? ' disabled' : ''}`} height={fheight} />
+            <ButtonItem name={`button middle${idDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
+            <ButtonItem name={`button end${idDisabled ? ' disabled' : ''}`} height={fheight} />
+        </div>
+    )
+}
+
+export default FrameButton;
