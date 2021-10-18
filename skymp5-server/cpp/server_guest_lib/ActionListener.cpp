@@ -547,47 +547,76 @@ class DamageFormula
 public:
   DamageFormula(const MpActor& aggressor_, const MpActor& target_,
                 const HitData& hitData_)
-    : aggressor(aggressor)
+    : aggressor(aggressor_)
     , target(target_)
     , hitData(hitData_)
+    , espmProvider(aggressor.GetParent())
   {
   }
 
-  float CalculateDamage()
+  float GetBaseWeaponDamage() const
   {
-    WorldState* espmProvider = aggressor.GetParent();
-    if (IsUnarmedAttack(hitData.source)) {
-      uint32_t raceId = GetRaceId(aggressor);
-      return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
-    }
     auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
+    if (!weapData.weapData) {
+      throw std::runtime_error(fmt::format("no weapData for {:#x}", hitData.source));
+    }
+    return weapData.weapData->damage;
+  }
+
+  float CalcWeaponRating() const
+  {
+    // TODO(#xyz): take other components into account
+    return GetBaseWeaponDamage();
+  }
+
+  float CalcArmorRatingComponent(const Inventory::Entry& opponentEquipmentEntry) const
+  {
+    if (opponentEquipmentEntry.extra.worn != Inventory::Worn::None) {
+      try {
+        auto armorData =
+          espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
+        spdlog::info("armor baseId={}: baseValue={}", opponentEquipmentEntry.baseId,
+                      armorData.baseValue);
+        // TODO(#xyz): take other components into account
+        return armorData.baseValue;
+      } catch (const std::exception& exc) {
+        spdlog::error("err: {}", exc.what());
+      }
+    }
+    return 0;
+  }
+
+  float CalcOpponentArmorRating() const
+  {
+    // TODO(#xyz): OpponentArmorRating is 1 if your character is successfully sneaking and has the Master Sneak perk
+    // (C) UESP Wiki
+    float combinedArmorRating = 0;
     for (const auto& entry : GetEquipment(target).inv.entries) {
       spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={}; worn={}",
                    aggressor.idx, target.idx, entry.extra.name, entry.baseId,
                    static_cast<int>(entry.extra.worn));
-      if (entry.extra.worn != Inventory::Worn::None) {
-        try {
-          auto armorData =
-            espm::GetData<espm::ARMO>(entry.baseId, espmProvider);
-          spdlog::info("armor baseId={}: baseValue={}", entry.baseId,
-                       armorData.baseValue);
-        } catch (const std::exception& exc) {
-          spdlog::error("err: {}", exc.what());
-        }
-      }
+      combinedArmorRating += CalcArmorRatingComponent(entry);
+    }
+    combinedArmorRating = std::min(combinedArmorRating, 85.0f);
+    return (100 - combinedArmorRating) / 100;
+  }
+
+  float CalculateDamage() const
+  {
+    if (IsUnarmedAttack(hitData.source)) {
+      uint32_t raceId = GetRaceId(aggressor);
+      return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
     }
 
-    auto damage = weapData.weapData ? weapData.weapData->damage : 0;
-    if (hitData.isHitBlocked) {
-      damage /= 2;
-    }
-    return damage;
+    // TODO(#xyz): take other components into account
+    return CalcWeaponRating() * CalcOpponentArmorRating();
   }
 
 private:
   const MpActor& aggressor;
   const MpActor& target;
   const HitData& hitData;
+  WorldState* espmProvider;
 };
 
 float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
