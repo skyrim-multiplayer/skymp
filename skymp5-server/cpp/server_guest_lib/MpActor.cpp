@@ -170,6 +170,7 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
     changeForm.healthPercentage = healthPercentage;
     changeForm.magickaPercentage = magickaPercentage;
     changeForm.staminaPercentage = staminaPercentage;
+    changeForm.isDead = (healthPercentage == 0.f);
   });
 }
 
