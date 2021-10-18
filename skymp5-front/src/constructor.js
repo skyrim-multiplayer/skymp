@@ -141,7 +141,6 @@ const Constructor = props => {
           }
           <div className={'login-form--content_main'} ref={content_mainRef}>
             {result.body}
-
             {hints.map(hint => {
               return (
                 <SkyrimHint
