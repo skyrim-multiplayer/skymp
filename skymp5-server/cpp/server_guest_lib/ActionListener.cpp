@@ -519,7 +519,7 @@ namespace {
 
 // XXX: move all of this stuff to a separate file?
 /**
- * 
+ *
  */
 // We try to implement the formula described on UESP:
 // https://en.uesp.net/wiki/Oblivion:The_Complete_Damage_Formula
@@ -545,37 +545,44 @@ uint32_t GetRaceId(const MpActor& actor)
 class DamageFormula
 {
 public:
-  DamageFormula(const MpActor& aggressor_, const MpActor& target_, const HitData& hitData_)
-    : aggressor(aggressor), target(target_), hitData(hitData_) {}
-
-float CalculateDamage()
-{
-  WorldState* espmProvider = aggressor.GetParent();
-  if (IsUnarmedAttack(hitData.source)) {
-    uint32_t raceId = GetRaceId(aggressor);
-    return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
+  DamageFormula(const MpActor& aggressor_, const MpActor& target_,
+                const HitData& hitData_)
+    : aggressor(aggressor)
+    , target(target_)
+    , hitData(hitData_)
+  {
   }
-  auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
-  for (const auto& entry : GetEquipment(target).inv.entries) {
-    spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={}; worn={}",
-        aggressor.idx, target.idx, entry.extra.name, entry.baseId,
-        static_cast<int>(entry.extra.worn));
-    if (entry.extra.worn != Inventory::Worn::None) {
-      try {
-        auto armorData = espm::GetData<espm::ARMO>(entry.baseId, espmProvider);
-        spdlog::info("armor baseId={}: baseValue={}", entry.baseId, armorData.baseValue);
-      } catch (const std::exception& exc) {
-        spdlog::error("err: {}", exc.what());
+
+  float CalculateDamage()
+  {
+    WorldState* espmProvider = aggressor.GetParent();
+    if (IsUnarmedAttack(hitData.source)) {
+      uint32_t raceId = GetRaceId(aggressor);
+      return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
+    }
+    auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
+    for (const auto& entry : GetEquipment(target).inv.entries) {
+      spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={}; worn={}",
+                   aggressor.idx, target.idx, entry.extra.name, entry.baseId,
+                   static_cast<int>(entry.extra.worn));
+      if (entry.extra.worn != Inventory::Worn::None) {
+        try {
+          auto armorData =
+            espm::GetData<espm::ARMO>(entry.baseId, espmProvider);
+          spdlog::info("armor baseId={}: baseValue={}", entry.baseId,
+                       armorData.baseValue);
+        } catch (const std::exception& exc) {
+          spdlog::error("err: {}", exc.what());
+        }
       }
     }
-  }
 
-  auto damage = weapData.weapData ? weapData.weapData->damage : 0;
-  if (hitData.isHitBlocked) {
-    damage /= 2;
+    auto damage = weapData.weapData ? weapData.weapData->damage : 0;
+    if (hitData.isHitBlocked) {
+      damage /= 2;
+    }
+    return damage;
   }
-  return damage;
-}
 
 private:
   const MpActor& aggressor;
@@ -662,7 +669,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  float damage = DamageFormula(*aggressor, targetActor, hitData).CalculateDamage();
+  float damage =
+    DamageFormula(*aggressor, targetActor, hitData).CalculateDamage();
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
     CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
