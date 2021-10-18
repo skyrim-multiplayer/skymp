@@ -76,7 +76,7 @@ const Constructor = props => {
           curElem = <SkyrimInput defaultValue={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} />;
           break;
         case "inputPass":
-          curElem = <SkyrimInput defaultValue={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} />;
+          curElem = <SkyrimInput defaultValue={obj.element.text} placeholder={obj.element.placeholder} type={'password'} name={obj.index} />;
           break;
         case "checkBox":
           curElem = (<div className={'login-form--content_main__label login-form--content_main__container'}>
