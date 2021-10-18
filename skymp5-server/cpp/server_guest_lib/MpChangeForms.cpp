@@ -38,6 +38,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["magickaPercentage"] = changeForm.magickaPercentage;
   res["staminaPercentage"] = changeForm.staminaPercentage;
 
+  res["isDead"] = changeForm.isDead;
   return res;
 }
 
@@ -52,7 +53,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     appearanceDump("appearanceDump"), equipmentDump("equipmentDump"),
     dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
-    staminaPercentage("staminaPercentage");
+    staminaPercentage("staminaPercentage"), isDead("isDead");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -115,6 +116,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   } catch (...) {
     throw;
   }
+
+  ReadEx(element, isDead, &res.isDead);
 
   return res;
 }
