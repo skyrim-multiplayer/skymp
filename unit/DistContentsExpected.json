@@ -98,8 +98,6 @@
       "server/dist_back/serverInterface.js.map",
       "server/dist_back/settings.js",
       "server/dist_back/settings.js.map",
-      "server/dist_back/systems/clientVerify.js",
-      "server/dist_back/systems/clientVerify.js.map",
       "server/dist_back/systems/login.js",
       "server/dist_back/systems/login.js.map",
       "server/dist_back/systems/masterClient.js",
