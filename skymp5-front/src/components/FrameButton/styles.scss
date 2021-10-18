@@ -1,0 +1,29 @@
+.skymp-button {
+  width: 384px;
+  height: 64px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+.skymp-button.disabled {
+  cursor: default;
+}
+.button-middle {
+  display: flex;
+  font-size: 36px;
+  text-align: center;
+  align-self: center;
+  * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: auto;
+    color: rgba(157, 158, 158, 0.75);
+  }
+}
+.button-middle.disabled {
+  * {
+    color: rgba(157, 158, 158, 0.33);
+  }
+}

@@ -65,21 +65,9 @@ if (Array.isArray(storage["eventSourceContexts"])) {
 //
 //
 
-const maxVerifyDelayDefault = 1000;
-let verifyStartMoment = 0;
 let loggingStartMoment = 0;
-let maxVerifyDelay = maxVerifyDelayDefault;
-
 on("tick", () => {
   const maxLoggingDelay = 5000;
-  if (verifyStartMoment && Date.now() - verifyStartMoment > maxVerifyDelay) {
-    maxVerifyDelay *= 2;
-    printConsole(
-      "Verify failed. Reconnecting. Calculated delay is " + maxVerifyDelay
-    );
-    networking.reconnect();
-    verifyStartMoment = 0;
-  }
   if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
     printConsole("Logging in failed. Reconnecting.");
     networking.reconnect();
@@ -104,22 +92,6 @@ const sendBrowserToken = () => {
   );
 };
 
-const verifySourceCode = () => {
-  verifyStartMoment = Date.now();
-  const src = getPluginSourceCode("skymp5-client");
-  printConsole(`Verifying current source code (${src.length} bytes)`);
-  networking.send(
-    {
-      t: messages.MsgType.CustomPacket,
-      content: {
-        customPacketType: "clientVersion",
-        src,
-      },
-    },
-    true
-  );
-};
-
 const loginWithSkympIoCredentials = () => {
   loggingStartMoment = Date.now();
   printConsole("Logging in as skymp.io user");
@@ -134,17 +106,6 @@ const loginWithSkympIoCredentials = () => {
     true
   );
 };
-
-const taskVerifySourceCode = () => {
-  storage["taskVerifySourceCode"] = true;
-};
-
-if (storage["taskVerifySourceCode"] === true) {
-  once("tick", () => {
-    verifySourceCode();
-  });
-  storage["taskVerifySourceCode"] = false;
-}
 
 export const getPcInventory = (): Inventory => {
   const res = storage["pcInv"];
@@ -463,7 +424,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.worldModel.forms = [];
     this.worldModel.playerCharacterFormIdx = -1;
 
-    verifySourceCode();
+    loginWithSkympIoCredentials();
     sendBrowserToken();
   }
 
@@ -498,23 +459,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   customPacket(msg: messages.CustomPacket): void {
     switch (msg.content.customPacketType) {
       case "loginRequired":
-        verifyStartMoment = 0;
-        maxVerifyDelay = maxVerifyDelayDefault;
         loginWithSkympIoCredentials();
-        break;
-      case "newClientVersion":
-        if (typeof msg.content.src !== "string")
-          throw new Error(`'${msg.content.src}' is not a string`);
-        const src: string = msg.content.src as string;
-
-        // Force reconnecting after hot reload (see skympClient.ts)
-        //networking.close();
-        //storage.targetIp = "";
-
-        taskVerifySourceCode();
-
-        printConsole(`writing new version (${src} bytes)`);
-        if (src.length > 0) writePlugin("skymp5-client", src);
         break;
     }
   }
