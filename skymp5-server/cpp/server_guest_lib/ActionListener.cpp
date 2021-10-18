@@ -580,6 +580,7 @@ public:
         // TODO(#xyz): take other components into account
         return armorData.baseValue;
       } catch (const std::exception& exc) {
+        // XXX: gotta check if that's ARMO somehow. New GetData for already found rec?
         spdlog::error("err: {}", exc.what());
       }
     }
