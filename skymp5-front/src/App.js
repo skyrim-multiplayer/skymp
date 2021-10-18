@@ -85,7 +85,7 @@ class App extends React.Component {
     else
       return (
         <>
-          <Constructor elem={this.props.elem} height={this.props.height || 704} width={this.props.width || 512}/>
+          <Constructor dynamicSize={true} elem={this.props.elem} height={this.props.height || 704} width={this.props.width || 512}/>
         </>
       )
   }

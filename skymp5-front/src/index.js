@@ -16,6 +16,7 @@ if (!window.skyrimPlatform) {
         elements: [
           { type: "button", text: "Yes", click: () => { console.log("Yes") } },
           { type: "button", text: "No", click: () => { console.log("No") } },
+          { type: "button", isDisabled: true, text: "No", click: () => { console.log("No") } },
         ],
       },
     ],

@@ -67,7 +67,7 @@ const Constructor = props => {
       }
       switch (obj.element.type) {
         case "button":
-          curElem = <Button disabled={obj.element.disabled} css={obj.css} text={obj.element.text} onClick={obj.element.onClick} width={obj.element.width} height={obj.element.height} />;
+          curElem = <Button disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} onClick={obj.element.click} width={obj.element.width} height={obj.element.height} />;
           break;
         case "text":
           curElem = obj.element.text || "";

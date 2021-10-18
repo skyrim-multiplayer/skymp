@@ -10,7 +10,7 @@ const Button = (props) => {
     let onClick = props.onClick;
     let width = props.width;
     let height = props.height;
-    let disabled = props.disabled;
+    let disabled = props.disabled || false;
 
     switch (css) {
         case "BUTTON_STYLE_FRAME":
