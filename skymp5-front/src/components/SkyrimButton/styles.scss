@@ -1,19 +1,25 @@
-.skymp-button {
-  width: 384px;
-  height: 64px;
-  display: flex;
-  text-align: center;
-  cursor: pointer;
-  font-size: 36px;
-  * {
-    margin: auto;
-    color: rgba(157, 158, 158, 0.75);
-  }
-}
-
-.skymp-button.disabled {
-  cursor: default;
-  * {
-    color: rgba(157, 158, 158, 0.33);
-  }
+.skymp-input.button {
+    text-align: center;
+    align-items: center;
+    display: flex;
+    margin-bottom: 0;
+    cursor: pointer;
+    border: 2px solid red;
+    &.disabled {
+      opacity: 0.33;
+      * {
+        opacity: 0.33;
+      }
+    }
+  .skymp-input_text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: Bankir-Retro, serif;
+      font-style: normal;
+      font-weight: normal;
+      font-size: 30px;
+      line-height: 32px;
+      color: #9D9E9EBF;
+      margin: auto;
+    }
 }

@@ -6,7 +6,7 @@ import {
   GlobalVariable,
   ObjectReference,
   Weather,
-  printConsole,
+  printConsole
 } from "skyrimPlatform";
 import { SkympClient } from "./skympClient";
 import * as browser from "./browser";

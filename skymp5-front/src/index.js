@@ -14,8 +14,8 @@ if (!window.skyrimPlatform) {
       {
         caption: "Test?",
         elements: [
-          { type: "button", text: "Yes" },
-          { type: "button", text: "No" },
+          { type: "button", tags: ['BUTTON_STYLE_FRAME'], text: "Yes", click: () => { console.log("Yes") } },
+          { type: "button", tags: ['BUTTON_STYLE_FRAME'], text: "No", click: () => { console.log("No") } },
         ],
       },
     ],
