@@ -1,4 +1,5 @@
 #pragma once
+#include "BrowserApi.h"    // BrowserApi::State
 #include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
 #include "JsEngine.h"
 #include "SkyrimPlatformListener.h"
@@ -12,7 +13,8 @@ class ExecutionCommonsListener : public SkyrimPlatformListener
 public:
   ExecutionCommonsListener(
     const std::shared_ptr<CallNativeApi::NativeCallRequirements>&
-      nativeCallRequirements);
+      nativeCallRequirements,
+    const std::shared_ptr<BrowserApi::State>& browserApiState);
 
   void Tick() override;
   void Update() override;

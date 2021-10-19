@@ -37,14 +37,14 @@ struct ExecutionCommonsListener::Impl
   std::shared_ptr<CallNativeApi::NativeCallRequirements>
     nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
-  std::shared_ptr<BrowserApi::State> browserApiState =
-    std::make_shared<BrowserApi::State>();
+  std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
 };
 
 ExecutionCommonsListener::ExecutionCommonsListener(
   const std::shared_ptr<CallNativeApi::NativeCallRequirements>&
-    nativeCallRequirements)
+    nativeCallRequirements,
+  const std::shared_ptr<BrowserApi::State>& browserApiState)
 {
   if (!nativeCallRequirements) {
     throw NullPointerException("nativeCallRequirements");
@@ -52,6 +52,7 @@ ExecutionCommonsListener::ExecutionCommonsListener(
 
   pImpl = std::make_shared<Impl>();
   pImpl->nativeCallRequirements = nativeCallRequirements;
+  pImpl->browserApiState = browserApiState;
 }
 
 void ExecutionCommonsListener::Tick()

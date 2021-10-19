@@ -16,6 +16,7 @@
 #include <skse64/PluginAPI.h>
 
 // Listeners
+#include "BrowserListener.h"
 #include "ExecutionCommonsListener.h"
 #include "HelloListener.h"
 
@@ -62,6 +63,7 @@ struct SkyrimPlatform::Impl
 
   std::shared_ptr<CallNativeApi::NativeCallRequirements>
     nativeCallRequirements;
+  std::shared_ptr<BrowserApi::State> browserApiState;
 
   TaskQueue printExceptionTasksQueue, tickTasksQueue, updateTasksQueue;
 };
@@ -180,10 +182,13 @@ SkyrimPlatform::SkyrimPlatform()
   pImpl = std::make_shared<Impl>();
   pImpl->nativeCallRequirements =
     std::make_shared<CallNativeApi::NativeCallRequirements>();
+  pImpl->browserApiState = std::make_shared<BrowserApi::State>();
 
   pImpl->listeners.push_back(std::make_shared<HelloListener>());
+  pImpl->listeners.push_back(std::make_shared<ExecutionCommonsListener>(
+    pImpl->nativeCallRequirements, pImpl->browserApiState));
   pImpl->listeners.push_back(
-    std::make_shared<ExecutionCommonsListener>(pImpl->nativeCallRequirements));
+    std::make_shared<BrowserListener>(pImpl->browserApiState));
 }
 
 void SkyrimPlatform::Tick()
