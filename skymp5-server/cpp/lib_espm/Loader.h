@@ -66,8 +66,8 @@ private:
   BufferType bufferType;
 };
 
-template <class EspmProvider>
-const RecordHeader* SafeLookup(uint32_t formId, EspmProvider* espmProvider)
+template <class RecordT, class EspmProvider>
+typename RecordT::Data GetData(uint32_t formId, EspmProvider* espmProvider)
 {
   if (!espmProvider) {
     throw std::runtime_error("Unable to find record without EspmProvider");
@@ -86,16 +86,6 @@ const RecordHeader* SafeLookup(uint32_t formId, EspmProvider* espmProvider)
       fmt::format("Record {0:x} doesn't exist", formId));
   }
 
-  return lookupResult.rec;
-}
-
-template <class RecordT>
-typename RecordT::Data SafeGetData(const RecordHeader* rec)
-{
-  if (!rec) {
-    throw std::runtime_error("SafeConvert: nullptr record provided");
-  }
-
   const RecordT* convertedRecord = espm::Convert<RecordT>(lookupResult.rec);
   if (!convertedRecord) {
     throw std::runtime_error(
@@ -104,13 +94,6 @@ typename RecordT::Data SafeGetData(const RecordHeader* rec)
   }
 
   return convertedRecord->GetData(espmCache);
-}
-
-template <class RecordT, class EspmProvider>
-typename RecordT::Data GetData(uint32_t formId, EspmProvider* espmProvider)
-{
-  const RecordHeader* rec = SafeLookup(formId, espmProvider);
-  return SafeGetData<RecordT>(rec);
 }
 
 } // namespace espm
