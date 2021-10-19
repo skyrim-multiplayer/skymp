@@ -571,7 +571,9 @@ public:
 
   float CalcArmorRatingComponent(const Inventory::Entry& opponentEquipmentEntry) const
   {
-    if (opponentEquipmentEntry.extra.worn != Inventory::Worn::None) {
+    spdlog::info("XXX type for {:#x} is {}", opponentEquipmentEntry.baseId, espm::GetRecordType(opponentEquipmentEntry.baseId, espmProvider).ToString());
+
+    if (opponentEquipmentEntry.extra.worn != Inventory::Worn::None && espm::GetRecordType(opponentEquipmentEntry.baseId, espmProvider) == espm::ARMO::type) {
       try {
         auto armorData =
           espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
@@ -593,7 +595,7 @@ public:
     // (C) UESP Wiki
     float combinedArmorRating = 0;
     for (const auto& entry : GetEquipment(target).inv.entries) {
-      spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={}; worn={}",
+      spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={:#x}; worn={}",
                    aggressor.idx, target.idx, entry.extra.name, entry.baseId,
                    static_cast<int>(entry.extra.worn));
       combinedArmorRating += CalcArmorRatingComponent(entry);
