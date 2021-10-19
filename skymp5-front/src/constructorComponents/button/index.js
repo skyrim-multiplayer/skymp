@@ -14,7 +14,11 @@ const Button = (props) => {
 
     switch (css) {
         case "BUTTON_STYLE_FRAME":
-            return <FrameButton disabled={disabled} text={text} onClick={onClick} width={width} height={height} />;
+            return <FrameButton disabled={disabled} variant='DEFAULT' text={text} onClick={onClick} width={width} height={height} />;
+        case "BUTTON_STYLE_FRAME_LEFT":
+            return <FrameButton disabled={disabled} variant='LEFT' text={text} onClick={onClick} width={width} height={height} />;
+        case "BUTTON_STYLE_FRAME_RIGHT":
+            return <FrameButton disabled={disabled} variant='RIGHT' text={text} onClick={onClick} width={width} height={height} />;
         case "BUTTON_STYLE_PATREON":
             return <ImageButton disabled={disabled} src={require('../../img/github.svg').default} onClick={onClick} width={width} height={height} />;
         case "BUTTON_STYLE_GITHUB":
