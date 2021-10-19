@@ -80,6 +80,13 @@ void SkyrimPlatform::BeginMain()
   }
 }
 
+void SkyrimPlatform::EndMain()
+{
+  for (auto& listener : GetSingleton().pImpl->listeners) {
+    listener->EndMain();
+  }
+}
+
 bool SkyrimPlatform::QuerySKSEPlugin(const SKSE::QueryInterface* skse,
                                      SKSE::PluginInfo* info)
 {

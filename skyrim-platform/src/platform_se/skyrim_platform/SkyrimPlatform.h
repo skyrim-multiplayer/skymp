@@ -15,6 +15,7 @@ public:
 
   static void ForceFirstTick();
   static void BeginMain();
+  static void EndMain();
   static bool QuerySKSEPlugin(const SKSE::QueryInterface* skse,
                               SKSE::PluginInfo* info);
   static bool LoadSKSEPlugin(const SKSEInterface* skse);

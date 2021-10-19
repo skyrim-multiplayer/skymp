@@ -112,7 +112,11 @@ public:
     return true;
   }
 
-  bool EndMain() override { return true; }
+  bool EndMain() override
+  {
+    SkyrimPlatform::EndMain();
+    return true;
+  }
 
   void Update() override {}
 };
