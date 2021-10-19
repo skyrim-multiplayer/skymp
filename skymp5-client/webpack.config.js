@@ -1,6 +1,6 @@
 const path = require('path');
 
-const outDir = path.resolve(__dirname, "../build/dist/client/Data/Platform/Plugins");
+const outDirPath = path.resolve(__dirname, "../build/dist/client/Data/Platform/Plugins");
 const outFileName = "skymp5-client.js";
 const spFilePath = path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules/skyrimPlatform.ts');
 
@@ -11,7 +11,7 @@ module.exports = {
   ],
   devtool: false,
   output: {
-    path: outDir,
+    path: outDirPath,
     filename: outFileName,
     libraryTarget: "commonjs",
   },
