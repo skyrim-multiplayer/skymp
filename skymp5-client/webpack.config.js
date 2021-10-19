@@ -27,7 +27,7 @@ module.exports = {
   module: {
     rules: [{
       test: /.*skyrimPlatform.ts$/,
-      use: path.resolve('src/skyrimPlatformLoader.js'),
+      use: path.resolve('loaders/skyrimPlatformLoader.js'),
     }, {
       test: /\.tsx?$/,
       use: "ts-loader"
