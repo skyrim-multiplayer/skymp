@@ -577,7 +577,7 @@ public:
       try {
         auto armorData =
           espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
-        spdlog::info("armor baseId={}: baseValue={}", opponentEquipmentEntry.baseId,
+        spdlog::info("armor baseId={:#x}: baseValue={}", opponentEquipmentEntry.baseId,
                       armorData.baseValue);
         // TODO(#xyz): take other components into account
         return armorData.baseValue;
