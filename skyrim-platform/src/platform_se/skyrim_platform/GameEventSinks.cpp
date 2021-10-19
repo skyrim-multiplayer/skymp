@@ -2,6 +2,7 @@
 #include "EventsApi.h"
 #include "JsEngine.h"
 #include "NativeValueCasts.h"
+#include "SkyrimPlatform.h"
 #include "TaskQueue.h"
 #include <RE/ActiveEffect.h>
 #include <RE/Actor.h>
@@ -33,26 +34,27 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto targetId = targetRefr ? targetRefr->formID : 0;
   auto casterId = casterRefr ? casterRefr->formID : 0;
 
-  taskQueue.AddTask([targetId, casterId, targetRefr, casterRefr] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [targetId, casterId, targetRefr, casterRefr] {
+      auto obj = JsValue::Object();
 
-    auto target = RE::TESForm::LookupByID(targetId);
-    target = target == targetRefr ? target : nullptr;
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+      auto target = RE::TESForm::LookupByID(targetId);
+      target = target == targetRefr ? target : nullptr;
+      obj.SetProperty("target", CreateObject("ObjectReference", target));
 
-    auto caster = RE::TESForm::LookupByID(casterId);
-    caster = caster == casterRefr ? caster : nullptr;
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
+      auto caster = RE::TESForm::LookupByID(casterId);
+      caster = caster == casterRefr ? caster : nullptr;
+      obj.SetProperty("caster", CreateObject("ObjectReference", caster));
 
-    auto targetRefr_ = reinterpret_cast<RE::TESObjectREFR*>(target);
+      auto targetRefr_ = reinterpret_cast<RE::TESObjectREFR*>(target);
 
-    obj.SetProperty("isCrimeToActivate",
-                    targetRefr_
-                      ? JsValue::Bool(targetRefr_->IsCrimeToActivate())
-                      : JsValue::Undefined());
+      obj.SetProperty("isCrimeToActivate",
+                      targetRefr_
+                        ? JsValue::Bool(targetRefr_->IsCrimeToActivate())
+                        : JsValue::Undefined());
 
-    EventsApi::SendEvent("activate", { JsValue::Undefined(), obj });
-  });
+      EventsApi::SendEvent("activate", { JsValue::Undefined(), obj });
+    });
 
   return RE::BSEventNotifyControl::kContinue;
 }
@@ -66,16 +68,17 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto targetId = movedRef ? movedRef->formID : 0;
   auto isCellAttached = event_ ? event_->isCellAttached : 0;
 
-  taskQueue.AddTask([targetId, isCellAttached, movedRef] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [targetId, isCellAttached, movedRef] {
+      auto obj = JsValue::Object();
 
-    auto target = RE::TESForm::LookupByID(targetId);
-    target = target == movedRef ? target : nullptr;
-    obj.SetProperty("movedRef", CreateObject("ObjectReference", target));
+      auto target = RE::TESForm::LookupByID(targetId);
+      target = target == movedRef ? target : nullptr;
+      obj.SetProperty("movedRef", CreateObject("ObjectReference", target));
 
-    obj.SetProperty("isCellAttached", JsValue::Bool(isCellAttached));
-    EventsApi::SendEvent("moveAttachDetach", { JsValue::Undefined(), obj });
-  });
+      obj.SetProperty("isCellAttached", JsValue::Bool(isCellAttached));
+      EventsApi::SendEvent("moveAttachDetach", { JsValue::Undefined(), obj });
+    });
 
   return RE::BSEventNotifyControl::kContinue;
 }
@@ -86,7 +89,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 {
   auto interrupted = event_ ? event_->interrupted : 0;
 
-  taskQueue.AddTask([interrupted] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([interrupted] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("isInterrupted", JsValue::Bool(interrupted));
@@ -104,7 +107,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto objectId = event_ ? event_->formID : 0;
   auto loaded = event_ ? event_->loaded : 0;
 
-  taskQueue.AddTask([objectId, loaded] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([objectId, loaded] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("object",
@@ -125,7 +128,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto lockedObject = event_ ? event_->lockedObject : nullptr;
   auto lockedObjectId = lockedObject ? lockedObject->formID : 0;
 
-  taskQueue.AddTask([lockedObjectId, lockedObject] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([lockedObjectId, lockedObject] {
     auto obj = JsValue::Object();
 
     auto lockedObject = RE::TESForm::LookupByID(lockedObjectId);
@@ -146,7 +149,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto cell = event_ ? event_->cell : nullptr;
   auto cellId = cell ? cell->formID : 0;
 
-  taskQueue.AddTask([cellId, cell] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([cellId, cell] {
     auto obj = JsValue::Object();
 
     auto cell_ = RE::TESForm::LookupByID(cellId);
@@ -167,7 +170,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto refId = ref ? ref->formID : 0;
   auto grabbed = event_ ? event_->grabbed : 0;
 
-  taskQueue.AddTask([refId, grabbed, ref] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([refId, grabbed, ref] {
     auto obj = JsValue::Object();
 
     auto reference = RE::TESForm::LookupByID(refId);
@@ -186,7 +189,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESLoadGameEvent* event_,
   RE::BSTEventSource<RE::TESLoadGameEvent>* eventSource)
 {
-  taskQueue.AddTask(
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
     [] { EventsApi::SendEvent("loadGame", { JsValue::Undefined() }); });
 
   return RE::BSEventNotifyControl::kContinue;
@@ -199,7 +202,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto subject = event_ ? event_->subject.get() : nullptr;
   auto subjectId = subject ? subject->formID : 0;
 
-  taskQueue.AddTask([subjectId, subject] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([subjectId, subject] {
     auto obj = JsValue::Object();
 
     auto subjectLocal = RE::TESForm::LookupByID(subjectId);
@@ -221,16 +224,17 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto oldBaseID = event_ ? event_->oldBaseID : 0;
   auto newBaseID = event_ ? event_->newBaseID : 0;
 
-  taskQueue.AddTask([oldUniqueID, newUniqueID, oldBaseID, newBaseID] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [oldUniqueID, newUniqueID, oldBaseID, newBaseID] {
+      auto obj = JsValue::Object();
 
-    obj.SetProperty("oldBaseID", JsValue::Double(oldBaseID));
-    obj.SetProperty("newBaseID", JsValue::Double(newBaseID));
-    obj.SetProperty("oldUniqueID", JsValue::Double(oldUniqueID));
-    obj.SetProperty("newUniqueID", JsValue::Double(newUniqueID));
+      obj.SetProperty("oldBaseID", JsValue::Double(oldBaseID));
+      obj.SetProperty("newBaseID", JsValue::Double(newBaseID));
+      obj.SetProperty("oldUniqueID", JsValue::Double(oldUniqueID));
+      obj.SetProperty("newUniqueID", JsValue::Double(newUniqueID));
 
-    EventsApi::SendEvent("uniqueIdChange", { JsValue::Undefined(), obj });
-  });
+      EventsApi::SendEvent("uniqueIdChange", { JsValue::Undefined(), obj });
+    });
   return RE::BSEventNotifyControl::kContinue;
 }
 
@@ -241,7 +245,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   std::string statName = event_ ? event_->stat.data() : "";
   auto value = event_ ? event_->value : 0;
 
-  taskQueue.AddTask([statName, value] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([statName, value] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("statName", JsValue::String(statName));
@@ -259,7 +263,8 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto objectInitialized = event_ ? event_->objectInitialized.get() : nullptr;
   auto objectInitializedId = objectInitialized ? objectInitialized->formID : 0;
 
-  taskQueue.AddTask([objectInitializedId, objectInitialized] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([objectInitializedId,
+                                                objectInitialized] {
     auto obj = JsValue::Object();
 
     auto objectInitializedLocal = RE::TESForm::LookupByID(objectInitializedId);
@@ -282,7 +287,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto object = event_ ? event_->object.get() : nullptr;
   auto objectId = object ? object->formID : 0;
 
-  taskQueue.AddTask([objectId, object] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([objectId, object] {
     auto obj = JsValue::Object();
 
     auto objectIdLocal = RE::TESForm::LookupByID(objectId);
@@ -308,7 +313,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   auto state = event_ ? (uint32_t)event_->state : 0;
 
-  taskQueue.AddTask(
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
     [targetActorId, actorId, state, targetActorRefr, actorRefr] {
       auto obj = JsValue::Object();
 
@@ -348,7 +353,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   auto dead = event_ ? event_->dead : 0;
 
-  taskQueue.AddTask(
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
     [actorDyingId, actorKillerId, dead, actorDyingRefr, actorKillerRefr] {
       auto obj = JsValue::Object();
 
@@ -383,8 +388,9 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto reference = event_ ? event_->reference.get() : nullptr;
   auto referenceId = reference ? reference->formID : 0;
 
-  taskQueue.AddTask([oldContainerId, newContainerId, baseObjId, itemCount,
-                     uniqueID, referenceId] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([oldContainerId, newContainerId,
+                                                baseObjId, itemCount, uniqueID,
+                                                referenceId] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("oldContainer",
@@ -424,7 +430,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto projectileId = event_ ? event_->projectile : 0;
   uint8_t flags = event_ ? (uint8_t)event_->flags : 0;
 
-  taskQueue.AddTask(
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
     [targetId, causeId, sourceId, projectileId, flags, targetRefr, causeRefr] {
       auto obj = JsValue::Object();
 
@@ -480,8 +486,9 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto equipped = event_ ? event_->equipped : 0;
   auto uniqueId = event_ ? event_->uniqueID : 0;
 
-  taskQueue.AddTask([actorId, baseObjectId, equipped, uniqueId, originalRefrId,
-                     actorRefr] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([actorId, baseObjectId,
+                                                equipped, uniqueId,
+                                                originalRefrId, actorRefr] {
     auto obj = JsValue::Object();
 
     auto actorLocal = RE::TESForm::LookupByID(actorId);
@@ -535,37 +542,38 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   auto activeEffectBaseId = activeEffectBase ? activeEffectBase->formID : 0;
 
-  taskQueue.AddTask([casterId, targetId, isApplied, activeEffect,
-                     activeEffectUniqueID, activeEffectBaseId, caster,
-                     target] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [casterId, targetId, isApplied, activeEffect, activeEffectUniqueID,
+     activeEffectBaseId, caster, target] {
+      auto obj = JsValue::Object();
 
-    bool isEffectValid = activeEffect
-      ? (activeEffect->usUniqueID == activeEffectUniqueID)
-      : false;
+      bool isEffectValid = activeEffect
+        ? (activeEffect->usUniqueID == activeEffectUniqueID)
+        : false;
 
-    obj.SetProperty("effect",
-                    CreateObject("MagicEffect",
-                                 RE::TESForm::LookupByID(activeEffectBaseId)));
+      obj.SetProperty(
+        "effect",
+        CreateObject("MagicEffect",
+                     RE::TESForm::LookupByID(activeEffectBaseId)));
 
-    obj.SetProperty("activeEffect",
-                    CreateObject("ActiveMagicEffect",
-                                 isEffectValid ? activeEffect : nullptr));
+      obj.SetProperty("activeEffect",
+                      CreateObject("ActiveMagicEffect",
+                                   isEffectValid ? activeEffect : nullptr));
 
-    auto casterLocal = RE::TESForm::LookupByID(casterId);
-    casterLocal = casterLocal == caster ? casterLocal : nullptr;
+      auto casterLocal = RE::TESForm::LookupByID(casterId);
+      casterLocal = casterLocal == caster ? casterLocal : nullptr;
 
-    obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
+      obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
 
-    auto targetLocal = RE::TESForm::LookupByID(targetId);
-    targetLocal = targetLocal == target ? targetLocal : nullptr;
+      auto targetLocal = RE::TESForm::LookupByID(targetId);
+      targetLocal = targetLocal == target ? targetLocal : nullptr;
 
-    obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
+      obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
 
-    isApplied
-      ? EventsApi::SendEvent("effectStart", { JsValue::Undefined(), obj })
-      : EventsApi::SendEvent("effectFinish", { JsValue::Undefined(), obj });
-  });
+      isApplied
+        ? EventsApi::SendEvent("effectStart", { JsValue::Undefined(), obj })
+        : EventsApi::SendEvent("effectFinish", { JsValue::Undefined(), obj });
+    });
   return RE::BSEventNotifyControl::kContinue;
 }
 
@@ -581,28 +589,29 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto casterId = caster ? caster->formID : 0;
   auto targetId = target ? target->formID : 0;
 
-  taskQueue.AddTask([effectId, casterId, targetId, caster, target] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [effectId, casterId, targetId, caster, target] {
+      auto obj = JsValue::Object();
 
-    auto effect = RE::TESForm::LookupByID(effectId);
+      auto effect = RE::TESForm::LookupByID(effectId);
 
-    if (effect && effect->formType != RE::FormType::MagicEffect)
-      return;
+      if (effect && effect->formType != RE::FormType::MagicEffect)
+        return;
 
-    obj.SetProperty("effect", CreateObject("MagicEffect", effect));
+      obj.SetProperty("effect", CreateObject("MagicEffect", effect));
 
-    auto casterLocal = RE::TESForm::LookupByID(casterId);
-    casterLocal = casterLocal == caster ? casterLocal : nullptr;
+      auto casterLocal = RE::TESForm::LookupByID(casterId);
+      casterLocal = casterLocal == caster ? casterLocal : nullptr;
 
-    obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
+      obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
 
-    auto targetLocal = RE::TESForm::LookupByID(targetId);
-    targetLocal = targetLocal == target ? targetLocal : nullptr;
+      auto targetLocal = RE::TESForm::LookupByID(targetId);
+      targetLocal = targetLocal == target ? targetLocal : nullptr;
 
-    obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
+      obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
 
-    EventsApi::SendEvent("magicEffectApply", { JsValue::Undefined(), obj });
-  });
+      EventsApi::SendEvent("magicEffectApply", { JsValue::Undefined(), obj });
+    });
   return RE::BSEventNotifyControl::kContinue;
 }
 

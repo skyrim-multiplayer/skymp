@@ -58,8 +58,10 @@
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
 
-static SkyrimPlatform g_skyrimPlatform;
-static ThreadPoolWrapper g_pool;
+extern ThreadPoolWrapper g_pool;
+extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+
+void SetupFridaHooks();
 
 void UpdateDumpFunctions()
 {
@@ -78,7 +80,8 @@ void UpdateDumpFunctions()
 
 void OnTick()
 {
-  g_pool.PushAndWait([=](int) { g_skyrimPlatform.JsTick(false); });
+  g_pool.PushAndWait(
+    [=](int) { SkyrimPlatform::GetSingleton().JsTick(false); });
   TESModPlatform::Update();
 }
 
@@ -88,7 +91,8 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
 
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
-  g_pool.PushAndWait([=](int) { g_skyrimPlatform.JsTick(true); });
+  g_pool.PushAndWait(
+    [=](int) { SkyrimPlatform::GetSingleton().JsTick(true); });
   g_nativeCallRequirements.gameThrQ->Update();
   g_nativeCallRequirements.stackId = static_cast<RE::VMStackID>(~0);
   g_nativeCallRequirements.vm = nullptr;
@@ -133,14 +137,9 @@ __declspec(dllexport) bool SKSEPlugin_Query_Impl(
 
 __declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
 {
-  g_messaging =
-    (SKSEMessagingInterface*)skse->QueryInterface(kInterface_Messaging);
-  if (!g_messaging) {
-    _FATALERROR("couldn't get messaging interface");
-    return false;
-  }
-  g_taskInterface = (SKSETaskInterface*)skse->QueryInterface(kInterface_Task);
-  if (!g_taskInterface) {
+  auto taskInterface = reinterpret_cast<SKSETaskInterface*>(
+    skse->QueryInterface(kInterface_Task));
+  if (!taskInterface) {
     _FATALERROR("couldn't get task interface");
     return false;
   }
@@ -154,7 +153,7 @@ __declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
 
   SetupFridaHooks();
 
-  g_taskInterface->AddTask(new TickTask(g_taskInterface, OnTick));
+  taskInterface->AddTask(new TickTask(taskInterface, OnTick));
 
   papyrusInterface->Register(
     (SKSEPapyrusInterface::RegisterFunctions)TESModPlatform::Register);
@@ -438,9 +437,10 @@ public:
           HandleMessage(name, arguments_);
         } catch (const std::exception&) {
           auto exception = std::current_exception();
-          g_taskQueueTick.AddTask([exception = std::move(exception)] {
-            std::rethrow_exception(exception);
-          });
+          SkyrimPlatform::GetSingleton().AddTickTask(
+            [exception = std::move(exception)] {
+              std::rethrow_exception(exception);
+            });
         }
       }
 
@@ -449,7 +449,7 @@ public:
                          const CefRefPtr<CefListValue>& arguments_)
       {
         auto arguments = arguments_->Copy();
-        g_taskQueueTick.AddTask([name, arguments] {
+        SkyrimPlatform::GetSingleton().AddTickTask([name, arguments] {
           auto length = static_cast<uint32_t>(arguments->GetSize());
           auto argumentsArray = JsValue::Array(length);
           for (uint32_t i = 0; i < length; ++i) {
@@ -512,7 +512,7 @@ public:
 
     overlayService = std::make_shared<OverlayService>(onProcessMessage);
     myInputListener->Init(overlayService, inputConverter);
-    g_browserApiState->overlayService = overlayService;
+    SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
 
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
     renderSystem->m_pSwapChain = reinterpret_cast<IDXGISwapChain*>(

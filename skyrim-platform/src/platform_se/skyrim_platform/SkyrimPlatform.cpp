@@ -12,7 +12,7 @@
 // HelloTickListener
 #include <RE/ConsoleLog.h>
 
-// GodListener
+// CommonExecutionListener
 #include "ConsoleApi.h"
 #include "DirectoryMonitor.h"
 #include "EventsApi.h"
@@ -21,7 +21,7 @@
 #include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
 
-// APIs for register in GodListener
+// APIs for register in CommonExecutionListener
 #include "BrowserApi.h"
 #include "CallNativeApi.h"
 #include "CameraApi.h"
@@ -34,7 +34,8 @@
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
 
-void SetupFridaHooks();
+CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+ThreadPoolWrapper g_pool;
 
 namespace {
 void PrintExceptionToGameConsole(std::exception& e)
@@ -80,9 +81,15 @@ private:
   bool helloSaid = false;
 };
 
-class GodListener : public TickListener
+class CommonExecutionListener : public TickListener
 {
 public:
+  CommonExecutionListener(std::shared_ptr<BrowserApi::State> browserApiState_)
+    : nativeCallRequirements(g_nativeCallRequirements)
+    , browserApiState(browserApiState_)
+  {
+  }
+
   void Tick() override
   {
     try {
@@ -103,6 +110,8 @@ public:
 
       HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
 
+      EventsApi::SendEvent("tick", {});
+
     } catch (std::exception& e) {
       PrintExceptionToGameConsole(e);
     }
@@ -114,16 +123,7 @@ public:
       taskQueue.Update();
       nativeCallRequirements.jsThrQ->Update();
       jsPromiseTaskQueue.Update();
-    } catch (std::exception& e) {
-      PrintExceptionToGameConsole(e);
-    }
-  }
-
-  void Tick(bool gameFunctionsAvailable) override
-  {
-    try {
-      EventsApi::SendEvent(gameFunctionsAvailable ? "update" : "tick", {});
-
+      EventsApi::SendEvent("update", {});
     } catch (std::exception& e) {
       PrintExceptionToGameConsole(e);
     }
@@ -259,33 +259,61 @@ private:
   uint32_t tickId = 0;
   TaskQueue taskQueue;
   TaskQueue jsPromiseTaskQueue;
-  CallNativeApi::NativeCallRequirements nativeCallRequirements;
+  CallNativeApi::NativeCallRequirements& nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
-  std::shared_ptr<BrowserApi::State> browserApiState =
-    std::make_shared<BrowserApi::State>();
+  std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
 };
 }
 
 struct SkyrimPlatform::Impl
 {
-  SKSETaskInterface* taskInterface = nullptr;
-  SKSEMessagingInterface* messaging = nullptr;
-
+  std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
+  TaskQueue tickTasks, updateTasks;
 };
 
 SkyrimPlatform::SkyrimPlatform()
 {
   pImpl = std::make_shared<Impl>();
+  pImpl->browserApiState = std::make_shared<BrowserApi::State>();
 
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
-  pImpl->tickListeners.push_back(std::make_shared<GodListener>());
+  pImpl->tickListeners.push_back(
+    std::make_shared<CommonExecutionListener>(pImpl->browserApiState));
+}
+
+SkyrimPlatform& SkyrimPlatform::GetSingleton()
+{
+  static SkyrimPlatform g_skyrimPlatform;
+  return g_skyrimPlatform;
 }
 
 void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
 {
   for (auto& listener : pImpl->tickListeners) {
-    listener->Tick(gameFunctionsAvailable);
+    gameFunctionsAvailable ? listener->Update() : listener->Tick();
   }
+
+  try {
+    (gameFunctionsAvailable ? pImpl->updateTasks : pImpl->tickTasks).Update();
+  } catch (std::exception& e) {
+    PrintExceptionToGameConsole(e);
+  }
+}
+
+void SkyrimPlatform::SetOverlayService(
+  std::shared_ptr<OverlayService> overlayService)
+{
+  pImpl->browserApiState->overlayService = overlayService;
+}
+
+void SkyrimPlatform::AddTickTask(std::function<void()> f)
+{
+  pImpl->tickTasks.AddTask(f);
+}
+
+void SkyrimPlatform::AddUpdateTask(std::function<void()> f)
+{
+  pImpl->updateTasks.AddTask(f);
 }

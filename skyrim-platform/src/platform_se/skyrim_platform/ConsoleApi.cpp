@@ -1,6 +1,7 @@
 #include "ConsoleApi.h"
 #include "InGameConsolePrinter.h"
 #include "NullPointerException.h"
+#include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
 #include "WindowsConsolePrinter.h"
 #include <RE/CommandTable.h>
@@ -18,7 +19,6 @@
 #include <vector>
 
 extern ThreadPoolWrapper g_pool;
-extern TaskQueue g_taskQueue;
 
 namespace {
 // TODO: Add printers switching
@@ -288,7 +288,7 @@ bool ConsoleComand_Execute(const ObScriptParam* paramInfo,
       }
     } catch (std::exception& e) {
       std::string what = e.what();
-      g_taskQueue.AddTask([what] {
+      SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
         throw std::runtime_error(what + " (in ConsoleComand_Execute)");
       });
     }
