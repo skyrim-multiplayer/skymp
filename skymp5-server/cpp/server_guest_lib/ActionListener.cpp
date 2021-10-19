@@ -11,6 +11,8 @@
 #include "UserMessageOutput.h"
 #include "Utils.h"
 
+#include <sstream>
+
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
   Networking::UserId userId, Networking::PacketData data, size_t length,
@@ -592,6 +594,10 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
   if (weapDNAM) {
     speed = weapDNAM->speed;
+    float weaponSpeed = 1.1 * speed;
+    float testTime = timePassed.count();
+
+    spdlog::info(fmt::format("You hit in {} but you should hit in {}", testTime, weaponSpeed));
     return timePassed.count() >= 1.1 * speed;
   } else {
     throw std::runtime_error(fmt::format(
