@@ -597,7 +597,8 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
     float weaponSpeed = 1.1 * speed;
     float testTime = timePassed.count();
 
-    spdlog::info(fmt::format("You hit in {} but you should hit in {}", testTime, weaponSpeed));
+    spdlog::info(fmt::format("You hit in {} but you should hit in {}",
+                             testTime, weaponSpeed));
     return timePassed.count() >= 1.1 * speed;
   } else {
     throw std::runtime_error(fmt::format(
