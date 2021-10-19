@@ -3,16 +3,13 @@ import React, { useState, useRef, useEffect } from "react";
 import './features/login/styles.scss'
 import './constructor.scss'
 
-import SkyrimButton from "./components/SkyrimButton";
 import Frame from "./components/SkyrimFrame";
 import SkyrimInput from "./components/SkyrimInput";
 import SkyrimHint from "./components/SkyrimHint";
-import LinkButton from "./components/LinkButton";
-import FrameButton from "./components/FrameButton";
+import Button from "./constructorComponents/button";
+import Icon from "./constructorComponents/icon"
 
 const Constructor = props => {
-
-
   const content_mainRef = useRef()
 
   useEffect(() => {
@@ -52,62 +49,48 @@ const Constructor = props => {
     }
     let obj = {
       index: i,
-      css: css
+      css: css,
+      element: allElems[i]
     }
     if (newline) bodylines.push([obj]);
     else bodylines[bodylines.length - 1].push(obj);
   }
 
-  for (let k = 0; k < bodylines.length; k++) {
-
+  bodylines.forEach((line) => {
     let arr = [];
-    for (let j = 0; j < bodylines[k].length; j++) {
-      let elemm = rend.elements[bodylines[k][j].index];
+    line.forEach((obj) => {
       let curElem = undefined;
       let hasHint = false;
-      if (elemm.hint != undefined) {
-        hintsarr.push({ id: bodylines[k][j].index, text: elemm.hint, isOpened: false });
+      if (obj.element.hint != undefined) {
+        hintsarr.push({ id: obj.index, text: obj.element.hint, isOpened: false });
         hasHint = true;
       }
 
-      if (elemm.type === "button") {
-        if (bodylines[k][j].css == undefined) {
-          curElem = <SkyrimButton onClick={elemm.click} disabled={false} text={elemm.text || ""} />;
-        } else if (bodylines[k][j].css == "BUTTON_STYLE_GITHUB") {
-          curElem = (<LinkButton onClick={elemm.click} src={require('./img/github.svg').default} />);
-        }
-        else if (bodylines[k][j].css == "BUTTON_STYLE_PATREON") {
-          curElem = (<LinkButton onClick={elemm.click} src={require('./img/patreon.svg').default} />);
-        } else if (bodylines[k][j].css == "BUTTON_STYLE_FRAME") {
-          curElem = (<div className={`skymp-input button`} onClick={elemm.click}>
-            <span className={'skymp-input_text'}>{elemm.text}</span>
-          </div>);
-        }
-      }
-      else if (elemm.type === "text") {
-        curElem = elemm.text || "";
-      }
-      else if (elemm.type === "inputText") {
-        curElem = <SkyrimInput defaultValue={elemm.text || ""} placeholder={elemm.placeholder || ""} type={'text'} name={bodylines[k][j].index} />;
-      }
-      else if (elemm.type === "inputPass") {
-        curElem = <SkyrimInput defaultValue={elemm.text || ""} placeholder={elemm.placeholder || ""} type={'text'} name={bodylines[k][j].index} />;
-      }
-      else if (elemm.type === "checkBox") {
-        curElem = (<div className={'login-form--content_main__label login-form--content_main__container'}>
-          <span className={'login-form--content_main__label___text'}>{elemm.text}</span>
-          <label
-            htmlFor="cbtest"
-            className={"checkbox active"}
-          />
-        </div>);
-      }
-      else if (elemm.type === "icon") {
-        // let path = (bodylines[k][j].css === "ICON_STYLE_MAIL") ? `./img/mail.svg` : (bodylines[k][j].css === "ICON_STYLE_KEY") ? `./img/password.svg` : '';
-        curElem = (<div className={'login-form--content_main__label'}>
-          <span className={'login-form--content_main__label___text'}>{elemm.text}</span>
-          <img src={(bodylines[k][j].css === "ICON_STYLE_MAIL") ? require('./img/mail.svg').default : (bodylines[k][j].css === "ICON_STYLE_KEY") ? require('./img/password.svg').default : ''} alt="" />
-        </div>);
+      switch (obj.element.type) {
+        case "button":
+          curElem = <Button disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} onClick={obj.element.click} width={obj.element.width} height={obj.element.height} />;
+          break;
+        case "text":
+          curElem = obj.element.text || "";
+          break;
+        case "inputText":
+          curElem = <SkyrimInput defaultValue={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} />;
+          break;
+        case "inputPass":
+          curElem = <SkyrimInput defaultValue={obj.element.text} placeholder={obj.element.placeholder} type={'password'} name={obj.index} />;
+          break;
+        case "checkBox":
+          curElem = (<div className={'login-form--content_main__label login-form--content_main__container'}>
+            <span className={'login-form--content_main__label___text'}>{obj.element.text}</span>
+            <label
+              htmlFor="cbtest"
+              className={"checkbox active"}
+            />
+          </div>)
+          break;
+        case "icon":
+          curElem = (<Icon css={obj.css} text={obj.element.text} width={obj.element.width} height={obj.element.height} />);
+          break;
       }
       if (curElem != undefined)
         arr.push(
@@ -128,9 +111,9 @@ const Constructor = props => {
               </>
             )
         );
-    }
-    result.body.push(<div className={'container'}>{arr}</div>)
-  }
+    });
+    result.body.push(<div className={'container'}>{arr}</div>);
+  });
 
   const [hints, setHints] = useState(hintsarr);
 

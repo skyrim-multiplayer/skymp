@@ -7,7 +7,6 @@ import * as scampNative from "./scampNative";
 import * as chat from "./chat";
 import { Settings } from "./settings";
 import { System } from "./systems/system";
-import { ClientVerify } from "./systems/clientVerify";
 import { MasterClient } from "./systems/masterClient";
 import { Spawn } from "./systems/spawn";
 import { Login } from "./systems/login";
@@ -85,7 +84,6 @@ const log = console.log;
 const systems = new Array<System>();
 systems.push(
   new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
-  new ClientVerify(log, "./dist_front/skymp5-client.js", maxPlayers),
   new Spawn(log),
   new Login(log, maxPlayers, master, port, ip, offlineMode)
 );
