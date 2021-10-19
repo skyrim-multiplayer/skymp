@@ -196,6 +196,8 @@ void ExecutionCommonsListener::LoadPluginFile(
     ReadFile(std::filesystem::path("Data/Platform/Distribution") /
              "___systemPolyfill.js"),
     "___systemPolyfill.js");
+  GetJsEngine().RunScript(
+    "skyrimPlatform = addNativeExports('skyrimPlatform', {})", "");
   GetJsEngine().RunScript(scriptSrc, path.filename().string()).ToString();
 }
 
