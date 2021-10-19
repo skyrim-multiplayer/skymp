@@ -22,6 +22,12 @@
     color: rgba(157, 158, 158, 0.75);
   }
 }
+.button-middle--left {
+  padding-left: 40px;
+}
+.button-middle--right {
+  padding-right: 40px;
+}
 .button-middle.disabled {
   * {
     color: rgba(157, 158, 158, 0.33);
