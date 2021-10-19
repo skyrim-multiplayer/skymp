@@ -1,8 +1,5 @@
 import React from 'react';
-// import { ReactComponent as BackgroundFrameRight } from '';
-// import BackgroundFrameRight from '';
-
-import './styles.scss'
+import './styles.scss';
 
 
 const ButtonItem = props => {
@@ -50,10 +47,6 @@ const FrameButton = props => {
     const isDefault = props.variant === 'DEFAULT';
     const isFrameLeft = props.variant === 'LEFT';
     const isFrameRight = props.variant === 'RIGHT';
-    const border = () => {
-        if (isFrameLeft) return '2px solid red';
-        if (isFrameRight) return '2px solid blue';
-    }
 
     return (
         <>
