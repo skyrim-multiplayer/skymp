@@ -1,4 +1,6 @@
+const spExportFuncName = "addNativeExports";
+const spModuleName = "skyrimPlatform";
 
 module.exports = function (source) {
-  return `module.exports = addNativeExports("skyrimPlatform", exports);`;
+  return `module.exports = ${spExportFuncName}("${spModuleName}", exports);`;
 }
