@@ -8,6 +8,7 @@ import SkyrimInput from "./components/SkyrimInput";
 import SkyrimHint from "./components/SkyrimHint";
 import Button from "./constructorComponents/button";
 import Icon from "./constructorComponents/icon"
+import CheckBox from "./constructorComponents/checkbox";
 
 const Constructor = props => {
   const content_mainRef = useRef()
@@ -74,22 +75,16 @@ const Constructor = props => {
           curElem = obj.element.text || "";
           break;
         case "inputText":
-          curElem = <SkyrimInput defaultValue={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} />;
+          curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} width={obj.element.width} height={obj.element.height} />;
           break;
         case "inputPass":
-          curElem = <SkyrimInput defaultValue={obj.element.text} placeholder={obj.element.placeholder} type={'password'} name={obj.index} />;
+          curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'password'} name={obj.index} width={obj.element.width} height={obj.element.height} />;
           break;
         case "checkBox":
-          curElem = (<div className={'login-form--content_main__label login-form--content_main__container'}>
-            <span className={'login-form--content_main__label___text'}>{obj.element.text}</span>
-            <label
-              htmlFor="cbtest"
-              className={"checkbox active"}
-            />
-          </div>)
+          curElem = <CheckBox disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} setChecked={obj.element.setChecked} />;
           break;
         case "icon":
-          curElem = (<Icon css={obj.css} text={obj.element.text} width={obj.element.width} height={obj.element.height} />);
+          curElem = (<Icon disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} width={obj.element.width} height={obj.element.height} />);
           break;
       }
       if (curElem != undefined)
