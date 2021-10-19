@@ -43,7 +43,7 @@ const ButtonItem = props => {
 const FrameButton = props => {
     let fwidth = props.width || 384;
     let fheight = props.height || 64;
-    let idDisabled = props.disabled != undefined ? props.disabled : true;
+    let isDisabled = props.disabled != undefined ? props.disabled : true;
     const isDefault = props.variant === 'DEFAULT';
     const isFrameLeft = props.variant === 'LEFT';
     const isFrameRight = props.variant === 'RIGHT';
@@ -51,37 +51,37 @@ const FrameButton = props => {
     return (
         <>
             {isDefault && <div
-                className={`skymp-button ${idDisabled ? 'disabled' : 'active'}`}
+                className={`skymp-button ${isDisabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
                     if (!props.disabled)
                         props.onClick ? props.onClick(e) : console.log(e)
                 }}
                 style={{ height: `${fheight}px`, width: `${fwidth}px` }}>
-                <ButtonItem name={`button start${idDisabled ? ' disabled' : ''}`} height={fheight} />
-                <ButtonItem name={`button middle${idDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
-                <ButtonItem name={`button end${idDisabled ? ' disabled' : ''}`} height={fheight} />
+                <ButtonItem name={`button start${isDisabled ? ' disabled' : ''}`} height={fheight} />
+                <ButtonItem name={`button middle${isDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
+                <ButtonItem name={`button end${isDisabled ? ' disabled' : ''}`} height={fheight} />
             </div>}
             {isFrameLeft && <div
-                className={`skymp-button ${idDisabled ? 'disabled' : 'active'}`}
+                className={`skymp-button ${isDisabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
                     if (!props.disabled)
                         props.onClick ? props.onClick(e) : console.log(e)
                 }}
                 style={{ height: `${fheight}px`, width: `${fwidth}px` }}>
-                <ButtonItem name={`button start${idDisabled ? ' disabled' : ''}`} height={fheight} />
-                <ButtonItem variant='middle_left' name={`button middle${idDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
-                <ButtonItem name={`frame_button_end${idDisabled ? ' disabled' : ''}`} height={fheight} />
+                <ButtonItem name={`button start${isDisabled ? ' disabled' : ''}`} height={fheight} />
+                <ButtonItem variant='middle_left' name={`button middle${isDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
+                <ButtonItem name={`frame_button_end${isDisabled ? ' disabled' : ''}`} height={fheight} />
             </div>}
             {isFrameRight && <div
-                className={`skymp-button ${idDisabled ? 'disabled' : 'active'}`}
+                className={`skymp-button ${isDisabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
                     if (!props.disabled)
                         props.onClick ? props.onClick(e) : console.log(e)
                 }}
                 style={{ height: `${fheight}px`, width: `${fwidth}px` }}>
-                <ButtonItem name={`frame_button_start${idDisabled ? ' disabled' : ''}`} height={fheight} />
-                <ButtonItem variant='middle_right' name={`button middle${idDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
-                <ButtonItem name={`button end${idDisabled ? ' disabled' : ''}`} height={fheight} />
+                <ButtonItem name={`frame_button_start${isDisabled ? ' disabled' : ''}`} height={fheight} />
+                <ButtonItem variant='middle_right' name={`button middle${isDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
+                <ButtonItem name={`button end${isDisabled ? ' disabled' : ''}`} height={fheight} />
             </div>}
         </>
     )
