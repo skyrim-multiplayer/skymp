@@ -1,22 +1,21 @@
-//webpack.config.js
 const path = require('path');
+var mode = process.env.NODE_ENV || 'development';
 
 module.exports = {
   mode: "development",
   //mode: "production",
-  // entry: {
-  //     main: "./src/index.ts",
-  // },
   entry: [
     "./src/index.ts"
   ],
-  //devtool: "inline-source-map",
+  devtool: (mode === 'development') ? 'inline-source-map' : false,
   output: {
-    libraryTarget: "commonjs",
-    //path: path.resolve(__dirname, '../build/dist/server/dist_front'),
     path: path.resolve(__dirname, '../build/dist/client/Data/Platform/Plugins'),
     filename: "skymp5-client.js",
+    libraryTarget: "commonjs",
   },
+  // performance: {
+  //   maxAssetSize: 1024000,
+  // },
   resolve: {
     // modules: [
     //   path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules'),
@@ -25,11 +24,10 @@ module.exports = {
     extensions: [".ts", ".tsx", ".js"],
     alias: {
       "skyrimPlatform": path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules/skyrimPlatform.ts'),
-      // "skyrimPlatform": "./spAPI.ts",
     }
   },
   optimization: {
-    minimize: true
+    minimize: false
   },
   module: {
     rules: [

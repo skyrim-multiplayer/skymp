@@ -13,6 +13,7 @@ import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
 import { verifyVersion } from "./version";
 import { updateWc } from "./worldCleaner";
+import { from, interval, map, Observable, of, Subject, tap } from "rxjs";
 
 new SkympClient();
 
@@ -112,9 +113,18 @@ on("update", () => {
   }
 });
 
+var tt: Observable<number> = new Subject<number>();
 
-import { from, interval, tap } from "rxjs";
-
-var sub = interval(1000).pipe(
-  tap(v => once("update", () => printConsole(v)))
+interval(1000).pipe(
+  tap(v => printConsole(v))
 ).subscribe();
+
+of(1, 2, 3, 4).pipe(
+  map(v => v + 10),
+  tap(v => printConsole(v))
+).subscribe();
+
+printConsole(JSON.stringify(globalThis));
+
+
+

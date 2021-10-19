@@ -10,10 +10,11 @@
     ],
     "removeComments": true,
     "strict": true,
-    "skipLibCheck": true,
+    //"skipLibCheck": true,
+    "sourceMap": false,
     "moduleResolution": "node",
     "module": "CommonJS",
-    "target": "ES6",
+    "target": "ES5",
     //"rootDir": ""
   }
 }
