@@ -1,0 +1,63 @@
+.checkBoxLabel {
+    display: flex;
+    flex-direction: column;
+    width: 100px;
+    justify-content: center;
+    align-items: center;
+    margin: 30px auto auto;
+    &___text {
+        color: rgba(157, 158, 158, 0.75);
+        font-size: 20px;
+        margin: auto;
+    }
+}
+/*.login {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    &-form {
+      height: 704px;
+      width: 512px;
+      margin: auto;
+      position: relative;
+      &--content {
+        font-family: Bankir-Retro, sans-serif;
+        display: flex;
+        flex-direction: column;
+        z-index: 9999;
+        &_main {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+         // width: 430px;
+          margin: 30px auto auto;
+          //height: 400px;
+          .skymp-input {
+            align-self: flex-end;
+            margin-bottom: 10px;
+            justify-self: flex-end;
+           //margin-left: auto;
+            //margin-right: 10px;
+          }
+          &__label {
+            display: flex;
+            flex-direction: column;
+            width: 100px;
+            justify-content: center;
+            img {
+              height: 54px;
+              margin: auto;
+            }
+            &___text {
+              color: rgba(157, 158, 158, 0.75);
+              font-size: 20px;
+              margin: auto;
+            }
+            label {
+              margin: auto auto 0;
+            }
+          }
+        }
+      }
+    }
+  }*/

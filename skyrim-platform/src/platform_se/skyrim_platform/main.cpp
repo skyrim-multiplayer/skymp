@@ -190,6 +190,8 @@ void JsTick(bool gameFunctionsAvailable)
           ReadFile(std::filesystem::path("Data/Platform/Distribution") /
                    "___systemPolyfill.js"),
           "___systemPolyfill.js");
+        engine->RunScript(
+          "skyrimPlatform = addNativeExports('skyrimPlatform', {})", "");
         engine->RunScript(scriptSrc, scriptPath.filename().string())
           .ToString();
       }
