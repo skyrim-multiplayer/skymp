@@ -170,8 +170,11 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
     changeForm.healthPercentage = healthPercentage;
     changeForm.magickaPercentage = magickaPercentage;
     changeForm.staminaPercentage = staminaPercentage;
-    changeForm.isDead = (healthPercentage == 0.f);
   });
+  if (healthPercentage == 0.f) {
+    Kill();
+    RespawnAfter(5.f);
+  }
 }
 
 std::chrono::steady_clock::time_point
@@ -245,4 +248,33 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
   if (worldState->HasEspm()) {
     EnsureBaseContainerAdded(GetParent()->GetEspm());
   }
+}
+
+void MpActor::Kill()
+{
+  pImpl->EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.isDead = true; });
+}
+
+void MpActor::RespawnAfter(float seconds)
+{
+  WorldState* worldState = GetParent();
+  worldState->SetTimer(seconds).Then([this](Viet::Void) { this->Respawn(); });
+}
+
+void MpActor::Respawn()
+{
+  if (pImpl->ChangeForm().isDead == false) {
+    return;
+  }
+  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.isDead = false;
+    changeForm.healthPercentage = 1.f;
+  });
+  LocationalData position = { { 133857, -61130, 14662 },
+                              { 0.f, 0.f, 72.f },
+                              0x3C };
+  SetCellOrWorldObsolete(position.cellOrWorld);
+  SetPos(position.pos);
+  SetAngle(position.rot);
 }

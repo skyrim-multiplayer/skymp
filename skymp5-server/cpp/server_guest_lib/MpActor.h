@@ -61,8 +61,7 @@ public:
       std::chrono::steady_clock::now());
 
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
-    std::chrono::steady_clock::time_point now =
-      std::chrono::steady_clock::now());
+    std::chrono::steady_clock::time_point now);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
@@ -75,4 +74,7 @@ private:
 protected:
   void BeforeDestroy() override;
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
+  void Kill();
+  void RespawnAfter(float seconds);
+  void Respawn();
 };
