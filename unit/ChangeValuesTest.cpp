@@ -175,7 +175,7 @@ TEST_CASE("OnChangeValues function sends ChangeValues message with new "
 
   partOne.Messages().clear();
   DoMessage(partOne, 0, j);
-  
+
   REQUIRE(partOne.Messages().size() == 1);
   nlohmann::json message = partOne.Messages()[0].j;
 
