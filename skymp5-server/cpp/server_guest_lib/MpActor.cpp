@@ -202,6 +202,11 @@ const bool& MpActor::IsRaceMenuOpen() const
   return pImpl->ChangeForm().isRaceMenuOpen;
 }
 
+const bool& MpActor::IsDead() const
+{
+  return pImpl->ChangeForm().isDead;
+}
+
 std::unique_ptr<const Appearance> MpActor::GetAppearance() const
 {
   auto& changeForm = pImpl->ChangeForm();
@@ -252,8 +257,10 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
 void MpActor::Kill()
 {
-  pImpl->EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.isDead = true; });
+  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.isDead = true;
+    changeForm.healthPercentage = 0.f;
+  });
 
   std::string msg;
   msg += Networking::MinPacketId;
@@ -263,15 +270,14 @@ void MpActor::Kill()
 
 void MpActor::RespawnAfter(float seconds)
 {
-  WorldState* worldState = GetParent();
-  worldState->SetTimer(seconds).Then([this](Viet::Void) { this->Respawn(); });
+  isRespawning = true;
+  GetParent()->SetTimer(seconds).Then([this](Viet::Void) { this->Respawn(); });
 }
 
 void MpActor::Respawn()
 {
-  if (pImpl->ChangeForm().isDead == false) {
-    return;
-  }
+  isRespawning = false;
+
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = false;
     changeForm.healthPercentage = 1.f;
@@ -297,4 +303,9 @@ void MpActor::Respawn()
   msg += Networking::MinPacketId;
   msg += nlohmann::json{ { "type", "isDead" }, { "isDead", false } }.dump();
   SendToUser(msg.data(), msg.size(), true);
+}
+
+const bool MpActor::IsRespawning() const
+{
+  return isRespawning;
 }

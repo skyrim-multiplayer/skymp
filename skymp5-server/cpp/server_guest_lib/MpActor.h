@@ -18,6 +18,7 @@ public:
           const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
 
   const bool& IsRaceMenuOpen() const;
+  const bool& IsDead() const;
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson();
@@ -57,24 +58,27 @@ public:
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
 
   void SetLastAttributesPercentagesUpdate(
-    std::chrono::steady_clock::time_point timePoint =
-      std::chrono::steady_clock::now());
+    std::chrono::steady_clock::time_point timePoint);
 
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point now);
+
+  void Kill();
+  void RespawnAfter(float seconds);
+  void Respawn();
+
+  const bool IsRespawning() const;
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
+  bool isRespawning = false;
 
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
 
 protected:
   void BeforeDestroy() override;
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
-  void Kill();
-  void RespawnAfter(float seconds);
-  void Respawn();
 };

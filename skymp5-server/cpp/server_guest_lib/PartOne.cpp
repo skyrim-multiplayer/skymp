@@ -137,6 +137,11 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
     serverState.actorsMap.Set(userId, &actor);
 
     actor.ForceSubscriptionsUpdate();
+
+    if (actor.IsDead() && !actor.IsRespawning()) {
+      actor.RespawnAfter(5.f);
+    }
+
   } else {
     serverState.actorsMap.Erase(userId);
   }
