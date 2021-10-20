@@ -163,7 +163,6 @@ TEST_CASE("OnChangeValues function sends ChangeValues message with new "
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
-  partOne.Messages().clear();
 
   nlohmann::json j = nlohmann::json{
     { "t", MsgType::ChangeValues },
@@ -174,8 +173,9 @@ TEST_CASE("OnChangeValues function sends ChangeValues message with new "
   auto past = std::chrono::steady_clock::now() - 1s;
   ac.SetLastAttributesPercentagesUpdate(past);
 
+  partOne.Messages().clear();
   DoMessage(partOne, 0, j);
-
+  
   REQUIRE(partOne.Messages().size() == 1);
   nlohmann::json message = partOne.Messages()[0].j;
 
