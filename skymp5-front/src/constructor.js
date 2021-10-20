@@ -137,8 +137,6 @@ const Constructor = props => {
     result.body.push(<div className={'container'}>{arr}</div>);
   });
 
-  
-  console.log(result.body);
   const setHintState = function (index, state) {
     let newArr = [...hints];
     hints.map((hint, ind) => {
