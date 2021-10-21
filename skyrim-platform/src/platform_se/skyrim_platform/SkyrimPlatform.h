@@ -10,8 +10,8 @@ public:
 
   void JsTick(bool gameFunctionsAvailable);
   void SetOverlayService(std::shared_ptr<OverlayService> overlayService);
-  void AddTickTask(std::function<void()> f);
-  void AddUpdateTask(std::function<void()> f);
+  void AddTickTask(const std::function<void()>& f);
+  void AddUpdateTask(const std::function<void()>& f);
 
 private:
   SkyrimPlatform();

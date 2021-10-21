@@ -94,7 +94,7 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
   g_pool.PushAndWait(
     [=](int) { SkyrimPlatform::GetSingleton().JsTick(true); });
   g_nativeCallRequirements.gameThrQ->Update();
-  g_nativeCallRequirements.stackId = static_cast<RE::VMStackID>(~0);
+  g_nativeCallRequirements.stackId = std::numeric_limits<RE::VMStackID>::max();
   g_nativeCallRequirements.vm = nullptr;
 }
 
@@ -153,7 +153,7 @@ __declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
 
   SetupFridaHooks();
 
-  taskInterface->AddTask(new TickTask(taskInterface, OnTick));
+  TickTask::Launch(taskInterface, OnTick);
 
   papyrusInterface->Register(
     (SKSEPapyrusInterface::RegisterFunctions)TESModPlatform::Register);

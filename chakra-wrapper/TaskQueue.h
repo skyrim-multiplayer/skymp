@@ -7,7 +7,7 @@
 class TaskQueue
 {
 public:
-  void AddTask(std::function<void()> task)
+  void AddTask(const std::function<void()>& task)
   {
     std::lock_guard l(m);
     tasks.push_back(task);

@@ -38,18 +38,27 @@ CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 ThreadPoolWrapper g_pool;
 
 namespace {
-void PrintExceptionToGameConsole(std::exception& e)
+const char* RemoveMultiplePrefixes(const char* str, const char* prefix)
+{
+  size_t prefixLen = strlen(prefix);
+  while (strlen(str) >= prefixLen && !memcmp(str, prefix, prefixLen)) {
+    str += prefixLen;
+  }
+  return str;
+}
+
+void PrintExceptionToGameConsole(const std::exception& e)
 {
   if (auto console = RE::ConsoleLog::GetSingleton()) {
-    std::string what = e.what();
-
-    while (what.size() > sizeof("Error: ") - 1 &&
-           !memcmp(what.data(), "Error: ", sizeof("Error: ") - 1)) {
-      what = { what.begin() + sizeof("Error: ") - 1, what.end() };
-    }
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-      .PrintException(what.data());
+    auto what = RemoveMultiplePrefixes(e.what(), "Error: ");
+    ExceptionPrinter(ConsoleApi::GetExceptionPrefix()).PrintException(what);
   }
+}
+
+bool EndsWith(const std::wstring& value, const std::wstring& ending)
+{
+  return ending.size() <= value.size() &&
+    std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 }
 
@@ -112,7 +121,7 @@ public:
 
       EventsApi::SendEvent("tick", {});
 
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       PrintExceptionToGameConsole(e);
     }
   }
@@ -124,7 +133,7 @@ public:
       nativeCallRequirements.jsThrQ->Update();
       jsPromiseTaskQueue.Update();
       EventsApi::SendEvent("update", {});
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       PrintExceptionToGameConsole(e);
     }
   }
@@ -172,7 +181,7 @@ private:
       auto result = JsValue::Object();
       auto standardJson = JsValue::GlobalObject().GetProperty("JSON");
       auto parse = standardJson.GetProperty("parse");
-      for (auto [pluginName, settings] : settingsByPluginName) {
+      for (const auto& [pluginName, settings] : settingsByPluginName) {
         result.SetProperty(pluginName, parse.Call({ standardJson, settings }));
       }
       return result;
@@ -237,14 +246,6 @@ private:
     return *engine;
   }
 
-  bool EndsWith(const std::wstring& value, const std::wstring& ending)
-  {
-    if (ending.size() > value.size()) {
-      return false;
-    }
-    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-  }
-
   std::vector<std::filesystem::path> GetPathsToLoad(
     const std::filesystem::path& directory)
   {
@@ -299,7 +300,7 @@ void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
 
   try {
     (gameFunctionsAvailable ? pImpl->updateTasks : pImpl->tickTasks).Update();
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     PrintExceptionToGameConsole(e);
   }
 }
@@ -310,12 +311,12 @@ void SkyrimPlatform::SetOverlayService(
   pImpl->browserApiState->overlayService = overlayService;
 }
 
-void SkyrimPlatform::AddTickTask(std::function<void()> f)
+void SkyrimPlatform::AddTickTask(const std::function<void()>& f)
 {
   pImpl->tickTasks.AddTask(f);
 }
 
-void SkyrimPlatform::AddUpdateTask(std::function<void()> f)
+void SkyrimPlatform::AddUpdateTask(const std::function<void()>& f)
 {
   pImpl->updateTasks.AddTask(f);
 }

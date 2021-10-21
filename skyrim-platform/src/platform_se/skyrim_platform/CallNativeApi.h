@@ -16,7 +16,7 @@ struct NativeCallRequirements
   }
 
   RE::BSScript::IVirtualMachine* vm = nullptr;
-  RE::VMStackID stackId = (RE::VMStackID)~0;
+  RE::VMStackID stackId = std::numeric_limits<RE::VMStackID>::max();
 
   std::shared_ptr<TaskQueue> gameThrQ, jsThrQ;
 };

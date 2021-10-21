@@ -6,12 +6,10 @@
 class TickTask : public TaskDelegate
 {
 public:
-  TickTask(SKSETaskInterface* taskInterface,
-           const std::function<void()>& onTick)
+  static void Launch(SKSETaskInterface* taskInterface,
+                     const std::function<void()>& onTick)
   {
-    state.taskInterface = taskInterface;
-    state.threadPool = std::make_shared<ThreadPoolWrapper>();
-    state.onTick = onTick;
+    taskInterface->AddTask(new TickTask(taskInterface, onTick));
   }
 
 private:
@@ -20,20 +18,28 @@ private:
     SKSETaskInterface* taskInterface = nullptr;
     std::shared_ptr<ThreadPoolWrapper> threadPool;
     std::function<void()> onTick;
-  } state;
+  };
 
-  TickTask(const State& state_) { state = state_; }
+  TickTask(SKSETaskInterface* taskInterface,
+           const std::function<void()>& onTick)
+  {
+    state.taskInterface = taskInterface;
+    state.threadPool = std::make_shared<ThreadPoolWrapper>();
+    state.onTick = onTick;
+  }
+
+  explicit TickTask(const State& state_) { state = state_; }
 
   void Run() override
   {
-    if (state.onTick) {
-      state.onTick();
-    }
+    state.onTick();
 
-    auto state = this->state;
-    state.threadPool->Push(
-      [state](int) { state.taskInterface->AddTask(new TickTask(state)); });
+    state.threadPool->Push([state = this->state](int) {
+      state.taskInterface->AddTask(new TickTask(state));
+    });
   }
 
   void Dispose() override { delete this; }
+
+  State state;
 };
