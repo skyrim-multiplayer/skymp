@@ -11,8 +11,6 @@
 #include "UserMessageOutput.h"
 #include "Utils.h"
 
-#include <sstream>
-
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
   Networking::UserId userId, Networking::PacketData data, size_t length,
@@ -589,11 +587,10 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
                               const std::chrono::duration<float>& timePassed)
 {
   WorldState* espmProvider = actor.GetParent();
-  float speedMult;
   auto weapDNAM =
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
   if (weapDNAM) {
-    speedMult = weapDNAM->speed;
+    float speedMult = weapDNAM->speed;
     float weapAttackSpeed = 1.65f;
     return timePassed.count() >= 1.1 * speedMult * weapAttackSpeed;
   } else {
@@ -630,9 +627,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
     return;
   }
-  float testTime = timePassed.count();
-
-  spdlog::info(fmt::format("You hit in {} seconds.", testTime));
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
     float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
