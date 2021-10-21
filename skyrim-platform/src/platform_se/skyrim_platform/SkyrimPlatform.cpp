@@ -41,8 +41,10 @@ namespace {
 const char* RemoveMultiplePrefixes(const char* str, const char* prefix)
 {
   size_t prefixLen = strlen(prefix);
-  while (strlen(str) >= prefixLen && !memcmp(str, prefix, prefixLen)) {
+  size_t strLen = strlen(str);
+  while (strLen >= prefixLen && !memcmp(str, prefix, prefixLen)) {
     str += prefixLen;
+    strLen -= prefixLen;
   }
   return str;
 }
