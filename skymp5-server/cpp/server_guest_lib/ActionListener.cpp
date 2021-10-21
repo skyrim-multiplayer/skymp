@@ -589,17 +589,13 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
                               const std::chrono::duration<float>& timePassed)
 {
   WorldState* espmProvider = actor.GetParent();
-  float speed;
+  float speedMult;
   auto weapDNAM =
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
   if (weapDNAM) {
-    speed = weapDNAM->speed;
-    float weaponSpeed = 1.1 * speed;
-    float testTime = timePassed.count();
-
-    spdlog::info(fmt::format("You hit in {} but you should hit in {}",
-                             testTime, weaponSpeed));
-    return timePassed.count() >= 1.1 * speed;
+    speedMult = weapDNAM->speed;
+    float weapAttackSpeed = 1.65f;
+    return timePassed.count() >= 1.1 * speedMult * weapAttackSpeed;
   } else {
     throw std::runtime_error(fmt::format(
       "Cannot get weapon speed from source: {0:x}", hitData.source));
@@ -634,6 +630,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
     return;
   }
+  float testTime = timePassed.count();
+
+  spdlog::info(fmt::format("You hit in {} seconds.", testTime));
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
     float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
