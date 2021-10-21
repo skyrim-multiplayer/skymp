@@ -7,6 +7,7 @@
 #include <set>
 
 class WorldState;
+static const float kRespawnTimeSeconds = 5.f;
 
 class MpActor : public MpObjectReference
 {
@@ -19,6 +20,7 @@ public:
 
   const bool& IsRaceMenuOpen() const;
   const bool& IsDead() const;
+  const bool& IsRespawning() const;
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson();
@@ -66,17 +68,15 @@ public:
   void Kill();
   void RespawnAfter(float seconds);
   void Respawn();
-
-  const bool IsRespawning() const;
+  void TeleportUser(LocationalData position);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
-  bool isRespawning = false;
 
-  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
+  void SetAndSendIsDeadPropery(bool value);
 
 protected:
   void BeforeDestroy() override;

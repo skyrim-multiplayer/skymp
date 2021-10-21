@@ -4,6 +4,7 @@
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
 #include "WorldState.h"
+#include <MsgType.h>
 #include <NiPoint3.h>
 
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
@@ -15,6 +16,8 @@ struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
   uint32_t snippetIndex = 0;
+  bool isRespawning = false;
+  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -173,27 +176,27 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
   });
   if (healthPercentage == 0.f) {
     Kill();
-    RespawnAfter(5.f);
+    RespawnAfter(kRespawnTimeSeconds);
   }
 }
 
 std::chrono::steady_clock::time_point
 MpActor::GetLastAttributesPercentagesUpdate()
 {
-  return lastAttributesUpdateTimePoint;
+  return pImpl->lastAttributesUpdateTimePoint;
 }
 
 void MpActor::SetLastAttributesPercentagesUpdate(
   std::chrono::steady_clock::time_point timePoint)
 {
-  lastAttributesUpdateTimePoint = timePoint;
+  pImpl->lastAttributesUpdateTimePoint = timePoint;
 }
 
 std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
   std::chrono::steady_clock::time_point now)
 {
   std::chrono::duration<float> timeAfterRegeneration =
-    now - lastAttributesUpdateTimePoint;
+    now - pImpl->lastAttributesUpdateTimePoint;
   return timeAfterRegeneration;
 }
 
@@ -205,6 +208,11 @@ const bool& MpActor::IsRaceMenuOpen() const
 const bool& MpActor::IsDead() const
 {
   return pImpl->ChangeForm().isDead;
+}
+
+const bool& MpActor::IsRespawning() const
+{
+  return pImpl->isRespawning;
 }
 
 std::unique_ptr<const Appearance> MpActor::GetAppearance() const
@@ -236,6 +244,37 @@ bool MpActor::IsWeaponDrawn() const
   return GetAnimationVariableBool("_skymp_isWeapDrawn");
 }
 
+void MpActor::SetAndSendIsDeadPropery(bool value)
+{
+  float health = value ? 0.f : 1.f;
+
+  std::string isDeadMsg;
+  isDeadMsg += Networking::MinPacketId;
+  isDeadMsg += nlohmann::json{
+    { "idx", GetIdx() },
+    { "t", MsgType::UpdateProperty },
+    { "propName", "isDead" },
+    { "data", value }
+  }.dump();
+
+  std::string healthPercentageMsg;
+  healthPercentageMsg += Networking::MinPacketId;
+  healthPercentageMsg += nlohmann::json{
+    { "idx", GetIdx() },
+    { "t", MsgType::UpdateProperty },
+    { "propName", "healthPercentage" },
+    { "data", health }
+  }.dump();
+
+  SendToUser(isDeadMsg.data(), isDeadMsg.size(), true);
+  SendToUser(healthPercentageMsg.data(), healthPercentageMsg.size(), true);
+
+  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.isDead = value;
+    changeForm.healthPercentage = health;
+  });
+}
+
 void MpActor::BeforeDestroy()
 {
   for (auto& sink : destroyEventSinks)
@@ -257,34 +296,35 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
 void MpActor::Kill()
 {
-  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
-    changeForm.isDead = true;
-    changeForm.healthPercentage = 0.f;
-  });
-
-  std::string msg;
-  msg += Networking::MinPacketId;
-  msg += nlohmann::json{ { "type", "isDead" }, { "isDead", true } }.dump();
-  SendToUser(msg.data(), msg.size(), true);
+  SetAndSendIsDeadPropery(true);
 }
 
 void MpActor::RespawnAfter(float seconds)
 {
-  isRespawning = true;
-  GetParent()->SetTimer(seconds).Then([this](Viet::Void) { this->Respawn(); });
+  pImpl->isRespawning = true;
+
+  uint32_t formId = GetFormId();
+  if (auto worldState = GetParent()) {
+    worldState->SetTimer(seconds).Then([worldState, this, formId](Viet::Void) {
+      if (&worldState->GetFormAt<MpActor>(formId) == this) {
+        this->Respawn();
+      }
+    });
+  }
 }
 
 void MpActor::Respawn()
 {
-  isRespawning = false;
+  pImpl->isRespawning = false;
+  static const LocationalData position = { { 133857, -61130, 14662 },
+                                           { 0.f, 0.f, 72.f },
+                                           0x3C };
+  TeleportUser(position);
+  SetAndSendIsDeadPropery(false);
+}
 
-  pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
-    changeForm.isDead = false;
-    changeForm.healthPercentage = 1.f;
-  });
-  LocationalData position = { { 133857, -61130, 14662 },
-                              { 0.f, 0.f, 72.f },
-                              0x3C };
+void MpActor::TeleportUser(LocationalData position)
+{
   std::string teleportMsg;
   teleportMsg += Networking::MinPacketId;
   teleportMsg += nlohmann::json{
@@ -298,14 +338,4 @@ void MpActor::Respawn()
   SetCellOrWorldObsolete(position.cellOrWorld);
   SetPos(position.pos);
   SetAngle(position.rot);
-
-  std::string msg;
-  msg += Networking::MinPacketId;
-  msg += nlohmann::json{ { "type", "isDead" }, { "isDead", false } }.dump();
-  SendToUser(msg.data(), msg.size(), true);
-}
-
-const bool MpActor::IsRespawning() const
-{
-  return isRespawning;
 }
