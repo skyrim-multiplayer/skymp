@@ -20,7 +20,6 @@
 #include "PapyrusTESModPlatform.h"
 #include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
-#include "SystemPolyfill.h"
 #include "TPInputService.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
@@ -191,6 +190,8 @@ void JsTick(bool gameFunctionsAvailable)
           ReadFile(std::filesystem::path("Data/Platform/Distribution") /
                    "___systemPolyfill.js"),
           "___systemPolyfill.js");
+        engine->RunScript(
+          "skyrimPlatform = addNativeExports('skyrimPlatform', {})", "");
         engine->RunScript(scriptSrc, scriptPath.filename().string())
           .ToString();
       }

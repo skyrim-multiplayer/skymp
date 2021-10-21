@@ -39,6 +39,38 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
   DoDisconnect(p, 0);
 }
 
+TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
+          "[ChangeValues]")
+{
+  using namespace std::chrono_literals;
+
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  IActionListener::RawMessageData rawMsgData;
+  rawMsgData.userId = 0;
+  HitData hitData;
+  hitData.target = 0x14;
+  hitData.aggressor = 0x14;
+  hitData.source = 0x0001397E; // iron dagger 4 damage
+
+  p.Messages().clear();
+  p.GetActionListener().OnHit(rawMsgData, hitData);
+
+  REQUIRE(p.Messages().size() == 1);
+  nlohmann::json message = p.Messages()[0].j;
+
+  REQUIRE(message["data"]["health"] == 0.96f);
+  REQUIRE(message["data"]["magicka"] == 1.0f);
+  REQUIRE(message["data"]["stamina"] == 1.0f);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
+}
+
 TEST_CASE("OnHit damage character by race-dependent value", "[Hit]")
 {
   PartOne& p = GetPartOne();
@@ -85,8 +117,8 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   IActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
 
-  uint32_t aggressor = 0xff000000;
-  uint32_t target = 0xff000001;
+  const uint32_t aggressor = 0xff000000;
+  const uint32_t target = 0xff000001;
 
   p.CreateActor(aggressor, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, aggressor);
@@ -98,7 +130,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   HitData hitData;
   hitData.target = target;
   hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E; // iron dagger has
+  hitData.source = 0x0001397E;
 
   // fCombatDistance global value * reach
   const float awaitedRange = 141.f * 0.7f;

@@ -36,11 +36,6 @@ export class Login implements System {
     this.log(
       `Login system assumed that ${this.myAddr} is our address on master`
     );
-
-    ctx.gm.on("loginRequired", (userId: number) => {
-      ctx.svr.sendCustomPacket(userId, "loginRequired", {});
-      console.log("Login required for " + userId);
-    });
   }
 
   disconnect(userId: number): void {
