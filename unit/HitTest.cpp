@@ -188,7 +188,7 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
   float daggerSpeedMult = 1.3f;
   float attackSpeedMult = 1.65f;
 
-  REQUIRE(passedTime <= 1.1 * daggerSpeedMult * attackSpeedMult); 
+  REQUIRE(passedTime <= 1.1 * daggerSpeedMult * attackSpeedMult);
   REQUIRE(p.Messages().size() == 0);
 
   past = std::chrono::steady_clock::now() - 3s;
