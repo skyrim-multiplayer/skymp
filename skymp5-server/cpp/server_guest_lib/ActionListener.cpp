@@ -591,8 +591,7 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
   if (weapDNAM) {
     float speedMult = weapDNAM->speed;
-    float weapAttackSpeed = 1.65f;
-    return timePassed.count() >= 1.1 * speedMult * weapAttackSpeed;
+    return timePassed.count() >= 1.1 * (1 / speedMult);
   } else {
     throw std::runtime_error(fmt::format(
       "Cannot get weapon speed from source: {0:x}", hitData.source));

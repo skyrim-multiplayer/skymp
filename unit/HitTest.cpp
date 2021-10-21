@@ -176,7 +176,7 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E;
 
-  auto past = std::chrono::steady_clock::now() - 1s;
+  auto past = std::chrono::steady_clock::now() - 300ms;
 
   ac.SetLastHitTime(past);
   p.Messages().clear();
@@ -185,10 +185,9 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
   auto current = ac.GetLastHitTime();
   std::chrono::duration<float> duration = current - past;
   float passedTime = duration.count();
-  float daggerSpeedMult = 1.3f;
-  float attackSpeedMult = 1.65f;
+  float daggerSpeed = 1.3f;
 
-  REQUIRE(passedTime <= 1.1 * daggerSpeedMult * attackSpeedMult);
+  REQUIRE(passedTime <= 1.1 * (1 / daggerSpeed));
   REQUIRE(p.Messages().size() == 0);
 
   past = std::chrono::steady_clock::now() - 3s;
@@ -199,7 +198,7 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
   duration = current - past;
   passedTime = duration.count();
 
-  REQUIRE(passedTime >= 1.1 * daggerSpeedMult * attackSpeedMult);
+  REQUIRE(passedTime >= 1.1 * (1 / daggerSpeed));
   REQUIRE(p.Messages().size() == 1);
   nlohmann::json message = p.Messages()[0].j;
   uint64_t msgType = 16; // OnHit sends ChangeValues message type
