@@ -252,7 +252,7 @@ Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaS
     leave(ctx) {}
   });
 
-  // Good. No JS is triggered until selfId in range `[minSelfId..maxSelfId]` found and event name matches `"*"` wildcard
+  // Good. No JS is triggered until selfId in range `[minSelfId..maxSelfId]` found and event name matches `"*"` wildcard. The * wildcard must be used alone: for example, the *Sleep* pattern won't work since it uses two. An exception will be thrown instead.
   hooks.sendAnimationEvent.add({
     enter(ctx) {
       printConsole("Player's anim:", ctx.animEventName);
