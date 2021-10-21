@@ -299,31 +299,29 @@ void MpActor::Kill()
   SetAndSendIsDeadPropery(true);
 }
 
-void MpActor::RespawnAfter(float seconds)
+void MpActor::RespawnAfter(float seconds, const LocationalData& position)
 {
   pImpl->isRespawning = true;
 
   uint32_t formId = GetFormId();
   if (auto worldState = GetParent()) {
-    worldState->SetTimer(seconds).Then([worldState, this, formId](Viet::Void) {
-      if (&worldState->GetFormAt<MpActor>(formId) == this) {
-        this->Respawn();
-      }
-    });
+    worldState->SetTimer(seconds).Then(
+      [worldState, this, formId, position](Viet::Void) {
+        if (&worldState->GetFormAt<MpActor>(formId) == this) {
+          this->Respawn(position);
+        }
+      });
   }
 }
 
-void MpActor::Respawn()
+void MpActor::Respawn(const LocationalData& position)
 {
   pImpl->isRespawning = false;
-  static const LocationalData position = { { 133857, -61130, 14662 },
-                                           { 0.f, 0.f, 72.f },
-                                           0x3C };
   TeleportUser(position);
   SetAndSendIsDeadPropery(false);
 }
 
-void MpActor::TeleportUser(LocationalData position)
+void MpActor::TeleportUser(const LocationalData& position)
 {
   std::string teleportMsg;
   teleportMsg += Networking::MinPacketId;

@@ -7,7 +7,11 @@
 #include <set>
 
 class WorldState;
+
 static const float kRespawnTimeSeconds = 5.f;
+static const LocationalData kSpawnPos = { { 133857, -61130, 14662 },
+                                          { 0.f, 0.f, 72.f },
+                                          0x3C };
 
 class MpActor : public MpObjectReference
 {
@@ -66,9 +70,9 @@ public:
     std::chrono::steady_clock::time_point now);
 
   void Kill();
-  void RespawnAfter(float seconds);
-  void Respawn();
-  void TeleportUser(LocationalData position);
+  void RespawnAfter(float seconds, const LocationalData& position = kSpawnPos);
+  void Respawn(const LocationalData& position = kSpawnPos);
+  void TeleportUser(const LocationalData& position);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
