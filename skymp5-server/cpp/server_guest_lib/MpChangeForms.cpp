@@ -102,6 +102,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     ReadEx(element, healthPercentage, &res.healthPercentage);
     ReadEx(element, magickaPercentage, &res.magickaPercentage);
     ReadEx(element, staminaPercentage, &res.staminaPercentage);
+    ReadEx(element, isDead, &res.isDead);
   } catch (JsonIndexException&) {
   } catch (...) {
     throw;
@@ -116,8 +117,6 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   } catch (...) {
     throw;
   }
-
-  ReadEx(element, isDead, &res.isDead);
 
   return res;
 }

@@ -121,6 +121,7 @@ MpChangeForm MpActor::GetChangeForm() const
   res.healthPercentage = achr.healthPercentage;
   res.magickaPercentage = achr.magickaPercentage;
   res.staminaPercentage = achr.staminaPercentage;
+  res.isDead = achr.isDead;
   // achr.dynamicFields isn't really used so I decided to comment this line:
   // res.dynamicFields.merge_patch(achr.dynamicFields);
 
@@ -174,7 +175,7 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
     changeForm.magickaPercentage = magickaPercentage;
     changeForm.staminaPercentage = staminaPercentage;
   });
-  if (healthPercentage == 0.f && IsDead() == false) {
+  if (healthPercentage == 0.f && !IsDead() && !pImpl->isRespawning) {
     Kill();
     RespawnAfter(kRespawnTimeSeconds);
   }
@@ -249,7 +250,6 @@ void MpActor::SetAndSendIsDeadPropery(bool value)
   float attribute = value ? 0.f : 1.f;
 
   SendPropertyTo("isDead", value, *this);
-  SetPercentages(attribute, attribute, attribute);
   std::string s;
   s += Networking::MinPacketId;
   s += nlohmann::json{
