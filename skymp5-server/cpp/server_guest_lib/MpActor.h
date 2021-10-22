@@ -8,10 +8,10 @@
 
 class WorldState;
 
-static const float kRespawnTimeSeconds = 5.f;
+constexpr float kRespawnTimeSeconds = 5.f;
 static const LocationalData kSpawnPos = { { 133857, -61130, 14662 },
                                           { 0.f, 0.f, 72.f },
-                                          0x3C };
+                                          0x3c };
 
 class MpActor : public MpObjectReference
 {

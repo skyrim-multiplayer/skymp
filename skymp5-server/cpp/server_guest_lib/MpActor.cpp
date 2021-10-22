@@ -3,8 +3,8 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
+#include "ServerState.cpp"
 #include "WorldState.h"
-#include <MsgType.h>
 #include <NiPoint3.h>
 
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
@@ -174,7 +174,7 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
     changeForm.magickaPercentage = magickaPercentage;
     changeForm.staminaPercentage = staminaPercentage;
   });
-  if (healthPercentage == 0.f) {
+  if (healthPercentage == 0.f && IsDead() == false) {
     Kill();
     RespawnAfter(kRespawnTimeSeconds);
   }
@@ -246,32 +246,26 @@ bool MpActor::IsWeaponDrawn() const
 
 void MpActor::SetAndSendIsDeadPropery(bool value)
 {
-  float health = value ? 0.f : 1.f;
+  float attribute = value ? 0.f : 1.f;
 
-  std::string isDeadMsg;
-  isDeadMsg += Networking::MinPacketId;
-  isDeadMsg += nlohmann::json{
-    { "idx", GetIdx() },
-    { "t", MsgType::UpdateProperty },
-    { "propName", "isDead" },
-    { "data", value }
+  SendPropertyTo("isDead", value, *this);
+  SetPercentages(attribute, attribute, attribute);
+  std::string s;
+  s += Networking::MinPacketId;
+  s += nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { { "health", attribute },
+        { "magicka", attribute },
+        { "stamina", attribute } } }
   }.dump();
-
-  std::string healthPercentageMsg;
-  healthPercentageMsg += Networking::MinPacketId;
-  healthPercentageMsg += nlohmann::json{
-    { "idx", GetIdx() },
-    { "t", MsgType::UpdateProperty },
-    { "propName", "healthPercentage" },
-    { "data", health }
-  }.dump();
-
-  SendToUser(isDeadMsg.data(), isDeadMsg.size(), true);
-  SendToUser(healthPercentageMsg.data(), healthPercentageMsg.size(), true);
+  SendToUser(s.data(), s.size(), true);
 
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = value;
-    changeForm.healthPercentage = health;
+    changeForm.healthPercentage = attribute;
+    changeForm.magickaPercentage = attribute;
+    changeForm.staminaPercentage = attribute;
   });
 }
 
@@ -307,7 +301,7 @@ void MpActor::RespawnAfter(float seconds, const LocationalData& position)
   if (auto worldState = GetParent()) {
     worldState->SetTimer(seconds).Then(
       [worldState, this, formId, position](Viet::Void) {
-        if (&worldState->GetFormAt<MpActor>(formId) == this) {
+        if (worldState->LookupFormById(formId).get() == this) {
           this->Respawn(position);
         }
       });
