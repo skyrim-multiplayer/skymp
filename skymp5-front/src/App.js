@@ -1,17 +1,8 @@
 import React from "react";
 import { connect } from "react-redux";
 
-import {
-  HashRouter as Router,
-  Switch,
-  Route,
-} from "react-router-dom";
-
-import history from "./utils/history";
-
 import Chat from "./features/chat";
 import AnimList from "./features/animList";
-import LoginPage from "./features/login";
 import Constructor from "./constructor";
 
 class App extends React.Component {
@@ -19,6 +10,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       isLoggined: false,
+      widget: window.skyrimPlatform.widgets.get()[0]
     }
   }
 
@@ -49,8 +41,15 @@ class App extends React.Component {
     window.isMoveWindow = false;
     window.addEventListener("mousemove", this.onMoveWindow);
     window.addEventListener("mouseup", this.onMouseUp);
-  }
 
+    window.skyrimPlatform.widgets.addListener((newWidgets) => this.handleWidgetUpdate(newWidgets))
+  }
+  handleWidgetUpdate(newWidgets) {
+    this.setState({
+      ...this.state,
+      widget: newWidgets[0]
+    })
+  }
   componentWillUnmount() {
     window.removeEventListener("focus", this.onWindowFocus.bind(this));
     window.removeEventListener("blur", this.onWindowFocus.bind(this));
@@ -64,7 +63,6 @@ class App extends React.Component {
 
   onMoveWindow(e) {
     if (window.isMoveWindow && typeof window.moveWindow == "function") {
-      // console.log(e)
       window.moveWindow(e.clientX, e.clientY);
     }
   }
@@ -85,7 +83,7 @@ class App extends React.Component {
     else
       return (
         <>
-          <Constructor dynamicSize={true} elem={this.props.elem} height={this.props.height || 704} width={this.props.width || 512}/>
+          <Constructor dynamicSize={true} elem={this.state.widget} height={this.props.height || 704} width={this.props.width || 512} />
         </>
       )
   }

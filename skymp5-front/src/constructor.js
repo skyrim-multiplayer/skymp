@@ -22,7 +22,6 @@ const Constructor = props => {
     }
   }, [])
 
-
   const [fwidth, setFwidth] = useState(props.width || 512);
   const [fheight, setFheight] = useState(props.height || 704);
 
