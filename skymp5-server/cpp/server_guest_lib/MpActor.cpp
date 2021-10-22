@@ -170,7 +170,7 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
 void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
                              float staminaPercentage)
 {
-  if (IsDead() == false && pImpl->isRespawning == false) {
+  if (IsDead() || pImpl->isRespawning) {
     return;
   }
   if (healthPercentage == 0.f) {
