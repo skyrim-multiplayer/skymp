@@ -10,6 +10,16 @@ import Button from "./constructorComponents/button";
 import Icon from "./constructorComponents/icon"
 import CheckBox from "./constructorComponents/checkbox";
 
+const styles = [
+  "BUTTON_STYLE_GITHUB",
+  "BUTTON_STYLE_PATREON",
+  "BUTTON_STYLE_FRAME",
+  "BUTTON_STYLE_FRAME_LEFT",
+  "BUTTON_STYLE_FRAME_RIGHT",
+  "ICON_STYLE_MAIL",
+  "ICON_STYLE_KEY",
+]
+
 const Constructor = props => {
   const content_mainRef = useRef()
 
@@ -36,16 +46,27 @@ const Constructor = props => {
   for (let i = 0; i < allElems.length; i++) {
     let newline = true;
     let css = undefined;
-    if (allElems[i].tags != undefined) {
-      if (allElems[i].tags.length != 0) {
+    let hintIsLeft = true;
+    if (allElems[i].tags !== undefined) {
+      if (allElems[i].tags.length !== 0) {
         for (let j = 0; j < allElems[i].tags.length; j++) {
-          if (allElems[i].tags[j] == "ELEMENT_SAME_LINE") {
+          if (allElems[i].tags[j] === "ELEMENT_SAME_LINE") {
             newline = false;
-          } else if (allElems[i].tags[j].indexOf('STYLE') != -1) {
+          } 
+          else if(allElems[i].tags[j] === "HINT_STYLE_LEFT") {
+            hintIsLeft = true;
+          } 
+          else if(allElems[i].tags[j] === "HINT_STYLE_RIGHT") {
+            hintIsLeft = false;
+          }
+          else if (styles.includes(allElems[i].tags[j])) {
             css = allElems[i].tags[j];
           }
         }
       }
+    }
+    if (allElems[i].hint !== undefined) {
+      hintsarr.push({ id: i, text: allElems[i].hint, isOpened: false, direction: hintIsLeft });
     }
     let obj = {
       index: i,
@@ -56,16 +77,14 @@ const Constructor = props => {
     else bodylines[bodylines.length - 1].push(obj);
   }
 
+  const [hints, setHints] = useState(hintsarr);
+  
+  let hintIndex = 0;
   bodylines.forEach((line) => {
     let arr = [];
     line.forEach((obj) => {
       let curElem = undefined;
-      let hasHint = false;
-      if (obj.element.hint != undefined) {
-        hintsarr.push({ id: obj.index, text: obj.element.hint, isOpened: false });
-        hasHint = true;
-      }
-
+      let hasHint = obj.element.hint != undefined ? true : false;
       switch (obj.element.type) {
         case "button":
           curElem = <Button disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} onClick={obj.element.click} width={obj.element.width} height={obj.element.height} />;
@@ -86,17 +105,23 @@ const Constructor = props => {
           curElem = (<Icon disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} width={obj.element.width} height={obj.element.height} />);
           break;
       }
-      if (curElem != undefined)
+      if (curElem != undefined) {
         arr.push(
           (hasHint)
             ?
-            (
+            (<>
+              <SkyrimHint
+                text={hints[hintIndex].text}
+                isOpened={hints[hintIndex].isOpened}
+                left={hints[hintIndex].direction}
+              />
               <div
-                onMouseOver={() => setHintState(bodylines[k][j].index, true)}
-                onMouseOut={() => setHintState(bodylines[k][j].index, false)}
+                onMouseOver={() => setHintState(obj.index, true)}
+                onMouseOut={() => setHintState(obj.index, false)}
               >
                 {curElem}
               </div>
+            </>
             )
             :
             (
@@ -105,11 +130,11 @@ const Constructor = props => {
               </>
             )
         );
+        if(hasHint) hintIndex++;
+      }
     });
     result.body.push(<div className={'container'}>{arr}</div>);
   });
-
-  const [hints, setHints] = useState(hintsarr);
 
   const setHintState = function (index, state) {
     let newArr = [...hints];
@@ -136,14 +161,6 @@ const Constructor = props => {
           }
           <div className={'login-form--content_main'} ref={content_mainRef}>
             {result.body}
-            {hints.map(hint => {
-              return (
-                <SkyrimHint
-                  text={hint.text}
-                  isOpened={hint.isOpened}
-                  left={true}
-                />);
-            })}
           </div>
         </div>
         <Frame width={fwidth} height={fheight} />
