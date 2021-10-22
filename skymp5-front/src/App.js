@@ -10,7 +10,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       isLoggined: false,
-      widget: window.skyrimPlatform.widgets.get()[0]
+      widget: this.props.elem[0] || null
     }
   }
 
@@ -42,7 +42,7 @@ class App extends React.Component {
     window.addEventListener("mousemove", this.onMoveWindow);
     window.addEventListener("mouseup", this.onMouseUp);
 
-    window.skyrimPlatform.widgets.addListener((newWidgets) => this.handleWidgetUpdate(newWidgets))
+    window.skyrimPlatform.widgets.addListener(this.handleWidgetUpdate.bind(this))
   }
   handleWidgetUpdate(newWidgets) {
     this.setState({
@@ -54,6 +54,7 @@ class App extends React.Component {
     window.removeEventListener("focus", this.onWindowFocus.bind(this));
     window.removeEventListener("blur", this.onWindowFocus.bind(this));
     window.addEventListener("mousemove", this.onMoveWindow);
+    window.skyrimPlatform.widgets.removeListener(this.handleWidgetUpdate.bind(this))
   }
 
   onWindowFocus(e) {
@@ -71,7 +72,6 @@ class App extends React.Component {
     if (window.isMoveWindow) window.isMoveWindow = false;
     window.moveWindow = null;
   }
-
   render() {
     if (this.state.isLoggined)
       return (
@@ -81,11 +81,14 @@ class App extends React.Component {
           </div>
       )
     else
-      return (
-        <>
-          <Constructor dynamicSize={true} elem={this.state.widget} height={this.props.height || 704} width={this.props.width || 512} />
-        </>
-      )
+      if (this.state.widget)
+        return (
+          <>
+            <Constructor dynamicSize={true} elem={this.state.widget} height={this.props.height || 704} width={this.props.width || 512} />
+          </>
+        )
+      else
+        return <></>
   }
 }
 

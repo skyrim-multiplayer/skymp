@@ -1,6 +1,6 @@
 class Widgets {
     constructor(widgets) {
-        this.widgets = widgets
+        this.widgets = widgets || []
         this.listeners = []
     }
     get() {

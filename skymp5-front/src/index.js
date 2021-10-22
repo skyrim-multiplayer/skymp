@@ -59,6 +59,9 @@ window.skyrimPlatform.widgets = new Widgets([
                   type: "button",
                   text: "register now",
                   tags: ["ELEMENT_SAME_LINE", "BUTTON_STYLE_FRAME"],
+                  click: (e) => {
+                    window.skyrimPlatform.widgets.set([])
+                  }
                 },
                 {
                   type: "button",
@@ -81,16 +84,13 @@ window.skyrimPlatform.widgets = new Widgets([
       { type: "inputText" },
     ],
   },
-]); 
+]);
 
-const widget = window.skyrimPlatform.widgets.get()[0]
-if (widget) {
-  ReactDOM.render(
+ReactDOM.render(
     <React.StrictMode>
       <Provider store={store}>
-        <App elem={widget} />
+        <App elem={window.skyrimPlatform.widgets.get()} />
       </Provider>
     </React.StrictMode>,
     document.getElementById("root")
-  );
-}
+);
