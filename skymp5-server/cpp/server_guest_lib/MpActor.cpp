@@ -170,15 +170,16 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
 void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
                              float staminaPercentage)
 {
+  if (healthPercentage == 0.f && !IsDead() && !pImpl->isRespawning) {
+    Kill();
+    RespawnAfter(kRespawnTimeSeconds);
+    return;
+  }
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.healthPercentage = healthPercentage;
     changeForm.magickaPercentage = magickaPercentage;
     changeForm.staminaPercentage = staminaPercentage;
   });
-  if (healthPercentage == 0.f && !IsDead() && !pImpl->isRespawning) {
-    Kill();
-    RespawnAfter(kRespawnTimeSeconds);
-  }
 }
 
 std::chrono::steady_clock::time_point
