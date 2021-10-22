@@ -12,30 +12,31 @@ import "./main.sass";
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
-  window.skyrimPlatform.widgets = new Widgets([
-    {
-      caption: "Test?",
-      elements: [
-        { type: "button", tags: ['BUTTON_STYLE_FRAME'], text: "Sample text", click: () => { console.log("Yes") } },
-        { type: "button", tags: ['BUTTON_STYLE_FRAME_LEFT'], text: "Sample text 2", click: () => {
-            window.skyrimPlatform.widgets.set([
-              {
-                caption: "Test?",
-                elements: [
-                  { type: "button", tags: ['BUTTON_STYLE_FRAME'], text: "Sample text", click: () => { console.log("Yes") } },
-                  { type: "button", isDisabled: true, text: "Sample text 2", click: () => { console.log("Yes") } },
-                  { type: "button", tags: ['BUTTON_STYLE_FRAME_RIGHT'], text: "Sample text 3", click: () => { console.log("No") } },
-                  {type: "inputText"}
-                ],
-              },
-            ])
-          }},
-        { type: "button", tags: ['BUTTON_STYLE_FRAME_RIGHT'], text: "Sample text 3", click: () => { console.log("No") } },
-        {type: "inputText"}
-      ],
-    },
-  ])
 }
+
+window.skyrimPlatform.widgets = new Widgets([
+  {
+    caption: "Test?",
+    elements: [
+      { type: "button", tags: ['BUTTON_STYLE_FRAME'], text: "Sample text", click: () => { console.log("Yes") } },
+      { type: "button", tags: ['BUTTON_STYLE_FRAME_LEFT'], text: "Sample text 2", click: () => {
+          window.skyrimPlatform.widgets.set([
+            {
+              caption: "Test?",
+              elements: [
+                { type: "button", tags: ['BUTTON_STYLE_FRAME'], text: "Sample text", click: () => { console.log("Yes") } },
+                { type: "button", isDisabled: true, text: "Sample text 2", click: () => { console.log("Yes") } },
+                { type: "button", tags: ['BUTTON_STYLE_FRAME_RIGHT'], text: "Sample text 3", click: () => { console.log("No") } },
+                {type: "inputText"}
+              ],
+            },
+          ])
+        }},
+      { type: "button", tags: ['BUTTON_STYLE_FRAME_RIGHT'], text: "Sample text 3", click: () => { console.log("No") } },
+      {type: "inputText"}
+    ],
+  },
+])
 
 const widget = window.skyrimPlatform.widgets.get()[0]
 if (widget) {
