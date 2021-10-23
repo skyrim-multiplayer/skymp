@@ -65,7 +65,8 @@ void DX11RenderHandler::Render()
 
   const wchar_t* string = L"Hello Skymp!";
 
-  auto origin = DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(string)) / 2;
+  auto origin =
+    DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(string)) / 2;
 
   m_pSpriteFont->DrawString(m_pSpriteBatch.get(), string,
                             DirectX::XMFLOAT2(m_width / 2, m_height / 2),
@@ -112,7 +113,8 @@ void DX11RenderHandler::Create()
 
   m_pStates = std::make_unique<DirectX::CommonStates>(m_pDevice.Get());
 
-  m_pSpriteFont = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), L"Data\\Interface\\Fonts\\font.spritefont");
+  m_pSpriteFont = std::make_unique<DirectX::SpriteFont>(
+    m_pDevice.Get(), L"Data\\Interface\\Fonts\\font.spritefont");
 
   if (FAILED(DirectX::CreateWICTextureFromFile(
         m_pDevice.Get(), m_pParent->GetCursorPathPNG().c_str(), nullptr,
