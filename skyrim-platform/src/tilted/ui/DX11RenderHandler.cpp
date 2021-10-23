@@ -55,6 +55,17 @@ void DX11RenderHandler::Render()
                         m_pStates->NonPremultiplied());
 
   if (Visible()) {
+    std::unique_lock<std::mutex> _(m_textureLock);
+
+    if (m_pTextureView) {
+      m_pSpriteBatch->Draw(m_pTextureView.Get(),
+                           DirectX::SimpleMath::Vector2(0.f, 0.f), nullptr,
+                           DirectX::Colors::White, 0.f);
+    }
+  }
+
+  // Temporary prototype, to be changed in #430
+  if (Visible()) {
     const wchar_t* kString = L"Hello Skymp!";
 
     auto origin =
@@ -63,14 +74,6 @@ void DX11RenderHandler::Render()
     m_pSpriteFont->DrawString(m_pSpriteBatch.get(), kString,
                               DirectX::XMFLOAT2(m_width / 2, m_height / 2),
                               DirectX::Colors::Blue, 0.f, origin);
-
-    std::unique_lock<std::mutex> _(m_textureLock);
-
-    if (m_pTextureView) {
-      m_pSpriteBatch->Draw(m_pTextureView.Get(),
-                           DirectX::SimpleMath::Vector2(0.f, 0.f), nullptr,
-                           DirectX::Colors::White, 0.f);
-    }
   }
 
   if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {
