@@ -53,7 +53,7 @@ void DX11RenderHandler::Render()
   m_pSpriteBatch->Begin(DirectX::SpriteSortMode_Deferred,
                         m_pStates->NonPremultiplied());
 
-  if (IsVisible()) {
+  if (Visible()) {
     std::unique_lock<std::mutex> _(m_textureLock);
 
     if (m_pTextureView) {
