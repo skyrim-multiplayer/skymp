@@ -5,6 +5,7 @@
 #include <DirectXTK/CommonStates.h>
 #include <DirectXTK/DDSTextureLoader.h>
 #include <DirectXTK/SimpleMath.h>
+#include <DirectXTK/SpriteBatch.h>
 #include <DirectXTK/SpriteFont.h>
 #include <DirectXTK/WICTextureLoader.h>
 #include <cmrc/cmrc.hpp>
@@ -54,6 +55,15 @@ void DX11RenderHandler::Render()
                         m_pStates->NonPremultiplied());
 
   if (Visible()) {
+    const wchar_t* kString = L"Hello Skymp!";
+
+    auto origin =
+      DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(kString)) / 2;
+
+    m_pSpriteFont->DrawString(m_pSpriteBatch.get(), kString,
+                              DirectX::XMFLOAT2(m_width / 2, m_height / 2),
+                              DirectX::Colors::Blue, 0.f, origin);
+
     std::unique_lock<std::mutex> _(m_textureLock);
 
     if (m_pTextureView) {
@@ -62,15 +72,6 @@ void DX11RenderHandler::Render()
                            DirectX::Colors::White, 0.f);
     }
   }
-
-  const wchar_t* string = L"Hello Skymp!";
-
-  auto origin =
-    DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(string)) / 2;
-
-  m_pSpriteFont->DrawString(m_pSpriteBatch.get(), string,
-                            DirectX::XMFLOAT2(m_width / 2, m_height / 2),
-                            DirectX::Colors::Blue, 0.f, origin);
 
   if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {
     m_pSpriteBatch->Draw(
