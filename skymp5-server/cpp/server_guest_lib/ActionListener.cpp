@@ -592,6 +592,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
+  if (aggressor->IsDead()) {
+    spdlog::debug(fmt::format("{:x} actor is dead and can't attack",
+                              aggressor->GetFormId()));
+    return;
+  }
+
   HitData hitData = hitData_;
 
   if (hitData.aggressor == 0x14) {
@@ -641,14 +647,16 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
+  targetForm = targetActor.GetChangeForm();
+
   std::string s;
   s += Networking::MinPacketId;
   s += nlohmann::json{
     { "t", MsgType::ChangeValues },
     { "data",
-      { { "health", currentHealthPercentage },
-        { "magicka", magickaPercentage },
-        { "stamina", staminaPercentage } } }
+      { { "health", targetForm.healthPercentage },
+        { "magicka", targetForm.magickaPercentage },
+        { "stamina", targetForm.staminaPercentage } } }
   }.dump();
   targetActor.SendToUser(s.data(), s.size(), true);
 }

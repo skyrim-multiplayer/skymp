@@ -146,3 +146,39 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   p.DestroyActor(target);
   DoDisconnect(p, 0);
 }
+
+TEST_CASE("Dead actors can't attack")
+{
+  PartOne& p = GetPartOne();
+  IActionListener::RawMessageData rawMsgData;
+
+  const uint32_t aggressor = 0xff000000;
+  const uint32_t target = 0xff000001;
+
+  p.CreateActor(aggressor, { 0, 0, 0 }, 0, 0x3c);
+  p.CreateActor(target, { 0, 0, 0 }, 0, 0x3c);
+
+  DoConnect(p, 0);
+  p.SetUserActor(0, aggressor);
+  rawMsgData.userId = 0;
+
+  HitData hitData;
+  hitData.target = target;
+  hitData.aggressor = 0x14;
+  hitData.source = 0x0001397E;
+
+  auto& acTarget = p.worldState.GetFormAt<MpActor>(target);
+  acTarget.SetPercentages(0.2f, 1.f, 1.f);
+
+  auto& acAggressor = p.worldState.GetFormAt<MpActor>(aggressor);
+  acAggressor.Kill();
+  REQUIRE(acAggressor.IsDead() == true);
+
+  p.GetActionListener().OnHit(rawMsgData, hitData);
+
+  REQUIRE(acTarget.GetChangeForm().healthPercentage == 0.2f);
+
+  p.DestroyActor(aggressor);
+  p.DestroyActor(target);
+  DoDisconnect(p, 0);
+}
