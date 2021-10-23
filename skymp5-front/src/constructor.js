@@ -3,26 +3,35 @@ import React, { useState, useRef, useEffect } from "react";
 import './features/login/styles.scss'
 import './constructor.scss'
 
-import SkyrimButton from "./components/SkyrimButton";
 import Frame from "./components/SkyrimFrame";
 import SkyrimInput from "./components/SkyrimInput";
 import SkyrimHint from "./components/SkyrimHint";
-import LinkButton from "./components/LinkButton"
+import Button from "./constructorComponents/button";
+import Icon from "./constructorComponents/icon"
+import CheckBox from "./constructorComponents/checkbox";
+import Text from "./constructorComponents/text"
+
+const styles = [
+  "BUTTON_STYLE_GITHUB",
+  "BUTTON_STYLE_PATREON",
+  "BUTTON_STYLE_FRAME",
+  "BUTTON_STYLE_FRAME_LEFT",
+  "BUTTON_STYLE_FRAME_RIGHT",
+  "ICON_STYLE_MAIL",
+  "ICON_STYLE_KEY",
+]
 
 const Constructor = props => {
-
-
   const content_mainRef = useRef()
 
   useEffect(() => {
     if (props.dynamicSize) {
       if (content_mainRef && content_mainRef.current && content_mainRef.current.clientHeight && content_mainRef.current.clientWidth) {
-        setFwidth(content_mainRef.current.clientWidth + 60);
+        setFwidth(content_mainRef.current.clientWidth + 60 < 257 ? 257 : content_mainRef.current.clientWidth + 60);
         setFheight(content_mainRef.current.clientHeight + 150);
       }
     }
-  }, [])
-
+  }, [props.elem])
 
   const [fwidth, setFwidth] = useState(props.width || 512);
   const [fheight, setFheight] = useState(props.height || 704);
@@ -38,87 +47,82 @@ const Constructor = props => {
   for (let i = 0; i < allElems.length; i++) {
     let newline = true;
     let css = undefined;
-    if (allElems[i].tags != undefined) {
-      if (allElems[i].tags.length != 0) {
+    let hintIsLeft = true;
+    if (allElems[i].tags !== undefined) {
+      if (allElems[i].tags.length !== 0) {
         for (let j = 0; j < allElems[i].tags.length; j++) {
-          if (allElems[i].tags[j] == "ELEMENT_SAME_LINE") {
+          if (allElems[i].tags[j] === "ELEMENT_SAME_LINE") {
             newline = false;
-          } else if (allElems[i].tags[j].indexOf('STYLE') != -1) {
+          } 
+          else if(allElems[i].tags[j] === "HINT_STYLE_LEFT") {
+            hintIsLeft = true;
+          } 
+          else if(allElems[i].tags[j] === "HINT_STYLE_RIGHT") {
+            hintIsLeft = false;
+          }
+          else if (styles.includes(allElems[i].tags[j])) {
             css = allElems[i].tags[j];
           }
         }
       }
     }
+    if (allElems[i].hint !== undefined) {
+      hintsarr.push({ id: i, text: allElems[i].hint, isOpened: false, direction: hintIsLeft });
+    }
     let obj = {
       index: i,
-      css: css
+      css: css,
+      element: allElems[i]
     }
     if (newline) bodylines.push([obj]);
     else bodylines[bodylines.length - 1].push(obj);
   }
 
-  for (let k = 0; k < bodylines.length; k++) {
-
+  const [hints, setHints] = useState(hintsarr);
+  
+  let hintIndex = 0;
+  bodylines.forEach((line) => {
     let arr = [];
-    for (let j = 0; j < bodylines[k].length; j++) {
-      let elemm = rend.elements[bodylines[k][j].index];
+    line.forEach((obj) => {
       let curElem = undefined;
-      let hasHint = false;
-      if (elemm.hint != undefined) {
-        hintsarr.push({ id: bodylines[k][j].index, text: elemm.hint, isOpened: false });
-        hasHint = true;
+      let hasHint = obj.element.hint != undefined ? true : false;
+      switch (obj.element.type) {
+        case "button":
+          curElem = <Button disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} onClick={obj.element.click} width={obj.element.width} height={obj.element.height} />;
+          break;
+        case "text":
+          curElem = <Text text={obj.element.text} />;
+          break;
+        case "inputText":
+          curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} width={obj.element.width} height={obj.element.height} />;
+          break;
+        case "inputPass":
+          curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'password'} name={obj.index} width={obj.element.width} height={obj.element.height} />;
+          break;
+        case "checkBox":
+          curElem = <CheckBox disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} setChecked={obj.element.setChecked} />;
+          break;
+        case "icon":
+          curElem = (<Icon disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} width={obj.element.width} height={obj.element.height} />);
+          break;
       }
-
-      if (elemm.type === "button") {
-        if (bodylines[k][j].css == undefined) {
-          curElem = <SkyrimButton disabled={false} text={elemm.text || ""} />;
-        } else if (bodylines[k][j].css == "BUTTON_STYLE_GITHUB") {
-          curElem = (<LinkButton href={'https://github.com/skyrim-multiplayer/skymp'} src={require('./img/github.svg').default} />);
-        }
-        else if (bodylines[k][j].css == "BUTTON_STYLE_PATREON") {
-          curElem = (<LinkButton href={'https://github.com/skyrim-multiplayer/skymp'} src={require('./img/patreon.svg').default} />);
-        } else if (bodylines[k][j].css == "BUTTON_STYLE_FRAME") {
-          curElem = (<div className={`skymp-input button`}>
-            <span className={'skymp-input_text'}>{elemm.text}</span>
-          </div>);
-        }
-      }
-      else if (elemm.type === "text") {
-        curElem = elemm.text || "";
-      }
-      else if (elemm.type === "inputText") {
-        curElem = <SkyrimInput defaultValue={elemm.text || ""} placeholder={elemm.placeholder || ""} type={'text'} name={bodylines[k][j].index} />;
-      }
-      else if (elemm.type === "inputPass") {
-        curElem = <SkyrimInput defaultValue={elemm.text || ""} placeholder={elemm.placeholder || ""} type={'text'} name={bodylines[k][j].index} />;
-      }
-      else if (elemm.type === "checkBox") {
-        curElem = (<div className={'login-form--content_main__label login-form--content_main__container'}>
-          <span className={'login-form--content_main__label___text'}>{elemm.text}</span>
-          <label
-            htmlFor="cbtest"
-            className={"checkbox active"}
-          />
-        </div>);
-      }
-      else if (elemm.type === "icon") {
-        // let path = (bodylines[k][j].css === "ICON_STYLE_MAIL") ? `./img/mail.svg` : (bodylines[k][j].css === "ICON_STYLE_KEY") ? `./img/password.svg` : '';
-        curElem = (<div className={'login-form--content_main__label'}>
-          <span className={'login-form--content_main__label___text'}>{elemm.text}</span>
-          <img src={(bodylines[k][j].css === "ICON_STYLE_MAIL") ? require('./img/mail.svg').default : (bodylines[k][j].css === "ICON_STYLE_KEY") ? require('./img/password.svg').default : ''} alt="" />
-        </div>);
-      }
-      if (curElem != undefined)
+      if (curElem != undefined) {
         arr.push(
           (hasHint)
             ?
-            (
+            (<>
+              <SkyrimHint
+                text={hints[hintIndex].text}
+                isOpened={hints[hintIndex].isOpened}
+                left={hints[hintIndex].direction}
+              />
               <div
-                onMouseOver={() => setHintState(bodylines[k][j].index, true)}
-                onMouseOut={() => setHintState(bodylines[k][j].index, false)}
+                onMouseOver={() => setHintState(obj.index, true)}
+                onMouseOut={() => setHintState(obj.index, false)}
               >
                 {curElem}
               </div>
+            </>
             )
             :
             (
@@ -127,11 +131,11 @@ const Constructor = props => {
               </>
             )
         );
-    }
-    result.body.push(<div className={'container'}>{arr}</div>)
-  }
-
-  const [hints, setHints] = useState(hintsarr);
+        if(hasHint) hintIndex++;
+      }
+    });
+    result.body.push(<div className={'container'}>{arr}</div>);
+  });
 
   const setHintState = function (index, state) {
     let newArr = [...hints];
@@ -158,15 +162,6 @@ const Constructor = props => {
           }
           <div className={'login-form--content_main'} ref={content_mainRef}>
             {result.body}
-
-            {hints.map(hint => {
-              return (
-                <SkyrimHint
-                  text={hint.text}
-                  isOpened={hint.isOpened}
-                  left={true}
-                />);
-            })}
           </div>
         </div>
         <Frame width={fwidth} height={fheight} />

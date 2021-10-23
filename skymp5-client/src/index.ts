@@ -6,7 +6,7 @@ import {
   GlobalVariable,
   ObjectReference,
   Weather,
-  printConsole,
+  printConsole
 } from "skyrimPlatform";
 import { SkympClient } from "./skympClient";
 import * as browser from "./browser";
@@ -25,12 +25,12 @@ loadGameManager.addLoadGameListener(enforceLimitations);
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
-  Game.setGameSettingFloat("fDiffMultHPToPCE", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCH", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCL", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCN", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCVE", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCVH", 0);
+  Game.setGameSettingFloat("fDiffMultHPToPCE", 1);
+  Game.setGameSettingFloat("fDiffMultHPToPCH", 1);
+  Game.setGameSettingFloat("fDiffMultHPToPCL", 1);
+  Game.setGameSettingFloat("fDiffMultHPToPCN", 1);
+  Game.setGameSettingFloat("fDiffMultHPToPCVE", 1);
+  Game.setGameSettingFloat("fDiffMultHPToPCVH", 1);
 });
 on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);
