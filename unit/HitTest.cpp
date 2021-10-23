@@ -14,7 +14,6 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
           "weapon-dependent value",
           "[Hit]")
 {
-
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
