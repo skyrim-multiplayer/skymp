@@ -42,7 +42,6 @@ struct PartOne::Impl
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
-  bool enableProductionHacks = false;
 
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<IActionListener> actionListener;
@@ -113,37 +112,7 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
     ac.RegisterProfileId(profileId);
   }
 
-  if (pImpl->enableProductionHacks) {
-    auto& ac = worldState.GetFormAt<MpActor>(formId);
-    std::vector<uint32_t> defaultItems = {
-      // ...
-    };
-    std::vector<Inventory::Entry> entries;
-    for (uint32_t item : defaultItems) {
-      entries.push_back({ item, 1 });
-    }
-    ac.AddItems(entries);
-  }
-
   return formId;
-}
-
-void PartOne::EnableProductionHacks()
-{
-  pImpl->enableProductionHacks = true;
-}
-
-namespace {
-std::string GetName(MpActor& actor)
-{
-  std::string defaultName = "Prisoner";
-  return actor.GetAppearance() ? actor.GetAppearance()->name : defaultName;
-}
-
-bool IsBanned(MpActor& actor)
-{
-  return GetName(actor) == "Pospelove";
-}
 }
 
 void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
@@ -152,11 +121,6 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
 
   if (actorFormId > 0) {
     auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
-
-    if (IsBanned(actor)) {
-      pImpl->logger->info("{} is banned", GetName(actor));
-      return;
-    }
 
     if (actor.IsDisabled()) {
       std::stringstream ss;
@@ -173,6 +137,11 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
     serverState.actorsMap.Set(userId, &actor);
 
     actor.ForceSubscriptionsUpdate();
+
+    if (actor.IsDead() && !actor.IsRespawning()) {
+      actor.RespawnAfter(kRespawnTimeSeconds);
+    }
+
   } else {
     serverState.actorsMap.Erase(userId);
   }

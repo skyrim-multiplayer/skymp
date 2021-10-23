@@ -16,6 +16,8 @@ using namespace std::chrono_literals;
 
 TEST_CASE("Bug", "[espm]")
 {
+  espm::CompressedFieldsCache dummyCache;
+
   auto chestId = 0x774bf;
 
   std::atomic<bool> finished = false;
@@ -38,7 +40,7 @@ TEST_CASE("Bug", "[espm]")
 
   auto chest =
     espm::Convert<espm::CONT>(l.GetBrowser().LookupById(chestId).rec);
-  auto objects = chest->GetData().objects;
+  auto objects = chest->GetData(dummyCache).objects;
   std::vector<espm::LookupResult> leveled;
   for (auto obj : objects) {
     leveled.push_back(l.GetBrowser().LookupById(obj.formId));

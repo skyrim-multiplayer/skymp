@@ -12,6 +12,7 @@ var RegistrationResult = /** @class */ (function () {
     }
     return RegistrationResult;
 }());
+var exports = {};
 var getParentDir = function (modulePath) { return modulePath.split('/').slice(0, -1).join('/'); };
 var normalizePath = function (p) { return p.slice(0, 2) === './' ? p.slice(2) : p; };
 var modulePath = './index';
