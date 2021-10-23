@@ -582,11 +582,27 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   float reach = GetReach(actor, hitData.source);
   return reach * reach > sqrDistance;
 }
+
+bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
+                              const std::chrono::duration<float>& timePassed)
+{
+  WorldState* espmProvider = actor.GetParent();
+  auto weapDNAM =
+    espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
+  if (weapDNAM) {
+    float speedMult = weapDNAM->speed;
+    return timePassed.count() >= 1.1 * (1 / speedMult);
+  } else {
+    throw std::runtime_error(fmt::format(
+      "Cannot get weapon speed from source: {0:x}", hitData.source));
+  }
+}
 }
 
 void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
 {
+  auto currentHitTime = std::chrono::steady_clock::now();
   MpActor* aggressor = partOne.serverState.ActorByUser(rawMsgData_.userId);
   if (!aggressor) {
     throw std::runtime_error("Unable to change values without Actor attached");
@@ -610,6 +626,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
+  auto lastHitTime = targetActor.GetLastHitTime();
+  std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
+
+  if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+    return;
+  }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
     float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
@@ -641,6 +663,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                              staminaPercentage);
   auto now = std::chrono::steady_clock::now();
   targetActor.SetLastAttributesPercentagesUpdate(now);
+  targetActor.SetLastHitTime(now);
 
   auto userId = partOne.serverState.UserByActor(&targetActor);
   if (userId == Networking::InvalidUserId) {
