@@ -17,7 +17,8 @@ struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
   uint32_t snippetIndex = 0;
   bool isRespawning = false;
-  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
+  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
+    lastHitTimePoint;
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -193,7 +194,7 @@ MpActor::GetLastAttributesPercentagesUpdate()
 
 std::chrono::steady_clock::time_point MpActor::GetLastHitTime()
 {
-  return lastHitTimePoint;
+  return pImpl->lastHitTimePoint;
 }
 
 void MpActor::SetLastAttributesPercentagesUpdate(
@@ -204,7 +205,7 @@ void MpActor::SetLastAttributesPercentagesUpdate(
 
 void MpActor::SetLastHitTime(std::chrono::steady_clock::time_point timePoint)
 {
-  lastHitTimePoint = timePoint;
+  pImpl->lastHitTimePoint = timePoint;
 }
 
 std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
