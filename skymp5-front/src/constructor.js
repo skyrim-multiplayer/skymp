@@ -9,6 +9,17 @@ import SkyrimHint from "./components/SkyrimHint";
 import Button from "./constructorComponents/button";
 import Icon from "./constructorComponents/icon"
 import CheckBox from "./constructorComponents/checkbox";
+import Text from "./constructorComponents/text"
+
+const styles = [
+  "BUTTON_STYLE_GITHUB",
+  "BUTTON_STYLE_PATREON",
+  "BUTTON_STYLE_FRAME",
+  "BUTTON_STYLE_FRAME_LEFT",
+  "BUTTON_STYLE_FRAME_RIGHT",
+  "ICON_STYLE_MAIL",
+  "ICON_STYLE_KEY",
+]
 
 const styles = [
   "BUTTON_STYLE_GITHUB",
@@ -26,12 +37,11 @@ const Constructor = props => {
   useEffect(() => {
     if (props.dynamicSize) {
       if (content_mainRef && content_mainRef.current && content_mainRef.current.clientHeight && content_mainRef.current.clientWidth) {
-        setFwidth(content_mainRef.current.clientWidth + 60);
+        setFwidth(content_mainRef.current.clientWidth + 60 < 257 ? 257 : content_mainRef.current.clientWidth + 60);
         setFheight(content_mainRef.current.clientHeight + 150);
       }
     }
-  }, [])
-
+  }, [props.elem])
 
   const [fwidth, setFwidth] = useState(props.width || 512);
   const [fheight, setFheight] = useState(props.height || 704);
@@ -91,7 +101,7 @@ const Constructor = props => {
           curElem = <Button disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} onClick={obj.element.click} width={obj.element.width} height={obj.element.height} />;
           break;
         case "text":
-          curElem = obj.element.text || "";
+          curElem = <Text text={obj.element.text} />;
           break;
         case "inputText":
           curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} width={obj.element.width} height={obj.element.height} />;
