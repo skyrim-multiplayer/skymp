@@ -4,6 +4,8 @@
 #include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
+#include "formulas/DamageFormula.h"
+#include "formulas/IDamageFormula.h"
 #include "GetBaseActorValues.h"
 #include "MovementValidation.h"
 #include "MsgType.h"
