@@ -8,6 +8,11 @@
 
 class WorldState;
 
+constexpr float kRespawnTimeSeconds = 5.f;
+static const LocationalData kSpawnPos = { { 133857, -61130, 14662 },
+                                          { 0.f, 0.f, 72.f },
+                                          0x3c };
+
 class MpActor : public MpObjectReference
 {
 public:
@@ -18,6 +23,8 @@ public:
           const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
 
   const bool& IsRaceMenuOpen() const;
+  const bool& IsDead() const;
+  const bool& IsRespawning() const;
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
@@ -55,14 +62,21 @@ public:
                       float staminaPercentage);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
+  std::chrono::steady_clock::time_point GetLastHitTime();
 
   void SetLastAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point timePoint =
       std::chrono::steady_clock::now());
+  void SetLastHitTime(std::chrono::steady_clock::time_point timePoint =
+                        std::chrono::steady_clock::now());
 
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
-    std::chrono::steady_clock::time_point now =
-      std::chrono::steady_clock::now());
+    std::chrono::steady_clock::time_point now);
+
+  void Kill();
+  void RespawnAfter(float seconds, const LocationalData& position = kSpawnPos);
+  void Respawn(const LocationalData& position = kSpawnPos);
+  void TeleportUser(const LocationalData& position);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
@@ -70,7 +84,7 @@ private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
-  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
+  void SetAndSendIsDeadPropery(bool value);
 
 protected:
   void BeforeDestroy() override;
