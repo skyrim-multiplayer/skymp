@@ -38,6 +38,7 @@ public:
   int32_t profileId = -1;
 
   bool isRaceMenuOpen = false;
+  bool isDead = false;
 
   // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.
   // "unexisting" equipment and equipment with zero entries are different

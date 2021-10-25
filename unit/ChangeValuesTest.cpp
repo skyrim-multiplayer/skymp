@@ -94,7 +94,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   IActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
-  ac.SetPercentages(0.0f, 0.0f, 0.0f);
+  ac.SetPercentages(0.1f, 0.0f, 0.0f);
   auto past = std::chrono::steady_clock::now() - 1s;
   ac.SetLastAttributesPercentagesUpdate(past);
   p.GetActionListener().OnChangeValues(msgData, 1.0f, 1.0f, 1.0f);
@@ -113,7 +113,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   auto changeForm = ac.GetChangeForm();
 
   REQUIRE_THAT(changeForm.healthPercentage,
-               Catch::Matchers::WithinAbs(expectedHealth, 0.000001f));
+               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.000001f));
   REQUIRE_THAT(changeForm.magickaPercentage,
                Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
   REQUIRE_THAT(changeForm.staminaPercentage,
@@ -163,7 +163,6 @@ TEST_CASE("OnChangeValues function sends ChangeValues message with new "
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
-  partOne.Messages().clear();
 
   nlohmann::json j = nlohmann::json{
     { "t", MsgType::ChangeValues },
@@ -174,6 +173,7 @@ TEST_CASE("OnChangeValues function sends ChangeValues message with new "
   auto past = std::chrono::steady_clock::now() - 1s;
   ac.SetLastAttributesPercentagesUpdate(past);
 
+  partOne.Messages().clear();
   DoMessage(partOne, 0, j);
 
   REQUIRE(partOne.Messages().size() == 1);
