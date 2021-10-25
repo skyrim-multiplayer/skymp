@@ -25,7 +25,7 @@ jobs:
         submodules: 'true'
 
     - name: test
-      run: mkdir yolo
+      run: mkdir yolo && echo 123 > yolo/kek.txt
 
     - uses: actions/upload-artifact@v2
       with:
