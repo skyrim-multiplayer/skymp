@@ -101,5 +101,5 @@ jobs:
         path: ${{github.workspace}}/build/__coverage
     - uses: actions/upload-artifact@v2
       with:
-        name: dist
+        name: dist_${{github.sha}}
         path: ${{github.workspace}}/build/dist
