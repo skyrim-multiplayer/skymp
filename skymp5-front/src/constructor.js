@@ -21,16 +21,6 @@ const styles = [
   "ICON_STYLE_KEY",
 ]
 
-const styles = [
-  "BUTTON_STYLE_GITHUB",
-  "BUTTON_STYLE_PATREON",
-  "BUTTON_STYLE_FRAME",
-  "BUTTON_STYLE_FRAME_LEFT",
-  "BUTTON_STYLE_FRAME_RIGHT",
-  "ICON_STYLE_MAIL",
-  "ICON_STYLE_KEY",
-]
-
 const Constructor = props => {
   const content_mainRef = useRef()
 

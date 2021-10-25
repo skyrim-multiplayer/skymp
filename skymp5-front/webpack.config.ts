@@ -17,6 +17,7 @@ module.exports = {
   devServer: {
     contentBase: distPath,
     port: 1234,
+    hot: true,
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -25,6 +26,13 @@ module.exports = {
   ],
   module: {
     rules: [
+      {
+        test: /\.(js|jsx)$/,
+        exclude: /node_modules/,
+        use: ['babel-loader'],
+      },
+      { test: /\.tsx?$/, loader: 'ts-loader' },
+      // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
       {
         test: /\.m?js$/,
         exclude: /(node_modules|bower_components|bridge)/,
@@ -49,5 +57,8 @@ module.exports = {
         use: "file-loader",
       },
     ],
+  },
+  resolve: {
+    extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
   },
 };
