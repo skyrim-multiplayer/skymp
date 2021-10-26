@@ -168,6 +168,11 @@ protected:
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
 
+  void SendPropertyToListeners(const char* name, const nlohmann::json& value);
+  void SendPropertyTo(const char* name, const nlohmann::json& value,
+                      MpActor& target);
+  void SendPropertyTo(const std::string& preparedPropMsg, MpActor& target);
+
 private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
                           std::map<uint32_t, uint32_t>* itemsToAdd);
@@ -177,10 +182,6 @@ private:
   void SendInventoryUpdate();
   void SendOpenContainer(uint32_t refId);
   void CheckInteractionAbility(MpObjectReference& ac);
-  void SendPropertyToListeners(const char* name, const nlohmann::json& value);
-  void SendPropertyTo(const char* name, const nlohmann::json& value,
-                      MpActor& target);
-  void SendPropertyTo(const std::string& preparedPropMsg, MpActor& target);
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
   void MpApiOnInit();
