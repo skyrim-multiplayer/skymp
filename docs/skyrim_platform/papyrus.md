@@ -1,11 +1,16 @@
 # Papyrus types from the original game
 
-- All types in SkyrimPlatform have the same name as in Papyrus, for example: `Game`, `Actor`, `Form`, `Spell`, `Perk`, etc.
-- To use types from Papyrus, including calling methods and static functions that they have, they need to be imported:
+All types in SkyrimPlatform have the same name as in Papyrus, for example: `Game`, `Actor`, `Form`, `Spell`, `Perk`, etc.
+
+To use types from Papyrus, including calling methods and static functions that they have, they need to be imported:
 
   ```typescript
   import { Game, Actor } from "skyrimPlatform";
   ```
+
+***WARNING***: Papyrus types and methods are only available inside [hooks][Hooks] or [new events][NewEvents] introduced by Skyrim Platform (except `tick`).
+
+You will get an exception if you try to use them outside any of those contexts.
 
 ## Form
 
@@ -95,3 +100,6 @@
   Game.getPlayer().ToString(); // '[object Actor]'
   JSON.stringify(Game.getPlayer()); // `{}`
   ```
+
+[Hooks]: events.md
+[NewEvents]: new_events.md
