@@ -4,8 +4,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include "MpActor.h"
 #include "HitData.h"
+#include "MpActor.h"
 #include "WorldState.h"
 #include <espm.h>
 
@@ -17,7 +17,7 @@ class TES5DamageFormula : public IDamageFormula
 {
 public:
   TES5DamageFormula(const MpActor& aggressor_, const MpActor& target_,
-                const HitData& hitData_);
+                    const HitData& hitData_);
 
   float CalculateDamage() const override;
 
@@ -30,6 +30,7 @@ private:
 private:
   float GetBaseWeaponDamage() const;
   float CalcWeaponRating() const;
-  float CalcArmorRatingComponent(const Inventory::Entry& opponentEquipmentEntry) const;
+  float CalcArmorRatingComponent(
+    const Inventory::Entry& opponentEquipmentEntry) const;
   float CalcOpponentArmorRating() const;
 };

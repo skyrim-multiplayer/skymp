@@ -4,14 +4,14 @@
 #include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
-#include "formulas/TES5DamageFormula.h"
-#include "formulas/IDamageFormula.h"
 #include "GetBaseActorValues.h"
 #include "MovementValidation.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
 #include "UserMessageOutput.h"
 #include "Utils.h"
+#include "formulas/IDamageFormula.h"
+#include "formulas/TES5DamageFormula.h"
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -173,7 +173,8 @@ void RecalculateWorn(MpObjectReference& refr)
   newEq.numChanges = eq.numChanges + 1;
   for (auto& entry : eq.inv.entries) {
     bool isEquipped = entry.extra.worn != Inventory::Worn::None;
-    bool isWeap = espm::GetRecordType(entry.baseId, refr.GetParent()) == espm::WEAP::type;
+    bool isWeap =
+      espm::GetRecordType(entry.baseId, refr.GetParent()) == espm::WEAP::type;
     if (isEquipped && isWeap) {
       continue;
     }
