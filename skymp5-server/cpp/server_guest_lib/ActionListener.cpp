@@ -630,6 +630,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
   if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+    spdlog::debug(fmt::format(
+      "Target is not available for attack due to fast attack speed"));
     return;
   }
 
@@ -667,6 +669,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   auto userId = partOne.serverState.UserByActor(&targetActor);
   if (userId == Networking::InvalidUserId) {
+    spdlog::debug(
+      fmt::format("Unable to attack due to invalid userId {0:x}", userId));
     return;
   }
 
@@ -682,4 +686,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
         { "stamina", targetForm.staminaPercentage } } }
   }.dump();
   targetActor.SendToUser(s.data(), s.size(), true);
+  spdlog::debug(
+    "Target {0:x} is hitted by {} damage. Current health percentage: {}.",
+    hitData.target, damage, currentHealthPercentage);
 }
