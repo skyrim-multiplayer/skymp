@@ -630,8 +630,15 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
   if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+    WorldState* espmProvider = targetActor.GetParent();
+    auto weapDNAM =
+      espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
+    float expectedAttackTime = 1.1 * (1 / weapDNAM->speed);
     spdlog::debug(fmt::format(
-      "Target is not available for attack due to fast attack speed"));
+      "Target {0:x} is not available for attack due to fast "
+      "attack speed. Weapon: {0:x}. Elapsed time: {}. Expected attack time: "
+      "{}",
+      hitData.target, hitData.source, timePassed.count(), expectedAttackTime));
     return;
   }
 
