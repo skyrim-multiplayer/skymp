@@ -695,7 +695,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   targetActor.SendToUser(s.data(), s.size(), true);
   spdlog::debug(
     "Target {0:x} is hitted by {} damage. Current health percentage: {}. Last "
-    "health percentage: {}. (Last: {} => Current: {}",
+    "health percentage: {}. (Last: {} => Current: {})",
     hitData.target, damage, currentHealthPercentage, healthPercentage,
     healthPercentage, currentHealthPercentage);
 }
