@@ -82,7 +82,6 @@ const Constructor = props => {
       }
 
       const [hints, setHints] = useState(hintsarr);
-
       let hintIndex = 0;
       bodylines.forEach((line) => {
         let arr = [];
