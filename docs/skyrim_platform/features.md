@@ -1,9 +1,3 @@
-# Unhandled exceptions
-
-- Unhandled JS exceptions will be logged to the console along with the call stack.
-- Raw Promise rejections are also output to the console.
-- Do not release plugins that have known bugs that are not handled. SkyrimPlatform performance is not guaranteed with unhandled exceptions.
-
 # Hot Reload
 
 - Hot Reload for SkyrimPlatform plugins is supported. Changing the contents of `Data / Platform / Plugins` will reload all plugins without restarting the game.
@@ -51,3 +45,9 @@ getAV.execute = (refrId: number, arg: string) => {
 # DumpFunctions
 
 - SkyrimPlatform has built-in functionality that allows you to output information about game functions to the file `Data / Platform / Output / DumpFunctions.txt` (key combination 9 + O + L). The game pauses for a few seconds while DumpFunctions is running.
+
+# Unhandled exceptions
+
+- Unhandled JS exceptions will be logged to the console along with the call stack.
+- Raw Promise rejections are also output to the console.
+- Do not release plugins that have known bugs that are not handled. SkyrimPlatform performance is not guaranteed with unhandled exceptions.

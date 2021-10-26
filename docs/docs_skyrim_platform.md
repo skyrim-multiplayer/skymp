@@ -20,11 +20,11 @@ Here you will find documentaiton aimed for you to create your own mods using Sky
   - [Browser / UI][Browser]
   - [HTTP][]
 
-[Browser]: browser.md
-[Events]: events.md
-[Features]: features.md
-[HTTP]: http.md
-[Native]: native.md
-[NewMethods]: new_methods.md
-[NewTypes]: new_types.md
-[Papyrus]: papyrus.md
+[Browser]: skyrim_platform/browser.md
+[Events]: skyrim_platform/events.md
+[Features]: skyrim_platform/features.md
+[HTTP]: skyrim_platform/http.md
+[Native]: skyrim_platform/native.md
+[NewMethods]: skyrim_platform/new_methods.md
+[NewTypes]: skyrim_platform/new_types.md
+[Papyrus]: skyrim_platform/papyrus.md
