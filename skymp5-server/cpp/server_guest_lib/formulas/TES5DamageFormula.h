@@ -9,16 +9,15 @@
 #include "WorldState.h"
 #include <espm.h>
 
+// Implements vanilla Skyrim damage formula.
+// Some parts may be missing. If they are, there should be a TODO regarding it.
+// If there's no corresponding TODO, consider adding it and/or filing an issue.
+
 class TES5DamageFormula
 {
 public:
   TES5DamageFormula(const MpActor& aggressor_, const MpActor& target_,
                 const HitData& hitData_);
-
-  float GetBaseWeaponDamage() const;
-  float CalcWeaponRating() const;
-  float CalcArmorRatingComponent(const Inventory::Entry& opponentEquipmentEntry) const;
-  float CalcOpponentArmorRating() const;
 
   float CalculateDamage() const;
 
@@ -27,4 +26,10 @@ private:
   const MpActor& target;
   const HitData& hitData;
   WorldState* espmProvider;
+
+private:
+  float GetBaseWeaponDamage() const;
+  float CalcWeaponRating() const;
+  float CalcArmorRatingComponent(const Inventory::Entry& opponentEquipmentEntry) const;
+  float CalcOpponentArmorRating() const;
 };

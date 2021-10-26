@@ -1,7 +1,3 @@
-// XXX: tmp to test compiling
-#include "formulas/TES5DamageFormula.h"
-
-
 #include "ActionListener.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
@@ -513,15 +509,6 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
-
-// XXX: move all of this stuff to a separate file?
-/**
- *
- */
-// We try to implement the formula described on UESP:
-// https://en.uesp.net/wiki/Oblivion:The_Complete_Damage_Formula
-// Some parts may be missing. If they are, there should be a TODO regarding it.
-// If there's no corresponding TODO, consider adding it and/or filing an issue.
 
 bool IsUnarmedAttack(const uint32_t sourceFormId)
 {
