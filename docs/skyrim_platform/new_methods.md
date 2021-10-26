@@ -1,4 +1,3 @@
-
 # Custom SkyrimPlatform Methods and Properties
 
 - There are methods such as `printConsole ()` that can be called immediately after import. They do not belong to any of the game types.
