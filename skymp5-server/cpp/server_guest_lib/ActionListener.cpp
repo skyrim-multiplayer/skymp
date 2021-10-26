@@ -154,14 +154,6 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   }
 }
 
-Equipment GetEquipment(const MpActor& ac)
-{
-  std::string equipment = ac.GetEquipmentAsJson();
-  simdjson::dom::parser p;
-  auto parseResult = p.parse(equipment);
-  return Equipment::FromJson(parseResult.value());
-}
-
 void RecalculateWorn(MpObjectReference& refr)
 {
   if (!refr.GetParent()->HasEspm()) {
@@ -175,7 +167,7 @@ void RecalculateWorn(MpObjectReference& refr)
     return;
   }
 
-  const Equipment eq = GetEquipment(*ac);
+  const Equipment eq = ac->GetEquipment();
 
   Equipment newEq;
   newEq.numChanges = eq.numChanges + 1;
@@ -595,7 +587,7 @@ public:
     // TODO(#xyz): OpponentArmorRating is 1 if your character is successfully sneaking and has the Master Sneak perk
     // (C) UESP Wiki
     float combinedArmorRating = 0;
-    for (const auto& entry : GetEquipment(target).inv.entries) {
+    for (const auto& entry : target.GetEquipment().inv.entries) {
       spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={:#x}; worn={}",
                    aggressor.idx, target.idx, entry.extra.name, entry.baseId,
                    static_cast<int>(entry.extra.worn));

@@ -253,7 +253,15 @@ const std::string& MpActor::GetAppearanceAsJson()
 const std::string& MpActor::GetEquipmentAsJson() const
 {
   return pImpl->ChangeForm().equipmentDump;
-};
+}
+
+Equipment MpActor::GetEquipment() const
+{
+  std::string equipment = GetEquipmentAsJson();
+  simdjson::dom::parser p;
+  auto parseResult = p.parse(equipment);
+  return Equipment::FromJson(parseResult.value());
+}
 
 bool MpActor::IsWeaponDrawn() const
 {
