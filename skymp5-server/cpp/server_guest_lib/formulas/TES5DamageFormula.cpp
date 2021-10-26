@@ -7,17 +7,6 @@ bool IsUnarmedAttack(const uint32_t sourceFormId)
   return sourceFormId == 0x1f4;
 }
 
-uint32_t GetRaceId(const MpActor& actor)
-{
-  auto appearance = actor.GetAppearance();
-  if (appearance) {
-    return appearance->raceId;
-  }
-  WorldState* espmProvider = actor.GetParent();
-  uint32_t baseId = actor.GetBaseId();
-  return espm::GetData<espm::NPC_>(baseId, espmProvider).race;
-}
-
 }
 
 TES5DamageFormula::TES5DamageFormula(const MpActor& aggressor_, const MpActor& target_,
@@ -82,7 +71,7 @@ float TES5DamageFormula::CalcOpponentArmorRating() const
 float TES5DamageFormula::CalculateDamage() const
 {
   if (IsUnarmedAttack(hitData.source)) {
-    uint32_t raceId = GetRaceId(aggressor);
+    uint32_t raceId = aggressor.GetRaceId();
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
   }
 

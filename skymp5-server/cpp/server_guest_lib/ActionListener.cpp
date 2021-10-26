@@ -523,11 +523,16 @@ namespace {
 // Some parts may be missing. If they are, there should be a TODO regarding it.
 // If there's no corresponding TODO, consider adding it and/or filing an issue.
 
+bool IsUnarmedAttack(const uint32_t sourceFormId)
+{
+  return sourceFormId == 0x1f4;
+}
+
 float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
                                        float healthPercentage)
 {
   uint32_t baseId = actor.GetBaseId();
-  uint32_t raceId = GetRaceId(actor);
+  uint32_t raceId = actor.GetRaceId();
   WorldState* espmProvider = actor.GetParent();
   float baseHealth = GetBaseActorValues(espmProvider, baseId, raceId).health;
 
@@ -545,7 +550,7 @@ float GetReach(const MpActor& actor, const uint32_t source)
 {
   auto espmProvider = actor.GetParent();
   if (IsUnarmedAttack(source)) {
-    uint32_t raceId = GetRaceId(actor);
+    uint32_t raceId = actor.GetRaceId();
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
@@ -631,7 +636,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float staminaPercentage = targetForm.staminaPercentage;
 
   float damage =
-    DamageFormula(*aggressor, targetActor, hitData).CalculateDamage();
+    TES5DamageFormula(*aggressor, targetActor, hitData).CalculateDamage();
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
     CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);

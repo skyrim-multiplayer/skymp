@@ -29,6 +29,7 @@ public:
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
   Equipment GetEquipment() const;
+  uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
 
   void SetRaceMenuOpen(bool isOpen);

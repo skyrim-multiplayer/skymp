@@ -263,6 +263,17 @@ Equipment MpActor::GetEquipment() const
   return Equipment::FromJson(parseResult.value());
 }
 
+uint32_t MpActor::GetRaceId() const
+{
+  auto appearance = GetAppearance();
+  if (appearance) {
+    return appearance->raceId;
+  }
+  WorldState* espmProvider = GetParent();
+  uint32_t baseId = GetBaseId();
+  return espm::GetData<espm::NPC_>(baseId, espmProvider).race;
+}
+
 bool MpActor::IsWeaponDrawn() const
 {
   return GetAnimationVariableBool("_skymp_isWeapDrawn");
