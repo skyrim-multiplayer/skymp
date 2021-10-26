@@ -181,8 +181,7 @@ void RecalculateWorn(MpObjectReference& refr)
   newEq.numChanges = eq.numChanges + 1;
   for (auto& entry : eq.inv.entries) {
     bool isEquipped = entry.extra.worn != Inventory::Worn::None;
-    bool isWeap = !!espm::Convert<espm::WEAP>(
-      loader.GetBrowser().LookupById(entry.baseId).rec);
+    bool isWeap = espm::GetRecordType(entry.baseId, refr.GetParent()) == espm::WEAP::type;
     if (isEquipped && isWeap) {
       continue;
     }
