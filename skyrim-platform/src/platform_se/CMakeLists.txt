@@ -57,6 +57,7 @@ if(MSVC)
   target_link_libraries(SkyrimPlatformCEF PUBLIC core_library)
   target_link_libraries(SkyrimPlatformCEF PUBLIC cef)
   set_target_properties(SkyrimPlatformCEF PROPERTIES WIN32_EXECUTABLE TRUE)
+  set_target_properties(SkyrimPlatformCEF PROPERTIES SUFFIX ".exe.hidden")
 endif()
 
 if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
