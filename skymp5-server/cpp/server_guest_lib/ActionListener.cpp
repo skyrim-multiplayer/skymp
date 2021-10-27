@@ -634,11 +634,11 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
     float expectedAttackTime = 1.1 * (1 / weapDNAM->speed);
-    spdlog::debug(fmt::format(
+    spdlog::debug(
       "Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
       "{3}",
-      hitData.target, hitData.source, timePassed.count(), expectedAttackTime));
+      hitData.target, hitData.source, timePassed.count(), expectedAttackTime);
     return;
   }
 
@@ -676,8 +676,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   auto userId = partOne.serverState.UserByActor(&targetActor);
   if (userId == Networking::InvalidUserId) {
-    spdlog::debug(
-      fmt::format("Unable to attack due to invalid userId {}", userId));
+    spdlog::debug("Unable to attack due to invalid userId {}", userId);
     return;
   }
 
