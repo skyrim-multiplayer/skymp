@@ -10,9 +10,7 @@ PartOne& GetPartOne();
 extern espm::Loader l;
 using namespace std::chrono_literals;
 
-TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
-          "weapon-dependent value",
-          "[Hit]")
+TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
@@ -35,6 +33,7 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
   REQUIRE(changeForm.healthPercentage == 0.75f);
+  // XXX: test with other dummy formula? Test with actor with baseHealth > 100?
   REQUIRE(changeForm.magickaPercentage == 1.f);
   REQUIRE(changeForm.staminaPercentage == 1.f);
 
@@ -82,7 +81,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   DoDisconnect(p, 0);
 }
 
-TEST_CASE("Dead actors can't attack")
+TEST_CASE("Dead actors can't attack", "[Hit]")
 {
   PartOne& p = GetPartOne();
   IActionListener::RawMessageData rawMsgData;
@@ -118,7 +117,7 @@ TEST_CASE("Dead actors can't attack")
   DoDisconnect(p, 0);
 }
 
-TEST_CASE("checking weapon cooldown", "[HitTest]")
+TEST_CASE("checking weapon cooldown", "[Hit]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
