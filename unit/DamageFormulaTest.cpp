@@ -54,48 +54,6 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
   DoDisconnect(p, 0);
 }
 
-TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
-          "[TES5DamageFormula]")
-{
-  PartOne& p = GetPartOne();
-  DoConnect(p, 0);
-  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
-  p.SetUserActor(0, 0xff000000);
-  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.SetEquipment(R"({"inv": {"entries": []}})");
-
-  IActionListener::RawMessageData rawMsgData;
-  rawMsgData.userId = 0;
-  HitData hitData;
-  hitData.target = 0x14;
-  hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E; // iron dagger 4 damage
-
-  TES5DamageFormula formula(ac, ac, hitData);
-  REQUIRE(formula.CalculateDamage() == 4.0f);
-
-  // vvv temporary stuff to ensure I didn't break anything
-
-  p.SetDamageFormulaFactory([](const MpActor& aggressor, const MpActor& target, const HitData& hitData) {
-    return std::make_unique<TES5DamageFormula>(aggressor, target, hitData);
-  });
-
-  p.Messages().clear();
-  auto past = std::chrono::steady_clock::now() - 4s;
-  ac.SetLastHitTime(past);
-  p.GetActionListener().OnHit(rawMsgData, hitData);
-
-  REQUIRE(p.Messages().size() == 1);
-  nlohmann::json message = p.Messages()[0].j;
-
-  REQUIRE(message["data"]["health"] == 0.96f);
-  REQUIRE(message["data"]["magicka"] == 1.0f);
-  REQUIRE(message["data"]["stamina"] == 1.0f);
-
-  p.DestroyActor(0xff000000);
-  DoDisconnect(p, 0);
-}
-
 TEST_CASE("OnHit damage character by race-dependent value", "[TES5DamageFormula]")
 {
   PartOne& p = GetPartOne();
