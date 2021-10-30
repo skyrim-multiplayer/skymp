@@ -17,7 +17,7 @@ Here you will find documentaiton aimed for you to create your own mods using Sky
   - [Exclusive features][Features]
   - [New methods and properties][NewMethods]
   - [New types][NewTypes]
-  - [New Events][NewEvents]
+  - [New events][NewEvents]
   - [Browser / UI][Browser]
   - [HTTP][]
 

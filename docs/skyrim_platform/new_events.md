@@ -55,6 +55,12 @@ on("update", () => {
 });
 ```
 
+***NOTE***: Executing code each single frame may be expensive depending on what you are doing.
+
+For `update` and `tick` try to use `once` instead of `on`, if possible.
+
+It's also a good idea to try to use any of the events below or even [Papyrus Hooks][Events] before considering executing code each frame.
+
 ## tick
 
 Called once for every frame in the game immediately after the game starts.
@@ -101,10 +107,9 @@ on("unequip", (event) => {
   const w = Weapon.from(event.baseObj);
 
   if(w)
-    printConsole("Player equipped a weapon");
+    printConsole("Player unequipped a weapon");
 })
 ```
-
 
 ## effectStart
 
@@ -117,14 +122,15 @@ Analogous to [OnEffectStart][OnEffectStart].
 import { on } from "skyrimPlatform";
 
 on("effectStart", (event) => {
-  const fx = Game.getFormFromFile(0x800, "my-mod.esp")
+  const fx = Game.getFormFromFile(0x800, "my-mod.esp");
   if (fx?.getFormID() !== event.effect.getFormID()) return
 
-  DoSomething(event.target)
+  DoSomething(event.target);
 })
 ```
 
 ## effectFinish
+
 Called when any Magic Effect ends.\
 Analogous to [OnEffectFinish][OnEffectFinish].
 
@@ -132,16 +138,31 @@ Analogous to [OnEffectFinish][OnEffectFinish].
 import { on } from "skyrimPlatform";
 
 on("effectFinish", (event) => {
-  printConsole(`${event.effect.getName()} finished on ${event.target.getName()}`)
+  printConsole(`${event.effect.getName()} finished on ${event.target.getName()}`);
 })
 ```
+
+## cellFullyLoaded
+
+Called each time a game cell has finished loading.
+
+```typescript
+import { on } from "skyrimPlatform";
+
+on("cellFullyLoaded", (event) => {
+  printConsole(`Cell "${event.cell.getName()}" was fully loaded`);
+})
+```
+
+Notice that due to the way Skyrim works this event may fire multiple times when roaming the wilderness, since many cells are usually loaded at the same time in this situation.
+
+This event will be called once for each of those cells that just had been loaded.
 
 ## Other events
 
 More info and samples for these will be added later:
 
 - `activate`
-- `cellFullyLoaded`
 - `combatState`
 - `containerChanged`
 - `deathEnd`
@@ -160,6 +181,7 @@ More info and samples for these will be added later:
 - `uniqueIdChange`
 - `waitStop`
 
+[Events]: events.md
 [Papyrus]: papyrus.md
 [OnObjectEquipped]: https://www.creationkit.com/index.php?title=OnObjectEquipped_-_Actor
 [OnObjectUnequipped]: https://www.creationkit.com/index.php?title=OnObjectUnequipped_-_Actor
