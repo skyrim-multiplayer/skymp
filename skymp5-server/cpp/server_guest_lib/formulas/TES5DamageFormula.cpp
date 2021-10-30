@@ -45,18 +45,12 @@ float TES5DamageFormula::CalcArmorRatingComponent(
   if (opponentEquipmentEntry.extra.worn != Inventory::Worn::None &&
       espm::GetRecordType(opponentEquipmentEntry.baseId, espmProvider) ==
         espm::ARMO::type) {
-    try {
-      auto armorData =
-        espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
-      spdlog::info("armor baseId={:#x}: baseValue={}",
-                   opponentEquipmentEntry.baseId, armorData.baseValue);
-      // TODO(#xyz): take other components into account
-      return armorData.baseValue;
-    } catch (const std::exception& exc) {
-      // XXX: gotta check if that's ARMO somehow. New GetData for already found
-      // rec?
-      spdlog::error("err: {}", exc.what());
-    }
+    auto armorData =
+      espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
+    spdlog::info("armor baseId={:#x}: baseValue={}",
+                  opponentEquipmentEntry.baseId, armorData.baseValue);
+    // TODO(#xyz): take other components into account
+    return armorData.baseValue;
   }
   return 0;
 }
@@ -72,8 +66,9 @@ float TES5DamageFormula::CalcOpponentArmorRating() const
                  static_cast<int>(entry.extra.worn));
     combinedArmorRating += CalcArmorRatingComponent(entry);
   }
-  combinedArmorRating = std::min(combinedArmorRating, 85.0f);
-  return (100 - combinedArmorRating) / 100;
+  // combinedArmorRating = std::min(combinedArmorRating, 85.0f);
+  // return (100 - combinedArmorRating) / 100;
+  return combinedArmorRating;
 }
 
 float TES5DamageFormula::CalculateDamage() const
@@ -83,6 +78,19 @@ float TES5DamageFormula::CalculateDamage() const
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
   }
 
+  float incomingDamage = CalcWeaponRating();
+  float maxArmorRating = espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, espmProvider).value;
+  float minReceivedDamage = incomingDamage * (1 - 0.01 * maxArmorRating);
+
   // TODO(#xyz): take other components into account
-  return CalcWeaponRating() * CalcOpponentArmorRating();
+  // return CalcWeaponRating() * CalcOpponentArmorRating();
+  float damage = std::max<float>(minReceivedDamage, incomingDamage / (CalcOpponentArmorRating() * 0.12 + 1));
+  if (hitData.isPowerAttack) {
+    damage *= 2;
+  }
+  if (hitData.isHitBlocked) {
+    // TODO(#xyz): implement correct block formula
+    damage *= 0.1;
+  }
+  return damage;
 }

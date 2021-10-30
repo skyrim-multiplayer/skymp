@@ -763,6 +763,7 @@ class GMST : public RecordHeader
 {
 public:
   static constexpr auto type = "GMST";
+  static constexpr uint32_t kFArmorRating = 0x00037DEB;
 
   struct Data
   {
