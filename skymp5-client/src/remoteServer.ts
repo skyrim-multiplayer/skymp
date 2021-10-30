@@ -32,9 +32,11 @@ import { IdManager } from "./idManager";
 import { applyAppearanceToPlayer } from "./appearance";
 import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
-import { localIdToRemoteId, remoteIdToLocalId } from "./view";
+import { localIdToRemoteId, remoteIdToLocalId, WorldView } from "./view";
 import * as updateOwner from "./updateOwner";
 import { setActorValuePercentage } from "./actorvalues";
+import { applyDeathState } from './deathSystem';
+import { nameof } from "./utils";
 
 //
 // eventSource system
@@ -165,23 +167,22 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         "cell/world is",
         msg.worldOrCell.toString(16)
       );
-      TESModPlatform.moveRefrToPosition(
-        Game.getPlayer(),
-        Cell.from(Game.getFormEx(msg.worldOrCell)),
-        WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
-        msg.pos[0],
-        msg.pos[1],
-        msg.pos[2],
-        msg.rot[0],
-        msg.rot[1],
-        msg.rot[2]
-      );
-      Utility.wait(0.2).then(() => {
-        (Game.getPlayer() as Actor).setAngle(
-          msg.rot[0],
-          msg.rot[1],
-          msg.rot[2]
-        );
+      const playerActor = Game.getPlayer()!;
+      // todo: think about track ragdoll state of player
+      playerActor.forceRemoveRagdollFromWorld().then(() => {
+        once("update", () => {
+          TESModPlatform.moveRefrToPosition(
+            playerActor,
+            Cell.from(Game.getFormEx(msg.worldOrCell)),
+            WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
+            msg.pos[0],
+            msg.pos[1],
+            msg.pos[2],
+            msg.rot[0],
+            msg.rot[1],
+            msg.rot[2]
+          );
+        })
       });
     });
   }
@@ -204,6 +205,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isSneaking: false,
         isBlocking: false,
         isWeapDrawn: false,
+        isDead: false,
         healthPercentage: 1.0,
       };
     }
@@ -416,8 +418,19 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
     const i = this.getIdManager().getId(msg.idx);
-    (this.worldModel.forms[i] as Record<string, unknown>)[msg.propName] =
+    const form = this.worldModel.forms[i];
+    (form as Record<string, unknown>)[msg.propName] =
       msg.data;
+
+    if (msg.propName === nameof<FormModel>("isDead") && typeof msg.data === "boolean") {
+      once("update", () => {
+        //const actor = Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
+        const actor = Game.getPlayer()!;
+        if (actor) {
+          applyDeathState(actor, msg.data as boolean);
+        }
+      });
+    }
   }
 
   handleConnectionAccepted(): void {
@@ -581,6 +594,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   send(msg: Record<string, unknown>, reliable: boolean): void {
+    if (!msg) return;
     if (this.worldModel.playerCharacterFormIdx === -1) return;
 
     const refrId = msg._refrId as number | undefined;
@@ -588,6 +602,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     const idxInModel = refrId
       ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId)
       : this.worldModel.playerCharacterFormIdx;
+    if (!this.worldModel.forms[idxInModel]) return;
     msg.idx = this.worldModel.forms[idxInModel].idx;
 
     delete msg._refrId;

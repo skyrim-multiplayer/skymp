@@ -6,6 +6,7 @@ import {
   Debug,
   Form,
 } from "skyrimPlatform";
+import { applyDeathState } from "./deathSystem";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {
@@ -47,6 +48,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
     applySneaking(ac, m.isSneaking);
     applyWeapDrawn(ac, m.isWeapDrawn);
     applyHealthPercentage(ac, m.healthPercentage);
+    applyDeathState(ac, m.isDead);
   }
 };
 

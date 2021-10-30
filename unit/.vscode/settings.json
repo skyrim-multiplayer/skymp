@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "chrono": "cpp",
+        "atomic": "cpp",
+        "filesystem": "cpp",
+        "forward_list": "cpp",
+        "ios": "cpp",
+        "list": "cpp",
+        "system_error": "cpp",
+        "vector": "cpp",
+        "xiosbase": "cpp",
+        "xstring": "cpp",
+        "xtree": "cpp",
+        "xlocale": "cpp"
+    }
+}

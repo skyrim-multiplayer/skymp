@@ -15,6 +15,7 @@ export interface AnimationVariables {
   isSneaking: boolean;
   isBlocking: boolean;
   isWeapDrawn: boolean;
+  isDead: boolean;
   healthPercentage: number;
   lookAt?: NiPoint3;
 }

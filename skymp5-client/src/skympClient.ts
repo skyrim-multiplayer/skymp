@@ -34,6 +34,8 @@ import { nextHostAttempt } from "./hostAttempts";
 import * as updateOwner from "./updateOwner";
 import { ActorValues, getActorValues } from "./actorvalues";
 import { Hit, getHitData } from "./hit";
+import { FormModel } from "./model";
+import { from } from "rxjs";
 
 interface AnyMessage {
   type?: string;
@@ -57,7 +59,7 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   if (msgType === "hostStart") {
     const msg = msgAny as HostStartMessage;
     const target = msg.target;
-    printConsole("hostStart", target.toString(16));
+    //printConsole("hostStart", target.toString(16));
 
     let hosted = storage["hosted"];
     if (typeof hosted !== typeof []) {
@@ -86,7 +88,6 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   if (f && typeof f === "function") handler[msgType](msgAny);
 };
 
-for (let i = 0; i < 100; ++i) printConsole();
 printConsole("Hello Multiplayer");
 printConsole("settings:", settings["skymp5-client"]);
 
@@ -314,7 +315,6 @@ export class SkympClient {
       }
     });
 
-    on("update", () => deathSystem.update());
     once("update", () => {
       const player = Game.getPlayer();
       if (player) {
@@ -352,7 +352,7 @@ export class SkympClient {
       this.sendTarget.send(
         {
           t: MsgType.UpdateMovement,
-          data: getMovement(owner),
+          data: getMovement(owner, this.getForm(_refrId)),
           _refrId,
         },
         false
@@ -539,6 +539,12 @@ export class SkympClient {
 
   private getView(): WorldView | undefined {
     return getViewFromStorage();
+  }
+
+  private getForm(refrId?: number): FormModel | undefined {
+    const world = (this.modelSource as ModelSource).getWorldModel();
+    const form = refrId ? world?.forms.find(f => f?.refrId === refrId) : world.forms[world.playerCharacterFormIdx];
+    return form;
   }
 
   private localIdToRemoteId(localFormId: number): number {

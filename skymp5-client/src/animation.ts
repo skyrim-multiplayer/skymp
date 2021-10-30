@@ -11,6 +11,25 @@ import {
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
 
+export enum AnimationEventName {
+  ragdoll = "Ragdoll",
+  death2 = "DeathAnim",
+  death_stop = "deathStop",
+
+  AddPCControllerToWorld = "AddCharacterControllerToWorld",
+  RemovePCControllerFromWorld = "RemoveCharacterControllerFromWorld",
+
+  reanimated = "reanimated",
+  get_up_begin = "GetUpBegin",
+  return_to_default = "returnToDefault",
+  force_default = "IdleForceDefaultState",
+
+  wound_default = "IdleWounded_02",
+  bleed_out = "bleedOutStart",
+
+  kill_move = "killmove",
+};
+
 export interface Animation {
   animEventName: string;
   numChanges: number;
@@ -44,7 +63,6 @@ export const applyAnimation = (
   if (isIdle(anim.animEventName)) {
     allowedIdles.push([refr.getFormID(), anim.animEventName]);
   }
-
   if (anim.animEventName === "SkympFakeEquip") {
     const ac = Actor.from(refr);
     if (ac) applyWeapDrawn(ac, true);
