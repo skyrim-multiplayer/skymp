@@ -7,6 +7,7 @@
 #include "PartOneListener.h"
 #include "ServerState.h"
 #include "WorldState.h"
+#include "formulas/IDamageFormula.h"
 #include <Loader.h>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -18,6 +19,7 @@
 using ProfileId = int32_t;
 
 class IActionListener;
+struct HitData;
 
 class PartOne
 {
@@ -30,6 +32,10 @@ public:
   };
 
   using Listener = PartOneListener;
+  using DamageFormulaFactory = std::function<std::unique_ptr<IDamageFormula>(
+                                     const MpActor& aggressor,
+                                     const MpActor& target,
+                                     const HitData& hitData)>;
 
   PartOne(Networking::ISendTarget* sendTarget = nullptr);
   PartOne(std::shared_ptr<Listener> listener,
@@ -37,6 +43,8 @@ public:
   ~PartOne();
 
   void SetSendTarget(Networking::ISendTarget* sendTarget);
+  // void SetDamageFormulaFactory(DamageFormulaFactory dmgFormulaFactory);
+  void SetDamageFormulaFactory(const DamageFormulaFactory& dmgFormulaFactory);
   void AddListener(std::shared_ptr<Listener> listener);
   bool IsConnected(Networking::UserId userId) const;
   void Tick();
@@ -76,6 +84,7 @@ public:
   ServerState serverState;
 
   Networking::ISendTarget& GetSendTarget() const;
+  std::unique_ptr<IDamageFormula> CreateDamageFormula(const MpActor& aggressor, const MpActor& target, const HitData& hitData) const;
 
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;

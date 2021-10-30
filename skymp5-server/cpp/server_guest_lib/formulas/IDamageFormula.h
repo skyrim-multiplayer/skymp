@@ -3,7 +3,7 @@
 class IDamageFormula
 {
 public:
-  ~IDamageFormula() = default;
+  virtual ~IDamageFormula() = default;
 
   virtual float CalculateDamage() const = 0;
 };

@@ -34,7 +34,7 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
 
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
-  REQUIRE(changeForm.healthPercentage == 0.96f);
+  REQUIRE(changeForm.healthPercentage == 0.75f);
   REQUIRE(changeForm.magickaPercentage == 1.f);
   REQUIRE(changeForm.staminaPercentage == 1.f);
 
@@ -66,7 +66,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   REQUIRE(p.Messages().size() == 1);
   nlohmann::json message = p.Messages()[0].j;
 
-  REQUIRE(message["data"]["health"] == 0.96f);
+  REQUIRE(message["data"]["health"] == 0.75f);
   REQUIRE(message["data"]["magicka"] == 1.0f);
   REQUIRE(message["data"]["stamina"] == 1.0f);
 
@@ -97,7 +97,7 @@ TEST_CASE("OnHit damage character by race-dependent value", "[Hit]")
 
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
-  REQUIRE(changeForm.healthPercentage == 0.96f);
+  REQUIRE(changeForm.healthPercentage == 0.75f);
   REQUIRE(changeForm.magickaPercentage == 1.f);
   REQUIRE(changeForm.staminaPercentage == 1.f);
 
@@ -111,7 +111,7 @@ TEST_CASE("OnHit damage character by race-dependent value", "[Hit]")
   p.GetActionListener().OnHit(rawMsgData, hitData);
   changeForm = ac.GetChangeForm();
 
-  REQUIRE(changeForm.healthPercentage == 0.9f);
+  REQUIRE(changeForm.healthPercentage == 0.75f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
@@ -238,7 +238,7 @@ TEST_CASE("checking weapon cooldown", "[HitTest]")
   nlohmann::json message = p.Messages()[0].j;
   uint64_t msgType = 16; // OnHit sends ChangeValues message type
   REQUIRE(message["t"] == msgType);
-  REQUIRE(message["data"]["health"] == 0.96f);
+  REQUIRE(message["data"]["health"] == 0.75f);
   REQUIRE(message["data"]["magicka"] == 1.f);
   REQUIRE(message["data"]["stamina"] == 1.f);
 
