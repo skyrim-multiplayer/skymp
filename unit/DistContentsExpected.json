@@ -196,7 +196,7 @@
       "client/Data/Platform/Distribution/RuntimeDependencies/libcef.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/libEGL.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/libGLESv2.dll",
-      "client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformCEF.exe",
+      "client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformCEF.exe.hidden",
       "client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/snapshot_blob.bin",
       "client/Data/Platform/Distribution/RuntimeDependencies/swiftshader/libEGL.dll",
