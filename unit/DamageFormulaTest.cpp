@@ -11,8 +11,7 @@ PartOne& GetPartOne();
 extern espm::Loader l;
 using namespace std::chrono_literals;
 
-TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
-          "weapon-dependent value",
+TEST_CASE("Formula takes weapon damage into account",
           "[TES5DamageFormula]")
 {
   PartOne& p = GetPartOne();
@@ -54,7 +53,7 @@ TEST_CASE("OnHit sends a ChangeValues' packet and damage character by "
   DoDisconnect(p, 0);
 }
 
-TEST_CASE("OnHit damage character by race-dependent value", "[TES5DamageFormula]")
+TEST_CASE("Formula is race-dependent for unarmed attack", "[TES5DamageFormula]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
