@@ -602,6 +602,15 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
   if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+    WorldState* espmProvider = targetActor.GetParent();
+    auto weapDNAM =
+      espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
+    float expectedAttackTime = 1.1 * (1 / weapDNAM->speed);
+    spdlog::debug(
+      "Target {0:x} is not available for attack due to fast "
+      "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
+      "{3}",
+      hitData.target, hitData.source, timePassed.count(), expectedAttackTime);
     return;
   }
 
@@ -640,6 +649,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   auto userId = partOne.serverState.UserByActor(&targetActor);
   if (userId == Networking::InvalidUserId) {
+    spdlog::debug("Unable to attack due to invalid userId {}", userId);
     return;
   }
 
@@ -655,4 +665,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
         { "stamina", targetForm.staminaPercentage } } }
   }.dump();
   targetActor.SendToUser(s.data(), s.size(), true);
+  spdlog::debug("Target {0:x} is hitted by {1} damage. Current health "
+                "percentage: {2}. Last "
+                "health percentage: {3}. (Last: {3} => Current: {2})",
+                hitData.target, damage, currentHealthPercentage,
+                healthPercentage);
 }
