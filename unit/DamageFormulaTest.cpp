@@ -53,6 +53,57 @@ TEST_CASE("Formula takes weapon damage into account",
   DoDisconnect(p, 0);
 }
 
+TEST_CASE("Damage is reduced based on target's armor",
+          "[TES5DamageFormula]")
+{
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  // 77382 = 0x12e46: Iron Gauntlets, rating = 10
+  // 77387 = 0x12e4b: Iron Boots, rating = 25
+  // 77389 = 0x12e4d: Iron Helmet, rating = 15
+  // Total rating for worn armor: 10 + 25 = 35
+  ac.SetEquipment(R"(
+    {
+      "inv": {
+        "entries": [
+          {
+            "baseId": 77382,
+            "count": 1,
+            "worn": true
+          },
+          {
+            "baseId": 77387,
+            "count": 1,
+            "worn": true
+          },
+          {
+            "baseId": 77389,
+            "count": 1,
+            "worn": false
+          }
+        ]
+      }
+    }
+  )");
+
+  IActionListener::RawMessageData rawMsgData;
+  rawMsgData.userId = 0;
+  HitData hitData;
+  hitData.target = 0x14;
+  hitData.aggressor = 0x14;
+  hitData.source = 0x0001397E; // iron dagger 4 damage
+
+  TES5DamageFormula formula(ac, ac, hitData);
+  REQUIRE(formula.CalculateDamage() == 0.8f);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
+}
+
 TEST_CASE("Formula is race-dependent for unarmed attack", "[TES5DamageFormula]")
 {
   PartOne& p = GetPartOne();
