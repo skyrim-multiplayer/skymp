@@ -33,7 +33,7 @@ HttpClient::HttpClient()
   pImpl.reset(new Impl);
 }
 
-void HttpClient::Update()
+void HttpClient::ExecuteQueuedCallbacks()
 {
   pImpl->q.Update();
 }

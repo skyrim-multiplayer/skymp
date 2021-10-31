@@ -95,3 +95,11 @@ JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
 {
   return "0.7.0+build3";
 }
+
+JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
+{
+  if (!jsEngine || !*jsEngine) {
+    throw NullPointerException("jsEngine");
+  }
+  return static_cast<double>((**jsEngine).GetMemoryUsage());
+}
