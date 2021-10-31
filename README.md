@@ -51,8 +51,8 @@ Client can be run with Proton (though it can be tricky to get Skyrim itself to w
 * Python 2 (not 3.x! It is needed to build ChakraCore. Don't worry, it won't conflict with Python 3):
   `sudo apt install python2`
 * Make sure that your NodeJS and CMake are fresh enough:
-  * You can use `nvm` or Nodesource's apt repositories to install fresh Node
-  * The simpliest way to install fresh CMake is to download a `.tar.gz` from CMake download page,
+  * You can use [`nvm`](https://github.com/nvm-sh/nvm) or [Nodesource's apt repositories](https://github.com/nodesource/distributions) to install fresh Node
+  * The simpliest way to install fresh CMake is to download a `.tar.gz` from [CMake download page](https://cmake.org/download/),
     unpack it to your home directory and add it to path:
     ```sh
     echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
@@ -108,7 +108,8 @@ directory and add some aliases to `PATH`.
 
 1. Generate project files with CMake wrapper (replace path with your actual Skyrim SE folder)
    ```sh
-   ./build.sh --configure -DCMAKE_BUILD_TYPE=Debug -DSKYRIM_DIR="$HOME/.steam/debian-installation/steamapps/common/Skyrim Special Edition"
+   ./build.sh --configure -DCMAKE_BUILD_TYPE=Debug \
+      -DSKYRIM_DIR="$HOME/.steam/debian-installation/steamapps/common/Skyrim Special Edition"
    ```
    For users who don't have Skyrim SE installed:
    ```sh
