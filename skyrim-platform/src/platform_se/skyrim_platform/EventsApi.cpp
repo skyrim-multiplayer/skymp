@@ -272,7 +272,7 @@ private:
 struct EventsGlobalStatePersistent
 {
   std::shared_ptr<GameEventSinks> gameEventSinks;
-} gPersistent;
+} g_persistent;
 
 struct EventsGlobalState
 {
@@ -486,8 +486,8 @@ void EventsApi::SendMenuClose(const char* menuName)
 namespace {
 JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
-  if (!gPersistent.gameEventSinks) {
-    gPersistent.gameEventSinks = std::make_shared<GameEventSinks>();
+  if (!g_persistent.gameEventSinks) {
+    g_persistent.gameEventSinks = std::make_shared<GameEventSinks>();
   }
 
   auto eventName = args[1].ToString();
