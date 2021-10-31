@@ -24,8 +24,6 @@ export CMAKE_C_COMPILER="$CC"
 export CMAKE_CXX_COMPILER="$CXX"
 export CMAKE_MAKE_PROGRAM="ninja"
 
-# export SKYMP_CMAKE_VARS="-DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_MAKE_PROGRAM=ninja -DSKYRIM_DIR=~/.steam/debian-installation/steamapps/common/Skyrim\ Special\ Edition"
-
 # Some build dependencies require some strange stuff.
 # For example, Chakra needs Python 2 installed with `python` name.
 # Some other deps won't work if we can't call clang without exact version.
