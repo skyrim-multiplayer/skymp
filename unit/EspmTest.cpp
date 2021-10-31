@@ -456,12 +456,37 @@ TEST_CASE("ARMO parsing", "[espm]")
 {
   MyEspmProvider provider;
   {
+    // Iron Gauntlets
+    auto data = espm::GetData<espm::ARMO>(0x12e46, &provider);
+    REQUIRE(data.baseRatingX100 == 1000);
+    REQUIRE(data.baseValue == 25);
+    REQUIRE(data.weight == 5);
+  }
+  {
+    // Iron Boots
+    auto data = espm::GetData<espm::ARMO>(0x12e4b, &provider);
+    REQUIRE(data.baseRatingX100 == 1000);
+    REQUIRE(data.baseValue == 25);
+    REQUIRE(data.weight == 6);
+  }
+  {
+    // Iron Boots
+    auto data = espm::GetData<espm::ARMO>(0x12e4d, &provider);
+    REQUIRE(data.baseRatingX100 == 1500);
+    REQUIRE(data.baseValue == 60);
+    REQUIRE(data.weight == 5);
+  }
+  {
+    // Hide Boots
     auto data = espm::GetData<espm::ARMO>(0x13910, &provider);
+    REQUIRE(data.baseRatingX100 == 500);
     REQUIRE(data.baseValue == 10);
     REQUIRE(data.weight == 1);
   }
   {
+    // Hide Armor
     auto data = espm::GetData<espm::ARMO>(0x13911, &provider);
+    REQUIRE(data.baseRatingX100 == 2000);
     REQUIRE(data.baseValue == 50);
     REQUIRE(data.weight == 5);
   }

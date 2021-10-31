@@ -63,9 +63,9 @@ TEST_CASE("Damage is reduced based on target's armor",
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
   // 77382 = 0x12e46: Iron Gauntlets, rating = 10
-  // 77387 = 0x12e4b: Iron Boots, rating = 25
+  // 77387 = 0x12e4b: Iron Boots, rating = 10
   // 77389 = 0x12e4d: Iron Helmet, rating = 15
-  // Total rating for worn armor: 10 + 25 = 35
+  // Total rating for worn armor: 10 + 10 = 20
   ac.SetEquipment(R"(
     {
       "inv": {

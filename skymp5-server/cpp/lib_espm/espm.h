@@ -729,11 +729,12 @@ public:
 
   struct Data
   {
+    uint32_t baseRatingX100 = 0;
     uint32_t baseValue = 0;
     float weight = 0;
   };
 
-  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 

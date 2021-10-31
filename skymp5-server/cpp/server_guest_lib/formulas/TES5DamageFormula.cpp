@@ -59,6 +59,7 @@ float TES5DamageFormula::CalcOpponentArmorRating() const
 {
   // TODO(#xyz): OpponentArmorRating is 1 if your character is successfully
   // sneaking and has the Master Sneak perk (C) UESP Wiki
+  // ^ at least for Oblivion
   float combinedArmorRating = 0;
   for (const auto& entry : target.GetEquipment().inv.entries) {
     spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={:#x}; worn={}",
