@@ -632,7 +632,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  auto damageFormula = partOne.CreateDamageFormula(*aggressor, targetActor, hitData);
+  auto damageFormula =
+    partOne.CreateDamageFormula(*aggressor, targetActor, hitData);
   float damage = damageFormula->CalculateDamage();
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =

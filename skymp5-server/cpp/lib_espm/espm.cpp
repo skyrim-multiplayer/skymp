@@ -995,8 +995,7 @@ espm::WEAP::Data espm::WEAP::GetData(
 }
 
 namespace espm {
-ARMO::Data ARMO::GetData(
-  CompressedFieldsCache& compressedFieldsCache) const
+ARMO::Data ARMO::GetData(CompressedFieldsCache& compressedFieldsCache) const
 {
   Data result;
   bool hasDNAM = false;

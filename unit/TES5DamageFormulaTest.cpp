@@ -11,8 +11,7 @@ PartOne& GetPartOne();
 extern espm::Loader l;
 using namespace std::chrono_literals;
 
-TEST_CASE("Formula takes weapon damage into account",
-          "[TES5DamageFormula]")
+TEST_CASE("Formula takes weapon damage into account", "[TES5DamageFormula]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
@@ -34,7 +33,8 @@ TEST_CASE("Formula takes weapon damage into account",
 
   // vvv temporary stuff to ensure I didn't break anything
 
-  p.SetDamageFormulaFactory([](const MpActor& aggressor, const MpActor& target, const HitData& hitData) {
+  p.SetDamageFormulaFactory([](const MpActor& aggressor, const MpActor& target,
+                               const HitData& hitData) {
     return std::make_unique<TES5DamageFormula>(aggressor, target, hitData);
   });
 
@@ -53,8 +53,7 @@ TEST_CASE("Formula takes weapon damage into account",
   DoDisconnect(p, 0);
 }
 
-TEST_CASE("Damage is reduced based on target's armor",
-          "[TES5DamageFormula]")
+TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
@@ -134,7 +133,8 @@ TEST_CASE("Damage is reduced based on target's armor",
   DoDisconnect(p, 0);
 }
 
-TEST_CASE("Formula is race-dependent for unarmed attack", "[TES5DamageFormula]")
+TEST_CASE("Formula is race-dependent for unarmed attack",
+          "[TES5DamageFormula]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
@@ -158,7 +158,8 @@ TEST_CASE("Formula is race-dependent for unarmed attack", "[TES5DamageFormula]")
 
   // vvv temporary stuff to ensure I didn't break anything
 
-  p.SetDamageFormulaFactory([](const MpActor& aggressor, const MpActor& target, const HitData& hitData) {
+  p.SetDamageFormulaFactory([](const MpActor& aggressor, const MpActor& target,
+                               const HitData& hitData) {
     return std::make_unique<TES5DamageFormula>(aggressor, target, hitData);
   });
 

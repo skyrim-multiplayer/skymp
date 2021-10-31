@@ -449,7 +449,9 @@ TEST_CASE("espm::GetData wrapper is able to get record data", "[espm]")
 TEST_CASE("GMST parsing", "[espm]")
 {
   MyEspmProvider provider;
-  REQUIRE(espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, &provider).value == 80);
+  REQUIRE(
+    espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, &provider).value ==
+    80);
 }
 
 TEST_CASE("ARMO parsing", "[espm]")

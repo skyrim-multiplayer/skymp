@@ -82,7 +82,8 @@ void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
   pImpl->sendTarget = sendTarget ? sendTarget : &pImpl->fakeSendTarget;
 }
 
-void PartOne::SetDamageFormulaFactory(const DamageFormulaFactory& dmgFormulaFactory)
+void PartOne::SetDamageFormulaFactory(
+  const DamageFormulaFactory& dmgFormulaFactory)
 {
   // pImpl->damageFormulaFactory = std::move(dmgFormulaFactory);
   pImpl->damageFormulaFactory = dmgFormulaFactory;
@@ -362,7 +363,10 @@ Networking::ISendTarget& PartOne::GetSendTarget() const
   return *pImpl->sendTarget;
 }
 
-std::unique_ptr<IDamageFormula> PartOne::CreateDamageFormula(const MpActor& aggressor, const MpActor& target, const HitData& hitData) const {
+std::unique_ptr<IDamageFormula> PartOne::CreateDamageFormula(
+  const MpActor& aggressor, const MpActor& target,
+  const HitData& hitData) const
+{
   if (!pImpl->damageFormulaFactory) {
     throw std::runtime_error("no damage formula factory");
   }

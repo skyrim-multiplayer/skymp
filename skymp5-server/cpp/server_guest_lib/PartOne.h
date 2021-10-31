@@ -33,9 +33,7 @@ public:
 
   using Listener = PartOneListener;
   using DamageFormulaFactory = std::function<std::unique_ptr<IDamageFormula>(
-                                     const MpActor& aggressor,
-                                     const MpActor& target,
-                                     const HitData& hitData)>;
+    const MpActor& aggressor, const MpActor& target, const HitData& hitData)>;
 
   PartOne(Networking::ISendTarget* sendTarget = nullptr);
   PartOne(std::shared_ptr<Listener> listener,
@@ -84,7 +82,9 @@ public:
   ServerState serverState;
 
   Networking::ISendTarget& GetSendTarget() const;
-  std::unique_ptr<IDamageFormula> CreateDamageFormula(const MpActor& aggressor, const MpActor& target, const HitData& hitData) const;
+  std::unique_ptr<IDamageFormula> CreateDamageFormula(
+    const MpActor& aggressor, const MpActor& target,
+    const HitData& hitData) const;
 
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;

@@ -48,7 +48,8 @@ float TES5DamageFormula::CalcArmorRatingComponent(
     auto armorData =
       espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
     spdlog::info("armor baseId={:#x}: baseValue={}, baseRating={}/100",
-                  opponentEquipmentEntry.baseId, armorData.baseValue, armorData.baseRatingX100);
+                 opponentEquipmentEntry.baseId, armorData.baseValue,
+                 armorData.baseRatingX100);
     // TODO(#xyz): take other components into account
     return static_cast<float>(armorData.baseRatingX100) / 100;
   }
@@ -80,12 +81,15 @@ float TES5DamageFormula::CalculateDamage() const
   }
 
   float incomingDamage = CalcWeaponRating();
-  float maxArmorRating = espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, espmProvider).value;
+  float maxArmorRating =
+    espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, espmProvider).value;
   float minReceivedDamage = incomingDamage * (1 - 0.01 * maxArmorRating);
 
   // TODO(#xyz): take other components into account
   // return CalcWeaponRating() * CalcOpponentArmorRating();
-  float damage = std::max<float>(minReceivedDamage, incomingDamage / (CalcOpponentArmorRating() * 0.12 + 1));
+  float damage =
+    std::max<float>(minReceivedDamage,
+                    incomingDamage / (CalcOpponentArmorRating() * 0.12 + 1));
   if (hitData.isPowerAttack) {
     damage *= 2;
   }
