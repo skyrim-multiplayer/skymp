@@ -98,7 +98,8 @@ TEST_CASE("Damage is reduced based on target's armor",
   hitData.source = 0x0001397E; // iron dagger 4 damage
 
   TES5DamageFormula formula(ac, ac, hitData);
-  REQUIRE(formula.CalculateDamage() == 0.8f);
+  // 4 / (20 * .12 + 1)
+  REQUIRE(formula.CalculateDamage() == 1.1764705882352942f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

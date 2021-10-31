@@ -47,10 +47,10 @@ float TES5DamageFormula::CalcArmorRatingComponent(
         espm::ARMO::type) {
     auto armorData =
       espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
-    spdlog::info("armor baseId={:#x}: baseValue={}",
-                  opponentEquipmentEntry.baseId, armorData.baseValue);
+    spdlog::info("armor baseId={:#x}: baseValue={}, baseRating={}/100",
+                  opponentEquipmentEntry.baseId, armorData.baseValue, armorData.baseRatingX100);
     // TODO(#xyz): take other components into account
-    return armorData.baseValue;
+    return static_cast<float>(armorData.baseRatingX100) / 100;
   }
   return 0;
 }
