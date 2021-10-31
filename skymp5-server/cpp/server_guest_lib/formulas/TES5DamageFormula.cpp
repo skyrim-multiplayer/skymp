@@ -1,8 +1,5 @@
 #include "TES5DamageFormula.h"
 
-// XXX: remove unneeded includs
-#include <spdlog/spdlog.h>
-
 #include "HitData.h"
 #include "MpActor.h"
 #include "WorldState.h"
@@ -15,7 +12,7 @@ bool IsUnarmedAttack(const uint32_t sourceFormId)
   return sourceFormId == 0x1f4;
 }
 
-class TES5DamageFormulaImpl // : public IDamageFormula
+class TES5DamageFormulaImpl
 {
 public:
   TES5DamageFormulaImpl(const MpActor& aggressor_, const MpActor& target_,
@@ -66,18 +63,11 @@ float TES5DamageFormulaImpl::CalcWeaponRating() const
 float TES5DamageFormulaImpl::CalcArmorRatingComponent(
   const Inventory::Entry& opponentEquipmentEntry) const
 {
-  spdlog::info("XXX type for {:#x} is {}", opponentEquipmentEntry.baseId,
-               espm::GetRecordType(opponentEquipmentEntry.baseId, espmProvider)
-                 .ToString());
-
   if (opponentEquipmentEntry.extra.worn != Inventory::Worn::None &&
       espm::GetRecordType(opponentEquipmentEntry.baseId, espmProvider) ==
         espm::ARMO::type) {
     auto armorData =
       espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
-    spdlog::info("armor baseId={:#x}: baseValue={}, baseRating={}/100",
-                 opponentEquipmentEntry.baseId, armorData.baseValue,
-                 armorData.baseRatingX100);
     // TODO(#xyz): take other components into account
     return static_cast<float>(armorData.baseRatingX100) / 100;
   }
@@ -91,13 +81,8 @@ float TES5DamageFormulaImpl::CalcOpponentArmorRating() const
   // ^ at least for Oblivion
   float combinedArmorRating = 0;
   for (const auto& entry : target.GetEquipment().inv.entries) {
-    spdlog::info("CalculateDamage {} -> {}; item '{}', baseId={:#x}; worn={}",
-                 aggressor.idx, target.idx, entry.extra.name, entry.baseId,
-                 static_cast<int>(entry.extra.worn));
     combinedArmorRating += CalcArmorRatingComponent(entry);
   }
-  // combinedArmorRating = std::min(combinedArmorRating, 85.0f);
-  // return (100 - combinedArmorRating) / 100;
   return combinedArmorRating;
 }
 
@@ -114,7 +99,6 @@ float TES5DamageFormulaImpl::CalculateDamage() const
   float minReceivedDamage = incomingDamage * (1 - 0.01 * maxArmorRating);
 
   // TODO(#xyz): take other components into account
-  // return CalcWeaponRating() * CalcOpponentArmorRating();
   float damage =
     std::max<float>(minReceivedDamage,
                     incomingDamage / (CalcOpponentArmorRating() * 0.12 + 1));
