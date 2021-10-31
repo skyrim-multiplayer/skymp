@@ -42,10 +42,21 @@ Before your start make sure that your system meets the conditions:
 
 ### Linux
 
-Playing on Linux isn't supported currently, but a full-featured server is.
+You can build and run server and unit-tests on Linux.
+As Skyrim has no native Linux version, client can only be built using MSVC.
+Client can be run with Proton (though it can be tricky to get Skyrim itself to work properly).
 
 * Ubuntu *(Some other distributions may also work, but we know that Alpine doesn't)*
-* Clang 11 or higher *(GCC is not supported)*
+* Clang 12 *(GCC is not supported)*: `sudo apt install clang-12`
+* Python 2 (not 3.x! It is needed to build ChakraCore. Don't worry, it won't conflict with Python 3):
+  `sudo apt install python2`
+* Make sure that your NodeJS and CMake are fresh enough:
+  * You can use `nvm` or Nodesource's apt repositories to install fresh Node
+  * The simpliest way to install fresh CMake is to download a `.tar.gz` from CMake download page,
+    unpack it to your home directory and add it to path:
+    ```sh
+    echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
+    ```
 
 ## Configuring and Building
 
@@ -91,19 +102,33 @@ Playing on Linux isn't supported currently, but a full-featured server is.
 
 ### Linux
 
-1. Generate project files with CMake (replace path with your actual Skyrim SE folder)
+On Linux, there might be some tricky dependency issues. To work around them,
+we recommend you to use a wrapper script `build.sh`. It will create a temporary
+directory and add some aliases to `PATH`.
+
+1. Generate project files with CMake wrapper (replace path with your actual Skyrim SE folder)
    ```sh
-   build.sh --configure -DCMAKE_BUILD_TYPE=Release -DSKYRIM_DIR="/home/user/.steam/debian-installation/steamapps/common/Skyrim\ Special\ Edition"
+   ./build.sh --configure -DCMAKE_BUILD_TYPE=Debug -DSKYRIM_DIR="$HOME/.steam/debian-installation/steamapps/common/Skyrim Special Edition"
    ```
    For users who don't have Skyrim SE installed:
    ```sh
-   build.sh --configure -DCMAKE_BUILD_TYPE=Release
+   ./build.sh --configure -DCMAKE_BUILD_TYPE=Debug
+   ```
+   If you're building for a production machine, change build type to Release:
+   ```sh
+   ./build.sh --configure -DCMAKE_BUILD_TYPE=Release
    ```
 
-2. Build with CMake:
+2. Build with CMake wrapper:
    ```sh
    cd build
    ../build.sh --build
+   ```
+   Additional arguments after `--build` will be passed to CMake. E.g. you can specify the build target:
+   ```sh
+   cd build
+   ../build.sh --build --target=unit  # only build unit-tests and their dependencies
+   # Will run cmake --build . --target=unit
    ```
 
 ### Optional steps after build
