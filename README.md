@@ -47,7 +47,9 @@ Playing on Linux isn't supported currently, but a full-featured server is.
 * Ubuntu *(Some other distributions may also work, but we know that Alpine doesn't)*
 * Clang 11 or higher *(GCC is not supported)*
 
-### Configuring and Building
+## Configuring and Building
+
+### Common
 
 1. Clone the repo, including submodules
    ```sh
@@ -56,11 +58,16 @@ Playing on Linux isn't supported currently, but a full-featured server is.
    git submodule init
    git submodule update
    ```
-2. Make a build directory (used for project files, cache, artifacts, etc)
+
+2. Do OS-specific steps (see below)
+
+### Windows
+
+1. Make a build directory (used for project files, cache, artifacts, etc)
    ```sh
    mkdir build
    ```
-3. Generate project files with CMake (replace path with your actual Skyrim SE folder)
+2. Generate project files with CMake (replace path with your actual Skyrim SE folder)
    ```sh
    cd build
    cmake .. -DSKYRIM_DIR="C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
@@ -74,7 +81,7 @@ Playing on Linux isn't supported currently, but a full-featured server is.
    * The server would require manual installation of Skyrim.esm and other master files
    * Papyrus scripts that require Bethesda's compiler would not be compiled, prebuilts would be used
 
-4. Build with CMake:
+3. Build with CMake:
    ```sh
    cmake --build . --config Debug
    ```
@@ -82,7 +89,26 @@ Playing on Linux isn't supported currently, but a full-featured server is.
 
    All build artifacts would be placed into `build/dist`.
 
-5. Run tests (optional):
+### Linux
+
+1. Generate project files with CMake (replace path with your actual Skyrim SE folder)
+   ```sh
+   build.sh --configure -DCMAKE_BUILD_TYPE=Release -DSKYRIM_DIR="/home/user/.steam/debian-installation/steamapps/common/Skyrim\ Special\ Edition"
+   ```
+   For users who don't have Skyrim SE installed:
+   ```sh
+   build.sh --configure -DCMAKE_BUILD_TYPE=Release
+   ```
+
+2. Build with CMake:
+   ```sh
+   cd build
+   ../build.sh --build
+   ```
+
+### Optional steps after build
+
+1. Run tests:
    ```sh
    ctest -C Debug --verbose
    ```
@@ -92,7 +118,7 @@ Playing on Linux isn't supported currently, but a full-featured server is.
    1. You have installed it using Steam and it's up to date (currently last update was on [Nov 20, 2019](https://steamdb.info/depot/489832/history/?changeid=M:8702665189575304780)). See SteamDB for [hashes](https://steamdb.info/depot/489832/?show_hashes) and [update history](https://steamdb.info/depot/489832/history/).
    2. You did not modify `Skyrim.esm`, `Update.esm`, `Dawnguard.esm`, `HearthFires.esm` and `Dragonborn.esm`. (Ideally, you should have pure Vanilla version installed.)
 
-6. Calculate test coverage (optional, Windows-only):
+2. Calculate test coverage (Windows-only):
    
    Install [OpenCppCoverage](https://github.com/OpenCppCoverage/OpenCppCoverage/releases) and then:
    ```sh
