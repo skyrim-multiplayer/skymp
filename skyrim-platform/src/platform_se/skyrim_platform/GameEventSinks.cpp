@@ -25,11 +25,11 @@ JsValue CreateObject(const char* type, void* form)
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESActivateEvent* event_,
+  const RE::TESActivateEvent* event,
   RE::BSTEventSource<RE::TESActivateEvent>* eventSource)
 {
-  auto targetRefr = event_ ? event_->target.get() : nullptr;
-  auto casterRefr = event_ ? event_->caster.get() : nullptr;
+  auto targetRefr = event ? event->target.get() : nullptr;
+  auto casterRefr = event ? event->caster.get() : nullptr;
 
   auto targetId = targetRefr ? targetRefr->formID : 0;
   auto casterId = casterRefr ? casterRefr->formID : 0;
@@ -60,13 +60,13 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESMoveAttachDetachEvent* event_,
+  const RE::TESMoveAttachDetachEvent* event,
   RE::BSTEventSource<RE::TESMoveAttachDetachEvent>* eventSource)
 {
-  auto movedRef = event_ ? event_->movedRef.get() : nullptr;
+  auto movedRef = event ? event->movedRef.get() : nullptr;
 
   auto targetId = movedRef ? movedRef->formID : 0;
-  auto isCellAttached = event_ ? event_->isCellAttached : 0;
+  auto isCellAttached = event ? event->isCellAttached : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
     [targetId, isCellAttached, movedRef] {
@@ -84,10 +84,10 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESWaitStopEvent* event_,
+  const RE::TESWaitStopEvent* event,
   RE::BSTEventSource<RE::TESWaitStopEvent>* eventSource)
 {
-  auto interrupted = event_ ? event_->interrupted : 0;
+  auto interrupted = event ? event->interrupted : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([interrupted] {
     auto obj = JsValue::Object();
@@ -101,11 +101,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESObjectLoadedEvent* event_,
+  const RE::TESObjectLoadedEvent* event,
   RE::BSTEventSource<RE::TESObjectLoadedEvent>* eventSource)
 {
-  auto objectId = event_ ? event_->formID : 0;
-  auto loaded = event_ ? event_->loaded : 0;
+  auto objectId = event ? event->formID : 0;
+  auto loaded = event ? event->loaded : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([objectId, loaded] {
     auto obj = JsValue::Object();
@@ -122,10 +122,10 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESLockChangedEvent* event_,
+  const RE::TESLockChangedEvent* event,
   RE::BSTEventSource<RE::TESLockChangedEvent>* eventSource)
 {
-  auto lockedObject = event_ ? event_->lockedObject : nullptr;
+  auto lockedObject = event ? event->lockedObject : nullptr;
   auto lockedObjectId = lockedObject ? lockedObject->formID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([lockedObjectId, lockedObject] {
@@ -143,10 +143,10 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESCellFullyLoadedEvent* event_,
+  const RE::TESCellFullyLoadedEvent* event,
   RE::BSTEventSource<RE::TESCellFullyLoadedEvent>* eventSource)
 {
-  auto cell = event_ ? event_->cell : nullptr;
+  auto cell = event ? event->cell : nullptr;
   auto cellId = cell ? cell->formID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([cellId, cell] {
@@ -163,12 +163,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESGrabReleaseEvent* event_,
+  const RE::TESGrabReleaseEvent* event,
   RE::BSTEventSource<RE::TESGrabReleaseEvent>* eventSource)
 {
-  auto ref = event_ ? event_->ref.get() : nullptr;
+  auto ref = event ? event->ref.get() : nullptr;
   auto refId = ref ? ref->formID : 0;
-  auto grabbed = event_ ? event_->grabbed : 0;
+  auto grabbed = event ? event->grabbed : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([refId, grabbed, ref] {
     auto obj = JsValue::Object();
@@ -186,7 +186,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESLoadGameEvent* event_,
+  const RE::TESLoadGameEvent* event,
   RE::BSTEventSource<RE::TESLoadGameEvent>* eventSource)
 {
   SkyrimPlatform::GetSingleton().AddUpdateTask(
@@ -196,10 +196,10 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESSwitchRaceCompleteEvent* event_,
+  const RE::TESSwitchRaceCompleteEvent* event,
   RE::BSTEventSource<RE::TESSwitchRaceCompleteEvent>* eventSource)
 {
-  auto subject = event_ ? event_->subject.get() : nullptr;
+  auto subject = event ? event->subject.get() : nullptr;
   auto subjectId = subject ? subject->formID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([subjectId, subject] {
@@ -215,14 +215,14 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESUniqueIDChangeEvent* event_,
+  const RE::TESUniqueIDChangeEvent* event,
   RE::BSTEventSource<RE::TESUniqueIDChangeEvent>* eventSource)
 {
-  auto oldUniqueID = event_ ? event_->oldUniqueID : 0;
-  auto newUniqueID = event_ ? event_->newUniqueID : 0;
+  auto oldUniqueID = event ? event->oldUniqueID : 0;
+  auto newUniqueID = event ? event->newUniqueID : 0;
 
-  auto oldBaseID = event_ ? event_->oldBaseID : 0;
-  auto newBaseID = event_ ? event_->newBaseID : 0;
+  auto oldBaseID = event ? event->oldBaseID : 0;
+  auto newBaseID = event ? event->newBaseID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
     [oldUniqueID, newUniqueID, oldBaseID, newBaseID] {
@@ -239,11 +239,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESTrackedStatsEvent* event_,
+  const RE::TESTrackedStatsEvent* event,
   RE::BSTEventSource<RE::TESTrackedStatsEvent>* eventSource)
 {
-  std::string statName = event_ ? event_->stat.data() : "";
-  auto value = event_ ? event_->value : 0;
+  std::string statName = event ? event->stat.data() : "";
+  auto value = event ? event->value : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([statName, value] {
     auto obj = JsValue::Object();
@@ -257,10 +257,10 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESInitScriptEvent* event_,
+  const RE::TESInitScriptEvent* event,
   RE::BSTEventSource<RE::TESInitScriptEvent>* eventSource)
 {
-  auto objectInitialized = event_ ? event_->objectInitialized.get() : nullptr;
+  auto objectInitialized = event ? event->objectInitialized.get() : nullptr;
   auto objectInitializedId = objectInitialized ? objectInitialized->formID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([objectInitializedId,
@@ -281,10 +281,10 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESResetEvent* event_,
+  const RE::TESResetEvent* event,
   RE::BSTEventSource<RE::TESResetEvent>* eventSource)
 {
-  auto object = event_ ? event_->object.get() : nullptr;
+  auto object = event ? event->object.get() : nullptr;
   auto objectId = object ? object->formID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([objectId, object] {
@@ -302,16 +302,16 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESCombatEvent* event_,
+  const RE::TESCombatEvent* event,
   RE::BSTEventSource<RE::TESCombatEvent>* eventSource)
 {
-  auto targetActorRefr = event_ ? event_->targetActor.get() : nullptr;
+  auto targetActorRefr = event ? event->targetActor.get() : nullptr;
   auto targetActorId = targetActorRefr ? targetActorRefr->formID : 0;
 
-  auto actorRefr = event_ ? event_->actor.get() : nullptr;
+  auto actorRefr = event ? event->actor.get() : nullptr;
   auto actorId = actorRefr ? actorRefr->formID : 0;
 
-  auto state = event_ ? (uint32_t)event_->state : 0;
+  auto state = event ? (uint32_t)event->state : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
     [targetActorId, actorId, state, targetActorRefr, actorRefr] {
@@ -342,16 +342,16 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESDeathEvent* event_,
+  const RE::TESDeathEvent* event,
   RE::BSTEventSource<RE::TESDeathEvent>* eventSource)
 {
-  auto actorDyingRefr = event_ ? event_->actorDying.get() : nullptr;
+  auto actorDyingRefr = event ? event->actorDying.get() : nullptr;
   auto actorDyingId = actorDyingRefr ? actorDyingRefr->formID : 0;
 
-  auto actorKillerRefr = event_ ? event_->actorKiller.get() : nullptr;
+  auto actorKillerRefr = event ? event->actorKiller.get() : nullptr;
   auto actorKillerId = actorKillerRefr ? actorKillerRefr->formID : 0;
 
-  auto dead = event_ ? event_->dead : 0;
+  auto dead = event ? event->dead : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
     [actorDyingId, actorKillerId, dead, actorDyingRefr, actorKillerRefr] {
@@ -376,16 +376,16 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESContainerChangedEvent* event_,
+  const RE::TESContainerChangedEvent* event,
   RE::BSTEventSource<RE::TESContainerChangedEvent>* eventSource)
 {
-  auto oldContainerId = event_ ? event_->oldContainer : 0;
-  auto newContainerId = event_ ? event_->newContainer : 0;
-  auto baseObjId = event_ ? event_->baseObj : 0;
-  auto itemCount = event_ ? event_->itemCount : 0;
-  auto uniqueID = event_ ? event_->uniqueID : 0;
+  auto oldContainerId = event ? event->oldContainer : 0;
+  auto newContainerId = event ? event->newContainer : 0;
+  auto baseObjId = event ? event->baseObj : 0;
+  auto itemCount = event ? event->itemCount : 0;
+  auto uniqueID = event ? event->uniqueID : 0;
 
-  auto reference = event_ ? event_->reference.get() : nullptr;
+  auto reference = event ? event->reference.get() : nullptr;
   auto referenceId = reference ? reference->formID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([oldContainerId, newContainerId,
@@ -417,18 +417,18 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESHitEvent* event_,
+  const RE::TESHitEvent* event,
   RE::BSTEventSource<RE::TESHitEvent>* eventSource)
 {
-  auto targetRefr = event_ ? event_->target.get() : nullptr;
-  auto causeRefr = event_ ? event_->cause.get() : nullptr;
+  auto targetRefr = event ? event->target.get() : nullptr;
+  auto causeRefr = event ? event->cause.get() : nullptr;
 
   auto targetId = targetRefr ? targetRefr->formID : 0;
   auto causeId = causeRefr ? causeRefr->formID : 0;
 
-  auto sourceId = event_ ? event_->source : 0;
-  auto projectileId = event_ ? event_->projectile : 0;
-  uint8_t flags = event_ ? (uint8_t)event_->flags : 0;
+  auto sourceId = event ? event->source : 0;
+  auto projectileId = event ? event->projectile : 0;
+  uint8_t flags = event ? (uint8_t)event->flags : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
     [targetId, causeId, sourceId, projectileId, flags, targetRefr, causeRefr] {
@@ -475,16 +475,16 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESEquipEvent* event_,
+  const RE::TESEquipEvent* event,
   RE::BSTEventSource<RE::TESEquipEvent>* eventSource)
 {
-  auto actorRefr = event_ ? event_->actor.get() : nullptr;
+  auto actorRefr = event ? event->actor.get() : nullptr;
   auto actorId = actorRefr ? actorRefr->formID : 0;
 
-  auto originalRefrId = event_ ? event_->originalRefr : 0;
-  auto baseObjectId = event_ ? event_->baseObject : 0;
-  auto equipped = event_ ? event_->equipped : 0;
-  auto uniqueId = event_ ? event_->uniqueID : 0;
+  auto originalRefrId = event ? event->originalRefr : 0;
+  auto baseObjectId = event ? event->baseObject : 0;
+  auto equipped = event ? event->equipped : 0;
+  auto uniqueId = event ? event->uniqueID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([actorId, baseObjectId,
                                                 equipped, uniqueId,
@@ -512,17 +512,17 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESActiveEffectApplyRemoveEvent* event_,
+  const RE::TESActiveEffectApplyRemoveEvent* event,
   RE::BSTEventSource<RE::TESActiveEffectApplyRemoveEvent>* eventSource)
 {
-  auto caster = event_->caster.get() ? event_->caster.get() : nullptr;
-  auto target = event_->target.get() ? event_->target.get() : nullptr;
+  auto caster = event->caster.get() ? event->caster.get() : nullptr;
+  auto target = event->target.get() ? event->target.get() : nullptr;
 
   auto casterId = caster ? caster->formID : 0;
   auto targetId = target ? target->formID : 0;
 
-  auto isApplied = event_ ? event_->isApplied : 0;
-  auto activeEffectUniqueID = event_ ? event_->activeEffectUniqueID : 0;
+  auto isApplied = event ? event->isApplied : 0;
+  auto activeEffectUniqueID = event ? event->activeEffectUniqueID : 0;
   RE::ActiveEffect* activeEffect = nullptr;
 
   auto actor = reinterpret_cast<RE::Actor*>(target);
@@ -578,13 +578,13 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESMagicEffectApplyEvent* event_,
+  const RE::TESMagicEffectApplyEvent* event,
   RE::BSTEventSource<RE::TESMagicEffectApplyEvent>* eventSource)
 {
-  auto effectId = event_ ? event_->magicEffect : 0;
+  auto effectId = event ? event->magicEffect : 0;
 
-  auto caster = event_->caster.get() ? event_->caster.get() : nullptr;
-  auto target = event_->target.get() ? event_->target.get() : nullptr;
+  auto caster = event->caster.get() ? event->caster.get() : nullptr;
+  auto target = event->target.get() ? event->target.get() : nullptr;
 
   auto casterId = caster ? caster->formID : 0;
   auto targetId = target ? target->formID : 0;
