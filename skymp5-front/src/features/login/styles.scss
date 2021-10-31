@@ -1,0 +1,265 @@
+.login {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  &-form {
+    height: 704px;
+    width: 512px;
+    margin: auto;
+    position: relative;
+    &--content {
+      font-family: Bankir-Retro, sans-serif;
+      display: flex;
+      flex-direction: column;
+      z-index: 9999;
+      &_header {
+        margin: 28px auto auto;
+        font-size: 32px;
+        color: #B6B6B6;
+      }
+      &_social {
+        display: flex;
+        flex-direction: row;
+        width: 440px;
+        margin: 30px auto auto;
+        &__link {
+          width: 208px;
+          margin: auto;
+          height: 96px;
+          border: 3px solid rgba(157, 158, 158, 0.75);
+          border-radius: 10px;
+          display: flex;
+          img {
+            width: 175px;
+            margin: auto;
+            height: 67px;
+          }
+        }
+      }
+      &_main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+       // width: 430px;
+        margin: 30px auto auto;
+        //height: 400px;
+        .skymp-input {
+          align-self: flex-end;
+          margin-bottom: 10px;
+          justify-self: flex-end;
+         //margin-left: auto;
+          //margin-right: 10px;
+        }
+        &__email {
+          margin-top: 10px;
+          display: flex;
+          width: 100%;
+          flex-direction: row;
+          margin-bottom: 0;
+        }
+        &__password {
+          margin-top: 10px;
+          display: flex;
+          width: 100%;
+          flex-direction: row;
+          margin-bottom: 0;
+        }
+        &__footer {
+          margin-top: 10px;
+          display: flex;
+          width: 100%;
+          margin-bottom: 0;
+          flex-direction: row;
+        }
+        &__button {
+          margin-top: 50px;
+          margin-bottom: 0;
+        }
+        &__label {
+          display: flex;
+          flex-direction: column;
+          width: 100px;
+          justify-content: center;
+          img {
+            height: 54px;
+            margin: auto;
+          }
+          &___text {
+            color: rgba(157, 158, 158, 0.75);
+            font-size: 20px;
+            margin: auto;
+          }
+          label {
+            margin: auto auto 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+.skymp-input.button {
+  text-align: center;
+  height: 48px;
+  align-items: center;
+  display: flex;
+  margin-bottom: 0;
+  cursor: pointer;
+  &.disabled {
+    opacity: 0.33;
+    * {
+      opacity: 0.33;
+    }
+  }
+  .skymp-input_text {
+    font-family: Bankir-Retro, serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 30px;
+    line-height: 32px;
+    color: #9D9E9EBF;
+    margin: auto;
+  }
+}
+
+
+
+
+
+
+/* Checkmark style starts */
+@-moz-keyframes
+dothabottomcheck {  0% {
+  height: 0;
+}
+  100% {
+    height: 50px;
+  }
+}
+@-webkit-keyframes
+dothabottomcheck {  0% {
+  height: 0;
+}
+  100% {
+    height: 25px;
+  }
+}
+@keyframes
+dothabottomcheck {  0% {
+  height: 0;
+}
+  100% {
+    height: 25px;
+  }
+}
+@keyframes
+dothatopcheck {  0% {
+  height: 0;
+}
+  50% {
+    height: 0;
+  }
+  100% {
+    height: 50px;
+  }
+}
+@-webkit-keyframes
+dothatopcheck {  0% {
+  height: 0;
+}
+  50% {
+    height: 0;
+  }
+  100% {
+    height: 50px;
+  }
+}
+@-moz-keyframes
+dothatopcheck {  0% {
+  height: 0;
+}
+  50% {
+    height: 0;
+  }
+  100% {
+    height: 50px;
+  }
+}
+
+.checkbox {
+  height: 50px;
+  width: 50px;
+  background-color: transparent;
+  border: 3px solid #9D9E9EBF;
+  border-radius: 12px;
+  position: relative;
+  display: inline-block;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  -moz-transition: border-color ease 0.2s;
+  -o-transition: border-color ease 0.2s;
+  -webkit-transition: border-color ease 0.2s;
+  transition: border-color ease 0.2s;
+  cursor: pointer;
+}
+
+.checkbox::before,
+.checkbox::after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  position: absolute;
+  height: 0;
+  width: 5px;
+  background-color: #9D9F9F;
+  display: inline-block;
+  -moz-transform-origin: left top;
+  -ms-transform-origin: left top;
+  -o-transform-origin: left top;
+  -webkit-transform-origin: left top;
+  transform-origin: left top;
+  border-radius: 5px;
+  content: ' ';
+  -webkit-transition: opacity ease .5;
+  -moz-transition: opacity ease .5;
+  transition: opacity ease .5;
+}
+
+.checkbox::before {
+  top: 34px;
+  left: 20px;
+  -moz-transform: rotate(-135deg);
+  -ms-transform: rotate(-135deg);
+  -o-transform: rotate(-135deg);
+  -webkit-transform: rotate(-135deg);
+  transform: rotate(-135deg);
+}
+
+.checkbox::after {
+  top: 15px;
+  left: 3px;
+  -moz-transform: rotate(-40deg);
+  -ms-transform: rotate(-40deg);
+  -o-transform: rotate(-40deg);
+  -webkit-transform: rotate(-40deg);
+  transform: rotate(-40deg);
+}
+
+.checkbox.active { border-color: #9D9F9F }
+
+.checkbox.active::after {
+  height: 25px !important;
+  -moz-animation: dothabottomcheck 1s ease 0s forwards;
+  -o-animation: dothabottomcheck 1s ease 0s forwards;
+  -webkit-animation: dothabottomcheck 1s ease 0s forwards;
+  animation: dothabottomcheck 1s ease 0s forwards;
+}
+
+.checkbox.active::before {
+  height: 50px !important;
+  -moz-animation: dothatopcheck 1s ease 0s forwards;
+  -o-animation: dothatopcheck 1s ease 0s forwards;
+  -webkit-animation: dothatopcheck 1s ease 0s forwards;
+  animation: dothatopcheck 1s ease 0s forwards;
+}

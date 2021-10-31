@@ -12,9 +12,7 @@ If you start a live-reload server and Skyrim Multiplayer server on the same mach
 Create `config.js` and specify an output folder.
 ```js
 module.exports = {
-  ui: {
     /* TIP: Change to '<your_server_path>/data/ui' */
     outputPath: "./dist",
-  },
 };
 ```

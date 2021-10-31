@@ -460,6 +460,28 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
   SendEvent("ipcMessage", { JsValue::Undefined(), ipcMessageEvent });
 }
 
+void EventsApi::SendMenuOpen(const char* menuName)
+{
+  g_taskQueue.AddTask([=] {
+    auto obj = JsValue::Object();
+
+    obj.SetProperty("name", JsValue::String(menuName));
+
+    SendEvent("menuOpen", { JsValue::Undefined(), obj });
+  });
+}
+
+void EventsApi::SendMenuClose(const char* menuName)
+{
+  g_taskQueue.AddTask([=] {
+    auto obj = JsValue::Object();
+
+    obj.SetProperty("name", JsValue::String(menuName));
+
+    SendEvent("menuClose", { JsValue::Undefined(), obj });
+  });
+}
+
 namespace {
 JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
@@ -495,10 +517,14 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "objectLoaded",
                                    "waitStop",
                                    "activate",
-                                   "ipcMessage" };
+                                   "ipcMessage",
+                                   "menuOpen",
+                                   "menuClose",
+                                   "browserMessage" };
 
-  if (events.count(eventName) == 0)
+  if (events.count(eventName) == 0) {
     throw InvalidArgumentException("eventName", eventName);
+  }
 
   isOnce ? g.callbacksOnce[eventName].push_back(callback)
          : g.callbacks[eventName].push_back(callback);

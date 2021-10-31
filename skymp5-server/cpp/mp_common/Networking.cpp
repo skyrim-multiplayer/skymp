@@ -133,9 +133,9 @@ public:
          const char* password_)
     : password(password_)
   {
-    if (maxConnections > g_maxPlayers) {
+    if (maxConnections > kMaxPlayers) {
       throw std::runtime_error("Current slots limit is " +
-                               std::to_string(g_maxPlayers));
+                               std::to_string(kMaxPlayers));
     }
 
     idManager.reset(new IdManager(maxConnections));

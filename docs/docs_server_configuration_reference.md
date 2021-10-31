@@ -74,7 +74,7 @@ At this moment, the server uses this directory for non-vanilla needs too:
 
 ## loadOrder
 
-A list of relative or absolute paths to .esp/.esm files which would be loaded by the server during startup in the same order as Skyrim SE loads them. 
+A list of relative or absolute paths to .esp/.esm files which would be loaded by the server during startup in the same order as Skyrim SE loads them.
 
 Relative paths are searched in `${dataDir}` directory.
 
@@ -94,14 +94,27 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 }
 ```
 
-## databaseDriver
+## offlineMode
 
-Name of a database driver which would be used to store server data. `sqlite` by default. There are also related options like `"databaseName"`. See [Database Drivers](docs_database_drivers.md) page to learn more.
+The boolean variable shows is server in "offline mode" or not (the server allows clients to connect with any profile id they choose).
+Users need to specify `"profileId"` in their `skymp5-settings.txt`.
 
 ```json5
 {
   // ...
-  "databaseDriver": "sqlite"
+  "offlineMode": true
+  // ...
+}
+```
+
+## databaseDriver
+
+Name of a database driver which would be used to store server data. `file` by default. There are also related options like `"databaseName"`. See [Database Drivers](docs_database_drivers.md) page to learn more.
+
+```json5
+{
+  // ...
+  "databaseDriver": "file"
   // ...
 }
 ```

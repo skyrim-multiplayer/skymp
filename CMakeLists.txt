@@ -17,11 +17,24 @@ if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
   message(FATAL_ERROR "${msg}")
 endif()
 
+if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
+  set(msg "CMake binary directory must be <repo_root>/build")
+  set(msg "${msg}\nUse commands below after cloning the repo (replace path with your actual Skyrim SE folder):")
+  set(msg "${msg}\n  mkdir build")
+  set(msg "${msg}\n  cd build")
+  set(msg "${msg}\nFor users who have Skyrim SE installed:")
+  set(msg "${msg}\n  cmake .. -DSKYRIM_DIR=\"C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition\"")
+  set(msg "${msg}\nFor users who don't have Skyrim SE installed:")
+  set(msg "${msg}\n  cmake ..")
+  message(FATAL_ERROR "${msg}")
+endif()
+
 cmake_minimum_required(VERSION 3.18.2)
 project(skymp)
 enable_testing()
 
 # Bool options
+# CAUTION! SkyrimPlatform crashes with that setting on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 
 if(JS_ENGINE_TRACING_ENABLED)
@@ -29,9 +42,13 @@ if(JS_ENGINE_TRACING_ENABLED)
 endif()
 
 # Path options
-option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing" OFF)
+option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing. CMAKE_SOURCE_DIR would be used to resolve a relative path if passed." OFF)
 option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
 option(CPPCOV_PATH "Path to OpenCppCoverage" OFF)
+
+if(UNIT_DATA_DIR AND NOT IS_ABSOLUTE "${UNIT_DATA_DIR}")
+  get_filename_component(UNIT_DATA_DIR "${UNIT_DATA_DIR}" ABSOLUTE BASE_DIR ${CMAKE_SOURCE_DIR})
+endif()
 
 if(NOT SKYRIM_DIR)
   message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")

@@ -1,7 +1,9 @@
 #pragma once
 
-#include <cef/core_library/Meta.hpp>
+#include <core_library/Meta.hpp>
+#include <include/cef_values.h>
 #include <include/internal/cef_ptr.h>
+#include <ui/ProcessMessageListener.h>
 
 namespace CEFUtils {
 struct MyChromiumApp;
@@ -14,7 +16,10 @@ using CEFUtils::MyChromiumApp;
 
 struct OverlayService
 {
-  OverlayService();
+  // onProcessMessage_ should never throw. The current behavior is
+  // console.error (see OverlayClient.cpp), but you better do not throw
+  // anything. Handle properly in place instead.
+  OverlayService(std::shared_ptr<ProcessMessageListener> onProcessMessage_);
   ~OverlayService() noexcept;
 
   TP_NOCOPYMOVE(OverlayService);
@@ -24,8 +29,9 @@ struct OverlayService
   void Render() const;
   void Reset() const;
 
-  MyChromiumApp* GetMyChromiumApp() const noexcept { return m_pOverlay.get(); }
+  MyChromiumApp* GetMyChromiumApp() const noexcept { return overlay.get(); }
 
 private:
-  CefRefPtr<MyChromiumApp> m_pOverlay{ nullptr };
+  CefRefPtr<MyChromiumApp> overlay{ nullptr };
+  const std::shared_ptr<ProcessMessageListener> onProcessMessage;
 };

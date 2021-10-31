@@ -9,7 +9,8 @@ namespace {
 constexpr uint32_t g_maxStackId = 100'000;
 }
 
-VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
+VirtualMachine::VirtualMachine(
+  const std::vector<PexScript::Lazy>& loadedScripts)
 {
   stackIdMaker.reset(new MakeID(g_maxStackId));
 
@@ -19,7 +20,8 @@ VirtualMachine::VirtualMachine(std::vector<PexScript::Lazy> loadedScripts)
   }
 }
 
-VirtualMachine::VirtualMachine(std::vector<PexScript::Ptr> loadedScripts)
+VirtualMachine::VirtualMachine(
+  const std::vector<std::shared_ptr<PexScript>>& loadedScripts)
 {
   stackIdMaker.reset(new MakeID(g_maxStackId));
 
@@ -48,9 +50,10 @@ std::string ToLower(std::string s)
   return s;
 }
 
-void VirtualMachine::RegisterFunction(std::string className,
-                                      std::string functionName,
-                                      FunctionType type, NativeFunction fn)
+void VirtualMachine::RegisterFunction(const std::string& className,
+                                      const std::string& functionName,
+                                      const FunctionType& type,
+                                      const NativeFunction& fn)
 {
   switch (type) {
     case FunctionType::GlobalFunction:
@@ -63,10 +66,10 @@ void VirtualMachine::RegisterFunction(std::string className,
   }
 }
 
-void VirtualMachine::AddObject(IGameObject::Ptr self,
+void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
                                const std::vector<ScriptInfo>& scripts)
 {
-  std::vector<ActivePexInstance::Ptr> scriptsForObject;
+  std::vector<std::shared_ptr<ActivePexInstance>> scriptsForObject;
 
   for (auto& s : scripts) {
     CIString ciNameNeedScript{ s.name.begin(), s.name.end() };
@@ -82,7 +85,8 @@ void VirtualMachine::AddObject(IGameObject::Ptr self,
   gameObjectsHolder.insert(self);
 }
 
-void VirtualMachine::SendEvent(IGameObject::Ptr self, const char* eventName,
+void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
+                               const char* eventName,
                                const std::vector<VarValue>& arguments,
                                OnEnter enter)
 {
@@ -158,7 +162,7 @@ VarValue VirtualMachine::CallMethod(
     auto it = allLoadedScripts.find(base);
     if (it == allLoadedScripts.end())
       break;
-    base = it->second.fn()->objectTable.m_data[0].parentClassName.data();
+    base = it->second.fn()->objectTable[0].parentClassName.data();
     if (!base[0])
       break;
   }
@@ -189,7 +193,7 @@ VarValue VirtualMachine::CallMethod(
 }
 
 VarValue VirtualMachine::CallStatic(
-  std::string className, std::string functionName,
+  const std::string& className, const std::string& functionName,
   std::vector<VarValue>& arguments,
   std::shared_ptr<StackIdHolder> stackIdHolder)
 {
@@ -253,10 +257,10 @@ PexScript::Lazy VirtualMachine::GetPexByName(const std::string& name)
   return PexScript::Lazy();
 }
 
-ActivePexInstance::Ptr VirtualMachine::CreateActivePexInstance(
+std::shared_ptr<ActivePexInstance> VirtualMachine::CreateActivePexInstance(
   const std::string& pexScriptName, VarValue activeInstanceOwner,
   const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
-  std::string childrenName)
+  const std::string& childrenName)
 {
 
   auto it = allLoadedScripts.find(
@@ -267,7 +271,7 @@ ActivePexInstance::Ptr VirtualMachine::CreateActivePexInstance(
     return std::make_shared<ActivePexInstance>(scriptInstance);
   }
 
-  static const ActivePexInstance::Ptr notValidInstance =
+  static const std::shared_ptr<ActivePexInstance> notValidInstance =
     std::make_shared<ActivePexInstance>();
 
   if (pexScriptName != "")
@@ -298,6 +302,6 @@ VirtualMachine::ExceptionHandler VirtualMachine::GetExceptionHandler() const
   return handler;
 }
 
-void VirtualMachine::RemoveObject(IGameObject::Ptr self)
+void VirtualMachine::RemoveObject(std::shared_ptr<IGameObject> self)
 {
 }

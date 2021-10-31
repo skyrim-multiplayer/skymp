@@ -31,7 +31,7 @@ ActivePexInstance::ActivePexInstance(
   this->parentVM = parentVM;
   this->sourcePex = sourcePex;
   this->parentInstance =
-    FillParentInstanse(sourcePex.fn()->objectTable.m_data[0].parentClassName,
+    FillParentInstanse(sourcePex.fn()->objectTable[0].parentClassName,
                        activeInstanceOwner, mapForFillPropertys);
 
   this->variables = mapForFillPropertys;
@@ -39,7 +39,7 @@ ActivePexInstance::ActivePexInstance(
   this->_IsValid = true;
 }
 
-ActivePexInstance::Ptr ActivePexInstance::FillParentInstanse(
+std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstanse(
   std::string nameNeedScript, VarValue activeInstanceOwner,
   const std::shared_ptr<IVariablesHolder>& mapForFillPropertys)
 {
@@ -53,7 +53,7 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
 {
 
   FunctionInfo function;
-  for (auto& object : sourcePex.fn()->objectTable.m_data) {
+  for (auto& object : sourcePex.fn()->objectTable) {
     for (auto& state : object.states) {
       if (state.name == stateName) {
         for (auto& func : state.functions) {
@@ -85,16 +85,16 @@ std::string ActivePexInstance::GetActiveStateName() const
   return static_cast<const char*>(*var);
 }
 
-ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
+Object::PropInfo* ActivePexInstance::GetProperty(
   const ActivePexInstance& scriptInstance, std::string nameProperty,
   uint8_t flag)
 {
   if (!scriptInstance.IsValid())
     return nullptr;
 
-  if (flag == ObjectTable::Object::PropInfo::kFlags_Read) {
+  if (flag == Object::PropInfo::kFlags_Read) {
 
-    for (auto& object : scriptInstance.sourcePex.fn()->objectTable.m_data) {
+    for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
       for (auto& prop : object.properties) {
         if (prop.name == nameProperty &&
             (prop.flags & 5) == prop.kFlags_Read) {
@@ -103,9 +103,9 @@ ObjectTable::Object::PropInfo* ActivePexInstance::GetProperty(
       }
     }
 
-    if (flag == ObjectTable::Object::PropInfo::kFlags_Write) {
+    if (flag == Object::PropInfo::kFlags_Write) {
 
-      for (auto& object : scriptInstance.sourcePex.fn()->objectTable.m_data) {
+      for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
         for (auto& prop : object.properties) {
           if (prop.name == nameProperty &&
               (prop.flags & 6) == prop.kFlags_Write) {
@@ -218,7 +218,7 @@ struct ActivePexInstance::ExecutionContext
 {
   std::shared_ptr<StackIdHolder> stackIdHolder;
   std::vector<FunctionCode::Instruction> instructions;
-  std::shared_ptr<Locals> locals;
+  std::shared_ptr<std::vector<Local>> locals;
   bool needReturn = false;
   bool needJump = false;
   int jumpStep = 0;
@@ -445,8 +445,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
           auto inst = object->activePexInstances.back();
-          ObjectTable::Object::PropInfo* runProperty = GetProperty(
-            *inst, nameProperty, ObjectTable::Object::PropInfo::kFlags_Read);
+          Object::PropInfo* runProperty =
+            GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Read);
           if (runProperty != nullptr) {
             *args[2] = inst->StartFunction(runProperty->readHandler,
                                            argsForCall, ctx->stackIdHolder);
@@ -465,8 +465,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           object = static_cast<IGameObject*>(activeInstanceOwner);
         if (object && object->activePexInstances.size() > 0) {
           auto inst = object->activePexInstances.back();
-          ObjectTable::Object::PropInfo* runProperty = GetProperty(
-            *inst, nameProperty, ObjectTable::Object::PropInfo::kFlags_Write);
+          Object::PropInfo* runProperty =
+            GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Write);
           if (runProperty != nullptr) {
             inst->StartFunction(runProperty->writeHandler, argsForCall,
                                 ctx->stackIdHolder);
@@ -522,10 +522,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
   }
 }
 
-std::shared_ptr<ActivePexInstance::Locals> ActivePexInstance::MakeLocals(
-  FunctionInfo& function, std::vector<VarValue>& arguments)
+std::shared_ptr<std::vector<ActivePexInstance::Local>>
+ActivePexInstance::MakeLocals(FunctionInfo& function,
+                              std::vector<VarValue>& arguments)
 {
-  auto locals = std::make_shared<Locals>();
+  auto locals = std::make_shared<std::vector<Local>>();
 
   // Fill with function locals
   for (auto& var : function.locals) {
@@ -565,7 +566,7 @@ std::shared_ptr<ActivePexInstance::Locals> ActivePexInstance::MakeLocals(
 std::vector<std::pair<uint8_t, std::vector<VarValue*>>>
 ActivePexInstance::TransformInstructions(
   std::vector<FunctionCode::Instruction>& instructions,
-  std::shared_ptr<Locals> locals)
+  std::shared_ptr<std::vector<Local>> locals)
 {
   std::vector<std::pair<uint8_t, std::vector<VarValue*>>> opCode;
   for (size_t i = 0; i < instructions.size(); ++i) {
@@ -654,7 +655,7 @@ VarValue ActivePexInstance::StartFunction(
 }
 
 VarValue& ActivePexInstance::GetIndentifierValue(
-  Locals& locals, VarValue& value, bool treatStringsAsIdentifiers)
+  std::vector<Local>& locals, VarValue& value, bool treatStringsAsIdentifiers)
 {
   if (auto valueAsString = static_cast<const char*>(value)) {
     if (treatStringsAsIdentifiers &&
@@ -778,7 +779,7 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
 void ActivePexInstance::CastObjectToObject(VarValue* result,
                                            VarValue* scriptToCastOwner,
-                                           Locals& locals)
+                                           std::vector<Local>& locals)
 {
   std::string objectToCastTypeName = scriptToCastOwner->objectType;
   const std::string& resultTypeName = result->objectType;
@@ -812,7 +813,7 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
         break;
       }
 
-      scriptName = myScriptPex.fn()->objectTable.m_data[0].parentClassName;
+      scriptName = myScriptPex.fn()->objectTable[0].parentClassName;
     }
   }
 
@@ -857,7 +858,7 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
   return false;
 }
 
-VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
+VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
                                                     std::string name)
 {
 
@@ -894,7 +895,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
 
   if (parentVM->IsNativeFunctionByNameExisted(GetSourcePexName())) {
 
-    VarValue::Ptr functionName =
+    std::shared_ptr<VarValue> functionName =
       std::make_shared<VarValue>((new std::string(name))->c_str());
 
     identifiersValueNameCache.push_back(functionName);
@@ -903,7 +904,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
 
   for (auto& _string : sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
-      VarValue::Ptr stringTableValue =
+      std::shared_ptr<VarValue> stringTableValue =
         std::make_shared<VarValue>((new std::string(name))->c_str());
 
       identifiersValueNameCache.push_back(stringTableValue);
@@ -915,7 +916,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(Locals* locals,
        parentInstance->sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
 
-      VarValue::Ptr stringTableParentValue =
+      std::shared_ptr<VarValue> stringTableParentValue =
         std::make_shared<VarValue>((new std::string(name))->c_str());
 
       identifiersValueNameCache.push_back(stringTableParentValue);

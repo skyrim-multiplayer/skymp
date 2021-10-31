@@ -8,7 +8,7 @@ var global: any = {};
 let expect: typeof ch.expect;
 
 let runTest = (testFn: () => void) => {
-    let cloadflare = new HttpClient('cdnjs.cloudflare.com', 80);
+    let cloadflare = new HttpClient('cdnjs.cloudflare.com');
     let p = cloadflare.get('/ajax/libs/chai/4.2.0/chai.js');
     p.then(res => {
         eval(res.body);
