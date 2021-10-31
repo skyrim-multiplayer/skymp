@@ -84,9 +84,7 @@ void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
 
 void PartOne::SetDamageFormula(std::unique_ptr<IDamageFormula> dmgFormula)
 {
-  // pImpl->damageFormulaFactory = std::move(dmgFormulaFactory);
   pImpl->damageFormula = std::move(dmgFormula);
-  // pImpl->damageFormulaFactory = dmgFormulaFactory;
 }
 
 void PartOne::AddListener(std::shared_ptr<Listener> listener)

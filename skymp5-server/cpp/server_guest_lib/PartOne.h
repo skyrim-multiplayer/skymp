@@ -39,7 +39,6 @@ public:
   ~PartOne();
 
   void SetSendTarget(Networking::ISendTarget* sendTarget);
-  // void SetDamageFormulaFactory(DamageFormulaFactory dmgFormulaFactory);
   void SetDamageFormula(std::unique_ptr<IDamageFormula> dmgFormulaFactory);
   void AddListener(std::shared_ptr<Listener> listener);
   bool IsConnected(Networking::UserId userId) const;
