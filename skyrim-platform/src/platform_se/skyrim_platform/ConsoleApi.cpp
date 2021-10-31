@@ -18,8 +18,6 @@
 #include <skse64_common/SafeWrite.h>
 #include <vector>
 
-extern ThreadPoolWrapper g_pool;
-
 namespace {
 // TODO: Add printers switching
 static std::shared_ptr<IConsolePrinter> g_printer(new InGameConsolePrinter);
@@ -294,7 +292,7 @@ bool ConsoleComand_Execute(const ObScriptParam* paramInfo,
     }
   };
 
-  g_pool.Push(func).wait();
+  SkyrimPlatform::GetSingleton().PushAndWait(func);
   if (iterator)
     iterator->second.execute(paramInfo, scriptData, thisObj, containingObj,
                              scriptObj, locals, result, opcodeOffsetPtr);

@@ -12,6 +12,7 @@ public:
   void SetOverlayService(std::shared_ptr<OverlayService> overlayService);
   void AddTickTask(const std::function<void()>& f);
   void AddUpdateTask(const std::function<void()>& f);
+  void PushAndWait(const std::function<void(int)>& task);
 
 private:
   SkyrimPlatform();

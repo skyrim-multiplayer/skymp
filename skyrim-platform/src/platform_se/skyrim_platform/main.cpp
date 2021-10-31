@@ -15,6 +15,7 @@
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
 #include "PapyrusTESModPlatform.h"
+#include "SkyrimPlatform.h"
 #include "SkyrimPlatformProxy.h"
 #include "TPInputService.h"
 #include "TPOverlayService.h"
@@ -58,7 +59,6 @@
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
 
-extern ThreadPoolWrapper g_pool;
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void SetupFridaHooks();
@@ -80,7 +80,7 @@ void UpdateDumpFunctions()
 
 void OnTick()
 {
-  g_pool.PushAndWait(
+  SkyrimPlatform::GetSingleton().PushAndWait(
     [=](int) { SkyrimPlatform::GetSingleton().JsTick(false); });
   TESModPlatform::Update();
 }
@@ -91,7 +91,7 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
 
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
-  g_pool.PushAndWait(
+  SkyrimPlatform::GetSingleton().PushAndWait(
     [=](int) { SkyrimPlatform::GetSingleton().JsTick(true); });
   g_nativeCallRequirements.gameThrQ->Update();
   g_nativeCallRequirements.stackId = std::numeric_limits<RE::VMStackID>::max();

@@ -35,7 +35,6 @@
 #include "MpClientPluginApi.h"
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
-ThreadPoolWrapper g_pool;
 
 namespace {
 const char* RemoveMultiplePrefixes(const char* str, const char* prefix)
@@ -276,6 +275,7 @@ struct SkyrimPlatform::Impl
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
   TaskQueue tickTasks, updateTasks;
+  ThreadPoolWrapper pool;
 };
 
 SkyrimPlatform::SkyrimPlatform()
@@ -321,4 +321,9 @@ void SkyrimPlatform::AddTickTask(const std::function<void()>& f)
 void SkyrimPlatform::AddUpdateTask(const std::function<void()>& f)
 {
   pImpl->updateTasks.AddTask(f);
+}
+
+void SkyrimPlatform::PushAndWait(const std::function<void(int)>& f)
+{
+  pImpl->pool.PushAndWait(f);
 }

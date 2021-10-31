@@ -15,8 +15,6 @@
 #include <tuple>
 #include <unordered_map>
 
-extern ThreadPoolWrapper g_pool;
-
 namespace {
 enum class PatternType
 {
@@ -169,7 +167,7 @@ public:
           [err] { throw std::runtime_error(err); });
       }
     };
-    g_pool.Push(f).wait();
+    SkyrimPlatform::GetSingleton().PushAndWait(f);
   }
 
   void Leave(bool succeeded)
@@ -193,7 +191,7 @@ public:
         });
       }
     };
-    g_pool.Push(f).wait();
+    SkyrimPlatform::GetSingleton().PushAndWait(f);
   }
 
 private:
