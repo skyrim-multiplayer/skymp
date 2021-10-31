@@ -37,6 +37,7 @@ import * as updateOwner from "./updateOwner";
 import { setActorValuePercentage } from "./actorvalues";
 import { applyDeathState } from './deathSystem';
 import { nameof } from "./utils";
+import { defaultLocalDamageMult, setLocalDamageMult } from "./index";
 
 //
 // eventSource system

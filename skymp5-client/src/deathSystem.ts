@@ -3,8 +3,6 @@ import { AnimationEventName } from "./animation";
 
 /*
 todo: 1. До подъема не получать урон локально
-todo: 2. Правильный порядок воскрешения и телепортации (?)
-todo: 3. Game.EnablePlayerControls()
 */
 
 /*
@@ -20,8 +18,7 @@ enum KillRessurectStrategies {
 }
 
 /**
- * Null for allow all
- * Empty array for disallow all
+ * Null for allow all. Empty array for disallow all
  */
 let gPlayerAllowAnimations: string[] | null = null;
 let gPlayerId: number = 0x14;
@@ -109,7 +106,9 @@ const killWithPush = (act: Actor): void => {
   act.pushActorAway(act, 0);
 }
 const ressurectWithPushKill = (act: Actor): void => {
-  once("update", () => Debug.sendAnimationEvent(act, AnimationEventName.get_up_begin));
+  act.forceRemoveRagdollFromWorld().then(() =>
+    once("update", () => Debug.sendAnimationEvent(act, AnimationEventName.get_up_begin))
+  );
 }
 
 //#endregion
