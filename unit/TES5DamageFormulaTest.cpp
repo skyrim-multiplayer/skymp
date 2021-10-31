@@ -31,21 +31,6 @@ TEST_CASE("Formula takes weapon damage into account", "[TES5DamageFormula]")
   TES5DamageFormula formula{};
   REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 4.0f);
 
-  // vvv temporary stuff to ensure I didn't break anything
-
-  p.SetDamageFormula(std::make_unique<TES5DamageFormula>());
-
-  auto past = std::chrono::steady_clock::now() - 10s;
-  ac.SetLastHitTime(past);
-  p.Messages().clear();
-  p.GetActionListener().OnHit(rawMsgData, hitData);
-
-  REQUIRE(p.Messages().size() == 1);
-  auto changeForm = ac.GetChangeForm();
-  REQUIRE(changeForm.healthPercentage == 0.96f);
-  REQUIRE(changeForm.magickaPercentage == 1.f);
-  REQUIRE(changeForm.staminaPercentage == 1.f);
-
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
 }
@@ -153,23 +138,6 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
     REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 4.0f);
   }
 
-  // vvv temporary stuff to ensure I didn't break anything
-
-  p.SetDamageFormula(std::make_unique<TES5DamageFormula>());
-
-  p.Messages().clear();
-  auto past = std::chrono::steady_clock::now() - 2s;
-  ac.SetLastHitTime(past);
-  p.GetActionListener().OnHit(rawMsgData, hitData);
-
-  REQUIRE(p.Messages().size() == 1);
-  auto changeForm = ac.GetChangeForm();
-  REQUIRE(changeForm.healthPercentage == 0.96f);
-  REQUIRE(changeForm.magickaPercentage == 1.f);
-  REQUIRE(changeForm.staminaPercentage == 1.f);
-
-  // ^^^
-
   Appearance appearance;
   appearance.raceId = 0x13745; // KhajiitRace
   ac.SetAppearance(&appearance);
@@ -179,13 +147,6 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
     TES5DamageFormula formula{};
     REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 10.0f);
   }
-
-  past = std::chrono::steady_clock::now() - 2s;
-  ac.SetLastHitTime(past);
-  p.GetActionListener().OnHit(rawMsgData, hitData);
-  changeForm = ac.GetChangeForm();
-
-  REQUIRE(changeForm.healthPercentage == 0.9f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
