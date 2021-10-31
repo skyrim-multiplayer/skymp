@@ -353,11 +353,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->SetSendTarget(server.get());
-    partOne->SetDamageFormulaFactory([](const MpActor& aggressor,
-                                        const MpActor& target,
-                                        const HitData& hitData) {
-      return std::make_unique<TES5DamageFormula>(aggressor, target, hitData);
-    });
+    partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
     partOne->worldState.AttachScriptStorage(scriptStorage);
     partOne->AttachEspm(espm);
     this->serverSettings = serverSettings;

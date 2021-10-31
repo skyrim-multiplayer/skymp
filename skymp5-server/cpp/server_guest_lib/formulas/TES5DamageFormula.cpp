@@ -1,5 +1,13 @@
 #include "TES5DamageFormula.h"
 
+// XXX: remove unneeded includs
+#include <spdlog/spdlog.h>
+
+#include "HitData.h"
+#include "MpActor.h"
+#include "WorldState.h"
+#include <espm.h>
+
 namespace {
 
 bool IsUnarmedAttack(const uint32_t sourceFormId)
@@ -7,11 +15,31 @@ bool IsUnarmedAttack(const uint32_t sourceFormId)
   return sourceFormId == 0x1f4;
 }
 
-}
+class TES5DamageFormulaImpl // : public IDamageFormula
+{
+public:
+  TES5DamageFormulaImpl(const MpActor& aggressor_, const MpActor& target_,
+                        const HitData& hitData_);
 
-TES5DamageFormula::TES5DamageFormula(const MpActor& aggressor_,
-                                     const MpActor& target_,
-                                     const HitData& hitData_)
+  float CalculateDamage() const;
+
+private:
+  const MpActor& aggressor;
+  const MpActor& target;
+  const HitData& hitData;
+  WorldState* espmProvider;
+
+private:
+  float GetBaseWeaponDamage() const;
+  float CalcWeaponRating() const;
+  float CalcArmorRatingComponent(
+    const Inventory::Entry& opponentEquipmentEntry) const;
+  float CalcOpponentArmorRating() const;
+};
+
+TES5DamageFormulaImpl::TES5DamageFormulaImpl(const MpActor& aggressor_,
+                                             const MpActor& target_,
+                                             const HitData& hitData_)
   : aggressor(aggressor_)
   , target(target_)
   , hitData(hitData_)
@@ -19,7 +47,7 @@ TES5DamageFormula::TES5DamageFormula(const MpActor& aggressor_,
 {
 }
 
-float TES5DamageFormula::GetBaseWeaponDamage() const
+float TES5DamageFormulaImpl::GetBaseWeaponDamage() const
 {
   auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
   if (!weapData.weapData) {
@@ -29,13 +57,13 @@ float TES5DamageFormula::GetBaseWeaponDamage() const
   return weapData.weapData->damage;
 }
 
-float TES5DamageFormula::CalcWeaponRating() const
+float TES5DamageFormulaImpl::CalcWeaponRating() const
 {
   // TODO(#xyz): take other components into account
   return GetBaseWeaponDamage();
 }
 
-float TES5DamageFormula::CalcArmorRatingComponent(
+float TES5DamageFormulaImpl::CalcArmorRatingComponent(
   const Inventory::Entry& opponentEquipmentEntry) const
 {
   spdlog::info("XXX type for {:#x} is {}", opponentEquipmentEntry.baseId,
@@ -56,7 +84,7 @@ float TES5DamageFormula::CalcArmorRatingComponent(
   return 0;
 }
 
-float TES5DamageFormula::CalcOpponentArmorRating() const
+float TES5DamageFormulaImpl::CalcOpponentArmorRating() const
 {
   // TODO(#xyz): OpponentArmorRating is 1 if your character is successfully
   // sneaking and has the Master Sneak perk (C) UESP Wiki
@@ -73,7 +101,7 @@ float TES5DamageFormula::CalcOpponentArmorRating() const
   return combinedArmorRating;
 }
 
-float TES5DamageFormula::CalculateDamage() const
+float TES5DamageFormulaImpl::CalculateDamage() const
 {
   if (IsUnarmedAttack(hitData.source)) {
     uint32_t raceId = aggressor.GetRaceId();
@@ -98,4 +126,13 @@ float TES5DamageFormula::CalculateDamage() const
     damage *= 0.1;
   }
   return damage;
+}
+
+}
+
+float TES5DamageFormula::CalculateDamage(const MpActor& aggressor,
+                                         const MpActor& target,
+                                         const HitData& hitData) const
+{
+  return TES5DamageFormulaImpl(aggressor, target, hitData).CalculateDamage();
 }

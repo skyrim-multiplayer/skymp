@@ -28,15 +28,12 @@ TEST_CASE("Formula takes weapon damage into account", "[TES5DamageFormula]")
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
 
-  TES5DamageFormula formula(ac, ac, hitData);
-  REQUIRE(formula.CalculateDamage() == 4.0f);
+  TES5DamageFormula formula{};
+  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 4.0f);
 
   // vvv temporary stuff to ensure I didn't break anything
 
-  p.SetDamageFormulaFactory([](const MpActor& aggressor, const MpActor& target,
-                               const HitData& hitData) {
-    return std::make_unique<TES5DamageFormula>(aggressor, target, hitData);
-  });
+  p.SetDamageFormula(std::make_unique<TES5DamageFormula>());
 
   auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastHitTime(past);
@@ -96,9 +93,9 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
     }
   )");
 
-  TES5DamageFormula formula(ac, ac, hitData);
+  TES5DamageFormula formula{};
   // 4 / (20 * .12 + 1)
-  REQUIRE(formula.CalculateDamage() == 1.1764705882352942f);
+  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 1.1764705882352942f);
 
   // Total rating for worn armor: 10 + 10 + 15 = 35
   ac.SetEquipment(R"(
@@ -127,7 +124,7 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
 
   // 4 / (35 * .12 + 1) = 0.7692307692307692
   // But minReceivedDamage = 4 * 20% = 0.8
-  REQUIRE(formula.CalculateDamage() == 0.8f);
+  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 0.8f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
@@ -152,16 +149,13 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
   hitData.source = 0x1f4; // unarmed attack
 
   {
-    TES5DamageFormula formula(ac, ac, hitData);
-    REQUIRE(formula.CalculateDamage() == 4.0f);
+    TES5DamageFormula formula{};
+    REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 4.0f);
   }
 
   // vvv temporary stuff to ensure I didn't break anything
 
-  p.SetDamageFormulaFactory([](const MpActor& aggressor, const MpActor& target,
-                               const HitData& hitData) {
-    return std::make_unique<TES5DamageFormula>(aggressor, target, hitData);
-  });
+  p.SetDamageFormula(std::make_unique<TES5DamageFormula>());
 
   p.Messages().clear();
   auto past = std::chrono::steady_clock::now() - 2s;
@@ -182,8 +176,8 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
   ac.SetPercentages(1, 1, 1);
 
   {
-    TES5DamageFormula formula(ac, ac, hitData);
-    REQUIRE(formula.CalculateDamage() == 10.0f);
+    TES5DamageFormula formula{};
+    REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 10.0f);
   }
 
   past = std::chrono::steady_clock::now() - 2s;

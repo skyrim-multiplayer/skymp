@@ -8,7 +8,11 @@ extern espm::Loader l;
 class FakeDamageFormula : public IDamageFormula
 {
 public:
-  float CalculateDamage() const override { return 25; }
+  float CalculateDamage(const MpActor&, const MpActor&,
+                        const HitData&) const override
+  {
+    return 25;
+  }
 };
 
 // Actually, there are a few utils
@@ -16,10 +20,7 @@ espm::CompressedFieldsCache g_dummyCache;
 PartOne& GetPartOne()
 {
   auto instance = std::make_shared<PartOne>();
-  instance->SetDamageFormulaFactory(
-    [](const MpActor&, const MpActor&, const HitData&) {
-      return std::make_unique<FakeDamageFormula>();
-    });
+  instance->SetDamageFormula(std::make_unique<FakeDamageFormula>());
 
   instance->worldState.AttachScriptStorage(
     std::make_shared<DirectoryScriptStorage>(TEST_PEX_DIR));

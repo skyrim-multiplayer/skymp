@@ -49,7 +49,7 @@ struct PartOne::Impl
   std::shared_ptr<spdlog::logger> logger;
 
   Networking::ISendTarget* sendTarget = nullptr;
-  PartOne::DamageFormulaFactory damageFormulaFactory{};
+  std::unique_ptr<IDamageFormula> damageFormula{};
   FakeSendTarget fakeSendTarget;
 
   GamemodeApi::State gamemodeApiState;
@@ -82,11 +82,11 @@ void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
   pImpl->sendTarget = sendTarget ? sendTarget : &pImpl->fakeSendTarget;
 }
 
-void PartOne::SetDamageFormulaFactory(
-  const DamageFormulaFactory& dmgFormulaFactory)
+void PartOne::SetDamageFormula(std::unique_ptr<IDamageFormula> dmgFormula)
 {
   // pImpl->damageFormulaFactory = std::move(dmgFormulaFactory);
-  pImpl->damageFormulaFactory = dmgFormulaFactory;
+  pImpl->damageFormula = std::move(dmgFormula);
+  // pImpl->damageFormulaFactory = dmgFormulaFactory;
 }
 
 void PartOne::AddListener(std::shared_ptr<Listener> listener)
@@ -363,14 +363,13 @@ Networking::ISendTarget& PartOne::GetSendTarget() const
   return *pImpl->sendTarget;
 }
 
-std::unique_ptr<IDamageFormula> PartOne::CreateDamageFormula(
-  const MpActor& aggressor, const MpActor& target,
-  const HitData& hitData) const
+float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
+                               const HitData& hitData) const
 {
-  if (!pImpl->damageFormulaFactory) {
-    throw std::runtime_error("no damage formula factory");
+  if (!pImpl->damageFormula) {
+    throw std::runtime_error("no damage formula");
   }
-  return pImpl->damageFormulaFactory(aggressor, target, hitData);
+  return pImpl->damageFormula->CalculateDamage(aggressor, target, hitData);
 }
 
 void PartOne::NotifyGamemodeApiStateChanged(
