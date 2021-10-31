@@ -62,6 +62,13 @@ TEST_CASE("Damage is reduced based on target's armor",
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
+  IActionListener::RawMessageData rawMsgData;
+  rawMsgData.userId = 0;
+  HitData hitData;
+  hitData.target = 0x14;
+  hitData.aggressor = 0x14;
+  hitData.source = 0x0001397E; // iron dagger 4 damage
+
   // 77382 = 0x12e46: Iron Gauntlets, rating = 10
   // 77387 = 0x12e4b: Iron Boots, rating = 10
   // 77389 = 0x12e4d: Iron Helmet, rating = 15
@@ -90,16 +97,38 @@ TEST_CASE("Damage is reduced based on target's armor",
     }
   )");
 
-  IActionListener::RawMessageData rawMsgData;
-  rawMsgData.userId = 0;
-  HitData hitData;
-  hitData.target = 0x14;
-  hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E; // iron dagger 4 damage
-
   TES5DamageFormula formula(ac, ac, hitData);
   // 4 / (20 * .12 + 1)
   REQUIRE(formula.CalculateDamage() == 1.1764705882352942f);
+
+  // Total rating for worn armor: 10 + 10 + 15 = 35
+  ac.SetEquipment(R"(
+    {
+      "inv": {
+        "entries": [
+          {
+            "baseId": 77382,
+            "count": 1,
+            "worn": true
+          },
+          {
+            "baseId": 77387,
+            "count": 1,
+            "worn": true
+          },
+          {
+            "baseId": 77389,
+            "count": 1,
+            "worn": true
+          }
+        ]
+      }
+    }
+  )");
+
+  // 4 / (35 * .12 + 1) = 0.7692307692307692
+  // But minReceivedDamage = 4 * 20% = 0.8
+  REQUIRE(formula.CalculateDamage() == 0.8f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
