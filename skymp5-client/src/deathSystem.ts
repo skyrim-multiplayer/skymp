@@ -2,10 +2,6 @@ import { hooks, Game, printConsole, Actor, Debug, once, ObjectReference, Utility
 import { AnimationEventName } from "./animation";
 
 /*
-todo: 1. До подъема не получать урон локально
-*/
-
-/*
 You can kill if you want
 If you want it you will kill
 Oh, come on, kill with push
