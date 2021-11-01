@@ -15,7 +15,6 @@ module.exports = {
   },
   mode: "development",
   devServer: {
-    contentBase: distPath,
     port: 1234,
     hot: true,
   },
