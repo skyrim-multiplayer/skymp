@@ -425,8 +425,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
     if (msg.propName === nameof<FormModel>("isDead") && typeof msg.data === "boolean") {
       once("update", () => {
-        //const actor = Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
-        const actor = Game.getPlayer()!;
+        const actor = i === this.getWorldModel().playerCharacterFormIdx ?
+          Game.getPlayer()! :
+          Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
         if (actor) {
           applyDeathState(actor, msg.data as boolean);
         }

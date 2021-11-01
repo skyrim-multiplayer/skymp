@@ -16,8 +16,8 @@ export enum AnimationEventName {
   death2 = "DeathAnim",
   death_stop = "deathStop",
 
-  AddPCControllerToWorld = "AddCharacterControllerToWorld",
-  RemovePCControllerFromWorld = "RemoveCharacterControllerFromWorld",
+  AddCControllerToWorld = "AddCharacterControllerToWorld",
+  RemoveCControllerFromWorld = "RemoveCharacterControllerFromWorld",
 
   reanimated = "reanimated",
   get_up_begin = "GetUpBegin",
