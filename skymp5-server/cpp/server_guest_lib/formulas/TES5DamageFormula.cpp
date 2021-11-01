@@ -65,7 +65,7 @@ float TES5DamageFormulaImpl::CalcArmorRatingComponent(
 {
   if (opponentEquipmentEntry.extra.worn != Inventory::Worn::None &&
       espm::GetRecordType(opponentEquipmentEntry.baseId, espmProvider) ==
-        espm::ARMO::type) {
+        espm::ARMO::kType) {
     auto armorData =
       espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
     // TODO(#xyz): take other components into account
