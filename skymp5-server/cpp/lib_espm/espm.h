@@ -726,7 +726,7 @@ static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 class ARMO : public RecordHeader
 {
 public:
-  static constexpr auto type = "ARMO";
+  static constexpr auto kType = "ARMO";
 
   struct Data
   {
