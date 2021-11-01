@@ -76,7 +76,7 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
     if (!eLookupRes.rec) {
       continue;
     }
-    if (eLookupRes.rec->GetType() == espm::LVLI::type) {
+    if (eLookupRes.rec->GetType() == espm::LVLI::kType) {
       auto childRes = EvaluateListRecurse(br, eLookupRes, 1, pcLevel);
       for (auto& p : childRes) {
         res[p.first] += p.second;
