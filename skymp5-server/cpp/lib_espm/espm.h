@@ -707,12 +707,14 @@ public:
 
   struct DNAM
   {
-    AnimType animType = 0;
+    AnimType animType = AnimType::Other;
     uint8_t unknown01 = 0;
     uint16_t unknown02 = 0;
     float speed = 0.f;
     float reach = 0.f;
+    // 0C: flags, etc
   };
+  static_assert(sizeof(DNAM) == 0x0c);
 
   struct Data
   {
