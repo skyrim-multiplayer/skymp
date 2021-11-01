@@ -10,8 +10,6 @@
 #include "PapyrusObjectReference.h"
 #include "UserMessageOutput.h"
 #include "Utils.h"
-#include "formulas/IDamageFormula.h"
-#include "formulas/TES5DamageFormula.h"
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
