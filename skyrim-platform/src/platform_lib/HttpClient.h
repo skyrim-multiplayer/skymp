@@ -8,7 +8,7 @@ class HttpClient
 {
 public:
   HttpClient();
-  void Update();
+  void ExecuteQueuedCallbacks();
 
   struct HttpResult
   {
