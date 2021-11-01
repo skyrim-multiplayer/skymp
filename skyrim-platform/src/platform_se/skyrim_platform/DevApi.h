@@ -17,6 +17,8 @@ JsValue WritePlugin(const JsFunctionArguments& args);
 
 JsValue GetPlatformVersion(const JsFunctionArguments& args);
 
+JsValue GetJsMemoryUsage(const JsFunctionArguments& args);
+
 using NativeExportsMap =
   std::map<std::string, std::function<JsValue(const JsValue&)>>;
 
@@ -43,5 +45,6 @@ inline void Register(JsValue& exports, std::shared_ptr<JsEngine>* jsEngine,
   exports.SetProperty("writePlugin", JsValue::Function(WritePlugin));
   exports.SetProperty("getPlatformVersion",
                       JsValue::Function(GetPlatformVersion));
+  exports.SetProperty("getJsMemoryUsage", JsValue::Function(GetJsMemoryUsage));
 }
 }
