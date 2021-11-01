@@ -690,7 +690,7 @@ public:
   };
   static_assert(sizeof(WeapData) == 10);
 
-  enum AnimType : uint8_t
+  enum class AnimType : uint8_t
   {
     Other = 0,
     OneHandSword = 1,
@@ -703,10 +703,11 @@ public:
     Staff = 8,
     Crossbow = 9
   };
+  static_assert(sizeof(AnimType) == 1);
 
   struct DNAM
   {
-    uint8_t animType = 0;
+    AnimType animType = 0;
     uint8_t unknown01 = 0;
     uint16_t unknown02 = 0;
     float speed = 0.f;
