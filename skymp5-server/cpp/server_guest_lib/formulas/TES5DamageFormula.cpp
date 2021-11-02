@@ -90,12 +90,14 @@ float TES5DamageFormulaImpl::CalculateDamage() const
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
   }
 
+  // TODO(#457): weapon rating is probably not only component of incomingDamage
+  // Replace this with another issue reference upon investigation
   float incomingDamage = CalcWeaponRating();
   float maxArmorRating =
     espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, espmProvider).value;
   float minReceivedDamage = incomingDamage * (1 - 0.01 * maxArmorRating);
 
-  // TODO(#461): take other components into account
+  // TODO(#461): add difficulty multiplier
   float damage =
     std::max<float>(minReceivedDamage,
                     incomingDamage / (CalcOpponentArmorRating() * 0.12 + 1));
