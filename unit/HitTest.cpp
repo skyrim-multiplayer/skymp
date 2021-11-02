@@ -33,7 +33,6 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
   REQUIRE(changeForm.healthPercentage == 0.75f);
-  // XXX: test with other dummy formula? Test with actor with baseHealth > 100?
   REQUIRE(changeForm.magickaPercentage == 1.f);
   REQUIRE(changeForm.staminaPercentage == 1.f);
 
