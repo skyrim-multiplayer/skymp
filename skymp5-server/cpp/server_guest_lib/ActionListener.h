@@ -26,6 +26,9 @@ public:
   void OnUpdateAnimation(const RawMessageData& rawMsgData,
                          uint32_t idx) override;
 
+  void OnUpdateProperty(const RawMessageData& rawMsgData,
+                         uint32_t idx) override;
+
   void OnUpdateAppearance(const RawMessageData& rawMsgData, uint32_t idx,
                           const Appearance& appearance) override;
 

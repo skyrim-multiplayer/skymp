@@ -115,6 +115,10 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   SendToNeighbours(idx, rawMsgData);
 }
 
+void ActionListener::OnUpdateProperty(const RawMessageData& rawNsgData, uint32_t idx){
+  partOne.GetLogger().info("The property has been updated");
+}
+
 void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
                                         uint32_t idx,
                                         const Appearance& appearance)
@@ -142,6 +146,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   for (auto& e : equipmentInv.entries) {
     if (!actor->GetInventory().HasItem(e.baseId)) {
       badEq = true;
+      partOne.GetLogger().info("Updated equipment for: {}. Equipped {}", rawMsgData.userId, e.baseId);
       break;
     }
   }
@@ -258,6 +263,7 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   if (hosterId) {
     RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
   }
+   partOne.GetLogger().info("{} has activated {}", caster == 0x14 ? rawMsgData.userId : partOne.worldState.GetFormAt<MpObjectReference>(caster).GetBaseId(), target);
 }
 
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
@@ -269,6 +275,7 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
   if (!actor)
     return; // TODO: Throw error instead
   ref.PutItem(*actor, entry);
+  partOne.GetLogger().info("Item {} has been put into container {}", entry.baseId, target);
 }
 
 void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
@@ -280,6 +287,7 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   if (!actor)
     return; // TODO: Throw error instead
   ref.TakeItem(*actor, entry);
+   partOne.GetLogger().info("Item {} has been taken from container {}", entry.baseId, target);
 }
 
 namespace {
@@ -332,12 +340,14 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  partOne.GetLogger().info("{} has equipped {}", rawMsgData.userId, baseId);
   if (!actor)
     throw std::runtime_error(
       "Unable to finish SpSnippet: No Actor found for user " +
       std::to_string(rawMsgData.userId));
 
   actor->OnEquip(baseId);
+  partOne.GetLogger().info("{} has equipped {}", rawMsgData.userId, baseId);
 }
 
 void ActionListener::OnConsoleCommand(
@@ -347,6 +357,7 @@ void ActionListener::OnConsoleCommand(
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (me)
     ConsoleCommands::Execute(*me, consoleCommandName, args);
+  partOne.GetLogger().info("\"{}\" command has been executed", consoleCommandName);
 }
 
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
@@ -360,7 +371,7 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   }
   me->RemoveItems(entries);
   me->AddItem(espm::GetMappedId(recipeData.outputObjectFormId, *mapping),
-              recipeData.outputCount);
+              recipeData.outputCount);  
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
@@ -393,6 +404,7 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
 
   auto recipeData = recipeUsed->GetData(cache);
   UseCraftRecipe(me, recipeData, br, espmIdx);
+  partOne.GetLogger().info("Recipe has been used to craft {}", resultObjectId);
 }
 
 void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
@@ -465,6 +477,7 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
   for (auto& listener : partOne.GetListeners()) {
     listener->OnMpApiEvent(eventName, args, ac->GetFormId());
   }
+  partOne.GetLogger().info("Emitted \"{}\" event by {}", eventName, rawMsgData.userId);
 }
 
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
@@ -509,6 +522,7 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
           { "stamina", stamina } } }
     }.dump();
     actor->SendToUser(s.data(), s.size(), true);
+    partOne.GetLogger().info("Values has been changed for {}.\n Health: {}\nMagica: {}\nStamina: {}", rawMsgData.userId, health, magicka, stamina);
   }
 
   actor->SetPercentages(health, magicka, stamina);

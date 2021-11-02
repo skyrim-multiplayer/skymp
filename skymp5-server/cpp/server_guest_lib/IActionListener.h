@@ -32,6 +32,11 @@ public:
   {
   }
 
+  virtual void OnUpdateProperty(const RawMessageData& rawNsgData, uint32_t idx)
+  
+  {
+  }
+
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
                                  uint32_t idx)
   {

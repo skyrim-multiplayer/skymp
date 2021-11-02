@@ -155,18 +155,25 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnActivate(rawMsgData, FormIdCasts::LongToNormal(caster),
                                 FormIdCasts::LongToNormal(target));
     } break;
-    case MsgType::UpdateProperty:
-      break;
-    case MsgType::PutItem:
+    case MsgType::UpdateProperty: {
+      uint32_t idx;
+      actionListener.OnUpdateProperty(rawMsgData, idx);
+    }break;
+
+    case MsgType::PutItem:{
+      uint32_t target;
+      ReadEx(jMessage, JsonPointers::target, &target);
+      auto e = Inventory::Entry::FromJson(jMessage);
+      actionListener.OnPutItem(rawMsgData, target, e);
+    }break;
+
     case MsgType::TakeItem: {
       uint32_t target;
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
-      if (type == MsgType::PutItem)
-        actionListener.OnPutItem(rawMsgData, target, e);
-      else
-        actionListener.OnTakeItem(rawMsgData, target, e);
+      actionListener.OnTakeItem(rawMsgData, target, e);
     } break;
+    
     case MsgType::FinishSpSnippet: {
       uint32_t snippetIdx;
       ReadEx(jMessage, JsonPointers::snippetIdx, &snippetIdx);
