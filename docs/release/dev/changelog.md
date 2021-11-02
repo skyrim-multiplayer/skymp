@@ -1,3 +1,18 @@
+## Add WebPack support
+
+SkyrimPlatform is now able to load plugins built by WebPack. Raw TSC output is still supported and the example plugin didn't migrate. See [skymp5-client](https://github.com/skyrim-multiplayer/skymp/tree/479562345a1f6df4af42217936ccb3e2d3819f78/skymp5-client) for example of use.
+
+Thanks to WebPack support we are now able to use packages from NPM in our SkyrimPlatform plugins. For example, [RxJS](https://rxjs.dev/guide/overview) is proven to work.
+
+Note: packages using timer functions (`setTimeout`, `setInterval`, etc) will not work until we implement these APIs. This also applies to other browser-specific or node-specific APIs.
+
+Also writing plugins in plain JavaScript is now supported for users who do not want bundlers or TypeScript.
+```js
+// Data/Platform/Plugins/test.js
+sp = skyrimPlatform;
+
+sp.printConsole("Hello JS");
+```
 ## Add API to contact back to game from browser
 
 Added `window.skyrimPlatform.sendMessage` to be used on the browser side to talk back to the game. `sendMessage` accepts zero or more JSON-serializable values.
@@ -21,13 +36,6 @@ on("browserMessage", (event) => {
   printConsole(JSON.stringify(event.arguments));
 });
 ```
-## Add WebPack support
-
-SkyrimPlatform is now able to load plugins built by WebPack. Raw TSC output is still supported and the example plugin didn't migrate. See [skymp5-client](https://github.com/skyrim-multiplayer/skymp/tree/479562345a1f6df4af42217936ccb3e2d3819f78/skymp5-client) for example of use.
-
-Thanks to WebPack support we are now able to use packages from NPM in our SkyrimPlatform plugins. For example, [RxJS](https://rxjs.dev/guide/overview) is proven to work.
-
-Note: packages using timer functions (`setTimeout`, `setInterval`, etc) will not work until we implement these APIs. This also applies to other browser-specific or node-specific APIs.
 ## Add enums for key codes and menus
 
 Added enums for game menus (see [UI Script](https://www.creationkit.com/index.php?title=UI_Script)).

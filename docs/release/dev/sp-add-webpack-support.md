@@ -5,3 +5,11 @@ SkyrimPlatform is now able to load plugins built by WebPack. Raw TSC output is s
 Thanks to WebPack support we are now able to use packages from NPM in our SkyrimPlatform plugins. For example, [RxJS](https://rxjs.dev/guide/overview) is proven to work.
 
 Note: packages using timer functions (`setTimeout`, `setInterval`, etc) will not work until we implement these APIs. This also applies to other browser-specific or node-specific APIs.
+
+Also writing plugins in plain JavaScript is now supported for users who do not want bundlers or TypeScript.
+```js
+// Data/Platform/Plugins/test.js
+sp = skyrimPlatform;
+
+sp.printConsole("Hello JS");
+```
