@@ -33,16 +33,10 @@ values into account. If you notice something missing, consider creating an
 issue if it's not present yet. If you have C++ knowledge, we would be glad to
 see your [contributions](https://github.com/skyrim-multiplayer/skymp/blob/main/CONTRIBUTING.md)!
 
-Current formula implementation is mainly based on the following articles:
-* ... todo uesp links
-
 Incoming damage:
-- [x] Weapon rating
-- ...
-
-Weapon rating:
-- [x] Base rating
-- [ ] todo perks, stuff ...
+```
+incomingDamage = isUnarmed ? raceUnarmedDamage : baseWeaponDamage;
+```
 
 Armor damage reduction:
 ```
@@ -50,7 +44,3 @@ armorRating = armorRating1 + armorRating2 + armorRating3 + ... + armorRatingN;
 minReceivedDamage = incomingDamage * (1 - 0.01 * fMaxArmorRating)
 receivedDamage = std::max(minReceivedDamage, incomingDamage / (armorRating * 0.12 + 1))
 ```
-
-Armor rating:
-- [x] Base rating
-- [ ] ...
