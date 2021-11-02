@@ -98,6 +98,7 @@ float TES5DamageFormulaImpl::CalculateDamage() const
   float minReceivedDamage = incomingDamage * (1 - 0.01 * maxArmorRating);
 
   // TODO(#461): add difficulty multiplier
+  // TODO(#463): add sneak modifier
   float damage =
     std::max<float>(minReceivedDamage,
                     incomingDamage / (CalcOpponentArmorRating() * 0.12 + 1));
