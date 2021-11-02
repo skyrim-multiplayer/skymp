@@ -152,14 +152,6 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   }
 }
 
-Equipment GetEquipment(MpActor& ac)
-{
-  std::string equipment = ac.GetEquipmentAsJson();
-  simdjson::dom::parser p;
-  auto parseResult = p.parse(equipment);
-  return Equipment::FromJson(parseResult.value());
-}
-
 void RecalculateWorn(MpObjectReference& refr)
 {
   if (!refr.GetParent()->HasEspm()) {
@@ -173,14 +165,14 @@ void RecalculateWorn(MpObjectReference& refr)
     return;
   }
 
-  const Equipment eq = GetEquipment(*ac);
+  const Equipment eq = ac->GetEquipment();
 
   Equipment newEq;
   newEq.numChanges = eq.numChanges + 1;
   for (auto& entry : eq.inv.entries) {
     bool isEquipped = entry.extra.worn != Inventory::Worn::None;
-    bool isWeap = !!espm::Convert<espm::WEAP>(
-      loader.GetBrowser().LookupById(entry.baseId).rec);
+    bool isWeap =
+      espm::GetRecordType(entry.baseId, refr.GetParent()) == espm::WEAP::kType;
     if (isEquipped && isWeap) {
       continue;
     }
@@ -516,39 +508,17 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 }
 
 namespace {
+
 bool IsUnarmedAttack(const uint32_t sourceFormId)
 {
   return sourceFormId == 0x1f4;
-}
-
-uint32_t GetRaceId(const MpActor& actor)
-{
-  auto appearance = actor.GetAppearance();
-  if (appearance) {
-    return appearance->raceId;
-  }
-  WorldState* espmProvider = actor.GetParent();
-  uint32_t baseId = actor.GetBaseId();
-  return espm::GetData<espm::NPC_>(baseId, espmProvider).race;
-}
-
-float CalculateDamage(const MpActor& actor, const HitData& hitData)
-{
-  // TODO(#200): Implement damage calculation logic
-  WorldState* espmProvider = actor.GetParent();
-  if (IsUnarmedAttack(hitData.source)) {
-    uint32_t raceId = GetRaceId(actor);
-    return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
-  }
-  auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
-  return weapData.weapData ? weapData.weapData->damage : 0;
 }
 
 float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
                                        float healthPercentage)
 {
   uint32_t baseId = actor.GetBaseId();
-  uint32_t raceId = GetRaceId(actor);
+  uint32_t raceId = actor.GetRaceId();
   WorldState* espmProvider = actor.GetParent();
   float baseHealth = GetBaseActorValues(espmProvider, baseId, raceId).health;
 
@@ -566,7 +536,7 @@ float GetReach(const MpActor& actor, const uint32_t source)
 {
   auto espmProvider = actor.GetParent();
   if (IsUnarmedAttack(source)) {
-    uint32_t raceId = GetRaceId(actor);
+    uint32_t raceId = actor.GetRaceId();
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
@@ -660,7 +630,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  float damage = CalculateDamage(*aggressor, hitData);
+  float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
     CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);

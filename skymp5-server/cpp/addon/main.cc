@@ -11,6 +11,7 @@
 #include "NetworkingMock.h"
 #include "PartOne.h"
 #include "ScriptStorage.h"
+#include "formulas/TES5DamageFormula.h"
 #include <JsEngine.h>
 #include <cassert>
 #include <memory>
@@ -352,6 +353,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->SetSendTarget(server.get());
+    partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
     partOne->worldState.AttachScriptStorage(scriptStorage);
     partOne->AttachEspm(espm);
     this->serverSettings = serverSettings;

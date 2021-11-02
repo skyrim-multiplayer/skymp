@@ -28,14 +28,6 @@ TEST_CASE("Loads refr from Update.esm", "[espm]")
   REQUIRE(refr.rec->GetType() == "REFR");
 }
 
-TEST_CASE("Loads Iron Sword", "[espm]")
-{
-  auto& br = l.GetBrowser();
-
-  auto ironSword = br.LookupById(0x12eb7);
-  REQUIRE(ironSword.rec->GetType() == "WEAP");
-}
-
 TEST_CASE("Loads Container", "[espm]")
 {
   auto& br = l.GetBrowser();
@@ -452,4 +444,52 @@ TEST_CASE("espm::GetData wrapper is able to get record data", "[espm]")
   // Verify that data wasn't default constructed
   auto data = espm::GetData<espm::RACE>(kArgonianRace, &provider);
   REQUIRE(abs(data.healRegen - 0.7f) < std::numeric_limits<float>::epsilon());
+}
+
+TEST_CASE("GMST parsing", "[espm]")
+{
+  MyEspmProvider provider;
+  REQUIRE(
+    espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, &provider).value ==
+    80);
+}
+
+TEST_CASE("ARMO parsing", "[espm]")
+{
+  MyEspmProvider provider;
+  {
+    // Iron Gauntlets
+    auto data = espm::GetData<espm::ARMO>(0x12e46, &provider);
+    REQUIRE(data.baseRatingX100 == 1000);
+    REQUIRE(data.baseValue == 25);
+    REQUIRE(data.weight == 5);
+  }
+  {
+    // Iron Boots
+    auto data = espm::GetData<espm::ARMO>(0x12e4b, &provider);
+    REQUIRE(data.baseRatingX100 == 1000);
+    REQUIRE(data.baseValue == 25);
+    REQUIRE(data.weight == 6);
+  }
+  {
+    // Iron Boots
+    auto data = espm::GetData<espm::ARMO>(0x12e4d, &provider);
+    REQUIRE(data.baseRatingX100 == 1500);
+    REQUIRE(data.baseValue == 60);
+    REQUIRE(data.weight == 5);
+  }
+  {
+    // Hide Boots
+    auto data = espm::GetData<espm::ARMO>(0x13910, &provider);
+    REQUIRE(data.baseRatingX100 == 500);
+    REQUIRE(data.baseValue == 10);
+    REQUIRE(data.weight == 1);
+  }
+  {
+    // Hide Armor
+    auto data = espm::GetData<espm::ARMO>(0x13911, &provider);
+    REQUIRE(data.baseRatingX100 == 2000);
+    REQUIRE(data.baseValue == 50);
+    REQUIRE(data.weight == 5);
+  }
 }

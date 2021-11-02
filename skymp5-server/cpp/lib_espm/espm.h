@@ -603,7 +603,6 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(ACTI) == sizeof(RecordHeader));
 
@@ -628,7 +627,6 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(COBJ) == sizeof(RecordHeader));
 
@@ -644,7 +642,6 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(OTFT) == sizeof(RecordHeader));
 
@@ -723,7 +720,22 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
+};
+static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+
+class ARMO : public RecordHeader
+{
+public:
+  static constexpr auto kType = "ARMO";
+
+  struct Data
+  {
+    uint32_t baseRatingX100 = 0;
+    uint32_t baseValue = 0;
+    float weight = 0;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 
@@ -753,6 +765,7 @@ class GMST : public RecordHeader
 {
 public:
   static constexpr auto kType = "GMST";
+  static constexpr uint32_t kFArmorRating = 0x00037DEB;
 
   struct Data
   {
