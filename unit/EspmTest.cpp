@@ -258,7 +258,7 @@ TEST_CASE("Loads Outfit", "[espm]")
 
   auto form = br.LookupById(0x10fe82);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::OTFT::type);
+  REQUIRE(form.rec->GetType() == espm::OTFT::kType);
 
   auto outfit = espm::Convert<espm::OTFT>(form.rec);
   REQUIRE(outfit->GetData(cache).count == 2);
@@ -273,7 +273,7 @@ TEST_CASE("Loads Npc", "[espm]")
 
   auto form = br.LookupById(0x7);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+  REQUIRE(form.rec->GetType() == espm::NPC_::kType);
 
   auto npc = espm::Convert<espm::NPC_>(form.rec);
 
@@ -290,7 +290,7 @@ TEST_CASE("Loads Weapon", "[espm]")
 
   auto form = br.LookupById(0x12eb7);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::WEAP::type);
+  REQUIRE(form.rec->GetType() == espm::WEAP::kType);
 
   auto npc = espm::Convert<espm::WEAP>(form.rec);
 
@@ -311,7 +311,7 @@ TEST_CASE("Loads NPC factions", "[espm]")
 
   auto form = br.LookupById(GuardWhiterunImperialGuardhouseSleep);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+  REQUIRE(form.rec->GetType() == espm::NPC_::kType);
 
   auto npc = espm::Convert<espm::NPC_>(form.rec);
 
@@ -332,7 +332,7 @@ TEST_CASE("Loads NPC flags", "[espm]")
 
   auto form = br.LookupById(MQ304Kodlak);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+  REQUIRE(form.rec->GetType() == espm::NPC_::kType);
 
   auto npc = espm::Convert<espm::NPC_>(form.rec);
 
@@ -443,11 +443,11 @@ TEST_CASE("espm::GetData wrapper is able to get record data", "[espm]")
     Catch::Contains("Unable to find record without EspmProvider"));
 
   REQUIRE_THROWS_WITH(espm::GetData<espm::RACE>(0xDEADBEEF, &provider),
-                      Catch::Contains("Record deadbeef doesn't exist"));
+                      Catch::Contains("Record 0xdeadbeef doesn't exist"));
 
   REQUIRE_THROWS_WITH(
     espm::GetData<espm::RACE>(kIronSword, &provider),
-    Catch::Contains("Expected record 12eb7 to be RACE, but found WEAP"));
+    Catch::Contains("Expected record 0x12eb7 to be RACE, but found WEAP"));
 
   // Verify that data wasn't default constructed
   auto data = espm::GetData<espm::RACE>(kArgonianRace, &provider);
