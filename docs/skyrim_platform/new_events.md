@@ -87,7 +87,7 @@ on("equip", (event) => {
   const b = event.actor.getBaseObject();
   const armor = Armor.from(event.baseObj);
 
-  if (!armor || armor.getSlotMask() !== 0x4 || !b) return
+  if (!armor || armor.getSlotMask() !== 0x4 || !b) return;
 
   printConsole(`ActorBase ${b.getName()} equipped this cuirass: ${armor.getName()}`);
 })
@@ -102,12 +102,13 @@ Analogous to [OnObjectUnequipped][OnObjectUnequipped].
 import { on } from "skyrimPlatform";
 
 on("unequip", (event) => {
-  if (event.actor.getFormID() !== Game.getPlayer()?.getFormID()) return
+  if (event.actor.getFormID() !== Game.getPlayer()?.getFormID()) return;
 
   const w = Weapon.from(event.baseObj);
 
-  if(w)
+  if (w) {
     printConsole("Player unequipped a weapon");
+  }
 })
 ```
 
@@ -123,7 +124,7 @@ import { on } from "skyrimPlatform";
 
 on("effectStart", (event) => {
   const fx = Game.getFormFromFile(0x800, "my-mod.esp");
-  if (fx?.getFormID() !== event.effect.getFormID()) return
+  if (fx?.getFormID() !== event.effect.getFormID()) return;
 
   DoSomething(event.target);
 })
