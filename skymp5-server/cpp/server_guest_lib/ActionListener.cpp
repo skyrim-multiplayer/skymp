@@ -545,6 +545,80 @@ float GetReach(const MpActor& actor, const uint32_t source)
   return weaponReach * fCombatDistance;
 }
 
+float GetSqrDistance(const MpActor& actor, const MpActor& target)
+{
+  static const float g_pi = std::acos(-1.f);
+  static const float g_angleToRadians = g_pi / 180.f;
+  WorldState* worldState = actor.GetParent();
+  auto aggressorBounds =
+    espm::GetData<espm::NPC_>(actor.GetBaseId(), worldState).objectBounds;
+  auto targetBounds =
+    espm::GetData<espm::NPC_>(target.GetBaseId(), worldState).objectBounds;
+
+  // vector from target to the actor
+  auto position = actor.GetPos() - target.GetPos();
+  auto& angle = target.GetAngle();
+
+  NiPoint3 direction = { std::cos(angle.z * g_angleToRadians),
+                         -std::sin(angle.z * g_angleToRadians), 0.f };
+
+  NiPoint3 pos = { position.x * direction.x - position.y * direction.y,
+                   position.x * direction.y + position.y * direction.x,
+                   position.z + aggressorBounds.Z2 };
+
+  // hint: state[dimention (X, Y, Z)][position (lower, center, upper)]
+  std::vector<bool[3]> state = {
+    { pos.x < targetBounds.X1,
+      (targetBounds.X1 <= pos.x) && (pos.x <= targetBounds.X2),
+      pos.x > targetBounds.X2 },
+    { pos.y < targetBounds.Y1,
+      (targetBounds.Y1 <= pos.y) && (pos.y <= targetBounds.Y2),
+      pos.y > targetBounds.Y2 },
+    { pos.z < targetBounds.Z1,
+      (targetBounds.Z1 <= pos.z) && (pos.z <= targetBounds.Z2),
+      pos.z > targetBounds.Z2 }
+  };
+
+  std::vector<NiPoint3> targetBoundsArray = {
+    { targetBounds.X1, targetBounds.Y1, targetBounds.Z1 },
+    { targetBounds.X2, targetBounds.Y2, targetBounds.Z2 }
+  };
+
+  std::vector<NiPoint3> aggressorBoundsArray = {
+    { aggressorBounds.X1, aggressorBounds.Y1, aggressorBounds.Z1 },
+    { aggressorBounds.X2, aggressorBounds.Y2, aggressorBounds.Z2 }
+  };
+
+  static const std::vector<int> coord1 = { 1, 2, 0 };
+  static const std::vector<int> coord2 = { 2, 0, 1 };
+
+  // 1 case
+  if (state[0][1] && state[1][1] && state[2][1]) {
+    spdlog::debug(
+      fmt::format("{:x} actor attacked from inside of the target {:x}",
+                  actor.GetFormId(), target.GetFormId()));
+    return 0.f;
+  }
+  // 8 cases
+  if (!state[0][1] && !state[1][1] && !state[2][1]) {
+    // TODO
+  }
+
+  for (int i = 0; i < 3; i++) {
+    // 6 cases
+    if (!state[i][1] && state[coord1[i]][1] && state[coord2[i]][1]) {
+      int index = pos[i] > 0 ? 1 : 0; // index = 0 if it is backstab
+      float result =
+        pos[i] - aggressorBoundsArray[index][1] - targetBoundsArray[index][i];
+      return result * result;
+    };
+    // 12 cases
+    if (state[i][1] && !state[coord1[i]][1] && !state[coord2[i]][1]) {
+      // TODO
+    }
+  }
+}
+
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {

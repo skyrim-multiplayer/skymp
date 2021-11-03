@@ -970,6 +970,10 @@ espm::NPC_::Data espm::NPC_::GetData(
         result.healthOffset = *reinterpret_cast<const uint16_t*>(data + 20);
       } else if (!memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!memcmp(type, "OBND", 4)) {
+        if (auto objectBounds = reinterpret_cast<const OBND*>(data)) {
+          result.objectBounds = *objectBounds;
+        }
       }
     },
     compressedFieldsCache);

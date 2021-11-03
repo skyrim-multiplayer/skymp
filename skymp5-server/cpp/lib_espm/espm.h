@@ -656,6 +656,16 @@ public:
     int8_t rank = 0;
   };
 
+  struct OBND
+  {
+    uint16_t X1 = 0;
+    uint16_t Y1 = 0;
+    uint16_t Z1 = 0;
+    uint16_t X2 = 0;
+    uint16_t Y2 = 0;
+    uint16_t Z2 = 0;
+  };
+
   struct Data
   {
     uint32_t defaultOutfitId = 0;
@@ -668,6 +678,7 @@ public:
     uint16_t healthOffset = 0;
     uint16_t magickaOffset = 0;
     uint16_t staminaOffset = 0;
+    OBND objectBounds = {};
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
