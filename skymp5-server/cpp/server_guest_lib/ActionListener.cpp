@@ -567,61 +567,41 @@ float GetSqrDistance(const MpActor& actor, const MpActor& target)
                    position.z + aggressorBounds.Z2 };
   pos.y = pos.y > 0 ? pos.y - aggressorBounds.Y2 : pos.y + aggressorBounds.Y2;
 
-  // hint: state[dimention (X, Y, Z)][position (lower, center, upper)]
-  std::vector<bool[3]> state = {
-    { pos.x < targetBounds.X1,
-      (targetBounds.X1 <= pos.x) && (pos.x <= targetBounds.X2),
-      pos.x > targetBounds.X2 },
-    { pos.y < targetBounds.Y1,
-      (targetBounds.Y1 <= pos.y) && (pos.y <= targetBounds.Y2),
-      pos.y > targetBounds.Y2 },
-    { pos.z < targetBounds.Z1,
-      (targetBounds.Z1 <= pos.z) && (pos.z <= targetBounds.Z2),
-      pos.z > targetBounds.Z2 }
-  };
-
-  std::vector<NiPoint3> targetBoundsArray = {
-    { targetBounds.X1, targetBounds.Y1, targetBounds.Z1 },
-    { targetBounds.X2, targetBounds.Y2, targetBounds.Z2 }
-  };
-
-  std::vector<NiPoint3> aggressorBoundsArray = {
-    { aggressorBounds.X1, aggressorBounds.Y1, aggressorBounds.Z1 },
-    { aggressorBounds.X2, aggressorBounds.Y2, aggressorBounds.Z2 }
+  // hint: state[dimention (X, Y, Z)]
+  std::vector<bool> state = {
+    (targetBounds.X1 <= pos.x && pos.x <= targetBounds.X2),
+    (targetBounds.Y1 <= pos.y && pos.y <= targetBounds.Y2),
+    (targetBounds.Z1 <= pos.z && pos.z <= targetBounds.Z2)
   };
 
   static const std::vector<int> coord1 = { 1, 2, 0 };
   static const std::vector<int> coord2 = { 2, 0, 1 };
 
-  // 1 case
-  if (state[0][1] && state[1][1] && state[2][1]) {
+  NiPoint3 nearestCorner = { pos[0] > 0 ? targetBounds.X2 : targetBounds.X1,
+                             pos[1] > 0 ? targetBounds.Y2 : targetBounds.Y1,
+                             pos[2] > 0 ? targetBounds.Z2 : targetBounds.Z1 };
+
+  if (state[0] && state[1] && state[2]) {
     spdlog::debug(
       fmt::format("{:x} actor attacked from inside of the target {:x}",
                   actor.GetFormId(), target.GetFormId()));
     return 0.f;
   }
 
-  // 8 cases
-  if (!state[0][1] && !state[1][1] && !state[2][1]) {
-    NiPoint3 nearestCorner;
-    for (int i = 0; i < 3; i++) {
-      int index = pos[i] > 0 ? 1 : 0; // index = 0 if it is backstab
-      nearestCorner[i] = targetBoundsArray[index][i];
-    }
+  if (!state[0] && !state[1] && !state[2]) {
     return (pos - nearestCorner).SqrLength();
   }
 
   for (int i = 0; i < 3; i++) {
-    // 6 cases
-    if (!state[i][1] && state[coord1[i]][1] && state[coord2[i]][1]) {
-      int index = pos[i] > 0 ? 1 : 0;
-      float result = pos[i] - targetBoundsArray[index][i];
+    if (!state[i] && state[coord1[i]] && state[coord2[i]]) {
+      float result = pos[i] - nearestCorner[i];
       return result * result;
     };
 
-    // 12 cases
-    if (state[i][1] && !state[coord1[i]][1] && !state[coord2[i]][1]) {
-      // TODO
+    if (state[i] && !state[coord1[i]] && !state[coord2[i]]) {
+      NiPoint3 result = pos - nearestCorner;
+      result[i] = 0;
+      return result.SqrLength();
     }
   }
 }
