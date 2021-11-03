@@ -549,6 +549,7 @@ float GetSqrDistance(const MpActor& actor, const MpActor& target)
 {
   static const float g_pi = std::acos(-1.f);
   static const float g_angleToRadians = g_pi / 180.f;
+
   WorldState* worldState = actor.GetParent();
   auto aggressorBounds =
     espm::GetData<espm::NPC_>(actor.GetBaseId(), worldState).objectBounds;
@@ -609,7 +610,7 @@ float GetSqrDistance(const MpActor& actor, const MpActor& target)
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {
-  float sqrDistance = (actor.GetPos() - targetActor.GetPos()).SqrLength();
+  float sqrDistance = GetSqrDistance(actor, targetActor);
   float reach = GetReach(actor, hitData.source);
   return reach * reach > sqrDistance;
 }
