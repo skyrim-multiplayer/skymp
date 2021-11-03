@@ -578,9 +578,11 @@ float GetSqrDistance(const MpActor& actor, const MpActor& target)
   static const std::vector<int> coord1 = { 1, 2, 0 };
   static const std::vector<int> coord2 = { 2, 0, 1 };
 
-  NiPoint3 nearestCorner = { pos[0] > 0 ? targetBounds.X2 : targetBounds.X1,
-                             pos[1] > 0 ? targetBounds.Y2 : targetBounds.Y1,
-                             pos[2] > 0 ? targetBounds.Z2 : targetBounds.Z1 };
+  NiPoint3 nearestCorner = {
+    pos[0] > 0 ? 0.f + targetBounds.X2 : 0.f + targetBounds.X1,
+    pos[1] > 0 ? 0.f + targetBounds.Y2 : 0.f + targetBounds.Y1,
+    pos[2] > 0 ? 0.f + targetBounds.Z2 : 0.f + targetBounds.Z1
+  };
 
   if (state[0] && state[1] && state[2]) {
     spdlog::debug(
