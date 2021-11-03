@@ -658,12 +658,12 @@ public:
 
   struct OBND
   {
-    uint16_t X1 = 0;
-    uint16_t Y1 = 0;
-    uint16_t Z1 = 0;
-    uint16_t X2 = 0;
-    uint16_t Y2 = 0;
-    uint16_t Z2 = 0;
+    int16_t X1 = 0;
+    int16_t Y1 = 0;
+    int16_t Z1 = 0;
+    int16_t X2 = 0;
+    int16_t Y2 = 0;
+    int16_t Z2 = 0;
   };
 
   struct Data
