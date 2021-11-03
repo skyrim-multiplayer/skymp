@@ -18,7 +18,7 @@ let isPlayerInCombat = pl.isInCombat();
 
 A list of original game types with documentation can be found here: https://www.creationkit.com/index.php?title=Category:Script_Objects
 
-***WARNING***: Papyrus types and methods are only available inside [hooks][Hooks] or [new events][NewEvents] introduced by Skyrim Platform (except `tick`).
+***WARNING***: Papyrus types and methods are only available inside [new events][NewEvents] introduced by Skyrim Platform (except `tick`) or `sendPapyrusEvent` hook (see [hooks][Hooks]).
 
 An exception will be thrown if you try to use them outside any of those contexts.
 
