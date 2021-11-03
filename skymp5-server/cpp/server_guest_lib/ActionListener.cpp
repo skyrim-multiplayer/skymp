@@ -575,38 +575,16 @@ float GetSqrDistance(const MpActor& actor, const MpActor& target)
     (targetBounds.Z1 <= pos.z && pos.z <= targetBounds.Z2)
   };
 
-  static const std::vector<int> coord1 = { 1, 2, 0 };
-  static const std::vector<int> coord2 = { 2, 0, 1 };
-
   NiPoint3 nearestCorner = {
     pos[0] > 0 ? 0.f + targetBounds.X2 : 0.f + targetBounds.X1,
     pos[1] > 0 ? 0.f + targetBounds.Y2 : 0.f + targetBounds.Y1,
     pos[2] > 0 ? 0.f + targetBounds.Z2 : 0.f + targetBounds.Z1
   };
 
-  if (state[0] && state[1] && state[2]) {
-    spdlog::debug(
-      fmt::format("{:x} actor attacked from inside of the target {:x}",
-                  actor.GetFormId(), target.GetFormId()));
-    return 0.f;
-  }
-
-  if (!state[0] && !state[1] && !state[2]) {
-    return (pos - nearestCorner).SqrLength();
-  }
-
-  for (int i = 0; i < 3; i++) {
-    if (!state[i] && state[coord1[i]] && state[coord2[i]]) {
-      float result = pos[i] - nearestCorner[i];
-      return result * result;
-    };
-
-    if (state[i] && !state[coord1[i]] && !state[coord2[i]]) {
-      NiPoint3 result = pos - nearestCorner;
-      result[i] = 0;
-      return result.SqrLength();
-    }
-  }
+  return NiPoint3(state[0] ? 0.f : pos.x - nearestCorner.x,
+                  state[1] ? 0.f : pos.y - nearestCorner.y,
+                  state[2] ? 0.f : pos.z - nearestCorner.z)
+    .SqrLength();
 }
 
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
