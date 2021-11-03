@@ -79,7 +79,7 @@ public:
   void Send(Networking::PacketData data, size_t length, bool reliable) override
   {
     peer->Send(reinterpret_cast<const char*>(data), length, MEDIUM_PRIORITY,
-               reliable ? RELIABLE : UNRELIABLE, 0, serverGuid, false);
+               reliable ? RELIABLE_ORDERED : UNRELIABLE, 0, serverGuid, false);
   }
 
   void Tick(OnPacket onPacket, void* state) override
