@@ -33,7 +33,7 @@ public:
   }
 
   virtual void OnUpdateProperty(const RawMessageData& rawNsgData, uint32_t idx)
-  
+
   {
   }
 
@@ -95,6 +95,11 @@ public:
 
   virtual void OnCustomEvent(const RawMessageData& rawMsgData,
                              const char* eventName, simdjson::dom::element& e)
+  {
+  }
+
+  virtual void OnUnknown(const RawMessageData& rawMsgData) 
+  
   {
   }
 

@@ -64,6 +64,8 @@ public:
   void OnCustomEvent(const RawMessageData& rawMsgData, const char* eventName,
                      simdjson::dom::element& e) override;
 
+  void OnUnknown(const RawMessageData& rawMsgData) override;
+
   void OnChangeValues(const RawMessageData& rawMsgData,
                       const float healthPercentage,
                       const float magickaPercentage,

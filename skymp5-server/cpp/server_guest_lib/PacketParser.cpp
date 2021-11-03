@@ -157,15 +157,16 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     } break;
     case MsgType::UpdateProperty: {
       uint32_t idx;
+      ReadEx(jMessage, JsonPointers::idx, &idx);
       actionListener.OnUpdateProperty(rawMsgData, idx);
-    }break;
+    } break;
 
-    case MsgType::PutItem:{
+    case MsgType::PutItem: {
       uint32_t target;
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
       actionListener.OnPutItem(rawMsgData, target, e);
-    }break;
+    } break;
 
     case MsgType::TakeItem: {
       uint32_t target;
@@ -173,7 +174,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       auto e = Inventory::Entry::FromJson(jMessage);
       actionListener.OnTakeItem(rawMsgData, target, e);
     } break;
-    
+
     case MsgType::FinishSpSnippet: {
       uint32_t snippetIdx;
       ReadEx(jMessage, JsonPointers::snippetIdx, &snippetIdx);
@@ -269,6 +270,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     }
     default:
-      throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
+      actionListener.OnUnknown(rawMsgData);
   }
 }
