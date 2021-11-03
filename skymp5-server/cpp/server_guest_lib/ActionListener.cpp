@@ -559,12 +559,13 @@ float GetSqrDistance(const MpActor& actor, const MpActor& target)
   auto position = actor.GetPos() - target.GetPos();
   auto& angle = target.GetAngle();
 
-  NiPoint3 direction = { std::cos(angle.z * g_angleToRadians),
-                         -std::sin(angle.z * g_angleToRadians), 0.f };
+  NiPoint3 rotation = { std::cos(angle.z * g_angleToRadians),
+                        -std::sin(angle.z * g_angleToRadians), 0.f };
 
-  NiPoint3 pos = { position.x * direction.x - position.y * direction.y,
-                   position.x * direction.y + position.y * direction.x,
+  NiPoint3 pos = { position.x * rotation.x - position.y * rotation.y,
+                   position.x * rotation.y + position.y * rotation.x,
                    position.z + aggressorBounds.Z2 };
+  pos.y = pos.y > 0 ? pos.y - aggressorBounds.Y2 : pos.y + aggressorBounds.Y2;
 
   // hint: state[dimention (X, Y, Z)][position (lower, center, upper)]
   std::vector<bool[3]> state = {
@@ -599,19 +600,25 @@ float GetSqrDistance(const MpActor& actor, const MpActor& target)
                   actor.GetFormId(), target.GetFormId()));
     return 0.f;
   }
+
   // 8 cases
   if (!state[0][1] && !state[1][1] && !state[2][1]) {
-    // TODO
+    NiPoint3 nearestCorner;
+    for (int i = 0; i < 3; i++) {
+      int index = pos[i] > 0 ? 1 : 0; // index = 0 if it is backstab
+      nearestCorner[i] = targetBoundsArray[index][i];
+    }
+    return (pos - nearestCorner).SqrLength();
   }
 
   for (int i = 0; i < 3; i++) {
     // 6 cases
     if (!state[i][1] && state[coord1[i]][1] && state[coord2[i]][1]) {
-      int index = pos[i] > 0 ? 1 : 0; // index = 0 if it is backstab
-      float result =
-        pos[i] - aggressorBoundsArray[index][1] - targetBoundsArray[index][i];
+      int index = pos[i] > 0 ? 1 : 0;
+      float result = pos[i] - targetBoundsArray[index][i];
       return result * result;
     };
+
     // 12 cases
     if (state[i][1] && !state[coord1[i]][1] && !state[coord2[i]][1]) {
       // TODO
