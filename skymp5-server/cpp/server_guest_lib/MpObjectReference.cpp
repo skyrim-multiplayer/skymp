@@ -911,16 +911,16 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
   auto t = base.rec->GetType();
 
-  if (t == espm::TREE::type || t == espm::FLOR::type || espm::IsItem(t)) {
+  if (t == espm::TREE::kType || t == espm::FLOR::kType || espm::IsItem(t)) {
     if (!IsHarvested()) {
       auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
       uint32_t resultItem = 0;
-      if (t == espm::TREE::type) {
+      if (t == espm::TREE::kType) {
         espm::FLOR::Data data;
         data =
           espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
         resultItem = espm::GetMappedId(data.resultItem, *mapping);
-      } else if (t == espm::FLOR::type) {
+      } else if (t == espm::FLOR::kType) {
         espm::FLOR::Data data;
         data =
           espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
@@ -933,7 +933,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       SetHarvested(true);
       RequestReloot();
     }
-  } else if (t == espm::DOOR::type) {
+  } else if (t == espm::DOOR::kType) {
 
     auto refrRecord = espm::Convert<espm::REFR>(
       loader.GetBrowser().LookupById(GetFormId()).rec);
@@ -977,7 +977,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     } else {
       SetOpen(!IsOpen());
     }
-  } else if (t == espm::CONT::type && actorActivator) {
+  } else if (t == espm::CONT::kType && actorActivator) {
     EnsureBaseContainerAdded(loader);
     if (!this->occupant) {
       SetOpen(true);

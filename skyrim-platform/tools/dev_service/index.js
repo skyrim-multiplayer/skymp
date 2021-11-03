@@ -133,7 +133,7 @@ const watchCallback = (_eventType, fileName) => {
           path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
         );
         cp(
-          binPath("SkyrimPlatformCEF.exe"),
+          binPath("SkyrimPlatformCEF.exe.hidden"),
           path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
         );
         cp(binPath("SkyrimPlatformCEF.pdb"), distDir);

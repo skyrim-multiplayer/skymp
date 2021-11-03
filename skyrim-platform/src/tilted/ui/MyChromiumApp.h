@@ -29,7 +29,7 @@ struct MyChromiumApp : CefApp
     std::shared_ptr<ProcessMessageListener> onProcessMessage_,
     std::wstring aProcessName =
       L"Data/Platform/Distribution/RuntimeDependencies/"
-      L"SkyrimPlatformCEF.exe") noexcept;
+      L"SkyrimPlatformCEF.exe.hidden") noexcept;
   virtual ~MyChromiumApp() = default;
 
   TP_NOCOPYMOVE(MyChromiumApp);

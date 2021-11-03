@@ -2,20 +2,18 @@
 
 #include "GameEventSinks.h"
 #include "InvalidArgumentException.h"
-#include "MyUpdateTask.h"
 #include "NativeObject.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
+#include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
+#include "TickTask.h"
 #include <algorithm>
 #include <map>
 #include <optional>
 #include <set>
 #include <tuple>
 #include <unordered_map>
-
-extern ThreadPoolWrapper g_pool;
-extern TaskQueue g_taskQueue;
 
 namespace {
 enum class PatternType
@@ -150,7 +148,7 @@ public:
         return;
       }
 
-      return g_taskQueue.AddTask([=] {
+      return SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
         std::string s = eventName;
         HandleEnter(owningThread, selfId, s);
       });
@@ -165,10 +163,11 @@ public:
       } catch (std::exception& e) {
         auto err = std::string(e.what()) + " (while performing enter on '" +
           hookName + "')";
-        g_taskQueue.AddTask([err] { throw std::runtime_error(err); });
+        SkyrimPlatform::GetSingleton().AddUpdateTask(
+          [err] { throw std::runtime_error(err); });
       }
     };
-    g_pool.Push(f).wait();
+    SkyrimPlatform::GetSingleton().PushAndWait(f);
   }
 
   void Leave(bool succeeded)
@@ -187,12 +186,12 @@ public:
         HandleLeave(owningThread, succeeded);
       } catch (std::exception& e) {
         std::string what = e.what();
-        g_taskQueue.AddTask([what] {
+        SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
           throw std::runtime_error(what + " (in SendAnimationEventLeave)");
         });
       }
     };
-    g_pool.Push(f).wait();
+    SkyrimPlatform::GetSingleton().PushAndWait(f);
   }
 
 private:
@@ -271,7 +270,7 @@ private:
 struct EventsGlobalStatePersistent
 {
   std::shared_ptr<GameEventSinks> gameEventSinks;
-} gPersistent;
+} g_persistent;
 
 struct EventsGlobalState
 {
@@ -462,7 +461,7 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
 
 void EventsApi::SendMenuOpen(const char* menuName)
 {
-  g_taskQueue.AddTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("name", JsValue::String(menuName));
@@ -473,7 +472,7 @@ void EventsApi::SendMenuOpen(const char* menuName)
 
 void EventsApi::SendMenuClose(const char* menuName)
 {
-  g_taskQueue.AddTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
     auto obj = JsValue::Object();
 
     obj.SetProperty("name", JsValue::String(menuName));
@@ -485,8 +484,8 @@ void EventsApi::SendMenuClose(const char* menuName)
 namespace {
 JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
-  if (!gPersistent.gameEventSinks) {
-    gPersistent.gameEventSinks.reset(new GameEventSinks(g_taskQueue));
+  if (!g_persistent.gameEventSinks) {
+    g_persistent.gameEventSinks = std::make_shared<GameEventSinks>();
   }
 
   auto eventName = args[1].ToString();
