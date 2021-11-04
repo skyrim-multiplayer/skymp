@@ -95,8 +95,10 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E;
 
-  int16_t face = espm::GetData<espm::NPC_>(aggressor, &p.worldState).objectBounds.Y2;
-  int16_t targetSide = espm::GetData<espm::NPC_>(target, &p.worldState).objectBounds.X2;
+  int16_t face =
+    espm::GetData<espm::NPC_>(aggressor, &p.worldState).objectBounds.Y2;
+  int16_t targetSide =
+    espm::GetData<espm::NPC_>(target, &p.worldState).objectBounds.X2;
 
   // fCombatDistance global value * reach
   const float awaitedRange = 141.f * 0.7f + face + targetSide;
