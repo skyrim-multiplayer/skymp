@@ -4,14 +4,14 @@ import './styles.scss'
 
 const SkyrimInput = (props) => {
     let width = props.width != undefined ? props.width : 320;
-    let height = props.height != undefined ? props.height : 42;
+    let height = props.height != undefined ? props.height : 48;
     let text = props.text;
     let disabled = props.disabled;
     return (
         <div>
             <span className={'login-form--content_main__label___text'}>{text}</span>
             <div
-                className={`skymp-input`}
+                className={`skymp-input1`}
                 style={{ width: `${width}px`, height: `${height}px` }}
             >
                 <input
