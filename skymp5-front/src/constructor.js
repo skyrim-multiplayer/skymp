@@ -29,7 +29,8 @@ const Constructor = props => {
     if (props.dynamicSize) {
       switch (props.elem.type) {
         case "form":
-          if (content_mainRef && content_mainRef.current && content_mainRef.current.clientHeight && content_mainRef.current.clientWidth) {
+          const isContentInitialized = content_mainRef && content_mainRef.current && content_mainRef.current.clientHeight && content_mainRef.current.clientWidth;
+          if (isContentInitialized) {
             setFwidth(content_mainRef.current.clientWidth + 60 < 257 ? 257 : content_mainRef.current.clientWidth + 60);
             setFheight(content_mainRef.current.clientHeight + 150);
           }
