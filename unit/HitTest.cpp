@@ -24,6 +24,8 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   hitData.target = 0x14;
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
+  ac.AddItem(hitData.source, 1);
+  ac.SetEquipment(ac.GetInventory().ToJson());
 
   auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastHitTime(past);
@@ -56,6 +58,8 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   hitData.target = 0x14;
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
+  ac.AddItem(hitData.source, 1);
+  ac.SetEquipment(ac.GetInventory().ToJson());
 
   p.Messages().clear();
   auto past = std::chrono::steady_clock::now() - 4s;
@@ -166,6 +170,8 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   hitData.target = 0x14;
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E;
+  ac.AddItem(hitData.source, 1);
+  ac.SetEquipment(ac.GetInventory().ToJson());
 
   auto past = std::chrono::steady_clock::now() - 300ms;
 
