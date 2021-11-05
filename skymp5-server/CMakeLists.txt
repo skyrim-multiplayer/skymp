@@ -18,15 +18,15 @@ add_subdirectory(ts)
 
 # cmake-js doesn't allow to simply include something into existing CMake-based build system
 # it expects top-level CMakeLists.txt. We can't meet this requirement.
-# We want to generate project files with `cmake ..`, not `npm run configure` or something
+# We want to generate project files with `cmake ..`, not `yarn configure` or something
 # But we still want to build native NodeJS addon
 
 # Solution:
 # 1. Give cmake-js a special CMakeLists.txt from the `cmake-js-fetch` directory.
 #    Look into package.json and `cmake-js-fetch/CMakeLists.txt` to understand mechanism
-npm_execute_command(
+yarn_execute_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  COMMAND run cmake-js-fetch
+  COMMAND install
 )
 
 # 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
