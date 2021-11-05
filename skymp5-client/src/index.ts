@@ -35,6 +35,7 @@ loadGameManager.addLoadGameListener(enforceLimitations);
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
+  Game.setGameSettingInt("iDeathDropWeaponChance", 0);
   setLocalDamageMult(defaultLocalDamageMult);
 });
 on("update", () => {

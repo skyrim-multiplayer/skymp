@@ -35,7 +35,7 @@ import * as updateOwner from "./updateOwner";
 import { ActorValues, getActorValues } from "./actorvalues";
 import { Hit, getHitData } from "./hit";
 import { FormModel } from "./model";
-import { from } from "rxjs";
+import { nameof } from "./utils";
 
 interface AnyMessage {
   type?: string;
@@ -447,10 +447,10 @@ export class SkympClient {
     const av = getActorValues(Game.getPlayer() as Actor);
     const currentTime = Date.now();
     if (
+      this.actorValuesNeedUpdate === false &&
       this.prevValues.health === av.health &&
       this.prevValues.stamina === av.stamina &&
-      this.prevValues.magicka === av.magicka &&
-      this.actorValuesNeedUpdate === false
+      this.prevValues.magicka === av.magicka
     ) {
       return;
     } else {

@@ -1,5 +1,6 @@
 import { hooks, Game, printConsole, Actor, Debug, once, ObjectReference, Utility } from "skyrimPlatform";
 import { AnimationEventName } from "./animation";
+import { RespawnNeededError } from "./errors";
 
 /*
 You can kill if you want
@@ -20,14 +21,18 @@ let gPlayerAllowAnimations: string[] | null = null;
 let gPlayerId: number = 0x14;
 let gKillRessurectStrategy: KillRessurectStrategies = KillRessurectStrategies.Push;
 
+// Blocking kill move animations
 hooks.sendAnimationEvent.add({
   enter(ctx) {
-    // if (ctx.animEventName.toLowerCase().includes("killmove")) {
-    //   ctx.animEventName = "";
-    // }
+    ctx.animEventName = "";
+  },
+  leave() { }
+}, 0, 0xffffffff, "KillMove*");
+
+hooks.sendAnimationEvent.add({
+  enter(ctx) {
     if (!gPlayerAllowAnimations) return;
     if (!gPlayerAllowAnimations.includes(ctx.animEventName)) {
-      printConsole(`Player anim "${ctx.animEventName}" blocked`);
       ctx.animEventName = "";
     }
   },
@@ -79,7 +84,6 @@ const resurrectActor = (act: Actor): void => {
   if (isPlayer(act) === true) {
     gPlayerAllowAnimations = null;
     act.setDontMove(false);
-
     switch (gKillRessurectStrategy) {
       case KillRessurectStrategies.Push:
         ressurectWithPushKill(act);
@@ -88,10 +92,9 @@ const resurrectActor = (act: Actor): void => {
         ressurectWithAnimKill(act);
         break;
     }
-
   } else {
     makeActorImmortal(act);
-    act.resurrect();
+    throw new RespawnNeededError("needs to be respawned");
   }
 }
 
@@ -105,7 +108,7 @@ const ressurectWithPushKill = (act: Actor): void => {
   act.forceRemoveRagdollFromWorld().then(() =>
     once("update", () => Debug.sendAnimationEvent(act, AnimationEventName.get_up_begin))
   );
-}
+};
 
 //#endregion
 

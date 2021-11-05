@@ -428,6 +428,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         const actor = i === this.getWorldModel().playerCharacterFormIdx ?
           Game.getPlayer()! :
           Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
+        printConsole(`Received death state for ${actor?.getFormID().toString(16)} "${nameof<FormModel>("isDead")}" = ${msg.data}`);
         if (actor) {
           applyDeathState(actor, msg.data as boolean);
         }
@@ -604,6 +605,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     const idxInModel = refrId
       ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId)
       : this.worldModel.playerCharacterFormIdx;
+    // fixes "can't get property idx of null or undefined"
     if (!this.worldModel.forms[idxInModel]) return;
     msg.idx = this.worldModel.forms[idxInModel].idx;
 

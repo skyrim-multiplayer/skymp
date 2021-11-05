@@ -7,6 +7,7 @@ import {
   Form,
 } from "skyrimPlatform";
 import { applyDeathState } from "./deathSystem";
+import { RespawnNeededError } from "./errors";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {
@@ -166,7 +167,7 @@ const teleportIfNeed = (refr: ObjectReference, m: Transform) => {
     isInDifferentWorldOrCell(refr, m.worldOrCell) ||
     (!refr.is3DLoaded() && isInDifferentExteriorCell(refr, m.pos))
   ) {
-    throw new Error("needs to be respawned");
+    throw new RespawnNeededError("needs to be respawned");
   }
   return false;
 };
