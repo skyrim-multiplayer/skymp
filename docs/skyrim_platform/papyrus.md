@@ -1,17 +1,23 @@
 # Papyrus types from the original game
 
-- All types in SkyrimPlatform have the same name as in Papyrus, for example: `Game`, `Actor`, `Form`, `Spell`, `Perk`, etc.
-- To use types from Papyrus, including calling methods and static functions that they have, they need to be imported:
+All types in SkyrimPlatform have the same name as in Papyrus, for example: `Game`, `Actor`, `Form`, `Spell`, `Perk`, etc.
+
+To use types from Papyrus, including calling methods and static functions that they have, they need to be imported:
 
   ```typescript
   import { Game, Actor } from "skyrimPlatform";
   ```
 
+***WARNING***: Papyrus types and methods are only available inside [hooks][Hooks] or [new events][NewEvents] introduced by Skyrim Platform (except `tick`).
+
+An exception will be thrown if you try to use them outside any of those contexts.
+
 ## Form
 
 - Form (`Form`) is inherited by most game types, which have methods such as `Actor`, `Weapon`, etc.
 - Each form has an ID, which is a 32-bit unsigned number (`uint32_t`). In SkyrimPlatform, represented by the type `number`.
-- If you need to find a form by its ID, use `Game.getFormEx`. Note that it is `Game.getFormEx`, not `Game.getForm`. The latter always returns `null` for IDs above 0x80000000 (the behavior of the original game).
+- If you need to find a form by its ID, use `Game.getFormEx`.\
+  Note that it is `Game.getFormEx`, not `Game.getForm`. The latter always returns `null` for IDs above 0x80000000 (the behavior of the original game).
 - You can get the form ID using the `getFormID` method. It is guaranteed that `Game.getFormEx` will find the form by the ID returned by this method if the form was not destroyed by the game.
 
 ## Object casting
@@ -81,17 +87,22 @@
 
 # Object comparison
 
-- To compare objects in SkyrimPlatform, you need to compare their IDs:
-  ```typescript
-  if (object1.getFormId() === object2.getFormId()) {
-    // ...
-  }
-  ```
+To compare objects in SkyrimPlatform, you need to compare their IDs:
+
+```typescript
+if (object1.getFormId() === object2.getFormId()) {
+  // ...
+}
+```
 
 # Casting objects to string
 
-- Types ported from Papyrus have limited support for a number of operations normal for regular JS objects such as `toString`, `toJSON`.
-  ```typescript
-  Game.getPlayer().ToString(); // '[object Actor]'
-  JSON.stringify(Game.getPlayer()); // `{}`
+Types ported from Papyrus have limited support for a number of operations normal for regular JS objects such as `toString`, `toJSON`.
+
+```typescript
+Game.getPlayer().ToString(); // '[object Actor]'
+JSON.stringify(Game.getPlayer()); // `{}`
   ```
+
+[Hooks]: events.md
+[NewEvents]: new_events.md
