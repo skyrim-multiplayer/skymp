@@ -79,37 +79,9 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   )");
 
   TES5DamageFormula formula{};
-  // 4 / (20 * .12 + 1)
-  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 1.1764705882352942f);
-
-  // Total rating for worn armor: 10 + 10 + 15 = 35
-  ac.SetEquipment(R"(
-    {
-      "inv": {
-        "entries": [
-          {
-            "baseId": 77382,
-            "count": 1,
-            "worn": true
-          },
-          {
-            "baseId": 77387,
-            "count": 1,
-            "worn": true
-          },
-          {
-            "baseId": 77389,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
-
-  // 4 / (35 * .12 + 1) = 0.7692307692307692
-  // But minReceivedDamage = 4 * 20% = 0.8
-  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 0.8f);
+  // 4 * 0.01 * (100 - 20 * .12) = 3,904
+  const float damage = 4.f * 0.01f * (100.f - 20.f * 0.12f);
+  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == damage);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
