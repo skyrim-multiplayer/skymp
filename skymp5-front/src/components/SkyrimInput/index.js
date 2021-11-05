@@ -11,7 +11,7 @@ const SkyrimInput = (props) => {
         <div>
             <span className={'login-form--content_main__label___text'}>{text}</span>
             <div
-                className={`skymp-input1`}
+                className={`skymp-input`}
                 style={{ width: `${width}px`, height: `${height}px` }}
             >
                 <input

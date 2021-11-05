@@ -40,15 +40,10 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-       // width: 430px;
         margin: 30px auto auto;
-        //height: 400px;
         .skymp-input {
           align-self: flex-end;
-          margin-bottom: 10px;
           justify-self: flex-end;
-         //margin-left: auto;
-          //margin-right: 10px;
         }
         &__email {
           margin-top: 10px;
