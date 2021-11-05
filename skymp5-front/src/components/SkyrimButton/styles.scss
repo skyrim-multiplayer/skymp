@@ -1,10 +1,8 @@
-.skymp-input {
+.skymp-input-button {
   border: 3px solid rgba(157, 158, 158, 0.75);
   border-radius: 10px;
   width: 320px;
   height: 48px;
-}
-.skymp-input.button {
     text-align: center;
     align-items: center;
     display: flex;
@@ -16,7 +14,7 @@
         opacity: 0.33;
       }
     }
-  .skymp-input_text {
+  .skymp-input-button_text {
       overflow: hidden;
       text-overflow: ellipsis;
       font-family: Bankir-Retro, serif;
