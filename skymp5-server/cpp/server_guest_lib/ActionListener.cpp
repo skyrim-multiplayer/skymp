@@ -266,12 +266,6 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   if (hosterId) {
     RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
   }
-  spdlog::debug(
-    "{} has activated {}",
-    caster == 0x14
-      ? rawMsgData.userId
-      : partOne.worldState.GetFormAt<MpObjectReference>(caster).GetBaseId(),
-    target);
 }
 
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
@@ -283,8 +277,6 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
   if (!actor)
     return; // TODO: Throw error instead
   ref.PutItem(*actor, entry);
-  spdlog::debug("Item {} has been put into container {}", entry.baseId,
-                target);
 }
 
 void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
@@ -296,8 +288,6 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   if (!actor)
     return; // TODO: Throw error instead
   ref.TakeItem(*actor, entry);
-  spdlog::debug("Item {} has been taken from container {}", entry.baseId,
-                target);
 }
 
 namespace {
@@ -356,7 +346,6 @@ void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
       std::to_string(rawMsgData.userId));
 
   actor->OnEquip(baseId);
-  spdlog::debug("{} has equipped {}", rawMsgData.userId, baseId);
 }
 
 void ActionListener::OnConsoleCommand(
@@ -366,7 +355,6 @@ void ActionListener::OnConsoleCommand(
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (me)
     ConsoleCommands::Execute(*me, consoleCommandName, args);
-  spdlog::debug("\"{}\" command has been executed", consoleCommandName);
 }
 
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
@@ -413,7 +401,6 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
 
   auto recipeData = recipeUsed->GetData(cache);
   UseCraftRecipe(me, recipeData, br, espmIdx);
-  spdlog::debug("Recipe has been used to craft {}", resultObjectId);
 }
 
 void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
@@ -486,12 +473,13 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
   for (auto& listener : partOne.GetListeners()) {
     listener->OnMpApiEvent(eventName, args, ac->GetFormId());
   }
-  spdlog::debug("Emitted \"{}\" event by {}", eventName, rawMsgData.userId);
 }
 
-void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
+void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
+                               simdjson::dom::element& data)
 {
-  spdlog::debug("Got uncknown message from {}", rawMsgData.userId);
+  spdlog::debug("Got uncknown message from {}, unheald log:\n {}",
+                rawMsgData.userId, data);
 }
 
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
@@ -536,9 +524,6 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
           { "stamina", stamina } } }
     }.dump();
     actor->SendToUser(s.data(), s.size(), true);
-    spdlog::debug(
-      "Values has been changed for {}.\n Health: {}\nMagica: {}\nStamina: {}",
-      rawMsgData.userId, health, magicka, stamina);
   }
 
   actor->SetPercentages(health, magicka, stamina);

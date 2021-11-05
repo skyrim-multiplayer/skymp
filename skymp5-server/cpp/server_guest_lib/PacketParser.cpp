@@ -270,6 +270,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     }
     default:
-      actionListener.OnUnknown(rawMsgData);
+      simdjson::dom::element data_;
+      ReadEx(jMessage, JsonPointers::data, &data_);
+      actionListener.OnUnknown(rawMsgData, data_);
   }
 }

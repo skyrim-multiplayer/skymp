@@ -98,7 +98,10 @@ public:
   {
   }
 
-  virtual void OnUnknown(const RawMessageData& rawMsgData) {}
+  virtual void OnUnknown(const RawMessageData& rawMsgData,
+                         simdjson::dom::element& data)
+  {
+  }
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
                               const float healthPercentage,
