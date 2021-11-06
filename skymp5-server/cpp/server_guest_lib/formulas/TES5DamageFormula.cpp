@@ -94,14 +94,18 @@ float TES5DamageFormulaImpl::CalculateDamage() const
   // Replace this with another issue reference upon investigation
   float incomingDamage = CalcWeaponRating();
   float maxArmorRating =
-    espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, espmProvider).value;
-  float minReceivedDamage = incomingDamage * (1 - 0.01 * maxArmorRating);
+    espm::GetData<espm::GMST>(espm::GMST::kFMaxArmorRating, espmProvider)
+      .value;
+  float armorScalingFactor =
+    espm::GetData<espm::GMST>(espm::GMST::kFArmorScalingFactor, espmProvider)
+      .value;
 
   // TODO(#461): add difficulty multiplier
   // TODO(#463): add sneak modifier
-  float damage =
-    std::max<float>(minReceivedDamage,
-                    incomingDamage / (CalcOpponentArmorRating() * 0.12 + 1));
+  float damage = incomingDamage * 0.01f *
+    (100.f -
+     std::min<float>(CalcOpponentArmorRating() * armorScalingFactor,
+                     maxArmorRating));
   if (hitData.isPowerAttack) {
     damage *= 2;
   }
