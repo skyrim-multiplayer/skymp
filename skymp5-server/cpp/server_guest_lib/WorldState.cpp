@@ -345,6 +345,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
 
   if (t == "NPC_") {
+    return false;
     auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
     if (npcData.isEssential || npcData.isProtected)
       return false;
