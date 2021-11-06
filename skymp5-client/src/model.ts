@@ -18,6 +18,7 @@ export interface FormModel {
   isOpen?: boolean;
   inventory?: Inventory;
   isHostedByOther?: boolean;
+  isDead?: boolean;
 }
 
 export interface WorldModel {
