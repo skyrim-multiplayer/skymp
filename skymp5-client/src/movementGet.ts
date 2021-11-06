@@ -2,7 +2,7 @@ import { FormModel } from './model';
 import { ObjectReference, Actor, TESModPlatform, Form, printConsole } from "skyrimPlatform";
 import { NiPoint3, Movement, RunMode } from "./movement";
 
-export function getMovement(refr: ObjectReference, form?: FormModel): Movement {
+export const getMovement = (refr: ObjectReference, form?: FormModel): Movement => {
   const ac = Actor.from(refr) as Actor;
 
   // It is running for ObjectReferences because Standing

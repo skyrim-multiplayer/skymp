@@ -59,7 +59,6 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   if (msgType === "hostStart") {
     const msg = msgAny as HostStartMessage;
     const target = msg.target;
-    //printConsole("hostStart", target.toString(16));
 
     let hosted = storage["hosted"];
     if (typeof hosted !== typeof []) {

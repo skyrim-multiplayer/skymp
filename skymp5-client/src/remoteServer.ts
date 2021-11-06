@@ -597,7 +597,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   send(msg: Record<string, unknown>, reliable: boolean): void {
-    if (!msg) return;
     if (this.worldModel.playerCharacterFormIdx === -1) return;
 
     const refrId = msg._refrId as number | undefined;

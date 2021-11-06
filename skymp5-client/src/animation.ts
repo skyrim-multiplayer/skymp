@@ -12,22 +12,22 @@ import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
 
 export enum AnimationEventName {
-  ragdoll = "Ragdoll",
-  death2 = "DeathAnim",
-  death_stop = "deathStop",
+  Ragdoll = "Ragdoll",
+  Death2 = "DeathAnim",
+  DeathStop = "deathStop",
 
   AddCControllerToWorld = "AddCharacterControllerToWorld",
   RemoveCControllerFromWorld = "RemoveCharacterControllerFromWorld",
 
-  reanimated = "reanimated",
-  get_up_begin = "GetUpBegin",
-  return_to_default = "returnToDefault",
-  force_default = "IdleForceDefaultState",
+  Reanimated = "reanimated",
+  GetUpBegin = "GetUpBegin",
+  ReturnToDefault = "returnToDefault",
+  ForceDefault = "IdleForceDefaultState",
 
-  wound_default = "IdleWounded_02",
-  bleed_out = "bleedOutStart",
+  WoundDefault = "IdleWounded_02",
+  BleedOut = "bleedOutStart",
 
-  kill_move = "killmove",
+  KillMove = "killmove",
 };
 
 export interface Animation {
@@ -63,6 +63,7 @@ export const applyAnimation = (
   if (isIdle(anim.animEventName)) {
     allowedIdles.push([refr.getFormID(), anim.animEventName]);
   }
+
   if (anim.animEventName === "SkympFakeEquip") {
     const ac = Actor.from(refr);
     if (ac) applyWeapDrawn(ac, true);
@@ -188,7 +189,7 @@ export const setupHooks = (): void => {
           if (allowedAnims.has(animKey)) {
             allowedAnims.delete(animKey);
           } else {
-            //printConsole("block anim " + ctx.animEventName);
+            printConsole("block anim " + ctx.animEventName);
             return (ctx.animEventName = "");
           }
         }

@@ -321,7 +321,7 @@ export class FormView implements View<FormModel> {
         );
         if (model.appearance && model.appearance.name)
           refr.setDisplayName("" + model.appearance.name, true);
-        //Actor.from(refr)?.setActorValue("attackDamageMult", 0);
+        Actor.from(refr)?.setActorValue("attackDamageMult", 0);
       }
       this.refrId = (refr as ObjectReference).getFormID();
     }
@@ -495,7 +495,6 @@ export class FormView implements View<FormModel> {
           const remoteId = this.remoteRefrId;
           if (ac && ac.is3DLoaded()) {
             tryHostIfNeed(ac, remoteId as number);
-            //printConsole("try to rehost");
           }
         }
       }
