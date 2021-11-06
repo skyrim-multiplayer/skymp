@@ -41,6 +41,7 @@ incomingDamage = isUnarmed ? raceUnarmedDamage : baseWeaponDamage;
 Armor damage reduction:
 ```
 armorRating = armorRating1 + armorRating2 + armorRating3 + ... + armorRatingN;
-minReceivedDamage = incomingDamage * (1 - 0.01 * fMaxArmorRating)
-receivedDamage = std::max(minReceivedDamage, incomingDamage / (armorRating * 0.12 + 1))
+//fMaxArmorRating is [GMST:00037DEB], fArmorScalingFactor is [GMST:00021A72];
+//fMaxArmorRating = 80 by default, fArmorScalingFactor = 0.12 by default
+receivedDamage = incomingDamage * 0.01 * (100 - std::min(armorRating * fArmorScalingFactor, fMaxArmorRating));
 ```
