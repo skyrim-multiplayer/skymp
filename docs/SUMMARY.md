@@ -31,3 +31,7 @@
 - [Events System](docs_events_system.md)
 - [Skyrim Platform](docs_skyrim_platform.md)
 - [Server Data Directory](docs_server_data_directory.md)
+
+## Game Mechanics
+
+- [Damage calculation and hit handling](docs_onhit_and_damage.md)
