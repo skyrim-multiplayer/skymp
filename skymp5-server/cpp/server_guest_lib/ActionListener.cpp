@@ -595,6 +595,19 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     hitData.target = aggressor->GetFormId();
   }
 
+  if (aggressor->GetEquipment().inv.HasItem(hitData.source) == false &&
+      IsUnarmedAttack(hitData.source) == false) {
+
+    if (aggressor->GetInventory().HasItem(hitData.source) == false) {
+      spdlog::debug("{:x} actor has no {:x} weapon and can't attack",
+                    hitData.aggressor, hitData.source);
+    }
+    spdlog::debug(
+      "{:x} weapon is not equipped by {:x} actor and cannot be used",
+      hitData.source, hitData.aggressor);
+    return;
+  };
+
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
   auto lastHitTime = targetActor.GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
