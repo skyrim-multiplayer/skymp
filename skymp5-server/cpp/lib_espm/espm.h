@@ -656,16 +656,6 @@ public:
     int8_t rank = 0;
   };
 
-  struct OBND
-  {
-    int16_t X1 = 0;
-    int16_t Y1 = 0;
-    int16_t Z1 = 0;
-    int16_t X2 = 0;
-    int16_t Y2 = 0;
-    int16_t Z2 = 0;
-  };
-
   struct Data
   {
     uint32_t defaultOutfitId = 0;
@@ -678,7 +668,7 @@ public:
     uint16_t healthOffset = 0;
     uint16_t magickaOffset = 0;
     uint16_t staminaOffset = 0;
-    OBND objectBounds = {};
+    ObjectBounds objectBounds = {};
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
@@ -776,6 +766,7 @@ class GMST : public RecordHeader
 {
 public:
   static constexpr auto kType = "GMST";
+  static constexpr uint32_t kFCombatDistance = 0x00055640;
   static constexpr uint32_t kFArmorRating = 0x00037DEB;
 
   struct Data

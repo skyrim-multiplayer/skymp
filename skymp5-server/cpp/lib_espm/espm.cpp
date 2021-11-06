@@ -971,7 +971,7 @@ espm::NPC_::Data espm::NPC_::GetData(
       } else if (!memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);
       } else if (!memcmp(type, "OBND", 4)) {
-        if (auto objectBounds = reinterpret_cast<const OBND*>(data)) {
+        if (auto objectBounds = reinterpret_cast<const ObjectBounds*>(data)) {
           result.objectBounds = *objectBounds;
         }
       }

@@ -31,6 +31,7 @@ public:
   Equipment GetEquipment() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
+  espm::ObjectBounds GetBounds() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);

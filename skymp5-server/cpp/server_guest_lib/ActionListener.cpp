@@ -527,11 +527,6 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
   return currentHealthPercentage;
 }
 
-float GetGlobalCombatDistance(WorldState* espmProvider)
-{
-  return espm::GetData<espm::GMST>(0x55640, espmProvider).value;
-}
-
 float GetReach(const MpActor& actor, const uint32_t source)
 {
   auto espmProvider = actor.GetParent();
@@ -540,45 +535,59 @@ float GetReach(const MpActor& actor, const uint32_t source)
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
-  float fCombatDistance = GetGlobalCombatDistance(espmProvider);
+  float fCombatDistance =
+    espm::GetData<espm::GMST>(espm::GMST::kFCombatDistance, espmProvider)
+      .value;
   float weaponReach = weapDNAM ? weapDNAM->reach : 0;
   return weaponReach * fCombatDistance;
 }
 
-float GetSqrDistance(const MpActor& actor, const MpActor& target)
+enum class AngleType
+{
+  Radians = 0,
+  Degrees = 1
+};
+
+template <AngleType type>
+NiPoint3 RotateZ(NiPoint3 point, float _angle)
 {
   static const float g_pi = std::acos(-1.f);
   static const float g_angleToRadians = g_pi / 180.f;
+  auto angle = type == AngleType::Radians ? _angle : _angle * g_angleToRadians;
+  float cos = std::cos(angle);
+  float sin = std::sin(angle);
 
-  WorldState* worldState = actor.GetParent();
-  auto aggressorBounds =
-    espm::GetData<espm::NPC_>(actor.GetBaseId(), worldState).objectBounds;
-  auto targetBounds =
-    espm::GetData<espm::NPC_>(target.GetBaseId(), worldState).objectBounds;
+  return { point.x * cos - point.y * sin, point.x * sin + point.y * cos,
+           point.z };
+}
+
+float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
+{
+  auto bounds = actor.GetBounds();
+  auto targetBounds = target.GetBounds();
+
+  // "Y" is "face" of character
+  const float angleZ = 90.f - target.GetAngle().z;
+  float direction = actor.GetAngle().z;
 
   // vector from target to the actor
-  auto position = actor.GetPos() - target.GetPos();
-  auto& angle = target.GetAngle();
+  NiPoint3 position = actor.GetPos() - target.GetPos();
+  position += RotateZ<AngleType::Degrees>(
+    NiPoint3(0.f + bounds.pos2[1], 0.f, 0.f + bounds.pos2[2]), direction);
 
-  NiPoint3 rotation = { std::cos(angle.z * g_angleToRadians),
-                        -std::sin(angle.z * g_angleToRadians), 0.f };
+  NiPoint3 pos = RotateZ<AngleType::Degrees>(position, angleZ);
 
-  NiPoint3 pos = { position.x * rotation.x - position.y * rotation.y,
-                   position.x * rotation.y + position.y * rotation.x,
-                   position.z + aggressorBounds.Z2 };
-  pos.y = pos.y > 0 ? pos.y - aggressorBounds.Y2 : pos.y + aggressorBounds.Y2;
-
-  // hint: state[dimention (X, Y, Z)]
+  // hint: state[axis (X, Y, Z)]
   std::vector<bool> state = {
-    (targetBounds.X1 <= pos.x && pos.x <= targetBounds.X2),
-    (targetBounds.Y1 <= pos.y && pos.y <= targetBounds.Y2),
-    (targetBounds.Z1 <= pos.z && pos.z <= targetBounds.Z2)
+    (targetBounds.pos1[0] <= pos.x && pos.x <= targetBounds.pos2[0]),
+    (targetBounds.pos1[1] <= pos.y && pos.y <= targetBounds.pos2[1]),
+    (targetBounds.pos1[2] <= pos.z && pos.z <= targetBounds.pos2[2])
   };
 
   NiPoint3 nearestCorner = {
-    pos[0] > 0 ? 0.f + targetBounds.X2 : 0.f + targetBounds.X1,
-    pos[1] > 0 ? 0.f + targetBounds.Y2 : 0.f + targetBounds.Y1,
-    pos[2] > 0 ? 0.f + targetBounds.Z2 : 0.f + targetBounds.Z1
+    pos[0] > 0 ? 0.f + targetBounds.pos2[0] : 0.f + targetBounds.pos1[0],
+    pos[1] > 0 ? 0.f + targetBounds.pos2[1] : 0.f + targetBounds.pos1[1],
+    pos[2] > 0 ? 0.f + targetBounds.pos2[2] : 0.f + targetBounds.pos1[2]
   };
 
   return NiPoint3(state[0] ? 0.f : pos.x - nearestCorner.x,
@@ -590,7 +599,7 @@ float GetSqrDistance(const MpActor& actor, const MpActor& target)
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {
-  float sqrDistance = GetSqrDistance(actor, targetActor);
+  float sqrDistance = GetSqrDistanceToBounds(actor, targetActor);
   float reach = GetReach(actor, hitData.source);
   return reach * reach > sqrDistance;
 }
@@ -655,7 +664,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
+    float distance =
+      std::sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
     float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();
@@ -685,12 +695,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   auto now = std::chrono::steady_clock::now();
   targetActor.SetLastAttributesPercentagesUpdate(now);
   targetActor.SetLastHitTime(now);
-
-  auto userId = partOne.serverState.UserByActor(&targetActor);
-  if (userId == Networking::InvalidUserId) {
-    spdlog::debug("Unable to attack due to invalid userId {}", userId);
-    return;
-  }
 
   targetForm = targetActor.GetChangeForm();
 
