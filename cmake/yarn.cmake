@@ -22,7 +22,7 @@ function(yarn_execute_command)
     file(WRITE ${temp_bat} ${str})
   else()
     set(yarn_cmd "npx")
-    set(yarn_arg npx yarn ${A_COMMAND})
+    set(yarn_arg npx -y yarn ${A_COMMAND})
   endif()
 
   execute_process(COMMAND ${yarn_cmd} ${yarn_arg}
