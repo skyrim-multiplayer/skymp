@@ -26,7 +26,7 @@ add_subdirectory(ts)
 #    Look into package.json and `cmake-js-fetch/CMakeLists.txt` to understand mechanism
 yarn_execute_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  COMMAND install
+  COMMAND cmake-js-fetch
 )
 
 # 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
