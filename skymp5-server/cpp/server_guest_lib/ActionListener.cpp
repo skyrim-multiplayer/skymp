@@ -542,18 +542,11 @@ float GetReach(const MpActor& actor, const uint32_t source)
   return weaponReach * fCombatDistance;
 }
 
-enum class AngleType
-{
-  Radians = 0,
-  Degrees = 1
-};
-
-template <AngleType type>
 NiPoint3 RotateZ(NiPoint3 point, float _angle)
 {
-  static const float g_pi = std::acos(-1.f);
-  static const float g_angleToRadians = g_pi / 180.f;
-  auto angle = type == AngleType::Radians ? _angle : _angle * g_angleToRadians;
+  static const float kPi = std::acos(-1.f);
+  static const float kAngleToRadians = kPi / 180.f;
+  auto angle = _angle * kAngleToRadians;
   float cos = std::cos(angle);
   float sin = std::sin(angle);
 
@@ -572,10 +565,10 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
 
   // vector from target to the actor
   NiPoint3 position = actor.GetPos() - target.GetPos();
-  position += RotateZ<AngleType::Degrees>(
+  position += RotateZ(
     NiPoint3(0.f + bounds.pos2[1], 0.f, 0.f + bounds.pos2[2]), direction);
 
-  NiPoint3 pos = RotateZ<AngleType::Degrees>(position, angleZ);
+  NiPoint3 pos = RotateZ(position, angleZ);
 
   // hint: state[axis (X, Y, Z)]
   std::vector<bool> state = {
