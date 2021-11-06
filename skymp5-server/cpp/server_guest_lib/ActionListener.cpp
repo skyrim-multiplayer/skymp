@@ -599,7 +599,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
       IsUnarmedAttack(hitData.source) == false) {
 
     if (aggressor->GetInventory().HasItem(hitData.source) == false) {
-      spdlog::debug("{:x} actor has no {:x} weapon and can't attak",
+      spdlog::debug("{:x} actor has no {:x} weapon and can't attack",
                     hitData.aggressor, hitData.source);
     }
     spdlog::debug(
