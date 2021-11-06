@@ -512,8 +512,7 @@ export class FormView implements View<FormModel> {
           }
           try {
             applyMovement(refr, model.movement);
-          }
-          catch (e) {
+          } catch (e) {
             if (e instanceof RespawnNeededError) {
               this.lastWorldOrCell = model.movement.worldOrCell;
               this.destroy();

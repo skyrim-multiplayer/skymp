@@ -13,21 +13,7 @@ import { applyWeapDrawn } from "./movementApply";
 
 export enum AnimationEventName {
   Ragdoll = "Ragdoll",
-  Death2 = "DeathAnim",
-  DeathStop = "deathStop",
-
-  AddCControllerToWorld = "AddCharacterControllerToWorld",
-  RemoveCControllerFromWorld = "RemoveCharacterControllerFromWorld",
-
-  Reanimated = "reanimated",
   GetUpBegin = "GetUpBegin",
-  ReturnToDefault = "returnToDefault",
-  ForceDefault = "IdleForceDefaultState",
-
-  WoundDefault = "IdleWounded_02",
-  BleedOut = "bleedOutStart",
-
-  KillMove = "killmove",
 };
 
 export interface Animation {
