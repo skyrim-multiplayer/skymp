@@ -542,13 +542,12 @@ float GetReach(const MpActor& actor, const uint32_t source)
   return weaponReach * fCombatDistance;
 }
 
-NiPoint3 RotateZ(NiPoint3 point, float _angle)
+NiPoint3 RotateZ(const NiPoint3& point, float angle)
 {
   static const float kPi = std::acos(-1.f);
   static const float kAngleToRadians = kPi / 180.f;
-  auto angle = _angle * kAngleToRadians;
-  float cos = std::cos(angle);
-  float sin = std::sin(angle);
+  float cos = std::cos(angle * kAngleToRadians);
+  float sin = std::sin(angle * kAngleToRadians);
 
   return { point.x * cos - point.y * sin, point.x * sin + point.y * cos,
            point.z };
