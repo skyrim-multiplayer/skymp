@@ -557,7 +557,7 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
 {
   // TODO(#491): Figure out where to take the missing reach component
   constexpr float kPatch = 15.f;
-  
+
   auto bounds = actor.GetBounds();
   auto targetBounds = target.GetBounds();
 
