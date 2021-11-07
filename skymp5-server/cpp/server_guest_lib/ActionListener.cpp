@@ -569,8 +569,7 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
 
   NiPoint3 pos = RotateZ(position, angleZ);
 
-  // hint: state[axis (X, Y, Z)]
-  std::vector<bool> state = {
+  bool isProjectionInside[3] = {
     (targetBounds.pos1[0] <= pos.x && pos.x <= targetBounds.pos2[0]),
     (targetBounds.pos1[1] <= pos.y && pos.y <= targetBounds.pos2[1]),
     (targetBounds.pos1[2] <= pos.z && pos.z <= targetBounds.pos2[2])
@@ -582,9 +581,9 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
     pos[2] > 0 ? 0.f + targetBounds.pos2[2] : 0.f + targetBounds.pos1[2]
   };
 
-  return NiPoint3(state[0] ? 0.f : pos.x - nearestCorner.x,
-                  state[1] ? 0.f : pos.y - nearestCorner.y,
-                  state[2] ? 0.f : pos.z - nearestCorner.z)
+  return NiPoint3(isProjectionInside[0] ? 0.f : pos.x - nearestCorner.x,
+                  isProjectionInside[1] ? 0.f : pos.y - nearestCorner.y,
+                  isProjectionInside[2] ? 0.f : pos.z - nearestCorner.z)
     .SqrLength();
 }
 
