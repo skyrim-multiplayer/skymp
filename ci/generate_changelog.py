@@ -13,6 +13,7 @@ for filename in os.listdir(directory):
         with open(path) as f:
             s = f.read()
             changelog_entries.insert(-1, s)
+            os.remove(path)
     else:
         continue
 
