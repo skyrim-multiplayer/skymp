@@ -1,3 +1,3 @@
 cls
-python impl/generate_changelog.py
+python impl/release.py --mod_name SkyrimPlatform
 if NOT ["%errorlevel%"]==["0"] pause

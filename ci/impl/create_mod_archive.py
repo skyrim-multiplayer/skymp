@@ -18,6 +18,9 @@ def main(argv):
     mod_name = get_mod_name(argv)
     if mod_name == "SkyrimPlatform":
         pack_skyrim_platform()
+    else:
+        print("Unknown mod_name")
+        sys.exit(1)
 
 def get_mod_name(argv):
     try:
