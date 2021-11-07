@@ -553,11 +553,11 @@ NiPoint3 RotateZ(const NiPoint3& point, float angle)
            point.z };
 }
 
-// TODO find the cause of this error
-constexpr float patch = 15.f;
-
 float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
 {
+  // TODO(#491): Figure out where to take the missing reach component
+  constexpr float kPatch = 15.f;
+  
   auto bounds = actor.GetBounds();
   auto targetBounds = target.GetBounds();
 
@@ -568,7 +568,7 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
   // vector from target to the actor
   NiPoint3 position = actor.GetPos() - target.GetPos();
   position += RotateZ(
-    NiPoint3(patch + bounds.pos2[1], 0.f, 0.f + bounds.pos2[2]), direction);
+    NiPoint3(kPatch + bounds.pos2[1], 0.f, 0.f + bounds.pos2[2]), direction);
 
   NiPoint3 pos = RotateZ(position, angleZ);
 
