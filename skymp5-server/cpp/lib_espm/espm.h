@@ -668,6 +668,7 @@ public:
     uint16_t healthOffset = 0;
     uint16_t magickaOffset = 0;
     uint16_t staminaOffset = 0;
+    ObjectBounds objectBounds = {};
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
@@ -765,6 +766,8 @@ class GMST : public RecordHeader
 {
 public:
   static constexpr auto kType = "GMST";
+
+  static constexpr uint32_t kFCombatDistance = 0x00055640;
   static constexpr uint32_t kFMaxArmorRating = 0x00037DEB;
   static constexpr uint32_t kFArmorScalingFactor = 0x00021A72;
 

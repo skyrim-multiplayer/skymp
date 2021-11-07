@@ -527,11 +527,6 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
   return currentHealthPercentage;
 }
 
-float GetGlobalCombatDistance(WorldState* espmProvider)
-{
-  return espm::GetData<espm::GMST>(0x55640, espmProvider).value;
-}
-
 float GetReach(const MpActor& actor, const uint32_t source)
 {
   auto espmProvider = actor.GetParent();
@@ -540,15 +535,65 @@ float GetReach(const MpActor& actor, const uint32_t source)
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
-  float fCombatDistance = GetGlobalCombatDistance(espmProvider);
+  float fCombatDistance =
+    espm::GetData<espm::GMST>(espm::GMST::kFCombatDistance, espmProvider)
+      .value;
   float weaponReach = weapDNAM ? weapDNAM->reach : 0;
   return weaponReach * fCombatDistance;
+}
+
+NiPoint3 RotateZ(const NiPoint3& point, float angle)
+{
+  static const float kPi = std::acos(-1.f);
+  static const float kAngleToRadians = kPi / 180.f;
+  float cos = std::cos(angle * kAngleToRadians);
+  float sin = std::sin(angle * kAngleToRadians);
+
+  return { point.x * cos - point.y * sin, point.x * sin + point.y * cos,
+           point.z };
+}
+
+float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
+{
+  // TODO(#491): Figure out where to take the missing reach component
+  constexpr float kPatch = 15.f;
+
+  auto bounds = actor.GetBounds();
+  auto targetBounds = target.GetBounds();
+
+  // "Y" is "face" of character
+  const float angleZ = 90.f - target.GetAngle().z;
+  float direction = actor.GetAngle().z;
+
+  // vector from target to the actor
+  NiPoint3 position = actor.GetPos() - target.GetPos();
+  position += RotateZ(
+    NiPoint3(kPatch + bounds.pos2[1], 0.f, 0.f + bounds.pos2[2]), direction);
+
+  NiPoint3 pos = RotateZ(position, angleZ);
+
+  bool isProjectionInside[3] = {
+    (targetBounds.pos1[0] <= pos.x && pos.x <= targetBounds.pos2[0]),
+    (targetBounds.pos1[1] <= pos.y && pos.y <= targetBounds.pos2[1]),
+    (targetBounds.pos1[2] <= pos.z && pos.z <= targetBounds.pos2[2])
+  };
+
+  NiPoint3 nearestCorner = {
+    pos[0] > 0 ? 0.f + targetBounds.pos2[0] : 0.f + targetBounds.pos1[0],
+    pos[1] > 0 ? 0.f + targetBounds.pos2[1] : 0.f + targetBounds.pos1[1],
+    pos[2] > 0 ? 0.f + targetBounds.pos2[2] : 0.f + targetBounds.pos1[2]
+  };
+
+  return NiPoint3(isProjectionInside[0] ? 0.f : pos.x - nearestCorner.x,
+                  isProjectionInside[1] ? 0.f : pos.y - nearestCorner.y,
+                  isProjectionInside[2] ? 0.f : pos.z - nearestCorner.z)
+    .SqrLength();
 }
 
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {
-  float sqrDistance = (actor.GetPos() - targetActor.GetPos()).SqrLength();
+  float sqrDistance = GetSqrDistanceToBounds(actor, targetActor);
   float reach = GetReach(actor, hitData.source);
   return reach * reach > sqrDistance;
 }
@@ -626,7 +671,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
+    float distance = sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
     float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();
@@ -656,12 +701,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   auto now = std::chrono::steady_clock::now();
   targetActor.SetLastAttributesPercentagesUpdate(now);
   targetActor.SetLastHitTime(now);
-
-  auto userId = partOne.serverState.UserByActor(&targetActor);
-  if (userId == Networking::InvalidUserId) {
-    spdlog::debug("Unable to attack due to invalid userId {}", userId);
-    return;
-  }
 
   targetForm = targetActor.GetChangeForm();
 
