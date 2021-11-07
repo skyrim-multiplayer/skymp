@@ -669,8 +669,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance =
-      sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
+    float distance = sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
     float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();
