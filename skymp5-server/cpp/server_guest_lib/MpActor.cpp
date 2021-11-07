@@ -279,6 +279,11 @@ bool MpActor::IsWeaponDrawn() const
   return GetAnimationVariableBool("_skymp_isWeapDrawn");
 }
 
+espm::ObjectBounds MpActor::GetBounds() const
+{
+  return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
+}
+
 void MpActor::SetAndSendIsDeadPropery(bool value)
 {
   float attribute = value ? 0.f : 1.f;

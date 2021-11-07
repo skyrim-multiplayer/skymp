@@ -11,6 +11,11 @@ import {
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
 
+export enum AnimationEventName {
+  Ragdoll = "Ragdoll",
+  GetUpBegin = "GetUpBegin",
+};
+
 export interface Animation {
   animEventName: string;
   numChanges: number;

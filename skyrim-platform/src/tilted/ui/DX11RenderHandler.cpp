@@ -152,8 +152,14 @@ void DX11RenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
   if (type == PET_VIEW && m_width == width && m_height == height) {
     std::unique_lock<std::mutex> _(m_textureLock);
 
-    if (!m_pTexture)
+    if (!m_pTexture) {
       CreateRenderTexture();
+    }
+
+    // Under MO2 for some reason, OnPaint called before context initialization
+    if (!m_pContext) {
+      return;
+    }
 
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     const auto result = m_pContext->Map(

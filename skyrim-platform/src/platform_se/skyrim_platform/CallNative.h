@@ -56,8 +56,8 @@ struct Arguments
   const AnySafe* args;
   size_t numArgs;
   FunctionInfoProvider& provider;
-  TaskQueue& gameThrQ;
-  TaskQueue& jsThrQ;
+  Viet::TaskQueue& gameThrQ;
+  Viet::TaskQueue& jsThrQ;
   LatentCallback latentCallback;
 };
 

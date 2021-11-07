@@ -4,7 +4,7 @@ import './styles.scss'
 
 const SkyrimInput = (props) => {
     let width = props.width != undefined ? props.width : 320;
-    let height = props.height != undefined ? props.height : 42;
+    let height = props.height != undefined ? props.height : 48;
     let text = props.text;
     let disabled = props.disabled;
     return (

@@ -18,10 +18,10 @@ TEST_CASE("Wait", "[Papyrus][Utility]")
   });
   REQUIRE(!waitFinished);
 
-  wst.TickTimers();
+  wst.Tick();
   REQUIRE(!waitFinished);
 
   std::this_thread::sleep_for(std::chrono::milliseconds(50));
-  wst.TickTimers();
+  wst.Tick();
   REQUIRE(waitFinished);
 }

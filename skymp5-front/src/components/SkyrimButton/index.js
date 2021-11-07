@@ -11,11 +11,11 @@ const SkyrimButton = props => {
 
         <div
             style={{ width: `${width}px`,height: `${height}px` }}
-            className={`skymp-input button`}
+            className={`skymp-input-button`}
             onClick={(e) => props.onClick && !disabled ? props.onClick(e) : console.log(e)}
             style={{opacity: disabled ? 0.6 : 1.0 }}
         >
-            <span className={'skymp-input_text'} style={{maxHeight:`${height}px`}}>{props.text}</span>
+            <span className={'skymp-input-button_text'} style={{maxHeight:`${height}px`}}>{props.text}</span>
         </div>
     )
 }

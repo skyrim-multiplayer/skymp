@@ -14,9 +14,8 @@ SkyrimPlatform currently only adds one type: `TESModPlatform`. Instances of this
 - `resizeHeadpartsArray` - resizes the array of head parts ActorBase.
 - `resizeTintsArray` - resizes the main character's TintMasks array.
 - `setFormIdUnsafe` - changes the form ID. Unsafe, use at your own risk.
-
-* `clearTintMasks` - remove TintMasks for the given Actor or the Player Character if the Actor is not passed.
-* `pushTintMask` - add TintMask with def. parameters for the given Actor or the Player Character, if Actor is not passed.
-* `pushWornState`, `addItemEx` - add / remove items from def. ExtraData.
-* `updateEquipment` - update equipment (unstable).
-* `resetContainer` - clear the base container.
+- `clearTintMasks` - remove TintMasks for the given Actor or the Player Character if the Actor is not passed.
+- `pushTintMask` - add TintMask with def. parameters for the given Actor or the Player Character, if Actor is not passed.
+- `pushWornState`, `addItemEx` - add / remove items from def. ExtraData.
+- `updateEquipment` - update equipment (unstable).
+- `resetContainer` - clear the base container.

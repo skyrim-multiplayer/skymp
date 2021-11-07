@@ -450,7 +450,7 @@ TEST_CASE("GMST parsing", "[espm]")
 {
   MyEspmProvider provider;
   REQUIRE(
-    espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, &provider).value ==
+    espm::GetData<espm::GMST>(espm::GMST::kFMaxArmorRating, &provider).value ==
     80);
 }
 
