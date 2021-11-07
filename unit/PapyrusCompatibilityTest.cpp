@@ -99,7 +99,7 @@ TEST_CASE("OnTriggerEnter crash in MovarthsLairExterior01", "[PartOne][espm]")
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
   actor.SetPos(ref.GetPos());
-  partOne.worldState.TickTimers();
+  partOne.worldState.Tick();
 
   partOne.worldState.DestroyForm(0xff000000);
 

@@ -678,7 +678,7 @@ public:
     return result ? JsValue(result) : JsValue::Undefined();
   }
 
-  void ResetContext(TaskQueue& taskQueue)
+  void ResetContext(Viet::TaskQueue& taskQueue)
   {
     JsValue::SafeCall(JS_ENGINE_F(JsCreateContext), pImpl->runtime,
                       &pImpl->context);
@@ -705,7 +705,7 @@ private:
     // Equivalent of JsValue::JsValue(JsValueRef *)
     JsValue::SafeCall(JS_ENGINE_F(JsAddRef), task, nullptr);
 
-    auto taskQueue = reinterpret_cast<TaskQueue*>(state);
+    auto taskQueue = reinterpret_cast<Viet::TaskQueue*>(state);
 
     // RAII doesn't work properly here. That's why we do not just use JsValue.
     // TaskQueue can be destroyed AFTER Chakra deinitialization and then try
@@ -734,7 +734,7 @@ private:
       // No sense to do anything.
       return;
     }
-    auto q = reinterpret_cast<TaskQueue*>(state);
+    auto q = reinterpret_cast<Viet::TaskQueue*>(state);
     std::stringstream ss;
     auto reason = JsValue(reason_);
     auto stack = reason.GetProperty("stack").ToString();
