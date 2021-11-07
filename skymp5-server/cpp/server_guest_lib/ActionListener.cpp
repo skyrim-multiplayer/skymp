@@ -553,6 +553,8 @@ NiPoint3 RotateZ(const NiPoint3& point, float angle)
            point.z };
 }
 
+constexpr float patch = 15.f;
+
 float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
 {
   auto bounds = actor.GetBounds();
@@ -565,7 +567,7 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
   // vector from target to the actor
   NiPoint3 position = actor.GetPos() - target.GetPos();
   position += RotateZ(
-    NiPoint3(0.f + bounds.pos2[1], 0.f, 0.f + bounds.pos2[2]), direction);
+    NiPoint3(patch + bounds.pos2[1], 0.f, 0.f + bounds.pos2[2]), direction);
 
   NiPoint3 pos = RotateZ(position, angleZ);
 
