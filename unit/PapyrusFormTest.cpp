@@ -23,7 +23,7 @@ TEST_CASE("RegisterForSingleUpdate", "[Papyrus][Form]")
   PapyrusForm().RegisterForSingleUpdate(form.ToVarValue(),
                                         { VarValue(0.05f) });
   REQUIRE(form.counter == 0);
-  p.worldState.TickTimers();
+  p.worldState.Tick();
   REQUIRE(form.counter == 0);
 
   std::this_thread::sleep_for(50ms);
@@ -32,16 +32,16 @@ TEST_CASE("RegisterForSingleUpdate", "[Papyrus][Form]")
   REQUIRE(form.counter == 0);
 
   // TickTimers performs Update of our form
-  p.worldState.TickTimers();
+  p.worldState.Tick();
   REQUIRE(form.counter == 1);
 
   // Update must be really single ...
-  p.worldState.TickTimers();
+  p.worldState.Tick();
   REQUIRE(form.counter == 1);
 
   // ... even if 50ms passed again
   std::this_thread::sleep_for(50ms);
-  p.worldState.TickTimers();
+  p.worldState.Tick();
   REQUIRE(form.counter == 1);
 }
 
@@ -67,7 +67,7 @@ TEST_CASE("RegisterForSingleUpdate triggers Papyrus OnUpdate event",
   auto& form = p.worldState.GetFormAt<CustomForm>(0xff000000);
   PapyrusForm().RegisterForSingleUpdate(form.ToVarValue(), { VarValue(0.f) });
 
-  p.worldState.TickTimers();
+  p.worldState.Tick();
   REQUIRE(form.sent);
 }
 
@@ -102,7 +102,7 @@ TEST_CASE("RegisterForSingleUpdate order", "[Papyrus][Form]")
                                         { VarValue(0.011f) });
 
   std::this_thread::sleep_for(12ms * 2);
-  p.worldState.TickTimers();
+  p.worldState.Tick();
 
   REQUIRE(OrderCountingForm().Order() ==
           std::vector<uint32_t>{ 0xff000000, 0xff000001, 0xff000002 });

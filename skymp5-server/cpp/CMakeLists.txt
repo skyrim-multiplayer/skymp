@@ -65,7 +65,7 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC mp_common espm papyrus-vm-lib geo)
+target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo)
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_SOURCE_DIR}/chakra-wrapper")
 
 #
@@ -81,6 +81,7 @@ target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/thir
 if(UNIX)
   target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
 endif()
+target_link_libraries(papyrus-vm-lib PUBLIC viet)
 
 #
 # Link vcpkg deps
