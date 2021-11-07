@@ -1,8 +1,12 @@
 import os
+from utils import find_skymp_root
+
+old_version = "2.0"
+new_version = "2.1"
 
 changelog_entries = []
 
-directory = "."
+directory = os.path.join(find_skymp_root(), "docs", "release", "dev")
 for filename in os.listdir(directory):
     if filename.endswith(".md") and not filename in ("0-sample-topic.md", "changelog.md"):
         path = os.path.join(directory, filename)
@@ -24,8 +28,9 @@ for entry in changelog_entries:
 
 changelog_entries_normal = reversed(sorted(changelog_entries_normal, key=len))
 
-
 changelog = ""
+changelog += "# SP " + new_version + " Release Notes\n\n"
+changelog += "Changes made since SP " + old_version + " include the following.\n"
 
 for entry in changelog_entries_normal:
     # New line if not start of changelog
@@ -39,5 +44,6 @@ changelog += "\n" + "## Other changes" "\n\n"
 for entry in changelog_entries_other:
     changelog += "- " + entry
 
-with open("changelog.md", "w") as text_file:
+changelog_out_path = os.path.join(find_skymp_root(), "docs", "release", "sp-" + new_version + ".md")
+with open(changelog_out_path, "w") as text_file:
     text_file.write(changelog)
