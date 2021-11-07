@@ -17,6 +17,7 @@ browser.setVisible(true);
 browser.setFocused(true);
 
 // Load a specified URL. The current implementation loads URLs only after the user moves the mouse, except the default URL.
+// CAUTION! Do not call this function with local URLs if you want your mod to work under MO2.
 browser.loadUrl("file:///Data/Platform/UI/index.html");         // Default one
 browser.loadUrl("");                                            // Same effect for empty URL
 browser.loadUrl("file:///Data/Platform/UI/another-file.html");  // Load another page from Data
