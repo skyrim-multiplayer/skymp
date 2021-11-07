@@ -553,6 +553,7 @@ NiPoint3 RotateZ(const NiPoint3& point, float angle)
            point.z };
 }
 
+// TODO find the cause of this error
 constexpr float patch = 15.f;
 
 float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
