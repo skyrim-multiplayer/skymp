@@ -154,7 +154,7 @@ void DX11RenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 
     if (!m_pTexture) {
       CreateRenderTexture();
-	}
+    }
 
     // Under MO2 for some reason, OnPaint called before context initialization
     if (!m_pContext) {
