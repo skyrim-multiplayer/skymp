@@ -16,6 +16,7 @@ Merge commits are avoided in the source tree like in [microsoft/vcpkg](https://g
 Commit names follow [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/).
 
 Commit types used (sorted by priority):
+* release - for releasing new versions of SP and other projects.
 * feat - API or functionality change, both backward-compatible or not.
 * fix - bugfix or crash fix.
 * tests - changes in tests.
@@ -37,6 +38,7 @@ Examples:
 feat(skymp5-server): add feature to choose default spawn points
 internal: make server's node addon buildable via top-level CMakeLists
 fix: server startup
+release(skyrim-platform): version 2.1
 ```
 
 Note that `BREAKING CHANGE` footer isn't used. Only `!` sign.
