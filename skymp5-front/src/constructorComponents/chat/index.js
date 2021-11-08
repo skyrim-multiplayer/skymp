@@ -6,6 +6,8 @@ const Chat = (props) => {
     const [input, updateInput] = useState('');
     const [list, addListElement] = useState(props.messages || []);
     const [isInputFocus, changeInputFocus] = useState(false)
+    const placeholder = props.placeholder;
+    const isHiddenInput = props.isHiddenInput;
     const send = props.send;
 
     const inputRef = useRef();
@@ -71,17 +73,22 @@ const Chat = (props) => {
     return (
         <div id="chat">
             <div className="list">{getList()}</div>
-            <input
-                id="chatInput"
-                className={'show'}
-                type="text"
-                placeholder="Напишите сообщение"
-                value={input}
-                onChange={(e) => { updateInput(e.target.value); }}
-                onFocus={(e) => changeInputFocus(true)}
-                onBlur={(e) => changeInputFocus(false)}
-                ref={inputRef}
-            />
+            {isHiddenInput
+                ?
+                <></>
+                :
+                <input
+                    id="chatInput"
+                    className={'show'}
+                    type="text"
+                    placeholder={placeholder !== undefined ? placeholder : ""}
+                    value={input}
+                    onChange={(e) => { updateInput(e.target.value); }}
+                    onFocus={(e) => changeInputFocus(true)}
+                    onBlur={(e) => changeInputFocus(false)}
+                    ref={inputRef}
+                />
+            }
         </div>
     )
 
