@@ -29,16 +29,16 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
 - `DxScanCode`. Key mappings from [Input Script][].
 
   ```ts
+  Input.isKeyPressed(DxScanCode.F2);
+  ```
+
+- `Menu`. Menu names from [UI Script][].
+
+  ```ts
   Ui.isMenuOpen(Menu.Container);
   Ui.isMenuOpen(Menu.Inventory);
   Ui.isMenuOpen(Menu.Crafting);
   ```
-
-- `Menu`. Menu names from [UI Script][].
-  ```ts
-  Input.isKeyPressed(DxScanCode.F2);
-  ```
-
 
 [UI Script]: https://www.creationkit.com/index.php?title=UI_Script
 [Input Script]: https://www.creationkit.com/index.php?title=Input_Script
