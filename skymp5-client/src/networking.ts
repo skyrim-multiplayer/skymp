@@ -58,3 +58,4 @@ export const reconnect = (): void => createClientSafe(lastHostname, lastPort);
 on("connectionFailed", reconnect);
 on("connectionDenied", reconnect);
 on("disconnect", reconnect);
+
