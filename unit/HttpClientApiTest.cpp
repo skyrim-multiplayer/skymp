@@ -8,7 +8,7 @@ TEST_CASE("Asynchronous operations should not trigger assert during static "
           "deinitialization",
           "[HttpClientApi][JsEngine]")
 {
-  TaskQueue taskQueue;
+  Viet::TaskQueue taskQueue;
   JsEngine engine;
   engine.ResetContext(taskQueue);
 
@@ -29,7 +29,7 @@ TEST_CASE("Asynchronous operations should not trigger assert during static "
 
 nlohmann::json ExecuteScript(const char* src)
 {
-  TaskQueue taskQueue;
+  Viet::TaskQueue taskQueue;
   JsEngine engine;
   engine.ResetContext(taskQueue);
 

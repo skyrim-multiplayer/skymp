@@ -1,7 +1,7 @@
 #pragma once
-#include <cassert>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 namespace Viet {
@@ -15,27 +15,14 @@ public:
   using ErrorCallback = std::function<void(const char*)>;
 
   template <class Promise>
-  AnyPromise(Promise promise)
+  AnyPromise(const Promise& promise)
   {
-    this->catchFn = [=](ErrorCallback cb) { promise.Catch(cb); };
-    this->rejectFn = [=](const char* str) { promise.Reject(str); };
+    this->catchFn = [promise](ErrorCallback cb) { promise.Catch(cb); };
+    this->rejectFn = [promise](const char* str) { promise.Reject(str); };
   }
 
-  void Reject(const char* error)
-  {
-    assert(this->rejectFn);
-    if (this->rejectFn) {
-      this->rejectFn(error);
-    }
-  }
-
-  void Catch(ErrorCallback cb)
-  {
-    assert(this->catchFn);
-    if (this->catchFn) {
-      this->catchFn(cb);
-    }
-  }
+  void Reject(const char* error);
+  void Catch(const ErrorCallback& cb) noexcept;
 
 private:
   std::function<void(ErrorCallback)> catchFn;
@@ -51,13 +38,13 @@ public:
   using ThenCallback = std::function<void(const T&)>;
   using ErrorCallback = std::function<void(const char*)>;
 
-  const Promise<T>& Then(ThenCallback cb_) const noexcept
+  const Promise<T>& Then(const ThenCallback& cb_) const noexcept
   {
     pImpl->thenCb = cb_;
     return *this;
   }
 
-  const Promise<T>& Catch(ErrorCallback cb_) const noexcept
+  const Promise<T>& Catch(const ErrorCallback& cb_) const noexcept
   {
     pImpl->errorCb = cb_;
     return *this;
@@ -119,7 +106,7 @@ private:
   {
     ThenCallback thenCb = [](const auto&) {};
     ErrorCallback errorCb = [](const auto&) {
-      assert(0 && "Unhandled error");
+      throw std::runtime_error("Unhandled promise rejection");
     };
     bool pending = true;
   };

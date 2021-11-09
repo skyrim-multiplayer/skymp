@@ -46,7 +46,7 @@ void WaitForNextUpsert(ISaveStorage& st, WorldState& wst)
   int i = 0;
   while (n == st.GetNumFinishedUpserts()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    wst.TickTimers(); // should include st.Tick()
+    wst.Tick(); // should include st.Tick()
 
     ++i;
     if (i > 2000)

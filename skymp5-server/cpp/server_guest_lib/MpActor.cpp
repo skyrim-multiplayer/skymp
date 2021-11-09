@@ -250,14 +250,38 @@ const std::string& MpActor::GetAppearanceAsJson()
   return pImpl->ChangeForm().appearanceDump;
 }
 
-const std::string& MpActor::GetEquipmentAsJson()
+const std::string& MpActor::GetEquipmentAsJson() const
 {
   return pImpl->ChangeForm().equipmentDump;
-};
+}
+
+Equipment MpActor::GetEquipment() const
+{
+  std::string equipment = GetEquipmentAsJson();
+  simdjson::dom::parser p;
+  auto parseResult = p.parse(equipment);
+  return Equipment::FromJson(parseResult.value());
+}
+
+uint32_t MpActor::GetRaceId() const
+{
+  auto appearance = GetAppearance();
+  if (appearance) {
+    return appearance->raceId;
+  }
+  WorldState* espmProvider = GetParent();
+  uint32_t baseId = GetBaseId();
+  return espm::GetData<espm::NPC_>(baseId, espmProvider).race;
+}
 
 bool MpActor::IsWeaponDrawn() const
 {
   return GetAnimationVariableBool("_skymp_isWeapDrawn");
+}
+
+espm::ObjectBounds MpActor::GetBounds() const
+{
+  return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
 }
 
 void MpActor::SetAndSendIsDeadPropery(bool value)

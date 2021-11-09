@@ -22,6 +22,7 @@ MovementMessage MakeTestMovementMessage(RunMode runMode, bool hasLookAt)
     true,            // isSneaking
     false,           // isBlocking
     true,            // isWeapDrawn
+    false,           // isDead
     { { 1, 2, 3 } }, // lookAt
   };
   result.runMode = runMode;

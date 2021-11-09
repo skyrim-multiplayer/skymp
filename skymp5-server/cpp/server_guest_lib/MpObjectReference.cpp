@@ -754,9 +754,8 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   }
 
   pImpl->blockSaving = true;
-  ScopedTask unblockTask(
-    [](void* ptr) { reinterpret_cast<Impl*>(ptr)->blockSaving = false; },
-    pImpl.get());
+  Viet::ScopedTask<Impl> unblockTask(
+    [](Impl& impl) { impl.blockSaving = false; }, *pImpl);
 
   const auto currentBaseId = GetBaseId();
   const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);

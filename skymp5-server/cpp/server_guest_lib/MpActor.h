@@ -27,8 +27,11 @@ public:
   const bool& IsRespawning() const;
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
-  const std::string& GetEquipmentAsJson();
+  const std::string& GetEquipmentAsJson() const;
+  Equipment GetEquipment() const;
+  uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
+  espm::ObjectBounds GetBounds() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);

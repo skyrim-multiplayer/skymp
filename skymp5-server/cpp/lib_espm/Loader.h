@@ -66,6 +66,26 @@ private:
   BufferType bufferType;
 };
 
+template <class EspmProvider>
+Type GetRecordType(uint32_t formId, EspmProvider* espmProvider)
+{
+  if (!espmProvider) {
+    throw std::runtime_error("Unable to find record without EspmProvider");
+  }
+
+  auto& espmLoader = espmProvider->GetEspm();
+
+  const espm::LookupResult lookupResult =
+    espmLoader.GetBrowser().LookupById(formId);
+
+  if (!lookupResult.rec) {
+    throw std::runtime_error(
+      fmt::format("Record {0:x} doesn't exist", formId));
+  }
+
+  return lookupResult.rec->GetType();
+}
+
 template <class RecordT, class EspmProvider>
 typename RecordT::Data GetData(uint32_t formId, EspmProvider* espmProvider)
 {

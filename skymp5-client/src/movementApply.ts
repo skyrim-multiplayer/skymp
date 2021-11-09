@@ -6,6 +6,8 @@ import {
   Debug,
   Form,
 } from "skyrimPlatform";
+import { applyDeathState } from "./deathSystem";
+import { RespawnNeededError } from "./errors";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 
 export const applyMovement = (refr: ObjectReference, m: Movement): void => {
@@ -47,6 +49,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
     applySneaking(ac, m.isSneaking);
     applyWeapDrawn(ac, m.isWeapDrawn);
     applyHealthPercentage(ac, m.healthPercentage);
+    applyDeathState(ac, m.isDead);
   }
 };
 
@@ -164,7 +167,7 @@ const teleportIfNeed = (refr: ObjectReference, m: Transform) => {
     isInDifferentWorldOrCell(refr, m.worldOrCell) ||
     (!refr.is3DLoaded() && isInDifferentExteriorCell(refr, m.pos))
   ) {
-    throw new Error("needs to be respawned");
+    throw new RespawnNeededError("needs to be respawned");
   }
   return false;
 };
