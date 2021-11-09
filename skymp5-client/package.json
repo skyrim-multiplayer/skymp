@@ -16,6 +16,5 @@
   },
   "dependencies": {
     "rxjs": "^7.4.0"
-  },
-  "packageManager": "yarn@3.1.0"
+  }
 }
