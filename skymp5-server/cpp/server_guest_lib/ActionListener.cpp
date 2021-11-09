@@ -662,7 +662,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
-    float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) / 1.3;
+    float expectedAttackTime =
+      (1.1 * (1 / weapDNAM->speed)) - (1.1 * (1 / weapDNAM->speed) * 0.3);
     spdlog::debug(
       "Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
