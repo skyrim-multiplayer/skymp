@@ -95,7 +95,7 @@ const Constructor = props => {
         line.forEach((obj, elementIndex) => {
           let curElem = undefined;
           let hasHint = obj.element.hint != undefined ? true : false;
-          let key = lineIndex + elementIndex + obj.element.type;
+          let key = lineIndex + "-" + elementIndex + "-" + obj.element.type;
           switch (obj.element.type) {
             case "button":
               curElem = <Button disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} onClick={obj.element.click} width={obj.element.width} height={obj.element.height} />;
@@ -144,7 +144,7 @@ const Constructor = props => {
             if (hasHint) hintIndex++;
           }
         });
-        result.body.push(<div key={lineIndex + "constainer"} className={'container'}>{arr}</div>);
+        result.body.push(<div key={lineIndex + "container"} className={'container'}>{arr}</div>);
       });
 
       const setHintState = function (index, state) {
