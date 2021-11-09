@@ -19,3 +19,27 @@ SkyrimPlatform currently only adds one type: `TESModPlatform`. Instances of this
 - `pushWornState`, `addItemEx` - add / remove items from def. ExtraData.
 - `updateEquipment` - update equipment (unstable).
 - `resetContainer` - clear the base container.
+
+# Enums added by Skyrim Platform
+
+Skyrim Platform adds [Typescript enums][Ts-Enum] for both convenience and preventing bugs.
+
+Here's a list of enum values declared in `skyrimPlatform.ts`.
+
+- `DxScanCode`. Key mappings from [Input Script][].
+
+  ```ts
+  Ui.isMenuOpen(Menu.Container);
+  Ui.isMenuOpen(Menu.Inventory);
+  Ui.isMenuOpen(Menu.Crafting);
+  ```
+
+- `Menu`. Menu names from [UI Script][].
+  ```ts
+  Input.isKeyPressed(DxScanCode.F2);
+  ```
+
+
+[UI Script]: https://www.creationkit.com/index.php?title=UI_Script
+[Input Script]: https://www.creationkit.com/index.php?title=Input_Script
+[Ts-Enum]: https://www.typescriptlang.org/docs/handbook/enums.html
