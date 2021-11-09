@@ -635,7 +635,7 @@ export const enum FormType {
 export const enum WeaponType {
     Fist = 0,
     Sword,
-    Daggers,
+    Dagger,
     WarAxe,
     Mace,
     Greatsword,
@@ -644,6 +644,23 @@ export const enum WeaponType {
     Bow,
     Staff,
     Crossbow
+}
+
+export const enum EquippedItemType {
+    Fist = 0,
+    Sword,
+    Dagger,
+    WarAxe,
+    Mace,
+    Greatsword,
+    Battleaxe = 6,
+    Warhammer = 6,
+    Bow,
+    Staff,
+    Spell,
+    Shield,
+    Torch,
+    Crossbow,
 }
 
 export declare namespace SendAnimationEventHook {
