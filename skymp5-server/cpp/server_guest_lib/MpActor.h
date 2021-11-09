@@ -88,6 +88,7 @@ private:
   std::shared_ptr<Impl> pImpl;
 
   void SetAndSendIsDeadPropery(bool value);
+  void SendRespawnMsg(const LocationalData& position, bool isDead);
 
 protected:
   void BeforeDestroy() override;

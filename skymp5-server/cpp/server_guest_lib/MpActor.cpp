@@ -308,6 +308,34 @@ void MpActor::SetAndSendIsDeadPropery(bool value)
   });
 }
 
+void MpActor::SendRespawnMsg(const LocationalData& position, bool isDead)
+{
+  float attribute = isDead ? 0.f : 1.f;
+
+  std::string respawnMsg;
+  respawnMsg += Networking::MinPacketId;
+  respawnMsg += nlohmann::json{
+    { "t", MsgType::Respawn },
+    { "tTeleport",
+      { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
+      { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
+      { "worldOrCell", position.cellOrWorld },
+      { "type", "teleport" } },
+    { "tChangeValues",
+      { "t", MsgType::ChangeValues },
+      { "data",
+        { { "health", attribute },
+          { "magicka", attribute },
+          { "stamina", attribute } } } },
+    { "tIsDead",
+      { "idx", GetIdx() },
+      { "t", MsgType::UpdateProperty },
+      { "propName", "isDead" },
+      { "data", isDead } }
+  }.dump();
+  SendToUser(respawnMsg.data(), respawnMsg.size(), true);
+}
+
 void MpActor::BeforeDestroy()
 {
   for (auto& sink : destroyEventSinks)
