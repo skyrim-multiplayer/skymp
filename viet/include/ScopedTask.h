@@ -1,11 +1,13 @@
 #pragma once
 
+namespace Viet {
+template <class State>
 class ScopedTask
 {
 public:
-  using Callback = void (*)(void*);
+  using Callback = void (*)(State&);
 
-  ScopedTask(Callback f_, void* state_)
+  ScopedTask(Callback f_, State& state_)
     : f(f_)
     , state(state_)
   {
@@ -15,5 +17,6 @@ public:
 
 private:
   const Callback f;
-  void* const state;
+  State& state;
 };
+}

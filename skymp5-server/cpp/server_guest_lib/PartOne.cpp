@@ -99,7 +99,7 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 
 void PartOne::Tick()
 {
-  worldState.TickTimers();
+  worldState.Tick();
 }
 
 uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,

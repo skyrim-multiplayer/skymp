@@ -261,8 +261,8 @@ private:
   std::shared_ptr<JsEngine> engine;
   std::shared_ptr<DirectoryMonitor> monitor;
   uint32_t tickId = 0;
-  TaskQueue taskQueue;
-  TaskQueue jsPromiseTaskQueue;
+  Viet::TaskQueue taskQueue;
+  Viet::TaskQueue jsPromiseTaskQueue;
   CallNativeApi::NativeCallRequirements& nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
   std::shared_ptr<BrowserApi::State> browserApiState;
@@ -274,7 +274,7 @@ struct SkyrimPlatform::Impl
 {
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
-  TaskQueue tickTasks, updateTasks;
+  Viet::TaskQueue tickTasks, updateTasks;
   ThreadPoolWrapper pool;
 };
 

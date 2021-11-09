@@ -105,7 +105,7 @@ private:
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   std::shared_ptr<JsEngine> chakraEngine;
-  TaskQueue chakraTaskQueue;
+  Viet::TaskQueue chakraTaskQueue;
   std::optional<Napi::FunctionReference> sendUiMessageImplementation;
   GamemodeApi::State gamemodeApiState;
 

@@ -23,7 +23,21 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   HitData hitData;
   hitData.target = 0x14;
   hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E; // iron dagger 4 damage
+  hitData.source = 0x0001397E; // iron dagger 4 damage, id = 80254
+  ac.AddItem(hitData.source, 1);
+  ac.SetEquipment(R"(
+    {
+      "inv": {
+        "entries": [
+          {
+            "baseId": 80254,
+            "count": 1,
+            "worn": true
+          }
+        ]
+      }
+    }
+  )");
 
   auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastHitTime(past);
@@ -56,6 +70,20 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   hitData.target = 0x14;
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
+  ac.AddItem(hitData.source, 1);
+  ac.SetEquipment(R"(
+    {
+      "inv": {
+        "entries": [
+          {
+            "baseId": 80254,
+            "count": 1,
+            "worn": true
+          }
+        ]
+      }
+    }
+  )");
 
   p.Messages().clear();
   auto past = std::chrono::steady_clock::now() - 4s;
@@ -95,9 +123,17 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E;
 
+  int16_t face =
+    espm::GetData<espm::NPC_>(acAggressor.GetBaseId(), &p.worldState)
+      .objectBounds.pos2[1];
+  int16_t targetSide =
+    espm::GetData<espm::NPC_>(acTarget.GetBaseId(), &p.worldState)
+      .objectBounds.pos2[1];
+
   // fCombatDistance global value * reach
-  const float awaitedRange = 141.f * 0.7f;
+  const float awaitedRange = 141.f * 0.7f + face + targetSide;
   acTarget.SetPos({ awaitedRange * 1.001f, 0, 0 });
+  acTarget.SetAngle({ 0.f, 0.f, 180.f });
   acTarget.SetPercentages(0.1f, 1, 1);
 
   auto past = std::chrono::steady_clock::now() - 2s;
@@ -166,6 +202,20 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   hitData.target = 0x14;
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E;
+  ac.AddItem(hitData.source, 1);
+  ac.SetEquipment(R"(
+    {
+      "inv": {
+        "entries": [
+          {
+            "baseId": 80254,
+            "count": 1,
+            "worn": true
+          }
+        ]
+      }
+    }
+  )");
 
   auto past = std::chrono::steady_clock::now() - 300ms;
 
