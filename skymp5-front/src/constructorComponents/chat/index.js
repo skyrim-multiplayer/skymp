@@ -7,7 +7,7 @@ const Chat = (props) => {
     const [list, addListElement] = useState(props.messages || []);
     const [isInputFocus, changeInputFocus] = useState(false)
     const placeholder = props.placeholder;
-    const isHiddenInput = props.isHiddenInput;
+    const isInputHidden = props.isInputHidden;
     const send = props.send;
 
     const inputRef = useRef();
@@ -73,7 +73,7 @@ const Chat = (props) => {
     return (
         <div id="chat">
             <div className="list">{getList()}</div>
-            {isHiddenInput
+            {isInputHidden
                 ?
                 <></>
                 :
