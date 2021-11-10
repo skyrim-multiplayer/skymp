@@ -436,6 +436,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     }
   }
 
+  respawn(msg: messages.RespawnMessage): void {
+    once("update", () => printConsole(`Received respawn message: ${JSON.stringify(msg)}`));
+  }
+
   handleConnectionAccepted(): void {
     this.worldModel.forms = [];
     this.worldModel.playerCharacterFormIdx = -1;
