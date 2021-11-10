@@ -26,6 +26,18 @@
   myBook.getType() === FormType.Book;
   ```
 
+- `SlotMask`. Armor [slot masks][SlotMask].
+
+  ```ts
+  // Before
+  armor.getSlotMask() === 0x2000000;
+  NiOverride.AddSkinOverrideString(a, true, false, 0x4, 9, 0, diffuseTex, true);
+
+  // After
+  armor.getSlotMask() === SlotMask.Jewelry;
+  NiOverride.AddSkinOverrideString(a, true, false, SlotMask.Body, 9, 0, diffuseTex, true);
+  ```
+
 - `WeaponType`. Weapon types from [`Weapon.GetWeaponType()`][WeaponType].
 
   ```ts
@@ -42,4 +54,5 @@
 
 [EquippedItemType]: https://www.creationkit.com/index.php?title=GetEquippedItemType_-_Actor
 [FormType]: https://www.creationkit.com/index.php?title=GetType_-_Form
+[SlotMask]: https://www.creationkit.com/index.php?title=Slot_Masks_-_Armor
 [WeaponType]: https://www.creationkit.com/index.php?title=GetWeaponType_-_Weapon

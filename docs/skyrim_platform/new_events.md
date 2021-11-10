@@ -2,7 +2,7 @@
 
 Aside from being able to subscribe to Papyrus events, Skyrim Platform also introduces events on its own.
 
-Many of these events are are analogous to events already available in Skyrim, but these are easier to use in Typescript due to all extended and typed info they get.
+Many of these events are analogous to events already available in Skyrim, but these are easier to use in Typescript due to all extended and typed info they get.
 
 Skyrim Platform does not attach scripts to objects, so these events are available without the need to do so.
 
