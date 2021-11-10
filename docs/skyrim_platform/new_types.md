@@ -58,6 +58,27 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
   Ui.isMenuOpen(Menu.Crafting);
   ```
 
+- `SlotMask`. Armor [slot masks][SlotMask].
+
+  ```ts
+  armor.getSlotMask() === SlotMask.Jewelry;
+  NiOverride.AddSkinOverrideString(a, true, false, SlotMask.Body, 9, 0, diffuseTex, true);
+  ```
+
+  ***WARNING***: Some slots were left unnamed by Bethesda, but this enum adheres to the [modders' consensus][Biped] on usage for those slots.\
+  When making your plugin, be ware **some armor creators may not adhere to that consensus**.
+
+  Some values in this enum are also synonyms, so you can use whichever name you think will best represent what you want to do.
+
+  For example, all these values are the same (`0x10000000`):
+
+  ```ts
+  // Consensus dictates slot 0x10000000 may be used for either...
+  SlotMask.ArmLeft        // Left arm
+  SlotMask.ArmUnder       // Arm undergarment
+  SlotMask.ArmSecondary   // Secondary arm
+  ```
+
 - `WeaponType`. Weapon types from [`Weapon.GetWeaponType()`][WeaponType].
 
   ```ts
@@ -69,9 +90,11 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
 
   ***WARNING***: Don't confuse with `EquippedItemType` enum. Both appear to be similar, but values actually differ.
 
+[Biped]: https://www.creationkit.com/index.php?title=Biped_Object
 [EquippedItemType]: https://www.creationkit.com/index.php?title=GetEquippedItemType_-_Actor
 [FormType]: https://www.creationkit.com/index.php?title=GetType_-_Form
 [Input Script]: https://www.creationkit.com/index.php?title=Input_Script
+[SlotMask]: https://www.creationkit.com/index.php?title=Slot_Masks_-_Armor
 [Ts-Enum]: https://www.typescriptlang.org/docs/handbook/enums.html
 [UI Script]: https://www.creationkit.com/index.php?title=UI_Script
 [WeaponType]: https://www.creationkit.com/index.php?title=GetWeaponType_-_Weapon

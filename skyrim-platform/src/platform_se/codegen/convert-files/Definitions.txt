@@ -663,6 +663,53 @@ export const enum EquippedItemType {
     Crossbow,
 }
 
+export const enum SlotMask {
+    Head = 0x1,
+    Hair = 0x2,
+    Body = 0x4,
+    Hands = 0x8,
+    Forearms = 0x10,
+    Amulet = 0x20,
+    Ring = 0x40,
+    Feet = 0x80,
+    Calves = 0x100,
+    Shield = 0x200,
+    Tail = 0x400,
+    LongHair = 0x800,
+    Circlet = 0x1000,
+    Ears = 0x2000,
+    Face = 0x4000,
+    Mouth = 0x4000,
+    Neck = 0x8000,
+    ChestOuter = 0x10000,
+    ChestPrimary = 0x10000,
+    Back = 0x20000,
+    Misc01 = 0x40000,
+    PelvisOuter = 0x80000,
+    PelvisPrimary = 0x80000,
+    DecapitateHead = 0x100000,
+    Decapitate = 0x200000,
+    PelvisUnder = 0x400000,
+    PelvisSecondary = 0x400000,
+    LegOuter = 0x800000,
+    LegPrimary = 0x800000,
+    LegUnder = 0x1000000,
+    LegSecondary = 0x1000000,
+    FaceAlt = 0x2000000,
+    Jewelry = 0x2000000,
+    ChestUnder = 0x4000000,
+    ChestSecondary = 0x4000000,
+    Shoulder = 0x8000000,
+    ArmUnder = 0x10000000,
+    ArmSecondary = 0x10000000,
+    ArmLeft = 0x10000000,
+    ArmOuter = 0x20000000,
+    ArmPrimary = 0x20000000,
+    ArmRight = 0x20000000,
+    Misc02 = 0x40000000,
+    FX01 = 0x80000000
+}
+
 export declare namespace SendAnimationEventHook {
     class Context {
         readonly selfId: number;
