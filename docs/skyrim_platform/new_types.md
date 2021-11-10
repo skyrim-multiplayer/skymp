@@ -19,3 +19,61 @@ SkyrimPlatform currently only adds one type: `TESModPlatform`. Instances of this
 - `pushWornState`, `addItemEx` - add / remove items from def. ExtraData.
 - `updateEquipment` - update equipment (unstable).
 - `resetContainer` - clear the base container.
+
+# Enums added by Skyrim Platform
+
+Skyrim Platform adds [Typescript enums][Ts-Enum] for both convenience and preventing bugs.
+
+Here's a list of enum values declared in `skyrimPlatform.ts`.
+
+- `DxScanCode`. Key mappings from [Input Script][].
+
+  ```ts
+  Input.isKeyPressed(DxScanCode.F2);
+  ```
+
+<!-- TODO: Uncomment when these enums are actually published -->
+<!-- - `EquippedItemType`. Types for [`Actor.GetEquippedItemType()`][EquippedItemType].
+
+  ```ts
+  player.getEquippedItemType(0) === EquippedItemType.Sword;
+  player.getEquippedItemType(0) === EquippedItemType.Torch;
+  ```
+
+  Please notice how Battleaxes and Warhammers have both the same value; this is the way vanilla Skyrim works.
+
+  ***WARNING***: Don't confuse with `WeaponType` enum. Both appear to be similar, but values actually differ.
+
+- `FormType`. Form types from [`Form.GetType()`][FormType].
+
+  ```ts
+  cell.getNumRefs(FormType.NPC);
+  myBook.getType() === FormType.Book;
+  ``` -->
+
+- `Menu`. Menu names from [UI Script][].
+
+  ```ts
+  Ui.isMenuOpen(Menu.Container);
+  Ui.isMenuOpen(Menu.Inventory);
+  Ui.isMenuOpen(Menu.Crafting);
+  ```
+
+<!-- TODO: Uncomment when these enums are actually published -->
+<!-- - `WeaponType`. Weapon types from [`Weapon.GetWeaponType()`][WeaponType].
+
+  ```ts
+  weapon.getWeaponType() === WeaponType.WarAxe;
+  weapon.setWeaponType(WeaponType.Greatsword);
+  ```
+
+  Please notice how Battleaxes and Warhammers have both the same value; this is the way vanilla Skyrim works.
+
+  ***WARNING***: Don't confuse with `EquippedItemType` enum. Both appear to be similar, but values actually differ. -->
+
+[EquippedItemType]: https://www.creationkit.com/index.php?title=GetEquippedItemType_-_Actor
+[FormType]: https://www.creationkit.com/index.php?title=GetType_-_Form
+[Input Script]: https://www.creationkit.com/index.php?title=Input_Script
+[Ts-Enum]: https://www.typescriptlang.org/docs/handbook/enums.html
+[UI Script]: https://www.creationkit.com/index.php?title=UI_Script
+[WeaponType]: https://www.creationkit.com/index.php?title=GetWeaponType_-_Weapon
