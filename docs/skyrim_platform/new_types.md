@@ -32,8 +32,7 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
   Input.isKeyPressed(DxScanCode.F2);
   ```
 
-<!-- TODO: Uncomment when these enums are actually published -->
-<!-- - `EquippedItemType`. Types for [`Actor.GetEquippedItemType()`][EquippedItemType].
+- `EquippedItemType`. Types for [`Actor.GetEquippedItemType()`][EquippedItemType].
 
   ```ts
   player.getEquippedItemType(0) === EquippedItemType.Sword;
@@ -49,7 +48,7 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
   ```ts
   cell.getNumRefs(FormType.NPC);
   myBook.getType() === FormType.Book;
-  ``` -->
+  ```
 
 - `Menu`. Menu names from [UI Script][].
 
@@ -59,8 +58,7 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
   Ui.isMenuOpen(Menu.Crafting);
   ```
 
-<!-- TODO: Uncomment when these enums are actually published -->
-<!-- - `WeaponType`. Weapon types from [`Weapon.GetWeaponType()`][WeaponType].
+- `WeaponType`. Weapon types from [`Weapon.GetWeaponType()`][WeaponType].
 
   ```ts
   weapon.getWeaponType() === WeaponType.WarAxe;
@@ -69,7 +67,7 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
 
   Please notice how Battleaxes and Warhammers have both the same value; this is the way vanilla Skyrim works.
 
-  ***WARNING***: Don't confuse with `EquippedItemType` enum. Both appear to be similar, but values actually differ. -->
+  ***WARNING***: Don't confuse with `EquippedItemType` enum. Both appear to be similar, but values actually differ.
 
 [EquippedItemType]: https://www.creationkit.com/index.php?title=GetEquippedItemType_-_Actor
 [FormType]: https://www.creationkit.com/index.php?title=GetType_-_Form
