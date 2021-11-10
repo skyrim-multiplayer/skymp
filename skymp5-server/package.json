@@ -27,7 +27,7 @@
     "archiver": "^5.3.0",
     "argparse": "^2.0.1",
     "aws-sdk": "^2.1023.0",
-    "axios": "^0.24.0",
+    "axios": "^0.21.2",
     "chokidar": "^3.5.2",
     "clinic": "^9.0.0",
     "cmake-js": "^6.2.1",
