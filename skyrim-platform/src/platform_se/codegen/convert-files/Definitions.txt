@@ -245,7 +245,7 @@ export interface BrowserMessageEvent {
 }
 
 /*
-* Notes: The message text can contain any characters, including ``"`"\`.
+* Notes: The message text can contain any characters, including `'` `"` `\`.
 * Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
 */
 export interface ConsoleMessageEvent {
