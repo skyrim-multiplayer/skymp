@@ -106,7 +106,7 @@ void SetupFridaHooks()
   w.Attach(listener, 5367792, RENDER_MAIN_MENU);
   w.Attach(listener, 19244800, SEND_EVENT);
   w.Attach(listener, 19245744, SEND_EVENT_ALL);
-  w.Attach(listener, 0x85C423, CONSOLE_VPRINT);
+  w.Attach(listener, 8766499, CONSOLE_VPRINT);
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;

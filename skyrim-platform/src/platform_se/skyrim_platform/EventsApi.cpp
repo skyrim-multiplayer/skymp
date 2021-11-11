@@ -459,10 +459,10 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
   SendEvent("ipcMessage", { JsValue::Undefined(), ipcMessageEvent });
 }
 
-void EventsApi::SendConsoleMsgEvent(char* msg_)
+void EventsApi::SendConsoleMsgEvent(const char* msg_)
 {
   std::string msg(msg_);
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddTickTask([=] {
     auto obj = JsValue::Object();
     obj.SetProperty("message", JsValue::String(msg));
     EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
