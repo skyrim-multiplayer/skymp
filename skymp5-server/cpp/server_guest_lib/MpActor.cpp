@@ -284,17 +284,17 @@ espm::ObjectBounds MpActor::GetBounds() const
   return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
 }
 
-void MpActor::SendAndSetRespawnState(bool isDead)
+void MpActor::SendAndSetDeathState(bool isDead)
 {
-  SendAndSetRespawnState({}, isDead, false);
+  SendAndSetDeathState({}, isDead, false);
 }
 
-void MpActor::SendAndSetRespawnState(const LocationalData& position,
-                                     bool isDead, bool shouldTeleport)
+void MpActor::SendAndSetDeathState(const LocationalData& position, bool isDead,
+                                   bool shouldTeleport)
 {
   float attribute = isDead ? 0.f : 1.f;
 
-  std::string respawnMsg = GetRespawnMsg(position, isDead, shouldTeleport);
+  std::string respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
   SendToUser(respawnMsg.data(), respawnMsg.size(), true);
 
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
@@ -310,8 +310,8 @@ void MpActor::SendAndSetRespawnState(const LocationalData& position,
   }
 }
 
-std::string MpActor::GetRespawnMsg(const LocationalData& position, bool isDead,
-                                   bool shouldTeleport)
+std::string MpActor::GetDeathStateMsg(const LocationalData& position,
+                                      bool isDead, bool shouldTeleport)
 {
   std::string tTeleport = R"({})";
   std::string tChangeValues = R"({})";
@@ -368,7 +368,7 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
 void MpActor::Kill()
 {
-  SendAndSetRespawnState(true);
+  SendAndSetDeathState(true);
 }
 
 void MpActor::RespawnAfter(float seconds, const LocationalData& position)
@@ -389,7 +389,7 @@ void MpActor::RespawnAfter(float seconds, const LocationalData& position)
 void MpActor::Respawn(const LocationalData& position)
 {
   pImpl->isRespawning = false;
-  SendAndSetRespawnState(position, false);
+  SendAndSetDeathState(position, false);
 }
 
 void MpActor::Teleport(const LocationalData& position)

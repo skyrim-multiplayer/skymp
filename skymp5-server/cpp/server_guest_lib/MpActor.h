@@ -87,11 +87,11 @@ private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
-  void SendAndSetRespawnState(bool isDead);
-  void SendAndSetRespawnState(const LocationalData& position, bool isDead,
-                              bool shouldTeleport = true);
-  std::string GetRespawnMsg(const LocationalData& position, bool isDead,
-                            bool shouldTeleport);
+  void SendAndSetDeathState(bool isDead);
+  void SendAndSetDeathState(const LocationalData& position, bool isDead,
+                            bool shouldTeleport = true);
+  std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
+                               bool shouldTeleport);
 
 protected:
   void BeforeDestroy() override;
