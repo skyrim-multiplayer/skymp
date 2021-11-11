@@ -124,15 +124,16 @@ static void example_listener_on_enter(GumInvocationListener* listener,
 
   switch ((size_t)hook_id) {
     case CONSOLE_VPRINT: {
-        char* refr =  _ic->cpu_context->rdx ? (char*)_ic->cpu_context->rdx : nullptr;
+      char* refr =
+        _ic->cpu_context->rdx ? (char*)_ic->cpu_context->rdx : nullptr;
 
-        if (!refr) {
-            return;
-        }
+      if (!refr) {
+        return;
+      }
 
-        EventsApi::SendConsoleMsgEvent(refr);
+      EventsApi::SendConsoleMsgEvent(refr);
 
-        break;
+      break;
     }
     case SEND_EVENT: {
       int argIdx = 2;

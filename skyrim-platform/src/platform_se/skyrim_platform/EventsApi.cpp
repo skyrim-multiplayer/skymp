@@ -461,12 +461,12 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
 
 void EventsApi::SendConsoleMsgEvent(char* msg_)
 {
-    std::string msg(msg_);
-    SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-        auto obj = JsValue::Object();
-        obj.SetProperty("message", JsValue::String(msg));
-        EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
-    });
+  std::string msg(msg_);
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+    auto obj = JsValue::Object();
+    obj.SetProperty("message", JsValue::String(msg));
+    EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
+  });
 }
 
 void EventsApi::SendMenuOpen(const char* menuName)
