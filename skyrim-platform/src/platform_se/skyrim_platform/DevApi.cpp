@@ -8,11 +8,11 @@
 #include <map>
 #include <sstream>
 
+#include <RE/ButtonEvent.h>
 #include <RE/ConsoleLog.h>
+#include <RE/InputEvent.h>
 #include <RE/MenuControls.h>
 #include <RE/MenuEventHandler.h>
-#include <RE/InputEvent.h>
-#include <RE/ButtonEvent.h>
 
 std::shared_ptr<JsEngine>* DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
@@ -108,41 +108,49 @@ JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
   return static_cast<double>((**jsEngine).GetMemoryUsage());
 }
 
-class WrapperScreenShotEventHandler : public RE::MenuEventHandler {
+class WrapperScreenShotEventHandler : public RE::MenuEventHandler
+{
 public:
-    WrapperScreenShotEventHandler::WrapperScreenShotEventHandler(RE::MenuEventHandler* originalHandler_) : originalHandler(originalHandler_) {
+  WrapperScreenShotEventHandler::WrapperScreenShotEventHandler(
+    RE::MenuEventHandler* originalHandler_)
+    : originalHandler(originalHandler_)
+  {
+  }
+
+  bool CanProcess(RE::InputEvent* e) override
+  {
+    if (e->eventType == RE::INPUT_EVENT_TYPE::kButton) {
+      if (strcmp(e->QUserEvent().c_str(), "Screenshot") == 0) {
+        return originalHandler->CanProcess(e);
+      }
     }
 
-    bool CanProcess(RE::InputEvent* e) override {
-        if (e->eventType == RE::INPUT_EVENT_TYPE::kButton) {
-            if (strcmp(e->QUserEvent().c_str(), "Screenshot") == 0) {
-                return originalHandler->CanProcess(e);
-            }
-        }
-
-        return false;
-    }
-    bool ProcessKinect(RE::KinectEvent* e) override { return false; }
-    bool ProcessThumbstick(RE::ThumbstickEvent* e) override { return false; }
-    bool ProcessMouseMove(RE::MouseMoveEvent* e) override { return false; }
-    bool ProcessButton(RE::ButtonEvent* e) override {
-        if (strcmp(e->QUserEvent().c_str(), "Screenshot") == 0) {
-            return originalHandler->ProcessButton(e);
-        }
-
-        return false;
+    return false;
+  }
+  bool ProcessKinect(RE::KinectEvent* e) override { return false; }
+  bool ProcessThumbstick(RE::ThumbstickEvent* e) override { return false; }
+  bool ProcessMouseMove(RE::MouseMoveEvent* e) override { return false; }
+  bool ProcessButton(RE::ButtonEvent* e) override
+  {
+    if (strcmp(e->QUserEvent().c_str(), "Screenshot") == 0) {
+      return originalHandler->ProcessButton(e);
     }
 
-    RE::MenuEventHandler* originalHandler;
+    return false;
+  }
+
+  RE::MenuEventHandler* originalHandler;
 };
 
 void DevApi::disableCtrlPrtScnHotkey()
 {
-    auto mc = RE::MenuControls::GetSingleton();
+  auto mc = RE::MenuControls::GetSingleton();
 
-    RE::MenuEventHandler* originalHandler = (RE::MenuEventHandler*)mc->screenshotHandler.get();
-    RE::MenuEventHandler* handler = (RE::MenuEventHandler*)new WrapperScreenShotEventHandler(originalHandler);
+  RE::MenuEventHandler* originalHandler =
+    (RE::MenuEventHandler*)mc->screenshotHandler.get();
+  RE::MenuEventHandler* handler =
+    (RE::MenuEventHandler*)new WrapperScreenShotEventHandler(originalHandler);
 
-    mc->RemoveHandler(originalHandler);
-    mc->AddHandler(handler);
+  mc->RemoveHandler(originalHandler);
+  mc->AddHandler(handler);
 }
