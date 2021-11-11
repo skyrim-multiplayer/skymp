@@ -9,6 +9,10 @@
 #include <sstream>
 
 #include <RE/ConsoleLog.h>
+#include <RE/MenuControls.h>
+#include <RE/MenuEventHandler.h>
+#include <RE/InputEvent.h>
+#include <RE/ButtonEvent.h>
 
 std::shared_ptr<JsEngine>* DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
@@ -102,4 +106,43 @@ JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
     throw NullPointerException("jsEngine");
   }
   return static_cast<double>((**jsEngine).GetMemoryUsage());
+}
+
+class WrapperScreenShotEventHandler : public RE::MenuEventHandler {
+public:
+    WrapperScreenShotEventHandler::WrapperScreenShotEventHandler(RE::MenuEventHandler* originalHandler_) : originalHandler(originalHandler_) {
+    }
+
+    bool CanProcess(RE::InputEvent* e) override {
+        if (e->eventType == RE::INPUT_EVENT_TYPE::kButton) {
+            if (strcmp(e->QUserEvent().c_str(), "Screenshot") == 0) {
+                return originalHandler->CanProcess(e);
+            }
+        }
+
+        return false;
+    }
+    bool ProcessKinect(RE::KinectEvent* e) override { return false; }
+    bool ProcessThumbstick(RE::ThumbstickEvent* e) override { return false; }
+    bool ProcessMouseMove(RE::MouseMoveEvent* e) override { return false; }
+    bool ProcessButton(RE::ButtonEvent* e) override {
+        if (strcmp(e->QUserEvent().c_str(), "Screenshot") == 0) {
+            return originalHandler->ProcessButton(e);
+        }
+
+        return false;
+    }
+
+    RE::MenuEventHandler* originalHandler;
+};
+
+void DevApi::disableCtrlPrtScnHotkey()
+{
+    auto mc = RE::MenuControls::GetSingleton();
+
+    RE::MenuEventHandler* originalHandler = (RE::MenuEventHandler*)mc->screenshotHandler.get();
+    RE::MenuEventHandler* handler = (RE::MenuEventHandler*)new WrapperScreenShotEventHandler(originalHandler);
+
+    mc->RemoveHandler(originalHandler);
+    mc->AddHandler(handler);
 }

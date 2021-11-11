@@ -19,6 +19,8 @@ JsValue GetPlatformVersion(const JsFunctionArguments& args);
 
 JsValue GetJsMemoryUsage(const JsFunctionArguments& args);
 
+void disableCtrlPrtScnHotkey();
+
 using NativeExportsMap =
   std::map<std::string, std::function<JsValue(const JsValue&)>>;
 
@@ -46,5 +48,11 @@ inline void Register(JsValue& exports, std::shared_ptr<JsEngine>* jsEngine,
   exports.SetProperty("getPlatformVersion",
                       JsValue::Function(GetPlatformVersion));
   exports.SetProperty("getJsMemoryUsage", JsValue::Function(GetJsMemoryUsage));
+  exports.SetProperty(
+      "disableCtrlPrtScnHotkey",
+      JsValue::Function([](const JsFunctionArguments& args) {
+          disableCtrlPrtScnHotkey();
+          return JsValue::Undefined();
+      }));
 }
 }
