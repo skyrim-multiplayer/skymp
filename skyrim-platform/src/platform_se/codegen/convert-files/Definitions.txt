@@ -244,6 +244,10 @@ export interface BrowserMessageEvent {
     arguments: unknown[]
 }
 
+export interface ConsoleMessageEvent {
+    message: string
+}
+
 export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 
@@ -321,6 +325,10 @@ export declare function once(eventName: 'menuClose', callback: (event: MenuClose
 
 export declare function on(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
 export declare function once(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
+
+export declare function on(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
+export declare function once(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
+
 
 declare class ConsoleComand {
     longName: string;
