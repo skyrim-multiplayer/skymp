@@ -19,19 +19,24 @@
 #include <map>
 #include <optional>
 
-namespace {
-std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
-                                  const nlohmann::json& value)
+std::string MpObjectReference::CreatePropertyMessage(
+  MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
-  nlohmann::json j{ { "idx", self->GetIdx() },
-                    { "t", MsgType::UpdateProperty },
-                    { "propName", name },
-                    { "data", value } };
   std::string str;
   str += Networking::MinPacketId;
-  str += j.dump();
+  str += PreparePropertyMessage(self, name, value);
   return str;
 }
+
+std::string MpObjectReference::PreparePropertyMessage(
+  MpObjectReference* self, const char* name, const nlohmann::json& value)
+{
+  return nlohmann::json{
+    { "idx", self->GetIdx() },
+    { "t", MsgType::UpdateProperty },
+    { "propName", name },
+    { "data", value }
+  }.dump();
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink

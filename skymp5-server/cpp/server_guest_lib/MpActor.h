@@ -88,8 +88,10 @@ private:
   std::shared_ptr<Impl> pImpl;
 
   void SendAndSetRespawnState(bool isDead);
-  void SendAndSetRespawnState(const LocationalData& position, bool isDead);
-  std::string GetRespawnMsg(const LocationalData& position, bool isDead);
+  void SendAndSetRespawnState(const LocationalData& position, bool isDead,
+                              bool shouldTeleport = true);
+  std::string GetRespawnMsg(const LocationalData& position, bool isDead,
+                            bool shouldTeleport);
 
 protected:
   void BeforeDestroy() override;
