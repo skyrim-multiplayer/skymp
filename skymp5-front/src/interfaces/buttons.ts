@@ -20,6 +20,7 @@ export interface ImageButtonProps extends DefaultButtonComponentProps{
 export interface SkyrimButtonProps extends DefaultButtonComponentProps {
     text: string
 }
+
 export interface FrameButtonProps extends DefaultButtonComponentProps {
     variant: string;
     text: string;
