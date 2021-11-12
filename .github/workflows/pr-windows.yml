@@ -18,6 +18,10 @@ jobs:
   build:
     runs-on: windows-2019
 
+    - name: test
+      run: >
+        bash -c 'echo "$PATH"; exit 1'
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -79,6 +83,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
+        --trace
 
     - uses: actions/upload-artifact@v2
       with:
@@ -87,7 +92,7 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --verbose
 
     - name: Test
       working-directory: ${{github.workspace}}/build
