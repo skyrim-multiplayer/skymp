@@ -79,7 +79,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
-        --verbose
+        --trace
 
     - name: List files
       run: dir /b /s /a:-D
