@@ -1,3 +1,5 @@
+include(CMakePrintHelpers)
+
 function(yarn_execute_command)
   cmake_parse_arguments(A "" "WORKING_DIRECTORY;OUTPUT_VARIABLE;RESULT_VARIABLE" "COMMAND" ${ARGN})
   foreach(arg WORKING_DIRECTORY COMMAND)
@@ -20,6 +22,7 @@ function(yarn_execute_command)
       string(APPEND str " ${arg}")
     endforeach()
     file(WRITE ${temp_bat} ${str})
+    cmake_print_variables(A_COMMAND)
   else()
     set(yarn_cmd "yarn")
     set(yarn_arg ${A_COMMAND})
