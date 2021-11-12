@@ -142,7 +142,7 @@ public:
   RE::MenuEventHandler* originalHandler;
 };
 
-void DevApi::disableCtrlPrtScnHotkey()
+void DevApi::DisableCtrlPrtScnHotkey()
 {
   auto mc = RE::MenuControls::GetSingleton();
 
