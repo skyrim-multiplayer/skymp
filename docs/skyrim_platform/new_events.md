@@ -130,6 +130,8 @@ on("effectStart", (event) => {
 })
 ```
 
+See the Cook Book [entry on this][Cloaks] for more details.
+
 ## effectFinish
 
 Called when any Magic Effect ends.\
@@ -189,3 +191,4 @@ More info and samples for these will be added later:
 [OnEffectStart]: https://www.creationkit.com/index.php?title=OnEffectStart_-_ActiveMagicEffect
 [OnEffectFinish]: https://www.creationkit.com/index.php?title=OnEffectFinish_-_ActiveMagicEffect
 [SPID]: https://www.nexusmods.com/skyrimspecialedition/mods/36869
+[Cloaks]: cookbook.md#getting-rid-of-cloaks
