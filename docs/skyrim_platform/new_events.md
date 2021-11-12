@@ -40,6 +40,8 @@ The variable `event` always contains variables related to the event to which you
   - [unequip](#unequip)
   - [effectStart](#effectstart)
   - [effectFinish](#effectfinish)
+  - [cellFullyLoaded](#cellFullyLoaded)
+  - [consoleMessage](#consoleMessage)
   - [Other events](#other-events)
 
  ## update
@@ -160,6 +162,33 @@ on("cellFullyLoaded", (event) => {
 Notice that due to the way Skyrim works this event may fire multiple times when roaming the wilderness, since many cells are usually loaded at the same time in this situation.
 
 This event will be called once for each of those cells that just had been loaded.
+
+## consoleMessage
+
+Called each time the game prints something to the console, including calls to `printConsole`.
+
+Note: The message text can contain any characters, including `'` `"` `\`.
+Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
+
+```typescript
+import { on, browser } from "skyrimPlatform";
+
+const htmlEscapes: Record<string, string> = {
+  '"': '\\"',
+  "'": "\\'",
+  '\\': '\\\\',
+  '<': '\\<',
+  '>': '\\>'
+};
+
+const htmlEscaper = /[&<>"'\\\/]/g;
+
+// On every print to the game console, console.log it to the browser
+on('consoleMessage', (e) => {
+  const msg = e.message.replace(htmlEscaper, (match) => htmlEscapes[match]);
+  browser.executeJavaScript('console.log("' + msg + '")');
+});
+```
 
 ## Other events
 
