@@ -244,6 +244,10 @@ export interface BrowserMessageEvent {
     arguments: unknown[]
 }
 
+/*
+* Note: The message text can contain any characters, including `'` `"` `\`.
+* Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
+*/
 export interface ConsoleMessageEvent {
     message: string
 }
