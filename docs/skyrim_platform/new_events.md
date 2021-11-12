@@ -40,6 +40,7 @@ The variable `event` always contains variables related to the event to which you
   - [unequip](#unequip)
   - [effectStart](#effectstart)
   - [effectFinish](#effectfinish)
+  - [consoleMessage](#consoleMessage)
   - [Other events](#other-events)
 
  ## update
