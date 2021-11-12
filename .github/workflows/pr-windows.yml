@@ -19,7 +19,8 @@ jobs:
     runs-on: windows-2019
 
     - name: test
-      run: bash -c 'echo "$PATH"; exit 1'
+      run: >
+        bash -c 'echo "$PATH"; exit 1'
 
     steps:
     - uses: actions/checkout@v2
@@ -71,10 +72,6 @@ jobs:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
         target: ${{github.workspace}}/skyrim_data_files/
 
-    - name: 'List files'
-      shell: 'bash'
-      run: ls -lhR "${{github.workspace}}"
-
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
@@ -88,11 +85,6 @@ jobs:
         --profiling-format google-trace
         --trace
 
-    - name: 'List files'
-      shell: 'bash'
-      run: ls -lhR "${{github.workspace}}"
-
-
     - uses: actions/upload-artifact@v2
       with:
         name: cmake-profiling-output
@@ -101,10 +93,6 @@ jobs:
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --verbose
-
-    - name: 'List files'
-      shell: 'bash'
-      run: ls -lhR "${{github.workspace}}"
 
     - name: Test
       working-directory: ${{github.workspace}}/build
