@@ -4,7 +4,7 @@ import './features/login/styles.scss';
 import './constructor.scss';
 
 import { SkyrimFrame } from './components/SkyrimFrame/SkyrimFrame';
-import SkyrimInput from './components/SkyrimInput/';
+import { SkyrimInput } from './components/SkyrimInput/SkyrimInput';
 import { SkyrimHint } from './components/SkyrimHint/SkyrimHint';
 import Button from './constructorComponents/button';
 import Icon from './constructorComponents/icon';

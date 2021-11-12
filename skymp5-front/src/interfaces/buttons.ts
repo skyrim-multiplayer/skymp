@@ -5,7 +5,12 @@ export interface SkyrimHintProps {
     left: boolean;
 }
 
-export interface SkyrimFrameProps extends DefaultButtonComponentProps {
+export interface SkyrimInputProps extends DefaultButtonComponentProps {
+    labelText: string;
+    type: React.HTMLInputTypeAttribute;
+    initialValue: string | number | readonly string[];
+    placeholder: string;
+    onInput?: (any?: any) => void;
 }
 
 export interface DefaultButtonComponentProps {
