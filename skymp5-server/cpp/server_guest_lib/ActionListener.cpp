@@ -607,7 +607,7 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
   if (weapDNAM) {
     float speedMult = weapDNAM->speed;
     return timePassed.count() >= (1.1 * (1 / speedMult)) -
-      (1.1 * (1 / speedMult) * (speedMult <= 0.75 ? 0.5 : 0.3));
+      (1.1 * (1 / speedMult) * (speedMult <= 0.75 ? 0.45 : 0.3));
   } else {
     throw std::runtime_error(fmt::format(
       "Cannot get weapon speed from source: {0:x}", hitData.source));
@@ -663,7 +663,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
     float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) -
-      (1.1 * (1 / weapDNAM->speed) * (weapDNAM->speed <= 0.75 ? 0.5 : 0.3));
+      (1.1 * (1 / weapDNAM->speed) * (weapDNAM->speed <= 0.75 ? 0.45 : 0.3));
     spdlog::debug(
       "Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
