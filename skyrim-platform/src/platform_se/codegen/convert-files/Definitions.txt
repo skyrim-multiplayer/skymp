@@ -1,4 +1,4 @@
-declare class PapyrusObject {
+export declare class PapyrusObject {
     static from(papyrusObject: PapyrusObject | null): PapyrusObject | null;
 }
 export type PapyrusValue = PapyrusObject | number | string | boolean | null | PapyrusValue[];
