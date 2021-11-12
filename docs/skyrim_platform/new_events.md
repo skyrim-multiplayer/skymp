@@ -165,6 +165,9 @@ This event will be called once for each of those cells that just had been loaded
 
 Called each time the game prints something to the console, including calls to `printConsole`.
 
+Note: The message text can contain any characters, including `'` `"` `\`.
+Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
+
 ```typescript
 import { on, browser } from "skyrimPlatform";
 
