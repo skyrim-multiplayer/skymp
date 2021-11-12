@@ -159,6 +159,28 @@ Notice that due to the way Skyrim works this event may fire multiple times when 
 
 This event will be called once for each of those cells that just had been loaded.
 
+## consoleMessage
+
+Called each time the game prints something to the console, including calls to `printConsole`.
+
+```typescript
+import { on, browser } from "skyrimPlatform";
+
+const htmlEscapes: Record<string, string> = {
+  '"': '\\"',
+  "'": "\\'",
+  '\\': '\\\\',
+};
+
+const htmlEscaper = /[&<>"'\\\/]/g;
+
+// On every print to the game console, console.log it to the browser
+on('consoleMessage', (e) => {
+  const msg = e.message.replace(htmlEscaper, (match) => htmlEscapes[match]);
+  browser.executeJavaScript('console.log("' + msg + '")');
+});
+```
+
 ## Other events
 
 More info and samples for these will be added later:
