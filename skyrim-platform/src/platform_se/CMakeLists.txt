@@ -162,10 +162,19 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # force "skyrim-platform" custom target to be built strictly after codegen
   list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
 
+  # if(WIN32)
+  #   set(KEK_BASH "C:/Program Files/Git/bin/bash.exe")# -c "find | grep -Ei 'skyrimplatform|tsconverter'")
+  # else()
+  #   set(KEK_BASH "/bin/bash")
+  #   # execute_process(COMMAND bash -c "find | grep -Ei 'skyrimplatform|tsconverter'")
+  # endif()
+
   # this target was originally called pack, now it is called skyrim-platform
   # so we can use add_dependencies(x skyrim-platform) in other projects
   add_custom_target(skyrim-platform ALL
-    COMMAND yarn pack$<$<CONFIG:Debug>:-debug>
+    # COMMAND "${BASH}" -c "find | grep -Ei 'skyrimplatform|tsconverter' && yarn pack$<$<CONFIG:Debug>:-debug>"
+    # COMMENT "${BASH}" -c "find | grep -Ei 'skyrimplatform|tsconverter' && yarn pack$<$<CONFIG:Debug>:-debug>"
+    COMMAND yarn pack
     COMMENT yarn pack$<$<CONFIG:Debug>:-debug>
     WORKING_DIRECTORY ${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service
   )
