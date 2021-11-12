@@ -1,4 +1,4 @@
-declare class PapyrusObject {
+export declare class PapyrusObject {
     static from(papyrusObject: PapyrusObject | null): PapyrusObject | null;
 }
 export type PapyrusValue = PapyrusObject | number | string | boolean | null | PapyrusValue[];
@@ -11,6 +11,7 @@ export declare function getJsMemoryUsage(): number;
 export declare function getPluginSourceCode(pluginName: string): string;
 export declare function writePlugin(pluginName: string, newSources: string): string;
 export declare function getPlatformVersion(): string;
+export declare function disableCtrlPrtScnHotkey(): void;
 export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void;
 export declare function encodeUtf8(text: string): ArrayBuffer;
 export declare function decodeUtf8(buffer: ArrayBuffer): string;
