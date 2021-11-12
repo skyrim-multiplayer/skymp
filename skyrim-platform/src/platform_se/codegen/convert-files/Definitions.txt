@@ -782,3 +782,9 @@ export declare class HttpClient {
     get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
     post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
 }
+
+export function PreserveForm(frm: Form | null) {
+    if (!frm) return () => null;
+    const id = frm.getFormID();
+    return () => Game.getFormEx(id);
+}
