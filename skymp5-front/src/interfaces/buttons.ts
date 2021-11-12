@@ -25,10 +25,3 @@ export interface FrameButtonProps extends DefaultButtonComponentProps {
     variant: string;
     text: string;
 }
-
-export interface ButtonItemProps extends DefaultButtonComponentProps {
-    name: string;
-    text?: string;
-    variant?: string;
-    url?: string;
-}
