@@ -26,6 +26,7 @@ function(yarn_execute_command)
   else()
     set(yarn_cmd "yarn")
     set(yarn_arg ${A_COMMAND})
+    cmake_print_variables(A_COMMAND)
   endif()
 
   execute_process(COMMAND ${yarn_cmd} ${yarn_arg}
