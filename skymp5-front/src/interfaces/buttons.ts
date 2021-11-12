@@ -22,7 +22,7 @@ export interface SkyrimButtonProps extends DefaultButtonComponentProps {
 }
 export interface FrameButtonProps extends DefaultButtonComponentProps {
     variant: string;
-    text?: string;
+    text: string;
 }
 
 export interface ButtonItemProps extends DefaultButtonComponentProps {

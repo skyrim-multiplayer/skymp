@@ -3,7 +3,7 @@ import React from 'react';
 import '../../features/login/styles.scss';
 import { ImageButtonProps } from '../../interfaces';
 
-const ImageButton = ({ width = 320, height = 48, disabled, onClick, src }: ImageButtonProps) => {
+export const ImageButton = ({ width = 320, height = 48, disabled, onClick, src }: ImageButtonProps) => {
   return (
       <div
           onClick={(e) => onClick && !disabled ? onClick(e) : console.log(e)}
@@ -14,5 +14,3 @@ const ImageButton = ({ width = 320, height = 48, disabled, onClick, src }: Image
       </div>
   );
 };
-
-export default ImageButton;

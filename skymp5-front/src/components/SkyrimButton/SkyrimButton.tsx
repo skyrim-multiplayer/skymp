@@ -1,9 +1,9 @@
 import React from 'react';
 
-import './styles.scss';
+import './SkyrimButton.scss';
 import { SkyrimButtonProps } from '../../interfaces';
 
-const SkyrimButton = ({ width = 320, height = 48, disabled, onClick, text }: SkyrimButtonProps) => {
+export const SkyrimButton = ({ width = 320, height = 48, disabled, onClick, text }: SkyrimButtonProps) => {
   return (
         <div
             style={{ width: `${width}px`, height: `${height}px`, opacity: disabled ? 0.6 : 1.0 }}
@@ -14,5 +14,3 @@ const SkyrimButton = ({ width = 320, height = 48, disabled, onClick, text }: Sky
         </div>
   );
 };
-
-export default SkyrimButton;
