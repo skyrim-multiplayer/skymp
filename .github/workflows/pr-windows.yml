@@ -21,7 +21,7 @@ jobs:
     steps:
     - name: test
       run: >
-        bash -c 'echo "$PATH"; exit 1'
+        bash -c 'echo "$PATH"'
 
     - uses: actions/checkout@v2
       with:
