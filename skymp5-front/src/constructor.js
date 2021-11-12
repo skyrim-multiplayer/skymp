@@ -3,8 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import './features/login/styles.scss';
 import './constructor.scss';
 
-import Frame from './components/SkyrimFrame';
-import SkyrimInput from './components/SkyrimInput';
+import { SkyrimFrame } from './components/SkyrimFrame/SkyrimFrame';
+import SkyrimInput from './components/SkyrimInput/';
 import { SkyrimHint } from './components/SkyrimHint/SkyrimHint';
 import Button from './constructorComponents/button';
 import Icon from './constructorComponents/icon';
@@ -174,7 +174,7 @@ const Constructor = props => {
                 {result.body}
               </div>
             </div>
-            <Frame width={fwidth} height={fheight} />
+            <SkyrimFrame width={fwidth} height={fheight} />
           </div>
         </div>
       )
