@@ -12,4 +12,5 @@ add_custom_target(skymp5-server-ts ALL
   WORKING_DIRECTORY ${SKYMP5_SERVER_SOURCE_DIR}
   SOURCES ${sources}
   COMMAND yarn build-ts
+  COMMENT yarn build-ts
 )
