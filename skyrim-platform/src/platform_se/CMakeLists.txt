@@ -172,10 +172,9 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # this target was originally called pack, now it is called skyrim-platform
   # so we can use add_dependencies(x skyrim-platform) in other projects
   add_custom_target(skyrim-platform ALL
-    # COMMAND "${BASH}" -c "find | grep -Ei 'skyrimplatform|tsconverter' && yarn pack$<$<CONFIG:Debug>:-debug>"
-    # COMMENT "${BASH}" -c "find | grep -Ei 'skyrimplatform|tsconverter' && yarn pack$<$<CONFIG:Debug>:-debug>"
+    # COMMAND "${KEK_BASH}" -c "find | grep -Ei 'skyrimplatform|tsconverter' && yarn pack$<$<CONFIG:Debug>:-debug>"
     COMMAND yarn pack
-    COMMENT yarn pack$<$<CONFIG:Debug>:-debug>
+    # COMMENT yarn pack$<$<CONFIG:Debug>:-debug>
     WORKING_DIRECTORY ${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service
   )
   add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
