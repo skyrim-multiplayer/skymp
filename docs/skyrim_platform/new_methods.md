@@ -89,6 +89,7 @@ More info and samples for these will be added later:
 - `storage` - an object used to save data between reloading scripts.
 - `getExtraContainerChanges` - get ExtraContainerChanges of the given ObjectReference...
 - `getContainer` - get all the items of the base container.
+- `disableCtrlPrtScnHotkey` - disable hotkey that changes the game speed to be based on framerate rather than real time.
 
 [NewEvents]: new_events.md
 [Browser]: browser.md
