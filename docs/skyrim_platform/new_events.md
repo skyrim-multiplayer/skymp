@@ -175,6 +175,8 @@ const htmlEscapes: Record<string, string> = {
   '"': '\\"',
   "'": "\\'",
   '\\': '\\\\',
+  '<': '\\<',
+  '>': '\\>'
 };
 
 const htmlEscaper = /[&<>"'\\\/]/g;
