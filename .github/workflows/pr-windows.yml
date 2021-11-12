@@ -81,9 +81,6 @@ jobs:
         --profiling-format google-trace
         --trace
 
-    - name: List files
-      run: dir /b /s /a:-D
-
     - uses: actions/upload-artifact@v2
       with:
         name: cmake-profiling-output
