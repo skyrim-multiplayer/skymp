@@ -16,6 +16,8 @@ int main(int argc, char* argv[])
   const std::filesystem::path pathToDefinitionsFile = argv[2];
   const std::filesystem::path pathToTypeScriptFile = argv[3];
 
+  std::cout << "OLOLO " << pathToJsonFile << " ;; " << pathToJsonFile << " ;; " << pathToTypeScriptFile << "\n";
+
   if (!std::filesystem::exists(pathToJsonFile)) {
     std::cout << "Json file: " << pathToJsonFile << " dosn't exits, check it.";
     return 1;
