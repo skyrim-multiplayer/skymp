@@ -313,27 +313,25 @@ void MpActor::SendAndSetDeathState(const LocationalData& position, bool isDead,
 std::string MpActor::GetDeathStateMsg(const LocationalData& position,
                                       bool isDead, bool shouldTeleport)
 {
-  std::string tTeleport = R"({})";
-  std::string tChangeValues = R"({})";
-  std::string tIsDead = PreparePropertyMessage(this, "isDead", isDead);
+  nlohmann::json tTeleport = nlohmann::json{};
+  nlohmann::json tChangeValues = nlohmann::json{};
+  nlohmann::json tIsDead = PreparePropertyMessage(this, "isDead", isDead);
 
   if (shouldTeleport) {
     tTeleport = nlohmann::json{
-      { { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
-        { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
-        { "worldOrCell", position.cellOrWorld },
-        { "type", "teleport" } }
-    }.dump();
+      { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
+      { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
+      { "worldOrCell", position.cellOrWorld },
+      { "type", "teleport" }
+    };
   }
   if (isDead == false) {
     const float attribute = 1.f;
-    tChangeValues = nlohmann::json{
-      { { "t", MsgType::ChangeValues },
-        { "data",
-          { { "health", attribute },
-            { "magicka", attribute },
-            { "stamina", attribute } } } }
-    }.dump();
+    tChangeValues = nlohmann::json{ { "t", MsgType::ChangeValues },
+                                    { "data",
+                                      { { "health", attribute },
+                                        { "magicka", attribute },
+                                        { "stamina", attribute } } } };
   }
 
   std::string DeathStateMsg;

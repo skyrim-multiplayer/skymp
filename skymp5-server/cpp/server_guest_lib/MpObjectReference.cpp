@@ -24,19 +24,17 @@ std::string MpObjectReference::CreatePropertyMessage(
 {
   std::string str;
   str += Networking::MinPacketId;
-  str += PreparePropertyMessage(self, name, value);
+  str += PreparePropertyMessage(self, name, value).dump();
   return str;
 }
 
-std::string MpObjectReference::PreparePropertyMessage(
+nlohmann::json MpObjectReference::PreparePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
-  return nlohmann::json{
-    { "idx", self->GetIdx() },
-    { "t", MsgType::UpdateProperty },
-    { "propName", name },
-    { "data", value }
-  }.dump();
+  return nlohmann::json{ { "idx", self->GetIdx() },
+                         { "t", MsgType::UpdateProperty },
+                         { "propName", name },
+                         { "data", value } };
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
