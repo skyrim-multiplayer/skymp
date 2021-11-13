@@ -4,8 +4,6 @@ else()
   set(VCPKG_TARGET_TRIPLET "x64-linux")
 endif()
 
-set(CMAKE_EXECUTE_PROCESS_COMMAND_ECHO STDOUT)
-
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
