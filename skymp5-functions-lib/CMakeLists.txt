@@ -13,6 +13,5 @@ add_custom_target(skymp5-functions-lib ALL
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES ${sources}
   COMMAND yarn build
-  COMMENT yarn build
 )
 add_dependencies(skymp5-functions-lib skyrim-platform)
