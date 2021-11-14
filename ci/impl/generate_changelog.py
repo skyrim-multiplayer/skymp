@@ -18,11 +18,6 @@ def generate_changelog():
     new_version = new_version_full[:-2] if new_version_full.endswith(".0") else new_version_full
 
     changelog_entries = []
-    
-    print(old_version_full, old_version)
-    print(new_version_full, new_version)
-    sys.exit(108)
-    return
 
     directory = os.path.join(find_skymp_root(), "docs", "release", "dev")
     for filename in os.listdir(directory):
