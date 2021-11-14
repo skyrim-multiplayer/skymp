@@ -35,7 +35,7 @@ def get_mod_name(argv):
 # Zip the files from given directory that matches the filter
 def zip_files_in_dir(dir_name, zip_file_name, filter):
    # create a ZipFile object
-   with ZipFile(zip_file_name, 'w') as zip_obj:
+   with ZipFile(zip_file_name, 'w', zipfile.ZIP_DEFLATED) as zip_obj:
        # Iterate over all the files in directory
        for folder_name, subfolders, filenames in os.walk(dir_name):
            for filename in filenames:

@@ -1,7 +1,6 @@
 import getopt
 import sys
 import os
-import re
 from zipfile import ZipFile
 from utils import find_skymp_root
 from create_mod_archive import pack_skyrim_platform

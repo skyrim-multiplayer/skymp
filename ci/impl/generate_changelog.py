@@ -1,14 +1,28 @@
 import os
+import sys
+import semantic_version
 from utils import find_skymp_root
+from utils import get_sp_version
+from utils import set_sp_version
 
 def main(argv):
     generate_changelog()
 
 def generate_changelog():
-    old_version = "2.0"
-    new_version = "2.1"
+    old_version_full = get_sp_version()
+    new_version_full = str(semantic_version.Version(old_version_full).next_minor())
+    set_sp_version(new_version_full)
+    
+    # For printing, omit fix if 0
+    old_version = old_version_full[:-2] if old_version_full.endswith(".0") else old_version_full
+    new_version = new_version_full[:-2] if new_version_full.endswith(".0") else new_version_full
 
     changelog_entries = []
+    
+    print(old_version_full, old_version)
+    print(new_version_full, new_version)
+    sys.exit(108)
+    return
 
     directory = os.path.join(find_skymp_root(), "docs", "release", "dev")
     for filename in os.listdir(directory):
