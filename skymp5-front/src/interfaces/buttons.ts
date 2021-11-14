@@ -5,6 +5,9 @@ export interface SkyrimHintProps {
     left: boolean;
 }
 
+export interface SkyrimFrameProps extends DefaultButtonComponentProps {
+}
+
 export interface DefaultButtonComponentProps {
     name: string;
     width?: number;
