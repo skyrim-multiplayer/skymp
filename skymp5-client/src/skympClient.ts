@@ -439,7 +439,10 @@ export class SkympClient {
     }
   }
 
-  private sendActorValuePercentage(_refrId?: number) {
+  private sendActorValuePercentage(_refrId?: number, form?: FormModel) {
+    const canSend = form && (form.isDead ?? false) === false;
+    if (!canSend) return;
+
     const owner = this.getInputOwner(_refrId);
     if (!owner) return;
 
@@ -459,6 +462,7 @@ export class SkympClient {
       ) {
         return;
       }
+      //printConsole(`[${Date.now()}].SEND AV: ${JSON.stringify(av)}`)
       this.sendTarget.send(
         { t: MsgType.ChangeValues, data: av, _refrId },
         true
@@ -486,7 +490,7 @@ export class SkympClient {
       this.sendAnimation(target);
       this.sendAppearance(target);
       this.sendEquipment(target);
-      this.sendActorValuePercentage(target);
+      this.sendActorValuePercentage(target, target ? this.getForm(target) : this.getForm());
     });
     this.sendHostAttempts();
   }

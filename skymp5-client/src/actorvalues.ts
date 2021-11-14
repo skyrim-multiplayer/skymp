@@ -1,5 +1,5 @@
 import {
-  Actor,
+  Actor, printConsole,
 } from "skyrimPlatform";
 
 export interface ActorValues {
@@ -22,16 +22,29 @@ export const getActorValues = (ac: Actor): ActorValues => {
   return resultActorValue;
 }
 
-export const setActorValuePercentage = (ac: Actor, avName: string, percentage: number) => {
+export const getMaximumActorValue = (ac: Actor, avName: string): number => {
+  const currentPercentage = ac.getActorValuePercentage(avName);
+  return Math.ceil(ac.getActorValue(avName) / (currentPercentage !== 0 ? currentPercentage : ac.getBaseActorValue(avName)));
+}
+
+export const setActorValuePercentage = (ac: Actor, avName: string, percentage: number): void => {
+  // Actor value percentage for health may be below zero (-1.8 for example, it means u have -180% health)
   const currentPercentage = ac.getActorValuePercentage(avName);
   if (currentPercentage === percentage) return;
 
-  const currentMax = ac.getBaseActorValue(avName);
+  const currentMaxValue = getMaximumActorValue(ac, avName);
   const deltaPercentage = percentage - currentPercentage;
-  const k = 1;
   if (deltaPercentage > 0) {
-    ac.restoreActorValue(avName, deltaPercentage * currentMax * k);
+    if (avName === "health") {
+      //printConsole(`[${Date.now()}].RESTORE AV:"${avName}" max:${currentMaxValue} serv:${percentage} current:${currentPercentage} delta:${deltaPercentage} result:${deltaPercentage * currentMaxValue}`);
+    }
+
+    ac.restoreActorValue(avName, deltaPercentage * currentMaxValue);
   } else if (deltaPercentage < 0) {
-    ac.damageActorValue(avName, deltaPercentage * currentMax * k);
+    if (avName === "health") {
+      //printConsole(`[${Date.now()}].DAMAGE AV:"${avName}" max:${currentMaxValue} serv:${percentage} current:${currentPercentage} delta:${deltaPercentage} result:${deltaPercentage * currentMaxValue}`);
+    }
+
+    ac.damageActorValue(avName, deltaPercentage * currentMaxValue);
   }
 };
