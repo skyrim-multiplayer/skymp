@@ -48,9 +48,8 @@ def generate_changelog():
 
     for entry in changelog_entries_normal:
         # New line if not start of changelog
-        changelog += "\n" if len(changelog) > 0 else ""
-
-        # Write all lines except the first (with # sign)
+        changelog += "\n\n" if len(changelog) > 0 else ""
+        
         changelog += "\n".join(entry.splitlines())
 
     changelog += "\n" + "## Other changes" "\n\n"

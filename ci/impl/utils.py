@@ -28,4 +28,4 @@ def set_sp_version(new_version_str):
         data = json.load(json_file)
     with open(sp_package_json, "w") as json_file:
         data["version"] = new_version_str
-        json.dump(data, json_file)
+        json.dump(data, json_file, ident=2)
