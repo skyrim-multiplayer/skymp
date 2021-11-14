@@ -44,7 +44,7 @@ def generate_changelog():
 
     changelog = ""
     changelog += "# SP " + new_version + " Release Notes\n\n"
-    changelog += "Changes made since SP " + old_version + " include the following.\n"
+    changelog += "Changes made since SP " + old_version + " include the following."
 
     for entry in changelog_entries_normal:
         # New line if not start of changelog
@@ -52,7 +52,7 @@ def generate_changelog():
         
         changelog += "\n".join(entry.splitlines())
 
-    changelog += "\n" + "## Other changes" "\n\n"
+    changelog += "\n\n" + "## Other changes" "\n\n"
 
     for entry in changelog_entries_other:
         changelog += "- " + entry
