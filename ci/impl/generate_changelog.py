@@ -44,7 +44,11 @@ def generate_changelog():
 
     changelog = ""
     changelog += "# SP " + new_version + " Release Notes\n\n"
-    changelog += "Changes made since SP " + old_version + " include the following."
+    changelog += "This document includes changes made since SP " + old_version + ".\n\n"
+    changelog += "SP updates regularly. This update probably doesn't include ALL patches that have to be made.\n"
+    changelog += "There are still many things to be implemented or fixed. See [issues](https://github.com/skyrim-multiplayer/skymp/issues?q=is%3Aopen+is%3Aissue+label%3Aarea%3Askyrim-platform).\n\n"
+    changelog += "Please note that the current SP version only works for the old SE build (before the 11.11.21 update).\n"
+    changelog += "To downgrade your Skyrim SE installation use [this patch](https://www.nexusmods.com/skyrimspecialedition/mods/57618)."
 
     for entry in changelog_entries_normal:
         # New line if not start of changelog
