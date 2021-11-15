@@ -57,6 +57,16 @@ target_include_directories(geo PUBLIC "${CMAKE_CURRENT_LIST_DIR}/geo")
 apply_default_settings(TARGETS geo)
 
 #
+# game_rules
+#
+file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/game_rules/src/*" "${CMAKE_CURRENT_SOURCE_DIR}/game_rules/include/*" "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(game_rules STATIC ${src})
+target_include_directories(game_rules PUBLIC "${CMAKE_CURRENT_LIST_DIR}/game_rules/include")
+target_include_directories(game_rules PRIVATE "${CMAKE_CURRENT_LIST_DIR}/game_rules/src")
+apply_default_settings(TARGETS game_rules)
+list(APPEND VCPKG_DEPENDENT game_rules)
+
+#
 # server_guest_lib
 #
 
@@ -65,7 +75,7 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo)
+target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo game_rules)
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_SOURCE_DIR}/chakra-wrapper")
 
 #
