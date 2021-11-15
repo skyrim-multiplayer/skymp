@@ -27,6 +27,6 @@ def set_sp_version(new_version_str):
     with open(sp_package_json) as json_file:
         data = json.load(json_file)
     with open(sp_package_json, "w") as json_file:
-        data["version"] = new_version_strs
+        data["version"] = new_version_str
         # newline is for linelint (github actions)
         json_file.write(json.dumps(data, indent=2) + "\n")
