@@ -35,7 +35,7 @@ import * as sp from "skyrimPlatform";
 import { localIdToRemoteId, remoteIdToLocalId, WorldView } from "./view";
 import * as updateOwner from "./updateOwner";
 import { getActorValues, setActorValuePercentage } from "./actorvalues";
-import { applyDeathState } from './deathSystem';
+import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
 import { nameof } from "./utils";
 import { defaultLocalDamageMult, setLocalDamageMult } from "./index";
 
@@ -170,20 +170,18 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       );
       const playerActor = Game.getPlayer()!;
       // todo: think about track ragdoll state of player
-      playerActor.forceRemoveRagdollFromWorld().then(() => {
-        once("update", () => {
-          TESModPlatform.moveRefrToPosition(
-            playerActor,
-            Cell.from(Game.getFormEx(msg.worldOrCell)),
-            WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
-            msg.pos[0],
-            msg.pos[1],
-            msg.pos[2],
-            msg.rot[0],
-            msg.rot[1],
-            msg.rot[2]
-          );
-        })
+      safeRemoveRagdollFromWorld(playerActor, () => {
+        TESModPlatform.moveRefrToPosition(
+          playerActor,
+          Cell.from(Game.getFormEx(msg.worldOrCell)),
+          WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
+          msg.pos[0],
+          msg.pos[1],
+          msg.pos[2],
+          msg.rot[0],
+          msg.rot[1],
+          msg.rot[2]
+        );
       });
     });
   }
@@ -425,13 +423,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   DeathStateContainer(msg: messages.DeathStateContainerMessage): void {
-    once("update", () => printConsole(`[${Date.now()}].Received death state: ${JSON.stringify(msg.tIsDead)}`));
+    once("update", () => printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`));
     if (msg.tIsDead.propName !== nameof<FormModel>("isDead") || typeof msg.tIsDead.data !== "boolean") return;
 
     if (msg.tChangeValues) {
       this.ChangeValues(msg.tChangeValues);
     }
-    this.UpdateProperty(msg.tIsDead);
+    once("update", () => this.UpdateProperty(msg.tIsDead));
 
     if (msg.tTeleport) {
       this.teleport(msg.tTeleport);

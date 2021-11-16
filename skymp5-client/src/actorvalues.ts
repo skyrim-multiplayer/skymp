@@ -24,7 +24,9 @@ export const getActorValues = (ac: Actor): ActorValues => {
 
 export const getMaximumActorValue = (ac: Actor, avName: string): number => {
   const currentPercentage = ac.getActorValuePercentage(avName);
-  return Math.ceil(ac.getActorValue(avName) / (currentPercentage !== 0 ? currentPercentage : ac.getBaseActorValue(avName)));
+  return currentPercentage === 0 ?
+    ac.getBaseActorValue(avName) :
+    Math.ceil(ac.getActorValue(avName) / currentPercentage);
 }
 
 export const setActorValuePercentage = (ac: Actor, avName: string, percentage: number): void => {
@@ -35,16 +37,8 @@ export const setActorValuePercentage = (ac: Actor, avName: string, percentage: n
   const currentMaxValue = getMaximumActorValue(ac, avName);
   const deltaPercentage = percentage - currentPercentage;
   if (deltaPercentage > 0) {
-    if (avName === "health") {
-      //printConsole(`[${Date.now()}].RESTORE AV:"${avName}" max:${currentMaxValue} serv:${percentage} current:${currentPercentage} delta:${deltaPercentage} result:${deltaPercentage * currentMaxValue}`);
-    }
-
     ac.restoreActorValue(avName, deltaPercentage * currentMaxValue);
   } else if (deltaPercentage < 0) {
-    if (avName === "health") {
-      //printConsole(`[${Date.now()}].DAMAGE AV:"${avName}" max:${currentMaxValue} serv:${percentage} current:${currentPercentage} delta:${deltaPercentage} result:${deltaPercentage * currentMaxValue}`);
-    }
-
     ac.damageActorValue(avName, deltaPercentage * currentMaxValue);
   }
 };

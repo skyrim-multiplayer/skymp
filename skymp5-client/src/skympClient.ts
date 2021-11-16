@@ -462,7 +462,6 @@ export class SkympClient {
       ) {
         return;
       }
-      //printConsole(`[${Date.now()}].SEND AV: ${JSON.stringify(av)}`)
       this.sendTarget.send(
         { t: MsgType.ChangeValues, data: av, _refrId },
         true
