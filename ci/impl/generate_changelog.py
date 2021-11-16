@@ -1,12 +1,21 @@
 import os
+import sys
+import semantic_version
 from utils import find_skymp_root
+from utils import get_sp_version
+from utils import set_sp_version
 
 def main(argv):
     generate_changelog()
 
 def generate_changelog():
-    old_version = "2.0"
-    new_version = "2.1"
+    old_version_full = get_sp_version()
+    new_version_full = str(semantic_version.Version(old_version_full).next_minor())
+    set_sp_version(new_version_full)
+    
+    # For printing, omit fix if 0
+    old_version = old_version_full[:-2] if old_version_full.endswith(".0") else old_version_full
+    new_version = new_version_full[:-2] if new_version_full.endswith(".0") else new_version_full
 
     changelog_entries = []
 
@@ -35,16 +44,19 @@ def generate_changelog():
 
     changelog = ""
     changelog += "# SP " + new_version + " Release Notes\n\n"
-    changelog += "Changes made since SP " + old_version + " include the following.\n"
+    changelog += "This document includes changes made since SP " + old_version + ".\n\n"
+    changelog += "SP updates regularly. This update probably doesn't include ALL patches that have to be made.\n"
+    changelog += "There are still many things to be implemented or fixed. See [issues](https://github.com/skyrim-multiplayer/skymp/issues?q=is%3Aopen+is%3Aissue+label%3Aarea%3Askyrim-platform).\n\n"
+    changelog += "Please note that the current SP version only works for the old SE build (before the 11.11.21 update).\n"
+    changelog += "To downgrade your Skyrim SE installation use [this patch](https://www.nexusmods.com/skyrimspecialedition/mods/57618)."
 
     for entry in changelog_entries_normal:
         # New line if not start of changelog
-        changelog += "\n" if len(changelog) > 0 else ""
-
-        # Write all lines except the first (with # sign)
+        changelog += "\n\n" if len(changelog) > 0 else ""
+        
         changelog += "\n".join(entry.splitlines())
 
-    changelog += "\n" + "## Other changes" "\n\n"
+    changelog += "\n\n" + "## Other changes" "\n\n"
 
     for entry in changelog_entries_other:
         changelog += "- " + entry

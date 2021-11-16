@@ -1,14 +1,13 @@
 import getopt
 import sys
 import os
-import re
 from zipfile import ZipFile
 from utils import find_skymp_root
 from create_mod_archive import pack_skyrim_platform
 from generate_changelog import generate_changelog
 
 def release_skyrim_platform():
-    # 1. Change verison in GetPlatformVersion (DevApi.cpp)
+    # 1. Change verison in GetPlatformVersion (DevApi.cpp) and in version.ts (skymp5-client)
     # 2. Compile
     # 3. Let python do the job
     generate_changelog()

@@ -79,7 +79,7 @@ public:
   void Kill();
   void RespawnAfter(float seconds, const LocationalData& position = kSpawnPos);
   void Respawn(const LocationalData& position = kSpawnPos);
-  void TeleportUser(const LocationalData& position);
+  void Teleport(const LocationalData& position);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
@@ -87,7 +87,11 @@ private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
-  void SetAndSendIsDeadPropery(bool value);
+  void SendAndSetDeathState(bool isDead);
+  void SendAndSetDeathState(const LocationalData& position, bool isDead,
+                            bool shouldTeleport = true);
+  std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
+                               bool shouldTeleport);
 
 protected:
   void BeforeDestroy() override;

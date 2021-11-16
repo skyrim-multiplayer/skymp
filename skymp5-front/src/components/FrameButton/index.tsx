@@ -1,99 +1,103 @@
 import React from 'react';
-import { IDefaultUIComponentProps } from '../../interfaces';
+
+import { DefaultButtonComponentProps, FrameButtonProps } from '../../interfaces';
 import './styles.scss';
 
-interface IFrameButtonProps extends IDefaultUIComponentProps {
-    variant: string;
+export interface ButtonItemProps extends DefaultButtonComponentProps {
+  name: string;
+  text?: string;
+  variant?: string;
+  url?: string;
 }
 
-interface IButtonItemProps extends IDefaultUIComponentProps {
-    name: string;
-    variant?: string;
-}
+const ButtonItem = ({
+  width = 64,
+  height = 64,
+  name,
+  text,
+  url = require(`./img/${name}.svg`).default,
+  variant
+}: ButtonItemProps) => {
+  const isDefault = variant === undefined;
+  const isMiddleLeft = variant === 'middle_left';
+  const isMiddleRight = variant === 'middle_right';
 
-const ButtonItem = (props: IButtonItemProps) => {
-    const height = props.height != undefined ? props.height : 64;
-    const width = props.width != undefined ? props.width : 64;
-    const url = props.url || require(`./img/${props.name}.svg`).default;
-    const isDefault = props.variant === undefined;
-    const isMiddleLeft = props.variant === 'middle_left';
-    const isMiddleRight = props.variant === 'middle_right'
-
-    return (
+  return (
         <div
             style={{
-                backgroundImage: `url(${url})`,
-                backgroundSize: `${width}px ${height}px`,
-                backgroundRepeat: 'repeat',
-                height:`${height}px`,
-                width: `${width}px`,
+              backgroundImage: `url(${url})`,
+              backgroundSize: `${width}px ${height}px`,
+              backgroundRepeat: 'repeat',
+              height: `${height}px`,
+              width: `${width}px`
             }}
-            className={props.name.replace(' ', '-')}
+            className={name.replace(' ', '-')}
         >
             {isDefault &&
-                (props.text)
-                    ?
-                    <span className={'button-middle--text'} style={{ maxHeight: `${height}px`, width: `${width}px` }}>{props.text}</span>
-                    :
-                    ''
+                (text)
+              ? <span className={'button-middle--text'} style={{ maxHeight: `${height}px`, width: `${width}px` }}>{text}</span>
+              : ''
             }
             {
-                !isDefault && (props.text) ? <span
+                !isDefault && (text)
+                  ? <span
                     className={`${isMiddleLeft ? 'button-middle--left' : ''}${isMiddleRight ? 'button-middle--right' : ''}`}
                     style={{ maxHeight: `${height}px`, width: `${width}px` }}
                 >
-                    {props.text}
-                </span> : ''
+                    {text}
+                </span>
+                  : ''
             }
         </div>
-    )
-}
+  );
+};
 
-const FrameButton = (props: IFrameButtonProps) => {
-    let fwidth = props.width || 384;
-    let fheight = props.height || 64;
-    let isDisabled = props.disabled != undefined ? props.disabled : true;
-    const isDefault = props.variant === 'DEFAULT';
-    const isFrameLeft = props.variant === 'LEFT';
-    const isFrameRight = props.variant === 'RIGHT';
+const FrameButton = ({
+  width = 384,
+  height = 64,
+  disabled = true,
+  variant,
+  onClick,
+  text
+}: FrameButtonProps) => {
+  const isDefault = variant === 'DEFAULT';
+  const isFrameLeft = variant === 'LEFT';
+  const isFrameRight = variant === 'RIGHT';
 
-    return (
+  return (
         <>
             {isDefault && <div
-                className={`skymp-button ${isDisabled ? 'disabled' : 'active'}`}
+                className={`skymp-button ${disabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
-                    if (!props.disabled)
-                        props.onClick ? props.onClick(e) : console.log(e)
+                  if (!disabled) { onClick ? onClick(e) : console.log(e); }
                 }}
-                style={{ height: `${fheight}px`, width: `${fwidth}px` }}>
-                <ButtonItem name={`button start${isDisabled ? ' disabled' : ''}`} height={fheight} />
-                <ButtonItem name={`button middle${isDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
-                <ButtonItem name={`button end${isDisabled ? ' disabled' : ''}`} height={fheight} />
+                style={{ height: `${height}px`, width: `${width}px` }}>
+                <ButtonItem name={`button start${disabled ? ' disabled' : ''}`} height={height} />
+                <ButtonItem name={`button middle${disabled ? ' disabled' : ''}`} width={width - 64 * 2} height={height} text={text} />
+                <ButtonItem name={`button end${disabled ? ' disabled' : ''}`} height={height} />
             </div>}
             {isFrameLeft && <div
-                className={`skymp-button ${isDisabled ? 'disabled' : 'active'}`}
+                className={`skymp-button ${disabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
-                    if (!props.disabled)
-                        props.onClick ? props.onClick(e) : console.log(e)
+                  if (!disabled) { onClick ? onClick(e) : console.log(e); }
                 }}
-                style={{ height: `${fheight}px`, width: `${fwidth}px` }}>
-                <ButtonItem name={`button start${isDisabled ? ' disabled' : ''}`} height={fheight} />
-                <ButtonItem variant='middle_left' name={`button middle${isDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
-                <ButtonItem name={`frame_button_end${isDisabled ? ' disabled' : ''}`} height={fheight} />
+                style={{ height: `${height}px`, width: `${width}px` }}>
+                <ButtonItem name={`button start${disabled ? ' disabled' : ''}`} height={height} />
+                <ButtonItem variant='middle_left' name={`button middle${disabled ? ' disabled' : ''}`} width={width - 64 * 2} height={height} text={text} />
+                <ButtonItem name={`frame_button_end${disabled ? ' disabled' : ''}`} height={height} />
             </div>}
             {isFrameRight && <div
-                className={`skymp-button ${isDisabled ? 'disabled' : 'active'}`}
+                className={`skymp-button ${disabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
-                    if (!props.disabled)
-                        props.onClick ? props.onClick(e) : console.log(e)
+                  if (!disabled) { onClick ? onClick(e) : console.log(e); }
                 }}
-                style={{ height: `${fheight}px`, width: `${fwidth}px` }}>
-                <ButtonItem name={`frame_button_start${isDisabled ? ' disabled' : ''}`} height={fheight} />
-                <ButtonItem variant='middle_right' name={`button middle${isDisabled ? ' disabled' : ''}`} width={fwidth - 64 * 2} height={fheight} text={props.text} />
-                <ButtonItem name={`button end${isDisabled ? ' disabled' : ''}`} height={fheight} />
+                style={{ height: `${height}px`, width: `${width}px` }}>
+                <ButtonItem name={`frame_button_start${disabled ? ' disabled' : ''}`} height={height} />
+                <ButtonItem variant='middle_right' name={`button middle${disabled ? ' disabled' : ''}`} width={width - 64 * 2} height={height} text={text} />
+                <ButtonItem name={`button end${disabled ? ' disabled' : ''}`} height={height} />
             </div>}
         </>
-    )
-}
+  );
+};
 
 export default FrameButton;

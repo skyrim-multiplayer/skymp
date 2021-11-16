@@ -1,4 +1,4 @@
-function(npm_execute_command)
+function(yarn_execute_command)
   cmake_parse_arguments(A "" "WORKING_DIRECTORY;OUTPUT_VARIABLE;RESULT_VARIABLE" "COMMAND" ${ARGN})
   foreach(arg WORKING_DIRECTORY COMMAND)
     if("${A_${arg}}" STREQUAL "")
@@ -13,37 +13,37 @@ function(npm_execute_command)
 
   if(WIN32)
     set(temp_bat "${CMAKE_CURRENT_BINARY_DIR}/temp.bat")
-    set(npm_cmd ${temp_bat})
-    set(npm_arg "")
-    set(str "npm")
+    set(yarn_cmd ${temp_bat})
+    set(yarn_arg "")
+    set(str "yarn")
     foreach(arg ${A_COMMAND})
       string(APPEND str " ${arg}")
     endforeach()
     file(WRITE ${temp_bat} ${str})
   else()
-    set(npm_cmd "npm")
-    set(npm_arg ${A_COMMAND})
+    set(yarn_cmd "yarn")
+    set(yarn_arg ${A_COMMAND})
   endif()
 
-  execute_process(COMMAND ${npm_cmd} ${npm_arg}
+  execute_process(COMMAND ${yarn_cmd} ${yarn_arg}
     WORKING_DIRECTORY ${A_WORKING_DIRECTORY}
-    RESULT_VARIABLE npm_result
-    OUTPUT_VARIABLE npm_output
+    RESULT_VARIABLE yarn_result
+    OUTPUT_VARIABLE yarn_output
     # TODO: ERROR_VARIABLE
   )
 
   if("${A_RESULT_VARIABLE}" STREQUAL "")
-    if(NOT "${npm_result}" STREQUAL "0")
-      message(FATAL_ERROR "npm ${A_COMMAND} exited with ${npm_result}:\n${npm_output}")
+    if(NOT "${yarn_result}" STREQUAL "0")
+      message(FATAL_ERROR "yarn ${A_COMMAND} exited with ${yarn_result}:\n${yarn_output}")
     endif()
   else()
-    set("${A_RESULT_VARIABLE}" "${npm_result}" PARENT_SCOPE)
+    set("${A_RESULT_VARIABLE}" "${yarn_result}" PARENT_SCOPE)
   endif()
 
-  set("${A_OUTPUT_VARIABLE}" "${npm_output}" PARENT_SCOPE)
+  set("${A_OUTPUT_VARIABLE}" "${yarn_output}" PARENT_SCOPE)
 endfunction()
 
-function(npm_set_script)
+function(yarn_set_script)
   cmake_parse_arguments(A "" "WORKING_DIRECTORY;NAME;RESULT_VARIABLE;OUTPUT_VARIABLE" "SCRIPT" ${ARGN})
   foreach(arg WORKING_DIRECTORY NAME SCRIPT RESULT_VARIABLE OUTPUT_VARIABLE)
     if ("${A_${arg}}" STREQUAL "")
