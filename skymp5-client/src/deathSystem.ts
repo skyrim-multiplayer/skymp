@@ -1,4 +1,5 @@
 import { hooks, Game, printConsole, Actor, Debug, once, ObjectReference, Utility } from "skyrimPlatform";
+import { setLocalDamageMult, defaultLocalDamageMult } from "./index";
 import { AnimationEventName } from "./animation";
 import { RespawnNeededError } from "./errors";
 
@@ -47,6 +48,16 @@ export const applyDeathState = (actor: Actor, isDead: boolean) => {
   }
 };
 
+export const safeRemoveRagdollFromWorld = (actor: Actor, afterRemoveCallback: () => void) => {
+  setLocalDamageMult(0);
+  actor.forceRemoveRagdollFromWorld().then(() => {
+    once("update", () => {
+      setLocalDamageMult(defaultLocalDamageMult);
+      afterRemoveCallback();
+    });
+  });
+}
+
 const killActor = (act: Actor, killer: Actor | null = null): void => {
   if (isPlayer(act) === true) {
     gPlayerAllowAnimations = [];
@@ -74,7 +85,5 @@ const killWithPush = (act: Actor): void => {
 }
 
 const ressurectWithPushKill = (act: Actor): void => {
-  act.forceRemoveRagdollFromWorld().then(() =>
-    once("update", () => Debug.sendAnimationEvent(act, AnimationEventName.GetUpBegin))
-  );
+  safeRemoveRagdollFromWorld(act, () => Debug.sendAnimationEvent(act, AnimationEventName.GetUpBegin));
 };

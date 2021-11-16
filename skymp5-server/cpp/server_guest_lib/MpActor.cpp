@@ -284,28 +284,65 @@ espm::ObjectBounds MpActor::GetBounds() const
   return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
 }
 
-void MpActor::SetAndSendIsDeadPropery(bool value)
+void MpActor::SendAndSetDeathState(bool isDead)
 {
-  float attribute = value ? 0.f : 1.f;
+  SendAndSetDeathState({}, isDead, false);
+}
 
-  SendPropertyTo("isDead", value, *this);
-  std::string s;
-  s += Networking::MinPacketId;
-  s += nlohmann::json{
-    { "t", MsgType::ChangeValues },
-    { "data",
-      { { "health", attribute },
-        { "magicka", attribute },
-        { "stamina", attribute } } }
-  }.dump();
-  SendToUser(s.data(), s.size(), true);
+void MpActor::SendAndSetDeathState(const LocationalData& position, bool isDead,
+                                   bool shouldTeleport)
+{
+  float attribute = isDead ? 0.f : 1.f;
+
+  std::string respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
+  SendToUser(respawnMsg.data(), respawnMsg.size(), true);
 
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
-    changeForm.isDead = value;
+    changeForm.isDead = isDead;
     changeForm.healthPercentage = attribute;
     changeForm.magickaPercentage = attribute;
     changeForm.staminaPercentage = attribute;
   });
+  if (shouldTeleport) {
+    SetCellOrWorldObsolete(position.cellOrWorld);
+    SetPos(position.pos);
+    SetAngle(position.rot);
+  }
+}
+
+std::string MpActor::GetDeathStateMsg(const LocationalData& position,
+                                      bool isDead, bool shouldTeleport)
+{
+  nlohmann::json tTeleport = nlohmann::json{};
+  nlohmann::json tChangeValues = nlohmann::json{};
+  nlohmann::json tIsDead = PreparePropertyMessage(this, "isDead", isDead);
+
+  if (shouldTeleport) {
+    tTeleport = nlohmann::json{
+      { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
+      { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
+      { "worldOrCell", position.cellOrWorld },
+      { "type", "teleport" }
+    };
+  }
+  if (isDead == false) {
+    const float attribute = 1.f;
+    tChangeValues = nlohmann::json{ { "t", MsgType::ChangeValues },
+                                    { "data",
+                                      { { "health", attribute },
+                                        { "magicka", attribute },
+                                        { "stamina", attribute } } } };
+  }
+
+  std::string DeathStateMsg;
+  DeathStateMsg += Networking::MinPacketId;
+  DeathStateMsg += nlohmann::json{
+    { "t", MsgType::DeathStateContainer },
+    { "tTeleport", tTeleport },
+    { "tChangeValues", tChangeValues },
+    { "tIsDead", tIsDead }
+  }.dump();
+  return DeathStateMsg;
 }
 
 void MpActor::BeforeDestroy()
@@ -329,7 +366,7 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
 void MpActor::Kill()
 {
-  SetAndSendIsDeadPropery(true);
+  SendAndSetDeathState(true);
 }
 
 void MpActor::RespawnAfter(float seconds, const LocationalData& position)
@@ -350,11 +387,10 @@ void MpActor::RespawnAfter(float seconds, const LocationalData& position)
 void MpActor::Respawn(const LocationalData& position)
 {
   pImpl->isRespawning = false;
-  TeleportUser(position);
-  SetAndSendIsDeadPropery(false);
+  SendAndSetDeathState(position, false);
 }
 
-void MpActor::TeleportUser(const LocationalData& position)
+void MpActor::Teleport(const LocationalData& position)
 {
   std::string teleportMsg;
   teleportMsg += Networking::MinPacketId;
