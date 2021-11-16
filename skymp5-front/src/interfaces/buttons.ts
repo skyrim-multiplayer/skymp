@@ -18,7 +18,7 @@ export interface DefaultButtonComponentProps {
     width?: number;
     height?: number;
     disabled?: boolean;
-    onClick?: (any?: any) => void;
+    onInput?: (value?: string | boolean) => void;
 }
 
 export interface ImageButtonProps extends DefaultButtonComponentProps{
