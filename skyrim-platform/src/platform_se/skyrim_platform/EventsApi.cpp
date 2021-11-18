@@ -122,7 +122,14 @@ public:
   }
 
   // Chakra thread only
-  void AddHandler(const Handler& handler) { handlers.push_back(handler); }
+  int AddHandler(const Handler& handler) {
+    handlers.emplace(hCounter, handler);
+    return hCounter++;
+  }
+
+  void RemoveHandler(const int& id){
+    handlers.erase(id);
+  }
 
   // Thread-safe, but it isn't too useful actually
   std::string GetName() const { return hookName; }
@@ -138,7 +145,8 @@ public:
     if (hookName == "sendPapyrusEvent") {
       // If there are no handlers, do not do g_taskQueue
       bool anyMatch = false;
-      for (auto& h : handlers) {
+      for (auto& hp : handlers) {
+        auto h = hp.second;
         if (h.Matches(selfId, eventName)) {
           anyMatch = true;
           break;
@@ -184,6 +192,7 @@ public:
           throw std::runtime_error("'" + hookName + "' is not processing");
         inProgressThreads.erase(owningThread);
         HandleLeave(owningThread, succeeded);
+        
       } catch (std::exception& e) {
         std::string what = e.what();
         SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
@@ -197,7 +206,8 @@ public:
 private:
   void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName)
   {
-    for (auto& h : handlers) {
+    for (auto& hp : handlers) {
+      auto h = hp.second;
       auto& perThread = h.perThread[owningThread];
       perThread.matchesCondition = h.Matches(selfId, eventName);
       if (!perThread.matchesCondition) {
@@ -241,7 +251,8 @@ private:
 
   void HandleLeave(DWORD owningThread, bool succeeded)
   {
-    for (auto& h : handlers) {
+    for (auto& hp : handlers) {
+      auto h = hp.second;
       auto& perThread = h.perThread.at(owningThread);
       if (!perThread.matchesCondition) {
         continue;
@@ -254,7 +265,6 @@ private:
                                       JsValue::Bool(succeeded));
       }
       h.leave.Call({ JsValue::Undefined(), perThread.context });
-
       h.perThread.erase(owningThread);
     }
   }
@@ -263,7 +273,8 @@ private:
   const std::string eventNameVariableName;
   const std::optional<std::string> succeededVariableName;
   std::set<DWORD> inProgressThreads;
-  std::vector<Handler> handlers;
+  std::map<int, Handler> handlers;
+  int hCounter;
 };
 }
 
@@ -396,10 +407,19 @@ JsValue CreateHookApi(std::shared_ptr<Hook> hookInfo)
       }
 
       Handler handler(handlerObj, minSelfId, maxSelfId, pattern);
-      hookInfo->AddHandler(handler);
+      int id = hookInfo->AddHandler(handler);
 
+      return JsValue(id);
+    })
+  );
+  
+  hook.SetProperty(
+    "remove", JsValue::Function([hookInfo](const JsFunctionArguments& args) {
+      int toRemove = static_cast<int>(args[1]);
+      hookInfo->RemoveHandler(toRemove);
       return JsValue::Undefined();
-    }));
+    })
+  );
   return hook;
 }
 }
