@@ -8,7 +8,7 @@ struct Rules::RulesImpl
 
 namespace sweetpie {
 namespace gamemode {
-struct Lobby::Impl
+struct TeamPlay::Impl
 {
 };
 }

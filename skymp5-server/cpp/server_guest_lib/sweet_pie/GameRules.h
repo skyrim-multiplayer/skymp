@@ -9,7 +9,8 @@ public:
   virtual void RemovePlayer(uint64_t playerID);
   virtual void BeforeUpdate();
   void Update();
-  virtual void BeforeMove();
+  virtual void OnUpdate();
+  virtual void CanMove();
   void OnMove();
 
 private:
