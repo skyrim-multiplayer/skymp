@@ -1,5 +1,8 @@
+#include "NiPoint3.h"
+#include <functional>
 #include <map>
 #include <memory>
+#include <set>
 
 namespace sweetpie {
 class Rules
@@ -28,4 +31,19 @@ private:
   std::shared_ptr<Impl> pImpl;
 };
 }
+}
+
+namespace sweetpie {
+
+struct Data
+{
+  enum InvalidId : uint64_t
+  {
+    InvalidId = (uint64_t)~0
+  };
+  uint64_t id = InvalidId;
+  int64_t score = 0;
+  NiPoint3 position;
+  std::set<std::shared_ptr<sweetpie::Data>> subordinates;
+};
 }
