@@ -122,12 +122,12 @@ public:
   }
 
   // Chakra thread only
-  int AddHandler(const Handler& handler) {
+  uint32_t AddHandler(const Handler& handler) {
     handlers.emplace(hCounter, handler);
     return hCounter++;
   }
 
-  void RemoveHandler(const int& id){
+  void RemoveHandler(const uint32_t& id) {
     handlers.erase(id);
   }
 
@@ -146,8 +146,8 @@ public:
       // If there are no handlers, do not do g_taskQueue
       bool anyMatch = false;
       for (auto& hp : handlers) {
-        auto h = hp.second;
-        if (h.Matches(selfId, eventName)) {
+        auto * h = &hp.second;
+        if (h->Matches(selfId, eventName)) {
           anyMatch = true;
           break;
         }
@@ -207,9 +207,9 @@ private:
   void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName)
   {
     for (auto& hp : handlers) {
-      auto h = hp.second;
-      auto& perThread = h.perThread[owningThread];
-      perThread.matchesCondition = h.Matches(selfId, eventName);
+      auto* h = &hp.second;
+      auto& perThread = h->perThread[owningThread];
+      perThread.matchesCondition = h->Matches(selfId, eventName);
       if (!perThread.matchesCondition) {
         continue;
       }
@@ -219,7 +219,7 @@ private:
 
       perThread.context.SetProperty("selfId", static_cast<double>(selfId));
       perThread.context.SetProperty(eventNameVariableName, eventName);
-      h.enter.Call({ JsValue::Undefined(), perThread.context });
+      h->enter.Call({ JsValue::Undefined(), perThread.context });
 
       eventName = static_cast<std::string>(
         perThread.context.GetProperty(eventNameVariableName));
@@ -252,8 +252,8 @@ private:
   void HandleLeave(DWORD owningThread, bool succeeded)
   {
     for (auto& hp : handlers) {
-      auto h = hp.second;
-      auto& perThread = h.perThread.at(owningThread);
+      auto* h = &hp.second;
+      auto& perThread = h->perThread.at(owningThread);
       if (!perThread.matchesCondition) {
         continue;
       }
@@ -264,8 +264,8 @@ private:
         perThread.context.SetProperty(succeededVariableName.value(),
                                       JsValue::Bool(succeeded));
       }
-      h.leave.Call({ JsValue::Undefined(), perThread.context });
-      h.perThread.erase(owningThread);
+      h->leave.Call({ JsValue::Undefined(), perThread.context });
+      h->perThread.erase(owningThread);
     }
   }
 
@@ -273,8 +273,8 @@ private:
   const std::string eventNameVariableName;
   const std::optional<std::string> succeededVariableName;
   std::set<DWORD> inProgressThreads;
-  std::map<int, Handler> handlers;
-  int hCounter;
+  std::map<uint32_t, Handler> handlers;
+  uint32_t hCounter = 0;
 };
 }
 
@@ -407,15 +407,15 @@ JsValue CreateHookApi(std::shared_ptr<Hook> hookInfo)
       }
 
       Handler handler(handlerObj, minSelfId, maxSelfId, pattern);
-      int id = hookInfo->AddHandler(handler);
+      uint32_t id = hookInfo->AddHandler(handler);
 
-      return JsValue(id);
+      return JsValue((int) id);
     })
   );
   
   hook.SetProperty(
     "remove", JsValue::Function([hookInfo](const JsFunctionArguments& args) {
-      int toRemove = static_cast<int>(args[1]);
+      uint32_t toRemove = static_cast<int>(args[1]);
       hookInfo->RemoveHandler(toRemove);
       return JsValue::Undefined();
     })
