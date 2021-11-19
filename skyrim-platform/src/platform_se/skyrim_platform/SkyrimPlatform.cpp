@@ -113,13 +113,25 @@ public:
 
       ++tickId;
 
-      for (size_t i = 0; i < monitors.size(); ++i) {
-        auto& monitor = monitors[i];
-        bool pluginsDirectoryUpdated = monitor->Updated();
+      std::vector<std::filesystem::path> pathsToLoad;
+
+      bool hotReload = false;
+
+      for (auto& monitor : monitors) {
+        if (monitor->Updated()) {
+          hotReload = true;
+          // Do not break here. monitor->Updated has to be called for all
+          // monitors. See method implementation
+        }
         monitor->ThrowOnceIfHasError();
-        if (tickId == 1 || pluginsDirectoryUpdated) {
-          ClearState();
-          LoadFiles(GetPathsToLoad(fileDirs[i]));
+      }
+
+      const bool startupLoad = tickId == 1;
+      const bool loadNeeded = startupLoad || hotReload;
+      if (loadNeeded) {
+        ClearState();
+        for (auto &fileDir : fileDirs) {
+          LoadFiles(GetPathsToLoad(fileDir));
         }
       }
 
