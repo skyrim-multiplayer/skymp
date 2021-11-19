@@ -18,37 +18,48 @@ std::shared_ptr<JsEngine>* DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
 
 JsValue DevApi::Require(const JsFunctionArguments& args,
-                        std::filesystem::path builtScriptsDir)
+                        const std::vector<const char*>& pluginLoadDirectories)
 {
   auto fileName = args[1].ToString();
 
-  if (fileName.find("..") != std::string::npos)
+  if (fileName.find("..") != std::string::npos) {
     throw InvalidArgumentException("fileName", fileName);
+  }
 
-  while (!fileName.empty() && (fileName[0] == '/' || fileName[0] == '\\'))
+  while (!fileName.empty() && (fileName[0] == '/' || fileName[0] == '\\')) {
     fileName = { fileName.begin() + 1, fileName.end() };
+  }
 
-  std::filesystem::path filePath = builtScriptsDir / (fileName + ".js");
+  for (auto dir : pluginLoadDirectories) {
+    std::filesystem::path filePath =
+      std::filesystem::path(dir) / (fileName + ".js");
 
-  if (!std::filesystem::exists(filePath))
-    throw std::runtime_error("'" + filePath.string() + "' doesn't exist");
+    if (!std::filesystem::exists(filePath)) {
+      continue; // Throws in the end of the function if nothing found
+    }
 
-  std::ifstream t(filePath);
-  if (!t.is_open())
-    throw std::runtime_error("Failed to open '" + filePath.string() +
-                             "' for reading");
+    std::ifstream t(filePath);
+    if (!t.is_open()) {
+      throw std::runtime_error("Failed to open '" + filePath.string() +
+                               "' for reading");
+    }
 
-  std::stringstream src;
-  src << t.rdbuf();
+    std::stringstream src;
+    src << t.rdbuf();
 
-  if (!jsEngine || !*jsEngine)
-    throw NullPointerException("jsEngine");
-  auto exports = (**jsEngine).RunScript(src.str(), fileName);
+    if (!jsEngine || !*jsEngine) {
+      throw NullPointerException("jsEngine");
+    }
+    auto exports = (**jsEngine).RunScript(src.str(), fileName);
 
-  if (auto& f = DevApi::nativeExportsMap[fileName])
-    exports = f(exports);
+    if (auto& f = DevApi::nativeExportsMap[fileName]) {
+      exports = f(exports);
+    }
 
-  return exports;
+    return exports;
+  }
+
+  throw std::runtime_error("'" + fileName + "' doesn't exist");
 }
 
 JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)

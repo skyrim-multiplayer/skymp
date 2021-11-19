@@ -103,25 +103,41 @@ public:
   void Tick() override
   {
     try {
-      auto fileDir = GetFileDir();
+      auto fileDirs = GetFileDirs();
 
-      if (!monitor) {
-        monitor = std::make_shared<DirectoryMonitor>(fileDir);
+      if (monitors.empty()) {
+        for (auto fileDir : fileDirs) {
+          monitors.push_back(std::make_shared<DirectoryMonitor>(fileDir));
+        }
       }
 
       ++tickId;
 
-      bool pluginsDirectoryUpdated = monitor->Updated();
-      monitor->ThrowOnceIfHasError();
-      if (tickId == 1 || pluginsDirectoryUpdated) {
+      std::vector<std::filesystem::path> pathsToLoad;
+
+      bool hotReload = false;
+
+      for (auto& monitor : monitors) {
+        if (monitor->Updated()) {
+          hotReload = true;
+          // Do not break here. monitor->Updated has to be called for all
+          // monitors. See method implementation
+        }
+        monitor->ThrowOnceIfHasError();
+      }
+
+      const bool startupLoad = tickId == 1;
+      const bool loadNeeded = startupLoad || hotReload;
+      if (loadNeeded) {
         ClearState();
-        LoadFiles(GetPathsToLoad(fileDir));
+        for (auto& fileDir : fileDirs) {
+          LoadFiles(GetPathsToLoad(fileDir));
+        }
       }
 
       HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
 
       EventsApi::SendEvent("tick", {});
-
     } catch (const std::exception& e) {
       PrintExceptionToGameConsole(e);
     }
@@ -140,7 +156,10 @@ public:
   }
 
 private:
-  const char* GetFileDir() const { return "Data/Platform/Plugins"; }
+  std::vector<const char*> GetFileDirs() const
+  {
+    return { "Data/Platform/Plugins", "Data/Platform/PluginsDev" };
+  }
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
   {
@@ -199,7 +218,7 @@ private:
                            MpClientPluginApi::Register(e);
                            HttpClientApi::Register(e);
                            ConsoleApi::Register(e);
-                           DevApi::Register(e, &engine, {}, GetFileDir());
+                           DevApi::Register(e, &engine, {}, GetFileDirs());
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
                            InventoryApi::Register(e);
@@ -209,7 +228,7 @@ private:
 
                            return SkyrimPlatformProxy::Attach(e);
                          } } },
-                     GetFileDir());
+                     GetFileDirs());
 
     JsValue consoleApi = JsValue::Object();
     ConsoleApi::Register(consoleApi);
@@ -251,15 +270,17 @@ private:
     const std::filesystem::path& directory)
   {
     std::vector<std::filesystem::path> paths;
-    for (auto& it : std::filesystem::directory_iterator(directory)) {
-      std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
-      paths.push_back(p);
+    if (std::filesystem::exists(directory)) {
+      for (auto& it : std::filesystem::directory_iterator(directory)) {
+        std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
+        paths.push_back(p);
+      }
     }
     return paths;
   }
 
   std::shared_ptr<JsEngine> engine;
-  std::shared_ptr<DirectoryMonitor> monitor;
+  std::vector<std::shared_ptr<DirectoryMonitor>> monitors;
   uint32_t tickId = 0;
   Viet::TaskQueue taskQueue;
   Viet::TaskQueue jsPromiseTaskQueue;
