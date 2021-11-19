@@ -130,7 +130,7 @@ public:
       const bool loadNeeded = startupLoad || hotReload;
       if (loadNeeded) {
         ClearState();
-        for (auto &fileDir : fileDirs) {
+        for (auto& fileDir : fileDirs) {
           LoadFiles(GetPathsToLoad(fileDir));
         }
       }
