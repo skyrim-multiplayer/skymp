@@ -124,11 +124,20 @@ public:
   // Chakra thread only
   uint32_t AddHandler(const Handler& handler)
   {
+    if (addRemoveBlocker) {
+      throw std::runtime_error("Trying to add hook inside hook context");
+    }
     handlers.emplace(hCounter, handler);
     return hCounter++;
   }
 
-  void RemoveHandler(const uint32_t& id) { handlers.erase(id); }
+  void RemoveHandler(const uint32_t& id)
+  {
+    if (addRemoveBlocker) {
+      throw std::runtime_error("Trying to remove hook inside hook context");
+    }
+    handlers.erase(id);
+  }
 
   // Thread-safe, but it isn't too useful actually
   std::string GetName() const { return hookName; }
@@ -139,6 +148,7 @@ public:
 
   void Enter(uint32_t selfId, std::string& eventName)
   {
+    addRemoveBlocker++;
     DWORD owningThread = GetCurrentThreadId();
 
     if (hookName == "sendPapyrusEvent") {
@@ -175,10 +185,12 @@ public:
       }
     };
     SkyrimPlatform::GetSingleton().PushAndWait(f);
+    addRemoveBlocker--;
   }
 
   void Leave(bool succeeded)
   {
+    addRemoveBlocker++;
     DWORD owningThread = GetCurrentThreadId();
 
     if (hookName == "sendPapyrusEvent") {
@@ -200,6 +212,7 @@ public:
       }
     };
     SkyrimPlatform::GetSingleton().PushAndWait(f);
+    addRemoveBlocker--;
   }
 
 private:
@@ -274,6 +287,7 @@ private:
   std::set<DWORD> inProgressThreads;
   std::map<uint32_t, Handler> handlers;
   uint32_t hCounter = 0;
+  std::atomic<int> addRemoveBlocker = 0;
 };
 }
 
