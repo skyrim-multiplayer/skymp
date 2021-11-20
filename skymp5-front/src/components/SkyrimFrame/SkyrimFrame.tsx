@@ -1,5 +1,5 @@
 import React from 'react'
-import { SkyrimFrameProps } from '../../interfaces'
+import { DefaultButtonComponentProps } from '../../interfaces'
 import './SkyrimFrame.scss'
 
 interface FrameItemProps {
@@ -8,7 +8,7 @@ interface FrameItemProps {
     height?: number;
 }
 
-export const FrameItem = ({
+const FrameItem = ({
     name,
     width = 64,
     height = 64,
@@ -26,10 +26,10 @@ export const FrameItem = ({
     )
 }
 
-const SkyrimFrame = ({
+export const SkyrimFrame = ({
     width = 512,
     height = 704,
-}: SkyrimFrameProps) => {
+}: DefaultButtonComponentProps) => {
     return (
         <div className={'frame'} style={{width:`${width}px`,height:`${height}px`}}>
         <FrameItem name={'Header left'} />

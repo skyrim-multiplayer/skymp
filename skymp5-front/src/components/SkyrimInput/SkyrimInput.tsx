@@ -2,7 +2,7 @@ import React from 'react';
 import { SkyrimInputProps } from '../../interfaces';
 import './SkyrimInput.scss'
 
-const SkyrimInput = ({
+export const SkyrimInput = ({
     width = 320,
     height = 48,
     labelText,

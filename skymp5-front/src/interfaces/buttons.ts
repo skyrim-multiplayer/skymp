@@ -10,7 +10,7 @@ export interface SkyrimInputProps extends DefaultButtonComponentProps {
     type: React.HTMLInputTypeAttribute;
     initialValue: string | number | readonly string[];
     placeholder: string;
-    onInput?: (any?: any) => void;
+    onInput: (value?: string | boolean) => void;
 }
 
 export interface DefaultButtonComponentProps {
@@ -18,7 +18,7 @@ export interface DefaultButtonComponentProps {
     width?: number;
     height?: number;
     disabled?: boolean;
-    onInput?: (value?: string | boolean) => void;
+    onClick?: (value?: string | boolean) => void;
 }
 
 export interface ImageButtonProps extends DefaultButtonComponentProps{
