@@ -1,15 +1,11 @@
 #include "GameRules.h"
 
 namespace sweetpie {
-struct Rules::RulesImpl
+struct PlaySpace::PlaySpaceData : public Data
 {
+  uint16_t numberOfTeams = 0;
+  std::set<Team> teams;
+  uint16_t maxNumberOfPlayers = 0;
+  std::set<Player> players;
 };
-}
-
-namespace sweetpie {
-namespace gamemode {
-struct TeamPlay::Impl
-{
-};
-}
 }

@@ -9,85 +9,60 @@ namespace sweetpie {
 class PlaySpace
 {
 public:
-  void AddPlayer(Player player);
-  void RemovePlayer(Player player);
+  void AddPlayer(ID playerID);
+  void RemovePlayer(ID playerID);
 
-  void AddTeam(Team team);
-  void RemoveTeam(Team team);
+protected:
+  void AddPlayer(Player& player);
+  void RemovePlayer(Player& player);
+  void MovePlayer(Player& player, const NiPoint3& pos);
 
-  void AddPlayerToTeam(Player player, Team team);
-  void RemovePlayerFromTeam(Player player, Team team);
+  void AddTeam(Team& team);
+  void RemoveTeam(Team& team);
 
-private:
-  sweetpie::Data data;
-  uint16_t numberOfTeams = 0;
-  std::set<std::pair<uint16_t, Team&>> teams;
-  uint16_t maxNumberOfPlayers = 0;
-  std::set<std::pair<uint16_t, Player&>> players;
+  void AddPlayerToTeam(Player& player, Team& team);
+  void RemovePlayerFromTeam(Player& player, Team& team);
+
+  struct PlaySpaceData;
+  std::shared_ptr<PlaySpaceData> data;
 };
+}
 
-struct Team : public Data
+namespace sweetpie {
+using ID = uint16_t;
+enum InvalidId : ID
 {
-  std::set<std::pair<uint16_t, Player&>> players;
-  uint16_t maxTeamSize = 0;
+  InvalidID = (ID)~0
+};
+struct Data
+{
+  ID id = InvalidID;
+  float score = 0;
+  Space area;
+
+  _NODISCARD constexpr bool operator==(const Data& right);
+  _NODISCARD constexpr bool operator!=(const Data& right);
+  _NODISCARD constexpr bool operator<(const Data& right);
+  _NODISCARD constexpr bool operator>(const Data& right);
+  _NODISCARD constexpr bool operator<=(const Data& right);
+  _NODISCARD constexpr bool operator>=(const Data& right);
 };
 
 struct Player : public Data
 {
-  std::pair<uint16_t, Team&> team;
+  Team& team;
 };
 
-class Rules
+struct Team : public Data
 {
-public:
-  virtual void AddPlayer(uint64_t playerID);
-  virtual void RemovePlayer(uint64_t playerID);
-  virtual void BeforeUpdate();
-  void Update();
-  virtual void OnUpdate();
-  virtual void CanMove();
-  void OnMove();
-
-private:
-  struct RulesImpl;
-  std::shared_ptr<RulesImpl> rulesImpl;
+  std::set<Player&> players;
+  uint16_t maxTeamSize = 0;
 };
-}
 
-namespace sweetpie {
-namespace gamemode {
-class TeamPlay : public Rules
+struct Space
 {
-private:
-  struct Impl;
-  std::shared_ptr<Impl> pImpl;
-};
-}
-}
-
-namespace sweetpie {
-struct Data
-{
-  enum InvalidId : uint16_t
-  {
-    InvalidID = (uint16_t)~0
-  };
-
-  uint16_t id = InvalidID;
-  float score = 0;
-  Space bounds;
-};
-}
-
-namespace sweetpie {
-class Space
-{
-public:
-  Space(const NiPoint3& position,
-        std::function<bool(const NiPoint3&, const NiPoint3&)> f);
-  const std::function<bool(const NiPoint3&, const NiPoint3&)> IsInside;
-
-private:
-  std::shared_ptr<const NiPoint3&> position;
+  NiPoint3 position;
+  std::function<bool(const NiPoint3&)> IsInside =
+    [](const NiPoint3& newPosition) { return true; };
 };
 }
