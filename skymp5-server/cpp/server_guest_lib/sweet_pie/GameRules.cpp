@@ -1,13 +1,15 @@
 #include "GameRules.h"
 
 namespace sweetpie {
-struct PlaySpace::PlaySpaceData : public Data
+namespace gamemode {
+EventData& GameRules::operator()(const EventData& data)
 {
-  uint16_t numberOfTeams = 0;
-  std::set<Team> teams;
-  uint16_t maxNumberOfPlayers = 0;
-  std::set<Player> players;
-  gamemode::GameRules rules;
-  std::set<Effect> effects;
-};
+  EventData result = EventData(data);
+  for (auto& f : listener->first[data.type]) {
+    result = f(result);
+  };
+
+  return result;
+}
+}
 }

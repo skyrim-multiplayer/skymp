@@ -26,5 +26,6 @@ struct Data
   _NODISCARD constexpr bool operator>=(const Data& right);
 
   constexpr operator bool();
+  operator int() = delete;
 };
 }

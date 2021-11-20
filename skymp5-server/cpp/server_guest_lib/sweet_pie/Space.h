@@ -1,3 +1,4 @@
+#pragma once
 #include "NiPoint3.h"
 #include <functional>
 

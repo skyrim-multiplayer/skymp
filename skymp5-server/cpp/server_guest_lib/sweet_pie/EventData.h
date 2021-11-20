@@ -1,14 +1,21 @@
+#pragma once
 #include "Data.h"
 #include "Effect.h"
 #include "Player.h"
 
 namespace sweetpie {
+enum EventType : uint16_t
+{
+  OnHit,
+  OnKill,
+  end
+};
 struct EventData : public Data
 {
-  Player* target = nullptr;
-  Player* aggressor = nullptr;
-  float damage = 0.f;
-  const NiPoint3* movement = nullptr;
-  const std::set<Effect>* effects = nullptr;
+  EventType type = end;
+  Player target;
+  Player aggressor;
+  float damageMod = 0.f;
+  std::set<Effect> effectsMod;
 };
 }
