@@ -4,6 +4,23 @@
 #include <map>
 #include <memory>
 #include <set>
+#include "Data.h"
+
+namespace sweetpie {
+struct Data;
+struct EventData;
+struct Player;
+struct Team;
+struct Space;
+struct Lobby;
+struct Effect;
+class PlaySpace;
+
+
+using EventFunction = std::function<EventData(const EventData&)>;
+using EventSet = std::set<EventFunction>;
+using EventVector = std::vector<EventSet>;
+}
 
 namespace sweetpie {
 class PlaySpace
@@ -11,6 +28,11 @@ class PlaySpace
 public:
   void AddPlayer(ID playerID);
   void RemovePlayer(ID playerID);
+
+  float OnHit(ID aggressor, ID target, float damage);
+  void OnKill(ID aggressor, ID target);
+
+  void Update();
 
 protected:
   void AddPlayer(Player& player);
@@ -29,40 +51,24 @@ protected:
 }
 
 namespace sweetpie {
-using ID = uint16_t;
-enum InvalidId : ID
+namespace gamemode {
+enum EventType : uint16_t
 {
-  InvalidID = (ID)~0
+  OnHit,
+  OnKill,
+  end
 };
-struct Data
+enum class RuleType
 {
-  ID id = InvalidID;
-  float score = 0;
-  Space area;
-
-  _NODISCARD constexpr bool operator==(const Data& right);
-  _NODISCARD constexpr bool operator!=(const Data& right);
-  _NODISCARD constexpr bool operator<(const Data& right);
-  _NODISCARD constexpr bool operator>(const Data& right);
-  _NODISCARD constexpr bool operator<=(const Data& right);
-  _NODISCARD constexpr bool operator>=(const Data& right);
+  Other = -1,
+  Null,
+  Lobby
 };
-
-struct Player : public Data
+class GameRules
 {
-  Team& team;
+private:
+  struct Rules;
+  std::shared_ptr<Rules> rules;
 };
-
-struct Team : public Data
-{
-  std::set<Player&> players;
-  uint16_t maxTeamSize = 0;
-};
-
-struct Space
-{
-  NiPoint3 position;
-  std::function<bool(const NiPoint3&)> IsInside =
-    [](const NiPoint3& newPosition) { return true; };
-};
+}
 }

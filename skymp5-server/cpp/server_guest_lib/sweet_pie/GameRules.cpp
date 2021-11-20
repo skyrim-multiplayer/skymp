@@ -7,5 +7,7 @@ struct PlaySpace::PlaySpaceData : public Data
   std::set<Team> teams;
   uint16_t maxNumberOfPlayers = 0;
   std::set<Player> players;
+  gamemode::GameRules rules;
+  std::set<Effect> effects;
 };
 }
