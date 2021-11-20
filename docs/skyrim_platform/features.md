@@ -1,6 +1,6 @@
 # Hot Reload
 
-- Hot Reload for SkyrimPlatform plugins is supported. Changing the contents of `Data / Platform / Plugins` will reload all plugins without restarting the game.
+- Hot Reload for SkyrimPlatform plugins is supported. Changing the contents of `Data/Platform/Plugins` or `Data/Platform/PluginsDev` will reload all plugins without restarting the game.
 - For using all these features, including Ctrl+S hot reload, take our example plugin as a base https://github.com/skyrim-multiplayer/skymp/tree/main/skyrim-platform/tools/plugin-example. Plugin example is also present in the archive uploaded to Nexus Mods (Data/Platform/plugin-example).
 - When reloading plugins, the added event and hook handlers are removed, asynchronous operations are interrupted and all variables are reset, except for `storage` and its properties.
 

@@ -742,7 +742,8 @@ export declare namespace SendAnimationEventHook {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     class Target {
-        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number;
+        remove(id: number): void;
     }
 }
 
@@ -760,7 +761,8 @@ export declare namespace SendPapyrusEventHook {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     class Target {
-        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number;
+        remove(id: number): void;
     }
 }
 

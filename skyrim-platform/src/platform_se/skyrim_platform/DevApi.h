@@ -8,7 +8,7 @@
 
 namespace DevApi {
 JsValue Require(const JsFunctionArguments& args,
-                std::filesystem::path builtScriptsDir);
+                const std::vector<const char*>& pluginLoadDirectories);
 JsValue AddNativeExports(const JsFunctionArguments& args);
 
 JsValue GetPluginSourceCode(const JsFunctionArguments& args);
@@ -29,7 +29,7 @@ extern NativeExportsMap nativeExportsMap;
 
 inline void Register(JsValue& exports, std::shared_ptr<JsEngine>* jsEngine,
                      NativeExportsMap nativeExportsMap,
-                     const std::filesystem::path& builtScriptsDir)
+                     const std::vector<const char*>& builtScriptsDir)
 {
   // Register may be called multiple times, so we merge maps
   for (auto& p : nativeExportsMap)
