@@ -1,8 +1,6 @@
-#include "Data.h"
+#pragma once
 #include "EventData.h"
-#include "NiPoint3.h"
-#include "Team.h"
-#include <chrono>
+#include "Rules.h"
 #include <functional>
 #include <map>
 #include <memory>
@@ -11,7 +9,7 @@ namespace sweetpie {
 namespace gamemode {
 enum class Type
 {
-  Other = -1,
+  Castom = -1,
   Null,
   Lobby
 };
@@ -27,13 +25,20 @@ using Listener = std::pair<EventVector, gamemode::Type>;
 
 namespace sweetpie {
 namespace gamemode {
+struct Rules
+{
+  Type type = Type::Null;
+  Listener listener;
+};
+
 class GameRules
 {
 public:
+  static GameRules CreateGameRules(Type type = Type::Null);
   EventData& operator()(const EventData& data);
 
 private:
-  std::shared_ptr<Listener> listener;
+  std::shared_ptr<Rules> rules;
 };
 }
 }
