@@ -1,22 +1,14 @@
+#include "Data.h"
+#include "EventData.h"
 #include "NiPoint3.h"
+#include "Team.h"
 #include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
 #include <set>
-#include "Data.h"
 
 namespace sweetpie {
-struct Data;
-struct EventData;
-struct Player;
-struct Team;
-struct Space;
-struct Lobby;
-struct Effect;
-class PlaySpace;
-
-
 using EventFunction = std::function<EventData(const EventData&)>;
 using EventSet = std::set<EventFunction>;
 using EventVector = std::vector<EventSet>;
