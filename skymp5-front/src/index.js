@@ -8,7 +8,7 @@ import { Provider } from 'react-redux';
 
 import { Widgets } from './utils/Widgets';
 
-import './main.sass';
+import './main.scss';
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
@@ -30,6 +30,7 @@ const login = {
     {
       type: 'button',
       tags: ['BUTTON_STYLE_FRAME'],
+      text: 'Text',
       click: () => {
         console.log('Yes');
       }

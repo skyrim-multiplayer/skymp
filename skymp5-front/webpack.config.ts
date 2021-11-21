@@ -31,7 +31,6 @@ module.exports = {
         use: ['babel-loader'],
       },
       { test: /\.tsx?$/, loader: 'ts-loader' },
-      // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
       {
         test: /\.m?js$/,
         exclude: /(node_modules|bower_components|bridge)/,
@@ -51,10 +50,6 @@ module.exports = {
         test: /\.(png|svg|jpg|gif)$/,
         use: "file-loader",
       },
-      // {
-      //   test: /\.(woff|woff2|eot|ttf|otf)$/,
-      //   use: "file-loader",
-      // },
     ],
   },
   resolve: {
