@@ -1187,8 +1187,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         }
         res = arr;
       } else if (propertyName == "worldOrCellDesc") {
-        auto desc = FormDesc::FromFormId(refr.GetCellOrWorld(),
-                                         partOne->worldState.espmFiles);
+        auto desc = refr.GetCellOrWorld();
         res = JsValue(desc.ToString());
       } else if (propertyName == "baseDesc") {
         auto desc = FormDesc::FromFormId(refr.GetBaseId(),
@@ -1272,9 +1271,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         refr.SetTeleportFlag(true);
       } else if (propertyName == "worldOrCellDesc") {
         std::string str = newValue.get<std::string>();
-        uint32_t formId =
-          FormDesc::FromString(str).ToFormId(partOne->worldState.espmFiles);
-        refr.SetCellOrWorld(formId);
+        refr.SetCellOrWorld(FormDesc::FromString(str));
       } else if (propertyName == "isOpen") {
         refr.SetOpen(newValue.get<bool>());
       } else if (propertyName == "appearance") {
@@ -1337,7 +1334,9 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       std::string type = akFormToPlace.rec->GetType().ToString();
 
-      LocationalData locationalData = { { 0, 0, 0 }, { 0, 0, 0 }, 0x3c };
+      LocationalData locationalData = { { 0, 0, 0 },
+                                        { 0, 0, 0 },
+                                        FormDesc::Tamriel() };
       FormCallbacks callbacks = partOne->CreateFormCallbacks();
 
       std::unique_ptr<MpObjectReference> newRefr;
