@@ -18,7 +18,7 @@ TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
   PartOne p;
 
   auto& ref = CreateMpObjectReference_(p.worldState, 0xff000000);
-  ref.SetCellOrWorld(0x3c);
+  ref.SetCellOrWorld(FormDesc::Tamriel());
 
   p.CreateActor(0xff000001, { 0, 0, 0 }, 0, 0x3c);
   DoConnect(p, 0);

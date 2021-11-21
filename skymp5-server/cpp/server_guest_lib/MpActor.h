@@ -11,7 +11,7 @@ class WorldState;
 constexpr float kRespawnTimeSeconds = 5.f;
 static const LocationalData kSpawnPos = { { 133857, -61130, 14662 },
                                           { 0.f, 0.f, 72.f },
-                                          0x3c };
+                                          FormDesc::Tamriel() };
 
 class MpActor : public MpObjectReference
 {

@@ -28,7 +28,7 @@ public:
   FormDesc baseDesc;
   NiPoint3 position = { 0, 0, 0 };
   NiPoint3 angle = { 0, 0, 0 };
-  uint32_t worldOrCell = 0;
+  FormDesc worldOrCellDesc;
   Inventory inv;
   bool isHarvested = false;
   bool isOpen = false;
@@ -61,7 +61,7 @@ public:
   {
     return std::make_tuple(
       recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
-      angle.y, angle.z, worldOrCell, inv.ToJson(), isHarvested, isOpen,
+      angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
       isRaceMenuOpen, appearanceDump, equipmentDump);
   }
