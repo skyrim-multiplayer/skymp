@@ -86,11 +86,12 @@ More info and samples for these will be added later:
 - `worldPointToScreenPoint` - convert an array of points in the game world to an array of points on the user's screen. The dot on the screen is indicated by 3 numbers from -1 to 1.
 - `callNative (className: string, functionName: string, self ?: object, ... args: any): any` - call a function from the original game by name.
 - `getJsMemoryUsage (): number` - get the amount of RAM used by the embedded JS engine, in bytes.
-- `storage` - an object used to save data between reloading scripts.
+- `storage` - an object used to save data between reloading scripts. See the [Plugin Initialization][PluginInit] recipe for an example of how to use it.
 - `getExtraContainerChanges` - get ExtraContainerChanges of the given ObjectReference...
 - `getContainer` - get all the items of the base container.
 - `disableCtrlPrtScnHotkey` - disable hotkey that changes the game speed to be based on framerate rather than real time.
 
-[NewEvents]: new_events.md
 [Browser]: browser.md
 [Features]: features.md
+[NewEvents]: new_events.md
+[PluginInit]: cookbook.md#plugin-initialization
