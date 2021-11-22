@@ -14,17 +14,7 @@ if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
 }
 
-let mychat = {
-  type:"chat",
-  messages: ["message))","#{676869}mess#{AAAAAA}age2"],
-  send: (message) => {
-    console.log("sended " + message);     
-  }
-};
-
-window.skyrimPlatform.widgets = new Widgets([
-  mychat
-]);
+window.skyrimPlatform.widgets = new Widgets([]);
 
 ReactDOM.render(
   <React.StrictMode>
