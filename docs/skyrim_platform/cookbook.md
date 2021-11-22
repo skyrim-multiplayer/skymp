@@ -116,16 +116,19 @@ This will avoid initialization to be done twice when loading an existing save, b
 
 4. Check if your plugin has ever been initialized.\
   \
-  Usually, `loadGame` will let you do initializons when your plugin is installed mid game, but this step lets you do them **when creating a new game**.
+  Usually, `loadGame` will let you do initializons when your plugin is installed mid game, but this step lets you do them **when creating a new game**.\
+  \
+  Here we need to use the [`storage`][NewMethods] Map so the value of `allowInit` is remembered between hot reloadings.
 
   ```ts
-  let allowInit = false;
+  let allowInit = storage["my-plugin-init"] as boolean | false;
 
   on("loadGame", () => {
     // Initialize when installed mid game and when loading a game
     // because this is always needed anyway.
     InitPlugin();
     allowInit = true;
+    storage["my-plugin-init"] = true
   });
 
   once("update", () => {
@@ -139,7 +142,7 @@ This will avoid initialization to be done twice when loading an existing save, b
 
 5. Initialize your plugin to your needs.\
   \
-  Using the [`storage`][NewMethods] Map is not really necessary if we save to disk `pluginVar1` each time we set a new value it (a must if you want your plugin values to be persistent, anyway), but we will use it here to demonstrate how it is used.
+  Using `storage` is not really necessary if we save to disk `pluginVar1` each time we set a new value it (a must if you want your plugin values to be persistent, anyway), but we will use it here to demonstrate how it is used.
 
   ```ts
   // Initialize with the value it had before hot reloading or default 0
@@ -172,13 +175,14 @@ const MarkInitialized = () => JDB.solveBoolSetter(initK, true, true);
 const WasInitialized = () => JDB.solveBool(initK, false);
 
 export function main() {
-  let allowInit = false;
+  let allowInit = storage["my-plugin-init"] as boolean | false;
 
   on("loadGame", () => {
     // Initialize when installed mid game and when loading a game
     // because this is always needed anyway.
     InitPlugin();
     allowInit = true;
+    storage["my-plugin-init"] = true
   });
 
   // IMPORTANT: we are using ONCE instead of on.
