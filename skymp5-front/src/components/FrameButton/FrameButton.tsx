@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DefaultButtonComponentProps, FrameButtonProps } from '../../interfaces';
-import './styles.scss';
+import './FrameButton.scss';
 
 export interface ButtonItemProps extends DefaultButtonComponentProps {
   name: string;
@@ -52,7 +52,7 @@ const ButtonItem = ({
   );
 };
 
-const FrameButton = ({
+export const FrameButton = ({
   width = 384,
   height = 64,
   disabled = true,
@@ -66,7 +66,7 @@ const FrameButton = ({
 
   return (
         <>
-            {isDefault && <div
+            {isDefault && <button
                 className={`skymp-button ${disabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
                   if (!disabled) { onClick ? onClick(e) : console.log(e); }
@@ -75,8 +75,8 @@ const FrameButton = ({
                 <ButtonItem name={`button start${disabled ? ' disabled' : ''}`} height={height} />
                 <ButtonItem name={`button middle${disabled ? ' disabled' : ''}`} width={width - 64 * 2} height={height} text={text} />
                 <ButtonItem name={`button end${disabled ? ' disabled' : ''}`} height={height} />
-            </div>}
-            {isFrameLeft && <div
+            </button>}
+            {isFrameLeft && <button
                 className={`skymp-button ${disabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
                   if (!disabled) { onClick ? onClick(e) : console.log(e); }
@@ -85,8 +85,8 @@ const FrameButton = ({
                 <ButtonItem name={`button start${disabled ? ' disabled' : ''}`} height={height} />
                 <ButtonItem variant='middle_left' name={`button middle${disabled ? ' disabled' : ''}`} width={width - 64 * 2} height={height} text={text} />
                 <ButtonItem name={`frame_button_end${disabled ? ' disabled' : ''}`} height={height} />
-            </div>}
-            {isFrameRight && <div
+            </button>}
+            {isFrameRight && <button
                 className={`skymp-button ${disabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
                   if (!disabled) { onClick ? onClick(e) : console.log(e); }
@@ -95,9 +95,7 @@ const FrameButton = ({
                 <ButtonItem name={`frame_button_start${disabled ? ' disabled' : ''}`} height={height} />
                 <ButtonItem variant='middle_right' name={`button middle${disabled ? ' disabled' : ''}`} width={width - 64 * 2} height={height} text={text} />
                 <ButtonItem name={`button end${disabled ? ' disabled' : ''}`} height={height} />
-            </div>}
+            </button>}
         </>
   );
 };
-
-export default FrameButton;
