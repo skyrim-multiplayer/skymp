@@ -42,6 +42,7 @@ The variable `event` always contains variables related to the event to which you
   - [effectFinish](#effectfinish)
   - [cellFullyLoaded](#cellFullyLoaded)
   - [consoleMessage](#consoleMessage)
+  - [loadGame](#loadgame)
   - [Other events](#other-events)
 
  ## update
@@ -190,6 +191,13 @@ on('consoleMessage', (e) => {
 });
 ```
 
+## loadGame
+
+Called when a saved game is loaded.
+
+***WARNING***: This event won't fire when creating a new game.\
+[Read this recipe][PluginInit] to get some ideas on how you can deal with that.
+
 ## Other events
 
 More info and samples for these will be added later:
@@ -201,7 +209,6 @@ More info and samples for these will be added later:
 - `deathStart`
 - `grabRelease`
 - `hit`
-- `loadGame`
 - `lockChanged`
 - `magicEffectApply`
 - `moveAttachDetach`
@@ -213,11 +220,12 @@ More info and samples for these will be added later:
 - `uniqueIdChange`
 - `waitStop`
 
+[Cloaks]: cookbook.md#getting-rid-of-cloaks
 [Events]: events.md
-[Papyrus]: papyrus.md
+[OnEffectFinish]: https://www.creationkit.com/index.php?title=OnEffectFinish_-_ActiveMagicEffect
+[OnEffectStart]: https://www.creationkit.com/index.php?title=OnEffectStart_-_ActiveMagicEffect
 [OnObjectEquipped]: https://www.creationkit.com/index.php?title=OnObjectEquipped_-_Actor
 [OnObjectUnequipped]: https://www.creationkit.com/index.php?title=OnObjectUnequipped_-_Actor
-[OnEffectStart]: https://www.creationkit.com/index.php?title=OnEffectStart_-_ActiveMagicEffect
-[OnEffectFinish]: https://www.creationkit.com/index.php?title=OnEffectFinish_-_ActiveMagicEffect
+[Papyrus]: papyrus.md
+[PluginInit]: cookbook.md#plugin-initialization
 [SPID]: https://www.nexusmods.com/skyrimspecialedition/mods/36869
-[Cloaks]: cookbook.md#getting-rid-of-cloaks
