@@ -154,6 +154,9 @@ This will avoid initialization to be done twice when loading an existing save, b
     // Save values inmediately to both disk and storage, so they don't get lost.
     JDB.solveFltSetter(key, pluginVar1, true);
     storage["my-plugin-var1"] = pluginVar1;
+
+    // Let's suppose this was OnInit.
+    MarkInitialized();
   }
   ```
 
@@ -199,6 +202,9 @@ export function main() {
     // Save values inmediately to both disk and storage, so they don't get lost.
     JDB.solveFltSetter(key, pluginVar1, true);
     storage["my-plugin-var1"] = pluginVar1;
+
+    // Let's suppose this was OnInit.
+    MarkInitialized();
   }
 }
 ```
