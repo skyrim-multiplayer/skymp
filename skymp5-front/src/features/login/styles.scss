@@ -8,7 +8,7 @@
     margin: auto;
     position: relative;
     &--content {
-      font-family: Bankir-Retro, sans-serif;
+      font-family: 'Bankir-Retro', sans-serif;
       display: flex;
       flex-direction: column;
       z-index: 9999;
@@ -92,6 +92,9 @@
     }
   }
 }
+.login-form--content_social__link {
+  cursor: pointer;
+}
 
 .skymp-input.button {
   text-align: center;
@@ -107,7 +110,7 @@
     }
   }
   .skymp-input_text {
-    font-family: Bankir-Retro, serif;
+    font-family: 'Bankir-Retro', serif;
     font-style: normal;
     font-weight: normal;
     font-size: 30px;
@@ -116,11 +119,6 @@
     margin: auto;
   }
 }
-
-
-
-
-
 
 /* Checkmark style starts */
 @-moz-keyframes
