@@ -21,7 +21,7 @@
 
 ## Building From Source
 
-You can find instructions on setting up the project locally below. To get a local copy up and running follow these simple example steps. You need ~10 GB on your hard drive and some free time.
+You can find instructions on setting up the project locally below. To get a local copy up and running follow these simple example steps. You need ~4 GM RAM, ~20 GB on your hard drive and some free time.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ You can find instructions on setting up the project locally below. To get a loca
 
 These tools required regardless of your system:
 
-* 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x or higher
+* 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x or higher (only stable versions)
 * [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
 * [CMake 3.18.2](https://cmake.org/download/) or higher
 
