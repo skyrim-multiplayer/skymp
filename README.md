@@ -21,7 +21,7 @@
 
 ## Building From Source
 
-You can find instructions on setting up the project locally below. To get a local copy up and running follow these simple example steps. You need ~4 GM RAM, ~22 GB on your hard drive and some free time.
+You can find instructions on setting up the project locally below. To get a local copy up and running follow these simple example steps. You need ~4 GB RAM, ~22 GB on your hard drive and some free time.
 
 ## Prerequisites
 
