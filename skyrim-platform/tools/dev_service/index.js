@@ -164,7 +164,6 @@ const watchCallback = (_eventType, fileName) => {
           path.join(sourceDir, "tools/plugin-example"),
           path.join(distDir, "Data/Platform/plugin-example")
         );
-        fs.copySync(path.join(sourceDir, "requirements"), distDir);
         fs.removeSync(
           path.join(distDir, "Data/Platform/plugin-example/node_modules")
         );

@@ -34,8 +34,10 @@ project(skymp)
 enable_testing()
 
 # Bool options
-# CAUTION! SkyrimPlatform crashes with that setting on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
+option(ONLY_SP "Build only SkyrimPlatform instead of performing full SkyMP build" OFF)
+
+# P.S. SkyrimPlatform crashes with that JS_ENGINE_TRACING_ENABLED on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 
 if(JS_ENGINE_TRACING_ENABLED)
   add_compile_definitions(JS_ENGINE_TRACING_ENABLED)
@@ -80,10 +82,13 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 add_subdirectory(viet)
 add_subdirectory(skyrim-platform)
-add_subdirectory(skymp5-client)
-add_subdirectory(skymp5-front)
-add_subdirectory(skymp5-functions-lib)
-add_subdirectory(skymp5-scripts)
-add_subdirectory(client-deps)
-add_subdirectory(skymp5-server)
-add_subdirectory(unit)
+
+if(NOT ONLY_SP)
+  add_subdirectory(client-deps)
+  add_subdirectory(skymp5-client)
+  add_subdirectory(skymp5-front)
+  add_subdirectory(skymp5-functions-lib)
+  add_subdirectory(skymp5-scripts)
+  add_subdirectory(skymp5-server)
+  add_subdirectory(unit)
+endif()

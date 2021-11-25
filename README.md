@@ -132,6 +132,13 @@ directory and add some aliases to `PATH`.
    ../build.sh --build --target=unit  # only build unit-tests and their dependencies
    # Will run cmake --build . --target=unit
    ```
+   
+### How to build only SkyrimPlatform
+
+For those users who want to build SP but not SkyMP there is `ONLY_SP` option:
+```sh
+cmake .. -DONLY_SP=ON
+```
 
 ### Optional steps after build
 
