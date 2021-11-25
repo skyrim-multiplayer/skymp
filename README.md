@@ -101,7 +101,7 @@ Client can be run with Proton (though it can be tricky to get Skyrim itself to w
 
    All build artifacts would be placed into `build/dist`.
 
-   #### How to build only SkyrimPlatform
+#### How to build only SkyrimPlatform
 
    For those users who want to build SP but not SkyMP there is `ONLY_SP` option:
    ```sh
