@@ -103,7 +103,8 @@ Client can be run with Proton (though it can be tricky to get Skyrim itself to w
 
 #### How to build only SkyrimPlatform
 
-   For those users who want to build SP but not SkyMP there is `ONLY_SP` option:
+-  For those users who want to build SP but not SkyMP there is `ONLY_SP` option:
+
    ```sh
    cmake .. -DONLY_SP=ON
    ```
