@@ -101,6 +101,13 @@ Client can be run with Proton (though it can be tricky to get Skyrim itself to w
 
    All build artifacts would be placed into `build/dist`.
 
+   #### How to build only SkyrimPlatform
+
+   For those users who want to build SP but not SkyMP there is `ONLY_SP` option:
+   ```sh
+   cmake .. -DONLY_SP=ON
+   ```
+
 ### Linux
 
 On Linux, there might be some tricky dependency issues. To work around them,
@@ -132,13 +139,6 @@ directory and add some aliases to `PATH`.
    ../build.sh --build --target=unit  # only build unit-tests and their dependencies
    # Will run cmake --build . --target=unit
    ```
-   
-### How to build only SkyrimPlatform
-
-For those users who want to build SP but not SkyMP there is `ONLY_SP` option:
-```sh
-cmake .. -DONLY_SP=ON
-```
 
 ### Optional steps after build
 
