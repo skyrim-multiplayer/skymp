@@ -12,5 +12,5 @@ vcpkg_install_cmake()
 vcpkg_fixup_cmake_targets(CONFIG_PATH "lib/cmake/commonlibsse")
 vcpkg_copy_pdbs()
 
-#file(INSTALL "${SOURCE_PATH}/include" DESTINATION "${CURRENT_PACKAGES_DIR}")
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
