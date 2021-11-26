@@ -1,0 +1,10 @@
+#pragma once
+
+namespace Version
+{
+	inline constexpr std::size_t MAJOR = @PROJECT_VERSION_MAJOR@;
+	inline constexpr std::size_t MINOR = @PROJECT_VERSION_MINOR@;
+	inline constexpr std::size_t PATCH = @PROJECT_VERSION_PATCH@;
+	inline constexpr auto NAME = "@PROJECT_VERSION@"sv;
+	inline constexpr auto PROJECT = "@PROJECT_NAME@"sv;
+}
