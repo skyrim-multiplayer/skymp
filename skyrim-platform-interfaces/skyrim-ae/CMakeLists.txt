@@ -13,11 +13,15 @@ find_package(spdlog REQUIRED CONFIG)
 include(cmake/headerlist.cmake)
 include(cmake/sourcelist.cmake)
 
-#source_group(TREE	${CMAKE_CURRENT_SOURCE_DIR}	FILES	${headers}	${sources})
-#source_group(TREE	${CMAKE_CURRENT_BINARY_DIR}	FILES	${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
+source_group(TREE	${CMAKE_CURRENT_SOURCE_DIR}	FILES	${headers}	${sources})
+source_group(TREE	${CMAKE_CURRENT_BINARY_DIR}	FILES	${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
 
 ### Library ###
 add_library(${PROJECT_NAME}	SHARED ${headers}	${sources}	${CMAKE_CURRENT_BINARY_DIR}/include/Version.h	${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 target_include_directories(${PROJECT_NAME}	PRIVATE	${CMAKE_CURRENT_BINARY_DIR}/include	${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${PROJECT_NAME}	PRIVATE	Boost::headers CommonLibSSE::CommonLibSSE	spdlog::spdlog)
 target_precompile_headers(${PROJECT_NAME}	PRIVATE	src/PCH.h)
+
+include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
+apply_default_settings(TARGETS ${PROJECT_NAME})
+
