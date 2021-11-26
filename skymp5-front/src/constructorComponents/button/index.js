@@ -1,6 +1,6 @@
 import React from 'react';
 
-import FrameButton from '../../components/FrameButton';
+import { FrameButton } from '../../components/FrameButton/FrameButton';
 import { ImageButton } from '../../components/ImageButton/ImageButton';
 import { SkyrimButton } from '../../components/SkyrimButton/SkyrimButton';
 

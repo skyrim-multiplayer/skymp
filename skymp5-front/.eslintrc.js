@@ -19,6 +19,6 @@ module.exports = {
   },
   plugins: ['react', '@typescript-eslint'],
   rules: {
-    omitLastInOneLineBlock: true,
+    omitLastInOneLineBlock: 'always',
   }
 };

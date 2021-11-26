@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 
 def find_skymp_root():
     current_dir = os.path.realpath(os.path.dirname(os.path.abspath(__file__)))
