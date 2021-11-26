@@ -86,13 +86,14 @@ if(CPPCOV_PATH)
   endif()
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 add_subdirectory(viet)
+add_subdirectory(skyrim-platform-interfaces)
 add_subdirectory(skyrim-platform)
 add_subdirectory(skymp5-client)
 add_subdirectory(skymp5-front)
