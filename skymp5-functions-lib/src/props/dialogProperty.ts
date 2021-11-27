@@ -3,6 +3,7 @@ import { Mp } from '../types/mp';
 import { FunctionInfo } from '../utils/functionInfo';
 import { BrowserProperty } from './browserProperty';
 import { EvalProperty } from './evalProperty';
+import { FrontConstructorPropertyBase } from './frontConstructorPropertyBase';
 
 type DialogValue = ['messageBox', string, string, string[]] | null;
 type DialogState = { dialogPrevValue?: DialogValue };
@@ -12,7 +13,7 @@ declare const mp: Mp;
 export type DialogResponse = { actorId: number; buttonIndex: number; dialogId: number };
 export type DialogResponseHandler = (response: DialogResponse) => boolean;
 
-export class DialogProperty {
+export class DialogProperty extends FrontConstructorPropertyBase {
   static init() {
     mp.makeProperty('dialog', {
       isVisibleByOwner: true,
@@ -84,7 +85,9 @@ export class DialogProperty {
 
       ctx.state.dialogPrevValue = ctx.value;
       if (!ctx.value) {
-        return ctx.sp.browser.executeJavaScript('window.skyrimPlatform.widgets.set([])');
+        let src = 'window.dialog = [];';
+        src += FrontConstructorPropertyBase.getUpdateWidgetsCodeSnippet();
+        return ctx.sp.browser.executeJavaScript(src);
       }
 
       switch (ctx.value[0]) {
@@ -96,7 +99,9 @@ export class DialogProperty {
           buttons.forEach((button, i) => {
             src += `tmp.elements.push({ type: 'button', text: '${button}', tags: ['BUTTON_STYLE_FRAME'], click: () => window.skyrimPlatform.sendMessage('buttonClick', ${i})});`;
           });
-          src += 'window.skyrimPlatform.widgets.set([tmp]);';
+          src += 'window.dialog = [tmp];';
+          src += FrontConstructorPropertyBase.getUpdateWidgetsCodeSnippet();
+          src.split(';').forEach(v => ctx.sp.printConsole(v));
           ctx.sp.browser.executeJavaScript(src);
           break;
         default:
