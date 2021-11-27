@@ -13,6 +13,9 @@ namespace logger = SKSE::log;
 
 using namespace std::literals;
 
+using VM = RE::BSScript::Internal::VirtualMachine;
+using StackID = RE::VMStackID;
+
 #define DLLEXPORT __declspec(dllexport)
 
 #include "Version.h"

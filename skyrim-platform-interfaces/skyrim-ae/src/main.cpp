@@ -1,3 +1,38 @@
+#include "Papyrus/PapyrusHandler.h"
+
+void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
+{
+  /* something can be done with system state events here */
+  switch (a_msg->type) {
+    case SKSE::MessagingInterface::kDataLoaded: {
+
+    } break;
+    case SKSE::MessagingInterface::kInputLoaded: {
+
+    } break;
+    case SKSE::MessagingInterface::kPostLoad: {
+
+    } break;
+    case SKSE::MessagingInterface::kPostPostLoad: {
+
+    } break;
+    case SKSE::MessagingInterface::kNewGame: {
+
+    } break;
+    case SKSE::MessagingInterface::kSaveGame: {
+
+    } break;
+    case SKSE::MessagingInterface::kPreLoadGame: {
+
+    } break;
+    case SKSE::MessagingInterface::kPostLoadGame: {
+
+    } break;
+    default:
+      break;
+  }
+}
+
 extern "C" {
 DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a_skse,
                                         SKSE::PluginInfo* a_info)
@@ -48,19 +83,17 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
     logger::critical("QueryInterface failed for PapyrusInterface");
     return false;
   }
-
-  const auto taskInterface = SKSE::GetTaskInterface();
-  if (!taskInterface) {
-    logger::critical("QueryInterface failed for TaskInterface");
-    return false;
-  }
+  papyrusInterface->Register(
+    Papyrus::Bind); // => Register papyrus extensions like TESModPlatform
 
   const auto messagingInterface = SKSE::GetMessagingInterface();
   if (!messagingInterface) {
     logger::critical("QueryInterface failed for MessagingInterface");
     return false;
   }
-
+  messagingInterface->RegisterListener(MessageHandler);
+  auto modEvent = SKSE::GetModCallbackEventSource();
+  /* might not need this here */
   const auto serializationInterface = SKSE::GetSerializationInterface();
   if (!serializationInterface) {
     logger::critical("QueryInterface failed for SerializationInterface");
