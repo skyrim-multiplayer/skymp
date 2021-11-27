@@ -79,7 +79,7 @@ TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne][espm]")
 
   ref.Activate(actor);
 
-  REQUIRE(actor.GetCellOrWorld() == 0x3c);
+  REQUIRE(actor.GetCellOrWorld() == FormDesc::Tamriel());
 
   partOne.worldState.DestroyForm(0xff000000);
 
