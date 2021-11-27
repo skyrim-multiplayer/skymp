@@ -168,11 +168,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         "cell/world is",
         msg.worldOrCell.toString(16)
       );
-      const playerActor = Game.getPlayer()!;
       // todo: think about track ragdoll state of player
-      safeRemoveRagdollFromWorld(playerActor, () => {
+      safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
         TESModPlatform.moveRefrToPosition(
-          playerActor,
+          Game.getPlayer()!,
           Cell.from(Game.getFormEx(msg.worldOrCell)),
           WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
           msg.pos[0],

@@ -285,7 +285,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
-  uint32_t worldOrCell = GetWorldOrCell(br, record);
+  uint32_t worldOrCell =
+    espm::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
     logger->error("Anomally: refr without world/cell");
     return false;
@@ -318,9 +319,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
     auto typeStr = t.ToString();
     std::unique_ptr<MpForm> form;
-    LocationalData formLocationalData = { GetPos(locationalData),
-                                          GetRot(locationalData),
-                                          worldOrCell };
+    LocationalData formLocationalData = {
+      GetPos(locationalData), GetRot(locationalData),
+      FormDesc::FromFormId(worldOrCell, espmFiles)
+    };
     if (t != "NPC_") {
       form.reset(new MpObjectReference(formLocationalData,
                                        formCallbacksFactory(), baseId,
