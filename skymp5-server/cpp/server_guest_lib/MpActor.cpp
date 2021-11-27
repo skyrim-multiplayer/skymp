@@ -304,7 +304,7 @@ void MpActor::SendAndSetDeathState(const LocationalData& position, bool isDead,
     changeForm.staminaPercentage = attribute;
   });
   if (shouldTeleport) {
-    SetCellOrWorldObsolete(position.cellOrWorld);
+    SetCellOrWorldObsolete(position.cellOrWorldDesc);
     SetPos(position.pos);
     SetAngle(position.rot);
   }
@@ -321,7 +321,8 @@ std::string MpActor::GetDeathStateMsg(const LocationalData& position,
     tTeleport = nlohmann::json{
       { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
       { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
-      { "worldOrCell", position.cellOrWorld },
+      { "worldOrCell",
+        position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles) },
       { "type", "teleport" }
     };
   }
@@ -397,12 +398,13 @@ void MpActor::Teleport(const LocationalData& position)
   teleportMsg += nlohmann::json{
     { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
     { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
-    { "worldOrCell", position.cellOrWorld },
+    { "worldOrCell",
+      position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles) },
     { "type", "teleport" }
   }.dump();
   SendToUser(teleportMsg.data(), teleportMsg.size(), true);
 
-  SetCellOrWorldObsolete(position.cellOrWorld);
+  SetCellOrWorldObsolete(position.cellOrWorldDesc);
   SetPos(position.pos);
   SetAngle(position.rot);
 }

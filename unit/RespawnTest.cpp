@@ -42,7 +42,7 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   ac.SetPos(kSpawnPos.pos);
   ac.SetAngle(kSpawnPos.rot);
-  ac.SetCellOrWorld(kSpawnPos.cellOrWorld);
+  ac.SetCellOrWorld(kSpawnPos.cellOrWorldDesc);
 
   ac.Kill();
   p.Messages().clear();
