@@ -14,7 +14,7 @@ public:
   DynamicFields& operator=(const DynamicFields& rhs);
 
   void Set(const std::string& propName, const JsValue& value);
-  const JsValue& Get(const std::string& propName) const;
+  JsValue Get(const std::string& propName) const;
 
   const nlohmann::json& GetAsJson() const;
   static DynamicFields FromJson(const nlohmann::json& j);
