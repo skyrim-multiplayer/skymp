@@ -13,7 +13,11 @@ export class FunctionInfo<F extends { toString: () => string }> {
   getText(args?: Record<string, unknown>): string {
     let result = this.text;
 
-    for (let name in args) {
+    // I wasn't able to disable minification in parcel 1.12.3
+    // So just let parcel rename ctx arg to e and then:
+    result = `const e = ctx;\n` + result;
+
+    for (const name in args) {
       switch (typeof args[name]) {
         case 'number':
           result = `const ${name} = ${args[name]};\n` + result;
