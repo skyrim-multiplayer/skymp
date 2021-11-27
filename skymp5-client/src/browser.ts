@@ -52,7 +52,14 @@ export const main = (): void => {
   on('update', () => {
     if (Date.now() - lastBadMenuCheck > 200) {
       lastBadMenuCheck = Date.now();
-      badMenuOpen = badMenus.findIndex((menu) => Ui.isMenuOpen(menu)) !== -1;
+
+      badMenuOpen = false;
+      for (let i = 0; i < badMenus.length; ++i) {
+        if (Ui.isMenuOpen(badMenus[i])) {
+          badMenuOpen = true;
+          break;
+        }
+      }
       browser.setVisible(browserVisibleState && !badMenuOpen);
     }
   });
