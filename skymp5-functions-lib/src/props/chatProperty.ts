@@ -4,7 +4,7 @@ import { FunctionInfo } from '../utils/functionInfo';
 import { BrowserProperty } from './browserProperty';
 
 type ChatValue = { show: boolean; messages: string[] };
-type ChatState = { chatPrevValue?: ChatValue };
+type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean };
 
 declare const mp: Mp;
 
@@ -38,10 +38,13 @@ export class ChatProperty {
 
   private static clientsideUpdateOwner() {
     return (ctx: Ctx<ChatState, ChatValue>) => {
-      if (ctx.value === ctx.state.chatPrevValue) {
+      const isInputHidden = !ctx.sp.browser.isFocused();
+
+      if (ctx.value === ctx.state.chatPrevValue && isInputHidden === ctx.state.chatIsInputHidden) {
         return;
       }
       ctx.state.chatPrevValue = ctx.value;
+      ctx.state.chatIsInputHidden = isInputHidden;
 
       // Please keep up-to-date with impl in dialogProperty.ts
       const refreshWidgets = 'window.skyrimPlatform.widgets.set((window.chat || []).concat(window.dialog || []));';
@@ -54,8 +57,11 @@ export class ChatProperty {
       }
 
       let src = '';
-      src +=
-        'window.chat = [{ type: "chat", messages: [], send: (text) => window.skyrimPlatform.sendMessage("chatInput", text) }];';
+      src += 'window.chat = [{}];';
+      src += 'window.chat[0].type = "chat";';
+      src += 'window.chat[0].messages = [];';
+      src += 'window.chat[0].send = (text) => window.skyrimPlatform.sendMessage("chatInput", text);';
+      src += `window.chat[0].isInputHidden = ${isInputHidden};`;
       src += refreshWidgets;
       ctx.sp.browser.executeJavaScript(src);
     };

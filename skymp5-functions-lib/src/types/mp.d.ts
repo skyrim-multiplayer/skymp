@@ -1,5 +1,3 @@
-import { Number } from 'aws-sdk/clients/iot';
-
 export interface MakePropertyOptions {
   /**
    * If set to false, `updateOwner` would never be invoked

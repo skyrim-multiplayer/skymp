@@ -177,8 +177,22 @@ DialogProperty.setDialogResponseHandler((response) => {
 });
 
 Timer.everySecond = () => {
-  const onlinePlayer = mp.get(0, "onlinePlayers");
-  onlinePlayer.forEach(actorId => {
+  // console.log(PersistentStorage.getSingleton().reloads);
+
+  const onlinePlayers = mp.get(0, 'onlinePlayers');
+  const onlinePlayersOld = PersistentStorage.getSingleton().onlinePlayers;
+
+  const joinedPlayers = onlinePlayers.filter((x) => !onlinePlayersOld.includes(x));
+  const leftPlayers = onlinePlayersOld.filter((x) => !onlinePlayers.includes(x));
+
+  for (const actorId of joinedPlayers) {
     ChatProperty.showChat(actorId, true);
-  });
+  }
+
+  for (const actorId of leftPlayers) {
+  }
+
+  if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
+    PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;
+  }
 };
