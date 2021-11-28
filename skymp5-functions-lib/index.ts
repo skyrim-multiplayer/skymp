@@ -1,13 +1,19 @@
 import { BrowserProperty } from './src/props/browserProperty';
+import { ChatProperty } from './src/props/chatProperty';
 import { DialogProperty } from './src/props/dialogProperty';
 import { EvalProperty } from './src/props/evalProperty';
 import { Ctx } from './src/types/ctx';
 import { LocationalData, Mp } from './src/types/mp';
 import { FunctionInfo } from './src/utils/functionInfo';
+import { PersistentStorage } from './src/utils/persistentStorage';
+import { Timer } from './src/utils/timer';
 
 DialogProperty.init();
 BrowserProperty.init();
 EvalProperty.init();
+ChatProperty.init();
+
+Timer.init();
 
 declare const mp: Mp;
 
@@ -102,7 +108,6 @@ mp.onActivate = (target: number, caster: number) => {
     return false;
   }
 
-
   const lookupRes = mp.lookupEspmRecordById(target);
   const hasTeleport = lookupRes.record?.fields.findIndex((field) => field.type === 'XTEL') !== -1;
   if (hasTeleport) {
@@ -170,3 +175,10 @@ DialogProperty.setDialogResponseHandler((response) => {
   }
   return true;
 });
+
+Timer.everySecond = () => {
+  const onlinePlayer = mp.get(0, "onlinePlayers");
+  onlinePlayer.forEach(actorId => {
+    ChatProperty.showChat(actorId, true);
+  });
+};

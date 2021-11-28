@@ -81,10 +81,16 @@ export class DialogProperty {
       if (ctx.value === ctx.state.dialogPrevValue) {
         return;
       }
-
       ctx.state.dialogPrevValue = ctx.value;
+
+      // Please keep up-to-date with impl in chatProperty.ts
+      const refreshWidgets = 'window.skyrimPlatform.widgets.set((window.chat || []).concat(window.dialog || []));';
+
       if (!ctx.value) {
-        return ctx.sp.browser.executeJavaScript('window.skyrimPlatform.widgets.set([])');
+        let src = '';
+        src += 'window.dialog = [];';
+        src += refreshWidgets;
+        return ctx.sp.browser.executeJavaScript(src);
       }
 
       switch (ctx.value[0]) {
@@ -96,7 +102,8 @@ export class DialogProperty {
           buttons.forEach((button, i) => {
             src += `tmp.elements.push({ type: 'button', text: '${button}', tags: ['BUTTON_STYLE_FRAME'], click: () => window.skyrimPlatform.sendMessage('buttonClick', ${i})});`;
           });
-          src += 'window.skyrimPlatform.widgets.set([tmp]);';
+          src += 'window.dialog = [tmp];';
+          src += refreshWidgets;
           ctx.sp.browser.executeJavaScript(src);
           break;
         default:
