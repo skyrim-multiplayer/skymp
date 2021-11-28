@@ -1223,18 +1223,32 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         auto desc = FormDesc::FromFormId(refr.GetFormId(),
                                          partOne->worldState.espmFiles);
         res = JsValue(desc.ToString());
-      } else if (propertyName == "neighbors") {
-        std::set<uint32_t> ids;
-        for (auto listener : refr.GetListeners()) {
-          ids.insert(listener->GetFormId());
+      } else if (propertyName == "neighbors" ||
+                 propertyName == "actorNeighbors") {
+        std::set<MpObjectReference*> ids;
+
+        if (propertyName == "actorNeighbors") {
+          for (auto listener : refr.GetListeners()) {
+            ids.insert(dynamic_cast<MpActor*>(listener));
+          }
+          for (auto emitter : refr.GetEmitters()) {
+            ids.insert(dynamic_cast<MpActor*>(emitter));
+          }
+          ids.erase(nullptr);
+        } else {
+          for (auto listener : refr.GetListeners()) {
+            ids.insert(listener);
+          }
+          for (auto emitter : refr.GetEmitters()) {
+            ids.insert(emitter);
+          }
         }
-        for (auto emitter : refr.GetEmitters()) {
-          ids.insert(emitter->GetFormId());
-        }
+
         auto arr = JsValue::Array(ids.size());
         int i = 0;
         for (auto id : ids) {
-          arr.SetProperty(JsValue(i), JsValue(static_cast<double>(id)));
+          arr.SetProperty(JsValue(i),
+                          JsValue(static_cast<double>(id->GetFormId())));
           ++i;
         }
         res = arr;
