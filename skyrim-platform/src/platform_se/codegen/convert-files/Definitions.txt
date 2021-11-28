@@ -65,7 +65,9 @@ export declare let mpClientPlugin: MpClientPlugin;
 
 export interface Browser {
   setVisible(visible: boolean): void;
+  isVisible(): boolean;
   setFocused(focused: boolean): void;
+  isFocused(): boolean;
   loadUrl(url: string): void;
   getToken(): string;
   executeJavaScript(src: string): void;
