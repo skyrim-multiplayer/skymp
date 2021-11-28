@@ -17,7 +17,9 @@ export class ChatProperty {
     mp.makeProperty('chat', {
       isVisibleByOwner: true,
       isVisibleByNeighbors: false,
-      updateOwner: new FunctionInfo(this.clientsideUpdateOwner()).getText(),
+      updateOwner: new FunctionInfo(this.clientsideUpdateOwner()).getText({
+        refreshWidgets: ChatProperty.refreshWidgets,
+      }),
       updateNeighbor: '',
     });
     mp.makeEventSource('_onChatInput', new FunctionInfo(this.clientsideInitChatInput()).getText());
@@ -43,9 +45,7 @@ export class ChatProperty {
   public static sendChatMessage(actorId: number, message: string) {
     EvalProperty.eval(
       actorId,
-      (ctx: Ctx) => {
-        // Please keep up-to-date with impl in dialogProperty.ts
-        const refreshWidgets = 'window.skyrimPlatform.widgets.set((window.chat || []).concat(window.dialog || []));';
+      (ctx: Ctx, refreshWidgets: string) => {
         let src = '';
         const htmlEscapes: Record<string, string> = {
           '"': '\\"',
@@ -59,7 +59,7 @@ export class ChatProperty {
         src += refreshWidgets;
         ctx.sp.browser.executeJavaScript(src);
       },
-      { message }
+      { message, refreshWidgets: ChatProperty.refreshWidgets }
     );
   }
 
@@ -68,7 +68,7 @@ export class ChatProperty {
   }
 
   private static clientsideUpdateOwner() {
-    return (ctx: Ctx<ChatState, ChatValue>) => {
+    return (ctx: Ctx<ChatState, ChatValue>, refreshWidgets: string) => {
       const isInputHidden = !ctx.sp.browser.isFocused() || (ctx.get && ctx.get('dialog') !== null);
 
       if (ctx.value === ctx.state.chatPrevValue && isInputHidden === ctx.state.chatIsInputHidden) {
@@ -76,9 +76,6 @@ export class ChatProperty {
       }
       ctx.state.chatPrevValue = ctx.value;
       ctx.state.chatIsInputHidden = isInputHidden;
-
-      // Please keep up-to-date with impl in dialogProperty.ts
-      const refreshWidgets = 'window.skyrimPlatform.widgets.set((window.chat || []).concat(window.dialog || []));';
 
       if (!ctx.value || !ctx.value.show) {
         let src = '';
@@ -88,6 +85,7 @@ export class ChatProperty {
       }
 
       let src = '';
+      src += `window.chatMessages = window.chatMessages || [];`; // Need to save chatMessages reference in chat[0]
       src += 'window.chat = [{}];';
       src += 'window.chat[0].type = "chat";';
       src += 'window.chat[0].messages = window.chatMessages;';
@@ -109,4 +107,7 @@ export class ChatProperty {
   }
 
   private static chatInputHandler: ChatInputHandler = () => {};
+
+  // Please keep up-to-date with impl in dialogProperty.ts
+  private static refreshWidgets = 'window.skyrimPlatform.widgets.set((window.chat || []).concat(window.dialog || []));';
 }

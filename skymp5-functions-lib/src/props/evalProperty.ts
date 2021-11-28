@@ -19,7 +19,7 @@ export class EvalProperty {
     mp['_onEvalFinish'] = this.onEvalFinish;
   }
 
-  static eval(actorId: number, f: (ctx: Ctx) => void, args?: Record<string, unknown>) {
+  static eval(actorId: number, f: (ctx: Ctx, ...args: any[]) => void, args?: Record<string, unknown>) {
     const code = new FunctionInfo(f).getText(args);
     const value: EvalValue = mp.get(actorId, 'eval') || { commands: [], nextId: 0 };
     value.commands.push({ code, id: value.nextId });

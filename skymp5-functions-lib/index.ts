@@ -189,8 +189,7 @@ ChatProperty.setChatInputHandler((input) => {
   })();
 
   for (const neighborActorId of actorNeighbors) {
-    ChatProperty.sendChatMessage(neighborActorId, "1) #{a8adad}" + name + "#{ffffff}: " + input.inputText);
-    ChatProperty.sendChatMessage(neighborActorId, "2) #{a8adad}" + name + "#{ffffff}: " + input.inputText);
+    ChatProperty.sendChatMessage(neighborActorId, "#{a8adad}" + name + "#{ffffff}: " + input.inputText);
   }
 });
 
