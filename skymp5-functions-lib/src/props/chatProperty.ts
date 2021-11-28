@@ -3,10 +3,13 @@ import { Mp } from '../types/mp';
 import { FunctionInfo } from '../utils/functionInfo';
 import { BrowserProperty } from './browserProperty';
 
-type ChatValue = { show: boolean; messages: string[] };
-type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean };
+type ChatValue = { show: boolean; lastMessage?: string; n?: number };
+type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean; messages?: string[]; n?: number };
 
 declare const mp: Mp;
+
+export type ChatInput = { actorId: number; inputText: string };
+export type ChatInputHandler = (input: ChatInput) => void;
 
 export class ChatProperty {
   static init() {
@@ -25,20 +28,31 @@ export class ChatProperty {
       return;
     }
     const [, inputText] = args;
-    console.log({ inputText });
+    ChatProperty.chatInputHandler({ actorId, inputText });
   }
 
   public static showChat(actorId: number, show = true) {
-    const value: ChatValue = mp.get(actorId, 'chat') || { show: false, messages: [] };
+    const value: ChatValue = mp.get(actorId, 'chat') || { show: false };
     if (value.show !== show) {
       value.show = show;
       mp.set(actorId, 'chat', value);
     }
   }
 
+  public static sendChatMessage(actorId: number, message: string) {
+    const value: ChatValue = mp.get(actorId, 'chat') || { show: false };
+    value.lastMessage = message;
+    value.n = value.n ? value.n + 1 : 1;
+    mp.set(actorId, 'chat', value);
+  }
+
+  public static setChatInputHandler(handler: ChatInputHandler) {
+    this.chatInputHandler = handler;
+  }
+
   private static clientsideUpdateOwner() {
     return (ctx: Ctx<ChatState, ChatValue>) => {
-      const isInputHidden = !ctx.sp.browser.isFocused();
+      const isInputHidden = !ctx.sp.browser.isFocused() || (ctx.get && ctx.get('dialog') !== null);
 
       if (ctx.value === ctx.state.chatPrevValue && isInputHidden === ctx.state.chatIsInputHidden) {
         return;
@@ -62,7 +76,27 @@ export class ChatProperty {
       src += 'window.chat[0].messages = [];';
       src += 'window.chat[0].send = (text) => window.skyrimPlatform.sendMessage("chatInput", text);';
       src += `window.chat[0].isInputHidden = ${isInputHidden};`;
+
+      ctx.state.messages = ctx.state.messages || [];
+      if (ctx.state.n !== ctx.value.n && ctx.value.lastMessage) {
+        ctx.state.n = ctx.value.n;
+        ctx.state.messages.push(ctx.value.lastMessage);
+      }
+      const htmlEscapes: Record<string, string> = {
+        '"': '\\"',
+        "'": "\\'",
+        '\\': '\\\\',
+      };
+      const htmlEscaper = /[&<>"'\\\/]/g;
+      for (const message of ctx.state.messages) {
+        const msg = message.replace(htmlEscaper, (match) => htmlEscapes[match]);
+        src += `window.chat[0].messages.push("${msg}");`;
+      }
+
       src += refreshWidgets;
+
+      // src.split(';').forEach(ctx.sp.printConsole);
+
       ctx.sp.browser.executeJavaScript(src);
     };
   }
@@ -76,4 +110,6 @@ export class ChatProperty {
       });
     };
   }
+
+  private static chatInputHandler: ChatInputHandler = () => {};
 }

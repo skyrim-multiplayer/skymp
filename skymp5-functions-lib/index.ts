@@ -176,6 +176,24 @@ DialogProperty.setDialogResponseHandler((response) => {
   return true;
 });
 
+ChatProperty.setChatInputHandler((input) => {
+  // Note that in current implementation we also send chat messages to npcs...
+  const actorNeighbors = mp.get(input.actorId, 'actorNeighbors');
+
+  const name = (() => {
+    const appearance = mp.get(input.actorId, 'appearance');
+    if (appearance && appearance.name) {
+      return `${appearance.name}`;
+    }
+    return 'Stranger';
+  })();
+
+  for (const neighborActorId of actorNeighbors) {
+    ChatProperty.sendChatMessage(neighborActorId, "1) #{a8adad}" + name + "#{ffffff}: " + input.inputText);
+    ChatProperty.sendChatMessage(neighborActorId, "2) #{a8adad}" + name + "#{ffffff}: " + input.inputText);
+  }
+});
+
 Timer.everySecond = () => {
   // console.log(PersistentStorage.getSingleton().reloads);
 
