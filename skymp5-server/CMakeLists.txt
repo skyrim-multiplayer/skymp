@@ -24,10 +24,17 @@ add_subdirectory(ts)
 # Solution:
 # 1. Give cmake-js a special CMakeLists.txt from the `cmake-js-fetch` directory.
 #    Look into package.json and `cmake-js-fetch/CMakeLists.txt` to understand mechanism
-yarn_execute_command(
-  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  COMMAND cmake-js-fetch
-)
+if (MSVC)
+  yarn_execute_command(
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    COMMAND cmake-js-fetch-msvc
+  )
+else ()
+  yarn_execute_command(
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    COMMAND cmake-js-fetch
+  )
+endif ()
 
 # 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
 
@@ -83,9 +90,9 @@ if(WIN32)
   set(bat "set NODE_PATH=${SKYMP5_SERVER_SOURCE_DIR}/node_modules\n")
   set(bat "${bat}node dist_back/index.js\n")
   set(bat "${bat}pause\n")
-  
+
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
-  
+
   add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/launch_server.bat.tmp ${CMAKE_BINARY_DIR}/dist/server/launch_server.bat
