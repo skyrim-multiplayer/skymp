@@ -86,3 +86,18 @@ DynamicFields DynamicFields::FromJson(const nlohmann::json& j)
   }
   return res;
 }
+
+bool operator<(const DynamicFields& r, const DynamicFields& l)
+{
+  return r.GetAsJson() < l.GetAsJson();
+}
+
+bool operator==(const DynamicFields& r, const DynamicFields& l)
+{
+  return r.GetAsJson() == l.GetAsJson();
+}
+
+bool operator!=(const DynamicFields& r, const DynamicFields& l)
+{
+  return !(r == l);
+}

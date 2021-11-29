@@ -69,7 +69,7 @@ export class ChatProperty {
 
   private static clientsideUpdateOwner() {
     return (ctx: Ctx<ChatState, ChatValue>, refreshWidgets: string) => {
-      const isInputHidden = !ctx.sp.browser.isFocused() || (ctx.get && ctx.get('dialog') !== null);
+      const isInputHidden = !ctx.sp.browser.isFocused() || (ctx.get && ctx.get('dialog'));
 
       if (ctx.value === ctx.state.chatPrevValue && isInputHidden === ctx.state.chatIsInputHidden) {
         return;

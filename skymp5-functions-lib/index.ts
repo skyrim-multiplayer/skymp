@@ -26,6 +26,12 @@ const neutralPortal = '42f70:SweetPie.esp';
 const redPortal = '42e96:SweetPie.esp';
 const bluePortal = '42fc1:SweetPie.esp';
 
+const hallSpawnPoint = {
+  pos: [18511, 10256, 610.6392],
+  cellOrWorldDesc: '42b5f:SweetPie.esp',
+  rot: [0, 0, 347],
+};
+
 type SpawnPoint = LocationalData;
 
 interface SweetPieMap {
@@ -39,13 +45,18 @@ interface SweetPieMap {
   leaveMapDoors: string[];
 }
 
+const warmupTimerMaximum = 5;
+const runningTimerMaximum = 60;
+
 class SweetPieRound {
   constructor(public readonly map: SweetPieMap) {}
 
-  launchTimer = 60;
+  warmupTimer = warmupTimerMaximum;
+  runningTimer = runningTimerMaximum;
   maxPlayers = 20;
   players = new Set<number>();
   state: 'running' | 'warmup' = 'warmup';
+  score = new Map<number, number>();
 }
 
 const whiterun: SweetPieMap = {
@@ -76,18 +87,32 @@ const getPlayerCurrentRound = (player: number): SweetPieRound | undefined => {
 };
 
 const joinRound = (round: SweetPieRound, player: number) => {
+  mp.set(player, 'spawnPoint', round.map.safePlace);
   mp.set(player, 'locationalData', round.map.safePlace);
   round.players.add(player);
 };
 
 const leaveRound = (round: SweetPieRound | undefined, player: number) => {
-  const hallSpawnPoint = {
-    pos: [18511, 10256, 610.6392],
-    cellOrWorldDesc: '42b5f:SweetPie.esp',
-    rot: [0, 0, 347],
-  };
+  mp.set(player, 'spawnPoint', hallSpawnPoint);
   mp.set(player, 'locationalData', hallSpawnPoint);
   round?.players.delete(player);
+};
+
+const getWinner = (round: SweetPieRound) => {
+  let bestActorId = 0;
+  let bestScore = -1;
+  for (const actorId of round.players) {
+    const score = round.score.get(actorId) || 0;
+    if (score > bestScore) {
+      bestScore = score;
+      bestActorId = actorId;
+    }
+  }
+  return bestActorId;
+};
+
+const sendMessageNeeded = (timerSeconds: number) => {
+  return timerSeconds <= 10 || timerSeconds % 10 === 0;
 };
 
 const enum DialogId {
@@ -130,9 +155,7 @@ mp.onActivate = (target: number, caster: number) => {
     } else if (round.map.safePlaceGoOutDoors.indexOf(targetDesc) !== -1) {
       return true;
     } else {
-      EvalProperty.eval(caster, (ctx) => {
-        ctx.sp.Debug.notification('Interiors are not available during combat');
-      });
+      ChatProperty.sendChatMessage(caster, 'Interiors are not available during combat');
       return false;
     }
   }
@@ -176,22 +199,93 @@ DialogProperty.setDialogResponseHandler((response) => {
   return true;
 });
 
+const getName = (actorId: number) => {
+  const appearance = mp.get(actorId, 'appearance');
+  if (appearance && appearance.name) {
+    return `${appearance.name}`;
+  }
+  return 'Stranger';
+};
+
 ChatProperty.setChatInputHandler((input) => {
   // Note that in current implementation we also send chat messages to npcs...
   const actorNeighbors = mp.get(input.actorId, 'actorNeighbors');
 
-  const name = (() => {
-    const appearance = mp.get(input.actorId, 'appearance');
-    if (appearance && appearance.name) {
-      return `${appearance.name}`;
-    }
-    return 'Stranger';
-  })();
+  const name = getName(input.actorId);
 
   for (const neighborActorId of actorNeighbors) {
-    ChatProperty.sendChatMessage(neighborActorId, "#{a8adad}" + name + "#{ffffff}: " + input.inputText);
+    ChatProperty.sendChatMessage(neighborActorId, '#{a8adad}' + name + '#{ffffff}: ' + input.inputText);
   }
 });
+
+const onJoin = (actorId: number) => {
+  ChatProperty.showChat(actorId, true);
+  mp.set(actorId, 'spawnPoint', hallSpawnPoint);
+};
+
+const onLeave = (actorId: number) => {};
+
+const everySecond = () => {
+  for (const round of rounds) {
+    if (round.state === 'warmup') {
+      if (round.players.size > 0) {
+        if (round.warmupTimer > 0) {
+          round.warmupTimer--;
+          if (sendMessageNeeded(round.warmupTimer)) {
+            round.players.forEach((actorId) =>
+              ChatProperty.sendChatMessage(actorId, `Starting round in ${round.warmupTimer}`)
+            );
+          }
+        } else {
+          round.players.forEach((actorId) => {
+            mp.set(actorId, 'spawnPoint', round.map.mainSpawnPoint);
+            ChatProperty.sendChatMessage(
+              actorId,
+              `Warmup finished! Go! You have ${round.runningTimer} seconds to kill each other!`
+            );
+          });
+          round.players.forEach((actorId) => mp.set(actorId, 'locationalData', round.map.mainSpawnPoint));
+          round.state = 'running';
+          round.score = new Map();
+          round.warmupTimer = warmupTimerMaximum;
+        }
+      }
+    }
+    if (round.state === 'running') {
+      if (round.runningTimer > 0) {
+        round.runningTimer--;
+        if (sendMessageNeeded(round.runningTimer)) {
+          round.players.forEach((actorId) => {
+            ChatProperty.sendChatMessage(actorId, `Fight! You have ${round.runningTimer} seconds`);
+          });
+        }
+      } else {
+        const winnerActorId = getWinner(round);
+        const winner = winnerActorId ? getName(winnerActorId) : 'No one';
+        const score = round.score.get(winnerActorId);
+        round.players.forEach((actorId) =>
+          ChatProperty.sendChatMessage(actorId, `${winner} wins with ${score} points! Thanks for playing`)
+        );
+        round.players.forEach((actorId) => leaveRound(round, actorId));
+        round.state = 'warmup';
+        round.runningTimer = runningTimerMaximum;
+      }
+    }
+  }
+};
+
+mp.onDeath = (target: number, killer: number) => {
+  const round = rounds.find((x) => x.players.has(target));
+  if (!round) return;
+
+  round.players.forEach((actorId) => {
+    ChatProperty.sendChatMessage(actorId, `#{a8adad}${getName(target)} was slain by ${getName(killer)}`);
+    const score = round.score.get(killer);
+    const newScore = score ? score + 1 : 1;
+    round.score.set(killer, newScore);
+    ChatProperty.sendChatMessage(actorId, `#{a8adad}${getName(killer)} now has ${newScore} points`);
+  });
+};
 
 Timer.everySecond = () => {
   // console.log(PersistentStorage.getSingleton().reloads);
@@ -203,11 +297,14 @@ Timer.everySecond = () => {
   const leftPlayers = onlinePlayersOld.filter((x) => !onlinePlayers.includes(x));
 
   for (const actorId of joinedPlayers) {
-    ChatProperty.showChat(actorId, true);
+    onJoin(actorId);
   }
 
   for (const actorId of leftPlayers) {
+    onLeave(actorId);
   }
+
+  everySecond();
 
   if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
     PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;

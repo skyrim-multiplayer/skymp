@@ -702,7 +702,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
 
   targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
-                             staminaPercentage);
+                             staminaPercentage, aggressor);
   auto now = std::chrono::steady_clock::now();
   targetActor.SetLastAttributesPercentagesUpdate(now);
   targetActor.SetLastHitTime(now);
