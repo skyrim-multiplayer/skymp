@@ -140,7 +140,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt "${CEF_SHARE}")
 
     # touch dev_service in watch mode
-    # TODO: do we actually support dev_service in watch mode? consider removing this target
     add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
     add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
   endif()
