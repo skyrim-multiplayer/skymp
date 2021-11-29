@@ -45,8 +45,8 @@ interface SweetPieMap {
   leaveMapDoors: string[];
 }
 
-const warmupTimerMaximum = 5;
-const runningTimerMaximum = 60;
+const warmupTimerMaximum = 60;
+const runningTimerMaximum = 300;
 
 class SweetPieRound {
   constructor(public readonly map: SweetPieMap) {}
