@@ -10,9 +10,9 @@ set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
 macro(set_from_environment VARIABLE)
-	if (NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
-		set(${VARIABLE} $ENV{${VARIABLE}})
-	endif ()
+  if (NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
+    set(${VARIABLE} $ENV{${VARIABLE}})
+  endif ()
 endmacro()
 
 set_from_environment(VCPKG_ROOT)
