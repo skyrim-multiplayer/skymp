@@ -22,13 +22,13 @@ vcpkg_copy_pdbs()
 file(GLOB skse64_include "${SOURCE_PATH}/skse64_2_01_03/src/skse64/skse64/*.h")
 file(INSTALL ${skse64_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/skse64")
 
-#file(GLOB skse64_common_include "${SOURCE_PATH}/skse64_2_01_03/src/skse64/skse64_common/*.h")
-#file(INSTALL ${skse64_common_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/skse64_common")
+file(GLOB skse64_common_include "${SOURCE_PATH}/skse64_2_01_03/src/skse64/skse64_common/*.h")
+file(INSTALL ${skse64_common_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/skse64_common")
 
-#file(GLOB common_include "${SOURCE_PATH}/skse64_2_01_03/src/common/*.h")
-#file(INSTALL ${common_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/common")
+file(GLOB common_include "${SOURCE_PATH}/skse64_2_01_03/src/common/*.h")
+file(INSTALL ${common_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/common")
 
-#file(GLOB xbyak_include "${SOURCE_PATH}/skse64_2_01_03/src/skse64/xbyak/*.h")
-#file(INSTALL ${xbyak_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/xbyak")
+file(GLOB xbyak_include "${SOURCE_PATH}/skse64_2_01_03/src/skse64/xbyak/*.h")
+file(INSTALL ${xbyak_include} DESTINATION "${CURRENT_PACKAGES_DIR}/include/xbyak")
 
 file(INSTALL ${SOURCE_PATH}/skse64_2_01_03/src/skse64/skse64_license.txt DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT} RENAME copyright)
