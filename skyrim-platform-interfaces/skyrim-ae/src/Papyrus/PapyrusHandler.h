@@ -11,7 +11,7 @@ bool Bind(VM* a_vm)
     return false;
   }
 
-  TESModPlatform::Bind(*a_vm);
+  /* TESModPlatform::Bind(*a_vm); */
 
   return true;
 }

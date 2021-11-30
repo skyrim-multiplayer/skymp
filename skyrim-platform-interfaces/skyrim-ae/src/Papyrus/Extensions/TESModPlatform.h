@@ -1,7 +1,20 @@
+#include "ConsoleHandler.h"
 #include "Utils/Form.h"
 
 /* we implement these first, then reorganize */
 namespace Papyrus::TESModPlatform {
+
+bool papyrusUpdateAllowed = false;
+bool vmCallAllowed = true;
+std::atomic<bool> moveRefrBlocked = false;
+std::function<void(VM* vm, StackID stackId)> onPapyrusUpdate = nullptr;
+std::atomic<uint64_t> numPapyrusUpdates = 0;
+
+struct
+{
+  std::unordered_map<uint32_t, int> weapDrawnMode;
+  std::recursive_mutex m;
+} share;
 
 struct
 {
@@ -10,10 +23,27 @@ struct
   std::recursive_mutex m;
 } share2;
 
-/* uint32_t TESModPlatform::Add(RE::BSScript::IVirtualMachine* vm,
+enum
+{
+  WEAP_DRAWN_MODE_DEFAULT = -1,
+  WEAP_DRAWN_MODE_ALWAYS_FALSE = 0,
+  WEAP_DRAWN_MODE_ALWAYS_TRUE = 1,
+
+  WEAP_DRAWN_MODE_MIN = WEAP_DRAWN_MODE_DEFAULT,
+  WEAP_DRAWN_MODE_MAX = WEAP_DRAWN_MODE_ALWAYS_TRUE
+};
+
+namespace {
+
+thread_local bool g_worn = false;
+thread_local bool g_wornLeft = false;
+
+}
+
+/* SInt32 TESModPlatform::Add(RE::BSScript::IVirtualMachine* vm,
                            RE::VMStackID stackId, RE::StaticFunctionTag*,
-                           uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
+                           SInt32, SInt32, SInt32, SInt32, SInt32, SInt32,
+                           SInt32, SInt32, SInt32, SInt32, SInt32, SInt32)
 {
   if (!papyrusUpdateAllowed)
     return 0;
@@ -35,6 +65,33 @@ uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
   return 0;
 } */
 
+/* no changes */
+int32_t Add(VM* vm, StackID stackId, RE::StaticFunctionTag*, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t)
+{
+  if (!papyrusUpdateAllowed)
+    return 0;
+
+  papyrusUpdateAllowed = false;
+
+  try {
+    ++numPapyrusUpdates;
+
+    if (!onPapyrusUpdate)
+      logger::critical("onPapyrusUpdate @ TESModPlatform");
+
+    onPapyrusUpdate(vm, stackId);
+
+  } catch (std::exception& e) {
+    ConsoleHandler::PrintConsole("Papyrus context exception: %s", e.what());
+  }
+
+  vmCallAllowed = true;
+
+  return 0;
+}
+
 /* void TESModPlatform::MoveRefrToPosition(
   RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
   RE::StaticFunctionTag*, RE::TESObjectREFR* refr, RE::TESObjectCELL* cell,
@@ -51,6 +108,25 @@ uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
   f(reinterpret_cast<TESObjectREFR*>(refr), &nullHandle, cell, world, &pos,
     &rot);
 } */
+
+/* doesn't use skse anymore, required commonlib patch */
+void MoveRefrToPosition(VM* vm, StackID stackId, RE::StaticFunctionTag*,
+                        RE::TESObjectREFR* refr, RE::TESObjectCELL* cell,
+                        RE::TESWorldSpace* world, float posX, float posY,
+                        float posZ, float rotX, float rotY, float rotZ)
+{
+  if (!refr || (!cell && !world) || moveRefrBlocked)
+    return;
+
+  RE::NiPoint3 pos = { posX, posY, posZ }, rot = { rotX, rotY, rotZ };
+
+  /* auto handle = refr->GetHandle(); nah, need nullhandle here */
+
+  if (!handle)
+    return;
+
+  refr->MoveTo_Impl(handle, cell, world, pos, rot);
+}
 
 /* void TESModPlatform::SetWeaponDrawnMode(RE::BSScript::IVirtualMachine* vm,
                                         RE::VMStackID stackId,
@@ -82,9 +158,37 @@ weapDrawnMode)
   share.weapDrawnMode[actor->formID] = weapDrawnMode;
 } */
 
-/* uint32_t TESModPlatform::GetNthVtableElement(RE::BSScript::IVirtualMachine*
-vm, RE::VMStackID stackId, RE::StaticFunctionTag*, RE::TESForm* pointer,
-uint32_t pointerOffset, uint32_t elementIndex)
+void SetWeaponDrawnMode(VM* vm, StackID stackId, RE::StaticFunctionTag*,
+                        RE::Actor* actor, uint32_t weapDrawnMode)
+{
+  if (!actor || weapDrawnMode < WEAP_DRAWN_MODE_MIN ||
+      weapDrawnMode > WEAP_DRAWN_MODE_MAX)
+    return;
+
+  // this needs native calls
+  if (g_nativeCallRequirements.gameThrQ) {
+    auto formId = actor->formID;
+    g_nativeCallRequirements.gameThrQ->AddTask([=] {
+      if (RE::TESForm::LookupByID<RE::Actor>(formId) != actor)
+        return;
+
+      if (!actor->IsWeaponDrawn() &&
+          weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_TRUE)
+        actor->DrawWeaponMagicHands(true);
+
+      if (actor->IsWeaponDrawn() &&
+          weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_FALSE)
+        actor->DrawWeaponMagicHands(false);
+    });
+  }
+
+  std::lock_guard l(share.m);
+  share.weapDrawnMode[actor->formID] = weapDrawnMode;
+}
+
+/* SInt32 TESModPlatform::GetNthVtableElement(RE::BSScript::IVirtualMachine*
+vm, RE::VMStackID stackId, RE::StaticFunctionTag*, RE::TESForm* pointer, SInt32
+pointerOffset, SInt32 elementIndex)
 {
   static auto getNthVTableElement = [](void* obj, size_t idx) {
     using VTable = size_t*;
@@ -104,10 +208,10 @@ uint32_t pointerOffset, uint32_t elementIndex)
   return -1;
 } */
 
-/* RE::Module::BaseAddr() doesnt exist anymore */
-uint32_t GetNthVtableElement(VM* vm, StackID stackId, RE::StaticFunctionTag*,
-                             RE::TESForm* pointer, uint32_t pointerOffset,
-                             uint32_t elementIndex)
+/* changed REL::Module::BaseAddr() to REL::Module::get().base(); */
+int32_t GetNthVtableElement(VM* vm, StackID stackId, RE::StaticFunctionTag*,
+                            RE::TESForm* pointer, int32_t pointerOffset,
+                            int32_t elementIndex)
 {
   static auto getNthVTableElement = [](void* obj, size_t idx) {
     using VTable = size_t*;
@@ -120,7 +224,7 @@ uint32_t GetNthVtableElement(VM* vm, StackID stackId, RE::StaticFunctionTag*,
       return getNthVTableElement(reinterpret_cast<uint8_t*>(pointer) +
                                    pointerOffset,
                                  elementIndex) -
-        REL::Module::get().base(); // ???
+        REL::Module::get().base();
     } __except (EXCEPTION_EXECUTE_HANDLER) {
     }
   }
@@ -158,10 +262,8 @@ bool IsPlayerRunningEnabled(VM* vm, StackID stackId, RE::StaticFunctionTag*)
 } */
 
 /* doesn't use SKSE now */
-/* streamlined function name with the rest of them */
-RE::BGSColorForm* TESModPlatform::GetNPCSkinColor(VM* vm, StackID stackId,
-                                                  RE::StaticFunctionTag*,
-                                                  RE::TESNPC* npc)
+RE::BGSColorForm* GetSkinColor(VM* vm, StackID stackId, RE::StaticFunctionTag*,
+                               RE::TESNPC* npc)
 {
   auto cf = Utils::CreateForm<RE::BGSColorForm>(RE::FormType::ColorForm);
   if (!cf)
@@ -237,9 +339,65 @@ void SetNPCSkinColor(VM* vm, StackID stackId, RE::StaticFunctionTag*,
   return (RE::TESNPC*)npc;
 } */
 
+/* doesn't use skse anymore, this one is big, hope everything's fine */
+RE::TESNPC* CreateNpc(VM* vm, StackID stackId, RE::StaticFunctionTag*)
+{
+  enum
+  {
+    AADeleteWhenDoneTestJeremyRegular = 0x0010D13E
+  };
+
+  auto npc = Utils::CreateForm<RE::TESNPC>(RE::FormType::NPC);
+  if (!npc)
+    return nullptr;
+
+  const auto srcNpc =
+    RE::TESForm::LookupByID<RE::TESNPC>(AADeleteWhenDoneTestJeremyRegular);
+
+  assert(srcNpc);
+  assert(srcNpc->formType == RE::FormType::NPC);
+  if (!srcNpc || srcNpc->formType != RE::FormType::NPC)
+    return nullptr;
+  auto backup = npc->formID;
+  memcpy(npc, srcNpc, sizeof RE::TESNPC);
+  npc->formID = backup;
+
+  auto npc_ = npc;
+  (**npc_->containerObjects).obj = nullptr;
+  (**npc_->containerObjects).count = 0;
+  npc_->crimeFaction = nullptr;
+  npc_->faceNPC = nullptr;
+  npc_->actorData.actorBaseFlags |= RE::ACTOR_BASE_DATA::Flag::kPCLevelMult;
+  npc_->actorData.actorBaseFlags |= RE::ACTOR_BASE_DATA::Flag::kUnique;
+  npc_->actorData.actorBaseFlags |=
+    RE::ACTOR_BASE_DATA::Flag::kSimpleActor; // Disables face animations
+
+  // Clear AI Packages to prevent idle animations with Furniture
+  enum
+  {
+    DoNothing = 0x654e2,
+    DefaultMoveToCustom02IgnoreCombat = 0x6af62
+  };
+  auto doNothing = RE::TESForm::LookupByID<RE::TESPackage>(DoNothing);
+  auto flagsSource = RE::TESForm::LookupByID<RE::TESPackage>(
+    DefaultMoveToCustom02IgnoreCombat); // ignore combat && no
+                                        // combat alert
+  doNothing->packData = flagsSource->packData;
+  npc_->aiPackages.packages.clear();
+  npc_->aiPackages.packages.push_front(doNothing);
+
+  auto sourceFaceData = npc_->faceData;
+  npc_->faceData = new RE::TESNPC::FaceData; // is new here ok?
+  if (!npc_->faceData)
+    return nullptr;
+  *npc_->faceData = *sourceFaceData;
+
+  return npc;
+}
+
 /* void TESModPlatform::SetNpcSex(RE::BSScript::IVirtualMachine* vm,
                                RE::VMStackID stackId, RE::StaticFunctionTag*,
-                               RE::TESNPC* npc, uint32_t sex)
+                               RE::TESNPC* npc, SInt32 sex)
 {
   if (npc) {
     if (sex == 1)
@@ -250,15 +408,15 @@ void SetNPCSkinColor(VM* vm, StackID stackId, RE::StaticFunctionTag*,
 } */
 
 /* no idea, skse enumeration must have changed */
-void SetNPCSex(VM* vm, StackID stackId, RE::StaticFunctionTag*,
-               RE::TESNPC* npc, RE::SEX sex)
+void SetNpcSex(VM* vm, StackID stackId, RE::StaticFunctionTag*,
+               RE::TESNPC* npc, int32_t sex)
 {
   if (npc) {
-    if (sex == RE::SEX::kFemale) // ???
+    if (sex == 1)
       npc->actorData.actorBaseFlags |= RE::ACTOR_BASE_DATA::Flag::kFemale;
     else
       npc->actorData.actorBaseFlags &=
-        ~RE::ACTOR_BASE_DATA::Flag::kFemale; // error here
+        ~RE::ACTOR_BASE_DATA::Flag::kFemale; // still error here
   }
 }
 
@@ -281,7 +439,7 @@ void SetNpcRace(VM* vm, StackID stackId, RE::StaticFunctionTag*,
 /* void TESModPlatform::ResizeHeadpartsArray(RE::BSScript::IVirtualMachine* vm,
                                           RE::VMStackID stackId,
                                           RE::StaticFunctionTag*,
-                                          RE::TESNPC* npc, uint32_t newSize)
+                                          RE::TESNPC* npc, SInt32 newSize)
 {
   if (!npc)
     return;
@@ -296,9 +454,9 @@ void SetNpcRace(VM* vm, StackID stackId, RE::StaticFunctionTag*,
   }
 } */
 
-/* only changed int type, gotta check later */
+/* no changes */
 void ResizeHeadpartsArray(VM* vm, StackID stackId, RE::StaticFunctionTag*,
-                          RE::TESNPC* npc, uint32_t newSize)
+                          RE::TESNPC* npc, int32_t newSize)
 {
   if (!npc)
     return;
@@ -308,14 +466,14 @@ void ResizeHeadpartsArray(VM* vm, StackID stackId, RE::StaticFunctionTag*,
   } else {
     npc->headParts = new RE::BGSHeadPart*[newSize];
     npc->numHeadParts = (uint8_t)newSize;
-    for (uint8_t i = 0; i < npc->numHeadParts; ++i)
+    for (int8_t i = 0; i < npc->numHeadParts; ++i)
       npc->headParts[i] = nullptr;
   }
 }
 
 /* void TESModPlatform::ResizeTintsArray(RE::BSScript::IVirtualMachine* vm,
                                       RE::VMStackID stackId,
-                                      RE::StaticFunctionTag*, uint32_t newSize)
+                                      RE::StaticFunctionTag*, SInt32 newSize)
 {
   PlayerCharacter* pc = *g_thePlayer;
   RE::PlayerCharacter* rePc = (RE::PlayerCharacter*)pc;
@@ -332,7 +490,7 @@ void ResizeHeadpartsArray(VM* vm, StackID stackId, RE::StaticFunctionTag*,
 
 /* partly removed skse dependency */
 void ResizeTintsArray(VM* vm, StackID stackId, RE::StaticFunctionTag*,
-                      uint32_t newSize)
+                      int32_t newSize)
 {
   auto pc = RE::PlayerCharacter::GetSingleton();
   if (!pc)
@@ -344,9 +502,9 @@ void ResizeTintsArray(VM* vm, StackID stackId, RE::StaticFunctionTag*,
     return;
 
   pc->tintMasks.resize(newSize);
-  for (uint32_t i = prevSize; i < pc->tintMasks.size(); ++i) {
-    pc->tintMasks[i] =
-      (RE::TintMask*)new TintMask; // this uses TintMask from skse
+  for (RE::BSTArrayBase::size_type i = prevSize; i < pc->tintMasks.size();
+       ++i) {
+    pc->tintMasks[i] = new RE::TintMask; // this uses TintMask from skse
   }
 }
 
@@ -532,6 +690,14 @@ void TESModPlatform::PushTintMask(VM* vm, StackID stackId,
   g_worn = worn;
   g_wornLeft = wornLeft;
 } */
+
+/* no changes */
+void PushWornState(VM* vm, StackID stackId, RE::StaticFunctionTag*, bool worn,
+                   bool wornLeft)
+{
+  g_worn = worn;
+  g_wornLeft = wornLeft;
+}
 
 /* void TESModPlatform::AddItemEx(
   RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
@@ -748,9 +914,13 @@ void TESModPlatform::PushTintMask(VM* vm, StackID stackId,
                                          : it->second;
 } */
 
-void Bind(VM& a_vm)
+inline void Bind(VM& a_vm)
 {
   /* register everything */
+  const auto hairset = new RE::BSScript::NativeFunction<true, decltype(SetNpcSkinColor), void,
+                                     RE::StaticFunctionTag*, RE::TESNPC*,
+                                     uint32_t>(
+      "SetNpcSkinColor", "TESModPlatform", SetNpcSkinColor));
 }
 
 }

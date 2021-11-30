@@ -4,7 +4,8 @@ set(headers ${headers}
 	src/Events/EventHandler.h
 	src/Papyrus/PapyrusHandler.h
 	src/Papyrus/Extensions/TESModPlatform.h
-	src/Papyrus/Utils/Form.h
-	src/Platform/GameInterface.h
-	src/Tasks/TaskHandler.h
+	src/Platform/PlatformInterface.h
+	src/Serialization/GameObject.h
+	src/Utils/Form.h
+	src/VM/Calls.h
 )

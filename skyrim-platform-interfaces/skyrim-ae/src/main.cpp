@@ -1,4 +1,5 @@
-#include "Papyrus/PapyrusHandler.h"
+#include "PapyrusHandler.h"
+#include "PlatformInterface.h"
 
 void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 {
@@ -70,33 +71,31 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a_skse,
 
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
-  logger::info("plugin loaded");
+  logger::info("Loading plugin.");
 
-  SKSE::Init(a_skse);
-  /* SKSE::AllocTrampoline(); do we need this? */
+  try {
+    /* Init */
+    SKSE::Init(a_skse);
 
-  /* Init Platform Impl here */
+    /* Papyrus */
+    const auto papyrusInterface = SKSE::GetPapyrusInterface();
+    papyrusInterface->Register(Papyrus::Bind);
 
-  /* handle SKSE Interfaces */
-  const auto papyrusInterface = SKSE::GetPapyrusInterface();
-  if (!papyrusInterface) {
-    logger::critical("QueryInterface failed for PapyrusInterface");
-    return false;
-  }
-  papyrusInterface->Register(
-    Papyrus::Bind); // => Register papyrus extensions like TESModPlatform
+    /* Messaging */
+    const auto messagingInterface = SKSE::GetMessagingInterface();
+    messagingInterface->RegisterListener(MessageHandler);
 
-  const auto messagingInterface = SKSE::GetMessagingInterface();
-  if (!messagingInterface) {
-    logger::critical("QueryInterface failed for MessagingInterface");
-    return false;
-  }
-  messagingInterface->RegisterListener(MessageHandler);
-  auto modEvent = SKSE::GetModCallbackEventSource();
-  /* might not need this here */
-  const auto serializationInterface = SKSE::GetSerializationInterface();
-  if (!serializationInterface) {
-    logger::critical("QueryInterface failed for SerializationInterface");
+    /* Tasks */
+    const auto taskInterface = SKSE::GetTaskInterface();
+    taskInterface->AddTask(PlatformInterface::GetSingleton()->TickTask());
+    /* taskInterface->AddUITask(); */
+
+    /* Serialization */
+    /* const auto serializationInterface = SKSE::GetSerializationInterface();
+     */
+
+  } catch (const std::exception& e) {
+    logger::critical("Failed to load plugin. ", e.what());
     return false;
   }
 
