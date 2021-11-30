@@ -158,7 +158,14 @@ public:
 private:
   std::vector<const char*> GetFileDirs() const
   {
-    return { "Data/Platform/Plugins", "Data/Platform/PluginsDev" };
+    constexpr auto kSkympPluginsDir =
+      "C:/projects/skymp/build/dist/client/Data/Platform/Plugins";
+    if (std::filesystem::exists(kSkympPluginsDir)) {
+      return { kSkympPluginsDir };
+    }
+    std::vector<const char*> dirs = { "Data/Platform/Plugins",
+                                      "Data/Platform/PluginsDev" };
+    return dirs;
   }
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)

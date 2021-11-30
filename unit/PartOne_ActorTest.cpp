@@ -20,7 +20,7 @@ TEST_CASE("CreateActor/DestroyActor", "[PartOne]")
   REQUIRE(ac);
   REQUIRE(ac->GetPos() == NiPoint3{ 1.f, 2.f, 3.f });
   REQUIRE(ac->GetAngle() == NiPoint3{ 0.f, 0.f, 180.f });
-  REQUIRE(ac->GetCellOrWorld() == 0x3c);
+  REQUIRE(ac->GetCellOrWorld() == FormDesc::Tamriel());
 
   // Destroy:
 
