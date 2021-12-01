@@ -69,6 +69,9 @@ public:
   void OnHit(const RawMessageData& rawMsgData,
              const HitData& hitData) override;
 
+  void OnUnknown(const RawMessageData& rawMsgData,
+                 simdjson::dom::element data) override;
+
 private:
   // Returns user's actor if exists
   MpActor* SendToNeighbours(uint32_t idx,
