@@ -231,7 +231,7 @@ namespace espm {
 template <class RecordT>
 const RecordT* Convert(const RecordHeader* source)
 {
-  if (source && source->GetType() == RecordT::type) {
+  if (source && source->GetType() == RecordT::kType) {
     return (const RecordT*)source;
   }
   return nullptr;
@@ -242,7 +242,7 @@ namespace espm {
 class TES4 : public RecordHeader
 {
 public:
-  static constexpr auto type = "TES4";
+  static constexpr auto kType = "TES4";
 
   // Header
   struct Header
@@ -270,7 +270,7 @@ static_assert(sizeof(TES4) == sizeof(RecordHeader));
 class REFR : public RecordHeader
 {
 public:
-  static constexpr auto type = "REFR";
+  static constexpr auto kType = "REFR";
 
   struct LocationalData
   {
@@ -302,7 +302,7 @@ static_assert(sizeof(REFR) == sizeof(RecordHeader));
 class CONT : public RecordHeader
 {
 public:
-  static constexpr auto type = "CONT";
+  static constexpr auto kType = "CONT";
 
   struct ContainerObject
   {
@@ -332,7 +332,7 @@ static_assert(sizeof(ObjectBounds) == 12);
 class TREE : public RecordHeader
 {
 public:
-  static constexpr auto type = "TREE";
+  static constexpr auto kType = "TREE";
 
   struct Data
   {
@@ -351,7 +351,7 @@ static_assert(sizeof(TREE) == sizeof(RecordHeader));
 class FLOR : public RecordHeader
 {
 public:
-  static constexpr auto type = "FLOR";
+  static constexpr auto kType = "FLOR";
 
   using Data = TREE::Data;
 
@@ -363,14 +363,14 @@ static_assert(sizeof(TREE) == sizeof(RecordHeader));
 class DOOR : public RecordHeader
 {
 public:
-  static constexpr auto type = "DOOR";
+  static constexpr auto kType = "DOOR";
 };
 static_assert(sizeof(DOOR) == sizeof(RecordHeader));
 
 class LVLI : public RecordHeader
 {
 public:
-  static constexpr auto type = "LVLI";
+  static constexpr auto kType = "LVLI";
 
   enum LeveledItemFlags
   {
@@ -411,7 +411,7 @@ static_assert(sizeof(LVLI::Entry) == 18);
 class NAVM : public RecordHeader
 {
 public:
-  static constexpr auto type = "NVNM";
+  static constexpr auto kType = "NVNM";
 
   class Vertices
   {
@@ -441,7 +441,7 @@ static_assert(sizeof(REFR) == sizeof(RecordHeader));
 class FLST : public RecordHeader
 {
 public:
-  static constexpr auto type = "FLST";
+  static constexpr auto kType = "FLST";
 
   struct Data
   {
@@ -595,7 +595,7 @@ struct ScriptData
 class ACTI : public RecordHeader
 {
 public:
-  static constexpr auto type = "ACTI";
+  static constexpr auto kType = "ACTI";
 
   struct Data
   {
@@ -603,14 +603,13 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(ACTI) == sizeof(RecordHeader));
 
 class COBJ : public RecordHeader
 {
 public:
-  static constexpr auto type = "COBJ";
+  static constexpr auto kType = "COBJ";
 
   struct InputObject
   {
@@ -628,14 +627,13 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(COBJ) == sizeof(RecordHeader));
 
 class OTFT : public RecordHeader
 {
 public:
-  static constexpr auto type = "OTFT";
+  static constexpr auto kType = "OTFT";
 
   struct Data
   {
@@ -644,14 +642,13 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
 };
 static_assert(sizeof(OTFT) == sizeof(RecordHeader));
 
 class NPC_ : public RecordHeader
 {
 public:
-  static constexpr auto type = "NPC_";
+  static constexpr auto kType = "NPC_";
 
   struct Faction
   {
@@ -671,6 +668,7 @@ public:
     uint16_t healthOffset = 0;
     uint16_t magickaOffset = 0;
     uint16_t staminaOffset = 0;
+    ObjectBounds objectBounds = {};
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
@@ -680,7 +678,7 @@ static_assert(sizeof(NPC_) == sizeof(RecordHeader));
 class WEAP : public RecordHeader
 {
 public:
-  static constexpr auto type = "WEAP";
+  static constexpr auto kType = "WEAP";
 
   struct WeapData
   {
@@ -690,7 +688,7 @@ public:
   };
   static_assert(sizeof(WeapData) == 10);
 
-  enum AnimType : uint8_t
+  enum class AnimType : uint8_t
   {
     Other = 0,
     OneHandSword = 1,
@@ -703,15 +701,18 @@ public:
     Staff = 8,
     Crossbow = 9
   };
+  static_assert(sizeof(AnimType) == 1);
 
   struct DNAM
   {
-    uint8_t animType = 0;
+    AnimType animType = AnimType::Other;
     uint8_t unknown01 = 0;
     uint16_t unknown02 = 0;
     float speed = 0.f;
     float reach = 0.f;
+    // 0C: flags, etc
   };
+  static_assert(sizeof(DNAM) == 0x0c);
 
   struct Data
   {
@@ -720,14 +721,29 @@ public:
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
-  ;
+};
+static_assert(sizeof(WEAP) == sizeof(RecordHeader));
+
+class ARMO : public RecordHeader
+{
+public:
+  static constexpr auto kType = "ARMO";
+
+  struct Data
+  {
+    uint32_t baseRatingX100 = 0;
+    uint32_t baseValue = 0;
+    float weight = 0;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
 };
 static_assert(sizeof(WEAP) == sizeof(RecordHeader));
 
 class RACE : public RecordHeader
 {
 public:
-  static constexpr auto type = "RACE";
+  static constexpr auto kType = "RACE";
 
   struct Data
   {
@@ -749,7 +765,11 @@ static_assert(sizeof(RACE) == sizeof(RecordHeader));
 class GMST : public RecordHeader
 {
 public:
-  static constexpr auto type = "GMST";
+  static constexpr auto kType = "GMST";
+
+  static constexpr uint32_t kFCombatDistance = 0x00055640;
+  static constexpr uint32_t kFMaxArmorRating = 0x00037DEB;
+  static constexpr uint32_t kFArmorScalingFactor = 0x00021A72;
 
   struct Data
   {

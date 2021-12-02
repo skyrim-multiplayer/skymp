@@ -1,3 +1,4 @@
+import { Actor } from 'skyrimPlatform';
 /* eslint-disable @typescript-eslint/no-empty-function */
 import * as networking from "./networking";
 import { FormModel, WorldModel } from "./model";
@@ -22,19 +23,21 @@ import {
   Ui,
   settings,
   Armor,
-  Actor,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./inventory";
 import { isBadMenuShown } from "./equipment";
 import { Movement } from "./movement";
 import { IdManager } from "./idManager";
-import { applyAppearanceToPlayer } from "./Appearance";
+import { applyAppearanceToPlayer } from "./appearance";
 import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
-import { localIdToRemoteId, remoteIdToLocalId } from "./view";
+import { localIdToRemoteId, remoteIdToLocalId, WorldView } from "./view";
 import * as updateOwner from "./updateOwner";
-import { setActorValuePercentage } from "./actorvalues";
+import { getActorValues, setActorValuePercentage } from "./actorvalues";
+import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
+import { nameof } from "./utils";
+import { defaultLocalDamageMult, setLocalDamageMult } from "./index";
 
 //
 // eventSource system
@@ -65,21 +68,9 @@ if (Array.isArray(storage["eventSourceContexts"])) {
 //
 //
 
-const maxVerifyDelayDefault = 1000;
-let verifyStartMoment = 0;
 let loggingStartMoment = 0;
-let maxVerifyDelay = maxVerifyDelayDefault;
-
 on("tick", () => {
   const maxLoggingDelay = 5000;
-  if (verifyStartMoment && Date.now() - verifyStartMoment > maxVerifyDelay) {
-    maxVerifyDelay *= 2;
-    printConsole(
-      "Verify failed. Reconnecting. Calculated delay is " + maxVerifyDelay
-    );
-    networking.reconnect();
-    verifyStartMoment = 0;
-  }
   if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
     printConsole("Logging in failed. Reconnecting.");
     networking.reconnect();
@@ -104,22 +95,6 @@ const sendBrowserToken = () => {
   );
 };
 
-const verifySourceCode = () => {
-  verifyStartMoment = Date.now();
-  const src = getPluginSourceCode("skymp5-client");
-  printConsole(`Verifying current source code (${src.length} bytes)`);
-  networking.send(
-    {
-      t: messages.MsgType.CustomPacket,
-      content: {
-        customPacketType: "clientVersion",
-        src,
-      },
-    },
-    true
-  );
-};
-
 const loginWithSkympIoCredentials = () => {
   loggingStartMoment = Date.now();
   printConsole("Logging in as skymp.io user");
@@ -134,17 +109,6 @@ const loginWithSkympIoCredentials = () => {
     true
   );
 };
-
-const taskVerifySourceCode = () => {
-  storage["taskVerifySourceCode"] = true;
-};
-
-if (storage["taskVerifySourceCode"] === true) {
-  once("tick", () => {
-    verifySourceCode();
-  });
-  storage["taskVerifySourceCode"] = false;
-}
 
 export const getPcInventory = (): Inventory => {
   const res = storage["pcInv"];
@@ -204,19 +168,15 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         "cell/world is",
         msg.worldOrCell.toString(16)
       );
-      TESModPlatform.moveRefrToPosition(
-        Game.getPlayer(),
-        Cell.from(Game.getFormEx(msg.worldOrCell)),
-        WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
-        msg.pos[0],
-        msg.pos[1],
-        msg.pos[2],
-        msg.rot[0],
-        msg.rot[1],
-        msg.rot[2]
-      );
-      Utility.wait(0.2).then(() => {
-        (Game.getPlayer() as Actor).setAngle(
+      // todo: think about track ragdoll state of player
+      safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
+        TESModPlatform.moveRefrToPosition(
+          Game.getPlayer()!,
+          Cell.from(Game.getFormEx(msg.worldOrCell)),
+          WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
+          msg.pos[0],
+          msg.pos[1],
+          msg.pos[2],
           msg.rot[0],
           msg.rot[1],
           msg.rot[2]
@@ -243,6 +203,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isSneaking: false,
         isBlocking: false,
         isWeapDrawn: false,
+        isDead: false,
         healthPercentage: 1.0,
       };
     }
@@ -455,15 +416,41 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
     const i = this.getIdManager().getId(msg.idx);
-    (this.worldModel.forms[i] as Record<string, unknown>)[msg.propName] =
+    const form = this.worldModel.forms[i];
+    (form as Record<string, unknown>)[msg.propName] =
       msg.data;
+  }
+
+  DeathStateContainer(msg: messages.DeathStateContainerMessage): void {
+    once("update", () => printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`));
+    if (msg.tIsDead.propName !== nameof<FormModel>("isDead") || typeof msg.tIsDead.data !== "boolean") return;
+
+    if (msg.tChangeValues) {
+      this.ChangeValues(msg.tChangeValues);
+    }
+    once("update", () => this.UpdateProperty(msg.tIsDead));
+
+    if (msg.tTeleport) {
+      this.teleport(msg.tTeleport);
+    }
+
+    const id = this.getIdManager().getId(msg.tIsDead.idx);
+    const form = this.worldModel.forms[id];
+    once("update", () => {
+      const actor = id === this.getWorldModel().playerCharacterFormIdx ?
+        Game.getPlayer()! :
+        Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
+      if (actor) {
+        applyDeathState(actor, msg.tIsDead.data as boolean);
+      }
+    });
   }
 
   handleConnectionAccepted(): void {
     this.worldModel.forms = [];
     this.worldModel.playerCharacterFormIdx = -1;
 
-    verifySourceCode();
+    loginWithSkympIoCredentials();
     sendBrowserToken();
   }
 
@@ -498,23 +485,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   customPacket(msg: messages.CustomPacket): void {
     switch (msg.content.customPacketType) {
       case "loginRequired":
-        verifyStartMoment = 0;
-        maxVerifyDelay = maxVerifyDelayDefault;
         loginWithSkympIoCredentials();
-        break;
-      case "newClientVersion":
-        if (typeof msg.content.src !== "string")
-          throw new Error(`'${msg.content.src}' is not a string`);
-        const src: string = msg.content.src as string;
-
-        // Force reconnecting after hot reload (see skympClient.ts)
-        //networking.close();
-        //storage.targetIp = "";
-
-        taskVerifySourceCode();
-
-        printConsole(`writing new version (${src} bytes)`);
-        if (src.length > 0) writePlugin("skymp5-client", src);
         break;
     }
   }
@@ -643,6 +614,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     const idxInModel = refrId
       ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId)
       : this.worldModel.playerCharacterFormIdx;
+    // fixes "can't get property idx of null or undefined"
+    if (!this.worldModel.forms[idxInModel]) return;
     msg.idx = this.worldModel.forms[idxInModel].idx;
 
     delete msg._refrId;

@@ -24,6 +24,7 @@ export enum MsgType {
   CustomEvent = 15,
   ChangeValues = 16,
   OnHit = 17,
+  DeathStateContainer = 18,
 }
 
 export interface SetInventory {
@@ -95,6 +96,13 @@ export interface UpdatePropertyMessage {
 export interface ChangeValuesMessage {
   t: MsgType.ChangeValues;
   data: ActorValues;
+}
+
+export interface DeathStateContainerMessage {
+  t: MsgType.DeathStateContainer;
+  tTeleport?: Teleport,
+  tChangeValues?: ChangeValuesMessage,
+  tIsDead: UpdatePropertyMessage,
 }
 
 export interface SetRaceMenuOpenMessage {

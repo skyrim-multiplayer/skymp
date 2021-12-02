@@ -1,31 +1,5 @@
 {
   "name": "@skymp/skyrim-platform",
-  "main": "dist_codegen/index.ts",
-  "version": "0.7.1",
-  "description": "A modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript",
-  "contributors": [
-    {
-      "name": "Leonid Pospelov",
-      "email": "pospelovlm@yandex.ru",
-      "url": "https://github.com/Pospelove"
-    },
-    {
-      "name": "Svyatoslav Ratov",
-      "email": "svyatoslavratov@gmail.com",
-      "url": "https://github.com/svyatoslavratov"
-    },
-    {
-      "name": "Darkwood",
-      "url": "https://github.com/Darkwood9612"
-    }
-  ],
-  "files": [
-    "dist_codegen"
-  ],
-  "keywords": [
-    "skymp",
-    "skyrim platform",
-    "skyrim",
-    "typescript declaration"
-  ]
+  "version": "2.3.0",
+  "description": "A modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript"
 }

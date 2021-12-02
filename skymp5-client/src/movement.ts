@@ -15,12 +15,12 @@ export interface AnimationVariables {
   isSneaking: boolean;
   isBlocking: boolean;
   isWeapDrawn: boolean;
+  isDead: boolean;
   healthPercentage: number;
   lookAt?: NiPoint3;
 }
 
 export type Movement = Transform & AnimationVariables;
-
 
 // // This doesn't work in SkyrimPlatform 0.5.0:
 // export * from './movementApply';

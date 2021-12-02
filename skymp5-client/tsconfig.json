@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
     "baseUrl": "../build/dist/client/Data/Platform/Modules",
-    "outFile": "../build/dist/client/Data/Platform/Plugins/skymp5-client.js",
     "noImplicitAny": true,
-    "lib": ["ES2015", "es2017"],
+    "lib": [
+      "ES2015",
+      "es2017",
+    ],
+    "removeComments": true,
     "strict": true,
-    "skipLibCheck": true,
-    "module": "System",
+    "sourceMap": false,
+    "moduleResolution": "node",
+    "module": "CommonJS",
     "target": "ES5",
-    "rootDir": ""
-  },
-  "include": ["src"]
+  }
 }

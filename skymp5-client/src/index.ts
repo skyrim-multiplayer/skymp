@@ -6,7 +6,6 @@ import {
   GlobalVariable,
   ObjectReference,
   Weather,
-  printConsole,
 } from "skyrimPlatform";
 import { SkympClient } from "./skympClient";
 import * as browser from "./browser";
@@ -20,17 +19,23 @@ const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
 };
 
+export const defaultLocalDamageMult = 1;
+export const setLocalDamageMult = (damageMult: number): void => {
+  Game.setGameSettingFloat("fDiffMultHPToPCE", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCH", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCL", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCN", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCVE", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
+}
+
 once("update", enforceLimitations);
 loadGameManager.addLoadGameListener(enforceLimitations);
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
-  Game.setGameSettingFloat("fDiffMultHPToPCE", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCH", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCL", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCN", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCVE", 0);
-  Game.setGameSettingFloat("fDiffMultHPToPCVH", 0);
+  Game.setGameSettingInt("iDeathDropWeaponChance", 0);
+  setLocalDamageMult(defaultLocalDamageMult);
 });
 on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);

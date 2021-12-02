@@ -970,6 +970,10 @@ espm::NPC_::Data espm::NPC_::GetData(
         result.healthOffset = *reinterpret_cast<const uint16_t*>(data + 20);
       } else if (!memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!memcmp(type, "OBND", 4)) {
+        if (auto objectBounds = reinterpret_cast<const ObjectBounds*>(data)) {
+          result.objectBounds = *objectBounds;
+        }
       }
     },
     compressedFieldsCache);
@@ -992,6 +996,30 @@ espm::WEAP::Data espm::WEAP::GetData(
     },
     compressedFieldsCache);
   return result;
+}
+
+namespace espm {
+ARMO::Data ARMO::GetData(CompressedFieldsCache& compressedFieldsCache) const
+{
+  Data result;
+  bool hasDNAM = false;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        result.baseValue = *reinterpret_cast<const uint32_t*>(data);
+        result.weight = *reinterpret_cast<const float*>(data + 4);
+      } else if (!memcmp(type, "DNAM", 4)) {
+        hasDNAM = true;
+        result.baseRatingX100 = *reinterpret_cast<const uint32_t*>(data);
+      }
+    },
+    compressedFieldsCache);
+  if (!hasDNAM) {
+    throw std::runtime_error("bad record ARMO? DNAM was not found");
+  }
+  return result;
+}
 }
 
 espm::RACE::Data espm::RACE::GetData(

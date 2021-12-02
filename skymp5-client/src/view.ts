@@ -27,6 +27,7 @@ import { tryHost } from "./hostAttempts";
 import { getMovement } from "./movementGet";
 import { Movement } from "./movement";
 import * as deathSystem from "./deathSystem";
+import { RespawnNeededError } from "./errors";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -320,6 +321,7 @@ export class FormView implements View<FormModel> {
         );
         if (model.appearance && model.appearance.name)
           refr.setDisplayName("" + model.appearance.name, true);
+        Actor.from(refr)?.setActorValue("attackDamageMult", 0);
       }
       this.refrId = (refr as ObjectReference).getFormID();
     }
@@ -493,7 +495,6 @@ export class FormView implements View<FormModel> {
           const remoteId = this.remoteRefrId;
           if (ac && ac.is3DLoaded()) {
             tryHostIfNeed(ac, remoteId as number);
-            printConsole("try to rehost");
           }
         }
       }
@@ -509,7 +510,19 @@ export class FormView implements View<FormModel> {
           if (forcedWeapDrawn === true || forcedWeapDrawn === false) {
             model.movement.isWeapDrawn = forcedWeapDrawn;
           }
-          applyMovement(refr, model.movement);
+          try {
+            applyMovement(refr, model.movement);
+          } catch (e) {
+            if (e instanceof RespawnNeededError) {
+              this.lastWorldOrCell = model.movement.worldOrCell;
+              this.destroy();
+              this.refrId = 0;
+              this.appearanceBasedBaseId = 0;
+              return;
+            } else {
+              throw e;
+            }
+          }
           model.movement.isWeapDrawn = backup;
 
           this.movState.lastNumChanges = +(model.numMovementChanges as number);
