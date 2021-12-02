@@ -14,4 +14,4 @@ jobs:
                 image: skymp/skymp-vcpkg-deps:latest
                 options: -v ${{ github.workspace }}:/src
                 run: |
-                    ls -alhR /home/skymp /src
+                    id
