@@ -64,6 +64,21 @@ jobs:
                     cd /src \
                     && ./build.sh --build
 
+          - name: Prepare dist.tar.gz
+            uses: addnab/docker-run-action@v3
+            with:
+                image: skymp/skymp-vcpkg-deps:latest
+                options: -v ${{ github.workspace }}:/src -u skymp
+                run: |
+                    cd /src/build \
+                    && tar czf dist.tar.gz dist
+
+          - name: Upload dist.tar.gz
+            uses: actions/upload-artifact@v2
+            with:
+              name: dist.tar.gz
+              path: ${{github.sorkspace}}/build/dist.tar.gz
+
           - name: Test
             uses: addnab/docker-run-action@v3
             with:
