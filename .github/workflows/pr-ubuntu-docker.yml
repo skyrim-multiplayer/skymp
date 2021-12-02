@@ -43,7 +43,6 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
-                    -u skymp
                 run: |
                     chown -R skymp:skymp /src /home/skymp/.cmake-js
 
