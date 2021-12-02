@@ -100,4 +100,6 @@ jobs:
                     -u skymp
                 run: |
                     cd /src/build \
-                    && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
+                    ./unit/unit
+                # not working output for some reason:
+                # && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
