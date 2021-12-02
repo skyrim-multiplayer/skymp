@@ -49,6 +49,7 @@ struct PartOne::Impl
   std::shared_ptr<spdlog::logger> logger;
 
   Networking::ISendTarget* sendTarget = nullptr;
+  std::unique_ptr<IDamageFormula> damageFormula{};
   FakeSendTarget fakeSendTarget;
 
   GamemodeApi::State gamemodeApiState;
@@ -81,6 +82,11 @@ void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
   pImpl->sendTarget = sendTarget ? sendTarget : &pImpl->fakeSendTarget;
 }
 
+void PartOne::SetDamageFormula(std::unique_ptr<IDamageFormula> dmgFormula)
+{
+  pImpl->damageFormula = std::move(dmgFormula);
+}
+
 void PartOne::AddListener(std::shared_ptr<Listener> listener)
 {
   worldState.listeners.push_back(listener);
@@ -93,7 +99,7 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 
 void PartOne::Tick()
 {
-  worldState.TickTimers();
+  worldState.Tick();
 }
 
 uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
@@ -104,8 +110,11 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
     formId = worldState.GenerateFormId();
   }
   worldState.AddForm(
-    std::unique_ptr<MpActor>(new MpActor(
-      { pos, { 0, 0, angleZ }, cellOrWorld }, CreateFormCallbacks())),
+    std::unique_ptr<MpActor>(
+      new MpActor({ pos,
+                    { 0, 0, angleZ },
+                    FormDesc::FromFormId(cellOrWorld, worldState.espmFiles) },
+                  CreateFormCallbacks())),
     formId);
   if (profileId >= 0) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
@@ -219,7 +228,7 @@ NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
 uint32_t PartOne::GetActorCellOrWorld(uint32_t actorFormId)
 {
   auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
-  return ac.GetCellOrWorld();
+  return ac.GetCellOrWorld().ToFormId(worldState.espmFiles);
 }
 
 const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
@@ -349,9 +358,19 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
 
 Networking::ISendTarget& PartOne::GetSendTarget() const
 {
-  if (!pImpl->sendTarget)
+  if (!pImpl->sendTarget) {
     throw std::runtime_error("No send target found");
+  }
   return *pImpl->sendTarget;
+}
+
+float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
+                               const HitData& hitData) const
+{
+  if (!pImpl->damageFormula) {
+    throw std::runtime_error("no damage formula");
+  }
+  return pImpl->damageFormula->CalculateDamage(aggressor, target, hitData);
 }
 
 void PartOne::NotifyGamemodeApiStateChanged(
@@ -547,15 +566,18 @@ void PartOne::Init()
 
     const char* method = "createActor";
 
+    uint32_t worldOrCell =
+      emitter->GetCellOrWorld().ToFormId(worldState.espmFiles);
+
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      emitter->GetCellOrWorld(), appearancePrefix, appearance, equipmentPrefix,
-      equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
-      props.data(), propsPostfix);
+      worldOrCell, appearancePrefix, appearance, equipmentPrefix, equipment,
+      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
+      propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,

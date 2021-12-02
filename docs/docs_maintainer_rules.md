@@ -16,12 +16,13 @@ Merge commits are avoided in the source tree like in [microsoft/vcpkg](https://g
 Commit names follow [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/).
 
 Commit types used (sorted by priority):
+* release - for releasing new versions of SP and other projects.
 * feat - API or functionality change, both backward-compatible or not.
 * fix - bugfix or crash fix.
 * tests - changes in tests.
 * perf - changes in code that target improving performance.
 * docs - changes in text files.
-* refact - changes in code that target improving readability.
+* refact - changes in code that target improving readability or rewriting code in different lang/style.
 * internal - fixes or changes in the build system, catalog structure, or anything that doesn't execute on the user's machine.
 
 Repo subdirectories are used to name commit scopes. Commits without scope are allowed.
@@ -37,6 +38,7 @@ Examples:
 feat(skymp5-server): add feature to choose default spawn points
 internal: make server's node addon buildable via top-level CMakeLists
 fix: server startup
+release(skyrim-platform): version 2.1
 ```
 
 Note that `BREAKING CHANGE` footer isn't used. Only `!` sign.

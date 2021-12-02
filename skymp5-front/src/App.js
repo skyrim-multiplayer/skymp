@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 
-import Chat from "./features/chat";
+import Chat from "./constructorComponents/chat"
 import AnimList from "./features/animList";
 import Constructor from "./constructor";
 
@@ -10,7 +10,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       isLoggined: false,
-      widget: this.props.elem[0] || null
+      widgets: this.props.elem || null
     }
   }
 
@@ -36,7 +36,7 @@ class App extends React.Component {
       window.skymp.on("message", (action) => {
         window.storage.dispatch(action);
       });
-    } catch {}
+    } catch { }
 
     window.isMoveWindow = false;
     window.addEventListener("mousemove", this.onMoveWindow);
@@ -47,7 +47,7 @@ class App extends React.Component {
   handleWidgetUpdate(newWidgets) {
     this.setState({
       ...this.state,
-      widget: newWidgets[0]
+      widgets: newWidgets
     })
   }
   componentWillUnmount() {
@@ -75,16 +75,23 @@ class App extends React.Component {
   render() {
     if (this.state.isLoggined)
       return (
-          <div className={`App ${!window.hasOwnProperty("skymp") ? "bg" : ""}`}>
-            <AnimList />
-            <Chat />
-          </div>
+        <div className={`App ${!window.hasOwnProperty("skyrimPlatform") ? "bg" : ""}`}>
+          <AnimList />
+          <Chat />
+        </div>
       )
     else
-      if (this.state.widget)
+      if (this.state.widgets)
         return (
           <>
-            <Constructor dynamicSize={true} elem={this.state.widget} height={this.props.height || 704} width={this.props.width || 512} />
+            {this.state.widgets.map((widget, index) =>
+              <Constructor
+                key={index.toString() + widget.type + ((widget.type == "form") ? widget.elements + widget.caption : (widget.type === "chat") ? widget.messages : "")}
+                dynamicSize={true}
+                elem={widget}
+                height={this.props.height || 704}
+                width={this.props.width || 512} />
+            )}
           </>
         )
       else

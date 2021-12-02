@@ -79,7 +79,7 @@ TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne][espm]")
 
   ref.Activate(actor);
 
-  REQUIRE(actor.GetCellOrWorld() == 0x3c);
+  REQUIRE(actor.GetCellOrWorld() == FormDesc::Tamriel());
 
   partOne.worldState.DestroyForm(0xff000000);
 
@@ -99,7 +99,7 @@ TEST_CASE("OnTriggerEnter crash in MovarthsLairExterior01", "[PartOne][espm]")
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
   actor.SetPos(ref.GetPos());
-  partOne.worldState.TickTimers();
+  partOne.worldState.Tick();
 
   partOne.worldState.DestroyForm(0xff000000);
 

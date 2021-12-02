@@ -4,13 +4,16 @@
 
 struct HitData
 {
+  // Aggressor player's form id
   uint32_t aggressor = 0;
   bool isBashAttack = false;
   bool isHitBlocked = false;
   bool isPowerAttack = false;
   bool isSneakAttack = false;
   uint32_t projectile = 0;
+  // Weapon's form id
   uint32_t source = 0;
+  // Target player's form id
   uint32_t target = 0;
 
   static HitData FromJson(const simdjson::dom::element& data)

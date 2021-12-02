@@ -50,8 +50,7 @@ class GameEventSinks
 
 {
 public:
-  GameEventSinks(TaskQueue& taskQueue_)
-    : taskQueue(taskQueue_)
+  GameEventSinks()
   {
     auto holder = RE::ScriptEventSourceHolder::GetSingleton();
     if (!holder)
@@ -213,6 +212,4 @@ private:
   RE::BSEventNotifyControl ProcessEvent(
     const RE::MenuOpenCloseEvent* e,
     RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource) override;
-
-  TaskQueue& taskQueue;
 };

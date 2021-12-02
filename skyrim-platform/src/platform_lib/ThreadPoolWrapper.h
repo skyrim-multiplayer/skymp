@@ -11,12 +11,17 @@ public:
   {
   }
 
-  auto Push(std::function<void(int32_t)> f)
+  std::future<void> Push(const std::function<void(int32_t)>& task)
   {
     if (!pool) {
       pool = std::make_unique<ctpl::thread_pool>(numThreads);
     }
-    return pool->push(f);
+    return pool->push(task);
+  }
+
+  void PushAndWait(const std::function<void(int32_t)>& task)
+  {
+    Push(task).wait();
   }
 
 private:

@@ -8,7 +8,7 @@
     margin: auto;
     position: relative;
     &--content {
-      font-family: Bankir-Retro, sans-serif;
+      font-family: 'Bankir-Retro', sans-serif;
       display: flex;
       flex-direction: column;
       z-index: 9999;
@@ -40,15 +40,10 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-       // width: 430px;
         margin: 30px auto auto;
-        //height: 400px;
         .skymp-input {
           align-self: flex-end;
-          margin-bottom: 10px;
           justify-self: flex-end;
-         //margin-left: auto;
-          //margin-right: 10px;
         }
         &__email {
           margin-top: 10px;
@@ -97,6 +92,9 @@
     }
   }
 }
+.login-form--content_social__link {
+  cursor: pointer;
+}
 
 .skymp-input.button {
   text-align: center;
@@ -112,7 +110,7 @@
     }
   }
   .skymp-input_text {
-    font-family: Bankir-Retro, serif;
+    font-family: 'Bankir-Retro', serif;
     font-style: normal;
     font-weight: normal;
     font-size: 30px;
@@ -121,11 +119,6 @@
     margin: auto;
   }
 }
-
-
-
-
-
 
 /* Checkmark style starts */
 @-moz-keyframes
@@ -187,8 +180,8 @@ dothatopcheck {  0% {
 }
 
 .checkbox {
-  height: 50px;
-  width: 50px;
+  height: 52px;
+  width: 52px;
   background-color: transparent;
   border: 3px solid #9D9E9EBF;
   border-radius: 12px;
