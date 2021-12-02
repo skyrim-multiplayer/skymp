@@ -1,0 +1,19 @@
+name: Formatting check
+on: [push, pull_request]
+jobs:
+    pr-ubuntu-docker:
+        name: ;
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v2
+          - name: Build & Test
+            uses: addnab/docker-run-action@v3
+            with:
+            #   username: ${{ secrets.DOCKER_USERNAME }}
+            #   password: ${{ secrets.DOCKER_PASSWORD }}
+            #   registry: gcr.io
+                image: skymp/skymp-vcpkg-deps:latest
+                options: -v ${{ github.workspace }}:/src
+                run: |
+                    ls -lhR /home/skymp /src
