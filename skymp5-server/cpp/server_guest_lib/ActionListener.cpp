@@ -347,7 +347,7 @@ void ActionListener::OnConsoleCommand(
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
                     const espm::CombineBrowser& br, int espmIdx)
 {
-  auto mapping = br.GetMapping(espmIdx);
+  auto mapping = br.GetCombMapping(espmIdx);
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
     auto formId = espm::GetMappedId(entry.formId, *mapping);
