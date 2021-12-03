@@ -7,6 +7,7 @@
 #include <ui/DX11RenderHandler.h>
 #include <ui/MyRenderHandler.h>
 #include <ui/ProcessMessageListener.h>
+#include <ui/TextToDraw.h>
 
 #include "TPRenderSystemD3D11.h"
 
@@ -39,8 +40,10 @@ private:
 };
 
 OverlayService::OverlayService(
-  std::shared_ptr<ProcessMessageListener> onProcessMessage_)
+  std::shared_ptr<ProcessMessageListener> onProcessMessage_,
+  std::vector<TextToDraw>* pTextsToDraw_)
   : onProcessMessage(onProcessMessage_)
+  , m_pTextsToDraw(pTextsToDraw_)
 {
 }
 
@@ -58,7 +61,7 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
 
 void OverlayService::Render() const
 {
-  overlay->GetClient()->Render();
+  overlay->GetClient()->Render(m_pTextsToDraw);
 }
 
 void OverlayService::Reset() const

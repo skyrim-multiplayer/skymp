@@ -23,6 +23,7 @@
 #include "TaskQueue.h"
 #include "ThreadPoolWrapper.h"
 #include "TickTask.h"
+#include "ui/TextToDraw.h"
 #include <RE/ConsoleLog.h>
 #include <Windows.h>
 #include <atomic>
@@ -96,6 +97,14 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
   g_nativeCallRequirements.gameThrQ->Update();
   g_nativeCallRequirements.stackId = std::numeric_limits<RE::VMStackID>::max();
   g_nativeCallRequirements.vm = nullptr;
+}
+
+std::vector<TextToDraw> ObtainTextsToDraw()
+{
+  std::vector<TextToDraw> textsToDraw = { TextToDraw(L"Hello, Skymp!#1"),
+                                          TextToDraw(L"Hello, Skymp!#2"),
+                                          TextToDraw(L"Hello, Skymp!#3") };
+  return textsToDraw;
 }
 
 extern "C" {
@@ -510,7 +519,9 @@ public:
 
     auto onProcessMessage = std::make_shared<ProcessMessageListenerImpl>();
 
-    overlayService = std::make_shared<OverlayService>(onProcessMessage);
+    std::vector<TextToDraw> textsToDraw = ObtainTextsToDraw();
+    overlayService =
+      std::make_shared<OverlayService>(onProcessMessage, &textsToDraw);
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
 

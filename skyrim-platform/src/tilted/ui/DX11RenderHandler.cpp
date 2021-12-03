@@ -1,6 +1,7 @@
 #include <DX11RenderHandler.h>
 #include <OverlayClient.h>
 
+#include "../ui/TextToDraw.h"
 #include <DirectXColors.h>
 #include <DirectXTK/CommonStates.h>
 #include <DirectXTK/DDSTextureLoader.h>
@@ -26,7 +27,7 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
 
 DX11RenderHandler::~DX11RenderHandler() = default;
 
-void DX11RenderHandler::Render()
+void DX11RenderHandler::Render(std::vector<TextToDraw>* pTextsToDraw)
 {
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {
@@ -67,13 +68,17 @@ void DX11RenderHandler::Render()
   // Temporary prototype, to be changed in #430
   if (Visible()) {
     const wchar_t* kString = L"Hello Skymp!";
+    std::vector<TextToDraw>& textsToDraw = *pTextsToDraw;
 
-    auto origin =
-      DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(kString)) / 2;
+    for (auto& textToDraw : textsToDraw) {
+      auto origin = DirectX::SimpleMath::Vector2(
+                      m_pSpriteFont->MeasureString(textToDraw.kString)) /
+        2;
 
-    m_pSpriteFont->DrawString(m_pSpriteBatch.get(), kString,
-                              DirectX::XMFLOAT2(m_width / 2, m_height / 2),
-                              DirectX::Colors::Blue, 0.f, origin);
+      m_pSpriteFont->DrawString(m_pSpriteBatch.get(), textToDraw.kString,
+                                DirectX::XMFLOAT2(m_width / 2, m_height / 2),
+                                DirectX::Colors::Blue, 0.f, origin);
+    }
   }
 
   if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {

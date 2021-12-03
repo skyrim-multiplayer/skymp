@@ -1,3 +1,4 @@
+#include "../ui/TextToDraw.h"
 #include <Filesystem.hpp>
 #include <MyCtxHandler.h>
 #include <OverlayClient.h>
@@ -76,10 +77,11 @@ void OverlayClient::Create() const noexcept
     m_pRenderHandler->Create();
 }
 
-void OverlayClient::Render() const noexcept
+void OverlayClient::Render(
+  std::vector<TextToDraw>* pTextsToDraw) const noexcept
 {
   if (m_pRenderHandler) {
-    m_pRenderHandler->Render();
+    m_pRenderHandler->Render(pTextsToDraw);
   }
 }
 
