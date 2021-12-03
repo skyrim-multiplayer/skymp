@@ -142,6 +142,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   openContainer(msg: messages.OpenContainer): void {
     once("update", async () => {
+      printConsole(`Container ${msg.target} has been opened`)
       await Utility.wait(0.1); // Give a chance to update inventory
       (
         ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference
@@ -362,6 +363,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         });
       });
     }
+    printConsole(`Actor has been created {id: ${msg.idx}}`);
   }
 
   destroyActor(msg: messages.DestroyActorMessage): void {
@@ -382,8 +384,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       // TODO: move to a separate module
       once("update", () => Game.quitToMainMenu());
     }
-
+    
     this.getIdManager().freeIdFor(msg.idx);
+    printConsole(`Actor has been destroyed {id: ${msg.idx}}`);
   }
 
   UpdateMovement(msg: messages.UpdateMovementMessage): void {
