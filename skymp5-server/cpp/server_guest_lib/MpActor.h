@@ -9,9 +9,6 @@
 class WorldState;
 
 constexpr float kRespawnTimeSeconds = 5.f;
-static const LocationalData kSpawnPos = { { 133857, -61130, 14662 },
-                                          { 0.f, 0.f, 72.f },
-                                          FormDesc::Tamriel() };
 
 class MpActor : public MpObjectReference
 {
@@ -62,7 +59,7 @@ public:
 
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
   void SetPercentages(float healthPercentage, float magickaPercentage,
-                      float staminaPercentage);
+                      float staminaPercentage, MpActor* aggressor = nullptr);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
   std::chrono::steady_clock::time_point GetLastHitTime();
@@ -76,10 +73,12 @@ public:
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point now);
 
-  void Kill();
-  void RespawnAfter(float seconds, const LocationalData& position = kSpawnPos);
-  void Respawn(const LocationalData& position = kSpawnPos);
+  void Kill(MpActor* killer = nullptr);
+  void RespawnAfter(float seconds, const LocationalData& position);
+  void Respawn(const LocationalData& position);
   void Teleport(const LocationalData& position);
+  void SetSpawnPoint(const LocationalData& position);
+  LocationalData GetSpawnPoint() const;
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
@@ -92,6 +91,7 @@ private:
                             bool shouldTeleport = true);
   std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
                                bool shouldTeleport);
+  void MpApiDeath(MpActor* killer = nullptr);
 
 protected:
   void BeforeDestroy() override;

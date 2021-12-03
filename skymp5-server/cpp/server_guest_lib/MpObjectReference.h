@@ -4,6 +4,7 @@
 #include "IWorldObject.h"
 #include "Inventory.h"
 #include "JsonUtils.h"
+#include "LocationalData.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
 #include <Loader.h>
@@ -18,12 +19,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
-struct LocationalData
-{
-  NiPoint3 pos, rot;
-  FormDesc cellOrWorldDesc;
-};
 
 struct GridPosInfo
 {

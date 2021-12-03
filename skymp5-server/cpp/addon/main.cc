@@ -1271,7 +1271,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-      if (propertyName == "locationalData") {
+      if (propertyName == "locationalData" || propertyName == "spawnPoint") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
           LocationalData locationalData;
           locationalData.cellOrWorldDesc =
@@ -1280,7 +1280,11 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
             locationalData.pos[i] = newValue["pos"][i].get<float>();
             locationalData.rot[i] = newValue["rot"][i].get<float>();
           }
-          actor->Teleport(locationalData);
+          if (propertyName == "locationalData") {
+            actor->Teleport(locationalData);
+          } else {
+            actor->SetSpawnPoint(locationalData);
+          }
         } else {
           throw std::runtime_error("mp.set can only change 'locationalData' "
                                    "for actors, not for refrs");

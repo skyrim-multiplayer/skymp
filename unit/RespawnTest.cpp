@@ -40,13 +40,13 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.SetPos(kSpawnPos.pos);
-  ac.SetAngle(kSpawnPos.rot);
-  ac.SetCellOrWorld(kSpawnPos.cellOrWorldDesc);
+  ac.SetPos(ac.GetSpawnPoint().pos);
+  ac.SetAngle(ac.GetSpawnPoint().rot);
+  ac.SetCellOrWorld(ac.GetSpawnPoint().cellOrWorldDesc);
 
   ac.Kill();
   p.Messages().clear();
-  ac.Respawn();
+  ac.Respawn(ac.GetSpawnPoint());
 
   REQUIRE(p.Messages().size() == 1);
   nlohmann::json message = p.Messages()[0].j;
