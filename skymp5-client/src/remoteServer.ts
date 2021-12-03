@@ -382,7 +382,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       // TODO: move to a separate module
       once("update", () => Game.quitToMainMenu());
     }
-    
+
     this.getIdManager().freeIdFor(msg.idx);
   }
 
