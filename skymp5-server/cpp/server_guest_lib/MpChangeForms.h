@@ -4,6 +4,7 @@
 #include "Equipment.h"
 #include "FormDesc.h"
 #include "Inventory.h"
+#include "LocationalData.h"
 #include "NiPoint3.h"
 #include <cstdint>
 #include <optional>
@@ -47,6 +48,9 @@ public:
   float healthPercentage = 1.0f;
   float magickaPercentage = 1.0f;
   float staminaPercentage = 1.0f;
+  LocationalData spawnPoint = { { 133857, -61130, 14662 },
+                                { 0.f, 0.f, 72.f },
+                                FormDesc::Tamriel() };
 
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
@@ -63,7 +67,8 @@ public:
       recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
       angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
-      isRaceMenuOpen, appearanceDump, equipmentDump);
+      isRaceMenuOpen, isDead, appearanceDump, equipmentDump, healthPercentage,
+      magickaPercentage, staminaPercentage, spawnPoint, dynamicFields);
   }
 
   static nlohmann::json ToJson(const MpChangeForm& changeForm);

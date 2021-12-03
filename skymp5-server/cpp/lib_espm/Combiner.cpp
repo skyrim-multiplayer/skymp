@@ -101,7 +101,7 @@ uint32_t espm::BrowserInfo::ToGlobalId(uint32_t rawId) const noexcept
 {
   if (!parent)
     return 0;
-  const auto mapping = parent->GetMapping(fileIdx);
+  const auto mapping = parent->GetCombMapping(fileIdx);
   return espm::GetMappedId(rawId, *mapping);
 }
 
@@ -181,12 +181,20 @@ espm::CombineBrowser::GetRecordsAtPos(uint32_t cellOrWorld, int16_t cellX,
   return res;
 }
 
-const espm::IdMapping* espm::CombineBrowser::GetMapping(
+const espm::IdMapping* espm::CombineBrowser::GetCombMapping(
   size_t fileIndex) const noexcept
 {
   if (fileIndex >= pImpl->numSources)
     return nullptr;
   return pImpl->sources[fileIndex].toComb.get();
+}
+
+const espm::IdMapping* espm::CombineBrowser::GetRawMapping(
+  size_t fileIndex) const noexcept
+{
+  if (fileIndex >= pImpl->numSources)
+    return nullptr;
+  return pImpl->sources[fileIndex].toRaw.get();
 }
 
 espm::CompressedFieldsCache& espm::CombineBrowser::GetCache() const noexcept

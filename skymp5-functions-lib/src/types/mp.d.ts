@@ -99,6 +99,7 @@ export interface Mp {
    */
   get(formId: number, propertyName: string): JsonSerializable | undefined;
   get(formId: number, propertyName: 'neighbors'): number[];
+  get(formId: number, propertyName: 'actorNeighbors'): number[];
   get(formId: number, propertyName: 'type'): 'MpActor' | 'MpObjectReference';
   get(formId: number, propertyName: 'appearance'): Record<string, unknown>;
   get(formId: number, propertyName: 'pos'): [number, number, number];
@@ -116,7 +117,8 @@ export interface Mp {
    */
   set(formId: number, propertyName: string, newValue: JsonSerializable): void;
   set(formId: number, propertyName: 'inventory', newValue: Inventory): void;
-  set(formId: number, propertyName: 'pos' | 'angle', newValue: [number, number, number]): void;
+  set(formId: number, propertyName: 'locationalData', newValue: LocationalData): void;
+  set(formId: number, propertyName: 'spawnPoint', newValue: LocationalData): void;
 
   /**
    * Creates a new property that would be attached to all instances of

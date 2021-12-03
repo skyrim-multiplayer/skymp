@@ -123,6 +123,7 @@ MpChangeForm MpActor::GetChangeForm() const
   res.magickaPercentage = achr.magickaPercentage;
   res.staminaPercentage = achr.staminaPercentage;
   res.isDead = achr.isDead;
+  res.spawnPoint = achr.spawnPoint;
   // achr.dynamicFields isn't really used so I decided to comment this line:
   // res.dynamicFields.merge_patch(achr.dynamicFields);
 
@@ -169,14 +170,14 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
 }
 
 void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
-                             float staminaPercentage)
+                             float staminaPercentage, MpActor* aggressor)
 {
   if (IsDead() || pImpl->isRespawning) {
     return;
   }
   if (healthPercentage == 0.f) {
-    Kill();
-    RespawnAfter(kRespawnTimeSeconds);
+    Kill(aggressor);
+    RespawnAfter(kRespawnTimeSeconds, GetSpawnPoint());
     return;
   }
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
@@ -346,6 +347,22 @@ std::string MpActor::GetDeathStateMsg(const LocationalData& position,
   return DeathStateMsg;
 }
 
+void MpActor::MpApiDeath(MpActor* killer)
+{
+  simdjson::dom::parser parser;
+
+  std::string s =
+    "[" + std::to_string(killer ? killer->GetFormId() : 0) + " ]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      listener->OnMpApiEvent("onDeath", args, id);
+    }
+  }
+}
+
 void MpActor::BeforeDestroy()
 {
   for (auto& sink : destroyEventSinks)
@@ -365,9 +382,10 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
   }
 }
 
-void MpActor::Kill()
+void MpActor::Kill(MpActor* killer)
 {
   SendAndSetDeathState(true);
+  MpApiDeath(killer);
 }
 
 void MpActor::RespawnAfter(float seconds, const LocationalData& position)
@@ -407,4 +425,15 @@ void MpActor::Teleport(const LocationalData& position)
   SetCellOrWorldObsolete(position.cellOrWorldDesc);
   SetPos(position.pos);
   SetAngle(position.rot);
+}
+
+void MpActor::SetSpawnPoint(const LocationalData& position)
+{
+  pImpl->EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.spawnPoint = position; });
+}
+
+LocationalData MpActor::GetSpawnPoint() const
+{
+  return pImpl->ChangeForm().spawnPoint;
 }

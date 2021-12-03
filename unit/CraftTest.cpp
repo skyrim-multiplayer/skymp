@@ -152,7 +152,7 @@ TEST_CASE("DLC Hearthfires recipes are working", "[Craft][espm]")
 {
   PartOne& p = GetPartOne();
 
-  REQUIRE(RecipeMatches(p.GetEspm().GetBrowser().GetMapping(3),
+  REQUIRE(RecipeMatches(p.GetEspm().GetBrowser().GetCombMapping(3),
                         espm::Convert<espm::COBJ>(
                           p.GetEspm().GetBrowser().LookupById(0x0300306d).rec),
                         Inventory().AddItem(0x0005ACE4, 1),
