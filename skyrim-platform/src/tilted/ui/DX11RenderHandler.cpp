@@ -6,6 +6,7 @@
 #include <DirectXTK/DDSTextureLoader.h>
 #include <DirectXTK/SimpleMath.h>
 #include <DirectXTK/SpriteBatch.h>
+#include <DirectXTK/SpriteFont.h>
 #include <DirectXTK/WICTextureLoader.h>
 #include <cmrc/cmrc.hpp>
 
@@ -63,6 +64,18 @@ void DX11RenderHandler::Render()
     }
   }
 
+  // Temporary prototype, to be changed in #430
+  if (Visible()) {
+    const wchar_t* kString = L"Hello Skymp!";
+
+    auto origin =
+      DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(kString)) / 2;
+
+    m_pSpriteFont->DrawString(m_pSpriteBatch.get(), kString,
+                              DirectX::XMFLOAT2(m_width / 2, m_height / 2),
+                              DirectX::Colors::Blue, 0.f, origin);
+  }
+
   if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {
     m_pSpriteBatch->Draw(
       m_pCursorTexture.Get(),
@@ -101,7 +114,11 @@ void DX11RenderHandler::Create()
 
   m_pSpriteBatch =
     std::make_unique<DirectX::SpriteBatch>(m_pImmediateContext.Get());
+
   m_pStates = std::make_unique<DirectX::CommonStates>(m_pDevice.Get());
+
+  m_pSpriteFont = std::make_unique<DirectX::SpriteFont>(
+    m_pDevice.Get(), L"Data\\Interface\\Fonts\\font.spritefont");
 
   if (FAILED(DirectX::CreateWICTextureFromFile(
         m_pDevice.Get(), m_pParent->GetCursorPathPNG().c_str(), nullptr,

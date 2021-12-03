@@ -8,6 +8,7 @@
 namespace DirectX {
 class SpriteBatch;
 class CommonStates;
+class SpriteFont;
 }
 
 struct IDXGISwapChain;
@@ -71,6 +72,8 @@ private:
   Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pImmediateContext;
 
   std::unique_ptr<DirectX::SpriteBatch> m_pSpriteBatch;
+  std::unique_ptr<DirectX::SpriteFont> m_pSpriteFont;
+
   std::unique_ptr<DirectX::CommonStates> m_pStates;
 };
 }
