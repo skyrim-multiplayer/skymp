@@ -99,6 +99,7 @@ export interface Mp {
    */
   get(formId: number, propertyName: string): JsonSerializable | undefined;
   get(formId: number, propertyName: 'neighbors'): number[];
+  get(formId: number, propertyName: 'actorNeighbors'): number[];
   get(formId: number, propertyName: 'type'): 'MpActor' | 'MpObjectReference';
   get(formId: number, propertyName: 'appearance'): Record<string, unknown>;
   get(formId: number, propertyName: 'pos'): [number, number, number];
