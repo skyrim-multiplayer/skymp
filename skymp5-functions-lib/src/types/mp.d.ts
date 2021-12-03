@@ -1,5 +1,3 @@
-import { Number } from 'aws-sdk/clients/iot';
-
 export interface MakePropertyOptions {
   /**
    * If set to false, `updateOwner` would never be invoked
@@ -88,6 +86,11 @@ export interface InventoryItemEq {
 export interface Equipment {
   inv: InventoryEq;
   numChanges: number;
+}
+export interface LocationalData {
+  cellOrWorldDesc: string;
+  pos: [number, number, number];
+  rot: [number, number, number];
 }
 
 export interface Mp {
