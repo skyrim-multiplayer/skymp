@@ -19,6 +19,10 @@ public:
   const nlohmann::json& GetAsJson() const;
   static DynamicFields FromJson(const nlohmann::json& j);
 
+  friend bool operator<(const DynamicFields& r, const DynamicFields& l);
+  friend bool operator==(const DynamicFields& r, const DynamicFields& l);
+  friend bool operator!=(const DynamicFields& r, const DynamicFields& l);
+
 private:
   struct Impl;
   std::unique_ptr<Impl, void (*)(Impl*)> pImpl;
