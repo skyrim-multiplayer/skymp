@@ -67,7 +67,6 @@ void DX11RenderHandler::Render(std::vector<TextToDraw>* pTextsToDraw)
 
   // Temporary prototype, to be changed in #430
   if (Visible()) {
-    const wchar_t* kString = L"Hello Skymp!";
     std::vector<TextToDraw>& textsToDraw = *pTextsToDraw;
 
     for (auto& textToDraw : textsToDraw) {
