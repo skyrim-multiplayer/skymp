@@ -344,7 +344,7 @@ bool WorldState::LoadForm(uint32_t formId)
   auto& br = GetEspm().GetBrowser();
   auto lookupResults = br.LookupByIdAll(formId);
   for (auto& lookupRes : lookupResults) {
-    auto mapping = br.GetMapping(lookupRes.fileIdx);
+    auto mapping = br.GetCombMapping(lookupRes.fileIdx);
     if (AttachEspmRecord(br, lookupRes.rec, *mapping)) {
       atLeastOneLoaded = true;
     }
@@ -436,11 +436,14 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
       for (int16_t y = cellY - 1; y <= cellY + 1; ++y) {
         const bool loaded = grids[cellOrWorld].loadedChunks[x][y];
         if (!loaded) {
-          auto records = br.GetRecordsAtPos(cellOrWorld, x, y);
           for (size_t i = 0; i < espmFiles.size(); ++i) {
-            auto mapping = br.GetMapping(i);
+            auto combMapping = br.GetCombMapping(i);
+            auto rawMapping = br.GetRawMapping(i);
+            uint32_t mappedCellOrWorld =
+              espm::GetMappedId(cellOrWorld, *rawMapping);
+            auto records = br.GetRecordsAtPos(mappedCellOrWorld, x, y);
             for (auto rec : *records[i]) {
-              auto mappedId = espm::GetMappedId(rec->GetId(), *mapping);
+              auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
               assert(mappedId < 0xff000000);
               LoadForm(mappedId);
             }

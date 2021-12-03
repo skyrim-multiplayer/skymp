@@ -255,7 +255,7 @@ void PartOne::AttachEspm(espm::Loader* espm)
   /*auto refrRecords = br.GetRecordsByType("REFR");
   for (size_t i = 0; i < refrRecords.size(); ++i) {
     auto& subVector = refrRecords[i];
-    auto mapping = br.GetMapping(i);
+    auto mapping = br.GetCombMapping(i);
 
     pImpl->logger->info("starting {}", worldState.espmFiles[i]);
 
