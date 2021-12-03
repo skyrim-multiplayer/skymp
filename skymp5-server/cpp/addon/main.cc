@@ -11,6 +11,7 @@
 #include "NetworkingMock.h"
 #include "PartOne.h"
 #include "ScriptStorage.h"
+#include "formulas/TES5DamageFormula.h"
 #include <JsEngine.h>
 #include <cassert>
 #include <memory>
@@ -104,7 +105,7 @@ private:
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   std::shared_ptr<JsEngine> chakraEngine;
-  TaskQueue chakraTaskQueue;
+  Viet::TaskQueue chakraTaskQueue;
   std::optional<Napi::FunctionReference> sendUiMessageImplementation;
   GamemodeApi::State gamemodeApiState;
 
@@ -352,6 +353,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->SetSendTarget(server.get());
+    partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
     partOne->worldState.AttachScriptStorage(scriptStorage);
     partOne->AttachEspm(espm);
     this->serverSettings = serverSettings;
@@ -1185,8 +1187,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         }
         res = arr;
       } else if (propertyName == "worldOrCellDesc") {
-        auto desc = FormDesc::FromFormId(refr.GetCellOrWorld(),
-                                         partOne->worldState.espmFiles);
+        auto desc = refr.GetCellOrWorld();
         res = JsValue(desc.ToString());
       } else if (propertyName == "baseDesc") {
         auto desc = FormDesc::FromFormId(refr.GetBaseId(),
@@ -1270,9 +1271,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         refr.SetTeleportFlag(true);
       } else if (propertyName == "worldOrCellDesc") {
         std::string str = newValue.get<std::string>();
-        uint32_t formId =
-          FormDesc::FromString(str).ToFormId(partOne->worldState.espmFiles);
-        refr.SetCellOrWorld(formId);
+        refr.SetCellOrWorld(FormDesc::FromString(str));
       } else if (propertyName == "isOpen") {
         refr.SetOpen(newValue.get<bool>());
       } else if (propertyName == "appearance") {
@@ -1335,7 +1334,9 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       std::string type = akFormToPlace.rec->GetType().ToString();
 
-      LocationalData locationalData = { { 0, 0, 0 }, { 0, 0, 0 }, 0x3c };
+      LocationalData locationalData = { { 0, 0, 0 },
+                                        { 0, 0, 0 },
+                                        FormDesc::Tamriel() };
       FormCallbacks callbacks = partOne->CreateFormCallbacks();
 
       std::unique_ptr<MpObjectReference> newRefr;

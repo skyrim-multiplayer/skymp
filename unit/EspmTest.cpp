@@ -28,14 +28,6 @@ TEST_CASE("Loads refr from Update.esm", "[espm]")
   REQUIRE(refr.rec->GetType() == "REFR");
 }
 
-TEST_CASE("Loads Iron Sword", "[espm]")
-{
-  auto& br = l.GetBrowser();
-
-  auto ironSword = br.LookupById(0x12eb7);
-  REQUIRE(ironSword.rec->GetType() == "WEAP");
-}
-
 TEST_CASE("Loads Container", "[espm]")
 {
   auto& br = l.GetBrowser();
@@ -258,7 +250,7 @@ TEST_CASE("Loads Outfit", "[espm]")
 
   auto form = br.LookupById(0x10fe82);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::OTFT::type);
+  REQUIRE(form.rec->GetType() == espm::OTFT::kType);
 
   auto outfit = espm::Convert<espm::OTFT>(form.rec);
   REQUIRE(outfit->GetData(cache).count == 2);
@@ -273,7 +265,7 @@ TEST_CASE("Loads Npc", "[espm]")
 
   auto form = br.LookupById(0x7);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+  REQUIRE(form.rec->GetType() == espm::NPC_::kType);
 
   auto npc = espm::Convert<espm::NPC_>(form.rec);
 
@@ -290,7 +282,7 @@ TEST_CASE("Loads Weapon", "[espm]")
 
   auto form = br.LookupById(0x12eb7);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::WEAP::type);
+  REQUIRE(form.rec->GetType() == espm::WEAP::kType);
 
   auto npc = espm::Convert<espm::WEAP>(form.rec);
 
@@ -311,7 +303,7 @@ TEST_CASE("Loads NPC factions", "[espm]")
 
   auto form = br.LookupById(GuardWhiterunImperialGuardhouseSleep);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+  REQUIRE(form.rec->GetType() == espm::NPC_::kType);
 
   auto npc = espm::Convert<espm::NPC_>(form.rec);
 
@@ -332,7 +324,7 @@ TEST_CASE("Loads NPC flags", "[espm]")
 
   auto form = br.LookupById(MQ304Kodlak);
   REQUIRE(form.rec);
-  REQUIRE(form.rec->GetType() == espm::NPC_::type);
+  REQUIRE(form.rec->GetType() == espm::NPC_::kType);
 
   auto npc = espm::Convert<espm::NPC_>(form.rec);
 
@@ -443,13 +435,61 @@ TEST_CASE("espm::GetData wrapper is able to get record data", "[espm]")
     Catch::Contains("Unable to find record without EspmProvider"));
 
   REQUIRE_THROWS_WITH(espm::GetData<espm::RACE>(0xDEADBEEF, &provider),
-                      Catch::Contains("Record deadbeef doesn't exist"));
+                      Catch::Contains("Record 0xdeadbeef doesn't exist"));
 
   REQUIRE_THROWS_WITH(
     espm::GetData<espm::RACE>(kIronSword, &provider),
-    Catch::Contains("Expected record 12eb7 to be RACE, but found WEAP"));
+    Catch::Contains("Expected record 0x12eb7 to be RACE, but found WEAP"));
 
   // Verify that data wasn't default constructed
   auto data = espm::GetData<espm::RACE>(kArgonianRace, &provider);
   REQUIRE(abs(data.healRegen - 0.7f) < std::numeric_limits<float>::epsilon());
+}
+
+TEST_CASE("GMST parsing", "[espm]")
+{
+  MyEspmProvider provider;
+  REQUIRE(
+    espm::GetData<espm::GMST>(espm::GMST::kFMaxArmorRating, &provider).value ==
+    80);
+}
+
+TEST_CASE("ARMO parsing", "[espm]")
+{
+  MyEspmProvider provider;
+  {
+    // Iron Gauntlets
+    auto data = espm::GetData<espm::ARMO>(0x12e46, &provider);
+    REQUIRE(data.baseRatingX100 == 1000);
+    REQUIRE(data.baseValue == 25);
+    REQUIRE(data.weight == 5);
+  }
+  {
+    // Iron Boots
+    auto data = espm::GetData<espm::ARMO>(0x12e4b, &provider);
+    REQUIRE(data.baseRatingX100 == 1000);
+    REQUIRE(data.baseValue == 25);
+    REQUIRE(data.weight == 6);
+  }
+  {
+    // Iron Boots
+    auto data = espm::GetData<espm::ARMO>(0x12e4d, &provider);
+    REQUIRE(data.baseRatingX100 == 1500);
+    REQUIRE(data.baseValue == 60);
+    REQUIRE(data.weight == 5);
+  }
+  {
+    // Hide Boots
+    auto data = espm::GetData<espm::ARMO>(0x13910, &provider);
+    REQUIRE(data.baseRatingX100 == 500);
+    REQUIRE(data.baseValue == 10);
+    REQUIRE(data.weight == 1);
+  }
+  {
+    // Hide Armor
+    auto data = espm::GetData<espm::ARMO>(0x13911, &provider);
+    REQUIRE(data.baseRatingX100 == 2000);
+    REQUIRE(data.baseValue == 50);
+    REQUIRE(data.weight == 5);
+  }
 }

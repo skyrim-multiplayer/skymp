@@ -57,7 +57,7 @@ public:
   void LoadChangeForm(const MpChangeForm& changeForm,
                       const FormCallbacks& callbacks);
 
-  void TickTimers();
+  void Tick();
 
   void RequestReloot(MpObjectReference& ref,
                      std::chrono::system_clock::duration time);
@@ -184,6 +184,10 @@ private:
                         const espm::IdMapping& mapping);
 
   bool LoadForm(uint32_t formId);
+
+  void TickReloot(const std::chrono::system_clock::time_point& now);
+  void TickSaveStorage(const std::chrono::system_clock::time_point& now);
+  void TickTimers(const std::chrono::system_clock::time_point& now);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

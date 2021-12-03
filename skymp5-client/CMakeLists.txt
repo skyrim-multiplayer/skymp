@@ -1,8 +1,8 @@
 project(skymp5-client)
 
-include(${CMAKE_SOURCE_DIR}/cmake/npm.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
 
-npm_execute_command(
+yarn_execute_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   COMMAND install
 )
@@ -12,7 +12,7 @@ file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/src/*)
 add_custom_target(skymp5-client ALL
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES ${sources}
-  COMMAND npm run build
+  COMMAND yarn build
 )
 add_dependencies(skymp5-client skyrim-platform)
 

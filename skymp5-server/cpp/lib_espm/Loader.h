@@ -66,6 +66,26 @@ private:
   BufferType bufferType;
 };
 
+template <class EspmProvider>
+Type GetRecordType(uint32_t formId, EspmProvider* espmProvider)
+{
+  if (!espmProvider) {
+    throw std::runtime_error("Unable to find record without EspmProvider");
+  }
+
+  auto& espmLoader = espmProvider->GetEspm();
+
+  const espm::LookupResult lookupResult =
+    espmLoader.GetBrowser().LookupById(formId);
+
+  if (!lookupResult.rec) {
+    throw std::runtime_error(
+      fmt::format("Record {0:x} doesn't exist", formId));
+  }
+
+  return lookupResult.rec->GetType();
+}
+
 template <class RecordT, class EspmProvider>
 typename RecordT::Data GetData(uint32_t formId, EspmProvider* espmProvider)
 {
@@ -83,14 +103,14 @@ typename RecordT::Data GetData(uint32_t formId, EspmProvider* espmProvider)
 
   if (!lookupResult.rec) {
     throw std::runtime_error(
-      fmt::format("Record {0:x} doesn't exist", formId));
+      fmt::format("Record {:#x} doesn't exist", formId));
   }
 
   const RecordT* convertedRecord = espm::Convert<RecordT>(lookupResult.rec);
   if (!convertedRecord) {
     throw std::runtime_error(
-      fmt::format("Expected record {0:x} to be {1}, but found {2}", formId,
-                  RecordT::type, lookupResult.rec->GetType().ToString()));
+      fmt::format("Expected record {:#x} to be {}, but found {}", formId,
+                  RecordT::kType, lookupResult.rec->GetType().ToString()));
   }
 
   return convertedRecord->GetData(espmCache);

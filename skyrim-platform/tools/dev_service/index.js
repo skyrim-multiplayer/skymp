@@ -64,9 +64,17 @@ const watchCallback = (_eventType, fileName) => {
         game.kill();
       }
 
-      if (fs.existsSync(distDir)) {
-        fs.removeSync(distDir);
-      }
+      // All except "Plugins" since we need RestartGame target to keep Plugins directory alive in watch mode
+      const directoriesToClear = [
+        path.join(distDir, "Data/Platform/Distribution"),
+        path.join(distDir, "Data/Platform/Modules"),
+        path.join(distDir, "Data/Platform/plugin-example"),
+      ];
+      directoriesToClear.forEach((directory) => {
+        if (fs.existsSync(directory)) {
+          fs.removeSync(directory);
+        }
+      });
       createDirectory(distDir);
       let getFileName = (p) => p.replace(/^.*[\\\/]/, "");
       let cp = (from, targetDir) =>
@@ -164,7 +172,6 @@ const watchCallback = (_eventType, fileName) => {
           path.join(sourceDir, "tools/plugin-example"),
           path.join(distDir, "Data/Platform/plugin-example")
         );
-        fs.copySync(path.join(sourceDir, "requirements"), distDir);
         fs.removeSync(
           path.join(distDir, "Data/Platform/plugin-example/node_modules")
         );

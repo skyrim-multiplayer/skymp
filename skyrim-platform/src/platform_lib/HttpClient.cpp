@@ -24,7 +24,7 @@ struct HttpClient::Impl
   {
   }
 
-  TaskQueue q;
+  Viet::TaskQueue q;
   ThreadPoolWrapper pool;
 };
 
@@ -33,7 +33,7 @@ HttpClient::HttpClient()
   pImpl.reset(new Impl);
 }
 
-void HttpClient::Update()
+void HttpClient::ExecuteQueuedCallbacks()
 {
   pImpl->q.Update();
 }

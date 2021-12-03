@@ -8,7 +8,7 @@ TEST_CASE("Asynchronous operations should not trigger assert during static "
           "deinitialization",
           "[HttpClientApi][JsEngine]")
 {
-  TaskQueue taskQueue;
+  Viet::TaskQueue taskQueue;
   JsEngine engine;
   engine.ResetContext(taskQueue);
 
@@ -29,7 +29,7 @@ TEST_CASE("Asynchronous operations should not trigger assert during static "
 
 nlohmann::json ExecuteScript(const char* src)
 {
-  TaskQueue taskQueue;
+  Viet::TaskQueue taskQueue;
   JsEngine engine;
   engine.ResetContext(taskQueue);
 
@@ -51,7 +51,7 @@ nlohmann::json ExecuteScript(const char* src)
   while (1) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     taskQueue.Update();
-    HttpClientApi::GetHttpClient().Update();
+    HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
 
     if (!result.is_null()) {
       break;

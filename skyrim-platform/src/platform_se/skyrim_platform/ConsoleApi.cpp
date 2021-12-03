@@ -1,6 +1,8 @@
 #include "ConsoleApi.h"
 #include "InGameConsolePrinter.h"
+#include "InvalidArgumentException.h"
 #include "NullPointerException.h"
+#include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
 #include "WindowsConsolePrinter.h"
 #include <RE/CommandTable.h>
@@ -16,9 +18,6 @@
 #include <skse64/ObScript.h>
 #include <skse64_common/SafeWrite.h>
 #include <vector>
-
-extern ThreadPoolWrapper g_pool;
-extern TaskQueue g_taskQueue;
 
 namespace {
 // TODO: Add printers switching
@@ -288,13 +287,13 @@ bool ConsoleComand_Execute(const ObScriptParam* paramInfo,
       }
     } catch (std::exception& e) {
       std::string what = e.what();
-      g_taskQueue.AddTask([what] {
+      SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
         throw std::runtime_error(what + " (in ConsoleComand_Execute)");
       });
     }
   };
 
-  g_pool.Push(func).wait();
+  SkyrimPlatform::GetSingleton().PushAndWait(func);
   if (iterator)
     iterator->second.execute(paramInfo, scriptData, thisObj, containingObj,
                              scriptObj, locals, result, opcodeOffsetPtr);
@@ -347,11 +346,17 @@ JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
 {
   auto pluginName = args[1].ToString();
 
-  static std::map<std::string, std::unique_ptr<std::ofstream>> m;
+  auto slashCount = std::count(pluginName.begin(), pluginName.end(), '/') +
+    std::count(pluginName.begin(), pluginName.end(), '\\');
+  if (slashCount > 0) {
+    throw InvalidArgumentException("pluginName", pluginName);
+  }
 
-  if (m[pluginName] == nullptr) {
-    m[pluginName].reset(new std::ofstream("Data\\Platform\\Plugins\\" +
-                                          pluginName + "-logs.txt"));
+  static std::map<std::string, std::unique_ptr<std::ofstream>> g_m;
+
+  if (!g_m[pluginName]) {
+    g_m[pluginName] = std::make_unique<std::ofstream>(
+      "Data\\Platform\\Logs\\" + pluginName + "-logs.txt");
   }
 
   std::string s;
@@ -367,7 +372,7 @@ JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
     s += str.ToString() + ' ';
   }
 
-  (*m[pluginName]) << s << std::endl;
+  (*g_m[pluginName]) << s << std::endl;
   return JsValue::Undefined();
 }
 
