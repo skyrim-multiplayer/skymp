@@ -22,7 +22,7 @@ Commit types used (sorted by priority):
 * tests - changes in tests.
 * perf - changes in code that target improving performance.
 * docs - changes in text files.
-* refact - changes in code that target improving readability.
+* refact - changes in code that target improving readability or rewriting code in different lang/style.
 * internal - fixes or changes in the build system, catalog structure, or anything that doesn't execute on the user's machine.
 
 Repo subdirectories are used to name commit scopes. Commits without scope are allowed.

@@ -1,5 +1,5 @@
 import {
-  Actor,
+  Actor, printConsole,
 } from "skyrimPlatform";
 
 export interface ActorValues {
@@ -22,16 +22,23 @@ export const getActorValues = (ac: Actor): ActorValues => {
   return resultActorValue;
 }
 
-export const setActorValuePercentage = (ac: Actor, avName: string, percentage: number) => {
+export const getMaximumActorValue = (ac: Actor, avName: string): number => {
+  const currentPercentage = ac.getActorValuePercentage(avName);
+  return currentPercentage === 0 ?
+    ac.getBaseActorValue(avName) :
+    Math.ceil(ac.getActorValue(avName) / currentPercentage);
+}
+
+export const setActorValuePercentage = (ac: Actor, avName: string, percentage: number): void => {
+  // Actor value percentage for health may be below zero (-1.8 for example, it means u have -180% health)
   const currentPercentage = ac.getActorValuePercentage(avName);
   if (currentPercentage === percentage) return;
 
-  const currentMax = ac.getBaseActorValue(avName);
+  const currentMaxValue = getMaximumActorValue(ac, avName);
   const deltaPercentage = percentage - currentPercentage;
-  const k = 1;
   if (deltaPercentage > 0) {
-    ac.restoreActorValue(avName, deltaPercentage * currentMax * k);
+    ac.restoreActorValue(avName, deltaPercentage * currentMaxValue);
   } else if (deltaPercentage < 0) {
-    ac.damageActorValue(avName, deltaPercentage * currentMax * k);
+    ac.damageActorValue(avName, deltaPercentage * currentMaxValue);
   }
 };

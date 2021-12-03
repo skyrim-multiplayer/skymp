@@ -88,10 +88,13 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       std::numeric_limits<float>::infinity()
     };
 
+    auto& espmFiles = actor->GetParent()->espmFiles;
     if (!MovementValidation::Validate(
-          *actor, teleportFlag ? reallyWrongPos : pos, worldOrCell,
+          *actor, teleportFlag ? reallyWrongPos : pos,
+          FormDesc::FromFormId(worldOrCell, espmFiles),
           isMe ? static_cast<IMessageOutput&>(msgOutput)
-               : static_cast<IMessageOutput&>(msgOutputDummy))) {
+               : static_cast<IMessageOutput&>(msgOutputDummy),
+          espmFiles)) {
       return;
     }
 

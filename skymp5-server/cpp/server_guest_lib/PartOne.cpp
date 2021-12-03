@@ -110,8 +110,11 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
     formId = worldState.GenerateFormId();
   }
   worldState.AddForm(
-    std::unique_ptr<MpActor>(new MpActor(
-      { pos, { 0, 0, angleZ }, cellOrWorld }, CreateFormCallbacks())),
+    std::unique_ptr<MpActor>(
+      new MpActor({ pos,
+                    { 0, 0, angleZ },
+                    FormDesc::FromFormId(cellOrWorld, worldState.espmFiles) },
+                  CreateFormCallbacks())),
     formId);
   if (profileId >= 0) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
@@ -225,7 +228,7 @@ NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
 uint32_t PartOne::GetActorCellOrWorld(uint32_t actorFormId)
 {
   auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
-  return ac.GetCellOrWorld();
+  return ac.GetCellOrWorld().ToFormId(worldState.espmFiles);
 }
 
 const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
@@ -563,15 +566,18 @@ void PartOne::Init()
 
     const char* method = "createActor";
 
+    uint32_t worldOrCell =
+      emitter->GetCellOrWorld().ToFormId(worldState.espmFiles);
+
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      emitter->GetCellOrWorld(), appearancePrefix, appearance, equipmentPrefix,
-      equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
-      props.data(), propsPostfix);
+      worldOrCell, appearancePrefix, appearance, equipmentPrefix, equipment,
+      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
+      propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,

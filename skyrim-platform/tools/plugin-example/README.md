@@ -6,7 +6,7 @@
 1. Grab the latest version of the Skyrim Platform from https://www.nexusmods.com/skyrimspecialedition/mods/54909?tab=files
 2. Extract the zip and place the files in your Skyrim install folder (Skyrim Special Edition\Data) 
    ### DO NOT USE A MOD MANAGER AS HOT CODE RELOADING WILL NOT WORK WITH THE VIRTUAL DRIVE.
-3. Go to the `Skyrim Special Edition\Data\Platform\plugin-example` folder and run `npm i` on the command line to install the dependencies.
+3. Go to the `Skyrim Special Edition\Data\Platform\plugin-example` folder and run `yarn` on the command line to install the dependencies.
 4. Create a file in the `Skyrim Special Edition\Data\Platform\plugin-example\tsc` folder named `config.js` with the following contents:
    ```
    module.exports = {
@@ -14,7 +14,7 @@
        seRoot: "C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
    };
    ```
-5. Run `npm run dev`. If everything is ok, the message `Found 0 errors, installing plugin-example.js` will appear.
+5. Run `yarn dev`. If everything is ok, the message `Found 0 errors, installing plugin-example.js` will appear.
 6. Log in to Steam and start the game with `skse64_loader.exe`.
 
 The console should display the following output (console opens to `~` in game).

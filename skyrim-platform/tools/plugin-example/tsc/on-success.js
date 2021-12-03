@@ -36,8 +36,8 @@ if (!seRoot) {
 
 console.log(`Installing ${pluginName}`);
 if (!outDir) {
-    writeFileSyncRecursive(path.join(seRoot, 'Data\\Platform\\Plugins', pluginName), fs.readFileSync(outFile));
+    writeFileSyncRecursive(path.join(seRoot, 'Data\\Platform\\PluginsDev', pluginName), fs.readFileSync(outFile));
 }
 else {
-    fs.copySync(`./dist/${pluginName}`, path.join(seRoot, 'Data\\Platform\\Plugins', pluginName));
+    fs.copySync(`./dist/${pluginName}`, path.join(seRoot, 'Data\\Platform\\PluginsDev', pluginName));
 }

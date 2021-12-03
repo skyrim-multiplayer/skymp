@@ -22,7 +22,7 @@
 struct LocationalData
 {
   NiPoint3 pos, rot;
-  uint32_t cellOrWorld = 0;
+  FormDesc cellOrWorldDesc;
 };
 
 struct GridPosInfo
@@ -72,7 +72,7 @@ public:
 
   const NiPoint3& GetPos() const override;
   const NiPoint3& GetAngle() const override;
-  const uint32_t& GetCellOrWorld() const override;
+  const FormDesc& GetCellOrWorld() const override;
   const uint32_t& GetBaseId() const;
   const Inventory& GetInventory() const;
   const bool& IsHarvested() const;
@@ -103,7 +103,7 @@ public:
   void TakeItem(MpActor& actor, const Inventory::Entry& entry);
   void SetRelootTime(std::chrono::system_clock::duration newRelootTime);
   void SetChanceNoneOverride(uint8_t chanceNone);
-  void SetCellOrWorld(uint32_t worldOrCell);
+  void SetCellOrWorld(const FormDesc& worldOrCell);
   void SetAnimationVariableBool(const char* name, bool value);
   void Disable();
   void Enable();
@@ -155,7 +155,7 @@ public:
 
   // This method removes ObjectReference from a current grid and doesn't attach
   // to another grid
-  void SetCellOrWorldObsolete(uint32_t worldOrCell);
+  void SetCellOrWorldObsolete(const FormDesc& worldOrCell);
 
   using Visitor = std::function<void(MpObjectReference*)>;
   void VisitNeighbours(const Visitor& visitor);
@@ -208,6 +208,11 @@ private:
 
 protected:
   void BeforeDestroy() override;
+  std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
+                                    const nlohmann::json& value);
+  nlohmann::json PreparePropertyMessage(MpObjectReference* self,
+                                        const char* name,
+                                        const nlohmann::json& value);
 
   const std::shared_ptr<FormCallbacks> callbacks;
 };

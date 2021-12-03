@@ -1,4 +1,5 @@
 #include "DirectoryMonitor.h"
+#include <fmt/format.h>
 
 namespace {
 bool WaitForNextUpdate(DWORD* outErrorCode, std::filesystem::path dir)
@@ -42,8 +43,9 @@ void DirectoryMonitor::ThrowOnceIfHasError()
 {
   if (pImpl->errorCode && !pImpl->thrown) {
     pImpl->thrown = true;
-    throw std::runtime_error("DirectoryMonitor failed with code " +
-                             std::to_string(pImpl->errorCode));
+    throw std::runtime_error(
+      fmt::format("DirectoryMonitor({}) failed with code {}",
+                  pImpl->dir.u8string(), std::to_string(pImpl->errorCode)));
   }
 }
 

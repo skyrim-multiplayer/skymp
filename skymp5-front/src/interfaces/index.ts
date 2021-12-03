@@ -1,9 +1,8 @@
-export interface IDefaultUIComponentProps {
+export * from './buttons';
+export * from './inputs';
+
+export interface DefaultUIElementProps {
     name: string;
     width?: number;
     height?: number;
-    disabled?: boolean;
-    url?: string;
-    text?: string;
-    onClick?: (any?: any) => void;
 }

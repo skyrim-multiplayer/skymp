@@ -10,6 +10,7 @@ export interface MsgHandler {
   ChangeValues(msg: msg.ChangeValuesMessage): void;
   setRaceMenuOpen(msg: msg.SetRaceMenuOpenMessage): void;
   customPacket(msg: msg.CustomPacket): void;
+  DeathStateContainer(msg: msg.DeathStateContainerMessage): void;
 
   handleConnectionAccepted(): void;
   handleDisconnect(): void;

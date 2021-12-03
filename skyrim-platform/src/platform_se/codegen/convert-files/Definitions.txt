@@ -1,4 +1,4 @@
-declare class PapyrusObject {
+export declare class PapyrusObject {
     static from(papyrusObject: PapyrusObject | null): PapyrusObject | null;
 }
 export type PapyrusValue = PapyrusObject | number | string | boolean | null | PapyrusValue[];
@@ -11,6 +11,7 @@ export declare function getJsMemoryUsage(): number;
 export declare function getPluginSourceCode(pluginName: string): string;
 export declare function writePlugin(pluginName: string, newSources: string): string;
 export declare function getPlatformVersion(): string;
+export declare function disableCtrlPrtScnHotkey(): void;
 export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void;
 export declare function encodeUtf8(text: string): ArrayBuffer;
 export declare function decodeUtf8(buffer: ArrayBuffer): string;
@@ -244,6 +245,14 @@ export interface BrowserMessageEvent {
     arguments: unknown[]
 }
 
+/*
+* Note: The message text can contain any characters, including `'` `"` `\`.
+* Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
+*/
+export interface ConsoleMessageEvent {
+    message: string
+}
+
 export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 
@@ -321,6 +330,10 @@ export declare function once(eventName: 'menuClose', callback: (event: MenuClose
 
 export declare function on(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
 export declare function once(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
+
+export declare function on(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
+export declare function once(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
+
 
 declare class ConsoleComand {
     longName: string;
@@ -729,7 +742,8 @@ export declare namespace SendAnimationEventHook {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     class Target {
-        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number;
+        remove(id: number): void;
     }
 }
 
@@ -747,7 +761,8 @@ export declare namespace SendPapyrusEventHook {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     class Target {
-        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number;
+        remove(id: number): void;
     }
 }
 
