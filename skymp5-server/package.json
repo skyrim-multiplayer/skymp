@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "build-ts": "tsc",
-    "cmake-js-fetch": "cmake-js configure --directory cmake-js-fetch --out cmake-js-fetch-build"
+    "cmake-js-fetch": "cmake-js configure --directory cmake-js-fetch --out cmake-js-fetch-build",
+    "cmake-js-fetch-msvc": "cmake-js configure -G \"Visual Studio 16 2019\" --directory cmake-js-fetch --out cmake-js-fetch-build"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {

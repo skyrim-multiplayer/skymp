@@ -64,7 +64,8 @@ public:
     uint32_t cellOrWorld, int16_t cellX, int16_t cellY) const;
 
   // Returns nullptr on failure
-  const espm::IdMapping* GetMapping(size_t fileIndex) const noexcept;
+  const espm::IdMapping* GetCombMapping(size_t fileIndex) const noexcept;
+  const espm::IdMapping* GetRawMapping(size_t fileIndex) const noexcept;
 
   // CompressedFieldsCache is not logically related to Combiner, this method is
   // added for usability

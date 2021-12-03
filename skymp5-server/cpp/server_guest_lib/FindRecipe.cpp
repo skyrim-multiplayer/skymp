@@ -41,7 +41,7 @@ espm::COBJ* FindRecipe(const espm::CombineBrowser& br,
   espm::COBJ* recipeUsed = nullptr;
 
   for (size_t i = 0; i < allRecipes.size(); ++i) {
-    auto mapping = br.GetMapping(i);
+    auto mapping = br.GetCombMapping(i);
     auto& espmLocalRecipes = allRecipes[i];
     auto it = std::find_if(espmLocalRecipes->begin(), espmLocalRecipes->end(),
                            [&](espm::RecordHeader* rec) {
