@@ -18,7 +18,6 @@
       "server/data/scripts/Game.pex",
       "server/data/scripts/Input.pex",
       "server/data/scripts/Keyword.pex",
-      "server/data/scripts/M.pex",
       "server/data/scripts/MagicEffect.pex",
       "server/data/scripts/Math.pex",
       "server/data/scripts/ObjectReference.pex",
