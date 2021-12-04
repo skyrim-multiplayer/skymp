@@ -10,6 +10,7 @@
 #include <DirectXTK/SpriteFont.h>
 #include <DirectXTK/WICTextureLoader.h>
 #include <cmrc/cmrc.hpp>
+#include <string>
 
 #include <functional>
 #include <iostream>
@@ -72,13 +73,16 @@ void DX11RenderHandler::Render(
     std::vector<TextToDraw> textsToDraw = ObtainTextsToDraw();
 
     for (auto& textToDraw : textsToDraw) {
-      auto origin = DirectX::SimpleMath::Vector2(
-                      m_pSpriteFont->MeasureString(textToDraw.kString)) /
+      auto origin = DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(
+                      textToDraw.kString.c_str())) /
         2;
 
-      m_pSpriteFont->DrawString(m_pSpriteBatch.get(), textToDraw.kString,
-                                DirectX::XMFLOAT2(m_width / 2, m_height / 2),
-                                DirectX::Colors::Blue, 0.f, origin);
+      DirectX::XMVECTORF32 color = { textToDraw.color[0], textToDraw.color[1],
+                                     textToDraw.color[2],
+                                     textToDraw.color[3] };
+      m_pSpriteFont->DrawString(
+        m_pSpriteBatch.get(), textToDraw.kString.c_str(),
+        DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color, 0.f, origin);
     }
   }
 

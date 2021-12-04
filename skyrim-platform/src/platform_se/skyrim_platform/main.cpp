@@ -102,11 +102,7 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
 
 std::vector<TextToDraw> GetTextsToDraw()
 {
-  std::vector<TextToDraw> textsToDraw = {
-    TextToDraw(0.f, 0.f, L"Hello, Skymp!#1"),
-    TextToDraw(0.f, 0.f, L"Hello, Skymp!#2"),
-    TextToDraw(0.f, 0.f, L"Hello, Skymp!#3")
-  };
+  std::vector<TextToDraw> textsToDraw = {};
   return textsToDraw;
 }
 
