@@ -27,6 +27,7 @@
 #include <RE/ConsoleLog.h>
 #include <Windows.h>
 #include <atomic>
+#include <functional>
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
@@ -47,7 +48,6 @@
 #include <thread>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
-#include <functional>
 
 #include "BrowserApi.h"
 #include "CallNativeApi.h"
@@ -102,9 +102,11 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
 
 std::vector<TextToDraw> GetTextsToDraw()
 {
-  std::vector<TextToDraw> textsToDraw = { TextToDraw(0.f, 0.f, L"Hello, Skymp!#1"),
-                                          TextToDraw(0.f, 0.f, L"Hello, Skymp!#2"),
-                                          TextToDraw(0.f, 0.f, L"Hello, Skymp!#3") };
+  std::vector<TextToDraw> textsToDraw = {
+    TextToDraw(0.f, 0.f, L"Hello, Skymp!#1"),
+    TextToDraw(0.f, 0.f, L"Hello, Skymp!#2"),
+    TextToDraw(0.f, 0.f, L"Hello, Skymp!#3")
+  };
   return textsToDraw;
 }
 
@@ -520,7 +522,8 @@ public:
 
     auto onProcessMessage = std::make_shared<ProcessMessageListenerImpl>();
 
-    std::function<std::vector<TextToDraw>()> ObtainTextsToDraw = GetTextsToDraw;
+    std::function<std::vector<TextToDraw>()> ObtainTextsToDraw =
+      GetTextsToDraw;
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, ObtainTextsToDraw);
     myInputListener->Init(overlayService, inputConverter);

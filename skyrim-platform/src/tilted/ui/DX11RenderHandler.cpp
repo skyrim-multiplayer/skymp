@@ -11,8 +11,8 @@
 #include <DirectXTK/WICTextureLoader.h>
 #include <cmrc/cmrc.hpp>
 
-#include <iostream>
 #include <functional>
+#include <iostream>
 
 CMRC_DECLARE(skyrim_plugin_resources);
 
@@ -28,7 +28,8 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
 
 DX11RenderHandler::~DX11RenderHandler() = default;
 
-void DX11RenderHandler::Render(std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw)
+void DX11RenderHandler::Render(
+  std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw)
 {
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {
