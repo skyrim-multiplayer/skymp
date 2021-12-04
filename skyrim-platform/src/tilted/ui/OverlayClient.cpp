@@ -3,6 +3,7 @@
 #include <MyCtxHandler.h>
 #include <OverlayClient.h>
 #include <filesystem>
+#include <functional>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
@@ -78,10 +79,10 @@ void OverlayClient::Create() const noexcept
 }
 
 void OverlayClient::Render(
-  std::vector<TextToDraw>* pTextsToDraw) const noexcept
+  std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw_) const noexcept
 {
   if (m_pRenderHandler) {
-    m_pRenderHandler->Render(pTextsToDraw);
+    m_pRenderHandler->Render(ObtainTextsToDraw_);
   }
 }
 

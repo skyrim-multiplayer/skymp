@@ -5,6 +5,7 @@
 #include <Signal.hpp>
 #include <mutex>
 #include <wrl.h>
+#include <functional>
 
 namespace DirectX {
 class SpriteBatch;
@@ -42,7 +43,7 @@ struct DX11RenderHandler : MyRenderHandler
   TP_NOCOPYMOVE(DX11RenderHandler);
 
   void Create() override;
-  void Render(std::vector<TextToDraw>* pTextsToDraw) override;
+  void Render(std::function<std::vector<TextToDraw>()>& obtainTextsToDraw) override;
   void Reset() override;
 
   void GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override;

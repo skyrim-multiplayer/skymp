@@ -7,6 +7,7 @@
 #include <include/cef_client.h>
 
 #include <Meta.hpp>
+#include <functional>
 
 namespace CEFUtils {
 struct OverlayClient
@@ -30,7 +31,7 @@ struct OverlayClient
   [[nodiscard]] const std::wstring& GetCursorPathPNG() const noexcept;
   [[nodiscard]] const std::wstring& GetCursorPathDDS() const noexcept;
 
-  void Render(std::vector<TextToDraw>* pTextsToDraw) const noexcept;
+  void Render(std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw_) const noexcept;
   void Create() const noexcept;
   void Reset() const noexcept;
 

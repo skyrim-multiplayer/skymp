@@ -12,6 +12,7 @@
 #include <cmrc/cmrc.hpp>
 
 #include <iostream>
+#include <functional>
 
 CMRC_DECLARE(skyrim_plugin_resources);
 
@@ -27,7 +28,7 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
 
 DX11RenderHandler::~DX11RenderHandler() = default;
 
-void DX11RenderHandler::Render(std::vector<TextToDraw>* pTextsToDraw)
+void DX11RenderHandler::Render(std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw)
 {
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {
@@ -67,7 +68,7 @@ void DX11RenderHandler::Render(std::vector<TextToDraw>* pTextsToDraw)
 
   // Temporary prototype, to be changed in #430
   if (Visible()) {
-    std::vector<TextToDraw>& textsToDraw = *pTextsToDraw;
+    std::vector<TextToDraw> textsToDraw = ObtainTextsToDraw();
 
     for (auto& textToDraw : textsToDraw) {
       auto origin = DirectX::SimpleMath::Vector2(

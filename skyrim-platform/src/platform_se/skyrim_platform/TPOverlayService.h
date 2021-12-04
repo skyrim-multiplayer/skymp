@@ -6,6 +6,8 @@
 #include <include/internal/cef_ptr.h>
 #include <ui/ProcessMessageListener.h>
 
+#include <functional>
+
 namespace CEFUtils {
 struct MyChromiumApp;
 }
@@ -21,7 +23,7 @@ struct OverlayService
   // console.error (see OverlayClient.cpp), but you better do not throw
   // anything. Handle properly in place instead.
   OverlayService(std::shared_ptr<ProcessMessageListener> onProcessMessage_,
-                 std::vector<TextToDraw>* pTextsToDraw_);
+                 std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw_);
   ~OverlayService() noexcept;
 
   TP_NOCOPYMOVE(OverlayService);
@@ -36,5 +38,5 @@ struct OverlayService
 private:
   CefRefPtr<MyChromiumApp> overlay{ nullptr };
   const std::shared_ptr<ProcessMessageListener> onProcessMessage;
-  std::vector<TextToDraw>* m_pTextsToDraw;
+  std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw;
 };

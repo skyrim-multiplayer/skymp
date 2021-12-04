@@ -11,6 +11,8 @@
 
 #include "TPRenderSystemD3D11.h"
 
+#include <functional>
+
 using CEFUtils::DX11RenderHandler;
 using CEFUtils::MyRenderHandler;
 
@@ -41,9 +43,9 @@ private:
 
 OverlayService::OverlayService(
   std::shared_ptr<ProcessMessageListener> onProcessMessage_,
-  std::vector<TextToDraw>* pTextsToDraw_)
+  std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw_)
   : onProcessMessage(onProcessMessage_)
-  , m_pTextsToDraw(pTextsToDraw_)
+  , ObtainTextsToDraw(ObtainTextsToDraw_)
 {
 }
 
@@ -61,7 +63,7 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
 
 void OverlayService::Render() const
 {
-  overlay->GetClient()->Render(m_pTextsToDraw);
+  overlay->GetClient()->Render(ObtainTextsToDraw);
 }
 
 void OverlayService::Reset() const

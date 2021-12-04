@@ -47,6 +47,7 @@
 #include <thread>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
+#include <functional>
 
 #include "BrowserApi.h"
 #include "CallNativeApi.h"
@@ -99,11 +100,11 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
   g_nativeCallRequirements.vm = nullptr;
 }
 
-std::vector<TextToDraw> ObtainTextsToDraw()
+std::vector<TextToDraw> GetTextsToDraw()
 {
-  std::vector<TextToDraw> textsToDraw = { TextToDraw(L"Hello, Skymp!#1"),
-                                          TextToDraw(L"Hello, Skymp!#2"),
-                                          TextToDraw(L"Hello, Skymp!#3") };
+  std::vector<TextToDraw> textsToDraw = { TextToDraw(0.f, 0.f, L"Hello, Skymp!#1"),
+                                          TextToDraw(0.f, 0.f, L"Hello, Skymp!#2"),
+                                          TextToDraw(0.f, 0.f, L"Hello, Skymp!#3") };
   return textsToDraw;
 }
 
@@ -519,9 +520,9 @@ public:
 
     auto onProcessMessage = std::make_shared<ProcessMessageListenerImpl>();
 
-    std::vector<TextToDraw> textsToDraw = ObtainTextsToDraw();
+    std::function<std::vector<TextToDraw>()> ObtainTextsToDraw = GetTextsToDraw;
     overlayService =
-      std::make_shared<OverlayService>(onProcessMessage, &textsToDraw);
+      std::make_shared<OverlayService>(onProcessMessage, ObtainTextsToDraw);
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
 
