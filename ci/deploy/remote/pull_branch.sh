@@ -16,5 +16,5 @@ docker run -d --rm --name="skymp-server-$branch" --network=host \
 
 # ^ limited to 50% of CPU: https://stackoverflow.com/a/41552172
 
-timeout 60s docker logs -f "skymp-server-$branch" \
+timeout 7m docker logs -f "skymp-server-$branch" \
   |& grep -q 'AttachSaveStorage took'
