@@ -20,8 +20,14 @@ echo "${DEPLOY_TARGET_USER:?}" > /dev/null
 echo "${DEPLOY_BRANCH:?}" > /dev/null
 echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
 
-echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
+if [[ "$CI" != "" ]]; then
+  sudo touch ssh_id
+  sudo chown "`id -u`:`id -g`" ssh_id
+else
+  touch ssh_id
+fi
 chmod 600 ssh_id
+echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
 
 remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
 
