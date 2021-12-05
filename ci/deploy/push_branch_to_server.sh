@@ -22,14 +22,11 @@ echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
 echo "${DEPLOY_SSH_KNOWN_HOSTS:?}" > /dev/null
 
 if [[ "$CI" != "" ]]; then
-  sudo touch ssh_id
-  sudo chown "`id -u`:`id -g`" ssh_id
-  sudo touch ssh_known_hosts
-  sudo chown "`id -u`:`id -g`" ssh_known_hosts
-else
-  touch ssh_id
-  touch ssh_known_hosts
+  sudo chmod -R 777 .
 fi
+
+touch ssh_id
+touch ssh_known_hosts
 chmod 600 ssh_id
 chmod 600 ssh_known_hosts
 echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
