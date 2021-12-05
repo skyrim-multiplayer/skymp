@@ -13,5 +13,5 @@ if [[ "$1" = "" ]]; then
   exit 1
 fi
 
-curl "$DEPLOY_STATUS_WEBHOOK" -H 'content-type: application/json' \
+curl -v "$DEPLOY_STATUS_WEBHOOK" -H 'content-type: application/json' \
     --data "`echo "$1" | jq --raw-input '{content: .}'`"
