@@ -90,6 +90,17 @@ jobs:
               name: dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
 
+          - name: Deploy
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+                DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST}}
+                DEPLOY_TARGET_USER: ubuntu
+                DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
+                DEPLOY_BRANCH: testtest
+            run: |
+                apt update && apt install jq ssh rsync \
+                && ./ci/deploy/push_branch_to_server.sh
+
           - name: Test
             uses: addnab/docker-run-action@v3
             with:
