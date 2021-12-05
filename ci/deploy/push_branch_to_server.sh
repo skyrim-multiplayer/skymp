@@ -32,13 +32,14 @@ chmod 600 ssh_known_hosts
 echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
 echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
 
+remote_shell="ssh -i ssh_id -o UserKnownHostsFile=ssh_known_hosts"
 remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
 
 message "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
 
 run_remote() {
   # echo "====== begin remote ======"
-  ssh -vv -i ssh_id -o UserKnownHostsFile=ssh_known_hosts "$remote_server_connstr" "$@"
+  $remote_shell "$remote_server_connstr" "$@"
   # code="$?"
   # echo "======  end  remote ======"
   # return "$code"
@@ -53,12 +54,12 @@ run_remote test -e "$remote_branch_dir" \
   || (echo "no branch on remote server" && exit 1)
 
 cp skymp5-server/{package.json,yarn.lock} build/dist/server/
-rsync --rsh="ssh -i $PWD/ssh_id -o UserKnownHostsFile=ssh_known_hosts" -vazPh \
+rsync --rsh="$remote_shell" -vazPh \
     build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
 
 message "Updated server files"
 
-rsync --rsh="ssh -i $PWD/ssh_id -o UserKnownHostsFile=ssh_known_hosts" -vazPh \
+rsync --rsh="$remote_shell" -vazPh \
     ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
 run_remote "$remote_tmp_dir/pull_branch.sh" "$DEPLOY_BRANCH"
 
