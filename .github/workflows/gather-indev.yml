@@ -22,10 +22,20 @@ jobs:
             run: |
                 git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
                 git config --local user.name "github-actions[bot]"
+
+                git remote add upstream https://github.com/skyrim-platform/skymp
+
                 git checkout -b indev
+
                 echo kek > kek
                 git add kek
                 git commit -m 'kek!!!'
+
                 git log --stat
+
+                # maybe also https://stackoverflow.com/a/14947958
+                git fetch origin pull/610/head
+                git merge origin/pull/610/head
+
                 git remote -vv
                 git push -u origin indev -f
