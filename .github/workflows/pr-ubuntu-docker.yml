@@ -106,6 +106,7 @@ jobs:
                 DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST}}
                 DEPLOY_TARGET_USER: ubuntu
                 DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
+                DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS}}
                 DEPLOY_BRANCH: testtest
             run: |
                 ./ci/deploy/push_branch_to_server.sh
