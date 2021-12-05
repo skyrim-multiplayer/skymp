@@ -8,13 +8,21 @@ jobs:
         steps:
           - name: Checkout
             uses: actions/checkout@v2
-            with:
-                submodules: recursive
 
           - name: Post link
+            if: 'false'
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[GATHER indev] Hello $link"
+                message="[GATHER indev] Hello <$link>"
                 ./ci/deploy/call_webhook.sh "$message"
+
+          - name: Kek
+            run: |
+                git checkout -b indev
+                echo kek > kek
+                git add kek
+                git commit -m 'kek!!!''
+                git log --stat
+                git remote -vv
