@@ -177,7 +177,6 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
   }
   if (healthPercentage == 0.f) {
     Kill(aggressor);
-    RespawnAfter(kRespawnTimeSeconds, GetSpawnPoint());
     return;
   }
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
@@ -350,6 +349,7 @@ std::string MpActor::GetDeathStateMsg(const LocationalData& position,
 void MpActor::MpApiDeath(MpActor* killer)
 {
   simdjson::dom::parser parser;
+  bool isRespawnBlocked = false;
 
   std::string s =
     "[" + std::to_string(killer ? killer->GetFormId() : 0) + " ]";
@@ -358,8 +358,13 @@ void MpActor::MpApiDeath(MpActor* killer)
   if (auto wst = GetParent()) {
     const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      listener->OnMpApiEvent("onDeath", args, id);
+      if (listener->OnMpApiEvent("onDeath", args, id) == false) {
+        isRespawnBlocked = true;
+      };
     }
+  }
+  if (!isRespawnBlocked) {
+    RespawnAfter(kRespawnTimeSeconds, GetSpawnPoint());
   }
 }
 
