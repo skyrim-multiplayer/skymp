@@ -23,6 +23,6 @@ jobs:
                 git checkout -b indev
                 echo kek > kek
                 git add kek
-                git commit -m 'kek!!!''
+                git commit -m 'kek!!!'
                 git log --stat
                 git remote -vv
