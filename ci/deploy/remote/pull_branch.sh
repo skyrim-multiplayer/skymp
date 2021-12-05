@@ -13,8 +13,8 @@ docker run -d --rm --name="skymp-server-$branch" --network=host \
     -u "`id -u`:`id -g`" \
     --cpu-period=50000 --cpu-quota=25000 \
     skymp/skymp-vcpkg-deps ./run.sh
-
 # ^ limited to 50% of CPU: https://stackoverflow.com/a/41552172
+# TODO(#584): replace vcpkg-deps with lite runtime image
 
 timeout 7m docker logs -f "skymp-server-$branch" \
   |& grep -q 'AttachSaveStorage took'
