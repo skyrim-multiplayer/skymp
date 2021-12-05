@@ -58,12 +58,12 @@ cp build/vcpkg_installed/x64-linux/bin/libChakraCore.so build/dist/server/
 cp ci/deploy/workaround_temporary/run.sh build/dist/server/
 
 cp skymp5-server/{package.json,yarn.lock} build/dist/server/
-rsync --rsh="$remote_shell" -vazPh \
+rsync --rsh="$remote_shell" -vazPh --checksum \
     build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
 
 message "Updated server files"
 
-rsync --rsh="$remote_shell" -vazPh \
+rsync --rsh="$remote_shell" -vazPh --checksum \
     ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
 run_remote "$remote_tmp_dir/pull_branch.sh" "$DEPLOY_BRANCH"
 
