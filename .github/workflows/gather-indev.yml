@@ -40,15 +40,15 @@ jobs:
                 git log --stat
 
                 # maybe also https://stackoverflow.com/a/14947958
-                git fetch upstream main
+                # git fetch upstream main
                 git pull upstream pull/610/head
-                git log --stat
+                # git log --stat
 
-                exit 0
+                # exit 0
 
-                git log --stat --graph upstream/main upstream/refs/pull/610/head
+                # git log --stat --graph upstream/main upstream/refs/pull/610/head
 
-                git merge upstream/refs/pull/610/head
+                # git merge upstream/refs/pull/610/head
 
                 git remote -vv
                 git push -u origin indev -f
