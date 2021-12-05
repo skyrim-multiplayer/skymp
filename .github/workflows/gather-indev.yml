@@ -41,7 +41,8 @@ jobs:
 
                 # maybe also https://stackoverflow.com/a/14947958
                 # git fetch upstream main
-                git pull upstream pull/610/head
+                git pull --squash upstream pull/610/head
+                git commit -m 'merge PR #610'
                 # git log --stat
 
                 # exit 0
