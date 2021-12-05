@@ -38,7 +38,11 @@ jobs:
 
                 # maybe also https://stackoverflow.com/a/14947958
                 git fetch upstream main
-                git fetch upstream pull/610/head
+                git pull upstream pull/610/head
+                git log --stat
+
+                exit 0
+
                 git log --stat --graph upstream/main upstream/refs/pull/610/head
 
                 git merge upstream/refs/pull/610/head
