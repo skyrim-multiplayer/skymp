@@ -16,9 +16,9 @@ This guide shows how to set it up.
 * Add the branches you wish to deploy to [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
   Also change the desired target user (`DEPLOY_TARGET_USER`) to the one you've set up on your server.
 * If you wish to deploy the branch from a pull request, you should open it from
-  a branch located in **the main repository, not a fork**!
-  See https://docs.github.com/en/actions/security-guides/encrypted-secrets: \
-  > **Note**: With the exception of `GITHUB_TOKEN`, secrets are not passed \
+  a branch located in **the main repository, not a fork**! \
+  See https://docs.github.com/en/actions/security-guides/encrypted-secrets:
+  > **Note**: With the exception of `GITHUB_TOKEN`, secrets are not passed
     to the runner when a workflow is triggered from a forked repository.
 
 
@@ -31,6 +31,32 @@ This guide shows how to set it up.
   let run deploy jobs (=users you give a write access to the repository).
 * A directory `~/skymp-server-<branch>` should be set up for every branch you
   wish to deploy to this server. See 'setting up branch on a server' below.
+
+### Setup access for GitHub
+
+Get server's public key:
+```
+ssh-keyscan <server ip>
+<...>
+# <server ip>:22 SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.2
+<server ip> ecdsa-sha2-nistp256 AAAAE<...>
+<...>
+```
+
+Copy that string with `ecdsa-sha2-nistp256` to the `DEPLOY_SSH_KNOWN_HOSTS` secret.
+
+Generate a key pair for deployment and add it as an authorized key:
+```sh
+ssh-keygen -b 4096 -C skymp_github_deployer -f gh_key
+cat gh_key.pub >> ~/.ssh/authorized_keys
+```
+
+Copy contents of `gh_key` (no `.pub`) to the `DEPLOY_SSH_PRIVATE_KEY` secret.
+
+For safety, you can also delete the private key:
+```
+rm gh_key
+```
 
 ## Setting up branch on a server
 
