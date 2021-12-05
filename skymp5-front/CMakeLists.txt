@@ -4,7 +4,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
 
 yarn_execute_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  #COMMAND ${CMAKE_COMMAND} -E echo "GEN!!! ${CMAKE_CURRENT_LIST_DIR}"
   COMMAND install
 )
 
@@ -20,9 +19,6 @@ file(APPEND ${FRONT_CFG_PATH} "    '${FRONT_OUTPUT_PATH}',\n")
 file(APPEND ${FRONT_CFG_PATH} "};\n")
 
 add_custom_target(skymp5-front ALL
-  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES ${sources}
-  COMMAND ${CMAKE_COMMAND} -E echo "\"HEY!!! ${CMAKE_CURRENT_LIST_DIR}\""
-  COMMAND yarn build
-  COMMENT yarn build
+  COMMAND yarn --cwd "\"${CMAKE_CURRENT_LIST_DIR}\"" build
 )
