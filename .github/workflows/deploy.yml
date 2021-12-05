@@ -1,5 +1,5 @@
 name: PR Ubuntu Docker
-on: [push, pull_request]
+on: [push]
 jobs:
     pr-ubuntu-docker:
         runs-on: ubuntu-latest
@@ -35,6 +35,16 @@ jobs:
             with:
               url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
               target: ${{github.workspace}}/skyrim_data_files/
+
+          - name: Post link
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            run: |
+                link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+                message="[DEPLOY testtest] Started build. "
+                message+="You can follow the process at $link. "
+                message+="Once build is finished, further progress will be reported here."
+                ./ci/deploy/call_webhook.sh "$message"
 
           - name: Prepare
             uses: addnab/docker-run-action@v3
@@ -89,6 +99,17 @@ jobs:
             with:
               name: dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
+
+          - name: Deploy
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+                DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST}}
+                DEPLOY_TARGET_USER: ubuntu
+                DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
+                DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS}}
+                DEPLOY_BRANCH: testtest
+            run: |
+                ./ci/deploy/push_branch_to_server.sh
 
           - name: Test
             uses: addnab/docker-run-action@v3
