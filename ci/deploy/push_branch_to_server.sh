@@ -21,6 +21,7 @@ echo "${DEPLOY_BRANCH:?}" > /dev/null
 echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
 
 echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
+chmod 600 ssh_id
 
 remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
 
