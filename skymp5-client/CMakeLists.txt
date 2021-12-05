@@ -12,6 +12,7 @@ file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/src/*)
 add_custom_target(skymp5-client ALL
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES ${sources}
+  COMMAND ${CMAKE_COMMAND} -E echo "HEY!!! ${CMAKE_CURRENT_LIST_DIR}"
   COMMAND yarn build
 )
 add_dependencies(skymp5-client skyrim-platform)
