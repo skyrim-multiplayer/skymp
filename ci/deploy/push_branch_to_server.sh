@@ -29,7 +29,7 @@ message "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
 
 run_remote() {
   # echo "====== begin remote ======"
-  ssh -i ssh_id "$remote_server_connstr" "$@"
+  ssh -vv -i ssh_id "$remote_server_connstr" "$@"
   # code="$?"
   # echo "======  end  remote ======"
   # return "$code"

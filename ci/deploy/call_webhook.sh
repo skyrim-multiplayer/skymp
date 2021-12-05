@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
 set -e
 
 if [[ "$DEPLOY_STATUS_WEBHOOK" = "" ]]; then

@@ -1,5 +1,5 @@
 name: PR Ubuntu Docker
-on: [push, pull_request]
+on: [push]
 jobs:
     pr-ubuntu-docker:
         runs-on: ubuntu-latest
