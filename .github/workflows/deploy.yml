@@ -1,5 +1,9 @@
 name: Deploy
-on: [push]
+on:
+    push:
+        branches:
+          - nic11-deploy
+          - indev
 jobs:
     deploy:
         runs-on: ubuntu-latest
