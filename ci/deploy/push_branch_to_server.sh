@@ -43,11 +43,13 @@ run_remote test -e "$remote_branch_dir" \
   || (echo "no branch on remote server" && exit 1)
 
 cp skymp5-server/{package.json,yarn.lock} build/dist/server/
-rsync -vazPh build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
+rsync --rsh="ssh -i $PWD/ssh_id" -vazPh \
+    build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
 
 message "Updated server files"
 
-rsync -vazPh ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
+rsync --rsh="ssh -i $PWD/ssh_id" -vazPh \
+    ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
 run_remote "$remote_tmp_dir/pull_branch.sh" "$DEPLOY_BRANCH"
 
 message "Finished successfully"
