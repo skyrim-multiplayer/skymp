@@ -287,7 +287,7 @@ espm::ObjectBounds MpActor::GetBounds() const
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   float attribute = isDead ? 0.f : 1.f;
-  auto& position = GetSpawnPoint();
+  auto position = GetSpawnPoint();
 
   std::string respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
   SendToUser(respawnMsg.data(), respawnMsg.size(), true);
