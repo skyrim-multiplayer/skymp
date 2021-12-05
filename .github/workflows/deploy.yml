@@ -9,33 +9,6 @@ jobs:
             with:
                 submodules: recursive
 
-          # Download Skyrim SE data files
-          - uses: suisei-cn/actions-download-file@v1
-            name: Download Skyrim.esm
-            with:
-              url: "https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm"
-              target: ${{github.workspace}}/skyrim_data_files/
-          - uses: suisei-cn/actions-download-file@v1
-            name: Download Update.esm
-            with:
-              url: "https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm"
-              target: ${{github.workspace}}/skyrim_data_files/
-          - uses: suisei-cn/actions-download-file@v1
-            name: Download Dawnguard.esm
-            with:
-              url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm"
-              target: ${{github.workspace}}/skyrim_data_files/
-          - uses: suisei-cn/actions-download-file@v1
-            name: Download HearthFires.esm
-            with:
-              url: "https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm"
-              target: ${{github.workspace}}/skyrim_data_files/
-          - uses: suisei-cn/actions-download-file@v1
-            name: Download Dragonborn.esm
-            with:
-              url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
-              target: ${{github.workspace}}/skyrim_data_files/
-
           - name: Post link
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
@@ -67,8 +40,7 @@ jobs:
                 run: |
                     cd /src \
                     && ./build.sh --configure \
-                       -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                       -DUNIT_DATA_DIR="/src/skyrim_data_files"
+                       -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
           - name: Build
             uses: addnab/docker-run-action@v3
@@ -110,6 +82,15 @@ jobs:
                 DEPLOY_BRANCH: testtest
             run: |
                 ./ci/deploy/push_branch_to_server.sh
+
+          - name: Notify failure
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            if: !success()
+            run: |
+                link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+                message="[DEPLOY testtest] Build or deploy failed. "
+                message+="Check out the logs at $link to find out why."
+                ./ci/deploy/call_webhook.sh "$message"
 
           - name: Test
             uses: addnab/docker-run-action@v3
