@@ -74,10 +74,8 @@ drwxrwxr-x 3 ubuntu ubuntu 4.0K Dec  5 12:04 server
 -rw-rw-r-- 1 ubuntu ubuntu  239 Dec  5 12:02 server-settings.json
 
 skymp-server-<branch>/server:
-total 19M
+total 4.0K
 drwxrwxr-x 2 ubuntu ubuntu 4.0K Dec  5 12:01 data
--rw-r--r-- 1 ubuntu ubuntu  19M Dec  5 12:04 libChakraCore.so
--rwxrwxr-x 1 ubuntu ubuntu   96 Dec  5 12:04 run.sh
 
 skymp-server-<branch>/server/data:
 total 346M
