@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-set -e
-
 if [[ "$DEPLOY_STATUS_WEBHOOK" = "" ]]; then
   echo no webhook
-  exit 1
+  exit 0
 fi
 
 if [[ "$1" = "" ]]; then
@@ -13,4 +11,5 @@ if [[ "$1" = "" ]]; then
 fi
 
 curl "$DEPLOY_STATUS_WEBHOOK" -H 'content-type: application/json' \
-    --data "`echo "$1" | jq --raw-input '{content: .}'`"
+    --data "`echo "$1" | jq --raw-input '{content: .}'`" \
+  || echo 'WARNING: webhook error'

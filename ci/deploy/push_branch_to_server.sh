@@ -38,14 +38,8 @@ remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
 message "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
 
 run_remote() {
-  # echo "====== begin remote ======"
   $remote_shell "$remote_server_connstr" "$@"
-  # code="$?"
-  # echo "======  end  remote ======"
-  # return "$code"
 }
-
-# set -x
 
 remote_tmp_dir="/tmp/skymp_deploy_`cat /dev/urandom | tr -cd 'a-f0-9' | head -c 32`"
 remote_branch_dir="skymp-server-$DEPLOY_BRANCH"
