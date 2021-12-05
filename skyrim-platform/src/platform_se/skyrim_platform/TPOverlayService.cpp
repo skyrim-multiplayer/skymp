@@ -1,20 +1,17 @@
 #include "TPOverlayService.h"
-
 #include <ui/MyChromiumApp.h>
-
 #include <D3D11Hook.hpp>
-
 #include <ui/DX11RenderHandler.h>
 #include <ui/MyRenderHandler.h>
 #include <ui/ProcessMessageListener.h>
 #include <ui/TextToDraw.h>
-
 #include "TPRenderSystemD3D11.h"
-
 #include <functional>
 
 using CEFUtils::DX11RenderHandler;
 using CEFUtils::MyRenderHandler;
+using ObtainTextsToDrawFunction = std::function<void(
+  std::function<void(const TextToDraw& textToDraw)> callback)>;
 
 struct D3D11RenderProvider final
   : MyChromiumApp::RenderProvider
@@ -43,9 +40,9 @@ private:
 
 OverlayService::OverlayService(
   std::shared_ptr<ProcessMessageListener> onProcessMessage_,
-  std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw_)
+  ObtainTextsToDrawFunction& obtainTextsToDraw_)
   : onProcessMessage(onProcessMessage_)
-  , ObtainTextsToDraw(ObtainTextsToDraw_)
+  , obtainTextsToDraw(obtainTextsToDraw_)
 {
 }
 
@@ -63,7 +60,7 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
 
 void OverlayService::Render() const
 {
-  overlay->GetClient()->Render(ObtainTextsToDraw);
+  overlay->GetClient()->Render(obtainTextsToDraw);
 }
 
 void OverlayService::Reset() const

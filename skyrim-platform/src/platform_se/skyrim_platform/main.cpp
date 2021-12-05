@@ -62,6 +62,10 @@
 #define PLUGIN_VERSION 0
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+using GetTextsToDrawCallback =
+  std::function<void(const TextToDraw& textToDraw)>;
+using ObtainTextsToDrawFunction = std::function<void(
+  std::function<void(const TextToDraw& textToDraw)> callback)>;
 
 void SetupFridaHooks();
 
@@ -100,10 +104,11 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
   g_nativeCallRequirements.vm = nullptr;
 }
 
-std::vector<TextToDraw> GetTextsToDraw()
+void GetTextsToDraw(GetTextsToDrawCallback callback)
 {
-  std::vector<TextToDraw> textsToDraw = { TextToDraw(), TextToDraw(), TextToDraw()};
-  return textsToDraw;
+  callback(TextToDraw(L"Hello, Skymp!#1"));
+  callback(TextToDraw(L"Hello, Skymp!#2"));
+  callback(TextToDraw(L"Hello, Skymp!#3"));
 }
 
 extern "C" {
@@ -518,10 +523,10 @@ public:
 
     auto onProcessMessage = std::make_shared<ProcessMessageListenerImpl>();
 
-    std::function<std::vector<TextToDraw>()> ObtainTextsToDraw =
-      GetTextsToDraw;
+    ObtainTextsToDrawFunction obtainTextsToDraw = GetTextsToDraw;
+
     overlayService =
-      std::make_shared<OverlayService>(onProcessMessage, ObtainTextsToDraw);
+      std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
 

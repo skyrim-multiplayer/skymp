@@ -15,6 +15,8 @@ struct OverlayClient
   , CefLifeSpanHandler
   , CefContextMenuHandler
 {
+  using ObtainTextsToDrawFunction = std::function<void(
+    std::function<void(const TextToDraw& textToDraw)> callback)>;
   explicit OverlayClient(
     MyRenderHandler* apHandler,
     std::shared_ptr<ProcessMessageListener> onProcessMessage_) noexcept;
@@ -31,8 +33,7 @@ struct OverlayClient
   [[nodiscard]] const std::wstring& GetCursorPathPNG() const noexcept;
   [[nodiscard]] const std::wstring& GetCursorPathDDS() const noexcept;
 
-  void Render(std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw_)
-    const noexcept;
+  void Render(ObtainTextsToDrawFunction& obtainTextsToDraw) const noexcept;
   void Create() const noexcept;
   void Reset() const noexcept;
 

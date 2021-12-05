@@ -7,9 +7,10 @@ namespace CEFUtils {
 struct OverlayClient;
 struct MyRenderHandler : CefRenderHandler
 {
+  using ObtainTextsToDrawFunction = std::function<void(
+    std::function<void(const TextToDraw& textToDraw)> callback)>;
   virtual void Reset() = 0;
-  virtual void Render(
-    std::function<std::vector<TextToDraw>()>& obtainTextsToDraw_) = 0;
+  virtual void Render(ObtainTextsToDrawFunction& obtainTextsToDarw) = 0;
   virtual void Create() = 0;
 
   void SetVisible(const bool aVisible) noexcept { m_visible = aVisible; }

@@ -1,7 +1,5 @@
+#include "TextToDraw.h"
 #include <DX11RenderHandler.h>
-#include <OverlayClient.h>
-
-#include "../ui/TextToDraw.h"
 #include <DirectXColors.h>
 #include <DirectXTK/CommonStates.h>
 #include <DirectXTK/DDSTextureLoader.h>
@@ -9,13 +7,15 @@
 #include <DirectXTK/SpriteBatch.h>
 #include <DirectXTK/SpriteFont.h>
 #include <DirectXTK/WICTextureLoader.h>
+#include <OverlayClient.h>
 #include <cmrc/cmrc.hpp>
-#include <string>
-
 #include <functional>
 #include <iostream>
+#include <string>
 
 CMRC_DECLARE(skyrim_plugin_resources);
+using ObtainTextsToDrawFunction = std::function<void(
+  std::function<void(const TextToDraw& textToDraw)> callback)>;
 
 namespace CEFUtils {
 DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
@@ -29,8 +29,7 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
 
 DX11RenderHandler::~DX11RenderHandler() = default;
 
-void DX11RenderHandler::Render(
-  std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw)
+void DX11RenderHandler::Render(ObtainTextsToDrawFunction& obtainTextsToDraw)
 {
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {
@@ -68,22 +67,19 @@ void DX11RenderHandler::Render(
     }
   }
 
-  // Temporary prototype, to be changed in #430
   if (Visible()) {
-    std::vector<TextToDraw> textsToDraw = ObtainTextsToDraw();
-
-    for (auto& textToDraw : textsToDraw) {
+    obtainTextsToDraw([&](const TextToDraw& textToDraw) {
       auto origin = DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(
-                      textToDraw.kString.c_str())) /
+                      textToDraw.string.c_str())) /
         2;
 
       DirectX::XMVECTORF32 color = { textToDraw.color[0], textToDraw.color[1],
                                      textToDraw.color[2],
                                      textToDraw.color[3] };
       m_pSpriteFont->DrawString(
-        m_pSpriteBatch.get(), textToDraw.kString.c_str(),
+        m_pSpriteBatch.get(), textToDraw.string.c_str(),
         DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color, 0.f, origin);
-    }
+    });
   }
 
   if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {

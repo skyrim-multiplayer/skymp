@@ -6,6 +6,8 @@
 #include <functional>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+using ObtainTextsToDrawFunction = std::function<void(
+  std::function<void(const TextToDraw& textToDraw)> callback)>;
 
 namespace CEFUtils {
 OverlayClient::OverlayClient(
@@ -79,10 +81,10 @@ void OverlayClient::Create() const noexcept
 }
 
 void OverlayClient::Render(
-  std::function<std::vector<TextToDraw>()>& ObtainTextsToDraw_) const noexcept
+  ObtainTextsToDrawFunction& obtainTextsToDraw) const noexcept
 {
   if (m_pRenderHandler) {
-    m_pRenderHandler->Render(ObtainTextsToDraw_);
+    m_pRenderHandler->Render(obtainTextsToDraw);
   }
 }
 
