@@ -26,7 +26,7 @@ jobs:
                 git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
                 git config --local user.name "github-actions[bot]"
 
-                git remote add upstream https://github.com/skyrim-platform/skymp
+                git remote add upstream https://github.com/skyrim-multiplayer/skymp
 
                 git checkout -b indev
 
