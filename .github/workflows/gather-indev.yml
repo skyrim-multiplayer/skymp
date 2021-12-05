@@ -28,3 +28,4 @@ jobs:
                 git commit -m 'kek!!!'
                 git log --stat
                 git remote -vv
+                git push -u origin indev -f
