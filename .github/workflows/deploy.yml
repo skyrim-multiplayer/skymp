@@ -1,7 +1,7 @@
-name: PR Ubuntu Docker
+name: Deploy
 on: [push]
 jobs:
-    pr-ubuntu-docker:
+    deploy:
         runs-on: ubuntu-latest
         steps:
           - name: Checkout
