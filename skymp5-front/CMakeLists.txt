@@ -4,6 +4,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
 
 yarn_execute_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  COMMAND ${CMAKE_COMMAND} -E echo "HEY!!! ${CMAKE_CURRENT_LIST_DIR}"
   COMMAND install
 )
 
