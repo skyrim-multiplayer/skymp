@@ -177,7 +177,6 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
   }
   if (healthPercentage == 0.f) {
     Kill(aggressor);
-    RespawnAfter(kRespawnTimeSeconds, GetSpawnPoint());
     return;
   }
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
