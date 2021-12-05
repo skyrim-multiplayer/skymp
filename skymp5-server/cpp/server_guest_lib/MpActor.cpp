@@ -124,6 +124,7 @@ MpChangeForm MpActor::GetChangeForm() const
   res.staminaPercentage = achr.staminaPercentage;
   res.isDead = achr.isDead;
   res.spawnPoint = achr.spawnPoint;
+  res.spawnDelay = achr.spawnDelay;
   // achr.dynamicFields isn't really used so I decided to comment this line:
   // res.dynamicFields.merge_patch(achr.dynamicFields);
 
