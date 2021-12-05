@@ -359,7 +359,7 @@ void MpActor::MpApiDeath(MpActor* killer)
     }
   }
   if (!isRespawnBlocked) {
-    RespawnAfter(kRespawnTimeSeconds, GetSpawnPoint());
+    RespawnWithDelay();
   }
 }
 
