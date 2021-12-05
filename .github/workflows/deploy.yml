@@ -9,6 +9,10 @@ jobs:
             with:
                 submodules: recursive
 
+          - name: Get branch name
+            run:
+                echo "DEPLOY_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+
           - name: Post link
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
@@ -61,7 +65,7 @@ jobs:
                 DEPLOY_TARGET_USER: ubuntu
                 DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
                 DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS}}
-                DEPLOY_BRANCH: testtest
+                # DEPLOY_BRANCH: ${{env.deploy_branch}}
             run: |
                 ./ci/deploy/push_branch_to_server.sh
 
@@ -71,7 +75,7 @@ jobs:
             if: !success()
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY ${{env.deploy_branch}}] Build or deploy failed. "
+                message="[DEPLOY $DEPLOY_BRANCH] Build or deploy failed. "
                 message+="Check out the logs at $link to find out why."
                 ./ci/deploy/call_webhook.sh "$message"
 
