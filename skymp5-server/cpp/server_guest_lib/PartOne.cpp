@@ -148,7 +148,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
     actor.ForceSubscriptionsUpdate();
 
     if (actor.IsDead() && !actor.IsRespawning()) {
-      actor.RespawnAfter(kRespawnTimeSeconds);
+      actor.RespawnAfter(kRespawnTimeSeconds, actor.GetSpawnPoint());
     }
 
   } else {
@@ -245,26 +245,7 @@ void PartOne::SetEnabled(uint32_t actorFormId, bool enabled)
 void PartOne::AttachEspm(espm::Loader* espm)
 {
   pImpl->espm = espm;
-  pImpl->espm->GetBrowser();
   worldState.AttachEspm(espm, [this] { return CreateFormCallbacks(); });
-
-  clock_t was = clock();
-
-  auto& br = espm->GetBrowser();
-
-  /*auto refrRecords = br.GetRecordsByType("REFR");
-  for (size_t i = 0; i < refrRecords.size(); ++i) {
-    auto& subVector = refrRecords[i];
-    auto mapping = br.GetMapping(i);
-
-    pImpl->logger->info("starting {}", worldState.espmFiles[i]);
-
-    for (auto& refrRecord : *subVector) {
-      AttachEspmRecord(br, refrRecord, *mapping, i == 0);
-    }
-  }*/
-
-  pImpl->logger->info("AttachEspm took {} ticks", clock() - was);
 }
 
 void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)

@@ -1,4 +1,13 @@
-import { hooks, Game, printConsole, Actor, Debug, once, ObjectReference, Utility } from "skyrimPlatform";
+import {
+  hooks,
+  Game,
+  printConsole,
+  Actor,
+  Debug,
+  once,
+  ObjectReference,
+  Utility,
+} from "skyrimPlatform";
 import { setLocalDamageMult, defaultLocalDamageMult } from "./index";
 import { AnimationEventName } from "./animation";
 import { RespawnNeededError } from "./errors";
@@ -10,26 +19,35 @@ let gPlayerAllowAnimations: string[] | null = null;
 const gPlayerId: number = 0x14;
 
 // Blocking kill move animations
-hooks.sendAnimationEvent.add({
-  enter(ctx) {
-    ctx.animEventName = "";
-  },
-  leave() { }
-}, 0, 0xffffffff, "KillMove*");
-
-hooks.sendAnimationEvent.add({
-  enter(ctx) {
-    if (!gPlayerAllowAnimations) return;
-    if (!gPlayerAllowAnimations.includes(ctx.animEventName)) {
+hooks.sendAnimationEvent.add(
+  {
+    enter(ctx) {
       ctx.animEventName = "";
-    }
+    },
+    leave() {},
   },
-  leave() { }
-}, gPlayerId, gPlayerId);
+  0,
+  0xffffffff,
+  "KillMove*"
+);
+
+hooks.sendAnimationEvent.add(
+  {
+    enter(ctx) {
+      if (!gPlayerAllowAnimations) return;
+      if (!gPlayerAllowAnimations.includes(ctx.animEventName)) {
+        ctx.animEventName = "";
+      }
+    },
+    leave() {},
+  },
+  gPlayerId,
+  gPlayerId
+);
 
 const isPlayer = (actor: Actor): boolean => {
   return actor.getFormID() === gPlayerId;
-}
+};
 
 export const makeActorImmortal = (act: Actor): void => {
   act.startDeferredKill();
@@ -48,7 +66,10 @@ export const applyDeathState = (actor: Actor, isDead: boolean) => {
   }
 };
 
-export const safeRemoveRagdollFromWorld = (actor: Actor, afterRemoveCallback: () => void) => {
+export const safeRemoveRagdollFromWorld = (
+  actor: Actor,
+  afterRemoveCallback: () => void
+) => {
   setLocalDamageMult(0);
   actor.forceRemoveRagdollFromWorld().then(() => {
     once("update", () => {
@@ -56,7 +77,7 @@ export const safeRemoveRagdollFromWorld = (actor: Actor, afterRemoveCallback: ()
       afterRemoveCallback();
     });
   });
-}
+};
 
 const killActor = (act: Actor, killer: Actor | null = null): void => {
   if (isPlayer(act) === true) {
@@ -67,7 +88,7 @@ const killActor = (act: Actor, killer: Actor | null = null): void => {
     makeActorMortal(act);
     act.kill(killer);
   }
-}
+};
 
 const resurrectActor = (act: Actor): void => {
   if (isPlayer(act) === true) {
@@ -77,13 +98,18 @@ const resurrectActor = (act: Actor): void => {
   } else {
     throw new RespawnNeededError("needs to be respawned");
   }
-}
+};
 
 const killWithPush = (act: Actor): void => {
   gPlayerAllowAnimations?.push(AnimationEventName.Ragdoll);
   act.pushActorAway(act, 0);
-}
+};
 
 const ressurectWithPushKill = (act: Actor): void => {
-  safeRemoveRagdollFromWorld(act, () => Debug.sendAnimationEvent(act, AnimationEventName.GetUpBegin));
+  const formId = act.getFormID();
+  safeRemoveRagdollFromWorld(act, () => {
+    const actor = Actor.from(Game.getFormEx(formId));
+    if (!actor) return;
+    Debug.sendAnimationEvent(actor, AnimationEventName.GetUpBegin);
+  });
 };
