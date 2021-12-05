@@ -10,7 +10,7 @@ jobs:
                 submodules: recursive
 
           - name: Get branch name
-            run:
+            run: |
                 echo "DEPLOY_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
 
           - name: Post link
