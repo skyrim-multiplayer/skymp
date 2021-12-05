@@ -11,7 +11,7 @@ jobs:
 
           - name: Get branch name
             run: |
-                echo "DEPLOY_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+                echo "DEPLOY_BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr / -)" >> "$GITHUB_ENV"
 
           - name: Post link
             env:
@@ -77,17 +77,3 @@ jobs:
                 message="[DEPLOY $DEPLOY_BRANCH] Build or deploy failed or was cancelled. "
                 message+="Check out the logs at <$link> to find out why."
                 ./ci/deploy/call_webhook.sh "$message"
-
-          - name: Test
-            uses: addnab/docker-run-action@v3
-            with:
-                image: skymp/skymp-vcpkg-deps:latest
-                options: |
-                    -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
-                    -u skymp
-                run: |
-                    cd /src/build \
-                    && ./unit/unit
-                # not working output for some reason:
-                # && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
