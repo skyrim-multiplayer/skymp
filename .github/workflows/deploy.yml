@@ -14,7 +14,7 @@ jobs:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY testtest] Started build. "
+                message="[DEPLOY ${{env.deploy_branch}}] Started build. "
                 message+="You can follow the process at $link. "
                 message+="Once build is finished, further progress will be reported here."
                 ./ci/deploy/call_webhook.sh "$message"
@@ -54,24 +54,6 @@ jobs:
                     cd /src \
                     && ./build.sh --build
 
-          - name: Prepare dist.tar.gz
-            uses: addnab/docker-run-action@v3
-            with:
-                image: skymp/skymp-vcpkg-deps:latest
-                options: |
-                    -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
-                    -u skymp
-                run: |
-                    cd /src/build \
-                    && tar czf dist.tar.gz dist
-
-          - name: Upload dist.tar.gz
-            uses: actions/upload-artifact@v2
-            with:
-              name: dist.tar.gz
-              path: ${{github.workspace}}/build/dist.tar.gz
-
           - name: Deploy
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
@@ -84,11 +66,12 @@ jobs:
                 ./ci/deploy/push_branch_to_server.sh
 
           - name: Notify failure
+            env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             if: !success()
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY testtest] Build or deploy failed. "
+                message="[DEPLOY ${{env.deploy_branch}}] Build or deploy failed. "
                 message+="Check out the logs at $link to find out why."
                 ./ci/deploy/call_webhook.sh "$message"
 
