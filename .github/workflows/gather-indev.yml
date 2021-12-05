@@ -2,6 +2,9 @@ name: Gather indev
 on:
     workflow_dispatch:
         # no params
+    push:
+        branches:
+          - main
 jobs:
     gather-indev:
         runs-on: ubuntu-latest
@@ -34,8 +37,8 @@ jobs:
                 git log --stat
 
                 # maybe also https://stackoverflow.com/a/14947958
-                git fetch origin pull/610/head
-                git merge origin/pull/610/head
+                git fetch upstream pull/610/head
+                git merge upstream/pull/610/head
 
                 git remote -vv
                 git push -u origin indev -f
