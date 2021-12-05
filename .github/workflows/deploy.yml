@@ -72,7 +72,7 @@ jobs:
           - name: Notify failure
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
-            if: !success()
+            if: '!success()'
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
                 message="[DEPLOY $DEPLOY_BRANCH] Build or deploy failed. "
