@@ -53,6 +53,10 @@ remote_branch_dir="skymp-server-$DEPLOY_BRANCH"
 run_remote test -e "$remote_branch_dir" \
   || (echo "no branch on remote server" && exit 1)
 
+# FIXME(#164): temporary workaround for Chakra build bug
+cp build/vcpkg_installed/x64-linux/bin/libChakraCore.so build/dist/server/
+cp ci/deploy/workaround_temporary/run.sh build/dist/server/
+
 cp skymp5-server/{package.json,yarn.lock} build/dist/server/
 rsync --rsh="$remote_shell" -vazPh \
     build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"

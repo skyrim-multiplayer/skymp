@@ -38,9 +38,8 @@ This guide shows how to set it up.
   and upload the data files required by your server.
 * Create `server-settings.json` with your desired settings in `skymp-server-<branch>`
   (not in `skymp-server-<branch>/server`, that would be overwritten).
-* Apply temporary workaround until [#164](https://github.com/skyrim-multiplayer/skymp/issues/164)
-  is resolved. See below for details.
 
+Expected contents of server branch required for the deployment process to succeed:
 ```
 $ ls -lhR skymp-server-<branch>/
 skymp-server-<branch>/:
@@ -61,19 +60,4 @@ total 346M
 -rw-rw-r-- 1 ubuntu ubuntu 3.8M Dec  5 12:01 HearthFires.esm
 -rw-rw-r-- 1 ubuntu ubuntu 239M Dec  5 12:01 Skyrim.esm
 -rw-rw-r-- 1 ubuntu ubuntu  18M Dec  5 12:01 Update.esm
-```
-
-### Temporary workaround for #164
-
-Build locally and upload
-
-Contents of `skymp-server-<branch>/server/run.sh`:
-```bash
-#!/usr/bin/env bash
-
-set -e
-set -x
-
-yarn install
-LD_LIBRARY_PATH="$PWD" node dist_back/index.js
 ```
