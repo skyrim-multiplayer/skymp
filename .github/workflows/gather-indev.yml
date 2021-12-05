@@ -1,0 +1,20 @@
+name: Gather indev
+on:
+    workflow_dispatch:
+        # no params
+jobs:
+    gather-indev:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v2
+            with:
+                submodules: recursive
+
+          - name: Post link
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            run: |
+                link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+                message="[GATHER indev] Hello $link"
+                ./ci/deploy/call_webhook.sh "$message"
