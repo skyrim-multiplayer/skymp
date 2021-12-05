@@ -177,7 +177,6 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
   }
   if (healthPercentage == 0.f) {
     Kill(aggressor);
-    RespawnAfter(kRespawnTimeSeconds, GetSpawnPoint());
     return;
   }
   pImpl->EditChangeForm([&](MpChangeForm& changeForm) {
@@ -285,15 +284,10 @@ espm::ObjectBounds MpActor::GetBounds() const
   return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
 }
 
-void MpActor::SendAndSetDeathState(bool isDead)
-{
-  SendAndSetDeathState({}, isDead, false);
-}
-
-void MpActor::SendAndSetDeathState(const LocationalData& position, bool isDead,
-                                   bool shouldTeleport)
+void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   float attribute = isDead ? 0.f : 1.f;
+  auto& position = GetSpawnPoint();
 
   std::string respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
   SendToUser(respawnMsg.data(), respawnMsg.size(), true);
@@ -384,29 +378,35 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
 void MpActor::Kill(MpActor* killer)
 {
-  SendAndSetDeathState(true);
+  SendAndSetDeathState(true, false);
   MpApiDeath(killer);
 }
 
-void MpActor::RespawnAfter(float seconds, const LocationalData& position)
+void MpActor::RespawnWithDelay(bool shouldTeleport)
 {
+  if (pImpl->isRespawning) {
+    return;
+  }
   pImpl->isRespawning = true;
 
   uint32_t formId = GetFormId();
   if (auto worldState = GetParent()) {
-    worldState->SetTimer(seconds).Then(
-      [worldState, this, formId, position](Viet::Void) {
+    worldState->SetTimer(GetRespawnTime())
+      .Then([worldState, this, formId, shouldTeleport](Viet::Void) {
         if (worldState->LookupFormById(formId).get() == this) {
-          this->Respawn(position);
+          this->Respawn(shouldTeleport);
         }
       });
   }
 }
 
-void MpActor::Respawn(const LocationalData& position)
+void MpActor::Respawn(bool shouldTeleport)
 {
+  if (IsDead() == false) {
+    return;
+  }
   pImpl->isRespawning = false;
-  SendAndSetDeathState(position, false);
+  SendAndSetDeathState(false, shouldTeleport);
 }
 
 void MpActor::Teleport(const LocationalData& position)
@@ -436,4 +436,15 @@ void MpActor::SetSpawnPoint(const LocationalData& position)
 LocationalData MpActor::GetSpawnPoint() const
 {
   return pImpl->ChangeForm().spawnPoint;
+}
+
+const float MpActor::GetRespawnTime() const
+{
+  return pImpl->ChangeForm().spawnDelay;
+}
+
+void MpActor::SetRespawnTime(float time)
+{
+  pImpl->EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.spawnDelay = time; });
 }

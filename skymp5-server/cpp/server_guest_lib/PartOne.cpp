@@ -148,7 +148,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
     actor.ForceSubscriptionsUpdate();
 
     if (actor.IsDead() && !actor.IsRespawning()) {
-      actor.RespawnAfter(kRespawnTimeSeconds, actor.GetSpawnPoint());
+      actor.RespawnWithDelay();
     }
 
   } else {
