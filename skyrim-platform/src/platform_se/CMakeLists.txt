@@ -164,8 +164,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # this target was originally called pack, now it is called skyrim-platform
   # so we can use add_dependencies(x skyrim-platform) in other projects
   add_custom_target(skyrim-platform ALL
-    COMMAND yarn run pack$<$<CONFIG:Debug>:-debug>
-    WORKING_DIRECTORY ${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service
+    COMMAND yarn run --cwd "\"${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service\"" pack$<$<CONFIG:Debug>:-debug>
   )
   add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 endif()
