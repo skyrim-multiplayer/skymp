@@ -1,8 +1,5 @@
 name: Deploy
 on:
-    push:
-    #     branches:
-    #       - indev
     workflow_dispatch:
         inputs:
             branch:
@@ -22,12 +19,7 @@ jobs:
 
           - name: Get branch name
             run: |
-                # XXX: temporary to test main repo workflow
-                DEPLOY_BRANCH="${{github.event.inputs.branch}}"
-                if [[ "$DEPLOY_BRANCH" == "" ]]; then
-                    DEPLOY_BRANCH=indev
-                fi
-                echo "DEPLOY_BRANCH=$DEPLOY_BRANCH" >> "$GITHUB_ENV"
+                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
 
           - name: Gather PRs
             env:
