@@ -81,7 +81,7 @@ void OverlayClient::Create() const noexcept
 }
 
 void OverlayClient::Render(
-  ObtainTextsToDrawFunction& obtainTextsToDraw) const noexcept
+  const ObtainTextsToDrawFunction& obtainTextsToDraw) const noexcept
 {
   if (m_pRenderHandler) {
     m_pRenderHandler->Render(obtainTextsToDraw);

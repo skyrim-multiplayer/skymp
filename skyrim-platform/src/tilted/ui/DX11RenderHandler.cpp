@@ -29,7 +29,8 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
 
 DX11RenderHandler::~DX11RenderHandler() = default;
 
-void DX11RenderHandler::Render(ObtainTextsToDrawFunction& obtainTextsToDraw)
+void DX11RenderHandler::Render(
+  const ObtainTextsToDrawFunction& obtainTextsToDraw)
 {
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {

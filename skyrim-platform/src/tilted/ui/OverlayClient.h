@@ -1,13 +1,12 @@
 #pragma once
 
-#include "../ui/TextToDraw.h"
 #include "MyLoadHandler.h"
 #include "MyRenderHandler.h"
 #include "ProcessMessageListener.h"
-#include <include/cef_client.h>
-
+#include "TextToDraw.h"
 #include <Meta.hpp>
 #include <functional>
+#include <include/cef_client.h>
 
 namespace CEFUtils {
 struct OverlayClient
@@ -17,6 +16,7 @@ struct OverlayClient
 {
   using ObtainTextsToDrawFunction = std::function<void(
     std::function<void(const TextToDraw& textToDraw)> callback)>;
+
   explicit OverlayClient(
     MyRenderHandler* apHandler,
     std::shared_ptr<ProcessMessageListener> onProcessMessage_) noexcept;
@@ -33,7 +33,8 @@ struct OverlayClient
   [[nodiscard]] const std::wstring& GetCursorPathPNG() const noexcept;
   [[nodiscard]] const std::wstring& GetCursorPathDDS() const noexcept;
 
-  void Render(ObtainTextsToDrawFunction& obtainTextsToDraw) const noexcept;
+  void Render(
+    const ObtainTextsToDrawFunction& obtainTextsToDraw) const noexcept;
   void Create() const noexcept;
   void Reset() const noexcept;
 

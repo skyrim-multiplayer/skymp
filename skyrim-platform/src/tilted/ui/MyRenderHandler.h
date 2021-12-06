@@ -1,5 +1,6 @@
 #pragma once
-#include "../ui/TextToDraw.h"
+
+#include "TextToDraw.h"
 #include <functional>
 #include <include/cef_render_handler.h>
 
@@ -9,8 +10,9 @@ struct MyRenderHandler : CefRenderHandler
 {
   using ObtainTextsToDrawFunction = std::function<void(
     std::function<void(const TextToDraw& textToDraw)> callback)>;
+
   virtual void Reset() = 0;
-  virtual void Render(ObtainTextsToDrawFunction& obtainTextsToDarw) = 0;
+  virtual void Render(const ObtainTextsToDrawFunction& obtainTextsToDarw) = 0;
   virtual void Create() = 0;
 
   void SetVisible(const bool aVisible) noexcept { m_visible = aVisible; }

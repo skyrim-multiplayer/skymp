@@ -1,7 +1,7 @@
 #pragma once
 
-#include "TextToDraw.h"
 #include "MyRenderHandler.h"
+#include "TextToDraw.h"
 #include <Signal.hpp>
 #include <functional>
 #include <mutex>
@@ -43,7 +43,7 @@ struct DX11RenderHandler : MyRenderHandler
   TP_NOCOPYMOVE(DX11RenderHandler);
 
   void Create() override;
-  void Render(ObtainTextsToDrawFunction& obtainTextsToDraw) override;
+  void Render(const ObtainTextsToDrawFunction& obtainTextsToDraw) override;
   void Reset() override;
 
   void GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override;

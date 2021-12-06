@@ -1,3 +1,5 @@
+#include "BrowserApi.h"
+#include "CallNativeApi.h"
 #include "CameraApi.h"
 #include "ConsoleApi.h"
 #include "DevApi.h"
@@ -25,6 +27,9 @@
 #include "TickTask.h"
 #include "ui/TextToDraw.h"
 #include <RE/ConsoleLog.h>
+#include <SKSE/API.h>
+#include <SKSE/Interfaces.h>
+#include <SKSE/Stubs.h>
 #include <Windows.h>
 #include <atomic>
 #include <functional>
@@ -42,6 +47,7 @@
 #include <skse64/GameMenus.h>
 #include <skse64/GameReferences.h>
 #include <skse64/NiRenderer.h>
+#include <skse64/PluginAPI.h>
 #include <skse64/gamethreads.h>
 #include <sstream>
 #include <string>
@@ -49,23 +55,19 @@
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
 
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
-#include <skse64/PluginAPI.h>
-
-#include "SkyrimPlatform.h"
-
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
-using GetTextsToDrawCallback =
-  std::function<void(const TextToDraw& textToDraw)>;
+
+using TextToDrawCallback = std::function<void(const TextToDraw& textToDraw)>;
 using ObtainTextsToDrawFunction = std::function<void(
   std::function<void(const TextToDraw& textToDraw)> callback)>;
+
+void GetTextsToDraw(TextToDrawCallback callback)
+{
+  callback(TextToDraw());
+}
 
 void SetupFridaHooks();
 
@@ -102,13 +104,6 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
   g_nativeCallRequirements.gameThrQ->Update();
   g_nativeCallRequirements.stackId = std::numeric_limits<RE::VMStackID>::max();
   g_nativeCallRequirements.vm = nullptr;
-}
-
-void GetTextsToDraw(GetTextsToDrawCallback callback)
-{
-  callback(TextToDraw(L"Hello, Skymp!#1"));
-  callback(TextToDraw(L"Hello, Skymp!#2"));
-  callback(TextToDraw(L"Hello, Skymp!#3"));
 }
 
 extern "C" {
