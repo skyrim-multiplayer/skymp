@@ -299,6 +299,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     std::string dataDir;
 
     auto logger = spdlog::stdout_color_mt("console");
+    logger->set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::debug);
     partOne->AttachLogger(logger);
 
     std::ifstream f("server-settings.json");
