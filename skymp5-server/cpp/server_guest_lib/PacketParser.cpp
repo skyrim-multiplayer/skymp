@@ -8,8 +8,6 @@
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
 
-jidosaijodsaijo
-
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)
 {
