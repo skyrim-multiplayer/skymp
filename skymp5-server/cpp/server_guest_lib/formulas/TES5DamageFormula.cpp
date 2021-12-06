@@ -34,7 +34,7 @@ private:
   float CalcArmorRatingComponent(
     const Inventory::Entry& opponentEquipmentEntry) const;
   float CalcOpponentArmorRating() const;
-  float TES5DamageFormulaImpl::CalcMagicEffects(Effects effects) const;
+  float CalcMagicEffects(Effects effects) const;
 };
 
 TES5DamageFormulaImpl::TES5DamageFormulaImpl(const MpActor& aggressor_,
