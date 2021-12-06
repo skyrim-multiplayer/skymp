@@ -1,6 +1,6 @@
 import { Octokit } from '@octokit/rest';
 import * as pull_manager from './pull_manager';
-import * as pull_merger from './pull_merger';
+// import * as pull_merger from './pull_merger';
 
 const octokit = new Octokit();
 
@@ -26,6 +26,15 @@ const octokit = new Octokit();
 //   pr.labels
 // }
 
-await pull_merger.mergePull({headLabel: 'kek', number: 123,});
+// await pull_merger.mergePull({headLabel: 'kek', number: 123,});
+
+const pulls = await pull_manager.getPullsWithLabel(octokit);
+
+console.log(pulls.map((pull) => pull.number).join(' '));
+
+console.log('Included PRs:');
+for (const pull of pulls) {
+  console.log(`[${pull.title}](https://github.com/skyrim-multiplayer/skymp/pull/${pull.number}) from ${pull.headLabel} by ${pull.authorLogin}`);
+}
 
 })().catch((err) => console.error(err));

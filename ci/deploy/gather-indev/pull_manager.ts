@@ -10,6 +10,8 @@ const REPO = {
 export interface Pull {
   number: number;
   headLabel: string;
+  authorLogin: string;
+  title: string;
 }
 
 export async function getPullsWithLabel(octokit: Octokit) { //: Endpoints["GET /repos/{owner}/{repo}/pulls"]["response"] {
@@ -25,6 +27,8 @@ export async function getPullsWithLabel(octokit: Octokit) { //: Endpoints["GET /
     result.push({
       number: pull.number,
       headLabel: pull.head.label,
+      authorLogin: pull.head.user.login,
+      title: pull.title,
     });
   }
   return result;
