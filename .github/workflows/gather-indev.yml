@@ -23,6 +23,13 @@ jobs:
                 message="[GATHER indev] Hello <$link>"
                 ./ci/deploy/call_webhook.sh "$message"
 
+          - name: Gather
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            run: |
+                yarn --cwd="${{github.workspace}}/ci/deploy/gather-indev"
+                ./ci/deploy/gather_indev.sh
+
           - name: Kek
             run: |
                 git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
