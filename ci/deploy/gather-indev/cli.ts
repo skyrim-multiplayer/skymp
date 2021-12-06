@@ -17,4 +17,7 @@ for (const pull of pulls) {
   console.log(`[${pull.title}](<https://github.com/skyrim-multiplayer/skymp/pull/${pull.number}>) from ${pull.headLabel} by **${pull.authorLogin}**`);
 }
 
-})().catch((err) => console.error(err));
+})().catch((err) => {
+  console.error(err)
+  process.exit(1);
+});
