@@ -12,6 +12,7 @@ jobs:
             uses: actions/checkout@v2
             with:
                 fetch-depth: 0
+                submodules: recursive
 
           - name: Post link
             if: 'false'
@@ -32,10 +33,79 @@ jobs:
 
                 git checkout -b indev
 
-          - name: Gather and push
+          - name: Gather and no push
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
                 yarn --cwd="${{github.workspace}}/ci/deploy/gather-indev"
                 ./ci/deploy/gather_indev.sh
-                git push -u origin indev -f
+                # git push -u origin indev -f
+
+          - name: Get branch name
+            run: |
+                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
+
+          - name: Post link
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            run: |
+                link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+                message="[DEPLOY $DEPLOY_BRANCH] Started build. "
+                message+="You can follow the process at <$link>. "
+                message+="Once build is finished, further progress will be reported here."
+                ./ci/deploy/call_webhook.sh "$message"
+
+          - name: Prepare
+            uses: addnab/docker-run-action@v3
+            with:
+                image: skymp/skymp-vcpkg-deps:latest
+                options: |
+                    -v ${{github.workspace}}:/src
+                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
+                run: |
+                    chown -R skymp:skymp /src /home/skymp/.cmake-js
+
+          - name: CMake Configure
+            uses: addnab/docker-run-action@v3
+            with:
+                image: skymp/skymp-vcpkg-deps:latest
+                options: |
+                    -v ${{github.workspace}}:/src
+                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
+                    -u skymp
+                run: |
+                    cd /src \
+                    && ./build.sh --configure \
+                       -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+          - name: Build
+            uses: addnab/docker-run-action@v3
+            with:
+                image: skymp/skymp-vcpkg-deps:latest
+                options: |
+                    -v ${{github.workspace}}:/src
+                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
+                    -u skymp
+                run: |
+                    cd /src \
+                    && ./build.sh --build
+
+          - name: Deploy
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+                DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST}}
+                DEPLOY_TARGET_USER: ubuntu
+                DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
+                DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS}}
+            run: |
+                ./ci/deploy/push_branch_to_server.sh
+
+          - name: Notify failure
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            if: '!success()'
+            run: |
+                link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+                message="[DEPLOY $DEPLOY_BRANCH] Build or deploy failed or was cancelled. "
+                message+="Check out the logs at <$link> to find out why."
+                ./ci/deploy/call_webhook.sh "$message"
