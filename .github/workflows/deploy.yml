@@ -21,7 +21,7 @@ jobs:
           - name: Get branch name
             run: |
                 echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
-                echo "DEPLOY_ACTION=restart" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=stop" >> "$GITHUB_ENV"
 
           - name: Gather PRs
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
