@@ -6,6 +6,7 @@ if git remote -vv | grep -q fork; then
 fi
 
 set -e
+set -x
 
 merge_pull() {
   git pull --squash "$MAIN_REPO" "pull/$1/head"
