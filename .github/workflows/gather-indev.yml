@@ -2,9 +2,6 @@ name: Gather indev
 on:
     workflow_dispatch:
         # no params
-    push:
-        # branches:
-        #   - main
 jobs:
     gather-indev:
         runs-on: ubuntu-latest
@@ -23,7 +20,7 @@ jobs:
                 message="[GATHER indev] Hello <$link>"
                 ./ci/deploy/call_webhook.sh "$message"
 
-          - name: Kek
+          - name: Prepare
             run: |
                 git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
                 git config --local user.name "github-actions[bot]"
@@ -33,11 +30,7 @@ jobs:
 
                 git checkout -b indev
 
-                echo kek > kek
-                git add kek
-                git commit -m 'kek!!!'
-
-          - name: Gather
+          - name: Gather and push
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
