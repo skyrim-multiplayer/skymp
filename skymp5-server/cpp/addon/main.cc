@@ -303,6 +303,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     spdlog::set_level(spdlog::level::debug);
     partOne->AttachLogger(logger);
 
+    logger->debug("Test debug to local logger");
+    spdlog::debug("Test debug to global logger");
+
     std::ifstream f("server-settings.json");
     if (!f.good()) {
       throw std::runtime_error("server-settings.json is missing");
