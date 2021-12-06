@@ -9,6 +9,7 @@
 TEST_CASE("Returns true and sends nothing for normal movement",
           "[MovementValidation]")
 {
+  REQUIRE(false);
   DummyWorldObject obj({ 0, 0, 0 }, { 0, 0, 0 }, FormDesc::Tamriel());
   DummyMessageOutput messageOutput;
 
