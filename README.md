@@ -59,6 +59,12 @@ Client can be run with Proton (though it can be tricky to get Skyrim itself to w
     echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
     ```
 
+Alternativaly, you can use [a docker Image with preinstalled depenndecies](https://hub.docker.com/r/skymp/skymp-vcpkg-deps):
+
+```sh
+docker run -it --rm -v "$PWD:/src" -w "/src" -u "`id -u`:`id -g`" skymp/skymp-vcpkg-deps ./build.sh ...
+```
+
 ## Configuring and Building
 
 ### Common
