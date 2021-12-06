@@ -112,23 +112,6 @@ jobs:
                     cd /src \
                     && ./build.sh --build
 
-          - name: Test
-            uses: addnab/docker-run-action@v3
-            env:
-                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
-            with:
-                image: skymp/skymp-vcpkg-deps:latest
-                options: |
-                    -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
-                    -u skymp
-                run: |
-                    cd /src/build \
-                    && ./unit/unit \
-                    || ./ci/deploy/call_webhook.sh "[DEPLOY $DEPLOY_BRANCH] " \
-                       "WARNING: tests are failing on merged branch. See logs "
-                       " for details"
-
           - name: Deploy
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
