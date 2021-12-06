@@ -6,7 +6,7 @@ on:
     workflow_dispatch:
         inputs:
             branch:
-                description: Search for PRs with merge-to:<branch>
+                description: branch - search for PRs with merge-to:<branch>
                     and deploy to skymp-server-<branch>
                 required: true
                 default: indev
