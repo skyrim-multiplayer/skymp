@@ -1,8 +1,15 @@
 name: Deploy
 on:
-    push:
-        branches:
-          - indev
+    # push:
+    #     branches:
+    #       - indev
+    workflow_dispatch:
+        inputs:
+            branch:
+                description: Search for PRs with merge-to:<branch>
+                    and deploy to skymp-server-<branch>
+                required: true
+                default: indev
 jobs:
     deploy:
         runs-on: ubuntu-latest
@@ -14,7 +21,48 @@ jobs:
 
           - name: Get branch name
             run: |
-                echo "DEPLOY_BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr / -)" >> "$GITHUB_ENV"
+                # echo "DEPLOY_BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr / -)" >> "$GITHUB_ENV"
+                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}" >> "$GITHUB_ENV"
+
+          - name: Gather PRs
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            run: |
+                git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git config --local user.name "github-actions[bot]"
+                git config pull.rebase false
+
+                git remote add upstream https://github.com/skyrim-multiplayer/skymp
+
+                base_rev="`git rev-parse HEAD`"
+                echo "=== Base revision: $base_rev"
+
+                git checkout -b tmp
+                yarn --cwd="${{github.workspace}}/ci/deploy/gather-indev"
+                ./ci/deploy/gather_indev.sh
+
+                if [[ "`git rev-parse HEAD`" == "$base_rev" ]]; then
+                    msg="[DEPLOY $DEPLOY_BRANCH] Nothing to deploy"
+                    ./ci/deploy/call_webhook.sh "$msg"
+                    echo "$msg"
+                    exit 1
+                fi
+
+                echo ""
+                echo "=== Changes since $base_rev:"
+                git log -p "$base_rev.." | tee deploy_git_log
+
+                echo ""
+                echo "=== Full diff being deployed:"
+                git diff "$base_rev" | tee deploy_git_diff
+
+          - name: Upload patches
+            uses: actions/upload-artifact@v2
+            with:
+                name: dist.tar.gz
+                path: |
+                    deploy_git_log
+                    deploy_git_diff
 
           - name: Post link
             env:
@@ -26,7 +74,7 @@ jobs:
                 message+="Once build is finished, further progress will be reported here."
                 ./ci/deploy/call_webhook.sh "$message"
 
-          - name: Prepare
+          - name: Prepare for build
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
