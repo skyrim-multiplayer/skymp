@@ -15,7 +15,10 @@ console.log(pulls.map((pull) => pull.number).join(' '));
 console.log('Included PRs:');
 let hasPulls = false;
 for (const pull of pulls) {
-  console.log(`[${pull.title}](<https://github.com/skyrim-multiplayer/skymp/pull/${pull.number}>) from ${pull.headLabel} by **${pull.authorLogin}**`);
+  console.log(
+    `[${pull.title}](<https://github.com/skyrim-multiplayer/skymp/pull/${pull.number}>)`
+    + `from ${pull.headLabel} by **${pull.authorLogin}**`
+  );
   hasPulls = true;
 }
 
