@@ -5,11 +5,18 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Checkout
+          - name: Checkout (full)
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/checkout@v2
             with:
                 submodules: recursive
                 fetch-depth: 0
+
+          - name: Checkout (last commit)
+            if: ${{env.DEPLOY_ACTION != 'deploy'}}
+            uses: actions/checkout@v2
+            with:
+                submodules: recursive
 
           - name: Get branch name
             run: |
@@ -61,6 +68,7 @@ jobs:
                 ./ci/deploy/call_webhook.sh "$message"
 
           - name: Prepare for build
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
