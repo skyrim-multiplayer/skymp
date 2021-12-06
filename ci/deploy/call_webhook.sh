@@ -10,6 +10,13 @@ if [[ "$1" = "" ]]; then
   exit 1
 fi
 
+msg=""
+
+while [[ "$1" != "" ]]; do
+  msg+="$1"
+  shift
+done
+
 curl -S "$DEPLOY_STATUS_WEBHOOK" -H 'content-type: application/json' \
-    --data "`echo "$1" | jq --raw-input --slurp '{content: .}'`" \
+    --data "`echo "$msg" | jq --raw-input --slurp '{content: .}'`" \
   || echo 'WARNING: webhook error'
