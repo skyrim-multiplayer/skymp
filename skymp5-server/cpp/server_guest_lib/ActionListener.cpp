@@ -729,5 +729,5 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
                                simdjson::dom::element data)
 {
-  spdlog::debug("Got unhandled message: {}", data.get_c_str());
+  spdlog::debug("Got unhandled message: {}", data.get());
 }
