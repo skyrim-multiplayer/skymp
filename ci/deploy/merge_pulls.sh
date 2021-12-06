@@ -11,7 +11,7 @@ set -x
 merge_pull() {
   git fetch "$MAIN_REPO" "pull/$1/head"
   git log --stat
-  git pull --squash FETCH_HEAD
+  git merge --squash FETCH_HEAD
   git commit -m "merge pull #$1"
 }
 
