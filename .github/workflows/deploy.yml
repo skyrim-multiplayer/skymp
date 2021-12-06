@@ -2,7 +2,6 @@ name: Deploy
 on:
     push:
         branches:
-          - nic11-deploy
           - indev
 jobs:
     deploy:
