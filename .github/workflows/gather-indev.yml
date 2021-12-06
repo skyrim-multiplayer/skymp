@@ -3,8 +3,8 @@ on:
     workflow_dispatch:
         # no params
     push:
-        branches:
-          - main
+        # branches:
+        #   - main
 jobs:
     gather-indev:
         runs-on: ubuntu-latest
