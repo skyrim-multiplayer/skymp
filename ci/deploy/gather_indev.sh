@@ -9,4 +9,4 @@ msg+="`echo "$data" | tail -n +2`"
 echo "$msg"
 ./ci/deploy/call_webhook.sh "$msg"
 
-echo "$data" | head -n 1 | xargs ./merge_pulls.sh
+echo "$data" | head -n 1 | xargs ./ci/deploy/merge_pulls.sh
