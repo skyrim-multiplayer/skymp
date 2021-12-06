@@ -1,6 +1,6 @@
 name: Deploy
 on:
-    push:
+    # push:
     #     branches:
     #       - indev
     workflow_dispatch:
@@ -22,7 +22,6 @@ jobs:
 
           - name: Get branch name
             run: |
-                # echo "DEPLOY_BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr / -)" >> "$GITHUB_ENV"
                 echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
 
           - name: Gather PRs
