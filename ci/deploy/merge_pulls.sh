@@ -9,7 +9,7 @@ set -e
 set -x
 
 merge_pull() {
-  git pull --squash "$MAIN_REPO" "pull/$1/head"
+  git pull --squash --allow-unrelated-histories "$MAIN_REPO" "pull/$1/head"
   git commit -m "merge pull #$1"
 }
 
