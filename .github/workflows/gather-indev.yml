@@ -23,13 +23,6 @@ jobs:
                 message="[GATHER indev] Hello <$link>"
                 ./ci/deploy/call_webhook.sh "$message"
 
-          - name: Gather
-            env:
-                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
-            run: |
-                yarn --cwd="${{github.workspace}}/ci/deploy/gather-indev"
-                ./ci/deploy/gather_indev.sh
-
           - name: Kek
             run: |
                 git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -44,19 +37,10 @@ jobs:
                 git add kek
                 git commit -m 'kek!!!'
 
-                git log --stat
-
-                # maybe also https://stackoverflow.com/a/14947958
-                # git fetch upstream main
-                git pull --squash upstream pull/610/head
-                git commit -m 'merge PR #610'
-                # git log --stat
-
-                # exit 0
-
-                # git log --stat --graph upstream/main upstream/refs/pull/610/head
-
-                # git merge upstream/refs/pull/610/head
-
-                git remote -vv
+          - name: Gather
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            run: |
+                yarn --cwd="${{github.workspace}}/ci/deploy/gather-indev"
+                ./ci/deploy/gather_indev.sh
                 git push -u origin indev -f
