@@ -11,5 +11,5 @@ if [[ "$1" = "" ]]; then
 fi
 
 curl "$DEPLOY_STATUS_WEBHOOK" -H 'content-type: application/json' \
-    --data "`echo "$1" | jq --raw-input '{content: .}'`" \
+    --data "`echo "$1" | jq --raw-input --slurp '{content: .}'`" \
   || echo 'WARNING: webhook error'
