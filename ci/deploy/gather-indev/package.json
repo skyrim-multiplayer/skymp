@@ -1,0 +1,14 @@
+{
+  "name": "gather-indev",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "dependencies": {
+    "@octokit/rest": "^18.12.0",
+    "@types/node": "^16.11.11",
+    "execa": "^6.0.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.2"
+  }
+}
