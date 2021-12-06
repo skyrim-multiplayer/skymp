@@ -1,6 +1,4 @@
 import { Octokit } from '@octokit/rest';
-import { Endpoints } from '@octokit/types/dist-types/generated/Endpoints';
-// Endpoints["GET /repos/{owner}/{repo}/pulls"]["response"]
 
 const REPO = {
   owner: 'skyrim-multiplayer',
@@ -14,7 +12,7 @@ export interface Pull {
   title: string;
 }
 
-export async function getPullsWithLabel(octokit: Octokit) { //: Endpoints["GET /repos/{owner}/{repo}/pulls"]["response"] {
+export async function getPullsWithLabel(octokit: Octokit) {
   const { data: pulls } = await octokit.pulls.list({
     ...REPO,
     state: 'open',
