@@ -3,10 +3,16 @@
 set -e
 set -x
 
-branch="${1:?}"
+action="${1:?}"
+branch="${2:?}"
 
 cd "skymp-server-$branch"
 docker stop "skymp-server-$branch" || true
+
+if [[ "$action" == "stop" ]]; then
+  exit 0
+fi
+
 cp ./server-settings.json server/
 docker run -d --rm --name="skymp-server-$branch" --network=host \
     -v "$PWD/server:/work" --workdir=/work \

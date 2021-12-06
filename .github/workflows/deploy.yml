@@ -14,8 +14,10 @@ jobs:
           - name: Get branch name
             run: |
                 echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=restart" >> "$GITHUB_ENV"
 
           - name: Gather PRs
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
@@ -39,6 +41,7 @@ jobs:
                 git diff "$base_rev" | tee deploy_git_diff
 
           - name: Upload patches
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/upload-artifact@v2
             with:
                 name: patches
@@ -47,6 +50,7 @@ jobs:
                     deploy_git_diff
 
           - name: Post link
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
@@ -67,6 +71,7 @@ jobs:
                     chown -R skymp:skymp /src /home/skymp/.cmake-js
 
           - name: CMake Configure
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
@@ -80,6 +85,7 @@ jobs:
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
           - name: Build
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
