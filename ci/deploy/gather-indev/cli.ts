@@ -14,7 +14,7 @@ console.log(pulls.map((pull) => pull.number).join(' '));
 // description for Discord message
 console.log('Included PRs:');
 for (const pull of pulls) {
-  console.log(`<[${pull.title}](https://github.com/skyrim-multiplayer/skymp/pull/${pull.number})> from ${pull.headLabel} by **${pull.authorLogin}**`);
+  console.log(`[${pull.title}](<https://github.com/skyrim-multiplayer/skymp/pull/${pull.number}>) from ${pull.headLabel} by **${pull.authorLogin}**`);
 }
 
 })().catch((err) => console.error(err));
