@@ -5,6 +5,11 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
+          - name: Get branch name
+            run: |
+                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=deploy" >> "$GITHUB_ENV"
+
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/checkout@v2
@@ -17,11 +22,6 @@ jobs:
             uses: actions/checkout@v2
             with:
                 submodules: recursive
-
-          - name: Get branch name
-            run: |
-                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
-                echo "DEPLOY_ACTION=deploy" >> "$GITHUB_ENV"
 
           - name: Gather PRs
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
