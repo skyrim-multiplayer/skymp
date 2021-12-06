@@ -13,8 +13,14 @@ console.log(pulls.map((pull) => pull.number).join(' '));
 
 // description for Discord message
 console.log('Included PRs:');
+let hasPulls = false;
 for (const pull of pulls) {
   console.log(`[${pull.title}](<https://github.com/skyrim-multiplayer/skymp/pull/${pull.number}>) from ${pull.headLabel} by **${pull.authorLogin}**`);
+  hasPulls = true;
+}
+
+if (!hasPulls) {
+  console.log('None. Will build clean base branch.')
 }
 
 })().catch((err) => {

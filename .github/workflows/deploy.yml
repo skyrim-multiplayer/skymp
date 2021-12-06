@@ -44,13 +44,6 @@ jobs:
                 yarn --cwd="${{github.workspace}}/ci/deploy/gather-indev"
                 ./ci/deploy/gather_indev.sh
 
-                if [[ "`git rev-parse HEAD`" == "$base_rev" ]]; then
-                    msg="[DEPLOY $DEPLOY_BRANCH] Nothing to deploy"
-                    ./ci/deploy/call_webhook.sh "$msg"
-                    echo "$msg"
-                    exit 1
-                fi
-
                 echo ""
                 echo "=== Changes since $base_rev:"
                 git log -p "$base_rev.." | tee deploy_git_log
