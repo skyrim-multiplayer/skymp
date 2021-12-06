@@ -18,6 +18,7 @@ jobs:
             uses: actions/checkout@v2
             with:
                 submodules: recursive
+                depth: 0
 
           - name: Get branch name
             run: |
