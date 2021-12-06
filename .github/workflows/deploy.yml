@@ -129,3 +129,5 @@ jobs:
                 message="[DEPLOY $DEPLOY_BRANCH] Build or deploy failed or was cancelled. "
                 message+="Check out the logs at <$link> to find out why."
                 ./ci/deploy/call_webhook.sh "$message"
+
+                git log --stat --graph --all
