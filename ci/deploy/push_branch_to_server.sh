@@ -7,7 +7,7 @@ message() {
 }
 
 report_fail() {
-  message "Something went wrong, please see GitHub logs for Ubuntu build for details"
+  message "Something went wrong, please see GitHub logs for details"
   exit 1
 }
 trap report_fail ERR
@@ -62,4 +62,10 @@ rsync --rsh="$remote_shell" -vazPh --checksum \
     ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
 run_remote "$remote_tmp_dir/pull_branch.sh" "$DEPLOY_BRANCH"
 
-message "Finished successfully"
+get_ip_port() {
+  jq --raw-output '"IP: `" + .ip + "`, port: `" + (.port | tostring) + "`"'
+}
+
+ip_port="`run_remote cat "$remote_branch_dir/server-settings.json" | get_ip_port`"
+
+message "Finished successfully. Connect to: $ip_port"
