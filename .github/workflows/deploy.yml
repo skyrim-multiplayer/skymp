@@ -1,6 +1,6 @@
 name: Deploy
 on:
-    # push:
+    push:
     #     branches:
     #       - indev
     workflow_dispatch:
@@ -60,7 +60,7 @@ jobs:
           - name: Upload patches
             uses: actions/upload-artifact@v2
             with:
-                name: dist.tar.gz
+                name: patches
                 path: |
                     deploy_git_log
                     deploy_git_diff
