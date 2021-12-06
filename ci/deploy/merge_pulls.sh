@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 MAIN_REPO="upstream"
-if git remote -vv | grep -q fork; then
+if git remote -vv | grep -e 'origin.*skyrim-multiplayer'; then
   MAIN_REPO="origin"
 fi
 
