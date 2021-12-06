@@ -1,5 +1,0 @@
-describe('events', () => {
-  it('exists', () => {
-    // ...
-  });
-});
