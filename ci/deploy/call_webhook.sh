@@ -17,6 +17,6 @@ while [[ "$1" != "" ]]; do
   shift
 done
 
-curl -S "$DEPLOY_STATUS_WEBHOOK" -H 'content-type: application/json' \
+curl -sS "$DEPLOY_STATUS_WEBHOOK" -H 'content-type: application/json' \
     --data "`echo "$msg" | jq --raw-input --slurp '{content: .}'`" \
   || echo 'WARNING: webhook error'
