@@ -46,7 +46,7 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
 
   ac.Kill();
   p.Messages().clear();
-  ac.Respawn(ac.GetSpawnPoint());
+  ac.Respawn();
 
   REQUIRE(p.Messages().size() == 1);
   nlohmann::json message = p.Messages()[0].j;
