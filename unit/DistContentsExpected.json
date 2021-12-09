@@ -5,7 +5,6 @@
       "client/Data/Platform/Modules/skyrimPlatform.ts",
       "client/Data/Platform/Plugins/skymp5-client.js",
       "client/Data/Platform/Plugins/skymp5-client-settings.txt",
-      "client/Data/Interface/Fonts/font.spritefont",
       "server/data/scripts/ActiveMagicEffect.pex",
       "server/data/scripts/Actor.pex",
       "server/data/scripts/ActorValueInfo.pex",
@@ -134,6 +133,7 @@
     ],
     "expectedFiles": [
       "server/ChakraCore.dll",
+      "client/Data/Interface/Fonts/font.spritefont",
       "client/Data/Platform/Distribution/CEF/cef.pak",
       "client/Data/Platform/Distribution/CEF/cef_100_percent.pak",
       "client/Data/Platform/Distribution/CEF/cef_200_percent.pak",
