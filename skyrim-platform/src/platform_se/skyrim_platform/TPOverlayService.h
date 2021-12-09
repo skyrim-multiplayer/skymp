@@ -18,8 +18,6 @@ using CEFUtils::MyChromiumApp;
 
 struct OverlayService
 {
-  using ObtainTextsToDrawFunction = std::function<void(
-    std::function<void(const TextToDraw& textToDraw)> callback)>;
   // onProcessMessage_ should never throw. The current behavior is
   // console.error (see OverlayClient.cpp), but you better do not throw
   // anything. Handle properly in place instead.

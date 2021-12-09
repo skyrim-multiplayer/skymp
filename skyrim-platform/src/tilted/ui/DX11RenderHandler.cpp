@@ -14,8 +14,6 @@
 #include <string>
 
 CMRC_DECLARE(skyrim_plugin_resources);
-using ObtainTextsToDrawFunction = std::function<void(
-  std::function<void(const TextToDraw& textToDraw)> callback)>;
 
 namespace CEFUtils {
 DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept

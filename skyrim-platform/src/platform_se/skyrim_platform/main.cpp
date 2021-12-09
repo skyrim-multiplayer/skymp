@@ -25,7 +25,6 @@
 #include "TaskQueue.h"
 #include "ThreadPoolWrapper.h"
 #include "TickTask.h"
-#include "ui/TextToDraw.h"
 #include <RE/ConsoleLog.h>
 #include <SKSE/API.h>
 #include <SKSE/Interfaces.h>
@@ -54,18 +53,16 @@
 #include <thread>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
+#include <ui/TextToDraw.h>
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
-using TextToDrawCallback = std::function<void(const TextToDraw& textToDraw)>;
-using ObtainTextsToDrawFunction = std::function<void(
-  std::function<void(const TextToDraw& textToDraw)> callback)>;
-
 void GetTextsToDraw(TextToDrawCallback callback)
 {
+  callback(TextToDraw());
   callback(TextToDraw());
 }
 

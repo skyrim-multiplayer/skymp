@@ -10,8 +10,6 @@
 
 using CEFUtils::DX11RenderHandler;
 using CEFUtils::MyRenderHandler;
-using ObtainTextsToDrawFunction = std::function<void(
-  std::function<void(const TextToDraw& textToDraw)> callback)>;
 
 struct D3D11RenderProvider final
   : MyChromiumApp::RenderProvider

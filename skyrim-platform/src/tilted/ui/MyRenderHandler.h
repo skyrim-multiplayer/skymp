@@ -1,5 +1,4 @@
 #pragma once
-
 #include "TextToDraw.h"
 #include <functional>
 #include <include/cef_render_handler.h>
@@ -8,9 +7,6 @@ namespace CEFUtils {
 struct OverlayClient;
 struct MyRenderHandler : CefRenderHandler
 {
-  using ObtainTextsToDrawFunction = std::function<void(
-    std::function<void(const TextToDraw& textToDraw)> callback)>;
-
   virtual void Reset() = 0;
   virtual void Render(const ObtainTextsToDrawFunction& obtainTextsToDarw) = 0;
   virtual void Create() = 0;
