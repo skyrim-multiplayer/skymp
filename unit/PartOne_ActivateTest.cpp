@@ -96,8 +96,8 @@ TEST_CASE("Activate with incorrect WorldSpace", "[PartOne][espm]")
       nlohmann::json{
         { "t", MsgType::Activate },
         { "data", { { "caster", 0x14 }, { "target", barrelInWhiterun } } } }),
-    Contains("WorldSpace doesn't match: caster is in Tamriel, target is in "
-             "WhiterunWorld"));
+    Contains("WorldSpace doesn't match: caster is in Tamriel (0x3c), target "
+             "is in WhiterunWorld (0x1a26f)"));
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
@@ -258,7 +258,7 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[1].j["worldOrCell"] == 0x3c);
 
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
-  REQUIRE(ac.GetCellOrWorld() == 0x3c);
+  REQUIRE(ac.GetCellOrWorld() == FormDesc::Tamriel());
 
   partOne.Messages().clear();
   std::this_thread::sleep_for(std::chrono::milliseconds(50));

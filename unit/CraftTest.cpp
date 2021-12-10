@@ -64,7 +64,8 @@ TEST_CASE("Player is able to craft item", "[Craft][espm]")
   auto& refr = p.worldState.GetFormAt<MpObjectReference>(workbenchId);
 
   DoConnect(p, 0);
-  p.CreateActor(0xff000000, refr.GetPos(), 0, refr.GetCellOrWorld());
+  p.CreateActor(0xff000000, refr.GetPos(), 0,
+                refr.GetCellOrWorld().ToFormId(p.worldState.espmFiles));
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   for (auto entry : requiredItems.entries)
@@ -115,7 +116,8 @@ TEST_CASE(
   auto& workbench = p.worldState.GetFormAt<MpObjectReference>(workbenchId);
 
   DoConnect(p, 0);
-  p.CreateActor(0xff000000, workbench.GetPos(), 0, workbench.GetCellOrWorld());
+  p.CreateActor(0xff000000, workbench.GetPos(), 0,
+                workbench.GetCellOrWorld().ToFormId(p.worldState.espmFiles));
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   for (auto entry : requiredItems.entries)
@@ -150,7 +152,7 @@ TEST_CASE("DLC Hearthfires recipes are working", "[Craft][espm]")
 {
   PartOne& p = GetPartOne();
 
-  REQUIRE(RecipeMatches(p.GetEspm().GetBrowser().GetMapping(3),
+  REQUIRE(RecipeMatches(p.GetEspm().GetBrowser().GetCombMapping(3),
                         espm::Convert<espm::COBJ>(
                           p.GetEspm().GetBrowser().LookupById(0x0300306d).rec),
                         Inventory().AddItem(0x0005ACE4, 1),

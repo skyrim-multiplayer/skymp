@@ -21,7 +21,7 @@
 
 ## Building From Source
 
-You can find instructions on setting up the project locally below. To get a local copy up and running follow these simple example steps. You need ~10 GB on your hard drive and some free time.
+You can find instructions on setting up the project locally below. To get a local copy up and running follow these simple example steps. You need ~4 GB RAM, ~22 GB on your hard drive and some free time.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ You can find instructions on setting up the project locally below. To get a loca
 
 These tools required regardless of your system:
 
-* 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x or higher
+* 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x/14.x/16.x
 * [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
 * [CMake 3.18.2](https://cmake.org/download/) or higher
 
@@ -100,6 +100,14 @@ Client can be run with Proton (though it can be tricky to get Skyrim itself to w
    On Windows you also can open `build/skymp.sln` with Visual Studio, then `Build -> Build Solution`.
 
    All build artifacts would be placed into `build/dist`.
+
+#### How to build only SkyrimPlatform
+
+-  For those users who want to build SP but not SkyMP there is `ONLY_SP` option:
+
+   ```sh
+   cmake .. -DONLY_SP=ON
+   ```
 
 ### Linux
 

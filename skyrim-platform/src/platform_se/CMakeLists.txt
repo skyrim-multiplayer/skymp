@@ -140,7 +140,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt "${CEF_SHARE}")
 
     # touch dev_service in watch mode
-    # TODO: do we actually support dev_service in watch mode? consider removing this target
     add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
     add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
   endif()
@@ -165,8 +164,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # this target was originally called pack, now it is called skyrim-platform
   # so we can use add_dependencies(x skyrim-platform) in other projects
   add_custom_target(skyrim-platform ALL
-    COMMAND yarn run pack$<$<CONFIG:Debug>:-debug>
-    WORKING_DIRECTORY ${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service
+    COMMAND yarn --cwd \"${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service\" run pack$<$<CONFIG:Debug>:-debug>
   )
   add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 endif()

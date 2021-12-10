@@ -88,10 +88,13 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       std::numeric_limits<float>::infinity()
     };
 
+    auto& espmFiles = actor->GetParent()->espmFiles;
     if (!MovementValidation::Validate(
-          *actor, teleportFlag ? reallyWrongPos : pos, worldOrCell,
+          *actor, teleportFlag ? reallyWrongPos : pos,
+          FormDesc::FromFormId(worldOrCell, espmFiles),
           isMe ? static_cast<IMessageOutput&>(msgOutput)
-               : static_cast<IMessageOutput&>(msgOutputDummy))) {
+               : static_cast<IMessageOutput&>(msgOutputDummy),
+          espmFiles)) {
       return;
     }
 
@@ -344,7 +347,7 @@ void ActionListener::OnConsoleCommand(
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
                     const espm::CombineBrowser& br, int espmIdx)
 {
-  auto mapping = br.GetMapping(espmIdx);
+  auto mapping = br.GetCombMapping(espmIdx);
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
     auto formId = espm::GetMappedId(entry.formId, *mapping);
@@ -699,7 +702,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
 
   targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
-                             staminaPercentage);
+                             staminaPercentage, aggressor);
   auto now = std::chrono::steady_clock::now();
   targetActor.SetLastAttributesPercentagesUpdate(now);
   targetActor.SetLastHitTime(now);
