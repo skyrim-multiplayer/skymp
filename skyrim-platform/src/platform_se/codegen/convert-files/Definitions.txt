@@ -1,4 +1,4 @@
-declare class PapyrusObject {
+export declare class PapyrusObject {
     static from(papyrusObject: PapyrusObject | null): PapyrusObject | null;
 }
 export type PapyrusValue = PapyrusObject | number | string | boolean | null | PapyrusValue[];
@@ -11,6 +11,7 @@ export declare function getJsMemoryUsage(): number;
 export declare function getPluginSourceCode(pluginName: string): string;
 export declare function writePlugin(pluginName: string, newSources: string): string;
 export declare function getPlatformVersion(): string;
+export declare function disableCtrlPrtScnHotkey(): void;
 export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void;
 export declare function encodeUtf8(text: string): ArrayBuffer;
 export declare function decodeUtf8(buffer: ArrayBuffer): string;
@@ -64,7 +65,9 @@ export declare let mpClientPlugin: MpClientPlugin;
 
 export interface Browser {
   setVisible(visible: boolean): void;
+  isVisible(): boolean;
   setFocused(focused: boolean): void;
+  isFocused(): boolean;
   loadUrl(url: string): void;
   getToken(): string;
   executeJavaScript(src: string): void;
@@ -244,6 +247,14 @@ export interface BrowserMessageEvent {
     arguments: unknown[]
 }
 
+/*
+* Note: The message text can contain any characters, including `'` `"` `\`.
+* Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
+*/
+export interface ConsoleMessageEvent {
+    message: string
+}
+
 export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 
@@ -321,6 +332,10 @@ export declare function once(eventName: 'menuClose', callback: (event: MenuClose
 
 export declare function on(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
 export declare function once(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
+
+export declare function on(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
+export declare function once(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
+
 
 declare class ConsoleComand {
     longName: string;
@@ -494,6 +509,222 @@ export const enum DxScanCode {
     MouseWheelDown
 }
 
+export const enum FormType {
+    ANIO = 83,
+    ARMA = 102,
+    AcousticSpace = 16,
+    Action = 6,
+    Activator = 24,
+    ActorValueInfo = 95,
+    AddonNode = 94,
+    Ammo = 42,
+    Apparatus = 33,
+    Armor = 26,
+    ArrowProjectile = 64,
+    Art = 125,
+    AssociationType = 123,
+    BarrierProjectile = 69,
+    BeamProjectile = 66,
+    BodyPartData = 93,
+    Book = 27,
+    CameraPath = 97,
+    CameraShot = 96,
+    Cell = 60,
+    Character = 62,
+    Class = 10,
+    Climate = 55,
+    CollisionLayer = 132,
+    ColorForm = 133,
+    CombatStyle = 80,
+    ConeProjectile = 68,
+    ConstructibleObject = 49,
+    Container = 28,
+    DLVW = 117,
+    Debris = 88,
+    DefaultObject = 107,
+    DialogueBranch = 115,
+    Door = 29,
+    DualCastData = 129,
+    EffectSetting = 18,
+    EffectShader = 85,
+    Enchantment = 21,
+    EncounterZone = 103,
+    EquipSlot = 120,
+    Explosion = 87,
+    Eyes = 13,
+    Faction = 11,
+    FlameProjectile = 67,
+    Flora = 39,
+    Footstep = 110,
+    FootstepSet = 111,
+    Furniture = 40,
+    GMST = 3,
+    Global = 9,
+    Grass = 37,
+    GrenadeProjectile = 65,
+    Group = 2,
+    Hazard = 51,
+    HeadPart = 12,
+    Idle = 78,
+    IdleMarker = 47,
+    ImageSpace = 89,
+    ImageSpaceModifier = 90,
+    ImpactData = 100,
+    ImpactDataSet = 101,
+    Ingredient = 30,
+    Key = 45,
+    Keyword = 4,
+    Land = 72,
+    LandTexture = 20,
+    LeveledCharacter = 44,
+    LeveledItem = 53,
+    LeveledSpell = 82,
+    Light = 31,
+    LightingTemplate = 108,
+    List = 91,
+    LoadScreen = 81,
+    Location = 104,
+    LocationRef = 5,
+    Material = 126,
+    MaterialType = 99,
+    MenuIcon = 8,
+    Message = 105,
+    Misc = 32,
+    MissileProjectile = 63,
+    MovableStatic = 36,
+    MovementType = 127,
+    MusicTrack = 116,
+    MusicType = 109,
+    NAVI = 59,
+    NPC = 43,
+    NavMesh = 73,
+    None = 0,
+    Note = 48,
+    Outfit = 124,
+    PHZD = 70,
+    Package = 79,
+    Perk = 92,
+    Potion = 46,
+    Projectile = 50,
+    Quest = 77,
+    Race = 14,
+    Ragdoll = 106,
+    Reference = 61,
+    ReferenceEffect = 57,
+    Region = 58,
+    Relationship = 121,
+    ReverbParam = 134,
+    Scene = 122,
+    Script = 19,
+    ScrollItem = 23,
+    ShaderParticleGeometryData = 56,
+    Shout = 119,
+    Skill = 17,
+    SoulGem = 52,
+    Sound = 15,
+    SoundCategory = 130,
+    SoundDescriptor = 128,
+    SoundOutput = 131,
+    Spell = 22,
+    Static = 34,
+    StaticCollection = 35,
+    StoryBranchNode = 112,
+    StoryEventNode = 114,
+    StoryQuestNode = 113,
+    TES4 = 1,
+    TLOD = 74,
+    TOFT = 86,
+    TalkingActivator = 25,
+    TextureSet = 7,
+    Topic = 75,
+    TopicInfo = 76,
+    Tree = 38,
+    VoiceType = 98,
+    Water = 84,
+    Weapon = 41,
+    Weather = 54,
+    WordOfPower = 118,
+    WorldSpace = 71
+}
+
+export const enum WeaponType {
+    Fist = 0,
+    Sword,
+    Dagger,
+    WarAxe,
+    Mace,
+    Greatsword,
+    Battleaxe = 6,
+    Warhammer = 6,
+    Bow,
+    Staff,
+    Crossbow
+}
+
+export const enum EquippedItemType {
+    Fist = 0,
+    Sword,
+    Dagger,
+    WarAxe,
+    Mace,
+    Greatsword,
+    Battleaxe = 6,
+    Warhammer = 6,
+    Bow,
+    Staff,
+    Spell,
+    Shield,
+    Torch,
+    Crossbow,
+}
+
+export const enum SlotMask {
+    Head = 0x1,
+    Hair = 0x2,
+    Body = 0x4,
+    Hands = 0x8,
+    Forearms = 0x10,
+    Amulet = 0x20,
+    Ring = 0x40,
+    Feet = 0x80,
+    Calves = 0x100,
+    Shield = 0x200,
+    Tail = 0x400,
+    LongHair = 0x800,
+    Circlet = 0x1000,
+    Ears = 0x2000,
+    Face = 0x4000,
+    Mouth = 0x4000,
+    Neck = 0x8000,
+    ChestOuter = 0x10000,
+    ChestPrimary = 0x10000,
+    Back = 0x20000,
+    Misc01 = 0x40000,
+    PelvisOuter = 0x80000,
+    PelvisPrimary = 0x80000,
+    DecapitateHead = 0x100000,
+    Decapitate = 0x200000,
+    PelvisUnder = 0x400000,
+    PelvisSecondary = 0x400000,
+    LegOuter = 0x800000,
+    LegPrimary = 0x800000,
+    LegUnder = 0x1000000,
+    LegSecondary = 0x1000000,
+    FaceAlt = 0x2000000,
+    Jewelry = 0x2000000,
+    ChestUnder = 0x4000000,
+    ChestSecondary = 0x4000000,
+    Shoulder = 0x8000000,
+    ArmUnder = 0x10000000,
+    ArmSecondary = 0x10000000,
+    ArmLeft = 0x10000000,
+    ArmOuter = 0x20000000,
+    ArmPrimary = 0x20000000,
+    ArmRight = 0x20000000,
+    Misc02 = 0x40000000,
+    FX01 = 0x80000000
+}
+
 export declare namespace SendAnimationEventHook {
     class Context {
         readonly selfId: number;
@@ -513,7 +744,8 @@ export declare namespace SendAnimationEventHook {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     class Target {
-        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number;
+        remove(id: number): void;
     }
 }
 
@@ -531,7 +763,8 @@ export declare namespace SendPapyrusEventHook {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     class Target {
-        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): void;
+        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number;
+        remove(id: number): void;
     }
 }
 

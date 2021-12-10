@@ -14,7 +14,7 @@ if(WIN32)
   set_target_properties(MpClientPlugin PROPERTIES OUTPUT_NAME "MpClientPlugin")
   apply_default_settings(TARGETS MpClientPlugin)
   list(APPEND VCPKG_DEPENDENT MpClientPlugin)
-  
+
   # Not mistake that skyrim-platform depends on MpClientPlugin
   # skyrim-platform is a logical target that invokes dev_service
   # dev_service wants to access built MpClientPlugin.dll
@@ -118,13 +118,12 @@ foreach(target ${VCPKG_DEPENDENT})
   find_package(ZLIB REQUIRED)
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
-  find_package(libmongocxx REQUIRED)
-  find_package(libbsoncxx REQUIRED)
-  find_package(libmongoc-1.0 CONFIG REQUIRED)
-  target_link_libraries(${target} PUBLIC ${LIBMONGOCXX_LIBRARIES} ${LIBBSONCXX_LIBRARIES} ${MONGOC_LIBRARIES} ${MONGOC_STATIC_LIBRARIES})
+  find_package(mongocxx REQUIRED)
+  find_package(mongoc-1.0 CONFIG REQUIRED)
+  target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongo::mongoc_static mongo::bson_static)
   find_package(OpenSSL REQUIRED)
   target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
-  
+
   if(UNIX)
     target_link_libraries(${target} PUBLIC pthread resolv rt m)
   endif()

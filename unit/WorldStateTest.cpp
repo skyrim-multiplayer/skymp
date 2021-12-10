@@ -38,7 +38,7 @@ TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
   MpChangeForm changeForm;
   changeForm.recType = MpChangeForm::ACHR;
   changeForm.position = { 1, 2, 3 };
-  changeForm.worldOrCell = 0x3c;
+  changeForm.worldOrCellDesc = FormDesc::Tamriel();
   changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
 
   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
@@ -47,7 +47,7 @@ TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
   REQUIRE(refr.GetFormId() == 0xff000000);
   REQUIRE(refr.GetChangeForm().formDesc.ToString() == "0");
   REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
-  REQUIRE(refr.GetCellOrWorld() == 0x3c);
+  REQUIRE(refr.GetCellOrWorld() == FormDesc::Tamriel());
   REQUIRE(refr.GetBaseId() == 0x0100abcd);
 }
 
@@ -59,7 +59,7 @@ TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
 
   MpChangeForm changeForm;
   changeForm.recType = MpChangeForm::ACHR;
-  changeForm.worldOrCell = 0xdead;
+  changeForm.worldOrCellDesc = FormDesc::FromString("dead:Morrowind.esm");
   changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
   changeForm.isDisabled = true;
 
@@ -79,7 +79,7 @@ TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
 
   MpChangeForm changeForm;
   changeForm.recType = MpChangeForm::ACHR;
-  changeForm.worldOrCell = 0xdead;
+  changeForm.worldOrCellDesc = FormDesc::FromString("dead:Morrowind.esm");
   changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
   changeForm.isDisabled = true;
   changeForm.profileId = 100;
@@ -100,7 +100,7 @@ TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
   MpChangeForm changeForm;
   changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
   changeForm.position = { 1, 2, 3 };
-  changeForm.worldOrCell = 0x3c;
+  changeForm.worldOrCellDesc = FormDesc::Tamriel();
   changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
 
   auto newRefr = new MpObjectReference(
@@ -112,7 +112,7 @@ TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
   REQUIRE(refr.GetFormId() == 0xeeee);
   REQUIRE(refr.GetChangeForm().formDesc.ToString() == "eeee:Skyrim.esm");
   REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
-  REQUIRE(refr.GetCellOrWorld() == 0x3c);
+  REQUIRE(refr.GetCellOrWorld() == FormDesc::Tamriel());
   REQUIRE(refr.GetBaseId() == 0x0000abcd);
   REQUIRE(refr.Type() == std::string("ObjectReference"));
   REQUIRE(&refr == newRefr);

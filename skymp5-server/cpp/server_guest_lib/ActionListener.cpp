@@ -88,10 +88,13 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       std::numeric_limits<float>::infinity()
     };
 
+    auto& espmFiles = actor->GetParent()->espmFiles;
     if (!MovementValidation::Validate(
-          *actor, teleportFlag ? reallyWrongPos : pos, worldOrCell,
+          *actor, teleportFlag ? reallyWrongPos : pos,
+          FormDesc::FromFormId(worldOrCell, espmFiles),
           isMe ? static_cast<IMessageOutput&>(msgOutput)
-               : static_cast<IMessageOutput&>(msgOutputDummy))) {
+               : static_cast<IMessageOutput&>(msgOutputDummy),
+          espmFiles)) {
       return;
     }
 
@@ -344,7 +347,7 @@ void ActionListener::OnConsoleCommand(
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
                     const espm::CombineBrowser& br, int espmIdx)
 {
-  auto mapping = br.GetMapping(espmIdx);
+  auto mapping = br.GetCombMapping(espmIdx);
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
     auto formId = espm::GetMappedId(entry.formId, *mapping);
@@ -606,7 +609,8 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
   if (weapDNAM) {
     float speedMult = weapDNAM->speed;
-    return timePassed.count() >= 1.1 * (1 / speedMult);
+    return timePassed.count() >= (1.1 * (1 / speedMult)) -
+      (1.1 * (1 / speedMult) * (speedMult <= 0.75 ? 0.45 : 0.3));
   } else {
     throw std::runtime_error(fmt::format(
       "Cannot get weapon speed from source: {0:x}", hitData.source));
@@ -661,7 +665,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
-    float expectedAttackTime = 1.1 * (1 / weapDNAM->speed);
+    float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) -
+      (1.1 * (1 / weapDNAM->speed) * (weapDNAM->speed <= 0.75 ? 0.45 : 0.3));
     spdlog::debug(
       "Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
@@ -697,7 +702,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
 
   targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
-                             staminaPercentage);
+                             staminaPercentage, aggressor);
   auto now = std::chrono::steady_clock::now();
   targetActor.SetLastAttributesPercentagesUpdate(now);
   targetActor.SetLastHitTime(now);

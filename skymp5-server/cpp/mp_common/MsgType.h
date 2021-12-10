@@ -20,5 +20,6 @@ enum class MsgType : int64_t
   Host = 14,
   CustomEvent = 15,
   ChangeValues = 16,
-  OnHit = 17
+  OnHit = 17,
+  DeathStateContainer = 18
 };

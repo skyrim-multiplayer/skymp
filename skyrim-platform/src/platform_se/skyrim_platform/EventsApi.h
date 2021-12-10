@@ -29,6 +29,7 @@ uint32_t IpcSubscribe(const char* systemName, IpcMessageCallback callback,
 void IpcUnsubscribe(uint32_t subscriptionId);
 void IpcSend(const char* systemName, const uint8_t* data, uint32_t length);
 
+void SendConsoleMsgEvent(const char* msg);
 void SendMenuOpen(const char* menuName);
 void SendMenuClose(const char* menuName);
 

@@ -20,8 +20,10 @@ Here you will find documentaiton aimed for you to create your own mods using Sky
   - [New events][NewEvents]
   - [Browser / UI][Browser]
   - [HTTP][]
+- [Cook Book][Cookbook]
 
 [Browser]: skyrim_platform/browser.md
+[Cookbook]: skyrim_platform/cookbook.md
 [Events]: skyrim_platform/events.md
 [Features]: skyrim_platform/features.md
 [HTTP]: skyrim_platform/http.md
