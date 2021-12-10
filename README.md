@@ -162,13 +162,8 @@ directory and add some aliases to `PATH`.
    ```
    These commands would re-generate project files with coverage enabled and run tests. Coverage report would be in `build/__coverage`.
 
-3. Create SkyrimPlatform archive with structure identical to our Nexus uploads (Windows-only):
-   
-   From the repo root:
-   ```sh
-   cd ci
-   ./CreateArchive_SkyrimPlatform.cmd
-   ```
+3. If you wish to use solely SP build, you can run `CreateArchive_SkyrimPlatform` script to get zip with only related files (Windows-only):
+   Go to `ci` folder and double-click `CreateArchive_SkyrimPlatform`.
 
 ## License
 
