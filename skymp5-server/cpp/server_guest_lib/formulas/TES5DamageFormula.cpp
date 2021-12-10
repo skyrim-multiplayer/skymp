@@ -86,10 +86,14 @@ float TES5DamageFormulaImpl::CalcArmorRatingComponent(
       espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
     // TODO(#458): take other components into account
     auto ac = static_cast<float>(armorData.baseRatingX100) / 100;
-    // TODO refactor this effects with actor effect system
-    auto enchantmentData =
-      espm::GetData<espm::ENCH>(armorData.enchantmentFormId, espmProvider);
-    return ac + CalcMagicEffects(enchantmentData.effects);
+    if (armorData.enchantmentFormId) {
+      // TODO refactor this effect with actor effect system
+      auto enchantmentData =
+        espm::GetData<espm::ENCH>(armorData.enchantmentFormId, espmProvider);
+      ac += CalcMagicEffects(enchantmentData.effects);
+    }
+
+    return ac;
   }
   return 0;
 }
