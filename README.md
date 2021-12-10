@@ -163,6 +163,7 @@ directory and add some aliases to `PATH`.
    These commands would re-generate project files with coverage enabled and run tests. Coverage report would be in `build/__coverage`.
 
 3. If you wish to use solely SP build, you can run `CreateArchive_SkyrimPlatform` script to get zip with only related files (Windows-only):
+   
    Go to `ci` folder and double-click `CreateArchive_SkyrimPlatform`.
 
 ## License
