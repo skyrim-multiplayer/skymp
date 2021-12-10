@@ -95,10 +95,13 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
 
-    #- uses: actions/upload-artifact@v2
-    #  with:
-    #    name: coverage
-    #    path: ${{github.workspace}}/build/__coverage
+    - uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ${{github.workspace}}/coverage.zip ${{github.workspace}}/build/__coverage
+    - uses: actions/upload-artifact@v2
+      with:
+        name: coverage
+        path: ${{github.workspace}}/coverage.zip
     - uses: actions/upload-artifact@v2
       with:
         name: dist
