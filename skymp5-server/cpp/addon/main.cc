@@ -1256,7 +1256,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         res = JsValue(refr.IsDisabled());
       } else if (propertyName == "isDead") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          res = JsValue(actor->IsDead());
+          res = JsValue::Bool(actor->IsDead());
         }
       } else {
         EnsurePropertyExists(gamemodeApiState, propertyName);
