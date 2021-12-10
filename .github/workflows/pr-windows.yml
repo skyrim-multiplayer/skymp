@@ -95,6 +95,11 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
 
+    # - uses: actions/upload-artifact@v2
+    #   with:
+    #     name: dist
+    #     path: ${{github.workspace}}/build/dist
+
     - name: Debug
       run: dir ${{github.workspace}}/build/__coverage
 
@@ -102,8 +107,3 @@ jobs:
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: dist
-        path: ${{github.workspace}}/build/dist
