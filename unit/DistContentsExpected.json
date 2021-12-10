@@ -162,6 +162,7 @@
     ],
     "expectedFiles": [
       "server/ChakraCore.dll",
+      "client/Data/Interface/Fonts/font.spritefont",
       "client/Data/Platform/Distribution/CEF/cef.pak",
       "client/Data/Platform/Distribution/CEF/cef_100_percent.pak",
       "client/Data/Platform/Distribution/CEF/cef_200_percent.pak",

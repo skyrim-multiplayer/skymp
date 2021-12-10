@@ -1,3 +1,5 @@
+#include "BrowserApi.h"
+#include "CallNativeApi.h"
 #include "CameraApi.h"
 #include "ConsoleApi.h"
 #include "DevApi.h"
@@ -24,8 +26,12 @@
 #include "ThreadPoolWrapper.h"
 #include "TickTask.h"
 #include <RE/ConsoleLog.h>
+#include <SKSE/API.h>
+#include <SKSE/Interfaces.h>
+#include <SKSE/Stubs.h>
 #include <Windows.h>
 #include <atomic>
+#include <functional>
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
@@ -40,26 +46,25 @@
 #include <skse64/GameMenus.h>
 #include <skse64/GameReferences.h>
 #include <skse64/NiRenderer.h>
+#include <skse64/PluginAPI.h>
 #include <skse64/gamethreads.h>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
-
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
-#include <skse64/PluginAPI.h>
-
-#include "SkyrimPlatform.h"
+#include <ui/TextToDraw.h>
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+
+void GetTextsToDraw(TextToDrawCallback callback)
+{
+  callback(TextToDraw());
+  callback(TextToDraw());
+}
 
 void SetupFridaHooks();
 
@@ -510,7 +515,10 @@ public:
 
     auto onProcessMessage = std::make_shared<ProcessMessageListenerImpl>();
 
-    overlayService = std::make_shared<OverlayService>(onProcessMessage);
+    ObtainTextsToDrawFunction obtainTextsToDraw = GetTextsToDraw;
+
+    overlayService =
+      std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
 
