@@ -11,7 +11,6 @@ const Button = (props) => {
   const width = props.width;
   const height = props.height;
   const disabled = props.disabled || false;
-
   switch (css) {
     case 'BUTTON_STYLE_FRAME':
       return <FrameButton disabled={disabled} variant='DEFAULT' text={text} onClick={onClick} width={width} height={height} />;

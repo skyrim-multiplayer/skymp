@@ -6,6 +6,10 @@
     align-items: flex-end;
     justify-content: center;
     margin-bottom: 0;
+    * {
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 .btn {
     margin: 20px;
