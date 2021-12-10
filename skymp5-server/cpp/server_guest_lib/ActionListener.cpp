@@ -729,10 +729,5 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
                                simdjson::dom::element data)
 {
-  const char* message = "<invalid>";
-  if (data.get(message) == simdjson::error_code::SUCCESS) {
-    spdlog::debug("Got unhandled message: {}", message);
-  } else {
-    spdlog::debug("Got unhandled message, but we've failed to interpret it");
-  }
+  spdlog::debug("Got unhandled message: {}", minify(data));
 }
