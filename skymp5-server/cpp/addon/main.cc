@@ -1254,6 +1254,10 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         res = arr;
       } else if (propertyName == "isDisabled") {
         res = JsValue(refr.IsDisabled());
+      } else if (propertyName == "isDead") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          res = JsValue(actor->IsDead());
+        }
       } else {
         EnsurePropertyExists(gamemodeApiState, propertyName);
         res = refr.GetDynamicFields().Get(propertyName);
@@ -1325,6 +1329,10 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           throw std::runtime_error(
             "'isDisabled' is not usable for non-FF forms");
         newValue.get<bool>() ? refr.Disable() : refr.Enable();
+      } else if (propertyName == "isDead") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          actor->SetIsDead(newValue.get<bool>());
+        }
       } else {
 
         EnsurePropertyExists(gamemodeApiState, propertyName);
