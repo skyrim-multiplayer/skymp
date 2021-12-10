@@ -111,45 +111,53 @@ public:
 };
 
 namespace {
+
+CallNative::ObjectPtr GetOneObjectPtr(
+  const RE::BSScript::Variable& r,
+  std::optional<const char*> className = std::nullopt)
+{
+  using namespace CallNative;
+  auto vmImpl = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+  if (!vmImpl)
+    throw NullPointerException("vmImpl");
+
+  auto object = r.GetObject();
+  if (!object)
+    return ObjectPtr();
+
+  auto policy = vmImpl->GetObjectHandlePolicy();
+
+  void* objPtr = nullptr;
+
+  for (int i = 0; i < (int)RE::FormType::Max; ++i)
+    if (policy->HandleIsType(i, object->handle)) {
+      objPtr = object->Resolve(i);
+      break;
+    }
+
+  if (objPtr) {
+    auto objectTypeInfo = VariableAccess::GetType(r).GetTypeInfo();
+    if (!objectTypeInfo)
+      throw NullPointerException("objectTypeInfo");
+    return std::make_shared<Object>(
+      className.has_value() ? *className : objectTypeInfo->GetName(), objPtr);
+  } else
+    return ObjectPtr();
+}
+
 CallNative::AnySafe VariableToAnySafe(
   const RE::BSScript::Variable& r,
   std::optional<const char*> className = std::nullopt)
 {
   using namespace CallNative;
 
-  auto vmImpl = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-  if (!vmImpl)
-    throw NullPointerException("vmImpl");
-
   auto t = VariableAccess::GetType(r);
+
   switch (t.GetUnmangledRawType()) {
     case RE::BSScript::TypeInfo::RawType::kNone:
       return ObjectPtr();
-    case RE::BSScript::TypeInfo::RawType::kObject: {
-      auto object = r.GetObject();
-      if (!object)
-        return ObjectPtr();
-
-      auto policy = vmImpl->GetObjectHandlePolicy();
-
-      void* objPtr = nullptr;
-
-      for (int i = 0; i < (int)RE::FormType::Max; ++i)
-        if (policy->HandleIsType(i, object->handle)) {
-          objPtr = object->Resolve(i);
-          break;
-        }
-
-      if (objPtr) {
-        auto objectTypeInfo = t.GetTypeInfo();
-        if (!objectTypeInfo)
-          throw NullPointerException("objectTypeInfo");
-        return std::make_shared<Object>(
-          className.has_value() ? *className : objectTypeInfo->GetName(),
-          objPtr);
-      } else
-        return ObjectPtr();
-    }
+    case RE::BSScript::TypeInfo::RawType::kObject:
+      return GetOneObjectPtr(r, className);
     case RE::BSScript::TypeInfo::RawType::kString:
       return (std::string)r.GetString().data();
     case RE::BSScript::TypeInfo::RawType::kInt:
@@ -158,14 +166,50 @@ CallNative::AnySafe VariableToAnySafe(
       return (double)r.GetFloat();
     case RE::BSScript::TypeInfo::RawType::kBool:
       return r.GetBool();
-    case RE::BSScript::TypeInfo::RawType::kNoneArray:
-    case RE::BSScript::TypeInfo::RawType::kObjectArray:
-    case RE::BSScript::TypeInfo::RawType::kStringArray:
-    case RE::BSScript::TypeInfo::RawType::kIntArray:
-    case RE::BSScript::TypeInfo::RawType::kFloatArray:
-    case RE::BSScript::TypeInfo::RawType::kBoolArray:
+    case RE::BSScript::TypeInfo::RawType::kNoneArray: {
       throw std::runtime_error(
-        "Functions with Array return type are not supported");
+        "Functions with NoneArray return type are not supported");
+    }
+    case RE::BSScript::TypeInfo::RawType::kObjectArray: {
+      auto array = r.GetArray();
+      std::vector<CallNative::ObjectPtr> out{};
+      for (const auto& item : *array) {
+        out.push_back(GetOneObjectPtr(item));
+      }
+      return out;
+    }
+    case RE::BSScript::TypeInfo::RawType::kStringArray: {
+      auto array = r.GetArray();
+      std::vector<std::string> out{};
+      for (const auto& item : *array) {
+        out.push_back(item.GetString().data());
+      }
+      return out;
+    }
+    case RE::BSScript::TypeInfo::RawType::kIntArray: {
+      auto array = r.GetArray();
+      std::vector<double> out{};
+      for (int i = 0; i < array->size(); ++i) {
+        out.push_back((double)array->at(i).GetSInt());
+      }
+      return out;
+    }
+    case RE::BSScript::TypeInfo::RawType::kFloatArray: {
+      auto array = r.GetArray();
+      std::vector<double> out{};
+      for (int i = 0; i < array->size(); ++i) {
+        out.push_back((double)array->at(i).GetFloat());
+      }
+      return out;
+    }
+    case RE::BSScript::TypeInfo::RawType::kBoolArray: {
+      auto array = r.GetArray();
+      std::vector<bool> out{};
+      for (const auto& item : *array) {
+        out.push_back(item.GetBool());
+      }
+      return out;
+    }
     default:
       throw std::runtime_error("Unknown function return type");
   }
