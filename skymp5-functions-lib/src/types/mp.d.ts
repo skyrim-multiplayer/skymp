@@ -123,7 +123,7 @@ export interface Mp {
   set(formId: number, propertyName: 'inventory', newValue: Inventory): void;
   set(formId: number, propertyName: 'locationalData', newValue: LocationalData): void;
   set(formId: number, propertyName: 'spawnPoint', newValue: LocationalData): void;
-  set(formId: number, propertyName: 'isDead', newValue: LocationalData): void;
+  set(formId: number, propertyName: 'isDead', newValue: boolean): void;
 
   /**
    * Creates a new property that would be attached to all instances of
