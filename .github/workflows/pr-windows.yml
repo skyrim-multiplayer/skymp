@@ -100,15 +100,8 @@ jobs:
         name: dist
         path: ${{github.workspace}}/build/dist
 
-    - name: Remove stdout if empty
-      run: |
-        $file = '${{github.workspace}}/build/__coverage/OpenCppCoverage-stdout.log'
-
-        if ((Get-Content -First 2 $file).Count -le 1) {
-          Remove-Item $file
-        }
-
-    - uses: actions/upload-artifact@v2
+    # TODO(#631): wait until empty file upload issue is fixed and unfreeze version
+    - uses: actions/upload-artifact@v2.2.4
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
