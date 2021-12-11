@@ -112,37 +112,42 @@ public:
 
 namespace {
 
-CallNative::ObjectPtr GetOneObjectPtr(
+CallNative::ObjectPtr GetSingleObjectPtr(
   const RE::BSScript::Variable& r,
   std::optional<const char*> className = std::nullopt)
 {
   using namespace CallNative;
   auto vmImpl = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-  if (!vmImpl)
+  if (!vmImpl) {
     throw NullPointerException("vmImpl");
+  }
 
   auto object = r.GetObject();
-  if (!object)
+  if (!object) {
     return ObjectPtr();
+  }
 
   auto policy = vmImpl->GetObjectHandlePolicy();
 
   void* objPtr = nullptr;
 
-  for (int i = 0; i < (int)RE::FormType::Max; ++i)
+  for (int i = 0; i < static_cast<int>(RE::FormType::Max); ++i) {
     if (policy->HandleIsType(i, object->handle)) {
       objPtr = object->Resolve(i);
       break;
     }
+  }
 
   if (objPtr) {
     auto objectTypeInfo = VariableAccess::GetType(r).GetTypeInfo();
-    if (!objectTypeInfo)
+    if (!objectTypeInfo) {
       throw NullPointerException("objectTypeInfo");
+    }
     return std::make_shared<Object>(
       className.has_value() ? *className : objectTypeInfo->GetName(), objPtr);
-  } else
+  } else {
     return ObjectPtr();
+  }
 }
 
 CallNative::AnySafe VariableToAnySafe(
@@ -157,7 +162,7 @@ CallNative::AnySafe VariableToAnySafe(
     case RE::BSScript::TypeInfo::RawType::kNone:
       return ObjectPtr();
     case RE::BSScript::TypeInfo::RawType::kObject:
-      return GetOneObjectPtr(r, className);
+      return GetSingleObjectPtr(r, className);
     case RE::BSScript::TypeInfo::RawType::kString:
       return (std::string)r.GetString().data();
     case RE::BSScript::TypeInfo::RawType::kInt:
@@ -173,14 +178,16 @@ CallNative::AnySafe VariableToAnySafe(
     case RE::BSScript::TypeInfo::RawType::kObjectArray: {
       auto array = r.GetArray();
       std::vector<CallNative::ObjectPtr> out{};
+      out.reserve(array->size());
       for (const auto& item : *array) {
-        out.push_back(GetOneObjectPtr(item));
+        out.push_back(GetSingleObjectPtr(item));
       }
       return out;
     }
     case RE::BSScript::TypeInfo::RawType::kStringArray: {
       auto array = r.GetArray();
       std::vector<std::string> out{};
+      out.reserve(array->size());
       for (const auto& item : *array) {
         out.push_back(item.GetString().data());
       }
@@ -189,22 +196,25 @@ CallNative::AnySafe VariableToAnySafe(
     case RE::BSScript::TypeInfo::RawType::kIntArray: {
       auto array = r.GetArray();
       std::vector<double> out{};
+      out.reserve(array->size());
       for (int i = 0; i < array->size(); ++i) {
-        out.push_back((double)array->at(i).GetSInt());
+        out.push_back(static_cast<double>(array->at(i).GetSInt()));
       }
       return out;
     }
     case RE::BSScript::TypeInfo::RawType::kFloatArray: {
       auto array = r.GetArray();
       std::vector<double> out{};
+      out.reserve(array->size());
       for (int i = 0; i < array->size(); ++i) {
-        out.push_back((double)array->at(i).GetFloat());
+        out.push_back(static_cast<double>(array->at(i).GetFloat()));
       }
       return out;
     }
     case RE::BSScript::TypeInfo::RawType::kBoolArray: {
       auto array = r.GetArray();
       std::vector<bool> out{};
+      out.reserve(array->size());
       for (const auto& item : *array) {
         out.push_back(item.GetBool());
       }

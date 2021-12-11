@@ -122,7 +122,7 @@ JsValue NativeValueCasts::NativeValueToJsValue(const CallNative::AnySafe& v)
       [](bool v) { return JsValue::Bool(v); },
       [](const std::string& v) { return JsValue(v); },
       [](const CallNative::ObjectPtr& v) { return NativeObjectToJsObject(v); },
-      [](std::vector<std::string> v) {
+      [](const std::vector<std::string>& v) {
         auto out = JsValue::Array(v.size());
         for (size_t i = 0; i < v.size(); ++i) {
           out.SetProperty(JsValue::Int(i), v[i]);
@@ -143,7 +143,7 @@ JsValue NativeValueCasts::NativeValueToJsValue(const CallNative::AnySafe& v)
         }
         return out;
       },
-      [](std::vector<CallNative::ObjectPtr> v) {
+      [](const std::vector<CallNative::ObjectPtr>& v) {
         auto out = JsValue::Array(v.size());
         for (size_t i = 0; i < v.size(); ++i) {
           out.SetProperty(JsValue::Int(i), NativeObjectToJsObject(v[i]));
