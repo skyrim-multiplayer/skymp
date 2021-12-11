@@ -129,14 +129,14 @@ JsValue NativeValueCasts::NativeValueToJsValue(const CallNative::AnySafe& v)
         }
         return out;
       },
-      [](std::vector<bool> v) {
+      [](const std::vector<bool>& v) {
         auto out = JsValue::Array(v.size());
         for (size_t i = 0; i < v.size(); ++i) {
           out.SetProperty(JsValue::Int(i), JsValue::Bool(v[i]));
         }
         return out;
       },
-      [](std::vector<double> v) {
+      [](const std::vector<double>& v) {
         auto out = JsValue::Array(v.size());
         for (size_t i = 0; i < v.size(); ++i) {
           out.SetProperty(JsValue::Int(i), v[i]);
