@@ -1,6 +1,7 @@
-## Add support for arrays return in TS function of papyrus methods
+## Add support for arrays return in TS implementation of Papyrus methods
 
-Now we can get actual arrays return istead of Exception, when when using TS function for papyrus methods.
+Now we can get actual arrays return istead of Exception, when using TS function
+as implementation for Papyrus methods.
 
 ```typescript
 Utility.createStringArray(3, "teststring");
@@ -20,5 +21,5 @@ array?.forEach(element => {
 })
 ```
 
-Note, that we are alaways recieve PapyrusObject[] in case of object array return.
+Note, that we always recieve `PapyrusObject[]` in case of object array return.
 So we need to use static method `from` for elements to use class methods.
