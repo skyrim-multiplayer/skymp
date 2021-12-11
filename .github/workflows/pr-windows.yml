@@ -100,8 +100,17 @@ jobs:
     #     name: dist
     #     path: ${{github.workspace}}/build/dist
 
+    - uses: actions/upload-artifact@v2
+      continue-on-error: true
+      with:
+        name: coverage
+        path: ${{github.workspace}}/build/__coverage
+
     - name: Debug
       run: dir ${{github.workspace}}/build/__coverage
+
+    - name: Remove empty file
+      run: rm ${{github.workspace}}/build/__coverage/OpenCppCoverage-stdout.log
 
     - uses: actions/upload-artifact@v2
       with:
