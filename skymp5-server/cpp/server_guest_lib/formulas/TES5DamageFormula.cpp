@@ -34,7 +34,7 @@ private:
   float CalcArmorRatingComponent(
     const Inventory::Entry& opponentEquipmentEntry) const;
   float CalcOpponentArmorRating() const;
-  float CalcMagicEffects(Effects effects) const;
+  float CalcMagicEffects(const Effects& effects) const;
 };
 
 TES5DamageFormulaImpl::TES5DamageFormulaImpl(const MpActor& aggressor_,
@@ -63,7 +63,7 @@ float TES5DamageFormulaImpl::CalcWeaponRating() const
   return GetBaseWeaponDamage();
 }
 
-float TES5DamageFormulaImpl::CalcMagicEffects(Effects effects) const
+float TES5DamageFormulaImpl::CalcMagicEffects(const Effects& effects) const
 {
   float armorRating = 0.f;
   for (const auto& effect : effects) {
@@ -87,7 +87,7 @@ float TES5DamageFormulaImpl::CalcArmorRatingComponent(
     // TODO(#458): take other components into account
     auto ac = static_cast<float>(armorData.baseRatingX100) / 100;
     if (armorData.enchantmentFormId) {
-      // TODO refactor this effect with actor effect system
+      // TODO(#632) refactor this effect with actor effect system
       auto enchantmentData =
         espm::GetData<espm::ENCH>(armorData.enchantmentFormId, espmProvider);
       ac += CalcMagicEffects(enchantmentData.effects);

@@ -1074,21 +1074,21 @@ espm::Effects::Data espm::Effects::GetData(
   }
 
   Data result;
-  uint32_t effect = 0;
+  uint32_t effectIndex = 0;
 
   espm::RecordHeaderAccess::IterateFields(
     parent,
     [&](const char* type, uint32_t size, const char* data) {
       if (!memcmp(type, "EFID", 4)) {
         result.effects.emplace_back();
-        result.effects[effect].effectId =
+        result.effects[effectIndex].effectId =
           *reinterpret_cast<const uint32_t*>(data);
       } else if (!memcmp(type, "EFIT", 4)) {
-        Effect& eff = result.effects[effect];
+        Effect& eff = result.effects[effectIndex];
         eff.magnitude = *reinterpret_cast<const float*>(data);
         eff.areaOfEffect = *reinterpret_cast<const uint32_t*>(data + 4);
         eff.duration = *reinterpret_cast<const uint32_t*>(data + 8);
-        effect++;
+        effectIndex++;
       }
     },
     compressedFieldsCache);

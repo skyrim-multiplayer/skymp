@@ -791,7 +791,7 @@ public:
 
   struct Effect
   {
-    uint32_t effectId = 0; // EffectID MGEF
+    uint32_t effectId = 0; // Corresponding MGEF record id
     float magnitude = 0.f;
     uint32_t areaOfEffect = 0;
     uint32_t duration = 0;
