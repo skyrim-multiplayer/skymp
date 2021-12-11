@@ -95,22 +95,18 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
 
-    # - uses: actions/upload-artifact@v2
-    #   with:
-    #     name: dist
-    #     path: ${{github.workspace}}/build/dist
-
     - uses: actions/upload-artifact@v2
-      continue-on-error: true
       with:
-        name: coverage
-        path: ${{github.workspace}}/build/__coverage
+        name: dist
+        path: ${{github.workspace}}/build/dist
 
-    - name: Debug
-      run: dir ${{github.workspace}}/build/__coverage
+    - name: Remove stdout if empty
+      run: |
+        $file = '${{github.workspace}}/build/__coverage/OpenCppCoverage-stdout.log'
 
-    - name: Remove empty file
-      run: rm ${{github.workspace}}/build/__coverage/OpenCppCoverage-stdout.log
+        if ((Get-Content -First 2 $file).Count -le 1) {
+          Remove-Item $file
+        }
 
     - uses: actions/upload-artifact@v2
       with:
