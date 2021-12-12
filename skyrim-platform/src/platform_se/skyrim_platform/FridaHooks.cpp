@@ -24,9 +24,8 @@
 
 #include <sstream>
 #include <windows.h>
-
-#include <hooks/DInputHook.hpp>
-#include <ui/DX11RenderHandler.h>
+#include "hooks/DInputHook.hpp"
+#include "ui/DX11RenderHandler.h"
 
 typedef struct _ExampleListener ExampleListener;
 typedef enum _ExampleHookId ExampleHookId;
@@ -43,7 +42,7 @@ enum _ExampleHookId
   DRAW_SHEATHE_WEAPON_PC,
   QUEUE_NINODE_UPDATE,
   APPLY_MASKS_TO_RENDER_TARGET,
-  RENDER_MAIN_MENU,
+  RENDER_CURSOR_MENU,
   SEND_EVENT,
   SEND_EVENT_ALL,
   CONSOLE_VPRINT
@@ -106,14 +105,14 @@ void SetupFridaHooks()
   w.Attach(listener, 7141008, DRAW_SHEATHE_WEAPON_PC);
   w.Attach(listener, 6893840, QUEUE_NINODE_UPDATE);
   w.Attach(listener, 4043808, APPLY_MASKS_TO_RENDER_TARGET);
-  w.Attach(listener, 5367792, RENDER_MAIN_MENU);
+  w.Attach(listener, 5367792, RENDER_CURSOR_MENU);
   w.Attach(listener, 19244800, SEND_EVENT);
   w.Attach(listener, 19245744, SEND_EVENT_ALL);
   w.Attach(listener, 8766499, CONSOLE_VPRINT);
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
-thread_local void* g_prevMainCursorView = nullptr;
+thread_local void* g_prevCursorMenuView = nullptr;
 thread_local void* g_prevMemorizedCursorMenuView = nullptr;
 
 bool g_allowHideCursorMenu = true;
@@ -289,9 +288,9 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       g_queueNiNodeActorId = 0;
       break;
     }
-    case RENDER_MAIN_MENU: {
-      if (g_prevMainCursorView != nullptr) {
-        g_prevMemorizedCursorMenuView = g_prevMainCursorView;
+    case RENDER_CURSOR_MENU: {
+      if (g_prevCursorMenuView != nullptr) {
+        g_prevMemorizedCursorMenuView = g_prevCursorMenuView;
       }
 
       static auto fsCursorMenu = new BSFixedString("Cursor Menu");
@@ -307,7 +306,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
             bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
 
             if (focusFlag && visibleFlag) {
-              g_prevMainCursorView = *viewPtr;
+              g_prevCursorMenuView = *viewPtr;
               *viewPtr = nullptr;
             } else {
               if (*viewPtr == nullptr && g_prevMemorizedCursorMenuView) {
@@ -333,19 +332,19 @@ static void example_listener_on_leave(GumInvocationListener* listener,
       EventsApi::SendAnimationEventLeave(res);
       break;
     }
-    case RENDER_MAIN_MENU: {
+    case RENDER_CURSOR_MENU: {
       auto _ic = (_GumInvocationContext*)ic;
 
       static auto fsCursorMenu = new BSFixedString("Cursor Menu");
       auto cursorMenu = FridaHooksUtils::GetMenuByName(fsCursorMenu);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-      bool renderHookInProgress = g_prevMainCursorView != nullptr;
+      bool renderHookInProgress = g_prevCursorMenuView != nullptr;
       if (renderHookInProgress)
         if (this_)
           if (cursorMenu == this_) {
-            *viewPtr = g_prevMainCursorView;
-            g_prevMainCursorView = nullptr;
+            *viewPtr = g_prevCursorMenuView;
+            g_prevCursorMenuView = nullptr;
           }
       break;
     }
