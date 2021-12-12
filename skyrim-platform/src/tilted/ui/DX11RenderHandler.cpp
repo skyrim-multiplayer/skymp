@@ -1,4 +1,3 @@
-#include "DInputHook.hpp"
 #include "TextToDraw.h"
 #include <DX11RenderHandler.h>
 #include <DirectXColors.h>
@@ -82,10 +81,9 @@ void DX11RenderHandler::Render(
     });
   }
 
-  bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
   bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
 
-  if (focusFlag && visibleFlag) {
+  if (visibleFlag) {
     if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {
       m_pSpriteBatch->Draw(
         m_pCursorTexture.Get(),

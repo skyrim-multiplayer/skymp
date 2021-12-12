@@ -22,7 +22,6 @@
 #include <RE/BSScript/ObjectTypeInfo.h>
 #include <RE/SkyrimScript/HandlePolicy.h>
 
-#include "hooks/DInputHook.hpp"
 #include "ui/DX11RenderHandler.h"
 #include <sstream>
 #include <windows.h>
@@ -302,10 +301,9 @@ static void example_listener_on_enter(GumInvocationListener* listener,
           if (cursorMenu == this_) {
             auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
 
-            bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
             bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
 
-            if (focusFlag && visibleFlag) {
+            if (visibleFlag) {
               g_prevCursorMenuView = *viewPtr;
               *viewPtr = nullptr;
             } else {
