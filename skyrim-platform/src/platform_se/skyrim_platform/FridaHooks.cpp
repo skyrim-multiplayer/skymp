@@ -112,7 +112,6 @@ void SetupFridaHooks()
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
 thread_local void* g_prevCursorMenuView = nullptr;
-thread_local void* g_prevMemorizedCursorMenuView = nullptr;
 
 bool g_allowHideCursorMenu = true;
 
@@ -288,10 +287,6 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       break;
     }
     case RENDER_CURSOR_MENU: {
-      if (g_prevCursorMenuView != nullptr) {
-        g_prevMemorizedCursorMenuView = g_prevCursorMenuView;
-      }
-
       static auto fsCursorMenu = new BSFixedString("Cursor Menu");
       auto cursorMenu = FridaHooksUtils::GetMenuByName(fsCursorMenu);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
@@ -304,11 +299,13 @@ static void example_listener_on_enter(GumInvocationListener* listener,
             bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
 
             if (visibleFlag) {
-              g_prevCursorMenuView = *viewPtr;
+              if (*viewPtr != nullptr) {
+                g_prevCursorMenuView = *viewPtr;
+              }
               *viewPtr = nullptr;
             } else {
-              if (*viewPtr == nullptr && g_prevMemorizedCursorMenuView) {
-                *viewPtr = g_prevMemorizedCursorMenuView;
+              if (*viewPtr == nullptr && g_prevCursorMenuView) {
+                *viewPtr = g_prevCursorMenuView;
               }
             }
           }
