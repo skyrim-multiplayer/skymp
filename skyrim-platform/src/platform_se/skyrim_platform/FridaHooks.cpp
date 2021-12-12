@@ -332,22 +332,6 @@ static void example_listener_on_leave(GumInvocationListener* listener,
       EventsApi::SendAnimationEventLeave(res);
       break;
     }
-    case RENDER_CURSOR_MENU: {
-      auto _ic = (_GumInvocationContext*)ic;
-
-      static auto fsCursorMenu = new BSFixedString("Cursor Menu");
-      auto cursorMenu = FridaHooksUtils::GetMenuByName(fsCursorMenu);
-      auto this_ = (int64_t*)_ic->cpu_context->rcx;
-      auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-      bool renderHookInProgress = g_prevCursorMenuView != nullptr;
-      if (renderHookInProgress)
-        if (this_)
-          if (cursorMenu == this_) {
-            *viewPtr = g_prevCursorMenuView;
-            g_prevCursorMenuView = nullptr;
-          }
-      break;
-    }
     case SEND_EVENT: {
       EventsApi::SendPapyrusEventLeave();
       break;
