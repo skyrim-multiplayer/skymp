@@ -7,8 +7,16 @@ import {
   settings,
   Ui,
   Menu,
-  DxScanCode
+  DxScanCode,
+  writePlugin,
+  getPluginSourceCode,
 } from "skyrimPlatform";
+import { TokenAuthData } from "./authData";
+
+const pluginAuthDataName = `AuthData`;
+
+let browserVisibleState = false;
+let browserFocusedState = false;
 
 export const main = (): void => {
   const badMenus: Menu[] = [
@@ -29,22 +37,8 @@ export const main = (): void => {
     Menu.Main
   ];
 
-  let browserVisibleState = false;
-  browser.setVisible(false);
-  const setBrowserVisible = (state: boolean) => {
-    browserVisibleState = state;
-    browser.setVisible(state);
-  };
-  once('update', () => {
-    browserVisibleState = true;
-    browser.setVisible(true);
-  });
-
-  let browserFocusedState = false;
-  const setBrowserFocused = (state: boolean) => {
-    browserFocusedState = state;
-    browser.setFocused(state);
-  };
+  setBrowserVisible(false);
+  once('update', () => setBrowserVisible(true));
 
   let badMenuOpen = true;
 
@@ -94,4 +88,26 @@ export const main = (): void => {
   const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
   printConsole(`loading url ${url}`);
   browser.loadUrl(url);
+};
+
+export const setBrowserVisible = (state: boolean) => {
+  browserVisibleState = state;
+  browser.setVisible(state);
+};
+
+export const setBrowserFocused = (state: boolean) => {
+  browserFocusedState = state;
+  browser.setFocused(state);
+};
+
+export const getAuthData = (): TokenAuthData | null => {
+  return globalThis.authData ?? null;
+};
+
+export const setAuthData = (data: TokenAuthData | null): void => {
+  if (data) {
+    writePlugin(pluginAuthDataName, `var ${authData} = ${JSON.stringify(data)};`);
+  } else {
+    writePlugin(pluginAuthDataName, `var ${authData} = null;`);
+  }
 };

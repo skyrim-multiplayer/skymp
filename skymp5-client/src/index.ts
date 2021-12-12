@@ -6,18 +6,32 @@ import {
   GlobalVariable,
   ObjectReference,
   Weather,
+  writePlugin,
+  printConsole,
 } from "skyrimPlatform";
 import { SkympClient } from "./skympClient";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
 import { verifyVersion } from "./version";
 import { updateWc } from "./worldCleaner";
+import * as authSystem from "./authSystem";
+import { TokenAuthData } from "./authData";
 
-new SkympClient();
-
-const enforceLimitations = () => {
-  Game.setInChargen(true, true, false);
+declare global {
+  var authData: TokenAuthData | undefined;
 };
+
+browser.main();
+
+authSystem.addAuthListener((token) => {
+  once("tick", () => printConsole(`AUTH EVENT: ${token}`));
+});
+
+authSystem.main({
+  pos: [133710, -61252, 14605],
+  rot: [0, 0, 0],
+  worldOrCell: 60,
+});
 
 export const defaultLocalDamageMult = 1;
 export const setLocalDamageMult = (damageMult: number): void => {
@@ -28,6 +42,15 @@ export const setLocalDamageMult = (damageMult: number): void => {
   Game.setGameSettingFloat("fDiffMultHPToPCVE", damageMult);
   Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
 }
+
+/*
+new SkympClient();
+
+const enforceLimitations = () => {
+  Game.setInChargen(true, true, false);
+};
+
+
 
 once("update", enforceLimitations);
 loadGameManager.addLoadGameListener(enforceLimitations);
@@ -42,7 +65,6 @@ on("update", () => {
   Game.enableFastTravel(false);
 });
 
-browser.main();
 
 once("update", verifyVersion);
 
@@ -116,3 +138,4 @@ on("update", () => {
     zeroKMoment = Date.now();
   }
 });
+*/
