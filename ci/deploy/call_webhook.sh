@@ -10,9 +10,9 @@ if [[ "$1" = "" ]]; then
   exit 1
 fi
 
-# Concatenating all args. E.g.:
+# Concatenating a common prefix and all args. E.g.:
 # `./call_webhook.sh $'This is the first line\n' 'This is ' 'the second line'`
-msg=""
+msg="[DEPLOY $DEPLOY_BRANCH] "
 while [[ "$1" != "" ]]; do
   msg+="$1"
   shift
