@@ -2,7 +2,7 @@
 
 set -e
 
-data="`ci/deploy/gather-indev/node_modules/.bin/ts-node ci/deploy/gather-indev/cli.ts`"
+data="`cd ci/deploy/gather-indev && node_modules/.bin/ts-node list_included_pulls.ts`"
 
 msg=$'Gathering indev...\n'
 msg+="`echo "$data" | tail -n +2`"
