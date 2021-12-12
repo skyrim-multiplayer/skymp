@@ -15,7 +15,7 @@ const octokit = new Octokit();
   for (const pull of pulls) {
     console.log(
       `[${pull.title}](<https://github.com/skyrim-multiplayer/skymp/pull/${pull.number}>)`
-      + `from ${pull.headLabel} by **${pull.authorLogin}**`
+      + ` from ${pull.headLabel} by **${pull.authorLogin}**`
     );
     hasPulls = true;
   }
