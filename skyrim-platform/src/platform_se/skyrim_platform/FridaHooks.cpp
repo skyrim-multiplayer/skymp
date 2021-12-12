@@ -25,6 +25,9 @@
 #include <sstream>
 #include <windows.h>
 
+#include <hooks/DInputHook.hpp>
+#include <ui/DX11RenderHandler.h>
+
 typedef struct _ExampleListener ExampleListener;
 typedef enum _ExampleHookId ExampleHookId;
 
@@ -110,9 +113,10 @@ void SetupFridaHooks()
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
-thread_local void* g_prevMainMenuView = nullptr;
+thread_local void* g_prevMainCursorView = nullptr;
+thread_local void* g_prevMemorizedCursorMenuView = nullptr;
 
-bool g_allowHideMainMenu = true;
+bool g_allowHideCursorMenu = true;
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -286,16 +290,30 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       break;
     }
     case RENDER_MAIN_MENU: {
-      static auto fsMainMenu = new BSFixedString("Cursor Menu");
-      auto mainMenu = FridaHooksUtils::GetMenuByName(fsMainMenu);
-      auto this_ = (int64_t*)_ic->cpu_context->rcx;
-      if (g_allowHideMainMenu) {
+      if (g_prevMainCursorView != nullptr) {
+        g_prevMemorizedCursorMenuView = g_prevMainCursorView;
+      }
 
+      static auto fsCursorMenu = new BSFixedString("Cursor Menu");
+      auto cursorMenu = FridaHooksUtils::GetMenuByName(fsCursorMenu);
+      auto this_ = (int64_t*)_ic->cpu_context->rcx;
+
+      if (g_allowHideCursorMenu) {
         if (this_)
-          if (mainMenu == this_) {
+          if (cursorMenu == this_) {
             auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-            g_prevMainMenuView = *viewPtr;
-            *viewPtr = nullptr;
+
+            bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
+            bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
+
+            if (focusFlag && visibleFlag) {
+              g_prevMainCursorView = *viewPtr;
+              *viewPtr = nullptr;
+            } else {
+              if (*viewPtr == nullptr && g_prevMemorizedCursorMenuView) {
+                *viewPtr = g_prevMemorizedCursorMenuView;
+              }
+            }
           }
       }
       break;
@@ -318,16 +336,16 @@ static void example_listener_on_leave(GumInvocationListener* listener,
     case RENDER_MAIN_MENU: {
       auto _ic = (_GumInvocationContext*)ic;
 
-      static auto fsMainMenu = new BSFixedString("Cursor Menu");
-      auto mainMenu = FridaHooksUtils::GetMenuByName(fsMainMenu);
+      static auto fsCursorMenu = new BSFixedString("Cursor Menu");
+      auto cursorMenu = FridaHooksUtils::GetMenuByName(fsCursorMenu);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-      bool renderHookInProgress = g_prevMainMenuView != nullptr;
+      bool renderHookInProgress = g_prevMainCursorView != nullptr;
       if (renderHookInProgress)
         if (this_)
-          if (mainMenu == this_) {
-            *viewPtr = g_prevMainMenuView;
-            g_prevMainMenuView = nullptr;
+          if (cursorMenu == this_) {
+            *viewPtr = g_prevMainCursorView;
+            g_prevMainCursorView = nullptr;
           }
       break;
     }
