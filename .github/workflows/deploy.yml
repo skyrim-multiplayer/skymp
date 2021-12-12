@@ -1,12 +1,7 @@
 name: Deploy
 on:
     workflow_dispatch:
-        inputs:
-            branch:
-                description: branch - search for PRs with merge-to:<branch>
-                    and deploy to skymp-server-<branch>
-                required: true
-                default: indev
+        # no inputs
 jobs:
     deploy:
         runs-on: ubuntu-latest
@@ -17,9 +12,8 @@ jobs:
                 submodules: recursive
                 fetch-depth: 0
 
-          - name: Get branch name
-            run: |
-                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
+          - run: |
+                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
 
           - name: Gather PRs
             env:
