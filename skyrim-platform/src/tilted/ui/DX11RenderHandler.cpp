@@ -1,5 +1,5 @@
-#include "TextToDraw.h"
 #include "DInputHook.hpp"
+#include "TextToDraw.h"
 #include <DX11RenderHandler.h>
 #include <DirectXColors.h>
 #include <DirectXTK/CommonStates.h>

@@ -22,10 +22,10 @@
 #include <RE/BSScript/ObjectTypeInfo.h>
 #include <RE/SkyrimScript/HandlePolicy.h>
 
-#include <sstream>
-#include <windows.h>
 #include "hooks/DInputHook.hpp"
 #include "ui/DX11RenderHandler.h"
+#include <sstream>
+#include <windows.h>
 
 typedef struct _ExampleListener ExampleListener;
 typedef enum _ExampleHookId ExampleHookId;
