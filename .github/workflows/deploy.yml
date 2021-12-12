@@ -1,6 +1,7 @@
 name: Deploy
 on:
-    workflow_dispatch:
+    push:
+    # workflow_dispatch:
         # no inputs
 jobs:
     deploy:
