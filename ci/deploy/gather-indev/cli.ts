@@ -1,5 +1,5 @@
-import { Octokit } from '@octokit/rest';
-import * as pull_manager from './pull_manager';
+import { Octokit } from "@octokit/rest";
+import * as pull_manager from "./pull_manager";
 
 const octokit = new Octokit();
 
@@ -7,10 +7,10 @@ const octokit = new Octokit();
   const pulls = await pull_manager.getPullsWithLabel(octokit);
 
   // numbers list for merge_pulls.sh
-  console.log(pulls.map((pull) => pull.number).join(' '));
+  console.log(pulls.map((pull) => pull.number).join(" "));
 
   // description for Discord message
-  console.log('Included PRs:');
+  console.log("Included PRs:");
   let hasPulls = false;
   for (const pull of pulls) {
     console.log(
@@ -21,7 +21,7 @@ const octokit = new Octokit();
   }
 
   if (!hasPulls) {
-    console.log('None. Will build clean base branch.')
+    console.log("None. Will build clean base branch.")
   }
 })().catch((err) => {
   console.error(err)
