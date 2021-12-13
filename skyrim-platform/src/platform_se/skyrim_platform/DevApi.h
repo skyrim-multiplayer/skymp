@@ -1,11 +1,6 @@
 #pragma once
 #include "JsEngine.h"
 
-#include <functional>
-#include <map>
-#include <memory>
-#include <string>
-
 namespace DevApi {
 JsValue Require(const JsFunctionArguments& args,
                 const std::vector<const char*>& pluginLoadDirectories);

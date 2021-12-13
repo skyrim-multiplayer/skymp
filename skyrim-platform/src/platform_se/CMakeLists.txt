@@ -25,7 +25,7 @@ if(MSVC)
 
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
   set(tilted "${SKYRIM_PLATFORM_SOURCE_DIR}/src/tilted")
-  
+
   file(GLOB_RECURSE core_library_src "${tilted}/core_library/*")
   add_library(core_library STATIC ${core_library_src})
   target_include_directories(core_library PUBLIC "${tilted}/core_library")
@@ -100,6 +100,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 	target_include_directories(skyrim_platform PRIVATE "${tilted}")
     target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib)
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
+    target_precompile_headers(skyrim_platform	PRIVATE	skyrim_platform/PCH.h)
     apply_default_settings(TARGETS skyrim_platform)
     list(APPEND VCPKG_DEPENDENT skyrim_platform)
 
@@ -118,7 +119,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
   add_papyrus_library_ck(
-    NAME TESModPlatformPsc 
+    NAME TESModPlatformPsc
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
     OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
     COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
@@ -148,7 +149,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   apply_default_settings(TARGETS TSConverter)
   set_target_properties(TSConverter PROPERTIES CXX_STANDARD 20)
   list(APPEND VCPKG_DEPENDENT TSConverter)
-  
+
   set(CONVERT_FILES_DIR ${CMAKE_CURRENT_LIST_DIR}/codegen/convert-files/)
   list(APPEND CODEGEN_ARGS
     "${CONVERT_FILES_DIR}/FunctionsDump.txt"
@@ -157,7 +158,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
   add_custom_target(codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
   add_dependencies(codegen TSConverter)
-  
+
   # force "skyrim-platform" custom target to be built strictly after codegen
   list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
 

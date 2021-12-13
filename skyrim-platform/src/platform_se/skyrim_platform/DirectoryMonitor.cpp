@@ -1,5 +1,4 @@
 #include "DirectoryMonitor.h"
-#include <fmt/format.h>
 
 namespace {
 bool WaitForNextUpdate(DWORD* outErrorCode, std::filesystem::path dir)

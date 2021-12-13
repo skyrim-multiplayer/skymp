@@ -1,3 +1,3 @@
 namespace FridaHooksUtils {
-void* GetMenuByName(void* name);
+void* GetMenuByName(std::string_view name);
 }

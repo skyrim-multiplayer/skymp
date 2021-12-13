@@ -1,3 +1,4 @@
+#pragma comment(lib, "shell32.lib")
 #include "LoadGame.h"
 #include "NullPointerException.h"
 #include "PapyrusTESModPlatform.h"
@@ -6,15 +7,6 @@
 #include "savefile/SFReader.h"
 #include "savefile/SFSeekerOfDifferences.h"
 #include "savefile/SFWriter.h"
-#include <RE/ScriptEventSourceHolder.h>
-#include <RE/TESLoadGameEvent.h>
-#include <filesystem>
-#include <fstream>
-#include <shlobj.h>
-#include <skse64/GameData.h>
-#include <sstream>
-#include <zlib.h>
-#pragma comment(lib, "shell32.lib")
 
 namespace fs = std::filesystem;
 
@@ -88,7 +80,7 @@ std::shared_ptr<SaveFile_::SaveFile> LoadGame::PrepareSaveFile()
     std::stringstream ss;
     ss << e.what() << std::endl << std::endl;
     ss << "Root directory contents is: " << std::endl;
-    for (auto& entry : dir)
+    for (auto entry : dir)
       ss << entry.filename() << std::endl;
     throw std::runtime_error(ss.str());
   }

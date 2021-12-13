@@ -1,38 +1,21 @@
 #include "SkyrimPlatform.h"
-
-#include "ThreadPoolWrapper.h"
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
-#include <skse64/PluginAPI.h>
-
-#include "BrowserApi.h"    // BrowserApi::State
+#include "BrowserApi.h"    // APIs for register in CommonExecutionListener
 #include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
-
-// HelloTickListener
-#include <RE/ConsoleLog.h>
-
-// CommonExecutionListener
-#include "ConsoleApi.h"
+#include "CameraApi.h"
+#include "ConsoleApi.h" // CommonExecutionListener
+#include "DevApi.h"
 #include "DirectoryMonitor.h"
+#include "EncodingApi.h"
 #include "EventsApi.h"
 #include "ExceptionPrinter.h"
 #include "HttpClient.h"
-#include "ReadFile.h"
-#include "SkyrimPlatformProxy.h"
-
-// APIs for register in CommonExecutionListener
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
-#include "CameraApi.h"
-#include "ConsoleApi.h"
-#include "DevApi.h"
-#include "EncodingApi.h"
-#include "EventsApi.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
+#include "ReadFile.h"
+#include "SkyrimPlatformProxy.h"
+#include "ThreadPoolWrapper.h"
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 

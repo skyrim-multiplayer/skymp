@@ -10,7 +10,7 @@ function(apply_default_settings)
     set_target_properties(${target} PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
       CXX_EXTENSIONS OFF
-      CXX_STANDARD 17
+      CXX_STANDARD 20
     )
     if(MSVC)
       set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS_RELEASE " /DEBUG /OPT:REF ")

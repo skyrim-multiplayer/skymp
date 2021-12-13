@@ -4,16 +4,6 @@
 #include "NativeValueCasts.h"
 #include "SkyrimPlatform.h"
 #include "TaskQueue.h"
-#include <RE/ActiveEffect.h>
-#include <RE/Actor.h>
-#include <RE/EffectSetting.h>
-#include <RE/TESObjectCELL.h>
-
-struct RE::TESActivateEvent
-{
-  NiPointer<TESObjectREFR> target;
-  NiPointer<TESObjectREFR> caster;
-};
 
 namespace {
 JsValue CreateObject(const char* type, void* form)
@@ -28,8 +18,8 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESActivateEvent* event,
   RE::BSTEventSource<RE::TESActivateEvent>* eventSource)
 {
-  auto targetRefr = event ? event->target.get() : nullptr;
-  auto casterRefr = event ? event->caster.get() : nullptr;
+  auto targetRefr = event ? event->objectActivated.get() : nullptr;
+  auto casterRefr = event ? event->actionRef.get() : nullptr;
 
   auto targetId = targetRefr ? targetRefr->formID : 0;
   auto casterId = casterRefr ? casterRefr->formID : 0;
@@ -311,7 +301,10 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto actorRefr = event ? event->actor.get() : nullptr;
   auto actorId = actorRefr ? actorRefr->formID : 0;
 
-  auto state = event ? (uint32_t)event->state : 0;
+  auto state = event
+    ? event->newState
+    : RE::stl::enumeration<RE::ACTOR_COMBAT_STATE, std::uint32_t>(
+        RE::ACTOR_COMBAT_STATE::kNone);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
     [targetActorId, actorId, state, targetActorRefr, actorRefr] {
@@ -327,13 +320,13 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       actorLocal = actorLocal == actorRefr ? actorLocal : nullptr;
       obj.SetProperty("actor", CreateObject("ObjectReference", actorLocal));
 
-      obj.SetProperty(
-        "isCombat",
-        JsValue::Bool(state & (uint32_t)RE::ACTOR_COMBAT_STATE::kCombat));
+      obj.SetProperty("isCombat",
+                      JsValue::Bool(state.any(
+                        RE::ACTOR_COMBAT_STATE::kCombat))); // ?? any or all
 
       obj.SetProperty(
         "isSearching",
-        JsValue::Bool(state & (uint32_t)RE::ACTOR_COMBAT_STATE::kSearching));
+        JsValue::Bool(state.any(RE::ACTOR_COMBAT_STATE::kCombat))); // ??
 
       EventsApi::SendEvent("combatState", { JsValue::Undefined(), obj });
     });
@@ -428,7 +421,9 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   auto sourceId = event ? event->source : 0;
   auto projectileId = event ? event->projectile : 0;
-  uint8_t flags = event ? (uint8_t)event->flags : 0;
+  auto flags = event ? event->flags
+                     : RE::stl::enumeration<RE::TESHitEvent::Flag, uint8_t>(
+                         RE::TESHitEvent::Flag::kNone);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
     [targetId, causeId, sourceId, projectileId, flags, targetRefr, causeRefr] {
@@ -455,19 +450,19 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
       obj.SetProperty(
         "isPowerAttack",
-        JsValue::Bool(flags & (uint8_t)RE::TESHitEvent::Flag::kPowerAttack));
+        JsValue::Bool(flags.any(RE::TESHitEvent::Flag::kPowerAttack)));
 
       obj.SetProperty(
         "isSneakAttack",
-        JsValue::Bool(flags & (uint8_t)RE::TESHitEvent::Flag::kSneakAttack));
+        JsValue::Bool(flags.any(RE::TESHitEvent::Flag::kSneakAttack)));
 
       obj.SetProperty(
         "isBashAttack",
-        JsValue::Bool(flags & (uint8_t)RE::TESHitEvent::Flag::kBashAttack));
+        JsValue::Bool(flags.any(RE::TESHitEvent::Flag::kBashAttack)));
 
       obj.SetProperty(
         "isHitBlocked",
-        JsValue::Bool(flags & (uint8_t)RE::TESHitEvent::Flag::kHitBlocked));
+        JsValue::Bool(flags.any(RE::TESHitEvent::Flag::kHitBlocked)));
 
       EventsApi::SendEvent("hit", { JsValue::Undefined(), obj });
     });

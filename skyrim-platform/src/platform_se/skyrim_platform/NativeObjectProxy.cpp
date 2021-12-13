@@ -2,7 +2,6 @@
 #include "CallNative.h"
 #include "CallNativeApi.h"
 #include "ProxyGetter.h"
-#include <sstream>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 

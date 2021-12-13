@@ -1,28 +1,6 @@
 #pragma once
 #include "NullPointerException.h"
 
-#include <RE/MenuOpenCloseEvent.h>
-#include <RE/ScriptEventSourceHolder.h>
-#include <RE/TESActiveEffectApplyRemoveEvent.h>
-#include <RE/TESCellFullyLoadedEvent.h>
-#include <RE/TESCombatEvent.h>
-#include <RE/TESContainerChangedEvent.h>
-#include <RE/TESDeathEvent.h>
-#include <RE/TESEquipEvent.h>
-#include <RE/TESGrabReleaseEvent.h>
-#include <RE/TESHitEvent.h>
-#include <RE/TESInitScriptEvent.h>
-#include <RE/TESLockChangedEvent.h>
-#include <RE/TESMagicEffectApplyEvent.h>
-#include <RE/TESMoveAttachDetachEvent.h>
-#include <RE/TESObjectLoadedEvent.h>
-#include <RE/TESResetEvent.h>
-#include <RE/TESSwitchRaceCompleteEvent.h>
-#include <RE/TESTrackedStatsEvent.h>
-#include <RE/TESUniqueIDChangeEvent.h>
-#include <RE/TESWaitStopEvent.h>
-#include <RE/UI.h>
-
 class TaskQueue;
 
 class GameEventSinks

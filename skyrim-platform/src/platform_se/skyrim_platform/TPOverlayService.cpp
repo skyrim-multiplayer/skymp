@@ -1,14 +1,11 @@
 #include "TPOverlayService.h"
-
-#include <ui/MyChromiumApp.h>
-
+#include "TPRenderSystemD3D11.h"
 #include <D3D11Hook.hpp>
-
 #include <ui/DX11RenderHandler.h>
+#include <ui/MyChromiumApp.h>
 #include <ui/MyRenderHandler.h>
 #include <ui/ProcessMessageListener.h>
 
-#include "TPRenderSystemD3D11.h"
 
 using CEFUtils::DX11RenderHandler;
 using CEFUtils::MyRenderHandler;

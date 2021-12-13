@@ -1,7 +1,5 @@
 #pragma once
 #include "TPOverlayService.h"
-#include <functional>
-#include <memory>
 
 class SkyrimPlatform
 {

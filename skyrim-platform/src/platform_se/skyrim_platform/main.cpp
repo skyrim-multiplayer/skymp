@@ -1,60 +1,18 @@
-#include "CameraApi.h"
-#include "ConsoleApi.h"
-#include "DevApi.h"
-#include "DirectoryMonitor.h"
 #include "DumpFunctions.h"
-#include "EncodingApi.h"
 #include "EventsApi.h"
-#include "ExceptionPrinter.h"
 #include "FlowManager.h"
-#include "HttpClient.h"
-#include "HttpClientApi.h"
 #include "InputConverter.h"
-#include "InventoryApi.h"
-#include "JsEngine.h"
-#include "LoadGameApi.h"
-#include "MpClientPluginApi.h"
 #include "PapyrusTESModPlatform.h"
 #include "SkyrimPlatform.h"
-#include "SkyrimPlatformProxy.h"
-#include "TPInputService.h"
-#include "TPOverlayService.h"
-#include "TPRenderSystemD3D11.h"
-#include "TaskQueue.h"
-#include "ThreadPoolWrapper.h"
-#include "TickTask.h"
-#include <RE/ConsoleLog.h>
-#include <Windows.h>
-#include <atomic>
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
 #include <hooks/WindowsHook.hpp>
-#include <map>
-#include <memory>
-#include <mutex>
 #include <reverse/App.hpp>
 #include <reverse/AutoPtr.hpp>
 #include <reverse/Entry.hpp>
-#include <shlobj.h>
-#include <skse64/GameMenus.h>
-#include <skse64/GameReferences.h>
-#include <skse64/NiRenderer.h>
-#include <skse64/gamethreads.h>
-#include <sstream>
-#include <string>
-#include <thread>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
-
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
-#include <skse64/PluginAPI.h>
-
-#include "SkyrimPlatform.h"
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
@@ -85,7 +43,7 @@ void OnTick()
   TESModPlatform::Update();
 }
 
-void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
+void OnUpdate(IVM* vm, StackID stackId)
 {
   UpdateDumpFunctions();
 
@@ -94,34 +52,31 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
   SkyrimPlatform::GetSingleton().PushAndWait(
     [=](int) { SkyrimPlatform::GetSingleton().JsTick(true); });
   g_nativeCallRequirements.gameThrQ->Update();
-  g_nativeCallRequirements.stackId = std::numeric_limits<RE::VMStackID>::max();
+  g_nativeCallRequirements.stackId = std::numeric_limits<StackID>::max();
   g_nativeCallRequirements.vm = nullptr;
 }
 
 extern "C" {
-__declspec(dllexport) uint32_t
-  SkyrimPlatform_IpcSubscribe_Impl(const char* systemName,
-                                   EventsApi::IpcMessageCallback callback,
-                                   void* state)
+DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe_Impl(
+  const char* systemName, EventsApi::IpcMessageCallback callback, void* state)
 {
   return EventsApi::IpcSubscribe(systemName, callback, state);
 }
 
-__declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe_Impl(
-  uint32_t subscriptionId)
+DLLEXPORT void SkyrimPlatform_IpcUnsubscribe_Impl(uint32_t subscriptionId)
 {
   return EventsApi::IpcUnsubscribe(subscriptionId);
 }
 
-__declspec(dllexport) void SkyrimPlatform_IpcSend_Impl(const char* systemName,
-                                                       const uint8_t* data,
-                                                       uint32_t length)
+DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
+                                           const uint8_t* data,
+                                           uint32_t length)
 {
   return EventsApi::IpcSend(systemName, data, length);
 }
 
-__declspec(dllexport) bool SKSEPlugin_Query_Impl(
-  const SKSE::QueryInterface* skse, SKSE::PluginInfo* info)
+DLLEXPORT bool SKSEPlugin_Query_Impl(const SKSE::QueryInterface* skse,
+                                     SKSE::PluginInfo* info)
 {
 
   info->infoVersion = SKSE::PluginInfo::kVersion;
@@ -135,17 +90,15 @@ __declspec(dllexport) bool SKSEPlugin_Query_Impl(
   return true;
 }
 
-__declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
+DLLEXPORT bool SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
-  auto taskInterface = reinterpret_cast<SKSETaskInterface*>(
-    skse->QueryInterface(kInterface_Task));
+  const auto taskInterface = SKSE::GetTaskInterface();
   if (!taskInterface) {
     _FATALERROR("couldn't get task interface");
     return false;
   }
 
-  auto papyrusInterface = static_cast<SKSEPapyrusInterface*>(
-    skse->QueryInterface(kInterface_Papyrus));
+  const auto papyrusInterface = SKSE::GetPapyrusInterface();
   if (!papyrusInterface) {
     _FATALERROR("QueryInterface failed for PapyrusInterface");
     return false;
@@ -153,10 +106,9 @@ __declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
 
   SetupFridaHooks();
 
-  TickTask::Launch(taskInterface, OnTick);
+  taskInterface->AddTask(OnTick);
 
-  papyrusInterface->Register(
-    (SKSEPapyrusInterface::RegisterFunctions)TESModPlatform::Register);
+  papyrusInterface->Register(TESModPlatform::Register);
   TESModPlatform::onPapyrusUpdate = OnUpdate;
 
   return true;
@@ -224,8 +176,8 @@ public:
 
   MyInputListener()
   {
-    pCursorX = (float*)(REL::Module::BaseAddr() + 0x2F6C104);
-    pCursorY = (float*)(REL::Module::BaseAddr() + 0x2F6C108);
+    pCursorX = (float*)(REL::Module::BaseAddr() + 0x2F6C104); // no idea
+    pCursorY = (float*)(REL::Module::BaseAddr() + 0x2F6C108); // no idea
     vkCodeDownDur.fill(0);
   }
 
@@ -316,11 +268,11 @@ public:
 
   void OnMouseMove(float deltaX, float deltaY) noexcept override
   {
-    auto mm = MenuManager::GetSingleton();
-    if (!mm)
+    auto ui = RE::UI::GetSingleton();
+    if (!ui)
       return;
-    static const auto fs = new BSFixedString("Cursor Menu");
-    if (!mm->IsMenuOpen(fs))
+
+    if (!ui->IsMenuOpen(RE::CursorMenu::MENU_NAME))
       return;
 
     if (pCursorX && pCursorY)
@@ -355,11 +307,11 @@ public:
 
   void OnUpdate() noexcept override
   {
-    auto mm = MenuManager::GetSingleton();
-    if (!mm)
+    auto ui = RE::UI::GetSingleton();
+    if (!ui)
       return;
-    static const auto fs = new BSFixedString("Cursor Menu");
-    if (!mm->IsMenuOpen(fs)) {
+
+    if (!ui->IsMenuOpen(RE::CursorMenu::MENU_NAME)) {
       if (auto app = service->GetMyChromiumApp()) {
         app->InjectMouseMove(-1.f, -1.f, GetCefModifiers_(0), false);
       }

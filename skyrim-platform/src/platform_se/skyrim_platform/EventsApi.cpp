@@ -1,5 +1,4 @@
 #include "EventsApi.h"
-
 #include "GameEventSinks.h"
 #include "InvalidArgumentException.h"
 #include "NativeObject.h"
@@ -7,13 +6,6 @@
 #include "NullPointerException.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
-#include "TickTask.h"
-#include <algorithm>
-#include <map>
-#include <optional>
-#include <set>
-#include <tuple>
-#include <unordered_map>
 
 namespace {
 enum class PatternType

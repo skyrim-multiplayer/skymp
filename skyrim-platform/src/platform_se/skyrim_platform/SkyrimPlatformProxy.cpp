@@ -1,9 +1,6 @@
 #include "SkyrimPlatformProxy.h"
 #include "NativeValueCasts.h"
 #include "ProxyGetter.h"
-#include <skse64/GameRTTI.h>
-#include <skse64/GameReferences.h>
-#include <unordered_map>
 
 namespace {
 JsValue CreateObject(const char* type, void* form)
@@ -40,7 +37,7 @@ JsValue GetProxyForClass(const std::string& className,
         if (isGame && s == "getFormEx") {
           f =
             JsValue::Function([](const JsFunctionArguments& args) -> JsValue {
-              auto f = LookupFormByID((uint32_t)(double)args[1]);
+              auto f = RE::TESForm::LookupByID((uint32_t)(double)args[1]);
               if (f)
                 return CreateObject("Form", f);
               else
@@ -54,11 +51,10 @@ JsValue GetProxyForClass(const std::string& className,
                   NativeValueCasts::JsObjectToNativeObject(args[1]);
                 if (!from)
                   return JsValue::Null();
-                auto fromRaw = (TESForm*)from->GetNativeObjectPtr();
+                auto fromRaw = (RE::TESForm*)from->GetNativeObjectPtr();
                 if (!fromRaw)
                   return JsValue::Null();
-                TESObjectREFR* resRaw =
-                  DYNAMIC_CAST(fromRaw, TESForm, TESObjectREFR);
+                auto resRaw = skyrim_cast<RE::TESObjectREFR*>(fromRaw);
                 if (!resRaw)
                   return JsValue::Null();
                 return CreateObject("ObjectReference", resRaw);
@@ -70,10 +66,10 @@ JsValue GetProxyForClass(const std::string& className,
                   NativeValueCasts::JsObjectToNativeObject(args[1]);
                 if (!from)
                   return JsValue::Null();
-                auto fromRaw = (TESForm*)from->GetNativeObjectPtr();
+                auto fromRaw = (RE::TESForm*)from->GetNativeObjectPtr();
                 if (!fromRaw)
                   return JsValue::Null();
-                Actor* resRaw = DYNAMIC_CAST(fromRaw, TESForm, Actor);
+                auto resRaw = skyrim_cast<RE::Actor*>(fromRaw);
                 if (!resRaw)
                   return JsValue::Null();
                 return CreateObject("Actor", resRaw);

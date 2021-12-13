@@ -2,8 +2,6 @@
 #include "CallNative.h" // CallNative::State
 #include "JsEngine.h"
 #include "TaskQueue.h"
-#include <RE/BSScript/IVirtualMachine.h>
-#include <functional>
 
 namespace CallNativeApi {
 
@@ -15,8 +13,8 @@ struct NativeCallRequirements
     jsThrQ = std::make_shared<Viet::TaskQueue>();
   }
 
-  RE::BSScript::IVirtualMachine* vm = nullptr;
-  RE::VMStackID stackId = std::numeric_limits<RE::VMStackID>::max();
+  IVM* vm = nullptr;
+  StackID stackId = std::numeric_limits<StackID>::max();
 
   std::shared_ptr<Viet::TaskQueue> gameThrQ, jsThrQ;
 };

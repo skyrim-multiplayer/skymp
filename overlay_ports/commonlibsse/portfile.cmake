@@ -1,19 +1,19 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO Ryan-rsm-McKenzie/CommonLibSSE
-    REF ec96be63ebaa82349225456005b773c75364f2b6
-    SHA512 f7c4f9760ce5a9671e4cdc28b230fe3901504af8335aeb0544482e41dc7e5eec6127281edbb58c082ad91ec9e26f6fdb63c7a8d931027433dc0fcca5a53b621b
+    REF 30f7895da2945c602a8d160aa222d897ae223226
+    SHA512 9577fc92877248b9edaf28903885805255243b3c8407373eaacf9c71f307cd030b7772b82df4917ae2cfe0e7548b8f4d17b2a8bccc45328e253dc6a0c3cd8f10
     HEAD_REF master
+    PATCHES
+      objectrefr-make_moverefr_public.patch
+      variable-make_members_public.patch
 )
 
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
-
-vcpkg_configure_cmake(
-    SOURCE_PATH ${SOURCE_PATH}
-)
+vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})
 
 vcpkg_install_cmake()
+vcpkg_fixup_cmake_targets(CONFIG_PATH "lib/cmake/commonlibsse")
 vcpkg_copy_pdbs()
 
-file(INSTALL "${SOURCE_PATH}/include" DESTINATION "${CURRENT_PACKAGES_DIR}")
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)

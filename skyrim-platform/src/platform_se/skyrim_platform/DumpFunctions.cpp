@@ -1,17 +1,8 @@
 #include "DumpFunctions.h"
-
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
 #include "papyrus-vm-lib/Reader.h"
-#include <RE/BSScript/IFunction.h>
-#include <RE/BSScript/Internal/VirtualMachine.h>
-#include <RE/BSScript/ObjectTypeInfo.h>
-#include <RE/ConsoleLog.h>
-#include <filesystem>
-#include <fstream>
-#include <map>
 #include <nlohmann/json.hpp>
-#include <set>
 
 using namespace nlohmann;
 
@@ -54,7 +45,7 @@ std::string RawTypeToString(RE::BSScript::TypeInfo::RawType raw)
   return "";
 }
 
-json TypeInfoToJson(RE::BSScript::TypeInfo& t)
+json TypeInfoToJson(RE::BSScript::TypeInfo t)
 {
   auto res = json::object();
   auto rawType = t.GetUnmangledRawType();
@@ -71,8 +62,8 @@ json FunctionToJson(const char* typeName, RE::BSScript::IFunction* f,
   res["name"] = f->GetName();
   res["returnType"] = TypeInfoToJson(f->GetReturnType());
   res["arguments"] = json::array();
-  for (UInt32 i = 0; i < f->GetParamCount(); ++i) {
-    RE::BSFixedString name;
+  for (uint32_t i = 0; i < f->GetParamCount(); ++i) {
+    FixedString name;
     RE::BSScript::TypeInfo type;
     f->GetParam(i, name, type);
     res["arguments"].push_back(
@@ -113,7 +104,7 @@ json FunctionToJson(const char* typeName, RE::BSScript::IFunction* f,
 
   std::stringstream ss;
   auto funcInfo = GetNativeFunctionAddr::Run(*f);
-  auto baseAddr = REL::Module::BaseAddr();
+  auto baseAddr = REL::Module::get().base(); // not sure
   auto offset = (size_t)funcInfo.fn - baseAddr;
   ss << offset;
   res["offset"] = ss.str();
@@ -176,14 +167,14 @@ void DumpType(State& state, RE::BSScript::ObjectTypeInfo* type, json& out)
 }
 }
 
-thread_local RE::BSScrapArray<RE::BSFixedString> g_typeNames;
+thread_local RE::BSScrapArray<FixedString> g_typeNames;
 
 void DumpFunctions::Run()
 {
   try {
     json out = json{ { "types", json::object() } };
 
-    auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+    auto vm = VM::GetSingleton();
     if (!vm)
       throw NullPointerException("vm");
 

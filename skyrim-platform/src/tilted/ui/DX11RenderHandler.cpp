@@ -121,7 +121,7 @@ void DX11RenderHandler::Create()
     std::stringstream ss;
     ss << e.what() << std::endl << std::endl;
     ss << "Root directory contents is: " << std::endl;
-    for (auto& entry : dir)
+    for (auto entry : dir)
       ss << entry.filename() << std::endl;
     throw std::runtime_error(ss.str());
   }

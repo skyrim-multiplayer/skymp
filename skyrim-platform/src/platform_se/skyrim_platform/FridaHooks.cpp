@@ -13,17 +13,6 @@
 #include "FridaHooksUtils.h"
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
-#include <RE/ConsoleLog.h>
-#include <RE/TESObjectREFR.h>
-#include <skse64/GameData.h>
-#include <skse64/GameTypes.h>
-
-#include <RE/BSScript/Object.h>
-#include <RE/BSScript/ObjectTypeInfo.h>
-#include <RE/SkyrimScript/HandlePolicy.h>
-
-#include <sstream>
-#include <windows.h>
 
 typedef struct _ExampleListener ExampleListener;
 typedef enum _ExampleHookId ExampleHookId;
@@ -67,11 +56,23 @@ public:
 
   ~InterceptorWrapper() { gum_interceptor_end_transaction(interceptor); }
 
-  void Attach(GumInvocationListener* listener, int offset,
-              _ExampleHookId hookId)
+  /**
+   * We can attach hooks w/o frida using commonlib?
+   *
+   * ex
+   * OnSomeUpdate(){};
+   *
+   * REL::Relocation<std::uintptr_t> OnSome_Update_Hook{ REL::ID(XXXXX), 0xXX
+   * };
+   *
+   * auto& trampoline = SKSE::GetTrampoline();
+   * _OnSomeFunction = trampoline.write_call<5>(OnSome_Update_Hook.address(),
+   * OnSomeUpdate);
+   */
+  void Attach(GumInvocationListener* listener, int id, _ExampleHookId hookId)
   {
-    int r = gum_interceptor_attach(interceptor,
-                                   (void*)(REL::Module::BaseAddr() + offset),
+    REL::Relocation<std::uintptr_t> func{ REL::ID(id) }; // not sure
+    int r = gum_interceptor_attach(interceptor, (void*)func.address(),
                                    listener, GSIZE_TO_POINTER(hookId));
 
     if (GUM_ATTACH_OK != r) {
@@ -98,15 +99,28 @@ void SetupFridaHooks()
   auto listener =
     (GumInvocationListener*)g_object_new(EXAMPLE_TYPE_LISTENER, NULL);
 
-  w.Attach(listener, 6353472, HOOK_SEND_ANIMATION_EVENT);
-  w.Attach(listener, 6104992, DRAW_SHEATHE_WEAPON_ACTOR);
-  w.Attach(listener, 7141008, DRAW_SHEATHE_WEAPON_PC);
-  w.Attach(listener, 6893840, QUEUE_NINODE_UPDATE);
-  w.Attach(listener, 4043808, APPLY_MASKS_TO_RENDER_TARGET);
-  w.Attach(listener, 5367792, RENDER_MAIN_MENU);
-  w.Attach(listener, 19244800, SEND_EVENT);
-  w.Attach(listener, 19245744, SEND_EVENT_ALL);
-  w.Attach(listener, 8766499, CONSOLE_VPRINT);
+  /**
+   * This now (hopefully) works based of REL::ID instead of offset
+   */
+
+  // 60F240@1.5.97 | 6374F0@1.6.318
+  w.Attach(listener, 38048, HOOK_SEND_ANIMATION_EVENT);
+  // 5D27A0@1.5.97 | 5F6E20@1.6.318
+  w.Attach(listener, 37279, DRAW_SHEATHE_WEAPON_ACTOR);
+  // 6CF690@1.5.97 | 6F77C0@1.6.318
+  w.Attach(listener, 41235, DRAW_SHEATHE_WEAPON_PC);
+  // 693110@1.5.97 | 6BADD0@1.6.318
+  w.Attach(listener, 40255, QUEUE_NINODE_UPDATE);
+  // 3DB420@1.5.97 | 3F3750@1.6.318
+  w.Attach(listener, 27040, APPLY_MASKS_TO_RENDER_TARGET);
+  // 51E7F0@1.5.97 | 537F90@1.6.318
+  w.Attach(listener, 33632, RENDER_MAIN_MENU);
+  // 125A700@1.5.97 | 1383330@1.6.318
+  w.Attach(listener, 104800, SEND_EVENT);
+  // 125AAB0@1.5.97 | 1383680@1.6.318
+  w.Attach(listener, 104801, SEND_EVENT_ALL);
+  // this appears to be wrong commenting for now
+  /* w.Attach(listener, 8766499, CONSOLE_VPRINT); */
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
@@ -123,7 +137,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
   auto _ic = (_GumInvocationContext*)ic;
 
   switch ((size_t)hook_id) {
-    case CONSOLE_VPRINT: {
+    /* case CONSOLE_VPRINT: {
       char* refr =
         _ic->cpu_context->rdx ? (char*)_ic->cpu_context->rdx : nullptr;
 
@@ -134,7 +148,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       EventsApi::SendConsoleMsgEvent(refr);
 
       break;
-    }
+    } */
     case SEND_EVENT: {
       int argIdx = 2;
 
@@ -143,7 +157,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
 
       auto handle =
         (RE::VMHandle)gum_invocation_context_get_nth_argument(ic, 1);
-      auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+      auto vm = VM::GetSingleton();
       bool blockEvents = TESModPlatform::GetPapyrusEventsBlocked();
 
       uint32_t selfId = 0;
@@ -192,7 +206,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       }
 
       if (blockEvents) {
-        static const auto fsEmpty = new RE::BSFixedString("");
+        static const auto fsEmpty = new FixedString("");
         gum_invocation_context_replace_nth_argument(ic, argIdx, fsEmpty);
       }
       break;
@@ -256,8 +270,8 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       std::string str = *animEventName;
       EventsApi::SendAnimationEventEnter(formId, str);
       if (str != *animEventName) {
-        auto fs = const_cast<RE::BSFixedString*>(
-          &StringHolder::ThreadSingleton()[str]);
+        auto fs =
+          const_cast<FixedString*>(&StringHolder::ThreadSingleton()[str]);
         auto newAnimEventName = reinterpret_cast<char**>(fs);
         gum_invocation_context_replace_nth_argument(ic, argIdx,
                                                     newAnimEventName);
@@ -286,8 +300,8 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       break;
     }
     case RENDER_MAIN_MENU: {
-      static auto fsMainMenu = new BSFixedString("Cursor Menu");
-      auto mainMenu = FridaHooksUtils::GetMenuByName(fsMainMenu);
+      auto mainMenu =
+        FridaHooksUtils::GetMenuByName(RE::CursorMenu::MENU_NAME);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       if (g_allowHideMainMenu) {
 
@@ -318,8 +332,8 @@ static void example_listener_on_leave(GumInvocationListener* listener,
     case RENDER_MAIN_MENU: {
       auto _ic = (_GumInvocationContext*)ic;
 
-      static auto fsMainMenu = new BSFixedString("Cursor Menu");
-      auto mainMenu = FridaHooksUtils::GetMenuByName(fsMainMenu);
+      auto mainMenu =
+        FridaHooksUtils::GetMenuByName(RE::CursorMenu::MENU_NAME);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
       bool renderHookInProgress = g_prevMainMenuView != nullptr;

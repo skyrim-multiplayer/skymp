@@ -1,18 +1,7 @@
 #include "DevApi.h"
-
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
 #include "ReadFile.h"
-#include <filesystem>
-#include <fstream>
-#include <map>
-#include <sstream>
-
-#include <RE/ButtonEvent.h>
-#include <RE/ConsoleLog.h>
-#include <RE/InputEvent.h>
-#include <RE/MenuControls.h>
-#include <RE/MenuEventHandler.h>
 
 std::shared_ptr<JsEngine>* DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
@@ -122,8 +111,7 @@ JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
 class WrapperScreenShotEventHandler : public RE::MenuEventHandler
 {
 public:
-  WrapperScreenShotEventHandler::WrapperScreenShotEventHandler(
-    RE::MenuEventHandler* originalHandler_)
+  WrapperScreenShotEventHandler(RE::MenuEventHandler* originalHandler_)
     : originalHandler(originalHandler_)
   {
   }

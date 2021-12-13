@@ -5,7 +5,7 @@ function(link_vcpkg_dependencies)
       message(FATAL_ERROR "Missing ${arg} argument")
     endif()
   endforeach()
-  
+
   foreach(target ${A_TARGETS})
     find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
     find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
@@ -49,15 +49,17 @@ function(link_vcpkg_dependencies)
       target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMON_LIBRARY_DEBUG},${COMMON_LIBRARY_RELEASE}>")
       target_include_directories(${target} PUBLIC ${COMMON_INCLUDE_DIR})
 
-      find_library(COMMONLIBSSE_LIBRARY_DEBUG CommonLibSSE)
-      string(REPLACE "/debug/lib/" "/lib/" COMMONLIBSSE_LIBRARY_RELEASE ${COMMONLIBSSE_LIBRARY_DEBUG})
-      find_path(COMMONLIBSSE_INCLUDE_DIR SKSE/API.h)
-      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMONLIBSSE_LIBRARY_DEBUG},${COMMONLIBSSE_LIBRARY_RELEASE}>")
-      target_include_directories(${target} PUBLIC ${COMMONLIBSSE_INCLUDE_DIR})
+      find_package(CommonLibSSE REQUIRED)
+      find_package(Boost MODULE REQUIRED)
 
-      # CommonLibSSE requirement
-      target_link_libraries(${target} PUBLIC Version)
-      target_compile_options(${target} PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
+      target_link_libraries(${target}	PRIVATE	Boost::headers CommonLibSSE::CommonLibSSE)
+
+
+      #find_library(COMMONLIBSSE_LIBRARY_DEBUG CommonLibSSE)
+      #string(REPLACE "/debug/lib/" "/lib/" COMMONLIBSSE_LIBRARY_RELEASE ${COMMONLIBSSE_LIBRARY_DEBUG})
+      #find_path(COMMONLIBSSE_INCLUDE_DIR SKSE/API.h)
+      #target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMONLIBSSE_LIBRARY_DEBUG},${COMMONLIBSSE_LIBRARY_RELEASE}>")
+      #target_include_directories(${target} PUBLIC ${COMMONLIBSSE_INCLUDE_DIR})
 
       find_package(directxtk CONFIG REQUIRED)
       find_package(directxmath CONFIG REQUIRED)
@@ -66,7 +68,7 @@ function(link_vcpkg_dependencies)
 
     find_package(spdlog CONFIG REQUIRED)
     target_link_libraries(${target} PUBLIC spdlog::spdlog)
-  
+
     find_package(OpenSSL REQUIRED)
     target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
   endforeach()
