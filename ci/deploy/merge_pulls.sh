@@ -14,10 +14,6 @@ merge_pull() {
   git commit -m "merge pull #$1"
 }
 
-# XXX: tmp
-git fetch "$MAIN_REPO" main
-git merge --squash FETCH_HEAD
-
 while [[ "$1" != "" ]]; do
   merge_pull "$1"
   shift

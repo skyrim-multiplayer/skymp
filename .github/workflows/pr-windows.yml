@@ -97,9 +97,11 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: coverage
-        path: ${{github.workspace}}/build/__coverage
-    - uses: actions/upload-artifact@v2
-      with:
         name: dist
         path: ${{github.workspace}}/build/dist
+
+    # TODO(#631): wait until empty file upload issue is fixed and unfreeze version
+    - uses: actions/upload-artifact@v2.2.4
+      with:
+        name: coverage
+        path: ${{github.workspace}}/build/__coverage
