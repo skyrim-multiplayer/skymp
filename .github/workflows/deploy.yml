@@ -1,14 +1,25 @@
 name: Deploy
 on:
     push:
+    workflow_dispatch:
+        action:
+            description: action (deploy/restart/stop)
+            required: true
+            default: deploy
 jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Get branch name
+          - name: Get action
             run: |
                 echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
-                echo "DEPLOY_ACTION=deploy" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
+
+          - name: TMP for manual run
+            run: |
+                if [[ "$DEPLOY_ACTION" = "" ]]; then
+                  echo "DEPLOY_ACTION=deploy" >> "$GITHUB_ENV"
+                fi
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
@@ -62,10 +73,9 @@ jobs:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY $DEPLOY_BRANCH] Started build. "
-                message+="You can follow the process at <$link>. "
-                message+="Once build is finished, further progress will be reported here."
-                ./ci/deploy/call_webhook.sh "$message"
+                ./ci/deploy/call_webhook.sh "Started build. " \
+                    "You can follow the process at <$link>. " \
+                    "Once build is finished, further progress will be reported here."
 
           - name: Prepare for build
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
@@ -121,6 +131,6 @@ jobs:
             if: '!success()'
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY $DEPLOY_BRANCH] Build or deploy failed or was cancelled. "
-                message+="Check out the logs at <$link> to find out why."
-                ./ci/deploy/call_webhook.sh "$message"
+                ./ci/deploy/call_webhook.sh \
+                    "Build or deploy failed or was cancelled. " \
+                    "Check out the logs at <$link> to find out why."

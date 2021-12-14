@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 
-message() {
-  msg="[DEPLOY $DEPLOY_BRANCH] $1"
-  echo "$msg"
-  ./ci/deploy/call_webhook.sh "$msg"
-}
-
 report_fail() {
-  message "Something went wrong, please see GitHub logs for details"
+  ./ci/deploy/call_webhook.sh "Something went wrong, please see GitHub logs for details"
   exit 1
 }
 trap report_fail ERR
@@ -82,4 +76,4 @@ get_ip_port() {
 
 ip_port="`run_remote cat "$remote_branch_dir/server-settings.json" | get_ip_port`"
 
-message "Finished successfully. Connect to: $ip_port"
+./ci/deploy/call_webhook.sh "Finished successfully. Connect to: $ip_port"

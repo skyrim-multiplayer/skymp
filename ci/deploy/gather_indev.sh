@@ -2,11 +2,11 @@
 
 set -e
 
-data="`ci/deploy/gather-indev/node_modules/.bin/ts-node ci/deploy/gather-indev/cli.ts`"
+data="`cd ci/deploy/gather-indev && node_modules/.bin/ts-node list_included_pulls.ts`"
 
 msg=$'Gathering indev...\n'
-msg+="`echo "$data" | tail -n +2`"
-echo "$msg"
+msg+="`echo "$data" | tail -n +2`"  # start from second line
 ./ci/deploy/call_webhook.sh "$msg"
 
+# Take first line and pass it to script. It treats this as a list of PR numbers
 echo "$data" | head -n 1 | xargs ./ci/deploy/merge_pulls.sh
