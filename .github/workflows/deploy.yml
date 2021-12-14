@@ -1,9 +1,7 @@
 name: Deploy
 on:
-    push:
-        branches:
-          - nic11-deploy
-          - indev
+    workflow_dispatch:
+        # no inputs
 jobs:
     deploy:
         runs-on: ubuntu-latest
@@ -12,22 +10,52 @@ jobs:
             uses: actions/checkout@v2
             with:
                 submodules: recursive
+                fetch-depth: 0
 
-          - name: Get branch name
+          - run: |
+                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
+
+          - name: Gather PRs
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
-                echo "DEPLOY_BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr / -)" >> "$GITHUB_ENV"
+                git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git config --local user.name "github-actions[bot]"
+                git config pull.rebase false
+
+                base_rev="`git rev-parse HEAD`"
+                echo "=== Base revision: $base_rev"
+
+                git checkout -b tmp
+                yarn --cwd="${{github.workspace}}/ci/deploy/gather-indev"
+                ./ci/deploy/gather_indev.sh
+
+                echo ""
+                echo "=== Changes since $base_rev:"
+                git log -p "$base_rev.." | tee deploy_git_log
+
+                echo ""
+                echo "=== Full diff being deployed:"
+                git diff "$base_rev" | tee deploy_git_diff
+
+          - name: Upload patches
+            uses: actions/upload-artifact@v2
+            with:
+                name: patches
+                path: |
+                    deploy_git_log
+                    deploy_git_diff
 
           - name: Post link
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY $DEPLOY_BRANCH] Started build. "
-                message+="You can follow the process at <$link>. "
-                message+="Once build is finished, further progress will be reported here."
-                ./ci/deploy/call_webhook.sh "$message"
+                ./ci/deploy/call_webhook.sh "Started build. " \
+                    "You can follow the process at <$link>. " \
+                    "Once build is finished, further progress will be reported here."
 
-          - name: Prepare
+          - name: Prepare for build
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
@@ -78,6 +106,6 @@ jobs:
             if: '!success()'
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY $DEPLOY_BRANCH] Build or deploy failed or was cancelled. "
-                message+="Check out the logs at <$link> to find out why."
-                ./ci/deploy/call_webhook.sh "$message"
+                ./ci/deploy/call_webhook.sh \
+                    "Build or deploy failed or was cancelled. " \
+                    "Check out the logs at <$link> to find out why."
