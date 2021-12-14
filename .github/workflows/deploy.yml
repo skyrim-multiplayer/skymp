@@ -15,12 +15,6 @@ jobs:
                 echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
                 echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
 
-          - name: TMP for manual run
-            run: |
-                if [[ "$DEPLOY_ACTION" = "" ]]; then
-                  echo "DEPLOY_ACTION=restart" >> "$GITHUB_ENV"
-                fi
-
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/checkout@v2
