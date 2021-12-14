@@ -44,12 +44,12 @@ rsync --rsh="$remote_shell" -vazPh --checksum \
     ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
 
 if [[ "$DEPLOY_ACTION" == "stop" ]]; then
-  message "Stopping the server at \`$remote_server_connstr\`..."
+  ./ci/deploy/call_webhook.sh "Stopping the server at \`$remote_server_connstr\`..."
   run_remote "$remote_tmp_dir/branchctl.sh" stop "$DEPLOY_BRANCH"
-  message "Server is now OFFLINE!"
+  ./ci/deploy/call_webhook.sh "Server is now OFFLINE!"
   exit 0
 elif [[ "$DEPLOY_ACTION" == "deploy" ]]; then
-  message "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
+  ./ci/deploy/call_webhook.sh "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
 
   # FIXME(#164): temporary workaround for Chakra build bug
   cp build/vcpkg_installed/x64-linux/bin/libChakraCore.so build/dist/server/
@@ -60,11 +60,11 @@ elif [[ "$DEPLOY_ACTION" == "deploy" ]]; then
   rsync --rsh="$remote_shell" -vazPh --checksum \
       build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
 
-  message "Updated server files, restarting it..."
+  ./ci/deploy/call_webhook.sh "Updated server files, restarting it..."
 elif [[ "$DEPLOY_ACTION" == "restart" ]]; then
-  message "Restarting server at \`$remote_server_connstr\`..."
+  ./ci/deploy/call_webhook.sh "Restarting server at \`$remote_server_connstr\`..."
 else
-  message "Unknown action $DEPLOY_ACTION"
+  ./ci/deploy/call_webhook.sh "Unknown action $DEPLOY_ACTION"
   exit 1
 fi
 
