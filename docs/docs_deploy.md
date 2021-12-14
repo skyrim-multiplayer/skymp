@@ -99,3 +99,9 @@ https://github.com/skyrim-multiplayer/skymp/actions/workflows/deploy.yml
 
 Progress can be tracked by following the link in run list or in the Discord
 channel `DEPLOY_WEBHOOK` is attached to.
+
+Several actions are available:
+* `deploy` - merge all PRs with `merge-to:<branch>` label set, build the resulting
+  source, upload build artifacts to the server and restart it
+* `restart` - just restart the server (stop if it is running and start)
+* `stop` - just stop the server
