@@ -11,3 +11,16 @@ void* FridaHooksUtils::GetMenuByName(void* name)
   }
   return nullptr;
 }
+
+void FridaHooksUtils::SetMenuNumberVariable(void* name, const char* target,
+                                            double value)
+{
+  if (auto mm = MenuManager::GetSingleton()) {
+    auto view = mm->GetMovieView((BSFixedString*)name);
+    if (view) {
+      GFxValue fxValue;
+      fxValue.SetNumber(value);
+      view->SetVariable(target, &fxValue, 1);
+    }
+  }
+}

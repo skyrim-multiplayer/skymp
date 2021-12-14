@@ -22,6 +22,7 @@
 #include <RE/BSScript/ObjectTypeInfo.h>
 #include <RE/SkyrimScript/HandlePolicy.h>
 
+#include "hooks/DInputHook.hpp"
 #include "ui/DX11RenderHandler.h"
 #include <sstream>
 #include <windows.h>
@@ -111,9 +112,9 @@ void SetupFridaHooks()
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
-thread_local void* g_prevCursorMenuView = nullptr;
 
 bool g_allowHideCursorMenu = true;
+bool g_transparentCursor = false;
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -290,22 +291,23 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       static auto fsCursorMenu = new BSFixedString("Cursor Menu");
       auto cursorMenu = FridaHooksUtils::GetMenuByName(fsCursorMenu);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
-
       if (g_allowHideCursorMenu) {
         if (this_)
           if (cursorMenu == this_) {
-            auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-
             bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
-
-            if (visibleFlag) {
-              if (*viewPtr != nullptr) {
-                g_prevCursorMenuView = *viewPtr;
+            bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
+            if (visibleFlag && focusFlag) {
+              if (!g_transparentCursor) {
+                g_transparentCursor = true;
+                FridaHooksUtils::SetMenuNumberVariable(
+                  fsCursorMenu, "_root.mc_Cursor._alpha", 0);
               }
-              *viewPtr = nullptr;
+
             } else {
-              if (*viewPtr == nullptr && g_prevCursorMenuView) {
-                *viewPtr = g_prevCursorMenuView;
+              if (g_transparentCursor) {
+                g_transparentCursor = false;
+                FridaHooksUtils::SetMenuNumberVariable(
+                  fsCursorMenu, "_root.mc_Cursor._alpha", 100);
               }
             }
           }
