@@ -2,7 +2,7 @@ name: Deploy
 on:
     push:
     workflow_dispatch:
-        action:
+        inputs:
             description: action (deploy/restart/stop)
             required: true
             default: deploy
