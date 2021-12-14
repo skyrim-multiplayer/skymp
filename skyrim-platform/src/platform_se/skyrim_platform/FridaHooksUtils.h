@@ -1,4 +1,4 @@
 namespace FridaHooksUtils {
 void* GetMenuByName(void* name);
-void SetMenuNumberVariable(void* name, const char* target, double value);
+bool SetMenuNumberVariable(void* fsName, const char* target, double value);
 }

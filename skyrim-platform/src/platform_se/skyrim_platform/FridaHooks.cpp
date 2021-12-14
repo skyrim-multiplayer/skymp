@@ -292,25 +292,27 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       auto cursorMenu = FridaHooksUtils::GetMenuByName(fsCursorMenu);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       if (g_allowHideCursorMenu) {
-        if (this_)
+        if (this_) {
           if (cursorMenu == this_) {
             bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
             bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
             if (visibleFlag && focusFlag) {
               if (!g_transparentCursor) {
-                g_transparentCursor = true;
-                FridaHooksUtils::SetMenuNumberVariable(
-                  fsCursorMenu, "_root.mc_Cursor._alpha", 0);
+                if (FridaHooksUtils::SetMenuNumberVariable(
+                      fsCursorMenu, "_root.mc_Cursor._alpha", 0)) {
+                  g_transparentCursor = true;
+                }
               }
-
             } else {
               if (g_transparentCursor) {
-                g_transparentCursor = false;
-                FridaHooksUtils::SetMenuNumberVariable(
-                  fsCursorMenu, "_root.mc_Cursor._alpha", 100);
+                if (FridaHooksUtils::SetMenuNumberVariable(
+                      fsCursorMenu, "_root.mc_Cursor._alpha", 100)) {
+                  g_transparentCursor = false;
+                }
               }
             }
           }
+        }
       }
       break;
     }
