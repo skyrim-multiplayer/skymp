@@ -3,6 +3,7 @@
 #include "ConsoleApi.h"
 #include "ExceptionPrinter.h"
 #include "NullPointerException.h"
+#include "Offsets.h"
 #include <nlohmann/json.hpp>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
@@ -28,12 +29,19 @@ struct
 } share2;
 
 namespace {
+template <class T>
+[[nodiscard]] T* CreateForm()
+{
+  auto form = RE::IFormFactory::GetConcreteFormFactoryByType<T>()->Create();
+  return form ? form->As<T>() : nullptr;
+}
+
 RE::BSTArray<RE::TintMask*> Clone(const RE::BSTArray<RE::TintMask*>& original)
 {
   RE::BSTArray<RE::TintMask*> res;
-  for (auto tint : original) {
+  for (auto& tint : original) {
     res.push_back(nullptr);
-    res.back() = (RE::TintMask*)Heap_Allocate(sizeof(TintMask));
+    res.back() = RE::malloc<RE::TintMask>(sizeof(TintMask));
     memcpy(res.back(), tint, sizeof(TintMask));
   }
   return res;
@@ -119,12 +127,8 @@ void TESModPlatform::MoveRefrToPosition(
   if (!refr || (!cell && !world) || moveRefrBlocked)
     return;
 
-  NiPoint3 pos = { posX, posY, posZ }, rot = { rotX, rotY, rotZ };
-  auto nullHandle = *g_invalidRefHandle;
-
-  auto f = ::MoveRefrToPosition.operator _MoveRefrToPosition();
-  f(reinterpret_cast<TESObjectREFR*>(refr), &nullHandle, cell, world, &pos,
-    &rot);
+  RE::NiPoint3 pos = { posX, posY, posZ }, rot = { rotX, rotY, rotZ };
+  refr->MoveTo_Impl(*(Offsets::invalidRefHandle), cell, world, pos, rot);
 }
 
 void TESModPlatform::BlockMoveRefrToPosition(bool blocked)
@@ -144,7 +148,8 @@ void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
   if (g_nativeCallRequirements.gameThrQ) {
     auto formId = actor->formID;
     g_nativeCallRequirements.gameThrQ->AddTask([=] {
-      if (LookupFormByID(formId) != (void*)actor)
+      // kinda redundant since we get formid from actor
+      if (RE::TESForm::LookupByID<RE::Actor>(formId) != actor)
         return;
 
       if (!actor->IsWeaponDrawn() &&
@@ -178,7 +183,7 @@ int32_t TESModPlatform::GetNthVtableElement(IVM* vm, StackID stackId,
       return getNthVTableElement(reinterpret_cast<uint8_t*>(pointer) +
                                    pointerOffset,
                                  elementIndex) -
-        REL::Module::BaseAddr();
+        REL::Module::get().base();
     } __except (EXCEPTION_EXECUTE_HANDLER) {
     }
   }
@@ -197,10 +202,7 @@ RE::BGSColorForm* TESModPlatform::GetSkinColor(IVM* vm, StackID stackId,
                                                RE::StaticFunctionTag*,
                                                RE::TESNPC* base)
 {
-  auto factory = IFormFactory::GetFactoryForType(BGSColorForm::kTypeID);
-  if (!factory)
-    return nullptr;
-  auto col = (RE::BGSColorForm*)factory->Create();
+  auto col = CreateForm<RE::BGSColorForm>();
   if (!col)
     return nullptr;
   col->color = base->bodyTintColor;
@@ -210,11 +212,7 @@ RE::BGSColorForm* TESModPlatform::GetSkinColor(IVM* vm, StackID stackId,
 RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
                                       RE::StaticFunctionTag*)
 {
-  auto factory = IFormFactory::GetFactoryForType(TESNPC::kTypeID);
-  if (!factory)
-    return nullptr;
-
-  auto npc = (RE::TESNPC*)factory->Create();
+  auto npc = CreateForm<RE::TESNPC>();
   if (!npc)
     return nullptr;
 
@@ -223,23 +221,23 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
     AADeleteWhenDoneTestJeremyRegular = 0x0010D13E
   };
   const auto srcNpc =
-    (TESNPC*)LookupFormByID(AADeleteWhenDoneTestJeremyRegular);
+    RE::TESForm::LookupByID<RE::TESNPC>(AADeleteWhenDoneTestJeremyRegular);
   assert(srcNpc);
-  assert(srcNpc->formType == kFormType_NPC);
-  if (!srcNpc || srcNpc->formType != kFormType_NPC)
+  assert(srcNpc->formType.get() == RE::FormType::NPC);
+  if (!srcNpc || srcNpc->formType != RE::FormType::NPC)
     return nullptr;
   auto backup = npc->formID;
-  memcpy(npc, srcNpc, sizeof TESNPC);
+  memcpy(npc, srcNpc, sizeof RE::TESNPC);
   npc->formID = backup;
 
-  auto npc_ = (TESNPC*)npc;
-  npc_->container.entries = nullptr;
-  npc_->container.numEntries = 0;
-  npc_->faction = nullptr;
-  npc_->nextTemplate = nullptr;
-  npc_->actorData.flags |= (1 << 7);  // pcLevelMult
-  npc_->actorData.flags |= (1 << 5);  // unique
-  npc_->actorData.flags |= (1 << 14); // simpleActor, Disables face animations
+  auto npc_ = npc;
+  npc_->numContainerObjects = 0;
+  npc_->containerObjects = nullptr;
+  npc_->crimeFaction = nullptr;
+  npc_->faceNPC = nullptr;
+  npc_->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kPCLevelMult);
+  npc_->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kUnique);
+  npc_->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kSimpleActor);
 
   // Clear AI Packages to prevent idle animations with Furniture
   enum
@@ -247,22 +245,23 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
     DoNothing = 0x654e2,
     DefaultMoveToCustom02IgnoreCombat = 0x6af62
   };
-  auto doNothing = (TESPackage*)LookupFormByID(DoNothing);
-  auto flagsSource = (TESPackage*)LookupFormByID(
-    DefaultMoveToCustom02IgnoreCombat); // ignore combat && no
-                                        // combat alert
-  doNothing->packageFlags = flagsSource->packageFlags;
-  npc_->aiForm.unk18.unk0 = doNothing;
-  npc_->aiForm.unk18.next = nullptr;
+  // ignore combat && no
+  auto doNothing = RE::TESForm::LookupByID<RE::TESPackage>(DoNothing);
+  // combat alert
+  auto flagsSource =
+    RE::TESForm::LookupByID<RE::TESPackage>(DefaultMoveToCustom02IgnoreCombat);
 
-  auto sourceMorph = npc_->faceMorph;
-  npc_->faceMorph =
-    (TESNPC::FaceMorphs*)Heap_Allocate(sizeof(TESNPC::FaceMorphs));
-  if (!npc_->faceMorph)
+  doNothing->packData = flagsSource->packData;
+  npc_->aiPackages.packages.clear();
+  npc_->aiPackages.packages.push_front(doNothing);
+
+  auto sourceFaceData = npc_->faceData;
+  npc_->faceData = new RE::TESNPC::FaceData;
+  if (!npc_->faceData)
     return nullptr;
-  *npc_->faceMorph = *sourceMorph;
+  *npc_->faceData = *sourceFaceData;
 
-  return (RE::TESNPC*)npc;
+  return npc;
 }
 
 void TESModPlatform::SetNpcSex(IVM* vm, StackID stackId,
@@ -271,9 +270,9 @@ void TESModPlatform::SetNpcSex(IVM* vm, StackID stackId,
 {
   if (npc) {
     if (sex == 1)
-      npc->actorData.actorBaseFlags |= RE::ACTOR_BASE_DATA::Flag::kFemale;
+      npc->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kFemale);
     else
-      npc->actorData.actorBaseFlags &= ~RE::ACTOR_BASE_DATA::Flag::kFemale;
+      npc->actorData.actorBaseFlags.reset(RE::ACTOR_BASE_DATA::Flag::kFemale);
   }
 }
 
@@ -300,33 +299,17 @@ void TESModPlatform::SetNpcHairColor(IVM* vm, StackID stackId,
                                      RE::StaticFunctionTag*, RE::TESNPC* npc,
                                      int32_t color)
 {
-  if (!npc)
-    return;
-  if (!npc->headRelatedData) {
-    npc->headRelatedData = (RE::TESNPC::HeadRelatedData*)Heap_Allocate(
-      sizeof RE::TESNPC::HeadRelatedData);
-    if (!npc->headRelatedData)
-      return;
-    npc->headRelatedData->faceDetails = nullptr;
-  }
+  auto colorForm = CreateForm<RE::BGSColorForm>();
+  colorForm->color.red = COLOR_RED(color);
+  colorForm->color.green = COLOR_GREEN(color);
+  colorForm->color.blue = COLOR_BLUE(color);
 
-  auto factory = IFormFactory::GetFactoryForType(BGSColorForm::kTypeID);
-  if (!factory)
-    return;
-
-  npc->headRelatedData->hairColor = (RE::BGSColorForm*)factory->Create();
-  if (!npc->headRelatedData->hairColor)
-    return;
-
-  auto& c = npc->headRelatedData->hairColor->color;
-  c.red = COLOR_RED(color);
-  c.green = COLOR_GREEN(color);
-  c.blue = COLOR_BLUE(color);
+  npc->SetHairColor(colorForm);
 }
 
 void TESModPlatform::ResizeHeadpartsArray(IVM* vm, StackID stackId,
                                           RE::StaticFunctionTag*,
-                                          RE::TESNPC* npc, int32_t newSize)
+                                          RE::TESNPC* npc, int8_t newSize)
 {
   if (!npc)
     return;
@@ -335,8 +318,9 @@ void TESModPlatform::ResizeHeadpartsArray(IVM* vm, StackID stackId,
     npc->numHeadParts = 0;
   } else {
     npc->headParts = new RE::BGSHeadPart*[newSize];
-    npc->numHeadParts = (uint8_t)newSize;
-    for (SInt8 i = 0; i < npc->numHeadParts; ++i)
+    npc->numHeadParts = newSize;
+
+    for (int8_t i = 0; i < npc->numHeadParts; ++i)
       npc->headParts[i] = nullptr;
   }
 }
@@ -344,16 +328,18 @@ void TESModPlatform::ResizeHeadpartsArray(IVM* vm, StackID stackId,
 void TESModPlatform::ResizeTintsArray(IVM* vm, StackID stackId,
                                       RE::StaticFunctionTag*, int32_t newSize)
 {
-  PlayerCharacter* pc = *g_thePlayer;
-  RE::PlayerCharacter* rePc = (RE::PlayerCharacter*)pc;
-  if (!rePc)
+  auto pc = RE::PlayerCharacter::GetSingleton();
+  if (!pc)
     return;
-  if (newSize < 0 || newSize > 1024)
+
+  auto prevSize = pc->tintMasks.size();
+
+  if (newSize < 0 || newSize > 1024 || newSize == prevSize)
     return;
-  auto prevSize = rePc->tintMasks.size();
-  rePc->tintMasks.resize(newSize);
-  for (size_t i = prevSize; i < rePc->tintMasks.size(); ++i) {
-    rePc->tintMasks[i] = (RE::TintMask*)new TintMask;
+
+  pc->tintMasks.resize(newSize);
+  for (auto& mask : pc->tintMasks) {
+    mask = (RE::TintMask*)new TintMask;
   }
 }
 
@@ -388,26 +374,25 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
                                   RE::Actor* targetActor, int32_t type,
                                   uint32_t argb, FixedString texturePath)
 {
-  auto newTm = (TintMask*)Heap_Allocate(sizeof TintMask);
+  auto newTm = RE::malloc<TintMask>();
   if (!newTm)
     return;
 
-  ARGBColor color(argb);
-  float alpha = color.GetAlpha() / 255.f;
+  float alpha = COLOR_ALPHA(argb) / 255.f;
   if (alpha > 1.0)
     alpha = 1.f;
   if (alpha < 0.0)
     alpha = 0.f;
-  newTm->color.alpha = color.GetAlpha();
+  newTm->color.alpha = COLOR_ALPHA(argb);
   newTm->alpha = alpha;
-  newTm->color.red = color.GetRed();
-  newTm->color.green = color.GetGreen();
-  newTm->color.blue = color.GetBlue();
+  newTm->color.red = COLOR_RED(argb);
+  newTm->color.green = COLOR_GREEN(argb);
+  newTm->color.blue = COLOR_BLUE(argb);
 
-  newTm->texture = (TESTexture*)Heap_Allocate(sizeof TESTexture);
+  newTm->texture = new RE::TESTexture;
   if (!newTm->texture)
     return;
-  newTm->texture->str = *(BSFixedString*)&texturePath;
+  newTm->texture->textureName = texturePath;
 
   newTm->tintType = type;
 
@@ -443,7 +428,7 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
 }
 
 namespace {
-RE::ExtraDataList* CreateExtraDataList()
+/* RE::ExtraDataList* CreateExtraDataList()
 {
   auto extraList = new RE::ExtraDataList;
 
@@ -456,7 +441,7 @@ RE::ExtraDataList* CreateExtraDataList()
   reinterpret_cast<void*&>(extraList_->m_presence) = p;
 
   return extraList;
-}
+} */
 }
 
 namespace {
@@ -472,7 +457,7 @@ void TESModPlatform::PushWornState(IVM* vm, StackID stackId,
   g_wornLeft = wornLeft;
 }
 
-class MyBSExtraData
+/* class MyBSExtraData
 {
 public:
   MyBSExtraData() = default;
@@ -480,8 +465,8 @@ public:
   virtual uint32_t GetType(void) = 0;
 
   MyBSExtraData* next; // 08
-};
-
+}; */
+/*
 template <ExtraDataType t>
 class MyExtra : public MyBSExtraData
 {
@@ -491,7 +476,7 @@ public:
   virtual ~MyExtra() = default;
 
   uint32_t GetType() override { return t; }
-};
+}; */
 
 void TESModPlatform::AddItemEx(
   IVM* vm, StackID stackId, RE::StaticFunctionTag*,
@@ -507,8 +492,7 @@ void TESModPlatform::AddItemEx(
 
   const auto refrId = containerRefr->GetFormID();
 
-  auto boundObject = reinterpret_cast<RE::TESBoundObject*>(
-    DYNAMIC_CAST(reinterpret_cast<TESForm*>(item), TESForm, TESBoundObject));
+  auto boundObject = skyrim_cast<RE::TESBoundObject*>(item);
   if (!boundObject)
     return;
 
@@ -588,7 +572,7 @@ void TESModPlatform::AddItemEx(
   }
 
   g_nativeCallRequirements.gameThrQ->AddTask([=] {
-    if (containerRefr != (void*)LookupFormByID(refrId))
+    if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId))
       return;
 
     auto optExtraList =
@@ -658,23 +642,17 @@ void TESModPlatform::AddItemEx(
 }
 
 void TESModPlatform::UpdateEquipment(IVM* vm, StackID stackId,
-                                     RE::StaticFunctionTag*,
-                                     RE::Actor* containerRefr,
+                                     RE::StaticFunctionTag*, RE::Actor* actor,
                                      RE::TESForm* item, bool leftHand)
 {
 
-  auto ac = ((Actor*)containerRefr);
-
-  if (!ac || !ac->processManager)
+  if (!actor || !actor->currentProcess)
     return;
-
-  auto& ref =
-    ac->processManager
-      ->equippedObject[leftHand ? ActorProcessManager::kEquippedHand_Left
-                                : ActorProcessManager::kEquippedHand_Right];
-
+  auto ref = leftHand ? actor->currentProcess->GetEquippedLeftHand()
+                      : actor->currentProcess->GetEquippedRightHand();
   const auto backup = ref;
-  ref = (TESForm*)item;
+
+  ref = item;
 }
 
 void TESModPlatform::ResetContainer(IVM* vm, StackID stackId,
@@ -683,12 +661,13 @@ void TESModPlatform::ResetContainer(IVM* vm, StackID stackId,
 {
   if (!container)
     return;
-  TESContainer* pContainer =
-    DYNAMIC_CAST(reinterpret_cast<TESForm*>(container), TESForm, TESContainer);
+
+  auto pContainer = skyrim_cast<RE::TESContainer*>(container);
   if (!pContainer)
     return;
-  pContainer->numEntries = 0;
-  pContainer->entries = nullptr;
+
+  pContainer->numContainerObjects = 0;
+  pContainer->containerObjects = nullptr;
 }
 
 void TESModPlatform::BlockPapyrusEvents(IVM* vm, StackID stackId,

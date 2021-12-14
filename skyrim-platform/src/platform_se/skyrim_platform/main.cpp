@@ -1,9 +1,13 @@
+#include "CallNativeApi.h"
 #include "DumpFunctions.h"
 #include "EventsApi.h"
 #include "FlowManager.h"
 #include "InputConverter.h"
+#include "Offsets.h"
 #include "PapyrusTESModPlatform.h"
 #include "SkyrimPlatform.h"
+#include "TPOverlayService.h"
+#include "TPRenderSystemD3D11.h"
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
@@ -84,7 +88,7 @@ DLLEXPORT bool SKSEPlugin_Query_Impl(const SKSE::QueryInterface* skse,
   info->version = PLUGIN_VERSION;
 
   if (skse->IsEditor()) {
-    _FATALERROR("loaded in editor, marking as incompatible");
+    logger::critical("loaded in editor, marking as incompatible");
     return false;
   }
   return true;
@@ -94,13 +98,13 @@ DLLEXPORT bool SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   const auto taskInterface = SKSE::GetTaskInterface();
   if (!taskInterface) {
-    _FATALERROR("couldn't get task interface");
+    logger::critical("couldn't get task interface");
     return false;
   }
 
   const auto papyrusInterface = SKSE::GetPapyrusInterface();
   if (!papyrusInterface) {
-    _FATALERROR("QueryInterface failed for PapyrusInterface");
+    logger::critical("QueryInterface failed for PapyrusInterface");
     return false;
   }
 

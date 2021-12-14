@@ -18,7 +18,7 @@ struct ConsoleComand
   std::string longName;
   std::string shortName;
   uint16_t numArgs = 0;
-  Script::Execute_t execute;
+  Script::Execute_t* execute;
   JsValue jsExecute;
   Script* myIter;
   Script myOriginalData;

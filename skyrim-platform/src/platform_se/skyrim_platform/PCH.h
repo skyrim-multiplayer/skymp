@@ -9,15 +9,8 @@
 
 #include <Windows.h>
 #include <tlhelp32.h>
-//#include <cstdlib>
 
 #include <spdlog/sinks/basic_file_sink.h>
-
-#include <common/IDebugLog.h>
-#include <common/ITypes.h>
-#include <skse64/GameData.h>
-#include <skse64/GameFormComponents.h>
-#include <skse64/NiRenderer.h> // used in main.cpp BSRenderManager
 
 namespace logger = SKSE::log;
 
@@ -28,5 +21,10 @@ using VM = RE::BSScript::Internal::VirtualMachine;
 using StackID = RE::VMStackID;
 using Variable = RE::BSScript::Variable;
 using FixedString = RE::BSFixedString;
+
+#define COLOR_ALPHA(in) ((in >> 24) & 0xFF)
+#define COLOR_RED(in) ((in >> 16) & 0xFF)
+#define COLOR_GREEN(in) ((in >> 8) & 0xFF)
+#define COLOR_BLUE(in) ((in >> 0) & 0xFF)
 
 #define DLLEXPORT __declspec(dllexport)

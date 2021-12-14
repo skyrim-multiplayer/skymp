@@ -262,7 +262,8 @@ private:
     std::vector<std::filesystem::path> paths;
     if (std::filesystem::exists(directory)) {
       for (auto& it : std::filesystem::directory_iterator(directory)) {
-        std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
+        std::filesystem::path p =
+          it.is_directory() ? it.path() / "index.js" : it;
         paths.push_back(p);
       }
     }

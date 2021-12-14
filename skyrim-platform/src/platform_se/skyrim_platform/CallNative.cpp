@@ -2,6 +2,7 @@
 #include "CallNativeApi.h"
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
+#include "Offsets.h"
 #include "Overloaded.h"
 #include "SendAnimationEvent.h"
 #include "StringHolder.h"
@@ -97,7 +98,7 @@ CallNative::AnySafe VariableToAnySafe(
     case RE::BSScript::TypeInfo::RawType::kNone:
       return ObjectPtr();
     case RE::BSScript::TypeInfo::RawType::kObject: {
-      auto object = r.GetObject();
+      auto object = r.value.obj;
       if (!object)
         return ObjectPtr();
 
@@ -112,7 +113,7 @@ CallNative::AnySafe VariableToAnySafe(
         }
 
       if (objPtr) {
-        auto objectTypeInfo = t.GetTypeInfo();
+        auto objectTypeInfo = r.varType.GetTypeInfo();
         if (!objectTypeInfo)
           throw NullPointerException("objectTypeInfo");
         return std::make_shared<Object>(
@@ -258,11 +259,8 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
       if (auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId)) {
         if (refr->GetFormID() == formId &&
             refr->GetFormType() == RE::FormType::Reference) {
-
-          typedef float (*myfunc)(void*, void*, RE::TESObjectREFR*);
-          RelocAddr<myfunc> func(
-            10041056); // Not a single clue of what it is or what it does
-          func(nullptr, nullptr, refr);
+          // change name
+          Offsets.Unknown(nullptr, nullptr, refr);
         }
       }
     });
@@ -276,7 +274,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
       auto nativeActorPtr = (RE::Actor*)_self->GetNativeObjectPtr();
       if (!nativeActorPtr)
         throw NullPointerException("nativeActorPtr");
-      if (nativeActorPtr->formType != RE::FormType::ActorCharacter)
+      if (nativeActorPtr->formType.get() != RE::FormType::ActorCharacter)
         throw std::runtime_error("QueueNiNodeUpdate must be called on Actor");
       papyrusActor::QueueNiNodeUpdate((RE::Actor*)nativeActorPtr);
     });
@@ -308,12 +306,13 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
       if (!g_nativeCallRequirements.vm)
         throw NullPointerException("g_nativeCallRequirements.vm");
 
-      typedef void(PushActorAway)(void* vm, StackID stackId, RE::Actor* self,
-                                  RE::Actor* targetActor, float magnitude);
-      RelocPtr<PushActorAway> pushActorAway(10052416);
+      // TODO: figure out what offset is this
+      /* typedef void(PushActorAway)(void* vm, StackID stackId, RE::Actor*
+      self, RE::Actor* targetActor, float magnitude); RelocPtr<PushActorAway>
+      pushActorAway(10052416);
       pushActorAway.GetPtr()(g_nativeCallRequirements.vm,
                              g_nativeCallRequirements.stackId,
-                             nativeTargetActor, nativeTargetActor, mag);
+                             nativeTargetActor, nativeTargetActor, mag); */
     });
     return ObjectPtr();
   }

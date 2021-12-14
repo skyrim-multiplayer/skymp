@@ -10,7 +10,6 @@
 #include <frida/frida-gum.h>
 
 #include "EventsApi.h"
-#include "FridaHooksUtils.h"
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
 
@@ -119,8 +118,7 @@ void SetupFridaHooks()
   w.Attach(listener, 104800, SEND_EVENT);
   // 125AAB0@1.5.97 | 1383680@1.6.318
   w.Attach(listener, 104801, SEND_EVENT_ALL);
-  // this appears to be wrong commenting for now
-  /* w.Attach(listener, 8766499, CONSOLE_VPRINT); */
+  w.Attach(listener, 51110, CONSOLE_VPRINT);
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
@@ -137,7 +135,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
   auto _ic = (_GumInvocationContext*)ic;
 
   switch ((size_t)hook_id) {
-    /* case CONSOLE_VPRINT: {
+    case CONSOLE_VPRINT: {
       char* refr =
         _ic->cpu_context->rdx ? (char*)_ic->cpu_context->rdx : nullptr;
 
@@ -148,7 +146,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       EventsApi::SendConsoleMsgEvent(refr);
 
       break;
-    } */
+    }
     case SEND_EVENT: {
       int argIdx = 2;
 
@@ -300,11 +298,10 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       break;
     }
     case RENDER_MAIN_MENU: {
-      auto mainMenu =
-        FridaHooksUtils::GetMenuByName(RE::CursorMenu::MENU_NAME);
+      void* mainMenu =
+        RE::UI::GetSingleton()->GetMenu(RE::MainMenu::MENU_NAME);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       if (g_allowHideMainMenu) {
-
         if (this_)
           if (mainMenu == this_) {
             auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
@@ -332,8 +329,8 @@ static void example_listener_on_leave(GumInvocationListener* listener,
     case RENDER_MAIN_MENU: {
       auto _ic = (_GumInvocationContext*)ic;
 
-      auto mainMenu =
-        FridaHooksUtils::GetMenuByName(RE::CursorMenu::MENU_NAME);
+      void* mainMenu =
+        RE::UI::GetSingleton()->GetMenu(RE::MainMenu::MENU_NAME);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
       bool renderHookInProgress = g_prevMainMenuView != nullptr;

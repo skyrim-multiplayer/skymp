@@ -49,7 +49,7 @@ void SetNpcHairColor(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                      RE::TESNPC* npc, int32_t skinColor);
 
 void ResizeHeadpartsArray(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
-                          RE::TESNPC* npc, int32_t size);
+                          RE::TESNPC* npc, int8_t size);
 
 void ResizeTintsArray(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                       int32_t size);
