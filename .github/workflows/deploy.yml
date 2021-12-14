@@ -2,9 +2,10 @@ name: Deploy
 on:
     workflow_dispatch:
         inputs:
-            description: action (deploy/restart/stop)
-            required: true
-            default: deploy
+            action:
+                description: action (deploy/restart/stop)
+                required: true
+                default: deploy
 jobs:
     deploy:
         runs-on: ubuntu-latest
