@@ -23,23 +23,13 @@ function(apply_default_settings)
           /permissive-	# Standards conformance
 
           /Zc:alignedNew	# C++17 over-aligned allocation
-			    /Zc:auto	# Deduce Variable Type
-			    /Zc:char8_t
 		    	/Zc:__cplusplus	# Enable updated __cplusplus macro
-		    	/Zc:externC
 	    		/Zc:externConstexpr	# Enable extern constexpr variables
-	    		/Zc:forScope	# Force Conformance in for Loop Scope
-	    		/Zc:implicitNoexcept	# Implicit Exception Specifiers
-		    	/Zc:lambda
-	    		/Zc:noexceptTypes	# C++17 noexcept rules
 		    	#/Zc:preprocessor	# Enable preprocessor conformance mode
-		    	/Zc:referenceBinding	# Enforce reference binding rules
-	    		/Zc:rvalueCast	# Enforce type conversion rules
-	    		/Zc:sizedDealloc	# Enable Global Sized Deallocation Functions
-	    		/Zc:strictStrings	# Disable string literal type conversion
-	    		/Zc:threadSafeInit	# Thread-safe Local Static Initialization
-	    		/Zc:trigraphs	# Trigraphs Substitution
-	    		/Zc:wchar_t	# wchar_t Is Native Type
+          #/Zc:throwingNew # Assume operator new throws on failure
+
+          "$<$<CONFIG:DEBUG>:>"
+			    "$<$<CONFIG:RELEASE>:/Zc:inline;/JMC-;/Ob2>"
       )
     endif()
   endforeach()
