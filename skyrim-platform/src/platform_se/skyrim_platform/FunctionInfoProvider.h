@@ -5,7 +5,7 @@ class FunctionInfo
 public:
   struct ValueType
   {
-    RE::BSScript::TypeInfo::RawType type;
+    TypeInfo::RawType type;
     const char* className = "";
   };
 

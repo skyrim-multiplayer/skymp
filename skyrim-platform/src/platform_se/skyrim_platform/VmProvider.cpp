@@ -33,7 +33,7 @@ struct AdditionalFunctionInfo
   };
   Type type = Type::Invalid;
 
-  std::vector<RE::BSScript::TypeInfo> paramTypes;
+  std::vector<TypeInfo> paramTypes;
 };
 
 using FunctionFindResult =
@@ -134,11 +134,11 @@ private:
   RE::BSTSmartPointer<RE::BSScript::IFunction> f;
   AdditionalFunctionInfo info;
 
-  static ValueType MakeValueType(RE::BSScript::TypeInfo typeInfo)
+  static ValueType MakeValueType(TypeInfo typeInfo)
   {
     ValueType res;
     res.type = typeInfo.GetUnmangledRawType();
-    if (res.type == RE::BSScript::TypeInfo::RawType::kObject) {
+    if (res.type == TypeInfo::RawType::kObject) {
       auto objTypeInfo = typeInfo.GetTypeInfo();
       if (!objTypeInfo)
         throw NullPointerException("objTypeInfo");

@@ -14,43 +14,43 @@ struct State
   bool isDumpingEmptyTypesAllowed = true;
 };
 
-std::string RawTypeToString(RE::BSScript::TypeInfo::RawType raw)
+std::string RawTypeToString(TypeInfo::RawType raw)
 {
   switch (raw) {
-    case RE::BSScript::TypeInfo::RawType::kNone:
+    case TypeInfo::RawType::kNone:
       return "None";
-    case RE::BSScript::TypeInfo::RawType::kObject:
+    case TypeInfo::RawType::kObject:
       return "Object";
-    case RE::BSScript::TypeInfo::RawType::kString:
+    case TypeInfo::RawType::kString:
       return "String";
-    case RE::BSScript::TypeInfo::RawType::kInt:
+    case TypeInfo::RawType::kInt:
       return "Int";
-    case RE::BSScript::TypeInfo::RawType::kFloat:
+    case TypeInfo::RawType::kFloat:
       return "Float";
-    case RE::BSScript::TypeInfo::RawType::kBool:
+    case TypeInfo::RawType::kBool:
       return "Bool";
-    case RE::BSScript::TypeInfo::RawType::kNoneArray:
+    case TypeInfo::RawType::kNoneArray:
       return "NoneArray";
-    case RE::BSScript::TypeInfo::RawType::kObjectArray:
+    case TypeInfo::RawType::kObjectArray:
       return "ObjectArray";
-    case RE::BSScript::TypeInfo::RawType::kStringArray:
+    case TypeInfo::RawType::kStringArray:
       return "StringArray";
-    case RE::BSScript::TypeInfo::RawType::kIntArray:
+    case TypeInfo::RawType::kIntArray:
       return "IntArray";
-    case RE::BSScript::TypeInfo::RawType::kFloatArray:
+    case TypeInfo::RawType::kFloatArray:
       return "FloatArray";
-    case RE::BSScript::TypeInfo::RawType::kBoolArray:
+    case TypeInfo::RawType::kBoolArray:
       return "BoolArray";
   }
   return "";
 }
 
-json TypeInfoToJson(RE::BSScript::TypeInfo t)
+json TypeInfoToJson(TypeInfo t)
 {
   auto res = json::object();
   auto rawType = t.GetUnmangledRawType();
   res["rawType"] = RawTypeToString(rawType);
-  if (rawType == RE::BSScript::TypeInfo::RawType::kObject)
+  if (rawType == TypeInfo::RawType::kObject)
     res["objectTypeName"] = t.GetTypeInfo()->GetName();
   return res;
 }
@@ -64,7 +64,7 @@ json FunctionToJson(const char* typeName, RE::BSScript::IFunction* f,
   res["arguments"] = json::array();
   for (uint32_t i = 0; i < f->GetParamCount(); ++i) {
     FixedString name;
-    RE::BSScript::TypeInfo type;
+    TypeInfo type;
     f->GetParam(i, name, type);
     res["arguments"].push_back(
       json{ { "name", name.data() }, { "type", TypeInfoToJson(type) } });

@@ -1,10 +1,15 @@
+#pragma once
+
 namespace Offsets {
 namespace BSRenderManager {
 inline constexpr REL::ID Singleton(static_cast<std::uint64_t>(411393));
 }
 
-REL::Relocation<const RE::ObjectRefHandle*> invalidRefHandle{ REL::ID(
-  400312) };
+inline RE::ObjectRefHandle GetInvalidRefHandle()
+{
+  REL::Relocation<RE::ObjectRefHandle*> handle{ REL::ID(400312) };
+  return *handle;
+}
 
 /**
  * This is called from CallNative::CallNativeSafe

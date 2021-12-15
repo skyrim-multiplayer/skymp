@@ -3,7 +3,6 @@
 #include "ConsoleApi.h"
 #include "ExceptionPrinter.h"
 #include "NullPointerException.h"
-#include "Offsets.h"
 #include <nlohmann/json.hpp>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
@@ -127,8 +126,9 @@ void TESModPlatform::MoveRefrToPosition(
   if (!refr || (!cell && !world) || moveRefrBlocked)
     return;
 
+  auto handle = Offsets::GetInvalidRefHandle();
   RE::NiPoint3 pos = { posX, posY, posZ }, rot = { rotX, rotY, rotZ };
-  refr->MoveTo_Impl(*(Offsets::invalidRefHandle), cell, world, pos, rot);
+  refr->MoveTo_Impl(handle, cell, world, pos, rot);
 }
 
 void TESModPlatform::BlockMoveRefrToPosition(bool blocked)
@@ -389,7 +389,7 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
   newTm->color.green = COLOR_GREEN(argb);
   newTm->color.blue = COLOR_BLUE(argb);
 
-  newTm->texture = new RE::TESTexture;
+  newTm->texture = RE::malloc<RE::TESTexture>();
   if (!newTm->texture)
     return;
   newTm->texture->textureName = texturePath;
@@ -428,23 +428,6 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
 }
 
 namespace {
-/* RE::ExtraDataList* CreateExtraDataList()
-{
-  auto extraList = new RE::ExtraDataList;
-
-  auto extraList_ = reinterpret_cast<BaseExtraList*>(extraList);
-
-  auto p = reinterpret_cast<uint8_t*>(Heap_Allocate(0x18));
-  for (int i = 0; i < 0x18; ++i) {
-    p[i] = 0;
-  }
-  reinterpret_cast<void*&>(extraList_->m_presence) = p;
-
-  return extraList;
-} */
-}
-
-namespace {
 thread_local bool g_worn = false;
 thread_local bool g_wornLeft = false;
 }
@@ -456,27 +439,6 @@ void TESModPlatform::PushWornState(IVM* vm, StackID stackId,
   g_worn = worn;
   g_wornLeft = wornLeft;
 }
-
-/* class MyBSExtraData
-{
-public:
-  MyBSExtraData() = default;
-  virtual ~MyBSExtraData() = default;
-  virtual uint32_t GetType(void) = 0;
-
-  MyBSExtraData* next; // 08
-}; */
-/*
-template <ExtraDataType t>
-class MyExtra : public MyBSExtraData
-{
-public:
-  MyExtra() = default;
-
-  virtual ~MyExtra() = default;
-
-  uint32_t GetType() override { return t; }
-}; */
 
 void TESModPlatform::AddItemEx(
   IVM* vm, StackID stackId, RE::StaticFunctionTag*,
@@ -492,7 +454,7 @@ void TESModPlatform::AddItemEx(
 
   const auto refrId = containerRefr->GetFormID();
 
-  auto boundObject = skyrim_cast<RE::TESBoundObject*>(item);
+  auto boundObject = item->As<RE::TESBoundObject>();
   if (!boundObject)
     return;
 
@@ -505,13 +467,11 @@ void TESModPlatform::AddItemEx(
 
   thread_local std::map<Tuple, RE::ExtraDataList*> g_lastEquippedExtraList[2];
 
-  RE::ExtraDataList* extraList = nullptr;
-
   const bool isShieldLike =
     (item->formType == RE::FormType::Armor &&
      reinterpret_cast<RE::TESObjectARMO*>(item)->IsShield());
 
-  const bool isTorch = item->formType == RE::FormType::Light;
+  const bool isTorch = item->formType.get() == RE::FormType::Light;
 
   const bool isClothes =
     (item->formType == RE::FormType::Armor && !isShieldLike) ||
@@ -522,53 +482,40 @@ void TESModPlatform::AddItemEx(
   if (item->formType != RE::FormType::Ammo && health <= 1)
     health = 1.01f;
 
+  auto extraList = RE::calloc<RE::ExtraDataList>(sizeof(RE::ExtraDataList));
+
   if (health > 1 || enchantment || chargePercent > 0 ||
       strlen(textDisplayData.data()) > 0 || (soul > 0 && soul <= 5) ||
       poison || g_worn || g_wornLeft) {
-    extraList = CreateExtraDataList();
 
-    auto extraList_ = reinterpret_cast<BaseExtraList*>(extraList);
+    if (g_worn)
+      if (isClothes)
+        extraList->Add(RE::malloc<RE::ExtraWorn>());
 
-    if (g_worn) {
-      if (isClothes) {
-        auto extra =
-          reinterpret_cast<BSExtraData*>(new MyExtra<kExtraData_Worn>);
-        extraList_->Add(kExtraData_Worn, extra);
-      }
-    }
-
-    if (g_wornLeft) {
-      if (isClothes) {
-        auto extra =
-          reinterpret_cast<BSExtraData*>(new MyExtra<kExtraData_WornLeft>);
-        extraList_->Add(kExtraData_WornLeft, extra);
-      }
-    }
+    if (g_wornLeft)
+      if (isClothes)
+        extraList->Add(RE::malloc<RE::ExtraWornLeft>());
 
     if (health > 1)
-      extraList_->Add(kExtraData_Health,
-                      (BSExtraData*)new RE::ExtraHealth(health));
+      extraList->Add(new RE::ExtraHealth(health));
+
     if (enchantment)
-      extraList_->Add(kExtraData_Enchantment,
-                      (BSExtraData*)new RE::ExtraEnchantment(
-                        enchantment, maxCharge, removeEnchantmentOnUnequip));
+      extraList->Add(new RE::ExtraEnchantment(enchantment, maxCharge,
+                                              removeEnchantmentOnUnequip));
     if (chargePercent > 0) {
-      auto extraCharge = new RE::ExtraCharge;
-      extraCharge->charge = chargePercent;
-      extraList_->Add(kExtraData_Charge, (BSExtraData*)extraCharge);
+      auto extra = new RE::ExtraCharge();
+      extra->charge = chargePercent;
+      extraList->Add(extra);
     }
+
     if (strlen(textDisplayData.data()) > 0)
-      extraList_->Add(
-        kExtraData_TextDisplayData,
-        (BSExtraData*)new RE::ExtraTextDisplayData(textDisplayData.data()));
+      extraList->Add(new RE::ExtraTextDisplayData(textDisplayData.data()));
+
     if (soul > 0 && soul <= 5)
-      extraList_->Add(
-        kExtraData_Soul,
-        (BSExtraData*)new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
-    if (poison) {
-      extraList_->Add(kExtraData_Poison,
-                      (BSExtraData*)new RE::ExtraPoison(poison, poisonCount));
-    }
+      extraList->Add(new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
+
+    if (poison)
+      extraList->Add(new RE::ExtraPoison(poison, poisonCount));
   }
 
   g_nativeCallRequirements.gameThrQ->AddTask([=] {
@@ -589,33 +536,45 @@ void TESModPlatform::AddItemEx(
   });
 
   const bool needEquipWeap =
-    (g_worn || g_wornLeft) && item->formType == RE::FormType::Weapon;
+    (g_worn || g_wornLeft) && item->formType.get() == RE::FormType::Weapon;
 
   const bool needEquipShieldLike = (g_worn || g_wornLeft) && isShieldLike;
 
   const bool needEquipAmmo =
-    (g_worn || g_wornLeft) && item->formType == RE::FormType::Ammo;
+    (g_worn || g_wornLeft) && item->formType.get() == RE::FormType::Ammo;
 
   if (needEquipWeap || needEquipShieldLike || needEquipAmmo) {
-    auto s = RE::ActorEquipManager::GetSingleton();
-    if (containerRefr->formType == RE::FormType::ActorCharacter) {
+    auto em = RE::ActorEquipManager::GetSingleton();
+    auto om = RE::BGSDefaultObjectManager::GetSingleton();
 
-      enum EquipSlot
-      {
-        BothHands = 0x13f45,
-        LeftHand = 0x13f43,
-        RightHand = 0x13f42
-      };
-      static const auto g_bothHandsSlot = LookupFormByID(BothHands);
+    RE::BGSEquipSlot* slot = nullptr;
+    RE::BGSEquipSlot* rightHandSlot = nullptr;
+    RE::BGSEquipSlot* leftHandSlot = nullptr;
 
-      RE::Actor* actor = reinterpret_cast<RE::Actor*>(containerRefr);
-      if (s) {
-        auto slot = reinterpret_cast<RE::BGSEquipSlot*>(GetRightHandSlot());
+    if (om->IsInitialized()) {
+      rightHandSlot =
+        om->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECTS::kRightHandEquip);
+      leftHandSlot =
+        om->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECTS::kLeftHandEquip);
+    }
 
-        if (g_wornLeft && !needEquipShieldLike) // wornLeft + shield = deadlock
-          slot = reinterpret_cast<RE::BGSEquipSlot*>(GetLeftHandSlot());
+    if (containerRefr->formType.get() == RE::FormType::ActorCharacter) {
+      auto actor = containerRefr->As<RE::Actor>();
 
-        if (item->formType == RE::FormType::Ammo) {
+      if (em) {
+        /**
+         * item has item->GetEquipSlot()
+         * so all of this slot thingie is redundant
+         * we should use predefined slots if we want to equip a spell
+         * not item
+         * but leaving this as it is for now
+         */
+        slot =
+          g_wornLeft && !needEquipShieldLike // wornLeft + shield = deadlock
+          ? leftHandSlot
+          : rightHandSlot;
+
+        if (item->formType.get() == RE::FormType::Ammo) {
           extraList = nullptr;
           slot = nullptr;
         }
@@ -623,15 +582,15 @@ void TESModPlatform::AddItemEx(
         if (countDelta > 0) {
           g_lastEquippedExtraList[g_worn ? false : true][tuple] = extraList;
           g_nativeCallRequirements.gameThrQ->AddTask([=] {
-            if (actor != (void*)LookupFormByID(refrId))
+            if (actor != RE::TESForm::LookupByID<RE::Actor>(refrId))
               return;
-            s->EquipObject(actor, boundObject, extraList, 1, slot);
+            em->EquipObject(actor, boundObject, extraList, 1, slot);
           });
         } else if (countDelta < 0)
           g_nativeCallRequirements.gameThrQ->AddTask([=] {
-            if (actor != (void*)LookupFormByID(refrId))
+            if (actor != RE::TESForm::LookupByID<RE::Actor>(refrId))
               return;
-            s->UnequipObject(actor, boundObject, extraList, 1, slot);
+            em->UnequipObject(actor, boundObject, extraList, 1, slot);
           });
       }
     }
@@ -656,13 +615,12 @@ void TESModPlatform::UpdateEquipment(IVM* vm, StackID stackId,
 }
 
 void TESModPlatform::ResetContainer(IVM* vm, StackID stackId,
-                                    RE::StaticFunctionTag*,
-                                    RE::TESForm* container)
+                                    RE::StaticFunctionTag*, RE::TESForm* form)
 {
-  if (!container)
+  if (!form)
     return;
 
-  auto pContainer = skyrim_cast<RE::TESContainer*>(container);
+  auto pContainer = form->As<RE::TESContainer>();
   if (!pContainer)
     return;
 

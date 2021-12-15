@@ -54,13 +54,6 @@ function(link_vcpkg_dependencies)
 
       target_link_libraries(${target}	PRIVATE	Boost::headers CommonLibSSE::CommonLibSSE)
 
-
-      #find_library(COMMONLIBSSE_LIBRARY_DEBUG CommonLibSSE)
-      #string(REPLACE "/debug/lib/" "/lib/" COMMONLIBSSE_LIBRARY_RELEASE ${COMMONLIBSSE_LIBRARY_DEBUG})
-      #find_path(COMMONLIBSSE_INCLUDE_DIR SKSE/API.h)
-      #target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMONLIBSSE_LIBRARY_DEBUG},${COMMONLIBSSE_LIBRARY_RELEASE}>")
-      #target_include_directories(${target} PUBLIC ${COMMONLIBSSE_INCLUDE_DIR})
-
       find_package(directxtk CONFIG REQUIRED)
       find_package(directxmath CONFIG REQUIRED)
       target_link_libraries(${target} PUBLIC Microsoft::DirectXTK)

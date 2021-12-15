@@ -44,7 +44,7 @@ void DirectoryMonitor::ThrowOnceIfHasError()
     pImpl->thrown = true;
     throw std::runtime_error(
       fmt::format("DirectoryMonitor({}) failed with code {}",
-                  pImpl->dir.u8string(), std::to_string(pImpl->errorCode)));
+                  pImpl->dir.string(), std::to_string(pImpl->errorCode)));
   }
 }
 

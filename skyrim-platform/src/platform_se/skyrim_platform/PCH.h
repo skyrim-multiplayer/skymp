@@ -8,6 +8,7 @@
 #include <SKSE/SKSE.h>
 
 #include <Windows.h>
+#undef GetObject // wingdi.h messes up GetObject()
 #include <tlhelp32.h>
 
 #include <spdlog/sinks/basic_file_sink.h>
@@ -21,6 +22,7 @@ using VM = RE::BSScript::Internal::VirtualMachine;
 using StackID = RE::VMStackID;
 using Variable = RE::BSScript::Variable;
 using FixedString = RE::BSFixedString;
+using TypeInfo = RE::BSScript::TypeInfo;
 
 #define COLOR_ALPHA(in) ((in >> 24) & 0xFF)
 #define COLOR_RED(in) ((in >> 16) & 0xFF)
@@ -28,3 +30,5 @@ using FixedString = RE::BSFixedString;
 #define COLOR_BLUE(in) ((in >> 0) & 0xFF)
 
 #define DLLEXPORT __declspec(dllexport)
+
+#include "Offsets.h"

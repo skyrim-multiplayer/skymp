@@ -47,32 +47,32 @@ JsValue GetProxyForClass(const std::string& className,
           if (isObjectReference) {
             f = JsValue::Function(
               [](const JsFunctionArguments& args) -> JsValue {
-                CallNative::ObjectPtr from =
+                CallNative::ObjectPtr obj =
                   NativeValueCasts::JsObjectToNativeObject(args[1]);
-                if (!from)
+                if (!obj)
                   return JsValue::Null();
-                auto fromRaw = (RE::TESForm*)from->GetNativeObjectPtr();
-                if (!fromRaw)
+                auto form = (RE::TESForm*)obj->GetNativeObjectPtr();
+                if (!form)
                   return JsValue::Null();
-                auto resRaw = skyrim_cast<RE::TESObjectREFR*>(fromRaw);
-                if (!resRaw)
+                auto objRefr = form->As<RE::TESObjectREFR>();
+                if (!objRefr)
                   return JsValue::Null();
-                return CreateObject("ObjectReference", resRaw);
+                return CreateObject("ObjectReference", objRefr);
               });
           } else if (isActor) {
             f = JsValue::Function(
               [](const JsFunctionArguments& args) -> JsValue {
-                CallNative::ObjectPtr from =
+                CallNative::ObjectPtr obj =
                   NativeValueCasts::JsObjectToNativeObject(args[1]);
-                if (!from)
+                if (!obj)
                   return JsValue::Null();
-                auto fromRaw = (RE::TESForm*)from->GetNativeObjectPtr();
-                if (!fromRaw)
+                auto form = (RE::TESForm*)obj->GetNativeObjectPtr();
+                if (!form)
                   return JsValue::Null();
-                auto resRaw = skyrim_cast<RE::Actor*>(fromRaw);
-                if (!resRaw)
+                auto actor = form->As<RE::Actor>();
+                if (!actor)
                   return JsValue::Null();
-                return CreateObject("Actor", resRaw);
+                return CreateObject("Actor", actor);
               });
           } else {
             f = JsValue::Function(

@@ -2,7 +2,6 @@
 #include "CallNativeApi.h"
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
-#include "Offsets.h"
 #include "Overloaded.h"
 #include "SendAnimationEvent.h"
 #include "StringHolder.h"
@@ -95,9 +94,9 @@ CallNative::AnySafe VariableToAnySafe(
     throw NullPointerException("vmImpl");
 
   switch (r.varType.GetUnmangledRawType()) {
-    case RE::BSScript::TypeInfo::RawType::kNone:
+    case TypeInfo::RawType::kNone:
       return ObjectPtr();
-    case RE::BSScript::TypeInfo::RawType::kObject: {
+    case TypeInfo::RawType::kObject: {
       auto object = r.value.obj;
       if (!object)
         return ObjectPtr();
@@ -122,20 +121,20 @@ CallNative::AnySafe VariableToAnySafe(
       } else
         return ObjectPtr();
     }
-    case RE::BSScript::TypeInfo::RawType::kString:
+    case TypeInfo::RawType::kString:
       return (std::string)r.GetString().data();
-    case RE::BSScript::TypeInfo::RawType::kInt:
+    case TypeInfo::RawType::kInt:
       return (double)r.GetSInt();
-    case RE::BSScript::TypeInfo::RawType::kFloat:
+    case TypeInfo::RawType::kFloat:
       return (double)r.GetFloat();
-    case RE::BSScript::TypeInfo::RawType::kBool:
+    case TypeInfo::RawType::kBool:
       return r.GetBool();
-    case RE::BSScript::TypeInfo::RawType::kNoneArray:
-    case RE::BSScript::TypeInfo::RawType::kObjectArray:
-    case RE::BSScript::TypeInfo::RawType::kStringArray:
-    case RE::BSScript::TypeInfo::RawType::kIntArray:
-    case RE::BSScript::TypeInfo::RawType::kFloatArray:
-    case RE::BSScript::TypeInfo::RawType::kBoolArray:
+    case TypeInfo::RawType::kNoneArray:
+    case TypeInfo::RawType::kObjectArray:
+    case TypeInfo::RawType::kStringArray:
+    case TypeInfo::RawType::kIntArray:
+    case TypeInfo::RawType::kFloatArray:
+    case TypeInfo::RawType::kBoolArray:
       throw std::runtime_error(
         "Functions with Array return type are not supported");
     default:
@@ -260,7 +259,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
         if (refr->GetFormID() == formId &&
             refr->GetFormType() == RE::FormType::Reference) {
           // change name
-          Offsets.Unknown(nullptr, nullptr, refr);
+          Offsets::Unknown(nullptr, nullptr, refr);
         }
       }
     });
@@ -276,7 +275,8 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
         throw NullPointerException("nativeActorPtr");
       if (nativeActorPtr->formType.get() != RE::FormType::ActorCharacter)
         throw std::runtime_error("QueueNiNodeUpdate must be called on Actor");
-      papyrusActor::QueueNiNodeUpdate((RE::Actor*)nativeActorPtr);
+      // this is called QueueNiNodeUpdate in skse
+      nativeActorPtr->DoReset3D(false);
     });
     return ObjectPtr();
   }
@@ -373,7 +373,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   auto topArgs = stackIterator->second->top->args;
   for (int i = 0; i < numArgs; i++) {
     FixedString unusedNameOut;
-    RE::BSScript::TypeInfo typeOut;
+    TypeInfo typeOut;
     f->GetParam(i, unusedNameOut, typeOut);
 
     topArgs[i] = AnySafeToVariable(args[i], typeOut.IsInt());
@@ -384,7 +384,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
       [](void* numArgs) { return (size_t)numArgs; },
       [&args_, &f](size_t i) {
         FixedString unusedNameOut;
-        RE::BSScript::TypeInfo typeOut;
+        TypeInfo typeOut;
         f->GetParam(i, unusedNameOut, typeOut);
         return AnySafeToVariable(args_.args[i], typeOut.IsInt());
       },

@@ -186,7 +186,7 @@ JsValue InventoryApi::GetContainer(const JsFunctionArguments& args)
   if (!form)
     return JsValue::Array(0);
 
-  auto pContainer = skyrim_cast<RE::TESContainer*>(form);
+  auto pContainer = form->As<RE::TESContainer>();
 
   if (!pContainer)
     return JsValue::Array(0);

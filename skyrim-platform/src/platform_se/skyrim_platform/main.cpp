@@ -3,7 +3,6 @@
 #include "EventsApi.h"
 #include "FlowManager.h"
 #include "InputConverter.h"
-#include "Offsets.h"
 #include "PapyrusTESModPlatform.h"
 #include "SkyrimPlatform.h"
 #include "TPOverlayService.h"
@@ -178,10 +177,11 @@ class MyInputListener : public IInputListener
 public:
   bool IsBrowserFocused() { return CEFUtils::DInputHook::ChromeFocus(); }
 
+  // this isn't working tight now
   MyInputListener()
   {
-    pCursorX = (float*)(REL::Module::BaseAddr() + 0x2F6C104); // no idea
-    pCursorY = (float*)(REL::Module::BaseAddr() + 0x2F6C108); // no idea
+    pCursorX = (float*)(REL::Module::get().base() + 0x2F6C104);
+    pCursorY = (float*)(REL::Module::get().base() + 0x2F6C108);
     vkCodeDownDur.fill(0);
   }
 

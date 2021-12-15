@@ -28,7 +28,7 @@ enum _ExampleHookId
   DRAW_SHEATHE_WEAPON_PC,
   QUEUE_NINODE_UPDATE,
   APPLY_MASKS_TO_RENDER_TARGET,
-  RENDER_MAIN_MENU,
+  RENDER_CURSOR_MENU,
   SEND_EVENT,
   SEND_EVENT_ALL,
   CONSOLE_VPRINT
@@ -113,7 +113,7 @@ void SetupFridaHooks()
   // 3DB420@1.5.97 | 3F3750@1.6.318
   w.Attach(listener, 27040, APPLY_MASKS_TO_RENDER_TARGET);
   // 51E7F0@1.5.97 | 537F90@1.6.318
-  w.Attach(listener, 33632, RENDER_MAIN_MENU);
+  w.Attach(listener, 33632, RENDER_CURSOR_MENU);
   // 125A700@1.5.97 | 1383330@1.6.318
   w.Attach(listener, 104800, SEND_EVENT);
   // 125AAB0@1.5.97 | 1383680@1.6.318
@@ -125,6 +125,13 @@ thread_local uint32_t g_queueNiNodeActorId = 0;
 thread_local void* g_prevMainMenuView = nullptr;
 
 bool g_allowHideMainMenu = true;
+
+static void* GetMenuByName(std::string_view name)
+{
+  if (auto ui = RE::UI::GetSingleton())
+    return (void*)ui->GetMenu(name).get();
+  return nullptr;
+}
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -297,13 +304,12 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       g_queueNiNodeActorId = 0;
       break;
     }
-    case RENDER_MAIN_MENU: {
-      void* mainMenu =
-        RE::UI::GetSingleton()->GetMenu(RE::MainMenu::MENU_NAME);
+    case RENDER_CURSOR_MENU: {
+      auto menu = GetMenuByName(RE::CursorMenu::MENU_NAME);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       if (g_allowHideMainMenu) {
         if (this_)
-          if (mainMenu == this_) {
+          if (menu == this_) {
             auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
             g_prevMainMenuView = *viewPtr;
             *viewPtr = nullptr;
@@ -326,17 +332,16 @@ static void example_listener_on_leave(GumInvocationListener* listener,
       EventsApi::SendAnimationEventLeave(res);
       break;
     }
-    case RENDER_MAIN_MENU: {
+    case RENDER_CURSOR_MENU: {
       auto _ic = (_GumInvocationContext*)ic;
 
-      void* mainMenu =
-        RE::UI::GetSingleton()->GetMenu(RE::MainMenu::MENU_NAME);
+      auto menu = GetMenuByName(RE::CursorMenu::MENU_NAME);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
       auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
       bool renderHookInProgress = g_prevMainMenuView != nullptr;
       if (renderHookInProgress)
         if (this_)
-          if (mainMenu == this_) {
+          if (menu == this_) {
             *viewPtr = g_prevMainMenuView;
             g_prevMainMenuView = nullptr;
           }

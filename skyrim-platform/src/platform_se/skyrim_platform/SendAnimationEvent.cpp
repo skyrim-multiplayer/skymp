@@ -16,7 +16,7 @@ void SendAnimationEvent::Run(const std::vector<CallNative::AnySafe>& _args)
     auto nativeObjPtr = (RE::TESForm*)objPtr->GetNativeObjectPtr();
     if (!nativeObjPtr)
       throw NullPointerException("nativeObjPtr");
-    auto refr = skyrim_cast<RE::TESObjectREFR*>(nativeObjPtr);
+    auto refr = nativeObjPtr->As<RE::TESObjectREFR>();
 
     if (!refr) {
       throw std::runtime_error(
