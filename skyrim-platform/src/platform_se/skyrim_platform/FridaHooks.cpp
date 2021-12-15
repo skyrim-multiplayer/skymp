@@ -294,12 +294,16 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       if (g_allowHideCursorMenu) {
         if (this_) {
           if (cursorMenu == this_) {
+            bool kRunningAE = false;
+            if (kRunningAE) {
+              auto fCursor = FridaHooksUtils::GetCursorPosition();
+            }
             bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
             bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
             if (visibleFlag && focusFlag) {
               if (!g_transparentCursor) {
                 if (FridaHooksUtils::SetMenuNumberVariable(
-                      fsCursorMenu, "_root.mc_Cursor._alpha", 0)) {
+                      fsCursorMenu, "_root.mc_Cursor._alpha", 100)) {
                   g_transparentCursor = true;
                 }
               }
