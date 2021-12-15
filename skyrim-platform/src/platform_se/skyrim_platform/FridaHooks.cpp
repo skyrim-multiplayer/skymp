@@ -294,6 +294,10 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       if (g_allowHideCursorMenu) {
         if (this_) {
           if (cursorMenu == this_) {
+            bool kRunningAE = false;
+            if (kRunningAE) {
+              FridaHooksUtils::SaveCursorPosition();
+            }
             bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
             bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
             if (visibleFlag && focusFlag) {
