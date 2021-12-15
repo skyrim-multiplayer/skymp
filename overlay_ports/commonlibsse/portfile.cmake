@@ -7,7 +7,8 @@ vcpkg_from_github(
     PATCHES
       objectrefr-make_moverefr_public.patch
       variable-make_members_public.patch
-      stackframe-uncomment-top-args.patch
+      stackframe-uncomment_top_args.patch
+      extradatalist-make_members_public.patch
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})

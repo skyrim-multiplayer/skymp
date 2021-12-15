@@ -128,5 +128,5 @@ public:
   ID3D11RenderTargetView1* renderView;     // 88
   ID3D11ShaderResourceView1* resourceView; // 90
   uint64_t unk2788[(0x2788 - 0x90) >> 3];
-  CRITICAL_SECTION lock; // 2790
+  mutable RE::BSReadWriteLock _lock; // 2790
 };

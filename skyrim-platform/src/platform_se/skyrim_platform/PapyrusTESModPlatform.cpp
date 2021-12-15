@@ -483,6 +483,8 @@ void TESModPlatform::AddItemEx(
     health = 1.01f;
 
   auto extraList = RE::calloc<RE::ExtraDataList>(sizeof(RE::ExtraDataList));
+  extraList->_presence = RE::calloc<RE::ExtraDataList::PresenceBitfield>(
+    sizeof(RE::ExtraDataList::PresenceBitfield));
 
   if (health > 1 || enchantment || chargePercent > 0 ||
       strlen(textDisplayData.data()) > 0 || (soul > 0 && soul <= 5) ||
