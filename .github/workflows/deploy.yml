@@ -1,21 +1,36 @@
 name: Deploy
 on:
     workflow_dispatch:
-        # no inputs
+        inputs:
+            action:
+                description: action (deploy/restart/stop)
+                required: true
+                default: deploy
 jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Checkout
+          - name: Get action
+            run: |
+                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
+
+          - name: Checkout (full)
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/checkout@v2
             with:
                 submodules: recursive
                 fetch-depth: 0
 
-          - run: |
-                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
+          - name: Checkout (last commit)
+            if: ${{env.DEPLOY_ACTION != 'deploy'}}
+            uses: actions/checkout@v2
+            with:
+                submodules: recursive
+                fetch-depth: 0
 
           - name: Gather PRs
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
@@ -39,6 +54,7 @@ jobs:
                 git diff "$base_rev" | tee deploy_git_diff
 
           - name: Upload patches
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/upload-artifact@v2
             with:
                 name: patches
@@ -47,6 +63,7 @@ jobs:
                     deploy_git_diff
 
           - name: Post link
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
@@ -56,6 +73,7 @@ jobs:
                     "Once build is finished, further progress will be reported here."
 
           - name: Prepare for build
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
@@ -66,6 +84,7 @@ jobs:
                     chown -R skymp:skymp /src /home/skymp/.cmake-js
 
           - name: CMake Configure
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
@@ -79,6 +98,7 @@ jobs:
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
           - name: Build
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
