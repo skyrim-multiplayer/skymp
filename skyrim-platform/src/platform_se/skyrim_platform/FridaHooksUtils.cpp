@@ -40,7 +40,7 @@ double FridaHooksUtils::GetMenuNumberVariable(void* fsName, const char* target)
   return NULL;
 }
 
-std::pair<double, double> FridaHooksUtils::GetCursorPosition()
+void FridaHooksUtils::SaveCursorPosition()
 {
   static auto fsCursorMenu = new BSFixedString("Cursor Menu");
   if (auto mm = MenuManager::GetSingleton()) {
@@ -63,19 +63,18 @@ std::pair<double, double> FridaHooksUtils::GetCursorPosition()
                            10.0) /
         10.0;
       *GetCursorY() = cursorY;
-      return std::make_pair(cursorX, cursorY);
     }
   }
 }
 
 float* FridaHooksUtils::GetCursorX()
 {
-  static double cursorX = 0;
-  return reinterpret_cast<float*>(&cursorX);
+  static float g_cursorX = 0;
+  return &g_cursorX;
 }
 
 float* FridaHooksUtils::GetCursorY()
 {
-  static double cursorY = 0;
-  return reinterpret_cast<float*>(&cursorY);
+  static float g_cursorY = 0;
+  return &g_cursorY;
 }
