@@ -104,10 +104,10 @@ const Constructor = props => {
               curElem = <Text text={obj.element.text} />;
               break;
             case 'inputText':
-              curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} width={obj.element.width} height={obj.element.height} />;
+              curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} width={obj.element.width} height={obj.element.height} onInput={obj.element.onInput} />;
               break;
             case 'inputPass':
-              curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'password'} name={obj.index} width={obj.element.width} height={obj.element.height} />;
+              curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'password'} name={obj.index} width={obj.element.width} height={obj.element.height} onInput={obj.element.onInput} />;
               break;
             case 'checkBox':
               curElem = <CheckBox disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} setChecked={obj.element.setChecked} />;

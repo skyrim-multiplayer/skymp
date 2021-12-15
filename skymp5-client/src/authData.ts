@@ -1,4 +1,11 @@
 export class AuthData {
+  public static canRegister(data: AuthData) {
+    return data && data.name?.trim() && data.email?.trim() && data.password?.trim();
+  }
+  public static canLogin(data: AuthData) {
+    return data && data.email?.trim() && data.password?.trim();
+  }
+
   public constructor(
     public name: string,
     public email: string,

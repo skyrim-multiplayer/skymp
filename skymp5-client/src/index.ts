@@ -24,7 +24,7 @@ declare global {
 browser.main();
 
 authSystem.addAuthListener((token) => {
-  once("tick", () => printConsole(`AUTH EVENT: ${token}`));
+  once("tick", () => printConsole(`AUTH EVENT: ${JSON.stringify(token)}`));
 });
 
 authSystem.main({
