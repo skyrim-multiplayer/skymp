@@ -48,6 +48,14 @@ once("update", verifyVersion);
 
 on("update", () => updateWc());
 
+once("update", () => {
+  // Also update weather to be always clear
+  const w = Weather.findWeather(0);
+  if (w) {
+    w.forceActive(false);
+  }
+});
+
 let lastTimeUpd = 0;
 on("update", () => {
   if (Date.now() - lastTimeUpd <= 2000) return;
