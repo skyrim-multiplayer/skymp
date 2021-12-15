@@ -303,7 +303,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
             if (visibleFlag && focusFlag) {
               if (!g_transparentCursor) {
                 if (FridaHooksUtils::SetMenuNumberVariable(
-                      fsCursorMenu, "_root.mc_Cursor._alpha", 100)) {
+                      fsCursorMenu, "_root.mc_Cursor._alpha", 0)) {
                   g_transparentCursor = true;
                 }
               }
