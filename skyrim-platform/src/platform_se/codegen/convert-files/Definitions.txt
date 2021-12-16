@@ -70,6 +70,7 @@ export interface Browser {
   loadUrl(url: string): void;
   getToken(): string;
   executeJavaScript(src: string): void;
+  shellExecute(url: string): void;
 }
 export declare let browser: Browser;
 
