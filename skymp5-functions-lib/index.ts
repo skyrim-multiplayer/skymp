@@ -3,10 +3,17 @@ import { ChatProperty } from './src/props/chatProperty';
 import { DialogProperty } from './src/props/dialogProperty';
 import { EvalProperty } from './src/props/evalProperty';
 import { Ctx } from './src/types/ctx';
-import { LocationalData, Mp } from './src/types/mp';
+import { LocationalData, Mp, PapyrusValue } from './src/types/mp';
 import { FunctionInfo } from './src/utils/functionInfo';
 import { PersistentStorage } from './src/utils/persistentStorage';
 import { Timer } from './src/utils/timer';
+
+const randomInt = (mp: Mp, self: null, args: PapyrusValue[]): number => {
+  const min = getNumber(args, 0);
+  const max = getNumber(args, 1);
+  const randomInRangeBothInclusive = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+  return randomInRangeBothInclusive(min, max);
+};
 
 DialogProperty.init();
 BrowserProperty.init();
@@ -16,6 +23,7 @@ ChatProperty.init();
 Timer.init();
 
 declare const mp: Mp;
+mp.registerPapyrusFunction('global', 'Utility', 'RandomInt', (self, args) => randomInt(mp, self, args));
 
 const config = mp.getServerSettings();
 
