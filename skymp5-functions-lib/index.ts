@@ -8,6 +8,19 @@ import { FunctionInfo } from './src/utils/functionInfo';
 import { PersistentStorage } from './src/utils/persistentStorage';
 import { Timer } from './src/utils/timer';
 
+const err = (index: number, x: unknown, expectedTypeName: string): never => {
+	throw new TypeError(
+		`The argument with index ${index} has value (${JSON.stringify(
+			x
+		)}) that doesn't meet the requirements of ${expectedTypeName}`
+	);
+};
+
+const getNumber = (args: PapyrusValue[], index: number): number => {
+	const x = args[index];
+	return typeof x === 'number' ? x : err(index, x, 'number');
+};
+
 const randomInt = (mp: Mp, self: null, args: PapyrusValue[]): number => {
   const min = getNumber(args, 0);
   const max = getNumber(args, 1);
