@@ -1,6 +1,7 @@
 const path = require('path');
 
-const outDirPath = path.resolve(__dirname, "../build/dist/client/Data/Platform/Plugins");
+//const outDirPath = path.resolve(__dirname, "../build/dist/client/Data/Platform/Plugins");
+const outDirPath = path.resolve(__dirname, "F:/Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Plugins");
 const outFileName = "skymp5-client.js";
 const spFilePath = path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules/skyrimPlatform.ts');
 

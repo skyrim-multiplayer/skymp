@@ -66,31 +66,42 @@ const loginWithSkympIO = (data: AuthData): void => {
     return;
   }
 
-  setLoginInfo("processing...");
-  const http = new sp.HttpClient(url);
-  http.post("/api/users/login", { body: JSON.stringify(data), contentType: "application/json" }).then(
-    (response) => {
-      switch (response.status) {
-        case 200:
-          setLoginInfo("SUCCESS");
-          break;
-        case 401:
-          setLoginInfo(`Server returned 401 (Unauthorized) "${JSON.stringify(response.body)}"`);
-          break;
-        case 403:
-          setLoginInfo(`Server returned 403 (Forbidden) "${JSON.stringify(response.body)}"`);
-          break;
-        default:
-          setLoginInfo(`Server returned ${response.status} "${JSON.stringify(response.body)}"`);
-      }
-    },
-    (reason) => setLoginInfo(`Skyrim platform error: ${reason}`),
-  )
+  //setLoginInfo("processing...");
+  new sp.HttpClient(url)
+    .post("/api/users/login", { body: JSON.stringify(data), contentType: "application/json" })
+    .then(
+      (response) => {
+        sp.once("update", () => setLoginInfo(`Server returned ${response.status} "${JSON.stringify(response.body)}"`))
+        sp.once("update", () => {
+          switch (response.status) {
+            case 200:
+              setLoginInfo("SUCCESS");
+              break;
+            case 401:
+              setLoginInfo(`Server returned 401 (Unauthorized) "${JSON.stringify(response.body)}"`);
+              break;
+            case 403:
+              setLoginInfo(`Server returned 403 (Forbidden) "${JSON.stringify(response.body)}"`);
+              break;
+            default:
+              setLoginInfo(`Server returned ${response.status} "${JSON.stringify(response.body)}"`);
+          }
+        });
+      },
+      (reason) => sp.once("tick", () => {
+        setLoginInfo(`Skyrim platform error: ${reason}`)
+      }),
+    );
 }
 const setLoginInfo = (text: string): void => {
   sp.browser.executeJavaScript(`
+  try
+  {
   window.${loginWidgetInfoObjName}.text = "${text}";
   window.skyrimPlatform.widgets.set([window.loginWidget]);
+  } catch (e) {
+    window.skyrimPlatform.sendMessage("err", e.message, "${text}");
+  }
   `);
 }
 
@@ -102,7 +113,8 @@ const registerAccountWithSkympIO = (data: AuthData): void => {
 
   setRegisterInfo("processing...");
   new sp.HttpClient(url)
-    .post("/users", { body: JSON.stringify(data), contentType: "application/json" }).then(
+    .post("/api/users", { body: JSON.stringify(data), contentType: "application/json" })
+    .then(
       (response) => {
         switch (response.status) {
           case 200:
