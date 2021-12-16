@@ -18,7 +18,7 @@ JsValue GetToken(const JsFunctionArguments& args);
 JsValue ExecuteJavaScript(const JsFunctionArguments& args,
                           std::shared_ptr<State> state);
 JsValue UrlShellExecute(const JsFunctionArguments& args,
-                          std::shared_ptr<State> state);
+                        std::shared_ptr<State> state);
 
 inline void Register(JsValue& exports, std::shared_ptr<State> state)
 {

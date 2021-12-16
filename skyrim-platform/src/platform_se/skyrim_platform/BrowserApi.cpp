@@ -91,7 +91,7 @@ JsValue BrowserApi::ExecuteJavaScript(const JsFunctionArguments& args,
 }
 
 JsValue BrowserApi::UrlShellExecute(const JsFunctionArguments& args,
-                                      std::shared_ptr<State> state)
+                                    std::shared_ptr<State> state)
 {
   auto str = static_cast<std::string>(args[1]);
   if (str.substr(0, 8) != "https://") {
