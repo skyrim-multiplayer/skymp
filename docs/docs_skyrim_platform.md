@@ -30,6 +30,7 @@ On the other hand, updating `skyrimPlatform.ts` may break the compilation of you
   - [New events][NewEvents]
   - [Browser / UI][Browser]
   - [HTTP][]
+  - [Win32][Win32]
 - [Cook Book][Cookbook]
 
 [Browser]: skyrim_platform/browser.md
@@ -42,3 +43,4 @@ On the other hand, updating `skyrimPlatform.ts` may break the compilation of you
 [NewMethods]: skyrim_platform/new_methods.md
 [NewTypes]: skyrim_platform/new_types.md
 [Papyrus]: skyrim_platform/papyrus.md
+[Win32]: skyrim_platform/win32.md

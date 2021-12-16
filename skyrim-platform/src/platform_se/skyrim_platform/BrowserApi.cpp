@@ -89,16 +89,3 @@ JsValue BrowserApi::ExecuteJavaScript(const JsFunctionArguments& args,
   GetApp(state).ExecuteJavaScript(str);
   return JsValue::Undefined();
 }
-
-JsValue BrowserApi::UrlShellExecute(const JsFunctionArguments& args,
-                                    std::shared_ptr<State> state)
-{
-  auto str = static_cast<std::string>(args[1]);
-  if (str.substr(0, 8) != "https://") {
-    throw std::runtime_error(
-      "Permission denied, only 'https://' prefix is allowed");
-  } else {
-    ShellExecute(0, 0, str.c_str(), 0, 0, SW_SHOW);
-  }
-  return JsValue::Undefined();
-}

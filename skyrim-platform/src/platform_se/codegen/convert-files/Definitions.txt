@@ -70,9 +70,13 @@ export interface Browser {
   loadUrl(url: string): void;
   getToken(): string;
   executeJavaScript(src: string): void;
-  shellExecute(url: string): void;
 }
 export declare let browser: Browser;
+
+export interface Win32 {
+  loadUrl(url: string): void;
+}
+export declare let win32: Win32;
 
 export interface ExtraData {
   type: 'Health' | 'Count' | 'Enchantment' | 'Charge' | 'TextDisplayData' | 'Soul' | 'Poison' | 'Worn' | 'WornLeft';

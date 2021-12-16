@@ -17,8 +17,6 @@ JsValue LoadUrl(const JsFunctionArguments& args, std::shared_ptr<State> state);
 JsValue GetToken(const JsFunctionArguments& args);
 JsValue ExecuteJavaScript(const JsFunctionArguments& args,
                           std::shared_ptr<State> state);
-JsValue UrlShellExecute(const JsFunctionArguments& args,
-                        std::shared_ptr<State> state);
 
 inline void Register(JsValue& exports, std::shared_ptr<State> state)
 {
@@ -37,11 +35,6 @@ inline void Register(JsValue& exports, std::shared_ptr<State> state)
     "executeJavaScript",
     JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
       return ExecuteJavaScript(args, state);
-    }));
-  browser.SetProperty(
-    "shellExecute",
-    JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-      return UrlShellExecute(args, state);
     }));
   exports.SetProperty("browser", browser);
 }
