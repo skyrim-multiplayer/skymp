@@ -165,7 +165,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       std::string eventNameStr = *eventName;
       EventsApi::SendPapyrusEventEnter(selfId, eventNameStr);
 
-      if (strcmp(*eventName, "OnUpdate") != 0 && vm) {
+      if (blockEvents && strcmp(*eventName, "OnUpdate") != 0 && vm) {
         vm->attachedScriptsLock.Lock();
         auto it = vm->attachedScripts.find(handle);
 
@@ -178,9 +178,6 @@ static void example_listener_on_enter(GumInvocationListener* listener,
             auto name = info->GetName();
 
             const char* skyui_name = "SKI_"; // start skyui object name
-
-            // RE::ConsoleLog::GetSingleton()->Print(name);
-
             if (strlen(name) >= 4 && name[0] == skyui_name[0] &&
                 name[1] == skyui_name[1] && name[2] == skyui_name[2] &&
                 name[3] == skyui_name[3]) {
