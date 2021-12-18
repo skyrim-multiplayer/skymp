@@ -110,9 +110,9 @@ public:
   }
 };
 
-namespace {
+// namespace {
 
-CallNative::ObjectPtr GetSingleObjectPtr(
+CallNative::ObjectPtr CallNative::GetSingleObjectPtr(
   const RE::BSScript::Variable& r,
   std::optional<const char*> className = std::nullopt)
 {
@@ -150,7 +150,7 @@ CallNative::ObjectPtr GetSingleObjectPtr(
   }
 }
 
-CallNative::AnySafe VariableToAnySafe(
+CallNative::AnySafe CallNative::VariableToAnySafe(
   const RE::BSScript::Variable& r,
   std::optional<const char*> className = std::nullopt)
 {
@@ -252,7 +252,7 @@ bool IsRemoveItem(const std::string& className, const std::string& classFunc,
     !stricmp(classFunc.data(), "removeItem") && rawSelf &&
     IsActorOrObjectRefr(rawSelf->formType);
 }
-}
+//}
 
 CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
 {

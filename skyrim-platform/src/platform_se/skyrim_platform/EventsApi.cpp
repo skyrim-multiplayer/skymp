@@ -1,5 +1,6 @@
 #include "EventsApi.h"
 
+#include "CallNative.h"
 #include "GameEventSinks.h"
 #include "InvalidArgumentException.h"
 #include "NativeObject.h"
@@ -146,7 +147,8 @@ public:
   // threads. So Enter/Leave methods are thread-safe, but all private methods
   // are for Chakra thread only
 
-  void Enter(uint32_t selfId, std::string& eventName)
+  void Enter(uint32_t selfId, std::string& eventName,
+             std::vector<CallNative::AnySafe>& papyrusEventArgs)
   {
     addRemoveBlocker++;
     DWORD owningThread = GetCurrentThreadId();
@@ -167,7 +169,8 @@ public:
 
       return SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
         std::string s = eventName;
-        HandleEnter(owningThread, selfId, s);
+        std::vector<CallNative::AnySafe> a = papyrusEventArgs;
+        HandleEnter(owningThread, selfId, s, a);
       });
     }
 
@@ -176,7 +179,7 @@ public:
         if (inProgressThreads.count(owningThread))
           throw std::runtime_error("'" + hookName + "' is already processing");
         inProgressThreads.insert(owningThread);
-        HandleEnter(owningThread, selfId, eventName);
+        HandleEnter(owningThread, selfId, eventName, papyrusEventArgs);
       } catch (std::exception& e) {
         auto err = std::string(e.what()) + " (while performing enter on '" +
           hookName + "')";
@@ -216,7 +219,19 @@ public:
   }
 
 private:
-  void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName)
+  JsValue ConvertArgsArray(std::vector<CallNative::AnySafe>& papyrusEventArgs)
+  {
+    auto out = JsValue::Array(papyrusEventArgs.size());
+    for (size_t i = 0; i < papyrusEventArgs.size(); ++i) {
+      out.SetProperty(
+        JsValue::Int(i),
+        NativeValueCasts::NativeValueToJsValue(papyrusEventArgs[i]));
+    }
+    return out;
+  }
+
+  void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName,
+                   std::vector<CallNative::AnySafe>& papyrusEventArgs)
   {
     for (auto& hp : handlers) {
       auto* h = &hp.second;
@@ -231,6 +246,8 @@ private:
 
       perThread.context.SetProperty("selfId", static_cast<double>(selfId));
       perThread.context.SetProperty(eventNameVariableName, eventName);
+      perThread.context.SetProperty("papyrusEventArgs",
+                                    ConvertArgsArray(papyrusEventArgs));
       h->enter.Call({ JsValue::Undefined(), perThread.context });
 
       eventName = static_cast<std::string>(
@@ -377,7 +394,9 @@ void EventsApi::Clear()
 void EventsApi::SendAnimationEventEnter(uint32_t selfId,
                                         std::string& animEventName) noexcept
 {
-  g.sendAnimationEvent->Enter(selfId, animEventName);
+  std::vector<CallNative::AnySafe> a;
+  a.reserve(0);
+  g.sendAnimationEvent->Enter(selfId, animEventName, a);
 }
 
 void EventsApi::SendAnimationEventLeave(bool animationSucceeded) noexcept
@@ -385,10 +404,11 @@ void EventsApi::SendAnimationEventLeave(bool animationSucceeded) noexcept
   g.sendAnimationEvent->Leave(animationSucceeded);
 }
 
-void EventsApi::SendPapyrusEventEnter(uint32_t selfId,
-                                      std::string& papyrusEventName) noexcept
+void EventsApi::SendPapyrusEventEnter(
+  uint32_t selfId, std::string& papyrusEventName,
+  std::vector<CallNative::AnySafe>& papyrusEventArgs) noexcept
 {
-  g.sendPapyrusEvent->Enter(selfId, papyrusEventName);
+  g.sendPapyrusEvent->Enter(selfId, papyrusEventName, papyrusEventArgs);
 }
 
 void EventsApi::SendPapyrusEventLeave() noexcept

@@ -8,6 +8,7 @@
 #include <RE/BSScript/Variable.h>
 #include <RE/BSTSmartPointer.h>
 #include <memory>
+#include <optional>
 #include <variant>
 
 namespace CallNative {
@@ -67,4 +68,10 @@ struct Arguments
 AnySafe CallNativeSafe(Arguments& args);
 
 AnySafe DynamicCast(const std::string& to, const AnySafe& from);
+
+ObjectPtr GetSingleObjectPtr(const RE::BSScript::Variable& r,
+                             std::optional<const char*> className);
+
+AnySafe VariableToAnySafe(const RE::BSScript::Variable& r,
+                          std::optional<const char*> className);
 }
