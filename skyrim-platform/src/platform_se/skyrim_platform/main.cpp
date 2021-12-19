@@ -17,9 +17,6 @@
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
 
-#define PLUGIN_NAME "SkyrimPlatform"
-#define PLUGIN_VERSION 0
-
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void SetupFridaHooks();
@@ -59,6 +56,28 @@ void OnUpdate(IVM* vm, StackID stackId)
   g_nativeCallRequirements.vm = nullptr;
 }
 
+void InitLog()
+{
+  auto path = logger::log_directory();
+  if (!path) {
+    stl::report_and_fail("Failed to find standard logging directory"sv);
+  }
+
+  *path /= "skyrim-platform.log"sv;
+  auto sink =
+    std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
+
+  auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
+
+  log->set_level(spdlog::level::info);
+  log->flush_on(spdlog::level::info);
+
+  spdlog::set_default_logger(std::move(log));
+  spdlog::set_pattern("[%H:%M:%S:%e] %v"s);
+
+  logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
+}
+
 extern "C" {
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe_Impl(
   const char* systemName, EventsApi::IpcMessageCallback callback, void* state)
@@ -78,23 +97,14 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
   return EventsApi::IpcSend(systemName, data, length);
 }
 
-DLLEXPORT bool SKSEPlugin_Query_Impl(const SKSE::QueryInterface* skse,
-                                     SKSE::PluginInfo* info)
+DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
+  InitLog();
 
-  info->infoVersion = SKSE::PluginInfo::kVersion;
-  info->name = PLUGIN_NAME;
-  info->version = PLUGIN_VERSION;
+  logger::info("loaded");
 
-  if (skse->IsEditor()) {
-    logger::critical("loaded in editor, marking as incompatible");
-    return false;
-  }
-  return true;
-}
+  SKSE::Init(skse);
 
-DLLEXPORT bool SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
-{
   const auto taskInterface = SKSE::GetTaskInterface();
   if (!taskInterface) {
     logger::critical("couldn't get task interface");

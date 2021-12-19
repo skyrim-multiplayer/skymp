@@ -45,6 +45,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace logger = SKSE::log;
+namespace stl = SKSE::stl;
 
 using namespace std::literals;
 
@@ -63,3 +64,4 @@ using TypeInfo = RE::BSScript::TypeInfo;
 #define DLLEXPORT __declspec(dllexport)
 
 #include "Offsets.h"
+#include "Version.h"

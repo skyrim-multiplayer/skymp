@@ -9,6 +9,7 @@ vcpkg_from_github(
       variable-make_members_public.patch
       stackframe-uncomment_top_args.patch
       extradatalist-make_members_public.patch
+      version-add_1.6.342_support.patch
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})

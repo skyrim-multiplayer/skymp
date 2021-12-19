@@ -31,24 +31,6 @@ function(link_vcpkg_dependencies)
       target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
       target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
 
-      find_library(SKSE64_LIBRARY_DEBUG skse64)
-      string(REPLACE "/debug/lib/" "/lib/" SKSE64_LIBRARY_RELEASE ${SKSE64_LIBRARY_DEBUG})
-      find_path(SKSE64_INCLUDE_DIR skse64/PluginAPI.h)
-      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_LIBRARY_DEBUG},${SKSE64_LIBRARY_RELEASE}>")
-      target_include_directories(${target} PUBLIC ${SKSE64_INCLUDE_DIR})
-
-      find_library(SKSE64_COMMON_LIBRARY_DEBUG skse64_common)
-      string(REPLACE "/debug/lib/" "/lib/" SKSE64_COMMON_LIBRARY_RELEASE ${SKSE64_COMMON_LIBRARY_DEBUG})
-      find_path(SKSE64_COMMON_INCLUDE_DIR skse64/PluginAPI.h)
-      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_COMMON_LIBRARY_DEBUG},${SKSE64_COMMON_LIBRARY_RELEASE}>")
-      target_include_directories(${target} PUBLIC ${SKSE64_COMMON_INCLUDE_DIR})
-
-      find_library(COMMON_LIBRARY_DEBUG common)
-      string(REPLACE "/debug/lib/" "/lib/" COMMON_LIBRARY_RELEASE ${COMMON_LIBRARY_DEBUG})
-      find_path(COMMON_INCLUDE_DIR skse64/PluginAPI.h)
-      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMON_LIBRARY_DEBUG},${COMMON_LIBRARY_RELEASE}>")
-      target_include_directories(${target} PUBLIC ${COMMON_INCLUDE_DIR})
-
       find_package(CommonLibSSE REQUIRED)
       find_package(Boost MODULE REQUIRED)
 

@@ -9,27 +9,31 @@ function(apply_default_settings)
   foreach(target ${A_TARGETS})
     set_target_properties(${target} PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-      CXX_EXTENSIONS OFF
-      CXX_STANDARD 20
     )
     if(MSVC)
-      set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS_RELEASE " /DEBUG /OPT:REF ")
-      target_compile_options(
-        ${target} PUBLIC
-          /MP
-          /utf-8	# Set Source and Executable character sets to UTF-8
-          /Zi	# Debug Information Format
+      target_compile_features(${target} PRIVATE cxx_std_20)
+      target_compile_options(${target} PRIVATE
+        /MP
+        /utf-8	# Set Source and Executable character sets to UTF-8
+        /Zi	# Debug Information Format
 
-          /permissive-	# Standards conformance
+        /permissive-	# Standards conformance
 
-          /Zc:alignedNew	# C++17 over-aligned allocation
-		    	/Zc:__cplusplus	# Enable updated __cplusplus macro
-	    		/Zc:externConstexpr	# Enable extern constexpr variables
-		    	#/Zc:preprocessor	# Enable preprocessor conformance mode
-          #/Zc:throwingNew # Assume operator new throws on failure
+        /Zc:alignedNew	# C++17 over-aligned allocation
+		    /Zc:__cplusplus	# Enable updated __cplusplus macro
+	    	/Zc:externConstexpr	# Enable extern constexpr variables
+		    #/Zc:preprocessor	# Enable preprocessor conformance mode
+        #/Zc:throwingNew # Assume operator new throws on failure
 
-          "$<$<CONFIG:DEBUG>:>"
-			    "$<$<CONFIG:RELEASE>:/Zc:inline;/JMC-;/Ob2>"
+        "$<$<CONFIG:DEBUG>:>"
+			  "$<$<CONFIG:RELEASE>:/Zc:inline;/JMC-;/Ob2>"
+      )
+
+      target_link_options(${target} PRIVATE
+        /WX	# Treat Linker Warnings as Errors
+
+        "$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF>"
+        "$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;/DEBUG:FULL>"
       )
     endif()
   endforeach()
