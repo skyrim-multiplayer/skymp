@@ -19,7 +19,7 @@ const styles = [
   'BUTTON_STYLE_FRAME_LEFT',
   'BUTTON_STYLE_FRAME_RIGHT',
   'ICON_STYLE_MAIL',
-  'ICON_STYLE_KEY',
+  'ICON_STYLE_KEY'
 ];
 
 const Constructor = props => {
@@ -32,7 +32,7 @@ const Constructor = props => {
           const isContentInitialized = content_mainRef && content_mainRef.current && content_mainRef.current.clientHeight && content_mainRef.current.clientWidth;
           if (isContentInitialized) {
             setFwidth(content_mainRef.current.clientWidth + 60 < 257 ? 257 : content_mainRef.current.clientWidth + 60);
-            setFheight(content_mainRef.current.clientHeight + 150);
+            setFheight(content_mainRef.current.clientHeight + 96);
           }
           break;
         default:
@@ -62,25 +62,37 @@ const Constructor = props => {
         if (allElems[i].tags !== undefined) {
           if (allElems[i].tags.length !== 0) {
             for (let j = 0; j < allElems[i].tags.length; j++) {
-              if (allElems[i].tags[j] === 'ELEMENT_SAME_LINE') {
-                newline = false;
+              if (allElems[i].tags[j] === 'ELEMENT_STYLE_MARGIN_EXTENDED') {
+                style = {
+                  marginTop: '30px'
+                };
+                if (i === allElems.length - 1) {
+                  style = {
+                    marginTop: '48px',
+                    marginBottom: '48px'
+                  };
+                }
               } else if (allElems[i].tags[j] === 'HINT_STYLE_LEFT') {
                 hintIsLeft = true;
               } else if (allElems[i].tags[j] === 'HINT_STYLE_RIGHT') {
                 hintIsLeft = false;
               } else if (styles.includes(allElems[i].tags[j])) {
                 css = allElems[i].tags[j];
-              } else if (allElems[i].tags[j] === 'ELEMENT_STYLE_MARGIN_EXTENDED') {
-                style = {
-                  marginTop: '30px'
-                };
-                if (i === allElems.length - 1) {
-                  style = {
-                    marginTop: '30px',
-                    marginBottom: '20px'
-                  };
-                }
+              } else if (allElems[i].tags[j] === 'ELEMENT_SAME_LINE') {
+                newline = false;
               }
+            }
+            if (i > 1 && allElems[i - 1].type.match(/(icon|checkBox)/) && allElems[i - 1].text && allElems[i].type.match(/(input|button)/)) {
+              if (Object.keys(style).length !== 0) {
+                for (const k in style) {
+                  style[k] = `${parseInt(style[k]) - 14}px`;
+                }
+              } else {
+                style = {
+                  marginTop: '4px'
+                };
+              }
+              console.log(style, allElems[i]);
             }
           }
         }

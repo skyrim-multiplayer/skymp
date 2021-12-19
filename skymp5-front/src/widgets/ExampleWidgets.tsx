@@ -24,7 +24,11 @@ export const login = {
       placeholder: 'dude33@gmail.com',
       hint: 'enter your e-mail and password for authorization'
     },
-    { type: 'icon', text: 'password', tags: ['ICON_STYLE_KEY'] },
+    {
+      type: 'icon',
+      text: 'password',
+      tags: ['ICON_STYLE_KEY']
+    },
     {
       type: 'inputPass',
       tags: ['ELEMENT_SAME_LINE', 'HINT_STYLE_RIGHT'],

@@ -21,7 +21,7 @@
         display: flex;
         flex-direction: row;
         width: 440px;
-        margin: 30px auto auto;
+        margin: 0px auto auto;
         &__link {
           width: 208px;
           margin: auto;
@@ -40,7 +40,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin: 30px auto auto;
+        margin: 0px auto auto;
         .skymp-input {
           align-self: flex-end;
           justify-self: flex-end;
