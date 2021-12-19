@@ -1,6 +1,6 @@
 #pragma once
-#include "JsEngine.h"
 #include "CallNative.h"
+#include "JsEngine.h"
 #include <RE/TESObjectREFR.h>
 
 class SKSETaskInterface;
@@ -17,8 +17,9 @@ void Clear();
 void SendAnimationEventEnter(uint32_t selfId,
                              std::string& animEventName) noexcept;
 void SendAnimationEventLeave(bool animationSucceeded) noexcept;
-void SendPapyrusEventEnter(uint32_t selfId,
-                           std::string& papyrusEventName, std::vector<CallNative::AnySafe>& papyrusEventArgs) noexcept;
+void SendPapyrusEventEnter(
+  uint32_t selfId, std::string& papyrusEventName,
+  std::vector<CallNative::AnySafe>& papyrusEventArgs) noexcept;
 void SendPapyrusEventLeave() noexcept;
 
 JsValue GetHooks();

@@ -78,3 +78,23 @@ float* FridaHooksUtils::GetCursorY()
   static float g_cursorY = 0;
   return &g_cursorY;
 }
+
+int FridaHooksUtils::GetNthVtableElement(void* pointer, int pointerOffset,
+                                         int elementIndex)
+{
+  static auto getNthVTableElement = [](void* obj, size_t idx) {
+    using VTable = size_t*;
+    auto vtable = *(VTable*)obj;
+    return vtable[idx];
+  };
+  if (pointer && elementIndex >= 0) {
+    __try {
+      return getNthVTableElement(reinterpret_cast<uint8_t*>(pointer) +
+                                   pointerOffset,
+                                 elementIndex) -
+        REL::Module::BaseAddr();
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+  }
+  return -1;
+}

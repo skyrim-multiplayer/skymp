@@ -51,7 +51,7 @@ enum _ExampleHookId
   SEND_EVENT,
   SEND_EVENT_ALL,
   CONSOLE_VPRINT,
-  SEND_EVENT_ARGS
+  MAGIC_EFFECT_APPLY
 };
 
 static void example_listener_iface_init(gpointer g_iface, gpointer iface_data);
@@ -115,27 +115,9 @@ void SetupFridaHooks()
   w.Attach(listener, 19244800, SEND_EVENT);
   w.Attach(listener, 19245744, SEND_EVENT_ALL);
   w.Attach(listener, 8766499, CONSOLE_VPRINT);
-  // w.Attach(listener, 9664752, SEND_EVENT_ARGS);
+  w.Attach(listener, 9666192, MAGIC_EFFECT_APPLY);
 }
 
-int GetNthVtableElement(void* pointer, int pointerOffset, int elementIndex)
-{
-  static auto getNthVTableElement = [](void* obj, size_t idx) {
-    using VTable = size_t*;
-    auto vtable = *(VTable*)obj;
-    return vtable[idx];
-  };
-  if (pointer && elementIndex >= 0) {
-    __try {
-      return getNthVTableElement(reinterpret_cast<uint8_t*>(pointer) +
-                                   pointerOffset,
-                                 elementIndex) -
-        REL::Module::BaseAddr();
-    } __except (EXCEPTION_EXECUTE_HANDLER) {
-    }
-  }
-  return -1;
-}
 class VariableAccess : public RE::BSScript::Variable
 {
 public:
@@ -157,7 +139,7 @@ thread_local uint32_t g_queueNiNodeActorId = 0;
 
 bool g_allowHideCursorMenu = true;
 bool g_transparentCursor = false;
-bool g_eventTrigger = false;
+
 thread_local gpointer g_eventArgsPointer = nullptr;
 thread_local char* g_eventName = nullptr;
 thread_local uint32_t g_eventSelfId = 0;
@@ -214,12 +196,15 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       }
 
       g_eventSelfId = selfId;
-      auto offset = GetNthVtableElement(args, 0, 1);
+      auto offset = FridaHooksUtils::GetNthVtableElement(args, 0, 1);
 
       if (auto c = RE::ConsoleLog::GetSingleton()) {
         if (std::find(g_argsOffsets.begin(), g_argsOffsets.end(), offset) !=
             g_argsOffsets.end()) {
-          // c->Print("Offset %i already added", offset);
+           //c->Print("Offset %i already added", offset);
+          if (strcmp(*eventName, "OnMagicEffectApply") == 0) {
+            //c->Print("MagicEffect EVENT already here! offset: %i", offset);
+          }
         } else {
           g_argsOffsets.push_back(offset);
           InterceptorWrapper w(gum_interceptor_obtain());
@@ -232,15 +217,17 @@ static void example_listener_on_enter(GumInvocationListener* listener,
         }
       }
 
-      /* if (strcmp(*eventName, "OnItemRemoved") == 0 ||
-          strcmp(*eventName, "OnItemAdded") == 0) {
+      /*if (strcmp(*eventName, "OnMagicEffectApply") == 0) {
         if (auto c = RE::ConsoleLog::GetSingleton()) {
-          auto offset0 = GetNthVtableElement(args, 0, 0);
-          auto offset1 = GetNthVtableElement(args, 0, 1);
-          auto offset2 = GetNthVtableElement(args, 0, 2);
-          g_eventTrigger = true;
-          c->Print("EVENT! name: %s, selfid: %i, argsP: %p, offset0: %i,
-      threadID: %d", *eventName, selfId, args, offset0, GetCurrentThreadId());
+          auto offset0 = FridaHooksUtils::GetNthVtableElement(args, 0, 0);
+          auto offset1 = FridaHooksUtils::GetNthVtableElement(args, 0, 1);
+          auto offset2 = FridaHooksUtils::GetNthVtableElement(args, 0, 2);
+          auto offset3 = FridaHooksUtils::GetNthVtableElement(args, 0, 3);
+          auto offset4 = FridaHooksUtils::GetNthVtableElement(args, 0, 4);
+          
+          c->Print("EVENT! name: %s, selfid: %i, offset0: %i, offset1: %i, "
+                   "offset2: %i, offset3: %i, offset4: %i,",
+                   *eventName, selfId, offset0, offset1, offset2, offset3, offset4);
         }
       }*/
 
@@ -281,13 +268,12 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       }
       break;
     }
-    /* case SEND_EVENT_ARGS : {
+    case MAGIC_EFFECT_APPLY : {
       if (auto c = RE::ConsoleLog::GetSingleton()) {
-        g_eventArgsPointer = gum_invocation_context_get_nth_argument(ic, 1);
-          c->Print("Operator ENTER: %i");
+        c->Print("Magic Effect Apply ENTER");
       }
       break;
-    }*/
+    }
     case SEND_EVENT_ALL:
       if (auto c = RE::ConsoleLog::GetSingleton())
         c->Print("SendEventAll");
@@ -435,39 +421,23 @@ static void example_listener_on_leave(GumInvocationListener* listener,
       break;
     }
     case SEND_EVENT: {
-      if (g_eventTrigger) {
-        g_eventTrigger = false;
-        if (auto c = RE::ConsoleLog::GetSingleton()) {
-          c->Print("SEND EVENT LEAVE");
-        }
-      }
       // EventsApi::SendPapyrusEventLeave();
       break;
     }
-    /*case SEND_EVENT_ARGS : {
+    case MAGIC_EFFECT_APPLY: {
       if (auto c = RE::ConsoleLog::GetSingleton()) {
-        if (g_eventArgsPointer != nullptr) {
-          auto argsArray =
-            static_cast<RE::BSScrapArray<RE::BSScript::Variable>*>(
-              g_eventArgsPointer);
-          //c->Print("Operator LEAVE: %i, theadID: %d, eventName: %s",
-    argsArray->size(),
-          //         GetCurrentThreadId(), g_eventName);
-          std::vector<CallNative::AnySafe> out{};
-          out.reserve(argsArray->size());
-          for (const auto& r : *argsArray) {
-            auto rSafe = CallNative::VariableToAnySafe(r, std::nullopt);
-            out.push_back(rSafe);
-          }
-          EventsApi::SendPapyrusEventEnter(g_eventSelfId,
-    static_cast<std::string>(g_eventName), out); g_eventArgsPointer = nullptr;
-          g_eventName = nullptr;
-          g_eventSelfId = 0;
-          EventsApi::SendPapyrusEventLeave();
-        }
+        c->Print("Magic Effect Apply LEAvLE");
       }
       break;
-    }*/
+    }
+    case DRAW_SHEATHE_WEAPON_ACTOR: {
+      g_eventName = nullptr;
+      break;
+    }
+    case RENDER_CURSOR_MENU: {
+      g_eventName = nullptr;
+      break;
+    }
     default: {
       if (auto c = RE::ConsoleLog::GetSingleton()) {
         if (reinterpret_cast<size_t>(hook_id) > 100 &&
@@ -478,8 +448,10 @@ static void example_listener_on_leave(GumInvocationListener* listener,
             auto argsArray =
               static_cast<RE::BSScrapArray<RE::BSScript::Variable>*>(
                 g_eventArgsPointer);
-            // c->Print("Operator LEAVE: %i, theadID: %d, eventName: %s",
-            //         argsArray->size(), GetCurrentThreadId(), g_eventName);
+            if (argsArray->size() > 0) {
+              c->Print("Operator ARGS Leave: %i, theadID: %d, eventName: %s",
+                       argsArray->size(), GetCurrentThreadId(), g_eventName);
+            }
             std::vector<CallNative::AnySafe> out{};
             out.reserve(argsArray->size());
             for (const auto& r : *argsArray) {
@@ -492,17 +464,20 @@ static void example_listener_on_leave(GumInvocationListener* listener,
             g_eventName = nullptr;
             g_eventSelfId = 0;
             EventsApi::SendPapyrusEventLeave();
+          } else if (g_eventName != nullptr) {
+              // c->Print("Event without args: %s", g_eventName);
+              std::vector<CallNative::AnySafe> out{};
+              out.reserve(0);
+              EventsApi::SendPapyrusEventEnter(
+                g_eventSelfId, static_cast<std::string>(g_eventName), out);
+              g_eventName = nullptr;
+              g_eventSelfId = 0;
+              EventsApi::SendPapyrusEventLeave();
           }
         } else {
           if (g_eventName != nullptr) {
-            // c->Print("Event without args: %s", g_eventName);
-            std::vector<CallNative::AnySafe> out{};
-            out.reserve(0);
-            EventsApi::SendPapyrusEventEnter(
-              g_eventSelfId, static_cast<std::string>(g_eventName), out);
-            g_eventName = nullptr;
-            g_eventSelfId = 0;
-            EventsApi::SendPapyrusEventLeave();
+              c->Print("Event without offset hookid: %i, name:  %s",
+                       (int)reinterpret_cast<size_t>(hook_id), g_eventName);
           }
         }
       }
