@@ -7,6 +7,7 @@
 #include "SkyrimPlatform.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
+#include "Tick.h"
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
@@ -16,6 +17,7 @@
 #include <reverse/Entry.hpp>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
+
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -34,13 +36,6 @@ void UpdateDumpFunctions()
     if (comb)
       DumpFunctions::Run();
   }
-}
-
-void OnTick()
-{
-  SkyrimPlatform::GetSingleton().PushAndWait(
-    [=](int) { SkyrimPlatform::GetSingleton().JsTick(false); });
-  TESModPlatform::Update();
 }
 
 void OnUpdate(IVM* vm, StackID stackId)
@@ -105,12 +100,6 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 
   SKSE::Init(skse);
 
-  const auto taskInterface = SKSE::GetTaskInterface();
-  if (!taskInterface) {
-    logger::critical("couldn't get task interface");
-    return false;
-  }
-
   const auto papyrusInterface = SKSE::GetPapyrusInterface();
   if (!papyrusInterface) {
     logger::critical("QueryInterface failed for PapyrusInterface");
@@ -119,7 +108,7 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 
   SetupFridaHooks();
 
-  taskInterface->AddTask(OnTick);
+  Tick::GetSingleton()->Update();
 
   papyrusInterface->Register(TESModPlatform::Register);
   TESModPlatform::onPapyrusUpdate = OnUpdate;
