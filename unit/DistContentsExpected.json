@@ -74,6 +74,8 @@
       "server/dist_front/skymp5-client.js",
       "server/gamemode.js",
       "server/scamp_native.node",
+      "server/package.json",
+      "server/yarn.lock",
       "server/server-settings.json"
     ]
   },
