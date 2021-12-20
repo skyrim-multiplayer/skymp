@@ -88,13 +88,10 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       std::numeric_limits<float>::infinity()
     };
 
-    auto& espmFiles = actor->GetParent()->espmFiles;
     if (!MovementValidation::Validate(
-          *actor, teleportFlag ? reallyWrongPos : pos,
-          FormDesc::FromFormId(worldOrCell, espmFiles),
+          *actor, teleportFlag ? reallyWrongPos : pos, worldOrCell,
           isMe ? static_cast<IMessageOutput&>(msgOutput)
-               : static_cast<IMessageOutput&>(msgOutputDummy),
-          espmFiles)) {
+               : static_cast<IMessageOutput&>(msgOutputDummy))) {
       return;
     }
 
@@ -347,7 +344,7 @@ void ActionListener::OnConsoleCommand(
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
                     const espm::CombineBrowser& br, int espmIdx)
 {
-  auto mapping = br.GetCombMapping(espmIdx);
+  auto mapping = br.GetMapping(espmIdx);
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
     auto formId = espm::GetMappedId(entry.formId, *mapping);
@@ -530,6 +527,11 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
   return currentHealthPercentage;
 }
 
+float GetGlobalCombatDistance(WorldState* espmProvider)
+{
+  return espm::GetData<espm::GMST>(0x55640, espmProvider).value;
+}
+
 float GetReach(const MpActor& actor, const uint32_t source)
 {
   auto espmProvider = actor.GetParent();
@@ -538,65 +540,15 @@ float GetReach(const MpActor& actor, const uint32_t source)
     return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
-  float fCombatDistance =
-    espm::GetData<espm::GMST>(espm::GMST::kFCombatDistance, espmProvider)
-      .value;
+  float fCombatDistance = GetGlobalCombatDistance(espmProvider);
   float weaponReach = weapDNAM ? weapDNAM->reach : 0;
   return weaponReach * fCombatDistance;
-}
-
-NiPoint3 RotateZ(const NiPoint3& point, float angle)
-{
-  static const float kPi = std::acos(-1.f);
-  static const float kAngleToRadians = kPi / 180.f;
-  float cos = std::cos(angle * kAngleToRadians);
-  float sin = std::sin(angle * kAngleToRadians);
-
-  return { point.x * cos - point.y * sin, point.x * sin + point.y * cos,
-           point.z };
-}
-
-float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
-{
-  // TODO(#491): Figure out where to take the missing reach component
-  constexpr float kPatch = 15.f;
-
-  auto bounds = actor.GetBounds();
-  auto targetBounds = target.GetBounds();
-
-  // "Y" is "face" of character
-  const float angleZ = 90.f - target.GetAngle().z;
-  float direction = actor.GetAngle().z;
-
-  // vector from target to the actor
-  NiPoint3 position = actor.GetPos() - target.GetPos();
-  position += RotateZ(
-    NiPoint3(kPatch + bounds.pos2[1], 0.f, 0.f + bounds.pos2[2]), direction);
-
-  NiPoint3 pos = RotateZ(position, angleZ);
-
-  bool isProjectionInside[3] = {
-    (targetBounds.pos1[0] <= pos.x && pos.x <= targetBounds.pos2[0]),
-    (targetBounds.pos1[1] <= pos.y && pos.y <= targetBounds.pos2[1]),
-    (targetBounds.pos1[2] <= pos.z && pos.z <= targetBounds.pos2[2])
-  };
-
-  NiPoint3 nearestCorner = {
-    pos[0] > 0 ? 0.f + targetBounds.pos2[0] : 0.f + targetBounds.pos1[0],
-    pos[1] > 0 ? 0.f + targetBounds.pos2[1] : 0.f + targetBounds.pos1[1],
-    pos[2] > 0 ? 0.f + targetBounds.pos2[2] : 0.f + targetBounds.pos1[2]
-  };
-
-  return NiPoint3(isProjectionInside[0] ? 0.f : pos.x - nearestCorner.x,
-                  isProjectionInside[1] ? 0.f : pos.y - nearestCorner.y,
-                  isProjectionInside[2] ? 0.f : pos.z - nearestCorner.z)
-    .SqrLength();
 }
 
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {
-  float sqrDistance = GetSqrDistanceToBounds(actor, targetActor);
+  float sqrDistance = (actor.GetPos() - targetActor.GetPos()).SqrLength();
   float reach = GetReach(actor, hitData.source);
   return reach * reach > sqrDistance;
 }
@@ -609,8 +561,7 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
   if (weapDNAM) {
     float speedMult = weapDNAM->speed;
-    return timePassed.count() >= (1.1 * (1 / speedMult)) -
-      (1.1 * (1 / speedMult) * (speedMult <= 0.75 ? 0.45 : 0.3));
+    return timePassed.count() >= 1.1 * (1 / speedMult);
   } else {
     throw std::runtime_error(fmt::format(
       "Cannot get weapon speed from source: {0:x}", hitData.source));
@@ -644,19 +595,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     hitData.target = aggressor->GetFormId();
   }
 
-  if (aggressor->GetEquipment().inv.HasItem(hitData.source) == false &&
-      IsUnarmedAttack(hitData.source) == false) {
-
-    if (aggressor->GetInventory().HasItem(hitData.source) == false) {
-      spdlog::debug("{:x} actor has no {:x} weapon and can't attack",
-                    hitData.aggressor, hitData.source);
-    }
-    spdlog::debug(
-      "{:x} weapon is not equipped by {:x} actor and cannot be used",
-      hitData.source, hitData.aggressor);
-    return;
-  };
-
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
   auto lastHitTime = targetActor.GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
@@ -665,8 +603,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
-    float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) -
-      (1.1 * (1 / weapDNAM->speed) * (weapDNAM->speed <= 0.75 ? 0.45 : 0.3));
+    float expectedAttackTime = 1.1 * (1 / weapDNAM->speed);
     spdlog::debug(
       "Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
@@ -676,7 +613,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance = sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
+    float distance = (aggressor->GetPos() - targetActor.GetPos()).Length();
     float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();
@@ -702,10 +639,16 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
 
   targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
-                             staminaPercentage, aggressor);
+                             staminaPercentage);
   auto now = std::chrono::steady_clock::now();
   targetActor.SetLastAttributesPercentagesUpdate(now);
   targetActor.SetLastHitTime(now);
+
+  auto userId = partOne.serverState.UserByActor(&targetActor);
+  if (userId == Networking::InvalidUserId) {
+    spdlog::debug("Unable to attack due to invalid userId {}", userId);
+    return;
+  }
 
   targetForm = targetActor.GetChangeForm();
 
@@ -724,10 +667,4 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                 "health percentage: {3}. (Last: {3} => Current: {2})",
                 hitData.target, damage, currentHealthPercentage,
                 healthPercentage);
-}
-
-void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
-                               simdjson::dom::element data)
-{
-  spdlog::debug("Got unhandled message: {}", simdjson::minify(data));
 }

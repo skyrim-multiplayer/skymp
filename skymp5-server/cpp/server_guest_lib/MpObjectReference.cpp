@@ -19,22 +19,19 @@
 #include <map>
 #include <optional>
 
-std::string MpObjectReference::CreatePropertyMessage(
-  MpObjectReference* self, const char* name, const nlohmann::json& value)
+namespace {
+std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
+                                  const nlohmann::json& value)
 {
+  nlohmann::json j{ { "idx", self->GetIdx() },
+                    { "t", MsgType::UpdateProperty },
+                    { "propName", name },
+                    { "data", value } };
   std::string str;
   str += Networking::MinPacketId;
-  str += PreparePropertyMessage(self, name, value).dump();
+  str += j.dump();
   return str;
 }
-
-nlohmann::json MpObjectReference::PreparePropertyMessage(
-  MpObjectReference* self, const char* name, const nlohmann::json& value)
-{
-  return nlohmann::json{ { "idx", self->GetIdx() },
-                         { "t", MsgType::UpdateProperty },
-                         { "propName", name },
-                         { "data", value } };
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
@@ -129,7 +126,7 @@ MpObjectReference::MpObjectReference(
   MpChangeFormREFR changeForm;
   changeForm.position = locationalData_.pos;
   changeForm.angle = locationalData_.rot;
-  changeForm.worldOrCellDesc = locationalData_.cellOrWorldDesc;
+  changeForm.worldOrCell = locationalData_.cellOrWorld;
   pImpl.reset(new Impl{ changeForm, this });
 
   if (primitiveBoundsDiv2)
@@ -146,9 +143,9 @@ const NiPoint3& MpObjectReference::GetAngle() const
   return pImpl->ChangeForm().angle;
 }
 
-const FormDesc& MpObjectReference::GetCellOrWorld() const
+const uint32_t& MpObjectReference::GetCellOrWorld() const
 {
-  return pImpl->ChangeForm().worldOrCellDesc;
+  return pImpl->ChangeForm().worldOrCell;
 }
 
 const uint32_t& MpObjectReference::GetBaseId() const
@@ -417,7 +414,7 @@ void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
   chanceNoneOverride.reset(new uint8_t(newChanceNone));
 }
 
-void MpObjectReference::SetCellOrWorld(const FormDesc& newWorldOrCell)
+void MpObjectReference::SetCellOrWorld(uint32_t newWorldOrCell)
 {
   SetCellOrWorldObsolete(newWorldOrCell);
   ForceSubscriptionsUpdate();
@@ -451,21 +448,17 @@ void MpObjectReference::SetActivationBlocked(bool blocked)
 
 void MpObjectReference::ForceSubscriptionsUpdate()
 {
-  auto worldState = GetParent();
-  if (!worldState || IsDisabled()) {
+  if (!GetParent() || IsDisabled())
     return;
-  }
   InitListenersAndEmitters();
 
-  auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
-
-  auto& gridInfo = worldState->grids[worldOrCell];
+  auto& gridInfo = GetParent()->grids[GetCellOrWorld()];
   MoveOnGrid(*gridInfo.grid);
 
   auto& was = *this->listeners;
   auto pos = GetGridPos(GetPos());
-  auto& now =
-    worldState->GetReferencesAtPosition(worldOrCell, pos.first, pos.second);
+  auto& now = GetParent()->GetReferencesAtPosition(GetCellOrWorld(), pos.first,
+                                                   pos.second);
 
   std::vector<MpObjectReference*> toRemove;
   std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
@@ -761,8 +754,9 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   }
 
   pImpl->blockSaving = true;
-  Viet::ScopedTask<Impl> unblockTask(
-    [](Impl& impl) { impl.blockSaving = false; }, *pImpl);
+  ScopedTask unblockTask(
+    [](void* ptr) { reinterpret_cast<Impl*>(ptr)->blockSaving = false; },
+    pImpl.get());
 
   const auto currentBaseId = GetBaseId();
   const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
@@ -781,7 +775,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 
   // Perform all required grid operations
   changeForm.isDisabled ? Disable() : Enable();
-  SetCellOrWorldObsolete(changeForm.worldOrCellDesc);
+  SetCellOrWorldObsolete(changeForm.worldOrCell);
   SetPos(changeForm.position);
 
   if (changeForm.profileId >= 0)
@@ -818,53 +812,41 @@ const DynamicFields& MpObjectReference::GetDynamicFields() const
   return pImpl->ChangeForm().dynamicFields;
 }
 
-void MpObjectReference::SetCellOrWorldObsolete(const FormDesc& newWorldOrCell)
+void MpObjectReference::SetCellOrWorldObsolete(uint32_t newWorldOrCell)
 {
   auto worldState = GetParent();
-  if (!worldState) {
+  if (!worldState)
     return;
-  }
-
-  auto worldOrCell =
-    pImpl->ChangeForm().worldOrCellDesc.ToFormId(worldState->espmFiles);
 
   everSubscribedOrListened = false;
-  auto gridIterator = worldState->grids.find(worldOrCell);
-  if (gridIterator != worldState->grids.end()) {
+  auto gridIterator = worldState->grids.find(pImpl->ChangeForm().worldOrCell);
+  if (gridIterator != worldState->grids.end())
     gridIterator->second.grid->Forget(this);
-  }
 
   pImpl->EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    changeForm.worldOrCellDesc = newWorldOrCell;
+    changeForm.worldOrCell = newWorldOrCell;
   });
 }
 
 void MpObjectReference::VisitNeighbours(const Visitor& visitor)
 {
-  if (IsDisabled()) {
+  if (IsDisabled())
     return;
-  }
 
   auto worldState = GetParent();
-  if (!worldState) {
+  if (!worldState)
     return;
-  }
 
-  auto worldOrCell =
-    pImpl->ChangeForm().worldOrCellDesc.ToFormId(worldState->espmFiles);
-
-  auto gridIterator = worldState->grids.find(worldOrCell);
-  if (gridIterator == worldState->grids.end()) {
+  auto gridIterator = worldState->grids.find(pImpl->ChangeForm().worldOrCell);
+  if (gridIterator == worldState->grids.end())
     return;
-  }
 
   auto& grid = gridIterator->second;
   auto pos = GetGridPos(GetPos());
-  auto& neighbours =
-    worldState->GetReferencesAtPosition(worldOrCell, pos.first, pos.second);
-  for (auto neighbour : neighbours) {
+  auto& neighbours = worldState->GetReferencesAtPosition(
+    GetCellOrWorld(), pos.first, pos.second);
+  for (auto neighbour : neighbours)
     visitor(neighbour);
-  }
 }
 
 void MpObjectReference::SendPapyrusEvent(const char* eventName,
@@ -915,7 +897,6 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 {
   auto actorActivator = dynamic_cast<MpActor*>(&activationSource);
 
-  auto worldState = GetParent();
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
@@ -932,7 +913,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
   if (t == espm::TREE::kType || t == espm::FLOR::kType || espm::IsItem(t)) {
     if (!IsHarvested()) {
-      auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
+      auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
       uint32_t resultItem = 0;
       if (t == espm::TREE::kType) {
         espm::FLOR::Data data;
@@ -963,16 +944,14 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         RequestReloot();
       }
 
-      auto destination =
-        loader.GetBrowser().LookupById(teleport->destinationDoor);
-      auto destinationRecord = espm::Convert<espm::REFR>(destination.rec);
-      if (!destinationRecord) {
+      auto destinationRecord = espm::Convert<espm::REFR>(
+        loader.GetBrowser().LookupById(teleport->destinationDoor).rec);
+      if (!destinationRecord)
         throw std::runtime_error(
           "No destination found for this teleport door");
-      }
 
-      auto teleportWorldOrCell = destination.ToGlobalId(
-        GetWorldOrCell(loader.GetBrowser(), destinationRecord));
+      auto teleportWorldOrCell =
+        GetWorldOrCell(loader.GetBrowser(), destinationRecord);
 
       static const auto g_pi = std::acos(-1.f);
       const NiPoint3 rot = { teleport->rotRadians[0] / g_pi * 180,
@@ -990,8 +969,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       if (actorActivator)
         actorActivator->SendToUser(msg.data(), msg.size(), true);
 
-      activationSource.SetCellOrWorldObsolete(
-        FormDesc::FromFormId(teleportWorldOrCell, worldState->espmFiles));
+      activationSource.SetCellOrWorldObsolete(teleportWorldOrCell);
       activationSource.SetPos(
         { teleport->pos[0], teleport->pos[1], teleport->pos[2] });
       activationSource.SetAngle(rot);
@@ -1053,16 +1031,13 @@ bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
 
 void MpObjectReference::RemoveFromGrid()
 {
-  auto worldOrCell = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
-  auto gridIterator = GetParent()->grids.find(worldOrCell);
-  if (gridIterator != GetParent()->grids.end()) {
+  auto gridIterator = GetParent()->grids.find(GetCellOrWorld());
+  if (gridIterator != GetParent()->grids.end())
     gridIterator->second.grid->Forget(this);
-  }
 
   auto listenersCopy = GetListeners();
-  for (auto listener : listenersCopy) {
+  for (auto listener : listenersCopy)
     Unsubscribe(this, listener);
-  }
 
   everSubscribedOrListened = false;
 }
@@ -1278,23 +1253,19 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
-  auto casterWorldId = refr.GetCellOrWorld().ToFormId(GetParent()->espmFiles);
-  auto targetWorldId = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
-
-  auto casterWorld = loader.GetBrowser().LookupById(casterWorldId).rec;
-  auto targetWorld = loader.GetBrowser().LookupById(targetWorldId).rec;
+  auto casterWorld = loader.GetBrowser().LookupById(refr.GetCellOrWorld()).rec;
+  auto targetWorld = loader.GetBrowser().LookupById(GetCellOrWorld()).rec;
 
   if (targetWorld != casterWorld) {
     const char* casterWorldName =
-      casterWorld ? casterWorld->GetEditorId(compressedFieldsCache) : "<null>";
+      casterWorld ? casterWorld->GetEditorId(compressedFieldsCache) : "";
 
     const char* targetWorldName =
-      targetWorld ? targetWorld->GetEditorId(compressedFieldsCache) : "<null>";
-
-    throw std::runtime_error(fmt::format(
-      "WorldSpace doesn't match: caster is in {} ({:#x}), target is in "
-      "{} ({:#x})",
-      casterWorldName, casterWorldId, targetWorldName, targetWorldId));
+      targetWorld ? targetWorld->GetEditorId(compressedFieldsCache) : "";
+    std::stringstream ss;
+    ss << "WorldSpace doesn't match: caster is in " << casterWorldName
+       << ", target is in " << targetWorldName;
+    throw std::runtime_error(ss.str());
   }
 }
 

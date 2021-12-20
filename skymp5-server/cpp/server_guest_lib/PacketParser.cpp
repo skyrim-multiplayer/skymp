@@ -262,9 +262,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     }
     default:
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      actionListener.OnUnknown(rawMsgData, data_);
-      break;
+      throw PublicError("Unknown MsgType: " + std::to_string((TypeInt)type));
   }
 }

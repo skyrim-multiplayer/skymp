@@ -24,28 +24,20 @@ FormDesc FormDesc::FromString(std::string str, char delimiter)
 
 uint32_t FormDesc::ToFormId(const std::vector<std::string>& files) const
 {
-  // Workaround legacy tests throwing exceptions (drop support for PartOne
-  // instances without espm to remove this)
-  static const std::string kSkyrimEsm = "Skyrim.esm";
-  if (shortFormId == 0x3c && file == kSkyrimEsm) {
-    return 0x3c;
-  }
-
   uint32_t realFormId;
   if (file.empty()) {
     realFormId = 0xff000000 + shortFormId;
   } else {
+
     int fileIdx = -1;
-    int numFiles = static_cast<int>(files.size());
-    for (int i = 0; i < numFiles; ++i) {
+    for (int i = 0; i < files.size(); ++i) {
       if (files[i] == file) {
         fileIdx = i;
         break;
       }
     }
-    if (fileIdx == -1) {
+    if (fileIdx == -1)
       throw std::runtime_error(file + " not found in loaded files");
-    }
 
     realFormId = fileIdx * 0x01000000 + shortFormId;
   }
@@ -55,19 +47,12 @@ uint32_t FormDesc::ToFormId(const std::vector<std::string>& files) const
 FormDesc FormDesc::FromFormId(uint32_t formId,
                               const std::vector<std::string>& files)
 {
-  // Workaround legacy tests throwing exceptions (drop support for PartOne
-  // instances without espm to remove this)
-  if (formId == 0x3c) {
-    return FormDesc::Tamriel();
-  }
-
   FormDesc res;
   if (formId < 0xff000000) {
     int fileIdx = formId / 0x01000000;
-    if (fileIdx >= static_cast<int>(files.size())) {
+    if (fileIdx >= static_cast<int>(files.size()))
       throw std::runtime_error("FromFormId failed due to invalid file index " +
                                std::to_string(fileIdx));
-    }
     res.file = files[fileIdx];
     res.shortFormId = formId % 0x01000000;
   } else {

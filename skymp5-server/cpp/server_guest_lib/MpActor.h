@@ -8,6 +8,11 @@
 
 class WorldState;
 
+constexpr float kRespawnTimeSeconds = 5.f;
+static const LocationalData kSpawnPos = { { 133857, -61130, 14662 },
+                                          { 0.f, 0.f, 72.f },
+                                          0x3c };
+
 class MpActor : public MpObjectReference
 {
 public:
@@ -26,7 +31,6 @@ public:
   Equipment GetEquipment() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
-  espm::ObjectBounds GetBounds() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
@@ -57,7 +61,7 @@ public:
 
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
   void SetPercentages(float healthPercentage, float magickaPercentage,
-                      float staminaPercentage, MpActor* aggressor = nullptr);
+                      float staminaPercentage);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
   std::chrono::steady_clock::time_point GetLastHitTime();
@@ -71,16 +75,10 @@ public:
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point now);
 
-  void Kill(MpActor* killer = nullptr, bool shouldTeleport = false);
-  void Respawn(bool shouldTeleport = true);
-  void RespawnWithDelay(bool shouldTeleport = true);
-  void Teleport(const LocationalData& position);
-  void SetSpawnPoint(const LocationalData& position);
-  LocationalData GetSpawnPoint() const;
-  const float GetRespawnTime() const;
-  void SetRespawnTime(float time);
-
-  void SetIsDead(bool isDead);
+  void Kill();
+  void RespawnAfter(float seconds, const LocationalData& position = kSpawnPos);
+  void Respawn(const LocationalData& position = kSpawnPos);
+  void TeleportUser(const LocationalData& position);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
@@ -88,10 +86,7 @@ private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
-  void SendAndSetDeathState(bool isDead, bool shouldTeleport);
-  std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
-                               bool shouldTeleport);
-  void MpApiDeath(MpActor* killer = nullptr);
+  void SetAndSendIsDeadPropery(bool value);
 
 protected:
   void BeforeDestroy() override;

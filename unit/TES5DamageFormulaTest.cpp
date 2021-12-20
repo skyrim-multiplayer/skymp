@@ -79,27 +79,37 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   )");
 
   TES5DamageFormula formula{};
-  // 4 * 0.01 * (100 - 20 * .12) = 3,904
-  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 3.903999805f);
+  // 4 / (20 * .12 + 1)
+  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 1.1764705882352942f);
 
-  std::string s = R"({
+  // Total rating for worn armor: 10 + 10 + 15 = 35
+  ac.SetEquipment(R"(
+    {
+      "inv": {
+        "entries": [
+          {
             "baseId": 77382,
             "count": 1,
             "worn": true
-          })";
-  std::string entri = R"(,)" + s;
+          },
+          {
+            "baseId": 77387,
+            "count": 1,
+            "worn": true
+          },
+          {
+            "baseId": 77389,
+            "count": 1,
+            "worn": true
+          }
+        ]
+      }
+    }
+  )");
 
-  for (int i = 0; i < 69; i++) {
-    s += entri;
-  }
-
-  // Total rating for worn armor: 10 * 70 = 700
-  ac.SetEquipment(R"({"inv": {"entries": [)" + s + R"(]}})");
-
-  // Armor rating is 700 * 0.12% = 84%
-  // But fMaxArmorRating = 80%
-  // 4 * 0.01 * (100 - 80) = 4 * 0.2 = 0.8
-  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 0.7999999523f);
+  // 4 / (35 * .12 + 1) = 0.7692307692307692
+  // But minReceivedDamage = 4 * 20% = 0.8
+  REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 0.8f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

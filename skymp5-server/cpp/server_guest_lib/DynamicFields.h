@@ -14,14 +14,10 @@ public:
   DynamicFields& operator=(const DynamicFields& rhs);
 
   void Set(const std::string& propName, const JsValue& value);
-  JsValue Get(const std::string& propName) const;
+  const JsValue& Get(const std::string& propName) const;
 
   const nlohmann::json& GetAsJson() const;
   static DynamicFields FromJson(const nlohmann::json& j);
-
-  friend bool operator<(const DynamicFields& r, const DynamicFields& l);
-  friend bool operator==(const DynamicFields& r, const DynamicFields& l);
-  friend bool operator!=(const DynamicFields& r, const DynamicFields& l);
 
 private:
   struct Impl;

@@ -36,14 +36,13 @@ struct MovementMessage
   bool isSneaking = false;
   bool isBlocking = false;
   bool isWeapDrawn = false;
-  bool isDead = false;
   std::optional<std::array<float, 3>> lookAt = std::nullopt;
 
   auto Tie() const
   {
     return std::tie(idx, worldOrCell, pos, rot, direction, healthPercentage,
                     runMode, isInJumpState, isSneaking, isBlocking,
-                    isWeapDrawn, isDead, lookAt);
+                    isWeapDrawn, lookAt);
   }
 
   bool operator==(const MovementMessage& rhs) const

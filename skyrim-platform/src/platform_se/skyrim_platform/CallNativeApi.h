@@ -11,14 +11,14 @@ struct NativeCallRequirements
 {
   NativeCallRequirements()
   {
-    gameThrQ = std::make_shared<Viet::TaskQueue>();
-    jsThrQ = std::make_shared<Viet::TaskQueue>();
+    gameThrQ.reset(new TaskQueue);
+    jsThrQ.reset(new TaskQueue);
   }
 
   RE::BSScript::IVirtualMachine* vm = nullptr;
   RE::VMStackID stackId = std::numeric_limits<RE::VMStackID>::max();
 
-  std::shared_ptr<Viet::TaskQueue> gameThrQ, jsThrQ;
+  std::shared_ptr<TaskQueue> gameThrQ, jsThrQ;
 };
 
 JsValue CallNative(

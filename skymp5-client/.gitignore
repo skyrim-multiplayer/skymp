@@ -62,7 +62,7 @@ web_modules/
 # Optional REPL history
 .node_repl_history
 
-# Output of 'yarn pack'
+# Output of 'npm pack'
 *.tgz
 
 # Yarn Integrity file

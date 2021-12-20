@@ -99,7 +99,7 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 
 void PartOne::Tick()
 {
-  worldState.Tick();
+  worldState.TickTimers();
 }
 
 uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
@@ -110,11 +110,8 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
     formId = worldState.GenerateFormId();
   }
   worldState.AddForm(
-    std::unique_ptr<MpActor>(
-      new MpActor({ pos,
-                    { 0, 0, angleZ },
-                    FormDesc::FromFormId(cellOrWorld, worldState.espmFiles) },
-                  CreateFormCallbacks())),
+    std::unique_ptr<MpActor>(new MpActor(
+      { pos, { 0, 0, angleZ }, cellOrWorld }, CreateFormCallbacks())),
     formId);
   if (profileId >= 0) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
@@ -148,7 +145,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
     actor.ForceSubscriptionsUpdate();
 
     if (actor.IsDead() && !actor.IsRespawning()) {
-      actor.RespawnWithDelay();
+      actor.RespawnAfter(kRespawnTimeSeconds);
     }
 
   } else {
@@ -228,7 +225,7 @@ NiPoint3 PartOne::GetActorPos(uint32_t actorFormId)
 uint32_t PartOne::GetActorCellOrWorld(uint32_t actorFormId)
 {
   auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
-  return ac.GetCellOrWorld().ToFormId(worldState.espmFiles);
+  return ac.GetCellOrWorld();
 }
 
 const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
@@ -245,7 +242,26 @@ void PartOne::SetEnabled(uint32_t actorFormId, bool enabled)
 void PartOne::AttachEspm(espm::Loader* espm)
 {
   pImpl->espm = espm;
+  pImpl->espm->GetBrowser();
   worldState.AttachEspm(espm, [this] { return CreateFormCallbacks(); });
+
+  clock_t was = clock();
+
+  auto& br = espm->GetBrowser();
+
+  /*auto refrRecords = br.GetRecordsByType("REFR");
+  for (size_t i = 0; i < refrRecords.size(); ++i) {
+    auto& subVector = refrRecords[i];
+    auto mapping = br.GetMapping(i);
+
+    pImpl->logger->info("starting {}", worldState.espmFiles[i]);
+
+    for (auto& refrRecord : *subVector) {
+      AttachEspmRecord(br, refrRecord, *mapping, i == 0);
+    }
+  }*/
+
+  pImpl->logger->info("AttachEspm took {} ticks", clock() - was);
 }
 
 void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
@@ -547,18 +563,15 @@ void PartOne::Init()
 
     const char* method = "createActor";
 
-    uint32_t worldOrCell =
-      emitter->GetCellOrWorld().ToFormId(worldState.espmFiles);
-
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      worldOrCell, appearancePrefix, appearance, equipmentPrefix, equipment,
-      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
-      propsPostfix);
+      emitter->GetCellOrWorld(), appearancePrefix, appearance, equipmentPrefix,
+      equipment, refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix,
+      props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,

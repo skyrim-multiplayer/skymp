@@ -45,18 +45,18 @@ We introduce `skymp5-functions-lib`, a collection of Papyrus functions that mimi
 
 Installation
 ```
-yarn add -D parcel-bundler
-yarn
+npm install parcel-bundler -D
+npm install
 ```
 Building
 ```
-yarn build
+npm run build
 ```
 Watch for changes and build
 ```
-yarn serve
+npm run serve
 ```
 Running tests
 ```
-yarn test
+npm run test
 ```

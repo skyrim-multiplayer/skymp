@@ -105,7 +105,7 @@ private:
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   std::shared_ptr<JsEngine> chakraEngine;
-  Viet::TaskQueue chakraTaskQueue;
+  TaskQueue chakraTaskQueue;
   std::optional<Napi::FunctionReference> sendUiMessageImplementation;
   GamemodeApi::State gamemodeApiState;
 
@@ -1187,7 +1187,8 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         }
         res = arr;
       } else if (propertyName == "worldOrCellDesc") {
-        auto desc = refr.GetCellOrWorld();
+        auto desc = FormDesc::FromFormId(refr.GetCellOrWorld(),
+                                         partOne->worldState.espmFiles);
         res = JsValue(desc.ToString());
       } else if (propertyName == "baseDesc") {
         auto desc = FormDesc::FromFormId(refr.GetBaseId(),
@@ -1223,41 +1224,23 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         auto desc = FormDesc::FromFormId(refr.GetFormId(),
                                          partOne->worldState.espmFiles);
         res = JsValue(desc.ToString());
-      } else if (propertyName == "neighbors" ||
-                 propertyName == "actorNeighbors") {
-        std::set<MpObjectReference*> ids;
-
-        if (propertyName == "actorNeighbors") {
-          for (auto listener : refr.GetListeners()) {
-            ids.insert(dynamic_cast<MpActor*>(listener));
-          }
-          for (auto emitter : refr.GetEmitters()) {
-            ids.insert(dynamic_cast<MpActor*>(emitter));
-          }
-          ids.erase(nullptr);
-        } else {
-          for (auto listener : refr.GetListeners()) {
-            ids.insert(listener);
-          }
-          for (auto emitter : refr.GetEmitters()) {
-            ids.insert(emitter);
-          }
+      } else if (propertyName == "neighbors") {
+        std::set<uint32_t> ids;
+        for (auto listener : refr.GetListeners()) {
+          ids.insert(listener->GetFormId());
         }
-
+        for (auto emitter : refr.GetEmitters()) {
+          ids.insert(emitter->GetFormId());
+        }
         auto arr = JsValue::Array(ids.size());
         int i = 0;
         for (auto id : ids) {
-          arr.SetProperty(JsValue(i),
-                          JsValue(static_cast<double>(id->GetFormId())));
+          arr.SetProperty(JsValue(i), JsValue(static_cast<double>(id)));
           ++i;
         }
         res = arr;
       } else if (propertyName == "isDisabled") {
         res = JsValue(refr.IsDisabled());
-      } else if (propertyName == "isDead") {
-        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          res = JsValue::Bool(actor->IsDead());
-        }
       } else {
         EnsurePropertyExists(gamemodeApiState, propertyName);
         res = refr.GetDynamicFields().Get(propertyName);
@@ -1275,24 +1258,23 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-      if (propertyName == "locationalData" || propertyName == "spawnPoint") {
-        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          LocationalData locationalData;
-          locationalData.cellOrWorldDesc =
-            FormDesc::FromString(newValue["cellOrWorldDesc"]);
-          for (int i = 0; i < 3; ++i) {
-            locationalData.pos[i] = newValue["pos"][i].get<float>();
-            locationalData.rot[i] = newValue["rot"][i].get<float>();
-          }
-          if (propertyName == "locationalData") {
-            actor->Teleport(locationalData);
-          } else {
-            actor->SetSpawnPoint(locationalData);
-          }
-        } else {
-          throw std::runtime_error("mp.set can only change 'locationalData' "
-                                   "for actors, not for refrs");
-        }
+      if (propertyName == "pos") {
+        float x = newValue[0].get<float>();
+        float y = newValue[1].get<float>();
+        float z = newValue[2].get<float>();
+        refr.SetPos({ x, y, z });
+        refr.SetTeleportFlag(true);
+      } else if (propertyName == "angle") {
+        float x = newValue[0].get<float>();
+        float y = newValue[1].get<float>();
+        float z = newValue[2].get<float>();
+        refr.SetAngle({ x, y, z });
+        refr.SetTeleportFlag(true);
+      } else if (propertyName == "worldOrCellDesc") {
+        std::string str = newValue.get<std::string>();
+        uint32_t formId =
+          FormDesc::FromString(str).ToFormId(partOne->worldState.espmFiles);
+        refr.SetCellOrWorld(formId);
       } else if (propertyName == "isOpen") {
         refr.SetOpen(newValue.get<bool>());
       } else if (propertyName == "appearance") {
@@ -1329,10 +1311,6 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           throw std::runtime_error(
             "'isDisabled' is not usable for non-FF forms");
         newValue.get<bool>() ? refr.Disable() : refr.Enable();
-      } else if (propertyName == "isDead") {
-        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          actor->SetIsDead(newValue.get<bool>());
-        }
       } else {
 
         EnsurePropertyExists(gamemodeApiState, propertyName);
@@ -1359,9 +1337,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       std::string type = akFormToPlace.rec->GetType().ToString();
 
-      LocationalData locationalData = { { 0, 0, 0 },
-                                        { 0, 0, 0 },
-                                        FormDesc::Tamriel() };
+      LocationalData locationalData = { { 0, 0, 0 }, { 0, 0, 0 }, 0x3c };
       FormCallbacks callbacks = partOne->CreateFormCallbacks();
 
       std::unique_ptr<MpObjectReference> newRefr;

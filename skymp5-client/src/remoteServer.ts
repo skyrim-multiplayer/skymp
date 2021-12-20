@@ -1,4 +1,3 @@
-import { Actor } from 'skyrimPlatform';
 /* eslint-disable @typescript-eslint/no-empty-function */
 import * as networking from "./networking";
 import { FormModel, WorldModel } from "./model";
@@ -23,6 +22,7 @@ import {
   Ui,
   settings,
   Armor,
+  Actor,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
 import { applyInventory, Inventory } from "./inventory";
@@ -32,12 +32,9 @@ import { IdManager } from "./idManager";
 import { applyAppearanceToPlayer } from "./appearance";
 import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
-import { localIdToRemoteId, remoteIdToLocalId, WorldView } from "./view";
+import { localIdToRemoteId, remoteIdToLocalId } from "./view";
 import * as updateOwner from "./updateOwner";
-import { getActorValues, setActorValuePercentage } from "./actorvalues";
-import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
-import { nameof } from "./utils";
-import { defaultLocalDamageMult, setLocalDamageMult } from "./index";
+import { setActorValuePercentage } from "./actorvalues";
 
 //
 // eventSource system
@@ -168,15 +165,19 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         "cell/world is",
         msg.worldOrCell.toString(16)
       );
-      // todo: think about track ragdoll state of player
-      safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
-        TESModPlatform.moveRefrToPosition(
-          Game.getPlayer()!,
-          Cell.from(Game.getFormEx(msg.worldOrCell)),
-          WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
-          msg.pos[0],
-          msg.pos[1],
-          msg.pos[2],
+      TESModPlatform.moveRefrToPosition(
+        Game.getPlayer(),
+        Cell.from(Game.getFormEx(msg.worldOrCell)),
+        WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
+        msg.pos[0],
+        msg.pos[1],
+        msg.pos[2],
+        msg.rot[0],
+        msg.rot[1],
+        msg.rot[2]
+      );
+      Utility.wait(0.2).then(() => {
+        (Game.getPlayer() as Actor).setAngle(
           msg.rot[0],
           msg.rot[1],
           msg.rot[2]
@@ -203,7 +204,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isSneaking: false,
         isBlocking: false,
         isWeapDrawn: false,
-        isDead: false,
         healthPercentage: 1.0,
       };
     }
@@ -416,34 +416,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
     const i = this.getIdManager().getId(msg.idx);
-    const form = this.worldModel.forms[i];
-    (form as Record<string, unknown>)[msg.propName] =
+    (this.worldModel.forms[i] as Record<string, unknown>)[msg.propName] =
       msg.data;
-  }
-
-  DeathStateContainer(msg: messages.DeathStateContainerMessage): void {
-    once("update", () => printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`));
-    if (msg.tIsDead.propName !== nameof<FormModel>("isDead") || typeof msg.tIsDead.data !== "boolean") return;
-
-    if (msg.tChangeValues) {
-      this.ChangeValues(msg.tChangeValues);
-    }
-    once("update", () => this.UpdateProperty(msg.tIsDead));
-
-    if (msg.tTeleport) {
-      this.teleport(msg.tTeleport);
-    }
-
-    const id = this.getIdManager().getId(msg.tIsDead.idx);
-    const form = this.worldModel.forms[id];
-    once("update", () => {
-      const actor = id === this.getWorldModel().playerCharacterFormIdx ?
-        Game.getPlayer()! :
-        Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
-      if (actor) {
-        applyDeathState(actor, msg.tIsDead.data as boolean);
-      }
-    });
   }
 
   handleConnectionAccepted(): void {
@@ -614,8 +588,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     const idxInModel = refrId
       ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId)
       : this.worldModel.playerCharacterFormIdx;
-    // fixes "can't get property idx of null or undefined"
-    if (!this.worldModel.forms[idxInModel]) return;
     msg.idx = this.worldModel.forms[idxInModel].idx;
 
     delete msg._refrId;

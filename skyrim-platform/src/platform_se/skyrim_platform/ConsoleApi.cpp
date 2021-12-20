@@ -1,6 +1,5 @@
 #include "ConsoleApi.h"
 #include "InGameConsolePrinter.h"
-#include "InvalidArgumentException.h"
 #include "NullPointerException.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
@@ -346,17 +345,11 @@ JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
 {
   auto pluginName = args[1].ToString();
 
-  auto slashCount = std::count(pluginName.begin(), pluginName.end(), '/') +
-    std::count(pluginName.begin(), pluginName.end(), '\\');
-  if (slashCount > 0) {
-    throw InvalidArgumentException("pluginName", pluginName);
-  }
+  static std::map<std::string, std::unique_ptr<std::ofstream>> m;
 
-  static std::map<std::string, std::unique_ptr<std::ofstream>> g_m;
-
-  if (!g_m[pluginName]) {
-    g_m[pluginName] = std::make_unique<std::ofstream>(
-      "Data\\Platform\\Logs\\" + pluginName + "-logs.txt");
+  if (m[pluginName] == nullptr) {
+    m[pluginName].reset(new std::ofstream("Data\\Platform\\Plugins\\" +
+                                          pluginName + "-logs.txt"));
   }
 
   std::string s;
@@ -372,7 +365,7 @@ JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
     s += str.ToString() + ' ';
   }
 
-  (*g_m[pluginName]) << s << std::endl;
+  (*m[pluginName]) << s << std::endl;
   return JsValue::Undefined();
 }
 

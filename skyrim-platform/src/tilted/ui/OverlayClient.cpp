@@ -1,9 +1,7 @@
-#include "../ui/TextToDraw.h"
 #include <Filesystem.hpp>
 #include <MyCtxHandler.h>
 #include <OverlayClient.h>
 #include <filesystem>
-#include <functional>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
@@ -78,11 +76,10 @@ void OverlayClient::Create() const noexcept
     m_pRenderHandler->Create();
 }
 
-void OverlayClient::Render(
-  const ObtainTextsToDrawFunction& obtainTextsToDraw) const noexcept
+void OverlayClient::Render() const noexcept
 {
   if (m_pRenderHandler) {
-    m_pRenderHandler->Render(obtainTextsToDraw);
+    m_pRenderHandler->Render();
   }
 }
 

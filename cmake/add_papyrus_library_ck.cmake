@@ -34,8 +34,6 @@ function(add_papyrus_library_ck)
       add_custom_target(${A_NAME} ALL
         COMMAND ${CMAKE_COMMAND} -E sleep 0
       )
-      if(NOT A_COMPILER_EXECUTABLE_PATH MATCHES "OFF.*")
-        message(WARNING "Missing Papyrus Compiler at ${A_COMPILER_EXECUTABLE_PATH}. Target ${A_NAME} wouldn't be built")
-      endif()
+      message(WARNING "Missing Papyrus Compiler at ${A_COMPILER_EXECUTABLE_PATH}. Target ${A_NAME} wouldn't be built")
     endif()
   endfunction()

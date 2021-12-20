@@ -74,19 +74,19 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
   apply_default_settings(TARGETS skyrim_plugin_resources)
 
-  include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/npm.cmake)
 
    set(wdir "${CMAKE_CURRENT_BINARY_DIR}/_codegen")
    file(MAKE_DIRECTORY ${wdir})
-   yarn_execute_command(
+   npm_execute_command(
      WORKING_DIRECTORY ${wdir}
      COMMAND init -y
    )
-   yarn_execute_command(
+   npm_execute_command(
      WORKING_DIRECTORY ${wdir}
-     COMMAND add -D tsc-watch@4.2.3 typescript@3.8.3
+     COMMAND install tsc-watch@4.2.3 typescript@3.8.3 --save
    )
-   yarn_execute_command(
+    npm_execute_command(
      WORKING_DIRECTORY "${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service"
      COMMAND install
    )
@@ -140,6 +140,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt "${CEF_SHARE}")
 
     # touch dev_service in watch mode
+    # TODO: do we actually support dev_service in watch mode? consider removing this target
     add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
     add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
   endif()
@@ -164,7 +165,8 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # this target was originally called pack, now it is called skyrim-platform
   # so we can use add_dependencies(x skyrim-platform) in other projects
   add_custom_target(skyrim-platform ALL
-    COMMAND yarn --cwd \"${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service\" run pack$<$<CONFIG:Debug>:-debug>
+    COMMAND npm run pack$<$<CONFIG:Debug>:-debug>
+    WORKING_DIRECTORY ${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service
   )
   add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
 endif()

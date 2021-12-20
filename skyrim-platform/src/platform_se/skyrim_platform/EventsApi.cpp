@@ -122,22 +122,7 @@ public:
   }
 
   // Chakra thread only
-  uint32_t AddHandler(const Handler& handler)
-  {
-    if (addRemoveBlocker) {
-      throw std::runtime_error("Trying to add hook inside hook context");
-    }
-    handlers.emplace(hCounter, handler);
-    return hCounter++;
-  }
-
-  void RemoveHandler(const uint32_t& id)
-  {
-    if (addRemoveBlocker) {
-      throw std::runtime_error("Trying to remove hook inside hook context");
-    }
-    handlers.erase(id);
-  }
+  void AddHandler(const Handler& handler) { handlers.push_back(handler); }
 
   // Thread-safe, but it isn't too useful actually
   std::string GetName() const { return hookName; }
@@ -148,15 +133,13 @@ public:
 
   void Enter(uint32_t selfId, std::string& eventName)
   {
-    addRemoveBlocker++;
     DWORD owningThread = GetCurrentThreadId();
 
     if (hookName == "sendPapyrusEvent") {
       // If there are no handlers, do not do g_taskQueue
       bool anyMatch = false;
-      for (auto& hp : handlers) {
-        auto* h = &hp.second;
-        if (h->Matches(selfId, eventName)) {
+      for (auto& h : handlers) {
+        if (h.Matches(selfId, eventName)) {
           anyMatch = true;
           break;
         }
@@ -185,12 +168,10 @@ public:
       }
     };
     SkyrimPlatform::GetSingleton().PushAndWait(f);
-    addRemoveBlocker--;
   }
 
   void Leave(bool succeeded)
   {
-    addRemoveBlocker++;
     DWORD owningThread = GetCurrentThreadId();
 
     if (hookName == "sendPapyrusEvent") {
@@ -203,7 +184,6 @@ public:
           throw std::runtime_error("'" + hookName + "' is not processing");
         inProgressThreads.erase(owningThread);
         HandleLeave(owningThread, succeeded);
-
       } catch (std::exception& e) {
         std::string what = e.what();
         SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
@@ -212,16 +192,14 @@ public:
       }
     };
     SkyrimPlatform::GetSingleton().PushAndWait(f);
-    addRemoveBlocker--;
   }
 
 private:
   void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName)
   {
-    for (auto& hp : handlers) {
-      auto* h = &hp.second;
-      auto& perThread = h->perThread[owningThread];
-      perThread.matchesCondition = h->Matches(selfId, eventName);
+    for (auto& h : handlers) {
+      auto& perThread = h.perThread[owningThread];
+      perThread.matchesCondition = h.Matches(selfId, eventName);
       if (!perThread.matchesCondition) {
         continue;
       }
@@ -231,7 +209,7 @@ private:
 
       perThread.context.SetProperty("selfId", static_cast<double>(selfId));
       perThread.context.SetProperty(eventNameVariableName, eventName);
-      h->enter.Call({ JsValue::Undefined(), perThread.context });
+      h.enter.Call({ JsValue::Undefined(), perThread.context });
 
       eventName = static_cast<std::string>(
         perThread.context.GetProperty(eventNameVariableName));
@@ -263,9 +241,8 @@ private:
 
   void HandleLeave(DWORD owningThread, bool succeeded)
   {
-    for (auto& hp : handlers) {
-      auto* h = &hp.second;
-      auto& perThread = h->perThread.at(owningThread);
+    for (auto& h : handlers) {
+      auto& perThread = h.perThread.at(owningThread);
       if (!perThread.matchesCondition) {
         continue;
       }
@@ -276,8 +253,9 @@ private:
         perThread.context.SetProperty(succeededVariableName.value(),
                                       JsValue::Bool(succeeded));
       }
-      h->leave.Call({ JsValue::Undefined(), perThread.context });
-      h->perThread.erase(owningThread);
+      h.leave.Call({ JsValue::Undefined(), perThread.context });
+
+      h.perThread.erase(owningThread);
     }
   }
 
@@ -285,9 +263,7 @@ private:
   const std::string eventNameVariableName;
   const std::optional<std::string> succeededVariableName;
   std::set<DWORD> inProgressThreads;
-  std::map<uint32_t, Handler> handlers;
-  uint32_t hCounter = 0;
-  std::atomic<int> addRemoveBlocker = 0;
+  std::vector<Handler> handlers;
 };
 }
 
@@ -420,15 +396,8 @@ JsValue CreateHookApi(std::shared_ptr<Hook> hookInfo)
       }
 
       Handler handler(handlerObj, minSelfId, maxSelfId, pattern);
-      uint32_t id = hookInfo->AddHandler(handler);
+      hookInfo->AddHandler(handler);
 
-      return JsValue((int)id);
-    }));
-
-  hook.SetProperty(
-    "remove", JsValue::Function([hookInfo](const JsFunctionArguments& args) {
-      uint32_t toRemove = static_cast<int>(args[1]);
-      hookInfo->RemoveHandler(toRemove);
       return JsValue::Undefined();
     }));
   return hook;
@@ -488,16 +457,6 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
   ipcMessageEvent.SetProperty("sourceSystemName", systemName);
   ipcMessageEvent.SetProperty("message", typedArray);
   SendEvent("ipcMessage", { JsValue::Undefined(), ipcMessageEvent });
-}
-
-void EventsApi::SendConsoleMsgEvent(const char* msg_)
-{
-  std::string msg(msg_);
-  SkyrimPlatform::GetSingleton().AddTickTask([=] {
-    auto obj = JsValue::Object();
-    obj.SetProperty("message", JsValue::String(msg));
-    EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
-  });
 }
 
 void EventsApi::SendMenuOpen(const char* menuName)
@@ -560,8 +519,7 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "ipcMessage",
                                    "menuOpen",
                                    "menuClose",
-                                   "browserMessage",
-                                   "consoleMessage" };
+                                   "browserMessage" };
 
   if (events.count(eventName) == 0) {
     throw InvalidArgumentException("eventName", eventName);

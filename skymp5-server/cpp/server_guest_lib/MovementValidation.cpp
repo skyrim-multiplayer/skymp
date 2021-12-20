@@ -1,5 +1,4 @@
 #include "MovementValidation.h"
-#include "FormDesc.h"
 #include "NetworkingInterface.h"
 #include "NiPoint3.h"
 #include <nlohmann/json.hpp>
@@ -7,9 +6,7 @@
 
 bool MovementValidation::Validate(const IWorldObject& worldObject,
                                   const NiPoint3& newPos,
-                                  const FormDesc& newCellOrWorld,
-                                  IMessageOutput& tgt,
-                                  const std::vector<std::string>& espmFiles)
+                                  uint32_t newCellOrWorld, IMessageOutput& tgt)
 {
   const auto& currentPos = worldObject.GetPos();
   const auto& currentRot = worldObject.GetAngle();
@@ -24,7 +21,7 @@ bool MovementValidation::Validate(const IWorldObject& worldObject,
       { "type", "teleport" },
       { "pos", { currentPos[0], currentPos[1], currentPos[2] } },
       { "rot", { currentRot[0], currentRot[1], currentRot[2] } },
-      { "worldOrCell", currentCellOrWorld.ToFormId(espmFiles) }
+      { "worldOrCell", currentCellOrWorld }
     }.dump();
     tgt.Send(reinterpret_cast<uint8_t*>(s.data()), s.length(), true);
     return false;

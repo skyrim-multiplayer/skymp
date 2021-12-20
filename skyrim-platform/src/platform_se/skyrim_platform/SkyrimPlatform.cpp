@@ -33,7 +33,6 @@
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
-#include "Win32Api.h"
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -104,41 +103,25 @@ public:
   void Tick() override
   {
     try {
-      auto fileDirs = GetFileDirs();
+      auto fileDir = GetFileDir();
 
-      if (monitors.empty()) {
-        for (auto fileDir : fileDirs) {
-          monitors.push_back(std::make_shared<DirectoryMonitor>(fileDir));
-        }
+      if (!monitor) {
+        monitor = std::make_shared<DirectoryMonitor>(fileDir);
       }
 
       ++tickId;
 
-      std::vector<std::filesystem::path> pathsToLoad;
-
-      bool hotReload = false;
-
-      for (auto& monitor : monitors) {
-        if (monitor->Updated()) {
-          hotReload = true;
-          // Do not break here. monitor->Updated has to be called for all
-          // monitors. See method implementation
-        }
-        monitor->ThrowOnceIfHasError();
-      }
-
-      const bool startupLoad = tickId == 1;
-      const bool loadNeeded = startupLoad || hotReload;
-      if (loadNeeded) {
+      bool pluginsDirectoryUpdated = monitor->Updated();
+      monitor->ThrowOnceIfHasError();
+      if (tickId == 1 || pluginsDirectoryUpdated) {
         ClearState();
-        for (auto& fileDir : fileDirs) {
-          LoadFiles(GetPathsToLoad(fileDir));
-        }
+        LoadFiles(GetPathsToLoad(fileDir));
       }
 
       HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
 
       EventsApi::SendEvent("tick", {});
+
     } catch (const std::exception& e) {
       PrintExceptionToGameConsole(e);
     }
@@ -157,17 +140,7 @@ public:
   }
 
 private:
-  std::vector<const char*> GetFileDirs() const
-  {
-    constexpr auto kSkympPluginsDir =
-      "C:/projects/skymp/build/dist/client/Data/Platform/Plugins";
-    if (std::filesystem::exists(kSkympPluginsDir)) {
-      return { kSkympPluginsDir };
-    }
-    std::vector<const char*> dirs = { "Data/Platform/Plugins",
-                                      "Data/Platform/PluginsDev" };
-    return dirs;
-  }
+  const char* GetFileDir() const { return "Data/Platform/Plugins"; }
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
   {
@@ -226,10 +199,9 @@ private:
                            MpClientPluginApi::Register(e);
                            HttpClientApi::Register(e);
                            ConsoleApi::Register(e);
-                           DevApi::Register(e, &engine, {}, GetFileDirs());
+                           DevApi::Register(e, &engine, {}, GetFileDir());
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
-                           Win32Api::Register(e);
                            InventoryApi::Register(e);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });
@@ -237,7 +209,7 @@ private:
 
                            return SkyrimPlatformProxy::Attach(e);
                          } } },
-                     GetFileDirs());
+                     GetFileDir());
 
     JsValue consoleApi = JsValue::Object();
     ConsoleApi::Register(consoleApi);
@@ -279,20 +251,18 @@ private:
     const std::filesystem::path& directory)
   {
     std::vector<std::filesystem::path> paths;
-    if (std::filesystem::exists(directory)) {
-      for (auto& it : std::filesystem::directory_iterator(directory)) {
-        std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
-        paths.push_back(p);
-      }
+    for (auto& it : std::filesystem::directory_iterator(directory)) {
+      std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
+      paths.push_back(p);
     }
     return paths;
   }
 
   std::shared_ptr<JsEngine> engine;
-  std::vector<std::shared_ptr<DirectoryMonitor>> monitors;
+  std::shared_ptr<DirectoryMonitor> monitor;
   uint32_t tickId = 0;
-  Viet::TaskQueue taskQueue;
-  Viet::TaskQueue jsPromiseTaskQueue;
+  TaskQueue taskQueue;
+  TaskQueue jsPromiseTaskQueue;
   CallNativeApi::NativeCallRequirements& nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
   std::shared_ptr<BrowserApi::State> browserApiState;
@@ -304,7 +274,7 @@ struct SkyrimPlatform::Impl
 {
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
-  Viet::TaskQueue tickTasks, updateTasks;
+  TaskQueue tickTasks, updateTasks;
   ThreadPoolWrapper pool;
 };
 

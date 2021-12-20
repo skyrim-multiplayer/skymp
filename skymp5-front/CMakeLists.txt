@@ -1,8 +1,8 @@
 project(skymp5-front)
 
-include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/npm.cmake)
 
-yarn_execute_command(
+npm_execute_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   COMMAND install
 )
@@ -19,6 +19,7 @@ file(APPEND ${FRONT_CFG_PATH} "    '${FRONT_OUTPUT_PATH}',\n")
 file(APPEND ${FRONT_CFG_PATH} "};\n")
 
 add_custom_target(skymp5-front ALL
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES ${sources}
-  COMMAND yarn --cwd "\"${CMAKE_CURRENT_LIST_DIR}\"" build
+  COMMAND npm run build
 )

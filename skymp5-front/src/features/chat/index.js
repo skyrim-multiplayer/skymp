@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 
-import "./styles.scss";
+import "./styles.sass";
 
 class Chat extends React.Component {
   constructor(props) {

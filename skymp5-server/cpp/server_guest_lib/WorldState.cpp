@@ -19,10 +19,15 @@
 #include "Reader.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
-#include "Timer.h"
 #include <algorithm>
 #include <deque>
 #include <unordered_map>
+
+struct TimerEntry
+{
+  Viet::Promise<Viet::Void> promise;
+  std::chrono::system_clock::time_point finish;
+};
 
 namespace {
 inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
@@ -47,6 +52,7 @@ struct WorldState::Impl
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
+  std::deque<TimerEntry> timers;
   std::shared_ptr<HeuristicPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
@@ -54,7 +60,6 @@ struct WorldState::Impl
   std::map<std::string, std::chrono::system_clock::duration>
     relootTimeForTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
-  Viet::Timer timer;
 };
 
 WorldState::WorldState()
@@ -130,19 +135,61 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
   }
 }
 
-void WorldState::Tick()
+void WorldState::TickTimers()
 {
   const auto now = std::chrono::system_clock::now();
-  TickReloot(now);
-  TickSaveStorage(now);
-  TickTimers(now);
+
+  // Tick Reloot
+  for (auto& p : relootTimers) {
+    auto& list = p.second;
+    while (!list.empty() && list.begin()->second <= now) {
+      uint32_t relootTargetId = list.begin()->first;
+      auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
+        LookupFormById(relootTargetId));
+      if (relootTarget)
+        relootTarget->DoReloot();
+
+      list.pop_front();
+    }
+  }
+
+  // Tick Save Storage
+  if (pImpl->saveStorage) {
+    pImpl->saveStorage->Tick();
+
+    auto& changes = pImpl->changes;
+    if (!pImpl->saveStorageBusy && !changes.empty()) {
+      pImpl->saveStorageBusy = true;
+      std::vector<MpChangeForm> changeForms;
+      changeForms.reserve(changes.size());
+      for (auto [formId, changeForm] : changes)
+        changeForms.push_back(changeForm);
+      changes.clear();
+
+      auto pImpl_ = pImpl;
+      pImpl->saveStorage->Upsert(
+        changeForms, [pImpl_] { pImpl_->saveStorageBusy = false; });
+    }
+  }
+
+  // Tick RegisterForSingleUpdate
+  auto& timers = pImpl->timers;
+  while (!timers.empty() && now >= timers.front().finish) {
+    auto front = std::move(timers.front());
+    timers.pop_front();
+    front.promise.Resolve(Viet::Void());
+  }
 }
 
 void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
                                 const FormCallbacks& callbacks)
 {
-  Viet::ScopedTask<bool> task([](bool& st) { st = false; },
-                              pImpl->formLoadingInProgress);
+  ScopedTask task(
+    [](void* st) {
+      auto ptr = reinterpret_cast<bool*>(st);
+      *ptr = false;
+    },
+    &pImpl->formLoadingInProgress);
   pImpl->formLoadingInProgress = true;
 
   std::unique_ptr<MpObjectReference> form;
@@ -226,22 +273,41 @@ void WorldState::RegisterForSingleUpdate(const VarValue& self, float seconds)
 
 Viet::Promise<Viet::Void> WorldState::SetTimer(float seconds)
 {
-  return pImpl->timer.SetTimer(seconds);
+  Viet::Promise<Viet::Void> promise;
+
+  auto finish = std::chrono::system_clock::now() +
+    std::chrono::milliseconds(static_cast<int>(seconds * 1000));
+
+  bool sortRequired = false;
+
+  if (!pImpl->timers.empty() && finish > pImpl->timers.front().finish) {
+    sortRequired = true;
+  }
+
+  pImpl->timers.push_front({ promise, finish });
+
+  if (sortRequired) {
+    std::sort(pImpl->timers.begin(), pImpl->timers.end(),
+              [](const TimerEntry& lhs, const TimerEntry& rhs) {
+                return lhs.finish < rhs.finish;
+              });
+  }
+
+  return promise;
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 {
-  static const std::shared_ptr<MpForm> kNullForm;
-
   auto it = forms.find(formId);
   if (it == forms.end()) {
+    static const std::shared_ptr<MpForm> g_null;
     if (formId < 0xff000000) {
       if (LoadForm(formId)) {
         it = forms.find(formId);
-        return it == forms.end() ? kNullForm : it->second;
+        return it == forms.end() ? g_null : it->second;
       }
     }
-    return kNullForm;
+    return g_null;
   }
   return it->second;
 }
@@ -279,14 +345,37 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
 
   if (t == "NPC_") {
-    return false;
+    auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
+    if (npcData.isEssential || npcData.isProtected)
+      return false;
+
+    enum
+    {
+      CrimeFactionsList = 0x26953
+    };
+
+    auto formListLookupRes = br.LookupById(CrimeFactionsList);
+    auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
+    auto formIds = formList->GetData(cache).formIds;
+    for (auto& formId : formIds) {
+      formId = formListLookupRes.ToGlobalId(formId);
+    }
+
+    for (auto fact : npcData.factions) {
+      auto it = std::find(formIds.begin(), formIds.end(),
+                          base.ToGlobalId(fact.formId));
+      if (it != formIds.end()) {
+        logger->info("Skipping actor {0:x} because it's in faction {0:x}",
+                     record->GetId(), *it);
+        return false;
+      }
+    }
   }
 
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
-  uint32_t worldOrCell =
-    espm::GetMappedId(GetWorldOrCell(br, record), mapping);
+  uint32_t worldOrCell = GetWorldOrCell(br, record);
   if (!worldOrCell) {
     logger->error("Anomally: refr without world/cell");
     return false;
@@ -319,10 +408,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
     auto typeStr = t.ToString();
     std::unique_ptr<MpForm> form;
-    LocationalData formLocationalData = {
-      GetPos(locationalData), GetRot(locationalData),
-      FormDesc::FromFormId(worldOrCell, espmFiles)
-    };
+    LocationalData formLocationalData = { GetPos(locationalData),
+                                          GetRot(locationalData),
+                                          worldOrCell };
     if (t != "NPC_") {
       form.reset(new MpObjectReference(formLocationalData,
                                        formCallbacksFactory(), baseId,
@@ -344,7 +432,7 @@ bool WorldState::LoadForm(uint32_t formId)
   auto& br = GetEspm().GetBrowser();
   auto lookupResults = br.LookupByIdAll(formId);
   for (auto& lookupRes : lookupResults) {
-    auto mapping = br.GetCombMapping(lookupRes.fileIdx);
+    auto mapping = br.GetMapping(lookupRes.fileIdx);
     if (AttachEspmRecord(br, lookupRes.rec, *mapping)) {
       atLeastOneLoaded = true;
     }
@@ -364,52 +452,6 @@ bool WorldState::LoadForm(uint32_t formId)
   return atLeastOneLoaded;
 }
 
-void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
-{
-  for (auto& p : relootTimers) {
-    auto& list = p.second;
-    while (!list.empty() && list.begin()->second <= now) {
-      uint32_t relootTargetId = list.begin()->first;
-      auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
-        LookupFormById(relootTargetId));
-      if (relootTarget) {
-        relootTarget->DoReloot();
-      }
-
-      list.pop_front();
-    }
-  }
-}
-
-void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
-{
-  if (!pImpl->saveStorage) {
-    return;
-  }
-
-  pImpl->saveStorage->Tick();
-
-  auto& changes = pImpl->changes;
-  if (!pImpl->saveStorageBusy && !changes.empty()) {
-    pImpl->saveStorageBusy = true;
-    std::vector<MpChangeForm> changeForms;
-    changeForms.reserve(changes.size());
-    for (auto [formId, changeForm] : changes) {
-      changeForms.push_back(changeForm);
-    }
-    changes.clear();
-
-    auto pImpl_ = pImpl;
-    pImpl->saveStorage->Upsert(changeForms,
-                               [pImpl_] { pImpl_->saveStorageBusy = false; });
-  }
-}
-
-void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
-{
-  pImpl->timer.TickTimers();
-}
-
 void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
                                   const VarValue* arguments,
                                   size_t argumentsCount)
@@ -427,8 +469,12 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
   uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
 {
   if (espm && !pImpl->chunkLoadingInProgress) {
-    Viet::ScopedTask<bool> task([](bool& st) { st = false; },
-                                pImpl->chunkLoadingInProgress);
+    ScopedTask task(
+      [](void* st) {
+        auto ptr = reinterpret_cast<bool*>(st);
+        *ptr = false;
+      },
+      &pImpl->chunkLoadingInProgress);
     pImpl->chunkLoadingInProgress = true;
 
     auto& br = espm->GetBrowser();
@@ -436,14 +482,11 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
       for (int16_t y = cellY - 1; y <= cellY + 1; ++y) {
         const bool loaded = grids[cellOrWorld].loadedChunks[x][y];
         if (!loaded) {
+          auto records = br.GetRecordsAtPos(cellOrWorld, x, y);
           for (size_t i = 0; i < espmFiles.size(); ++i) {
-            auto combMapping = br.GetCombMapping(i);
-            auto rawMapping = br.GetRawMapping(i);
-            uint32_t mappedCellOrWorld =
-              espm::GetMappedId(cellOrWorld, *rawMapping);
-            auto records = br.GetRecordsAtPos(mappedCellOrWorld, x, y);
+            auto mapping = br.GetMapping(i);
             for (auto rec : *records[i]) {
-              auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
+              auto mappedId = espm::GetMappedId(rec->GetId(), *mapping);
               assert(mappedId < 0xff000000);
               LoadForm(mappedId);
             }

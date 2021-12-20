@@ -28,7 +28,6 @@ void WriteToBitStream(SLNet::BitStream& stream, const MovementMessage& movData)
   WriteToBitStream(stream, movData.isSneaking);
   WriteToBitStream(stream, movData.isBlocking);
   WriteToBitStream(stream, movData.isWeapDrawn);
-  WriteToBitStream(stream, movData.isDead);
   WriteToBitStream(stream, movData.lookAt);
 }
 
@@ -53,7 +52,6 @@ void ReadFromBitStream(SLNet::BitStream& stream, MovementMessage& movData)
   ReadFromBitStream(stream, movData.isSneaking);
   ReadFromBitStream(stream, movData.isBlocking);
   ReadFromBitStream(stream, movData.isWeapDrawn);
-  ReadFromBitStream(stream, movData.isDead);
   ReadFromBitStream(stream, movData.lookAt);
 }
 
@@ -74,7 +72,6 @@ MovementMessage MovementMessageFromJson(const nlohmann::json& json)
   result.isSneaking = data.at("isSneaking").get<bool>();
   result.isBlocking = data.at("isBlocking").get<bool>();
   result.isWeapDrawn = data.at("isWeapDrawn").get<bool>();
-  result.isDead = data.at("isDead").get<bool>();
   const auto lookAtIt = data.find("lookAt");
   if (lookAtIt != data.end()) {
     result.lookAt = lookAtIt->get<std::array<float, 3>>();
@@ -100,7 +97,6 @@ nlohmann::json MovementMessageToJson(const MovementMessage& movData)
         { "isSneaking", movData.isSneaking },
         { "isBlocking", movData.isBlocking },
         { "isWeapDrawn", movData.isWeapDrawn },
-        { "isDead", movData.isDead },
       },
     },
   };

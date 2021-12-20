@@ -29,11 +29,6 @@ JsValue BrowserApi::SetVisible(const JsFunctionArguments& args)
   return JsValue::Undefined();
 }
 
-JsValue BrowserApi::IsVisible(const JsFunctionArguments& args)
-{
-  return JsValue::Bool(CEFUtils::DX11RenderHandler::Visible());
-}
-
 JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
 {
   bool& v = CEFUtils::DInputHook::ChromeFocus();
@@ -63,11 +58,6 @@ JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
     }
   }
   return JsValue::Undefined();
-}
-
-JsValue BrowserApi::IsFocused(const JsFunctionArguments& args)
-{
-  return JsValue::Bool(CEFUtils::DInputHook::ChromeFocus());
 }
 
 JsValue BrowserApi::LoadUrl(const JsFunctionArguments& args,

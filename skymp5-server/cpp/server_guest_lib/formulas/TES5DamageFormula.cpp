@@ -14,8 +14,6 @@ bool IsUnarmedAttack(const uint32_t sourceFormId)
 
 class TES5DamageFormulaImpl
 {
-  using Effects = std::vector<espm::Effects::Effect>;
-
 public:
   TES5DamageFormulaImpl(const MpActor& aggressor_, const MpActor& target_,
                         const HitData& hitData_);
@@ -34,7 +32,6 @@ private:
   float CalcArmorRatingComponent(
     const Inventory::Entry& opponentEquipmentEntry) const;
   float CalcOpponentArmorRating() const;
-  float CalcMagicEffects(const Effects& effects) const;
 };
 
 TES5DamageFormulaImpl::TES5DamageFormulaImpl(const MpActor& aggressor_,
@@ -63,19 +60,6 @@ float TES5DamageFormulaImpl::CalcWeaponRating() const
   return GetBaseWeaponDamage();
 }
 
-float TES5DamageFormulaImpl::CalcMagicEffects(const Effects& effects) const
-{
-  float armorRating = 0.f;
-  for (const auto& effect : effects) {
-    auto actorValueType =
-      espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
-    if (actorValueType == espm::ActorValue::DamageResist) {
-      armorRating += effect.magnitude;
-    }
-  }
-  return armorRating;
-}
-
 float TES5DamageFormulaImpl::CalcArmorRatingComponent(
   const Inventory::Entry& opponentEquipmentEntry) const
 {
@@ -85,15 +69,7 @@ float TES5DamageFormulaImpl::CalcArmorRatingComponent(
     auto armorData =
       espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
     // TODO(#458): take other components into account
-    auto ac = static_cast<float>(armorData.baseRatingX100) / 100;
-    if (armorData.enchantmentFormId) {
-      // TODO(#632) refactor this effect with actor effect system
-      auto enchantmentData =
-        espm::GetData<espm::ENCH>(armorData.enchantmentFormId, espmProvider);
-      ac += CalcMagicEffects(enchantmentData.effects);
-    }
-
-    return ac;
+    return static_cast<float>(armorData.baseRatingX100) / 100;
   }
   return 0;
 }
@@ -118,18 +94,14 @@ float TES5DamageFormulaImpl::CalculateDamage() const
   // Replace this with another issue reference upon investigation
   float incomingDamage = CalcWeaponRating();
   float maxArmorRating =
-    espm::GetData<espm::GMST>(espm::GMST::kFMaxArmorRating, espmProvider)
-      .value;
-  float armorScalingFactor =
-    espm::GetData<espm::GMST>(espm::GMST::kFArmorScalingFactor, espmProvider)
-      .value;
+    espm::GetData<espm::GMST>(espm::GMST::kFArmorRating, espmProvider).value;
+  float minReceivedDamage = incomingDamage * (1 - 0.01 * maxArmorRating);
 
   // TODO(#461): add difficulty multiplier
   // TODO(#463): add sneak modifier
-  float damage = incomingDamage * 0.01f *
-    (100.f -
-     std::min<float>(CalcOpponentArmorRating() * armorScalingFactor,
-                     maxArmorRating));
+  float damage =
+    std::max<float>(minReceivedDamage,
+                    incomingDamage / (CalcOpponentArmorRating() * 0.12 + 1));
   if (hitData.isPowerAttack) {
     damage *= 2;
   }

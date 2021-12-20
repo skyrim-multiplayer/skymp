@@ -24,7 +24,7 @@ struct HttpClient::Impl
   {
   }
 
-  Viet::TaskQueue q;
+  TaskQueue q;
   ThreadPoolWrapper pool;
 };
 

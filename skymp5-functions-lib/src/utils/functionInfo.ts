@@ -1,24 +1,24 @@
 export class FunctionInfo<F extends { toString: () => string }> {
-  public constructor(private f: F) {}
+  constructor(private f: F) {}
 
-  get text(): string {
+  get body(): string {
+    const funcString = this.f.toString().substring(0, this.f.toString().length - 1);
+    return funcString.replace(new RegExp('^.+?{', 'm'), '').trim();
+  }
+
+  tryCatch() {
     return `
-        try {
-          ${this.getTextWithoutErrorHandling()}
-        } catch(err) {
-          ctx.sp.printConsole('[CTX ERROR]', err, '\\n', ${this.f});
-        }`;
+      try {
+        ${this.body}
+      } catch(err) {
+        ctx.sp.printConsole('[CTX ERROR]', err, '\\n', ${this.f});
+      }`;
   }
 
   getText(args?: Record<string, unknown>): string {
-    let result = this.text;
+    let result = this.tryCatch();
 
-    // I wasn't able to disable minification in parcel 1.12.3
-    // So just let parcel rename ctx arg to e and then:
-    result = `const e = ctx;\n` + result;
-    result = `const t = ctx;\n` + result;
-
-    for (const name in args) {
+    for (let name in args) {
       switch (typeof args[name]) {
         case 'number':
           result = `const ${name} = ${args[name]};\n` + result;
@@ -41,10 +41,5 @@ export class FunctionInfo<F extends { toString: () => string }> {
     }
 
     return result;
-  }
-
-  private getTextWithoutErrorHandling(): string {
-    const funcString = this.f.toString().substring(0, this.f.toString().length - 1);
-    return funcString.replace(new RegExp('^.+?{', 'm'), '').trim();
   }
 }
