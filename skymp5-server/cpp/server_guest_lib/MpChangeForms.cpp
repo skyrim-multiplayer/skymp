@@ -48,8 +48,6 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
                             changeForm.spawnPoint.rot[2] };
   res["spawnPoint_cellOrWorldDesc"] =
     changeForm.spawnPoint.cellOrWorldDesc.ToString();
-
-  res["spawnDelay"] = changeForm.spawnDelay;
   return res;
 }
 
@@ -66,8 +64,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     magickaPercentage("magickaPercentage"),
     staminaPercentage("staminaPercentage"), isDead("isDead"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
-    spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay");
+    spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -139,8 +136,6 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
 
   ReadEx(element, spawnPointCellOrWorldDesc, &tmp);
   res.spawnPoint.cellOrWorldDesc = FormDesc::FromString(tmp);
-
-  ReadEx(element, spawnDelay, &res.spawnDelay);
 
   return res;
 }

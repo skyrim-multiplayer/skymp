@@ -1,5 +1,3 @@
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
 #include "CameraApi.h"
 #include "ConsoleApi.h"
 #include "DevApi.h"
@@ -9,7 +7,6 @@
 #include "EventsApi.h"
 #include "ExceptionPrinter.h"
 #include "FlowManager.h"
-#include "FridaHooksUtils.h"
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InputConverter.h"
@@ -27,12 +24,8 @@
 #include "ThreadPoolWrapper.h"
 #include "TickTask.h"
 #include <RE/ConsoleLog.h>
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
 #include <Windows.h>
 #include <atomic>
-#include <functional>
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
@@ -47,25 +40,26 @@
 #include <skse64/GameMenus.h>
 #include <skse64/GameReferences.h>
 #include <skse64/NiRenderer.h>
-#include <skse64/PluginAPI.h>
 #include <skse64/gamethreads.h>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
-#include <ui/TextToDraw.h>
+
+#include "BrowserApi.h"
+#include "CallNativeApi.h"
+#include <SKSE/API.h>
+#include <SKSE/Interfaces.h>
+#include <SKSE/Stubs.h>
+#include <skse64/PluginAPI.h>
+
+#include "SkyrimPlatform.h"
 
 #define PLUGIN_NAME "SkyrimPlatform"
 #define PLUGIN_VERSION 0
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
-
-void GetTextsToDraw(TextToDrawCallback callback)
-{
-  callback(TextToDraw());
-  callback(TextToDraw());
-}
 
 void SetupFridaHooks();
 
@@ -230,14 +224,8 @@ public:
 
   MyInputListener()
   {
-    bool kRunningAE = false;
-    if (kRunningAE) {
-      pCursorX = FridaHooksUtils::GetCursorX();
-      pCursorY = FridaHooksUtils::GetCursorY();
-    } else {
-      pCursorX = (float*)(REL::Module::BaseAddr() + 0x2F6C104);
-      pCursorY = (float*)(REL::Module::BaseAddr() + 0x2F6C108);
-    }
+    pCursorX = (float*)(REL::Module::BaseAddr() + 0x2F6C104);
+    pCursorY = (float*)(REL::Module::BaseAddr() + 0x2F6C108);
     vkCodeDownDur.fill(0);
   }
 
@@ -522,10 +510,7 @@ public:
 
     auto onProcessMessage = std::make_shared<ProcessMessageListenerImpl>();
 
-    ObtainTextsToDrawFunction obtainTextsToDraw = GetTextsToDraw;
-
-    overlayService =
-      std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
+    overlayService = std::make_shared<OverlayService>(onProcessMessage);
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
 

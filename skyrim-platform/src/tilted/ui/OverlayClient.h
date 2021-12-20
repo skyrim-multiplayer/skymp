@@ -3,10 +3,9 @@
 #include "MyLoadHandler.h"
 #include "MyRenderHandler.h"
 #include "ProcessMessageListener.h"
-#include "TextToDraw.h"
-#include <Meta.hpp>
-#include <functional>
 #include <include/cef_client.h>
+
+#include <Meta.hpp>
 
 namespace CEFUtils {
 struct OverlayClient
@@ -30,8 +29,7 @@ struct OverlayClient
   [[nodiscard]] const std::wstring& GetCursorPathPNG() const noexcept;
   [[nodiscard]] const std::wstring& GetCursorPathDDS() const noexcept;
 
-  void Render(
-    const ObtainTextsToDrawFunction& obtainTextsToDraw) const noexcept;
+  void Render() const noexcept;
   void Create() const noexcept;
   void Reset() const noexcept;
 

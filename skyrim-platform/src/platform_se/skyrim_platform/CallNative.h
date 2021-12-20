@@ -32,10 +32,7 @@ private:
 };
 
 using ObjectPtr = std::shared_ptr<Object>;
-using AnySafe =
-  std::variant<ObjectPtr, double, bool, std::string, std::vector<double>,
-               std::vector<std::string>, std::vector<bool>,
-               std::vector<CallNative::ObjectPtr>>;
+using AnySafe = std::variant<ObjectPtr, double, bool, std::string>;
 
 template <class T>
 static inline size_t GetIndexFor()

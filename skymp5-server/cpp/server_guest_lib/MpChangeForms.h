@@ -51,7 +51,6 @@ public:
   LocationalData spawnPoint = { { 133857, -61130, 14662 },
                                 { 0.f, 0.f, 72.f },
                                 FormDesc::Tamriel() };
-  float spawnDelay = 5.0f;
 
   // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
   // adding new Actor-related rows
@@ -69,8 +68,7 @@ public:
       angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
       isRaceMenuOpen, isDead, appearanceDump, equipmentDump, healthPercentage,
-      magickaPercentage, staminaPercentage, spawnPoint, dynamicFields,
-      spawnDelay);
+      magickaPercentage, staminaPercentage, spawnPoint, dynamicFields);
   }
 
   static nlohmann::json ToJson(const MpChangeForm& changeForm);

@@ -10,8 +10,9 @@ yarn_execute_command(
 file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/src/*)
 
 add_custom_target(skymp5-client ALL
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES ${sources}
-  COMMAND yarn --cwd "\"${CMAKE_CURRENT_LIST_DIR}\"" build
+  COMMAND yarn build
 )
 add_dependencies(skymp5-client skyrim-platform)
 

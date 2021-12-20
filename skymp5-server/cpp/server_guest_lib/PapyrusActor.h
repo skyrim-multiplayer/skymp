@@ -9,7 +9,6 @@ public:
   const char* GetName() override { return "actor"; }
 
   DEFINE_METHOD_SPSNIPPET(DrawWeapon);
-  DEFINE_METHOD_SPSNIPPET(UnequipAll);
   DEFINE_METHOD_SPSNIPPET(PlayIdle);
 
   VarValue IsWeaponDrawn(VarValue self,
@@ -22,7 +21,6 @@ public:
 
     AddMethod(vm, "IsWeaponDrawn", &PapyrusActor::IsWeaponDrawn);
     AddMethod(vm, "DrawWeapon", &PapyrusActor::DrawWeapon);
-    AddMethod(vm, "UnequipAll", &PapyrusActor::UnequipAll);
     AddMethod(vm, "PlayIdle", &PapyrusActor::PlayIdle);
   }
 

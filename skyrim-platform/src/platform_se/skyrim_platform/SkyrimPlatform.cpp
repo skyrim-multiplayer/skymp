@@ -33,7 +33,6 @@
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
-#include "Win32Api.h"
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -229,7 +228,6 @@ private:
                            DevApi::Register(e, &engine, {}, GetFileDirs());
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
-                           Win32Api::Register(e);
                            InventoryApi::Register(e);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });

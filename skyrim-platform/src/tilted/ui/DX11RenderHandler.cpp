@@ -1,18 +1,15 @@
-#include "DInputHook.hpp"
-#include "TextToDraw.h"
 #include <DX11RenderHandler.h>
+#include <OverlayClient.h>
+
 #include <DirectXColors.h>
 #include <DirectXTK/CommonStates.h>
 #include <DirectXTK/DDSTextureLoader.h>
 #include <DirectXTK/SimpleMath.h>
 #include <DirectXTK/SpriteBatch.h>
-#include <DirectXTK/SpriteFont.h>
 #include <DirectXTK/WICTextureLoader.h>
-#include <OverlayClient.h>
 #include <cmrc/cmrc.hpp>
-#include <functional>
+
 #include <iostream>
-#include <string>
 
 CMRC_DECLARE(skyrim_plugin_resources);
 
@@ -28,8 +25,7 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
 
 DX11RenderHandler::~DX11RenderHandler() = default;
 
-void DX11RenderHandler::Render(
-  const ObtainTextsToDrawFunction& obtainTextsToDraw)
+void DX11RenderHandler::Render()
 {
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {
@@ -67,31 +63,12 @@ void DX11RenderHandler::Render(
     }
   }
 
-  if (Visible()) {
-    obtainTextsToDraw([&](const TextToDraw& textToDraw) {
-      auto origin = DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(
-                      textToDraw.string.c_str())) /
-        2;
-
-      DirectX::XMVECTORF32 color = { textToDraw.color[0], textToDraw.color[1],
-                                     textToDraw.color[2],
-                                     textToDraw.color[3] };
-      m_pSpriteFont->DrawString(
-        m_pSpriteBatch.get(), textToDraw.string.c_str(),
-        DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color, 0.f, origin);
-    });
-  }
-
-  bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
-
-  if (Visible() && focusFlag) {
-    if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {
-      m_pSpriteBatch->Draw(
-        m_pCursorTexture.Get(),
-        DirectX::SimpleMath::Vector2(m_cursorX - 24, m_cursorY - 25), nullptr,
-        DirectX::Colors::White, 0.f, DirectX::SimpleMath::Vector2(0, 0),
-        m_width / 1920.f);
-    }
+  if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {
+    m_pSpriteBatch->Draw(
+      m_pCursorTexture.Get(),
+      DirectX::SimpleMath::Vector2(m_cursorX - 24, m_cursorY - 25), nullptr,
+      DirectX::Colors::White, 0.f, DirectX::SimpleMath::Vector2(0, 0),
+      m_width / 1920.f);
   }
 
   m_pSpriteBatch->End();
@@ -124,11 +101,7 @@ void DX11RenderHandler::Create()
 
   m_pSpriteBatch =
     std::make_unique<DirectX::SpriteBatch>(m_pImmediateContext.Get());
-
   m_pStates = std::make_unique<DirectX::CommonStates>(m_pDevice.Get());
-
-  m_pSpriteFont = std::make_unique<DirectX::SpriteFont>(
-    m_pDevice.Get(), L"Data\\Interface\\Fonts\\font.spritefont");
 
   if (FAILED(DirectX::CreateWICTextureFromFile(
         m_pDevice.Get(), m_pParent->GetCursorPathPNG().c_str(), nullptr,
