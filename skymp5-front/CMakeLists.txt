@@ -19,8 +19,6 @@ file(APPEND ${FRONT_CFG_PATH} "    '${FRONT_OUTPUT_PATH}',\n")
 file(APPEND ${FRONT_CFG_PATH} "};\n")
 
 add_custom_target(skymp5-front ALL
-  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   SOURCES ${sources}
-  COMMAND yarn build
-  COMMENT yarn build
+  COMMAND yarn --cwd "\"${CMAKE_CURRENT_LIST_DIR}\"" build
 )

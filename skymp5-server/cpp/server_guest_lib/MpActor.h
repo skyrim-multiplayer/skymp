@@ -8,8 +8,6 @@
 
 class WorldState;
 
-constexpr float kRespawnTimeSeconds = 5.f;
-
 class MpActor : public MpObjectReference
 {
 public:
@@ -73,12 +71,16 @@ public:
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point now);
 
-  void Kill(MpActor* killer = nullptr);
-  void RespawnAfter(float seconds, const LocationalData& position);
-  void Respawn(const LocationalData& position);
+  void Kill(MpActor* killer = nullptr, bool shouldTeleport = false);
+  void Respawn(bool shouldTeleport = true);
+  void RespawnWithDelay(bool shouldTeleport = true);
   void Teleport(const LocationalData& position);
   void SetSpawnPoint(const LocationalData& position);
   LocationalData GetSpawnPoint() const;
+  const float GetRespawnTime() const;
+  void SetRespawnTime(float time);
+
+  void SetIsDead(bool isDead);
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
@@ -86,9 +88,7 @@ private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
-  void SendAndSetDeathState(bool isDead);
-  void SendAndSetDeathState(const LocationalData& position, bool isDead,
-                            bool shouldTeleport = true);
+  void SendAndSetDeathState(bool isDead, bool shouldTeleport);
   std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
                                bool shouldTeleport);
   void MpApiDeath(MpActor* killer = nullptr);
