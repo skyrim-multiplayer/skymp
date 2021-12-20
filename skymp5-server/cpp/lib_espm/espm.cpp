@@ -1100,7 +1100,7 @@ espm::Effects::Data espm::Effects::GetData(
       if (!isValid) {
         auto name = parent->GetEditorId(compressedFieldsCache);
         throw std::runtime_error(
-          fmt::format("Bad effect array for edid={}", *name));
+          fmt::format("Bad effect array for edid={}", name));
       }
     },
     compressedFieldsCache);
