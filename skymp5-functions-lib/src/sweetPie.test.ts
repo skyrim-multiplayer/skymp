@@ -401,7 +401,6 @@ describe("SweetPieGameModeListener: Round clock", () => {
   });
 });
 
-
 describe("SweetPieGameModeListener: OnDeath", () => {
   it("Gives score to killer", () => {
     const controller = makePlayerController();
