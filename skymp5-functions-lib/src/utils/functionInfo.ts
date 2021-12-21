@@ -15,8 +15,10 @@ export class FunctionInfo<F extends { toString: () => string }> {
 
     // I wasn't able to disable minification in parcel 1.12.3
     // So just let parcel rename ctx arg to e and then:
-    result = `const e = ctx;\n` + result;
-    result = `const t = ctx;\n` + result;
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    for (const letter of alphabet) {
+      result = `let ${letter} = ctx;\n` + result;
+    }
 
     for (const name in args) {
       switch (typeof args[name]) {
