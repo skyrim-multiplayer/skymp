@@ -15,6 +15,7 @@
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
+    "guid-typescript": "^1.0.9",
     "rxjs": "^7.4.0"
   }
 }

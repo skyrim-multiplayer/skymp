@@ -1,6 +1,6 @@
 export class AuthData {
   public static canRegister(data: AuthData) {
-    return data && data.name?.trim() && data.email?.trim() && data.password?.trim();
+    return data && data.email?.trim() && data.password?.trim();
   }
   public static canLogin(data: AuthData) {
     return data && data.email?.trim() && data.password?.trim();
@@ -10,6 +10,7 @@ export class AuthData {
     public name: string,
     public email: string,
     public password: string,
+    public passwordRepeat?: string,
     public rememberMe?: boolean,
   ) { }
 }
