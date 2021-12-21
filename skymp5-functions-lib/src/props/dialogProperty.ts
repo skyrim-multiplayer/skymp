@@ -2,7 +2,6 @@ import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
 import { FunctionInfo } from '../utils/functionInfo';
 import { BrowserProperty } from './browserProperty';
-import { EvalProperty } from './evalProperty';
 
 type DialogValue = ['messageBox', string, string, string[]] | null;
 type DialogState = { dialogPrevValue?: DialogValue };
