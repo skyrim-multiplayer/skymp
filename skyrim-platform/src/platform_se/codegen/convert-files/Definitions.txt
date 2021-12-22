@@ -757,6 +757,7 @@ export declare namespace SendPapyrusEventHook {
     class Context {
         readonly selfId: number;
         readonly papyrusEventName: string;
+        readonly papyrusEventArgs: [number | string | boolean | PapyrusObject | number[] | string[] | boolean[] | PapyrusObject[]];
 
         readonly storage: Map<string, unknown>;
     }

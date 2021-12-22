@@ -50,8 +50,7 @@ enum _ExampleHookId
   RENDER_CURSOR_MENU,
   SEND_EVENT,
   SEND_EVENT_ALL,
-  CONSOLE_VPRINT,
-  MAGIC_EFFECT_APPLY
+  CONSOLE_VPRINT
 };
 
 static void example_listener_iface_init(gpointer g_iface, gpointer iface_data);
@@ -115,25 +114,28 @@ void SetupFridaHooks()
   w.Attach(listener, 19244800, SEND_EVENT);
   w.Attach(listener, 19245744, SEND_EVENT_ALL);
   w.Attach(listener, 8766499, CONSOLE_VPRINT);
-  w.Attach(listener, 9666192, MAGIC_EFFECT_APPLY);
 }
 
-class VariableAccess : public RE::BSScript::Variable
+void logger(const std::string fn, const std::string& eventName, int value)
 {
-public:
-  VariableAccess() = delete;
+  std::filesystem::path dir = "Data\\Platform\\Output";
+  std::filesystem::create_directories(dir);
+  auto p = dir / fn;
+  std::ofstream out;
+  out.open(p, std::ios_base::app);
+  out << eventName << " | " << value << std::endl;
+  out.close();
+}
 
-  static RE::BSScript::TypeInfo GetType(const RE::BSScript::Variable& v)
-  {
-    return ((VariableAccess&)v).varType;
-  }
-
-  static RE::BSTSmartPointer<RE::BSScript::Object> GetObjectSmartPtr(
-    const RE::BSScript::Variable& v)
-  {
-    return ((VariableAccess&)v).value.obj;
-  }
-};
+bool stringInVector(const std::string& value,
+                    const std::vector<std::string>& array)
+{
+  return std::find(array.begin(), array.end(), value) != array.end();
+}
+bool intInVector(const int& value, const std::vector<int>& array)
+{
+  return std::find(array.begin(), array.end(), value) != array.end();
+}
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
 
@@ -144,6 +146,13 @@ thread_local gpointer g_eventArgsPointer = nullptr;
 thread_local char* g_eventName = nullptr;
 thread_local uint32_t g_eventSelfId = 0;
 std::vector<int> g_argsOffsets;
+std::vector<std::string> passbyEvents = {
+  "OnMagicEffectApply", "OnSleepStart",  "OnPackageEnd", "OnGrab",
+  "OnRelease",          "OnTriggerLeave"
+};
+
+std::vector<std::string> temp_eventOffsets;         // for logging
+std::vector<std::string> temp_eventWithArgs;        // for logging
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -175,64 +184,57 @@ static void example_listener_on_enter(GumInvocationListener* listener,
 
       auto handle =
         (RE::VMHandle)gum_invocation_context_get_nth_argument(ic, 1);
-      auto args = static_cast<RE::BSScript::IFunctionArguments*>(
-        gum_invocation_context_get_nth_argument(ic, 3));
 
       auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
       bool blockEvents = TESModPlatform::GetPapyrusEventsBlocked();
 
-      uint32_t selfId = 0;
-
       auto policy = vm->GetObjectHandlePolicy();
       if (policy) {
-        if (auto actor = policy->GetObjectForHandle(
-              RE::FormType::ActorCharacter, handle)) {
-          selfId = actor->GetFormID();
-        }
-        if (auto refr =
-              policy->GetObjectForHandle(RE::FormType::Reference, handle)) {
-          selfId = refr->GetFormID();
+        if (auto none =
+              policy->GetObjectForHandle(RE::FormType::None, handle)) {
+          auto selfIid = none->GetFormID();
+
+          // Sometimes we have != null id and args of the event in
+          // different hooks Send Event Enter
+
+          if (selfIid != 0) {
+            g_eventSelfId = selfIid;
+          }
         }
       }
 
-      g_eventSelfId = selfId;
+      auto args = static_cast<RE::BSScript::IFunctionArguments*>(
+        gum_invocation_context_get_nth_argument(ic, 3));
       auto offset = FridaHooksUtils::GetNthVtableElement(args, 0, 1);
+      if (offset > 0) {
 
-      if (auto c = RE::ConsoleLog::GetSingleton()) {
-        if (std::find(g_argsOffsets.begin(), g_argsOffsets.end(), offset) !=
-            g_argsOffsets.end()) {
-           //c->Print("Offset %i already added", offset);
-          if (strcmp(*eventName, "OnMagicEffectApply") == 0) {
-            //c->Print("MagicEffect EVENT already here! offset: %i", offset);
-          }
-        } else {
+        // ====== TEMP =======
+        if (!stringInVector(g_eventName, temp_eventOffsets)) {
+          temp_eventOffsets.push_back(g_eventName);
+          logger("offsets.txt", g_eventName, offset);
+        }
+        // ===================
+
+        if (!intInVector(offset, g_argsOffsets)) {
           g_argsOffsets.push_back(offset);
           InterceptorWrapper w(gum_interceptor_obtain());
           auto listener =
             (GumInvocationListener*)g_object_new(EXAMPLE_TYPE_LISTENER, NULL);
           w.Attach(listener, offset,
                    static_cast<ExampleHookId>(100 + g_argsOffsets.size()));
-          c->Print("New offset added %i, total: %i, hookid: %i", offset,
-                   g_argsOffsets.size(), (100 + g_argsOffsets.size()));
         }
       }
 
-      /*if (strcmp(*eventName, "OnMagicEffectApply") == 0) {
-        if (auto c = RE::ConsoleLog::GetSingleton()) {
-          auto offset0 = FridaHooksUtils::GetNthVtableElement(args, 0, 0);
-          auto offset1 = FridaHooksUtils::GetNthVtableElement(args, 0, 1);
-          auto offset2 = FridaHooksUtils::GetNthVtableElement(args, 0, 2);
-          auto offset3 = FridaHooksUtils::GetNthVtableElement(args, 0, 3);
-          auto offset4 = FridaHooksUtils::GetNthVtableElement(args, 0, 4);
-          
-          c->Print("EVENT! name: %s, selfid: %i, offset0: %i, offset1: %i, "
-                   "offset2: %i, offset3: %i, offset4: %i,",
-                   *eventName, selfId, offset0, offset1, offset2, offset3, offset4);
-        }
+      /*
+      if (stringInVector(*eventName, passbyEvents)) {
+        std::vector<CallNative::AnySafe> out{};
+        out.reserve(0);
+        EventsApi::SendPapyrusEventEnter(
+          g_eventSelfId, static_cast<std::string>(g_eventName), out);
+        g_eventName = nullptr;
+        g_eventSelfId = 0;
+        EventsApi::SendPapyrusEventLeave();
       }*/
-
-      // std::string eventNameStr = *eventName;
-      // EventsApi::SendPapyrusEventEnter(selfId, eventNameStr);
 
       if (strcmp(*eventName, "OnUpdate") != 0 && vm) {
         vm->attachedScriptsLock.Lock();
@@ -265,12 +267,6 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       if (blockEvents) {
         static const auto fsEmpty = new RE::BSFixedString("");
         gum_invocation_context_replace_nth_argument(ic, argIdx, fsEmpty);
-      }
-      break;
-    }
-    case MAGIC_EFFECT_APPLY : {
-      if (auto c = RE::ConsoleLog::GetSingleton()) {
-        c->Print("Magic Effect Apply ENTER");
       }
       break;
     }
@@ -396,13 +392,9 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       break;
     }
     default: {
-      if (reinterpret_cast<size_t>(hook_id) > 100 &&
+      if (reinterpret_cast<size_t>(hook_id) >= 100 &&
           reinterpret_cast<size_t>(hook_id) <= (100 + g_argsOffsets.size())) {
         g_eventArgsPointer = gum_invocation_context_get_nth_argument(ic, 1);
-
-        if (auto c = RE::ConsoleLog::GetSingleton()) {
-          // c->Print("Operator Enter: %i", reinterpret_cast<int>(hook_id));
-        }
       }
     }
   }
@@ -424,12 +416,6 @@ static void example_listener_on_leave(GumInvocationListener* listener,
       // EventsApi::SendPapyrusEventLeave();
       break;
     }
-    case MAGIC_EFFECT_APPLY: {
-      if (auto c = RE::ConsoleLog::GetSingleton()) {
-        c->Print("Magic Effect Apply LEAvLE");
-      }
-      break;
-    }
     case DRAW_SHEATHE_WEAPON_ACTOR: {
       g_eventName = nullptr;
       break;
@@ -440,18 +426,23 @@ static void example_listener_on_leave(GumInvocationListener* listener,
     }
     default: {
       if (auto c = RE::ConsoleLog::GetSingleton()) {
-        if (reinterpret_cast<size_t>(hook_id) > 100 &&
+        if (reinterpret_cast<size_t>(hook_id) >= 100 &&
             reinterpret_cast<size_t>(hook_id) <=
               (100 + g_argsOffsets.size())) {
-          // c->Print("Operator Leave: %i", reinterpret_cast<int>(hook_id));
+          if (g_eventName != nullptr) {
+            // ====== TEMP =======
+            if (!stringInVector(static_cast<std::string>(g_eventName),
+                                temp_eventWithArgs)) {
+              temp_eventWithArgs.push_back(
+                static_cast<std::string>(g_eventName));
+              logger("args.txt", static_cast<std::string>(g_eventName), 1);
+            }
+            // ===================
+          }
           if (g_eventArgsPointer != nullptr && g_eventName != nullptr) {
             auto argsArray =
               static_cast<RE::BSScrapArray<RE::BSScript::Variable>*>(
                 g_eventArgsPointer);
-            if (argsArray->size() > 0) {
-              c->Print("Operator ARGS Leave: %i, theadID: %d, eventName: %s",
-                       argsArray->size(), GetCurrentThreadId(), g_eventName);
-            }
             std::vector<CallNative::AnySafe> out{};
             out.reserve(argsArray->size());
             for (const auto& r : *argsArray) {
@@ -465,19 +456,19 @@ static void example_listener_on_leave(GumInvocationListener* listener,
             g_eventSelfId = 0;
             EventsApi::SendPapyrusEventLeave();
           } else if (g_eventName != nullptr) {
-              // c->Print("Event without args: %s", g_eventName);
-              std::vector<CallNative::AnySafe> out{};
-              out.reserve(0);
-              EventsApi::SendPapyrusEventEnter(
-                g_eventSelfId, static_cast<std::string>(g_eventName), out);
-              g_eventName = nullptr;
-              g_eventSelfId = 0;
-              EventsApi::SendPapyrusEventLeave();
+            // c->Print("Event without args: %s", g_eventName);
+            std::vector<CallNative::AnySafe> out{};
+            out.reserve(0);
+            EventsApi::SendPapyrusEventEnter(
+              g_eventSelfId, static_cast<std::string>(g_eventName), out);
+            g_eventName = nullptr;
+            g_eventSelfId = 0;
+            EventsApi::SendPapyrusEventLeave();
           }
         } else {
           if (g_eventName != nullptr) {
-              c->Print("Event without offset hookid: %i, name:  %s",
-                       (int)reinterpret_cast<size_t>(hook_id), g_eventName);
+            c->Print("Event without offset hookid: %i, name:  %s",
+                     (int)reinterpret_cast<size_t>(hook_id), g_eventName);
           }
         }
       }
