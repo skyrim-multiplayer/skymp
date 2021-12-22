@@ -23,6 +23,10 @@
       "platform": "windows"
     },
     {
+      "name": "skse64",
+      "platform": "windows"
+    },
+    {
       "name": "commonlibsse",
       "platform": "windows"
     },
