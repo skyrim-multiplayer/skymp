@@ -19,7 +19,6 @@
 #define NOKEYSTATES      // MK_*
 #define NOSYSCOMMANDS    // SC_*
 #define NORASTEROPS      // Binary and Tertiary raster ops
-#define NOSHOWWINDOW     // SW_*
 #define OEMRESOURCE      // OEM Resource values
 #define NOATOM           // Atom Manager routines
 #define NOCLIPBOARD      // Clipboard routines
@@ -40,6 +39,7 @@
 #include <SKSE/SKSE.h>
 
 #include <Windows.h>
+#include <shellapi.h>
 #include <tlhelp32.h>
 
 #include <frida/frida-gum.h>
