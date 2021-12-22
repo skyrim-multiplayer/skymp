@@ -20,13 +20,13 @@ function(apply_default_settings)
         /permissive-	# Standards conformance
 
         /Zc:alignedNew	# C++17 over-aligned allocation
-		    /Zc:__cplusplus	# Enable updated __cplusplus macro
-	    	/Zc:externConstexpr	# Enable extern constexpr variables
-		    #/Zc:preprocessor	# Enable preprocessor conformance mode
+        /Zc:__cplusplus	# Enable updated __cplusplus macro
+        /Zc:externConstexpr	# Enable extern constexpr variables
+        #/Zc:preprocessor	# Enable preprocessor conformance mode
         #/Zc:throwingNew # Assume operator new throws on failure
 
         "$<$<CONFIG:DEBUG>:>"
-			  "$<$<CONFIG:RELEASE>:/Zc:inline;/JMC-;/Ob2>"
+        "$<$<CONFIG:RELEASE>:/Zc:inline;/JMC-;/Ob2>"
       )
 
       target_link_options(${target} PRIVATE
