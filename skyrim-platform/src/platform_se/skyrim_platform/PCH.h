@@ -42,6 +42,7 @@
 #include <Windows.h>
 #include <tlhelp32.h>
 
+#include <frida/frida-gum.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace logger = SKSE::log;
@@ -62,6 +63,7 @@ using TypeInfo = RE::BSScript::TypeInfo;
 #define COLOR_BLUE(in) ((in >> 0) & 0xFF)
 
 #define DLLEXPORT __declspec(dllexport)
+#define NOINLINE __declspec(noinline)
 
 #include "Offsets.h"
 #include "Version.h"

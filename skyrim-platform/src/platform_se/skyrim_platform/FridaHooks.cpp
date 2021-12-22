@@ -1,375 +1,306 @@
-/*
- * To build, set up your Release configuration like this:
- *
- * [Runtime Library]
- * Multi-threaded (/MT)
- *
- * Visit www.frida.re to learn more about Frida.
- */
-
-#include <frida/frida-gum.h>
-
+#include "FridaHooks.h"
 #include "EventsApi.h"
+#include "FridaHookHandler.h"
+#include "FridaHooksUtils.h"
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
 
-typedef struct _ExampleListener ExampleListener;
-typedef enum _ExampleHookId ExampleHookId;
+#include <hooks/DInputHook.hpp>
+#include <ui/DX11RenderHandler.h>
 
-struct _ExampleListener
+/**
+ * ConsoleVPrint hook
+ */
+void OnConsoleVPrintEnter(GumInvocationContext* ic)
 {
-  GObject parent;
-};
+  auto refr = ic->cpu_context->rdx ? (char*)ic->cpu_context->rdx : nullptr;
 
-enum _ExampleHookId
+  if (refr)
+    EventsApi::SendConsoleMsgEvent(refr);
+}
+
+void InstallConsoleVPrintHook()
 {
-  HOOK_SEND_ANIMATION_EVENT,
-  DRAW_SHEATHE_WEAPON_ACTOR,
-  DRAW_SHEATHE_WEAPON_PC,
-  QUEUE_NINODE_UPDATE,
-  APPLY_MASKS_TO_RENDER_TARGET,
-  RENDER_CURSOR_MENU,
-  SEND_EVENT,
-  SEND_EVENT_ALL,
-  CONSOLE_VPRINT
-};
+  auto hook = new Frida::Hook(OnConsoleVPrintEnter, nullptr);
+  REL::Relocation<std::uintptr_t> target{ REL::ID(51110) };
+  Frida::HookHandler::GetSingleton()->Install(Frida::HookID::CONSOLE_VPRINT,
+                                              target.address(), hook);
+}
 
-static void example_listener_iface_init(gpointer g_iface, gpointer iface_data);
+/**
+ * Send Event hook
+ */
 
-#define EXAMPLE_TYPE_LISTENER (example_listener_get_type())
-G_DECLARE_FINAL_TYPE(ExampleListener, example_listener, EXAMPLE, LISTENER,
-                     GObject)
-G_DEFINE_TYPE_EXTENDED(ExampleListener, example_listener, G_TYPE_OBJECT, 0,
-                       G_IMPLEMENT_INTERFACE(GUM_TYPE_INVOCATION_LISTENER,
-                                             example_listener_iface_init))
-
-namespace {
-class InterceptorWrapper
+// (VMHandle handle, const BSFixedString& eventName, IFunctionArguments* args)
+void OnSendEventEnter(GumInvocationContext* ic)
 {
-public:
-  InterceptorWrapper(GumInterceptor* interceptor_)
-    : interceptor(interceptor_)
-  {
-    gum_interceptor_begin_transaction(interceptor);
-  }
+  auto handle = (RE::VMHandle)gum_invocation_context_get_nth_argument(ic, 1);
+  auto eventName = (char**)gum_invocation_context_get_nth_argument(ic, 2);
 
-  ~InterceptorWrapper() { gum_interceptor_end_transaction(interceptor); }
+  auto vm = VM::GetSingleton();
 
-  /**
-   * We can attach hooks w/o frida using commonlib?
-   *
-   * ex
-   * OnSomeUpdate(){};
-   *
-   * REL::Relocation<std::uintptr_t> OnSome_Update_Hook{ REL::ID(XXXXX), 0xXX
-   * };
-   *
-   * auto& trampoline = SKSE::GetTrampoline();
-   * _OnSomeFunction = trampoline.write_call<5>(OnSome_Update_Hook.address(),
-   * OnSomeUpdate);
-   */
-  void Attach(GumInvocationListener* listener, int id, _ExampleHookId hookId)
-  {
-    REL::Relocation<std::uintptr_t> func{ REL::ID(id) }; // not sure
-    int r = gum_interceptor_attach(interceptor, (void*)func.address(),
-                                   listener, GSIZE_TO_POINTER(hookId));
+  uint32_t selfId = 0;
 
-    if (GUM_ATTACH_OK != r) {
-      char buf[1025];
-      sprintf_s(buf, "Interceptor failed with %d for hook %d", int(r),
-                int(hookId));
-      MessageBox(0, buf, "Error", MB_ICONERROR);
-      return;
+  auto policy = vm->GetObjectHandlePolicy();
+  if (policy) {
+    if (auto actor =
+          policy->GetObjectForHandle(RE::FormType::ActorCharacter, handle)) {
+      selfId = actor->GetFormID();
+    }
+    if (auto refr =
+          policy->GetObjectForHandle(RE::FormType::Reference, handle)) {
+      selfId = refr->GetFormID();
     }
   }
 
-private:
-  GumInterceptor* const interceptor;
-};
+  auto eventNameStr = std::string(*eventName);
+  EventsApi::SendPapyrusEventEnter(selfId, eventNameStr);
+
+  auto blockEvents = TESModPlatform::GetPapyrusEventsBlocked();
+  if (blockEvents && strcmp(*eventName, "OnUpdate") != 0 && vm) {
+    vm->attachedScriptsLock.Lock();
+    auto it = vm->attachedScripts.find(handle);
+
+    if (it != vm->attachedScripts.end()) {
+      auto& scripts = it->second;
+
+      for (size_t i = 0; i < scripts.size(); i++) {
+        auto script = scripts[i].get();
+        auto info = script->GetTypeInfo();
+        auto name = info->GetName();
+
+        const char* skyui_name = "SKI_"; // start skyui object name
+        if (strlen(name) >= 4 && name[0] == skyui_name[0] &&
+            name[1] == skyui_name[1] && name[2] == skyui_name[2] &&
+            name[3] == skyui_name[3]) {
+          blockEvents = false;
+          break;
+        }
+      }
+    }
+
+    vm->attachedScriptsLock.Unlock();
+  }
+
+  if (blockEvents) {
+    static const auto fsEmpty = new FixedString("");
+    gum_invocation_context_replace_nth_argument(ic, 2, fsEmpty);
+  }
 }
 
-void SetupFridaHooks()
+void OnSendEventLeave(GumInvocationContext* ic)
 {
-  GumInterceptor* interceptor;
-
-  gum_init_embedded();
-
-  InterceptorWrapper w(gum_interceptor_obtain());
-  auto listener =
-    (GumInvocationListener*)g_object_new(EXAMPLE_TYPE_LISTENER, NULL);
-
-  /**
-   * This now (hopefully) works based of REL::ID instead of offset
-   */
-
-  // 60F240@1.5.97 | 6374F0@1.6.318
-  w.Attach(listener, 38048, HOOK_SEND_ANIMATION_EVENT);
-  // 5D27A0@1.5.97 | 5F6E20@1.6.318
-  w.Attach(listener, 37279, DRAW_SHEATHE_WEAPON_ACTOR);
-  // 6CF690@1.5.97 | 6F77C0@1.6.318
-  w.Attach(listener, 41235, DRAW_SHEATHE_WEAPON_PC);
-  // 693110@1.5.97 | 6BADD0@1.6.318
-  w.Attach(listener, 40255, QUEUE_NINODE_UPDATE);
-  // 3DB420@1.5.97 | 3F3750@1.6.318
-  w.Attach(listener, 27040, APPLY_MASKS_TO_RENDER_TARGET);
-  // 51E7F0@1.5.97 | 537F90@1.6.318
-  w.Attach(listener, 33632, RENDER_CURSOR_MENU);
-  // 125A700@1.5.97 | 1383330@1.6.318
-  w.Attach(listener, 104800, SEND_EVENT);
-  // 125AAB0@1.5.97 | 1383680@1.6.318
-  w.Attach(listener, 104801, SEND_EVENT_ALL);
-  w.Attach(listener, 51110, CONSOLE_VPRINT);
+  EventsApi::SendPapyrusEventLeave();
 }
 
+void InstallSendEventHook()
+{
+  auto hook = new Frida::Hook(OnSendEventEnter, OnSendEventLeave);
+  REL::Relocation<std::uintptr_t> target{ REL::ID(104800) };
+  Frida::HookHandler::GetSingleton()->Install(Frida::HookID::SEND_EVENT,
+                                              target.address(), hook);
+}
+
+/**
+ *  Draw Sheathe Weapon PC hook
+ */
+void OnDrawSheatheWeaponPcEnter(GumInvocationContext* ic)
+{
+  auto refr =
+    ic->cpu_context->rcx ? (RE::Actor*)(ic->cpu_context->rcx) : nullptr;
+  uint32_t formId = refr ? refr->formID : 0;
+
+  union
+  {
+    size_t draw;
+    uint8_t byte[8];
+  };
+
+  draw = (size_t)gum_invocation_context_get_nth_argument(ic, 1);
+
+  auto falseValue = gpointer(*byte ? draw - 1 : draw);
+  auto trueValue = gpointer(*byte ? draw : draw + 1);
+
+  auto mode = TESModPlatform::GetWeapDrawnMode(formId);
+  if (mode == TESModPlatform::WEAP_DRAWN_MODE_ALWAYS_TRUE) {
+    gum_invocation_context_replace_nth_argument(ic, 1, trueValue);
+  } else if (mode == TESModPlatform::WEAP_DRAWN_MODE_ALWAYS_FALSE) {
+    gum_invocation_context_replace_nth_argument(ic, 1, falseValue);
+  }
+}
+
+void InstallDrawSheatheWeaponPcHook()
+{
+  auto hook = new Frida::Hook(OnDrawSheatheWeaponPcEnter, nullptr);
+  REL::Relocation<std::uintptr_t> target{ REL::ID(41235) };
+  Frida::HookHandler::GetSingleton()->Install(
+    Frida::HookID::DRAW_SHEATHE_WEAPON_PC, target.address(), hook);
+}
+
+/**
+ * Draw Sheathe Weapon Actor hook
+ */
+void OnDrawSheatheWeaponActorEnter(GumInvocationContext* ic)
+{
+  auto refr =
+    ic->cpu_context->rcx ? (RE::Actor*)(ic->cpu_context->rcx) : nullptr;
+  uint32_t formId = refr ? refr->formID : 0;
+
+  auto draw = (uint32_t*)gum_invocation_context_get_nth_argument(ic, 1);
+
+  auto mode = TESModPlatform::GetWeapDrawnMode(formId);
+  if (mode == TESModPlatform::WEAP_DRAWN_MODE_ALWAYS_TRUE) {
+    gum_invocation_context_replace_nth_argument(ic, 1, gpointer(1));
+  } else if (mode == TESModPlatform::WEAP_DRAWN_MODE_ALWAYS_FALSE) {
+    gum_invocation_context_replace_nth_argument(ic, 1, gpointer(0));
+  }
+}
+
+void InstallDrawSheatheWeaponActorHook()
+{
+  auto hook = new Frida::Hook(OnDrawSheatheWeaponActorEnter, nullptr);
+  REL::Relocation<std::uintptr_t> target{ REL::ID(37279) };
+  Frida::HookHandler::GetSingleton()->Install(
+    Frida::HookID::DRAW_SHEATHE_WEAPON_ACTOR, target.address(), hook);
+}
+
+/**
+ * Send Animation Event hook
+ */
+void OnSendAnimationEventEnter(GumInvocationContext* ic)
+{
+  auto refr = ic->cpu_context->rcx
+    ? (RE::TESObjectREFR*)(ic->cpu_context->rcx - 0x38)
+    : nullptr;
+  uint32_t formId = refr ? refr->formID : 0;
+
+  constexpr int argIdx = 1;
+  auto animEventName =
+    (char**)gum_invocation_context_get_nth_argument(ic, argIdx);
+
+  if (!refr || !animEventName)
+    return;
+
+  std::string str = *animEventName;
+  EventsApi::SendAnimationEventEnter(formId, str);
+  if (str != *animEventName) {
+    auto fs =
+      const_cast<RE::BSFixedString*>(&StringHolder::ThreadSingleton()[str]);
+    auto newAnimEventName = reinterpret_cast<char**>(fs);
+    gum_invocation_context_replace_nth_argument(ic, argIdx, newAnimEventName);
+  }
+}
+
+void OnSendAnimationEventLeave(GumInvocationContext* ic)
+{
+  bool res = !!gum_invocation_context_get_return_value(ic);
+  EventsApi::SendAnimationEventLeave(res);
+}
+
+void InstallSendAnimationEventHook()
+{
+  auto hook =
+    new Frida::Hook(OnSendAnimationEventEnter, OnSendAnimationEventLeave);
+  REL::Relocation<std::uintptr_t> target{ REL::ID(38048) };
+  Frida::HookHandler::GetSingleton()->Install(
+    Frida::HookID::HOOK_SEND_ANIMATION_EVENT, target.address(), hook);
+}
+
+/**
+ * Queue Ninode Update hook
+ */
 thread_local uint32_t g_queueNiNodeActorId = 0;
-thread_local void* g_prevMainMenuView = nullptr;
 
-bool g_allowHideMainMenu = true;
-
-static void* GetMenuByName(std::string_view name)
+void OnQueueNinodeUpdateEnter(GumInvocationContext* ic)
 {
-  if (auto ui = RE::UI::GetSingleton())
-    return (void*)ui->GetMenu(name).get();
-  return nullptr;
+  auto refr = ic->cpu_context->rcx ? (RE::TESObjectREFR*)(ic->cpu_context->rcx)
+                                   : nullptr;
+
+  uint32_t id = refr ? refr->formID : 0;
+
+  g_queueNiNodeActorId = id;
 }
 
-static void example_listener_on_enter(GumInvocationListener* listener,
-                                      GumInvocationContext* ic)
+void InstallQueueNinodeUpdateHook()
 {
-  ExampleListener* self = EXAMPLE_LISTENER(listener);
-  auto hook_id = gum_invocation_context_get_listener_function_data(ic);
+  auto hook = new Frida::Hook(OnQueueNinodeUpdateEnter, nullptr);
+  REL::Relocation<std::uintptr_t> target{ REL::ID(40255) };
+  Frida::HookHandler::GetSingleton()->Install(
+    Frida::HookID::QUEUE_NINODE_UPDATE, target.address(), hook);
+}
 
-  auto _ic = (_GumInvocationContext*)ic;
-
-  switch ((size_t)hook_id) {
-    case CONSOLE_VPRINT: {
-      char* refr =
-        _ic->cpu_context->rdx ? (char*)_ic->cpu_context->rdx : nullptr;
-
-      if (!refr) {
-        return;
-      }
-
-      EventsApi::SendConsoleMsgEvent(refr);
-
-      break;
+/**
+ * Apply Masks To Render Targets hook
+ */
+void OnApplyMasksToRenderTargetsEnter(GumInvocationContext* ic)
+{
+  if (g_queueNiNodeActorId > 0) {
+    auto tints = TESModPlatform::GetTintsFor(g_queueNiNodeActorId);
+    if (tints) {
+      gum_invocation_context_replace_nth_argument(ic, 0, tints.get());
     }
-    case SEND_EVENT: {
-      int argIdx = 2;
+  }
 
-      auto eventName =
-        (char**)gum_invocation_context_get_nth_argument(ic, argIdx);
+  g_queueNiNodeActorId = 0;
+}
 
-      auto handle =
-        (RE::VMHandle)gum_invocation_context_get_nth_argument(ic, 1);
-      auto vm = VM::GetSingleton();
-      bool blockEvents = TESModPlatform::GetPapyrusEventsBlocked();
+void InstallApplyMasksToRenderTargetsHook()
+{
+  auto hook = new Frida::Hook(OnApplyMasksToRenderTargetsEnter, nullptr);
+  REL::Relocation<std::uintptr_t> target{ REL::ID(27040) };
+  Frida::HookHandler::GetSingleton()->Install(
+    Frida::HookID::APPLY_MASKS_TO_RENDER_TARGET, target.address(), hook);
+}
 
-      uint32_t selfId = 0;
+/**
+ * Render Cursor Menu hook
+ */
+bool g_allowHideCursorMenu = true;
+bool g_transparentCursor = false;
 
-      auto policy = vm->GetObjectHandlePolicy();
-      if (policy) {
-        if (auto actor = policy->GetObjectForHandle(
-              RE::FormType::ActorCharacter, handle)) {
-          selfId = actor->GetFormID();
-        }
-        if (auto refr =
-              policy->GetObjectForHandle(RE::FormType::Reference, handle)) {
-          selfId = refr->GetFormID();
-        }
+void OnRenderCursorMenuEnter(GumInvocationContext* ic)
+{
+  auto menu = FridaHooksUtils::GetMenuByName(RE::CursorMenu::MENU_NAME);
+  auto this_ = (int64_t*)ic->cpu_context->rcx;
+  if (!this_ || !g_allowHideCursorMenu || this_ != menu)
+    return;
+
+  auto& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
+  auto& focusFlag = CEFUtils::DInputHook::ChromeFocus();
+  if (visibleFlag && focusFlag) {
+    if (!g_transparentCursor) {
+      if (FridaHooksUtils::SetMenuNumberVariable(
+            RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 0)) {
+        g_transparentCursor = true;
       }
-
-      std::string eventNameStr = *eventName;
-      EventsApi::SendPapyrusEventEnter(selfId, eventNameStr);
-
-      if (strcmp(*eventName, "OnUpdate") != 0 && vm) {
-        vm->attachedScriptsLock.Lock();
-        auto it = vm->attachedScripts.find(handle);
-
-        if (it != vm->attachedScripts.end()) {
-          auto& scripts = it->second;
-
-          for (size_t i = 0; i < scripts.size(); i++) {
-            auto script = scripts[i].get();
-            auto info = script->GetTypeInfo();
-            auto name = info->GetName();
-
-            const char* skyui_name = "SKI_"; // start skyui object name
-
-            // RE::ConsoleLog::GetSingleton()->Print(name);
-
-            if (strlen(name) >= 4 && name[0] == skyui_name[0] &&
-                name[1] == skyui_name[1] && name[2] == skyui_name[2] &&
-                name[3] == skyui_name[3]) {
-              blockEvents = false;
-              break;
-            }
-          }
-        }
-
-        vm->attachedScriptsLock.Unlock();
-      }
-
-      if (blockEvents) {
-        static const auto fsEmpty = new FixedString("");
-        gum_invocation_context_replace_nth_argument(ic, argIdx, fsEmpty);
-      }
-      break;
     }
-    case SEND_EVENT_ALL:
-      if (auto c = RE::ConsoleLog::GetSingleton())
-        c->Print("SendEventAll");
-      break;
-    case DRAW_SHEATHE_WEAPON_PC: {
-      auto refr =
-        _ic->cpu_context->rcx ? (RE::Actor*)(_ic->cpu_context->rcx) : nullptr;
-      uint32_t formId = refr ? refr->formID : 0;
-
-      union
-      {
-        size_t draw;
-        uint8_t byte[8];
-      };
-
-      draw = (size_t)gum_invocation_context_get_nth_argument(ic, 1);
-
-      auto falseValue = gpointer(*byte ? draw - 1 : draw);
-      auto trueValue = gpointer(*byte ? draw : draw + 1);
-
-      auto mode = TESModPlatform::GetWeapDrawnMode(formId);
-      if (mode == TESModPlatform::WEAP_DRAWN_MODE_ALWAYS_TRUE) {
-        gum_invocation_context_replace_nth_argument(ic, 1, trueValue);
-      } else if (mode == TESModPlatform::WEAP_DRAWN_MODE_ALWAYS_FALSE) {
-        gum_invocation_context_replace_nth_argument(ic, 1, falseValue);
+  } else {
+    if (g_transparentCursor) {
+      if (FridaHooksUtils::SetMenuNumberVariable(
+            RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 100)) {
+        g_transparentCursor = false;
       }
-      break;
-    }
-    case DRAW_SHEATHE_WEAPON_ACTOR: {
-      auto refr =
-        _ic->cpu_context->rcx ? (RE::Actor*)(_ic->cpu_context->rcx) : nullptr;
-      uint32_t formId = refr ? refr->formID : 0;
-
-      auto draw = (uint32_t*)gum_invocation_context_get_nth_argument(ic, 1);
-
-      auto mode = TESModPlatform::GetWeapDrawnMode(formId);
-      if (mode == TESModPlatform::WEAP_DRAWN_MODE_ALWAYS_TRUE) {
-        gum_invocation_context_replace_nth_argument(ic, 1, gpointer(1));
-      } else if (mode == TESModPlatform::WEAP_DRAWN_MODE_ALWAYS_FALSE) {
-        gum_invocation_context_replace_nth_argument(ic, 1, gpointer(0));
-      }
-      break;
-    }
-    case HOOK_SEND_ANIMATION_EVENT: {
-      auto refr = _ic->cpu_context->rcx
-        ? (RE::TESObjectREFR*)(_ic->cpu_context->rcx - 0x38)
-        : nullptr;
-      uint32_t formId = refr ? refr->formID : 0;
-
-      constexpr int argIdx = 1;
-      auto animEventName =
-        (char**)gum_invocation_context_get_nth_argument(ic, argIdx);
-
-      if (!refr || !animEventName)
-        break;
-
-      std::string str = *animEventName;
-      EventsApi::SendAnimationEventEnter(formId, str);
-      if (str != *animEventName) {
-        auto fs =
-          const_cast<FixedString*>(&StringHolder::ThreadSingleton()[str]);
-        auto newAnimEventName = reinterpret_cast<char**>(fs);
-        gum_invocation_context_replace_nth_argument(ic, argIdx,
-                                                    newAnimEventName);
-      }
-      break;
-    }
-    case QUEUE_NINODE_UPDATE: {
-      auto refr = _ic->cpu_context->rcx
-        ? (RE::TESObjectREFR*)(_ic->cpu_context->rcx)
-        : nullptr;
-
-      uint32_t id = refr ? refr->formID : 0;
-
-      g_queueNiNodeActorId = id;
-      break;
-    }
-    case APPLY_MASKS_TO_RENDER_TARGET: {
-      if (g_queueNiNodeActorId > 0) {
-        auto tints = TESModPlatform::GetTintsFor(g_queueNiNodeActorId);
-        if (tints) {
-          gum_invocation_context_replace_nth_argument(ic, 0, tints.get());
-        }
-      }
-
-      g_queueNiNodeActorId = 0;
-      break;
-    }
-    case RENDER_CURSOR_MENU: {
-      auto menu = GetMenuByName(RE::CursorMenu::MENU_NAME);
-      auto this_ = (int64_t*)_ic->cpu_context->rcx;
-      if (g_allowHideMainMenu) {
-        if (this_)
-          if (menu == this_) {
-            auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-            g_prevMainMenuView = *viewPtr;
-            *viewPtr = nullptr;
-          }
-      }
-      break;
     }
   }
 }
 
-static void example_listener_on_leave(GumInvocationListener* listener,
-                                      GumInvocationContext* ic)
+void InstallRenderCursorMenuHook()
 {
-  ExampleListener* self = EXAMPLE_LISTENER(listener);
-  auto hook_id = gum_invocation_context_get_listener_function_data(ic);
-
-  switch ((size_t)hook_id) {
-    case HOOK_SEND_ANIMATION_EVENT: {
-      bool res = !!gum_invocation_context_get_return_value(ic);
-      EventsApi::SendAnimationEventLeave(res);
-      break;
-    }
-    case RENDER_CURSOR_MENU: {
-      auto _ic = (_GumInvocationContext*)ic;
-
-      auto menu = GetMenuByName(RE::CursorMenu::MENU_NAME);
-      auto this_ = (int64_t*)_ic->cpu_context->rcx;
-      auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-      bool renderHookInProgress = g_prevMainMenuView != nullptr;
-      if (renderHookInProgress)
-        if (this_)
-          if (menu == this_) {
-            *viewPtr = g_prevMainMenuView;
-            g_prevMainMenuView = nullptr;
-          }
-      break;
-    }
-    case SEND_EVENT: {
-      EventsApi::SendPapyrusEventLeave();
-      break;
-    }
-  }
+  auto hook = new Frida::Hook(OnRenderCursorMenuEnter, nullptr);
+  REL::Relocation<std::uintptr_t> target{ REL::ID(33632) };
+  Frida::HookHandler::GetSingleton()->Install(
+    Frida::HookID::RENDER_CURSOR_MENU, target.address(), hook);
 }
 
-static void example_listener_class_init(ExampleListenerClass* klass)
+void Frida::InstallHooks()
 {
-  (void)EXAMPLE_IS_LISTENER;
-#ifndef _MSC_VER
-  (void)glib_autoptr_cleanup_ExampleListener;
-#endif
-}
+  InstallConsoleVPrintHook();
+  InstallSendEventHook();
+  InstallDrawSheatheWeaponPcHook();
+  InstallDrawSheatheWeaponActorHook();
+  InstallSendAnimationEventHook();
+  InstallQueueNinodeUpdateHook();
+  InstallRenderCursorMenuHook();
 
-static void example_listener_iface_init(gpointer g_iface, gpointer iface_data)
-{
-  auto iface = (GumInvocationListenerInterface*)g_iface;
-
-  iface->on_enter = example_listener_on_enter;
-  iface->on_leave = example_listener_on_leave;
-}
-
-static void example_listener_init(ExampleListener* self)
-{
+  logger::info("Frida hooks installed.");
 }

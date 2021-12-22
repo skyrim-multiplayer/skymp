@@ -2,12 +2,14 @@
 #include "DumpFunctions.h"
 #include "EventsApi.h"
 #include "FlowManager.h"
+#include "FridaHooks.h"
+#include "Hooks.h"
 #include "InputConverter.h"
 #include "PapyrusTESModPlatform.h"
 #include "SkyrimPlatform.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
-#include "Tick.h"
+#include "TickHandler.h"
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
@@ -17,7 +19,6 @@
 #include <reverse/Entry.hpp>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
-
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -96,21 +97,22 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   InitLog();
 
-  logger::info("loaded");
+  logger::info("Loading plugin.");
 
   SKSE::Init(skse);
+  SKSE::AllocTrampoline(64);
 
   const auto papyrusInterface = SKSE::GetPapyrusInterface();
   if (!papyrusInterface) {
     logger::critical("QueryInterface failed for PapyrusInterface");
     return false;
   }
-
-  SetupFridaHooks();
-
-  Tick::GetSingleton()->Update();
-
   papyrusInterface->Register(TESModPlatform::Register);
+
+  Hooks::Install();
+  Frida::InstallHooks();
+  TickHandler::GetSingleton()->Update();
+
   TESModPlatform::onPapyrusUpdate = OnUpdate;
 
   return true;
@@ -179,8 +181,8 @@ public:
   // this isn't working tight now
   MyInputListener()
   {
-    pCursorX = (float*)(REL::Module::get().base() + 0x2F6C104);
-    pCursorY = (float*)(REL::Module::get().base() + 0x2F6C108);
+    pCursorX = &MenuScreenData::GetSingleton()->mousePos.x;
+    pCursorY = &MenuScreenData::GetSingleton()->mousePos.y;
     vkCodeDownDur.fill(0);
   }
 
