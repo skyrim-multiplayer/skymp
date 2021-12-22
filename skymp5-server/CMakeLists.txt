@@ -87,7 +87,7 @@ apply_default_settings(TARGETS ${PROJECT_NAME})
 # On Windows create launch_server.bat in build/dist/server
 # This .bat file is for launching the server
 if(WIN32)
-  set(bat "npx yarn\n")
+  set(bat "set NODE_PATH=${SKYMP5_SERVER_SOURCE_DIR}/node_modules\n")
   set(bat "${bat}node dist_back/index.js\n")
   set(bat "${bat}pause\n")
 
