@@ -1,13 +1,15 @@
 import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
 import { FunctionInfo } from '../utils/functionInfo';
-import { BrowserProperty } from './browserProperty';
 import { EvalProperty } from './evalProperty';
+import { refreshWidgetsJs } from './refreshWidgets';
 
-type ChatValue = { show: boolean };
+type ChatValue = { show: boolean, refreshWidgets: string };
 type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean };
 
 declare const mp: Mp;
+declare const ctx: Ctx;
+declare const messageClientSide: string;
 
 export type ChatInput = { actorId: number; inputText: string };
 export type ChatInputHandler = (input: ChatInput) => void;
@@ -17,9 +19,7 @@ export class ChatProperty {
     mp.makeProperty('chat', {
       isVisibleByOwner: true,
       isVisibleByNeighbors: false,
-      updateOwner: new FunctionInfo(this.clientsideUpdateOwner()).getText({
-        refreshWidgets: ChatProperty.refreshWidgets,
-      }),
+      updateOwner: new FunctionInfo(this.clientsideUpdateOwner()).getText(),
       updateNeighbor: '',
     });
     mp.makeEventSource('_onChatInput', new FunctionInfo(this.clientsideInitChatInput()).getText());
@@ -36,16 +36,15 @@ export class ChatProperty {
 
   public static showChat(actorId: number, show = true) {
     const value: ChatValue = mp.get(actorId, 'chat') || { show: false };
-    if (value.show !== show) {
-      value.show = show;
-      mp.set(actorId, 'chat', value);
-    }
+    value.show = show;
+    value.refreshWidgets = refreshWidgetsJs;
+    mp.set(actorId, 'chat', value);
   }
 
   public static sendChatMessage(actorId: number, message: string) {
     EvalProperty.eval(
       actorId,
-      (ctx: Ctx, refreshWidgets: string) => {
+      () => {
         let src = '';
         const htmlEscapes: Record<string, string> = {
           '"': '\\"',
@@ -53,13 +52,13 @@ export class ChatProperty {
           '\\': '\\\\',
         };
         const htmlEscaper = /[&<>"'\\\/]/g;
-        const msg = message.replace(htmlEscaper, (match) => htmlEscapes[match]);
+        const msg = messageClientSide.replace(htmlEscaper, (match) => htmlEscapes[match]);
         src += `window.chatMessages = window.chatMessages || [];`;
         src += `window.chatMessages.push("${msg}");`;
-        src += refreshWidgets;
+        src += ctx.value.refreshWidgets;
         ctx.sp.browser.executeJavaScript(src);
       },
-      { message, refreshWidgets: ChatProperty.refreshWidgets }
+      { messageClientSide: message }
     );
   }
 
@@ -68,7 +67,7 @@ export class ChatProperty {
   }
 
   private static clientsideUpdateOwner() {
-    return (ctx: Ctx<ChatState, ChatValue>, refreshWidgets: string) => {
+    return () => {
       const isInputHidden = !ctx.sp.browser.isFocused() || (ctx.get && ctx.get('dialog'));
 
       if (ctx.value === ctx.state.chatPrevValue && isInputHidden === ctx.state.chatIsInputHidden) {
@@ -80,7 +79,7 @@ export class ChatProperty {
       if (!ctx.value || !ctx.value.show) {
         let src = '';
         src += 'window.chat = [];';
-        src += refreshWidgets;
+        src += ctx.value.refreshWidgets;
         return ctx.sp.browser.executeJavaScript(src);
       }
 
@@ -91,13 +90,13 @@ export class ChatProperty {
       src += 'window.chat[0].messages = window.chatMessages;';
       src += 'window.chat[0].send = (text) => window.skyrimPlatform.sendMessage("chatInput", text);';
       src += `window.chat[0].isInputHidden = ${isInputHidden};`;
-      src += refreshWidgets;
+      src += ctx.value.refreshWidgets;
       ctx.sp.browser.executeJavaScript(src);
     };
   }
 
   private static clientsideInitChatInput() {
-    return (ctx: Ctx) => {
+    return () => {
       ctx.sp.on('browserMessage', (event) => {
         if (event.arguments[0] === 'chatInput') {
           ctx.sendEvent(...event.arguments);
@@ -106,8 +105,5 @@ export class ChatProperty {
     };
   }
 
-  private static chatInputHandler: ChatInputHandler = () => {};
-
-  // Please keep up-to-date with impl in dialogProperty.ts
-  private static refreshWidgets = 'window.skyrimPlatform.widgets.set((window.chat || []).concat(window.dialog || []));';
+  private static chatInputHandler: ChatInputHandler = () => { };
 }
