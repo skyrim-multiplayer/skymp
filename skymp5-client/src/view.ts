@@ -767,10 +767,10 @@ export class WorldView implements View<WorldModel> {
   update(model: WorldModel): void {
     if (!this.allowUpdate) return;
 
-    // Skip 80% of updates
+    // Skip 25% of updates
     this.counter = this.counter + 1;
     if (this.counter >= 1000) this.counter = 0;
-    if (this.counter % 5 !== 0) return;
+    if (this.counter % 4 === 0) return;
 
     this.formViews.resize(model.forms.length);
 
