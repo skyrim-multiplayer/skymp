@@ -69,7 +69,7 @@ ConsoleComand FillCmdInfo(Script* cmd)
   cmdInfo.longName = cmd->functionName;
   cmdInfo.shortName = cmd->shortName;
   cmdInfo.numArgs = cmd->numParams;
-  cmdInfo.execute = cmd->executeFunction; // ??
+  cmdInfo.execute = cmd->executeFunction;
   cmdInfo.myIter = cmd;
   cmdInfo.myOriginalData = *cmd;
   cmdInfo.jsExecute = JsValue::Function(
@@ -163,10 +163,11 @@ ParseCommandResult ParseCommand(std::string comand)
   while ((pos = comand.find(delimiterSpase)) != std::string::npos) {
 
     token = comand.substr(0, pos);
-    if (res.commandName.empty())
+    if (res.commandName.empty()) {
       res.commandName = token;
-    else
+    } else {
       res.params.push_back(token);
+    }
     comand.erase(0, pos + delimiterSpase.length());
   }
 

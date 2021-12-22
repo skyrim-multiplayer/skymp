@@ -320,13 +320,13 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       actorLocal = actorLocal == actorRefr ? actorLocal : nullptr;
       obj.SetProperty("actor", CreateObject("ObjectReference", actorLocal));
 
-      obj.SetProperty("isCombat",
-                      JsValue::Bool(state.any(
-                        RE::ACTOR_COMBAT_STATE::kCombat))); // ?? any or all
+      obj.SetProperty(
+        "isCombat",
+        JsValue::Bool(state.get() == RE::ACTOR_COMBAT_STATE::kCombat));
 
       obj.SetProperty(
         "isSearching",
-        JsValue::Bool(state.any(RE::ACTOR_COMBAT_STATE::kCombat))); // ??
+        JsValue::Bool(state.get() == RE::ACTOR_COMBAT_STATE::kSearching));
 
       EventsApi::SendEvent("combatState", { JsValue::Undefined(), obj });
     });

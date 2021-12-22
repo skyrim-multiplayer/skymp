@@ -14,10 +14,10 @@ JsValue CameraApi::WorldPointToScreenPoint(const JsFunctionArguments& args)
 
   RE::NiCamera* niCamera = nullptr;
   for (uint16_t i = 0; i < n; ++i) {
-    auto niAvObject = camRoot->children[i]; // ??
+    auto niAvObject = camRoot->children[i];
     if (!niAvObject)
       continue;
-    niCamera = netimmerse_cast<RE::NiCamera*>(niAvObject.get()); // ??
+    niCamera = netimmerse_cast<RE::NiCamera*>(niAvObject.get());
     if (niCamera)
       break;
   }

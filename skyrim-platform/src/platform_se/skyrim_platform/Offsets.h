@@ -18,12 +18,10 @@ inline RE::ObjectRefHandle GetInvalidRefHandle()
 inline float Unknown(void* unk1, void* unk2, RE::TESObjectREFR* obj)
 {
   using func_t = decltype(&Unknown);
-  // 9936E0@1.5.97 | 09BB7B0@1.6.318
   REL::Relocation<func_t> func{ REL::ID(56151) };
   return func(unk1, unk2, obj);
 }
 
-// 996340@1.5.97
 inline void PushActorAway(void* vm, StackID stackId, RE::Actor* self,
                           RE::Actor* targetActor, float magnitude)
 {
