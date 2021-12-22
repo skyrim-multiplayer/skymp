@@ -29,7 +29,7 @@ static void invocation_listener_on_enter(GumInvocationListener* listener,
     try {
       func(ic);
     } catch (const std::exception& e) {
-      logger::critical("Error executing hook leave function: id {:X} error {}",
+      logger::critical("Error executing hook enter function: id {:X} error {}",
                        id, e.what());
     }
 }
