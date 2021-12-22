@@ -20,7 +20,7 @@ BEGIN
 			VALUE "FileDescription", "@PROJECT_NAME@"
 			VALUE "FileVersion", "@PROJECT_VERSION@.0"
 			VALUE "InternalName", "@PROJECT_NAME@"
-			VALUE "LegalCopyright", "MIT License"
+			VALUE "LegalCopyright", "GPLv3 License"
 			VALUE "ProductName", "@PROJECT_NAME@"
 			VALUE "ProductVersion", "@PROJECT_VERSION@.0"
 		END
