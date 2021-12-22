@@ -6,7 +6,6 @@
 #include <ui/MyRenderHandler.h>
 #include <ui/ProcessMessageListener.h>
 
-
 using CEFUtils::DX11RenderHandler;
 using CEFUtils::MyRenderHandler;
 
@@ -36,8 +35,10 @@ private:
 };
 
 OverlayService::OverlayService(
-  std::shared_ptr<ProcessMessageListener> onProcessMessage_)
+  std::shared_ptr<ProcessMessageListener> onProcessMessage_,
+  const ObtainTextsToDrawFunction& obtainTextsToDraw_)
   : onProcessMessage(onProcessMessage_)
+  , obtainTextsToDraw(obtainTextsToDraw_)
 {
 }
 
@@ -55,7 +56,7 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
 
 void OverlayService::Render() const
 {
-  overlay->GetClient()->Render();
+  overlay->GetClient()->Render(obtainTextsToDraw);
 }
 
 void OverlayService::Reset() const

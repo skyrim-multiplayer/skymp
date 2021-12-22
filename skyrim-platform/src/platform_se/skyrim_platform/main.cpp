@@ -19,8 +19,15 @@
 #include <reverse/Entry.hpp>
 #include <ui/MyChromiumApp.h>
 #include <ui/ProcessMessageListener.h>
+#include <ui/TextToDraw.h>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+
+void GetTextsToDraw(TextToDrawCallback callback)
+{
+  callback(TextToDraw());
+  callback(TextToDraw());
+}
 
 void SetupFridaHooks();
 
@@ -178,7 +185,6 @@ class MyInputListener : public IInputListener
 public:
   bool IsBrowserFocused() { return CEFUtils::DInputHook::ChromeFocus(); }
 
-  // this isn't working tight now
   MyInputListener()
   {
     pCursorX = &MenuScreenData::GetSingleton()->mousePos.x;
@@ -467,7 +473,10 @@ public:
 
     auto onProcessMessage = std::make_shared<ProcessMessageListenerImpl>();
 
-    overlayService = std::make_shared<OverlayService>(onProcessMessage);
+    ObtainTextsToDrawFunction obtainTextsToDraw = GetTextsToDraw;
+
+    overlayService =
+      std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
 

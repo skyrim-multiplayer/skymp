@@ -16,6 +16,7 @@
 #include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
 #include "ThreadPoolWrapper.h"
+#include "Win32Api.h"
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -173,12 +174,8 @@ private:
     s.resize(s.size() - strlen("-settings.txt"));
 
     auto pluginName = std::filesystem::path(s).string();
-
-    // Why do we treat it as an exception actually?
-    std::string what =
-      "Found settings file: " + path.string() + " for plugin " + pluginName;
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-      .PrintException(what.data());
+    logger::info("Found settings file {} for plugin {}.", path.string(),
+                 pluginName);
 
     settingsByPluginName[pluginName] = ReadFile(path);
   }
@@ -211,6 +208,7 @@ private:
                            DevApi::Register(e, &engine, {}, GetFileDirs());
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
+                           Win32Api::Register(e);
                            InventoryApi::Register(e);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });

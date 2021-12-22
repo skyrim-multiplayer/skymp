@@ -84,43 +84,54 @@ Variable CallNative::AnySafeToVariable(const CallNative::AnySafe& v,
 }
 
 namespace {
+
+CallNative::ObjectPtr GetSingleObjectPtr(
+  const Variable& r, std::optional<const char*> className = std::nullopt)
+{
+  using namespace CallNative;
+  auto vmImpl = VM::GetSingleton();
+  if (!vmImpl) {
+    throw NullPointerException("vmImpl");
+  }
+
+  auto object = r.GetObject();
+  if (!object) {
+    return ObjectPtr();
+  }
+
+  auto policy = vmImpl->GetObjectHandlePolicy();
+
+  void* objPtr = nullptr;
+
+  for (int i = 0; i < static_cast<int>(RE::FormType::Max); ++i) {
+    if (policy->HandleIsType(i, object->handle)) {
+      objPtr = object->Resolve(i);
+      break;
+    }
+  }
+
+  if (objPtr) {
+    auto objectTypeInfo = r.varType.GetTypeInfo();
+    if (!objectTypeInfo) {
+      throw NullPointerException("objectTypeInfo");
+    }
+    return std::make_shared<Object>(
+      className.has_value() ? *className : objectTypeInfo->GetName(), objPtr);
+  } else {
+    return ObjectPtr();
+  }
+}
+
 CallNative::AnySafe VariableToAnySafe(
   const Variable& r, std::optional<const char*> className = std::nullopt)
 {
   using namespace CallNative;
 
-  auto vmImpl = VM::GetSingleton();
-  if (!vmImpl)
-    throw NullPointerException("vmImpl");
-
   switch (r.varType.GetUnmangledRawType()) {
     case TypeInfo::RawType::kNone:
       return ObjectPtr();
-    case TypeInfo::RawType::kObject: {
-      auto object = r.value.obj;
-      if (!object)
-        return ObjectPtr();
-
-      auto policy = vmImpl->GetObjectHandlePolicy();
-
-      void* objPtr = nullptr;
-
-      for (int i = 0; i < (int)RE::FormType::Max; ++i)
-        if (policy->HandleIsType(i, object->handle)) {
-          objPtr = object->Resolve(i);
-          break;
-        }
-
-      if (objPtr) {
-        auto objectTypeInfo = r.varType.GetTypeInfo();
-        if (!objectTypeInfo)
-          throw NullPointerException("objectTypeInfo");
-        return std::make_shared<Object>(
-          className.has_value() ? *className : objectTypeInfo->GetName(),
-          objPtr);
-      } else
-        return ObjectPtr();
-    }
+    case TypeInfo::RawType::kObject:
+      return GetSingleObjectPtr(r, className);
     case TypeInfo::RawType::kString:
       return (std::string)r.GetString().data();
     case TypeInfo::RawType::kInt:
@@ -130,13 +141,53 @@ CallNative::AnySafe VariableToAnySafe(
     case TypeInfo::RawType::kBool:
       return r.GetBool();
     case TypeInfo::RawType::kNoneArray:
-    case TypeInfo::RawType::kObjectArray:
-    case TypeInfo::RawType::kStringArray:
-    case TypeInfo::RawType::kIntArray:
-    case TypeInfo::RawType::kFloatArray:
-    case TypeInfo::RawType::kBoolArray:
       throw std::runtime_error(
-        "Functions with Array return type are not supported");
+        "Functions with NoneArray return type are not supported");
+    case TypeInfo::RawType::kObjectArray: {
+      auto array = r.GetArray();
+      std::vector<CallNative::ObjectPtr> out{};
+      out.reserve(array->size());
+      for (const auto& item : *array) {
+        out.push_back(GetSingleObjectPtr(item));
+      }
+      return out;
+    }
+    case TypeInfo::RawType::kStringArray: {
+      auto array = r.GetArray();
+      std::vector<std::string> out{};
+      out.reserve(array->size());
+      for (const auto& item : *array) {
+        out.push_back(item.GetString().data());
+      }
+      return out;
+    }
+    case TypeInfo::RawType::kIntArray: {
+      auto array = r.GetArray();
+      std::vector<double> out{};
+      out.reserve(array->size());
+      for (int i = 0; i < array->size(); ++i) {
+        out.push_back(static_cast<double>((*array)[i].GetSInt()));
+      }
+      return out;
+    }
+    case TypeInfo::RawType::kFloatArray: {
+      auto array = r.GetArray();
+      std::vector<double> out{};
+      out.reserve(array->size());
+      for (int i = 0; i < array->size(); ++i) {
+        out.push_back(static_cast<double>((*array)[i].GetFloat()));
+      }
+      return out;
+    }
+    case TypeInfo::RawType::kBoolArray: {
+      auto array = r.GetArray();
+      std::vector<bool> out{};
+      out.reserve(array->size());
+      for (const auto& item : *array) {
+        out.push_back(item.GetBool());
+      }
+      return out;
+    }
     default:
       throw std::runtime_error("Unknown function return type");
   }
