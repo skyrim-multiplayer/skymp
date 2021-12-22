@@ -767,9 +767,10 @@ export class WorldView implements View<WorldModel> {
   update(model: WorldModel): void {
     if (!this.allowUpdate) return;
 
-    // Skip 50% of updates
-    this.counter = !this.counter;
-    if (this.counter) return;
+    // Skip 80% of updates
+    this.counter = this.counter + 1;
+    if (this.counter >= 1000) this.counter = 0;
+    if (this.counter % 5 !== 0) return;
 
     this.formViews.resize(model.forms.length);
 
@@ -805,7 +806,7 @@ export class WorldView implements View<WorldModel> {
   private cloneFormViews = new FormViewArray();
   private allowUpdate = false;
   private pcWorldOrCell = 0;
-  private counter = false;
+  private counter = 0;
 }
 
 export const getViewFromStorage = (): WorldView | undefined => {
