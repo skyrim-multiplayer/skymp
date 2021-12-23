@@ -52,6 +52,8 @@ if(MSVC)
   add_executable(SkyrimPlatformCEF ${ui_process_src})
   target_link_libraries(SkyrimPlatformCEF PUBLIC core_library)
   target_link_libraries(SkyrimPlatformCEF PUBLIC cef)
+  # supress missing pdb warning for cef
+  target_link_options(SkyrimPlatformCEF PRIVATE "LINKER:-ignore:4099")
   set_target_properties(SkyrimPlatformCEF PROPERTIES WIN32_EXECUTABLE TRUE)
   set_target_properties(SkyrimPlatformCEF PROPERTIES SUFFIX ".exe.hidden")
 endif()
@@ -99,6 +101,8 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib)
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
+    # supress missing pdb warning for cef and frida
+    target_link_options(skyrim_platform PRIVATE "LINKER:-ignore:4099")
     apply_default_settings(TARGETS skyrim_platform)
     list(APPEND VCPKG_DEPENDENT skyrim_platform)
 
@@ -147,7 +151,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   apply_default_settings(TARGETS TSConverter)
   set_target_properties(TSConverter PROPERTIES CXX_STANDARD 20)
   list(APPEND VCPKG_DEPENDENT TSConverter)
-  
+
   set(CONVERT_FILES_DIR ${CMAKE_CURRENT_LIST_DIR}/codegen/convert-files/)
   list(APPEND CODEGEN_ARGS
     "${CONVERT_FILES_DIR}/FunctionsDump.txt"
@@ -156,7 +160,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
   add_custom_target(codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
   add_dependencies(codegen TSConverter)
-  
+
   # force "skyrim-platform" custom target to be built strictly after codegen
   list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
 
