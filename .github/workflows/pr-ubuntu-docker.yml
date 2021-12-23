@@ -62,10 +62,10 @@ jobs:
                 run: |
                     cd /src \
                     && ./build.sh --configure \
-                       -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                       -DCMAKE_BUILD_TYPE=RelWithDebInfo \
                        -DUNIT_DATA_DIR="/src/skyrim_data_files"
 
-          - name: Upload dist.tar.gz
+          - name: Upload compile_commands.json
             uses: actions/upload-artifact@v2
             with:
               name: compile_commands.json
