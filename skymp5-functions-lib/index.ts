@@ -9,16 +9,12 @@ import { PersistentStorage } from './src/utils/persistentStorage';
 import { Timer } from './src/utils/timer';
 
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
-	throw new TypeError(
-		`The argument with index ${index} has value (${JSON.stringify(
-			x
-		)}) that doesn't meet the requirements of ${expectedTypeName}`
-	);
+  throw new TypeError(`The argument with index ${index} has value (${JSON.stringify(x)}) that doesn't meet the requirements of ${expectedTypeName}`);
 };
 
 const getNumber = (args: PapyrusValue[], index: number): number => {
-	const x = args[index];
-	return typeof x === 'number' ? x : err(index, x, 'number');
+  const x = args[index];
+  return typeof x === 'number' ? x : err(index, x, 'number');
 };
 
 const randomInt = (mp: Mp, self: null, args: PapyrusValue[]): number => {
@@ -26,6 +22,37 @@ const randomInt = (mp: Mp, self: null, args: PapyrusValue[]): number => {
   const max = getNumber(args, 1);
   const randomInRangeBothInclusive = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
   return randomInRangeBothInclusive(min, max);
+};
+
+export const getForm = (mp: Mp, self: null, args: PapyrusValue[]): PapyrusObject | undefined => {
+  const formId = getNumber(args, 0);
+  try {
+    if (formId >= 0xff000000) {
+      mp.get(formId, 'type');
+      return {
+        desc: mp.getDescFromId(formId),
+        type: 'form',
+      };
+    }
+    const espm = mp.lookupEspmRecordById(formId);
+    if (!espm.record?.type) {
+      console.log(`ESPM Record by id ${formId.toString(16)} not found`);
+      return;
+    }
+    const obj: PapyrusObject = {
+      desc: mp.getDescFromId(formId),
+      type: ['REFR', 'ACHR'].includes(espm.record?.type) ? 'form' : 'espm',
+    };
+    return obj;
+  } catch (err) {
+    const regex = /Form with id.+doesn't exist/gm;
+    if (regex.exec(err as string) !== null) {
+      console.log(err);
+      return;
+    }
+    console.log(err);
+    throw err;
+  }
 };
 
 DialogProperty.init();
@@ -37,6 +64,8 @@ Timer.init();
 
 declare const mp: Mp;
 mp.registerPapyrusFunction('global', 'Utility', 'RandomInt', (self, args) => randomInt(mp, self, args));
+mp.registerPapyrusFunction('global', 'Game', 'GetForm', (self, args) => getForm(mp, self, args));
+mp.registerPapyrusFunction('global', 'Game', 'GetFormEx', (self, args) => getForm(mp, self, args));
 
 const config = mp.getServerSettings();
 
