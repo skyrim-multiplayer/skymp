@@ -4,7 +4,7 @@ import { FunctionInfo } from '../utils/functionInfo';
 import { EvalProperty } from './evalProperty';
 import { refreshWidgetsJs } from './refreshWidgets';
 
-type ChatValue = { show: boolean, refreshWidgets: string };
+type ChatValue = { show: boolean };
 type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean };
 
 declare const mp: Mp;
