@@ -10,6 +10,7 @@ type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean };
 declare const mp: Mp;
 declare const ctx: Ctx;
 declare const messageClientSide: string;
+declare const refreshWidgets: string;
 
 export type ChatInput = { actorId: number; inputText: string };
 export type ChatInputHandler = (input: ChatInput) => void;
@@ -19,7 +20,7 @@ export class ChatProperty {
     mp.makeProperty('chat', {
       isVisibleByOwner: true,
       isVisibleByNeighbors: false,
-      updateOwner: new FunctionInfo(this.clientsideUpdateOwner()).getText(),
+      updateOwner: new FunctionInfo(this.clientsideUpdateOwner()).getText({ refreshWidgets: refreshWidgetsJs }),
       updateNeighbor: '',
     });
     mp.makeEventSource('_onChatInput', new FunctionInfo(this.clientsideInitChatInput()).getText());
@@ -37,7 +38,6 @@ export class ChatProperty {
   public static showChat(actorId: number, show = true) {
     const value: ChatValue = mp.get(actorId, 'chat') || { show: false };
     value.show = show;
-    value.refreshWidgets = refreshWidgetsJs;
     mp.set(actorId, 'chat', value);
   }
 
@@ -55,10 +55,10 @@ export class ChatProperty {
         const msg = messageClientSide.replace(htmlEscaper, (match) => htmlEscapes[match]);
         src += `window.chatMessages = window.chatMessages || [];`;
         src += `window.chatMessages.push("${msg}");`;
-        src += ctx.value.refreshWidgets;
+        src += refreshWidgets;
         ctx.sp.browser.executeJavaScript(src);
       },
-      { messageClientSide: message }
+      { messageClientSide: message, refreshWidgets: refreshWidgetsJs }
     );
   }
 
@@ -79,7 +79,7 @@ export class ChatProperty {
       if (!ctx.value || !ctx.value.show) {
         let src = '';
         src += 'window.chat = [];';
-        src += ctx.value.refreshWidgets;
+        src += refreshWidgets;
         return ctx.sp.browser.executeJavaScript(src);
       }
 
@@ -90,7 +90,7 @@ export class ChatProperty {
       src += 'window.chat[0].messages = window.chatMessages;';
       src += 'window.chat[0].send = (text) => window.skyrimPlatform.sendMessage("chatInput", text);';
       src += `window.chat[0].isInputHidden = ${isInputHidden};`;
-      src += ctx.value.refreshWidgets;
+      src += refreshWidgets;
       ctx.sp.browser.executeJavaScript(src);
     };
   }
