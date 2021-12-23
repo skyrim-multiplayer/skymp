@@ -3,7 +3,8 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
-#include "ServerState.cpp"
+#include "MsgType.h"
+#include "ServerState.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 
