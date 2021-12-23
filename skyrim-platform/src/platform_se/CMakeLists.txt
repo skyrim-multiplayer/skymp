@@ -103,6 +103,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
     # supress missing pdb warning for cef and frida
     target_link_options(skyrim_platform PRIVATE "LINKER:-ignore:4099")
+    target_precompile_headers(skyrim_platform	PRIVATE	skyrim_platform/PCH.h)
     apply_default_settings(TARGETS skyrim_platform)
     list(APPEND VCPKG_DEPENDENT skyrim_platform)
 
