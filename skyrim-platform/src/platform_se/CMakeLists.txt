@@ -1,10 +1,6 @@
-if("${CMAKE_PROJECT_NAME}" STREQUAL "" OR "${CMAKE_PROJECT_NAME}" STREQUAL "platform_se")
-  if(MSVC)
-    set(CMAKE_SYSTEM_VERSION "10.0.17763.0" CACHE STRING INTERNAL FORCE)
-    set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION "10.0.17763.0" CACHE STRING INTERNAL FORCE)
-  endif()
-  project(platform_se)
-endif()
+project(platform_se	VERSION 2.4.0	LANGUAGES CXX)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc	@ONLY)
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/link_vcpkg_dependencies.cmake)
@@ -25,7 +21,7 @@ if(MSVC)
 
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
   set(tilted "${SKYRIM_PLATFORM_SOURCE_DIR}/src/tilted")
-  
+
   file(GLOB_RECURSE core_library_src "${tilted}/core_library/*")
   add_library(core_library STATIC ${core_library_src})
   target_include_directories(core_library PUBLIC "${tilted}/core_library")
@@ -94,10 +90,13 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   if(MSVC)
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
+    list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
+    list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
     add_library(skyrim_platform SHARED ${platform_src})
     set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
     target_include_directories(skyrim_platform PRIVATE "${third_party}")
-	target_include_directories(skyrim_platform PRIVATE "${tilted}")
+    target_include_directories(skyrim_platform PRIVATE "${tilted}")
+    target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib)
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
     apply_default_settings(TARGETS skyrim_platform)
@@ -118,7 +117,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
   add_papyrus_library_ck(
-    NAME TESModPlatformPsc 
+    NAME TESModPlatformPsc
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
     OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
     COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
