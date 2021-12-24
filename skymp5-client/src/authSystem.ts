@@ -4,7 +4,7 @@ import * as sp from "skyrimPlatform";
 import * as spe from "./skyrimPlatform.extensions";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
-import { AuthData, TokenAuthData } from "./authData";
+import { AuthGameData, LoginRegisterData, LoginResponseAuthData } from "./authModel";
 import { Transform } from "./movement";
 import { escapeJs, nameof } from "./utils";
 
@@ -15,7 +15,7 @@ const loginEventKey = "loginRequiredEvent";
 const loginWidgetInfoObjName = "loginWidgetInfo";
 const registerEventKey = "registerRequiredEvent";
 const registerWidgetInfoObjName = "registerWidgetInfo";
-const openGHEventKey = "openGithub";
+const openGitHubEventKey = "openGithub";
 const openPatreonEvetnKey = "openPatreon";
 
 /**
@@ -34,17 +34,21 @@ interface AuthServerValidationError {
   };
 }
 
-export type AuthCallback = (data: TokenAuthData) => void;
+export type AuthCallback = (data: AuthGameData) => void;
 
 const authListeners = new Array<AuthCallback>();
+const onAuthListeners = (data: AuthGameData): void => {
+  authListeners.forEach(listener => listener(data));
+}
 export const addAuthListener = (callback: AuthCallback): void => {
   authListeners.push(callback);
 }
 
 export const main = (lobbyLocation: Transform): void => {
-  const authData = browser.getAuthData();
-  if (authData) {
-    authListeners.forEach(listener => listener(authData));
+  const settingsGameData = sp.settings["skymp5-client"]["gameData"] as any;
+  const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
+  if (isOfflineMode) {
+    onAuthListeners({ local: { profileId: settingsGameData?.profileId } });
   } else {
     loadLobby(lobbyLocation);
   }
@@ -61,12 +65,16 @@ const onBrowserMessage = (): void => {
     const eventKey = e.arguments[0];
     switch (eventKey) {
       case registerEventKey:
-        registerAccountWithSkympIO(e.arguments[1] as AuthData);
+        registerAccountWithSkympIO(e.arguments[1] as LoginRegisterData);
         break;
       case loginEventKey:
-        loginWithSkympIO(e.arguments[1] as AuthData);
+        setLoginInfo("processing...");
+        const authData = e.arguments[1] as LoginRegisterData;
+        loginWithSkympIO(authData, (msg) => setLoginInfo(msg), (loginResponse) =>
+          onAuthListeners({ remote: { email: authData.email, rememberMe: authData.rememberMe ?? false, session: loginResponse.token } })
+        );
         break;
-      case openGHEventKey:
+      case openGitHubEventKey:
         sp.win32.loadUrl(githubUrl);
         break;
       case openPatreonEvetnKey:
@@ -92,7 +100,10 @@ const loadLobby = (location: Transform): void => {
     sp.Game.forceFirstPerson();
 
     startListenBrowserMessage();
+    const authData = browser.getAuthData();
+    const loginWidgetLoginDataJs = `window.loginData = ${authData ? escapeJs(JSON.stringify(authData)) : "{}"};`;
     sp.browser.executeJavaScript(`
+    ${loginWidgetLoginDataJs}
     ${loginWidgetJs}
     ${registerWidgetJs}
     window.skyrimPlatform.widgets.set([window.loginWidget]);
@@ -108,36 +119,35 @@ const loadLobby = (location: Transform): void => {
   );
 }
 
-const loginWithSkympIO = (data: AuthData): void => {
-  if (!AuthData.canLogin(data)) {
-    setLoginInfo("Some fields are invalid");
+const loginWithSkympIO = (data: LoginRegisterData, failCallback: (msg: string) => void, successCallback: (loginResponse: LoginResponseAuthData) => void): void => {
+  if (!LoginRegisterData.canLogin(data)) {
+    failCallback("Some fields are invalid");
     return;
   }
 
-  setLoginInfo("processing...");
   new sp.HttpClient(authUrl)
     .post("/api/users/login", { body: JSON.stringify(data), contentType: "application/json" })
     .then(response => {
       switch (response.status) {
         case 200:
-          setLoginInfo("SUCCESS");
+          successCallback(JSON.parse(response.body));
           break;
         case 401: // Unauthorized
         case 403: // Forbidden
-          setLoginInfo(`${response.body}`);
+          failCallback(`${response.body}`);
           break;
         case 404: // Not found
-          setLoginInfo(`Login url is invalid (not found)`);
+          failCallback(`Login url is invalid (not found)`);
           break;
         default:
-          setLoginInfo(`Server returned ${response.status} "${response.body}"`);
+          failCallback(`Server returned ${response.status || "???"} "${response.body}"`);
       }
     })
     .catch(reason => {
       if (typeof reason === "string") {
-        setLoginInfo(`Skyrim platform error (http): ${reason}`)
+        failCallback(`Skyrim platform error (http): ${reason}`)
       } else {
-        setLoginInfo(`Skyrim platform error (http): request rejected`);
+        failCallback(`Skyrim platform error (http): request rejected`);
       }
     });
 }
@@ -148,8 +158,8 @@ const setLoginInfo = (text: string): void => {
   `);
 }
 
-const registerAccountWithSkympIO = (data: AuthData): void => {
-  if (!AuthData.canRegister(data)) {
+const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
+  if (!LoginRegisterData.canRegister(data)) {
     setRegisterInfo("Registration data is incorrect");
     return;
   };
@@ -162,7 +172,9 @@ const registerAccountWithSkympIO = (data: AuthData): void => {
       switch (response.status) {
         case 200:
         case 201:
-          setRegisterInfo("SUCCESS");
+          loginWithSkympIO(data, (msg) => setRegisterInfo(msg), (loginResponse) =>
+            onAuthListeners({ remote: { email: data.email, rememberMe: true, session: loginResponse.token } })
+          );
           break;
         case 400: // Bad Request
           if (response.body.startsWith("[")) {
@@ -208,7 +220,6 @@ window.${loginWidgetInfoObjName} = {
   text: "",
   tags: [],
 };
-window.loginData = {};
 window.loginWidget = {
   type: "form",
   id: 1,
@@ -218,7 +229,7 @@ window.loginWidget = {
       type: "button",
       tags: ["BUTTON_STYLE_GITHUB"],
       hint: "get a colored nickname and mention in news",
-      click: () => window.skyrimPlatform.sendMessage("${openGHEventKey}")
+      click: () => window.skyrimPlatform.sendMessage("${openGitHubEventKey}")
     },
     {
       type: "button",
@@ -236,7 +247,7 @@ window.loginWidget = {
       tags: ["ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT", "ELEMENT_STYLE_MARGIN_EXTENDED"],
       placeholder: "dude33@gmail.com",
       hint: "enter your e-mail and password for authorization",
-      onInput: (e) => window.loginData["${nameof<AuthData>("email")}"] = e.target.value
+      onInput: (e) => window.loginData["${nameof<LoginRegisterData>("email")}"] = e.target.value
     },
     { 
       type: "icon", 
@@ -248,14 +259,14 @@ window.loginWidget = {
       tags: ["ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
       placeholder: "password, you know",
       hint: "enter your e-mail and password for authorization",
-      onInput: (e) => window.loginData["${nameof<AuthData>("password")}"] = e.target.value
+      onInput: (e) => window.loginData["${nameof<LoginRegisterData>("password")}"] = e.target.value
     },
     {
       type: "checkBox",
       text: "remember me",
       tags: ["HINT_STYLE_LEFT"],
       hint: "check the box “remember me” for automatic authorization",
-      onInput: (e) => window.loginData["${nameof<AuthData>("rememberMe")}"] = e.target.value
+      onInput: (e) => window.loginData["${nameof<LoginRegisterData>("rememberMe")}"] = e.target.value
     },
     {
       type: "button",
@@ -289,7 +300,7 @@ window.registerWidgetRegisterButton = {
     marginTop: "10px"
   },
   click: () => {
-    const isPassEqual = window.registerData["${nameof<AuthData>("password")}"] === window.registerData["${nameof<AuthData>("passwordRepeat")}"];
+    const isPassEqual = window.registerData["${nameof<LoginRegisterData>("password")}"] === window.registerData["${nameof<LoginRegisterData>("passwordRepeat")}"];
     if (!isPassEqual) {
       window.${registerWidgetInfoObjName}.text = "Passwords do not match";
       window.skyrimPlatform.widgets.set([window.registerWidget]);
@@ -322,6 +333,18 @@ window.registerWidget = {
   caption: "Register",
   elements: [
     {
+      type: "button",
+      tags: ["BUTTON_STYLE_GITHUB"],
+      hint: "get a colored nickname and mention in news",
+      click: () => window.skyrimPlatform.sendMessage("${openGitHubEventKey}")
+    },
+    {
+      type: "button",
+      tags: ["BUTTON_STYLE_PATREON", "ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
+      hint: "get a colored nickname and other bonuses for patrons",
+      click: () => window.skyrimPlatform.sendMessage("${openPatreonEvetnKey}")
+    },
+    {
       type: "icon",
       text: "email",
       tags: ["ICON_STYLE_MAIL"]
@@ -331,7 +354,7 @@ window.registerWidget = {
       tags: ["ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT", "ELEMENT_STYLE_MARGIN_EXTENDED"],
       placeholder: "dude33@gmail.com",
       hint: "enter your e-mail and password for registration",
-      onInput: (e) => window.updateRegisterData("${nameof<AuthData>("email")}", e.target.value)
+      onInput: (e) => window.updateRegisterData("${nameof<LoginRegisterData>("email")}", e.target.value)
     },
     {
       type: "icon", 
@@ -343,7 +366,7 @@ window.registerWidget = {
       tags: ["ELEMENT_SAME_LINE", "HINT_STYLE_LEFT"],
       placeholder: "password, you know",
       hint: "enter your e-mail and password for authorization",
-      onInput: (e) => window.updateRegisterData("${nameof<AuthData>("password")}", e.target.value)
+      onInput: (e) => window.updateRegisterData("${nameof<LoginRegisterData>("password")}", e.target.value)
     },
     { 
       type: "icon", 
@@ -355,7 +378,7 @@ window.registerWidget = {
       tags: ["ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
       placeholder: "password, again",
       hint: "confirm your password",
-      onInput: (e) => window.updateRegisterData("${nameof<AuthData>("passwordRepeat")}", e.target.value)
+      onInput: (e) => window.updateRegisterData("${nameof<LoginRegisterData>("passwordRepeat")}", e.target.value)
     },
     window.${registerWidgetInfoObjName},
     window.registerWidgetGoBackButton

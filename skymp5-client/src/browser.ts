@@ -11,7 +11,8 @@ import {
   writePlugin,
   getPluginSourceCode,
 } from "skyrimPlatform";
-import { TokenAuthData } from "./authData";
+import { AuthGameData } from "./authModel";
+import { escapeJs } from "./utils";
 
 const pluginAuthDataName = `AuthData`;
 
@@ -100,14 +101,14 @@ export const setBrowserFocused = (state: boolean) => {
   browser.setFocused(state);
 };
 
-export const getAuthData = (): TokenAuthData | null => {
+export const getAuthData = (): AuthGameData | null => {
   return globalThis.authData ?? null;
 };
 
-export const setAuthData = (data: TokenAuthData | null): void => {
+export const setAuthData = (data: AuthGameData | null): void => {
   if (data) {
-    writePlugin(pluginAuthDataName, `var ${authData} = ${JSON.stringify(data)};`);
+    writePlugin(pluginAuthDataName, `var authData = ${JSON.stringify(data)};`);
   } else {
-    writePlugin(pluginAuthDataName, `var ${authData} = null;`);
+    writePlugin(pluginAuthDataName, `var authData = null;`);
   }
 };

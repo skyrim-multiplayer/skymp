@@ -1,8 +1,8 @@
-export class AuthData {
-  public static canRegister(data: AuthData) {
+export class LoginRegisterData {
+  public static canRegister(data: LoginRegisterData) {
     return data && data.email?.trim() && data.password?.trim();
   }
-  public static canLogin(data: AuthData) {
+  public static canLogin(data: LoginRegisterData) {
     return data && data.email?.trim() && data.password?.trim();
   }
 
@@ -15,10 +15,15 @@ export class AuthData {
   ) { }
 }
 
-export class TokenAuthData {
+export class LoginResponseAuthData {
   public constructor(
     public token: string,
     public id: number,
     public name: string,
   ) { }
+}
+
+export class AuthGameData {
+  public remote?: { session: string, email: string, rememberMe: boolean };
+  public local?: { profileId: number };
 }
