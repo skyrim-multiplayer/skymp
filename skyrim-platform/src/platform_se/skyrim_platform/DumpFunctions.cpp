@@ -2,7 +2,6 @@
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
 #include "papyrus-vm-lib/Reader.h"
-#include <nlohmann/json.hpp>
 
 using namespace nlohmann;
 

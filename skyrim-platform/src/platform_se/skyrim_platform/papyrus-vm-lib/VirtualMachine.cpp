@@ -1,6 +1,4 @@
 #include "VirtualMachine.h"
-#include <algorithm>
-#include <stdexcept>
 
 VirtualMachine::VirtualMachine(
   std::vector<std::shared_ptr<PexScript>> loadedScripts)

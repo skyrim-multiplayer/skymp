@@ -5,9 +5,6 @@
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
 
-#include <hooks/DInputHook.hpp>
-#include <ui/DX11RenderHandler.h>
-
 /**
  * ConsoleVPrint hook
  */

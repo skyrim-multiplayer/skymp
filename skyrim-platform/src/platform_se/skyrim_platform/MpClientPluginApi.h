@@ -1,5 +1,4 @@
 #pragma once
-#include "JsEngine.h"
 
 namespace MpClientPluginApi {
 JsValue GetVersion(const JsFunctionArguments& args);

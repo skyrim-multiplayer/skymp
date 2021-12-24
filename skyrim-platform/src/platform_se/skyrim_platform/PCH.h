@@ -39,11 +39,33 @@
 #include <SKSE/SKSE.h>
 
 #include <Windows.h>
+#include <d3d11.h>
+#include <iostream> // savefile
 #include <shellapi.h>
+#include <shlobj_core.h>
 #include <tlhelp32.h>
 
+#include <cef_values.h>
+#include <cmrc/cmrc.hpp>
+#include <core_library/Meta.hpp>
 #include <frida/frida-gum.h>
+#include <hooks/D3D11Hook.hpp>
+#include <hooks/DInputHook.hpp>
+#include <hooks/IInputListener.h>
+#include <hooks/WindowsHook.hpp>
+#include <internal/cef_ptr.h>
+#include <internal/cef_types.h>
+#include <nlohmann/json.hpp>
+#include <reverse/App.hpp>
+#include <reverse/AutoPtr.hpp>
+#include <reverse/Entry.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <ui/DX11RenderHandler.h>
+#include <ui/MyChromiumApp.h>
+#include <ui/MyRenderHandler.h>
+#include <ui/ProcessMessageListener.h>
+#include <ui/TextToDraw.h>
+#include <zlib.h>
 
 namespace logger = SKSE::log;
 namespace stl = SKSE::stl;
@@ -65,5 +87,6 @@ using TypeInfo = RE::BSScript::TypeInfo;
 #define DLLEXPORT __declspec(dllexport)
 #define NOINLINE __declspec(noinline)
 
+#include "JsEngine.h" // imports TaskQueue.h
 #include "Offsets.h"
 #include "Version.h"

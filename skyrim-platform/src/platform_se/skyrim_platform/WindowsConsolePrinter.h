@@ -1,6 +1,5 @@
 #pragma once
 #include "IConsolePrinter.h"
-#include "JsEngine.h"
 
 class WindowsConsolePrinter : public IConsolePrinter
 {

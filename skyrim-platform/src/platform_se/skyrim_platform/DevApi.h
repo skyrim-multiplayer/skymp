@@ -1,5 +1,4 @@
 #pragma once
-#include "JsEngine.h"
 
 namespace DevApi {
 JsValue Require(const JsFunctionArguments& args,

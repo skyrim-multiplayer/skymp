@@ -1,6 +1,5 @@
 #include "InGameConsolePrinter.h"
 #include "ConsoleApi.h"
-#include "JsEngine.h"
 #include "NullPointerException.h"
 
 void InGameConsolePrinter::Print(const JsFunctionArguments& args)

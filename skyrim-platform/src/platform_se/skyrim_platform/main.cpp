@@ -10,16 +10,6 @@
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
 #include "TickHandler.h"
-#include <hooks/D3D11Hook.hpp>
-#include <hooks/DInputHook.hpp>
-#include <hooks/IInputListener.h>
-#include <hooks/WindowsHook.hpp>
-#include <reverse/App.hpp>
-#include <reverse/AutoPtr.hpp>
-#include <reverse/Entry.hpp>
-#include <ui/MyChromiumApp.h>
-#include <ui/ProcessMessageListener.h>
-#include <ui/TextToDraw.h>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 

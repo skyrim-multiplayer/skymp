@@ -3,7 +3,6 @@
 #include "ConsoleApi.h"
 #include "ExceptionPrinter.h"
 #include "NullPointerException.h"
-#include <nlohmann/json.hpp>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 

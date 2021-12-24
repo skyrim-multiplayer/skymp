@@ -1,7 +1,5 @@
 #pragma once
 #include "Structures.h"
-#include <functional>
-#include <map>
 
 class VirtualMachine
 {

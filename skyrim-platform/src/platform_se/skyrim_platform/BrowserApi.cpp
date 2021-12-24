@@ -1,8 +1,5 @@
 #include "BrowserApi.h"
 #include "NullPointerException.h"
-#include <hooks/DInputHook.hpp>
-#include <ui/DX11RenderHandler.h>
-#include <ui/MyChromiumApp.h>
 
 namespace {
 thread_local bool g_cursorIsOpenByFocus = false;

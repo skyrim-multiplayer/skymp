@@ -1,6 +1,5 @@
 #pragma once
 #include "FunctionInfoProvider.h"
-#include "TaskQueue.h"
 
 namespace CallNative {
 static constexpr size_t g_maxArgs = 12;

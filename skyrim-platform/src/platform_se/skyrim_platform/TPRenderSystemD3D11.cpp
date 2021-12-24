@@ -1,7 +1,5 @@
 #include "TPRenderSystemD3D11.h"
 #include "TPOverlayService.h"
-#include <D3D11Hook.hpp>
-#include <d3d11.h>
 
 /*#include <imgui.h>
 

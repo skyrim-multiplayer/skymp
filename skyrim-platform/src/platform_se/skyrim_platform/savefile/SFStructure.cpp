@@ -1,5 +1,4 @@
 #include "SFStructure.h"
-#include <stdexcept>
 
 SaveFile_::RefID SaveFile_::RefID::CreateRefId(SaveFile& parentSaveFile,
                                                uint32_t formId)

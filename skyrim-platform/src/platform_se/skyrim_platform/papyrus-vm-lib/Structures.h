@@ -1,11 +1,4 @@
 #pragma once
-#include <cassert>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <stdexcept>
-#include <string>
-#include <vector>
 
 class VirtualMachine;
 struct PexScript;

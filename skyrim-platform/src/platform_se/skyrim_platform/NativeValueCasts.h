@@ -1,6 +1,5 @@
 #pragma once
 #include "CallNative.h"
-#include "JsEngine.h"
 
 namespace NativeValueCasts {
 

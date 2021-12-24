@@ -1,5 +1,4 @@
 #pragma once
-#include "JsEngine.h"
 
 namespace Win32Api {
 JsValue LoadUrl(const JsFunctionArguments& args);

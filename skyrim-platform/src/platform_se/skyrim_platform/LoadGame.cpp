@@ -2,12 +2,10 @@
 #include "LoadGame.h"
 #include "NullPointerException.h"
 #include "PapyrusTESModPlatform.h"
-#include "cmrc/cmrc.hpp"
 #include "savefile/SFChangeFormNPC.h"
 #include "savefile/SFReader.h"
 #include "savefile/SFSeekerOfDifferences.h"
 #include "savefile/SFWriter.h"
-#include <shlobj.h>
 
 namespace fs = std::filesystem;
 

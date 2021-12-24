@@ -1,9 +1,7 @@
 #include "GameEventSinks.h"
 #include "EventsApi.h"
-#include "JsEngine.h"
 #include "NativeValueCasts.h"
 #include "SkyrimPlatform.h"
-#include "TaskQueue.h"
 
 namespace {
 JsValue CreateObject(const char* type, void* form)

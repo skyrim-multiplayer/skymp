@@ -1,7 +1,5 @@
 #pragma once
 #include "CallNative.h" // CallNative::State
-#include "JsEngine.h"
-#include "TaskQueue.h"
 
 namespace CallNativeApi {
 

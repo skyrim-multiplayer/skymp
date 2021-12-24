@@ -1,5 +1,4 @@
 #pragma once
-#include "JsEngine.h"
 
 inline std::array<float, 3> JsExtractPoint(const JsValue& v)
 {
