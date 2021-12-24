@@ -2,7 +2,7 @@
 #include "EventsApi.h"
 #include "JsEngine.h"
 #include "NativeValueCasts.h"
-#include "PapyrusSendEvent.h"
+#include "PapyrusTESEvents.h"
 #include "SkyrimPlatform.h"
 #include "TaskQueue.h"
 #include <RE/ActiveEffect.h>
@@ -636,21 +636,29 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   RE::BSTEventSource<RE::TESSpellCastEvent>* eventSource)
 {
   auto converted =
-    reinterpret_cast<const PapyrusSendEvent::TESSpellCastEvent*>(event);
+    reinterpret_cast<const PapyrusTESEvents::TESSpellCastEvent*>(event);
 
-  auto caster = converted ? converted->caster.get() : nullptr;
-  auto spellId = converted ? converted->spell : 0;
+  if (!converted) {
+    return RE::BSEventNotifyControl::kContinue;
+  }
 
+  auto caster = converted->caster.get();
+  auto spellId = converted->spell;
   auto casterId = caster ? caster->formID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([caster, spellId, casterId] {
     auto obj = JsValue::Object();
 
     auto casterLocal = RE::TESForm::LookupByID(casterId);
+    auto spellLocal = RE::TESForm::LookupByID(spellId);
+
+    if (casterLocal == nullptr || spellLocal == nullptr) {
+      return RE::BSEventNotifyControl::kContinue;
+    }
+
     casterLocal = casterLocal == caster ? casterLocal : nullptr;
     obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
 
-    auto spellLocal = RE::TESForm::LookupByID(spellId);
     spellLocal =
       spellLocal->formType == RE::FormType::Spell ? spellLocal : nullptr;
     obj.SetProperty("spell", CreateObject("Spell", spellLocal));
