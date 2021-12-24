@@ -409,8 +409,13 @@ describe("SweetPieGameModeListener: OnDeath", () => {
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 2);
     resetMocks(controller);
-    listener.getRounds()[0].state = 'running';
 
+    listener.getRounds()[0].state = 'warmup';
+    listener.onPlayerDeath(1, 2);
+
+    expect(controller.sendChatMessage).not.toBeCalled();
+
+    listener.getRounds()[0].state = 'running';
     listener.onPlayerDeath(1, 2);
 
     // %s was slain by %s. %s now has %d points (the best is %d)
