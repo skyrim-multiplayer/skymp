@@ -180,11 +180,14 @@ describe("SweetPieGameModeListener: DeathMatch", () => {
     listener.onPlayerDialogResponse(1, listener.leaveRoundConfirmationDialog[0], 1);
     expect(controller.teleport).toBeCalledTimes(0);
 
+    listener.getRounds()[0].state = 'running';
+
     // Player clicks Yes. Now it was removed from the round
     listener.onPlayerDialogResponse(1, listener.leaveRoundConfirmationDialog[0], 0);
     expect(controller.teleport).toBeCalledWith(1, 'hall:spawnPoint');
     expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
     expect(getPlayerCurrentRound(listener.getRounds(), 1)).toEqual(undefined);
+    expect(listener.getRounds()[0].state).toEqual('warmup');
   });
 
   test("Player attempts to hide from fight in interior", () => {
