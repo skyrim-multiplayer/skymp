@@ -2,6 +2,7 @@
 #include "EventsApi.h"
 #include "JsEngine.h"
 #include "NativeValueCasts.h"
+#include "PapyrusSendEvent.h"
 #include "SkyrimPlatform.h"
 #include "TaskQueue.h"
 #include <RE/ActiveEffect.h>
@@ -629,3 +630,33 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   return RE::BSEventNotifyControl::kContinue;
 };
+
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
+  const RE::TESSpellCastEvent* event,
+  RE::BSTEventSource<RE::TESSpellCastEvent>* eventSource)
+{
+  auto converted =
+    reinterpret_cast<const PapyrusSendEvent::TESSpellCastEvent*>(event);
+
+  auto caster = converted ? converted->caster.get() : nullptr;
+  auto spellId = converted ? converted->spell : 0;
+
+  auto casterId = caster ? caster->formID : 0;
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([caster, spellId, casterId] {
+    auto obj = JsValue::Object();
+
+    auto casterLocal = RE::TESForm::LookupByID(casterId);
+    casterLocal = casterLocal == caster ? casterLocal : nullptr;
+    obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
+
+    auto spellLocal = RE::TESForm::LookupByID(spellId);
+    spellLocal =
+      spellLocal->formType == RE::FormType::Spell ? spellLocal : nullptr;
+    obj.SetProperty("spell", CreateObject("Spell", spellLocal));
+
+    EventsApi::SendEvent("spellCast", { JsValue::Undefined(), obj });
+  });
+
+  return RE::BSEventNotifyControl::kContinue;
+}
