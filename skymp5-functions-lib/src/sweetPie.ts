@@ -33,10 +33,6 @@ export const getAvailableRound = (rounds: SweetPieRound[], player: number): Swee
   return rounds.find((x) => x.state !== 'running');
 };
 
-export const getPlayerCurrentRoundIndex = (rounds: SweetPieRound[], player: number): number => {
-  return rounds.findIndex((x) => x.players && x.players.has(player));
-};
-
 export const getPlayerCurrentRound = (rounds: SweetPieRound[], player: number): SweetPieRound | undefined => {
   return rounds.find((x) => x.players && x.players.has(player));
 };
@@ -184,11 +180,15 @@ export class SweetPieGameModeListener implements GameModeListener {
         }
       }
     } else if (dialogId === this.leaveRoundConfirmationDialog[0]) {
-      const roundIndex = getPlayerCurrentRoundIndex(this.rounds, actorId);
+      const round = getPlayerCurrentRound(this.rounds, actorId);
+      if (!round) {
+        throw new Error(`player ${actorId} clicked leave but not found in any round`);
+      }
+      const roundIndex = this.rounds.indexOf(round);
       if (buttonIndex === 0) {
         forceLeaveRound(this.controller, this.rounds, actorId);
       }
-      if (this.rounds[roundIndex]?.players?.size === 0) {
+      if (round.players?.size === 0) {
         this.resetRound(roundIndex);
       }
     }
