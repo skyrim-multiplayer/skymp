@@ -9,3 +9,4 @@ on("spellCast", (event) => {
 })
 ```
 
+Event object contain fields `ObjectReference caster` and `Spell spell`
