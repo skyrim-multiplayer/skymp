@@ -18,19 +18,19 @@
 #include <skse64/GameData.h>
 #include <skse64/GameTypes.h>
 
+#include "CallNative.h"
 #include <RE/BSScript/Object.h>
 #include <RE/BSScript/ObjectTypeInfo.h>
 #include <RE/BSScript/Variable.h>
 #include <RE/SkyrimScript/HandlePolicy.h>
-//#include "VmFunctionArguments.h"
-//#include <RE/BSScript/IFunctionArguments.h>
-#include "CallNative.h"
 
 #include "hooks/DInputHook.hpp"
 #include "ui/DX11RenderHandler.h"
 #include <algorithm>
 #include <sstream>
 #include <windows.h>
+
+#include "PapyrusSendEvent.h"
 
 typedef struct _ExampleListener ExampleListener;
 typedef enum _ExampleHookId ExampleHookId;
@@ -146,13 +146,13 @@ thread_local gpointer g_eventArgsPointer = nullptr;
 thread_local char* g_eventName = nullptr;
 thread_local uint32_t g_eventSelfId = 0;
 std::vector<int> g_argsOffsets;
-std::vector<std::string> passbyEvents = {
+const std::vector<std::string> passbyEvents = {
   "OnMagicEffectApply", "OnSleepStart",  "OnPackageEnd", "OnGrab",
   "OnRelease",          "OnTriggerLeave"
 };
 
-std::vector<std::string> temp_eventOffsets;         // for logging
-std::vector<std::string> temp_eventWithArgs;        // for logging
+std::vector<std::string> temp_eventOffsets;  // for logging
+std::vector<std::string> temp_eventWithArgs; // for logging
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -200,6 +200,12 @@ static void example_listener_on_enter(GumInvocationListener* listener,
           if (selfIid != 0) {
             g_eventSelfId = selfIid;
           }
+        }
+      }
+
+      if (strcmp(*eventName, "OnHit") == 0) {
+        if (auto c = RE::ConsoleLog::GetSingleton()) {
+          c->Print("SEND EVENT On Hit");
         }
       }
 
@@ -429,42 +435,45 @@ static void example_listener_on_leave(GumInvocationListener* listener,
         if (reinterpret_cast<size_t>(hook_id) >= 100 &&
             reinterpret_cast<size_t>(hook_id) <=
               (100 + g_argsOffsets.size())) {
+
+          std::vector<CallNative::AnySafe> out{};
+          if (g_eventArgsPointer != nullptr) {
+            auto argsArray =
+              static_cast<RE::BSScrapArray<RE::BSScript::Variable>*>(
+                g_eventArgsPointer);
+            if (argsArray) {
+              out.reserve(argsArray->size());
+              for (const auto& r : *argsArray) {
+                auto rSafe = CallNative::VariableToAnySafe(r, std::nullopt);
+                out.push_back(rSafe);
+              }
+            }
+          } else {
+            out.reserve(0);
+          }
+
           if (g_eventName != nullptr) {
             // ====== TEMP =======
             if (!stringInVector(static_cast<std::string>(g_eventName),
                                 temp_eventWithArgs)) {
               temp_eventWithArgs.push_back(
                 static_cast<std::string>(g_eventName));
-              logger("args.txt", static_cast<std::string>(g_eventName), 1);
+              logger("args.txt", static_cast<std::string>(g_eventName), out.size());
             }
             // ===================
           }
-          if (g_eventArgsPointer != nullptr && g_eventName != nullptr) {
-            auto argsArray =
-              static_cast<RE::BSScrapArray<RE::BSScript::Variable>*>(
-                g_eventArgsPointer);
-            std::vector<CallNative::AnySafe> out{};
-            out.reserve(argsArray->size());
-            for (const auto& r : *argsArray) {
-              auto rSafe = CallNative::VariableToAnySafe(r, std::nullopt);
-              out.push_back(rSafe);
-            }
-            EventsApi::SendPapyrusEventEnter(
-              g_eventSelfId, static_cast<std::string>(g_eventName), out);
-            g_eventArgsPointer = nullptr;
-            g_eventName = nullptr;
-            g_eventSelfId = 0;
-            EventsApi::SendPapyrusEventLeave();
-          } else if (g_eventName != nullptr) {
-            // c->Print("Event without args: %s", g_eventName);
-            std::vector<CallNative::AnySafe> out{};
-            out.reserve(0);
-            EventsApi::SendPapyrusEventEnter(
-              g_eventSelfId, static_cast<std::string>(g_eventName), out);
-            g_eventName = nullptr;
-            g_eventSelfId = 0;
-            EventsApi::SendPapyrusEventLeave();
+
+          std::string name = "Unknown";
+          if (g_eventName != nullptr) {
+            name = static_cast<std::string>(g_eventName);
           }
+
+          EventsApi::SendPapyrusEventEnter(g_eventSelfId, name, out);
+          g_eventArgsPointer = nullptr;
+          g_eventName = nullptr;
+          g_eventSelfId = 0;
+          EventsApi::SendPapyrusEventLeave();
+
         } else {
           if (g_eventName != nullptr) {
             c->Print("Event without offset hookid: %i, name:  %s",
