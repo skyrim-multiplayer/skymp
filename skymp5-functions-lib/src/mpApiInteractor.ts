@@ -1,11 +1,11 @@
-import { ChatProperty } from "./src/props/chatProperty";
-import { DialogProperty } from "./src/props/dialogProperty";
-import { EvalProperty } from "./src/props/evalProperty";
-import { GameModeListener, PlayerController } from "./src/sweetPie";
-import { Ctx } from "./src/types/ctx";
-import { LocationalData, Mp } from "./src/types/mp";
-import { PersistentStorage } from "./src/utils/persistentStorage";
-import { Timer } from "./src/utils/timer";
+import { ChatProperty } from "./props/chatProperty";
+import { DialogProperty } from "./props/dialogProperty";
+import { EvalProperty } from "./props/evalProperty";
+import { GameModeListener, PlayerController } from "./sweetPie";
+import { Ctx } from "./types/ctx";
+import { LocationalData, Mp } from "./types/mp";
+import { PersistentStorage } from "./utils/persistentStorage";
+import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 
@@ -32,6 +32,7 @@ export class MpApiInteractor {
     MpApiInteractor.setupChatHandler(listener);
     MpApiInteractor.setupDialogResponseHandler(listener);
     MpApiInteractor.setupTimer(listener);
+    MpApiInteractor.setupDeathHandler(listener);
   }
 
   private static setupActivateHandler(listener: GameModeListener) {
@@ -107,6 +108,19 @@ export class MpApiInteractor {
 
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
         PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;
+      }
+    };
+  }
+
+  private static setupDeathHandler(listener: GameModeListener) {
+    mp.onDeath = (target: number, killer: number) => {
+      if (listener.onPlayerDeath) {
+        if (killer === 0) {
+          listener.onPlayerDeath(target, undefined);
+        }
+        else {
+          listener.onPlayerDeath(target, killer);
+        }
       }
     };
   }

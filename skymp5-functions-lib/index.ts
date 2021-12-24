@@ -1,4 +1,4 @@
-import { MpApiInteractor } from './mpApiInteractor';
+import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { ChatProperty } from './src/props/chatProperty';
 import { DialogProperty } from './src/props/dialogProperty';
