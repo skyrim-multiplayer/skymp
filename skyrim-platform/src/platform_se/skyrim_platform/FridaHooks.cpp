@@ -30,8 +30,6 @@
 #include <sstream>
 #include <windows.h>
 
-#include "PapyrusSendEvent.h"
-
 typedef struct _ExampleListener ExampleListener;
 typedef enum _ExampleHookId ExampleHookId;
 
@@ -146,10 +144,24 @@ thread_local gpointer g_eventArgsPointer = nullptr;
 thread_local char* g_eventName = nullptr;
 thread_local uint32_t g_eventSelfId = 0;
 std::vector<int> g_argsOffsets;
-const std::vector<std::string> passbyEvents = {
-  "OnMagicEffectApply", "OnSleepStart",  "OnPackageEnd", "OnGrab",
-  "OnRelease",          "OnTriggerLeave"
-};
+const std::vector<std::string> passbyEvents = { "OnEnterBleedout",
+                                                "OnGrab",
+                                                "OnRelease",
+                                                "OnMagicEffectApply",
+                                                "OnObjectUnequipped",
+                                                "OnAnimationEventUnregistered",
+                                                "OnAttachedToCell",
+                                                "OnOpen",
+                                                "OnClose",
+                                                "OnRead",
+                                                "OnPlayerFastTravelEnd",
+                                                "OnDestructionStageChanged",
+                                                "OnStoryNewVoicePower",
+                                                "OnVampirismStateChanged",
+                                                "OnStoryDialogue",
+                                                "OnVampireFeed",
+                                                "OnPakageLeave",
+                                                "OnTriggerLeave" };
 
 std::vector<std::string> temp_eventOffsets;  // for logging
 std::vector<std::string> temp_eventWithArgs; // for logging
@@ -203,22 +215,16 @@ static void example_listener_on_enter(GumInvocationListener* listener,
         }
       }
 
-      if (strcmp(*eventName, "OnHit") == 0) {
-        if (auto c = RE::ConsoleLog::GetSingleton()) {
-          c->Print("SEND EVENT On Hit");
-        }
-      }
-
       auto args = static_cast<RE::BSScript::IFunctionArguments*>(
         gum_invocation_context_get_nth_argument(ic, 3));
       auto offset = FridaHooksUtils::GetNthVtableElement(args, 0, 1);
       if (offset > 0) {
 
         // ====== TEMP =======
-        if (!stringInVector(g_eventName, temp_eventOffsets)) {
-          temp_eventOffsets.push_back(g_eventName);
-          logger("offsets.txt", g_eventName, offset);
-        }
+        // if (!stringInVector(g_eventName, temp_eventOffsets)) {
+        //  temp_eventOffsets.push_back(g_eventName);
+        //  logger("offsets.txt", g_eventName, offset);
+        //}
         // ===================
 
         if (!intInVector(offset, g_argsOffsets)) {
@@ -231,7 +237,6 @@ static void example_listener_on_enter(GumInvocationListener* listener,
         }
       }
 
-      /*
       if (stringInVector(*eventName, passbyEvents)) {
         std::vector<CallNative::AnySafe> out{};
         out.reserve(0);
@@ -240,9 +245,9 @@ static void example_listener_on_enter(GumInvocationListener* listener,
         g_eventName = nullptr;
         g_eventSelfId = 0;
         EventsApi::SendPapyrusEventLeave();
-      }*/
+      }
 
-      if (strcmp(*eventName, "OnUpdate") != 0 && vm) {
+      if (blockEvents && strcmp(*eventName, "OnUpdate") != 0 && vm) {
         vm->attachedScriptsLock.Lock();
         auto it = vm->attachedScripts.find(handle);
 
@@ -255,9 +260,6 @@ static void example_listener_on_enter(GumInvocationListener* listener,
             auto name = info->GetName();
 
             const char* skyui_name = "SKI_"; // start skyui object name
-
-            // RE::ConsoleLog::GetSingleton()->Print(name);
-
             if (strlen(name) >= 4 && name[0] == skyui_name[0] &&
                 name[1] == skyui_name[1] && name[2] == skyui_name[2] &&
                 name[3] == skyui_name[3]) {
@@ -431,55 +433,47 @@ static void example_listener_on_leave(GumInvocationListener* listener,
       break;
     }
     default: {
-      if (auto c = RE::ConsoleLog::GetSingleton()) {
-        if (reinterpret_cast<size_t>(hook_id) >= 100 &&
-            reinterpret_cast<size_t>(hook_id) <=
-              (100 + g_argsOffsets.size())) {
+      if (reinterpret_cast<size_t>(hook_id) >= 100 &&
+          reinterpret_cast<size_t>(hook_id) <= (100 + g_argsOffsets.size())) {
 
-          std::vector<CallNative::AnySafe> out{};
-          if (g_eventArgsPointer != nullptr) {
-            auto argsArray =
-              static_cast<RE::BSScrapArray<RE::BSScript::Variable>*>(
-                g_eventArgsPointer);
-            if (argsArray) {
-              out.reserve(argsArray->size());
-              for (const auto& r : *argsArray) {
-                auto rSafe = CallNative::VariableToAnySafe(r, std::nullopt);
-                out.push_back(rSafe);
-              }
+        std::vector<CallNative::AnySafe> out{};
+        if (g_eventArgsPointer != nullptr) {
+          auto argsArray =
+            static_cast<RE::BSScrapArray<RE::BSScript::Variable>*>(
+              g_eventArgsPointer);
+          if (argsArray) {
+            out.reserve(argsArray->size());
+            for (const auto& r : *argsArray) {
+              auto rSafe = CallNative::VariableToAnySafe(r, std::nullopt);
+              out.push_back(rSafe);
             }
-          } else {
-            out.reserve(0);
           }
-
-          if (g_eventName != nullptr) {
-            // ====== TEMP =======
-            if (!stringInVector(static_cast<std::string>(g_eventName),
-                                temp_eventWithArgs)) {
-              temp_eventWithArgs.push_back(
-                static_cast<std::string>(g_eventName));
-              logger("args.txt", static_cast<std::string>(g_eventName), out.size());
-            }
-            // ===================
-          }
-
-          std::string name = "Unknown";
-          if (g_eventName != nullptr) {
-            name = static_cast<std::string>(g_eventName);
-          }
-
-          EventsApi::SendPapyrusEventEnter(g_eventSelfId, name, out);
-          g_eventArgsPointer = nullptr;
-          g_eventName = nullptr;
-          g_eventSelfId = 0;
-          EventsApi::SendPapyrusEventLeave();
-
         } else {
-          if (g_eventName != nullptr) {
-            c->Print("Event without offset hookid: %i, name:  %s",
-                     (int)reinterpret_cast<size_t>(hook_id), g_eventName);
-          }
+          out.reserve(0);
         }
+
+        if (g_eventName != nullptr) {
+          // ====== TEMP =======
+          // if (!stringInVector(static_cast<std::string>(g_eventName),
+          //                    temp_eventWithArgs)) {
+          //  temp_eventWithArgs.push_back(
+          //    static_cast<std::string>(g_eventName));
+          //  logger("args.txt", static_cast<std::string>(g_eventName),
+          //         out.size());
+          //}
+          // ===================
+        }
+
+        std::string name = "Unknown";
+        if (g_eventName != nullptr) {
+          name = static_cast<std::string>(g_eventName);
+        }
+
+        EventsApi::SendPapyrusEventEnter(g_eventSelfId, name, out);
+        g_eventArgsPointer = nullptr;
+        g_eventName = nullptr;
+        g_eventSelfId = 0;
+        EventsApi::SendPapyrusEventLeave();
       }
     }
   }
