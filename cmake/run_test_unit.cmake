@@ -35,6 +35,7 @@ endif()
 execute_process(COMMAND ${EXE_PATH}
   RESULT_VARIABLE res
   OUTPUT_VARIABLE out
+  WORKING_DIRECTORY "${UNIT_WORKING_DIRECTORY}"
 )
 
 message("${out}")
