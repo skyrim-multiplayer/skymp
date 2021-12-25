@@ -259,6 +259,11 @@ export interface ConsoleMessageEvent {
     message: string
 }
 
+export interface SpellCastEvent {
+    caster: ObjectReference,
+    spell: Spell
+}
+
 export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 
@@ -339,6 +344,9 @@ export declare function once(eventName: 'browserMessage', callback: (event: Brow
 
 export declare function on(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
 export declare function once(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
+
+export declare function on(eventName: 'spellCast', callback: (event: SpellCastEvent) => void): void;
+export declare function once(eventName: 'spellCast', callback: (event: SpellCastEvent) => void): void;
 
 
 declare class ConsoleComand {
