@@ -8,6 +8,7 @@ import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
+declare const ctx: Ctx;
 
 const isTeleportDoor = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -156,7 +157,7 @@ export class MpApiInteractor {
         ChatProperty.sendChatMessage(actorId, text);
       },
       quitGame(actorId: number): void {
-        EvalProperty.eval(actorId, (ctx: Ctx) => {
+        EvalProperty.eval(actorId, () => {
           ctx.sp.Game.quitToMainMenu();
           // TODO: close game
         });
