@@ -23,6 +23,7 @@
 #include "TPInputService.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
+#include "TextsCollection.h"
 #include "TaskQueue.h"
 #include "ThreadPoolWrapper.h"
 #include "TickTask.h"
@@ -63,8 +64,11 @@ extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
-  callback(TextToDraw());
-  callback(TextToDraw());
+  auto text = &TextsCollection::GetSinglton();
+
+  for (const auto& a : TextsCollection::GetSinglton().GetCreatedTexts()) {
+    callback(a.second);
+  }
 }
 
 void SetupFridaHooks();
