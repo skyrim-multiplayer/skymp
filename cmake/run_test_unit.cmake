@@ -38,3 +38,7 @@ execute_process(COMMAND ${EXE_PATH}
 )
 
 message("${out}")
+
+if(NOT "${res}" STREQUAL "0")
+  message(FATAL_ERROR "Bad exit status ${res}")
+endif()
