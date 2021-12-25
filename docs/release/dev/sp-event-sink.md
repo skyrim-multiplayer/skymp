@@ -1,4 +1,4 @@
-## Add on spellCast event
+## Add spellCast event
 
 Now we can catch spellCast events
 
