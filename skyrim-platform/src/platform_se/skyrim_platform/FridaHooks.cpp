@@ -114,7 +114,6 @@ void SetupFridaHooks()
 thread_local uint32_t g_queueNiNodeActorId = 0;
 
 bool g_allowHideCursorMenu = true;
-bool g_transparentCursor = false;
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -298,19 +297,11 @@ static void example_listener_on_enter(GumInvocationListener* listener,
             bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
             bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
             if (visibleFlag && focusFlag) {
-              if (!g_transparentCursor) {
-                if (FridaHooksUtils::SetMenuNumberVariable(
-                      fsCursorMenu, "_root.mc_Cursor._alpha", 0)) {
-                  g_transparentCursor = true;
-                }
-              }
+              FridaHooksUtils::SetMenuNumberVariable(
+                fsCursorMenu, "_root.mc_Cursor._alpha", 0);
             } else {
-              if (g_transparentCursor) {
-                if (FridaHooksUtils::SetMenuNumberVariable(
-                      fsCursorMenu, "_root.mc_Cursor._alpha", 100)) {
-                  g_transparentCursor = false;
-                }
-              }
+              FridaHooksUtils::SetMenuNumberVariable(
+                fsCursorMenu, "_root.mc_Cursor._alpha", 100);
             }
           }
         }
