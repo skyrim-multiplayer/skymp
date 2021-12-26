@@ -17,7 +17,7 @@ namespace TextApi
 
   JsValue SetTextColor(const JsFunctionArguments& args);
   
-  JsValue DestroyAllTexts(const JsFunctionArguments& args);
+  JsValue DestroyAllTexts();
 	
   JsValue GetTextPos(const JsFunctionArguments& args);
 

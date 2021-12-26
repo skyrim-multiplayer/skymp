@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include "ui/TextToDraw.h"
 #include "JsEngine.h"
 
@@ -15,11 +14,11 @@ public:
 
   void DestroyText(int textId);
 
-  int SetTextPos(uint32_t textId, float xPos, float yPos);
+  void SetTextPos(int textId, float xPos, float yPos);
 
-  int SetTextString(uint32_t textId, std::wstring str);
+  void SetTextString(int textId, std::wstring str);
 
-  int SetTextColor(uint32_t textId, std::array<double, 4> color);
+  void SetTextColor(int textId, std::array<double, 4> color);
 
   void DestroyAllTexts();
 
@@ -33,11 +32,11 @@ public:
   TextsCollection& operator=(const TextsCollection&&) = delete;
 
 public:
-  std::pair<float, float> GetTextPos(uint32_t textId) const;
+  std::pair<float, float> GetTextPos(int textId) const;
 
-  std::wstring GetTextString(uint32_t textId) const;
+  std::wstring GetTextString(int textId) const;
 
-  std::array<double, 4> GetTextColor(uint32_t textId) const;
+  std::array<double, 4> GetTextColor(int textId) const;
 
   const std::unordered_map<int, TextToDraw>& GetCreatedTexts() const;
 
@@ -47,6 +46,5 @@ private:
   TextsCollection();
 
   std::unordered_map<int, TextToDraw> texts;
-  //std::vector<uint32_t> deleted_texts;
   uint32_t textCount;
 };

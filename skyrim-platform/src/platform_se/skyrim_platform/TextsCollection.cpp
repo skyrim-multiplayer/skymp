@@ -25,24 +25,21 @@ void TextsCollection::DestroyText(int textId)
   texts.erase(textId);
 }
 
-int TextsCollection::SetTextPos(uint32_t textId, float xPos, float yPos)
+void TextsCollection::SetTextPos(int textId, float xPos, float yPos)
 {
   texts.at(textId).x = xPos;
   texts.at(textId).y = yPos;
-  return textId;
 }
 
-int TextsCollection::SetTextString(uint32_t textId, std::wstring str)
+void TextsCollection::SetTextString(int textId, std::wstring str)
 {
   texts.at(textId).string = str;
-  return textId;
 }
 
-int TextsCollection::SetTextColor(uint32_t textId,
+void TextsCollection::SetTextColor(int textId,
                                    std::array<double, 4> color)
 {
   texts.at(textId).color = color;
-  return textId;
 }
 
 void TextsCollection::DestroyAllTexts()
@@ -54,14 +51,10 @@ void TextsCollection::DestroyAllTexts()
 TextsCollection& TextsCollection::GetSinglton() noexcept
 {
   static TextsCollection text;
-
   return text;
 }
 
-//Getters
-
-std::pair<float, float> TextsCollection::GetTextPos(
-  uint32_t textId) const 
+std::pair<float, float> TextsCollection::GetTextPos(int textId) const
 {  
     std::pair<float, float> positions = {
     texts.at(textId).x,
@@ -71,13 +64,12 @@ std::pair<float, float> TextsCollection::GetTextPos(
   return positions;
 }
 
-std::wstring TextsCollection::GetTextString(uint32_t textId) const 
+std::wstring TextsCollection::GetTextString(int textId) const
 {
   return texts.at(textId).string;
 }
 
-std::array<double, 4> TextsCollection::GetTextColor(
-  uint32_t textId) const 
+std::array<double, 4> TextsCollection::GetTextColor(int textId) const
 {
   return texts.at(textId).color;
 }

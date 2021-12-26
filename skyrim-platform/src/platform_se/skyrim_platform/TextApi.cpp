@@ -1,7 +1,5 @@
 #include "TextApi.h"
 #include <fstream>
-#include <locale>
-#include <codecvt>
 #include <string>
 
 namespace TextApi {
@@ -36,7 +34,8 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
   auto argPosX = static_cast<double>(args[2]);
   auto argPosY = static_cast<double>(args[3]);
 
-  return JsValue(TextsCollection::GetSinglton().SetTextPos(argTextId, argPosX, argPosY));
+  TextsCollection::GetSinglton().SetTextPos(argTextId, argPosX, argPosY);
+  return JsValue::Undefined();
 }
 
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
@@ -45,7 +44,8 @@ JsValue TextApi::SetTextString(const JsFunctionArguments& args)
   auto argString = static_cast<std::string> (args[2]); 
   std::wstring argWstring(argString.begin(), argString.end());
 
-  return JsValue(TextsCollection::GetSinglton().SetTextString(argTextId, argWstring));
+  TextsCollection::GetSinglton().SetTextString(argTextId, argWstring);
+  return JsValue::Undefined();
 }
 
 JsValue TextApi::SetTextColor(const JsFunctionArguments& args)
@@ -57,16 +57,15 @@ JsValue TextApi::SetTextColor(const JsFunctionArguments& args)
     argColor[i] = args[2].GetProperty(i);
   }
 
-  return JsValue(TextsCollection::GetSinglton().SetTextColor(argTextId, argColor));
+  TextsCollection::GetSinglton().SetTextColor(argTextId, argColor);
+  return JsValue::Undefined();
 }
 
-JsValue TextApi::DestroyAllTexts(const JsFunctionArguments& args)
+JsValue TextApi::DestroyAllTexts()
 {
   TextsCollection::GetSinglton().DestroyAllTexts();
   return JsValue::Undefined();
 }
-
-//Getters
 
 JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 {
@@ -79,7 +78,7 @@ JsValue TextApi::GetTextString(const JsFunctionArguments& args)
   std::wstring str =
     TextsCollection::GetSinglton().GetTextString(static_cast<int>(args[1]));
 
-  return std::string(str.begin(), str.end());
+  return JsValue(std::string(str.begin(), str.end()));
 }
 
 JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
@@ -99,8 +98,6 @@ JsValue TextApi::GetTextCount(const JsFunctionArguments& args)
 
 void Register(JsValue& exports)
 {
-  auto textApi = JsValue::Object();
-
   exports.SetProperty(
     "createText",
     JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
@@ -114,7 +111,7 @@ void Register(JsValue& exports)
     }));
 
   exports.SetProperty(
-    "setTextPos",
+    "setTextPos",   
     JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
       return SetTextPos(args);
     }));
@@ -129,6 +126,12 @@ void Register(JsValue& exports)
     "setTextColor",
     JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
       return SetTextColor(args);
+    }));
+
+  exports.SetProperty(
+    "destroyAllTexts",
+    JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
+      return DestroyAllTexts();
     }));
 
   exports.SetProperty(
