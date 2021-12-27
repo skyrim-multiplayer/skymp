@@ -44,7 +44,7 @@ You can find the `plugin-example` folder inside the downloaded Skyrim Platform m
 
 If you installed Skyrim Platform using a mod manager, find and click on the Skyrim Platform mod.
 
-Next, open the mod in the file syste:
+Next, open the mod in the file system:
 
 - Vortex: `Open in File Manager`
 - Mod Organizer 2: `Open in Explorer`
