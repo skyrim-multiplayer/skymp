@@ -204,7 +204,7 @@ This is a simple demonstration of how to use one function from one common Skyrim
 
 For more documentation on how to use a third-party library, read the documentation on its npm page or GitHub repository.
 
-> Third-party library documentation is not provided on this website
+> Third-party library documentation is not provided in this README
 
 ## Distributing your Skyrim Platform plugin
 
