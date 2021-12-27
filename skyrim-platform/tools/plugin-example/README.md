@@ -73,7 +73,7 @@ In the file explorer, open `skyrim.json` and edit the path so that it directs to
 ```
 
 > If you prefer, you can set the `SKYRIMPATH` environment variable to this path.  
-> This can be conventient when working with multiple projects or collaborators who have Skyrim folders in different locations.
+> This can be convenient when working with multiple projects or collaborators who have Skyrim folders in different locations.
 
 ## Configure Plugin Name
 
