@@ -15,6 +15,7 @@
 - [Distributing your Skyrim Platform plugin](#distributing-your-skyrim-platform-plugin)
 - [Read the Documentation](#read-the-documentation)
 - [Join the Discord](#join-the-discord)
+- [LICENSE](#license)
 
 ## Install Skyrim Platform
 
@@ -244,5 +245,12 @@ You can find documentation for Skyrim Platform at:
 
 For further support using Skyrim Platform, join the Discord server https://discord.gg/P8yg7YKY2e
 
+## LICENSE
+
+Your plugin is your own software and can be licensed however you like!
+
+Skyrim Platform is distributed under the [GNU General Public License v3.0][GPLv3].
+
 [PapyrusUtil]: https://www.nexusmods.com/skyrimspecialedition/mods/13048
 [JContainers]: https://www.nexusmods.com/skyrimspecialedition/mods/16495
+[GPLv3]: https://www.gnu.org/licenses/gpl-3.0.en.html
