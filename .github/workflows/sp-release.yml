@@ -14,7 +14,7 @@ jobs:
           MINOR=$(echo "$OLDVER" | sed -n "s/[0-9]\.\([0-9]\)\.[0-9]/\1/p")
           NEWMINOR=$((MINOR+1))
           NEWVER=$(echo "$OLDVER" | sed -n "s/\.$MINOR\./\.$NEWMINOR\./p")
-          SHORTVER=$(echo "$NEWVER" | sed -n "s/\([0-9]\.[0-9]\)\.[0-9]/\1/p")
+          SHORTVER=$(echo "$NEWVER" | sed -r "s/\.0//g")
           echo "OLDVER=$OLDVER" >> $GITHUB_ENV
           echo "NEWVER=$NEWVER" >> $GITHUB_ENV
           echo "SHORTVER=$SHORTVER" >> $GITHUB_ENV
