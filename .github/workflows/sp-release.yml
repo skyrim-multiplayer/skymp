@@ -35,7 +35,7 @@ jobs:
           chmod 644 ${{github.workspace}}/skyrim-platform/package.json
           chmod 644 ${{github.workspace}}/skymp5-client/src/version.ts
 
-      - name: Generate Chaneglog
+      - name: Generate Changelog
         run: |
           chmod 777 ${{github.workspace}}/docs/release
           TRAGET=$(echo "${{github.workspace}}/docs/release/sp-${{ env.SHORTVER }}.md")
