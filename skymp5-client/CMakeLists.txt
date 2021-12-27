@@ -26,6 +26,11 @@ add_custom_command(
 set(skymp5_client_settings_txt "{
   \"server-ip\": \"127.0.0.1\",
   \"server-port\": 7777,
+  \"lobbyLocation\": {
+    \"pos\": [133710, -61252, 14605],
+    \"rot\": [0, 0, 0],
+    \"worldOrCell\": 60
+  },
   \"gameData\": {
     \"profileId\": 1
   }

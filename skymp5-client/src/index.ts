@@ -1,3 +1,4 @@
+import { Transform } from './movement';
 import {
   Game,
   Utility,
@@ -9,29 +10,18 @@ import {
   writePlugin,
   printConsole,
   settings,
+  storage,
 } from "skyrimPlatform";
-import { SkympClient } from "./skympClient";
+import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
 import { verifyVersion } from "./version";
 import { updateWc } from "./worldCleaner";
 import * as authSystem from "./authSystem";
+import { nameof } from "./utils";
+import { AuthGameData } from "./authModel";
 
 browser.main();
-
-authSystem.addAuthListener((data) => {
-  if (data.remote && data.remote.rememberMe) {
-    browser.setAuthData(data);
-  }
-
-  startClient();
-});
-
-authSystem.main({
-  pos: [133710, -61252, 14605],
-  rot: [0, 0, 0],
-  worldOrCell: 60,
-});
 
 export const defaultLocalDamageMult = 1;
 export const setLocalDamageMult = (damageMult: number): void => {
@@ -44,6 +34,7 @@ export const setLocalDamageMult = (damageMult: number): void => {
 }
 
 const startClient = (): void => {
+  connectWhenICallAndNotWhenIImport();
   new SkympClient();
 
   const enforceLimitations = () => {
@@ -137,3 +128,13 @@ const startClient = (): void => {
     }
   });
 }
+
+authSystem.addAuthListener((data) => {
+  if (data.remote) {
+    browser.setAuthData(data.remote.rememberMe ? data.remote : null);
+  }
+  storage[AuthGameData.storageKey] = data;
+  startClient();
+});
+
+authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);

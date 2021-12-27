@@ -12,6 +12,7 @@ export class LoginRegisterData {
     public password: string,
     public passwordRepeat?: string,
     public rememberMe?: boolean,
+    public changed?: boolean,
   ) { }
 }
 
@@ -23,7 +24,17 @@ export class LoginResponseAuthData {
   ) { }
 }
 
+export class RemoteAuthGameData {
+  public constructor(
+    public session: string,
+    public email: string,
+    public rememberMe: boolean,
+  ) { }
+}
+
 export class AuthGameData {
-  public remote?: { session: string, email: string, rememberMe: boolean };
+  public static readonly storageKey = "authGameData";
+
+  public remote?: RemoteAuthGameData;
   public local?: { profileId: number };
 }

@@ -4,7 +4,7 @@ import * as sp from "skyrimPlatform";
 import * as spe from "./skyrimPlatform.extensions";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
-import { AuthGameData, LoginRegisterData, LoginResponseAuthData } from "./authModel";
+import { AuthGameData, LoginRegisterData, LoginResponseAuthData, RemoteAuthGameData } from "./authModel";
 import { Transform } from "./movement";
 import { escapeJs, nameof } from "./utils";
 
@@ -17,6 +17,7 @@ const registerEventKey = "registerRequiredEvent";
 const registerWidgetInfoObjName = "registerWidgetInfo";
 const openGitHubEventKey = "openGithub";
 const openPatreonEvetnKey = "openPatreon";
+const clearSavedAuthDataEventKey = "clearAuthData";
 
 /**
  * https://github.com/typestack/class-validator/blob/develop/src/validation/ValidationError.ts
@@ -34,10 +35,13 @@ interface AuthServerValidationError {
   };
 }
 
+let authData: RemoteAuthGameData | null = null;
+
 export type AuthCallback = (data: AuthGameData) => void;
 
 const authListeners = new Array<AuthCallback>();
 const onAuthListeners = (data: AuthGameData): void => {
+  isListenBrowserMessage = false;
   authListeners.forEach(listener => listener(data));
 }
 export const addAuthListener = (callback: AuthCallback): void => {
@@ -48,7 +52,7 @@ export const main = (lobbyLocation: Transform): void => {
   const settingsGameData = sp.settings["skymp5-client"]["gameData"] as any;
   const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
   if (isOfflineMode) {
-    onAuthListeners({ local: { profileId: settingsGameData?.profileId } });
+    onAuthListeners({ local: { profileId: settingsGameData.profileId } });
   } else {
     loadLobby(lobbyLocation);
   }
@@ -68,17 +72,27 @@ const onBrowserMessage = (): void => {
         registerAccountWithSkympIO(e.arguments[1] as LoginRegisterData);
         break;
       case loginEventKey:
+        const loginData = e.arguments[1] as LoginRegisterData;
+        if (authData && !loginData.changed) {
+          onAuthListeners({ remote: { email: loginData.email, rememberMe: loginData.rememberMe ?? false, session: authData.session } });
+          return;
+        }
+
         setLoginInfo("processing...");
-        const authData = e.arguments[1] as LoginRegisterData;
-        loginWithSkympIO(authData, (msg) => setLoginInfo(msg), (loginResponse) =>
-          onAuthListeners({ remote: { email: authData.email, rememberMe: authData.rememberMe ?? false, session: loginResponse.token } })
+        loginWithSkympIO(loginData, (msg) => setLoginInfo(msg), (loginResponse) =>
+          onAuthListeners({ remote: { email: loginData.email, rememberMe: loginData.rememberMe ?? false, session: loginResponse.token } })
         );
         break;
+      case clearSavedAuthDataEventKey:
+        browser.setAuthData(null);
+        break;
       case openGitHubEventKey:
-        sp.win32.loadUrl(githubUrl);
+        // todo: uncomment when merging into the main branch
+        //sp.win32.loadUrl(githubUrl);
         break;
       case openPatreonEvetnKey:
-        sp.win32.loadUrl(patreonUrl);
+        // todo: uncomment when merging into the main branch
+        //sp.win32.loadUrl(patreonUrl);
         break;
       default:
         break;
@@ -93,15 +107,14 @@ const loadLobby = (location: Transform): void => {
   sp.once("update", () => {
     sp.Game.setInChargen(true, true, false);
     sp.Utility.setINIBool("bAlwaysActive:General", true);
-    sp.Utility.setINIBool("bDisableAutoVanityMode:Camera", true);
-    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 3600.0);
+    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 7200.0);
     sp.Game.enableFastTravel(false);
     sp.Game.getPlayer()!.setDontMove(true);
     sp.Game.forceFirstPerson();
 
     startListenBrowserMessage();
-    const authData = browser.getAuthData();
-    const loginWidgetLoginDataJs = `window.loginData = ${authData ? escapeJs(JSON.stringify(authData)) : "{}"};`;
+    authData = browser.getAuthData();
+    const loginWidgetLoginDataJs = `window.loginData = ${authData ? JSON.stringify(authData) : "{}"};`;
     sp.browser.executeJavaScript(`
     ${loginWidgetLoginDataJs}
     ${loginWidgetJs}
@@ -166,6 +179,7 @@ const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
 
   setRegisterInfo("processing...");
   data.name = Guid.create().toString().replace(/-/g, "");
+  data.rememberMe = true;
   new sp.HttpClient(authUrl)
     .post("/api/users", { body: JSON.stringify(data), contentType: "application/json" })
     .then(response => {
@@ -246,8 +260,12 @@ window.loginWidget = {
       type: "inputText",
       tags: ["ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT", "ELEMENT_STYLE_MARGIN_EXTENDED"],
       placeholder: "dude33@gmail.com",
+      initialValue: window.loginData["${nameof<RemoteAuthGameData>("email")}"] || undefined,
       hint: "enter your e-mail and password for authorization",
-      onInput: (e) => window.loginData["${nameof<LoginRegisterData>("email")}"] = e.target.value
+      onInput: (e) => {
+        window.loginData["${nameof<LoginRegisterData>("email")}"] = e.target.value;
+        window.loginData["${nameof<LoginRegisterData>("changed")}"] = true;
+      }
     },
     { 
       type: "icon", 
@@ -258,15 +276,25 @@ window.loginWidget = {
       type: "inputPass",
       tags: ["ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
       placeholder: "password, you know",
+      initialValue: window.loginData["${nameof<RemoteAuthGameData>("email")}"] || undefined,
       hint: "enter your e-mail and password for authorization",
-      onInput: (e) => window.loginData["${nameof<LoginRegisterData>("password")}"] = e.target.value
+      onInput: (e) => {
+        window.loginData["${nameof<LoginRegisterData>("password")}"] = e.target.value;
+        window.loginData["${nameof<LoginRegisterData>("changed")}"] = true;
+      }
     },
     {
       type: "checkBox",
       text: "remember me",
       tags: ["HINT_STYLE_LEFT"],
       hint: "check the box “remember me” for automatic authorization",
-      onInput: (e) => window.loginData["${nameof<LoginRegisterData>("rememberMe")}"] = e.target.value
+      initialValue: window.loginData["${nameof<RemoteAuthGameData>("rememberMe")}"],
+      setChecked: (checked) => {
+        if (!checked) {
+          window.skyrimPlatform.sendMessage("${clearSavedAuthDataEventKey}");
+        }
+        window.loginData["${nameof<LoginRegisterData>("rememberMe")}"] = checked;
+      }
     },
     {
       type: "button",

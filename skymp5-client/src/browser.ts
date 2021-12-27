@@ -11,10 +11,10 @@ import {
   writePlugin,
   getPluginSourceCode,
 } from "skyrimPlatform";
-import { AuthGameData } from "./authModel";
+import { RemoteAuthGameData } from "./authModel";
 import { escapeJs } from "./utils";
 
-const pluginAuthDataName = `AuthData`;
+const pluginAuthDataName = `auth-data-no-load`;
 
 let browserVisibleState = false;
 let browserFocusedState = false;
@@ -101,14 +101,18 @@ export const setBrowserFocused = (state: boolean) => {
   browser.setFocused(state);
 };
 
-export const getAuthData = (): AuthGameData | null => {
-  return globalThis.authData ?? null;
+export const getAuthData = (): RemoteAuthGameData | null => {
+  try {
+    const data = getPluginSourceCode(pluginAuthDataName);
+    if (data) {
+      return JSON.parse(data) || null;
+    }
+  } catch (e) {
+    return null
+  }
+  return null;
 };
 
-export const setAuthData = (data: AuthGameData | null): void => {
-  if (data) {
-    writePlugin(pluginAuthDataName, `var authData = ${JSON.stringify(data)};`);
-  } else {
-    writePlugin(pluginAuthDataName, `var authData = null;`);
-  }
+export const setAuthData = (data: RemoteAuthGameData | null): void => {
+  writePlugin(pluginAuthDataName, data ? JSON.stringify(data) : "null");
 };
