@@ -244,7 +244,5 @@ You can find documentation for Skyrim Platform at:
 
 For further support using Skyrim Platform, join the Discord server https://discord.gg/P8yg7YKY2e
 
-- https://github.com/skyrim-platform/example-plugin-using-libraries
-
 [PapyrusUtil]: https://www.nexusmods.com/skyrimspecialedition/mods/13048
 [JContainers]: https://www.nexusmods.com/skyrimspecialedition/mods/16495
