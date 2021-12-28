@@ -7,14 +7,14 @@ from create_mod_archive import pack_skyrim_platform
 from generate_changelog import generate_changelog
 
 def release_skyrim_platform():
-    # 1. Change verison in GetPlatformVersion (DevApi.cpp) and in version.ts (skymp5-client)
+    # 1. Change version in platform_se (CmakeLists.txt) and in GetPlatformVersion (DevApi.cpp) and in version.ts (skymp5-client)
     # 2. Compile
     # 3. Let python do the job
     generate_changelog()
     pack_skyrim_platform()
     # 4. Pull request changes
     # 5. Upload archive to nexus
-    
+
 def main(argv):
     mod_name = get_mod_name(argv)
     if mod_name == "SkyrimPlatform":
@@ -22,7 +22,7 @@ def main(argv):
     else:
         print("Unknown mod_name")
         sys.exit(1)
-        
+
 
 def get_mod_name(argv):
     try:
