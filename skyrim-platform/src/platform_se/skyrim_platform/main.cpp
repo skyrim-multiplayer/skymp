@@ -64,14 +64,10 @@ extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
-  auto text = &TextsCollection::GetSinglton();
+  auto text = &TextsCollection::GetSingleton();
 
-  try {
-    for (const auto& a : TextsCollection::GetSinglton().GetCreatedTexts()) {
-      callback(a.second);
-    }
-  } catch (const std::exception& err) {
-    RE::ConsoleLog::GetSingleton()->Print(err.what()); 
+  for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
+    callback(a.second);
   }
 }
 

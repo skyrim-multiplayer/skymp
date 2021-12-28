@@ -12,7 +12,7 @@ int TextsCollection::CreateText(double xPos, double yPos, std::string str,
                                                                  1.f })
 {
   if (texts.size() >= 2000) {
-    throw std::runtime_error(fmt::format("Texts limit reached: {0}", texts.size()));
+    return -1;
   }
 
   TextToDraw text{ xPos, yPos, str, color };
@@ -52,7 +52,7 @@ void TextsCollection::DestroyAllTexts()
   textCount = 0;
 }
 
-TextsCollection& TextsCollection::GetSinglton() noexcept
+TextsCollection& TextsCollection::GetSingleton() noexcept
 {
   static TextsCollection text;
   return text;

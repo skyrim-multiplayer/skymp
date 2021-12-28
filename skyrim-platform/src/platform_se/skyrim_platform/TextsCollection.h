@@ -11,7 +11,7 @@ class TextsCollection
 public:
   ~TextsCollection();
 
-  int CreateText(double xPos, double yPos, std::string str,
+  int CreateText(double xPos, double yPos, std::string string,
                  std::array<double, 4> color);
 
   void DestroyText(int textId);
@@ -24,7 +24,7 @@ public:
 
   void DestroyAllTexts();
 
-  static TextsCollection& GetSinglton() noexcept;
+  static TextsCollection& GetSingleton() noexcept;
 
 public:
   TextsCollection(const TextsCollection&) = delete;

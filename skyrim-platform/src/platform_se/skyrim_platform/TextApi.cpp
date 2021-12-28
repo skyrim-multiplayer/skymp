@@ -2,6 +2,9 @@
 #include <fstream>
 #include <string>
 
+#include <codecvt>
+#include <locale>
+
 namespace TextApi {
 JsValue TextApi::CreateText(const JsFunctionArguments& args)
 {
@@ -15,13 +18,14 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
     argColor[i] = args[4].GetProperty(i);
   }
 
-  return JsValue(TextsCollection::GetSinglton().CreateText(argPosX, argPosY, argString, argColor));
+  return JsValue(TextsCollection::GetSingleton().CreateText(
+    argPosX, argPosY, argString, argColor));
 }
 
 JsValue TextApi::DestroyText(const JsFunctionArguments& args)
 {
   auto argTextId = static_cast<int>(args[1]);
-  TextsCollection::GetSinglton().DestroyText(argTextId);
+  TextsCollection::GetSingleton().DestroyText(argTextId);
   return JsValue::Undefined();
 }
 
@@ -31,7 +35,7 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
   auto argPosX = static_cast<double>(args[2]);
   auto argPosY = static_cast<double>(args[3]);
 
-  TextsCollection::GetSinglton().SetTextPos(argTextId, argPosX, argPosY);
+  TextsCollection::GetSingleton().SetTextPos(argTextId, argPosX, argPosY);
   return JsValue::Undefined();
 }
 
@@ -40,7 +44,7 @@ JsValue TextApi::SetTextString(const JsFunctionArguments& args)
   auto argTextId = static_cast<int>(args[1]);
   auto argString = static_cast<std::string> (args[2]); 
 
-  TextsCollection::GetSinglton().SetTextString(argTextId, argString);
+  TextsCollection::GetSingleton().SetTextString(argTextId, argString);
   return JsValue::Undefined();
 }
 
@@ -53,20 +57,20 @@ JsValue TextApi::SetTextColor_(const JsFunctionArguments& args)
     argColor[i] = args[2].GetProperty(i);
   }
 
-  TextsCollection::GetSinglton().SetTextColor(argTextId, argColor);
+  TextsCollection::GetSingleton().SetTextColor(argTextId, argColor);
   return JsValue::Undefined();
 }
 
 JsValue TextApi::DestroyAllTexts(const JsFunctionArguments&)
 {
-  TextsCollection::GetSinglton().DestroyAllTexts();
+  TextsCollection::GetSingleton().DestroyAllTexts();
   return JsValue::Undefined();
 }
 
 JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 {
   auto argId = static_cast<int> (args[1]);
-  auto postions = TextsCollection::GetSinglton().GetTextPos(argId);
+  auto postions = TextsCollection::GetSingleton().GetTextPos(argId);
   auto jsArray = JsValue::Array(2);
 
   jsArray.SetProperty(0, postions.first);
@@ -78,7 +82,7 @@ JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 {
   std::string str =
-    TextsCollection::GetSinglton().GetTextString(static_cast<int>(args[1]));
+    TextsCollection::GetSingleton().GetTextString(static_cast<int>(args[1]));
 
   return JsValue(str);
 }
@@ -86,7 +90,7 @@ JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
 {
   auto argId = static_cast<int>(args[1]);
-  auto argArray = TextsCollection::GetSinglton().GetTextColor(argId);
+  auto argArray = TextsCollection::GetSingleton().GetTextColor(argId);
   auto jsArray = JsValue::Array(4);
 
   for (int i = 0; i < 4; i++) {
@@ -98,7 +102,7 @@ JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextCount(const JsFunctionArguments& args)
 {
-  return JsValue(TextsCollection::GetSinglton().GetTextCount());
+  return JsValue(TextsCollection::GetSingleton().GetTextCount());
 }
 
 void Register(JsValue& exports)
