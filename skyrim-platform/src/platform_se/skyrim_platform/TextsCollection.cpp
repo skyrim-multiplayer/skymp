@@ -7,15 +7,19 @@ TextsCollection::TextsCollection()
 TextsCollection::~TextsCollection()
 {  }
 
-int TextsCollection::CreateText(float xPos, float yPos, std::wstring str,
+int TextsCollection::CreateText(double xPos, double yPos, std::string str,
                                  std::array<double, 4> color = { 0.f, 0.f, 1.f,
                                                                  1.f })
 {
+  if (texts.size() >= 2000) {
+    throw std::runtime_error(fmt::format("Texts limit reached: {0}", texts.size()));
+  }
+
   TextToDraw text{ xPos, yPos, str, color };
-  textCount++;
+  std::pair<int, TextToDraw> arg = { textCount, text };
  
-  std::pair<uint32_t, TextToDraw> arg = { textCount, text };
   texts.insert(arg);
+  textCount++;
 
   return textCount;
 }
@@ -31,7 +35,7 @@ void TextsCollection::SetTextPos(int textId, float xPos, float yPos)
   texts.at(textId).y = yPos;
 }
 
-void TextsCollection::SetTextString(int textId, std::wstring str)
+void TextsCollection::SetTextString(int textId, std::string str)
 {
   texts.at(textId).string = str;
 }
@@ -54,9 +58,9 @@ TextsCollection& TextsCollection::GetSinglton() noexcept
   return text;
 }
 
-std::pair<float, float> TextsCollection::GetTextPos(int textId) const
+std::pair<double, double> TextsCollection::GetTextPos(int textId) const
 {  
-    std::pair<float, float> positions = {
+    std::pair<double, double> positions = {
     texts.at(textId).x,
     texts.at(textId).y,
   };
@@ -64,7 +68,7 @@ std::pair<float, float> TextsCollection::GetTextPos(int textId) const
   return positions;
 }
 
-std::wstring TextsCollection::GetTextString(int textId) const
+std::string TextsCollection::GetTextString(int textId) const
 {
   return texts.at(textId).string;
 }

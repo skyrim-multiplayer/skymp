@@ -6,9 +6,9 @@
 
 struct TextToDraw
 {
-  float x = 0.f;
-  float y = 0.f;
-  std::wstring string;
+  double x = 0.f;
+  double y = 0.f;
+  std::string string;
   std::array<double, 4> color = { 0.f, 0.f, 1.f, 1.f };
 };
 
