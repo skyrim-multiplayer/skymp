@@ -6,7 +6,6 @@ class TESEventEmitter
 {
 public:
   static void HitEvent(RE::TESHitEvent* event);
-  static void SpellCastEvent(TESEvents::TESSpellCastEvent* event);
   static void MoveAttachDetachEvent(RE::TESMoveAttachDetachEvent* event);
   static void ActivateEvent(RE::TESActivateEvent* event);
   static void WaitStopEvent(RE::TESWaitStopEvent* event);
