@@ -107,7 +107,7 @@ const loadLobby = (location: Transform): void => {
   sp.once("update", () => {
     sp.Game.setInChargen(true, true, false);
     sp.Utility.setINIBool("bAlwaysActive:General", true);
-    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 7200.0);
+    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
     sp.Game.enableFastTravel(false);
     sp.Game.getPlayer()!.setDontMove(true);
     sp.Game.forceFirstPerson();
