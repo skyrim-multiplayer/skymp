@@ -87,12 +87,10 @@ const onBrowserMessage = (): void => {
         browser.setAuthData(null);
         break;
       case openGitHubEventKey:
-        // todo: uncomment when merging into the main branch
-        //sp.win32.loadUrl(githubUrl);
+        sp.win32.loadUrl(githubUrl);
         break;
       case openPatreonEvetnKey:
-        // todo: uncomment when merging into the main branch
-        //sp.win32.loadUrl(patreonUrl);
+        sp.win32.loadUrl(patreonUrl);
         break;
       default:
         break;

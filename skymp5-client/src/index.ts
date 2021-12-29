@@ -129,12 +129,17 @@ const startClient = (): void => {
   });
 }
 
-authSystem.addAuthListener((data) => {
-  if (data.remote) {
-    browser.setAuthData(data.remote.rememberMe ? data.remote : null);
-  }
-  storage[AuthGameData.storageKey] = data;
-  startClient();
-});
+const autData = storage[AuthGameData.storageKey];
+if (autData) {
+  authSystem.addAuthListener((data) => {
+    if (data.remote) {
+      browser.setAuthData(data.remote.rememberMe ? data.remote : null);
+    }
+    storage[AuthGameData.storageKey] = data;
+    startClient();
+  });
 
-authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
+  authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
+} else {
+  startClient();
+}
