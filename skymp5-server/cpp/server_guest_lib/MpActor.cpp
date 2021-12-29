@@ -3,7 +3,8 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
-#include "ServerState.cpp"
+#include "MsgType.h"
+#include "ServerState.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 
@@ -383,9 +384,9 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
   }
 }
 
-void MpActor::Kill(MpActor* killer)
+void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 {
-  SendAndSetDeathState(true, false);
+  SendAndSetDeathState(true, shouldTeleport);
   MpApiDeath(killer);
 }
 
@@ -454,4 +455,9 @@ void MpActor::SetRespawnTime(float time)
 {
   pImpl->EditChangeForm(
     [&](MpChangeForm& changeForm) { changeForm.spawnDelay = time; });
+}
+
+void MpActor::SetIsDead(bool isDead)
+{
+  SendAndSetDeathState(isDead, false);
 }

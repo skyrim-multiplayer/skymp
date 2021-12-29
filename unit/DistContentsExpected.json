@@ -74,6 +74,8 @@
       "server/dist_front/skymp5-client.js",
       "server/gamemode.js",
       "server/scamp_native.node",
+      "server/package.json",
+      "server/yarn.lock",
       "server/server-settings.json"
     ]
   },
@@ -162,6 +164,7 @@
     ],
     "expectedFiles": [
       "server/ChakraCore.dll",
+      "client/Data/Interface/Fonts/font.spritefont",
       "client/Data/Platform/Distribution/CEF/cef.pak",
       "client/Data/Platform/Distribution/CEF/cef_100_percent.pak",
       "client/Data/Platform/Distribution/CEF/cef_200_percent.pak",

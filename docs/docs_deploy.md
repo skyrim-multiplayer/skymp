@@ -30,7 +30,8 @@ This guide shows how to set it up.
   **Note:** this effectively means root access, so be careful with users you
   let run deploy jobs (=users you give a write access to the repository).
 * A directory `~/skymp-server-<branch>` should be set up for every branch you
-  wish to deploy to this server. See 'setting up branch on a server' below.
+  wish to deploy to this server. See 'setting up branch on a server' below. \
+  _Note_: currently, only `indev` branch is hardcoded.
 
 ### Setup access for GitHub
 
@@ -85,3 +86,22 @@ total 346M
 -rw-rw-r-- 1 ubuntu ubuntu 239M Dec  5 12:01 Skyrim.esm
 -rw-rw-r-- 1 ubuntu ubuntu  18M Dec  5 12:01 Update.esm
 ```
+
+## Running deploy
+
+Deploy action is set up as a separate workflow
+[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
+and can be triggered in [actions](https://github.com/skyrim-multiplayer/skymp/actions)
+tab in the repository header on GitHub:
+https://github.com/skyrim-multiplayer/skymp/actions/workflows/deploy.yml
+
+![](img/run_deploy.png)
+
+Progress can be tracked by following the link in run list or in the Discord
+channel `DEPLOY_WEBHOOK` is attached to.
+
+Several actions are available:
+* `deploy` - merge all PRs with `merge-to:<branch>` label set, build the resulting
+  source, upload build artifacts to the server and restart it
+* `restart` - just restart the server (stop if it is running and start)
+* `stop` - just stop the server

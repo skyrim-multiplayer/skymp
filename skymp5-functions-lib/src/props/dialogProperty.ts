@@ -2,12 +2,12 @@ import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
 import { FunctionInfo } from '../utils/functionInfo';
 import { BrowserProperty } from './browserProperty';
-import { EvalProperty } from './evalProperty';
 
 type DialogValue = ['messageBox', string, string, string[]] | null;
 type DialogState = { dialogPrevValue?: DialogValue };
 
 declare const mp: Mp;
+declare const ctx: Ctx;
 
 export type DialogResponse = { actorId: number; buttonIndex: number; dialogId: number };
 export type DialogResponseHandler = (response: DialogResponse) => boolean;
@@ -67,7 +67,7 @@ export class DialogProperty {
   }
 
   private static clientsideInitDialogResponse() {
-    return (ctx: Ctx) => {
+    return () => {
       ctx.sp.on('browserMessage', (event) => {
         if (event.arguments[0] === 'buttonClick') {
           ctx.sendEvent(...event.arguments);
@@ -77,13 +77,17 @@ export class DialogProperty {
   }
 
   private static clientsideUpdateOwner() {
-    return (ctx: Ctx<DialogState, DialogValue>) => {
+    return () => {
+      const ctxTyped = (ctx: Ctx): ctx is Ctx<DialogState, DialogValue> => true;
+      if (!ctxTyped(ctx)) {
+        return;
+      }
       if (ctx.value === ctx.state.dialogPrevValue) {
         return;
       }
       ctx.state.dialogPrevValue = ctx.value;
 
-      // Please keep up-to-date with impl in chatProperty.ts
+      // Please keep up-to-date with impl in refreshWidgets.ts
       const refreshWidgets = 'window.skyrimPlatform.widgets.set((window.chat || []).concat(window.dialog || []));';
 
       if (!ctx.value) {
