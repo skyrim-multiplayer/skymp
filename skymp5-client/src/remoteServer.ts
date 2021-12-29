@@ -132,7 +132,7 @@ const loginWithSkympIoCredentials = () => {
     return;
   }
 
-  printConsole("Not found any authentication method");
+  printConsole("Not found authentication method");
 };
 
 export const getPcInventory = (): Inventory => {

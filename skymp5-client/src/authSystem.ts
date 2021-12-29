@@ -121,7 +121,8 @@ const loadLobby = (location: Transform): void => {
     `);
     browser.setBrowserVisible(true);
   });
-  sp.once("loadGame", () => browser.setBrowserFocused(true));
+  // todo: for now, the cursor disappears after a few seconds after the browser receives focus. Need to press F6 twice
+  // sp.once("loadGame", () => browser.setBrowserFocused(true));
 
   loadGameManager.loadGame(
     location.pos,
