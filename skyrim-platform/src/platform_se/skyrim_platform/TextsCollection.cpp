@@ -2,14 +2,16 @@
 
 TextsCollection::TextsCollection()
   : textCount(0)
-{	}
+{
+}
 
 TextsCollection::~TextsCollection()
-{  }
+{
+}
 
 int TextsCollection::CreateText(double xPos, double yPos, std::string str,
-                                 std::array<double, 4> color = { 0.f, 0.f, 1.f,
-                                                                 1.f })
+                                std::array<double, 4> color = { 0.f, 0.f, 1.f,
+                                                                1.f })
 {
   if (texts.size() >= 5000) {
     throw std::runtime_error(
@@ -18,7 +20,7 @@ int TextsCollection::CreateText(double xPos, double yPos, std::string str,
 
   TextToDraw text{ xPos, yPos, str, color };
   std::pair<int, TextToDraw> arg = { textCount, text };
- 
+
   texts.insert(arg);
   textCount++;
 
@@ -41,8 +43,7 @@ void TextsCollection::SetTextString(int textId, std::string str)
   texts.at(textId).string = str;
 }
 
-void TextsCollection::SetTextColor(int textId,
-                                   std::array<double, 4> color)
+void TextsCollection::SetTextColor(int textId, std::array<double, 4> color)
 {
   texts.at(textId).color = color;
 }
@@ -60,8 +61,8 @@ TextsCollection& TextsCollection::GetSingleton() noexcept
 }
 
 std::pair<double, double> TextsCollection::GetTextPos(int textId) const
-{  
-    std::pair<double, double> positions = {
+{
+  std::pair<double, double> positions = {
     texts.at(textId).x,
     texts.at(textId).y,
   };
@@ -79,8 +80,8 @@ std::array<double, 4> TextsCollection::GetTextColor(int textId) const
   return texts.at(textId).color;
 }
 
-const std::unordered_map<int, TextToDraw>&
-TextsCollection::GetCreatedTexts() const
+const std::unordered_map<int, TextToDraw>& TextsCollection::GetCreatedTexts()
+  const
 {
   return texts;
 }

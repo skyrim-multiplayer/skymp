@@ -40,9 +40,10 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
 {
-  auto argString = static_cast<std::string> (args[2]); 
+  auto argString = static_cast<std::string>(args[2]);
 
-  TextsCollection::GetSingleton().SetTextString(static_cast<int>(args[1]), argString);
+  TextsCollection::GetSingleton().SetTextString(static_cast<int>(args[1]),
+                                                argString);
   return JsValue::Undefined();
 }
 

@@ -23,8 +23,8 @@
 #include "TPInputService.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
-#include "TextsCollection.h"
 #include "TaskQueue.h"
+#include "TextsCollection.h"
 #include "ThreadPoolWrapper.h"
 #include "TickTask.h"
 #include <RE/ConsoleLog.h>
@@ -70,8 +70,8 @@ void GetTextsToDraw(TextToDrawCallback callback)
     for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
       callback(a.second);
     }
-  } catch(const std::runtime_error& err) {
-    RE::ConsoleLog::GetSingleton()->Print(err.what()); 
+  } catch (const std::runtime_error& err) {
+    RE::ConsoleLog::GetSingleton()->Print(err.what());
   }
 }
 
