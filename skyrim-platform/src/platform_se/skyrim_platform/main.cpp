@@ -66,8 +66,12 @@ void GetTextsToDraw(TextToDrawCallback callback)
 {
   auto text = &TextsCollection::GetSingleton();
 
-  for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
-    callback(a.second);
+  try {
+    for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
+      callback(a.second);
+    }
+  } catch(const std::runtime_error& err) {
+    RE::ConsoleLog::GetSingleton()->Print(err.what()); 
   }
 }
 

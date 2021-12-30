@@ -24,40 +24,38 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
 
 JsValue TextApi::DestroyText(const JsFunctionArguments& args)
 {
-  auto argTextId = static_cast<int>(args[1]);
-  TextsCollection::GetSingleton().DestroyText(argTextId);
+  TextsCollection::GetSingleton().DestroyText(static_cast<int>(args[1]));
   return JsValue::Undefined();
 }
 
 JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
 {
-  auto argTextId = static_cast<int>(args[1]);
   auto argPosX = static_cast<double>(args[2]);
   auto argPosY = static_cast<double>(args[3]);
 
-  TextsCollection::GetSingleton().SetTextPos(argTextId, argPosX, argPosY);
+  TextsCollection::GetSingleton().SetTextPos(static_cast<int>(args[1]),
+                                             argPosX, argPosY);
   return JsValue::Undefined();
 }
 
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
 {
-  auto argTextId = static_cast<int>(args[1]);
   auto argString = static_cast<std::string> (args[2]); 
 
-  TextsCollection::GetSingleton().SetTextString(argTextId, argString);
+  TextsCollection::GetSingleton().SetTextString(static_cast<int>(args[1]), argString);
   return JsValue::Undefined();
 }
 
 JsValue TextApi::SetTextColor_(const JsFunctionArguments& args)
 {
-  auto argTextId = static_cast<int>(args[1]);
   std::array<double, 4> argColor;
 
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[2].GetProperty(i);
   }
 
-  TextsCollection::GetSingleton().SetTextColor(argTextId, argColor);
+  TextsCollection::GetSingleton().SetTextColor(static_cast<int>(args[1]),
+                                               argColor);
   return JsValue::Undefined();
 }
 
@@ -69,8 +67,8 @@ JsValue TextApi::DestroyAllTexts(const JsFunctionArguments&)
 
 JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 {
-  auto argId = static_cast<int> (args[1]);
-  auto postions = TextsCollection::GetSingleton().GetTextPos(argId);
+  auto postions =
+    TextsCollection::GetSingleton().GetTextPos(static_cast<int>(args[1]));
   auto jsArray = JsValue::Array(2);
 
   jsArray.SetProperty(0, postions.first);
@@ -89,8 +87,8 @@ JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
 {
-  auto argId = static_cast<int>(args[1]);
-  auto argArray = TextsCollection::GetSingleton().GetTextColor(argId);
+  auto argArray =
+    TextsCollection::GetSingleton().GetTextColor(static_cast<int>(args[1]));
   auto jsArray = JsValue::Array(4);
 
   for (int i = 0; i < 4; i++) {
