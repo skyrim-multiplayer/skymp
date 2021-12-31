@@ -64,6 +64,13 @@ jobs:
             rm -f ./temp.txt
           fi
 
+      - name: Remove files used in changelog
+        run: |
+          for file in `find ${{github.workspace}}/docs/release/dev -type f -name "sp*.md"`
+          do
+            rm $file
+          done
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
