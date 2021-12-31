@@ -1,3 +1,4 @@
+#include "DInputHook.hpp"
 #include "TextToDraw.h"
 #include <DX11RenderHandler.h>
 #include <DirectXColors.h>
@@ -81,12 +82,16 @@ void DX11RenderHandler::Render(
     });
   }
 
-  if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {
-    m_pSpriteBatch->Draw(
-      m_pCursorTexture.Get(),
-      DirectX::SimpleMath::Vector2(m_cursorX - 24, m_cursorY - 25), nullptr,
-      DirectX::Colors::White, 0.f, DirectX::SimpleMath::Vector2(0, 0),
-      m_width / 1920.f);
+  bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
+
+  if (Visible() && focusFlag) {
+    if (m_pCursorTexture && m_cursorX >= 0 && m_cursorY >= 0) {
+      m_pSpriteBatch->Draw(
+        m_pCursorTexture.Get(),
+        DirectX::SimpleMath::Vector2(m_cursorX - 24, m_cursorY - 25), nullptr,
+        DirectX::Colors::White, 0.f, DirectX::SimpleMath::Vector2(0, 0),
+        m_width / 1920.f);
+    }
   }
 
   m_pSpriteBatch->End();

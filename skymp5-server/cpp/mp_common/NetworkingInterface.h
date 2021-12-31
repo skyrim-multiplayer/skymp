@@ -45,6 +45,8 @@ public:
 class ISendTarget
 {
 public:
+  virtual ~ISendTarget() = default;
+
   virtual void Send(UserId targetUserId, PacketData data, size_t length,
                     bool reliable) = 0;
 };

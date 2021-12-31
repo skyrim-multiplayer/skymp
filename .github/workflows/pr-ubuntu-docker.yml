@@ -5,6 +5,10 @@ on:
     push:
         branches:
           - main
+
+env:
+    BUILD_TYPE: RelWithDebInfo
+
 jobs:
     pr-ubuntu-docker:
         runs-on: ubuntu-latest
@@ -65,6 +69,12 @@ jobs:
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                        -DUNIT_DATA_DIR="/src/skyrim_data_files"
 
+          - name: Upload compile_commands.json
+            uses: actions/upload-artifact@v2
+            with:
+                name: compile_commands.json
+                path: ${{github.workspace}}/build/compile_commands.json
+
           - name: Build
             uses: addnab/docker-run-action@v3
             with:
@@ -105,6 +115,4 @@ jobs:
                     -u skymp
                 run: |
                     cd /src/build \
-                    && ./unit/unit
-                # not working output for some reason:
-                # && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
+                    && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure

@@ -35,7 +35,7 @@ SaveFile_::RefID SaveFile_::RefID::CreateRefId(SaveFile& parentSaveFile,
 }
 
 SaveFile_::ChangeForm* SaveFile_::SaveFile::GetChangeFormByRefID(
-  SaveFile_::RefID& refID, const uint8_t& type)
+  SaveFile_::RefID refID, const uint8_t& type)
 {
   for (auto& form : this->changeForms) {
     if ((form.type & 0b00111111) == type &&

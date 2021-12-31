@@ -82,7 +82,7 @@ public:
 
   std::shared_ptr<ActivePexInstance> CreateActivePexInstance(
     const std::string& pexScriptName, VarValue activeInstanceOwner,
-    const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+    const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
     const std::string& childrenName);
 
   bool IsNativeFunctionByNameExisted(const std::string& name) const;

@@ -97,9 +97,19 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: coverage
-        path: ${{github.workspace}}/build/__coverage
-    - uses: actions/upload-artifact@v2
-      with:
         name: dist
         path: ${{github.workspace}}/build/dist
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: coverage
+        path: ${{github.workspace}}/build/__coverage
+        
+    - name: Create SP archive
+      working-directory: ${{github.workspace}}/ci
+      run: python impl/create_mod_archive.py --mod_name SkyrimPlatform
+      
+    - uses: actions/upload-artifact@v2
+      with:
+        name: SP
+        path: ${{github.workspace}}/ci/SkyrimPlatform.zip
