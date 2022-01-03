@@ -1,4 +1,4 @@
-import { Debug, once, printConsole } from 'skyrimPlatform'
+import { Debug, once, printConsole } from '@skyrim-platform/skyrim-platform'
 
 once('tick', () => {
     printConsole('Hello! You can view this in the Skyrim ~ console on the Main Menu when the game runs')
