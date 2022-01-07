@@ -96,7 +96,11 @@ export class SweetPieGameModeListener implements GameModeListener {
     } else if (dialogId === this.leaveRoundConfirmationDialog[0]) {
       const round = getPlayerCurrentRound(this.rounds, actorId);
       if (!round) {
-        throw new Error(`player ${actorId} clicked leave but not found in any round`);
+        if (this.rounds[0] && this.rounds[0].hallPointName) {
+          this.controller.setSpawnPoint(actorId, this.rounds[0].hallPointName);
+          this.controller.teleport(actorId, this.rounds[0].hallPointName);
+        }
+        return;
       }
       const roundIndex = this.rounds.indexOf(round);
       if (buttonIndex === 0) {
