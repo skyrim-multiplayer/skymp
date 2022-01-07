@@ -561,7 +561,8 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "menuOpen",
                                    "menuClose",
                                    "browserMessage",
-                                   "consoleMessage" };
+                                   "consoleMessage",
+                                   "spellCast" };
 
   if (events.count(eventName) == 0) {
     throw InvalidArgumentException("eventName", eventName);

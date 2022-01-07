@@ -47,6 +47,7 @@ class GameEventSinks
   , public RE::BSTEventSink<RE::TESWaitStopEvent>
   , public RE::BSTEventSink<RE::TESActivateEvent>
   , public RE::BSTEventSink<RE::MenuOpenCloseEvent>
+  , public RE::BSTEventSink<RE::TESSpellCastEvent>
 
 {
 public:
@@ -116,6 +117,9 @@ public:
     holder->AddEventSink(
       dynamic_cast<RE::BSTEventSink<RE::TESActiveEffectApplyRemoveEvent>*>(
         this));
+
+    holder->AddEventSink(
+      dynamic_cast<RE::BSTEventSink<RE::TESSpellCastEvent>*>(this));
 
     auto ui = RE::UI::GetSingleton();
 
@@ -212,4 +216,8 @@ private:
   RE::BSEventNotifyControl ProcessEvent(
     const RE::MenuOpenCloseEvent* e,
     RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource) override;
+
+  RE::BSEventNotifyControl ProcessEvent(
+    const RE::TESSpellCastEvent* e,
+    RE::BSTEventSource<RE::TESSpellCastEvent>* a_eventSource) override;
 };

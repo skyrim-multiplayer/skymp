@@ -52,6 +52,7 @@ add_test(
     -DCOVERAGE_HTML_OUT_DIR=${CMAKE_BINARY_DIR}/__coverage
     -DCPPCOV=OFF
     -DCPPCOV_PATH=${CPPCOV_PATH}
+    -DUNIT_WORKING_DIRECTORY=${CMAKE_BINARY_DIR}
     -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
 )
 
