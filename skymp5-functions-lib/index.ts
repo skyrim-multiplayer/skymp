@@ -3,7 +3,7 @@ import { BrowserProperty } from './src/props/browserProperty';
 import { ChatProperty } from './src/props/chatProperty';
 import { DialogProperty } from './src/props/dialogProperty';
 import { EvalProperty } from './src/props/evalProperty';
-import { SweetPieGameModeListener, SweetPieMap } from './src/sweetPie';
+import { SweetPieGameModeListener, SweetPieMap } from './src/logic/sweetPie';
 import { LocationalData, Mp, PapyrusObject, PapyrusValue } from './src/types/mp';
 import { Timer } from './src/utils/timer';
 

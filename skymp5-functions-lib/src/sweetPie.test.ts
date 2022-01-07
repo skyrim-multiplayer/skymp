@@ -1,5 +1,8 @@
 import { sprintf } from "sprintf-js";
-import { determineDeathMatchWinners, forceJoinRound, forceLeaveRound, getAvailableRound, getPlayerCurrentRound, PlayerController, SweetPieGameModeListener, SweetPieMap, SweetPieRound } from "./sweetPie";
+import { PlayerController } from "./logic/PlayerController";
+import { SweetPieGameModeListener } from "./logic/SweetPieGameModeListener";
+import { SweetPieMap } from "./logic/SweetPieMap";
+import { SweetPieRound, getAvailableRound, getPlayerCurrentRound, forceJoinRound, forceLeaveRound, determineDeathMatchWinners } from "./logic/SweetPieRound";
 
 const makePlayerController = (): PlayerController => {
   // TODO: use ES6 Proxy to automate handy methods adding
