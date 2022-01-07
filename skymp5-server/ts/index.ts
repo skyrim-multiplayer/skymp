@@ -23,7 +23,7 @@ import * as manifestGen from "./manifestGen";
 console.log(`Current process ID is ${pid}`);
 
 const {
-  master = "http://localhost:2282",
+  master = "https://skymp.io",
   port,
   maxPlayers,
   name,

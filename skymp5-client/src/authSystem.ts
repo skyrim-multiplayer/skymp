@@ -8,7 +8,7 @@ import { AuthGameData, LoginRegisterData, LoginResponseAuthData, RemoteAuthGameD
 import { Transform } from "./movement";
 import { escapeJs, nameof } from "./utils";
 
-const authUrl = "http://localhost:2282";
+const authUrl = "https://skymp.io";
 const githubUrl = "https://github.com/skyrim-multiplayer/skymp";
 const patreonUrl = "https://www.patreon.com/skymp";
 const loginEventKey = "loginRequiredEvent";
@@ -170,7 +170,7 @@ const loginWithSkympIO = (data: LoginRegisterData, failCallback: (msg: string) =
           failCallback(`Login url is invalid (not found)`);
           break;
         default:
-          failCallback(`SYKA Server returned ${escapeJs(response.status.toString() || "???")} \\"${escapeJs(response.body)}\\"`);
+          failCallback(`Server returned ${escapeJs(response.status.toString() || "???")} \\"${escapeJs(response.body)}\\"`);
       }
     })
     .catch(reason => {
@@ -229,7 +229,7 @@ const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
           }
           break;
         default:
-          setRegisterInfo(`SYKA Server returned ${escapeJs(response.status.toString())} \\"${escapeJs(response.body)}\\"`);
+          setRegisterInfo(`Server returned ${escapeJs(response.status.toString())} \\"${escapeJs(response.body)}\\"`);
           break;
       }
     }).catch(reason => {
