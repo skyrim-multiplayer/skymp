@@ -109,11 +109,11 @@ private:
   Napi::Env tickEnv;
   Napi::ObjectReference emitter;
   Napi::FunctionReference emit;
+  Napi::FunctionReference sendUiMessageImplementation;
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   std::shared_ptr<JsEngine> chakraEngine;
   Viet::TaskQueue chakraTaskQueue;
-  std::optional<Napi::FunctionReference> sendUiMessageImplementation;
   GamemodeApi::State gamemodeApiState;
 
   static Napi::FunctionReference constructor;
@@ -1555,15 +1555,11 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
     JsValue::Function([this, update](const JsFunctionArguments& args) {
       auto formId = ExtractFormId(args[1]);
       std::string msgDump = ExtractNewValueStr(args[2]);
-      if (sendUiMessageImplementation) {
-        auto env = sendUiMessageImplementation->Env();
-        std::vector<napi_value> sendUiMessageArgs;
-        sendUiMessageArgs.push_back(Napi::Number::New(env, formId));
-        sendUiMessageArgs.push_back(ParseJson(env, msgDump));
-        sendUiMessageImplementation->Call(sendUiMessageArgs);
-      } else {
-        logger->error("sendUiMessageImplementation was nullptr");
-      }
+      auto env = sendUiMessageImplementation.Env();
+      std::vector<napi_value> sendUiMessageArgs;
+      sendUiMessageArgs.push_back(Napi::Number::New(env, formId));
+      sendUiMessageArgs.push_back(ParseJson(env, msgDump));
+      sendUiMessageImplementation.Call(sendUiMessageArgs);
       return JsValue::Undefined();
     }));
 
