@@ -32,6 +32,13 @@ inline NiPoint3 NapiValueToNiPoint3(Napi::Value v)
     res[i] = arr.Get(i).As<Napi::Number>().FloatValue();
   return res;
 }
+
+inline Napi::Value RunScript(const Napi::Env& env, const std::string& src)
+{
+  auto eval = env.Global().Get("eval");
+  auto evalFunc = eval.As<Napi::Function>();
+  return evalFunc.Call({ Napi::String::New(env, src) });
+}
 }
 
 class ScampServerListener;
@@ -208,29 +215,29 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(
     env, "ScampServer",
-    { InstanceMethod<&ScampServer::AttachSaveStorage>("attachSaveStorage"),
-      InstanceMethod<&ScampServer::Tick>("tick"),
-      InstanceMethod<&ScampServer::On>("on"),
-      InstanceMethod<&ScampServer::CreateActor>("createActor"),
-      InstanceMethod<&ScampServer::SetUserActor>("setUserActor"),
-      InstanceMethod<&ScampServer::GetUserActor>("getUserActor"),
-      InstanceMethod<&ScampServer::GetActorPos>("getActorPos"),
-      InstanceMethod<&ScampServer::GetActorCellOrWorld>("getActorCellOrWorld"),
-      InstanceMethod<&ScampServer::GetActorName>("getActorName"),
-      InstanceMethod<&ScampServer::DestroyActor>("destroyActor"),
-      InstanceMethod<&ScampServer::SetRaceMenuOpen>("setRaceMenuOpen"),
-      InstanceMethod<&ScampServer::SendCustomPacket>("sendCustomPacket"),
-      InstanceMethod<&ScampServer::GetActorsByProfileId>(
-        "getActorsByProfileId"),
-      InstanceMethod<&ScampServer::SetEnabled>("setEnabled"),
-      InstanceMethod<&ScampServer::CreateBot>("createBot"),
-      InstanceMethod<&ScampServer::GetUserByActor>("getUserByActor"),
-      InstanceMethod<&ScampServer::ExecuteJavaScriptOnChakra>(
-        "executeJavaScriptOnChakra"),
-      InstanceMethod<&ScampServer::SetSendUiMessageImplementation>(
-        "setSendUiMessageImplementation"),
-      InstanceMethod<&ScampServer::OnUiEvent>("onUiEvent"),
-      InstanceMethod<&ScampServer::Clear>("clear") });
+    { InstanceMethod("attachSaveStorage", &ScampServer::AttachSaveStorage),
+      InstanceMethod("tick", &ScampServer::Tick),
+      InstanceMethod("on", &ScampServer::On),
+      InstanceMethod("createActor", &ScampServer::CreateActor),
+      InstanceMethod("setUserActor", &ScampServer::SetUserActor),
+      InstanceMethod("getUserActor", &ScampServer::GetUserActor),
+      InstanceMethod("getActorPos", &ScampServer::GetActorPos),
+      InstanceMethod("getActorCellOrWorld", &ScampServer::GetActorCellOrWorld),
+      InstanceMethod("getActorName", &ScampServer::GetActorName),
+      InstanceMethod("destroyActor", &ScampServer::DestroyActor),
+      InstanceMethod("setRaceMenuOpen", &ScampServer::SetRaceMenuOpen),
+      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket),
+      InstanceMethod("getActorsByProfileId",
+                     &ScampServer::GetActorsByProfileId),
+      InstanceMethod("setEnabled", &ScampServer::SetEnabled),
+      InstanceMethod("createBot", &ScampServer::CreateBot),
+      InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
+      InstanceMethod("executeJavaScriptOnChakra",
+                     &ScampServer::ExecuteJavaScriptOnChakra),
+      InstanceMethod("setSendUiMessageImplementation",
+                     &ScampServer::SetSendUiMessageImplementation),
+      InstanceMethod("onUiEvent", &ScampServer::OnUiEvent),
+      InstanceMethod("clear", &ScampServer::Clear) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -368,10 +375,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
     }
 
-    auto res =
-      info.Env().RunScript("let require = global.require || "
-                           "global.process.mainModule.constructor._load; let "
-                           "Emitter = require('events'); new Emitter");
+    auto res = RunScript(Env(),
+                         "let require = global.require || "
+                         "global.process.mainModule.constructor._load; let "
+                         "Emitter = require('events'); new Emitter");
+
     emitter = Napi::Persistent(res.As<Napi::Object>());
     emit = Napi::Persistent(emitter.Value().Get("emit").As<Napi::Function>());
   } catch (std::exception& e) {
@@ -1617,7 +1625,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           }
           src += "]))    )";
 
-          Env().RunScript(src);
+          RunScript(Env(), src);
 
           std::ifstream t("kek");
           std::stringstream buffer;
