@@ -8,7 +8,7 @@ import { AuthGameData, LoginRegisterData, LoginResponseAuthData, RemoteAuthGameD
 import { Transform } from "./movement";
 import { escapeJs, nameof } from "./utils";
 
-const authUrl = "https://skymp.io";
+const authUrl = "http://localhost:2282";
 const githubUrl = "https://github.com/skyrim-multiplayer/skymp";
 const patreonUrl = "https://www.patreon.com/skymp";
 const loginEventKey = "loginRequiredEvent";
@@ -58,6 +58,22 @@ export const main = (lobbyLocation: Transform): void => {
   }
 }
 
+function createPlaySession(token: string) {
+  const client = new sp.HttpClient(authUrl);
+  return client.post(`/api/users/me/play/${sp.settings["skymp5-client"]["server-ip"]}:${sp.settings["skymp5-client"]["server-port"]}`, {
+    body: '{}',
+    contentType: 'application/json',
+    headers: {
+      'authorization': token,
+    },
+  }).then((res) => {
+    if (res.status != 200) {
+      throw Error('status code ' + res.status);
+    }
+    return JSON.parse(res.body).session;
+  });
+}
+
 let isListenBrowserMessage = false;
 const startListenBrowserMessage = (): void => {
   isListenBrowserMessage = true;
@@ -80,7 +96,9 @@ const onBrowserMessage = (): void => {
 
         setLoginInfo("processing...");
         loginWithSkympIO(loginData, (msg) => setLoginInfo(msg), (loginResponse) =>
-          onAuthListeners({ remote: { email: loginData.email, rememberMe: loginData.rememberMe ?? false, session: loginResponse.token } })
+          createPlaySession(loginResponse.token).then((playSession) => {
+            onAuthListeners({ remote: { email: loginData.email, rememberMe: loginData.rememberMe ?? false, session: playSession } })
+          })
         );
         break;
       case clearSavedAuthDataEventKey:
@@ -103,12 +121,12 @@ const onBrowserMessage = (): void => {
 
 const loadLobby = (location: Transform): void => {
   sp.once("update", () => {
-    sp.Game.setInChargen(true, true, false);
-    sp.Utility.setINIBool("bAlwaysActive:General", true);
-    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
-    sp.Game.enableFastTravel(false);
-    sp.Game.getPlayer()!.setDontMove(true);
-    sp.Game.forceFirstPerson();
+    // sp.Game.setInChargen(true, true, false);
+    // sp.Utility.setINIBool("bAlwaysActive:General", true);
+    // sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
+    // sp.Game.enableFastTravel(false);
+    //sp.Game.getPlayer()!.setDontMove(true);
+    // sp.Game.forceFirstPerson();
 
     startListenBrowserMessage();
     authData = browser.getAuthData();
@@ -152,7 +170,7 @@ const loginWithSkympIO = (data: LoginRegisterData, failCallback: (msg: string) =
           failCallback(`Login url is invalid (not found)`);
           break;
         default:
-          failCallback(`Server returned ${response.status || "???"} "${response.body}"`);
+          failCallback(`SYKA Server returned ${escapeJs(response.status.toString() || "???")} \\"${escapeJs(response.body)}\\"`);
       }
     })
     .catch(reason => {
@@ -186,7 +204,9 @@ const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
         case 200:
         case 201:
           loginWithSkympIO(data, (msg) => setRegisterInfo(msg), (loginResponse) =>
-            onAuthListeners({ remote: { email: data.email, rememberMe: true, session: loginResponse.token } })
+            createPlaySession(loginResponse.token).then((playSession) => {
+              onAuthListeners({ remote: { email: data.email, rememberMe: true, session: playSession } })
+            })
           );
           break;
         case 400: // Bad Request
@@ -209,7 +229,7 @@ const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
           }
           break;
         default:
-          setRegisterInfo(`Server returned ${response.status} "${response.body}"`);
+          setRegisterInfo(`SYKA Server returned ${escapeJs(response.status.toString())} \\"${escapeJs(response.body)}\\"`);
           break;
       }
     }).catch(reason => {

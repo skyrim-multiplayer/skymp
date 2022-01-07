@@ -293,7 +293,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (msg.isMe) {
       const task = new SpawnTask();
       once("update", () => {
-        if (!task.running) {
+        if (!task.running && false) {
           task.running = true;
           printConsole("Using moveRefrToPosition to spawn player");
           TESModPlatform.moveRefrToPosition(

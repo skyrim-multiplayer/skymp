@@ -105,14 +105,16 @@ export const getAuthData = (): RemoteAuthGameData | null => {
   try {
     const data = getPluginSourceCode(pluginAuthDataName);
     if (data) {
-      return JSON.parse(data) || null;
+      return JSON.parse(data.slice(2)) || null;
     }
   } catch (e) {
+    printConsole(e);
     return null
   }
   return null;
 };
 
 export const setAuthData = (data: RemoteAuthGameData | null): void => {
-  writePlugin(pluginAuthDataName, data ? JSON.stringify(data) : "null");
+  printConsole(data);
+  writePlugin(pluginAuthDataName, "//" + (data ? JSON.stringify(data) : "null"));
 };
