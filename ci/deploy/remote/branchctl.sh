@@ -14,7 +14,7 @@ if [[ "$action" == "stop" ]]; then
 fi
 
 cp ./server-settings.json server/
-docker run -d --restart=always --rm --name="skymp-server-$branch" --network=host \
+docker run -d --restart=always --name="skymp-server-$branch" --network=host \
     -v "$PWD/server:/work" --workdir=/work \
     -u "`id -u`:`id -g`" \
     --cpu-period=50000 --cpu-quota=25000 \
