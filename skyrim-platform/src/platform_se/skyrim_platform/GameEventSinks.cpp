@@ -654,7 +654,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
     if (casterLocal == nullptr || spellLocal == nullptr ||
         spellLocal->formType != RE::FormType::Spell || casterLocal != caster) {
-      return RE::BSEventNotifyControl::kContinue;
+      return;
     }
 
     obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));

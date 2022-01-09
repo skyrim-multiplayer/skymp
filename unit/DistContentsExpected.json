@@ -42,10 +42,8 @@
       "server/data/ui/855bfaf67c57745958d3.ttf",
       "server/data/ui/d213051bb6f28a25fb26.ttf",
       "server/data/ui/fdf086661e1600f95a34.ttf",
-
       "server/dist_back/skymp5-server.js",
       "server/dist_back/skymp5-server.js.map",
-      "server/dist_front/skymp5-client.js",
       "server/gamemode.js",
       "server/scamp_native.node",
       "server/package.json",
@@ -138,7 +136,7 @@
     ],
     "expectedFiles": [
       "server/ChakraCore.dll",
-      "client/Data/Interface/Fonts/font.spritefont",
+      "client/Data/Platform/Fonts/font.spritefont",
       "client/Data/Platform/Distribution/CEF/cef.pak",
       "client/Data/Platform/Distribution/CEF/cef_100_percent.pak",
       "client/Data/Platform/Distribution/CEF/cef_200_percent.pak",

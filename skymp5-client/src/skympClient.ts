@@ -93,14 +93,16 @@ printConsole("settings:", settings["skymp5-client"]);
 const targetIp = settings["skymp5-client"]["server-ip"] as string;
 const targetPort = settings["skymp5-client"]["server-port"] as number;
 
-if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
-  storage.targetIp = targetIp;
-  storage.targetPort = targetPort;
+export const connectWhenICallAndNotWhenIImport = (): void => {
+  if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+    storage.targetIp = targetIp;
+    storage.targetPort = targetPort;
 
-  printConsole(`Connecting to ${storage.targetIp}:${storage.targetPort}`);
-  networking.connect(targetIp, targetPort);
-} else {
-  printConsole("Reconnect is not required");
+    printConsole(`Connecting to ${storage.targetIp}:${storage.targetPort}`);
+    networking.connect(targetIp, targetPort);
+  } else {
+    printConsole("Reconnect is not required");
+  }
 }
 
 export class SkympClient {

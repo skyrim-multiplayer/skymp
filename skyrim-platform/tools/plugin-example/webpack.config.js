@@ -62,7 +62,7 @@ if (process.env['DEPLOY_PLUGIN']?.includes('true')) {
 
 module.exports = {
     plugins,
-    mode: 'production',
+    mode: 'development',
     devtool: 'inline-source-map',
     entry: { main: entryPoint, },
     output: { path: outputFolder, filename: outputFilename },
