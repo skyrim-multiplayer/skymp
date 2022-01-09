@@ -71,7 +71,6 @@
       "server/dist_back/systems/system.js.map",
       "server/dist_back/ui.js",
       "server/dist_back/ui.js.map",
-      "server/dist_front/skymp5-client.js",
       "server/gamemode.js",
       "server/scamp_native.node",
       "server/package.json",
