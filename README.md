@@ -45,7 +45,7 @@ Before your start make sure that your system meets the conditions:
 
 You can build and run server and unit-tests on Linux.
 As Skyrim has no native Linux version, client can only be built using MSVC,
-but then can be run with Proton (though some crashes can occur on SP startap
+but then can be run with Proton (though some crashes can occur on SP startup
 and it can be tricky to get Skyrim itself to work with non-ASCII text, for example).
 
 * Ubuntu 18.04 or 20.04. Other distros are not tested or are expected to fail:
