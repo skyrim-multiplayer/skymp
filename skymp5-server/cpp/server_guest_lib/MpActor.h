@@ -82,6 +82,8 @@ public:
 
   void SetIsDead(bool isDead);
 
+  BaseActorValues GetBaseValues();
+
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 

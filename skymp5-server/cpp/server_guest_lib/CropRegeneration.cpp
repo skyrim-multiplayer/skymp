@@ -79,3 +79,14 @@ float CropPeriodAfterLastRegen(float secondsAfterLastRegen,
   }
   return secondsAfterLastRegen;
 }
+
+float CropValue(float value, float min = 0.f, float max = 1.0f)
+{
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}

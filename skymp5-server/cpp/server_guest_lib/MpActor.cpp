@@ -473,17 +473,24 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   }
 
   auto changeForm = GetChangeForm();
-  float health = 0;
+  float regeneration = 0;
 
   for (const auto& effect : effects) {
     if (espm::GetData<espm::MGEF>(effect.effectId, espmProvider)
           .data.primaryAV == espm::ActorValue::Health) {
-      health += effect.magnitude;
+      regeneration += effect.magnitude;
     }
   }
-  health = health > 1 ? 1 : health + changeForm.healthPercentage;
+  float maxHealt = GetBaseValues().health;
+  float health =
+    CropValue(changeForm.healthPercentage + regeneration / maxHealt);
 
   SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
   SetPercentages(health, changeForm.magickaPercentage,
                  changeForm.staminaPercentage);
+}
+
+BaseActorValues MpActor::GetBaseValues()
+{
+  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
 }
