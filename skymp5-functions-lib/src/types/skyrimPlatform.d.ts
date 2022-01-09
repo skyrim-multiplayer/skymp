@@ -10,7 +10,6 @@ export type PapyrusValue = PapyrusObject | number | string | boolean | null | Pa
 export declare function printConsole(...arguments: unknown[]): void;
 export declare function writeLogs(pluginName: string, ...arguments: unknown[]): void;
 export declare function setPrintConsolePrefixesEnabled(enabled: boolean): void;
-export declare function writeScript(scriptName: string, src: string): void;
 export declare function callNative(className: string, functionName: string, self?: PapyrusObject, ...args: PapyrusValue[]): PapyrusValue;
 export declare function getJsMemoryUsage(): number;
 export declare function getPluginSourceCode(pluginName: string): string;

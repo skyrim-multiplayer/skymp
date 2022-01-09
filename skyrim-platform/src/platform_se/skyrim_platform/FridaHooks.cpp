@@ -22,6 +22,8 @@
 #include <RE/BSScript/ObjectTypeInfo.h>
 #include <RE/SkyrimScript/HandlePolicy.h>
 
+#include "hooks/DInputHook.hpp"
+#include "ui/DX11RenderHandler.h"
 #include <sstream>
 #include <windows.h>
 
@@ -40,7 +42,7 @@ enum _ExampleHookId
   DRAW_SHEATHE_WEAPON_PC,
   QUEUE_NINODE_UPDATE,
   APPLY_MASKS_TO_RENDER_TARGET,
-  RENDER_MAIN_MENU,
+  RENDER_CURSOR_MENU,
   SEND_EVENT,
   SEND_EVENT_ALL,
   CONSOLE_VPRINT
@@ -103,16 +105,15 @@ void SetupFridaHooks()
   w.Attach(listener, 7141008, DRAW_SHEATHE_WEAPON_PC);
   w.Attach(listener, 6893840, QUEUE_NINODE_UPDATE);
   w.Attach(listener, 4043808, APPLY_MASKS_TO_RENDER_TARGET);
-  w.Attach(listener, 5367792, RENDER_MAIN_MENU);
+  w.Attach(listener, 5367792, RENDER_CURSOR_MENU);
   w.Attach(listener, 19244800, SEND_EVENT);
   w.Attach(listener, 19245744, SEND_EVENT_ALL);
   w.Attach(listener, 8766499, CONSOLE_VPRINT);
 }
 
 thread_local uint32_t g_queueNiNodeActorId = 0;
-thread_local void* g_prevMainMenuView = nullptr;
 
-bool g_allowHideMainMenu = true;
+bool g_allowHideCursorMenu = true;
 
 static void example_listener_on_enter(GumInvocationListener* listener,
                                       GumInvocationContext* ic)
@@ -163,7 +164,7 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       std::string eventNameStr = *eventName;
       EventsApi::SendPapyrusEventEnter(selfId, eventNameStr);
 
-      if (strcmp(*eventName, "OnUpdate") != 0 && vm) {
+      if (blockEvents && strcmp(*eventName, "OnUpdate") != 0 && vm) {
         vm->attachedScriptsLock.Lock();
         auto it = vm->attachedScripts.find(handle);
 
@@ -176,9 +177,6 @@ static void example_listener_on_enter(GumInvocationListener* listener,
             auto name = info->GetName();
 
             const char* skyui_name = "SKI_"; // start skyui object name
-
-            // RE::ConsoleLog::GetSingleton()->Print(name);
-
             if (strlen(name) >= 4 && name[0] == skyui_name[0] &&
                 name[1] == skyui_name[1] && name[2] == skyui_name[2] &&
                 name[3] == skyui_name[3]) {
@@ -285,18 +283,28 @@ static void example_listener_on_enter(GumInvocationListener* listener,
       g_queueNiNodeActorId = 0;
       break;
     }
-    case RENDER_MAIN_MENU: {
-      static auto fsMainMenu = new BSFixedString("Cursor Menu");
-      auto mainMenu = FridaHooksUtils::GetMenuByName(fsMainMenu);
+    case RENDER_CURSOR_MENU: {
+      static auto fsCursorMenu = new BSFixedString("Cursor Menu");
+      auto cursorMenu = FridaHooksUtils::GetMenuByName(fsCursorMenu);
       auto this_ = (int64_t*)_ic->cpu_context->rcx;
-      if (g_allowHideMainMenu) {
-
-        if (this_)
-          if (mainMenu == this_) {
-            auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-            g_prevMainMenuView = *viewPtr;
-            *viewPtr = nullptr;
+      if (g_allowHideCursorMenu) {
+        if (this_) {
+          if (cursorMenu == this_) {
+            bool kRunningAE = false;
+            if (kRunningAE) {
+              FridaHooksUtils::SaveCursorPosition();
+            }
+            bool& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
+            bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
+            if (visibleFlag && focusFlag) {
+              FridaHooksUtils::SetMenuNumberVariable(
+                fsCursorMenu, "_root.mc_Cursor._alpha", 0);
+            } else {
+              FridaHooksUtils::SetMenuNumberVariable(
+                fsCursorMenu, "_root.mc_Cursor._alpha", 100);
+            }
           }
+        }
       }
       break;
     }
@@ -313,22 +321,6 @@ static void example_listener_on_leave(GumInvocationListener* listener,
     case HOOK_SEND_ANIMATION_EVENT: {
       bool res = !!gum_invocation_context_get_return_value(ic);
       EventsApi::SendAnimationEventLeave(res);
-      break;
-    }
-    case RENDER_MAIN_MENU: {
-      auto _ic = (_GumInvocationContext*)ic;
-
-      static auto fsMainMenu = new BSFixedString("Cursor Menu");
-      auto mainMenu = FridaHooksUtils::GetMenuByName(fsMainMenu);
-      auto this_ = (int64_t*)_ic->cpu_context->rcx;
-      auto viewPtr = reinterpret_cast<void**>(((uint8_t*)this_) + 0x10);
-      bool renderHookInProgress = g_prevMainMenuView != nullptr;
-      if (renderHookInProgress)
-        if (this_)
-          if (mainMenu == this_) {
-            *viewPtr = g_prevMainMenuView;
-            g_prevMainMenuView = nullptr;
-          }
       break;
     }
     case SEND_EVENT: {

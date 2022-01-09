@@ -9,6 +9,7 @@
 #include "EventsApi.h"
 #include "ExceptionPrinter.h"
 #include "FlowManager.h"
+#include "FridaHooksUtils.h"
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InputConverter.h"
@@ -229,8 +230,14 @@ public:
 
   MyInputListener()
   {
-    pCursorX = (float*)(REL::Module::BaseAddr() + 0x2F6C104);
-    pCursorY = (float*)(REL::Module::BaseAddr() + 0x2F6C108);
+    bool kRunningAE = false;
+    if (kRunningAE) {
+      pCursorX = FridaHooksUtils::GetCursorX();
+      pCursorY = FridaHooksUtils::GetCursorY();
+    } else {
+      pCursorX = (float*)(REL::Module::BaseAddr() + 0x2F6C104);
+      pCursorY = (float*)(REL::Module::BaseAddr() + 0x2F6C108);
+    }
     vkCodeDownDur.fill(0);
   }
 
