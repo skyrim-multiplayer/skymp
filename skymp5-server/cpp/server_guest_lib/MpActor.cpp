@@ -94,7 +94,7 @@ void MpActor::OnEquip(uint32_t baseId)
     return;
   auto t = lookupRes.rec->GetType();
   if (t == "INGR" || t == "ALCH") {
-    // Eat item
+    EatItem(baseId, t);
     RemoveItem(baseId, 1, nullptr);
 
     VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
@@ -460,4 +460,29 @@ void MpActor::SetRespawnTime(float time)
 void MpActor::SetIsDead(bool isDead)
 {
   SendAndSetDeathState(isDead, false);
+}
+
+void MpActor::EatItem(uint32_t baseId, espm::Type t)
+{
+  auto espmProvider = GetParent();
+  std::vector<espm::Effects::Effect> effects;
+  if (t == "ALCH") {
+    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
+  } else if (t == "INGR") {
+    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
+  }
+
+  auto changeForm = GetChangeForm();
+  float health = 0;
+
+  for (const auto& effect : effects) {
+    if (espm::GetData<espm::MGEF>(effect.effectId, espmProvider)
+          .data.primaryAV == espm::ActorValue::Health) {
+      health += effect.magnitude;
+    }
+  }
+  health = health > 1 ? 1 : health + changeForm.healthPercentage;
+
+  SetPercentages(health, changeForm.magickaPercentage,
+                 changeForm.staminaPercentage);
 }

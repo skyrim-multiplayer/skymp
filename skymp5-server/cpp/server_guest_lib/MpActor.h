@@ -92,6 +92,7 @@ private:
   std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
                                bool shouldTeleport);
   void MpApiDeath(MpActor* killer = nullptr);
+  void EatItem(uint32_t baseId, espm::Type t);
 
 protected:
   void BeforeDestroy() override;
