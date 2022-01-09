@@ -483,6 +483,7 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   }
   health = health > 1 ? 1 : health + changeForm.healthPercentage;
 
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
   SetPercentages(health, changeForm.magickaPercentage,
                  changeForm.staminaPercentage);
 }
