@@ -1021,6 +1021,20 @@ public:
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 static_assert(sizeof(ALCH) == sizeof(RecordHeader));
+
+class INGR : public RecordHeader
+{
+public:
+  static constexpr auto kType = "INGR";
+
+  struct Data
+  {
+    std::vector<espm::Effects::Effect> effects;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+};
+static_assert(sizeof(INGR) == sizeof(RecordHeader));
 }
 
 namespace espm {
