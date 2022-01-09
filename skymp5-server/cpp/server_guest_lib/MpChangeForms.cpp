@@ -39,6 +39,17 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["staminaPercentage"] = changeForm.staminaPercentage;
 
   res["isDead"] = changeForm.isDead;
+
+  res["spawnPoint_pos"] = { changeForm.spawnPoint.pos[0],
+                            changeForm.spawnPoint.pos[1],
+                            changeForm.spawnPoint.pos[2] };
+  res["spawnPoint_rot"] = { changeForm.spawnPoint.rot[0],
+                            changeForm.spawnPoint.rot[1],
+                            changeForm.spawnPoint.rot[2] };
+  res["spawnPoint_cellOrWorldDesc"] =
+    changeForm.spawnPoint.cellOrWorldDesc.ToString();
+
+  res["spawnDelay"] = changeForm.spawnDelay;
   return res;
 }
 
@@ -53,7 +64,10 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     appearanceDump("appearanceDump"), equipmentDump("equipmentDump"),
     dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
-    staminaPercentage("staminaPercentage"), isDead("isDead");
+    staminaPercentage("staminaPercentage"), isDead("isDead"),
+    spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
+    spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
+    spawnDelay("spawnDelay");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -112,6 +126,21 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   ReadEx(element, dynamicFields, &jDynamicFields);
   res.dynamicFields = DynamicFields::FromJson(nlohmann::json::parse(
     static_cast<std::string>(simdjson::minify(jDynamicFields))));
+
+  ReadEx(element, spawnPointPos, &jTmp);
+  for (int i = 0; i < 3; ++i) {
+    ReadEx(jTmp, i, &res.spawnPoint.pos[i]);
+  }
+
+  ReadEx(element, spawnPointRot, &jTmp);
+  for (int i = 0; i < 3; ++i) {
+    ReadEx(jTmp, i, &res.spawnPoint.rot[i]);
+  }
+
+  ReadEx(element, spawnPointCellOrWorldDesc, &tmp);
+  res.spawnPoint.cellOrWorldDesc = FormDesc::FromString(tmp);
+
+  ReadEx(element, spawnDelay, &res.spawnDelay);
 
   return res;
 }

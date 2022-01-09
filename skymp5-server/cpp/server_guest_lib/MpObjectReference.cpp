@@ -932,7 +932,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
   if (t == espm::TREE::kType || t == espm::FLOR::kType || espm::IsItem(t)) {
     if (!IsHarvested()) {
-      auto mapping = loader.GetBrowser().GetMapping(base.fileIdx);
+      auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
       uint32_t resultItem = 0;
       if (t == espm::TREE::kType) {
         espm::FLOR::Data data;
