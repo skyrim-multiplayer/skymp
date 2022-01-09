@@ -18,10 +18,8 @@ RUN \
   && apt-get install -y \
     nodejs \
     yarn \
-    # dsadsa
     python2 \
     libicu-dev \
-    clang-12 \
     git \
     cmake \
     ninja-build \
@@ -33,7 +31,8 @@ RUN \
     zip \
     pkg-config \
     upx-ucl \
-    cmake=3.22.0-0kitware1ubuntu20.04.1 \
+    cmake=3.22.1-0kitware1ubuntu20.04.1 \
+    clang-12 \
   && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m skymp
