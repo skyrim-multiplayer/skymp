@@ -1299,8 +1299,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
     auto actorLocal = RE::TESForm::LookupByID(actorId);
 
-    if (actorLocal == nullptr || actorLocal != actor ||
-        actorLocal->formType != RE::FormType::ActorCharacter) {
+    if (actorLocal == nullptr || actorLocal != actor) {
       return;
     }
 
