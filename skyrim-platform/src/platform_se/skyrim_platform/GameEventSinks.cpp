@@ -103,7 +103,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     auto obj = JsValue::Object();
 
     obj.SetProperty("startTime", JsValue::Double(waitStart));
-    obj.SetProperty("desiredEndTime", JsValue::Double(waitEnd));
+    obj.SetProperty("desiredStopTime", JsValue::Double(waitEnd));
 
     EventsApi::SendEvent("waitStart", { JsValue::Undefined(), obj });
   });
@@ -996,7 +996,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     }
 
     obj.SetProperty("startTime", JsValue::Double(sleepStart));
-    obj.SetProperty("desiredEndTime", JsValue::Double(sleepEnd));
+    obj.SetProperty("desiredStopTime", JsValue::Double(sleepEnd));
 
     EventsApi::SendEvent("sleepStart", { JsValue::Undefined(), obj });
   });
