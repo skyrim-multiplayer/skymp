@@ -1792,12 +1792,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     return RE::BSEventNotifyControl::kContinue;
   }
 
-  auto tag = event->tag;
+  auto tag = static_cast<std::string>(event->tag);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([tag] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("tag", JsValue::String(static_cast<std::string>(tag)));
+    obj.SetProperty("tag", JsValue::String(tag));
 
     EventsApi::SendEvent("footstep", { JsValue::Undefined(), obj });
   });
