@@ -1253,9 +1253,8 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       auto packageLocal = RE::TESForm::LookupByID(packageId);
 
       if (actorLocal == nullptr || packageLocal == nullptr ||
-          actorLocal != actor ||
-          packageLocal->formType != RE::FormType::Package ||
-          static_cast<int>(type) < 0 || static_cast<int>(type) > 2) {
+          actorLocal != actor || static_cast<int>(type) < 0 ||
+          static_cast<int>(type) > 2) {
         return;
       }
 
