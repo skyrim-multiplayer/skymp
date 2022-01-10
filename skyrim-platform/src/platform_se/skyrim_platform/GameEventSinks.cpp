@@ -850,8 +850,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
     auto questLocal = RE::TESForm::LookupByID(questId);
 
-    if (questLocal == nullptr || questLocal->formType != RE::FormType::Quest ||
-        stage < 0) {
+    if (questLocal == nullptr || questLocal->formType != RE::FormType::Quest) {
       return;
     }
 
