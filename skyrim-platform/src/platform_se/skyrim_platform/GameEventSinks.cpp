@@ -102,10 +102,6 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([waitStart, waitEnd] {
     auto obj = JsValue::Object();
 
-    if (waitStart < 0 || waitEnd < 0) {
-      return;
-    }
-
     obj.SetProperty("startTime", JsValue::Double(waitStart));
     obj.SetProperty("desiredEndTime", JsValue::Double(waitEnd));
 
