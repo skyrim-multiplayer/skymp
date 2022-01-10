@@ -68,7 +68,8 @@ you can use [a Docker image with preinstalled dependencies](https://hub.docker.c
 ```sh
 docker run -it --rm -v "$PWD:$PWD" -w "$PWD" -u "`id -u`:`id -g`" skymp/skymp-vcpkg-deps ./build.sh ...
 # ... or go rootless!
-podman run -it --rm -v "$PWD:$PWD" -w "$PWD" -e VCPKG_DEFAULT_BINARY_CACHE=/home/skymp/.cache/vcpkg/archives skymp/skymp-vcpkg-deps ./build.sh ...
+podman run -it --rm -v "$PWD:$PWD" -w "$PWD" -e VCPKG_DEFAULT_BINARY_CACHE=/home/skymp/.cache/vcpkg/archives \
+    skymp/skymp-vcpkg-deps ./build.sh ...
 ```
 
 ## Configuring and Building
