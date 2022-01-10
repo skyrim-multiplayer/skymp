@@ -1663,10 +1663,6 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([travelTimeGameHours] {
     auto obj = JsValue::Object();
 
-    if (travelTimeGameHours < 0) {
-      return;
-    }
-
     obj.SetProperty("travelTimeGameHours",
                     JsValue::Double(travelTimeGameHours));
 
