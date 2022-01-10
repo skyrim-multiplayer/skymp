@@ -83,10 +83,6 @@ class GameEventSinks
   , public RE::BSTEventSink<RE::TESFastTravelEndEvent>
   , public RE::BSTEventSink<RE::TESObjectREFRTranslationEvent>
   , public RE::BSTEventSink<RE::TESPerkEntryRunEvent>
-  , public RE::BSTEventSink<RE::ItemCrafted::Event>
-  , public RE::BSTEventSink<RE::Inventory::Event>
-  , public RE::BSTEventSink<RE::ChestsLooted::Event>
-  , public RE::BSTEventSink<RE::ItemsPickpocketed::Event>
   , public RE::BSTEventSink<SKSE::ActionEvent>
   , public RE::BSTEventSink<SKSE::CameraEvent>
   , public RE::BSTEventSink<SKSE::CrosshairRefEvent>
@@ -267,18 +263,6 @@ public:
 
     SKSE::GetModCallbackEventSource()->AddEventSink(
       dynamic_cast<RE::BSTEventSink<SKSE::ModCallbackEvent>*>(this));
-
-    RE::ItemCrafted::GetEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::ItemCrafted::Event>*>(this));
-
-    RE::Inventory::GetEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::Inventory::Event>*>(this));
-
-    RE::ChestsLooted::GetEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::ChestsLooted::Event>*>(this));
-
-    RE::ItemsPickpocketed::GetEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::ItemsPickpocketed::Event>*>(this));
 
     auto playerCharacterHolder = RE::PlayerCharacter::GetSingleton();
     auto playerCharacterEventSource = playerCharacterHolder
@@ -510,22 +494,6 @@ private:
   RE::BSEventNotifyControl ProcessEvent(
     const SKSE::ModCallbackEvent* e,
     RE::BSTEventSource<SKSE::ModCallbackEvent>* a_eventSource) override;
-
-  RE::BSEventNotifyControl ProcessEvent(
-    const RE::ItemCrafted::Event* e,
-    RE::BSTEventSource<RE::ItemCrafted::Event>* a_eventSource);
-
-  RE::BSEventNotifyControl ProcessEvent(
-    const RE::Inventory::Event* e,
-    RE::BSTEventSource<RE::Inventory::Event>* a_eventSource);
-
-  RE::BSEventNotifyControl ProcessEvent(
-    const RE::ChestsLooted::Event* e,
-    RE::BSTEventSource<RE::ChestsLooted::Event>* a_eventSource);
-
-  RE::BSEventNotifyControl ProcessEvent(
-    const RE::ItemsPickpocketed::Event* e,
-    RE::BSTEventSource<RE::ItemsPickpocketed::Event>* a_eventSource);
 
   RE::BSEventNotifyControl ProcessEvent(
     const RE::PositionPlayerEvent* e,

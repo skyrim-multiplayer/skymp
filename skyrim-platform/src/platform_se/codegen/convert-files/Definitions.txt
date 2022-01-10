@@ -376,29 +376,6 @@ export interface PerkEntryRunEvent {
     flag: number
 }
 
-export interface ItemCraftedEvent {
-    item: Form
-}
-
-export interface ItemEnchantedEvent {
-    item: Form
-}
-
-export interface ItemObtainEvent {
-    reference: ObjectReference,
-    itemName: string,
-    itemOwner: ObjectReference | null,
-    itemValue: number,
-    itemWeight: number,
-    itemSoulLevel: number,
-    prevCount: number,
-    newCount: number,
-}
-
-export interface ItemPickpocketedEvent {
-    count: number
-}
-
 export interface ActionEvent {
     actor: Actor,
     source: Form,
@@ -610,21 +587,6 @@ export declare function once(eventName: 'fastTravelEnd', callback: (event: FastT
 
 export declare function on(eventName: 'perkEntryRun', callback: (event: PerkEntryRunEvent) => void): void;
 export declare function once(eventName: 'perkEntryRun', callback: (event: PerkEntryRunEvent) => void): void;
-
-export declare function on(eventName: 'itemCrafted', callback: (event: ItemCraftedEvent) => void): void;
-export declare function once(eventName: 'itemCrafted', callback: (event: ItemCraftedEvent) => void): void;
-
-export declare function on(eventName: 'itemEnchanted', callback: (event: ItemEnchantedEvent) => void): void;
-export declare function once(eventName: 'itemEnchanted', callback: (event: ItemEnchantedEvent) => void): void;
-
-export declare function on(eventName: 'itemObtain', callback: (event: ItemObtainEvent) => void): void;
-export declare function once(eventName: 'itemObtain', callback: (event: ItemObtainEvent) => void): void;
-
-export declare function on(eventName: 'chestLooted', callback: (event: void) => void): void;
-export declare function once(eventName: 'chestLooted', callback: (event: void) => void): void;
-
-export declare function on(eventName: 'itemPickpocketed', callback: (event: ItemPickpocketedEvent) => void): void;
-export declare function once(eventName: 'itemPickpocketed', callback: (event: ItemPickpocketedEvent) => void): void;
 
 export declare function on(eventName: 'actionWeaponSwing', callback: (event: ActionEvent) => void): void;
 export declare function once(eventName: 'actionWeaponSwing', callback: (event: ActionEvent) => void): void;
