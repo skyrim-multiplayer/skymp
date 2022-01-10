@@ -62,10 +62,13 @@ and it can be tricky to get Skyrim itself to work with non-ASCII text, for examp
     echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
     ```
 
-Alternativaly, you can use [a docker Image with preinstalled depenndecies](https://hub.docker.com/r/skymp/skymp-vcpkg-deps):
+If you don't wish to build all the dependencies by yourself, or have an unsupported distro,
+you can use [a Docker image with preinstalled dependencies](https://hub.docker.com/r/skymp/skymp-vcpkg-deps):
 
 ```sh
-docker run -it --rm -v "$PWD:/src" -w "/src" -u "`id -u`:`id -g`" skymp/skymp-vcpkg-deps ./build.sh ...
+docker run -it --rm -v "$PWD:$PWD" -w "$PWD" -u "`id -u`:`id -g`" skymp/skymp-vcpkg-deps ./build.sh ...
+# ... or go rootless!
+docker run -it --rm -v "$PWD:$PWD" -w "$PWD" -e VCPKG_DEFAULT_BINARY_CACHE=/home/skymp/.cache/vcpkg/archives skymp/skymp-vcpkg-deps ./build.sh ...
 ```
 
 ## Configuring and Building
