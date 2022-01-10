@@ -89,12 +89,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESWaitStartEvent* event,
   RE::BSTEventSource<RE::TESWaitStartEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESWaitStartEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESWaitStartEvent*>(event);
 
   auto waitStart = converted->waitStartTime;
   auto waitEnd = converted->desiredWaitEndTime;
@@ -198,12 +198,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESCellAttachDetachEvent* event,
   RE::BSTEventSource<RE::TESCellAttachDetachEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESCellAttachDetachEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESCellAttachDetachEvent*>(event);
 
   auto reference = converted->reference.get();
   auto action = converted->action;
@@ -702,12 +702,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESSpellCastEvent* event,
   RE::BSTEventSource<RE::TESSpellCastEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESSpellCastEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESSpellCastEvent*>(event);
 
   auto caster = converted->caster.get();
   auto spellId = converted->spell;
@@ -737,12 +737,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESOpenCloseEvent* event,
   RE::BSTEventSource<RE::TESOpenCloseEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESOpenCloseEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESOpenCloseEvent*>(event);
 
   auto target = converted->target.get();
   auto cause = converted->cause.get();
@@ -776,12 +776,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESQuestInitEvent* event,
   RE::BSTEventSource<RE::TESQuestInitEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESQuestInitEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESQuestInitEvent*>(event);
 
   auto questId = converted->questId;
 
@@ -806,12 +806,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESQuestStartStopEvent* event,
   RE::BSTEventSource<RE::TESQuestStartStopEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESQuestStartStopEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESQuestStartStopEvent*>(event);
 
   auto questId = converted->questId;
   auto isStarted = converted->isStarted;
@@ -839,12 +839,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESQuestStageEvent* event,
   RE::BSTEventSource<RE::TESQuestStageEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESQuestStageEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESQuestStageEvent*>(event);
 
   auto questId = converted->questId;
   auto stage = converted->stage;
@@ -872,11 +872,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESTriggerEvent* event,
   RE::BSTEventSource<RE::TESTriggerEvent>* eventSource)
 {
-  auto converted = reinterpret_cast<const TESEvents::TESTriggerEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted = reinterpret_cast<const TESEvents::TESTriggerEvent*>(event);
 
   auto target = converted->target.get();
   auto cause = converted->cause.get();
@@ -908,12 +908,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESTriggerEnterEvent* event,
   RE::BSTEventSource<RE::TESTriggerEnterEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESTriggerEnterEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESTriggerEnterEvent*>(event);
 
   auto target = converted->target.get();
   auto cause = converted->cause.get();
@@ -945,12 +945,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESTriggerLeaveEvent* event,
   RE::BSTEventSource<RE::TESTriggerLeaveEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESTriggerLeaveEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESTriggerLeaveEvent*>(event);
 
   auto target = converted->target.get();
   auto cause = converted->cause.get();
@@ -982,12 +982,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESSleepStartEvent* event,
   RE::BSTEventSource<RE::TESSleepStartEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESSleepStartEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESSleepStartEvent*>(event);
 
   auto sleepStart = converted->sleepStartTime;
   auto sleepEnd = converted->desiredSleepEndTime;
@@ -1012,12 +1012,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESSleepStopEvent* event,
   RE::BSTEventSource<RE::TESSleepStopEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESSleepStopEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESSleepStopEvent*>(event);
 
   auto isInterrupted = converted->isInterrupted;
 
@@ -1036,12 +1036,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESActorLocationChangeEvent* event,
   RE::BSTEventSource<RE::TESActorLocationChangeEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESActorLocationChangeEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESActorLocationChangeEvent*>(event);
 
   auto actor = converted->actor.get();
   auto oldLoc = converted->oldLoc;
@@ -1082,11 +1082,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESBookReadEvent* event,
   RE::BSTEventSource<RE::TESBookReadEvent>* eventSource)
 {
-  auto converted = reinterpret_cast<const TESEvents::TESBookReadEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted = reinterpret_cast<const TESEvents::TESBookReadEvent*>(event);
 
   auto book = converted->book.get();
   auto bookId = book ? book->formID : 0;
@@ -1112,11 +1112,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESSellEvent* event,
   RE::BSTEventSource<RE::TESSellEvent>* eventSource)
 {
-  auto converted = reinterpret_cast<const TESEvents::TESSellEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted = reinterpret_cast<const TESEvents::TESSellEvent*>(event);
 
   auto target = converted->target.get();
   auto seller = converted->seller.get();
@@ -1148,12 +1148,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESFurnitureEvent* event,
   RE::BSTEventSource<RE::TESFurnitureEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESFurnitureEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESFurnitureEvent*>(event);
 
   auto target = converted->target.get();
   auto actor = converted->actor.get();
@@ -1189,12 +1189,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESMagicWardHitEvent* event,
   RE::BSTEventSource<RE::TESMagicWardHitEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESMagicWardHitEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESMagicWardHitEvent*>(event);
 
   auto target = converted->target.get();
   auto caster = converted->caster.get();
@@ -1250,11 +1250,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESPackageEvent* event,
   RE::BSTEventSource<RE::TESPackageEvent>* eventSource)
 {
-  auto converted = reinterpret_cast<const TESEvents::TESPackageEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted = reinterpret_cast<const TESEvents::TESPackageEvent*>(event);
 
   auto actor = converted->actor.get();
   auto actorId = actor ? actor->formID : 0;
@@ -1301,12 +1301,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESEnterBleedoutEvent* event,
   RE::BSTEventSource<RE::TESEnterBleedoutEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESEnterBleedoutEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESEnterBleedoutEvent*>(event);
 
   auto actor = converted->actor.get();
   auto actorId = actor ? actor->formID : 0;
@@ -1683,12 +1683,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESDestructionStageChangedEvent* event,
   RE::BSTEventSource<RE::TESDestructionStageChangedEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESDestructionStageChangedEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESDestructionStageChangedEvent*>(event);
 
   auto target = converted->target.get();
   auto targetId = target ? target->formID : 0;
@@ -1720,12 +1720,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESSceneActionEvent* event,
   RE::BSTEventSource<RE::TESSceneActionEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESSceneActionEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESSceneActionEvent*>(event);
 
   auto ref = converted->reference;
   auto refId = ref ? ref->formID : 0;
@@ -1765,12 +1765,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESPlayerBowShotEvent* event,
   RE::BSTEventSource<RE::TESPlayerBowShotEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESPlayerBowShotEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESPlayerBowShotEvent*>(event);
 
   auto weaponId = converted->weaponId;
   auto ammoId = converted->ammoId;
@@ -1805,12 +1805,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESFastTravelEndEvent* event,
   RE::BSTEventSource<RE::TESFastTravelEndEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESFastTravelEndEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESFastTravelEndEvent*>(event);
 
   auto travelTimeGameHours = converted->travelTimeGameHours;
 
@@ -1834,12 +1834,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESObjectREFRTranslationEvent* event,
   RE::BSTEventSource<RE::TESObjectREFRTranslationEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESObjectREFRTranslationEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+  auto converted =
+    reinterpret_cast<const TESEvents::TESObjectREFRTranslationEvent*>(event);
 
   auto ref = converted->refr.get();
   auto refId = ref ? ref->formID : 0;
@@ -1883,12 +1882,12 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESPerkEntryRunEvent* event,
   RE::BSTEventSource<RE::TESPerkEntryRunEvent>* eventSource)
 {
-  auto converted =
-    reinterpret_cast<const TESEvents::TESPerkEntryRunEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted =
+    reinterpret_cast<const TESEvents::TESPerkEntryRunEvent*>(event);
 
   auto cause = converted->cause.get();
   auto causeId = cause ? cause->formID : 0;
@@ -1968,11 +1967,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESSceneEvent* event,
   RE::BSTEventSource<RE::TESSceneEvent>* eventSource)
 {
-  auto converted = reinterpret_cast<const TESEvents::TESSceneEvent*>(event);
-
-  if (!converted) {
+  if (event == nullptr) {
     return RE::BSEventNotifyControl::kContinue;
   }
+
+  auto converted = reinterpret_cast<const TESEvents::TESSceneEvent*>(event);
 
   auto sceneId = converted->sceneId;
 
