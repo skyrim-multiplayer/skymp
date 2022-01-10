@@ -183,7 +183,6 @@ struct TESSceneEvent
 {
   RE::TESForm* reference; // what ref?
   RE::FormID sceneId;
-  UInt32 flag; // what flag?
 };
 
 struct TESPlayerBowShotEvent

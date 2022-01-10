@@ -2006,10 +2006,9 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     return RE::BSEventNotifyControl::kContinue;
   }
 
-  auto flag = converted->flag;
   auto sceneId = converted->sceneId;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([flag, sceneId] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([sceneId] {
     auto obj = JsValue::Object();
 
     auto sceneLocal = RE::TESForm::LookupByID(sceneId);
@@ -2019,7 +2018,6 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     }
 
     obj.SetProperty("scene", CreateObject("Scene", sceneLocal));
-    obj.SetProperty("flag", JsValue::Double(flag));
 
     EventsApi::SendEvent("scene", { JsValue::Undefined(), obj });
   });

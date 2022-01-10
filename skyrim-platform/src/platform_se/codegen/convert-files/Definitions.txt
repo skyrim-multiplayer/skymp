@@ -362,8 +362,7 @@ export interface SceneActionEvent {
 }
 
 export interface SceneEvent {
-    scene: Scene,
-    flag: number
+    scene: Scene
 }
 
 export interface PlayerBowShotEvent {
