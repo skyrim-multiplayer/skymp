@@ -24,7 +24,9 @@ const styles = [
 
 const Constructor = props => {
   const content_mainRef = useRef();
-
+  useEffect(() => {
+    console.log('render con')
+  }, [])
   useEffect(() => {
     if (props.dynamicSize) {
       switch (props.elem.type) {
@@ -40,7 +42,6 @@ const Constructor = props => {
       }
     }
   }, [props.elem]);
-
   const [fwidth, setFwidth] = useState(props.width || 512);
   const [fheight, setFheight] = useState(props.height || 704);
 
