@@ -8,7 +8,6 @@
 #include <RE/ActiveEffect.h>
 #include <RE/Actor.h>
 #include <RE/EffectSetting.h>
-#include <RE/InventoryEntryData.h>
 #include <RE/TESObjectCELL.h>
 
 struct RE::TESActivateEvent
