@@ -60,6 +60,11 @@ const Constructor = props => {
         if (allElems[i].tags !== undefined) {
           if (allElems[i].tags.length !== 0) {
             for (let j = 0; j < allElems[i].tags.length; j++) {
+              if (i === allElems.length - 1) {
+                style = {
+                  marginBottom: '35px'
+                };
+              }
               if (allElems[i].tags[j] === 'ELEMENT_STYLE_MARGIN_EXTENDED') {
                 style = {
                   marginTop: '30px'
