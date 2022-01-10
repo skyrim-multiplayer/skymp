@@ -306,7 +306,7 @@ export interface WaitStartEvent {
 }
 
 export interface LocationChangedEvent {
-    actor: ObjectReference,
+    actor: Actor,
     oldLoc: Location,
     newLoc: Location,
 }

@@ -1068,7 +1068,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
         return;
       }
 
-      obj.SetProperty("actor", CreateObject("ObjectReference", actorLocal));
+      obj.SetProperty("actor", CreateObject("Actor", actorLocal));
       obj.SetProperty("oldLoc", CreateObject("Location", oldLocLocal));
       obj.SetProperty("newLoc", CreateObject("Location", newLocLocal));
 
