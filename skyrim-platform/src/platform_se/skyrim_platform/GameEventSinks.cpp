@@ -1822,7 +1822,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
     auto sceneLocal = RE::TESForm::LookupByID(sceneId);
 
-    if (sceneLocal == nullptr) {
+    if (sceneLocal == nullptr || sceneLocal->formID != sceneId) {
       return;
     }
 
