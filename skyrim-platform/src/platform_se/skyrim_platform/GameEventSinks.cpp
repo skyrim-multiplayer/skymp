@@ -991,10 +991,6 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([sleepStart, sleepEnd] {
     auto obj = JsValue::Object();
 
-    if (sleepStart < 0 || sleepEnd < 0) {
-      return;
-    }
-
     obj.SetProperty("startTime", JsValue::Double(sleepStart));
     obj.SetProperty("desiredStopTime", JsValue::Double(sleepEnd));
 
