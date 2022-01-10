@@ -1574,29 +1574,24 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto converted =
     reinterpret_cast<const TESEvents::TESSceneActionEvent*>(event);
 
-  auto ref = converted->reference;
-  auto refId = ref ? ref->formID : 0;
   auto sceneId = converted->sceneId;
   auto refAliasId = converted->referenceAliasID;
   auto questId = converted->questId;
   auto action = converted->action;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [ref, refId, sceneId, refAliasId, questId, action] {
+    [sceneId, refAliasId, questId, action] {
       auto obj = JsValue::Object();
 
-      auto refLocal = RE::TESForm::LookupByID(refId);
       auto sceneLocal = RE::TESForm::LookupByID(sceneId);
       auto questLocal = RE::TESForm::LookupByID(questId);
 
-      if (refLocal == nullptr || sceneLocal == nullptr ||
-          questLocal == nullptr || refAliasId < 0 || action < 0 ||
-          sceneLocal->formType != RE::FormType::Scene ||
-          questLocal->formType != RE::FormType::Quest) {
+      if (sceneLocal == nullptr || questLocal == nullptr || refAliasId < 0 ||
+          action < 0 || sceneLocal->formID != sceneId ||
+          questLocal->formID != questId) {
         return;
       }
 
-      obj.SetProperty("referenceForm", CreateObject("Form", refLocal));
       obj.SetProperty("referenceAliasId", JsValue::Double(refAliasId));
       obj.SetProperty("scene", CreateObject("Scene", sceneLocal));
       obj.SetProperty("quest", CreateObject("Quest", questLocal));

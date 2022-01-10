@@ -347,7 +347,6 @@ export interface DestructionStageChangedEvent {
 }
 
 export interface SceneActionEvent {
-    reference: ObjectReference,
     referenceAliasId: number,
     scene: Scene,
     quest: Quest,
