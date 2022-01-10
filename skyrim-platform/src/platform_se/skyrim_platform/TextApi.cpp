@@ -118,9 +118,13 @@ void Register(JsValue& exports)
 
   exports.SetProperty("destroyAllTexts", JsValue::Function(DestroyAllTexts));
 
+  exports.SetProperty("getTextPos", JsValue::Function(GetTextPos));
+
   exports.SetProperty("getTextString", JsValue::Function(GetTextString));
 
   exports.SetProperty("getTextColor", JsValue::Function(GetTextColor));
+
+  exports.SetProperty("getTextCount", JsValue::Function(GetTextCount));
 }
 
 }
