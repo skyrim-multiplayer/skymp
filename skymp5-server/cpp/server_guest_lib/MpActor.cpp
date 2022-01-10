@@ -2,7 +2,6 @@
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
-#include "GetBaseActorValues.h"
 #include "MsgType.h"
 #include "ServerState.h"
 #include "WorldState.h"

@@ -1,5 +1,6 @@
 #pragma once
 #include "Appearance.h"
+#include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
 #include "Structures.h"
 #include <memory>
