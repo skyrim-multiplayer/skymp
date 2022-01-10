@@ -328,10 +328,7 @@ export interface FurnitureEvent {
 export interface WardHitEvent {
     target: ObjectReference,
     caster: ObjectReference,
-    spell: Spell,
-    isFriendly: boolean,
-    isWardAbsorbed: boolean,
-    isWardBroken: boolean
+    status: 'friendly' | 'absorbed' | 'broken'
 }
 
 export interface PackageEvent {

@@ -1208,21 +1208,18 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
       obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
       obj.SetProperty("spell", CreateObject("Spell", spellLocal));
-      obj.SetProperty("isFriendly", JsValue::Bool(false));
-      obj.SetProperty("isWardAbsorbed", JsValue::Bool(false));
-      obj.SetProperty("isWardBroken", JsValue::Bool(false));
 
       switch (status) {
         case TESEvents::TESMagicWardHitEvent::Status::kFriendly: {
-          obj.SetProperty("isFriendly", JsValue::Bool(true));
+          obj.SetProperty("status", "friendly");
           break;
         }
         case TESEvents::TESMagicWardHitEvent::Status::kAbsorbed: {
-          obj.SetProperty("isWardAbsorbed", JsValue::Bool(true));
+          obj.SetProperty("status", "absorbed");
           break;
         }
         case TESEvents::TESMagicWardHitEvent::Status::kBroken: {
-          obj.SetProperty("isWardBroken", JsValue::Bool(true));
+          obj.SetProperty("status", "broken");
           break;
         }
       }
