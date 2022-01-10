@@ -1632,8 +1632,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       auto ammoLocal = RE::TESForm::LookupByID(ammoId);
 
       if (weaponLocal == nullptr || ammoLocal == nullptr ||
-          weaponLocal->formType != RE::FormType::Weapon ||
-          ammoLocal->formType != RE::FormType::Ammo) {
+          weaponLocal->formID != weaponId || ammoLocal->formID != ammoId) {
         return;
       }
 
