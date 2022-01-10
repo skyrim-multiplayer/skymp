@@ -51,7 +51,6 @@ class GameEventSinks
   , public RE::BSTEventSink<RE::TESUniqueIDChangeEvent>
   , public RE::BSTEventSink<RE::TESCellFullyLoadedEvent>
   , public RE::BSTEventSink<RE::TESCellAttachDetachEvent>
-  , public RE::BSTEventSink<RE::TESCellReadyToApplyDecalsEvent>
   , public RE::BSTEventSink<RE::TESGrabReleaseEvent>
   , public RE::BSTEventSink<RE::TESLockChangedEvent>
   , public RE::BSTEventSink<RE::TESMoveAttachDetachEvent>
@@ -154,10 +153,6 @@ public:
 
     holder->AddEventSink(
       dynamic_cast<RE::BSTEventSink<RE::TESCellAttachDetachEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESCellReadyToApplyDecalsEvent>*>(
-        this));
 
     holder->AddEventSink(
       dynamic_cast<RE::BSTEventSink<RE::TESLockChangedEvent>*>(this));
@@ -335,11 +330,6 @@ private:
   RE::BSEventNotifyControl ProcessEvent(
     const RE::TESCellAttachDetachEvent* event_,
     RE::BSTEventSource<RE::TESCellAttachDetachEvent>* eventSource) override;
-
-  RE::BSEventNotifyControl ProcessEvent(
-    const RE::TESCellReadyToApplyDecalsEvent* event_,
-    RE::BSTEventSource<RE::TESCellReadyToApplyDecalsEvent>* eventSource)
-    override;
 
   RE::BSEventNotifyControl ProcessEvent(
     const RE::TESGrabReleaseEvent* event_,

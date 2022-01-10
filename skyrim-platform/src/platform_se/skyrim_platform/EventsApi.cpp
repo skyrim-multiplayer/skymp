@@ -553,7 +553,6 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "cellFullyLoaded",
                                    "cellAttach",
                                    "cellDetach",
-                                   "cellReadyToApplyDecals",
                                    "grabRelease",
                                    "lockChanged",
                                    "moveAttachDetach",

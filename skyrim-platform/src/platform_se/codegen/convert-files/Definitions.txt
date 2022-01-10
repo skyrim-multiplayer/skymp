@@ -320,10 +320,6 @@ export interface SellEvent {
     seller: ObjectReference
 }
 
-export interface CellReadyToApplyDecalsEvent {
-    cell: Cell
-}
-
 export interface FurnitureEvent {
     target: ObjectReference,
     actor: ObjectReference
@@ -578,9 +574,6 @@ export declare function once(eventName: 'bookRead', callback: (event: BookReadEv
 
 export declare function on(eventName: 'sell', callback: (event: SellEvent) => void): void;
 export declare function once(eventName: 'sell', callback: (event: SellEvent) => void): void;
-
-export declare function on(eventName: 'cellReadyToApplyDecals', callback: (event: CellReadyToApplyDecalsEvent) => void): void;
-export declare function once(eventName: 'cellReadyToApplyDecals', callback: (event: CellReadyToApplyDecalsEvent) => void): void;
 
 export declare function on(eventName: 'furnitureEnter', callback: (event: FurnitureEvent) => void): void;
 export declare function once(eventName: 'furnitureEnter', callback: (event: FurnitureEvent) => void): void;

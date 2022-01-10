@@ -1145,39 +1145,6 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 }
 
 RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESCellReadyToApplyDecalsEvent* event,
-  RE::BSTEventSource<RE::TESCellReadyToApplyDecalsEvent>* eventSource)
-{
-  auto converted =
-    reinterpret_cast<const TESEvents::TESCellReadyToApplyDecalsEvent*>(event);
-
-  if (!converted) {
-    return RE::BSEventNotifyControl::kContinue;
-  }
-
-  auto cell = converted->cell.get();
-  auto cellId = cell ? cell->formID : 0;
-
-  SkyrimPlatform::GetSingleton().AddUpdateTask([cell, cellId] {
-    auto obj = JsValue::Object();
-
-    auto cellLocal = RE::TESForm::LookupByID(cellId);
-
-    if (cellLocal == nullptr || cellLocal != cell ||
-        cellLocal->formType != RE::FormType::Cell) {
-      return;
-    }
-
-    obj.SetProperty("cell", CreateObject("Cell", cellLocal));
-
-    EventsApi::SendEvent("cellReadyToApplyDecals",
-                         { JsValue::Undefined(), obj });
-  });
-
-  return RE::BSEventNotifyControl::kContinue;
-}
-
-RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   const RE::TESFurnitureEvent* event,
   RE::BSTEventSource<RE::TESFurnitureEvent>* eventSource)
 {
