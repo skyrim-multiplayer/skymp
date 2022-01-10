@@ -1408,16 +1408,17 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   }
 
   auto newState = event->newState;
-  auto newStateId = newState ? newState->id : 0;
   auto oldState = event->oldState;
-  auto oldStateId = oldState ? oldState->id : 0;
+
+  if (newState == nullptr || oldState == nullptr) {
+    return RE::BSEventNotifyControl::kContinue;
+  }
+
+  auto oldStateId = oldState->id;
+  auto newStateId = newState->id;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([oldStateId, newStateId] {
     auto obj = JsValue::Object();
-
-    if (oldStateId < 0 || newStateId < 0) {
-      return;
-    }
 
     obj.SetProperty("oldStateId", JsValue::Double(oldStateId));
     obj.SetProperty("newStateId", JsValue::Double(newStateId));
