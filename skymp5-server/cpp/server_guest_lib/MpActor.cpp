@@ -1,5 +1,6 @@
 #include "MpActor.h"
 #include "ChangeFormGuard.h"
+#include "CropRegeneration.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "MsgType.h"
