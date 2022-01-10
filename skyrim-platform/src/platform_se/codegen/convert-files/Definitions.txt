@@ -391,7 +391,7 @@ export interface ItemEnchantedEvent {
     item: Form
 }
 
-export interface InventoryEvent {
+export interface ItemObtainEvent {
     reference: ObjectReference,
     itemName: string,
     itemOwner: ObjectReference | null,
@@ -627,8 +627,8 @@ export declare function once(eventName: 'itemCrafted', callback: (event: ItemCra
 export declare function on(eventName: 'itemEnchanted', callback: (event: ItemEnchantedEvent) => void): void;
 export declare function once(eventName: 'itemEnchanted', callback: (event: ItemEnchantedEvent) => void): void;
 
-export declare function on(eventName: 'inventory', callback: (event: InventoryEvent) => void): void;
-export declare function once(eventName: 'inventory', callback: (event: InventoryEvent) => void): void;
+export declare function on(eventName: 'itemObtain', callback: (event: ItemObtainEvent) => void): void;
+export declare function once(eventName: 'itemObtain', callback: (event: ItemObtainEvent) => void): void;
 
 export declare function on(eventName: 'chestLooted', callback: (event: void) => void): void;
 export declare function once(eventName: 'chestLooted', callback: (event: void) => void): void;

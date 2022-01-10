@@ -599,7 +599,7 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "translationCompleted",
                                    "itemCrafted",
                                    "itemEnchanted",
-                                   "inventory",
+                                   "itemObtain",
                                    "chestLooted",
                                    "itemPickpocketed",
                                    "actionWeaponSwing",

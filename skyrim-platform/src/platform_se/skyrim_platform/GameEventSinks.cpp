@@ -1664,7 +1664,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       obj.SetProperty("prevCount", JsValue::Double(prevCount));
       obj.SetProperty("newCount", JsValue::Double(newCount));
 
-      EventsApi::SendEvent("inventory", { JsValue::Undefined(), obj });
+      EventsApi::SendEvent("itemObtain", { JsValue::Undefined(), obj });
     });
 
   return RE::BSEventNotifyControl::kContinue;
