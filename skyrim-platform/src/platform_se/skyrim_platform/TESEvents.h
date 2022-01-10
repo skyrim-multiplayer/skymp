@@ -195,7 +195,7 @@ struct TESPlayerBowShotEvent
 
 struct TESFastTravelEndEvent
 {
-  float travelTime;
+  float travelTimeGameHours;
 };
 
 struct TESObjectREFRTranslationEvent

@@ -1845,16 +1845,17 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     return RE::BSEventNotifyControl::kContinue;
   }
 
-  auto travelTime = converted->travelTime;
+  auto travelTimeGameHours = converted->travelTimeGameHours;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([travelTime] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([travelTimeGameHours] {
     auto obj = JsValue::Object();
 
-    if (travelTime < 0) {
+    if (travelTimeGameHours < 0) {
       return;
     }
 
-    obj.SetProperty("travelTime", JsValue::Double(travelTime));
+    obj.SetProperty("travelTimeGameHours",
+                    JsValue::Double(travelTimeGameHours));
 
     EventsApi::SendEvent("fastTravelEnd", { JsValue::Undefined(), obj });
   });

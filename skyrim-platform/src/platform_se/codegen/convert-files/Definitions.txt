@@ -373,7 +373,7 @@ export interface PlayerBowShotEvent {
 }
 
 export interface FastTravelEnd {
-    travelTime: number
+    travelTimeGameHours: number
 }
 
 export interface PerkEntryRunEvent {
