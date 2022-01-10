@@ -1473,7 +1473,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     obj.SetProperty("oldStateId", JsValue::Double(oldStateId));
     obj.SetProperty("newStateId", JsValue::Double(newStateId));
 
-    EventsApi::SendEvent("camera", { JsValue::Undefined(), obj });
+    EventsApi::SendEvent("cameraStateChanged", { JsValue::Undefined(), obj });
   });
 
   return RE::BSEventNotifyControl::kContinue;

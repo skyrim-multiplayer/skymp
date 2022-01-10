@@ -412,7 +412,7 @@ export interface ActionEvent {
     slot: SlotType
 }
 
-export interface CameraEvent {
+export interface CameraStateChangedEvent {
     oldStateId: number,
     newStateId: number
 }
@@ -669,8 +669,8 @@ export declare function once(eventName: 'actionVoiceCast', callback: (event: Act
 export declare function on(eventName: 'actionVoiceFire', callback: (event: ActionEvent) => void): void;
 export declare function once(eventName: 'actionVoiceFire', callback: (event: ActionEvent) => void): void;
 
-export declare function on(eventName: 'camera', callback: (event: CameraEvent) => void): void;
-export declare function once(eventName: 'camera', callback: (event: CameraEvent) => void): void;
+export declare function on(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): void;
+export declare function once(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): void;
 
 export declare function on(eventName: 'crosshair', callback: (event: CrosshairEvent) => void): void;
 export declare function once(eventName: 'crosshair', callback: (event: CrosshairEvent) => void): void;
