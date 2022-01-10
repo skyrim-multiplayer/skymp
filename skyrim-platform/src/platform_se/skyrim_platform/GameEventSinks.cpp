@@ -1050,12 +1050,8 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       auto newLocLocal = RE::TESForm::LookupByID(newLocId);
 
       if (actorLocal == nullptr || oldLocLocal == nullptr ||
-          newLocLocal == nullptr ||
-          actorLocal->formType != RE::FormType::ActorCharacter ||
-          oldLocLocal->formType != RE::FormType::Location ||
-          newLocLocal->formType != RE::FormType::Location ||
-          actorLocal != actor || oldLocLocal != oldLoc ||
-          newLocLocal != newLoc) {
+          newLocLocal == nullptr || actorLocal != actor ||
+          oldLocLocal != oldLoc || newLocLocal != newLoc) {
         return;
       }
 
@@ -1194,45 +1190,45 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto spellId = converted->spell;
   auto status = converted->status;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([target, caster, targetId,
-                                                casterId, spellId, status] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [target, caster, targetId, casterId, spellId, status] {
+      auto obj = JsValue::Object();
 
-    auto targetLocal = RE::TESForm::LookupByID(targetId);
-    auto casterLocal = RE::TESForm::LookupByID(casterId);
-    auto spellLocal = RE::TESForm::LookupByID(spellId);
+      auto targetLocal = RE::TESForm::LookupByID(targetId);
+      auto casterLocal = RE::TESForm::LookupByID(casterId);
+      auto spellLocal = RE::TESForm::LookupByID(spellId);
 
-    if (targetLocal == nullptr || casterLocal == nullptr ||
-        spellLocal == nullptr || targetLocal != target ||
-        casterLocal != caster || spellLocal->formType != RE::FormType::Spell ||
-        static_cast<int>(status) < 0 || static_cast<int>(status) > 2) {
-      return;
-    }
-
-    obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
-    obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
-    obj.SetProperty("spell", CreateObject("Spell", spellLocal));
-    obj.SetProperty("isFriendly", JsValue::Bool(false));
-    obj.SetProperty("isWardAbsorbed", JsValue::Bool(false));
-    obj.SetProperty("isWardBroken", JsValue::Bool(false));
-
-    switch (status) {
-      case TESEvents::TESMagicWardHitEvent::Status::kFriendly: {
-        obj.SetProperty("isFriendly", JsValue::Bool(true));
-        break;
+      if (targetLocal == nullptr || casterLocal == nullptr ||
+          spellLocal == nullptr || targetLocal != target ||
+          casterLocal != caster || static_cast<int>(status) < 0 ||
+          static_cast<int>(status) > 2) {
+        return;
       }
-      case TESEvents::TESMagicWardHitEvent::Status::kAbsorbed: {
-        obj.SetProperty("isWardAbsorbed", JsValue::Bool(true));
-        break;
-      }
-      case TESEvents::TESMagicWardHitEvent::Status::kBroken: {
-        obj.SetProperty("isWardBroken", JsValue::Bool(true));
-        break;
-      }
-    }
 
-    EventsApi::SendEvent("wardHit", { JsValue::Undefined(), obj });
-  });
+      obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
+      obj.SetProperty("caster", CreateObject("ObjectReference", casterLocal));
+      obj.SetProperty("spell", CreateObject("Spell", spellLocal));
+      obj.SetProperty("isFriendly", JsValue::Bool(false));
+      obj.SetProperty("isWardAbsorbed", JsValue::Bool(false));
+      obj.SetProperty("isWardBroken", JsValue::Bool(false));
+
+      switch (status) {
+        case TESEvents::TESMagicWardHitEvent::Status::kFriendly: {
+          obj.SetProperty("isFriendly", JsValue::Bool(true));
+          break;
+        }
+        case TESEvents::TESMagicWardHitEvent::Status::kAbsorbed: {
+          obj.SetProperty("isWardAbsorbed", JsValue::Bool(true));
+          break;
+        }
+        case TESEvents::TESMagicWardHitEvent::Status::kBroken: {
+          obj.SetProperty("isWardBroken", JsValue::Bool(true));
+          break;
+        }
+      }
+
+      EventsApi::SendEvent("wardHit", { JsValue::Undefined(), obj });
+    });
 
   return RE::BSEventNotifyControl::kContinue;
 }
