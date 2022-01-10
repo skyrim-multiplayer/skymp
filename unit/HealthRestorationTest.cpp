@@ -1,6 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
+PartOne& GetPartOne();
+
 TEST_CASE("Potions restore healt", "[Restoration]")
 {
   PartOne& p = GetPartOne();
