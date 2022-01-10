@@ -4,10 +4,6 @@
 #include "TESEvents.h"
 #include <RE/BGSFootstepEvent.h>
 #include <RE/BGSFootstepManager.h>
-#include <RE/ChestsLooted.h>
-#include <RE/Inventory.h>
-#include <RE/ItemCrafted.h>
-#include <RE/ItemsPickpocketed.h>
 #include <RE/MenuOpenCloseEvent.h>
 #include <RE/PlayerCharacter.h>
 #include <RE/PositionPlayerEvent.h>
