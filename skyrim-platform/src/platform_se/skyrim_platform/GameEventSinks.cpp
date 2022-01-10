@@ -1499,9 +1499,9 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     return RE::BSEventNotifyControl::kContinue;
   }
 
-  auto eventName = event->eventName;
+  auto eventName = static_cast<std::string>(event->eventName);
   auto numArg = event->numArg;
-  auto strArg = event->strArg;
+  auto strArg = static_cast<std::string>(event->strArg);
   auto sender = event->sender;
   auto senderId = sender ? sender->formID : 0;
 
@@ -1516,10 +1516,8 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       }
 
       obj.SetProperty("sender", CreateObject("Form", senderLocal));
-      obj.SetProperty("eventName",
-                      JsValue::String(static_cast<std::string>(eventName)));
-      obj.SetProperty("strArg",
-                      JsValue::String(static_cast<std::string>(strArg)));
+      obj.SetProperty("eventName", JsValue::String(eventName));
+      obj.SetProperty("strArg", JsValue::String(strArg));
       obj.SetProperty("numArg", JsValue::Double(numArg));
 
       EventsApi::SendEvent("modEvent", { JsValue::Undefined(), obj });
