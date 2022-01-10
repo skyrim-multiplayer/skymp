@@ -353,10 +353,6 @@ export interface SceneActionEvent {
     action: number
 }
 
-export interface SceneEvent {
-    scene: Scene
-}
-
 export interface PlayerBowShotEvent {
     weapon: Weapon,
     ammo: Ammo,
@@ -574,9 +570,6 @@ export declare function once(eventName: 'destructionStageChanged', callback: (ev
 
 export declare function on(eventName: 'sceneAction', callback: (event: SceneActionEvent) => void): void;
 export declare function once(eventName: 'sceneAction', callback: (event: SceneActionEvent) => void): void;
-
-export declare function on(eventName: 'scene', callback: (event: SceneEvent) => void): void;
-export declare function once(eventName: 'scene', callback: (event: SceneEvent) => void): void;
 
 export declare function on(eventName: 'playerBowShot', callback: (event: PlayerBowShotEvent) => void): void;
 export declare function once(eventName: 'playerBowShot', callback: (event: PlayerBowShotEvent) => void): void;

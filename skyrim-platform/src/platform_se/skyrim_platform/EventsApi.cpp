@@ -589,7 +589,6 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "enterBleedout",
                                    "destructionStageChanged",
                                    "sceneAction",
-                                   "scene",
                                    "playerBowShot",
                                    "fastTravelEnd",
                                    "perkEntryRun",

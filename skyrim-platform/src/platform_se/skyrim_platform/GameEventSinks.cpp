@@ -1799,32 +1799,3 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
   return RE::BSEventNotifyControl::kContinue;
 }
-
-RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
-  const RE::TESSceneEvent* event,
-  RE::BSTEventSource<RE::TESSceneEvent>* eventSource)
-{
-  if (event == nullptr) {
-    return RE::BSEventNotifyControl::kContinue;
-  }
-
-  auto converted = reinterpret_cast<const TESEvents::TESSceneEvent*>(event);
-
-  auto sceneId = converted->sceneId;
-
-  SkyrimPlatform::GetSingleton().AddUpdateTask([sceneId] {
-    auto obj = JsValue::Object();
-
-    auto sceneLocal = RE::TESForm::LookupByID(sceneId);
-
-    if (sceneLocal == nullptr || sceneLocal->formID != sceneId) {
-      return;
-    }
-
-    obj.SetProperty("scene", CreateObject("Scene", sceneLocal));
-
-    EventsApi::SendEvent("scene", { JsValue::Undefined(), obj });
-  });
-
-  return RE::BSEventNotifyControl::kContinue;
-}

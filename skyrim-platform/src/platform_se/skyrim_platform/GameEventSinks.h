@@ -78,7 +78,6 @@ class GameEventSinks
   , public RE::BSTEventSink<RE::TESEnterBleedoutEvent>
   , public RE::BSTEventSink<RE::TESDestructionStageChangedEvent>
   , public RE::BSTEventSink<RE::TESSceneActionEvent>
-  , public RE::BSTEventSink<RE::TESSceneEvent>
   , public RE::BSTEventSink<RE::TESPlayerBowShotEvent>
   , public RE::BSTEventSink<RE::TESFastTravelEndEvent>
   , public RE::BSTEventSink<RE::TESObjectREFRTranslationEvent>
@@ -223,9 +222,6 @@ public:
 
     holder->AddEventSink(
       dynamic_cast<RE::BSTEventSink<RE::TESSceneActionEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESSceneEvent>*>(this));
 
     holder->AddEventSink(
       dynamic_cast<RE::BSTEventSink<RE::TESPlayerBowShotEvent>*>(this));
@@ -453,10 +449,6 @@ private:
   RE::BSEventNotifyControl ProcessEvent(
     const RE::TESSceneActionEvent* e,
     RE::BSTEventSource<RE::TESSceneActionEvent>* a_eventSource) override;
-
-  RE::BSEventNotifyControl ProcessEvent(
-    const RE::TESSceneEvent* e,
-    RE::BSTEventSource<RE::TESSceneEvent>* a_eventSource) override;
 
   RE::BSEventNotifyControl ProcessEvent(
     const RE::TESPlayerBowShotEvent* e,
