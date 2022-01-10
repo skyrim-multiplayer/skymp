@@ -25,9 +25,6 @@ const styles = [
 const Constructor = props => {
   const content_mainRef = useRef();
   useEffect(() => {
-    console.log('render con')
-  }, [])
-  useEffect(() => {
     if (props.dynamicSize) {
       switch (props.elem.type) {
         case 'form':

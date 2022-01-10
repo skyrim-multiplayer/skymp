@@ -4,7 +4,6 @@ import './styles.scss';
 
 const Chat = (props) => {
   const [input, updateInput] = useState('');
-  const [list, addListElement] = useState(props.messages || []);
   const [isInputFocus, changeInputFocus] = useState(false);
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;

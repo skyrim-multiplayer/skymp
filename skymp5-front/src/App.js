@@ -17,7 +17,6 @@ class App extends React.Component {
   componentDidMount () {
     window.addEventListener('focus', this.onWindowFocus.bind(this));
     window.addEventListener('blur', this.onWindowFocus.bind(this));
-    console.log('redner app');
     window.mp = {
       send: (type, data) => {
         try {
@@ -87,15 +86,13 @@ class App extends React.Component {
     if (this.state.widgets) {
       return (
           <>
-            {this.state.widgets.map((widget, index) => {
-              console.log(index.toString() + widget.type + ((widget.type === 'form') ? widget.elements + widget.caption : (widget.type === 'chat') ? widget.messages : ''));
-              return <Constructor
-                  key={index.toString() + widget.type + ((widget.type === 'form') ? widget.elements + widget.caption : "chat")}
+            {this.state.widgets.map((widget, index) =>
+               <Constructor
+                  key={index.toString() + widget.type + ((widget.type === 'form') ? widget.elements + widget.caption : 'chat')}
                   dynamicSize={true}
                   elem={widget}
                   height={this.props.height || 704}
-                  width={this.props.width || 512} />;
-            }
+                  width={this.props.width || 512} />
             )}
           </>
       );
