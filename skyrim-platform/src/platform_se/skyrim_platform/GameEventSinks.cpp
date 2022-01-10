@@ -1504,7 +1504,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       obj.SetProperty("reference", CreateObject("ObjectReference", refLocal));
     }
 
-    EventsApi::SendEvent("crosshair", { JsValue::Undefined(), obj });
+    EventsApi::SendEvent("crosshairRefChanged", { JsValue::Undefined(), obj });
   });
 
   return RE::BSEventNotifyControl::kContinue;

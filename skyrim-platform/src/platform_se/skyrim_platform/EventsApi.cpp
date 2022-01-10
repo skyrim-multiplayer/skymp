@@ -614,7 +614,7 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "actionVoiceCast",
                                    "actionVoiceFire",
                                    "cameraStateChanged",
-                                   "crosshair",
+                                   "crosshairRefChanged",
                                    "niNodeUpdate",
                                    "modEvent",
                                    "positionPlayer",

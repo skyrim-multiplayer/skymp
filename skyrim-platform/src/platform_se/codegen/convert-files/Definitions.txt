@@ -417,7 +417,7 @@ export interface CameraStateChangedEvent {
     newStateId: number
 }
 
-export interface CrosshairEvent {
+export interface CrosshairRefChangedEvent {
     reference: ObjectReference | null
 }
 
@@ -672,8 +672,8 @@ export declare function once(eventName: 'actionVoiceFire', callback: (event: Act
 export declare function on(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): void;
 export declare function once(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): void;
 
-export declare function on(eventName: 'crosshair', callback: (event: CrosshairEvent) => void): void;
-export declare function once(eventName: 'crosshair', callback: (event: CrosshairEvent) => void): void;
+export declare function on(eventName: 'crosshairRefChanged', callback: (event: CrosshairRefChangedEvent) => void): void;
+export declare function once(eventName: 'crosshairRefChanged', callback: (event: CrosshairRefChangedEvent) => void): void;
 
 export declare function on(eventName: 'niNodeUpdate', callback: (event: NiNodeUpdateEvent) => void): void;
 export declare function once(eventName: 'niNodeUpdate', callback: (event: NiNodeUpdateEvent) => void): void;
