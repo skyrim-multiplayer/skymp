@@ -219,6 +219,7 @@ More info and samples for these will be added later:
 - `trackedStats`
 - `uniqueIdChange`
 - `waitStop`
+- `spellCast`
 
 [Cloaks]: cookbook.md#getting-rid-of-cloaks
 [Events]: events.md

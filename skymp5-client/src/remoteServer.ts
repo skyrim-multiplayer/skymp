@@ -38,6 +38,7 @@ import { getActorValues, setActorValuePercentage } from "./actorvalues";
 import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
 import { nameof } from "./utils";
 import { defaultLocalDamageMult, setLocalDamageMult } from "./index";
+import { AuthGameData } from './authModel';
 
 //
 // eventSource system
@@ -97,17 +98,41 @@ const sendBrowserToken = () => {
 
 const loginWithSkympIoCredentials = () => {
   loggingStartMoment = Date.now();
-  printConsole("Logging in as skymp.io user");
-  networking.send(
-    {
-      t: messages.MsgType.CustomPacket,
-      content: {
-        customPacketType: "loginWithSkympIo",
-        gameData: settings["skymp5-client"]["gameData"],
+  const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
+  if (authData?.local) {
+    printConsole(`Logging in offline mode, profileId = ${authData.local.profileId}`);
+    networking.send(
+      {
+        t: messages.MsgType.CustomPacket,
+        content: {
+          customPacketType: "loginWithSkympIo",
+          gameData: {
+            profileId: authData.local.profileId,
+          },
+        },
       },
-    },
-    true
-  );
+      true
+    );
+    return;
+  }
+  if (authData?.remote) {
+    printConsole("Logging in as skymp.io user");
+    networking.send(
+      {
+        t: messages.MsgType.CustomPacket,
+        content: {
+          customPacketType: "loginWithSkympIo",
+          gameData: {
+            session: authData.remote.session,
+          },
+        },
+      },
+      true
+    );
+    return;
+  }
+
+  printConsole("Not found authentication method");
 };
 
 export const getPcInventory = (): Inventory => {
@@ -268,7 +293,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (msg.isMe) {
       const task = new SpawnTask();
       once("update", () => {
-        if (!task.running) {
+        if (!task.running && false) {
           task.running = true;
           printConsole("Using moveRefrToPosition to spawn player");
           TESModPlatform.moveRefrToPosition(

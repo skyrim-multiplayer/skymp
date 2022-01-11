@@ -6,6 +6,10 @@ on:
                 description: action (deploy/restart/stop)
                 required: true
                 default: deploy
+
+env:
+    BUILD_TYPE: RelWithDebInfo
+
 jobs:
     deploy:
         runs-on: ubuntu-latest
@@ -96,6 +100,12 @@ jobs:
                     cd /src \
                     && ./build.sh --configure \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+          - name: Upload compile_commands.json
+            uses: actions/upload-artifact@v2
+            with:
+                name: compile_commands.json
+                path: ${{github.workspace}}/build/compile_commands.json
 
           - name: Build
             if: ${{env.DEPLOY_ACTION == 'deploy'}}

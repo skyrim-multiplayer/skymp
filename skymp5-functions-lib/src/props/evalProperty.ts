@@ -3,6 +3,7 @@ import { Mp } from '../types/mp';
 import { FunctionInfo } from '../utils/functionInfo';
 
 declare const mp: Mp;
+declare const ctx: Ctx;
 
 type EvalState = { evalGreatestId?: number };
 type EvalValue = { commands: Array<{ code: string; id: number }>; nextId: 0 };
@@ -37,7 +38,7 @@ export class EvalProperty {
   }
 
   private static clientsideUpdateOwner() {
-    return (ctx: Ctx<EvalState, EvalValue>) => {
+    return () => {
       if (!ctx.value) {
         return;
       }
@@ -61,7 +62,7 @@ export class EvalProperty {
   }
 
   private static clientsideInitEvalFinish() {
-    return (ctx: Ctx) => {
+    return () => {
       ctx.sp.on('browserMessage', (event) => {
         if (event.arguments[0] === 'evalFinish') {
           const evalGreatestId = event.arguments[1];
