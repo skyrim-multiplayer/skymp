@@ -5,4 +5,4 @@
 set -e
 set -x
 
-LD_LIBRARY_PATH="$PWD" node dist_back/index.js
+LD_LIBRARY_PATH="$PWD" node dist_back/skymp5-server.js
