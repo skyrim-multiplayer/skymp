@@ -161,6 +161,8 @@ __declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
     return false;
   }
 
+  SKSE::Init(reinterpret_cast<const SKSE::LoadInterface*>(skse));
+
   SetupFridaHooks();
 
   TickTask::Launch(taskInterface, OnTick);
