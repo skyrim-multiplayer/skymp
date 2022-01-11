@@ -1,8 +1,9 @@
 ## Add more events
 
-Now we can catch a couple new events. For example:
+Lots of new events were added to reflect vanilla Papyrus scripting abilities. For example:
 
 ```typescript
+// OnPlayerBowShot TypeScript equivalent
 on("playerBowShot", (event) => {
   printConsole(event.weapon.getFormID());
   printConsole(event.ammo.getFormID());
@@ -11,7 +12,7 @@ on("playerBowShot", (event) => {
 });
 ```
 
-Interfaces of added events can be easily explored via IDE intellisense, or directly in skyrimPlatform.ts.
+Interfaces of added events can be easily explored via IDE IntelliSense, or directly in `skyrimPlatform.ts`.
 
 Full list of added events:
 
