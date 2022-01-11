@@ -13,6 +13,8 @@ if [[ "$action" == "stop" ]]; then
   exit 0
 fi
 
+docker rm "skymp-server-$branch" || true
+
 cp ./server-settings.json server/
 docker run -d --restart=always --name="skymp-server-$branch" --network=host \
     -v "$PWD/server:/work" --workdir=/work \
