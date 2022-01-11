@@ -1586,8 +1586,8 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       auto questLocal = RE::TESForm::LookupByID(questId);
 
       if (sceneLocal == nullptr || questLocal == nullptr || refAliasId < 0 ||
-          action < 0 || sceneLocal->formID != sceneId ||
-          questLocal->formID != questId) {
+          action < 0 || sceneLocal->formType != RE::FormType::Scene ||
+          questLocal->formType != RE::FormType::Quest) {
         return;
       }
 
@@ -1626,7 +1626,8 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       auto ammoLocal = RE::TESForm::LookupByID(ammoId);
 
       if (weaponLocal == nullptr || ammoLocal == nullptr ||
-          weaponLocal->formID != weaponId || ammoLocal->formID != ammoId) {
+          weaponLocal->formType != RE::FormType::Weapon ||
+          ammoLocal->formType != RE::FormType::Ammo) {
         return;
       }
 
@@ -1732,27 +1733,27 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto perkId = converted->perkId;
   auto flag = converted->flag;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [cause, causeId, target, targetId, perkId, flag] {
-      auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask([cause, causeId, target,
+                                                targetId, perkId, flag] {
+    auto obj = JsValue::Object();
 
-      auto causeLocal = RE::TESForm::LookupByID(causeId);
-      auto targetLocal = RE::TESForm::LookupByID(targetId);
-      auto perkLocal = RE::TESForm::LookupByID(perkId);
+    auto causeLocal = RE::TESForm::LookupByID(causeId);
+    auto targetLocal = RE::TESForm::LookupByID(targetId);
+    auto perkLocal = RE::TESForm::LookupByID(perkId);
 
-      if (causeLocal == nullptr || targetLocal == nullptr ||
-          perkLocal == nullptr || causeLocal != cause ||
-          targetLocal != target || perkLocal->formID != perkId || flag < 0) {
-        return;
-      }
+    if (causeLocal == nullptr || targetLocal == nullptr ||
+        perkLocal == nullptr || causeLocal != cause || targetLocal != target ||
+        perkLocal->formType != RE::FormType::Perk || flag < 0) {
+      return;
+    }
 
-      obj.SetProperty("cause", CreateObject("ObjectReference", causeLocal));
-      obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
-      obj.SetProperty("perk", CreateObject("Perk", perkLocal));
-      obj.SetProperty("flag", JsValue::Double(flag));
+    obj.SetProperty("cause", CreateObject("ObjectReference", causeLocal));
+    obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
+    obj.SetProperty("perk", CreateObject("Perk", perkLocal));
+    obj.SetProperty("flag", JsValue::Double(flag));
 
-      EventsApi::SendEvent("perkEntryRun", { JsValue::Undefined(), obj });
-    });
+    EventsApi::SendEvent("perkEntryRun", { JsValue::Undefined(), obj });
+  });
 
   return RE::BSEventNotifyControl::kContinue;
 }

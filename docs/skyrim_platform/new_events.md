@@ -34,20 +34,20 @@ The variable `event` always contains variables related to the event to which you
 
 # List of new events
 
-  - [update](#update)
-  - [tick](#tick)
-  - [equip](#equip)
-  - [unequip](#unequip)
-  - [effectStart](#effectstart)
-  - [effectFinish](#effectfinish)
-  - [cellFullyLoaded](#cellFullyLoaded)
-  - [consoleMessage](#consoleMessage)
-  - [loadGame](#loadgame)
-  - [Other events](#other-events)
+- [update](#update)
+- [tick](#tick)
+- [equip](#equip)
+- [unequip](#unequip)
+- [effectStart](#effectstart)
+- [effectFinish](#effectfinish)
+- [cellFullyLoaded](#cellFullyLoaded)
+- [consoleMessage](#consoleMessage)
+- [loadGame](#loadgame)
+- [Other events](#other-events)
 
- ## update
+## update
 
- Called once for every frame in the game (60 times per second at 60 FPS) after you've loaded a save or started a new game.
+Called once for every frame in the game (60 times per second at 60 FPS) after you've loaded a save or started a new game.
 
 ```typescript
 import { on } from "skyrimPlatform";
@@ -58,17 +58,17 @@ on("update", () => {
 });
 ```
 
-***NOTE***: Executing code each single frame may be expensive depending on what you are doing.
+**_NOTE_**: Executing code each single frame may be expensive depending on what you are doing.
 
 For `update` and `tick` try to use `once` instead of `on`, if possible.
 
-It's also a good idea to try to use any of the events below or even [Papyrus Hooks][Events] before considering executing code each frame.
+It's also a good idea to try to use any of the events below or even [Papyrus Hooks][events] before considering executing code each frame.
 
 ## tick
 
 Called once for every frame in the game immediately after the game starts.
 
-***WARNING***: This event has no access to [game methods and objects][Papyrus].
+**_WARNING_**: This event has no access to [game methods and objects][papyrus].
 
 ```typescript
 import { on } from "skyrimPlatform";
@@ -81,7 +81,7 @@ on("tick", () => {
 ## equip
 
 Called each time any `Actor` equips an item.\
-Analogous to [OnObjectEquipped][OnObjectEquipped].
+Analogous to [OnObjectEquipped][onobjectequipped].
 
 ```typescript
 import { on } from "skyrimPlatform";
@@ -92,14 +92,16 @@ on("equip", (event) => {
 
   if (!armor || armor.getSlotMask() !== 0x4 || !b) return;
 
-  printConsole(`ActorBase ${b.getName()} equipped this cuirass: ${armor.getName()}`);
-})
+  printConsole(
+    `ActorBase ${b.getName()} equipped this cuirass: ${armor.getName()}`
+  );
+});
 ```
 
 ## unequip
 
 Called each time any `Actor` unequips an item.\
-Analogous to [OnObjectUnequipped][OnObjectUnequipped].
+Analogous to [OnObjectUnequipped][onobjectunequipped].
 
 ```typescript
 import { on } from "skyrimPlatform";
@@ -112,15 +114,15 @@ on("unequip", (event) => {
   if (w) {
     printConsole("Player unequipped a weapon");
   }
-})
+});
 ```
 
 ## effectStart
 
 Called when any Magic Effect starts.\
-Analogous to [OnEffectStart][OnEffectStart].
+Analogous to [OnEffectStart][oneffectstart].
 
-***HINT***: If you are using cloaks to apply Magic Effects in your mod, you can drastically increase performance by applying a blank Magic Effect with [SPID][SPID] instead of cloaks and letting Skyrim Platform deal with the real code:
+**_HINT_**: If you are using cloaks to apply Magic Effects in your mod, you can drastically increase performance by applying a blank Magic Effect with [SPID][spid] instead of cloaks and letting Skyrim Platform deal with the real code:
 
 ```typescript
 import { on } from "skyrimPlatform";
@@ -130,22 +132,24 @@ on("effectStart", (event) => {
   if (fx?.getFormID() !== event.effect.getFormID()) return;
 
   DoSomething(event.target);
-})
+});
 ```
 
-See the Cook Book [entry on this][Cloaks] for more details.
+See the Cook Book [entry on this][cloaks] for more details.
 
 ## effectFinish
 
 Called when any Magic Effect ends.\
-Analogous to [OnEffectFinish][OnEffectFinish].
+Analogous to [OnEffectFinish][oneffectfinish].
 
 ```typescript
 import { on } from "skyrimPlatform";
 
 on("effectFinish", (event) => {
-  printConsole(`${event.effect.getName()} finished on ${event.target.getName()}`);
-})
+  printConsole(
+    `${event.effect.getName()} finished on ${event.target.getName()}`
+  );
+});
 ```
 
 ## cellFullyLoaded
@@ -157,7 +161,7 @@ import { on } from "skyrimPlatform";
 
 on("cellFullyLoaded", (event) => {
   printConsole(`Cell "${event.cell.getName()}" was fully loaded`);
-})
+});
 ```
 
 Notice that due to the way Skyrim works this event may fire multiple times when roaming the wilderness, since many cells are usually loaded at the same time in this situation.
@@ -177,15 +181,15 @@ import { on, browser } from "skyrimPlatform";
 const htmlEscapes: Record<string, string> = {
   '"': '\\"',
   "'": "\\'",
-  '\\': '\\\\',
-  '<': '\\<',
-  '>': '\\>'
+  "\\": "\\\\",
+  "<": "\\<",
+  ">": "\\>",
 };
 
 const htmlEscaper = /[&<>"'\\\/]/g;
 
 // On every print to the game console, console.log it to the browser
-on('consoleMessage', (e) => {
+on("consoleMessage", (e) => {
   const msg = e.message.replace(htmlEscaper, (match) => htmlEscapes[match]);
   browser.executeJavaScript('console.log("' + msg + '")');
 });
@@ -195,8 +199,8 @@ on('consoleMessage', (e) => {
 
 Called when a saved game is loaded.
 
-***WARNING***: This event won't fire when creating a new game.\
-[Read this recipe][PluginInit] to get some ideas on how you can deal with that.
+**_WARNING_**: This event won't fire when creating a new game.\
+[Read this recipe][plugininit] to get some ideas on how you can deal with that.
 
 ## Other events
 
@@ -220,13 +224,59 @@ More info and samples for these will be added later:
 - `uniqueIdChange`
 - `waitStop`
 - `spellCast`
+- `open`
+- `close`
+- `questInit`
+- `questStart`
+- `questStop`
+- `questStage`
+- `trigger`
+- `triggerEnter`
+- `triggerLeave`
+- `sleepStart`
+- `sleepStop`
+- `locationChanged`
+- `bookRead`
+- `sell`
+- `furnitureEnter`
+- `furnitureExit`
+- `wardHit`
+- `packageStart`
+- `packageChange`
+- `packageEnd`
+- `enterBleedout`
+- `destructionStageChanged`
+- `sceneAction`
+- `playerBowShot`
+- `fastTravelEnd`
+- `perkEntryRun`
+- `translationFailed`
+- `translationAlmostCompleted`
+- `translationCompleted`
+- `actionWeaponSwing`
+- `actionBeginDraw`
+- `actionEndDraw`
+- `actionBowDraw`
+- `actionBowRelease`
+- `actionBeginSheathe`
+- `actionEndSheathe`
+- `actionSpellCast`
+- `actionSpellFire`
+- `actionVoiceCast`
+- `actionVoiceFire`
+- `cameraStateChanged`
+- `crosshairRefChanged`
+- `niNodeUpdate`
+- `modEvent`
+- `positionPlayer`
+- `footstep`
 
-[Cloaks]: cookbook.md#getting-rid-of-cloaks
-[Events]: events.md
-[OnEffectFinish]: https://www.creationkit.com/index.php?title=OnEffectFinish_-_ActiveMagicEffect
-[OnEffectStart]: https://www.creationkit.com/index.php?title=OnEffectStart_-_ActiveMagicEffect
-[OnObjectEquipped]: https://www.creationkit.com/index.php?title=OnObjectEquipped_-_Actor
-[OnObjectUnequipped]: https://www.creationkit.com/index.php?title=OnObjectUnequipped_-_Actor
-[Papyrus]: papyrus.md
-[PluginInit]: cookbook.md#plugin-initialization
-[SPID]: https://www.nexusmods.com/skyrimspecialedition/mods/36869
+[cloaks]: cookbook.md#getting-rid-of-cloaks
+[events]: events.md
+[oneffectfinish]: https://www.creationkit.com/index.php?title=OnEffectFinish_-_ActiveMagicEffect
+[oneffectstart]: https://www.creationkit.com/index.php?title=OnEffectStart_-_ActiveMagicEffect
+[onobjectequipped]: https://www.creationkit.com/index.php?title=OnObjectEquipped_-_Actor
+[onobjectunequipped]: https://www.creationkit.com/index.php?title=OnObjectUnequipped_-_Actor
+[papyrus]: papyrus.md
+[plugininit]: cookbook.md#plugin-initialization
+[spid]: https://www.nexusmods.com/skyrimspecialedition/mods/36869
