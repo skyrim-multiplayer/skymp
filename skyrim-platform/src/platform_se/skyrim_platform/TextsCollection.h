@@ -42,7 +42,7 @@ public:
 
   const std::unordered_map<int, TextToDraw>& GetCreatedTexts() const;
 
-  int GetTextCount() const noexcept { return textCount; }
+  int GetNumCreatedTexts() const noexcept { return texts.size(); }
 
 private:
   TextsCollection();

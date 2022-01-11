@@ -1,0 +1,1 @@
+https://github.com/skyrim-multiplayer/skymp/tree/main/docs/skyrim_platform/texts.md

@@ -24,5 +24,5 @@ JsValue GetTextString(const JsFunctionArguments& args);
 
 JsValue GetTextColor(const JsFunctionArguments& args);
 
-JsValue GetTextCount(const JsFunctionArguments& args);
+JsValue GetNumCreatedTexts(const JsFunctionArguments& args);
 }

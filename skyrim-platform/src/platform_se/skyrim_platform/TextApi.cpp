@@ -99,9 +99,9 @@ JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
   return jsArray;
 }
 
-JsValue TextApi::GetTextCount(const JsFunctionArguments& args)
+JsValue TextApi::GetNumCreatedTexts(const JsFunctionArguments& args)
 {
-  return JsValue(TextsCollection::GetSingleton().GetTextCount());
+  return JsValue(TextsCollection::GetSingleton().GetNumCreatedTexts());
 }
 
 void Register(JsValue& exports)
@@ -124,7 +124,8 @@ void Register(JsValue& exports)
 
   exports.SetProperty("getTextColor", JsValue::Function(GetTextColor));
 
-  exports.SetProperty("getTextCount", JsValue::Function(GetTextCount));
+  exports.SetProperty("getNumCreatedTexts",
+                      JsValue::Function(GetNumCreatedTexts));
 }
 
 }

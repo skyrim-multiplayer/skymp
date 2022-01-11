@@ -790,3 +790,14 @@ export declare class HttpClient {
     get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
     post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
 }
+
+export declare function createText(xPos: number, yPos: number, text: string, color: number[]): number;
+export declare function destroyText(textId: number): void;
+export declare function setTextPos(textId: number, xPos: number, yPos: number): void;
+export declare function setTextString(textId: number, text: string): void;
+export declare function setTextColor(textId: number, color: number[]): void;
+export declare function destroyAllTexts(): void;
+export declare function getTextPos(textId: number): number[];
+export declare function getTextString(textId: number): string;
+export declare function getTextColor(textId: number): number[];
+export declare function getNumCreatedTexts(): number;
