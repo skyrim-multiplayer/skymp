@@ -1,6 +1,11 @@
 name: Deploy
 on:
-    push:
+    workflow_dispatch:
+        inputs:
+            action:
+                description: action (deploy/restart/stop)
+                required: true
+                default: deploy
 
 env:
     BUILD_TYPE: RelWithDebInfo
@@ -12,7 +17,7 @@ jobs:
           - name: Get action
             run: |
                 echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
-                echo "DEPLOY_ACTION=deploy" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
