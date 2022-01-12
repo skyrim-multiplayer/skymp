@@ -1,14 +1,13 @@
 import { Guid } from "guid-typescript";
 
 import * as sp from "skyrimPlatform";
-import * as spe from "./skyrimPlatform.extensions";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
 import { AuthGameData, LoginRegisterData, LoginResponseAuthData, RemoteAuthGameData } from "./authModel";
 import { Transform } from "./movement";
 import { escapeJs, nameof } from "./utils";
 
-const authUrl = "https://skymp.io";
+const authUrl = (sp.settings["skymp5-client"]["master"] as string) || "https://skymp.io";
 const githubUrl = "https://github.com/skyrim-multiplayer/skymp";
 const patreonUrl = "https://www.patreon.com/skymp";
 const loginEventKey = "loginRequiredEvent";
