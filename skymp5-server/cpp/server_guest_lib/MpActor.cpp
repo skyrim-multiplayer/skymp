@@ -182,78 +182,19 @@ int AcknowledgeTier(int tier1Chance, int tier2Chance, int tier3Chance,
   }
 }
 
-int GenerateItemIndex(int tier, std::string type)
-{
-  if (type == "WEAP") {
-    switch (tier) {
-      case 1:
-        return GenerateRandomNumber(0, 14);
-        break;
-      case 2:
-        return GenerateRandomNumber(0, 29);
-        break;
-      case 3:
-        return GenerateRandomNumber(0, 22);
-        break;
-      case 4:
-        return GenerateRandomNumber(0, 28);
-        break;
-      case 5:
-        return GenerateRandomNumber(0, 17);
-        break;
-    }
-  } else if (type == "GEAR") {
-    switch (tier) {
-      case 1:
-        return GenerateRandomNumber(0, 49);
-        break;
-      case 2:
-        return GenerateRandomNumber(0, 58);
-        break;
-      case 3:
-        return GenerateRandomNumber(0, 65);
-        break;
-      case 4:
-        return GenerateRandomNumber(0, 36);
-        break;
-      case 5:
-        return GenerateRandomNumber(0, 14);
-        break;
-    }
-  } else if (type == "CONS") {
-    switch (tier) {
-      case 1:
-        return GenerateRandomNumber(0, 3);
-        break;
-      case 2:
-        return GenerateRandomNumber(0, 4);
-        break;
-      case 3:
-        return GenerateRandomNumber(0, 0);
-        break;
-      case 4:
-        return GenerateRandomNumber(0, 0);
-        break;
-      case 5:
-        return GenerateRandomNumber(0, 0);
-        break;
-    }
-  }
-}
-
 uint32_t GetRandomItem(std::string type)
 {
   if (type == "WEAP") {
-    int tier = AcknowledgeTier(60, 20, 10, 9, 1);
-    int item = GenerateItemIndex(tier, type);
+    int tier = AcknowledgeTier(100, 20, 10, 9, 1);
+    int item = GenerateRandomNumber(0, lootTable[type][tier].size() - 1);
     return lootTable[type][tier][item];
   } else if (type == "GEAR") {
-    int tier = AcknowledgeTier(60, 20, 10, 9, 1);
-    int item = GenerateItemIndex(tier, type);
+    int tier = AcknowledgeTier(100, 20, 10, 9, 1);
+    int item = GenerateRandomNumber(0, lootTable[type][tier].size() - 1);
     return lootTable[type][tier][item];
   } else if (type == "CONS") {
-    int tier = AcknowledgeTier(60, 20, 10, 9, 1);
-    int item = GenerateItemIndex(tier, type);
+    int tier = AcknowledgeTier(100, 20, 10, 9, 1);
+    int item = GenerateRandomNumber(0, lootTable[type][tier].size() - 1);
     return lootTable[type][tier][item];
   } else if (type == "NOTH") {
       // do smth
@@ -265,7 +206,7 @@ uint32_t GetSlotItem(int weaponChance, int gearChance, int consumableChance,
 {
   std::string type =
     AcknowledgeType(weaponChance, gearChance, consumableChance, nothingChance);
-  GetRandomItem(type);
+  return GetRandomItem(type);
 }
 
 void MpActor::OnEquip(uint32_t baseId)
