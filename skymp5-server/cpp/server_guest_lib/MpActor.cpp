@@ -89,15 +89,6 @@ void MpActor::SendToUser(const void* data, size_t size, bool reliable)
     throw std::runtime_error("sendToUser is nullptr");
 }
 
-std::unordered_map<int, std::vector<uint32_t>> weapTable = {
-  {
-    1,
-    { 0x0001397E, 0x00013790, 0x00013981, 0x0002C66F, 0x0001CB64, 0x00012EB7,
-      0x00013980, 0x000CADE9, 0x0002C672, 0x0002E6D1, 0x0001359D, 0x00013982,
-      0x000CC829, 0x000236A5, 0x000302CD },
-  },
-};
-
 std::unordered_map<std::string, std::unordered_map<int, std::vector<uint32_t>>>
   lootTable = {
     { "WEAP",
@@ -114,6 +105,7 @@ std::unordered_map<std::string, std::unordered_map<int, std::vector<uint32_t>>>
                0x0001399F, 0x000139A0, 0x00013991, 0x0001398C, 0x0010AA19,
                0x00013987, 0x00013988, 0x00013999, 0x00013994, 0x0001399E,
                0x0001399B, 0x000139A2, 0x0001398F, 0x00013990, 0x0010C6FB } },
+        { 3, {} },
       } },
     { "GEAR",
       {
