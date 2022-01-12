@@ -184,21 +184,9 @@ int AcknowledgeTier(int tier1Chance, int tier2Chance, int tier3Chance,
 
 uint32_t GetRandomItem(std::string type)
 {
-  if (type == "WEAP") {
     int tier = AcknowledgeTier(100, 20, 10, 9, 1);
     int item = GenerateRandomNumber(0, lootTable[type][tier].size() - 1);
-    return lootTable[type][tier][item];
-  } else if (type == "GEAR") {
-    int tier = AcknowledgeTier(100, 20, 10, 9, 1);
-    int item = GenerateRandomNumber(0, lootTable[type][tier].size() - 1);
-    return lootTable[type][tier][item];
-  } else if (type == "CONS") {
-    int tier = AcknowledgeTier(100, 20, 10, 9, 1);
-    int item = GenerateRandomNumber(0, lootTable[type][tier].size() - 1);
-    return lootTable[type][tier][item];
-  } else if (type == "NOTH") {
-      // do smth
-  } 
+    return lootTable[type][tier][item]; 
 }
 
 uint32_t GetSlotItem(int weaponChance, int gearChance, int consumableChance,
