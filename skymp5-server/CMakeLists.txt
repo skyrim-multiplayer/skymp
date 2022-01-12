@@ -87,8 +87,7 @@ apply_default_settings(TARGETS ${PROJECT_NAME})
 # On Windows create launch_server.bat in build/dist/server
 # This .bat file is for launching the server
 if(WIN32)
-  set(bat "set NODE_PATH=${SKYMP5_SERVER_SOURCE_DIR}/node_modules\n")
-  set(bat "${bat}node dist_back/index.js\n")
+  set(bat "node dist_back/skymp5-server.js\n")
   set(bat "${bat}pause\n")
 
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
@@ -129,4 +128,14 @@ file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_jso
 add_custom_command(
   TARGET ${PROJECT_NAME} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/server-settings.json.tmp ${CMAKE_BINARY_DIR}/dist/server/server-settings.json
+)
+
+add_custom_command(
+  TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/package.json ${CMAKE_BINARY_DIR}/dist/server/package.json
+)
+
+add_custom_command(
+  TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/yarn.lock ${CMAKE_BINARY_DIR}/dist/server/yarn.lock
 )

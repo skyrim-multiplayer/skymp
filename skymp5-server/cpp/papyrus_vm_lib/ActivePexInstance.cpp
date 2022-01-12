@@ -22,7 +22,7 @@ ActivePexInstance::ActivePexInstance()
 
 ActivePexInstance::ActivePexInstance(
   PexScript::Lazy sourcePex,
-  const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+  const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
   VirtualMachine* parentVM, VarValue activeInstanceOwner,
   std::string childrenName)
 {
@@ -31,20 +31,20 @@ ActivePexInstance::ActivePexInstance(
   this->parentVM = parentVM;
   this->sourcePex = sourcePex;
   this->parentInstance =
-    FillParentInstanse(sourcePex.fn()->objectTable[0].parentClassName,
-                       activeInstanceOwner, mapForFillPropertys);
+    FillParentInstance(sourcePex.fn()->objectTable[0].parentClassName,
+                       activeInstanceOwner, mapForFillProperties);
 
-  this->variables = mapForFillPropertys;
+  this->variables = mapForFillProperties;
 
   this->_IsValid = true;
 }
 
-std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstanse(
+std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
   std::string nameNeedScript, VarValue activeInstanceOwner,
-  const std::shared_ptr<IVariablesHolder>& mapForFillPropertys)
+  const std::shared_ptr<IVariablesHolder>& mapForFillProperties)
 {
   return parentVM->CreateActivePexInstance(nameNeedScript, activeInstanceOwner,
-                                           mapForFillPropertys,
+                                           mapForFillProperties,
                                            this->sourcePex.source);
 }
 

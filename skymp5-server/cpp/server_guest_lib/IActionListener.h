@@ -103,4 +103,9 @@ public:
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData)
   {
   }
+
+  virtual void OnUnknown(const RawMessageData& rawMsgData,
+                         simdjson::dom::element data)
+  {
+  }
 };

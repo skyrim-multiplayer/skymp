@@ -44,10 +44,13 @@ Before your start make sure that your system meets the conditions:
 ### Linux
 
 You can build and run server and unit-tests on Linux.
-As Skyrim has no native Linux version, client can only be built using MSVC.
-Client can be run with Proton (though it can be tricky to get Skyrim itself to work properly).
+As Skyrim has no native Linux version, client can only be built using MSVC,
+but then can be run with Proton (though some crashes can occur on SP startup
+and it can be tricky to get Skyrim itself to work with non-ASCII text, for example).
 
-* Ubuntu *(Some other distributions may also work, but we know that Alpine doesn't)*
+* Ubuntu 18.04 or 20.04. Other distros are not tested or are expected to fail:
+  * Alpine Linux doesn't work
+  * Arch-based distros also [won't be able to run the server](https://github.com/chakra-core/ChakraCore/issues/6613)
 * Clang 12 *(GCC is not supported)*: `sudo apt install clang-12`
 * Python 2 (not 3.x! It is needed to build ChakraCore. Don't worry, it won't conflict with Python 3):
   `sudo apt install python2`
@@ -58,6 +61,16 @@ Client can be run with Proton (though it can be tricky to get Skyrim itself to w
     ```sh
     echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
     ```
+
+If you don't wish to build all the dependencies by yourself, or have an unsupported distro,
+you can use [a Docker image with preinstalled dependencies](https://hub.docker.com/r/skymp/skymp-vcpkg-deps):
+
+```sh
+docker run -it --rm -v "$PWD:$PWD" -w "$PWD" -u "`id -u`:`id -g`" skymp/skymp-vcpkg-deps ./build.sh ...
+# ... or go rootless!
+podman run -it --rm -v "$PWD:$PWD" -w "$PWD" -e VCPKG_DEFAULT_BINARY_CACHE=/home/skymp/.cache/vcpkg/archives \
+    skymp/skymp-vcpkg-deps ./build.sh ...
+```
 
 ## Configuring and Building
 
@@ -161,6 +174,10 @@ directory and add some aliases to `PATH`.
    ctest -C Debug --verbose
    ```
    These commands would re-generate project files with coverage enabled and run tests. Coverage report would be in `build/__coverage`.
+
+3. If you wish to use solely SP build, you can run `CreateArchive_SkyrimPlatform` script to get zip with only related files (Windows-only):
+   
+   Go to `ci` folder and double-click `CreateArchive_SkyrimPlatform`.
 
 ## License
 

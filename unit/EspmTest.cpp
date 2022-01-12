@@ -491,5 +491,56 @@ TEST_CASE("ARMO parsing", "[espm]")
     REQUIRE(data.baseRatingX100 == 2000);
     REQUIRE(data.baseValue == 50);
     REQUIRE(data.weight == 5);
+    REQUIRE(data.enchantmentFormId == 0);
   }
+  {
+    // Steel Plate Boots with fire resist
+    auto data = espm::GetData<espm::ARMO>(0x1B401, &provider);
+    REQUIRE(data.baseRatingX100 == 1400);
+    REQUIRE(data.baseValue == 125);
+    REQUIRE(data.weight == 9);
+    REQUIRE(data.enchantmentFormId == 0xAD484); // fire resist 03
+  }
+}
+
+TEST_CASE("ENCH and effects parsing", "[espm]")
+{
+  MyEspmProvider provider;
+  {
+    // EnchArmorResistFire03
+    auto data = espm::GetData<espm::ENCH>(0xAD484, &provider);
+    REQUIRE(data.effects.size() == 1);
+    auto& effect = data.effects[0];
+    REQUIRE(effect.effectId == 0x48C8B);
+    REQUIRE(effect.areaOfEffect == 0);
+    REQUIRE(effect.duration == 0);
+    REQUIRE(effect.magnitude == 40);
+  }
+  {
+    // EnchWeaponNightingaleBow04
+    auto data = espm::GetData<espm::ENCH>(0xF6521, &provider);
+    REQUIRE(data.effects.size() == 3);
+    auto& effects = data.effects;
+    REQUIRE(effects[0].effectId == 0x4605B); // EnchFrostDamageFFContact
+    REQUIRE(effects[0].areaOfEffect == 0);
+    REQUIRE(effects[0].duration == 0);
+    REQUIRE(effects[0].magnitude == 25);
+
+    REQUIRE(effects[1].effectId == 0x4605C); // EnchShockDamageFFContact
+    REQUIRE(effects[1].areaOfEffect == 0);
+    REQUIRE(effects[1].duration == 1);
+    REQUIRE(effects[1].magnitude == 12);
+
+    REQUIRE(effects[2].effectId == 0xB72A0); // FrostSlowFFContact
+    REQUIRE(effects[2].areaOfEffect == 0);
+    REQUIRE(effects[2].duration == 3);
+    REQUIRE(effects[2].magnitude == 50);
+  }
+}
+
+TEST_CASE("MGEF parsing", "[espm]")
+{
+  MyEspmProvider provider;
+  auto data = espm::GetData<espm::MGEF>(0x51B15, &provider);
+  REQUIRE(data.data.primaryAV == espm::ActorValue::DamageResist);
 }

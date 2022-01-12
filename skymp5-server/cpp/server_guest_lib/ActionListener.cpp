@@ -347,7 +347,7 @@ void ActionListener::OnConsoleCommand(
 void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
                     const espm::CombineBrowser& br, int espmIdx)
 {
-  auto mapping = br.GetMapping(espmIdx);
+  auto mapping = br.GetCombMapping(espmIdx);
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
     auto formId = espm::GetMappedId(entry.formId, *mapping);
@@ -702,7 +702,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
 
   targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
-                             staminaPercentage);
+                             staminaPercentage, aggressor);
   auto now = std::chrono::steady_clock::now();
   targetActor.SetLastAttributesPercentagesUpdate(now);
   targetActor.SetLastHitTime(now);
@@ -724,4 +724,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                 "health percentage: {3}. (Last: {3} => Current: {2})",
                 hitData.target, damage, currentHealthPercentage,
                 healthPercentage);
+}
+
+void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
+                               simdjson::dom::element data)
+{
+  spdlog::debug("Got unhandled message: {}", simdjson::minify(data));
 }
