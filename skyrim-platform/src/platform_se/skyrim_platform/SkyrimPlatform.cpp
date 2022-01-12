@@ -179,9 +179,6 @@ private:
         LoadSettingsFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L"-logs.txt")) {
-        continue;
-      }
       LoadPluginFile(path);
     }
   }
