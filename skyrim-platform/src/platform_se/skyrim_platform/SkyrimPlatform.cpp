@@ -179,11 +179,6 @@ private:
         LoadSettingsFile(path);
         continue;
       }
-      // TODO(#336): Remove in 3.0
-      // SP doesn't store logs in the Plugins folder anymore. See #562.
-      if (EndsWith(path.wstring(), L"-logs.txt")) {
-        continue;
-      }
       LoadPluginFile(path);
     }
   }
