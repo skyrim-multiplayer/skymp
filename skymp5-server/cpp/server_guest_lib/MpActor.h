@@ -82,6 +82,9 @@ public:
 
   void SetIsDead(bool isDead);
 
+  void RestoreActorValue(espm::ActorValue av, float value);
+  void DamageActorValue(espm::ActorValue av, float value);
+
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 
@@ -92,6 +95,8 @@ private:
   std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
                                bool shouldTeleport);
   void MpApiDeath(MpActor* killer = nullptr);
+
+  void ModifyActorValue(espm::ActorValue av, float value);
 
 protected:
   void BeforeDestroy() override;

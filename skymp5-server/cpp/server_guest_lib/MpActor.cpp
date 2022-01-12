@@ -365,6 +365,36 @@ void MpActor::MpApiDeath(MpActor* killer)
   }
 }
 
+void MpActor::ModifyActorValue(espm::ActorValue av, float value)
+{
+  BaseActorValues base =
+    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  MpChangeForm form = GetChangeForm();
+  float hp = form.healthPercentage;
+  float mp = form.magickaPercentage;
+  float sp = form.staminaPercentage;
+  switch (av) {
+    case espm::ActorValue::Health:
+      hp = form.healthPercentage + value / base.health;
+      // its temporal
+      hp = hp < 0 ? 0 : hp > 1 ? 1 : hp;
+      break;
+    case espm::ActorValue::Stamina:
+      sp = form.staminaPercentage + value / base.stamina;
+      // its temporal
+      sp = sp < 0 ? 0 : sp > 1 ? 1 : sp;
+      break;
+    case espm::ActorValue::Magicka:
+      mp = form.magickaPercentage + value / base.magicka;
+      // its temporal
+      mp = mp < 0 ? 0 : mp > 1 ? 1 : mp;
+      break;
+    default:
+      return;
+  }
+  SetPercentages(hp, mp, sp);
+}
+
 void MpActor::BeforeDestroy()
 {
   for (auto& sink : destroyEventSinks)
@@ -460,4 +490,14 @@ void MpActor::SetRespawnTime(float time)
 void MpActor::SetIsDead(bool isDead)
 {
   SendAndSetDeathState(isDead, false);
+}
+
+void MpActor::RestoreActorValue(espm::ActorValue av, float value)
+{
+  ModifyActorValue(av, std::abs(value));
+}
+
+void MpActor::DamageActorValue(espm::ActorValue av, float value)
+{
+  ModifyActorValue(av, -std::abs(value));
 }
