@@ -7,6 +7,11 @@
 #include "ServerState.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
+#include <random>
+#include <string>
+
+std::random_device rd;
+std::mt19937 gen(rd());
 
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 {
@@ -84,6 +89,193 @@ void MpActor::SendToUser(const void* data, size_t size, bool reliable)
     throw std::runtime_error("sendToUser is nullptr");
 }
 
+std::unordered_map<int, std::vector<uint32_t>> weapTable = {
+  {
+    1,
+    { 0x0001397E, 0x00013790, 0x00013981, 0x0002C66F, 0x0001CB64, 0x00012EB7,
+      0x00013980, 0x000CADE9, 0x0002C672, 0x0002E6D1, 0x0001359D, 0x00013982,
+      0x000CC829, 0x000236A5, 0x000302CD },
+  },
+};
+
+std::unordered_map<std::string, std::unordered_map<int, std::vector<uint32_t>>>
+  lootTable = {
+    { "WEAP",
+      {
+        {
+          1,
+          { 0x0001397E, 0x00013790, 0x00013981, 0x0002C66F, 0x0001CB64,
+            0x00012EB7, 0x00013980, 0x000CADE9, 0x0002C672, 0x0002E6D1,
+            0x0001359D, 0x00013982, 0x000CC829, 0x000236A5, 0x000302CD },
+        },
+        { 2, { 0x00013986, 0x00013983, 0x0001398A, 0x00013997, 0x00013998,
+               0x000139A1, 0x0001399C, 0x0001398E, 0x0001398B, 0x00013992,
+               0x00013989, 0x00013984, 0x00013996, 0x00013993, 0x0001399A,
+               0x0001399F, 0x000139A0, 0x00013991, 0x0001398C, 0x0010AA19,
+               0x00013987, 0x00013988, 0x00013999, 0x00013994, 0x0001399E,
+               0x0001399B, 0x000139A2, 0x0001398F, 0x00013990, 0x0010C6FB } },
+      } },
+    { "GEAR",
+      {
+        { 1, { 0x00013913, 0x00013922, 0x00012E4D, 0x0001B3A1, 0x0006F39E,
+               0x000D8D52, 0x00056A9E, 0x00012E46, 0x00013912, 0x000D8D55,
+               0x00012EB6, 0x000209A6, 0x0006ff38, 0x0005B69F, 0x0005b6a1,
+               0x0006FF45, 0x000209A5, 0x000209A5, 0x000C5D12, 0x00013911,
+               0x0003619E, 0x00012E49, 0x0001B3A3, 0x0001B3A4, 0x0010594D,
+               0x000D8D50, 0x00018388, 0x00013921, 0x00013921, 0x0001394B,
+               0x0001be1a, 0x000f1229, 0x000209a5, 0x0006c1d9, 0x0004223C,
+               0x0001BE1B, 0x0001BE1B, 0x000BACD7, 0x0006FF37, 0x00013910,
+               0x00013920, 0x00012E4B, 0x0001B39F, 0x0006F398, 0x000D8D4E,
+               0x00056a9D, 0x0006F39B, 0x0001B3A0, 0x00013914, 0x0005C06C,
+               0x0006c1d9, 0x0006ff43, 0x0006C1D8, 0x0003452E, 0x000D191F,
+               0x0003452F, 0x000C36E9 } },
+      } },
+    { "CONS",
+      {
+        { 1, { 0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC } },
+        { 2, { 0x0006AC4A, 0x0001B3BD, 0x00064B2E, 0x00064B2F, 0x00023D77 } },
+        { 3, { 0x0000353C } }, // change to dlc id 0xXX00353c
+        { 4, { 0x0003EADE } },
+        { 5, { 0x002E504 } },
+      } }
+  };
+
+int GenerateRandomNumber(int leftBound, int rightBound)
+{
+  std::uniform_int_distribution<> distr(leftBound, rightBound);
+  return distr(gen);
+}
+
+std::string AcknowledgeType(int weaponChance, int gearChance,
+                            int consumablesChance, int nothingChance)
+{
+
+  int chance = GenerateRandomNumber(1, 100);
+  std::string type = "";
+
+  if (chance <= weaponChance && weaponChance != 0) {
+    type = "WEAP";
+    return type;
+  } else if (chance <= (weaponChance + gearChance) && gearChance != 0) {
+    type = "GEAR";
+    return type;
+  } else if (chance <= (weaponChance + gearChance + consumablesChance) &&
+             consumablesChance != 0) {
+    type = "CONS";
+    return type;
+  } else {
+    type = "NOTH";
+    return type;
+  }
+}
+
+int AcknowledgeTier(int tier1Chance, int tier2Chance, int tier3Chance,
+                    int tier4Chance, int tier5Chance)
+{
+  int chance = GenerateRandomNumber(1, 100);
+
+  if (chance < tier1Chance && tier1Chance != 0) {
+    return 1;
+  } else if (chance <= (tier1Chance + tier2Chance) && tier2Chance != 0) {
+    return 2;
+  } else if (chance <= (tier1Chance + tier2Chance + tier3Chance) &&
+             tier3Chance != 0) {
+    return 3;
+  } else if (chance <=
+               (tier1Chance + tier2Chance + tier3Chance + tier4Chance) &&
+             tier4Chance != 0) {
+    return 4;
+  } else {
+    return 5;
+  }
+}
+
+int GenerateItemIndex(int tier, std::string type)
+{
+  if (type == "WEAP") {
+    switch (tier) {
+      case 1:
+        return GenerateRandomNumber(0, 14);
+        break;
+      case 2:
+        return GenerateRandomNumber(0, 29);
+        break;
+      case 3:
+        return GenerateRandomNumber(0, 22);
+        break;
+      case 4:
+        return GenerateRandomNumber(0, 28);
+        break;
+      case 5:
+        return GenerateRandomNumber(0, 17);
+        break;
+    }
+  } else if (type == "GEAR") {
+    switch (tier) {
+      case 1:
+        return GenerateRandomNumber(0, 49);
+        break;
+      case 2:
+        return GenerateRandomNumber(0, 58);
+        break;
+      case 3:
+        return GenerateRandomNumber(0, 65);
+        break;
+      case 4:
+        return GenerateRandomNumber(0, 36);
+        break;
+      case 5:
+        return GenerateRandomNumber(0, 14);
+        break;
+    }
+  } else if (type == "CONS") {
+    switch (tier) {
+      case 1:
+        return GenerateRandomNumber(0, 3);
+        break;
+      case 2:
+        return GenerateRandomNumber(0, 4);
+        break;
+      case 3:
+        return GenerateRandomNumber(0, 0);
+        break;
+      case 4:
+        return GenerateRandomNumber(0, 0);
+        break;
+      case 5:
+        return GenerateRandomNumber(0, 0);
+        break;
+    }
+  }
+}
+
+uint32_t GetRandomItem(std::string type)
+{
+  if (type == "WEAP") {
+    int tier = AcknowledgeTier(60, 20, 10, 9, 1);
+    int item = GenerateItemIndex(tier, type);
+    return lootTable[type][tier][item];
+  } else if (type == "GEAR") {
+    int tier = AcknowledgeTier(60, 20, 10, 9, 1);
+    int item = GenerateItemIndex(tier, type);
+    return lootTable[type][tier][item];
+  } else if (type == "CONS") {
+    int tier = AcknowledgeTier(60, 20, 10, 9, 1);
+    int item = GenerateItemIndex(tier, type);
+    return lootTable[type][tier][item];
+  } else if (type == "NOTH") {
+      // do smth
+  } 
+}
+
+uint32_t GetSlotItem(int weaponChance, int gearChance, int consumableChance,
+                     int nothingChance)
+{
+  std::string type =
+    AcknowledgeType(weaponChance, gearChance, consumableChance, nothingChance);
+  GetRandomItem(type);
+}
+
 void MpActor::OnEquip(uint32_t baseId)
 {
   if (GetInventory().GetItemCount(baseId) == 0)
@@ -100,6 +292,13 @@ void MpActor::OnEquip(uint32_t baseId)
     VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
                         VarValue::None() };
     SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
+
+    if (baseId == 0x00064B43) {
+       AddItem(GetSlotItem(80, 10, 8, 2), 1);
+       AddItem(GetSlotItem(10, 80, 8, 2), 1);
+       AddItem(GetSlotItem(10, 50, 30, 10), 1);
+       AddItem(GetSlotItem(0, 0, 94, 6), 1);
+    }
   }
 }
 
