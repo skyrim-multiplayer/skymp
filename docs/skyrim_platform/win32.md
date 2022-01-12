@@ -1,6 +1,6 @@
-# Win32 shell calls
+# Win32
 
-SkyrimPlatform provides support for opening links and more in os default browser by windows shell calls.
+SkyrimPlatform provides support for opening links in os default browser by windows shell calls and more.
 
 ```typescript
 import { win32 } from "skyrimPlatform";
@@ -10,5 +10,5 @@ win32.loadUrl(url);
 
 ```typescript
 import { win32 } from "skyrimPlatform";
-win32.exitProcess() //terminates the process gracefully;
+win32.exitProcess() // terminates the process gracefully
 ```
