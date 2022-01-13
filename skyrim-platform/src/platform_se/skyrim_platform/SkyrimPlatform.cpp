@@ -182,9 +182,6 @@ private:
       if (EndsWith(path.wstring(), L"-logs.txt")) {
         continue;
       }
-      if (EndsWith(path.wstring(), L"-no-load.js")) {
-        continue;
-      }
       LoadPluginFile(path);
     }
   }
