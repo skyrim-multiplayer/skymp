@@ -367,6 +367,10 @@ void MpActor::MpApiDeath(MpActor* killer)
 
 void MpActor::ModifyActorValue(espm::ActorValue av, float value)
 {
+  if ((av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
+       av == espm::ActorValue::Magicka) == false) {
+    return;
+  }
   BaseActorValues base =
     GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
   MpChangeForm form = GetChangeForm();
