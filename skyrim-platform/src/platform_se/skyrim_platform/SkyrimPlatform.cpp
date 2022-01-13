@@ -33,6 +33,7 @@
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
+#include "TextApi.h"
 #include "Win32Api.h"
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
@@ -181,9 +182,6 @@ private:
       if (EndsWith(path.wstring(), L"-logs.txt")) {
         continue;
       }
-      if (EndsWith(path.wstring(), L"-no-load.js")) {
-        continue;
-      }
       LoadPluginFile(path);
     }
   }
@@ -233,6 +231,7 @@ private:
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
                            Win32Api::Register(e);
+                           TextApi::Register(e);
                            InventoryApi::Register(e);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });

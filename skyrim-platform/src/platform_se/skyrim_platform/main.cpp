@@ -24,6 +24,7 @@
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
 #include "TaskQueue.h"
+#include "TextsCollection.h"
 #include "ThreadPoolWrapper.h"
 #include "TickTask.h"
 #include <RE/ConsoleLog.h>
@@ -63,8 +64,11 @@ extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
-  callback(TextToDraw());
-  callback(TextToDraw());
+  auto text = &TextsCollection::GetSingleton();
+
+  for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
+    callback(a.second);
+  }
 }
 
 void SetupFridaHooks();
@@ -156,6 +160,8 @@ __declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
     _FATALERROR("QueryInterface failed for PapyrusInterface");
     return false;
   }
+
+  SKSE::Init(reinterpret_cast<const SKSE::LoadInterface*>(skse));
 
   SetupFridaHooks();
 
