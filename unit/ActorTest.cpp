@@ -74,4 +74,7 @@ TEST_CASE("Actor's value can be modified", "[Actor]")
   REQUIRE(changeForm.healthPercentage == 1.f);
   REQUIRE(changeForm.staminaPercentage == .25f);
   REQUIRE(changeForm.magickaPercentage == 0.f);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
 }
