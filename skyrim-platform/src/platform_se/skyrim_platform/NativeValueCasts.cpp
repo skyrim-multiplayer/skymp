@@ -6,6 +6,8 @@
 #include "PapyrusTESModPlatform.h"
 #include <sstream>
 
+#include <RE/ConsoleLog.h> // test include
+
 namespace {
 JsValue ToString(const JsFunctionArguments& args)
 {
@@ -93,6 +95,67 @@ JsValue NativeValueCasts::NativeObjectToJsObject(
   return poolEntry.object;
 }
 
+CallNative::AnySafe NativeValueCasts::JsArrayToNativeArray(const JsValue& v)
+{
+  auto length = static_cast<int>(v.GetProperty("length"));
+  if (length == 0) {
+    throw std::runtime_error("Passed array should be non zero length");
+  }
+  switch (v.GetProperty(0).GetType()) {
+    case JsValue::Type::Boolean: {
+      std::vector<bool> out{};
+      out.reserve(length);
+      for (int i = 0; i < length; ++i) {
+        if (v.GetProperty(i).GetType() != JsValue::Type::Boolean) {
+          throw std::runtime_error(
+            "Passed array should contain monotype elements");
+        }
+        out.push_back(static_cast<bool>(v.GetProperty(i)));
+      }
+      return out;
+    }
+    case JsValue::Type::Number: {
+      std::vector<double> out{};
+      out.reserve(length);
+      for (int i = 0; i < length; ++i) {
+        if (v.GetProperty(i).GetType() != JsValue::Type::Number) {
+          throw std::runtime_error(
+            "Passed array should contain monotype elements");
+        }
+        out.push_back(static_cast<double>(v.GetProperty(i)));
+      }
+      return out;
+    }
+    case JsValue::Type::String: {
+      std::vector<std::string> out{};
+      out.reserve(length);
+      for (int i = 0; i < length; ++i) {
+        if (v.GetProperty(i).GetType() != JsValue::Type::String) {
+          throw std::runtime_error(
+            "Passed array should contain monotype elements");
+        }
+        out.push_back(static_cast<std::string>(v.GetProperty(i)));
+      }
+      return out;
+    }
+    case JsValue::Type::Object: {
+      std::vector<CallNative::ObjectPtr> out{};
+      out.reserve(length);
+      for (int i = 0; i < length; ++i) {
+        if (v.GetProperty(i).GetType() != JsValue::Type::Object) {
+          throw std::runtime_error(
+            "Passed array should contain monotype elements");
+        }
+        out.push_back(JsObjectToNativeObject(v.GetProperty(i)));
+      }
+      return out;
+    }
+    default: {
+      throw std::runtime_error("Unsupported array type");
+    }
+  }
+}
+
 CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const JsValue& v)
 {
   switch (v.GetType()) {
@@ -106,6 +169,9 @@ CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const JsValue& v)
     case JsValue::Type::Null:
     case JsValue::Type::Undefined:
       return JsObjectToNativeObject(v);
+    case JsValue::Type::Array: {
+      return JsArrayToNativeArray(v);
+    }
     default:
       throw std::runtime_error("Unsupported JavaScript type (" +
                                std::to_string((int)v.GetType()) + ")");

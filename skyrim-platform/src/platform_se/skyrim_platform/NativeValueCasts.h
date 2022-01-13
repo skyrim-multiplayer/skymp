@@ -6,6 +6,7 @@ namespace NativeValueCasts {
 
 CallNative::ObjectPtr JsObjectToNativeObject(const JsValue& v);
 JsValue NativeObjectToJsObject(const CallNative::ObjectPtr& obj);
+CallNative::AnySafe JsArrayToNativeArray(const JsValue& v);
 CallNative::AnySafe JsValueToNativeValue(const JsValue& v);
 JsValue NativeValueToJsValue(const CallNative::AnySafe& v);
 }

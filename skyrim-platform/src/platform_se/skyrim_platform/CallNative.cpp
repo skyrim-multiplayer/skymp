@@ -18,7 +18,22 @@
 #include <skse64/PapyrusActor.h>
 #include <skse64_common/Relocation.h>
 
+#include <RE/BSScript/Array.h>  // test include
+#include <RE/BSTSmartPointer.h> // test include
+#include <RE/ConsoleLog.h>      // test include
+
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+
+RE::BSScript::TypeInfo::RawType GetNumberArrayType(
+  const std::vector<double>& v)
+{
+  for (int i = 0; i < v.size(); ++i) {
+    if (floor(v[i]) != v[i]) {
+      return RE::BSScript::TypeInfo::RawType::kFloatArray;
+    }
+  }
+  return RE::BSScript::TypeInfo::RawType::kIntArray;
+}
 
 RE::BSScript::Variable CallNative::AnySafeToVariable(
   const CallNative::AnySafe& v, bool treatNumberAsInt = false)
@@ -84,6 +99,137 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
           isNotForm ? id : static_cast<RE::VMTypeID>(nativePtrRaw->formType);
 
         RE::BSScript::PackHandle(&res, nativePtrRaw, id);
+        return res;
+      },
+      [](const std::vector<bool>& v) {
+        auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+
+        if (!vm) {
+          throw std::runtime_error(
+            "Unable to cast the argument to RE::BSScript::Variable");
+        }
+
+        RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
+        RE::BSScript::TypeInfo typeInfo(
+          RE::BSScript::TypeInfo::RawType::kBoolArray);
+
+        if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
+          throw std::runtime_error(
+            "Unable to cast the argument to RE::BSScript::Variable");
+        }
+
+        for (int i = 0; i < v.size(); ++i) {
+          (*arrayPtr)[i].Pack(static_cast<bool>(v[i]));
+        }
+
+        RE::BSScript::Variable res;
+        res.SetArray(arrayPtr.get());
+        return res;
+      },
+      [](const std::vector<double>& v) {
+        auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+
+        if (!vm) {
+          throw std::runtime_error(
+            "Unable to cast the argument to RE::BSScript::Variable");
+        }
+
+        RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
+        auto arrayType = GetNumberArrayType(v);
+        RE::BSScript::TypeInfo typeInfo(arrayType);
+
+        if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
+          throw std::runtime_error(
+            "Unable to cast the argument to RE::BSScript::Variable");
+        }
+
+        for (int i = 0; i < v.size(); ++i) {
+          if (arrayType == RE::BSScript::TypeInfo::RawType::kIntArray) {
+            (*arrayPtr)[i].Pack(static_cast<int>(v[i]));
+          } else {
+            (*arrayPtr)[i].Pack(static_cast<float>(v[i]));
+          }
+        }
+
+        RE::BSScript::Variable res;
+        res.SetArray(arrayPtr.get());
+        return res;
+      },
+      [](const std::vector<std::string>& v) {
+        auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+
+        if (!vm) {
+          throw std::runtime_error(
+            "Unable to cast the argument to RE::BSScript::Variable");
+        }
+
+        RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
+        RE::BSScript::TypeInfo typeInfo(
+          RE::BSScript::TypeInfo::RawType::kStringArray);
+
+        if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
+          throw std::runtime_error(
+            "Unable to cast the argument to RE::BSScript::Variable");
+        }
+
+        for (int i = 0; i < v.size(); ++i) {
+          (*arrayPtr)[i].Pack(static_cast<RE::BSFixedString>(v[i]));
+        }
+
+        RE::BSScript::Variable res;
+        res.SetArray(arrayPtr.get());
+        return res;
+      },
+      [](const std::vector<CallNative::ObjectPtr>& v) {
+        auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+
+        if (!vm) {
+          throw std::runtime_error(
+            "Unable to cast the argument to RE::BSScript::Variable");
+        }
+
+        RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
+        RE::BSScript::TypeInfo typeInfo(
+          RE::BSScript::TypeInfo::RawType::kObjectArray);
+
+        if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
+          throw std::runtime_error(
+            "Unable to cast the argument to RE::BSScript::Variable");
+        }
+
+        for (int i = 0; i < v.size(); ++i) {
+          bool isNotForm =
+            v[i]->GetType() == std::string("ActiveMagicEffect") ||
+            v[i]->GetType() == std::string("ColorComponent") ||
+            v[i]->GetType() == std::string("Alias") ||
+            v[i]->GetType() == std::string("ReferenceAlias") ||
+            v[i]->GetType() == std::string("LocationAlias");
+
+          RE::VMTypeID id = 0;
+
+          if (isNotForm) {
+
+            bool isValid = vm->GetTypeIDForScriptObject(v[i]->GetType(), id);
+
+            if (!isValid) {
+              throw std::runtime_error("Object in array not valid");
+            }
+          }
+
+          auto nativePtrRaw =
+            reinterpret_cast<RE::TESForm*>(v[i]->GetNativeObjectPtr());
+          if (!nativePtrRaw) {
+            throw NullPointerException("nativePtrRaw");
+          }
+
+          id =
+            isNotForm ? id : static_cast<RE::VMTypeID>(nativePtrRaw->formType);
+
+          RE::BSScript::PackHandle(&((*arrayPtr)[i]), nativePtrRaw, id);
+        }
+
+        RE::BSScript::Variable res;
+        res.SetArray(arrayPtr.get());
         return res;
       },
       [](auto) -> RE::BSScript::Variable {
