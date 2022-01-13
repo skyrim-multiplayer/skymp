@@ -1,6 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
+PartOne& GetPartOne();
+
 TEST_CASE(
   "Actor appearance, equipment and isRaceMenuOpen properties should present "
   "in changeForm",
@@ -53,4 +55,23 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   REQUIRE(actor.GetChangeForm().spawnPoint.pos == NiPoint3{ 1, 2, 3 });
   REQUIRE(actor.GetChangeForm().spawnPoint.rot == NiPoint3{ 1, 2, 4 });
   REQUIRE(actor.GetChangeForm().spawnDelay == 8.0f);
+}
+
+TEST_CASE("Actor's value can be modified", "[Actor]")
+{
+  using AV = espm::ActorValue;
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
+  actor.SetPercentages(.5f, .5f, .5f);
+  actor.RestoreActorValue(AV::Health, 100);
+  actor.DamageActorValue(AV::Stamina, 25);
+  actor.DamageActorValue(AV::Magicka, 100);
+  MpChangeForm changeForm = actor.GetChangeForm();
+
+  REQUIRE(changeForm.healthPercentage == 1.f);
+  REQUIRE(changeForm.staminaPercentage == .25f);
+  REQUIRE(changeForm.magickaPercentage == 0.f);
 }
