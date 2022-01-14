@@ -14,3 +14,9 @@ JsValue Win32Api::LoadUrl(const JsFunctionArguments& args)
   }
   return JsValue::Undefined();
 }
+
+JsValue Win32Api::ExitProcess(const JsFunctionArguments& args)
+{
+  std::exit(0);
+  return JsValue::Undefined();
+}

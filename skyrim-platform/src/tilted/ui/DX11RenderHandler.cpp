@@ -128,7 +128,7 @@ void DX11RenderHandler::Create()
   m_pStates = std::make_unique<DirectX::CommonStates>(m_pDevice.Get());
 
   m_pSpriteFont = std::make_unique<DirectX::SpriteFont>(
-    m_pDevice.Get(), L"Data\\Interface\\Fonts\\font.spritefont");
+    m_pDevice.Get(), L"Data\\Platform\\Fonts\\font.spritefont");
 
   if (FAILED(DirectX::CreateWICTextureFromFile(
         m_pDevice.Get(), m_pParent->GetCursorPathPNG().c_str(), nullptr,

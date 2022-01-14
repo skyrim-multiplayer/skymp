@@ -1,12 +1,12 @@
 #pragma once
 #include "NiPoint3.h"
+#include "Structures.h"
 #include <cstdint>
 #include <memory>
 #include <string.h>
 #include <typeinfo>
 
 class WorldState;
-class VarValue;
 class IGameObject;
 
 class MpForm
