@@ -105,8 +105,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
         auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 
         if (!vm) {
-          throw std::runtime_error(
-            "Unable to cast the argument to RE::BSScript::Variable");
+          throw NullPointerException("vm");
         }
 
         RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
@@ -114,8 +113,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
           RE::BSScript::TypeInfo::RawType::kBoolArray);
 
         if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
-          throw std::runtime_error(
-            "Unable to cast the argument to RE::BSScript::Variable");
+          throw std::runtime_error("Unable to create kBoolArray array");
         }
 
         for (int i = 0; i < v.size(); ++i) {
@@ -130,8 +128,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
         auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 
         if (!vm) {
-          throw std::runtime_error(
-            "Unable to cast the argument to RE::BSScript::Variable");
+          throw NullPointerException("vm");
         }
 
         RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
@@ -140,7 +137,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
 
         if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
           throw std::runtime_error(
-            "Unable to cast the argument to RE::BSScript::Variable");
+            "Unable to create kIntArray/kFloatArray array");
         }
 
         for (int i = 0; i < v.size(); ++i) {
@@ -159,8 +156,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
         auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 
         if (!vm) {
-          throw std::runtime_error(
-            "Unable to cast the argument to RE::BSScript::Variable");
+          throw NullPointerException("vm");
         }
 
         RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
@@ -168,8 +164,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
           RE::BSScript::TypeInfo::RawType::kStringArray);
 
         if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
-          throw std::runtime_error(
-            "Unable to cast the argument to RE::BSScript::Variable");
+          throw std::runtime_error("Unable to create kStringArray array");
         }
 
         for (int i = 0; i < v.size(); ++i) {
@@ -184,8 +179,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
         auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 
         if (!vm) {
-          throw std::runtime_error(
-            "Unable to cast the argument to RE::BSScript::Variable");
+          throw NullPointerException("vm");
         }
 
         RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
@@ -193,8 +187,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
           RE::BSScript::TypeInfo::RawType::kObjectArray);
 
         if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
-          throw std::runtime_error(
-            "Unable to cast the argument to RE::BSScript::Variable");
+          throw std::runtime_error("Unable to create kObjectArray array");
         }
 
         for (int i = 0; i < v.size(); ++i) {
