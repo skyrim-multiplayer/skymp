@@ -95,6 +95,23 @@ JsValue NativeValueCasts::NativeObjectToJsObject(
   return poolEntry.object;
 }
 
+template <typename T>
+CallNative::AnySafe CreateNativeArray(const JsValue& v)
+{
+  auto length = static_cast<int>(v.GetProperty("length"));
+  std::vector<T> out{};
+  for (int i = 0; i < length; ++i) {
+    if (v.GetProperty(i).GetType() == v.GetProperty(0).GetType()) {
+      out.push_back(static_cast<T>(v.GetProperty(i)));
+    }
+  }
+  if (out.size() != length) {
+    throw std::runtime_error("Passed array should contain monotype elements");
+  }
+  out.reserve(length);
+  return out;
+}
+
 CallNative::AnySafe NativeValueCasts::JsArrayToNativeArray(const JsValue& v)
 {
   auto length = static_cast<int>(v.GetProperty("length"));
@@ -103,40 +120,13 @@ CallNative::AnySafe NativeValueCasts::JsArrayToNativeArray(const JsValue& v)
   }
   switch (v.GetProperty(0).GetType()) {
     case JsValue::Type::Boolean: {
-      std::vector<bool> out{};
-      out.reserve(length);
-      for (int i = 0; i < length; ++i) {
-        if (v.GetProperty(i).GetType() != JsValue::Type::Boolean) {
-          throw std::runtime_error(
-            "Passed array should contain monotype elements");
-        }
-        out.push_back(static_cast<bool>(v.GetProperty(i)));
-      }
-      return out;
+      return CreateNativeArray<bool>(v);
     }
     case JsValue::Type::Number: {
-      std::vector<double> out{};
-      out.reserve(length);
-      for (int i = 0; i < length; ++i) {
-        if (v.GetProperty(i).GetType() != JsValue::Type::Number) {
-          throw std::runtime_error(
-            "Passed array should contain monotype elements");
-        }
-        out.push_back(static_cast<double>(v.GetProperty(i)));
-      }
-      return out;
+      return CreateNativeArray<double>(v);
     }
     case JsValue::Type::String: {
-      std::vector<std::string> out{};
-      out.reserve(length);
-      for (int i = 0; i < length; ++i) {
-        if (v.GetProperty(i).GetType() != JsValue::Type::String) {
-          throw std::runtime_error(
-            "Passed array should contain monotype elements");
-        }
-        out.push_back(static_cast<std::string>(v.GetProperty(i)));
-      }
-      return out;
+      return CreateNativeArray<std::string>(v);
     }
     case JsValue::Type::Object: {
       std::vector<CallNative::ObjectPtr> out{};
