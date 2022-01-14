@@ -1,8 +1,8 @@
 #include "MpActor.h"
 #include "ChangeFormGuard.h"
+#include "CropRegeneration.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
-#include "GetBaseActorValues.h"
 #include "MsgType.h"
 #include "ServerState.h"
 #include "WorldState.h"
@@ -94,7 +94,7 @@ void MpActor::OnEquip(uint32_t baseId)
     return;
   auto t = lookupRes.rec->GetType();
   if (t == "INGR" || t == "ALCH") {
-    // Eat item
+    EatItem(baseId, t);
     RemoveItem(baseId, 1, nullptr);
 
     VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
@@ -504,4 +504,37 @@ void MpActor::RestoreActorValue(espm::ActorValue av, float value)
 void MpActor::DamageActorValue(espm::ActorValue av, float value)
 {
   ModifyActorValue(av, -std::abs(value));
+}
+
+void MpActor::EatItem(uint32_t baseId, espm::Type t)
+{
+  auto espmProvider = GetParent();
+  std::vector<espm::Effects::Effect> effects;
+  if (t == "ALCH") {
+    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
+  } else if (t == "INGR") {
+    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
+  }
+
+  auto changeForm = GetChangeForm();
+  float regeneration = 0;
+
+  for (const auto& effect : effects) {
+    if (espm::GetData<espm::MGEF>(effect.effectId, espmProvider)
+          .data.primaryAV == espm::ActorValue::Health) {
+      regeneration += effect.magnitude;
+    }
+  }
+  float maxHealt = GetBaseValues().health;
+  float health =
+    CropValue(changeForm.healthPercentage + regeneration / maxHealt);
+
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
+  SetPercentages(health, changeForm.magickaPercentage,
+                 changeForm.staminaPercentage);
+}
+
+BaseActorValues MpActor::GetBaseValues()
+{
+  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
 }
