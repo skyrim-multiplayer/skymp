@@ -4,7 +4,7 @@
 
 PartOne& GetPartOne();
 
-TEST_CASE("Potions restore healt", "[Restoration]")
+TEST_CASE("Potions restore health", "[Restoration]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
