@@ -1,94 +1,8 @@
-import { sprintf } from "../lib/sprintf-js";
-
-export type SweetPieMap = {
-  safePointName: string;
-  mainSpawnPointName?: string;
-  safePlaceLeaveDoors?: string[];
-  safePlaceEnterDoors?: string[];
-  leaveRoundDoors?: string[];
-}
-
-export type PlayerState = {
-  kills?: number;
-}
-
-export type SweetPieRound = {
-  state: 'running' | 'warmup';
-  players?: Map<number, PlayerState>;
-  map?: SweetPieMap;
-  hallPointName?: string;
-  secondsPassed?: number;
-}
-
-export type PlayerController = {
-  setSpawnPoint(player: number, pointName: string): void;
-  teleport(player: number, pointName: string): void;
-  showMessageBox(actorId: number, dialogId: number, caption: string, text: string, buttons: string[]): void;
-  sendChatMessage(actorId: number, text: string): void;
-  quitGame(actorId: number): void;
-  getName(actorId: number): string;
-}
-
-export const getAvailableRound = (rounds: SweetPieRound[], player: number): SweetPieRound | undefined => {
-  return rounds.find((x) => x.state !== 'running');
-};
-
-export const getPlayerCurrentRound = (rounds: SweetPieRound[], player: number): SweetPieRound | undefined => {
-  return rounds.find((x) => x.players && x.players.has(player));
-};
-
-export const forceJoinRound = (controller: PlayerController, rounds: SweetPieRound[], round: SweetPieRound, player: number): void => {
-  if (round.map) {
-    controller.setSpawnPoint(player, round.map.safePointName);
-    controller.teleport(player, round.map.safePointName);
-    round.players = round.players || new Map;
-    round.players.set(player, {});
-  }
-};
-
-export const forceLeaveRound = (controller: PlayerController, rounds: SweetPieRound[], player: number): void => {
-  const round = getPlayerCurrentRound(rounds, player);
-  if (round && round.hallPointName) {
-    controller.setSpawnPoint(player, round.hallPointName);
-    controller.teleport(player, round.hallPointName);
-  }
-  round?.players?.delete(player);
-}
-
-export const determineDeathMatchWinners = (round: SweetPieRound): number[] => {
-  if (round.players) {
-    let bestKills = -1;
-    for (const [, playerState] of round.players) {
-      if (playerState.kills && playerState.kills > bestKills) {
-        bestKills = playerState.kills;
-      }
-    }
-    if (bestKills !== -1) {
-      let bestPlayers = new Array<number>();
-      for (const [player, playerState] of round.players) {
-        if (playerState.kills === bestKills) {
-          bestPlayers.push(player);
-        }
-      }
-      return bestPlayers;
-    }
-  }
-  return [];
-}
-
-export const sendMessageNeeded = (secondsRemaining: number) => {
-  return secondsRemaining <= 10 || secondsRemaining % 10 === 0;
-};
-
-export interface GameModeListener {
-  onPlayerJoin?: (actorId: number) => void;
-  onPlayerLeave?: (actorId: number) => void;
-  onPlayerDeath?: (targetActorId: number, killerActorId?: number) => void;
-  everySecond?: () => void;
-  onPlayerChatInput?: (actorId: number, inputText: string, neighbors: number[], senderName: string) => void;
-  onPlayerDialogResponse?: (actorId: number, dialogId: number, buttonIndex: number) => void;
-  onPlayerActivateObject?: (casterActorId: number, targetObjectDesc: string, isTeleportDoor: boolean) => 'continue' | 'blockActivation';
-}
+import { sprintf } from "sprintf-js";
+import { GameModeListener } from "./GameModeListener";
+import { PlayerController } from "./PlayerController";
+import { SweetPieMap } from "./SweetPieMap";
+import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly quitGamePortal = '42f3f:SweetPie.esp';
@@ -182,7 +96,11 @@ export class SweetPieGameModeListener implements GameModeListener {
     } else if (dialogId === this.leaveRoundConfirmationDialog[0]) {
       const round = getPlayerCurrentRound(this.rounds, actorId);
       if (!round) {
-        throw new Error(`player ${actorId} clicked leave but not found in any round`);
+        if (this.rounds[0] && this.rounds[0].hallPointName) {
+          this.controller.setSpawnPoint(actorId, this.rounds[0].hallPointName);
+          this.controller.teleport(actorId, this.rounds[0].hallPointName);
+        }
+        return;
       }
       const roundIndex = this.rounds.indexOf(round);
       if (buttonIndex === 0) {
@@ -215,7 +133,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         round.secondsPassed = (round.secondsPassed || 0) + 1;
         if (round.state === 'warmup') {
           const secondsRemaining = this.warmupTimerMaximum - round.secondsPassed;
-          if (secondsRemaining > 0 && sendMessageNeeded(secondsRemaining)) {
+          if (secondsRemaining > 0 && this.sendMessageNeeded(secondsRemaining)) {
             this.sendRoundChatMessage(round, sprintf(this.startingRoundInMessage[0], secondsRemaining));
           }
           if (round.secondsPassed > this.warmupTimerMaximum) {
@@ -232,7 +150,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         }
         else if (round.state === 'running') {
           const secondsRemaining = this.runningTimerMaximum - round.secondsPassed;
-          if (secondsRemaining > 0 && sendMessageNeeded(secondsRemaining)) {
+          if (secondsRemaining > 0 && this.sendMessageNeeded(secondsRemaining)) {
             this.sendRoundChatMessage(round, sprintf(this.remainingFightTimeMessage[0], secondsRemaining));
           }
           if (round.secondsPassed > this.runningTimerMaximum) {
@@ -280,6 +198,11 @@ export class SweetPieGameModeListener implements GameModeListener {
       this.controller.sendChatMessage(player, msg);
     }
   }
+
+  private sendMessageNeeded(secondsRemaining: number) {
+    return secondsRemaining <= 10 || secondsRemaining % 10 === 0;
+  };
+  
 
   private rounds: SweetPieRound[];
 }
