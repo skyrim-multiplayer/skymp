@@ -85,8 +85,9 @@ public:
 
   void RestoreActorValue(espm::ActorValue av, float value);
   void DamageActorValue(espm::ActorValue av, float value);
-  
+
   BaseActorValues GetBaseValues();
+  BaseActorValues GetMaximumValues();
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
@@ -100,7 +101,7 @@ private:
   void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);
 
-  void ModifyActorValue(espm::ActorValue av, float value);
+  void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
 
 protected:
   void BeforeDestroy() override;

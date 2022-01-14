@@ -365,35 +365,54 @@ void MpActor::MpApiDeath(MpActor* killer)
   }
 }
 
-void MpActor::ModifyActorValue(espm::ActorValue av, float value)
+void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
-  if ((av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
-       av == espm::ActorValue::Magicka) == false) {
-    return;
+  auto espmProvider = GetParent();
+  std::vector<espm::Effects::Effect> effects;
+  if (t == "ALCH") {
+    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
+  } else if (t == "INGR") {
+    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
   }
-  BaseActorValues base =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+
+  auto changeForm = GetChangeForm();
+  float regeneration = 0;
+
+  for (const auto& effect : effects) {
+    if (espm::GetData<espm::MGEF>(effect.effectId, espmProvider)
+          .data.primaryAV == espm::ActorValue::Health) {
+      regeneration += effect.magnitude;
+    }
+  }
+  float maxHealt = GetBaseValues().health;
+  float health =
+    CropValue(changeForm.healthPercentage + regeneration / maxHealt);
+
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
+  SetPercentages(health, changeForm.magickaPercentage,
+                 changeForm.staminaPercentage);
+}
+
+void MpActor::ModifyActorValuePercentage(espm::ActorValue av, float value)
+{
+  float percentageDelta = value / GetMaximumValues().GetValue(av);
   MpChangeForm form = GetChangeForm();
   float hp = form.healthPercentage;
   float mp = form.magickaPercentage;
   float sp = form.staminaPercentage;
   switch (av) {
     case espm::ActorValue::Health:
-      hp = form.healthPercentage + value / base.health;
-      // its temporal
-      hp = hp < 0 ? 0 : hp > 1 ? 1 : hp;
+      hp = CropValue(form.healthPercentage + percentageDelta);
       break;
     case espm::ActorValue::Stamina:
-      sp = form.staminaPercentage + value / base.stamina;
-      // its temporal
-      sp = sp < 0 ? 0 : sp > 1 ? 1 : sp;
+      sp = CropValue(form.staminaPercentage + percentageDelta);
       break;
     case espm::ActorValue::Magicka:
-      mp = form.magickaPercentage + value / base.magicka;
-      // its temporal
-      mp = mp < 0 ? 0 : mp > 1 ? 1 : mp;
+      mp = CropValue(form.magickaPercentage + percentageDelta);
       break;
     default:
+      throw std::runtime_error(
+        fmt::format("Unsupported actor value type {:}", av));
       return;
   }
   SetPercentages(hp, mp, sp);
@@ -498,43 +517,20 @@ void MpActor::SetIsDead(bool isDead)
 
 void MpActor::RestoreActorValue(espm::ActorValue av, float value)
 {
-  ModifyActorValue(av, std::abs(value));
+  ModifyActorValuePercentage(av, std::abs(value));
 }
 
 void MpActor::DamageActorValue(espm::ActorValue av, float value)
 {
-  ModifyActorValue(av, -std::abs(value));
-}
-
-void MpActor::EatItem(uint32_t baseId, espm::Type t)
-{
-  auto espmProvider = GetParent();
-  std::vector<espm::Effects::Effect> effects;
-  if (t == "ALCH") {
-    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
-  } else if (t == "INGR") {
-    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
-  }
-
-  auto changeForm = GetChangeForm();
-  float regeneration = 0;
-
-  for (const auto& effect : effects) {
-    if (espm::GetData<espm::MGEF>(effect.effectId, espmProvider)
-          .data.primaryAV == espm::ActorValue::Health) {
-      regeneration += effect.magnitude;
-    }
-  }
-  float maxHealt = GetBaseValues().health;
-  float health =
-    CropValue(changeForm.healthPercentage + regeneration / maxHealt);
-
-  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
-  SetPercentages(health, changeForm.magickaPercentage,
-                 changeForm.staminaPercentage);
+  ModifyActorValuePercentage(av, -std::abs(value));
 }
 
 BaseActorValues MpActor::GetBaseValues()
 {
   return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+}
+
+BaseActorValues MpActor::GetMaximumValues()
+{
+  return GetBaseValues();
 }

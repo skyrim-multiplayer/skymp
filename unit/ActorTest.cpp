@@ -67,7 +67,7 @@ TEST_CASE("Actor's value can be modified", "[Actor]")
   auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
   actor.SetPercentages(.5f, .5f, .5f);
   actor.RestoreActorValue(AV::Health, 100);
-  actor.DamageActorValue(AV::Stamina, 25);
+  actor.DamageActorValue(AV::Stamina, -25);
   actor.DamageActorValue(AV::Magicka, 100);
   MpChangeForm changeForm = actor.GetChangeForm();
 
