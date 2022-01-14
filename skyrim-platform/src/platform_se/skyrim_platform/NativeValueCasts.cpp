@@ -130,14 +130,16 @@ CallNative::AnySafe NativeValueCasts::JsArrayToNativeArray(const JsValue& v)
     }
     case JsValue::Type::Object: {
       std::vector<CallNative::ObjectPtr> out{};
-      out.reserve(length);
       for (int i = 0; i < length; ++i) {
-        if (v.GetProperty(i).GetType() != JsValue::Type::Object) {
-          throw std::runtime_error(
-            "Passed array should contain monotype elements");
+        if (v.GetProperty(i).GetType() == JsValue::Type::Object) {
+          out.push_back(JsObjectToNativeObject(v.GetProperty(i)));
         }
-        out.push_back(JsObjectToNativeObject(v.GetProperty(i)));
       }
+      if (out.size() != length) {
+        throw std::runtime_error(
+          "Passed array should contain monotype elements");
+      }
+      out.reserve(length);
       return out;
     }
     default: {
