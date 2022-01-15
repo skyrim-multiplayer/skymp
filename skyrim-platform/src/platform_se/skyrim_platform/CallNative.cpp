@@ -18,22 +18,10 @@
 #include <skse64/PapyrusActor.h>
 #include <skse64_common/Relocation.h>
 
-#include <RE/BSScript/Array.h>  // test include
 #include <RE/BSTSmartPointer.h> // test include
 #include <RE/ConsoleLog.h>      // test include
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
-
-RE::BSScript::TypeInfo::RawType GetNumberArrayType(
-  const std::vector<double>& v)
-{
-  for (int i = 0; i < v.size(); ++i) {
-    if (floor(v[i]) != v[i]) {
-      return RE::BSScript::TypeInfo::RawType::kFloatArray;
-    }
-  }
-  return RE::BSScript::TypeInfo::RawType::kIntArray;
-}
 
 RE::BSScript::Variable CallNative::AnySafeToVariable(
   const CallNative::AnySafe& v, bool treatNumberAsInt = false)
@@ -124,7 +112,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
         res.SetArray(arrayPtr.get());
         return res;
       },
-      [](const std::vector<double>& v) {
+      [&](const std::vector<double>& v) {
         auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 
         if (!vm) {
@@ -132,8 +120,9 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
         }
 
         RE::BSTSmartPointer<RE::BSScript::Array> arrayPtr;
-        auto arrayType = GetNumberArrayType(v);
-        RE::BSScript::TypeInfo typeInfo(arrayType);
+        RE::BSScript::TypeInfo typeInfo(
+          treatNumberAsInt ? RE::BSScript::TypeInfo::RawType::kIntArray
+                           : RE::BSScript::TypeInfo::RawType::kFloatArray);
 
         if (!vm->CreateArray(typeInfo, v.size(), arrayPtr) || !arrayPtr) {
           throw std::runtime_error(
@@ -141,7 +130,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
         }
 
         for (int i = 0; i < v.size(); ++i) {
-          if (arrayType == RE::BSScript::TypeInfo::RawType::kIntArray) {
+          if (treatNumberAsInt) {
             (*arrayPtr)[i].Pack(static_cast<int>(v[i]));
           } else {
             (*arrayPtr)[i].Pack(static_cast<float>(v[i]));
@@ -598,8 +587,15 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     RE::BSFixedString unusedNameOut;
     RE::BSScript::TypeInfo typeOut;
     f->GetParam(i, unusedNameOut, typeOut);
-
-    topArgs[i] = AnySafeToVariable(args[i], typeOut.IsInt());
+    if (typeOut.IsArray()) {
+      topArgs[i] = AnySafeToVariable(
+        args[i],
+        typeOut.GetRawType() == RE::BSScript::TypeInfo::RawType::kIntArray
+          ? true
+          : false);
+    } else {
+      topArgs[i] = AnySafeToVariable(args[i], typeOut.IsInt());
+    }
   }
 
   if (funcInfo->IsLatent()) {
@@ -609,7 +605,15 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
         RE::BSFixedString unusedNameOut;
         RE::BSScript::TypeInfo typeOut;
         f->GetParam(i, unusedNameOut, typeOut);
-        return AnySafeToVariable(args_.args[i], typeOut.IsInt());
+        if (typeOut.IsArray()) {
+          return AnySafeToVariable(
+            args_.args[i],
+            typeOut.GetRawType() == RE::BSScript::TypeInfo::RawType::kIntArray
+              ? true
+              : false);
+        } else {
+          return AnySafeToVariable(args_.args[i], typeOut.IsInt());
+        }
       },
       (void*)numArgs);
     auto fsClassName = AnySafeToVariable(className).GetString();
