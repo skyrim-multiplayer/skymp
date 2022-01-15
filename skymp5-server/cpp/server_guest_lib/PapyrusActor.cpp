@@ -3,38 +3,22 @@
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 
-namespace {
-std::string ToLowerCase(std::string str)
-{
-  for (auto& ch : str) {
-    ch = std::tolower(ch);
-  }
-  return str;
-}
+#include "CIString.h"
 
-espm::ActorValue ConvertToAV(const char* actorValueName)
+namespace {
+espm::ActorValue ConvertToAV(CIString actorValueName)
 {
-  std::string name = ToLowerCase(actorValueName);
-  if (name == "health") {
+  if (!actorValueName.compare("health")) {
     return espm::ActorValue::Health;
   }
-  if (name == "stamina") {
+  if (!actorValueName.compare("stamina")) {
     return espm::ActorValue::Stamina;
   }
-  if (name == "magicka") {
+  if (!actorValueName.compare("magicka")) {
     return espm::ActorValue::Magicka;
   }
   return espm::ActorValue::None;
 }
-
-#define ACTOR_VALUE_CHANGE(functionName)                                      \
-  espm::ActorValue attributeName =                                            \
-    ConvertToAV(static_cast<const char*>(arguments[0]));                      \
-  float modifire = static_cast<double>(arguments[1]);                         \
-  if (auto actor = GetFormPtr<MpActor>(self)) {                               \
-    actor->functionName(attributeName, modifire);                             \
-  }                                                                           \
-  return VarValue();
 }
 
 VarValue PapyrusActor::IsWeaponDrawn(VarValue self,
@@ -47,12 +31,25 @@ VarValue PapyrusActor::IsWeaponDrawn(VarValue self,
 }
 
 VarValue PapyrusActor::RestoreActorValue(
-  VarValue self, const std::vector<VarValue>& arguments){
-  ACTOR_VALUE_CHANGE(RestoreActorValue)
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  espm::ActorValue attributeName =
+    ConvertToAV(static_cast<const char*>(arguments[0]));
+  float modifire = static_cast<double>(arguments[1]);
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    actor->RestoreActorValue(attributeName, modifire);
+  }
+  return VarValue();
 }
 
 VarValue PapyrusActor::DamageActorValue(VarValue self,
                                         const std::vector<VarValue>& arguments)
 {
-  ACTOR_VALUE_CHANGE(DamageActorValue)
+  espm::ActorValue attributeName =
+    ConvertToAV(static_cast<const char*>(arguments[0]));
+  float modifire = static_cast<double>(arguments[1]);
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    actor->DamageActorValue(attributeName, modifire);
+  }
+  return VarValue();
 }
