@@ -62,3 +62,8 @@ Full list of added events:
 - `modEvent`
 - `positionPlayer`
 - `footstep`
+- `buttonEvent`
+- `mouseMove`
+- `thumbstickEvent`
+- `kinectEvent`
+- `deviceConnect`

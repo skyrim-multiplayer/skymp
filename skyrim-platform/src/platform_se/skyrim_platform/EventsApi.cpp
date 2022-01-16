@@ -522,6 +522,92 @@ void EventsApi::SendMenuClose(const char* menuName)
   });
 }
 
+void EventsApi::SendButtonEvent(uint32_t device, uint32_t code,
+                                std::string& userEventName, float value,
+                                float heldDownSecs, bool isPressed, bool isUp,
+                                bool isDown, bool isHeld, bool isRepeating)
+{
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+    auto obj = JsValue::Object();
+
+    obj.SetProperty("device", JsValue::Double(device));
+    obj.SetProperty("code", JsValue::Double(code));
+    obj.SetProperty("userEventName", JsValue::String(userEventName));
+    obj.SetProperty("value", JsValue::Double(value));
+    obj.SetProperty("heldDuration", JsValue::Double(heldDownSecs));
+    obj.SetProperty("isPressed", JsValue::Bool(isPressed));
+    obj.SetProperty("isUp", JsValue::Bool(isUp));
+    obj.SetProperty("isDown", JsValue::Bool(isDown));
+    obj.SetProperty("isHeld", JsValue::Bool(isHeld));
+    obj.SetProperty("isRepeating", JsValue::Bool(isRepeating));
+
+    SendEvent("buttonEvent", { JsValue::Undefined(), obj });
+  });
+}
+
+void EventsApi::SendMouseMoveEvent(uint32_t device, uint32_t code,
+                                   std::string& userEventName, double inputX,
+                                   double inputY)
+{
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+    auto obj = JsValue::Object();
+
+    obj.SetProperty("device", JsValue::Double(device));
+    obj.SetProperty("code", JsValue::Double(code));
+    obj.SetProperty("userEventName", JsValue::String(userEventName));
+    obj.SetProperty("inputX", JsValue::Double(inputX));
+    obj.SetProperty("inputY", JsValue::Double(inputY));
+
+    SendEvent("mouseMove", { JsValue::Undefined(), obj });
+  });
+}
+
+void EventsApi::SendThumbstickEvent(uint32_t device, uint32_t code,
+                                    std::string& userEventName, float inputX,
+                                    float inputY, bool isLeft, bool isRight)
+{
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+    auto obj = JsValue::Object();
+
+    obj.SetProperty("device", JsValue::Double(device));
+    obj.SetProperty("code", JsValue::Double(code));
+    obj.SetProperty("userEventName", JsValue::String(userEventName));
+    obj.SetProperty("inputX", JsValue::Double(inputX));
+    obj.SetProperty("inputY", JsValue::Double(inputY));
+    obj.SetProperty("isLeft", JsValue::Bool(isLeft));
+    obj.SetProperty("isRight", JsValue::Bool(isRight));
+
+    SendEvent("thumbstickEvent", { JsValue::Undefined(), obj });
+  });
+}
+
+void EventsApi::SendKinectEvent(uint32_t device, uint32_t code,
+                                std::string& userEventName, std::string& heard)
+{
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+    auto obj = JsValue::Object();
+
+    obj.SetProperty("device", JsValue::Double(device));
+    obj.SetProperty("code", JsValue::Double(code));
+    obj.SetProperty("userEventName", JsValue::String(userEventName));
+    obj.SetProperty("heard", JsValue::String(heard));
+
+    SendEvent("kinectEvent", { JsValue::Undefined(), obj });
+  });
+}
+
+void EventsApi::SendDeviceConnectEvent(uint32_t device, bool isConnected)
+{
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+    auto obj = JsValue::Object();
+
+    obj.SetProperty("device", JsValue::Double(device));
+    obj.SetProperty("isConnected", JsValue::Bool(isConnected));
+
+    SendEvent("deviceConnect", { JsValue::Undefined(), obj });
+  });
+}
+
 namespace {
 JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
 {
@@ -611,7 +697,12 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "niNodeUpdate",
                                    "modEvent",
                                    "positionPlayer",
-                                   "footstep" };
+                                   "footstep",
+                                   "buttonEvent",
+                                   "mouseMove",
+                                   "thumbstickEvent",
+                                   "kinectEvent",
+                                   "deviceConnect" };
 
   if (events.count(eventName) == 0) {
     throw InvalidArgumentException("eventName", eventName);

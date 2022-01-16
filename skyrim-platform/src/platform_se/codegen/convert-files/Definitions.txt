@@ -409,6 +409,49 @@ export interface TranslationEvent {
     reference: ObjectReference
 }
 
+export interface ButtonEvent {
+    device: InputDeviceType,
+    code: DxScanCode,
+    userEventName: string,
+    value: number,
+    heldDuration: number,
+    isPressed: boolean,
+    isUp: boolean,
+    isDown: boolean,
+    isHeld: boolean,
+    isRepeating: boolean
+}
+
+export interface MouseMoveEvent {
+    device: InputDeviceType,
+    code: DxScanCode,
+    userEventName: string,
+    inputX: number,
+    inputY: number
+}
+
+export interface ThumbstickEvent {
+    device: InputDeviceType,
+    code: DxScanCode,
+    userEventName: string,
+    inputX: number,
+    inputY: number,
+    isLeft: boolean,
+    isRight: boolean
+}
+
+export interface KinectEvent {
+    device: InputDeviceType,
+    code: DxScanCode,
+    userEventName: string,
+    heard: string
+}
+
+export interface DeviceConnectEvent {
+    device: InputDeviceType,
+    isConnected: boolean
+}
+
 export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
 
@@ -640,6 +683,21 @@ export declare function once(eventName: 'translationAlmostCompleted', callback: 
 export declare function on(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): void;
 export declare function once(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): void;
 
+export declare function on(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): void;
+export declare function once(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): void;
+
+export declare function on(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): void;
+export declare function once(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): void;
+
+export declare function on(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): void;
+export declare function once(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): void;
+
+export declare function on(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): void;
+export declare function once(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): void;
+
+export declare function on(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): void;
+export declare function once(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): void;
+
 
 declare class ConsoleComand {
     longName: string;
@@ -655,13 +713,19 @@ export const enum SlotType {
     Voice = 3
 }
 
-export const enum PlayerPositionEventType
-{
+export const enum PlayerPositionEventType {
     PreCellTransition = 0,
     PreUpdatePackages = 1,
     PostUpdatePackages = 2,
     PostCellTransition = 3,
     CellTransitionFinish = 4
+}
+
+export const enum InputDeviceType {
+    kKeyboard = 0,
+    kMouse = 1,
+    kGamepad = 2,
+    kVirtualKeyboard = 3
 }
 
 export const enum MotionType {

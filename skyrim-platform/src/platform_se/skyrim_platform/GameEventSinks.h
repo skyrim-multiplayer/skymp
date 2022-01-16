@@ -4,6 +4,7 @@
 #include "TESEvents.h"
 #include <RE/BGSFootstepEvent.h>
 #include <RE/BGSFootstepManager.h>
+#include <RE/BSInputDeviceManager.h>
 #include <RE/MenuOpenCloseEvent.h>
 #include <RE/PlayerCharacter.h>
 #include <RE/PositionPlayerEvent.h>
@@ -85,6 +86,7 @@ class GameEventSinks
   , public RE::BSTEventSink<SKSE::ModCallbackEvent>
   , public RE::BSTEventSink<RE::PositionPlayerEvent>
   , public RE::BSTEventSink<RE::BGSFootstepEvent>
+  , public RE::BSTEventSink<RE::InputEvent*>
 
 {
 public:
@@ -272,6 +274,13 @@ public:
 
     footstepEventSource->AddEventSink(
       dynamic_cast<RE::BSTEventSink<RE::BGSFootstepEvent>*>(this));
+
+    auto inputHolder = RE::BSInputDeviceManager::GetSingleton();
+    auto inputEventSource = inputHolder
+      ? static_cast<RE::BSTEventSource<RE::InputEvent*>*>(inputHolder)
+      : throw NullPointerException("inputHolder");
+    inputEventSource->AddEventSink(
+      dynamic_cast<RE::BSTEventSink<RE::InputEvent*>*>(this));
   }
 
 private:
@@ -490,4 +499,8 @@ private:
   RE::BSEventNotifyControl ProcessEvent(
     const RE::BGSFootstepEvent* e,
     RE::BSTEventSource<RE::BGSFootstepEvent>* a_eventSource) override;
+
+  RE::BSEventNotifyControl ProcessEvent(
+    RE::InputEvent* const* e,
+    RE::BSTEventSource<RE::InputEvent*>* a_eventSource) override;
 };

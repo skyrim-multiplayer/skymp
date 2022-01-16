@@ -10,6 +10,13 @@
 #include <RE/EffectSetting.h>
 #include <RE/TESObjectCELL.h>
 
+#include <RE/ButtonEvent.h>
+#include <RE/DeviceConnectEvent.h>
+#include <RE/InputEvent.h>
+#include <RE/KinectEvent.h>
+#include <RE/MouseMoveEvent.h>
+#include <RE/ThumbstickEvent.h>
+
 struct RE::TESActivateEvent
 {
   NiPointer<TESObjectREFR> target;
@@ -1796,6 +1803,77 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
     EventsApi::SendEvent("footstep", { JsValue::Undefined(), obj });
   });
+
+  return RE::BSEventNotifyControl::kContinue;
+}
+
+RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
+  RE::InputEvent* const* event,
+  RE::BSTEventSource<RE::InputEvent*>* eventSource)
+{
+  if (event == nullptr) {
+    return RE::BSEventNotifyControl::kContinue;
+  }
+
+  for (auto eventItem = *event; eventItem; eventItem = eventItem->next) {
+    if (eventItem == nullptr) {
+      return RE::BSEventNotifyControl::kContinue;
+    }
+    switch (eventItem->eventType) {
+      case RE::INPUT_EVENT_TYPE::kButton: {
+        auto buttonEvent = static_cast<RE::ButtonEvent*>(eventItem);
+
+        EventsApi::SendButtonEvent(
+          eventItem->device, buttonEvent->idCode,
+          static_cast<std::string>(buttonEvent->userEvent), buttonEvent->value,
+          buttonEvent->heldDownSecs, buttonEvent->IsPressed(),
+          buttonEvent->IsUp(), buttonEvent->IsDown(), buttonEvent->IsHeld(),
+          buttonEvent->IsRepeating());
+
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kMouseMove: {
+        auto mouseEvent = static_cast<RE::MouseMoveEvent*>(eventItem);
+
+        EventsApi::SendMouseMoveEvent(
+          eventItem->device, mouseEvent->idCode,
+          static_cast<std::string>(mouseEvent->userEvent),
+          static_cast<double>(mouseEvent->mouseInputX),
+          static_cast<double>(mouseEvent->mouseInputY));
+
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kDeviceConnect: {
+        auto deviceConnectEvent =
+          static_cast<RE::DeviceConnectEvent*>(eventItem);
+
+        EventsApi::SendDeviceConnectEvent(eventItem->device,
+                                          deviceConnectEvent->connected);
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kThumbstick: {
+        auto thumbstickEvent = static_cast<RE::ThumbstickEvent*>(eventItem);
+
+        EventsApi::SendThumbstickEvent(
+          eventItem->device, thumbstickEvent->idCode,
+          static_cast<std::string>(thumbstickEvent->userEvent),
+          thumbstickEvent->xValue, thumbstickEvent->yValue,
+          thumbstickEvent->IsLeft(), thumbstickEvent->IsRight());
+
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kKinect: {
+        auto kinectEvent = static_cast<RE::KinectEvent*>(eventItem);
+
+        EventsApi::SendKinectEvent(
+          eventItem->device, kinectEvent->idCode,
+          static_cast<std::string>(kinectEvent->userEvent),
+          static_cast<std::string>(kinectEvent->heard));
+
+        break;
+      }
+    }
+  }
 
   return RE::BSEventNotifyControl::kContinue;
 }

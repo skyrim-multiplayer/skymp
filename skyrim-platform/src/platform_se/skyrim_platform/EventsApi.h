@@ -32,6 +32,19 @@ void IpcSend(const char* systemName, const uint8_t* data, uint32_t length);
 void SendConsoleMsgEvent(const char* msg);
 void SendMenuOpen(const char* menuName);
 void SendMenuClose(const char* menuName);
+void SendButtonEvent(uint32_t device, uint32_t code,
+                     std::string& userEventName, float value,
+                     float heldDownSecs, bool isPressed, bool isUp,
+                     bool isDown, bool isHeld, bool isRepeating);
+void SendMouseMoveEvent(uint32_t device, uint32_t code,
+                        std::string& userEventName, double inputX,
+                        double inputY);
+void SendThumbstickEvent(uint32_t device, uint32_t code,
+                         std::string& userEventName, float inputX,
+                         float inputY, bool isLeft, bool isRight);
+void SendKinectEvent(uint32_t device, uint32_t code,
+                     std::string& userEventName, std::string& heard);
+void SendDeviceConnectEvent(uint32_t device, bool isConnected);
 
 inline void Register(JsValue& exports)
 {
