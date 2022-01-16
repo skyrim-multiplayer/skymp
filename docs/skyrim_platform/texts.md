@@ -6,7 +6,6 @@ Skyrim Platform now supports rendering texts and has methods for manipulating th
 ```typescript
 skyrimPlatform.createText(600, 600, "Hello", [1,1,0,1])  // Non-ASCII character are not yet supported
 ```
-The maximum number of texts is limited (currently 5000).
 
 ## Colors
 
