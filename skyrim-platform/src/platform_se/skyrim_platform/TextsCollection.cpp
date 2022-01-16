@@ -14,8 +14,8 @@ int TextsCollection::CreateText(double xPos, double yPos, std::string str,
                                                                 1.f })
 {
   TextToDraw text{ xPos, yPos, str, color };
-  
-  textCount++; 
+
+  textCount++;
   std::pair<int, TextToDraw> arg = { textCount, text };
 
   texts.insert(arg);
