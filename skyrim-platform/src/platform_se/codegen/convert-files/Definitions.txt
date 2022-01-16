@@ -75,6 +75,7 @@ export declare let browser: Browser;
 
 export interface Win32 {
   loadUrl(url: string): void;
+  exitProcess(): void;
 }
 export declare let win32: Win32;
 

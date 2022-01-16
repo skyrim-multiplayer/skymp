@@ -16,6 +16,12 @@ public:
   VarValue IsWeaponDrawn(VarValue self,
                          const std::vector<VarValue>& arguments);
 
+  VarValue RestoreActorValue(VarValue self,
+                             const std::vector<VarValue>& arguments);
+
+  VarValue DamageActorValue(VarValue self,
+                            const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
@@ -26,6 +32,8 @@ public:
     AddMethod(vm, "UnequipAll", &PapyrusActor::UnequipAll);
     AddMethod(vm, "PlayIdle", &PapyrusActor::PlayIdle);
     AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
+    AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
+    AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

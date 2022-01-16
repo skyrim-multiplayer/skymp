@@ -1,101 +1,19 @@
 import { sprintf } from "sprintf-js";
-import { determineDeathMatchWinners, forceJoinRound, forceLeaveRound, getAvailableRound, getPlayerCurrentRound, PlayerController, SweetPieGameModeListener, SweetPieMap, SweetPieRound } from "./sweetPie";
+import { SweetPieGameModeListener } from "./SweetPieGameModeListener";
+import { SweetPieMap } from "./SweetPieMap";
+import { getPlayerCurrentRound, forceJoinRound, forceLeaveRound, determineDeathMatchWinners } from "./SweetPieRound";
+import { makePlayerController, resetMocks } from "./TestUtils";
 
-const makePlayerController = (): PlayerController => {
-  // TODO: use ES6 Proxy to automate handy methods adding
-  // TODO: fix getName always returning undefined
-  return {
-    teleport: jest.fn(), setSpawnPoint: jest.fn(), showMessageBox: jest.fn(), sendChatMessage: jest.fn(), quitGame: jest.fn(), getName: jest.fn(x => { return `Player${x}`; })
-  };
-};
-
-const resetMocks = (controller: PlayerController) => {
-  for (const key in controller) {
-    (controller as Record<string, unknown>)[key] = jest.fn();
-  }
-}
-
-describe("SweetPie", () => {
-  test("Is able to find available round", () => {
-    const rounds = new Array<SweetPieRound>({ state: 'running' }, { state: 'warmup' });
-    expect(getAvailableRound(rounds, 1)).toEqual(rounds[1]);
-  });
-});
-
-describe("getPlayerCurrentRound", () => {
-  test("No rounds present results in undefined", () => {
-    const rounds = new Array<SweetPieRound>();
-    expect(getPlayerCurrentRound(rounds, 1)).toEqual(undefined);
-  });
-
-  test("If player is not in round then return undefined", () => {
-    const rounds = new Array<SweetPieRound>({ state: 'warmup' });
-    expect(getPlayerCurrentRound(rounds, 1)).toEqual(undefined);
-  });
-
-  test("If player is in round then return the round", () => {
-    const rounds = new Array<SweetPieRound>({ state: 'warmup' }, { state: 'warmup', players: new Map }, { state: 'warmup', players: new Map([[1, {}]]) });
-    expect(getPlayerCurrentRound(rounds, 1)).toEqual(rounds[2]);
-  });
-});
-
-// TODO: Remove from previous round while joining to a new round
-describe("forceJoinRound", () => {
-  test("Forcing round join moves player to the safe place of the map", () => {
-    const rounds = new Array<SweetPieRound>({ state: 'warmup', map: { safePointName: 'safepoint' } });
+describe("SweetPieGameModeListener: Activation default", () => {
+  test("Activators should continue by default", () => {
     const controller = makePlayerController();
-    forceJoinRound(controller, rounds, rounds[0], 1);
-    expect(controller.setSpawnPoint).toBeCalledWith(1, 'safepoint');
-    expect(controller.teleport).toBeCalledWith(1, 'safepoint');
-    expect(rounds[0].players).toBeTruthy();
-    expect(rounds[0].players?.has(1)).toBeTruthy();
-  });
-});
+    const listener = new SweetPieGameModeListener(controller);
 
-describe("forceLeaveRound", () => {
-  test("Leaving non-existing round does nothing", () => {
-    const rounds = new Array<SweetPieRound>();
-    const controller = makePlayerController();
-    forceLeaveRound(controller, rounds, 1);
-    expect(controller.setSpawnPoint).toBeCalledTimes(0);
-    expect(controller.teleport).toBeCalledTimes(0);
-  });
-
-  test("Leaving a round teleports to the hall and removes from player set", () => {
-    const rounds = new Array<SweetPieRound>({ state: 'warmup' }, { state: 'warmup', hallPointName: 'hallpoint', players: new Map([[1, {}]]) });
-    const controller = makePlayerController();
-    expect(getPlayerCurrentRound(rounds, 1)).toEqual(rounds[1]);
-    forceLeaveRound(controller, rounds, 1);
-    expect(controller.setSpawnPoint).toBeCalledWith(1, 'hallpoint')
-    expect(controller.teleport).toBeCalledWith(1, 'hallpoint');
-    expect(getPlayerCurrentRound(rounds, 1)).toEqual(undefined);
-  });
-});
-
-describe("determineDeathMatchWinners", () => {
-  test("Empty round winners are empty array", () => {
-    expect(determineDeathMatchWinners({ state: 'warmup' })).toEqual([]);
-  });
-
-  test("Should be able to determine single winner", () => {
-    const round: SweetPieRound = { state: 'warmup', players: new Map };
-    round.players?.set(1, { kills: 20 });
-    round.players?.set(2, { kills: 11 });
-    expect(determineDeathMatchWinners(round)).toEqual([1]);
-  });
-
-  test("Should be able to determine two winners", () => {
-    const round: SweetPieRound = { state: 'warmup', players: new Map };
-    round.players?.set(1, { kills: 4 });
-    round.players?.set(2, { kills: 4 });
-    expect(determineDeathMatchWinners(round)).toEqual([1, 2]);
-  });
-
-  test("Players can't win with zero kills", () => {
-    const round: SweetPieRound = { state: 'warmup', players: new Map };
-    round.players?.set(1, { kills: 0 });
-    round.players?.set(2, { kills: 0 });
-    expect(determineDeathMatchWinners(round)).toEqual([]);
+    const res = [
+      listener.onPlayerActivateObject(1, "2beef", false),
+      listener.onPlayerActivateObject(1, "1beef", true)
+    ];
+    expect(res).toEqual(['continue', 'continue']);
   });
 });
 
@@ -188,6 +106,12 @@ describe("SweetPieGameModeListener: DeathMatch", () => {
     expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
     expect(getPlayerCurrentRound(listener.getRounds(), 1)).toEqual(undefined);
     expect(listener.getRounds()[0].state).toEqual('warmup');
+
+    // Teleport even if the player isn't in any round
+    resetMocks(controller);
+    listener.onPlayerDialogResponse(1, listener.leaveRoundConfirmationDialog[0], 0);
+    expect(controller.teleport).toBeCalledWith(1, 'hall:spawnPoint');
+    expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
   });
 
   test("Player attempts to hide from fight in interior", () => {
