@@ -15,6 +15,6 @@ public:
   {
     AddMethod(vm, "GetSize", &PapyrusFormList::GetSize);
     AddMethod(vm, "GetAt", &PapyrusFormList::GetAt);
-    AddMethod(vm, "GetAt", &PapyrusFormList::Find);
+    AddMethod(vm, "Find", &PapyrusFormList::Find);
   }
 };
