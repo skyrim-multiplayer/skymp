@@ -19,11 +19,12 @@ int TextsCollection::CreateText(double xPos, double yPos, std::string str,
   }
 
   TextToDraw text{ xPos, yPos, str, color };
+
+  textCount++;
   std::pair<int, TextToDraw> arg = { textCount, text };
 
   texts.insert(arg);
-  textCount++;
-
+  
   return textCount;
 }
 
