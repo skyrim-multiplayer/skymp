@@ -323,7 +323,7 @@ export class FormView implements View<FormModel> {
           }
         );
         if (model.appearance && model.appearance.name)
-          refr.setDisplayName("" + model.appearance.name, true);
+          refr.setDisplayName("", true);
         Actor.from(refr)?.setActorValue("attackDamageMult", 0);
       }
       this.refrId = (refr as ObjectReference).getFormID();
@@ -622,8 +622,8 @@ export class FormView implements View<FormModel> {
           sp.NetImmerse.getNodeWorldPositionZ(refr, headPart, false) + 22
         ])[0];
         const resolution = getScreenResolution();
-        const textXPos = Math.round(headScreenPos[0] * resolution.Width);
-        const textYPos = Math.round((1 - headScreenPos[1]) * resolution.Height);
+        const textXPos = Math.round(headScreenPos[0] * resolution.width);
+        const textYPos = Math.round((1 - headScreenPos[1]) * resolution.height);
 
         if (!this.textNameId) {
           this.textNameId = sp.createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1]);
