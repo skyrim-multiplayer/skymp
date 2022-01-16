@@ -13,16 +13,12 @@ int TextsCollection::CreateText(double xPos, double yPos, std::string str,
                                 std::array<double, 4> color = { 0.f, 0.f, 1.f,
                                                                 1.f })
 {
-  if (texts.size() >= 5000) {
-    throw std::runtime_error(
-      fmt::format("Texts limit reached: {0}", texts.size()));
-  }
-
   TextToDraw text{ xPos, yPos, str, color };
+
+  textCount++;
   std::pair<int, TextToDraw> arg = { textCount, text };
 
   texts.insert(arg);
-  textCount++;
 
   return textCount;
 }
