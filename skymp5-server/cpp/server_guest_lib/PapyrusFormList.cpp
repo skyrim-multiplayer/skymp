@@ -47,8 +47,7 @@ VarValue PapyrusFormList::Find(VarValue self,
       if (arg.rec != nullptr) {
         auto formId = arg.ToGlobalId(arg.rec->GetId());
         auto data = formlist->GetData(dummyCache).formIds;
-        for (int i = 0; i < formlist->GetData(dummyCache).formIds.size();
-             i++) {
+        for (int i = 0; i < data.size(); i++) {
           if (data[i] == formId) {
             return VarValue(i);
           }
