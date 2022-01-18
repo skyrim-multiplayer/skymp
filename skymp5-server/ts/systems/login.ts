@@ -51,7 +51,10 @@ export class Login implements System {
     if (type !== "loginWithSkympIo") return;
 
     const gameData = content["gameData"];
-    if (this.offlineMode === false && gameData && gameData.session) {
+    if (this.offlineMode === true && gameData && gameData.session) {
+      this.log("The server is in offline mode, the client is NOT");
+    }
+    else if (this.offlineMode === false && gameData && gameData.session) {
       this.getUserProfileId(gameData.session).then((res) => {
         console.log("getUserProfileId", res.data);
         if (!res.data || !res.data.user || res.data.user.id === undefined)
