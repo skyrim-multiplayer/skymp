@@ -1,12 +1,6 @@
 import { System, Log, Content, SystemContext } from "./system";
 import Axios from "axios";
-
-const getMyPublicIp = async (): Promise<string> => {
-  const res = await Axios.request({
-    url: "http://ipv4bot.whatismyipaddress.com",
-  });
-  return res.data;
-};
+import { getMyPublicIp } from "../publicIp";
 
 export class Login implements System {
   systemName = "Login";
