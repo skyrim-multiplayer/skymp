@@ -2,13 +2,7 @@ import { System, Log } from "./system";
 import Axios from "axios";
 import { SystemContext } from "./system";
 import { ServerInterface } from "../serverInterface";
-
-const getMyPublicIp = async (): Promise<string> => {
-  const res = await Axios.request({
-    url: "http://ipv4bot.whatismyipaddress.com",
-  });
-  return res.data;
-};
+import { getMyPublicIp } from "../publicIp";
 
 export class MasterClient implements System {
   systemName = "MasterClient";
