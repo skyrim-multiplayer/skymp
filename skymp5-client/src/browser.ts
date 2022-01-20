@@ -5,67 +5,79 @@ import {
   Input,
   printConsole,
   settings,
-  Ui,
   Menu,
   DxScanCode,
   writePlugin,
   getPluginSourceCode,
+  MenuOpenEvent,
+  MenuCloseEvent,
 } from "skyrimPlatform";
 import { RemoteAuthGameData } from "./authModel";
-import { escapeJs } from "./utils";
 
 const pluginAuthDataName = `auth-data-no-load`;
 
-let browserVisibleState = false;
-let browserFocusedState = false;
+type BindingKey = DxScanCode[];
+type BindingValue = () => void;
+
+const badMenus: Menu[] = [
+  Menu.Barter,
+  Menu.Book,
+  Menu.Container,
+  Menu.Crafting,
+  Menu.Gift,
+  Menu.Inventory,
+  Menu.Journal,
+  Menu.Lockpicking,
+  Menu.Loading,
+  Menu.Map,
+  Menu.RaceSex,
+  Menu.Stats,
+  Menu.Tween,
+  Menu.Console,
+  Menu.Main,
+];
+
+const IsBadMenu = (menu: string) => badMenus.includes(menu as Menu);
 
 export const main = (): void => {
-  const badMenus: Menu[] = [
-    Menu.Barter,
-    Menu.Book,
-    Menu.Container,
-    Menu.Crafting,
-    Menu.Gift,
-    Menu.Inventory,
-    Menu.Journal,
-    Menu.Lockpicking,
-    Menu.Loading,
-    Menu.Map,
-    Menu.RaceSex,
-    Menu.Stats,
-    Menu.Tween,
-    Menu.Console,
-    Menu.Main
-  ];
+  browser.setVisible(false);
+  once("update", () => browser.setVisible(true));
 
-  setBrowserVisible(false);
-  once('update', () => setBrowserVisible(true));
+  const openedMenus: string[] = [];
 
-  let badMenuOpen = true;
+  const badMenuOpen = () => !!openedMenus.length;
 
-  let lastBadMenuCheck = 0;
-  on('update', () => {
-    if (Date.now() - lastBadMenuCheck > 200) {
-      lastBadMenuCheck = Date.now();
-
-      badMenuOpen = false;
-      for (let i = 0; i < badMenus.length; ++i) {
-        if (Ui.isMenuOpen(badMenus[i])) {
-          badMenuOpen = true;
-          break;
-        }
-      }
-      browser.setVisible(browserVisibleState && !badMenuOpen);
+  on("menuOpen", (e: MenuOpenEvent) => {
+    if (IsBadMenu(e.name)) {
+      browser.setVisible(false);
+      openedMenus.push(e.name);
+    } else if (e.name === Menu.HUD) {
+      browser.setVisible(true);
     }
   });
 
-  const binding = new Map<DxScanCode[], () => void>();
-  binding.set([DxScanCode.F2], () => setBrowserVisible(!browserVisibleState));
-  binding.set([DxScanCode.F6], () => setBrowserFocused(!browserFocusedState));
-  binding.set([DxScanCode.Escape], () => (browserFocusedState ? setBrowserFocused(false) : undefined));
+  on("menuClose", (e: MenuCloseEvent) => {
+    const i = openedMenus.indexOf(e.name);
+    if (i !== -1) {
+      openedMenus.splice(i, 1);
+
+      if (openedMenus.length === 0) browser.setVisible(true);
+    }
+
+    if (e.name === Menu.HUD) browser.setVisible(false);
+  });
+
+  const binding = new Map<BindingKey, BindingValue>([
+    [[DxScanCode.F2], () => browser.setVisible(!browser.isVisible())],
+    [[DxScanCode.F6], () => browser.setFocused(!browser.isFocused())],
+    [
+      [DxScanCode.Escape],
+      () => (browser.isFocused() ? browser.setFocused(false) : undefined),
+    ],
+  ]);
 
   let lastNumKeys = 0;
-  on('update', () => {
+  on("update", () => {
     const numKeys = Input.getNumKeysPressed();
 
     if (lastNumKeys === numKeys) return;
@@ -73,7 +85,7 @@ export const main = (): void => {
     lastNumKeys = numKeys;
 
     binding.forEach((fn, keyCodes) => {
-      if (keyCodes.every(key => Input.isKeyPressed(key))) fn();
+      if (keyCodes.every((key) => Input.isKeyPressed(key))) fn();
     });
   });
 
@@ -84,21 +96,11 @@ export const main = (): void => {
 
   printConsole({ cfg });
 
-  const uiPort = cfg.port === 7777 ? 3000 : cfg.port as number + 1;
+  const uiPort = cfg.port === 7777 ? 3000 : (cfg.port as number) + 1;
 
   const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
   printConsole(`loading url ${url}`);
   browser.loadUrl(url);
-};
-
-export const setBrowserVisible = (state: boolean) => {
-  browserVisibleState = state;
-  browser.setVisible(state);
-};
-
-export const setBrowserFocused = (state: boolean) => {
-  browserFocusedState = state;
-  browser.setFocused(state);
 };
 
 export const getAuthData = (): RemoteAuthGameData | null => {
@@ -109,12 +111,15 @@ export const getAuthData = (): RemoteAuthGameData | null => {
     }
   } catch (e) {
     printConsole(e);
-    return null
+    return null;
   }
   return null;
 };
 
 export const setAuthData = (data: RemoteAuthGameData | null): void => {
   printConsole(data);
-  writePlugin(pluginAuthDataName, "//" + (data ? JSON.stringify(data) : "null"));
+  writePlugin(
+    pluginAuthDataName,
+    "//" + (data ? JSON.stringify(data) : "null")
+  );
 };

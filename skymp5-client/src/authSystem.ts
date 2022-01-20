@@ -136,7 +136,7 @@ const loadLobby = (location: Transform): void => {
     ${registerWidgetJs}
     window.skyrimPlatform.widgets.set([window.loginWidget]);
     `);
-    browser.setBrowserVisible(true);
+    sp.browser.setVisible(true);
   });
   // todo: for now, the cursor disappears after a few seconds after the browser receives focus. Need to press F6 twice
   // sp.once("loadGame", () => browser.setBrowserFocused(true));
