@@ -19,7 +19,7 @@ void OnConsoleVPrintEnter(GumInvocationContext* ic)
 void InstallConsoleVPrintHook()
 {
   auto hook = new Frida::Hook(OnConsoleVPrintEnter, nullptr);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(51110) };
+  REL::Relocation<std::uintptr_t> target{ REL::ID(50180) }; // VR ??
   Frida::HookHandler::GetSingleton()->Install(Frida::HookID::CONSOLE_VPRINT,
                                               target.address(), hook);
 }
@@ -93,7 +93,7 @@ void OnSendEventLeave(GumInvocationContext* ic)
 void InstallSendEventHook()
 {
   auto hook = new Frida::Hook(OnSendEventEnter, OnSendEventLeave);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(104800) };
+  REL::Relocation<std::uintptr_t> target{ REL::ID(98077) }; // VR
   Frida::HookHandler::GetSingleton()->Install(Frida::HookID::SEND_EVENT,
                                               target.address(), hook);
 }
@@ -129,7 +129,7 @@ void OnDrawSheatheWeaponPcEnter(GumInvocationContext* ic)
 void InstallDrawSheatheWeaponPcHook()
 {
   auto hook = new Frida::Hook(OnDrawSheatheWeaponPcEnter, nullptr);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(41235) };
+  REL::Relocation<std::uintptr_t> target{ REL::ID(40232) }; // VR
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::DRAW_SHEATHE_WEAPON_PC, target.address(), hook);
 }
@@ -156,7 +156,7 @@ void OnDrawSheatheWeaponActorEnter(GumInvocationContext* ic)
 void InstallDrawSheatheWeaponActorHook()
 {
   auto hook = new Frida::Hook(OnDrawSheatheWeaponActorEnter, nullptr);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(37279) };
+  REL::Relocation<std::uintptr_t> target{ REL::ID(36289) }; // VR
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::DRAW_SHEATHE_WEAPON_ACTOR, target.address(), hook);
 }
@@ -198,7 +198,7 @@ void InstallSendAnimationEventHook()
 {
   auto hook =
     new Frida::Hook(OnSendAnimationEventEnter, OnSendAnimationEventLeave);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(38048) };
+  REL::Relocation<std::uintptr_t> target{ REL::ID(37020) }; // VR
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::HOOK_SEND_ANIMATION_EVENT, target.address(), hook);
 }
@@ -221,7 +221,7 @@ void OnQueueNinodeUpdateEnter(GumInvocationContext* ic)
 void InstallQueueNinodeUpdateHook()
 {
   auto hook = new Frida::Hook(OnQueueNinodeUpdateEnter, nullptr);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(40255) };
+  REL::Relocation<std::uintptr_t> target{ REL::ID(39181) }; // VR
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::QUEUE_NINODE_UPDATE, target.address(), hook);
 }
@@ -244,7 +244,7 @@ void OnApplyMasksToRenderTargetsEnter(GumInvocationContext* ic)
 void InstallApplyMasksToRenderTargetsHook()
 {
   auto hook = new Frida::Hook(OnApplyMasksToRenderTargetsEnter, nullptr);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(27040) };
+  REL::Relocation<std::uintptr_t> target{ REL::ID(26454) }; // VR
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::APPLY_MASKS_TO_RENDER_TARGET, target.address(), hook);
 }
@@ -284,14 +284,14 @@ void OnRenderCursorMenuEnter(GumInvocationContext* ic)
 void InstallRenderCursorMenuHook()
 {
   auto hook = new Frida::Hook(OnRenderCursorMenuEnter, nullptr);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(33632) };
+  REL::Relocation<std::uintptr_t> target{ REL::ID(32867) }; // VR
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::RENDER_CURSOR_MENU, target.address(), hook);
 }
 
 void Frida::InstallHooks()
 {
-  InstallConsoleVPrintHook();
+  /* InstallConsoleVPrintHook(); */
   InstallSendEventHook();
   InstallDrawSheatheWeaponPcHook();
   InstallDrawSheatheWeaponActorHook();

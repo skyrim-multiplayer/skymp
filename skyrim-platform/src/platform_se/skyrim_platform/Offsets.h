@@ -2,12 +2,14 @@
 
 namespace Offsets {
 namespace BSRenderManager {
-inline constexpr REL::ID Singleton(static_cast<std::uint64_t>(411393));
+// inline constexpr REL::ID Singleton(static_cast<std::uint64_t>(411393));
+inline constexpr REL::Offset Singleton(0x03181700); // VR 1_4_15 143181700
 }
 
 inline RE::ObjectRefHandle GetInvalidRefHandle()
 {
-  REL::Relocation<RE::ObjectRefHandle*> handle{ REL::ID(400312) };
+  REL::Relocation<RE::ObjectRefHandle*> handle{ REL::Offset(
+    0x01F8319C) }; // VR 1_4_15 141F8319C
   return *handle;
 }
 
@@ -18,7 +20,7 @@ inline RE::ObjectRefHandle GetInvalidRefHandle()
 inline float Unknown(void* unk1, void* unk2, RE::TESObjectREFR* obj)
 {
   using func_t = decltype(&Unknown);
-  REL::Relocation<func_t> func{ REL::ID(56151) };
+  REL::Relocation<func_t> func{ REL::ID(55622) }; // VR
   return func(unk1, unk2, obj);
 }
 
@@ -134,7 +136,8 @@ class MenuScreenData
 public:
   static MenuScreenData* GetSingleton()
   {
-    REL::Relocation<MenuScreenData**> singleton{ REL::ID(403551) };
+    REL::Relocation<MenuScreenData**> singleton{ REL::Offset(
+      0x02FEBC40) }; // VR 1_4_15 142FEBC40
     return *singleton;
   }
 
