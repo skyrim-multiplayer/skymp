@@ -72,7 +72,7 @@ export const main = (): void => {
     [[DxScanCode.F6], () => browser.setFocused(!browser.isFocused())],
     [
       [DxScanCode.Escape],
-      () => (browser.isFocused() ? browser.setFocused(false) : undefined),
+      () => browser.isFocused() && browser.setFocused(false),
     ],
   ]);
 
