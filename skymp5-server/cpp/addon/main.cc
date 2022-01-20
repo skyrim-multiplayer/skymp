@@ -1563,6 +1563,20 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       return JsValue::Undefined();
     }));
 
+  mp.SetProperty(
+    "sendCustomPacket",
+    JsValue::Function([this, update](const JsFunctionArguments& args) {
+      try {
+        auto formId = ExtractFormId(args[1]);
+        std::string packet = ExtractNewValueStr(args[2]);
+        auto userId = partOne->GetUserByActor(formId);
+        partOne->SendCustomPacket(userId, packet);
+      } catch (std::exception& e) {
+        throw Napi::Error::New(info.Env(), (std::string)e.what());
+      }
+      return JsValue::Undefined();
+    }));
+
   JsValue::GlobalObject().SetProperty("mp", mp);
 
   JsValue console = JsValue::Object();
