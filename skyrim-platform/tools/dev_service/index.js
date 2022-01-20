@@ -178,7 +178,9 @@ const watchCallback = (_eventType, fileName) => {
         fs.removeSync(path.join(distDir, "Data/Platform/plugin-example/dist"));
 
         if (!process.env.DEV_SERVICE_NO_GAME) {
-          fs.copySync(distDir, config.SkyrimSEFolder);
+          if (config.SkyrimSEFolder !== "OFF" && config.SkyrimSEFolder !== "") {
+            fs.copySync(distDir, config.SkyrimSEFolder);
+          }
         }
 
         // No need to release pdb to the public
@@ -195,8 +197,13 @@ const watchCallback = (_eventType, fileName) => {
       );
 
       if (!process.env.DEV_SERVICE_NO_GAME) {
-        console.log(`Starting ${config.SkyrimSEFolder}`);
-        game.launch(config.SkyrimSEFolder).catch((e) => console.error(e));
+        if (config.SkyrimSEFolder === "OFF" || config.SkyrimSEFolder === "") {
+          console.log(`It seems that you didn't specify SKYRIM_DIR CMake option. The game will not be restarted.`);
+        }
+        else {
+          console.log(`Starting ${config.SkyrimSEFolder}`);
+          game.launch(config.SkyrimSEFolder).catch((e) => console.error(e));
+        }
       }
     }
   }

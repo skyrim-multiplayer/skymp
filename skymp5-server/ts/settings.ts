@@ -5,7 +5,7 @@ export class Settings {
   ip: string | null = null;
   port = 7777;
   maxPlayers = 100;
-  master: string | null = null;
+  master: string = "https://skymp.io";
   name = 'Yet Another Server';
   gamemodePath = '...';
   loadOrder = new Array<string>();
@@ -51,7 +51,7 @@ export class Settings {
 
     res.port = +args['port'] || res.port;
     res.maxPlayers = +args['maxPlayers'] || res.maxPlayers;
-    res.master = args['master'];
+    res.master = args['master'] || res.master;
     res.name = args['name'] || res.name;
     res.ip = args['ip'] || res.ip;
     res.offlineMode = args['offlineMode'] || res.offlineMode;

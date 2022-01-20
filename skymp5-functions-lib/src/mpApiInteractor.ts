@@ -1,13 +1,15 @@
+import { GameModeListener } from "./logic/GameModeListener";
+import { PlayerController } from "./logic/PlayerController";
 import { ChatProperty } from "./props/chatProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
-import { GameModeListener, PlayerController } from "./sweetPie";
 import { Ctx } from "./types/ctx";
 import { LocationalData, Mp } from "./types/mp";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
+declare const ctx: Ctx;
 
 const isTeleportDoor = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -156,7 +158,7 @@ export class MpApiInteractor {
         ChatProperty.sendChatMessage(actorId, text);
       },
       quitGame(actorId: number): void {
-        EvalProperty.eval(actorId, (ctx: Ctx) => {
+        EvalProperty.eval(actorId, () => {
           ctx.sp.Game.quitToMainMenu();
           // TODO: close game
         });

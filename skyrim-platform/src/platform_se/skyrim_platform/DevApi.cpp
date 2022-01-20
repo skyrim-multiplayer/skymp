@@ -108,7 +108,7 @@ JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
 
 JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
 {
-  return "2.3.0";
+  return "2.5.0";
 }
 
 JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
