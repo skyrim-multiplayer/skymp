@@ -1,6 +1,7 @@
 typedef void (*IpcMessageCallback)(const uint8_t* data, uint32_t length,
                                    void* state);
 
+typedef bool (*SKSEPlugin_Query_Impl)(void*, void*);
 typedef bool (*SKSEPlugin_Load_Impl)(void*);
 typedef uint32_t (*SkyrimPlatform_IpcSubscribe_Impl)(const char*,
                                                      IpcMessageCallback,
@@ -17,6 +18,8 @@ public:
     static PlatformImplInterface instance;
     return instance;
   }
+
+  bool Query(void* skse, void* pluginInfo) { return query(skse, pluginInfo); }
 
   bool Load(void* skse) { return load(skse); }
 
@@ -47,6 +50,13 @@ private:
       throw std::runtime_error(
         "Unable to load SkyrimPlatformImpl.dll: Error " +
         std::to_string(GetLastError()));
+    }
+
+    query = reinterpret_cast<SKSEPlugin_Query_Impl>(
+      GetProcAddress(skyrimPlatformImpl, "SKSEPlugin_Query_Impl"));
+    if (!query) {
+      throw std::runtime_error("Unable to find SKSEPlugin_Query_Impl: Error " +
+                               std::to_string(GetLastError()));
     }
 
     load = reinterpret_cast<SKSEPlugin_Load_Impl>(
@@ -82,6 +92,7 @@ private:
     }
   }
 
+  SKSEPlugin_Query_Impl query = nullptr;
   SKSEPlugin_Load_Impl load = nullptr;
   SkyrimPlatform_IpcSubscribe_Impl ipcSubscribe = nullptr;
   SkyrimPlatform_IpcSend_Impl ipcSend = nullptr;
@@ -90,37 +101,39 @@ private:
 
 extern "C" {
 
-DLLEXPORT constinit auto SKSEPlugin_Version = []() {
-  PluginVersionData v;
-  v.pluginVersion = Version::ASINT;
-  SetCharBuffer("SkyrimPlatform"sv, v.pluginName);
-  SetCharBuffer("SkyMP Team"sv, v.author);
-  v.addressLibrary = true;
-
-  return v;
-}();
-
-DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe(const char* systemName,
-                                               IpcMessageCallback callback,
-                                               void* state)
+__declspec(dllexport) uint32_t
+  SkyrimPlatform_IpcSubscribe(const char* systemName,
+                              IpcMessageCallback callback, void* state)
 {
   return PlatformImplInterface::GetSingleton().IpcSubscribe(systemName,
                                                             callback, state);
 }
 
-DLLEXPORT void SkyrimPlatform_IpcUnsubscribe(uint32_t subscriptionId)
+__declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe(
+  uint32_t subscriptionId)
 {
   return PlatformImplInterface::GetSingleton().IpcUnsubscribe(subscriptionId);
 }
 
-DLLEXPORT void SkyrimPlatform_IpcSend(const char* systemName,
-                                      const uint8_t* data, uint32_t length)
+__declspec(dllexport) void SkyrimPlatform_IpcSend(const char* systemName,
+                                                  const uint8_t* data,
+                                                  uint32_t length)
 {
   return PlatformImplInterface::GetSingleton().IpcSend(systemName, data,
                                                        length);
 }
 
-DLLEXPORT bool SKSEPlugin_Load(void* skse)
+__declspec(dllexport) bool SKSEPlugin_Query(void* skse, void* pluginInfo)
+{
+  try {
+    return PlatformImplInterface::GetSingleton().Query(skse, pluginInfo);
+  } catch (std::exception& e) {
+    MessageBoxA(0, e.what(), "Fatal", MB_ICONERROR);
+    return false;
+  }
+}
+
+__declspec(dllexport) bool SKSEPlugin_Load(void* skse)
 {
   try {
     return PlatformImplInterface::GetSingleton().Load(skse);

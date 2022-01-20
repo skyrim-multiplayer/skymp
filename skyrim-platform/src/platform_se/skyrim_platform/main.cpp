@@ -90,10 +90,25 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
   return EventsApi::IpcSend(systemName, data, length);
 }
 
-DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
+DLLEXPORT bool SKSEAPI SKSEPlugin_Query_Impl(const SKSE::QueryInterface* skse,
+                                             SKSE::PluginInfo* info)
 {
   InitLog();
 
+  info->infoVersion = SKSE::PluginInfo::kVersion;
+  info->name = "Skyrim Platform VR";
+  info->version = Version::MAJOR;
+
+  if (skse->IsEditor()) {
+    logger::critical("loaded in editor, marking as incompatible");
+    return false;
+  }
+
+  return true;
+}
+
+DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
+{
   logger::info("Loading plugin.");
 
   SKSE::Init(skse);
