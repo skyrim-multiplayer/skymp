@@ -46,7 +46,13 @@ export class MasterClient implements System {
       try {
         await Axios.post(this.endpoint, { name, maxPlayers, online });
       } catch (e) {
-        console.error(`${e.response.status} - ${e.response.data}`);
+        const hasHttpStatus = e.response !== undefined;
+        if (hasHttpStatus) {
+          throw new Error(`${e.response.status} - ${e.response.data}`);
+        }
+        else {
+          throw e;
+        }
       }
     }
   }
