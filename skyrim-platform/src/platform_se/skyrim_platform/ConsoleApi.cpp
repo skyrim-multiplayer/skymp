@@ -5,8 +5,6 @@
 #include "SkyrimPlatform.h"
 #include "WindowsConsolePrinter.h"
 
-using Script = RE::SCRIPT_FUNCTION;
-
 namespace {
 // TODO: Add printers switching
 static std::shared_ptr<IConsolePrinter> g_printer(new InGameConsolePrinter);
@@ -18,10 +16,10 @@ struct ConsoleComand
   std::string longName;
   std::string shortName;
   uint16_t numArgs = 0;
-  Script::Execute_t* execute;
+  RE::SCRIPT_FUNCTION::Execute_t* execute;
   JsValue jsExecute;
-  Script* myIter;
-  Script myOriginalData;
+  RE::SCRIPT_FUNCTION* myIter;
+  RE::SCRIPT_FUNCTION myOriginalData;
 };
 static std::map<std::string, ConsoleComand> replacedConsoleCmd;
 static bool printConsolePrefixesEnabled = true;
@@ -62,7 +60,7 @@ const char* ConsoleApi::GetExceptionPrefix()
 }
 
 namespace {
-ConsoleComand FillCmdInfo(Script* cmd)
+ConsoleComand FillCmdInfo(RE::SCRIPT_FUNCTION* cmd)
 {
   ConsoleComand cmdInfo;
 
@@ -88,7 +86,7 @@ void CreateLongNameProperty(JsValue& obj, ConsoleComand* replaced)
     [=](const JsFunctionArguments& args) {
       replaced->longName = args[1].ToString();
 
-      Script cmd = *replaced->myIter;
+      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
       cmd.functionName = replaced->longName.c_str();
 
       REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
@@ -106,7 +104,7 @@ void CreateShortNameProperty(JsValue& obj, ConsoleComand* replaced)
     [=](const JsFunctionArguments& args) {
       replaced->shortName = args[1].ToString();
 
-      Script cmd = *replaced->myIter;
+      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
       cmd.shortName = replaced->shortName.c_str();
 
       REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
@@ -124,7 +122,7 @@ void CreateNumArgsProperty(JsValue& obj, ConsoleComand* replaced)
     [=](const JsFunctionArguments& args) {
       replaced->numArgs = (double)args[1];
 
-      Script cmd = *replaced->myIter;
+      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
       cmd.numParams = replaced->numArgs;
 
       REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
@@ -221,7 +219,7 @@ JsValue GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
 }
 
 bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
-                           Script::ScriptData* scriptData,
+                           RE::SCRIPT_FUNCTION::ScriptData* scriptData,
                            RE::TESObjectREFR* thisObj,
                            RE::TESObjectREFR* containingObj,
                            RE::Script* scriptObj, RE::ScriptLocals* locals,
@@ -289,9 +287,10 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
 
 JsValue FindComand(const std::string& comandName)
 {
-  auto commands = Script::GetFirstConsoleCommand();
-  for (std::uint16_t i = 0; i < Script::Commands::kConsoleCommandsEnd; ++i) {
-    Script* _iter = &commands[i];
+  auto commands = RE::SCRIPT_FUNCTION::GetFirstConsoleCommand();
+  for (std::uint16_t i = 0;
+       i < RE::SCRIPT_FUNCTION::Commands::kConsoleCommandsEnd; ++i) {
+    RE::SCRIPT_FUNCTION* _iter = &commands[i];
 
     if (IsNameEqual(_iter->functionName, comandName) ||
         IsNameEqual(_iter->shortName, comandName)) {
@@ -305,7 +304,7 @@ JsValue FindComand(const std::string& comandName)
       CreateNumArgsProperty(obj, &replaced);
       CreateExecuteProperty(obj, &replaced);
 
-      Script cmd = *_iter;
+      RE::SCRIPT_FUNCTION cmd = *_iter;
       cmd.executeFunction = ConsoleComand_Execute;
       REL::safe_write((uintptr_t)_iter, &cmd, sizeof(cmd));
       return obj;
