@@ -28,7 +28,24 @@ set(skymp5_client_settings_txt "{
   }
 }
 ")
-file(WRITE ${PROJECT_BINARY_DIR}/skymp5-client-settings.txt.tmp "${skymp5_client_settings_txt}")
+
+set(skymp5_client_settings_txt_sweetpie "{
+  \"server-ip\": \"127.0.0.1\",
+  \"server-port\": 7777,
+  \"lobbyLocation\": {
+    \"pos\": [133710, -61252, 14605],
+    \"rot\": [0, 0, 0],
+    \"worldOrCell\": 60
+  }
+}
+")
+
+if(SWEETPIE)
+  file(WRITE ${PROJECT_BINARY_DIR}/skymp5-client-settings.txt.tmp "${skymp5_client_settings_txt_sweetpie}")
+else()
+  file(WRITE ${PROJECT_BINARY_DIR}/skymp5-client-settings.txt.tmp "${skymp5_client_settings_txt}")
+endif()
+
 add_custom_command(
   TARGET skymp5-client POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/skymp5-client-settings.txt.tmp ${CMAKE_BINARY_DIR}/dist/client/Data/Platform/Plugins/skymp5-client-settings.txt
