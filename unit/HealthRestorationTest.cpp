@@ -14,7 +14,7 @@ TEST_CASE("Potions restore health", "[Restoration]")
   p.SetUserActor(0, 0xff000000);
 
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  auto past = std::chrono::steady_clock::now() - 1s;
+  auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastAttributesPercentagesUpdate(past);
   ac.AddItem(0x3EAE3, 1);
   // 0x3EAE3 restores 100 hp
