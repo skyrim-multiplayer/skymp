@@ -7,8 +7,8 @@ See [MakeSpriteFont](https://github.com/microsoft/DirectXTK/wiki/MakeSpriteFont)
 
 ## Example
 ```typescript
-// 0,0 is top left. Non-ASCII character are not yet supported.
-skyrimPlatform.createText(0, 0, "Hello", [1,1,0,1]);
+skyrimPlatform.createText(0, 0, "Hello", [1,1,0,1]); // 0,0 is top left. Non-ASCII character are not yet supported.
+skyrimPlatform.browser.setVisible(true); // Texts API takes visibility flag from the browser
 ```
 
 ## Complex
