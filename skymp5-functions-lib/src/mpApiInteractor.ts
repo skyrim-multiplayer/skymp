@@ -169,8 +169,8 @@ export class MpApiInteractor {
       addItem(actorId: number, itemId: number, count: number): void {
         mp.callPapyrusFunction(
           'method', 'ObjectReference', 'AddItem',
-          {type: 'form', desc: mp.getDescFromId(actorId)},
-          [{type: 'espm', desc: mp.getDescFromId(itemId)}, count, /*silent*/false]
+          { type: 'form', desc: mp.getDescFromId(actorId) },
+          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/false]
         );
       },
     }
