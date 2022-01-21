@@ -307,3 +307,8 @@ const main = async () => {
 };
 
 main();
+
+// This is needed at least to handle axios errors in masterClient
+process.on("unhandledRejection", (...args) => {
+  console.error(...args);
+});
