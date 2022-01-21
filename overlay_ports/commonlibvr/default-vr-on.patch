@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ca69aec3..419ab738 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ cmake_minimum_required(VERSION 3.19)
+ 
+ option(SKSE_SUPPORT_XBYAK "Enables trampoline support for Xbyak." OFF)
+-option(BUILD_SKYRIMVR "Build for Skyrim VR" OFF)
++option(BUILD_SKYRIMVR "Build for Skyrim VR" ON)
+ 
+ if (NOT BUILD_SKYRIMVR)
+ 	project(

@@ -31,10 +31,10 @@ function(link_vcpkg_dependencies)
       target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
       target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
 
-      find_package(CommonLibSSE REQUIRED)
+      find_package(CommonLibVR REQUIRED)
       find_package(Boost MODULE REQUIRED)
 
-      target_link_libraries(${target}	PRIVATE	Boost::headers CommonLibSSE::CommonLibSSE)
+      target_link_libraries(${target}	PRIVATE	Boost::headers CommonLibVR::CommonLibVR)
 
       find_package(directxtk CONFIG REQUIRED)
       find_package(directxmath CONFIG REQUIRED)
