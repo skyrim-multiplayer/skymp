@@ -307,7 +307,3 @@ const main = async () => {
 };
 
 main();
-
-/*process.on("unhandledRejection", (...args) => {
-  //console.error(...args);
-});*/
