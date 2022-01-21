@@ -20,8 +20,6 @@ import * as libkey from "./libkey";
 
 import * as manifestGen from "./manifestGen";
 
-console.log(`Current process ID is ${pid}`);
-
 const {
   master,
   port,
@@ -141,6 +139,7 @@ const main = async () => {
   const ctx = { svr: new NativeGameServer(server), gm: new EventEmitter() };
 
   setupStreams(server);
+  console.log(`Current process ID is ${pid}`);
 
   (async () => {
     while (1) {
