@@ -1,7 +1,7 @@
 import { sprintf } from "../lib/sprintf-js";
 import { SweetPieGameModeListener } from "./SweetPieGameModeListener";
 import { SweetPieMap } from "./SweetPieMap";
-import { getPlayerCurrentRound, forceJoinRound, forceLeaveRound, determineDeathMatchWinners } from "./SweetPieRound";
+import { getPlayerCurrentRound, forceJoinRound, forceLeaveRound, determineDeathMatchWinners, setTeam } from "./SweetPieRound";
 import { makePlayerController, resetMocks } from "./TestUtils";
 
 describe("SweetPieGameModeListener: Activation default", () => {
@@ -355,11 +355,43 @@ describe("SweetPieGameModeListener: OnDeath", () => {
     expect(controller.sendChatMessage).toBeCalledWith(1, msg);
     expect(controller.sendChatMessage).toBeCalledWith(2, msg);
 
-    // Death reward is 1 septim
+    // Kill reward is 1 septim
     const gold001 = 0x0000000f;
     const goldCount = 1;
     expect(controller.addItem).toBeCalledWith(2, gold001, goldCount);
 
     expect(determineDeathMatchWinners(listener.getRounds()[0])).toEqual([2]);
+  });
+
+  it("Gives score to the team of the killer", () => {
+    const controller = makePlayerController();
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
+    const listener = new SweetPieGameModeListener(controller, maps);
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 2);
+    setTeam(controller, listener.getRounds(), 1, "Red");
+    setTeam(controller, listener.getRounds(), 2, "Blue");
+    resetMocks(controller);
+
+    listener.getRounds()[0].state = 'warmup';
+    listener.onPlayerDeath(2, 1);
+
+    expect(controller.sendChatMessage).not.toBeCalled();
+
+    listener.getRounds()[0].state = 'running';
+    listener.onPlayerDeath(2, 1);
+
+    // %s was slain by %s. Red team now has %d points (Blue team has %d)
+    const redScoreExpected = 1;
+    const blueScoreExpected = 0;
+    const msg = sprintf(listener.deathMessageTdm[0], controller.getName(2), controller.getName(1), redScoreExpected, blueScoreExpected);
+    expect(controller.sendChatMessage).toBeCalledTimes(2);
+    expect(controller.sendChatMessage).toBeCalledWith(1, msg);
+    expect(controller.sendChatMessage).toBeCalledWith(2, msg);
+
+    // Kill reward is 1 septim
+    const gold001 = 0x0000000f;
+    const goldCount = 1;
+    expect(controller.addItem).toBeCalledWith(1, gold001, goldCount);
   });
 });

@@ -26,6 +26,7 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly noWinnerMessage: [string] = ["There is no winner! Thanks for playing"];
   readonly multipleWinnersMessage: [string] = ["We have multiple winners!"];
   readonly deathMessage: [string] = ["%s was slain by %s. %s now has %d points (the best is %d)"];
+  readonly deathMessageTdm: [string] = ["%s was slain by %s. Red team now has %d points (Blue team has %d)"];
 
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
@@ -178,19 +179,40 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
-    if (killerActorId) {
-      const round = getPlayerCurrentRound(this.rounds, targetActorId);
-      const round2 = getPlayerCurrentRound(this.rounds, killerActorId);
-      if (round === round2 && round && round.players && round.state === 'running') {
-        this.controller.addItem(killerActorId, this.coinFormId, 1);
-        const killerState = round.players.get(killerActorId);
-        if (killerState) {
-          killerState.kills = (killerState.kills || 0) + 1;
-        }
-        const killerScore = round.players.get(killerActorId)?.kills;
-        const winnerScore = Math.max(...(determineDeathMatchWinners(round).map(x => round.players?.get(x)?.kills) as number[]));
-        this.sendRoundChatMessage(round, sprintf(this.deathMessage[0], this.controller.getName(targetActorId), this.controller.getName(killerActorId), this.controller.getName(killerActorId), killerScore, winnerScore));
+    if (!killerActorId) {
+      return;
+    }
+    const round = getPlayerCurrentRound(this.rounds, targetActorId);
+    const round2 = getPlayerCurrentRound(this.rounds, killerActorId);
+    if (round !== round2 || !round || !round.players || round.state !== 'running') {
+      return;
+    }
+
+    this.controller.addItem(killerActorId, this.coinFormId, 1);
+    const killerState = round.players.get(killerActorId);
+    const targetState = round.players.get(targetActorId);
+    const killerTeam = killerState?.team;
+    const targetTeam = targetState?.team;
+    if (killerState) {
+      killerState.kills = (killerState.kills || 0) + 1;
+    }
+
+    if (killerTeam !== targetTeam) {
+      if (killerTeam === 'Blue') {
+        round.blueScore = (round.blueScore || 0) + 1;
       }
+      else if (killerTeam === "Red") {
+        round.redScore = (round.redScore || 0) + 1;
+      }
+      else {
+        throw new Error("Unknown team"); // TODO: Write team-independent code
+      }
+      this.sendRoundChatMessage(round, sprintf(this.deathMessageTdm[0], this.controller.getName(targetActorId), this.controller.getName(killerActorId), round.redScore || 0, round.blueScore || 0));
+    }
+    else {
+      const killerScore = round.players.get(killerActorId)?.kills;
+      const winnerScore = Math.max(...(determineDeathMatchWinners(round).map(x => round.players?.get(x)?.kills) as number[]));
+      this.sendRoundChatMessage(round, sprintf(this.deathMessage[0], this.controller.getName(targetActorId), this.controller.getName(killerActorId), this.controller.getName(killerActorId), killerScore, winnerScore));
     }
   }
 
