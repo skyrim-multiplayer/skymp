@@ -45,8 +45,7 @@ export class MasterClient implements System {
       const online = this.getCurrentOnline(ctx.svr);
       try {
         await Axios.post(this.endpoint, { name, maxPlayers, online });
-      }
-      catch (e) {
+      } catch (e) {
         console.error(`${e.response.status} - ${e.response.data}`);
       }
     }
