@@ -30,6 +30,7 @@ On the other hand, updating `skyrimPlatform.ts` may break the compilation of you
   - [New events][NewEvents]
   - [Browser / UI][Browser]
   - [HTTP][]
+  - [Texts][Texts]
   - [Win32][Win32]
 - [Cook Book][Cookbook]
 
