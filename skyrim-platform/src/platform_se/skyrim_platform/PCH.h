@@ -34,12 +34,15 @@
 #define NOSCROLL         // SB_* and scrolling routines
 #define NOSERVICE // All Service Controller routines, SERVICE_ equates, etc.
 
+#include <base/cef_scoped_ptr.h>
+#include <frida/frida-gum.h>
+
 #include <RE/Skyrim.h>
 #include <REL/Relocation.h>
 #include <SKSE/SKSE.h>
 
 #include <Windows.h>
-#include <d3d11.h>
+#include <dxgi.h>
 #include <iostream> // savefile
 #include <shellapi.h>
 #include <shlobj_core.h>
@@ -48,7 +51,6 @@
 #include <cef_values.h>
 #include <cmrc/cmrc.hpp>
 #include <core_library/Meta.hpp>
-#include <frida/frida-gum.h>
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
