@@ -63,3 +63,4 @@ export declare class ScampServer {
 }
 
 module.exports.ScampServer = scampNativeNode.ScampServer;
+module.exports.writeLogs = scampNativeNode.log;

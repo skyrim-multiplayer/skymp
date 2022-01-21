@@ -109,6 +109,28 @@ const handleLibkeyJs = () => {
   }, 1);
 };
 
+const setupStreams = (server: scampNative.ScampServer) => {
+  class LogsStream {
+    constructor(private logLevel: string) {
+    }
+
+    write(chunk: Buffer, encoding: string, callback: () => void) {
+      const str = chunk.toString(encoding);
+      server.writeLogs(this.logLevel, str);
+      callback();
+    }
+  }
+
+  const infoStream = new LogsStream('info');
+  const errorStream = new LogsStream('error');
+  process.stdout.write = (chunk: Buffer, encoding: string, callback: () => void) => {
+    infoStream.write(chunk, encoding, callback);
+  };
+  process.stderr.write = (chunk: Buffer, encoding: string, callback: () => void) => {
+    errorStream.write(chunk, encoding, callback);
+  };
+};
+
 const main = async () => {
   handleLibkeyJs();
 
@@ -117,6 +139,8 @@ const main = async () => {
 
   const server = new scampNative.ScampServer(port, maxPlayers);
   const ctx = { svr: new NativeGameServer(server), gm: new EventEmitter() };
+
+  setupStreams(server);
 
   (async () => {
     while (1) {
