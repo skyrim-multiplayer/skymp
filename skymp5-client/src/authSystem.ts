@@ -66,7 +66,7 @@ function createPlaySession(token: string) {
   if (!masterKey) {
     masterKey = sp.settings["skymp5-client"]["server-ip"] + ":" + sp.settings["skymp5-client"]["server-port"];
   }
-  sp.printConsole({masterKey});
+  sp.printConsole({ masterKey });
   return client.post(`/api/users/me/play/${masterKey}`, {
     body: '{}',
     contentType: 'application/json',
@@ -148,6 +148,13 @@ const loadLobby = (location: Transform): void => {
   });
   // todo: for now, the cursor disappears after a few seconds after the browser receives focus. Need to press F6 twice
   // sp.once("loadGame", () => browser.setBrowserFocused(true));
+
+  sp.once("loadGame", () => {
+    // In non-offline mode we still want to see our face in RaceMenu
+    const ironHelment = sp.Armor.from(sp.Game.getFormEx(0x00012e4d));
+    const pl = sp.Game.getPlayer();
+    if (pl) pl.unequipItem(ironHelment, false, true);
+  });
 
   loadGameManager.loadGame(
     location.pos,
