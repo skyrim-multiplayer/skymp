@@ -316,6 +316,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           // Unfortunatelly it requires two calls to work
           Utility.wait(1).then(applyPcInv);
           Utility.wait(1.3).then(applyPcInv);
+          // Note: appearance part was copy-pasted
           if (msg.appearance) {
             applyAppearanceToPlayer(msg.appearance);
             if (msg.appearance.isFemale)
@@ -388,6 +389,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
             once("update", () => {
               applyPcInv();
               Utility.wait(0.3).then(applyPcInv);
+              // Note: appearance part was copy-pasted
               if (msg.appearance) {
                 applyAppearanceToPlayer(msg.appearance);
                 if (msg.appearance.isFemale)
