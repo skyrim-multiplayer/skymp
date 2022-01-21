@@ -59,7 +59,15 @@ export const main = (lobbyLocation: Transform): void => {
 
 function createPlaySession(token: string) {
   const client = new sp.HttpClient(authUrl);
-  return client.post(`/api/users/me/play/${sp.settings["skymp5-client"]["server-ip"]}:${sp.settings["skymp5-client"]["server-port"]}`, {
+  let masterKey = sp.settings["skymp5-client"]["server-master-key"];
+  if (!masterKey) {
+    masterKey = sp.settings["skymp5-client"]["master-key"];
+  }
+  if (!masterKey) {
+    masterKey = sp.settings["skymp5-client"]["server-ip"] + ":" + sp.settings["skymp5-client"]["server-port"];
+  }
+  sp.printConsole({masterKey});
+  return client.post(`/api/users/me/play/${masterKey}`, {
     body: '{}',
     contentType: 'application/json',
     headers: {
