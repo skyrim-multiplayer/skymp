@@ -532,7 +532,7 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
   auto eventName = args[1].ToString();
   auto callback = args[2];
 
-  std::set<std::string> events = { "tick",
+  static const std::set<std::string> kEvents = { "tick",
                                    "update",
                                    "effectStart",
                                    "effectFinish",
@@ -613,7 +613,7 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
                                    "positionPlayer",
                                    "footstep" };
 
-  if (events.count(eventName) == 0) {
+  if (kEvents.count(eventName) == 0) {
     throw InvalidArgumentException("eventName", eventName);
   }
 
