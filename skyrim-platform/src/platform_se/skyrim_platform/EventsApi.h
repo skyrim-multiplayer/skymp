@@ -10,6 +10,7 @@ JsValue Once(const JsFunctionArguments& args);
 JsValue SendIpcMessage(const JsFunctionArguments& args);
 
 void SendEvent(const char* eventName, const std::vector<JsValue>& arguments);
+bool HasSubscriptions(const char* eventName);
 void Clear();
 
 // Exceptions will be pushed to g_taskQueue

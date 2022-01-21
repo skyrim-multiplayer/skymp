@@ -870,6 +870,11 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
     return RE::BSEventNotifyControl::kContinue;
   }
 
+  auto eventName = "trigger";
+  if (!EventsApi::HasSubscriptions(eventName)) {
+    return RE::BSEventNotifyControl::kContinue;
+  }
+
   auto converted = reinterpret_cast<const TESEvents::TESTriggerEvent*>(event);
 
   auto target = converted->target.get();
@@ -878,7 +883,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto causeId = cause ? cause->formID : 0;
 
   SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [target, cause, targetId, causeId] {
+    [target, cause, targetId, causeId, eventName] {
       auto obj = JsValue::Object();
 
       auto targetLocal = RE::TESForm::LookupByID(targetId);
@@ -892,7 +897,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
       obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
       obj.SetProperty("cause", CreateObject("ObjectReference", causeLocal));
 
-      EventsApi::SendEvent("trigger", { JsValue::Undefined(), obj });
+      EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
     });
 
   return RE::BSEventNotifyControl::kContinue;
@@ -1681,7 +1686,28 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
   auto refId = ref ? ref->formID : 0;
   auto type = converted->type;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([ref, refId, type] {
+  const char* eventName;
+  switch (type) {
+    case TESEvents::TESObjectREFRTranslationEvent::EventType::kFailed: {
+      eventName = "translationFailed";
+      break;
+    }
+    case TESEvents::TESObjectREFRTranslationEvent::EventType::
+      kAlmostCompleted: {
+      eventName = "translationAlmostCompleted";
+      break;
+    }
+    case TESEvents::TESObjectREFRTranslationEvent::EventType::kCompleted: {
+      eventName = "translationCompleted";
+      break;
+    }
+  }
+
+  if (!EventsApi::HasSubscriptions(eventName)) {
+    return RE::BSEventNotifyControl::kContinue;
+  }
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([ref, refId, type, eventName] {
     auto obj = JsValue::Object();
 
     auto refLocal = RE::TESForm::LookupByID(refId);
@@ -1692,24 +1718,7 @@ RE::BSEventNotifyControl GameEventSinks::ProcessEvent(
 
     obj.SetProperty("reference", CreateObject("ObjectReference", refLocal));
 
-    switch (type) {
-      case TESEvents::TESObjectREFRTranslationEvent::EventType::kFailed: {
-        EventsApi::SendEvent("translationFailed",
-                             { JsValue::Undefined(), obj });
-        break;
-      }
-      case TESEvents::TESObjectREFRTranslationEvent::EventType::
-        kAlmostCompleted: {
-        EventsApi::SendEvent("translationAlmostCompleted",
-                             { JsValue::Undefined(), obj });
-        break;
-      }
-      case TESEvents::TESObjectREFRTranslationEvent::EventType::kCompleted: {
-        EventsApi::SendEvent("translationCompleted",
-                             { JsValue::Undefined(), obj });
-        break;
-      }
-    }
+    EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
   });
 
   return RE::BSEventNotifyControl::kContinue;
