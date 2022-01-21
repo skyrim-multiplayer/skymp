@@ -182,7 +182,7 @@ export class SweetPieGameModeListener implements GameModeListener {
       const round = getPlayerCurrentRound(this.rounds, targetActorId);
       const round2 = getPlayerCurrentRound(this.rounds, killerActorId);
       if (round === round2 && round && round.players && round.state === 'running') {
-        this.controller.addItem(killerActorId, this.coinFormId, 228);
+        this.controller.addItem(killerActorId, this.coinFormId, 1);
         const killerState = round.players.get(killerActorId);
         if (killerState) {
           killerState.kills = (killerState.kills || 0) + 1;
