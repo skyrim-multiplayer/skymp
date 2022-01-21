@@ -39,8 +39,8 @@ RE::BSTArray<RE::TintMask*> Clone(const RE::BSTArray<RE::TintMask*>& original)
   RE::BSTArray<RE::TintMask*> res;
   for (auto& tint : original) {
     res.push_back(nullptr);
-    res.back() = RE::malloc<RE::TintMask>(sizeof(TintMask));
-    memcpy(res.back(), tint, sizeof(TintMask));
+    res.back() = RE::malloc<RE::TintMask>(sizeof(::TintMask));
+    memcpy(res.back(), tint, sizeof(::TintMask));
   }
   return res;
 }
@@ -338,7 +338,7 @@ void TESModPlatform::ResizeTintsArray(IVM* vm, StackID stackId,
 
   pc->tintMasks.resize(newSize);
   for (auto& mask : pc->tintMasks) {
-    mask = (RE::TintMask*)new TintMask;
+    mask = (RE::TintMask*)new ::TintMask;
   }
 }
 
@@ -373,7 +373,7 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
                                   RE::Actor* targetActor, int32_t type,
                                   uint32_t argb, FixedString texturePath)
 {
-  auto newTm = RE::malloc<TintMask>();
+  auto newTm = RE::malloc<::TintMask>();
   if (!newTm)
     return;
 

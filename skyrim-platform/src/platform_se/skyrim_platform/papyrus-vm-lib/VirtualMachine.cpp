@@ -8,7 +8,7 @@ VirtualMachine::VirtualMachine(
 
 void VirtualMachine::RegisterFunction(std::string className,
                                       std::string functionName,
-                                      FunctionType type, NativeFunction fn)
+                                      FunctionType type, ::NativeFunction fn)
 {
 
   switch (type) {
@@ -107,7 +107,7 @@ VarValue VirtualMachine::CallStatic(std::string className,
     : nativeStaticFunctions[""][functionName];
 
   if (f) {
-    NativeFunction func = f;
+    ::NativeFunction func = f;
     result = func(VarValue::None(), arguments);
     return result;
   }
