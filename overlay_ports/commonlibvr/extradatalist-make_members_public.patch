@@ -1,0 +1,12 @@
+diff --git a/include/RE/E/ExtraDataList.h b/include/RE/E/ExtraDataList.h
+index b7146beb..ed639925 100644
+--- a/include/RE/E/ExtraDataList.h
++++ b/include/RE/E/ExtraDataList.h
+@@ -161,7 +161,6 @@ namespace RE
+ 		void                  SetLinkedRef(TESObjectREFR* a_targetRef, BGSKeyword* a_keyword);
+ 		void                  SetOwner(TESForm* a_owner);
+ 
+-	protected:
+ 		struct PresenceBitfield
+ 		{
+ 		public:

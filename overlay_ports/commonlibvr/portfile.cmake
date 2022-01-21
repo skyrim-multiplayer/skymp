@@ -6,6 +6,10 @@ vcpkg_from_github(
     HEAD_REF vr
     PATCHES
       default-vr-on.patch
+      variable-make_members_public.patch
+      stackframe-uncomment-top-args.patch
+      objectrefr-make_moverefr_public.patch
+      extradatalist-make_members_public.patch
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})

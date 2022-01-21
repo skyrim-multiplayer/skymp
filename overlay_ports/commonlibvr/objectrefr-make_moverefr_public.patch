@@ -1,0 +1,12 @@
+diff --git a/include/RE/T/TESObjectREFR.h b/include/RE/T/TESObjectREFR.h
+index 15e01475..b2edc95d 100644
+--- a/include/RE/T/TESObjectREFR.h
++++ b/include/RE/T/TESObjectREFR.h
+@@ -481,7 +481,6 @@ namespace RE
+ 		bool             preDestroyed;  // 93
+ 		std::uint32_t    pad94;         // 94
+ 
+-	private:
+ 		InventoryChanges* ForceInitInventoryChanges();
+ 		InventoryChanges* MakeInventoryChanges();
+ 		void              MoveTo_Impl(const ObjectRefHandle& a_targetHandle, TESObjectCELL* a_targetCell, TESWorldSpace* a_selfWorldSpace, const NiPoint3& a_position, const NiPoint3& a_rotation);

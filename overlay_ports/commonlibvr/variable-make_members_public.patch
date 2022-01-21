@@ -1,0 +1,12 @@
+diff --git a/include/RE/V/Variable.h b/include/RE/V/Variable.h
+index 4ad96f25..fb23a718 100644
+--- a/include/RE/V/Variable.h
++++ b/include/RE/V/Variable.h
+@@ -82,7 +82,6 @@ namespace RE
+ 			template <class T>
+ 			[[nodiscard]] T Unpack() const;
+ 
+-		private:
+ 			void ChangeType(TypeInfo::RawType a_type);
+ 			void Cleanup();
+ 			void Assign(const Variable& a_rhs);
