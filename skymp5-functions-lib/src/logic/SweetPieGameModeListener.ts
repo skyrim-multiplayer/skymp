@@ -179,6 +179,8 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
     if (killerActorId) {
+      console.log(`${killerActorId} killz ${targetActorId}!!!`);
+      this.controller.addItem(killerActorId, 0x00064B43, 228);
       const round = getPlayerCurrentRound(this.rounds, targetActorId);
       const round2 = getPlayerCurrentRound(this.rounds, killerActorId);
       if (round === round2 && round && round.players && round.state === 'running') {
@@ -202,7 +204,6 @@ export class SweetPieGameModeListener implements GameModeListener {
   private sendMessageNeeded(secondsRemaining: number) {
     return secondsRemaining <= 10 || secondsRemaining % 10 === 0;
   };
-  
 
   private rounds: SweetPieRound[];
 }

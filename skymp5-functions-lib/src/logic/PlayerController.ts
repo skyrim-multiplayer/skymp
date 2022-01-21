@@ -5,4 +5,5 @@ export type PlayerController = {
   sendChatMessage(actorId: number, text: string): void;
   quitGame(actorId: number): void;
   getName(actorId: number): string;
+  addItem(actorId: number, itemId: number, count: number): void;
 }

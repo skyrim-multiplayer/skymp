@@ -4,7 +4,7 @@ import { ChatProperty } from "./props/chatProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
-import { LocationalData, Mp } from "./types/mp";
+import { LocationalData, Mp, PapyrusObject } from "./types/mp";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
@@ -165,7 +165,20 @@ export class MpApiInteractor {
       },
       getName(actorId: number): string {
         return getName(actorId);
-      }
+      },
+      addItem(actorId: number, itemId: number, count: number): void {
+        const actorForm = mp.callPapyrusFunction('global', 'Game', 'GetForm', null, [actorId]);
+        if (!actorForm) {
+          console.log(`addItem: Can't find formId ${actorId} for actor`);
+          return;
+        }
+        const itemForm = mp.callPapyrusFunction('global', 'Game', 'GetForm', null, [itemId]);
+        if (!itemForm) {
+          console.log(`addItem: Can't find formId ${itemId} for item`);
+          return;
+        }
+        mp.callPapyrusFunction('method', 'ObjectReference', 'AddItem', actorForm as PapyrusObject, [itemForm, count, /*silent*/false]);
+      },
     }
   }
 }
