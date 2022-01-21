@@ -167,11 +167,17 @@ export class MpApiInteractor {
         return getName(actorId);
       },
       addItem(actorId: number, itemId: number, count: number): void {
-        mp.callPapyrusFunction(
-          'method', 'ObjectReference', 'AddItem',
-          {type: 'espm', desc: mp.getDescFromId(actorId)},
-          [{type: 'form', desc: mp.getDescFromId(itemId)}, count, /*silent*/false]
-        );
+        const actorForm = mp.callPapyrusFunction('global', 'Game', 'GetForm', null, [actorId]);
+        if (!actorForm) {
+          console.log(`addItem: Can't find formId ${actorId} for actor`);
+          return;
+        }
+        const itemForm = mp.callPapyrusFunction('global', 'Game', 'GetForm', null, [itemId]);
+        if (!itemForm) {
+          console.log(`addItem: Can't find formId ${itemId} for item`);
+          return;
+        }
+        mp.callPapyrusFunction('method', 'ObjectReference', 'AddItem', actorForm as PapyrusObject, [itemForm, count, /*silent*/false]);
       },
     }
   }
