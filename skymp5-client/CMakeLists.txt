@@ -33,9 +33,9 @@ set(skymp5_client_settings_txt_sweetpie "{
   \"server-ip\": \"127.0.0.1\",
   \"server-port\": 7777,
   \"lobbyLocation\": {
-    \"pos\": [133710, -61252, 14605],
-    \"rot\": [0, 0, 0],
-    \"worldOrCell\": 60
+    \"pos\": [19256.69, 9777.12, 899.56],
+    \"rot\": [6.36, 0.00, 221.51],
+    \"worldOrCell\": 100936543
   }
 }
 ")
