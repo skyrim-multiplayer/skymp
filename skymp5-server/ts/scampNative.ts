@@ -46,6 +46,7 @@ export declare class ScampServer {
   setSendUiMessageImplementation(fn: SendChatMessageFn): void;
   onUiEvent(formId: number, msg: Record<string, unknown>): void;
   clear(): void;
+  writeLogs(logLevel: string, message: string): void;
 }
 
 module.exports.ScampServer = scampNativeNode.ScampServer;

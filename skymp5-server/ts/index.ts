@@ -1,7 +1,17 @@
 import * as ui from "./ui";
 
 import * as sourceMapSupport from "source-map-support";
-sourceMapSupport.install();
+sourceMapSupport.install({
+  retrieveSourceMap: function (source: string) {
+    if (source.endsWith('skymp5-server.js')) {
+      return {
+        url: 'original.js',
+        map: fs.readFileSync('dist_back/skymp5-server.js.map', 'utf8')
+      };
+    }
+    return null;
+  }
+});
 
 import * as scampNative from "./scampNative";
 import * as chat from "./chat";
@@ -114,7 +124,9 @@ const setupStreams = (server: scampNative.ScampServer) => {
 
     write(chunk: Buffer, encoding: string, callback: () => void) {
       const str = chunk.toString(encoding);
-      server.writeLogs(this.logLevel, str);
+      if (str.trim().length > 0) {
+        server.writeLogs(this.logLevel, str);
+      }
       callback();
     }
   }
@@ -147,7 +159,7 @@ const main = async () => {
         server.tick();
         await new Promise((r) => setTimeout(r, 1));
       } catch (e) {
-        log(`Error in server.tick: ${e}\n${e.stack}`);
+        console.error(`in server.tick:\n${e.stack}`);
       }
     }
   })();
@@ -162,7 +174,7 @@ const main = async () => {
           try {
             await system.updateAsync(ctx);
           } catch (e) {
-            log(`Error in ${system.systemName}.updateAsync: ${e}\n${e.stack}`);
+            console.error(e);
           }
         }
       })();
@@ -174,7 +186,7 @@ const main = async () => {
       try {
         if (system.connect) system.connect(userId, ctx);
       } catch (e) {
-        log(`Error in ${system.systemName}.connect: ${e}\n${e.stack}`);
+        console.error(e);
       }
     }
   });
@@ -185,7 +197,7 @@ const main = async () => {
       try {
         if (system.disconnect) system.disconnect(userId, ctx);
       } catch (e) {
-        log(`Error in ${system.systemName}.disconnect: ${e}\n${e.stack}`);
+        console.error(e);
       }
     }
   });
@@ -201,7 +213,7 @@ const main = async () => {
         if (system.customPacket)
           system.customPacket(userId, type, content, ctx);
       } catch (e) {
-        log(`Error in ${system.systemName}.customPacket: ${e}\n${e.stack}`);
+        console.error(e);
       }
     }
   });
@@ -294,12 +306,8 @@ const main = async () => {
   server.attachSaveStorage();
 };
 
-main().catch((e) => {
-  log(`Main function threw an error: ${e}`);
-  if (e["stack"]) log(e["stack"]);
-  process.exit(-1);
-});
+main();
 
-process.on("unhandledRejection", (...args) => {
-  console.error(...args);
-});
+/*process.on("unhandledRejection", (...args) => {
+  //console.error(...args);
+});*/
