@@ -5,6 +5,9 @@ import { SweetPieMap } from "./SweetPieMap";
 import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
 
 export class SweetPieGameModeListener implements GameModeListener {
+  readonly coinFormId = 0xf;
+  readonly applePieFormId = 0x00064B43;
+
   readonly quitGamePortal = '42f3f:SweetPie.esp';
   readonly neutralPortal = '42f70:SweetPie.esp';
   readonly redPortal = '42e96:SweetPie.esp';
@@ -157,15 +160,12 @@ export class SweetPieGameModeListener implements GameModeListener {
             const winners = determineDeathMatchWinners(round);
             if (winners.length === 0) {
               this.sendRoundChatMessage(round, ...this.noWinnerMessage);
-            }
-            else if (winners.length === 1) {
-              const winner = winners[0];
-              const winnerScore = round.players.get(winner)?.kills;
-              this.sendRoundChatMessage(round, sprintf(this.determineWinnerMessage[0], this.controller.getName(winner), winnerScore));
-            }
-            else {
-              this.sendRoundChatMessage(round, ...this.multipleWinnersMessage);
+            } else {
+              if (winners.length > 1) {
+                this.sendRoundChatMessage(round, ...this.multipleWinnersMessage);
+              }
               for (const winner of winners) {
+                this.controller.addItem(winner, this.applePieFormId, 1);
                 const winnerScore = round.players.get(winner)?.kills;
                 this.sendRoundChatMessage(round, sprintf(this.determineWinnerMessage[0], this.controller.getName(winner), winnerScore));
               };
@@ -182,6 +182,7 @@ export class SweetPieGameModeListener implements GameModeListener {
       const round = getPlayerCurrentRound(this.rounds, targetActorId);
       const round2 = getPlayerCurrentRound(this.rounds, killerActorId);
       if (round === round2 && round && round.players && round.state === 'running') {
+        this.controller.addItem(killerActorId, this.coinFormId, 1);
         const killerState = round.players.get(killerActorId);
         if (killerState) {
           killerState.kills = (killerState.kills || 0) + 1;
@@ -202,7 +203,6 @@ export class SweetPieGameModeListener implements GameModeListener {
   private sendMessageNeeded(secondsRemaining: number) {
     return secondsRemaining <= 10 || secondsRemaining % 10 === 0;
   };
-  
 
   private rounds: SweetPieRound[];
 }

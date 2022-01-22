@@ -271,6 +271,10 @@ describe("SweetPieGameModeListener: Round clock", () => {
     expect(controller.sendChatMessage).toBeCalledTimes(2);
     expect(controller.sendChatMessage).toBeCalledWith(1, msg);
     expect(controller.sendChatMessage).toBeCalledWith(2, msg);
+
+    // Round win reward is 1 apple pie
+    const applePie = 0x00064b43;
+    expect(controller.addItem).toBeCalledWith(1, applePie, 1);
   });
 
   test("Round must finish with two winner if both players are tops", () => {
@@ -350,6 +354,11 @@ describe("SweetPieGameModeListener: OnDeath", () => {
     expect(controller.sendChatMessage).toBeCalledTimes(2);
     expect(controller.sendChatMessage).toBeCalledWith(1, msg);
     expect(controller.sendChatMessage).toBeCalledWith(2, msg);
+
+    // Death reward is 1 septim
+    const gold001 = 0x0000000f;
+    const goldCount = 1;
+    expect(controller.addItem).toBeCalledWith(2, gold001, goldCount);
 
     expect(determineDeathMatchWinners(listener.getRounds()[0])).toEqual([2]);
   });

@@ -28,6 +28,7 @@ import { getMovement } from "./movementGet";
 import { Movement } from "./movement";
 import * as deathSystem from "./deathSystem";
 import { RespawnNeededError } from "./errors";
+import { getScreenResolution } from "./skyrimSettings";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -54,6 +55,8 @@ export interface View<T> {
 }
 
 const getFormEx = Game.getFormEx;
+const headPart = "NPC Head [Head]";
+const maxNicknameDrawDistance = 1000;
 
 function isItem(t: number) {
   const isAmmo = t === 42;
@@ -320,7 +323,7 @@ export class FormView implements View<FormModel> {
           }
         );
         if (model.appearance && model.appearance.name)
-          refr.setDisplayName("" + model.appearance.name, true);
+          refr.setDisplayName("", true);
         Actor.from(refr)?.setActorValue("attackDamageMult", 0);
       }
       this.refrId = (refr as ObjectReference).getFormID();
@@ -380,6 +383,9 @@ export class FormView implements View<FormModel> {
       }
     }
     this.localImmortal = false;
+    if (this.textNameId) {
+      sp.destroyText(this.textNameId);
+    }
   }
 
   private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
@@ -604,6 +610,31 @@ export class FormView implements View<FormModel> {
         }
       }
     }
+
+    if (model.appearance?.name) {
+      const playerActor = sp.Game.getPlayer()!;
+      const isVisibleByPlayer = playerActor.getDistance(refr) <= maxNicknameDrawDistance;
+      if (isVisibleByPlayer) {
+        const headScreenPos = sp.worldPointToScreenPoint([
+          sp.NetImmerse.getNodeWorldPositionX(refr, headPart, false),
+          sp.NetImmerse.getNodeWorldPositionY(refr, headPart, false),
+          sp.NetImmerse.getNodeWorldPositionZ(refr, headPart, false) + 22
+        ])[0];
+        const resolution = getScreenResolution();
+        const textXPos = Math.round(headScreenPos[0] * resolution.width);
+        const textYPos = Math.round((1 - headScreenPos[1]) * resolution.height);
+
+        if (!this.textNameId) {
+          this.textNameId = sp.createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1]);
+        } else {
+          sp.setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
+          sp.setTextPos(this.textNameId, textXPos, textYPos);
+        }
+      } else if (this.textNameId) {
+        sp.destroyText(this.textNameId);
+        this.textNameId = undefined;
+      }
+    }
   }
 
   private getAppearanceBasedBase(): number {
@@ -641,6 +672,7 @@ export class FormView implements View<FormModel> {
   private wasHostedByOther: boolean | undefined = undefined;
   private state = {};
   private localImmortal = false;
+  private textNameId: number | undefined = undefined;
 }
 
 class FormViewArray {
@@ -754,6 +786,7 @@ export class WorldView implements View<WorldModel> {
         printConsole("Update is now allowed");
       });
     });
+    sp.destroyAllTexts();
   }
 
   getRemoteRefrId(clientsideRefrId: number): number {
