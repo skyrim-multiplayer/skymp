@@ -1,8 +1,8 @@
 #pragma once
+#include "MpChangeForms.h"
 #include "WorldState.h"
 #include <unordered_map>
 #include <utility>
-#include "MpChangeForms.h"
 
 class PieScript
 {
@@ -43,6 +43,7 @@ private:
                                                           int armoryChance,
                                                           int consumableChance,
                                                           int nothingChance);
+
 private:
   LootTable lootTable;
 
