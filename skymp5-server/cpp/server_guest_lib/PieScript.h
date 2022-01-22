@@ -42,6 +42,7 @@ private:
                                                           int armoryChance,
                                                           int consumableChance,
                                                           int nothingChance);
+
 private:
   LootTable lootTable;
   const int TIER1_CHANCE = 60;
