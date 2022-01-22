@@ -30,6 +30,8 @@
 #include <RE/UI.h>
 #include <SKSE/API.h>
 
+#include <RE/ConsoleLog.h>
+
 class TaskQueue;
 
 class GameEventSinks
@@ -90,197 +92,362 @@ class GameEventSinks
 
 {
 public:
-  GameEventSinks()
+  static GameEventSinks* GetSingleton()
   {
-    auto holder = RE::ScriptEventSourceHolder::GetSingleton();
-    if (!holder)
-      throw NullPointerException("holder");
+    static GameEventSinks singleton;
+    return &singleton;
+  }
 
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESActivateEvent>*>(this));
+  enum class SinkClass
+  {
+    kNone,
+    kTESActiveEffectApplyRemoveEvent,
+    kTESLoadGameEvent,
+    kTESEquipEvent,
+    kTESHitEvent,
+    kTESContainerChangedEvent,
+    kTESDeathEvent,
+    kTESMagicEffectApplyEvent,
+    kTESCombatEvent,
+    kTESResetEvent,
+    kTESInitScriptEvent,
+    kTESTrackedStatsEvent,
+    kTESSwitchRaceCompleteEvent,
+    kTESUniqueIDChangeEvent,
+    kTESCellFullyLoadedEvent,
+    kTESCellAttachDetachEvent,
+    kTESGrabReleaseEvent,
+    kTESLockChangedEvent,
+    kTESMoveAttachDetachEvent,
+    kTESObjectLoadedEvent,
+    kTESWaitStartEvent,
+    kTESWaitStopEvent,
+    kTESActivateEvent,
+    kMenuOpenCloseEvent,
+    kTESSpellCastEvent,
+    kTESOpenCloseEvent,
+    kTESQuestInitEvent,
+    kTESQuestStartStopEvent,
+    kTESQuestStageEvent,
+    kTESTriggerEvent,
+    kTESTriggerEnterEvent,
+    kTESTriggerLeaveEvent,
+    kTESSleepStartEvent,
+    kTESSleepStopEvent,
+    kTESActorLocationChangeEvent,
+    kTESBookReadEvent,
+    kTESSellEvent,
+    kTESFurnitureEvent,
+    kTESMagicWardHitEvent,
+    kTESPackageEvent,
+    kTESEnterBleedoutEvent,
+    kTESDestructionStageChangedEvent,
+    kTESSceneActionEvent,
+    kTESPlayerBowShotEvent,
+    kTESFastTravelEndEvent,
+    kTESObjectREFRTranslationEvent,
+    kTESPerkEntryRunEvent,
+    kSKSEActionEvent,
+    kSKSECameraEvent,
+    kSKSECrosshairRefEvent,
+    kSKSENiNodeUpdateEvent,
+    kSKSEModCallbackEvent,
+    kPositionPlayerEvent,
+    kBGSFootstepEvent,
+    kInputEvent
+  };
 
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESMoveAttachDetachEvent>*>(this));
+  enum class SinkAction
+  {
+    kAdd = 0,
+    kRemove = 1
+  };
 
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESHitEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESEquipEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESLoadGameEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESDeathEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESContainerChangedEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESMagicEffectApplyEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESResetEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESInitScriptEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESCombatEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESTrackedStatsEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESUniqueIDChangeEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESSwitchRaceCompleteEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESGrabReleaseEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESCellFullyLoadedEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESCellAttachDetachEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESLockChangedEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESObjectLoadedEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESWaitStartEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESWaitStopEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESActiveEffectApplyRemoveEvent>*>(
-        this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESSpellCastEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESOpenCloseEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESQuestInitEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESQuestStartStopEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESQuestStageEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESTriggerEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESTriggerEnterEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESTriggerLeaveEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESSleepStartEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESSleepStopEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESActorLocationChangeEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESBookReadEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESSellEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESFurnitureEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESMagicWardHitEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESPackageEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESEnterBleedoutEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESDestructionStageChangedEvent>*>(
-        this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESSceneActionEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESPlayerBowShotEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESFastTravelEndEvent>*>(this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESObjectREFRTranslationEvent>*>(
-        this));
-
-    holder->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::TESPerkEntryRunEvent>*>(this));
-
-    auto ui = RE::UI::GetSingleton();
-
-    if (!ui) {
-      throw NullPointerException("ui");
+  template <typename T>
+  void ChangeEventSink(RE::BSTEventSource<T>* eventSource, SinkAction action)
+  {
+    if (action == SinkAction::kAdd) {
+      eventSource->AddEventSink(dynamic_cast<RE::BSTEventSink<T>*>(this));
     }
+    if (action == SinkAction::kRemove) {
+      eventSource->RemoveEventSink(dynamic_cast<RE::BSTEventSink<T>*>(this));
+    }
+  }
 
-    ui->GetEventSource<RE::MenuOpenCloseEvent>()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::MenuOpenCloseEvent>*>(this));
+  void EventSinksAction(SinkClass sink, SinkAction action)
+  {
+    auto scriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
+    if (!scriptEventSource)
+      throw NullPointerException("scriptEventSource");
 
-    SKSE::GetActionEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<SKSE::ActionEvent>*>(this));
+    switch (sink) {
+      case SinkClass::kNone: {
+        break;
+      }
+      case SinkClass::kTESActiveEffectApplyRemoveEvent: {
+        ChangeEventSink<RE::TESActivateEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESLoadGameEvent: {
+        ChangeEventSink<RE::TESLoadGameEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESEquipEvent: {
+        ChangeEventSink<RE::TESEquipEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESHitEvent: {
+        ChangeEventSink<RE::TESHitEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESContainerChangedEvent: {
+        ChangeEventSink<RE::TESContainerChangedEvent>(scriptEventSource,
+                                                      action);
+        break;
+      }
+      case SinkClass::kTESDeathEvent: {
+        ChangeEventSink<RE::TESDeathEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESMagicEffectApplyEvent: {
+        ChangeEventSink<RE::TESMagicEffectApplyEvent>(scriptEventSource,
+                                                      action);
+        break;
+      }
+      case SinkClass::kTESCombatEvent: {
+        ChangeEventSink<RE::TESCombatEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESResetEvent: {
+        ChangeEventSink<RE::TESResetEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESInitScriptEvent: {
+        ChangeEventSink<RE::TESInitScriptEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESTrackedStatsEvent: {
+        ChangeEventSink<RE::TESTrackedStatsEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESSwitchRaceCompleteEvent: {
+        ChangeEventSink<RE::TESSwitchRaceCompleteEvent>(scriptEventSource,
+                                                        action);
+        break;
+      }
+      case SinkClass::kTESUniqueIDChangeEvent: {
+        ChangeEventSink<RE::TESUniqueIDChangeEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESCellFullyLoadedEvent: {
+        ChangeEventSink<RE::TESCellFullyLoadedEvent>(scriptEventSource,
+                                                     action);
+        break;
+      }
+      case SinkClass::kTESCellAttachDetachEvent: {
+        ChangeEventSink<RE::TESCellAttachDetachEvent>(scriptEventSource,
+                                                      action);
+        break;
+      }
+      case SinkClass::kTESGrabReleaseEvent: {
+        ChangeEventSink<RE::TESGrabReleaseEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESLockChangedEvent: {
+        ChangeEventSink<RE::TESLockChangedEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESMoveAttachDetachEvent: {
+        ChangeEventSink<RE::TESMoveAttachDetachEvent>(scriptEventSource,
+                                                      action);
+        break;
+      }
+      case SinkClass::kTESObjectLoadedEvent: {
+        ChangeEventSink<RE::TESObjectLoadedEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESWaitStartEvent: {
+        ChangeEventSink<RE::TESWaitStartEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESWaitStopEvent: {
+        ChangeEventSink<RE::TESWaitStopEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESActivateEvent: {
+        ChangeEventSink<RE::TESActivateEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kMenuOpenCloseEvent: {
+        auto ui = RE::UI::GetSingleton();
 
-    SKSE::GetCameraEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<SKSE::CameraEvent>*>(this));
+        if (!ui) {
+          throw NullPointerException("ui");
+        }
 
-    SKSE::GetCrosshairRefEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<SKSE::CrosshairRefEvent>*>(this));
+        auto uiEventSource = ui->GetEventSource<RE::MenuOpenCloseEvent>();
+        ChangeEventSink<RE::MenuOpenCloseEvent>(uiEventSource, action);
+        break;
+      }
+      case SinkClass::kTESSpellCastEvent: {
+        ChangeEventSink<RE::TESSpellCastEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESOpenCloseEvent: {
+        ChangeEventSink<RE::TESOpenCloseEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESQuestInitEvent: {
+        ChangeEventSink<RE::TESQuestInitEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESQuestStartStopEvent: {
+        ChangeEventSink<RE::TESQuestStartStopEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESQuestStageEvent: {
+        if (action == SinkAction::kAdd) {
+          scriptEventSource->AddEventSink(
+            dynamic_cast<RE::BSTEventSink<RE::TESQuestStageEvent>*>(this));
+        }
+        // WTF?
+        // if (action == SinkAction::kRemove) {
+        //   scriptEventSource->RemoveEventSink(
+        //     dynamic_cast<RE::BSTEventSink<RE::TESQuestStageEvent>*>(this));
+        // }
+        break;
+      }
+      case SinkClass::kTESTriggerEvent: {
+        ChangeEventSink<RE::TESTriggerEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESTriggerEnterEvent: {
+        ChangeEventSink<RE::TESTriggerEnterEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESTriggerLeaveEvent: {
+        ChangeEventSink<RE::TESTriggerLeaveEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESSleepStartEvent: {
+        ChangeEventSink<RE::TESSleepStartEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESSleepStopEvent: {
+        ChangeEventSink<RE::TESSleepStopEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESActorLocationChangeEvent: {
+        ChangeEventSink<RE::TESActorLocationChangeEvent>(scriptEventSource,
+                                                         action);
+        break;
+      }
+      case SinkClass::kTESBookReadEvent: {
+        ChangeEventSink<RE::TESBookReadEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESSellEvent: {
+        ChangeEventSink<RE::TESSellEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESFurnitureEvent: {
+        ChangeEventSink<RE::TESFurnitureEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESMagicWardHitEvent: {
+        ChangeEventSink<RE::TESMagicWardHitEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESPackageEvent: {
+        ChangeEventSink<RE::TESPackageEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESEnterBleedoutEvent: {
+        ChangeEventSink<RE::TESEnterBleedoutEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESDestructionStageChangedEvent: {
+        ChangeEventSink<RE::TESDestructionStageChangedEvent>(scriptEventSource,
+                                                             action);
+        break;
+      }
+      case SinkClass::kTESSceneActionEvent: {
+        ChangeEventSink<RE::TESSceneActionEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESPlayerBowShotEvent: {
+        ChangeEventSink<RE::TESPlayerBowShotEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESFastTravelEndEvent: {
+        ChangeEventSink<RE::TESFastTravelEndEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kTESObjectREFRTranslationEvent: {
+        ChangeEventSink<RE::TESObjectREFRTranslationEvent>(scriptEventSource,
+                                                           action);
+        break;
+      }
+      case SinkClass::kTESPerkEntryRunEvent: {
+        ChangeEventSink<RE::TESPerkEntryRunEvent>(scriptEventSource, action);
+        break;
+      }
+      case SinkClass::kSKSEActionEvent: {
+        ChangeEventSink<SKSE::ActionEvent>(SKSE::GetActionEventSource(),
+                                           action);
+        break;
+      }
+      case SinkClass::kSKSECameraEvent: {
+        ChangeEventSink<SKSE::CameraEvent>(SKSE::GetCameraEventSource(),
+                                           action);
+        break;
+      }
+      case SinkClass::kSKSECrosshairRefEvent: {
+        ChangeEventSink<SKSE::CrosshairRefEvent>(
+          SKSE::GetCrosshairRefEventSource(), action);
+        break;
+      }
+      case SinkClass::kSKSENiNodeUpdateEvent: {
+        ChangeEventSink<SKSE::NiNodeUpdateEvent>(
+          SKSE::GetNiNodeUpdateEventSource(), action);
+        break;
+      }
+      case SinkClass::kSKSEModCallbackEvent: {
+        ChangeEventSink<SKSE::ModCallbackEvent>(
+          SKSE::GetModCallbackEventSource(), action);
+        break;
+      }
+      case SinkClass::kPositionPlayerEvent: {
+        auto playerCharacterHolder = RE::PlayerCharacter::GetSingleton();
+        auto playerCharacterEventSource = playerCharacterHolder
+          ? static_cast<RE::BSTEventSource<RE::PositionPlayerEvent>*>(
+              playerCharacterHolder)
+          : throw NullPointerException("player character");
 
-    SKSE::GetNiNodeUpdateEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<SKSE::NiNodeUpdateEvent>*>(this));
+        ChangeEventSink<RE::PositionPlayerEvent>(playerCharacterEventSource,
+                                                 action);
+        break;
+      }
+      case SinkClass::kBGSFootstepEvent: {
+        auto footstepHolder = RE::BGSFootstepManager::GetSingleton();
+        auto footstepEventSource = footstepHolder
+          ? static_cast<RE::BSTEventSource<RE::BGSFootstepEvent>*>(
+              footstepHolder)
+          : throw NullPointerException("footstep");
 
-    SKSE::GetModCallbackEventSource()->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<SKSE::ModCallbackEvent>*>(this));
+        ChangeEventSink<RE::BGSFootstepEvent>(footstepEventSource, action);
+        break;
+      }
+      case SinkClass::kInputEvent: {
+        auto inputHolder = RE::BSInputDeviceManager::GetSingleton();
+        auto inputEventSource = inputHolder
+          ? static_cast<RE::BSTEventSource<RE::InputEvent*>*>(inputHolder)
+          : throw NullPointerException("inputHolder");
 
-    auto playerCharacterHolder = RE::PlayerCharacter::GetSingleton();
-    auto playerCharacterEventSource = playerCharacterHolder
-      ? static_cast<RE::BSTEventSource<RE::PositionPlayerEvent>*>(
-          playerCharacterHolder)
-      : throw NullPointerException("player character");
-
-    playerCharacterEventSource->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::PositionPlayerEvent>*>(this));
-
-    auto footstepHolder = RE::BGSFootstepManager::GetSingleton();
-    auto footstepEventSource = footstepHolder
-      ? static_cast<RE::BSTEventSource<RE::BGSFootstepEvent>*>(footstepHolder)
-      : throw NullPointerException("footstep");
-
-    footstepEventSource->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::BGSFootstepEvent>*>(this));
-
-    auto inputHolder = RE::BSInputDeviceManager::GetSingleton();
-    auto inputEventSource = inputHolder
-      ? static_cast<RE::BSTEventSource<RE::InputEvent*>*>(inputHolder)
-      : throw NullPointerException("inputHolder");
-    inputEventSource->AddEventSink(
-      dynamic_cast<RE::BSTEventSink<RE::InputEvent*>*>(this));
+        ChangeEventSink<RE::InputEvent*>(inputEventSource, action);
+        break;
+      }
+    }
   }
 
 private:

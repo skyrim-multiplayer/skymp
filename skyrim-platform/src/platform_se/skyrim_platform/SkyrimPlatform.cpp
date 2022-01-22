@@ -187,6 +187,8 @@ private:
       }
       LoadPluginFile(path);
     }
+
+    EventsApi::AddSinks();
   }
 
   void LoadSettingsFile(const std::filesystem::path& path)

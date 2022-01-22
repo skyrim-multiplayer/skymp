@@ -22,6 +22,9 @@ void SendPapyrusEventLeave() noexcept;
 
 JsValue GetHooks();
 
+void RemoveSinks();
+void AddSinks();
+
 typedef void (*IpcMessageCallback)(const uint8_t* data, uint32_t length,
                                    void* state);
 uint32_t IpcSubscribe(const char* systemName, IpcMessageCallback callback,

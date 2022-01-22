@@ -15,6 +15,8 @@
 #include <tuple>
 #include <unordered_map>
 
+#include <RE/ConsoleLog.h>
+
 namespace {
 enum class PatternType
 {
@@ -313,6 +315,121 @@ struct EventsGlobalState
   std::shared_ptr<Hook> sendPapyrusEvent;
 } g;
 
+std::vector<GameEventSinks::SinkClass> g_Sinks;
+
+const std::map<std::string, GameEventSinks::SinkClass> eventSinksMap{
+  { "tick", GameEventSinks::SinkClass::kNone },
+  { "update", GameEventSinks::SinkClass::kNone },
+  { "effectStart",
+    GameEventSinks::SinkClass::kTESActiveEffectApplyRemoveEvent },
+  { "effectFinish",
+    GameEventSinks::SinkClass::kTESActiveEffectApplyRemoveEvent },
+  { "magicEffectApply", GameEventSinks::SinkClass::kTESMagicEffectApplyEvent },
+  { "equip", GameEventSinks::SinkClass::kTESEquipEvent },
+  { "unequip", GameEventSinks::SinkClass::kTESEquipEvent },
+  { "hit", GameEventSinks::SinkClass::kTESHitEvent },
+  { "containerChanged", GameEventSinks::SinkClass::kTESContainerChangedEvent },
+  { "deathStart", GameEventSinks::SinkClass::kTESDeathEvent },
+  { "deathEnd", GameEventSinks::SinkClass::kTESDeathEvent },
+  { "loadGame", GameEventSinks::SinkClass::kTESLoadGameEvent },
+  { "combatState", GameEventSinks::SinkClass::kTESCombatEvent },
+  { "reset", GameEventSinks::SinkClass::kTESResetEvent },
+  { "scriptInit", GameEventSinks::SinkClass::kTESInitScriptEvent },
+  { "trackedStats", GameEventSinks::SinkClass::kTESTrackedStatsEvent },
+  { "uniqueIdChange", GameEventSinks::SinkClass::kTESUniqueIDChangeEvent },
+  { "switchRaceComplete",
+    GameEventSinks::SinkClass::kTESSwitchRaceCompleteEvent },
+  { "cellFullyLoaded", GameEventSinks::SinkClass::kTESCellFullyLoadedEvent },
+  { "cellAttach", GameEventSinks::SinkClass::kTESCellAttachDetachEvent },
+  { "cellDetach", GameEventSinks::SinkClass::kTESCellAttachDetachEvent },
+  { "grabRelease", GameEventSinks::SinkClass::kTESGrabReleaseEvent },
+  { "lockChanged", GameEventSinks::SinkClass::kTESLockChangedEvent },
+  { "moveAttachDetach", GameEventSinks::SinkClass::kTESMoveAttachDetachEvent },
+  { "objectLoaded", GameEventSinks::SinkClass::kTESObjectLoadedEvent },
+  { "waitStart", GameEventSinks::SinkClass::kTESWaitStartEvent },
+  { "waitStop", GameEventSinks::SinkClass::kTESWaitStopEvent },
+  { "activate", GameEventSinks::SinkClass::kTESActivateEvent },
+  { "ipcMessage", GameEventSinks::SinkClass::kNone },
+  { "menuOpen", GameEventSinks::SinkClass::kMenuOpenCloseEvent },
+  { "menuClose", GameEventSinks::SinkClass::kMenuOpenCloseEvent },
+  { "browserMessage", GameEventSinks::SinkClass::kNone },
+  { "consoleMessage", GameEventSinks::SinkClass::kNone },
+  { "spellCast", GameEventSinks::SinkClass::kTESSpellCastEvent },
+  { "open", GameEventSinks::SinkClass::kTESOpenCloseEvent },
+  { "close", GameEventSinks::SinkClass::kTESOpenCloseEvent },
+  { "questInit", GameEventSinks::SinkClass::kTESQuestInitEvent },
+  { "questStart", GameEventSinks::SinkClass::kTESQuestStartStopEvent },
+  { "questStop", GameEventSinks::SinkClass::kTESQuestStartStopEvent },
+  { "questStage", GameEventSinks::SinkClass::kTESQuestStageEvent },
+  { "trigger", GameEventSinks::SinkClass::kTESTriggerEvent },
+  { "triggerEnter", GameEventSinks::SinkClass::kTESTriggerEnterEvent },
+  { "triggerLeave", GameEventSinks::SinkClass::kTESTriggerLeaveEvent },
+  { "sleepStart", GameEventSinks::SinkClass::kTESSleepStartEvent },
+  { "sleepStop", GameEventSinks::SinkClass::kTESSleepStopEvent },
+  { "locationChanged",
+    GameEventSinks::SinkClass::kTESActorLocationChangeEvent },
+  { "bookRead", GameEventSinks::SinkClass::kTESBookReadEvent },
+  { "sell", GameEventSinks::SinkClass::kTESSellEvent },
+  { "furnitureEnter", GameEventSinks::SinkClass::kTESFurnitureEvent },
+  { "furnitureExit", GameEventSinks::SinkClass::kTESFurnitureEvent },
+  { "wardHit", GameEventSinks::SinkClass::kTESMagicWardHitEvent },
+  { "packageStart", GameEventSinks::SinkClass::kTESPackageEvent },
+  { "packageChange", GameEventSinks::SinkClass::kTESPackageEvent },
+  { "packageEnd", GameEventSinks::SinkClass::kTESPackageEvent },
+  { "enterBleedout", GameEventSinks::SinkClass::kTESEnterBleedoutEvent },
+  { "destructionStageChanged",
+    GameEventSinks::SinkClass::kTESDestructionStageChangedEvent },
+  { "sceneAction", GameEventSinks::SinkClass::kTESSceneActionEvent },
+  { "playerBowShot", GameEventSinks::SinkClass::kTESPlayerBowShotEvent },
+  { "fastTravelEnd", GameEventSinks::SinkClass::kTESFastTravelEndEvent },
+  { "perkEntryRun", GameEventSinks::SinkClass::kTESPerkEntryRunEvent },
+  { "translationFailed",
+    GameEventSinks::SinkClass::kTESObjectREFRTranslationEvent },
+  { "translationAlmostCompleted",
+    GameEventSinks::SinkClass::kTESObjectREFRTranslationEvent },
+  { "translationCompleted",
+    GameEventSinks::SinkClass::kTESObjectREFRTranslationEvent },
+  { "actionWeaponSwing", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionBeginDraw", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionEndDraw", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionBowDraw", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionBowRelease", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionBeginSheathe", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionEndSheathe", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionSpellCast", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionSpellFire", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionVoiceCast", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "actionVoiceFire", GameEventSinks::SinkClass::kSKSEActionEvent },
+  { "cameraStateChanged", GameEventSinks::SinkClass::kSKSECameraEvent },
+  { "crosshairRefChanged", GameEventSinks::SinkClass::kSKSECrosshairRefEvent },
+  { "niNodeUpdate", GameEventSinks::SinkClass::kSKSENiNodeUpdateEvent },
+  { "modEvent", GameEventSinks::SinkClass::kSKSEModCallbackEvent },
+  { "positionPlayer", GameEventSinks::SinkClass::kPositionPlayerEvent },
+  { "footstep", GameEventSinks::SinkClass::kBGSFootstepEvent },
+  { "buttonEvent", GameEventSinks::SinkClass::kInputEvent },
+  { "mouseMove", GameEventSinks::SinkClass::kInputEvent },
+  { "thumbstickEvent", GameEventSinks::SinkClass::kInputEvent },
+  { "kinectEvent", GameEventSinks::SinkClass::kInputEvent },
+  { "deviceConnect", GameEventSinks::SinkClass::kInputEvent }
+};
+
+void EventsApi::RemoveSinks()
+{
+  for (int i = 0; i < g_Sinks.size(); ++i) {
+    GameEventSinks::GetSingleton()->EventSinksAction(
+      g_Sinks[i], GameEventSinks::SinkAction::kRemove);
+  }
+  g_Sinks.clear();
+}
+
+void EventsApi::AddSinks()
+{
+  for (int i = 0; i < g_Sinks.size(); ++i) {
+    GameEventSinks::GetSingleton()->EventSinksAction(
+      g_Sinks[i], GameEventSinks::SinkAction::kAdd);
+  }
+}
+
 class IpcCallbackData
 {
 public:
@@ -372,6 +489,7 @@ void EventsApi::Clear()
 {
   g_chakraThreadId = GetCurrentThreadId();
   g = {};
+  RemoveSinks();
 }
 
 void EventsApi::SendAnimationEventEnter(uint32_t selfId,
@@ -618,94 +736,13 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
   auto eventName = args[1].ToString();
   auto callback = args[2];
 
-  std::set<std::string> events = { "tick",
-                                   "update",
-                                   "effectStart",
-                                   "effectFinish",
-                                   "magicEffectApply",
-                                   "equip",
-                                   "unequip",
-                                   "hit",
-                                   "containerChanged",
-                                   "deathStart",
-                                   "deathEnd",
-                                   "loadGame",
-                                   "combatState",
-                                   "reset",
-                                   "scriptInit",
-                                   "trackedStats",
-                                   "uniqueIdChange",
-                                   "switchRaceComplete",
-                                   "cellFullyLoaded",
-                                   "cellAttach",
-                                   "cellDetach",
-                                   "grabRelease",
-                                   "lockChanged",
-                                   "moveAttachDetach",
-                                   "objectLoaded",
-                                   "waitStart",
-                                   "waitStop",
-                                   "activate",
-                                   "ipcMessage",
-                                   "menuOpen",
-                                   "menuClose",
-                                   "browserMessage",
-                                   "consoleMessage",
-                                   "spellCast",
-                                   "open",
-                                   "close",
-                                   "questInit",
-                                   "questStart",
-                                   "questStop",
-                                   "questStage",
-                                   "trigger",
-                                   "triggerEnter",
-                                   "triggerLeave",
-                                   "sleepStart",
-                                   "sleepStop",
-                                   "locationChanged",
-                                   "bookRead",
-                                   "sell",
-                                   "furnitureEnter",
-                                   "furnitureExit",
-                                   "wardHit",
-                                   "packageStart",
-                                   "packageChange",
-                                   "packageEnd",
-                                   "enterBleedout",
-                                   "destructionStageChanged",
-                                   "sceneAction",
-                                   "playerBowShot",
-                                   "fastTravelEnd",
-                                   "perkEntryRun",
-                                   "translationFailed",
-                                   "translationAlmostCompleted",
-                                   "translationCompleted",
-                                   "actionWeaponSwing",
-                                   "actionBeginDraw",
-                                   "actionEndDraw",
-                                   "actionBowDraw",
-                                   "actionBowRelease",
-                                   "actionBeginSheathe",
-                                   "actionEndSheathe",
-                                   "actionSpellCast",
-                                   "actionSpellFire",
-                                   "actionVoiceCast",
-                                   "actionVoiceFire",
-                                   "cameraStateChanged",
-                                   "crosshairRefChanged",
-                                   "niNodeUpdate",
-                                   "modEvent",
-                                   "positionPlayer",
-                                   "footstep",
-                                   "buttonEvent",
-                                   "mouseMove",
-                                   "thumbstickEvent",
-                                   "kinectEvent",
-                                   "deviceConnect" };
-
-  if (events.count(eventName) == 0) {
+  if (eventSinksMap.count(eventName) == 0) {
     throw InvalidArgumentException("eventName", eventName);
+  }
+
+  if (std::find(g_Sinks.begin(), g_Sinks.end(),
+                eventSinksMap.find(eventName)->second) == g_Sinks.end()) {
+    g_Sinks.push_back(eventSinksMap.find(eventName)->second);
   }
 
   isOnce ? g.callbacksOnce[eventName].push_back(callback)
