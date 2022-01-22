@@ -1,5 +1,4 @@
 #include "PieScript.h"
-#include "WorldState.h"
 #include "MpActor.h"
 #include <random>
 
@@ -11,7 +10,7 @@ int GenerateRandomNumber(int leftBound, int rightBound)
   return distr(g_rng);
 }
 
-PieScript::PieScript()
+PieScript::PieScript(std::vector<std::string> espmFiles)
 {
   lootTable = {
     { LootboxItemType::Weapon,
@@ -52,7 +51,7 @@ PieScript::PieScript()
         { Tier::Tier1, { 0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC } },
         { Tier::Tier2,
           { 0x0006AC4A, 0x0001B3BD, 0x00064B2E, 0x00064B2F, 0x00023D77 } },
-        { Tier::Tier3, { 0x0000353C } }, // change to dlc id 0xXX00353c
+        { Tier::Tier3, { 0x0000353C } },
         { Tier::Tier4, { 0x0003EADE } },
         { Tier::Tier5, { 0x002E504 } },
       } }
@@ -123,14 +122,12 @@ uint32_t PieScript::GetSlotItem(int weaponChance, int armoryChacne,
   int item = GenerateRandomNumber(
     0, lootTable[typeAndTier.first][typeAndTier.second].size() - 1);
   return lootTable[typeAndTier.first][typeAndTier.second][item];
-  ;
 }
 
-void PieScript::Play(WorldState* worldState, uint32_t id)
+void PieScript::Play(MpActor* actor)
 {
-  MpActor& actor = worldState->GetFormAt<MpActor>(id);
-  actor.AddItem(GetSlotItem(80, 10, 8, 2), 1);
-  actor.AddItem(GetSlotItem(10, 80, 8, 2), 1);
-  actor.AddItem(GetSlotItem(10, 50, 30, 10), 1);
-  actor.AddItem(GetSlotItem(0, 0, 94, 6), 1);
+  actor->AddItem(GetSlotItem(80, 10, 8, 2), 1);
+  actor->AddItem(GetSlotItem(10, 80, 8, 2), 1);
+  actor->AddItem(GetSlotItem(10, 50, 30, 10), 1);
+  actor->AddItem(GetSlotItem(0, 0, 94, 6), 1);
 }

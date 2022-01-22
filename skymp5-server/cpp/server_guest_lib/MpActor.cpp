@@ -4,12 +4,12 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "MsgType.h"
+#include "PieScript.h"
 #include "ServerState.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 #include <random>
 #include <string>
-#include "PieScript.h"
 
 const uint32_t APPLIE_PIE = 0x00064B43;
 
@@ -109,11 +109,9 @@ void MpActor::OnEquip(uint32_t baseId)
     WorldState* espmProvider = GetParent();
     std::vector<std::string> espmFiles = espmProvider->espmFiles;
 
-    if (std::find(espmFiles.begin(), espmFiles.end(), "SweetPie.esp") != espmFiles.end()) {
-      if (baseId == APPLIE_PIE) {
-        PieScript pieScript;
-        pieScript.Play(espmProvider, GetFormId());
-      }
+    if (baseId == APPLIE_PIE) {
+      PieScript pieScript(espmFiles);
+      pieScript.Play(this);
     }
   }
 }

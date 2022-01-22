@@ -2,6 +2,7 @@
 #include "WorldState.h"
 #include <unordered_map>
 #include <utility>
+#include "MpChangeForms.h"
 
 class PieScript
 {
@@ -28,11 +29,11 @@ public:
                        std::unordered_map<Tier, std::vector<uint32_t>>>;
 
 public:
-  PieScript();
+  PieScript(std::vector<std::string> espmFiles);
 
 public:
   const LootTable& GetLootTable() const;
-  void Play(WorldState* pWorldState, uint32_t id);
+  void Play(MpActor* actor);
 
 private:
   Tier AcknowledgeTier(int chance);
@@ -44,7 +45,8 @@ private:
                                                           int nothingChance);
 private:
   LootTable lootTable;
-  const int TIER1_CHANCE = 60;
+
+  const int TIER1_CHANCE = 100;
   const int TIER2_CHANCE = 20;
   const int TIER3_CHANCE = 10;
   const int TIER4_CHANCE = 9;
