@@ -385,6 +385,7 @@ export class FormView implements View<FormModel> {
     this.localImmortal = false;
     if (this.textNameId) {
       sp.destroyText(this.textNameId);
+      this.textNameId = undefined;
     }
   }
 
@@ -611,7 +612,7 @@ export class FormView implements View<FormModel> {
       }
     }
 
-    if (model.appearance?.name) {
+    if (this.refrId && model.appearance?.name) {
       const playerActor = sp.Game.getPlayer()!;
       const isVisibleByPlayer = playerActor.getDistance(refr) <= maxNicknameDrawDistance;
       if (isVisibleByPlayer) {
@@ -630,10 +631,18 @@ export class FormView implements View<FormModel> {
           sp.setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
           sp.setTextPos(this.textNameId, textXPos, textYPos);
         }
-      } else if (this.textNameId) {
-        sp.destroyText(this.textNameId);
-        this.textNameId = undefined;
+      } else {
+        this.removeNickname();
       }
+    } else {
+      this.removeNickname();
+    }
+  }
+
+  private removeNickname() {
+    if (this.textNameId) {
+      sp.destroyText(this.textNameId);
+      this.textNameId = undefined;
     }
   }
 
@@ -786,7 +795,6 @@ export class WorldView implements View<WorldModel> {
         printConsole("Update is now allowed");
       });
     });
-    sp.destroyAllTexts();
   }
 
   getRemoteRefrId(clientsideRefrId: number): number {
