@@ -383,10 +383,7 @@ export class FormView implements View<FormModel> {
       }
     }
     this.localImmortal = false;
-    if (this.textNameId) {
-      sp.destroyText(this.textNameId);
-      this.textNameId = undefined;
-    }
+    this.removeNickname();
   }
 
   private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
