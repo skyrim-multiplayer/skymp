@@ -54,8 +54,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     if (targetObjectDesc === this.quitGamePortal) {
       this.controller.quitGame(actorId);
       return 'continue';
-    }
-    else if (targetObjectDesc === this.neutralPortal) {
+    } else if (targetObjectDesc === this.neutralPortal) {
       const round = getAvailableRound(this.rounds, actorId);
       if (!round || !round.map) {
         // TODO: Handle unavailability to find a round
@@ -63,24 +62,24 @@ export class SweetPieGameModeListener implements GameModeListener {
         forceJoinRound(this.controller, this.rounds, round, actorId);
       }
       return 'continue';
-    }
-    else {
-      const round = getPlayerCurrentRound(this.rounds, casterActorId);
+    } else {
+      let round = getPlayerCurrentRound(this.rounds, casterActorId);
+      if (!round) {
+        // We aren't aware of any rounds this player might be in.
+        // However, if they somehow got into the battlefield, we should let them out...
+        round = this.rounds.find((x) => x.map?.leaveRoundDoors?.includes(targetObjectDesc));
+        if (round?.hallPointName) {
+          this.controller.setSpawnPoint(actorId, round.hallPointName);
+          this.controller.teleport(actorId, round.hallPointName);
+          return 'continue';
+        }
+      }
       if (round && round.map) {
         if (round.map.safePlaceEnterDoors?.includes(targetObjectDesc)) {
           this.controller.sendChatMessage(casterActorId, ...this.noEnterSafePlaceMessage);
           return 'blockActivation';
         }
-        // FIXME: leave any round
         if (round.map.leaveRoundDoors?.includes(targetObjectDesc)) {
-          const round = getPlayerCurrentRound(this.rounds, actorId);
-          if (!round) {
-            if (this.rounds[0] && this.rounds[0].hallPointName) {
-              this.controller.setSpawnPoint(actorId, this.rounds[0].hallPointName);
-              this.controller.teleport(actorId, this.rounds[0].hallPointName);
-            }
-            return 'blockActivation';
-          }
           const roundIndex = this.rounds.indexOf(round);
           forceLeaveRound(this.controller, this.rounds, actorId);
           if (round.players?.size === 0) {
