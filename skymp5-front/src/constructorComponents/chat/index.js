@@ -26,14 +26,11 @@ const Chat = (props) => {
     };
   }, [input, isInputFocus]);
 
-  const scrollToLastMessage = () => {
-    const _list = document.querySelector('#chat > .list');
-    if (_list != null) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
-  };
-
   useEffect(() => {
     scrollToLastMessage();
-    inputRef.current.focus();
+    if (inputRef !== undefined && inputRef.current !== undefined) {
+      inputRef.current.focus();
+    }
   }, [props.messages]);
 
   const getMessageText = (text) => {

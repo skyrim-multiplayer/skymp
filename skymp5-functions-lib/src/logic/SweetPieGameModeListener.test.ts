@@ -96,7 +96,7 @@ describe("SweetPieGameModeListener: Chat", () => {
     const listener = new SweetPieGameModeListener(controller);
     listener.onPlayerChatInput(1, "hello!", [1, 2, 3], "SupAidme");
 
-    const msg = '#{a8adad}' + 'SupAidme' + '#{ffffff}: ' + 'hello!';
+    const msg = 'SupAidme: hello!';
     expect(controller.sendChatMessage).toBeCalledTimes(3);
     expect(controller.sendChatMessage).toHaveBeenCalledWith(1, msg);
     expect(controller.sendChatMessage).toHaveBeenCalledWith(2, msg);
