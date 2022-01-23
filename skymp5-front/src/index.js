@@ -9,12 +9,13 @@ import { Provider } from 'react-redux';
 import { Widgets } from './utils/Widgets';
 
 import './main.scss';
+import {login} from "./widgets/ExampleWidgets";
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
 }
 
-window.skyrimPlatform.widgets = new Widgets([]);
+window.skyrimPlatform.widgets = new Widgets([login]);
 
 ReactDOM.render(
   <React.StrictMode>

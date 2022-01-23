@@ -73,9 +73,10 @@ void DX11RenderHandler::Render(
                       textToDraw.string.c_str())) /
         2;
 
-      DirectX::XMVECTORF32 color = { textToDraw.color[0], textToDraw.color[1],
-                                     textToDraw.color[2],
-                                     textToDraw.color[3] };
+      DirectX::XMVECTORF32 color = { static_cast<float>(textToDraw.color[0]),
+                                     static_cast<float>(textToDraw.color[1]),
+                                     static_cast<float>(textToDraw.color[2]),
+                                     static_cast<float>(textToDraw.color[3]) };
       m_pSpriteFont->DrawString(
         m_pSpriteBatch.get(), textToDraw.string.c_str(),
         DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color, 0.f, origin);

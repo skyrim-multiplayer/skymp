@@ -8,7 +8,7 @@ if [ "`basename "$PWD"`" = "build" ]; then
   cd ..
 fi
 
-if [ ! -d .git ]; then
+if [ ! -e .git ]; then
   eecho "This script should be run from either source root or build directory."
   exit 1
 fi

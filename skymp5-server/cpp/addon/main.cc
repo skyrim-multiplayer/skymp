@@ -98,6 +98,7 @@ public:
   Napi::Value SetSendUiMessageImplementation(const Napi::CallbackInfo& info);
   Napi::Value OnUiEvent(const Napi::CallbackInfo& info);
   Napi::Value Clear(const Napi::CallbackInfo& info);
+  Napi::Value WriteLogs(const Napi::CallbackInfo& info);
 
 private:
   void RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine);
@@ -237,7 +238,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("setSendUiMessageImplementation",
                      &ScampServer::SetSendUiMessageImplementation),
       InstanceMethod("onUiEvent", &ScampServer::OnUiEvent),
-      InstanceMethod("clear", &ScampServer::Clear) });
+      InstanceMethod("clear", &ScampServer::Clear),
+      InstanceMethod("writeLogs", &ScampServer::WriteLogs) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -288,6 +290,12 @@ std::shared_ptr<ISaveStorage> CreateSaveStorage(
   return std::make_shared<AsyncSaveStorage>(db, logger);
 }
 
+static std::shared_ptr<spdlog::logger>& GetLogger()
+{
+  static auto g_logger = spdlog::stdout_color_mt("console");
+  return g_logger;
+}
+
 }
 
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
@@ -305,7 +313,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     std::string dataDir;
 
-    auto logger = spdlog::stdout_color_mt("console");
+    const auto& logger = GetLogger();
     partOne->AttachLogger(logger);
 
     std::ifstream f("server-settings.json");
@@ -1563,6 +1571,16 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       return JsValue::Undefined();
     }));
 
+  mp.SetProperty(
+    "sendCustomPacket",
+    JsValue::Function([this, update](const JsFunctionArguments& args) {
+      auto formId = ExtractFormId(args[1]);
+      std::string packet = ExtractNewValueStr(args[2]);
+      auto userId = partOne->GetUserByActor(formId);
+      partOne->SendCustomPacket(userId, packet);
+      return JsValue::Undefined();
+    }));
+
   JsValue::GlobalObject().SetProperty("mp", mp);
 
   JsValue console = JsValue::Object();
@@ -1704,10 +1722,28 @@ Napi::Value ScampServer::Clear(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-Napi::String Method(const Napi::CallbackInfo& info)
+Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
 {
-  Napi::Env env = info.Env();
-  return Napi::String::New(env, "world");
+  try {
+    Napi::String logLevel = info[0].As<Napi::String>();
+    Napi::String message = info[1].As<Napi::String>();
+
+    auto messageStr = static_cast<std::string>(message);
+    while (!messageStr.empty() && messageStr.back() == '\n') {
+      messageStr.pop_back();
+    }
+
+    if (static_cast<std::string>(logLevel) == "info") {
+      GetLogger()->info(messageStr);
+    } else if (static_cast<std::string>(logLevel) == "error") {
+      GetLogger()->error(messageStr);
+    }
+  } catch (std::exception& e) {
+    // No sense to rethrow, NodeJS will unlikely be able to print this
+    // exception
+    GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
+  }
+  return info.Env().Undefined();
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)
