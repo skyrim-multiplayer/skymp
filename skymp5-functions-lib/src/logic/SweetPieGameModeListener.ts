@@ -54,13 +54,23 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, isTeleportDoor: boolean): 'continue' | 'blockActivation' {
+    const actorId = casterActorId;
     if (targetObjectDesc === this.quitGamePortal) {
-      this.controller.showMessageBox(casterActorId, ...this.quitDialog);
-      return 'blockActivation';
+      // this.controller.showMessageBox(casterActorId, ...this.quitDialog);
+        this.controller.quitGame(actorId);
+      // return 'blockActivation';
+      return 'continue';
     }
     else if (targetObjectDesc === this.neutralPortal) {
-      this.controller.showMessageBox(casterActorId, ...this.joinDeathMatchDialog);
-      return 'blockActivation';
+      const round = getAvailableRound(this.rounds, actorId);
+      if (!round || !round.map) {
+        // TODO: Handle unavailability to find a round
+      }
+      else {
+        forceJoinRound(this.controller, this.rounds, round, actorId);
+      }
+      // return 'blockActivation';
+      return 'continue';
     }
     else {
       const round = getPlayerCurrentRound(this.rounds, casterActorId);
@@ -70,8 +80,20 @@ export class SweetPieGameModeListener implements GameModeListener {
           return 'blockActivation';
         }
         if (round.map.leaveRoundDoors?.includes(targetObjectDesc)) {
-          this.controller.showMessageBox(casterActorId, ...this.leaveRoundConfirmationDialog);
-          return 'blockActivation';
+          const round = getPlayerCurrentRound(this.rounds, actorId);
+          if (!round) {
+            if (this.rounds[0] && this.rounds[0].hallPointName) {
+              this.controller.setSpawnPoint(actorId, this.rounds[0].hallPointName);
+              this.controller.teleport(actorId, this.rounds[0].hallPointName);
+            }
+            return 'blockActivation';
+          }
+          const roundIndex = this.rounds.indexOf(round);
+          forceLeaveRound(this.controller, this.rounds, actorId);
+          if (round.players?.size === 0) {
+            this.resetRound(roundIndex);
+          }
+          return 'continue';
         }
         if (round.map.safePlaceLeaveDoors?.includes(targetObjectDesc)) {
           return 'continue';
@@ -88,34 +110,11 @@ export class SweetPieGameModeListener implements GameModeListener {
   onPlayerDialogResponse(actorId: number, dialogId: number, buttonIndex: number) {
     if (dialogId === this.joinDeathMatchDialog[0]) {
       if (buttonIndex === 0) {
-        const round = getAvailableRound(this.rounds, actorId);
-        if (!round || !round.map) {
-          // TODO: Handle unavailability to find a round
-        }
-        else {
-          forceJoinRound(this.controller, this.rounds, round, actorId);
-        }
       }
     } else if (dialogId === this.leaveRoundConfirmationDialog[0]) {
-      const round = getPlayerCurrentRound(this.rounds, actorId);
-      if (!round) {
-        if (this.rounds[0] && this.rounds[0].hallPointName) {
-          this.controller.setSpawnPoint(actorId, this.rounds[0].hallPointName);
-          this.controller.teleport(actorId, this.rounds[0].hallPointName);
-        }
-        return;
-      }
-      const roundIndex = this.rounds.indexOf(round);
-      if (buttonIndex === 0) {
-        forceLeaveRound(this.controller, this.rounds, actorId);
-      }
-      if (round.players?.size === 0) {
-        this.resetRound(roundIndex);
-      }
     }
     else if (dialogId === this.quitDialog[0]) {
       if (buttonIndex === 0) {
-        this.controller.quitGame(actorId);
       }
     }
   }
