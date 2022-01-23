@@ -110,8 +110,12 @@ void MpActor::OnEquip(uint32_t baseId)
     std::vector<std::string> espmFiles = espmProvider->espmFiles;
 
     if (baseId == APPLIE_PIE) {
-      PieScript pieScript(espmFiles);
-      pieScript.Play(this);
+      std::set<std::string> s;
+      s = { espmFiles.begin(), espmFiles.end() };
+      if (s.count("SweetPie.esp")) {
+        PieScript pieScript(espmFiles);
+        pieScript.Play(this);
+      }
     }
   }
 }
