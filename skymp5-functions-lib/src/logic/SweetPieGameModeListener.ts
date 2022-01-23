@@ -71,6 +71,7 @@ export class SweetPieGameModeListener implements GameModeListener {
           this.controller.sendChatMessage(casterActorId, ...this.noEnterSafePlaceMessage);
           return 'blockActivation';
         }
+        // FIXME: leave any round
         if (round.map.leaveRoundDoors?.includes(targetObjectDesc)) {
           const round = getPlayerCurrentRound(this.rounds, actorId);
           if (!round) {
