@@ -50,16 +50,15 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, isTeleportDoor: boolean): 'continue' | 'blockActivation' {
-    const actorId = casterActorId;
     if (targetObjectDesc === this.quitGamePortal) {
-      this.controller.quitGame(actorId);
+      this.controller.quitGame(casterActorId);
       return 'continue';
     } else if (targetObjectDesc === this.neutralPortal) {
-      const round = getAvailableRound(this.rounds, actorId);
+      const round = getAvailableRound(this.rounds, casterActorId);
       if (!round || !round.map) {
         // TODO: Handle unavailability to find a round
       } else {
-        forceJoinRound(this.controller, this.rounds, round, actorId);
+        forceJoinRound(this.controller, this.rounds, round, casterActorId);
       }
       return 'continue';
     } else {
@@ -69,8 +68,8 @@ export class SweetPieGameModeListener implements GameModeListener {
         // However, if they somehow got into the battlefield, we should let them return to lobby...
         round = this.rounds.find((x) => x.map?.leaveRoundDoors?.includes(targetObjectDesc));
         if (round?.hallPointName) {
-          this.controller.setSpawnPoint(actorId, round.hallPointName);
-          this.controller.teleport(actorId, round.hallPointName);
+          this.controller.setSpawnPoint(casterActorId, round.hallPointName);
+          this.controller.teleport(casterActorId, round.hallPointName);
           return 'continue';
         }
       }
@@ -81,7 +80,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         }
         if (round.map.leaveRoundDoors?.includes(targetObjectDesc)) {
           const roundIndex = this.rounds.indexOf(round);
-          forceLeaveRound(this.controller, this.rounds, actorId);
+          forceLeaveRound(this.controller, this.rounds, casterActorId);
           if (round.players?.size === 0) {
             this.resetRound(roundIndex);
           }
