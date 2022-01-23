@@ -4,6 +4,7 @@ import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { ChatProperty } from './src/props/chatProperty';
 import { DialogProperty } from './src/props/dialogProperty';
+import { DisableCheats } from './src/props/disableCheats';
 import { EvalProperty } from './src/props/evalProperty';
 import { LocationalData, Mp, PapyrusObject, PapyrusValue } from './src/types/mp';
 import { Timer } from './src/utils/timer';
@@ -60,7 +61,7 @@ BrowserProperty.init();
 EvalProperty.init();
 ChatProperty.init();
 Timer.init();
-
+DisableCheats.init();
 
 declare const mp: Mp;
 mp.registerPapyrusFunction('global', 'Utility', 'RandomInt', (self, args) => randomInt(mp, self, args));
