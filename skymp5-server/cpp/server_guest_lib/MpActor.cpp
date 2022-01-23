@@ -4,9 +4,14 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "MsgType.h"
+#include "PieScript.h"
 #include "ServerState.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
+#include <random>
+#include <string>
+
+const uint32_t APPLIE_PIE = 0x00064B43;
 
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 {
@@ -100,6 +105,18 @@ void MpActor::OnEquip(uint32_t baseId)
     VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
                         VarValue::None() };
     SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
+
+    WorldState* espmProvider = GetParent();
+    std::vector<std::string> espmFiles = espmProvider->espmFiles;
+
+    if (baseId == APPLIE_PIE) {
+      std::set<std::string> s;
+      s = { espmFiles.begin(), espmFiles.end() };
+      if (s.count("SweetPie.esp")) {
+        PieScript pieScript(espmFiles);
+        pieScript.Play(this);
+      }
+    }
   }
 }
 
