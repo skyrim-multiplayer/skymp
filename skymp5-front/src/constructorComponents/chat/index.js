@@ -60,12 +60,9 @@ const Chat = (props) => {
             <div
                 className="msg"
                 key={`msg-${index}`}
-                // dangerouslySetInnerHTML={{ __html:  }}
+                dangerouslySetInnerHTML={{ __html: getMessageText(msg) }}
                 style={{ marginLeft: '10px' }}
             >
-              {
-                getMessageText(msg)
-              }
             </div>
     ));
   };
