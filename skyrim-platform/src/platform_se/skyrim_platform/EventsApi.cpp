@@ -317,7 +317,7 @@ struct EventsGlobalState
 
 std::vector<GameEventSinks::SinkClass> g_Sinks;
 
-const std::map<std::string, GameEventSinks::SinkClass> eventSinksMap{
+const std::map<std::string, GameEventSinks::SinkClass> kEventSinksMap{
   { "tick", GameEventSinks::SinkClass::kNone },
   { "update", GameEventSinks::SinkClass::kNone },
   { "effectStart",
@@ -736,13 +736,13 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
   auto eventName = args[1].ToString();
   auto callback = args[2];
 
-  if (eventSinksMap.count(eventName) == 0) {
+  if (kEventSinksMap.count(eventName) == 0) {
     throw InvalidArgumentException("eventName", eventName);
   }
 
   if (std::find(g_Sinks.begin(), g_Sinks.end(),
-                eventSinksMap.find(eventName)->second) == g_Sinks.end()) {
-    g_Sinks.push_back(eventSinksMap.find(eventName)->second);
+                kEventSinksMap.find(eventName)->second) == g_Sinks.end()) {
+    g_Sinks.push_back(kEventSinksMap.find(eventName)->second);
   }
 
   isOnce ? g.callbacksOnce[eventName].push_back(callback)
