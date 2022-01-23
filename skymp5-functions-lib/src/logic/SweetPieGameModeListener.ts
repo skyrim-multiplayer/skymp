@@ -65,8 +65,8 @@ export class SweetPieGameModeListener implements GameModeListener {
     } else {
       let round = getPlayerCurrentRound(this.rounds, casterActorId);
       if (!round) {
-        // We aren't aware of any rounds this player might be in.
-        // However, if they somehow got into the battlefield, we should let them out...
+        // We aren't aware of any round this player might be in.
+        // However, if they somehow got into the battlefield, we should let them return to lobby...
         round = this.rounds.find((x) => x.map?.leaveRoundDoors?.includes(targetObjectDesc));
         if (round?.hallPointName) {
           this.controller.setSpawnPoint(actorId, round.hallPointName);
