@@ -419,8 +419,6 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
       mp = CropValue(form.magickaPercentage + percentageDelta);
       break;
     default:
-      throw std::runtime_error(
-        fmt::format("Unsupported actor value type {:}", av));
       return;
   }
   SetPercentages(hp, mp, sp);
