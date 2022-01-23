@@ -17,27 +17,6 @@ describe("SweetPieGameModeListener: Activation default", () => {
   });
 });
 
-/*
-describe("SweetPieGameModeListener: Portals", () => {
-  test("Quit game portal should show quit game dialog", () => {
-    const controller = makePlayerController();
-    const listener = new SweetPieGameModeListener(controller);
-    const res = listener.onPlayerActivateObject(1, listener.quitGamePortal, false);
-    expect(res).toEqual('continue');
-
-    resetMocks(controller);
-    expect(controller.quitGame).toBeCalledWith(1);
-  });
-
-  test("Neutral portal should show deathmatch dialog", () => {
-    const controller = makePlayerController();
-    const listener = new SweetPieGameModeListener(controller);
-    const res = listener.onPlayerActivateObject(1, listener.neutralPortal, false);
-    expect(res).toEqual('continue');
-  });
-});
-*/
-
 describe("SweetPieGameModeListener: DeathMatch", () => {
   test("Player should be able to join round via dialog window", () => {
     const controller = makePlayerController();
