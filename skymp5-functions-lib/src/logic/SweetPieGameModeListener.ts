@@ -13,11 +13,7 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly redPortal = '42e96:SweetPie.esp';
   readonly bluePortal = '42fc1:SweetPie.esp';
 
-  readonly quitDialog: [number, string, string, string[]] = [1001, "Quit game", "Do you want to quit SweetPie?", ["Yes", "No"]];
-  readonly joinDeathMatchDialog: [number, string, string, string[]] = [1002, "Join DeathMatch", "Do you want to join DeathMatch?", ["Yes", "No"]];
-  readonly noEnterSafePlaceDialog: [number, string, string, string[]] = [1003, "No enter", "You cannot go back to safety! Running out of the map is the only option", ["Well"]];
-  readonly leaveRoundConfirmationDialog: [number, string, string, string[]] = [1004, "Leave round", "Do you want to run out?", ["Yes", "No"]];
-
+  readonly noEnterSafePlaceMessage: [string] = ["You cannot go back to safety! Running out of the map is the only option"];
   readonly interiorsBlockedMessage: [string] = ["Interiors are not available during round"];
   readonly warmupFinishedMessage: [string] = ["Warmup finished! Go! You have %d seconds to kill each other!"];
   readonly startingRoundInMessage: [string] = ["Starting round in %d seconds"];
@@ -55,23 +51,40 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, isTeleportDoor: boolean): 'continue' | 'blockActivation' {
     if (targetObjectDesc === this.quitGamePortal) {
-      this.controller.showMessageBox(casterActorId, ...this.quitDialog);
-      return 'blockActivation';
-    }
-    else if (targetObjectDesc === this.neutralPortal) {
-      this.controller.showMessageBox(casterActorId, ...this.joinDeathMatchDialog);
-      return 'blockActivation';
-    }
-    else {
-      const round = getPlayerCurrentRound(this.rounds, casterActorId);
+      this.controller.quitGame(casterActorId);
+      return 'continue';
+    } else if (targetObjectDesc === this.neutralPortal) {
+      const round = getAvailableRound(this.rounds, casterActorId);
+      if (!round || !round.map) {
+        // TODO: Handle unavailability to find a round
+      } else {
+        forceJoinRound(this.controller, this.rounds, round, casterActorId);
+      }
+      return 'continue';
+    } else {
+      let round = getPlayerCurrentRound(this.rounds, casterActorId);
+      if (!round) {
+        // We aren't aware of any round this player might be in.
+        // However, if they somehow got into the battlefield, we should let them return to lobby...
+        round = this.rounds.find((x) => x.map?.leaveRoundDoors?.includes(targetObjectDesc));
+        if (round?.hallPointName) {
+          this.controller.setSpawnPoint(casterActorId, round.hallPointName);
+          this.controller.teleport(casterActorId, round.hallPointName);
+          return 'continue';
+        }
+      }
       if (round && round.map) {
         if (round.map.safePlaceEnterDoors?.includes(targetObjectDesc)) {
-          this.controller.showMessageBox(casterActorId, ...this.noEnterSafePlaceDialog);
+          this.controller.sendChatMessage(casterActorId, ...this.noEnterSafePlaceMessage);
           return 'blockActivation';
         }
         if (round.map.leaveRoundDoors?.includes(targetObjectDesc)) {
-          this.controller.showMessageBox(casterActorId, ...this.leaveRoundConfirmationDialog);
-          return 'blockActivation';
+          const roundIndex = this.rounds.indexOf(round);
+          forceLeaveRound(this.controller, this.rounds, casterActorId);
+          if (round.players?.size === 0) {
+            this.resetRound(roundIndex);
+          }
+          return 'continue';
         }
         if (round.map.safePlaceLeaveDoors?.includes(targetObjectDesc)) {
           return 'continue';
@@ -86,38 +99,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerDialogResponse(actorId: number, dialogId: number, buttonIndex: number) {
-    if (dialogId === this.joinDeathMatchDialog[0]) {
-      if (buttonIndex === 0) {
-        const round = getAvailableRound(this.rounds, actorId);
-        if (!round || !round.map) {
-          // TODO: Handle unavailability to find a round
-        }
-        else {
-          forceJoinRound(this.controller, this.rounds, round, actorId);
-        }
-      }
-    } else if (dialogId === this.leaveRoundConfirmationDialog[0]) {
-      const round = getPlayerCurrentRound(this.rounds, actorId);
-      if (!round) {
-        if (this.rounds[0] && this.rounds[0].hallPointName) {
-          this.controller.setSpawnPoint(actorId, this.rounds[0].hallPointName);
-          this.controller.teleport(actorId, this.rounds[0].hallPointName);
-        }
-        return;
-      }
-      const roundIndex = this.rounds.indexOf(round);
-      if (buttonIndex === 0) {
-        forceLeaveRound(this.controller, this.rounds, actorId);
-      }
-      if (round.players?.size === 0) {
-        this.resetRound(roundIndex);
-      }
-    }
-    else if (dialogId === this.quitDialog[0]) {
-      if (buttonIndex === 0) {
-        this.controller.quitGame(actorId);
-      }
-    }
+    // Moving away from confirmation dialogs till some better times...
+    // TODO(#835): maybe return the dialog system when bugs are fixed?
   }
 
   onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
