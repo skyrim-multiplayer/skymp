@@ -15,7 +15,9 @@ if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
 }
 
-window.skyrimPlatform.widgets = new Widgets([login]);
+if (!window.skyrimPlatform.widgets) {
+  window.skyrimPlatform.widgets = new Widgets([]);
+}
 
 ReactDOM.render(
   <React.StrictMode>
