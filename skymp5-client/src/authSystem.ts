@@ -104,6 +104,7 @@ const onBrowserMessage = (): void => {
         setLoginInfo("processing...");
         loginWithSkympIO(loginData, (msg) => setLoginInfo(msg), (loginResponse) =>
           createPlaySession(loginResponse.token).then((playSession) => {
+            setPlayerAuthMode(false);
             onAuthListeners({ remote: { email: loginData.email, rememberMe: loginData.rememberMe ?? false, session: playSession } })
           })
         );
@@ -126,15 +127,22 @@ const onBrowserMessage = (): void => {
   })
 }
 
+let defaultAutoVanityModeDelay: number = 120;
+const setPlayerAuthMode = (frozen: boolean): void => {
+  if (frozen) {
+    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
+  } else {
+    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", defaultAutoVanityModeDelay);
+  }
+
+  sp.Game.getPlayer()!.setDontMove(frozen);
+  sp.Game.forceFirstPerson();
+}
+
 const loadLobby = (location: Transform): void => {
   sp.once("update", () => {
-    // sp.Game.setInChargen(true, true, false);
-    // sp.Utility.setINIBool("bAlwaysActive:General", true);
-    // sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
-    // sp.Game.enableFastTravel(false);
-    //sp.Game.getPlayer()!.setDontMove(true);
-    // sp.Game.forceFirstPerson();
-
+    defaultAutoVanityModeDelay = sp.Utility.getINIFloat("fAutoVanityModeDelay:Camera");
+    setPlayerAuthMode(true);
     startListenBrowserMessage();
     authData = browser.getAuthData();
     const loginWidgetLoginDataJs = `window.loginData = ${authData ? JSON.stringify(authData) : "{}"};`;
@@ -219,6 +227,7 @@ const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
         case 201:
           loginWithSkympIO(data, (msg) => setRegisterInfo(msg), (loginResponse) =>
             createPlaySession(loginResponse.token).then((playSession) => {
+              setPlayerAuthMode(false);
               onAuthListeners({ remote: { email: data.email, rememberMe: true, session: playSession } })
             })
           );
