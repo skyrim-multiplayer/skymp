@@ -122,7 +122,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
     for (const neighborActorId of neighbors) {
-      this.controller.sendChatMessage(neighborActorId, '#{a8adad}' + senderName + '#{ffffff}: ' + inputText);
+      this.controller.sendChatMessage(neighborActorId, '' + senderName + ': ' + inputText);
     }
   }
 

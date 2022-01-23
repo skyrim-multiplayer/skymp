@@ -33,7 +33,9 @@ const Chat = (props) => {
 
   useEffect(() => {
     scrollToLastMessage();
-    inputRef.current.focus();
+    if (inputRef !== undefined && inputRef.current !== undefined) {
+      inputRef.current.focus();
+    }
   }, [props.messages]);
 
   const getMessageText = (text) => {
