@@ -17,43 +17,17 @@ describe("SweetPieGameModeListener: Activation default", () => {
   });
 });
 
-describe("SweetPieGameModeListener: Portals", () => {
-  test("Quit game portal should show quit game dialog", () => {
-    const controller = makePlayerController();
-    const listener = new SweetPieGameModeListener(controller);
-    const res = listener.onPlayerActivateObject(1, listener.quitGamePortal, false);
-    expect(controller.showMessageBox).toBeCalledWith(1, ...listener.quitDialog);
-    expect(res).toEqual('blockActivation');
-
-    resetMocks(controller);
-    listener.onPlayerDialogResponse(1, listener.quitDialog[0], 0);
-    expect(controller.quitGame).toBeCalledWith(1);
-  });
-
-  test("Neutral portal should show deathmatch dialog", () => {
-    const controller = makePlayerController();
-    const listener = new SweetPieGameModeListener(controller);
-    const res = listener.onPlayerActivateObject(1, listener.neutralPortal, false);
-    expect(controller.showMessageBox).toBeCalledWith(1, ...listener.joinDeathMatchDialog);
-    expect(res).toEqual('blockActivation');
-  });
-});
-
 describe("SweetPieGameModeListener: DeathMatch", () => {
   test("Player should be able to join round via dialog window", () => {
     const controller = makePlayerController();
     const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
     const listener = new SweetPieGameModeListener(controller, maps);
 
-    // We click No
-    listener.onPlayerDialogResponse(1, listener.joinDeathMatchDialog[0], 1);
-    expect(controller.teleport).toBeCalledTimes(0);
-    expect(controller.setSpawnPoint).toBeCalledTimes(0);
-    expect(getPlayerCurrentRound(listener.getRounds(), 1)).toEqual(undefined);
+    const res = listener.onPlayerActivateObject(1, listener.neutralPortal, false);
+    expect(res).toEqual('continue');
 
-    // We click Yes and teleport to the safe place of the round's map
+    // We teleport to the safe place of the round's map
     // It's usually a tavern
-    listener.onPlayerDialogResponse(1, listener.joinDeathMatchDialog[0], 0);
     expect(controller.teleport).toBeCalledWith(1, 'whiterun:safePlace');
     expect(controller.setSpawnPoint).toBeCalledWith(1, 'whiterun:safePlace');
     expect(getPlayerCurrentRound(listener.getRounds(), 1)).toBeTruthy();
@@ -78,7 +52,7 @@ describe("SweetPieGameModeListener: DeathMatch", () => {
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
 
     const res = listener.onPlayerActivateObject(1, 'bbb', true);
-    expect(controller.showMessageBox).toBeCalledWith(1, ...listener.noEnterSafePlaceDialog);
+    expect(controller.sendChatMessage).toBeCalledWith(1, ...listener.noEnterSafePlaceMessage);
     expect(res).toEqual('blockActivation');
   });
 
@@ -88,20 +62,10 @@ describe("SweetPieGameModeListener: DeathMatch", () => {
     const listener = new SweetPieGameModeListener(controller, maps);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
 
-    // Players press E on city gates and see the dialog
-    const res = listener.onPlayerActivateObject(1, 'bbb', true);
-    expect(controller.showMessageBox).toBeCalledWith(1, ...listener.leaveRoundConfirmationDialog);
-    expect(res).toEqual('blockActivation');
-
-    // Player clicks No. Nothing happens
-    resetMocks(controller);
-    listener.onPlayerDialogResponse(1, listener.leaveRoundConfirmationDialog[0], 1);
-    expect(controller.teleport).toBeCalledTimes(0);
-
     listener.getRounds()[0].state = 'running';
 
     // Player clicks Yes. Now it was removed from the round
-    listener.onPlayerDialogResponse(1, listener.leaveRoundConfirmationDialog[0], 0);
+    expect(listener.onPlayerActivateObject(1, 'bbb', true)).toEqual('continue');
     expect(controller.teleport).toBeCalledWith(1, 'hall:spawnPoint');
     expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
     expect(getPlayerCurrentRound(listener.getRounds(), 1)).toEqual(undefined);
@@ -109,7 +73,7 @@ describe("SweetPieGameModeListener: DeathMatch", () => {
 
     // Teleport even if the player isn't in any round
     resetMocks(controller);
-    listener.onPlayerDialogResponse(1, listener.leaveRoundConfirmationDialog[0], 0);
+    expect(listener.onPlayerActivateObject(1, 'bbb', true)).toEqual('continue');
     expect(controller.teleport).toBeCalledWith(1, 'hall:spawnPoint');
     expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
   });
