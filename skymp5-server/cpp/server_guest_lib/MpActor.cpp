@@ -373,29 +373,20 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
     effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
   } else if (t == "INGR") {
     effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
+  } else {
+    return;
   }
-
-  auto changeForm = GetChangeForm();
-  float regeneration = 0;
 
   for (const auto& effect : effects) {
-    if (espm::GetData<espm::MGEF>(effect.effectId, espmProvider)
-          .data.primaryAV == espm::ActorValue::Health) {
-      regeneration += effect.magnitude;
-    }
+    espm::ActorValue av =
+      espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
+    RestoreActorValue(av, effect.magnitude);
   }
-  float maxHealt = GetBaseValues().health;
-  float health =
-    CropValue(changeForm.healthPercentage + regeneration / maxHealt);
-
-  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
-  SetPercentages(health, changeForm.magickaPercentage,
-                 changeForm.staminaPercentage);
 }
 
-void MpActor::ModifyActorValuePercentage(espm::ActorValue av, float value)
+void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
+                                         float percentageDelta)
 {
-  float percentageDelta = value / GetMaximumValues().GetValue(av);
   MpChangeForm form = GetChangeForm();
   float hp = form.healthPercentage;
   float mp = form.magickaPercentage;
@@ -416,6 +407,7 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av, float value)
       return;
   }
   SetPercentages(hp, mp, sp);
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
 }
 
 void MpActor::BeforeDestroy()
@@ -517,12 +509,14 @@ void MpActor::SetIsDead(bool isDead)
 
 void MpActor::RestoreActorValue(espm::ActorValue av, float value)
 {
-  ModifyActorValuePercentage(av, std::abs(value));
+  ModifyActorValuePercentage(
+    av, std::abs(value) / GetMaximumValues().GetValue(av));
 }
 
 void MpActor::DamageActorValue(espm::ActorValue av, float value)
 {
-  ModifyActorValuePercentage(av, -std::abs(value));
+  ModifyActorValuePercentage(
+    av, -std::abs(value) / GetMaximumValues().GetValue(av));
 }
 
 BaseActorValues MpActor::GetBaseValues()

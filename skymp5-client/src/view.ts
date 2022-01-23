@@ -613,7 +613,6 @@ export class FormView implements View<FormModel> {
 
     if (model.appearance?.name) {
       const playerActor = sp.Game.getPlayer()!;
-      // const isVisibleByPlayer = playerActor.hasLOS(refr) && playerActor.getDistance(refr) <= 200;
       const isVisibleByPlayer = playerActor.getDistance(refr) <= maxNicknameDrawDistance;
       if (isVisibleByPlayer) {
         const headScreenPos = sp.worldPointToScreenPoint([
@@ -628,7 +627,7 @@ export class FormView implements View<FormModel> {
         if (!this.textNameId) {
           this.textNameId = sp.createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1]);
         } else {
-          sp.setTextString(this.textNameId, model.appearance.name);
+          sp.setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
           sp.setTextPos(this.textNameId, textXPos, textYPos);
         }
       } else if (this.textNameId) {

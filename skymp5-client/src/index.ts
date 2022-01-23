@@ -33,6 +33,8 @@ export const setLocalDamageMult = (damageMult: number): void => {
   Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
 }
 
+on("update", () => updateWc());
+
 const startClient = (): void => {
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
@@ -56,8 +58,6 @@ const startClient = (): void => {
 
 
   once("update", verifyVersion);
-
-  on("update", () => updateWc());
 
   let lastTimeUpd = 0;
   on("update", () => {

@@ -157,6 +157,12 @@ on("update", () => {
   }
 });
 
+const unequipIronHelmet = () => {
+  const ironHelment = Armor.from(Game.getFormEx(0x00012e4d));
+  const pl = Game.getPlayer();
+  if (pl) pl.unequipItem(ironHelment, false, true);
+};
+
 export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   setInventory(msg: messages.SetInventory): void {
     once("update", () => {
@@ -293,23 +299,44 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (msg.isMe) {
       const task = new SpawnTask();
       once("update", () => {
-        if (!task.running && false) {
+        if (!task.running) {
           task.running = true;
           printConsole("Using moveRefrToPosition to spawn player");
-          TESModPlatform.moveRefrToPosition(
-            Game.getPlayer(),
-            Cell.from(Game.getFormEx(msg.transform.worldOrCell)),
-            WorldSpace.from(Game.getFormEx(msg.transform.worldOrCell)),
-            msg.transform.pos[0],
-            msg.transform.pos[1],
-            msg.transform.pos[2],
-            msg.transform.rot[0],
-            msg.transform.rot[1],
-            msg.transform.rot[2]
-          );
+          (async () => {
+            while (true) {
+              printConsole("Spawning...");
+              TESModPlatform.moveRefrToPosition(
+                Game.getPlayer(),
+                Cell.from(Game.getFormEx(msg.transform.worldOrCell)),
+                WorldSpace.from(Game.getFormEx(msg.transform.worldOrCell)),
+                msg.transform.pos[0],
+                msg.transform.pos[1],
+                msg.transform.pos[2],
+                msg.transform.rot[0],
+                msg.transform.rot[1],
+                msg.transform.rot[2]
+              );
+              await Utility.wait(1);
+              const pl = Game.getPlayer();
+              if (!pl) break;
+              const pos = [pl.getPositionX(), pl.getPositionY(), pl.getPositionZ()];
+              const sqr = (x: number) => x * x;
+              const distance = Math.sqrt(sqr(pos[0] - msg.transform.pos[0]) + sqr(pos[1] - msg.transform.pos[1]));
+              if (distance < 256) {
+                break;
+              } 
+            }
+          })();
           // Unfortunatelly it requires two calls to work
           Utility.wait(1).then(applyPcInv);
           Utility.wait(1.3).then(applyPcInv);
+          // Note: appearance part was copy-pasted
+          if (msg.appearance) {
+            applyAppearanceToPlayer(msg.appearance);
+            if (msg.appearance.isFemale)
+              // Fix gender-specific walking anim
+              (Game.getPlayer() as Actor).resurrect();
+          }
         }
 
         if (msg.props) {
@@ -376,6 +403,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
             once("update", () => {
               applyPcInv();
               Utility.wait(0.3).then(applyPcInv);
+              // Note: appearance part was copy-pasted
               if (msg.appearance) {
                 applyAppearanceToPlayer(msg.appearance);
                 if (msg.appearance.isFemale)
@@ -497,8 +525,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       // and showing this menu at the same time in onConnect
       once("update", () =>
         Utility.wait(0.3).then(() => {
-          const ironHelment = Armor.from(Game.getFormEx(0x00012e4d));
-          (Game.getPlayer() as Actor).unequipItem(ironHelment, false, true);
+          unequipIronHelmet();
           Game.showRaceMenu();
         })
       );
