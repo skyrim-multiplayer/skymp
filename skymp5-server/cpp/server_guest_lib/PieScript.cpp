@@ -22,11 +22,14 @@ void PieScript::AddDLCItems(std::vector<std::string> espmFiles, std::vector<std:
   }
 }
 
+=======
+>>>>>>> upstream/main
 PieScript::PieScript(std::vector<std::string> espmFiles)
 {
   lootTable = {
     { LootboxItemType::Weapon,
       { {
+
           Tier::Tier1,
           { 0x0001397E, 0x00013790, 0x00013981, 0x0002C66F, 0x0001CB64,
             0x00012EB7, 0x00013980, 0x000CADE9, 0x0002C672, 0x0002E6D1,
@@ -176,6 +179,13 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
 }
 
 
+=======
+        { Tier::Tier5, { 0x002E504 } },
+      } }
+  };
+}
+
+>>>>>>> upstream/main
 const PieScript::LootTable& PieScript::GetLootTable() const
 {
   return lootTable;

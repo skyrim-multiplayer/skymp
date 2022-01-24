@@ -2,10 +2,20 @@
 
 Skyrim Platform now supports rendering texts and has methods for manipulating them.
 
+`Data/Platform/Fonts/font.spritefont` is used as a font.
+See [MakeSpriteFont](https://github.com/microsoft/DirectXTK/wiki/MakeSpriteFont) if you want to compile your font into spritefont format.
+
 ## Example
 ```typescript
-skyrimPlatform.createText(600, 600, "Hello", [1,1,0,1])  // Non-ASCII character are not yet supported
+skyrimPlatform.createText(0, 0, "Hello", [1,1,0,1]); // 0,0 is top left. Non-ASCII character are not yet supported.
+skyrimPlatform.browser.setVisible(true); // Texts API takes visibility flag from the browser
 ```
+
+## Complex
+
+This simple API can be used to create dynamic texts attached to 3D points, objects, or even actor bones.
+For example, SkyMP uses this API to draw nicknames  at `NPC Head [Head]` node
+([#783](https://github.com/skyrim-multiplayer/skymp/pull/783/files)).
 
 ## Colors
 

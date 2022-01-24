@@ -4,7 +4,7 @@ import { ChatProperty } from "./props/chatProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
-import { LocationalData, Mp } from "./types/mp";
+import { LocationalData, Mp, PapyrusObject } from "./types/mp";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
@@ -159,13 +159,19 @@ export class MpApiInteractor {
       },
       quitGame(actorId: number): void {
         EvalProperty.eval(actorId, () => {
-          ctx.sp.Game.quitToMainMenu();
-          // TODO: close game
+          ctx.sp.win32.exitProcess();
         });
       },
       getName(actorId: number): string {
         return getName(actorId);
-      }
+      },
+      addItem(actorId: number, itemId: number, count: number): void {
+        mp.callPapyrusFunction(
+          'method', 'ObjectReference', 'AddItem',
+          { type: 'form', desc: mp.getDescFromId(actorId) },
+          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/false]
+        );
+      },
     }
   }
 }

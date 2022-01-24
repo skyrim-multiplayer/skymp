@@ -33,42 +33,36 @@ export const setLocalDamageMult = (damageMult: number): void => {
   Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
 }
 
+const enforceLimitations = () => {
+  Game.setInChargen(true, true, false);
+};
+
+once("update", enforceLimitations);
+loadGameManager.addLoadGameListener(enforceLimitations);
+
+once("update", () => {
+  Utility.setINIBool("bAlwaysActive:General", true);
+  Game.setGameSettingInt("iDeathDropWeaponChance", 0);
+  setLocalDamageMult(defaultLocalDamageMult);
+});
+on("update", () => {
+  Utility.setINIInt("iDifficulty:GamePlay", 5);
+  Game.enableFastTravel(false);
+});
+
+on("update", () => updateWc());
+
 const startClient = (): void => {
+  once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
 
-  const enforceLimitations = () => {
-    Game.setInChargen(true, true, false);
-  };
-
-  once("update", enforceLimitations);
-  loadGameManager.addLoadGameListener(enforceLimitations);
-
-  once("update", () => {
-    Utility.setINIBool("bAlwaysActive:General", true);
-    Game.setGameSettingInt("iDeathDropWeaponChance", 0);
-    setLocalDamageMult(defaultLocalDamageMult);
-  });
-  on("update", () => {
-    Utility.setINIInt("iDifficulty:GamePlay", 5);
-    Game.enableFastTravel(false);
-  });
-
-
   once("update", verifyVersion);
-
-  on("update", () => updateWc());
 
   let lastTimeUpd = 0;
   on("update", () => {
     if (Date.now() - lastTimeUpd <= 2000) return;
     lastTimeUpd = Date.now();
-
-    // Also update weather to be always clear
-    const w = Weather.findWeather(0);
-    if (w) {
-      w.setActive(false, false);
-    }
 
     const gameHourId = 0x38;
     const gameMonthId = 0x36;

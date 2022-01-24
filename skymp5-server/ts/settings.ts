@@ -5,7 +5,7 @@ export class Settings {
   ip: string | null = null;
   port = 7777;
   maxPlayers = 100;
-  master: string | null = null;
+  master: string = "https://skymp.io";
   name = 'Yet Another Server';
   gamemodePath = '...';
   loadOrder = new Array<string>();

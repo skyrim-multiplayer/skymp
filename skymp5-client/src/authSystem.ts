@@ -57,9 +57,29 @@ export const main = (lobbyLocation: Transform): void => {
   }
 }
 
+let defaultAutoVanityModeDelay: number = 120;
+export const setPlayerAuthMode = (frozen: boolean): void => {
+  if (frozen) {
+    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
+  } else {
+    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", defaultAutoVanityModeDelay);
+  }
+
+  sp.Game.getPlayer()!.setDontMove(frozen);
+  sp.Game.forceFirstPerson();
+}
+
 function createPlaySession(token: string) {
   const client = new sp.HttpClient(authUrl);
-  return client.post(`/api/users/me/play/${sp.settings["skymp5-client"]["server-ip"]}:${sp.settings["skymp5-client"]["server-port"]}`, {
+  let masterKey = sp.settings["skymp5-client"]["server-master-key"];
+  if (!masterKey) {
+    masterKey = sp.settings["skymp5-client"]["master-key"];
+  }
+  if (!masterKey) {
+    masterKey = sp.settings["skymp5-client"]["server-ip"] + ":" + sp.settings["skymp5-client"]["server-port"];
+  }
+  sp.printConsole({ masterKey });
+  return client.post(`/api/users/me/play/${masterKey}`, {
     body: '{}',
     contentType: 'application/json',
     headers: {
@@ -120,13 +140,8 @@ const onBrowserMessage = (): void => {
 
 const loadLobby = (location: Transform): void => {
   sp.once("update", () => {
-    // sp.Game.setInChargen(true, true, false);
-    // sp.Utility.setINIBool("bAlwaysActive:General", true);
-    // sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
-    // sp.Game.enableFastTravel(false);
-    //sp.Game.getPlayer()!.setDontMove(true);
-    // sp.Game.forceFirstPerson();
-
+    defaultAutoVanityModeDelay = sp.Utility.getINIFloat("fAutoVanityModeDelay:Camera");
+    setPlayerAuthMode(true);
     startListenBrowserMessage();
     authData = browser.getAuthData();
     const loginWidgetLoginDataJs = `window.loginData = ${authData ? JSON.stringify(authData) : "{}"};`;
@@ -140,6 +155,13 @@ const loadLobby = (location: Transform): void => {
   });
   // todo: for now, the cursor disappears after a few seconds after the browser receives focus. Need to press F6 twice
   // sp.once("loadGame", () => browser.setBrowserFocused(true));
+
+  sp.once("loadGame", () => {
+    // In non-offline mode we still want to see our face in RaceMenu
+    const ironHelment = sp.Armor.from(sp.Game.getFormEx(0x00012e4d));
+    const pl = sp.Game.getPlayer();
+    if (pl) pl.unequipItem(ironHelment, false, true);
+  });
 
   loadGameManager.loadGame(
     location.pos,

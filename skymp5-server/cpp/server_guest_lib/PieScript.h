@@ -14,7 +14,7 @@ public:
     Weapon = 0,
     Armor,
     Consumable,
-  };
+};
 
   enum class Tier
   {
@@ -47,7 +47,6 @@ private:
   void AddDLCItems(std::vector<std::string> espmFiles,
                    std::vector<std::string> items, LootboxItemType type,
                    Tier tier);
-
 private:
   LootTable lootTable;
 
