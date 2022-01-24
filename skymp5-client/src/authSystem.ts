@@ -57,6 +57,18 @@ export const main = (lobbyLocation: Transform): void => {
   }
 }
 
+let defaultAutoVanityModeDelay: number = 120;
+export const setPlayerAuthMode = (frozen: boolean): void => {
+  if (frozen) {
+    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
+  } else {
+    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", defaultAutoVanityModeDelay);
+  }
+
+  sp.Game.getPlayer()!.setDontMove(frozen);
+  sp.Game.forceFirstPerson();
+}
+
 function createPlaySession(token: string) {
   const client = new sp.HttpClient(authUrl);
   let masterKey = sp.settings["skymp5-client"]["server-master-key"];
@@ -104,7 +116,6 @@ const onBrowserMessage = (): void => {
         setLoginInfo("processing...");
         loginWithSkympIO(loginData, (msg) => setLoginInfo(msg), (loginResponse) =>
           createPlaySession(loginResponse.token).then((playSession) => {
-            setPlayerAuthMode(false);
             onAuthListeners({ remote: { email: loginData.email, rememberMe: loginData.rememberMe ?? false, session: playSession } })
           })
         );
@@ -125,18 +136,6 @@ const onBrowserMessage = (): void => {
       onBrowserMessage();
     }
   })
-}
-
-let defaultAutoVanityModeDelay: number = 120;
-const setPlayerAuthMode = (frozen: boolean): void => {
-  if (frozen) {
-    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", 72000.0);
-  } else {
-    sp.Utility.setINIFloat("fAutoVanityModeDelay:Camera", defaultAutoVanityModeDelay);
-  }
-
-  sp.Game.getPlayer()!.setDontMove(frozen);
-  sp.Game.forceFirstPerson();
 }
 
 const loadLobby = (location: Transform): void => {
@@ -227,7 +226,6 @@ const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
         case 201:
           loginWithSkympIO(data, (msg) => setRegisterInfo(msg), (loginResponse) =>
             createPlaySession(loginResponse.token).then((playSession) => {
-              setPlayerAuthMode(false);
               onAuthListeners({ remote: { email: data.email, rememberMe: true, session: playSession } })
             })
           );

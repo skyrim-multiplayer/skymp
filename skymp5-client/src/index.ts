@@ -53,6 +53,7 @@ on("update", () => {
 on("update", () => updateWc());
 
 const startClient = (): void => {
+  once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
 
