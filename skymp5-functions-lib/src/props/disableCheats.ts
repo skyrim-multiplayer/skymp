@@ -24,6 +24,9 @@ export class DisableCheats {
 
       // Disable tcl
       ctx.sp.findConsoleCommand("ToggleCollision").execute = () => false;
+
+      // Disable tgm
+      ctx.sp.findConsoleCommand("ToggleGodMode").execute = () => false;
     };
   }
 }
