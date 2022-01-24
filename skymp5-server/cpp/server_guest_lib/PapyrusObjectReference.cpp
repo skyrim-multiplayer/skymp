@@ -59,6 +59,7 @@ VarValue PapyrusObjectReference::AddItem(
     return VarValue::None();
 
   std::vector<uint32_t> formIds;
+  bool runSkympHacks = false;
 
   if (auto formlist = espm::Convert<espm::FLST>(item.rec)) {
     formIds =
@@ -66,16 +67,20 @@ VarValue PapyrusObjectReference::AddItem(
         .formIds;
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
+    runSkympHacks = true;
+  }
+
+  for (auto itemId : formIds) {
+    selfRefr->AddItem(itemId, count);
+  }
+
+  if (runSkympHacks) {
     if (!silent && count > 0) {
       if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
         (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(actor);
       }
     }
-  }
-
-  for (auto itemId : formIds) {
-    selfRefr->AddItem(itemId, count);
   }
 
   return VarValue::None();
@@ -93,10 +98,11 @@ VarValue PapyrusObjectReference::RemoveItem(
   bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto refrToAdd = GetFormPtr<MpObjectReference>(arguments[3]);
 
-  if (!selfRefr || !item.rec || count <= 0)
+  if (!selfRefr || !item.rec)
     return VarValue::None();
 
   std::vector<uint32_t> formIds;
+  bool runSkympHacks = false;
 
   if (auto formlist = espm::Convert<espm::FLST>(item.rec)) {
     formIds =
@@ -104,6 +110,16 @@ VarValue PapyrusObjectReference::RemoveItem(
         .formIds;
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
+    runSkympHacks = true;
+  }
+
+  for (auto itemId : formIds) {
+    uint32_t maxCount = selfRefr->GetInventory().GetItemCount(itemId);
+    uint32_t realCount = count > maxCount ? maxCount : count;
+    selfRefr->RemoveItem(itemId, realCount, refrToAdd);
+  }
+
+  if (runSkympHacks) {
     if (!silent && count > 0) {
       if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
@@ -111,12 +127,6 @@ VarValue PapyrusObjectReference::RemoveItem(
           .Execute(actor);
       }
     }
-  }
-
-  for (auto itemId : formIds) {
-    uint32_t maxCount = selfRefr->GetInventory().GetItemCount(itemId);
-    uint32_t realCount = count > maxCount ? maxCount : count;
-    selfRefr->RemoveItem(itemId, realCount, refrToAdd);
   }
 
   return VarValue::None();
