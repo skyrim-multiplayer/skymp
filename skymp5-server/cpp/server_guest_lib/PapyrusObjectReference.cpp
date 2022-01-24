@@ -77,7 +77,7 @@ VarValue PapyrusObjectReference::AddItem(
   for (auto itemId : formIds) {
     selfRefr->AddItem(itemId, count);
   }
-  
+
   return VarValue::None();
 }
 
@@ -107,7 +107,8 @@ VarValue PapyrusObjectReference::RemoveItem(
     if (!silent && count > 0) {
       if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
-        (void)SpSnippet("SkympHacks", "RemoveItem", args.data()).Execute(actor);
+        (void)SpSnippet("SkympHacks", "RemoveItem", args.data())
+          .Execute(actor);
       }
     }
   }
