@@ -106,7 +106,7 @@ void MpActor::OnEquip(uint32_t baseId)
 
     WorldState* espmProvider = GetParent();
     std::vector<std::string> espmFiles = espmProvider->espmFiles;
-
+    
     constexpr uint32_t kApplePieId0 = 0x00064B43;
     constexpr uint32_t kApplePieId1 = 0x0300353B;
     constexpr uint32_t kApplePieId2 = 0x03003539;
