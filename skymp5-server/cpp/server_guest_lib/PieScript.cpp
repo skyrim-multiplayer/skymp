@@ -1,8 +1,8 @@
 #include "PieScript.h"
+#include "FormDesc.h"
 #include "MpActor.h"
 #include <random>
 #include <vector>
-#include "FormDesc.h"
 
 std::mt19937 g_rng{ std::random_device{}() };
 
@@ -12,7 +12,9 @@ int GenerateRandomNumber(int leftBound, int rightBound)
   return distr(g_rng);
 }
 
-void PieScript::AddDLCItems(std::vector<std::string> espmFiles, std::vector<std::string> items, LootboxItemType type, Tier tier)
+void PieScript::AddDLCItems(std::vector<std::string> espmFiles,
+                            std::vector<std::string> items,
+                            LootboxItemType type, Tier tier)
 {
   for (auto item : items) {
     FormDesc formDesc = FormDesc::FromString(item);
@@ -22,14 +24,12 @@ void PieScript::AddDLCItems(std::vector<std::string> espmFiles, std::vector<std:
   }
 }
 
-=======
->>>>>>> upstream/main
 PieScript::PieScript(std::vector<std::string> espmFiles)
 {
   lootTable = {
     { LootboxItemType::Weapon,
-      { {
-
+      {
+        {
           Tier::Tier1,
           { 0x0001397E, 0x00013790, 0x00013981, 0x0002C66F, 0x0001CB64,
             0x00012EB7, 0x00013980, 0x000CADE9, 0x0002C672, 0x0002E6D1,
@@ -54,7 +54,8 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
           { 0x000139B6, 0x000139B3, 0x000139BA, 0x000240D2, 0x000233E3,
             0x000139B9, 0x000139B4, 0x0009CCDC, 0x0004A38F, 0x0002ACD2,
             0x0001C4E6, 0x000956B5, 0x0004E4EE, 0x0006A13C, 0x000139B7,
-            0x000139B8 } } } },
+            0x000139B8 } },
+      } },
     { LootboxItemType::Armor,
       {
         { Tier::Tier1,
@@ -102,7 +103,6 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
         { Tier::Tier1, { 0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC } },
         { Tier::Tier2,
           { 0x0006AC4A, 0x0001B3BD, 0x00064B2E, 0x00064B2F, 0x00023D77 } },
-        { Tier::Tier3, { 0x0000353C } },
         { Tier::Tier4, { 0x0003EADE } },
         { Tier::Tier5, { 0x0003EAE3 } },
       } }
@@ -178,14 +178,6 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
               Tier::Tier3);
 }
 
-
-=======
-        { Tier::Tier5, { 0x002E504 } },
-      } }
-  };
-}
-
->>>>>>> upstream/main
 const PieScript::LootTable& PieScript::GetLootTable() const
 {
   return lootTable;
@@ -235,7 +227,6 @@ PieScript::AcknowledgeTypeAndTier(int weaponChance, int armorChance,
     type = LootboxItemType::Consumable;
     tier = AcknowledgeTier(chance);
   } else {
-    type = LootboxItemType::Nothing;
   }
 
   std::pair<LootboxItemType, Tier> tierAndType = std::make_pair(type, tier);
