@@ -64,12 +64,6 @@ const startClient = (): void => {
     if (Date.now() - lastTimeUpd <= 2000) return;
     lastTimeUpd = Date.now();
 
-    // Also update weather to be always clear
-    const w = Weather.findWeather(0);
-    if (w) {
-      w.setActive(false, false);
-    }
-
     const gameHourId = 0x38;
     const gameMonthId = 0x36;
     const gameDayId = 0x37;
