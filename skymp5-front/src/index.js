@@ -15,7 +15,9 @@ if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
 }
 
-window.skyrimPlatform.widgets = new Widgets([login]);
+if (!window.skyrimPlatform.widgets) {
+  window.skyrimPlatform.widgets = new Widgets([]);
+}
 
 ReactDOM.render(
   <React.StrictMode>
@@ -25,3 +27,9 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById('root')
 );
+
+// Called from skymp5-functions-lib, chatProperty.ts
+window.scrollToLastMessage = () => {
+  const _list = document.querySelector('#chat > .list');
+  if (_list != null) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
+};

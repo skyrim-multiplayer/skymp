@@ -1,6 +1,6 @@
 import { JsonSerializable } from './mp';
 
-import * as skyrimPlatform from './skyrimPlatform';
+import * as skyrimPlatform from 'skyrimPlatform';
 
 export interface Ctx<S = Record<string, JsonSerializable>, V = JsonSerializable> {
   /**

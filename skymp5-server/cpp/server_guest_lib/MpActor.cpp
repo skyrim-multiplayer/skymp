@@ -4,9 +4,12 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "MsgType.h"
+#include "PieScript.h"
 #include "ServerState.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
+#include <random>
+#include <string>
 
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 {
@@ -100,6 +103,27 @@ void MpActor::OnEquip(uint32_t baseId)
     VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
                         VarValue::None() };
     SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
+
+    WorldState* espmProvider = GetParent();
+    std::vector<std::string> espmFiles = espmProvider->espmFiles;
+
+    constexpr uint32_t kApplePieId0 = 0x00064B43;
+    constexpr uint32_t kApplePieId1 = 0x0300353B;
+    constexpr uint32_t kApplePieId2 = 0x03003539;
+    constexpr uint32_t kApplePieId3 = 0x0300353A;
+    bool isPie = false;
+    isPie = isPie || baseId == kApplePieId0;
+    isPie = isPie || baseId == kApplePieId1;
+    isPie = isPie || baseId == kApplePieId2;
+    isPie = isPie || baseId == kApplePieId3;
+    if (isPie) {
+      std::set<std::string> s;
+      s = { espmFiles.begin(), espmFiles.end() };
+      if (s.count("SweetPie.esp")) {
+        PieScript pieScript(espmFiles);
+        pieScript.Play(this);
+      }
+    }
   }
 }
 
@@ -402,8 +426,6 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
       mp = CropValue(form.magickaPercentage + percentageDelta);
       break;
     default:
-      throw std::runtime_error(
-        fmt::format("Unsupported actor value type {:}", av));
       return;
   }
   SetPercentages(hp, mp, sp);
