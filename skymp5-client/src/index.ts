@@ -33,29 +33,29 @@ export const setLocalDamageMult = (damageMult: number): void => {
   Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
 }
 
+const enforceLimitations = () => {
+  Game.setInChargen(true, true, false);
+};
+
+once("update", enforceLimitations);
+loadGameManager.addLoadGameListener(enforceLimitations);
+
+once("update", () => {
+  Utility.setINIBool("bAlwaysActive:General", true);
+  Game.setGameSettingInt("iDeathDropWeaponChance", 0);
+  setLocalDamageMult(defaultLocalDamageMult);
+});
+on("update", () => {
+  Utility.setINIInt("iDifficulty:GamePlay", 5);
+  Game.enableFastTravel(false);
+});
+
 on("update", () => updateWc());
 
 const startClient = (): void => {
+  once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
-
-  const enforceLimitations = () => {
-    Game.setInChargen(true, true, false);
-  };
-
-  once("update", enforceLimitations);
-  loadGameManager.addLoadGameListener(enforceLimitations);
-
-  once("update", () => {
-    Utility.setINIBool("bAlwaysActive:General", true);
-    Game.setGameSettingInt("iDeathDropWeaponChance", 0);
-    setLocalDamageMult(defaultLocalDamageMult);
-  });
-  on("update", () => {
-    Utility.setINIInt("iDifficulty:GamePlay", 5);
-    Game.enableFastTravel(false);
-  });
-
 
   once("update", verifyVersion);
 
