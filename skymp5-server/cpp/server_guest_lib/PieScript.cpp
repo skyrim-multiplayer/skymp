@@ -23,7 +23,6 @@ void PieScript::AddDLCItems(std::vector<std::string> espmFiles,
     lootTable[type][tier].push_back(id);
   }
 }
-
 PieScript::PieScript(std::vector<std::string> espmFiles)
 {
   lootTable = {
@@ -103,6 +102,7 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
         { Tier::Tier1, { 0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC } },
         { Tier::Tier2,
           { 0x0006AC4A, 0x0001B3BD, 0x00064B2E, 0x00064B2F, 0x00023D77 } },
+        { Tier::Tier3, { 0x0000353C } },
         { Tier::Tier4, { 0x0003EADE } },
         { Tier::Tier5, { 0x0003EAE3 } },
       } }
