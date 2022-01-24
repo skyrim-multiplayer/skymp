@@ -66,18 +66,18 @@ VarValue PapyrusObjectReference::AddItem(
         .formIds;
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
+    if (!silent && count > 0) {
+      if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
+        auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
+        (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(actor);
+      }
+    }
   }
 
   for (auto itemId : formIds) {
     selfRefr->AddItem(itemId, count);
   }
-
-  if (!silent && count > 0) {
-    if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
-      auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
-      (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(actor);
-    }
-  }
+  
   return VarValue::None();
 }
 
@@ -104,19 +104,18 @@ VarValue PapyrusObjectReference::RemoveItem(
         .formIds;
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
+    if (!silent && count > 0) {
+      if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
+        auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
+        (void)SpSnippet("SkympHacks", "RemoveItem", args.data()).Execute(actor);
+      }
+    }
   }
 
   for (auto itemId : formIds) {
     uint32_t maxCount = selfRefr->GetInventory().GetItemCount(itemId);
     uint32_t realCount = count > maxCount ? maxCount : count;
     selfRefr->RemoveItem(itemId, realCount, refrToAdd);
-  }
-
-  if (!silent && count > 0) {
-    if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
-      auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
-      (void)SpSnippet("SkympHacks", "RemoveItem", args.data()).Execute(actor);
-    }
   }
 
   return VarValue::None();
