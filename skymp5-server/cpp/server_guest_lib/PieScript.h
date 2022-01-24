@@ -3,6 +3,8 @@
 #include "WorldState.h"
 #include <unordered_map>
 #include <utility>
+#include <vector>
+#include <string>
 
 class PieScript
 {
@@ -12,7 +14,6 @@ public:
     Weapon = 0,
     Armor,
     Consumable,
-    Nothing
   };
 
   enum class Tier
@@ -43,13 +44,16 @@ private:
                                                           int armoryChance,
                                                           int consumableChance,
                                                           int nothingChance);
+  void AddDLCItems(std::vector<std::string> espmFiles,
+                   std::vector<std::string> items, LootboxItemType type,
+                   Tier tier);
 
 private:
   LootTable lootTable;
 
-  const int TIER1_CHANCE = 100;
-  const int TIER2_CHANCE = 20;
-  const int TIER3_CHANCE = 10;
+  const int TIER1_CHANCE = 10;
+  const int TIER2_CHANCE = 10;
+  const int TIER3_CHANCE = 70;
   const int TIER4_CHANCE = 9;
   const int TIER5_CHANCE = 1;
 };
