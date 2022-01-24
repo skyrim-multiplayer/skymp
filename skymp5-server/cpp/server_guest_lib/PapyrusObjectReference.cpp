@@ -50,7 +50,7 @@ VarValue PapyrusObjectReference::AddItem(
 {
   if (arguments.size() < 3)
     return VarValue::None();
-  auto item = GetRecordPtr(arguments[0]);
+  const auto& item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
@@ -58,8 +58,19 @@ VarValue PapyrusObjectReference::AddItem(
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
-  auto itemId = item.ToGlobalId(item.rec->GetId());
-  selfRefr->AddItem(itemId, count);
+  std::vector<uint32_t> formIds;
+
+  if (auto formlist = espm::Convert<espm::FLST>(item.rec)) {
+    formIds =
+      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
+        .formIds;
+  } else {
+    formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
+  }
+
+  for (auto itemId : formIds) {
+    selfRefr->AddItem(itemId, count);
+  }
 
   if (!silent && count > 0) {
     if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
@@ -76,20 +87,30 @@ VarValue PapyrusObjectReference::RemoveItem(
   if (arguments.size() < 4)
     return VarValue::None();
 
-  auto item = GetRecordPtr(arguments[0]);
+  const auto& item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
   bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto refrToAdd = GetFormPtr<MpObjectReference>(arguments[3]);
 
-  if (!selfRefr || !item.rec)
+  if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
-  auto itemId = item.ToGlobalId(item.rec->GetId());
-  auto realCount = selfRefr->GetInventory().GetItemCount(itemId);
-  count = count > realCount ? realCount : count;
+  std::vector<uint32_t> formIds;
 
-  selfRefr->RemoveItem(itemId, count, refrToAdd);
+  if (auto formlist = espm::Convert<espm::FLST>(item.rec)) {
+    formIds =
+      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
+        .formIds;
+  } else {
+    formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
+  }
+
+  for (auto itemId : formIds) {
+    uint32_t maxCount = selfRefr->GetInventory().GetItemCount(itemId);
+    uint32_t realCount = count > maxCount ? maxCount : count;
+    selfRefr->RemoveItem(itemId, realCount, refrToAdd);
+  }
 
   if (!silent && count > 0) {
     if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
