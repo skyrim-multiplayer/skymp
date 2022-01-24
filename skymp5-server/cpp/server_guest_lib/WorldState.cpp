@@ -284,11 +284,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       return false;
     }
     auto formId = espm::GetMappedId(record->GetId(), mapping);
-    if (formId != 0x062353DF && formId != 0x062353EB && formId != 0x062353ED) {
-      logger->info("!!!skipping actor {0:x}", formId);
+    if (baseId != 0x06362334 && baseId != 0x062353ED && baseId != 0x062353EB && baseId != 0x062353DF) {
+      logger->info("!!!skipping actor formId={0:x}", formId);
       return false;
     }
-    logger->info("!!!SPAWNING actor {0:x}", formId);
+    logger->info("!!!SPAWNING actor formId={0:x}", formId);
   }
 
   auto formId = espm::GetMappedId(record->GetId(), mapping);
