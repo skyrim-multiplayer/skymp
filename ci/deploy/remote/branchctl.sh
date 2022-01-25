@@ -24,5 +24,14 @@ docker run -d --restart=always --name="skymp-server-$branch" --network=host \
 # ^ limited to 50% of CPU: https://stackoverflow.com/a/41552172
 # TODO(#584): replace vcpkg-deps with lite runtime image
 
-timeout 7m docker logs -f "skymp-server-$branch" \
-  |& grep -q 'AttachSaveStorage took'
+for ((t = 0; t < 150; t += 5)); do
+    if docker logs "skymp-server-$branch" \
+            |& grep -q 'AttachSaveStorage took'; then
+        echo health check success
+        exit 0
+    fi
+    sleep 5
+done
+
+echo health check failed
+exit 1
