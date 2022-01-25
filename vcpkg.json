@@ -33,6 +33,10 @@
     {
       "name": "cef-prebuilt",
       "platform": "windows"
+    },
+    {
+      "name": "asio",
+      "platform": "windows"
     }
   ]
 }
