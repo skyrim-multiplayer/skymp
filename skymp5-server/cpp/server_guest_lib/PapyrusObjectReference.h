@@ -27,6 +27,8 @@ public:
                                const std::vector<VarValue>& arguments);
   VarValue Activate(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue OnItemAdded(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(
     VirtualMachine& vm,
     std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
@@ -49,5 +51,7 @@ public:
     AddMethod(vm, "IsActivationBlocked",
               &PapyrusObjectReference::IsActivationBlocked);
     AddMethod(vm, "Activate", &PapyrusObjectReference::Activate);
+    AddMethod(vm, "OnItemAdded", &PapyrusObjectReference::OnItemAdded);
+    
   }
 };
