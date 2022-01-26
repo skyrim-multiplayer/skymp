@@ -25,11 +25,13 @@ const Chat = (props) => {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [input, isInputFocus]);
+
   useEffect(() => {
     if (inputRef !== undefined && inputRef.current !== undefined && !isInputHidden) {
       inputRef.current.focus();
     }
-  }, [isInputHidden])
+  }, [isInputHidden]);
+  
   useEffect(() => {
     scrollToLastMessage();
     if (inputRef !== undefined && inputRef.current !== undefined) {
