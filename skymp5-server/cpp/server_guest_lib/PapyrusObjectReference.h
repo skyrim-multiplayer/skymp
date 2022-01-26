@@ -52,6 +52,5 @@ public:
               &PapyrusObjectReference::IsActivationBlocked);
     AddMethod(vm, "Activate", &PapyrusObjectReference::Activate);
     AddMethod(vm, "OnItemAdded", &PapyrusObjectReference::OnItemAdded);
-    
   }
 };
