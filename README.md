@@ -41,7 +41,6 @@ Before your start make sure that your system meets the conditions:
 * [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
 * .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
 * Python 3.9.x 64bit or 32bit *(Visual Studio Installer -> Idividual components -> search for python)*
-* Python 2.7.18 can be also installed by Visual Studio Installer
 
 ### Linux
 
