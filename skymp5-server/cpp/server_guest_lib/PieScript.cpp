@@ -109,8 +109,8 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
 
   lootTable[LootboxItemType::Weapon][Tier::Tier2].push_back(0x12);
   std::vector<std::string> weaponTier3 = {
-    "00D098:Dawnguard.esm",  "01CDB1:Dragonborn.esm",  "01CDAD:Dragonborn.esm",
-    "00DD55:Dawnguard.esm",  "01CDAF:Dragonborn.esm",  "01CDB0:Dragonborn.esm",
+    "00D098:Dawnguard.esm",  "01CDB1:Dragonborn.esm", "01CDAD:Dragonborn.esm",
+    "00DD55:Dawnguard.esm",  "01CDAF:Dragonborn.esm", "01CDB0:Dragonborn.esm",
     "01CDAF:Dragonborn.esm", "01CDB0:Dragonborn.esm", "00084E:HearthFires.esm",
     "01CDAE:Dragonborn.esm", "01CDB2:Dragonborn.esm", "01CDB3:Dragonborn.esm"
   };
