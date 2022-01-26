@@ -23,7 +23,11 @@ class Chat extends React.Component {
   componentDidUpdate(prevProps) {
     if (prevProps.list !== this.props.list) this.scrollToLastMessage();
 
-    if (this.getInputShowBool()) this.ref_input.current.focus();
+    if (this.getInputShowBool()) {
+      if (this.ref_input !== undefined && this.ref_input.current !== undefined) {
+        this.ref_input.current.focus();
+      }
+    }
   }
 
   onKeyDown(e) {

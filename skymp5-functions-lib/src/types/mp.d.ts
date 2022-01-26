@@ -112,6 +112,7 @@ export interface Mp {
   get(formId: number, propertyName: 'baseDesc'): string;
   get(formId: 0, propertyName: 'onlinePlayers'): number[];
   get(formId: number, propertyName: 'isDead'): boolean;
+  get(formId: number, propertyName: 'worldOrCellDesc'): string;
 
   /**
    * Modifies value of the specified property.
@@ -160,7 +161,7 @@ export interface Mp {
 
   getDescFromId(formId: number): string;
 
-  getIdFromDesc(formDesc: string): Number;
+  getIdFromDesc(formDesc: string): number;
 
   place(globalRecordId: number): number;
 

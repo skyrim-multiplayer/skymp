@@ -11,8 +11,6 @@
 #include <random>
 #include <string>
 
-const uint32_t APPLIE_PIE = 0x00064B43;
-
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 {
   Impl(MpChangeForm changeForm_, MpObjectReference* self_)
@@ -109,7 +107,16 @@ void MpActor::OnEquip(uint32_t baseId)
     WorldState* espmProvider = GetParent();
     std::vector<std::string> espmFiles = espmProvider->espmFiles;
 
-    if (baseId == APPLIE_PIE) {
+    constexpr uint32_t kApplePieId0 = 0x00064B43;
+    constexpr uint32_t kApplePieId1 = 0x0300353B;
+    constexpr uint32_t kApplePieId2 = 0x03003539;
+    constexpr uint32_t kApplePieId3 = 0x0300353A;
+    bool isPie = false;
+    isPie = isPie || baseId == kApplePieId0;
+    isPie = isPie || baseId == kApplePieId1;
+    isPie = isPie || baseId == kApplePieId2;
+    isPie = isPie || baseId == kApplePieId3;
+    if (isPie) {
       std::set<std::string> s;
       s = { espmFiles.begin(), espmFiles.end() };
       if (s.count("SweetPie.esp")) {
@@ -419,8 +426,6 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
       mp = CropValue(form.magickaPercentage + percentageDelta);
       break;
     default:
-      throw std::runtime_error(
-        fmt::format("Unsupported actor value type {:}", av));
       return;
   }
   SetPercentages(hp, mp, sp);
