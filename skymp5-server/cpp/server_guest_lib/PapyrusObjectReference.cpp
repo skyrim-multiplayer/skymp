@@ -137,14 +137,26 @@ VarValue PapyrusObjectReference::GetItemCount(
 {
   if (arguments.size() >= 1) {
     auto selfRefr = GetFormPtr<MpObjectReference>(self);
+    if (!selfRefr) {
+      return VarValue(0);
+    }
     auto& form = GetRecordPtr(arguments[0]);
 
-    const uint32_t formId = form.ToGlobalId(form.rec->GetId());
+    std::vector<uint32_t> formIds;
 
-    if (selfRefr) {
-      return VarValue(
-        static_cast<int>(selfRefr->GetInventory().GetItemCount(formId)));
+    if (auto formlist = espm::Convert<espm::FLST>(form.rec)) {
+      formIds =
+        espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
+          .formIds;
+    } else {
+      formIds.emplace_back(form.ToGlobalId(form.rec->GetId()));
     }
+
+    uint32_t count = 0;
+    for (auto& formId : formIds) {
+      count += selfRefr->GetInventory().GetItemCount(formId);
+    }
+    return VarValue(static_cast<int>(count));
   }
   return VarValue(0);
 }
