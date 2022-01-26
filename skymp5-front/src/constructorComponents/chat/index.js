@@ -27,6 +27,12 @@ const Chat = (props) => {
   }, [input, isInputFocus]);
 
   useEffect(() => {
+    if (inputRef !== undefined && inputRef.current !== undefined && !isInputHidden) {
+      inputRef.current.focus();
+    }
+  }, [isInputHidden]);
+  
+  useEffect(() => {
     scrollToLastMessage();
     if (inputRef !== undefined && inputRef.current !== undefined) {
       inputRef.current.focus();
