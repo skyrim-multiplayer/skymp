@@ -273,9 +273,3 @@ VarValue PapyrusObjectReference::Activate(
   }
   return VarValue::None();
 }
-
-VarValue PapyrusObjectReference::OnItemAdded(
-  VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue();
-}
