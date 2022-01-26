@@ -141,7 +141,6 @@ VarValue PapyrusObjectReference::GetItemCount(
       return VarValue(0);
     }
     auto& form = GetRecordPtr(arguments[0]);
-
     std::vector<uint32_t> formIds;
 
     if (auto formlist = espm::Convert<espm::FLST>(form.rec)) {
@@ -155,6 +154,7 @@ VarValue PapyrusObjectReference::GetItemCount(
     uint32_t count = 0;
     for (auto& formId : formIds) {
       count += selfRefr->GetInventory().GetItemCount(formId);
+
     }
     return VarValue(static_cast<int>(count));
   }

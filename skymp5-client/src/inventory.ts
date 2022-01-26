@@ -196,7 +196,7 @@ const getExtraContainerChangesAsInventory = (
   const extraContainerChanges = getExtraContainerChanges(refr.getFormID());
   const entries = new Array<Entry>();
 
-  extraContainerChanges.forEach((changesEntry) => {
+  (extraContainerChanges || []).forEach((changesEntry) => {
     const entry: Entry = {
       baseId: changesEntry.baseId,
       count: changesEntry.countDelta,
