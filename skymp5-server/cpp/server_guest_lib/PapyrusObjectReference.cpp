@@ -139,9 +139,8 @@ VarValue PapyrusObjectReference::GetItemCount(
     auto selfRefr = GetFormPtr<MpObjectReference>(self);
     auto& form = GetRecordPtr(arguments[0]);
 
-    const uint32_t formId = form.ToGlobalId(form.rec->GetId());
-
-    if (selfRefr) {
+    if (selfRefr && form.rec) {
+      const uint32_t formId = form.ToGlobalId(form.rec->GetId());
       return VarValue(
         static_cast<int>(selfRefr->GetInventory().GetItemCount(formId)));
     }
