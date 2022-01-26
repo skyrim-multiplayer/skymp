@@ -1,9 +1,5 @@
 Scriptname SweetEatAnim extends ObjectReference  
 int count
-event oninit()
-self.BlockActivation() 
-GotoState("eat")
-endevent
 State eat
 Event OnActivate(ObjectReference akActionRef) 
 if count < 1&&Game.GetPlayer().GetSitState() == 0
