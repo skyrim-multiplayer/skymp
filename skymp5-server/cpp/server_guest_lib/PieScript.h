@@ -1,10 +1,10 @@
 #pragma once
 #include "MpChangeForms.h"
 #include "WorldState.h"
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <string>
 
 class PieScript
 {
@@ -14,7 +14,7 @@ public:
     Weapon = 0,
     Armor,
     Consumable,
-};
+  };
 
   enum class Tier
   {
@@ -47,6 +47,7 @@ private:
   void AddDLCItems(std::vector<std::string> espmFiles,
                    std::vector<std::string> items, LootboxItemType type,
                    Tier tier);
+
 private:
   LootTable lootTable;
 
