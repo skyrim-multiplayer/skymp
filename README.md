@@ -40,6 +40,7 @@ Before your start make sure that your system meets the conditions:
 * Windows 7 or higher *([Windows 10](https://www.microsoft.com/en-us/software-download/windows10) is recommended)*
 * [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
 * .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
+* Python 3.9.x 64bit or 32bit *(Visual Studio Installer -> Idividual components -> search for python)*
 
 ### Linux
 
