@@ -404,7 +404,10 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   for (const auto& effect : effects) {
     espm::ActorValue av =
       espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
-    RestoreActorValue(av, effect.magnitude);
+    if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
+        av == espm::ActorValue::Magicka) { // other types is unsupported
+      RestoreActorValue(av, effect.magnitude);
+    }
   }
 }
 

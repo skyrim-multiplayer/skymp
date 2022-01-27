@@ -159,8 +159,7 @@ export class MpApiInteractor {
       },
       quitGame(actorId: number): void {
         EvalProperty.eval(actorId, () => {
-          ctx.sp.Game.quitToMainMenu();
-          // TODO: close game
+          ctx.sp.win32.exitProcess();
         });
       },
       getName(actorId: number): string {

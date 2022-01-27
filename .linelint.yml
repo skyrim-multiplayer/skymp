@@ -1,6 +1,7 @@
 ignore:
   - .git/
   - '**/third_party'
+  - 'skymp5-scripts/'
 
 rules:
   end-of-file:
