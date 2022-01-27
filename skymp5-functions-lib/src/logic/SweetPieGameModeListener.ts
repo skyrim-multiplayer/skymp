@@ -125,10 +125,10 @@ export class SweetPieGameModeListener implements GameModeListener {
             this.sendRoundChatMessage(round, sprintf(this.startingRoundInMessage[0], secondsRemaining));
           }
           if (round.secondsPassed > this.warmupTimerMaximum) {
-            round.secondsPassed = 0;
             if (round?.players?.size < this.minimumPlayersToStart) {
               return;
             }
+            round.secondsPassed = 0;
             round.state = 'running';
             this.sendRoundChatMessage(round, sprintf(this.warmupFinishedMessage[0], this.runningTimerMaximum));
             for (const [player] of round.players) {
