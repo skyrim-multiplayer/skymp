@@ -140,7 +140,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
   test("Round warmup must finish once timer reaches maximum", () => {
     const controller = makePlayerController();
     const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', mainSpawnPointName: 'whiterun:spawnPoint' }];
-    const listener = new SweetPieGameModeListener(controller, maps);
+    const listener = new SweetPieGameModeListener(controller, maps, 0);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
     resetMocks(controller);
     listener.getRounds()[0].secondsPassed = listener.warmupTimerMaximum;
