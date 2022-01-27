@@ -51,9 +51,9 @@ private:
 private:
   LootTable lootTable;
 
-  const int TIER1_CHANCE = 10;
-  const int TIER2_CHANCE = 10;
-  const int TIER3_CHANCE = 70;
+  const int TIER1_CHANCE = 60;
+  const int TIER2_CHANCE = 20;
+  const int TIER3_CHANCE = 10;
   const int TIER4_CHANCE = 9;
   const int TIER5_CHANCE = 1;
 };
