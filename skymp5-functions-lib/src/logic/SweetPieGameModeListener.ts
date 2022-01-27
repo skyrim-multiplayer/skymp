@@ -25,6 +25,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
+  minimumPlayersToStart = 5;
 
   // TODO: Unhardcode this name
   readonly hallSpawnPointName = 'hall:spawnPoint';
@@ -124,6 +125,9 @@ export class SweetPieGameModeListener implements GameModeListener {
           }
           if (round.secondsPassed > this.warmupTimerMaximum) {
             round.secondsPassed = 0;
+            if (round?.players?.size < this.minimumPlayersToStart) {
+              return;
+            }
             round.state = 'running';
             this.sendRoundChatMessage(round, sprintf(this.warmupFinishedMessage[0], this.runningTimerMaximum));
             for (const [player] of round.players) {
