@@ -11,6 +11,7 @@ import {
   printConsole,
   settings,
   storage,
+  destroyAllTexts,
 } from "skyrimPlatform";
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./browser";
@@ -20,8 +21,10 @@ import { updateWc } from "./worldCleaner";
 import * as authSystem from "./authSystem";
 import { nameof } from "./utils";
 import { AuthGameData } from "./authModel";
+import * as netInfoSystem from "./netInfoSystem";
 
 browser.main();
+destroyAllTexts();
 
 export const defaultLocalDamageMult = 1;
 export const setLocalDamageMult = (damageMult: number): void => {
@@ -54,6 +57,7 @@ on("update", () => updateWc());
 
 const startClient = (): void => {
   once("update", () => authSystem.setPlayerAuthMode(false));
+  netInfoSystem.start();
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
 
