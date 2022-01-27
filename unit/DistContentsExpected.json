@@ -66,9 +66,9 @@
       "server/data/scripts/sweetHealthActivator.pex",
       "server/data/scripts/sweetSpawnCristallWindhelm.pex",
       "server/data/scripts/sweetTriggerSell.pex",
-      "server/data/scripts/SweetTeleportIsland.pex"
-      "server/data/scripts/SweetWriteLetter.pex"
-      "server/data/scripts/sweetDamage35hp.pex"
+      "server/data/scripts/SweetTeleportIsland.pex",
+      "server/data/scripts/SweetWriteLetter.pex",
+      "server/data/scripts/sweetDamage35hp.pex",
       "server/data/ui/0935e00bec58845a687af990665e1554.png",
       "server/data/ui/f4d6dc3e7665a2c2fc6d.png",
       "server/data/ui/build.js",
