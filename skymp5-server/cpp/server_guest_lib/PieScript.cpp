@@ -23,6 +23,7 @@ void PieScript::AddDLCItems(std::vector<std::string> espmFiles,
     lootTable[type][tier].push_back(id);
   }
 }
+
 PieScript::PieScript(std::vector<std::string> espmFiles)
 {
   lootTable = {
@@ -133,24 +134,18 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
     "037066:Dragonborn.esm", "03705A:Dragonborn.esm"
   };
   std::vector<std::string> armorTier3 = {
-    "03AB23:Dragonborn.esm",    "01CD8C:Dragonborn.esm",
-    "01CD99:Dragonborn.esm",    "0292AE:Dragonborn.esm",
-    "0050D0:Dawnguard.esm",     "039114:Dragonborn.esm",
-    "01CD93:Dragonborn.esm",    "01CD8B:Dragonborn.esm",
-    "014758:Dawnguard.esm",     "026235:Dragonborn.esm",
-    "037B88:Dragonborn.esm",    "037B8A:Dragonborn.esm",
-    "026236:Dragonborn.esm",    "039110:Dragonborn.esm",
-    "01CD98:Dragonborn.esm",    "03910E:Dragonborn.esm",
-    "0191F3:Dawnguard.esm",     "00F3FA:Dawnguard.esm",
-    "00F3F7:Dawnguard.esm",     "0292AC:Dragonborn.esm",
-    "01CD97:Dragonborn.esm",    "01CD8A:Dragonborn.esm",
-    "037564:Dragonborn.esm",    "01CD92:Dragonborn.esm",
-    "XX01CD82: Dragonborn.esm", "01CD96:Dragonborn.esm",
-    "0292AB:Dragonborn.esm",    "014757:Dawnguard.esm",
-    "019AE1:Dawnguard.esm",     "039112:Dragonborn.esm",
-    "01CD94:Dragonborn.esm",    "0292AD:Dragonborn.esm",
-    "026234:Dragonborn.esm",    "0150B8:Dawnguard.esm",
-    "037B8E:Dragonborn.esm",    "037B8C:Dragonborn.esm"
+    "03AB23:Dragonborn.esm", "01CD8C:Dragonborn.esm", "01CD99:Dragonborn.esm",
+    "0292AE:Dragonborn.esm", "0050D0:Dawnguard.esm",  "039114:Dragonborn.esm",
+    "01CD93:Dragonborn.esm", "01CD8B:Dragonborn.esm", "014758:Dawnguard.esm",
+    "026235:Dragonborn.esm", "037B88:Dragonborn.esm", "037B8A:Dragonborn.esm",
+    "026236:Dragonborn.esm", "039110:Dragonborn.esm", "01CD98:Dragonborn.esm",
+    "03910E:Dragonborn.esm", "0191F3:Dawnguard.esm",  "00F3FA:Dawnguard.esm",
+    "00F3F7:Dawnguard.esm",  "0292AC:Dragonborn.esm", "01CD97:Dragonborn.esm",
+    "01CD8A:Dragonborn.esm", "037564:Dragonborn.esm", "01CD92:Dragonborn.esm",
+    "01CD82:Dragonborn.esm", "01CD96:Dragonborn.esm", "0292AB:Dragonborn.esm",
+    "014757:Dawnguard.esm",  "019AE1:Dawnguard.esm",  "039112:Dragonborn.esm",
+    "01CD94:Dragonborn.esm", "0292AD:Dragonborn.esm", "026234:Dragonborn.esm",
+    "0150B8:Dawnguard.esm",  "037B8E:Dragonborn.esm", "037B8C:Dragonborn.esm"
   };
   std::vector<std::string> armorTier4 = {
     "01CDA1:Dragonborn.esm", "00C814:Dawnguard.esm",  "0047DA:Dawnguard.esm",
