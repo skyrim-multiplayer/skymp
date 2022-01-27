@@ -7,6 +7,8 @@ FROM ubuntu:focal AS skymp-base
 ENV TZ=Europe/London
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# TODO: are perl, upx-ucl, ninja needed?
+# TODO: add gdb to base image
 RUN \
   apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_14.x | bash - \
@@ -59,3 +61,13 @@ FROM skymp-base AS skymp-vcpkg-deps
 
 COPY --from=skymp-vcpkg-deps-builder --chown=skymp:skymp \
   /home/skymp/.cache/vcpkg /home/skymp/.cache/vcpkg
+
+# Image used as runtime base for a game server.
+# Should only contain a minimal subset of stuff needed for running the server.
+# Not the case currently, too much of a bloat here.
+# TODO: fix it, make another redo of a (cleaner) Dockerfile
+FROM skymp-base AS skymp-runtime-base
+
+RUN \
+  apt-get update && apt-get install -y gdb \
+  && rm -rf /var/lib/apt/lists/*
