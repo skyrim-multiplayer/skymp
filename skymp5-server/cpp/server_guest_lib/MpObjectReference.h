@@ -144,7 +144,7 @@ public:
   GetNextRelootMoment() const;
 
   virtual MpChangeForm GetChangeForm() const;
-  virtual void ApplyChangeForm(const MpChangeForm& changeForm);
+  virtual void ApplyChangeForm(MpChangeForm changeForm);
   const DynamicFields& GetDynamicFields() const;
 
   // This method removes ObjectReference from a current grid and doesn't attach

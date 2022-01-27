@@ -51,7 +51,7 @@ public:
   void RemoveEventSink(std::shared_ptr<DestroyEventSink> sink);
 
   MpChangeForm GetChangeForm() const override;
-  void ApplyChangeForm(const MpChangeForm& changeForm) override;
+  void ApplyChangeForm(MpChangeForm changeForm) override;
 
   uint32_t NextSnippetIndex(
     std::optional<Viet::Promise<VarValue>> promise = std::nullopt);

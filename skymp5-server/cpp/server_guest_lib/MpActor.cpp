@@ -157,7 +157,7 @@ MpChangeForm MpActor::GetChangeForm() const
   return res;
 }
 
-void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
+void MpActor::ApplyChangeForm(MpChangeForm newChangeForm)
 {
   if (newChangeForm.recType != MpChangeForm::ACHR) {
     throw std::runtime_error(

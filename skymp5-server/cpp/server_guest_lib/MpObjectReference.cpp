@@ -769,7 +769,7 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   return res;
 }
 
-void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
+void MpObjectReference::ApplyChangeForm(MpChangeForm changeForm)
 {
   if (pImpl->setPropertyCalled) {
     GetParent()->logger->critical("ApplyChangeForm called after SetProperty");
@@ -780,13 +780,16 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   Viet::ScopedTask<Impl> unblockTask(
     [](Impl& impl) { impl.blockSaving = false; }, *pImpl);
 
-  const auto currentBaseId = GetBaseId();
-  const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
-  if (currentBaseId != newBaseId) {
-    std::stringstream ss;
-    ss << "Anomally, baseId should never change (";
-    ss << std::hex << currentBaseId << " => " << newBaseId << ")";
-    throw std::runtime_error(ss.str());
+  const auto espmBaseId = GetBaseId();
+  const auto changeFormBaseId =
+    changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
+  if (espmBaseId != changeFormBaseId) {
+    GetParent()->logger->warn(
+      "Anomally, espmBaseId != changeFormBaseId ({:#x} "
+      "!= {:#x}), choosing espmBaseId",
+      espmBaseId, changeFormBaseId);
+    changeForm.baseDesc =
+      FormDesc::FromFormId(espmBaseId, GetParent()->espmFiles);
   }
 
   if (pImpl->ChangeForm().formDesc != changeForm.formDesc) {
