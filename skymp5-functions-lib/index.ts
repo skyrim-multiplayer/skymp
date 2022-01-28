@@ -1,3 +1,4 @@
+import { PlayerController } from './src/logic/PlayerController';
 import { SweetPieGameModeListener } from './src/logic/SweetPieGameModeListener';
 import { SweetPieMap } from './src/logic/SweetPieMap';
 import { MpApiInteractor } from './src/mpApiInteractor';
@@ -176,9 +177,14 @@ const maps: Required<SweetPieMap>[] = [{
   leaveRoundDoors: ['1b1f3:Skyrim.esm']
 }];
 
-const serverSettings = mp.getServerSettings();
-let playersToStart = serverSettings["minimumPlayersToStart"];
-playersToStart = typeof playersToStart === "number" ? playersToStart : 5;
+const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[], playersToStart: unknown): SweetPieGameModeListener => {
+  if (typeof playersToStart === "number") {
+    return new SweetPieGameModeListener(controller, maps, playersToStart);
+  } else {
+    return new SweetPieGameModeListener(controller, maps);
+  }
+};
+
 const playerController = MpApiInteractor.makeController(pointsByName);
-const gameModeListener = new SweetPieGameModeListener(playerController, maps, playersToStart as number);
+const gameModeListener = createGameModeListener(playerController, maps,  mp.getServerSettings()["minimumPlayersToStart"]);
 MpApiInteractor.setup(gameModeListener);
