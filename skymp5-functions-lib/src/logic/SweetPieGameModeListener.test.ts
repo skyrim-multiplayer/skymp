@@ -169,6 +169,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
     listener.everySecond();
     expect(listener.getRounds()[0].secondsPassed).toBe(listener.warmupTimerMaximum + 1);
     expect(listener.getRounds()[0].state).toBe('warmup');
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Too few players, the warmup will end when 1 more join");
   });
 
   test("Round warmup must finish if there are enough players and timer reaches maximum", () => {
@@ -182,6 +183,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
     listener.everySecond();
     expect(listener.getRounds()[0].secondsPassed).toBe(listener.warmupTimerMaximum + 1);
     expect(listener.getRounds()[0].state).toBe('warmup');
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Too few players, the warmup will end when 1 more join");
 
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 2);
     listener.everySecond();

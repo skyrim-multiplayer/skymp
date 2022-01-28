@@ -23,6 +23,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly multipleWinnersMessage: [string] = ["We have multiple winners!"];
   readonly deathMessage: [string] = ["%s was slain by %s. %s now has %d points (the best is %d)"];
 
+  readonly cantStartMessage: [string] = ["Too few players, the warmup will end when %s more join"];
+
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
   minimumPlayersToStart = 5;
@@ -125,7 +127,8 @@ export class SweetPieGameModeListener implements GameModeListener {
             this.sendRoundChatMessage(round, sprintf(this.startingRoundInMessage[0], secondsRemaining));
           }
           if (round.secondsPassed > this.warmupTimerMaximum) {
-            if (round?.players?.size < this.minimumPlayersToStart) {
+            if (round.players.size < this.minimumPlayersToStart) {
+              this.sendRoundChatMessage(round, sprintf(this.cantStartMessage[0], this.minimumPlayersToStart - round.players.size));
               return;
             }
             round.secondsPassed = 0;
