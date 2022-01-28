@@ -176,6 +176,9 @@ const maps: Required<SweetPieMap>[] = [{
   leaveRoundDoors: ['1b1f3:Skyrim.esm']
 }];
 
+const serverSettings = mp.getServerSettings();
+let playersToStart = serverSettings["minimumPlayersToStart"];
+playersToStart = typeof playersToStart === "number" ? playersToStart : 5;
 const playerController = MpApiInteractor.makeController(pointsByName);
-const gameModeListener = new SweetPieGameModeListener(playerController, maps);
+const gameModeListener = new SweetPieGameModeListener(playerController, maps, playersToStart as number);
 MpApiInteractor.setup(gameModeListener);
