@@ -129,7 +129,7 @@ export class SweetPieGameModeListener implements GameModeListener {
           if (round.secondsPassed > this.warmupTimerMaximum) {
             if (round.players.size < this.minimumPlayersToStart) {
               this.sendRoundChatMessage(round, sprintf(this.cantStartMessage[0], this.minimumPlayersToStart - round.players.size));
-              return;
+              continue;
             }
             round.secondsPassed = 0;
             round.state = 'running';
