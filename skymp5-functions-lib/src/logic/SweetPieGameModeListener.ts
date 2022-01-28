@@ -23,13 +23,15 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly multipleWinnersMessage: [string] = ["We have multiple winners!"];
   readonly deathMessage: [string] = ["%s was slain by %s. %s now has %d points (the best is %d)"];
 
+  readonly cantStartMessage: [string] = ["Too few players, the warmup will end when %s more join"];
+
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
 
   // TODO: Unhardcode this name
   readonly hallSpawnPointName = 'hall:spawnPoint';
 
-  constructor(private controller: PlayerController, private maps: SweetPieMap[] = []) {
+  constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayersToStart: number = 5) {
     this.rounds = [];
     maps.forEach(map => this.rounds.push({ state: 'warmup', map: map }));
     this.rounds.forEach((round, index) => this.resetRound(index));
@@ -123,6 +125,10 @@ export class SweetPieGameModeListener implements GameModeListener {
             this.sendRoundChatMessage(round, sprintf(this.startingRoundInMessage[0], secondsRemaining));
           }
           if (round.secondsPassed > this.warmupTimerMaximum) {
+            if (round.players.size < this.minimumPlayersToStart) {
+              this.sendRoundChatMessage(round, sprintf(this.cantStartMessage[0], this.minimumPlayersToStart - round.players.size));
+              continue;
+            }
             round.secondsPassed = 0;
             round.state = 'running';
             this.sendRoundChatMessage(round, sprintf(this.warmupFinishedMessage[0], this.runningTimerMaximum));

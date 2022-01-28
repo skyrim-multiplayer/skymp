@@ -140,8 +140,9 @@ describe("SweetPieGameModeListener: Round clock", () => {
   test("Round warmup must finish once timer reaches maximum", () => {
     const controller = makePlayerController();
     const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', mainSpawnPointName: 'whiterun:spawnPoint' }];
-    const listener = new SweetPieGameModeListener(controller, maps);
+    const listener = new SweetPieGameModeListener(controller, maps, 2);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 2);
     resetMocks(controller);
     listener.getRounds()[0].secondsPassed = listener.warmupTimerMaximum;
 
@@ -155,6 +156,39 @@ describe("SweetPieGameModeListener: Round clock", () => {
 
     expect(controller.teleport).toBeCalledWith(1, 'whiterun:spawnPoint');
     expect(controller.setSpawnPoint).toBeCalledWith(1, 'whiterun:spawnPoint');
+  });
+
+  test("Round warmup doesn't start if there are not enough players", () => {
+    const controller = makePlayerController();
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', mainSpawnPointName: 'whiterun:spawnPoint' }];
+    const listener = new SweetPieGameModeListener(controller, maps, 2);
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+    resetMocks(controller);
+    listener.getRounds()[0].secondsPassed = listener.warmupTimerMaximum;
+
+    listener.everySecond();
+    expect(listener.getRounds()[0].secondsPassed).toBe(listener.warmupTimerMaximum + 1);
+    expect(listener.getRounds()[0].state).toBe('warmup');
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Too few players, the warmup will end when 1 more join");
+  });
+
+  test("Round warmup must finish if there are enough players and timer reaches maximum", () => {
+    const controller = makePlayerController();
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', mainSpawnPointName: 'whiterun:spawnPoint' }];
+    const listener = new SweetPieGameModeListener(controller, maps, 2);
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+    resetMocks(controller);
+    listener.getRounds()[0].secondsPassed = listener.warmupTimerMaximum;
+
+    listener.everySecond();
+    expect(listener.getRounds()[0].secondsPassed).toBe(listener.warmupTimerMaximum + 1);
+    expect(listener.getRounds()[0].state).toBe('warmup');
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Too few players, the warmup will end when 1 more join");
+
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 2);
+    listener.everySecond();
+    expect(listener.getRounds()[0].secondsPassed).toBe(0);
+    expect(listener.getRounds()[0].state).toBe('running');
   });
 
   test("Round warmup must output messages about remaining seconds", () => {
