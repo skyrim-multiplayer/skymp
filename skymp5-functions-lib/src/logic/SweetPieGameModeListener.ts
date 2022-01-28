@@ -27,14 +27,12 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
-  minimumPlayersToStart = 5;
 
   // TODO: Unhardcode this name
   readonly hallSpawnPointName = 'hall:spawnPoint';
 
-  constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayers: number = 5) {
+  constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayersToStart: number = 5) {
     this.rounds = [];
-    this.minimumPlayersToStart = minimumPlayers;
     maps.forEach(map => this.rounds.push({ state: 'warmup', map: map }));
     this.rounds.forEach((round, index) => this.resetRound(index));
   }
