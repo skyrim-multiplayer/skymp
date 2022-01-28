@@ -198,3 +198,15 @@ The name of a localizaiton file in `data/localization` that would be used by `M.
   // ...
 }
 ```
+
+## minimumPlayersToStart
+
+The minimal amount of players to begin deathmatch
+
+```json5
+{
+  // ...
+  "minimumPlayersToStart": 5
+  // ...
+}
+```
