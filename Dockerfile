@@ -1,7 +1,5 @@
 # Image used as runtime base for a game server.
-# Should only contain a minimal subset of stuff needed for running the server.
-# Not the case currently, too much of a bloat here.
-# TODO: fix it, make another redo of a (cleaner) Dockerfile
+# Contains a minimal subset of stuff needed for running (and debugging, if needed) the server.
 FROM ubuntu:focal AS skymp-runtime-base
 
 # Prevent apt-get from asking us about timezone
@@ -24,7 +22,6 @@ RUN useradd -m skymp
 FROM skymp-runtime-base AS skymp-build-base
 
 # TODO: are perl, upx-ucl, ninja needed?
-# TODO: add gdb to base image
 RUN \
   curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
   && echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" > /etc/apt/sources.list.d/yarn.list \

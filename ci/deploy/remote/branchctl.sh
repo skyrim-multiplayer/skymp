@@ -20,9 +20,8 @@ docker run -d --restart=always --name="skymp-server-$branch" --network=host \
     -v "$PWD/server:/work" --workdir=/work \
     -u "`id -u`:`id -g`" \
     --cpu-period=50000 --cpu-quota=25000 \
-    skymp/skymp-vcpkg-deps ./run.sh
+    skymp/skymp-runtime-base ./run.sh
 # ^ limited to 50% of CPU: https://stackoverflow.com/a/41552172
-# TODO(#584): replace vcpkg-deps with lite runtime image
 
 for ((t = 0; t < 150; t += 5)); do
     if docker logs "skymp-server-$branch" \
