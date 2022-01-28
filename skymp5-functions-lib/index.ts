@@ -186,5 +186,5 @@ const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[
 };
 
 const playerController = MpApiInteractor.makeController(pointsByName);
-const gameModeListener = createGameModeListener(playerController, maps,  mp.getServerSettings()["sweetPieMinimumPlayersToStart"]);
+const gameModeListener = createGameModeListener(playerController, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]);
 MpApiInteractor.setup(gameModeListener);
