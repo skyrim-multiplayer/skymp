@@ -69,7 +69,7 @@ fi
 run_remote "$remote_tmp_dir/branchctl.sh" restart "$DEPLOY_BRANCH"
 
 get_ip_port() {
-  jq --raw-output '"IP: `" + .ip + "`, port: `" + (.port | tostring) + "`"'
+  jq --raw-output '"IP: `'"$DEPLOY_TARGET_HOST"'`, port: `" + (.port | tostring) + "`"'
 }
 
 ip_port="`run_remote cat "$remote_branch_dir/server-settings.json" | get_ip_port`"
