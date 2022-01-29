@@ -40,6 +40,8 @@ remote_branch_dir="skymp-server-$DEPLOY_BRANCH"
 run_remote test -e "$remote_branch_dir" \
   || (echo "no branch on remote server" && exit 1)
 
+# TODO: remove this dir after we're finished
+
 rsync --rsh="$remote_shell" -vazPh --checksum \
     ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
 
@@ -69,7 +71,7 @@ fi
 run_remote "$remote_tmp_dir/branchctl.sh" restart "$DEPLOY_BRANCH"
 
 get_ip_port() {
-  jq --raw-output '"IP: `" + .ip + "`, port: `" + (.port | tostring) + "`"'
+  jq --raw-output '"IP: `'"$DEPLOY_TARGET_HOST"'`, port: `" + (.port | tostring) + "`"'
 }
 
 ip_port="`run_remote cat "$remote_branch_dir/server-settings.json" | get_ip_port`"
