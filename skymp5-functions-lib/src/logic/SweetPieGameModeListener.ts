@@ -32,9 +32,11 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly hallSpawnPointName = 'hall:spawnPoint';
 
   constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayersToStart: number = 5) {
-    this.rounds = [];
-    maps.forEach(map => this.rounds.push({ state: 'warmup', map: map }));
-    this.rounds.forEach((round, index) => this.resetRound(index));
+    this.rounds = this.controller.getRoundsArray();
+    if (this.rounds.length === 0) {
+      maps.forEach(map => this.rounds.push({ state: 'warmup', map: map }));
+      this.rounds.forEach((round, index) => this.resetRound(index));
+    }
   }
 
   private resetRound(roundIndex: number) {
@@ -45,6 +47,7 @@ export class SweetPieGameModeListener implements GameModeListener {
       }
     }
     this.rounds[roundIndex] = { state: 'warmup', map: this.rounds[roundIndex].map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }
+    this.controller.setRoundsArray(this.rounds);
   }
 
   getRounds() {
@@ -61,6 +64,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         // TODO: Handle unavailability to find a round
       } else {
         forceJoinRound(this.controller, this.rounds, round, casterActorId);
+        this.controller.setRoundsArray(this.rounds);
       }
       return 'continue';
     } else {
@@ -85,6 +89,7 @@ export class SweetPieGameModeListener implements GameModeListener {
           forceLeaveRound(this.controller, this.rounds, casterActorId);
           if (round.players?.size === 0) {
             this.resetRound(roundIndex);
+            this.controller.setRoundsArray(this.rounds);
           }
           return 'continue';
         }
@@ -120,13 +125,29 @@ export class SweetPieGameModeListener implements GameModeListener {
       if (round.players && round.players.size) {
         round.secondsPassed = (round.secondsPassed || 0) + 1;
         if (round.state === 'warmup') {
+          const onlinePlayers: number[] = this.controller.getOnlinePlayers();
+          const playersToRemove: number[] = [];
+          for (const player of round.players.keys()) {
+            if (onlinePlayers.indexOf(player) < 0) {
+              playersToRemove.push(player);
+            }
+          }
+          for (const player of playersToRemove) {
+            forceLeaveRound(this.controller, this.rounds, player);
+          }
+          if (0 >= round.players.size) {
+            this.resetRound(this.rounds.indexOf(round));
+            continue;
+          }
           const secondsRemaining = this.warmupTimerMaximum - round.secondsPassed;
           if (secondsRemaining > 0 && this.sendMessageNeeded(secondsRemaining)) {
             this.sendRoundChatMessage(round, sprintf(this.startingRoundInMessage[0], secondsRemaining));
           }
           if (round.secondsPassed > this.warmupTimerMaximum) {
             if (round.players.size < this.minimumPlayersToStart) {
-              this.sendRoundChatMessage(round, sprintf(this.cantStartMessage[0], this.minimumPlayersToStart - round.players.size));
+              if (this.sendMessageNeeded(round.secondsPassed - this.warmupTimerMaximum)) {
+                this.sendRoundChatMessage(round, sprintf(this.cantStartMessage[0], this.minimumPlayersToStart - round.players.size));
+              }
               continue;
             }
             round.secondsPassed = 0;
@@ -164,6 +185,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         }
       }
     }
+    this.controller.setRoundsArray(this.rounds);
   }
 
   onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
@@ -181,6 +203,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         this.sendRoundChatMessage(round, sprintf(this.deathMessage[0], this.controller.getName(targetActorId), this.controller.getName(killerActorId), this.controller.getName(killerActorId), killerScore, winnerScore));
       }
     }
+    this.controller.setRoundsArray(this.rounds);
   }
 
   private sendRoundChatMessage(round: SweetPieRound, msg: string) {
