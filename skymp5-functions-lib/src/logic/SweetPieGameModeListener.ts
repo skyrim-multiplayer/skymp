@@ -54,6 +54,7 @@ export class SweetPieGameModeListener implements GameModeListener {
   onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, isTeleportDoor: boolean): 'continue' | 'blockActivation' {
     if (targetObjectDesc === this.quitGamePortal) {
       this.controller.quitGame(casterActorId);
+      forceLeaveRound(this.controller, this.rounds, casterActorId);
       return 'continue';
     } else if (targetObjectDesc === this.neutralPortal) {
       const round = getAvailableRound(this.rounds, casterActorId);
