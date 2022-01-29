@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <array>
 
 class MpActor;
 
@@ -70,7 +71,7 @@ private:
 
 private:
   LootTable lootTable;
-  std::unordered_map<StarterKitType, std::vector<uint32_t>> starterKitsMap;
+  std::unordered_map<StarterKitType, std::array<uint32_t, 5>> starterKitsMap;
 
   const int TIER1_CHANCE = 60;
   const int TIER2_CHANCE = 20;
