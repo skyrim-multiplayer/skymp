@@ -279,9 +279,12 @@ void PieScript::GetStarterKitItems(MpActor* actor)
   int chance = GenerateRandomNumber(1, 100);
   if (chance <= StarterKitChance::ChefKitChance) {
     AddStarterKitItems(actor, StarterKitType::ChefKit);
-  } else if (chance <= (StarterKitChance::ChefKitChance + StarterKitChance::LumberjackKitChance)) {
+  } else if (chance <= (StarterKitChance::ChefKitChance +
+                        StarterKitChance::LumberjackKitChance)) {
     AddStarterKitItems(actor, StarterKitType::LumberjackKit);
-  } else if (chance <= (StarterKitChance::ChefKitChance + StarterKitChance::LumberjackKitChance + StarterKitChance::MinerKitChance)) {
+  } else if (chance <= (StarterKitChance::ChefKitChance +
+                        StarterKitChance::LumberjackKitChance +
+                        StarterKitChance::MinerKitChance)) {
     AddStarterKitItems(actor, StarterKitType::MinerKit);
   } else {
     AddStarterKitItems(actor, StarterKitType::PrisonerKit);

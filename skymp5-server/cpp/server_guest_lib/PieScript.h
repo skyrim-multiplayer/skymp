@@ -27,16 +27,16 @@ public:
 
   enum class StarterKitType
   {
-      ChefKit,
-      MinerKit,
-      PrisonerKit,
-      LumberjackKit,
-      PatronKit
+    ChefKit,
+    MinerKit,
+    PrisonerKit,
+    LumberjackKit,
+    PatronKit
   };
 
 private:
   enum StarterKitChance
-  { 
+  {
     ChefKitChance = 25,
     MinerKitChance = 25,
     PrisonerKitChance = 25,
