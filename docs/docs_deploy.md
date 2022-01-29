@@ -119,10 +119,18 @@ Prerequisites:
 2. `gdb` should be installed in the environment where your server is running.
    If server is running inside of a container, its image should include `gdb`:
    debugging a process inside of a container from the host is not going to work well.
+3. If inside of a container, `ptrace` syscall should be available.
+   Add `--cap-add=SYS_PTRACE` argument to your `docker run` command.
 
-To attach to the server
+To attach to the server, run:
+```
+$ docker exec -it -u 0:0 skymp-server-indev sh -c 'gdb -p "`pgrep node`"'
+<...>
+(gdb) c
+```
 
-!!! TODO
+All typical gdb commands should be available now. Set breakpoints or just type
+`c` to contrinue execution right away.
 
 ### Collecting core dumps
 
