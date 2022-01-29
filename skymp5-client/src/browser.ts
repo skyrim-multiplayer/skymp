@@ -11,10 +11,15 @@ import {
   getPluginSourceCode,
   MenuOpenEvent,
   MenuCloseEvent,
+  BrowserMessageEvent,
 } from "skyrimPlatform";
 import { RemoteAuthGameData } from "./authModel";
 
 const pluginAuthDataName = `auth-data-no-load`;
+const onWindowLoadedEventKey = "onWindowLoadedEventKey";
+
+export type onWindowLoadedEventCallback = () => void;
+const onWindowLoadListeners = new Array<onWindowLoadedEventCallback>();
 
 type BindingKey = DxScanCode[];
 type BindingValue = () => void;
@@ -38,6 +43,17 @@ const badMenus: Menu[] = [
 ];
 
 const IsBadMenu = (menu: string) => badMenus.includes(menu as Menu);
+
+browser.executeJavaScript(`window.onload = window.skyrimPlatform.sendMessage("${onWindowLoadedEventKey}")`);
+on("browserMessage", (e) => {
+  if (e.arguments[0] === onWindowLoadedEventKey) {
+    onWindowLoadListeners.forEach(l => l());
+  }
+});
+
+export const addOnWindowLoadListener = (listener: onWindowLoadedEventCallback): void => {
+  onWindowLoadListeners.push(listener);
+}
 
 export const main = (): void => {
   browser.setVisible(false);
@@ -123,3 +139,38 @@ export const setAuthData = (data: RemoteAuthGameData | null): void => {
     "//" + (data ? JSON.stringify(data) : "null")
   );
 };
+
+let isFocusedPersistantActive = false;
+let isFocusedPersistantActive_dt = 0;
+let isFocusedPersistantActive_last_dt = 0;
+
+export const forcePersistantBrowserFocus_Crutch_ = (): void => {
+  isFocusedPersistantActive = true;
+  isFocusedPersistantActive_last_dt = Date.now();
+
+  once("update", () => {
+    isFocusedPersistantActive_dt += Date.now() - isFocusedPersistantActive_last_dt;
+    isFocusedPersistantActive_last_dt = Date.now();
+
+    if (isFocusedPersistantActive_dt > 1000) {
+      updateFocus();
+      isFocusedPersistantActive_dt = 0;
+    }
+
+    if (isFocusedPersistantActive) {
+      forcePersistantBrowserFocus_Crutch_();
+    }
+  });
+}
+
+const updateFocus = (): void => {
+  browser.setFocused(true);
+  browser.setFocused(false);
+  browser.setFocused(true);
+  
+  printConsole(browser.isFocused());
+}
+
+export const clearPersistantBrowserFocus_Crutch_ = (): void => {
+  isFocusedPersistantActive = false;
+}
