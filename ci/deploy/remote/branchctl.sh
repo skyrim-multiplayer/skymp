@@ -24,6 +24,8 @@ docker run -d --restart=always --name="skymp-server-$branch" --network=host \
     skymp/skymp-runtime-base ./run.sh
 # ^ limited to 50% of CPU: https://stackoverflow.com/a/41552172
 
+# This looks a bit ugly, but apparently is more fault-tolerant than older version:
+# docker logs -f ... |& grep -q ...
 for ((t = 0; t < 150; t += 5)); do
     if docker logs "skymp-server-$branch" \
             |& grep -q 'AttachSaveStorage took'; then
