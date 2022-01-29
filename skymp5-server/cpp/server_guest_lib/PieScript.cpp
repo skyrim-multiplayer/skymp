@@ -108,6 +108,29 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
       } }
   };
 
+  starterKitsMap = {
+    {
+      StarterKitType::ChefKit,
+      { 0x0001BCA7, 0x000261C1, 0x0001BC82, 0x0001F25B, 0x000D1921 },
+    },
+    { StarterKitType::LumberjackKit,
+      {
+        0x000209AA,
+        0x000261C0,
+        0x000261BD,
+        0x0002F2F4,
+        0x000261C1,
+      } },
+    {
+      StarterKitType::MinerKit,
+      { 0x000330B3, 0x00080697, 0x00080699, 0x000E3C16, 0x0010E039 },
+    },
+    { StarterKitType::PrisonerKit,
+      { 0x000646AB, 0x0008F19A, 0x0003ca00, 0x000426C8, 0x0010E039 } },
+    { StarterKitType::PatronKit,
+      { 0x0008895A, 0x000B145B, 0x0001C1FE, 0x00088956, 0x00088958 } },
+  };
+
   std::vector<std::string> weaponTier3 = {
     "00D098:Dawnguard.esm",   "01CDB1:Dragonborn.esm", "01CDAD:Dragonborn.esm",
     "00DD55:Dawnguard.esm",   "01CDAF:Dragonborn.esm", "01CDB0:Dragonborn.esm",
@@ -242,4 +265,30 @@ void PieScript::Play(MpActor* actor)
   actor->AddItem(GetSlotItem(10, 80, 10, 0), 1);
   actor->AddItem(GetSlotItem(25, 25, 40, 10), 1);
   actor->AddItem(GetSlotItem(0, 0, 100, 0), 1);
+}
+
+void PieScript::AddStarterKitItems(MpActor* actor, StarterKitType type)
+{
+  for (auto item : starterKitsMap[type]) {
+    actor->AddItem(item, 1);
+  }
+}
+
+void PieScript::GetStarterKitItems(MpActor* actor)
+{
+  int chance = GenerateRandomNumber(1, 100);
+  if (chance <= StarterKitChance::ChefKitChance) {
+    AddStarterKitItems(actor, StarterKitType::ChefKit);
+  } else if (chance <= (StarterKitChance::ChefKitChance + StarterKitChance::LumberjackKitChance)) {
+    AddStarterKitItems(actor, StarterKitType::LumberjackKit);
+  } else if (chance <= (StarterKitChance::ChefKitChance + StarterKitChance::LumberjackKitChance + StarterKitChance::MinerKitChance)) {
+    AddStarterKitItems(actor, StarterKitType::MinerKit);
+  } else {
+    AddStarterKitItems(actor, StarterKitType::PrisonerKit);
+  }
+}
+
+void PieScript::GetPatronStarterKitItems(MpActor* actor)
+{
+  AddStarterKitItems(actor, StarterKitType::PatronKit);
 }

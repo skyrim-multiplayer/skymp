@@ -1,10 +1,10 @@
 #pragma once
-#include "MpChangeForms.h"
-#include "WorldState.h"
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+class MpActor;
 
 class PieScript
 {
@@ -25,16 +25,35 @@ public:
     Tier5
   };
 
-  using LootTable =
-    std::unordered_map<LootboxItemType,
-                       std::unordered_map<Tier, std::vector<uint32_t>>>;
+  enum class StarterKitType
+  {
+      ChefKit,
+      MinerKit,
+      PrisonerKit,
+      LumberjackKit,
+      PatronKit
+  };
+
+private:
+  enum StarterKitChance
+  { 
+    ChefKitChance = 25,
+    MinerKitChance = 25,
+    PrisonerKitChance = 25,
+    LumberjackKitChance = 25
+  };
 
 public:
   PieScript(std::vector<std::string> espmFiles);
 
 public:
+  using LootTable =
+    std::unordered_map<LootboxItemType,
+                       std::unordered_map<Tier, std::vector<uint32_t>>>;
   const LootTable& GetLootTable() const;
   void Play(MpActor* actor);
+  void GetStarterKitItems(MpActor* actor);
+  void GetPatronStarterKitItems(MpActor* actor);
 
 private:
   Tier AcknowledgeTier(int chance);
@@ -47,9 +66,11 @@ private:
   void AddDLCItems(std::vector<std::string> espmFiles,
                    std::vector<std::string> items, LootboxItemType type,
                    Tier tier);
+  void AddStarterKitItems(MpActor* actor, StarterKitType starterKitType);
 
 private:
   LootTable lootTable;
+  std::unordered_map<StarterKitType, std::vector<uint32_t>> starterKitsMap;
 
   const int TIER1_CHANCE = 60;
   const int TIER2_CHANCE = 20;
