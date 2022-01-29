@@ -21,6 +21,7 @@ docker run -d --restart=always --name="skymp-server-$branch" --network=host \
     -v "$PWD/server:/work" --workdir=/work \
     -u "`id -u`:`id -g`" \
     --cpu-period=50000 --cpu-quota=25000 \
+    --cap-add=SYS_PTRACE \
     skymp/skymp-runtime-base ./run.sh
 # ^ limited to 50% of CPU: https://stackoverflow.com/a/41552172
 
