@@ -24,7 +24,6 @@ import { AuthGameData } from "./authModel";
 import * as netInfoSystem from "./netInfoSystem";
 
 browser.main();
-destroyAllTexts();
 
 export const defaultLocalDamageMult = 1;
 export const setLocalDamageMult = (damageMult: number): void => {
