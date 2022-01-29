@@ -12,7 +12,7 @@ jobs:
           - name: Get action
             run: |
                 echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
-                echo "DEPLOY_ACTION=restart" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=deploy" >> "$GITHUB_ENV"
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}

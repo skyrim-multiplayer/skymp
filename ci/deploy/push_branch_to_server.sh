@@ -40,6 +40,8 @@ remote_branch_dir="skymp-server-$DEPLOY_BRANCH"
 run_remote test -e "$remote_branch_dir" \
   || (echo "no branch on remote server" && exit 1)
 
+# TODO: remove this dir after we're finished
+
 rsync --rsh="$remote_shell" -vazPh --checksum \
     ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
 
