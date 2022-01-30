@@ -171,9 +171,9 @@ pointsByName.set('whiterun:safePlace', {
   rot: [0, 0, 176],
 });
 
-const startPoints = serverSettings["startPoints"] as LocationalData[] | undefined;
-if(startPoints && startPoints[0]){
-  pointsByName.set('default', startPoints[0]);
+const startPoints = serverSettings["startPoints"];
+if(startPoints && typeof startPoints === 'object' && Array.isArray(startPoints)){
+  pointsByName.set('default', startPoints[0] as LocationalData);
 }else{
   pointsByName.set('default', pointsByName.get('hall:spawnPoint') as LocationalData);
 }
