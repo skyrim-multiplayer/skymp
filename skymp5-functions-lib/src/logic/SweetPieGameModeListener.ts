@@ -30,7 +30,6 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   // TODO: Unhardcode this name
   readonly hallSpawnPointName = 'hall:spawnPoint';
-  readonly defaultSpawnPoint = 'default';
 
   constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayersToStart: number = 5) {
     this.rounds = [];
@@ -187,13 +186,13 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerLeave(actorId: number) {
     const round = getPlayerCurrentRound(this.rounds, actorId);
+    this.controller.setSpawnPoint(actorId, this.hallSpawnPointName);
+    this.controller.teleport(actorId, this.hallSpawnPointName);
+    round?.players?.delete(actorId);
     if (round && round.players?.size === 0) {
-      forceLeaveRound(this.controller, this.rounds, actorId);
       const roundIndex = this.rounds.indexOf(round);
       this.resetRound(roundIndex);
     }
-    this.controller.setSpawnPoint(actorId, this.defaultSpawnPoint);
-    this.controller.teleport(actorId, this.defaultSpawnPoint);
   }
 
   private sendRoundChatMessage(round: SweetPieRound, msg: string) {

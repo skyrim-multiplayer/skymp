@@ -171,13 +171,6 @@ pointsByName.set('whiterun:safePlace', {
   rot: [0, 0, 176],
 });
 
-const startPoints = serverSettings["startPoints"];
-if(startPoints && typeof startPoints === 'object' && Array.isArray(startPoints)){
-  pointsByName.set('default', startPoints[0] as LocationalData);
-}else{
-  pointsByName.set('default', pointsByName.get('hall:spawnPoint') as LocationalData);
-}
-
 const maps: Required<SweetPieMap>[] = [{
   safePointName: 'whiterun:safePlace',
   mainSpawnPointName: 'whiterun:spawnPoint',
