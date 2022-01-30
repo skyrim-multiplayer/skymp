@@ -112,7 +112,7 @@ void MpActor::OnEquip(uint32_t baseId)
     constexpr uint32_t kApplePieId2 = 0x03003539;
     constexpr uint32_t kApplePieId3 = 0x0300353A;
     constexpr uint32_t kStareterKitPie = 0x030009DB;
-    constexpr uint32_t kPatronStarterKitPie = 0x03064B30;
+    constexpr uint32_t kPatronStarterKitPie = 0x00064B30;
     bool isPie = false;
     isPie = isPie || baseId == kApplePieId0;
     isPie = isPie || baseId == kApplePieId1;
