@@ -47,7 +47,9 @@ class netInfoTexts {
   }
 }
 
-(sp.storage[netInfoTexts.Name] as netInfoTexts)?.clear();
+if (sp.storage[netInfoTexts.Name] && (sp.storage[netInfoTexts.Name] as netInfoTexts).clear) {
+  (sp.storage[netInfoTexts.Name] as netInfoTexts)?.clear();
+}
 const delayMs: number = 1000;
 const textIds: netInfoTexts = new netInfoTexts();
 let last_dt: number = 0;
