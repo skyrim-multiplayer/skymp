@@ -45,8 +45,6 @@ const badMenus: Menu[] = [
 
 const IsBadMenu = (menu: string) => badMenus.includes(menu as Menu);
 
-// browser.executeJavaScript(`window.onload = window.skyrimPlatform.sendMessage("${onWindowLoadedEventKey}")`);
-browser.executeJavaScript(`document.DOMContentLoaded = window.skyrimPlatform.sendMessage("${onFrontLoadedEventKey}")`);
 on("browserMessage", (e) => {
   if (e.arguments[0] === onFrontLoadedEventKey) {
     onWindowLoadListeners.forEach(l => l());
@@ -162,44 +160,4 @@ export const keepCursorMenuOpenedWhenBrowserFocused = (): void => {
       keepCursorMenuOpenedWhenBrowserFocused();
     }
   });
-}
-
-
-let isFocusedPersistantActive = false;
-let isFocusedPersistantActive_dt = 0;
-let isFocusedPersistantActive_last_dt = 0;
-
-export const forcePersistantBrowserFocus_Crutch_ = (): void => {
-  isFocusedPersistantActive = true;
-  isFocusedPersistantActive_last_dt = Date.now();
-
-  once("update", () => {
-    isFocusedPersistantActive_dt += Date.now() - isFocusedPersistantActive_last_dt;
-    isFocusedPersistantActive_last_dt = Date.now();
-
-    if (isFocusedPersistantActive_dt > 1000) {
-      updateFocus();
-      isFocusedPersistantActive_dt = 0;
-    }
-
-    if (isFocusedPersistantActive) {
-      forcePersistantBrowserFocus_Crutch_();
-    }
-  });
-}
-
-const updateFocus = (): void => {
-  printConsole(`cursor menu opened: ${isCursorMenuOpened}`);
-  if (isCursorMenuOpened) {
-    // browser.setFocused(false);
-  }
-
-  // browser.setFocused(false);
-  // once("update", () => browser.setFocused(true));
-
-  //printConsole(browser.isFocused());
-}
-
-export const clearPersistantBrowserFocus_Crutch_ = (): void => {
-  isFocusedPersistantActive = false;
 }

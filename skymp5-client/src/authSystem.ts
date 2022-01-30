@@ -41,7 +41,6 @@ export type AuthCallback = (data: AuthGameData) => void;
 const authListeners = new Array<AuthCallback>();
 const onAuthListeners = (data: AuthGameData): void => {
   isListenBrowserMessage = false;
-  browser.clearPersistantBrowserFocus_Crutch_();
   authListeners.forEach(listener => listener(data));
 }
 export const addAuthListener = (callback: AuthCallback): void => {
@@ -58,7 +57,6 @@ export const main = (lobbyLocation: Transform): void => {
     browser.addOnWindowLoadListener(() => {
       if (isListenBrowserMessage) loadLobby(lobbyLocation)
     });
-    // loadLobby(lobbyLocation);
   }
 }
 
@@ -147,7 +145,6 @@ const loadLobby = (location: Transform): void => {
   sp.once("update", () => {
     defaultAutoVanityModeDelay = sp.Utility.getINIFloat("fAutoVanityModeDelay:Camera");
     setPlayerAuthMode(true);
-    //startListenBrowserMessage();
     authData = browser.getAuthData();
     const loginWidgetLoginDataJs = `window.loginData = ${authData ? JSON.stringify(authData) : "{}"};`;
     sp.browser.executeJavaScript(`
