@@ -3,14 +3,22 @@
 #include "FormDesc.h"
 #include "MpActor.h"
 #include <random>
+#include <sstream>
 #include <vector>
 
 std::mt19937 g_rng{ std::random_device{}() };
 
 int GenerateRandomNumber(int leftBound, int rightBound)
 {
-  std::uniform_int_distribution<> distr(leftBound, rightBound);
-  return distr(g_rng);
+  if (leftBound <= rightBound) {
+    std::uniform_int_distribution<> distr(leftBound, rightBound);
+    return distr(g_rng);
+  } else {
+    std::stringstream ss;
+    ss << "GenerateRandomNumber() cannot generate number in range: ("
+       << leftBound << ", " << rightBound << ")\n";
+    throw std::runtime_error(ss.str());
+  }
 }
 
 void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
@@ -285,31 +293,31 @@ void PieScript::Play(MpActor& actor)
   }
 }
 
-void PieScript::AddStarterKitItems(MpActor& actor, StarterKitType type)
+void PieScript::AddKitItems(MpActor& actor, StarterKitType type)
 {
   for (auto item : starterKitsMap[type]) {
     actor.AddItem(item, 1);
   }
 }
 
-void PieScript::GetStarterKitItems(MpActor& actor)
+void PieScript::AddStarterKitItems(MpActor& actor)
 {
   int chance = GenerateRandomNumber(1, 100);
   if (chance <= StarterKitChance::ChefKitChance) {
-    AddStarterKitItems(actor, StarterKitType::ChefKit);
+    AddKitItems(actor, StarterKitType::ChefKit);
   } else if (chance <= (StarterKitChance::ChefKitChance +
                         StarterKitChance::LumberjackKitChance)) {
-    AddStarterKitItems(actor, StarterKitType::LumberjackKit);
+    AddKitItems(actor, StarterKitType::LumberjackKit);
   } else if (chance <= (StarterKitChance::ChefKitChance +
                         StarterKitChance::LumberjackKitChance +
                         StarterKitChance::MinerKitChance)) {
-    AddStarterKitItems(actor, StarterKitType::MinerKit);
+    AddKitItems(actor, StarterKitType::MinerKit);
   } else {
-    AddStarterKitItems(actor, StarterKitType::PrisonerKit);
+    AddKitItems(actor, StarterKitType::PrisonerKit);
   }
 }
 
-void PieScript::GetPatronStarterKitItems(MpActor& actor)
+void PieScript::AddPatronStarterKitItems(MpActor& actor)
 {
-  AddStarterKitItems(actor, StarterKitType::PatronKit);
+  AddKitItems(actor, StarterKitType::PatronKit);
 }
