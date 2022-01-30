@@ -15,7 +15,6 @@
 #include <JsEngine.h>
 #include <cassert>
 #include <memory>
-#include <set>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
