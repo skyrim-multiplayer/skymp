@@ -165,7 +165,8 @@ const loadLobby = (location: Transform): void => {
     const pl = sp.Game.getPlayer();
     if (pl) pl.unequipItem(ironHelment, false, true);
 
-    browser.forcePersistantBrowserFocus_Crutch_();
+    sp.browser.setFocused(true);
+    browser.keepCursorMenuOpenedWhenBrowserFocused();
   });
 
   loadGameManager.loadGame(

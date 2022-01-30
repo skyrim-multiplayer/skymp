@@ -12,11 +12,12 @@ import {
   MenuOpenEvent,
   MenuCloseEvent,
   BrowserMessageEvent,
+  Ui,
 } from "skyrimPlatform";
 import { RemoteAuthGameData } from "./authModel";
 
 const pluginAuthDataName = `auth-data-no-load`;
-const onWindowLoadedEventKey = "onWindowLoadedEventKey";
+const onFrontLoadedEventKey = "front-loaded";
 
 export type onWindowLoadedEventCallback = () => void;
 const onWindowLoadListeners = new Array<onWindowLoadedEventCallback>();
@@ -44,9 +45,10 @@ const badMenus: Menu[] = [
 
 const IsBadMenu = (menu: string) => badMenus.includes(menu as Menu);
 
-browser.executeJavaScript(`window.onload = window.skyrimPlatform.sendMessage("${onWindowLoadedEventKey}")`);
+// browser.executeJavaScript(`window.onload = window.skyrimPlatform.sendMessage("${onWindowLoadedEventKey}")`);
+browser.executeJavaScript(`document.DOMContentLoaded = window.skyrimPlatform.sendMessage("${onFrontLoadedEventKey}")`);
 on("browserMessage", (e) => {
-  if (e.arguments[0] === onWindowLoadedEventKey) {
+  if (e.arguments[0] === onFrontLoadedEventKey) {
     onWindowLoadListeners.forEach(l => l());
   }
 });
@@ -64,6 +66,9 @@ export const main = (): void => {
   const badMenuOpen = () => !!openedMenus.length;
 
   on("menuOpen", (e: MenuOpenEvent) => {
+    if (e.name === Menu.Cursor) {
+      isCursorMenuOpened = true;
+    }
     if (IsBadMenu(e.name)) {
       browser.setVisible(false);
       openedMenus.push(e.name);
@@ -73,6 +78,9 @@ export const main = (): void => {
   });
 
   on("menuClose", (e: MenuCloseEvent) => {
+    if (e.name === Menu.Cursor) {
+      isCursorMenuOpened = false;
+    }
     const i = openedMenus.indexOf(e.name);
     if (i !== -1) {
       openedMenus.splice(i, 1);
@@ -140,6 +148,23 @@ export const setAuthData = (data: RemoteAuthGameData | null): void => {
   );
 };
 
+var isCursorMenuOpened = false;
+export const keepCursorMenuOpenedWhenBrowserFocused = (): void => {
+  once("update", () => {
+    if (browser.isFocused() && !isCursorMenuOpened) {
+      printConsole(`browser ${browser.isFocused()}, isCursorMenuOpened ${isCursorMenuOpened}`);
+      browser.setFocused(false);
+      once("update", () => {
+        browser.setFocused(true);
+        once("update", () => keepCursorMenuOpenedWhenBrowserFocused());
+      });
+    } else {
+      keepCursorMenuOpenedWhenBrowserFocused();
+    }
+  });
+}
+
+
 let isFocusedPersistantActive = false;
 let isFocusedPersistantActive_dt = 0;
 let isFocusedPersistantActive_last_dt = 0;
@@ -164,11 +189,15 @@ export const forcePersistantBrowserFocus_Crutch_ = (): void => {
 }
 
 const updateFocus = (): void => {
-  browser.setFocused(true);
-  browser.setFocused(false);
-  browser.setFocused(true);
-  
-  printConsole(browser.isFocused());
+  printConsole(`cursor menu opened: ${isCursorMenuOpened}`);
+  if (isCursorMenuOpened) {
+    // browser.setFocused(false);
+  }
+
+  // browser.setFocused(false);
+  // once("update", () => browser.setFocused(true));
+
+  //printConsole(browser.isFocused());
 }
 
 export const clearPersistantBrowserFocus_Crutch_ = (): void => {
