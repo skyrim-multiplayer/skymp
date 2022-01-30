@@ -53,9 +53,9 @@ public:
     std::unordered_map<LootboxItemType,
                        std::unordered_map<Tier, std::vector<uint32_t>>>;
   const LootTable& GetLootTable() const;
-  void Play(MpActor* actor);
-  void GetStarterKitItems(MpActor* actor);
-  void GetPatronStarterKitItems(MpActor* actor);
+  void Play(MpActor& actor);
+  void GetStarterKitItems(MpActor& actor);
+  void GetPatronStarterKitItems(MpActor& actor);
 
 private:
   Tier AcknowledgeTier(int chance);
@@ -68,7 +68,7 @@ private:
   void AddDLCItems(std::vector<std::string> espmFiles,
                    std::vector<std::string> items, LootboxItemType type,
                    Tier tier);
-  void AddStarterKitItems(MpActor* actor, StarterKitType starterKitType);
+  void AddStarterKitItems(MpActor& actor, StarterKitType starterKitType);
 
 private:
   LootTable lootTable;

@@ -263,7 +263,7 @@ uint32_t PieScript::GetSlotItem(int weaponChance, int armoryChacne,
   return 0;
 }
 
-void PieScript::Play(MpActor* actor)
+void PieScript::Play(MpActor& actor)
 {
   uint32_t item1 = GetSlotItem(80, 10, 10, 0);
   uint32_t item2 = GetSlotItem(10, 80, 10, 0);
@@ -271,27 +271,27 @@ void PieScript::Play(MpActor* actor)
   uint32_t item4 = GetSlotItem(0, 0, 100, 0);
 
   if (item1) {
-    actor->AddItem(item1, 1);
+    actor.AddItem(item1, 1);
   }
   if (item2) {
-    actor->AddItem(item2, 1);
+    actor.AddItem(item2, 1);
   }
   if (item3) {
-    actor->AddItem(item3, 1);
+    actor.AddItem(item3, 1);
   }
   if (item4) {
-    actor->AddItem(item4, 1);
+    actor.AddItem(item4, 1);
   }
 }
 
-void PieScript::AddStarterKitItems(MpActor* actor, StarterKitType type)
+void PieScript::AddStarterKitItems(MpActor& actor, StarterKitType type)
 {
   for (auto item : starterKitsMap[type]) {
-    actor->AddItem(item, 1);
+    actor.AddItem(item, 1);
   }
 }
 
-void PieScript::GetStarterKitItems(MpActor* actor)
+void PieScript::GetStarterKitItems(MpActor& actor)
 {
   int chance = GenerateRandomNumber(1, 100);
   if (chance <= StarterKitChance::ChefKitChance) {
@@ -308,7 +308,7 @@ void PieScript::GetStarterKitItems(MpActor* actor)
   }
 }
 
-void PieScript::GetPatronStarterKitItems(MpActor* actor)
+void PieScript::GetPatronStarterKitItems(MpActor& actor)
 {
   AddStarterKitItems(actor, StarterKitType::PatronKit);
 }
