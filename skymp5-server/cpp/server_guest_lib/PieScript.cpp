@@ -14,10 +14,9 @@ int GenerateRandomNumber(int leftBound, int rightBound)
     std::uniform_int_distribution<> distr(leftBound, rightBound);
     return distr(g_rng);
   } else {
-    std::stringstream ss;
-    ss << "GenerateRandomNumber() cannot generate number in range: ("
-       << leftBound << ", " << rightBound << ")\n";
-    throw std::runtime_error(ss.str());
+    throw std::runtime_error(fmt::format(
+      "GenerateRandomNumber() cannot generate number in range: ({}, {})",
+      leftBound, rightBound));
   }
 }
 
