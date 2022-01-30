@@ -55,7 +55,7 @@ export const main = (lobbyLocation: Transform): void => {
   } else {
     startListenBrowserMessage();
     browser.addOnWindowLoadListener(() => {
-      if (isListenBrowserMessage) loadLobby(lobbyLocation)
+      if (isListenBrowserMessage) loadLobby(lobbyLocation);
     });
   }
 }
