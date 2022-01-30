@@ -11,6 +11,7 @@ import {
   printConsole,
   settings,
   storage,
+  browser as spBrowser
 } from "skyrimPlatform";
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./browser";
@@ -130,6 +131,7 @@ if (!(authGameData?.local || authGameData?.remote)) {
       browser.setAuthData(data.remote.rememberMe ? data.remote : null);
     }
     storage[AuthGameData.storageKey] = data;
+    spBrowser.setFocused(false);
     startClient();
   });
 
