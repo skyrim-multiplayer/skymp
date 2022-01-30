@@ -243,6 +243,7 @@ PieScript::AcknowledgeTypeAndTier(int weaponChance, int armorChance,
     type = LootboxItemType::Consumable;
     tier = AcknowledgeTier(chance);
   } else {
+    type = LootboxItemType::Nothing;
   }
 
   std::pair<LootboxItemType, Tier> tierAndType = std::make_pair(type, tier);
@@ -254,9 +255,12 @@ uint32_t PieScript::GetSlotItem(int weaponChance, int armoryChacne,
 {
   std::pair<LootboxItemType, Tier> typeAndTier = AcknowledgeTypeAndTier(
     weaponChance, armoryChacne, consumableChance, nothingChance);
-  int item = GenerateRandomNumber(
-    0, lootTable[typeAndTier.first][typeAndTier.second].size() - 1);
-  return lootTable[typeAndTier.first][typeAndTier.second].at(item);
+  if (typeAndTier.first != LootboxItemType::Nothing) {
+    int item = GenerateRandomNumber(
+      0, lootTable[typeAndTier.first][typeAndTier.second].size() - 1);
+    return lootTable[typeAndTier.first][typeAndTier.second].at(item);
+  }
+  return;
 }
 
 void PieScript::Play(MpActor* actor)

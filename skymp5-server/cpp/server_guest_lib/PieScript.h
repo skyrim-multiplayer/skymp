@@ -1,9 +1,9 @@
 #pragma once
+#include <array>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <array>
 
 class MpActor;
 
@@ -15,6 +15,7 @@ public:
     Weapon = 0,
     Armor,
     Consumable,
+    Nothing
   };
 
   enum class Tier
