@@ -7,6 +7,7 @@ import { ChatProperty } from './src/props/chatProperty';
 import { DialogProperty } from './src/props/dialogProperty';
 import { DisableCheats } from './src/props/disableCheats';
 import { EvalProperty } from './src/props/evalProperty';
+import { PortalNamingProperty } from './src/props/portalNamingProperty';
 import { LocationalData, Mp, PapyrusObject, PapyrusValue } from './src/types/mp';
 import { Timer } from './src/utils/timer';
 
@@ -143,6 +144,7 @@ EvalProperty.init();
 ChatProperty.init();
 Timer.init();
 DisableCheats.init();
+PortalNamingProperty.init();
 
 declare const mp: Mp;
 mp.registerPapyrusFunction('global', 'Utility', 'RandomInt', (self, args) => randomInt(mp, self, args));
