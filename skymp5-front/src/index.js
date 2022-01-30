@@ -34,4 +34,6 @@ window.scrollToLastMessage = () => {
   if (_list != null) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
 };
 
-window.skyrimPlatform.sendMessage("front-loaded");
+if (window.skyrimPlatform?.sendMessage) {
+  window.skyrimPlatform.sendMessage("front-loaded");
+}
