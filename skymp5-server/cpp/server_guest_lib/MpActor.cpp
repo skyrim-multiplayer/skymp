@@ -122,7 +122,6 @@ void MpActor::OnEquip(uint32_t baseId)
     std::set<std::string> s;
     s = { espmFiles.begin(), espmFiles.end() };
     if (s.count("SweetPie.esp")) {
-
       if (baseId == kStareterKitPie) {
         PieScript pieScript(espmFiles);
         pieScript.GetStarterKitItems(*this);

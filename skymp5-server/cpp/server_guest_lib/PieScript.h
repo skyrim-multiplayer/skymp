@@ -46,7 +46,7 @@ private:
   };
 
 public:
-  PieScript(std::vector<std::string> espmFiles);
+  PieScript(const std::vector<std::string>& espmFiles);
 
 public:
   using LootTable =
@@ -65,8 +65,8 @@ private:
                                                           int armoryChance,
                                                           int consumableChance,
                                                           int nothingChance);
-  void AddDLCItems(std::vector<std::string> espmFiles,
-                   std::vector<std::string> items, LootboxItemType type,
+  void AddDLCItems(const std::vector<std::string>& espmFiles,
+                   const std::vector<std::string>& items, LootboxItemType type,
                    Tier tier);
   void AddStarterKitItems(MpActor& actor, StarterKitType starterKitType);
 

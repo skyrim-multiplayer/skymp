@@ -1,4 +1,5 @@
 #include "PieScript.h"
+
 #include "FormDesc.h"
 #include "MpActor.h"
 #include <random>
@@ -12,8 +13,8 @@ int GenerateRandomNumber(int leftBound, int rightBound)
   return distr(g_rng);
 }
 
-void PieScript::AddDLCItems(std::vector<std::string> espmFiles,
-                            std::vector<std::string> items,
+void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
+                            const std::vector<std::string>& items,
                             LootboxItemType type, Tier tier)
 {
   for (const auto& item : items) {
@@ -24,7 +25,7 @@ void PieScript::AddDLCItems(std::vector<std::string> espmFiles,
   }
 }
 
-PieScript::PieScript(std::vector<std::string> espmFiles)
+PieScript::PieScript(const std::vector<std::string>& espmFiles)
 {
   lootTable = {
     { LootboxItemType::Weapon,
