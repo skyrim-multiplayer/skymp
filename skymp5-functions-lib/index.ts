@@ -10,6 +10,8 @@ import { EvalProperty } from './src/props/evalProperty';
 import { LocationalData, Mp, PapyrusObject, PapyrusValue } from './src/types/mp';
 import { Timer } from './src/utils/timer';
 
+const serverSettings = mp.getServerSettings();
+
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
   throw new TypeError(`The argument with index ${index} has value (${JSON.stringify(x)}) that doesn't meet the requirements of ${expectedTypeName}`);
 };
@@ -169,6 +171,13 @@ pointsByName.set('whiterun:safePlace', {
   rot: [0, 0, 176],
 });
 
+const startPoints = serverSettings["startPoints"] as LocationalData[] | undefined;
+if(startPoints && startPoints[0]){
+  pointsByName.set('default', startPoints[0]);
+}else{
+  pointsByName.set('default', pointsByName.get('hall:spawnPoint') as LocationalData);
+}
+
 const maps: Required<SweetPieMap>[] = [{
   safePointName: 'whiterun:safePlace',
   mainSpawnPointName: 'whiterun:spawnPoint',
@@ -186,5 +195,5 @@ const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[
 };
 
 const playerController = MpApiInteractor.makeController(pointsByName);
-const gameModeListener = createGameModeListener(playerController, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]);
+const gameModeListener = createGameModeListener(playerController, maps, serverSettings["sweetPieMinimumPlayersToStart"]);
 MpApiInteractor.setup(gameModeListener);
