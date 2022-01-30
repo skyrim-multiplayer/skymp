@@ -15,6 +15,7 @@
 #include <JsEngine.h>
 #include <cassert>
 #include <memory>
+#include <set>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -438,9 +439,6 @@ Napi::Value ScampServer::CreateActor(const Napi::CallbackInfo& info)
   try {
     uint32_t res =
       partOne->CreateActor(formId, pos, angleZ, cellOrWorld, userProfileId);
-    constexpr uint32_t kStarterKitPie = 0x030009DB;
-    auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-    actor.AddItem(kStarterKitPie, 1);
     return Napi::Number::New(info.Env(), res);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
