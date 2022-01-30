@@ -93,6 +93,10 @@ export interface LocationalData {
   rot: [number, number, number];
 }
 
+export interface RuntimeStorage {
+  rounds?: any[];
+}
+
 export interface Mp {
   /**
    * Returns the actual value of a specified property. If there is no value, then
@@ -187,6 +191,8 @@ export interface Mp {
   readDataDirectory(): string[];
   readDataFile(path: string): string;
   writeDataFile(path: string, content: string): void;
+  
+  runtimeStorage: RuntimeStorage;
 
   [key: string]: unknown;
 }

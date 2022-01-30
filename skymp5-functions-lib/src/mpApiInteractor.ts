@@ -174,10 +174,10 @@ export class MpApiInteractor {
         );
       },
       getRoundsArray(): SweetPieRound[] {
-        return PersistentStorage.getSingleton().rounds;
+        return mp.runtimeStorage.rounds || [];
       },
       setRoundsArray(rounds: SweetPieRound[]): void {
-        PersistentStorage.getSingleton().rounds = rounds;
+        mp.runtimeStorage.rounds = rounds;
       },
       getOnlinePlayers(): number[] {
         return PersistentStorage.getSingleton().onlinePlayers;

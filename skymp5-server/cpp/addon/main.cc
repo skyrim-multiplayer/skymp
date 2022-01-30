@@ -1581,6 +1581,8 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       return JsValue::Undefined();
     }));
 
+  mp.SetProperty("runtimeStorage", JsValue::Object());
+
   JsValue::GlobalObject().SetProperty("mp", mp);
 
   JsValue console = JsValue::Object();
@@ -1660,10 +1662,9 @@ Napi::Value ScampServer::ExecuteJavaScriptOnChakra(
     if (!chakraEngine) {
       chakraEngine.reset(new JsEngine);
       chakraEngine->ResetContext(chakraTaskQueue);
+      RegisterChakraApi(chakraEngine);
     }
     auto src = static_cast<std::string>(info[0].As<Napi::String>());
-
-    RegisterChakraApi(chakraEngine);
 
     chakraEngine->RunScript(src, "skymp5-gamemode/gamemode.js");
   } catch (std::exception& e) {
