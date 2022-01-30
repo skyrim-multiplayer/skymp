@@ -54,7 +54,6 @@ export class SweetPieGameModeListener implements GameModeListener {
   onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, isTeleportDoor: boolean): 'continue' | 'blockActivation' {
     if (targetObjectDesc === this.quitGamePortal) {
       this.controller.quitGame(casterActorId);
-      forceLeaveRound(this.controller, this.rounds, casterActorId);
       return 'continue';
     } else if (targetObjectDesc === this.neutralPortal) {
       const round = getAvailableRound(this.rounds, casterActorId);
@@ -114,6 +113,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerJoin(actorId: number) {
     this.controller.setSpawnPoint(actorId, this.hallSpawnPointName);
+    this.controller.teleport(actorId, this.hallSpawnPointName);
   }
 
   everySecond() {
@@ -181,6 +181,15 @@ export class SweetPieGameModeListener implements GameModeListener {
         const winnerScore = Math.max(...(determineDeathMatchWinners(round).map(x => round.players?.get(x)?.kills) as number[]));
         this.sendRoundChatMessage(round, sprintf(this.deathMessage[0], this.controller.getName(targetActorId), this.controller.getName(killerActorId), this.controller.getName(killerActorId), killerScore, winnerScore));
       }
+    }
+  }
+
+  onPlayerLeave(actorId: number) {
+    forceLeaveRound(this.controller, this.rounds, actorId);
+    const round = getPlayerCurrentRound(this.rounds, actorId);
+    if (round && round.players?.size === 0) {
+      const roundIndex = this.rounds.indexOf(round);
+      this.resetRound(roundIndex);
     }
   }
 
