@@ -16,7 +16,7 @@ void PieScript::AddDLCItems(std::vector<std::string> espmFiles,
                             std::vector<std::string> items,
                             LootboxItemType type, Tier tier)
 {
-  for (auto item : items) {
+  for (const auto& item : items) {
     FormDesc formDesc = FormDesc::FromString(item);
     uint32_t id = formDesc.ToFormId(espmFiles);
 
@@ -260,15 +260,28 @@ uint32_t PieScript::GetSlotItem(int weaponChance, int armoryChacne,
       0, lootTable[typeAndTier.first][typeAndTier.second].size() - 1);
     return lootTable[typeAndTier.first][typeAndTier.second].at(item);
   }
-  return;
+  return 0;
 }
 
 void PieScript::Play(MpActor* actor)
 {
-  actor->AddItem(GetSlotItem(80, 10, 10, 0), 1);
-  actor->AddItem(GetSlotItem(10, 80, 10, 0), 1);
-  actor->AddItem(GetSlotItem(25, 25, 40, 10), 1);
-  actor->AddItem(GetSlotItem(0, 0, 100, 0), 1);
+  uint32_t item1 = GetSlotItem(80, 10, 10, 0);
+  uint32_t item2 = GetSlotItem(10, 80, 10, 0);
+  uint32_t item3 = GetSlotItem(25, 25, 40, 10);
+  uint32_t item4 = GetSlotItem(0, 0, 100, 0);
+
+  if (item1) {
+    actor->AddItem(item1, 1);
+  }
+  if (item2) {
+    actor->AddItem(item2, 1);
+  }
+  if (item3) {
+    actor->AddItem(item3, 1);
+  }
+  if (item4) {
+    actor->AddItem(item4, 1);
+  }
 }
 
 void PieScript::AddStarterKitItems(MpActor* actor, StarterKitType type)
