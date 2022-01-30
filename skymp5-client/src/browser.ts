@@ -12,7 +12,6 @@ import {
   MenuOpenEvent,
   MenuCloseEvent,
   BrowserMessageEvent,
-  Ui,
 } from "skyrimPlatform";
 import { RemoteAuthGameData } from "./authModel";
 
