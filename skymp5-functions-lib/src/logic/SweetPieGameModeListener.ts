@@ -113,7 +113,6 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerJoin(actorId: number) {
     this.controller.setSpawnPoint(actorId, this.hallSpawnPointName);
-    this.controller.teleport(actorId, this.hallSpawnPointName);
   }
 
   everySecond() {
