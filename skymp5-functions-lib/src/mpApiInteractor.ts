@@ -7,6 +7,7 @@ import { Ctx } from "./types/ctx";
 import { LocationalData, Mp, PapyrusObject } from "./types/mp";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
+import {PortalNamingProperty} from "./props/portalNamingProperty";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
