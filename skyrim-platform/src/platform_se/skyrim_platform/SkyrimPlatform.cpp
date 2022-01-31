@@ -18,6 +18,9 @@
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
 
+#include <asio.hpp>
+#include <condition_variable>
+
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {
@@ -209,6 +212,7 @@ private:
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
                            Win32Api::Register(e);
+                           TextApi::Register(e);
                            InventoryApi::Register(e);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });
@@ -280,12 +284,32 @@ private:
 };
 }
 
+typedef asio::executor_work_guard<asio::io_context::executor_type> SPWorkGuard;
+
 struct SkyrimPlatform::Impl
 {
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
   Viet::TaskQueue tickTasks, updateTasks;
   ThreadPoolWrapper pool;
+
+  // Stuff needed to push functions from js to game thread
+  asio::io_context ioContext;
+  std::mutex syncLock;
+  std::condition_variable conditionalVariable;
+  bool complete;
+  std::shared_ptr<SPWorkGuard> workGuard;
+  void RunInIOContext(RE::BSTSmartPointer<RE::BSScript::IFunction> fPtr,
+                      const RE::BSTSmartPointer<RE::BSScript::Stack>& stack,
+                      RE::BSScript::ErrorLogger* logger,
+                      RE::BSScript::Internal::VirtualMachine* vm,
+                      RE::BSScript::IFunction::CallResult* ret)
+  {
+    *ret = fPtr->Call(stack, logger, vm, false);
+    std::lock_guard<std::mutex> lock(syncLock);
+    complete = true;
+    conditionalVariable.notify_all();
+  }
 };
 
 SkyrimPlatform::SkyrimPlatform()
@@ -296,6 +320,7 @@ SkyrimPlatform::SkyrimPlatform()
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
   pImpl->tickListeners.push_back(
     std::make_shared<CommonExecutionListener>(pImpl->browserApiState));
+  pImpl->complete = false;
 }
 
 SkyrimPlatform& SkyrimPlatform::GetSingleton()
@@ -336,4 +361,44 @@ void SkyrimPlatform::AddUpdateTask(const std::function<void()>& f)
 void SkyrimPlatform::PushAndWait(const std::function<void(int)>& f)
 {
   pImpl->pool.PushAndWait(f);
+}
+
+void SkyrimPlatform::Push(const std::function<void(int)>& f)
+{
+  pImpl->pool.Push(f);
+}
+
+void SkyrimPlatform::PushToWorkerAndWait(
+  RE::BSTSmartPointer<RE::BSScript::IFunction> fPtr,
+  const RE::BSTSmartPointer<RE::BSScript::Stack>& stack,
+  RE::BSScript::ErrorLogger* logger,
+  RE::BSScript::Internal::VirtualMachine* vm,
+  RE::BSScript::IFunction::CallResult* ret)
+{
+  std::unique_lock<std::mutex> lock(pImpl->syncLock);
+  pImpl->complete = false;
+  asio::post(
+    pImpl->ioContext.get_executor(),
+    std::bind(&Impl::RunInIOContext, pImpl, fPtr, stack, logger, vm, ret));
+  pImpl->conditionalVariable.wait(
+    lock, [] { return SkyrimPlatform::GetSingleton().pImpl->complete; });
+}
+
+void SkyrimPlatform::PrepareWorker()
+{
+  if (pImpl->ioContext.stopped()) {
+    pImpl->ioContext.restart();
+  }
+  pImpl->workGuard =
+    std::make_shared<SPWorkGuard>(pImpl->ioContext.get_executor());
+}
+
+void SkyrimPlatform::StartWorker()
+{
+  pImpl->ioContext.run();
+}
+
+void SkyrimPlatform::StopWorker()
+{
+  pImpl->ioContext.stop();
 }

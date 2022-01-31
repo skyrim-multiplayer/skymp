@@ -15,8 +15,11 @@ extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
-  callback(TextToDraw());
-  callback(TextToDraw());
+  auto text = &TextsCollection::GetSingleton();
+
+  for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
+    callback(a.second);
+  }
 }
 
 void SetupFridaHooks();
@@ -42,8 +45,12 @@ void OnUpdate(IVM* vm, StackID stackId)
 
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
-  SkyrimPlatform::GetSingleton().PushAndWait(
-    [=](int) { SkyrimPlatform::GetSingleton().JsTick(true); });
+  SkyrimPlatform::GetSingleton().PrepareWorker();
+  SkyrimPlatform::GetSingleton().Push([=](int) {
+    SkyrimPlatform::GetSingleton().JsTick(true);
+    SkyrimPlatform::GetSingleton().StopWorker();
+  });
+  SkyrimPlatform::GetSingleton().StartWorker();
   g_nativeCallRequirements.gameThrQ->Update();
   g_nativeCallRequirements.stackId = std::numeric_limits<StackID>::max();
   g_nativeCallRequirements.vm = nullptr;

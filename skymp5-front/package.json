@@ -7,7 +7,7 @@
     "build": "webpack --config webpack.config.ts",
     "watch": "webpack serve",
     "lint": "eslint src --ext .ts",
-    "lint:fix": "yarn lint -- --fix",
+    "lint:fix": "yarn lint --fix",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook"
   },

@@ -35,6 +35,6 @@ Once you build the server, you should be able to launch it. But default config v
 }
 ```
 
-- You may find out your public IP here http://ipv4bot.whatismyipaddress.com
+- You may find out your public IP here http://api.ipify.org
 - You need to have ports open. Talk to your Internet provider support if you want to open ports. Status of each port can be checked here https://www.yougetsignal.com/tools/open-ports/. You can learn about ports that are really used by the server on [Server Configuration Reference](docs_server_configuration_reference.md) page or to simplify think that it may use any of available ports and protocols.
 - If you use `LogMeIn Hamachi` or similar software then just type an IP address you got assigned from it. Your friends who share a "local" network with you will be able to connect, players from the Internet will not.

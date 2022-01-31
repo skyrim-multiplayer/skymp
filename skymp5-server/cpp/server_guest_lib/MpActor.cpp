@@ -1,12 +1,15 @@
 #include "MpActor.h"
 #include "ChangeFormGuard.h"
+#include "CropRegeneration.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
-#include "GetBaseActorValues.h"
 #include "MsgType.h"
+#include "PieScript.h"
 #include "ServerState.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
+#include <random>
+#include <string>
 
 
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
@@ -95,12 +98,46 @@ void MpActor::OnEquip(uint32_t baseId)
     return;
   auto t = lookupRes.rec->GetType();
   if (t == "INGR" || t == "ALCH") {
-    // Eat item
+    EatItem(baseId, t);
     RemoveItem(baseId, 1, nullptr);
 
     VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
                         VarValue::None() };
     SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
+
+    WorldState* espmProvider = GetParent();
+    std::vector<std::string> espmFiles = espmProvider->espmFiles;
+
+    constexpr uint32_t kApplePieId0 = 0x00064B43;
+    constexpr uint32_t kApplePieId1 = 0x0300353B;
+    constexpr uint32_t kApplePieId2 = 0x03003539;
+    constexpr uint32_t kApplePieId3 = 0x0300353A;
+    constexpr uint32_t kStareterKitPie = 0x030009DB;
+    constexpr uint32_t kPatronStarterKitPie = 0x00064B30;
+    bool isPie = false;
+    isPie = isPie || baseId == kApplePieId0;
+    isPie = isPie || baseId == kApplePieId1;
+    isPie = isPie || baseId == kApplePieId2;
+    isPie = isPie || baseId == kApplePieId3;
+
+    std::set<std::string> s;
+    s = { espmFiles.begin(), espmFiles.end() };
+    if (s.count("SweetPie.esp")) {
+      if (baseId == kStareterKitPie) {
+        PieScript pieScript(espmFiles);
+        pieScript.AddStarterKitItems(*this);
+      }
+
+      if (baseId == kPatronStarterKitPie) {
+        PieScript pieScript(espmFiles);
+        pieScript.AddPatronStarterKitItems(*this);
+      }
+
+      if (isPie) {
+        PieScript pieScript(espmFiles);
+        pieScript.Play(*this);
+      }
+    }
   }
 }
 
@@ -366,6 +403,52 @@ void MpActor::MpApiDeath(MpActor* killer)
   }
 }
 
+void MpActor::EatItem(uint32_t baseId, espm::Type t)
+{
+  auto espmProvider = GetParent();
+  std::vector<espm::Effects::Effect> effects;
+  if (t == "ALCH") {
+    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
+  } else if (t == "INGR") {
+    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
+  } else {
+    return;
+  }
+
+  for (const auto& effect : effects) {
+    espm::ActorValue av =
+      espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
+    if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
+        av == espm::ActorValue::Magicka) { // other types is unsupported
+      RestoreActorValue(av, effect.magnitude);
+    }
+  }
+}
+
+void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
+                                         float percentageDelta)
+{
+  MpChangeForm form = GetChangeForm();
+  float hp = form.healthPercentage;
+  float mp = form.magickaPercentage;
+  float sp = form.staminaPercentage;
+  switch (av) {
+    case espm::ActorValue::Health:
+      hp = CropValue(form.healthPercentage + percentageDelta);
+      break;
+    case espm::ActorValue::Stamina:
+      sp = CropValue(form.staminaPercentage + percentageDelta);
+      break;
+    case espm::ActorValue::Magicka:
+      mp = CropValue(form.magickaPercentage + percentageDelta);
+      break;
+    default:
+      return;
+  }
+  SetPercentages(hp, mp, sp);
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
+}
+
 void MpActor::BeforeDestroy()
 {
   for (auto& sink : destroyEventSinks)
@@ -461,4 +544,26 @@ void MpActor::SetRespawnTime(float time)
 void MpActor::SetIsDead(bool isDead)
 {
   SendAndSetDeathState(isDead, false);
+}
+
+void MpActor::RestoreActorValue(espm::ActorValue av, float value)
+{
+  ModifyActorValuePercentage(
+    av, std::abs(value) / GetMaximumValues().GetValue(av));
+}
+
+void MpActor::DamageActorValue(espm::ActorValue av, float value)
+{
+  ModifyActorValuePercentage(
+    av, -std::abs(value) / GetMaximumValues().GetValue(av));
+}
+
+BaseActorValues MpActor::GetBaseValues()
+{
+  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+}
+
+BaseActorValues MpActor::GetMaximumValues()
+{
+  return GetBaseValues();
 }

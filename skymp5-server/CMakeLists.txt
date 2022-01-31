@@ -87,8 +87,7 @@ apply_default_settings(TARGETS ${PROJECT_NAME})
 # On Windows create launch_server.bat in build/dist/server
 # This .bat file is for launching the server
 if(WIN32)
-  set(bat "set NODE_PATH=${SKYMP5_SERVER_SOURCE_DIR}/node_modules\n")
-  set(bat "${bat}node dist_back/index.js\n")
+  set(bat "node dist_back/skymp5-server.js\n")
   set(bat "${bat}pause\n")
 
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
@@ -124,7 +123,33 @@ set(server_settings_json "{
 }
 ")
 
-file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json}")
+set(server_settings_json_sweetpie "{
+  \"dataDir\": \"data\",
+  \"loadOrder\": [
+    \"${esm_prefix}Skyrim.esm\",
+    \"${esm_prefix}Update.esm\",
+    \"${esm_prefix}Dawnguard.esm\",
+    \"${esm_prefix}HearthFires.esm\",
+    \"${esm_prefix}Dragonborn.esm\",
+    \"${esm_prefix}RavenOnMyShoulder.esp\",
+    \"${esm_prefix}SweetPie.esp\"
+  ],
+  \"name\": \"SweetPie\",
+  \"startPoints\": [
+    {
+      \"pos\": [ 18511.7637, 10256.8955, 610.6392 ],
+      \"worldOrCell\": \"0x6042b5f\",
+      \"angleZ\": 0
+    }
+  ]
+}
+")
+
+if(SWEETPIE)
+  file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json_sweetpie}")
+else()
+  file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json}")
+endif()
 
 add_custom_command(
   TARGET ${PROJECT_NAME} POST_BUILD

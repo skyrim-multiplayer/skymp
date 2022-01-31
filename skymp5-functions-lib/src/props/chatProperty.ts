@@ -56,6 +56,7 @@ export class ChatProperty {
         src += `window.chatMessages = window.chatMessages || [];`;
         src += `window.chatMessages.push("${msg}");`;
         src += refreshWidgets;
+        src += `if (window.scrollToLastMessage) { window.scrollToLastMessage(); }`;
         ctx.sp.browser.executeJavaScript(src);
       },
       { messageClientSide: message, refreshWidgets: refreshWidgetsJs }

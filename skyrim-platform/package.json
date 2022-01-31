@@ -1,5 +1,5 @@
 {
   "name": "@skymp/skyrim-platform",
-  "version": "2.3.0",
+  "version": "2.5.0",
   "description": "A modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript"
 }

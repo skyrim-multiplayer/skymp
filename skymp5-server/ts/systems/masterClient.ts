@@ -2,13 +2,7 @@ import { System, Log } from "./system";
 import Axios from "axios";
 import { SystemContext } from "./system";
 import { ServerInterface } from "../serverInterface";
-
-const getMyPublicIp = async (): Promise<string> => {
-  const res = await Axios.request({
-    url: "http://ipv4bot.whatismyipaddress.com",
-  });
-  return res.data;
-};
+import { getMyPublicIp } from "../publicIp";
 
 export class MasterClient implements System {
   systemName = "MasterClient";
@@ -22,7 +16,7 @@ export class MasterClient implements System {
     private ip: string,
     private updateIntervalMs = 5000,
     private offlineMode = false
-  ) {}
+  ) { }
 
   async initAsync(): Promise<void> {
     if (!this.masterUrl) return this.log("No master server specified");
@@ -49,7 +43,17 @@ export class MasterClient implements System {
     if (this.endpoint) {
       const { name, maxPlayers } = this;
       const online = this.getCurrentOnline(ctx.svr);
-      await Axios.post(this.endpoint, { name, maxPlayers, online });
+      try {
+        await Axios.post(this.endpoint, { name, maxPlayers, online });
+      } catch (e) {
+        const hasHttpStatus = e.response !== undefined;
+        if (hasHttpStatus) {
+          throw new Error(`${e.response.status} - ${e.response.data}`);
+        }
+        else {
+          throw e;
+        }
+      }
     }
   }
 

@@ -10,19 +10,19 @@ set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
 macro(set_from_environment VARIABLE)
-  if (NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
+  if(NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
     set(${VARIABLE} $ENV{${VARIABLE}})
-  endif ()
+  endif()
 endmacro()
 
 set_from_environment(VCPKG_ROOT)
 
 # Use installed VCPKG if exists
-if (USE_SYSTEM_VCPKG AND DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+if(USE_SYSTEM_VCPKG AND DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
   set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-else ()
+else()
   set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-endif ()
+endif()
 
 # File from vcpkg submodule. This indicates inability to find this file or checkout submodules.
 if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
@@ -52,6 +52,11 @@ enable_testing()
 # Bool options
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(ONLY_SP "Build only SkyrimPlatform instead of performing full SkyMP build" OFF)
+option(SWEETPIE "Affects default client and server configs" ON)
+
+message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
+message(STATUS ONLY_SP=${ONLY_SP})
+message(STATUS SWEETPIE=${SWEETPIE})
 
 # P.S. SkyrimPlatform crashes with that JS_ENGINE_TRACING_ENABLED on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 

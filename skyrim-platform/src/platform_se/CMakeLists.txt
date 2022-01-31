@@ -1,6 +1,6 @@
-project(platform_se	VERSION 2.4.0	LANGUAGES CXX)
+project(platform_se VERSION 2.5.0 LANGUAGES CXX)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h @ONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc	@ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/link_vcpkg_dependencies.cmake)
@@ -52,7 +52,7 @@ if(MSVC)
   add_executable(SkyrimPlatformCEF ${ui_process_src})
   target_link_libraries(SkyrimPlatformCEF PUBLIC core_library)
   target_link_libraries(SkyrimPlatformCEF PUBLIC cef)
-  # supress missing pdb warning for cef and frida
+  # suppress missing pdb warning for cef
   target_link_options(SkyrimPlatformCEF PRIVATE "LINKER:-ignore:4099")
   set_target_properties(SkyrimPlatformCEF PROPERTIES WIN32_EXECUTABLE TRUE)
   set_target_properties(SkyrimPlatformCEF PROPERTIES SUFFIX ".exe.hidden")
@@ -102,7 +102,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib)
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
-    # supress missing pdb warning for cef and frida
+    # suppress missing pdb warning for cef and frida
     target_link_options(skyrim_platform PRIVATE "LINKER:-ignore:4099")
     target_precompile_headers(skyrim_platform	PRIVATE	skyrim_platform/PCH.h)
     apply_default_settings(TARGETS skyrim_platform)

@@ -575,6 +575,13 @@ void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
     changeForm.inv.AddItem(baseId, count);
   });
   SendInventoryUpdate();
+
+  auto baseItem = VarValue(static_cast<int32_t>(baseId));
+  auto itemCount = VarValue(static_cast<int32_t>(count));
+  auto itemReference = VarValue((IGameObject*)nullptr);
+  auto sourceContainer = VarValue((IGameObject*)nullptr);
+  VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer };
+  SendPapyrusEvent("OnItemAdded", args, 4);
 }
 
 void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
@@ -585,6 +592,15 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
       changeForm.inv.AddItems(entries);
     });
     SendInventoryUpdate();
+  }
+
+  for (const auto& entri : entries) {
+    auto baseItem = VarValue(static_cast<int32_t>(entri.baseId));
+    auto itemCount = VarValue(static_cast<int32_t>(entri.count));
+    auto itemReference = VarValue((IGameObject*)nullptr);
+    auto sourceContainer = VarValue((IGameObject*)nullptr);
+    VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer };
+    SendPapyrusEvent("OnItemAdded", args, 4);
   }
 }
 
