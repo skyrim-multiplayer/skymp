@@ -137,9 +137,9 @@ set(server_settings_json_sweetpie "{
   \"name\": \"SweetPie\",
   \"startPoints\": [
     {
-      \"pos\": [ 18511.7637, 10256.8955, 610.6392 ],
+      \"pos\": [ 18522.08, 10218.17, 624.46 ],
       \"worldOrCell\": \"0x6042b5f\",
-      \"angleZ\": 0
+      \"angleZ\": 348
     }
   ]
 }
