@@ -225,6 +225,25 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
   });
 }
 
+void MpActor::NetSetPercentages(
+  float healthPercentage, float magickaPercentage, float staminaPercentage,
+  std::chrono::steady_clock::time_point timePoint, MpActor* aggressor)
+{
+  std::string s;
+  s += Networking::MinPacketId;
+  s += nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { { "health", healthPercentage },
+        { "magicka", magickaPercentage },
+        { "stamina", staminaPercentage } } }
+  }.dump();
+  SendToUser(s.data(), s.size(), true);
+  SetPercentages(healthPercentage, magickaPercentage, staminaPercentage,
+                 aggressor);
+  SetLastAttributesPercentagesUpdate(timePoint);
+}
+
 std::chrono::steady_clock::time_point
 MpActor::GetLastAttributesPercentagesUpdate()
 {
