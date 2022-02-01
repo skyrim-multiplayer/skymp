@@ -1,7 +1,7 @@
 #include "EventHandlerScript.h"
 #include "EventsApi.h"
 #include "NativeValueCasts.h"
-#include "SkyrimPlatform.h"
+#include "SkyrimPlatform.h" //hy
 
 namespace {
 JsValue CreateObject(const char* type, void* form)
