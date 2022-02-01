@@ -1,4 +1,16 @@
 #pragma once
+#include "ActorKill.h"
+#include "BooksRead.h"
+#include "CriticalHit.h"
+#include "DisarmedEvent.h"
+#include "DragonSoulsGained.h"
+#include "ItemHarvested.h"
+#include "LevelIncrease.h"
+#include "LocationDiscovery.h"
+#include "ShoutAttack.h"
+#include "SkillIncrease.h"
+#include "SoulsTrapped.h"
+#include "SpellsLearned.h"
 
 namespace RE {
 
