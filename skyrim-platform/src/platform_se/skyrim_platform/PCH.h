@@ -88,5 +88,9 @@ using TypeInfo = RE::BSScript::TypeInfo;
 #define NOINLINE __declspec(noinline)
 
 #include "JsEngine.h" // imports TaskQueue.h
-#include "Offsets.h"
-#include "Version.h"
+
+#include "game/Offsets.h"
+
+#include "game/BSRenderManager.h"
+#include "game/Events.h"
+#include "game/TintMask.h"
