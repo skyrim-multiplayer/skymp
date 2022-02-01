@@ -74,9 +74,9 @@ private:
   LootTable lootTable;
   std::unordered_map<StarterKitType, std::array<uint32_t, 5>> starterKitsMap;
 
-  const int TIER1_CHANCE = 60;
-  const int TIER2_CHANCE = 20;
-  const int TIER3_CHANCE = 10;
-  const int TIER4_CHANCE = 9;
-  const int TIER5_CHANCE = 1;
+  const int TIER1_CHANCE = 600;
+  const int TIER2_CHANCE = 220;
+  const int TIER3_CHANCE = 150;
+  const int TIER4_CHANCE = 25;
+  const int TIER5_CHANCE = 5;
 };

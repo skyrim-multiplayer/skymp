@@ -237,16 +237,16 @@ PieScript::AcknowledgeTypeAndTier(int weaponChance, int armorChance,
   Tier tier;
 
   if (chance <= weaponChance && weaponChance != 0) {
-    chance = GenerateRandomNumber(1, 100);
+    chance = GenerateRandomNumber(1, 1000);
     type = LootboxItemType::Weapon;
     tier = AcknowledgeTier(chance);
   } else if (chance <= (weaponChance + armorChance) && armorChance != 0) {
-    chance = GenerateRandomNumber(1, 100);
+    chance = GenerateRandomNumber(1, 1000);
     type = LootboxItemType::Armor;
     tier = AcknowledgeTier(chance);
   } else if (chance <= (weaponChance + armorChance + consumableChance) &&
              consumableChance != 0) {
-    chance = GenerateRandomNumber(1, 100);
+    chance = GenerateRandomNumber(1, 1000);
     type = LootboxItemType::Consumable;
     tier = AcknowledgeTier(chance);
   } else {
@@ -273,7 +273,7 @@ void PieScript::Play(MpActor& actor)
 {
   uint32_t item1 = GetSlotItem(80, 10, 10, 0);
   uint32_t item2 = GetSlotItem(10, 80, 10, 0);
-  uint32_t item3 = GetSlotItem(25, 25, 40, 10);
+  uint32_t item3 = GetSlotItem(10, 10, 80, 0);
   uint32_t item4 = GetSlotItem(0, 0, 100, 0);
 
   if (item1) {
