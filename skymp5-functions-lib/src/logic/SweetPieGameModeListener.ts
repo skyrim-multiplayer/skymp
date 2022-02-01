@@ -37,6 +37,10 @@ export class SweetPieGameModeListener implements GameModeListener {
       maps.forEach(map => this.rounds.push({ state: 'warmup', map: map }));
       this.rounds.forEach((round, index) => this.resetRound(index));
     }
+    this.controller.updateCustomName(this.quitGamePortal, 'Quit the game and return to desktop');
+    this.controller.updateCustomName(this.neutralPortal, 'Enter deathmatch1\n2\n3');
+    this.controller.updateCustomName(this.redPortal, 'Coming soon...');
+    this.controller.updateCustomName(this.bluePortal, 'Coming soon...');
   }
 
   private resetRound(roundIndex: number) {
@@ -48,6 +52,9 @@ export class SweetPieGameModeListener implements GameModeListener {
     }
     this.rounds[roundIndex] = { state: 'warmup', map: this.rounds[roundIndex].map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }
     this.controller.setRoundsArray(this.rounds);
+    this.rounds[roundIndex].map?.leaveRoundDoors?.forEach(
+      (doorDesc) => this.controller.updateCustomName(doorDesc, 'Return to hall')
+    );
   }
 
   getRounds() {
@@ -65,6 +72,8 @@ export class SweetPieGameModeListener implements GameModeListener {
       } else {
         forceJoinRound(this.controller, this.rounds, round, casterActorId);
         this.controller.setRoundsArray(this.rounds);
+        // If no match, then [free, min to start]
+        this.controller.updateCustomName(this.neutralPortal, `Enter deathmatch1\n2Players:${round.players?.size}`);
       }
       return 'continue';
     } else {

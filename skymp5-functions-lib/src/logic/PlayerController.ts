@@ -11,4 +11,5 @@ export type PlayerController = {
   getRoundsArray(): SweetPieRound[];
   setRoundsArray(rounds: SweetPieRound[]): void;
   getOnlinePlayers(): number[];
+  updateCustomName(formDesc: string, name: string): void;
 }

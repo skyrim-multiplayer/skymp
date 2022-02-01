@@ -12,7 +12,7 @@ import { Timer } from "./utils/timer";
 declare const mp: Mp;
 declare const ctx: Ctx;
 // declare const portalData: [number, string][];
-declare const portalData: string;
+declare const nameUpdatesJson: string;
 
 const isTeleportDoor = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -32,6 +32,8 @@ const getName = (actorId: number) => {
 };
 
 export class MpApiInteractor {
+  private static customNames = new Map<number, string>();
+
   static setup(listener: GameModeListener) {
     MpApiInteractor.setupActivateHandler(listener);
     MpApiInteractor.setupChatHandler(listener);
@@ -114,23 +116,24 @@ export class MpApiInteractor {
       for (const actorId of leftPlayers) {
         mp.set(actorId, 'eval', { commands: [], nextId: 0 });
       }
-      
+
       for (const actorId of onlinePlayers) {
-        const playerCnt = PersistentStorage.getSingleton().rounds[0]?.players?.size;
-        const portalDataLocal = [
-          [mp.getIdFromDesc("42f3f:SweetPie.esp"), 'СУДА ВЫХОДЫТ'],
-          [mp.getIdFromDesc("42f70:SweetPie.esp"), `СУДА УМИРАТ (${playerCnt})`],
-          [mp.getIdFromDesc("42e96:SweetPie.esp"), 'ЕТО ЖДАТ'],
-          [mp.getIdFromDesc("42fc1:SweetPie.esp"), 'ЕТО ТОЖЕ ЖДАТ'],
-        ];
-        console.log(`upd ${actorId} ${JSON.stringify(portalDataLocal)}`);
+        const nameUpdates = [];
+        for (const formId of mp.get(actorId, 'neighbors')) {
+          const name = MpApiInteractor.customNames.get(formId);
+          if (name !== undefined) {
+            nameUpdates.push([formId, name]);
+          }
+        }
         EvalProperty.eval(actorId, () => {
-          for (const [formId, name] of JSON.parse(portalData)) {
+          for (const [formId, name] of JSON.parse(nameUpdatesJson)) {
             const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
             const ret = refr?.setDisplayName(name, true);
-            ctx.sp.printConsole('KEK set name:', name, refr, ret);
+            if (!ret) {
+              ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
+            }
           }
-        }, { portalData: JSON.stringify(portalDataLocal) });
+        }, { nameUpdatesJson: JSON.stringify(nameUpdates) });
       }
  
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
@@ -205,6 +208,9 @@ export class MpApiInteractor {
       },
       getOnlinePlayers(): number[] {
         return PersistentStorage.getSingleton().onlinePlayers;
+      },
+      updateCustomName(formDesc: string, name: string): void {
+        MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
       },
     }
   }
