@@ -133,7 +133,7 @@ export class MpApiInteractor {
               ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
             }
           }
-        }, { nameUpdatesJson: JSON.stringify(nameUpdates) });
+        }, { nameUpdatesJson: JSON.stringify(nameUpdates).replace(/\\/g, '\\\\') });
       }
  
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
