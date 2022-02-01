@@ -206,6 +206,15 @@ export class SweetPieGameModeListener implements GameModeListener {
     this.controller.setRoundsArray(this.rounds);
   }
 
+  onPlayerLeave(actorId: number) {
+    const round = getPlayerCurrentRound(this.rounds, actorId);
+    forceLeaveRound(this.controller, this.rounds, actorId);
+    if (round && round.players?.size === 0) {
+      const roundIndex = this.rounds.indexOf(round);
+      this.resetRound(roundIndex);
+    }
+  }
+
   private sendRoundChatMessage(round: SweetPieRound, msg: string) {
     for (const [player] of (round.players || new Map)) {
       this.controller.sendChatMessage(player, msg);
