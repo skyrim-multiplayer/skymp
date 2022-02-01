@@ -42,12 +42,13 @@ export class EvalProperty {
       if (!ctx.value) {
         return;
       }
+      const value = ctx.value as EvalValue;
 
       if (typeof ctx.state.evalGreatestId !== 'number') {
         ctx.state.evalGreatestId = -1;
       }
 
-      for (const command of ctx.value.commands) {
+      for (const command of value.commands) {
         if (command.id > ctx.state.evalGreatestId) {
           ctx.state.evalGreatestId = command.id;
 

@@ -11,6 +11,8 @@ import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
+// declare const portalData: [number, string][];
+declare const portalData: string;
 
 const isTeleportDoor = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -112,7 +114,25 @@ export class MpApiInteractor {
       for (const actorId of leftPlayers) {
         mp.set(actorId, 'eval', { commands: [], nextId: 0 });
       }
-
+      
+      for (const actorId of onlinePlayers) {
+        const playerCnt = PersistentStorage.getSingleton().rounds[0]?.players?.size;
+        const portalDataLocal = [
+          [mp.getIdFromDesc("42f3f:SweetPie.esp"), 'СУДА ВЫХОДЫТ'],
+          [mp.getIdFromDesc("42f70:SweetPie.esp"), `СУДА УМИРАТ (${playerCnt})`],
+          [mp.getIdFromDesc("42e96:SweetPie.esp"), 'ЕТО ЖДАТ'],
+          [mp.getIdFromDesc("42fc1:SweetPie.esp"), 'ЕТО ТОЖЕ ЖДАТ'],
+        ];
+        console.log(`upd ${actorId} ${JSON.stringify(portalDataLocal)}`);
+        EvalProperty.eval(actorId, () => {
+          for (const [formId, name] of JSON.parse(portalData)) {
+            const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
+            const ret = refr?.setDisplayName(name, true);
+            ctx.sp.printConsole('KEK set name:', name, refr, ret);
+          }
+        }, { portalData: JSON.stringify(portalDataLocal) });
+      }
+ 
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
         PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;
       }
