@@ -208,9 +208,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerLeave(actorId: number) {
     const round = getPlayerCurrentRound(this.rounds, actorId);
-    this.controller.setSpawnPoint(actorId, this.hallSpawnPointName);
-    this.controller.teleport(actorId, this.hallSpawnPointName);
-    round?.players?.delete(actorId);
+    forceLeaveRound(this.controller, this.rounds, actorId);
     if (round && round.players?.size === 0) {
       const roundIndex = this.rounds.indexOf(round);
       this.resetRound(roundIndex);
