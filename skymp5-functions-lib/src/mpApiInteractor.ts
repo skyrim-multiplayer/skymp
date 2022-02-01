@@ -174,7 +174,7 @@ export class MpApiInteractor {
         mp.callPapyrusFunction(
           'method', 'ObjectReference', 'AddItem',
           { type: 'form', desc: mp.getDescFromId(actorId) },
-          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/true]
+          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/false]
         );
       },
       getRoundsArray(): SweetPieRound[] {
