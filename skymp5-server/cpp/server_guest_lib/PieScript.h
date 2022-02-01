@@ -6,6 +6,7 @@
 #include <vector>
 
 class MpActor;
+class WorldState;
 
 class PieScript
 {
@@ -53,9 +54,9 @@ public:
     std::unordered_map<LootboxItemType,
                        std::unordered_map<Tier, std::vector<uint32_t>>>;
   const LootTable& GetLootTable() const;
-  void Play(MpActor& actor);
-  void AddStarterKitItems(MpActor& actor);
-  void AddPatronStarterKitItems(MpActor& actor);
+  void Play(MpActor& actor, const WorldState& worldState);
+  void AddStarterKitItems(MpActor& actor, const WorldState& worldState);
+  void AddPatronStarterKitItems(MpActor& actor, const WorldState& worldState);
 
 private:
   Tier AcknowledgeTier(int chance);
@@ -68,7 +69,10 @@ private:
   void AddDLCItems(const std::vector<std::string>& espmFiles,
                    const std::vector<std::string>& items, LootboxItemType type,
                    Tier tier);
-  void AddKitItems(MpActor& actor, StarterKitType starterKitType);
+  void AddKitItems(MpActor& actor, const WorldState& worldState,
+                   StarterKitType starterKitType);
+  void Notify(MpActor& actor, const WorldState& worldState, uint32_t formId,
+              int count, bool silent);
 
 private:
   LootTable lootTable;

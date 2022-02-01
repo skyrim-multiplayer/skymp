@@ -2,8 +2,11 @@
 
 #include "FormDesc.h"
 #include "MpActor.h"
+#include "SpSnippet.h"
+#include "WorldState.h"
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 std::mt19937 g_rng{ std::random_device{}() };
@@ -270,7 +273,40 @@ uint32_t PieScript::GetSlotItem(int weaponChance, int armoryChacne,
   return 0;
 }
 
-void PieScript::Play(MpActor& actor)
+void PieScript::Notify(MpActor& actor, const WorldState& worldState,
+                       uint32_t formId, int count, bool silent)
+{
+  std::string type;
+  std::stringstream ss;
+  auto lookupRes = worldState.GetEspm().GetBrowser().LookupById(formId);
+  auto recType = lookupRes.rec->GetType();
+
+  if (recType == "WEAP") {
+    type = "weapon";
+  } else if (recType == "ARMO") {
+    type = "armor";
+  } else if (recType == "INGR") {
+    type = "ingridient";
+  } else if (recType == "LIGH") {
+    type = "light";
+  } else if (recType == "SLGM") {
+    type = "soulgem";
+  } else if (recType == "ALCH") {
+    type = "potion";
+  } else {
+    throw std::runtime_error(fmt::format("Unexpected type {}", type));
+  }
+
+  ss << "[";
+  ss << nlohmann::json({ { "formId", formId }, { "type", type } }).dump();
+  ss << "," << static_cast<int>(count) << ","
+     << (static_cast<bool>(silent) ? "true" : "false");
+  ss << "]";
+  std::string args = ss.str();
+  (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(&actor);
+}
+
+void PieScript::Play(MpActor& actor, const WorldState& worldState)
 {
   uint32_t item1 = GetSlotItem(80, 10, 10, 0);
   uint32_t item2 = GetSlotItem(10, 80, 10, 0);
@@ -279,43 +315,51 @@ void PieScript::Play(MpActor& actor)
 
   if (item1) {
     actor.AddItem(item1, 1);
+    Notify(actor, worldState, item1, 1, false);
   }
   if (item2) {
     actor.AddItem(item2, 1);
+    Notify(actor, worldState, item2, 1, false);
   }
   if (item3) {
     actor.AddItem(item3, 1);
+    Notify(actor, worldState, item3, 1, false);
   }
   if (item4) {
     actor.AddItem(item4, 1);
+    Notify(actor, worldState, item4, 1, false);
   }
 }
 
-void PieScript::AddKitItems(MpActor& actor, StarterKitType type)
+void PieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
+                            StarterKitType type)
 {
   for (auto item : starterKitsMap[type]) {
     actor.AddItem(item, 1);
+    Notify(actor, worldState, item, 1, false);
   }
 }
 
-void PieScript::AddStarterKitItems(MpActor& actor)
+void PieScript::AddStarterKitItems(MpActor& actor,
+                                   const WorldState& worldState)
 {
   int chance = GenerateRandomNumber(1, 100);
   if (chance <= StarterKitChance::ChefKitChance) {
-    AddKitItems(actor, StarterKitType::ChefKit);
+    AddKitItems(actor, worldState, StarterKitType::ChefKit);
   } else if (chance <= (StarterKitChance::ChefKitChance +
                         StarterKitChance::LumberjackKitChance)) {
-    AddKitItems(actor, StarterKitType::LumberjackKit);
+    AddKitItems(actor, worldState, StarterKitType::LumberjackKit);
   } else if (chance <= (StarterKitChance::ChefKitChance +
                         StarterKitChance::LumberjackKitChance +
                         StarterKitChance::MinerKitChance)) {
-    AddKitItems(actor, StarterKitType::MinerKit);
+    AddKitItems(actor, worldState, StarterKitType::MinerKit);
   } else {
-    AddKitItems(actor, StarterKitType::PrisonerKit);
+    AddKitItems(actor, worldState, StarterKitType::PrisonerKit);
   }
 }
 
-void PieScript::AddPatronStarterKitItems(MpActor& actor)
+void PieScript::AddPatronStarterKitItems(MpActor& actor,
+                                         const WorldState& worldState)
 {
-  AddKitItems(actor, StarterKitType::PatronKit);
+  AddKitItems(actor, worldState, StarterKitType::PatronKit);
 }

@@ -123,18 +123,21 @@ void MpActor::OnEquip(uint32_t baseId)
     s = { espmFiles.begin(), espmFiles.end() };
     if (s.count("SweetPie.esp")) {
       if (baseId == kStareterKitPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.AddStarterKitItems(*this);
+        pieScript.AddStarterKitItems(*this, *worldState);
       }
 
       if (baseId == kPatronStarterKitPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.AddPatronStarterKitItems(*this);
+        pieScript.AddPatronStarterKitItems(*this, *worldState);
       }
 
       if (isPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.Play(*this);
+        pieScript.Play(*this, *worldState);
       }
     }
   }
