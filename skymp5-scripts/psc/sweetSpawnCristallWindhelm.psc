@@ -52,6 +52,9 @@ int count
 int count1
 int count2
 
+
+
+
 event oninit()
  ObjectReference refr
   refr = Game.FindClosestReferenceOfAnyTypeInListFromRef(list, self, 1000)
@@ -66,39 +69,39 @@ endif
 endevent
 
 
-
 State activate1
 Event OnActivate(ObjectReference akActionRef)
 debug.notification(1)
 
+
 objectreference w1 = xm1.placeatme(game.getform(0x00101CF3))
 w1.GetHeadingAngle(xm1)
-trig1.activate(self)
+trig1.blockactivation()
 
 objectreference w2 = xm2.placeatme(game.getform(0x00101CF3))
 w2.GetHeadingAngle(xm2)
-trig2.activate(self)
+trig2.blockactivation()
 
 
 objectreference w3 = xm3.placeatme(game.getform(0x00101CF3))
 w3.GetHeadingAngle(xm3)
-trig3.activate(self)
+trig3.blockactivation()
 
 objectreference w4 = xm4.placeatme(game.getform(0x00101CF3))
 w4.GetHeadingAngle(xm4)
-trig4.activate(self)
+trig4.blockactivation()
 
 objectreference w5 = xm5.placeatme(game.getform(0x00101CF3))
 w5.GetHeadingAngle(xm5)
-trig5.activate(self)
+trig5.blockactivation()
 
 objectreference w6 = xm6.placeatme(game.getform(0x00101CF3))
 w6.GetHeadingAngle(xm6)
-trig6.activate(self)
+trig6.blockactivation()
 
 objectreference w7 = xm7.placeatme(game.getform(0x00101CF3))
 w7.GetHeadingAngle(xm7)
-trig7.activate(self)
+trig7.blockactivation()
 
 objectreference w8 = xm8.placeatme(game.getform(0x00101CF3))
 w8.GetHeadingAngle(xm8)
@@ -163,6 +166,9 @@ gotostate("activate11")
 endevent
 endstate
 
+function wa()
+  GotoState("w")
+endfunction
 
 
 

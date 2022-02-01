@@ -1,5 +1,6 @@
 import { GameModeListener } from "./logic/GameModeListener";
 import { PlayerController } from "./logic/PlayerController";
+import { SweetPieRound } from "./logic/SweetPieRound";
 import { ChatProperty } from "./props/chatProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
@@ -108,6 +109,10 @@ export class MpApiInteractor {
         listener.everySecond();
       }
 
+      for (const actorId of leftPlayers) {
+        mp.set(actorId, 'eval', { commands: [], nextId: 0 });
+      }
+
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
         PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;
       }
@@ -171,6 +176,15 @@ export class MpApiInteractor {
           { type: 'form', desc: mp.getDescFromId(actorId) },
           [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/false]
         );
+      },
+      getRoundsArray(): SweetPieRound[] {
+        return PersistentStorage.getSingleton().rounds;
+      },
+      setRoundsArray(rounds: SweetPieRound[]): void {
+        PersistentStorage.getSingleton().rounds = rounds;
+      },
+      getOnlinePlayers(): number[] {
+        return PersistentStorage.getSingleton().onlinePlayers;
       },
     }
   }
