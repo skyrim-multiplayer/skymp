@@ -4,6 +4,7 @@
 #include "NullPointerException.h"
 #include "Overloaded.h"
 #include "SendAnimationEvent.h"
+#include "SkyrimPlatform.h"
 #include "StringHolder.h"
 #include "VmCall.h"
 #include "VmCallback.h"
@@ -496,7 +497,9 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   }
 
   RE::BSScript::IFunction::CallResult callResut =
-    f->Call(stackIterator->second, vmImpl->GetErrorLogger(), vmImpl, false);
+    RE::BSScript::IFunction::CallResult::kFailedAbort;
+  SkyrimPlatform::GetSingleton().PushToWorkerAndWait(
+    f, stackIterator->second, vmImpl->GetErrorLogger(), vmImpl, &callResut);
   if (callResut != RE::BSScript::IFunction::CallResult::kCompleted) {
     throw std::runtime_error("Bad call result " +
                              std::to_string((int)callResut));

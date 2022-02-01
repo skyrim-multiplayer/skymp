@@ -1,29 +1,37 @@
 #include "PieScript.h"
+
 #include "FormDesc.h"
 #include "MpActor.h"
 #include <random>
+#include <sstream>
 #include <vector>
 
 std::mt19937 g_rng{ std::random_device{}() };
 
 int GenerateRandomNumber(int leftBound, int rightBound)
 {
-  std::uniform_int_distribution<> distr(leftBound, rightBound);
-  return distr(g_rng);
+  if (leftBound <= rightBound) {
+    std::uniform_int_distribution<> distr(leftBound, rightBound);
+    return distr(g_rng);
+  } else {
+    throw std::runtime_error(fmt::format(
+      "GenerateRandomNumber() cannot generate number in range: ({}, {})",
+      leftBound, rightBound));
+  }
 }
 
-void PieScript::AddDLCItems(std::vector<std::string> espmFiles,
-                            std::vector<std::string> items,
+void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
+                            const std::vector<std::string>& items,
                             LootboxItemType type, Tier tier)
 {
-  for (auto item : items) {
+  for (const auto& item : items) {
     FormDesc formDesc = FormDesc::FromString(item);
     uint32_t id = formDesc.ToFormId(espmFiles);
 
     lootTable[type][tier].push_back(id);
   }
 }
-PieScript::PieScript(std::vector<std::string> espmFiles)
+PieScript::PieScript(const std::vector<std::string>& espmFiles)
 {
   lootTable = {
     { LootboxItemType::Weapon,
@@ -69,7 +77,7 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
             0x00013920, 0x00012E4B, 0x0001B39F, 0x0006F398, 0x000D8D4E,
             0x00056a9D, 0x0006F39B, 0x0001B3A0, 0x00013914, 0x0005C06C,
             0x0006c1d9, 0x0006ff43, 0x0006C1D8, 0x0003452E, 0x000D191F,
-            0x0003452F, 0x000C36E9 } },
+            0x0003452F, 0x000C36E8 } },
         { Tier::Tier2,
           { 0x00013954, 0x000F6F24, 0x0001395E, 0x00013959, 0x0001391D,
             0x0001394F, 0x0004C3CB, 0x000d2842, 0x000D3AC5, 0x000B83CF,
@@ -107,12 +115,34 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
       } }
   };
 
-  lootTable[LootboxItemType::Weapon][Tier::Tier2].push_back(0x12);
+  starterKitsMap = {
+    {
+      StarterKitType::ChefKit,
+      { 0x0001BCA7, 0x000261C1, 0x0001BC82, 0x0001F25B, 0x000D1921 },
+    },
+    { StarterKitType::LumberjackKit,
+      {
+        0x000209AA,
+        0x000261C0,
+        0x000261BD,
+        0x0002F2F4,
+        0x000261C1,
+      } },
+    {
+      StarterKitType::MinerKit,
+      { 0x000330B3, 0x00080697, 0x00080699, 0x000E3C16, 0x0010E039 },
+    },
+    { StarterKitType::PrisonerKit,
+      { 0x000646AB, 0x0008F19A, 0x0003ca00, 0x000426C8, 0x0010E039 } },
+    { StarterKitType::PatronKit,
+      { 0x0008895A, 0x000B145B, 0x0001C1FE, 0x00088956, 0x00088958 } },
+  };
+
   std::vector<std::string> weaponTier3 = {
-    "00D098:Dawnguard.esm",  "01CDB1:Dawnguard.esm",  "01CDAD:Dragonborn.esm",
-    "00DD55:Dawnguard.esm",  "01CDAF:Dragonborn.esm", "01CDB0:Dawnguard.esm",
-    "01CDAF:Dragonborn.esm", "01CDB0:Dragonborn.esm", "00084E:HearthFires.esm",
-    "01CDAE:Dragonborn.esm", "01CDB2:Dragonborn.esm", "01CDB3:Dragonborn.esm"
+    "00D098:Dawnguard.esm",   "01CDB1:Dragonborn.esm", "01CDAD:Dragonborn.esm",
+    "00DD55:Dawnguard.esm",   "01CDAF:Dragonborn.esm", "01CDB0:Dragonborn.esm",
+    "00084E:HearthFires.esm", "01CDAE:Dragonborn.esm", "01CDB2:Dragonborn.esm",
+    "01CDB3:Dragonborn.esm"
   };
 
   std::vector<std::string> weaponTier4 = {
@@ -134,24 +164,18 @@ PieScript::PieScript(std::vector<std::string> espmFiles)
     "037066:Dragonborn.esm", "03705A:Dragonborn.esm"
   };
   std::vector<std::string> armorTier3 = {
-    "03AB23:Dragonborn.esm",    "01CD8C:Dragonborn.esm",
-    "01CD99:Dragonborn.esm",    "0292AE:Dragonborn.esm",
-    "0050D0:Dawnguard.esm",     "039114:Dragonborn.esm",
-    "01CD93:Dragonborn.esm",    "01CD8B:Dragonborn.esm",
-    "014758:Dawnguard.esm",     "026235:Dragonborn.esm",
-    "037B88:Dragonborn.esm",    "037B8A:Dragonborn.esm",
-    "026236:Dragonborn.esm",    "039110:Dragonborn.esm",
-    "01CD98:Dragonborn.esm",    "03910E:Dragonborn.esm",
-    "0191F3:Dawnguard.esm",     "00F3FA:Dawnguard.esm",
-    "00F3F7:Dawnguard.esm",     "0292AC:Dragonborn.esm",
-    "01CD97:Dragonborn.esm",    "01CD8A:Dragonborn.esm",
-    "037564:Dragonborn.esm",    "01CD92:Dragonborn.esm",
-    "XX01CD82: Dragonborn.esm", "01CD96:Dragonborn.esm",
-    "0292AB:Dragonborn.esm",    "014757:Dawnguard.esm",
-    "019AE1:Dawnguard.esm",     "039112:Dragonborn.esm",
-    "01CD94:Dragonborn.esm",    "0292AD:Dragonborn.esm",
-    "026234:Dragonborn.esm",    "0150B8:Dawnguard.esm",
-    "037B8E:Dragonborn.esm",    "037B8C:Dragonborn.esm"
+    "03AB23:Dragonborn.esm", "01CD8C:Dragonborn.esm", "01CD99:Dragonborn.esm",
+    "0292AE:Dragonborn.esm", "0050D0:Dawnguard.esm",  "039114:Dragonborn.esm",
+    "01CD93:Dragonborn.esm", "01CD8B:Dragonborn.esm", "014758:Dawnguard.esm",
+    "026235:Dragonborn.esm", "037B88:Dragonborn.esm", "037B8A:Dragonborn.esm",
+    "026236:Dragonborn.esm", "039110:Dragonborn.esm", "01CD98:Dragonborn.esm",
+    "03910E:Dragonborn.esm", "0191F3:Dawnguard.esm",  "00F3FA:Dawnguard.esm",
+    "00F3F7:Dawnguard.esm",  "0292AC:Dragonborn.esm", "01CD97:Dragonborn.esm",
+    "01CD8A:Dragonborn.esm", "037564:Dragonborn.esm", "01CD92:Dragonborn.esm",
+    "01CD82:Dragonborn.esm", "01CD96:Dragonborn.esm", "0292AB:Dragonborn.esm",
+    "014757:Dawnguard.esm",  "019AE1:Dawnguard.esm",  "039112:Dragonborn.esm",
+    "01CD94:Dragonborn.esm", "0292AD:Dragonborn.esm", "026234:Dragonborn.esm",
+    "0150B8:Dawnguard.esm",  "037B8E:Dragonborn.esm", "037B8C:Dragonborn.esm"
   };
   std::vector<std::string> armorTier4 = {
     "01CDA1:Dragonborn.esm", "00C814:Dawnguard.esm",  "0047DA:Dawnguard.esm",
@@ -237,15 +261,60 @@ uint32_t PieScript::GetSlotItem(int weaponChance, int armoryChacne,
 {
   std::pair<LootboxItemType, Tier> typeAndTier = AcknowledgeTypeAndTier(
     weaponChance, armoryChacne, consumableChance, nothingChance);
-  int item = GenerateRandomNumber(
-    0, lootTable[typeAndTier.first][typeAndTier.second].size() - 1);
-  return lootTable[typeAndTier.first][typeAndTier.second][item];
+  if (typeAndTier.first != LootboxItemType::Nothing) {
+    int item = GenerateRandomNumber(
+      0, lootTable[typeAndTier.first][typeAndTier.second].size() - 1);
+    return lootTable[typeAndTier.first][typeAndTier.second].at(item);
+  }
+  return 0;
 }
 
-void PieScript::Play(MpActor* actor)
+void PieScript::Play(MpActor& actor)
 {
-  actor->AddItem(GetSlotItem(80, 10, 10, 0), 1);
-  actor->AddItem(GetSlotItem(10, 80, 10, 0), 1);
-  actor->AddItem(GetSlotItem(25, 25, 40, 10), 1);
-  actor->AddItem(GetSlotItem(0, 0, 100, 0), 1);
+  uint32_t item1 = GetSlotItem(80, 10, 10, 0);
+  uint32_t item2 = GetSlotItem(10, 80, 10, 0);
+  uint32_t item3 = GetSlotItem(25, 25, 40, 10);
+  uint32_t item4 = GetSlotItem(0, 0, 100, 0);
+
+  if (item1) {
+    actor.AddItem(item1, 1);
+  }
+  if (item2) {
+    actor.AddItem(item2, 1);
+  }
+  if (item3) {
+    actor.AddItem(item3, 1);
+  }
+  if (item4) {
+    actor.AddItem(item4, 1);
+  }
+}
+
+void PieScript::AddKitItems(MpActor& actor, StarterKitType type)
+{
+  for (auto item : starterKitsMap[type]) {
+    actor.AddItem(item, 1);
+  }
+}
+
+void PieScript::AddStarterKitItems(MpActor& actor)
+{
+  int chance = GenerateRandomNumber(1, 100);
+  if (chance <= StarterKitChance::ChefKitChance) {
+    AddKitItems(actor, StarterKitType::ChefKit);
+  } else if (chance <= (StarterKitChance::ChefKitChance +
+                        StarterKitChance::LumberjackKitChance)) {
+    AddKitItems(actor, StarterKitType::LumberjackKit);
+  } else if (chance <= (StarterKitChance::ChefKitChance +
+                        StarterKitChance::LumberjackKitChance +
+                        StarterKitChance::MinerKitChance)) {
+    AddKitItems(actor, StarterKitType::MinerKit);
+  } else {
+    AddKitItems(actor, StarterKitType::PrisonerKit);
+  }
+}
+
+void PieScript::AddPatronStarterKitItems(MpActor& actor)
+{
+  AddKitItems(actor, StarterKitType::PatronKit);
 }
