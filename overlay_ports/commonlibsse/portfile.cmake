@@ -1,15 +1,14 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO Ryan-rsm-McKenzie/CommonLibSSE
-    REF 30f7895da2945c602a8d160aa222d897ae223226
-    SHA512 9577fc92877248b9edaf28903885805255243b3c8407373eaacf9c71f307cd030b7772b82df4917ae2cfe0e7548b8f4d17b2a8bccc45328e253dc6a0c3cd8f10
+    REF 4bf99d0d8fc917dc803e3dc7668caa948a12b59c
+    SHA512 23ac8932f92da746f28930d7138b1f565f03dbf6e8a92284b70df1cd09f56bd8d7d924ee6ae84ad9cd84982dff4943d68186bc0347769f208c66650b62ebfbaa
     HEAD_REF master
     PATCHES
       objectrefr-make_moverefr_public.patch
       variable-make_members_public.patch
       stackframe-uncomment_top_args.patch
       extradatalist-make_members_public.patch
-      version-add_1.6.342_support.patch
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})
