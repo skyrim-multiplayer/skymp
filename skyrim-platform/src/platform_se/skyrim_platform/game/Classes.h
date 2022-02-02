@@ -1,5 +1,5 @@
 #pragma once
 
-#include "BSRenderManager.h"
-#include "MenuScreenData.h"
-#include "TintMask.h"
+#include "classes/BSRenderManager.h"
+#include "classes/MenuScreenData.h"
+#include "classes/TintMask.h"
