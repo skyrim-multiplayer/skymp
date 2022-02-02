@@ -1,8 +1,11 @@
 #pragma once
 
 namespace Offsets {
+
 namespace BSRenderManager {
+
 inline constexpr REL::ID Singleton(static_cast<std::uint64_t>(411393));
+
 }
 
 inline RE::ObjectRefHandle GetInvalidRefHandle()
@@ -25,5 +28,9 @@ inline float Unknown(void* unk1, void* unk2, RE::TESObjectREFR* obj)
 inline void PushActorAway(void* vm, StackID stackId, RE::Actor* self,
                           RE::Actor* targetActor, float magnitude)
 {
+  using func_t = decltype(&PushActorAway);
+  REL::Relocation<func_t> func{ REL::ID(56213) };
+  func(vm, stackId, self, targetActor, magnitude);
 }
+
 }

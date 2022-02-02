@@ -358,13 +358,9 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
       if (!g_nativeCallRequirements.vm)
         throw NullPointerException("g_nativeCallRequirements.vm");
 
-      // TODO: figure out what offset is this
-      /* typedef void(PushActorAway)(void* vm, StackID stackId, RE::Actor*
-      self, RE::Actor* targetActor, float magnitude); RelocPtr<PushActorAway>
-      pushActorAway(10052416);
-      pushActorAway.GetPtr()(g_nativeCallRequirements.vm,
+      Offsets::PushActorAway(g_nativeCallRequirements.vm,
                              g_nativeCallRequirements.stackId,
-                             nativeTargetActor, nativeTargetActor, mag); */
+                             nativeTargetActor, nativeTargetActor, mag);
     });
     return ObjectPtr();
   }
