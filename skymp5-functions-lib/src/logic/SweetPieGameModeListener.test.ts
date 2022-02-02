@@ -310,7 +310,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
 
     listener.everySecond();
 
-    // 'We have multiple winners!'
+    // 'У нас несколько победителей!'
     // 'Player1 wins with 3 points'
     // 'Player2 wins with 3 points'
     const msg1 = sprintf(listener.determineWinnerMessage[0], controller.getName(1), 3);

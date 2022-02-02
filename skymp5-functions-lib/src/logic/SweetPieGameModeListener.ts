@@ -20,7 +20,7 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly remainingFightTimeMessage: [string] = ["В бой! У вас %d секунд"];
   readonly determineWinnerMessage: [string] = ["%s побеждает с %d очками! Спасибо за игру!"];
   readonly noWinnerMessage: [string] = ["Победителя нет. Спасибо за игру!"];
-  readonly multipleWinnersMessage: [string] = ["We have multiple winners!"];
+  readonly multipleWinnersMessage: [string] = ["У нас несколько победителей!"];
   readonly deathMessage: [string] = ["%s был убит %s. У %s теперь %d очков (у лучшего игрока %d)"];
   readonly restoreMessage: [string] = ["Полное восстановление"];
   readonly restoreDeniedMessage: [string] = ["Подождите еще %d секунд перед повторным восстановлением"];
