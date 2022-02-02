@@ -165,6 +165,11 @@ export class MpApiInteractor {
 
   static makeController(pointsByName: Map<string, LocationalData>): PlayerController {
     return {
+    // XXX: reorder before merging; anti-conflict stuff
+      updateCustomName(formDesc: string, name: string): void {
+        console.log(`updateCustomName ${formDesc} to ${name}`);
+        MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
+      },
       setSpawnPoint(player: number, pointName: string) {
         const point = pointsByName.get(pointName);
         if (point) {
@@ -212,10 +217,6 @@ export class MpApiInteractor {
       },
       getOnlinePlayers(): number[] {
         return PersistentStorage.getSingleton().onlinePlayers;
-      },
-      updateCustomName(formDesc: string, name: string): void {
-        console.log(`updateCustomName ${formDesc} to ${name}`);
-        MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
       },
     }
   }
