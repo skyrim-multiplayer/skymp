@@ -1,16 +1,7 @@
 #include "EventHandlerMisc.h"
+#include "EventUtils.h"
 #include "EventsApi.h"
-#include "NativeValueCasts.h"
 #include "SkyrimPlatform.h"
-
-namespace {
-JsValue CreateObject(const char* type, void* form)
-{
-  return form ? NativeValueCasts::NativeObjectToJsObject(
-                  std::make_shared<CallNative::Object>(type, form))
-              : JsValue::Null();
-}
-}
 
 EventResult EventHandlerMisc::ProcessEvent(
   const RE::MenuOpenCloseEvent* event,
@@ -42,7 +33,7 @@ EventResult EventHandlerMisc::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("tag", JsValue::String(event->tag.c_str()));
+    AddProperty(&obj, "tag", event->tag.c_str());
 
     EventsApi::SendEvent("footstep", { JsValue::Undefined(), obj });
   });
@@ -63,8 +54,11 @@ EventResult EventHandlerMisc::ProcessEvent(
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
-    obj.SetProperty("eventType", JsValue::Double(type));
+
+    AddProperty(&obj, "eventType", type);
+
     EventsApi::SendEvent("positionPlayer", { JsValue::Undefined(), obj });
   });
+
   return EventResult::kContinue;
 }

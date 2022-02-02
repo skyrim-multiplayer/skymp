@@ -1,4 +1,5 @@
 #include "EventHandlerStory.h"
+#include "EventUtils.h"
 
 EventResult EventHandlerStory::ProcessEvent(
   const RE::ActorKill::Event* event, RE::BSTEventSource<RE::ActorKill::Event>*)

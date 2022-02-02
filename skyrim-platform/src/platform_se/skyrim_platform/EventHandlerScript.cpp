@@ -21,27 +21,26 @@ EventResult EventHandlerScript::ProcessEvent(
   auto targetId = targetRefr ? targetRefr->formID : 0;
   auto casterId = casterRefr ? casterRefr->formID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [targetId, casterId, targetRefr, casterRefr] {
-      auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
+    auto obj = JsValue::Object();
 
-      auto target = RE::TESForm::LookupByID(targetId);
-      target = target == targetRefr ? target : nullptr;
-      obj.SetProperty("target", CreateObject("ObjectReference", target));
+    auto target = RE::TESForm::LookupByID(targetId);
+    target = target == targetRefr ? target : nullptr;
+    obj.SetProperty("target", CreateObject("ObjectReference", target));
 
-      auto caster = RE::TESForm::LookupByID(casterId);
-      caster = caster == casterRefr ? caster : nullptr;
-      obj.SetProperty("caster", CreateObject("ObjectReference", caster));
+    auto caster = RE::TESForm::LookupByID(casterId);
+    caster = caster == casterRefr ? caster : nullptr;
+    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
 
-      auto targetRefr_ = reinterpret_cast<RE::TESObjectREFR*>(target);
+    auto targetRefr_ = reinterpret_cast<RE::TESObjectREFR*>(target);
 
-      obj.SetProperty("isCrimeToActivate",
-                      targetRefr_
-                        ? JsValue::Bool(targetRefr_->IsCrimeToActivate())
-                        : JsValue::Undefined());
+    obj.SetProperty("isCrimeToActivate",
+                    targetRefr_
+                      ? JsValue::Bool(targetRefr_->IsCrimeToActivate())
+                      : JsValue::Undefined());
 
-      EventsApi::SendEvent("activate", { JsValue::Undefined(), obj });
-    });
+    EventsApi::SendEvent("activate", { JsValue::Undefined(), obj });
+  });
 
   return EventResult::kContinue;
 }

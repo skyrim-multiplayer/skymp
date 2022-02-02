@@ -1,16 +1,7 @@
 #include "EventHandlerSKSE.h"
+#include "EventUtils.h"
 #include "EventsApi.h"
-#include "NativeValueCasts.h"
 #include "SkyrimPlatform.h"
-
-namespace {
-JsValue CreateObject(const char* type, void* form)
-{
-  return form ? NativeValueCasts::NativeObjectToJsObject(
-                  std::make_shared<CallNative::Object>(type, form))
-              : JsValue::Null();
-}
-}
 
 EventResult EventHandlerSKSE::ProcessEvent(
   const SKSE::ActionEvent* event,
@@ -28,13 +19,14 @@ EventResult EventHandlerSKSE::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto slot = to_underlying<SKSE::ActionEvent::Slot>(event->slot.get());
+
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("actor", CreateObject("Actor", event->actor));
-    obj.SetProperty("source", CreateObject("Form", event->sourceForm));
-    obj.SetProperty("slot",
-                    JsValue::Double(static_cast<double>(event->slot.get())));
+    AddProperty(&obj, "actor", event->actor, "Actor");
+    AddProperty(&obj, "source", event->sourceForm, "Form");
+    AddProperty(&obj, "slot", slot);
 
     switch (event->type.get()) {
       case SKSE::ActionEvent::Type::kWeaponSwing: {
@@ -91,7 +83,6 @@ EventResult EventHandlerSKSE::ProcessEvent(
   return EventResult::kContinue;
 }
 
-// TODO: Fix this
 EventResult EventHandlerSKSE::ProcessEvent(
   const SKSE::CameraEvent* event,
   RE::BSTEventSource<SKSE::CameraEvent>* eventSource)
@@ -100,12 +91,20 @@ EventResult EventHandlerSKSE::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto oldStateId =
+    to_underlying<RE::CameraStates::CameraState>(event->oldState->id);
+  auto newStateId =
+    to_underlying<RE::CameraStates::CameraState>(event->newState->id);
+
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
-    obj.SetProperty("oldStateId", JsValue::Double(event->oldStateId));
-    obj.SetProperty("newStateId", JsValue::Double(event->newStateId));
+
+    AddProperty(&obj, "oldStateId", oldStateId);
+    AddProperty(&obj, "newStateId", newStateId);
+
     EventsApi::SendEvent("cameraStateChanged", { JsValue::Undefined(), obj });
   });
+
   return EventResult::kContinue;
 }
 
@@ -113,6 +112,10 @@ EventResult EventHandlerSKSE::ProcessEvent(
   const SKSE::CrosshairRefEvent* event,
   RE::BSTEventSource<SKSE::CrosshairRefEvent>* eventSource)
 {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
   auto refr = event->crosshairRef ? event->crosshairRef.get() : nullptr;
   auto refrId = refr ? refr->formID : 0;
 
@@ -123,7 +126,7 @@ EventResult EventHandlerSKSE::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("reference", CreateObject("ObjectReference", refr));
+    AddProperty(&obj, "reference", refr, "ObjectReference");
 
     EventsApi::SendEvent("crosshairRefChanged", { JsValue::Undefined(), obj });
   });
@@ -148,8 +151,7 @@ EventResult EventHandlerSKSE::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("reference",
-                    CreateObject("ObjectReference", event->reference));
+    AddProperty(&obj, "reference", event->reference, "ObjectReference");
 
     EventsApi::SendEvent("niNodeUpdate", { JsValue::Undefined(), obj });
   });
@@ -168,10 +170,10 @@ EventResult EventHandlerSKSE::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("sender", CreateObject("Form", event->sender));
-    obj.SetProperty("eventName", JsValue::String(event->eventName.c_str()));
-    obj.SetProperty("strArg", JsValue::String(event->strArg.c_str()));
-    obj.SetProperty("numArg", JsValue::Double(event->numArg));
+    AddProperty(&obj, "sender", event->sender, "Form");
+    AddProperty(&obj, "eventName", event->eventName.c_str());
+    AddProperty(&obj, "strArg", event->strArg.c_str());
+    AddProperty(&obj, "numArg", event->numArg);
 
     EventsApi::SendEvent("modEvent", { JsValue::Undefined(), obj });
   });

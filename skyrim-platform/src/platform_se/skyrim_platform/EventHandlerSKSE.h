@@ -18,11 +18,25 @@ public:
 
   static void RegisterSinks()
   {
-    SKSE::GetActionEventSource()->AddEventSink(GetSingleton());
-    SKSE::GetCameraEventSource()->AddEventSink(GetSingleton());
-    SKSE::GetCrosshairRefEventSource()->AddEventSink(GetSingleton());
-    SKSE::GetModCallbackEventSource()->AddEventSink(GetSingleton());
-    SKSE::GetNiNodeUpdateEventSource()->AddEventSink(GetSingleton());
+    if (const auto holder = SKSE::GetActionEventSource()) {
+      holder->AddEventSink(GetSingleton());
+    }
+
+    if (const auto holder = SKSE::GetActionEventSource()) {
+      holder->AddEventSink(GetSingleton());
+    }
+
+    if (const auto holder = SKSE::GetActionEventSource()) {
+      holder->AddEventSink(GetSingleton());
+    }
+
+    if (const auto holder = SKSE::GetActionEventSource()) {
+      holder->AddEventSink(GetSingleton());
+    }
+
+    if (const auto holder = SKSE::GetActionEventSource()) {
+      holder->AddEventSink(GetSingleton());
+    }
   }
 
   EventResult ProcessEvent(const SKSE::ActionEvent* event,
