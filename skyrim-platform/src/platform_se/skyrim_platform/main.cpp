@@ -9,6 +9,7 @@
 #include "SkyrimPlatform.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
+#include "TextsCollection.h"
 #include "TickHandler.h"
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
@@ -184,8 +185,8 @@ public:
 
   MyInputListener()
   {
-    pCursorX = &MenuScreenData::GetSingleton()->mousePos.x;
-    pCursorY = &MenuScreenData::GetSingleton()->mousePos.y;
+    pCursorX = &RE::MenuScreenData::GetSingleton()->mousePos.x;
+    pCursorY = &RE::MenuScreenData::GetSingleton()->mousePos.y;
     vkCodeDownDur.fill(0);
   }
 
@@ -479,7 +480,7 @@ public:
 
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
     renderSystem->m_pSwapChain = reinterpret_cast<IDXGISwapChain*>(
-      BSRenderManager::GetSingleton()->swapChain);
+      RE::BSRenderManager::GetSingleton()->swapChain);
 
     return true;
   }
