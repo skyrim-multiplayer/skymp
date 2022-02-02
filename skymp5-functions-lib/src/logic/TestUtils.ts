@@ -18,6 +18,7 @@ export const makePlayerController = (): PlayerController => {
     getPercentages: jest.fn(),
     getScriptName: jest.fn(),
     isTeleportActivator: jest.fn().mockReturnValue(true),
+    updateCustomName: jest.fn(),
   };
 };
 

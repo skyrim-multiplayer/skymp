@@ -21,4 +21,5 @@ export type PlayerController = {
   getPercentages(actorId: number): Percentages;
   getScriptName(refrId: number): string;
   isTeleportActivator(refrId: number): boolean;
+  updateCustomName(formDesc: string, name: string): void;
 }

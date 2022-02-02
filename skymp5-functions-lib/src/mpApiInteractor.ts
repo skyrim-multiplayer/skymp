@@ -11,6 +11,7 @@ import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
+declare const nameUpdatesJson: string;
 
 const scriptName = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -47,6 +48,8 @@ const getName = (actorId: number) => {
 };
 
 export class MpApiInteractor {
+  private static customNames = new Map<number, string>();
+
   static setup(listener: GameModeListener) {
     MpApiInteractor.setupActivateHandler(listener);
     MpApiInteractor.setupChatHandler(listener);
@@ -127,6 +130,28 @@ export class MpApiInteractor {
 
       for (const actorId of leftPlayers) {
         mp.set(actorId, 'eval', { commands: [], nextId: 0 });
+      }
+
+      for (const actorId of onlinePlayers) {
+        const nameUpdates = [];
+        for (const formId of mp.get(actorId, 'neighbors')) {
+          const name = MpApiInteractor.customNames.get(formId);
+          if (name !== undefined) {
+            nameUpdates.push([formId, name]);
+          }
+        }
+        if (!nameUpdates.length) {
+          continue;
+        }
+        EvalProperty.eval(actorId, () => {
+          for (const [formId, name] of JSON.parse(nameUpdatesJson)) {
+            const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
+            const ret = refr?.setDisplayName(name, true);
+            if (!ret) {
+              ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
+            }
+          }
+        }, { nameUpdatesJson: JSON.stringify(nameUpdates).replace(/\\/g, '\\\\').replace(/'/g, '\\\'') });
       }
 
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
@@ -220,6 +245,9 @@ export class MpApiInteractor {
       },
       isTeleportActivator(refrId: number): boolean {
         return isTeleportDoor(refrId);
+      },
+      updateCustomName(formDesc: string, name: string): void {
+        MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
       },
     }
   }
