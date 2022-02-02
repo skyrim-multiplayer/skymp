@@ -91,11 +91,12 @@ private:
 extern "C" {
 
 DLLEXPORT constinit auto SKSEPlugin_Version = []() {
-  PluginVersionData v;
-  v.pluginVersion = Version::ASINT;
-  SetCharBuffer("SkyrimPlatform"sv, v.pluginName);
-  SetCharBuffer("SkyMP Team"sv, v.author);
-  v.addressLibrary = true;
+  SKSE::PluginVersionData v;
+  v.PluginVersion(Version::ASINT);
+  v.PluginName("SkyrimPlatform");
+  v.AuthorName("SkyMP Team and Contributors");
+  v.UsesAddressLibrary(true);
+  v.CompatibleVersions({ SKSE::RUNTIME_LATEST });
 
   return v;
 }();
