@@ -1,11 +1,12 @@
 #include "EventsApi.h"
-#include "GameEventSinks.h"
+#include "EventManager.h"
 #include "InvalidArgumentException.h"
 #include "NativeObject.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
+
 
 namespace {
 enum class PatternType
