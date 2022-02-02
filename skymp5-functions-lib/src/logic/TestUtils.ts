@@ -4,8 +4,6 @@ export const makePlayerController = (): PlayerController => {
   // TODO: use ES6 Proxy to automate handy methods adding
   // TODO: fix getName always returning undefined
   return {
-    // XXX: reorder before merging; anti-conflict stuff
-    updateCustomName: jest.fn(),
     teleport: jest.fn(),
     setSpawnPoint: jest.fn(),
     showMessageBox: jest.fn(),
@@ -16,6 +14,7 @@ export const makePlayerController = (): PlayerController => {
     getRoundsArray: jest.fn().mockReturnValue([]),
     setRoundsArray: jest.fn(),
     getOnlinePlayers: jest.fn().mockReturnValue([1, 2]),
+    updateCustomName: jest.fn(),
   };
 };
 
