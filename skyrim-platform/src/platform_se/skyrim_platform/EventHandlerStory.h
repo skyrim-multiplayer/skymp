@@ -8,7 +8,7 @@ class EventHandlerStory final
   , public RE::BSTEventSink<RE::CriticalHit::Event>
   , public RE::BSTEventSink<RE::DisarmedEvent::Event>
   , public RE::BSTEventSink<RE::DragonSoulsGained::Event>
-  , public RE::BSTEventSink<RE::TESHarvestedEvent::ItemHarvested>
+  , public RE::BSTEventSink<RE::ItemHarvested::Event>
   , public RE::BSTEventSink<RE::LevelIncrease::Event>
   , public RE::BSTEventSink<RE::LocationDiscovery::Event>
   , public RE::BSTEventSink<RE::ShoutAttack::Event>
@@ -17,9 +17,9 @@ class EventHandlerStory final
   , public RE::BSTEventSink<RE::SpellsLearned::Event>
 {
 public:
-  [[nodiscard]] static EventHandlerScript* GetSingleton()
+  [[nodiscard]] static EventHandlerStory* GetSingleton()
   {
-    static EventHandlerScript singleton;
+    static EventHandlerStory singleton;
     return &singleton;
   }
 
@@ -30,14 +30,7 @@ public:
     add_sink<RE::CriticalHit>();
     add_sink<RE::DisarmedEvent>();
     add_sink<RE::DragonSoulsGained>();
-
-    if (const auto event = RE::TESHarvestedEvent::GetEventSource(); event) {
-      event->AddEventSink<RE::TESHarvestedEvent::ItemHarvested>(
-        GetSingleton());
-      logger::info("Registered {} handler"sv,
-                   typeid(RE::TESHarvestedEvent::ItemHarvested).name());
-    }
-
+    add_sink<RE::ItemHarvested>();
     add_sink<RE::LevelIncrease>();
     add_sink<RE::LocationDiscovery>();
     add_sink<RE::ShoutAttack>();
@@ -65,8 +58,8 @@ public:
     RE::BSTEventSource<RE::DragonSoulsGained::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::TESHarvestedEvent::ItemHarvested* a_event,
-    RE::BSTEventSource<RE::TESHarvestedEvent::ItemHarvested>*) override;
+    const RE::ItemHarvested::Event* a_event,
+    RE::BSTEventSource<RE::ItemHarvested::Event>*) override;
 
   EventResult ProcessEvent(
     const RE::LevelIncrease::Event* a_event,
