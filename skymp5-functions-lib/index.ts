@@ -174,7 +174,9 @@ const maps: Required<SweetPieMap>[] = [{
   mainSpawnPointName: 'whiterun:spawnPoint',
   safePlaceEnterDoors: ['1a6f4:Skyrim.esm'],
   safePlaceLeaveDoors: ['16072:Skyrim.esm'],
-  leaveRoundDoors: ['1b1f3:Skyrim.esm']
+  leaveRoundDoors: ['1b1f3:Skyrim.esm'],
+  playerRestoreActivators: ['3a99d6:SweetPie.esp'],
+  playerRestoreWaitTime: 30000,
 }];
 
 const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[], playersToStart: unknown): SweetPieGameModeListener => {

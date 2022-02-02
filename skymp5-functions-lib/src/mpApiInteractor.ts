@@ -1,5 +1,5 @@
 import { GameModeListener } from "./logic/GameModeListener";
-import { PlayerController } from "./logic/PlayerController";
+import { Percentages, PlayerController } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/SweetPieRound";
 import { ChatProperty } from "./props/chatProperty";
 import { DialogProperty } from "./props/dialogProperty";
@@ -12,6 +12,23 @@ import { Timer } from "./utils/timer";
 declare const mp: Mp;
 declare const ctx: Ctx;
 declare const nameUpdatesJson: string;
+
+const scriptName = (refrId: number) => {
+  const lookupRes = mp.lookupEspmRecordById(refrId);
+  if (lookupRes.record) {
+    const vmadIndex = lookupRes.record.fields.findIndex((field) => field.type === 'VMAD');
+    if (vmadIndex >= 0) {
+      const vmadData = lookupRes.record.fields[vmadIndex].data;
+      const strLength = vmadData[6] + (vmadData[7] << 8);
+      var strData: string = '';
+      for (var i = 0; i < strLength; i++) {
+        strData += String.fromCharCode(vmadData[8+i]).valueOf();
+      }
+      return strData;
+    }
+  }
+  return '';
+}
 
 const isTeleportDoor = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -53,8 +70,7 @@ export class MpApiInteractor {
         return true;
       }
 
-      const isTeleport = isTeleportDoor(target);
-      const res = listener.onPlayerActivateObject(caster, targetDesc, isTeleport);
+      const res = listener.onPlayerActivateObject(caster, targetDesc, target);
       if (res === 'continue') {
         return true;
       }
@@ -210,6 +226,25 @@ export class MpApiInteractor {
       },
       getOnlinePlayers(): number[] {
         return PersistentStorage.getSingleton().onlinePlayers;
+      },
+      setPercentages(actorId: number, percentages: Percentages): void {
+        mp.set(
+          actorId,
+          'percentages',
+          {
+            health: percentages.health ?? 1.0,
+            magicka: percentages.magicka ?? 1.0,
+            stamina: percentages.stamina ?? 1.0
+          });
+      },
+      getPercentages(actorId: number): Percentages {
+        return mp.get(actorId, 'percentages');
+      },
+      getScriptName(refrId: number): string {
+        return scriptName(refrId);
+      },
+      isTeleportActivator(refrId: number): boolean {
+        return isTeleportDoor(refrId);
       },
       updateCustomName(formDesc: string, name: string): void {
         MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
