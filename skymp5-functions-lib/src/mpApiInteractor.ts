@@ -109,6 +109,10 @@ export class MpApiInteractor {
         listener.everySecond();
       }
 
+      for (const actorId of leftPlayers) {
+        mp.set(actorId, 'eval', { commands: [], nextId: 0 });
+      }
+
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
         PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;
       }
