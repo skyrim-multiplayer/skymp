@@ -168,6 +168,36 @@ pointsByName.set('whiterun:safePlace', {
   cellOrWorldDesc: '1605e:Skyrim.esm',
   rot: [0, 0, 176],
 });
+pointsByName.set('whiterun:spawnPoint1', {
+  pos: [26496.7656, -6511.5684, -3183.8271],
+  cellOrWorldDesc: '1a26f:Skyrim.esm',
+  rot: [0, 0, -81.8869],
+});
+pointsByName.set('whiterun:spawnPoint2', {
+  pos: [19170.6484, -6968.4121, -3549.6443],
+  cellOrWorldDesc: '1a26f:Skyrim.esm',
+  rot: [0, 0, 72.8116],
+});
+pointsByName.set('whiterun:spawnPoint3', {
+  pos: [20930.9316, -9920.6191, -3497.4736],
+  cellOrWorldDesc: '1a26f:Skyrim.esm',
+  rot: [0, 0, 32.7047],
+});
+pointsByName.set('whiterun:spawnPoint4', {
+  pos: [20287.3750, -6478.4185, -3225.1785],
+  cellOrWorldDesc: '1a26f:Skyrim.esm',
+  rot: [0, 0, 170.2144],
+});
+pointsByName.set('whiterun:spawnPoint5', {
+  pos: [24443.8594, -11096.1328, -3292.7659],
+  cellOrWorldDesc: '1a26f:Skyrim.esm',
+  rot: [0, 0, -1.6730],
+});
+pointsByName.set('whiterun:spawnPoint6', {
+  pos: [22855.9473, -6104.4355, -3092.7661],
+  cellOrWorldDesc: '1a26f:Skyrim.esm',
+  rot: [0, 0, 84.2714],
+});
 
 const maps: Required<SweetPieMap>[] = [{
   safePointName: 'whiterun:safePlace',
@@ -177,6 +207,7 @@ const maps: Required<SweetPieMap>[] = [{
   leaveRoundDoors: ['1b1f3:Skyrim.esm'],
   playerRestoreActivators: ['3a99d6:SweetPie.esp'],
   playerRestoreWaitTime: 30000,
+  spawnPointNames: ['whiterun:spawnPoint1', 'whiterun:spawnPoint2', 'whiterun:spawnPoint3', 'whiterun:spawnPoint4', 'whiterun:spawnPoint5', 'whiterun:spawnPoint6'],
 }];
 
 const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[], playersToStart: unknown): SweetPieGameModeListener => {

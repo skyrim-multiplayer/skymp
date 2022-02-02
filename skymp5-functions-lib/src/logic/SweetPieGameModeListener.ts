@@ -72,6 +72,14 @@ export class SweetPieGameModeListener implements GameModeListener {
     this.controller.setRoundsArray(this.rounds);
   }
 
+  private getRandomSpawnPoint(points: string[]): string {
+    if (points.length) {
+      const pIndex = Math.floor(Math.random() * (points.length - 1));
+      return points[pIndex];
+    }
+    return this.hallSpawnPointName;
+  }
+
   getRounds() {
     return this.rounds;
   }
@@ -213,9 +221,10 @@ export class SweetPieGameModeListener implements GameModeListener {
             round.state = 'running';
             this.sendRoundChatMessage(round, sprintf(this.warmupFinishedMessage[0], this.runningTimerMaximum));
             for (const [player] of round.players) {
-              if (round.map && round.map.mainSpawnPointName) {
-                this.controller.setSpawnPoint(player, round.map.mainSpawnPointName);
-                this.controller.teleport(player, round.map.mainSpawnPointName);
+              if (round.map && round.map.spawnPointNames) {
+                const pName = this.getRandomSpawnPoint(round.map.spawnPointNames);
+                this.controller.setSpawnPoint(player, pName);
+                this.controller.teleport(player, pName);
               }
             }
           }
@@ -248,8 +257,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
+    const round = getPlayerCurrentRound(this.rounds, targetActorId);
     if (killerActorId) {
-      const round = getPlayerCurrentRound(this.rounds, targetActorId);
       const round2 = getPlayerCurrentRound(this.rounds, killerActorId);
       if (round === round2 && round && round.players && round.state === 'running') {
         this.controller.addItem(killerActorId, this.coinFormId, 1);
@@ -261,6 +270,9 @@ export class SweetPieGameModeListener implements GameModeListener {
         const winnerScore = Math.max(...(determineDeathMatchWinners(round).map(x => round.players?.get(x)?.kills) as number[]));
         this.sendRoundChatMessage(round, sprintf(this.deathMessage[0], this.controller.getName(targetActorId), this.controller.getName(killerActorId), this.controller.getName(killerActorId), killerScore, winnerScore));
       }
+    }
+    if (round?.map && round.map.spawnPointNames) {
+      this.controller.setSpawnPoint(targetActorId, this.getRandomSpawnPoint(round.map.spawnPointNames));
     }
     this.controller.setRoundsArray(this.rounds);
   }
