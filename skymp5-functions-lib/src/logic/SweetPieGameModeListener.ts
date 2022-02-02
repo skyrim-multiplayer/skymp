@@ -25,6 +25,11 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   readonly cantStartMessage: [string] = ["Too few players, the warmup will end when %s more join"];
 
+  readonly roundStateToHumanReadable: Record<SweetPieRound['state'], string> = {
+    'warmup': 'Waiting for players...',
+    'running': 'Running, please wait',
+  };
+
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
 
@@ -38,9 +43,11 @@ export class SweetPieGameModeListener implements GameModeListener {
       this.rounds.forEach((round, index) => this.resetRound(index));
     }
     this.controller.updateCustomName(this.quitGamePortal, 'Quit the game and return to desktop');
-    this.controller.updateCustomName(this.neutralPortal, 'Enter deathmatch1\n2\n3');
     this.controller.updateCustomName(this.redPortal, 'Coming soon...');
     this.controller.updateCustomName(this.bluePortal, 'Coming soon...');
+    this.rounds.forEach((round) => round.map?.leaveRoundDoors?.forEach(
+      (doorDesc) => this.controller.updateCustomName(doorDesc, 'Return to hall')
+    ));
   }
 
   private resetRound(roundIndex: number) {
@@ -52,9 +59,6 @@ export class SweetPieGameModeListener implements GameModeListener {
     }
     this.rounds[roundIndex] = { state: 'warmup', map: this.rounds[roundIndex].map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }
     this.controller.setRoundsArray(this.rounds);
-    this.rounds[roundIndex].map?.leaveRoundDoors?.forEach(
-      (doorDesc) => this.controller.updateCustomName(doorDesc, 'Return to hall')
-    );
   }
 
   getRounds() {
@@ -72,8 +76,6 @@ export class SweetPieGameModeListener implements GameModeListener {
       } else {
         forceJoinRound(this.controller, this.rounds, round, casterActorId);
         this.controller.setRoundsArray(this.rounds);
-        // If no match, then [free, min to start]
-        this.controller.updateCustomName(this.neutralPortal, `Enter deathmatch1\n2Players:${round.players?.size}`);
       }
       return 'continue';
     } else {
@@ -131,6 +133,11 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   everySecond() {
     for (const round of this.rounds) {
+      const playersCount = round.players?.size || 0;
+      this.controller.updateCustomName(
+        this.neutralPortal,
+        `Enter deathmatch\nPlayers: ${playersCount} (min ${this.minimumPlayersToStart})\n${this.roundStateToHumanReadable[round.state]}`
+      );
       if (round.players && round.players.size) {
         round.secondsPassed = (round.secondsPassed || 0) + 1;
         if (round.state === 'warmup') {
