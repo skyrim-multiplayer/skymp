@@ -128,7 +128,6 @@ export class MpApiInteractor {
         if (!nameUpdates.length) {
           continue;
         }
-        console.log(`upd ${actorId} ${JSON.stringify(nameUpdates, null, 2)}`);
         EvalProperty.eval(actorId, () => {
           for (const [formId, name] of JSON.parse(nameUpdatesJson)) {
             const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
@@ -214,7 +213,6 @@ export class MpApiInteractor {
         return PersistentStorage.getSingleton().onlinePlayers;
       },
       updateCustomName(formDesc: string, name: string): void {
-        console.log(`updateCustomName ${formDesc} to ${name}`);
         MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
       },
     }
