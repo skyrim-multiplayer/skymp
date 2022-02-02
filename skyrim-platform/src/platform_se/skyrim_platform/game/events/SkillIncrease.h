@@ -1,6 +1,7 @@
 #pragma once
 
 namespace RE {
+
 struct SkillIncrease
 {
 public:
@@ -21,4 +22,5 @@ public:
     return func();
   }
 };
+
 }

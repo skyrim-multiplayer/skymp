@@ -1,6 +1,7 @@
 #pragma once
 
 namespace RE {
+
 struct SoulsTrapped
 {
 public:
@@ -29,4 +30,5 @@ public:
     }
   }
 };
+
 }

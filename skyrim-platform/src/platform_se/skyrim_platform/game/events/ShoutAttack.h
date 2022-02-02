@@ -1,6 +1,7 @@
 #pragma once
 
 namespace RE {
+
 struct ShoutAttack
 {
 public:
@@ -19,4 +20,5 @@ public:
     return func();
   }
 };
+
 }

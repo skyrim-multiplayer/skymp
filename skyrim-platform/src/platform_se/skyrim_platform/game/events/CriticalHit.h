@@ -1,6 +1,7 @@
 #pragma once
 
 namespace RE {
+
 struct CriticalHit
 {
 public:
@@ -24,4 +25,5 @@ public:
     return func();
   }
 };
+
 }

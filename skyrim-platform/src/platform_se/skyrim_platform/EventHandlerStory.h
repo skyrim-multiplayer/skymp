@@ -96,7 +96,7 @@ private:
   static void add_sink()
   {
     if (const auto holder = T::GetEventSource()) {
-      holder->AddEventSink<T::Event>(GetSingleton());
+      holder->AddEventSink(GetSingleton());
       logger::info("Registered {} handler"sv, typeid(T::Event).name());
     }
   }

@@ -1,6 +1,7 @@
 #pragma once
 
 namespace RE {
+
 struct LocationDiscovery
 {
 public:
@@ -20,4 +21,5 @@ public:
     return func();
   }
 };
+
 }

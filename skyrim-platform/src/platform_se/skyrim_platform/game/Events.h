@@ -1,4 +1,5 @@
 #pragma once
+
 #include "events/ActorKill.h"
 #include "events/BooksRead.h"
 #include "events/CriticalHit.h"

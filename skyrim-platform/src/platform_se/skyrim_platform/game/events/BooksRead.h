@@ -1,7 +1,6 @@
 #pragma once
 
 namespace RE {
-class TESObjectBOOK;
 
 struct BooksRead
 {
@@ -24,4 +23,5 @@ public:
     return func();
   }
 };
+
 }
