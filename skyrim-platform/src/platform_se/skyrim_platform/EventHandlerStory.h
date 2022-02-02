@@ -39,50 +39,50 @@ public:
     add_sink<RE::SpellsLearned>();
   }
 
-  EventResult ProcessEvent(const RE::ActorKill::Event* a_event,
+  EventResult ProcessEvent(const RE::ActorKill::Event* event,
                            RE::BSTEventSource<RE::ActorKill::Event>*) override;
 
-  EventResult ProcessEvent(const RE::BooksRead::Event* a_event,
+  EventResult ProcessEvent(const RE::BooksRead::Event* event,
                            RE::BSTEventSource<RE::BooksRead::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::CriticalHit::Event* a_event,
+    const RE::CriticalHit::Event* event,
     RE::BSTEventSource<RE::CriticalHit::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::DisarmedEvent::Event* a_event,
+    const RE::DisarmedEvent::Event* event,
     RE::BSTEventSource<RE::DisarmedEvent::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::DragonSoulsGained::Event* a_event,
+    const RE::DragonSoulsGained::Event* event,
     RE::BSTEventSource<RE::DragonSoulsGained::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::ItemHarvested::Event* a_event,
+    const RE::ItemHarvested::Event* event,
     RE::BSTEventSource<RE::ItemHarvested::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::LevelIncrease::Event* a_event,
+    const RE::LevelIncrease::Event* event,
     RE::BSTEventSource<RE::LevelIncrease::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::LocationDiscovery::Event* a_event,
+    const RE::LocationDiscovery::Event* event,
     RE::BSTEventSource<RE::LocationDiscovery::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::ShoutAttack::Event* a_event,
+    const RE::ShoutAttack::Event* event,
     RE::BSTEventSource<RE::ShoutAttack::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::SkillIncrease::Event* a_event,
+    const RE::SkillIncrease::Event* event,
     RE::BSTEventSource<RE::SkillIncrease::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::SoulsTrapped::Event* a_event,
+    const RE::SoulsTrapped::Event* event,
     RE::BSTEventSource<RE::SoulsTrapped::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::SpellsLearned::Event* a_event,
+    const RE::SpellsLearned::Event* event,
     RE::BSTEventSource<RE::SpellsLearned::Event>*) override;
 
 private:
