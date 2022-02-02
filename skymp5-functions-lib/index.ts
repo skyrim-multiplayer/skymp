@@ -156,7 +156,7 @@ const pointsByName = new Map<string, LocationalData>();
 pointsByName.set('hall:spawnPoint', {
   pos: [18522.08, 10218.17, 624.46],
   cellOrWorldDesc: '42b5f:SweetPie.esp',
-  rot: [0, 0, 348],
+  rot: [0, 0, 0],
 });
 pointsByName.set('whiterun:spawnPoint', {
   pos: [22659, -8697, -3594],

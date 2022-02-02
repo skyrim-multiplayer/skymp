@@ -139,7 +139,7 @@ set(server_settings_json_sweetpie "{
     {
       \"pos\": [ 18522.08, 10218.17, 624.46 ],
       \"worldOrCell\": \"0x6042b5f\",
-      \"angleZ\": 348
+      \"angleZ\": 0
     }
   ]
 }
