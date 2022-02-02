@@ -33,7 +33,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly neutralPortalNameTpl = 'Enter deathmatch\nPlayers: %d (min %d)\n%s';
 
   readonly roundStateToHumanReadable: Record<SweetPieRound['state'], string> = {
-    'warmup': 'Waiting for players...',
+    'wait': 'Waiting for players...',
+    'warmup': 'Warmup',
     'running': 'Running, please wait',
   };
 
