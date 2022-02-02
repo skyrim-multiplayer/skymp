@@ -12,7 +12,6 @@
 #define NOPROFILER       // Profiler interface.
 #define NODEFERWINDOWPOS // DeferWindowPos routines
 #define NOMCX            // Modem Configuration Extensions
-#define NOGDICAPMASKS    // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
 #define NOSYSMETRICS     // SM_*
 #define NOMENUS          // MF_*
 #define NOICONS          // IDI_*
@@ -26,7 +25,6 @@
 #define NODRAWTEXT       // DrawText() and DT_*
 #define NOGDI            // All GDI defines and routines
 #define NOKERNEL         // All KERNEL defines and routines
-#define NONLS            // All NLS defines and routines
 #define NOMEMMGR         // GMEM_*, LMEM_*, GHND, LHND, associated routines
 #define NOMETAFILE       // typedef METAFILEPICT
 #define NOMINMAX         // Macros min(a,b) and max(a,b)
@@ -34,17 +32,22 @@
 #define NOSCROLL         // SB_* and scrolling routines
 #define NOSERVICE // All Service Controller routines, SERVICE_ equates, etc.
 
+//#define NOGDICAPMASKS    // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
+//#define NONLS            // All NLS defines and routines
+
 #include <RE/Skyrim.h>
 #include <REL/Relocation.h>
 #include <SKSE/SKSE.h>
 
-#include <Windows.h>
-#include <d3d11.h>
+#include <condition_variable>
+#include <dxgi.h>
 #include <iostream> // savefile
 #include <shellapi.h>
 #include <shlobj_core.h>
+#include <stringapiset.h>
 #include <tlhelp32.h>
 
+#include <asio.hpp>
 #include <cef_values.h>
 #include <cmrc/cmrc.hpp>
 #include <core_library/Meta.hpp>
@@ -88,9 +91,9 @@ using TypeInfo = RE::BSScript::TypeInfo;
 #define NOINLINE __declspec(noinline)
 
 #include "JsEngine.h" // imports TaskQueue.h
+#include "Version.h"
 
 #include "game/Offsets.h"
 
-#include "game/BSRenderManager.h"
+#include "game/Classes.h"
 #include "game/Events.h"
-#include "game/TintMask.h"
