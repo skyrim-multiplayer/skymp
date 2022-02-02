@@ -15,11 +15,9 @@
 #include "MpClientPluginApi.h"
 #include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
+#include "TextApi.h"
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
-
-#include <asio.hpp>
-#include <condition_variable>
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
