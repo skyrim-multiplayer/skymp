@@ -22,8 +22,10 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly noWinnerMessage: [string] = ["There is no winner! Thanks for playing"];
   readonly multipleWinnersMessage: [string] = ["We have multiple winners!"];
   readonly deathMessage: [string] = ["%s was slain by %s. %s now has %d points (the best is %d)"];
+  readonly restoreMessage: [string] = ["Restored"];
+  readonly restoreDeniedMessage: [string] = ["Wait for %d seconds to restore again"];
 
-  readonly cantStartMessage: [string] = ["Too few players, the warmup will end when %s more join"];
+  readonly cantStartMessage: [string] = ["Too few players, the warmup will start when %s more join"];
 
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
@@ -34,8 +36,10 @@ export class SweetPieGameModeListener implements GameModeListener {
   constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayersToStart: number = 5) {
     this.rounds = this.controller.getRoundsArray();
     if (this.rounds.length === 0) {
-      maps.forEach(map => this.rounds.push({ state: 'warmup', map: map }));
+      maps.forEach(map => this.rounds.push({ state: 'wait', map: map }));
       this.rounds.forEach((round, index) => this.resetRound(index));
+    } else {
+      maps.forEach((map, index) => this.rounds[index].map = map);
     }
   }
 
@@ -46,7 +50,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         forceLeaveRound(this.controller, this.rounds, player);
       }
     }
-    this.rounds[roundIndex] = { state: 'warmup', map: this.rounds[roundIndex].map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }
+    this.rounds[roundIndex] = { state: 'wait', map: this.rounds[roundIndex].map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }
     this.controller.setRoundsArray(this.rounds);
   }
 
@@ -54,7 +58,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     return this.rounds;
   }
 
-  onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, isTeleportDoor: boolean): 'continue' | 'blockActivation' {
+  onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, targetActorId: number): 'continue' | 'blockActivation' {
     if (targetObjectDesc === this.quitGamePortal) {
       this.controller.quitGame(casterActorId);
       return 'continue';
@@ -78,6 +82,17 @@ export class SweetPieGameModeListener implements GameModeListener {
           this.controller.teleport(casterActorId, round.hallPointName);
           return 'continue';
         }
+        const rx = RegExp("^sweet.*(Eat|Drink|Soup)", "i"); // TODO: Make this configurable
+        if (rx.test(this.controller.getScriptName(targetActorId))) {
+          const percentages = this.controller.getPercentages(casterActorId);
+          this.controller.setPercentages(
+            casterActorId, {
+              health: percentages.health! + .5,
+              magicka: percentages.magicka! + .5,
+              stamina: percentages.stamina! + .5
+          });
+          return 'continue';
+        }
       }
       if (round && round.map) {
         if (round.map.safePlaceEnterDoors?.includes(targetObjectDesc)) {
@@ -96,7 +111,20 @@ export class SweetPieGameModeListener implements GameModeListener {
         if (round.map.safePlaceLeaveDoors?.includes(targetObjectDesc)) {
           return 'continue';
         }
-        if (isTeleportDoor) {
+        if (round.map.playerRestoreActivators?.includes(targetObjectDesc)) {
+          const now = Date.now();
+          const elapsed = now - (round.players?.get(casterActorId)?.restored || now);
+          const waitTime = round.map.playerRestoreWaitTime || 30000;
+          if (elapsed >= 0) {
+            round.players!.get(casterActorId)!.restored = now + waitTime;
+            this.controller.setPercentages(casterActorId, {});
+            this.controller.sendChatMessage(casterActorId, ...this.restoreMessage);
+            return 'continue';
+          }
+          this.controller.sendChatMessage(casterActorId, sprintf(this.restoreDeniedMessage[0], -elapsed / 1000));
+          return 'continue';
+          }
+        if (this.controller.isTeleportActivator(targetActorId)) {
           this.controller.sendChatMessage(casterActorId, ...this.interiorsBlockedMessage);
           return 'blockActivation';
         }
@@ -123,8 +151,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   everySecond() {
     for (const round of this.rounds) {
       if (round.players && round.players.size) {
-        round.secondsPassed = (round.secondsPassed || 0) + 1;
-        if (round.state === 'warmup') {
+        round.secondsPassed = (round.secondsPassed ?? -1) + 1;
+        if (round.state === 'warmup' || round.state === 'wait') {
           const onlinePlayers: number[] = this.controller.getOnlinePlayers();
           const playersToRemove: number[] = [];
           for (const player of round.players.keys()) {
@@ -139,17 +167,25 @@ export class SweetPieGameModeListener implements GameModeListener {
             this.resetRound(this.rounds.indexOf(round));
             continue;
           }
+          if (round.players.size < this.minimumPlayersToStart) {
+            if (round.state === 'warmup') {
+              round.state = 'wait';
+              round.secondsPassed = 0;
+            }
+            if (this.sendMessageNeeded(this.warmupTimerMaximum - round.secondsPassed)) {
+              this.sendRoundChatMessage(round, sprintf(this.cantStartMessage[0], this.minimumPlayersToStart - round.players.size));
+              round.secondsPassed = 0;
+            }
+            continue;
+          } else if (round.state === 'wait') {
+            round.state = 'warmup';
+            round.secondsPassed = 0;
+          }
           const secondsRemaining = this.warmupTimerMaximum - round.secondsPassed;
           if (secondsRemaining > 0 && this.sendMessageNeeded(secondsRemaining)) {
             this.sendRoundChatMessage(round, sprintf(this.startingRoundInMessage[0], secondsRemaining));
           }
           if (round.secondsPassed > this.warmupTimerMaximum) {
-            if (round.players.size < this.minimumPlayersToStart) {
-              if (this.sendMessageNeeded(round.secondsPassed - this.warmupTimerMaximum)) {
-                this.sendRoundChatMessage(round, sprintf(this.cantStartMessage[0], this.minimumPlayersToStart - round.players.size));
-              }
-              continue;
-            }
             round.secondsPassed = 0;
             round.state = 'running';
             this.sendRoundChatMessage(round, sprintf(this.warmupFinishedMessage[0], this.runningTimerMaximum));

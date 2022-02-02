@@ -701,24 +701,11 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   currentHealthPercentage =
     currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
 
-  targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
-                             staminaPercentage, aggressor);
   auto now = std::chrono::steady_clock::now();
-  targetActor.SetLastAttributesPercentagesUpdate(now);
+  targetActor.NetSetPercentages(currentHealthPercentage, magickaPercentage,
+                                staminaPercentage, now, aggressor);
   targetActor.SetLastHitTime(now);
 
-  targetForm = targetActor.GetChangeForm();
-
-  std::string s;
-  s += Networking::MinPacketId;
-  s += nlohmann::json{
-    { "t", MsgType::ChangeValues },
-    { "data",
-      { { "health", targetForm.healthPercentage },
-        { "magicka", targetForm.magickaPercentage },
-        { "stamina", targetForm.staminaPercentage } } }
-  }.dump();
-  targetActor.SendToUser(s.data(), s.size(), true);
   spdlog::debug("Target {0:x} is hitted by {1} damage. Current health "
                 "percentage: {2}. Last "
                 "health percentage: {3}. (Last: {3} => Current: {2})",

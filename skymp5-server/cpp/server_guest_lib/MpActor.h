@@ -59,6 +59,11 @@ public:
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
   void SetPercentages(float healthPercentage, float magickaPercentage,
                       float staminaPercentage, MpActor* aggressor = nullptr);
+  void NetSetPercentages(float healthPercentage, float magickaPercentage,
+                         float staminaPercentage,
+                         std::chrono::steady_clock::time_point timePoint =
+                           std::chrono::steady_clock::now(),
+                         MpActor* aggressor = nullptr);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
   std::chrono::steady_clock::time_point GetLastHitTime();
