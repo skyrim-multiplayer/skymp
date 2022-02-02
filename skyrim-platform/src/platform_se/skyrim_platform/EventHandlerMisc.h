@@ -16,24 +16,20 @@ public:
 
   static void RegisterSinks()
   {
-    auto footstepHolder = RE::BGSFootstepManager::GetSingleton();
-    auto footstepEventSource = footstepHolder
-      ? static_cast<RE::BSTEventSource<RE::BGSFootstepEvent>*>(footstepHolder)
-      : throw NullPointerException("footstepHolder");
-    footstepEventSource->AddEventSink(GetSingleton());
-
-    auto ui = RE::UI::GetSingleton();
-    if (!ui) {
-      throw NullPointerException("ui");
+    if (const auto manager = RE::BGSFootstepManager::GetSingleton()) {
+      manager->AddEventSink(GetSingleton());
     }
-    ui->GetEventSource<RE::MenuOpenCloseEvent>()->AddEventSink(GetSingleton());
 
-    auto playerCharacterHolder = RE::PlayerCharacter::GetSingleton();
-    auto playerCharacterEventSource = playerCharacterHolder
-      ? static_cast<RE::BSTEventSource<RE::PositionPlayerEvent>*>(
-          playerCharacterHolder)
-      : throw NullPointerException("playerCharacterHolder");
-    playerCharacterEventSource->AddEventSink(GetSingleton());
+    if (const auto ui = RE::UI::GetSingleton()) {
+      ui->GetEventSource<RE::MenuOpenCloseEvent>()->AddEventSink(
+        GetSingleton());
+    }
+
+    if (const auto pc =
+          RE::PlayerCharacter::GetSingleton()
+            ->As<RE::BSTEventSource<RE::PositionPlayerEvent>>()) {
+      pc->AddEventSink(GetSingleton());
+    }
   }
 
   EventResult ProcessEvent(const RE::BGSFootstepEvent* event,

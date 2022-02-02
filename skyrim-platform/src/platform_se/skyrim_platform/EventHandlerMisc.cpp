@@ -50,7 +50,7 @@ EventResult EventHandlerMisc::ProcessEvent(
   return EventResult::kContinue;
 }
 
-/* EventResult EventHandlerMisc::ProcessEvent(
+EventResult EventHandlerMisc::ProcessEvent(
   const RE::PositionPlayerEvent* event,
   RE::BSTEventSource<RE::PositionPlayerEvent>* eventSource)
 {
@@ -58,11 +58,13 @@ EventResult EventHandlerMisc::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto type = event->type;
-  SkyrimPlatform::GetSingleton().AddUpdateTask([type] {
+  auto type =
+    to_underlying<RE::PositionPlayerEvent::EVENT_TYPE>(event->type.get());
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
-    obj.SetProperty("eventType", JsValue::Double(static_cast<int>(type)));
+    obj.SetProperty("eventType", JsValue::Double(type));
     EventsApi::SendEvent("positionPlayer", { JsValue::Undefined(), obj });
   });
   return EventResult::kContinue;
-} */
+}
