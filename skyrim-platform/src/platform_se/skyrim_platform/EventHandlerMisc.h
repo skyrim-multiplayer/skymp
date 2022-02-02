@@ -6,7 +6,6 @@ class EventHandlerMisc final
   : public RE::BSTEventSink<RE::BGSFootstepEvent>
   , public RE::BSTEventSink<RE::MenuOpenCloseEvent>
   , public RE::BSTEventSink<RE::PositionPlayerEvent>
-
 {
 public:
   [[nodiscard]] static EventHandlerMisc* GetSingleton()

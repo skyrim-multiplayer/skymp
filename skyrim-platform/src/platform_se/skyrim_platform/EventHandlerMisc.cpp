@@ -16,6 +16,10 @@ EventResult EventHandlerMisc::ProcessEvent(
   const RE::MenuOpenCloseEvent* event,
   RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource)
 {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
   const char* menuName = event->menuName.c_str();
 
   if (event->opening) {
@@ -31,6 +35,10 @@ EventResult EventHandlerMisc::ProcessEvent(
   const RE::BGSFootstepEvent* event,
   RE::BSTEventSource<RE::BGSFootstepEvent>* eventSource)
 {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
@@ -46,9 +54,10 @@ EventResult EventHandlerMisc::ProcessEvent(
   const RE::PositionPlayerEvent* event,
   RE::BSTEventSource<RE::PositionPlayerEvent>* eventSource)
 {
-  if (event == nullptr) {
+  if (!event) {
     return EventResult::kContinue;
   }
+
   auto type = event->type;
   SkyrimPlatform::GetSingleton().AddUpdateTask([type] {
     auto obj = JsValue::Object();

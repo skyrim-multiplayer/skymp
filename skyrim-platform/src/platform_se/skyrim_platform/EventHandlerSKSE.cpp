@@ -16,6 +16,10 @@ EventResult EventHandlerSKSE::ProcessEvent(
   const SKSE::ActionEvent* event,
   RE::BSTEventSource<SKSE::ActionEvent>* eventSource)
 {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
   auto actorId = event->actor ? event->actor->formID : 0;
   auto sourceId = event->sourceForm ? event->sourceForm->formID : 0;
 
@@ -92,6 +96,10 @@ EventResult EventHandlerSKSE::ProcessEvent(
   const SKSE::CameraEvent* event,
   RE::BSTEventSource<SKSE::CameraEvent>* eventSource)
 {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
     obj.SetProperty("oldStateId", JsValue::Double(event->oldStateId));
@@ -127,6 +135,10 @@ EventResult EventHandlerSKSE::ProcessEvent(
   const SKSE::NiNodeUpdateEvent* event,
   RE::BSTEventSource<SKSE::NiNodeUpdateEvent>* eventSource)
 {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
   auto referenceId = event->reference ? event->reference->formID : 0;
 
   if (!event->reference || event->reference->formID != referenceId) {
@@ -149,6 +161,10 @@ EventResult EventHandlerSKSE::ProcessEvent(
   const SKSE::ModCallbackEvent* event,
   RE::BSTEventSource<SKSE::ModCallbackEvent>* eventSource)
 {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
