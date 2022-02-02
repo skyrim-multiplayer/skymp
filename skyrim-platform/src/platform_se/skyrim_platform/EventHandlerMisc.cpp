@@ -12,7 +12,7 @@ JsValue CreateObject(const char* type, void* form)
 }
 }
 
-EventResult EvEventHandlerMisc::ProcessEvent(
+EventResult EventHandlerMisc::ProcessEvent(
   const RE::MenuOpenCloseEvent* event,
   RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource)
 {
@@ -27,7 +27,7 @@ EventResult EvEventHandlerMisc::ProcessEvent(
   return EventResult::kContinue;
 };
 
-EventResult EvEventHandlerMisc::ProcessEvent(
+EventResult EventHandlerMisc::ProcessEvent(
   const RE::BGSFootstepEvent* event,
   RE::BSTEventSource<RE::BGSFootstepEvent>* eventSource)
 {
@@ -42,7 +42,7 @@ EventResult EvEventHandlerMisc::ProcessEvent(
   return EventResult::kContinue;
 }
 
-/* EventResult EvEventHandlerMisc::ProcessEvent(
+/* EventResult EventHandlerMisc::ProcessEvent(
   const RE::PositionPlayerEvent* event,
   RE::BSTEventSource<RE::PositionPlayerEvent>* eventSource)
 {
