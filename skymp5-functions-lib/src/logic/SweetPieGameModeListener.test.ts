@@ -341,14 +341,12 @@ describe("SweetPieGameModeListener: Round clock", () => {
     expect(controller.updateCustomName).toBeCalledWith('whiterun:away', 'Return to hall');
 
     resetMocks(controller);
-    // listener.getRounds()[0].state = 'running';
     listener.everySecond();
     expect(controller.updateCustomName).toBeCalledWith(
       listener.neutralPortal, 'Enter deathmatch\nPlayers: 0 (min 5)\nWaiting for players...'
     );
 
     resetMocks(controller);
-    // listener.getRounds()[0].state = 'running';
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
     listener.everySecond();
     expect(controller.updateCustomName).toBeCalledWith(

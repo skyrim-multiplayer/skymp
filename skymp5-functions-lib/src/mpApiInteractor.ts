@@ -11,7 +11,6 @@ import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
-// declare const portalData: [number, string][];
 declare const nameUpdatesJson: string;
 
 const isTeleportDoor = (refrId: number) => {
