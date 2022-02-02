@@ -14,6 +14,7 @@ export const makePlayerController = (): PlayerController => {
     getRoundsArray: jest.fn().mockReturnValue([]),
     setRoundsArray: jest.fn(),
     getOnlinePlayers: jest.fn().mockReturnValue([1, 2]),
+    updateCustomName: jest.fn(),
   };
 };
 

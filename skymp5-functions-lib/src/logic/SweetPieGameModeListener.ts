@@ -45,6 +45,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     this.controller.updateCustomName(this.quitGamePortal, 'Quit the game and return to desktop');
     this.controller.updateCustomName(this.redPortal, 'Coming soon...');
     this.controller.updateCustomName(this.bluePortal, 'Coming soon...');
+    // FIXME: does not apply in-game
     this.rounds.forEach((round) => round.map?.leaveRoundDoors?.forEach(
       (doorDesc) => this.controller.updateCustomName(doorDesc, 'Return to hall')
     ));

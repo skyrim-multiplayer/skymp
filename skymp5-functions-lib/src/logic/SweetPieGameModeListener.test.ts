@@ -328,6 +328,41 @@ describe("SweetPieGameModeListener: Round clock", () => {
     expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 2 seconds");
     expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 1 seconds");
   });
+
+  test("Sets custom names for portals and doors", () => {
+    const controller = makePlayerController();
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
+    const listener = new SweetPieGameModeListener(controller, maps);
+
+    expect(controller.updateCustomName).toBeCalledTimes(3);
+    expect(controller.updateCustomName).toBeCalledWith(listener.quitGamePortal, 'Quit the game and return to desktop');
+    expect(controller.updateCustomName).toBeCalledWith(listener.redPortal, 'Coming soon...');
+    expect(controller.updateCustomName).toBeCalledWith(listener.bluePortal, 'Coming soon...');
+
+    resetMocks(controller);
+    // listener.getRounds()[0].state = 'running';
+    listener.everySecond();
+    expect(controller.updateCustomName).toBeCalledWith(
+      listener.neutralPortal, 'Enter deathmatch\nPlayers: 0 (min 5)\nWaiting for players...'
+    );
+
+    resetMocks(controller);
+    // listener.getRounds()[0].state = 'running';
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+    listener.everySecond();
+    expect(controller.updateCustomName).toBeCalledWith(
+      listener.neutralPortal, 'Enter deathmatch\nPlayers: 1 (min 5)\nWaiting for players...'
+    );
+
+    resetMocks(controller);
+    listener.getRounds()[0].state = 'running';
+    listener.everySecond();
+    expect(controller.updateCustomName).toBeCalledWith(
+      listener.neutralPortal, 'Enter deathmatch\nPlayers: 1 (min 5)\nRunning, please wait'
+    );
+
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+  });
 });
 
 describe("SweetPieGameModeListener: OnDeath", () => {
