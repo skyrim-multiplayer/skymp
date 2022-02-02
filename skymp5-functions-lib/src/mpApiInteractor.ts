@@ -153,7 +153,7 @@ export class MpApiInteractor {
           }
         }, { nameUpdatesJson: JSON.stringify(nameUpdates).replace(/\\/g, '\\\\').replace(/'/g, '\\\'') });
       }
- 
+
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
         PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;
       }
