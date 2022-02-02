@@ -7,7 +7,7 @@ using Catch::Matchers::Contains;
 
 PartOne& GetPartOne();
 
-int pospelov = 20;
+int pospelov = -2;
 
 TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
