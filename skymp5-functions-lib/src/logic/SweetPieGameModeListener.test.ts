@@ -331,13 +331,14 @@ describe("SweetPieGameModeListener: Round clock", () => {
 
   test("Sets custom names for portals and doors", () => {
     const controller = makePlayerController();
-    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', leaveRoundDoors: ['whiterun:away'] }];
     const listener = new SweetPieGameModeListener(controller, maps);
 
-    expect(controller.updateCustomName).toBeCalledTimes(3);
+    expect(controller.updateCustomName).toBeCalledTimes(4);
     expect(controller.updateCustomName).toBeCalledWith(listener.quitGamePortal, 'Quit the game and return to desktop');
     expect(controller.updateCustomName).toBeCalledWith(listener.redPortal, 'Coming soon...');
     expect(controller.updateCustomName).toBeCalledWith(listener.bluePortal, 'Coming soon...');
+    expect(controller.updateCustomName).toBeCalledWith('whiterun:away', 'Return to hall');
 
     resetMocks(controller);
     // listener.getRounds()[0].state = 'running';

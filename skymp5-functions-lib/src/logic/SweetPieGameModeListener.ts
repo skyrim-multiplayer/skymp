@@ -27,7 +27,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   readonly comingSoonPortalName = 'Coming soon...';
   readonly quitGamePortalName = 'Quit the game and return to desktop';
-  readonly returnToHallPortalName = 'Quit the game and return to desktop';
+  readonly returnToHallPortalName = 'Return to hall';
   readonly neutralPortalNameTpl = 'Enter deathmatch\nPlayers: %d (min %d)\n%s';
 
   readonly roundStateToHumanReadable: Record<SweetPieRound['state'], string> = {
