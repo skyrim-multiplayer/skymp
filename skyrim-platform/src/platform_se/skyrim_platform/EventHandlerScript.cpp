@@ -1,16 +1,7 @@
 #include "EventHandlerScript.h"
+#include "EventUtils.h"
 #include "EventsApi.h"
-#include "NativeValueCasts.h"
 #include "SkyrimPlatform.h"
-
-namespace {
-JsValue CreateObject(const char* type, void* form)
-{
-  return form ? NativeValueCasts::NativeObjectToJsObject(
-                  std::make_shared<CallNative::Object>(type, form))
-              : JsValue::Null();
-}
-}
 
 EventResult EventHandlerScript::ProcessEvent(
   const RE::TESActivateEvent* event, RE::BSTEventSource<RE::TESActivateEvent>*)
@@ -26,18 +17,14 @@ EventResult EventHandlerScript::ProcessEvent(
 
     auto target = RE::TESForm::LookupByID(targetId);
     target = target == targetRefr ? target : nullptr;
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     auto caster = RE::TESForm::LookupByID(casterId);
     caster = caster == casterRefr ? caster : nullptr;
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
+    AddProperty(&obj, "caster", caster, "ObjectReference");
 
-    auto targetRefr_ = reinterpret_cast<RE::TESObjectREFR*>(target);
-
-    obj.SetProperty("isCrimeToActivate",
-                    targetRefr_
-                      ? JsValue::Bool(targetRefr_->IsCrimeToActivate())
-                      : JsValue::Undefined());
+    AddProperty(&obj, "isCrimeToActivate",
+                target->As<RE::TESObjectREFR>()->IsCrimeToActivate());
 
     EventsApi::SendEvent("activate", { JsValue::Undefined(), obj });
   });
@@ -77,14 +64,10 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty(
-      "effect", CreateObject("MagicEffect", activeEffect->GetBaseObject()));
-
-    obj.SetProperty("activeEffect",
-                    CreateObject("ActiveMagicEffect", activeEffect));
-
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "effect", activeEffect->GetBaseObject(), "MagicEffect");
+    AddProperty(&obj, "activeEffect", activeEffect, "ActiveMagicEffect");
+    AddProperty(&obj, "caster", caster, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     if (event->isApplied)
       EventsApi::SendEvent("effectStart", { JsValue::Undefined(), obj });
@@ -111,9 +94,9 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("actor", CreateObject("Actor", actor));
-    obj.SetProperty("oldLoc", CreateObject("Location", event->oldLoc));
-    obj.SetProperty("newLoc", CreateObject("Location", event->newLoc));
+    AddProperty(&obj, "actor", actor, "Actor");
+    AddProperty(&obj, "oldLoc", event->oldLoc, "Location");
+    AddProperty(&obj, "newLoc", event->newLoc, "Location");
 
     EventsApi::SendEvent("locationChanged", { JsValue::Undefined(), obj });
   });
@@ -135,7 +118,7 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("book", CreateObject("ObjectReference", book));
+    AddProperty(&obj, "book", book, "ObjectReference");
 
     EventsApi::SendEvent("bookRead", { JsValue::Undefined(), obj });
   });
@@ -157,10 +140,10 @@ EventResult EventHandlerScript::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([refr, action] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("refr", CreateObject("ObjectReference", refr));
+    AddProperty(&obj, "refr", refr, "ObjectReference");
 
     if (action == 1)
       EventsApi::SendEvent("cellAttach", { JsValue::Undefined(), obj });
@@ -179,12 +162,12 @@ EventResult EventHandlerScript::ProcessEvent(
   auto cell = event ? event->cell : nullptr;
   auto cellId = cell ? cell->formID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([cellId, cell] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
     auto cell_ = RE::TESForm::LookupByID(cellId);
     cell_ = cell_ == cell ? cell_ : nullptr;
-    obj.SetProperty("cell", CreateObject("Cell", cell_));
+    AddProperty(&obj, "cell", cell_, "Cell");
 
     EventsApi::SendEvent("cellFullyLoaded", { JsValue::Undefined(), obj });
   });
@@ -206,30 +189,25 @@ EventResult EventHandlerScript::ProcessEvent(
     : RE::stl::enumeration<RE::ACTOR_COMBAT_STATE, std::uint32_t>(
         RE::ACTOR_COMBAT_STATE::kNone);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [targetActorId, actorId, state, targetActorRefr, actorRefr] {
-      auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
+    auto obj = JsValue::Object();
 
-      auto targetActorLocal = RE::TESForm::LookupByID(targetActorId);
-      targetActorLocal =
-        targetActorLocal == targetActorRefr ? targetActorLocal : nullptr;
-      obj.SetProperty("target",
-                      CreateObject("ObjectReference", targetActorLocal));
+    auto targetActorLocal = RE::TESForm::LookupByID(targetActorId);
+    targetActorLocal =
+      targetActorLocal == targetActorRefr ? targetActorLocal : nullptr;
+    AddProperty(&obj, "target", targetActorLocal, "ObjectReference");
 
-      auto actorLocal = RE::TESForm::LookupByID(actorId);
-      actorLocal = actorLocal == actorRefr ? actorLocal : nullptr;
-      obj.SetProperty("actor", CreateObject("ObjectReference", actorLocal));
+    auto actorLocal = RE::TESForm::LookupByID(actorId);
+    actorLocal = actorLocal == actorRefr ? actorLocal : nullptr;
+    AddProperty(&obj, "actor", actorLocal, "ObjectReference");
 
-      obj.SetProperty(
-        "isCombat",
-        JsValue::Bool(state.get() == RE::ACTOR_COMBAT_STATE::kCombat));
+    AddProperty(&obj, "isCombat",
+                state.get() == RE::ACTOR_COMBAT_STATE::kCombat);
+    AddProperty(&obj, "isSearching",
+                state.get() == RE::ACTOR_COMBAT_STATE::kSearching);
 
-      obj.SetProperty(
-        "isSearching",
-        JsValue::Bool(state.get() == RE::ACTOR_COMBAT_STATE::kSearching));
-
-      EventsApi::SendEvent("combatState", { JsValue::Undefined(), obj });
-    });
+    EventsApi::SendEvent("combatState", { JsValue::Undefined(), obj });
+  });
 
   return EventResult::kContinue;
 }
@@ -247,28 +225,18 @@ EventResult EventHandlerScript::ProcessEvent(
   auto reference = event ? event->reference.get() : nullptr;
   auto referenceId = reference ? reference->formID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([oldContainerId, newContainerId,
-                                                baseObjId, itemCount, uniqueID,
-                                                referenceId] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("oldContainer",
-                    CreateObject("ObjectReference",
-                                 RE::TESForm::LookupByID(oldContainerId)));
-
-    obj.SetProperty("newContainer",
-                    CreateObject("ObjectReference",
-                                 RE::TESForm::LookupByID(newContainerId)));
-
-    obj.SetProperty("baseObj",
-                    CreateObject("Form", RE::TESForm::LookupByID(baseObjId)));
-
-    obj.SetProperty("numItems", JsValue::Double(itemCount));
-    obj.SetProperty("uniqueID", JsValue::Double(uniqueID));
-
-    obj.SetProperty(
-      "reference",
-      CreateObject("ObjectReference", RE::TESForm::LookupByID(referenceId)));
+    AddProperty(&obj, "oldContainer", RE::TESForm::LookupByID(oldContainerId),
+                "ObjectReference");
+    AddProperty(&obj, "newContainer", RE::TESForm::LookupByID(newContainerId),
+                "ObjectReference");
+    AddProperty(&obj, "baseObj", RE::TESForm::LookupByID(baseObjId), "Form");
+    AddProperty(&obj, "numItems", itemCount);
+    AddProperty(&obj, "uniqueID", uniqueID);
+    AddProperty(&obj, "reference", RE::TESForm::LookupByID(referenceId),
+                "ObjectReference");
 
     EventsApi::SendEvent("containerChanged", { JsValue::Undefined(), obj });
   });
@@ -286,25 +254,24 @@ EventResult EventHandlerScript::ProcessEvent(
 
   auto dead = event ? event->dead : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [actorDyingId, actorKillerId, dead, actorDyingRefr, actorKillerRefr] {
-      auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
+    auto obj = JsValue::Object();
 
-      auto actorDyingLocal = RE::TESForm::LookupByID(actorDyingId);
-      actorDyingLocal =
-        actorDyingLocal == actorDyingRefr ? actorDyingLocal : nullptr;
-      obj.SetProperty("actorDying",
-                      CreateObject("ObjectReference", actorDyingLocal));
+    auto actorDyingLocal = RE::TESForm::LookupByID(actorDyingId);
+    actorDyingLocal =
+      actorDyingLocal == actorDyingRefr ? actorDyingLocal : nullptr;
 
-      auto actorKillerLocal = RE::TESForm::LookupByID(actorKillerId);
-      actorKillerLocal =
-        actorKillerLocal == actorKillerRefr ? actorKillerLocal : nullptr;
-      obj.SetProperty("actorKiller",
-                      CreateObject("ObjectReference", actorKillerLocal));
+    AddProperty(&obj, "actorDying", actorDyingLocal, "ObjectReference");
 
-      dead ? EventsApi::SendEvent("deathEnd", { JsValue::Undefined(), obj })
-           : EventsApi::SendEvent("deathStart", { JsValue::Undefined(), obj });
-    });
+    auto actorKillerLocal = RE::TESForm::LookupByID(actorKillerId);
+    actorKillerLocal =
+      actorKillerLocal == actorKillerRefr ? actorKillerLocal : nullptr;
+
+    AddProperty(&obj, "actorKiller", actorKillerLocal, "ObjectReference");
+
+    dead ? EventsApi::SendEvent("deathEnd", { JsValue::Undefined(), obj })
+         : EventsApi::SendEvent("deathStart", { JsValue::Undefined(), obj });
+  });
   return EventResult::kContinue;
 }
 
@@ -322,9 +289,9 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
-    obj.SetProperty("oldStage", JsValue::Double(event->oldStage));
-    obj.SetProperty("newStage", JsValue::Double(event->newStage));
+    AddProperty(&obj, "target", target, "ObjectReference");
+    AddProperty(&obj, "oldStage", event->oldStage);
+    AddProperty(&obj, "newStage", event->newStage);
 
     EventsApi::SendEvent("destructionStageChanged",
                          { JsValue::Undefined(), obj });
@@ -347,7 +314,7 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("actor", CreateObject("ObjectReference", actor));
+    AddProperty(&obj, "actor", actor, "ObjectReference");
 
     EventsApi::SendEvent("enterBleedout", { JsValue::Undefined(), obj });
   });
@@ -366,23 +333,18 @@ EventResult EventHandlerScript::ProcessEvent(
   auto equipped = event ? event->equipped : 0;
   auto uniqueId = event ? event->uniqueID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([actorId, baseObjectId,
-                                                equipped, uniqueId,
-                                                originalRefrId, actorRefr] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
     auto actorLocal = RE::TESForm::LookupByID(actorId);
     actorLocal = actorLocal == actorRefr ? actorLocal : nullptr;
-    obj.SetProperty("actor", CreateObject("ObjectReference", actorLocal));
+    AddProperty(&obj, "actor", actorLocal, "ObjectReference");
 
-    obj.SetProperty(
-      "baseObj", CreateObject("Form", RE::TESForm::LookupByID(baseObjectId)));
-
-    obj.SetProperty("originalRefr",
-                    CreateObject("ObjectReference",
-                                 RE::TESForm::LookupByID(originalRefrId)));
-
-    obj.SetProperty("uniqueId", JsValue::Double(uniqueId));
+    AddProperty(&obj, "baseObj", RE::TESForm::LookupByID(baseObjectId),
+                "Form");
+    AddProperty(&obj, "originalRefr", RE::TESForm::LookupByID(originalRefrId),
+                "ObjectReference");
+    AddProperty(&obj, "uniqueId", uniqueId);
 
     equipped ? EventsApi::SendEvent("equip", { JsValue::Undefined(), obj })
              : EventsApi::SendEvent("unequip", { JsValue::Undefined(), obj });
@@ -398,8 +360,7 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("travelTimeGameHours",
-                    JsValue::Double(event->travelTimeGameHours));
+    AddProperty(&obj, "travelTimeGameHours", event->travelTimeGameHours);
 
     EventsApi::SendEvent("fastTravelEnd", { JsValue::Undefined(), obj });
   });
@@ -426,8 +387,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("actor", CreateObject("ObjectReference", actor));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "actor", actor, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     if (event->type == RE::TESFurnitureEvent::FurnitureEventType::kExit) {
       EventsApi::SendEvent("furnitureExit", { JsValue::Undefined(), obj });
@@ -448,14 +409,14 @@ EventResult EventHandlerScript::ProcessEvent(
   auto refId = ref ? ref->formID : 0;
   auto grabbed = event ? event->grabbed : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([refId, grabbed, ref] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
     auto reference = RE::TESForm::LookupByID(refId);
     reference = reference == ref ? reference : nullptr;
-    obj.SetProperty("refr", CreateObject("ObjectReference", reference));
+    AddProperty(&obj, "refr", reference, "ObjectReference");
 
-    obj.SetProperty("isGrabbed", JsValue::Bool(grabbed));
+    AddProperty(&obj, "isGrabbed", grabbed);
 
     EventsApi::SendEvent("grabRelease", { JsValue::Undefined(), obj });
   });
@@ -478,47 +439,33 @@ EventResult EventHandlerScript::ProcessEvent(
                      : RE::stl::enumeration<RE::TESHitEvent::Flag, uint8_t>(
                          RE::TESHitEvent::Flag::kNone);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [targetId, causeId, sourceId, projectileId, flags, targetRefr, causeRefr] {
-      auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
+    auto obj = JsValue::Object();
 
-      auto targetLocal = RE::TESForm::LookupByID(targetId);
-      targetLocal = targetLocal == targetRefr ? targetLocal : nullptr;
-      obj.SetProperty("target", CreateObject("ObjectReference", targetLocal));
+    auto targetLocal = RE::TESForm::LookupByID(targetId);
+    targetLocal = targetLocal == targetRefr ? targetLocal : nullptr;
+    AddProperty(&obj, "target", targetLocal, "ObjectReference");
 
-      auto causeLocal = RE::TESForm::LookupByID(causeId);
-      causeLocal = causeLocal == causeRefr ? causeLocal : nullptr;
+    auto causeLocal = RE::TESForm::LookupByID(causeId);
+    causeLocal = causeLocal == causeRefr ? causeLocal : nullptr;
+    // TODO(#336): drop old name "agressor" on next major release of SP
+    AddProperty(&obj, "agressor", causeLocal, "ObjectReference");
 
-      // TODO(#336): drop old name "agressor" on next major release of SP
-      auto aggressor = CreateObject("ObjectReference", causeLocal);
-      obj.SetProperty("agressor", aggressor);
-      obj.SetProperty("aggressor", aggressor);
+    AddProperty(&obj, "aggressor", causeLocal, "ObjectReference");
+    AddProperty(&obj, "source", RE::TESForm::LookupByID(sourceId), "Form");
+    AddProperty(&obj, "projectile", RE::TESForm::LookupByID(projectileId),
+                "Form");
+    AddProperty(&obj, "isPowerAttack",
+                flags.any(RE::TESHitEvent::Flag::kPowerAttack));
+    AddProperty(&obj, "isSneakAttack",
+                flags.any(RE::TESHitEvent::Flag::kSneakAttack));
+    AddProperty(&obj, "isBashAttack",
+                flags.any(RE::TESHitEvent::Flag::kBashAttack));
+    AddProperty(&obj, "isHitBlocked",
+                flags.any(RE::TESHitEvent::Flag::kHitBlocked));
 
-      obj.SetProperty("source",
-                      CreateObject("Form", RE::TESForm::LookupByID(sourceId)));
-
-      obj.SetProperty(
-        "projectile",
-        CreateObject("Form", RE::TESForm::LookupByID(projectileId)));
-
-      obj.SetProperty(
-        "isPowerAttack",
-        JsValue::Bool(flags.any(RE::TESHitEvent::Flag::kPowerAttack)));
-
-      obj.SetProperty(
-        "isSneakAttack",
-        JsValue::Bool(flags.any(RE::TESHitEvent::Flag::kSneakAttack)));
-
-      obj.SetProperty(
-        "isBashAttack",
-        JsValue::Bool(flags.any(RE::TESHitEvent::Flag::kBashAttack)));
-
-      obj.SetProperty(
-        "isHitBlocked",
-        JsValue::Bool(flags.any(RE::TESHitEvent::Flag::kHitBlocked)));
-
-      EventsApi::SendEvent("hit", { JsValue::Undefined(), obj });
-    });
+    EventsApi::SendEvent("hit", { JsValue::Undefined(), obj });
+  });
   return EventResult::kContinue;
 }
 
@@ -529,17 +476,15 @@ EventResult EventHandlerScript::ProcessEvent(
   auto objectInitialized = event ? event->objectInitialized.get() : nullptr;
   auto objectInitializedId = objectInitialized ? objectInitialized->formID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([objectInitializedId,
-                                                objectInitialized] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
     auto objectInitializedLocal = RE::TESForm::LookupByID(objectInitializedId);
     objectInitializedLocal = objectInitializedLocal == objectInitialized
       ? objectInitializedLocal
       : nullptr;
-
-    obj.SetProperty("initializedObject",
-                    CreateObject("ObjectReference", objectInitializedLocal));
+    AddProperty(&obj, "initializedObject", objectInitializedLocal,
+                "ObjectReference");
 
     EventsApi::SendEvent("scriptInit", { JsValue::Undefined(), obj });
   });
@@ -568,8 +513,7 @@ EventResult EventHandlerScript::ProcessEvent(
 
     auto lockedObject = RE::TESForm::LookupByID(lockedObjectId);
     lockedObject = lockedObject == lockedObject ? lockedObject : nullptr;
-    obj.SetProperty("lockedObject",
-                    CreateObject("ObjectReference", lockedObject));
+    AddProperty(&obj, "lockedObject", lockedObject, "ObjectReference");
 
     EventsApi::SendEvent("lockChanged", { JsValue::Undefined(), obj });
   });
@@ -598,9 +542,9 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("effect", CreateObject("MagicEffect", effect));
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "effect", effect, "MagicEffect");
+    AddProperty(&obj, "caster", caster, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     EventsApi::SendEvent("magicEffectApply", { JsValue::Undefined(), obj });
   });
@@ -628,21 +572,21 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
-    obj.SetProperty("spell", CreateObject("Spell", spell));
+    AddProperty(&obj, "caster", caster, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
+    AddProperty(&obj, "spell", spell, "Spell");
 
     switch (event->status) {
       case RE::TESMagicWardHitEvent::Status::kFriendly: {
-        obj.SetProperty("status", "friendly");
+        AddProperty(&obj, "status", "friendly");
         break;
       }
       case RE::TESMagicWardHitEvent::Status::kAbsorbed: {
-        obj.SetProperty("status", "absorbed");
+        AddProperty(&obj, "status", "absorbed");
         break;
       }
       case RE::TESMagicWardHitEvent::Status::kBroken: {
-        obj.SetProperty("status", "broken");
+        AddProperty(&obj, "status", "broken");
         break;
       }
     }
@@ -662,17 +606,17 @@ EventResult EventHandlerScript::ProcessEvent(
   auto targetId = movedRef ? movedRef->formID : 0;
   auto isCellAttached = event ? event->isCellAttached : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [targetId, isCellAttached, movedRef] {
-      auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
+    auto obj = JsValue::Object();
 
-      auto target = RE::TESForm::LookupByID(targetId);
-      target = target == movedRef ? target : nullptr;
-      obj.SetProperty("movedRef", CreateObject("ObjectReference", target));
+    auto target = RE::TESForm::LookupByID(targetId);
+    target = target == movedRef ? target : nullptr;
+    AddProperty(&obj, "movedRef", target, "ObjectReference");
 
-      obj.SetProperty("isCellAttached", JsValue::Bool(isCellAttached));
-      EventsApi::SendEvent("moveAttachDetach", { JsValue::Undefined(), obj });
-    });
+    AddProperty(&obj, "isCellAttached", isCellAttached);
+
+    EventsApi::SendEvent("moveAttachDetach", { JsValue::Undefined(), obj });
+  });
 
   return EventResult::kContinue;
 }
@@ -684,13 +628,11 @@ EventResult EventHandlerScript::ProcessEvent(
   auto objectId = event ? event->formID : 0;
   auto loaded = event ? event->loaded : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([objectId, loaded] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("object",
-                    CreateObject("Form", RE::TESForm::LookupByID(objectId)));
-
-    obj.SetProperty("isLoaded", JsValue::Bool(loaded));
+    AddProperty(&obj, "object", RE::TESForm::LookupByID(objectId), "Form");
+    AddProperty(&obj, "isLoaded", loaded);
 
     EventsApi::SendEvent("objectLoaded", { JsValue::Undefined(), obj });
   });
@@ -721,7 +663,7 @@ EventResult EventHandlerScript::ProcessEvent(
       return;
     }
 
-    obj.SetProperty("reference", CreateObject("ObjectReference", refLocal));
+    AddProperty(&obj, "reference", refLocal, "ObjectReference");
 
     switch (type) {
       case RE::TESObjectREFRTranslationEvent::EventType::kFailed: {
@@ -763,8 +705,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "caster", caster, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     if (event->opened) {
       EventsApi::SendEvent("open", { JsValue::Undefined(), obj });
@@ -791,8 +733,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("actor", CreateObject("ObjectReference", actor));
-    obj.SetProperty("package", CreateObject("Package", package));
+    AddProperty(&obj, "actor", actor, "ObjectReference");
+    AddProperty(&obj, "package", package, "Package");
 
     switch (event->type) {
       case RE::TESPackageEvent::EventType::kStart: {
@@ -834,10 +776,10 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("cause", CreateObject("ObjectReference", cause));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
-    obj.SetProperty("perk", CreateObject("Perk", perk));
-    obj.SetProperty("flag", JsValue::Double(event->flag));
+    AddProperty(&obj, "cause", cause, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
+    AddProperty(&obj, "perk", perk, "Perk");
+    AddProperty(&obj, "flag", event->flag);
 
     EventsApi::SendEvent("perkEntryRun", { JsValue::Undefined(), obj });
   });
@@ -860,10 +802,10 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("weapon", CreateObject("Weapon", weapon));
-    obj.SetProperty("ammo", CreateObject("Ammo", ammo));
-    obj.SetProperty("power", JsValue::Double(event->power));
-    obj.SetProperty("isSunGazing", JsValue::Bool(event->isSunGazing));
+    AddProperty(&obj, "weapon", weapon, "Weapon");
+    AddProperty(&obj, "ammo", ammo, "Ammo");
+    AddProperty(&obj, "power", event->power);
+    AddProperty(&obj, "target", event->isSunGazing);
 
     EventsApi::SendEvent("playerBowShot", { JsValue::Undefined(), obj });
   });
@@ -880,10 +822,10 @@ EventResult EventHandlerScript::ProcessEvent(
   if (quest->formType.get() != RE::FormType::Quest)
     return EventResult::kContinue;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([quest] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("quest", CreateObject("Quest", quest));
+    AddProperty(&obj, "quest", quest, "Quest");
 
     EventsApi::SendEvent("questInit", { JsValue::Undefined(), obj });
   });
@@ -903,8 +845,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("quest", CreateObject("Quest", quest));
-    obj.SetProperty("stage", JsValue::Double(event->stage));
+    AddProperty(&obj, "quest", quest, "Quest");
+    AddProperty(&obj, "stage", event->stage);
 
     EventsApi::SendEvent("questStage", { JsValue::Undefined(), obj });
   });
@@ -924,7 +866,7 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("quest", CreateObject("Quest", quest));
+    AddProperty(&obj, "quest", quest, "Quest");
 
     if (event->isStarted) {
       EventsApi::SendEvent("questStart", { JsValue::Undefined(), obj });
@@ -942,13 +884,12 @@ EventResult EventHandlerScript::ProcessEvent(
   auto object = event ? event->object.get() : nullptr;
   auto objectId = object ? object->formID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([objectId, object] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
     auto objectIdLocal = RE::TESForm::LookupByID(objectId);
     objectIdLocal = objectIdLocal == object ? objectIdLocal : nullptr;
-
-    obj.SetProperty("object", CreateObject("ObjectReference", objectIdLocal));
+    AddProperty(&obj, "object", objectIdLocal, "ObjectReference");
 
     EventsApi::SendEvent("reset", { JsValue::Undefined(), obj });
   });
@@ -973,8 +914,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("seller", CreateObject("ObjectReference", seller));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "seller", seller, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     EventsApi::SendEvent("sell", { JsValue::Undefined(), obj });
   });
@@ -989,9 +930,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("startTime", JsValue::Double(event->sleepStartTime));
-    obj.SetProperty("desiredStopTime",
-                    JsValue::Double(event->desiredSleepEndTime));
+    AddProperty(&obj, "startTime", event->sleepStartTime);
+    AddProperty(&obj, "desiredStopTime", event->desiredSleepEndTime);
 
     EventsApi::SendEvent("sleepStart", { JsValue::Undefined(), obj });
   });
@@ -1006,7 +946,7 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("isInterrupted", JsValue::Bool(event->isInterrupted));
+    AddProperty(&obj, "isInterrupted", event->isInterrupted);
 
     EventsApi::SendEvent("sleepStop", { JsValue::Undefined(), obj });
   });
@@ -1030,8 +970,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
-    obj.SetProperty("spell", CreateObject("Spell", spell));
+    AddProperty(&obj, "caster", caster, "ObjectReference");
+    AddProperty(&obj, "spell", spell, "Spell");
 
     EventsApi::SendEvent("spellCast", { JsValue::Undefined(), obj });
   });
@@ -1046,12 +986,12 @@ EventResult EventHandlerScript::ProcessEvent(
   auto subject = event ? event->subject.get() : nullptr;
   auto subjectId = subject ? subject->formID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([subjectId, subject] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
     auto subjectLocal = RE::TESForm::LookupByID(subjectId);
     subjectLocal = subjectLocal == subject ? subjectLocal : nullptr;
-    obj.SetProperty("subject", CreateObject("ObjectReference", subjectLocal));
+    AddProperty(&obj, "subject", subjectLocal, "ObjectReference");
 
     EventsApi::SendEvent("switchRaceComplete", { JsValue::Undefined(), obj });
   });
@@ -1062,14 +1002,14 @@ EventResult EventHandlerScript::ProcessEvent(
   const RE::TESTrackedStatsEvent* event,
   RE::BSTEventSource<RE::TESTrackedStatsEvent>*)
 {
-  std::string statName = event ? event->stat.data() : "";
+  auto statName = event ? event->stat.data() : "";
   auto value = event ? event->value : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([statName, value] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("statName", JsValue::String(statName));
-    obj.SetProperty("newValue", JsValue::Double(value));
+    AddProperty(&obj, "statName", statName);
+    AddProperty(&obj, "newValue", value);
 
     EventsApi::SendEvent("trackedStats", { JsValue::Undefined(), obj });
   });
@@ -1094,8 +1034,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "caster", caster, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     EventsApi::SendEvent("triggerEnter", { JsValue::Undefined(), obj });
   });
@@ -1120,8 +1060,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "caster", caster, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     EventsApi::SendEvent("trigger", { JsValue::Undefined(), obj });
   });
@@ -1147,8 +1087,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("caster", CreateObject("ObjectReference", caster));
-    obj.SetProperty("target", CreateObject("ObjectReference", target));
+    AddProperty(&obj, "caster", caster, "ObjectReference");
+    AddProperty(&obj, "target", target, "ObjectReference");
 
     EventsApi::SendEvent("triggerLeave", { JsValue::Undefined(), obj });
   });
@@ -1166,17 +1106,16 @@ EventResult EventHandlerScript::ProcessEvent(
   auto oldBaseID = event ? event->oldBaseID : 0;
   auto newBaseID = event ? event->newBaseID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [oldUniqueID, newUniqueID, oldBaseID, newBaseID] {
-      auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
+    auto obj = JsValue::Object();
 
-      obj.SetProperty("oldBaseID", JsValue::Double(oldBaseID));
-      obj.SetProperty("newBaseID", JsValue::Double(newBaseID));
-      obj.SetProperty("oldUniqueID", JsValue::Double(oldUniqueID));
-      obj.SetProperty("newUniqueID", JsValue::Double(newUniqueID));
+    AddProperty(&obj, "oldBaseID", oldBaseID);
+    AddProperty(&obj, "newBaseID", newBaseID);
+    AddProperty(&obj, "oldUniqueID", oldUniqueID);
+    AddProperty(&obj, "tarnewUniqueIDget", newUniqueID);
 
-      EventsApi::SendEvent("uniqueIdChange", { JsValue::Undefined(), obj });
-    });
+    EventsApi::SendEvent("uniqueIdChange", { JsValue::Undefined(), obj });
+  });
   return EventResult::kContinue;
 }
 
@@ -1187,9 +1126,8 @@ EventResult EventHandlerScript::ProcessEvent(
   SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("startTime", JsValue::Double(event->waitStartTime));
-    obj.SetProperty("desiredStopTime",
-                    JsValue::Double(event->desiredWaitEndTime));
+    AddProperty(&obj, "startTime", event->waitStartTime);
+    AddProperty(&obj, "desiredStopTime", event->desiredWaitEndTime);
 
     EventsApi::SendEvent("waitStart", { JsValue::Undefined(), obj });
   });
@@ -1202,10 +1140,10 @@ EventResult EventHandlerScript::ProcessEvent(
 {
   auto interrupted = event ? event->interrupted : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([interrupted] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([&] {
     auto obj = JsValue::Object();
 
-    obj.SetProperty("isInterrupted", JsValue::Bool(interrupted));
+    AddProperty(&obj, "isInterrupted", interrupted);
 
     EventsApi::SendEvent("waitStop", { JsValue::Undefined(), obj });
   });
