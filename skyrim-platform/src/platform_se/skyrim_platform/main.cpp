@@ -101,8 +101,12 @@ void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
 
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
-  SkyrimPlatform::GetSingleton().PushAndWait(
-    [=](int) { SkyrimPlatform::GetSingleton().JsTick(true); });
+  SkyrimPlatform::GetSingleton().PrepareWorker();
+  SkyrimPlatform::GetSingleton().Push([=](int) {
+    SkyrimPlatform::GetSingleton().JsTick(true);
+    SkyrimPlatform::GetSingleton().StopWorker();
+  });
+  SkyrimPlatform::GetSingleton().StartWorker();
   g_nativeCallRequirements.gameThrQ->Update();
   g_nativeCallRequirements.stackId = std::numeric_limits<RE::VMStackID>::max();
   g_nativeCallRequirements.vm = nullptr;

@@ -2,8 +2,8 @@ import { PlayerController } from "./PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 
 export type SweetPieRound = {
-  state: 'running' | 'warmup';
-  players?: Map<number, { kills?: number }>;
+  state: 'running' | 'warmup' | 'wait';
+  players?: Map<number, { kills?: number, restored?: number }>;
   map?: SweetPieMap;
   hallPointName?: string;
   secondsPassed?: number;
@@ -28,10 +28,9 @@ export const forceJoinRound = (controller: PlayerController, rounds: SweetPieRou
 
 export const forceLeaveRound = (controller: PlayerController, rounds: SweetPieRound[], player: number): void => {
   const round = getPlayerCurrentRound(rounds, player);
-  if (round && round.hallPointName) {
-    controller.setSpawnPoint(player, round.hallPointName);
-    controller.teleport(player, round.hallPointName);
-  }
+  const newSpawnPointName = round?.hallPointName || 'hall:spawnPoint';
+  controller.setSpawnPoint(player, newSpawnPointName);
+  controller.teleport(player, newSpawnPointName);
   round?.players?.delete(player);
 }
 

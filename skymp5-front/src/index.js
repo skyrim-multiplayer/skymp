@@ -33,3 +33,7 @@ window.scrollToLastMessage = () => {
   const _list = document.querySelector('#chat > .list');
   if (_list != null) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
 };
+
+if (window.skyrimPlatform?.sendMessage) {
+  window.skyrimPlatform.sendMessage("front-loaded");
+}

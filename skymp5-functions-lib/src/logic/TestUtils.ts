@@ -11,11 +11,20 @@ export const makePlayerController = (): PlayerController => {
     quitGame: jest.fn(),
     getName: jest.fn(x => { return `Player${x}`; }),
     addItem: jest.fn(),
+    getRoundsArray: jest.fn().mockReturnValue([]),
+    setRoundsArray: jest.fn(),
+    getOnlinePlayers: jest.fn().mockReturnValue([1, 2]),
+    setPercentages: jest.fn(),
+    getPercentages: jest.fn(),
+    getScriptName: jest.fn(),
+    isTeleportActivator: jest.fn().mockReturnValue(true),
+    updateCustomName: jest.fn(),
   };
 };
 
 export const resetMocks = (controller: PlayerController) => {
+  const freshController = makePlayerController();
   for (const key in controller) {
-    (controller as Record<string, unknown>)[key] = jest.fn();
+    (controller as Record<string, unknown>)[key] = (freshController as Record<string, unknown>)[key];
   }
 }

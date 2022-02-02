@@ -11,10 +11,15 @@ import {
   getPluginSourceCode,
   MenuOpenEvent,
   MenuCloseEvent,
+  BrowserMessageEvent,
 } from "skyrimPlatform";
 import { RemoteAuthGameData } from "./authModel";
 
 const pluginAuthDataName = `auth-data-no-load`;
+const onFrontLoadedEventKey = "front-loaded";
+
+export type onWindowLoadedEventCallback = () => void;
+const onWindowLoadListeners = new Array<onWindowLoadedEventCallback>();
 
 type BindingKey = DxScanCode[];
 type BindingValue = () => void;
@@ -39,6 +44,16 @@ const badMenus: Menu[] = [
 
 const IsBadMenu = (menu: string) => badMenus.includes(menu as Menu);
 
+on("browserMessage", (e) => {
+  if (e.arguments[0] === onFrontLoadedEventKey) {
+    onWindowLoadListeners.forEach(l => l());
+  }
+});
+
+export const addOnWindowLoadListener = (listener: onWindowLoadedEventCallback): void => {
+  onWindowLoadListeners.push(listener);
+}
+
 export const main = (): void => {
   browser.setVisible(false);
   once("update", () => browser.setVisible(true));
@@ -48,6 +63,9 @@ export const main = (): void => {
   const badMenuOpen = () => !!openedMenus.length;
 
   on("menuOpen", (e: MenuOpenEvent) => {
+    if (e.name === Menu.Cursor) {
+      isCursorMenuOpened = true;
+    }
     if (IsBadMenu(e.name)) {
       browser.setVisible(false);
       openedMenus.push(e.name);
@@ -57,6 +75,9 @@ export const main = (): void => {
   });
 
   on("menuClose", (e: MenuCloseEvent) => {
+    if (e.name === Menu.Cursor) {
+      isCursorMenuOpened = false;
+    }
     const i = openedMenus.indexOf(e.name);
     if (i !== -1) {
       openedMenus.splice(i, 1);
@@ -123,3 +144,19 @@ export const setAuthData = (data: RemoteAuthGameData | null): void => {
     "//" + (data ? JSON.stringify(data) : "null")
   );
 };
+
+var isCursorMenuOpened = false;
+export const keepCursorMenuOpenedWhenBrowserFocused = (): void => {
+  once("update", () => {
+    if (browser.isFocused() && !isCursorMenuOpened) {
+      printConsole(`browser ${browser.isFocused()}, isCursorMenuOpened ${isCursorMenuOpened}`);
+      browser.setFocused(false);
+      once("update", () => {
+        browser.setFocused(true);
+        once("update", () => keepCursorMenuOpenedWhenBrowserFocused());
+      });
+    } else {
+      keepCursorMenuOpenedWhenBrowserFocused();
+    }
+  });
+}

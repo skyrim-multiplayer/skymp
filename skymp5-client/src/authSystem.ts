@@ -53,7 +53,10 @@ export const main = (lobbyLocation: Transform): void => {
   if (isOfflineMode) {
     onAuthListeners({ local: { profileId: settingsGameData.profileId } });
   } else {
-    loadLobby(lobbyLocation);
+    startListenBrowserMessage();
+    browser.addOnWindowLoadListener(() => {
+      if (isListenBrowserMessage) loadLobby(lobbyLocation);
+    });
   }
 }
 
@@ -142,7 +145,6 @@ const loadLobby = (location: Transform): void => {
   sp.once("update", () => {
     defaultAutoVanityModeDelay = sp.Utility.getINIFloat("fAutoVanityModeDelay:Camera");
     setPlayerAuthMode(true);
-    startListenBrowserMessage();
     authData = browser.getAuthData();
     const loginWidgetLoginDataJs = `window.loginData = ${authData ? JSON.stringify(authData) : "{}"};`;
     sp.browser.executeJavaScript(`
@@ -153,14 +155,15 @@ const loadLobby = (location: Transform): void => {
     `);
     sp.browser.setVisible(true);
   });
-  // todo: for now, the cursor disappears after a few seconds after the browser receives focus. Need to press F6 twice
-  // sp.once("loadGame", () => browser.setBrowserFocused(true));
 
   sp.once("loadGame", () => {
     // In non-offline mode we still want to see our face in RaceMenu
     const ironHelment = sp.Armor.from(sp.Game.getFormEx(0x00012e4d));
     const pl = sp.Game.getPlayer();
     if (pl) pl.unequipItem(ironHelment, false, true);
+
+    sp.browser.setFocused(true);
+    browser.keepCursorMenuOpenedWhenBrowserFocused();
   });
 
   loadGameManager.loadGame(

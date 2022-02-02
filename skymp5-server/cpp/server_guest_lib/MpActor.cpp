@@ -111,17 +111,30 @@ void MpActor::OnEquip(uint32_t baseId)
     constexpr uint32_t kApplePieId1 = 0x0300353B;
     constexpr uint32_t kApplePieId2 = 0x03003539;
     constexpr uint32_t kApplePieId3 = 0x0300353A;
+    constexpr uint32_t kStareterKitPie = 0x030009DB;
+    constexpr uint32_t kPatronStarterKitPie = 0x00064B30;
     bool isPie = false;
     isPie = isPie || baseId == kApplePieId0;
     isPie = isPie || baseId == kApplePieId1;
     isPie = isPie || baseId == kApplePieId2;
     isPie = isPie || baseId == kApplePieId3;
-    if (isPie) {
-      std::set<std::string> s;
-      s = { espmFiles.begin(), espmFiles.end() };
-      if (s.count("SweetPie.esp")) {
+
+    std::set<std::string> s;
+    s = { espmFiles.begin(), espmFiles.end() };
+    if (s.count("SweetPie.esp")) {
+      if (baseId == kStareterKitPie) {
         PieScript pieScript(espmFiles);
-        pieScript.Play(this);
+        pieScript.AddStarterKitItems(*this);
+      }
+
+      if (baseId == kPatronStarterKitPie) {
+        PieScript pieScript(espmFiles);
+        pieScript.AddPatronStarterKitItems(*this);
+      }
+
+      if (isPie) {
+        PieScript pieScript(espmFiles);
+        pieScript.Play(*this);
       }
     }
   }
@@ -210,6 +223,25 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
     changeForm.magickaPercentage = magickaPercentage;
     changeForm.staminaPercentage = staminaPercentage;
   });
+}
+
+void MpActor::NetSetPercentages(
+  float healthPercentage, float magickaPercentage, float staminaPercentage,
+  std::chrono::steady_clock::time_point timePoint, MpActor* aggressor)
+{
+  std::string s;
+  s += Networking::MinPacketId;
+  s += nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { { "health", healthPercentage },
+        { "magicka", magickaPercentage },
+        { "stamina", staminaPercentage } } }
+  }.dump();
+  SendToUser(s.data(), s.size(), true);
+  SetPercentages(healthPercentage, magickaPercentage, staminaPercentage,
+                 aggressor);
+  SetLastAttributesPercentagesUpdate(timePoint);
 }
 
 std::chrono::steady_clock::time_point

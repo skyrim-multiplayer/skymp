@@ -195,12 +195,17 @@ const watchCallback = (_eventType, fileName) => {
         path.join(bin, `_codegen/skyrimPlatform.ts`),
         path.join(distDir, "Data/Platform/Modules")
       );
+      cp(
+        path.join(bin, `_codegen/skyrimPlatform.ts`),
+        path.join(sourceDir, "src/platform_se/codegen/convert-files")
+      );
 
       if (!process.env.DEV_SERVICE_NO_GAME) {
         if (config.SkyrimSEFolder === "OFF" || config.SkyrimSEFolder === "") {
-          console.log(`It seems that you didn't specify SKYRIM_DIR CMake option. The game will not be restarted.`);
-        }
-        else {
+          console.log(
+            `It seems that you didn't specify SKYRIM_DIR CMake option. The game will not be restarted.`
+          );
+        } else {
           console.log(`Starting ${config.SkyrimSEFolder}`);
           game.launch(config.SkyrimSEFolder).catch((e) => console.error(e));
         }
