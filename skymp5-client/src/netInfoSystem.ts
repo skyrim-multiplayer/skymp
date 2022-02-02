@@ -28,13 +28,21 @@ export class NetInfo {
 class netInfoTexts {
   public static readonly Name = "netInfoTexts";
 
+  // private static readonly _CHARACTER_LEN = 10;
+  // private static readonly _CONNECTION_STR = "connection:";
+  // private static readonly _CONNECTION_STR_LEN = netInfoTexts._CONNECTION_STR.length * netInfoTexts._CHARACTER_LEN;
+  // private static readonly _INCOMING_STR = "incoming (p/s):";
+  // private static readonly _INCOMING_STR_LEN = netInfoTexts._INCOMING_STR.length * netInfoTexts._CHARACTER_LEN;
+  // private static readonly _OUTGOING_STR = "outgoing (p/s):";
+  // private static readonly _OUTGOING_STR_LEN = netInfoTexts._OUTGOING_STR.length * netInfoTexts._CHARACTER_LEN;
+
   constructor(
-    public readonly connectionStaticTextId = sp.createText(150, 350, "connection:", [255, 255, 255, 1]),
-    public readonly connectionStateTextId = sp.createText(320, 350, "", [255, 255, 255, 1]),
-    public readonly receivedPacketStaticTextId = sp.createText(188, 400, "incoming (p/s):", [255, 255, 255, 1]),
-    public readonly receivedPacketAmountTextId = sp.createText(360, 400, "", [255, 255, 255, 1]),
-    public readonly sentPacketStaticTextId = sp.createText(188, 450, "outgoing (p/s):", [255, 255, 255, 1]),
-    public readonly sentPacketAmountTextId = sp.createText(360, 450, "", [255, 255, 255, 1]),
+    public readonly connectionStaticTextId = sp.createText(100, 350, "connection:", [255, 255, 255, 1]),
+    public readonly connectionStateTextId = sp.createText(220, 350, "", [255, 255, 255, 1]),
+    public readonly receivedPacketStaticTextId = sp.createText(120, 400, "incoming (p/s):", [255, 255, 255, 1]),
+    public readonly receivedPacketAmountTextId = sp.createText(250, 400, "", [255, 255, 255, 1]),
+    public readonly sentPacketStaticTextId = sp.createText(120, 450, "outgoing (p/s):", [255, 255, 255, 1]),
+    public readonly sentPacketAmountTextId = sp.createText(250, 450, "", [255, 255, 255, 1]),
   ) { }
 
   public clear(): void {

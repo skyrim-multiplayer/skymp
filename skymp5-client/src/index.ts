@@ -21,6 +21,7 @@ import { updateWc } from "./worldCleaner";
 import * as authSystem from "./authSystem";
 import { nameof } from "./utils";
 import { AuthGameData } from "./authModel";
+import * as NetInfo from "./netInfoSystem";
 
 browser.main();
 
@@ -54,6 +55,7 @@ on("update", () => {
 on("update", () => updateWc());
 
 const startClient = (): void => {
+  NetInfo.start();
   once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
