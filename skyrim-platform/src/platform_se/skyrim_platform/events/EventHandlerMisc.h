@@ -17,6 +17,8 @@ public:
     return &singleton;
   }
 
+  EventMap FetchEvents() override { return sinks; }
+
   EventResult ProcessEvent(const RE::BGSFootstepEvent* event,
                            RE::BSTEventSource<RE::BGSFootstepEvent>*) override;
 
@@ -48,6 +50,7 @@ private:
       AppendSink(&std::vector{ "positionPlayer" }, pc);
     }
   }
+
   EventHandlerMisc(const EventHandlerMisc&) = delete;
   EventHandlerMisc(EventHandlerMisc&&) = delete;
 

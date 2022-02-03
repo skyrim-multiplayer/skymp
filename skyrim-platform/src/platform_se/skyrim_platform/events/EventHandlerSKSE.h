@@ -19,6 +19,8 @@ public:
     return &singleton;
   }
 
+  EventMap FetchEvents() override { return sinks; }
+
   EventResult ProcessEvent(const SKSE::ActionEvent* event,
                            RE::BSTEventSource<SKSE::ActionEvent>*) override;
 

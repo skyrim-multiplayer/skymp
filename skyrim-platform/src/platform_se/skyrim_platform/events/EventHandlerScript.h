@@ -59,6 +59,8 @@ public:
     return &singleton;
   }
 
+  EventMap FetchEvents() override { return sinks; }
+
   static void RegisterSinks()
   {
     add_sink<RE::TESActivateEvent>();

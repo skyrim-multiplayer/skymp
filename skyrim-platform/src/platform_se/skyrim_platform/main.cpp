@@ -11,6 +11,7 @@
 #include "TPRenderSystemD3D11.h"
 #include "TextsCollection.h"
 #include "TickHandler.h"
+#include "events/EventManager.h"
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -116,6 +117,7 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 
   Hooks::Install();
   Frida::InstallHooks();
+  EventManager::GetSingleton()->Init();
   TickHandler::GetSingleton()->Update();
 
   TESModPlatform::onPapyrusUpdate = OnUpdate;

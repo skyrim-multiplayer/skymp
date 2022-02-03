@@ -26,6 +26,8 @@ public:
     return &singleton;
   }
 
+  EventMap FetchEvents() override { return sinks; }
+
   EventResult ProcessEvent(const RE::ActorKill::Event* event,
                            RE::BSTEventSource<RE::ActorKill::Event>*) override;
 

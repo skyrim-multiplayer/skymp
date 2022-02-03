@@ -18,15 +18,23 @@ struct Sink
   std::function<bool()> IsActive;
 };
 
+using EventMap = std::unordered_map<std::vector<const char*>*, const Sink*>*;
+
 class EventHandlerBase
 {
 public:
   virtual EventHandlerBase* GetSingleton();
 
+  virtual EventMap FetchEvents();
+
+protected:
+  EventMap sinks;
+  std::unordered_set<std::vector<const char*>*>* activeSinks;
+
   /**
-   * @brief Check if  activeSinks set contains event name, meaning sink is
+   * @brief Check if activeSinks set contains event name, meaning sink is
    * active.
-   * @param arr event name array
+   * @param events vector ptr with event names
    */
   bool IsActiveSink(std::vector<const char*>* events)
   {
@@ -35,7 +43,7 @@ public:
 
   /**
    * @brief Add event name for activated sink to activeSinks set.
-   * @param name event name
+   * @param events vector ptr with event names
    */
   bool AddActiveSink(std::vector<const char*>* events)
   {
@@ -45,7 +53,7 @@ public:
 
   /**
    * @brief Remove event name for deactivated sink from activeSinks set.
-   * @param name event name
+   * @param events vector ptr with event names
    */
   bool RemoveActiveSink(std::vector<const char*>* events)
   {
@@ -142,10 +150,6 @@ public:
     sinks->emplace(events, sink);
     return true;
   }
-
-protected:
-  std::unordered_map<std::vector<const char*>*, const Sink*>* sinks;
-  std::unordered_set<std::vector<const char*>*>* activeSinks;
 
   template <class E>
   static void add_sink(RE::BSTEventSource<E>* holder)
