@@ -12,7 +12,9 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
 
   auto argPosX = static_cast<double>(args[1]);
   auto argPosY = static_cast<double>(args[2]);
-  auto argString = static_cast<std::string>(args[3]);
+  auto argString = static_cast<std::wstring>(args[3]);
+
+  args;
 
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[4].GetProperty(i);
@@ -40,7 +42,7 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
 {
-  auto argString = static_cast<std::string>(args[2]);
+  auto argString = static_cast<std::wstring>(args[2]);
 
   TextsCollection::GetSingleton().SetTextString(static_cast<int>(args[1]),
                                                 argString);
@@ -80,7 +82,7 @@ JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 {
-  std::string str =
+  std::wstring str =
     TextsCollection::GetSingleton().GetTextString(static_cast<int>(args[1]));
 
   return JsValue(str);
