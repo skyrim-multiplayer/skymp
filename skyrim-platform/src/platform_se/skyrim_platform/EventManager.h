@@ -4,6 +4,22 @@
 #include "EventHandlerScript.h"
 #include "EventHandlerStory.h"
 
+struct EventHandle
+{
+  uintptr_t uid;
+  std::string eventName;
+};
+
+struct CallbackObject
+{
+};
+
+struct EventState
+{
+  const ::Sink* sink;
+  std::unordered_set<EventHandle>* subscribers; // <CallbackObject> here
+};
+
 class EventManager
 {
 public:
@@ -13,17 +29,24 @@ public:
     return &singleton;
   }
 
-  JsValue Subscribe();
-  JsValue Unsubscribe();
+  EventHandle Subscribe(std::string eventName) {}
+  JsValue Unsubscribe(EventHandle handle);
+
+  void Init()
+  {
+    // run at main
+    // populate this.events from handler.sinks
+
+    /* EventHandlerMisc::GetSingleton()
+    EventHandlerSKSE::GetSingleton()
+    EventHandlerScript::GetSingleton()
+    EventHandlerStory::GetSingleton() */
+  }
 
 private:
-  EventManager(const EventManager&) = delete;
-  EventManager(EventManager&&) = delete;
+  EventManager() = default;
 
   ~EventManager() = default;
 
-  EventHandlerMisc* _handlerMisc;
-  EventHandlerSKSE* _handlerSKSE;
-  EventHandlerScript* _handlerScript;
-  EventHandlerStory* _handlerStory;
+  std::unordered_map<const std::string_view, EventState*>* events;
 };

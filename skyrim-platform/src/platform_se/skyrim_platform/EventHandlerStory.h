@@ -1,9 +1,12 @@
 #pragma once
 
+#include "EventHandlerBase.h"
+
 using EventResult = RE::BSEventNotifyControl;
 
 class EventHandlerStory final
-  : public RE::BSTEventSink<RE::ActorKill::Event>
+  : EventHandlerBase
+  , public RE::BSTEventSink<RE::ActorKill::Event>
   , public RE::BSTEventSink<RE::BooksRead::Event>
   , public RE::BSTEventSink<RE::CriticalHit::Event>
   , public RE::BSTEventSink<RE::DisarmedEvent::Event>
@@ -21,22 +24,6 @@ public:
   {
     static EventHandlerStory singleton;
     return &singleton;
-  }
-
-  static void RegisterSinks()
-  {
-    add_sink<RE::ActorKill>();
-    add_sink<RE::BooksRead>();
-    add_sink<RE::CriticalHit>();
-    add_sink<RE::DisarmedEvent>();
-    add_sink<RE::DragonSoulsGained>();
-    add_sink<RE::ItemHarvested>();
-    add_sink<RE::LevelIncrease>();
-    add_sink<RE::LocationDiscovery>();
-    add_sink<RE::ShoutAttack>();
-    add_sink<RE::SkillIncrease>();
-    add_sink<RE::SoulsTrapped>();
-    add_sink<RE::SpellsLearned>();
   }
 
   EventResult ProcessEvent(const RE::ActorKill::Event* event,
@@ -86,18 +73,24 @@ public:
     RE::BSTEventSource<RE::SpellsLearned::Event>*) override;
 
 private:
-  EventHandlerStory() = default;
+  EventHandlerStory()
+  {
+    // TODO: implement these on JS side
+    AppendSink<RE::ActorKill>(&std::vector{ "actorkill" });
+    AppendSink<RE::BooksRead>(&std::vector{ "booksread" });
+    AppendSink<RE::CriticalHit>(&std::vector{ "criticalhit" });
+    AppendSink<RE::DisarmedEvent>(&std::vector{ "disarmedevent" });
+    AppendSink<RE::DragonSoulsGained>(&std::vector{ "dragonsoulsgained" });
+    AppendSink<RE::ItemHarvested>(&std::vector{ "itemharvested" });
+    AppendSink<RE::LevelIncrease>(&std::vector{ "levelincrease" });
+    AppendSink<RE::LocationDiscovery>(&std::vector{ "locationdiscovery" });
+    AppendSink<RE::ShoutAttack>(&std::vector{ "shoutattack" });
+    AppendSink<RE::SkillIncrease>(&std::vector{ "skillincrease" });
+    AppendSink<RE::SoulsTrapped>(&std::vector{ "soulstrapped" });
+    AppendSink<RE::SpellsLearned>(&std::vector{ "spellslearned" });
+  };
   EventHandlerStory(const EventHandlerStory&) = delete;
   EventHandlerStory(EventHandlerStory&&) = delete;
 
   ~EventHandlerStory() = default;
-
-  template <class T>
-  static void add_sink()
-  {
-    if (const auto holder = T::GetEventSource()) {
-      holder->AddEventSink(GetSingleton());
-      logger::info("Registered {} handler"sv, typeid(T::Event).name());
-    }
-  }
 };

@@ -1,9 +1,12 @@
 #pragma once
 
+#include "EventHandlerBase.h"
+
 using EventResult = RE::BSEventNotifyControl;
 
 class EventHandlerScript final
-  : public RE::BSTEventSink<RE::TESActivateEvent>
+  : EventHandlerBase
+  , public RE::BSTEventSink<RE::TESActivateEvent>
   , public RE::BSTEventSink<RE::TESActiveEffectApplyRemoveEvent>
   , public RE::BSTEventSink<RE::TESActorLocationChangeEvent>
   , public RE::BSTEventSink<RE::TESBookReadEvent>
@@ -279,13 +282,4 @@ private:
   EventHandlerScript(EventHandlerScript&&) = delete;
 
   ~EventHandlerScript() = default;
-
-  template <class T>
-  static void add_sink()
-  {
-    if (const auto holder = RE::ScriptEventSourceHolder::GetSingleton()) {
-      holder->AddEventSink<T>(GetSingleton());
-      logger::info("Registered {} handler"sv, typeid(T).name());
-    }
-  }
 };

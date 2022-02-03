@@ -5,7 +5,7 @@
 
 EventResult EventHandlerMisc::ProcessEvent(
   const RE::MenuOpenCloseEvent* event,
-  RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_eventSource)
+  RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
   if (!event) {
     return EventResult::kContinue;
@@ -23,8 +23,7 @@ EventResult EventHandlerMisc::ProcessEvent(
 };
 
 EventResult EventHandlerMisc::ProcessEvent(
-  const RE::BGSFootstepEvent* event,
-  RE::BSTEventSource<RE::BGSFootstepEvent>* eventSource)
+  const RE::BGSFootstepEvent* event, RE::BSTEventSource<RE::BGSFootstepEvent>*)
 {
   if (!event) {
     return EventResult::kContinue;
@@ -43,7 +42,7 @@ EventResult EventHandlerMisc::ProcessEvent(
 
 EventResult EventHandlerMisc::ProcessEvent(
   const RE::PositionPlayerEvent* event,
-  RE::BSTEventSource<RE::PositionPlayerEvent>* eventSource)
+  RE::BSTEventSource<RE::PositionPlayerEvent>*)
 {
   if (!event) {
     return EventResult::kContinue;

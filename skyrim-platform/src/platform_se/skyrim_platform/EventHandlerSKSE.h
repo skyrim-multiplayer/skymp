@@ -1,9 +1,12 @@
 #pragma once
 
+#include "EventHandlerBase.h"
+
 using EventResult = RE::BSEventNotifyControl;
 
 class EventHandlerSKSE final
-  : public RE::BSTEventSink<SKSE::ActionEvent>
+  : EventHandlerBase
+  , public RE::BSTEventSink<SKSE::ActionEvent>
   , public RE::BSTEventSink<SKSE::CameraEvent>
   , public RE::BSTEventSink<SKSE::CrosshairRefEvent>
   , public RE::BSTEventSink<SKSE::NiNodeUpdateEvent>
@@ -14,29 +17,6 @@ public:
   {
     static EventHandlerSKSE singleton;
     return &singleton;
-  }
-
-  static void RegisterSinks()
-  {
-    if (const auto holder = SKSE::GetActionEventSource()) {
-      holder->AddEventSink(GetSingleton());
-    }
-
-    if (const auto holder = SKSE::GetActionEventSource()) {
-      holder->AddEventSink(GetSingleton());
-    }
-
-    if (const auto holder = SKSE::GetActionEventSource()) {
-      holder->AddEventSink(GetSingleton());
-    }
-
-    if (const auto holder = SKSE::GetActionEventSource()) {
-      holder->AddEventSink(GetSingleton());
-    }
-
-    if (const auto holder = SKSE::GetActionEventSource()) {
-      holder->AddEventSink(GetSingleton());
-    }
   }
 
   EventResult ProcessEvent(const SKSE::ActionEvent* event,
@@ -58,7 +38,29 @@ public:
     RE::BSTEventSource<SKSE::ModCallbackEvent>*) override;
 
 private:
-  EventHandlerSKSE() = default;
+  EventHandlerSKSE()
+  {
+    if (const auto holder = SKSE::GetActionEventSource())
+      AppendSink(&std::vector{ "actionWeaponSwing", "actionBeginDraw",
+                               "actionEndDraw", "actionBowDraw",
+                               "actionBowRelease", "actionBeginSheathe",
+                               "actionEndSheathe", "actionSpellCast",
+                               "actionSpellFire", "actionVoiceCast",
+                               "actionVoiceFire" },
+                 holder);
+
+    if (const auto holder = SKSE::GetCameraEventSource())
+      AppendSink(&std::vector{ "cameraStateChanged" }, holder);
+
+    if (const auto holder = SKSE::GetCrosshairRefEventSource())
+      AppendSink(&std::vector{ "crosshairRefChanged" }, holder);
+
+    if (const auto holder = SKSE::GetModCallbackEventSource())
+      AppendSink(&std::vector{ "modEvent" }, holder);
+
+    if (const auto holder = SKSE::GetNiNodeUpdateEventSource())
+      AppendSink(&std::vector{ "niNodeUpdate" }, holder);
+  };
   EventHandlerSKSE(const EventHandlerSKSE&) = delete;
   EventHandlerSKSE(EventHandlerSKSE&&) = delete;
 
