@@ -61,55 +61,6 @@ public:
 
   EventMap FetchEvents() override { return sinks; }
 
-  static void RegisterSinks()
-  {
-    add_sink<RE::TESActivateEvent>();
-    add_sink<RE::TESActiveEffectApplyRemoveEvent>();
-    add_sink<RE::TESActorLocationChangeEvent>();
-    add_sink<RE::TESBookReadEvent>();
-    add_sink<RE::TESCellAttachDetachEvent>();
-    add_sink<RE::TESCellFullyLoadedEvent>();
-    add_sink<RE::TESCombatEvent>();
-    add_sink<RE::TESContainerChangedEvent>();
-    add_sink<RE::TESDeathEvent>();
-    add_sink<RE::TESDestructionStageChangedEvent>();
-    add_sink<RE::TESEnterBleedoutEvent>();
-    add_sink<RE::TESEquipEvent>();
-    add_sink<RE::TESFastTravelEndEvent>();
-    add_sink<RE::TESFurnitureEvent>();
-    add_sink<RE::TESGrabReleaseEvent>();
-    add_sink<RE::TESHitEvent>();
-    add_sink<RE::TESInitScriptEvent>();
-    add_sink<RE::TESLoadGameEvent>();
-    add_sink<RE::TESLockChangedEvent>();
-    add_sink<RE::TESMagicEffectApplyEvent>();
-    add_sink<RE::TESMagicWardHitEvent>();
-    add_sink<RE::TESMoveAttachDetachEvent>();
-    add_sink<RE::TESObjectLoadedEvent>();
-    // add_sink<RE::TESObjectREFRTranslationEvent>();
-    add_sink<RE::TESOpenCloseEvent>();
-    add_sink<RE::TESPackageEvent>();
-    add_sink<RE::TESPerkEntryRunEvent>();
-    add_sink<RE::TESPlayerBowShotEvent>();
-    add_sink<RE::TESQuestInitEvent>();
-    add_sink<RE::TESQuestStageEvent>();
-    add_sink<RE::TESQuestStartStopEvent>();
-    add_sink<RE::TESResetEvent>();
-    // add_sink<RE::TESSceneActionEvent>();
-    add_sink<RE::TESSellEvent>();
-    add_sink<RE::TESSleepStartEvent>();
-    add_sink<RE::TESSleepStopEvent>();
-    add_sink<RE::TESSpellCastEvent>();
-    add_sink<RE::TESSwitchRaceCompleteEvent>();
-    add_sink<RE::TESTrackedStatsEvent>();
-    add_sink<RE::TESTriggerEnterEvent>();
-    add_sink<RE::TESTriggerEvent>();
-    add_sink<RE::TESTriggerLeaveEvent>();
-    add_sink<RE::TESUniqueIDChangeEvent>();
-    add_sink<RE::TESWaitStartEvent>();
-    add_sink<RE::TESWaitStopEvent>();
-  }
-
   EventResult ProcessEvent(const RE::TESActivateEvent* event,
                            RE::BSTEventSource<RE::TESActivateEvent>*) override;
 
@@ -279,7 +230,67 @@ public:
                            RE::BSTEventSource<RE::TESWaitStopEvent>*) override;
 
 private:
-  EventHandlerScript() = default;
+  EventHandlerScript()
+  {
+    AppendSink<RE::TESActivateEvent>(&std::vector{ "activate" });
+    AppendSink<RE::TESActiveEffectApplyRemoveEvent>(
+      &std::vector{ "effectStart", "effectFinish" });
+    AppendSink<RE::TESActorLocationChangeEvent>(
+      &std::vector{ "locationChanged" });
+    AppendSink<RE::TESBookReadEvent>(&std::vector{ "bookRead" });
+    AppendSink<RE::TESCellAttachDetachEvent>(
+      &std::vector{ "cellAttach", "cellDetach" });
+    AppendSink<RE::TESCellFullyLoadedEvent>(&std::vector{ "cellFullyLoaded" });
+    AppendSink<RE::TESCombatEvent>(&std::vector{ "combatState" });
+    AppendSink<RE::TESContainerChangedEvent>(
+      &std::vector{ "containerChanged" });
+    AppendSink<RE::TESDeathEvent>(&std::vector{ "deathEnd", "deathStart" });
+    AppendSink<RE::TESDestructionStageChangedEvent>(
+      &std::vector{ "destructionStageChanged" });
+    AppendSink<RE::TESEnterBleedoutEvent>(&std::vector{ "enterBleedout" });
+    AppendSink<RE::TESEquipEvent>(&std::vector{ "equip", "unequip" });
+    AppendSink<RE::TESFastTravelEndEvent>(&std::vector{ "fastTravelEnd" });
+    AppendSink<RE::TESFurnitureEvent>(
+      &std::vector{ "furnitureExit", "furnitureEnter" });
+    AppendSink<RE::TESGrabReleaseEvent>(&std::vector{ "grabRelease" });
+    AppendSink<RE::TESHitEvent>(&std::vector{ "hit" });
+    AppendSink<RE::TESInitScriptEvent>(&std::vector{ "scriptInit" });
+    AppendSink<RE::TESLoadGameEvent>(&std::vector{ "loadGame" });
+    AppendSink<RE::TESLockChangedEvent>(&std::vector{ "lockChanged" });
+    AppendSink<RE::TESMagicEffectApplyEvent>(
+      &std::vector{ "magicEffectApply" });
+    AppendSink<RE::TESMagicWardHitEvent>(&std::vector{ "wardHit" });
+    AppendSink<RE::TESMoveAttachDetachEvent>(
+      &std::vector{ "moveAttachDetach" });
+    AppendSink<RE::TESObjectLoadedEvent>(&std::vector{ "objectLoaded" });
+    // AppendSink<RE::TESObjectREFRTranslationEvent>(&std::vector{
+    // "translationFailed", "translationAlmostCompleted",
+    // "translationCompleted" });
+    AppendSink<RE::TESOpenCloseEvent>(&std::vector{ "open", "close" });
+    AppendSink<RE::TESPackageEvent>(
+      &std::vector{ "packageStart", "packageChange", "packageEnd" });
+    AppendSink<RE::TESPerkEntryRunEvent>(&std::vector{ "perkEntryRun" });
+    AppendSink<RE::TESPlayerBowShotEvent>(&std::vector{ "playerBowShot" });
+    AppendSink<RE::TESQuestInitEvent>(&std::vector{ "questInit" });
+    AppendSink<RE::TESQuestStageEvent>(&std::vector{ "questStage" });
+    AppendSink<RE::TESQuestStartStopEvent>(
+      &std::vector{ "questStart", "questStop" });
+    AppendSink<RE::TESResetEvent>(&std::vector{ "reset" });
+    // AppendSink<RE::TESSceneActionEvent>(&std::vector{ "" });
+    AppendSink<RE::TESSellEvent>(&std::vector{ "sell" });
+    AppendSink<RE::TESSleepStartEvent>(&std::vector{ "sleepStart" });
+    AppendSink<RE::TESSleepStopEvent>(&std::vector{ "sleepStop" });
+    AppendSink<RE::TESSpellCastEvent>(&std::vector{ "spellCast" });
+    AppendSink<RE::TESSwitchRaceCompleteEvent>(
+      &std::vector{ "switchRaceComplete" });
+    AppendSink<RE::TESTrackedStatsEvent>(&std::vector{ "trackedStats" });
+    AppendSink<RE::TESTriggerEnterEvent>(&std::vector{ "triggerEnter" });
+    AppendSink<RE::TESTriggerEvent>(&std::vector{ "trigger" });
+    AppendSink<RE::TESTriggerLeaveEvent>(&std::vector{ "triggerLeave" });
+    AppendSink<RE::TESUniqueIDChangeEvent>(&std::vector{ "uniqueIdChange" });
+    AppendSink<RE::TESWaitStartEvent>(&std::vector{ "waitStart" });
+    AppendSink<RE::TESWaitStopEvent>(&std::vector{ "waitStop" });
+  };
   EventHandlerScript(const EventHandlerScript&) = delete;
   EventHandlerScript(EventHandlerScript&&) = delete;
 
