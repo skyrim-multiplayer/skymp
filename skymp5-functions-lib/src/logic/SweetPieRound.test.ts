@@ -39,12 +39,12 @@ describe("forceJoinRound", () => {
 });
 
 describe("forceLeaveRound", () => {
-  test("Leaving non-existing round does nothing", () => {
+  test("Leaving non-existing round teleports to the hardcoded hallpoint", () => {
     const rounds = new Array<SweetPieRound>();
     const controller = makePlayerController();
     forceLeaveRound(controller, rounds, 1);
-    expect(controller.setSpawnPoint).toBeCalledTimes(0);
-    expect(controller.teleport).toBeCalledTimes(0);
+    expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
+    expect(controller.teleport).toBeCalledWith(1, 'hall:spawnPoint');
   });
 
   test("Leaving a round teleports to the hall and removes from player set", () => {

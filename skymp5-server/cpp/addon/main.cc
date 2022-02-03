@@ -1274,6 +1274,14 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
           res = JsValue::Bool(actor->IsDead());
         }
+      } else if (propertyName == "percentages") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          auto chForm = actor->GetChangeForm();
+          res = JsValue::Object();
+          res.SetProperty("health", chForm.healthPercentage);
+          res.SetProperty("magicka", chForm.magickaPercentage);
+          res.SetProperty("stamina", chForm.staminaPercentage);
+        }
       } else {
         EnsurePropertyExists(gamemodeApiState, propertyName);
         res = refr.GetDynamicFields().Get(propertyName);
@@ -1348,6 +1356,12 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       } else if (propertyName == "isDead") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
           actor->SetIsDead(newValue.get<bool>());
+        }
+      } else if (propertyName == "percentages") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          actor->NetSetPercentages(newValue["health"].get<float>(),
+                                   newValue["magicka"].get<float>(),
+                                   newValue["stamina"].get<float>());
         }
       } else {
 
