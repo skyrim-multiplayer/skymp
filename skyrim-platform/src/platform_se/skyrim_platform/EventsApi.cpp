@@ -7,7 +7,6 @@
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
 
-
 namespace {
 enum class PatternType
 {
@@ -610,9 +609,14 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
     throw InvalidArgumentException("eventName", eventName);
   }
 
-  isOnce ? g.callbacksOnce[eventName].push_back(callback)
-         : g.callbacks[eventName].push_back(callback);
-  return JsValue::Undefined();
+  auto handle = isOnce
+    ? EventManager::GetSingleton()->Subscribe(eventName, callback, true)
+    : EventManager::GetSingleton()->Subscribe(eventName, callback);
+
+  // remove this
+  // isOnce ? g.callbacksOnce[eventName].push_back(callback)
+  //        : g.callbacks[eventName].push_back(callback);
+  return JsValue::Double(handle->uid);
 }
 }
 

@@ -276,7 +276,7 @@ private:
     AppendSink<RE::TESQuestStartStopEvent>(
       &std::vector{ "questStart", "questStop" });
     AppendSink<RE::TESResetEvent>(&std::vector{ "reset" });
-    // AppendSink<RE::TESSceneActionEvent>(&std::vector{ "" });
+    // AppendSink<RE::TESSceneActionEvent>(&std::vector{ "sceneAction" });
     AppendSink<RE::TESSellEvent>(&std::vector{ "sell" });
     AppendSink<RE::TESSleepStartEvent>(&std::vector{ "sleepStart" });
     AppendSink<RE::TESSleepStopEvent>(&std::vector{ "sleepStop" });

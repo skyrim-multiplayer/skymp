@@ -410,236 +410,236 @@ export interface TranslationEvent {
     reference: ObjectReference
 }
 
-export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
-export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
+export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): number;
+export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): number;
 
-export declare function on(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): void;
-export declare function once(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): void;
+export declare function on(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): number;
+export declare function once(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): number;
 
-export declare function on(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): void;
-export declare function once(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): void;
+export declare function on(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): number;
+export declare function once(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): number;
 
-export declare function on(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): void;
-export declare function once(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): void;
+export declare function on(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): number;
+export declare function once(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): number;
 
-export declare function on(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): void;
-export declare function once(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): void;
+export declare function on(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): number;
+export declare function once(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): number;
 
-export declare function on(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): void;
-export declare function once(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): void;
+export declare function on(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): number;
+export declare function once(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): number;
 
-export declare function on(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): void;
-export declare function once(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): void;
+export declare function on(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): number;
+export declare function once(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): number;
 
-export declare function on(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): void;
-export declare function once(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): void;
+export declare function on(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): number;
+export declare function once(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): number;
 
-export declare function on(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): void;
-export declare function once(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): void;
+export declare function on(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): number;
+export declare function once(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): number;
 
-export declare function on(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): void;
-export declare function once(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): void;
+export declare function on(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): number;
+export declare function once(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): number;
 
-export declare function on(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): void;
-export declare function once(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): void;
+export declare function on(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): number;
+export declare function once(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): number;
 
-export declare function on(eventName: 'reset', callback: (event: ResetEvent) => void): void;
-export declare function once(eventName: 'reset', callback: (event: ResetEvent) => void): void;
+export declare function on(eventName: 'reset', callback: (event: ResetEvent) => void): number;
+export declare function once(eventName: 'reset', callback: (event: ResetEvent) => void): number;
 
-export declare function on(eventName: 'combatState', callback: (event: CombatEvent) => void): void;
-export declare function once(eventName: 'combatState', callback: (event: CombatEvent) => void): void;
+export declare function on(eventName: 'combatState', callback: (event: CombatEvent) => void): number;
+export declare function once(eventName: 'combatState', callback: (event: CombatEvent) => void): number;
 
-export declare function on(eventName: 'loadGame', callback: () => void): void;
-export declare function once(eventName: 'loadGame', callback: () => void): void;
+export declare function on(eventName: 'loadGame', callback: () => void): number;
+export declare function once(eventName: 'loadGame', callback: () => void): number;
 
-export declare function on(eventName: 'deathEnd', callback: (event: DeathEvent) => void): void;
-export declare function once(eventName: 'deathEnd', callback: (event: DeathEvent) => void): void;
+export declare function on(eventName: 'deathEnd', callback: (event: DeathEvent) => void): number;
+export declare function once(eventName: 'deathEnd', callback: (event: DeathEvent) => void): number;
 
-export declare function on(eventName: 'deathStart', callback: (event: DeathEvent) => void): void;
-export declare function once(eventName: 'deathStart', callback: (event: DeathEvent) => void): void;
+export declare function on(eventName: 'deathStart', callback: (event: DeathEvent) => void): number;
+export declare function once(eventName: 'deathStart', callback: (event: DeathEvent) => void): number;
 
-export declare function on(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): void;
-export declare function once(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): void;
+export declare function on(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): number;
+export declare function once(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): number;
 
-export declare function on(eventName: 'hit', callback: (event: HitEvent) => void): void;
-export declare function once(eventName: 'hit', callback: (event: HitEvent) => void): void;
+export declare function on(eventName: 'hit', callback: (event: HitEvent) => void): number;
+export declare function once(eventName: 'hit', callback: (event: HitEvent) => void): number;
 
-export declare function on(eventName: 'unequip', callback: (event: EquipEvent) => void): void;
-export declare function once(eventName: 'unequip', callback: (event: EquipEvent) => void): void;
+export declare function on(eventName: 'unequip', callback: (event: EquipEvent) => void): number;
+export declare function once(eventName: 'unequip', callback: (event: EquipEvent) => void): number;
 
-export declare function on(eventName: 'equip', callback: (event: EquipEvent) => void): void;
-export declare function once(eventName: 'equip', callback: (event: EquipEvent) => void): void;
+export declare function on(eventName: 'equip', callback: (event: EquipEvent) => void): number;
+export declare function once(eventName: 'equip', callback: (event: EquipEvent) => void): number;
 
-export declare function on(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): void;
-export declare function once(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): void;
+export declare function on(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): number;
+export declare function once(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): number;
 
-export declare function on(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
-export declare function once(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+export declare function on(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): number;
+export declare function once(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): number;
 
-export declare function on(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
-export declare function once(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
+export declare function on(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): number;
+export declare function once(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): number;
 
-export declare function on(eventName: 'menuOpen', callback: (event: MenuOpenEvent) => void): void;
-export declare function once(eventName: 'menuOpen', callback: (event: MenuOpenEvent) => void): void;
+export declare function on(eventName: 'menuOpen', callback: (event: MenuOpenEvent) => void): number;
+export declare function once(eventName: 'menuOpen', callback: (event: MenuOpenEvent) => void): number;
 
-export declare function on(eventName: 'menuClose', callback: (event: MenuCloseEvent) => void): void;
-export declare function once(eventName: 'menuClose', callback: (event: MenuCloseEvent) => void): void;
+export declare function on(eventName: 'menuClose', callback: (event: MenuCloseEvent) => void): number;
+export declare function once(eventName: 'menuClose', callback: (event: MenuCloseEvent) => void): number;
 
-export declare function on(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
-export declare function once(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
+export declare function on(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): number;
+export declare function once(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): number;
 
-export declare function on(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
-export declare function once(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
+export declare function on(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): number;
+export declare function once(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): number;
 
-export declare function on(eventName: 'spellCast', callback: (event: SpellCastEvent) => void): void;
-export declare function once(eventName: 'spellCast', callback: (event: SpellCastEvent) => void): void;
+export declare function on(eventName: 'spellCast', callback: (event: SpellCastEvent) => void): number;
+export declare function once(eventName: 'spellCast', callback: (event: SpellCastEvent) => void): number;
 
-export declare function on(eventName: 'open', callback: (event: OpenCloseEvent) => void): void;
-export declare function once(eventName: 'open', callback: (event: OpenCloseEvent) => void): void;
+export declare function on(eventName: 'open', callback: (event: OpenCloseEvent) => void): number;
+export declare function once(eventName: 'open', callback: (event: OpenCloseEvent) => void): number;
 
-export declare function on(eventName: 'close', callback: (event: OpenCloseEvent) => void): void;
-export declare function once(eventName: 'close', callback: (event: OpenCloseEvent) => void): void;
+export declare function on(eventName: 'close', callback: (event: OpenCloseEvent) => void): number;
+export declare function once(eventName: 'close', callback: (event: OpenCloseEvent) => void): number;
 
-export declare function on(eventName: 'questInit', callback: (event: QuestInitEvent) => void): void;
-export declare function once(eventName: 'questInit', callback: (event: QuestInitEvent) => void): void;
+export declare function on(eventName: 'questInit', callback: (event: QuestInitEvent) => void): number;
+export declare function once(eventName: 'questInit', callback: (event: QuestInitEvent) => void): number;
 
-export declare function on(eventName: 'questStart', callback: (event: QuestStartStopEvent) => void): void;
-export declare function once(eventName: 'questStart', callback: (event: QuestStartStopEvent) => void): void;
+export declare function on(eventName: 'questStart', callback: (event: QuestStartStopEvent) => void): number;
+export declare function once(eventName: 'questStart', callback: (event: QuestStartStopEvent) => void): number;
 
-export declare function on(eventName: 'questStop', callback: (event: QuestStartStopEvent) => void): void;
-export declare function once(eventName: 'questStop', callback: (event: QuestStartStopEvent) => void): void;
+export declare function on(eventName: 'questStop', callback: (event: QuestStartStopEvent) => void): number;
+export declare function once(eventName: 'questStop', callback: (event: QuestStartStopEvent) => void): number;
 
-export declare function on(eventName: 'questStage', callback: (event: QuestStageEvent) => void): void;
-export declare function once(eventName: 'questStage', callback: (event: QuestStageEvent) => void): void;
+export declare function on(eventName: 'questStage', callback: (event: QuestStageEvent) => void): number;
+export declare function once(eventName: 'questStage', callback: (event: QuestStageEvent) => void): number;
 
-export declare function on(eventName: 'trigger', callback: (event: TriggerEvent) => void): void;
-export declare function once(eventName: 'trigger', callback: (event: TriggerEvent) => void): void;
+export declare function on(eventName: 'trigger', callback: (event: TriggerEvent) => void): number;
+export declare function once(eventName: 'trigger', callback: (event: TriggerEvent) => void): number;
 
-export declare function on(eventName: 'triggerEnter', callback: (event: TriggerEvent) => void): void;
-export declare function once(eventName: 'triggerEnter', callback: (event: TriggerEvent) => void): void;
+export declare function on(eventName: 'triggerEnter', callback: (event: TriggerEvent) => void): number;
+export declare function once(eventName: 'triggerEnter', callback: (event: TriggerEvent) => void): number;
 
-export declare function on(eventName: 'triggerLeave', callback: (event: TriggerEvent) => void): void;
-export declare function once(eventName: 'triggerLeave', callback: (event: TriggerEvent) => void): void;
+export declare function on(eventName: 'triggerLeave', callback: (event: TriggerEvent) => void): number;
+export declare function once(eventName: 'triggerLeave', callback: (event: TriggerEvent) => void): number;
 
-export declare function on(eventName: 'sleepStart', callback: (event: SleepStartEvent) => void): void;
-export declare function once(eventName: 'sleepStart', callback: (event: SleepStartEvent) => void): void;
+export declare function on(eventName: 'sleepStart', callback: (event: SleepStartEvent) => void): number;
+export declare function once(eventName: 'sleepStart', callback: (event: SleepStartEvent) => void): number;
 
-export declare function on(eventName: 'sleepStop', callback: (event: SleepStopEvent) => void): void;
-export declare function once(eventName: 'sleepStop', callback: (event: SleepStopEvent) => void): void;
+export declare function on(eventName: 'sleepStop', callback: (event: SleepStopEvent) => void): number;
+export declare function once(eventName: 'sleepStop', callback: (event: SleepStopEvent) => void): number;
 
-export declare function on(eventName: 'cellAttach', callback: (event: CellAttachDetachEvent) => void): void;
-export declare function once(eventName: 'cellAttach', callback: (event: CellAttachDetachEvent) => void): void;
+export declare function on(eventName: 'cellAttach', callback: (event: CellAttachDetachEvent) => void): number;
+export declare function once(eventName: 'cellAttach', callback: (event: CellAttachDetachEvent) => void): number;
 
-export declare function on(eventName: 'cellDetach', callback: (event: CellAttachDetachEvent) => void): void;
-export declare function once(eventName: 'cellDetach', callback: (event: CellAttachDetachEvent) => void): void;
+export declare function on(eventName: 'cellDetach', callback: (event: CellAttachDetachEvent) => void): number;
+export declare function once(eventName: 'cellDetach', callback: (event: CellAttachDetachEvent) => void): number;
 
-export declare function on(eventName: 'waitStart', callback: (event: WaitStartEvent) => void): void;
-export declare function once(eventName: 'waitStart', callback: (event: WaitStartEvent) => void): void;
+export declare function on(eventName: 'waitStart', callback: (event: WaitStartEvent) => void): number;
+export declare function once(eventName: 'waitStart', callback: (event: WaitStartEvent) => void): number;
 
-export declare function on(eventName: 'locationChanged', callback: (event: LocationChangedEvent) => void): void;
-export declare function once(eventName: 'locationChanged', callback: (event: LocationChangedEvent) => void): void;
+export declare function on(eventName: 'locationChanged', callback: (event: LocationChangedEvent) => void): number;
+export declare function once(eventName: 'locationChanged', callback: (event: LocationChangedEvent) => void): number;
 
-export declare function on(eventName: 'bookRead', callback: (event: BookReadEvent) => void): void;
-export declare function once(eventName: 'bookRead', callback: (event: BookReadEvent) => void): void;
+export declare function on(eventName: 'bookRead', callback: (event: BookReadEvent) => void): number;
+export declare function once(eventName: 'bookRead', callback: (event: BookReadEvent) => void): number;
 
-export declare function on(eventName: 'sell', callback: (event: SellEvent) => void): void;
-export declare function once(eventName: 'sell', callback: (event: SellEvent) => void): void;
+export declare function on(eventName: 'sell', callback: (event: SellEvent) => void): number;
+export declare function once(eventName: 'sell', callback: (event: SellEvent) => void): number;
 
-export declare function on(eventName: 'furnitureEnter', callback: (event: FurnitureEvent) => void): void;
-export declare function once(eventName: 'furnitureEnter', callback: (event: FurnitureEvent) => void): void;
+export declare function on(eventName: 'furnitureEnter', callback: (event: FurnitureEvent) => void): number;
+export declare function once(eventName: 'furnitureEnter', callback: (event: FurnitureEvent) => void): number;
 
-export declare function on(eventName: 'furnitureExit', callback: (event: FurnitureEvent) => void): void;
-export declare function once(eventName: 'furnitureExit', callback: (event: FurnitureEvent) => void): void;
+export declare function on(eventName: 'furnitureExit', callback: (event: FurnitureEvent) => void): number;
+export declare function once(eventName: 'furnitureExit', callback: (event: FurnitureEvent) => void): number;
 
-export declare function on(eventName: 'wardHit', callback: (event: WardHitEvent) => void): void;
-export declare function once(eventName: 'wardHit', callback: (event: WardHitEvent) => void): void;
+export declare function on(eventName: 'wardHit', callback: (event: WardHitEvent) => void): number;
+export declare function once(eventName: 'wardHit', callback: (event: WardHitEvent) => void): number;
 
-export declare function on(eventName: 'packageStart', callback: (event: PackageEvent) => void): void;
-export declare function once(eventName: 'packageStart', callback: (event: PackageEvent) => void): void;
+export declare function on(eventName: 'packageStart', callback: (event: PackageEvent) => void): number;
+export declare function once(eventName: 'packageStart', callback: (event: PackageEvent) => void): number;
 
-export declare function on(eventName: 'packageChange', callback: (event: PackageEvent) => void): void;
-export declare function once(eventName: 'packageChange', callback: (event: PackageEvent) => void): void;
+export declare function on(eventName: 'packageChange', callback: (event: PackageEvent) => void): number;
+export declare function once(eventName: 'packageChange', callback: (event: PackageEvent) => void): number;
 
-export declare function on(eventName: 'packageEnd', callback: (event: PackageEvent) => void): void;
-export declare function once(eventName: 'packageEnd', callback: (event: PackageEvent) => void): void;
+export declare function on(eventName: 'packageEnd', callback: (event: PackageEvent) => void): number;
+export declare function once(eventName: 'packageEnd', callback: (event: PackageEvent) => void): number;
 
-export declare function on(eventName: 'enterBleedout', callback: (event: EnterBleedoutEvent) => void): void;
-export declare function once(eventName: 'enterBleedout', callback: (event: EnterBleedoutEvent) => void): void;
+export declare function on(eventName: 'enterBleedout', callback: (event: EnterBleedoutEvent) => void): number;
+export declare function once(eventName: 'enterBleedout', callback: (event: EnterBleedoutEvent) => void): number;
 
-export declare function on(eventName: 'destructionStageChanged', callback: (event: DestructionStageChangedEvent) => void): void;
-export declare function once(eventName: 'destructionStageChanged', callback: (event: DestructionStageChangedEvent) => void): void;
+export declare function on(eventName: 'destructionStageChanged', callback: (event: DestructionStageChangedEvent) => void): number;
+export declare function once(eventName: 'destructionStageChanged', callback: (event: DestructionStageChangedEvent) => void): number;
 
-export declare function on(eventName: 'sceneAction', callback: (event: SceneActionEvent) => void): void;
-export declare function once(eventName: 'sceneAction', callback: (event: SceneActionEvent) => void): void;
+export declare function on(eventName: 'sceneAction', callback: (event: SceneActionEvent) => void): number;
+export declare function once(eventName: 'sceneAction', callback: (event: SceneActionEvent) => void): number;
 
-export declare function on(eventName: 'playerBowShot', callback: (event: PlayerBowShotEvent) => void): void;
-export declare function once(eventName: 'playerBowShot', callback: (event: PlayerBowShotEvent) => void): void;
+export declare function on(eventName: 'playerBowShot', callback: (event: PlayerBowShotEvent) => void): number;
+export declare function once(eventName: 'playerBowShot', callback: (event: PlayerBowShotEvent) => void): number;
 
-export declare function on(eventName: 'fastTravelEnd', callback: (event: FastTravelEnd) => void): void;
-export declare function once(eventName: 'fastTravelEnd', callback: (event: FastTravelEnd) => void): void;
+export declare function on(eventName: 'fastTravelEnd', callback: (event: FastTravelEnd) => void): number;
+export declare function once(eventName: 'fastTravelEnd', callback: (event: FastTravelEnd) => void): number;
 
-export declare function on(eventName: 'perkEntryRun', callback: (event: PerkEntryRunEvent) => void): void;
-export declare function once(eventName: 'perkEntryRun', callback: (event: PerkEntryRunEvent) => void): void;
+export declare function on(eventName: 'perkEntryRun', callback: (event: PerkEntryRunEvent) => void): number;
+export declare function once(eventName: 'perkEntryRun', callback: (event: PerkEntryRunEvent) => void): number;
 
-export declare function on(eventName: 'actionWeaponSwing', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionWeaponSwing', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionWeaponSwing', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionWeaponSwing', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionBeginDraw', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionBeginDraw', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionBeginDraw', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionBeginDraw', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionEndDraw', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionEndDraw', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionEndDraw', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionEndDraw', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionBowDraw', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionBowDraw', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionBowDraw', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionBowDraw', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionBowRelease', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionBowRelease', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionBowRelease', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionBowRelease', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionBeginSheathe', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionBeginSheathe', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionBeginSheathe', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionBeginSheathe', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionEndSheathe', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionEndSheathe', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionEndSheathe', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionEndSheathe', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionSpellCast', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionSpellCast', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionSpellCast', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionSpellCast', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionSpellFire', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionSpellFire', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionSpellFire', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionSpellFire', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionVoiceCast', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionVoiceCast', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionVoiceCast', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionVoiceCast', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'actionVoiceFire', callback: (event: ActionEvent) => void): void;
-export declare function once(eventName: 'actionVoiceFire', callback: (event: ActionEvent) => void): void;
+export declare function on(eventName: 'actionVoiceFire', callback: (event: ActionEvent) => void): number;
+export declare function once(eventName: 'actionVoiceFire', callback: (event: ActionEvent) => void): number;
 
-export declare function on(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): void;
-export declare function once(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): void;
+export declare function on(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): number;
+export declare function once(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): number;
 
-export declare function on(eventName: 'crosshairRefChanged', callback: (event: CrosshairRefChangedEvent) => void): void;
-export declare function once(eventName: 'crosshairRefChanged', callback: (event: CrosshairRefChangedEvent) => void): void;
+export declare function on(eventName: 'crosshairRefChanged', callback: (event: CrosshairRefChangedEvent) => void): number;
+export declare function once(eventName: 'crosshairRefChanged', callback: (event: CrosshairRefChangedEvent) => void): number;
 
-export declare function on(eventName: 'niNodeUpdate', callback: (event: NiNodeUpdateEvent) => void): void;
-export declare function once(eventName: 'niNodeUpdate', callback: (event: NiNodeUpdateEvent) => void): void;
+export declare function on(eventName: 'niNodeUpdate', callback: (event: NiNodeUpdateEvent) => void): number;
+export declare function once(eventName: 'niNodeUpdate', callback: (event: NiNodeUpdateEvent) => void): number;
 
-export declare function on(eventName: 'modEvent', callback: (event: ModEvent) => void): void;
-export declare function once(eventName: 'modEvent', callback: (event: ModEvent) => void): void;
+export declare function on(eventName: 'modEvent', callback: (event: ModEvent) => void): number;
+export declare function once(eventName: 'modEvent', callback: (event: ModEvent) => void): number;
 
-export declare function on(eventName: 'positionPlayer', callback: (event: PositionPlayerEvent) => void): void;
-export declare function once(eventName: 'positionPlayer', callback: (event: PositionPlayerEvent) => void): void;
+export declare function on(eventName: 'positionPlayer', callback: (event: PositionPlayerEvent) => void): number;
+export declare function once(eventName: 'positionPlayer', callback: (event: PositionPlayerEvent) => void): number;
 
-export declare function on(eventName: 'footstep', callback: (event: FootstepEvent) => void): void;
-export declare function once(eventName: 'footstep', callback: (event: FootstepEvent) => void): void;
+export declare function on(eventName: 'footstep', callback: (event: FootstepEvent) => void): number;
+export declare function once(eventName: 'footstep', callback: (event: FootstepEvent) => void): number;
 
-export declare function on(eventName: 'translationFailed', callback: (event: TranslationEvent) => void): void;
-export declare function once(eventName: 'translationFailed', callback: (event: TranslationEvent) => void): void;
+export declare function on(eventName: 'translationFailed', callback: (event: TranslationEvent) => void): number;
+export declare function once(eventName: 'translationFailed', callback: (event: TranslationEvent) => void): number;
 
-export declare function on(eventName: 'translationAlmostCompleted', callback: (event: TranslationEvent) => void): void;
-export declare function once(eventName: 'translationAlmostCompleted', callback: (event: TranslationEvent) => void): void;
+export declare function on(eventName: 'translationAlmostCompleted', callback: (event: TranslationEvent) => void): number;
+export declare function once(eventName: 'translationAlmostCompleted', callback: (event: TranslationEvent) => void): number;
 
-export declare function on(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): void;
-export declare function once(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): void;
+export declare function on(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): number;
+export declare function once(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): number;
 
 
 declare class ConsoleComand {
