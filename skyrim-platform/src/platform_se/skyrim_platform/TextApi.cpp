@@ -2,9 +2,6 @@
 #include <fstream>
 #include <string>
 
-#include <codecvt>
-#include <locale>
-
 namespace TextApi {
 JsValue TextApi::CreateText(const JsFunctionArguments& args)
 {
@@ -13,8 +10,6 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
   auto argPosX = static_cast<double>(args[1]);
   auto argPosY = static_cast<double>(args[2]);
   auto argString = static_cast<std::wstring>(args[3]);
-
-  args;
 
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[4].GetProperty(i);

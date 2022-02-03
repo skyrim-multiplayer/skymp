@@ -159,7 +159,8 @@ public:
   static JsValue WString(const std::wstring& arg)
   {
     JsValueRef v;
-    SafeCall(JS_ENGINE_F(JsCreateStringUtf16), reinterpret_cast<const uint16_t*>(arg.data(), arg.size()), &v);
+    SafeCall(JS_ENGINE_F(JsCreateStringUtf16),
+             reinterpret_cast<const uint16_t*>(arg.data(), arg.size()), &v);
     return JsValue(v);
   }
 
@@ -260,7 +261,11 @@ public:
     *this = String(arg);
     TraceConstructor();
   }
-  JsValue(const std::wstring& arg) {}
+  JsValue(const std::wstring& arg)
+  {
+    *this = WString(arg);
+    TraceConstructor();
+  }
   JsValue(const char* arg)
   {
     *this = String(arg);
