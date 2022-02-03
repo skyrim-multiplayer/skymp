@@ -55,7 +55,11 @@ on("update", () => {
 on("update", () => updateWc());
 
 const startClient = (): void => {
-  NetInfo.start();
+  const showNetInfo = settings["skymp5-client"]["show-net-info"];
+  if (showNetInfo === true) {
+    NetInfo.start();
+  }
+  
   once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();

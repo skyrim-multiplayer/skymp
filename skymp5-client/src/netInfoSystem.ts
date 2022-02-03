@@ -28,21 +28,13 @@ export class NetInfo {
 class netInfoTexts {
   public static readonly Name = "netInfoTexts";
 
-  // private static readonly _CHARACTER_LEN = 10;
-  // private static readonly _CONNECTION_STR = "connection:";
-  // private static readonly _CONNECTION_STR_LEN = netInfoTexts._CONNECTION_STR.length * netInfoTexts._CHARACTER_LEN;
-  // private static readonly _INCOMING_STR = "incoming (p/s):";
-  // private static readonly _INCOMING_STR_LEN = netInfoTexts._INCOMING_STR.length * netInfoTexts._CHARACTER_LEN;
-  // private static readonly _OUTGOING_STR = "outgoing (p/s):";
-  // private static readonly _OUTGOING_STR_LEN = netInfoTexts._OUTGOING_STR.length * netInfoTexts._CHARACTER_LEN;
-
   constructor(
     public readonly connectionStaticTextId = sp.createText(100, 350, "connection:", [255, 255, 255, 1]),
     public readonly connectionStateTextId = sp.createText(220, 350, "", [255, 255, 255, 1]),
-    public readonly receivedPacketStaticTextId = sp.createText(120, 400, "incoming (p/s):", [255, 255, 255, 1]),
-    public readonly receivedPacketAmountTextId = sp.createText(250, 400, "", [255, 255, 255, 1]),
-    public readonly sentPacketStaticTextId = sp.createText(120, 450, "outgoing (p/s):", [255, 255, 255, 1]),
-    public readonly sentPacketAmountTextId = sp.createText(250, 450, "", [255, 255, 255, 1]),
+    public readonly receivedPacketStaticTextId = sp.createText(120, 390, "incoming (p/s):", [255, 255, 255, 1]),
+    public readonly receivedPacketAmountTextId = sp.createText(250, 390, "", [255, 255, 255, 1]),
+    public readonly sentPacketStaticTextId = sp.createText(120, 430, "outgoing (p/s):", [255, 255, 255, 1]),
+    public readonly sentPacketAmountTextId = sp.createText(250, 430, "", [255, 255, 255, 1]),
   ) { }
 
   public clear(): void {
@@ -59,7 +51,7 @@ if (sp.storage[netInfoTexts.Name] && (sp.storage[netInfoTexts.Name] as netInfoTe
   (sp.storage[netInfoTexts.Name] as netInfoTexts)?.clear();
 }
 const delayMs: number = 1000;
-const textIds: netInfoTexts = new netInfoTexts();
+let textIds: netInfoTexts;
 let last_dt: number = 0;
 let dt: number = 0;
 
@@ -67,6 +59,7 @@ const greenARGB: number[] = [0, 128, 0, 1];
 const redARGB: number[] = [255, 0, 0, 1];
 
 export const start = (): void => {
+  textIds = new netInfoTexts();
   sp.storage[netInfoTexts.Name] = textIds;
   last_dt = Date.now();
 
