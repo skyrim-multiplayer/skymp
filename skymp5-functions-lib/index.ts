@@ -158,6 +158,41 @@ pointsByName.set('hall:spawnPoint', {
   cellOrWorldDesc: '42b5f:SweetPie.esp',
   rot: [0, 0, 0],
 });
+pointsByName.set('riften:safePlace', {
+  pos: [418.4863, -179.2634, 64.0000],
+  cellOrWorldDesc: '16bdf:Skyrim.esm',
+  rot: [0, 0, -88.6934],
+});
+pointsByName.set('riften:spawnPoint1', {
+  pos: [172414.4688, -99692.1719, 11136.5918],
+  cellOrWorldDesc: '16bb4:Skyrim.esm',
+  rot: [0, 0, 177.6169],
+});
+pointsByName.set('riften:spawnPoint2', {
+  pos: [174379.4063, -93622.4688, 11125.2783],
+  cellOrWorldDesc: '16bb4:Skyrim.esm',
+  rot: [0, 0, 4.0566],
+});
+pointsByName.set('riften:spawnPoint3', {
+  pos: [172683.5625, -93227.9766, 11221.7686],
+  cellOrWorldDesc: '16bb4:Skyrim.esm',
+  rot: [0, 0, 177.6169],
+});
+pointsByName.set('riften:spawnPoint4', {
+  pos: [174862.0938, -95209.4141, 11397.0518],
+  cellOrWorldDesc: '16bb4:Skyrim.esm',
+  rot: [0, 0, 269.2902],
+});
+pointsByName.set('riften:spawnPoint5', {
+  pos: [175102.6563, -97816.5859, 11139.4395],
+  cellOrWorldDesc: '16bb4:Skyrim.esm',
+  rot: [0, 0, -70.4278],
+});
+pointsByName.set('riften:spawnPoint6', {
+  pos: [171816.8125, -96627.7891, 11136.0000],
+  cellOrWorldDesc: '16bb4:Skyrim.esm',
+  rot: [0, 0, 111.9557],
+});
 pointsByName.set('whiterun:spawnPoint', {
   pos: [22659, -8697, -3594],
   cellOrWorldDesc: '1a26f:Skyrim.esm',
@@ -200,6 +235,16 @@ pointsByName.set('whiterun:spawnPoint6', {
 });
 
 const maps: Required<SweetPieMap>[] = [{
+  safePointName: 'riften:safePlace',
+  mainSpawnPointName: 'riften:spawnPoint1',
+  safePlaceEnterDoors: ['430a6:Skyrim.esm', '42279:Skyrim.esm'],
+  safePlaceLeaveDoors: ['16c3c:Skyrim.esm', '44bd7:Skyrim.esm'],
+  leaveRoundDoors: ['42285:Skyrim.esm', '42283:Skyrim.esm'],
+  playerRestoreActivators: ['2b46a7:SweetPie.esp'],
+  playerRestoreWaitTime: 30000,
+  spawnPointNames: ['riften:spawnPoint1', 'riften:spawnPoint2', 'riften:spawnPoint3', 'riften:spawnPoint4', 'riften:spawnPoint5', 'riften:spawnPoint6'],
+},
+{
   safePointName: 'whiterun:safePlace',
   mainSpawnPointName: 'whiterun:spawnPoint',
   safePlaceEnterDoors: ['1a6f4:Skyrim.esm'],

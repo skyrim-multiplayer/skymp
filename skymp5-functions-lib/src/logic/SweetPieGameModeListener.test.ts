@@ -50,6 +50,7 @@ describe("SweetPieGameModeListener: DeathMatch", () => {
     const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', safePlaceEnterDoors: ['bbb'] }];
     const listener = new SweetPieGameModeListener(controller, maps);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+    listener.getRounds()[0].state = 'running';
 
     const res = listener.onPlayerActivateObject(1, 'bbb', 666);
     expect(controller.sendChatMessage).toBeCalledWith(1, ...listener.noEnterSafePlaceMessage);
