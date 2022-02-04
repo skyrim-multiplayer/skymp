@@ -3,7 +3,7 @@ import { makePlayerController } from "./TestUtils";
 
 describe("SweetPie", () => {
   test("Is able to find available round", () => {
-    const rounds = new Array<SweetPieRound>({ state: 'running' }, { state: 'warmup' });
+    const rounds = new Array<SweetPieRound>({ state: 'running', map: { safePointName: 'safepoint', enabled: true } }, { state: 'warmup', map: { safePointName: 'safepoint', enabled: true } });
     expect(getAvailableRound(rounds, 1)).toEqual(rounds[1]);
   });
 });

@@ -1,3 +1,4 @@
+import { isNull } from 'util';
 import { PlayerController } from './src/logic/PlayerController';
 import { SweetPieGameModeListener } from './src/logic/SweetPieGameModeListener';
 import { SweetPieMap } from './src/logic/SweetPieMap';
@@ -137,6 +138,27 @@ export const moveTo = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): Papyr
   return undefined;
 }
 
+export const setAlpha = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): PapyrusObject | undefined => {
+  const afTargetAlpha = getNumber(args, 0);
+  const abFade = typeof args[1] === 'boolean'? getBoolean(args, 1) : false;
+  console.log('called Actor.SetAlpha: ' + self.desc + ': ' + mp.getIdFromDesc(self.desc) + ': Alpha ' + afTargetAlpha + '; Fade ' + abFade);
+  return undefined;
+}
+
+export const isDead = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): boolean => {
+  const selfId = mp.getIdFromDesc(self.desc);
+  return mp.get(selfId, 'isDead');
+}
+
+export const spLog = (mp: Mp, self: null, args: PapyrusValue[]): PapyrusObject | undefined => {
+  var str = 'From papyrus: ';
+  for (const pVal of args) {
+    str += ' ' + ((typeof pVal === 'object' || Array.isArray(pVal)) ? JSON.stringify(pVal) : pVal) + ';';
+  }
+  console.log(str);
+  return undefined;
+}
+
 DialogProperty.init();
 BrowserProperty.init();
 EvalProperty.init();
@@ -149,6 +171,9 @@ mp.registerPapyrusFunction('global', 'Utility', 'RandomInt', (self, args) => ran
 mp.registerPapyrusFunction('global', 'Game', 'GetForm', (self, args) => getForm(mp, self, args));
 mp.registerPapyrusFunction('global', 'Game', 'GetFormEx', (self, args) => getForm(mp, self, args));
 mp.registerPapyrusFunction('method', 'ObjectReference', 'MoveTo', (self, args) => moveTo(mp, self, args));
+mp.registerPapyrusFunction('method', 'Actor', 'SetAlpha', (self, args) => setAlpha(mp, self, args));
+mp.registerPapyrusFunction('method', 'Actor', 'IsDead', (self, args) => isDead(mp, self, args));
+mp.registerPapyrusFunction('global', 'debug', 'SPLog', (self, args) => spLog(mp, self, args));
 
 console.log('gamemode.js reloaded');
 
@@ -157,6 +182,41 @@ pointsByName.set('hall:spawnPoint', {
   pos: [18522.08, 10218.17, 624.46],
   cellOrWorldDesc: '42b5f:SweetPie.esp',
   rot: [0, 0, 0],
+});
+pointsByName.set('markarth:safePlace', {
+  pos: [-5818.1523, -1085.7805, -7.9892],
+  cellOrWorldDesc: '16dfe:Skyrim.esm',
+  rot: [0, 0, 154.6992],
+});
+pointsByName.set('markarth:spawnPoint1', {
+  pos: [-174156.5781, 7128.9624, -3105.9287],
+  cellOrWorldDesc: '16d71:Skyrim.esm',
+  rot: [0, 0, 166.6154],
+});
+pointsByName.set('markarth:spawnPoint2', {
+  pos: [-177508.5000, 1116.4828, -2312.4185],
+  cellOrWorldDesc: '16d71:Skyrim.esm',
+  rot: [0, 0, 55.6242],
+});
+pointsByName.set('markarth:spawnPoint3', {
+  pos: [-178162.2813, 5273.3086, -2149.9355],
+  cellOrWorldDesc: '16d71:Skyrim.esm',
+  rot: [0, 0, 55.6245],
+});
+pointsByName.set('markarth:spawnPoint4', {
+  pos: [-175959.4688, 6482.9048, -2727.4172],
+  cellOrWorldDesc: '16d71:Skyrim.esm',
+  rot: [0, 0, 164.4858],
+});
+pointsByName.set('markarth:spawnPoint5', {
+  pos: [-174378.8750, 4578.2480, -1677.9618],
+  cellOrWorldDesc: '16d71:Skyrim.esm',
+  rot: [0, 0, -13.1307],
+});
+pointsByName.set('markarth:spawnPoint6', {
+  pos: [-176310.9688, 2410.2986, -3245.0044],
+  cellOrWorldDesc: '16d71:Skyrim.esm',
+  rot: [0, 0, 78.5424],
 });
 pointsByName.set('riften:safePlace', {
   pos: [418.4863, -179.2634, 64.0000],
@@ -233,8 +293,54 @@ pointsByName.set('whiterun:spawnPoint6', {
   cellOrWorldDesc: '1a26f:Skyrim.esm',
   rot: [0, 0, 84.2714],
 });
+pointsByName.set('windhelm:safePlace', {
+  pos: [-98.3297, -3405.2292, 323.0901],
+  cellOrWorldDesc: '16789:Skyrim.esm',
+  rot: [0, 0, 154.6992],
+});
+pointsByName.set('windhelm:spawnPoint1', {
+  pos: [134123.7813, 36661.9023, -12252.2842],
+  cellOrWorldDesc: 'd45f0:Skyrim.esm',
+  rot: [0, 0, -83.5598],
+});
+pointsByName.set('windhelm:spawnPoint2', {
+  pos: [131426.0625, 41579.3945, -11889.8086],
+  cellOrWorldDesc: 'd45f0:Skyrim.esm',
+  rot: [0, 0, -143.9488],
+});
+pointsByName.set('windhelm:spawnPoint3', {
+  pos: [132020.8750, 36545.2188, -12260.5020],
+  cellOrWorldDesc: 'd45f0:Skyrim.esm',
+  rot: [0, 0, -81.8858],
+});
+pointsByName.set('windhelm:spawnPoint4', {
+  pos: [130052.2656, 34946.4414, -11835.0566],
+  cellOrWorldDesc: 'd45f0:Skyrim.esm',
+  rot: [0, 0, 44.1644],
+});
+pointsByName.set('windhelm:spawnPoint5', {
+  pos: [129352.6328, 40330.7852, -11652.3076],
+  cellOrWorldDesc: 'd45f0:Skyrim.esm',
+  rot: [0, 0, 130.1079],
+});
+pointsByName.set('windhelm:spawnPoint6', {
+  pos: [131651.7344, 39875.6367, -12101.8936],
+  cellOrWorldDesc: 'd45f0:Skyrim.esm',
+  rot: [0, 0, -155.4077],
+});
 
 const maps: Required<SweetPieMap>[] = [{
+  safePointName: 'markarth:safePlace',
+  mainSpawnPointName: 'markarth:spawnPoint1',
+  safePlaceEnterDoors: ['16e3b:Skyrim.esm'],
+  safePlaceLeaveDoors: ['793a4:Skyrim.esm'],
+  leaveRoundDoors: ['1c38b:Skyrim.esm'],
+  playerRestoreActivators: [],
+  playerRestoreWaitTime: 30000,
+  spawnPointNames: ['markarth:spawnPoint1', 'markarth:spawnPoint2', 'markarth:spawnPoint3', 'markarth:spawnPoint4', 'markarth:spawnPoint5', 'markarth:spawnPoint6'],
+  enabled: false,
+},
+{
   safePointName: 'riften:safePlace',
   mainSpawnPointName: 'riften:spawnPoint1',
   safePlaceEnterDoors: ['430a6:Skyrim.esm', '42279:Skyrim.esm'],
@@ -243,6 +349,7 @@ const maps: Required<SweetPieMap>[] = [{
   playerRestoreActivators: ['2b46a7:SweetPie.esp'],
   playerRestoreWaitTime: 30000,
   spawnPointNames: ['riften:spawnPoint1', 'riften:spawnPoint2', 'riften:spawnPoint3', 'riften:spawnPoint4', 'riften:spawnPoint5', 'riften:spawnPoint6'],
+  enabled: false,
 },
 {
   safePointName: 'whiterun:safePlace',
@@ -253,6 +360,18 @@ const maps: Required<SweetPieMap>[] = [{
   playerRestoreActivators: ['3a99d6:SweetPie.esp'],
   playerRestoreWaitTime: 30000,
   spawnPointNames: ['whiterun:spawnPoint1', 'whiterun:spawnPoint2', 'whiterun:spawnPoint3', 'whiterun:spawnPoint4', 'whiterun:spawnPoint5', 'whiterun:spawnPoint6'],
+  enabled: true,
+},
+{
+  safePointName: 'windhelm:safePlace',
+  mainSpawnPointName: 'windhelm:spawnPoint1',
+  safePlaceEnterDoors: ['d18b2:Skyrim.esm', 'd18b1:Skyrim.esm', '16964:Skyrim.esm'],
+  safePlaceLeaveDoors: ['d18b5:Skyrim.esm', 'd18b4:Skyrim.esm','167be:Skyrim.esm'],
+  leaveRoundDoors: ['55fca:Skyrim.esm'],
+  playerRestoreActivators: ['3716f4:SweetPie.esp'],
+  playerRestoreWaitTime: 30000,
+  spawnPointNames: ['windhelm:spawnPoint1', 'windhelm:spawnPoint2', 'windhelm:spawnPoint3', 'windhelm:spawnPoint4', 'windhelm:spawnPoint5', 'windhelm:spawnPoint6'],
+  enabled: false,
 }];
 
 const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[], playersToStart: unknown): SweetPieGameModeListener => {

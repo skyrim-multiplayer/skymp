@@ -62,6 +62,13 @@ export class SweetPieGameModeListener implements GameModeListener {
           toDelete.push(i);
         }
         toDelete.forEach(index => this.rounds.splice(index, 1));
+      } else {
+        for (var i = 0; i < this.rounds.length; i++) {
+          if (this.rounds[i].players?.size) {
+            continue;
+          }
+          this.rounds[i].map = maps[i];
+        }
       }
     }
     this.controller.setRoundsArray(this.rounds);

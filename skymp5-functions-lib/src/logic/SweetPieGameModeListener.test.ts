@@ -20,7 +20,7 @@ describe("SweetPieGameModeListener: Activation default", () => {
 describe("SweetPieGameModeListener: DeathMatch", () => {
   test("Player should be able to join round via dialog window", () => {
     const controller = makePlayerController();
-    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', enabled: true }];
     const listener = new SweetPieGameModeListener(controller, maps);
 
     const res = listener.onPlayerActivateObject(1, listener.neutralPortal, 666);
