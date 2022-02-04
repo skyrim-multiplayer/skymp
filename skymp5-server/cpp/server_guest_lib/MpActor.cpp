@@ -11,6 +11,7 @@
 #include <random>
 #include <string>
 
+
 struct MpActor::Impl : public ChangeFormGuard<MpChangeForm>
 {
   Impl(MpChangeForm changeForm_, MpObjectReference* self_)
