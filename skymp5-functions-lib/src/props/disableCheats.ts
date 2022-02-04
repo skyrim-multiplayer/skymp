@@ -20,9 +20,11 @@ export class DisableCheats {
       }
 
       const commandsToDisable: string[] = [
+        "modAV",
+        "forceAV",
         "setAV",
         "ToggleCollision",
-        "ToggleGodMode"
+        "ToggleGodMode" // Disable unlimited carry weight
       ]
 
       // Disable commands from commandsToDisable
