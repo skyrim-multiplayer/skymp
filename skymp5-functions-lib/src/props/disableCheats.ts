@@ -21,6 +21,9 @@ export class DisableCheats {
       
       // Disable setav
       ctx.sp.findConsoleCommand("setAV").execute = () => false;
+      
+      // Disable modav
+      ctx.sp.findConsoleCommand("modAV").execute = () => false;
 
       // Disable tcl
       ctx.sp.findConsoleCommand("ToggleCollision").execute = () => false;
