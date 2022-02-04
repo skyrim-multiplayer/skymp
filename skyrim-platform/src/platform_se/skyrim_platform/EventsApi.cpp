@@ -1,5 +1,6 @@
 #include "EventsApi.h"
 #include "EventManager.h"
+#include "EventUtils.h"
 #include "InvalidArgumentException.h"
 #include "NativeObject.h"
 #include "NativeValueCasts.h"
@@ -612,11 +613,14 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
   auto handle = isOnce
     ? EventManager::GetSingleton()->Subscribe(eventName, callback, true)
     : EventManager::GetSingleton()->Subscribe(eventName, callback);
+  auto obj = JsValue::Object();
+  AddProperty(&obj, "uid", handle->uid);
+  AddProperty(&obj, "eventName", handle->uid);
 
   // remove this
   // isOnce ? g.callbacksOnce[eventName].push_back(callback)
   //        : g.callbacks[eventName].push_back(callback);
-  return JsValue::Double(handle->uid);
+  return obj;
 }
 }
 
