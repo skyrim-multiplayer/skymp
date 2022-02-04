@@ -1,21 +1,23 @@
 #include "Hooks.h"
+#include "EventsApi.h"
 
-struct OnSendEvent
+struct OnConsoleVPrint
 {
-  static void thunk(RE::VMHandle a_handle, const FixedString& a_eventName,
-                    RE::BSScript::IFunctionArguments* a_args)
+  static void thunk(void* unk1, const char* msg)
   {
-    logger::info("Event: {}", a_eventName);
+    if (msg) {
+      EventsApi::SendConsoleMsgEvent(msg);
+    }
 
-    func(a_handle, a_eventName, a_args);
+    func(unk1, msg);
   };
   static inline REL::Relocation<decltype(&thunk)> func;
 };
 
-void InstallOnSendEventHook()
+void InstallOnConsoleVPrintHook()
 {
-  REL::Relocation<std::uintptr_t> vtbl{ REL::ID(252631) };
-  Hooks::write_vfunc<0x24, OnSendEvent>(vtbl);
+  REL::Relocation<std::uintptr_t> hook{ REL::ID(51110), 0x300 };
+  Hooks::write_thunk_call<OnConsoleVPrint>(hook.address());
 }
 
 void Hooks::Install()

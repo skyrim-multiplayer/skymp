@@ -291,7 +291,7 @@ void InstallRenderCursorMenuHook()
 
 void Frida::InstallHooks()
 {
-  InstallConsoleVPrintHook();
+  // InstallConsoleVPrintHook();
   InstallSendEventHook();
   InstallDrawSheatheWeaponPcHook();
   InstallDrawSheatheWeaponActorHook();
