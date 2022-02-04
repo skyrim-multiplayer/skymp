@@ -5,7 +5,6 @@
 #include "EventHandlerScript.h"
 #include "EventHandlerStory.h"
 
-
 struct EventHandle
 {
   EventHandle(uintptr_t _uid, std::string_view _eventName)
@@ -195,6 +194,7 @@ private:
     events->emplace("tick", new EventState(nullptr));
     events->emplace("browserMessage", new EventState(nullptr));
     events->emplace("consoleMessage", new EventState(nullptr));
+    events->emplace("ipcMessage", new EventState(nullptr));
   }
 
   std::unordered_map<std::string_view, EventState*>* events;

@@ -463,14 +463,11 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
     assert(0 && "IpcSend is only available in Chakra thread");
     return;
   }
+  auto obj = JsValue::Object();
+  AddProperty(&obj, "sourceSystemName", systemName);
+  AddProperty(&obj, "message", data, length);
 
-  auto typedArray = JsValue::Uint8Array(length);
-  memcpy(typedArray.GetTypedArrayData(), data, length);
-
-  auto ipcMessageEvent = JsValue::Object();
-  ipcMessageEvent.SetProperty("sourceSystemName", systemName);
-  ipcMessageEvent.SetProperty("message", typedArray);
-  SendEvent("ipcMessage", { JsValue::Undefined(), ipcMessageEvent });
+  SendEvent("ipcMessage", { JsValue::Undefined(), obj });
 }
 
 void EventsApi::SendConsoleMsgEvent(const char* msg_)
@@ -478,8 +475,9 @@ void EventsApi::SendConsoleMsgEvent(const char* msg_)
   std::string msg(msg_);
   SkyrimPlatform::GetSingleton().AddTickTask([=] {
     auto obj = JsValue::Object();
-    obj.SetProperty("message", JsValue::String(msg));
-    EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
+    AddProperty(&obj, "message", msg);
+
+    SendEvent("consoleMessage", { JsValue::Undefined(), obj });
   });
 }
 

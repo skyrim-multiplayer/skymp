@@ -53,6 +53,14 @@ void AddProperty(JsValue* obj, const char* tag, float property)
   obj->SetProperty(tag, JsValue::Double(property));
 }
 
+void AddProperty(JsValue* obj, const char* tag, const uint8_t* data,
+                 uint32_t length)
+{
+  auto typedArray = JsValue::Uint8Array(length);
+  memcpy(typedArray.GetTypedArrayData(), data, length);
+  obj->SetProperty(tag, typedArray);
+}
+
 void AddProperty(JsValue* obj, const char* tag, RE::TESForm* property,
                  const char* typeName)
 {
