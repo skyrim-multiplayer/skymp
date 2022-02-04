@@ -51,7 +51,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     } else {
       if (maps.length > this.rounds.length) {
         for (var i = this.rounds.length; i < maps.length; i++) {
-          this.rounds.push({ state: 'wait', map: maps[i], hallPointName: this.hallSpawnPointName, secondsPassed: 0 });
+          this.rounds.push({ state: 'wait', hallPointName: this.hallSpawnPointName, secondsPassed: 0 });
         }
       } else if (maps.length < this.rounds.length) {
         const toDelete = [];
@@ -62,13 +62,12 @@ export class SweetPieGameModeListener implements GameModeListener {
           toDelete.push(i);
         }
         toDelete.forEach(index => this.rounds.splice(index, 1));
-      } else {
-        for (var i = 0; i < this.rounds.length; i++) {
-          if (this.rounds[i].players?.size) {
-            continue;
-          }
-          this.rounds[i].map = maps[i];
+      }
+      for (var i = 0; i < this.rounds.length; i++) {
+        if (this.rounds[i].players?.size) {
+          continue;
         }
+        this.rounds[i].map = maps[i];
       }
     }
     this.controller.setRoundsArray(this.rounds);
