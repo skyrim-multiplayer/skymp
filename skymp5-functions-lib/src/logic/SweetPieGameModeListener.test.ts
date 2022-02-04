@@ -353,7 +353,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
 
   test("Sets custom names for portals and doors", () => {
     const controller = makePlayerController();
-    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', leaveRoundDoors: ['whiterun:away'] }];
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', leaveRoundDoors: ['whiterun:away'], enabled: true }];
     const listener = new SweetPieGameModeListener(controller, maps);
 
     expect(controller.updateCustomName).toBeCalledTimes(4);

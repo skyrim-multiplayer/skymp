@@ -103,6 +103,17 @@ export class SweetPieGameModeListener implements GameModeListener {
     return this.hallSpawnPointName;
   }
 
+  private updatePortalsByAvailableRounds(): void {
+    const round = getAvailableRound(this.rounds) || this.rounds.find((x) => x.map?.enabled && x.state === 'running');
+    if (round) {
+      const playersCount = round.players?.size || 0;
+      this.controller.updateCustomName(
+        this.neutralPortal,
+        sprintf(this.neutralPortalNameTpl, playersCount, this.minimumPlayersToStart, this.roundStateToHumanReadable[round.state]),
+      );
+    }
+  }
+
   getRounds() {
     return this.rounds;
   }
@@ -196,12 +207,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   everySecond() {
+    this.updatePortalsByAvailableRounds();
     for (const round of this.rounds) {
-      const playersCount = round.players?.size || 0;
-      this.controller.updateCustomName(
-        this.neutralPortal,
-        sprintf(this.neutralPortalNameTpl, playersCount, this.minimumPlayersToStart, this.roundStateToHumanReadable[round.state]),
-      );
       if (round.players && round.players.size) {
         round.secondsPassed = (round.secondsPassed ?? -1) + 1;
         if (round.state === 'warmup' || round.state === 'wait') {
