@@ -477,7 +477,7 @@ void EventsApi::SendConsoleMsgEvent(const char* msg_)
     auto obj = JsValue::Object();
     AddProperty(&obj, "message", msg);
 
-    SendEvent("consoleMessage", { JsValue::Undefined(), obj });
+    EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
   });
 }
 
