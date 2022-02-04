@@ -88,7 +88,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         forceLeaveRound(this.controller, this.rounds, player);
       }
     }
-    if (this.maps.length == this.rounds.length) {
+    if (this.maps.length == this.rounds.length || roundIndex < this.maps.length) {
       this.rounds[roundIndex] = { state: 'wait', map: this.maps[roundIndex], hallPointName: this.hallSpawnPointName, secondsPassed: 0 }
     } else if (roundIndex >= this.maps.length) {
       this.rounds.splice(roundIndex, 1);

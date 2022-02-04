@@ -338,15 +338,16 @@ const maps: Required<SweetPieMap>[] = [{
   playerRestoreActivators: [],
   playerRestoreWaitTime: 30000,
   spawnPointNames: ['markarth:spawnPoint1', 'markarth:spawnPoint2', 'markarth:spawnPoint3', 'markarth:spawnPoint4', 'markarth:spawnPoint5', 'markarth:spawnPoint6'],
-  enabled: false,
+  enabled: true,
 },
-{
+  {
+  // '2b46a7:SweetPie.esp' ActorAlpha and bridges activator
   safePointName: 'riften:safePlace',
   mainSpawnPointName: 'riften:spawnPoint1',
   safePlaceEnterDoors: ['430a6:Skyrim.esm', '42279:Skyrim.esm'],
   safePlaceLeaveDoors: ['16c3c:Skyrim.esm', '44bd7:Skyrim.esm'],
   leaveRoundDoors: ['42285:Skyrim.esm', '42283:Skyrim.esm'],
-  playerRestoreActivators: ['2b46a7:SweetPie.esp'],
+  playerRestoreActivators: [],
   playerRestoreWaitTime: 30000,
   spawnPointNames: ['riften:spawnPoint1', 'riften:spawnPoint2', 'riften:spawnPoint3', 'riften:spawnPoint4', 'riften:spawnPoint5', 'riften:spawnPoint6'],
   enabled: false,
@@ -362,13 +363,14 @@ const maps: Required<SweetPieMap>[] = [{
   spawnPointNames: ['whiterun:spawnPoint1', 'whiterun:spawnPoint2', 'whiterun:spawnPoint3', 'whiterun:spawnPoint4', 'whiterun:spawnPoint5', 'whiterun:spawnPoint6'],
   enabled: true,
 },
-{
+  {
+  //'3716f4:SweetPie.esp' - wind activator
   safePointName: 'windhelm:safePlace',
   mainSpawnPointName: 'windhelm:spawnPoint1',
   safePlaceEnterDoors: ['d18b2:Skyrim.esm', 'd18b1:Skyrim.esm', '16964:Skyrim.esm'],
   safePlaceLeaveDoors: ['d18b5:Skyrim.esm', 'd18b4:Skyrim.esm','167be:Skyrim.esm'],
   leaveRoundDoors: ['55fca:Skyrim.esm'],
-  playerRestoreActivators: ['3716f4:SweetPie.esp'],
+  playerRestoreActivators: [],
   playerRestoreWaitTime: 30000,
   spawnPointNames: ['windhelm:spawnPoint1', 'windhelm:spawnPoint2', 'windhelm:spawnPoint3', 'windhelm:spawnPoint4', 'windhelm:spawnPoint5', 'windhelm:spawnPoint6'],
   enabled: false,
