@@ -615,7 +615,7 @@ JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
     : EventManager::GetSingleton()->Subscribe(eventName, callback);
   auto obj = JsValue::Object();
   AddProperty(&obj, "uid", handle->uid);
-  AddProperty(&obj, "eventName", handle->uid);
+  AddProperty(&obj, "eventName", handle->eventName);
 
   // remove this
   // isOnce ? g.callbacksOnce[eventName].push_back(callback)
