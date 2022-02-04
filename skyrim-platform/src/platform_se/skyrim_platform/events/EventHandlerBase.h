@@ -1,4 +1,5 @@
 #pragma once
+#include "EventUtils.h"
 
 /**
  * @brief Each instance should be able to manipulate its own sink,
@@ -62,15 +63,15 @@ protected:
     }
 
     auto sink = new Sink(
-      [&] {
+      [] {
         add_sink<E>();
         activeSinks->emplace(events);
       },
-      [&] {
+      [] {
         remove_sink<E>();
         activeSinks->erase(events);
       },
-      [&](bool) { return IsActiveSink(events); });
+      [](bool) { return IsActiveSink(events); });
 
     sinks->emplace(events, sink);
   }

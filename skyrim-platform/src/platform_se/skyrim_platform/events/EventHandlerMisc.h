@@ -29,19 +29,17 @@ public:
 private:
   EventHandlerMisc()
   {
-    // No implementation for this event on JS side atm,
-    // so just register it to proc constantly
     if (const auto ui = RE::UI::GetSingleton()) {
-      add_sink<RE::MenuOpenCloseEvent>(ui);
+      AppendSink<RE::MenuOpenCloseEvent>(CreateEV({ "menuOpen", "menuClose" }),
+                                         ui);
     }
 
     if (const auto manager = RE::BGSFootstepManager::GetSingleton()) {
-      AppendSink(&std::vector{ "footstep" }, manager);
+      AppendSink(CreateEV({ "footstep" }), manager);
     }
 
     if (const auto pc = RE::PlayerCharacter::GetSingleton()) {
-      AppendSink<RE::PositionPlayerEvent>(&std::vector{ "positionPlayer" },
-                                          pc);
+      AppendSink<RE::PositionPlayerEvent>(CreateEV({ "positionPlayer" }), pc);
     }
   }
 

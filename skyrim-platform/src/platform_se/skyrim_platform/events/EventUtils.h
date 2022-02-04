@@ -1,4 +1,10 @@
-#include "NativeValueCasts.h"
+#pragma once
+
+std::vector<const char*>* CreateEV(std::initializer_list<const char*> list)
+{
+  auto v = std::vector(list);
+  return &v;
+}
 
 JsValue CreateObject(const char* type, void* form)
 {

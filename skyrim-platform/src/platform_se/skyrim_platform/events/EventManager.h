@@ -1,9 +1,10 @@
 #pragma once
+#include "../InvalidArgumentException.h"
 #include "EventHandlerMisc.h"
 #include "EventHandlerSKSE.h"
 #include "EventHandlerScript.h"
 #include "EventHandlerStory.h"
-#include "InvalidArgumentException.h"
+
 
 struct EventHandle
 {
@@ -15,6 +16,17 @@ struct EventHandle
 
   uintptr_t uid;
   std::string_view eventName;
+};
+
+struct SinkObject
+{
+  SinkObject(const ::Sink* _sink, std::vector<std::string_view>* _linkedEvents)
+    : sink(_sink)
+    , linkedEvents(_linkedEvents)
+  {
+  }
+  const ::Sink* sink;
+  const std::vector<std::string_view>* linkedEvents;
 };
 
 struct CallbackObject
@@ -31,12 +43,12 @@ struct CallbackObject
 
 struct EventState
 {
-  EventState(const ::Sink* _sink)
-    : sink(_sink)
+  EventState(const SinkObject* _sink)
+    : sinkObj(_sink)
   {
   }
 
-  const ::Sink* sink;
+  const SinkObject* sinkObj;
   std::unordered_map<uintptr_t, CallbackObject*>* callbacks;
 };
 
@@ -62,8 +74,8 @@ public:
     }
 
     // if sink for that event is not active activate it, duh
-    if (!event->sink->IsActive())
-      event->sink->Activate();
+    if (event->sinkObj && !event->sinkObj->sink->IsActive())
+      event->sinkObj->sink->Activate();
 
     // use callback pointer as unique id for that callback
     auto uid = reinterpret_cast<uintptr_t>(&callback);
@@ -72,21 +84,55 @@ public:
     return new EventHandle(uid, eventName);
   }
 
-  bool Unsubscribe(EventHandle* handle)
+  void Unsubscribe(uintptr_t uid, std::string eventName)
   {
-    auto event = (*events)[handle->eventName];
+    // check for correct event
+    auto event = (*events)[eventName];
     if (!event)
-      return false;
+      return;
 
-    if (!event->callbacks->contains(handle->uid))
-      return false;
+    // check if callback with provided uid exists
+    if (!event->callbacks->contains(uid))
+      return;
 
-    event->callbacks->erase(handle->uid);
+    event->callbacks->erase(uid);
 
-    if (event->callbacks->size() == 0)
-      event->sink->Deactivate();
+    // now we need to see if we can deactivate event sink
 
-    return true;
+    // ignore this for custom events
+    if (event->sinkObj) {
+      // check if there are no other callbacks for this event
+      if (event->callbacks->empty()) {
+        // check if there are any linked events for this sink
+        if (event->sinkObj->linkedEvents->empty()) {
+          event->sinkObj->sink->Deactivate();
+        } else {
+          // check if there are any callbacks for linked events
+          auto sinkIsBusy = false;
+          for (const auto& eventName : *event->sinkObj->linkedEvents) {
+            if (!(*events)[eventName]->callbacks->empty()) {
+              sinkIsBusy = true;
+              break;
+            }
+          }
+
+          if (!sinkIsBusy) {
+            event->sinkObj->sink->Deactivate();
+          }
+        }
+      }
+    }
+  }
+
+  std::unordered_map<uintptr_t, CallbackObject*>* GetCallbackObjects(
+    const char* eventName)
+  {
+    auto event = (*events)[eventName];
+
+    if (!event)
+      return nullptr;
+
+    return event->callbacks;
   }
 
   /**
@@ -113,6 +159,8 @@ public:
     if (const auto story = EventHandlerStory::GetSingleton()->FetchEvents()) {
       ProcessMap(story);
     }
+
+    ProcessCustomEvents();
   }
 
 private:
@@ -125,15 +173,29 @@ private:
   void ProcessMap(EventMap map)
   {
     for (const auto& item : *map) {
-      if (item.first->size() == 1) {
-        events->emplace((*item.first)[0], new EventState(item.second));
-      } else {
-        for (const auto& eventName : *item.first) {
-          events->emplace(eventName, new EventState(item.second));
-        }
+      for (const auto& eventName : *item.first) {
+        std::vector<std::string_view> linkedEvents;
+        std::copy_if(item.first->begin(), item.first->end(),
+                     std::back_inserter(linkedEvents),
+                     [&](const char* const s) { return s != eventName; });
+
+        auto sinkObj = new SinkObject(item.second, &linkedEvents);
+        events->emplace(eventName, new EventState(sinkObj));
       }
     }
   }
 
-  std::unordered_map<const std::string_view, EventState*>* events;
+  /**
+   * @brief If we create our own events that fire from within the code
+   * we register them with nullptr SinkObj here
+   */
+  void ProcessCustomEvents()
+  {
+    events->emplace("update", new EventState(nullptr));
+    events->emplace("tick", new EventState(nullptr));
+    events->emplace("browserMessage", new EventState(nullptr));
+    events->emplace("consoleMessage", new EventState(nullptr));
+  }
+
+  std::unordered_map<std::string_view, EventState*>* events;
 };

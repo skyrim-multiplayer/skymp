@@ -284,11 +284,6 @@ private:
 };
 }
 
-struct EventsGlobalStatePersistent
-{
-  std::shared_ptr<GameEventSinks> gameEventSinks;
-} g_persistent;
-
 struct EventsGlobalState
 {
   EventsGlobalState()
@@ -338,27 +333,22 @@ struct IpcShare
 
 std::atomic<uint32_t> g_chakraThreadId = 0;
 
-namespace {
-void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
-                  bool isOnce = false)
-{
-  EventsGlobalState::Callbacks callbacks =
-    isOnce ? g.callbacksOnce : g.callbacks;
-
-  if (isOnce)
-    g.callbacksOnce[eventName].clear();
-
-  for (auto& f : callbacks[eventName]) {
-    f.Call(arguments);
-  }
-}
-}
-
 void EventsApi::SendEvent(const char* eventName,
                           const std::vector<JsValue>& arguments)
 {
-  CallCalbacks(eventName, arguments);
-  CallCalbacks(eventName, arguments, true);
+  auto manager = EventManager::GetSingleton();
+
+  auto cbObjects = manager->GetCallbackObjects(eventName);
+
+  if (!cbObjects || cbObjects->empty())
+    return;
+
+  for (const auto& obj : *cbObjects) {
+    obj.second->callback->Call(arguments);
+    if (obj.second->runOnce) {
+      manager->Unsubscribe(obj.first, eventName);
+    }
+  }
 }
 
 void EventsApi::Clear()
@@ -490,28 +480,6 @@ void EventsApi::SendConsoleMsgEvent(const char* msg_)
     auto obj = JsValue::Object();
     obj.SetProperty("message", JsValue::String(msg));
     EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
-  });
-}
-
-void EventsApi::SendMenuOpen(const char* menuName)
-{
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-    auto obj = JsValue::Object();
-
-    obj.SetProperty("name", JsValue::String(menuName));
-
-    SendEvent("menuOpen", { JsValue::Undefined(), obj });
-  });
-}
-
-void EventsApi::SendMenuClose(const char* menuName)
-{
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-    auto obj = JsValue::Object();
-
-    obj.SetProperty("name", JsValue::String(menuName));
-
-    SendEvent("menuClose", { JsValue::Undefined(), obj });
   });
 }
 

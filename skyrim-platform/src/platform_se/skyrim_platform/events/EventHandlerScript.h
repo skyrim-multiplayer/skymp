@@ -228,64 +228,61 @@ public:
 private:
   EventHandlerScript()
   {
-    AppendSink<RE::TESActivateEvent>(&std::vector{ "activate" });
+    AppendSink<RE::TESActivateEvent>(CreateEV({ "activate" }));
     AppendSink<RE::TESActiveEffectApplyRemoveEvent>(
-      &std::vector{ "effectStart", "effectFinish" });
+      CreateEV({ "effectStart", "effectFinish" }));
     AppendSink<RE::TESActorLocationChangeEvent>(
-      &std::vector{ "locationChanged" });
-    AppendSink<RE::TESBookReadEvent>(&std::vector{ "bookRead" });
+      CreateEV({ "locationChanged" }));
+    AppendSink<RE::TESBookReadEvent>(CreateEV({ "bookRead" }));
     AppendSink<RE::TESCellAttachDetachEvent>(
-      &std::vector{ "cellAttach", "cellDetach" });
-    AppendSink<RE::TESCellFullyLoadedEvent>(&std::vector{ "cellFullyLoaded" });
-    AppendSink<RE::TESCombatEvent>(&std::vector{ "combatState" });
-    AppendSink<RE::TESContainerChangedEvent>(
-      &std::vector{ "containerChanged" });
-    AppendSink<RE::TESDeathEvent>(&std::vector{ "deathEnd", "deathStart" });
+      CreateEV({ "cellAttach", "cellDetach" }));
+    AppendSink<RE::TESCellFullyLoadedEvent>(CreateEV({ "cellFullyLoaded" }));
+    AppendSink<RE::TESCombatEvent>(CreateEV({ "combatState" }));
+    AppendSink<RE::TESContainerChangedEvent>(CreateEV({ "containerChanged" }));
+    AppendSink<RE::TESDeathEvent>(CreateEV({ "deathEnd", "deathStart" }));
     AppendSink<RE::TESDestructionStageChangedEvent>(
-      &std::vector{ "destructionStageChanged" });
-    AppendSink<RE::TESEnterBleedoutEvent>(&std::vector{ "enterBleedout" });
-    AppendSink<RE::TESEquipEvent>(&std::vector{ "equip", "unequip" });
-    AppendSink<RE::TESFastTravelEndEvent>(&std::vector{ "fastTravelEnd" });
+      CreateEV({ "destructionStageChanged" }));
+    AppendSink<RE::TESEnterBleedoutEvent>(CreateEV({ "enterBleedout" }));
+    AppendSink<RE::TESEquipEvent>(CreateEV({ "equip", "unequip" }));
+    AppendSink<RE::TESFastTravelEndEvent>(CreateEV({ "fastTravelEnd" }));
     AppendSink<RE::TESFurnitureEvent>(
-      &std::vector{ "furnitureExit", "furnitureEnter" });
-    AppendSink<RE::TESGrabReleaseEvent>(&std::vector{ "grabRelease" });
-    AppendSink<RE::TESHitEvent>(&std::vector{ "hit" });
-    AppendSink<RE::TESInitScriptEvent>(&std::vector{ "scriptInit" });
-    AppendSink<RE::TESLoadGameEvent>(&std::vector{ "loadGame" });
-    AppendSink<RE::TESLockChangedEvent>(&std::vector{ "lockChanged" });
-    AppendSink<RE::TESMagicEffectApplyEvent>(
-      &std::vector{ "magicEffectApply" });
-    AppendSink<RE::TESMagicWardHitEvent>(&std::vector{ "wardHit" });
-    AppendSink<RE::TESMoveAttachDetachEvent>(
-      &std::vector{ "moveAttachDetach" });
-    AppendSink<RE::TESObjectLoadedEvent>(&std::vector{ "objectLoaded" });
-    // AppendSink<RE::TESObjectREFRTranslationEvent>(&std::vector{
-    // "translationFailed", "translationAlmostCompleted",
-    // "translationCompleted" });
-    AppendSink<RE::TESOpenCloseEvent>(&std::vector{ "open", "close" });
+      CreateEV({ "furnitureExit", "furnitureEnter" }));
+    AppendSink<RE::TESGrabReleaseEvent>(CreateEV({ "grabRelease" }));
+    AppendSink<RE::TESHitEvent>(CreateEV({ "hit" }));
+    AppendSink<RE::TESInitScriptEvent>(CreateEV({ "scriptInit" }));
+    AppendSink<RE::TESLoadGameEvent>(CreateEV({ "loadGame" }));
+    AppendSink<RE::TESLockChangedEvent>(CreateEV({ "lockChanged" }));
+    AppendSink<RE::TESMagicEffectApplyEvent>(CreateEV({ "magicEffectApply" }));
+    AppendSink<RE::TESMagicWardHitEvent>(CreateEV({ "wardHit" }));
+    AppendSink<RE::TESMoveAttachDetachEvent>(CreateEV({ "moveAttachDetach" }));
+    AppendSink<RE::TESObjectLoadedEvent>(CreateEV({ "objectLoaded" }));
+    AppendSink<RE::TESObjectREFRTranslationEvent>(
+      CreateEV({ "translationFailed", "translationAlmostCompleted",
+                 "translationCompleted" }));
+    AppendSink<RE::TESOpenCloseEvent>(CreateEV({ "open", "close" }));
     AppendSink<RE::TESPackageEvent>(
-      &std::vector{ "packageStart", "packageChange", "packageEnd" });
-    AppendSink<RE::TESPerkEntryRunEvent>(&std::vector{ "perkEntryRun" });
-    AppendSink<RE::TESPlayerBowShotEvent>(&std::vector{ "playerBowShot" });
-    AppendSink<RE::TESQuestInitEvent>(&std::vector{ "questInit" });
-    AppendSink<RE::TESQuestStageEvent>(&std::vector{ "questStage" });
+      CreateEV({ "packageStart", "packageChange", "packageEnd" }));
+    AppendSink<RE::TESPerkEntryRunEvent>(CreateEV({ "perkEntryRun" }));
+    AppendSink<RE::TESPlayerBowShotEvent>(CreateEV({ "playerBowShot" }));
+    AppendSink<RE::TESQuestInitEvent>(CreateEV({ "questInit" }));
+    AppendSink<RE::TESQuestStageEvent>(CreateEV({ "questStage" }));
     AppendSink<RE::TESQuestStartStopEvent>(
-      &std::vector{ "questStart", "questStop" });
-    AppendSink<RE::TESResetEvent>(&std::vector{ "reset" });
-    // AppendSink<RE::TESSceneActionEvent>(&std::vector{ "sceneAction" });
-    AppendSink<RE::TESSellEvent>(&std::vector{ "sell" });
-    AppendSink<RE::TESSleepStartEvent>(&std::vector{ "sleepStart" });
-    AppendSink<RE::TESSleepStopEvent>(&std::vector{ "sleepStop" });
-    AppendSink<RE::TESSpellCastEvent>(&std::vector{ "spellCast" });
+      CreateEV({ "questStart", "questStop" }));
+    AppendSink<RE::TESResetEvent>(CreateEV({ "reset" }));
+    AppendSink<RE::TESSceneActionEvent>(CreateEV({ "sceneAction" }));
+    AppendSink<RE::TESSellEvent>(CreateEV({ "sell" }));
+    AppendSink<RE::TESSleepStartEvent>(CreateEV({ "sleepStart" }));
+    AppendSink<RE::TESSleepStopEvent>(CreateEV({ "sleepStop" }));
+    AppendSink<RE::TESSpellCastEvent>(CreateEV({ "spellCast" }));
     AppendSink<RE::TESSwitchRaceCompleteEvent>(
-      &std::vector{ "switchRaceComplete" });
-    AppendSink<RE::TESTrackedStatsEvent>(&std::vector{ "trackedStats" });
-    AppendSink<RE::TESTriggerEnterEvent>(&std::vector{ "triggerEnter" });
-    AppendSink<RE::TESTriggerEvent>(&std::vector{ "trigger" });
-    AppendSink<RE::TESTriggerLeaveEvent>(&std::vector{ "triggerLeave" });
-    AppendSink<RE::TESUniqueIDChangeEvent>(&std::vector{ "uniqueIdChange" });
-    AppendSink<RE::TESWaitStartEvent>(&std::vector{ "waitStart" });
-    AppendSink<RE::TESWaitStopEvent>(&std::vector{ "waitStop" });
+      CreateEV({ "switchRaceComplete" }));
+    AppendSink<RE::TESTrackedStatsEvent>(CreateEV({ "trackedStats" }));
+    AppendSink<RE::TESTriggerEnterEvent>(CreateEV({ "triggerEnter" }));
+    AppendSink<RE::TESTriggerEvent>(CreateEV({ "trigger" }));
+    AppendSink<RE::TESTriggerLeaveEvent>(CreateEV({ "triggerLeave" }));
+    AppendSink<RE::TESUniqueIDChangeEvent>(CreateEV({ "uniqueIdChange" }));
+    AppendSink<RE::TESWaitStartEvent>(CreateEV({ "waitStart" }));
+    AppendSink<RE::TESWaitStopEvent>(CreateEV({ "waitStop" }));
   };
   EventHandlerScript(const EventHandlerScript&) = delete;
   EventHandlerScript(EventHandlerScript&&) = delete;

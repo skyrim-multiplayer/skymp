@@ -2,10 +2,8 @@
 
 #include "EventHandlerBase.h"
 
-using EventResult = RE::BSEventNotifyControl;
-
 class EventHandlerStory final
-  : EventHandlerBase
+  : public EventHandlerBase
   , public RE::BSTEventSink<RE::ActorKill::Event>
   , public RE::BSTEventSink<RE::BooksRead::Event>
   , public RE::BSTEventSink<RE::CriticalHit::Event>
@@ -25,8 +23,6 @@ public:
     static EventHandlerStory singleton;
     return &singleton;
   }
-
-  EventMap FetchEvents() override { return sinks; }
 
   EventResult ProcessEvent(const RE::ActorKill::Event* event,
                            RE::BSTEventSource<RE::ActorKill::Event>*) override;
@@ -78,30 +74,28 @@ private:
   EventHandlerStory()
   {
     // TODO: implement these on JS side
-    AppendSink<RE::ActorKill, RE::ActorKill::Event>(
-      &std::vector{ "actorKill" });
-    AppendSink<RE::BooksRead, RE::BooksRead::Event>(
-      &std::vector{ "booksRead" });
+    AppendSink<RE::ActorKill, RE::ActorKill::Event>(CreateEV({ "actorKill" }));
+    AppendSink<RE::BooksRead, RE::BooksRead::Event>(CreateEV({ "booksRead" }));
     AppendSink<RE::CriticalHit, RE::CriticalHit::Event>(
-      &std::vector{ "criticalHit" });
+      CreateEV({ "criticalHit" }));
     AppendSink<RE::DisarmedEvent, RE::DisarmedEvent::Event>(
-      &std::vector{ "disarmedEvent" });
+      CreateEV({ "disarmedEvent" }));
     AppendSink<RE::DragonSoulsGained, RE::DragonSoulsGained::Event>(
-      &std::vector{ "dragonSoulsGained" });
+      CreateEV({ "dragonSoulsGained" }));
     AppendSink<RE::ItemHarvested, RE::ItemHarvested::Event>(
-      &std::vector{ "itemHarvested" });
+      CreateEV({ "itemHarvested" }));
     AppendSink<RE::LevelIncrease, RE::LevelIncrease::Event>(
-      &std::vector{ "levelIncrease" });
+      CreateEV({ "levelIncrease" }));
     AppendSink<RE::LocationDiscovery, RE::LocationDiscovery::Event>(
-      &std::vector{ "locationDiscovery" });
+      CreateEV({ "locationDiscovery" }));
     AppendSink<RE::ShoutAttack, RE::ShoutAttack::Event>(
-      &std::vector{ "shoutAttack" });
+      CreateEV({ "shoutAttack" }));
     AppendSink<RE::SkillIncrease, RE::SkillIncrease::Event>(
-      &std::vector{ "skillIncrease" });
+      CreateEV({ "skillIncrease" }));
     AppendSink<RE::SoulsTrapped, RE::SoulsTrapped::Event>(
-      &std::vector{ "soulsTrapped" });
+      CreateEV({ "soulsTrapped" }));
     AppendSink<RE::SpellsLearned, RE::SpellsLearned::Event>(
-      &std::vector{ "spellsLearned" });
+      CreateEV({ "spellsLearned" }));
   };
   EventHandlerStory(const EventHandlerStory&) = delete;
   EventHandlerStory(EventHandlerStory&&) = delete;

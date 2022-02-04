@@ -13,11 +13,17 @@ EventResult EventHandlerMisc::ProcessEvent(
 
   const char* menuName = event->menuName.c_str();
 
-  if (event->opening) {
-    EventsApi::SendMenuOpen(menuName);
-  } else {
-    EventsApi::SendMenuClose(menuName);
-  }
+  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+    auto obj = JsValue::Object();
+
+    AddProperty(&obj, "name", menuName);
+
+    if (event->opening) {
+      EventsApi::SendEvent("menuOpen", { JsValue::Undefined(), obj });
+    } else {
+      EventsApi::SendEvent("menuClose", { JsValue::Undefined(), obj });
+    }
+  });
 
   return EventResult::kContinue;
 };
