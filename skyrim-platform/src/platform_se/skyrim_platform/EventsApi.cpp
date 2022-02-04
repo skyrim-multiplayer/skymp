@@ -1,12 +1,12 @@
 #include "EventsApi.h"
-#include "EventManager.h"
-#include "EventUtils.h"
 #include "InvalidArgumentException.h"
 #include "NativeObject.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
+#include "events/EventManager.h"
+#include "events/EventUtils.h"
 
 namespace {
 enum class PatternType
@@ -516,122 +516,30 @@ void EventsApi::SendMenuClose(const char* menuName)
 }
 
 namespace {
-JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
+JsValue Subscribe(const JsFunctionArguments& args, bool runOnce = false)
 {
-  if (!g_persistent.gameEventSinks) {
-    g_persistent.gameEventSinks = std::make_shared<GameEventSinks>();
-  }
-
   auto eventName = args[1].ToString();
   auto callback = args[2];
 
-  std::set<std::string> events = { "tick",
-                                   "update",
-                                   "effectStart",
-                                   "effectFinish",
-                                   "magicEffectApply",
-                                   "equip",
-                                   "unequip",
-                                   "hit",
-                                   "containerChanged",
-                                   "deathStart",
-                                   "deathEnd",
-                                   "loadGame",
-                                   "combatState",
-                                   "reset",
-                                   "scriptInit",
-                                   "trackedStats",
-                                   "uniqueIdChange",
-                                   "switchRaceComplete",
-                                   "cellFullyLoaded",
-                                   "cellAttach",
-                                   "cellDetach",
-                                   "grabRelease",
-                                   "lockChanged",
-                                   "moveAttachDetach",
-                                   "objectLoaded",
-                                   "waitStart",
-                                   "waitStop",
-                                   "activate",
-                                   "ipcMessage",
-                                   "menuOpen",
-                                   "menuClose",
-                                   "browserMessage",
-                                   "consoleMessage",
-                                   "spellCast",
-                                   "open",
-                                   "close",
-                                   "questInit",
-                                   "questStart",
-                                   "questStop",
-                                   "questStage",
-                                   "trigger",
-                                   "triggerEnter",
-                                   "triggerLeave",
-                                   "sleepStart",
-                                   "sleepStop",
-                                   "locationChanged",
-                                   "bookRead",
-                                   "sell",
-                                   "furnitureEnter",
-                                   "furnitureExit",
-                                   "wardHit",
-                                   "packageStart",
-                                   "packageChange",
-                                   "packageEnd",
-                                   "enterBleedout",
-                                   "destructionStageChanged",
-                                   "sceneAction",
-                                   "playerBowShot",
-                                   "fastTravelEnd",
-                                   "perkEntryRun",
-                                   "translationFailed",
-                                   "translationAlmostCompleted",
-                                   "translationCompleted",
-                                   "actionWeaponSwing",
-                                   "actionBeginDraw",
-                                   "actionEndDraw",
-                                   "actionBowDraw",
-                                   "actionBowRelease",
-                                   "actionBeginSheathe",
-                                   "actionEndSheathe",
-                                   "actionSpellCast",
-                                   "actionSpellFire",
-                                   "actionVoiceCast",
-                                   "actionVoiceFire",
-                                   "cameraStateChanged",
-                                   "crosshairRefChanged",
-                                   "niNodeUpdate",
-                                   "modEvent",
-                                   "positionPlayer",
-                                   "footstep" };
+  auto handle =
+    EventManager::GetSingleton()->Subscribe(eventName, callback, runOnce);
 
-  if (events.count(eventName) == 0) {
-    throw InvalidArgumentException("eventName", eventName);
-  }
-
-  auto handle = isOnce
-    ? EventManager::GetSingleton()->Subscribe(eventName, callback, true)
-    : EventManager::GetSingleton()->Subscribe(eventName, callback);
   auto obj = JsValue::Object();
   AddProperty(&obj, "uid", handle->uid);
   AddProperty(&obj, "eventName", handle->eventName);
 
-  // remove this
-  // isOnce ? g.callbacksOnce[eventName].push_back(callback)
-  //        : g.callbacks[eventName].push_back(callback);
   return obj;
 }
 }
 
 JsValue EventsApi::On(const JsFunctionArguments& args)
 {
-  return AddCallback(args);
+  return Subscribe(args);
 }
 
 JsValue EventsApi::Once(const JsFunctionArguments& args)
 {
-  return AddCallback(args, true);
+  return Subscribe(args, true);
 }
 
 JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)

@@ -78,18 +78,30 @@ private:
   EventHandlerStory()
   {
     // TODO: implement these on JS side
-    AppendSink<RE::ActorKill>(&std::vector{ "actorkill" });
-    AppendSink<RE::BooksRead>(&std::vector{ "booksread" });
-    AppendSink<RE::CriticalHit>(&std::vector{ "criticalhit" });
-    AppendSink<RE::DisarmedEvent>(&std::vector{ "disarmedevent" });
-    AppendSink<RE::DragonSoulsGained>(&std::vector{ "dragonsoulsgained" });
-    AppendSink<RE::ItemHarvested>(&std::vector{ "itemharvested" });
-    AppendSink<RE::LevelIncrease>(&std::vector{ "levelincrease" });
-    AppendSink<RE::LocationDiscovery>(&std::vector{ "locationdiscovery" });
-    AppendSink<RE::ShoutAttack>(&std::vector{ "shoutattack" });
-    AppendSink<RE::SkillIncrease>(&std::vector{ "skillincrease" });
-    AppendSink<RE::SoulsTrapped>(&std::vector{ "soulstrapped" });
-    AppendSink<RE::SpellsLearned>(&std::vector{ "spellslearned" });
+    AppendSink<RE::ActorKill, RE::ActorKill::Event>(
+      &std::vector{ "actorKill" });
+    AppendSink<RE::BooksRead, RE::BooksRead::Event>(
+      &std::vector{ "booksRead" });
+    AppendSink<RE::CriticalHit, RE::CriticalHit::Event>(
+      &std::vector{ "criticalHit" });
+    AppendSink<RE::DisarmedEvent, RE::DisarmedEvent::Event>(
+      &std::vector{ "disarmedEvent" });
+    AppendSink<RE::DragonSoulsGained, RE::DragonSoulsGained::Event>(
+      &std::vector{ "dragonSoulsGained" });
+    AppendSink<RE::ItemHarvested, RE::ItemHarvested::Event>(
+      &std::vector{ "itemHarvested" });
+    AppendSink<RE::LevelIncrease, RE::LevelIncrease::Event>(
+      &std::vector{ "levelIncrease" });
+    AppendSink<RE::LocationDiscovery, RE::LocationDiscovery::Event>(
+      &std::vector{ "locationDiscovery" });
+    AppendSink<RE::ShoutAttack, RE::ShoutAttack::Event>(
+      &std::vector{ "shoutAttack" });
+    AppendSink<RE::SkillIncrease, RE::SkillIncrease::Event>(
+      &std::vector{ "skillIncrease" });
+    AppendSink<RE::SoulsTrapped, RE::SoulsTrapped::Event>(
+      &std::vector{ "soulsTrapped" });
+    AppendSink<RE::SpellsLearned, RE::SpellsLearned::Event>(
+      &std::vector{ "spellsLearned" });
   };
   EventHandlerStory(const EventHandlerStory&) = delete;
   EventHandlerStory(EventHandlerStory&&) = delete;

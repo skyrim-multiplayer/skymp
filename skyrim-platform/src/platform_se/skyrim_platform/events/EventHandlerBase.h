@@ -1,40 +1,45 @@
 #pragma once
 
 /**
- * @brief Each instance should possess functions to manipulate unique sink, so
- * we dont have to rely on handlers to do that
+ * @brief Each instance should be able to manipulate its own sink,
+ * so we dont have to rely on handlers to do that.
  */
 struct Sink
 {
-  Sink(std::function<bool()> _add, std::function<bool()> _remove,
+  Sink(std::function<void()> _add, std::function<void()> _remove,
        std::function<bool()> _validate)
-    : Add(_add)
-    , Remove(_remove)
+    : Activate(_add)
+    , Deactivate(_remove)
     , IsActive(_validate)
   {
   }
-  std::function<bool()> Add;
-  std::function<bool()> Remove;
+  std::function<void()> Activate;
+  std::function<void()> Deactivate;
   std::function<bool()> IsActive;
 };
 
 using EventMap = std::unordered_map<std::vector<const char*>*, const Sink*>*;
+using EventResult = RE::BSEventNotifyControl;
 
 class EventHandlerBase
 {
 public:
   virtual EventHandlerBase* GetSingleton();
 
-  virtual EventMap FetchEvents();
+  /**
+   * @brief Fetches event map from event handlers.
+   * Returns std::unordered_map<std::vector<const char*>*, const Sink*>*
+   */
+  EventMap FetchEvents() { return sinks; }
 
 protected:
   EventMap sinks;
   std::unordered_set<std::vector<const char*>*>* activeSinks;
 
   /**
-   * @brief Check if activeSinks set contains event name, meaning sink is
-   * active.
-   * @param events vector ptr with event names
+   * @brief Check if activeSinks set contains event name,
+   * meaning sink is active.
+   * @param events ptr to vector with event names
    */
   bool IsActiveSink(std::vector<const char*>* events)
   {
@@ -42,115 +47,99 @@ protected:
   }
 
   /**
-   * @brief Add event name for activated sink to activeSinks set.
-   * @param events vector ptr with event names
-   */
-  bool AddActiveSink(std::vector<const char*>* events)
-  {
-    activeSinks->emplace(events);
-    return true;
-  }
-
-  /**
-   * @brief Remove event name for deactivated sink from activeSinks set.
-   * @param events vector ptr with event names
-   */
-  bool RemoveActiveSink(std::vector<const char*>* events)
-  {
-    activeSinks->erase(events);
-    return true;
-  }
-
-  /**
    * @brief Create new Sink class instance and add it to sinks map with
-   * corresponding event name. x_sink<E>()
+   * corresponding vector of event names x_sink<E>()
    */
   template <class E>
-  bool AppendSink(std::vector<const char*>* events)
+  void AppendSink(std::vector<const char*>* events)
   {
-    if (sinks->contains(events))
-      return false;
+    if (sinks->contains(events)) {
+      logger::critical(
+        "Attempt to append EventSink for {} failed. Already exists.",
+        typeid(E).name());
+
+      return;
+    }
 
     auto sink = new Sink(
-      [&](bool) {
-        if (IsActiveSink(events))
-          return false;
-
+      [&] {
         add_sink<E>();
-        return AddActiveSink(events);
+        activeSinks->emplace(events);
       },
-      [&](bool) {
-        if (!IsActiveSink(events))
-          return false;
-
+      [&] {
         remove_sink<E>();
-        return RemoveActiveSink(events);
+        activeSinks->erase(events);
       },
       [&](bool) { return IsActiveSink(events); });
+
     sinks->emplace(events, sink);
-    return true;
   }
 
   /**
    * @brief Create new Sink class instance and add it to sinks map with
-   * corresponding event name. x_sink<T, T::Event>()
+   * corresponding vector of event names. x_sink<T, T::Event>()
+   *
+   * There might be a way to validate T::Event with c++20 concepts
+   * so we dont have to pass second class
    */
-  template <class T, class E = decltype(&T::Event)>
-  bool AppendSink(std::vector<const char*>* events)
+  template <class T, class E>
+  void AppendSink(std::vector<const char*>* events)
   {
-    if (sinks->contains(events))
-      return false;
+    if (sinks->contains(events)) {
+      logger::critical(
+        "Attempt to append EventSink for {} failed. Already exists.",
+        typeid(E).name());
+
+      return;
+    }
 
     auto sink = new Sink(
       [&](bool) {
-        if (IsActiveSink(events))
-          return false;
-
         add_sink<T, E>();
-        return AddActiveSink(events);
+        activeSinks->emplace(events);
       },
       [&](bool) {
-        if (!IsActiveSink(events))
-          return false;
-
         remove_sink<T, E>();
-        return RemoveActiveSink(events);
+        activeSinks->erase(events);
       },
       [&](bool) { return IsActiveSink(events); });
+
     sinks->emplace(events, sink);
-    return true;
   }
 
   /**
    * @brief Create new Sink class instance and add it to sinks map with
-   * corresponding event name. x_sink(holder)
+   * corresponding vector of event names x_sink(holder)
    */
-  template <class T = RE::BSTEventSource<class E>>
-  bool AppendSink(std::vector<const char*>* events, T* holder)
+  template <class E>
+  void AppendSink(std::vector<const char*>* events,
+                  RE::BSTEventSource<E>* holder)
   {
-    if (sinks->contains(events))
-      return false;
+    if (sinks->contains(events)) {
+      logger::critical(
+        "Attempt to append EventSink for {} failed. Already exists.",
+        typeid(E).name());
+
+      return;
+    }
 
     auto sink = new Sink(
       [&](bool) {
-        if (IsActiveSink(events))
-          return false;
-
         add_sink(holder);
-        return AddActiveSink(events);
+        activeSinks->emplace(events);
       },
       [&](bool) {
-        if (!IsActiveSink(events))
-          return false;
-
         remove_sink(holder);
-        return RemoveActiveSink(events);
+        activeSinks->erase(events);
       },
       [&](bool) { return IsActiveSink(events); });
+
     sinks->emplace(events, sink);
-    return true;
   }
 
+  /**
+   * @brief Registers sink using specific event source holder.
+   */
   template <class E>
   static void add_sink(RE::BSTEventSource<E>* holder)
   {
@@ -158,6 +147,9 @@ protected:
     logger::debug("Registered {} handler"sv, typeid(E).name());
   }
 
+  /**
+   * @brief Registers sink using ScriptEventSourceHolder.
+   */
   template <class E>
   static void add_sink()
   {
@@ -167,6 +159,10 @@ protected:
     }
   }
 
+  /**
+   * @brief Registers sink using T::GetEventSource() holder.
+   * Used by story events.
+   */
   template <class T, class E>
   static void add_sink()
   {
@@ -176,6 +172,9 @@ protected:
     }
   }
 
+  /**
+   * @brief Unregisters sink using specific event source holder.
+   */
   template <class E>
   static void remove_sink(RE::BSTEventSource<E>* holder)
   {
@@ -183,6 +182,9 @@ protected:
     logger::debug("Unregistered {} handler"sv, typeid(E).name());
   }
 
+  /**
+   * @brief Unregisters sink using ScriptEventSourceHolder.
+   */
   template <class E>
   static void remove_sink()
   {
@@ -192,7 +194,11 @@ protected:
     }
   }
 
-  template <class T, class E = decltype(&T::Event)>
+  /**
+   * @brief Unregisters sink using T::GetEventSource() holder.
+   * Used by story events.
+   */
+  template <class T, class E>
   static void remove_sink()
   {
     if (const auto holder = T::GetEventSource()) {

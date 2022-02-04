@@ -2,10 +2,8 @@
 
 #include "EventHandlerBase.h"
 
-using EventResult = RE::BSEventNotifyControl;
-
 class EventHandlerSKSE final
-  : EventHandlerBase
+  : public EventHandlerBase
   , public RE::BSTEventSink<SKSE::ActionEvent>
   , public RE::BSTEventSink<SKSE::CameraEvent>
   , public RE::BSTEventSink<SKSE::CrosshairRefEvent>
@@ -18,8 +16,6 @@ public:
     static EventHandlerSKSE singleton;
     return &singleton;
   }
-
-  EventMap FetchEvents() override { return sinks; }
 
   EventResult ProcessEvent(const SKSE::ActionEvent* event,
                            RE::BSTEventSource<SKSE::ActionEvent>*) override;

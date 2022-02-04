@@ -2,10 +2,8 @@
 
 #include "EventHandlerBase.h"
 
-using EventResult = RE::BSEventNotifyControl;
-
 class EventHandlerMisc final
-  : EventHandlerBase
+  : public EventHandlerBase
   , public RE::BSTEventSink<RE::BGSFootstepEvent>
   , public RE::BSTEventSink<RE::MenuOpenCloseEvent>
   , public RE::BSTEventSink<RE::PositionPlayerEvent>
@@ -16,8 +14,6 @@ public:
     static EventHandlerMisc singleton;
     return &singleton;
   }
-
-  EventMap FetchEvents() override { return sinks; }
 
   EventResult ProcessEvent(const RE::BGSFootstepEvent* event,
                            RE::BSTEventSource<RE::BGSFootstepEvent>*) override;
@@ -36,18 +32,16 @@ private:
     // No implementation for this event on JS side atm,
     // so just register it to proc constantly
     if (const auto ui = RE::UI::GetSingleton()) {
-      ui->GetEventSource<RE::MenuOpenCloseEvent>()->AddEventSink(
-        GetSingleton());
+      add_sink<RE::MenuOpenCloseEvent>(ui);
     }
 
     if (const auto manager = RE::BGSFootstepManager::GetSingleton()) {
       AppendSink(&std::vector{ "footstep" }, manager);
     }
 
-    if (const auto pc =
-          RE::PlayerCharacter::GetSingleton()
-            ->As<RE::BSTEventSource<RE::PositionPlayerEvent>>()) {
-      AppendSink(&std::vector{ "positionPlayer" }, pc);
+    if (const auto pc = RE::PlayerCharacter::GetSingleton()) {
+      AppendSink<RE::PositionPlayerEvent>(&std::vector{ "positionPlayer" },
+                                          pc);
     }
   }
 

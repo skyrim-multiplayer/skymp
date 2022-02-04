@@ -2,10 +2,8 @@
 
 #include "EventHandlerBase.h"
 
-using EventResult = RE::BSEventNotifyControl;
-
 class EventHandlerScript final
-  : EventHandlerBase
+  : public EventHandlerBase
   , public RE::BSTEventSink<RE::TESActivateEvent>
   , public RE::BSTEventSink<RE::TESActiveEffectApplyRemoveEvent>
   , public RE::BSTEventSink<RE::TESActorLocationChangeEvent>
@@ -58,8 +56,6 @@ public:
     static EventHandlerScript singleton;
     return &singleton;
   }
-
-  EventMap FetchEvents() override { return sinks; }
 
   EventResult ProcessEvent(const RE::TESActivateEvent* event,
                            RE::BSTEventSource<RE::TESActivateEvent>*) override;

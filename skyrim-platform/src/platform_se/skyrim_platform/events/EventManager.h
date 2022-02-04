@@ -3,6 +3,7 @@
 #include "EventHandlerSKSE.h"
 #include "EventHandlerScript.h"
 #include "EventHandlerStory.h"
+#include "InvalidArgumentException.h"
 
 struct EventHandle
 {
@@ -18,19 +19,19 @@ struct EventHandle
 
 struct CallbackObject
 {
-  CallbackObject(JsValue* _callback, bool _onceFlag)
+  CallbackObject(JsValue* _callback, bool _runOnce)
     : callback(_callback)
-    , onceFlag(_onceFlag)
+    , runOnce(_runOnce)
   {
   }
 
   JsValue* callback;
-  bool onceFlag;
+  bool runOnce;
 };
 
 struct EventState
 {
-  EventState(::Sink _sink)
+  EventState(const ::Sink* _sink)
     : sink(_sink)
   {
   }
@@ -48,18 +49,25 @@ public:
     return &singleton;
   }
 
-  EventHandle* Subscribe(std::string eventName, JsValue callback,
-                         bool onceFlag = false)
+  EventHandle* Subscribe(std::string eventName, JsValue callback, bool runOnce)
   {
+    // check if event is supported
     auto event = (*events)[eventName];
-    if (!event)
-      return nullptr;
+    if (!event) {
+      logger::critical("Subscription to event failed. "
+                       "{} is not a valid argument for eventName",
+                       eventName);
+      throw InvalidArgumentException("eventName", eventName);
+      return new EventHandle(0, "");
+    }
 
+    // if sink for that event is not active activate it, duh
     if (!event->sink->IsActive())
-      event->sink->Add();
+      event->sink->Activate();
 
+    // use callback pointer as unique id for that callback
     auto uid = reinterpret_cast<uintptr_t>(&callback);
-    event->callbacks->emplace(uid, new CallbackObject(&callback, onceFlag));
+    event->callbacks->emplace(uid, new CallbackObject(&callback, runOnce));
 
     return new EventHandle(uid, eventName);
   }
@@ -76,11 +84,17 @@ public:
     event->callbacks->erase(handle->uid);
 
     if (event->callbacks->size() == 0)
-      event->sink->Remove();
+      event->sink->Deactivate();
 
     return true;
   }
 
+  /**
+   * @brief Fetches collections of supported events from corresponding event
+   * handlers. Populates global event map with event names, corresponding Sink
+   * class instance and empty callback collection, which is being filled when
+   * JS plugin subscribes to an event.
+   */
   void Init()
   {
     if (const auto misc = EventHandlerMisc::GetSingleton()->FetchEvents()) {
@@ -103,6 +117,9 @@ public:
 
 private:
   EventManager() = default;
+  EventManager(const EventManager&) = delete;
+  EventManager(EventManager&&) = delete;
+
   ~EventManager() = default;
 
   void ProcessMap(EventMap map)
@@ -112,7 +129,7 @@ private:
         events->emplace((*item.first)[0], new EventState(item.second));
       } else {
         for (const auto& eventName : *item.first) {
-          events->emplace(eventName, new EventState(item.second););
+          events->emplace(eventName, new EventState(item.second));
         }
       }
     }
