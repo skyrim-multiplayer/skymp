@@ -463,8 +463,7 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
     default:
       return;
   }
-  SetPercentages(hp, mp, sp);
-  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
+  NetSetPercentages(hp, mp, sp, std::chrono::steady_clock::now());
 }
 
 void MpActor::BeforeDestroy()
