@@ -24,7 +24,8 @@ export class DisableCheats {
         "forceAV",
         "setAV",
         "ToggleCollision",
-        "ToggleGodMode" // Disable unlimited carry weight
+        "ToggleGodMode", // Disable unlimited carry weight
+        "ToggleFreeCamera",
       ]
 
       // Disable commands from commandsToDisable
