@@ -20,7 +20,7 @@ describe("SweetPieGameModeListener: Activation default", () => {
 describe("SweetPieGameModeListener: DeathMatch", () => {
   test("Player should be able to join round via dialog window", () => {
     const controller = makePlayerController();
-    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', enabled: true }];
     const listener = new SweetPieGameModeListener(controller, maps);
 
     const res = listener.onPlayerActivateObject(1, listener.neutralPortal, 666);
@@ -50,6 +50,7 @@ describe("SweetPieGameModeListener: DeathMatch", () => {
     const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', safePlaceEnterDoors: ['bbb'] }];
     const listener = new SweetPieGameModeListener(controller, maps);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+    listener.getRounds()[0].state = 'running';
 
     const res = listener.onPlayerActivateObject(1, 'bbb', 666);
     expect(controller.sendChatMessage).toBeCalledWith(1, ...listener.noEnterSafePlaceMessage);
@@ -139,7 +140,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
   // TODO: Start right now if there are maximum players
   test("Round warmup must finish once timer reaches maximum", () => {
     const controller = makePlayerController();
-    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', mainSpawnPointName: 'whiterun:spawnPoint' }];
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', spawnPointNames: ['whiterun:spawnPoint'] }];
     const listener = new SweetPieGameModeListener(controller, maps, 2);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 2);
@@ -352,7 +353,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
 
   test("Sets custom names for portals and doors", () => {
     const controller = makePlayerController();
-    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', leaveRoundDoors: ['whiterun:away'] }];
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace', leaveRoundDoors: ['whiterun:away'], enabled: true }];
     const listener = new SweetPieGameModeListener(controller, maps);
 
     expect(controller.updateCustomName).toBeCalledTimes(4);
