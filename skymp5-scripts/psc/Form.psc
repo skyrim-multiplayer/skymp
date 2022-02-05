@@ -8,3 +8,4 @@ float Function GetWeight() native
 String Function GetName() native
 bool Function HasKeyword(Keyword akKeyword) Native
 Function SetWorldModelPath(string path) native
+Function RegisterForSingleUpdate(float afInterval) native

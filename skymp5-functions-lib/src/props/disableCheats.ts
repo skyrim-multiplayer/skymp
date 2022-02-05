@@ -18,15 +18,19 @@ export class DisableCheats {
         ctx.sp.storage["disableCtrlPrtScnHotkeyCalled"] = true;
         ctx.sp.disableCtrlPrtScnHotkey();
       }
-      
-      // Disable setav
-      ctx.sp.findConsoleCommand("setAV").execute = () => false;
 
-      // Disable tcl
-      ctx.sp.findConsoleCommand("ToggleCollision").execute = () => false;
+      const commandsToDisable: string[] = [
+        "modAV",
+        "forceAV",
+        "setAV",
+        "ToggleCollision",
+        "ToggleGodMode" // Disable unlimited carry weight
+      ]
 
-      // Disable tgm
-      ctx.sp.findConsoleCommand("ToggleGodMode").execute = () => false;
+      // Disable commands from commandsToDisable
+      commandsToDisable.forEach((command) => {
+        ctx.sp.findConsoleCommand(command).execute = () => false;
+      })
     };
   }
 }

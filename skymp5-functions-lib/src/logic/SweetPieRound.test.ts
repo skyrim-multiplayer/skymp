@@ -3,7 +3,7 @@ import { makePlayerController } from "./TestUtils";
 
 describe("SweetPie", () => {
   test("Is able to find available round", () => {
-    const rounds = new Array<SweetPieRound>({ state: 'running' }, { state: 'warmup' });
+    const rounds = new Array<SweetPieRound>({ state: 'running', map: { safePointName: 'safepoint', enabled: true } }, { state: 'warmup', map: { safePointName: 'safepoint', enabled: true } });
     expect(getAvailableRound(rounds, 1)).toEqual(rounds[1]);
   });
 });
@@ -39,12 +39,12 @@ describe("forceJoinRound", () => {
 });
 
 describe("forceLeaveRound", () => {
-  test("Leaving non-existing round does nothing", () => {
+  test("Leaving non-existing round teleports to the hardcoded hallpoint", () => {
     const rounds = new Array<SweetPieRound>();
     const controller = makePlayerController();
     forceLeaveRound(controller, rounds, 1);
-    expect(controller.setSpawnPoint).toBeCalledTimes(0);
-    expect(controller.teleport).toBeCalledTimes(0);
+    expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
+    expect(controller.teleport).toBeCalledWith(1, 'hall:spawnPoint');
   });
 
   test("Leaving a round teleports to the hall and removes from player set", () => {

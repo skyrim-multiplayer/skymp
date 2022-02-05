@@ -25,3 +25,29 @@ WorldSpace Function GetWorldSpace() Native
 Function SetScale(float afScale) Native
 Function MoveTo(ObjectReference akTarget, float afXOffset = 0.0, float afYOffset = 0.0, float afZOffset = 0.0, bool abMatchRotation = true) Native
 Function SetOpen(bool abOpen = true) Native
+Function BlockActivation(bool abBlocked = True) native
+bool Function IsActivationBlocked() native
+Function Enable(bool abFadeIn = false) native
+Function SetMotionType(int aeMotionType, bool abAllowActivate = true) native
+float Function GetHeadingAngle(ObjectReference akOther) native
+bool Function Activate(ObjectReference akActivator, bool abDefaultProcessingOnly = false) native
+Event OnActivate(ObjectReference akActionRef)
+EndEvent
+Event OnTrigger(ObjectReference akActionRef)
+EndEvent
+Event OnTriggerEnter(ObjectReference akActionRef)
+EndEvent
+Event OnTriggerLeave(ObjectReference akActionRef)
+EndEvent
+
+int Property Motion_Dynamic = 1 AutoReadOnly
+int Property Motion_SphereIntertia = 2 AutoReadOnly
+int Property Motion_BoxIntertia = 3 AutoReadOnly
+int Property Motion_Keyframed = 4 AutoReadOnly
+int Property Motion_Fixed = 5 AutoReadOnly
+int Property Motion_ThinBoxIntertia = 6 AutoReadOnly
+int Property Motion_Character = 7 AutoReadOnly
+
+float Property X = 0 AutoReadOnly
+float Property Y = 0 AutoReadOnly
+float Property Z = 0 AutoReadOnly

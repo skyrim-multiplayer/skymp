@@ -1,5 +1,5 @@
 import { GameModeListener } from "./logic/GameModeListener";
-import { PlayerController } from "./logic/PlayerController";
+import { Percentages, PlayerController } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/SweetPieRound";
 import { ChatProperty } from "./props/chatProperty";
 import { DialogProperty } from "./props/dialogProperty";
@@ -11,6 +11,24 @@ import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
+declare const nameUpdatesJson: string;
+
+const scriptName = (refrId: number) => {
+  const lookupRes = mp.lookupEspmRecordById(refrId);
+  if (lookupRes.record) {
+    const vmadIndex = lookupRes.record.fields.findIndex((field) => field.type === 'VMAD');
+    if (vmadIndex >= 0) {
+      const vmadData = lookupRes.record.fields[vmadIndex].data;
+      const strLength = vmadData[6] + (vmadData[7] << 8);
+      var strData: string = '';
+      for (var i = 0; i < strLength; i++) {
+        strData += String.fromCharCode(vmadData[8+i]).valueOf();
+      }
+      return strData;
+    }
+  }
+  return '';
+}
 
 const isTeleportDoor = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -30,6 +48,8 @@ const getName = (actorId: number) => {
 };
 
 export class MpApiInteractor {
+  private static customNames = new Map<number, string>();
+
   static setup(listener: GameModeListener) {
     MpApiInteractor.setupActivateHandler(listener);
     MpApiInteractor.setupChatHandler(listener);
@@ -50,8 +70,7 @@ export class MpApiInteractor {
         return true;
       }
 
-      const isTeleport = isTeleportDoor(target);
-      const res = listener.onPlayerActivateObject(caster, targetDesc, isTeleport);
+      const res = listener.onPlayerActivateObject(caster, targetDesc, target);
       if (res === 'continue') {
         return true;
       }
@@ -111,6 +130,28 @@ export class MpApiInteractor {
 
       for (const actorId of leftPlayers) {
         mp.set(actorId, 'eval', { commands: [], nextId: 0 });
+      }
+
+      for (const actorId of onlinePlayers) {
+        const nameUpdates = [];
+        for (const formId of mp.get(actorId, 'neighbors')) {
+          const name = MpApiInteractor.customNames.get(formId);
+          if (name !== undefined) {
+            nameUpdates.push([formId, name]);
+          }
+        }
+        if (!nameUpdates.length) {
+          continue;
+        }
+        EvalProperty.eval(actorId, () => {
+          for (const [formId, name] of JSON.parse(nameUpdatesJson)) {
+            const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
+            const ret = refr?.setDisplayName(name, true);
+            if (!ret) {
+              ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
+            }
+          }
+        }, { nameUpdatesJson: JSON.stringify(nameUpdates).replace(/\\/g, '\\\\').replace(/'/g, '\\\'') });
       }
 
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
@@ -185,6 +226,28 @@ export class MpApiInteractor {
       },
       getOnlinePlayers(): number[] {
         return PersistentStorage.getSingleton().onlinePlayers;
+      },
+      setPercentages(actorId: number, percentages: Percentages): void {
+        mp.set(
+          actorId,
+          'percentages',
+          {
+            health: percentages.health ?? 1.0,
+            magicka: percentages.magicka ?? 1.0,
+            stamina: percentages.stamina ?? 1.0
+          });
+      },
+      getPercentages(actorId: number): Percentages {
+        return mp.get(actorId, 'percentages');
+      },
+      getScriptName(refrId: number): string {
+        return scriptName(refrId);
+      },
+      isTeleportActivator(refrId: number): boolean {
+        return isTeleportDoor(refrId);
+      },
+      updateCustomName(formDesc: string, name: string): void {
+        MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
       },
     }
   }

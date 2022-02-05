@@ -15,7 +15,7 @@ const loginWidgetInfoObjName = "loginWidgetInfo";
 const registerEventKey = "registerRequiredEvent";
 const registerWidgetInfoObjName = "registerWidgetInfo";
 const openGitHubEventKey = "openGithub";
-const openPatreonEvetnKey = "openPatreon";
+const openPatreonEventKey = "openPatreon";
 const clearSavedAuthDataEventKey = "clearAuthData";
 
 /**
@@ -129,7 +129,7 @@ const onBrowserMessage = (): void => {
       case openGitHubEventKey:
         sp.win32.loadUrl(githubUrl);
         break;
-      case openPatreonEvetnKey:
+      case openPatreonEventKey:
         sp.win32.loadUrl(patreonUrl);
         break;
       default:
@@ -292,7 +292,7 @@ window.loginWidget = {
       type: "button",
       tags: ["BUTTON_STYLE_PATREON", "ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
       hint: "get a colored nickname and other bonuses for patrons",
-      click: () => window.skyrimPlatform.sendMessage("${openPatreonEvetnKey}")
+      click: () => window.skyrimPlatform.sendMessage("${openPatreonEventKey}")
     },
     {
       type: "icon",
@@ -413,7 +413,7 @@ window.registerWidget = {
       type: "button",
       tags: ["BUTTON_STYLE_PATREON", "ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
       hint: "get a colored nickname and other bonuses for patrons",
-      click: () => window.skyrimPlatform.sendMessage("${openPatreonEvetnKey}")
+      click: () => window.skyrimPlatform.sendMessage("${openPatreonEventKey}")
     },
     {
       type: "icon",
