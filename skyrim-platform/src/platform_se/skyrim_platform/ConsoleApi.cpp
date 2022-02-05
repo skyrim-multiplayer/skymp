@@ -43,7 +43,7 @@ bool AreCommandNamesValidAndEqual(const std::string& first,
     ? stricmp(first.data(), second.data()) == 0
     : false;
 }
-}  // namespace
+} // namespace
 
 JsValue ConsoleApi::PrintConsole(const JsFunctionArguments& args)
 {
@@ -226,10 +226,10 @@ JsValue GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
 }
 
 bool ConsoleCommand_Execute(const ObScriptParam* paramInfo,
-                           ScriptData* scriptData, TESObjectREFR* thisObj,
-                           TESObjectREFR* containingObj, Script* scriptObj,
-                           ScriptLocals* locals, double& result,
-                           UInt32& opcodeOffsetPtr)
+                            ScriptData* scriptData, TESObjectREFR* thisObj,
+                            TESObjectREFR* containingObj, Script* scriptObj,
+                            ScriptLocals* locals, double& result,
+                            UInt32& opcodeOffsetPtr)
 {
   std::pair<const std::string, ConsoleCommand>* iterator = nullptr;
 
@@ -297,7 +297,7 @@ bool ConsoleCommand_Execute(const ObScriptParam* paramInfo,
 }
 
 JsValue FindCommand(ObScriptCommand* iter, size_t size,
-                   const std::string& commandName)
+                    const std::string& commandName)
 {
   for (size_t i = 0; i < size; ++i) {
     ObScriptCommand* _iter = &iter[i];
@@ -322,18 +322,18 @@ JsValue FindCommand(ObScriptCommand* iter, size_t size,
   }
   return JsValue::Null();
 }
-}  // namespace
+} // namespace
 
 JsValue ConsoleApi::FindConsoleCommand(const JsFunctionArguments& args)
 {
   auto commandName = args[1].ToString();
 
-  JsValue res = FindCommand(g_firstConsoleCommand, kObScript_NumConsoleCommands,
-                           commandName);
+  JsValue res = FindCommand(g_firstConsoleCommand,
+                            kObScript_NumConsoleCommands, commandName);
 
   if (res.GetType() == JsValue::Type::Null)
     res = FindCommand(g_firstObScriptCommand, kObScript_NumObScriptCommands,
-                     commandName);
+                      commandName);
 
   return res;
 }
