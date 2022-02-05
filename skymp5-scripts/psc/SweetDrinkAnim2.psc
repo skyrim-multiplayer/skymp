@@ -1,4 +1,4 @@
-Scriptname SweetEatAnim extends ObjectReference  
+Scriptname SweetDrinkAnim2 extends ObjectReference  
 int count
 event oninit()
 self.BlockActivation() 
@@ -9,6 +9,7 @@ Event OnActivate(ObjectReference akActionRef)
 count = count + 1
 if count == 2
 self.BlockActivation()
+game.getplayer().removeitem(Game.GetForm(0x6277674),10, true)
 Debug.SendAnimationEvent(Game.GetPlayer(),"IdleForceDefaultState")
 count = 0
 elseif Game.GetPlayer().GetSitState() == 0 

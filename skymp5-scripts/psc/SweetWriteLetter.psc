@@ -1,9 +1,9 @@
 Scriptname SweetWriteLetter extends ObjectReference  
 message property LetterMess auto 
-miscobject property rememberitem auto
 Event OnActivate(ObjectReference akActionRef)
+Form rememberItem = game.getform(0x0640ad63)
 int Ibutton = LetterMess.show()
 if (Ibutton == 0)&&game.getplayer().getitemcount(rememberItem) < 1
-game.getplayer().additem(rememberitem, 1, false)
+game.getplayer().additem(rememberItem, 1, false)
 endif
 endevent
