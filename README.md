@@ -1,4 +1,5 @@
 <!-- PROJECT LOGO -->
+
 <br />
 <p align="center">
   <a href="https://skymp.io">
