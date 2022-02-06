@@ -23,9 +23,28 @@ export class DisableCheats {
         "modAV",
         "forceAV",
         "setAV",
+        "SetScale",
         "ToggleCollision",
+        "ToggleControlsDriven",
         "ToggleGodMode", // Disable unlimited carry weight
         "ToggleFreeCamera",
+        "ToggleImmortalMode",
+        "ToggleMotionDriven",
+        "ToggleTrees",
+        "ToggleScripts",
+        "ToggleCellNode",
+        "ToggleSky",
+        "SetGlobalTimeMultiplier",
+        "ToggleWaterSystem",
+        "ForceWeather",
+        "SetWeather",
+        "SexChange",
+        "ToggleCombatAI",
+        "ToggleAI",
+        "SetGameSetting",
+        "SetPos",
+        "SetAngle",
+        "ToggleFogOfWar",
       ]
 
       // Disable commands from commandsToDisable
