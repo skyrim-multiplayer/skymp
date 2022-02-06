@@ -202,7 +202,7 @@ const Constructor = props => {
       );
     case 'chat':
       return (
-        <Chat messages={rend.messages} send={rend.send} placeholder={rend.placeholder} isInputHidden={rend.isInputHidden} />
+        <Chat messages={rend.messages} send={(...args) => { debugger; rend.send(...args); }} placeholder={rend.placeholder} isInputHidden={rend.isInputHidden} />
       );
     default:
       break;

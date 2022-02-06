@@ -19,6 +19,7 @@ class App extends React.Component {
     window.addEventListener('blur', this.onWindowFocus.bind(this));
     window.mp = {
       send: (type, data) => {
+        debugger;
         try {
           window.skymp.send({
             type,

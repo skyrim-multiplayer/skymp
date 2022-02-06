@@ -28,6 +28,7 @@ export class ChatProperty {
   }
 
   private static onChatInput(actorId: number, ...args: unknown[]) {
+    console.log(`event: ${actorId} ${JSON.stringify(args)}`);
     if (args[0] !== 'chatInput' || typeof args[1] !== 'string') {
       return;
     }
@@ -42,17 +43,18 @@ export class ChatProperty {
   }
 
   public static sendChatMessage(actorId: number, message: string) {
+    console.log(`sendChatMessage ${actorId} ${message} ${JSON.stringify(message).replace(/\\/g, '\\\\').replace(/'/g, '\\\'')}`);
     EvalProperty.eval(
       actorId,
       () => {
         let src = '';
         src += `window.chatMessages = window.chatMessages || [];`;
-        src += `window.chatMessages.push(${JSON.stringify(messageClientSide)});`;
+        src += `window.chatMessages.push(${messageClientSide});`;
         src += refreshWidgets;
         src += `if (window.scrollToLastMessage) { window.scrollToLastMessage(); }`;
         ctx.sp.browser.executeJavaScript(src);
       },
-      { messageClientSide: message, refreshWidgets: refreshWidgetsJs }
+      { messageClientSide: JSON.stringify(message).replace(/\\/g, '\\\\').replace(/'/g, '\\\''), refreshWidgets: refreshWidgetsJs }
     );
   }
 
@@ -92,6 +94,7 @@ export class ChatProperty {
   private static clientsideInitChatInput() {
     return () => {
       ctx.sp.on('browserMessage', (event) => {
+        ctx.sp.printConsole('browserMessage', JSON.stringify(event.arguments));
         if (event.arguments[0] === 'chatInput') {
           ctx.sendEvent(...event.arguments);
         }
