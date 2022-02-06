@@ -1,7 +1,7 @@
 #include "EventHandlerMisc.h"
+#include "../EventsApi.h"
+#include "../SkyrimPlatform.h"
 #include "EventUtils.h"
-#include "EventsApi.h"
-#include "SkyrimPlatform.h"
 
 EventResult EventHandlerMisc::ProcessEvent(
   const RE::MenuOpenCloseEvent* event,

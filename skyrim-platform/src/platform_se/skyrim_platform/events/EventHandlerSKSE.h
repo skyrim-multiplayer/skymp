@@ -16,6 +16,38 @@ public:
     static EventHandlerSKSE singleton;
     return &singleton;
   }
+  template <class E>
+  void AppendSink(std::vector<const char*>* events,
+                  RE::BSTEventSource<E>* holder)
+  {
+    auto handler = EventHandlerSKSE::GetSingleton();
+    if (handler->sinks->contains(events)) {
+      logger::critical(
+        "Attempt to append EventSink for {} failed. Already exists.",
+        typeid(E).name());
+
+      return;
+    }
+
+    Sink* sink = new Sink(
+      [sink, holder] {
+        auto handler = EventHandlerSKSE::GetSingleton();
+        handler->add_sink(holder);
+        handler->activeSinksEmplace(sink);
+      },
+      [sink, holder] {
+        auto handler = EventHandlerSKSE::GetSingleton();
+        handler->remove_sink(holder);
+        handler->activeSinksErase(sink);
+      },
+      [sink](bool) {
+        auto handler = EventHandlerSKSE::GetSingleton();
+        return handler->IsActiveSink(sink);
+      },
+      events);
+
+    handler->sinks->emplace(events, sink);
+  }
 
   EventResult ProcessEvent(const SKSE::ActionEvent* event,
                            RE::BSTEventSource<SKSE::ActionEvent>*) override;

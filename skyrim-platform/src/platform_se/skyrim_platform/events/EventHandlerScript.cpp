@@ -1,7 +1,7 @@
 #include "EventHandlerScript.h"
 #include "EventUtils.h"
-#include "EventsApi.h"
-#include "SkyrimPlatform.h"
+#include "../EventsApi.h"
+#include "../SkyrimPlatform.h"
 
 EventResult EventHandlerScript::ProcessEvent(
   const RE::TESActivateEvent* event, RE::BSTEventSource<RE::TESActivateEvent>*)

@@ -1,7 +1,7 @@
 #include "EventHandlerSKSE.h"
+#include "../EventsApi.h"
 #include "EventUtils.h"
-#include "EventsApi.h"
-#include "SkyrimPlatform.h"
+#include "../SkyrimPlatform.h"
 
 EventResult EventHandlerSKSE::ProcessEvent(
   const SKSE::ActionEvent* event,

@@ -24,6 +24,38 @@ public:
     return &singleton;
   }
 
+  template <class T, class E>
+  void AppendSink(std::vector<const char*>* events)
+  {
+    auto handler = EventHandlerStory::GetSingleton();
+    if (handler->sinks->contains(events)) {
+      logger::critical(
+        "Attempt to append EventSink for {} failed. Already exists.",
+        typeid(E).name());
+
+      return;
+    }
+
+    Sink* sink = new Sink(
+      [sink] {
+        auto handler = EventHandlerStory::GetSingleton();
+        handler->add_sink<T, E>();
+        handler->activeSinksEmplace(sink);
+      },
+      [sink] {
+        auto handler = EventHandlerStory::GetSingleton();
+        handler->remove_sink<T, E>();
+        handler->activeSinksErase(sink);
+      },
+      [sink](bool) {
+        auto handler = EventHandlerStory::GetSingleton();
+        return handler->IsActiveSink(sink);
+      },
+      events);
+
+    handler->sinks->emplace(events, sink);
+  }
+
   EventResult ProcessEvent(const RE::ActorKill::Event* event,
                            RE::BSTEventSource<RE::ActorKill::Event>*) override;
 

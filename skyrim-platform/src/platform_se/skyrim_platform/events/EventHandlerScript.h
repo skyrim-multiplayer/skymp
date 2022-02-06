@@ -57,6 +57,38 @@ public:
     return &singleton;
   }
 
+  template <class E>
+  void AppendSink(std::vector<const char*>* events)
+  {
+    auto handler = EventHandlerScript::GetSingleton();
+    if (handler->sinks->contains(events)) {
+      logger::critical(
+        "Attempt to append EventSink for {} failed. Already exists.",
+        typeid(E).name());
+
+      return;
+    }
+
+    Sink* sink = new Sink(
+      [sink] {
+        auto handler = EventHandlerScript::GetSingleton();
+        handler->add_sink<E>();
+        handler->activeSinksEmplace(sink);
+      },
+      [sink] {
+        auto handler = EventHandlerScript::GetSingleton();
+        handler->remove_sink<E>();
+        handler->activeSinksErase(sink);
+      },
+      [sink](bool) {
+        auto handler = EventHandlerScript::GetSingleton();
+        return handler->IsActiveSink(sink);
+      },
+      events);
+
+    handler->sinks->emplace(events, sink);
+  }
+
   EventResult ProcessEvent(const RE::TESActivateEvent* event,
                            RE::BSTEventSource<RE::TESActivateEvent>*) override;
 

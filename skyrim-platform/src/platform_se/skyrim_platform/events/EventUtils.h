@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../NativeValueCasts.h"
+
 std::vector<const char*>* CreateEV(std::initializer_list<const char*> list)
 {
   auto v = std::vector(list);
