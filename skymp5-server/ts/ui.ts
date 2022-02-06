@@ -12,6 +12,7 @@ const createApp = (getOriginPort: () => number) => {
   const router = new Router();
   router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
   router.get(new RegExp("\.es[mpl]"), (ctx: any) => ctx.throw(403));
+  router.get(new RegExp("\.bsa"), (ctx: any) => ctx.throw(403));
   app.use(router.routes()).use(router.allowedMethods());
   app.use(serve("data"));
   return app;
