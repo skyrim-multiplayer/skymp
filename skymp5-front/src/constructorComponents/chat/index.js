@@ -47,6 +47,11 @@ const Chat = (props) => {
     }
     for (let i = 0; i < text.length; i++) {
       if (i + 1 !== text.length && text[i] === '#' && text[i + 1] === '{') {
+        //..L)
+        //     [ hex )
+        //            [R...
+        //   0123456789
+        //   #{123456}...
         const hex = text.substring(i + 2, i + 8);
         hexCount++;
         text =
@@ -61,14 +66,39 @@ const Chat = (props) => {
     return text;
   };
 
+  const getMessageSpans = (text, currentColor = undefined) => {
+    const colorSnippetTpl = '#{123456}';
+    for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
+      if (text[i] == '#' && text[i + 1] == '{'
+          && text[i + colorSnippetTpl.length - 1] == '}') {
+        return (
+          <span style={{color: currentColor}}>
+            {text.substring(0, i)}
+            {
+              getMessageSpans(
+                text.substring(i + colorSnippetTpl.length),
+                '#' + text.substring(i + 2, i + 8),
+              )
+            }
+          </span>
+        );
+      }
+    }
+    return (
+      <span style={{color: currentColor}}>
+        {text}
+      </span>
+    );
+  };
+
   const getList = () => {
     return props.messages.map((msg, index) => (
             <div
                 className="msg"
                 key={`msg-${index}`}
-                dangerouslySetInnerHTML={{ __html: getMessageText(msg) }}
                 style={{ marginLeft: '10px' }}
             >
+              {getMessageSpans(msg)}
             </div>
     ));
   };
