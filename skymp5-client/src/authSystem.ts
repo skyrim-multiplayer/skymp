@@ -52,6 +52,7 @@ export const main = (lobbyLocation: Transform): void => {
   const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
   if (isOfflineMode) {
     onAuthListeners({ local: { profileId: settingsGameData.profileId } });
+    // XXX подсунуть туда проверку
   } else {
     startListenBrowserMessage();
     browser.addOnWindowLoadListener(() => {

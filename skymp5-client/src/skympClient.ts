@@ -107,11 +107,14 @@ interface ServerManifest {
 };
 
 export const connectWhenICallAndNotWhenIImport = (): void => {
+  actuallyConnect();
+  sp.once('update', () => {
   verifyLoadOrder()
-    .then(actuallyConnect)
     .catch((err) => {
       printConsole("Can't verify load order:", err);
+      sp.createText(1920 / 2, 1080 / 2, "LOAD ORDER ERROR.\nPlease check console", [255, 0, 0, 1]);
     });
+  });
 };
 
 const getServerMods = () => {
