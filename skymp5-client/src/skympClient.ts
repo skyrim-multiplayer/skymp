@@ -36,6 +36,7 @@ import { ActorValues, getActorValues } from "./actorvalues";
 import { Hit, getHitData } from "./hit";
 import { FormModel } from "./model";
 import { nameof } from "./utils";
+import * as netInfo from "./netInfoSystem";
 
 interface AnyMessage {
   type?: string;
@@ -131,6 +132,7 @@ export class SkympClient {
     });
 
     networking.on("message", (msgAny: Record<string, unknown> | string) => {
+      netInfo.NetInfo.addReceivedPacketAmount(1);
       handleMessage(
         msgAny as Record<string, unknown>,
         this.msgHandler as MsgHandler
