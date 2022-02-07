@@ -39,33 +39,6 @@ const Chat = (props) => {
     }
   }, [props.messages]);
 
-  const getMessageText = (text) => {
-    let hexCount = 0;
-    while (text.indexOf('<') !== -1 || text.indexOf('>') !== -1) {
-      text = text.replace('>', '');
-      text = text.replace('<', '');
-    }
-    for (let i = 0; i < text.length; i++) {
-      if (i + 1 !== text.length && text[i] === '#' && text[i + 1] === '{') {
-        //..L)
-        //     [ hex )
-        //            [R...
-        //   0123456789
-        //   #{123456}...
-        const hex = text.substring(i + 2, i + 8);
-        hexCount++;
-        text =
-                    text.substring(0, i) +
-                    `<span style=color:#${hex}>` +
-                    text.substring(i + 9, text.length);
-      }
-    }
-    for (let i = 0; i < hexCount; i++) {
-      text += '</span>';
-    }
-    return text;
-  };
-
   const getMessageSpans = (text, currentColor = undefined) => {
     const colorSnippetTpl = '#{123456}';
     for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {

@@ -28,11 +28,11 @@ export class ChatProperty {
   }
 
   private static onChatInput(actorId: number, ...args: unknown[]) {
-    console.log(`event: ${actorId} ${JSON.stringify(args)}`);
     if (args[0] !== 'chatInput' || typeof args[1] !== 'string') {
       return;
     }
     const [, inputText] = args;
+    console.log(`chat: ${actorId} says ${JSON.stringify(inputText)}`);
     ChatProperty.chatInputHandler({ actorId, inputText });
   }
 
@@ -43,7 +43,6 @@ export class ChatProperty {
   }
 
   public static sendChatMessage(actorId: number, message: string) {
-    console.log(`sendChatMessage ${actorId} ${message} ${JSON.stringify(message).replace(/\\/g, '\\\\').replace(/'/g, '\\\'')}`);
     EvalProperty.eval(
       actorId,
       () => {
