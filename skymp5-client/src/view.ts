@@ -611,7 +611,7 @@ export class FormView implements View<FormModel> {
 
     if (this.refrId && model.appearance?.name) {
       const playerActor = sp.Game.getPlayer()!;
-      const isVisibleByPlayer = playerActor.getDistance(refr) <= maxNicknameDrawDistance;
+      const isVisibleByPlayer = playerActor.hasLOS(refr) && !model.movement?.isSneaking && playerActor.getDistance(refr) <= maxNicknameDrawDistance;
       if (isVisibleByPlayer) {
         const headScreenPos = sp.worldPointToScreenPoint([
           sp.NetImmerse.getNodeWorldPositionX(refr, headPart, false),
