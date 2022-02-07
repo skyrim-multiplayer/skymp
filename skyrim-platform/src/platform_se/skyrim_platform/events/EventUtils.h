@@ -3,9 +3,27 @@
 #include "../NativeValueCasts.h"
 
 /**
+ * concepts to distinguish what approach we should take to register sinks
+ */
+template <class T>
+concept HasEvent = requires
+{
+  typename T::Event;
+};
+
+template <class T, class E>
+concept SingletonSource = requires
+{
+  {
+    T::GetSingleton()
+    } -> std::convertible_to<RE::BSTEventSource<E>*>;
+};
+
+/**
  * @brief Create event names vector.
  */
-std::vector<const char*>* CreateEV(std::initializer_list<const char*> list)
+std::vector<const char*>* CreateEventList(
+  std::initializer_list<const char*> list)
 {
   auto v = std::vector(list);
   return &v;

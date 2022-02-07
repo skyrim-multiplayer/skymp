@@ -64,72 +64,10 @@ public:
     return &singleton;
   }
 
-  EventHandle* Subscribe(std::string eventName, JsValue callback, bool runOnce)
-  {
-    // check if event is supported
-    auto event = (*events)[eventName];
-    if (!event) {
-      logger::critical("Subscription to event failed. "
-                       "{} is not a valid argument for eventName",
-                       eventName);
-      throw InvalidArgumentException("eventName", eventName);
-      return new EventHandle(0, "");
-    }
+  EventHandle* Subscribe(std::string eventName, JsValue callback,
+                         bool runOnce);
 
-    // if sink for that event is not active activate it, duh
-    if (event->sinkObj &&
-        !event->sinkObj->sink->IsActive(event->sinkObj->sink)) {
-      event->sinkObj->sink->Activate(event->sinkObj->sink);
-    }
-
-    // use callback pointer as unique id for that callback
-    auto uid = reinterpret_cast<uintptr_t>(&callback);
-    event->callbacks->emplace(uid, new CallbackObject(&callback, runOnce));
-
-    return new EventHandle(uid, eventName);
-  }
-
-  void Unsubscribe(uintptr_t uid, std::string eventName)
-  {
-    // check for correct event
-    auto event = (*events)[eventName];
-    if (!event) {
-      return;
-    }
-
-    // check if callback with provided uid exists
-    if (!event->callbacks->contains(uid)) {
-      return;
-    }
-
-    event->callbacks->erase(uid);
-
-    // now we need to see if we can deactivate event sink
-
-    // ignore this for custom events
-    if (event->sinkObj) {
-      // check if there are no other callbacks for this event
-      if (event->callbacks->empty()) {
-        // check if there are any linked events for this sink
-        if (event->sinkObj->linkedEvents->empty()) {
-          event->sinkObj->sink->Deactivate(event->sinkObj->sink);
-        } else {
-          // check if there are any callbacks for linked events
-          auto sinkIsBusy = false;
-          for (const auto& eventName : *event->sinkObj->linkedEvents) {
-            if (!(*events)[eventName]->callbacks->empty()) {
-              sinkIsBusy = true;
-              break;
-            }
-          }
-
-          if (!sinkIsBusy) {
-            event->sinkObj->sink->Deactivate(event->sinkObj->sink);
-          }
-        }
-      }
-    }
-  }
+  void Unsubscribe(uintptr_t uid, std::string eventName);
 
   CallbackObjMap GetCallbackObjMap(const char* eventName)
   {
@@ -139,6 +77,19 @@ public:
       return nullptr;
 
     return event->callbacks;
+  }
+
+  /**
+   * @brief If we create our own events that fire from within the code
+   * we register them with nullptr SinkObj here
+   */
+  void InitCustom()
+  {
+    events->emplace("update", new EventState(nullptr));
+    events->emplace("tick", new EventState(nullptr));
+    events->emplace("browserMessage", new EventState(nullptr));
+    events->emplace("consoleMessage", new EventState(nullptr));
+    events->emplace("ipcMessage", new EventState(nullptr));
   }
 
   /**
@@ -164,8 +115,6 @@ public:
     if (const auto story = EventHandlerStory::GetSingleton()->GetSinks()) {
       ProcessSinks(story);
     }
-
-    ProcessCustomEvents();
   }
 
 private:
@@ -177,30 +126,23 @@ private:
 
   void ProcessSinks(SinkSet sinkSet)
   {
+    if (sinkSet->empty()) {
+      return;
+    }
+
     for (const auto& sink : *sinkSet) {
       for (const auto& event : *sink->events) {
         std::vector<std::string_view> linkedEvents;
-        std::copy_if(events->begin(), events->end(),
-                     std::back_inserter(linkedEvents),
-                     [&](const char* const s) { return s != event; });
+        // use std::copy_if?
+        for (const auto& ev : *sink->events) {
+          if (event != ev)
+            linkedEvents.push_back(ev);
+        }
 
         auto sinkObj = new SinkObject(sink, &linkedEvents);
         events->emplace(event, new EventState(sinkObj));
       }
     }
-  }
-
-  /**
-   * @brief If we create our own events that fire from within the code
-   * we register them with nullptr SinkObj here
-   */
-  void ProcessCustomEvents()
-  {
-    events->emplace("update", new EventState(nullptr));
-    events->emplace("tick", new EventState(nullptr));
-    events->emplace("browserMessage", new EventState(nullptr));
-    events->emplace("consoleMessage", new EventState(nullptr));
-    events->emplace("ipcMessage", new EventState(nullptr));
   }
 
   EventMap events;
