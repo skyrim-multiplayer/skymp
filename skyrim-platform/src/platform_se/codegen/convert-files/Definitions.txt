@@ -415,6 +415,8 @@ export interface EventHandle {
     eventName: string
 }
 
+export declare function unsubscribe(handle: EventHandle): void;
+
 export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): EventHandle;
 export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): EventHandle;
 

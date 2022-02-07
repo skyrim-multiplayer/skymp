@@ -6,6 +6,7 @@ namespace EventsApi {
 JsValue On(const JsFunctionArguments& args);
 JsValue Once(const JsFunctionArguments& args);
 JsValue SendIpcMessage(const JsFunctionArguments& args);
+JsValue Unsubscribe(const JsFunctionArguments& args);
 
 void SendEvent(const char* eventName, const std::vector<JsValue>& arguments);
 void Clear();
@@ -37,5 +38,6 @@ inline void Register(JsValue& exports)
   exports.SetProperty("once", JsValue::Function(Once));
   exports.SetProperty("hooks", GetHooks());
   exports.SetProperty("sendIpcMessage", JsValue::Function(SendIpcMessage));
+  exports.SetProperty("unsubscribe", JsValue::Function(Unsubscribe));
 }
 }
