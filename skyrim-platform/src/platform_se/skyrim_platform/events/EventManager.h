@@ -142,21 +142,20 @@ public:
    */
   void Init()
   {
-    if (const auto misc = EventHandlerMisc::GetSingleton()->FetchEvents()) {
-      ProcessMap(misc);
+    if (const auto misc = EventHandlerMisc::GetSingleton()->GetSinks()) {
+      ProcessSinks(misc);
     }
 
-    if (const auto skse = EventHandlerSKSE::GetSingleton()->FetchEvents()) {
-      ProcessMap(skse);
+    if (const auto skse = EventHandlerSKSE::GetSingleton()->GetSinks()) {
+      ProcessSinks(skse);
     }
 
-    if (const auto script =
-          EventHandlerScript::GetSingleton()->FetchEvents()) {
-      ProcessMap(script);
+    if (const auto script = EventHandlerScript::GetSingleton()->GetSinks()) {
+      ProcessSinks(script);
     }
 
-    if (const auto story = EventHandlerStory::GetSingleton()->FetchEvents()) {
-      ProcessMap(story);
+    if (const auto story = EventHandlerStory::GetSingleton()->GetSinks()) {
+      ProcessSinks(story);
     }
 
     ProcessCustomEvents();
@@ -169,7 +168,7 @@ private:
 
   ~EventManager() = default;
 
-  void ProcessMap(EventMap map)
+  void ProcessSinks(SinkSet map)
   {
     for (const auto& item : *map) {
       for (const auto& eventName : *item.first) {
@@ -197,5 +196,5 @@ private:
     events->emplace("ipcMessage", new EventState(nullptr));
   }
 
-  std::unordered_map<std::string_view, EventState*>* events;
+  robin_hood::unordered_map<std::string_view, EventState*>* events;
 };

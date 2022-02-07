@@ -37,6 +37,7 @@
     {
       "name": "asio",
       "platform": "windows"
-    }
+    },
+    "robin-hood-hashing"
   ]
 }

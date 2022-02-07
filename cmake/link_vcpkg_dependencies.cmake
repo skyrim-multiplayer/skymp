@@ -33,8 +33,9 @@ function(link_vcpkg_dependencies)
 
       find_package(CommonLibSSE REQUIRED)
       find_package(Boost MODULE REQUIRED)
+      find_package(robin_hood REQUIRED)
 
-      target_link_libraries(${target}	PRIVATE	Boost::headers CommonLibSSE::CommonLibSSE)
+      target_link_libraries(${target}	PRIVATE	Boost::headers CommonLibSSE::CommonLibSSE robin_hood::robin_hood)
 
       find_package(directxtk CONFIG REQUIRED)
       find_package(directxmath CONFIG REQUIRED)

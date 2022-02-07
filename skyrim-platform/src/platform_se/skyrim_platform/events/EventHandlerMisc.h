@@ -15,39 +15,6 @@ public:
     return &singleton;
   }
 
-  template <class E>
-  void AppendSink(std::vector<const char*>* events,
-                  RE::BSTEventSource<E>* holder)
-  {
-    auto handler = EventHandlerMisc::GetSingleton();
-    if (handler->sinks->contains(events)) {
-      logger::critical(
-        "Attempt to append EventSink for {} failed. Already exists.",
-        typeid(E).name());
-
-      return;
-    }
-
-    Sink* sink = new Sink(
-      [sink, holder] {
-        auto handler = EventHandlerMisc::GetSingleton();
-        handler->add_sink<E>(holder);
-        handler->activeSinksEmplace(sink);
-      },
-      [sink, holder] {
-        auto handler = EventHandlerMisc::GetSingleton();
-        handler->remove_sink<E>(holder);
-        handler->activeSinksErase(sink);
-      },
-      [sink](bool) {
-        auto handler = EventHandlerMisc::GetSingleton();
-        return handler->IsActiveSink(sink);
-      },
-      events);
-
-    handler->sinks->emplace(events, sink);
-  }
-
   EventResult ProcessEvent(const RE::BGSFootstepEvent* event,
                            RE::BSTEventSource<RE::BGSFootstepEvent>*) override;
 
@@ -62,18 +29,14 @@ public:
 private:
   EventHandlerMisc()
   {
-    if (const auto ui = RE::UI::GetSingleton()) {
-      AppendSink<RE::MenuOpenCloseEvent>(CreateEV({ "menuOpen", "menuClose" }),
-                                         ui);
-    }
+    AppendSink<RE::UI, RE::MenuOpenCloseEvent>(
+      CreateEV({ "menuOpen", "menuClose" }));
 
-    if (const auto manager = RE::BGSFootstepManager::GetSingleton()) {
-      AppendSink(CreateEV({ "footstep" }), manager);
-    }
+    AppendSink<RE::BGSFootstepManager, RE::BGSFootstepEvent>(
+      CreateEV({ "footstep" }));
 
-    if (const auto pc = RE::PlayerCharacter::GetSingleton()) {
-      AppendSink<RE::PositionPlayerEvent>(CreateEV({ "positionPlayer" }), pc);
-    }
+    AppendSink<RE::PlayerCharacter, RE::PositionPlayerEvent>(
+      CreateEV({ "positionPlayer" }));
   }
 
   EventHandlerMisc(const EventHandlerMisc&) = delete;

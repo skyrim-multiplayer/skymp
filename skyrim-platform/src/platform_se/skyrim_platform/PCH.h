@@ -39,6 +39,7 @@
 #include <REL/Relocation.h>
 #include <SKSE/SKSE.h>
 
+#include <concepts>
 #include <condition_variable>
 #include <dxgi.h>
 #include <iostream> // savefile
@@ -62,6 +63,7 @@
 #include <reverse/App.hpp>
 #include <reverse/AutoPtr.hpp>
 #include <reverse/Entry.hpp>
+#include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <ui/DX11RenderHandler.h>
 #include <ui/MyChromiumApp.h>
