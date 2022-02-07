@@ -36,7 +36,9 @@ JsValue FileInfo(const JsFunctionArguments& args) {
       throw std::runtime_error("FileInfo: forbidden characters in path");
     }
   }
-  
+
+  path = "Data/" + path;
+
   size_t size = std::filesystem::file_size(path);
   std::vector<char> buf(size);
 
