@@ -18,12 +18,12 @@ EndEvent
 Event OnTriggerEnter(ObjectReference akTriggerRef)
 	Actor AK = akTriggerRef as Actor
 	Int t = refList.Find(AK)
-	if (AK == Game.GetPlayer() && refList.Find(AK) < 0)
+	if(AK == Game.GetPlayer() && refList.Find(AK) < 0)
 		Int nIndex = refList.Find(none)
 		refList[nIndex]=AK
 		eff.Play(AK)
 		if(Enabled)
-			debug.SPLog(AK, "Entered Trigger; Position "+ nIndex)
+			debug.SPLog(AK, "Entered Trigger; Position " + nIndex)
 		endif
 	endif
 EndEvent
@@ -37,7 +37,7 @@ Event OnUpdate()
 			if(Enabled)
 				debug.SPLog(AK, "Still Trigger")
 			endif
-			if (AK.IsDead())
+			if(AK.IsDead())
 				Int i = refListToDelete.Find(none)
 				refListToDelete[i]=AK
 				if(Enabled)
@@ -65,7 +65,7 @@ EndEvent
  
 Event OnTriggerLeave(ObjectReference akTriggerRef)
 	Actor AK = akTriggerRef as Actor
-	if (AK == Game.GetPlayer() && refList.Find(AK) >= 0 && refListToDelete.Find(AK) < 0)
+	if(AK == Game.GetPlayer() && refList.Find(AK) >= 0 && refListToDelete.Find(AK) < 0)
 		Int nIndex = refListToDelete.Find(none)
 		refListToDelete[nIndex]=AK
 		if(Enabled)
