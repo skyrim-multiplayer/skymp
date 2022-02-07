@@ -345,7 +345,7 @@ const maps: Required<SweetPieMap>[] = [{
   playerRestoreActivators: [],
   playerRestoreWaitTime: 30000,
   spawnPointNames: ['markarth:spawnPoint1', 'markarth:spawnPoint2', 'markarth:spawnPoint3', 'markarth:spawnPoint4', 'markarth:spawnPoint5', 'markarth:spawnPoint6'],
-  enabled: true,
+  enabled: false,
 },
 {
   // '2b46a7:SweetPie.esp' ActorAlpha and bridges activator
