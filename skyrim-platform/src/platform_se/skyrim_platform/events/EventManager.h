@@ -40,6 +40,8 @@ struct CallbackObject
   bool runOnce;
 };
 
+using CallbackObjMap = robin_hood::unordered_map<uintptr_t, CallbackObject*>*;
+
 struct EventState
 {
   EventState(const SinkObject* _sink)
@@ -48,8 +50,10 @@ struct EventState
   }
 
   const SinkObject* sinkObj;
-  std::unordered_map<uintptr_t, CallbackObject*>* callbacks;
+  CallbackObjMap callbacks;
 };
+
+using EventMap = robin_hood::unordered_map<std::string_view, EventState*>*;
 
 class EventManager
 {
@@ -73,8 +77,10 @@ public:
     }
 
     // if sink for that event is not active activate it, duh
-    if (event->sinkObj && !event->sinkObj->sink->IsActive())
-      event->sinkObj->sink->Activate();
+    if (event->sinkObj &&
+        !event->sinkObj->sink->IsActive(event->sinkObj->sink)) {
+      event->sinkObj->sink->Activate(event->sinkObj->sink);
+    }
 
     // use callback pointer as unique id for that callback
     auto uid = reinterpret_cast<uintptr_t>(&callback);
@@ -87,12 +93,14 @@ public:
   {
     // check for correct event
     auto event = (*events)[eventName];
-    if (!event)
+    if (!event) {
       return;
+    }
 
     // check if callback with provided uid exists
-    if (!event->callbacks->contains(uid))
+    if (!event->callbacks->contains(uid)) {
       return;
+    }
 
     event->callbacks->erase(uid);
 
@@ -104,7 +112,7 @@ public:
       if (event->callbacks->empty()) {
         // check if there are any linked events for this sink
         if (event->sinkObj->linkedEvents->empty()) {
-          event->sinkObj->sink->Deactivate();
+          event->sinkObj->sink->Deactivate(event->sinkObj->sink);
         } else {
           // check if there are any callbacks for linked events
           auto sinkIsBusy = false;
@@ -116,15 +124,14 @@ public:
           }
 
           if (!sinkIsBusy) {
-            event->sinkObj->sink->Deactivate();
+            event->sinkObj->sink->Deactivate(event->sinkObj->sink);
           }
         }
       }
     }
   }
 
-  std::unordered_map<uintptr_t, CallbackObject*>* GetCallbackObjects(
-    const char* eventName)
+  CallbackObjMap GetCallbackObjMap(const char* eventName)
   {
     auto event = (*events)[eventName];
 
@@ -135,10 +142,10 @@ public:
   }
 
   /**
-   * @brief Fetches collections of supported events from corresponding event
-   * handlers. Populates global event map with event names, corresponding Sink
-   * class instance and empty callback collection, which is being filled when
-   * JS plugin subscribes to an event.
+   * @brief Fetches collections of sinks from corresponding event handlers.
+   * Populates global event map with event names, corresponding Sink class
+   * instance and empty callback collection, which is being filled when JS
+   * plugin subscribes to an event.
    */
   void Init()
   {
@@ -168,17 +175,17 @@ private:
 
   ~EventManager() = default;
 
-  void ProcessSinks(SinkSet map)
+  void ProcessSinks(SinkSet sinkSet)
   {
-    for (const auto& item : *map) {
-      for (const auto& eventName : *item.first) {
+    for (const auto& sink : *sinkSet) {
+      for (const auto& event : *sink->events) {
         std::vector<std::string_view> linkedEvents;
-        std::copy_if(item.first->begin(), item.first->end(),
+        std::copy_if(events->begin(), events->end(),
                      std::back_inserter(linkedEvents),
-                     [&](const char* const s) { return s != eventName; });
+                     [&](const char* const s) { return s != event; });
 
-        auto sinkObj = new SinkObject(item.second, &linkedEvents);
-        events->emplace(eventName, new EventState(sinkObj));
+        auto sinkObj = new SinkObject(sink, &linkedEvents);
+        events->emplace(event, new EventState(sinkObj));
       }
     }
   }
@@ -196,5 +203,5 @@ private:
     events->emplace("ipcMessage", new EventState(nullptr));
   }
 
-  robin_hood::unordered_map<std::string_view, EventState*>* events;
+  EventMap events;
 };

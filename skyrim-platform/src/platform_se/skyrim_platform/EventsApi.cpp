@@ -338,12 +338,12 @@ void EventsApi::SendEvent(const char* eventName,
 {
   auto manager = EventManager::GetSingleton();
 
-  auto cbObjects = manager->GetCallbackObjects(eventName);
+  auto cbObjMap = manager->GetCallbackObjMap(eventName);
 
-  if (!cbObjects || cbObjects->empty())
+  if (!cbObjMap || cbObjMap->empty())
     return;
 
-  for (const auto& obj : *cbObjects) {
+  for (const auto& obj : *cbObjMap) {
     obj.second->callback->Call(arguments);
     if (obj.second->runOnce) {
       manager->Unsubscribe(obj.first, eventName);

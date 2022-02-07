@@ -2,6 +2,9 @@
 
 #include "../NativeValueCasts.h"
 
+/**
+ * @brief Create event names vector.
+ */
 std::vector<const char*>* CreateEV(std::initializer_list<const char*> list)
 {
   auto v = std::vector(list);

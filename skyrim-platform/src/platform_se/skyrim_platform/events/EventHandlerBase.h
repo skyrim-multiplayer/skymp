@@ -24,8 +24,9 @@ concept SingletonSource = requires
 struct Sink
 {
   Sink(EventHandlerBase* _handler, std::vector<const char*>* _events,
-       std::function<void(::Sink*)> _add, std::function<void(::Sink*)> _remove,
-       std::function<bool(::Sink*)> _validate)
+       std::function<void(const ::Sink*)> _add,
+       std::function<void(const ::Sink*)> _remove,
+       std::function<bool(const ::Sink*)> _validate)
     : Activate(_add)
     , Deactivate(_remove)
     , IsActive(_validate)
@@ -36,9 +37,9 @@ struct Sink
   EventHandlerBase* handler;
   std::vector<const char*>* events;
 
-  std::function<void(::Sink*)> Activate;
-  std::function<void(::Sink*)> Deactivate;
-  std::function<bool(::Sink*)> IsActive;
+  std::function<void(const ::Sink*)> Activate;
+  std::function<void(const ::Sink*)> Deactivate;
+  std::function<bool(const ::Sink*)> IsActive;
 };
 
 using SinkSet = robin_hood::unordered_set<const ::Sink*>*;
