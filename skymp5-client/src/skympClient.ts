@@ -94,7 +94,93 @@ printConsole("settings:", settings["skymp5-client"]);
 const targetIp = settings["skymp5-client"]["server-ip"] as string;
 const targetPort = settings["skymp5-client"]["server-port"] as number;
 
+interface Mod {
+  filename: string;
+  size: number;
+  crc32: number;
+};
+
+interface ServerManifest {
+  versionMajor: number;
+  mods: Mod[];
+  loadOrder: string[];
+};
+
 export const connectWhenICallAndNotWhenIImport = (): void => {
+  verifyLoadOrder()
+    .then(actuallyConnect)
+    .catch((err) => {
+      printConsole("Can't verify load order:", err);
+    });
+};
+
+const getServerMods = () => {
+  const uiPort = targetPort === 7777 ? 3000 : (targetPort as number) + 1;
+  return new sp.HttpClient(`http://${targetIp}:${uiPort}`)
+    .get('manifest.json')
+    .then((res) => {
+      if (res.status != 200) {
+        throw new Error(`Status code ${res.status}`);
+      }
+      const manifest = JSON.parse(res.body) as ServerManifest;
+      if (manifest.versionMajor !== 1) {
+        throw new Error(`Server manifest version is ${manifest.versionMajor}, we expect 1`);
+      }
+      return manifest.mods;
+    })
+    .catch((err) => {
+      sp.printConsole("Can't get server mods", err);
+    });
+};
+
+const enumerateClientMods = (getCount: (() => number), getAt: ((idx: number) => string)) => {
+  const result = [];
+  for (let i = 0; i < getCount(); ++i) {
+    const filename = getAt(i);
+    const { crc32, size } = sp.win32.fileInfo(filename);
+    result.push({ filename, crc32, size });
+  }
+  return result;
+}
+
+const getClientMods = () => {
+  const eslMods = enumerateClientMods(Game.getLightModCount, Game.getLightModName);
+  if (eslMods.length !== 0) {
+    throw new Error(`esl mods are not supported, yet you have these: ${JSON.stringify(eslMods)}`);
+  }
+  return enumerateClientMods(Game.getModCount, Game.getModName);
+};
+
+const verifyLoadOrder = () => {
+  const clientMods = getClientMods();
+  printConsole(`Client load order: ${JSON.stringify(clientMods)}`);
+  return getServerMods()
+    .then((serverMods) => {
+      if (!serverMods) {
+        throw new Error(`getServerMods returned something strange: ${JSON.stringify(serverMods)}`);
+      }
+      printConsole(`Server load order: ${JSON.stringify(serverMods)}`);
+      if (clientMods.length !== serverMods.length) {
+        throw new Error(`Different count of mod count. Server has ${serverMods.length}, we have ${clientMods.length}`);
+      }
+      for (let i = 0; i < clientMods.length; ++i) {
+        if (
+          clientMods[i].filename != serverMods[i].filename ||
+          clientMods[i].size != clientMods[i].size ||
+          clientMods[i].crc32 != clientMods[i].crc32
+        ) {
+          throw new Error(
+            `${i}-th mod (numbered from 0) do not match. ` +
+            `Server has ${JSON.stringify(serverMods[i])}, ` +
+            `we have ${JSON.stringify(clientMods[i])}`
+          );
+        }
+      }
+      throw new Error("OLOLO");
+    });
+};
+
+const actuallyConnect = (): void => {
   if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
     storage.targetIp = targetIp;
     storage.targetPort = targetPort;
@@ -104,7 +190,7 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
   } else {
     printConsole("Reconnect is not required");
   }
-}
+};
 
 export class SkympClient {
   constructor() {
