@@ -92,7 +92,6 @@ export class ChatProperty {
   private static clientsideInitChatInput() {
     return () => {
       ctx.sp.on('browserMessage', (event) => {
-        ctx.sp.printConsole('browserMessage', JSON.stringify(event.arguments));
         if (event.arguments[0] === 'chatInput') {
           ctx.sendEvent(...event.arguments);
         }
