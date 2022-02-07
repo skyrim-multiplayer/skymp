@@ -32,7 +32,6 @@ export class ChatProperty {
       return;
     }
     const [, inputText] = args;
-    console.log(`chat: ${actorId} says ${JSON.stringify(inputText)}`);
     ChatProperty.chatInputHandler({ actorId, inputText });
   }
 
