@@ -150,11 +150,16 @@ export const isDead = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): boole
   return mp.get(selfId, 'isDead');
 }
 
-export const spLog = (mp: Mp, self: null, args: PapyrusValue[]): PapyrusObject | undefined => {
-  var str = 'From papyrus: ';
+const printArgs = (args: PapyrusValue[]): string => {
+  var out = '';
   for (const pVal of args) {
-    str += ' ' + ((typeof pVal === 'object' || Array.isArray(pVal)) ? JSON.stringify(pVal) : pVal) + ';';
+    out += ' ' + ((typeof pVal === 'object' || Array.isArray(pVal)) ? JSON.stringify(pVal) : pVal) + ';';
   }
+  return out;
+}
+
+export const placeholder = (mp: Mp, self: PapyrusObject | null, args: PapyrusValue[], name: string): PapyrusObject | undefined => {
+  var str = name + (self ? ':' + self.desc + ':' : ':') + printArgs(args);
   console.log(str);
   return undefined;
 }
@@ -173,7 +178,9 @@ mp.registerPapyrusFunction('global', 'Game', 'GetFormEx', (self, args) => getFor
 mp.registerPapyrusFunction('method', 'ObjectReference', 'MoveTo', (self, args) => moveTo(mp, self, args));
 mp.registerPapyrusFunction('method', 'Actor', 'SetAlpha', (self, args) => setAlpha(mp, self, args));
 mp.registerPapyrusFunction('method', 'Actor', 'IsDead', (self, args) => isDead(mp, self, args));
-mp.registerPapyrusFunction('global', 'debug', 'SPLog', (self, args) => spLog(mp, self, args));
+mp.registerPapyrusFunction('global', 'debug', 'SPLog', (self, args) => placeholder(mp, self, args, 'SPLog'));
+mp.registerPapyrusFunction('method', 'effectshader', 'Play', (self, args) => placeholder(mp, self, args, 'effectshader.Play'));
+mp.registerPapyrusFunction('method', 'effectshader', 'Stop', (self, args) => placeholder(mp, self, args, 'effectshader.Stop'));
 
 console.log('gamemode.js reloaded');
 
@@ -340,7 +347,7 @@ const maps: Required<SweetPieMap>[] = [{
   spawnPointNames: ['markarth:spawnPoint1', 'markarth:spawnPoint2', 'markarth:spawnPoint3', 'markarth:spawnPoint4', 'markarth:spawnPoint5', 'markarth:spawnPoint6'],
   enabled: true,
 },
-  {
+{
   // '2b46a7:SweetPie.esp' ActorAlpha and bridges activator
   safePointName: 'riften:safePlace',
   mainSpawnPointName: 'riften:spawnPoint1',
@@ -363,12 +370,12 @@ const maps: Required<SweetPieMap>[] = [{
   spawnPointNames: ['whiterun:spawnPoint1', 'whiterun:spawnPoint2', 'whiterun:spawnPoint3', 'whiterun:spawnPoint4', 'whiterun:spawnPoint5', 'whiterun:spawnPoint6'],
   enabled: true,
 },
-  {
+{
   //'3716f4:SweetPie.esp' - wind activator
   safePointName: 'windhelm:safePlace',
   mainSpawnPointName: 'windhelm:spawnPoint1',
   safePlaceEnterDoors: ['d18b2:Skyrim.esm', 'd18b1:Skyrim.esm', '16964:Skyrim.esm'],
-  safePlaceLeaveDoors: ['d18b5:Skyrim.esm', 'd18b4:Skyrim.esm','167be:Skyrim.esm'],
+  safePlaceLeaveDoors: ['d18b5:Skyrim.esm', 'd18b4:Skyrim.esm', '167be:Skyrim.esm'],
   leaveRoundDoors: ['55fca:Skyrim.esm'],
   playerRestoreActivators: [],
   playerRestoreWaitTime: 30000,
