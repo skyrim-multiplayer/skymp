@@ -171,7 +171,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
     listener.everySecond();
     expect(listener.getRounds()[0].secondsPassed).toBe(0);
     expect(listener.getRounds()[0].state).toBe('wait');
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Too few players, the warmup will start when 1 more join");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Игроков слишком мало, разминка начнется, когда будет еще 1 человек");
   });
 
   test("Round warmup must start if there are enough players", () => {
@@ -185,13 +185,13 @@ describe("SweetPieGameModeListener: Round clock", () => {
     listener.everySecond();
     expect(listener.getRounds()[0].secondsPassed).toBe(0);
     expect(listener.getRounds()[0].state).toBe('wait');
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Too few players, the warmup will start when 1 more join");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Игроков слишком мало, разминка начнется, когда будет еще 1 человек");
 
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 2);
     listener.everySecond();
     expect(listener.getRounds()[0].secondsPassed).toBe(0);
     expect(listener.getRounds()[0].state).toBe('warmup');
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 60 seconds");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 60 секунд");
   });
 
   test("Round warmup must output messages about remaining seconds", () => {
@@ -207,17 +207,17 @@ describe("SweetPieGameModeListener: Round clock", () => {
       listener.everySecond();
     }
 
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 20 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 10 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 9 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 8 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 7 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 6 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 5 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 4 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 3 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 2 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Starting round in 1 seconds");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 20 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 10 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 9 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 8 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 7 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 6 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 5 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 4 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 3 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 2 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "Раунд начнется через 1 секунд");
   });
 
   test("Round warmup should stop if there are not enough players after player leaves", () => {
@@ -230,11 +230,11 @@ describe("SweetPieGameModeListener: Round clock", () => {
     resetMocks(controller);
     listener.getRounds()[0].secondsPassed = 9;
     listener.everySecond();
-    expect(controller.sendChatMessage).toBeCalledWith(2, "Starting round in 50 seconds");
+    expect(controller.sendChatMessage).toBeCalledWith(2, "Раунд начнется через 50 секунд");
 
     forceLeaveRound(controller, listener.getRounds(), 1);
     listener.everySecond()
-    expect(controller.sendChatMessage).toBeCalledWith(2, "Too few players, the warmup will start when 1 more join");
+    expect(controller.sendChatMessage).toBeCalledWith(2, "Игроков слишком мало, разминка начнется, когда будет еще 1 человек");
     expect(listener.getRounds()[0].state).toBe('wait');
   });
 
@@ -311,7 +311,7 @@ describe("SweetPieGameModeListener: Round clock", () => {
 
     listener.everySecond();
 
-    // 'We have multiple winners!'
+    // 'У нас несколько победителей!'
     // 'Player1 wins with 3 points'
     // 'Player2 wins with 3 points'
     const msg1 = sprintf(listener.determineWinnerMessage[0], controller.getName(1), 3);
@@ -338,17 +338,17 @@ describe("SweetPieGameModeListener: Round clock", () => {
       listener.everySecond();
     }
 
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 20 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 10 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 9 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 8 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 7 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 6 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 5 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 4 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 3 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 2 seconds");
-    expect(controller.sendChatMessage).toBeCalledWith(1, "Fight! You have 1 seconds");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 20 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 10 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 9 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 8 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 7 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 6 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 5 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 4 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 3 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 2 секунд");
+    expect(controller.sendChatMessage).toBeCalledWith(1, "В бой! У вас 1 секунд");
   });
 
   test("Sets custom names for portals and doors", () => {
@@ -357,29 +357,29 @@ describe("SweetPieGameModeListener: Round clock", () => {
     const listener = new SweetPieGameModeListener(controller, maps);
 
     expect(controller.updateCustomName).toBeCalledTimes(4);
-    expect(controller.updateCustomName).toBeCalledWith(listener.quitGamePortal, 'Quit the game and return to desktop');
-    expect(controller.updateCustomName).toBeCalledWith(listener.redPortal, 'Coming soon...');
-    expect(controller.updateCustomName).toBeCalledWith(listener.bluePortal, 'Coming soon...');
-    expect(controller.updateCustomName).toBeCalledWith('whiterun:away', 'Return to hall');
+    expect(controller.updateCustomName).toBeCalledWith(listener.quitGamePortal, 'Выйти из игры и вернуться на рабочий стол');
+    expect(controller.updateCustomName).toBeCalledWith(listener.redPortal, 'Скоро...');
+    expect(controller.updateCustomName).toBeCalledWith(listener.bluePortal, 'Скоро...');
+    expect(controller.updateCustomName).toBeCalledWith('whiterun:away', 'Вернуться в чертоги');
 
     resetMocks(controller);
     listener.everySecond();
     expect(controller.updateCustomName).toBeCalledWith(
-      listener.neutralPortal, 'Enter deathmatch\nPlayers: 0 (min 5)\nWaiting for players...'
+      listener.neutralPortal, 'Войти в десматч\nИгроков сейчас: 0 (мин 5 для старта игры)\nОжидание игроков...'
     );
 
     resetMocks(controller);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
     listener.everySecond();
     expect(controller.updateCustomName).toBeCalledWith(
-      listener.neutralPortal, 'Enter deathmatch\nPlayers: 1 (min 5)\nWaiting for players...'
+      listener.neutralPortal, 'Войти в десматч\nИгроков сейчас: 1 (мин 5 для старта игры)\nОжидание игроков...'
     );
 
     resetMocks(controller);
     listener.getRounds()[0].state = 'running';
     listener.everySecond();
     expect(controller.updateCustomName).toBeCalledWith(
-      listener.neutralPortal, 'Enter deathmatch\nPlayers: 1 (min 5)\nRunning, please wait'
+      listener.neutralPortal, 'Войти в десматч\nИгроков сейчас: 1 (мин 5 для старта игры)\nИгра идет, подождите'
     );
 
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
@@ -403,7 +403,7 @@ describe("SweetPieGameModeListener: OnDeath", () => {
     listener.getRounds()[0].state = 'running';
     listener.onPlayerDeath(1, 2);
 
-    // %s was slain by %s. %s now has %d points (the best is %d)
+    // %s был убит %s. У %s теперь %d очков (у лучшего игрока %d)
     const msg = sprintf(listener.deathMessage[0], controller.getName(1), controller.getName(2), controller.getName(2), 1, 1);
     expect(controller.sendChatMessage).toBeCalledTimes(2);
     expect(controller.sendChatMessage).toBeCalledWith(1, msg);
