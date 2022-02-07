@@ -7,8 +7,8 @@
 
 enum ProfileIds
 {
-  kProfileId_Pospelov = 20,
-  kProfileId_Xccane = 35
+  kProfileId_Pospelov = -2,
+  kProfileId_Xccane = -1,
 };
 
 ConsoleCommands::Argument::Argument()
