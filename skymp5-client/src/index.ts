@@ -22,6 +22,7 @@ import * as authSystem from "./authSystem";
 import { nameof } from "./utils";
 import { AuthGameData } from "./authModel";
 import * as NetInfo from "./netInfoSystem";
+import * as playerCombatSystem from "./playerCombatSystem";
 
 browser.main();
 
@@ -59,7 +60,8 @@ const startClient = (): void => {
   if (showNetInfo === true) {
     NetInfo.start();
   }
-  
+
+  playerCombatSystem.start();
   once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
