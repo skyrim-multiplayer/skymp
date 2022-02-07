@@ -120,7 +120,8 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
   starterKitsMap = {
     {
       StarterKitType::ChefKit,
-      { 0x0001BCA7, 0x000261C1, 0x0001BC82, 0x0001F25B, 0x000D1921 },
+      { 0x0001BCA7, 0x000261C1, 0x0001BC82, 0x0001F25B, 0x000D1921,
+        0x064D2B03 },
     },
     { StarterKitType::LumberjackKit,
       {
