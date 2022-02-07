@@ -17,7 +17,6 @@ EndEvent
 
 Event OnTriggerEnter(ObjectReference akTriggerRef)
 	Actor AK = akTriggerRef as Actor
-	Int t = refList.Find(AK)
 	if(AK == Game.GetPlayer() && refList.Find(AK) < 0)
 		Int nIndex = refList.Find(none)
 		refList[nIndex]=AK
