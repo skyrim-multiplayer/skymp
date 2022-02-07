@@ -19,12 +19,33 @@ export class DisableCheats {
         ctx.sp.disableCtrlPrtScnHotkey();
       }
 
+      // This code fails to disable some commands
       const commandsToDisable: string[] = [
         "modAV",
         "forceAV",
         "setAV",
+        "SetScale",
         "ToggleCollision",
-        "ToggleGodMode" // Disable unlimited carry weight
+        "ToggleControlsDriven",
+        "ToggleGodMode", // Disable unlimited carry weight
+        "ToggleFreeCamera",
+        "ToggleImmortalMode",
+        "ToggleMotionDriven",
+        "ToggleTrees",
+        "ToggleScripts",
+        "ToggleCellNode",
+        "ToggleSky",
+        "SetGlobalTimeMultiplier",
+        "ToggleWaterSystem",
+        "ForceWeather",
+        "SetWeather",
+        "SexChange",
+        "ToggleCombatAI",
+        "ToggleAI",
+        "SetGameSetting",
+        "SetPos",
+        "SetAngle",
+        "ToggleFogOfWar",
       ]
 
       // Disable commands from commandsToDisable
