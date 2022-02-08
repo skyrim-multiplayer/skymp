@@ -18,15 +18,40 @@ export class DisableCheats {
         ctx.sp.storage["disableCtrlPrtScnHotkeyCalled"] = true;
         ctx.sp.disableCtrlPrtScnHotkey();
       }
-      
-      // Disable setav
-      ctx.sp.findConsoleCommand("setAV").execute = () => false;
 
-      // Disable tcl
-      ctx.sp.findConsoleCommand("ToggleCollision").execute = () => false;
+      // This code fails to disable some commands
+      const commandsToDisable: string[] = [
+        "modAV",
+        "forceAV",
+        "setAV",
+        "SetScale",
+        "ToggleCollision",
+        "ToggleControlsDriven",
+        "ToggleGodMode", // Disable unlimited carry weight
+        "ToggleFreeCamera",
+        "ToggleImmortalMode",
+        "ToggleMotionDriven",
+        "ToggleTrees",
+        "ToggleScripts",
+        "ToggleCellNode",
+        "ToggleSky",
+        "SetGlobalTimeMultiplier",
+        "ToggleWaterSystem",
+        "ForceWeather",
+        "SetWeather",
+        "SexChange",
+        "ToggleCombatAI",
+        "ToggleAI",
+        "SetGameSetting",
+        "SetPos",
+        "SetAngle",
+        "ToggleFogOfWar",
+      ]
 
-      // Disable tgm
-      ctx.sp.findConsoleCommand("ToggleGodMode").execute = () => false;
+      // Disable commands from commandsToDisable
+      commandsToDisable.forEach((command) => {
+        ctx.sp.findConsoleCommand(command).execute = () => false;
+      })
     };
   }
 }

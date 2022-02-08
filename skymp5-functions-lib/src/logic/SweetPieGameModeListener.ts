@@ -13,29 +13,29 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly redPortal = '42e96:SweetPie.esp';
   readonly bluePortal = '42fc1:SweetPie.esp';
 
-  readonly noEnterSafePlaceMessage: [string] = ["You cannot go back to safety! Running out of the map is the only option"];
-  readonly interiorsBlockedMessage: [string] = ["Interiors are not available during round"];
-  readonly warmupFinishedMessage: [string] = ["Warmup finished! Go! You have %d seconds to kill each other!"];
-  readonly startingRoundInMessage: [string] = ["Starting round in %d seconds"];
-  readonly remainingFightTimeMessage: [string] = ["Fight! You have %d seconds"];
-  readonly determineWinnerMessage: [string] = ["%s wins with %d points! Thanks for playing"];
-  readonly noWinnerMessage: [string] = ["There is no winner! Thanks for playing"];
-  readonly multipleWinnersMessage: [string] = ["We have multiple winners!"];
-  readonly deathMessage: [string] = ["%s was slain by %s. %s now has %d points (the best is %d)"];
-  readonly restoreMessage: [string] = ["Restored"];
-  readonly restoreDeniedMessage: [string] = ["Wait for %d seconds to restore again"];
+  readonly noEnterSafePlaceMessage: [string] = ["Странно, но вы не можете открыть эту дверь. Похоже, можно только сбежать через ворота..."];
+  readonly interiorsBlockedMessage: [string] = ["Похоже, эта дверь не откроется. Придется драться..."];
+  readonly warmupFinishedMessage: [string] = ["Разминка окончена. У вас есть %d секунд, чтобы убить друг друга!"];
+  readonly startingRoundInMessage: [string] = ["Раунд начнется через %d секунд"];
+  readonly remainingFightTimeMessage: [string] = ["В бой! У вас %d секунд"];
+  readonly determineWinnerMessage: [string] = ["%s побеждает с %d очками! Спасибо за игру!"];
+  readonly noWinnerMessage: [string] = ["Победителя нет. Спасибо за игру!"];
+  readonly multipleWinnersMessage: [string] = ["У нас несколько победителей!"];
+  readonly deathMessage: [string] = ["%s был убит %s. У %s теперь %d очков (у лучшего игрока %d)"];
+  readonly restoreMessage: [string] = ["Полное восстановление"];
+  readonly restoreDeniedMessage: [string] = ["Подождите еще %d секунд перед повторным восстановлением"];
 
-  readonly cantStartMessage: [string] = ["Too few players, the warmup will start when %s more join"];
+  readonly cantStartMessage: [string] = ["Игроков слишком мало, разминка начнется, когда будет еще %s человек"];
 
-  readonly comingSoonPortalName = 'Coming soon...';
-  readonly quitGamePortalName = 'Quit the game and return to desktop';
-  readonly returnToHallPortalName = 'Return to hall';
-  readonly neutralPortalNameTpl = 'Enter deathmatch\nPlayers: %d (min %d)\n%s';
+  readonly comingSoonPortalName = 'Скоро...';
+  readonly quitGamePortalName = 'Выйти из игры и вернуться на рабочий стол';
+  readonly returnToHallPortalName = 'Вернуться в чертоги';
+  readonly neutralPortalNameTpl = 'Войти в десматч\nИгроков сейчас: %d (мин %d для старта игры)\n%s';
 
   readonly roundStateToHumanReadable: Record<SweetPieRound['state'], string> = {
-    'wait': 'Waiting for players...',
-    'warmup': 'Warmup',
-    'running': 'Running, please wait',
+    'wait': 'Ожидание игроков...',
+    'warmup': 'Разминка',
+    'running': 'Игра идет, подождите',
   };
 
   warmupTimerMaximum = 60;
@@ -47,11 +47,30 @@ export class SweetPieGameModeListener implements GameModeListener {
   constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayersToStart: number = 5) {
     this.rounds = this.controller.getRoundsArray();
     if (this.rounds.length === 0) {
-      maps.forEach(map => this.rounds.push({ state: 'wait', map: map }));
-      this.rounds.forEach((round, index) => this.resetRound(index));
+      maps.forEach(map => this.rounds.push({ state: 'wait', map: map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }));
     } else {
-      maps.forEach((map, index) => this.rounds[index].map = map);
+      if (maps.length > this.rounds.length) {
+        for (var i = this.rounds.length; i < maps.length; i++) {
+          this.rounds.push({ state: 'wait', hallPointName: this.hallSpawnPointName, secondsPassed: 0 });
+        }
+      } else if (maps.length < this.rounds.length) {
+        const toDelete = [];
+        for (var i = 0; i < this.rounds.length; i++) {
+          if (this.rounds[i].players?.size) {
+            continue;
+          }
+          toDelete.push(i);
+        }
+        toDelete.forEach(index => this.rounds.splice(index, 1));
+      }
+      for (var i = 0; i < this.rounds.length; i++) {
+        if (this.rounds[i].players?.size) {
+          continue;
+        }
+        this.rounds[i].map = maps[i];
+      }
     }
+    this.controller.setRoundsArray(this.rounds);
     this.controller.updateCustomName(this.quitGamePortal, this.quitGamePortalName);
     this.controller.updateCustomName(this.redPortal, this.comingSoonPortalName);
     this.controller.updateCustomName(this.bluePortal, this.comingSoonPortalName);
@@ -68,8 +87,31 @@ export class SweetPieGameModeListener implements GameModeListener {
         forceLeaveRound(this.controller, this.rounds, player);
       }
     }
-    this.rounds[roundIndex] = { state: 'wait', map: this.rounds[roundIndex].map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }
+    if (this.maps.length == this.rounds.length || roundIndex < this.maps.length) {
+      this.rounds[roundIndex] = { state: 'wait', map: this.maps[roundIndex], hallPointName: this.hallSpawnPointName, secondsPassed: 0 }
+    } else if (roundIndex >= this.maps.length) {
+      this.rounds.splice(roundIndex, 1);
+    }
     this.controller.setRoundsArray(this.rounds);
+  }
+
+  private getRandomSpawnPoint(points: string[]): string {
+    if (points.length) {
+      const pIndex = Math.floor(Math.random() * (points.length - 1));
+      return points[pIndex];
+    }
+    return this.hallSpawnPointName;
+  }
+
+  private updatePortalsByAvailableRounds(): void {
+    const round = getAvailableRound(this.rounds) || this.rounds.find((x) => x.map?.enabled && x.state === 'running');
+    if (round) {
+      const playersCount = round.players?.size || 0;
+      this.controller.updateCustomName(
+        this.neutralPortal,
+        sprintf(this.neutralPortalNameTpl, playersCount, this.minimumPlayersToStart, this.roundStateToHumanReadable[round.state]),
+      );
+    }
   }
 
   getRounds() {
@@ -114,16 +156,14 @@ export class SweetPieGameModeListener implements GameModeListener {
       }
       if (round && round.map) {
         if (round.map.safePlaceEnterDoors?.includes(targetObjectDesc)) {
-          this.controller.sendChatMessage(casterActorId, ...this.noEnterSafePlaceMessage);
-          return 'blockActivation';
+          if (round.state !== 'wait') {
+            this.controller.sendChatMessage(casterActorId, ...this.noEnterSafePlaceMessage);
+            return 'blockActivation';
+          }
+          return 'continue';
         }
         if (round.map.leaveRoundDoors?.includes(targetObjectDesc)) {
-          const roundIndex = this.rounds.indexOf(round);
-          forceLeaveRound(this.controller, this.rounds, casterActorId);
-          if (round.players?.size === 0) {
-            this.resetRound(roundIndex);
-            this.controller.setRoundsArray(this.rounds);
-          }
+          this.onPlayerLeave(casterActorId);
           return 'continue';
         }
         if (round.map.safePlaceLeaveDoors?.includes(targetObjectDesc)) {
@@ -167,12 +207,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   everySecond() {
+    this.updatePortalsByAvailableRounds();
     for (const round of this.rounds) {
-      const playersCount = round.players?.size || 0;
-      this.controller.updateCustomName(
-        this.neutralPortal,
-        sprintf(this.neutralPortalNameTpl, playersCount, this.minimumPlayersToStart, this.roundStateToHumanReadable[round.state]),
-      );
       if (round.players && round.players.size) {
         round.secondsPassed = (round.secondsPassed ?? -1) + 1;
         if (round.state === 'warmup' || round.state === 'wait') {
@@ -213,9 +249,11 @@ export class SweetPieGameModeListener implements GameModeListener {
             round.state = 'running';
             this.sendRoundChatMessage(round, sprintf(this.warmupFinishedMessage[0], this.runningTimerMaximum));
             for (const [player] of round.players) {
-              if (round.map && round.map.mainSpawnPointName) {
-                this.controller.setSpawnPoint(player, round.map.mainSpawnPointName);
-                this.controller.teleport(player, round.map.mainSpawnPointName);
+              if (round.map && round.map.spawnPointNames) {
+                const pName = this.getRandomSpawnPoint(round.map.spawnPointNames);
+                this.controller.setSpawnPoint(player, pName);
+                this.controller.teleport(player, pName);
+                this.controller.setPercentages(player, {});
               }
             }
           }
@@ -248,8 +286,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
+    const round = getPlayerCurrentRound(this.rounds, targetActorId);
     if (killerActorId) {
-      const round = getPlayerCurrentRound(this.rounds, targetActorId);
       const round2 = getPlayerCurrentRound(this.rounds, killerActorId);
       if (round === round2 && round && round.players && round.state === 'running') {
         this.controller.addItem(killerActorId, this.coinFormId, 1);
@@ -262,6 +300,9 @@ export class SweetPieGameModeListener implements GameModeListener {
         this.sendRoundChatMessage(round, sprintf(this.deathMessage[0], this.controller.getName(targetActorId), this.controller.getName(killerActorId), this.controller.getName(killerActorId), killerScore, winnerScore));
       }
     }
+    if (round?.state === 'running' && round.map && round.map.spawnPointNames) {
+      this.controller.setSpawnPoint(targetActorId, this.getRandomSpawnPoint(round.map.spawnPointNames));
+    }
     this.controller.setRoundsArray(this.rounds);
   }
 
@@ -272,6 +313,7 @@ export class SweetPieGameModeListener implements GameModeListener {
       const roundIndex = this.rounds.indexOf(round);
       this.resetRound(roundIndex);
     }
+    this.controller.setRoundsArray(this.rounds);
   }
 
   private sendRoundChatMessage(round: SweetPieRound, msg: string) {
