@@ -4,6 +4,7 @@
 #include "EventHandlerSKSE.h"
 #include "EventHandlerScript.h"
 #include "EventHandlerStory.h"
+#include <algorithm>
 
 struct EventHandle
 {
@@ -133,11 +134,10 @@ private:
     for (const auto& sink : *sinkSet) {
       for (const auto& event : *sink->events) {
         std::vector<std::string_view> linkedEvents;
-        // use std::copy_if?
-        for (const auto& ev : *sink->events) {
-          if (event != ev)
-            linkedEvents.push_back(ev);
-        }
+
+        auto v = *sink->events;
+        std::copy_if(v.begin(), v.end(), linkedEvents.begin(),
+                     [&](int i) { return event != v[i]; });
 
         auto sinkObj = new SinkObject(sink, &linkedEvents);
         events->emplace(event, new EventState(sinkObj));
