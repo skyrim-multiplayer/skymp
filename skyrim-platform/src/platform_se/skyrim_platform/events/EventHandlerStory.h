@@ -74,18 +74,18 @@ private:
   EventHandlerStory()
   {
     // TODO: implement these
-    AppendSink<RE::ActorKill>(CreateEV({ "actorKill" }));
-    AppendSink<RE::BooksRead>(CreateEV({ "booksRead" }));
-    AppendSink<RE::CriticalHit>(CreateEV({ "criticalHit" }));
-    AppendSink<RE::DisarmedEvent>(CreateEV({ "disarmedEvent" }));
-    AppendSink<RE::DragonSoulsGained>(CreateEV({ "dragonSoulsGained" }));
-    AppendSink<RE::ItemHarvested>(CreateEV({ "itemHarvested" }));
-    AppendSink<RE::LevelIncrease>(CreateEV({ "levelIncrease" }));
-    AppendSink<RE::LocationDiscovery>(CreateEV({ "locationDiscovery" }));
-    AppendSink<RE::ShoutAttack>(CreateEV({ "shoutAttack" }));
-    AppendSink<RE::SkillIncrease>(CreateEV({ "skillIncrease" }));
-    AppendSink<RE::SoulsTrapped>(CreateEV({ "soulsTrapped" }));
-    AppendSink<RE::SpellsLearned>(CreateEV({ "spellsLearned" }));
+    AppendSink<RE::ActorKill>(CreateEventList({ "actorKill" }));
+    AppendSink<RE::BooksRead>(CreateEventList({ "booksRead" }));
+    AppendSink<RE::CriticalHit>(CreateEventList({ "criticalHit" }));
+    AppendSink<RE::DisarmedEvent>(CreateEventList({ "disarmedEvent" }));
+    AppendSink<RE::DragonSoulsGained>(CreateEventList({ "dragonSoulsGained" }));
+    AppendSink<RE::ItemHarvested>(CreateEventList({ "itemHarvested" }));
+    AppendSink<RE::LevelIncrease>(CreateEventList({ "levelIncrease" }));
+    AppendSink<RE::LocationDiscovery>(CreateEventList({ "locationDiscovery" }));
+    AppendSink<RE::ShoutAttack>(CreateEventList({ "shoutAttack" }));
+    AppendSink<RE::SkillIncrease>(CreateEventList({ "skillIncrease" }));
+    AppendSink<RE::SoulsTrapped>(CreateEventList({ "soulsTrapped" }));
+    AppendSink<RE::SpellsLearned>(CreateEventList({ "spellsLearned" }));
   };
   EventHandlerStory(const EventHandlerStory&) = delete;
   EventHandlerStory(EventHandlerStory&&) = delete;

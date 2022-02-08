@@ -71,24 +71,24 @@ private:
   EventHandlerSKSE()
   {
     if (const auto holder = SKSE::GetActionEventSource())
-      AppendSink(
-        CreateEV({ "actionWeaponSwing", "actionBeginDraw", "actionEndDraw",
-                   "actionBowDraw", "actionBowRelease", "actionBeginSheathe",
-                   "actionEndSheathe", "actionSpellCast", "actionSpellFire",
-                   "actionVoiceCast", "actionVoiceFire" }),
-        holder);
+      AppendSink(CreateEventList(
+                   { "actionWeaponSwing", "actionBeginDraw", "actionEndDraw",
+                     "actionBowDraw", "actionBowRelease", "actionBeginSheathe",
+                     "actionEndSheathe", "actionSpellCast", "actionSpellFire",
+                     "actionVoiceCast", "actionVoiceFire" }),
+                 holder);
 
     if (const auto holder = SKSE::GetCameraEventSource())
-      AppendSink(CreateEV({ "cameraStateChanged" }), holder);
+      AppendSink(CreateEventList({ "cameraStateChanged" }), holder);
 
     if (const auto holder = SKSE::GetCrosshairRefEventSource())
-      AppendSink(CreateEV({ "crosshairRefChanged" }), holder);
+      AppendSink(CreateEventList({ "crosshairRefChanged" }), holder);
 
     if (const auto holder = SKSE::GetModCallbackEventSource())
-      AppendSink(CreateEV({ "modEvent" }), holder);
+      AppendSink(CreateEventList({ "modEvent" }), holder);
 
     if (const auto holder = SKSE::GetNiNodeUpdateEventSource())
-      AppendSink(CreateEV({ "niNodeUpdate" }), holder);
+      AppendSink(CreateEventList({ "niNodeUpdate" }), holder);
   };
   EventHandlerSKSE(const EventHandlerSKSE&) = delete;
   EventHandlerSKSE(EventHandlerSKSE&&) = delete;

@@ -30,13 +30,13 @@ private:
   EventHandlerMisc()
   {
     AppendSink<RE::UI, RE::MenuOpenCloseEvent>(
-      CreateEV({ "menuOpen", "menuClose" }));
+      CreateEventList({ "menuOpen", "menuClose" }));
 
     AppendSink<RE::BGSFootstepManager, RE::BGSFootstepEvent>(
-      CreateEV({ "footstep" }));
+      CreateEventList({ "footstep" }));
 
     AppendSink<RE::PlayerCharacter, RE::PositionPlayerEvent>(
-      CreateEV({ "positionPlayer" }));
+      CreateEventList({ "positionPlayer" }));
   }
 
   EventHandlerMisc(const EventHandlerMisc&) = delete;
