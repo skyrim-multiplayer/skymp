@@ -120,7 +120,7 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
 const getServerMods = () => {
   const uiPort = targetPort === 7777 ? 3000 : (targetPort as number) + 1;
   return new sp.HttpClient(`http://${targetIp}:${uiPort}`)
-    .get('manifest.json')
+    .get('/manifest.json')
     .then((res) => {
       if (res.status != 200) {
         throw new Error(`Status code ${res.status}`);
@@ -154,15 +154,22 @@ const getClientMods = () => {
   return enumerateClientMods(Game.getModCount, Game.getModName);
 };
 
+const printModOrder = (header: string, order: Mod[]) => {
+  printConsole(header);
+  for (const mod of order) {
+    printConsole(JSON.stringify(mod));
+  }
+};
+
 const verifyLoadOrder = () => {
   const clientMods = getClientMods();
-  printConsole(`Client load order: ${JSON.stringify(clientMods)}`);
+  printModOrder('Client load order:', clientMods);
   return getServerMods()
     .then((serverMods) => {
       if (!serverMods) {
         throw new Error(`getServerMods returned something strange: ${JSON.stringify(serverMods)}`);
       }
-      printConsole(`Server load order: ${JSON.stringify(serverMods)}`);
+      printModOrder('Server load order:', serverMods);
       if (clientMods.length !== serverMods.length) {
         throw new Error(`Different count of mod count. Server has ${serverMods.length}, we have ${clientMods.length}`);
       }
@@ -179,7 +186,6 @@ const verifyLoadOrder = () => {
           );
         }
       }
-      throw new Error("OLOLO");
     });
 };
 
