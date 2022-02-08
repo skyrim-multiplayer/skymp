@@ -46,20 +46,13 @@ export class ChatProperty {
       actorId,
       () => {
         let src = '';
-        const htmlEscapes: Record<string, string> = {
-          '"': '\\"',
-          "'": "\\'",
-          '\\': '\\\\',
-        };
-        const htmlEscaper = /[&<>"'\\\/]/g;
-        const msg = messageClientSide.replace(htmlEscaper, (match) => htmlEscapes[match]);
         src += `window.chatMessages = window.chatMessages || [];`;
-        src += `window.chatMessages.push("${msg}");`;
+        src += `window.chatMessages.push(${messageClientSide});`;
         src += refreshWidgets;
         src += `if (window.scrollToLastMessage) { window.scrollToLastMessage(); }`;
         ctx.sp.browser.executeJavaScript(src);
       },
-      { messageClientSide: message, refreshWidgets: refreshWidgetsJs }
+      { messageClientSide: JSON.stringify(message).replace(/\\/g, '\\\\').replace(/'/g, '\\\''), refreshWidgets: refreshWidgetsJs }
     );
   }
 
