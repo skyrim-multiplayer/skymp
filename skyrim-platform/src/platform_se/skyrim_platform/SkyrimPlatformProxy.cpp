@@ -3,7 +3,6 @@
 #include "NativeValueCasts.h"
 #include "ProxyGetter.h"
 
-
 namespace {
 
 JsValue GetProxyForClass(const std::string& className,

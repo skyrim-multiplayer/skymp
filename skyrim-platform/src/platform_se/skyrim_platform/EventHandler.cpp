@@ -3,7 +3,6 @@
 #include "JsUtils.h"
 #include "SkyrimPlatform.h"
 
-
 EventResult EventHandler::ProcessEvent(
   const RE::TESActivateEvent* event, RE::BSTEventSource<RE::TESActivateEvent>*)
 {

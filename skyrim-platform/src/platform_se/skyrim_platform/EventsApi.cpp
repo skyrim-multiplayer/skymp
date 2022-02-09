@@ -8,7 +8,6 @@
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
 
-
 namespace {
 enum class PatternType
 {
