@@ -42,9 +42,6 @@ export class ChatProperty {
   }
 
   public static sendChatMessage(actorId: number, message: string) {
-    if (message === '/kill') {
-      return;
-    }
     EvalProperty.eval(
       actorId,
       () => {
