@@ -74,7 +74,7 @@ public:
   EventHandle* Subscribe(std::string eventName, JsValue callback,
                          bool runOnce);
 
-  void Unsubscribe(uintptr_t uid, std::string eventName);
+  void Unsubscribe(uintptr_t uid, std::string_view eventName);
 
   CallbackObjMap* GetCallbackObjMap(const char* eventName)
   {

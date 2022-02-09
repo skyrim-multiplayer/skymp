@@ -554,8 +554,7 @@ JsValue EventsApi::Unsubscribe(const JsFunctionArguments& args)
   auto objPtr = NativeValueCasts::JsObjectToNativeObject(args[1]);
   if (objPtr) {
     auto handle = reinterpret_cast<EventHandle*>(objPtr->GetNativeObjectPtr());
-    EventManager::GetSingleton()->Unsubscribe(
-      handle->uid, static_cast<std::string>(handle->eventName));
+    EventManager::GetSingleton()->Unsubscribe(handle->uid, handle->eventName);
   }
   return JsValue::Undefined();
 }

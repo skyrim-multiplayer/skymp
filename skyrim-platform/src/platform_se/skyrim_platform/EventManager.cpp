@@ -33,7 +33,7 @@ EventHandle* EventManager::Subscribe(std::string eventName, JsValue callback,
   return new EventHandle(uid, eventName);
 }
 
-void EventManager::Unsubscribe(uintptr_t uid, std::string eventName)
+void EventManager::Unsubscribe(uintptr_t uid, std::string_view eventName)
 {
   // check for correct event
   auto event = events[eventName];
