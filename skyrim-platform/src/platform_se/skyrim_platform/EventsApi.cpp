@@ -1,12 +1,13 @@
 #include "EventsApi.h"
+#include "EventManager.h"
 #include "InvalidArgumentException.h"
+#include "JsUtils.h"
 #include "NativeObject.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
-#include "events/EventManager.h"
-#include "events/EventUtils.h"
+
 
 namespace {
 enum class PatternType
@@ -464,8 +465,8 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
     return;
   }
   auto obj = JsValue::Object();
-  AddProperty(&obj, "sourceSystemName", systemName);
-  AddProperty(&obj, "message", data, length);
+  AddObjProperty(&obj, "sourceSystemName", systemName);
+  AddObjProperty(&obj, "message", data, length);
 
   SendEvent("ipcMessage", { JsValue::Undefined(), obj });
 }
@@ -475,7 +476,7 @@ void EventsApi::SendConsoleMsgEvent(const char* msg_)
   std::string msg(msg_);
   SkyrimPlatform::GetSingleton().AddTickTask([=] {
     auto obj = JsValue::Object();
-    AddProperty(&obj, "message", msg);
+    AddObjProperty(&obj, "message", msg);
 
     EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
   });
@@ -491,8 +492,8 @@ JsValue Subscribe(const JsFunctionArguments& args, bool runOnce = false)
     EventManager::GetSingleton()->Subscribe(eventName, callback, runOnce);
 
   auto obj = JsValue::Object();
-  AddProperty(&obj, "uid", handle->uid);
-  AddProperty(&obj, "eventName", handle->eventName);
+  AddObjProperty(&obj, "uid", handle->uid);
+  AddObjProperty(&obj, "eventName", handle->eventName);
 
   return obj;
 }

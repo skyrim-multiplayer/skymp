@@ -1,10 +1,6 @@
 #pragma once
-#include "../InvalidArgumentException.h"
-#include "EventHandlerMisc.h"
-#include "EventHandlerSKSE.h"
-#include "EventHandlerScript.h"
-#include "EventHandlerStory.h"
-#include <algorithm>
+#include "EventHandler.h"
+#include "InvalidArgumentException.h"
 
 struct EventHandle
 {
@@ -56,6 +52,17 @@ struct EventState
 
 using EventMap = robin_hood::unordered_map<std::string_view, EventState*>*;
 
+/**
+ * TODO: if we want to modularize platform further
+ * we should not let EventManager use JsValue here
+ * and instead store everything coming from JS side as
+ * some generic objects
+ *
+ * this would require some refactored translation mechanism
+ * native->generic->jsValue
+ * jsValue->generic->native
+ *
+ */
 class EventManager
 {
 public:
@@ -81,8 +88,9 @@ public:
   }
 
   /**
-   * @brief If we create our own events that fire from within the code
-   * we register them with nullptr SinkObj here
+   * @brief If we create our own custom events
+   * that don't have sinks and fire from within the code
+   * we register them with nullptr SinkObj here.
    */
   void InitCustom()
   {
@@ -94,27 +102,29 @@ public:
   }
 
   /**
-   * @brief Fetches collections of sinks from corresponding event handlers.
-   * Populates global event map with event names, corresponding Sink class
-   * instance and empty callback collection, which is being filled when JS
-   * plugin subscribes to an event.
+   * @brief Fetches collection of sinks, populates global event map with event
+   * names, corresponding Sink class instance and empty callback collection,
+   * which is being filled when JS plugin subscribes to an event.
    */
   void Init()
   {
-    if (const auto misc = EventHandlerMisc::GetSingleton()->GetSinks()) {
-      ProcessSinks(misc);
-    }
+    if (const auto sinks = EventHandler::GetSingleton()->GetSinks()) {
+      if (sinks->empty()) {
+        return;
+      }
 
-    if (const auto skse = EventHandlerSKSE::GetSingleton()->GetSinks()) {
-      ProcessSinks(skse);
-    }
+      for (const auto& sink : *sinks) {
+        for (const auto& event : sink->events) {
+          std::vector<std::string_view> linkedEvents;
 
-    if (const auto script = EventHandlerScript::GetSingleton()->GetSinks()) {
-      ProcessSinks(script);
-    }
+          std::copy_if(sink->events.begin(), sink->events.end(),
+                       std::back_inserter(linkedEvents),
+                       [&](const char* const s) { return s != event; });
 
-    if (const auto story = EventHandlerStory::GetSingleton()->GetSinks()) {
-      ProcessSinks(story);
+          auto sinkObj = new SinkObject(sink, &linkedEvents);
+          events->emplace(event, new EventState(sinkObj));
+        }
+      }
     }
   }
 
@@ -124,26 +134,6 @@ private:
   EventManager(EventManager&&) = delete;
 
   ~EventManager() = default;
-
-  void ProcessSinks(SinkSet sinkSet)
-  {
-    if (sinkSet->empty()) {
-      return;
-    }
-
-    for (const auto& sink : *sinkSet) {
-      for (const auto& event : *sink->events) {
-        std::vector<std::string_view> linkedEvents;
-
-        auto v = *sink->events;
-        std::copy_if(v.begin(), v.end(), linkedEvents.begin(),
-                     [&](int i) { return event != v[i]; });
-
-        auto sinkObj = new SinkObject(sink, &linkedEvents);
-        events->emplace(event, new EventState(sinkObj));
-      }
-    }
-  }
 
   EventMap events;
 };

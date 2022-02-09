@@ -1,5 +1,5 @@
 #include "EventManager.h"
-#include "../EventsApi.h"
+#include "EventsApi.h"
 
 EventHandle* EventManager::Subscribe(std::string eventName, JsValue callback,
                                      bool runOnce)
@@ -17,8 +17,9 @@ EventHandle* EventManager::Subscribe(std::string eventName, JsValue callback,
   // if sink for that event is not active activate it, duh
   if (event->sinkObj) {
     auto sink = event->sinkObj->sink;
-    if (!sink->IsActive(sink->handler, sink)) {
-      sink->Activate(sink->handler, sink);
+
+    if (!sink->IsActive(sink)) {
+      sink->Activate(sink);
     }
   }
 
@@ -53,7 +54,7 @@ void EventManager::Unsubscribe(uintptr_t uid, std::string eventName)
     if (event->callbacks->empty()) {
       // check if there are any linked events for this sink
       if (event->sinkObj->linkedEvents->empty()) {
-        sink->Deactivate(sink->handler, sink);
+        sink->Deactivate(sink);
       } else {
         // check if there are any callbacks for linked events
         auto sinkIsBusy = false;
@@ -65,7 +66,7 @@ void EventManager::Unsubscribe(uintptr_t uid, std::string eventName)
         }
 
         if (!sinkIsBusy) {
-          sink->Deactivate(sink->handler, sink);
+          sink->Deactivate(sink);
         }
       }
     }

@@ -1,5 +1,6 @@
 #include "CallNativeApi.h"
 #include "DumpFunctions.h"
+#include "EventManager.h"
 #include "EventsApi.h"
 #include "FlowManager.h"
 #include "FridaHooks.h"
@@ -11,7 +12,7 @@
 #include "TPRenderSystemD3D11.h"
 #include "TextsCollection.h"
 #include "TickHandler.h"
-#include "events/EventManager.h"
+
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 

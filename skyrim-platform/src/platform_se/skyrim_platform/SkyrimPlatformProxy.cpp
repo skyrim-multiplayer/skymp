@@ -1,14 +1,10 @@
 #include "SkyrimPlatformProxy.h"
+#include "JsUtils.h"
 #include "NativeValueCasts.h"
 #include "ProxyGetter.h"
 
+
 namespace {
-JsValue CreateObject(const char* type, void* form)
-{
-  return form ? NativeValueCasts::NativeObjectToJsObject(
-                  std::make_shared<CallNative::Object>(type, form))
-              : JsValue::Null();
-}
 
 JsValue GetProxyForClass(const std::string& className,
                          const JsValue& skyrimPlatformExports)
