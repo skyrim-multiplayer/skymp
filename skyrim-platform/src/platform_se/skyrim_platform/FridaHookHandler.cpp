@@ -29,7 +29,7 @@ static void invocation_listener_on_enter(GumInvocationListener* listener,
     try {
       func(ic);
     } catch (const std::exception& e) {
-      logger::critical("Error executing hook enter function: id {:X} error {}",
+      logger::critical("Error executing hook enter function: id {} error {}",
                        id, e.what());
     }
 }
@@ -48,7 +48,7 @@ static void invocation_listener_on_leave(GumInvocationListener* listener,
     try {
       func(ic);
     } catch (const std::exception& e) {
-      logger::critical("Error executing hook leave function: id {:X} error {}",
+      logger::critical("Error executing hook leave function: id {} error {}",
                        id, e.what());
     }
 }
@@ -90,12 +90,12 @@ bool HookHandler::Attach(HookID id, uintptr_t address)
                                        GSIZE_TO_POINTER(id));
   if (status != GUM_ATTACH_OK) {
     logger::critical(
-      "Failed to attach hook: address {:X} id {:X} with status {:X}.",
+      "Failed to attach hook: address {:X} id {} with status {}.",
       address - REL::Module::get().base(), id, status);
     return false;
   } else {
-    logger::info("Attached hook: address {:X} id {:X} with status {:X}.",
-                 address - REL::Module::get().base(), id, status);
+    logger::debug("Attached hook: address {:X} id {} with status {}.",
+                  address - REL::Module::get().base(), id, status);
     return true;
   }
 }
@@ -104,7 +104,7 @@ void HookHandler::Install(HookID id, uintptr_t address, Hook* hook)
 {
   if (hooks.contains(id)) {
     logger::critical(
-      "Failed to install hook: address {:X} id {:X} already installed.",
+      "Failed to install hook: address {:X} id {} already installed.",
       address - REL::Module::get().base(), id);
     return;
   }

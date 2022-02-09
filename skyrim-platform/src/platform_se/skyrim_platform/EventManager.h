@@ -16,28 +16,28 @@ struct EventHandle
 
 struct SinkObject
 {
-  SinkObject(const ::Sink* _sink, std::vector<std::string_view>* _linkedEvents)
+  SinkObject(const ::Sink* _sink, std::vector<std::string_view> _linkedEvents)
     : sink(_sink)
     , linkedEvents(_linkedEvents)
   {
   }
   const ::Sink* sink;
-  const std::vector<std::string_view>* linkedEvents;
+  const std::vector<std::string_view> linkedEvents;
 };
 
 struct CallbackObject
 {
-  CallbackObject(JsValue* _callback, bool _runOnce)
+  CallbackObject(JsValue _callback, bool _runOnce)
     : callback(_callback)
     , runOnce(_runOnce)
   {
   }
 
-  JsValue* callback;
+  JsValue callback;
   bool runOnce;
 };
 
-using CallbackObjMap = robin_hood::unordered_map<uintptr_t, CallbackObject*>*;
+using CallbackObjMap = robin_hood::unordered_map<uintptr_t, CallbackObject*>;
 
 struct EventState
 {
@@ -61,7 +61,6 @@ using EventMap = robin_hood::unordered_map<std::string_view, EventState*>;
  * this would require some refactored translation mechanism
  * native->generic->jsValue
  * jsValue->generic->native
- *
  */
 class EventManager
 {
@@ -77,14 +76,15 @@ public:
 
   void Unsubscribe(uintptr_t uid, std::string eventName);
 
-  CallbackObjMap GetCallbackObjMap(const char* eventName)
+  CallbackObjMap* GetCallbackObjMap(const char* eventName)
   {
     auto event = events[eventName];
 
-    if (!event)
+    if (!event) {
       return nullptr;
+    }
 
-    return event->callbacks;
+    return &event->callbacks;
   }
 
   /**
@@ -99,6 +99,8 @@ public:
     events.emplace("browserMessage", new EventState(nullptr));
     events.emplace("consoleMessage", new EventState(nullptr));
     events.emplace("ipcMessage", new EventState(nullptr));
+
+    logger::debug("Custom events initialized.");
   }
 
   /**
@@ -121,11 +123,13 @@ public:
                        std::back_inserter(linkedEvents),
                        [&](const char* const s) { return s != event; });
 
-          auto sinkObj = new SinkObject(sink, &linkedEvents);
+          auto sinkObj = new SinkObject(sink, linkedEvents);
           events.emplace(event, new EventState(sinkObj));
         }
       }
     }
+
+    logger::debug("Game events initialized.");
   }
 
 private:

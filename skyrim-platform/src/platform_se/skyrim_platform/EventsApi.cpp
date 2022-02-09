@@ -340,11 +340,20 @@ void EventsApi::SendEvent(const char* eventName,
 
   auto cbObjMap = manager->GetCallbackObjMap(eventName);
 
-  if (!cbObjMap || cbObjMap->empty())
+  if (!cbObjMap || cbObjMap->empty()) {
+    logger::debug("Failed to retrieve callback map or the map is empty.");
     return;
+  }
 
   for (const auto& obj : *cbObjMap) {
-    obj.second->callback->Call(arguments);
+    try {
+      obj.second->callback.Call(arguments);
+    } catch (const std::exception& e) {
+      logger::critical(
+        "Error while calling a callback for event {}. Error: {}", eventName,
+        e.what());
+    }
+
     if (obj.second->runOnce) {
       manager->Unsubscribe(obj.first, eventName);
     }

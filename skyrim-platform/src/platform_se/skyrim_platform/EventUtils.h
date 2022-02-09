@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * concepts to distinguish what approach we should take acquire event source
+ * concepts to distinguish what approach we should take to acquire event source
  */
 template <class T, class E = T::Event>
 concept HasEvent = requires
