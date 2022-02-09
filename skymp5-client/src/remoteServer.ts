@@ -39,6 +39,7 @@ import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
 import { nameof } from "./utils";
 import { defaultLocalDamageMult, setLocalDamageMult } from "./index";
 import { AuthGameData } from './authModel';
+import * as netInfo from "./netInfoSystem";
 
 //
 // eventSource system
@@ -324,7 +325,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               const distance = Math.sqrt(sqr(pos[0] - msg.transform.pos[0]) + sqr(pos[1] - msg.transform.pos[1]));
               if (distance < 256) {
                 break;
-              } 
+              }
             }
           })();
           // Unfortunatelly it requires two calls to work
@@ -671,6 +672,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     msg.idx = this.worldModel.forms[idxInModel].idx;
 
     delete msg._refrId;
+    netInfo.NetInfo.addSentPacketAmount(1);
     networking.send(msg, reliable);
   }
 

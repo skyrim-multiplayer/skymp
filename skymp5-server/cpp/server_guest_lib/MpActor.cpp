@@ -124,18 +124,21 @@ void MpActor::OnEquip(uint32_t baseId)
     s = { espmFiles.begin(), espmFiles.end() };
     if (s.count("SweetPie.esp")) {
       if (baseId == kStareterKitPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.AddStarterKitItems(*this);
+        pieScript.AddStarterKitItems(*this, *worldState);
       }
 
       if (baseId == kPatronStarterKitPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.AddPatronStarterKitItems(*this);
+        pieScript.AddPatronStarterKitItems(*this, *worldState);
       }
 
       if (isPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.Play(*this);
+        pieScript.Play(*this, *worldState);
       }
     }
   }
@@ -224,6 +227,25 @@ void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
     changeForm.magickaPercentage = magickaPercentage;
     changeForm.staminaPercentage = staminaPercentage;
   });
+}
+
+void MpActor::NetSetPercentages(
+  float healthPercentage, float magickaPercentage, float staminaPercentage,
+  std::chrono::steady_clock::time_point timePoint, MpActor* aggressor)
+{
+  std::string s;
+  s += Networking::MinPacketId;
+  s += nlohmann::json{
+    { "t", MsgType::ChangeValues },
+    { "data",
+      { { "health", healthPercentage },
+        { "magicka", magickaPercentage },
+        { "stamina", staminaPercentage } } }
+  }.dump();
+  SendToUser(s.data(), s.size(), true);
+  SetPercentages(healthPercentage, magickaPercentage, staminaPercentage,
+                 aggressor);
+  SetLastAttributesPercentagesUpdate(timePoint);
 }
 
 std::chrono::steady_clock::time_point
@@ -445,8 +467,7 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
     default:
       return;
   }
-  SetPercentages(hp, mp, sp);
-  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
+  NetSetPercentages(hp, mp, sp, std::chrono::steady_clock::now());
 }
 
 void MpActor::BeforeDestroy()
