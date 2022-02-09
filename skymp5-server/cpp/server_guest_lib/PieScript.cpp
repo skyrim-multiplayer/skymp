@@ -34,6 +34,7 @@ void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
     lootTable[type][tier].push_back(id);
   }
 }
+
 PieScript::PieScript(const std::vector<std::string>& espmFiles)
 {
   lootTable = {
