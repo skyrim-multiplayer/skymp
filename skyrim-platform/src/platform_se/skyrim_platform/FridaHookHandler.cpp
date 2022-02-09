@@ -21,7 +21,7 @@ static void invocation_listener_on_enter(GumInvocationListener* listener,
   InvocationListener* self = INVOCATION_LISTENER(listener);
   auto id = (size_t)gum_invocation_context_get_listener_function_data(ic);
 
-  logger::debug("Frida OnEnter procced.");
+  logger::trace("Frida OnEnter procced.");
   auto func =
     HookHandler::GetSingleton()->GetHookEnterFunction(static_cast<HookID>(id));
 
@@ -40,7 +40,7 @@ static void invocation_listener_on_leave(GumInvocationListener* listener,
   InvocationListener* self = INVOCATION_LISTENER(listener);
   auto id = (size_t)gum_invocation_context_get_listener_function_data(ic);
 
-  logger::debug("Frida OnLeave procced.");
+  logger::trace("Frida OnLeave procced.");
   auto func =
     HookHandler::GetSingleton()->GetHookLeaveFunction(static_cast<HookID>(id));
 

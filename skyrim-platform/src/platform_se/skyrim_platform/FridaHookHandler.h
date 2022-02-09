@@ -60,7 +60,7 @@ private:
     gum_interceptor_end_transaction(_interceptor);
   }
 
-  std::map<HookID, Hook*> hooks;
+  robin_hood::unordered_map<HookID, Hook*> hooks;
 
   GumInterceptor* _interceptor;
   GumInvocationListener* _listener;

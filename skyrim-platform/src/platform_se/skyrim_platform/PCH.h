@@ -1,5 +1,8 @@
 #pragma once
 
+// disable non critical frida warning
+#pragma warning(disable : 4551)
+
 /* disable unused headers from Windows.h */
 #define WIN32_LEAN_AND_MEAN
 #define NOSOUND          // Sound driver routines
