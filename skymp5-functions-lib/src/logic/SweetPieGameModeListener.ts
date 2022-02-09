@@ -197,6 +197,10 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
+    if (inputText === '/kill') {
+      this.controller.setPercentages(0, { health: 0 });
+      return;
+    }
     for (const neighborActorId of neighbors) {
       this.controller.sendChatMessage(neighborActorId, '' + senderName + ': ' + inputText);
     }
