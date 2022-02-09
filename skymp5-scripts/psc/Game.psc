@@ -12,3 +12,6 @@ ObjectReference Function FindRandomReferenceOfAnyTypeInList(FormList arBaseObjec
 ObjectReference Function FindRandomReferenceOfAnyTypeInListFromRef(FormList arBaseObjects, ObjectReference arCenter, float afRadius) global
 	return FindRandomReferenceOfAnyTypeInList(arBaseObjects, arCenter.X, arCenter.Y, arCenter.Z, afRadius)
 endFunction
+Function ShowRaceMenu() native global
+Function ShowLimitedRaceMenu() native global
+Function ForceThirdPerson() native global
