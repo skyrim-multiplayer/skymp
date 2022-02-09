@@ -5,7 +5,7 @@ EventHandle* EventManager::Subscribe(std::string eventName, JsValue callback,
                                      bool runOnce)
 {
   // check if event is supported
-  auto event = (*events)[eventName];
+  auto event = events[eventName];
   if (!event) {
     logger::critical("Subscription to event failed. "
                      "{} is not a valid argument for eventName",
@@ -33,7 +33,7 @@ EventHandle* EventManager::Subscribe(std::string eventName, JsValue callback,
 void EventManager::Unsubscribe(uintptr_t uid, std::string eventName)
 {
   // check for correct event
-  auto event = (*events)[eventName];
+  auto event = events[eventName];
   if (!event) {
     return;
   }
@@ -59,7 +59,7 @@ void EventManager::Unsubscribe(uintptr_t uid, std::string eventName)
         // check if there are any callbacks for linked events
         auto sinkIsBusy = false;
         for (const auto& eventName : *event->sinkObj->linkedEvents) {
-          if (!(*events)[eventName]->callbacks->empty()) {
+          if (!events[eventName]->callbacks->empty()) {
             sinkIsBusy = true;
             break;
           }

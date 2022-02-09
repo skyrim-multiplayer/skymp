@@ -22,7 +22,7 @@ struct Sink
 };
 
 using EventResult = RE::BSEventNotifyControl;
-using SinkSet = robin_hood::unordered_set<const ::Sink*>*;
+using SinkSet = robin_hood::unordered_set<const ::Sink*>;
 
 class EventHandler final
   : public RE::BSTEventSink<RE::TESActivateEvent>
@@ -98,9 +98,9 @@ public:
     return &singleton;
   }
 
-  SinkSet GetSinks() { return sinks; }
+  SinkSet* GetSinks() { return &sinks; }
 
-  bool IsActiveSink(const Sink* sink) { return activeSinks->contains(sink); }
+  bool IsActiveSink(const Sink* sink) { return activeSinks.contains(sink); }
 
   /**
    * @brief Registers sink using script event source.
@@ -111,7 +111,7 @@ public:
     if (const auto source = ::GetEventSource<E>()) {
       source->AddEventSink(GetSingleton());
       logger::debug("Registered {} handler"sv, typeid(E).name());
-      activeSinks->emplace(sink);
+      activeSinks.emplace(sink);
     }
   }
 
@@ -124,7 +124,7 @@ public:
     if (source) {
       source->AddEventSink(GetSingleton());
       logger::debug("Registered {} handler"sv, typeid(E).name());
-      activeSinks->emplace(sink);
+      activeSinks.emplace(sink);
     }
   }
 
@@ -137,7 +137,7 @@ public:
     if (const auto source = ::GetEventSource<T, E>()) {
       source->AddEventSink(GetSingleton());
       logger::debug("Registered {} handler"sv, typeid(E).name());
-      activeSinks->emplace(sink);
+      activeSinks.emplace(sink);
     }
   }
 
@@ -150,7 +150,7 @@ public:
     if (const auto source = ::GetEventSource<E>()) {
       source->RemoveEventSink(GetSingleton());
       logger::debug("Unregistered {} handler"sv, typeid(E).name());
-      activeSinks->erase(sink);
+      activeSinks.erase(sink);
     }
   }
 
@@ -163,7 +163,7 @@ public:
     if (source) {
       source->RemoveEventSink(GetSingleton());
       logger::debug("Unregistered {} handler"sv, typeid(E).name());
-      activeSinks->erase(sink);
+      activeSinks.erase(sink);
     }
   }
 
@@ -176,7 +176,7 @@ public:
     if (const auto source = ::GetEventSource<T, E>()) {
       source->RemoveEventSink(GetSingleton());
       logger::debug("Unregistered {} handler"sv, typeid(E).name());
-      activeSinks->erase(sink);
+      activeSinks.erase(sink);
     }
   }
 
@@ -516,7 +516,7 @@ private:
           return handler->IsActiveSink(sink);
         });
 
-      sinks->emplace(sink);
+      sinks.emplace(sink);
     }
 
     if (const auto source = SKSE::GetCameraEventSource()) {
@@ -538,7 +538,7 @@ private:
           return handler->IsActiveSink(sink);
         });
 
-      sinks->emplace(sink);
+      sinks.emplace(sink);
     }
 
     if (const auto source = SKSE::GetCrosshairRefEventSource()) {
@@ -560,7 +560,7 @@ private:
           return handler->IsActiveSink(sink);
         });
 
-      sinks->emplace(sink);
+      sinks.emplace(sink);
     }
 
     if (const auto source = SKSE::GetModCallbackEventSource()) {
@@ -582,7 +582,7 @@ private:
           return handler->IsActiveSink(sink);
         });
 
-      sinks->emplace(sink);
+      sinks.emplace(sink);
     }
 
     if (const auto source = SKSE::GetNiNodeUpdateEventSource()) {
@@ -604,7 +604,7 @@ private:
           return handler->IsActiveSink(sink);
         });
 
-      sinks->emplace(sink);
+      sinks.emplace(sink);
     }
 
     // misc events
@@ -661,7 +661,7 @@ private:
         return handler->IsActiveSink(sink);
       });
 
-    sinks->emplace(sink);
+    sinks.emplace(sink);
   }
 
   /**
@@ -694,7 +694,7 @@ private:
         return handler->IsActiveSink(sink);
       });
 
-    sinks->emplace(sink);
+    sinks.emplace(sink);
   }
 
   SinkSet sinks;

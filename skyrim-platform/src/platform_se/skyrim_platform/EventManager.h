@@ -50,7 +50,7 @@ struct EventState
   CallbackObjMap callbacks;
 };
 
-using EventMap = robin_hood::unordered_map<std::string_view, EventState*>*;
+using EventMap = robin_hood::unordered_map<std::string_view, EventState*>;
 
 /**
  * TODO: if we want to modularize platform further
@@ -79,7 +79,7 @@ public:
 
   CallbackObjMap GetCallbackObjMap(const char* eventName)
   {
-    auto event = (*events)[eventName];
+    auto event = events[eventName];
 
     if (!event)
       return nullptr;
@@ -94,11 +94,11 @@ public:
    */
   void InitCustom()
   {
-    events->emplace("update", new EventState(nullptr));
-    events->emplace("tick", new EventState(nullptr));
-    events->emplace("browserMessage", new EventState(nullptr));
-    events->emplace("consoleMessage", new EventState(nullptr));
-    events->emplace("ipcMessage", new EventState(nullptr));
+    events.emplace("update", new EventState(nullptr));
+    events.emplace("tick", new EventState(nullptr));
+    events.emplace("browserMessage", new EventState(nullptr));
+    events.emplace("consoleMessage", new EventState(nullptr));
+    events.emplace("ipcMessage", new EventState(nullptr));
   }
 
   /**
@@ -122,7 +122,7 @@ public:
                        [&](const char* const s) { return s != event; });
 
           auto sinkObj = new SinkObject(sink, &linkedEvents);
-          events->emplace(event, new EventState(sinkObj));
+          events.emplace(event, new EventState(sinkObj));
         }
       }
     }
