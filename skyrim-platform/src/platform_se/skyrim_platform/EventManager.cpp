@@ -102,7 +102,8 @@ void EventManager::Unsubscribe(uintptr_t uid, std::string_view eventName)
   }
 
   event->callbacks.erase(uid);
-  logger::info("Unsubscribe callback with uid {}", uid);
+
+  logger::info("Unsubscribed from event {}, callback uid {}", eventName, uid);
 
   // now we need to see if we can deactivate event sink
 
