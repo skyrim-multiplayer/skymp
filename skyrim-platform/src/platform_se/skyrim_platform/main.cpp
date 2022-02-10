@@ -146,9 +146,6 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 }
 };
 
-#define POINTER_SKYRIMSE(className, variableName, ...)                        \
-  static CEFUtils::AutoPtr<className> variableName(__VA_ARGS__)
-
 inline uint32_t GetCefModifiers_(uint16_t aVirtualKey)
 {
   uint32_t modifiers = EVENTFLAG_NONE;
@@ -384,8 +381,9 @@ public:
 
   void* GetMainAddress() const override
   {
-    POINTER_SKYRIMSE(void, winMain, Offsets::WinMain.offset());
-    return winMain.GetPtr();
+    REL::Relocation<void*> winMain{ Offsets::WinMain };
+
+    return winMain.get(); // winMain.GetPtr();
   }
 
   bool Attach() override { return true; }
@@ -499,10 +497,15 @@ public:
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
-
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
-    renderSystem->m_pSwapChain = reinterpret_cast<IDXGISwapChain*>(
-      RE::BSRenderManager::GetSingleton()->swapChain);
+
+    auto manager = RE::BSRenderManager::GetSingleton();
+    if (!manager) {
+      logger::critical("Failed to retrieve BSRenderManager");
+    }
+
+    renderSystem->m_pSwapChain =
+      reinterpret_cast<IDXGISwapChain*>(manager->swapChain);
 
     return true;
   }

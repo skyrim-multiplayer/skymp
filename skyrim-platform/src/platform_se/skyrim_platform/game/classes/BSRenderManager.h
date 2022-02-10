@@ -13,10 +13,8 @@ class BSRenderManager
 public:
   static BSRenderManager* GetSingleton()
   {
-    REL::Relocation<BSRenderManager**> singleton{
-      Offsets::BSRenderManager::Singleton
-    };
-    return *singleton;
+    REL::Relocation<BSRenderManager*> singleton{ REL::ID(411393) };
+    return singleton.get();
   }
 
   uint64_t unk00[0x48 >> 3];               // 00

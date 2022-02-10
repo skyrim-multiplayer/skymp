@@ -4,10 +4,6 @@ namespace Offsets {
 
 inline constexpr REL::ID WinMain(36544);
 
-namespace BSRenderManager {
-inline constexpr REL::ID Singleton(411393);
-}
-
 inline RE::ObjectRefHandle GetInvalidRefHandle()
 {
   REL::Relocation<RE::ObjectRefHandle*> handle{ REL::ID(400312) };
