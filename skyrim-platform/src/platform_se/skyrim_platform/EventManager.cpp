@@ -96,14 +96,15 @@ void EventManager::Unsubscribe(uintptr_t uid, std::string_view eventName)
 
   // check if callback with provided uid exists
   if (!event->callbacks.contains(uid)) {
-    logger::info("Unsubscribe attempt failed, callback with uid {} not found",
-                 uid);
+    logger::info("Unsubscribe attempt failed, callback with uid {} for event "
+                 "{} not found",
+                 uid, eventName);
     return;
   }
 
   event->callbacks.erase(uid);
 
-  logger::info("Unsubscribed from event {}, callback uid {}", eventName, uid);
+  logger::debug("Unsubscribed from event {}, callback uid {}", eventName, uid);
 
   // now we need to see if we can deactivate event sink
 

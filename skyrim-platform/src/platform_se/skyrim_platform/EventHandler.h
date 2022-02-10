@@ -502,7 +502,7 @@ private:
     AppendSink<RE::TESWaitStopEvent>(std::vector({ "waitStop" }));
 
     // skse events
-    // as the moment of writing, no way was found to standardize event source
+    // at the moment of writing, no way was found to standardize event source
     // aquisition for skse events, which means those must be done manually
     if (const auto source = SKSE::GetActionEventSource()) {
       auto events = std::vector(

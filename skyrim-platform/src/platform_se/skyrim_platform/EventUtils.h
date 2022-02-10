@@ -20,21 +20,21 @@ concept SingletonSource = requires
 };
 
 template <class E>
-RE::BSTEventSource<E>* GetEventSource()
+inline RE::BSTEventSource<E>* GetEventSource()
 {
   return RE::ScriptEventSourceHolder::GetSingleton()->GetEventSource<E>();
 }
 
 template <class T, class E = T::Event>
-requires HasEvent<T> RE::BSTEventSource<E>
-*GetEventSource()
+requires HasEvent<T>
+inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetEventSource();
 }
 
 template <class T, class E>
-requires SingletonSource<T, E> RE::BSTEventSource<E>
-*GetEventSource()
+requires SingletonSource<T, E>
+inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetSingleton();
 }
