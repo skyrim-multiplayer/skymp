@@ -38,7 +38,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     'warmup': 'Разминка',
     'running': 'Игра идет, подождите',
   };
-  readonly commands: Array<Command> = [
+  readonly commands: [Command] = [
     {
       name: 'kill',
       handler: (actorId: number, controller: PlayerController) => {
