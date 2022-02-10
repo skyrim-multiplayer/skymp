@@ -4,14 +4,14 @@
 
 struct EventHandle
 {
-  EventHandle(uintptr_t _uid, std::string_view _eventName)
+  EventHandle(uintptr_t _uid, std::string _eventName)
     : uid(_uid)
     , eventName(_eventName)
   {
   }
 
   uintptr_t uid;
-  std::string_view eventName;
+  std::string eventName;
 };
 
 struct SinkObject

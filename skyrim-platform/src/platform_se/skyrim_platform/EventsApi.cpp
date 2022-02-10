@@ -553,10 +553,11 @@ JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
 
 JsValue EventsApi::Unsubscribe(const JsFunctionArguments& args)
 {
-  auto objPtr = NativeValueCasts::JsObjectToNativeObject(args[1]);
-  if (objPtr) {
-    auto handle = reinterpret_cast<EventHandle*>(objPtr->GetNativeObjectPtr());
-    EventManager::GetSingleton()->Unsubscribe(handle->uid, handle->eventName);
-  }
+  auto obj = args[1];
+  auto eventName = std::get<std::string>(
+    NativeValueCasts::JsValueToNativeValue(obj.GetProperty("eventName")));
+  auto uid = std::get<double>(
+    NativeValueCasts::JsValueToNativeValue(obj.GetProperty("uid")));
+  EventManager::GetSingleton()->Unsubscribe(uid, eventName);
   return JsValue::Undefined();
 }
