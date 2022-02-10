@@ -22,6 +22,7 @@ void InstallOnConsoleVPrintHook()
 
 void Hooks::Install()
 {
-  /* InstallOnSendEventHook();
-  logger::info("CommonLib hooks installed."); */
+  InstallOnConsoleVPrintHook();
+
+  logger::info("CommonLib hooks installed.");
 }

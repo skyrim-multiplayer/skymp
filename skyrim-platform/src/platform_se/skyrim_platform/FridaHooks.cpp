@@ -6,25 +6,6 @@
 #include "StringHolder.h"
 
 /**
- * ConsoleVPrint hook
- */
-void OnConsoleVPrintEnter(GumInvocationContext* ic)
-{
-  auto refr = ic->cpu_context->rdx ? (char*)ic->cpu_context->rdx : nullptr;
-
-  if (refr)
-    EventsApi::SendConsoleMsgEvent(refr);
-}
-
-void InstallConsoleVPrintHook()
-{
-  auto hook = new Frida::Hook(OnConsoleVPrintEnter, nullptr);
-  REL::Relocation<std::uintptr_t> target{ REL::ID(51110) };
-  Frida::HookHandler::GetSingleton()->Install(Frida::HookID::CONSOLE_VPRINT,
-                                              target.address(), hook);
-}
-
-/**
  * Send Event hook
  */
 
@@ -291,7 +272,6 @@ void InstallRenderCursorMenuHook()
 
 void Frida::InstallHooks()
 {
-  // InstallConsoleVPrintHook();
   InstallSendEventHook();
   InstallDrawSheatheWeaponPcHook();
   InstallDrawSheatheWeaponActorHook();
