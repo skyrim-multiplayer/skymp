@@ -329,5 +329,5 @@ VarValue PapyrusObjectReference::SetPosition(
       }
     }
   }
-  return VarValue();
+  return VarValue::None();
 }

@@ -75,7 +75,7 @@ VarValue PapyrusGame::ShowRaceMenu(VarValue self,
 {
   auto funcName = "ShowRaceMenu";
   RaceMenuHelper(self, funcName, arguments);
-  return VarValue();
+  return VarValue::None();
 }
 
 VarValue PapyrusGame::ShowLimitedRaceMenu(
@@ -83,7 +83,7 @@ VarValue PapyrusGame::ShowLimitedRaceMenu(
 {
   auto funcName = "ShowLimitedRaceMenu";
   RaceMenuHelper(self, funcName, arguments);
-  return VarValue();
+  return VarValue::None();
 }
 
 void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
