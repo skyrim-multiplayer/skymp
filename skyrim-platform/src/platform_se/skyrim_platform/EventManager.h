@@ -4,13 +4,13 @@
 
 struct EventHandle
 {
-  EventHandle(size_t _uid, std::string_view _eventName)
+  EventHandle(uintptr_t _uid, std::string_view _eventName)
     : uid(_uid)
     , eventName(_eventName)
   {
   }
 
-  size_t uid;
+  uintptr_t uid;
   std::string_view eventName;
 };
 
@@ -85,6 +85,9 @@ public:
     for (const auto& event : events) {
       event.second->callbacks.clear();
     }
+
+    auto handler = EventHandler::GetSingleton();
+    handler->DeactivateAllSinks();
   }
 
   CallbackObjMap* GetCallbackObjMap(const char* eventName)
@@ -108,5 +111,4 @@ private:
   ~EventManager() = default;
 
   EventMap events;
-  UUIDv4::UUIDGenerator<std::mt19937_64> uidGenerator;
 };

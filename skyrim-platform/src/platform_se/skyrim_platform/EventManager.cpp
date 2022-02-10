@@ -70,16 +70,17 @@ std::unique_ptr<EventHandle> EventManager::Subscribe(std::string eventName,
     }
   }
 
-  auto uid = uidGenerator.getUUID().hash();
-  event->callbacks.emplace(
-    uid, std::make_unique<CallbackObject>(callback, runOnce));
+  auto cb = new CallbackObject(callback, runOnce);
+  auto uid = reinterpret_cast<uintptr_t>(cb);
+
+  event->callbacks.emplace(uid, cb);
 
   logger::debug("Subscribed to event {}, callback uid {}", eventName, uid);
 
   return std::make_unique<EventHandle>(uid, eventName);
 }
 
-void EventManager::Unsubscribe(size_t uid, std::string_view eventName)
+void EventManager::Unsubscribe(uintptr_t uid, std::string_view eventName)
 {
   if (uid == 0) {
     logger::info("Unsubscribe attempt failed, invalid event handle");

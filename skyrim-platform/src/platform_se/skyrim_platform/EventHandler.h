@@ -100,6 +100,17 @@ public:
 
   SinkSet* GetSinks() { return &sinks; }
 
+  void DeactivateAllSinks()
+  {
+    if (activeSinks.empty()) {
+      return;
+    }
+
+    for (const auto& sink : activeSinks) {
+      sink->Deactivate(sink);
+    }
+  }
+
   bool IsActiveSink(const Sink* sink) { return activeSinks.contains(sink); }
 
   /**

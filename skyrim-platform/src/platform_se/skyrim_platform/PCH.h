@@ -76,9 +76,7 @@
 #include <ui/MyRenderHandler.h>
 #include <ui/ProcessMessageListener.h>
 #include <ui/TextToDraw.h>
-#include <uuid/uuid_v4.h>
 #include <zlib.h>
-
 
 namespace logger = SKSE::log;
 namespace stl = SKSE::stl;
