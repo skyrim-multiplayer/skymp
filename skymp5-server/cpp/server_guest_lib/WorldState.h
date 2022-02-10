@@ -3,6 +3,7 @@
 #include "Grid.h"
 #include "GridElement.h"
 #include "MpChangeForms.h"
+#include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "VirtualMachine.h"
@@ -24,7 +25,6 @@
 #  undef AddForm
 #endif
 
-class MpObjectReference;
 class MpActor;
 class FormCallbacks;
 class MpChangeForm;
@@ -88,11 +88,19 @@ public:
       throw std::runtime_error(ss.str());
     }
 
+    spdlog::info("Form with id {:#x} is {}", formId, MpForm::GetFormType(&*form));
+    auto ref = std::dynamic_pointer_cast<MpObjectReference>(form);
+    if (ref) {
+      auto pos = ref->GetPos();
+      spdlog::info("{:#x}: baseId={:#x}, pos is {:.2f} {:.2f} {:.2f} at {}",
+          formId, ref->GetBaseId(), pos.x, pos.y, pos.z, ref->GetCellOrWorld().ToString());
+    }
+
     auto typedForm = std::dynamic_pointer_cast<F>(form);
     if (!typedForm) {
-      std::stringstream ss;
-      ss << "Form with id " << std::hex << formId << " is not " << F::Type();
-      throw std::runtime_error(ss.str());
+      throw std::runtime_error(fmt::format("Form with id {:#x} is not {} (actually it is {})",
+        formId, F::Type(), MpForm::GetFormType(&*form)
+      ));
     }
 
     return *typedForm;

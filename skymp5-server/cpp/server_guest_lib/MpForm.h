@@ -42,9 +42,11 @@ public:
     return PrettifyType(typeid(F).name());
   }
 
+  // XXX: no sense in this function :(
   static const char* GetFormType(MpForm* form)
   {
-    return PrettifyType(typeid(form).name());
+    // you need to dereference
+    return PrettifyType(typeid(*form).name());
   }
 
   virtual ~MpForm() = default;
