@@ -24,8 +24,6 @@ void GetTextsToDraw(TextToDrawCallback callback)
   }
 }
 
-void SetupFridaHooks();
-
 void UpdateDumpFunctions()
 {
   auto pressed = [](int key) {
@@ -386,7 +384,7 @@ public:
 
   void* GetMainAddress() const override
   {
-    POINTER_SKYRIMSE(void, winMain, 0x1405ACBD0 - 0x140000000);
+    POINTER_SKYRIMSE(void, winMain, Offsets::WinMain.offset());
     return winMain.GetPtr();
   }
 
