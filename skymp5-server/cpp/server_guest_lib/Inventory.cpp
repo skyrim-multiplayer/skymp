@@ -52,7 +52,10 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
       matchingEntry == copy.entries.end() ? 0 : matchingEntry->count;
 
     if (count < e.count) {
-      throw std::runtime_error(fmt::format("Source inventory doesn't have enough {:#x} ({} is required while {} present)", e.baseId, e.count, count));
+      throw std::runtime_error(
+        fmt::format("Source inventory doesn't have enough {:#x} ({} is "
+                    "required while {} present)",
+                    e.baseId, e.count, count));
     }
 
     matchingEntry->count -= e.count;

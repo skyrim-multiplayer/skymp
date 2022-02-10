@@ -657,7 +657,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   };
 
-  spdlog::info("onhit actor {:#x} wpn {:#x} target_actor {:#x}", hitData.aggressor, hitData.source, hitData.target);
+  spdlog::info("onhit actor {:#x} wpn {:#x} target_actor {:#x}",
+               hitData.aggressor, hitData.source, hitData.target);
 
   auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
   auto lastHitTime = targetActor.GetLastHitTime();

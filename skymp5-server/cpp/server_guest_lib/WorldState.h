@@ -88,19 +88,21 @@ public:
       throw std::runtime_error(ss.str());
     }
 
-    spdlog::info("Form with id {:#x} is {}", formId, MpForm::GetFormType(&*form));
+    spdlog::info("Form with id {:#x} is {}", formId,
+                 MpForm::GetFormType(&*form));
     auto ref = std::dynamic_pointer_cast<MpObjectReference>(form);
     if (ref) {
       auto pos = ref->GetPos();
       spdlog::info("{:#x}: baseId={:#x}, pos is {:.2f} {:.2f} {:.2f} at {}",
-          formId, ref->GetBaseId(), pos.x, pos.y, pos.z, ref->GetCellOrWorld().ToString());
+                   formId, ref->GetBaseId(), pos.x, pos.y, pos.z,
+                   ref->GetCellOrWorld().ToString());
     }
 
     auto typedForm = std::dynamic_pointer_cast<F>(form);
     if (!typedForm) {
-      throw std::runtime_error(fmt::format("Form with id {:#x} is not {} (actually it is {})",
-        formId, F::Type(), MpForm::GetFormType(&*form)
-      ));
+      throw std::runtime_error(
+        fmt::format("Form with id {:#x} is not {} (actually it is {})", formId,
+                    F::Type(), MpForm::GetFormType(&*form)));
     }
 
     return *typedForm;
