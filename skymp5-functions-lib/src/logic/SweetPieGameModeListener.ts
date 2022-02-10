@@ -209,6 +209,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     for (const command of this.commands) {
       if (inputText === '/' + command.name) {
         command.handler(actorId, this.controller);
+        return;
       }
     }
     for (const neighborActorId of neighbors) {
