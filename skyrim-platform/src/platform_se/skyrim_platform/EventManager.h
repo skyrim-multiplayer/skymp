@@ -4,13 +4,13 @@
 
 struct EventHandle
 {
-  EventHandle(uintptr_t _uid, std::string_view _eventName)
+  EventHandle(size_t _uid, std::string_view _eventName)
     : uid(_uid)
     , eventName(_eventName)
   {
   }
 
-  uintptr_t uid;
+  size_t uid;
   std::string_view eventName;
 };
 
@@ -37,7 +37,8 @@ struct CallbackObject
   bool runOnce;
 };
 
-using CallbackObjMap = robin_hood::unordered_map<uintptr_t, CallbackObject*>;
+using CallbackObjMap =
+  robin_hood::unordered_map<uintptr_t, std::unique_ptr<CallbackObject>>;
 
 struct EventState
 {
@@ -71,10 +72,20 @@ public:
     return &singleton;
   }
 
-  EventHandle* Subscribe(std::string eventName, JsValue callback,
-                         bool runOnce);
+  void Init();
+  void InitCustom();
+
+  std::unique_ptr<EventHandle> Subscribe(std::string eventName,
+                                         JsValue callback, bool runOnce);
 
   void Unsubscribe(uintptr_t uid, std::string_view eventName);
+
+  void ClearCallbacks()
+  {
+    for (const auto& event : events) {
+      event.second->callbacks.clear();
+    }
+  }
 
   CallbackObjMap* GetCallbackObjMap(const char* eventName)
   {
@@ -87,50 +98,7 @@ public:
     return &event->callbacks;
   }
 
-  /**
-   * @brief If we create our own custom events
-   * that don't have sinks and fire from within the code
-   * we register them with nullptr SinkObj here.
-   */
-  void InitCustom()
-  {
-    events.emplace("update", new EventState(nullptr));
-    events.emplace("tick", new EventState(nullptr));
-    events.emplace("browserMessage", new EventState(nullptr));
-    events.emplace("consoleMessage", new EventState(nullptr));
-    events.emplace("ipcMessage", new EventState(nullptr));
-
-    logger::debug("Custom events initialized.");
-  }
-
-  /**
-   * @brief Fetches collection of sinks, populates global event map with event
-   * names, corresponding Sink class instance and empty callback collection,
-   * which is being filled when JS plugin subscribes to an event.
-   */
-  void Init()
-  {
-    if (const auto sinks = EventHandler::GetSingleton()->GetSinks()) {
-      if (sinks->empty()) {
-        return;
-      }
-
-      for (const auto& sink : *sinks) {
-        for (const auto& event : sink->events) {
-          std::vector<std::string_view> linkedEvents;
-
-          std::copy_if(sink->events.begin(), sink->events.end(),
-                       std::back_inserter(linkedEvents),
-                       [&](const char* const s) { return s != event; });
-
-          auto sinkObj = new SinkObject(sink, linkedEvents);
-          events.emplace(event, new EventState(sinkObj));
-        }
-      }
-    }
-
-    logger::debug("Game events initialized.");
-  }
+  EventMap* GetEventMap() { return &events; }
 
 private:
   EventManager() = default;
@@ -140,4 +108,5 @@ private:
   ~EventManager() = default;
 
   EventMap events;
+  UUIDv4::UUIDGenerator<std::mt19937_64> uidGenerator;
 };

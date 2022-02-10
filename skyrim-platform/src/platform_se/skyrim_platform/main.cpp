@@ -382,8 +382,7 @@ public:
   void* GetMainAddress() const override
   {
     REL::Relocation<void*> winMain{ Offsets::WinMain };
-
-    return winMain.get(); // winMain.GetPtr();
+    return winMain.get();
   }
 
   bool Attach() override { return true; }

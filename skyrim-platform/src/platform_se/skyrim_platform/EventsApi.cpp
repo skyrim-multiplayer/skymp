@@ -364,6 +364,8 @@ void EventsApi::Clear()
 {
   g_chakraThreadId = GetCurrentThreadId();
   g = {};
+
+  EventManager::GetSingleton()->ClearCallbacks();
 }
 
 void EventsApi::SendAnimationEventEnter(uint32_t selfId,

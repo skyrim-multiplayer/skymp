@@ -35,6 +35,7 @@
 #define NOSCROLL         // SB_* and scrolling routines
 #define NOSERVICE // All Service Controller routines, SERVICE_ equates, etc.
 
+// those are used by boost::asio
 //#define NOGDICAPMASKS    // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
 //#define NONLS            // All NLS defines and routines
 
@@ -51,7 +52,9 @@
 #include <stringapiset.h>
 #include <tlhelp32.h>
 
-#include <asio.hpp>
+#include <asio/executor_work_guard.hpp>
+#include <asio/io_context.hpp>
+#include <asio/post.hpp>
 #include <cef_values.h>
 #include <cmrc/cmrc.hpp>
 #include <core_library/Meta.hpp>
@@ -73,7 +76,9 @@
 #include <ui/MyRenderHandler.h>
 #include <ui/ProcessMessageListener.h>
 #include <ui/TextToDraw.h>
+#include <uuid/uuid_v4.h>
 #include <zlib.h>
+
 
 namespace logger = SKSE::log;
 namespace stl = SKSE::stl;

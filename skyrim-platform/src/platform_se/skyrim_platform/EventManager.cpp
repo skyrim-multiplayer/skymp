@@ -1,8 +1,54 @@
 #include "EventManager.h"
 #include "EventsApi.h"
 
-EventHandle* EventManager::Subscribe(std::string eventName, JsValue callback,
-                                     bool runOnce)
+/**
+ * @brief If we create our own custom events
+ * that don't have sinks and fire from within the code
+ * we register them with nullptr SinkObj here.
+ */
+void EventManager::InitCustom()
+{
+  events.emplace("update", new EventState(nullptr));
+  events.emplace("tick", new EventState(nullptr));
+  events.emplace("browserMessage", new EventState(nullptr));
+  events.emplace("consoleMessage", new EventState(nullptr));
+  events.emplace("ipcMessage", new EventState(nullptr));
+
+  logger::debug("Custom events initialized.");
+}
+
+/**
+ * @brief Fetches collection of sinks, populates global event map with event
+ * names, corresponding Sink class instance and empty callback collection,
+ * which is being filled when JS plugin subscribes to an event.
+ */
+void EventManager::Init()
+{
+  if (const auto sinks = EventHandler::GetSingleton()->GetSinks()) {
+    if (sinks->empty()) {
+      return;
+    }
+
+    for (const auto& sink : *sinks) {
+      for (const auto& event : sink->events) {
+        std::vector<std::string_view> linkedEvents;
+
+        std::copy_if(sink->events.begin(), sink->events.end(),
+                     std::back_inserter(linkedEvents),
+                     [&](const char* const s) { return s != event; });
+
+        auto sinkObj = new SinkObject(sink, linkedEvents);
+        events.emplace(event, new EventState(sinkObj));
+      }
+    }
+  }
+
+  logger::debug("Game events initialized.");
+}
+
+std::unique_ptr<EventHandle> EventManager::Subscribe(std::string eventName,
+                                                     JsValue callback,
+                                                     bool runOnce)
 {
   // check if event is supported
   auto event = events[eventName];
@@ -11,7 +57,7 @@ EventHandle* EventManager::Subscribe(std::string eventName, JsValue callback,
                      "{} is not a valid argument for eventName",
                      eventName);
     throw InvalidArgumentException("eventName", eventName);
-    return new EventHandle(0, "");
+    return std::make_unique<EventHandle>(0, "");
   }
 
   // if sink for that event is not active activate it, duh
@@ -24,17 +70,22 @@ EventHandle* EventManager::Subscribe(std::string eventName, JsValue callback,
     }
   }
 
-  // use callback pointer as unique id for that callback
-  auto uid = reinterpret_cast<uintptr_t>(&callback);
-  event->callbacks.emplace(uid, new CallbackObject(callback, runOnce));
+  auto uid = uidGenerator.getUUID().hash();
+  event->callbacks.emplace(
+    uid, std::make_unique<CallbackObject>(callback, runOnce));
 
   logger::debug("Subscribed to event {}, callback uid {}", eventName, uid);
 
-  return new EventHandle(uid, eventName);
+  return std::make_unique<EventHandle>(uid, eventName);
 }
 
-void EventManager::Unsubscribe(uintptr_t uid, std::string_view eventName)
+void EventManager::Unsubscribe(size_t uid, std::string_view eventName)
 {
+  if (uid == 0) {
+    logger::info("Unsubscribe attempt failed, invalid event handle");
+    return;
+  }
+
   // check for correct event
   auto event = events[eventName];
   if (!event) {
