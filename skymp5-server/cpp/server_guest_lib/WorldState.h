@@ -83,23 +83,23 @@ public:
   {
     auto form = LookupFormById(formId);
     if (!form) {
-      std::stringstream ss;
-      ss << "Form with id " << std::hex << formId << " doesn't exist";
-      throw std::runtime_error(ss.str());
-    }
-
-    spdlog::info("Form with id {:#x} is {}", formId,
-                 MpForm::GetFormType(&*form));
-    auto ref = std::dynamic_pointer_cast<MpObjectReference>(form);
-    if (ref) {
-      auto pos = ref->GetPos();
-      spdlog::info("{:#x}: baseId={:#x}, pos is {:.2f} {:.2f} {:.2f} at {}",
-                   formId, ref->GetBaseId(), pos.x, pos.y, pos.z,
-                   ref->GetCellOrWorld().ToString());
+      throw std::runtime_error(
+        fmt::format("Form with id {:#x} doesn't exist", formId));
     }
 
     auto typedForm = std::dynamic_pointer_cast<F>(form);
     if (!typedForm) {
+      if constexpr (std::is_same_v<F, MpActor>) {
+        if (auto ref = std::dynamic_pointer_cast<MpObjectReference>(form)) {
+          auto pos = ref->GetPos();
+          spdlog::warn(
+            "Specified Form is ObjectReference, but we tried to treat it as "
+            "Actor, likely because of a client bug. formId={:#x}, "
+            "baseId={:#x}, pos is {:.2f} {:.2f} {:.2f} at {}",
+            formId, ref->GetBaseId(), pos.x, pos.y, pos.z,
+            ref->GetCellOrWorld().ToString());
+        }
+      }
       throw std::runtime_error(
         fmt::format("Form with id {:#x} is not {} (actually it is {})", formId,
                     F::Type(), MpForm::GetFormType(&*form)));
