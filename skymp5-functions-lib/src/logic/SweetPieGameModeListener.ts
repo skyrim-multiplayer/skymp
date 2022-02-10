@@ -1,4 +1,5 @@
 import { sprintf } from "../lib/sprintf-js";
+import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
@@ -37,6 +38,14 @@ export class SweetPieGameModeListener implements GameModeListener {
     'warmup': 'Разминка',
     'running': 'Игра идет, подождите',
   };
+  readonly commands: Array<Command> = [
+    {
+      name: 'kill',
+      handler: (actorId: number, controller: PlayerController) => {
+        controller.setPercentages(actorId, { health: 0 })
+      }
+    }, 
+  ]
 
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
@@ -197,9 +206,10 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
-    if (inputText === '/kill') {
-      this.controller.setPercentages(actorId, { health: 0 });
-      return;
+    for (const command of this.commands) {
+      if (inputText === '/' + command.name) {
+        command.handler(actorId, this.controller);
+      }
     }
     for (const neighborActorId of neighbors) {
       this.controller.sendChatMessage(neighborActorId, '' + senderName + ': ' + inputText);
