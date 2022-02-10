@@ -42,7 +42,8 @@ export class SweetPieGameModeListener implements GameModeListener {
     {
       name: 'kill',
       handler: (actorId: number, controller: PlayerController) => {
-        controller.setPercentages(actorId, { health: 0 })
+        controller.setPercentages(actorId, { health: 0 });
+        controller.sendChatMessage(actorId, 'Вы убили себя...');
       }
     }, 
   ]
