@@ -116,20 +116,18 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(
   const RE::TESBookReadEvent* event, RE::BSTEventSource<RE::TESBookReadEvent>*)
 {
-  auto book = event->book.get() ? event->book.get() : nullptr;
-  auto bookId = book ? book->formID : 0;
-
-  if ((!book || book->formID != bookId) ||
-      (book->formType != RE::FormType::Book)) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "book", book, "ObjectReference");
+    AddObjProperty(&obj, "book", e->book.get(), "ObjectReference");
 
-    EventsApi::SendEvent("bookRead", { JsValue::Undefined(), obj });
+    SendEvent("bookRead", obj);
   });
 
   return EventResult::kContinue;
