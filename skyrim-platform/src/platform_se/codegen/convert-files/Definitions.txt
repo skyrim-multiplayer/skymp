@@ -329,6 +329,7 @@ export interface FurnitureEvent {
 export interface WardHitEvent {
     target: ObjectReference,
     caster: ObjectReference,
+    spell: Spell,
     status: 'friendly' | 'absorbed' | 'broken'
 }
 
