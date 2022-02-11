@@ -302,29 +302,24 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
                                        RE::BSTEventSource<RE::TESEquipEvent>*)
 {
-  auto actorRefr = event ? event->actor.get() : nullptr;
-  auto actorId = actorRefr ? actorRefr->formID : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  auto originalRefrId = event ? event->originalRefr : 0;
-  auto baseObjectId = event ? event->baseObject : 0;
-  auto equipped = event ? event->equipped : 0;
-  auto uniqueId = event ? event->uniqueID : 0;
+  auto e = CopyPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto actorLocal = RE::TESForm::LookupByID(actorId);
-    actorLocal = actorLocal == actorRefr ? actorLocal : nullptr;
-    AddObjProperty(&obj, "actor", actorLocal, "ObjectReference");
+    auto baseObjForm = RE::TESForm::LookupByID(e->baseObject);
+    auto originalRefrForm = RE::TESForm::LookupByID(e->originalRefr);
 
-    AddObjProperty(&obj, "baseObj", RE::TESForm::LookupByID(baseObjectId),
-                   "Form");
-    AddObjProperty(&obj, "originalRefr",
-                   RE::TESForm::LookupByID(originalRefrId), "ObjectReference");
-    AddObjProperty(&obj, "uniqueId", uniqueId);
+    AddObjProperty(&obj, "actor", e->actor.get(), "ObjectReference");
+    AddObjProperty(&obj, "baseObj", baseObjForm, "Form");
+    AddObjProperty(&obj, "originalRefr", originalRefrForm, "ObjectReference");
+    AddObjProperty(&obj, "uniqueId", e->uniqueID);
 
-    equipped ? EventsApi::SendEvent("equip", { JsValue::Undefined(), obj })
-             : EventsApi::SendEvent("unequip", { JsValue::Undefined(), obj });
+    e->equipped ? SendEvent("equip", obj) : SendEvent("unequip", obj);
   });
 
   return EventResult::kContinue;
