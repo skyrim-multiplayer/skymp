@@ -265,31 +265,28 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(const RE::TESDeathEvent* event,
                                        RE::BSTEventSource<RE::TESDeathEvent>*)
 {
-  auto actorDyingRefr = event ? event->actorDying.get() : nullptr;
-  auto actorDyingId = actorDyingRefr ? actorDyingRefr->formID : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  auto actorKillerRefr = event ? event->actorKiller.get() : nullptr;
-  auto actorKillerId = actorKillerRefr ? actorKillerRefr->formID : 0;
+  auto e = CopyPtr(event);
 
-  auto dead = event ? event->dead : 0;
+  // auto actorDyingRefr = event ? event->actorDying.get() : nullptr;
+  // auto actorDyingId = actorDyingRefr ? actorDyingRefr->formID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  // auto actorKillerRefr = event ? event->actorKiller.get() : nullptr;
+  // auto actorKillerId = actorKillerRefr ? actorKillerRefr->formID : 0;
+
+  // auto dead = event ? event->actorKiller.get() : 0;
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto actorDyingLocal = RE::TESForm::LookupByID(actorDyingId);
-    actorDyingLocal =
-      actorDyingLocal == actorDyingRefr ? actorDyingLocal : nullptr;
+    AddObjProperty(&obj, "actorDying", e->actorDying.get(), "ObjectReference");
+    AddObjProperty(&obj, "actorKiller", e->actorKiller.get(),
+                   "ObjectReference");
 
-    AddObjProperty(&obj, "actorDying", actorDyingLocal, "ObjectReference");
-
-    auto actorKillerLocal = RE::TESForm::LookupByID(actorKillerId);
-    actorKillerLocal =
-      actorKillerLocal == actorKillerRefr ? actorKillerLocal : nullptr;
-
-    AddObjProperty(&obj, "actorKiller", actorKillerLocal, "ObjectReference");
-
-    dead ? EventsApi::SendEvent("deathEnd", { JsValue::Undefined(), obj })
-         : EventsApi::SendEvent("deathStart", { JsValue::Undefined(), obj });
+    e->dead ? SendEvent("deathEnd", obj) : SendEvent("deathStart", obj);
   });
   return EventResult::kContinue;
 }
