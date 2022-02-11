@@ -52,7 +52,6 @@ export const main = (lobbyLocation: Transform): void => {
   const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
   if (isOfflineMode) {
     onAuthListeners({ local: { profileId: settingsGameData.profileId } });
-    // XXX подсунуть туда проверку
   } else {
     startListenBrowserMessage();
     browser.addOnWindowLoadListener(() => {
@@ -195,7 +194,7 @@ const loginWithSkympIO = (data: LoginRegisterData, failCallback: (msg: string) =
           failCallback(`Login url is invalid (not found)`);
           break;
         default:
-          failCallback(`Server returned ${escapeJs(response.status.toString() || "???")} \\"${escapeJs(response.body)}\\"`);
+          failCallback(`Server returned ${escapeJs(response.status.toString() || "???")} \\"${escapeJs(response.body || response.error)}\\"`);
       }
     })
     .catch(reason => {
@@ -254,7 +253,7 @@ const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
           }
           break;
         default:
-          setRegisterInfo(`Server returned ${escapeJs(response.status.toString())} \\"${escapeJs(response.body)}\\"`);
+          setRegisterInfo(`Server returned ${escapeJs(response.status.toString())} \\"${escapeJs(response.body || response.error)}\\"`);
           break;
       }
     }).catch(reason => {

@@ -1104,6 +1104,7 @@ export declare let hooks: Hooks;
 export declare class HttpResponse {
     body: string;
     status: number;
+    error: string;
 }
 export type HttpHeaders = Record<string, string>;
 

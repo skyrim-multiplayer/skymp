@@ -75,6 +75,15 @@ std::map<std::string, uint32_t> Loader::GetHashes() const
   return res;
 }
 
+std::map<std::string, uint32_t> Loader::GetSizes() const
+{
+  std::map<std::string, uint32_t> res;
+  for (auto& entry : entries) {
+    res.emplace(entry.fileName.string(), entry.buffer->GetLength());
+  }
+  return res;
+}
+
 std::vector<fs::path> Loader::MakeFilePaths(
   const fs::path& dataDir, const std::vector<fs::path>& fileNames)
 {

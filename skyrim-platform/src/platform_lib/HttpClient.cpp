@@ -55,9 +55,10 @@ void HttpClient::Get(const char* host, const char* path,
       ? std::vector<uint8_t>(res->body.begin(), res->body.end())
       : std::vector<uint8_t>();
     int32_t status = res ? res->status : 0;
+    std::string error = res ? std::string{} : to_string(res.error());
 
-    pImpl_->q.AddTask([callback, resultVector, status] {
-      callback({ resultVector, status });
+    pImpl_->q.AddTask([callback, resultVector, status, error] {
+      callback({ resultVector, status, error });
     });
   });
 }

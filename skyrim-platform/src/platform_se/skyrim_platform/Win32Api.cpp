@@ -1,10 +1,6 @@
 #include "Win32Api.h"
 
-#include <stdexcept>
-#include <filesystem>
-#include <vector>
-
-#include <zlib.h>
+#include "FileInfo.h"
 
 namespace Win32Api {
 
@@ -37,23 +33,11 @@ JsValue FileInfo(const JsFunctionArguments& args) {
     }
   }
 
-  path = "Data/" + path;
-
-  size_t size = std::filesystem::file_size(path);
-  std::vector<char> buf(size);
-
-  std::ifstream f(path, std::ios::binary);
-  if (!f.read(buf.data(), size)) {
-    throw std::runtime_error("FileInfo: can't read " + path);
-  }
-
-  auto hash = crc32_z(0L, Z_NULL, 0);
-  hash = crc32_z(hash, reinterpret_cast<const Bytef*>(buf.data()), size);
-
-  auto result = JsValue::Object();
-  result.SetProperty("crc32", static_cast<int>(hash));
-  result.SetProperty("size", static_cast<int>(size));
-  return result;
+  const auto cppResult = ::FileInfo("Data/" + path);
+  auto jsResult = JsValue::Object();
+  jsResult.SetProperty("crc32", static_cast<int>(cppResult.crc32));
+  jsResult.SetProperty("size", static_cast<int>(cppResult.size));
+  return jsResult;
 }
 
 }
