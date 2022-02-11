@@ -1,4 +1,5 @@
 #pragma once
+#include "EventManager.h"
 #include "EventUtils.h"
 
 struct Sink
@@ -96,6 +97,40 @@ public:
   {
     static EventHandler singleton;
     return &singleton;
+  }
+
+  static void HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
+  {
+    switch (msg->type) {
+      case SKSE::MessagingInterface::kDataLoaded:
+        EventManager::Init();
+        EventsApi::SendEvent("dataLoaded", {});
+        break;
+      case SKSE::MessagingInterface::kInputLoaded:
+        EventsApi::SendEvent("inputLoaded", {});
+        break;
+      case SKSE::MessagingInterface::kPostLoad:
+        EventsApi::SendEvent("postLoad", {});
+        break;
+      case SKSE::MessagingInterface::kPostPostLoad:
+        EventsApi::SendEvent("postPostLoad", {});
+        break;
+      case SKSE::MessagingInterface::kNewGame:
+        EventsApi::SendEvent("newGame", {});
+        break;
+      case SKSE::MessagingInterface::kPreLoadGame:
+        EventsApi::SendEvent("preLoadGame", {});
+        break;
+      case SKSE::MessagingInterface::kPostLoadGame:
+        EventsApi::SendEvent("postLoadGame", {});
+        break;
+      case SKSE::MessagingInterface::kSaveGame:
+        EventsApi::SendEvent("saveGame", {});
+        break;
+      case SKSE::MessagingInterface::kDeleteGame:
+        EventsApi::SendEvent("deleteGame", {});
+        break;
+    }
   }
 
   SinkSet* GetSinks() { return &sinks; }

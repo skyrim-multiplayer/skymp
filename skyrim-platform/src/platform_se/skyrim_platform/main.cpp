@@ -1,5 +1,6 @@
 #include "CallNativeApi.h"
 #include "DumpFunctions.h"
+#include "EventHandler.h"
 #include "EventManager.h"
 #include "EventsApi.h"
 #include "FlowManager.h"
@@ -78,15 +79,6 @@ void InitLog()
   logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
 
-void OnMessage(SKSE::MessagingInterface::Message* msg)
-{
-  // TODO: handle other types of messages
-  switch (msg->type) {
-    case SKSE::MessagingInterface::kDataLoaded:
-      EventManager::GetSingleton()->Init();
-  }
-}
-
 extern "C" {
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe_Impl(
   const char* systemName, EventsApi::IpcMessageCallback callback, void* state)
@@ -129,14 +121,14 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
     return false;
   }
 
-  messagingInterface->RegisterListener(OnMessage);
+  messagingInterface->RegisterListener(EventHandler::HandleSKSEMessage);
 
   Hooks::Install();
   Frida::InstallHooks();
 
   // init custom events first
   // and the rest at DataLoaded, to be safe
-  EventManager::GetSingleton()->InitCustom();
+  EventManager::InitCustom();
 
   TickHandler::GetSingleton()->Update();
 

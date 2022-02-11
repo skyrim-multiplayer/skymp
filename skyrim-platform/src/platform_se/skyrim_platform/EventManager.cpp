@@ -8,11 +8,24 @@
  */
 void EventManager::InitCustom()
 {
-  events.emplace("update", new EventState(nullptr));
-  events.emplace("tick", new EventState(nullptr));
-  events.emplace("browserMessage", new EventState(nullptr));
-  events.emplace("consoleMessage", new EventState(nullptr));
-  events.emplace("ipcMessage", new EventState(nullptr));
+  auto manager = GetSingleton();
+
+  manager->EmplaceEvent("update");
+  manager->EmplaceEvent("tick");
+  manager->EmplaceEvent("browserMessage");
+  manager->EmplaceEvent("consoleMessage");
+  manager->EmplaceEvent("ipcMessage");
+
+  // skse messages
+  manager->EmplaceEvent("dataLoaded");
+  manager->EmplaceEvent("inputLoaded");
+  manager->EmplaceEvent("postLoad");
+  manager->EmplaceEvent("postPostLoad");
+  manager->EmplaceEvent("newGame");
+  manager->EmplaceEvent("preLoadGame");
+  manager->EmplaceEvent("postLoadGame");
+  manager->EmplaceEvent("saveGame");
+  manager->EmplaceEvent("deleteGame");
 
   logger::debug("Custom events initialized.");
 }
@@ -29,6 +42,8 @@ void EventManager::Init()
       return;
     }
 
+    auto manager = GetSingleton();
+
     for (const auto& sink : *sinks) {
       for (const auto& event : sink->events) {
         std::vector<std::string_view> linkedEvents;
@@ -38,7 +53,7 @@ void EventManager::Init()
                      [&](const char* const s) { return s != event; });
 
         auto sinkObj = new SinkObject(sink, linkedEvents);
-        events.emplace(event, new EventState(sinkObj));
+        manager->EmplaceEvent(event, new EventState(sinkObj));
       }
     }
   }
