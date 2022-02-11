@@ -172,17 +172,18 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESCellFullyLoadedEvent* event,
   RE::BSTEventSource<RE::TESCellFullyLoadedEvent>*)
 {
-  auto cell = event ? event->cell : nullptr;
-  auto cellId = cell ? cell->formID : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto cell_ = RE::TESForm::LookupByID(cellId);
-    cell_ = cell_ == cell ? cell_ : nullptr;
-    AddObjProperty(&obj, "cell", cell_, "Cell");
+    AddObjProperty(&obj, "cell", e->cell, "Cell");
 
-    EventsApi::SendEvent("cellFullyLoaded", { JsValue::Undefined(), obj });
+    SendEvent("cellFullyLoaded", obj);
   });
 
   return EventResult::kContinue;
