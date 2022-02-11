@@ -22,11 +22,9 @@ EventResult EventHandler::ProcessEvent(
   // ==== test
   auto p = RE::TESForm::LookupByID<RE::TESObjectREFR>(20);
   auto ni = static_cast<RE::NiPointer<RE::TESObjectREFR>>(p);
-  auto o = new RE::TESDestructionStageChangedEvent();
-  o->newStage = 15;
-  o->oldStage = 10;
-  o->target = ni;
-  EventEmitter::DestructionStageChangedEvent(o);
+  auto o = new RE::TESEnterBleedoutEvent();
+  o->actor = ni;
+  EventEmitter::EnterBleedoutEvent(o);
   // ==== test
 
   auto e = CopyPtr(event);
@@ -284,19 +282,18 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESEnterBleedoutEvent* event,
   RE::BSTEventSource<RE::TESEnterBleedoutEvent>*)
 {
-  auto actor = event->actor.get() ? event->actor.get() : nullptr;
-  auto actorId = actor ? actor->formID : 0;
-
-  if (!actor || actor->formID != actorId) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "actor", actor, "ObjectReference");
+    AddObjProperty(&obj, "actor", e->actor.get(), "ObjectReference");
 
-    EventsApi::SendEvent("enterBleedout", { JsValue::Undefined(), obj });
+    SendEvent("enterBleedout", obj);
   });
 
   return EventResult::kContinue;
