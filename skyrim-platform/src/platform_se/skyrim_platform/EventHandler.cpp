@@ -3,6 +3,13 @@
 #include "JsUtils.h"
 #include "SkyrimPlatform.h"
 
+namespace {
+inline void SendEvent(const char* name, JsValue obj)
+{
+  EventsApi::SendEvent(name, { JsValue::Undefined(), obj });
+}
+}
+
 EventResult EventHandler::ProcessEvent(
   const RE::TESActivateEvent* event, RE::BSTEventSource<RE::TESActivateEvent>*)
 {
@@ -1172,8 +1179,7 @@ EventResult EventHandler::ProcessEvent(
 
     switch (e->type.get()) {
       case SKSE::ActionEvent::Type::kWeaponSwing: {
-        EventsApi::SendEvent("actionWeaponSwing",
-                             { JsValue::Undefined(), obj });
+        SendEvent("actionWeaponSwing", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kBeginDraw: {
