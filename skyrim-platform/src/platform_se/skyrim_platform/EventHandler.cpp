@@ -137,26 +137,32 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESCellAttachDetachEvent* event,
   RE::BSTEventSource<RE::TESCellAttachDetachEvent>*)
 {
-  auto refr = event->reference.get();
-  auto action = event->action;
-
-  auto formId = refr ? refr->formID : 0;
-  auto form = RE::TESForm::LookupByID(formId);
-
-  if (!form || refr->formID != form->formID) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  // auto refr = event->reference.get();
+  // auto action = event->action;
+
+  // auto formId = refr ? refr->formID : 0;
+  // auto form = RE::TESForm::LookupByID(formId);
+
+  // if (!form || refr->formID != form->formID) {
+  //   return EventResult::kContinue;
+  // }
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "refr", refr, "ObjectReference");
+    AddObjProperty(&obj, "refr", e->reference.get(), "ObjectReference");
 
-    if (action == 1)
-      EventsApi::SendEvent("cellAttach", { JsValue::Undefined(), obj });
+    if (e->action == 1)
+      SendEvent("cellAttach", obj);
 
-    if (action == 0)
-      EventsApi::SendEvent("cellDetach", { JsValue::Undefined(), obj });
+    if (e->action == 0)
+      SendEvent("cellDetach", obj);
   });
 
   return EventResult::kContinue;
