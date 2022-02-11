@@ -42,7 +42,7 @@ inline RE::BSTEventSource<E>* GetEventSource()
 template <class T>
 inline std::shared_ptr<T> CopyPtr(const T* ptr)
 {
-  auto copy = RE::malloc<T>(sizeof(T));
+  auto copy = static_cast<T*>(malloc(sizeof(T)));
   std::memcpy(copy, ptr, sizeof(T));
 
   return std::shared_ptr<T>(copy);
