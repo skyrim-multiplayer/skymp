@@ -1,6 +1,6 @@
 #pragma once
 
-class TESEventEmitter
+class EventEmitter
 {
 public:
   static void HitEvent(RE::TESHitEvent* event)

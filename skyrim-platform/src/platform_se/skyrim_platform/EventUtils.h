@@ -38,3 +38,12 @@ inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetSingleton();
 }
+
+template <class T>
+inline std::shared_ptr<T> CopyPtr(const T* ptr)
+{
+  auto copy = RE::malloc<T>(sizeof(T));
+  std::memcpy(copy, ptr, sizeof(T));
+
+  return std::shared_ptr<T>(copy);
+}
