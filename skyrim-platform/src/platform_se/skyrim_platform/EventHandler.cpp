@@ -13,27 +13,22 @@ inline void SendEvent(const char* name, JsValue obj)
 EventResult EventHandler::ProcessEvent(
   const RE::TESActivateEvent* event, RE::BSTEventSource<RE::TESActivateEvent>*)
 {
-  auto targetRefr = event ? event->objectActivated.get() : nullptr;
-  auto casterRefr = event ? event->actionRef.get() : nullptr;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  auto targetId = targetRefr ? targetRefr->formID : 0;
-  auto casterId = casterRefr ? casterRefr->formID : 0;
+  auto e = CopyPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto target = RE::TESForm::LookupByID(targetId);
-    target = target == targetRefr ? target : nullptr;
-    AddObjProperty(&obj, "target", target, "ObjectReference");
-
-    auto caster = RE::TESForm::LookupByID(casterId);
-    caster = caster == casterRefr ? caster : nullptr;
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
-
+    AddObjProperty(&obj, "target", e->objectActivated.get(),
+                   "ObjectReference");
+    AddObjProperty(&obj, "caster", e->actionRef.get(), "ObjectReference");
     AddObjProperty(&obj, "isCrimeToActivate",
-                   target->As<RE::TESObjectREFR>()->IsCrimeToActivate());
+                   e->objectActivated.get()->IsCrimeToActivate());
 
-    EventsApi::SendEvent("activate", { JsValue::Undefined(), obj });
+    SendEvent("activate", obj);
   });
 
   return EventResult::kContinue;
@@ -89,24 +84,30 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESActorLocationChangeEvent* event,
   RE::BSTEventSource<RE::TESActorLocationChangeEvent>*)
 {
-  auto actor = event->actor.get() ? event->actor.get() : nullptr;
-
-  auto actorId = actor ? actor->formID : 0;
-
-  if ((!actor || actor->formID != actorId) ||
-      (event->oldLoc->formType != RE::FormType::Location) ||
-      (event->newLoc->formType != RE::FormType::Location)) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  // auto actor = event->actor.get() ? event->actor.get() : nullptr;
+
+  // auto actorId = actor ? actor->formID : 0;
+
+  // if ((!actor || actor->formID != actorId) ||
+  //     (event->oldLoc->formType != RE::FormType::Location) ||
+  //     (event->newLoc->formType != RE::FormType::Location)) {
+  //   return EventResult::kContinue;
+  // }
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "actor", actor, "Actor");
-    AddObjProperty(&obj, "oldLoc", event->oldLoc, "Location");
-    AddObjProperty(&obj, "newLoc", event->newLoc, "Location");
+    AddObjProperty(&obj, "actor", e->actor.get(), "Actor");
+    AddObjProperty(&obj, "oldLoc", e->oldLoc, "Location");
+    AddObjProperty(&obj, "newLoc", e->newLoc, "Location");
 
-    EventsApi::SendEvent("locationChanged", { JsValue::Undefined(), obj });
+    SendEvent("locationChanged", obj);
   });
 
   return EventResult::kContinue;
