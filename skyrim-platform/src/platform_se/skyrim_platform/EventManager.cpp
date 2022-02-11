@@ -110,7 +110,7 @@ void EventManager::Unsubscribe(uintptr_t uid, std::string_view eventName)
 
   // ignore this for custom events
   if (event->sinkObj) {
-    // check if there are no other callbacks for this event
+    // check if there are any other callbacks for this event
     if (event->callbacks.empty()) {
       logger::trace("No other callbacks found for event {}", eventName);
       auto sink = event->sinkObj->sink;
@@ -126,7 +126,7 @@ void EventManager::Unsubscribe(uintptr_t uid, std::string_view eventName)
         for (const auto& linkedEventName : event->sinkObj->linkedEvents) {
           logger::trace("Checking callbacks for linked event {}",
                         linkedEventName);
-          if (!events[eventName]->callbacks.empty()) {
+          if (!events[linkedEventName]->callbacks.empty()) {
             logger::trace("Found callbacks for linked event {}. Aborting sink "
                           "deactivation.",
                           linkedEventName);
