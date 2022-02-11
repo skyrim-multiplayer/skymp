@@ -192,35 +192,40 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(const RE::TESCombatEvent* event,
                                        RE::BSTEventSource<RE::TESCombatEvent>*)
 {
-  auto targetActorRefr = event ? event->targetActor.get() : nullptr;
-  auto targetActorId = targetActorRefr ? targetActorRefr->formID : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  auto actorRefr = event ? event->actor.get() : nullptr;
-  auto actorId = actorRefr ? actorRefr->formID : 0;
+  auto e = CopyPtr(event);
 
-  auto state = event
-    ? event->newState
-    : RE::stl::enumeration<RE::ACTOR_COMBAT_STATE, std::uint32_t>(
-        RE::ACTOR_COMBAT_STATE::kNone);
+  // auto targetActorRefr = event ? event->targetActor.get() : nullptr;
+  // auto targetActorId = targetActorRefr ? targetActorRefr->formID : 0;
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  // auto actorRefr = event ? event->actor.get() : nullptr;
+  // auto actorId = actorRefr ? actorRefr->formID : 0;
+
+  // auto state = event
+  //   ? event->newState
+  //   : RE::stl::enumeration<RE::ACTOR_COMBAT_STATE, std::uint32_t>(
+  //       RE::ACTOR_COMBAT_STATE::kNone);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto targetActorLocal = RE::TESForm::LookupByID(targetActorId);
-    targetActorLocal =
-      targetActorLocal == targetActorRefr ? targetActorLocal : nullptr;
-    AddObjProperty(&obj, "target", targetActorLocal, "ObjectReference");
+    AddObjProperty(&obj, "target", e->targetActor.get(), "ObjectReference");
+    AddObjProperty(&obj, "actor", e->actor.get(), "ObjectReference");
 
-    auto actorLocal = RE::TESForm::LookupByID(actorId);
-    actorLocal = actorLocal == actorRefr ? actorLocal : nullptr;
-    AddObjProperty(&obj, "actor", actorLocal, "ObjectReference");
+    auto state = e
+      ? e->newState
+      : RE::stl::enumeration<RE::ACTOR_COMBAT_STATE, std::uint32_t>(
+          RE::ACTOR_COMBAT_STATE::kNone);
 
     AddObjProperty(&obj, "isCombat",
                    state.get() == RE::ACTOR_COMBAT_STATE::kCombat);
     AddObjProperty(&obj, "isSearching",
                    state.get() == RE::ACTOR_COMBAT_STATE::kSearching);
 
-    EventsApi::SendEvent("combatState", { JsValue::Undefined(), obj });
+    SendEvent("combatState", obj);
   });
 
   return EventResult::kContinue;
