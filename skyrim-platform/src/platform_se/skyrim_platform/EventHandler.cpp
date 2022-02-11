@@ -235,30 +235,29 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESContainerChangedEvent* event,
   RE::BSTEventSource<RE::TESContainerChangedEvent>*)
 {
-  auto oldContainerId = event ? event->oldContainer : 0;
-  auto newContainerId = event ? event->newContainer : 0;
-  auto baseObjId = event ? event->baseObj : 0;
-  auto itemCount = event ? event->itemCount : 0;
-  auto uniqueID = event ? event->uniqueID : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  auto reference = event ? event->reference.get() : nullptr;
-  auto referenceId = reference ? reference->formID : 0;
+  auto e = CopyPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "oldContainer",
-                   RE::TESForm::LookupByID(oldContainerId), "ObjectReference");
+                   RE::TESForm::LookupByID(e->oldContainer),
+                   "ObjectReference");
     AddObjProperty(&obj, "newContainer",
-                   RE::TESForm::LookupByID(newContainerId), "ObjectReference");
-    AddObjProperty(&obj, "baseObj", RE::TESForm::LookupByID(baseObjId),
+                   RE::TESForm::LookupByID(e->newContainer),
+                   "ObjectReference");
+    AddObjProperty(&obj, "baseObj", RE::TESForm::LookupByID(e->baseObj),
                    "Form");
-    AddObjProperty(&obj, "numItems", itemCount);
-    AddObjProperty(&obj, "uniqueID", uniqueID);
-    AddObjProperty(&obj, "reference", RE::TESForm::LookupByID(referenceId),
+    AddObjProperty(&obj, "numItems", e->itemCount);
+    AddObjProperty(&obj, "uniqueID", e->uniqueID);
+    AddObjProperty(&obj, "reference", e->reference.get().get(),
                    "ObjectReference");
 
-    EventsApi::SendEvent("containerChanged", { JsValue::Undefined(), obj });
+    SendEvent("containerChanged", obj);
   });
   return EventResult::kContinue;
 }

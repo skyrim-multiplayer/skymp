@@ -39,6 +39,11 @@ inline void AddObjProperty(JsValue* obj, const char* tag, uint32_t property)
   obj->SetProperty(tag, JsValue::Double(property));
 }
 
+inline void AddObjProperty(JsValue* obj, const char* tag, uint16_t property)
+{
+  obj->SetProperty(tag, JsValue::Double(property));
+}
+
 inline void AddObjProperty(JsValue* obj, const char* tag, uintptr_t property)
 {
   obj->SetProperty(tag, JsValue::Double(property));
