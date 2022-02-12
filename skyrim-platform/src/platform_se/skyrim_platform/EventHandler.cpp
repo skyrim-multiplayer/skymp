@@ -3,8 +3,6 @@
 #include "JsUtils.h"
 #include "SkyrimPlatform.h"
 
-#include "EventEmitter.h" // test
-
 namespace {
 inline void SendEvent(const char* name, JsValue obj)
 {
@@ -18,19 +16,6 @@ EventResult EventHandler::ProcessEvent(
   if (!event) {
     return EventResult::kContinue;
   }
-
-  // ==== test
-  auto p = RE::TESForm::LookupByID<RE::TESObjectREFR>(20);
-  auto ni = static_cast<RE::NiPointer<RE::TESObjectREFR>>(p);
-  auto o = new RE::TESPerkEntryRunEvent();
-  // o->spell = static_cast<RE::FormID>(20);
-  o->target = ni;
-  o->cause = ni;
-  o->flag = 3;
-  o->perkId = static_cast<RE::FormID>(19);
-  EventEmitter::PerkEntryRunEvent(o);
-  logger::debug("Emit");
-  // ==== test
 
   auto e = CopyPtr(event);
 
@@ -830,17 +815,18 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(const RE::TESResetEvent* event,
                                        RE::BSTEventSource<RE::TESResetEvent>*)
 {
-  auto object = event ? event->object.get() : nullptr;
-  auto objectId = object ? object->formID : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto objectIdLocal = RE::TESForm::LookupByID(objectId);
-    objectIdLocal = objectIdLocal == object ? objectIdLocal : nullptr;
-    AddObjProperty(&obj, "object", objectIdLocal, "ObjectReference");
+    AddObjProperty(&obj, "object", e->object.get(), "ObjectReference");
 
-    EventsApi::SendEvent("reset", { JsValue::Undefined(), obj });
+    SendEvent("reset", obj);
   });
 
   return EventResult::kStop;
@@ -849,24 +835,19 @@ EventResult EventHandler::ProcessEvent(const RE::TESResetEvent* event,
 EventResult EventHandler::ProcessEvent(const RE::TESSellEvent* event,
                                        RE::BSTEventSource<RE::TESSellEvent>*)
 {
-  auto seller = event->seller.get() ? event->seller.get() : nullptr;
-  auto target = event->target.get() ? event->target.get() : nullptr;
-
-  auto sellerId = seller ? seller->formID : 0;
-  auto targetId = target ? target->formID : 0;
-
-  if ((!seller || seller->formID != sellerId) ||
-      (!target || target->formID != targetId)) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "seller", seller, "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
+    AddObjProperty(&obj, "seller", e->seller.get(), "ObjectReference");
+    AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
 
-    EventsApi::SendEvent("sell", { JsValue::Undefined(), obj });
+    SendEvent("sell", obj);
   });
 
   return EventResult::kContinue;
@@ -876,13 +857,19 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESSleepStartEvent* event,
   RE::BSTEventSource<RE::TESSleepStartEvent>*)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "startTime", event->sleepStartTime);
-    AddObjProperty(&obj, "desiredStopTime", event->desiredSleepEndTime);
+    AddObjProperty(&obj, "startTime", e->sleepStartTime);
+    AddObjProperty(&obj, "desiredStopTime", e->desiredSleepEndTime);
 
-    EventsApi::SendEvent("sleepStart", { JsValue::Undefined(), obj });
+    SendEvent("sleepStart", obj);
   });
 
   return EventResult::kContinue;
@@ -892,12 +879,18 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESSleepStopEvent* event,
   RE::BSTEventSource<RE::TESSleepStopEvent>*)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "isInterrupted", event->isInterrupted);
+    AddObjProperty(&obj, "isInterrupted", e->isInterrupted);
 
-    EventsApi::SendEvent("sleepStop", { JsValue::Undefined(), obj });
+    SendEvent("sleepStop", obj);
   });
 
   return EventResult::kContinue;
@@ -907,22 +900,21 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESSpellCastEvent* event,
   RE::BSTEventSource<RE::TESSpellCastEvent>*)
 {
-  auto caster = event->caster.get() ? event->caster.get() : nullptr;
-  auto casterId = caster ? caster->formID : 0;
-  auto spell = RE::TESForm::LookupByID(event->spell);
-
-  if ((!caster || caster->formID != casterId) ||
-      (spell->formType.get() != RE::FormType::Spell)) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
+    auto spell = RE::TESForm::LookupByID(e->spell);
+
+    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
     AddObjProperty(&obj, "spell", spell, "Spell");
 
-    EventsApi::SendEvent("spellCast", { JsValue::Undefined(), obj });
+    SendEvent("spellCast", obj);
   });
 
   return EventResult::kContinue;
@@ -932,17 +924,18 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESSwitchRaceCompleteEvent* event,
   RE::BSTEventSource<RE::TESSwitchRaceCompleteEvent>*)
 {
-  auto subject = event ? event->subject.get() : nullptr;
-  auto subjectId = subject ? subject->formID : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto subjectLocal = RE::TESForm::LookupByID(subjectId);
-    subjectLocal = subjectLocal == subject ? subjectLocal : nullptr;
-    AddObjProperty(&obj, "subject", subjectLocal, "ObjectReference");
+    AddObjProperty(&obj, "subject", e->subject.get(), "ObjectReference");
 
-    EventsApi::SendEvent("switchRaceComplete", { JsValue::Undefined(), obj });
+    SendEvent("switchRaceComplete", obj);
   });
   return EventResult::kContinue;
 }
@@ -951,16 +944,19 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESTrackedStatsEvent* event,
   RE::BSTEventSource<RE::TESTrackedStatsEvent>*)
 {
-  auto statName = event ? event->stat.data() : "";
-  auto value = event ? event->value : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "statName", statName);
-    AddObjProperty(&obj, "newValue", value);
+    AddObjProperty(&obj, "statName", e->stat.data());
+    AddObjProperty(&obj, "newValue", e->value);
 
-    EventsApi::SendEvent("trackedStats", { JsValue::Undefined(), obj });
+    SendEvent("trackedStats", obj);
   });
   return EventResult::kContinue;
 }
@@ -969,24 +965,19 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESTriggerEnterEvent* event,
   RE::BSTEventSource<RE::TESTriggerEnterEvent>*)
 {
-  auto caster = event->caster.get() ? event->caster.get() : nullptr;
-  auto target = event->target.get() ? event->target.get() : nullptr;
-
-  auto casterId = caster ? caster->formID : 0;
-  auto targetId = target ? target->formID : 0;
-
-  if ((!caster || caster->formID != casterId) ||
-      (!target || target->formID != targetId)) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
+    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+    AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
 
-    EventsApi::SendEvent("triggerEnter", { JsValue::Undefined(), obj });
+    SendEvent("triggerEnter", obj);
   });
 
   return EventResult::kContinue;
@@ -995,24 +986,19 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(
   const RE::TESTriggerEvent* event, RE::BSTEventSource<RE::TESTriggerEvent>*)
 {
-  auto caster = event->caster.get() ? event->caster.get() : nullptr;
-  auto target = event->target.get() ? event->target.get() : nullptr;
-
-  auto casterId = caster ? caster->formID : 0;
-  auto targetId = target ? target->formID : 0;
-
-  if ((!caster || caster->formID != casterId) ||
-      (!target || target->formID != targetId)) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
+    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+    AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
 
-    EventsApi::SendEvent("trigger", { JsValue::Undefined(), obj });
+    SendEvent("trigger", obj);
   });
 
   return EventResult::kContinue;
@@ -1022,24 +1008,19 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESTriggerLeaveEvent* event,
   RE::BSTEventSource<RE::TESTriggerLeaveEvent>*)
 {
-  auto caster = event->caster.get() ? event->caster.get() : nullptr;
-  auto target = event->target.get() ? event->target.get() : nullptr;
-
-  auto casterId = caster ? caster->formID : 0;
-  auto targetId = target ? target->formID : 0;
-
-  if ((!caster || caster->formID != casterId) ||
-      (!target || target->formID != targetId)) {
+  if (!event) {
     return EventResult::kContinue;
   }
+
+  auto e = CopyPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
+    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+    AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
 
-    EventsApi::SendEvent("triggerLeave", { JsValue::Undefined(), obj });
+    SendEvent("triggerLeave", obj);
   });
 
   return EventResult::kContinue;
@@ -1049,22 +1030,23 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESUniqueIDChangeEvent* event,
   RE::BSTEventSource<RE::TESUniqueIDChangeEvent>*)
 {
-  auto oldUniqueID = event ? event->oldUniqueID : 0;
-  auto newUniqueID = event ? event->newUniqueID : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  auto oldBaseID = event ? event->oldBaseID : 0;
-  auto newBaseID = event ? event->newBaseID : 0;
+  auto e = CopyPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "oldBaseID", oldBaseID);
-    AddObjProperty(&obj, "newBaseID", newBaseID);
-    AddObjProperty(&obj, "oldUniqueID", oldUniqueID);
-    AddObjProperty(&obj, "tarnewUniqueIDget", newUniqueID);
+    AddObjProperty(&obj, "oldBaseID", e->oldBaseID);
+    AddObjProperty(&obj, "newBaseID", e->newBaseID);
+    AddObjProperty(&obj, "oldUniqueID", e->oldUniqueID);
+    AddObjProperty(&obj, "newUniqueID", e->newUniqueID);
 
-    EventsApi::SendEvent("uniqueIdChange", { JsValue::Undefined(), obj });
+    SendEvent("uniqueIdChange", obj);
   });
+
   return EventResult::kContinue;
 }
 
@@ -1072,13 +1054,19 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESWaitStartEvent* event,
   RE::BSTEventSource<RE::TESWaitStartEvent>*)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "startTime", event->waitStartTime);
-    AddObjProperty(&obj, "desiredStopTime", event->desiredWaitEndTime);
+    AddObjProperty(&obj, "startTime", e->waitStartTime);
+    AddObjProperty(&obj, "desiredStopTime", e->desiredWaitEndTime);
 
-    EventsApi::SendEvent("waitStart", { JsValue::Undefined(), obj });
+    SendEvent("waitStart", obj);
   });
 
   return EventResult::kContinue;
@@ -1087,22 +1075,25 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(
   const RE::TESWaitStopEvent* event, RE::BSTEventSource<RE::TESWaitStopEvent>*)
 {
-  auto interrupted = event ? event->interrupted : 0;
+  if (!event) {
+    return EventResult::kContinue;
+  }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "isInterrupted", interrupted);
+    AddObjProperty(&obj, "isInterrupted", e->interrupted);
 
-    EventsApi::SendEvent("waitStop", { JsValue::Undefined(), obj });
+    SendEvent("waitStop", obj);
   });
 
   return EventResult::kContinue;
 }
 
-EventResult EventHandler::ProcessEvent(
-  const SKSE::ActionEvent* event,
-  RE::BSTEventSource<SKSE::ActionEvent>* eventSource)
+EventResult EventHandler::ProcessEvent(const SKSE::ActionEvent* event,
+                                       RE::BSTEventSource<SKSE::ActionEvent>*)
 {
   if (!event) {
     return EventResult::kContinue;
@@ -1171,26 +1162,27 @@ EventResult EventHandler::ProcessEvent(
   return EventResult::kContinue;
 }
 
-EventResult EventHandler::ProcessEvent(
-  const SKSE::CameraEvent* event,
-  RE::BSTEventSource<SKSE::CameraEvent>* eventSource)
+EventResult EventHandler::ProcessEvent(const SKSE::CameraEvent* event,
+                                       RE::BSTEventSource<SKSE::CameraEvent>*)
 {
   if (!event) {
     return EventResult::kContinue;
   }
 
-  auto oldStateId =
-    to_underlying<RE::CameraStates::CameraState>(event->oldState->id);
-  auto newStateId =
-    to_underlying<RE::CameraStates::CameraState>(event->newState->id);
+  auto e = CopyPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
+
+    auto oldStateId =
+      to_underlying<RE::CameraStates::CameraState>(e->oldState->id);
+    auto newStateId =
+      to_underlying<RE::CameraStates::CameraState>(e->newState->id);
 
     AddObjProperty(&obj, "oldStateId", oldStateId);
     AddObjProperty(&obj, "newStateId", newStateId);
 
-    EventsApi::SendEvent("cameraStateChanged", { JsValue::Undefined(), obj });
+    SendEvent("cameraStateChanged", obj);
   });
 
   return EventResult::kContinue;
@@ -1198,25 +1190,21 @@ EventResult EventHandler::ProcessEvent(
 
 EventResult EventHandler::ProcessEvent(
   const SKSE::CrosshairRefEvent* event,
-  RE::BSTEventSource<SKSE::CrosshairRefEvent>* eventSource)
+  RE::BSTEventSource<SKSE::CrosshairRefEvent>*)
 {
   if (!event) {
     return EventResult::kContinue;
   }
 
-  auto refr = event->crosshairRef ? event->crosshairRef.get() : nullptr;
-  auto refrId = refr ? refr->formID : 0;
+  auto e = CopyPtr(event);
 
-  if (!refr || refr->formID != refrId) {
-    return EventResult::kContinue;
-  }
-
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "reference", refr, "ObjectReference");
+    AddObjProperty(&obj, "reference", e->crosshairRef.get(),
+                   "ObjectReference");
 
-    EventsApi::SendEvent("crosshairRefChanged", { JsValue::Undefined(), obj });
+    SendEvent("crosshairRefChanged", obj);
   });
 
   return EventResult::kContinue;
@@ -1224,24 +1212,20 @@ EventResult EventHandler::ProcessEvent(
 
 EventResult EventHandler::ProcessEvent(
   const SKSE::NiNodeUpdateEvent* event,
-  RE::BSTEventSource<SKSE::NiNodeUpdateEvent>* eventSource)
+  RE::BSTEventSource<SKSE::NiNodeUpdateEvent>*)
 {
   if (!event) {
     return EventResult::kContinue;
   }
 
-  auto referenceId = event->reference ? event->reference->formID : 0;
+  auto e = CopyPtr(event);
 
-  if (!event->reference || event->reference->formID != referenceId) {
-    return EventResult::kContinue;
-  }
-
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "reference", event->reference, "ObjectReference");
+    AddObjProperty(&obj, "reference", e->reference, "ObjectReference");
 
-    EventsApi::SendEvent("niNodeUpdate", { JsValue::Undefined(), obj });
+    SendEvent("niNodeUpdate", obj);
   });
 
   return EventResult::kContinue;
@@ -1249,11 +1233,13 @@ EventResult EventHandler::ProcessEvent(
 
 EventResult EventHandler::ProcessEvent(
   const SKSE::ModCallbackEvent* event,
-  RE::BSTEventSource<SKSE::ModCallbackEvent>* eventSource)
+  RE::BSTEventSource<SKSE::ModCallbackEvent>*)
 {
   if (!event) {
     return EventResult::kContinue;
   }
+
+  auto e = CopyPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
     auto obj = JsValue::Object();
@@ -1263,7 +1249,7 @@ EventResult EventHandler::ProcessEvent(
     AddObjProperty(&obj, "strArg", event->strArg.c_str());
     AddObjProperty(&obj, "numArg", event->numArg);
 
-    EventsApi::SendEvent("modEvent", { JsValue::Undefined(), obj });
+    SendEvent("modEvent", obj);
   });
 
   return EventResult::kContinue;
@@ -1277,17 +1263,17 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  const char* menuName = event->menuName.c_str();
+  auto e = CopyPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "name", menuName);
+    AddObjProperty(&obj, "name", e->menuName.c_str());
 
-    if (event->opening) {
-      EventsApi::SendEvent("menuOpen", { JsValue::Undefined(), obj });
+    if (e->opening) {
+      SendEvent("menuOpen", obj);
     } else {
-      EventsApi::SendEvent("menuClose", { JsValue::Undefined(), obj });
+      SendEvent("menuClose", obj);
     }
   });
 
@@ -1301,12 +1287,14 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  auto e = CopyPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "tag", event->tag.c_str());
+    AddObjProperty(&obj, "tag", e->tag.c_str());
 
-    EventsApi::SendEvent("footstep", { JsValue::Undefined(), obj });
+    SendEvent("footstep", obj);
   });
 
   return EventResult::kContinue;
@@ -1320,15 +1308,17 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto type =
-    to_underlying<RE::PositionPlayerEvent::EVENT_TYPE>(event->type.get());
+  auto e = CopyPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
+
+    auto type =
+      to_underlying<RE::PositionPlayerEvent::EVENT_TYPE>(e->type.get());
 
     AddObjProperty(&obj, "eventType", type);
 
-    EventsApi::SendEvent("positionPlayer", { JsValue::Undefined(), obj });
+    SendEvent("positionPlayer", obj);
   });
 
   return EventResult::kContinue;
