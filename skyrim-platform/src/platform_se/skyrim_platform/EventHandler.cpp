@@ -17,37 +17,34 @@ inline void SendEvent(const char* name, JsValue obj)
 }
 }
 
+void SendSimpleEvent(const char* tag)
+{
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [tag] { EventsApi::SendEvent(tag, { JsValue::Undefined() }); });
+}
+
 void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
 {
   switch (msg->type) {
-    // case SKSE::MessagingInterface::kDataLoaded: {
-    //   EventManager::Init();
-    //   SendEvent("dataLoaded");
-    // } break;
-    // case SKSE::MessagingInterface::kInputLoaded:
-    //   SendEvent("inputLoaded");
-    //   break;
-    // case SKSE::MessagingInterface::kPostLoad:
-    //   SendEvent("postLoad");
-    //   break;
-    // case SKSE::MessagingInterface::kPostPostLoad:
-    //   SendEvent("postPostLoad");
-    //   break;
-    // case SKSE::MessagingInterface::kNewGame:
-    //   SendEvent("newGame");
-    //   break;
-    // case SKSE::MessagingInterface::kPreLoadGame:
-    //   SendEvent("preLoadGame");
-    //   break;
-    // case SKSE::MessagingInterface::kPostLoadGame:
-    //   SendEvent("postLoadGame");
-    //   break;
-    // case SKSE::MessagingInterface::kSaveGame:
-    //   SendEvent("saveGame");
-    //   break;
-    // case SKSE::MessagingInterface::kDeleteGame:
-    //   SendEvent("deleteGame");
-    //   break;
+    case SKSE::MessagingInterface::kDataLoaded: {
+      EventManager::Init();
+      SendSimpleEvent("dataLoaded");
+    } break;
+    case SKSE::MessagingInterface::kNewGame:
+      SendSimpleEvent("newGame");
+      break;
+    case SKSE::MessagingInterface::kPreLoadGame:
+      SendSimpleEvent("preLoadGame");
+      break;
+    case SKSE::MessagingInterface::kPostLoadGame:
+      SendSimpleEvent("postLoadGame");
+      break;
+    case SKSE::MessagingInterface::kSaveGame:
+      SendSimpleEvent("saveGame");
+      break;
+    case SKSE::MessagingInterface::kDeleteGame:
+      SendSimpleEvent("deleteGame");
+      break;
   }
 }
 
