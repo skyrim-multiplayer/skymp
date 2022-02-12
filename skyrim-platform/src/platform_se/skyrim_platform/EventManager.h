@@ -44,6 +44,7 @@ struct EventState
   EventState(const SinkObject* _sink)
     : sinkObj(_sink)
   {
+    callbacks.reserve(5);
   }
 
   const SinkObject* sinkObj;
@@ -109,7 +110,8 @@ public:
   EventMap* GetEventMap() { return &events; }
 
 private:
-  EventManager() = default;
+  // last i checked we had ~97 events
+  EventManager() { events.reserve(100); }
   EventManager(const EventManager&) = delete;
   EventManager(EventManager&&) = delete;
 

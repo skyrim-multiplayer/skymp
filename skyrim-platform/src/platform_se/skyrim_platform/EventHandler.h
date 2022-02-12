@@ -443,6 +443,9 @@ public:
 private:
   EventHandler()
   {
+    sinks.reserve(70);
+    activeSinks.reserve(20);
+
     // script events
     AppendSink<RE::TESActivateEvent>(std::vector({ "activate" }));
     AppendSink<RE::TESActiveEffectApplyRemoveEvent>(

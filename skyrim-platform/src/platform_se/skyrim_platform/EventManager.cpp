@@ -48,6 +48,7 @@ void EventManager::Init()
     for (const auto& sink : *sinks) {
       for (const auto& event : sink->events) {
         std::vector<std::string_view> linkedEvents;
+        linkedEvents.reserve(sink->events.size() - 1);
 
         std::copy_if(sink->events.begin(), sink->events.end(),
                      std::back_inserter(linkedEvents),
