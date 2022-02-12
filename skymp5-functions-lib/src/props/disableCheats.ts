@@ -56,6 +56,7 @@ export class DisableCheats {
         const cmd = ctx.sp.findConsoleCommand(command);
         if (!cmd) {
           ctx.sp.printConsole(`Can't find command ${command}`);
+          return;
         }
         cmd.execute = () => false;
       })
