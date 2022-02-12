@@ -20,31 +20,31 @@ let blockPlayerControlTimeStamp: number = 0;
 let isPlayerControlDisabled: boolean = true;
 let playerAttackTimeout: number = 0;
 
-export const start = (): void => { };
-
-for (const pattern of ['attackStart*', 'AttackStart*']) {
-  sp.hooks.sendAnimationEvent.add({
-    enter: (() => { }),
-    leave: ((ctx) => blockPlayerAttack(ctx.animEventName.toLowerCase().includes('lefthand'))),
-  }, 0x14, 0x14, pattern);
-}
-
-for (const pattern of ['attackPowerStart*', 'AttackPowerStart*', 'Jump*']) {
-  sp.hooks.sendAnimationEvent.add({
-    enter: (() => { }),
-    leave: (() => {
-      playerAttackTimeout = 0;
-      activeTimers.clear();
-    }),
-  }, 0x14, 0x14, pattern);
-}
-
-sp.on("update", () => {
-  if (isPlayerControlDisabled === true && Date.now() - blockPlayerControlTimeStamp >= playerAttackTimeout) {
-    sp.Game.getPlayer()!.setDontMove(false);
-    isPlayerControlDisabled = false;
+export const start = (): void => {
+  for (const pattern of ['attackStart*', 'AttackStart*']) {
+    sp.hooks.sendAnimationEvent.add({
+      enter: (() => { }),
+      leave: ((ctx) => blockPlayerAttack(ctx.animEventName.toLowerCase().includes('lefthand'))),
+    }, 0x14, 0x14, pattern);
   }
-});
+
+  for (const pattern of ['attackPowerStart*', 'AttackPowerStart*', 'Jump*']) {
+    sp.hooks.sendAnimationEvent.add({
+      enter: (() => { }),
+      leave: (() => {
+        playerAttackTimeout = 0;
+        activeTimers.clear();
+      }),
+    }, 0x14, 0x14, pattern);
+  }
+
+  sp.on("update", () => {
+    if (isPlayerControlDisabled === true && Date.now() - blockPlayerControlTimeStamp >= playerAttackTimeout) {
+      sp.Game.getPlayer()!.setDontMove(false);
+      isPlayerControlDisabled = false;
+    }
+  });
+};
 
 const activeTimers = new Set<string>();
 
