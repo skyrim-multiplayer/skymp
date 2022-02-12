@@ -17,9 +17,15 @@ inline void SendEvent(const char* name, JsValue obj)
 }
 }
 
-void SendSimpleEvent(const char* tag)
+void EventHandler::SendSimpleOnUpdateEvent(const char* tag)
 {
   SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [tag] { EventsApi::SendEvent(tag, { JsValue::Undefined() }); });
+}
+
+void EventHandler::SendSimpleOnTickEvent(const char* tag)
+{
+  SkyrimPlatform::GetSingleton().AddTickTask(
     [tag] { EventsApi::SendEvent(tag, { JsValue::Undefined() }); });
 }
 
@@ -28,22 +34,22 @@ void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
   switch (msg->type) {
     case SKSE::MessagingInterface::kDataLoaded: {
       EventManager::Init();
-      SendSimpleEvent("dataLoaded");
+      SendSimpleOnTickEvent("dataLoaded");
     } break;
     case SKSE::MessagingInterface::kNewGame:
-      SendSimpleEvent("newGame");
+      SendSimpleOnTickEvent("newGame");
       break;
     case SKSE::MessagingInterface::kPreLoadGame:
-      SendSimpleEvent("preLoadGame");
+      SendSimpleOnTickEvent("preLoadGame");
       break;
     case SKSE::MessagingInterface::kPostLoadGame:
-      SendSimpleEvent("postLoadGame");
+      SendSimpleOnTickEvent("postLoadGame");
       break;
     case SKSE::MessagingInterface::kSaveGame:
-      SendSimpleEvent("saveGame");
+      SendSimpleOnTickEvent("saveGame");
       break;
     case SKSE::MessagingInterface::kDeleteGame:
-      SendSimpleEvent("deleteGame");
+      SendSimpleOnTickEvent("deleteGame");
       break;
   }
 }

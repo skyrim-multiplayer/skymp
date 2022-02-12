@@ -102,7 +102,8 @@ public:
 
   static void HandleSKSEMessage(SKSE::MessagingInterface::Message* msg);
 
-  SinkSet* GetSinks() { return &sinks; }
+  static void SendSimpleOnUpdateEvent(const char* tag);
+  static void SendSimpleOnTickEvent(const char* tag);
 
   void DeactivateAllSinks()
   {
@@ -115,6 +116,7 @@ public:
     }
   }
 
+  SinkSet* GetSinks() { return &sinks; }
   bool IsActiveSink(const Sink* sink) { return activeSinks.contains(sink); }
 
   /**
@@ -385,9 +387,8 @@ public:
   EventResult ProcessEvent(const RE::BGSFootstepEvent* event,
                            RE::BSTEventSource<RE::BGSFootstepEvent>*) override;
 
-EventResult ProcessEvent(
-    RE::InputEvent* const* event,
-    RE::BSTEventSource<RE::InputEvent*>*) override;
+  EventResult ProcessEvent(RE::InputEvent* const* event,
+                           RE::BSTEventSource<RE::InputEvent*>*) override;
 
   EventResult ProcessEvent(
     const RE::MenuOpenCloseEvent* event,
@@ -633,7 +634,8 @@ private:
     AppendSink<RE::UI, RE::MenuOpenCloseEvent>(
       std::vector({ "menuOpen", "menuClose" }));
     AppendSink<RE::BSInputDeviceManager, RE::InputEvent*>(
-      std::vector({ "buttonEvent", "mouseMove", "thumbstickEvent", "kinectEvent", "deviceConnect" }));
+      std::vector({ "buttonEvent", "mouseMove", "thumbstickEvent",
+                    "kinectEvent", "deviceConnect" }));
     AppendSink<RE::BGSFootstepManager, RE::BGSFootstepEvent>(
       std::vector({ "footstep" }));
     AppendSink<RE::PlayerCharacter, RE::PositionPlayerEvent>(
