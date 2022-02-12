@@ -18,10 +18,7 @@ void EventManager::InitCustom()
   manager->EmplaceEvent("ipcMessage");
 
   // skse messages
-  manager->EmplaceEvent("dataLoaded");
-  manager->EmplaceEvent("inputLoaded");
-  manager->EmplaceEvent("postLoad");
-  manager->EmplaceEvent("postPostLoad");
+  manager->EmplaceEvent("skyrimLoaded");
   manager->EmplaceEvent("newGame");
   manager->EmplaceEvent("preLoadGame");
   manager->EmplaceEvent("postLoadGame");

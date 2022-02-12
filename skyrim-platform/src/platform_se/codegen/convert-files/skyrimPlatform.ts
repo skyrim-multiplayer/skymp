@@ -262,157 +262,201 @@ export interface BrowserMessageEvent {
 * Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
 */
 export interface ConsoleMessageEvent {
-    message: string
+    message: string;
 }
 
 export interface SpellCastEvent {
-    caster: ObjectReference,
-    spell: Spell
+    caster: ObjectReference;
+    spell: Spell;
 }
 
 export interface OpenCloseEvent {
-    target: ObjectReference,
-    cause: ObjectReference
+    target: ObjectReference;
+    cause: ObjectReference | undefined;
 }
 
 export interface QuestInitEvent {
-    quest: Quest
+    quest: Quest;
 }
 
 export interface QuestStartStopEvent {
-    quest: Quest
+    quest: Quest;
 }
 
 export interface QuestStageEvent {
-    quest: Quest,
-    stage: number
+    quest: Quest;
+    stage: number;
 }
 
 export interface TriggerEvent {
-    target: ObjectReference,
-    cause: ObjectReference
+    target: ObjectReference;
+    cause: ObjectReference;
 }
 
 export interface SleepStartEvent {
-    startTime: number,
-    desiredStopTime: number
+    startTime: number;
+    desiredStopTime: number;
 }
 
 export interface SleepStopEvent {
-    isInterrupted: boolean
+    isInterrupted: boolean;
 }
 
 export interface CellAttachDetachEvent {
-    refr: ObjectReference
+    refr: ObjectReference;
 }
 
 export interface WaitStartEvent {
-    startTime: number,
-    desiredStopTime: number
+    startTime: number;
+    desiredStopTime: number;
 }
 
 export interface LocationChangedEvent {
-    actor: Actor,
-    oldLoc: Location,
-    newLoc: Location,
+    actor: Actor;
+    oldLoc: Location;
+    newLoc: Location;
 }
 
 export interface BookReadEvent {
-    book: ObjectReference
+    book: ObjectReference;
 }
 
 export interface SellEvent {
-    target: ObjectReference,
-    seller: ObjectReference
+    target: ObjectReference;
+    seller: ObjectReference;
 }
 
 export interface FurnitureEvent {
-    target: ObjectReference,
-    actor: ObjectReference
+    target: ObjectReference;
+    actor: ObjectReference;
 }
 
 export interface WardHitEvent {
-    target: ObjectReference,
-    caster: ObjectReference,
-    status: 'friendly' | 'absorbed' | 'broken'
+    target: ObjectReference;
+    caster: ObjectReference;
+    spell: Spell;
+    status: WardHitStatus;
 }
 
 export interface PackageEvent {
-    actor: ObjectReference,
-    package: Package
+    actor: ObjectReference;
+    package: Package;
 }
 
 export interface EnterBleedoutEvent {
-    actor: ObjectReference
+    actor: ObjectReference;
 }
 
 export interface DestructionStageChangedEvent {
-    target: ObjectReference,
-    oldStage: number,
-    newStage: number
+    target: ObjectReference;
+    oldStage: number;
+    newStage: number;
 }
 
 export interface SceneActionEvent {
-    referenceAliasId: number,
-    scene: Scene,
-    quest: Quest,
-    action: number
+    referenceAliasId: number;
+    scene: Scene;
+    quest: Quest;
+    action: number;
 }
 
 export interface PlayerBowShotEvent {
-    weapon: Weapon,
-    ammo: Ammo,
-    power: number,
-    isSunGazing: boolean
+    weapon: Weapon;
+    ammo: Ammo;
+    power: number;
+    isSunGazing: boolean;
 }
 
 export interface FastTravelEnd {
-    travelTimeGameHours: number
+    travelTimeGameHours: number;
 }
 
 export interface PerkEntryRunEvent {
-    cause: ObjectReference,
-    target: ObjectReference,
-    perk: Perk,
-    flag: number
+    cause: ObjectReference;
+    target: ObjectReference;
+    perk: Perk;
+    flag: number;
 }
 
 export interface ActionEvent {
-    actor: Actor,
-    source: Form,
-    slot: SlotType
+    actor: Actor;
+    source: Form;
+    slot: SlotType;
 }
 
 export interface CameraStateChangedEvent {
-    oldStateId: number,
-    newStateId: number
+    oldStateId: number;
+    newStateId: number;
 }
 
 export interface CrosshairRefChangedEvent {
-    reference: ObjectReference | null
+    reference: ObjectReference | undefined;
 }
 
 export interface NiNodeUpdateEvent {
-    reference: ObjectReference | null
+    reference: ObjectReference | undefined;
 }
 
 export interface ModEvent {
-    sender: Form,
-    eventName: string,
-    strArg: string,
-    numArg: number
+    sender: Form;
+    eventName: string;
+    strArg: string;
+    numArg: number;
 }
 
 export interface PositionPlayerEvent {
-    eventType: PlayerPositionEventType
+    eventType: PlayerPositionEventType;
 }
 
 export interface FootstepEvent {
-    tag: string
+    tag: string;
 }
 
 export interface TranslationEvent {
-    reference: ObjectReference
+    reference: ObjectReference;
+}
+
+export interface ButtonEvent {
+    device: InputDeviceType;
+    code: DxScanCode;
+    userEventName: string;
+    value: number;
+    heldDuration: number;
+    isPressed: boolean;
+    isUp: boolean;
+    isDown: boolean;
+    isHeld: boolean;
+    isRepeating: boolean;
+}
+
+export interface MouseMoveEvent {
+    device: InputDeviceType;
+    code: DxScanCode;
+    userEventName: string;
+    inputX: number;
+    inputY: number;
+}
+
+export interface ThumbstickEvent {
+    device: InputDeviceType;
+    code: DxScanCode;
+    userEventName: string;
+    inputX: number;
+    inputY: number;
+    isLeft: boolean;
+    isRight: boolean;
+}
+
+export interface KinectEvent {
+    device: InputDeviceType;
+    code: DxScanCode;
+    userEventName: string;
+    heard: string;
+}
+
+export interface DeviceConnectEvent {
+    device: InputDeviceType;
+    isConnected: boolean;
 }
 
 export interface EventHandle {
@@ -421,6 +465,24 @@ export interface EventHandle {
 }
 
 export declare function unsubscribe(handle: EventHandle): void;
+
+export declare function on(eventName: 'skyrimLoaded', callback: () => void): EventHandle;
+export declare function once(eventName: 'skyrimLoaded', callback: () => void): EventHandle;
+
+export declare function on(eventName: 'newGame', callback: () => void): EventHandle;
+export declare function once(eventName: 'newGame', callback: () => void): EventHandle;
+
+export declare function on(eventName: 'preLoadGame', callback: () => void): EventHandle;
+export declare function once(eventName: 'preLoadGame', callback: () => void): EventHandle;
+
+export declare function on(eventName: 'postLoadGame', callback: () => void): EventHandle;
+export declare function once(eventName: 'postLoadGame', callback: () => void): EventHandle;
+
+export declare function on(eventName: 'saveGame', callback: () => void): EventHandle;
+export declare function once(eventName: 'saveGame', callback: () => void): EventHandle;
+
+export declare function on(eventName: 'deleteGame', callback: () => void): EventHandle;
+export declare function once(eventName: 'deleteGame', callback: () => void): EventHandle;
 
 export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): EventHandle;
 export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): EventHandle;
@@ -653,6 +715,20 @@ export declare function once(eventName: 'translationAlmostCompleted', callback: 
 export declare function on(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): EventHandle;
 export declare function once(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): EventHandle;
 
+export declare function on(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): void;
+export declare function once(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): void;
+
+export declare function on(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): void;
+export declare function once(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): void;
+
+export declare function on(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): void;
+export declare function once(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): void;
+
+export declare function on(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): void;
+export declare function once(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): void;
+
+export declare function on(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): void;
+export declare function once(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): void;
 
 declare class ConsoleComand {
     longName: string;
@@ -668,13 +744,25 @@ export const enum SlotType {
     Voice = 3
 }
 
-export const enum PlayerPositionEventType
-{
+export const enum WardHitStatus {
+    Friendly = 0,
+    Absorbed = 1,
+    Broken = 2
+}
+
+export const enum PlayerPositionEventType {
     PreCellTransition = 0,
     PreUpdatePackages = 1,
     PostUpdatePackages = 2,
     PostCellTransition = 3,
     CellTransitionFinish = 4
+}
+
+export const enum InputDeviceType {
+    Keyboard = 0,
+    Mouse = 1,
+    Gamepad = 2,
+    VirtualKeyboard = 3
 }
 
 export const enum MotionType {

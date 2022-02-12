@@ -12,7 +12,6 @@ inline void SendEvent(const char* name)
 
 inline void SendEvent(const char* name, JsValue obj)
 {
-
   EventsApi::SendEvent(name, { JsValue::Undefined(), obj });
 }
 }
@@ -34,7 +33,7 @@ void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
   switch (msg->type) {
     case SKSE::MessagingInterface::kDataLoaded: {
       EventManager::Init();
-      SendSimpleOnTickEvent("dataLoaded");
+      SendSimpleOnTickEvent("skyrimLoaded");
     } break;
     case SKSE::MessagingInterface::kNewGame:
       SendSimpleOnTickEvent("newGame");
@@ -82,44 +81,40 @@ EventResult EventHandler::ProcessEvent(
   const RE::TESActiveEffectApplyRemoveEvent* event,
   RE::BSTEventSource<RE::TESActiveEffectApplyRemoveEvent>*)
 {
-  auto caster = event->caster.get() ? event->caster.get() : nullptr;
-  auto target = event->target.get() ? event->target.get() : nullptr;
-
-  auto casterId = caster ? caster->formID : 0;
-  auto targetId = target ? target->formID : 0;
-
-  if ((!caster || caster->formID != casterId) ||
-      (!target || target->formID != targetId) ||
-      (target->formType.get() != RE::FormType::ActorCharacter)) {
+  if (!event) {
     return EventResult::kContinue;
   }
 
-  auto activeEffectUniqueID = event ? event->activeEffectUniqueID : 0;
+  auto e = CopyEventPtr(event);
+  auto activeEffectList =
+    std::make_shared<RE::BSSimpleList<RE::ActiveEffect*>>(
+      *e->target.get()->As<RE::Actor>()->GetActiveEffectList());
 
-  RE::ActiveEffect* activeEffect = nullptr;
-  for (const auto& effect : *target->As<RE::Actor>()->GetActiveEffectList()) {
-    if (effect->usUniqueID == event->activeEffectUniqueID) {
-      activeEffect = effect;
-      break;
-    }
-  }
-
-  if (!activeEffect)
-    return EventResult::kContinue;
-
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e, activeEffectList] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "effect", activeEffect->GetBaseObject(),
+    auto target = e->target.get();
+
+    RE::ActiveEffect* activeEffect = nullptr;
+    for (const auto& effect : *activeEffectList) {
+      if (effect->usUniqueID == e->activeEffectUniqueID) {
+        activeEffect = effect;
+        break;
+      }
+    }
+
+    AddObjProperty(&obj, "effect",
+                   activeEffect ? activeEffect->GetBaseObject() : nullptr,
                    "MagicEffect");
     AddObjProperty(&obj, "activeEffect", activeEffect, "ActiveMagicEffect");
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
+    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
     AddObjProperty(&obj, "target", target, "ObjectReference");
 
-    if (event->isApplied)
-      EventsApi::SendEvent("effectStart", { JsValue::Undefined(), obj });
-    else
-      EventsApi::SendEvent("effectFinish", { JsValue::Undefined(), obj });
+    if (e->isApplied) {
+      SendEvent("effectStart", obj);
+    } else {
+      SendEvent("effectFinish", obj);
+    }
   });
 
   return EventResult::kContinue;
