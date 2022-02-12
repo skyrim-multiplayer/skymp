@@ -43,8 +43,8 @@ public:
 
   struct FileInfo
   {
-    uint32_t crc32;
-    size_t size;
+    uint32_t crc32 = 0;
+    size_t size = 0;
   };
 
   std::map<std::string, FileInfo> GetFilesInfo() const;
