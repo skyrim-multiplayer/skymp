@@ -1314,7 +1314,7 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     for (auto eventItem = *e; eventItem; eventItem = eventItem->next) {
       if (!eventItem) {
-        return EventResult::kContinue;
+        return;
       }
 
       auto device = to_underlying(eventItem->device.get());
