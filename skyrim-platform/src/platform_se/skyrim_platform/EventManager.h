@@ -72,8 +72,8 @@ public:
     return &singleton;
   }
 
-  void Init();
-  void InitCustom();
+  static void Init();
+  static void InitCustom();
 
   std::unique_ptr<EventHandle> Subscribe(std::string eventName,
                                          JsValue callback, bool runOnce);
@@ -99,6 +99,12 @@ public:
     }
 
     return &event->callbacks;
+  }
+
+  void EmplaceEvent(std::string_view name,
+                    EventState* state = new EventState(nullptr))
+  {
+    events.emplace(name, state);
   }
 
   EventMap* GetEventMap() { return &events; }
