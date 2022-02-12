@@ -1,9 +1,9 @@
 #include "FileInfo.h"
 
 #include <cassert>
+#include <fstream>
 #include <stdexcept>
 #include <vector>
-#include <fstream>
 
 #include <zlib.h>
 
@@ -32,5 +32,5 @@ FileInfoResult FileInfo(const std::string& path)
   }
   assert(f.tellg() == size);
 
-  return {hash, size};
+  return { hash, size };
 }

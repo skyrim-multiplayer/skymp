@@ -2,7 +2,8 @@
 
 #include <string>
 
-struct FileInfoResult {
+struct FileInfoResult
+{
   size_t crc32;
   size_t size;
 };
