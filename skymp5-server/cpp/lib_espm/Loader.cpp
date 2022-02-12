@@ -62,25 +62,17 @@ std::vector<std::string> Loader::GetFileNames() const noexcept
   return res;
 }
 
-std::map<std::string, uint32_t> Loader::GetHashes() const
+std::map<std::string, Loader::FileInfo> Loader::GetFilesInfo() const
 {
-  std::map<std::string, uint32_t> res;
+  std::map<std::string, FileInfo> res;
 
-  for (auto& entry : entries) {
+  for (const auto& entry : entries) {
     auto hash =
       CalculateHashcode(entry.buffer->GetData(), entry.buffer->GetLength());
-    res.emplace(entry.fileName.string(), hash);
+    res.emplace(entry.fileName.string(),
+                FileInfo{ hash, entry.buffer->GetLength() });
   }
 
-  return res;
-}
-
-std::map<std::string, uint32_t> Loader::GetSizes() const
-{
-  std::map<std::string, uint32_t> res;
-  for (auto& entry : entries) {
-    res.emplace(entry.fileName.string(), entry.buffer->GetLength());
-  }
   return res;
 }
 

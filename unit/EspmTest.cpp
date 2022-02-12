@@ -10,11 +10,11 @@ extern espm::Loader l;
 
 TEST_CASE("Hash check", "[espm]")
 {
-  const auto hashes = l.GetHashes();
-  for (const auto& [filename, checksum] : hashes) {
-    DYNAMIC_SECTION(filename << " checksum test")
+  const auto hashes = l.GetFilesInfo();
+  for (const auto& [filename, info] : hashes) {
+    DYNAMIC_SECTION(filename << " checksum and size test")
     {
-      REQUIRE(espm::GetCorrectHashcode(filename) == checksum);
+      REQUIRE(espm::GetCorrectHashcode(filename) == info.crc32);
     }
   }
 }

@@ -2,23 +2,23 @@
 #include <Loader.h>
 #include <catch2/catch.hpp>
 
-#include "TestUtils.hpp"
 #include "FileInfo.h"
+#include "TestUtils.hpp"
 
 extern espm::Loader l;
 
 // This test is similar to one found in EspmTest.cpp, but check that two ways
 // of calculating CRC32 return the same result.
-TEST_CASE("FileInfo should return correct checksums of datafiles", "[espm][FileInfo]")
+TEST_CASE("FileInfo should return correct checksums of datafiles",
+          "[espm][FileInfo]")
 {
-  const auto hashes = l.GetHashes();
-  const auto sizes = l.GetSizes();
-  for (const auto& [filename, checksum] : hashes) {
+  const auto files = l.GetFilesInfo();
+  for (const auto& [filename, espmInfo] : files) {
     DYNAMIC_SECTION(filename << " checksum test")
     {
       const auto fileInfo = FileInfo(GetDataDir() + ('/' + filename));
-      REQUIRE(fileInfo.size == sizes.at(filename));
-      REQUIRE(static_cast<int32_t>(fileInfo.crc32) == checksum);
+      REQUIRE(fileInfo.size == espmInfo.size);
+      REQUIRE(fileInfo.crc32 == espmInfo.crc32);
     }
   }
 }
