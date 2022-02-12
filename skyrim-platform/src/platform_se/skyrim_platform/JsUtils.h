@@ -70,11 +70,21 @@ inline void AddObjProperty(JsValue* obj, const char* tag, const uint8_t* data,
 inline void AddObjProperty(JsValue* obj, const char* tag,
                            RE::TESForm* property, const char* typeName)
 {
-  obj->SetProperty(tag, CreateObject(typeName, static_cast<void*>(property)));
+  if (property) {
+    obj->SetProperty(tag,
+                     CreateObject(typeName, static_cast<void*>(property)));
+  } else {
+    obj->SetProperty(tag, JsValue::Undefined());
+  }
 }
 
 inline void AddObjProperty(JsValue* obj, const char* tag,
                            RE::ActiveEffect* property, const char* typeName)
 {
-  obj->SetProperty(tag, CreateObject(typeName, static_cast<void*>(property)));
+  if (property) {
+    obj->SetProperty(tag,
+                     CreateObject(typeName, static_cast<void*>(property)));
+  } else {
+    obj->SetProperty(tag, JsValue::Undefined());
+  }
 }

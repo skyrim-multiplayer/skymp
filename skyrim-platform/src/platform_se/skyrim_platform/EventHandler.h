@@ -77,6 +77,7 @@ class EventHandler final
   , public RE::BSTEventSink<SKSE::NiNodeUpdateEvent>
   , public RE::BSTEventSink<SKSE::ModCallbackEvent>
   , public RE::BSTEventSink<RE::BGSFootstepEvent>
+  , public RE::BSTEventSink<RE::InputEvent*>
   , public RE::BSTEventSink<RE::MenuOpenCloseEvent>
   , public RE::BSTEventSink<RE::PositionPlayerEvent>
   , public RE::BSTEventSink<RE::ActorKill::Event>
@@ -384,6 +385,10 @@ public:
   EventResult ProcessEvent(const RE::BGSFootstepEvent* event,
                            RE::BSTEventSource<RE::BGSFootstepEvent>*) override;
 
+EventResult ProcessEvent(
+    RE::InputEvent* const* event,
+    RE::BSTEventSource<RE::InputEvent*>*) override;
+
   EventResult ProcessEvent(
     const RE::MenuOpenCloseEvent* event,
     RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override;
@@ -627,6 +632,8 @@ private:
     // misc events
     AppendSink<RE::UI, RE::MenuOpenCloseEvent>(
       std::vector({ "menuOpen", "menuClose" }));
+    AppendSink<RE::BSInputDeviceManager, RE::InputEvent*>(
+      std::vector({ "buttonEvent", "mouseMove", "thumbstickEvent", "kinectEvent", "deviceConnect" }));
     AppendSink<RE::BGSFootstepManager, RE::BGSFootstepEvent>(
       std::vector({ "footstep" }));
     AppendSink<RE::PlayerCharacter, RE::PositionPlayerEvent>(

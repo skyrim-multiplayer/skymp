@@ -7,11 +7,12 @@
 namespace {
 inline void SendEvent(const char* name)
 {
-  EventsApi::SendEvent(name, {});
+  EventsApi::SendEvent(name, { JsValue::Undefined() });
 }
 
 inline void SendEvent(const char* name, JsValue obj)
 {
+
   EventsApi::SendEvent(name, { JsValue::Undefined(), obj });
 }
 }
@@ -19,34 +20,34 @@ inline void SendEvent(const char* name, JsValue obj)
 void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
 {
   switch (msg->type) {
-    case SKSE::MessagingInterface::kDataLoaded: {
-      EventManager::Init();
-      SendEvent("dataLoaded");
-    } break;
-    case SKSE::MessagingInterface::kInputLoaded:
-      SendEvent("inputLoaded");
-      break;
-    case SKSE::MessagingInterface::kPostLoad:
-      SendEvent("postLoad");
-      break;
-    case SKSE::MessagingInterface::kPostPostLoad:
-      SendEvent("postPostLoad");
-      break;
-    case SKSE::MessagingInterface::kNewGame:
-      SendEvent("newGame");
-      break;
-    case SKSE::MessagingInterface::kPreLoadGame:
-      SendEvent("preLoadGame");
-      break;
-    case SKSE::MessagingInterface::kPostLoadGame:
-      SendEvent("postLoadGame");
-      break;
-    case SKSE::MessagingInterface::kSaveGame:
-      SendEvent("saveGame");
-      break;
-    case SKSE::MessagingInterface::kDeleteGame:
-      SendEvent("deleteGame");
-      break;
+    // case SKSE::MessagingInterface::kDataLoaded: {
+    //   EventManager::Init();
+    //   SendEvent("dataLoaded");
+    // } break;
+    // case SKSE::MessagingInterface::kInputLoaded:
+    //   SendEvent("inputLoaded");
+    //   break;
+    // case SKSE::MessagingInterface::kPostLoad:
+    //   SendEvent("postLoad");
+    //   break;
+    // case SKSE::MessagingInterface::kPostPostLoad:
+    //   SendEvent("postPostLoad");
+    //   break;
+    // case SKSE::MessagingInterface::kNewGame:
+    //   SendEvent("newGame");
+    //   break;
+    // case SKSE::MessagingInterface::kPreLoadGame:
+    //   SendEvent("preLoadGame");
+    //   break;
+    // case SKSE::MessagingInterface::kPostLoadGame:
+    //   SendEvent("postLoadGame");
+    //   break;
+    // case SKSE::MessagingInterface::kSaveGame:
+    //   SendEvent("saveGame");
+    //   break;
+    // case SKSE::MessagingInterface::kDeleteGame:
+    //   SendEvent("deleteGame");
+    //   break;
   }
 }
 
@@ -444,8 +445,6 @@ EventResult EventHandler::ProcessEvent(const RE::TESHitEvent* event,
     auto projectileForm = RE::TESForm::LookupByID(e->projectile);
 
     AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
-    // TODO(#336): drop old name "agressor" on next major release of SP
-    AddObjProperty(&obj, "agressor", e->cause.get(), "ObjectReference");
     AddObjProperty(&obj, "aggressor", e->cause.get(), "ObjectReference");
     AddObjProperty(&obj, "source", sourceForm, "Form");
     AddObjProperty(&obj, "projectile", projectileForm, "Form");
@@ -556,25 +555,12 @@ EventResult EventHandler::ProcessEvent(
     auto obj = JsValue::Object();
 
     auto spell = RE::TESForm::LookupByID(e->spell);
+    auto status = to_underlying(e->status);
 
     AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
     AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
     AddObjProperty(&obj, "spell", spell, "Spell");
-
-    switch (e->status) {
-      case RE::TESMagicWardHitEvent::Status::kFriendly: {
-        AddObjProperty(&obj, "status", "friendly");
-        break;
-      }
-      case RE::TESMagicWardHitEvent::Status::kAbsorbed: {
-        AddObjProperty(&obj, "status", "absorbed");
-        break;
-      }
-      case RE::TESMagicWardHitEvent::Status::kBroken: {
-        AddObjProperty(&obj, "status", "broken");
-        break;
-      }
-    }
+    AddObjProperty(&obj, "status", status);
 
     SendEvent("wardHit", obj);
   });
@@ -1310,6 +1296,100 @@ EventResult EventHandler::ProcessEvent(
       SendEvent("menuOpen", obj);
     } else {
       SendEvent("menuClose", obj);
+    }
+  });
+
+  return EventResult::kContinue;
+};
+
+EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
+                                       RE::BSTEventSource<RE::InputEvent*>*)
+{
+  if (!event) {
+    return EventResult::kContinue;
+  }
+
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+    for (auto eventItem = *e; eventItem; eventItem = eventItem->next) {
+      if (!eventItem) {
+        return EventResult::kContinue;
+      }
+
+      auto device = to_underlying(eventItem->device.get());
+
+      switch (eventItem->eventType.get()) {
+        case RE::INPUT_EVENT_TYPE::kButton: {
+          auto buttonEvent = static_cast<RE::ButtonEvent*>(eventItem);
+          auto obj = JsValue::Object();
+
+          AddObjProperty(&obj, "device", device);
+          AddObjProperty(&obj, "code", buttonEvent->idCode);
+          AddObjProperty(&obj, "userEventName", buttonEvent->userEvent);
+          AddObjProperty(&obj, "value", buttonEvent->value);
+          AddObjProperty(&obj, "heldDuration", buttonEvent->heldDownSecs);
+          AddObjProperty(&obj, "isPressed", buttonEvent->IsPressed());
+          AddObjProperty(&obj, "isUp", buttonEvent->IsUp());
+          AddObjProperty(&obj, "isDown", buttonEvent->IsDown());
+          AddObjProperty(&obj, "isHeld", buttonEvent->IsHeld());
+          AddObjProperty(&obj, "isRepeating", buttonEvent->IsRepeating());
+
+          SendEvent("buttonEvent", obj);
+          break;
+        }
+        case RE::INPUT_EVENT_TYPE::kMouseMove: {
+          auto mouseEvent = static_cast<RE::MouseMoveEvent*>(eventItem);
+          auto obj = JsValue::Object();
+
+          AddObjProperty(&obj, "device", device);
+          AddObjProperty(&obj, "code", mouseEvent->idCode);
+          AddObjProperty(&obj, "userEventName", mouseEvent->userEvent);
+          AddObjProperty(&obj, "inputX", mouseEvent->mouseInputX);
+          AddObjProperty(&obj, "inputY", mouseEvent->mouseInputY);
+
+          SendEvent("mouseMove", obj);
+          break;
+        }
+        case RE::INPUT_EVENT_TYPE::kDeviceConnect: {
+          auto deviceConnectEvent =
+            static_cast<RE::DeviceConnectEvent*>(eventItem);
+          auto obj = JsValue::Object();
+
+          AddObjProperty(&obj, "device", device);
+          AddObjProperty(&obj, "isConnected", deviceConnectEvent->connected);
+
+          SendEvent("deviceConnect", obj);
+          break;
+        }
+        case RE::INPUT_EVENT_TYPE::kThumbstick: {
+          auto thumbstickEvent = static_cast<RE::ThumbstickEvent*>(eventItem);
+          auto obj = JsValue::Object();
+
+          AddObjProperty(&obj, "device", device);
+          AddObjProperty(&obj, "code", thumbstickEvent->idCode);
+          AddObjProperty(&obj, "userEventName", thumbstickEvent->userEvent);
+          AddObjProperty(&obj, "inputX", thumbstickEvent->xValue);
+          AddObjProperty(&obj, "inputY", thumbstickEvent->yValue);
+          AddObjProperty(&obj, "isLeft", thumbstickEvent->IsLeft());
+          AddObjProperty(&obj, "isRight", thumbstickEvent->IsRight());
+
+          SendEvent("thumbstickEvent", obj);
+          break;
+        }
+        case RE::INPUT_EVENT_TYPE::kKinect: {
+          auto kinectEvent = static_cast<RE::KinectEvent*>(eventItem);
+          auto obj = JsValue::Object();
+
+          AddObjProperty(&obj, "device", device);
+          AddObjProperty(&obj, "code", kinectEvent->idCode);
+          AddObjProperty(&obj, "userEventName", kinectEvent->userEvent);
+          AddObjProperty(&obj, "heard", kinectEvent->heard);
+
+          SendEvent("kinectEvent", obj);
+          break;
+        }
+      }
     }
   });
 
