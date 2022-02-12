@@ -21,7 +21,7 @@ inline void AddObjProperty(JsValue* obj, const char* tag, std::string property)
 inline void AddObjProperty(JsValue* obj, const char* tag,
                            std::string_view property)
 {
-  obj->SetProperty(tag, JsValue::String(std::string(property)));
+  obj->SetProperty(tag, JsValue::String(property));
 }
 
 inline void AddObjProperty(JsValue* obj, const char* tag, FixedString property)
