@@ -1,13 +1,53 @@
 #include "EventHandler.h"
+#include "EventManager.h"
 #include "EventsApi.h"
 #include "JsUtils.h"
 #include "SkyrimPlatform.h"
 
 namespace {
+inline void SendEvent(const char* name)
+{
+  EventsApi::SendEvent(name, {});
+}
+
 inline void SendEvent(const char* name, JsValue obj)
 {
   EventsApi::SendEvent(name, { JsValue::Undefined(), obj });
 }
+}
+
+void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
+{
+  switch (msg->type) {
+    case SKSE::MessagingInterface::kDataLoaded: {
+      EventManager::Init();
+      SendEvent("dataLoaded");
+    } break;
+    case SKSE::MessagingInterface::kInputLoaded:
+      SendEvent("inputLoaded");
+      break;
+    case SKSE::MessagingInterface::kPostLoad:
+      SendEvent("postLoad");
+      break;
+    case SKSE::MessagingInterface::kPostPostLoad:
+      SendEvent("postPostLoad");
+      break;
+    case SKSE::MessagingInterface::kNewGame:
+      SendEvent("newGame");
+      break;
+    case SKSE::MessagingInterface::kPreLoadGame:
+      SendEvent("preLoadGame");
+      break;
+    case SKSE::MessagingInterface::kPostLoadGame:
+      SendEvent("postLoadGame");
+      break;
+    case SKSE::MessagingInterface::kSaveGame:
+      SendEvent("saveGame");
+      break;
+    case SKSE::MessagingInterface::kDeleteGame:
+      SendEvent("deleteGame");
+      break;
+  }
 }
 
 EventResult EventHandler::ProcessEvent(
@@ -450,8 +490,7 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(
   const RE::TESLoadGameEvent* event, RE::BSTEventSource<RE::TESLoadGameEvent>*)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [] { EventsApi::SendEvent("loadGame", { JsValue::Undefined() }); });
+  SkyrimPlatform::GetSingleton().AddUpdateTask([] { SendEvent("loadGame"); });
 
   return EventResult::kContinue;
 }

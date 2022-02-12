@@ -1,5 +1,6 @@
 #include "EventManager.h"
 #include "EventsApi.h"
+#include "InvalidArgumentException.h"
 
 /**
  * @brief If we create our own custom events

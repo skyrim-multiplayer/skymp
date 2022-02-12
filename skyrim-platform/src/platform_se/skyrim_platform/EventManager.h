@@ -1,6 +1,5 @@
 #pragma once
 #include "EventHandler.h"
-#include "InvalidArgumentException.h"
 
 struct EventHandle
 {

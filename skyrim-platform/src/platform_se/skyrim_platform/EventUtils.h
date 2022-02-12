@@ -1,8 +1,7 @@
 #pragma once
 
-/**
- * concepts to distinguish what approach we should take to acquire event source
- */
+// concepts to distinguish what approach we should take to acquire event source
+
 template <class T, class E = T::Event>
 concept HasEvent = requires
 {
@@ -38,6 +37,8 @@ inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetSingleton();
 }
+
+// helper functions
 
 template <class T>
 inline std::shared_ptr<T> CopyEventPtr(const T* ptr)
