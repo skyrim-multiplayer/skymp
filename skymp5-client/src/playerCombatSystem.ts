@@ -1,20 +1,19 @@
 import * as sp from "skyrimPlatform";
 
-const attackStartEventPattern = "attackStart*";
-const attackStart2EventPattern = "AttackStart*";
-const attackPowerStartEventPattern = "AttackPowerStart*";
-const weaponTimeouts = new Map<sp.WeaponType, number>([
-  [sp.WeaponType.Fist, 180],
-  [sp.WeaponType.Sword, 250],
-  [sp.WeaponType.Dagger, 180],
-  [sp.WeaponType.WarAxe, 250],
-  [sp.WeaponType.Mace, 300],
-  [sp.WeaponType.Greatsword, 450],
-  [sp.WeaponType.Battleaxe, 450],
-  [sp.WeaponType.Warhammer, 520],
-  [sp.WeaponType.Bow, 0],
-  [sp.WeaponType.Staff, 180],
-  [sp.WeaponType.Crossbow, 0]
+const weaponTimings = new Map<sp.WeaponType, [number, number]>([
+  [sp.WeaponType.Fist,       [200, 210]],
+  [sp.WeaponType.Sword,      [190, 150]],
+  [sp.WeaponType.Dagger,     [180, 120]],
+  [sp.WeaponType.WarAxe,     [190, 180]],
+  [sp.WeaponType.Mace,       [190, 210]],
+  [sp.WeaponType.Greatsword, [540, 350]],
+  // NOTE: both of the next two weapon types correspond to id=6.
+  // TODO(#xyz): do something about it. Maybe we can distinguish them somehow...
+  [sp.WeaponType.Battleaxe,  [540, 550]],
+  [sp.WeaponType.Warhammer,  [540, 450]],
+  [sp.WeaponType.Bow,        [  0,   0]],
+  [sp.WeaponType.Staff,      [  0, 180]],
+  [sp.WeaponType.Crossbow,   [  0,   0]],
 ]);
 
 let blockPlayerControlTimeStamp: number = 0;
@@ -23,20 +22,22 @@ let playerAttackTimeout: number = 0;
 
 export const start = (): void => { };
 
-sp.hooks.sendAnimationEvent.add({
-  enter: (() => { }),
-  leave: (() => blockPlayerAttack())
-}, 0x14, 0x14, attackStartEventPattern);
+for (const pattern of ['attackStart*', 'AttackStart*']) {
+  sp.hooks.sendAnimationEvent.add({
+    enter: (() => { }),
+    leave: ((ctx) => blockPlayerAttack(ctx.animEventName.toLowerCase().includes('lefthand'))),
+  }, 0x14, 0x14, pattern);
+}
 
-sp.hooks.sendAnimationEvent.add({
-  enter: (() => { }),
-  leave: (() => blockPlayerAttack())
-}, 0x14, 0x14, attackStart2EventPattern);
-
-sp.hooks.sendAnimationEvent.add({
-  enter: (() => { }),
-  leave: (() => blockPlayerAttack())
-}, 0x14, 0x14, attackPowerStartEventPattern);
+for (const pattern of ['attackPowerStart*', 'AttackPowerStart*', 'Jump*']) {
+  sp.hooks.sendAnimationEvent.add({
+    enter: (() => { }),
+    leave: (() => {
+      playerAttackTimeout = 0;
+      activeTimers.clear();
+    }),
+  }, 0x14, 0x14, pattern);
+}
 
 sp.on("update", () => {
   if (isPlayerControlDisabled === true && Date.now() - blockPlayerControlTimeStamp >= playerAttackTimeout) {
@@ -45,30 +46,41 @@ sp.on("update", () => {
   }
 });
 
-const blockPlayerAttack = (): void => {
+const activeTimers = new Set<string>();
+
+const blockPlayerAttack = (isLeftHand: boolean): void => {
   sp.once("update", () => {
-    sp.Utility.wait(0.5).then(() => {
+    const player = sp.Game.getPlayer()!;
+    if (player.getAnimationVariableBool("bInJumpState")) {
+      return;
+    }
+    const [delay, timeout] = getTimings(player.getEquippedWeapon(isLeftHand)?.getWeaponType());
+    const rnd = Math.random().toString();
+    activeTimers.add(rnd);
+    sp.Utility.wait(delay / 1000).then(() => {
+      if (!activeTimers.delete(rnd)) {
+        return;
+      }
       sp.once("update", () => {
         isPlayerControlDisabled = true;
         blockPlayerControlTimeStamp = Date.now();
 
-        const player = sp.Game.getPlayer()!;
-        player.setDontMove(true);
-        playerAttackTimeout = calculateTimeout(player.getEquippedWeapon(true)?.getWeaponType(), player.getEquippedWeapon(false)?.getWeaponType());
+        sp.Game.getPlayer()!.setDontMove(true);
+        playerAttackTimeout = timeout;
       });
     });
   });
 }
 
-const calculateTimeout = (leftHand?: sp.WeaponType, righHand?: sp.WeaponType): number => {
-  let result = 0;
-  if (leftHand) {
-    result = weaponTimeouts.get(leftHand) ?? 0;
-  }
-  if (righHand) {
-    result += weaponTimeouts.get(righHand) ?? 0;
-    result /= leftHand ? 2 : 1;
+const getTimings = (weapon?: sp.WeaponType): [number, number] => {
+  if (weapon === undefined) {
+    return getTimings(sp.WeaponType.Fist);
   }
 
-  return result || (weaponTimeouts.get(sp.WeaponType.Fist) ?? 0);
+  const timings = weaponTimings.get(weapon);
+  if (!timings) {
+    return getTimings(sp.WeaponType.Fist);
+  }
+
+  return timings;
 };
