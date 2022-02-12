@@ -1261,13 +1261,13 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "sender", event->sender, "Form");
-    AddObjProperty(&obj, "eventName", event->eventName);
-    AddObjProperty(&obj, "strArg", event->strArg);
-    AddObjProperty(&obj, "numArg", event->numArg);
+    AddObjProperty(&obj, "sender", e->sender, "Form");
+    AddObjProperty(&obj, "eventName", e->eventName);
+    AddObjProperty(&obj, "strArg", e->strArg);
+    AddObjProperty(&obj, "numArg", e->numArg);
 
     SendEvent("modEvent", obj);
   });
