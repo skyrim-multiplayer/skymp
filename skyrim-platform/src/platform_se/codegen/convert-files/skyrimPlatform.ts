@@ -715,20 +715,20 @@ export declare function once(eventName: 'translationAlmostCompleted', callback: 
 export declare function on(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): EventHandle;
 export declare function once(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): EventHandle;
 
-export declare function on(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): void;
-export declare function once(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): void;
+export declare function on(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): EventHandle;
+export declare function once(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): EventHandle;
 
-export declare function on(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): void;
-export declare function once(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): void;
+export declare function on(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): EventHandle;
+export declare function once(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): EventHandle;
 
-export declare function on(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): void;
-export declare function once(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): void;
+export declare function on(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): EventHandle;
+export declare function once(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): EventHandle;
 
-export declare function on(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): void;
-export declare function once(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): void;
+export declare function on(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): EventHandle;
+export declare function once(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): EventHandle;
 
-export declare function on(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): void;
-export declare function once(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): void;
+export declare function on(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): EventHandle;
+export declare function once(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): EventHandle;
 
 declare class ConsoleComand {
     longName: string;
