@@ -7,6 +7,9 @@ declare const ctx: Ctx;
 
 export class DisableCheats {
   static init() {
+    if (mp.getServerSettings()['allowCheats']) {
+      return;
+    }
     mp.makeEventSource('_onHacks', new FunctionInfo(this.clientsideInit()).getText());
     mp['_onHacks'] = () => { };
   }
@@ -28,7 +31,7 @@ export class DisableCheats {
         "ToggleCollision",
         "ToggleControlsDriven",
         "ToggleGodMode", // Disable unlimited carry weight
-        "ToggleFreeCamera",
+        "tfc",
         "ToggleImmortalMode",
         "ToggleMotionDriven",
         "ToggleTrees",
@@ -46,11 +49,15 @@ export class DisableCheats {
         "SetPos",
         "SetAngle",
         "ToggleFogOfWar",
-      ]
+      ];
 
       // Disable commands from commandsToDisable
       commandsToDisable.forEach((command) => {
-        ctx.sp.findConsoleCommand(command).execute = () => false;
+        const cmd = ctx.sp.findConsoleCommand(command);
+        if (!cmd) {
+          ctx.sp.printConsole(`Can't find command ${command}`);
+        }
+        cmd.execute = () => false;
       })
     };
   }
