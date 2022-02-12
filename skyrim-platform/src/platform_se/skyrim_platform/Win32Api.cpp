@@ -25,7 +25,8 @@ JsValue ExitProcess(const JsFunctionArguments& args)
   return JsValue::Undefined();
 }
 
-JsValue FileInfo(const JsFunctionArguments& args) {
+JsValue FileInfo(const JsFunctionArguments& args)
+{
   auto path = static_cast<std::string>(args[1]);
   for (char c : path) {
     if (!(('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') || c == '.')) {
