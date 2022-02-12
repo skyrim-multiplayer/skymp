@@ -41,6 +41,7 @@ sp.hooks.sendAnimationEvent.add({
 sp.on("update", () => {
   if (isPlayerControlDisabled === true && Date.now() - blockPlayerControlTimeStamp >= playerAttackTimeout) {
     sp.Game.getPlayer()!.setDontMove(false);
+    isPlayerControlDisabled = false;
   }
 });
 
