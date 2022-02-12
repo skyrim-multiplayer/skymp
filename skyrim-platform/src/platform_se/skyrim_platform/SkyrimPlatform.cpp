@@ -262,17 +262,12 @@ private:
 
   void ClearState()
   {
-    // TODO: beforeReload, afterReload
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-      .PrintException("Clearing state...");
     ConsoleApi::Clear();
     EventsApi::Clear();
     taskQueue.Clear();
     jsPromiseTaskQueue.Clear();
     nativeCallRequirements.jsThrQ->Clear();
     settingsByPluginName.clear();
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-      .PrintException("Clearing state... DONE!");
   }
 
   std::shared_ptr<JsEngine> GetJsEngine()

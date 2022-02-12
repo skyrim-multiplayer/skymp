@@ -362,7 +362,6 @@ void CallCallbacks(const char* eventName,
 }
 }
 
-// EVENTS API IS NAMESPACE!!!
 void EventsApi::SendEvent(const char* eventName,
                           const std::vector<JsValue>& arguments)
 {
