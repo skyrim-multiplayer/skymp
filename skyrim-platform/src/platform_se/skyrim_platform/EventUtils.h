@@ -40,7 +40,7 @@ inline RE::BSTEventSource<E>* GetEventSource()
 }
 
 template <class T>
-inline std::shared_ptr<T> CopyPtr(const T* ptr)
+inline std::shared_ptr<T> CopyEventPtr(const T* ptr)
 {
   return std::make_shared<T>(*ptr);
 }

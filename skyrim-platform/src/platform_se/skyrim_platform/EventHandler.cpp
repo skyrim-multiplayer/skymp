@@ -17,7 +17,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -89,7 +89,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -111,7 +111,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -132,18 +132,18 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "refr", e->reference.get(), "ObjectReference");
 
-    if (e->action == 1)
+    if (e->action == 1) {
       SendEvent("cellAttach", obj);
-
-    if (e->action == 0)
+    } else if (e->action == 0) {
       SendEvent("cellDetach", obj);
+    }
   });
 
   return EventResult::kContinue;
@@ -157,7 +157,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -177,7 +177,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESCombatEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -203,7 +203,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -233,7 +233,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESDeathEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -256,7 +256,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -279,7 +279,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -299,7 +299,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -326,7 +326,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -347,7 +347,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -374,7 +374,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -395,7 +395,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESHitEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -432,7 +432,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -464,7 +464,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -486,7 +486,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -511,7 +511,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -551,7 +551,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -573,7 +573,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -597,7 +597,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -631,7 +631,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -656,7 +656,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -693,7 +693,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -719,7 +719,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -746,7 +746,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -769,7 +769,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -793,7 +793,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -819,7 +819,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESResetEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -839,7 +839,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESSellEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -861,7 +861,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -883,7 +883,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -904,7 +904,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -928,7 +928,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -948,7 +948,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -969,7 +969,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -990,7 +990,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -1012,7 +1012,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
     auto obj = JsValue::Object();
@@ -1034,7 +1034,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -1058,7 +1058,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -1079,7 +1079,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -1099,14 +1099,16 @@ EventResult EventHandler::ProcessEvent(const SKSE::ActionEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
+    auto slot = to_underlying(e->slot.get());
+
     AddObjProperty(&obj, "actor", e->actor, "Actor");
     AddObjProperty(&obj, "source", e->sourceForm, "Form");
-    AddObjProperty(&obj, "slot", to_underlying(e->slot.get()));
+    AddObjProperty(&obj, "slot", slot);
 
     switch (e->type.get()) {
       case SKSE::ActionEvent::Type::kWeaponSwing: {
@@ -1114,46 +1116,43 @@ EventResult EventHandler::ProcessEvent(const SKSE::ActionEvent* event,
         break;
       }
       case SKSE::ActionEvent::Type::kBeginDraw: {
-        EventsApi::SendEvent("actionBeginDraw", { JsValue::Undefined(), obj });
+        SendEvent("actionBeginDraw", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kEndDraw: {
-        EventsApi::SendEvent("actionEndDraw", { JsValue::Undefined(), obj });
+        SendEvent("actionEndDraw", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kBowDraw: {
-        EventsApi::SendEvent("actionBowDraw", { JsValue::Undefined(), obj });
+        SendEvent("actionBowDraw", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kBowRelease: {
-        EventsApi::SendEvent("actionBowRelease",
-                             { JsValue::Undefined(), obj });
+        SendEvent("actionBowRelease", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kBeginSheathe: {
-        EventsApi::SendEvent("actionBeginSheathe",
-                             { JsValue::Undefined(), obj });
+        SendEvent("actionBeginSheathe", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kEndSheathe: {
-        EventsApi::SendEvent("actionEndSheathe",
-                             { JsValue::Undefined(), obj });
+        SendEvent("actionEndSheathe", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kSpellCast: {
-        EventsApi::SendEvent("actionSpellCast", { JsValue::Undefined(), obj });
+        SendEvent("actionSpellCast", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kSpellFire: {
-        EventsApi::SendEvent("actionSpellFire", { JsValue::Undefined(), obj });
+        SendEvent("actionSpellFire", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kVoiceCast: {
-        EventsApi::SendEvent("actionVoiceCast", { JsValue::Undefined(), obj });
+        SendEvent("actionVoiceCast", obj);
         break;
       }
       case SKSE::ActionEvent::Type::kVoiceFire: {
-        EventsApi::SendEvent("actionVoiceFire", { JsValue::Undefined(), obj });
+        SendEvent("actionVoiceFire", obj);
         break;
       }
     }
@@ -1169,15 +1168,13 @@ EventResult EventHandler::ProcessEvent(const SKSE::CameraEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto oldStateId =
-      to_underlying<RE::CameraStates::CameraState>(e->oldState->id);
-    auto newStateId =
-      to_underlying<RE::CameraStates::CameraState>(e->newState->id);
+    auto oldStateId = to_underlying(e->oldState->id);
+    auto newStateId = to_underlying(e->newState->id);
 
     AddObjProperty(&obj, "oldStateId", oldStateId);
     AddObjProperty(&obj, "newStateId", newStateId);
@@ -1196,7 +1193,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -1218,7 +1215,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
@@ -1239,14 +1236,14 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "sender", event->sender, "Form");
-    AddObjProperty(&obj, "eventName", event->eventName.c_str());
-    AddObjProperty(&obj, "strArg", event->strArg.c_str());
+    AddObjProperty(&obj, "eventName", event->eventName);
+    AddObjProperty(&obj, "strArg", event->strArg);
     AddObjProperty(&obj, "numArg", event->numArg);
 
     SendEvent("modEvent", obj);
@@ -1263,12 +1260,12 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "name", e->menuName.c_str());
+    AddObjProperty(&obj, "name", e->menuName);
 
     if (e->opening) {
       SendEvent("menuOpen", obj);
@@ -1287,12 +1284,12 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "tag", e->tag.c_str());
+    AddObjProperty(&obj, "tag", e->tag);
 
     SendEvent("footstep", obj);
   });
@@ -1308,13 +1305,12 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyPtr(event);
+  auto e = CopyEventPtr(event);
 
   SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto type =
-      to_underlying<RE::PositionPlayerEvent::EVENT_TYPE>(e->type.get());
+    auto type = to_underlying(e->type.get());
 
     AddObjProperty(&obj, "eventType", type);
 

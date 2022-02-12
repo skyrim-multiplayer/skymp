@@ -24,6 +24,11 @@ inline void AddObjProperty(JsValue* obj, const char* tag,
   obj->SetProperty(tag, JsValue::String(std::string(property)));
 }
 
+inline void AddObjProperty(JsValue* obj, const char* tag, FixedString property)
+{
+  obj->SetProperty(tag, JsValue::String(property.c_str()));
+}
+
 inline void AddObjProperty(JsValue* obj, const char* tag, bool property)
 {
   obj->SetProperty(tag, JsValue::Bool(property));
@@ -34,12 +39,12 @@ inline void AddObjProperty(JsValue* obj, const char* tag, int property)
   obj->SetProperty(tag, JsValue::Double(property));
 }
 
-inline void AddObjProperty(JsValue* obj, const char* tag, uint32_t property)
+inline void AddObjProperty(JsValue* obj, const char* tag, uint16_t property)
 {
   obj->SetProperty(tag, JsValue::Double(property));
 }
 
-inline void AddObjProperty(JsValue* obj, const char* tag, uint16_t property)
+inline void AddObjProperty(JsValue* obj, const char* tag, uint32_t property)
 {
   obj->SetProperty(tag, JsValue::Double(property));
 }
