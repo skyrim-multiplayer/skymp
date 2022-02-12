@@ -1,4 +1,5 @@
 #pragma once
+#include <bits/types/FILE.h>
 #include <filesystem>
 #include <fmt/format.h>
 #include <fstream>
@@ -40,7 +41,13 @@ public:
 
   std::vector<std::string> GetFileNames() const noexcept;
 
-  std::map<std::string, uint32_t> GetHashes() const;
+  struct FileInfo
+  {
+    uint32_t crc32;
+    size_t size;
+  };
+
+  std::map<std::string, FileInfo> GetFilesInfo() const;
 
 private:
   std::vector<fs::path> MakeFilePaths(const fs::path& dataDir,
