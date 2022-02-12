@@ -81,6 +81,7 @@ export declare let browser: Browser;
 export interface Win32 {
   loadUrl(url: string): void;
   exitProcess(): void;
+  fileInfo(filename: string): { crc32: number, size: number };
 }
 export declare let win32: Win32;
 
@@ -1103,6 +1104,7 @@ export declare let hooks: Hooks;
 export declare class HttpResponse {
     body: string;
     status: number;
+    error: string;
 }
 export type HttpHeaders = Record<string, string>;
 
