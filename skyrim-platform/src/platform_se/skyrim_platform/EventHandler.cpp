@@ -134,62 +134,22 @@ EventResult EventHandler::ProcessEvent(
     }
   }
 
-  /* auto begin =
-  event->target->As<RE::Actor>()->GetActiveEffectList()->begin(); auto end =
-  event->target->As<RE::Actor>()->GetActiveEffectList()->end(); */
-
-  /* std::copy_if(begin, end, std::back_inserter(*effectList.get()),
-               [](RE::ActiveEffect* eff) { return eff->usUniqueID != 0; }); */
-
-  /* auto e = CopyEventPtr(event);
-  auto activeEffectList =
-    std::make_shared<RE::BSSimpleList<RE::ActiveEffect*>>(
-      *e->target.get()->As<RE::Actor>()->GetActiveEffectList());
-
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e, activeEffectList] {
-    auto obj = JsValue::Object();
-
-    auto target = e->target.get();
-
-    RE::ActiveEffect* activeEffect = nullptr;
-    for (const auto& effect : *activeEffectList) {
-      if (effect->usUniqueID == e->activeEffectUniqueID) {
-        activeEffect = effect;
-        break;
-      }
-    }
-
-    AddObjProperty(&obj, "effect",
-                   activeEffect ? activeEffect->GetBaseObject() : nullptr,
-                   "MagicEffect");
-    AddObjProperty(&obj, "activeEffect", activeEffect, "ActiveMagicEffect");
-    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
-
-    if (e->isApplied) {
-      SendEvent("effectStart", obj);
-    } else {
-      SendEvent("effectFinish", obj);
-    }
-  } );*/
-
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e, effectList] {
-    logger::info("Event procced: isApplied - {}, provided id - {}",
-                 e->isApplied, e->activeEffectUniqueID);
-
     for (const auto& effect : *effectList.get()) {
-      if (effect->usUniqueID != 0) {
-        auto caster = effect->GetCasterActor()->formID;
-        auto target = effect->GetTargetActor()->formID;
-        auto duration = effect->duration;
-        auto uid = effect->usUniqueID;
-        auto baseId = effect->GetBaseObject()->formID;
-        auto baseName = effect->GetBaseObject()->GetName();
+      if (effect->usUniqueID == e->activeEffectUniqueID) {
+        auto obj = JsValue::Object();
 
-        logger::info("From event [uid - {}, baseName - {}, baseId - {}, "
-                     "duration - {}, "
-                     "castedId - {}, targetId - {}]",
-                     uid, baseName, baseId, duration, caster, target);
+        AddObjProperty(&obj, "effect", effect->GetBaseObject(), "MagicEffect");
+        AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+        AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
+
+        if (e->isApplied) {
+          SendEvent("effectStart", obj);
+        } else {
+          SendEvent("effectFinish", obj);
+        }
+
+        return;
       }
     }
   });

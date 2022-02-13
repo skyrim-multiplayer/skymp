@@ -79,14 +79,3 @@ inline void AddObjProperty(JsValue* obj, const char* tag,
     obj->SetProperty(tag, JsValue::Undefined());
   }
 }
-
-inline void AddObjProperty(JsValue* obj, const char* tag,
-                           RE::ActiveEffect* property, const char* typeName)
-{
-  if (property) {
-    obj->SetProperty(tag,
-                     CreateObject(typeName, static_cast<void*>(property)));
-  } else {
-    obj->SetProperty(tag, JsValue::Undefined());
-  }
-}
