@@ -1,12 +1,9 @@
 #include "TextApi.h"
-#include <fstream>
-#include <stdexcept>
+
 #include <string>
 
 #include <codecvt>
 #include <locale>
-
-#include <fmt/format.h>
 
 namespace TextApi {
 
