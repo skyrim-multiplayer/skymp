@@ -5,4 +5,3 @@ Event OnActivate(ObjectReference akActionRef)
 	Utility.Wait(0.2)
 	Game.ShowRaceMenu()
 EndEvent
-
