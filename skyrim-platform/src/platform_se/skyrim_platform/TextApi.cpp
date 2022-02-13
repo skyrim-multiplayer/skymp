@@ -5,6 +5,8 @@
 #include <codecvt>
 #include <locale>
 
+#include <fmt/format.h>
+
 namespace TextApi {
 JsValue TextApi::CreateText(const JsFunctionArguments& args)
 {
@@ -12,7 +14,7 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
 
   auto argPosX = static_cast<double>(args[1]);
   auto argPosY = static_cast<double>(args[2]);
-  auto argString = static_cast<std::string>(args[3]);
+  auto argString = static_cast<std::wstring>(args[3]);
 
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[4].GetProperty(i);
@@ -40,10 +42,19 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
 {
-  auto argString = static_cast<std::string>(args[2]);
+  auto textId = static_cast<int>(args[1]);
+  auto argString = static_cast<std::wstring>(args[2]);
 
-  TextsCollection::GetSingleton().SetTextString(static_cast<int>(args[1]),
-                                                argString);
+  std::string s = "S";
+  for (auto wc : argString) {
+    s += ',';
+    s += static_cast<int>(wc);
+  }
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  argString = converter.from_bytes(s);
+
+  TextsCollection::GetSingleton().SetTextString(textId,
+                                                std::move(argString));
   return JsValue::Undefined();
 }
 
@@ -56,7 +67,7 @@ JsValue TextApi::SetTextColor_(const JsFunctionArguments& args)
   }
 
   TextsCollection::GetSingleton().SetTextColor(static_cast<int>(args[1]),
-                                               argColor);
+                                               std::move(argColor));
   return JsValue::Undefined();
 }
 
@@ -80,7 +91,7 @@ JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 {
-  std::string str =
+  const auto& str =
     TextsCollection::GetSingleton().GetTextString(static_cast<int>(args[1]));
 
   return JsValue(str);
