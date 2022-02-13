@@ -319,6 +319,13 @@ public:
     return GetString(res);
   }
 
+  std::string_view ToStringView() const
+  {
+    JsValueRef res;
+    SafeCall(JS_ENGINE_F(JsConvertValueToString), value, &res);
+    return GetStringView(res);
+  }
+
   operator bool() const
   {
     bool res;
@@ -601,6 +608,18 @@ private:
     res.resize(outLength);
     SafeCall(JS_ENGINE_F(JsCopyString), value, res.data(), outLength,
              &outLength);
+    return res;
+  }
+
+  static std::string_view GetStringView(JsValueRef value)
+  {
+    size_t outLength;
+    SafeCall(JS_ENGINE_F(JsCopyString), value, nullptr, 0, &outLength);
+
+    auto buf = new char[outLength];
+    SafeCall(JS_ENGINE_F(JsCopyString), value, buf, outLength, &outLength);
+
+    auto res = std::string_view(buf);
     return res;
   }
 

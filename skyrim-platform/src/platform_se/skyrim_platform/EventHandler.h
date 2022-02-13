@@ -102,8 +102,10 @@ public:
 
   static void HandleSKSEMessage(SKSE::MessagingInterface::Message* msg);
 
-  static void SendSimpleOnUpdateEvent(const char* tag);
-  static void SendSimpleOnTickEvent(const char* tag);
+  static void SendSimpleEventOnUpdate(const char* eventName);
+  static void SendSimpleEventOnTick(const char* eventName);
+  static void SendEventOnUpdate(const char* eventName, const JsValue& obj);
+  static void SendEventOnTick(const char* eventName, const JsValue& obj);
 
   void DeactivateAllSinks()
   {

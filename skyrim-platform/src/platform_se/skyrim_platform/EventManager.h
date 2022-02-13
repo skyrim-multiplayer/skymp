@@ -3,19 +3,19 @@
 
 struct EventHandle
 {
-  EventHandle(uintptr_t _uid, std::string _eventName)
+  EventHandle(uintptr_t _uid, const std::string& _eventName)
     : uid(_uid)
     , eventName(_eventName)
   {
   }
 
-  uintptr_t uid;
-  std::string eventName;
+  const uintptr_t uid;
+  const std::string eventName;
 };
 
 struct SinkObject
 {
-  SinkObject(const ::Sink* _sink, std::vector<std::string_view> _linkedEvents)
+  SinkObject(const ::Sink* _sink, std::vector<std::string_view>& _linkedEvents)
     : sink(_sink)
     , linkedEvents(_linkedEvents)
   {
@@ -26,7 +26,7 @@ struct SinkObject
 
 struct CallbackObject
 {
-  CallbackObject(JsValue _callback, bool _runOnce)
+  CallbackObject(const JsValue& _callback, bool _runOnce)
     : callback(_callback)
     , runOnce(_runOnce)
   {
@@ -41,7 +41,7 @@ using CallbackObjMap =
 
 struct EventState
 {
-  EventState(const SinkObject* _sink)
+  explicit EventState(const SinkObject* _sink)
     : sinkObj(_sink)
   {
     callbacks.reserve(5);
@@ -75,10 +75,11 @@ public:
   static void Init();
   static void InitCustom();
 
-  std::unique_ptr<EventHandle> Subscribe(std::string eventName,
-                                         JsValue callback, bool runOnce);
+  std::unique_ptr<EventHandle> Subscribe(const std::string& eventName,
+                                         const JsValue& callback,
+                                         bool runOnce);
 
-  void Unsubscribe(uintptr_t uid, std::string_view eventName);
+  void Unsubscribe(uintptr_t uid, const std::string_view& eventName);
 
   void ClearCallbacks()
   {
@@ -101,7 +102,7 @@ public:
     return &event->callbacks;
   }
 
-  void EmplaceEvent(std::string_view name,
+  void EmplaceEvent(const std::string_view& name,
                     EventState* state = new EventState(nullptr))
   {
     events.emplace(name, state);

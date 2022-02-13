@@ -5,27 +5,43 @@
 #include "SkyrimPlatform.h"
 
 namespace {
-inline void SendEvent(const char* name)
+inline void SendEvent(const char* eventName)
 {
-  EventsApi::SendEvent(name, { JsValue::Undefined() });
+  EventsApi::SendEvent(eventName, { JsValue::Undefined() });
 }
 
-inline void SendEvent(const char* name, JsValue obj)
+inline void SendEvent(const char* eventName, const JsValue& obj)
 {
-  EventsApi::SendEvent(name, { JsValue::Undefined(), obj });
+  EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
 }
 }
 
-void EventHandler::SendSimpleOnUpdateEvent(const char* tag)
+void EventHandler::SendSimpleEventOnUpdate(const char* eventName)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask(
-    [tag] { EventsApi::SendEvent(tag, { JsValue::Undefined() }); });
+  SkyrimPlatform::GetSingleton().AddUpdateTask([eventName] {
+    EventsApi::SendEvent(eventName, { JsValue::Undefined() });
+  });
 }
 
-void EventHandler::SendSimpleOnTickEvent(const char* tag)
+void EventHandler::SendSimpleEventOnTick(const char* eventName)
 {
-  SkyrimPlatform::GetSingleton().AddTickTask(
-    [tag] { EventsApi::SendEvent(tag, { JsValue::Undefined() }); });
+  SkyrimPlatform::GetSingleton().AddTickTask([eventName] {
+    EventsApi::SendEvent(eventName, { JsValue::Undefined() });
+  });
+}
+
+void EventHandler::SendEventOnUpdate(const char* eventName, const JsValue& obj)
+{
+  SkyrimPlatform::GetSingleton().AddUpdateTask([eventName, obj] {
+    EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
+  });
+}
+
+void EventHandler::SendEventOnTick(const char* eventName, const JsValue& obj)
+{
+  SkyrimPlatform::GetSingleton().AddTickTask([eventName, obj] {
+    EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
+  });
 }
 
 void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
@@ -33,22 +49,22 @@ void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
   switch (msg->type) {
     case SKSE::MessagingInterface::kDataLoaded: {
       EventManager::Init();
-      SendSimpleOnTickEvent("skyrimLoaded");
+      SendSimpleEventOnTick("skyrimLoaded");
     } break;
     case SKSE::MessagingInterface::kNewGame:
-      SendSimpleOnTickEvent("newGame");
+      SendSimpleEventOnTick("newGame");
       break;
     case SKSE::MessagingInterface::kPreLoadGame:
-      SendSimpleOnTickEvent("preLoadGame");
+      SendSimpleEventOnTick("preLoadGame");
       break;
     case SKSE::MessagingInterface::kPostLoadGame:
-      SendSimpleOnTickEvent("postLoadGame");
+      SendSimpleEventOnTick("postLoadGame");
       break;
     case SKSE::MessagingInterface::kSaveGame:
-      SendSimpleOnTickEvent("saveGame");
+      SendSimpleEventOnTick("saveGame");
       break;
     case SKSE::MessagingInterface::kDeleteGame:
-      SendSimpleOnTickEvent("deleteGame");
+      SendSimpleEventOnTick("deleteGame");
       break;
   }
 }
@@ -485,7 +501,7 @@ EventResult EventHandler::ProcessEvent(
 
 // TODO: Look into LoadGame event
 EventResult EventHandler::ProcessEvent(
-  const RE::TESLoadGameEvent* event, RE::BSTEventSource<RE::TESLoadGameEvent>*)
+  const RE::TESLoadGameEvent*, RE::BSTEventSource<RE::TESLoadGameEvent>*)
 {
   SkyrimPlatform::GetSingleton().AddUpdateTask([] { SendEvent("loadGame"); });
 

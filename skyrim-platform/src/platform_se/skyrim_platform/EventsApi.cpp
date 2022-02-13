@@ -1,5 +1,6 @@
 #include "EventsApi.h"
 #include "EventManager.h"
+#include "IPC.h"
 #include "InvalidArgumentException.h"
 #include "JsUtils.h"
 #include "NativeObject.h"
@@ -301,38 +302,6 @@ struct EventsGlobalState
   std::shared_ptr<Hook> sendPapyrusEvent;
 } g;
 
-class IpcCallbackData
-{
-public:
-  IpcCallbackData() = default;
-  IpcCallbackData(std::string systemName_,
-                  EventsApi::IpcMessageCallback callback_, void* state_)
-    : systemName(systemName_)
-    , callback(callback_)
-    , state(state_)
-  {
-  }
-
-  friend bool operator==(const IpcCallbackData& lhs,
-                         const IpcCallbackData& rhs)
-  {
-    return std::make_tuple(lhs.systemName, lhs.callback, lhs.state) ==
-      std::make_tuple(rhs.systemName, rhs.callback, rhs.state);
-  }
-
-  std::string systemName;
-  EventsApi::IpcMessageCallback callback;
-  void* state = nullptr;
-};
-
-struct IpcShare
-{
-  std::recursive_mutex m;
-  std::vector<IpcCallbackData> ipcCallbacks;
-} g_ipcShare;
-
-std::atomic<uint32_t> g_chakraThreadId = 0;
-
 void EventsApi::SendEvent(const char* eventName,
                           const std::vector<JsValue>& arguments)
 {
@@ -362,7 +331,6 @@ void EventsApi::SendEvent(const char* eventName,
 
 void EventsApi::Clear()
 {
-  g_chakraThreadId = GetCurrentThreadId();
   g = {};
 
   EventManager::GetSingleton()->ClearCallbacks();
@@ -438,49 +406,6 @@ JsValue EventsApi::GetHooks()
   return res;
 }
 
-uint32_t EventsApi::IpcSubscribe(const char* systemName,
-                                 IpcMessageCallback callback, void* state)
-{
-  // Maybe they decide calling IpcSubscribe from multiple threads...
-  std::lock_guard l(g_ipcShare.m);
-
-  IpcCallbackData ipcCallbackData(systemName, callback, state);
-
-  auto it = std::find(g_ipcShare.ipcCallbacks.begin(),
-                      g_ipcShare.ipcCallbacks.end(), IpcCallbackData());
-  if (it == g_ipcShare.ipcCallbacks.end()) {
-    g_ipcShare.ipcCallbacks.push_back(ipcCallbackData);
-    return g_ipcShare.ipcCallbacks.size() - 1;
-  } else {
-    *it = ipcCallbackData;
-    return static_cast<uint32_t>(it - g_ipcShare.ipcCallbacks.begin());
-  }
-}
-
-void EventsApi::IpcUnsubscribe(uint32_t subscriptionId)
-{
-  std::lock_guard l(g_ipcShare.m);
-  if (g_ipcShare.ipcCallbacks.size() > subscriptionId) {
-    g_ipcShare.ipcCallbacks[subscriptionId] = IpcCallbackData();
-  }
-  // TODO: pop_back for empty subscriptions?
-}
-
-void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
-                        uint32_t length)
-{
-  const DWORD currentThreadId = GetCurrentThreadId();
-  if (currentThreadId != g_chakraThreadId) {
-    assert(0 && "IpcSend is only available in Chakra thread");
-    return;
-  }
-  auto obj = JsValue::Object();
-  AddObjProperty(&obj, "sourceSystemName", systemName);
-  AddObjProperty(&obj, "message", data, length);
-
-  SendEvent("ipcMessage", { JsValue::Undefined(), obj });
-}
-
 void EventsApi::SendConsoleMsgEvent(const char* msg_)
 {
   std::string msg(msg_);
@@ -519,38 +444,6 @@ JsValue EventsApi::Once(const JsFunctionArguments& args)
   return Subscribe(args, true);
 }
 
-JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
-{
-  auto targetSystemName = static_cast<std::string>(args[1]);
-  auto message = args[2].GetArrayBufferData();
-  auto messageLength = args[2].GetArrayBufferLength();
-
-  if (!message || messageLength == 0) {
-    throw std::runtime_error(
-      "sendIpcMessage expects a valid ArrayBuffer instance");
-  }
-
-  std::vector<IpcCallbackData> callbacks;
-  {
-    std::lock_guard l(g_ipcShare.m);
-    for (auto& callbackData : g_ipcShare.ipcCallbacks) {
-      if (callbackData.systemName == targetSystemName) {
-        callbacks.push_back(callbackData);
-      }
-    }
-  }
-
-  // Want to call callbacks with g_ipcShare.m unlocked
-  for (auto& callbackData : callbacks) {
-    if (callbackData.callback) {
-      callbackData.callback(reinterpret_cast<uint8_t*>(message), messageLength,
-                            callbackData.state);
-    }
-  }
-
-  return JsValue::Undefined();
-}
-
 JsValue EventsApi::Unsubscribe(const JsFunctionArguments& args)
 {
   auto obj = args[1];
@@ -559,5 +452,22 @@ JsValue EventsApi::Unsubscribe(const JsFunctionArguments& args)
   auto uid = std::get<double>(
     NativeValueCasts::JsValueToNativeValue(obj.GetProperty("uid")));
   EventManager::GetSingleton()->Unsubscribe(uid, eventName);
+  return JsValue::Undefined();
+}
+
+JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
+{
+  auto targetSystemName = args[1].ToStringView();
+  auto message = args[2].GetArrayBufferData();
+  auto messageLength = args[2].GetArrayBufferLength();
+
+  if (!message || messageLength == 0) {
+    throw std::runtime_error(
+      "sendIpcMessage expects a valid ArrayBuffer instance");
+  }
+
+  IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message),
+            messageLength);
+
   return JsValue::Undefined();
 }

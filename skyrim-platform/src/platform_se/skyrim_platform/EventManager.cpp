@@ -60,9 +60,8 @@ void EventManager::Init()
   logger::debug("Game events initialized.");
 }
 
-std::unique_ptr<EventHandle> EventManager::Subscribe(std::string eventName,
-                                                     JsValue callback,
-                                                     bool runOnce)
+std::unique_ptr<EventHandle> EventManager::Subscribe(
+  const std::string& eventName, const JsValue& callback, bool runOnce)
 {
   // check if event is supported
   auto event = events[eventName];
@@ -94,7 +93,8 @@ std::unique_ptr<EventHandle> EventManager::Subscribe(std::string eventName,
   return std::make_unique<EventHandle>(uid, eventName);
 }
 
-void EventManager::Unsubscribe(uintptr_t uid, std::string_view eventName)
+void EventManager::Unsubscribe(uintptr_t uid,
+                               const std::string_view& eventName)
 {
   if (uid == 0) {
     logger::info("Unsubscribe attempt failed, invalid event handle");

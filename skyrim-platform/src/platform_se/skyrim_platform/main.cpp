@@ -6,6 +6,7 @@
 #include "FlowManager.h"
 #include "FridaHooks.h"
 #include "Hooks.h"
+#include "IPC.h"
 #include "InputConverter.h"
 #include "PapyrusTESModPlatform.h"
 #include "SkyrimPlatform.h"
@@ -13,6 +14,7 @@
 #include "TPRenderSystemD3D11.h"
 #include "TextsCollection.h"
 #include "TickHandler.h"
+
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -81,21 +83,21 @@ void InitLog()
 
 extern "C" {
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe_Impl(
-  const char* systemName, EventsApi::IpcMessageCallback callback, void* state)
+  const char* systemName, IPC::MessageCallback callback, void* state)
 {
-  return EventsApi::IpcSubscribe(systemName, callback, state);
+  return IPC::Subscribe(systemName, callback, state);
 }
 
 DLLEXPORT void SkyrimPlatform_IpcUnsubscribe_Impl(uint32_t subscriptionId)
 {
-  return EventsApi::IpcUnsubscribe(subscriptionId);
+  return IPC::Unsubscribe(subscriptionId);
 }
 
 DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
                                            const uint8_t* data,
                                            uint32_t length)
 {
-  return EventsApi::IpcSend(systemName, data, length);
+  return IPC::Send(systemName, data, length);
 }
 
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
