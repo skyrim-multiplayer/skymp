@@ -48,8 +48,7 @@ JsValue TextApi::SetTextString(const JsFunctionArguments& args)
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   auto argString = converter.from_bytes(static_cast<std::string>(args[2]));
 
-  TextsCollection::GetSingleton().SetTextString(textId,
-                                                std::move(argString));
+  TextsCollection::GetSingleton().SetTextString(textId, std::move(argString));
   return JsValue::Undefined();
 }
 
@@ -86,7 +85,8 @@ JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 {
-  const auto& str = TextsCollection::GetSingleton().GetTextString(static_cast<int>(args[1]));
+  const auto& str =
+    TextsCollection::GetSingleton().GetTextString(static_cast<int>(args[1]));
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   return JsValue(converter.to_bytes(str));
