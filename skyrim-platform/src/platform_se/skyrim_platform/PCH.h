@@ -63,6 +63,7 @@
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
 #include <hooks/WindowsHook.hpp>
+#include <ini/ini.h>
 #include <internal/cef_ptr.h>
 #include <internal/cef_types.h>
 #include <nlohmann/json.hpp>
