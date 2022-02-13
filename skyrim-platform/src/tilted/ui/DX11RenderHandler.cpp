@@ -69,6 +69,7 @@ void DX11RenderHandler::Render(
 
   if (Visible()) {
     obtainTextsToDraw([&](const TextToDraw& textToDraw) {
+      static_assert(std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>, wchar_t>);
       auto origin = DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(
                       textToDraw.string.c_str())) /
         2;
