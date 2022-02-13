@@ -83,6 +83,7 @@ std::unique_ptr<EventHandle> EventManager::Subscribe(
     }
   }
 
+  // this becomes unique_ptr when it gets emplaced, so no leak
   auto cb = new CallbackObject(callback, runOnce);
   auto uid = reinterpret_cast<uintptr_t>(cb);
 
