@@ -61,4 +61,3 @@ Event OnUpdate()
 		PlayerRef = none
 	endif
 EndEvent
-

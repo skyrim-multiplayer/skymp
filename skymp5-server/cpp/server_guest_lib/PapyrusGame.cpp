@@ -89,10 +89,10 @@ VarValue PapyrusGame::ShowLimitedRaceMenu(
 void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
                                  const std::vector<VarValue>& arguments)
 {
-  auto s = SpSnippetFunctionGen::SerializeArguments(arguments);
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
   if (auto actor = compatibilityPolicy->GetDefaultActor(
         GetName(), funcName, self.GetMetaStackId())) {
     actor->SetRaceMenuOpen(true);
-    SpSnippet(GetName(), funcName, s.data()).Execute(actor);
+    SpSnippet(GetName(), funcName, serializedArgs.data()).Execute(actor);
   }
 }

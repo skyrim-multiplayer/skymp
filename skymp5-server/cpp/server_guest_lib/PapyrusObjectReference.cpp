@@ -314,17 +314,18 @@ VarValue PapyrusObjectReference::SetPosition(
     // note that this change is global. So players should get new position on
     // entering area or even outside of it
     selfRefr->SetPosAndAngleSilent(
-      NiPoint3((float)static_cast<double>(arguments[0].CastToFloat()),
-               (float)static_cast<double>(arguments[1].CastToFloat()),
-               (float)static_cast<double>(arguments[2].CastToFloat())),
+      NiPoint3(float(static_cast<double>(arguments[0].CastToFloat())),
+               float(static_cast<double>(arguments[1].CastToFloat())),
+               float(static_cast<double>(arguments[2].CastToFloat()))),
       selfRefr->GetAngle());
     selfRefr->ForceSubscriptionsUpdate();
     auto funcName = "SetPosition";
-    auto s = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
     for (auto listener : selfRefr->GetListeners()) {
       auto targetRefr = dynamic_cast<MpActor*>(listener);
       if (targetRefr) {
-        SpSnippet(GetName(), funcName, s.data(), selfRefr->GetFormId())
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
           .Execute(targetRefr);
       }
     }
