@@ -9,13 +9,16 @@
 #include <fmt/format.h>
 
 namespace TextApi {
+
 JsValue TextApi::CreateText(const JsFunctionArguments& args)
 {
   std::array<double, 4> argColor;
 
   auto argPosX = static_cast<double>(args[1]);
   auto argPosY = static_cast<double>(args[2]);
-  auto argString = static_cast<std::wstring>(args[3]);
+
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  auto argString = converter.from_bytes(static_cast<std::string>(args[3]));
 
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[4].GetProperty(i);
@@ -44,23 +47,6 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
-  // auto argString = static_cast<std::wstring>(args[2]);
-
-  /*
-  std::string s = static_cast<std::string>(args[2]) + "S";
-  for (auto c : static_cast<std::string>(args[2])) {
-    s += ',';
-    s += std::to_string(static_cast<int>(c));
-  }
-  s += 'W';
-  for (auto wc : argString) {
-    s += ',';
-    s += std::to_string(static_cast<int>(wc));
-  }
-  // throw std::runtime_error(s);
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  argString = converter.from_bytes(s);
-  */
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   auto argString = converter.from_bytes(static_cast<std::string>(args[2]));
@@ -103,7 +89,10 @@ JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 {
-  return JsValue("nope");
+  const auto& str = TextsCollection::GetSingleton().GetTextString(static_cast<int>(args[1]));
+
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  return JsValue(converter.to_bytes(str));
 }
 
 JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
