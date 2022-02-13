@@ -18,29 +18,40 @@ inline void SendEvent(const char* eventName, const JsValue& obj)
 
 void EventHandler::SendSimpleEventOnUpdate(const char* eventName)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([eventName] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([eventName] {
     EventsApi::SendEvent(eventName, { JsValue::Undefined() });
   });
 }
 
 void EventHandler::SendSimpleEventOnTick(const char* eventName)
 {
-  SkyrimPlatform::GetSingleton().AddTickTask([eventName] {
+  SkyrimPlatform::GetSingleton()->AddTickTask([eventName] {
     EventsApi::SendEvent(eventName, { JsValue::Undefined() });
   });
 }
 
 void EventHandler::SendEventOnUpdate(const char* eventName, const JsValue& obj)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([eventName, obj] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([eventName, obj] {
     EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
   });
 }
 
 void EventHandler::SendEventOnTick(const char* eventName, const JsValue& obj)
 {
-  SkyrimPlatform::GetSingleton().AddTickTask([eventName, obj] {
+  SkyrimPlatform::GetSingleton()->AddTickTask([eventName, obj] {
     EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
+  });
+}
+
+void EventHandler::SendEventConsoleMsg(const char* msg)
+{
+  SkyrimPlatform::GetSingleton()->AddTickTask([msg] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "message", msg);
+
+    SendEvent("consoleMessage", obj);
   });
 }
 
@@ -78,7 +89,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "target", e->objectActivated.get(),
@@ -102,11 +113,40 @@ EventResult EventHandler::ProcessEvent(
   }
 
   auto e = CopyEventPtr(event);
+
+  /**
+   * this is a workaround
+   * at the moment of writing if you try to create new instance of
+   * RE::ActiveEffect the game crashes either at instance construction or
+   * deconstruction, but since we really need copies of those classes here we
+   * have to manually manage memory to avoid leaks
+   */
+  auto effectList = std::make_shared<std::vector<std::unique_ptr<
+    RE::ActiveEffect, game_type_pointer_deleter<RE::ActiveEffect>>>>();
+
+  for (const auto& eff :
+       *event->target.get()->As<RE::Actor>()->GetActiveEffectList()) {
+    if (eff->usUniqueID != 0) {
+      auto activeEffect = RE::malloc<RE::ActiveEffect>();
+      std::memcpy(activeEffect, eff, sizeof(*eff));
+      effectList->emplace_back(activeEffect,
+                               game_type_pointer_deleter<RE::ActiveEffect>());
+    }
+  }
+
+  /* auto begin =
+  event->target->As<RE::Actor>()->GetActiveEffectList()->begin(); auto end =
+  event->target->As<RE::Actor>()->GetActiveEffectList()->end(); */
+
+  /* std::copy_if(begin, end, std::back_inserter(*effectList.get()),
+               [](RE::ActiveEffect* eff) { return eff->usUniqueID != 0; }); */
+
+  /* auto e = CopyEventPtr(event);
   auto activeEffectList =
     std::make_shared<RE::BSSimpleList<RE::ActiveEffect*>>(
       *e->target.get()->As<RE::Actor>()->GetActiveEffectList());
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e, activeEffectList] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e, activeEffectList] {
     auto obj = JsValue::Object();
 
     auto target = e->target.get();
@@ -131,6 +171,27 @@ EventResult EventHandler::ProcessEvent(
     } else {
       SendEvent("effectFinish", obj);
     }
+  } );*/
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e, effectList] {
+    logger::info("Event procced: isApplied - {}, provided id - {}",
+                 e->isApplied, e->activeEffectUniqueID);
+
+    for (const auto& effect : *effectList.get()) {
+      if (effect->usUniqueID != 0) {
+        auto caster = effect->GetCasterActor()->formID;
+        auto target = effect->GetTargetActor()->formID;
+        auto duration = effect->duration;
+        auto uid = effect->usUniqueID;
+        auto baseId = effect->GetBaseObject()->formID;
+        auto baseName = effect->GetBaseObject()->GetName();
+
+        logger::info("From event [uid - {}, baseName - {}, baseId - {}, "
+                     "duration - {}, "
+                     "castedId - {}, targetId - {}]",
+                     uid, baseName, baseId, duration, caster, target);
+      }
+    }
   });
 
   return EventResult::kContinue;
@@ -146,7 +207,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "actor", e->actor.get(), "Actor");
@@ -168,7 +229,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "book", e->book.get(), "ObjectReference");
@@ -189,7 +250,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "refr", e->reference.get(), "ObjectReference");
@@ -214,7 +275,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "cell", e->cell, "Cell");
@@ -234,7 +295,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESCombatEvent* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "target", e->targetActor.get(), "ObjectReference");
@@ -260,7 +321,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto contFormOld = RE::TESForm::LookupByID(e->oldContainer);
@@ -290,7 +351,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESDeathEvent* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "actorDying", e->actorDying.get(), "ObjectReference");
@@ -313,7 +374,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
@@ -336,7 +397,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "actor", e->actor.get(), "ObjectReference");
@@ -356,7 +417,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto baseObjForm = RE::TESForm::LookupByID(e->baseObject);
@@ -383,7 +444,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "travelTimeGameHours", e->travelTimeGameHours);
@@ -404,7 +465,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "actor", e->actor.get(), "ObjectReference");
@@ -431,7 +492,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "refr", e->ref.get(), "ObjectReference");
@@ -452,7 +513,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESHitEvent* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto sourceForm = RE::TESForm::LookupByID(e->source);
@@ -487,7 +548,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "initializedObject", e->objectInitialized.get(),
@@ -503,7 +564,7 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(
   const RE::TESLoadGameEvent*, RE::BSTEventSource<RE::TESLoadGameEvent>*)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([] { SendEvent("loadGame"); });
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([] { SendEvent("loadGame"); });
 
   return EventResult::kContinue;
 }
@@ -518,7 +579,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "lockedObject", e->lockedObject.get(),
@@ -540,7 +601,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto effect = RE::TESForm::LookupByID(e->magicEffect);
@@ -565,7 +626,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto spell = RE::TESForm::LookupByID(e->spell);
@@ -592,7 +653,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "movedRef", e->movedRef.get(), "ObjectReference");
@@ -614,7 +675,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto object = RE::TESForm::LookupByID(e->formID);
@@ -638,7 +699,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "reference", e->refr.get(), "ObjectReference");
@@ -672,7 +733,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "caster", e->activeRef.get(), "ObjectReference");
@@ -697,7 +758,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto package = RE::TESForm::LookupByID(e->package);
@@ -734,7 +795,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto perk = RE::TESForm::LookupByID(e->perkId);
@@ -760,7 +821,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto weapon = RE::TESForm::LookupByID(e->weaponId);
@@ -787,7 +848,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto quest = RE::TESForm::LookupByID(e->questId);
@@ -810,7 +871,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto quest = RE::TESForm::LookupByID(e->questId);
@@ -834,7 +895,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto quest = RE::TESForm::LookupByID(e->questId);
@@ -860,7 +921,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESResetEvent* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "object", e->object.get(), "ObjectReference");
@@ -880,7 +941,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESSellEvent* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "seller", e->seller.get(), "ObjectReference");
@@ -902,7 +963,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "startTime", e->sleepStartTime);
@@ -924,7 +985,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "isInterrupted", e->isInterrupted);
@@ -945,7 +1006,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto spell = RE::TESForm::LookupByID(e->spell);
@@ -969,7 +1030,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "subject", e->subject.get(), "ObjectReference");
@@ -989,7 +1050,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "statName", e->stat.data());
@@ -1010,7 +1071,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
@@ -1031,7 +1092,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
@@ -1053,7 +1114,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([=] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
@@ -1075,7 +1136,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "oldBaseID", e->oldBaseID);
@@ -1099,7 +1160,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "startTime", e->waitStartTime);
@@ -1120,7 +1181,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "isInterrupted", e->interrupted);
@@ -1140,7 +1201,7 @@ EventResult EventHandler::ProcessEvent(const SKSE::ActionEvent* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto slot = to_underlying(e->slot.get());
@@ -1209,7 +1270,7 @@ EventResult EventHandler::ProcessEvent(const SKSE::CameraEvent* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto oldStateId = to_underlying(e->oldState->id);
@@ -1234,7 +1295,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "reference", e->crosshairRef.get(),
@@ -1256,7 +1317,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "reference", e->reference, "ObjectReference");
@@ -1277,7 +1338,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "sender", e->sender, "Form");
@@ -1301,7 +1362,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "name", e->menuName);
@@ -1325,7 +1386,7 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     for (auto eventItem = *e; eventItem; eventItem = eventItem->next) {
       if (!eventItem) {
         return;
@@ -1419,7 +1480,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "tag", e->tag);
@@ -1440,7 +1501,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton().AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     auto type = to_underlying(e->type.get());

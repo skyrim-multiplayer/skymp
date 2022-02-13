@@ -4,7 +4,7 @@
 class SkyrimPlatform
 {
 public:
-  static SkyrimPlatform& GetSingleton();
+  static SkyrimPlatform* GetSingleton();
 
   void JsTick(bool gameFunctionsAvailable);
   void SetOverlayService(std::shared_ptr<OverlayService> overlayService);

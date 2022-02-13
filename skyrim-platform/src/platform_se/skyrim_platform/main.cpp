@@ -47,12 +47,12 @@ void OnUpdate(IVM* vm, StackID stackId)
 
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
-  SkyrimPlatform::GetSingleton().PrepareWorker();
-  SkyrimPlatform::GetSingleton().Push([=](int) {
-    SkyrimPlatform::GetSingleton().JsTick(true);
-    SkyrimPlatform::GetSingleton().StopWorker();
+  SkyrimPlatform::GetSingleton()->PrepareWorker();
+  SkyrimPlatform::GetSingleton()->Push([=](int) {
+    SkyrimPlatform::GetSingleton()->JsTick(true);
+    SkyrimPlatform::GetSingleton()->StopWorker();
   });
-  SkyrimPlatform::GetSingleton().StartWorker();
+  SkyrimPlatform::GetSingleton()->StartWorker();
   g_nativeCallRequirements.gameThrQ->Update();
   g_nativeCallRequirements.stackId = std::numeric_limits<StackID>::max();
   g_nativeCallRequirements.vm = nullptr;
@@ -410,7 +410,7 @@ public:
           HandleMessage(name, arguments_);
         } catch (const std::exception&) {
           auto exception = std::current_exception();
-          SkyrimPlatform::GetSingleton().AddTickTask(
+          SkyrimPlatform::GetSingleton()->AddTickTask(
             [exception = std::move(exception)] {
               std::rethrow_exception(exception);
             });
@@ -422,7 +422,7 @@ public:
                          const CefRefPtr<CefListValue>& arguments_)
       {
         auto arguments = arguments_->Copy();
-        SkyrimPlatform::GetSingleton().AddTickTask([name, arguments] {
+        SkyrimPlatform::GetSingleton()->AddTickTask([name, arguments] {
           auto length = static_cast<uint32_t>(arguments->GetSize());
           auto argumentsArray = JsValue::Array(length);
           for (uint32_t i = 0; i < length; ++i) {
@@ -488,7 +488,7 @@ public:
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
     myInputListener->Init(overlayService, inputConverter);
-    SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
+    SkyrimPlatform::GetSingleton()->SetOverlayService(overlayService);
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
 
     auto manager = RE::BSRenderManager::GetSingleton();

@@ -19,7 +19,6 @@ void SendPapyrusEventLeave() noexcept;
 
 JsValue GetHooks();
 
-void SendConsoleMsgEvent(const char* msg);
 void SendMenuOpen(const char* menuName);
 void SendMenuClose(const char* menuName);
 

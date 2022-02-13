@@ -321,10 +321,10 @@ SkyrimPlatform::SkyrimPlatform()
   pImpl->complete = false;
 }
 
-SkyrimPlatform& SkyrimPlatform::GetSingleton()
+SkyrimPlatform* SkyrimPlatform::GetSingleton()
 {
   static SkyrimPlatform g_skyrimPlatform;
-  return g_skyrimPlatform;
+  return &g_skyrimPlatform;
 }
 
 void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
@@ -379,7 +379,7 @@ void SkyrimPlatform::PushToWorkerAndWait(
     pImpl->ioContext.get_executor(),
     std::bind(&Impl::RunInIOContext, pImpl, fPtr, stack, logger, vm, ret));
   pImpl->conditionalVariable.wait(
-    lock, [] { return SkyrimPlatform::GetSingleton().pImpl->complete; });
+    lock, [] { return SkyrimPlatform::GetSingleton()->pImpl->complete; });
 }
 
 void SkyrimPlatform::PrepareWorker()

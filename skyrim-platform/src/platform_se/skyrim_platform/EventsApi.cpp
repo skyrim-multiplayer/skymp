@@ -159,7 +159,7 @@ public:
         return;
       }
 
-      return SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
+      return SkyrimPlatform::GetSingleton()->AddUpdateTask([=] {
         std::string s = eventName;
         HandleEnter(owningThread, selfId, s);
       });
@@ -174,11 +174,11 @@ public:
       } catch (std::exception& e) {
         auto err = std::string(e.what()) + " (while performing enter on '" +
           hookName + "')";
-        SkyrimPlatform::GetSingleton().AddUpdateTask(
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
           [err] { throw std::runtime_error(err); });
       }
     };
-    SkyrimPlatform::GetSingleton().PushAndWait(f);
+    SkyrimPlatform::GetSingleton()->PushAndWait(f);
     addRemoveBlocker--;
   }
 
@@ -200,12 +200,12 @@ public:
 
       } catch (std::exception& e) {
         std::string what = e.what();
-        SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
+        SkyrimPlatform::GetSingleton()->AddUpdateTask([what] {
           throw std::runtime_error(what + " (in SendAnimationEventLeave)");
         });
       }
     };
-    SkyrimPlatform::GetSingleton().PushAndWait(f);
+    SkyrimPlatform::GetSingleton()->PushAndWait(f);
     addRemoveBlocker--;
   }
 
@@ -404,17 +404,6 @@ JsValue EventsApi::GetHooks()
     res.SetProperty(hook->GetName(), CreateHookApi(hook));
   }
   return res;
-}
-
-void EventsApi::SendConsoleMsgEvent(const char* msg_)
-{
-  std::string msg(msg_);
-  SkyrimPlatform::GetSingleton().AddTickTask([=] {
-    auto obj = JsValue::Object();
-    AddObjProperty(&obj, "message", msg);
-
-    EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
-  });
 }
 
 namespace {

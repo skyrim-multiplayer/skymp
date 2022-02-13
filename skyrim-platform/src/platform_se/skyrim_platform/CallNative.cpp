@@ -460,7 +460,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
 
   RE::BSScript::IFunction::CallResult callResut =
     RE::BSScript::IFunction::CallResult::kFailedAbort;
-  SkyrimPlatform::GetSingleton().PushToWorkerAndWait(
+  SkyrimPlatform::GetSingleton()->PushToWorkerAndWait(
     f, stackIterator->second, vmImpl->GetErrorLogger(), vmImpl, &callResut);
   if (callResut != RE::BSScript::IFunction::CallResult::kCompleted) {
     throw std::runtime_error("Bad call result " +

@@ -105,6 +105,14 @@ constexpr typename std::underlying_type<E>::type to_underlying(E e) noexcept
   return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
+// this should be move somewhere.
+// use only when RE::malloc is used for memory allocation
+template <typename T>
+struct game_type_pointer_deleter
+{
+  void operator()(T* ptr) { RE::free((void*)ptr); }
+};
+
 #include "JsEngine.h" // imports TaskQueue.h
 #include "Version.h"
 

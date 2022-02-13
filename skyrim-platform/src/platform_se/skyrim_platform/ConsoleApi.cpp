@@ -268,13 +268,13 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
       }
     } catch (std::exception& e) {
       std::string what = e.what();
-      SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
+      SkyrimPlatform::GetSingleton()->AddUpdateTask([what] {
         throw std::runtime_error(what + " (in ConsoleCommand_Execute)");
       });
     }
   };
 
-  SkyrimPlatform::GetSingleton().PushAndWait(func);
+  SkyrimPlatform::GetSingleton()->PushAndWait(func);
   if (iterator)
     iterator->second.execute(paramInfo, scriptData, thisObj, containingObj,
                              scriptObj, locals, result, opcodeOffsetPtr);

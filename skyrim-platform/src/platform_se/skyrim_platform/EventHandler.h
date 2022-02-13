@@ -106,6 +106,7 @@ public:
   static void SendSimpleEventOnTick(const char* eventName);
   static void SendEventOnUpdate(const char* eventName, const JsValue& obj);
   static void SendEventOnTick(const char* eventName, const JsValue& obj);
+  static void SendEventConsoleMsg(const char* msg);
 
   void DeactivateAllSinks()
   {
