@@ -232,7 +232,6 @@ export interface EquipEvent {
 }
 
 export interface ActiveEffectApplyRemoveEvent {
-  activeEffect: ActiveMagicEffect
   effect: MagicEffect
   caster: ObjectReference
   target: ObjectReference
