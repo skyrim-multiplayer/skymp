@@ -10,9 +10,7 @@ export class FunctionInfo<F extends { toString: () => string }> {
     if (!args) {
       return this.text;
     }
-    const kek = `const {${Object.keys(args).join(',')}} = ${JSON.stringify(args)};${this.text}`;
-    console.log(kek);
-    return kek;
+    return `const {${Object.keys(args).join(',')}} = ${JSON.stringify(args)};${this.text}`;
   }
 
   private getTextWithoutErrorHandling(): string {
