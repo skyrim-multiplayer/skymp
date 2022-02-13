@@ -2,7 +2,7 @@
 
 Skyrim Platform now supports rendering texts and has methods for manipulating them.
 
-`Data/Platform/Fonts/font.spritefont` is used as a font.
+`Data/Platform/Fonts/Tavern.spritefont` is used as a font.
 See [MakeSpriteFont](https://github.com/microsoft/DirectXTK/wiki/MakeSpriteFont) if you want to compile your font into spritefont format.
 
 ## Example
