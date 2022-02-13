@@ -93,12 +93,12 @@ TEST_CASE("SetUserActor failures", "[PartOne]")
   DoConnect(partOne, 9);
 
   REQUIRE_THROWS_WITH(partOne.SetUserActor(9, 0xff000000),
-                      Contains("Form with id ff000000 doesn't exist"));
+                      Contains("Form with id 0xff000000 doesn't exist"));
 
   partOne.worldState.AddForm(std::unique_ptr<MpForm>(new MpForm), 0xff000000);
 
   REQUIRE_THROWS_WITH(partOne.SetUserActor(9, 0xff000000),
-                      Contains("Form with id ff000000 is not Actor"));
+                      Contains("Form with id 0xff000000 is not Actor"));
 }
 
 TEST_CASE("createActor message contains Appearance", "[PartOne]")
