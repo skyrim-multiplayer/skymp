@@ -15,7 +15,6 @@
 #include "TextsCollection.h"
 #include "TickHandler.h"
 
-
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
