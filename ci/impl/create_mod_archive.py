@@ -13,7 +13,7 @@ def filter_skyrim_platform(path):
     
 def pack_skyrim_platform():
     dist_client_path = os.path.join(find_skymp_root(), "build/dist/client/data")
-    zip_files_in_dir(dist_client_path, "SkyrimPlatform.zip", filter_skyrim_platform)
+    zip_files_in_dir(dist_client_path, "SkyrimPlatformAE.zip", filter_skyrim_platform)
 
 def main(argv):
     mod_name = get_mod_name(argv)
