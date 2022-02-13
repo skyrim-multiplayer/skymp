@@ -16,10 +16,14 @@ macro(set_from_environment VARIABLE)
 endmacro()
 
 set_from_environment(VCPKG_ROOT)
+# for github actions
+set_from_environment(VCPKG_INSTALLATION_ROOT)
 
 # Use installed VCPKG if exists
 if(USE_SYSTEM_VCPKG AND DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
   set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+elseif(USE_SYSTEM_VCPKG AND DEFINED VCPKG_INSTALLATION_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+  set(CMAKE_TOOLCHAIN_FILE "${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 else()
   set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
 endif()
