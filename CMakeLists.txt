@@ -57,10 +57,12 @@ enable_testing()
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(ONLY_SP "Build only SkyrimPlatform instead of performing full SkyMP build" OFF)
 option(SWEETPIE "Affects default client and server configs" ON)
+option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
 message(STATUS ONLY_SP=${ONLY_SP})
 message(STATUS SWEETPIE=${SWEETPIE})
+message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
 
 # P.S. SkyrimPlatform crashes with that JS_ENGINE_TRACING_ENABLED on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 
@@ -116,4 +118,26 @@ if(NOT ONLY_SP)
   add_subdirectory(skymp5-scripts)
   add_subdirectory(skymp5-server)
   add_subdirectory(unit)
+endif()
+
+if(PREPARE_NEXUS_ARCHIVES)
+  add_custom_target(
+    prepare_nexus_archives ALL
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/prepare_nexus_archives.cmake
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  )
+
+  add_dependencies(prepare_nexus_archives skyrim-platform)
+  set(TARGETS_ADDITIONAL 
+    skymp5-client 
+    skymp5-front 
+    skymp5-functions-lib 
+    skymp5-scripts 
+    skymp5-server
+  )
+  foreach(target ${TARGETS_ADDITIONAL})
+    if(TARGET ${target})
+      add_dependencies(prepare_nexus_archives ${target})
+    endif()
+  endforeach()
 endif()
