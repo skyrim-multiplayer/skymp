@@ -123,11 +123,11 @@ endif()
 if(PREPARE_NEXUS_ARCHIVES)
   get_filename_component(PROJECT_ROOT_ABSOLUTE ${CMAKE_SOURCE_DIR} ABSOLUTE)
 
-	add_custom_target(
-		prepare_nexus_archives
-		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/prepare_nexus_archives.cmake
+  add_custom_target(
+    prepare_nexus_archives
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/prepare_nexus_archives.cmake
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-	)
+  )
 
 	add_dependencies(prepare_nexus_archives skyrim-platform)
   set(TARGETS_ADDITIONAL 
