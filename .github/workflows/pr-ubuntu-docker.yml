@@ -119,7 +119,7 @@ jobs:
 
           - name: SP Types Check
             run: |
-              diff ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts ${{github.workspace}}build/dist/client/Data/Platform/Modules/skyrimPlatform.ts > test.txt
+              diff ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts ${{github.workspace}}/build/dist/client/Data/Platform/Modules/skyrimPlatform.ts > test.txt
               SIZE=$(stat -c '%s' test.txt)
               if [ "$SIZE" != 0 ]
               then
