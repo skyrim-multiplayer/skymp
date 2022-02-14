@@ -116,16 +116,3 @@ jobs:
                 run: |
                     cd /src/build \
                     && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
-
-          - name: SP Types Check
-            run: |
-              diff ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts ${{github.workspace}}build/dist/client/Data/Platform/Modules/skyrimPlatform.ts > test.txt
-              SIZE=$(stat -c '%s' test.txt)
-              if [ "$SIZE" != 0 ]
-              then
-                echo "SP Types in codegen and build dist not equal"
-                rm test.txt
-                exit 1
-              fi
-              echo "SP Types in codegen and build dist equal"
-              rm test.txt
