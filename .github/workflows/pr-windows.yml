@@ -109,4 +109,5 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: SP
-        path: ${{github.workspace}}/build/nexus/sp/*
+        # Data folder is skipped for mod managers
+        path: ${{github.workspace}}/build/nexus/sp/data/*
