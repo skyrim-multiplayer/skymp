@@ -119,14 +119,14 @@ jobs:
 
           - name: SP Types Check
             run: |
-              chmod 777 ${{github.workspace}}
-              diff ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts ${{github.workspace}}/build/dist/client/Data/Platform/Modules/skyrimPlatform.ts > ${{github.workspace}}/test.txt
-              SIZE=$(stat -c '%s' ${{github.workspace}}/test.txt)
+              chmod 777 ${{github.workspace}}/ci
+              diff ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts ${{github.workspace}}/build/dist/client/Data/Platform/Modules/skyrimPlatform.ts > ${{github.workspace}}/ci/test.txt
+              SIZE=$(stat -c '%s' ${{github.workspace}}/ci/test.txt)
               if [ "$SIZE" != 0 ]
               then
                 echo "SP Types in codegen and build dist not equal"
-                rm ${{github.workspace}}/test.txt
+                rm ${{github.workspace}}/ci/test.txt
                 exit 1
               fi
               echo "SP Types in codegen and build dist equal"
-              rm ${{github.workspace}}/test.txt
+              rm ${{github.workspace}}/ci/test.txt
