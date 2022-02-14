@@ -31,6 +31,8 @@ export class DisableCheats {
         "ToggleCollision",
         "ToggleControlsDriven",
         "ToggleGodMode", // Disable unlimited carry weight
+        "tg",
+        "tmm",
         "tfc",
         "ToggleImmortalMode",
         "ToggleMotionDriven",
