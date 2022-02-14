@@ -76,6 +76,7 @@ jobs:
         cmake -B ${{github.workspace}}/build
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
+        -DPREPARE_NEXUS_ARCHIVES=ON
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
@@ -104,12 +105,8 @@ jobs:
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
-        
-    - name: Create SP archive
-      working-directory: ${{github.workspace}}/ci
-      run: python impl/create_mod_archive.py --mod_name SkyrimPlatform
       
     - uses: actions/upload-artifact@v2
       with:
         name: SP
-        path: ${{github.workspace}}/ci/SkyrimPlatform.zip
+        path: ${{github.workspace}}/build/nexus/sp/*
