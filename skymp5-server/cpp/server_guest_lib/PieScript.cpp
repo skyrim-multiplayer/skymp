@@ -136,7 +136,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
       { 0x000330B3, 0x00080697, 0x00080699, 0x000E3C16, 0x0010E039 },
     },
     { StarterKitType::PrisonerKit,
-      { 0x000646AB, 0x0008F19A, 0x0003ca00, 0x000426C8, 0x0010E039 } },
+      { 0x000646AB, 0x0008F19A, 0x0003ca00, 0x000426C8, 0x0010E039, 0x0651F7E4} },
     { StarterKitType::PatronKit,
       { 0x0008895A, 0x000B145B, 0x0001C1FE, 0x00088956, 0x00088958 } },
   };
