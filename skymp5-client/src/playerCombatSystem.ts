@@ -22,6 +22,10 @@ let isPlayerControlDisabled: boolean = true;
 let playerAttackTimeout: number = 0;
 
 export const start = (): void => {
+  sp.once('update', registerHandlersIfNeeded);
+};
+
+const registerHandlersIfNeeded = (): void => {
   if (!hasSweetPie()) {
     return;
   }
