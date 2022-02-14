@@ -446,7 +446,7 @@ JsValue EventsApi::Unsubscribe(const JsFunctionArguments& args)
 
 JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
 {
-  auto targetSystemName = args[1].ToStringView();
+  auto targetSystemName = args[1].ToString();
   auto message = args[2].GetArrayBufferData();
   auto messageLength = args[2].GetArrayBufferLength();
 
