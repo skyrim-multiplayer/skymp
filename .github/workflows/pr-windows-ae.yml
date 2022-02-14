@@ -66,6 +66,13 @@ jobs:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
         target: ${{github.workspace}}/skyrim_data_files/
 
+    - name: NPM config
+      run: |
+        npm config set msvs_version 2022
+        npm install --global node-gyp@latest
+        npm prefix -g | % {npm config set node_gyp "$_\node_modules\node-gyp\bin\node-gyp.js"}
+
+
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type

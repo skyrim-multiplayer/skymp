@@ -9,7 +9,7 @@ class CallbackData
 {
 public:
   CallbackData() = default;
-  CallbackData(const std::string_view& _systemName,
+  CallbackData(const std::string& _systemName,
                const MessageCallback& _callback, void* _state)
     : systemName(_systemName)
     , callback(_callback)
@@ -23,7 +23,7 @@ public:
       std::make_tuple(rhs.systemName, rhs.callback, rhs.state);
   }
 
-  const std::string_view systemName;
+  const std::string systemName;
   const MessageCallback callback;
   void* state = nullptr;
 };
@@ -33,7 +33,6 @@ uint32_t Subscribe(const char* systemName, MessageCallback callback,
 
 void Unsubscribe(uint32_t subscriptionId);
 
-void Call(const std::string_view& systemName, const uint8_t* data,
-          uint32_t length);
+void Call(const std::string& systemName, const uint8_t* data, uint32_t length);
 void Send(const char* systemName, const uint8_t* data, uint32_t length);
 }

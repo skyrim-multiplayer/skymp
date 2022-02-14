@@ -27,7 +27,7 @@ void IPC::Unsubscribe(uint32_t subscriptionId)
     std::next(g_ipcShare.ipcCallbacks.begin(), subscriptionId));
 }
 
-void IPC::Call(const std::string_view& systemName, const uint8_t* data,
+void IPC::Call(const std::string& systemName, const uint8_t* data,
                uint32_t length)
 {
   std::vector<std::shared_ptr<CallbackData>> callbacks;
