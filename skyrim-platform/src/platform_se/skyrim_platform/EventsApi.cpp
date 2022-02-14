@@ -346,8 +346,8 @@ struct IpcShare
 std::atomic<uint32_t> g_chakraThreadId = 0;
 
 namespace {
-void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
-                  bool isOnce = false)
+void CallCallbacks(const char* eventName,
+                   const std::vector<JsValue>& arguments, bool isOnce = false)
 {
   EventsGlobalState::Callbacks callbacks =
     isOnce ? g.callbacksOnce : g.callbacks;
@@ -364,8 +364,8 @@ void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
 void EventsApi::SendEvent(const char* eventName,
                           const std::vector<JsValue>& arguments)
 {
-  CallCalbacks(eventName, arguments);
-  CallCalbacks(eventName, arguments, true);
+  CallCallbacks(eventName, arguments);
+  CallCallbacks(eventName, arguments, true);
 }
 
 void EventsApi::Clear()
