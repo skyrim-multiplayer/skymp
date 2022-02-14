@@ -13,7 +13,7 @@ int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
                                 std::array<double, 4> color = { 0.f, 0.f, 1.f,
                                                                 1.f })
 {
-  TextToDraw text{ xPos, yPos, str, color };
+  TextToDraw text{ xPos, yPos, std::move(str), std::move(color) };
 
   textCount++;
   std::pair<int, TextToDraw> arg = { textCount, text };
@@ -36,7 +36,7 @@ void TextsCollection::SetTextPos(int textId, float xPos, float yPos)
 
 void TextsCollection::SetTextString(int textId, std::wstring str)
 {
-  texts.at(textId).string = str;
+  texts.at(textId).string = std::move(str);
 }
 
 void TextsCollection::SetTextColor(int textId, std::array<double, 4> color)
