@@ -8,7 +8,17 @@ Skyrim Platform does not attach scripts to objects, so these events are availabl
 
 ## Subscribing to events
 
-With `on`, you can subscribe to an event forever.
+With `on` or `once`, you can subscribe to an event. You get an `EventHandle` object as the return. With the `unsubscribe` method you can unsubscribe from an event by passing this object as an argument.
+
+```typescript
+import { on, unsubscribe } from "skyrimPlatform";
+
+let handle = on('disarmedEvent', (event) => {
+  printConsole(`disarmedEvent`);
+  unsubscribe(handle);
+})
+```
+
 
 ```typescript
 import { on } from "skyrimPlatform";
@@ -266,6 +276,28 @@ More info and samples for these will be added later:
 - `modEvent`
 - `positionPlayer`
 - `footstep`
+- `skyrimLoaded`
+- `newGame`
+- `preLoadGame`
+- `postLoadGame`
+- `saveGame`
+- `deleteGame`
+- `buttonEvent`
+- `mouseMove`
+- `thumbstickEvent`
+- `kinectEvent`
+- `deviceConnect`
+- `actorKill`
+- `criticalHit`
+- `disarmedEvent`
+- `dragonSoulsGained`
+- `itemHarvested`
+- `levelIncrease`
+- `locationDiscovery`
+- `shoutAttack`
+- `skillIncrease`
+- `soulsTrapped`
+- `spellsLearned`
 
 [Cloaks]: cookbook.md#getting-rid-of-cloaks
 [Events]: events.md
