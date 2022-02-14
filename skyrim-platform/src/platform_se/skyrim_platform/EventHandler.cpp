@@ -181,26 +181,6 @@ EventResult EventHandler::ProcessEvent(
 }
 
 EventResult EventHandler::ProcessEvent(
-  const RE::TESBookReadEvent* event, RE::BSTEventSource<RE::TESBookReadEvent>*)
-{
-  if (!event) {
-    return EventResult::kContinue;
-  }
-
-  auto e = CopyEventPtr(event);
-
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
-    auto obj = JsValue::Object();
-
-    AddObjProperty(&obj, "book", e->book.get(), "ObjectReference");
-
-    SendEvent("bookRead", obj);
-  });
-
-  return EventResult::kContinue;
-}
-
-EventResult EventHandler::ProcessEvent(
   const RE::TESCellAttachDetachEvent* event,
   RE::BSTEventSource<RE::TESCellAttachDetachEvent>*)
 {
@@ -1481,6 +1461,17 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "killer", e->killer, "Actor");
+    AddObjProperty(&obj, "victim", e->victim, "Actor");
+
+    SendEvent("actorKill", obj);
+  });
+
   return EventResult::kContinue;
 }
 
@@ -1490,6 +1481,16 @@ EventResult EventHandler::ProcessEvent(
   if (!event) {
     return EventResult::kContinue;
   }
+
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "book", e->book, "Book");
+
+    SendEvent("bookRead", obj);
+  });
 
   return EventResult::kContinue;
 }
@@ -1502,6 +1503,18 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "aggressor", e->aggressor, "ObjectReference");
+    AddObjProperty(&obj, "weapon", e->weapon, "Weapon");
+    AddObjProperty(&obj, "isSneakHit", e->sneakHit);
+
+    SendEvent("criticalHit", obj);
+  });
+
   return EventResult::kContinue;
 }
 
@@ -1512,6 +1525,17 @@ EventResult EventHandler::ProcessEvent(
   if (!event) {
     return EventResult::kContinue;
   }
+
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "source", e->source, "Actor");
+    AddObjProperty(&obj, "target", e->target, "Actor");
+
+    SendEvent("disarmedEvent", obj);
+  });
 
   return EventResult::kContinue;
 }
@@ -1524,6 +1548,16 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "souls", e->souls);
+
+    SendEvent("dragonSoulsGained", obj);
+  });
+
   return EventResult::kContinue;
 }
 
@@ -1534,6 +1568,17 @@ EventResult EventHandler::ProcessEvent(
   if (!event) {
     return EventResult::kContinue;
   }
+
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "produceItem", e->produceItem, "Form");
+    AddObjProperty(&obj, "harvester", e->harvester, "Actor");
+
+    SendEvent("itemHarvested", obj);
+  });
 
   return EventResult::kContinue;
 }
@@ -1546,6 +1591,17 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "player", e->player, "Actor");
+    AddObjProperty(&obj, "newLevel", e->newLevel);
+
+    SendEvent("levelIncrease", obj);
+  });
+
   return EventResult::kContinue;
 }
 
@@ -1556,6 +1612,29 @@ EventResult EventHandler::ProcessEvent(
   if (!event) {
     return EventResult::kContinue;
   }
+
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    auto type = to_underlying(e->mapMarkerData->type.get());
+
+    AddObjProperty(&obj, "worldSpaceId", e->worldspaceID);
+    AddObjProperty(&obj, "name", e->mapMarkerData->locationName.fullName);
+    AddObjProperty(&obj, "markerType", type);
+    AddObjProperty(
+      &obj, "isVisible",
+      e->mapMarkerData->flags.any(RE::MapMarkerData::Flag::kVisible));
+    AddObjProperty(
+      &obj, "canTravelTo",
+      e->mapMarkerData->flags.any(RE::MapMarkerData::Flag::kCanTravelTo));
+    AddObjProperty(
+      &obj, "isShowAllHidden",
+      e->mapMarkerData->flags.any(RE::MapMarkerData::Flag::kShowAllHidden));
+
+    SendEvent("locationDiscovery", obj);
+  });
 
   return EventResult::kContinue;
 }
@@ -1568,6 +1647,16 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "shout", e->shout, "Shout");
+
+    SendEvent("shoutAttack", obj);
+  });
+
   return EventResult::kContinue;
 }
 
@@ -1578,6 +1667,17 @@ EventResult EventHandler::ProcessEvent(
   if (!event) {
     return EventResult::kContinue;
   }
+
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "player", e->player, "Actor");
+    AddObjProperty(&obj, "actorValue", to_underlying(e->actorValue));
+
+    SendEvent("skillIncrease", obj);
+  });
 
   return EventResult::kContinue;
 }
@@ -1590,6 +1690,17 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "trapper", e->trapper, "Actor");
+    AddObjProperty(&obj, "target", e->target, "Actor");
+
+    SendEvent("soulsTrapped", obj);
+  });
+
   return EventResult::kContinue;
 }
 
@@ -1600,6 +1711,16 @@ EventResult EventHandler::ProcessEvent(
   if (!event) {
     return EventResult::kContinue;
   }
+
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "spell", e->spell, "Spell");
+
+    SendEvent("spellsLearned", obj);
+  });
 
   return EventResult::kContinue;
 }

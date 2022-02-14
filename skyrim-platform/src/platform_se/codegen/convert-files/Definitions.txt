@@ -312,7 +312,7 @@ export interface LocationChangedEvent {
 }
 
 export interface BookReadEvent {
-  book: ObjectReference
+  book: Book
 }
 
 export interface SellEvent {
@@ -456,6 +456,67 @@ export interface DeviceConnectEvent {
 export interface EventHandle {
   uid: number
   eventName: string
+}
+
+export interface ActorKillEvent {
+  killer: Actor
+  victim: Actor
+}
+
+export interface BooksReadEvent {
+  book: Book
+}
+
+export interface CriticalHitEvent {
+  aggressor: ObjectReference
+  weapon: Weapon
+  isSneakHit: boolean
+}
+
+export interface DisarmedEvent {
+  source: Actor
+  target: Actor
+}
+
+export interface DragonSoulsGainedEvent {
+  souls: number
+}
+
+export interface ItemHarvestedEvent {
+  produceItem: Form
+  harvester: Actor
+}
+
+export interface LevelIncreaseEvent {
+  player: Actor
+  newLevel: number
+}
+
+export interface LocationDiscoveryEvent {
+  worldSpaceId: string
+  name: string
+  markerType: MarkerType
+  isVisible: boolean
+  canTravelTo: boolean
+  isShowAllHidden: boolean
+}
+
+export interface ShoutAttackEvent {
+  shout: Shout
+}
+
+export interface SkillIncreaseEvent {
+  player: Actor
+  actorValue: ActorValue
+}
+
+export interface SoulsTrappedEvent {
+  trapper: Actor
+  target: Actor
+}
+
+export interface SpellsLearnedEvent {
+  spell: Spell
 }
 
 export declare function unsubscribe(handle: EventHandle): void
@@ -724,6 +785,39 @@ export declare function once(eventName: 'kinectEvent', callback: (event: KinectE
 export declare function on(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): EventHandle
 export declare function once(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): EventHandle
 
+export declare function on(eventName: 'actorKill', callback: (event: ActorKillEvent) => void): EventHandle
+export declare function once(eventName: 'actorKill', callback: (event: ActorKillEvent) => void): EventHandle
+
+export declare function on(eventName: 'criticalHit', callback: (event: CriticalHitEvent) => void): EventHandle
+export declare function once(eventName: 'criticalHit', callback: (event: CriticalHitEvent) => void): EventHandle
+
+export declare function on(eventName: 'disarmedEvent', callback: (event: DisarmedEvent) => void): EventHandle
+export declare function once(eventName: 'disarmedEvent', callback: (event: DisarmedEvent) => void): EventHandle
+
+export declare function on(eventName: 'dragonSoulsGained', callback: (event: DragonSoulsGainedEvent) => void): EventHandle
+export declare function once(eventName: 'dragonSoulsGained', callback: (event: DragonSoulsGainedEvent) => void): EventHandle
+
+export declare function on(eventName: 'itemHarvested', callback: (event: ItemHarvestedEvent) => void): EventHandle
+export declare function once(eventName: 'itemHarvested', callback: (event: ItemHarvestedEvent) => void): EventHandle
+
+export declare function on(eventName: 'levelIncrease', callback: (event: LevelIncreaseEvent) => void): EventHandle
+export declare function once(eventName: 'levelIncrease', callback: (event: LevelIncreaseEvent) => void): EventHandle
+
+export declare function on(eventName: 'locationDiscovery', callback: (event: LocationDiscoveryEvent) => void): EventHandle
+export declare function once(eventName: 'locationDiscovery', callback: (event: LocationDiscoveryEvent) => void): EventHandle
+
+export declare function on(eventName: 'shoutAttack', callback: (event: ShoutAttackEvent) => void): EventHandle
+export declare function once(eventName: 'shoutAttack', callback: (event: ShoutAttackEvent) => void): EventHandle
+
+export declare function on(eventName: 'skillIncrease', callback: (event: SkillIncreaseEvent) => void): EventHandle
+export declare function once(eventName: 'skillIncrease', callback: (event: SkillIncreaseEvent) => void): EventHandle
+
+export declare function on(eventName: 'soulsTrapped', callback: (event: SoulsTrappedEvent) => void): EventHandle
+export declare function once(eventName: 'soulsTrapped', callback: (event: SoulsTrappedEvent) => void): EventHandle
+
+export declare function on(eventName: 'spellsLearned', callback: (event: SpellsLearnedEvent) => void): EventHandle
+export declare function once(eventName: 'spellsLearned', callback: (event: SpellsLearnedEvent) => void): EventHandle
+
 declare class ConsoleComand {
   longName: string
   shortName: string
@@ -731,6 +825,235 @@ declare class ConsoleComand {
   execute: (...arguments: unknown[]) => boolean
 }
 export declare function findConsoleCommand(cmdName: string): ConsoleComand
+
+export const enum MarkerType {
+  None = 0,
+  City = 1,
+  Town = 2,
+  Settlement = 3,
+  Cave = 4,
+  Camp = 5,
+  Fort = 6,
+  NordicRuins = 7,
+  DwemerRuin = 8,
+  Shipwreck = 9,
+  Grove = 10,
+  Landmark = 11,
+  DragonLair = 12,
+  Farm = 13,
+  WoodMill = 14,
+  Mine = 15,
+  ImperialCamp = 16,
+  StormcloakCamp = 17,
+  Doomstone = 18,
+  WheatMill = 19,
+  Smelter = 20,
+  Stable = 21,
+  ImperialTower = 22,
+  Clearing = 23,
+  Pass = 24,
+  Alter = 25,
+  Rock = 26,
+  Lighthouse = 27,
+  OrcStronghold = 28,
+  GiantCamp = 29,
+  Shack = 30,
+  NordicTower = 31,
+  NordicDwelling = 32,
+  Docks = 33,
+  Shrine = 34,
+  RiftenCastle = 35,
+  RiftenCapitol = 36,
+  WindhelmCastle = 37,
+  WindhelmCapitol = 38,
+  WhiterunCastle = 39,
+  WhiterunCapitol = 40,
+  SolitudeCastle = 41,
+  SolitudeCapitol = 42,
+  MarkarthCastle = 43,
+  MarkarthCapitol = 44,
+  WinterholdCastle = 45,
+  WinterholdCapitol = 46,
+  MorthalCastle = 47,
+  MorthalCapitol = 48,
+  FalkreathCastle = 49,
+  FalkreathCapitol = 50,
+  DawnstarCastle = 51,
+  DawnstarCapitol = 52,
+  DLC02_TempleOfMiraak = 53,
+  DLC02_RavenRock = 54,
+  DLC02_BeastStone = 55,
+  DLC02_TelMithryn = 56,
+  DLC02_ToSkyrim = 57,
+  DLC02_ToSolstheim = 58,
+}
+
+export const enum ActorValue {
+  Aggresion = 0,
+  Confidence = 1,
+  Energy = 2,
+  Morality = 3,
+  Mood = 4,
+  Assistance = 5,
+  OneHanded = 6,
+  TwoHanded = 7,
+  Archery = 8,
+  Block = 9,
+  Smithing = 10,
+  HeavyArmor = 11,
+  LightArmor = 12,
+  Pickpocket = 13,
+  Lockpicking = 14,
+  Sneak = 15,
+  Alchemy = 16,
+  Speech = 17,
+  Alteration = 18,
+  Conjuration = 19,
+  Destruction = 20,
+  Illusion = 21,
+  Restoration = 22,
+  Enchanting = 23,
+  Health = 24,
+  Magicka = 25,
+  Stamina = 26,
+  HealRate = 27,
+  MagickaRate = 28,
+  StaminaRate = 29,
+  SpeedMult = 30,
+  InventoryWeight = 31,
+  CarryWeight = 32,
+  CriticalChance = 33,
+  MeleeDamage = 34,
+  UnarmedDamage = 35,
+  Mass = 36,
+  VoicePoints = 37,
+  VoiceRate = 38,
+  DamageResist = 39,
+  PoisonResist = 40,
+  ResistFire = 41,
+  ResistShock = 42,
+  ResistFrost = 43,
+  ResistMagic = 44,
+  ResistDisease = 45,
+  Unknown46 = 46,
+  Unknown47 = 47,
+  Unknown48 = 48,
+  Unknown49 = 49,
+  Unknown50 = 50,
+  Unknown51 = 51,
+  Unknown52 = 52,
+  Paralysis = 53,
+  Invisibility = 54,
+  NightEye = 55,
+  DetectLifeRange = 56,
+  WaterBreathing = 57,
+  WaterWalking = 58,
+  Unknown59 = 59,
+  Fame = 60,
+  Infamy = 61,
+  JumpingBonus = 62,
+  WardPower = 63,
+  RightItemCharge = 64,
+  ArmorPerks = 65,
+  ShieldPerks = 66,
+  WardDeflection = 67,
+  Variable01 = 68,
+  Variable02 = 69,
+  Variable03 = 70,
+  Variable04 = 71,
+  Variable05 = 72,
+  Variable06 = 73,
+  Variable07 = 74,
+  Variable08 = 75,
+  Variable09 = 76,
+  Variable10 = 77,
+  BowSpeedBonus = 78,
+  FavorActive = 79,
+  FavorsPerDay = 80,
+  FavorsPerDayTimer = 81,
+  LeftItemCharge = 82,
+  AbsorbChance = 83,
+  Blindness = 84,
+  WeaponSpeedMult = 85,
+  ShoutRecoveryMult = 86,
+  BowStaggerBonus = 87,
+  Telekinesis = 88,
+  FavorPointsBonus = 89,
+  LastBribedIntimidated = 90,
+  LastFlattered = 91,
+  MovementNoiseMult = 92,
+  BypassVendorStolenCheck = 93,
+  BypassVendorKeywordCheck = 94,
+  WaitingForPlayer = 95,
+  OneHandedModifier = 96,
+  TwoHandedModifier = 97,
+  MarksmanModifier = 98,
+  BlockModifier = 99,
+  SmithingModifier = 100,
+  HeavyArmorModifier = 101,
+  LightArmorModifier = 102,
+  PickpocketModifier = 103,
+  LockpickingModifier = 104,
+  SneakingModifier = 105,
+  AlchemyModifier = 106,
+  SpeechcraftModifier = 107,
+  AlterationModifier = 108,
+  ConjurationModifier = 109,
+  DestructionModifier = 110,
+  IllusionModifier = 111,
+  RestorationModifier = 112,
+  EnchantingModifier = 113,
+  OneHandedSkillAdvance = 114,
+  TwoHandedSkillAdvance = 115,
+  MarksmanSkillAdvance = 116,
+  BlockSkillAdvance = 117,
+  SmithingSkillAdvance = 118,
+  HeavyArmorSkillAdvance = 119,
+  LightArmorSkillAdvance = 120,
+  PickpocketSkillAdvance = 121,
+  LockpickingSkillAdvance = 122,
+  SneakingSkillAdvance = 123,
+  AlchemySkillAdvance = 124,
+  SpeechcraftSkillAdvance = 125,
+  AlterationSkillAdvance = 126,
+  ConjurationSkillAdvance = 127,
+  DestructionSkillAdvance = 128,
+  IllusionSkillAdvance = 129,
+  RestorationSkillAdvance = 130,
+  EnchantingSkillAdvance = 131,
+  LeftWeaponSpeedMultiply = 132,
+  DragonSouls = 133,
+  CombatHealthRegenMultiply = 134,
+  OneHandedPowerModifier = 135,
+  TwoHandedPowerModifier = 136,
+  MarksmanPowerModifier = 137,
+  BlockPowerModifier = 138,
+  SmithingPowerModifier = 139,
+  HeavyArmorPowerModifier = 140,
+  LightArmorPowerModifier = 141,
+  PickpocketPowerModifier = 142,
+  LockpickingPowerModifier = 143,
+  SneakingPowerModifier = 144,
+  AlchemyPowerModifier = 145,
+  SpeechcraftPowerModifier = 146,
+  AlterationPowerModifier = 147,
+  ConjurationPowerModifier = 148,
+  DestructionPowerModifier = 149,
+  IllusionPowerModifier = 150,
+  RestorationPowerModifier = 151,
+  EnchantingPowerModifier = 152,
+  DragonRend = 153,
+  AttackDamageMult = 154,
+  HealRateMult = 155,
+  MagickaRateMult = 156,
+  StaminaRateMult = 157,
+  WerewolfPerks = 158,
+  VampirePerks = 159,
+  GrabActorOffset = 160,
+  Grabbed = 161,
+  Unknown162 = 162,
+  ReflectDamage = 163,
+}
 
 export const enum SlotType {
   Left = 1,

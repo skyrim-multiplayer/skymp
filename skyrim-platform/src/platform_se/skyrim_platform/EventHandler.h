@@ -29,7 +29,6 @@ class EventHandler final
   : public RE::BSTEventSink<RE::TESActivateEvent>
   , public RE::BSTEventSink<RE::TESActiveEffectApplyRemoveEvent>
   , public RE::BSTEventSink<RE::TESActorLocationChangeEvent>
-  , public RE::BSTEventSink<RE::TESBookReadEvent>
   , public RE::BSTEventSink<RE::TESCellAttachDetachEvent>
   , public RE::BSTEventSink<RE::TESCellFullyLoadedEvent>
   , public RE::BSTEventSink<RE::TESCombatEvent>
@@ -211,9 +210,6 @@ public:
   EventResult ProcessEvent(
     const RE::TESActorLocationChangeEvent* event,
     RE::BSTEventSource<RE::TESActorLocationChangeEvent>*) override;
-
-  EventResult ProcessEvent(const RE::TESBookReadEvent* event,
-                           RE::BSTEventSource<RE::TESBookReadEvent>*) override;
 
   EventResult ProcessEvent(
     const RE::TESCellAttachDetachEvent* event,
@@ -461,7 +457,6 @@ private:
       std::vector({ "effectStart", "effectFinish" }));
     AppendSink<RE::TESActorLocationChangeEvent>(
       std::vector({ "locationChanged" }));
-    AppendSink<RE::TESBookReadEvent>(std::vector({ "bookRead" }));
     AppendSink<RE::TESCellAttachDetachEvent>(
       std::vector({ "cellAttach", "cellDetach" }));
     AppendSink<RE::TESCellFullyLoadedEvent>(
@@ -647,7 +642,7 @@ private:
     // story events
     // TODO: implement these
     AppendSink<RE::ActorKill>(std::vector({ "actorKill" }));
-    AppendSink<RE::BooksRead>(std::vector({ "booksRead" }));
+    AppendSink<RE::BooksRead>(std::vector({ "bookRead" }));
     AppendSink<RE::CriticalHit>(std::vector({ "criticalHit" }));
     AppendSink<RE::DisarmedEvent>(std::vector({ "disarmedEvent" }));
     AppendSink<RE::DragonSoulsGained>(std::vector({ "dragonSoulsGained" }));
