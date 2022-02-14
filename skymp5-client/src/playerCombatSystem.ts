@@ -1,4 +1,5 @@
 import * as sp from "skyrimPlatform";
+import { hasSweetPie } from "./utils";
 
 const weaponTimings = new Map<sp.WeaponType, [number, number]>([
   [sp.WeaponType.Fist,       [200, 210]],
@@ -21,6 +22,10 @@ let isPlayerControlDisabled: boolean = true;
 let playerAttackTimeout: number = 0;
 
 export const start = (): void => {
+  if (!hasSweetPie()) {
+    return;
+  }
+
   for (const pattern of ['attackStart*', 'AttackStart*']) {
     sp.hooks.sendAnimationEvent.add({
       enter: (() => { }),
