@@ -22,7 +22,6 @@ export class DisableCheats {
         ctx.sp.disableCtrlPrtScnHotkey();
       }
 
-      // This code fails to disable some commands
       const commandsToDisable: string[] = [
         "modAV",
         "forceAV",
