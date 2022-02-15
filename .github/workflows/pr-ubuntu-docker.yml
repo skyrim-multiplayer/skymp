@@ -21,7 +21,8 @@ jobs:
           - name: Store SP types from commit
             run: |
               commit=$(< ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts)
-              echo "commit=$commit" > ./temp.txt
+              chmod 777 ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files
+              echo "$commit" > ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/temp.txt
 
           # Download Skyrim SE data files
           - uses: suisei-cn/actions-download-file@v1
@@ -112,7 +113,7 @@ jobs:
 
           - name: SP Types Check
             run: |
-              commit=$(< ./temp.txt)
+              commit=$(< ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/temp.txt)
               build=$(< ${{github.workspace}}/build/dist/client/Data/Platform/Modules/skyrimPlatform.ts)
               difference=$(diff -u <(echo "$commit") <(echo "$build"))
               size=$(echo -n $difference | wc -m)
