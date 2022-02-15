@@ -5,7 +5,7 @@
 #include "SkyrimPlatform.h"
 
 namespace {
-inline explicit void SendEvent(const char* eventName)
+inline void SendEvent(const char* eventName)
 {
   EventsApi::SendEvent(eventName, { JsValue::Undefined() });
 }
