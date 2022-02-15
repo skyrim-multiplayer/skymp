@@ -48,7 +48,7 @@ float BaseActorValues::GetValue(espm::ActorValue av)
       return staminaRateMult;
     default:
       throw std::runtime_error(
-        fmt::format("Unsupported actor value type {:}", av));
+        fmt::format("Unsupported actor value type {:}", (int32_t)av));
   }
 }
 
