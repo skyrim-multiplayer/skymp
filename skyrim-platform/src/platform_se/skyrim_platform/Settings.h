@@ -29,5 +29,5 @@ private:
   mINI::INIFile file;
 };
 
-File* GetPlatformSettings();
+std::unique_ptr<Settings::File> GetPlatformSettings();
 }
