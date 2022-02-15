@@ -6,7 +6,7 @@ Then you can unsubscribe from an event using the added `unsubscribe` method by p
 ```typescript
 import { on, unsubscribe } from "skyrimPlatform";
 
-let handle = on('disarmedEvent', (event) => {
+const handle = on('disarmedEvent', (event) => {
   printConsole(`disarmedEvent`);
   unsubscribe(handle);
 })

@@ -823,13 +823,13 @@ export declare function once(eventName: 'soulsTrapped', callback: (event: SoulsT
 export declare function on(eventName: 'spellsLearned', callback: (event: SpellsLearnedEvent) => void): EventHandle
 export declare function once(eventName: 'spellsLearned', callback: (event: SpellsLearnedEvent) => void): EventHandle
 
-declare class ConsoleComand {
+declare class ConsoleCommand {
   longName: string
   shortName: string
   numArgs: number
   execute: (...arguments: unknown[]) => boolean
 }
-export declare function findConsoleCommand(cmdName: string): ConsoleComand | null
+export declare function findConsoleCommand(cmdName: string): ConsoleCommand | null
 
 export const enum MarkerType {
   None = 0,
