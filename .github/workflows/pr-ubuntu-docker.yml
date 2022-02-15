@@ -18,19 +18,6 @@ jobs:
             with:
                 submodules: recursive
 
-          - name: SP Types Check
-            run: |
-              difference=$(diff -u ${{github.workspace}}/{skyrim-platform/src/platform_se/codegen/convert-files,build/dist/client/Data/Platform/Modules}/skyrimPlatform.ts)
-              size=$(echo -n $difference | wc -m)
-              echo "Size $size"
-              if [ $size != 0 ] ; then
-                echo "SP Types in codegen and build dist not equal"
-                echo "Difference:"
-                echo $difference
-                exit 1
-              fi
-              echo "SP Types in codegen and build dist equal"
-
           # Download Skyrim SE data files
           - uses: suisei-cn/actions-download-file@v1
             name: Download Skyrim.esm
@@ -117,6 +104,19 @@ jobs:
             with:
               name: dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
+
+          - name: SP Types Check
+            run: |
+              difference=$(diff -u ${{github.workspace}}/{skyrim-platform/src/platform_se/codegen/convert-files,build/dist/client/Data/Platform/Modules}/skyrimPlatform.ts)
+              size=$(echo -n $difference | wc -m)
+              echo "Size $size"
+              if [ $size != 0 ] ; then
+                echo "SP Types in codegen and build dist not equal"
+                echo "Difference:"
+                echo $difference
+                exit 1
+              fi
+              echo "SP Types in codegen and build dist equal"
 
           - name: Test
             uses: addnab/docker-run-action@v3
