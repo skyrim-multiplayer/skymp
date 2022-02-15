@@ -72,11 +72,12 @@ void InitLog()
 
   auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
 
-  const auto& settings = Settings::GetPlatformSettings();
-  auto logLevel = std::stoi(settings.data.get("Debug").get("LogLevel"));
+  auto settings = Settings::GetPlatformSettings();
+  auto logLevel =
+    (spdlog::level::level_enum)std::stoi(settings->data["Debug"]["LogLevel"]);
 
-  log->set_level((spdlog::level::level_enum)logLevel);
-  log->flush_on((spdlog::level::level_enum)logLevel);
+  log->set_level(logLevel);
+  log->flush_on(logLevel);
 
   spdlog::set_default_logger(std::move(log));
   spdlog::set_pattern("[%H:%M:%S:%e] %v"s);
