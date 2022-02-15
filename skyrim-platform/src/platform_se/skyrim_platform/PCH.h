@@ -39,6 +39,8 @@
 //#define NOGDICAPMASKS    // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
 //#define NONLS            // All NLS defines and routines
 
+#define MINI_CASE_SENSITIVE
+
 #include <RE/Skyrim.h>
 #include <REL/Relocation.h>
 #include <SKSE/SKSE.h>

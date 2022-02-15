@@ -5,7 +5,7 @@
 #include "SkyrimPlatform.h"
 
 namespace {
-inline void SendEvent(const char* eventName)
+inline explicit void SendEvent(const char* eventName)
 {
   EventsApi::SendEvent(eventName, { JsValue::Undefined() });
 }
@@ -18,30 +18,26 @@ inline void SendEvent(const char* eventName, const JsValue& obj)
 
 void EventHandler::SendSimpleEventOnUpdate(const char* eventName)
 {
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([eventName] {
-    EventsApi::SendEvent(eventName, { JsValue::Undefined() });
-  });
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [eventName] { SendEvent(eventName); });
 }
 
 void EventHandler::SendSimpleEventOnTick(const char* eventName)
 {
-  SkyrimPlatform::GetSingleton()->AddTickTask([eventName] {
-    EventsApi::SendEvent(eventName, { JsValue::Undefined() });
-  });
+  SkyrimPlatform::GetSingleton()->AddTickTask(
+    [eventName] { SendEvent(eventName); });
 }
 
 void EventHandler::SendEventOnUpdate(const char* eventName, const JsValue& obj)
 {
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([eventName, obj] {
-    EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
-  });
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [eventName, obj] { SendEvent(eventName, obj); });
 }
 
 void EventHandler::SendEventOnTick(const char* eventName, const JsValue& obj)
 {
-  SkyrimPlatform::GetSingleton()->AddTickTask([eventName, obj] {
-    EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
-  });
+  SkyrimPlatform::GetSingleton()->AddTickTask(
+    [eventName, obj] { SendEvent(eventName, obj); });
 }
 
 void EventHandler::SendEventConsoleMsg(const char* msg)

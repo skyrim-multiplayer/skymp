@@ -1,6 +1,12 @@
 #include "Hooks.h"
 #include "EventHandler.h"
 
+/**
+ * @brief This hooks into the game main cycle
+ * which behaves much like "our" tick cycle
+ * but with a slight artificial delay between ticks.
+ * Is mostly used for testing atm.
+ */
 struct OnUpdate
 {
   static void thunk() { func(); };

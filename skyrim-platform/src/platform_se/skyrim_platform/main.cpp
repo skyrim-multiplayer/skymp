@@ -9,6 +9,7 @@
 #include "IPC.h"
 #include "InputConverter.h"
 #include "PapyrusTESModPlatform.h"
+#include "Settings.h"
 #include "SkyrimPlatform.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
@@ -71,8 +72,11 @@ void InitLog()
 
   auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
 
-  log->set_level(spdlog::level::debug);
-  log->flush_on(spdlog::level::debug);
+  const auto& settings = Settings::GetPlatformSettings();
+  auto logLevel = std::stoi(settings.data.get("Debug").get("LogLevel"));
+
+  log->set_level((spdlog::level::level_enum)logLevel);
+  log->flush_on((spdlog::level::level_enum)logLevel);
 
   spdlog::set_default_logger(std::move(log));
   spdlog::set_pattern("[%H:%M:%S:%e] %v"s);

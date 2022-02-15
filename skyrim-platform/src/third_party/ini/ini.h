@@ -98,11 +98,13 @@
 namespace mINI {
 namespace INIStringUtil {
 const char* const whitespaceDelimiters = " \t\n\r\f\v";
+
 inline void trim(std::string& str)
 {
   str.erase(str.find_last_not_of(whitespaceDelimiters) + 1);
   str.erase(0, str.find_first_not_of(whitespaceDelimiters));
 }
+
 #ifndef MINI_CASE_SENSITIVE
 inline void toLower(std::string& str)
 {
@@ -111,6 +113,7 @@ inline void toLower(std::string& str)
   });
 }
 #endif
+
 inline void replace(std::string& str, std::string const& a,
                     std::string const& b)
 {
@@ -122,12 +125,13 @@ inline void replace(std::string& str, std::string const& a,
     }
   }
 }
+
 #ifdef _WIN32
 const char* const endl = "\r\n";
 #else
 const char* const endl = "\n";
 #endif
-}
+} // mINI
 
 template <typename T>
 class INIMap
@@ -176,6 +180,7 @@ public:
     std::size_t index = (hasIt) ? it->second : setEmpty(key);
     return data[index].second;
   }
+
   T get(std::string key) const
   {
     INIStringUtil::trim(key);
@@ -188,6 +193,7 @@ public:
     }
     return T(data[it->second].second);
   }
+
   bool has(std::string key) const
   {
     INIStringUtil::trim(key);
@@ -196,6 +202,7 @@ public:
 #endif
     return (dataIndexMap.count(key) == 1);
   }
+
   void set(std::string key, T obj)
   {
     INIStringUtil::trim(key);
@@ -210,6 +217,7 @@ public:
       data.emplace_back(key, obj);
     }
   }
+
   void set(T_MultiArgs const& multiArgs)
   {
     for (auto const& it : multiArgs) {
@@ -218,6 +226,7 @@ public:
       set(key, obj);
     }
   }
+
   bool remove(std::string key)
   {
     INIStringUtil::trim(key);
@@ -239,11 +248,13 @@ public:
     }
     return false;
   }
+
   void clear()
   {
     data.clear();
     dataIndexMap.clear();
   }
+
   std::size_t size() const { return data.size(); }
   const_iterator begin() const { return data.begin(); }
   const_iterator end() const { return data.end(); }
