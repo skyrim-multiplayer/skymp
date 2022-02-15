@@ -829,7 +829,7 @@ declare class ConsoleComand {
   numArgs: number
   execute: (...arguments: unknown[]) => boolean
 }
-export declare function findConsoleCommand(cmdName: string): ConsoleComand
+export declare function findConsoleCommand(cmdName: string): ConsoleComand | null
 
 export const enum MarkerType {
   None = 0,

@@ -318,9 +318,8 @@ void EventsApi::SendEvent(const char* eventName,
     try {
       obj.second->callback.Call(arguments);
     } catch (const std::exception& e) {
-      logger::critical(
-        "Error while calling a callback for event {}. Error: {}", eventName,
-        e.what());
+      logger::critical("Error while calling a callback for event {}. {}",
+                       eventName, e.what());
     }
 
     if (obj.second->runOnce) {

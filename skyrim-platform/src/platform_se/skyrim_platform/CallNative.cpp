@@ -458,13 +458,13 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     return ObjectPtr();
   }
 
-  RE::BSScript::IFunction::CallResult callResut =
+  RE::BSScript::IFunction::CallResult callResult =
     RE::BSScript::IFunction::CallResult::kFailedAbort;
   SkyrimPlatform::GetSingleton()->PushToWorkerAndWait(
-    f, stackIterator->second, vmImpl->GetErrorLogger(), vmImpl, &callResut);
-  if (callResut != RE::BSScript::IFunction::CallResult::kCompleted) {
+    f, stackIterator->second, vmImpl->GetErrorLogger(), vmImpl, &callResult);
+  if (callResult != RE::BSScript::IFunction::CallResult::kCompleted) {
     throw std::runtime_error("Bad call result " +
-                             std::to_string((int)callResut));
+                             std::to_string((int)callResult));
   }
 
   auto& r = stackIterator->second->returnValue;
