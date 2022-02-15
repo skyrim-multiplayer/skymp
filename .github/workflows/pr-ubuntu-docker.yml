@@ -117,6 +117,9 @@ jobs:
                     cd /src/build \
                     && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
 
+          - name: Checkout
+            uses: actions/checkout@v2
+
           - name: SP Types Check
             run: |
               file1="${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts"
@@ -125,7 +128,7 @@ jobs:
               echo "File2: $file2"
               size=$(echo -n $(diff -u $file $file2) | wc -m)
               echo "Size $size"
-              if $size != 0; then
+              if [ $size != 0 ] ; then
                 echo "SP Types in codegen and build dist not equal"
                 exit 1
               fi
