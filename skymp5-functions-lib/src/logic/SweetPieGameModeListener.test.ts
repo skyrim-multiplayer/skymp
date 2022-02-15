@@ -292,9 +292,9 @@ describe("SweetPieGameModeListener: Round clock", () => {
     expect(controller.sendChatMessage).toBeCalledWith(1, msg);
     expect(controller.sendChatMessage).toBeCalledWith(2, msg);
 
-    // Round win reward is 1 apple pie
-    const applePie = 0x00064b43;
-    expect(controller.addItem).toBeCalledWith(1, applePie, 1);
+    // Round win reward is 10 septims
+    const gold001 = 0x0000000f;
+    expect(controller.addItem).toBeCalledWith(1, gold001, 10);
   });
 
   test("Round must finish with two winner if both players are tops", () => {

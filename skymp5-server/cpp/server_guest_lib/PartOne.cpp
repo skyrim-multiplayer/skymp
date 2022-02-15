@@ -194,10 +194,8 @@ void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open)
 
   auto userId = serverState.UserByActor(&actor);
   if (userId == Networking::InvalidUserId) {
-    std::stringstream ss;
-    ss << "Actor with id " << std::hex << actorFormId
-       << " is not attached to any of users";
-    throw std::runtime_error(ss.str());
+    throw std::runtime_error(fmt::format(
+      "Actor with id {:#x} is not attached to any of users", actorFormId));
   }
 
   Networking::SendFormatted(pImpl->sendTarget, userId,
