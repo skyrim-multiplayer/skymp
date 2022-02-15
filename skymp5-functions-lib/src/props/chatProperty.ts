@@ -9,7 +9,7 @@ type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean };
 
 declare const mp: Mp;
 declare const ctx: Ctx;
-declare const messageClientSide: string;
+declare const messageString: string;
 declare const refreshWidgets: string;
 
 export type ChatInput = { actorId: number; inputText: string };
@@ -47,12 +47,12 @@ export class ChatProperty {
       () => {
         let src = '';
         src += `window.chatMessages = window.chatMessages || [];`;
-        src += `window.chatMessages.push(${messageClientSide});`;
+        src += `window.chatMessages.push(${messageString});`;
         src += refreshWidgets;
         src += `if (window.scrollToLastMessage) { window.scrollToLastMessage(); }`;
         ctx.sp.browser.executeJavaScript(src);
       },
-      { messageClientSide: JSON.stringify(message).replace(/\\/g, '\\\\').replace(/'/g, '\\\''), refreshWidgets: refreshWidgetsJs }
+      { messageString: JSON.stringify(message), refreshWidgets: refreshWidgetsJs }
     );
   }
 

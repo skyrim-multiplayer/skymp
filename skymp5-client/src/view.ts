@@ -322,8 +322,9 @@ export class FormView implements View<FormModel> {
             this.spawnMoment = Date.now();
           }
         );
-        if (model.appearance && model.appearance.name)
-          refr.setDisplayName("", true);
+        if (model.appearance && model.appearance.name) {
+          refr.setDisplayName("" + model.appearance.name, true);
+        }
         Actor.from(refr)?.setActorValue("attackDamageMult", 0);
       }
       this.refrId = (refr as ObjectReference).getFormID();
