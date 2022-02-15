@@ -5,7 +5,7 @@ Skyrim Platform now supports rendering texts and has methods for manipulating th
 `Data/Platform/Fonts/Tavern.spritefont` is used as a font.
 `*.spritefont` is a custom format that DirectXTK library uses.
 You can convert a `*.ttf` to this format using MakeSpriteFont utility that is
-provided by DirectXTK. See [texts.md#compiling-font](Compiling Font) for details.
+provided by DirectXTK. See [Compiling Font](#compiling-font) for details.
 
 ## Example
 ```typescript
