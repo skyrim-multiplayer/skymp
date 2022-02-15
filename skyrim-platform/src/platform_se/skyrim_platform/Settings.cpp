@@ -3,7 +3,7 @@
 constexpr auto platformSettingsFilePath =
   R"(.\Data\SKSE\Plugins\SkyrimPlatform.ini)";
 
-Settings::File Settings::GetPlatformSettings()
+Settings::File* Settings::GetPlatformSettings()
 {
   Settings::File file(platformSettingsFilePath);
 
@@ -13,5 +13,5 @@ Settings::File Settings::GetPlatformSettings()
     file.Generate();
   }
 
-  return file;
+  return &file;
 }
