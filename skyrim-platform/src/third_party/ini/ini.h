@@ -406,12 +406,28 @@ private:
 
 public:
   bool prettyPrint = false;
+  std::unordered_map<std::string, std::string> comment;
 
-  INIGenerator(std::string const& filename)
+  INIGenerator(
+    std::string const& filename,
+    std::unordered_map<std::string, std::string>* comments = nullptr)
   {
     fileWriteStream.open(filename, std::ios::out | std::ios::binary);
+    if (comments) {
+      comment = *comments;
+    }
   }
   ~INIGenerator() {}
+
+  bool CommentKeyExist(std::string key)
+  {
+    if (comment.size() > 0) {
+      auto it = comment.find(key);
+      if (it != comment.end())
+        return true;
+    }
+    return false;
+  }
 
   bool operator<<(INIStructure const& data)
   {
@@ -434,6 +450,9 @@ public:
           INIStringUtil::replace(key, "=", "\\=");
           auto value = it2->second;
           INIStringUtil::trim(value);
+          if (CommentKeyExist(key)) {
+            fileWriteStream << "; " << comment[key] << INIStringUtil::endl;
+          }
           fileWriteStream << key << ((prettyPrint) ? " = " : "=") << value;
           if (++it2 == collection.end()) {
             break;
@@ -652,12 +671,15 @@ public:
     INIReader reader(filename);
     return reader >> data;
   }
-  bool generate(INIStructure const& data, bool pretty = false) const
+  bool generate(
+    INIStructure const& data,
+    std::unordered_map<std::string, std::string>* comments = nullptr,
+    bool pretty = false) const
   {
     if (filename.empty()) {
       return false;
     }
-    INIGenerator generator(filename);
+    INIGenerator generator(filename, comments);
     generator.prettyPrint = pretty;
     return generator << data;
   }

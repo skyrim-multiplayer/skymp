@@ -10,6 +10,7 @@ std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
   // load some default data
   if (!file->IsLoaded()) {
     file->data["Debug"].set({ { "LogLevel", "2" } });
+    file->Comment("LogLevel", "test comment");
     file->Generate();
   }
 
