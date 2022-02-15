@@ -123,18 +123,21 @@ void MpActor::OnEquip(uint32_t baseId)
     s = { espmFiles.begin(), espmFiles.end() };
     if (s.count("SweetPie.esp")) {
       if (baseId == kStareterKitPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.AddStarterKitItems(*this);
+        pieScript.AddStarterKitItems(*this, *worldState);
       }
 
       if (baseId == kPatronStarterKitPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.AddPatronStarterKitItems(*this);
+        pieScript.AddPatronStarterKitItems(*this, *worldState);
       }
 
       if (isPie) {
+        WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
-        pieScript.Play(*this);
+        pieScript.Play(*this, *worldState);
       }
     }
   }
@@ -463,8 +466,7 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
     default:
       return;
   }
-  SetPercentages(hp, mp, sp);
-  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
+  NetSetPercentages(hp, mp, sp, std::chrono::steady_clock::now());
 }
 
 void MpActor::BeforeDestroy()

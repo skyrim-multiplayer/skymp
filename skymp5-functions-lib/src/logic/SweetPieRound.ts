@@ -9,8 +9,8 @@ export type SweetPieRound = {
   secondsPassed?: number;
 }
 
-export const getAvailableRound = (rounds: SweetPieRound[], player: number): SweetPieRound | undefined => {
-  return rounds.find((x) => x.state !== 'running');
+export const getAvailableRound = (rounds: SweetPieRound[], player?: number): SweetPieRound | undefined => {
+  return rounds.find((x) => x.map?.enabled && x.state !== 'running');
 };
 
 export const getPlayerCurrentRound = (rounds: SweetPieRound[], player: number): SweetPieRound | undefined => {

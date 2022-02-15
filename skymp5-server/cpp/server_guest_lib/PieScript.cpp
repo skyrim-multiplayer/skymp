@@ -2,8 +2,11 @@
 
 #include "FormDesc.h"
 #include "MpActor.h"
+#include "SpSnippet.h"
+#include "WorldState.h"
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 std::mt19937 g_rng{ std::random_device{}() };
@@ -31,7 +34,6 @@ void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
     lootTable[type][tier].push_back(id);
   }
 }
-
 PieScript::PieScript(const std::vector<std::string>& espmFiles)
 {
   lootTable = {
@@ -55,9 +57,8 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
             0x000139AA, 0x000139A3, 0x000139A9, 0x0007A91A, 0x0003AEB9,
             0x000139A7, 0x000139A4, 0x00f71dd } },
         { Tier::Tier4,
-          { 0x000139AF, 0x000139B0, 0x0001C1FE, 0x000CDEC9, 0x000139B2,
-            0x000139B2, 0x000139AE, 0x000139B1, 0x000139AC, 0x000F8313,
-            0x0007A917 } },
+          { 0x000139AF, 0x000139B0, 0x000CDEC9, 0x000139B2, 0x000139B2,
+            0x000139AE, 0x000139B1, 0x000139AC, 0x000F8313, 0x0007A917 } },
         { Tier::Tier5,
           { 0x000139B6, 0x000139B3, 0x000139BA, 0x000240D2, 0x000233E3,
             0x000139B9, 0x000139B4, 0x0009CCDC, 0x0004A38F, 0x0002ACD2,
@@ -83,7 +84,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
           { 0x00013954, 0x000F6F24, 0x0001395E, 0x00013959, 0x0001391D,
             0x0001394F, 0x0004C3CB, 0x000d2842, 0x000D3AC5, 0x000B83CF,
             0x00013958, 0x00013955, 0x00013950, 0x000CEE80, 0x000CEE82,
-            0x000D1921, 0x0010E2CE, 0x000F8715, 0x000F8713, 0x00013946,
+            0x0010E2CE, 0x000F8715, 0x000F8713, 0x00013946, 0x0001392A,
             0x0001394F, 0x00013953, 0x000D3AC4, 0x000D3AC3, 0x000d2844,
             0x000B83CB, 0x0001394D, 0x0001392A, 0x00013957, 0x00013952,
             0x00013952, 0x00013951, 0x0001395B, 0x00013956, 0x0001391A,
@@ -119,7 +120,8 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
   starterKitsMap = {
     {
       StarterKitType::ChefKit,
-      { 0x0001BCA7, 0x000261C1, 0x0001BC82, 0x0001F25B, 0x000D1921 },
+      { 0x0001BCA7, 0x000261C1, 0x0001BC82, 0x0001F25B, 0x000D1921,
+        0x064D2B03 },
     },
     { StarterKitType::LumberjackKit,
       {
@@ -238,20 +240,19 @@ PieScript::AcknowledgeTypeAndTier(int weaponChance, int armorChance,
   Tier tier;
 
   if (chance <= weaponChance && weaponChance != 0) {
-    chance = GenerateRandomNumber(1, 100);
+    chance = GenerateRandomNumber(1, 1000);
     type = LootboxItemType::Weapon;
     tier = AcknowledgeTier(chance);
   } else if (chance <= (weaponChance + armorChance) && armorChance != 0) {
-    chance = GenerateRandomNumber(1, 100);
+    chance = GenerateRandomNumber(1, 1000);
     type = LootboxItemType::Armor;
     tier = AcknowledgeTier(chance);
   } else if (chance <= (weaponChance + armorChance + consumableChance) &&
              consumableChance != 0) {
-    chance = GenerateRandomNumber(1, 100);
+    chance = GenerateRandomNumber(1, 1000);
     type = LootboxItemType::Consumable;
     tier = AcknowledgeTier(chance);
   } else {
-    type = LootboxItemType::Nothing;
   }
 
   std::pair<LootboxItemType, Tier> tierAndType = std::make_pair(type, tier);
@@ -271,52 +272,93 @@ uint32_t PieScript::GetSlotItem(int weaponChance, int armoryChacne,
   return 0;
 }
 
-void PieScript::Play(MpActor& actor)
+void PieScript::Notify(MpActor& actor, const WorldState& worldState,
+                       uint32_t formId, int count, bool silent)
+{
+  std::string type;
+  std::stringstream ss;
+  auto lookupRes = worldState.GetEspm().GetBrowser().LookupById(formId);
+  auto recType = lookupRes.rec->GetType();
+
+  if (recType == "WEAP") {
+    type = "weapon";
+  } else if (recType == "ARMO") {
+    type = "armor";
+  } else if (recType == "INGR") {
+    type = "ingridient";
+  } else if (recType == "LIGH") {
+    type = "light";
+  } else if (recType == "SLGM") {
+    type = "soulgem";
+  } else if (recType == "ALCH") {
+    type = "potion";
+  } else {
+    throw std::runtime_error(fmt::format("Unexpected type {}", type));
+  }
+
+  ss << "[";
+  ss << nlohmann::json({ { "formId", formId }, { "type", type } }).dump();
+  ss << "," << static_cast<int>(count) << ","
+     << (static_cast<bool>(silent) ? "true" : "false");
+  ss << "]";
+  std::string args = ss.str();
+  (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(&actor);
+}
+
+void PieScript::Play(MpActor& actor, const WorldState& worldState)
 {
   uint32_t item1 = GetSlotItem(80, 10, 10, 0);
   uint32_t item2 = GetSlotItem(10, 80, 10, 0);
-  uint32_t item3 = GetSlotItem(25, 25, 40, 10);
+  uint32_t item3 = GetSlotItem(10, 10, 80, 0);
   uint32_t item4 = GetSlotItem(0, 0, 100, 0);
 
   if (item1) {
     actor.AddItem(item1, 1);
+    Notify(actor, worldState, item1, 1, false);
   }
   if (item2) {
     actor.AddItem(item2, 1);
+    Notify(actor, worldState, item2, 1, false);
   }
   if (item3) {
     actor.AddItem(item3, 1);
+    Notify(actor, worldState, item3, 1, false);
   }
   if (item4) {
     actor.AddItem(item4, 1);
+    Notify(actor, worldState, item4, 1, false);
   }
 }
 
-void PieScript::AddKitItems(MpActor& actor, StarterKitType type)
+void PieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
+                            StarterKitType type)
 {
   for (auto item : starterKitsMap[type]) {
     actor.AddItem(item, 1);
+    Notify(actor, worldState, item, 1, false);
   }
 }
 
-void PieScript::AddStarterKitItems(MpActor& actor)
+void PieScript::AddStarterKitItems(MpActor& actor,
+                                   const WorldState& worldState)
 {
   int chance = GenerateRandomNumber(1, 100);
   if (chance <= StarterKitChance::ChefKitChance) {
-    AddKitItems(actor, StarterKitType::ChefKit);
+    AddKitItems(actor, worldState, StarterKitType::ChefKit);
   } else if (chance <= (StarterKitChance::ChefKitChance +
                         StarterKitChance::LumberjackKitChance)) {
-    AddKitItems(actor, StarterKitType::LumberjackKit);
+    AddKitItems(actor, worldState, StarterKitType::LumberjackKit);
   } else if (chance <= (StarterKitChance::ChefKitChance +
                         StarterKitChance::LumberjackKitChance +
                         StarterKitChance::MinerKitChance)) {
-    AddKitItems(actor, StarterKitType::MinerKit);
+    AddKitItems(actor, worldState, StarterKitType::MinerKit);
   } else {
-    AddKitItems(actor, StarterKitType::PrisonerKit);
+    AddKitItems(actor, worldState, StarterKitType::PrisonerKit);
   }
 }
 
-void PieScript::AddPatronStarterKitItems(MpActor& actor)
+void PieScript::AddPatronStarterKitItems(MpActor& actor,
+                                         const WorldState& worldState)
 {
-  AddKitItems(actor, StarterKitType::PatronKit);
+  AddKitItems(actor, worldState, StarterKitType::PatronKit);
 }

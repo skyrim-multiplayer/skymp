@@ -6,4 +6,6 @@ export type SweetPieMap = {
   leaveRoundDoors?: string[];
   playerRestoreActivators?: string[];
   playerRestoreWaitTime?: number;
+  spawnPointNames?: string[];
+  enabled?: boolean;
 }

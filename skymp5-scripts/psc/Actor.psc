@@ -28,3 +28,5 @@ Function SetOutfit(Outfit akOutfit, bool abSleepOutfit = false) native
 Function SetRace(Race akRace = None) native
 
 bool Function IsDead() Native
+int Function GetSitState() native
+Function SetAlpha(float afTargetAlpha, bool abFade = false) native
