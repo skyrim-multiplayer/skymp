@@ -1,4 +1,4 @@
-
+//blah
 /* eslint-disable @typescript-eslint/adjacent-overload-signatures */
 /* eslint-disable @typescript-eslint/no-namespace */
 // Generated automatically. Do not edit.
@@ -1125,7 +1125,7 @@ export declare function getNumCreatedTexts(): number;
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : Form| null; 
+    static from(papyrusObject: PapyrusObject | null) : Form| null;
     getFormID(): number;
     getGoldValue(): number;
     getKeywords(): PapyrusObject[] | null;
@@ -1191,17 +1191,17 @@ export declare class Form extends PapyrusObject{
 
 // Based on Action.pex
 export declare class Action extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Action| null; 
+    static from(papyrusObject: PapyrusObject | null) : Action| null;
 }
 
 // Based on Activator.pex
 export declare class Activator extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Activator| null; 
+    static from(papyrusObject: PapyrusObject | null) : Activator| null;
 }
 
 // Based on ActiveMagicEffect.pex
 export declare class ActiveMagicEffect extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : ActiveMagicEffect| null; 
+    static from(papyrusObject: PapyrusObject | null) : ActiveMagicEffect| null;
     addInventoryEventFilter(akFilter: Form | null): void;
     dispel(): void;
     getBaseObject(): MagicEffect | null;
@@ -1255,7 +1255,7 @@ export declare class ActiveMagicEffect extends PapyrusObject{
 
 // Based on ObjectReference.pex
 export declare class ObjectReference extends Form{
-    static from(papyrusObject: PapyrusObject | null) : ObjectReference| null; 
+    static from(papyrusObject: PapyrusObject | null) : ObjectReference| null;
     activate(akActivator: ObjectReference | null, abDefaultProcessingOnly: boolean): boolean;
     addDependentAnimatedObjectReference(akDependent: ObjectReference | null): boolean;
     addInventoryEventFilter(akFilter: Form | null): void;
@@ -1402,7 +1402,7 @@ export declare class ObjectReference extends Form{
 
 // Based on Actor.pex
 export declare class Actor extends ObjectReference{
-    static from(papyrusObject: PapyrusObject | null) : Actor| null; 
+    static from(papyrusObject: PapyrusObject | null) : Actor| null;
     addPerk(akPerk: Perk | null): void;
     addShout(akShout: Shout | null): boolean;
     addSpell(akSpell: Spell | null, abVerbose: boolean): boolean;
@@ -1614,7 +1614,7 @@ export declare class Actor extends ObjectReference{
 
 // Based on ActorBase.pex
 export declare class ActorBase extends Form{
-    static from(papyrusObject: PapyrusObject | null) : ActorBase| null; 
+    static from(papyrusObject: PapyrusObject | null) : ActorBase| null;
     getClass(): Class | null;
     getCombatStyle(): CombatStyle | null;
     getDeadCount(): number;
@@ -1664,7 +1664,7 @@ export declare class ActorBase extends Form{
 
 // Based on ActorValueInfo.pex
 export declare class ActorValueInfo extends Form{
-    static from(papyrusObject: PapyrusObject | null) : ActorValueInfo| null; 
+    static from(papyrusObject: PapyrusObject | null) : ActorValueInfo| null;
     addSkillExperience(exp: number): void;
     getBaseValue(akActor: Actor | null): number;
     getCurrentValue(akActor: Actor | null): number;
@@ -1691,7 +1691,7 @@ export declare class ActorValueInfo extends Form{
 
 // Based on Alias.pex
 export declare class Alias extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : Alias| null; 
+    static from(papyrusObject: PapyrusObject | null) : Alias| null;
     getID(): number;
     getName(): string;
     getOwningQuest(): Quest | null;
@@ -1738,7 +1738,7 @@ export declare class Alias extends PapyrusObject{
 
 // Based on Ammo.pex
 export declare class Ammo extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Ammo| null; 
+    static from(papyrusObject: PapyrusObject | null) : Ammo| null;
     getDamage(): number;
     getProjectile(): Projectile | null;
     isBolt(): boolean;
@@ -1746,19 +1746,19 @@ export declare class Ammo extends Form{
 
 // Based on MiscObject.pex
 export declare class MiscObject extends Form{
-    static from(papyrusObject: PapyrusObject | null) : MiscObject| null; 
+    static from(papyrusObject: PapyrusObject | null) : MiscObject| null;
 }
 
 // Based on Apparatus.pex
 export declare class Apparatus extends MiscObject{
-    static from(papyrusObject: PapyrusObject | null) : Apparatus| null; 
+    static from(papyrusObject: PapyrusObject | null) : Apparatus| null;
     getQuality(): number;
     setQuality(quality: number): void;
 }
 
 // Based on Armor.pex
 export declare class Armor extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Armor| null; 
+    static from(papyrusObject: PapyrusObject | null) : Armor| null;
     addSlotToMask(slotMask: number): number;
     getArmorRating(): number;
     getEnchantment(): Enchantment | null;
@@ -1784,7 +1784,7 @@ export declare class Armor extends Form{
 
 // Based on ArmorAddon.pex
 export declare class ArmorAddon extends Form{
-    static from(papyrusObject: PapyrusObject | null) : ArmorAddon| null; 
+    static from(papyrusObject: PapyrusObject | null) : ArmorAddon| null;
     addSlotToMask(slotMask: number): number;
     getModelNthTextureSet(n: number, first: boolean, female: boolean): TextureSet | null;
     getModelNumTextureSets(first: boolean, female: boolean): number;
@@ -1800,19 +1800,19 @@ export declare class ArmorAddon extends Form{
 
 // Based on Art.pex
 export declare class Art extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Art| null; 
+    static from(papyrusObject: PapyrusObject | null) : Art| null;
     getModelPath(): string;
     setModelPath(path: string): void;
 }
 
 // Based on AssociationType.pex
 export declare class AssociationType extends Form{
-    static from(papyrusObject: PapyrusObject | null) : AssociationType| null; 
+    static from(papyrusObject: PapyrusObject | null) : AssociationType| null;
 }
 
 // Based on Book.pex
 export declare class Book extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Book| null; 
+    static from(papyrusObject: PapyrusObject | null) : Book| null;
     getSkill(): number;
     getSpell(): Spell | null;
     isRead(): boolean;
@@ -1821,7 +1821,7 @@ export declare class Book extends Form{
 
 // Based on Cell.pex
 export declare class Cell extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Cell| null; 
+    static from(papyrusObject: PapyrusObject | null) : Cell| null;
     getActorOwner(): ActorBase | null;
     getFactionOwner(): Faction | null;
     getNthRef(n: number, formTypeFilter: number): ObjectReference | null;
@@ -1840,19 +1840,19 @@ export declare class Cell extends Form{
 
 // Based on Class.pex
 export declare class Class extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Class| null; 
+    static from(papyrusObject: PapyrusObject | null) : Class| null;
 }
 
 // Based on ColorForm.pex
 export declare class ColorForm extends Form{
-    static from(papyrusObject: PapyrusObject | null) : ColorForm| null; 
+    static from(papyrusObject: PapyrusObject | null) : ColorForm| null;
     getColor(): number;
     setColor(color: number): void;
 }
 
 // Based on CombatStyle.pex
 export declare class CombatStyle extends Form{
-    static from(papyrusObject: PapyrusObject | null) : CombatStyle| null; 
+    static from(papyrusObject: PapyrusObject | null) : CombatStyle| null;
     getAllowDualWielding(): boolean;
     getAvoidThreatChance(): number;
     getCloseRangeDuelingCircleMult(): number;
@@ -1911,7 +1911,7 @@ export declare class CombatStyle extends Form{
 
 // Based on ConstructibleObject.pex
 export declare class ConstructibleObject extends MiscObject{
-    static from(papyrusObject: PapyrusObject | null) : ConstructibleObject| null; 
+    static from(papyrusObject: PapyrusObject | null) : ConstructibleObject| null;
     getNthIngredient(n: number): Form | null;
     getNthIngredientQuantity(n: number): number;
     getNumIngredients(): number;
@@ -1927,12 +1927,12 @@ export declare class ConstructibleObject extends MiscObject{
 
 // Based on Container.pex
 export declare class Container extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Container| null; 
+    static from(papyrusObject: PapyrusObject | null) : Container| null;
 }
 
 // Based on Debug.pex
 export declare class Debug extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : Debug| null; 
+    static from(papyrusObject: PapyrusObject | null) : Debug| null;
     static centerOnCell(param1: string): void;
     static centerOnCellAndWait(param1: string): Promise<number>;
     static closeUserLog(param1: string): void;
@@ -1966,26 +1966,26 @@ export declare class Debug extends PapyrusObject{
 
 // Based on DefaultObjectManager.pex
 export declare class DefaultObjectManager extends Form{
-    static from(papyrusObject: PapyrusObject | null) : DefaultObjectManager| null; 
+    static from(papyrusObject: PapyrusObject | null) : DefaultObjectManager| null;
     getForm(key: string): Form | null;
     setForm(key: string, newForm: Form | null): void;
 }
 
 // Based on Door.pex
 export declare class Door extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Door| null; 
+    static from(papyrusObject: PapyrusObject | null) : Door| null;
 }
 
 // Based on EffectShader.pex
 export declare class EffectShader extends Form{
-    static from(papyrusObject: PapyrusObject | null) : EffectShader| null; 
+    static from(papyrusObject: PapyrusObject | null) : EffectShader| null;
     play(param1: ObjectReference | null, param2: number): void;
     stop(param1: ObjectReference | null): void;
 }
 
 // Based on Enchantment.pex
 export declare class Enchantment extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Enchantment| null; 
+    static from(papyrusObject: PapyrusObject | null) : Enchantment| null;
     getBaseEnchantment(): Enchantment | null;
     getCostliestEffectIndex(): number;
     getKeywordRestrictions(): FormList | null;
@@ -2003,24 +2003,24 @@ export declare class Enchantment extends Form{
 
 // Based on EncounterZone.pex
 export declare class EncounterZone extends Form{
-    static from(papyrusObject: PapyrusObject | null) : EncounterZone| null; 
+    static from(papyrusObject: PapyrusObject | null) : EncounterZone| null;
 }
 
 // Based on EquipSlot.pex
 export declare class EquipSlot extends Form{
-    static from(papyrusObject: PapyrusObject | null) : EquipSlot| null; 
+    static from(papyrusObject: PapyrusObject | null) : EquipSlot| null;
     getNthParent(n: number): EquipSlot | null;
     getNumParents(): number;
 }
 
 // Based on Explosion.pex
 export declare class Explosion extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Explosion| null; 
+    static from(papyrusObject: PapyrusObject | null) : Explosion| null;
 }
 
 // Based on Faction.pex
 export declare class Faction extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Faction| null; 
+    static from(papyrusObject: PapyrusObject | null) : Faction| null;
     canPayCrimeGold(): boolean;
     clearFactionFlag(flag: number): void;
     getBuySellList(): FormList | null;
@@ -2066,7 +2066,7 @@ export declare class Faction extends Form{
 
 // Based on Flora.pex
 export declare class Flora extends Activator{
-    static from(papyrusObject: PapyrusObject | null) : Flora| null; 
+    static from(papyrusObject: PapyrusObject | null) : Flora| null;
     getHarvestSound(): SoundDescriptor | null;
     getIngredient(): Form | null;
     setHarvestSound(akSoundDescriptor: SoundDescriptor | null): void;
@@ -2075,7 +2075,7 @@ export declare class Flora extends Activator{
 
 // Based on FormList.pex
 export declare class FormList extends Form{
-    static from(papyrusObject: PapyrusObject | null) : FormList| null; 
+    static from(papyrusObject: PapyrusObject | null) : FormList| null;
     addForm(apForm: Form | null): void;
     addForms(forms: PapyrusObject[] | null): void;
     find(apForm: Form | null): number;
@@ -2089,12 +2089,12 @@ export declare class FormList extends Form{
 
 // Based on Furniture.pex
 export declare class Furniture extends Activator{
-    static from(papyrusObject: PapyrusObject | null) : Furniture| null; 
+    static from(papyrusObject: PapyrusObject | null) : Furniture| null;
 }
 
 // Based on Game.pex
 export declare class Game extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : Game| null; 
+    static from(papyrusObject: PapyrusObject | null) : Game| null;
     static addAchievement(aiAchievementID: number): void;
     static addHavokBallAndSocketConstraint(arRefA: ObjectReference | null, arRefANode: string, arRefB: ObjectReference | null, arRefBNode: string, afRefALocalOffsetX: number, afRefALocalOffsetY: number, afRefALocalOffsetZ: number, afRefBLocalOffsetX: number, afRefBLocalOffsetY: number, afRefBLocalOffsetZ: number): Promise<boolean>;
     static addPerkPoints(aiPerkPoints: number): void;
@@ -2231,19 +2231,19 @@ export declare class Game extends PapyrusObject{
 
 // Based on GlobalVariable.pex
 export declare class GlobalVariable extends Form{
-    static from(papyrusObject: PapyrusObject | null) : GlobalVariable| null; 
+    static from(papyrusObject: PapyrusObject | null) : GlobalVariable| null;
     getValue(): number;
     setValue(param1: number): void;
 }
 
 // Based on Hazard.pex
 export declare class Hazard extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Hazard| null; 
+    static from(papyrusObject: PapyrusObject | null) : Hazard| null;
 }
 
 // Based on HeadPart.pex
 export declare class HeadPart extends Form{
-    static from(papyrusObject: PapyrusObject | null) : HeadPart| null; 
+    static from(papyrusObject: PapyrusObject | null) : HeadPart| null;
     getIndexOfExtraPart(p: HeadPart | null): number;
     getNthExtraPart(n: number): HeadPart | null;
     getNumExtraParts(): number;
@@ -2258,12 +2258,12 @@ export declare class HeadPart extends Form{
 
 // Based on Idle.pex
 export declare class Idle extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Idle| null; 
+    static from(papyrusObject: PapyrusObject | null) : Idle| null;
 }
 
 // Based on ImageSpaceModifier.pex
 export declare class ImageSpaceModifier extends Form{
-    static from(papyrusObject: PapyrusObject | null) : ImageSpaceModifier| null; 
+    static from(papyrusObject: PapyrusObject | null) : ImageSpaceModifier| null;
     apply(param1: number): void;
     applyCrossFade(param1: number): void;
     popTo(param1: ImageSpaceModifier | null, param2: number): void;
@@ -2273,12 +2273,12 @@ export declare class ImageSpaceModifier extends Form{
 
 // Based on ImpactDataSet.pex
 export declare class ImpactDataSet extends Form{
-    static from(papyrusObject: PapyrusObject | null) : ImpactDataSet| null; 
+    static from(papyrusObject: PapyrusObject | null) : ImpactDataSet| null;
 }
 
 // Based on Ingredient.pex
 export declare class Ingredient extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Ingredient| null; 
+    static from(papyrusObject: PapyrusObject | null) : Ingredient| null;
     getCostliestEffectIndex(): number;
     getEffectAreas(): number[] | null;
     getEffectDurations(): number[] | null;
@@ -2301,7 +2301,7 @@ export declare class Ingredient extends Form{
 
 // Based on Input.pex
 export declare class Input extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : Input| null; 
+    static from(papyrusObject: PapyrusObject | null) : Input| null;
     static getMappedControl(keycode: number): string;
     static getMappedKey(control: string, deviceType: number): number;
     static getNthKeyPressed(n: number): number;
@@ -2314,12 +2314,12 @@ export declare class Input extends PapyrusObject{
 
 // Based on Key.pex
 export declare class Key extends MiscObject{
-    static from(papyrusObject: PapyrusObject | null) : Key| null; 
+    static from(papyrusObject: PapyrusObject | null) : Key| null;
 }
 
 // Based on Keyword.pex
 export declare class Keyword extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Keyword| null; 
+    static from(papyrusObject: PapyrusObject | null) : Keyword| null;
     getString(): string;
     sendStoryEvent(akLoc: Location | null, akRef1: ObjectReference | null, akRef2: ObjectReference | null, aiValue1: number, aiValue2: number): void;
     sendStoryEventAndWait(akLoc: Location | null, akRef1: ObjectReference | null, akRef2: ObjectReference | null, aiValue1: number, aiValue2: number): Promise<boolean>;
@@ -2328,7 +2328,7 @@ export declare class Keyword extends Form{
 
 // Based on LeveledActor.pex
 export declare class LeveledActor extends Form{
-    static from(papyrusObject: PapyrusObject | null) : LeveledActor| null; 
+    static from(papyrusObject: PapyrusObject | null) : LeveledActor| null;
     addForm(apForm: Form | null, aiLevel: number): void;
     getNthCount(n: number): number;
     getNthForm(n: number): Form | null;
@@ -2341,7 +2341,7 @@ export declare class LeveledActor extends Form{
 
 // Based on LeveledItem.pex
 export declare class LeveledItem extends Form{
-    static from(papyrusObject: PapyrusObject | null) : LeveledItem| null; 
+    static from(papyrusObject: PapyrusObject | null) : LeveledItem| null;
     addForm(apForm: Form | null, aiLevel: number, aiCount: number): void;
     getChanceGlobal(): GlobalVariable | null;
     getChanceNone(): number;
@@ -2358,7 +2358,7 @@ export declare class LeveledItem extends Form{
 
 // Based on LeveledSpell.pex
 export declare class LeveledSpell extends Form{
-    static from(papyrusObject: PapyrusObject | null) : LeveledSpell| null; 
+    static from(papyrusObject: PapyrusObject | null) : LeveledSpell| null;
     addForm(apForm: Form | null, aiLevel: number): void;
     getChanceNone(): number;
     getNthForm(n: number): Form | null;
@@ -2371,13 +2371,13 @@ export declare class LeveledSpell extends Form{
 
 // Based on Light.pex
 export declare class Light extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Light| null; 
+    static from(papyrusObject: PapyrusObject | null) : Light| null;
     getWarmthRating(): number;
 }
 
 // Based on Location.pex
 export declare class Location extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Location| null; 
+    static from(papyrusObject: PapyrusObject | null) : Location| null;
     getKeywordData(param1: Keyword | null): number;
     getRefTypeAliveCount(param1: LocationRefType | null): number;
     getRefTypeDeadCount(param1: LocationRefType | null): number;
@@ -2392,7 +2392,7 @@ export declare class Location extends Form{
 
 // Based on LocationAlias.pex
 export declare class LocationAlias extends Alias{
-    static from(papyrusObject: PapyrusObject | null) : LocationAlias| null; 
+    static from(papyrusObject: PapyrusObject | null) : LocationAlias| null;
     clear(): void;
     forceLocationTo(param1: Location | null): void;
     getLocation(): Location | null;
@@ -2400,12 +2400,12 @@ export declare class LocationAlias extends Alias{
 
 // Based on LocationRefType.pex
 export declare class LocationRefType extends Keyword{
-    static from(papyrusObject: PapyrusObject | null) : LocationRefType| null; 
+    static from(papyrusObject: PapyrusObject | null) : LocationRefType| null;
 }
 
 // Based on MagicEffect.pex
 export declare class MagicEffect extends Form{
-    static from(papyrusObject: PapyrusObject | null) : MagicEffect| null; 
+    static from(papyrusObject: PapyrusObject | null) : MagicEffect| null;
     clearEffectFlag(flag: number): void;
     getArea(): number;
     getAssociatedSkill(): Promise<string>;
@@ -2454,7 +2454,7 @@ export declare class MagicEffect extends Form{
 
 // Based on Message.pex
 export declare class Message extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Message| null; 
+    static from(papyrusObject: PapyrusObject | null) : Message| null;
     show(param1: number, param2: number, param3: number, param4: number, param5: number, param6: number, param7: number, param8: number, param9: number): Promise<number>;
     showAsHelpMessage(param1: string, param2: number, param3: number, param4: number): void;
     static resetHelpMessage(param1: string): void;
@@ -2462,14 +2462,14 @@ export declare class Message extends Form{
 
 // Based on MusicType.pex
 export declare class MusicType extends Form{
-    static from(papyrusObject: PapyrusObject | null) : MusicType| null; 
+    static from(papyrusObject: PapyrusObject | null) : MusicType| null;
     add(): void;
     remove(): void;
 }
 
 // Based on NetImmerse.pex
 export declare class NetImmerse extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : NetImmerse| null; 
+    static from(papyrusObject: PapyrusObject | null) : NetImmerse| null;
     static getNodeLocalPosition(ref: ObjectReference | null, node: string, _in: number[] | null, firstPerson: boolean): boolean;
     static getNodeLocalPositionX(ref: ObjectReference | null, node: string, firstPerson: boolean): number;
     static getNodeLocalPositionY(ref: ObjectReference | null, node: string, firstPerson: boolean): number;
@@ -2500,26 +2500,26 @@ export declare class NetImmerse extends PapyrusObject{
 
 // Based on Outfit.pex
 export declare class Outfit extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Outfit| null; 
+    static from(papyrusObject: PapyrusObject | null) : Outfit| null;
     getNthPart(n: number): Form | null;
     getNumParts(): number;
 }
 
 // Based on Projectile.pex
 export declare class Projectile extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Projectile| null; 
+    static from(papyrusObject: PapyrusObject | null) : Projectile| null;
 }
 
 // Based on Package.pex
 export declare class Package extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Package| null; 
+    static from(papyrusObject: PapyrusObject | null) : Package| null;
     getOwningQuest(): Quest | null;
     getTemplate(): Package | null;
 }
 
 // Based on Perk.pex
 export declare class Perk extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Perk| null; 
+    static from(papyrusObject: PapyrusObject | null) : Perk| null;
     getNextPerk(): Perk | null;
     getNthEntryLeveledList(n: number): LeveledItem | null;
     getNthEntryPriority(n: number): number;
@@ -2542,7 +2542,7 @@ export declare class Perk extends Form{
 
 // Based on Potion.pex
 export declare class Potion extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Potion| null; 
+    static from(papyrusObject: PapyrusObject | null) : Potion| null;
     getCostliestEffectIndex(): number;
     getEffectAreas(): number[] | null;
     getEffectDurations(): number[] | null;
@@ -2564,7 +2564,7 @@ export declare class Potion extends Form{
 
 // Based on Quest.pex
 export declare class Quest extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Quest| null; 
+    static from(papyrusObject: PapyrusObject | null) : Quest| null;
     completeAllObjectives(): void;
     completeQuest(): void;
     failAllObjectives(): void;
@@ -2601,7 +2601,7 @@ export declare class Quest extends Form{
 
 // Based on Race.pex
 export declare class Race extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Race| null; 
+    static from(papyrusObject: PapyrusObject | null) : Race| null;
     clearRaceFlag(n: number): void;
     getDefaultVoiceType(female: boolean): VoiceType | null;
     getNthSpell(n: number): Spell | null;
@@ -2618,7 +2618,7 @@ export declare class Race extends Form{
 
 // Based on ReferenceAlias.pex
 export declare class ReferenceAlias extends Alias{
-    static from(papyrusObject: PapyrusObject | null) : ReferenceAlias| null; 
+    static from(papyrusObject: PapyrusObject | null) : ReferenceAlias| null;
     addInventoryEventFilter(param1: Form | null): void;
     clear(): void;
     forceRefTo(param1: ObjectReference | null): void;
@@ -2629,7 +2629,7 @@ export declare class ReferenceAlias extends Alias{
 
 // Based on Spell.pex
 export declare class Spell extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Spell| null; 
+    static from(papyrusObject: PapyrusObject | null) : Spell| null;
     cast(akSource: ObjectReference | null, akTarget: ObjectReference | null): Promise<void>;
     getCastTime(): number;
     getCostliestEffectIndex(): number;
@@ -2658,12 +2658,12 @@ export declare class Spell extends Form{
 
 // Based on Static.pex
 export declare class Static extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Static| null; 
+    static from(papyrusObject: PapyrusObject | null) : Static| null;
 }
 
 // Based on Scene.pex
 export declare class Scene extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Scene| null; 
+    static from(papyrusObject: PapyrusObject | null) : Scene| null;
     forceStart(): void;
     getOwningQuest(): Quest | null;
     isActionComplete(param1: number): boolean;
@@ -2674,7 +2674,7 @@ export declare class Scene extends Form{
 
 // Based on Scroll.pex
 export declare class Scroll extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Scroll| null; 
+    static from(papyrusObject: PapyrusObject | null) : Scroll| null;
     cast(akSource: ObjectReference | null, akTarget: ObjectReference | null): Promise<void>;
     getCastTime(): number;
     getCostliestEffectIndex(): number;
@@ -2697,14 +2697,14 @@ export declare class Scroll extends Form{
 
 // Based on ShaderParticleGeometry.pex
 export declare class ShaderParticleGeometry extends Form{
-    static from(papyrusObject: PapyrusObject | null) : ShaderParticleGeometry| null; 
+    static from(papyrusObject: PapyrusObject | null) : ShaderParticleGeometry| null;
     apply(param1: number): void;
     remove(param1: number): void;
 }
 
 // Based on Shout.pex
 export declare class Shout extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Shout| null; 
+    static from(papyrusObject: PapyrusObject | null) : Shout| null;
     getNthRecoveryTime(n: number): number;
     getNthSpell(n: number): Spell | null;
     getNthWordOfPower(n: number): WordOfPower | null;
@@ -2715,14 +2715,14 @@ export declare class Shout extends Form{
 
 // Based on SoulGem.pex
 export declare class SoulGem extends MiscObject{
-    static from(papyrusObject: PapyrusObject | null) : SoulGem| null; 
+    static from(papyrusObject: PapyrusObject | null) : SoulGem| null;
     getGemSize(): number;
     getSoulSize(): number;
 }
 
 // Based on Sound.pex
 export declare class Sound extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Sound| null; 
+    static from(papyrusObject: PapyrusObject | null) : Sound| null;
     getDescriptor(): SoundDescriptor | null;
     play(akSource: ObjectReference | null): number;
     playAndWait(akSource: ObjectReference | null): Promise<boolean>;
@@ -2732,7 +2732,7 @@ export declare class Sound extends Form{
 
 // Based on SoundCategory.pex
 export declare class SoundCategory extends Form{
-    static from(papyrusObject: PapyrusObject | null) : SoundCategory| null; 
+    static from(papyrusObject: PapyrusObject | null) : SoundCategory| null;
     mute(): void;
     pause(): void;
     setFrequency(param1: number): void;
@@ -2743,7 +2743,7 @@ export declare class SoundCategory extends Form{
 
 // Based on SoundDescriptor.pex
 export declare class SoundDescriptor extends Form{
-    static from(papyrusObject: PapyrusObject | null) : SoundDescriptor| null; 
+    static from(papyrusObject: PapyrusObject | null) : SoundDescriptor| null;
     getDecibelAttenuation(): number;
     getDecibelVariance(): number;
     getFrequencyShift(): number;
@@ -2756,7 +2756,7 @@ export declare class SoundDescriptor extends Form{
 
 // Based on TESModPlatform.pex
 export declare class TESModPlatform extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : TESModPlatform| null; 
+    static from(papyrusObject: PapyrusObject | null) : TESModPlatform| null;
     static addItemEx(containerRefr: ObjectReference | null, item: Form | null, countDelta: number, health: number, enchantment: Enchantment | null, maxCharge: number, removeEnchantmentOnUnequip: boolean, chargePercent: number, textDisplayData: string, soul: number, poison: Potion | null, poisonCount: number): void;
     static clearTintMasks(targetActor: Actor | null): void;
     static createNpc(): ActorBase | null;
@@ -2780,12 +2780,12 @@ export declare class TESModPlatform extends PapyrusObject{
 
 // Based on TalkingActivator.pex
 export declare class TalkingActivator extends Activator{
-    static from(papyrusObject: PapyrusObject | null) : TalkingActivator| null; 
+    static from(papyrusObject: PapyrusObject | null) : TalkingActivator| null;
 }
 
 // Based on TextureSet.pex
 export declare class TextureSet extends Form{
-    static from(papyrusObject: PapyrusObject | null) : TextureSet| null; 
+    static from(papyrusObject: PapyrusObject | null) : TextureSet| null;
     getNthTexturePath(n: number): string;
     getNumTexturePaths(): number;
     setNthTexturePath(n: number, texturePath: string): void;
@@ -2793,19 +2793,19 @@ export declare class TextureSet extends Form{
 
 // Based on Topic.pex
 export declare class Topic extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Topic| null; 
+    static from(papyrusObject: PapyrusObject | null) : Topic| null;
     add(): void;
 }
 
 // Based on TopicInfo.pex
 export declare class TopicInfo extends Form{
-    static from(papyrusObject: PapyrusObject | null) : TopicInfo| null; 
+    static from(papyrusObject: PapyrusObject | null) : TopicInfo| null;
     getOwningQuest(): Quest | null;
 }
 
 // Based on TreeObject.pex
 export declare class TreeObject extends Form{
-    static from(papyrusObject: PapyrusObject | null) : TreeObject| null; 
+    static from(papyrusObject: PapyrusObject | null) : TreeObject| null;
     getHarvestSound(): SoundDescriptor | null;
     getIngredient(): Form | null;
     setHarvestSound(akSoundDescriptor: SoundDescriptor | null): void;
@@ -2814,7 +2814,7 @@ export declare class TreeObject extends Form{
 
 // Based on Ui.pex
 export declare class Ui extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : Ui| null; 
+    static from(papyrusObject: PapyrusObject | null) : Ui| null;
     static closeCustomMenu(): void;
     static getBool(menuName: string, target: string): boolean;
     static getFloat(menuName: string, target: string): number;
@@ -2840,19 +2840,19 @@ export declare class Ui extends PapyrusObject{
 
 // Based on VisualEffect.pex
 export declare class VisualEffect extends Form{
-    static from(papyrusObject: PapyrusObject | null) : VisualEffect| null; 
+    static from(papyrusObject: PapyrusObject | null) : VisualEffect| null;
     play(param1: ObjectReference | null, param2: number, param3: ObjectReference | null): void;
     stop(param1: ObjectReference | null): void;
 }
 
 // Based on VoiceType.pex
 export declare class VoiceType extends Form{
-    static from(papyrusObject: PapyrusObject | null) : VoiceType| null; 
+    static from(papyrusObject: PapyrusObject | null) : VoiceType| null;
 }
 
 // Based on Weapon.pex
 export declare class Weapon extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Weapon| null; 
+    static from(papyrusObject: PapyrusObject | null) : Weapon| null;
     fire(akSource: ObjectReference | null, akAmmo: Ammo | null): void;
     getBaseDamage(): number;
     getCritDamage(): number;
@@ -2899,7 +2899,7 @@ export declare class Weapon extends Form{
 
 // Based on Weather.pex
 export declare class Weather extends Form{
-    static from(papyrusObject: PapyrusObject | null) : Weather| null; 
+    static from(papyrusObject: PapyrusObject | null) : Weather| null;
     forceActive(abOverride: boolean): void;
     getClassification(): number;
     getFogDistance(day: boolean, type: number): number;
@@ -2918,17 +2918,17 @@ export declare class Weather extends Form{
 
 // Based on WordOfPower.pex
 export declare class WordOfPower extends Form{
-    static from(papyrusObject: PapyrusObject | null) : WordOfPower| null; 
+    static from(papyrusObject: PapyrusObject | null) : WordOfPower| null;
 }
 
 // Based on WorldSpace.pex
 export declare class WorldSpace extends Form{
-    static from(papyrusObject: PapyrusObject | null) : WorldSpace| null; 
+    static from(papyrusObject: PapyrusObject | null) : WorldSpace| null;
 }
 
 // Based on Utility.pex
 export declare class Utility extends PapyrusObject{
-    static from(papyrusObject: PapyrusObject | null) : Utility| null; 
+    static from(papyrusObject: PapyrusObject | null) : Utility| null;
     static captureFrameRate(numFrames: number): string;
     static createAliasArray(size: number, fill: Alias | null): PapyrusObject[] | null;
     static createBoolArray(size: number, fill: boolean): boolean[] | null;
