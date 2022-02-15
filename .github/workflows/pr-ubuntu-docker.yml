@@ -114,7 +114,7 @@ jobs:
             run: |
               commit=$(< ./temp.txt)
               build=$(< ${{github.workspace}}/build/dist/client/Data/Platform/Modules/skyrimPlatform.ts)
-              difference=$(diff -u <(echo "${{ env.commit }}") <(echo "$build"))
+              difference=$(diff -u <(echo "$commit") <(echo "$build"))
               size=$(echo -n $difference | wc -m)
               echo "Size $size"
               if [ $size != 0 ] ; then
