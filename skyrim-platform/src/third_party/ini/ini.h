@@ -283,7 +283,7 @@ inline PDataType parseLine(std::string line, T_ParseValues& parseData)
     return PDataType::PDATA_NONE;
   }
   char firstCharacter = line[0];
-  if (firstCharacter == ';') {
+  if (firstCharacter == ';' || firstCharacter == '#') {
     return PDataType::PDATA_COMMENT;
   }
   if (firstCharacter == '[') {
