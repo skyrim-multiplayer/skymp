@@ -82,9 +82,8 @@ public:
     return ini.GetLongValue(section, key, defaultValue);
   }
 
-  template <typename T>
-  requires IntegralOrEnum<T> T GetInteger(const char* section, const char* key,
-                                          T defaultValue)
+  template <IntegralOrEnum T>
+  T GetInteger(const char* section, const char* key, T defaultValue)
   {
     return (T)GetInteger(section, key, (long)defaultValue);
   }
@@ -114,8 +113,7 @@ public:
     return success;
   }
 
-  template <typename T>
-  requires IntegralOrEnum<T>
+  template <IntegralOrEnum T>
   bool SetInteger(const char* section, const char* key, T value,
                   const char* comment = nullptr, bool forceReplace = false)
   {
@@ -127,9 +125,8 @@ public:
     return ini.GetDoubleValue(section, key, defaultValue);
   }
 
-  template <typename T>
-  requires FloatingPoint<T> T GetFloat(const char* section, const char* key,
-                                       T defaultValue)
+  template <FloatingPoint T>
+  T GetFloat(const char* section, const char* key, T defaultValue)
   {
     return (T)GetFloat(section, key, (double)defaultValue);
   }
@@ -160,8 +157,7 @@ public:
     return success;
   }
 
-  template <typename T>
-  requires FloatingPoint<T>
+  template <FloatingPoint T>
   bool SetFloat(const char* section, const char* key, T value,
                 const char* comment = nullptr, bool forceReplace = false)
   {

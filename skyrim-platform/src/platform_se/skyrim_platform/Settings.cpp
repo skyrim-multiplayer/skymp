@@ -1,7 +1,7 @@
 #include "Settings.h"
 
 constexpr auto platformSettingsFilePath =
-  R"(.\Data\SKSE\Plugins\SkyrimPlatform.ini)";
+  L"Data/SKSE/Plugins/SkyrimPlatform.ini";
 
 std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
 {
