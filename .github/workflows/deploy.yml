@@ -6,6 +6,10 @@ on:
                 description: action (deploy/restart/stop)
                 required: true
                 default: deploy
+            branch:
+                description: branch, meaning server instance (sweetpie/indev)
+                required: true
+                default: indev
 
 env:
     BUILD_TYPE: RelWithDebInfo
