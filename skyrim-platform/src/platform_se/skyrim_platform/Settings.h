@@ -86,7 +86,7 @@ public:
   requires IntegralOrEnum<T> T GetInteger(const char* section, const char* key,
                                           T defaultValue)
   {
-    return (T)ini.GetLongValue(section, key, (long)defaultValue);
+    return (T)GetInteger(section, key, (long)defaultValue);
   }
 
   bool SetInteger(const char* section, const char* key, long value,
@@ -131,13 +131,14 @@ public:
   requires FloatingPoint<T> T GetFloat(const char* section, const char* key,
                                        T defaultValue)
   {
-    return (T)ini.GetDoubleValue(section, key, (double)defaultValue);
+    return (T)GetFloat(section, key, (double)defaultValue);
   }
 
   bool SetFloat(const char* section, const char* key, double value,
                 const char* comment = nullptr, bool forceReplace = false)
   {
-    auto status = ini.SetBoolValue(section, key, value, comment, forceReplace);
+    auto status =
+      ini.SetDoubleValue(section, key, value, comment, forceReplace);
     if (status == SI_Error::SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
@@ -206,7 +207,7 @@ public:
   bool SetString(const char* section, const char* key, const char* value,
                  const char* comment = nullptr, bool forceReplace = false)
   {
-    auto status = ini.SetBoolValue(section, key, value, comment, forceReplace);
+    auto status = ini.SetValue(section, key, value, comment, forceReplace);
     if (status == SI_Error::SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
@@ -232,7 +233,12 @@ public:
                  bool deleteEmptySection = true)
   {
     auto status = ini.Delete(section, key, deleteEmptySection);
-    return status == SI_Error::SI_OK;
+
+    auto success = status == SI_Error::SI_OK;
+    if (success) {
+      changed = true;
+    }
+    return success;
   }
 
   std::string ToString()
