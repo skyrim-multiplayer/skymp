@@ -2,7 +2,7 @@
 
 set -e
 
-data="`cd ci/deploy/gather-indev && node_modules/.bin/ts-node list_included_pulls.ts`"
+data="`cd ci/deploy/gather-server-branch && node_modules/.bin/ts-node list_included_pulls.ts`"
 
 msg="Gathering $DEPLOY_BRANCH..."$'\n'
 msg+="`echo "$data" | tail -n +2`"  # start from second line
