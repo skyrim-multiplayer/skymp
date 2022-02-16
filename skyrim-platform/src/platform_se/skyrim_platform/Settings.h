@@ -18,7 +18,6 @@ public:
     : path(_path)
   {
     ini.SetUnicode();
-    ini.SetMultiKey();
     loadStatus = ini.LoadFile(path);
   }
 
@@ -26,7 +25,6 @@ public:
     : pathW(_pathW)
   {
     ini.SetUnicode();
-    ini.SetMultiKey();
     loadStatus = ini.LoadFile(pathW);
   }
 
@@ -89,9 +87,9 @@ public:
   }
 
   bool SetInteger(const char* section, const char* key, long value,
-                  const char* comment = nullptr, bool forceReplace = false)
+                  const char* comment = nullptr)
   {
-    auto status = ini.SetLongValue(section, key, value, comment, forceReplace);
+    auto status = ini.SetLongValue(section, key, value, comment);
     if (status == SI_Error::SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
@@ -115,9 +113,9 @@ public:
 
   template <IntegralOrEnum T>
   bool SetInteger(const char* section, const char* key, T value,
-                  const char* comment = nullptr, bool forceReplace = false)
+                  const char* comment = nullptr)
   {
-    return SetInteger(section, key, (long)value, comment, forceReplace);
+    return SetInteger(section, key, (long)value, comment);
   }
 
   double GetFloat(const char* section, const char* key, double defaultValue)
@@ -132,10 +130,9 @@ public:
   }
 
   bool SetFloat(const char* section, const char* key, double value,
-                const char* comment = nullptr, bool forceReplace = false)
+                const char* comment = nullptr)
   {
-    auto status =
-      ini.SetDoubleValue(section, key, value, comment, forceReplace);
+    auto status = ini.SetDoubleValue(section, key, value, comment);
     if (status == SI_Error::SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
@@ -159,9 +156,9 @@ public:
 
   template <FloatingPoint T>
   bool SetFloat(const char* section, const char* key, T value,
-                const char* comment = nullptr, bool forceReplace = false)
+                const char* comment = nullptr)
   {
-    return SetFloat(section, key, (double)value, comment, forceReplace);
+    return SetFloat(section, key, (double)value, comment);
   }
 
   bool GetBool(const char* section, const char* key, bool defaultValue)
@@ -170,9 +167,9 @@ public:
   }
 
   bool SetBool(const char* section, const char* key, bool value,
-               const char* comment = nullptr, bool forceReplace = false)
+               const char* comment = nullptr)
   {
-    auto status = ini.SetBoolValue(section, key, value, comment, forceReplace);
+    auto status = ini.SetBoolValue(section, key, value, comment);
     if (status == SI_Error::SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
@@ -201,9 +198,9 @@ public:
   }
 
   bool SetString(const char* section, const char* key, const char* value,
-                 const char* comment = nullptr, bool forceReplace = false)
+                 const char* comment = nullptr)
   {
-    auto status = ini.SetValue(section, key, value, comment, forceReplace);
+    auto status = ini.SetValue(section, key, value, comment);
     if (status == SI_Error::SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
