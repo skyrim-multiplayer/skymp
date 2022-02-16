@@ -62,7 +62,12 @@ public:
       status = ini.SaveFile(path);
     }
 
-    return status == SI_Error::SI_OK;
+    auto success = status == SI_Error::SI_OK;
+    if (success) {
+      loadStatus = true;
+      changed = false;
+    }
+    return success;
   }
 
   long GetInteger(const char* section, const char* key, long defaultValue)
@@ -95,7 +100,11 @@ public:
                     GetFilePath(), section, key, value);
     }
 
-    return status == SI_Error::SI_OK;
+    auto success = status == SI_Error::SI_OK;
+    if (success) {
+      changed = true;
+    }
+    return success;
   }
 
   template <typename T>
@@ -136,7 +145,11 @@ public:
                     GetFilePath(), section, key, value);
     }
 
-    return status == SI_Error::SI_OK;
+    auto success = status == SI_Error::SI_OK;
+    if (success) {
+      changed = true;
+    }
+    return success;
   }
 
   template <typename T>
@@ -170,7 +183,11 @@ public:
                     GetFilePath(), section, key, value);
     }
 
-    return status == SI_Error::SI_OK;
+    auto success = status == SI_Error::SI_OK;
+    if (success) {
+      changed = true;
+    }
+    return success;
   }
 
   const char* GetString(const char* section, const char* key,
@@ -197,7 +214,11 @@ public:
                     GetFilePath(), section, key, value);
     }
 
-    return status == SI_Error::SI_OK;
+    auto success = status == SI_Error::SI_OK;
+    if (success) {
+      changed = true;
+    }
+    return success;
   }
 
   bool DeleteKey(const char* section, const char* key,
@@ -218,11 +239,18 @@ private:
   File() = delete;
   File(const File&) = delete;
   File(File&&) = delete;
+  ~File()
+  {
+    if (changed) {
+      Save();
+    }
+  }
 
   CSimpleIniA ini;
   const char* path;
   const wchar_t* pathW;
   SI_Error loadStatus;
+  bool changed = false;
 };
 
 std::unique_ptr<Settings::File> GetPlatformSettings();
