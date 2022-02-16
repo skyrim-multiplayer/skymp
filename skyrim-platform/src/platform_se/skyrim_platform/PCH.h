@@ -47,13 +47,16 @@
 
 #include <concepts>
 #include <condition_variable>
-#include <dxgi.h>
 #include <iostream> // savefile
+
+#include <comdef.h> // _bstr_t
+#include <dxgi.h>
 #include <shellapi.h>
 #include <shlobj_core.h>
 #include <stringapiset.h>
 #include <tlhelp32.h>
 
+#include <SimpleIni.h>
 #include <asio/executor_work_guard.hpp>
 #include <asio/io_context.hpp>
 #include <asio/post.hpp>
@@ -65,7 +68,6 @@
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>
 #include <hooks/WindowsHook.hpp>
-#include <ini/ini.h>
 #include <internal/cef_ptr.h>
 #include <internal/cef_types.h>
 #include <nlohmann/json.hpp>
@@ -122,3 +124,5 @@ struct game_type_pointer_deleter
 
 #include "game/Classes.h"
 #include "game/Events.h"
+
+#include "Concepts.h"

@@ -14,6 +14,8 @@
     "slikenet",
     "mongo-cxx-driver",
     "simdjson",
+    "robin-hood-hashing",
+    "simpleini",
     {
       "name": "directxtk",
       "platform": "windows"
@@ -37,7 +39,6 @@
     {
       "name": "asio",
       "platform": "windows"
-    },
-    "robin-hood-hashing"
+    }
   ]
 }
