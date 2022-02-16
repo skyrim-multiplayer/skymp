@@ -10,8 +10,8 @@ std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
   // load some default data
   if (!file->IsLoaded()) {
     file->SetInteger("Debug", "LogLevel", 2,
-                     "0 - trace, 1 - debug, 2 - info, 3 - warn, 4 - error, 5 "
-                     "- critical, 6 - none");
+                     "; 0 - trace, 1 - debug, 2 - info, 3 - warn, 4 - error, "
+                     "5- critical, 6 - none");
     file->Save();
   }
 

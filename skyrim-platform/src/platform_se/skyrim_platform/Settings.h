@@ -30,6 +30,13 @@ public:
     loadStatus = ini.LoadFile(pathW);
   }
 
+  ~File()
+  {
+    if (changed) {
+      Save();
+    }
+  }
+
   std::string_view GetFilePath()
   {
     if (pathW) {
@@ -64,7 +71,7 @@ public:
 
     auto success = status == SI_Error::SI_OK;
     if (success) {
-      loadStatus = true;
+      loadStatus = status;
       changed = false;
     }
     return success;
@@ -239,12 +246,6 @@ private:
   File() = delete;
   File(const File&) = delete;
   File(File&&) = delete;
-  ~File()
-  {
-    if (changed) {
-      Save();
-    }
-  }
 
   CSimpleIniA ini;
   const char* path;
