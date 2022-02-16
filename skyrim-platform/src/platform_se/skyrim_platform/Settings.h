@@ -67,7 +67,7 @@ public:
       status = ini.SaveFile(path);
     }
 
-    auto success = status == SI_Error::SI_OK;
+    auto success = status >= 0;
     if (success) {
       loadStatus = status;
       changed = false;
@@ -104,7 +104,7 @@ public:
                     GetFilePath(), section, key, value);
     }
 
-    auto success = status == SI_Error::SI_OK;
+    auto success = status >= 0;
     if (success) {
       changed = true;
     }
@@ -147,7 +147,7 @@ public:
                     GetFilePath(), section, key, value);
     }
 
-    auto success = status == SI_Error::SI_OK;
+    auto success = status >= 0;
     if (success) {
       changed = true;
     }
@@ -184,7 +184,7 @@ public:
                     GetFilePath(), section, key, value);
     }
 
-    auto success = status == SI_Error::SI_OK;
+    auto success = status >= 0;
     if (success) {
       changed = true;
     }
@@ -215,7 +215,7 @@ public:
                     GetFilePath(), section, key, value);
     }
 
-    auto success = status == SI_Error::SI_OK;
+    auto success = status >= 0;
     if (success) {
       changed = true;
     }
@@ -227,7 +227,7 @@ public:
   {
     auto status = ini.Delete(section, key, deleteEmptySection);
 
-    auto success = status == SI_Error::SI_OK;
+    auto success = status >= 0;
     if (success) {
       changed = true;
     }
