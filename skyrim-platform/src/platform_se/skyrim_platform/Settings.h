@@ -225,9 +225,8 @@ public:
   bool DeleteKey(const char* section, const char* key,
                  bool deleteEmptySection = true)
   {
-    auto status = ini.Delete(section, key, deleteEmptySection);
+    auto success = ini.Delete(section, key, deleteEmptySection);
 
-    auto success = status >= 0;
     if (success) {
       changed = true;
     }
