@@ -22,7 +22,7 @@ function(apply_default_settings)
         /Zc:alignedNew	# C++17 over-aligned allocation
         /Zc:__cplusplus	# Enable updated __cplusplus macro
         /Zc:externConstexpr	# Enable extern constexpr variables
-        #/Zc:preprocessor	# Enable preprocessor conformance mode
+        /Zc:preprocessor	# Enable preprocessor conformance mode
         #/Zc:throwingNew # Assume operator new throws on failure
 
         "$<$<CONFIG:DEBUG>:>"
