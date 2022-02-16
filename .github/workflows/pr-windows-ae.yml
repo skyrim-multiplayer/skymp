@@ -25,13 +25,11 @@ jobs:
     - name: Install tools
       run: choco install opencppcoverage
 
-    - run: ./vcpkg/bootstrap-vcpkg.bat
-
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
       run: >
-        `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        `vcpkg fetch nuget | tail -n 1`
         sources add
         -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
         -storepasswordincleartext
@@ -111,7 +109,7 @@ jobs:
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
-      
+
     - uses: actions/upload-artifact@v2
       with:
         name: SP
