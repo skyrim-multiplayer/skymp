@@ -20,7 +20,7 @@ jobs:
         steps:
           - name: Get action
             run: |
-                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
+                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
                 echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
 
           - name: Checkout (full)
