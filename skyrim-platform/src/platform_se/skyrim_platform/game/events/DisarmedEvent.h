@@ -17,7 +17,11 @@ public:
   static RE::BSTEventSource<DisarmedEvent::Event>* GetEventSource()
   {
     using func_t = decltype(&DisarmedEvent::GetEventSource);
+#ifdef SKYRIMSE
+    REL::Relocation<func_t> func{ REL::ID(37392) };
+#else
     REL::Relocation<func_t> func{ REL::ID(38340) };
+#endif
     return func();
   }
 };

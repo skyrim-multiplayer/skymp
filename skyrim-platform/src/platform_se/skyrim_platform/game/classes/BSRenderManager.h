@@ -13,7 +13,11 @@ class BSRenderManager
 public:
   static BSRenderManager* GetSingleton()
   {
+#ifdef SKYRIMSE
+    REL::Relocation<BSRenderManager*> singleton{ REL::ID(524907) };
+#else
     REL::Relocation<BSRenderManager*> singleton{ REL::ID(411393) };
+#endif
     return singleton.get();
   }
 

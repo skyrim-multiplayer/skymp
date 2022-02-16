@@ -90,6 +90,9 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
    )
 
   if(MSVC)
+    if(SKYRIM_SE)
+      add_compile_definitions(SKYRIMSE)
+    endif()
 
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")

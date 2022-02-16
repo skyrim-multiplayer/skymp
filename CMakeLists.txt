@@ -53,6 +53,14 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
   message(FATAL_ERROR "${msg}")
 endif()
 
+option(SKYRIM_SE "Build platform for Skyrim Special Edition." OFF)
+
+if (SKYRIM_SE)
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
+else()
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
+endif()
+
 cmake_minimum_required(VERSION 3.18.2)
 project(skymp)
 enable_testing()
@@ -132,11 +140,11 @@ if(PREPARE_NEXUS_ARCHIVES)
   )
 
   add_dependencies(prepare_nexus_archives skyrim-platform)
-  set(TARGETS_ADDITIONAL 
-    skymp5-client 
-    skymp5-front 
-    skymp5-functions-lib 
-    skymp5-scripts 
+  set(TARGETS_ADDITIONAL
+    skymp5-client
+    skymp5-front
+    skymp5-functions-lib
+    skymp5-scripts
     skymp5-server
   )
   foreach(target ${TARGETS_ADDITIONAL})

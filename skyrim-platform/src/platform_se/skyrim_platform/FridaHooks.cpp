@@ -74,7 +74,11 @@ void OnSendEventLeave(GumInvocationContext* ic)
 void InstallSendEventHook()
 {
   auto hook = new Frida::Hook(OnSendEventEnter, OnSendEventLeave);
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> target{ REL::ID(98077) };
+#else
   REL::Relocation<std::uintptr_t> target{ REL::ID(104800) };
+#endif
   Frida::HookHandler::GetSingleton()->Install(Frida::HookID::SEND_EVENT,
                                               target.address(), hook);
 }
@@ -110,7 +114,11 @@ void OnDrawSheatheWeaponPcEnter(GumInvocationContext* ic)
 void InstallDrawSheatheWeaponPcHook()
 {
   auto hook = new Frida::Hook(OnDrawSheatheWeaponPcEnter, nullptr);
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> target{ REL::ID(40232) };
+#else
   REL::Relocation<std::uintptr_t> target{ REL::ID(41235) };
+#endif
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::DRAW_SHEATHE_WEAPON_PC, target.address(), hook);
 }
@@ -137,7 +145,11 @@ void OnDrawSheatheWeaponActorEnter(GumInvocationContext* ic)
 void InstallDrawSheatheWeaponActorHook()
 {
   auto hook = new Frida::Hook(OnDrawSheatheWeaponActorEnter, nullptr);
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> target{ REL::ID(36289) };
+#else
   REL::Relocation<std::uintptr_t> target{ REL::ID(37279) };
+#endif
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::DRAW_SHEATHE_WEAPON_ACTOR, target.address(), hook);
 }
@@ -179,7 +191,11 @@ void InstallSendAnimationEventHook()
 {
   auto hook =
     new Frida::Hook(OnSendAnimationEventEnter, OnSendAnimationEventLeave);
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> target{ REL::ID(37020) };
+#else
   REL::Relocation<std::uintptr_t> target{ REL::ID(38048) };
+#endif
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::HOOK_SEND_ANIMATION_EVENT, target.address(), hook);
 }
@@ -202,7 +218,11 @@ void OnQueueNinodeUpdateEnter(GumInvocationContext* ic)
 void InstallQueueNinodeUpdateHook()
 {
   auto hook = new Frida::Hook(OnQueueNinodeUpdateEnter, nullptr);
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> target{ REL::ID(39181) };
+#else
   REL::Relocation<std::uintptr_t> target{ REL::ID(40255) };
+#endif
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::QUEUE_NINODE_UPDATE, target.address(), hook);
 }
@@ -225,7 +245,11 @@ void OnApplyMasksToRenderTargetsEnter(GumInvocationContext* ic)
 void InstallApplyMasksToRenderTargetsHook()
 {
   auto hook = new Frida::Hook(OnApplyMasksToRenderTargetsEnter, nullptr);
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> target{ REL::ID(26454) };
+#else
   REL::Relocation<std::uintptr_t> target{ REL::ID(27040) };
+#endif
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::APPLY_MASKS_TO_RENDER_TARGET, target.address(), hook);
 }
@@ -265,7 +289,11 @@ void OnRenderCursorMenuEnter(GumInvocationContext* ic)
 void InstallRenderCursorMenuHook()
 {
   auto hook = new Frida::Hook(OnRenderCursorMenuEnter, nullptr);
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> target{ REL::ID(32867) };
+#else
   REL::Relocation<std::uintptr_t> target{ REL::ID(33632) };
+#endif
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::RENDER_CURSOR_MENU, target.address(), hook);
 }

@@ -31,7 +31,12 @@ function(link_vcpkg_dependencies)
       target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
       target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
 
-      find_package(CommonLibSSE REQUIRED)
+      if (SKYRIM_SE)
+        find_package(commonlibse REQUIRED CONFIGS CommonLibSSEConfig.cmake)
+      else()
+        find_package(commonlibae REQUIRED CONFIGS CommonLibSSEConfig.cmake)
+      endif()
+
       find_package(Boost MODULE REQUIRED)
       find_package(robin_hood REQUIRED)
 

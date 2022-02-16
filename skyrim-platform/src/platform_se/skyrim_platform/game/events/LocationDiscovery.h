@@ -17,7 +17,11 @@ public:
   static RE::BSTEventSource<LocationDiscovery::Event>* GetEventSource()
   {
     using func_t = decltype(&LocationDiscovery::GetEventSource);
+#ifdef SKYRIMSE
+    REL::Relocation<func_t> func{ REL::ID(40056) };
+#else
     REL::Relocation<func_t> func{ REL::ID(41067) };
+#endif
     return func();
   }
 };

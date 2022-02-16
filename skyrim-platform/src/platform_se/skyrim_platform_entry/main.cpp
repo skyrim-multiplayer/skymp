@@ -90,6 +90,22 @@ private:
 
 extern "C" {
 
+#ifdef SKYRIMSE
+DLLEXPORT bool SKSEPlugin_Query(const SKSE::QueryInterface* skse,
+                                SKSE::PluginInfo* info)
+{
+  info->infoVersion = SKSE::PluginInfo::kVersion;
+  info->name = "SkyrimPlatform";
+  info->version = Version::ASINT;
+
+  if (skse->IsEditor()) {
+    //_FATALERROR("loaded in editor, marking as incompatible");
+    return false;
+  }
+  return true;
+}
+
+#else
 DLLEXPORT constinit auto SKSEPlugin_Version = []() {
   SKSE::PluginVersionData v;
   v.PluginVersion(Version::ASINT);
@@ -100,6 +116,8 @@ DLLEXPORT constinit auto SKSEPlugin_Version = []() {
 
   return v;
 }();
+
+#endif
 
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe(const char* systemName,
                                                IpcMessageCallback callback,

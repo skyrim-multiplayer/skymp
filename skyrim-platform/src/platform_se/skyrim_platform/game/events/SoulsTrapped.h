@@ -17,7 +17,11 @@ public:
   static RE::BSTEventSource<SoulsTrapped::Event>* GetEventSource()
   {
     using func_t = decltype(&SoulsTrapped::GetEventSource);
+#ifdef SKYRIMSE
+    REL::Relocation<func_t> func{ REL::ID(37916) };
+#else
     REL::Relocation<func_t> func{ REL::ID(38873) };
+#endif
     return func();
   }
 

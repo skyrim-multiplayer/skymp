@@ -16,7 +16,11 @@ public:
   static RE::BSTEventSource<SpellsLearned::Event>* GetEventSource()
   {
     using func_t = decltype(&SpellsLearned::GetEventSource);
+#ifdef SKYRIMSE
+    REL::Relocation<func_t> func{ REL::ID(37917) };
+#else
     REL::Relocation<func_t> func{ REL::ID(38874) };
+#endif
     return func();
   }
   static void SendEvent(SpellItem* spell)

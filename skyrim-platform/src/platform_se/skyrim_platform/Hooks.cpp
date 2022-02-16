@@ -33,14 +33,18 @@ struct OnConsoleVPrint
 };
 
 void InstallOnConsoleVPrintHook()
-{
+{ // 50180
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> hook{ REL::ID(50180), 0x163 };
+#else
   REL::Relocation<std::uintptr_t> hook{ REL::ID(51110), 0x300 };
+#endif
   Hooks::write_thunk_call<OnConsoleVPrint>(hook.address());
 }
 
 void Hooks::Install()
 {
-  InstallOnUpdateHook();
+  // InstallOnUpdateHook();
   InstallOnConsoleVPrintHook();
 
   logger::info("CommonLib hooks installed.");

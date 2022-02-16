@@ -19,7 +19,11 @@ public:
   static RE::BSTEventSource<LevelIncrease::Event>* GetEventSource()
   {
     using func_t = decltype(&LevelIncrease::GetEventSource);
+#ifdef SKYRIMSE
+    REL::Relocation<func_t> func{ REL::ID(39247) };
+#else
     REL::Relocation<func_t> func{ REL::ID(40319) };
+#endif
     return func();
   }
 };

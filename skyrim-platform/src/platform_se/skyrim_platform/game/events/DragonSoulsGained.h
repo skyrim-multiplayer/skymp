@@ -17,7 +17,11 @@ public:
   static RE::BSTEventSource<DragonSoulsGained::Event>* GetEventSource()
   {
     using func_t = decltype(&DragonSoulsGained::GetEventSource);
+#ifdef SKYRIMSE
+    REL::Relocation<func_t> func{ REL::ID(37571) };
+#else
     REL::Relocation<func_t> func{ REL::ID(38520) };
+#endif
     return func();
   }
 };

@@ -17,6 +17,7 @@ concept SingletonSource = requires
     } -> std::convertible_to<RE::BSTEventSource<E>*>;
 };
 
+// concepts to check for primitive types
 template <typename T>
 concept Integral = std::is_integral_v<T>;
 

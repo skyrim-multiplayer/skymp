@@ -73,8 +73,8 @@ void InitLog()
   auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
 
   auto settings = Settings::GetPlatformSettings();
-  auto logLevel = settings->GetInteger<spdlog::level::level_enum>(
-    "Debug", "LogLevel", spdlog::level::level_enum::info);
+  auto logLevel =
+    settings->GetInteger("Debug", "LogLevel", spdlog::level::level_enum::info);
 
   log->set_level(logLevel);
   log->flush_on(logLevel);
