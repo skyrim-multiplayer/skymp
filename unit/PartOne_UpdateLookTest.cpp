@@ -11,15 +11,15 @@ TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 
   REQUIRE_THROWS_WITH(
     partOne.SetRaceMenuOpen(0xff000000, true),
-    Contains("Actor with id ff000000 is not attached to any of users"));
+    Contains("Actor with id 0xff000000 is not attached to any of users"));
 
   REQUIRE_THROWS_WITH(partOne.SetRaceMenuOpen(0xffffffff, true),
-                      Contains("Form with id ffffffff doesn't exist"));
+                      Contains("Form with id 0xffffffff doesn't exist"));
 
   partOne.worldState.AddForm(std::make_unique<MpForm>(), 0xffffffff);
 
   REQUIRE_THROWS_WITH(partOne.SetRaceMenuOpen(0xffffffff, true),
-                      Contains("Form with id ffffffff is not Actor"));
+                      Contains("Form with id 0xffffffff is not Actor"));
 }
 
 TEST_CASE("SetRaceMenuOpen", "[PartOne]")

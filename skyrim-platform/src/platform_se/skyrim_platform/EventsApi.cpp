@@ -165,10 +165,11 @@ public:
         return;
       }
 
-      return SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-        std::string s = eventName;
-        HandleEnter(owningThread, selfId, s);
-      });
+      return SkyrimPlatform::GetSingleton().AddUpdateTask(
+        [this, owningThread, selfId, eventName] {
+          std::string s = eventName;
+          HandleEnter(owningThread, selfId, s);
+        });
     }
 
     auto f = [&](int) {
@@ -346,8 +347,8 @@ struct IpcShare
 std::atomic<uint32_t> g_chakraThreadId = 0;
 
 namespace {
-void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
-                  bool isOnce = false)
+void CallCallbacks(const char* eventName,
+                   const std::vector<JsValue>& arguments, bool isOnce = false)
 {
   EventsGlobalState::Callbacks callbacks =
     isOnce ? g.callbacksOnce : g.callbacks;
@@ -364,8 +365,8 @@ void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
 void EventsApi::SendEvent(const char* eventName,
                           const std::vector<JsValue>& arguments)
 {
-  CallCalbacks(eventName, arguments);
-  CallCalbacks(eventName, arguments, true);
+  CallCallbacks(eventName, arguments);
+  CallCallbacks(eventName, arguments, true);
 }
 
 void EventsApi::Clear()
@@ -492,8 +493,7 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
 
 void EventsApi::SendConsoleMsgEvent(const char* msg_)
 {
-  std::string msg(msg_);
-  SkyrimPlatform::GetSingleton().AddTickTask([=] {
+  SkyrimPlatform::GetSingleton().AddTickTask([msg = std::string{ msg_ }] {
     auto obj = JsValue::Object();
     obj.SetProperty("message", JsValue::String(msg));
     EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
@@ -502,24 +502,26 @@ void EventsApi::SendConsoleMsgEvent(const char* msg_)
 
 void EventsApi::SendMenuOpen(const char* menuName)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [name = std::string{ menuName }] {
+      auto obj = JsValue::Object();
 
-    obj.SetProperty("name", JsValue::String(menuName));
+      obj.SetProperty("name", JsValue::String(name));
 
-    SendEvent("menuOpen", { JsValue::Undefined(), obj });
-  });
+      SendEvent("menuOpen", { JsValue::Undefined(), obj });
+    });
 }
 
 void EventsApi::SendMenuClose(const char* menuName)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [name = std::string{ menuName }] {
+      auto obj = JsValue::Object();
 
-    obj.SetProperty("name", JsValue::String(menuName));
+      obj.SetProperty("name", JsValue::String(name));
 
-    SendEvent("menuClose", { JsValue::Undefined(), obj });
-  });
+      SendEvent("menuClose", { JsValue::Undefined(), obj });
+    });
 }
 
 namespace {

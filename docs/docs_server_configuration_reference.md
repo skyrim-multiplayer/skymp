@@ -201,12 +201,24 @@ The name of a localizaiton file in `data/localization` that would be used by `M.
 
 ## sweetPieMinimumPlayersToStart
 
-The minimal amount of players to begin deathmatch. This setting is sweetpie only and does not affects to vanilla server. By default `sweetPieMinimumPlayersToStart` is 5.
+The minimal amount of players to begin deathmatch. This setting is sweetpie only and does not affect vanilla server. By default is 5.
 
 ```json5
 {
   // ...
   "sweetPieMinimumPlayersToStart": 5
+  // ...
+}
+```
+
+## sweetPieAllowCheats
+
+Prevents the gamemode from disabling cheats. This setting is sweetpie only and does not affect vanilla server. Default is false.
+
+```json5
+{
+  // ...
+  "sweetPieAllowCheats": true
   // ...
 }
 ```

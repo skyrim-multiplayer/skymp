@@ -44,7 +44,7 @@ public:
 
   static const char* GetFormType(MpForm* form)
   {
-    return PrettifyType(typeid(form).name());
+    return PrettifyType(typeid(*form).name());
   }
 
   virtual ~MpForm() = default;

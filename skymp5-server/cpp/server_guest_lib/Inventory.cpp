@@ -1,5 +1,6 @@
 #include "Inventory.h"
 #include "JsonUtils.h"
+#include <fmt/format.h>
 #include <tuple>
 
 bool operator==(const Inventory::EntryExtras& r,
@@ -51,10 +52,10 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
       matchingEntry == copy.entries.end() ? 0 : matchingEntry->count;
 
     if (count < e.count) {
-      std::stringstream err;
-      err << "Source inventory doesn't have enough 0x" << std::hex << e.baseId
-          << " (" << e.count << " is required while " << count << " present)";
-      throw std::runtime_error(err.str());
+      throw std::runtime_error(
+        fmt::format("Source inventory doesn't have enough {:#x} ({} is "
+                    "required while {} present)",
+                    e.baseId, e.count, count));
     }
 
     matchingEntry->count -= e.count;

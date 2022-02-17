@@ -2,8 +2,10 @@
 
 Skyrim Platform now supports rendering texts and has methods for manipulating them.
 
-`Data/Platform/Fonts/font.spritefont` is used as a font.
-See [MakeSpriteFont](https://github.com/microsoft/DirectXTK/wiki/MakeSpriteFont) if you want to compile your font into spritefont format.
+`Data/Platform/Fonts/Tavern.spritefont` is used as a font.
+`*.spritefont` is a custom format that DirectXTK library uses.
+You can convert a `*.ttf` to this format using MakeSpriteFont utility that is
+provided by DirectXTK. See [Compiling Font](#compiling-font) for details.
 
 ## Example
 ```typescript
@@ -46,3 +48,33 @@ Returns id.
 9) ```skyrimPlatform.getTextColor(textId)``` - returns an array of colors in RGBA.
 
 10) ```skyrimPlatform.getNumCreatedTexts()``` - returns the number of created texts.
+
+
+## Compiling Font
+
+To compile a font, you need `MakeSpriteFont.exe` utility from DirectXTK releases
+and to have a `*.ttf` installed in your system.
+
+```
+./MakeSpriteFont.exe "Typey McTypeface" Tavern.spritefont /FontSize:20 /CharacterRegion:32-126 /CharacterRegion:1040-1103 /CharacterRegion:1025 /CharacterRegion:1105 /DefaultCharacter:63
+```
+
+* `"Typey McTypeface"` is the internal name of `Tavern.ttf` (input font)
+* `Tavern.spritefont` is filename for output font
+* `/CharacterRegion:32-126 /DefaultCharacter:63` - default ASCII characters region with 63 (`?`) as a fallback character
+* `/CharacterRegion:1040-1103 /CharacterRegion:1025 /CharacterRegion:1105` - Russian alphabet
+
+You can use Python (or whatever tool you like, including
+[web-services](https://onlineutf8tools.com/convert-utf8-to-code-points))
+to find out characters mapping:
+```
+$ python3
+>>> ord('Ё')
+1025
+>>> chr(1105)
+'ё'
+```
+
+More info and downloads:
+* [DirectXTK wiki](https://github.com/microsoft/DirectXTK/wiki/MakeSpriteFont)
+* [Download `MakeSpriteFont.exe` from DirectXTK releases page](https://github.com/microsoft/DirectXTK/releases)
