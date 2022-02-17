@@ -8,6 +8,8 @@ import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRou
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
   readonly applePieFormId = 0x00064B43;
+  readonly goldOreFormId = 0x0005ACDE;
+  readonly silverOreFormId = 0x0005ACDF;
 
   readonly quitGamePortal = '42f3f:SweetPie.esp';
   readonly neutralPortal = '42f70:SweetPie.esp';
@@ -129,8 +131,6 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, targetActorId: number): 'continue' | 'blockActivation' {
-    const cn = `<${targetObjectDesc}>`;
-    this.controller.sendChatMessage(casterActorId, 'yo, counter ' + cn + ': ' + this.controller.incrementCounter(casterActorId, cn, 1));
     if (targetObjectDesc === this.quitGamePortal) {
       this.controller.quitGame(casterActorId);
       return 'continue';
@@ -282,6 +282,13 @@ export class SweetPieGameModeListener implements GameModeListener {
             this.sendRoundChatMessage(round, sprintf(this.remainingFightTimeMessage[0], secondsRemaining));
           }
           if (round.secondsPassed > this.runningTimerMaximum) {
+            if (round.players) {
+              for (const [player,] of round.players) {
+                const numGamesBefore = this.controller.incrementCounter(player, 'finishedDeathmatches', 1);
+                const rewardFormId = (numGamesBefore < 3 ? this.goldOreFormId : this.silverOreFormId);
+                this.controller.addItem(player, rewardFormId, 1);
+              }
+            }
             const winners = determineDeathMatchWinners(round);
             if (winners.length === 0) {
               this.sendRoundChatMessage(round, ...this.noWinnerMessage);
