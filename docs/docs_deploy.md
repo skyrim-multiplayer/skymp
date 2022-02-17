@@ -30,8 +30,8 @@ This guide shows how to set it up.
   **Note:** this effectively means root access, so be careful with users you
   let run deploy jobs (=users you give a write access to the repository).
 * A directory `~/skymp-server-<branch>` should be set up for every branch you
-  wish to deploy to this server. See 'setting up branch on a server' below. \
-  _Note_: currently, only `indev` branch is hardcoded.
+  wish to deploy to this server (i.e., every option that should be available
+  in 'Deploy' action). See 'setting up branch on a server' below.
 
 ### Setup access for GitHub
 

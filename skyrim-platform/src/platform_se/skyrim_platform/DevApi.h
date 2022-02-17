@@ -24,10 +24,10 @@ void DisableCtrlPrtScnHotkey();
 using NativeExportsMap =
   std::map<std::string, std::function<JsValue(const JsValue&)>>;
 
-extern std::shared_ptr<JsEngine>* jsEngine;
+extern std::shared_ptr<JsEngine> jsEngine;
 extern NativeExportsMap nativeExportsMap;
 
-inline void Register(JsValue& exports, std::shared_ptr<JsEngine>* jsEngine,
+inline void Register(JsValue& exports, std::shared_ptr<JsEngine> jsEngine,
                      NativeExportsMap nativeExportsMap,
                      const std::vector<const char*>& builtScriptsDir)
 {

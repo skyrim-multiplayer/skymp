@@ -9,11 +9,11 @@ TextsCollection::~TextsCollection()
 {
 }
 
-int TextsCollection::CreateText(double xPos, double yPos, std::string str,
+int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
                                 std::array<double, 4> color = { 0.f, 0.f, 1.f,
                                                                 1.f })
 {
-  TextToDraw text{ xPos, yPos, str, color };
+  TextToDraw text{ xPos, yPos, std::move(str), std::move(color) };
 
   textCount++;
   std::pair<int, TextToDraw> arg = { textCount, text };
@@ -34,9 +34,9 @@ void TextsCollection::SetTextPos(int textId, float xPos, float yPos)
   texts.at(textId).y = yPos;
 }
 
-void TextsCollection::SetTextString(int textId, std::string str)
+void TextsCollection::SetTextString(int textId, std::wstring str)
 {
-  texts.at(textId).string = str;
+  texts.at(textId).string = std::move(str);
 }
 
 void TextsCollection::SetTextColor(int textId, std::array<double, 4> color)
@@ -66,7 +66,7 @@ std::pair<double, double> TextsCollection::GetTextPos(int textId) const
   return positions;
 }
 
-std::string TextsCollection::GetTextString(int textId) const
+const std::wstring& TextsCollection::GetTextString(int textId) const
 {
   return texts.at(textId).string;
 }

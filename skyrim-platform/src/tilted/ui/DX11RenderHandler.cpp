@@ -69,6 +69,9 @@ void DX11RenderHandler::Render(
 
   if (Visible()) {
     obtainTextsToDraw([&](const TextToDraw& textToDraw) {
+      static_assert(
+        std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,
+                       wchar_t>);
       auto origin = DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(
                       textToDraw.string.c_str())) /
         2;
@@ -129,7 +132,7 @@ void DX11RenderHandler::Create()
   m_pStates = std::make_unique<DirectX::CommonStates>(m_pDevice.Get());
 
   m_pSpriteFont = std::make_unique<DirectX::SpriteFont>(
-    m_pDevice.Get(), L"Data\\Platform\\Fonts\\font.spritefont");
+    m_pDevice.Get(), L"Data/Platform/Fonts/Tavern.spritefont");
 
   if (FAILED(DirectX::CreateWICTextureFromFile(
         m_pDevice.Get(), m_pParent->GetCursorPathPNG().c_str(), nullptr,
