@@ -5,11 +5,12 @@ vcpkg_from_github(
     SHA512 286876ac975e50b13a8ba433a79c7061887d3a2c907f397211cabed9464d24d0c72eb6da8ce2bcb49b4ab53b4f184892d9b562be9368ca3b98fdef42a1825796
     HEAD_REF master
     PATCHES
-      objectrefr-make_moverefr_public.patch
-      variable-make_members_public.patch
-      stackframe-uncomment_top_args.patch
-      extradatalist-make_members_public.patch
-      update-fmt.patch
+      patches/objectrefr-make_moverefr_public.patch
+      patches/variable-make_members_public.patch
+      patches/stackframe-uncomment_top_args.patch
+      patches/extradatalist-make_members_public.patch
+      patches/update-fmt.patch
+      patches/expand-alias.patch
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})
