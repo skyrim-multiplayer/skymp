@@ -10,7 +10,7 @@ vcpkg_from_github(
       patches/stackframe-uncomment_top_args.patch
       patches/extradatalist-make_members_public.patch
       patches/update-fmt.patch
-      patches/expand-alias.patch
+      patches/expand-alias-se.patch
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})
