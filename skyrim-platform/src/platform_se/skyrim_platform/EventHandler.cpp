@@ -672,7 +672,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "caster", e->activeRef.get(), "ObjectReference");
+    AddObjProperty(&obj, "cause", e->activeRef.get(), "ObjectReference");
     AddObjProperty(&obj, "target", e->ref.get(), "ObjectReference");
 
     if (e->opened) {
@@ -1010,7 +1010,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+    AddObjProperty(&obj, "cause", e->caster.get(), "ObjectReference");
     AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
 
     SendEvent("triggerEnter", obj);
@@ -1031,7 +1031,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+    AddObjProperty(&obj, "cause", e->caster.get(), "ObjectReference");
     AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
 
     SendEvent("trigger", obj);
@@ -1053,7 +1053,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([=] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+    AddObjProperty(&obj, "cause", e->caster.get(), "ObjectReference");
     AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
 
     SendEvent("triggerLeave", obj);

@@ -8,17 +8,7 @@ Skyrim Platform does not attach scripts to objects, so these events are availabl
 
 ## Subscribing to events
 
-With `on` or `once`, you can subscribe to an event. You get an `EventHandle` object as the return. With the `unsubscribe` method you can unsubscribe from an event by passing this object as an argument.
-
-```typescript
-import { on, unsubscribe } from "skyrimPlatform";
-
-let handle = on('disarmedEvent', (event) => {
-  printConsole(`disarmedEvent`);
-  unsubscribe(handle);
-})
-```
-
+With `on`, you can subscribe to an event forever.
 
 ```typescript
 import { on } from "skyrimPlatform";
@@ -40,7 +30,21 @@ once("equip", (event) => {
 });
 ```
 
-The variable `event` always contains variables related to the event to which you are subscribed.
+Both `on` and `once` return an `EventHandle` object, which contains unique subscription id and event name: `{ uid, eventName }`.
+Using `EventHandle` is optional, but it is required if you want to unsubscribe from the event later in your code.
+
+```typescript
+import { on, unsubscribe } from "skyrimPlatform";
+
+const handle = on("equip", (event) => {
+  printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
+  printConsole(`object: ${event.baseObj.getName()}`);
+});
+
+unsubscribe(handle);
+```
+
+The variable `event` contains variables related to the event (*if they exist*) to which you are subscribed.
 
 # List of new events
 
@@ -212,92 +216,116 @@ Called when a saved game is loaded.
 
 More info and samples for these will be added later:
 
+- action event group
+  - `actionBeginDraw`
+  - `actionBeginSheathe`
+  - `actionBowDraw`
+  - `actionBowRelease`
+  - `actionEndDraw`
+  - `actionEndSheathe`
+  - `actionSpellCast`
+  - `actionSpellFire`
+  - `actionVoiceCast`
+  - `actionVoiceFire`
+  - `actionWeaponSwing`
 - `activate`
+- `actorKill`
+- `bookRead`
+- `browserMessage`
+- input event group
+  - `buttonEvent`
+  - `mouseMove`
+  - `thumbstickEvent`
+  - `kinectEvent`
+  - `deviceConnect`
+- `cameraStateChanged`
+- cell event group
+  - `cellAttach`
+  - `cellDetach`
+  - `cellFullyLoaded`
 - `combatState`
 - `containerChanged`
-- `deathEnd`
-- `deathStart`
-- `grabRelease`
-- `hit`
-- `lockChanged`
-- `magicEffectApply`
-- `moveAttachDetach`
-- `objectLoaded`
-- `reset`
-- `scriptInit`
-- `switchRaceComplete`
-- `trackedStats`
-- `uniqueIdChange`
-- `waitStop`
-- `spellCast`
-- `open`
-- `close`
-- `questInit`
-- `questStart`
-- `questStop`
-- `questStage`
-- `trigger`
-- `triggerEnter`
-- `triggerLeave`
-- `sleepStart`
-- `sleepStop`
-- `locationChanged`
-- `bookRead`
-- `sell`
-- `furnitureEnter`
-- `furnitureExit`
-- `wardHit`
-- `packageStart`
-- `packageChange`
-- `packageEnd`
-- `enterBleedout`
-- `destructionStageChanged`
-- `sceneAction`
-- `playerBowShot`
-- `fastTravelEnd`
-- `perkEntryRun`
-- `translationFailed`
-- `translationAlmostCompleted`
-- `translationCompleted`
-- `actionWeaponSwing`
-- `actionBeginDraw`
-- `actionEndDraw`
-- `actionBowDraw`
-- `actionBowRelease`
-- `actionBeginSheathe`
-- `actionEndSheathe`
-- `actionSpellCast`
-- `actionSpellFire`
-- `actionVoiceCast`
-- `actionVoiceFire`
-- `cameraStateChanged`
-- `crosshairRefChanged`
-- `niNodeUpdate`
-- `modEvent`
-- `positionPlayer`
-- `footstep`
-- `skyrimLoaded`
-- `newGame`
-- `preLoadGame`
-- `postLoadGame`
-- `saveGame`
-- `deleteGame`
-- `buttonEvent`
-- `mouseMove`
-- `thumbstickEvent`
-- `kinectEvent`
-- `deviceConnect`
-- `actorKill`
 - `criticalHit`
+- `crosshairRefChanged`
+- death event group
+  - `deathStart`
+  - `deathEnd`
+- `destructionStageChanged`
 - `disarmedEvent`
 - `dragonSoulsGained`
+- `enterBleedout`
+- `fastTravelEnd`
+- `footstep`
+- furniture event group
+  - `furnitureEnter`
+  - `furnitureExit`
+- `grabRelease`
+- `hit`
+- `ipcMessage`
 - `itemHarvested`
 - `levelIncrease`
-- `locationDiscovery`
+- location event group
+  - `locationChanged`
+  - `locationDiscovery`
+- `lockChanged`
+- `magicEffectApply`
+- menu event group
+  - `menuOpen`
+  - `menuClose`
+- SKSE
+  - `modEvent`
+  - `niNodeUpdate`
+  - `skyrimLoaded`
+- `moveAttachDetach`
+- `objectLoaded`
+- open\close event group
+  - `open`
+  - `close`
+- package event group
+  - `packageStart`
+  - `packageEnd`
+  - `packageChange`
+- `perkEntryRun`
+- `playerBowShot`
+- `positionPlayer`
+- quest event group
+  - `questInit`
+  - `questStart`
+  - `questStop`
+  - `questStage`
+- `reset`
+- save\load event group
+  - `saveGame`
+  - `loadGame`
+  - `postLoadGame`
+  - `preLoadGame`
+  - `deleteGame`
+  - `newGame`
+- `sceneAction`
+- `scriptInit`
+- `sell`
 - `shoutAttack`
 - `skillIncrease`
+- `sleepStart`
+- `sleepStop`
 - `soulsTrapped`
+- `spellCast`
 - `spellsLearned`
+- `switchRaceComplete`
+- `trackedStats`
+- translation event group
+  - `translationAlmostCompleted`
+  - `translationCompleted`
+  - `translationFailed`
+- trigger event group
+  - `trigger`
+  - `triggerEnter`
+  - `triggerLeave`
+- `uniqueIdChange`
+- wait event group
+  - `waitStart`
+  - `waitStop`
+- `wardHit`
 
 [Cloaks]: cookbook.md#getting-rid-of-cloaks
 [Events]: events.md
