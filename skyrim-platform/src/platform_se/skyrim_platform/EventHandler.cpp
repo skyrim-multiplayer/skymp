@@ -1050,7 +1050,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([=] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "cause", e->caster.get(), "ObjectReference");
