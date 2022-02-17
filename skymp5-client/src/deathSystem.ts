@@ -7,6 +7,8 @@ import {
   once,
   ObjectReference,
   Utility,
+  writeLogs,
+  on,
 } from "skyrimPlatform";
 import { setLocalDamageMult, defaultLocalDamageMult } from "./index";
 import { AnimationEventName } from "./animation";
@@ -29,6 +31,19 @@ hooks.sendAnimationEvent.add(
   0,
   0xffffffff,
   "KillMove*"
+);
+
+// Blocking stagger animations
+hooks.sendAnimationEvent.add(
+  {
+    enter(ctx) {
+      ctx.animEventName = "";
+    },
+    leave() {},
+  },
+  0xff000000,
+  0xffffffff,
+  "staggerStart"
 );
 
 hooks.sendAnimationEvent.add(
