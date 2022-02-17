@@ -39,6 +39,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     'wait': 'Ожидание игроков...',
     'warmup': 'Разминка',
     'running': 'Игра идет, подождите',
+    'finished': 'Игра идет, подождите',
   };
   readonly commands: Command[] = [
     {
@@ -52,6 +53,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
+  roundEndTimerMaximum = 5;
 
   // TODO: Unhardcode this name
   readonly hallSpawnPointName = 'hall:spawnPoint';
@@ -302,6 +304,11 @@ export class SweetPieGameModeListener implements GameModeListener {
                 this.sendRoundChatMessage(round, sprintf(this.determineWinnerMessage[0], this.controller.getName(winner), winnerScore));
               };
             }
+            round.secondsPassed = 0;
+            round.state = 'finished';
+          }
+        } else if (round.state === 'finished') {
+          if (round.secondsPassed > this.runningTimerMaximum) {
             this.resetRound(this.rounds.indexOf(round));
           }
         }
