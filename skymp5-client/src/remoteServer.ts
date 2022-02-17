@@ -1,11 +1,11 @@
-import { Actor } from 'skyrimPlatform';
+import { Actor } from 'skyrimPlatform'
 /* eslint-disable @typescript-eslint/no-empty-function */
-import * as networking from "./networking";
-import { FormModel, WorldModel } from "./model";
-import { MsgHandler } from "./msgHandler";
-import { ModelSource } from "./modelSource";
-import { SendTarget } from "./sendTarget";
-import * as messages from "./messages";
+import * as networking from './networking'
+import { FormModel, WorldModel } from './model'
+import { MsgHandler } from './msgHandler'
+import { ModelSource } from './modelSource'
+import { SendTarget } from './sendTarget'
+import * as messages from './messages'
 import {
   Game,
   once,
@@ -23,65 +23,63 @@ import {
   Ui,
   settings,
   Armor,
-} from "skyrimPlatform";
-import * as loadGameManager from "./loadGameManager";
-import { applyInventory, Inventory } from "./inventory";
-import { isBadMenuShown } from "./equipment";
-import { Movement } from "./movement";
-import { IdManager } from "./idManager";
-import { applyAppearanceToPlayer } from "./appearance";
-import * as spSnippet from "./spSnippet";
-import * as sp from "skyrimPlatform";
-import { localIdToRemoteId, remoteIdToLocalId, WorldView } from "./view";
-import * as updateOwner from "./updateOwner";
-import { getActorValues, setActorValuePercentage } from "./actorvalues";
-import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
-import { nameof } from "./utils";
-import { defaultLocalDamageMult, setLocalDamageMult } from "./index";
-import { AuthGameData } from './authModel';
-import * as netInfo from "./netInfoSystem";
+} from 'skyrimPlatform'
+import * as loadGameManager from './loadGameManager'
+import { applyInventory, Inventory } from './inventory'
+import { isBadMenuShown } from './equipment'
+import { Movement } from './movement'
+import { IdManager } from './idManager'
+import { applyAppearanceToPlayer } from './appearance'
+import * as spSnippet from './spSnippet'
+import * as sp from 'skyrimPlatform'
+import { localIdToRemoteId, remoteIdToLocalId, WorldView } from './view'
+import * as updateOwner from './updateOwner'
+import { getActorValues, setActorValuePercentage } from './actorvalues'
+import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem'
+import { nameof } from './utils'
+import { defaultLocalDamageMult, setLocalDamageMult } from './index'
+import { AuthGameData } from './authModel'
+import * as netInfo from './netInfoSystem'
 
 //
 // eventSource system
 //
 
 const setupEventSource = (ctx: any) => {
-  once("update", () => {
+  once('update', () => {
     try {
-      ctx._fn(ctx);
-      printConsole(`'eventSources.${ctx._eventName}' - Added`);
+      ctx._fn(ctx)
+      printConsole(`'eventSources.${ctx._eventName}' - Added`)
     } catch (e) {
-      printConsole(`'eventSources.${ctx._eventName}' -`, e);
+      printConsole(`'eventSources.${ctx._eventName}' -`, e)
     }
-  });
-};
+  })
+}
 
 // Handle hot reload for eventSoucres
-if (Array.isArray(storage["eventSourceContexts"])) {
-  storage["eventSourceContexts"] = storage["eventSourceContexts"].filter(
-    (ctx: Record<string, unknown>) => !ctx._expired
-  );
-  (storage["eventSourceContexts"] as any).forEach((ctx: any) => {
-    setupEventSource(ctx);
-  });
+if (Array.isArray(storage['eventSourceContexts'])) {
+  storage['eventSourceContexts'] = storage['eventSourceContexts'].filter((ctx: Record<string, unknown>) => !ctx._expired)
+  ;(storage['eventSourceContexts'] as any).forEach((ctx: any) => {
+    setupEventSource(ctx)
+  })
 }
 
 //
 //
 //
 
-let loggingStartMoment = 0;
-on("tick", () => {
-  const maxLoggingDelay = 5000;
+let loggingStartMoment = 0
+on('tick', () => {
+  const maxLoggingDelay = 5000
   if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
-    printConsole("Logging in failed. Reconnecting.");
-    networking.reconnect();
-    loggingStartMoment = 0;
+    printConsole('Logging in failed. Reconnecting.')
+    networking.reconnect()
+    loggingStartMoment = 0
   }
-});
+})
 
 class SpawnTask {
-  running = false;
+  running = false
 }
 
 const sendBrowserToken = () => {
@@ -89,117 +87,110 @@ const sendBrowserToken = () => {
     {
       t: messages.MsgType.CustomPacket,
       content: {
-        customPacketType: "browserToken",
+        customPacketType: 'browserToken',
         token: browser.getToken(),
       },
     },
-    true
-  );
-};
+    true,
+  )
+}
 
 const loginWithSkympIoCredentials = () => {
-  loggingStartMoment = Date.now();
-  const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
+  loggingStartMoment = Date.now()
+  const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined
   if (authData?.local) {
-    printConsole(`Logging in offline mode, profileId = ${authData.local.profileId}`);
+    printConsole(`Logging in offline mode, profileId = ${authData.local.profileId}`)
     networking.send(
       {
         t: messages.MsgType.CustomPacket,
         content: {
-          customPacketType: "loginWithSkympIo",
+          customPacketType: 'loginWithSkympIo',
           gameData: {
             profileId: authData.local.profileId,
           },
         },
       },
-      true
-    );
-    return;
+      true,
+    )
+    return
   }
   if (authData?.remote) {
-    printConsole("Logging in as skymp.io user");
+    printConsole('Logging in as skymp.io user')
     networking.send(
       {
         t: messages.MsgType.CustomPacket,
         content: {
-          customPacketType: "loginWithSkympIo",
+          customPacketType: 'loginWithSkympIo',
           gameData: {
             session: authData.remote.session,
           },
         },
       },
-      true
-    );
-    return;
+      true,
+    )
+    return
   }
 
-  printConsole("Not found authentication method");
-};
+  printConsole('Not found authentication method')
+}
 
 export const getPcInventory = (): Inventory => {
-  const res = storage["pcInv"];
-  if (typeof res === "object" && (res as any)["entries"]) {
-    return res as unknown as Inventory;
+  const res = storage['pcInv']
+  if (typeof res === 'object' && (res as any)['entries']) {
+    return res as unknown as Inventory
   }
-  return null as unknown as Inventory;
-};
+  return null as unknown as Inventory
+}
 
 const setPcInventory = (inv: Inventory): void => {
-  storage["pcInv"] = inv;
-};
+  storage['pcInv'] = inv
+}
 
-let pcInvLastApply = 0;
-on("update", () => {
-  if (isBadMenuShown()) return;
+let pcInvLastApply = 0
+on('update', () => {
+  if (isBadMenuShown()) return
   if (Date.now() - pcInvLastApply > 5000) {
-    pcInvLastApply = Date.now();
-    const pcInv = getPcInventory();
-    if (pcInv) applyInventory(Game.getPlayer() as Actor, pcInv, false, true);
+    pcInvLastApply = Date.now()
+    const pcInv = getPcInventory()
+    if (pcInv) applyInventory(Game.getPlayer() as Actor, pcInv, false, true)
   }
-});
+})
 
 const unequipIronHelmet = () => {
-  const ironHelment = Armor.from(Game.getFormEx(0x00012e4d));
-  const pl = Game.getPlayer();
-  if (pl) pl.unequipItem(ironHelment, false, true);
-};
+  const ironHelment = Armor.from(Game.getFormEx(0x00012e4d))
+  const pl = Game.getPlayer()
+  if (pl) pl.unequipItem(ironHelment, false, true)
+}
 
 export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   setInventory(msg: messages.SetInventory): void {
-    once("update", () => {
-      setPcInventory(msg.inventory);
-      pcInvLastApply = 0;
-    });
+    once('update', () => {
+      setPcInventory(msg.inventory)
+      pcInvLastApply = 0
+    })
   }
 
   openContainer(msg: messages.OpenContainer): void {
-    once("update", async () => {
-      await Utility.wait(0.1); // Give a chance to update inventory
-      (
-        ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference
-      ).activate(Game.getPlayer(), true);
-      (async () => {
-        while (!Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
-        while (Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
+    once('update', async () => {
+      await Utility.wait(0.1) // Give a chance to update inventory
+      ;(ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference).activate(Game.getPlayer(), true)
+      ;(async () => {
+        while (!Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1)
+        while (Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1)
         networking.send(
           {
             t: messages.MsgType.Activate,
             data: { caster: 0x14, target: msg.target },
           },
-          true
-        );
-      })();
-    });
+          true,
+        )
+      })()
+    })
   }
 
   teleport(msg: messages.Teleport): void {
-    once("update", () => {
-      printConsole(
-        "Teleporting...",
-        msg.pos,
-        "cell/world is",
-        msg.worldOrCell.toString(16)
-      );
+    once('update', () => {
+      printConsole('Teleporting...', msg.pos, 'cell/world is', msg.worldOrCell.toString(16))
       // todo: think about track ragdoll state of player
       safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
         TESModPlatform.moveRefrToPosition(
@@ -211,25 +202,25 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           msg.pos[2],
           msg.rot[0],
           msg.rot[1],
-          msg.rot[2]
-        );
-      });
-    });
+          msg.rot[2],
+        )
+      })
+    })
   }
 
   createActor(msg: messages.CreateActorMessage): void {
-    loggingStartMoment = 0;
+    loggingStartMoment = 0
 
-    const i = this.getIdManager().allocateIdFor(msg.idx);
-    if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
+    const i = this.getIdManager().allocateIdFor(msg.idx)
+    if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1
 
-    let movement: Movement = null as unknown as Movement;
+    let movement: Movement = null as unknown as Movement
     if ((msg.refrId as number) >= 0xff000000) {
       movement = {
         pos: msg.transform.pos,
         rot: msg.transform.rot,
         worldOrCell: msg.transform.worldOrCell,
-        runMode: "Standing",
+        runMode: 'Standing',
         direction: 0,
         isInJumpState: false,
         isSneaking: false,
@@ -237,7 +228,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isWeapDrawn: false,
         isDead: false,
         healthPercentage: 1.0,
-      };
+      }
     }
 
     this.worldModel.forms[i] = {
@@ -247,65 +238,61 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       numAppearanceChanges: 0,
       baseId: msg.baseId,
       refrId: msg.refrId,
-    };
+    }
     if (msg.isMe) {
-      updateOwner.setOwnerModel(this.worldModel.forms[i]);
+      updateOwner.setOwnerModel(this.worldModel.forms[i])
     }
 
     if (msg.appearance) {
-      this.worldModel.forms[i].appearance = msg.appearance;
+      this.worldModel.forms[i].appearance = msg.appearance
     }
 
     if (msg.equipment) {
-      this.worldModel.forms[i].equipment = msg.equipment;
+      this.worldModel.forms[i].equipment = msg.equipment
     }
 
     if (msg.props) {
       for (const propName in msg.props) {
-        const i = this.getIdManager().getId(msg.idx);
-        (this.worldModel.forms[i] as Record<string, unknown>)[propName] =
-          msg.props[propName];
+        const i = this.getIdManager().getId(msg.idx)
+        ;(this.worldModel.forms[i] as Record<string, unknown>)[propName] = msg.props[propName]
       }
     }
 
-    if (msg.isMe) this.worldModel.playerCharacterFormIdx = i;
+    if (msg.isMe) this.worldModel.playerCharacterFormIdx = i
 
     // TODO: move to a separate module
 
     if (msg.props && !msg.props.isHostedByOther) {
     }
 
-    if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
-      this.setRaceMenuOpen({ type: "setRaceMenuOpen", open: true });
+    if (msg.props && msg.props.isRaceMenuOpen && msg.isMe) this.setRaceMenuOpen({ type: 'setRaceMenuOpen', open: true })
 
     const applyPcInv = () => {
       applyInventory(
         Game.getPlayer() as Actor,
         msg.equipment
           ? {
-            entries: msg.equipment.inv.entries.filter(
-              (x) => !!Armor.from(Game.getFormEx(x.baseId))
-            ),
-          }
+              entries: msg.equipment.inv.entries.filter((x) => !!Armor.from(Game.getFormEx(x.baseId))),
+            }
           : { entries: [] },
-        false
-      );
+        false,
+      )
       if (msg.props && msg.props.inventory)
         this.setInventory({
-          type: "setInventory",
+          type: 'setInventory',
           inventory: (msg.props as any).inventory as Inventory,
-        });
-    };
+        })
+    }
 
     if (msg.isMe) {
-      const task = new SpawnTask();
-      once("update", () => {
+      const task = new SpawnTask()
+      once('update', () => {
         if (!task.running) {
-          task.running = true;
-          printConsole("Using moveRefrToPosition to spawn player");
-          (async () => {
+          task.running = true
+          printConsole('Using moveRefrToPosition to spawn player')
+          ;(async () => {
             while (true) {
-              printConsole("Spawning...");
+              printConsole('Spawning...')
               TESModPlatform.moveRefrToPosition(
                 Game.getPlayer(),
                 Cell.from(Game.getFormEx(msg.transform.worldOrCell)),
@@ -315,221 +302,218 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 msg.transform.pos[2],
                 msg.transform.rot[0],
                 msg.transform.rot[1],
-                msg.transform.rot[2]
-              );
-              await Utility.wait(1);
-              const pl = Game.getPlayer();
-              if (!pl) break;
-              const pos = [pl.getPositionX(), pl.getPositionY(), pl.getPositionZ()];
-              const sqr = (x: number) => x * x;
-              const distance = Math.sqrt(sqr(pos[0] - msg.transform.pos[0]) + sqr(pos[1] - msg.transform.pos[1]));
+                msg.transform.rot[2],
+              )
+              await Utility.wait(1)
+              const pl = Game.getPlayer()
+              if (!pl) break
+              const pos = [pl.getPositionX(), pl.getPositionY(), pl.getPositionZ()]
+              const sqr = (x: number) => x * x
+              const distance = Math.sqrt(sqr(pos[0] - msg.transform.pos[0]) + sqr(pos[1] - msg.transform.pos[1]))
               if (distance < 256) {
-                break;
+                break
               }
             }
-          })();
+          })()
           // Unfortunatelly it requires two calls to work
-          Utility.wait(1).then(applyPcInv);
-          Utility.wait(1.3).then(applyPcInv);
+          Utility.wait(1).then(applyPcInv)
+          Utility.wait(1.3).then(applyPcInv)
           // Note: appearance part was copy-pasted
           if (msg.appearance) {
-            applyAppearanceToPlayer(msg.appearance);
+            applyAppearanceToPlayer(msg.appearance)
             if (msg.appearance.isFemale)
               // Fix gender-specific walking anim
-              (Game.getPlayer() as Actor).resurrect();
+              (Game.getPlayer() as Actor).resurrect()
           }
         }
 
         if (msg.props) {
           const baseActorValues = new Map<string, unknown>([
-            ["healRate", msg.props.healRate],
-            ["healRateMult", msg.props.healRateMult],
-            ["health", msg.props.health],
-            ["magickaRate", msg.props.magickaRate],
-            ["magickaRateMult", msg.props.magickaRateMult],
-            ["magicka", msg.props.magicka],
-            ["staminaRate", msg.props.staminaRate],
-            ["staminaRateMult", msg.props.staminaRateMult],
-            ["stamina", msg.props.stamina],
-            ["healthPercentage", msg.props.healthPercentage],
-            ["staminaPercentage", msg.props.staminaPercentage],
-            ["magickaPercentage", msg.props.magickaPercentage],
-          ]);
+            ['healRate', msg.props.healRate],
+            ['healRateMult', msg.props.healRateMult],
+            ['health', msg.props.health],
+            ['magickaRate', msg.props.magickaRate],
+            ['magickaRateMult', msg.props.magickaRateMult],
+            ['magicka', msg.props.magicka],
+            ['staminaRate', msg.props.staminaRate],
+            ['staminaRateMult', msg.props.staminaRateMult],
+            ['stamina', msg.props.stamina],
+            ['healthPercentage', msg.props.healthPercentage],
+            ['staminaPercentage', msg.props.staminaPercentage],
+            ['magickaPercentage', msg.props.magickaPercentage],
+          ])
 
-          const player = Game.getPlayer();
+          const player = Game.getPlayer()
           if (player) {
             baseActorValues.forEach((value, key) => {
-              if (typeof value === "number") {
-                if (key.includes("Percentage")) {
-                  const subKey = key.replace("Percentage", "");
-                  const subValue = baseActorValues.get(subKey);
-                  if (typeof subValue === "number") {
-                    setActorValuePercentage(player, subKey, value);
+              if (typeof value === 'number') {
+                if (key.includes('Percentage')) {
+                  const subKey = key.replace('Percentage', '')
+                  const subValue = baseActorValues.get(subKey)
+                  if (typeof subValue === 'number') {
+                    setActorValuePercentage(player, subKey, value)
                   }
                 } else {
-                  player.setActorValue(key, value);
+                  player.setActorValue(key, value)
                 }
               }
-            });
+            })
           }
         }
-      });
-      once("tick", () => {
-        once("tick", () => {
+      })
+      once('tick', () => {
+        once('tick', () => {
           if (!task.running) {
-            task.running = true;
-            printConsole("Using loadGame to spawn player");
-            printConsole(
-              "skinColorFromServer:",
-              msg.appearance ? msg.appearance.skinColor.toString(16) : undefined
-            );
+            task.running = true
+            printConsole('Using loadGame to spawn player')
+            printConsole('skinColorFromServer:', msg.appearance ? msg.appearance.skinColor.toString(16) : undefined)
             loadGameManager.loadGame(
               msg.transform.pos,
               msg.transform.rot,
               msg.transform.worldOrCell,
               msg.appearance
                 ? {
-                  name: msg.appearance.name,
-                  raceId: msg.appearance.raceId,
-                  face: {
-                    hairColor: msg.appearance.hairColor,
-                    bodySkinColor: msg.appearance.skinColor,
-                    headTextureSetId: msg.appearance.headTextureSetId,
-                    headPartIds: msg.appearance.headpartIds,
-                    presets: msg.appearance.presets,
-                  },
-                }
-                : undefined
-            );
-            once("update", () => {
-              applyPcInv();
-              Utility.wait(0.3).then(applyPcInv);
+                    name: msg.appearance.name,
+                    raceId: msg.appearance.raceId,
+                    face: {
+                      hairColor: msg.appearance.hairColor,
+                      bodySkinColor: msg.appearance.skinColor,
+                      headTextureSetId: msg.appearance.headTextureSetId,
+                      headPartIds: msg.appearance.headpartIds,
+                      presets: msg.appearance.presets,
+                    },
+                  }
+                : undefined,
+            )
+            once('update', () => {
+              applyPcInv()
+              Utility.wait(0.3).then(applyPcInv)
               // Note: appearance part was copy-pasted
               if (msg.appearance) {
-                applyAppearanceToPlayer(msg.appearance);
+                applyAppearanceToPlayer(msg.appearance)
                 if (msg.appearance.isFemale)
                   // Fix gender-specific walking anim
-                  (Game.getPlayer() as Actor).resurrect();
+                  (Game.getPlayer() as Actor).resurrect()
               }
-            });
+            })
           }
-        });
-      });
+        })
+      })
     }
   }
 
   destroyActor(msg: messages.DestroyActorMessage): void {
-    const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i] = null as unknown as FormModel;
+    const i = this.getIdManager().getId(msg.idx)
+    this.worldModel.forms[i] = null as unknown as FormModel
 
     // Shrink to fit
     while (1) {
-      const length = this.worldModel.forms.length;
-      if (!length) break;
-      if (this.worldModel.forms[length - 1]) break;
-      this.worldModel.forms.length = length - 1;
+      const length = this.worldModel.forms.length
+      if (!length) break
+      if (this.worldModel.forms[length - 1]) break
+      this.worldModel.forms.length = length - 1
     }
 
     if (this.worldModel.playerCharacterFormIdx === i) {
-      this.worldModel.playerCharacterFormIdx = -1;
+      this.worldModel.playerCharacterFormIdx = -1
 
       // TODO: move to a separate module
-      once("update", () => Game.quitToMainMenu());
+      once('update', () => Game.quitToMainMenu())
     }
 
-    this.getIdManager().freeIdFor(msg.idx);
+    this.getIdManager().freeIdFor(msg.idx)
   }
 
   UpdateMovement(msg: messages.UpdateMovementMessage): void {
-    const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].movement = msg.data;
+    const i = this.getIdManager().getId(msg.idx)
+    this.worldModel.forms[i].movement = msg.data
     if (!this.worldModel.forms[i].numMovementChanges) {
-      this.worldModel.forms[i].numMovementChanges = 0;
+      this.worldModel.forms[i].numMovementChanges = 0
     }
-    (this.worldModel.forms[i].numMovementChanges as number)++;
+    ;(this.worldModel.forms[i].numMovementChanges as number)++
   }
 
   UpdateAnimation(msg: messages.UpdateAnimationMessage): void {
-    const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].animation = msg.data;
+    const i = this.getIdManager().getId(msg.idx)
+    this.worldModel.forms[i].animation = msg.data
   }
 
   UpdateAppearance(msg: messages.UpdateAppearanceMessage): void {
-    const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].appearance = msg.data;
+    const i = this.getIdManager().getId(msg.idx)
+    this.worldModel.forms[i].appearance = msg.data
     if (!this.worldModel.forms[i].numAppearanceChanges) {
-      this.worldModel.forms[i].numAppearanceChanges = 0;
+      this.worldModel.forms[i].numAppearanceChanges = 0
     }
-    (this.worldModel.forms[i].numAppearanceChanges as number)++;
+    ;(this.worldModel.forms[i].numAppearanceChanges as number)++
   }
 
   UpdateEquipment(msg: messages.UpdateEquipmentMessage): void {
-    const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].equipment = msg.data;
+    const i = this.getIdManager().getId(msg.idx)
+    this.worldModel.forms[i].equipment = msg.data
   }
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
-    const i = this.getIdManager().getId(msg.idx);
-    const form = this.worldModel.forms[i];
-    (form as Record<string, unknown>)[msg.propName] =
-      msg.data;
+    const i = this.getIdManager().getId(msg.idx)
+    const form = this.worldModel.forms[i]
+    ;(form as Record<string, unknown>)[msg.propName] = msg.data
   }
 
   DeathStateContainer(msg: messages.DeathStateContainerMessage): void {
-    once("update", () => printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`));
-    if (msg.tIsDead.propName !== nameof<FormModel>("isDead") || typeof msg.tIsDead.data !== "boolean") return;
+    once('update', () => printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`))
+    if (msg.tIsDead.propName !== nameof<FormModel>('isDead') || typeof msg.tIsDead.data !== 'boolean') return
 
     if (msg.tChangeValues) {
-      this.ChangeValues(msg.tChangeValues);
+      this.ChangeValues(msg.tChangeValues)
     }
-    once("update", () => this.UpdateProperty(msg.tIsDead));
+    once('update', () => this.UpdateProperty(msg.tIsDead))
 
     if (msg.tTeleport) {
-      this.teleport(msg.tTeleport);
+      this.teleport(msg.tTeleport)
     }
 
-    const id = this.getIdManager().getId(msg.tIsDead.idx);
-    const form = this.worldModel.forms[id];
-    once("update", () => {
-      const actor = id === this.getWorldModel().playerCharacterFormIdx ?
-        Game.getPlayer()! :
-        Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
+    const id = this.getIdManager().getId(msg.tIsDead.idx)
+    const form = this.worldModel.forms[id]
+    once('update', () => {
+      const actor =
+        id === this.getWorldModel().playerCharacterFormIdx
+          ? Game.getPlayer()!
+          : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)))
       if (actor) {
-        applyDeathState(actor, msg.tIsDead.data as boolean);
+        applyDeathState(actor, msg.tIsDead.data as boolean)
       }
-    });
+    })
   }
 
   handleConnectionAccepted(): void {
-    this.worldModel.forms = [];
-    this.worldModel.playerCharacterFormIdx = -1;
+    this.worldModel.forms = []
+    this.worldModel.playerCharacterFormIdx = -1
 
-    loginWithSkympIoCredentials();
-    sendBrowserToken();
+    loginWithSkympIoCredentials()
+    sendBrowserToken()
   }
 
-  handleDisconnect(): void { }
+  handleDisconnect(): void {}
 
   ChangeValues(msg: messages.ChangeValuesMessage): void {
-    once("update", () => {
-      const ac = Game.getPlayer();
-      if (!ac) return;
-      setActorValuePercentage(ac, "health", msg.data.health);
-      setActorValuePercentage(ac, "stamina", msg.data.stamina);
-      setActorValuePercentage(ac, "magicka", msg.data.magicka);
-    });
+    once('update', () => {
+      const ac = Game.getPlayer()
+      if (!ac) return
+      setActorValuePercentage(ac, 'health', msg.data.health)
+      setActorValuePercentage(ac, 'stamina', msg.data.stamina)
+      setActorValuePercentage(ac, 'magicka', msg.data.magicka)
+    })
   }
 
   setRaceMenuOpen(msg: messages.SetRaceMenuOpenMessage): void {
     if (msg.open) {
       // wait 0.3s cause we can see visual bugs when teleporting
       // and showing this menu at the same time in onConnect
-      once("update", () =>
+      once('update', () =>
         Utility.wait(0.3).then(() => {
-          unequipIronHelmet();
-          Game.showRaceMenu();
-        })
-      );
+          unequipIronHelmet()
+          Game.showRaceMenu()
+        }),
+      )
     } else {
       // TODO: Implement closeMenu in SkyrimPlatform
     }
@@ -537,88 +521,76 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   customPacket(msg: messages.CustomPacket): void {
     switch (msg.content.customPacketType) {
-      case "loginRequired":
-        loginWithSkympIoCredentials();
-        break;
+      case 'loginRequired':
+        loginWithSkympIoCredentials()
+        break
     }
   }
 
   spSnippet(msg: messages.SpSnippet): void {
-    once("update", async () => {
+    once('update', async () => {
       spSnippet
         .run(msg)
         .then((res) => {
-          if (res === undefined) res = null;
+          if (res === undefined) res = null
           this.send(
             {
               t: messages.MsgType.FinishSpSnippet,
               returnValue: res,
               snippetIdx: msg.snippetIdx,
             },
-            true
-          );
+            true,
+          )
         })
-        .catch((e) => printConsole("!!! SpSnippet failed", e));
-    });
+        .catch((e) => printConsole('!!! SpSnippet failed', e))
+    })
   }
 
-  private updateGamemodeUpdateFunctions(
-    storageVar: string,
-    functionSources: Record<string, string>
-  ): void {
-    storage[storageVar] = JSON.parse(JSON.stringify(functionSources));
+  private updateGamemodeUpdateFunctions(storageVar: string, functionSources: Record<string, string>): void {
+    storage[storageVar] = JSON.parse(JSON.stringify(functionSources))
     for (const propName of Object.keys(functionSources)) {
       try {
-        (storage[storageVar] as any)[propName] = new Function(
-          "ctx",
-          (storage[storageVar] as any)[propName]
-        );
-        const emptyFunction = functionSources[propName] === "";
+        ;(storage[storageVar] as any)[propName] = new Function('ctx', (storage[storageVar] as any)[propName])
+        const emptyFunction = functionSources[propName] === ''
         if (emptyFunction) {
-          delete (storage[storageVar] as any)[propName];
-          printConsole(`'${storageVar}.${propName}' -`, "Added empty");
+          delete (storage[storageVar] as any)[propName]
+          printConsole(`'${storageVar}.${propName}' -`, 'Added empty')
         } else {
-          printConsole(`'${storageVar}.${propName}' -`, "Added");
+          printConsole(`'${storageVar}.${propName}' -`, 'Added')
         }
       } catch (e) {
-        printConsole(`'${storageVar}.${propName}' -`, e);
+        printConsole(`'${storageVar}.${propName}' -`, e)
       }
     }
-    storage[`${storageVar}_keys`] = Object.keys(storage[storageVar] as any);
+    storage[`${storageVar}_keys`] = Object.keys(storage[storageVar] as any)
   }
 
   updateGamemodeData(msg: messages.UpdateGamemodeDataMessage): void {
-    storage["_api_onAnimationEvent"] = { callback() { } };
+    storage['_api_onAnimationEvent'] = { callback() {} }
     //
     // updateOwnerFunctions/updateNeighborFunctions
     //
-    storage["updateNeighborFunctions"] = undefined;
-    storage["updateOwnerFunctions"] = undefined;
+    storage['updateNeighborFunctions'] = undefined
+    storage['updateOwnerFunctions'] = undefined
 
-    this.updateGamemodeUpdateFunctions(
-      "updateNeighborFunctions",
-      msg.updateNeighborFunctions || {}
-    );
-    this.updateGamemodeUpdateFunctions(
-      "updateOwnerFunctions",
-      msg.updateOwnerFunctions || {}
-    );
+    this.updateGamemodeUpdateFunctions('updateNeighborFunctions', msg.updateNeighborFunctions || {})
+    this.updateGamemodeUpdateFunctions('updateOwnerFunctions', msg.updateOwnerFunctions || {})
 
     //
     // EventSource
     //
-    if (!Array.isArray(storage["eventSourceContexts"])) {
-      storage["eventSourceContexts"] = [];
+    if (!Array.isArray(storage['eventSourceContexts'])) {
+      storage['eventSourceContexts'] = []
     } else {
-      storage["eventSourceContexts"].forEach((ctx: Record<string, unknown>) => {
-        ctx.sendEvent = () => { };
-        ctx._expired = true;
-      });
+      storage['eventSourceContexts'].forEach((ctx: Record<string, unknown>) => {
+        ctx.sendEvent = () => {}
+        ctx._expired = true
+      })
     }
-    const eventNames = Object.keys(msg.eventSources);
+    const eventNames = Object.keys(msg.eventSources)
     eventNames.forEach((eventName) => {
       try {
-        const fn = new Function("ctx", msg.eventSources[eventName]);
+        const fn = new Function('ctx', msg.eventSources[eventName])
         const ctx = {
           sp,
           sendEvent: (...args: unknown[]) => {
@@ -628,59 +600,57 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 args,
                 eventName,
               },
-              true
-            );
+              true,
+            )
           },
           getFormIdInServerFormat: (clientsideFormId: number) => {
-            return localIdToRemoteId(clientsideFormId);
+            return localIdToRemoteId(clientsideFormId)
           },
           getFormIdInClientFormat: (serversideFormId: number) => {
-            return remoteIdToLocalId(serversideFormId);
+            return remoteIdToLocalId(serversideFormId)
           },
           _fn: fn,
           _eventName: eventName,
           state: {},
-        };
-        (storage["eventSourceContexts"] as Record<string, any>).push(ctx);
-        setupEventSource(ctx);
+        }
+        ;(storage['eventSourceContexts'] as Record<string, any>).push(ctx)
+        setupEventSource(ctx)
       } catch (e) {
-        printConsole(`'eventSources.${eventName}' -`, e);
+        printConsole(`'eventSources.${eventName}' -`, e)
       }
-    });
+    })
   }
 
   /** Packet handlers end **/
 
   getWorldModel(): WorldModel {
-    return this.worldModel;
+    return this.worldModel
   }
 
   getMyActorIndex(): number {
-    return this.worldModel.playerCharacterFormIdx;
+    return this.worldModel.playerCharacterFormIdx
   }
 
   send(msg: Record<string, unknown>, reliable: boolean): void {
-    if (this.worldModel.playerCharacterFormIdx === -1) return;
+    if (this.worldModel.playerCharacterFormIdx === -1) return
 
-    const refrId = msg._refrId as number | undefined;
+    const refrId = msg._refrId as number | undefined
 
-    const idxInModel = refrId
-      ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId)
-      : this.worldModel.playerCharacterFormIdx;
+    const idxInModel = refrId ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId) : this.worldModel.playerCharacterFormIdx
     // fixes "can't get property idx of null or undefined"
-    if (!this.worldModel.forms[idxInModel]) return;
-    msg.idx = this.worldModel.forms[idxInModel].idx;
+    if (!this.worldModel.forms[idxInModel]) return
+    msg.idx = this.worldModel.forms[idxInModel].idx
 
-    delete msg._refrId;
-    netInfo.NetInfo.addSentPacketAmount(1);
-    networking.send(msg, reliable);
+    delete msg._refrId
+    netInfo.NetInfo.addSentPacketAmount(1)
+    networking.send(msg, reliable)
   }
 
   private getIdManager() {
-    if (!this.idManager_) this.idManager_ = new IdManager();
-    return this.idManager_;
+    if (!this.idManager_) this.idManager_ = new IdManager()
+    return this.idManager_
   }
 
-  private worldModel: WorldModel = { forms: [], playerCharacterFormIdx: -1 };
-  private idManager_ = new IdManager();
+  private worldModel: WorldModel = { forms: [], playerCharacterFormIdx: -1 }
+  private idManager_ = new IdManager()
 }

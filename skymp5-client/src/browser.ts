@@ -12,17 +12,17 @@ import {
   MenuOpenEvent,
   MenuCloseEvent,
   BrowserMessageEvent,
-} from "skyrimPlatform";
-import { RemoteAuthGameData } from "./authModel";
+} from 'skyrimPlatform'
+import { RemoteAuthGameData } from './authModel'
 
-const pluginAuthDataName = `auth-data-no-load`;
-const onFrontLoadedEventKey = "front-loaded";
+const pluginAuthDataName = `auth-data-no-load`
+const onFrontLoadedEventKey = 'front-loaded'
 
-export type onWindowLoadedEventCallback = () => void;
-const onWindowLoadListeners = new Array<onWindowLoadedEventCallback>();
+export type onWindowLoadedEventCallback = () => void
+const onWindowLoadListeners = new Array<onWindowLoadedEventCallback>()
 
-type BindingKey = DxScanCode[];
-type BindingValue = () => void;
+type BindingKey = DxScanCode[]
+type BindingValue = () => void
 
 const badMenus: Menu[] = [
   Menu.Barter,
@@ -40,123 +40,117 @@ const badMenus: Menu[] = [
   Menu.Tween,
   Menu.Console,
   Menu.Main,
-];
+]
 
-const IsBadMenu = (menu: string) => badMenus.includes(menu as Menu);
+const IsBadMenu = (menu: string) => badMenus.includes(menu as Menu)
 
-on("browserMessage", (e) => {
+on('browserMessage', (e) => {
   if (e.arguments[0] === onFrontLoadedEventKey) {
-    onWindowLoadListeners.forEach(l => l());
+    onWindowLoadListeners.forEach((l) => l())
   }
-});
+})
 
 export const addOnWindowLoadListener = (listener: onWindowLoadedEventCallback): void => {
-  onWindowLoadListeners.push(listener);
+  onWindowLoadListeners.push(listener)
 }
 
 export const main = (): void => {
-  browser.setVisible(false);
-  once("update", () => browser.setVisible(true));
+  browser.setVisible(false)
+  once('update', () => browser.setVisible(true))
 
-  const openedMenus: string[] = [];
+  const openedMenus: string[] = []
 
-  const badMenuOpen = () => !!openedMenus.length;
+  const badMenuOpen = () => !!openedMenus.length
 
-  on("menuOpen", (e: MenuOpenEvent) => {
+  on('menuOpen', (e: MenuOpenEvent) => {
     if (e.name === Menu.Cursor) {
-      isCursorMenuOpened = true;
+      isCursorMenuOpened = true
     }
     if (IsBadMenu(e.name)) {
-      browser.setVisible(false);
-      openedMenus.push(e.name);
+      browser.setVisible(false)
+      openedMenus.push(e.name)
     } else if (e.name === Menu.HUD) {
-      browser.setVisible(true);
+      browser.setVisible(true)
     }
-  });
+  })
 
-  on("menuClose", (e: MenuCloseEvent) => {
+  on('menuClose', (e: MenuCloseEvent) => {
     if (e.name === Menu.Cursor) {
-      isCursorMenuOpened = false;
+      isCursorMenuOpened = false
     }
-    const i = openedMenus.indexOf(e.name);
+    const i = openedMenus.indexOf(e.name)
     if (i !== -1) {
-      openedMenus.splice(i, 1);
+      openedMenus.splice(i, 1)
 
-      if (openedMenus.length === 0) browser.setVisible(true);
+      if (openedMenus.length === 0) browser.setVisible(true)
     }
 
-    if (e.name === Menu.HUD) browser.setVisible(false);
-  });
+    if (e.name === Menu.HUD) browser.setVisible(false)
+  })
 
   const binding = new Map<BindingKey, BindingValue>([
     [[DxScanCode.F2], () => browser.setVisible(!browser.isVisible())],
     [[DxScanCode.F6], () => browser.setFocused(!browser.isFocused())],
-    [
-      [DxScanCode.Escape],
-      () => browser.isFocused() && browser.setFocused(false),
-    ],
-  ]);
+    [[DxScanCode.Escape], () => browser.isFocused() && browser.setFocused(false)],
+  ])
 
-  let lastNumKeys = 0;
-  on("update", () => {
-    const numKeys = Input.getNumKeysPressed();
+  let lastNumKeys = 0
+  on('update', () => {
+    const numKeys = Input.getNumKeysPressed()
 
-    if (lastNumKeys === numKeys) return;
+    if (lastNumKeys === numKeys) return
 
-    lastNumKeys = numKeys;
+    lastNumKeys = numKeys
 
     binding.forEach((fn, keyCodes) => {
-      if (keyCodes.every((key) => Input.isKeyPressed(key))) fn();
-    });
-  });
+      if (keyCodes.every((key) => Input.isKeyPressed(key))) fn()
+    })
+  })
 
   const cfg = {
-    ip: settings["skymp5-client"]["server-ip"],
-    port: settings["skymp5-client"]["server-port"],
-  };
+    ip: settings['skymp5-client']['server-ip'],
+    port: settings['skymp5-client']['server-port'],
+  }
 
-  printConsole({ cfg });
+  printConsole({ cfg })
 
-  const uiPort = cfg.port === 7777 ? 3000 : (cfg.port as number) + 1;
+  const uiPort = cfg.port === 7777 ? 3000 : (cfg.port as number) + 1
 
-  const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
-  printConsole(`loading url ${url}`);
-  browser.loadUrl(url);
-};
+  const url = `http://${cfg.ip}:${uiPort}/ui/index.html`
+  printConsole(`loading url ${url}`)
+  browser.loadUrl(url)
+}
 
 export const getAuthData = (): RemoteAuthGameData | null => {
   try {
-    const data = getPluginSourceCode(pluginAuthDataName);
+    const data = getPluginSourceCode(pluginAuthDataName)
     if (data) {
-      return JSON.parse(data.slice(2)) || null;
+      return JSON.parse(data.slice(2)) || null
     }
   } catch (e) {
-    printConsole(e);
-    return null;
+    printConsole(e)
+    return null
   }
-  return null;
-};
+  return null
+}
 
 export const setAuthData = (data: RemoteAuthGameData | null): void => {
-  printConsole(data);
-  writePlugin(
-    pluginAuthDataName,
-    "//" + (data ? JSON.stringify(data) : "null")
-  );
-};
+  printConsole(data)
+  writePlugin(pluginAuthDataName, '//' + (data ? JSON.stringify(data) : 'null'))
+}
 
-var isCursorMenuOpened = false;
+var isCursorMenuOpened = false
 export const keepCursorMenuOpenedWhenBrowserFocused = (): void => {
-  once("update", () => {
+  once('update', () => {
     if (browser.isFocused() && !isCursorMenuOpened) {
-      printConsole(`browser ${browser.isFocused()}, isCursorMenuOpened ${isCursorMenuOpened}`);
-      browser.setFocused(false);
-      once("update", () => {
-        browser.setFocused(true);
-        once("update", () => keepCursorMenuOpenedWhenBrowserFocused());
-      });
+      printConsole(`browser ${browser.isFocused()}, isCursorMenuOpened ${isCursorMenuOpened}`)
+      browser.setFocused(false)
+      once('update', () => {
+        browser.setFocused(true)
+        once('update', () => keepCursorMenuOpenedWhenBrowserFocused())
+      })
     } else {
-      keepCursorMenuOpenedWhenBrowserFocused();
+      keepCursorMenuOpenedWhenBrowserFocused()
     }
-  });
+  })
 }

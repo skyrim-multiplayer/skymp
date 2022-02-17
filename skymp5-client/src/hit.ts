@@ -1,15 +1,15 @@
-import * as sp from "skyrimPlatform";
-import { localIdToRemoteId } from "./view";
+import * as sp from 'skyrimPlatform'
+import { localIdToRemoteId } from './view'
 
 export interface Hit {
-  aggressor: number;
-  isBashAttack: boolean;
-  isHitBlocked: boolean;
-  isPowerAttack: boolean;
-  isSneakAttack: boolean;
-  projectile: number;
-  source: number;
-  target: number;
+  aggressor: number
+  isBashAttack: boolean
+  isHitBlocked: boolean
+  isPowerAttack: boolean
+  isSneakAttack: boolean
+  projectile: number
+  source: number
+  target: number
 }
 
 export const getHitData = (e: sp.HitEvent): Hit => {
@@ -21,7 +21,7 @@ export const getHitData = (e: sp.HitEvent): Hit => {
     isSneakAttack: e.isSneakAttack,
     projectile: e.projectile ? e.projectile.getFormID() : 0,
     source: e.source ? e.source.getFormID() : 0,
-    target: localIdToRemoteId(e.target.getFormID())
+    target: localIdToRemoteId(e.target.getFormID()),
   }
-  return hitData;
+  return hitData
 }

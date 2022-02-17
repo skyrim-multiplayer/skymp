@@ -82,6 +82,7 @@ All plugins must have unique names.
 Configure the name of your plugin by opening the `package.json` file and changing the `"name"` field.
 
 For example:
+
 ```json
 {
   "name": "my-cool-plugin",
@@ -90,13 +91,14 @@ For example:
 
 > Please do not use spaces. Use only lowercase letters and dashes.
 
-## Compile Plugin 
+## Compile Plugin
 
 Now you are ready to compile and run your first Skyrim Platform plugin!
 
 In the file menu, select `Terminal` > `Run Build Task...` (_or press Ctrl+Shift+B_)
 
 This should automatically open a terminal which will:
+
 - Install all plugin dependencies from npm
 - Compile your plugin
 - Bundle your plugin for distribution
@@ -146,15 +148,16 @@ That's it! Now it's time to make changes to the plugin.
 In the example projects, the main plugin file can be found in the `src/` folder:
 
 ### `src/index.ts`
+
 ```ts
 import { Debug, once, printConsole } from 'skyrimPlatform'
 
 once('tick', () => {
-    printConsole('Hello! You can view this in the Skyrim ~ console on the Main Menu when the game runs')
+  printConsole('Hello! You can view this in the Skyrim ~ console on the Main Menu when the game runs')
 })
 
 once('update', () => {
-    Debug.messageBox('Hello! This will appear when a new game is started or an existing game is loaded')
+  Debug.messageBox('Hello! This will appear when a new game is started or an existing game is loaded')
 })
 ```
 
@@ -166,7 +169,7 @@ Edit the above code with your own text. For example:
 import { Debug, once, printConsole } from 'skyrimPlatform'
 
 once('update', () => {
-    Debug.messageBox('Hey look! I changed this! Yay!')
+  Debug.messageBox('Hey look! I changed this! Yay!')
 })
 ```
 
@@ -182,7 +185,7 @@ Any libraries you install as dependencies will be bundled into your plugin via `
 
 These may be other libraries you create yourself or other people's libraries.
 
-A very common use-case is importing common Skyrim utility libraries such as [`PapyrusUtil`][PapyrusUtil] or [`JContainers`][JContainers].
+A very common use-case is importing common Skyrim utility libraries such as [`PapyrusUtil`][papyrusutil] or [`JContainers`][jcontainers].
 
 If you need to use `PapyrusUtil` you can open up a terminal and run `npm i @skyrim-platform/papyrus-util` to install the `PapyrusUtil` TypeScript library for calling native `PapyrusUtil` functions from TypeScript.
 
@@ -195,9 +198,8 @@ import { once, Debug } from '@skyrim-platform/skyrim-platform'
 
 // When 'update' runs, show a messagebox listing all of the top-level folder names inside of the 'Data' folder
 once('update', () => {
-    const foldersInData = FoldersInFolder('.')
-    if (foldersInData)
-        Debug.messageBox(`Folders in Data directory: ${foldersInData.join("\n")}`)
+  const foldersInData = FoldersInFolder('.')
+  if (foldersInData) Debug.messageBox(`Folders in Data directory: ${foldersInData.join('\n')}`)
 })
 ```
 
@@ -228,7 +230,7 @@ Structure of the zip archive for distribution:
 ```
 Platform\
   Plugins\
-    plugin-file-1.0.0.js    
+    plugin-file-1.0.0.js
 ```
 
 > Note: do not try to package your .ts TypeScript files -or- the .js JavaScript files in the dist/ folder. Instead, use the .js file in the build/ folder which is bundled for usage with Skyrim Platform
@@ -249,8 +251,8 @@ For further support using Skyrim Platform, join the Discord server https://disco
 
 Your plugin is your own software and can be licensed however you like!
 
-Skyrim Platform is distributed under the [GNU General Public License v3.0][GPLv3].
+Skyrim Platform is distributed under the [GNU General Public License v3.0][gplv3].
 
-[PapyrusUtil]: https://www.nexusmods.com/skyrimspecialedition/mods/13048
-[JContainers]: https://www.nexusmods.com/skyrimspecialedition/mods/16495
-[GPLv3]: https://www.gnu.org/licenses/gpl-3.0.en.html
+[papyrusutil]: https://www.nexusmods.com/skyrimspecialedition/mods/13048
+[jcontainers]: https://www.nexusmods.com/skyrimspecialedition/mods/16495
+[gplv3]: https://www.gnu.org/licenses/gpl-3.0.en.html

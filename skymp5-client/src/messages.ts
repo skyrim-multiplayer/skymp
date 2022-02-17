@@ -1,10 +1,10 @@
-import { Movement, Transform } from "./movement";
-import { Appearance } from "./appearance";
-import { Animation } from "./animation";
-import { Equipment } from "./equipment";
-import { Inventory } from "./inventory";
-import * as spSnippet from "./spSnippet";
-import { ActorValues } from "./actorvalues";
+import { Movement, Transform } from './movement'
+import { Appearance } from './appearance'
+import { Animation } from './animation'
+import { Equipment } from './equipment'
+import { Inventory } from './inventory'
+import * as spSnippet from './spSnippet'
+import { ActorValues } from './actorvalues'
 
 export enum MsgType {
   CustomPacket = 1,
@@ -28,112 +28,112 @@ export enum MsgType {
 }
 
 export interface SetInventory {
-  type: "setInventory";
-  inventory: Inventory;
+  type: 'setInventory'
+  inventory: Inventory
 }
 
 export interface OpenContainer {
-  type: "openContainer";
-  target: number;
+  type: 'openContainer'
+  target: number
 }
 
 export interface Teleport {
-  type: "teleport";
-  pos: number[];
-  rot: number[];
-  worldOrCell: number;
+  type: 'teleport'
+  pos: number[]
+  rot: number[]
+  worldOrCell: number
 }
 
 export interface CreateActorMessage {
-  type: "createActor";
-  idx: number;
-  refrId?: number;
-  transform: Transform;
-  isMe: boolean;
-  appearance?: Appearance;
-  equipment?: Equipment;
-  inventory?: Inventory;
-  baseId?: number;
-  props?: Record<string, unknown>;
+  type: 'createActor'
+  idx: number
+  refrId?: number
+  transform: Transform
+  isMe: boolean
+  appearance?: Appearance
+  equipment?: Equipment
+  inventory?: Inventory
+  baseId?: number
+  props?: Record<string, unknown>
 }
 
 export interface DestroyActorMessage {
-  type: "destroyActor";
-  idx: number;
+  type: 'destroyActor'
+  idx: number
 }
 
 export interface UpdateMovementMessage {
-  t: MsgType.UpdateMovement;
-  idx: number;
-  data: Movement;
+  t: MsgType.UpdateMovement
+  idx: number
+  data: Movement
 }
 
 export interface UpdateAnimationMessage {
-  t: MsgType.UpdateAnimation;
-  idx: number;
-  data: Animation;
+  t: MsgType.UpdateAnimation
+  idx: number
+  data: Animation
 }
 
 export interface UpdateAppearanceMessage {
-  t: MsgType.UpdateAppearance;
-  idx: number;
-  data: Appearance;
+  t: MsgType.UpdateAppearance
+  idx: number
+  data: Appearance
 }
 
 export interface UpdateEquipmentMessage {
-  t: MsgType.UpdateEquipment;
-  idx: number;
-  data: Equipment;
+  t: MsgType.UpdateEquipment
+  idx: number
+  data: Equipment
 }
 
 export interface UpdatePropertyMessage {
-  t: MsgType.UpdateProperty;
-  idx: number;
-  data: unknown;
-  propName: string;
+  t: MsgType.UpdateProperty
+  idx: number
+  data: unknown
+  propName: string
 }
 
 export interface ChangeValuesMessage {
-  t: MsgType.ChangeValues;
-  data: ActorValues;
+  t: MsgType.ChangeValues
+  data: ActorValues
 }
 
 export interface DeathStateContainerMessage {
-  t: MsgType.DeathStateContainer;
-  tTeleport?: Teleport,
-  tChangeValues?: ChangeValuesMessage,
-  tIsDead: UpdatePropertyMessage,
+  t: MsgType.DeathStateContainer
+  tTeleport?: Teleport
+  tChangeValues?: ChangeValuesMessage
+  tIsDead: UpdatePropertyMessage
 }
 
 export interface SetRaceMenuOpenMessage {
-  type: "setRaceMenuOpen";
-  open: boolean;
+  type: 'setRaceMenuOpen'
+  open: boolean
 }
 
 export interface CustomPacket {
-  type: "customPacket";
-  content: Record<string, unknown>;
+  type: 'customPacket'
+  content: Record<string, unknown>
 }
 
 interface SpSnippetMsgBase {
-  type: "spSnippet";
+  type: 'spSnippet'
 }
 
-export type SpSnippet = SpSnippetMsgBase & spSnippet.Snippet;
+export type SpSnippet = SpSnippetMsgBase & spSnippet.Snippet
 
 export interface HostStartMessage {
-  type: "hostStart";
-  target: number;
+  type: 'hostStart'
+  target: number
 }
 
 export interface HostStopMessage {
-  type: "hostStop";
-  target: number;
+  type: 'hostStop'
+  target: number
 }
 
 export interface UpdateGamemodeDataMessage {
-  type: "updateGamemodeData";
-  eventSources: Record<string, string>;
-  updateOwnerFunctions: Record<string, string>;
-  updateNeighborFunctions: Record<string, string>;
+  type: 'updateGamemodeData'
+  eventSources: Record<string, string>
+  updateOwnerFunctions: Record<string, string>
+  updateNeighborFunctions: Record<string, string>
 }

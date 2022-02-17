@@ -1,11 +1,11 @@
-import * as sp from "skyrimPlatform";
-import { FormModel } from "./model";
-import * as view from "./view";
+import * as sp from 'skyrimPlatform'
+import { FormModel } from './model'
+import * as view from './view'
 
 export const setOwnerModel = (ownerModel: FormModel): void => {
-  sp.storage["ownerModel"] = ownerModel;
-  sp.storage["ownerModelSet"] = true;
-};
+  sp.storage['ownerModel'] = ownerModel
+  sp.storage['ownerModelSet'] = true
+}
 
 export const setup = (): void => {
   const ctx = {
@@ -14,47 +14,45 @@ export const setup = (): void => {
     value: undefined as unknown,
     _model: undefined as unknown as FormModel,
     getFormIdInServerFormat: (clientsideFormId: number) => {
-      return view.localIdToRemoteId(clientsideFormId);
+      return view.localIdToRemoteId(clientsideFormId)
     },
     getFormIdInClientFormat: (serversideFormId: number) => {
-      return view.remoteIdToLocalId(serversideFormId);
+      return view.remoteIdToLocalId(serversideFormId)
     },
     get(propName: string) {
-      return (this._model as Record<string, any>)[propName];
+      return (this._model as Record<string, any>)[propName]
     },
     state: {},
-  };
-  sp.on("update", () => {
-    let keys = sp.storage["updateOwnerFunctions_keys"] as Array<string>;
+  }
+  sp.on('update', () => {
+    let keys = sp.storage['updateOwnerFunctions_keys'] as Array<string>
     if (!keys || !Array.isArray(keys)) {
-      keys = [];
+      keys = []
     }
-    const funcs = sp.storage["updateOwnerFunctions"];
+    const funcs = sp.storage['updateOwnerFunctions']
 
-    if (sp.storage["ownerModelSet"] !== true) return;
+    if (sp.storage['ownerModelSet'] !== true) return
 
-    const ownerModel = sp.storage["ownerModel"] as FormModel;
+    const ownerModel = sp.storage['ownerModel'] as FormModel
 
     for (const propName of keys) {
-      const f = (funcs as Record<string, any>)[propName];
+      const f = (funcs as Record<string, any>)[propName]
       // Actually, must always be a valid funciton, but who knows
-      if (!f) continue;
+      if (!f) continue
 
-      ctx._model = ownerModel;
-      if (!ctx._model) continue;
+      ctx._model = ownerModel
+      if (!ctx._model) continue
 
-      ctx.value = (ctx._model as Record<string, unknown>)[propName];
-      if (ctx.value === undefined) continue;
+      ctx.value = (ctx._model as Record<string, unknown>)[propName]
+      if (ctx.value === undefined) continue
 
-      ctx.refr = sp.ObjectReference.from(
-        sp.Game.getPlayer()
-      ) as sp.ObjectReference;
-      ctx._model = ownerModel;
+      ctx.refr = sp.ObjectReference.from(sp.Game.getPlayer()) as sp.ObjectReference
+      ctx._model = ownerModel
       try {
-        if (f) f(ctx);
+        if (f) f(ctx)
       } catch (e) {
-        sp.printConsole(`'updateOwner.${propName}' - `, e);
+        sp.printConsole(`'updateOwner.${propName}' - `, e)
       }
     }
-  });
-};
+  })
+}

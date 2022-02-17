@@ -22,16 +22,10 @@ Once you build the server, you should be able to launch it. But default config v
 
 ```json5
 {
-  "dataDir": "data",
-  "loadOrder": [
-    "Skyrim.esm",
-    "Update.esm",
-    "Dawnguard.esm",
-    "HearthFires.esm",
-    "Dragonborn.esm"
-  ],
-  "ip": "127.0.0.1", // <=
-  "name": "My Server"
+  dataDir: 'data',
+  loadOrder: ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm', 'HearthFires.esm', 'Dragonborn.esm'],
+  ip: '127.0.0.1', // <=
+  name: 'My Server',
 }
 ```
 

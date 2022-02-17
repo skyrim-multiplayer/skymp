@@ -76,14 +76,14 @@ Returns the actual value of a specified property. If there is no value, then `un
 /* Definition */
 interface Mp {
   // ...
-  get(formId: number, propertyName: string): void;
+  get(formId: number, propertyName: string): void
   // ...
 }
 
 /* Usage */
-mp.get(0xff000000, "type");
-mp.get(0xff000000, "pos");
-mp.get(0xff000000, "myAwesomeProperty");
+mp.get(0xff000000, 'type')
+mp.get(0xff000000, 'pos')
+mp.get(0xff000000, 'myAwesomeProperty')
 ```
 
 ## mp.set()
@@ -94,12 +94,12 @@ Changes value of the specified property.
 /* Definition */
 interface Mp {
   // ...
-  set(formId: number, propertyName: string, newValue: any): void;
+  set(formId: number, propertyName: string, newValue: any): void
   // ...
 }
 
 /* Usage */
-mp.set(0xff000000, "pos", [0, 0, 0]);
+mp.set(0xff000000, 'pos', [0, 0, 0])
 ```
 
 ## mp.clear()
@@ -113,7 +113,7 @@ clear(): void;
 
 ```typescript
 // Usage
-mp.clear();
+mp.clear()
 ```
 
 ## mp.sendUiMessage()
@@ -127,5 +127,5 @@ sendUiMessage(formId: number, message: Record<string, unknown>): void;
 
 ```typescript
 // Usage
-mp.sendUiMessage(0xff000000, { foo: 'bar' });
+mp.sendUiMessage(0xff000000, { foo: 'bar' })
 ```

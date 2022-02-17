@@ -1,5 +1,5 @@
-import { WorldModel } from "./model";
+import { WorldModel } from './model'
 
 export interface ModelSource {
-  getWorldModel(): WorldModel;
+  getWorldModel(): WorldModel
 }

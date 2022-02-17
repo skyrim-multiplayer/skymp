@@ -110,9 +110,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "Win32"
-    ],
+    "configurationTags": ["Win32"],
     "expectedFiles": [
       "server/data/ui/07863f7f6cd3e41d2d4dd98555709017.svg",
       "server/data/ui/29359f1c6135098e82121dce53128a35.svg",
@@ -145,9 +143,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "Unix"
-    ],
+    "configurationTags": ["Unix"],
     "expectedFiles": [
       "server/data/ui/02687b2110d1a50a6b4e194282ab8deb.svg",
       "server/data/ui/10e908e65fc531810ade31b77d30c836.svg",
@@ -180,18 +176,11 @@
     ]
   },
   {
-    "configurationTags": [
-      "Win32"
-    ],
-    "expectedFiles": [
-      "server/launch_server.bat",
-      "server/scamp_native.pdb"
-    ]
+    "configurationTags": ["Win32"],
+    "expectedFiles": ["server/launch_server.bat", "server/scamp_native.pdb"]
   },
   {
-    "configurationTags": [
-      "Win32"
-    ],
+    "configurationTags": ["Win32"],
     "expectedFiles": [
       "server/ChakraCore.dll",
       "client/Data/Platform/Fonts/font.spritefont",

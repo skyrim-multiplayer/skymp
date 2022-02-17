@@ -1,19 +1,19 @@
-import React from "react";
-import { connect } from "react-redux";
+import React from 'react'
+import { connect } from 'react-redux'
 
-import "./styles.scss";
+import './styles.scss'
 
 class AnimList extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
   }
 
   componentDidMount() {
-    document.addEventListener("keydown", this.onKeyDown.bind(this));
+    document.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 
   componentWillUnmount() {
-    document.removeEventListener("keydown", this.onKeyDown.bind(this));
+    document.removeEventListener('keydown', this.onKeyDown.bind(this))
   }
 
   onKeyDown(e) {
@@ -27,34 +27,34 @@ class AnimList extends React.Component {
         className="anim"
         key={`anim-${index}`}
         onClick={() => {
-          this.props.updateShow({ show: false });
-          window.mp.send("cef::chat:send", `/anim ${index}`);
+          this.props.updateShow({ show: false })
+          window.mp.send('cef::chat:send', `/anim ${index}`)
         }}
       >
         {anim.name}
       </div>
-    ));
+    ))
   }
 
   render() {
-    return this.props.show && <div id="animList">{this.getAnimList()}</div>;
+    return this.props.show && <div id="animList">{this.getAnimList()}</div>
   }
 }
 
 const mapStateToProps = (state) => {
-  const defaultState = state.animListReducer;
+  const defaultState = state.animListReducer
   return {
     show: defaultState.show,
     list: defaultState.list,
-  };
-};
+  }
+}
 
 const mapDispatchToProps = (dispatch) => ({
   updateShow: (data) =>
     dispatch({
-      type: "UPDATE_ANIMLIST_SHOW",
+      type: 'UPDATE_ANIMLIST_SHOW',
       data,
     }),
-});
+})
 
-export default connect(mapStateToProps, mapDispatchToProps)(AnimList);
+export default connect(mapStateToProps, mapDispatchToProps)(AnimList)

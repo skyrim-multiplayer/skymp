@@ -8,9 +8,9 @@ Refers to Skyrim Platform API. See [Skyrim Platform](docs_skyrim_platform.md) pa
 
 ```typescript
 // Print to console
-ctx.sp.printConsole("Hello Skyrim Platform!");
+ctx.sp.printConsole('Hello Skyrim Platform!')
 // Kill player character (locally)
-ctx.sp.Game.getPlayer().kill();
+ctx.sp.Game.getPlayer().kill()
 ```
 
 ## ctx.refr
@@ -22,11 +22,7 @@ In `updateOwner` is similar to `ctx.sp.Game.getPlayer()`.
 In `updateNeighbor` refers to neighbor synchronized `ObjectReference` or `Actor`.
 
 ```typescript
-const pos = [
-  ctx.refr.getPositionX(),
-  ctx.refr.getPositionY(),
-  ctx.refr.getPositionZ()
-];
+const pos = [ctx.refr.getPositionX(), ctx.refr.getPositionY(), ctx.refr.getPositionZ()]
 ```
 
 ## ctx.value
@@ -36,7 +32,7 @@ In `makeProperty` is always `undefined`.
 In `updateOwner` / `updateNeighbor` is equal to the value of a property that is processed currently or `undefined` if there is no value or it's not visible due to flags.
 
 ```typescript
-ctx.sp.Game.setPlayerLevel(ctx.value || 1);
+ctx.sp.Game.setPlayerLevel(ctx.value || 1)
 ```
 
 ## ctx.state
@@ -46,7 +42,7 @@ A writable object that is used to store data between `updateOwner`/`updateNeighb
 `state` is currently shared between properties.
 
 ```typescript
-ctx.state.x = "y";
+ctx.state.x = 'y'
 ```
 
 ## ctx.get()
@@ -54,7 +50,7 @@ ctx.state.x = "y";
 Get the value of the specified property. Built-in properties are not supported properly, so attempts getting them are leading to the undefined behavior.
 
 ```typescript
-const v = ctx.get("myAwesomeProperty");
+const v = ctx.get('myAwesomeProperty')
 ```
 
 ## ctx.getFormIdInServerFormat()
@@ -62,7 +58,7 @@ const v = ctx.get("myAwesomeProperty");
 Gets serverside formId by clientside formId or `0` if not found.
 
 ```typescript
-const serversideFormId = ctx.getFormIdInServerFormat(0xff00016a);
+const serversideFormId = ctx.getFormIdInServerFormat(0xff00016a)
 ```
 
 ## ctx.getFormIdInClientFormat()
@@ -70,7 +66,7 @@ const serversideFormId = ctx.getFormIdInServerFormat(0xff00016a);
 Opposite to `getFormIdInServerFormat`. Gets clientside formId by serverside formId or 0 if not found.
 
 ```typescript
-const clientsideFormId = ctx.getFormIdInClientFormat(0xff000000);
+const clientsideFormId = ctx.getFormIdInClientFormat(0xff000000)
 ```
 
 ## ctx.respawn()
@@ -78,7 +74,7 @@ const clientsideFormId = ctx.getFormIdInClientFormat(0xff000000);
 Respawns `ctx.refr` immediately.
 
 ```typescript
-ctx.respawn();
+ctx.respawn()
 ```
 
 ## ctx.sendEvent()
@@ -86,5 +82,5 @@ ctx.respawn();
 Available only in `makeProperty` context. Sends an event to the server.
 
 ```typescript
-ctx.sendEvent({ foo: 'bar' });
+ctx.sendEvent({ foo: 'bar' })
 ```

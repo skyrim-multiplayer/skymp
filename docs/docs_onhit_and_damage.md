@@ -3,6 +3,7 @@
 When a local hit event occurs, client sends an OnHit packet to server.
 
 It contains the following fields:
+
 ```c++
 uint32_t aggressor = 0; // originating actor
 bool isBashAttack = false;
@@ -34,11 +35,13 @@ issue if it's not present yet. If you have C++ knowledge, we would be glad to
 see your [contributions](https://github.com/skyrim-multiplayer/skymp/blob/main/CONTRIBUTING.md)!
 
 Incoming damage:
+
 ```
 incomingDamage = isUnarmed ? raceUnarmedDamage : baseWeaponDamage;
 ```
 
 Armor damage reduction:
+
 ```
 armorRating = armorRating1 + armorRating2 + armorRating3 + ... + armorRatingN + magicArmorRating;
 //fMaxArmorRating is [GMST:00037DEB], fArmorScalingFactor is [GMST:00021A72];

@@ -20,29 +20,29 @@ On the other hand, updating `skyrimPlatform.ts` may break the compilation of you
 ## Table of contents
 
 - Skyrim integration
-  - [Papyrus objects][Papyrus]
-  - [Native functions][Native]
-  - [Hooks (events)][Events]
+  - [Papyrus objects][papyrus]
+  - [Native functions][native]
+  - [Hooks (events)][events]
 - Content added by Skyrim Platform
-  - [Exclusive features][Features]
-  - [New methods and properties][NewMethods]
-  - [New types][NewTypes]
-  - [New events][NewEvents]
-  - [Browser / UI][Browser]
+  - [Exclusive features][features]
+  - [New methods and properties][newmethods]
+  - [New types][newtypes]
+  - [New events][newevents]
+  - [Browser / UI][browser]
   - [HTTP][]
-  - [Texts][Texts]
-  - [Win32][Win32]
-- [Cook Book][Cookbook]
+  - [Texts][texts]
+  - [Win32][win32]
+- [Cook Book][cookbook]
 
-[Browser]: skyrim_platform/browser.md
-[Cookbook]: skyrim_platform/cookbook.md
-[Events]: skyrim_platform/events.md
-[Features]: skyrim_platform/features.md
-[HTTP]: skyrim_platform/http.md
-[Native]: skyrim_platform/native.md
-[NewEvents]: skyrim_platform/new_events.md
-[NewMethods]: skyrim_platform/new_methods.md
-[NewTypes]: skyrim_platform/new_types.md
-[Papyrus]: skyrim_platform/papyrus.md
-[Texts]: skyrim_platform/texts.md
-[Win32]: skyrim_platform/win32.md
+[browser]: skyrim_platform/browser.md
+[cookbook]: skyrim_platform/cookbook.md
+[events]: skyrim_platform/events.md
+[features]: skyrim_platform/features.md
+[http]: skyrim_platform/http.md
+[native]: skyrim_platform/native.md
+[newevents]: skyrim_platform/new_events.md
+[newmethods]: skyrim_platform/new_methods.md
+[newtypes]: skyrim_platform/new_types.md
+[papyrus]: skyrim_platform/papyrus.md
+[texts]: skyrim_platform/texts.md
+[win32]: skyrim_platform/win32.md
