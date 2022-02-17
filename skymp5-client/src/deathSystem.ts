@@ -15,7 +15,7 @@ import { RespawnNeededError } from "./errors";
 let gPlayerAllowAnimations: string[] | null = null;
 const gPlayerId: number = 0x14;
 
-// Blocking kill move animations
+// Turn off kill move animations
 hooks.sendAnimationEvent.add(
   {
     enter(ctx) {
@@ -28,7 +28,7 @@ hooks.sendAnimationEvent.add(
   "KillMove*"
 );
 
-// Blocking stagger animations
+// Turn off stagger animations
 hooks.sendAnimationEvent.add(
   {
     enter(ctx) {
