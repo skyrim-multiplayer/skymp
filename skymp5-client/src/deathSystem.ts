@@ -1,14 +1,9 @@
 import {
   hooks,
   Game,
-  printConsole,
   Actor,
   Debug,
-  once,
-  ObjectReference,
-  Utility,
-  writeLogs,
-  on,
+  once
 } from "skyrimPlatform";
 import { setLocalDamageMult, defaultLocalDamageMult } from "./index";
 import { AnimationEventName } from "./animation";
@@ -26,7 +21,7 @@ hooks.sendAnimationEvent.add(
     enter(ctx) {
       ctx.animEventName = "";
     },
-    leave() {},
+    leave() { },
   },
   0,
   0xffffffff,
@@ -39,7 +34,7 @@ hooks.sendAnimationEvent.add(
     enter(ctx) {
       ctx.animEventName = "";
     },
-    leave() {},
+    leave() { },
   },
   0xff000000,
   0xffffffff,
@@ -54,7 +49,7 @@ hooks.sendAnimationEvent.add(
         ctx.animEventName = "";
       }
     },
-    leave() {},
+    leave() { },
   },
   gPlayerId,
   gPlayerId
