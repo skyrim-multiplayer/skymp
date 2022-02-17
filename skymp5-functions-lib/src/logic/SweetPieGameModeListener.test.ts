@@ -325,6 +325,34 @@ describe("SweetPieGameModeListener: Round clock", () => {
     expect(controller.sendChatMessage).toBeCalledWith(2, msg2);
   });
 
+  test("Round should reward all players with gold or silver", () => {
+    const controller = makePlayerController();
+    const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
+    const listener = new SweetPieGameModeListener(controller, maps);
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 2);
+    forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 3);
+    resetMocks(controller);
+    listener.getRounds()[0].secondsPassed = listener.runningTimerMaximum;
+    listener.getRounds()[0].state = 'running';
+
+    controller.incrementCounter(/*actor*/1, 'finishedDeathmatches', /*by*/2);
+    controller.incrementCounter(/*actor*/2, 'finishedDeathmatches', /*by*/3);
+    // Player 3 has 0 finished games
+
+    listener.everySecond();
+
+    expect(controller.incrementCounter(1, 'finishedDeathmatches', 0)).toEqual(3);
+    expect(controller.incrementCounter(2, 'finishedDeathmatches', 0)).toEqual(4);
+    expect(controller.incrementCounter(3, 'finishedDeathmatches', 0)).toEqual(1);
+
+    expect(controller.addItem).toBeCalledTimes(3);
+    expect(controller.addItem).toBeCalledWith(/*actor*/1, /*item*/listener.goldOreFormId, /*count*/1);
+    expect(controller.addItem).toBeCalledWith(/*actor*/2, /*item*/listener.silverOreFormId, /*count*/1);
+    expect(controller.addItem).toBeCalledWith(/*actor*/3, /*item*/listener.goldOreFormId, /*count*/1);
+    // noone gets gold: there is no winner
+  });
+
   test("Round fight must output messages about remaining seconds", () => {
     const controller = makePlayerController();
     const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
