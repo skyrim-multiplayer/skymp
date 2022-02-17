@@ -302,7 +302,7 @@ export class SweetPieGameModeListener implements GameModeListener {
                 this.controller.addItem(winner, this.coinFormId, 10);
                 const winnerScore = round.players.get(winner)?.kills;
                 this.sendRoundChatMessage(round, sprintf(this.determineWinnerMessage[0], this.controller.getName(winner), winnerScore));
-              };
+              }
             }
             round.secondsPassed = 0;
             round.state = 'finished';
