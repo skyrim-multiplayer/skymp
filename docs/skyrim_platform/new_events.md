@@ -209,8 +209,8 @@ on('consoleMessage', (e) => {
 
 Called when a saved game is loaded.
 
-***WARNING***: This event won't fire when creating a new game.\
-[Read this recipe][PluginInit] to get some ideas on how you can deal with that.
+***WARNING***: This event won't fire when creating a new game. Use `newGame` for that.\
+Or [read this recipe][PluginInit] to get some ideas on how you can deal with plugin initialization.
 
 ## Other events
 
