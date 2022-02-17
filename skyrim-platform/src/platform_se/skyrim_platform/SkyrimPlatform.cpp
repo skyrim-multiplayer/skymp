@@ -175,8 +175,6 @@ private:
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
   {
-    auto& engine = GetJsEngine();
-
     for (auto& path : pathsToLoad) {
       if (EndsWith(path.wstring(), L"-settings.txt")) {
         LoadSettingsFile(path);
@@ -207,6 +205,7 @@ private:
 
   void LoadPluginFile(const std::filesystem::path& path)
   {
+    auto engine = GetJsEngine();
     auto scriptSrc = ReadFile(path);
 
     getSettings = [this](const JsFunctionArguments&) {
@@ -221,16 +220,16 @@ private:
 
     // We will be able to use require()
     JsValue devApi = JsValue::Object();
-    DevApi::Register(devApi, &engine,
+    DevApi::Register(devApi, engine,
                      { { "skyrimPlatform",
-                         [this](JsValue e) {
+                         [this, engine](JsValue e) {
                            EncodingApi::Register(e);
                            LoadGameApi::Register(e);
                            CameraApi::Register(e);
                            MpClientPluginApi::Register(e);
                            HttpClientApi::Register(e);
                            ConsoleApi::Register(e);
-                           DevApi::Register(e, &engine, {}, GetFileDirs());
+                           DevApi::Register(e, engine, {}, GetFileDirs());
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
                            Win32Api::Register(e);
@@ -271,13 +270,13 @@ private:
     settingsByPluginName.clear();
   }
 
-  JsEngine& GetJsEngine()
+  std::shared_ptr<JsEngine> GetJsEngine()
   {
-    if (!engine) {
-      engine = std::make_shared<JsEngine>();
-      engine->ResetContext(jsPromiseTaskQueue);
+    if (!engine_) {
+      engine_ = std::make_shared<JsEngine>();
+      engine_->ResetContext(jsPromiseTaskQueue);
     }
-    return *engine;
+    return engine_;
   }
 
   std::vector<std::filesystem::path> GetPathsToLoad(
@@ -293,7 +292,7 @@ private:
     return paths;
   }
 
-  std::shared_ptr<JsEngine> engine;
+  std::shared_ptr<JsEngine> engine_;
   std::vector<std::shared_ptr<DirectoryMonitor>> monitors;
   uint32_t tickId = 0;
   Viet::TaskQueue taskQueue;
