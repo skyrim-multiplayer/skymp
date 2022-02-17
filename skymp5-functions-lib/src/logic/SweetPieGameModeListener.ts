@@ -129,6 +129,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, targetActorId: number): 'continue' | 'blockActivation' {
+    const cn = `<${targetObjectDesc}>`;
+    this.controller.sendChatMessage(casterActorId, 'yo, counter ' + cn + ': ' + this.controller.incrementCounter(casterActorId, cn, 1));
     if (targetObjectDesc === this.quitGamePortal) {
       this.controller.quitGame(casterActorId);
       return 'continue';

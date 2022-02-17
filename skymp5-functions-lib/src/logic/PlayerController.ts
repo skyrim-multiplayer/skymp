@@ -6,6 +6,9 @@ export type Percentages = {
   stamina?: number;
 }
 
+// export type Counter = 'finishedDeathmatches';
+export type Counter = string;
+
 export type PlayerController = {
   setSpawnPoint(player: number, pointName: string): void;
   teleport(player: number, pointName: string): void;
@@ -22,4 +25,5 @@ export type PlayerController = {
   getScriptName(refrId: number): string;
   isTeleportActivator(refrId: number): boolean;
   updateCustomName(formDesc: string, name: string): void;
+  incrementCounter(actorId: number, counter: Counter, by?: number): number;
 }
