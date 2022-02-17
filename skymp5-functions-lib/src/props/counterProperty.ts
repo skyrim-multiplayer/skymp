@@ -27,4 +27,3 @@ export class CounterProperty {
     mp.set(actorId, 'counter', current);
   }
 }
-
