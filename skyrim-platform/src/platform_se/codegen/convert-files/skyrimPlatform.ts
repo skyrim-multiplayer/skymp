@@ -1264,13 +1264,7 @@ export declare class ObjectReference extends Form {
   canFastTravelToMarker(): boolean
   clearDestruction(): void
   createDetectionEvent(akOwner: Actor | null, aiSoundLevel: number): void
-  createEnchantment(
-    maxCharge: number,
-    effects: PapyrusObject[] | null,
-    magnitudes: number[] | null,
-    areas: number[] | null,
-    durations: number[] | null,
-  ): void
+  createEnchantment(maxCharge: number, effects: PapyrusObject[] | null, magnitudes: number[] | null, areas: number[] | null, durations: number[] | null): void
   damageObject(afDamage: number): Promise<void>
   delete(): Promise<void>
   disable(abFadeOut: boolean): Promise<void>
@@ -1359,38 +1353,11 @@ export declare class ObjectReference extends Form {
   playAnimation(asAnimation: string): boolean
   playAnimationAndWait(asAnimation: string, asEventName: string): Promise<boolean>
   playGamebryoAnimation(asAnimation: string, abStartOver: boolean, afEaseInTime: number): boolean
-  playImpactEffect(
-    akImpactEffect: ImpactDataSet | null,
-    asNodeName: string,
-    afPickDirX: number,
-    afPickDirY: number,
-    afPickDirZ: number,
-    afPickLength: number,
-    abApplyNodeRotation: boolean,
-    abUseNodeLocalRotation: boolean,
-  ): boolean
-  playSyncedAnimationAndWaitSS(
-    asAnimation1: string,
-    asEvent1: string,
-    akObj2: ObjectReference | null,
-    asAnimation2: string,
-    asEvent2: string,
-  ): Promise<boolean>
+  playImpactEffect(akImpactEffect: ImpactDataSet | null, asNodeName: string, afPickDirX: number, afPickDirY: number, afPickDirZ: number, afPickLength: number, abApplyNodeRotation: boolean, abUseNodeLocalRotation: boolean): boolean
+  playSyncedAnimationAndWaitSS(asAnimation1: string, asEvent1: string, akObj2: ObjectReference | null, asAnimation2: string, asEvent2: string): Promise<boolean>
   playSyncedAnimationSS(asAnimation1: string, akObj2: ObjectReference | null, asAnimation2: string): boolean
   playTerrainEffect(asEffectModelName: string, asAttachBoneName: string): void
-  processTrapHit(
-    akTrap: ObjectReference | null,
-    afDamage: number,
-    afPushback: number,
-    afXVel: number,
-    afYVel: number,
-    afZVel: number,
-    afXPos: number,
-    afYPos: number,
-    afZPos: number,
-    aeMaterial: number,
-    afStagger: number,
-  ): void
+  processTrapHit(akTrap: ObjectReference | null, afDamage: number, afPushback: number, afXVel: number, afYVel: number, afZVel: number, afXPos: number, afYPos: number, afZPos: number, aeMaterial: number, afStagger: number): void
   pushActorAway(akActorToPush: Actor | null, aiKnockbackForce: number): void
   removeAllInventoryEventFilters(): void
   removeAllItems(akTransferTo: ObjectReference | null, abKeepOwnership: boolean, abRemoveQuestItems: boolean): void
@@ -1421,36 +1388,11 @@ export declare class ObjectReference extends Form {
   setOpen(abOpen: boolean): void
   setPosition(afX: number, afY: number, afZ: number): Promise<void>
   setScale(afScale: number): Promise<void>
-  splineTranslateTo(
-    afX: number,
-    afY: number,
-    afZ: number,
-    afXAngle: number,
-    afYAngle: number,
-    afZAngle: number,
-    afTangentMagnitude: number,
-    afSpeed: number,
-    afMaxRotationSpeed: number,
-  ): void
-  splineTranslateToRefNode(
-    arTarget: ObjectReference | null,
-    arNodeName: string,
-    afTangentMagnitude: number,
-    afSpeed: number,
-    afMaxRotationSpeed: number,
-  ): void
+  splineTranslateTo(afX: number, afY: number, afZ: number, afXAngle: number, afYAngle: number, afZAngle: number, afTangentMagnitude: number, afSpeed: number, afMaxRotationSpeed: number): void
+  splineTranslateToRefNode(arTarget: ObjectReference | null, arNodeName: string, afTangentMagnitude: number, afSpeed: number, afMaxRotationSpeed: number): void
   stopTranslation(): void
   tetherToHorse(akHorse: ObjectReference | null): void
-  translateTo(
-    afX: number,
-    afY: number,
-    afZ: number,
-    afXAngle: number,
-    afYAngle: number,
-    afZAngle: number,
-    afSpeed: number,
-    afMaxRotationSpeed: number,
-  ): void
+  translateTo(afX: number, afY: number, afZ: number, afXAngle: number, afYAngle: number, afZAngle: number, afSpeed: number, afMaxRotationSpeed: number): void
   waitForAnimationEvent(asEventName: string): Promise<boolean>
   getDistance(akOther: ObjectReference | null): number
 }
@@ -1582,17 +1524,7 @@ export declare class Actor extends ObjectReference {
   isTrespassing(): boolean
   isUnconscious(): boolean
   isWeaponDrawn(): boolean
-  keepOffsetFromActor(
-    arTarget: Actor | null,
-    afOffsetX: number,
-    afOffsetY: number,
-    afOffsetZ: number,
-    afOffsetAngleX: number,
-    afOffsetAngleY: number,
-    afOffsetAngleZ: number,
-    afCatchUpRadius: number,
-    afFollowRadius: number,
-  ): void
+  keepOffsetFromActor(arTarget: Actor | null, afOffsetX: number, afOffsetY: number, afOffsetZ: number, afOffsetAngleX: number, afOffsetAngleY: number, afOffsetAngleZ: number, afCatchUpRadius: number, afFollowRadius: number): void
   kill(akKiller: Actor | null): void
   killSilent(akKiller: Actor | null): void
   modActorValue(asValueName: string, afAmount: number): void
@@ -2161,78 +2093,23 @@ export declare class Furniture extends Activator {
 export declare class Game extends PapyrusObject {
   static from(papyrusObject: PapyrusObject | null): Game | null
   static addAchievement(aiAchievementID: number): void
-  static addHavokBallAndSocketConstraint(
-    arRefA: ObjectReference | null,
-    arRefANode: string,
-    arRefB: ObjectReference | null,
-    arRefBNode: string,
-    afRefALocalOffsetX: number,
-    afRefALocalOffsetY: number,
-    afRefALocalOffsetZ: number,
-    afRefBLocalOffsetX: number,
-    afRefBLocalOffsetY: number,
-    afRefBLocalOffsetZ: number,
-  ): Promise<boolean>
+  static addHavokBallAndSocketConstraint(arRefA: ObjectReference | null, arRefANode: string, arRefB: ObjectReference | null, arRefBNode: string, afRefALocalOffsetX: number, afRefALocalOffsetY: number, afRefALocalOffsetZ: number, afRefBLocalOffsetX: number, afRefBLocalOffsetY: number, afRefBLocalOffsetZ: number): Promise<boolean>
   static addPerkPoints(aiPerkPoints: number): void
   static advanceSkill(asSkillName: string, afMagnitude: number): void
   static calculateFavorCost(aiFavorPrice: number): number
   static clearPrison(): void
   static clearTempEffects(): void
-  static disablePlayerControls(
-    abMovement: boolean,
-    abFighting: boolean,
-    abCamSwitch: boolean,
-    abLooking: boolean,
-    abSneaking: boolean,
-    abMenu: boolean,
-    abActivate: boolean,
-    abJournalTabs: boolean,
-    aiDisablePOVType: number,
-  ): void
+  static disablePlayerControls(abMovement: boolean, abFighting: boolean, abCamSwitch: boolean, abLooking: boolean, abSneaking: boolean, abMenu: boolean, abActivate: boolean, abJournalTabs: boolean, aiDisablePOVType: number): void
   static enableFastTravel(abEnable: boolean): void
-  static enablePlayerControls(
-    abMovement: boolean,
-    abFighting: boolean,
-    abCamSwitch: boolean,
-    abLooking: boolean,
-    abSneaking: boolean,
-    abMenu: boolean,
-    abActivate: boolean,
-    abJournalTabs: boolean,
-    aiDisablePOVType: number,
-  ): void
+  static enablePlayerControls(abMovement: boolean, abFighting: boolean, abCamSwitch: boolean, abLooking: boolean, abSneaking: boolean, abMenu: boolean, abActivate: boolean, abJournalTabs: boolean, aiDisablePOVType: number): void
   static fadeOutGame(abFadingOut: boolean, abBlackFade: boolean, afSecsBeforeFade: number, afFadeDuration: number): void
   static fastTravel(akDestination: ObjectReference | null): void
   static findClosestActor(afX: number, afY: number, afZ: number, afRadius: number): Actor | null
-  static findClosestReferenceOfAnyTypeInList(
-    arBaseObjects: FormList | null,
-    afX: number,
-    afY: number,
-    afZ: number,
-    afRadius: number,
-  ): ObjectReference | null
-  static findClosestReferenceOfType(
-    arBaseObject: Form | null,
-    afX: number,
-    afY: number,
-    afZ: number,
-    afRadius: number,
-  ): ObjectReference | null
+  static findClosestReferenceOfAnyTypeInList(arBaseObjects: FormList | null, afX: number, afY: number, afZ: number, afRadius: number): ObjectReference | null
+  static findClosestReferenceOfType(arBaseObject: Form | null, afX: number, afY: number, afZ: number, afRadius: number): ObjectReference | null
   static findRandomActor(afX: number, afY: number, afZ: number, afRadius: number): Actor | null
-  static findRandomReferenceOfAnyTypeInList(
-    arBaseObjects: FormList | null,
-    afX: number,
-    afY: number,
-    afZ: number,
-    afRadius: number,
-  ): ObjectReference | null
-  static findRandomReferenceOfType(
-    arBaseObject: Form | null,
-    afX: number,
-    afY: number,
-    afZ: number,
-    afRadius: number,
-  ): ObjectReference | null
+  static findRandomReferenceOfAnyTypeInList(arBaseObjects: FormList | null, afX: number, afY: number, afZ: number, afRadius: number): ObjectReference | null
+  static findRandomReferenceOfType(arBaseObject: Form | null, afX: number, afY: number, afZ: number, afRadius: number): ObjectReference | null
   static forceFirstPerson(): void
   static forceThirdPerson(): void
   static getCameraState(): number
@@ -2301,12 +2178,7 @@ export declare class Game extends PapyrusObject {
   static precacheCharGenClear(): void
   static queryStat(asStat: string): number
   static quitToMainMenu(): void
-  static removeHavokConstraints(
-    arFirstRef: ObjectReference | null,
-    arFirstRefNodeName: string,
-    arSecondRef: ObjectReference | null,
-    arSecondRefNodeName: string,
-  ): Promise<boolean>
+  static removeHavokConstraints(arFirstRef: ObjectReference | null, arFirstRefNodeName: string, arSecondRef: ObjectReference | null, arSecondRefNodeName: string): Promise<boolean>
   static requestAutosave(): void
   static requestModel(asModelName: string): void
   static requestSave(): void
@@ -2446,20 +2318,8 @@ export declare class Key extends MiscObject {
 export declare class Keyword extends Form {
   static from(papyrusObject: PapyrusObject | null): Keyword | null
   getString(): string
-  sendStoryEvent(
-    akLoc: Location | null,
-    akRef1: ObjectReference | null,
-    akRef2: ObjectReference | null,
-    aiValue1: number,
-    aiValue2: number,
-  ): void
-  sendStoryEventAndWait(
-    akLoc: Location | null,
-    akRef1: ObjectReference | null,
-    akRef2: ObjectReference | null,
-    aiValue1: number,
-    aiValue2: number,
-  ): Promise<boolean>
+  sendStoryEvent(akLoc: Location | null, akRef1: ObjectReference | null, akRef2: ObjectReference | null, aiValue1: number, aiValue2: number): void
+  sendStoryEventAndWait(akLoc: Location | null, akRef1: ObjectReference | null, akRef2: ObjectReference | null, aiValue1: number, aiValue2: number): Promise<boolean>
   static getKeyword(key: string): Keyword | null
 }
 
@@ -2592,17 +2452,7 @@ export declare class MagicEffect extends Form {
 // Based on Message.pex
 export declare class Message extends Form {
   static from(papyrusObject: PapyrusObject | null): Message | null
-  show(
-    param1: number,
-    param2: number,
-    param3: number,
-    param4: number,
-    param5: number,
-    param6: number,
-    param7: number,
-    param8: number,
-    param9: number,
-  ): Promise<number>
+  show(param1: number, param2: number, param3: number, param4: number, param5: number, param6: number, param7: number, param8: number, param9: number): Promise<number>
   showAsHelpMessage(param1: string, param2: number, param3: number, param4: number): void
   static resetHelpMessage(param1: string): void
 }
@@ -2630,13 +2480,7 @@ export declare class NetImmerse extends PapyrusObject {
   static getNodeWorldPositionZ(ref: ObjectReference | null, node: string, firstPerson: boolean): number
   static getNodeWorldRotationEuler(ref: ObjectReference | null, node: string, _in: number[] | null, firstPerson: boolean): boolean
   static getNodeWorldRotationMatrix(ref: ObjectReference | null, node: string, _in: number[] | null, firstPerson: boolean): boolean
-  static getRelativeNodePosition(
-    ref: ObjectReference | null,
-    nodeA: string,
-    nodeB: string,
-    _in: number[] | null,
-    firstPerson: boolean,
-  ): boolean
+  static getRelativeNodePosition(ref: ObjectReference | null, nodeA: string, nodeB: string, _in: number[] | null, firstPerson: boolean): boolean
   static getRelativeNodePositionX(ref: ObjectReference | null, nodeA: string, nodeB: string, firstPerson: boolean): number
   static getRelativeNodePositionY(ref: ObjectReference | null, nodeA: string, nodeB: string, firstPerson: boolean): number
   static getRelativeNodePositionZ(ref: ObjectReference | null, nodeA: string, nodeB: string, firstPerson: boolean): number
@@ -2910,36 +2754,13 @@ export declare class SoundDescriptor extends Form {
 // Based on TESModPlatform.pex
 export declare class TESModPlatform extends PapyrusObject {
   static from(papyrusObject: PapyrusObject | null): TESModPlatform | null
-  static addItemEx(
-    containerRefr: ObjectReference | null,
-    item: Form | null,
-    countDelta: number,
-    health: number,
-    enchantment: Enchantment | null,
-    maxCharge: number,
-    removeEnchantmentOnUnequip: boolean,
-    chargePercent: number,
-    textDisplayData: string,
-    soul: number,
-    poison: Potion | null,
-    poisonCount: number,
-  ): void
+  static addItemEx(containerRefr: ObjectReference | null, item: Form | null, countDelta: number, health: number, enchantment: Enchantment | null, maxCharge: number, removeEnchantmentOnUnequip: boolean, chargePercent: number, textDisplayData: string, soul: number, poison: Potion | null, poisonCount: number): void
   static clearTintMasks(targetActor: Actor | null): void
   static createNpc(): ActorBase | null
   static getNthVtableElement(pointer: Form | null, pointerOffset: number, elementIndex: number): number
   static getSkinColor(base: ActorBase | null): ColorForm | null
   static isPlayerRunningEnabled(): boolean
-  static moveRefrToPosition(
-    refr: ObjectReference | null,
-    cell: Cell | null,
-    world: WorldSpace | null,
-    posX: number,
-    posY: number,
-    posZ: number,
-    rotX: number,
-    rotY: number,
-    rotZ: number,
-  ): void
+  static moveRefrToPosition(refr: ObjectReference | null, cell: Cell | null, world: WorldSpace | null, posX: number, posY: number, posZ: number, rotX: number, rotY: number, rotZ: number): void
   static pushTintMask(targetActor: Actor | null, type: number, argb: number, texturePath: string): void
   static pushWornState(worn: boolean, wornLeft: boolean): void
   static resetContainer(container: Form | null): void
