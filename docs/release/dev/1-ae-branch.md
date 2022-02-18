@@ -23,4 +23,4 @@
 
 ## Known bugs & problems
 - footstep event freezes the game at sink activation on Skyrim v1.6+.
-- sceneActionEvent needs to be decompiled further to provide correct arguments.
+- ~~sceneActionEvent needs to be decompiled further to provide correct arguments.~~

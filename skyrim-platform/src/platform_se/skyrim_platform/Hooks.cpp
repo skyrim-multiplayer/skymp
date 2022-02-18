@@ -9,13 +9,17 @@
  */
 struct OnUpdate
 {
-  static void thunk() { func(); };
+  static void thunk(std::int64_t unk) { func(unk); };
   static inline REL::Relocation<decltype(&thunk)> func;
 };
 
 void InstallOnUpdateHook()
 {
+#ifdef SKYRIMSE
+  REL::Relocation<std::uintptr_t> hook{ REL::ID(35565), 0x53 };
+#else
   REL::Relocation<std::uintptr_t> hook{ REL::ID(36564), 0x6e };
+#endif
   Hooks::write_thunk_call<OnUpdate>(hook.address());
 }
 
