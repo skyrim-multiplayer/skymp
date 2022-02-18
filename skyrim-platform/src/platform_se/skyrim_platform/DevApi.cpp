@@ -3,6 +3,7 @@
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
 #include "ReadFile.h"
+#include "Validators.h"
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -22,12 +23,8 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
 {
   auto fileName = args[1].ToString();
 
-  if (fileName.find("..") != std::string::npos) {
+  if (!ValidateRelativePath(fileName)) {
     throw InvalidArgumentException("fileName", fileName);
-  }
-
-  while (!fileName.empty() && (fileName[0] == '/' || fileName[0] == '\\')) {
-    fileName = { fileName.begin() + 1, fileName.end() };
   }
 
   for (auto dir : pluginLoadDirectories) {
@@ -64,7 +61,7 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
 
 JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
 {
-  auto fileName = (std::string)args[1];
+  auto fileName = static_cast<std::string>(args[1]);
   auto exports = args[2];
 
   for (auto& [moduleName, f] : DevApi::nativeExportsMap) {
@@ -77,8 +74,11 @@ JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
 }
 
 namespace {
-std::filesystem::path GetPluginPath(std::string pluginName)
+std::filesystem::path GetPluginPath(const std::string& pluginName)
 {
+  if (!ValidateFilename(pluginName, /*allowDots*/ false)) {
+    throw InvalidArgumentException("pluginName", pluginName);
+  }
   return std::filesystem::path("Data/Platform/Plugins") / (pluginName + ".js");
 }
 }
@@ -119,6 +119,7 @@ JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
   return static_cast<double>(jsEngine->GetMemoryUsage());
 }
 
+namespace {
 class WrapperScreenShotEventHandler : public RE::MenuEventHandler
 {
 public:
@@ -152,6 +153,7 @@ public:
 
   RE::MenuEventHandler* originalHandler;
 };
+}
 
 void DevApi::DisableCtrlPrtScnHotkey()
 {
