@@ -9,7 +9,7 @@ namespace FileInfoApi {
 JsValue FileInfo(const JsFunctionArguments& args)
 {
   auto filename = static_cast<std::string>(args[1]);
-  if (!ValidateFilename(filename, /*allowDots*/ false)) {
+  if (!ValidateFilename(filename, /*allowDots*/ true)) {
     throw InvalidArgumentException("filename", filename);
   }
 
