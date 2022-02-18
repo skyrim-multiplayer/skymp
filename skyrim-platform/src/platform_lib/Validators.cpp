@@ -14,11 +14,17 @@ bool ValidateFilename(std::string_view filename, bool allowDots)
 
 bool ValidateRelativePath(std::string_view path)
 {
-  if (path.empty() || path[0] == '/' || path[0] == '\\' ||
-      path.find("..") != std::string::npos ||
-      path.find(':') != std::string::npos ||
-      path.find('\0') != std::string::npos) {
-    return false;
+  for (size_t i = 0; i < path.size(); ++i) {
+    // Forbid everything including ':' and null character
+    const char& c = path[i];
+    if (!(('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') ||
+          ('a' <= c && c <= 'z') || c == '.' || c == '-' || c == '_' ||
+          c == '/' || c == '\\')) {
+      return false;
+    }
+    if (i > 0 && path[i - 1] == '.' && path[i] == '.') {
+      return false;
+    }
   }
   return true;
 }
