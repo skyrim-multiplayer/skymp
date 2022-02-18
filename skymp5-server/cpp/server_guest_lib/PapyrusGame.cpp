@@ -69,3 +69,30 @@ VarValue PapyrusGame::GetPlayer(VarValue self,
                                                     self.GetMetaStackId());
   return VarValue(std::make_shared<MpFormGameObject>(actor));
 }
+
+VarValue PapyrusGame::ShowRaceMenu(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  auto funcName = "ShowRaceMenu";
+  RaceMenuHelper(self, funcName, arguments);
+  return VarValue::None();
+}
+
+VarValue PapyrusGame::ShowLimitedRaceMenu(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto funcName = "ShowLimitedRaceMenu";
+  RaceMenuHelper(self, funcName, arguments);
+  return VarValue::None();
+}
+
+void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
+                                 const std::vector<VarValue>& arguments)
+{
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+  if (auto actor = compatibilityPolicy->GetDefaultActor(
+        GetName(), funcName, self.GetMetaStackId())) {
+    actor->SetRaceMenuOpen(true);
+    SpSnippet(GetName(), funcName, serializedArgs.data()).Execute(actor);
+  }
+}
