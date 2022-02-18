@@ -1,18 +1,21 @@
 #include "TextApi.h"
-#include <fstream>
+
 #include <string>
 
 #include <codecvt>
 #include <locale>
 
 namespace TextApi {
+
 JsValue TextApi::CreateText(const JsFunctionArguments& args)
 {
   std::array<double, 4> argColor;
 
   auto argPosX = static_cast<double>(args[1]);
   auto argPosY = static_cast<double>(args[2]);
-  auto argString = static_cast<std::string>(args[3]);
+
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  auto argString = converter.from_bytes(static_cast<std::string>(args[3]));
 
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[4].GetProperty(i);
@@ -40,10 +43,12 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
 {
-  auto argString = static_cast<std::string>(args[2]);
+  auto textId = static_cast<int>(args[1]);
 
-  TextsCollection::GetSingleton().SetTextString(static_cast<int>(args[1]),
-                                                argString);
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  auto argString = converter.from_bytes(static_cast<std::string>(args[2]));
+
+  TextsCollection::GetSingleton().SetTextString(textId, std::move(argString));
   return JsValue::Undefined();
 }
 
@@ -56,7 +61,7 @@ JsValue TextApi::SetTextColor_(const JsFunctionArguments& args)
   }
 
   TextsCollection::GetSingleton().SetTextColor(static_cast<int>(args[1]),
-                                               argColor);
+                                               std::move(argColor));
   return JsValue::Undefined();
 }
 
@@ -80,10 +85,11 @@ JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 {
-  std::string str =
+  const auto& str =
     TextsCollection::GetSingleton().GetTextString(static_cast<int>(args[1]));
 
-  return JsValue(str);
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  return JsValue(converter.to_bytes(str));
 }
 
 JsValue TextApi::GetTextColor(const JsFunctionArguments& args)

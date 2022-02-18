@@ -14,7 +14,7 @@
 #include <RE/MenuControls.h>
 #include <RE/MenuEventHandler.h>
 
-std::shared_ptr<JsEngine>* DevApi::jsEngine = nullptr;
+std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
 
 JsValue DevApi::Require(const JsFunctionArguments& args,
@@ -47,10 +47,10 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
     std::stringstream src;
     src << t.rdbuf();
 
-    if (!jsEngine || !*jsEngine) {
+    if (!jsEngine) {
       throw NullPointerException("jsEngine");
     }
-    auto exports = (**jsEngine).RunScript(src.str(), fileName);
+    auto exports = jsEngine->RunScript(src.str(), fileName);
 
     if (auto& f = DevApi::nativeExportsMap[fileName]) {
       exports = f(exports);
@@ -113,10 +113,10 @@ JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
 
 JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
 {
-  if (!jsEngine || !*jsEngine) {
+  if (!jsEngine) {
     throw NullPointerException("jsEngine");
   }
-  return static_cast<double>((**jsEngine).GetMemoryUsage());
+  return static_cast<double>(jsEngine->GetMemoryUsage());
 }
 
 class WrapperScreenShotEventHandler : public RE::MenuEventHandler
