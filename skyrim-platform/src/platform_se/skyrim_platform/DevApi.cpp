@@ -26,8 +26,15 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
     throw InvalidArgumentException("fileName", fileName);
   }
 
-  while (!fileName.empty() && (fileName[0] == '/' || fileName[0] == '\\')) {
-    fileName = { fileName.begin() + 1, fileName.end() };
+  while (!fileName.empty()) {
+    // Trying to get rid of absolute paths...
+    while (!fileName.empty() && (fileName[0] == '/' || fileName[0] == '\\')) {
+      fileName = { fileName.begin() + 1, fileName.end() };
+    }
+    // Trying to get rid of `DRIVELETTER:`
+    while (fileName.size() > 1 && fileName[1] == ':') {
+      fileName = { fileName.begin() + 2, fileName.end() };
+    }
   }
 
   for (auto dir : pluginLoadDirectories) {
@@ -64,7 +71,7 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
 
 JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
 {
-  auto fileName = (std::string)args[1];
+  auto fileName = static_cast<std::string>(args[1]);
   auto exports = args[2];
 
   for (auto& [moduleName, f] : DevApi::nativeExportsMap) {
@@ -77,8 +84,13 @@ JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
 }
 
 namespace {
-std::filesystem::path GetPluginPath(std::string pluginName)
+std::filesystem::path GetPluginPath(const std::string& pluginName)
 {
+  for (char c : pluginName) {
+    if (c == ':' || c == '/' || c == '\\') {
+      throw std::runtime_error("Illegal characters in plugin name");
+    }
+  }
   return std::filesystem::path("Data/Platform/Plugins") / (pluginName + ".js");
 }
 }
@@ -119,6 +131,7 @@ JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
   return static_cast<double>(jsEngine->GetMemoryUsage());
 }
 
+namespace {
 class WrapperScreenShotEventHandler : public RE::MenuEventHandler
 {
 public:
@@ -152,6 +165,7 @@ public:
 
   RE::MenuEventHandler* originalHandler;
 };
+}
 
 void DevApi::DisableCtrlPrtScnHotkey()
 {
