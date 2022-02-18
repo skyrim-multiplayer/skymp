@@ -3,6 +3,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <string>
 
 class HttpClient
 {
@@ -14,6 +15,7 @@ public:
   {
     std::vector<uint8_t> body;
     int32_t status = 0;
+    std::string error;
   };
 
   using Headers = std::vector<std::pair<std::string, std::string>>;
