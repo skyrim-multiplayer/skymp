@@ -1,8 +1,6 @@
 #include "Win32Api.h"
 
-namespace Win32Api {
-
-JsValue LoadUrl(const JsFunctionArguments& args)
+JsValue Win32Api::LoadUrl(const JsFunctionArguments& args)
 {
   auto str = static_cast<std::string>(args[1]);
   if (str.substr(0, 8) != "https://") {
@@ -17,10 +15,8 @@ JsValue LoadUrl(const JsFunctionArguments& args)
   return JsValue::Undefined();
 }
 
-JsValue ExitProcess(const JsFunctionArguments& args)
+JsValue Win32Api::ExitProcess(const JsFunctionArguments& args)
 {
   std::exit(0);
   return JsValue::Undefined();
-}
-
 }
