@@ -199,13 +199,16 @@ const spExchanges: SPExchange[] = [
           {
             formId: 0x0300353a,
             returnNumber: 1,
-          }, {
+          },
+          {
             formId: 0x03003539,
             returnNumber: 1,
-          }, {
+          },
+          {
             formId: 0x0300353b,
             returnNumber: 1,
-          }, {
+          },
+          {
             formId: 0x00064b43,
             returnNumber: 1,
           },
