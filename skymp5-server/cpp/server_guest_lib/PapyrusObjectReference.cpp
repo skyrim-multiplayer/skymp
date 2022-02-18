@@ -317,9 +317,10 @@ VarValue PapyrusObjectReference::SetPosition(
     // note that this change is global. So players should get new position on
     // entering area or even outside of it
     selfRefr->SetPosAndAngleSilent(
-      NiPoint3(float(static_cast<double>(arguments[0].CastToFloat())),
-               float(static_cast<double>(arguments[1].CastToFloat())),
-               float(static_cast<double>(arguments[2].CastToFloat()))),
+      NiPoint3(
+        static_cast<float>(static_cast<double>(arguments[0].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat()))),
       selfRefr->GetAngle());
     selfRefr->ForceSubscriptionsUpdate();
     auto funcName = "SetPosition";
