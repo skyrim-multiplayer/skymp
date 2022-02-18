@@ -3,6 +3,7 @@
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
 #include "ReadFile.h"
+#include "Validators.h"
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -22,19 +23,8 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
 {
   auto fileName = args[1].ToString();
 
-  if (fileName.find("..") != std::string::npos) {
+  if (!ValidateRelativePath(fileName)) {
     throw InvalidArgumentException("fileName", fileName);
-  }
-
-  while (!fileName.empty()) {
-    // Trying to get rid of absolute paths...
-    while (!fileName.empty() && (fileName[0] == '/' || fileName[0] == '\\')) {
-      fileName = { fileName.begin() + 1, fileName.end() };
-    }
-    // Trying to get rid of `DRIVELETTER:`
-    while (fileName.size() > 1 && fileName[1] == ':') {
-      fileName = { fileName.begin() + 2, fileName.end() };
-    }
   }
 
   for (auto dir : pluginLoadDirectories) {
@@ -86,10 +76,8 @@ JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
 namespace {
 std::filesystem::path GetPluginPath(const std::string& pluginName)
 {
-  for (char c : pluginName) {
-    if (c == ':' || c == '/' || c == '\\') {
-      throw std::runtime_error("Illegal characters in plugin name");
-    }
+  if (!ValidateFilename(pluginName, /*allowDots*/ false)) {
+    throw InvalidArgumentException("pluginName", pluginName);
   }
   return std::filesystem::path("Data/Platform/Plugins") / (pluginName + ".js");
 }
