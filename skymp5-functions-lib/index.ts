@@ -5,6 +5,7 @@ import { SweetPieMap } from './src/logic/SweetPieMap';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { ChatProperty } from './src/props/chatProperty';
+import { CounterProperty } from './src/props/counterProperty';
 import { DialogProperty } from './src/props/dialogProperty';
 import { DisableCheats } from './src/props/disableCheats';
 import { EvalProperty } from './src/props/evalProperty';
@@ -168,6 +169,7 @@ DialogProperty.init();
 BrowserProperty.init();
 EvalProperty.init();
 ChatProperty.init();
+CounterProperty.init();
 Timer.init();
 DisableCheats.init();
 
