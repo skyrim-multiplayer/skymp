@@ -1,4 +1,4 @@
-import { Game, Utility, HttpClient, printConsole, win32, createText } from "skyrimPlatform";
+import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
 import { getServerIp, getServerUiPort } from "./skympClient";
 import { getScreenResolution } from "./skyrimSettings";
@@ -85,7 +85,7 @@ const enumerateClientMods = (getCount: (() => number), getAt: ((idx: number) => 
   const result = [];
   for (let i = 0; i < getCount(); ++i) {
     const filename = getAt(i);
-    const { crc32, size } = win32.fileInfo(filename);
+    const { crc32, size } = sp.fileInfo(filename);
     result.push({ filename, crc32, size });
   }
   return result;
