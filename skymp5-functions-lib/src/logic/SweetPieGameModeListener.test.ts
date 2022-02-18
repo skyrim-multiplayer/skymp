@@ -249,9 +249,15 @@ describe("SweetPieGameModeListener: Round clock", () => {
 
     listener.everySecond();
 
+    expect(listener.getRounds()[0].state).toBe('finished');
+    expect(listener.getRounds()[0].secondsPassed).toBe(0);
+
+    listener.getRounds()[0].secondsPassed = listener.roundEndTimerMaximum;
+    listener.everySecond();
+
+    expect(listener.getRounds()[0].state).toBe('wait');
     expect(listener.getRounds()[0].secondsPassed).toBe(0);
     expect(listener.getRounds()[0].players).toBe(undefined);
-    expect(listener.getRounds()[0].state).toBe('wait');
     expect(controller.teleport).toBeCalledWith(1, 'hall:spawnPoint');
     expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
   });

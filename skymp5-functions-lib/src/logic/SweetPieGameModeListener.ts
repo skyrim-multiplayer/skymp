@@ -308,7 +308,7 @@ export class SweetPieGameModeListener implements GameModeListener {
             round.state = 'finished';
           }
         } else if (round.state === 'finished') {
-          if (round.secondsPassed > this.runningTimerMaximum) {
+          if (round.secondsPassed > this.roundEndTimerMaximum) {
             this.resetRound(this.rounds.indexOf(round));
           }
         }
