@@ -81,7 +81,6 @@ export declare let browser: Browser;
 export interface Win32 {
   loadUrl(url: string): void;
   exitProcess(): void;
-  fileInfo(filename: string): { crc32: number, size: number };
 }
 export declare let win32: Win32;
 
@@ -1123,6 +1122,8 @@ export declare function getTextPos(textId: number): number[];
 export declare function getTextString(textId: number): string;
 export declare function getTextColor(textId: number): number[];
 export declare function getNumCreatedTexts(): number;
+
+export declare function fileInfo(filename: string): { crc32: number, size: number };
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject{
