@@ -8,7 +8,8 @@ JsValue FileInfo(const JsFunctionArguments& args)
 {
   auto path = static_cast<std::string>(args[1]);
   for (char c : path) {
-    if (!(('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') || c == '.')) {
+    if (!(('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') ||
+          ('a' <= c && c <= 'z') || c == '.' || c == '-' || c == '-')) {
       throw std::runtime_error("FileInfo: forbidden characters in path");
     }
   }
