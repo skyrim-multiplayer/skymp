@@ -1,9 +1,9 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
-#include <string>
 
 class HttpClient
 {
