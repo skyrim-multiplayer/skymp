@@ -2,6 +2,7 @@
 
 #include "FileInfo.h"
 #include "InvalidArgumentException.h"
+#include "Validators.h"
 
 namespace FileInfoApi {
 
