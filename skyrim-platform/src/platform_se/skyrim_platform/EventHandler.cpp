@@ -890,6 +890,32 @@ EventResult EventHandler::ProcessEvent(const RE::TESSellEvent* event,
 }
 
 EventResult EventHandler::ProcessEvent(
+  const RE::TESSceneActionEvent* event,
+  RE::BSTEventSource<RE::TESSceneActionEvent>*)
+{
+  if (!event) {
+    return EventResult::kContinue;
+  }
+  auto e = CopyEventPtr(event);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+    auto obj = JsValue::Object();
+
+    auto scene = RE::TESForm::LookupByID<RE::BGSScene>(e->sceneId);
+    auto quest = RE::TESForm::LookupByID<RE::TESQuest>(e->questId);
+
+    AddObjProperty(&obj, "actorAliasId", e->actorAliasId);
+    AddObjProperty(&obj, "actionIndex", e->actionIndex);
+    AddObjProperty(&obj, "scene", scene, "Scene");
+    AddObjProperty(&obj, "quest", quest, "Quest");
+
+    SendEvent("sceneAction", obj);
+  });
+
+  return EventResult::kContinue;
+}
+
+EventResult EventHandler::ProcessEvent(
   const RE::TESSleepStartEvent* event,
   RE::BSTEventSource<RE::TESSleepStartEvent>*)
 {

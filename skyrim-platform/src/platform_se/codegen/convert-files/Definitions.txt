@@ -348,10 +348,10 @@ export interface DestructionStageChangedEvent {
 }
 
 export interface SceneActionEvent {
-  referenceAliasId: number
+  actorAliasId: number
+  actionIndex: number
   scene: Scene
   quest: Quest
-  action: number
 }
 
 export interface PlayerBowShotEvent {

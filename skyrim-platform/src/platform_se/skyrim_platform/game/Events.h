@@ -169,11 +169,11 @@ struct TESDestructionStageChangedEvent
 
 struct TESSceneActionEvent
 {
-  RE::TESForm* reference;
+  void* reference;
   RE::FormID sceneId;
-  RE::FormID referenceAliasID;
+  uint32_t actionIndex;
   RE::FormID questId;
-  uint32_t action; // not sure, where enum?
+  uint32_t actorAliasId;
 };
 
 struct TESSceneEvent
