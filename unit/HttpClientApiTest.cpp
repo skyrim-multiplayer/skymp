@@ -78,7 +78,6 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
 
   REQUIRE(nlohmann::json::parse(result["body"].get<std::string>()) == body);
   REQUIRE(result["status"] == 404);
-  REQUIRE(result["error"] == "");
 }
 
 TEST_CASE("Should be able to perform Bearer authorization", "[HttpClientApi]")
@@ -95,7 +94,6 @@ TEST_CASE("Should be able to perform Bearer authorization", "[HttpClientApi]")
   REQUIRE(responseBody["authenticated"] == true);
   REQUIRE(responseBody["token"] == "123");
   REQUIRE(result["status"] == 200);
-  REQUIRE(result["error"] == "");
 }
 
 TEST_CASE("Should be able to perform a POST request", "[HttpClientApi]")
@@ -111,5 +109,4 @@ TEST_CASE("Should be able to perform a POST request", "[HttpClientApi]")
   auto responseBody = nlohmann::json::parse(result["body"].get<std::string>());
   REQUIRE(responseBody["url"] == "https://httpbin.org/post");
   REQUIRE(result["status"] == 200);
-  REQUIRE(result["error"] == "");
 }
