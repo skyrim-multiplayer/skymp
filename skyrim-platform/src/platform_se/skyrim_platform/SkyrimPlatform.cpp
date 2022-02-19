@@ -29,6 +29,7 @@
 #include "DevApi.h"
 #include "EncodingApi.h"
 #include "EventsApi.h"
+#include "FileInfoApi.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
@@ -233,6 +234,7 @@ private:
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
                            Win32Api::Register(e);
+                           FileInfoApi::Register(e);
                            TextApi::Register(e);
                            InventoryApi::Register(e);
                            CallNativeApi::Register(
