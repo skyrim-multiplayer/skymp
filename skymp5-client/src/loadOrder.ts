@@ -62,7 +62,7 @@ const getServerMods = (retriesLeft: number): Promise<Mod[]> => {
     .get('/manifest.json')
     .then((res) => {
       if (res.status != 200) {
-        throw new Error(`Status code ${res.status}`);
+        throw new Error(`Status code ${res.status}, error ${res.error}`);
       }
       const manifest = JSON.parse(res.body) as ServerManifest;
       if (manifest.versionMajor !== 1) {
