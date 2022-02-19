@@ -17,19 +17,19 @@ export declare function decodeUtf8(buffer: ArrayBuffer): string
 export declare let storage: Record<string, unknown>
 export declare let settings: Record<string, Record<string, unknown>>
 
-export declare function on(eventName: 'update', callback: () => void): void
-export declare function once(eventName: 'update', callback: () => void): void
+export declare function on(eventName: 'update', callback: () => void): EventHandle
+export declare function once(eventName: 'update', callback: () => void): EventHandle
 
-export declare function on(eventName: 'tick', callback: () => void): void
-export declare function once(eventName: 'tick', callback: () => void): void
+export declare function on(eventName: 'tick', callback: () => void): EventHandle
+export declare function once(eventName: 'tick', callback: () => void): EventHandle
 
 export interface IpcMessageEvent {
   sourceSystemName: string
   message: ArrayBuffer
 }
 
-export declare function on(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): void
-export declare function once(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): void
+export declare function on(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): EventHandle
+export declare function once(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): EventHandle
 
 export interface Face {
   hairColor: number
