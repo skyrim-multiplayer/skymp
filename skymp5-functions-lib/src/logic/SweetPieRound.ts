@@ -2,7 +2,7 @@ import { PlayerController } from "./PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 
 export type SweetPieRound = {
-  state: 'running' | 'warmup' | 'wait';
+  state: 'running' | 'warmup' | 'wait' | 'finished';
   players?: Map<number, { kills?: number, restored?: number }>;
   map?: SweetPieMap;
   hallPointName?: string;

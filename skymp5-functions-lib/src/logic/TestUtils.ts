@@ -1,8 +1,9 @@
-import { PlayerController } from "./PlayerController";
+import { Counter, PlayerController } from "./PlayerController";
 
 export const makePlayerController = (): PlayerController => {
   // TODO: use ES6 Proxy to automate handy methods adding
   // TODO: fix getName always returning undefined
+  const counters = new Map<number, number>();
   return {
     teleport: jest.fn(),
     setSpawnPoint: jest.fn(),
@@ -19,6 +20,11 @@ export const makePlayerController = (): PlayerController => {
     getScriptName: jest.fn(),
     isTeleportActivator: jest.fn().mockReturnValue(true),
     updateCustomName: jest.fn(),
+    incrementCounter(actorId: number, counter: Counter, by?: number): number {
+      const old = counters.get(actorId) ?? 0;
+      counters.set(actorId, old + (by ?? 0));
+      return old;
+    },
   };
 };
 

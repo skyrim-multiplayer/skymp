@@ -5,6 +5,7 @@ import { SweetPieMap } from './src/logic/SweetPieMap';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { ChatProperty } from './src/props/chatProperty';
+import { CounterProperty } from './src/props/counterProperty';
 import { DialogProperty } from './src/props/dialogProperty';
 import { DisableCheats } from './src/props/disableCheats';
 import { EvalProperty } from './src/props/evalProperty';
@@ -164,10 +165,172 @@ export const placeholder = (mp: Mp, self: PapyrusObject | null, args: PapyrusVal
   return undefined;
 }
 
+// TODO: Move these types to a better place
+type SPExchangeRet = {
+  formId: number, returnNumber: number,
+}
+
+type SPExchangeReq = {
+  formId: number, requiredCount: number,
+  returnSelect: 'random' | 'none', returns: SPExchangeRet[],
+}
+
+type SPExchange = {
+  formId: number, commissionItem: number,
+  commissionSize: number, startMessage: number,
+  failMessage: number, finishMessage: number,
+  reqs: SPExchangeReq[],
+}
+
+// TODO: Get these values from external config file
+const spExchanges: SPExchange[] = [
+  {
+    formId: 0x064d2b03,
+    commissionItem: 0x0f,
+    commissionSize: 1,
+    startMessage: 0x0635d1f0,
+    failMessage: 0x0635d1f2,
+    finishMessage: 0x0635d1f1,
+    reqs: [
+      {
+        formId: 0x0f,
+        requiredCount: 30,
+        returnSelect: 'random',
+        returns: [
+          {
+            formId: 0x0300353a,
+            returnNumber: 1,
+          },
+          {
+            formId: 0x03003539,
+            returnNumber: 1,
+          },
+          {
+            formId: 0x0300353b,
+            returnNumber: 1,
+          },
+          {
+            formId: 0x00064b43,
+            returnNumber: 1,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    formId: 0x0651f7e4,
+    commissionItem: 0x0f,
+    commissionSize: 1,
+    startMessage: 0x065390f9,
+    failMessage: 0x065390fa,
+    finishMessage: 0x065390fb,
+    reqs: [
+      {
+        formId: 0x05ad9e,
+        requiredCount: 1,
+        returnSelect: 'none',
+        returns: [
+          {
+            formId: 0x0f,
+            returnNumber: 30,
+          },
+        ],
+      },
+      {
+        formId: 0x05ace3,
+        requiredCount: 1,
+        returnSelect: 'none',
+        returns: [
+          {
+            formId: 0x0f,
+            returnNumber: 20,
+          },
+        ],
+      },
+    ],
+  },
+];
+
+export const getLicenses = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number[] => {
+  const ret: number[] = [];
+  for (const l of exchanges) {
+    ret.push(l.formId);
+  }
+  return ret;
+}
+
+export const getRequiredItems = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number[] => {
+  const ret: number[] = [];
+  const licenseIndex: number = getNumber(args, 0);
+  if (exchanges[licenseIndex].reqs.length) {
+    for (const l of exchanges[licenseIndex].reqs) {
+      ret.push(l.formId);
+    }
+  }
+  return ret;
+}
+
+export const getSPExchangeNumberField = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[],
+  field: 'startMessage' | 'failMessage' | 'finishMessage' | 'commissionItem' | 'commissionSize'): number => {
+  const ret: number = 0;
+  const licenseIndex: number = getNumber(args, 0);
+  if (exchanges[licenseIndex]) {
+    return exchanges[licenseIndex][field];
+  }
+  return ret;
+  return ret;
+}
+
+export const getRequiredItemCount = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
+  const ret: number = 0;
+  const licenseIndex: number = getNumber(args, 0);
+  const requiredItemIndex: number = getNumber(args, 1);
+  if (exchanges[licenseIndex].reqs[requiredItemIndex]) {
+    return exchanges[licenseIndex].reqs[requiredItemIndex].requiredCount;
+  }
+  return ret;
+}
+
+export const getReturnItemIndex = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
+  const ret: number = 0;
+  const licenseIndex: number = getNumber(args, 0);
+  const requiredItemIndex: number = getNumber(args, 1);
+  if (exchanges[licenseIndex].reqs[requiredItemIndex].returns.length) {
+    if (exchanges[licenseIndex].reqs[requiredItemIndex].returnSelect === 'random') {
+      const max = exchanges[licenseIndex].reqs[requiredItemIndex].returns.length - 1;
+      return randomInt(mp, self, [0,max]);
+    }
+  }
+  return ret;
+}
+
+export const getReturnItem = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
+  const ret: number = 0;
+  const licenseIndex: number = getNumber(args, 0);
+  const requiredItemIndex: number = getNumber(args, 1);
+  const returnItemIndex: number = getNumber(args, 2);
+  if (exchanges[licenseIndex].reqs[requiredItemIndex].returns[returnItemIndex]) {
+    return exchanges[licenseIndex].reqs[requiredItemIndex].returns[returnItemIndex].formId;
+  }
+  return ret;
+}
+
+export const getReturnItemCount = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
+  const ret: number = 0;
+  const licenseIndex: number = getNumber(args, 0);
+  const requiredItemIndex: number = getNumber(args, 1);
+  const returnItemIndex: number = getNumber(args, 2);
+  if (exchanges[licenseIndex].reqs[requiredItemIndex].returns[returnItemIndex]) {
+    return exchanges[licenseIndex].reqs[requiredItemIndex].returns[returnItemIndex].returnNumber;
+  }
+  return ret;
+}
+
 DialogProperty.init();
 BrowserProperty.init();
 EvalProperty.init();
 ChatProperty.init();
+CounterProperty.init();
 Timer.init();
 DisableCheats.init();
 
@@ -181,6 +344,17 @@ mp.registerPapyrusFunction('method', 'Actor', 'IsDead', (self, args) => isDead(m
 mp.registerPapyrusFunction('global', 'debug', 'SPLog', (self, args) => placeholder(mp, self, args, 'SPLog'));
 mp.registerPapyrusFunction('method', 'effectshader', 'Play', (self, args) => placeholder(mp, self, args, 'effectshader.Play'));
 mp.registerPapyrusFunction('method', 'effectshader', 'Stop', (self, args) => placeholder(mp, self, args, 'effectshader.Stop'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieLicenses', (self, args) => getLicenses(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItems', (self, args) => getRequiredItems(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItemCount', (self, args) => getRequiredItemCount(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieStartMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'startMessage'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieFailMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'failMessage'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieFinishMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'finishMessage'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemIndex', (self, args) => getReturnItemIndex(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItem', (self, args) => getReturnItem(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemCount', (self, args) => getReturnItemCount(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionItem', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionItem'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionSize', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionSize'));
 
 console.log('gamemode.js reloaded');
 
