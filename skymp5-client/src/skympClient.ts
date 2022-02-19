@@ -94,7 +94,15 @@ printConsole("settings:", settings["skymp5-client"]);
 const targetIp = settings["skymp5-client"]["server-ip"] as string;
 const targetPort = settings["skymp5-client"]["server-port"] as number;
 
-export const connectWhenICallAndNotWhenIImport = (): void => {
+export const getServerIp = () => {
+  return targetIp;
+};
+
+export const getServerUiPort = () => {
+  return targetPort === 7777 ? 3000 : (targetPort as number) + 1;
+};
+
+export const connectWhenICallAndNotWhenIImport  = (): void => {
   if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
     storage.targetIp = targetIp;
     storage.targetPort = targetPort;
@@ -104,7 +112,7 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
   } else {
     printConsole("Reconnect is not required");
   }
-}
+};
 
 export class SkympClient {
   constructor() {
