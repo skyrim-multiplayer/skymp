@@ -9,12 +9,15 @@
     "pack-debug": "cross-env DEFAULT_CONFIG=Debug DEV_SERVICE_ONLY_ONCE=yes DEV_SERVICE_NO_GAME=yes node .",
     "start": "cross-env DEV_SERVICE_ONLY_ONCE=yes node .",
     "start-debug": "cross-env DEFAULT_CONFIG=Debug DEV_SERVICE_ONLY_ONCE=yes node .",
+    "format-check": "npx prettier --check ../../../**/*.{js,ts,md,json,css,scss} --config ../../../.prettierrc.yml --ignore-path ../../../.prettierignore",
+    "format-fix": "npx prettier --write ../../../**/*.{js,ts,md,json,css,scss} --config ../../../.prettierrc.yml --ignore-path ../../../.prettierignore",
 	"dev": "cross-env node .",
     "dev-debug": "cross-env DEFAULT_CONFIG=Debug node ."
   },
   "keywords": [],
   "author": "Pospelov",
   "dependencies": {
+    "prettier": "^2.5.1",
     "cross-env": "^7.0.3",
     "fs-extra": "^9.0.0",
     "nodemon": "^2.0.3"
