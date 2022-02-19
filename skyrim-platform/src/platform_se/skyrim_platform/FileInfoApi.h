@@ -7,7 +7,7 @@ JsValue FileInfo(const JsFunctionArguments& args);
 
 inline void Register(JsValue& exports)
 {
-  exports.SetProperty("fileInfo", JsValue::Function(FileInfo));
+  exports.SetProperty("getFileInfo", JsValue::Function(FileInfo));
 }
 
 }

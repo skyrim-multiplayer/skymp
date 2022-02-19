@@ -1123,7 +1123,7 @@ export declare function getTextString(textId: number): string;
 export declare function getTextColor(textId: number): number[];
 export declare function getNumCreatedTexts(): number;
 
-export declare function fileInfo(filename: string): { crc32: number, size: number };
+export declare function getFileInfo(filename: string): { crc32: number, size: number };
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject{
