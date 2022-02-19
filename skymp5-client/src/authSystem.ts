@@ -194,7 +194,7 @@ const loginWithSkympIO = (data: LoginRegisterData, failCallback: (msg: string) =
           failCallback(`Login url is invalid (not found)`);
           break;
         default:
-          failCallback(`Server returned ${escapeJs(response.status.toString() || "???")} \\"${escapeJs(response.body || response.error)}\\"`);
+          failCallback(`Server returned ${escapeJs(response.status.toString() || "???")} \\"${escapeJs(response.body)}\\"`);
       }
     })
     .catch(reason => {
@@ -253,7 +253,7 @@ const registerAccountWithSkympIO = (data: LoginRegisterData): void => {
           }
           break;
         default:
-          setRegisterInfo(`Server returned ${escapeJs(response.status.toString())} \\"${escapeJs(response.body || response.error)}\\"`);
+          setRegisterInfo(`Server returned ${escapeJs(response.status.toString())} \\"${escapeJs(response.body)}\\"`);
           break;
       }
     }).catch(reason => {
