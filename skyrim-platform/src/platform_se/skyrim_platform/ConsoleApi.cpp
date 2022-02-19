@@ -4,6 +4,7 @@
 #include "NullPointerException.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
+#include "Validators.h"
 #include "WindowsConsolePrinter.h"
 #include <RE/CommandTable.h>
 #include <RE/ConsoleLog.h>
@@ -341,10 +342,7 @@ JsValue ConsoleApi::FindConsoleCommand(const JsFunctionArguments& args)
 JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
 {
   auto pluginName = args[1].ToString();
-
-  auto slashCount = std::count(pluginName.begin(), pluginName.end(), '/') +
-    std::count(pluginName.begin(), pluginName.end(), '\\');
-  if (slashCount > 0) {
+  if (!ValidateFilename(pluginName, /*allowDots*/ false)) {
     throw InvalidArgumentException("pluginName", pluginName);
   }
 
