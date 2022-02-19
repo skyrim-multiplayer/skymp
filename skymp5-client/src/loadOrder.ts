@@ -85,7 +85,7 @@ const enumerateClientMods = (getCount: (() => number), getAt: ((idx: number) => 
   const result = [];
   for (let i = 0; i < getCount(); ++i) {
     const filename = getAt(i);
-    const { crc32, size } = sp.fileInfo(filename);
+    const { crc32, size } = sp.getFileInfo(filename);
     result.push({ filename, crc32, size });
   }
   return result;
