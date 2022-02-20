@@ -13,4 +13,3 @@ vcpkg
 **/jest.config.js
 skymp5-server/data/_libkey.js
 **/config.js
-**/skyrimPlatform.ts

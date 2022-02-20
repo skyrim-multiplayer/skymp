@@ -2,6 +2,7 @@ let fs = require('fs-extra')
 let path = require('path')
 let childProcess = require('child_process')
 let game = require('./game')
+let prettier = require('prettier')
 
 function writeFileSyncRecursive(filename, content, charset) {
   filename
@@ -129,6 +130,20 @@ const watchCallback = (_eventType, fileName) => {
         fs.unlinkSync(path.join(distDir, 'SkyrimPlatformCEF.pdb'))
         fs.unlinkSync(path.join(distDir, 'SkyrimPlatformImpl.pdb'))
       }
+
+      // Format skyrimPlatform.ts after codegen
+      const types = fs.readFileSync(path.join(bin, `_codegen/skyrimPlatform.ts`), "utf8")
+      options = {
+        printWidth: 140,
+        endOfLine: "lf",
+        semi: false,
+        singleQuote: true,
+        quoteProps: "consistent",
+        trailingComma: "all",
+        parser: "typescript",
+      }
+      const formatted = prettier.format(types, options)
+      fs.writeFileSync(path.join(bin, `_codegen/skyrimPlatform.ts`), formatted)
 
       // On Linux, we would not have this directory created yet
       createDirectory(path.join(distDir, 'Data/Platform/Modules'))
