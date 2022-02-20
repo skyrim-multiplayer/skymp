@@ -32,7 +32,7 @@ import { IdManager } from "./idManager";
 import { applyAppearanceToPlayer } from "./appearance";
 import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
-import { localIdToRemoteId, remoteIdToLocalId, WorldView } from "./view";
+import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId, WorldView } from "./view";
 import * as updateOwner from "./updateOwner";
 import { getActorValues, setActorValuePercentage } from "./actorvalues";
 import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
@@ -421,6 +421,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   destroyActor(msg: messages.DestroyActorMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i] = null as unknown as FormModel;
+    getViewFromStorage()?.syncFormArray(this.worldModel);
 
     // Shrink to fit
     while (1) {
