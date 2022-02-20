@@ -374,19 +374,15 @@ export class FormView implements View<FormModel> {
   destroy(): void {
     this.isOnScreen = false;
     this.spawnMoment = 0;
-    const refrId = this.refrId;
-    sp.once("update", () => {
-      if (refrId >= 0xff000000) {
-        const refr = ObjectReference.from(Game.getFormEx(refrId));
-        if (refr) refr.delete();
-        modWcProtection(refrId, -1);
-        const ac = Actor.from(refr);
-        if (ac) {
-          sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
-        }
+    const refr = ObjectReference.from(Game.getFormEx(this.refrId));
+    if (this.refrId >= 0xff000000) {
+      if (refr) refr.delete();
+      modWcProtection(this.refrId, -1);
+      const ac = Actor.from(refr);
+      if (ac) {
+        sp.TESModPlatform.setWeaponDrawnMode(ac, -1);
       }
-    })
-
+    }
     this.localImmortal = false;
     this.removeNickname();
   }
@@ -750,15 +746,6 @@ class FormViewArray {
     }
   }
 
-  syncFormView(model: WorldModel, showMe: boolean,) {
-    for (let i = 0; i < model.forms.length; ++i) {
-      if (!model.forms[i] || (model.playerCharacterFormIdx === i && !showMe)) {
-        this.destroyForm(i);
-        continue;
-      }
-    }
-  }
-
   getRemoteRefrId(clientsideRefrId: number): number {
     if (clientsideRefrId < 0xff000000)
       throw new Error("This function is only for 0xff forms");
@@ -843,11 +830,6 @@ export class WorldView implements View<WorldModel> {
     } else {
       this.cloneFormViews.resize(0);
     }
-  }
-
-  syncFormArray(model: WorldModel) {
-    const showMe = settings["skymp5-client"]["show-me"];
-    this.formViews.syncFormView(model, showMe as boolean);
   }
 
   destroy(): void {
