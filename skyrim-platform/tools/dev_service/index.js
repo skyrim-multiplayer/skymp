@@ -132,15 +132,15 @@ const watchCallback = (_eventType, fileName) => {
       }
 
       // Format skyrimPlatform.ts after codegen
-      const types = fs.readFileSync(path.join(bin, `_codegen/skyrimPlatform.ts`), "utf8")
+      const types = fs.readFileSync(path.join(bin, `_codegen/skyrimPlatform.ts`), 'utf8')
       options = {
         printWidth: 140,
-        endOfLine: "lf",
+        endOfLine: 'lf',
         semi: false,
         singleQuote: true,
-        quoteProps: "consistent",
-        trailingComma: "all",
-        parser: "typescript",
+        quoteProps: 'consistent',
+        trailingComma: 'all',
+        parser: 'typescript',
       }
       const formatted = prettier.format(types, options)
       fs.writeFileSync(path.join(bin, `_codegen/skyrimPlatform.ts`), formatted)
