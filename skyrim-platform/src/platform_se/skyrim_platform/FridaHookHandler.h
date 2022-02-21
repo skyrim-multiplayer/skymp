@@ -44,7 +44,7 @@ public:
   }
 
   bool Attach(HookID id, uintptr_t address);
-  void Install(HookID id, uintptr_t address, Hook* hook);
+  void Install(HookID id, uintptr_t address, std::shared_ptr<Hook> hook);
   auto GetHooks() { return &hooks; }
   std::function<void(GumInvocationContext*)> GetHookEnterFunction(HookID id);
   std::function<void(GumInvocationContext*)> GetHookLeaveFunction(HookID id);
@@ -60,7 +60,7 @@ private:
     gum_interceptor_end_transaction(_interceptor);
   }
 
-  robin_hood::unordered_map<HookID, Hook*> hooks;
+  robin_hood::unordered_map<HookID, std::shared_ptr<Hook>> hooks;
 
   GumInterceptor* _interceptor;
   GumInvocationListener* _listener;

@@ -7,11 +7,9 @@ class MenuScreenData
 public:
   static MenuScreenData* GetSingleton()
   {
-#ifdef SKYRIMSE
-    REL::Relocation<MenuScreenData**> singleton{ REL::ID(517043) };
-#else
-    REL::Relocation<MenuScreenData**> singleton{ REL::ID(403551) };
-#endif
+    REL::Relocation<MenuScreenData**> singleton{
+      Offsets::MenuScreenData::Singleton
+    };
     return *singleton;
   }
 

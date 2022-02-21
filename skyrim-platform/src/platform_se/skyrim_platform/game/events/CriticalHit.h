@@ -21,11 +21,7 @@ public:
   static RE::BSTEventSource<CriticalHit::Event>* GetEventSource()
   {
     using func_t = decltype(&CriticalHit::GetEventSource);
-#ifdef SKYRIMSE
-    REL::Relocation<func_t> func{ REL::ID(37726) };
-#else
-    REL::Relocation<func_t> func{ REL::ID(38671) };
-#endif
+    REL::Relocation<func_t> func{ Offsets::EventSource::CriticalHit };
     return func();
   }
 };

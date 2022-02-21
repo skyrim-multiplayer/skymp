@@ -16,11 +16,7 @@ public:
   static RE::BSTEventSource<ShoutAttack::Event>* GetEventSource()
   {
     using func_t = decltype(&ShoutAttack::GetEventSource);
-#ifdef SKYRIMSE
-    REL::Relocation<func_t> func{ REL::ID(40060) };
-#else
-    REL::Relocation<func_t> func{ REL::ID(41071) };
-#endif
+    REL::Relocation<func_t> func{ Offsets::EventSource::ShoutAttack };
     return func();
   }
 };

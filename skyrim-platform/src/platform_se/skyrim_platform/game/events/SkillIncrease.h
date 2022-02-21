@@ -18,11 +18,7 @@ public:
   static RE::BSTEventSource<SkillIncrease::Event>* GetEventSource()
   {
     using func_t = decltype(&SkillIncrease::GetEventSource);
-#ifdef SKYRIMSE
-    REL::Relocation<func_t> func{ REL::ID(39248) };
-#else
-    REL::Relocation<func_t> func{ REL::ID(40320) };
-#endif
+    REL::Relocation<func_t> func{ Offsets::EventSource::SkillIncrease };
     return func();
   }
 };

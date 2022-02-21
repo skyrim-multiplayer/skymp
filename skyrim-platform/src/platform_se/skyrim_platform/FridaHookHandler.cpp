@@ -21,7 +21,6 @@ static void invocation_listener_on_enter(GumInvocationListener* listener,
   InvocationListener* self = INVOCATION_LISTENER(listener);
   auto id = (size_t)gum_invocation_context_get_listener_function_data(ic);
 
-  logger::trace("Frida OnEnter procced.");
   auto func =
     HookHandler::GetSingleton()->GetHookEnterFunction(static_cast<HookID>(id));
 
@@ -40,7 +39,6 @@ static void invocation_listener_on_leave(GumInvocationListener* listener,
   InvocationListener* self = INVOCATION_LISTENER(listener);
   auto id = (size_t)gum_invocation_context_get_listener_function_data(ic);
 
-  logger::trace("Frida OnLeave procced.");
   auto func =
     HookHandler::GetSingleton()->GetHookLeaveFunction(static_cast<HookID>(id));
 
@@ -91,21 +89,22 @@ bool HookHandler::Attach(HookID id, uintptr_t address)
   if (status != GUM_ATTACH_OK) {
     logger::critical(
       "Failed to attach hook: address {:X} id {} with status {}.",
-      address - REL::Module::get().base(), id, status);
+      address - Offsets::BaseAddress, id, status);
     return false;
   } else {
     logger::debug("Attached hook: address {:X} id {} with status {}.",
-                  address - REL::Module::get().base(), id, status);
+                  address - Offsets::BaseAddress, id, status);
     return true;
   }
 }
 
-void HookHandler::Install(HookID id, uintptr_t address, Hook* hook)
+void HookHandler::Install(HookID id, uintptr_t address,
+                          std::shared_ptr<Hook> hook)
 {
   if (hooks.contains(id)) {
     logger::critical(
       "Failed to install hook: address {:X} id {} already installed.",
-      address - REL::Module::get().base(), id);
+      address - Offsets::BaseAddress, id);
     return;
   }
 

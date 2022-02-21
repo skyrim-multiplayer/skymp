@@ -19,11 +19,7 @@ public:
   static RE::BSTEventSource<BooksRead::Event>* GetEventSource()
   {
     using func_t = decltype(&BooksRead::GetEventSource);
-#ifdef SKYRIMSE
-    REL::Relocation<func_t> func{ REL::ID(17470) };
-#else
-    REL::Relocation<func_t> func{ REL::ID(17865) };
-#endif
+    REL::Relocation<func_t> func{ Offsets::EventSource::BooksRead };
     return func();
   }
 };

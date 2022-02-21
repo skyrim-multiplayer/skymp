@@ -103,7 +103,7 @@ json FunctionToJson(const char* typeName, RE::BSScript::IFunction* f,
 
   std::stringstream ss;
   auto funcInfo = GetNativeFunctionAddr::Run(*f);
-  auto baseAddr = REL::Module::get().base();
+  auto baseAddr = Offsets::BaseAddress;
   auto offset = (size_t)funcInfo.fn - baseAddr;
   ss << offset;
   res["offset"] = ss.str();

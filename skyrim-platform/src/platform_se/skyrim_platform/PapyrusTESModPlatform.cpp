@@ -190,7 +190,7 @@ int32_t TESModPlatform::GetNthVtableElement(IVM* vm, StackID stackId,
       return getNthVTableElement(reinterpret_cast<uint8_t*>(pointer) +
                                    pointerOffset,
                                  elementIndex) -
-        REL::Module::get().base();
+        Offsets::BaseAddress;
     } __except (EXCEPTION_EXECUTE_HANDLER) {
     }
   }

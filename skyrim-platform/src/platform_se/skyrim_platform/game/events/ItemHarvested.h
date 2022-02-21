@@ -17,11 +17,7 @@ public:
   static RE::BSTEventSource<ItemHarvested::Event>* GetEventSource()
   {
     using func_t = decltype(&ItemHarvested::GetEventSource);
-#ifdef SKYRIMSE
-    REL::Relocation<func_t> func{ REL::ID(14704) };
-#else
-    REL::Relocation<func_t> func{ REL::ID(14875) };
-#endif
+    REL::Relocation<func_t> func{ Offsets::EventSource::ItemHarvested };
     return func();
   }
 };

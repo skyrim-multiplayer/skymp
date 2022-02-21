@@ -17,11 +17,7 @@ public:
   static RE::BSTEventSource<ActorKill::Event>* GetEventSource()
   {
     using func_t = decltype(&ActorKill::GetEventSource);
-#ifdef SKYRIMSE
-    REL::Relocation<func_t> func{ REL::ID(37390) };
-#else
-    REL::Relocation<func_t> func{ REL::ID(38338) };
-#endif
+    REL::Relocation<func_t> func{ Offsets::EventSource::ActorKill };
     return func();
   }
 };

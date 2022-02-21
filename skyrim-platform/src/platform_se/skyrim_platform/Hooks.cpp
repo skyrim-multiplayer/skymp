@@ -7,20 +7,16 @@
  * but with a slight artificial delay between ticks.
  * Is mostly used for testing atm.
  */
-struct OnUpdate
+struct OnFrameUpdate
 {
   static void thunk(std::int64_t unk) { func(unk); };
   static inline REL::Relocation<decltype(&thunk)> func;
 };
 
-void InstallOnUpdateHook()
+void InstallOnFrameUpdateHook()
 {
-#ifdef SKYRIMSE
-  REL::Relocation<std::uintptr_t> hook{ REL::ID(35565), 0x53 };
-#else
-  REL::Relocation<std::uintptr_t> hook{ REL::ID(36564), 0x6e };
-#endif
-  Hooks::write_thunk_call<OnUpdate>(hook.address());
+  Hooks::write_thunk_call<OnFrameUpdate>(
+    Offsets::Hooks::FrameUpdate.address());
 }
 
 struct OnConsoleVPrint
@@ -37,18 +33,13 @@ struct OnConsoleVPrint
 };
 
 void InstallOnConsoleVPrintHook()
-{ // 50180
-#ifdef SKYRIMSE
-  REL::Relocation<std::uintptr_t> hook{ REL::ID(50180), 0x163 };
-#else
-  REL::Relocation<std::uintptr_t> hook{ REL::ID(51110), 0x300 };
-#endif
-  Hooks::write_thunk_call<OnConsoleVPrint>(hook.address());
+{
+  Hooks::write_thunk_call<OnConsoleVPrint>(Offsets::Hooks::VPrint.address());
 }
 
 void Hooks::Install()
 {
-  // InstallOnUpdateHook();
+  // InstallOnFrameUpdateHook();
   InstallOnConsoleVPrintHook();
 
   logger::info("CommonLib hooks installed.");
