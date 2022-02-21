@@ -1,77 +1,63 @@
 Scriptname SweetTransparent extends ObjectReference  
-objectreference property Most1 auto
-objectreference property Most2 auto
-objectreference property Most3 auto
-objectreference property Most4 auto
-objectreference property Most1N auto
-objectreference property Most2N auto
-objectreference property Most3N auto
-objectreference property Most4N auto
+Int[] property Bridges Auto
+Float property DefaultZ Auto
+Float property Timeout = 30.0 Auto
+Bool property DebugEnabled = False Auto
+ObjectReference[] BridgeRefs
+Actor PlayerRef = none
 
-event OnActivate(ObjectReference akActionRef)
-if !IsActivationBlocked()
-game.getplayer().SetAlpha(0,9)
+Function ChangeZ(Float value)
+	Int nIndex = 0
+	while nIndex < Bridges.Length
+		ObjectReference oRef = BridgeRefs[nIndex]
+		if(oRef != none)
+			Float nX = oRef.GetPositionX()
+			Float nY = oRef.GetPositionY()
+			if(DebugEnabled)
+				Float nZ = oRef.GetPositionZ()
+				debug.SPLog(oRef,"Platform: X " + nX + "; Y " + nY + "; Z " + nZ)
+				;debug.notification("Platform: X " + nX + "; Y " + nY + "; Z " + nZ)
+			endif
+			oRef.SetPosition(nX, nY, DefaultZ + value)
+		endif
+		nIndex += 1
+	endwhile
+EndFunction
 
-Most1.disable()
+Event OnInit()
+	BridgeRefs = new ObjectReference[32]
+	Int nIndex = 0
+	while (nIndex < Bridges.Length && nIndex < BridgeRefs.Length)
+		BridgeRefs[nIndex] = Game.GetForm(Bridges[nIndex]) as ObjectReference
+		nIndex += 1
+	endwhile
+	if(DebugEnabled)
+		Float nX = GetPositionX()
+		Float nY = GetPositionY()
+		Float nZ = GetPositionZ()
+		debug.SPLog(self,"Activator: X " + nX + "; Y " + nY + "; Z " + nZ)
+		;debug.notification("Activator: X " + nX + "; Y " + nY + "; Z " + nZ)
+	endif
+	ChangeZ(0.0)
+EndEvent
 
-Most2.disable()
+Event OnActivate(ObjectReference akActionRef)
+	if(!IsActivationBlocked())
+		PlayerRef = game.getplayer()
+		BlockActivation()
+		if(PlayerRef != none)
+			PlayerRef.SetAlpha(0.2)
+		endif
+		ChangeZ(318.0)
+		RegisterForSingleUpdate(Timeout)
+	endif
+EndEvent
 
-Most3.disable()
-
-Most4.disable()
-
-
-Most1N.enable()
-
-Most2N.enable()
-
-Most3N.enable()
-
-Most4N.enable()
-
-blockactivation()
-self.SetPosition(173397.7656, -97021.6875, 10850.0000)
-utility.wait(1)
-self.SetPosition(173397.7656, -97021.6875, 10800.0000)
-utility.wait(1)
-self.SetPosition(173397.7656, -97021.6875, 10750.0000)
-utility.wait(1)
-self.SetPosition(173397.7656, -97021.6875, 10700.0000)
-utility.wait(1)
-self.SetPosition(173397.7656, -97021.6875, 10650.0000)
-utility.wait(30)
-utility.wait(15)
-self.SetPosition(173397.7656, -97021.6875, 10700.0000)
-utility.wait(1)
-self.SetPosition(173397.7656, -97021.6875, 10750.0000)
-utility.wait(1)
-self.SetPosition(173397.7656, -97021.6875, 10800.0000)
-utility.wait(1)
-self.SetPosition(173397.7656, -97021.6875, 10850.0000)
-utility.wait(1)
-self.SetPosition(173397.7656, -97021.6875, 10900.0000)
-
-Most1N.disable()
-
-Most2N.disable()
-
-Most3N.disable()
-
-Most4N.disable()
-
-
-
-
-Most1.enable()
-
-Most2.enable()
-
-Most3.enable()
-
-Most4.enable()
-
-game.getplayer().SetAlpha(1,0)
-blockactivation(false)
-endif
-endevent
-
+Event OnUpdate()
+	ChangeZ(0.0)
+	blockactivation(false)
+	if(PlayerRef != none)
+		PlayerRef.SetAlpha(1.0)
+		PlayerRef = none
+	endif
+EndEvent

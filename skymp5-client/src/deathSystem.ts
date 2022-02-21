@@ -1,12 +1,9 @@
 import {
   hooks,
   Game,
-  printConsole,
   Actor,
   Debug,
-  once,
-  ObjectReference,
-  Utility,
+  once
 } from "skyrimPlatform";
 import { setLocalDamageMult, defaultLocalDamageMult } from "./index";
 import { AnimationEventName } from "./animation";
@@ -18,7 +15,7 @@ import { RespawnNeededError } from "./errors";
 let gPlayerAllowAnimations: string[] | null = null;
 const gPlayerId: number = 0x14;
 
-// Blocking kill move animations
+// Turn off kill move animations
 hooks.sendAnimationEvent.add(
   {
     enter(ctx) {
@@ -29,6 +26,19 @@ hooks.sendAnimationEvent.add(
   0,
   0xffffffff,
   "KillMove*"
+);
+
+// Turn off stagger animations
+hooks.sendAnimationEvent.add(
+  {
+    enter(ctx) {
+      ctx.animEventName = "";
+    },
+    leave() {},
+  },
+  0xff000000,
+  0xffffffff,
+  "staggerStart"
 );
 
 hooks.sendAnimationEvent.add(

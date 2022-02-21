@@ -2,8 +2,9 @@
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
 #include "ReadFile.h"
+#include "Validators.h"
 
-std::shared_ptr<JsEngine>* DevApi::jsEngine = nullptr;
+std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
 
 JsValue DevApi::Require(const JsFunctionArguments& args,
@@ -11,12 +12,8 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
 {
   auto fileName = args[1].ToString();
 
-  if (fileName.find("..") != std::string::npos) {
+  if (!ValidateRelativePath(fileName)) {
     throw InvalidArgumentException("fileName", fileName);
-  }
-
-  while (!fileName.empty() && (fileName[0] == '/' || fileName[0] == '\\')) {
-    fileName = { fileName.begin() + 1, fileName.end() };
   }
 
   for (auto dir : pluginLoadDirectories) {
@@ -36,10 +33,10 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
     std::stringstream src;
     src << t.rdbuf();
 
-    if (!jsEngine || !*jsEngine) {
+    if (!jsEngine) {
       throw NullPointerException("jsEngine");
     }
-    auto exports = (**jsEngine).RunScript(src.str(), fileName);
+    auto exports = jsEngine->RunScript(src.str(), fileName);
 
     if (auto& f = DevApi::nativeExportsMap[fileName]) {
       exports = f(exports);
@@ -53,7 +50,7 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
 
 JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
 {
-  auto fileName = (std::string)args[1];
+  auto fileName = static_cast<std::string>(args[1]);
   auto exports = args[2];
 
   for (auto& [moduleName, f] : DevApi::nativeExportsMap) {
@@ -66,8 +63,11 @@ JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
 }
 
 namespace {
-std::filesystem::path GetPluginPath(std::string pluginName)
+std::filesystem::path GetPluginPath(const std::string& pluginName)
 {
+  if (!ValidateFilename(pluginName, /*allowDots*/ false)) {
+    throw InvalidArgumentException("pluginName", pluginName);
+  }
   return std::filesystem::path("Data/Platform/Plugins") / (pluginName + ".js");
 }
 }
@@ -102,12 +102,13 @@ JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
 
 JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
 {
-  if (!jsEngine || !*jsEngine) {
+  if (!jsEngine) {
     throw NullPointerException("jsEngine");
   }
-  return static_cast<double>((**jsEngine).GetMemoryUsage());
+  return static_cast<double>(jsEngine->GetMemoryUsage());
 }
 
+namespace {
 class WrapperScreenShotEventHandler : public RE::MenuEventHandler
 {
 public:
@@ -140,6 +141,7 @@ public:
 
   RE::MenuEventHandler* originalHandler;
 };
+}
 
 void DevApi::DisableCtrlPrtScnHotkey()
 {

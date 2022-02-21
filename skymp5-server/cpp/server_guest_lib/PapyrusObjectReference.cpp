@@ -276,3 +276,63 @@ VarValue PapyrusObjectReference::Activate(
   }
   return VarValue::None();
 }
+
+VarValue PapyrusObjectReference::GetPositionX(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    return VarValue(selfRefr->GetPos().x);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::GetPositionY(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    return VarValue(selfRefr->GetPos().y);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::GetPositionZ(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    return VarValue(selfRefr->GetPos().z);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::SetPosition(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 3) {
+      throw std::runtime_error(
+        "SetPosition requires at least three arguments");
+    }
+    // TODO: Add movement/position changing sync for ingame objects and remove
+    // workaround below. Don't forget that SetPosition has fading effect. Also
+    // note that this change is global. So players should get new position on
+    // entering area or even outside of it
+    selfRefr->SetPosAndAngleSilent(
+      NiPoint3(
+        static_cast<float>(static_cast<double>(arguments[0].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat()))),
+      selfRefr->GetAngle());
+    selfRefr->ForceSubscriptionsUpdate();
+    auto funcName = "SetPosition";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}

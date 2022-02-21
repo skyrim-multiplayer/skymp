@@ -1,7 +1,8 @@
 import { GameModeListener } from "./logic/GameModeListener";
-import { Percentages, PlayerController } from "./logic/PlayerController";
+import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/SweetPieRound";
 import { ChatProperty } from "./props/chatProperty";
+import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
@@ -249,6 +250,11 @@ export class MpApiInteractor {
       },
       updateCustomName(formDesc: string, name: string): void {
         MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
+      },
+      incrementCounter(actorId: number, counter: Counter, by?: number): number {
+        const current = CounterProperty.get(actorId, counter);
+        CounterProperty.set(actorId, counter, current + (by ?? 0));
+        return current;
       },
     }
   }

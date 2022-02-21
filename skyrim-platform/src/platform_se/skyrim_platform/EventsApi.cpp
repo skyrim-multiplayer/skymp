@@ -159,10 +159,11 @@ public:
         return;
       }
 
-      return SkyrimPlatform::GetSingleton()->AddUpdateTask([=] {
-        std::string s = eventName;
-        HandleEnter(owningThread, selfId, s);
-      });
+      return SkyrimPlatform::GetSingleton()->AddUpdateTask(
+        [this, owningThread, selfId, eventName] {
+          std::string s = eventName;
+          HandleEnter(owningThread, selfId, s);
+        });
     }
 
     auto f = [&](int) {

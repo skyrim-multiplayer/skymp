@@ -13,8 +13,19 @@ if(temp_coverage)
   file(REMOVE ${temp_coverage})
 endif()
 
+execute_process(COMMAND ${EXE_PATH}
+  RESULT_VARIABLE res
+  OUTPUT_VARIABLE out
+  WORKING_DIRECTORY "${UNIT_WORKING_DIRECTORY}"
+)
+message("${out}")
+
+if(NOT "${res}" STREQUAL "0")
+  message(FATAL_ERROR "Bad exit status ${res}")
+endif()
+
 # OpenCppCoverage is Windows-only
-if(WIN32)
+if(WIN32 AND CPPCOV)
   skymp_execute_process(
     EXECUTABLE_PATH ${EXE_PATH}
     CPPCOV ${CPPCOV}
@@ -28,18 +39,6 @@ if(WIN32)
   )
 
   if(NOT "${EXIT_CODE}" STREQUAL "0")
-    message(FATAL_ERROR "Bad exit status ${EXIT_CODE}")
+    message(FATAL_ERROR "Bad exit status ${EXIT_CODE} ${STDOUT}")
   endif()
-endif()
-
-execute_process(COMMAND ${EXE_PATH}
-  RESULT_VARIABLE res
-  OUTPUT_VARIABLE out
-  WORKING_DIRECTORY "${UNIT_WORKING_DIRECTORY}"
-)
-
-message("${out}")
-
-if(NOT "${res}" STREQUAL "0")
-  message(FATAL_ERROR "Bad exit status ${res}")
 endif()
