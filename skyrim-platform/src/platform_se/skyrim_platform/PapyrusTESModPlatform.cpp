@@ -75,8 +75,9 @@ public:
   LoadGameEvent()
   {
     auto holder = RE::ScriptEventSourceHolder::GetSingleton();
-    if (!holder)
+    if (!holder) {
       throw NullPointerException("holder");
+    }
 
     holder->AddEventSink(this);
   }
@@ -103,13 +104,15 @@ int32_t TESModPlatform::Add(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
 
   try {
     ++numPapyrusUpdates;
-    if (!onPapyrusUpdate)
+    if (!onPapyrusUpdate) {
       throw NullPointerException("onPapyrusUpdate");
+    }
     onPapyrusUpdate(vm, stackId);
 
   } catch (std::exception& e) {
-    if (auto console = RE::ConsoleLog::GetSingleton())
+    if (auto console = RE::ConsoleLog::GetSingleton()) {
       console->Print("Papyrus context exception: %s", e.what());
+    }
   }
 
   vmCallAllowed = true;
@@ -122,8 +125,9 @@ void TESModPlatform::MoveRefrToPosition(
   RE::TESObjectCELL* cell, RE::TESWorldSpace* world, float posX, float posY,
   float posZ, float rotX, float rotY, float rotZ)
 {
-  if (!refr || (!cell && !world) || moveRefrBlocked)
+  if (!refr || (!cell && !world) || moveRefrBlocked) {
     return;
+  }
 
   auto handle = Offsets::GetInvalidRefHandle();
   RE::NiPoint3 pos = { posX, posY, posZ }, rot = { rotX, rotY, rotZ };
@@ -141,23 +145,27 @@ void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
                                         int32_t weapDrawnMode)
 {
   if (!actor || weapDrawnMode < WEAP_DRAWN_MODE_MIN ||
-      weapDrawnMode > WEAP_DRAWN_MODE_MAX)
+      weapDrawnMode > WEAP_DRAWN_MODE_MAX) {
     return;
+  }
 
   if (g_nativeCallRequirements.gameThrQ) {
     auto formId = actor->formID;
     g_nativeCallRequirements.gameThrQ->AddTask([=] {
       // kinda redundant since we get formid from actor
-      if (RE::TESForm::LookupByID<RE::Actor>(formId) != actor)
+      if (RE::TESForm::LookupByID<RE::Actor>(formId) != actor) {
         return;
+      }
 
       if (!actor->IsWeaponDrawn() &&
-          weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_TRUE)
+          weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_TRUE) {
         actor->DrawWeaponMagicHands(true);
+      }
 
       if (actor->IsWeaponDrawn() &&
-          weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_FALSE)
+          weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_FALSE) {
         actor->DrawWeaponMagicHands(false);
+      }
     });
   }
 
@@ -202,8 +210,9 @@ RE::BGSColorForm* TESModPlatform::GetSkinColor(IVM* vm, StackID stackId,
                                                RE::TESNPC* base)
 {
   auto col = CreateForm<RE::BGSColorForm>();
-  if (!col)
+  if (!col) {
     return nullptr;
+  }
   col->color = base->bodyTintColor;
   return col;
 }
@@ -212,8 +221,9 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
                                       RE::StaticFunctionTag*)
 {
   auto npc = CreateForm<RE::TESNPC>();
-  if (!npc)
+  if (!npc) {
     return nullptr;
+  }
 
   enum
   {
@@ -223,8 +233,9 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
     RE::TESForm::LookupByID<RE::TESNPC>(AADeleteWhenDoneTestJeremyRegular);
   assert(srcNpc);
   assert(srcNpc->formType.get() == RE::FormType::NPC);
-  if (!srcNpc || srcNpc->formType != RE::FormType::NPC)
+  if (!srcNpc || srcNpc->formType != RE::FormType::NPC) {
     return nullptr;
+  }
   auto backup = npc->formID;
   memcpy(npc, srcNpc, sizeof RE::TESNPC);
   npc->formID = backup;
@@ -256,8 +267,9 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
 
   auto sourceFaceData = npc_->faceData;
   npc_->faceData = new RE::TESNPC::FaceData;
-  if (!npc_->faceData)
+  if (!npc_->faceData) {
     return nullptr;
+  }
   *npc_->faceData = *sourceFaceData;
 
   return npc;
@@ -268,10 +280,11 @@ void TESModPlatform::SetNpcSex(IVM* vm, StackID stackId,
                                int32_t sex)
 {
   if (npc) {
-    if (sex == 1)
+    if (sex == 1) {
       npc->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kFemale);
-    else
+    } else {
       npc->actorData.actorBaseFlags.reset(RE::ACTOR_BASE_DATA::Flag::kFemale);
+    }
   }
 }
 
@@ -279,16 +292,18 @@ void TESModPlatform::SetNpcRace(IVM* vm, StackID stackId,
                                 RE::StaticFunctionTag*, RE::TESNPC* npc,
                                 RE::TESRace* race)
 {
-  if (npc && race)
+  if (npc && race) {
     npc->race = race;
+  }
 }
 
 void TESModPlatform::SetNpcSkinColor(IVM* vm, StackID stackId,
                                      RE::StaticFunctionTag*, RE::TESNPC* npc,
                                      int32_t color)
 {
-  if (!npc)
+  if (!npc) {
     return;
+  }
   npc->bodyTintColor.red = COLOR_RED(color);
   npc->bodyTintColor.green = COLOR_GREEN(color);
   npc->bodyTintColor.blue = COLOR_BLUE(color);
@@ -319,8 +334,9 @@ void TESModPlatform::ResizeHeadpartsArray(IVM* vm, StackID stackId,
     npc->headParts = new RE::BGSHeadPart*[newSize];
     npc->numHeadParts = newSize;
 
-    for (int8_t i = 0; i < npc->numHeadParts; ++i)
+    for (int8_t i = 0; i < npc->numHeadParts; ++i) {
       npc->headParts[i] = nullptr;
+    }
   }
 }
 
@@ -328,13 +344,15 @@ void TESModPlatform::ResizeTintsArray(IVM* vm, StackID stackId,
                                       RE::StaticFunctionTag*, int32_t newSize)
 {
   auto pc = RE::PlayerCharacter::GetSingleton();
-  if (!pc)
+  if (!pc) {
     return;
+  }
 
   auto prevSize = pc->tintMasks.size();
 
-  if (newSize < 0 || newSize > 1024 || newSize == prevSize)
+  if (newSize < 0 || newSize > 1024 || newSize == prevSize) {
     return;
+  }
 
   pc->tintMasks.resize(newSize);
   for (auto& mask : pc->tintMasks) {
@@ -346,8 +364,9 @@ void TESModPlatform::SetFormIdUnsafe(IVM* vm, StackID stackId,
                                      RE::StaticFunctionTag*, RE::TESForm* form,
                                      uint32_t newId)
 {
-  if (form)
+  if (form) {
     form->formID = newId;
+  }
 }
 
 void TESModPlatform::ClearTintMasks(IVM* vm, StackID stackId,
@@ -359,8 +378,9 @@ void TESModPlatform::ClearTintMasks(IVM* vm, StackID stackId,
     return pc->tintMasks.clear();
   }
 
-  if (targetActor->formID < 0xff000000)
+  if (targetActor->formID < 0xff000000) {
     return;
+  }
   size_t i = targetActor->formID - 0xff000000;
 
   std::lock_guard l(share2.m);
@@ -374,8 +394,9 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
                                   uint32_t argb, FixedString texturePath)
 {
   auto newTm = RE::malloc<::TintMask>();
-  if (!newTm)
+  if (!newTm) {
     return;
+  }
 
   float alpha = COLOR_ALPHA(argb) / 255.f;
   if (alpha > 1.0)
@@ -389,8 +410,9 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
   newTm->color.blue = COLOR_BLUE(argb);
 
   newTm->texture = RE::malloc<RE::TESTexture>();
-  if (!newTm->texture)
+  if (!newTm->texture) {
     return;
+  }
   newTm->texture->textureName = texturePath;
 
   newTm->tintType = type;
@@ -405,8 +427,9 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
     return;
   }
 
-  if (targetActor->formID < 0xff000000)
+  if (targetActor->formID < 0xff000000) {
     return;
+  }
 
   size_t i = targetActor->formID - 0xff000000;
   std::lock_guard l(share2.m);
@@ -448,14 +471,16 @@ void TESModPlatform::AddItemEx(
   int32_t poisonCount)
 {
   auto ui = RE::UI::GetSingleton();
-  if (!containerRefr || !item || !ui || ui->GameIsPaused())
+  if (!containerRefr || !item || !ui || ui->GameIsPaused()) {
     return;
+  }
 
   const auto refrId = containerRefr->GetFormID();
 
   auto boundObject = item->As<RE::TESBoundObject>();
-  if (!boundObject)
+  if (!boundObject) {
     return;
+  }
 
   auto tuple = std::make_tuple(
     containerRefr->formID, item, health, enchantment, maxCharge,
@@ -478,8 +503,9 @@ void TESModPlatform::AddItemEx(
 
   // Our extra-less items support is disgusting! EquipItem crashes when we try
   // an iron sword. This hack saves our slav lives
-  if (item->formType != RE::FormType::Ammo && health <= 1)
+  if (item->formType != RE::FormType::Ammo && health <= 1) {
     health = 1.01f;
+  }
 
   auto extraList = RE::calloc<RE::ExtraDataList>(sizeof(RE::ExtraDataList));
   extraList->_presence = RE::calloc<RE::ExtraDataList::PresenceBitfield>(
@@ -489,39 +515,46 @@ void TESModPlatform::AddItemEx(
       strlen(textDisplayData.data()) > 0 || (soul > 0 && soul <= 5) ||
       poison || g_worn || g_wornLeft) {
 
-    if (g_worn)
-      if (isClothes)
-        extraList->Add(RE::malloc<RE::ExtraWorn>());
+    if (g_worn && isClothes) {
+      extraList->Add(RE::malloc<RE::ExtraWorn>());
+    }
 
-    if (g_wornLeft)
-      if (isClothes)
-        extraList->Add(RE::malloc<RE::ExtraWornLeft>());
+    if (g_wornLeft && isClothes) {
+      extraList->Add(RE::malloc<RE::ExtraWornLeft>());
+    }
 
-    if (health > 1)
+    if (health > 1) {
       extraList->Add(new RE::ExtraHealth(health));
+    }
 
-    if (enchantment)
+    if (enchantment) {
       extraList->Add(new RE::ExtraEnchantment(enchantment, maxCharge,
                                               removeEnchantmentOnUnequip));
+    }
+
     if (chargePercent > 0) {
       auto extra = new RE::ExtraCharge();
       extra->charge = chargePercent;
       extraList->Add(extra);
     }
 
-    if (strlen(textDisplayData.data()) > 0)
+    if (strlen(textDisplayData.data()) > 0) {
       extraList->Add(new RE::ExtraTextDisplayData(textDisplayData.data()));
+    }
 
-    if (soul > 0 && soul <= 5)
+    if (soul > 0 && soul <= 5) {
       extraList->Add(new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
+    }
 
-    if (poison)
+    if (poison) {
       extraList->Add(new RE::ExtraPoison(poison, poisonCount));
+    }
   }
 
   g_nativeCallRequirements.gameThrQ->AddTask([=] {
-    if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId))
+    if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId)) {
       return;
+    }
 
     auto optExtraList =
       item->formType == RE::FormType::Ammo ? nullptr : extraList;
@@ -606,8 +639,9 @@ void TESModPlatform::UpdateEquipment(IVM* vm, StackID stackId,
                                      RE::TESForm* item, bool leftHand)
 {
 
-  if (!actor || !actor->currentProcess)
+  if (!actor || !actor->currentProcess) {
     return;
+  }
   auto ref = leftHand ? actor->currentProcess->GetEquippedLeftHand()
                       : actor->currentProcess->GetEquippedRightHand();
   const auto backup = ref;
@@ -618,12 +652,14 @@ void TESModPlatform::UpdateEquipment(IVM* vm, StackID stackId,
 void TESModPlatform::ResetContainer(IVM* vm, StackID stackId,
                                     RE::StaticFunctionTag*, RE::TESForm* form)
 {
-  if (!form)
+  if (!form) {
     return;
+  }
 
   auto pContainer = form->As<RE::TESContainer>();
-  if (!pContainer)
+  if (!pContainer) {
     return;
+  }
 
   pContainer->numContainerObjects = 0;
   pContainer->containerObjects = nullptr;
@@ -682,19 +718,22 @@ public:
 
 void TESModPlatform::Update()
 {
-  if (!vmCallAllowed)
+  if (!vmCallAllowed) {
     return;
+  }
   vmCallAllowed = false;
 
   papyrusUpdateAllowed = true;
 
   auto console = RE::ConsoleLog::GetSingleton();
-  if (!console)
+  if (!console) {
     return;
+  }
 
   auto vm = RE::SkyrimVM::GetSingleton();
-  if (!vm || !vm->impl)
+  if (!vm || !vm->impl) {
     return console->Print("VM was nullptr");
+  }
 
   FunctionArguments args;
   RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> functor(
@@ -726,13 +765,15 @@ uint64_t TESModPlatform::GetNumPapyrusUpdates()
 std::shared_ptr<RE::BSTArray<RE::TintMask*>> TESModPlatform::GetTintsFor(
   uint32_t actorId)
 {
-  if (actorId < 0xff000000)
+  if (actorId < 0xff000000) {
     return nullptr;
+  }
 
   std::lock_guard l(share2.m);
   auto i = actorId - 0xff000000;
-  if (i >= share2.actorsTints.size())
+  if (i >= share2.actorsTints.size()) {
     return nullptr;
+  }
   return share2.actorsTints[i];
 }
 
