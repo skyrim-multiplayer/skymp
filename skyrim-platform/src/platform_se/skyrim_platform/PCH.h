@@ -35,14 +35,11 @@
 #define NOSCROLL         // SB_* and scrolling routines
 #define NOSERVICE // All Service Controller routines, SERVICE_ equates, etc.
 
-// those are used by boost::asio
-//#define NOGDICAPMASKS    // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
-//#define NONLS            // All NLS defines and routines
-
 #include <RE/Skyrim.h>
 #include <REL/Relocation.h>
 #include <SKSE/SKSE.h>
 
+#include <codecvt>
 #include <concepts>
 #include <condition_variable>
 #include <iostream> // savefile

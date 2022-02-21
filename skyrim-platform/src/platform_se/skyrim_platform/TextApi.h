@@ -1,7 +1,5 @@
 #pragma once
-#include "JsEngine.h"
 #include "TextsCollection.h"
-#include "ui/TextToDraw.h"
 
 namespace TextApi {
 void Register(JsValue& exports);

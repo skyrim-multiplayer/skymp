@@ -19,9 +19,6 @@ void SendPapyrusEventLeave() noexcept;
 
 JsValue GetHooks();
 
-void SendMenuOpen(const char* menuName);
-void SendMenuClose(const char* menuName);
-
 inline void Register(JsValue& exports)
 {
   exports.SetProperty("on", JsValue::Function(On));

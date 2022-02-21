@@ -1,10 +1,5 @@
 #include "TextApi.h"
 
-#include <string>
-
-#include <codecvt>
-#include <locale>
-
 namespace TextApi {
 
 JsValue TextApi::CreateText(const JsFunctionArguments& args)
