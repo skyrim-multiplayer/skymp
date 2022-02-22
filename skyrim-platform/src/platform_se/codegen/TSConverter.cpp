@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
   nlohmann::json j;
   input >> j;
 
-  std::string tab = "    ";
+  std::string tab = "  ";
 
   const std::set<std::string> ignored = { "TESModPlatform.Add", "Math",
                                           "MpClientPlugin" };
@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
     }
 
     output << ")"
-           << ": " << returnType << ";\n";
+           << ": " << returnType << "\n";
   };
 
   std::function<void(nlohmann::json)> dumpType =
@@ -206,9 +206,9 @@ int main(int argc, char* argv[])
            << (data.contains("parent")
                  ? prettify(data["parent"].get<std::string>())
                  : "PapyrusObject")
-           << "{\n";
-    output << tab << "static from(papyrusObject: PapyrusObject | null) : "
-           << prettify(data["name"].get<std::string>()) << "| null; \n";
+           << " {\n";
+    output << tab << "static from(papyrusObject: PapyrusObject | null): "
+           << prettify(data["name"].get<std::string>()) << " | null\n";
 
     for (auto& function : data.at("memberFunctions")) {
       dumpFunction(data.at("name").get<std::string>(), function, false);

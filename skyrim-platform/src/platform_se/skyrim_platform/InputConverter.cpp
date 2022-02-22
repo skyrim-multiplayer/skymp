@@ -1,6 +1,4 @@
 #include "InputConverter.h"
-#include <Windows.h>
-#include <array>
 
 wchar_t InputConverter::VkCodeToChar(uint8_t virtualKeyCode,
                                      bool capitalLetters) noexcept

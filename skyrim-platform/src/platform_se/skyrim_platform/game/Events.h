@@ -1,29 +1,39 @@
 #pragma once
-#include <RE/BGSLocation.h>
-#include <RE/ScriptEventSourceHolder.h>
-#include <RE/TESObjectCELL.h>
-#include <RE/TESObjectREFR.h>
 
-namespace TESEvents {
+#include "events/ActorKill.h"
+#include "events/BooksRead.h"
+#include "events/CriticalHit.h"
+#include "events/DisarmedEvent.h"
+#include "events/DragonSoulsGained.h"
+#include "events/ItemHarvested.h"
+#include "events/LevelIncrease.h"
+#include "events/LocationDiscovery.h"
+#include "events/ShoutAttack.h"
+#include "events/SkillIncrease.h"
+#include "events/SoulsTrapped.h"
+#include "events/SpellsLearned.h"
+
+namespace RE {
 
 struct TESSpellCastEvent
 {
 public:
-  TESSpellCastEvent();
-  TESSpellCastEvent(RE::TESObjectREFR* caster, RE::FormID spell);
+  TESSpellCastEvent()
+    : TESSpellCastEvent(nullptr, static_cast<RE::FormID>(0))
+  {
+  }
+
+  TESSpellCastEvent(RE::TESObjectREFR* caster, RE::FormID spell)
+    : caster(caster)
+    , spell(spell)
+  {
+  }
   ~TESSpellCastEvent() = default;
 
   RE::NiPointer<RE::TESObjectREFR> caster;
   RE::FormID spell;
 };
 static_assert(sizeof(TESSpellCastEvent) == 0x10);
-
-struct TESOpenCloseEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> cause;
-  bool isOpened;
-};
 
 struct TESQuestInitEvent
 {
@@ -40,36 +50,36 @@ struct TESQuestStageEvent
 {
   void* finishedCallback;
   RE::FormID questId;
-  UInt16 stage;
-  UInt8 unk;
-  UInt8 pad;
+  uint16_t stage;
+  uint8_t unk;
+  uint8_t pad;
 };
 
 struct TESQuestStageItemDoneEvent // not finished
 {
-  UInt32 stage;
+  uint32_t stage;
   RE::FormID questId;
-  void* one;   // ? pointer
-  void* two;   // pointer?
-  UInt32 flag; // 1, -1 ?
+  void* one;     // ? pointer
+  void* two;     // pointer?
+  uint32_t flag; // 1, -1 ?
 };
 
 struct TESTriggerEvent
 {
   RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> cause;
+  RE::NiPointer<RE::TESObjectREFR> caster;
 };
 
 struct TESTriggerEnterEvent
 {
   RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> cause;
+  RE::NiPointer<RE::TESObjectREFR> caster;
 };
 
 struct TESTriggerLeaveEvent
 {
   RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> cause;
+  RE::NiPointer<RE::TESObjectREFR> caster;
 };
 
 struct TESSleepStartEvent
@@ -86,7 +96,7 @@ struct TESSleepStopEvent
 struct TESCellAttachDetachEvent
 {
   RE::NiPointer<RE::TESObjectREFR> reference;
-  UInt8 action;
+  uint8_t action;
 };
 
 struct TESWaitStartEvent
@@ -118,22 +128,9 @@ struct TESCellReadyToApplyDecalsEvent
   RE::NiPointer<RE::TESObjectCELL> cell;
 };
 
-struct TESFurnitureEvent
-{
-public:
-  enum class EventType : UInt32
-  {
-    kEnter = 0,
-    kExit = 1
-  };
-  RE::NiPointer<RE::TESObjectREFR> actor;
-  RE::NiPointer<RE::TESObjectREFR> target;
-  EventType type;
-};
-
 struct TESMagicWardHitEvent
 {
-  enum class Status : UInt32
+  enum class Status : uint32_t
   {
     kFriendly = 0,
     kAbsorbed = 1,
@@ -147,7 +144,7 @@ struct TESMagicWardHitEvent
 
 struct TESPackageEvent
 {
-  enum class EventType : UInt32 // not sure
+  enum class EventType : uint32_t // not sure
   {
     kStart = 0,
     kChange = 1,
@@ -166,17 +163,17 @@ struct TESEnterBleedoutEvent
 struct TESDestructionStageChangedEvent
 {
   RE::NiPointer<RE::TESObjectREFR> target;
-  UInt32 oldStage;
-  UInt32 newStage;
+  uint32_t oldStage;
+  uint32_t newStage;
 };
 
 struct TESSceneActionEvent
 {
-  RE::TESForm* reference;
+  void* reference;
   RE::FormID sceneId;
-  RE::FormID referenceAliasID;
+  uint32_t actionIndex;
   RE::FormID questId;
-  UInt32 action; // not sure, where enum?
+  uint32_t actorAliasId;
 };
 
 struct TESSceneEvent
@@ -200,7 +197,7 @@ struct TESFastTravelEndEvent
 
 struct TESObjectREFRTranslationEvent
 {
-  enum class EventType : UInt32
+  enum class EventType : uint32_t
   {
     kFailed = 0,
     kCompleted = 1,
@@ -214,7 +211,7 @@ struct TESTrapHitEvent // not finished
 {
   RE::NiPointer<RE::TESObjectREFR> trap;
   RE::NiPointer<RE::TESObjectREFR> target;
-  UInt32 flag; // flag ? 0 - traphit, 1 - traphitend, 2 - traphitstart
+  uint32_t flag; // flag ? 0 - traphit, 1 - traphitend, 2 - traphitstart
   float f1;
   float f2;
   float f3;
@@ -236,7 +233,7 @@ struct TESPerkEntryRunEvent
   RE::NiPointer<RE::TESObjectREFR> cause;
   RE::NiPointer<RE::TESObjectREFR> target;
   RE::FormID perkId;
-  UInt32 flag;
+  uint32_t flag;
 };
 
 }

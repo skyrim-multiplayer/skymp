@@ -1,7 +1,4 @@
 #include "FlowManager.h"
-#include <tlhelp32.h>
-#include <vector>
-#include <windows.h>
 
 void FlowManager::CloseProcess(std::wstring pName)
 {

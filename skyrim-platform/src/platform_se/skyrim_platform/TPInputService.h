@@ -1,5 +1,4 @@
 #pragma once
-#include <core_library/Meta.hpp>
 
 struct OverlayService;
 

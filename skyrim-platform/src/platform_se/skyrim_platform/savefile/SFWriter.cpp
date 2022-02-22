@@ -1,5 +1,4 @@
 #include "SFWriter.h"
-#include <cassert>
 
 SaveFile_::Writer::Writer(std::shared_ptr<SaveFile> saveStructure)
 {

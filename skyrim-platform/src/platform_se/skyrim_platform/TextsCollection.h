@@ -1,11 +1,5 @@
 #pragma once
 
-#include <fmt/format.h>
-#include <string>
-
-#include "JsEngine.h"
-#include "ui/TextToDraw.h"
-
 class TextsCollection
 {
 public:

@@ -1,5 +1,4 @@
 #include "GetNativeFunctionAddr.h"
-#include <RE\BSScript\NF_util\NativeFunctionBase.h>
 
 GetNativeFunctionAddr::Result GetNativeFunctionAddr::Run(
   const RE::BSScript::IFunction& f)

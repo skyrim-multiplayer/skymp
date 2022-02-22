@@ -1,15 +1,11 @@
 #pragma once
 #include "VmCallback.h"
 #include "VmFunctionArguments.h"
-#include <RE/BSScript/Internal/VirtualMachine.h>
-#include <functional>
-#include <sstream>
 
 class VmCall
 {
 public:
-  static bool Run(RE::BSScript::IVirtualMachine& vm,
-                  RE::BSFixedString className, RE::BSFixedString functionName,
+  static bool Run(IVM& vm, FixedString className, FixedString functionName,
                   const RE::BSTSmartPointer<RE::BSScript::Object>* self,
                   const VmFunctionArguments& arguments,
                   const VmCallback::OnResult& onResult,
@@ -24,8 +20,8 @@ public:
     std::stringstream err;
 
     bool res =
-      ([](RE::BSScript::IVirtualMachine& vm, RE::BSFixedString& className,
-          RE::BSFixedString& functionName, VmFunctionArguments* args,
+      ([](IVM& vm, FixedString& className, FixedString& functionName,
+          VmFunctionArguments* args,
           RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor>& functor,
           std::stringstream& err,
           std::function<const char*()>& getExceptionInfo) {
