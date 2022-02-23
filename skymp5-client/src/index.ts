@@ -22,6 +22,8 @@ import * as authSystem from "./authSystem";
 import { nameof } from "./utils";
 import { AuthGameData } from "./authModel";
 import * as NetInfo from "./netInfoSystem";
+import * as playerCombatSystem from "./playerCombatSystem";
+import { verifyLoadOrder } from './loadOrder';
 
 browser.main();
 
@@ -54,12 +56,15 @@ on("update", () => {
 
 on("update", () => updateWc());
 
+once("update", verifyLoadOrder);
+
 const startClient = (): void => {
   const showNetInfo = settings["skymp5-client"]["show-net-info"];
   if (showNetInfo === true) {
     NetInfo.start();
   }
-  
+
+  playerCombatSystem.start();
   once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();

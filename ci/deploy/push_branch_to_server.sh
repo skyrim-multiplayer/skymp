@@ -58,6 +58,7 @@ elif [[ "$DEPLOY_ACTION" == "deploy" ]]; then
   cp ci/deploy/workaround_temporary/run.sh build/dist/server/
 
   rsync --rsh="$remote_shell" -vazPh --checksum \
+      --exclude=server-settings.json \
       build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
 
   ./ci/deploy/call_webhook.sh "Updated server files, restarting it..."

@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -14,6 +15,7 @@ public:
   {
     std::vector<uint8_t> body;
     int32_t status = 0;
+    std::string error;
   };
 
   using Headers = std::vector<std::pair<std::string, std::string>>;

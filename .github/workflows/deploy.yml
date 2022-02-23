@@ -6,6 +6,10 @@ on:
                 description: action (deploy/restart/stop)
                 required: true
                 default: deploy
+            branch:
+                description: branch, meaning server instance (sweetpie/indev)
+                required: true
+                default: indev
 
 env:
     BUILD_TYPE: RelWithDebInfo
@@ -16,7 +20,7 @@ jobs:
         steps:
           - name: Get action
             run: |
-                echo "DEPLOY_BRANCH=indev" >> "$GITHUB_ENV"
+                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
                 echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
 
           - name: Checkout (full)
@@ -46,8 +50,8 @@ jobs:
                 echo "=== Base revision: $base_rev"
 
                 git checkout -b tmp
-                yarn --cwd="${{github.workspace}}/ci/deploy/gather-indev"
-                ./ci/deploy/gather_indev.sh
+                yarn --cwd="${{github.workspace}}/ci/deploy/gather-server-branch"
+                ./ci/deploy/gather_server_branch.sh
 
                 echo ""
                 echo "=== Changes since $base_rev:"

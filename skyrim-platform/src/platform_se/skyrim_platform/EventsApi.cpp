@@ -165,10 +165,11 @@ public:
         return;
       }
 
-      return SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-        std::string s = eventName;
-        HandleEnter(owningThread, selfId, s);
-      });
+      return SkyrimPlatform::GetSingleton().AddUpdateTask(
+        [this, owningThread, selfId, eventName] {
+          std::string s = eventName;
+          HandleEnter(owningThread, selfId, s);
+        });
     }
 
     auto f = [&](int) {
@@ -492,8 +493,7 @@ void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
 
 void EventsApi::SendConsoleMsgEvent(const char* msg_)
 {
-  std::string msg(msg_);
-  SkyrimPlatform::GetSingleton().AddTickTask([=] {
+  SkyrimPlatform::GetSingleton().AddTickTask([msg = std::string{ msg_ }] {
     auto obj = JsValue::Object();
     obj.SetProperty("message", JsValue::String(msg));
     EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
@@ -502,24 +502,26 @@ void EventsApi::SendConsoleMsgEvent(const char* msg_)
 
 void EventsApi::SendMenuOpen(const char* menuName)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [name = std::string{ menuName }] {
+      auto obj = JsValue::Object();
 
-    obj.SetProperty("name", JsValue::String(menuName));
+      obj.SetProperty("name", JsValue::String(name));
 
-    SendEvent("menuOpen", { JsValue::Undefined(), obj });
-  });
+      SendEvent("menuOpen", { JsValue::Undefined(), obj });
+    });
 }
 
 void EventsApi::SendMenuClose(const char* menuName)
 {
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton().AddUpdateTask(
+    [name = std::string{ menuName }] {
+      auto obj = JsValue::Object();
 
-    obj.SetProperty("name", JsValue::String(menuName));
+      obj.SetProperty("name", JsValue::String(name));
 
-    SendEvent("menuClose", { JsValue::Undefined(), obj });
-  });
+      SendEvent("menuClose", { JsValue::Undefined(), obj });
+    });
 }
 
 namespace {

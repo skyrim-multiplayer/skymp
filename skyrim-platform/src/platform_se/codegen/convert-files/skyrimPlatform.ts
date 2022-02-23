@@ -1103,6 +1103,7 @@ export declare let hooks: Hooks;
 export declare class HttpResponse {
     body: string;
     status: number;
+    error: string;
 }
 export type HttpHeaders = Record<string, string>;
 
@@ -1122,6 +1123,8 @@ export declare function getTextPos(textId: number): number[];
 export declare function getTextString(textId: number): string;
 export declare function getTextColor(textId: number): number[];
 export declare function getNumCreatedTexts(): number;
+
+export declare function getFileInfo(filename: string): { crc32: number, size: number };
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject{
