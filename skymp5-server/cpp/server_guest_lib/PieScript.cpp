@@ -124,10 +124,19 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     { LootboxItemType::Consumable,
       {
         { Tier::Tier1,
-          { 0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC, 0x06557B54 } },
+          {
+            0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC, 0x06557B54,
+            0x000DB5D2, 0x06557B55, 0x000C886C, 0x0005ACDB, 0x00071CF3,
+            0x00034CDD, 0x0005ACE2, 0x0005ACE1, 0x0401CD7C, 0x0005ACDD,
+            0x0005ACE0, 0x0402B04E, 0x0003AD53, 0x0003AD57,
+          } },
         { Tier::Tier2,
           { 0x0006AC4A, 0x0001B3BD, 0x00064B2E, 0x00064B2F, 0x00023D77,
             0x06557B55 } },
+        {
+          Tier::Tier3,
+          { 0x0003ADA4, 0x0005ACDC, 0x0402B06B, 0x0003AD5B },
+        },
         { Tier::Tier4, { 0x0003EADE, 0x0005ACDF } },
         { Tier::Tier5,
           {
