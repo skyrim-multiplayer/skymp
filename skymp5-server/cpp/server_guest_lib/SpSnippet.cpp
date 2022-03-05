@@ -20,7 +20,8 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 
   // Player character is always 0x14 on client, but 0xff000000+ in our server
   // See also SpSnippetFunctionGen.cpp
-  auto targetSelfId = selfId < 0xff000000 ? selfId : 0x14;
+  auto targetSelfId =
+    (selfId < 0xff000000 || selfId != actor->GetFormId()) ? selfId : 0x14;
 
   Networking::Format(
     [&](Networking::PacketData data, size_t len) {

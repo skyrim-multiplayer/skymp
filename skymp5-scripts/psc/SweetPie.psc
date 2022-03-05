@@ -10,3 +10,5 @@ Int Function GetBuyPieReturnItemCount(Int licenseIndex, Int requiredItemIndex, I
 Int Function GetBuyPieCommissionItem(Int licenseIndex) native global
 Int Function GetBuyPieCommissionSize(Int licenseIndex) native global
 Int[] Function GetBuyPieLicenses() native global
+Function SPLog(ObjectReference selfRef, ObjectReference Ref, string TextToPrint) native global
+Function SPDumpActorArray(ObjectReference Ref, string TextToPrint, Actor[] Actors) native global

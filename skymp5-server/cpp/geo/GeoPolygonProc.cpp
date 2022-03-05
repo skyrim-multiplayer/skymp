@@ -13,7 +13,7 @@ void GeoPolygonProc::Set3DPolygonBoundary()
   int n = _polygon.GetN();
 
   this->_x0 = vertices[0].x;
-  this->_x0 = vertices[0].x;
+  this->_x1 = vertices[0].x;
   this->_y0 = vertices[0].y;
   this->_y1 = vertices[0].y;
   this->_z0 = vertices[0].z;
