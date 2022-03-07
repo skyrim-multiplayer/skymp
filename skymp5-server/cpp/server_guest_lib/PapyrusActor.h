@@ -22,6 +22,8 @@ public:
   VarValue DamageActorValue(VarValue self,
                             const std::vector<VarValue>& arguments);
 
+  VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
@@ -34,6 +36,7 @@ public:
     AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
     AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
     AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
+    AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

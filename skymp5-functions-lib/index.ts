@@ -139,13 +139,6 @@ export const moveTo = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): Papyr
   return undefined;
 }
 
-export const setAlpha = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): PapyrusObject | undefined => {
-  const afTargetAlpha = getNumber(args, 0);
-  const abFade = typeof args[1] === 'boolean'? getBoolean(args, 1) : false;
-  console.log('called Actor.SetAlpha: ' + self.desc + ': ' + mp.getIdFromDesc(self.desc) + ': Alpha ' + afTargetAlpha + '; Fade ' + abFade);
-  return undefined;
-}
-
 export const isDead = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): boolean => {
   const selfId = mp.getIdFromDesc(self.desc);
   return mp.get(selfId, 'isDead');
@@ -339,11 +332,9 @@ mp.registerPapyrusFunction('global', 'Utility', 'RandomInt', (self, args) => ran
 mp.registerPapyrusFunction('global', 'Game', 'GetForm', (self, args) => getForm(mp, self, args));
 mp.registerPapyrusFunction('global', 'Game', 'GetFormEx', (self, args) => getForm(mp, self, args));
 mp.registerPapyrusFunction('method', 'ObjectReference', 'MoveTo', (self, args) => moveTo(mp, self, args));
-mp.registerPapyrusFunction('method', 'Actor', 'SetAlpha', (self, args) => setAlpha(mp, self, args));
 mp.registerPapyrusFunction('method', 'Actor', 'IsDead', (self, args) => isDead(mp, self, args));
-mp.registerPapyrusFunction('global', 'debug', 'SPLog', (self, args) => placeholder(mp, self, args, 'SPLog'));
-mp.registerPapyrusFunction('method', 'effectshader', 'Play', (self, args) => placeholder(mp, self, args, 'effectshader.Play'));
-mp.registerPapyrusFunction('method', 'effectshader', 'Stop', (self, args) => placeholder(mp, self, args, 'effectshader.Stop'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'SPLog', (self, args) => placeholder(mp, self, args, 'SPLog'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'SPDumpActorArray', (self, args) => placeholder(mp, self, args, 'SPDumpActorArray'));
 mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieLicenses', (self, args) => getLicenses(mp, self, args, spExchanges));
 mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItems', (self, args) => getRequiredItems(mp, self, args, spExchanges));
 mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItemCount', (self, args) => getRequiredItemCount(mp, self, args, spExchanges));
@@ -519,7 +510,7 @@ const maps: Required<SweetPieMap>[] = [{
   playerRestoreActivators: [],
   playerRestoreWaitTime: 30000,
   spawnPointNames: ['markarth:spawnPoint1', 'markarth:spawnPoint2', 'markarth:spawnPoint3', 'markarth:spawnPoint4', 'markarth:spawnPoint5', 'markarth:spawnPoint6'],
-  enabled: false,
+  enabled: true,
 },
 {
   // '2b46a7:SweetPie.esp' ActorAlpha and bridges activator
@@ -531,7 +522,7 @@ const maps: Required<SweetPieMap>[] = [{
   playerRestoreActivators: [],
   playerRestoreWaitTime: 30000,
   spawnPointNames: ['riften:spawnPoint1', 'riften:spawnPoint2', 'riften:spawnPoint3', 'riften:spawnPoint4', 'riften:spawnPoint5', 'riften:spawnPoint6'],
-  enabled: false,
+  enabled: true,
 },
 {
   safePointName: 'whiterun:safePlace',
