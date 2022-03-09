@@ -1,6 +1,8 @@
 # At the moment of writing this gives ~10% speedup of cmake command on Windows
 # https://gitlab.kitware.com/cmake/cmake/-/issues/23154
-cmake_policy(SET CMP0115 NEW)
+if(POLICY 0115)
+  cmake_policy(SET CMP0115 NEW)
+endif()
 
 option(USE_SYSTEM_VCPKG "Use vcpkg from your system instead of skymp submodule" OFF)
 
