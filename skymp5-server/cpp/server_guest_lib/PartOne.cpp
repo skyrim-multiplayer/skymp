@@ -492,7 +492,7 @@ void PartOne::Init()
     if (emitter->GetBaseId() != 0x00000000 &&
         emitter->GetBaseId() != 0x00000007) {
       baseIdPrefix = R"(, "baseId": )";
-      sprintf(baseId, "%d", emitter->GetBaseId());
+      sprintf(baseId, "", emitter->GetBaseId());
     }
 
     const bool isOwner = emitter == listener;
