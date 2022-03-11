@@ -174,7 +174,7 @@ VarValue CastToString(const VarValue& var)
 
 VarValue GetElementsArrayAtString(const VarValue& array)
 {
-  const uint8_t type = array.GetType();
+  const auto type = array.GetType();
   
   std::string returnValue = "[";
 
