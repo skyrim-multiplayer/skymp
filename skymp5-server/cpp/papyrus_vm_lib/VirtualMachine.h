@@ -2,12 +2,12 @@
 #include "CIString.h"
 #include "MakeID.h"
 #include "Structures.h"
-#include <MakeID.h>
 #include <functional>
 #include <map>
 #include <set>
 
 class VirtualMachine;
+class MakeID;
 
 class StackIdHolder
 {
@@ -46,8 +46,8 @@ public:
     std::shared_ptr<IVariablesHolder> vars;
   };
 
-  VirtualMachine(const std::vector<PexScript::Lazy>& loadedScripts);
-  VirtualMachine(const std::vector<std::shared_ptr<PexScript>>& loadedScripts);
+  explicit VirtualMachine(const std::vector<PexScript::Lazy>& loadedScripts);
+  explicit VirtualMachine(const std::vector<std::shared_ptr<PexScript>>& loadedScripts);
 
   void SetMissingScriptHandler(const MissingScriptHandler& handler);
 

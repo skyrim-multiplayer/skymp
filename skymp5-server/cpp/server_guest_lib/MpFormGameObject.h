@@ -5,7 +5,7 @@
 class MpFormGameObject : public IGameObject
 {
 public:
-  MpFormGameObject(MpForm* form_);
+  explicit MpFormGameObject(MpForm* form_);
   MpForm* GetFormPtr() const noexcept;
 
   const char* GetParentNativeScript() override;
@@ -18,12 +18,14 @@ private:
 };
 
 template <class T>
-inline T* GetFormPtr(const VarValue& papyrusObject)
+T* GetFormPtr(const VarValue& papyrusObject)
 {
-  if (papyrusObject.GetType() != VarValue::kType_Object)
+  if (papyrusObject.GetType() != VarValue::Type::Object)
     return nullptr;
-  auto gameObject = static_cast<IGameObject*>(papyrusObject);
-  auto mpFormGameObject = dynamic_cast<MpFormGameObject*>(gameObject);
+
+  const auto gameObject = static_cast<IGameObject*>(papyrusObject);
+  const auto mpFormGameObject = dynamic_cast<MpFormGameObject*>(gameObject);
+
   if (!mpFormGameObject)
     return nullptr;
   return dynamic_cast<T*>(mpFormGameObject->GetFormPtr());

@@ -1,12 +1,10 @@
 #pragma once
 #include "Promise.h"
-#include <cassert>
 #include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -27,7 +25,7 @@ public:
   // 'Actor', 'ObjectReference' and so on. Used for dynamic casts
   virtual const char* GetParentNativeScript() { return ""; }
 
-  virtual bool EqualsByValue(const IGameObject& obj) const { return false; }
+  [[nodiscard]] virtual bool EqualsByValue(const IGameObject& obj) const { return false; }
 
   bool HasScript(const char* name) const;
 
@@ -45,58 +43,70 @@ struct VarValue
 {
 
 private:
-  union
+  union Data
   {
+    constexpr Data() : id(nullptr) {}
+    constexpr explicit Data(nullptr_t) : Data() {}
+    constexpr explicit Data(IGameObject* obj) : id(obj) {}
+    constexpr explicit Data(const int32_t value) : i(value) {}
+    constexpr explicit Data(const double value) : f(value) {}
+    constexpr explicit Data(const bool value) : b(value) {}
+    constexpr explicit Data(const char* value) : string(value) {}
+
     IGameObject* id;
     const char* string;
     int32_t i;
     double f;
     bool b;
-  } data;
+  };
+
+  Data data;
 
   std::shared_ptr<IGameObject> owningObject;
   int32_t stackId = -1;
 
+  static constexpr inline double EPSILON = 1e-5;
+
 public:
   std::string objectType;
 
-  enum Type : uint8_t
+  enum class Type : uint8_t
   {
-    kType_Object = 0, // 0 null?
-    kType_Identifier, // 1 identifier
-    kType_String,     // 2
-    kType_Integer,    // 3
-    kType_Float,      // 4
-    kType_Bool,       // 5
-
-    _ArraysStart = 11,
-    kType_ObjectArray = 11,
-    kType_StringArray = 12,
-    kType_IntArray = 13,
-    kType_FloatArray = 14,
-    kType_BoolArray = 15,
-    _ArraysEnd = 16,
+    Object = 0, // 0 null?
+    Identifier, // 1 identifier
+    String,     // 2
+    Integer,    // 3
+    Float,      // 4
+    Bool,       // 5
+    ArraysStart = 11,
+    ObjectArray = 11,
+    StringArray = 12,
+    IntArray = 13,
+    FloatArray = 14,
+    BoolArray = 15,
+    ArraysEnd = 16,
+    None = 255,
   };
 
-  uint8_t GetType() const { return static_cast<uint8_t>(this->type); }
+  [[nodiscard]] bool IsArray() const noexcept {return type == Type::ObjectArray ||
+                                                      type == Type::StringArray ||
+                                                      type == Type::IntArray || 
+                                                      type == Type::FloatArray ||
+                                                      type == Type::BoolArray;}
 
-  VarValue()
-  {
-    data.id = nullptr;
-    type = Type::kType_Object;
-  }
+  [[nodiscard]] Type GetType() const noexcept { return type; }
 
-  explicit VarValue(uint8_t type);
-  explicit VarValue(IGameObject* object);
-  explicit VarValue(int32_t value);
-  explicit VarValue(const char* value);
+  VarValue() : data{nullptr}, type(Type::Object) {}
+
+  explicit VarValue(Type type);
   explicit VarValue(const std::string& value);
+  explicit VarValue(int32_t value);
+  explicit VarValue(const char* value, Type type_ = Type::String);
   explicit VarValue(double value);
   explicit VarValue(bool value);
-  explicit VarValue(Viet::Promise<VarValue> promise);
-  explicit VarValue(std::shared_ptr<IGameObject> object);
-
-  VarValue(uint8_t type, const char* value);
+  explicit VarValue(IGameObject* object);
+  explicit VarValue(const Viet::Promise<VarValue>& promise);
+  explicit VarValue(const std::shared_ptr<IGameObject>& object);
 
   static VarValue None() { return VarValue(); }
 
@@ -117,16 +127,15 @@ public:
   std::shared_ptr<std::string> stringHolder;
 
   int32_t GetMetaStackId() const;
-  void SetMetaStackIdHolder(std::shared_ptr<StackIdHolder> stackIdHolder);
-  static VarValue AttachTestStackId(VarValue original = VarValue::None(),
-                                    int32_t stackId = 108);
+  void SetMetaStackIdHolder(const std::shared_ptr<StackIdHolder>& stackIdHolder);
+  static VarValue AttachTestStackId(VarValue original = None(), int32_t stackId = 108);
 
-  VarValue operator+(const VarValue& argument2);
-  VarValue operator-(const VarValue& argument2);
-  VarValue operator*(const VarValue& argument2);
-  VarValue operator/(const VarValue& argument2);
-  VarValue operator%(const VarValue& argument2);
-  VarValue operator!();
+  VarValue operator+(const VarValue& argument2) const;
+  VarValue operator-(const VarValue& argument2) const;
+  VarValue operator*(const VarValue& argument2) const;
+  VarValue operator/(const VarValue& argument2) const;
+  VarValue operator%(const VarValue& argument2) const;
+  VarValue operator!() const;
 
   bool operator==(const VarValue& argument2) const;
   bool operator!=(const VarValue& argument2) const;
@@ -143,7 +152,7 @@ public:
   VarValue CastToFloat() const;
   VarValue CastToBool() const;
 
-  void Then(std::function<void(VarValue)> cb);
+  void Then(std::function<void(VarValue)> cb) const;
 
 private:
   Type type;
@@ -214,7 +223,6 @@ struct FunctionCode
 
 struct FunctionInfo
 {
-
   bool valid = false;
 
   enum
@@ -323,7 +331,7 @@ struct DebugInfo
 
     std::vector<uint16_t> lineNumbers; // one per instruction
 
-    size_t GetNumInstructions() { return lineNumbers.size(); }
+    size_t GetNumInstructions() const { return lineNumbers.size(); }
   };
 
   std::vector<DebugFunction> m_data;
@@ -394,39 +402,38 @@ public:
   using Local = std::pair<std::string, VarValue>;
 
   ActivePexInstance();
-  ActivePexInstance(
-    PexScript::Lazy sourcePex,
+  ActivePexInstance(const PexScript::Lazy& sourcePex,
     const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
-    VirtualMachine* parentVM, VarValue activeInstanceOwner,
-    std::string childrenName);
+    VirtualMachine* parentVM, const VarValue& activeInstanceOwner,
+    const std::string& childrenName);
 
   FunctionInfo GetFunctionByName(const char* name,
-                                 std::string stateName) const;
+                                 const std::string& stateName) const;
 
   VarValue& GetVariableValueByName(std::vector<Local>* optional,
-                                   std::string name);
+                                   const std::string& name);
 
-  VarValue& GetIndentifierValue(std::vector<Local>& locals, VarValue& value,
+  VarValue& GetIdentifierValue(std::vector<Local>& locals, VarValue& value,
                                 bool treatStringsAsIdentifiers = false);
 
   VarValue StartFunction(FunctionInfo& function,
                          std::vector<VarValue>& arguments,
                          std::shared_ptr<StackIdHolder> stackIdHolder);
 
-  static uint8_t GetTypeByName(std::string typeRef);
-  std::string GetActiveStateName() const;
+  static VarValue::Type GetTypeByName(std::string typeRef);
+  [[nodiscard]] std::string GetActiveStateName() const;
 
-  bool IsValid() const { return _IsValid; };
+  [[nodiscard]] bool IsValid() const { return isValid; };
 
-  const std::string& GetSourcePexName() const;
+  [[nodiscard]] const std::string& GetSourcePexName() const;
 
-  const std::shared_ptr<ActivePexInstance> GetParentInstance() const
+  const std::shared_ptr<ActivePexInstance>& GetParentInstance() const
   {
     return parentInstance;
   };
 
-  static uint8_t GetArrayElementType(uint8_t type);
-  static uint8_t GetArrayTypeByElementType(uint8_t type);
+  static VarValue::Type GetArrayElementType(VarValue::Type type);
+  static VarValue::Type GetArrayTypeByElementType(VarValue::Type type);
 
 private:
   struct ExecutionContext;
@@ -448,20 +455,20 @@ private:
   bool EnsureCallResultIsSynchronous(const VarValue& callResult,
                                      ExecutionContext* ctx);
 
-  Object::PropInfo* GetProperty(const ActivePexInstance& scriptInstance,
-                                std::string nameProperty, uint8_t flag);
+  static Object::PropInfo* GetProperty(const ActivePexInstance& scriptInstance,
+                                const std::string& nameProperty, uint8_t flag);
 
   void CastObjectToObject(VarValue* result, VarValue* objectType,
                           std::vector<Local>& locals);
 
-  bool HasParent(ActivePexInstance* script, std::string castToTypeName);
-  bool HasChild(ActivePexInstance* script, std::string castToTypeName);
+  static bool HasParent(ActivePexInstance* script, const std::string& castToTypeName);
+  static bool HasChild(ActivePexInstance* script, const std::string& castToTypeName);
 
   std::shared_ptr<ActivePexInstance> FillParentInstance(
-    std::string nameNeedScript, VarValue activeInstanceOwner,
-    const std::shared_ptr<IVariablesHolder>& mapForFillProperties);
+    const std::string& nameNeedScript, VarValue activeInstanceOwner,
+    const std::shared_ptr<IVariablesHolder>& mapForFillProperties) const;
 
-  bool _IsValid = false;
+  bool isValid = false;
 
   std::string childrenName;
 
@@ -482,4 +489,4 @@ private:
 };
 
 VarValue CastToString(const VarValue& var);
-VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type);
+VarValue GetElementsArrayAtString(const VarValue& array);

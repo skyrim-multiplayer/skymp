@@ -297,7 +297,7 @@ const espm::LookupResult& GetRecordPtr(const VarValue& papyrusObject)
 {
   static const espm::LookupResult emptyResult;
 
-  if (papyrusObject.GetType() != VarValue::kType_Object)
+  if (papyrusObject.GetType() != VarValue::Type::Object)
     return emptyResult;
   auto gameObject = static_cast<IGameObject*>(papyrusObject);
   auto espmGameObject = dynamic_cast<EspmGameObject*>(gameObject);

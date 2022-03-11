@@ -1,4 +1,6 @@
 #include "Reader.h"
+
+#include <cassert>
 #include <fstream>
 
 void Reader::Read()
@@ -227,45 +229,44 @@ VarValue Reader::FillVariableData()
 {
   VarValue Data;
 
-  uint8_t type = Read8_bit();
+  const auto type = static_cast<VarValue::Type>(Read8_bit());
 
   switch (type) {
-    case Data.kType_Object:
+    case VarValue::Type::Object:
       Data = VarValue::None();
       break;
-    case Data.kType_Identifier:
+    case VarValue::Type::Identifier:
       Data = VarValue(
-        Data.kType_Identifier,
+        this->structure->stringTable.GetStorage()[Read16_bit()].data(), VarValue::Type::Identifier);
+      break;
+    case VarValue::Type::String:
+      Data = VarValue(
         this->structure->stringTable.GetStorage()[Read16_bit()].data());
       break;
-    case Data.kType_String:
-      Data = VarValue(
-        this->structure->stringTable.GetStorage()[Read16_bit()].data());
-      break;
-    case Data.kType_Integer:
+    case VarValue::Type::Integer:
       Data = VarValue((int32_t)Read32_bit());
       break;
-    case Data.kType_Float: {
+    case VarValue::Type::Float: {
       uint32_t v = Read32_bit();
       Data = VarValue(*(float*)&v);
       // Data.data.f = (int)Read32_bit();
     } break;
-    case Data.kType_Bool:
+    case VarValue::Type::Bool:
       Data = VarValue((bool)Read8_bit());
       break;
-    case VarValue::kType_ObjectArray:
+    case VarValue::Type::ObjectArray:
       Read32_bit();
       break;
-    case VarValue::kType_StringArray:
+    case VarValue::Type::StringArray:
       Read32_bit();
       break;
-    case VarValue::kType_IntArray:
+    case VarValue::Type::IntArray:
       Read32_bit();
       break;
-    case VarValue::kType_FloatArray:
+    case VarValue::Type::FloatArray:
       Read32_bit();
       break;
-    case VarValue::kType_BoolArray:
+    case VarValue::Type::BoolArray:
       Read32_bit();
       break;
     default:

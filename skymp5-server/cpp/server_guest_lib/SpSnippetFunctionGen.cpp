@@ -30,7 +30,7 @@ std::string SpSnippetFunctionGen::SerializeArguments(
       ss << ", ";
 
     switch (arg.GetType()) {
-      case VarValue::kType_Object: {
+      case VarValue::Type::Object: {
         auto formId = GetFormId(arg);
 
         // Player character is always 0x14 on client, but 0xff000000+ in our
@@ -46,16 +46,16 @@ std::string SpSnippetFunctionGen::SerializeArguments(
           << nlohmann::json({ { "formId", formId }, { "type", type } }).dump();
         break;
       }
-      case VarValue::kType_String:
+      case VarValue::Type::String:
         ss << nlohmann::json(static_cast<const char*>(arg)).dump();
         break;
-      case VarValue::kType_Bool:
+      case VarValue::Type::Bool:
         ss << (static_cast<bool>(arg) ? "true" : "false");
         break;
-      case VarValue::kType_Integer:
+      case VarValue::Type::Integer:
         ss << static_cast<int>(arg);
         break;
-      case VarValue::kType_Float:
+      case VarValue::Type::Float:
         ss << static_cast<double>(arg);
         break;
       default: {

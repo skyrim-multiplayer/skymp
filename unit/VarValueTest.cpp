@@ -54,8 +54,8 @@ TEST_CASE("operator== for objects", "[VarValue]")
 
 TEST_CASE("VarValue Identifier", "[VarValue]")
 {
-  VarValue IdentifierConstructor = VarValue(uint8_t(1));
-  VarValue Identifier = VarValue(uint8_t(1), "kType_Identifier");
+  VarValue IdentifierConstructor = VarValue(VarValue::Type::Identifier);
+  VarValue Identifier = VarValue("kType_Identifier", VarValue::Type::Identifier);
   std::string err = "";
 
   try {
@@ -96,7 +96,7 @@ TEST_CASE("VarValue with nonexistent Type", "[VarValue]")
   std::string err = "";
 
   try {
-    VarValue nonexistent = VarValue(uint8_t(300));
+    VarValue nonexistent = VarValue(static_cast<VarValue::Type>(300));
   } catch (std::exception& e) {
     err = e.what();
   }
@@ -227,7 +227,7 @@ TEST_CASE("Cast to string", "[VarValue]")
   REQUIRE(CastToString(VarValue(5.0)) == VarValue("5"));
   REQUIRE(CastToString(VarValue(4278190080.0)) == VarValue("4278190080"));
 
-  VarValue arr((uint8_t)VarValue::kType_ObjectArray);
+  VarValue arr((uint8_t)VarValue::Type::ObjectArray);
   arr.pArray.reset(new std::vector<VarValue>);
   arr.pArray->resize(2, VarValue::None());
   REQUIRE(CastToString(arr) == VarValue("[None, None]"));

@@ -169,7 +169,7 @@ VarValue PapyrusObjectReference::GetAnimationVariableBool(
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
 
   if (arguments.size() >= 1 &&
-      arguments[0].GetType() == VarValue::kType_String) {
+      arguments[0].GetType() == VarValue::Type::String) {
     auto animVarName = static_cast<const char*>(arguments[0]);
     return VarValue(selfRefr->GetAnimationVariableBool(animVarName));
   }

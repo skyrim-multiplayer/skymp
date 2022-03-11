@@ -792,33 +792,33 @@ JsValue GetJsValueFromPapyrusValue(
       });
   }
   switch (value.GetType()) {
-    case VarValue::kType_Object:
+    case VarValue::Type::Object:
       return GetJsObjectFromPapyrusObject(value, espmFilenames);
-    case VarValue::kType_Identifier:
+    case VarValue::Type::Identifier:
       throw std::runtime_error(
         "Unexpected convertion from Papyrus identifier");
-    case VarValue::kType_String: {
+    case VarValue::Type::String: {
       std::string str = static_cast<const char*>(value);
       return JsValue::String(str);
     }
-    case VarValue::kType_Integer: {
+    case VarValue::Type::Integer: {
       auto v = static_cast<int32_t>(value);
       return JsValue::Int(v);
     }
-    case VarValue::kType_Float: {
+    case VarValue::Type::Float: {
       auto v = static_cast<double>(value);
       return JsValue::Double(v);
     }
-    case VarValue::kType_Bool: {
+    case VarValue::Type::Bool: {
       auto v = static_cast<bool>(value);
       return JsValue::Bool(v);
     }
 
-    case VarValue::kType_ObjectArray:
-    case VarValue::kType_StringArray:
-    case VarValue::kType_IntArray:
-    case VarValue::kType_FloatArray:
-    case VarValue::kType_BoolArray: {
+    case VarValue::Type::ObjectArray:
+    case VarValue::Type::StringArray:
+    case VarValue::Type::IntArray:
+    case VarValue::Type::FloatArray:
+    case VarValue::Type::BoolArray: {
       if (value.pArray == nullptr)
         return JsValue::Null();
       auto arr = JsValue::Array(value.pArray->size());
@@ -865,13 +865,13 @@ VarValue GetPapyrusValueFromJsValue(const JsValue& v, bool treatNumberAsInt,
       auto arr = v;
       if (arr.GetProperty("length").ToString() == "0") {
         // Treat zero-length arrays as kType_ObjectArray ("none array")
-        VarValue papyrusArray(VarValue::kType_ObjectArray);
+        VarValue papyrusArray(VarValue::Type::ObjectArray);
         papyrusArray.pArray.reset(new std::vector<VarValue>);
         return papyrusArray;
       }
 
       auto arrayContents = std::make_shared<std::vector<VarValue>>();
-      uint8_t type = ~0;
+      auto type = VarValue::Type::None;
 
       int n = static_cast<int>(arr.GetProperty("length"));
       for (int i = 0; i < n; ++i) {
@@ -879,7 +879,7 @@ VarValue GetPapyrusValueFromJsValue(const JsValue& v, bool treatNumberAsInt,
           arr.GetProperty(i), treatNumberAsInt, wst));
 
         auto extractedType = arrayContents->back().GetType();
-        if (type == static_cast<uint8_t>(~0)) {
+        if (type == VarValue::Type::None) {
           type = extractedType;
         } else if (extractedType != type) {
           throw std::runtime_error(

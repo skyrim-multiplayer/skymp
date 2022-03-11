@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include "VirtualMachine.h"
 #include <algorithm>
+#include <cassert>
 #include <cctype> // tolower
 #include <functional>
 #include <sstream>
@@ -10,7 +11,7 @@
 namespace {
 bool IsSelfStr(const VarValue& v)
 {
-  return v.GetType() == VarValue::kType_String &&
+  return v.GetType() == VarValue::Type::String &&
     !Utils::stricmp("self", static_cast<const char*>(v));
 }
 }
@@ -20,11 +21,10 @@ ActivePexInstance::ActivePexInstance()
   this->parentVM = nullptr;
 }
 
-ActivePexInstance::ActivePexInstance(
-  PexScript::Lazy sourcePex,
-  const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
-  VirtualMachine* parentVM, VarValue activeInstanceOwner,
-  std::string childrenName)
+ActivePexInstance::ActivePexInstance(const PexScript::Lazy& sourcePex,
+    const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
+    VirtualMachine* parentVM, const VarValue& activeInstanceOwner,
+    const std::string& childrenName)
 {
   this->childrenName = childrenName;
   this->activeInstanceOwner = activeInstanceOwner;
@@ -36,37 +36,37 @@ ActivePexInstance::ActivePexInstance(
 
   this->variables = mapForFillProperties;
 
-  this->_IsValid = true;
+  this->isValid = true;
 }
 
 std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
-  std::string nameNeedScript, VarValue activeInstanceOwner,
-  const std::shared_ptr<IVariablesHolder>& mapForFillProperties)
+  const std::string& nameNeedScript, VarValue activeInstanceOwner_,
+  const std::shared_ptr<IVariablesHolder>& mapForFillProperties) const
 {
-  return parentVM->CreateActivePexInstance(nameNeedScript, activeInstanceOwner,
+  return parentVM->CreateActivePexInstance(nameNeedScript, activeInstanceOwner_,
                                            mapForFillProperties,
                                            this->sourcePex.source);
 }
 
-FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
-                                                  std::string stateName) const
+FunctionInfo ActivePexInstance::GetFunctionByName(const char* name_,
+                                                  const std::string& stateName_) const
 {
+  for (const auto& object : sourcePex.fn()->objectTable) {
+    for (const auto& [stateName, functions] : object.states) {
+      if (stateName != stateName_){
+        continue;
+      }
 
-  FunctionInfo function;
-  for (auto& object : sourcePex.fn()->objectTable) {
-    for (auto& state : object.states) {
-      if (state.name == stateName) {
-        for (auto& func : state.functions) {
-          if (!Utils::stricmp(func.name.data(), name)) {
-            function = func.function;
-            function.valid = true;
-            return function;
+      for (const auto& [fName, function] : functions) {
+          if (name_ == fName) {
+           FunctionInfo result(function);
+            result.valid = true;
+            return result;
           }
-        }
       }
     }
   }
-  return function;
+  return FunctionInfo();
 }
 
 std::string ActivePexInstance::GetActiveStateName() const
@@ -86,7 +86,7 @@ std::string ActivePexInstance::GetActiveStateName() const
 }
 
 Object::PropInfo* ActivePexInstance::GetProperty(
-  const ActivePexInstance& scriptInstance, std::string nameProperty,
+  const ActivePexInstance& scriptInstance, const std::string& nameProperty,
   uint8_t flag)
 {
   if (!scriptInstance.IsValid())
@@ -132,73 +132,62 @@ const std::string& ActivePexInstance::GetSourcePexName() const
 VarValue CastToString(const VarValue& var)
 {
   switch (var.GetType()) {
-    case VarValue::kType_Object: {
-      IGameObject* ptr = ((IGameObject*)var);
-      if (ptr)
-        return VarValue(ptr->GetStringID());
-      else {
-        const static std::string noneString = "None";
-        return VarValue(noneString.c_str());
-      }
+  case VarValue::Type::Object: {
+    if (auto * ptr = static_cast<IGameObject*>(var); ptr)
+    {
+       return VarValue(ptr->GetStringID());
     }
-    case VarValue::kType_Identifier:
+
+    constexpr static std::string_view noneString = "None";
+    return VarValue(noneString.data());
+    }
+    case VarValue::Type::Identifier:
       assert(false);
       return VarValue();
-    case VarValue::kType_String:
+    case VarValue::Type::String:
       return var;
-    case VarValue::kType_Integer:
+    case VarValue::Type::Integer:
       return VarValue(std::to_string(static_cast<int32_t>(var)));
-    case VarValue::kType_Float: {
+    case VarValue::Type::Float: {
       char buffer[512];
       snprintf(buffer, sizeof(buffer), "%.*g", 9000, static_cast<double>(var));
       return VarValue(std::string(buffer));
     }
-    case VarValue::kType_Bool: {
+    case VarValue::Type::Bool: {
       return VarValue(static_cast<bool>(var) ? "True" : "False");
     }
-    case VarValue::kType_ObjectArray:
-      return GetElementsArrayAtString(var, var.kType_ObjectArray);
-    case VarValue::kType_StringArray:
-      return GetElementsArrayAtString(var, var.kType_StringArray);
-    case VarValue::kType_IntArray:
-      return GetElementsArrayAtString(var, var.kType_IntArray);
-    case VarValue::kType_FloatArray:
-      return GetElementsArrayAtString(var, var.kType_FloatArray);
-    case VarValue::kType_BoolArray:
-      return GetElementsArrayAtString(var, var.kType_BoolArray);
+    case VarValue::Type::ObjectArray:
+      return GetElementsArrayAtString(var);
+    case VarValue::Type::StringArray:
+      return GetElementsArrayAtString(var);
+    case VarValue::Type::IntArray:
+      return GetElementsArrayAtString(var);
+    case VarValue::Type::FloatArray:
+      return GetElementsArrayAtString(var);
+    case VarValue::Type::BoolArray:
+      return GetElementsArrayAtString(var);
     default:
       assert(false);
       return VarValue();
   }
 }
 
-VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
+VarValue GetElementsArrayAtString(const VarValue& array)
 {
   std::string returnValue = "[";
 
   for (size_t i = 0; i < array.pArray->size(); ++i) {
-    switch (type) {
-      case VarValue::kType_ObjectArray: {
-        auto object = (static_cast<IGameObject*>((*array.pArray)[i]));
+    switch (array.GetType()) {
+    case VarValue::Type::ObjectArray: {
+        auto* object = static_cast<IGameObject*>((*array.pArray)[i]);
         returnValue += object ? object->GetStringID() : "None";
         break;
       }
-
-      case VarValue::kType_StringArray:
-        returnValue += (const char*)((*array.pArray)[i]);
-        break;
-
-      case VarValue::kType_IntArray:
-        returnValue += std::to_string((int)((*array.pArray)[i]));
-        break;
-
-      case VarValue::kType_FloatArray:
-        returnValue += std::to_string((double)((*array.pArray)[i]));
-        break;
-
-      case VarValue::kType_BoolArray: {
-        VarValue& temp = ((*array.pArray)[i]);
-        returnValue += (const char*)(CastToString(temp));
+      case VarValue::Type::StringArray:
+      case VarValue::Type::IntArray:
+      case VarValue::Type::FloatArray:
+      case VarValue::Type::BoolArray: {
+        returnValue += (const char*)CastToString((*array.pArray)[i]);
         break;
       }
       default:
@@ -309,21 +298,21 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       break;
     case OpcodesImplementation::Opcodes::op_Cast:
       switch ((*args[0]).GetType()) {
-        case VarValue::kType_Object: {
+      case VarValue::Type::Object: {
           auto to = args[0];
           auto from = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
           CastObjectToObject(to, from, *ctx->locals);
         } break;
-        case VarValue::kType_Integer:
+        case VarValue::Type::Integer:
           *args[0] = (*args[1]).CastToInt();
           break;
-        case VarValue::kType_Float:
+        case VarValue::Type::Float:
           *args[0] = (*args[1]).CastToFloat();
           break;
-        case VarValue::kType_Bool:
+        case VarValue::Type::Bool:
           *args[0] = (*args[1]).CastToBool();
           break;
-        case VarValue::kType_String:
+        case VarValue::Type::String:
           *args[0] = CastToString(*args[1]);
           break;
         default:
@@ -349,18 +338,18 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       *args[0] = VarValue(*args[1] >= *args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_Jmp:
-      ctx->jumpStep = (int)(*args[0]) - 1;
+      ctx->jumpStep = static_cast<int>(*args[0]) - 1;
       ctx->needJump = true;
       break;
     case OpcodesImplementation::Opcodes::op_Jmpt:
-      if ((bool)(*args[0])) {
-        ctx->jumpStep = (int)(*args[1]) - 1;
+      if (static_cast<bool>(*args[0])) {
+        ctx->jumpStep = static_cast<int>(*args[1]) - 1;
         ctx->needJump = true;
       }
       break;
     case OpcodesImplementation::Opcodes::op_Jmpf:
-      if ((bool)(!(*args[0]))) {
-        ctx->jumpStep = (int)(*args[1]) - 1;
+      if (!static_cast<bool>(*args[0])) {
+        ctx->jumpStep = static_cast<int>(*args[1]) - 1;
         ctx->needJump = true;
       }
       break;
@@ -369,7 +358,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         parentInstance ? parentInstance->GetSourcePexName() : "";
       try {
         auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
-        auto res = parentVM->CallMethod(gameObject, (const char*)(*args[0]),
+        auto res = parentVM->CallMethod(gameObject, static_cast<const char*>(*args[0]),
                                         argsForCall);
         if (EnsureCallResultIsSynchronous(res, ctx))
           *args[1] = res;
@@ -384,11 +373,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       VarValue* object = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
 
       // BYOHRelationshipAdoptionPetDoorTrigger
-      if (args[0]->GetType() != VarValue::kType_String &&
-          args[0]->GetType() != VarValue::kType_Identifier)
+      if (args[0]->GetType() != VarValue::Type::String &&
+          args[0]->GetType() != VarValue::Type::Identifier)
         throw std::runtime_error("Anomally in CallMethod. String expected");
 
-      std::string functionName = (const char*)(*args[0]);
+      std::string functionName = static_cast<const char*>(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
       static const std::string nameOnEndState = "onEndState";
       try {
@@ -396,14 +385,14 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
             functionName == nameOnEndState) {
           parentVM->SendEvent(this, functionName.c_str(), argsForCall);
           break;
-        } else {
-          auto nullableGameObject = static_cast<IGameObject*>(*object);
-          auto res =
-            parentVM->CallMethod(nullableGameObject, functionName.c_str(),
+        }
+
+        auto nullableGameObject = static_cast<IGameObject*>(*object);
+        auto res = parentVM->CallMethod(nullableGameObject, functionName.c_str(),
                                  argsForCall, ctx->stackIdHolder);
           if (EnsureCallResultIsSynchronous(res, ctx))
             *args[2] = res;
-        }
+
       } catch (std::exception& e) {
         if (auto handler = parentVM->GetExceptionHandler())
           handler({ e.what(), sourcePex.fn()->source });
@@ -412,8 +401,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       }
     } break;
     case OpcodesImplementation::Opcodes::op_CallStatic: {
-      const char* className = (const char*)(*args[0]);
-      const char* functionName = (const char*)(*args[1]);
+      const auto* className = static_cast<const char*>(*args[0]);
+      const auto* functionName = static_cast<const char*>(*args[1]);
+
       try {
         auto res = parentVM->CallStatic(className, functionName, argsForCall,
                                         ctx->stackIdHolder);
@@ -438,15 +428,19 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       // PropGet/Set seems to work only in very simple cases covered by unit
       // tests
       if (args[1] != nullptr) {
-        std::string nameProperty = (const char*)*args[0];
+        std::string nameProperty = static_cast<const char*>(*args[0]);
         auto object = static_cast<IGameObject*>(
           IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
+
         if (!object)
           object = static_cast<IGameObject*>(activeInstanceOwner);
-        if (object && object->activePexInstances.size() > 0) {
-          auto inst = object->activePexInstances.back();
+
+        if (object && !object->activePexInstances.empty()) {
+          const auto& inst = object->activePexInstances.back();
+
           Object::PropInfo* runProperty =
             GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Read);
+
           if (runProperty != nullptr) {
             *args[2] = inst->StartFunction(runProperty->readHandler,
                                            argsForCall, ctx->stackIdHolder);
@@ -458,12 +452,12 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
     case OpcodesImplementation::Opcodes::op_PropSet:
       if (args[1] != nullptr) {
         argsForCall.push_back(*args[2]);
-        std::string nameProperty = (const char*)*args[0];
+        std::string nameProperty = static_cast<const char*>(*args[0]);
         auto object = static_cast<IGameObject*>(
           IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
         if (!object)
           object = static_cast<IGameObject*>(activeInstanceOwner);
-        if (object && object->activePexInstances.size() > 0) {
+        if (object && !object->activePexInstances.empty()) {
           auto inst = object->activePexInstances.back();
           Object::PropInfo* runProperty =
             GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Write);
@@ -477,9 +471,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
       (*args[0]).pArray = std::make_shared<std::vector<VarValue>>();
-      if ((int32_t)(*args[1]) > 0) {
-        (*args[0]).pArray->resize((int32_t)(*args[1]));
-        uint8_t type = GetArrayElementType((*args[0]).GetType());
+      if (static_cast<int32_t>(*args[1]) > 0) {
+        (*args[0]).pArray->resize(static_cast<int32_t>(*args[1]));
+        auto type = GetArrayElementType((*args[0]).GetType());
         for (auto& element : *(*args[0]).pArray) {
           element = VarValue(type);
         }
@@ -488,24 +482,24 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
       if ((*args[1]).pArray != nullptr) {
-        if ((*args[0]).GetType() == VarValue::kType_Integer) {
-          *args[0] = VarValue((int32_t)(*args[1]).pArray->size());
-        } else if ((*args[0]).GetType() == VarValue::kType_Float) {
-          *args[0] = VarValue((double)(*args[1]).pArray->size());
+        if ((*args[0]).GetType() == VarValue::Type::Integer) {
+          *args[0] = VarValue(static_cast<int32_t>(args[1]->pArray->size()));
+        } else if ((*args[0]).GetType() == VarValue::Type::Float) {
+          *args[0] = VarValue(static_cast<double>(args[1]->pArray->size()));
         }
       } else
-        *args[0] = VarValue((int32_t)0);
+        *args[0] = VarValue(0);
       break;
     case OpcodesImplementation::Opcodes::op_Array_GetElement:
       if ((*args[1]).pArray != nullptr) {
-        *args[0] = (*args[1]).pArray->at((int32_t)(*args[2]));
+        *args[0] = (*args[1]).pArray->at(static_cast<int32_t>(*args[2]));
       } else {
         *args[0] = VarValue::None();
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_SetElement:
       if ((*args[0]).pArray != nullptr) {
-        (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
+        (*args[0]).pArray->at(static_cast<int32_t>(*args[1])) = *args[2];
       } else
         assert(0);
       break;
@@ -556,7 +550,7 @@ ActivePexInstance::MakeLocals(FunctionInfo& function,
 
   // Dereference identifiers
   for (auto& var : *locals) {
-    var.second = GetIndentifierValue(*locals, var.second);
+    var.second = GetIdentifierValue(*locals, var.second);
   }
 
   return locals;
@@ -602,7 +596,7 @@ ActivePexInstance::TransformInstructions(
     }
     for (size_t i = dereferenceStart; i < opcodeArgs.size(); ++i) {
       auto& arg = opcodeArgs[i];
-      arg = &(GetIndentifierValue(*locals, *arg));
+      arg = &GetIdentifierValue(*locals, *arg);
     }
   }
 
@@ -617,8 +611,8 @@ VarValue ActivePexInstance::ExecuteAll(
   auto opCode = TransformInstructions(ctx.instructions, ctx.locals);
 
   if (previousCallResult) {
-    int i = ctx.line - 1;
-    size_t resultIdx =
+    const size_t i = ctx.line - static_cast<size_t>(1);
+    const size_t resultIdx =
       opCode[i].first == OpcodesImplementation::Opcodes::op_CallParent ? 1 : 2;
 
     *opCode[i].second[resultIdx] = *previousCallResult;
@@ -654,124 +648,124 @@ VarValue ActivePexInstance::StartFunction(
   return ExecuteAll(ctx);
 }
 
-VarValue& ActivePexInstance::GetIndentifierValue(
+VarValue& ActivePexInstance::GetIdentifierValue(
   std::vector<Local>& locals, VarValue& value, bool treatStringsAsIdentifiers)
 {
-  if (auto valueAsString = static_cast<const char*>(value)) {
+  if (const auto valueAsString = static_cast<const char*>(value)) {
     if (treatStringsAsIdentifiers &&
-        value.GetType() == VarValue::kType_String) {
+        value.GetType() == VarValue::Type::String) {
       return GetVariableValueByName(&locals, valueAsString);
     }
-    if (value.GetType() == VarValue::kType_Identifier) {
+    if (value.GetType() == VarValue::Type::Identifier) {
       return GetVariableValueByName(&locals, valueAsString);
     }
   }
   return value;
 }
 
-uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
+VarValue::Type ActivePexInstance::GetTypeByName(std::string typeRef)
 {
 
   std::transform(typeRef.begin(), typeRef.end(), typeRef.begin(), tolower);
 
   if (typeRef == "int") {
-    return VarValue::kType_Integer;
+    return VarValue::Type::Integer;
   }
   if (typeRef == "float") {
-    return VarValue::kType_Float;
+    return VarValue::Type::Float;
   }
   if (typeRef == "string") {
-    return VarValue::kType_String;
+    return VarValue::Type::String;
   }
   if (typeRef == "bool") {
-    return VarValue::kType_Bool;
+    return VarValue::Type::Bool;
   }
   if (typeRef == "identifier") {
     assert(0);
   }
   if (typeRef == "string[]") {
-    return VarValue::kType_StringArray;
+    return VarValue::Type::StringArray;
   }
   if (typeRef == "int[]") {
-    return VarValue::kType_IntArray;
+    return VarValue::Type::IntArray;
   }
   if (typeRef == "float[]") {
-    return VarValue::kType_FloatArray;
+    return VarValue::Type::FloatArray;
   }
   if (typeRef == "bool[]") {
-    return VarValue::kType_BoolArray;
+    return VarValue::Type::BoolArray;
   }
   if (typeRef.find("[]") != std::string::npos) {
-    return VarValue::kType_ObjectArray;
+    return VarValue::Type::ObjectArray;
   }
   if (typeRef == "none") {
     // assert(false);
-    return VarValue::kType_Object;
+    return VarValue::Type::Object;
   }
-  return VarValue::kType_Object;
+  return VarValue::Type::Object;
 }
 
-uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
+VarValue::Type ActivePexInstance::GetArrayElementType(const VarValue::Type type)
 {
-  uint8_t returnType;
+  VarValue::Type returnType;
 
   switch (type) {
-    case VarValue::kType_ObjectArray:
-      returnType = VarValue::kType_Object;
+    case VarValue::Type::ObjectArray:
+      returnType = VarValue::Type::Object;
 
       break;
-    case VarValue::kType_StringArray:
-      returnType = VarValue::kType_String;
+    case VarValue::Type::StringArray:
+      returnType = VarValue::Type::String;
 
       break;
-    case VarValue::kType_IntArray:
-      returnType = VarValue::kType_Integer;
+    case VarValue::Type::IntArray:
+      returnType = VarValue::Type::Integer;
 
       break;
-    case VarValue::kType_FloatArray:
-      returnType = VarValue::kType_Float;
+    case VarValue::Type::FloatArray:
+      returnType = VarValue::Type::Float;
 
       break;
-    case VarValue::kType_BoolArray:
-      returnType = VarValue::kType_Bool;
+    case VarValue::Type::BoolArray:
+      returnType = VarValue::Type::Bool;
 
       break;
     default:
       assert(false);
-      return VarValue::kType_Object;
+      return VarValue::Type::Object;
   }
 
   return returnType;
 }
 
-uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
+VarValue::Type ActivePexInstance::GetArrayTypeByElementType(const VarValue::Type type)
 {
-  uint8_t returnType;
+  VarValue::Type returnType;
 
   switch (type) {
-    case VarValue::kType_Object:
-      returnType = VarValue::kType_ObjectArray;
+    case VarValue::Type::Object:
+      returnType = VarValue::Type::ObjectArray;
 
       break;
-    case VarValue::kType_String:
-      returnType = VarValue::kType_StringArray;
+    case VarValue::Type::String:
+      returnType = VarValue::Type::StringArray;
 
       break;
-    case VarValue::kType_Integer:
-      returnType = VarValue::kType_IntArray;
+    case VarValue::Type::Integer:
+      returnType = VarValue::Type::IntArray;
 
       break;
-    case VarValue::kType_Float:
-      returnType = VarValue::kType_FloatArray;
+    case VarValue::Type::Float:
+      returnType = VarValue::Type::FloatArray;
 
       break;
-    case VarValue::kType_Bool:
-      returnType = VarValue::kType_BoolArray;
+    case VarValue::Type::Bool:
+      returnType = VarValue::Type::BoolArray;
 
       break;
     default:
       assert(false);
-      return VarValue::kType_ObjectArray;
+      return VarValue::Type::ObjectArray;
   }
 
   return returnType;
@@ -784,7 +778,7 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
   std::string objectToCastTypeName = scriptToCastOwner->objectType;
   const std::string& resultTypeName = result->objectType;
 
-  if (scriptToCastOwner->GetType() != VarValue::kType_Object ||
+  if (scriptToCastOwner->GetType() != VarValue::Type::Object ||
       *scriptToCastOwner == VarValue::None()) {
     *result = VarValue::None();
     return;
@@ -821,45 +815,42 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
 }
 
 bool ActivePexInstance::HasParent(ActivePexInstance* script,
-                                  std::string castToTypeName)
+                                  const std::string& castToTypeName)
 {
-
-  if (script != nullptr) {
+    if (script == nullptr) {
+       return false;
+    }
 
     if (script->sourcePex.fn()->source == castToTypeName)
       return true;
 
-    if (script->parentInstance != nullptr &&
-        script->parentInstance->sourcePex.fn()->source != "") {
-      if (script->parentInstance->sourcePex.fn()->source == castToTypeName)
+    if (script->parentInstance != nullptr && !script->parentInstance->sourcePex.fn()->source.empty()) {
+      if (script->parentInstance->sourcePex.fn()->source == castToTypeName) {
         return true;
-      else
-        return HasParent(script->parentInstance.get(), castToTypeName);
-    }
-  }
+      }
 
-  return false;
+      return HasParent(script->parentInstance.get(), castToTypeName);
+    }
+
+    return false;
 }
 
 bool ActivePexInstance::HasChild(ActivePexInstance* script,
-                                 std::string castToTypeName)
+                                 const std::string& castToTypeName)
 {
 
-  if (script != nullptr) {
+  if (script == nullptr) {
+       return false;
+  }
 
-    if (script->sourcePex.fn()->source == castToTypeName)
+  if (script->sourcePex.fn()->source == castToTypeName)
       return true;
 
-    if (script->childrenName != "") {
-      if (script->childrenName == castToTypeName)
-        return true;
-    }
-  }
-  return false;
+  return !script->childrenName.empty() && script->childrenName == castToTypeName;
 }
 
 VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
-                                                    std::string name)
+                                                    const std::string& name)
 {
 
   if (name == "self") {
@@ -875,11 +866,11 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
 
   try {
     if (variables)
-      if (auto var =
-            variables->GetVariableByName(name.data(), *sourcePex.fn()))
+      if (const auto var = variables->GetVariableByName(name.data(), *sourcePex.fn()))
         return *var;
   } catch (std::exception& e) {
-    if (auto handler = parentVM->GetExceptionHandler()) {
+
+    if (const auto handler = parentVM->GetExceptionHandler()) {
       noneVar = VarValue::None();
       handler({ e.what(), sourcePex.fn()->source });
       return noneVar;
@@ -888,39 +879,29 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
   }
 
   for (auto& _name : identifiersValueNameCache) {
-    if ((const char*)(*_name) == name) {
+    if (static_cast<const char*>(*_name) == name) {
       return *_name;
     }
   }
 
   if (parentVM->IsNativeFunctionByNameExisted(GetSourcePexName())) {
 
-    std::shared_ptr<VarValue> functionName =
-      std::make_shared<VarValue>((new std::string(name))->c_str());
-
-    identifiersValueNameCache.push_back(functionName);
-    return *functionName;
+    identifiersValueNameCache.emplace_back(std::make_shared<VarValue>(name));
+    return *identifiersValueNameCache.back();
   }
 
-  for (auto& _string : sourcePex.fn()->stringTable.GetStorage()) {
+  for (const auto& _string : sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
-      std::shared_ptr<VarValue> stringTableValue =
-        std::make_shared<VarValue>((new std::string(name))->c_str());
-
-      identifiersValueNameCache.push_back(stringTableValue);
-      return *stringTableValue;
+      identifiersValueNameCache.emplace_back(std::make_shared<VarValue>(name));
+      return *identifiersValueNameCache.back();
     }
   }
 
-  for (auto& _string :
-       parentInstance->sourcePex.fn()->stringTable.GetStorage()) {
+  for (auto& _string : parentInstance->sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
 
-      std::shared_ptr<VarValue> stringTableParentValue =
-        std::make_shared<VarValue>((new std::string(name))->c_str());
-
-      identifiersValueNameCache.push_back(stringTableParentValue);
-      return *stringTableParentValue;
+    identifiersValueNameCache.emplace_back(std::make_shared<VarValue>(name));
+    return *identifiersValueNameCache.back();
     }
   }
 

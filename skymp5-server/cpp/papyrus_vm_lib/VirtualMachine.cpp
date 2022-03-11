@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <sstream>
 #include <stdexcept>
+#include <cassert>
 
 namespace {
 constexpr uint32_t g_maxStackId = 100'000;
@@ -204,15 +205,16 @@ VarValue VirtualMachine::CallStatic(
   VarValue result = VarValue::None();
   FunctionInfo function;
 
-  auto functionNameLower = ToLower(functionName);
-  auto f = nativeStaticFunctions[ToLower(className)][functionNameLower]
+  const auto functionNameLower = ToLower(functionName);
+
+  const auto& func = nativeStaticFunctions[ToLower(className)][functionNameLower]
     ? nativeStaticFunctions[ToLower(className)][functionNameLower]
     : nativeStaticFunctions[""][functionNameLower];
 
-  if (f) {
+  if (func) {
     auto self = VarValue::None();
     self.SetMetaStackIdHolder(stackIdHolder);
-    return f(self, arguments);
+    return func(self, arguments);
   }
 
   auto classNameCi = CIString{ className.begin(), className.end() };
@@ -251,9 +253,13 @@ VarValue VirtualMachine::CallStatic(
 
 PexScript::Lazy VirtualMachine::GetPexByName(const std::string& name)
 {
-  auto it = allLoadedScripts.find(CIString{ name.begin(), name.end() });
+  const auto it = allLoadedScripts.find(CIString{ name.begin(), name.end() });
+
   if (it != allLoadedScripts.end())
+  {
     return it->second;
+  }
+
   return PexScript::Lazy();
 }
 
@@ -262,20 +268,21 @@ std::shared_ptr<ActivePexInstance> VirtualMachine::CreateActivePexInstance(
   const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
   const std::string& childrenName)
 {
+  if (pexScriptName.empty())
+  {
+     throw std::runtime_error("Unable to find script '" + pexScriptName + "'");
+  }
 
-  auto it = allLoadedScripts.find(
+  const auto it = allLoadedScripts.find(
     CIString{ pexScriptName.begin(), pexScriptName.end() });
+
   if (it != allLoadedScripts.end()) {
     ActivePexInstance scriptInstance(it->second, mapForFillProperties, this,
                                      activeInstanceOwner, childrenName);
     return std::make_shared<ActivePexInstance>(scriptInstance);
   }
 
-  static const std::shared_ptr<ActivePexInstance> notValidInstance =
-    std::make_shared<ActivePexInstance>();
-
-  if (pexScriptName != "")
-    throw std::runtime_error("Unable to find script '" + pexScriptName + "'");
+  static const auto notValidInstance = std::make_shared<ActivePexInstance>();
 
   return notValidInstance;
 }
@@ -283,15 +290,16 @@ std::shared_ptr<ActivePexInstance> VirtualMachine::CreateActivePexInstance(
 bool VirtualMachine::IsNativeFunctionByNameExisted(
   const std::string& name) const
 {
-  for (auto& staticFunction : nativeStaticFunctions) {
-    if (staticFunction.first == name)
+  if (const auto it = nativeStaticFunctions.find(name); it != nativeStaticFunctions.end())
+  {
       return true;
   }
 
-  for (auto& metod : nativeFunctions) {
-    for (auto& func : metod.second)
-      if (func.first == name)
-        return true;
+  for (const auto& [_, method] : nativeFunctions)
+  {
+    if (const auto it = method.find(name); it != method.end()) {
+       return true;
+    }
   }
 
   return false;
@@ -302,6 +310,6 @@ VirtualMachine::ExceptionHandler VirtualMachine::GetExceptionHandler() const
   return handler;
 }
 
-void VirtualMachine::RemoveObject(std::shared_ptr<IGameObject> self)
+void VirtualMachine::RemoveObject(std::shared_ptr<IGameObject> /*self*/)
 {
 }
