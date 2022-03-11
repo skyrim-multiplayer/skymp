@@ -46,7 +46,7 @@ private:
   union Data
   {
     constexpr Data() : id(nullptr) {}
-    constexpr explicit Data(nullptr_t) : Data() {}
+    constexpr explicit Data(std::nullptr_t) : Data() {}
     constexpr explicit Data(IGameObject* obj) : id(obj) {}
     constexpr explicit Data(const int32_t value) : i(value) {}
     constexpr explicit Data(const double value) : f(value) {}
