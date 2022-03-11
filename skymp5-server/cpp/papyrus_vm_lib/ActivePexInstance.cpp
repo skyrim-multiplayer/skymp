@@ -174,20 +174,33 @@ VarValue CastToString(const VarValue& var)
 
 VarValue GetElementsArrayAtString(const VarValue& array)
 {
+  const uint8_t type = array.GetType();
+  
   std::string returnValue = "[";
 
   for (size_t i = 0; i < array.pArray->size(); ++i) {
-    switch (array.GetType()) {
-    case VarValue::Type::ObjectArray: {
-        auto* object = static_cast<IGameObject*>((*array.pArray)[i]);
+    switch (type) {
+      case VarValue::Type::ObjectArray: {
+        auto object = (static_cast<IGameObject*>((*array.pArray)[i]));
         returnValue += object ? object->GetStringID() : "None";
         break;
       }
+
       case VarValue::Type::StringArray:
+        returnValue += (const char*)((*array.pArray)[i]);
+        break;
+
       case VarValue::Type::IntArray:
+        returnValue += std::to_string((int)((*array.pArray)[i]));
+        break;
+
       case VarValue::Type::FloatArray:
+        returnValue += std::to_string((double)((*array.pArray)[i]));
+        break;
+
       case VarValue::Type::BoolArray: {
-        returnValue += (const char*)CastToString((*array.pArray)[i]);
+        VarValue& temp = ((*array.pArray)[i]);
+        returnValue += (const char*)(CastToString(temp));
         break;
       }
       default:
