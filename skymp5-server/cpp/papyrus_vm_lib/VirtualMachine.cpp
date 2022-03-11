@@ -268,11 +268,6 @@ std::shared_ptr<ActivePexInstance> VirtualMachine::CreateActivePexInstance(
   const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
   const std::string& childrenName)
 {
-  if (pexScriptName.empty())
-  {
-     throw std::runtime_error("Unable to find script '" + pexScriptName + "'");
-  }
-
   const auto it = allLoadedScripts.find(
     CIString{ pexScriptName.begin(), pexScriptName.end() });
 
