@@ -264,17 +264,7 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
   if (!actor)
     return; // TODO: Throw error instead
 
-  Equipment eq = actor->GetEquipment(); 
-  Inventory::Entry newEntry; 
-  for (const auto& en: eq.inv.entries)
-  {
-    if (en.baseId == entry.baseId)
-    {
-      newEntry = entry;
-      newEntry.extra.worn = Inventory::Worn::None;
-    }
-  }
-  ref.PutItem(*actor, newEntry);
+  ref.PutItem(*actor, entry);
 }
 
 void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,

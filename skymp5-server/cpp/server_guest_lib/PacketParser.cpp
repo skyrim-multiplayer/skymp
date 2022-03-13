@@ -163,7 +163,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
       if (type == MsgType::PutItem)
+      {
+        e.extra.worn = Inventory::Worn::None;
         actionListener.OnPutItem(rawMsgData, target, e);
+      }
       else
         actionListener.OnTakeItem(rawMsgData, target, e);
     } break;
