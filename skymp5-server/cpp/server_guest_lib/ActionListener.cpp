@@ -261,10 +261,10 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
-  entry.extra.worn = Inventory::Worn::None;
-
   if (!actor)
     return; // TODO: Throw error instead
+
+  entry.extra.worn = Inventory::Worn::None;
   ref.PutItem(*actor, entry);
 }
 
