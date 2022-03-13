@@ -1,23 +1,4 @@
-<!-- PROJECT LOGO -->
-<br />
-<p align="center">
-  <a href="https://skymp.io">
-    <img src="skymp.jpg" alt="Logo" width="200" height="200">
-  </a>
-  <h3 align="center">SkyMP</h3>
-
-  <p align="center">
-    A general-purpose multiplayer mod for Skyrim SE. 
-    <br>
-    <a href="https://github.com/skyrim-multiplayer/skymp/tree/main/docs">Explore Docs</a>
-    ·
-    <a href="https://github.com/skyrim-multiplayer/skymp/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/skyrim-multiplayer/skymp/issues">Request Feature</a> 
-    ·
-    <a href="https://discord.gg/k39uQ9Yudt">Join Discord</a>
-  </p>
-</p>
+# Skyrim Multiplayer Mod
 
 ![image](https://user-images.githubusercontent.com/37947786/158084241-7057ea3e-3644-460c-9ad1-9f9b63859e15.png)
 
