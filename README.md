@@ -19,6 +19,8 @@
   </p>
 </p>
 
+![image](https://user-images.githubusercontent.com/37947786/158084241-7057ea3e-3644-460c-9ad1-9f9b63859e15.png)
+
 ## Building From Source
 
 You can find instructions on setting up the project locally below. To get a local copy up and running follow these simple example steps. You need ~4 GB RAM, ~22 GB on your hard drive and some free time.
