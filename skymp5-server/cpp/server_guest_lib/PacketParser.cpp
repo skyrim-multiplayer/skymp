@@ -162,13 +162,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       uint32_t target;
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
-      if (type == MsgType::PutItem)
-      {
+      if (type == MsgType::PutItem) {
         e.extra.worn = Inventory::Worn::None;
         actionListener.OnPutItem(rawMsgData, target, e);
-      }
-      else
+      } else {
         actionListener.OnTakeItem(rawMsgData, target, e);
+      }
     } break;
     case MsgType::FinishSpSnippet: {
       uint32_t snippetIdx;
