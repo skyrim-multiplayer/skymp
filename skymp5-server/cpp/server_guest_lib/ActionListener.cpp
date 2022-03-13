@@ -263,7 +263,6 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
 
   if (!actor)
     return; // TODO: Throw error instead
-
   ref.PutItem(*actor, entry);
 }
 
