@@ -5,7 +5,7 @@
 
 SkyMP is an open-source multiplayer mod for Skyrim ⚡
 
-Built on top of the [SkyrimPlatform](https://www.nexusmods.com/skyrimspecialedition/mods/54909) - a tool to create Skyrim mods with TypeScript and Chromium. 🚀
+SkyMP is built on top of the [SkyrimPlatform](https://www.nexusmods.com/skyrimspecialedition/mods/54909) - a tool to create Skyrim mods with TypeScript and Chromium. 🚀
 
 This repo hosts all sources to ease local setup and contributing. See [CONTRIBUTING](CONTRIBUTING.md) for build instructions.
 
