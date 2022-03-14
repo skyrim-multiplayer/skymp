@@ -11,12 +11,11 @@ This repo hosts all sources to ease local setup and contributing. See [CONTRIBUT
 
 ![image](skymp.jpg)
 
-### Multiplayer Features
+### Getting Started
 
-- Mostly server-controlled game state - you can't cheat everything
-- Store your world in plain files or MongoDB
-- Customize your server with TypeScript or Papyrus scripting
-- Use esp/esm mods, just ensure both client and server load order are the same
+If you just want to play multiplayer, [download the client]().
+
+You can join our official server called [SweetPie]() or [host your own]().
 
 ### What's Synced
 
@@ -25,3 +24,10 @@ This repo hosts all sources to ease local setup and contributing. See [CONTRIBUT
 - [x] Inventory sync: equipment, containers, etc
 - [x] Limited scripts sync (WIP) - we have our own Papyrus engine
 - [ ] Who knows what comes next? We work on synchronizing all Skyrim game mechanics, see [ROADMAP](ROADMAP.md).
+
+### Multiplayer Features
+
+- Mostly server-controlled game state - you can't cheat everything
+- Store your world in plain files or MongoDB
+- Customize your server with TypeScript or Papyrus scripting
+- Use esp/esm mods, just ensure both client and server load order are the same
