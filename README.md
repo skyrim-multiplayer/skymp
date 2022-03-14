@@ -9,7 +9,7 @@ Built on top of the [SkyrimPlatform](https://www.nexusmods.com/skyrimspecialedit
 
 This repo hosts all sources to ease local setup and contributing. See [CONTRIBUTING](CONTRIBUTING.md) for build instructions.
 
-![image](https://user-images.githubusercontent.com/37947786/158084241-7057ea3e-3644-460c-9ad1-9f9b63859e15.png)
+![image](skymp.jpg)
 
 ### Multiplayer Features
 
