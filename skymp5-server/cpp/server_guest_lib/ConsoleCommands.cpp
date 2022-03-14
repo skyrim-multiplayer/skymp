@@ -7,7 +7,7 @@
 
 enum ProfileIds
 {
-  kProfileId_Pospelov = -2,
+  kProfileId_Pospelov = std::numeric_limits<int>::max(),
   kProfileId_Xccane = -1,
 };
 
