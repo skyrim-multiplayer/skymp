@@ -11,10 +11,6 @@ The documentation is versioned up-to-date with SkyrimPlatform itself. If you rea
 
 You can get Skyrim Platform from Nexus: https://www.nexusmods.com/skyrimspecialedition/mods/54909
 
-[Table of contents](docs_skyrim_platform.md#table-of-contents)
-
-![image](https://user-images.githubusercontent.com/37947786/158098287-53db2556-2958-4431-8e7f-1508b07fd68b.png)
-
 ## Table of contents
 
 - Skyrim integration
