@@ -7,7 +7,7 @@ SkyMP is an open-source multiplayer mod for Skyrim ⚡
 
 Built on top of the [SkyrimPlatform](https://www.nexusmods.com/skyrimspecialedition/mods/54909) - a tool to create Skyrim mods with TypeScript and Chromium. 🚀
 
-This repo hosts all sources to ease local setup and contributing. See CONTRIBUTING for build instructions.
+This repo hosts all sources to ease local setup and contributing. See [CONTRIBUTING](CONTRIBUTING.md) for build instructions.
 
 ![image](https://user-images.githubusercontent.com/37947786/158084241-7057ea3e-3644-460c-9ad1-9f9b63859e15.png)
 
@@ -24,4 +24,4 @@ This repo hosts all sources to ease local setup and contributing. See CONTRIBUTI
 - [x] PvP sync: melee damage, attributes, death
 - [x] Inventory sync: equipment, containers, etc
 - [x] Limited scripts sync (WIP) - we have our own Papyrus engine
-- [ ] Who knows what comes next? We work on synchronizing all Skyrim game mechanics, see ROADMAP.
+- [ ] Who knows what comes next? We work on synchronizing all Skyrim game mechanics, see [ROADMAP](ROADMAP.md).
