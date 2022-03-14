@@ -15,7 +15,7 @@ This repo hosts all sources to ease local setup and contributing. See [CONTRIBUT
 
 If you just want to play multiplayer, [download the client]().
 
-You can join our official server called [SweetPie]() or [host your own]().
+You can join our test server called [SweetPie]() or [host your own]().
 
 ### What's Synced
 
