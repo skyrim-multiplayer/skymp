@@ -2,8 +2,6 @@
 
 Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript.
 
-https://www.nexusmods.com/skyrimspecialedition/mods/54909
-
 One of the mods built on Skyrim Platform is skymp client.\
 Yes, client of Skyrim Multiplayer is technically a mod for Skyrim Special Edition implemented using Skyrim Platform.
 
@@ -11,7 +9,11 @@ Here you will find documentaiton aimed for you to create your own mods using Sky
 
 The documentation is versioned up-to-date with SkyrimPlatform itself. If you read this page on GitHub, it's probably docs on latest SP revision. We release SkyrimPlatform updates from time to time. See [here](https://github.com/skyrim-multiplayer/skymp/tree/main/docs/release/dev) what is included in the upcoming SP update.
 
-## Versioning
+You can get Skyrim Platform from Nexus: https://www.nexusmods.com/skyrimspecialedition/mods/54909
+
+![image](https://user-images.githubusercontent.com/37947786/158098287-53db2556-2958-4431-8e7f-1508b07fd68b.png)
+
+## Versioning Notes
 
 SP follows [Semantic Versioning](https://semver.org/) for JavaScript, but not for TypeScript.
 
