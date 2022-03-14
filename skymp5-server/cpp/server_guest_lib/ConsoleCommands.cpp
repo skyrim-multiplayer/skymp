@@ -5,6 +5,8 @@
 #include "Utils.h"
 #include "WorldState.h"
 
+// There were hardcoded real profile ids
+// For now, we disable this system by the hack with invalid values
 enum ProfileIds
 {
   kProfileId_Pospelov = std::numeric_limits<int>::max(),
