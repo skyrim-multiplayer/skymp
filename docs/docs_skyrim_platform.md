@@ -13,14 +13,6 @@ You can get Skyrim Platform from Nexus: https://www.nexusmods.com/skyrimspeciale
 
 ![image](https://user-images.githubusercontent.com/37947786/158098287-53db2556-2958-4431-8e7f-1508b07fd68b.png)
 
-## Versioning Notes
-
-SP follows [Semantic Versioning](https://semver.org/) for JavaScript, but not for TypeScript.
-
-It means that non-major updates won't break compiled TypeScript plugins or plugins written in JavaScript. If they do, treat it as an SP bug then.
-
-On the other hand, updating `skyrimPlatform.ts` may break the compilation of your TypeScript plugins. You likely will be able to easily fix these problems, or ask for help in our Discord server, or just use `skyrimPlatform.ts` from one of the previous versions.
-
 ## Table of contents
 
 - Skyrim integration
@@ -50,3 +42,11 @@ On the other hand, updating `skyrimPlatform.ts` may break the compilation of you
 [Papyrus]: skyrim_platform/papyrus.md
 [Texts]: skyrim_platform/texts.md
 [Win32]: skyrim_platform/win32.md
+
+## Versioning Notes
+
+SP follows [Semantic Versioning](https://semver.org/) for JavaScript, but not for TypeScript.
+
+It means that non-major updates won't break compiled TypeScript plugins or plugins written in JavaScript. If they do, treat it as an SP bug then.
+
+On the other hand, updating `skyrimPlatform.ts` may break the compilation of your TypeScript plugins. You likely will be able to easily fix these problems, or ask for help in our Discord server, or just use `skyrimPlatform.ts` from one of the previous versions.
