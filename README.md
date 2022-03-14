@@ -1,7 +1,7 @@
 # SkyMP
 
 [![Discord Chat](https://img.shields.io/discord/699653182946803722?label=Discord&logo=Discord)](https://discord.gg/k39uQ9Yudt) 
-[![PR's Welcome](https://img.shields.io/badge/PRs%20-welcome-brightgreen.svg)]()
+[![PR's Welcome](https://img.shields.io/badge/PRs%20-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 SkyMP is an open-source multiplayer mod for Skyrim ⚡
 
