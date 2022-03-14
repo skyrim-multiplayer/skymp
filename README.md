@@ -17,6 +17,8 @@ If you just want to play multiplayer, [download the client]().
 
 You can join our test server called [SweetPie]() or [host your own]().
 
+A list of the servers online can be retrieved via API: https://skymp.io/api/servers
+
 ### What's Synced
 
 - [x] Player movement and animation sync
