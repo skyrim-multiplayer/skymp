@@ -7,7 +7,7 @@ using Catch::Matchers::Contains;
 
 PartOne& GetPartOne();
 
-int pospelov = std::numberic_limits<int>::max();
+int pospelov = std::numeric_limits<int>::max();
 
 TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
