@@ -397,12 +397,14 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
   actor.AddItem(0x12eb7, 1);
 
   // On the first PutItem, we use DoMessage to ensure our messages are parsed
-  // and processed successfully
+  // and processed successfully.
+  // "Worn" state may be sent by the real skymp client. Ignoring then.
   partOne.Messages().clear();
   DoMessage(partOne, 0,
             { { "t", MsgType::PutItem },
               { "baseId", 0x12eb7 },
               { "count", 2 },
+              { "worn", true },
               { "target", refrId } });
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
