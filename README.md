@@ -6,7 +6,7 @@ Built on top of the [SkyrimPlatform](https://www.nexusmods.com/skyrimspecialedit
 
 This repo hosts all sources to ease local setup and contributing. See CONTRIBUTING for build instructions.
 
-[![Discord Chat](https://img.shields.io/discord/695166668967510077?label=Discord&logo=Discord)](https://discord.gg/k39uQ9Yudt)
+[![Discord Chat](https://img.shields.io/discord/699653182946803722?label=Discord&logo=Discord)](https://discord.gg/k39uQ9Yudt)
 
 ![image](https://user-images.githubusercontent.com/37947786/158084241-7057ea3e-3644-460c-9ad1-9f9b63859e15.png)
 
