@@ -140,7 +140,7 @@ export class SkympClient {
     });
 
     networking.on("message", (msgAny: Record<string, unknown> | string) => {
-      netInfo.NetInfo.addReceivedPacketAmount(1);
+      netInfo.NetInfo.addReceivedPacketCount(1);
       handleMessage(
         msgAny as Record<string, unknown>,
         this.msgHandler as MsgHandler

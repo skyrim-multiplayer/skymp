@@ -9,48 +9,59 @@ import {
 import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "./errors";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
+import { NetInfo } from "./netInfoSystem";
 
-export const applyMovement = (refr: ObjectReference, m: Movement): void => {
+const sqr = (x: number) => x * x;
+
+export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: boolean): void => {
   if (teleportIfNeed(refr, m)) return;
 
   translateTo(refr, m);
 
   const ac = Actor.from(refr);
+  if (!ac) return;
 
-  if (ac) {
-    let lookAt: Actor | null = undefined as unknown as Actor;
-    if (m.lookAt) {
-      try {
-        lookAt = Game.findClosestActor(
-          m.lookAt[0],
-          m.lookAt[1],
-          m.lookAt[2],
-          128
-        );
-      } catch (e) {
-        lookAt = null;
-      }
-    }
+  if (isMyClone === true && NetInfo.isEnabled()) {
+    // Z axis isn't useful here
+    const acX = ac.getPositionX();
+    const acY = ac.getPositionY();
+    const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
 
-    if (lookAt as Actor) {
-      ac.setHeadTracking(true);
-      ac.setLookAt(lookAt, false);
-    } else {
-      ac.setHeadTracking(false);
-    }
-
-    // ac.stopCombat();
-    ac.blockActivation(true);
-
-    keepOffsetFromActor(ac, m);
-
-    applySprinting(ac, m.runMode === "Sprinting");
-    applyBlocking(ac, m);
-    applySneaking(ac, m.isSneaking);
-    applyWeapDrawn(ac, m.isWeapDrawn);
-    applyHealthPercentage(ac, m.healthPercentage);
-    applyDeathState(ac, m.isDead);
+    NetInfo.setLocalLagUnits(lagUnitsNoZ);
   }
+
+  let lookAt: Actor | null = undefined as unknown as Actor;
+  if (m.lookAt) {
+    try {
+      lookAt = Game.findClosestActor(
+        m.lookAt[0],
+        m.lookAt[1],
+        m.lookAt[2],
+        128
+      );
+    } catch (e) {
+      lookAt = null;
+    }
+  }
+
+  if (lookAt as Actor) {
+    ac.setHeadTracking(true);
+    ac.setLookAt(lookAt, false);
+  } else {
+    ac.setHeadTracking(false);
+  }
+
+  // ac.stopCombat();
+  ac.blockActivation(true);
+
+  keepOffsetFromActor(ac, m);
+
+  applySprinting(ac, m.runMode === "Sprinting");
+  applyBlocking(ac, m);
+  applySneaking(ac, m.isSneaking);
+  applyWeapDrawn(ac, m.isWeapDrawn);
+  applyHealthPercentage(ac, m.healthPercentage);
+  applyDeathState(ac, m.isDead);
 };
 
 const keepOffsetFromActor = (ac: Actor, m: Movement) => {

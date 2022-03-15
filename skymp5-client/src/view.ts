@@ -29,6 +29,7 @@ import { Movement } from "./movement";
 import * as deathSystem from "./deathSystem";
 import { RespawnNeededError } from "./errors";
 import { getScreenResolution } from "./skyrimSettings";
+import { NetInfo } from "./netInfoSystem";
 
 let gCrosshairRefId = 0;
 let gPcInJumpState = false;
@@ -520,7 +521,7 @@ export class FormView implements View<FormModel> {
             model.movement.isWeapDrawn = forcedWeapDrawn;
           }
           try {
-            applyMovement(refr, model.movement);
+            applyMovement(refr, model.movement, !!model.isMyClone);
           } catch (e) {
             if (e instanceof RespawnNeededError) {
               this.lastWorldOrCell = model.movement.worldOrCell;
@@ -731,6 +732,7 @@ class FormViewArray {
           realPos[2],
         ];
       }
+
       if (isCloneView) {
         // Prevent using the same refr by normal and clone views
         if (!form.refrId || form.refrId >= 0xff000000) {

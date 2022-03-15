@@ -59,10 +59,7 @@ on("update", () => updateWc());
 once("update", verifyLoadOrder);
 
 const startClient = (): void => {
-  const showNetInfo = settings["skymp5-client"]["show-net-info"];
-  if (showNetInfo === true) {
-    NetInfo.start();
-  }
+  NetInfo.start();
 
   playerCombatSystem.start();
   once("update", () => authSystem.setPlayerAuthMode(false));

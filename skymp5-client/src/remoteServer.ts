@@ -247,6 +247,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       numAppearanceChanges: 0,
       baseId: msg.baseId,
       refrId: msg.refrId,
+      isMyClone: msg.isMe
     };
     if (msg.isMe) {
       updateOwner.setOwnerModel(this.worldModel.forms[i]);
@@ -673,7 +674,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     msg.idx = this.worldModel.forms[idxInModel].idx;
 
     delete msg._refrId;
-    netInfo.NetInfo.addSentPacketAmount(1);
+    netInfo.NetInfo.addSentPacketCount(1);
     networking.send(msg, reliable);
   }
 
