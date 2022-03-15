@@ -1,3 +1,8 @@
+Feel like a Skyrim multiplayer dev. Be Skyrim multiplayer dev.
+No need to contact anyone to start, but you can request help at any time.
+Learn smth new each time you open the code.
+Feel useful. Be useful - any contribution matters.
+
 # Contributing
 
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Contributions are welcome and will be fully credited.
