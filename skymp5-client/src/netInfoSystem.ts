@@ -1,4 +1,5 @@
 import * as sp from "skyrimPlatform";
+import { settings } from "skyrimPlatform";
 
 export class NetInfo {
   static addReceivedPacketCount(count: number): void {
@@ -29,12 +30,16 @@ export class NetInfo {
     return this.localLagUnits;
   }
 
+  static isEnabled() {
+    return !!settings["skymp5-client"]["show-net-info"];
+  }
+
   private static receivedPacketCount = 0;
   private static sentPacketCount = 0;
   private static localLagUnits = 0;
 }
 
-class netInfoTexts {
+class NetInfoTexts {
   public static readonly Name = "netInfoTexts";
 
   constructor(
@@ -60,11 +65,11 @@ class netInfoTexts {
   }
 }
 
-if (sp.storage[netInfoTexts.Name] && (sp.storage[netInfoTexts.Name] as netInfoTexts).clear) {
-  (sp.storage[netInfoTexts.Name] as netInfoTexts)?.clear();
+if (sp.storage[NetInfoTexts.Name] && (sp.storage[NetInfoTexts.Name] as NetInfoTexts).clear) {
+  (sp.storage[NetInfoTexts.Name] as NetInfoTexts)?.clear();
 }
 const delayMs: number = 1000;
-let textIds: netInfoTexts;
+let textIds: NetInfoTexts;
 let lastDt: number = 0;
 let dt: number = 0;
 
@@ -72,8 +77,10 @@ const greenARGB: number[] = [0, 128, 0, 1];
 const redARGB: number[] = [255, 0, 0, 1];
 
 export const start = (): void => {
-  textIds = new netInfoTexts();
-  sp.storage[netInfoTexts.Name] = textIds;
+  if (!NetInfo.isEnabled()) return;
+
+  textIds = new NetInfoTexts();
+  sp.storage[NetInfoTexts.Name] = textIds;
   lastDt = Date.now();
 
   sp.on("update", () => {

@@ -247,6 +247,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       numAppearanceChanges: 0,
       baseId: msg.baseId,
       refrId: msg.refrId,
+      isMyClone: msg.isMe
     };
     if (msg.isMe) {
       updateOwner.setOwnerModel(this.worldModel.forms[i]);

@@ -19,6 +19,9 @@ export interface FormModel {
   inventory?: Inventory;
   isHostedByOther?: boolean;
   isDead?: boolean;
+
+  // Assigned locally
+  isMyClone?: boolean;
 }
 
 export interface WorldModel {

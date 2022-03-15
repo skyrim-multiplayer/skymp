@@ -11,7 +11,9 @@ import { RespawnNeededError } from "./errors";
 import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
 import { NetInfo } from "./netInfoSystem";
 
-export const applyMovement = (refr: ObjectReference, m: Movement): void => {
+const sqr = (x: number) => x * x;
+
+export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: boolean): void => {
   if (teleportIfNeed(refr, m)) return;
 
   translateTo(refr, m);
@@ -19,14 +21,14 @@ export const applyMovement = (refr: ObjectReference, m: Movement): void => {
   const ac = Actor.from(refr);
   if (!ac) return;
 
-  const acX = ac.getPositionX();
-  const acY = ac.getPositionY();
-  const acZ = ac.getPositionZ();
+  if (isMyClone === true && NetInfo.isEnabled()) {
+    // Z axis isn't useful here
+    const acX = ac.getPositionX();
+    const acY = ac.getPositionY();
+    const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
 
-  const sqr = (x: number) => x * x;
-  const lagUnits = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
-
-  NetInfo.setLocalLagUnits(lagUnits);
+    NetInfo.setLocalLagUnits(lagUnitsNoZ);
+  }
 
   let lookAt: Actor | null = undefined as unknown as Actor;
   if (m.lookAt) {
