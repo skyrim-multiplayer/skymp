@@ -673,7 +673,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     msg.idx = this.worldModel.forms[idxInModel].idx;
 
     delete msg._refrId;
-    netInfo.NetInfo.addSentPacketAmount(1);
+    netInfo.NetInfo.addSentPacketCount(1);
     networking.send(msg, reliable);
   }
 

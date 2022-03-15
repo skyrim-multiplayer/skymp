@@ -1,28 +1,37 @@
 import * as sp from "skyrimPlatform";
 
 export class NetInfo {
-  private static _receivedPacketAmount: number = 0;
-  private static _sentPacketAmount: number = 0;
-
-  public static addReceivedPacketAmount(amount: number): void {
-    this._receivedPacketAmount += amount;
+  static addReceivedPacketCount(count: number): void {
+    this.receivedPacketCount += count;
   }
 
-  public static getAndClearReceivedPacketAmount(): number {
-    const value = this._receivedPacketAmount;
-    this._receivedPacketAmount = 0;
+  static getAndClearReceivedPacketCount(): number {
+    const value = this.receivedPacketCount;
+    this.receivedPacketCount = 0;
     return value;
   }
 
-  public static addSentPacketAmount(amount: number): void {
-    this._sentPacketAmount += amount;
+  static addSentPacketCount(count: number): void {
+    this.sentPacketCount += count;
   }
 
-  public static getAndClearSentPacketAmount(): number {
-    const value = this._sentPacketAmount;
-    this._sentPacketAmount = 0;
+  static getAndClearSentPacketCount(): number {
+    const value = this.sentPacketCount;
+    this.sentPacketCount = 0;
     return value;
   }
+
+  static setLocalLagUnits(distance: number): void {
+    this.localLagUnits = distance;
+  }
+
+  static getLocalLagUnits() {
+    return this.localLagUnits;
+  }
+
+  private static receivedPacketCount = 0;
+  private static sentPacketCount = 0;
+  private static localLagUnits = 0;
 }
 
 class netInfoTexts {
@@ -35,6 +44,8 @@ class netInfoTexts {
     public readonly receivedPacketAmountTextId = sp.createText(250, 390, "", [255, 255, 255, 1]),
     public readonly sentPacketStaticTextId = sp.createText(120, 430, "outgoing (p/s):", [255, 255, 255, 1]),
     public readonly sentPacketAmountTextId = sp.createText(250, 430, "", [255, 255, 255, 1]),
+    public readonly localPositionLagStaticTextId = sp.createText(90, 470, "local lag:", [255, 255, 255, 1]),
+    public readonly localPositionLagAmountTextId = sp.createText(250, 470, "", [255, 255, 255, 1]),
   ) { }
 
   public clear(): void {
@@ -44,6 +55,8 @@ class netInfoTexts {
     sp.destroyText(this.receivedPacketAmountTextId);
     sp.destroyText(this.sentPacketStaticTextId);
     sp.destroyText(this.sentPacketAmountTextId);
+    sp.destroyText(this.localPositionLagStaticTextId);
+    sp.destroyText(this.localPositionLagAmountTextId);
   }
 }
 
@@ -52,7 +65,7 @@ if (sp.storage[netInfoTexts.Name] && (sp.storage[netInfoTexts.Name] as netInfoTe
 }
 const delayMs: number = 1000;
 let textIds: netInfoTexts;
-let last_dt: number = 0;
+let lastDt: number = 0;
 let dt: number = 0;
 
 const greenARGB: number[] = [0, 128, 0, 1];
@@ -61,20 +74,27 @@ const redARGB: number[] = [255, 0, 0, 1];
 export const start = (): void => {
   textIds = new netInfoTexts();
   sp.storage[netInfoTexts.Name] = textIds;
-  last_dt = Date.now();
+  lastDt = Date.now();
 
   sp.on("update", () => {
-    dt += Date.now() - last_dt;
-    last_dt = Date.now();
+    dt += Date.now() - lastDt;
+    lastDt = Date.now();
 
     const isConnected = sp.mpClientPlugin.isConnected();
     sp.setTextString(textIds.connectionStateTextId, `${isConnected ? "ON" : "OFF"}`);
     sp.setTextColor(textIds.connectionStateTextId, isConnected ? greenARGB : redARGB);
 
+    // https://www.creationkit.com/index.php?title=Unit
+    const units = NetInfo.getLocalLagUnits();
+    const unitsInMeter = 70.0218818381;
+    const meters = Math.round(units / unitsInMeter * 10) / 10;
+
+    sp.setTextString(textIds.localPositionLagAmountTextId, `${units} units (~${meters} m)`);
+
     if (delayMs > dt) return;
 
-    sp.setTextString(textIds.receivedPacketAmountTextId, `${Math.round(NetInfo.getAndClearReceivedPacketAmount())}`);
-    sp.setTextString(textIds.sentPacketAmountTextId, `${Math.round(NetInfo.getAndClearSentPacketAmount())}`);
+    sp.setTextString(textIds.receivedPacketAmountTextId, `${Math.round(NetInfo.getAndClearReceivedPacketCount())}`);
+    sp.setTextString(textIds.sentPacketAmountTextId, `${Math.round(NetInfo.getAndClearSentPacketCount())}`);
     dt = 0;
   });
 }
