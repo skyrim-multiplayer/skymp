@@ -237,6 +237,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isWeapDrawn: false,
         isDead: false,
         healthPercentage: 1.0,
+        speed: 0
       };
     }
 

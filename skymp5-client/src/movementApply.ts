@@ -5,6 +5,7 @@ import {
   TESModPlatform,
   Debug,
   Form,
+  printConsole,
 } from "skyrimPlatform";
 import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "./errors";
@@ -142,34 +143,30 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
 };
 
 // Use global temp var to avoid allocationg of array on each translateTo
-const gTempTargetPos = [0,0,0];
-
-// Determined by experience
-const distanceAddMagic = 0.2;
+const gTempTargetPos = [0, 0, 0];
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
-  const player = Game.getPlayer();
-  if (!player) return;
+  let time = 0.3;
+  if (m.isInJumpState || m.runMode !== "Standing") {
+    time = 0.2;
+  }
 
-  // Local lags compensation
-  // TODO: Use SpeedSampled from 'm' variable, not from the local player
-  const distanceAdd = player.getAnimationVariableFloat("SpeedSampled") * distanceAddMagic;
+  // Local lag compensation
+  // TODO: Remove "|| 0" hack (added to support old MpClientPlugin)
+  const distanceAdd = (m.speed || 0) * time;
   const direction = m.rot[2] + m.direction;
   gTempTargetPos[0] = m.pos[0] + Math.sin(direction / 180 * Math.PI) * distanceAdd;
   gTempTargetPos[1] = m.pos[1] + Math.cos(direction / 180 * Math.PI) * distanceAdd;
   gTempTargetPos[2] = m.pos[2];
-
   const distance = getDistance(getPos(refr), gTempTargetPos);
-  let time = 0.1;
-  if (m.isInJumpState) time = 0.2;
-  if (m.runMode !== "Standing") time = 0.2;
+
   const speed = distance / time;
 
   const angleDiff = Math.abs(m.rot[2] - refr.getAngleZ());
   if (
-    m.runMode != "Standing" ||
+    m.runMode !== "Standing" ||
     m.isInJumpState ||
-    distance > 64 ||
+    distance > 8 ||
     angleDiff > 80
   ) {
     const actor = Actor.from(refr);

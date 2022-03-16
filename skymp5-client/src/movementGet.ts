@@ -3,7 +3,7 @@ import { ObjectReference, Actor, TESModPlatform, Form, printConsole } from "skyr
 import { NiPoint3, Movement, RunMode } from "./movement";
 
 export const getMovement = (refr: ObjectReference, form?: FormModel): Movement => {
-  const ac = Actor.from(refr) as Actor;
+  const ac = Actor.from(refr);
 
   // It is running for ObjectReferences because Standing
   // Doesn't lead to translateTo call
@@ -15,8 +15,8 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
   }
 
   let lookAt: undefined | NiPoint3 = undefined;
-  if (ac.getFormID() !== 0x14) {
-    const combatTarget = ac.getCombatTarget();
+  if (refr.getFormID() !== 0x14) {
+    const combatTarget = ac?.getCombatTarget();
     if (combatTarget) {
       lookAt = [
         combatTarget.getPositionX(),
@@ -34,13 +34,14 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     direction: runMode !== "Standing"
       ? 360 * refr.getAnimationVariableFloat("Direction")
       : 0,
-    isInJumpState: (ac && ac.getAnimationVariableBool("bInJumpState")) as boolean,
-    isSneaking: (ac && isSneaking(ac)) as boolean,
-    isBlocking: (ac && ac.getAnimationVariableBool("IsBlocking")) as boolean,
-    isWeapDrawn: (ac && ac.isWeaponDrawn()) as boolean,
+    isInJumpState: !!(ac && ac.getAnimationVariableBool("bInJumpState")),
+    isSneaking: !!(ac && isSneaking(ac)),
+    isBlocking: !!(ac && ac.getAnimationVariableBool("IsBlocking")),
+    isWeapDrawn: !!(ac && ac.isWeaponDrawn()),
     isDead: form?.isDead ?? false,
-    healthPercentage: healthPercentage as number,
+    healthPercentage: healthPercentage || 0,
     lookAt,
+    speed: refr.getAnimationVariableFloat("SpeedSampled")
   };
 }
 
