@@ -9,7 +9,7 @@ import {
 } from "skyrimPlatform";
 import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "./errors";
-import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
+import { Movement, RunMode, AnimationVariables, Transform, NiPoint3 } from "./movement";
 import { NetInfo } from "./netInfoSystem";
 
 const sqr = (x: number) => x * x;
@@ -218,11 +218,11 @@ const isInDifferentWorldOrCell = (
   );
 };
 
-const getPos = (refr: ObjectReference) => {
+export const getPos = (refr: ObjectReference): NiPoint3 => {
   return [refr.getPositionX(), refr.getPositionY(), refr.getPositionZ()];
 };
 
-const getDistance = (a: number[], b: number[]) => {
+export const getDistance = (a: number[], b: number[]) => {
   let r = 0;
   a.forEach((v, i) => (r += Math.pow(a[i] - b[i], 2)));
   return Math.sqrt(r);

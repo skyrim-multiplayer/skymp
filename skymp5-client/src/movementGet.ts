@@ -1,6 +1,28 @@
 import { FormModel } from './model';
-import { ObjectReference, Actor, TESModPlatform, Form, printConsole } from "skyrimPlatform";
+import { ObjectReference, Actor, TESModPlatform, Form, printConsole, on } from "skyrimPlatform";
 import { NiPoint3, Movement, RunMode } from "./movement";
+import { getDistance, getPos } from './movementApply';
+
+class PlayerCharacterSpeedCalculator {
+  static savePosition(pos: NiPoint3) {
+    this.lastPcPos = pos;
+    this.lastPcPosCheck = Date.now();
+  }
+
+  static getSpeed(currentPos: NiPoint3) {
+    if (this.lastPcPosCheck === -1) return 0;
+
+    const timeDeltaSec = (Date.now() - this.lastPcPosCheck) / 1000;
+    if (timeDeltaSec > 5) return 0; // Too inaccurate
+    if (timeDeltaSec === 0) return 0; // Division by zero
+
+    const distance = getDistance(currentPos, this.lastPcPos);
+    return distance / timeDeltaSec;
+  }
+
+  private static lastPcPos = [0, 0, 0];
+  private static lastPcPosCheck = -1;
+}
 
 export const getMovement = (refr: ObjectReference, form?: FormModel): Movement => {
   const ac = Actor.from(refr);
@@ -26,9 +48,22 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     }
   }
 
+  const pos = getPos(refr);
+
+  let speed;
+  if (refr.getFormID() !== 0x14) {
+    speed = refr.getAnimationVariableFloat("SpeedSampled");
+  }
+  else {
+    speed = PlayerCharacterSpeedCalculator.getSpeed(pos);
+    PlayerCharacterSpeedCalculator.savePosition(pos);
+  }
+
+  const worldOrCell = refr.getWorldSpace() || refr.getParentCell();
+
   return {
-    worldOrCell: ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID(),
-    pos: [refr.getPositionX(), refr.getPositionY(), refr.getPositionZ()],
+    worldOrCell: worldOrCell?.getFormID() || 0,
+    pos,
     rot: [refr.getAngleX(), refr.getAngleY(), refr.getAngleZ()],
     runMode: runMode,
     direction: runMode !== "Standing"
@@ -41,7 +76,7 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     isDead: form?.isDead ?? false,
     healthPercentage: healthPercentage || 0,
     lookAt,
-    speed: refr.getAnimationVariableFloat("SpeedSampled")
+    speed
   };
 }
 
