@@ -152,6 +152,7 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
   if (!player) return;
 
   // Local lags compensation
+  // TODO: Use SpeedSampled from 'm' variable, not from the local player
   const distanceAdd = player.getAnimationVariableFloat("SpeedSampled") * distanceAddMagic;
   const direction = m.rot[2] + m.direction;
   gTempTargetPos[0] = m.pos[0] + Math.sin(direction / 180 * Math.PI) * distanceAdd;
