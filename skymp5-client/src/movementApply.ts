@@ -144,11 +144,15 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
 // Use global temp var to avoid allocationg of array on each translateTo
 const gTempTargetPos = [0,0,0];
 
+// Determined by experience
+const distanceAddMagic = 0.2;
+
 const translateTo = (refr: ObjectReference, m: Movement) => {
   const player = Game.getPlayer();
+  if (!player) return;
 
   // Local lags compensation
-  const distanceAdd = player ? player.getAnimationVariableFloat("SpeedSampled") * 0.2 : 0;
+  const distanceAdd = player.getAnimationVariableFloat("SpeedSampled") * distanceAddMagic;
   const direction = m.rot[2] + m.direction;
   gTempTargetPos[0] = m.pos[0] + Math.sin(direction / 180 * Math.PI) * distanceAdd;
   gTempTargetPos[1] = m.pos[1] + Math.cos(direction / 180 * Math.PI) * distanceAdd;
