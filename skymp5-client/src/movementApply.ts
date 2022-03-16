@@ -16,19 +16,19 @@ const sqr = (x: number) => x * x;
 export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: boolean): void => {
   if (teleportIfNeed(refr, m)) return;
 
-  translateTo(refr, m);
+  // Z axis isn't useful here
+  const acX = refr.getPositionX();
+  const acY = refr.getPositionY();
+  const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
+
+  if (isMyClone === true && NetInfo.isEnabled()) {
+    NetInfo.setLocalLagUnits(lagUnitsNoZ);
+  }
+
+  translateTo(refr, m, lagUnitsNoZ);
 
   const ac = Actor.from(refr);
   if (!ac) return;
-
-  if (isMyClone === true && NetInfo.isEnabled()) {
-    // Z axis isn't useful here
-    const acX = ac.getPositionX();
-    const acY = ac.getPositionY();
-    const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
-
-    NetInfo.setLocalLagUnits(lagUnitsNoZ);
-  }
 
   let lookAt: Actor | null = undefined as unknown as Actor;
   if (m.lookAt) {
@@ -141,8 +141,17 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
   }
 };
 
-const translateTo = (refr: ObjectReference, m: Movement) => {
-  const distance = getDistance(getPos(refr), m.pos);
+const translateTo = (refr: ObjectReference, m: Movement, lagUnitsNoZ: number) => {
+  const player = Game.getPlayer();
+
+  const distanceAdd = player ? player.getAnimationVariableFloat("SpeedSampled") * 0.2 : 0;
+  const direction = m.rot[2] + m.direction;
+  const targetX = m.pos[0] + Math.sin(direction / 180 * Math.PI) * distanceAdd;
+  const targetY = m.pos[1] + Math.cos(direction / 180 * Math.PI) * distanceAdd;
+  const targetZ = m.pos[2];
+  const targetPos = [targetX, targetY, targetZ];
+
+  const distance = getDistance(getPos(refr), targetPos);
   let time = 0.1;
   if (m.isInJumpState) time = 0.2;
   if (m.runMode !== "Standing") time = 0.2;
@@ -160,9 +169,9 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
 
     if (!actor || !actor.isDead()) {
       refr.translateTo(
-        m.pos[0],
-        m.pos[1],
-        m.pos[2],
+        targetPos[0],
+        targetPos[1],
+        targetPos[2],
         m.rot[0],
         m.rot[1],
         m.rot[2],
