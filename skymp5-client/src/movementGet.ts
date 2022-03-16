@@ -1,5 +1,5 @@
 import { FormModel } from './model';
-import { ObjectReference, Actor, TESModPlatform, Form, printConsole, on } from "skyrimPlatform";
+import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
 import { NiPoint3, Movement, RunMode } from "./movement";
 import { getDistance, getPos } from './movementApply';
 
