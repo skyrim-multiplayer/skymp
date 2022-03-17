@@ -18,6 +18,7 @@ export interface AnimationVariables {
   isDead: boolean;
   healthPercentage: number;
   lookAt?: NiPoint3;
+  speed: number;
 }
 
 export type Movement = Transform & AnimationVariables;

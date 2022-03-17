@@ -18,6 +18,7 @@ void WriteToBitStream(SLNet::BitStream& stream, const MovementMessage& movData)
   WriteToBitStream(stream, movData.rot);
   WriteToBitStream(stream, movData.direction);
   WriteToBitStream(stream, movData.healthPercentage);
+  WriteToBitStream(stream, movData.speed);
 
   WriteToBitStream(
     stream, static_cast<bool>(static_cast<uint8_t>(movData.runMode) & 2));
@@ -42,6 +43,7 @@ void ReadFromBitStream(SLNet::BitStream& stream, MovementMessage& movData)
   ReadFromBitStream(stream, movData.rot);
   ReadFromBitStream(stream, movData.direction);
   ReadFromBitStream(stream, movData.healthPercentage);
+  ReadFromBitStream(stream, movData.speed);
 
   uint8_t runMode = 0;
   runMode |= static_cast<uint8_t>(ReadFromBitStream<bool>(stream));
@@ -68,6 +70,7 @@ MovementMessage MovementMessageFromJson(const nlohmann::json& json)
   result.rot = data.at("rot").get<std::array<float, 3>>();
   result.direction = data.at("direction").get<float>();
   result.healthPercentage = data.at("healthPercentage").get<float>();
+  result.speed = data.at("speed").get<float>();
   result.runMode =
     RunModeFromString(data.at("runMode").get<std::string_view>());
   result.isInJumpState = data.at("isInJumpState").get<bool>();
@@ -96,6 +99,7 @@ nlohmann::json MovementMessageToJson(const MovementMessage& movData)
         { "runMode", ToString(movData.runMode) },
         { "direction", movData.direction },
         { "healthPercentage", movData.healthPercentage },
+        { "speed", movData.speed },
         { "isInJumpState", movData.isInJumpState },
         { "isSneaking", movData.isSneaking },
         { "isBlocking", movData.isBlocking },

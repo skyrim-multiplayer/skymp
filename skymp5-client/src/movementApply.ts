@@ -5,10 +5,11 @@ import {
   TESModPlatform,
   Debug,
   Form,
+  printConsole,
 } from "skyrimPlatform";
 import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "./errors";
-import { Movement, RunMode, AnimationVariables, Transform } from "./movement";
+import { Movement, RunMode, AnimationVariables, Transform, NiPoint3 } from "./movement";
 import { NetInfo } from "./netInfoSystem";
 
 const sqr = (x: number) => x * x;
@@ -16,19 +17,19 @@ const sqr = (x: number) => x * x;
 export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: boolean): void => {
   if (teleportIfNeed(refr, m)) return;
 
+  // Z axis isn't useful here
+  const acX = refr.getPositionX();
+  const acY = refr.getPositionY();
+  const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
+
+  if (isMyClone === true && NetInfo.isEnabled()) {
+    NetInfo.setLocalLagUnits(lagUnitsNoZ);
+  }
+
   translateTo(refr, m);
 
   const ac = Actor.from(refr);
   if (!ac) return;
-
-  if (isMyClone === true && NetInfo.isEnabled()) {
-    // Z axis isn't useful here
-    const acX = ac.getPositionX();
-    const acY = ac.getPositionY();
-    const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
-
-    NetInfo.setLocalLagUnits(lagUnitsNoZ);
-  }
 
   let lookAt: Actor | null = undefined as unknown as Actor;
   if (m.lookAt) {
@@ -141,18 +142,31 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
   }
 };
 
+// Use global temp var to avoid allocationg of array on each translateTo
+const gTempTargetPos = [0, 0, 0];
+
 const translateTo = (refr: ObjectReference, m: Movement) => {
-  const distance = getDistance(getPos(refr), m.pos);
-  let time = 0.1;
-  if (m.isInJumpState) time = 0.2;
-  if (m.runMode !== "Standing") time = 0.2;
+  let time = 0.3;
+  if (m.isInJumpState || m.runMode !== "Standing") {
+    time = 0.2;
+  }
+
+  // Local lag compensation
+  // TODO: Remove "|| 0" hack (added to support old MpClientPlugin)
+  const distanceAdd = (m.speed || 0) * time;
+  const direction = m.rot[2] + m.direction;
+  gTempTargetPos[0] = m.pos[0] + Math.sin(direction / 180 * Math.PI) * distanceAdd;
+  gTempTargetPos[1] = m.pos[1] + Math.cos(direction / 180 * Math.PI) * distanceAdd;
+  gTempTargetPos[2] = m.pos[2];
+  const distance = getDistance(getPos(refr), gTempTargetPos);
+
   const speed = distance / time;
 
   const angleDiff = Math.abs(m.rot[2] - refr.getAngleZ());
   if (
-    m.runMode != "Standing" ||
+    m.runMode !== "Standing" ||
     m.isInJumpState ||
-    distance > 64 ||
+    distance > 8 ||
     angleDiff > 80
   ) {
     const actor = Actor.from(refr);
@@ -160,9 +174,9 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
 
     if (!actor || !actor.isDead()) {
       refr.translateTo(
-        m.pos[0],
-        m.pos[1],
-        m.pos[2],
+        gTempTargetPos[0],
+        gTempTargetPos[1],
+        gTempTargetPos[2],
         m.rot[0],
         m.rot[1],
         m.rot[2],
@@ -204,11 +218,11 @@ const isInDifferentWorldOrCell = (
   );
 };
 
-const getPos = (refr: ObjectReference) => {
+export const getPos = (refr: ObjectReference): NiPoint3 => {
   return [refr.getPositionX(), refr.getPositionY(), refr.getPositionZ()];
 };
 
-const getDistance = (a: number[], b: number[]) => {
+export const getDistance = (a: number[], b: number[]) => {
   let r = 0;
   a.forEach((v, i) => (r += Math.pow(a[i] - b[i], 2)));
   return Math.sqrt(r);

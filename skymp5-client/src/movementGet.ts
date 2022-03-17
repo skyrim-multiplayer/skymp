@@ -1,9 +1,31 @@
 import { FormModel } from './model';
-import { ObjectReference, Actor, TESModPlatform, Form, printConsole } from "skyrimPlatform";
+import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
 import { NiPoint3, Movement, RunMode } from "./movement";
+import { getDistance, getPos } from './movementApply';
+
+class PlayerCharacterSpeedCalculator {
+  static savePosition(pos: NiPoint3) {
+    this.lastPcPos = pos;
+    this.lastPcPosCheck = Date.now();
+  }
+
+  static getSpeed(currentPos: NiPoint3) {
+    if (this.lastPcPosCheck === -1) return 0;
+
+    const timeDeltaSec = (Date.now() - this.lastPcPosCheck) / 1000;
+    if (timeDeltaSec > 5) return 0; // Too inaccurate
+    if (timeDeltaSec === 0) return 0; // Division by zero
+
+    const distance = getDistance(currentPos, this.lastPcPos);
+    return distance / timeDeltaSec;
+  }
+
+  private static lastPcPos = [0, 0, 0];
+  private static lastPcPosCheck = -1;
+}
 
 export const getMovement = (refr: ObjectReference, form?: FormModel): Movement => {
-  const ac = Actor.from(refr) as Actor;
+  const ac = Actor.from(refr);
 
   // It is running for ObjectReferences because Standing
   // Doesn't lead to translateTo call
@@ -15,8 +37,8 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
   }
 
   let lookAt: undefined | NiPoint3 = undefined;
-  if (ac.getFormID() !== 0x14) {
-    const combatTarget = ac.getCombatTarget();
+  if (refr.getFormID() !== 0x14) {
+    const combatTarget = ac?.getCombatTarget();
     if (combatTarget) {
       lookAt = [
         combatTarget.getPositionX(),
@@ -26,21 +48,35 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     }
   }
 
+  const pos = getPos(refr);
+
+  let speed;
+  if (refr.getFormID() !== 0x14) {
+    speed = refr.getAnimationVariableFloat("SpeedSampled");
+  }
+  else {
+    speed = PlayerCharacterSpeedCalculator.getSpeed(pos);
+    PlayerCharacterSpeedCalculator.savePosition(pos);
+  }
+
+  const worldOrCell = refr.getWorldSpace() || refr.getParentCell();
+
   return {
-    worldOrCell: ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID(),
-    pos: [refr.getPositionX(), refr.getPositionY(), refr.getPositionZ()],
+    worldOrCell: worldOrCell?.getFormID() || 0,
+    pos,
     rot: [refr.getAngleX(), refr.getAngleY(), refr.getAngleZ()],
     runMode: runMode,
     direction: runMode !== "Standing"
       ? 360 * refr.getAnimationVariableFloat("Direction")
       : 0,
-    isInJumpState: (ac && ac.getAnimationVariableBool("bInJumpState")) as boolean,
-    isSneaking: (ac && isSneaking(ac)) as boolean,
-    isBlocking: (ac && ac.getAnimationVariableBool("IsBlocking")) as boolean,
-    isWeapDrawn: (ac && ac.isWeaponDrawn()) as boolean,
+    isInJumpState: !!(ac && ac.getAnimationVariableBool("bInJumpState")),
+    isSneaking: !!(ac && isSneaking(ac)),
+    isBlocking: !!(ac && ac.getAnimationVariableBool("IsBlocking")),
+    isWeapDrawn: !!(ac && ac.isWeaponDrawn()),
     isDead: form?.isDead ?? false,
-    healthPercentage: healthPercentage as number,
+    healthPercentage: healthPercentage || 0,
     lookAt,
+    speed
   };
 }
 
