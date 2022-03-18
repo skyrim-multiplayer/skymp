@@ -158,6 +158,7 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
   gTempTargetPos[1] = m.pos[1];
   gTempTargetPos[2] = m.pos[2];
 
+  // We do not want to add pos in case of standing-jumping
   if (m.runMode !== "Standing") {
     gTempTargetPos[0] += Math.sin(direction / 180 * Math.PI) * distanceAdd;
     gTempTargetPos[1] += Math.cos(direction / 180 * Math.PI) * distanceAdd;
