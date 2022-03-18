@@ -1,20 +1,22 @@
 import { FormModel } from './model';
-import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
+import { ObjectReference, Actor, TESModPlatform, printConsole } from "skyrimPlatform";
 import { NiPoint3, Movement, RunMode } from "./movement";
-import { getDistance, getPos } from './movementApply';
+import { getDistance, getPos, getWorldOrCell } from './movementApply';
 
 class PlayerCharacterSpeedCalculator {
-  static savePosition(pos: NiPoint3) {
+  static savePosition(pos: NiPoint3, worldOrCell: number) {
     this.lastPcPos = pos;
     this.lastPcPosCheck = Date.now();
+    this.lastPcWorldOrCell = worldOrCell;
   }
 
-  static getSpeed(currentPos: NiPoint3) {
+  static getSpeed(currentPos: NiPoint3, worldOrCell: number) {
     if (this.lastPcPosCheck === -1) return 0;
 
     const timeDeltaSec = (Date.now() - this.lastPcPosCheck) / 1000;
     if (timeDeltaSec > 5) return 0; // Too inaccurate
     if (timeDeltaSec === 0) return 0; // Division by zero
+    if (worldOrCell !== this.lastPcWorldOrCell) return 0;
 
     const distance = getDistance(currentPos, this.lastPcPos);
     return distance / timeDeltaSec;
@@ -22,6 +24,7 @@ class PlayerCharacterSpeedCalculator {
 
   private static lastPcPos = [0, 0, 0];
   private static lastPcPosCheck = -1;
+  private static lastPcWorldOrCell = 0;
 }
 
 export const getMovement = (refr: ObjectReference, form?: FormModel): Movement => {
@@ -55,8 +58,14 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     speed = refr.getAnimationVariableFloat("SpeedSampled");
   }
   else {
-    speed = PlayerCharacterSpeedCalculator.getSpeed(pos);
-    PlayerCharacterSpeedCalculator.savePosition(pos);
+    // Real players often run into the wall.
+    // We need to have zero speed in this case. SpeedSampled doesn't help
+    const w = getWorldOrCell(refr);
+    speed = PlayerCharacterSpeedCalculator.getSpeed(pos, w);
+    PlayerCharacterSpeedCalculator.savePosition(pos, w);
+
+    // It's unrealistic speed. It still may happen due to teleports
+    if (speed > 2000) speed = 0;
   }
 
   const worldOrCell = refr.getWorldSpace() || refr.getParentCell();

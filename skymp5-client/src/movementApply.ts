@@ -5,7 +5,6 @@ import {
   TESModPlatform,
   Debug,
   Form,
-  printConsole,
 } from "skyrimPlatform";
 import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "./errors";
@@ -142,11 +141,11 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
   }
 };
 
-// Use global temp var to avoid allocationg of array on each translateTo
+// Use global temp var to avoid allocation of an array on each translateTo
 const gTempTargetPos = [0, 0, 0];
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
-  let time = 0.3;
+  let time = 0.2;
   if (m.isInJumpState || m.runMode !== "Standing") {
     time = 0.2;
   }
@@ -155,9 +154,15 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
   // TODO: Remove "|| 0" hack (added to support old MpClientPlugin)
   const distanceAdd = (m.speed || 0) * time;
   const direction = m.rot[2] + m.direction;
-  gTempTargetPos[0] = m.pos[0] + Math.sin(direction / 180 * Math.PI) * distanceAdd;
-  gTempTargetPos[1] = m.pos[1] + Math.cos(direction / 180 * Math.PI) * distanceAdd;
+  gTempTargetPos[0] = m.pos[0];
+  gTempTargetPos[1] = m.pos[1];
   gTempTargetPos[2] = m.pos[2];
+
+  if (m.runMode !== "Standing") {
+    gTempTargetPos[0] += Math.sin(direction / 180 * Math.PI) * distanceAdd;
+    gTempTargetPos[1] += Math.cos(direction / 180 * Math.PI) * distanceAdd;
+  }
+
   const distance = getDistance(getPos(refr), gTempTargetPos);
 
   const speed = distance / time;
@@ -214,9 +219,13 @@ const isInDifferentWorldOrCell = (
   worldOrCell: number
 ) => {
   return (
-    worldOrCell !== ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID()
+    worldOrCell !== getWorldOrCell(refr)
   );
 };
+
+export const getWorldOrCell = (refr: ObjectReference): number => {
+  return ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID();
+}
 
 export const getPos = (refr: ObjectReference): NiPoint3 => {
   return [refr.getPositionX(), refr.getPositionY(), refr.getPositionZ()];
