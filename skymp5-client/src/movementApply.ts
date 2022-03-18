@@ -11,7 +11,7 @@ import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "./errors";
 import { Movement, RunMode, AnimationVariables, Transform, NiPoint3 } from "./movement";
 import { NetInfo } from "./netInfoSystem";
-import { ObjectReferenceEx } from "./objectReferenceEx";
+import { UtilsObjectReference } from "./utilsObjectReference";
 
 const sqr = (x: number) => x * x;
 
@@ -166,7 +166,7 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
     gTempTargetPos[1] += Math.cos(direction / 180 * Math.PI) * distanceAdd;
   }
 
-  const distance = ObjectReferenceEx.getDistance(ObjectReferenceEx.getPos(refr), gTempTargetPos);
+  const distance = UtilsObjectReference.getDistance(UtilsObjectReference.getPos(refr), gTempTargetPos);
 
   const speed = distance / time;
 
@@ -208,10 +208,10 @@ const teleportIfNeed = (refr: ObjectReference, m: Transform) => {
 const cellWidth = 4096;
 
 const isInDifferentExteriorCell = (refr: ObjectReference, pos: NiPoint3) => {
-  const currentPos = ObjectReferenceEx.getPos(refr);
-  const playerPos = ObjectReferenceEx.getPos(Game.getPlayer() as Actor);
-  const targetDistanceToPlayer = ObjectReferenceEx.getDistance(playerPos, pos);
-  const currentDistanceToPlayer = ObjectReferenceEx.getDistance(playerPos, currentPos);
+  const currentPos = UtilsObjectReference.getPos(refr);
+  const playerPos = UtilsObjectReference.getPos(Game.getPlayer() as Actor);
+  const targetDistanceToPlayer = UtilsObjectReference.getDistance(playerPos, pos);
+  const currentDistanceToPlayer = UtilsObjectReference.getDistance(playerPos, currentPos);
   return currentDistanceToPlayer > cellWidth && targetDistanceToPlayer <= cellWidth;
 };
 
@@ -219,5 +219,5 @@ const isInDifferentWorldOrCell = (
   refr: ObjectReference,
   worldOrCell: number
 ) => {
-  return worldOrCell !== ObjectReferenceEx.getWorldOrCell(refr);
+  return worldOrCell !== UtilsObjectReference.getWorldOrCell(refr);
 };

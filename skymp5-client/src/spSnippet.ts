@@ -1,6 +1,6 @@
 import { Game, Form } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
-import * as view from "./view";
+import { remoteIdToLocalId } from "./worldViewMisc";
 
 const spAny = sp as Record<string, any>;
 
@@ -14,7 +14,7 @@ export interface Snippet {
 
 const deserializeArg = (arg: any) => {
   if (typeof arg === "object") {
-    const formId = view.remoteIdToLocalId(arg.formId);
+    const formId = remoteIdToLocalId(arg.formId);
     const form = Game.getFormEx(formId);
     const gameObject = spAny[arg.type].from(form);
     return gameObject;
@@ -23,7 +23,7 @@ const deserializeArg = (arg: any) => {
 };
 
 const runMethod = async (snippet: Snippet): Promise<any> => {
-  const selfId = view.remoteIdToLocalId(snippet.selfId);
+  const selfId = remoteIdToLocalId(snippet.selfId);
   const self = Game.getFormEx(selfId);
   if (!self)
     throw new Error(

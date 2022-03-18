@@ -11,3 +11,5 @@ export const nextHostAttempt = (): number | undefined => {
   if (arr.length === 0) return undefined;
   return arr.shift();
 };
+
+export const lastTryHost: Record<number, number> = {};
