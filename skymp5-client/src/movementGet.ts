@@ -1,7 +1,7 @@
 import { FormModel } from './model';
-import { ObjectReference, Actor, TESModPlatform, printConsole } from "skyrimPlatform";
+import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
 import { NiPoint3, Movement, RunMode } from "./movement";
-import { getDistance, getPos, getWorldOrCell } from './movementApply';
+import { ObjectReferenceEx } from './objectReferenceEx';
 
 class PlayerCharacterSpeedCalculator {
   static savePosition(pos: NiPoint3, worldOrCell: number) {
@@ -18,11 +18,11 @@ class PlayerCharacterSpeedCalculator {
     if (timeDeltaSec === 0) return 0; // Division by zero
     if (worldOrCell !== this.lastPcWorldOrCell) return 0;
 
-    const distance = getDistance(currentPos, this.lastPcPos);
+    const distance = ObjectReferenceEx.getDistance(currentPos, this.lastPcPos);
     return distance / timeDeltaSec;
   }
 
-  private static lastPcPos = [0, 0, 0];
+  private static lastPcPos: NiPoint3 = [0, 0, 0];
   private static lastPcPosCheck = -1;
   private static lastPcWorldOrCell = 0;
 }
@@ -51,7 +51,7 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     }
   }
 
-  const pos = getPos(refr);
+  const pos = ObjectReferenceEx.getPos(refr);
 
   let speed;
   if (refr.getFormID() !== 0x14) {
@@ -60,7 +60,7 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
   else {
     // Real players often run into the wall.
     // We need to have zero speed in this case. SpeedSampled doesn't help
-    const w = getWorldOrCell(refr);
+    const w = ObjectReferenceEx.getWorldOrCell(refr);
     speed = PlayerCharacterSpeedCalculator.getSpeed(pos, w);
     PlayerCharacterSpeedCalculator.savePosition(pos, w);
 
