@@ -4,7 +4,7 @@ import { NiPoint3 } from "./movement";
 
 export class SpawnProcess {
   constructor(
-    appearance: Appearance,
+    appearance: Appearance | null,
     pos: NiPoint3,
     refrId: number,
     private callback: () => void
@@ -15,16 +15,18 @@ export class SpawnProcess {
     refr.setPosition(...pos).then(() => this.enable(appearance, refrId));
   }
 
-  private enable(appearance: Appearance, refrId: number) {
+  private enable(appearance: Appearance | null, refrId: number) {
     const refr = ObjectReference.from(Game.getFormEx(refrId));
     if (!refr || refr.getFormID() !== refrId) return;
 
     const ac = Actor.from(refr);
-    if (appearance && ac) applyTints(ac, appearance);
-    refr.enable(false).then(() => this.resurrect(appearance, refrId));
+    if (ac && appearance) {
+      applyTints(ac, appearance);
+    }
+    refr.enable(false).then(() => this.resurrect(refrId));
   }
 
-  private resurrect(appearance: Appearance, refrId: number) {
+  private resurrect(refrId: number) {
     const refr = ObjectReference.from(Game.getFormEx(refrId));
     if (!refr || refr.getFormID() !== refrId) return;
 

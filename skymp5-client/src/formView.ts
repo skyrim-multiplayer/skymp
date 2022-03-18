@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "./animation";
 import { Appearance, applyAppearance } from "./appearance";
 import { isBadMenuShown, applyEquipment } from "./equipment";
@@ -41,12 +41,10 @@ export class FormView implements View<FormModel> {
 
     // Players with different worldOrCell should be invisible
     if (model.movement) {
-      const worldOrCell =
-        (Game.getPlayer() as Actor).getWorldSpace() ||
-        (Game.getPlayer() as Actor).getParentCell();
+      const worldOrCell = UtilsObjectReference.getWorldOrCell(Game.getPlayer() as Actor);
       if (
-        worldOrCell &&
-        model.movement.worldOrCell !== worldOrCell.getFormID()
+        worldOrCell !== 0 &&
+        model.movement.worldOrCell !== worldOrCell
       ) {
         this.destroy();
         this.refrId = 0;
@@ -101,8 +99,7 @@ export class FormView implements View<FormModel> {
         ) as ObjectReference;
         this.state = {};
         delete this.wasHostedByOther;
-        const kTypeNpc = 43;
-        if (base.getType() !== kTypeNpc) {
+        if (base.getType() !== FormType.NPC) {
           refr.setAngle(
             model.movement?.rot[0] || 0,
             model.movement?.rot[1] || 0,
@@ -116,7 +113,7 @@ export class FormView implements View<FormModel> {
 
         this.ready = false;
         new SpawnProcess(
-          this.appearanceState.appearance as Appearance,
+          this.appearanceState.appearance,
           model.movement
             ? model.movement.pos
             : UtilsObjectReference.getPos(Game.getPlayer() as Actor),
@@ -173,22 +170,23 @@ export class FormView implements View<FormModel> {
     const base = refr.getBaseObject();
     if (base) {
       const t = base.getType();
-      if (t >= 38 && t <= 39) {
+      if (t == FormType.Tree || t == FormType.Flora) {
         const wasHarvested = refr.isHarvested();
         if (isHarvested != wasHarvested) {
-          let ac: Actor = undefined as unknown as Actor;
-          if (isHarvested)
+          let ac: Actor | null = null;
+          if (isHarvested) {
             for (let i = 0; i < 20; ++i) {
               ac = Game.findRandomActor(
                 refr.getPositionX(),
                 refr.getPositionY(),
                 refr.getPositionZ(),
                 10000
-              ) as Actor;
+              );
               if (ac && ac.getFormID() !== 0x14) {
                 break;
               }
             }
+          }
           if (isHarvested && ac && ac.getFormID() !== 0x14) {
             refr.activate(ac, true);
           } else {
@@ -316,7 +314,7 @@ export class FormView implements View<FormModel> {
           this.movState.everApplied = true;
         } else {
           if (ac) {
-            ac.clearKeepOffsetFromActor(); 
+            ac.clearKeepOffsetFromActor();
             TESModPlatform.setWeaponDrawnMode(ac, -1);
           }
           const remoteId = this.remoteRefrId;
@@ -452,7 +450,7 @@ export class FormView implements View<FormModel> {
     const last = lastTryHost[remoteId];
     if (!last || Date.now() - last >= 1000) {
       lastTryHost[remoteId] = Date.now();
-  
+
       if (
         getMovement(ac).worldOrCell ===
         getMovement(Game.getPlayer() as Actor).worldOrCell
