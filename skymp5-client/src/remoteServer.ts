@@ -14,14 +14,11 @@ import {
   WorldSpace,
   printConsole,
   Utility,
-  writePlugin,
   storage,
-  getPluginSourceCode,
   browser,
   ObjectReference,
   on,
   Ui,
-  settings,
   Armor,
 } from "skyrimPlatform";
 import * as loadGameManager from "./loadGameManager";
@@ -32,14 +29,13 @@ import { IdManager } from "./idManager";
 import { applyAppearanceToPlayer } from "./appearance";
 import * as spSnippet from "./spSnippet";
 import * as sp from "skyrimPlatform";
-import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId, WorldView } from "./view";
 import * as updateOwner from "./updateOwner";
-import { getActorValues, setActorValuePercentage } from "./actorvalues";
+import { setActorValuePercentage } from "./actorvalues";
 import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
 import { nameof } from "./utils";
-import { defaultLocalDamageMult, setLocalDamageMult } from "./index";
 import { AuthGameData } from './authModel';
 import * as netInfo from "./netInfoSystem";
+import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from './worldViewMisc';
 
 //
 // eventSource system

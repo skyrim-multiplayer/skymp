@@ -9,12 +9,6 @@ import {
   Utility,
   Actor,
 } from "skyrimPlatform";
-import {
-  WorldView,
-  getViewFromStorage,
-  localIdToRemoteId,
-  remoteIdToLocalId,
-} from "./view";
 import { getMovement } from "./movement";
 import { getAppearance } from "./appearance";
 import { AnimationSource, Animation, setupHooks } from "./animation";
@@ -37,6 +31,8 @@ import { Hit, getHitData } from "./hit";
 import { FormModel } from "./model";
 import { nameof } from "./utils";
 import * as netInfo from "./netInfoSystem";
+import { WorldView } from "./worldView";
+import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./worldViewMisc";
 
 interface AnyMessage {
   type?: string;
@@ -102,7 +98,7 @@ export const getServerUiPort = () => {
   return targetPort === 7777 ? 3000 : (targetPort as number) + 1;
 };
 
-export const connectWhenICallAndNotWhenIImport  = (): void => {
+export const connectWhenICallAndNotWhenIImport = (): void => {
   if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
     storage.targetIp = targetIp;
     storage.targetPort = targetPort;

@@ -5,11 +5,13 @@ import {
   TESModPlatform,
   Debug,
   Form,
+  printConsole,
 } from "skyrimPlatform";
 import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "./errors";
 import { Movement, RunMode, AnimationVariables, Transform, NiPoint3 } from "./movement";
 import { NetInfo } from "./netInfoSystem";
+import { UtilsObjectReference } from "./utilsObjectReference";
 
 const sqr = (x: number) => x * x;
 
@@ -30,7 +32,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
   const ac = Actor.from(refr);
   if (!ac) return;
 
-  let lookAt: Actor | null = undefined as unknown as Actor;
+  let lookAt = null;
   if (m.lookAt) {
     try {
       lookAt = Game.findClosestActor(
@@ -44,7 +46,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
     }
   }
 
-  if (lookAt as Actor) {
+  if (lookAt) {
     ac.setHeadTracking(true);
     ac.setLookAt(lookAt, false);
   } else {
@@ -142,7 +144,7 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
 };
 
 // Use global temp var to avoid allocation of an array on each translateTo
-const gTempTargetPos = [0, 0, 0];
+const gTempTargetPos: NiPoint3 = [0, 0, 0];
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
   let time = 0.2;
@@ -164,7 +166,7 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
     gTempTargetPos[1] += Math.cos(direction / 180 * Math.PI) * distanceAdd;
   }
 
-  const distance = getDistance(getPos(refr), gTempTargetPos);
+  const distance = UtilsObjectReference.getDistance(UtilsObjectReference.getPos(refr), gTempTargetPos);
 
   const speed = distance / time;
 
@@ -205,35 +207,17 @@ const teleportIfNeed = (refr: ObjectReference, m: Transform) => {
 
 const cellWidth = 4096;
 
-const isInDifferentExteriorCell = (refr: ObjectReference, pos: number[]) => {
-  const currentPos = getPos(refr);
-  const playerPos = getPos(Game.getPlayer() as Actor);
-  const targetDistanceToPlayer = getDistance(playerPos, pos);
-  const currentDistanceToPlayer = getDistance(playerPos, currentPos);
-  return (
-    currentDistanceToPlayer > cellWidth && targetDistanceToPlayer <= cellWidth
-  );
+const isInDifferentExteriorCell = (refr: ObjectReference, pos: NiPoint3) => {
+  const currentPos = UtilsObjectReference.getPos(refr);
+  const playerPos = UtilsObjectReference.getPos(Game.getPlayer() as Actor);
+  const targetDistanceToPlayer = UtilsObjectReference.getDistance(playerPos, pos);
+  const currentDistanceToPlayer = UtilsObjectReference.getDistance(playerPos, currentPos);
+  return currentDistanceToPlayer > cellWidth && targetDistanceToPlayer <= cellWidth;
 };
 
 const isInDifferentWorldOrCell = (
   refr: ObjectReference,
   worldOrCell: number
 ) => {
-  return (
-    worldOrCell !== getWorldOrCell(refr)
-  );
-};
-
-export const getWorldOrCell = (refr: ObjectReference): number => {
-  return ((refr.getWorldSpace() || refr.getParentCell()) as Form).getFormID();
-}
-
-export const getPos = (refr: ObjectReference): NiPoint3 => {
-  return [refr.getPositionX(), refr.getPositionY(), refr.getPositionZ()];
-};
-
-export const getDistance = (a: number[], b: number[]) => {
-  let r = 0;
-  a.forEach((v, i) => (r += Math.pow(a[i] - b[i], 2)));
-  return Math.sqrt(r);
+  return worldOrCell !== UtilsObjectReference.getWorldOrCell(refr);
 };

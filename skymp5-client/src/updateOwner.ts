@@ -1,6 +1,6 @@
 import * as sp from "skyrimPlatform";
 import { FormModel } from "./model";
-import * as view from "./view";
+import { localIdToRemoteId, remoteIdToLocalId } from "./worldViewMisc";
 
 export const setOwnerModel = (ownerModel: FormModel): void => {
   sp.storage["ownerModel"] = ownerModel;
@@ -14,10 +14,10 @@ export const setup = (): void => {
     value: undefined as unknown,
     _model: undefined as unknown as FormModel,
     getFormIdInServerFormat: (clientsideFormId: number) => {
-      return view.localIdToRemoteId(clientsideFormId);
+      return localIdToRemoteId(clientsideFormId);
     },
     getFormIdInClientFormat: (serversideFormId: number) => {
-      return view.remoteIdToLocalId(serversideFormId);
+      return remoteIdToLocalId(serversideFormId);
     },
     get(propName: string) {
       return (this._model as Record<string, any>)[propName];
