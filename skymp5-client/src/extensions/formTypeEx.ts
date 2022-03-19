@@ -1,6 +1,6 @@
 import { FormType } from "skyrimPlatform";
 
-export class UtilsFormType {
+export class FormTypeEx {
   static isItem(type: FormType) {
     return type === FormType.Ammo ||
       type === FormType.Armor ||

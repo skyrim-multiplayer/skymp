@@ -1,20 +1,19 @@
 import * as sp from "skyrimPlatform";
-import { hasSweetPie } from "./utils";
 
 const weaponTimings = new Map<sp.WeaponType, [number, number]>([
-  [sp.WeaponType.Fist,       [200, 210]],
-  [sp.WeaponType.Sword,      [190, 150]],
-  [sp.WeaponType.Dagger,     [180, 120]],
-  [sp.WeaponType.WarAxe,     [190, 180]],
-  [sp.WeaponType.Mace,       [190, 210]],
+  [sp.WeaponType.Fist, [200, 210]],
+  [sp.WeaponType.Sword, [190, 150]],
+  [sp.WeaponType.Dagger, [180, 120]],
+  [sp.WeaponType.WarAxe, [190, 180]],
+  [sp.WeaponType.Mace, [190, 210]],
   [sp.WeaponType.Greatsword, [540, 350]],
   // NOTE: both of the next two weapon types correspond to id=6.
   // TODO(#xyz): do something about it. Maybe we can distinguish them somehow...
-  [sp.WeaponType.Battleaxe,  [540, 550]],
-  [sp.WeaponType.Warhammer,  [540, 450]],
-  [sp.WeaponType.Bow,        [  0,   0]],
-  [sp.WeaponType.Staff,      [  0, 180]],
-  [sp.WeaponType.Crossbow,   [  0,   0]],
+  [sp.WeaponType.Battleaxe, [540, 550]],
+  [sp.WeaponType.Warhammer, [540, 450]],
+  [sp.WeaponType.Bow, [0, 0]],
+  [sp.WeaponType.Staff, [0, 180]],
+  [sp.WeaponType.Crossbow, [0, 0]],
 ]);
 
 let blockPlayerControlTimeStamp: number = 0;
@@ -24,6 +23,16 @@ let playerAttackTimeout: number = 0;
 export const start = (): void => {
   sp.once('update', registerHandlersIfNeeded);
 };
+
+const hasSweetPie = (): boolean => {
+  const modCount = sp.Game.getModCount();
+  for (let i = 0; i < modCount; ++i) {
+    if (sp.Game.getModName(i).toLowerCase().includes('sweetpie')) {
+      return true;
+    }
+  }
+  return false;
+}
 
 const registerHandlersIfNeeded = (): void => {
   if (!hasSweetPie()) {

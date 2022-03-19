@@ -1,11 +1,11 @@
 import { Actor } from 'skyrimPlatform';
 /* eslint-disable @typescript-eslint/no-empty-function */
-import * as networking from "./networking";
+import * as networking from "../networking";
 import { FormModel, WorldModel } from "./model";
 import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
 import { SendTarget } from "./sendTarget";
-import * as messages from "./messages";
+import * as messages from "../messages";
 import {
   Game,
   once,
@@ -21,21 +21,21 @@ import {
   Ui,
   Armor,
 } from "skyrimPlatform";
-import * as loadGameManager from "./loadGameManager";
-import { applyInventory, Inventory } from "./inventory";
-import { isBadMenuShown } from "./equipment";
-import { Movement } from "./movement";
-import { IdManager } from "./idManager";
-import { applyAppearanceToPlayer } from "./appearance";
-import * as spSnippet from "./spSnippet";
+import * as loadGameManager from "../features/loadGameManager";
+import { applyInventory, Inventory } from "../sync/inventory";
+import { isBadMenuShown } from "../sync/equipment";
+import { Movement } from "../sync/movement";
+import { IdManager } from "../lib/idManager";
+import { applyAppearanceToPlayer } from "../sync/appearance";
+import * as spSnippet from "../spSnippet";
 import * as sp from "skyrimPlatform";
-import * as updateOwner from "./updateOwner";
-import { setActorValuePercentage } from "./actorvalues";
-import { applyDeathState, safeRemoveRagdollFromWorld } from './deathSystem';
-import { nameof } from "./utils";
-import { AuthGameData } from './authModel';
-import * as netInfo from "./netInfoSystem";
-import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from './worldViewMisc';
+import * as updateOwner from "../gamemodeApi/updateOwner";
+import { setActorValuePercentage } from "../sync/actorvalues";
+import { applyDeathState, safeRemoveRagdollFromWorld } from '../sync/deathSystem';
+import { AuthGameData } from '../features/authModel';
+import * as netInfo from "../features/netInfoSystem";
+import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
+import { nameof } from '../lib/nameof';
 
 //
 // eventSource system

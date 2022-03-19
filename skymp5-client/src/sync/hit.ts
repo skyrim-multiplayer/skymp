@@ -1,5 +1,5 @@
 import * as sp from "skyrimPlatform";
-import { localIdToRemoteId } from "./worldViewMisc";
+import { localIdToRemoteId } from "../view/worldViewMisc";
 
 export interface Hit {
   aggressor: number;

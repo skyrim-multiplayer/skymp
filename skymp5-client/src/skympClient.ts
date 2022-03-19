@@ -9,30 +9,29 @@ import {
   Utility,
   Actor,
 } from "skyrimPlatform";
-import { getMovement } from "./movement";
-import { getAppearance } from "./appearance";
-import { AnimationSource, Animation, setupHooks } from "./animation";
-import { getEquipment } from "./equipment";
-import { getDiff, getInventory, Inventory } from "./inventory";
+import { getMovement } from "./sync/movement";
+import { getAppearance } from "./sync/appearance";
+import { AnimationSource, Animation, setupHooks } from "./sync/animation";
+import { getEquipment } from "./sync/equipment";
+import { getDiff, getInventory, Inventory } from "./sync/inventory";
 import { MsgType, HostStartMessage, HostStopMessage } from "./messages";
-import { MsgHandler } from "./msgHandler";
-import { ModelSource } from "./modelSource";
-import { RemoteServer, getPcInventory } from "./remoteServer";
-import { SendTarget } from "./sendTarget";
+import { MsgHandler } from "./modelSource/msgHandler";
+import { ModelSource } from "./modelSource/modelSource";
+import { RemoteServer, getPcInventory } from "./modelSource/remoteServer";
+import { SendTarget } from "./modelSource/sendTarget";
 import * as networking from "./networking";
 import * as sp from "skyrimPlatform";
-import * as loadGameManager from "./loadGameManager";
-import * as deathSystem from "./deathSystem";
-import { setUpConsoleCommands } from "./console";
-import { nextHostAttempt } from "./hostAttempts";
-import * as updateOwner from "./updateOwner";
-import { ActorValues, getActorValues } from "./actorvalues";
-import { Hit, getHitData } from "./hit";
-import { FormModel } from "./model";
-import { nameof } from "./utils";
-import * as netInfo from "./netInfoSystem";
-import { WorldView } from "./worldView";
-import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./worldViewMisc";
+import * as loadGameManager from "./features/loadGameManager";
+import * as deathSystem from "./sync/deathSystem";
+import { setUpConsoleCommands } from "./features/console";
+import { nextHostAttempt } from "./view/hostAttempts";
+import * as updateOwner from "./gamemodeApi/updateOwner";
+import { ActorValues, getActorValues } from "./sync/actorvalues";
+import { getHitData } from "./sync/hit";
+import { FormModel } from "./modelSource/model";
+import * as netInfo from "./features/netInfoSystem";
+import { WorldView } from "./view/worldView";
+import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./view/worldViewMisc";
 
 interface AnyMessage {
   type?: string;
@@ -45,13 +44,6 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     (m: AnyMessage) => void
   >;
   const f = handler[msgType];
-  /*if (msgType !== "UpdateMovement") {
-    printConsole();
-    for (const key in msgAny) {
-      const v = (msgAny as Record<string, any>)[key];
-      printConsole(`${key}=${JSON.stringify(v)}`);
-    }
-  }*/
 
   if (msgType === "hostStart") {
     const msg = msgAny as HostStartMessage;
