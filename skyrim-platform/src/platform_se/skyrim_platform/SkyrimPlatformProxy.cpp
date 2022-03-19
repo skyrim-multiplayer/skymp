@@ -1,17 +1,9 @@
 #include "SkyrimPlatformProxy.h"
+#include "JsUtils.h"
 #include "NativeValueCasts.h"
 #include "ProxyGetter.h"
-#include <skse64/GameRTTI.h>
-#include <skse64/GameReferences.h>
-#include <unordered_map>
 
 namespace {
-JsValue CreateObject(const char* type, void* form)
-{
-  return form ? NativeValueCasts::NativeObjectToJsObject(
-                  std::make_shared<CallNative::Object>(type, form))
-              : JsValue::Null();
-}
 
 JsValue GetProxyForClass(const std::string& className,
                          const JsValue& skyrimPlatformExports)
@@ -40,7 +32,7 @@ JsValue GetProxyForClass(const std::string& className,
         if (isGame && s == "getFormEx") {
           f =
             JsValue::Function([](const JsFunctionArguments& args) -> JsValue {
-              auto f = LookupFormByID((uint32_t)(double)args[1]);
+              auto f = RE::TESForm::LookupByID((uint32_t)(double)args[1]);
               if (f)
                 return CreateObject("Form", f);
               else
@@ -50,33 +42,32 @@ JsValue GetProxyForClass(const std::string& className,
           if (isObjectReference) {
             f = JsValue::Function(
               [](const JsFunctionArguments& args) -> JsValue {
-                CallNative::ObjectPtr from =
+                CallNative::ObjectPtr obj =
                   NativeValueCasts::JsObjectToNativeObject(args[1]);
-                if (!from)
+                if (!obj)
                   return JsValue::Null();
-                auto fromRaw = (TESForm*)from->GetNativeObjectPtr();
-                if (!fromRaw)
+                auto form = (RE::TESForm*)obj->GetNativeObjectPtr();
+                if (!form)
                   return JsValue::Null();
-                TESObjectREFR* resRaw =
-                  DYNAMIC_CAST(fromRaw, TESForm, TESObjectREFR);
-                if (!resRaw)
+                auto objRefr = form->As<RE::TESObjectREFR>();
+                if (!objRefr)
                   return JsValue::Null();
-                return CreateObject("ObjectReference", resRaw);
+                return CreateObject("ObjectReference", objRefr);
               });
           } else if (isActor) {
             f = JsValue::Function(
               [](const JsFunctionArguments& args) -> JsValue {
-                CallNative::ObjectPtr from =
+                CallNative::ObjectPtr obj =
                   NativeValueCasts::JsObjectToNativeObject(args[1]);
-                if (!from)
+                if (!obj)
                   return JsValue::Null();
-                auto fromRaw = (TESForm*)from->GetNativeObjectPtr();
-                if (!fromRaw)
+                auto form = (RE::TESForm*)obj->GetNativeObjectPtr();
+                if (!form)
                   return JsValue::Null();
-                Actor* resRaw = DYNAMIC_CAST(fromRaw, TESForm, Actor);
-                if (!resRaw)
+                auto actor = form->As<RE::Actor>();
+                if (!actor)
                   return JsValue::Null();
-                return CreateObject("Actor", resRaw);
+                return CreateObject("Actor", actor);
               });
           } else {
             f = JsValue::Function(

@@ -1,14 +1,11 @@
 #pragma once
-#include <RE/BSScript/IFunction.h>
-#include <RE/BSScript/TypeInfo.h>
-#include <string>
 
 class FunctionInfo
 {
 public:
   struct ValueType
   {
-    RE::BSScript::TypeInfo::RawType type;
+    TypeInfo::RawType type;
     const char* className = "";
   };
 

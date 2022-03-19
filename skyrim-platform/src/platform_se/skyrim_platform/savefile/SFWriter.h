@@ -1,7 +1,5 @@
 #pragma once
 #include "SFStructure.h"
-#include <filesystem>
-#include <fstream>
 
 namespace SaveFile_ {
 class Writer

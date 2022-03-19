@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include "SFChangeFormNPC.h"
 
 namespace {

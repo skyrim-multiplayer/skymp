@@ -1,6 +1,5 @@
 #pragma once
 #include "IInputConverter.h"
-#include <vector>
 
 class InputConverter : public IInputConverter
 {

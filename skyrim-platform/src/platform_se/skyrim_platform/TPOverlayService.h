@@ -1,12 +1,5 @@
 #pragma once
 
-#include "ui/TextToDraw.h"
-#include <core_library/Meta.hpp>
-#include <functional>
-#include <include/cef_values.h>
-#include <include/internal/cef_ptr.h>
-#include <ui/ProcessMessageListener.h>
-
 namespace CEFUtils {
 struct MyChromiumApp;
 }

@@ -1,5 +1,4 @@
 #pragma once
-#include "JsEngine.h"
 
 namespace CameraApi {
 JsValue WorldPointToScreenPoint(const JsFunctionArguments& args);

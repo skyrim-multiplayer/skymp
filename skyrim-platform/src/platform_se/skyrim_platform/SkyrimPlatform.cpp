@@ -1,44 +1,25 @@
 #include "SkyrimPlatform.h"
-
-#include "ThreadPoolWrapper.h"
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
-#include <skse64/PluginAPI.h>
-
-#include "BrowserApi.h"    // BrowserApi::State
+#include "BrowserApi.h"    // APIs for register in CommonExecutionListener
 #include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
-
-// HelloTickListener
-#include <RE/ConsoleLog.h>
-
-// CommonExecutionListener
-#include "ConsoleApi.h"
-#include "DirectoryMonitor.h"
-#include "EventsApi.h"
-#include "ExceptionPrinter.h"
-#include "HttpClient.h"
-#include "ReadFile.h"
-#include "SkyrimPlatformProxy.h"
-
-// APIs for register in CommonExecutionListener
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
 #include "CameraApi.h"
-#include "ConsoleApi.h"
+#include "ConsoleApi.h" // CommonExecutionListener
 #include "DevApi.h"
+#include "DirectoryMonitor.h"
 #include "EncodingApi.h"
 #include "EventsApi.h"
+#include "ExceptionPrinter.h"
 #include "FileInfoApi.h"
+#include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
+#include "ReadFile.h"
+#include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
+#include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
 
-#include <asio.hpp>
-#include <condition_variable>
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -194,12 +175,8 @@ private:
     s.resize(s.size() - strlen("-settings.txt"));
 
     auto pluginName = std::filesystem::path(s).string();
-
-    // Why do we treat it as an exception actually?
-    std::string what =
-      "Found settings file: " + path.string() + " for plugin " + pluginName;
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-      .PrintException(what.data());
+    logger::info("Found settings file {} for plugin {}.", path.string(),
+                 pluginName);
 
     settingsByPluginName[pluginName] = ReadFile(path);
   }
@@ -287,7 +264,8 @@ private:
     std::vector<std::filesystem::path> paths;
     if (std::filesystem::exists(directory)) {
       for (auto& it : std::filesystem::directory_iterator(directory)) {
-        std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
+        std::filesystem::path p =
+          it.is_directory() ? it.path() / "index.js" : it;
         paths.push_back(p);
       }
     }
@@ -345,10 +323,10 @@ SkyrimPlatform::SkyrimPlatform()
   pImpl->complete = false;
 }
 
-SkyrimPlatform& SkyrimPlatform::GetSingleton()
+SkyrimPlatform* SkyrimPlatform::GetSingleton()
 {
   static SkyrimPlatform g_skyrimPlatform;
-  return g_skyrimPlatform;
+  return &g_skyrimPlatform;
 }
 
 void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
@@ -403,7 +381,7 @@ void SkyrimPlatform::PushToWorkerAndWait(
     pImpl->ioContext.get_executor(),
     std::bind(&Impl::RunInIOContext, pImpl, fPtr, stack, logger, vm, ret));
   pImpl->conditionalVariable.wait(
-    lock, [] { return SkyrimPlatform::GetSingleton().pImpl->complete; });
+    lock, [] { return SkyrimPlatform::GetSingleton()->pImpl->complete; });
 }
 
 void SkyrimPlatform::PrepareWorker()

@@ -22,10 +22,14 @@ macro(set_from_environment VARIABLE)
 endmacro()
 
 set_from_environment(VCPKG_ROOT)
+# for github actions
+set_from_environment(VCPKG_INSTALLATION_ROOT)
 
 # Use installed VCPKG if exists
 if(USE_SYSTEM_VCPKG AND DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
   set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+elseif(USE_SYSTEM_VCPKG AND DEFINED VCPKG_INSTALLATION_ROOT AND EXISTS ${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake)
+  set(CMAKE_TOOLCHAIN_FILE "${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 else()
   set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
 endif()
@@ -49,6 +53,14 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
   set(msg "${msg}\nFor users who don't have Skyrim SE installed:")
   set(msg "${msg}\n  cmake ..")
   message(FATAL_ERROR "${msg}")
+endif()
+
+option(SKYRIM_SE "Build platform for Skyrim Special Edition." OFF)
+
+if (SKYRIM_SE)
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
+else()
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
 endif()
 
 cmake_minimum_required(VERSION 3.18.2)
@@ -103,7 +115,7 @@ if(CPPCOV_PATH)
   endif()
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -130,11 +142,11 @@ if(PREPARE_NEXUS_ARCHIVES)
   )
 
   add_dependencies(prepare_nexus_archives skyrim-platform)
-  set(TARGETS_ADDITIONAL 
-    skymp5-client 
-    skymp5-front 
-    skymp5-functions-lib 
-    skymp5-scripts 
+  set(TARGETS_ADDITIONAL
+    skymp5-client
+    skymp5-front
+    skymp5-functions-lib
+    skymp5-scripts
     skymp5-server
   )
   foreach(target ${TARGETS_ADDITIONAL})

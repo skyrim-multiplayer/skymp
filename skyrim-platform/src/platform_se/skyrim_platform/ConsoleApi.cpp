@@ -6,19 +6,6 @@
 #include "ThreadPoolWrapper.h"
 #include "Validators.h"
 #include "WindowsConsolePrinter.h"
-#include <RE/CommandTable.h>
-#include <RE/ConsoleLog.h>
-#include <RE/Script.h>
-#include <RE/TESForm.h>
-#include <RE/TESObjectREFR.h>
-#include <cstdlib>
-#include <ctpl/ctpl_stl.h>
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <skse64/ObScript.h>
-#include <skse64_common/SafeWrite.h>
-#include <vector>
 
 namespace {
 // TODO: Add printers switching
@@ -29,16 +16,15 @@ struct ConsoleCommand
   std::string longName;
   std::string shortName;
   uint16_t numArgs = 0;
-  ObScript_Execute execute;
+  RE::SCRIPT_FUNCTION::Execute_t* execute;
   JsValue jsExecute;
-  ObScriptCommand* myIter;
-  ObScriptCommand myOriginalData;
+  RE::SCRIPT_FUNCTION* myIter;
+  RE::SCRIPT_FUNCTION myOriginalData;
 };
 static std::map<std::string, ConsoleCommand> replacedConsoleCmd;
 static bool printConsolePrefixesEnabled = true;
 
-bool AreCommandNamesValidAndEqual(const std::string& first,
-                                  const std::string& second)
+bool IsNameEqual(const std::string& first, const std::string& second)
 {
   return first.size() > 0 && second.size() > 0
     ? stricmp(first.data(), second.data()) == 0
@@ -55,8 +41,9 @@ JsValue ConsoleApi::PrintConsole(const JsFunctionArguments& args)
 void ConsoleApi::Clear()
 {
   for (auto& item : replacedConsoleCmd) {
-    SafeWriteBuf((uintptr_t)item.second.myIter, &(item.second.myOriginalData),
-                 sizeof(item.second.myOriginalData));
+    REL::safe_write((uintptr_t)item.second.myIter,
+                    &(item.second.myOriginalData),
+                    sizeof(item.second.myOriginalData));
   }
 
   replacedConsoleCmd.clear();
@@ -73,14 +60,14 @@ const char* ConsoleApi::GetExceptionPrefix()
 }
 
 namespace {
-ConsoleCommand FillCmdInfo(ObScriptCommand* cmd)
+ConsoleCommand FillCmdInfo(RE::SCRIPT_FUNCTION* cmd)
 {
   ConsoleCommand cmdInfo;
 
-  cmdInfo.longName = cmd->longName;
+  cmdInfo.longName = cmd->functionName;
   cmdInfo.shortName = cmd->shortName;
   cmdInfo.numArgs = cmd->numParams;
-  cmdInfo.execute = cmd->execute;
+  cmdInfo.execute = cmd->executeFunction;
   cmdInfo.myIter = cmd;
   cmdInfo.myOriginalData = *cmd;
   cmdInfo.jsExecute = JsValue::Function(
@@ -94,15 +81,15 @@ void CreateLongNameProperty(JsValue& obj, ConsoleCommand* replaced)
   obj.SetProperty(
     "longName",
     [=](const JsFunctionArguments& args) {
-      return JsValue::String(replaced->myIter->longName);
+      return JsValue::String(replaced->myIter->functionName);
     },
     [=](const JsFunctionArguments& args) {
       replaced->longName = args[1].ToString();
 
-      ObScriptCommand cmd = *replaced->myIter;
-      cmd.longName = replaced->longName.c_str();
+      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
+      cmd.functionName = replaced->longName.c_str();
 
-      SafeWriteBuf((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+      REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
       return JsValue::Undefined();
     });
 }
@@ -117,10 +104,10 @@ void CreateShortNameProperty(JsValue& obj, ConsoleCommand* replaced)
     [=](const JsFunctionArguments& args) {
       replaced->shortName = args[1].ToString();
 
-      ObScriptCommand cmd = *replaced->myIter;
+      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
       cmd.shortName = replaced->shortName.c_str();
 
-      SafeWriteBuf((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+      REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
       return JsValue::Undefined();
     });
 }
@@ -135,10 +122,10 @@ void CreateNumArgsProperty(JsValue& obj, ConsoleCommand* replaced)
     [=](const JsFunctionArguments& args) {
       replaced->numArgs = (double)args[1];
 
-      ObScriptCommand cmd = *replaced->myIter;
+      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
       cmd.numParams = replaced->numArgs;
 
-      SafeWriteBuf((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+      REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
       return JsValue::Undefined();
     });
 }
@@ -172,8 +159,11 @@ ParseCommandResult ParseCommand(std::string command)
   while ((pos = command.find(delimiterSpase)) != std::string::npos) {
 
     token = command.substr(0, pos);
-    res.commandName.empty() ? res.commandName = token
-                            : res.params.push_back(token);
+    if (res.commandName.empty()) {
+      res.commandName = token;
+    } else {
+      res.params.push_back(token);
+    }
     command.erase(0, pos + delimiterSpase.length());
   }
 
@@ -226,11 +216,12 @@ JsValue GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
   }
 }
 
-bool ConsoleCommand_Execute(const ObScriptParam* paramInfo,
-                            ScriptData* scriptData, TESObjectREFR* thisObj,
-                            TESObjectREFR* containingObj, Script* scriptObj,
-                            ScriptLocals* locals, double& result,
-                            UInt32& opcodeOffsetPtr)
+bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
+                           RE::SCRIPT_FUNCTION::ScriptData* scriptData,
+                           RE::TESObjectREFR* thisObj,
+                           RE::TESObjectREFR* containingObj,
+                           RE::Script* scriptObj, RE::ScriptLocals* locals,
+                           double& result, std::uint32_t& opcodeOffsetPtr)
 {
   std::pair<const std::string, ConsoleCommand>* iterator = nullptr;
 
@@ -239,16 +230,14 @@ bool ConsoleCommand_Execute(const ObScriptParam* paramInfo,
       if (!scriptObj)
         throw NullPointerException("scriptObj");
 
-      RE::Script* script = reinterpret_cast<RE::Script*>(scriptObj);
-
-      std::string command = script->GetCommand();
+      std::string command = scriptObj->GetCommand();
       auto parseCommandResult = ParseCommand(command);
 
       for (auto& item : replacedConsoleCmd) {
-        if (AreCommandNamesValidAndEqual(item.second.longName,
-                                         parseCommandResult.commandName) ||
-            AreCommandNamesValidAndEqual(item.second.shortName,
-                                         parseCommandResult.commandName)) {
+        if (IsNameEqual(item.second.longName,
+                        parseCommandResult.commandName) ||
+            IsNameEqual(item.second.shortName,
+                        parseCommandResult.commandName)) {
 
           std::vector<JsValue> args;
           args.push_back(JsValue::Undefined());
@@ -257,19 +246,16 @@ bool ConsoleCommand_Execute(const ObScriptParam* paramInfo,
           refr ? args.push_back(JsValue::Double((double)refr->formID))
                : args.push_back(JsValue::Double(0));
 
-          auto param =
-            reinterpret_cast<const RE::SCRIPT_PARAMETER*>(paramInfo);
-
           for (size_t i = 0; i < parseCommandResult.params.size(); ++i) {
-            if (!param)
+            if (!paramInfo)
               break;
 
-            JsValue arg =
-              GetTypedArg(param[i].paramType, parseCommandResult.params[i]);
+            JsValue arg = GetTypedArg(paramInfo[i].paramType.get(),
+                                      parseCommandResult.params[i]);
 
             if (arg.GetType() == JsValue::Type::Undefined) {
               auto err = " typeId " +
-                std::to_string((uint32_t)param[i].paramType) +
+                std::to_string((uint32_t)paramInfo[i].paramType.get()) +
                 " not yet supported";
 
               throw std::runtime_error(err.data());
@@ -284,27 +270,28 @@ bool ConsoleCommand_Execute(const ObScriptParam* paramInfo,
       }
     } catch (std::exception& e) {
       std::string what = e.what();
-      SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
+      SkyrimPlatform::GetSingleton()->AddUpdateTask([what] {
         throw std::runtime_error(what + " (in ConsoleCommand_Execute)");
       });
     }
   };
 
-  SkyrimPlatform::GetSingleton().PushAndWait(func);
+  SkyrimPlatform::GetSingleton()->PushAndWait(func);
   if (iterator)
     iterator->second.execute(paramInfo, scriptData, thisObj, containingObj,
                              scriptObj, locals, result, opcodeOffsetPtr);
   return true;
 }
 
-JsValue FindCommand(ObScriptCommand* iter, size_t size,
-                    const std::string& commandName)
+JsValue FindCommand(const std::string& commandName)
 {
-  for (size_t i = 0; i < size; ++i) {
-    ObScriptCommand* _iter = &iter[i];
+  auto commands = RE::SCRIPT_FUNCTION::GetFirstConsoleCommand();
+  for (std::uint16_t i = 0;
+       i < RE::SCRIPT_FUNCTION::Commands::kConsoleCommandsEnd; ++i) {
+    RE::SCRIPT_FUNCTION* _iter = &commands[i];
 
-    if (AreCommandNamesValidAndEqual(_iter->longName, commandName) ||
-        AreCommandNamesValidAndEqual(_iter->shortName, commandName)) {
+    if (IsNameEqual(_iter->functionName, commandName) ||
+        IsNameEqual(_iter->shortName, commandName)) {
       JsValue obj = JsValue::Object();
 
       auto& replaced = replacedConsoleCmd[commandName];
@@ -315,9 +302,9 @@ JsValue FindCommand(ObScriptCommand* iter, size_t size,
       CreateNumArgsProperty(obj, &replaced);
       CreateExecuteProperty(obj, &replaced);
 
-      ObScriptCommand cmd = *_iter;
-      cmd.execute = ConsoleCommand_Execute;
-      SafeWriteBuf((uintptr_t)_iter, &cmd, sizeof(cmd));
+      RE::SCRIPT_FUNCTION cmd = *_iter;
+      cmd.executeFunction = ConsoleComand_Execute;
+      REL::safe_write((uintptr_t)_iter, &cmd, sizeof(cmd));
       return obj;
     }
   }
@@ -329,12 +316,10 @@ JsValue ConsoleApi::FindConsoleCommand(const JsFunctionArguments& args)
 {
   auto commandName = args[1].ToString();
 
-  JsValue res = FindCommand(g_firstConsoleCommand,
-                            kObScript_NumConsoleCommands, commandName);
+  JsValue res = FindCommand(commandName);
 
   if (res.GetType() == JsValue::Type::Null)
-    res = FindCommand(g_firstObScriptCommand, kObScript_NumObScriptCommands,
-                      commandName);
+    res = FindCommand(commandName);
 
   return res;
 }

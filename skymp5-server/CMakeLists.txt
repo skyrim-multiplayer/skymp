@@ -24,17 +24,10 @@ add_subdirectory(ts)
 # Solution:
 # 1. Give cmake-js a special CMakeLists.txt from the `cmake-js-fetch` directory.
 #    Look into package.json and `cmake-js-fetch/CMakeLists.txt` to understand mechanism
-if (MSVC)
-  yarn_execute_command(
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    COMMAND cmake-js-fetch-msvc
-  )
-else ()
-  yarn_execute_command(
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    COMMAND cmake-js-fetch
-  )
-endif ()
+yarn_execute_command(
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  COMMAND cmake-js-fetch
+)
 
 # 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
 

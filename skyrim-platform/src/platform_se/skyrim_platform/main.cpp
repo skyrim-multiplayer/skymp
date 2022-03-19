@@ -1,64 +1,20 @@
-#include "BrowserApi.h"
 #include "CallNativeApi.h"
-#include "CameraApi.h"
-#include "ConsoleApi.h"
-#include "DevApi.h"
-#include "DirectoryMonitor.h"
 #include "DumpFunctions.h"
-#include "EncodingApi.h"
+#include "EventHandler.h"
+#include "EventManager.h"
 #include "EventsApi.h"
-#include "ExceptionPrinter.h"
 #include "FlowManager.h"
-#include "FridaHooksUtils.h"
-#include "HttpClient.h"
-#include "HttpClientApi.h"
+#include "FridaHooks.h"
+#include "Hooks.h"
+#include "IPC.h"
 #include "InputConverter.h"
-#include "InventoryApi.h"
-#include "JsEngine.h"
-#include "LoadGameApi.h"
-#include "MpClientPluginApi.h"
 #include "PapyrusTESModPlatform.h"
+#include "Settings.h"
 #include "SkyrimPlatform.h"
-#include "SkyrimPlatformProxy.h"
-#include "TPInputService.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
-#include "TaskQueue.h"
 #include "TextsCollection.h"
-#include "ThreadPoolWrapper.h"
-#include "TickTask.h"
-#include <RE/ConsoleLog.h>
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
-#include <Windows.h>
-#include <atomic>
-#include <functional>
-#include <hooks/D3D11Hook.hpp>
-#include <hooks/DInputHook.hpp>
-#include <hooks/IInputListener.h>
-#include <hooks/WindowsHook.hpp>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <reverse/App.hpp>
-#include <reverse/AutoPtr.hpp>
-#include <reverse/Entry.hpp>
-#include <shlobj.h>
-#include <skse64/GameMenus.h>
-#include <skse64/GameReferences.h>
-#include <skse64/NiRenderer.h>
-#include <skse64/PluginAPI.h>
-#include <skse64/gamethreads.h>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <ui/MyChromiumApp.h>
-#include <ui/ProcessMessageListener.h>
-#include <ui/TextToDraw.h>
-
-#define PLUGIN_NAME "SkyrimPlatform"
-#define PLUGIN_VERSION 0
+#include "TickHandler.h"
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -70,8 +26,6 @@ void GetTextsToDraw(TextToDrawCallback callback)
     callback(a.second);
   }
 }
-
-void SetupFridaHooks();
 
 void UpdateDumpFunctions()
 {
@@ -88,99 +42,107 @@ void UpdateDumpFunctions()
   }
 }
 
-void OnTick()
-{
-  SkyrimPlatform::GetSingleton().PushAndWait(
-    [=](int) { SkyrimPlatform::GetSingleton().JsTick(false); });
-  TESModPlatform::Update();
-}
-
-void OnUpdate(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId)
+void OnUpdate(IVM* vm, StackID stackId)
 {
   UpdateDumpFunctions();
 
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
-  SkyrimPlatform::GetSingleton().PrepareWorker();
-  SkyrimPlatform::GetSingleton().Push([=](int) {
-    SkyrimPlatform::GetSingleton().JsTick(true);
-    SkyrimPlatform::GetSingleton().StopWorker();
+  SkyrimPlatform::GetSingleton()->PrepareWorker();
+  SkyrimPlatform::GetSingleton()->Push([=](int) {
+    SkyrimPlatform::GetSingleton()->JsTick(true);
+    SkyrimPlatform::GetSingleton()->StopWorker();
   });
-  SkyrimPlatform::GetSingleton().StartWorker();
+  SkyrimPlatform::GetSingleton()->StartWorker();
   g_nativeCallRequirements.gameThrQ->Update();
-  g_nativeCallRequirements.stackId = std::numeric_limits<RE::VMStackID>::max();
+  g_nativeCallRequirements.stackId = std::numeric_limits<StackID>::max();
   g_nativeCallRequirements.vm = nullptr;
 }
 
+void InitLog()
+{
+  auto path = logger::log_directory();
+  if (!path) {
+    stl::report_and_fail("Failed to find standard logging directory"sv);
+  }
+
+  *path /= "skyrim-platform.log"sv;
+  auto sink =
+    std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
+
+  auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
+
+  auto settings = Settings::GetPlatformSettings();
+  auto logLevel =
+    settings->GetInteger("Debug", "LogLevel", spdlog::level::level_enum::info);
+
+  log->set_level(logLevel);
+  log->flush_on(logLevel);
+
+  spdlog::set_default_logger(std::move(log));
+  spdlog::set_pattern("[%H:%M:%S:%e] %v"s);
+
+  logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
+}
+
 extern "C" {
-__declspec(dllexport) uint32_t
-  SkyrimPlatform_IpcSubscribe_Impl(const char* systemName,
-                                   EventsApi::IpcMessageCallback callback,
-                                   void* state)
+DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe_Impl(
+  const char* systemName, IPC::MessageCallback callback, void* state)
 {
-  return EventsApi::IpcSubscribe(systemName, callback, state);
+  return IPC::Subscribe(systemName, callback, state);
 }
 
-__declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe_Impl(
-  uint32_t subscriptionId)
+DLLEXPORT void SkyrimPlatform_IpcUnsubscribe_Impl(uint32_t subscriptionId)
 {
-  return EventsApi::IpcUnsubscribe(subscriptionId);
+  return IPC::Unsubscribe(subscriptionId);
 }
 
-__declspec(dllexport) void SkyrimPlatform_IpcSend_Impl(const char* systemName,
-                                                       const uint8_t* data,
-                                                       uint32_t length)
+DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
+                                           const uint8_t* data,
+                                           uint32_t length)
 {
-  return EventsApi::IpcSend(systemName, data, length);
+  return IPC::Send(systemName, data, length);
 }
 
-__declspec(dllexport) bool SKSEPlugin_Query_Impl(
-  const SKSE::QueryInterface* skse, SKSE::PluginInfo* info)
+DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
+  InitLog();
 
-  info->infoVersion = SKSE::PluginInfo::kVersion;
-  info->name = PLUGIN_NAME;
-  info->version = PLUGIN_VERSION;
+  logger::info("Loading plugin.");
 
-  if (skse->IsEditor()) {
-    _FATALERROR("loaded in editor, marking as incompatible");
-    return false;
-  }
-  return true;
-}
+  SKSE::Init(skse);
+  SKSE::AllocTrampoline(64);
 
-__declspec(dllexport) bool SKSEPlugin_Load_Impl(const SKSEInterface* skse)
-{
-  auto taskInterface = reinterpret_cast<SKSETaskInterface*>(
-    skse->QueryInterface(kInterface_Task));
-  if (!taskInterface) {
-    _FATALERROR("couldn't get task interface");
-    return false;
-  }
-
-  auto papyrusInterface = static_cast<SKSEPapyrusInterface*>(
-    skse->QueryInterface(kInterface_Papyrus));
+  const auto papyrusInterface = SKSE::GetPapyrusInterface();
   if (!papyrusInterface) {
-    _FATALERROR("QueryInterface failed for PapyrusInterface");
+    logger::critical("QueryInterface failed for PapyrusInterface");
     return false;
   }
 
-  SKSE::Init(reinterpret_cast<const SKSE::LoadInterface*>(skse));
+  papyrusInterface->Register(TESModPlatform::Register);
 
-  SetupFridaHooks();
+  const auto messagingInterface = SKSE::GetMessagingInterface();
+  if (!messagingInterface) {
+    logger::critical("QueryInterface failed for MessagingInterface");
+    return false;
+  }
 
-  TickTask::Launch(taskInterface, OnTick);
+  messagingInterface->RegisterListener(EventHandler::HandleSKSEMessage);
 
-  papyrusInterface->Register(
-    (SKSEPapyrusInterface::RegisterFunctions)TESModPlatform::Register);
+  Hooks::Install();
+  Frida::InstallHooks();
+
+  // init custom events first
+  // and the rest at DataLoaded, to be safe
+  EventManager::InitCustom();
+
+  TickHandler::GetSingleton()->Update();
+
   TESModPlatform::onPapyrusUpdate = OnUpdate;
 
   return true;
 }
 };
-
-#define POINTER_SKYRIMSE(className, variableName, ...)                        \
-  static CEFUtils::AutoPtr<className> variableName(__VA_ARGS__)
 
 inline uint32_t GetCefModifiers_(uint16_t aVirtualKey)
 {
@@ -240,14 +202,8 @@ public:
 
   MyInputListener()
   {
-    bool kRunningAE = false;
-    if (kRunningAE) {
-      pCursorX = FridaHooksUtils::GetCursorX();
-      pCursorY = FridaHooksUtils::GetCursorY();
-    } else {
-      pCursorX = (float*)(REL::Module::BaseAddr() + 0x2F6C104);
-      pCursorY = (float*)(REL::Module::BaseAddr() + 0x2F6C108);
-    }
+    pCursorX = &RE::MenuScreenData::GetSingleton()->mousePos.x;
+    pCursorY = &RE::MenuScreenData::GetSingleton()->mousePos.y;
     vkCodeDownDur.fill(0);
   }
 
@@ -338,11 +294,11 @@ public:
 
   void OnMouseMove(float deltaX, float deltaY) noexcept override
   {
-    auto mm = MenuManager::GetSingleton();
-    if (!mm)
+    auto ui = RE::UI::GetSingleton();
+    if (!ui)
       return;
-    static const auto fs = new BSFixedString("Cursor Menu");
-    if (!mm->IsMenuOpen(fs))
+
+    if (!ui->IsMenuOpen(RE::CursorMenu::MENU_NAME))
       return;
 
     if (pCursorX && pCursorY)
@@ -377,11 +333,11 @@ public:
 
   void OnUpdate() noexcept override
   {
-    auto mm = MenuManager::GetSingleton();
-    if (!mm)
+    auto ui = RE::UI::GetSingleton();
+    if (!ui)
       return;
-    static const auto fs = new BSFixedString("Cursor Menu");
-    if (!mm->IsMenuOpen(fs)) {
+
+    if (!ui->IsMenuOpen(RE::CursorMenu::MENU_NAME)) {
       if (auto app = service->GetMyChromiumApp()) {
         app->InjectMouseMove(-1.f, -1.f, GetCefModifiers_(0), false);
       }
@@ -423,8 +379,8 @@ public:
 
   void* GetMainAddress() const override
   {
-    POINTER_SKYRIMSE(void, winMain, 0x1405ACBD0 - 0x140000000);
-    return winMain.GetPtr();
+    REL::Relocation<void*> winMain{ Offsets::WinMain };
+    return winMain.get();
   }
 
   bool Attach() override { return true; }
@@ -459,7 +415,7 @@ public:
           HandleMessage(name, arguments_);
         } catch (const std::exception&) {
           auto exception = std::current_exception();
-          SkyrimPlatform::GetSingleton().AddTickTask(
+          SkyrimPlatform::GetSingleton()->AddTickTask(
             [exception = std::move(exception)] {
               std::rethrow_exception(exception);
             });
@@ -471,7 +427,7 @@ public:
                          const CefRefPtr<CefListValue>& arguments_)
       {
         auto arguments = arguments_->Copy();
-        SkyrimPlatform::GetSingleton().AddTickTask([name, arguments] {
+        SkyrimPlatform::GetSingleton()->AddTickTask([name, arguments] {
           auto length = static_cast<uint32_t>(arguments->GetSize());
           auto argumentsArray = JsValue::Array(length);
           for (uint32_t i = 0; i < length; ++i) {
@@ -537,11 +493,16 @@ public:
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
     myInputListener->Init(overlayService, inputConverter);
-    SkyrimPlatform::GetSingleton().SetOverlayService(overlayService);
-
+    SkyrimPlatform::GetSingleton()->SetOverlayService(overlayService);
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
-    renderSystem->m_pSwapChain = reinterpret_cast<IDXGISwapChain*>(
-      BSRenderManager::GetSingleton()->swapChain);
+
+    auto manager = RE::BSRenderManager::GetSingleton();
+    if (!manager) {
+      logger::critical("Failed to retrieve BSRenderManager");
+    }
+
+    renderSystem->m_pSwapChain =
+      reinterpret_cast<IDXGISwapChain*>(manager->swapChain);
 
     return true;
   }
