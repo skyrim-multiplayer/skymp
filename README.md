@@ -22,8 +22,9 @@ A list of the servers online can be retrieved via API: https://skymp.io/api/serv
 ### What's Synced
 
 - [x] Player movement and animation sync
+- [x] Appearance: race, headparts, tints, etc
 - [x] PvP sync: melee damage, attributes, death
-- [x] Inventory sync: equipment, containers, etc
+- [x] Inventory sync: equipment, containers, craft, etc
 - [x] Limited scripts sync (WIP) - we have our own Papyrus engine
 - [ ] Who knows what comes next? We work on synchronizing all Skyrim game mechanics, see [ROADMAP](ROADMAP.md).
 
