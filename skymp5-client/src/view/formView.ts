@@ -1,21 +1,36 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, worldPointToScreenPoint } from "skyrimPlatform";
-import { setDefaultAnimsDisabled, applyAnimation } from "./animation";
-import { Appearance, applyAppearance } from "./appearance";
-import { isBadMenuShown, applyEquipment } from "./equipment";
-import { RespawnNeededError } from "./errors";
-import { applyInventory } from "./inventory";
-import { FormModel } from "./model";
-import { applyMovement } from "./movementApply";
-import { getScreenResolution } from "./skyrimSettings";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
+import { Appearance, applyAppearance } from "../sync/appearance";
+import { isBadMenuShown, applyEquipment } from "../sync/equipment";
+import { RespawnNeededError } from "../lib/errors";
+import { applyInventory } from "../sync/inventory";
+import { FormModel } from "../modelSource/model";
+import { applyMovement } from "../sync/movementApply";
 import { SpawnProcess } from "./spawnProcess";
-import { UtilsObjectReference } from "./utilsObjectReference";
+import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 import { View } from "./view";
-import { modWcProtection } from "./worldCleaner";
-import * as deathSystem from "./deathSystem";
-import { GamemodeApiSupport } from "./gamemodeApiSupport";
+import { modWcProtection } from "../features/worldCleaner";
+import * as deathSystem from "../sync/deathSystem";
+import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
-import { getMovement } from "./movementGet";
+import { getMovement } from "../sync/movementGet";
 import { lastTryHost, tryHost } from "./hostAttempts";
+
+export interface ScreenResolution {
+  width: number;
+  height: number;
+}
+
+let _screenResolution: ScreenResolution | undefined;
+export const getScreenResolution = (): ScreenResolution => {
+  if (!_screenResolution) {
+    _screenResolution = {
+      width: Utility.getINIInt("iSize W:Display"),
+      height: Utility.getINIInt("iSize H:Display"),
+    }
+  }
+  return _screenResolution;
+}
 
 export class FormView implements View<FormModel> {
   constructor(private remoteRefrId?: number) { }
@@ -41,7 +56,7 @@ export class FormView implements View<FormModel> {
 
     // Players with different worldOrCell should be invisible
     if (model.movement) {
-      const worldOrCell = UtilsObjectReference.getWorldOrCell(Game.getPlayer() as Actor);
+      const worldOrCell = ObjectReferenceEx.getWorldOrCell(Game.getPlayer() as Actor);
       if (
         worldOrCell !== 0 &&
         model.movement.worldOrCell !== worldOrCell
@@ -74,7 +89,7 @@ export class FormView implements View<FormModel> {
         const refr = ObjectReference.from(Game.getFormEx(this.refrId));
         if (refr) {
           const base = refr.getBaseObject();
-          if (base) UtilsObjectReference.dealWithRef(refr, base);
+          if (base) ObjectReferenceEx.dealWithRef(refr, base);
         }
       }
     } else {
@@ -116,7 +131,7 @@ export class FormView implements View<FormModel> {
           this.appearanceState.appearance,
           model.movement
             ? model.movement.pos
-            : UtilsObjectReference.getPos(Game.getPlayer() as Actor),
+            : ObjectReferenceEx.getPos(Game.getPlayer() as Actor),
           refr.getFormID(),
           () => {
             this.ready = true;

@@ -4,8 +4,9 @@ import * as sp from "skyrimPlatform";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
 import { AuthGameData, LoginRegisterData, LoginResponseAuthData, RemoteAuthGameData } from "./authModel";
-import { Transform } from "./movement";
-import { escapeJs, nameof } from "./utils";
+import { Transform } from "../sync/movement";
+import { escapeJs } from "../lib/escapeJs";
+import { nameof } from "../lib/nameof";
 
 const authUrl = (sp.settings["skymp5-client"]["master"] as string) || "https://skymp.io";
 const githubUrl = "https://github.com/skyrim-multiplayer/skymp";

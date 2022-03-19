@@ -5,9 +5,9 @@ import {
   Debug,
   once
 } from "skyrimPlatform";
-import { setLocalDamageMult, defaultLocalDamageMult } from "./index";
+import { setLocalDamageMult, defaultLocalDamageMult } from "../index";
 import { AnimationEventName } from "./animation";
-import { RespawnNeededError } from "./errors";
+import { RespawnNeededError } from "../lib/errors";
 
 /**
  * Null for allow all animations. Empty array for disallow all

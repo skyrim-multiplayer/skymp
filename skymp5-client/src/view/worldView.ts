@@ -1,6 +1,6 @@
 import { on, Game, Actor, Form, printConsole, once, Utility, settings } from "skyrimPlatform";
 import { FormViewArray } from "./formViewArray";
-import { WorldModel } from "./model";
+import { WorldModel } from "../modelSource/model";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { View } from "./view";
 

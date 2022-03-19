@@ -1,6 +1,6 @@
 import { ObjectReference, Game, Actor, MotionType } from "skyrimPlatform";
-import { Appearance, applyTints } from "./appearance";
-import { NiPoint3 } from "./movement";
+import { Appearance, applyTints } from "../sync/appearance";
+import { NiPoint3 } from "../sync/movement";
 
 export class SpawnProcess {
   constructor(

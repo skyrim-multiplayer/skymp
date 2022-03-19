@@ -11,7 +11,6 @@ import {
   getPluginSourceCode,
   MenuOpenEvent,
   MenuCloseEvent,
-  BrowserMessageEvent,
 } from "skyrimPlatform";
 import { RemoteAuthGameData } from "./authModel";
 

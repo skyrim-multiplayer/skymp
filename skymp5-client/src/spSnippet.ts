@@ -1,6 +1,6 @@
 import { Game, Form } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
-import { remoteIdToLocalId } from "./worldViewMisc";
+import { remoteIdToLocalId } from "./view/worldViewMisc";
 
 const spAny = sp as Record<string, any>;
 

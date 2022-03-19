@@ -4,7 +4,7 @@ import {
   findConsoleCommand,
   storage,
 } from "skyrimPlatform";
-import { MsgType } from "./messages";
+import { MsgType } from "../messages";
 
 enum CmdArgument {
   ObjectReference,

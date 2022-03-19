@@ -1,6 +1,4 @@
-import {
-  Actor, printConsole,
-} from "skyrimPlatform";
+import { Actor } from "skyrimPlatform";
 
 export interface ActorValues {
   health: number;

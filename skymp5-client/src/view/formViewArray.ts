@@ -1,7 +1,7 @@
 import { FormView } from "./formView";
-import { GamemodeApiSupport } from "./gamemodeApiSupport";
-import { FormModel, WorldModel } from "./model";
-import { Movement, NiPoint3 } from "./movement";
+import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
+import { FormModel, WorldModel } from "../modelSource/model";
+import { Movement, NiPoint3 } from "../sync/movement";
 
 export class FormViewArray {
   updateForm(form: FormModel, i: number) {

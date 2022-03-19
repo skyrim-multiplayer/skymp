@@ -1,8 +1,8 @@
 import { Flora, Form, FormType, MotionType, ObjectReference } from "skyrimPlatform";
-import { NiPoint3 } from "./movement";
-import { UtilsFormType } from "./utilsFormType";
+import { NiPoint3 } from "../sync/movement";
+import { FormTypeEx } from "./formTypeEx";
 
-export class UtilsObjectReference {
+export class ObjectReferenceEx {
   static getWorldOrCell(self: ObjectReference): number {
     let world = self.getWorldSpace();
     if (world) return world.getFormID();
@@ -26,7 +26,7 @@ export class UtilsObjectReference {
 
   static dealWithRef(self: ObjectReference, base: Form): void {
     const t = base.getType();
-    const isItem = UtilsFormType.isItem(t);
+    const isItem = FormTypeEx.isItem(t);
 
     if (t === FormType.Container || isItem || t === FormType.Flora || t === FormType.Tree || t === FormType.NPC || t === FormType.Door) {
       self.blockActivation(true);
