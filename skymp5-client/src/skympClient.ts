@@ -386,19 +386,6 @@ export class SkympClient {
           { t: MsgType.UpdateAnimation, data: anim, _refrId },
           false
         );
-        if (
-          (storage as Record<string, any>)._api_onAnimationEvent &&
-          (storage as Record<string, any>)._api_onAnimationEvent.callback
-        ) {
-          try {
-            (storage as Record<string, any>)._api_onAnimationEvent.callback(
-              _refrId ? _refrId : 0x14,
-              anim.animEventName
-            );
-          } catch (e) {
-            printConsole("'_api_onAnimationEvent' -", e);
-          }
-        }
       }
     }
   }

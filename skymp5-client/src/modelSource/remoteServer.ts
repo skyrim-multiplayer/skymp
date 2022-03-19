@@ -587,7 +587,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   updateGamemodeData(msg: messages.UpdateGamemodeDataMessage): void {
-    storage["_api_onAnimationEvent"] = { callback() { } };
     //
     // updateOwnerFunctions/updateNeighborFunctions
     //
