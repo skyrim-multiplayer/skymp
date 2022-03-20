@@ -8,8 +8,8 @@
 
 // "macro expansion producing 'defined' has undefined behavior"
 // https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/c5105?view=msvc-170
-// It's not critical for us since we support only MSVC under Windows
-// Linux build isn't affected at all (it's SkyrimPlatform, a Windows-only thing)
+// It's not critical for us since we support only MSVC under Windows. Linux
+// build isn't affected at all (it's SkyrimPlatform, a Windows-only thing).
 #pragma warning(disable : 5105)
 
 /* disable unused headers from Windows.h */
