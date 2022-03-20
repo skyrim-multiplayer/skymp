@@ -37,13 +37,19 @@
     "skyrim-se": {
       "description": "Build platform for Skyrim Special Edition.",
       "dependencies": [
-        "commonlibse"
+        {
+          "name": "commonlibse",
+          "platform": "windows"
+        }
       ]
     },
     "skyrim-ae": {
       "description": "Build platform for Skyrim Anniversary Edition.",
       "dependencies": [
-        "commonlibae"
+        {
+          "name": "commonlibae",
+          "platform": "windows"
+        }
       ]
     },
     "skyrim-vr": {
