@@ -20,7 +20,6 @@
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
 
-
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {

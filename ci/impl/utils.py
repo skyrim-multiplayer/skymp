@@ -8,7 +8,7 @@ def find_skymp_root():
     root = current_dir
     for i in range(max_directory_depth):
         root = os.path.realpath(os.path.join(root, ".."))
-        dist_path = os.path.join(root, "build/dist")
+        dist_path = os.path.join(root, ".github\workflows")
         if os.path.exists(dist_path):
             return root
     print("Couldn't find skymp root")

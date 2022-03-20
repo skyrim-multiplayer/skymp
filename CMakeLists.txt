@@ -55,7 +55,7 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
   message(FATAL_ERROR "${msg}")
 endif()
 
-option(SKYRIM_SE "Build platform for Skyrim Special Edition." OFF)
+option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
 
 if (SKYRIM_SE)
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
