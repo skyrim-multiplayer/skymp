@@ -283,12 +283,11 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
   return true;
 }
 
-JsValue FindCommand(const std::string& commandName)
+JsValue FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* start,
+                    size_t count)
 {
-  auto commands = RE::SCRIPT_FUNCTION::GetFirstConsoleCommand();
-  for (std::uint16_t i = 0;
-       i < RE::SCRIPT_FUNCTION::Commands::kConsoleCommandsEnd; ++i) {
-    RE::SCRIPT_FUNCTION* _iter = &commands[i];
+  for (size_t i = 0; i < count; ++i) {
+    RE::SCRIPT_FUNCTION* _iter = &start[i];
 
     if (IsNameEqual(_iter->functionName, commandName) ||
         IsNameEqual(_iter->shortName, commandName)) {
@@ -316,10 +315,15 @@ JsValue ConsoleApi::FindConsoleCommand(const JsFunctionArguments& args)
 {
   auto commandName = args[1].ToString();
 
-  JsValue res = FindCommand(commandName);
+  JsValue res =
+    FindCommand(commandName, RE::SCRIPT_FUNCTION::GetFirstConsoleCommand(),
+                RE::SCRIPT_FUNCTION::Commands::kConsoleCommandsEnd);
 
-  if (res.GetType() == JsValue::Type::Null)
-    res = FindCommand(commandName);
+  if (res.GetType() == JsValue::Type::Null) {
+    res =
+      FindCommand(commandName, RE::SCRIPT_FUNCTION::GetFirstScriptCommand(),
+                  RE::SCRIPT_FUNCTION::Commands::kScriptCommandsEnd);
+  }
 
   return res;
 }
