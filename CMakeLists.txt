@@ -166,7 +166,7 @@ set(TARGETS_ADDITIONAL
     skymp5-server
   )
 foreach(target ${TARGETS_ADDITIONAL})
-  if(TARGET ${target})
+  if(TARGET ${target} AND TARGET RestartGame)
     add_dependencies(RestartGame ${target})
   endif()
 endforeach()
