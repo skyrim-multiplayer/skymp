@@ -24,6 +24,12 @@ export class ObjectReferenceEx {
     return Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
   };
 
+  static getDistanceNoZ(a: NiPoint3, b: NiPoint3) {
+    const deltaX = a[0] - b[0];
+    const deltaY = a[1] - b[1];
+    return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  };
+
   static dealWithRef(self: ObjectReference, base: Form): void {
     const t = base.getType();
     const isItem = FormTypeEx.isItem(t);

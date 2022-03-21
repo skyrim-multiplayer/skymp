@@ -166,7 +166,8 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
     gTempTargetPos[1] += Math.cos(direction / 180 * Math.PI) * distanceAdd;
   }
 
-  const distance = ObjectReferenceEx.getDistance(ObjectReferenceEx.getPos(refr), gTempTargetPos);
+  const refrRealPos = ObjectReferenceEx.getPos(refr);
+  const distance = ObjectReferenceEx.getDistance(refrRealPos, gTempTargetPos);
 
   const speed = distance / time;
 
@@ -174,7 +175,7 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
   if (
     m.runMode !== "Standing" ||
     m.isInJumpState ||
-    distance > 8 ||
+    ObjectReferenceEx.getDistanceNoZ(refrRealPos, gTempTargetPos) > 8 ||
     angleDiff > 80
   ) {
     const actor = Actor.from(refr);
