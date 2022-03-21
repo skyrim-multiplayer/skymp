@@ -388,15 +388,15 @@ void TESModPlatform::ClearTintMasks(IVM* vm, StackID stackId,
     share2.actorsTints[i].reset();
 }
 
-void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
+void TESModPlatform::PushTintMask(RE::BSScript::IVirtualMachine* vm,
+                                  RE::VMStackID stackId,
                                   RE::StaticFunctionTag*,
                                   RE::Actor* targetActor, int32_t type,
-                                  uint32_t argb, FixedString texturePath)
+                                  uint32_t argb, RE::BSFixedString texturePath)
 {
   auto newTm = RE::malloc<::TintMask>();
-  if (!newTm) {
+  if (!newTm)
     return;
-  }
 
   float alpha = COLOR_ALPHA(argb) / 255.f;
   if (alpha > 1.0)
@@ -410,10 +410,13 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
   newTm->color.blue = COLOR_BLUE(argb);
 
   newTm->texture = RE::malloc<RE::TESTexture>();
-  if (!newTm->texture) {
+  if (!newTm->texture)
     return;
-  }
-  newTm->texture->textureName = texturePath;
+
+  // Not even trying to copy BSFixedString since we do not construct
+  // BSFixedString properly
+  reinterpret_cast<const char*&>(newTm->texture->textureName) =
+    texturePath.c_str();
 
   newTm->tintType = type;
 
@@ -427,9 +430,8 @@ void TESModPlatform::PushTintMask(IVM* vm, StackID stackId,
     return;
   }
 
-  if (targetActor->formID < 0xff000000) {
+  if (targetActor->formID < 0xff000000)
     return;
-  }
 
   size_t i = targetActor->formID - 0xff000000;
   std::lock_guard l(share2.m);
@@ -462,6 +464,42 @@ void TESModPlatform::PushWornState(IVM* vm, StackID stackId,
   g_wornLeft = wornLeft;
 }
 
+class MyBSExtraData
+{
+public:
+  MyBSExtraData() = default;
+  virtual ~MyBSExtraData() = default;
+  virtual uint32_t GetType(void) = 0;
+
+  MyBSExtraData* next; // 08
+};
+
+template <RE::ExtraDataType t>
+class MyExtra : public MyBSExtraData
+{
+public:
+  MyExtra() = default;
+
+  virtual ~MyExtra() = default;
+
+  uint32_t GetType() override { return static_cast<uint32_t>(t); }
+};
+
+namespace {
+RE::ExtraDataList* CreateExtraDataList()
+{
+  auto extraList = new RE::ExtraDataList;
+
+  auto p = reinterpret_cast<uint8_t*>(RE::malloc(0x18));
+  for (int i = 0; i < 0x18; ++i) {
+    p[i] = 0;
+  }
+  reinterpret_cast<void*&>(extraList->_presence) = p;
+
+  return extraList;
+}
+}
+
 void TESModPlatform::AddItemEx(
   IVM* vm, StackID stackId, RE::StaticFunctionTag*,
   RE::TESObjectREFR* containerRefr, RE::TESForm* item, int32_t countDelta,
@@ -470,10 +508,37 @@ void TESModPlatform::AddItemEx(
   FixedString textDisplayData, int32_t soul, RE::AlchemyItem* poison,
   int32_t poisonCount)
 {
+  auto markType = [](RE::ExtraDataList::PresenceBitfield* presence,
+                     uint32_t type, bool bCleared) {
+    uint32_t index = (type >> 3);
+    uint8_t bitMask = 1 << (type % 8);
+    uint8_t& flag = presence->bits[index];
+    if (bCleared) {
+      flag &= ~bitMask;
+    } else {
+      flag |= bitMask;
+    }
+  };
+
+  auto addExtra = [markType](void* this__, uint32_t extraType,
+                             RE::BSExtraData* toAdd) {
+    auto this_ = reinterpret_cast<RE::ExtraDataList*>(this__);
+
+    if (!toAdd || this_->HasType(static_cast<RE::ExtraDataType>(extraType))) {
+      return false;
+    }
+
+    RE::BSWriteLockGuard locker(this_->_lock);
+    auto* next = this_->_data;
+    this_->_data = toAdd;
+    toAdd->next = next;
+    markType(this_->_presence, extraType, false);
+    return true;
+  };
+
   auto ui = RE::UI::GetSingleton();
-  if (!containerRefr || !item || !ui || ui->GameIsPaused()) {
+  if (!containerRefr || !item || !ui || ui->GameIsPaused())
     return;
-  }
 
   const auto refrId = containerRefr->GetFormID();
 
@@ -491,11 +556,13 @@ void TESModPlatform::AddItemEx(
 
   thread_local std::map<Tuple, RE::ExtraDataList*> g_lastEquippedExtraList[2];
 
+  RE::ExtraDataList* extraList = nullptr;
+
   const bool isShieldLike =
     (item->formType == RE::FormType::Armor &&
      reinterpret_cast<RE::TESObjectARMO*>(item)->IsShield());
 
-  const bool isTorch = item->formType.get() == RE::FormType::Light;
+  const bool isTorch = item->formType == RE::FormType::Light;
 
   const bool isClothes =
     (item->formType == RE::FormType::Armor && !isShieldLike) ||
@@ -503,58 +570,73 @@ void TESModPlatform::AddItemEx(
 
   // Our extra-less items support is disgusting! EquipItem crashes when we try
   // an iron sword. This hack saves our slav lives
-  if (item->formType != RE::FormType::Ammo && health <= 1) {
+  if (item->formType != RE::FormType::Ammo && health <= 1)
     health = 1.01f;
-  }
-
-  auto extraList = RE::calloc<RE::ExtraDataList>(sizeof(RE::ExtraDataList));
-  extraList->_presence = RE::calloc<RE::ExtraDataList::PresenceBitfield>(
-    sizeof(RE::ExtraDataList::PresenceBitfield));
 
   if (health > 1 || enchantment || chargePercent > 0 ||
       strlen(textDisplayData.data()) > 0 || (soul > 0 && soul <= 5) ||
       poison || g_worn || g_wornLeft) {
+    extraList = CreateExtraDataList();
 
-    if (g_worn && isClothes) {
-      extraList->Add(RE::malloc<RE::ExtraWorn>());
+    auto extraList_ = reinterpret_cast<void*>(extraList);
+
+    if (g_worn) {
+      if (isClothes) {
+        auto extra = reinterpret_cast<RE::BSExtraData*>(
+          new MyExtra<RE::ExtraDataType::kWorn>);
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kWorn),
+                 extra);
+      }
     }
 
-    if (g_wornLeft && isClothes) {
-      extraList->Add(RE::malloc<RE::ExtraWornLeft>());
+    if (g_wornLeft) {
+      if (isClothes) {
+        auto extra = reinterpret_cast<RE::BSExtraData*>(
+          new MyExtra<RE::ExtraDataType::kWornLeft>);
+        addExtra(extraList_,
+                 static_cast<uint32_t>(RE::ExtraDataType::kWornLeft), extra);
+      }
     }
 
     if (health > 1) {
-      extraList->Add(new RE::ExtraHealth(health));
+      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kHealth),
+               new RE::ExtraHealth(health));
     }
 
     if (enchantment) {
-      extraList->Add(new RE::ExtraEnchantment(enchantment, maxCharge,
-                                              removeEnchantmentOnUnequip));
+      addExtra(extraList_,
+               static_cast<uint32_t>(RE::ExtraDataType::kEnchantment),
+               new RE::ExtraEnchantment(enchantment, maxCharge,
+                                        removeEnchantmentOnUnequip));
     }
 
     if (chargePercent > 0) {
-      auto extra = new RE::ExtraCharge();
-      extra->charge = chargePercent;
-      extraList->Add(extra);
+      auto extraCharge = new RE::ExtraCharge;
+      extraCharge->charge = chargePercent;
+      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kCharge),
+               extraCharge);
     }
 
     if (strlen(textDisplayData.data()) > 0) {
-      extraList->Add(new RE::ExtraTextDisplayData(textDisplayData.data()));
+      addExtra(extraList_,
+               static_cast<uint32_t>(RE::ExtraDataType::kTextDisplayData),
+               new RE::ExtraTextDisplayData(textDisplayData.data()));
     }
 
     if (soul > 0 && soul <= 5) {
-      extraList->Add(new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
+      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kSoul),
+               new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
     }
 
     if (poison) {
-      extraList->Add(new RE::ExtraPoison(poison, poisonCount));
+      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kPoison),
+               new RE::ExtraPoison(poison, poisonCount));
     }
   }
 
   g_nativeCallRequirements.gameThrQ->AddTask([=] {
-    if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId)) {
+    if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId))
       return;
-    }
 
     auto optExtraList =
       item->formType == RE::FormType::Ammo ? nullptr : extraList;
@@ -570,45 +652,36 @@ void TESModPlatform::AddItemEx(
   });
 
   const bool needEquipWeap =
-    (g_worn || g_wornLeft) && item->formType.get() == RE::FormType::Weapon;
+    (g_worn || g_wornLeft) && item->formType == RE::FormType::Weapon;
 
   const bool needEquipShieldLike = (g_worn || g_wornLeft) && isShieldLike;
 
   const bool needEquipAmmo =
-    (g_worn || g_wornLeft) && item->formType.get() == RE::FormType::Ammo;
+    (g_worn || g_wornLeft) && item->formType == RE::FormType::Ammo;
 
   if (needEquipWeap || needEquipShieldLike || needEquipAmmo) {
-    auto em = RE::ActorEquipManager::GetSingleton();
-    auto om = RE::BGSDefaultObjectManager::GetSingleton();
+    auto s = RE::ActorEquipManager::GetSingleton();
+    if (containerRefr->formType == RE::FormType::ActorCharacter) {
 
-    RE::BGSEquipSlot* slot = nullptr;
-    RE::BGSEquipSlot* rightHandSlot = nullptr;
-    RE::BGSEquipSlot* leftHandSlot = nullptr;
+      enum EquipSlot
+      {
+        BothHands = 0x13f45,
+        LeftHand = 0x13f43,
+        RightHand = 0x13f42
+      };
+      static const auto g_bothHandsSlot = RE::TESForm::LookupByID(BothHands);
 
-    if (om->IsInitialized()) {
-      rightHandSlot =
-        om->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECTS::kRightHandEquip);
-      leftHandSlot =
-        om->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECTS::kLeftHandEquip);
-    }
+      auto actor = reinterpret_cast<RE::Actor*>(containerRefr);
+      if (s) {
+        auto om = RE::BGSDefaultObjectManager::GetSingleton();
+        auto slot = reinterpret_cast<RE::BGSEquipSlot*>(
+          RE::TESForm::LookupByID(RightHand));
 
-    if (containerRefr->formType.get() == RE::FormType::ActorCharacter) {
-      auto actor = containerRefr->As<RE::Actor>();
+        if (g_wornLeft && !needEquipShieldLike) // wornLeft + shield = deadlock
+          slot = reinterpret_cast<RE::BGSEquipSlot*>(
+            RE::TESForm::LookupByID(LeftHand));
 
-      if (em) {
-        /**
-         * item has item->GetEquipSlot()
-         * so all of this slot thingie is redundant
-         * we should use predefined slots if we want to equip a spell
-         * not item
-         * but leaving this as it is for now
-         */
-        slot =
-          g_wornLeft && !needEquipShieldLike // wornLeft + shield = deadlock
-          ? leftHandSlot
-          : rightHandSlot;
-
-        if (item->formType.get() == RE::FormType::Ammo) {
+        if (item->formType == RE::FormType::Ammo) {
           extraList = nullptr;
           slot = nullptr;
         }
@@ -616,15 +689,15 @@ void TESModPlatform::AddItemEx(
         if (countDelta > 0) {
           g_lastEquippedExtraList[g_worn ? false : true][tuple] = extraList;
           g_nativeCallRequirements.gameThrQ->AddTask([=] {
-            if (actor != RE::TESForm::LookupByID<RE::Actor>(refrId))
+            if (actor != (void*)RE::TESForm::LookupByID(refrId))
               return;
-            em->EquipObject(actor, boundObject, extraList, 1, slot);
+            s->EquipObject(actor, boundObject, extraList, 1, slot);
           });
         } else if (countDelta < 0)
           g_nativeCallRequirements.gameThrQ->AddTask([=] {
-            if (actor != RE::TESForm::LookupByID<RE::Actor>(refrId))
+            if (actor != (void*)RE::TESForm::LookupByID(refrId))
               return;
-            em->UnequipObject(actor, boundObject, extraList, 1, slot);
+            s->UnequipObject(actor, boundObject, extraList, 1, slot);
           });
       }
     }

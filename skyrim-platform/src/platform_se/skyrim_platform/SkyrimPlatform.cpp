@@ -89,6 +89,8 @@ public:
   void Tick() override
   {
     try {
+      GetJsEngine();
+
       auto fileDirs = GetFileDirs();
 
       if (monitors.empty()) {
@@ -132,6 +134,7 @@ public:
   void Update() override
   {
     try {
+      GetJsEngine();
       taskQueue.Update();
       nativeCallRequirements.jsThrQ->Update();
       jsPromiseTaskQueue.Update();

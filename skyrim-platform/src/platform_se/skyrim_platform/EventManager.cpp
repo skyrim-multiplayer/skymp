@@ -83,9 +83,8 @@ std::unique_ptr<EventHandle> EventManager::Subscribe(
     }
   }
 
-  // this becomes unique_ptr when it gets emplaced, so no leak
-  auto cb = new CallbackObject(callback, runOnce);
-  auto uid = reinterpret_cast<uintptr_t>(cb);
+  auto cb = CallbackObject(callback, runOnce);
+  auto uid = this->nextUid++;
 
   event->callbacks.emplace(uid, cb);
 
@@ -97,11 +96,6 @@ std::unique_ptr<EventHandle> EventManager::Subscribe(
 void EventManager::Unsubscribe(uintptr_t uid,
                                const std::string_view& eventName)
 {
-  if (uid == 0) {
-    logger::info("Unsubscribe attempt failed, invalid event handle");
-    return;
-  }
-
   // check for correct event
   auto event = events[eventName];
   if (!event) {

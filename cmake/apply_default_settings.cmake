@@ -13,6 +13,9 @@ function(apply_default_settings)
     if(MSVC)
       target_compile_features(${target} PRIVATE cxx_std_20)
       target_compile_options(${target} PRIVATE
+        /wd4551 # disable non critical frida warning
+        /wd5104 # disable non critical winsdk warning
+        /wd5105 # TODO: investigate and fix
         /MP
         /utf-8	# Set Source and Executable character sets to UTF-8
         /Zi	# Debug Information Format
