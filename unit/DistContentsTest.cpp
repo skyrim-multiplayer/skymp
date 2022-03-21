@@ -50,6 +50,12 @@ auto GetExpectedPaths(const nlohmann::json& j)
   configurationTags.insert("Unix");
 #endif
 
+#ifdef SKYRIM_SE
+  configurationTags.insert("SkyrimSE");
+#else
+  configurationTags.insert("SkyrimAE");
+#endif
+
   for (auto& entry : j) {
     if (IsSubsetOf(entry["configurationTags"], configurationTags)) {
       for (auto& file : entry["expectedFiles"]) {
