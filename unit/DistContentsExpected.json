@@ -192,6 +192,48 @@
   },
   {
     "configurationTags": [
+      "SkyrimSE",
+      "Win32"
+    ],
+    "expectedFiles": [
+      "client/Data/SKSE/Plugins/version-1-5-16-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-23-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-3-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-39-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-50-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-53-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-62-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-73-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-80-0.bin",
+      "client/Data/SKSE/Plugins/version-1-5-97-0.bin"
+    ]
+  },
+  {
+    "configurationTags": [
+      "SkyrimAE",
+      "Win32"
+    ],
+    "expectedFiles": [
+      "client/Data/Interface/CombatAlertOverlayMenu.swf",
+      "client/Data/Scripts/DLC2SummonDremoraMerchantScript.pex",
+      "client/Data/Scripts/QF_MQ201_00035D5F.pex",
+      "client/Data/Scripts/Source/DLC2SummonDremoraMerchantScript.psc",
+      "client/Data/Scripts/Source/PlayerBookShelfContainerScript.psc",
+      "client/Data/Scripts/Source/QF_MQ201_00035D5F.psc",
+      "client/Data/Scripts/Source/TIF__000361DF.psc",
+      "client/Data/Scripts/Source/uimenubase.psc",
+      "client/Data/Scripts/TIF__000361DF.pex",
+      "client/Data/Scripts/playerbookshelfcontainerscript.pex",
+      "client/Data/Scripts/uimenubase.pex",
+      "client/Data/SKSE/Plugins/versionlib-1-6-317-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-318-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-323-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-342-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-353-0.bin"
+    ]
+  },
+  {
+    "configurationTags": [
       "Win32"
     ],
     "expectedFiles": [
@@ -284,17 +326,7 @@
       "client/Data/SKSE/Plugins/MpClientPlugin.dll",
       "client/Data/SKSE/Plugins/SkyrimPlatform.dll",
       "client/Data/SKSE/Plugins/SkyrimSoulsRE.dll",
-      "client/Data/SKSE/Plugins/SkyrimSoulsRE.ini",
-      "client/Data/SKSE/Plugins/version-1-5-16-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-23-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-3-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-39-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-50-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-53-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-62-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-73-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-80-0.bin",
-      "client/Data/SKSE/Plugins/version-1-5-97-0.bin"
+      "client/Data/SKSE/Plugins/SkyrimSoulsRE.ini"
     ]
   }
 ]

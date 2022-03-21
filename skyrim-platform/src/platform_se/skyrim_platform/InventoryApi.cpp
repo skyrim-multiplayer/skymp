@@ -113,14 +113,18 @@ JsValue ToJsValue(RE::BSExtraData* extraData)
 
 JsValue ToJsValue(RE::ExtraDataList* extraList)
 {
-  if (!extraList)
+  if (!extraList) {
     return JsValue::Null();
+  }
 
   std::vector<JsValue> jData;
 
+  RE::BSReadLockGuard lock(extraList->_lock);
+
   for (auto it = extraList->begin(); it != extraList->end(); ++it) {
-    if (it->GetType() != RE::ExtraDataType::kNone) {
-      jData.push_back(ToJsValue(&(*it)));
+    auto extra = ToJsValue(&(*it));
+    if (extra.GetType() != JsValue::Type::Undefined) {
+      jData.push_back(extra);
     }
   }
 
@@ -135,9 +139,9 @@ JsValue ToJsValue(RE::BSSimpleList<RE::ExtraDataList*>* extendDataList)
   auto first = extendDataList->begin();
   auto last = extendDataList->end();
 
-  auto arr = JsValue::Array(std::distance(last, first));
+  std::vector<JsValue> arr;
   for (auto it = first; it != last; ++it) {
-    arr.SetProperty(JsValue::Int(std::distance(first, it)), ToJsValue(*it));
+    arr.push_back(ToJsValue(*it));
   }
 
   return arr;
@@ -157,13 +161,14 @@ JsValue InventoryApi::GetExtraContainerChanges(const JsFunctionArguments& args)
 
   auto cntChanges = refr->extraList.GetByType<RE::ExtraContainerChanges>();
 
-  if (!cntChanges || !cntChanges->changes)
+  if (!cntChanges || !cntChanges->changes || !cntChanges->changes->entryList)
     return JsValue::Null();
 
   auto first = cntChanges->changes->entryList->begin();
   auto last = cntChanges->changes->entryList->end();
 
-  auto res = JsValue::Array(std::distance(last, first));
+  std::vector<JsValue> res;
+
   for (auto it = first; it != last; ++it) {
     const auto baseID = (*it)->object ? (*it)->object->formID : 0;
 
@@ -171,7 +176,8 @@ JsValue InventoryApi::GetExtraContainerChanges(const JsFunctionArguments& args)
     jEntry.SetProperty("countDelta", (*it)->countDelta);
     jEntry.SetProperty("baseId", JsValue::Double(baseID));
     jEntry.SetProperty("extendDataList", ToJsValue((*it)->extraLists));
-    res.SetProperty(JsValue::Int(std::distance(first, it)), jEntry);
+
+    res.push_back(jEntry);
   }
 
   return res;

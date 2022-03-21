@@ -315,18 +315,39 @@ void EventsApi::SendEvent(const char* eventName,
     return;
   }
 
-  for (const auto& obj : *cbObjMap) {
+  std::vector<uintptr_t> callbacksToUnsubscribe;
+  std::vector<CallbackObject> callbacksToCall;
+
+  // 1. Collect all callbacks and remember "runOnce" callbacks
+  for (const auto& [uid, callbackInfo] : *cbObjMap) {
+    callbacksToCall.push_back(callbackInfo);
+    if (callbackInfo.runOnce) {
+      callbacksToUnsubscribe.push_back(uid);
+    }
+  }
+
+  // 2. Make sure that "runOnce" callbacks will never be called again
+  for (auto uid : callbacksToUnsubscribe) {
+    manager->Unsubscribe(uid, eventName);
+  }
+
+  // 3. Finally, call the callbacks
+  for (auto& callbackInfo : callbacksToCall) {
     try {
-      obj.second->callback.Call(arguments);
+      callbackInfo.callback.Call(arguments);
     } catch (const std::exception& e) {
       logger::critical("Error while calling a callback for event {}. {}",
                        eventName, e.what());
     }
-
-    if (obj.second->runOnce) {
-      manager->Unsubscribe(obj.first, eventName);
-    }
   }
+
+  // You may want to optimize it. Feel free to. But remember that changing
+  // order of those three steps may and WILL break user code like:
+  //
+  // sp.on("tick", () => {
+  //   sp.once("tick", () => {
+  //     sp.once("tick", () => {
+  // // ...
 }
 
 void EventsApi::Clear()

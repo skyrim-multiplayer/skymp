@@ -32,12 +32,11 @@ struct CallbackObject
   {
   }
 
-  JsValue callback;
-  bool runOnce;
+  JsValue callback = JsValue::Undefined();
+  bool runOnce = false;
 };
 
-using CallbackObjMap =
-  robin_hood::unordered_map<uintptr_t, std::unique_ptr<CallbackObject>>;
+using CallbackObjMap = robin_hood::unordered_map<uintptr_t, CallbackObject>;
 
 struct EventState
 {
@@ -119,4 +118,6 @@ private:
   ~EventManager() = default;
 
   EventMap events;
+
+  uintptr_t nextUid = 0;
 };

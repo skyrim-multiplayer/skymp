@@ -77,6 +77,7 @@ message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
 message(STATUS ONLY_SP=${ONLY_SP})
 message(STATUS SWEETPIE=${SWEETPIE})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
+message(STATUS SKYRIM_SE=${SKYRIM_SE})
 
 # P.S. SkyrimPlatform crashes with that JS_ENGINE_TRACING_ENABLED on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 
@@ -155,3 +156,17 @@ if(PREPARE_NEXUS_ARCHIVES)
     endif()
   endforeach()
 endif()
+
+# One or more of these targets help dev_service not to crash during build (watch mode). Not sure which target exactly.
+set(TARGETS_ADDITIONAL
+    skymp5-client
+    skymp5-front
+    skymp5-functions-lib
+    skymp5-scripts
+    skymp5-server
+  )
+foreach(target ${TARGETS_ADDITIONAL})
+  if(TARGET ${target} AND TARGET RestartGame)
+    add_dependencies(RestartGame ${target})
+  endif()
+endforeach()
