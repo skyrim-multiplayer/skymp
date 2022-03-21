@@ -45,18 +45,6 @@ const getCommandExecutor = (
     }
     printConsole("sent");
     send({ t: MsgType.ConsoleCommand, data: { commandName, args } });
-    if (
-      storage["_api_onConsoleCommand"] &&
-      (storage["_api_onConsoleCommand"] as any)["callback"]
-    ) {
-      if (commandName === "mp") {
-        try {
-          (storage["_api_onConsoleCommand"] as any)["callback"](...args);
-        } catch (e) {
-          printConsole("'_api_onConsoleCommand' - ", e);
-        }
-      }
-    }
     return false;
   };
 };
