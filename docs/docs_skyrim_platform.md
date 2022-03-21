@@ -2,6 +2,20 @@
 
 Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript.
 
+```ts
+printConsole("Hello Platform");
+
+on("update", () => {
+  const gold = Game.getForm(0xf);
+  const target = Game.getDialogueTarget();
+  const player = Game.getPlayer();
+  if (target && player && player.getItemCount(gold) >= 100) {
+    player.removeItem(gold, 100, true, target);
+    Debug.notification("You have just paid to an NPC");
+  }
+});
+```
+
 One of the mods built on Skyrim Platform is skymp client.\
 Yes, client of Skyrim Multiplayer is technically a mod for Skyrim Special Edition implemented using Skyrim Platform.
 
