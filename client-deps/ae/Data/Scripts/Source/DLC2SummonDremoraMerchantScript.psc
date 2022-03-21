@@ -40,5 +40,3 @@ Event OnEffectFinish(actor akTarget, actor akCaster)
 	DLC2DremoraForceGreet.SetValue(0)
 EndEvent
 
-
-
