@@ -118,7 +118,7 @@ const extrasEqual = (a: Entry, b: Entry, ignoreWorn = false) => {
   );
 };
 
-const hasExtras = (e: Entry): boolean => {
+export const hasExtras = (e: Entry): boolean => {
   return !extrasEqual(e, { baseId: 0, count: 0 });
 };
 
@@ -224,7 +224,7 @@ const getBaseContainerAsInventory = (refr: ObjectReference): Inventory => {
   return { entries: getContainer((refr.getBaseObject() as ActorBase).getFormID()) };
 };
 
-const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
+export const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
   const leftEntriesWithExtras = lhs.entries.filter((e) => hasExtras(e));
   const rightEntriesWithExtras = rhs.entries.filter((e) => hasExtras(e));
   const leftEntriesSimple = lhs.entries.filter((e) => !hasExtras(e));
@@ -246,6 +246,19 @@ const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
       .filter((e) => e.count !== 0),
   };
 };
+
+export const removeSimpleItemsAsManyAsPossible = (inv: Inventory, baseId: number, count: number): Inventory => {
+  const res: Inventory = { entries: [] };
+  res.entries = JSON.parse(JSON.stringify(inv.entries));
+  
+  const entry = res.entries.find((e) => !hasExtras(e) && e.baseId === baseId);
+  if (entry) {
+    entry.count -= count;
+  }
+
+  res.entries = res.entries.filter((e) => e.count > 0);
+  return res;
+}
 
 export const getDiff = (
   lhs: Inventory,

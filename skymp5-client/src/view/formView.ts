@@ -261,6 +261,7 @@ export class FormView implements View<FormModel> {
       // Except your clone.
       if (!Actor.from(refr)) {
         applyInventory(refr, model.inventory, false, true);
+        model.inventory = undefined;
       }
     }
 

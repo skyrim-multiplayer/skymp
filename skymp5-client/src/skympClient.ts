@@ -13,7 +13,7 @@ import { getMovement } from "./sync/movement";
 import { getAppearance } from "./sync/appearance";
 import { AnimationSource, Animation, setupHooks } from "./sync/animation";
 import { getEquipment } from "./sync/equipment";
-import { getDiff, getInventory, Inventory } from "./sync/inventory";
+import { getDiff, getInventory, hasExtras, Inventory, removeSimpleItemsAsManyAsPossible, sumInventories } from "./sync/inventory";
 import { MsgType, HostStartMessage, HostStopMessage } from "./messages";
 import { MsgHandler } from "./modelSource/msgHandler";
 import { ModelSource } from "./modelSource/modelSource";
@@ -141,7 +141,7 @@ export class SkympClient {
       }
     });
 
-    let lastInv: Inventory;
+    let lastInv: Inventory | undefined;
 
     once("update", () => {
       const send = (msg: Record<string, unknown>) => {
@@ -244,10 +244,8 @@ export class SkympClient {
           e.oldContainer.getFormID() === 0x14 ||
           e.newContainer.getFormID() === 0x14
         ) {
-          printConsole(1);
           if (!lastInv) lastInv = getPcInventory();
           if (lastInv) {
-            printConsole(2);
             const newInv = getInventory(Game.getPlayer() as Actor);
 
             // It seems that 'ignoreWorn = false' fixes this:
@@ -275,6 +273,24 @@ export class SkympClient {
               }
             });
             msgs.forEach((msg) => this.sendTarget.send(msg, true));
+
+            // Prevent emitting 1,2,3,4,5 changes when taking/putting 5 potions one by one
+            // This code makes it 1,1,1,1,1 but works only for extra-less items
+            // At the moment of writing this I think it's not needed for items with extras
+            diff.entries.forEach((entry) => {
+              if (lastInv && !hasExtras(entry)) {
+                const put = entry.count > 0;
+                const take = entry.count < 0;
+                if (put) {
+                  lastInv = removeSimpleItemsAsManyAsPossible(lastInv, entry.baseId, entry.count);
+                }
+                else if (take) {
+                  const add = { entries: [entry] };
+                  add.entries[0].count *= -1;
+                  lastInv = sumInventories(lastInv, add);
+                }
+              }
+            });
           }
         }
       }
@@ -570,6 +586,6 @@ export class SkympClient {
 }
 
 once("update", () => {
-  // Is it racing with OnInit in Papyrus?
+  // TODO: It is racing with OnInit in Papyrus, fix it
   (sp.TESModPlatform as any).blockPapyrusEvents(true);
 });
