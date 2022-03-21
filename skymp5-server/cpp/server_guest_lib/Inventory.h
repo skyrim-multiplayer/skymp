@@ -6,6 +6,12 @@
 #include <tuple>
 #include <vector>
 
+enum class RemoveItemMode
+{
+  ExactCount,
+  TakeAsManyAsPossible
+};
+
 class Inventory
 {
 public:
@@ -81,7 +87,10 @@ public:
 
   Inventory& AddItem(uint32_t baseId, uint32_t count);
   Inventory& AddItems(const std::vector<Entry>& entries);
-  Inventory& RemoveItems(const std::vector<Entry>& entries);
+  Inventory& RemoveItems(
+    const std::vector<Entry>& entries,
+    RemoveItemMode removeItemMode = RemoveItemMode::ExactCount,
+    Inventory* outRemovedItems = nullptr);
   bool HasItem(uint32_t baseId) const;
   uint32_t GetItemCount(uint32_t baseId) const;
   uint32_t GetTotalItemCount() const;

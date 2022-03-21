@@ -35,7 +35,9 @@ Inventory& Inventory::AddItems(const std::vector<Entry>& toAdd)
   return *this;
 }
 
-Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
+Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries,
+                                  RemoveItemMode removeItemMode,
+                                  Inventory* outRemovedItems)
 {
   auto copy = *this;
 
@@ -51,16 +53,33 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
     auto count =
       matchingEntry == copy.entries.end() ? 0 : matchingEntry->count;
 
-    if (count < e.count) {
-      throw std::runtime_error(
-        fmt::format("Source inventory doesn't have enough {:#x} ({} is "
-                    "required while {} present)",
-                    e.baseId, e.count, count));
+    auto countToRemove = e.count;
+
+    if (count < countToRemove) {
+      switch (removeItemMode) {
+        case RemoveItemMode::ExactCount:
+          throw std::runtime_error(
+            fmt::format("Source inventory doesn't have enough {:#x} ({} is "
+                        "required while {} present)",
+                        e.baseId, e.count, count));
+        case RemoveItemMode::TakeAsManyAsPossible:
+          countToRemove = count;
+          break;
+      }
     }
 
-    matchingEntry->count -= e.count;
-    if (matchingEntry->count == 0) {
-      copy.entries.erase(matchingEntry);
+    if (outRemovedItems && countToRemove > 0) {
+      std::vector<Inventory::Entry> removedEntries;
+      removedEntries.push_back(e);
+      removedEntries.back().count = countToRemove;
+      outRemovedItems->AddItems(removedEntries);
+    }
+
+    if (matchingEntry != copy.entries.end()) {
+      matchingEntry->count -= countToRemove;
+      if (matchingEntry->count == 0) {
+        copy.entries.erase(matchingEntry);
+      }
     }
   }
 

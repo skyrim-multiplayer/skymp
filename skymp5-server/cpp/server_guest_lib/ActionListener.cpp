@@ -262,7 +262,8 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
   if (!actor)
-    return; // TODO: Throw error instead
+    return;
+
   ref.PutItem(*actor, entry);
 }
 
@@ -273,7 +274,7 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
   if (!actor)
-    return; // TODO: Throw error instead
+    return;
   ref.TakeItem(*actor, entry);
 }
 
