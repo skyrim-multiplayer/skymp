@@ -224,7 +224,12 @@
       "client/Data/Scripts/Source/uimenubase.psc",
       "client/Data/Scripts/TIF__000361DF.pex",
       "client/Data/Scripts/playerbookshelfcontainerscript.pex",
-      "client/Data/Scripts/uimenubase.pex"
+      "client/Data/Scripts/uimenubase.pex",
+      "client/Data/SKSE/Plugins/versionlib-1-6-317-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-318-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-323-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-342-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-353-0.bin"
     ]
   },
   {
