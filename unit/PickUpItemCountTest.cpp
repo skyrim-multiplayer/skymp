@@ -2,8 +2,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
-#include "MpObjectReference.h"
 #include "MpActor.h"
+#include "MpObjectReference.h"
 
 extern espm::Loader l;
 
@@ -20,9 +20,9 @@ TEST_CASE("Picking up a bunch of items", "[PickUpItemCountTest]")
   auto& refr = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
 
   partOne.worldState.AddForm(
-    std::make_unique<MpActor>(LocationalData{ refr.GetPos(), NiPoint3(),
-                                              refr.GetCellOrWorld() },
-                              FormCallbacks::DoNothing()),
+    std::make_unique<MpActor>(
+      LocationalData{ refr.GetPos(), NiPoint3(), refr.GetCellOrWorld() },
+      FormCallbacks::DoNothing()),
     0xff000000);
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
