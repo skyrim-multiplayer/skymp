@@ -9,23 +9,25 @@ extern espm::Loader l;
 
 PartOne& GetPartOne();
 
-TEST_CASE("PickUpItemCountTest", "[PickUpItemCount]")
+TEST_CASE("Picking up a bunch of items", "[PickUpItemCountTest]")
 {
   auto& partOne = GetPartOne();
 
   DoConnect(partOne, 0);
-  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
-  partOne.SetUserActor(0, 0xff000000);
-  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RemoveAllItems();
 
-  // a quiver with steel arrows
-  constexpr uint32_t refrId = 0x000fd7;
+  // a quiver with 15 steel arrows
+  const uint32_t refrId = 0x0008a986;
   auto& refr = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
 
-  partOne.Messages().clear();
+  partOne.worldState.AddForm(
+    std::make_unique<MpActor>(LocationalData{ refr.GetPos(), NiPoint3(),
+                                              refr.GetCellOrWorld() },
+                              FormCallbacks::DoNothing()),
+    0xff000000);
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
-  REQUIRE(ac.GetInventory().GetTotalItemCount() == 1);
+  ac.RemoveAllItems();
+  REQUIRE(ac.GetInventory().GetTotalItemCount() == 0);
   refr.Activate(ac);
-  REQUIRE(ac.GetInventory().GetTotalItemCount() == 6);
+  REQUIRE(ac.GetInventory().GetTotalItemCount() == 15);
 }
