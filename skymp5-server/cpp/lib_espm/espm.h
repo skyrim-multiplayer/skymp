@@ -293,6 +293,7 @@ public:
     const LocationalData* loc = nullptr;
     const DoorTeleport* teleport = nullptr;
     const float* boundsDiv2 = nullptr;
+    uint32_t count = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
