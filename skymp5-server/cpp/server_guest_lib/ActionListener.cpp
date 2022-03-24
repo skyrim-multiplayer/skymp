@@ -289,9 +289,10 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData, uint32_t baseI
   if (!(ac->GetInventory().GetItemCount(baseId) >= 1))
   {
     throw std::runtime_error(fmt::format("Too few items to drop. Actor Id: {:x}, item's baseId: {:x}",
-                                         rawMsgData.userId, baseId))
+                                         rawMsgData.userId, baseId));
   }
-  ac->RemoveItem(baseId, 1, nullptr);
+  uint32_t count = 1;
+  ac->RemoveItem(baseId, count, nullptr);
 }
 
 namespace {
