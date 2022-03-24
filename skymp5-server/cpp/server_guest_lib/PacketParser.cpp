@@ -263,6 +263,13 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnHit(rawMsgData, HitData::FromJson(data_));
       break;
     }
+    case MsgType::DropItem:
+    {
+      uint32_t baseId;
+      ReadEx(jMessage, JsonPointers::baseId, &baseId);
+      actionListener.OnDropItem(rawMsgData, baseId);
+      break;
+    }
     default:
       simdjson::dom::element data_;
       ReadEx(jMessage, JsonPointers::data, &data_);

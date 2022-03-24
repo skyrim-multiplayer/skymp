@@ -41,6 +41,7 @@ public:
 
   void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
                   const Inventory::Entry& entry) override;
+  void OnDropItem(const RawMessageData& rawMsgdata, uint32_t baseId) override;
 
   void OnFinishSpSnippet(const RawMessageData& rawMsgData, uint32_t snippetIdx,
                          simdjson::dom::element& returnValue) override;

@@ -1,4 +1,5 @@
 #include "ActionListener.h"
+#include <fmt/format.h>
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
@@ -10,6 +11,7 @@
 #include "PapyrusObjectReference.h"
 #include "UserMessageOutput.h"
 #include "Utils.h"
+#include "WorldState.h"
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -275,6 +277,16 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   if (!actor)
     return; // TODO: Throw error instead
   ref.TakeItem(*actor, entry);
+}
+
+void ActionListener::OnDropItem(const RawMessageData& rawMsgData, uint32_t baseId)
+{
+  MpActor* ac = partOne.worldState.GetFormAt<MpActor*>(rawMsgData.userId);
+  if (!ac)
+  {
+    throw std::runtime_error(fmt::format("Unable to drop an item from user with id: {}.", rawMsgData.userId));
+  }
+  ac->RemoveItem(baseId, 1, nullptr);
 }
 
 namespace {
