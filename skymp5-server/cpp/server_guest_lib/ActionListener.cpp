@@ -281,10 +281,15 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
 
 void ActionListener::OnDropItem(const RawMessageData& rawMsgData, uint32_t baseId)
 {
-  MpActor* ac = partOne.worldState.GetFormAt<MpActor*>(rawMsgData.userId);
+  MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac)
   {
-    throw std::runtime_error(fmt::format("Unable to drop an item from user with id: {}.", rawMsgData.userId));
+    throw std::runtime_error(fmt::format("Unable to drop an item from user with id: {:x}.", rawMsgData.userId));
+  }
+  if (!(ac->GetInventory().GetItemCount(baseId) >= 1))
+  {
+    throw std::runtime_error(fmt::format("Too few items to drop. Actor Id: {:x}, item's baseId: {:x}",
+                                         rawMsgData.userId, baseId))
   }
   ac->RemoveItem(baseId, 1, nullptr);
 }
