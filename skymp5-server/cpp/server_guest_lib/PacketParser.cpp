@@ -1,5 +1,6 @@
 #include "PacketParser.h"
 #include "Exceptions.h"
+#include "HitData.h"
 #include "JsonUtils.h"
 #include "MovementMessage.h"
 #include "MovementMessageSerialization.h"
