@@ -63,9 +63,7 @@ public:
   {
   }
 
-  virtual void OnDropItem(const RawMessageData& rawMsgData, uint32_t baseId)
-  {
-  }
+  virtual void OnDropItem(const RawMessageData& rawMsgData, uint32_t baseId) {}
 
   virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                  uint32_t snippetIdx,

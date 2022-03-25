@@ -263,8 +263,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnHit(rawMsgData, HitData::FromJson(data_));
       break;
     }
-    case MsgType::DropItem:
-    {
+    case MsgType::DropItem: {
       uint32_t baseId;
       ReadEx(jMessage, JsonPointers::baseId, &baseId);
       actionListener.OnDropItem(rawMsgData, baseId);
