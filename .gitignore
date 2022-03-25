@@ -3,4 +3,3 @@ build
 .editorconfig
 .prettierrc*
 .vscode
-.cache
