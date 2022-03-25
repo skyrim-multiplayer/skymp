@@ -1,5 +1,4 @@
 #include "ActionListener.h"
-#include <fmt/format.h>
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
@@ -12,6 +11,7 @@
 #include "UserMessageOutput.h"
 #include "Utils.h"
 #include "WorldState.h"
+#include <fmt/format.h>
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -279,17 +279,18 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   ref.TakeItem(*actor, entry);
 }
 
-void ActionListener::OnDropItem(const RawMessageData& rawMsgData, uint32_t baseId)
+void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
+                                uint32_t baseId)
 {
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!ac)
-  {
-    throw std::runtime_error(fmt::format("Unable to drop an item from user with id: {:x}.", rawMsgData.userId));
+  if (!ac) {
+    throw std::runtime_error(fmt::format(
+      "Unable to drop an item from user with id: {:x}.", rawMsgData.userId));
   }
-  if (!(ac->GetInventory().GetItemCount(baseId) >= 1))
-  {
-    throw std::runtime_error(fmt::format("Too few items to drop. Actor Id: {:x}, item's baseId: {:x}",
-                                         rawMsgData.userId, baseId));
+  if (!(ac->GetInventory().GetItemCount(baseId) >= 1)) {
+    throw std::runtime_error(
+      fmt::format("Too few items to drop. Actor Id: {:x}, item's baseId: {:x}",
+                  rawMsgData.userId, baseId));
   }
   uint32_t count = 1;
   ac->RemoveItem(baseId, count, nullptr);
