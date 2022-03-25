@@ -5,6 +5,7 @@
 #include "Exceptions.h"
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
+#include "HitData.h"
 #include "MovementValidation.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"

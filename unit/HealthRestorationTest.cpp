@@ -1,4 +1,4 @@
-#include "IActionListener.h"
+#include "ActionListener.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 #include <chrono>
@@ -20,7 +20,7 @@ TEST_CASE("Potions restore health", "[Restoration]")
   // 0x3EAE3 restores 100 hp
   ac.SetPercentages(0.1f, 0.f, 0.f);
 
-  IActionListener::RawMessageData rawMsgData;
+  ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
 
   p.GetActionListener().OnEquip(rawMsgData, 0x3EAE3);

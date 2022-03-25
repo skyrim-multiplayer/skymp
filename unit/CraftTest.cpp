@@ -10,9 +10,14 @@ PartOne& GetPartOne();
 
 TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
 {
-  class MyActionListener : public IActionListener
+  class MyActionListener : public ActionListener
   {
   public:
+    MyActionListener()
+      : ActionListener(p)
+    {
+    }
+
     void OnCraftItem(const RawMessageData& rawMsgData_,
                      const Inventory& inputObjects_, uint32_t workbenchId_,
                      uint32_t resultObjectId_) override
@@ -27,6 +32,8 @@ TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
     Inventory inputObjects;
     uint32_t workbenchId = 0;
     uint32_t resultObjectId = 0;
+
+    PartOne p;
   };
 
   nlohmann::json j{
@@ -73,7 +80,7 @@ TEST_CASE("Player is able to craft item", "[Craft][espm]")
   for (auto entry : requiredItemsForNails.entries)
     ac.AddItem(entry.baseId, entry.count);
 
-  IActionListener::RawMessageData msgData;
+  ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
   // Vanilla item
@@ -125,7 +132,7 @@ TEST_CASE(
 
   const uint32_t wrongResultObject = 0xd8d4e;
 
-  IActionListener::RawMessageData msgData;
+  ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
   REQUIRE_THROWS_WITH(p.GetActionListener().OnCraftItem(msgData, requiredItems,
