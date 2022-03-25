@@ -12,6 +12,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
     DoConnect(partOne, 0);
 
     partOne.CreateActor(0xff000000, {0, 0, 0}, 0, 0x3c);
+    partOne.SetUserActor(0, 0xff000000);
 
     MpActor& ac = partOne.worldState.GetFormAt<MpActor>(0xff);
 
