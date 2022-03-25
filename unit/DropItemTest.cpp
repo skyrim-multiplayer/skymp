@@ -1,3 +1,4 @@
+#include "MpObjectReference.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
@@ -30,4 +31,9 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
             });
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(ac.GetInventory().GetItemCount(baseId) == 0);
+  MpObjectReference* refr =
+    partOne.worldState.GetFormAt<MpObjectReference*>(baseId);
+  REQUIRE(refr != nullptr);
+  refr->Activate(ac);
+  REQUIRE(ac.GetInventory().GetItemCount(baseId) == 1);
 }

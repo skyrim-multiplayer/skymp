@@ -294,7 +294,16 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
                   rawMsgData.userId, baseId));
   }
   uint32_t count = 1;
+  if (ac->GetInventory().GetItemCount(baseId) - count < 0) {
+    throw std::runtime_error(
+      fmt::format("You cannot drop more items than you have. Actor: {:x} "
+                  "Item: {:x} Items to drop: {}, Items count: {}",
+                  rawMsgData.userId, baseId, count,
+                  ac->GetInventory().GetItemCount(baseId)));
+  }
   ac->RemoveItem(baseId, count, nullptr);
+  constexpr const char* placeAtMeCommand = "placeatme";
+  ConsoleCommands::Execute(*ac, placeAtMeCommand, { count });
 }
 
 namespace {
