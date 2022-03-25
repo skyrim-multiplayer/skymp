@@ -62,13 +62,23 @@ private:
   const uint64_t v;
 };
 
-const std::map<std::string, uint32_t> kCorrectHashcode{
+#ifdef SKYRIM_SE
+const std::map<std::string, uint32_t> kCorrectHashcodes{
   { "Skyrim.esm", 0xaf75991dUL },
   { "Update.esm", 0x17ab5e20UL },
   { "Dawnguard.esm", 0xcc81e5d8UL },
   { "HearthFires.esm", 0xbad9393aUL },
   { "Dragonborn.esm", 0xeb10e82UL }
 };
+#else
+const std::map<std::string, uint32_t> kCorrectHashcodes{
+  { "Skyrim.esm", 0xfa343672UL },
+  { "Update.esm", 0xabc253c5UL },
+  { "Dawnguard.esm", 0x91a9fa28UL },
+  { "HearthFires.esm", 0x2d820611UL },
+  { "Dragonborn.esm", 0x947d94aeUL }
+};
+#endif
 }
 
 namespace espm {
@@ -109,8 +119,8 @@ uint32_t CalculateHashcode(const void* readBuffer, size_t length)
 
 uint32_t GetCorrectHashcode(const std::string& fileName)
 {
-  auto iter = kCorrectHashcode.find(fileName);
-  return iter == kCorrectHashcode.end() ? 0 : iter->second;
+  auto iter = kCorrectHashcodes.find(fileName);
+  return iter == kCorrectHashcodes.end() ? 0 : iter->second;
 }
 }
 
