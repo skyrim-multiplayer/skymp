@@ -14,7 +14,7 @@ TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
   {
   public:
     MyActionListener()
-      : ActionListener(p)
+      : ActionListener(GetPartOne())
     {
     }
 
@@ -32,8 +32,6 @@ TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
     Inventory inputObjects;
     uint32_t workbenchId = 0;
     uint32_t resultObjectId = 0;
-
-    PartOne p;
   };
 
   nlohmann::json j{

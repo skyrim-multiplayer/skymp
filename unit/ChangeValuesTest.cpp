@@ -15,7 +15,7 @@ TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
   {
   public:
     MyActionListener()
-      : ActionListener(p)
+      : ActionListener(GetPartOne())
     {
     }
 
@@ -34,7 +34,6 @@ TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
     float healthPercentage = 1;
     float magickaPercentage = 1;
     float staminaPercentage = 1;
-    PartOne p;
   };
 
   nlohmann::json j{

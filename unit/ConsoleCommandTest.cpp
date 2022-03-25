@@ -15,7 +15,7 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
   {
   public:
     MyActionListener()
-      : ActionListener(p)
+      : ActionListener(GetPartOne())
     {
     }
 
@@ -32,7 +32,6 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
     RawMessageData rawMsgData;
     std::string consoleCommandName;
     std::vector<ConsoleCommands::Argument> args;
-    PartOne p;
   };
 
   nlohmann::json j{ { "t", MsgType::ConsoleCommand },
