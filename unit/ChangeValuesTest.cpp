@@ -11,9 +11,14 @@ extern espm::Loader l;
 
 TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
 {
-  class MyActionListener : public IActionListener
+  class MyActionListener : public ActionListener
   {
   public:
+    MyActionListener()
+      : ActionListener(GetPartOne())
+    {
+    }
+
     void OnChangeValues(const RawMessageData& rawMsgData_,
                         const float healthPercentage_,
                         const float magickaPercentage_,
@@ -60,7 +65,7 @@ TEST_CASE("Player attribute percentages are changing correctly",
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  IActionListener::RawMessageData msgData;
+  ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
   p.GetActionListener().OnChangeValues(msgData, 0.75f, 0.0f, 0.7f);
@@ -91,7 +96,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   BaseActorValues baseValues =
     GetBaseActorValues(&p.worldState, baseId, raceId);
 
-  IActionListener::RawMessageData msgData;
+  ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
   ac.SetPercentages(0.1f, 0.0f, 0.0f);

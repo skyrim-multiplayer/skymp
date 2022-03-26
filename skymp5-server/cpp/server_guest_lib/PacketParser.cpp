@@ -1,5 +1,6 @@
 #include "PacketParser.h"
 #include "Exceptions.h"
+#include "HitData.h"
 #include "JsonUtils.h"
 #include "MovementMessage.h"
 #include "MovementMessageSerialization.h"
@@ -42,13 +43,13 @@ PacketParser::PacketParser()
 void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                              Networking::PacketData data,
                                              size_t length,
-                                             IActionListener& actionListener)
+                                             ActionListener& actionListener)
 {
   if (!length) {
     throw std::runtime_error("Zero-length message packets are not allowed");
   }
 
-  IActionListener::RawMessageData rawMsgData{
+  ActionListener::RawMessageData rawMsgData{
     data,
     length,
     /*parsed (json)*/ {},

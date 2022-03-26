@@ -44,7 +44,7 @@ struct PartOne::Impl
   espm::CompressedFieldsCache compressedFieldsCache;
 
   std::shared_ptr<PacketParser> packetParser;
-  std::shared_ptr<IActionListener> actionListener;
+  std::shared_ptr<ActionListener> actionListener;
 
   std::shared_ptr<spdlog::logger> logger;
 
@@ -416,7 +416,7 @@ FormCallbacks PartOne::CreateFormCallbacks()
   return { subscribe, unsubscribe, sendToUser };
 }
 
-IActionListener& PartOne::GetActionListener()
+ActionListener& PartOne::GetActionListener()
 {
   InitActionListener();
   return *pImpl->actionListener;
