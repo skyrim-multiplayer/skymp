@@ -1,5 +1,6 @@
 #include "PacketParser.h"
 #include "Exceptions.h"
+#include "HitData.h"
 #include "JsonUtils.h"
 #include "MovementMessage.h"
 #include "MovementMessageSerialization.h"
@@ -11,8 +12,6 @@
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)
 {
-  if (longFormId < 0x100000000)
-    return static_cast<uint32_t>(longFormId);
   return static_cast<uint32_t>(longFormId % 0x100000000);
 }
 }
@@ -42,13 +41,13 @@ PacketParser::PacketParser()
 void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                              Networking::PacketData data,
                                              size_t length,
-                                             IActionListener& actionListener)
+                                             ActionListener& actionListener)
 {
   if (!length) {
     throw std::runtime_error("Zero-length message packets are not allowed");
   }
 
-  IActionListener::RawMessageData rawMsgData{
+  ActionListener::RawMessageData rawMsgData{
     data,
     length,
     /*parsed (json)*/ {},
