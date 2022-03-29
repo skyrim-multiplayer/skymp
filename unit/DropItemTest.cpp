@@ -1,7 +1,7 @@
-#include "MpObjectReference.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
+#include "MpObjectReference.h"
 #include "PartOne.h"
 
 PartOne& GetPartOne();
@@ -29,7 +29,8 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
               { "t", MsgType::DropItem }, { "baseId", baseId },
               /* { "count", count } */
             });
-  REQUIRE(partOne.Messages().size() == 1);
+  // 1 message from here and another 1 is comming from actionListener
+  REQUIRE(partOne.Messages().size() == 2);
   REQUIRE(ac.GetInventory().GetItemCount(baseId) == 0);
   MpObjectReference& refr =
     partOne.worldState.GetFormAt<MpObjectReference>(baseId);
