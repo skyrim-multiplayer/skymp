@@ -8,6 +8,7 @@
 #include "GetBaseActorValues.h"
 #include "HitData.h"
 #include "MovementValidation.h"
+#include "MpObjectReference.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
 #include "UserMessageOutput.h"
@@ -294,7 +295,7 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
       fmt::format("Too few items to drop. Actor Id: {:x}, item's baseId: {:x}",
                   rawMsgData.userId, baseId));
   }
-  uint32_t count = 1;
+  int count = 1;
   if (ac->GetInventory().GetItemCount(baseId) - count < 0) {
     throw std::runtime_error(
       fmt::format("You cannot drop more items than you have. Actor: {:x} "
@@ -303,8 +304,14 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
                   ac->GetInventory().GetItemCount(baseId)));
   }
   ac->RemoveItem(baseId, count, nullptr);
-  constexpr const char* placeAtMeCommand = "placeatme";
-  ConsoleCommands::Execute(*ac, placeAtMeCommand, { count });
+  PapyrusObjectReference papyrus;
+  auto baseForm = VarValue(std::make_shared<EspmGameObject>(
+    partOne.worldState.GetEspm().GetBrowser().LookupById(baseId)));
+  auto aCount = VarValue(count);
+  auto aForcePersist = VarValue(false);
+  auto aInitiallyDisabled = VarValue(false);
+  papyrus.PlaceAtMe(ac->ToVarValue(),
+                    { baseForm, aCount, aForcePersist, aInitiallyDisabled });
 }
 
 namespace {
