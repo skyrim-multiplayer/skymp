@@ -283,35 +283,14 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
-                                uint32_t baseId)
+                                uint32_t baseId, const Inventory::Entry& entry)
 {
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
     throw std::runtime_error(fmt::format(
       "Unable to drop an item from user with id: {:x}.", rawMsgData.userId));
   }
-  if (!(ac->GetInventory().GetItemCount(baseId) >= 1)) {
-    throw std::runtime_error(
-      fmt::format("Too few items to drop. Actor Id: {:x}, item's baseId: {:x}",
-                  rawMsgData.userId, baseId));
-  }
-  int count = 1;
-  if (ac->GetInventory().GetItemCount(baseId) - count < 0) {
-    throw std::runtime_error(
-      fmt::format("You cannot drop more items than you have. Actor: {:x} "
-                  "Item: {:x} Items to drop: {}, Items count: {}",
-                  rawMsgData.userId, baseId, count,
-                  ac->GetInventory().GetItemCount(baseId)));
-  }
-  ac->RemoveItem(baseId, count, nullptr);
-  PapyrusObjectReference papyrus;
-  auto baseForm = VarValue(std::make_shared<EspmGameObject>(
-    partOne.worldState.GetEspm().GetBrowser().LookupById(baseId)));
-  auto aCount = VarValue(count);
-  auto aForcePersist = VarValue(false);
-  auto aInitiallyDisabled = VarValue(false);
-  papyrus.PlaceAtMe(ac->ToVarValue(),
-                    { baseForm, aCount, aForcePersist, aInitiallyDisabled });
+  ac->DropItem(baseId, entry);
 }
 
 namespace {

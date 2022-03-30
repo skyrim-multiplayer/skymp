@@ -94,6 +94,8 @@ public:
   BaseActorValues GetBaseValues();
   BaseActorValues GetMaximumValues();
 
+  void DropItem(const uint32_t baseId, const Inventory::Entry& entry);
+
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
 

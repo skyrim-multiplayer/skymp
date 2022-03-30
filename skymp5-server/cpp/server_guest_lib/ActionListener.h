@@ -51,7 +51,8 @@ public:
   virtual void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
                           const Inventory::Entry& entry);
 
-  virtual void OnDropItem(const RawMessageData& rawMsgdata, uint32_t baseId);
+  virtual void OnDropItem(const RawMessageData& rawMsgdata, uint32_t baseId,
+                          const Inventory::Entry& entry);
 
   virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                  uint32_t snippetIdx,

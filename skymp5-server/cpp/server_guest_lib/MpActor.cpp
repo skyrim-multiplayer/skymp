@@ -4,6 +4,7 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "MsgType.h"
+#include "PapyrusObjectReference.h"
 #include "PieScript.h"
 #include "ServerState.h"
 #include "WorldState.h"
@@ -586,4 +587,20 @@ BaseActorValues MpActor::GetBaseValues()
 BaseActorValues MpActor::GetMaximumValues()
 {
   return GetBaseValues();
+}
+
+void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
+{
+  // TODO: Take count into account
+  int count = 1;
+  RemoveItem(baseId, count, nullptr);
+  PapyrusObjectReference papyrusObjectReference;
+  auto baseForm = VarValue(std::make_shared<EspmGameObject>(
+    GetParent()->GetEspm().GetBrowser().LookupById(baseId)));
+  auto aCount = VarValue(count);
+  auto aForcePersist = VarValue(false);
+  auto aInitiallyDisabled = VarValue(false);
+  (void)papyrusObjectReference.PlaceAtMe(
+    this->ToVarValue(),
+    { baseForm, aCount, aForcePersist, aInitiallyDisabled });
 }
