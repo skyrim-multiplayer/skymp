@@ -141,13 +141,6 @@ public:
     return JsValue(v);
   }
 
-  static JsValue String(const char* arg)
-  {
-    JsValueRef v;
-    SafeCall(JS_ENGINE_F(JsCreateString), arg, strlen(arg), &v);
-    return JsValue(v);
-  }
-
   static JsValue String(const std::string& arg)
   {
     JsValueRef v;
