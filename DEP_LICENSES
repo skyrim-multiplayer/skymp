@@ -1,0 +1,33 @@
+This software uses TiltedUI:
+
+Copyright (c) 2019 Tilted Phoques. All Rights Reserved.
+
+All materials are made available on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. Do not remove or modify any license notices.
+
+--------------------------------------------------------------------------------
+
+This software uses TiltedCore:
+
+Copyright (c) 2019 Tilted Phoques. All Rights Reserved.
+
+All materials are made available on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. Do not remove or modify any license notices.
+
+--------------------------------------------------------------------------------
+
+This software uses TiltedHooks:
+
+Copyright (c) 2019 Tilted Phoques. All Rights Reserved.
+
+All materials are made available on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. Do not remove or modify any license notices.
+
+--------------------------------------------------------------------------------
+
+This software uses TiltedReverse:
+
+Copyright (c) 2019 Tilted Phoques. All Rights Reserved.
+
+All materials are made available on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. Do not remove or modify any license notices.
+
+--------------------------------------------------------------------------------
+
+Tons of installed vcpkg ports have their own licenses/copyrights. You can read all of them after building since vcpkg copies them.
