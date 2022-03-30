@@ -14,10 +14,11 @@ This repo hosts all sources to ease local setup and contributing. See [CONTRIBUT
 ### What's Synced
 
 - [x] Player movement and animation sync
+- [x] Appearance: race, headparts, tints, etc
 - [x] PvP sync: melee damage, attributes, death
-- [x] Inventory sync: equipment, containers, etc
+- [x] Inventory sync: equipment, containers, craft, etc
 - [x] Limited scripts sync (WIP) - we have our own Papyrus engine
-- [ ] Who knows what comes next? We work on synchronizing all Skyrim game mechanics.
+- [ ] Who knows what comes next? We work on synchronizing all Skyrim game mechanics, see [ROADMAP](ROADMAP.md).
 
 ### Multiplayer Features
 
@@ -25,3 +26,8 @@ This repo hosts all sources to ease local setup and contributing. See [CONTRIBUT
 - Store your world in plain files or MongoDB
 - Customize your server with TypeScript or Papyrus scripting
 - Use esp/esm mods, just ensure both client and server load order are the same
+
+### Terms of Use
+
+See [TERMS.md](TERMS.md)
+TL;DR disclose the source code of your forks.
