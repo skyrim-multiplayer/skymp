@@ -26,7 +26,7 @@ Implemented features we plan to improve or fix.
 | *Character creation* | Add server-side validation |
 | *Animation events* | Remove local delays when the animation is postponed to the next. frames. Disable collision when using chairs. Ask for help at ST. |
 | *Damage* | Remove incorrect range check for shooting. Blood spatter and sounds must be in sync. |
-| *Containers* | Incorrect “empty” label on a container. You should animate the opening of the container for everyone, including sounds. We probably should prepare a new API in the platform for serializing/deserializing the contents of the container, as is done in ST. This API may be the basis for future upgrades to this sync and inventory sync. |
+| *Containers* | Incorrect “empty” label on a container. You should animate the opening of the container for everyone, including sounds. We probably should prepare a new API in the platform for serializing/deserializing the contents of the container, as is done in ST. This API may be the basis for future upgrades to this sync and inventory sync. 2 or more players should be able to loot a container at the same time. |
 | *Equipment* | What is equipped in the hands is not saved when you restart the server, but it should. |
 | *Picking up items* | Take into account ExtraData (charm, poison, etc., impossible without throwing away the corresponding items). The message about adding an item should be like in the original: “Added…”. Synchronize pickup sound. When activating a book item, the reading interface should open, not picking up a book in inventory. |
 | *Picking up ingredients* | The message must be as in the original, the sound must be as in the original and synchronized, the object must not blink and/or move. |
