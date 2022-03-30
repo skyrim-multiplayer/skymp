@@ -32,8 +32,4 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   // 1 message from here and another 1 is comming from actionListener
   REQUIRE(partOne.Messages().size() == 2);
   REQUIRE(ac.GetInventory().GetItemCount(baseId) == 0);
-  MpObjectReference& refr =
-    partOne.worldState.GetFormAt<MpObjectReference>(baseId);
-  refr.Activate(ac);
-  REQUIRE(ac.GetInventory().GetItemCount(baseId) == 1);
 }
