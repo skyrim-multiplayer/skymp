@@ -38,4 +38,4 @@ A list of the servers online can be retrieved via API: https://skymp.io/api/serv
 ### Terms of Use
 
 See [TERMS.md](TERMS.md)
-TL;DR disclose the source code of your forks, that's all.
+TL;DR disclose the source code of your forks.
