@@ -29,5 +29,6 @@ This repo hosts all sources to ease local setup and contributing. See [CONTRIBUT
 
 ### Terms of Use
 
-See [TERMS.md](TERMS.md)
-TL;DR disclose the source code of your forks.
+See [TERMS.md](TERMS.md). TL;DR disclose the source code of your forks.
+
+Third-party code licenses can be found in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).
