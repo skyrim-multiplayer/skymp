@@ -26,10 +26,9 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   partOne.Messages().clear();
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::DropItem }, { "baseId", baseId },
-              /* { "count", count } */
-            });
+            nlohmann::json{ { "t", MsgType::DropItem },
+                            { "baseId", baseId },
+                            { "count", 1 } });
   // 1 message from here and another 1 is comming from actionListener
   REQUIRE(partOne.Messages().size() == 2);
   REQUIRE(ac.GetInventory().GetItemCount(baseId) == 0);
