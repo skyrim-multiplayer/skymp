@@ -10,7 +10,6 @@
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
-#include "PapyrusObjectReference.h"
 #include "UserMessageOutput.h"
 #include "Utils.h"
 #include "WorldState.h"
