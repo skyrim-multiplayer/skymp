@@ -1,3 +1,4 @@
+#include "MpChangeForms.h"
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
 
@@ -13,7 +14,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   constexpr uint32_t baseId = 0x0001397E;
   DoConnect(partOne, 0);
 
-  partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  partOne.CreateActor(0xff000000, { 1, 2, 3 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
 
   MpActor& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
@@ -32,4 +33,9 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   // 1 message from here and another 1 is comming from actionListener
   REQUIRE(partOne.Messages().size() == 2);
   REQUIRE(ac.GetInventory().GetItemCount(baseId) == 0);
+  MpObjectReference& refr =
+    partOne.worldState.GetFormAt<MpObjectReference>(baseId);
+  REQUIRE(refr.GetPos().x == 1.f);
+  REQUIRE(refr.GetPos().y == 2.f);
+  REQUIRE(refr.GetPos().z == 3.f);
 }
