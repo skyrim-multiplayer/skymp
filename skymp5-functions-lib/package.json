@@ -10,7 +10,7 @@
 	},
 	"keywords": [],
 	"author": "Leonid Pospelov <pospelovlm@yandex.ru>",
-	"license": "SEE LICENSE IN 'LICENSE'",
+	"license": "GPL-3.0",
 	"devDependencies": {
 		"@types/mocha": "^8.2.0",
 		"@types/node": "^14.14.20",
