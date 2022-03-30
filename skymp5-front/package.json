@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
-  "license": "SEE LICENSE IN 'LICENSE'",
+  "license": "GPL-3.0",
   "devDependencies": {
     "@babel/core": "^7.11.6",
     "@babel/preset-env": "^7.11.5",
