@@ -45,4 +45,8 @@ Top level folders of this repo represent subprojects and each subproject have it
 
 It seems that you also technically can write a proprietary remake of skymp5-client or skymp5-front to use with GPL SkyMP parts as they are not linked directly. Same for other subprojects. But for a reason, I'd say it's a way to disappointment if you ask me.
 
+We in SkyMP [link our AGPLv3 and GPLv3 components](https://opensource.stackexchange.com/questions/8432/is-gpl-linking-to-agpl-possible).
+
+If you'd like to do something controversial feel free to contact us for consultation. But no, we wouldn't allow you closed-source server/client forks since we respect the contributors and their copyright.
+
 SkyMP is not affiliated with or endorsed by Bethesda Softworks, ZeniMax Media or other rightsholders. Any trademarks used belong to their respective owners.
