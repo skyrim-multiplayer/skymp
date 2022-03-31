@@ -33,7 +33,8 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(partOne.Messages().size() == 2);
   REQUIRE(ac.GetInventory().GetItemCount(baseId) == 0);
   MpObjectReference& refr =
-    partOne.worldState.GetFormAt<MpObjectReference>(baseId);
+    partOne.worldState.GetFormAt<MpObjectReference>(0xff000001);
+  REQUIRE(refr.GetBaseId() == baseId);
   REQUIRE(refr.GetPos().x == 1.f);
   REQUIRE(refr.GetPos().y == 2.f);
   REQUIRE(refr.GetPos().z == 3.f);
