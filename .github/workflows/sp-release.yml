@@ -47,7 +47,7 @@ jobs:
           for file in `find ${{github.workspace}}/docs/release/dev -type f -name "sp*.md"`
           do
             content=$(< $file)
-            if grep -q "#" "$file"; then
+            if grep -q "^#" "$file"; then
               echo "$content" >> $TRAGET
               echo $'\n' >> $TRAGET
             else
