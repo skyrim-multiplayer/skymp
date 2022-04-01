@@ -66,8 +66,8 @@ Planned features. It will be an amazing journey!
 | **Dialogs** | Random remarks of bandits and other NPCs, dialogues with quest characters. Probably not the priority since ST exists. |
 | **Horses** | We must always host the horse we ride. Combat should also be available. Mounted shooting may be introduced separately. |
 | **Quests** | Learn how to serialize / deserialize the quest state of the game, or just draw the right words in the interface. Probably not the priority since ST exists. |
-| **Dragons** | Dragons must fly, attack, cast offensive spells, screams. The ability to absorb the souls of dragons. Ask ST for help. |
-| **Shouts** | Ability to equip and cast shouts. Learning words of power. Possibility to limit the study of words of power, i.e. determine who is a Dovakin and who is not. Gradually test and add more and more screams. |
+| **Dragons** | Dragons should be able to fly, attack, cast spells and shouts. The ability to capture dragon souls. Ask ST for help. |
+| **Shouts** | Ability to equip and cast shouts. Learning words of power. Possibility to limit the study of words of power, i.e. determine who is a Dovakin and who is not. Iteratively test and add more and more shouts. |
 | **Magic effects** | The server must be able to cast a magical effect on a person. The use of the potion should impose a magical effect, and not instantly change health parameters, as it happens now. The appearance of the magic effect is accompanied by the playback of the shader effect. Even if the moment of applying the magic effect on another player was not visible, when you enter the visibility zone, you should see the effect of the shader. The most popular effect archetypes should be implemented (with which we attack and heal). |
 | **Spells** | TODO: Add a few words on spells sync |
 | **Weather** | Learn how weather changes work in the original game and do the same. |
