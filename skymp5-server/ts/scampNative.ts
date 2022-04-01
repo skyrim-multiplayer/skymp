@@ -1,4 +1,4 @@
-const scampNativeNode = require(process.cwd() + "/scamp_native.node");
+const scampNativeNode = require(process.cwd() + "/scam_native.node");
 
 export declare interface Bot {
   destroy(): void;
