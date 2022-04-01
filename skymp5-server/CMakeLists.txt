@@ -55,8 +55,8 @@ add_library(${PROJECT_NAME} SHARED ${sources})
 # Apply NodeJS convention (no .dll/.so, just .node)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
-# Legacy TypeScript part expects this module to be called `scamp_native`
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scamp_native")
+# Legacy TypeScript part expects this module to be called `scam_native`
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native")
 
 # Put build artifacts into build/dist/server
 if(WIN32)
