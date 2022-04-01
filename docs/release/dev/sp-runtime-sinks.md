@@ -1,0 +1,1 @@
+Runtime event sink handling introduced. Except for some custom events that fire from within the code, events now will not be processed if there are no plugins that are subscribed to them. In theory this should provide more execution performance since there are less calls that need to be processed.
