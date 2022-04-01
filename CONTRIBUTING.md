@@ -18,7 +18,7 @@ You can find instructions on setting up the project locally below. To get a loca
 
 These tools required regardless of your system:
 
-* 64-bit [NodeJS](https://nodejs.org/en/download/) 12.x/14.x/16.x
+* 64-bit [NodeJS](https://nodejs.org/en/download/) 16.x *(may also work for 12.x, 14.x if you manually update node-gyp to version 8.4.0+)*
 * [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
 * [CMake 3.18.2](https://cmake.org/download/) or higher
 
@@ -27,7 +27,7 @@ These tools required regardless of your system:
 Before your start make sure that your system meets the conditions:
 
 * Windows 7 or higher *([Windows 10](https://www.microsoft.com/en-us/software-download/windows10) is recommended)*
-* [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
+* [Visual Studio 2019/2022](https://visualstudio.microsoft.com/downloads/)
 * .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
 * Python 3.9.x 64bit or 32bit *(Visual Studio Installer -> Idividual components -> search for python)*
 
