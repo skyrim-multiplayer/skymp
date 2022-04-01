@@ -112,7 +112,7 @@ Deployed server might crash under some circumstances. It's important to be able
 to be able to debug it in case something goes wrong.
 
 Prerequisites:
-1. `scamp_server.node` should contain debug symbols, otherwise core dump won't make much sense.
+1. `scamp_native.node` should contain debug symbols, otherwise core dump won't make much sense.
    Our [CI build](https://github.com/skyrim-multiplayer/skymp/blob/688c5dfeabffd6510d759d5a128349de8898743c/.github/workflows/pr-ubuntu-docker.yml#L10)
    does include them, but if you're building everything yourself, you may need
    to explicitly specify `-DCMAKE_BUILD_TYPE=Debug` or `RelWithDebInfo`.
