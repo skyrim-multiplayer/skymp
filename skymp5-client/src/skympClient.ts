@@ -295,6 +295,14 @@ export class SkympClient {
         }
       }
     });
+    on("containerChanged", (e) => {
+      const isPlayer: boolean = e.oldContainer === Game.getPlayer();
+      const noContainer: boolean = e.newContainer === null;
+      const isReference: boolean = e.reference !== null;
+      if (isPlayer && noContainer && isReference) {
+        this.sendTarget.send({ t: MsgType.DropItem, baseId: e.reference.getFormID(), count: 1}, false);
+      }
+    });
 
     const playerFormId = 0x14;
     on("equip", (e) => {

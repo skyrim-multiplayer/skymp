@@ -25,6 +25,7 @@ export enum MsgType {
   ChangeValues = 16,
   OnHit = 17,
   DeathStateContainer = 18,
+  DropItem = 19,
 }
 
 export interface SetInventory {
