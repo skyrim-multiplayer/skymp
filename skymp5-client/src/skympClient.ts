@@ -300,7 +300,11 @@ export class SkympClient {
       const noContainer: boolean = e.newContainer === null;
       const isReference: boolean = e.reference !== null;
       if (isPlayer && noContainer && isReference) {
-        this.sendTarget.send({ t: MsgType.DropItem, baseId: e.reference.getFormID(), count: 1}, false);
+        const furnitureRefr = (Game.getPlayer() as Actor).getFurnitureReference();
+        if (!furnitureRefr) return;
+        const furnitureId = furnitureRefr.getFormID();
+        furnitureStreak.delete(furnitureId);
+        this.sendTarget.send({ t: MsgType.DropItem, baseId: e.reference.getFormID(), count: 1 }, true);
       }
     });
 
@@ -531,7 +535,7 @@ export class SkympClient {
     this.sendTarget = rs;
     this.msgHandler = rs;
     this.modelSource = rs;
-    storage.remoteServer = rs;
+    storage.remoteServer = rs
   }
 
   private resetView() {
