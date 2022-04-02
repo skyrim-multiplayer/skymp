@@ -535,7 +535,7 @@ export class SkympClient {
     this.sendTarget = rs;
     this.msgHandler = rs;
     this.modelSource = rs;
-    storage.remoteServer = rs
+    storage.remoteServer = rs;
   }
 
   private resetView() {
