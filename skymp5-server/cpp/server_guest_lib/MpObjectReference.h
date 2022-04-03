@@ -1,4 +1,5 @@
 #pragma once
+#include "ChangeFormGuard.h"
 #include "FormIndex.h"
 #include "Grid.h"
 #include "IWorldObject.h"
@@ -52,6 +53,7 @@ class MpObjectReference
   : public MpForm
   , public FormIndex
   , public IWorldObject
+  , protected ChangeFormGuard
 {
   friend class OccupantDestroyEventSink;
 
