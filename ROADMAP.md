@@ -4,10 +4,6 @@ Welcome to the roadmap of the project! You can see synchronizations here, but th
 
 # Synchronization
 
-## Done
-
-Fully implemented and well-tested. Near to ideal sync.
-
 | Feature | Status/TODO |
 | --- | --- |
 | **DONE:** | **Fully implemented and well-tested. Near to ideal sync.** |
