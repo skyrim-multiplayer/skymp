@@ -15,12 +15,6 @@ Fully implemented and well-tested. Near to ideal sync.
 | Death | Done |
 | Inventory | Done |
 | Craft (forge like) | Done |
-
-## Partially implemented or buggy syncs
-
-Implemented features we plan to improve or fix.
-
-| Feature | Status/TODO |
 | --- | --- |
 | *Movement* | Add lag compensation; work on the details - walking speed and stuff, ask for help in ST. |
 | *Character creation* | Add server-side validation |
@@ -33,12 +27,6 @@ Implemented features we plan to improve or fix.
 | *Torches* | Player should be able to set a player on fire with a torch. It should be synced. Also we should remove torch from the inventory after some time on the server. In the current version, torches are limitless like arrows also are. |
 | *Scripts* | Variables need to be preserved, needs to be figured out how events work differently from the original Skyrim and documented (at least). |
 | *Console commands* | Make a list of popular console commands, implement them. They should be typed as in the original game. Their output should also be the same. Implement a system of permissions that determines who can use which commands. Perhaps make it possible to use them on the server from stdin (https://github.com/lionkor/commandline), as well as selectors like in Minecraft - applying to all entities or to specific ones. On the client, the player IDs in the console should show the server ID, not the local one. |
-
-## TODO
-
-Planned features. It will be an amazing journey!
-
-| Feature | Status/TODO |
 | --- | --- |
 | **Anims triggered by enemy** | Usually in PvP. Stagger, random dodge animation, sprint collision reaction. |
 | **Picking up leveled items** | In CK they start with the word Dummy, eg. RandomPotion. I'm not sure how the server handles them now. |
