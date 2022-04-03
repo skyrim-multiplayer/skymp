@@ -24,13 +24,13 @@ Implemented features we plan to improve or fix.
 | --- | --- |
 | *Movement* | Add lag compensation; work on the details - walking speed and stuff, ask for help in ST. |
 | *Character creation* | Add server-side validation |
-| *Animation events* | Remove local delays when the animation is postponed to the next. frames. Disable collision when using chairs. Ask for help at ST. |
+| *Animation events* | Remove local delays when animation events are queued to the next frames. Disable collision when using furniture like chairs. Ask for help at ST. |
 | *Damage* | Remove incorrect range check for shooting. Blood spatter and sounds must be in sync. |
 | *Containers* | Incorrect “empty” label on a container. You should animate the opening of the container for everyone, including sounds. We probably should prepare a new API in the platform for serializing/deserializing the contents of the container, as is done in ST. This API may be the basis for future upgrades to this sync and inventory sync. 2 or more players should be able to loot a container at the same time. |
 | *Equipment* | What is equipped in the hands is not saved when you restart the server, but it should. |
 | *Picking up items* | Take into account ExtraData (charm, poison, etc., impossible without throwing away the corresponding items). The message about adding an item should be like in the original: “Added…”. Synchronize pickup sound. When activating a book item, the reading interface should open, not picking up a book in inventory. |
 | *Picking up ingredients* | The message must be as in the original, the sound must be as in the original and synchronized, the object must not blink and/or move. |
-| *Torches* | The ignition of other players with the help of a torch must be synchronized, also the torches are consumed over time - and in our case they are issued back. |
+| *Torches* | Player should be able to set a player on fire with a torch. It should be synced. Also we should remove torch from the inventory after some time on the server. In the current version, torches are limitless like arrows also are. |
 | *Scripts* | Variables need to be preserved, needs to be figured out how events work differently from the original Skyrim and documented (at least). |
 | *Console commands* | Make a list of popular console commands, implement them. They should be typed as in the original game. Their output should also be the same. Implement a system of permissions that determines who can use which commands. Perhaps make it possible to use them on the server from stdin (https://github.com/lionkor/commandline), as well as selectors like in Minecraft - applying to all entities or to specific ones. On the client, the player IDs in the console should show the server ID, not the local one. |
 
@@ -58,7 +58,7 @@ Planned features. It will be an amazing journey!
 | **Skills** | Disable the original leveling formulas and add the ability to level skills for existing synchronizations, such as combat skills. When developing each new synchra, take into account the associated skill. |
 | **Perks and level up** | Attribute boost must work and persist (health, magicka or stamina). Selected perks must be saved. Then gradually make the existing perks work. |
 | **Blocking** | The ability to repel an attack may require "Reverse Animation Events". |
-| **Shooting** | Perhaps use a mod that allows you to look up and down to synchronize the vertical angle of the character. The arrow must have the correct initial speed, fly out from where it is needed. Perhaps it will be possible to pick it up - at the initial stage, you can not do it. Perhaps the arrows stuck in the characters should be synchronized. |
+| **Marksman** | Perhaps use a mod that allows you to look up and down to synchronize the vertical angle of the character. The arrow must have the correct initial speed, fly out from where it is needed. Perhaps it will be possible to pick it up - at the initial stage, you can not do it. Perhaps the arrows stuck in the characters should be synchronized. The server must remove 1 arrow after each shot. |
 | **Pickpocketing** | |
 | **NPC** | Make sure that the host change works, as well as the existing synchronizations in relation to NPCs - combat, activation of objects, equipment, etc. Support rendering of NPC templates on the server and applying its results on the client. NPCs should spawn normally (no bugs, inappropriate behavior, they should behave according to packages). Going forward, they should be able to travel out of sight of the players. |
 | **Loot** | Ability to loot dead NPCs and players. |
@@ -66,8 +66,8 @@ Planned features. It will be an amazing journey!
 | **Dialogs** | Random remarks of bandits and other NPCs, dialogues with quest characters. Probably not the priority since ST exists. |
 | **Horses** | We must always host the horse we ride. Combat should also be available. Mounted shooting may be introduced separately. |
 | **Quests** | Learn how to serialize / deserialize the quest state of the game, or just draw the right words in the interface. Probably not the priority since ST exists. |
-| **Dragons** | Dragons must fly, attack, cast offensive spells, screams. The ability to absorb the souls of dragons. Ask ST for help. |
-| **Shouts** | Ability to equip and cast shouts. Learning words of power. Possibility to limit the study of words of power, i.e. determine who is a Dovakin and who is not. Gradually test and add more and more screams. |
+| **Dragons** | Dragons should be able to fly, attack, cast spells and shouts. The ability to capture dragon souls. Ask ST for help. |
+| **Shouts** | Ability to equip and cast shouts. Learning words of power. Possibility to limit the study of words of power, i.e. determine who is a Dovakin and who is not. Iteratively test and add more and more shouts. |
 | **Magic effects** | The server must be able to cast a magical effect on a person. The use of the potion should impose a magical effect, and not instantly change health parameters, as it happens now. The appearance of the magic effect is accompanied by the playback of the shader effect. Even if the moment of applying the magic effect on another player was not visible, when you enter the visibility zone, you should see the effect of the shader. The most popular effect archetypes should be implemented (with which we attack and heal). |
 | **Spells** | TODO: Add a few words on spells sync |
 | **Weather** | Learn how weather changes work in the original game and do the same. |
