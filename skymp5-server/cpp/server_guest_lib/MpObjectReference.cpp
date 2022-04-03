@@ -105,7 +105,7 @@ public:
 };
 
 namespace {
-auto Mode(bool isLocationSaveNeeded)
+auto MakeMode(bool isLocationSaveNeeded)
 {
   return isLocationSaveNeeded ? ChangeFormGuard::Mode::RequestSave
                               : ChangeFormGuard::Mode::NoRequestSave;
@@ -278,7 +278,7 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
 
   EditChangeForm(
     [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; },
-    Mode(IsLocationSavingNeeded()));
+    MakeMode(IsLocationSavingNeeded()));
 
   if (oldGridPos != newGridPos || !everSubscribedOrListened)
     ForceSubscriptionsUpdate();
@@ -355,7 +355,7 @@ void MpObjectReference::SetAngle(const NiPoint3& newAngle)
 {
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.angle = newAngle; },
-    Mode(IsLocationSavingNeeded()));
+    MakeMode(IsLocationSavingNeeded()));
 }
 
 void MpObjectReference::SetHarvested(bool harvested)
