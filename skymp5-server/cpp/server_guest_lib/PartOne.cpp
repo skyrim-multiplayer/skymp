@@ -44,7 +44,7 @@ struct PartOne::Impl
   espm::CompressedFieldsCache compressedFieldsCache;
 
   std::shared_ptr<PacketParser> packetParser;
-  std::shared_ptr<IActionListener> actionListener;
+  std::shared_ptr<ActionListener> actionListener;
 
   std::shared_ptr<spdlog::logger> logger;
 
@@ -194,10 +194,8 @@ void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open)
 
   auto userId = serverState.UserByActor(&actor);
   if (userId == Networking::InvalidUserId) {
-    std::stringstream ss;
-    ss << "Actor with id " << std::hex << actorFormId
-       << " is not attached to any of users";
-    throw std::runtime_error(ss.str());
+    throw std::runtime_error(fmt::format(
+      "Actor with id {:#x} is not attached to any of users", actorFormId));
   }
 
   Networking::SendFormatted(pImpl->sendTarget, userId,
@@ -418,7 +416,7 @@ FormCallbacks PartOne::CreateFormCallbacks()
   return { subscribe, unsubscribe, sendToUser };
 }
 
-IActionListener& PartOne::GetActionListener()
+ActionListener& PartOne::GetActionListener()
 {
   InitActionListener();
   return *pImpl->actionListener;
@@ -494,7 +492,7 @@ void PartOne::Init()
     if (emitter->GetBaseId() != 0x00000000 &&
         emitter->GetBaseId() != 0x00000007) {
       baseIdPrefix = R"(, "baseId": )";
-      sprintf(baseId, "%d", emitter->GetBaseId());
+      sprintf(baseId, "%u", emitter->GetBaseId());
     }
 
     const bool isOwner = emitter == listener;

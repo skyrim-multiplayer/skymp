@@ -1,7 +1,8 @@
 import { GameModeListener } from "./logic/GameModeListener";
-import { Percentages, PlayerController } from "./logic/PlayerController";
+import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/SweetPieRound";
 import { ChatProperty } from "./props/chatProperty";
+import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
@@ -11,7 +12,7 @@ import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
-declare const nameUpdatesJson: string;
+declare const nameUpdatesClientSide: [number, string][];
 
 const scriptName = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -134,7 +135,7 @@ export class MpApiInteractor {
       }
 
       for (const actorId of onlinePlayers) {
-        const nameUpdates = [];
+        const nameUpdates: [number, string][] = [];
         for (const formId of mp.get(actorId, 'neighbors')) {
           const name = MpApiInteractor.customNames.get(formId);
           if (name !== undefined) {
@@ -145,14 +146,14 @@ export class MpApiInteractor {
           continue;
         }
         EvalProperty.eval(actorId, () => {
-          for (const [formId, name] of JSON.parse(nameUpdatesJson)) {
+          for (const [formId, name] of nameUpdatesClientSide) {
             const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
             const ret = refr?.setDisplayName(name, true);
             if (!ret) {
               ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
             }
           }
-        }, { nameUpdatesJson: JSON.stringify(nameUpdates).replace(/\\/g, '\\\\').replace(/'/g, '\\\'') });
+        }, { nameUpdatesClientSide: nameUpdates });
       }
 
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
@@ -249,6 +250,11 @@ export class MpApiInteractor {
       },
       updateCustomName(formDesc: string, name: string): void {
         MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
+      },
+      incrementCounter(actorId: number, counter: Counter, by?: number): number {
+        const current = CounterProperty.get(actorId, counter);
+        CounterProperty.set(actorId, counter, current + (by ?? 0));
+        return current;
       },
     }
   }

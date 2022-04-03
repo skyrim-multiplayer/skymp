@@ -53,3 +53,26 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
   }
   return VarValue();
 }
+
+VarValue PapyrusActor::SetAlpha(VarValue self,
+                                const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("SetAlpha requires at least one argument");
+    }
+    // TODO: Make normal sync for this. For now using workaround to inform
+    // neigbours by sending papyrus functions to them.
+    auto funcName = "SetAlpha";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}

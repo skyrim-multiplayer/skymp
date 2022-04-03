@@ -1,4 +1,4 @@
-import { Transform } from './movement';
+import { Transform } from './sync/movement';
 import {
   Game,
   Utility,
@@ -6,22 +6,20 @@ import {
   once,
   GlobalVariable,
   ObjectReference,
-  Weather,
-  writePlugin,
-  printConsole,
   settings,
   storage,
   browser as spBrowser
 } from "skyrimPlatform";
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
-import * as browser from "./browser";
-import * as loadGameManager from "./loadGameManager";
+import * as browser from "./features/browser";
+import * as loadGameManager from "./features/loadGameManager";
 import { verifyVersion } from "./version";
-import { updateWc } from "./worldCleaner";
-import * as authSystem from "./authSystem";
-import { nameof } from "./utils";
-import { AuthGameData } from "./authModel";
-import * as NetInfo from "./netInfoSystem";
+import { updateWc } from "./features/worldCleaner";
+import * as authSystem from "./features/authSystem";
+import { AuthGameData } from "./features/authModel";
+import * as NetInfo from "./features/netInfoSystem";
+import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
+import { verifyLoadOrder } from './features/loadOrder';
 
 browser.main();
 
@@ -54,12 +52,12 @@ on("update", () => {
 
 on("update", () => updateWc());
 
+once("update", verifyLoadOrder);
+
 const startClient = (): void => {
-  const showNetInfo = settings["skymp5-client"]["show-net-info"];
-  if (showNetInfo === true) {
-    NetInfo.start();
-  }
-  
+  NetInfo.start();
+
+  playerCombatSystem.start();
   once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();

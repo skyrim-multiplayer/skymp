@@ -1,0 +1,120 @@
+name: PR Windows AE
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FEATURE_FLAGS: 'manifests'
+
+jobs:
+  build:
+    # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+        submodules: 'true'
+
+    - name: Install tools
+      run: choco install opencppcoverage
+
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        `vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "skyrim-multiplayer"
+        -password "${{ secrets.GITHUB_TOKEN }}"
+
+    # Download Skyrim SE data files
+    - uses: suisei-cn/actions-download-file@v1
+      name: Download Skyrim.esm
+      with:
+        url: "https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm"
+        target: ${{github.workspace}}/skyrim_data_files/
+    - uses: suisei-cn/actions-download-file@v1
+      name: Download Update.esm
+      with:
+        url: "https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm"
+        target: ${{github.workspace}}/skyrim_data_files/
+    - uses: suisei-cn/actions-download-file@v1
+      name: Download Dawnguard.esm
+      with:
+        url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm"
+        target: ${{github.workspace}}/skyrim_data_files/
+    - uses: suisei-cn/actions-download-file@v1
+      name: Download HearthFires.esm
+      with:
+        url: "https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm"
+        target: ${{github.workspace}}/skyrim_data_files/
+    - uses: suisei-cn/actions-download-file@v1
+      name: Download Dragonborn.esm
+      with:
+        url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
+        target: ${{github.workspace}}/skyrim_data_files/
+
+    - name: NPM config
+      run: |
+        npm config set msvs_version 2022
+        npm install --global node-gyp@latest
+        npm prefix -g | % {npm config set node_gyp "$_\node_modules\node-gyp\bin\node-gyp.js"}
+
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
+      run: >
+        cmake -B ${{github.workspace}}/build
+        -DUSE_SYSTEM_VCPKG=ON
+        -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
+        -DUNIT_DATA_DIR="skyrim_data_files"
+        -DPREPARE_NEXUS_ARCHIVES=ON
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        --profiling-output cmake-profiling-output
+        --profiling-format google-trace
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: cmake-profiling-output
+        path: cmake-profiling-output
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      # Execute tests defined by the CMake configuration.
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: ${{github.workspace}}/build/dist
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: coverage
+        path: ${{github.workspace}}/build/__coverage
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: SP-AE
+        # Data folder is skipped for mod managers
+        path: ${{github.workspace}}/build/nexus/sp/data/*

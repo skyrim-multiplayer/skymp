@@ -1,50 +1,38 @@
-Scriptname SweetBuyPieDialog extends ObjectReference  
-int random
-Potion property pie1 auto
-Potion property pie2 auto
-Potion property pie3 auto
-Message property m1 auto
-Message property m2 auto
-Message property m3 auto
+Scriptname SweetBuyPieDialog extends ObjectReference
+
 Event OnActivate(ObjectReference akActionRef)
-Int iButton = m1.Show()
-if (IButton == 0)&&game.getplayer().getitemcount(game.getform(0x0000000F)) >= 30
-gotostate("havemoney")
-
-elseif (IButton == 0)&&game.getplayer().getitemcount(game.getform(0x0000000F)) < 30
-gotostate("notmoney")
-endif
-endevent
-
-State havemoney
-event onbeginstate()
-random = Utility.RandomInt(1 ,4)
-int ibutton = m2.show()
-if (ibutton == 0 )
- Utility.RandomInt(1 ,4)
-endif
-if random == 1
-game.getplayer().removeitem(game.getform(0x0000000F), 30)
-game.getplayer().additem(game.getform(0x00064B43), 1)
-
-elseif random == 2
-game.getplayer().removeitem(game.getform(0x0000000F), 30)
-game.getplayer().additem(pie1, 1)
-
-elseif random == 3
-game.getplayer().removeitem(game.getform(0x0000000F), 30)
-game.getplayer().additem(pie2, 1)
-
-elseif random == 4
-game.getplayer().removeitem(game.getform(0x0000000F), 30)
-game.getplayer().additem(pie3, 1)
-
-endif
-endevent
-endstate
-
-State notmoney
-event onbeginstate()
-Int Ibutton = m3.show()
-endevent
-endstate
+	Actor Client = akActionRef as Actor
+	ObjectReference Broker = self
+	if(Client && Broker)
+		Int[] Licenses = SweetPie.GetBuyPieLicenses()
+		Int nLIndex = -1
+		Int nIndex = 0
+		while(nIndex < Licenses.Length)
+			if(Broker.GetItemCount(Game.GetForm(Licenses[nIndex])))
+				nLIndex = nIndex
+			endif
+			nIndex +=1
+		endwhile
+		nIndex = -1
+		if(nLIndex >= 0)
+			Message mStart = Game.GetForm(SweetPie.GetBuyPieStartMessage(nLIndex)) as Message
+			Int[] Required = SweetPie.GetBuyPieRequiredItems(nLIndex)
+			nIndex = mStart.Show()
+			if(nIndex >=0 && nIndex < Required.Length)
+				Form RequiredItem = Game.GetForm(Required[nIndex])
+				Int RequiredItemCount = SweetPie.GetBuyPieRequiredItemCount(nLIndex, nIndex)
+				if(Client.GetItemCount(RequiredItem) >= RequiredItemCount)
+					Message mFinish = Game.GetForm(SweetPie.GetBuyPieFinishMessage(nLIndex)) as Message
+					Int RewardIndex = SweetPie.GetBuyPieReturnItemIndex(nLIndex, nIndex)
+					mFinish.Show()
+					Client.RemoveItem(RequiredItem, RequiredItemCount)
+					Client.AddItem(Game.GetForm(SweetPie.GetBuyPieReturnItem(nLIndex, nIndex, RewardIndex)), SweetPie.GetBuyPieReturnItemCount(nLIndex, nIndex, RewardIndex))
+					Broker.AddItem(Game.GetForm(SweetPie.GetBuyPieCommissionItem(nLIndex)), SweetPie.GetBuyPieCommissionSize(nLIndex))
+				else
+					Message mFail = Game.GetForm(SweetPie.GetBuyPieFailMessage(nLIndex)) as Message
+					mFail.Show()
+				endif
+			endif
+		endif
+	endif
+EndEvent

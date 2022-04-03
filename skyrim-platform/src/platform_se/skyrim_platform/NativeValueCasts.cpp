@@ -4,7 +4,6 @@
 #include "NullPointerException.h"
 #include "Overloaded.h"
 #include "PapyrusTESModPlatform.h"
-#include <sstream>
 
 namespace {
 JsValue ToString(const JsFunctionArguments& args)

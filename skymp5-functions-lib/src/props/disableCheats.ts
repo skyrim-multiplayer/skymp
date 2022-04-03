@@ -7,6 +7,9 @@ declare const ctx: Ctx;
 
 export class DisableCheats {
   static init() {
+    if (mp.getServerSettings()['sweetPieAllowCheats']) {
+      return;
+    }
     mp.makeEventSource('_onHacks', new FunctionInfo(this.clientsideInit()).getText());
     mp['_onHacks'] = () => { };
   }
@@ -23,13 +26,40 @@ export class DisableCheats {
         "modAV",
         "forceAV",
         "setAV",
+        "SetScale",
         "ToggleCollision",
-        "ToggleGodMode" // Disable unlimited carry weight
-      ]
+        "ToggleControlsDriven",
+        "ToggleGodMode", // Disable unlimited carry weight
+        "tg",
+        "tmm",
+        "tfc",
+        "ToggleImmortalMode",
+        "ToggleMotionDriven",
+        "ToggleTrees",
+        "ToggleScripts",
+        "ToggleCellNode",
+        "ToggleSky",
+        "SetGlobalTimeMultiplier",
+        "ToggleWaterSystem",
+        "ForceWeather",
+        "SetWeather",
+        "SexChange",
+        "ToggleCombatAI",
+        "ToggleAI",
+        "SetGameSetting",
+        "SetPos",
+        "SetAngle",
+        "ToggleFogOfWar",
+      ];
 
       // Disable commands from commandsToDisable
       commandsToDisable.forEach((command) => {
-        ctx.sp.findConsoleCommand(command).execute = () => false;
+        const cmd = ctx.sp.findConsoleCommand(command);
+        if (!cmd) {
+          ctx.sp.printConsole(`Can't find command ${command}`);
+          return;
+        }
+        cmd.execute = () => false;
       })
     };
   }

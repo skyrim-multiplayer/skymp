@@ -43,12 +43,11 @@ jobs:
           echo "This document includes changes made since SP ${{ env.OLDVER }}"$'\n'$'\n' >> $TRAGET
           echo "SP updates regularly. This update probably doesn't include ALL patches that have to be made."$'\n' >> $TRAGET
           echo "There are still many things to be implemented or fixed. See [issues](https://github.com/skyrim-multiplayer/skymp/issues?q=is%3Aopen+is%3Aissue+label%3Aarea%3Askyrim-platform)."$'\n' >> $TRAGET
-          echo "Please note that the current SP version only works for the old SE build (before the 11.11.21 update)."$'\n' >> $TRAGET
-          echo "To downgrade your Skyrim SE installation use [this patch](https://www.nexusmods.com/skyrimspecialedition/mods/57618)."$'\n' >> $TRAGET
+          echo "SP supports both Steam version of Skyrim SE (1.6+) and legacy 1.5.97."$'\n' >> $TRAGET
           for file in `find ${{github.workspace}}/docs/release/dev -type f -name "sp*.md"`
           do
             content=$(< $file)
-            if grep -q "#" "$file"; then
+            if grep -q "^#" "$file"; then
               echo "$content" >> $TRAGET
               echo $'\n' >> $TRAGET
             else

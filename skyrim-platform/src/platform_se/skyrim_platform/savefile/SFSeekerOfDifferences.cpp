@@ -1,13 +1,7 @@
 
 #include "SFSeekerOfDifferences.h"
-#include <cassert>
-#include <iostream>
-#include <stdexcept>
-
-#include <bitset>
-#include <string>
-
 #include "SFChangeFormNPC.h"
+
 namespace {
 // Example program
 

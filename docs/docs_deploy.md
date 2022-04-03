@@ -30,8 +30,8 @@ This guide shows how to set it up.
   **Note:** this effectively means root access, so be careful with users you
   let run deploy jobs (=users you give a write access to the repository).
 * A directory `~/skymp-server-<branch>` should be set up for every branch you
-  wish to deploy to this server. See 'setting up branch on a server' below. \
-  _Note_: currently, only `indev` branch is hardcoded.
+  wish to deploy to this server (i.e., every option that should be available
+  in 'Deploy' action). See 'setting up branch on a server' below.
 
 ### Setup access for GitHub
 
@@ -112,7 +112,7 @@ Deployed server might crash under some circumstances. It's important to be able
 to be able to debug it in case something goes wrong.
 
 Prerequisites:
-1. `scamp_server.node` should contain debug symbols, otherwise core dump won't make much sense.
+1. `scam_native.node` should contain debug symbols, otherwise core dump won't make much sense.
    Our [CI build](https://github.com/skyrim-multiplayer/skymp/blob/688c5dfeabffd6510d759d5a128349de8898743c/.github/workflows/pr-ubuntu-docker.yml#L10)
    does include them, but if you're building everything yourself, you may need
    to explicitly specify `-DCMAKE_BUILD_TYPE=Debug` or `RelWithDebInfo`.
@@ -177,6 +177,6 @@ How to check that everything is working fine:
 Debugging a core dump:
 1. Attach to en existing container with a server (or create a new container
    with a similar setup) and run `gdb`:
-   `docker exec -it skymp-server-indev gdb /work/scamp_native.node /var/crash/...`
+   `docker exec -it skymp-server-indev gdb /work/scam_native.node /var/crash/...`
 2. Run `bt` to view a stack trace
 3. Have fun with debugging it...

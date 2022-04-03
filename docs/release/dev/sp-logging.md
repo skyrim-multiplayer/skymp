@@ -1,0 +1,1 @@
+Logging introduced. Platform now uses skse runtime logging capabilities to provide users more feedback about its execution succession. Log file is located at `User\Documents\My Games\Skyrim Special Edition\SKSE.`

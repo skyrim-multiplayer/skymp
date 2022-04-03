@@ -1,8 +1,5 @@
 #include "OpcodesImplementation.h"
 #include "VirtualMachine.h"
-#include <algorithm>
-#include <cctype> // tolower
-#include <functional>
 
 ActivePexInstance::ActivePexInstance()
 {
@@ -11,7 +8,7 @@ ActivePexInstance::ActivePexInstance()
 }
 
 ActivePexInstance::ActivePexInstance(std::shared_ptr<PexScript> sourcePex,
-                                     VarForBuildActivePex mapForFillPropertys,
+                                     VarForBuildActivePex mapForFillProperties,
                                      VirtualMachine* parentVM,
                                      VarValue activeInstanceOwner,
                                      std::string childrenName)
@@ -21,27 +18,27 @@ ActivePexInstance::ActivePexInstance(std::shared_ptr<PexScript> sourcePex,
   this->parentVM = parentVM;
   this->sourcePex = sourcePex;
   this->parentInstance =
-    FillParentInstanse(sourcePex->objectTable.m_data[0].parentClassName,
-                       activeInstanceOwner, mapForFillPropertys);
+    FillParentInstance(sourcePex->objectTable.m_data[0].parentClassName,
+                       activeInstanceOwner, mapForFillProperties);
 
-  auto at = mapForFillPropertys.find(sourcePex->source);
+  auto at = mapForFillProperties.find(sourcePex->source);
 
-  std::vector<std::pair<std::string, VarValue>> argsForFillPropertys;
+  std::vector<std::pair<std::string, VarValue>> argsForFillProperties;
 
-  if (at != mapForFillPropertys.end()) {
-    argsForFillPropertys = at->second;
+  if (at != mapForFillProperties.end()) {
+    argsForFillProperties = at->second;
   }
 
-  variables = FillVariables(sourcePex, argsForFillPropertys);
+  variables = FillVariables(sourcePex, argsForFillProperties);
 }
 
-std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstanse(
+std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
   std::string nameNeedScript, VarValue activeInstanceOwner,
-  VarForBuildActivePex mapForFillPropertys)
+  VarForBuildActivePex mapForFillProperties)
 {
   for (auto& baseScript : parentVM->allLoadedScripts) {
     if (baseScript->source == nameNeedScript) {
-      ActivePexInstance scriptInstance(baseScript, mapForFillPropertys,
+      ActivePexInstance scriptInstance(baseScript, mapForFillProperties,
                                        parentVM, activeInstanceOwner,
                                        this->sourcePex->source);
       return std::make_shared<ActivePexInstance>(scriptInstance);
@@ -55,7 +52,7 @@ std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstanse(
 
 std::vector<ObjectTable::Object::VarInfo> ActivePexInstance::FillVariables(
   std::shared_ptr<PexScript> sourcePex,
-  std::vector<std::pair<std::string, VarValue>> argsForFillPropertys)
+  std::vector<std::pair<std::string, VarValue>> argsForFillProperties)
 {
   std::vector<ObjectTable::Object::VarInfo> result;
 
@@ -79,7 +76,7 @@ std::vector<ObjectTable::Object::VarInfo> ActivePexInstance::FillVariables(
 
   for (auto& object : sourcePex->objectTable.m_data) {
     for (auto& prop : object.properties) {
-      for (auto var : argsForFillPropertys) {
+      for (auto var : argsForFillProperties) {
         if (prop.name == var.first) {
           for (auto& varInfo : result) {
             if (prop.autoVarName == varInfo.name) {

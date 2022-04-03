@@ -1,12 +1,5 @@
 #include "SendAnimationEvent.h"
 #include "NullPointerException.h"
-#include <RE/BSAnimationGraphChannel.h>
-#include <RE/BSAnimationGraphManager.h>
-#include <RE/IAnimationGraphManagerHolder.h>
-#include <RE/UserEvents.h>
-#include <skse64/GameRTTI.h>
-#include <skse64/GameReferences.h>
-#include <skse64/PapyrusForm.h>
 
 void SendAnimationEvent::Run(const std::vector<CallNative::AnySafe>& _args)
 {
@@ -19,10 +12,12 @@ void SendAnimationEvent::Run(const std::vector<CallNative::AnySafe>& _args)
     throw std::runtime_error("Expected param2 to be string");
 
   if (auto objPtr = std::get<CallNative::ObjectPtr>(_args[0])) {
+    // why not cast to ObjectREFR right away?
     auto nativeObjPtr = (RE::TESForm*)objPtr->GetNativeObjectPtr();
     if (!nativeObjPtr)
       throw NullPointerException("nativeObjPtr");
-    auto refr = DYNAMIC_CAST(nativeObjPtr, TESForm, TESObjectREFR);
+    auto refr = nativeObjPtr->As<RE::TESObjectREFR>();
+
     if (!refr) {
       throw std::runtime_error(
         "Expected param1 to be ObjectReference but got " +
@@ -30,10 +25,6 @@ void SendAnimationEvent::Run(const std::vector<CallNative::AnySafe>& _args)
     }
 
     auto animEventName = CallNative::AnySafeToVariable(_args[1], false);
-    auto graphManagerHolder =
-      reinterpret_cast<RE::IAnimationGraphManagerHolder*>(
-        &refr->animGraphHolder);
-
-    graphManagerHolder->NotifyAnimationGraph(animEventName.GetString());
+    refr->NotifyAnimationGraph(animEventName.GetString());
   }
 }

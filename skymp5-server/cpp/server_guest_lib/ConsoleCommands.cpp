@@ -5,10 +5,12 @@
 #include "Utils.h"
 #include "WorldState.h"
 
+// There were hardcoded real profile ids
+// For now, we disable this system by the hack with invalid values
 enum ProfileIds
 {
-  kProfileId_Pospelov = 20,
-  kProfileId_Xccane = 35
+  kProfileId_Pospelov = std::numeric_limits<int>::max(),
+  kProfileId_Xccane = -1,
 };
 
 ConsoleCommands::Argument::Argument()

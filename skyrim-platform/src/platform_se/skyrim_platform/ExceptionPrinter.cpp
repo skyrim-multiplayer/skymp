@@ -1,7 +1,5 @@
 #include "ExceptionPrinter.h"
 #include "ConsoleApi.h"
-#include <RE/ConsoleLog.h>
-#include <string>
 
 ExceptionPrinter::ExceptionPrinter(const char* exceptionPrefix_)
   : exceptionPrefix(exceptionPrefix_)

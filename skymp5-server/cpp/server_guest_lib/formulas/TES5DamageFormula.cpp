@@ -137,6 +137,9 @@ float TES5DamageFormulaImpl::CalculateDamage() const
     // TODO(#460): implement correct block formula
     damage *= 0.1;
   }
+  if (hitData.isSneakAttack) {
+    damage *= 2;
+  }
   return damage;
 }
 

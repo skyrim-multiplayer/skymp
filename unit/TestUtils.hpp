@@ -10,6 +10,10 @@
 
 // Utilities for testing
 
+bool IsCmakeOptionSpecified(const std::string& optionValue);
+
+const char* GetDataDir();
+
 std::string MakeMessage(const nlohmann::json& j);
 
 void DoMessage(PartOne& partOne, Networking::UserId id,

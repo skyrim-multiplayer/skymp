@@ -52,9 +52,11 @@ Next, open the mod in the file system:
 
 You will see a `Platform` folder with a `plugin-example` subdirectory.
 
-Copy the `plugin-example` subdirectory to anywhere on your PC.
+Copy the `plugin-example` subdirectory to someplace on your PC _outside of the Skyrim folder_.
 
 > Unlike traditional Skyrim mods, you do not need to put your Skyrim Platform plugins into your MO2 or Vortex mods folder _unless_ your mod includes game assets, e.g. textures and meshes
+>
+> It is recommended that you _not_ put your plugin folder anywhere inside of a MO2 mod folder or inside of your Skyrim folder.
 
 ## Open Example Plugin
 

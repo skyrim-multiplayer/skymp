@@ -16,6 +16,9 @@ public:
   VarValue FindClosestReferenceOfAnyTypeInListFromRef(
     VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetPlayer(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue ShowRaceMenu(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue ShowLimitedRaceMenu(VarValue self,
+                               const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
@@ -30,7 +33,13 @@ public:
     AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
               &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
     AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
+    AddStatic(vm, "ShowRaceMenu", &PapyrusGame::ShowRaceMenu);
+    AddStatic(vm, "ShowLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
+
+private:
+  void RaceMenuHelper(VarValue& self, const char* funcName,
+                      const std::vector<VarValue>& arguments);
 };

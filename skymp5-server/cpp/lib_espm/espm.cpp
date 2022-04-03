@@ -732,6 +732,9 @@ espm::REFR::Data espm::REFR::GetData(
         result.teleport = (DoorTeleport*)data;
       else if (!memcmp(type, "XPRM", 4))
         result.boundsDiv2 = reinterpret_cast<const float*>(data);
+      else if (!memcmp(type, "XCNT", 4)) {
+        result.count = *reinterpret_cast<const uint32_t*>(data);
+      }
     },
     compressedFieldsCache);
   return result;

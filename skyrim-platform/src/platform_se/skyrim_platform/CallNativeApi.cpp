@@ -1,5 +1,4 @@
 #include "CallNativeApi.h"
-
 #include "CallNative.h"
 #include "CreatePromise.h"
 #include "NativeValueCasts.h"

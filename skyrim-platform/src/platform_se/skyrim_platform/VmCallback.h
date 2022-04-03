@@ -1,11 +1,9 @@
 #pragma once
-#include <RE/BSScript/IStackCallbackFunctor.h>
-#include <RE/BSScript/Variable.h>
 
 class VmCallback : public RE::BSScript::IStackCallbackFunctor
 {
 public:
-  using OnResult = std::function<void(const RE::BSScript::Variable& result)>;
+  using OnResult = std::function<void(const Variable& result)>;
 
   static auto New(const OnResult& onResult_)
   {
@@ -20,7 +18,7 @@ private:
   {
   }
 
-  void operator()(RE::BSScript::Variable result) override
+  void operator()(Variable result) override
   {
     if (onResult)
       onResult(result);

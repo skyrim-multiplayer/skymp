@@ -5,16 +5,16 @@
 
 extern espm::Loader l;
 
-// These tests depend on the most recent files shipped with Skyrim SE.
+// These tests depend on the files shipped with Skyrim SE (pre-AE update).
 // See README.md in project root for details.
 
 TEST_CASE("Hash check", "[espm]")
 {
-  const auto hashes = l.GetHashes();
-  for (const auto& [filename, checksum] : hashes) {
-    DYNAMIC_SECTION(filename << " checksum test")
+  const auto hashes = l.GetFilesInfo();
+  for (const auto& [filename, info] : hashes) {
+    DYNAMIC_SECTION(filename << " checksum and size test")
     {
-      REQUIRE(espm::GetCorrectHashcode(filename) == checksum);
+      REQUIRE(espm::GetCorrectHashcode(filename) == info.crc32);
     }
   }
 }

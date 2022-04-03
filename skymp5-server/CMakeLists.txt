@@ -24,17 +24,10 @@ add_subdirectory(ts)
 # Solution:
 # 1. Give cmake-js a special CMakeLists.txt from the `cmake-js-fetch` directory.
 #    Look into package.json and `cmake-js-fetch/CMakeLists.txt` to understand mechanism
-if (MSVC)
-  yarn_execute_command(
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    COMMAND cmake-js-fetch-msvc
-  )
-else ()
-  yarn_execute_command(
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    COMMAND cmake-js-fetch
-  )
-endif ()
+yarn_execute_command(
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  COMMAND cmake-js-fetch
+)
 
 # 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
 
@@ -62,8 +55,8 @@ add_library(${PROJECT_NAME} SHARED ${sources})
 # Apply NodeJS convention (no .dll/.so, just .node)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
-# Legacy TypeScript part expects this module to be called `scamp_native`
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scamp_native")
+# Legacy TypeScript part expects this module to be called `scam_native`
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native")
 
 # Put build artifacts into build/dist/server
 if(WIN32)

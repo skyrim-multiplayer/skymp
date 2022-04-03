@@ -16,7 +16,8 @@ env:
 
 jobs:
   build:
-    runs-on: windows-2019
+    # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
+    runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v2
@@ -76,7 +77,9 @@ jobs:
         cmake -B ${{github.workspace}}/build
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
+        -DPREPARE_NEXUS_ARCHIVES=ON
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        -DSKYRIM_SE=ON
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
 
@@ -104,12 +107,9 @@ jobs:
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
-        
-    - name: Create SP archive
-      working-directory: ${{github.workspace}}/ci
-      run: python impl/create_mod_archive.py --mod_name SkyrimPlatform
       
     - uses: actions/upload-artifact@v2
       with:
-        name: SP
-        path: ${{github.workspace}}/ci/SkyrimPlatform.zip
+        name: SP-SE
+        # Data folder is skipped for mod managers
+        path: ${{github.workspace}}/build/nexus/sp/data/*

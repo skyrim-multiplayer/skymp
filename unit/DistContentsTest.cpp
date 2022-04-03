@@ -50,6 +50,12 @@ auto GetExpectedPaths(const nlohmann::json& j)
   configurationTags.insert("Unix");
 #endif
 
+#ifdef SKYRIM_SE
+  configurationTags.insert("SkyrimSE");
+#else
+  configurationTags.insert("SkyrimAE");
+#endif
+
   for (auto& entry : j) {
     if (IsSubsetOf(entry["configurationTags"], configurationTags)) {
       for (auto& file : entry["expectedFiles"]) {
@@ -91,7 +97,7 @@ TEST_CASE("Distribution folder must contain all requested files",
   std::vector<std::filesystem::path> distContentsIgnore = {
     "server/data/Dawnguard.esm",   "server/data/Dragonborn.esm",
     "server/data/HearthFires.esm", "server/data/Skyrim.esm",
-    "server/data/Update.esm",      "server/scamp_native.ilk"
+    "server/data/Update.esm",      "server/scam_native.ilk"
   };
   for (auto& path : distContentsIgnore) {
     expectedPaths.erase(path);

@@ -1,5 +1,6 @@
 import { Game, Form } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
+import { remoteIdToLocalId } from "./view/worldViewMisc";
 
 const spAny = sp as Record<string, any>;
 
@@ -13,7 +14,8 @@ export interface Snippet {
 
 const deserializeArg = (arg: any) => {
   if (typeof arg === "object") {
-    const form = Game.getFormEx(arg.formId);
+    const formId = remoteIdToLocalId(arg.formId);
+    const form = Game.getFormEx(formId);
     const gameObject = spAny[arg.type].from(form);
     return gameObject;
   }
@@ -21,15 +23,16 @@ const deserializeArg = (arg: any) => {
 };
 
 const runMethod = async (snippet: Snippet): Promise<any> => {
-  const self = Game.getFormEx(snippet.selfId);
+  const selfId = remoteIdToLocalId(snippet.selfId);
+  const self = Game.getFormEx(selfId);
   if (!self)
     throw new Error(
-      `Unable to find form with id ${snippet.selfId.toString(16)}`
+      `Unable to find form with id ${selfId.toString(16)}`
     );
   const selfCasted = spAny[snippet.class].from(self);
   if (!selfCasted)
     throw new Error(
-      `Form ${snippet.selfId.toString(16)} is not instance of ${snippet.class}`
+      `Form ${selfId.toString(16)} is not instance of ${snippet.class}`
     );
   const f = selfCasted[snippet.function];
   return await f.apply(

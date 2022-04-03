@@ -1,5 +1,4 @@
 #pragma once
-#include <RE/BSScript/IFunction.h>
 
 class GetNativeFunctionAddr
 {

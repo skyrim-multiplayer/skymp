@@ -1,43 +1,24 @@
 #include "SkyrimPlatform.h"
-
-#include "ThreadPoolWrapper.h"
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
-#include <skse64/PluginAPI.h>
-
-#include "BrowserApi.h"    // BrowserApi::State
+#include "BrowserApi.h"    // APIs for register in CommonExecutionListener
 #include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
-
-// HelloTickListener
-#include <RE/ConsoleLog.h>
-
-// CommonExecutionListener
-#include "ConsoleApi.h"
-#include "DirectoryMonitor.h"
-#include "EventsApi.h"
-#include "ExceptionPrinter.h"
-#include "HttpClient.h"
-#include "ReadFile.h"
-#include "SkyrimPlatformProxy.h"
-
-// APIs for register in CommonExecutionListener
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
 #include "CameraApi.h"
-#include "ConsoleApi.h"
+#include "ConsoleApi.h" // CommonExecutionListener
 #include "DevApi.h"
+#include "DirectoryMonitor.h"
 #include "EncodingApi.h"
 #include "EventsApi.h"
+#include "ExceptionPrinter.h"
+#include "FileInfoApi.h"
+#include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
+#include "ReadFile.h"
+#include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
+#include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
-
-#include <asio.hpp>
-#include <condition_variable>
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -108,6 +89,8 @@ public:
   void Tick() override
   {
     try {
+      GetJsEngine();
+
       auto fileDirs = GetFileDirs();
 
       if (monitors.empty()) {
@@ -151,6 +134,7 @@ public:
   void Update() override
   {
     try {
+      GetJsEngine();
       taskQueue.Update();
       nativeCallRequirements.jsThrQ->Update();
       jsPromiseTaskQueue.Update();
@@ -175,8 +159,6 @@ private:
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
   {
-    auto& engine = GetJsEngine();
-
     for (auto& path : pathsToLoad) {
       if (EndsWith(path.wstring(), L"-settings.txt")) {
         LoadSettingsFile(path);
@@ -195,18 +177,15 @@ private:
     s.resize(s.size() - strlen("-settings.txt"));
 
     auto pluginName = std::filesystem::path(s).string();
-
-    // Why do we treat it as an exception actually?
-    std::string what =
-      "Found settings file: " + path.string() + " for plugin " + pluginName;
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-      .PrintException(what.data());
+    logger::info("Found settings file {} for plugin {}.", path.string(),
+                 pluginName);
 
     settingsByPluginName[pluginName] = ReadFile(path);
   }
 
   void LoadPluginFile(const std::filesystem::path& path)
   {
+    auto engine = GetJsEngine();
     auto scriptSrc = ReadFile(path);
 
     getSettings = [this](const JsFunctionArguments&) {
@@ -221,19 +200,20 @@ private:
 
     // We will be able to use require()
     JsValue devApi = JsValue::Object();
-    DevApi::Register(devApi, &engine,
+    DevApi::Register(devApi, engine,
                      { { "skyrimPlatform",
-                         [this](JsValue e) {
+                         [this, engine](JsValue e) {
                            EncodingApi::Register(e);
                            LoadGameApi::Register(e);
                            CameraApi::Register(e);
                            MpClientPluginApi::Register(e);
                            HttpClientApi::Register(e);
                            ConsoleApi::Register(e);
-                           DevApi::Register(e, &engine, {}, GetFileDirs());
+                           DevApi::Register(e, engine, {}, GetFileDirs());
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
                            Win32Api::Register(e);
+                           FileInfoApi::Register(e);
                            TextApi::Register(e);
                            InventoryApi::Register(e);
                            CallNativeApi::Register(
@@ -271,13 +251,13 @@ private:
     settingsByPluginName.clear();
   }
 
-  JsEngine& GetJsEngine()
+  std::shared_ptr<JsEngine> GetJsEngine()
   {
-    if (!engine) {
-      engine = std::make_shared<JsEngine>();
-      engine->ResetContext(jsPromiseTaskQueue);
+    if (!engine_) {
+      engine_ = std::make_shared<JsEngine>();
+      engine_->ResetContext(jsPromiseTaskQueue);
     }
-    return *engine;
+    return engine_;
   }
 
   std::vector<std::filesystem::path> GetPathsToLoad(
@@ -286,14 +266,15 @@ private:
     std::vector<std::filesystem::path> paths;
     if (std::filesystem::exists(directory)) {
       for (auto& it : std::filesystem::directory_iterator(directory)) {
-        std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
+        std::filesystem::path p =
+          it.is_directory() ? it.path() / "index.js" : it;
         paths.push_back(p);
       }
     }
     return paths;
   }
 
-  std::shared_ptr<JsEngine> engine;
+  std::shared_ptr<JsEngine> engine_;
   std::vector<std::shared_ptr<DirectoryMonitor>> monitors;
   uint32_t tickId = 0;
   Viet::TaskQueue taskQueue;
@@ -344,10 +325,10 @@ SkyrimPlatform::SkyrimPlatform()
   pImpl->complete = false;
 }
 
-SkyrimPlatform& SkyrimPlatform::GetSingleton()
+SkyrimPlatform* SkyrimPlatform::GetSingleton()
 {
   static SkyrimPlatform g_skyrimPlatform;
-  return g_skyrimPlatform;
+  return &g_skyrimPlatform;
 }
 
 void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
@@ -402,7 +383,7 @@ void SkyrimPlatform::PushToWorkerAndWait(
     pImpl->ioContext.get_executor(),
     std::bind(&Impl::RunInIOContext, pImpl, fPtr, stack, logger, vm, ret));
   pImpl->conditionalVariable.wait(
-    lock, [] { return SkyrimPlatform::GetSingleton().pImpl->complete; });
+    lock, [] { return SkyrimPlatform::GetSingleton()->pImpl->complete; });
 }
 
 void SkyrimPlatform::PrepareWorker()

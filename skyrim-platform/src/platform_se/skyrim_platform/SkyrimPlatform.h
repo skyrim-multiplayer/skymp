@@ -1,16 +1,10 @@
 #pragma once
 #include "TPOverlayService.h"
 
-#include <RE/BSScript/IFunction.h>
-#include <RE/BSScript/Internal/VirtualMachine.h>
-#include <RE/BSTSmartPointer.h>
-#include <functional>
-#include <memory>
-
 class SkyrimPlatform
 {
 public:
-  static SkyrimPlatform& GetSingleton();
+  static SkyrimPlatform* GetSingleton();
 
   void JsTick(bool gameFunctionsAvailable);
   void SetOverlayService(std::shared_ptr<OverlayService> overlayService);
