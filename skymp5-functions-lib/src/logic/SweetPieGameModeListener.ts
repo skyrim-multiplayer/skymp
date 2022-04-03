@@ -16,37 +16,37 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly redPortal = '42e96:SweetPie.esp';
   readonly bluePortal = '42fc1:SweetPie.esp';
 
-  readonly noEnterSafePlaceMessage: [string] = ["Странно, но вы не можете открыть эту дверь. Похоже, можно только сбежать через ворота..."];
-  readonly interiorsBlockedMessage: [string] = ["Похоже, эта дверь не откроется. Придется драться..."];
-  readonly warmupFinishedMessage: [string] = ["Разминка окончена. У вас есть %d секунд, чтобы убить друг друга!"];
-  readonly startingRoundInMessage: [string] = ["Раунд начнется через %d секунд"];
-  readonly remainingFightTimeMessage: [string] = ["В бой! У вас %d секунд"];
-  readonly determineWinnerMessage: [string] = ["%s побеждает с %d очками! Спасибо за игру!"];
-  readonly noWinnerMessage: [string] = ["Победителя нет. Спасибо за игру!"];
-  readonly multipleWinnersMessage: [string] = ["У нас несколько победителей!"];
-  readonly deathMessage: [string] = ["%s был убит %s. У %s теперь %d очков (у лучшего игрока %d)"];
-  readonly restoreMessage: [string] = ["Полное восстановление"];
-  readonly restoreDeniedMessage: [string] = ["Подождите еще %d секунд перед повторным восстановлением"];
+  readonly noEnterSafePlaceMessage: [string] = ["You cannot go back to safety! Running out of the map is the only option"];
+  readonly interiorsBlockedMessage: [string] = ["Interiors are not available during round"];
+  readonly warmupFinishedMessage: [string] = ["Warmup finished! Go! You have %d seconds to kill each other!"];
+  readonly startingRoundInMessage: [string] = ["Starting round in %d seconds"];
+  readonly remainingFightTimeMessage: [string] = ["Fight! You have %d seconds"];
+  readonly determineWinnerMessage: [string] = ["%s wins with %d points! Thanks for playing"];
+  readonly noWinnerMessage: [string] = ["There is no winner! Thanks for playing"];
+  readonly multipleWinnersMessage: [string] = ["We have multiple winners!"];
+  readonly deathMessage: [string] = ["%s was slain by %s. %s now has %d points (the best is %d)"];
+  readonly restoreMessage: [string] = ["Restored"];
+  readonly restoreDeniedMessage: [string] = ["Wait for %d seconds to restore again"];
 
-  readonly cantStartMessage: [string] = ["Игроков слишком мало, разминка начнется, когда будет еще %s человек"];
+  readonly cantStartMessage: [string] = ["Too few players, the warmup will start when %s more join"];
 
-  readonly comingSoonPortalName = 'Скоро...';
-  readonly quitGamePortalName = 'Выйти из игры и вернуться на рабочий стол';
-  readonly returnToHallPortalName = 'Вернуться в чертоги';
-  readonly neutralPortalNameTpl = 'Войти в десматч\nИгроков сейчас: %d (мин %d для старта игры)\n%s';
+  readonly comingSoonPortalName = 'Coming soon...';
+  readonly quitGamePortalName = 'Quit the game and return to desktop';
+  readonly returnToHallPortalName = 'Return to hall';
+  readonly neutralPortalNameTpl = 'Enter deathmatch\nPlayers: %d (min %d)\n%s';
 
   readonly roundStateToHumanReadable: Record<SweetPieRound['state'], string> = {
-    'wait': 'Ожидание игроков...',
-    'warmup': 'Разминка',
-    'running': 'Игра идет, подождите',
-    'finished': 'Игра идет, подождите',
+    'wait': 'Waiting for players...',
+    'warmup': 'Warmup',
+    'running': 'Running, please wait',
+    'finished': 'Running, please wait',
   };
   readonly commands: Command[] = [
     {
       name: 'kill',
       handler: (actorId: number, controller: PlayerController) => {
         controller.setPercentages(actorId, { health: 0 });
-        controller.sendChatMessage(actorId, 'Вы убили себя...');
+        controller.sendChatMessage(actorId, 'You killed yourself...');
       }
     }, 
   ]
