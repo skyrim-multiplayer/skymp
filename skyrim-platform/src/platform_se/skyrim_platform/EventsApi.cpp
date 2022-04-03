@@ -1,5 +1,6 @@
 #include "EventsApi.h"
 #include "EventManager.h"
+#include "ExceptionPrinter.h"
 #include "IPC.h"
 #include "InvalidArgumentException.h"
 #include "JsUtils.h"
@@ -336,8 +337,14 @@ void EventsApi::SendEvent(const char* eventName,
     try {
       callbackInfo.callback.Call(arguments);
     } catch (const std::exception& e) {
-      logger::critical("Error while calling a callback for event {}. {}",
-                       eventName, e.what());
+      const char* method = callbackInfo.runOnce ? "once" : "on";
+      std::string what = e.what();
+      logger::error("{}('{}'): {}", method, eventName, what);
+
+      // We still write to the game console as we were doing before spdlog
+      // integration. When I write something wrong when coding skymp5-client I
+      // expect to see errors in game console
+      ExceptionPrinter::Print(e);
     }
   }
 
