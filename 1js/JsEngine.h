@@ -148,14 +148,6 @@ public:
     return JsValue(v);
   }
 
-  static JsValue String(const std::u16string& arg)
-  {
-    JsValueRef v;
-    SafeCall(JS_ENGINE_F(JsCreateStringUtf16),
-             reinterpret_cast<const uint16_t*>(arg.data()), arg.size(), &v);
-    return JsValue(v);
-  }
-
   static JsValue Int(int arg)
   {
     JsValueRef v;
@@ -313,18 +305,6 @@ public:
   }
 
   operator std::string() const { return GetString(value); }
-
-  operator std::wstring() const
-  {
-    size_t outLength;
-    SafeCall(JS_ENGINE_F(JsCopyStringUtf16), value, 0, 0, nullptr, &outLength);
-
-    std::wstring res;
-    res.resize(outLength);
-    SafeCall(JS_ENGINE_F(JsCopyStringUtf16), value, 0, outLength,
-             reinterpret_cast<short unsigned int*>(res.data()), &outLength);
-    return res;
-  }
 
   operator int() const
   {
