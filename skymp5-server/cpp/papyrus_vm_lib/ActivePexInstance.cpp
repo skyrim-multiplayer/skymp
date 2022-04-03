@@ -894,33 +894,28 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
   }
 
   if (parentVM->IsNativeFunctionByNameExisted(GetSourcePexName())) {
-
-    std::shared_ptr<VarValue> functionName =
-      std::make_shared<VarValue>((new std::string(name))->c_str());
+    auto functionName = std::make_shared<VarValue>(name);
 
     identifiersValueNameCache.push_back(functionName);
-    return *functionName;
+    return *identifiersValueNameCache.back();
   }
 
   for (auto& _string : sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
-      std::shared_ptr<VarValue> stringTableValue =
-        std::make_shared<VarValue>((new std::string(name))->c_str());
+      auto stringTableValue = std::make_shared<VarValue>(name);
 
       identifiersValueNameCache.push_back(stringTableValue);
-      return *stringTableValue;
+      return *identifiersValueNameCache.back();
     }
   }
 
   for (auto& _string :
        parentInstance->sourcePex.fn()->stringTable.GetStorage()) {
     if (_string == name) {
-
-      std::shared_ptr<VarValue> stringTableParentValue =
-        std::make_shared<VarValue>((new std::string(name))->c_str());
+      auto stringTableParentValue = std::make_shared<VarValue>(name);
 
       identifiersValueNameCache.push_back(stringTableParentValue);
-      return *stringTableParentValue;
+      return *identifiersValueNameCache.back();
     }
   }
 
