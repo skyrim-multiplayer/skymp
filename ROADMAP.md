@@ -24,7 +24,7 @@ Implemented features we plan to improve or fix.
 | --- | --- |
 | *Movement* | Add lag compensation; work on the details - walking speed and stuff, ask for help in ST. |
 | *Character creation* | Add server-side validation |
-| *Animation events* | Remove local delays when the animation is postponed to the next. frames. Disable collision when using chairs. Ask for help at ST. |
+| *Animation events* | Remove local delays when animation events are queued to the next frames. Disable collision when using furniture like chairs. Ask for help at ST. |
 | *Damage* | Remove incorrect range check for shooting. Blood spatter and sounds must be in sync. |
 | *Containers* | Incorrect “empty” label on a container. You should animate the opening of the container for everyone, including sounds. We probably should prepare a new API in the platform for serializing/deserializing the contents of the container, as is done in ST. This API may be the basis for future upgrades to this sync and inventory sync. 2 or more players should be able to loot a container at the same time. |
 | *Equipment* | What is equipped in the hands is not saved when you restart the server, but it should. |
