@@ -104,14 +104,6 @@ podman run -it --rm -v "$PWD:$PWD" -w "$PWD" -e VCPKG_DEFAULT_BINARY_CACHE=/home
 
    All build artifacts would be placed into `build/dist`.
 
-#### How to build only SkyrimPlatform
-
--  For those users who want to build SP but not SkyMP there is `ONLY_SP` option:
-
-   ```sh
-   cmake .. -DONLY_SP=ON
-   ```
-
 ### Linux
 
 On Linux, there might be some tricky dependency issues. To work around them,
