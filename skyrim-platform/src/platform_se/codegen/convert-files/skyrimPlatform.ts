@@ -130,7 +130,7 @@ export interface InventoryChangesEntry {
   baseId: number
   extendDataList: BaseExtraList[]
 }
-export declare let getExtraContainerChanges: (objectReferenceId: number) => InventoryChangesEntry[]
+export declare let getExtraContainerChanges: (objectReferenceId: number) => InventoryChangesEntry[] | null
 
 export interface InventoryEntry {
   count: number
