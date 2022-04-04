@@ -296,14 +296,12 @@ export class SkympClient {
       }
     });
     on("containerChanged", (e) => {
-      const isPlayer: boolean = e.oldContainer === Game.getPlayer();
+      const pl = Game.getPlayer();
+      const isPlayer: boolean | null = pl && e.oldContainer && (pl.getFormID() === e.oldContainer.getFormID());
       const noContainer: boolean = e.newContainer === null;
       const isReference: boolean = e.reference !== null;
       if (isPlayer && noContainer && isReference) {
-        const furnitureRefr = (Game.getPlayer() as Actor).getFurnitureReference();
-        if (!furnitureRefr) return;
-        const furnitureId = furnitureRefr.getFormID();
-        furnitureStreak.delete(furnitureId);
+        e.reference.delete();
         this.sendTarget.send({ t: MsgType.DropItem, baseId: e.reference.getFormID(), count: 1 }, true);
       }
     });
