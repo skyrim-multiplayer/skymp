@@ -1,6 +1,24 @@
 #include "ExceptionPrinter.h"
 #include "ConsoleApi.h"
 
+const char* ExceptionPrinter::RemoveMultiplePrefixes(const char* str,
+                                                     const char* prefix)
+{
+  size_t prefixLen = strlen(prefix);
+  size_t strLen = strlen(str);
+  while (strLen >= prefixLen && !memcmp(str, prefix, prefixLen)) {
+    str += prefixLen;
+    strLen -= prefixLen;
+  }
+  return str;
+}
+
+void ExceptionPrinter::Print(const std::exception& e)
+{
+  auto what = RemoveMultiplePrefixes(e.what(), "Error: ");
+  ExceptionPrinter(ConsoleApi::GetExceptionPrefix()).PrintException(what);
+}
+
 ExceptionPrinter::ExceptionPrinter(const char* exceptionPrefix_)
   : exceptionPrefix(exceptionPrefix_)
 {

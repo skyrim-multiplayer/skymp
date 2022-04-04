@@ -23,25 +23,6 @@
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {
-const char* RemoveMultiplePrefixes(const char* str, const char* prefix)
-{
-  size_t prefixLen = strlen(prefix);
-  size_t strLen = strlen(str);
-  while (strLen >= prefixLen && !memcmp(str, prefix, prefixLen)) {
-    str += prefixLen;
-    strLen -= prefixLen;
-  }
-  return str;
-}
-
-void PrintExceptionToGameConsole(const std::exception& e)
-{
-  if (auto console = RE::ConsoleLog::GetSingleton()) {
-    auto what = RemoveMultiplePrefixes(e.what(), "Error: ");
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix()).PrintException(what);
-  }
-}
-
 bool EndsWith(const std::wstring& value, const std::wstring& ending)
 {
   return ending.size() <= value.size() &&
@@ -127,7 +108,7 @@ public:
 
       EventsApi::SendEvent("tick", {});
     } catch (const std::exception& e) {
-      PrintExceptionToGameConsole(e);
+      ExceptionPrinter::Print(e);
     }
   }
 
@@ -140,7 +121,7 @@ public:
       jsPromiseTaskQueue.Update();
       EventsApi::SendEvent("update", {});
     } catch (const std::exception& e) {
-      PrintExceptionToGameConsole(e);
+      ExceptionPrinter::Print(e);
     }
   }
 
@@ -340,7 +321,7 @@ void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
   try {
     (gameFunctionsAvailable ? pImpl->updateTasks : pImpl->tickTasks).Update();
   } catch (const std::exception& e) {
-    PrintExceptionToGameConsole(e);
+    ExceptionPrinter::Print(e);
   }
 }
 

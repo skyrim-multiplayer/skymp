@@ -824,9 +824,8 @@ void TESModPlatform::Update()
     vm->impl->DispatchStaticCall(className, funcName, &args, functor);
   } catch (std::exception& e) {
     // We are not interested in crashing the game thread, so just printing
-    ExceptionPrinter printer(ConsoleApi::GetExceptionPrefix());
     static std::once_flag flag;
-    std::call_once(flag, [&] { printer.PrintException(e.what()); });
+    std::call_once(flag, [&] { ExceptionPrinter::Print(e); });
   }
 }
 
