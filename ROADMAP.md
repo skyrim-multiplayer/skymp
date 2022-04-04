@@ -7,12 +7,12 @@ Welcome to the roadmap of the project! You can see synchronizations here, but th
 | Feature | Status/TODO |
 | --- | --- |
 | **DONE:** | **Fully implemented and well-tested. Near to ideal sync.** |
-| *Appearance* | Done |
 | *Attributes - Health, Magicka, Stamina* | Done |
 | *Death* | Done |
 | *Inventory* | Done |
 | *Craft (forge like)* | Done |
 | **PARTIALLY:** | **Implemented features we plan to improve or fix.** |
+| *Appearance* | https://github.com/skyrim-multiplayer/skymp/issues/929 |
 | *Movement* | Add lag compensation; work on the details - walking speed and stuff, ask for help in ST. |
 | *Character creation* | Add server-side validation |
 | *Animation events* | Remove local delays when animation events are queued to the next frames. Disable collision when using furniture like chairs. Ask for help at ST. |
