@@ -8,7 +8,8 @@ import {
   ObjectReference,
   settings,
   storage,
-  browser as spBrowser
+  browser as spBrowser,
+  printConsole
 } from "skyrimPlatform";
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./features/browser";
@@ -75,27 +76,33 @@ const startClient = (): void => {
     const gameYearId = 0x35;
     const timeScaleId = 0x3a;
 
+    const gameHour = GlobalVariable.from(Game.getFormEx(gameHourId));
+    const gameDay = GlobalVariable.from(Game.getFormEx(gameDayId));
+    const gameMonth = GlobalVariable.from(Game.getFormEx(gameMonthId));
+    const gameYear = GlobalVariable.from(Game.getFormEx(gameYearId));
+    const timeScale = GlobalVariable.from(Game.getFormEx(timeScaleId));
+    if (!gameHour || !gameDay || !gameMonth || !gameYear || !timeScale) {
+      return;
+    }
+
     const d = new Date();
 
-    const gameHour = GlobalVariable.from(Game.getFormEx(gameHourId)) as GlobalVariable;
-    gameHour.setValue(
-      d.getUTCHours() +
-      d.getUTCMinutes() / 60 +
-      d.getUTCSeconds() / 60 / 60 +
-      d.getUTCMilliseconds() / 60 / 60 / 1000
-    );
+    let newGameHourValue = 0;
+    newGameHourValue += d.getUTCHours();
+    newGameHourValue += d.getUTCMinutes() / 60;
+    newGameHourValue += d.getUTCSeconds() / 60 / 60;
+    newGameHourValue += d.getUTCMilliseconds() / 60 / 60 / 1000;
 
-    const gameDay = GlobalVariable.from(Game.getFormEx(gameDayId)) as GlobalVariable;
-    gameDay.setValue(d.getUTCDate());
+    const diff = Math.abs(gameHour.getValue() - newGameHourValue);
 
-    const gameMonth = GlobalVariable.from(Game.getFormEx(gameMonthId)) as GlobalVariable;
-    gameMonth.setValue(d.getUTCMonth());
+    if (diff >= 1 / 60) {
+      gameHour.setValue(newGameHourValue);
+      gameDay.setValue(d.getUTCDate());
+      gameMonth.setValue(d.getUTCMonth());
+      gameYear.setValue(d.getUTCFullYear() - 2020 + 199);
+    }
 
-    const gameYear = GlobalVariable.from(Game.getFormEx(gameYearId)) as GlobalVariable;
-    gameYear.setValue(d.getUTCFullYear() - 2020 + 199);
-
-    const timeScale = GlobalVariable.from(Game.getFormEx(timeScaleId)) as GlobalVariable;
-    timeScale.setValue(1);
+    timeScale.setValue(gameHour.getValue() > newGameHourValue ? 0.6 : 1.2);
   });
 
   let riftenUnlocked = false;
