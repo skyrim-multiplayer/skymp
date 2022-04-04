@@ -301,8 +301,9 @@ export class SkympClient {
       const noContainer: boolean = e.newContainer === null;
       const isReference: boolean = e.reference !== null;
       if (isPlayer && noContainer && isReference) {
+        const baseId = e.reference.getFormID();
         e.reference.delete();
-        this.sendTarget.send({ t: MsgType.DropItem, baseId: e.reference.getFormID(), count: 1 }, true);
+        this.sendTarget.send({ t: MsgType.DropItem, baseId, count: 1 }, true);
       }
     });
 
