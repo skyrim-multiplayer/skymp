@@ -69,12 +69,10 @@ enable_testing()
 
 # Bool options
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
-option(ONLY_SP "Build only SkyrimPlatform instead of performing full SkyMP build" OFF)
 option(SWEETPIE "Affects default client and server configs" ON)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
-message(STATUS ONLY_SP=${ONLY_SP})
 message(STATUS SWEETPIE=${SWEETPIE})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
 message(STATUS SKYRIM_SE=${SKYRIM_SE})
@@ -125,15 +123,14 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 add_subdirectory(viet)
 add_subdirectory(skyrim-platform)
 
-if(NOT ONLY_SP)
-  add_subdirectory(client-deps)
-  add_subdirectory(skymp5-client)
-  add_subdirectory(skymp5-front)
-  add_subdirectory(skymp5-functions-lib)
-  add_subdirectory(skymp5-scripts)
-  add_subdirectory(skymp5-server)
-  add_subdirectory(unit)
-endif()
+
+add_subdirectory(client-deps)
+add_subdirectory(skymp5-client)
+add_subdirectory(skymp5-front)
+add_subdirectory(skymp5-functions-lib)
+add_subdirectory(skymp5-scripts)
+add_subdirectory(skymp5-server)
+add_subdirectory(unit)
 
 if(PREPARE_NEXUS_ARCHIVES)
   add_custom_target(
