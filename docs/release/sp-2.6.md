@@ -29,6 +29,24 @@ why your HTTP request failed. Currently, it can be
 * `UnsupportedMultipartBoundaryChars`
 * `Compression`
 
+## Add more events
+
+* `buttonEvent`
+* `mouseMove`
+* `thumbstickEvent`
+* `kinectEvent`
+* `deviceConnect`
+* `actorKill`
+* `criticalHit`
+* `disarmedEvent`
+* `dragonSoulsGained`
+* `itemHarvested`
+* `levelIncrease`
+* `locationDiscovery`
+* `shoutAttack`
+* `skillIncrease`
+* `soulsTrapped`
+* `spellsLearned`
 
 ## FileInfo API
 
