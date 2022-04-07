@@ -3,10 +3,9 @@
 
 This document includes changes made since SP 2.5.0
 
+**Hey! This is a very important update that adds AE/1.6 support, improves FPS, and generally fixes lots of crashes and issues. It's quite reasonable to update instead of keep using 2.5 or even older versions.**
 
-SP updates regularly. This update probably doesn't include ALL patches that have to be made.
-
-There are still many things to be implemented or fixed. See [issues](https://github.com/skyrim-multiplayer/skymp/issues?q=is%3Aopen+is%3Aissue+label%3Aarea%3Askyrim-platform).
+But remember that unfortunately updating SP break save games on *some* modlists. There are still many things to be implemented or fixed. See [issues](https://github.com/skyrim-multiplayer/skymp/issues?q=is%3Aopen+is%3Aissue+label%3Aarea%3Askyrim-platform).
 
 SP supports both Steam version of Skyrim SE (1.6+) and legacy 1.5.97.
 
