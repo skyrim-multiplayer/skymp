@@ -13,7 +13,7 @@ Welcome to the roadmap of the project! You can see synchronizations here, but th
 | *Craft (forge like)* | Done |
 | **PARTIALLY:** | **Implemented features we plan to improve or fix.** |
 | *Appearance* | https://github.com/skyrim-multiplayer/skymp/issues/929 |
-| *Movement* | Add lag compensation; work on the details - walking speed and stuff, ask for help in ST. |
+| *Movement* | Add lag compensation; work on the details - walking speed and stuff, ask for help in ST. Send Movement to the server when the character has moved instead of still once every X ms. |
 | *Character creation* | Add server-side validation |
 | *Animation events* | Remove local delays when animation events are queued to the next frames. Disable collision when using furniture like chairs. Ask for help at ST. |
 | *Damage* | Remove incorrect range check for shooting. Blood spatter and sounds must be in sync. |
