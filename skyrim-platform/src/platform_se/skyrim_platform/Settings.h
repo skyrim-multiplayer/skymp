@@ -1,4 +1,5 @@
 #pragma once
+#include <SimpleIni.h>
 
 namespace Settings {
 
