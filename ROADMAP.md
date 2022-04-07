@@ -67,3 +67,14 @@ Welcome to the roadmap of the project! You can see synchronizations here, but th
 | *Playable monster races* | Replacing a player with any NPC (animals, monsters, etc.) |
 | *Lycanthropy* | |
 | *Vampirism* | Perks, extras, vampire spells from DLC. I’ll add on my own that I don’t see the meaning of the word in everything at all :) |
+
+# Build system
+
+These deps should be installed via vcpkg:
+- ctpl
+- frida
+- tilted core
+- tilted hooks
+- tilted reverse
+- tilted ui
+- makeid
