@@ -21,13 +21,6 @@ public:
     loadStatus = ini.LoadFile(path);
   }
 
-  File(const wchar_t* _pathW)
-    : pathW(_pathW)
-  {
-    ini.SetUnicode();
-    loadStatus = ini.LoadFile(pathW);
-  }
-
   ~File()
   {
     if (changed) {
@@ -35,39 +28,20 @@ public:
     }
   }
 
-  std::string_view GetFilePath()
-  {
-    if (pathW) {
-      _bstr_t b(pathW);
-      return std::string_view(b);
-    } else {
-      return std::string_view(path);
-    }
-  }
+  const char* GetFilePath() const { return path; }
 
-  bool IsLoaded() { return loadStatus == SI_Error::SI_OK; }
+  bool IsLoaded() const { return loadStatus == SI_OK; }
 
   bool Reload()
   {
-    if (pathW) {
-      loadStatus = ini.LoadFile(pathW);
-    } else {
-      loadStatus = ini.LoadFile(path);
-    }
-
+    loadStatus = ini.LoadFile(path);
     return IsLoaded();
   }
 
   bool Save()
   {
-    auto status = SI_Error::SI_FAIL;
-    if (pathW) {
-      status = ini.SaveFile(pathW);
-    } else {
-      status = ini.SaveFile(path);
-    }
-
-    auto success = status >= 0;
+    const auto status = ini.SaveFile(path);
+    const auto success = status >= 0;
     if (success) {
       loadStatus = status;
       changed = false;
@@ -90,15 +64,15 @@ public:
                   const char* comment = nullptr)
   {
     auto status = ini.SetLongValue(section, key, value, comment);
-    if (status == SI_Error::SI_FAIL) {
+    if (status == SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
                    GetFilePath(), section, key, value);
-    } else if (status == SI_Error::SI_INSERTED) {
+    } else if (status == SI_INSERTED) {
       logger::debug("Inserted config key. file - {}, section - {}, key "
                     "- {}, value - {}.",
                     GetFilePath(), section, key, value);
-    } else if (status == SI_Error::SI_UPDATED) {
+    } else if (status == SI_UPDATED) {
       logger::debug("Updated config key. file - {}, section - {}, key "
                     "- {}, value - {}.",
                     GetFilePath(), section, key, value);
@@ -133,15 +107,15 @@ public:
                 const char* comment = nullptr)
   {
     auto status = ini.SetDoubleValue(section, key, value, comment);
-    if (status == SI_Error::SI_FAIL) {
+    if (status == SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
                    GetFilePath(), section, key, value);
-    } else if (status == SI_Error::SI_INSERTED) {
+    } else if (status == SI_INSERTED) {
       logger::debug("Inserted config key. file - {}, section - {}, key "
                     "- {}, value - {}.",
                     GetFilePath(), section, key, value);
-    } else if (status == SI_Error::SI_UPDATED) {
+    } else if (status == SI_UPDATED) {
       logger::debug("Updated config key. file - {}, section - {}, key "
                     "- {}, value - {}.",
                     GetFilePath(), section, key, value);
@@ -170,15 +144,15 @@ public:
                const char* comment = nullptr)
   {
     auto status = ini.SetBoolValue(section, key, value, comment);
-    if (status == SI_Error::SI_FAIL) {
+    if (status == SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
                    GetFilePath(), section, key, value);
-    } else if (status == SI_Error::SI_INSERTED) {
+    } else if (status == SI_INSERTED) {
       logger::debug("Inserted config key. file - {}, section - {}, key "
                     "- {}, value - {}.",
                     GetFilePath(), section, key, value);
-    } else if (status == SI_Error::SI_UPDATED) {
+    } else if (status == SI_UPDATED) {
       logger::debug("Updated config key. file - {}, section - {}, key "
                     "- {}, value - {}.",
                     GetFilePath(), section, key, value);
@@ -201,15 +175,15 @@ public:
                  const char* comment = nullptr)
   {
     auto status = ini.SetValue(section, key, value, comment);
-    if (status == SI_Error::SI_FAIL) {
+    if (status == SI_FAIL) {
       logger::info("Failed to set config value. file - {}, section - {}, key "
                    "- {}, value - {}.",
                    GetFilePath(), section, key, value);
-    } else if (status == SI_Error::SI_INSERTED) {
+    } else if (status == SI_INSERTED) {
       logger::debug("Inserted config key. file - {}, section - {}, key "
                     "- {}, value - {}.",
                     GetFilePath(), section, key, value);
-    } else if (status == SI_Error::SI_UPDATED) {
+    } else if (status == SI_UPDATED) {
       logger::debug("Updated config key. file - {}, section - {}, key "
                     "- {}, value - {}.",
                     GetFilePath(), section, key, value);
@@ -246,9 +220,8 @@ private:
   File(File&&) = delete;
 
   CSimpleIniA ini;
-  const char* path;
-  const wchar_t* pathW;
-  SI_Error loadStatus;
+  const char* path = "";
+  int loadStatus = 0;
   bool changed = false;
 };
 
