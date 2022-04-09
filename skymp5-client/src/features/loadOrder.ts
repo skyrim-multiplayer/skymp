@@ -120,6 +120,7 @@ export const verifyLoadOrder = () => {
       }
       let fail = [];
       for (let i = 0; i < serverMods.length; ++i) {
+        // Need case-insensitive check for 1.6+
         if (
           clientMods[i].filename.toLowerCase() !== serverMods[i].filename.toLowerCase() ||
           clientMods[i].size !== serverMods[i].size ||
