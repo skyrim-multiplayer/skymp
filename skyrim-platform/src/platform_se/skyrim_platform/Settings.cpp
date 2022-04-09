@@ -1,11 +1,11 @@
 #include "Settings.h"
 
-constexpr auto platformSettingsFilePath =
-  L"Data/SKSE/Plugins/SkyrimPlatform.ini";
+constexpr auto kPlatformSettingsFilePath =
+  "Data/SKSE/Plugins/SkyrimPlatform.ini";
 
 std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
 {
-  auto file = std::make_unique<Settings::File>(platformSettingsFilePath);
+  auto file = std::make_unique<Settings::File>(kPlatformSettingsFilePath);
 
   if (!file->IsLoaded()) {
     // if not loaded put some default data and save
