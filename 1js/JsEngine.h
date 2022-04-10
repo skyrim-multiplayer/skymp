@@ -13,8 +13,9 @@
 // ^ uncomment or re-generate project files with -DJS_ENGINE_TRACING_ENABLED to
 // enable tracing
 
-// CAUTION! SkyrimPlatform crashes with that setting on.
-// See https://github.com/skyrim-multiplayer/skymp/issues/266
+// Works with SkyrimPlatform but generates GBs of logs.
+// We use spdlog::trace. Make sure that your log level allows you to see
+// 'trace'.
 
 // Useful for finding static JsValue variables that fail in destructor due to
 // undefined static deinitialization order (Chakra is being deinitialized
@@ -40,8 +41,8 @@
 // specifiers were added to initialize constants once.
 
 #ifdef JS_ENGINE_TRACING_ENABLED
-#  include <fmt/format.h>
 #  include <map>
+#  include <spdlog/spdlog.h>
 #endif
 
 #define JS_ENGINE_F(func) func, #func
@@ -573,7 +574,7 @@ private:
 #ifdef JS_ENGINE_TRACING_ENABLED
   void TraceConstructor()
   {
-    fmt::print("[!] JsValue {}\n", ToString());
+    spdlog::trace("[!] JsValue {}\n", ToString());
     GetStringValuesStorage()[value] = ToString();
     GetJsValueIdStorage()[value].push_back(GetJsValueNextId()++);
   }
@@ -582,8 +583,8 @@ private:
   {
     auto& stringifiedValue = GetStringValuesStorage()[value];
     auto& ids = GetJsValueIdStorage()[value];
-    fmt::print("[!] ~JsValue {}; ids = {}\n", stringifiedValue,
-               fmt::join(ids, ", "));
+    spdlog::trace("[!] ~JsValue {}; ids = {}\n", stringifiedValue,
+                  fmt::join(ids, ", "));
   }
 
   static std::map<void*, std::string>& GetStringValuesStorage()
