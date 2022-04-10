@@ -317,7 +317,6 @@ export class SkympClient {
           }
         }
       }
-      printConsole(`Everything seems to work`);
     });
 
     const playerFormId = 0x14;
