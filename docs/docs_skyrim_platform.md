@@ -25,6 +25,8 @@ The documentation is versioned up-to-date with SkyrimPlatform itself. If you rea
 
 You can get Skyrim Platform from Nexus: https://www.nexusmods.com/skyrimspecialedition/mods/54909
 
+[Create your first Skyrim Platform plugin!](https://github.com/skyrim-multiplayer/skymp/tree/main/skyrim-platform/tools/plugin-example)
+
 ## Table of contents
 
 - Skyrim integration
