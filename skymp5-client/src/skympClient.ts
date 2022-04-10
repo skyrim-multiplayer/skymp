@@ -8,6 +8,7 @@ import {
   Ui,
   Utility,
   Actor,
+  ObjectReference,
 } from "skyrimPlatform";
 import { getMovement } from "./sync/movement";
 import { getAppearance } from "./sync/appearance";
@@ -32,6 +33,7 @@ import { FormModel } from "./modelSource/model";
 import * as netInfo from "./features/netInfoSystem";
 import { WorldView } from "./view/worldView";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./view/worldViewMisc";
+import { throwIfEmpty } from "rxjs";
 
 interface AnyMessage {
   type?: string;
@@ -295,16 +297,28 @@ export class SkympClient {
         }
       }
     });
-    on("containerChanged", (e) => {
-      const pl = Game.getPlayer();
-      const isPlayer: boolean | null = pl && e.oldContainer && (pl.getFormID() === e.oldContainer.getFormID());
+
+    on("containerChanged", (e) => { 
+      const pl = Game.getPlayer() as Actor;
+      const isPlayer: boolean = pl && e.oldContainer && (pl.getFormID() === e.oldContainer.getFormID());
       const noContainer: boolean = e.newContainer === null;
       const isReference: boolean = e.reference !== null;
-      if (isPlayer && noContainer && isReference) {
-        const baseId = e.reference.getFormID();
-        e.reference.delete();
-        this.sendTarget.send({ t: MsgType.DropItem, baseId, count: 1 }, true);
+      if (isPlayer && isReference && !noContainer) {
+        const baseId: number = e.baseObj.getFormID();
+        const radius: number = 200;
+        const refrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();
+        if (refrId) {
+          const refr = ObjectReference.from(Game.getFormEx(refrId));
+          if (refr) {
+            refr.delete().then(() => {
+              const t = MsgType.DropItem;
+              const count = 1;
+              this.sendTarget.send({t, baseId, count}, true);
+            });
+          }
+        }
       }
+      printConsole(`Everything seems to work`);
     });
 
     const playerFormId = 0x14;
