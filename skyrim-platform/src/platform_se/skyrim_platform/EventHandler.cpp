@@ -455,8 +455,11 @@ EventResult EventHandler::ProcessEvent(const RE::TESHitEvent* event,
     auto sourceForm = RE::TESForm::LookupByID(e->source);
     auto projectileForm = RE::TESForm::LookupByID(e->projectile);
 
-    AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
+    // TODO(#336): drop old name "agressor" on next major release of SP
+    // Again: Until we release 3.0.0 we do not remove this line.
+    AddObjProperty(&obj, "agressor", e->cause.get(), "ObjectReference");
     AddObjProperty(&obj, "aggressor", e->cause.get(), "ObjectReference");
+    AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
     AddObjProperty(&obj, "source", sourceForm, "Form");
     AddObjProperty(&obj, "projectile", projectileForm, "Form");
     AddObjProperty(&obj, "isPowerAttack",
