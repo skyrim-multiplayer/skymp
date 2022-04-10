@@ -92,10 +92,6 @@ const enumerateClientMods = (getCount: (() => number), getAt: ((idx: number) => 
 }
 
 const getClientMods = () => {
-  const eslMods = enumerateClientMods(Game.getLightModCount, Game.getLightModName);
-  if (eslMods.length !== 0) {
-    throw new Error(`esl mods are not supported, yet you have these: ${JSON.stringify(eslMods)}`);
-  }
   return enumerateClientMods(Game.getModCount, Game.getModName);
 };
 
@@ -124,10 +120,11 @@ export const verifyLoadOrder = () => {
       }
       let fail = [];
       for (let i = 0; i < serverMods.length; ++i) {
+        // Need case-insensitive check for 1.6+
         if (
-          clientMods[i].filename != serverMods[i].filename ||
-          clientMods[i].size != serverMods[i].size ||
-          clientMods[i].crc32 != serverMods[i].crc32
+          clientMods[i].filename.toLowerCase() !== serverMods[i].filename.toLowerCase() ||
+          clientMods[i].size !== serverMods[i].size ||
+          clientMods[i].crc32 !== serverMods[i].crc32
         ) {
           fail.push(i);
           printConsole(`${i}-th mod (numbered from 0) does not match.`);
