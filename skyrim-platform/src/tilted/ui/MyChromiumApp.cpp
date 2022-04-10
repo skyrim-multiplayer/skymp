@@ -70,8 +70,12 @@ void MyChromiumApp::Initialize() noexcept
   settings.remote_debugging_port = 9000;
 #endif
 
-  auto ceftempPath =
-    std::filesystem::temp_directory_path() / L"Skyrim Platform" / L"CEFTemp";
+  // We want different CEFTemp paths for the different game installations
+  size_t hash =
+    std::hash<std::wstring>{}(std::filesystem::current_path().wstring());
+
+  auto ceftempPath = std::filesystem::temp_directory_path() /
+    L"Skyrim Platform" / (L"CEFTemp" + std::to_wstring(hash));
   auto logPath = ceftempPath / L"cef_debug.log";
 
   CefString(&settings.log_file).FromWString(logPath.wstring());
