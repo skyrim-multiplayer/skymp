@@ -70,11 +70,12 @@ void MyChromiumApp::Initialize() noexcept
   settings.remote_debugging_port = 9000;
 #endif
 
-  CefString(&settings.log_file)
-    .FromWString(currentPath / L"Data" / L"Platform" / L"CEFTemp" /
-                 L"cef_debug.log");
-  CefString(&settings.cache_path)
-    .FromWString(currentPath / L"Data" / L"Platform" / L"CEFTemp");
+  auto ceftempPath =
+    std::filesystem::temp_directory_path() / L"Skyrim Platform" / L"CEFTemp";
+  auto logPath = ceftempPath / L"cef_debug.log";
+
+  CefString(&settings.log_file).FromWString(logPath.wstring());
+  CefString(&settings.cache_path).FromWString(ceftempPath.wstring());
 
   CefString(&settings.browser_subprocess_path)
     .FromWString(currentPath / m_processName);
@@ -86,7 +87,10 @@ void MyChromiumApp::Initialize() noexcept
                  "locales");
 
   if (!CefInitialize(args, settings, this, nullptr)) {
-    MessageBoxA(0, "CefInitialize failed", "Error", MB_ICONERROR);
+    MessageBoxA(0,
+                "CefInitialize failed (You probably have Skyrim Together "
+                "installed, SP isn't compatible with it)",
+                "Error", MB_ICONERROR);
   }
 
   m_pGameClient =
@@ -106,7 +110,10 @@ void MyChromiumApp::Initialize() noexcept
                                      L"file:///Data/Platform/UI/index.html",
                                      browserSettings, nullptr, nullptr)) {
 
-    MessageBoxA(0, "CreateBrowser failed", "Error", MB_ICONERROR);
+    MessageBoxA(0,
+                "CreateBrowser failed (You probably have Skyrim Together "
+                "installed, SP isn't compatible with it)",
+                "Error", MB_ICONERROR);
   }
 }
 
