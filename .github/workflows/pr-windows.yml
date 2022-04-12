@@ -108,8 +108,17 @@ jobs:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
 
+    - id: set_var
+      run: |
+        content=`cat ./path/to/package.json`
+        # the following lines are only required for multi line json
+        content="${content//'%'/'%25'}"
+        content="${content//$'\n'/'%0A'}"
+        content="${content//$'\r'/'%0D'}"
+        # end of optional handling for multi line json
+        echo "::set-output name=packageJson::$content"
     - uses: actions/upload-artifact@v2
       with:
-        name: Skyrim Platform ${{fromJson("skyrim-platform/package.json").version}} (Special Edition)
+        name: Skyrim Platform ${{fromJson(steps.set_var.outputs.packageJson).version}} (Special Edition)
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
