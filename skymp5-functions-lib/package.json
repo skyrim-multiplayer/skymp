@@ -12,6 +12,7 @@
 	"author": "Leonid Pospelov <pospelovlm@yandex.ru>",
 	"license": "GPL-3.0",
 	"devDependencies": {
+		"@types/mocha": "^9.1.0",
 		"@types/node": "^17.0.23",
 		"jest": "^27.5.1",
 		"parcel-bundler": "1.12.3",
