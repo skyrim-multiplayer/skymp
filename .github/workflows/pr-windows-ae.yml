@@ -113,8 +113,12 @@ jobs:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
 
+    - name: Get Version
+      run: |
+        OLDVER=$(sed -n "s/.*\([0-9]\.[0-9]\.[0-9]*\).*/\1/p" ${{github.workspace}}/skyrim-platform/package.json | head -1)
+        echo "OLDVER=$OLDVER" >> $GITHUB_ENV
     - uses: actions/upload-artifact@v2
       with:
-        name: SP-AE
+        name: Skyrim Platform ${{ env.OLDVER }} (Anniversary Edition)
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
