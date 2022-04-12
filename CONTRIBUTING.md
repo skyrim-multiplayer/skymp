@@ -18,7 +18,7 @@ You can find instructions on setting up the project locally below. To get a loca
 
 These tools required regardless of your system:
 
-* 64-bit [NodeJS](https://nodejs.org/en/download/) 16.x *(may also work for 12.x, 14.x if you manually update node-gyp to version 8.4.0+)*
+* 64-bit [NodeJS](https://nodejs.org/en/download/) 17.x *(may also work for older versions)*
 * [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
 * [CMake 3.18.2](https://cmake.org/download/) or higher
 
