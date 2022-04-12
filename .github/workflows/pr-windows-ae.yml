@@ -115,6 +115,6 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: Skyrim Platform ${{fromJson(skyrim-platform/package.json).version}} (Anniversary Edition)
+        name: Skyrim Platform ${{fromJson("skyrim-platform/package.json").version}} (Anniversary Edition)
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
