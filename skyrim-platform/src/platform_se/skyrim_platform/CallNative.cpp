@@ -241,6 +241,12 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
                              std::string(classFunc) + "' ");
   }
 
+  if (!funcInfo->IsNative()) {
+    throw std::runtime_error("Function is not native '" +
+                             std::string(className) + "." +
+                             std::string(classFunc) + "' ");
+  }
+
   RE::TESForm* rawSelf = nullptr;
   if (!funcInfo->IsGlobal()) {
     if (self)

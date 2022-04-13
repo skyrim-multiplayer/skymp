@@ -1,6 +1,7 @@
 #include "VmProvider.h"
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
+#include <optional>
 
 namespace {
 const RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo>& FindType(
@@ -109,17 +110,16 @@ public:
     }
   }
 
-  bool IsLatent() override { return GetNativeFunctionAddr::Run(*f).isLatent; }
+  bool IsLatent() override { return GetResult().isLatent; }
+
+  bool IsNative() override { return GetResult().isNative; }
 
   RE::BSTSmartPointer<RE::BSScript::IFunction> GetIFunction() override
   {
     return f;
   }
 
-  bool UsesLongSignature() override
-  {
-    return GetNativeFunctionAddr::Run(*f).useLongSignature;
-  }
+  bool UsesLongSignature() override { return GetResult().useLongSignature; }
 
   ValueType GetParamType(size_t i) override
   {
@@ -131,6 +131,7 @@ public:
   }
 
 private:
+  std::optional<GetNativeFunctionAddr::Result> result;
   RE::BSTSmartPointer<RE::BSScript::IFunction> f;
   AdditionalFunctionInfo info;
 
@@ -145,6 +146,14 @@ private:
       res.className = objTypeInfo->GetName();
     }
     return res;
+  }
+
+  const GetNativeFunctionAddr::Result& GetResult()
+  {
+    if (!result) {
+      result = GetNativeFunctionAddr::Run(*f);
+    }
+    return *result;
   }
 };
 
