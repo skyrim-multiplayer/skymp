@@ -263,10 +263,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     }
     case MsgType::DropItem: {
-      uint32_t baseId;
+      uint64_t baseId;
       ReadEx(jMessage, JsonPointers::baseId, &baseId);
       auto entry = Inventory::Entry::FromJson(jMessage);
-      actionListener.OnDropItem(rawMsgData, baseId, entry);
+      actionListener.OnDropItem(rawMsgData, FormIdCasts::LongToNormal(baseId), entry);
       break;
     }
     default:
