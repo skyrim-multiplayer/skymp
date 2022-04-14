@@ -967,7 +967,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       auto refrRecord = espm::Convert<espm::REFR>(
         loader.GetBrowser().LookupById(GetFormId()).rec);
       if (!refrRecord) {
-        throw std::runtime_error(fmt::format("No refrRecord with id: {:x}", GetFormId()));
+        throw std::runtime_error(
+          fmt::format("No refrRecord with id: {:x}", GetFormId()));
       }
       uint32_t count = refrRecord->GetData(compressedFieldsCache).count;
       activationSource.AddItem(resultItem, count ? count : 1);
