@@ -159,7 +159,6 @@ export class SkympClient {
       let caster = e.caster ? e.caster.getFormID() : 0;
       let target = e.target ? e.target.getFormID() : 0;
 
-      printConsole(`RefrId: ${caster.toString(16)}`)
       if (!target || !caster) return;
 
       // Actors never have non-ff ids locally in skymp
@@ -298,7 +297,7 @@ export class SkympClient {
       }
     });
 
-    on("containerChanged", (e) => { 
+    on("containerChanged", (e) => {
       const pl = Game.getPlayer() as Actor;
       const isPlayer: boolean = pl && e.oldContainer && (pl.getFormID() === e.oldContainer.getFormID());
       const noContainer: boolean = e.newContainer === null;
@@ -315,7 +314,7 @@ export class SkympClient {
             refr.delete().then(() => {
               const t = MsgType.DropItem;
               const count = 1;
-              this.sendTarget.send({t, baseId, count}, true);
+              this.sendTarget.send({ t, baseId, count }, true);
             });
           }
         }
