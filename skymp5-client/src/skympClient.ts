@@ -159,6 +159,7 @@ export class SkympClient {
       let caster = e.caster ? e.caster.getFormID() : 0;
       let target = e.target ? e.target.getFormID() : 0;
 
+      printConsole(`RefrId: ${caster.toString(16)}`)
       if (!target || !caster) return;
 
       // Actors never have non-ff ids locally in skymp
@@ -302,11 +303,13 @@ export class SkympClient {
       const isPlayer: boolean = pl && e.oldContainer && (pl.getFormID() === e.oldContainer.getFormID());
       const noContainer: boolean = e.newContainer === null;
       const isReference: boolean = e.reference !== null;
+      if (e.newContainer && e.newContainer.getFormID() === pl.getFormID()) return;
       if (isPlayer && isReference && !noContainer) {
-        const baseId: number = e.baseObj.getFormID();
         const radius: number = 200;
-        const refrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();
-        if (refrId) {
+        const baseId: number = e.baseObj.getFormID();
+        const localRefrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();
+        if (localRefrId) {
+          const refrId = this.localIdToRemoteId(localRefrId);
           const refr = ObjectReference.from(Game.getFormEx(refrId));
           if (refr) {
             refr.delete().then(() => {
