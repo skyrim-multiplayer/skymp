@@ -8,6 +8,7 @@ import {
   Ui,
   Utility,
   Actor,
+  ObjectReference,
 } from "skyrimPlatform";
 import { getMovement } from "./sync/movement";
 import { getAppearance } from "./sync/appearance";
@@ -290,6 +291,30 @@ export class SkympClient {
                   lastInv = sumInventories(lastInv, add);
                 }
               }
+            });
+          }
+        }
+      }
+    });
+
+    on("containerChanged", (e) => {
+      const pl = Game.getPlayer() as Actor;
+      const isPlayer: boolean = pl && e.oldContainer && (pl.getFormID() === e.oldContainer.getFormID());
+      const noContainer: boolean = e.newContainer === null || e.newContainer === undefined;
+      const isReference: boolean = e.reference !== null;
+      if (e.newContainer && e.newContainer.getFormID() === pl.getFormID()) return;
+      if (isPlayer && isReference && noContainer) {
+        const radius: number = 200;
+        const baseId: number = e.baseObj.getFormID();
+        const localRefrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();
+        if (localRefrId) {
+          const refrId = this.localIdToRemoteId(localRefrId);
+          const refr = ObjectReference.from(Game.getFormEx(refrId));
+          if (refr) {
+            refr.delete().then(() => {
+              const t = MsgType.DropItem;
+              const count = 1;
+              this.sendTarget.send({ t, baseId, count }, true);
             });
           }
         }
