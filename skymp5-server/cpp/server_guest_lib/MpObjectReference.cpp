@@ -968,7 +968,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         loader.GetBrowser().LookupById(GetFormId()).rec);
       uint32_t count =
         refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
-      activationSource.AddItem(resultItem, count);
+      activationSource.AddItem(resultItem, count ? count : 1);
       SetHarvested(true);
       RequestReloot();
     }
