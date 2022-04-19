@@ -306,9 +306,8 @@ export class SkympClient {
       if (isPlayer && isReference && noContainer) {
         const radius: number = 200;
         const baseId: number = e.baseObj.getFormID();
-        const localRefrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();
-        if (localRefrId) {
-          const refrId = this.localIdToRemoteId(localRefrId);
+        const refrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();
+        if (refrId) {
           const refr = ObjectReference.from(Game.getFormEx(refrId));
           if (refr) {
             refr.delete().then(() => {
