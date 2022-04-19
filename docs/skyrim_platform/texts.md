@@ -74,7 +74,7 @@ Returns id.
 
 - ```skyrimPlatform.getTextOrigin(textId)``` - returns pivot (center point) of the text
 
-- ```skyrimPlatform.skyrimPlatform.getNumCreatedTexts()``` - returns the number of created texts.
+- ```skyrimPlatform.getNumCreatedTexts()``` - returns the number of created texts.
 
 
 ## Compiling Font
