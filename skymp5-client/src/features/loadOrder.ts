@@ -153,7 +153,7 @@ export const verifyLoadOrder = () => {
       }
       updateText(
         'LOAD ORDER ERROR!\nCheck console for details.',
-        [255, 0, 0, 1], "Data/Platform/Fonts/DINPro.spritefont",
+        [255, 0, 0, 1], "Data/Platform/Fonts/Tavern.spritefont",
       );
       sp.browser.loadUrl('about:blank');
     });
