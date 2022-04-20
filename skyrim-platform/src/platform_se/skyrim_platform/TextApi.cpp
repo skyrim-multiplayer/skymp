@@ -88,9 +88,10 @@ JsValue TextApi::SetTextFont(const JsFunctionArguments& args)
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   auto argString = converter.from_bytes(static_cast<std::string>(args[2]));
 
-  std::wstring widestr = std::wstring(argString.begin(), argString.end()) ;
+  std::wstring widestr = std::wstring(argString.begin(), argString.end());
 
-  TextsCollection::GetSingleton().SetTextFont(textId, static_cast<std::string>(args[2]));
+  TextsCollection::GetSingleton().SetTextFont(
+    textId, static_cast<std::string>(args[2]));
   return JsValue::Undefined();
 }
 
