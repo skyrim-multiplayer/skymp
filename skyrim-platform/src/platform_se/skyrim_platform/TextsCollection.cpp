@@ -10,9 +10,10 @@ TextsCollection::~TextsCollection()
 {
 }
 
-int TextsCollection::CreateText(double xPos, double yPos, std::wstring string,
-                                std::array<double, 4> color = { 0.f, 0.f, 1.f,1.f }, 
-                                std::string name = "Data/Platform/Fonts/Tavern.spritefont" )
+int TextsCollection::CreateText(
+  double xPos, double yPos, std::wstring string,
+  std::array<double, 4> color = { 0.f, 0.f, 1.f, 1.f },
+  std::string name = "Data/Platform/Fonts/Tavern.spritefont")
 {
   TextToDraw text{ name, xPos, yPos, std::move(string), std::move(color) };
 

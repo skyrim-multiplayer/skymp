@@ -17,7 +17,6 @@ public:
 
   void SetTextColor(int textId, std::array<double, 4> color);
 
-
   void SetTextFont(int textId, std::string name);
   void SetTextRotation(int textId, float rotation);
   void SetTextSize(int textId, float size);
