@@ -201,7 +201,7 @@ JsValue TextApi::GetTextDepth(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextEffect(const JsFunctionArguments& args)
 {
-  const int& effect =
+  const int effect =
     TextsCollection::GetSingleton().GetTextEffect(static_cast<int>(args[1]));
 
   return JsValue(effect);
