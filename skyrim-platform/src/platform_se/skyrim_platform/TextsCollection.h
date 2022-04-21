@@ -18,10 +18,15 @@ public:
   void SetTextColor(int textId, std::array<double, 4> color);
 
   void SetTextFont(int textId, std::string name);
+
   void SetTextRotation(int textId, float rotation);
+
   void SetTextSize(int textId, float size);
+
   void SetTextEffect(int textId, int effect);
+
   void SetTextDepth(int textId, float Depth);
+  
   void SetTextOrigin(int textId, std::array<double, 2> origin);
 
   void DestroyAllTexts();
