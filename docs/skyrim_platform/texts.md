@@ -30,7 +30,7 @@ const white = [1,1,1,1];
 
 ## API methods
 
-- ```skyrimPlatform.createText(xpos, ypos, "string", ["array of RGBA colors"])``` - create a text.
+- ```skyrimPlatform.createText(xpos, ypos, "string", ["array of RGBA colors"], fontName: string)``` - create a text.
 Returns id.
 
 - ```skyrimPlatform.destroyText(textId)``` - delete text by id.
@@ -48,7 +48,7 @@ Returns id.
 
 - ```skyrimPlatform.setTextRotation(textId, rotation: float)``` - set text rotation.
 
-- ```skyrimPlatform.setTextFont(textId, path: string)``` - set text font from relative path "Data/Platform/Fonts/Tavern.spritefont".
+- ```skyrimPlatform.setTextFont(textId, name: string)``` - set text font from relative path "Data/Platform/Fonts/Tavern.spritefont".
 
 - ```skyrimPlatform.setTextDepth(textId, depth: int)``` - set text z-index of the text.
 
