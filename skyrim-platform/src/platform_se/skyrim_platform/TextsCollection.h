@@ -7,7 +7,7 @@ public:
   ~TextsCollection();
 
   int CreateText(double xPos, double yPos, std::wstring string,
-                 std::array<double, 4> color, std::string name);
+                 std::array<double, 4> color, std::wstring name);
 
   void DestroyText(int textId);
 
@@ -17,7 +17,7 @@ public:
 
   void SetTextColor(int textId, std::array<double, 4> color);
 
-  void SetTextFont(int textId, std::string name);
+  void SetTextFont(int textId, std::wstring name);
 
   void SetTextRotation(int textId, float rotation);
 
@@ -47,7 +47,7 @@ public:
 
   std::array<double, 4> GetTextColor(int textId) const;
 
-  std::string GetTextFont(int textId) const;
+  std::wstring GetTextFont(int textId) const;
 
   float GetTextRotation(int textId) const;
 

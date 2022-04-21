@@ -7,7 +7,7 @@
 
 struct TextToDraw
 {
-  std::string fontName = "Data/Platform/Fonts/Tavern.spritefont";
+  std::wstring fontName = L"Data/Platform/Fonts/Tavern.spritefont";
   double x = 0.f;
   double y = 0.f;
   std::wstring string;

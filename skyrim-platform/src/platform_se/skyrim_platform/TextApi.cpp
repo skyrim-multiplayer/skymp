@@ -11,7 +11,7 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   auto argString = converter.from_bytes(static_cast<std::string>(args[3]));
-  auto argFontName = static_cast<std::string>(args[5]);
+  auto argFontName = converter.from_bytes(static_cast<std::string>(args[5]));
 
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[4].GetProperty(i);
@@ -86,12 +86,10 @@ JsValue TextApi::SetTextFont(const JsFunctionArguments& args)
   auto textId = static_cast<int>(args[1]);
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  auto argString = converter.from_bytes(static_cast<std::string>(args[2]));
+  auto font = converter.from_bytes(static_cast<std::string>(args[2]));
 
-  std::wstring widestr = std::wstring(argString.begin(), argString.end());
+  TextsCollection::GetSingleton().SetTextFont(textId, font);
 
-  TextsCollection::GetSingleton().SetTextFont(
-    textId, static_cast<std::string>(args[2]));
   return JsValue::Undefined();
 }
 
@@ -109,7 +107,7 @@ JsValue TextApi::SetTextEffect(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
 
-  int eff = static_cast<int>(args[2]);
+  auto eff = static_cast<int>(args[2]);
 
   TextsCollection::GetSingleton().SetTextEffect(textId, eff);
   return JsValue::Undefined();
@@ -189,23 +187,24 @@ JsValue TextApi::GetTextFont(const JsFunctionArguments& args)
   const auto& font =
     TextsCollection::GetSingleton().GetTextFont(static_cast<int>(args[1]));
 
-  return JsValue(font);
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  return JsValue(converter.to_bytes(font));
 }
 
 JsValue TextApi::GetTextDepth(const JsFunctionArguments& args)
 {
-  const auto& z =
+  const auto& depth =
     TextsCollection::GetSingleton().GetTextDepth(static_cast<int>(args[1]));
 
-  return JsValue(z);
+  return JsValue(depth);
 }
 
 JsValue TextApi::GetTextEffect(const JsFunctionArguments& args)
 {
-  const int& i =
+  const int& effect =
     TextsCollection::GetSingleton().GetTextEffect(static_cast<int>(args[1]));
 
-  return JsValue(i);
+  return JsValue(effect);
 }
 
 JsValue TextApi::GetTextOrigin(const JsFunctionArguments& args)

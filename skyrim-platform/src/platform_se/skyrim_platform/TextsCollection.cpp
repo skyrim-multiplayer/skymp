@@ -13,9 +13,10 @@ TextsCollection::~TextsCollection()
 int TextsCollection::CreateText(
   double xPos, double yPos, std::wstring str,
   std::array<double, 4> color = { 0.f, 0.f, 1.f, 1.f },
-  std::string name = "Data/Platform/Fonts/Tavern.spritefont")
+  std::wstring name = L"Data/Platform/Fonts/Tavern.spritefont")
 {
-  TextToDraw text{ std::move(name), xPos, yPos, std::move(str), std::move(color) };
+  TextToDraw text{ std::move(name), xPos, yPos, std::move(str),
+                   std::move(color) };
 
   textCount++;
   std::pair<int, TextToDraw> arg = { textCount, text };
@@ -46,7 +47,7 @@ void TextsCollection::SetTextColor(int textId, std::array<double, 4> color)
   texts.at(textId).color = color;
 }
 
-void TextsCollection::SetTextFont(int textId, std::string name)
+void TextsCollection::SetTextFont(int textId, std::wstring name)
 {
   texts.at(textId).fontName = name;
 }
@@ -108,9 +109,9 @@ std::array<double, 4> TextsCollection::GetTextColor(int textId) const
   return texts.at(textId).color;
 }
 
-std::string TextsCollection::GetTextFont(int textId) const
+std::wstring TextsCollection::GetTextFont(int textId) const
 {
-  std::string txt = texts.at(textId).fontName;
+  std::wstring txt = texts.at(textId).fontName;
 
   return txt;
 }
