@@ -26,7 +26,7 @@ public:
   void SetTextEffect(int textId, int effect);
 
   void SetTextDepth(int textId, float Depth);
-  
+
   void SetTextOrigin(int textId, std::array<double, 2> origin);
 
   void DestroyAllTexts();
@@ -47,7 +47,7 @@ public:
 
   std::array<double, 4> GetTextColor(int textId) const;
 
-  std::string GetTextName(int textId) const;
+  std::string GetTextFont(int textId) const;
 
   float GetTextRotation(int textId) const;
 

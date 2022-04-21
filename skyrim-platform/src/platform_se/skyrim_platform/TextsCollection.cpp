@@ -108,7 +108,7 @@ std::array<double, 4> TextsCollection::GetTextColor(int textId) const
   return texts.at(textId).color;
 }
 
-std::string TextsCollection::GetTextName(int textId) const
+std::string TextsCollection::GetTextFont(int textId) const
 {
   std::string txt = texts.at(textId).fontName;
 
