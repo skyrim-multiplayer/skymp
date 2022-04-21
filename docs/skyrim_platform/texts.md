@@ -10,7 +10,7 @@ provided by DirectXTK. See [Compiling Font](#compiling-font) for details.
 ## Example
 
 ```typescript
-skyrimPlatform.createText(0, 0, "Hello World!", [1, 1, 1, 1], "Data/Platform/Fonts/Tavern.spritefont"),; // 0,0 is top left. Non-ASCII character are not yet supported.
+skyrimPlatform.createText(0, 0, "Hello World!", [1, 1, 1, 1], "Tavern"),; // 0,0 is top left. Non-ASCII character are not yet supported.
 skyrimPlatform.browser.setVisible(true); // Texts API takes visibility flag from the browser
 ```
 

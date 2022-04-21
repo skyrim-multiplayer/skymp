@@ -13,9 +13,9 @@ TextsCollection::~TextsCollection()
 int TextsCollection::CreateText(
   double xPos, double yPos, std::wstring str,
   std::array<double, 4> color = { 0.f, 0.f, 1.f, 1.f },
-  std::wstring name = L"Data/Platform/Fonts/Tavern.spritefont")
+  std::wstring name = L"Tavern")
 {
-  TextToDraw text{ std::move(name), xPos, yPos, std::move(str),
+  TextToDraw text{ std::move(L"Data/Platform/Fonts/" + name + L".spritefont"), xPos, yPos, std::move(str),
                    std::move(color) };
 
   textCount++;
