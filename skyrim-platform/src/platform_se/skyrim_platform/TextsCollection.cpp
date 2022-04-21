@@ -49,7 +49,7 @@ void TextsCollection::SetTextColor(int textId, std::array<double, 4> color)
 
 void TextsCollection::SetTextFont(int textId, std::wstring name)
 {
-  texts.at(textId).fontName = name;
+  texts.at(textId).fontName = L"Data/Platform/Fonts/" + name + L".spritefont";
 }
 
 void TextsCollection::SetTextRotation(int textId, float rotation)
