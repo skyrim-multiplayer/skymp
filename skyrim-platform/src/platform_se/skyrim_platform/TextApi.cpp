@@ -276,4 +276,3 @@ void Register(JsValue& exports)
 }
 
 }
-
