@@ -189,7 +189,6 @@ JsValue TextApi::GetTextFont(const JsFunctionArguments& args)
   const auto& font =
     TextsCollection::GetSingleton().GetTextFont(static_cast<int>(args[1]));
 
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   return JsValue(font);
 }
 
