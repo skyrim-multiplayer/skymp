@@ -4,7 +4,6 @@
 #include <array>
 #include <functional>
 #include <string>
-
 struct TextToDraw
 {
   std::string fontName = "Data/Platform/Fonts/Tavern.spritefont";

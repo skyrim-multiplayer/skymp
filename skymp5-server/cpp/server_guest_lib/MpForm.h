@@ -49,10 +49,7 @@ public:
 
   virtual ~MpForm() = default;
 
-  auto GetFormId() const noexcept
-  {
-    return id;
-  }
+  auto GetFormId() const noexcept { return id; }
 
   MpForm(const MpForm&) = delete;
   MpForm& operator=(const MpForm&) = delete;
