@@ -25,7 +25,7 @@ public:
 
   void SetTextEffect(int textId, int effect);
 
-  void SetTextDepth(int textId, float Depth);
+  void SetTextDepth(int textId, float depth);
 
   void SetTextOrigin(int textId, std::array<double, 2> origin);
 

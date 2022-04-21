@@ -67,9 +67,9 @@ void TextsCollection::SetTextEffect(int textId, int effect)
   texts.at(textId).effects = static_cast<DirectX::SpriteEffects>(effect);
 }
 
-void TextsCollection::SetTextDepth(int textId, float Depth)
+void TextsCollection::SetTextDepth(int textId, float depth)
 {
-  texts.at(textId).layerDepth = Depth;
+  texts.at(textId).layerDepth = depth;
 }
 
 void TextsCollection::SetTextOrigin(int textId, std::array<double, 2> origin)
