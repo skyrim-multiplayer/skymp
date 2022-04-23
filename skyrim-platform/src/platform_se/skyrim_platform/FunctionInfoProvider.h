@@ -15,6 +15,7 @@ public:
   virtual ValueType GetReturnType() = 0;
   virtual bool IsGlobal() = 0;
   virtual bool IsLatent() = 0;
+  virtual bool IsNative() = 0;
   virtual RE::BSTSmartPointer<RE::BSScript::IFunction> GetIFunction() = 0;
   virtual bool UsesLongSignature() = 0;
   virtual ValueType GetParamType(size_t i) = 0;

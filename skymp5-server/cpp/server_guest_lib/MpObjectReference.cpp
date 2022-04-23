@@ -965,7 +965,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
       auto refrRecord = espm::Convert<espm::REFR>(
         loader.GetBrowser().LookupById(GetFormId()).rec);
-      uint32_t count = refrRecord->GetData(compressedFieldsCache).count;
+      uint32_t count =
+        refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
       activationSource.AddItem(resultItem, count ? count : 1);
       SetHarvested(true);
       RequestReloot();
