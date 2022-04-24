@@ -20,6 +20,8 @@
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include "FunctionsLibApi.h"
+
 #ifndef NAPI_CPP_EXCEPTIONS
 #  error NAPI_CPP_EXCEPTIONS must be defined or throwing from JS code would crash!
 #endif
@@ -974,6 +976,8 @@ std::string GetDataDirSafe(nlohmann::json serverSettings)
 
 void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 {
+  RegisterFunctionsLibApi(this->partOne);
+
   JsValue mp = JsValue::Object();
 
   mp.SetProperty(

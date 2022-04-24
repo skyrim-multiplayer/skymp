@@ -95,6 +95,19 @@ apply_default_settings(TARGETS localization-provider)
 target_include_directories(localization-provider PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/localization_provider")
 
 #
+# functions_lib_api
+#
+
+file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/functions_lib_api/*")
+list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(functions_lib_api STATIC ${src})
+target_include_directories(functions_lib_api PUBLIC "${CMAKE_CURRENT_LIST_DIR}/functions_lib_api")
+apply_default_settings(TARGETS functions_lib_api)
+list(APPEND VCPKG_DEPENDENT functions_lib_api)
+target_link_libraries(functions_lib_api PUBLIC server_guest_lib)
+target_include_directories(functions_lib_api PUBLIC "${CMAKE_SOURCE_DIR}/1js")
+
+#
 # Link vcpkg deps
 #
 
