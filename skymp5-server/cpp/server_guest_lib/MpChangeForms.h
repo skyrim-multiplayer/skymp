@@ -71,6 +71,9 @@ public:
 
   static nlohmann::json ToJson(const MpChangeForm& changeForm);
   static MpChangeForm JsonToChangeForm(simdjson::dom::element& element);
+
+public:
+  std::optional<int> lockLevel = 0;
 };
 
 inline bool operator==(const MpChangeForm& lhs, const MpChangeForm& rhs)

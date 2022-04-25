@@ -21,6 +21,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["profileId"] = changeForm.profileId;
   res["isRaceMenuOpen"] = changeForm.isRaceMenuOpen;
   res["dynamicFields"] = changeForm.dynamicFields.GetAsJson();
+  res["lockLevel"] = *changeForm.lockLevel;
 
   if (changeForm.appearanceDump.empty()) {
     res["appearanceDump"] = nullptr;

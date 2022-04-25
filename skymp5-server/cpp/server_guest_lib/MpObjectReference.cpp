@@ -160,6 +160,12 @@ const Inventory& MpObjectReference::GetInventory() const
   return ChangeForm().inv;
 }
 
+const std::optional<int> MpObjectReference::GetLockLevel() const
+{
+    
+  return std::nullopt;
+}
+
 const bool& MpObjectReference::IsHarvested() const
 {
   return ChangeForm().isHarvested;

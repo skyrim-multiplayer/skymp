@@ -71,6 +71,7 @@ public:
   const FormDesc& GetCellOrWorld() const override;
   const uint32_t& GetBaseId() const;
   const Inventory& GetInventory() const;
+  const std::optional<int> GetLockLevel() const;
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
   const bool& IsDisabled() const;
