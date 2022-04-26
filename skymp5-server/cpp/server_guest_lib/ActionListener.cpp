@@ -733,3 +733,8 @@ void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
 {
   spdlog::debug("Got unhandled message: {}", simdjson::minify(data));
 }
+
+void ActionListener::OnLockLevel(const RawMessageData& rawMsgData)
+{
+
+}

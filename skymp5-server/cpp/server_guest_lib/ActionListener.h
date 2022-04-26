@@ -84,6 +84,8 @@ public:
   virtual void OnUnknown(const RawMessageData& rawMsgData,
                          simdjson::dom::element data);
 
+  virtual void OnLockLevel(const RawMessageData& rawMsgData);
+
 private:
   // Returns user's actor if there is attached one
   MpActor* SendToNeighbours(uint32_t idx,

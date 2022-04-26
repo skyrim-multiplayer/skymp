@@ -270,6 +270,9 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                 entry);
       break;
     }
+    case MsgType::LockLevel: {
+        //получить данные и обработать по аналогии выше
+    }
     default:
       simdjson::dom::element data_;
       ReadEx(jMessage, JsonPointers::data, &data_);
