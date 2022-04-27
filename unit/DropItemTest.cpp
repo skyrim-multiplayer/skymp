@@ -39,12 +39,13 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(refr.GetPos().x == 1.f);
   REQUIRE(refr.GetPos().y == 2.f);
   REQUIRE(refr.GetPos().z == 3.f);
+  ac.AddItem(healingPotion, 5);
   partOne.Messages().clear();
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
             nlohmann::json{ { "t", MsgType::DropItem },
                             { "baseId", healingPotion },
-                            { "count", 3 } });
+                            { "count", 5 } });
   REQUIRE(partOne.Messages().size() == 2);
   REQUIRE(ac.GetInventory().GetItemCount(healingPotion) == 0);
 }
