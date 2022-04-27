@@ -12,7 +12,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   auto& partOne = GetPartOne();
   // an iron dagger
   constexpr uint32_t ironDagger = 0x0001397E;
-  constexpr uint32_t ironArrow = 0x0001397D;
+  constexpr uint32_t lockPick = 0x0000000A;
   DoConnect(partOne, 0);
 
   partOne.CreateActor(0xff000000, { 1, 2, 3 }, 0, 0x3c);
@@ -43,8 +43,8 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
             nlohmann::json{ { "t", MsgType::DropItem },
-                            { "baseId", ironArrow },
+                            { "baseId", lockPick },
                             { "count", 5 } });
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(ac.GetInventory().GetItemCount(ironArrow) == 10);
+  REQUIRE(ac.GetInventory().GetItemCount(lockPick) == 5);
 }
