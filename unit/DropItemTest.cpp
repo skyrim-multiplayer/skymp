@@ -28,7 +28,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
             nlohmann::json{ { "t", MsgType::DropItem },
-                            { "ironDagger", ironDagger },
+                            { "baseId", ironDagger },
                             { "count", 1 } });
   // 1 message from here and another 1 is comming from actionListener
   REQUIRE(partOne.Messages().size() == 2);
@@ -43,7 +43,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
             nlohmann::json{ { "t", MsgType::DropItem },
-                            { "ironDagger", ironArrow },
+                            { "baseId", ironArrow },
                             { "count", 5 } });
   REQUIRE(partOne.Messages().size() == 2);
   REQUIRE(ac.GetInventory().GetItemCount(ironArrow) == 10);
