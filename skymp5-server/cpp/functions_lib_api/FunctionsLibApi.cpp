@@ -21,7 +21,7 @@ uint32_t FormIdFromJsValue(const JsValue& v)
   return 0;
 }
 
-std::shared_ptr<spdlog::logger> GetLogger()
-{
-  return spdlog::get("console");
-}
+// std::shared_ptr<spdlog::logger> GetLogger()
+// {
+//   return spdlog::get("console");
+// }

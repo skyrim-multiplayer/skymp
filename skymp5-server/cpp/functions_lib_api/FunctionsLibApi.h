@@ -4,4 +4,4 @@
 void RegisterFunctionsLibApi(std::shared_ptr<PartOne> partOne);
 
 uint32_t FormIdFromJsValue(const JsValue& v);
-std::shared_ptr<spdlog::logger> GetLogger();
+// std::shared_ptr<spdlog::logger> GetLogger();
