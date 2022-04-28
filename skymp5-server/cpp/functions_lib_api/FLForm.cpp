@@ -27,7 +27,7 @@ JsValue FormCtor(std::shared_ptr<PartOne> partOne,
 {
   auto formId = FormIdFromJsValue(args[1]);
   if (formId == 0) {
-    GetLogger()->error("Error on check formId");
+    // GetLogger()->error("Error on check formId");
     return JsValue::Undefined();
   }
 
@@ -40,7 +40,7 @@ JsValue FormCtor(std::shared_ptr<PartOne> partOne,
   auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
 
   if (!lookupRes.rec || lookupRes.rec->GetType().ToString() == "") {
-    GetLogger()->error("Form not exists");
+    // GetLogger()->error("Form not exists");
     return JsValue::Undefined();
   }
 
@@ -63,10 +63,36 @@ JsValue GetName(std::shared_ptr<PartOne> partOne,
     lookupRes.rec,
     [&](const char* type, uint32_t size, const char* data) {
       if (std::string(type, 4) == "FULL") {
-        if (size <= 4) {
-          GetLogger()->error("TODO: use localization files in GetName");
-          return JsValue::Undefined();
-        }
+        // std::cout << data;
+        // std::cout << "\n";
+        std::cout << *reinterpret_cast<const uint32_t*>(data);
+        std::cout << "\n";
+        // if (size == 4) {
+        //   // JsValue arr = JsValue::Uint8Array(size);
+        //   // memcpy(arr.GetTypedArrayData(), data, size);
+
+        //   //
+        //   JsValue::GlobalObject().GetProperty("form").SetProperty("_test",
+        //   //                                                         arr);
+
+        //   // return arr;
+
+        //   // spdlog::get("console")->info("data");
+        //   // GetLogger()->error("TODO: use localization files in GetName");
+        //   // std::cout << "\n";
+        //   // std::cout << (*reinterpret_cast<const uint32_t*>(data));
+        //   // std::cout << (*reinterpret_cast<const uint32_t*>(data));
+        //   // std::cout << "\n";
+        //   // std::cout << "\n";
+        //   std::stringstream ss;
+        //   ss << *reinterpret_cast<const uint32_t*>(data);
+        //   std::string str;
+        //   ss >> str;
+
+        //   return JsValue::String(str);
+        // }
+
+        // std::cout << "\n";
 
         return JsValue::String(data);
       }
