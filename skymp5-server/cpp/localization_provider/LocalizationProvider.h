@@ -5,16 +5,16 @@
 
 class LocalizationProvider
 {
-  std::map<uint32_t, std::string> Parse(
-    const std::filesystem::directory_entry& file);
-
-  std::map<uint32_t, std::string> ParseILDLStrings(
-    std::vector<char> buffer, std::vector<DirectoryEntry> entries);
+  std::vector<DirectoryEntry> ParseDirectoryEntries(std::vector<char> buffer);
 
   std::map<uint32_t, std::string> ParseStrings(
     std::vector<char> buffer, std::vector<DirectoryEntry> entries);
 
-  std::vector<DirectoryEntry> ParseDirectoryEntries(std::vector<char> buffer);
+  std::map<uint32_t, std::string> ParseILDLStrings(
+    std::vector<char> buffer, std::vector<DirectoryEntry> entries);
+
+  std::map<uint32_t, std::string> Parse(
+    const std::filesystem::directory_entry& file);
 
 public:
   LocalizationProvider(std::string language);
