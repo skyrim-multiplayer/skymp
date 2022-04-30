@@ -976,27 +976,20 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
   mp.SetProperty(
     "getLocalizedString",
     JsValue::Function([this](const JsFunctionArguments& args) {
-      this->partOne->GetLogger().info("1");
-
       auto globalRecordId = ExtractFormId(args[1], "globalRecordId");
       auto lookupRes =
         partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
-
-      this->partOne->GetLogger().info("2");
+      auto translatedString = JsValue::Undefined();
 
       if (lookupRes.rec) {
         auto fields = JsValue::Array(0);
 
         auto& cache = partOne->worldState.GetEspmCache();
 
-        this->partOne->GetLogger().info("3");
-
         espm::IterateFields_(
           lookupRes.rec,
           [&](const char* type, uint32_t size, const char* data) {
-            if (memcmp(type, "FULL", 4) && size == 4) {
-              this->partOne->GetLogger().info("4");
-
+            if (std::string(type, 4) == "FULL" && size == 4) {
               auto stringId = *(uint32_t*)data;
               if (serverSettings["loadOrder"].is_array()) {
                 for (size_t i = 0; i < serverSettings["loadOrder"].size();
@@ -1014,15 +1007,10 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
                       fileNameWithoutExt.begin(),
                       [](unsigned char c) { return std::tolower(c); });
 
-                    return JsValue::String(this->localizationProvider->Get(
-                      fileNameWithoutExt, stringId));
+                    translatedString =
+                      JsValue::String(this->localizationProvider->Get(
+                        fileNameWithoutExt, stringId));
                   }
-
-                  // if (loadOrderElement.is_absolute()) {
-                  //   pluginPaths.push_back(loadOrderElement);
-                  // } else {
-                  //   pluginPaths.push_back(dataDir / loadOrderElement);
-                  // }
                 }
               }
             }
@@ -1030,7 +1018,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           cache);
       }
 
-      return JsValue::Undefined();
+      return translatedString;
     }));
 
   mp.SetProperty("getServerSettings",

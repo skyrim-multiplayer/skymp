@@ -67,7 +67,7 @@ std::map<uint32_t, std::string> LocalizationProvider::ParseILDLStrings(
 
     for (int charIndex = 0; charIndex < (*entries[i]).length - start;
          charIndex++) {
-      if (buffer[start + charIndex] == 0) {
+      if (buffer[start + 4 + charIndex] == 0) {
         break;
       }
 
@@ -116,10 +116,13 @@ LocalizationProvider::LocalizationProvider(std::string language)
 
     if (!entry.is_directory() &&
         filename.find(language) != std::string::npos) {
-      size_t lastIndex = filename.find_last_of(language);
+      size_t lastIndex = filename.find_last_of("_");
       std::string name = filename.substr(0, lastIndex);
 
-      this->localization[name] = this->Parse(entry);
+      auto parsedStrings = this->Parse(entry);
+
+      this->localization[name].insert(parsedStrings.begin(),
+                                      parsedStrings.end());
     }
   }
 }
