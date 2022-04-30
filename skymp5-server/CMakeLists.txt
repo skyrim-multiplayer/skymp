@@ -71,7 +71,7 @@ else()
   )
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE node mp_common server_guest_lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE node mp_common server_guest_lib localization-provider)
 list(APPEND VCPKG_DEPENDENT ${PROJECT_NAME})
 apply_default_settings(TARGETS ${PROJECT_NAME})
 
