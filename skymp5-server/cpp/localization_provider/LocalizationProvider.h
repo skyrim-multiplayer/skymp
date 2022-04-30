@@ -3,6 +3,17 @@
 #include <string>
 #include <vector>
 
+class DirectoryEntry
+{
+public:
+  uint32_t stringId;
+  uint32_t offset;
+  uint32_t length;
+  std::string str;
+
+  DirectoryEntry();
+  DirectoryEntry(uint32_t stringId, uint32_t stringOffset);
+};
 class LocalizationProvider
 {
   std::vector<DirectoryEntry> ParseDirectoryEntries(std::vector<char> buffer);
@@ -21,16 +32,4 @@ public:
   std::map<std::string, std::map<uint32_t, std::string>>
     localization; // localization[filename][stringId]
   std::string Get(std::string file, uint32_t stringId);
-};
-
-class DirectoryEntry
-{
-public:
-  uint32_t stringId;
-  uint32_t offset;
-  uint32_t length;
-  std::string str;
-
-  DirectoryEntry();
-  DirectoryEntry(uint32_t stringId, uint32_t stringOffset);
 };
