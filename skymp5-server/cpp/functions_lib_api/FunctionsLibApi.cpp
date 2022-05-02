@@ -1,14 +1,12 @@
 #include "FunctionsLibApi.h"
 #include "FLForm.h"
-#include "FLGame.h"
 
 void RegisterFunctionsLibApi(std::shared_ptr<PartOne> partOne)
 {
   RegisterFormApi(partOne);
-  RegisterGameApi(partOne);
 }
 
-uint32_t FormIdFromJsValue(const JsValue& v)
+uint32_t Uint32FromJsValue(const JsValue& v)
 {
   if (v.GetType() == JsValue::Type::Number) {
     double formId = static_cast<double>(v);
@@ -20,8 +18,3 @@ uint32_t FormIdFromJsValue(const JsValue& v)
   }
   return 0;
 }
-
-// std::shared_ptr<spdlog::logger> GetLogger()
-// {
-//   return spdlog::get("console");
-// }
