@@ -288,13 +288,13 @@ JsValue GetInventory(std::shared_ptr<PartOne> partOne,
 
   auto entries = JsValue::Array(inventory.GetTotalItemCount());
 
-  for (auto entry : inventory.entries) {
+  for (int i = 0; i < inventory.entries.size(); i++) {
     auto item = JsValue::Object();
 
-    item.SetProperty("baseId", JsValue::Int(entry.baseId));
-    item.SetProperty("count", JsValue::Int(entry.count));
+    item.SetProperty("baseId", JsValue::Int(inventory.entries[i].baseId));
+    item.SetProperty("count", JsValue::Int(inventory.entries[i].count));
 
-    entries.GetProperty("push").Call({ item });
+    entries.SetProperty(i, item);
   }
 
   jsInventory.SetProperty("entries", entries);
