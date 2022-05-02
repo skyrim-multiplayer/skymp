@@ -29,12 +29,6 @@ void RegisterFormApi(std::shared_ptr<PartOne> partOne)
     }));
 
   formPrototype.SetProperty(
-    "GetGoldValue",
-    JsValue::Function([partOne](const JsFunctionArguments& args) {
-      return GetGoldValue(partOne, args);
-    }));
-
-  formPrototype.SetProperty(
     "GetWeight", JsValue::Function([partOne](const JsFunctionArguments& args) {
       return GetWeight(partOne, args);
     }));
