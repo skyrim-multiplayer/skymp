@@ -282,7 +282,24 @@ JsValue GetInventory(std::shared_ptr<PartOne> partOne,
   auto& obj = partOne->worldState.GetFormAt<MpObjectReference>(formId);
   auto espmFileNames = partOne->GetEspm().GetFileNames();
 
-  return JsValue::String(obj.GetInventory().ToJson());
+  auto inventory = obj.GetInventory();
+
+  auto jsInventory = JsValue::Object();
+
+  auto entries = JsValue::Array(inventory.GetTotalItemCount());
+
+  for (auto entry : inventory.entries) {
+    auto item = JsValue::Object();
+
+    item.SetProperty("baseId", JsValue::Int(entry.baseId));
+    item.SetProperty("count", JsValue::Int(entry.count));
+
+    entries.GetProperty("push").Call({ item });
+  }
+
+  jsInventory.SetProperty("entries", entries);
+
+  return jsInventory;
 }
 
 JsValue GetPos(std::shared_ptr<PartOne> partOne,
