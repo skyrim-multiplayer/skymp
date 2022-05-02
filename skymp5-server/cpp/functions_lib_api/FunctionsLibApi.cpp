@@ -1,9 +1,11 @@
 #include "FunctionsLibApi.h"
 #include "FLForm.h"
+#include "FLObjectReference.h"
 
 void RegisterFunctionsLibApi(std::shared_ptr<PartOne> partOne)
 {
   RegisterFormApi(partOne);
+  RegisterObjectReferenceApi(partOne);
 }
 
 uint32_t Uint32FromJsValue(const JsValue& v)
