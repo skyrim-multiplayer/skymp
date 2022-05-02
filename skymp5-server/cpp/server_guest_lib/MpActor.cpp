@@ -574,8 +574,8 @@ BaseActorValues MpActor::GetMaximumValues()
 void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 {
   // TODO: Take count into account
-  int count = 1;
-  RemoveItem(baseId, count, nullptr);
+  int count = entry.count;
+  RemoveItems({ entry });
   PapyrusObjectReference papyrusObjectReference;
   auto baseForm = VarValue(std::make_shared<EspmGameObject>(
     GetParent()->GetEspm().GetBrowser().LookupById(baseId)));
