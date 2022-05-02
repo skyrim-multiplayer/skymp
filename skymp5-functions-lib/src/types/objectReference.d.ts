@@ -1,4 +1,5 @@
 import { Form } from './form';
+import { Inventory } from './mp';
 
 export class ObjectReference extends Form {
   constructor(formId: number) {}
@@ -12,7 +13,7 @@ export class ObjectReference extends Form {
   GetAnimationVariableBool(): boolean;
   GetBaseId(): number;
   GetCellOrWorld(): number;
-  GetInventory(): string;
+  GetInventory(): Inventory;
   GetPos(): number[3];
   IsActivationBlocked(): boolean;
   IsDisabled(): boolean;
