@@ -93,7 +93,7 @@ JsValue FormCtor(std::shared_ptr<PartOne> partOne,
 {
   auto formId = Uint32FromJsValue(args[1]);
   if (formId == 0) {
-    // GetLogger()->error("Error on check formId");
+    partOne->GetLogger().error("Error on check formId");
     return JsValue::Undefined();
   }
 
@@ -106,7 +106,7 @@ JsValue FormCtor(std::shared_ptr<PartOne> partOne,
   auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
 
   if (!lookupRes.rec || lookupRes.rec->GetType().ToString() == "") {
-    // GetLogger()->error("Form not exists");
+    partOne->GetLogger().error("Form not exists");
     return JsValue::Undefined();
   }
 
