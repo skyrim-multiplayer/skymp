@@ -1,6 +1,7 @@
 export class Form {
   constructor(formId: number) {}
 
+  GetFormId(): number;
   GetName(): string;
   GetGoldValue(): number;
   GetWeight(): number;
@@ -12,4 +13,5 @@ export class Form {
   GetEditorId(): string;
   GetSignature(): string;
   EqualSignature(signature: string): boolean;
+  GetDescription(): string;
 }
