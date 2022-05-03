@@ -1,6 +1,7 @@
 #include "FunctionsLibApi.h"
 #include "FLActor.h"
 #include "FLArmor.h"
+#include "FLCell.h"
 #include "FLForm.h"
 #include "FLObjectReference.h"
 
@@ -10,6 +11,7 @@ void RegisterFunctionsLibApi(std::shared_ptr<PartOne> partOne)
   RegisterArmorApi(partOne);
   RegisterObjectReferenceApi(partOne);
   RegisterActorApi(partOne);
+  RegisterCellApi(partOne);
 }
 
 uint32_t Uint32FromJsValue(const JsValue& v)
