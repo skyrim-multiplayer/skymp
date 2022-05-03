@@ -47,7 +47,7 @@ JsValue ArmorCtor(std::shared_ptr<PartOne> partOne,
 
   auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
 
-  if (!lookupRes.rec || lookupRes.rec->GetType().ToString() == "") {
+  if (!lookupRes.rec || lookupRes.rec->GetType().ToString() != "ARMO") {
     partOne->GetLogger().error("Armor not exists");
     return JsValue::Undefined();
   }

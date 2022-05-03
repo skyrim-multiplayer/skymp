@@ -53,7 +53,7 @@ JsValue CellCtor(std::shared_ptr<PartOne> partOne,
 
   auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
 
-  if (!lookupRes.rec || lookupRes.rec->GetType().ToString() == "") {
+  if (!lookupRes.rec || lookupRes.rec->GetType().ToString() != "CELL") {
     partOne->GetLogger().error("Cell not exists");
     return JsValue::Undefined();
   }

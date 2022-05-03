@@ -128,9 +128,13 @@ JsValue ActorCtor(std::shared_ptr<PartOne> partOne,
 
   auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
 
-  if (!lookupRes.rec || lookupRes.rec->GetType().ToString() == "") {
-    partOne->GetLogger().error("Actor not exists");
-    return JsValue::Undefined();
+  if (!lookupRes.rec) {
+    auto type = lookupRes.rec->GetType().ToString();
+
+    if (type != "NPC_" && type != "ACHR") {
+      partOne->GetLogger().error("Actor not exists");
+      return JsValue::Undefined();
+    }
   }
 
   return JsValue::Undefined();

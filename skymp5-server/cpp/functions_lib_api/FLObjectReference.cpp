@@ -158,7 +158,7 @@ JsValue ObjectReferenceCtor(std::shared_ptr<PartOne> partOne,
 
   auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
 
-  if (!lookupRes.rec || lookupRes.rec->GetType().ToString() == "") {
+  if (!lookupRes.rec || lookupRes.rec->GetType().ToString() != "REFR") {
     partOne->GetLogger().error("ObjectReference not exists");
     return JsValue::Undefined();
   }
