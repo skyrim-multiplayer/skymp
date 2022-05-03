@@ -5,6 +5,7 @@
 #include "FLForm.h"
 #include "FLLocation.h"
 #include "FLObjectReference.h"
+#include "FLWeapon.h"
 
 void RegisterFunctionsLibApi(std::shared_ptr<PartOne> partOne)
 {
@@ -14,6 +15,7 @@ void RegisterFunctionsLibApi(std::shared_ptr<PartOne> partOne)
   RegisterActorApi(partOne);
   RegisterCellApi(partOne);
   RegisterLocationApi(partOne);
+  RegisterWeaponApi(partOne);
 }
 
 uint32_t Uint32FromJsValue(const JsValue& v)

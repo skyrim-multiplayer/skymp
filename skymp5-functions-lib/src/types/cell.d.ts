@@ -1,3 +1,5 @@
+import { Form } from './form';
+
 export class Cell extends Form {
   constructor(formId: number) {}
   GetLocation(): number | undefined;
