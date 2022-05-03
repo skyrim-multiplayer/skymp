@@ -79,6 +79,12 @@ void RegisterFormApi(std::shared_ptr<PartOne> partOne)
     JsValue::Function([partOne](const JsFunctionArguments& args) {
       return EqualSignature(partOne, args);
     }));
+
+  formPrototype.SetProperty(
+    "GetDescription",
+    JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return GetDescription(partOne, args);
+    }));
 }
 
 JsValue FormCtor(std::shared_ptr<PartOne> partOne,
@@ -290,4 +296,25 @@ JsValue EqualSignature(std::shared_ptr<PartOne> partOne,
   auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
 
   return JsValue::Bool(signature == lookupRes.rec->GetType().ToString());
+}
+
+JsValue GetDescription(std::shared_ptr<PartOne> partOne,
+                       const JsFunctionArguments& args)
+{
+  auto formId = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
+  auto& cache = partOne->worldState.GetEspmCache();
+
+  JsValue desc = JsValue::String("");
+
+  espm::IterateFields_(
+    lookupRes.rec,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (std::string(type, 4) == "DESC") {
+        desc = JsValue::String(std::string(data, size));
+      }
+    },
+    cache);
+
+  return desc;
 }

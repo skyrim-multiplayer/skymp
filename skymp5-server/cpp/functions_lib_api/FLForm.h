@@ -38,3 +38,6 @@ JsValue GetEditorId(std::shared_ptr<PartOne> partOne,
 
 JsValue EqualSignature(std::shared_ptr<PartOne> partOne,
                        const JsFunctionArguments& args);
+
+JsValue GetDescription(std::shared_ptr<PartOne> partOne,
+                       const JsFunctionArguments& args);
