@@ -3,6 +3,7 @@
 #include "FLArmor.h"
 #include "FLCell.h"
 #include "FLForm.h"
+#include "FLLocation.h"
 #include "FLObjectReference.h"
 
 void RegisterFunctionsLibApi(std::shared_ptr<PartOne> partOne)
@@ -12,6 +13,7 @@ void RegisterFunctionsLibApi(std::shared_ptr<PartOne> partOne)
   RegisterObjectReferenceApi(partOne);
   RegisterActorApi(partOne);
   RegisterCellApi(partOne);
+  RegisterLocationApi(partOne);
 }
 
 uint32_t Uint32FromJsValue(const JsValue& v)
