@@ -9,3 +9,9 @@ JsValue CellCtor(std::shared_ptr<PartOne> partOne,
 
 JsValue GetLocation(std::shared_ptr<PartOne> partOne,
                     const JsFunctionArguments& args);
+
+JsValue GetFlags(std::shared_ptr<PartOne> partOne,
+                 const JsFunctionArguments& args);
+
+JsValue IsInterior(std::shared_ptr<PartOne> partOne,
+                   const JsFunctionArguments& args);

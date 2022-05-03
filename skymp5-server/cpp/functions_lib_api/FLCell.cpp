@@ -23,6 +23,17 @@ void RegisterCellApi(std::shared_ptr<PartOne> partOne)
     JsValue::Function([partOne](const JsFunctionArguments& args) {
       return GetLocation(partOne, args);
     }));
+
+  cellPrototype.SetProperty(
+    "GetFlags", JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return GetFlags(partOne, args);
+    }));
+
+  cellPrototype.SetProperty(
+    "IsInterior",
+    JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return IsInterior(partOne, args);
+    }));
 }
 
 JsValue CellCtor(std::shared_ptr<PartOne> partOne,
