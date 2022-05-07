@@ -1,6 +1,6 @@
 import { ObjectReference } from './objectReference';
 import { ActorValue } from 'skyrimPlatform';
-import { BaseActorValues, Equipment } from './mp';
+import { BaseActorValues, Equipment, LocationalData } from './mp';
 
 export class Actor extends ObjectReference {
   constructor(formId: number) {}
@@ -18,6 +18,10 @@ export class Actor extends ObjectReference {
   RestoreActorValue(av: ActorValue, value: number);
   SetActorValuesPercentages(health: number, magicka: number, stamina: number, aggressor?: Actor);
   SetRaceMenuOpen(isOpen: boolean);
+  SetSpawnPoint(locationalData: LocationalData);
+  GetSpawnPoint(): LocationalData;
+  GetRespawnTime(): number;
+  SetRespawnTime(time: number);
 }
 
 export interface Appearance {

@@ -89,8 +89,8 @@ export interface Equipment {
 }
 export interface LocationalData {
   cellOrWorldDesc: string;
-  pos: [number, number, number];
-  rot: [number, number, number];
+  pos: number[3];
+  rot: number[3];
 }
 
 export interface Mp {
