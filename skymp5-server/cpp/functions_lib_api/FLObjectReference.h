@@ -69,3 +69,15 @@ JsValue SetHarvested(std::shared_ptr<PartOne> partOne,
 
 JsValue SetPos(std::shared_ptr<PartOne> partOne,
                const JsFunctionArguments& args);
+
+JsValue MoveTo(std::shared_ptr<PartOne> partOne,
+               const JsFunctionArguments& args);
+
+JsValue PlaceAtMe(std::shared_ptr<PartOne> partOne,
+                  const JsFunctionArguments& args);
+
+JsValue GetDistance(std::shared_ptr<PartOne> partOne,
+                    const JsFunctionArguments& args);
+
+JsValue GetLinkedDoorId(std::shared_ptr<PartOne> partOne,
+                        const JsFunctionArguments& args);
