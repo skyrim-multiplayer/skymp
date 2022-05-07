@@ -109,6 +109,30 @@ void RegisterFormApi(std::shared_ptr<PartOne> partOne)
     JsValue::Function([partOne](const JsFunctionArguments& args) {
       return SetRaceMenuOpen(partOne, args);
     }));
+
+  actorPrototype.SetProperty(
+    "SetSpawnPoint",
+    JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return SetSpawnPoint(partOne, args);
+    }));
+
+  actorPrototype.SetProperty(
+    "GetSpawnPoint",
+    JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return GetSpawnPoint(partOne, args);
+    }));
+
+  actorPrototype.SetProperty(
+    "GetRespawnTime",
+    JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return GetRespawnTime(partOne, args);
+    }));
+
+  actorPrototype.SetProperty(
+    "SetRespawnTime",
+    JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return SetRespawnTime(partOne, args);
+    }));
 }
 
 JsValue ActorCtor(std::shared_ptr<PartOne> partOne,
@@ -486,6 +510,87 @@ JsValue SetRaceMenuOpen(std::shared_ptr<PartOne> partOne,
   bool isOpen = args[1];
 
   actor.SetRaceMenuOpen(isOpen);
+
+  return JsValue::Undefined();
+}
+
+JsValue SetSpawnPoint(std::shared_ptr<PartOne> partOne,
+                      const JsFunctionArguments& args)
+{
+  auto formId = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
+
+  JsValue jsLocationalData = args[1];
+  auto pos = jsLocationalData.GetProperty("pos");
+  auto rot = jsLocationalData.GetProperty("rot");
+
+  LocationalData locationalData = {
+    {
+      Uint32FromJsValue(pos.GetProperty(0)),
+      Uint32FromJsValue(pos.GetProperty(1)),
+      Uint32FromJsValue(pos.GetProperty(2)),
+    },
+    {
+      Uint32FromJsValue(rot.GetProperty(0)),
+      Uint32FromJsValue(rot.GetProperty(1)),
+      Uint32FromJsValue(rot.GetProperty(2)),
+    },
+    FormDesc::FromString(jsLocationalData.GetProperty("cellOrWorldDesc"))
+  };
+
+  actor.SetSpawnPoint(locationalData);
+
+  return JsValue::Undefined();
+}
+
+JsValue GetSpawnPoint(std::shared_ptr<PartOne> partOne,
+                      const JsFunctionArguments& args)
+{
+  auto formId = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
+
+  LocationalData locationalData = actor.GetSpawnPoint();
+
+  JsValue jsLocationalData = JsValue::Object();
+
+  JsValue jsPos = JsValue::Array(3);
+  jsPos.SetProperty(0, JsValue(locationalData.pos[0]));
+  jsPos.SetProperty(0, JsValue(locationalData.pos[1]));
+  jsPos.SetProperty(0, JsValue(locationalData.pos[2]));
+  jsLocationalData.SetProperty("pos", jsPos);
+
+  JsValue jsRot = JsValue::Array(3);
+  jsRot.SetProperty(0, JsValue(locationalData.rot[0]));
+  jsRot.SetProperty(0, JsValue(locationalData.rot[1]));
+  jsRot.SetProperty(0, JsValue(locationalData.rot[2]));
+  jsLocationalData.SetProperty("rot", jsRot);
+
+  JsValue cellOrWorldDesc = locationalData.cellOrWorldDesc.ToString();
+  jsLocationalData.SetProperty("cellOrWorldDesc", cellOrWorldDesc);
+
+  return jsLocationalData;
+}
+
+JsValue GetRespawnTime(std::shared_ptr<PartOne> partOne,
+                       const JsFunctionArguments& args)
+{
+  auto formId = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
+
+  auto respawnTime = actor.GetRespawnTime();
+
+  return JsValue(respawnTime);
+}
+
+JsValue SetRespawnTime(std::shared_ptr<PartOne> partOne,
+                       const JsFunctionArguments& args)
+{
+  auto formId = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
+
+  auto respawnTime = args[1];
+
+  actor.SetRespawnTime(static_cast<double>(respawnTime));
 
   return JsValue::Undefined();
 }
