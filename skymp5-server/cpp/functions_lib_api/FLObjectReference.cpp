@@ -1,5 +1,6 @@
 #include "FLObjectReference.h"
 #include "FunctionsLibApi.h"
+#include <math.h>
 
 void RegisterObjectReferenceApi(std::shared_ptr<PartOne> partOne)
 {
@@ -138,6 +139,28 @@ void RegisterObjectReferenceApi(std::shared_ptr<PartOne> partOne)
   objectReferencePrototype.SetProperty(
     "SetPos", JsValue::Function([partOne](const JsFunctionArguments& args) {
       return SetPos(partOne, args);
+    }));
+
+  objectReferencePrototype.SetProperty(
+    "MoveTo", JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return MoveTo(partOne, args);
+    }));
+
+  objectReferencePrototype.SetProperty(
+    "PlaceAtMe", JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return PlaceAtMe(partOne, args);
+    }));
+
+  objectReferencePrototype.SetProperty(
+    "GetDistance",
+    JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return GetDistance(partOne, args);
+    }));
+
+  objectReferencePrototype.SetProperty(
+    "GetLinkedDoorId",
+    JsValue::Function([partOne](const JsFunctionArguments& args) {
+      return GetLinkedDoorId(partOne, args);
     }));
 }
 
@@ -479,4 +502,102 @@ JsValue SetPos(std::shared_ptr<PartOne> partOne,
   obj.SetPos(niPoint3);
 
   return JsValue::Undefined();
+}
+
+JsValue MoveTo(std::shared_ptr<PartOne> partOne,
+               const JsFunctionArguments& args)
+{
+  auto formId1 = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto formId2 = Uint32FromJsValue(args[1].GetProperty("_formId"));
+
+  auto& obj1 = partOne->worldState.GetFormAt<MpObjectReference>(formId1);
+  auto& obj2 = partOne->worldState.GetFormAt<MpObjectReference>(formId2);
+
+  obj1.SetPos(obj2.GetPos());
+  obj1.SetAngle(obj2.GetAngle());
+  obj1.SetCellOrWorld(obj2.GetCellOrWorld());
+
+  return JsValue::Undefined();
+}
+
+JsValue PlaceAtMe(std::shared_ptr<PartOne> partOne,
+                  const JsFunctionArguments& args)
+{
+  auto formId1 = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto formId2 = Uint32FromJsValue(args[1].GetProperty("_formId"));
+
+  auto& obj = partOne->worldState.GetFormAt<MpObjectReference>(formId1);
+
+  auto akFormToPlace = partOne->GetEspm().GetBrowser().LookupById(formId2);
+  if (!akFormToPlace.rec) {
+    throw std::runtime_error("Form not exists");
+  }
+
+  std::string type = akFormToPlace.rec->GetType().ToString();
+
+  auto pos = obj.GetPos();
+  auto rot = obj.GetAngle();
+  auto cellOrWorld = obj.GetCellOrWorld();
+
+  LocationalData locationalData = { pos, rot, cellOrWorld };
+
+  auto callbacks = partOne->CreateFormCallbacks();
+
+  std::unique_ptr<MpObjectReference> newRefr;
+  if (akFormToPlace.rec->GetType() == "NPC_") {
+    auto actor = new MpActor(locationalData, callbacks, formId2);
+    newRefr.reset(actor);
+  } else {
+    newRefr.reset(
+      new MpObjectReference(locationalData, callbacks, formId2, type));
+  }
+
+  auto worldState = &partOne->worldState;
+  auto newRefrId = worldState->GenerateFormId();
+  worldState->AddForm(std::move(newRefr), newRefrId);
+
+  auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
+  refr.ForceSubscriptionsUpdate();
+
+  return JsValue(JsValue::Int(refr.GetFormId()));
+}
+
+JsValue GetDistance(std::shared_ptr<PartOne> partOne,
+                    const JsFunctionArguments& args)
+{
+  auto formId1 = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto formId2 = Uint32FromJsValue(args[1].GetProperty("_formId"));
+
+  auto& obj1 = partOne->worldState.GetFormAt<MpObjectReference>(formId1);
+  auto& obj2 = partOne->worldState.GetFormAt<MpObjectReference>(formId2);
+
+  auto& pos1 = obj1.GetPos();
+  auto& pos2 = obj2.GetPos();
+
+  auto distance =
+    sqrt(pow(fdim(pos1[0], pos2[0]), 2) + pow(fdim(pos1[1], pos2[1]), 2) +
+         pow(fdim(pos1[2], pos2[2]), 2));
+
+  return JsValue(distance);
+}
+
+JsValue GetLinkedDoorId(std::shared_ptr<PartOne> partOne,
+                        const JsFunctionArguments& args)
+{
+  auto formId = Uint32FromJsValue(args[0].GetProperty("_formId"));
+  auto lookupRes = partOne->GetEspm().GetBrowser().LookupById(formId);
+  auto& cache = partOne->worldState.GetEspmCache();
+
+  JsValue id = JsValue::Undefined();
+
+  espm::IterateFields_(
+    lookupRes.rec,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (std::string(type, 4) == "XTEL") {
+        id = JsValue::Int(*(uint32_t*)data);
+      }
+    },
+    cache);
+
+  return id;
 }

@@ -3,7 +3,6 @@ import { Inventory } from './mp';
 
 export class ObjectReference extends Form {
   constructor(formId: number) {}
-
   Activate(activator: ObjectReference);
   AddItem(item: number, count: number = 1);
   Disable();
@@ -27,4 +26,8 @@ export class ObjectReference extends Form {
   SetCellOrWorld(cellOrWorldId: number);
   SetHarvested(IsHarvested: boolean);
   SetPos(angle: number[3]);
+  MoveTo(akTarget: ObjectReference): void;
+  PlaceAtMe(akFormToPlace: Form): number;
+  GetDistance(obj: ObjectReference): number[3];
+  GetLinkedDoorId(): number | undefined;
 }
