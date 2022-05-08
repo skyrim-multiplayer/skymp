@@ -128,7 +128,7 @@ jobs:
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
                 DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST}}
-                DEPLOY_TARGET_USER: ubuntu
+                DEPLOY_TARGET_USER: skmp
                 DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
                 DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS}}
             run: |
