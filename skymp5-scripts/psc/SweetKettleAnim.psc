@@ -11,7 +11,7 @@ Debug.SendAnimationEvent(Game.GetPlayer(),"IdleForceDefaultState")
 if count <1
 Debug.SendAnimationEvent(Game.GetPlayer(),"IdleOffsetCarryPotServe")
 count = count + 1
-Game.GetPlayer().Additem(Game.GetForm(0x6277674), 1, true)
+Game.GetPlayer().Additem(Game.GetForm(0x8277674), 1, true)
 elseif count >=1
 Debug.SendAnimationEvent(Game.GetPlayer(),"IdleForceDefaultState")
 count = 0

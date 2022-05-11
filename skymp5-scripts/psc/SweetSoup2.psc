@@ -6,7 +6,7 @@ GotoState("eat")
 endevent
 State eat
 Event OnActivate(ObjectReference akActionRef) 
-if count < 1&&Game.GetPlayer().GetSitState() == 0&&  Game.GetPlayer().getitemcount(Game.GetForm(0x6277674)) < 1
+if count < 1&&Game.GetPlayer().GetSitState() == 0&&  Game.GetPlayer().getitemcount(Game.GetForm(0x8277674)) < 1
 self.BlockActivation() 
 Debug.SendAnimationEvent(Game.GetPlayer(),"IdleEatingStandingStart")
 count = count + 1
@@ -21,7 +21,7 @@ count = 0
 elseif count >= 1
 Debug.SendAnimationEvent(Game.GetPlayer(),"ChairEatingSoupStop")
 count = 0
-elseif  Game.GetPlayer().getitemcount(Game.GetForm(0x6277674)) >= 1
+elseif  Game.GetPlayer().getitemcount(Game.GetForm(0x8277674)) >= 1
 Debug.SendAnimationEvent(Game.GetPlayer(),"IdleOffsetCarryPotServe")
 endif
 endevent

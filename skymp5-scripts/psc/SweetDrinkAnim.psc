@@ -9,7 +9,7 @@ Event OnActivate(ObjectReference akActionRef)
 count = count + 1
 if count == 2
 self.BlockActivation()
-game.getplayer().removeitem(Game.GetForm(0x6277674),10, true)
+game.getplayer().removeitem(Game.GetForm(0x8277674),10, true)
 Debug.SendAnimationEvent(Game.GetPlayer(),"IdleForceDefaultState")
 count = 0
 elseif Game.GetPlayer().GetSitState() == 0 
