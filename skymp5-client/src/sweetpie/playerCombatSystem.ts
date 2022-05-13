@@ -11,7 +11,7 @@ const weaponTimings = new Map<sp.WeaponType, [number, number]>([
   // TODO(#xyz): do something about it. Maybe we can distinguish them somehow...
   [sp.WeaponType.Battleaxe, [416, 66]],
   [sp.WeaponType.Warhammer, [416, 66]],
-  [sp.WeaponType.Bow, [0, 218]},
+  [sp.WeaponType.Bow, [0, 218]],
   [sp.WeaponType.Staff, [320, 51]],
   [sp.WeaponType.Crossbow, [0, 320]],
 ]);
