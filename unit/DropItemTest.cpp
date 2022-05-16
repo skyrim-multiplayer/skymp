@@ -31,7 +31,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
                             { "baseId", ironDagger },
                             { "count", 1 } });
   // 1 message from here and another 1 is comming from actionListener
-  REQUIRE(partOne.Messages().size() == 2);
+  REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(ac.GetInventory().GetItemCount(ironDagger) == 0);
   // spawning items will be implemented later
   // MpObjectReference& refr =
@@ -47,6 +47,6 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
             nlohmann::json{ { "t", MsgType::DropItem },
                             { "baseId", healingPotion },
                             { "count", 5 } });
-  REQUIRE(partOne.Messages().size() == 2);
+  REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(ac.GetInventory().GetItemCount(healingPotion) == 0);
 }
