@@ -48,7 +48,29 @@ export class SweetPieGameModeListener implements GameModeListener {
         controller.setPercentages(actorId, { health: 0 });
         controller.sendChatMessage(actorId, 'You killed yourself...');
       }
-    }, 
+    },
+    {
+      name: 'roll',
+      handler: (actorId: number, controller: PlayerController, neighbors: number[], senderName: string, inputText: string) => {
+        const random = []
+        const [count, max]: number[] = inputText.split(' ')[1].split('d').map(str => parseInt(str))
+        const colors: {
+          [key: number]: string
+        } = {
+          6: 'F78C8C',
+          12: '5DAD60',
+          20: '7175D6',
+          100: '9159B6'
+        }
+        for (let i = 0; i < count; i++) {
+          if (i > 4) break;
+          random.push(Math.floor(Math.random() * (max - 1) + 1));
+        }
+        for (const neighbor of neighbors) {
+          controller.sendChatMessage(neighbor, `#{${colors[max] ? colors[max] : '9159B6'}}${senderName} бросает D${max} #{FFFFFF}- ${random.join(', ')}`);
+        } 
+      }
+    }
   ]
 
   warmupTimerMaximum = 60;
@@ -212,8 +234,12 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
     for (const command of this.commands) {
+      if (/\/roll \d+d\d+/g.test(inputText) && command.name === 'roll') {
+        command.handler(actorId, this.controller, neighbors, senderName, inputText)
+        return;
+      }
       if (inputText === '/' + command.name) {
-        command.handler(actorId, this.controller);
+        command.handler(actorId, this.controller, neighbors, senderName, inputText);
         return;
       }
     }

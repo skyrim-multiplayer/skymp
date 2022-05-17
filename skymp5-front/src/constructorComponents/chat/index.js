@@ -31,7 +31,7 @@ const Chat = (props) => {
       inputRef.current.focus();
     }
   }, [isInputHidden]);
-  
+
   useEffect(() => {
     scrollToLastMessage();
     if (inputRef !== undefined && inputRef.current !== undefined) {
@@ -43,9 +43,9 @@ const Chat = (props) => {
     const colorSnippetTpl = '#{123456}';
     for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
       if (text[i] == '#' && text[i + 1] == '{'
-          && text[i + colorSnippetTpl.length - 1] == '}') {
+        && text[i + colorSnippetTpl.length - 1] == '}') {
         return (
-          <span style={{color: currentColor}}>
+          <span style={{ color: currentColor }}>
             {text.substring(0, i)}
             {
               getMessageSpans(
@@ -57,43 +57,62 @@ const Chat = (props) => {
         );
       }
     }
+    const resultMessage = []
+    let lastIndex = 0
+    for (let i = 0; i < text.length; ++i) {
+      if (text[i] === '*' && text.indexOf('*', i + 1)) {
+        const end = text.indexOf('*', i + 1) + 1
+        resultMessage.push(<span>{text.slice(lastIndex, i)}</span>)
+        resultMessage.push(<span style={{ color: '#CFAA6E' }}>{text.slice(i + 1, end - 1).replace(/\*/g, '')}</span>)
+        lastIndex = end
+        i = end
+      }
+      if (text[i] === '(' && text[i + 1] === '(' && text.indexOf('))', i + 1)) {
+        const end = text.indexOf('))', i + 1) + 2
+        resultMessage.push(<span>{text.slice(lastIndex, i)}</span>)
+        resultMessage.push(<span style={{ color: '#91916D' }}>{text.slice(i, end)}</span>)
+        lastIndex = end
+        i = end
+      }
+    }
+    resultMessage.push(text.slice(lastIndex))
     return (
-      <span style={{color: currentColor}}>
-        {text}
+      <span style={{ color: currentColor }}>
+        {resultMessage}
       </span>
     );
   };
 
   const getList = () => {
     return props.messages.map((msg, index) => (
-            <div
-                className="msg"
-                key={`msg-${index}`}
-                style={{ marginLeft: '10px' }}
-            >
-              {getMessageSpans(msg)}
-            </div>
+      <div
+        className="msg"
+        key={`msg-${index}`}
+        style={{ marginLeft: '10px' }}
+      >
+        {getMessageSpans(msg)}
+      </div>
     ));
   };
 
   return (
-        <div id="chat">
-            <div className="list">{getList()}</div>
-            {isInputHidden
-              ? <></>
-              : <input
-                    id="chatInput"
-                    className={'show'}
-                    type="text"
-                    placeholder={placeholder !== undefined ? placeholder : ''}
-                    value={input}
-                    onChange={(e) => { updateInput(e.target.value); }}
-                    onFocus={(e) => changeInputFocus(true)}
-                    onBlur={(e) => changeInputFocus(false)}
-                    ref={inputRef}
-                />
-            }
-        </div>
+    <div id="chat">
+      <div className="list">{getList()}</div>
+      {isInputHidden
+        ? <></>
+        : <input
+          id="chatInput"
+          className={'show'}
+          type="text"
+          placeholder={placeholder !== undefined ? placeholder : ''}
+          value={input}
+          onChange={(e) => { updateInput(e.target.value); }}
+          onFocus={(e) => changeInputFocus(true)}
+          onBlur={(e) => changeInputFocus(false)}
+          ref={inputRef}
+        />
+      }
+    </div>
   );
 };
 
