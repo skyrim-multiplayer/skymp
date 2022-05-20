@@ -3,6 +3,7 @@
 #include "CropRegeneration.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "MpChangeForms.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
 #include "PieScript.h"
@@ -104,8 +105,9 @@ void MpActor::OnEquip(uint32_t baseId)
     std::vector<std::string> espmFiles = espmProvider->espmFiles;
 
     constexpr uint32_t kApplePieId0 = 0x082b9671;
-    constexpr uint32_t kStareterKitPie = 0x0;
+    constexpr uint32_t kStareterKitPie = 0x030009DB;
     constexpr uint32_t kPatronStarterKitPie = 0x00064B30;
+    constexpr uint32_t kWardrobePie = 0x082DD28A;
     bool isPie = false;
     isPie = isPie || baseId == kApplePieId0;
 
@@ -122,6 +124,14 @@ void MpActor::OnEquip(uint32_t baseId)
         WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
         pieScript.AddPatronStarterKitItems(*this, *worldState);
+      }
+
+      if (baseId == kWardrobePie) {
+        WorldState* worldState = GetParent();
+        constexpr uint32_t wardrobeId = 0x0756C165;
+        this->Teleport({ { 0, 0, 0 },
+                         { 0, 0, 0 },
+                         FormDesc::FromFormId(wardrobeId, espmFiles) });
       }
 
       if (isPie) {
