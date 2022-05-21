@@ -129,7 +129,8 @@ void MpActor::OnEquip(uint32_t baseId)
       if (baseId == kWardrobePie) {
         WorldState* worldState = GetParent();
         constexpr uint32_t wardrobeId = 0x0756C165;
-        this->Teleport({ { 0, 0, 0 },
+        const NiPoint3 wardrobePos = { -769, 10461, -915 };
+        this->Teleport({ wardrobePos,
                          { 0, 0, 0 },
                          FormDesc::FromFormId(wardrobeId, espmFiles) });
       }
