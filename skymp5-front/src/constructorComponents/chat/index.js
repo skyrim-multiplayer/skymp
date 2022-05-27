@@ -18,7 +18,6 @@ const Chat = (props) => {
   const chatRef = useRef();
 
   const handleScroll = () => {
-    console.log('scroll');
     if (chatRef.current) {
       window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
     }
@@ -26,8 +25,6 @@ const Chat = (props) => {
 
   useEffect(() => {
     window.needToScroll = true;
-    window.addEventListener('wheel', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
@@ -124,7 +121,7 @@ const Chat = (props) => {
   return (
     <div id="chat">
       <div className="chat-main">
-        <div className="list" ref={chatRef}>{getList()}</div>
+        <div className="list" ref={chatRef} onScroll={(e) => handleScroll()}>{getList()}</div>
         {isInputHidden
           ? <></>
           : <div className='input'>

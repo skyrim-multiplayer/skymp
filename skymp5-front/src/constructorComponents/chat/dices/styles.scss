@@ -102,4 +102,8 @@
     width: 54px;
     height: 54px;
     margin: auto auto 0 auto;
+    transition: all 0.1s ease;
+    &:active {
+        width: 38px;
+    }
 }
