@@ -1,27 +1,16 @@
-#chat {
-    width: calc(26.6% + 70px);
-    height: 372px;
-    position: absolute;
-    bottom: 30px;
-    left: 30px;
+.chat-dices {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    font-family: Din-pro;
-    font-size: 16px;
-    .chat-main {
-      flex-direction: column;
-      width: calc(100% - 60px);
-      >.list {
-        width: 100%;
-        height: 300px;
-        overflow-y: scroll;
-        &::-webkit-scrollbar {
-          width: 0 !important;
-        }
-        > .msg {
-          margin-top: 5px;
-          font-weight: bold;
+    flex-direction: column;
+    min-width: 54px;
+    min-height: 340px;
+    margin-bottom: 15px;
+    margin-top: auto;
+    span {
+        font-family: Din-pro;
+        font-weight: bold;
+        margin: 0 auto;
+        opacity: 0.68;
+        font-weight: bold;
           letter-spacing: 1px;
           text-shadow: 
           -0   -2px 0   rgba( 0, 0, 0, 0.63 ),
@@ -49,32 +38,68 @@
           -2px  2px 0   rgba( 0, 0, 0, 0.63 ),
            2px  2px 0   rgba( 0, 0, 0, 0.63 );
           color: #FAFAFA;
-          &.default {
-            color: #FAFAFA;
-          }
-          &.action {
-            color: #C37BDD;
-          }
-          &.admin {
-            color: #CE3131;
-          }
+
+    }
+}
+
+.icon {
+    &-d100 {
+        &:hover {
+            .to-color {
+                fill: #A062C9;
+                
+            }
         }
-      }
     }
-    
-    #chatInput {
-      width: 100%;
-      height: 0;
-      border-radius: 15px;
-      background-color: rgba(0, 0, 0, .75);
-      padding-left: 10px;
-      font-family: Din-pro;
-      font-size: 16px;
-      color: #fafafa;
-      opacity: 0;
-      &.show {
-        opacity: 1;
-        height: 32px;
-      }
+    &-d12 {
+        &:hover {
+            .to-color {
+                fill: #5DAD60;
+                
+            }
+        }
     }
+    &-d6 {
+        &:hover {
+            .to-color {
+                fill: #F78C8C;
+                
+            }
+        }
+    }
+    &-d20 {
+        &:hover {
+            .to-color {
+                fill: #7175D6;
+                
+            }
+        }
+    }
+    &-coin {
+        &:hover {
+            .to-color {
+                fill: #BDBD7D; 
+            }
+        }
+    }
+}
+
+.dice {
+    opacity: 0.5;
+    margin: auto;
+    .to-color {
+        fill: white;
+    }
+    &:hover {
+        width: 54px;
+        height: 54px;
+        cursor: pointer;
+        opacity: 0.63;
+    }
+}
+.dice-wrapper {
+    display: flex;
+    width: 54px;
+    height: 54px;
+    margin: auto auto 0 auto;
 }

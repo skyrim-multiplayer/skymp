@@ -1,15 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import ChatCheckbox from './checkbox';
+import Dices from './dices';
 
 import './styles.scss';
 
 const Chat = (props) => {
   const [input, updateInput] = useState('');
   const [isInputFocus, changeInputFocus] = useState(false);
+  const [hideNonRP, changeNonRPHide] = useState(false);
+
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;
   const send = props.send;
 
   const inputRef = useRef();
+
+  const chatRef = useRef();
+
+  const handleScroll = () => {
+    console.log('scroll');
+    if (chatRef.current) {
+      window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
+    }
+  };
+
+  useEffect(() => {
+    window.needToScroll = true;
+    window.addEventListener('wheel', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -33,51 +52,52 @@ const Chat = (props) => {
   }, [isInputHidden]);
 
   useEffect(() => {
-    scrollToLastMessage();
+    if (window.needToScroll) window.scrollToLastMessage();
     if (inputRef !== undefined && inputRef.current !== undefined) {
       inputRef.current.focus();
     }
   }, [props.messages]);
 
   const getMessageSpans = (text, currentColor = undefined) => {
+    const isFullNonRp = /([а-яa-z\s])+:\s*\(\(([a-zа-я\s])+\)\)/gi.test(text);
     const colorSnippetTpl = '#{123456}';
     for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
-      if (text[i] == '#' && text[i + 1] == '{'
-        && text[i + colorSnippetTpl.length - 1] == '}') {
+      if (text[i] == '#' && text[i + 1] == '{' &&
+        text[i + colorSnippetTpl.length - 1] == '}') {
         return (
           <span style={{ color: currentColor }}>
             {text.substring(0, i)}
             {
               getMessageSpans(
                 text.substring(i + colorSnippetTpl.length),
-                '#' + text.substring(i + 2, i + 8),
+                '#' + text.substring(i + 2, i + 8)
               )
             }
           </span>
         );
       }
     }
-    const resultMessage = []
-    let lastIndex = 0
+    const resultMessage = [];
+    let lastIndex = 0;
     for (let i = 0; i < text.length; ++i) {
       if (text[i] === '*' && text.indexOf('*', i + 1)) {
-        const end = text.indexOf('*', i + 1) + 1
-        resultMessage.push(<span>{text.slice(lastIndex, i)}</span>)
-        resultMessage.push(<span style={{ color: '#CFAA6E' }}>{text.slice(i + 1, end - 1).replace(/\*/g, '')}</span>)
-        lastIndex = end
-        i = end
+        const end = text.indexOf('*', i + 1) + 1;
+        resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
+        resultMessage.push(<span style={{ color: '#CFAA6E' }}>{text.slice(i + 1, end - 1).replace(/\*/g, '')}</span>);
+        lastIndex = end;
+        i = end;
       }
       if (text[i] === '(' && text[i + 1] === '(' && text.indexOf('))', i + 1)) {
-        const end = text.indexOf('))', i + 1) + 2
-        resultMessage.push(<span>{text.slice(lastIndex, i)}</span>)
-        resultMessage.push(<span style={{ color: '#91916D' }}>{text.slice(i, end)}</span>)
-        lastIndex = end
-        i = end
+        const end = text.indexOf('))', i + 1) + 2;
+        resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
+        resultMessage.push(<span style={{ color: '#91916D' }} className='nonrp'>{text.slice(i, end)}</span>);
+        lastIndex = end;
+        i = end;
       }
     }
-    resultMessage.push(text.slice(lastIndex))
+    resultMessage.push(text.slice(lastIndex));
     return (
-      <span style={{ color: currentColor }}>
+      <span className={isFullNonRp ? 'nonrp' : ''} style={{ color: currentColor }}>
         {resultMessage}
       </span>
     );
@@ -95,22 +115,49 @@ const Chat = (props) => {
     ));
   };
 
+  const hideNonRPStyles = `
+  .nonrp {
+    display: none;
+  }
+  `;
+
   return (
     <div id="chat">
-      <div className="list">{getList()}</div>
-      {isInputHidden
-        ? <></>
-        : <input
-          id="chatInput"
-          className={'show'}
-          type="text"
-          placeholder={placeholder !== undefined ? placeholder : ''}
-          value={input}
-          onChange={(e) => { updateInput(e.target.value); }}
-          onFocus={(e) => changeInputFocus(true)}
-          onBlur={(e) => changeInputFocus(false)}
-          ref={inputRef}
-        />
+      <div className="chat-main">
+        <div className="list" ref={chatRef}>{getList()}</div>
+        {isInputHidden
+          ? <></>
+          : <div className='input'>
+            <div>
+              <input
+                id="chatInput"
+                className={'show'}
+                type="text"
+                placeholder={placeholder !== undefined ? placeholder : ''}
+                value={input}
+                onChange={(e) => { updateInput(e.target.value); }}
+                onFocus={(e) => changeInputFocus(true)}
+                onBlur={(e) => changeInputFocus(false)}
+                ref={inputRef}
+              />
+            </div>
+            <div>
+              <ChatCheckbox id={'nonrp'} text={'nonrp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
+            </div>
+          </div>
+        }
+      </div>
+      {
+        isInputHidden
+          ? <></>
+          : <Dices send={props.send} />
+      }
+      {
+        hideNonRP
+          ? <style>
+            {hideNonRPStyles}
+          </style>
+          : null
       }
     </div>
   );

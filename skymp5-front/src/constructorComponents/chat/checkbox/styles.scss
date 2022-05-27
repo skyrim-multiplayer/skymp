@@ -1,0 +1,80 @@
+.promoted-input-checkbox {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+
+.promoted-checkbox {
+    input:checked+label>img {
+        // Firefox doesn't render svg's that is loading with the use tag if its been set to display: none and then toggled to display: block, so you have to use tricks like this to get it to render again:
+        height: 24px;
+    }
+
+    label {
+        line-height: 40px;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        flex-direction: row;
+
+        span {
+            margin: auto 10px;
+            font-family: Din-pro;
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-family: Din-pro;
+            font-weight: bold;
+            opacity: 0.68;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow:
+                -0 -2px 0 rgba(0, 0, 0, 0.63),
+                0 -2px 0 rgba(0, 0, 0, 0.63),
+                -0 2px 0 rgba(0, 0, 0, 0.63),
+                0 2px 0 rgba(0, 0, 0, 0.63),
+                -2px -0 0 rgba(0, 0, 0, 0.63),
+                2px -0 0 rgba(0, 0, 0, 0.63),
+                -2px 0 0 rgba(0, 0, 0, 0.63),
+                2px 0 0 rgba(0, 0, 0, 0.63),
+                -1px -2px 0 rgba(0, 0, 0, 0.63),
+                1px -2px 0 rgba(0, 0, 0, 0.63),
+                -1px 2px 0 rgba(0, 0, 0, 0.63),
+                1px 2px 0 rgba(0, 0, 0, 0.63),
+                -2px -1px 0 rgba(0, 0, 0, 0.63),
+                2px -1px 0 rgba(0, 0, 0, 0.63),
+                -2px 1px 0 rgba(0, 0, 0, 0.63),
+                2px 1px 0 rgba(0, 0, 0, 0.63),
+                -2px -2px 0 rgba(0, 0, 0, 0.63),
+                2px -2px 0 rgba(0, 0, 0, 0.63),
+                -2px 2px 0 rgba(0, 0, 0, 0.63),
+                2px 2px 0 rgba(0, 0, 0, 0.63),
+                -2px -2px 0 rgba(0, 0, 0, 0.63),
+                2px -2px 0 rgba(0, 0, 0, 0.63),
+                -2px 2px 0 rgba(0, 0, 0, 0.63),
+                2px 2px 0 rgba(0, 0, 0, 0.63);
+            color: #FAFAFA;
+
+        }
+
+        &:after {
+            content: "";
+            height: 40px;
+            width: 40px;
+            margin-right: 1rem;
+            float: left;
+            border-radius: 3px;
+            transition: 0.15s all ease-out;
+        }
+    }
+
+    img {
+        width: 24px;
+        height: 24px;
+        margin: auto 0;
+    }
+}
