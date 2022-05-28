@@ -63,7 +63,7 @@ std::map<uint32_t, std::string> LocalizationProvider::ParseILDLStrings(
   for (int i = 0; i < numberOfEntries; i++) {
     uint32_t start = 8 + numberOfEntries * 8 + entries[i]->offset;
 
-    entries[i]->length = *(uint32_t*)&(buffer[start]);
+    entries[i]->length = static_cast<uint32_t>(buffer[start]);
 
     for (int charIndex = 0; charIndex < entries[i]->length - start;
          charIndex++) {
