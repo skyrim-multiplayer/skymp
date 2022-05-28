@@ -14,6 +14,7 @@
 #include "Utils.h"
 #include "WorldState.h"
 #include <fmt/format.h>
+#include <unordered_set>
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -650,6 +651,13 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   MpActor* aggressor = partOne.serverState.ActorByUser(rawMsgData_.userId);
   if (!aggressor) {
     throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  std::unordered_set<uint32_t> greenZones = { 0x0760AADA };
+  uint32_t aggressorCell = aggressor->GetCellOrWorld();
+  auto it = greenZones.find(aggressorCell);
+  if (it != greenZones.end()) {
+    return;
   }
 
   if (aggressor->IsDead()) {
