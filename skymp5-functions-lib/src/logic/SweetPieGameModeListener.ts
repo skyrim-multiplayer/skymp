@@ -52,11 +52,12 @@ export class SweetPieGameModeListener implements GameModeListener {
     {
       name: 'roll',
       handler: (actorId: number, controller: PlayerController, neighbors: number[], senderName: string, inputText: string) => {
-        const random = []
+        const random: string[] = []
         const [count, max]: number[] = inputText.split(' ')[1].split('d').map(str => parseInt(str))
         const colors: {
           [key: number]: string
         } = {
+          2: 'BDBD7D',
           6: 'F78C8C',
           12: '5DAD60',
           20: '7175D6',
@@ -64,10 +65,20 @@ export class SweetPieGameModeListener implements GameModeListener {
         }
         for (let i = 0; i < count; i++) {
           if (i > 4) break;
-          random.push(Math.floor(Math.random() * (max - 1) + 1));
+          if (max === 2) {
+            random.push(Math.floor(Math.random() * (max) + 1) === 2 ? 'успех' : 'неудача');
+          } else {
+            random.push(`${Math.floor(Math.random() * (max) + 1)}`);
+          }
+        }
+        let message: string;
+        if (max === 2) {
+          message = `#{${colors[max] ? colors[max] : '9159B6'}}${senderName} подбрасывает монетку #{FFFFFF}- ${random.join(', ')}`
+        } else {
+          message = `#{${colors[max] ? colors[max] : '9159B6'}}${senderName} бросает D${max} #{FFFFFF}- ${random.join(', ')}`
         }
         for (const neighbor of neighbors) {
-          controller.sendChatMessage(neighbor, `#{${colors[max] ? colors[max] : '9159B6'}}${senderName} бросает D${max} #{FFFFFF}- ${random.join(', ')}`);
+          controller.sendChatMessage(neighbor, message);
         } 
       }
     }
