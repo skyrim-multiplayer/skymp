@@ -234,6 +234,16 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   if (!ac)
     throw std::runtime_error("Can't do this without Actor attached");
 
+  constexpr uint32_t wardrobeDoor = 0x0760AADA;
+  if (target == wardrobeDoor) {
+    const Inventory& inv = ac->GetInventory();
+    for (const auto& entry : inv.entries) {
+      if (entry.extra.worn == Inventory::Worn::None) {
+        ac->RemoveItems({ entry });
+      }
+    }
+  }
+
   auto it = partOne.worldState.hosters.find(caster);
   auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
 
