@@ -30,7 +30,7 @@ const Dices = (props: {
 
   const playSound = (type: 'pouch' | 'coin' | 'dice') => {
     if (type === 'dice') {
-      const rand = Math.floor(Math.random() * (4 - 1)) + 1;
+      const rand = Math.floor(Math.random() * 3) + 1;
       const audio = new Audio(require(`../../../sound/dice${rand}.mp3`).default);
       audio.play();
     }
