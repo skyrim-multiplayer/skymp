@@ -11,7 +11,7 @@ std::vector<DirectoryEntry*> LocalizationProvider::ParseDirectoryEntries(
   std::vector<char> buffer)
 {
   std::vector<DirectoryEntry*> directoryEntries;
-  uint32_t numberOfEntries = *(uint32_t*)&buffer[0];
+  uint32_t numberOfEntries = *reinterpret_cast<uint32_t*>(&buffer[0]);
 
   directoryEntries.resize(numberOfEntries);
 
@@ -38,17 +38,17 @@ std::map<uint32_t, std::string> LocalizationProvider::ParseStrings(
   uint32_t numberOfEntries = entries.size();
 
   for (int i = 0; i < numberOfEntries; i++) {
-    uint32_t start = 8 + numberOfEntries * 8 + (*entries[i]).offset;
+    uint32_t start = 8 + numberOfEntries * 8 + entries[i]->offset;
 
     for (int charIndex = 0; charIndex < buffer.size() - start; charIndex++) {
       if (buffer[start + charIndex] == 0) {
         break;
       }
 
-      (*entries[i]).str += buffer[start + charIndex];
+      entries[i]->str += buffer[start + charIndex];
     }
 
-    localization[(*entries[i]).stringId] = (*entries[i]).str;
+    localization[entries[i]->stringId] = entries[i]->str;
   }
 
   return localization;
@@ -61,20 +61,20 @@ std::map<uint32_t, std::string> LocalizationProvider::ParseILDLStrings(
   uint32_t numberOfEntries = entries.size();
 
   for (int i = 0; i < numberOfEntries; i++) {
-    uint32_t start = 8 + numberOfEntries * 8 + (*entries[i]).offset;
+    uint32_t start = 8 + numberOfEntries * 8 + entries[i]->offset;
 
-    (*entries[i]).length = *(uint32_t*)&(buffer[start]);
+    entries[i]->length = *(uint32_t*)&(buffer[start]);
 
-    for (int charIndex = 0; charIndex < (*entries[i]).length - start;
+    for (int charIndex = 0; charIndex < entries[i]->length - start;
          charIndex++) {
       if (buffer[start + 4 + charIndex] == 0) {
         break;
       }
 
-      (*entries[i]).str += buffer[start + 4 + charIndex];
+      entries[i]->str += buffer[start + 4 + charIndex];
     }
 
-    localization[(*entries[i]).stringId] = (*entries[i]).str;
+    localization[entries[i]->stringId] = entries[i]->str;
   }
 
   return localization;
@@ -107,7 +107,7 @@ std::map<uint32_t, std::string> LocalizationProvider::Parse(
                            file.path().filename().string());
 }
 
-LocalizationProvider::LocalizationProvider(std::string language)
+LocalizationProvider::LocalizationProvider(const std::string& language)
 {
   std::string stringsPath = "./data/strings/";
 
@@ -127,7 +127,7 @@ LocalizationProvider::LocalizationProvider(std::string language)
   }
 }
 
-std::string LocalizationProvider::Get(std::string file, uint32_t stringId)
+std::string LocalizationProvider::Get(const std::string& file, uint32_t stringId)
 {
   return this->localization[file][stringId];
 }

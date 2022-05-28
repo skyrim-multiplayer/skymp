@@ -29,8 +29,8 @@ class LocalizationProvider
     const std::filesystem::directory_entry& file);
 
 public:
-  LocalizationProvider(std::string language);
+  LocalizationProvider(const std::string& language);
   std::map<std::string, std::map<uint32_t, std::string>>
     localization; // localization[filename][stringId]
-  std::string Get(std::string file, uint32_t stringId);
+  std::string Get(const std::string& file, uint32_t stringId);
 };
