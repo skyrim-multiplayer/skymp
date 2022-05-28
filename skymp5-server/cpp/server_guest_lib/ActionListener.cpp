@@ -653,17 +653,17 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
+  if (aggressor->IsDead()) {
+    spdlog::debug(fmt::format("{:x} actor is dead and can't attack",
+                              aggressor->GetFormId()));
+    return;
+  }
+
   std::unordered_set<uint32_t> greenZones = { 0x0760AADA };
   std::vector<std::string> espmFiles = aggressor->GetParent()->espmFiles;
   uint32_t aggressorCell = aggressor->GetCellOrWorld().ToFormId(espmFiles);
   auto it = greenZones.find(aggressorCell);
   if (it != greenZones.end()) {
-    return;
-  }
-
-  if (aggressor->IsDead()) {
-    spdlog::debug(fmt::format("{:x} actor is dead and can't attack",
-                              aggressor->GetFormId()));
     return;
   }
 
