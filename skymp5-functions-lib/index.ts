@@ -178,12 +178,12 @@ type SPExchange = {
 // TODO: Get these values from external config file
 const spExchanges: SPExchange[] = [
   {
-    formId: 0x064d2b03,
+    formId: 0x084d2b03,
     commissionItem: 0x0f,
     commissionSize: 1,
-    startMessage: 0x0635d1f0,
-    failMessage: 0x0635d1f2,
-    finishMessage: 0x0635d1f1,
+    startMessage: 0x0835d1f0,
+    failMessage: 0x0835d1f2,
+    finishMessage: 0x0835d1f1,
     reqs: [
       {
         formId: 0x0f,
@@ -211,12 +211,12 @@ const spExchanges: SPExchange[] = [
     ],
   },
   {
-    formId: 0x0651f7e4,
+    formId: 0x0851f7e4,
     commissionItem: 0x0f,
     commissionSize: 1,
-    startMessage: 0x065390f9,
-    failMessage: 0x065390fa,
-    finishMessage: 0x065390fb,
+    startMessage: 0x085390f9,
+    failMessage: 0x085390fa,
+    finishMessage: 0x085390fb,
     reqs: [
       {
         formId: 0x05ad9e,
