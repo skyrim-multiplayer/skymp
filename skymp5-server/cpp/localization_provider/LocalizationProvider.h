@@ -3,17 +3,6 @@
 #include <string>
 #include <vector>
 
-class TestClass
-{
-public:
-  uint32_t stringId;
-  uint32_t offset;
-  uint32_t length;
-  std::string str;
-
-  // TestClass();
-};
-
 class DirectoryEntry
 {
 public:
