@@ -255,9 +255,6 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   targetPtr->Activate(
     caster == 0x14 ? *ac
                    : partOne.worldState.GetFormAt<MpObjectReference>(caster));
-  if (hosterId) {
-    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
-  }
 
   constexpr uint32_t wardrobeDoor = 0x0760AADA;
   if (target == wardrobeDoor) {
@@ -267,6 +264,10 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
         ac->RemoveItems({ entry });
       }
     }
+  }
+
+  if (hosterId) {
+    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
   }
 }
 
