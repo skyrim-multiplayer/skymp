@@ -119,7 +119,7 @@ private:
   Viet::TaskQueue chakraTaskQueue;
   GamemodeApi::State gamemodeApiState;
 
-  LocalizationProvider* localizationProvider;
+  std::shared_ptr<LocalizationProvider> localizationProvider;
 
   static Napi::FunctionReference constructor;
 };
@@ -321,7 +321,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->AttachLogger(logger);
 
     logger->info("Run localization provider");
-    this->localizationProvider = new LocalizationProvider("russian");
+    this->localizationProvider = std::shared_ptr<LocalizationProvider>(
+      new LocalizationProvider("russian"));
 
     std::ifstream f("server-settings.json");
     if (!f.good()) {
@@ -990,7 +991,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           lookupRes.rec,
           [&](const char* type, uint32_t size, const char* data) {
             if (std::string(type, 4) == "FULL" && size == 4) {
-              auto stringId = *(uint32_t*)data;
+              auto stringId = *reinterpret_cast<const uint32_t*>(data);
               if (serverSettings["loadOrder"].is_array()) {
                 for (size_t i = 0; i < serverSettings["loadOrder"].size();
                      ++i) {
