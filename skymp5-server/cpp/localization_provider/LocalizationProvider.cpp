@@ -106,9 +106,10 @@ void LocalizationProvider::Parse(const std::filesystem::directory_entry& file)
   }
 }
 
-LocalizationProvider::LocalizationProvider(const std::string& language)
+LocalizationProvider::LocalizationProvider(const std::string& dataDir,
+                                           const std::string& language)
 {
-  std::string stringsPath = "./data/strings/";
+  std::filesystem::path stringsPath = std::filesystem::path(dataDir) / "strings";
 
   for (const auto& entry : std::filesystem::directory_iterator(stringsPath)) {
     std::string filename = entry.path().filename().string();

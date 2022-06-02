@@ -32,6 +32,7 @@ class LocalizationProvider
   void Parse(const std::filesystem::directory_entry& file);
 
 public:
-  LocalizationProvider(const std::string& language);
+  LocalizationProvider(const std::string& dataDir,
+                       const std::string& language);
   std::string Get(const std::string& file, uint32_t stringId);
 };

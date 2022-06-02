@@ -320,10 +320,6 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     const auto& logger = GetLogger();
     partOne->AttachLogger(logger);
 
-    logger->info("Run localization provider");
-    this->localizationProvider = std::shared_ptr<LocalizationProvider>(
-      new LocalizationProvider("russian"));
-
     std::ifstream f("server-settings.json");
     if (!f.good()) {
       throw std::runtime_error("server-settings.json is missing");
@@ -367,6 +363,14 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         }
       }
     }
+
+    if (serverSettings["lang"] == nullptr){
+      serverSettings["lang"] = "english";
+    }
+
+    logger->info("Run localization provider for language:", serverSettings["lang"]);
+    this->localizationProvider = std::shared_ptr<LocalizationProvider>(
+      new LocalizationProvider(serverSettings["dataDir"], serverSettings["lang"]));
 
     auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
       (espm::fs::path(dataDir) / "scripts").string());
