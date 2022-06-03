@@ -60,7 +60,6 @@ const Chat = (props) => {
   }, [props.messages]);
 
   const getMessageSpans = (text, currentColor = undefined) => {
-    console.log(text)
     const isFullNonRp = FULL_NON_RP_REGEX.test(text);
     const colorSnippetTpl = '#{123456}';
     for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
@@ -82,7 +81,6 @@ const Chat = (props) => {
     const resultMessage = [];
     let lastIndex = 0;
     for (let i = 0; i < text.length; ++i) {
-      console.log([i, text.slice(i), text.slice(i).match(NONRP_REGEX)])
       if (text[i] === '*' && text.indexOf('*', i + 1) && text.slice(i).match(ACTION_REGEX)) {
         const end = text.indexOf('*', i + 1) + 1;
         resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
