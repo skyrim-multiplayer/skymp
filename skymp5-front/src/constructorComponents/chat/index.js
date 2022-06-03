@@ -4,6 +4,10 @@ import Dices from './dices';
 
 import './styles.scss';
 
+const FULL_NON_RP_REGEX = /(.*?):\s*\(\((.*?)\)\)/gi;
+const NONRP_REGEX = /\(\((.*?)\)\)/gi;
+const ACTION_REGEX = /\*(.*?)\*/gi;
+
 const Chat = (props) => {
   const [input, updateInput] = useState('');
   const [isInputFocus, changeInputFocus] = useState(false);
@@ -56,7 +60,8 @@ const Chat = (props) => {
   }, [props.messages]);
 
   const getMessageSpans = (text, currentColor = undefined) => {
-    const isFullNonRp = /([а-яa-z\s])+:\s*\(\(([a-zа-я\s])+\)\)/gi.test(text);
+    console.log(text)
+    const isFullNonRp = FULL_NON_RP_REGEX.test(text);
     const colorSnippetTpl = '#{123456}';
     for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
       if (text[i] == '#' && text[i + 1] == '{' &&
@@ -77,14 +82,15 @@ const Chat = (props) => {
     const resultMessage = [];
     let lastIndex = 0;
     for (let i = 0; i < text.length; ++i) {
-      if (text[i] === '*' && text.indexOf('*', i + 1)) {
+      console.log([i, text.slice(i), text.slice(i).match(NONRP_REGEX)])
+      if (text[i] === '*' && text.indexOf('*', i + 1) && text.slice(i).match(ACTION_REGEX)) {
         const end = text.indexOf('*', i + 1) + 1;
         resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
         resultMessage.push(<span style={{ color: '#CFAA6E' }}>{text.slice(i + 1, end - 1).replace(/\*/g, '')}</span>);
         lastIndex = end;
         i = end;
       }
-      if (text[i] === '(' && text[i + 1] === '(' && text.indexOf('))', i + 1)) {
+      if (text[i] === '(' && text[i + 1] === '(' && text.indexOf('))', i + 1) && text.slice(i).match(NONRP_REGEX)) {
         const end = text.indexOf('))', i + 1) + 2;
         resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
         resultMessage.push(<span style={{ color: '#91916D' }} className='nonrp'>{text.slice(i, end)}</span>);
