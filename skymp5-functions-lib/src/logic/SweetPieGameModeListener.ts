@@ -53,7 +53,7 @@ export class SweetPieGameModeListener implements GameModeListener {
       name: 'roll',
       handler: (actorId: number, controller: PlayerController, neighbors: number[], senderName: string, inputText: string) => {
         const random: string[] = []
-        const [count, max]: number[] = inputText.split(' ')[1].split('d').map(str => parseInt(str))
+        const [count, _, max]: number[] = inputText.slice(1).split(/(d|к)/g).map(str => parseInt(str))
         const colors: {
           [key: number]: string
         } = {
@@ -245,7 +245,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
     for (const command of this.commands) {
-      if (/\/roll \d+d\d+/g.test(inputText) && command.name === 'roll') {
+      if (/\/\d+(d|к)\d+/gi.test(inputText) && command.name === 'roll') {
         command.handler(actorId, this.controller, neighbors, senderName, inputText)
         return;
       }

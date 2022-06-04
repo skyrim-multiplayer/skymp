@@ -16,7 +16,7 @@ const Dices = (props: {
   const roll = (type: 'coin' | 'dice', code: string) => {
     if (count.current < 10) {
       playSound(type);
-      props.send(`/roll ${code}`);
+      props.send(`/${code}`);
       count.current += 1;
     }
   };
