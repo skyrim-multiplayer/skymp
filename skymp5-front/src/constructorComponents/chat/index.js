@@ -156,7 +156,7 @@ const Chat = (props) => {
             <div className='chat-checkboxes'>
               <ChatCheckbox id={'nonrp'} text={'nonrp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
               <ChatCheckbox id={'diceSound'} text={'dice sounds'} isChecked={!disableDiceSounds} onChange={(e) => setDisableDiceSounds(!e.target.checked)} />
-              <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} />
+              {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
               <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
             </div>
           </div>
