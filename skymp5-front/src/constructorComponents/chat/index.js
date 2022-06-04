@@ -7,12 +7,17 @@ import './styles.scss';
 const FULL_NON_RP_REGEX = /(.*?):\s*\(\((.*?)\)\)/gi;
 const NONRP_REGEX = /\(\((.*?)\)\)/gi;
 const ACTION_REGEX = /\*(.*?)\*/gi;
+const IS_DICES_MESSAGE = /#\{.{6}\}(.)+ #\{ffffff\}- (.)+/gi;
+
+const MAX_LENGTH = 700;
 
 const Chat = (props) => {
   const [input, updateInput] = useState('');
   const [isInputFocus, changeInputFocus] = useState(false);
   const [hideNonRP, changeNonRPHide] = useState(false);
   const [disableDiceSounds, setDisableDiceSounds] = useState(false);
+  const [disableDiceColors, setDisableDiceColors] = useState(false);
+  const [isPouchOpened, setPocuhOpened] = useState(false);
 
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;
@@ -35,7 +40,7 @@ const Chat = (props) => {
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.keyCode === 13) {
-        if (input !== '' && isInputFocus === true) {
+        if (input !== '' && isInputFocus === true && input.length <= MAX_LENGTH) {
           if (send !== undefined) send(input);
           updateInput('');
         }
@@ -62,22 +67,27 @@ const Chat = (props) => {
 
   const getMessageSpans = (text, currentColor = undefined) => {
     const isFullNonRp = FULL_NON_RP_REGEX.test(text);
+    const isDiceMessage = text.match(IS_DICES_MESSAGE);
     const colorSnippetTpl = '#{123456}';
-    for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
-      if (text[i] == '#' && text[i + 1] == '{' &&
-        text[i + colorSnippetTpl.length - 1] == '}') {
-        return (
-          <span style={{ color: currentColor }}>
-            {text.substring(0, i)}
-            {
-              getMessageSpans(
-                text.substring(i + colorSnippetTpl.length),
-                '#' + text.substring(i + 2, i + 8)
-              )
-            }
-          </span>
-        );
+    if (!isDiceMessage || !disableDiceColors) {
+      for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
+        if (text[i] == '#' && text[i + 1] == '{' &&
+          text[i + colorSnippetTpl.length - 1] == '}') {
+          return (
+            <span style={{ color: currentColor }}>
+              {text.substring(0, i)}
+              {
+                getMessageSpans(
+                  text.substring(i + colorSnippetTpl.length),
+                  '#' + text.substring(i + 2, i + 8)
+                )
+              }
+            </span>
+          );
+        }
       }
+    } else {
+      text = text.replace(/#\{.{6}\}/gi, '');
     }
     const resultMessage = [];
     let lastIndex = 0;
@@ -146,6 +156,8 @@ const Chat = (props) => {
             <div className='chat-checkboxes'>
               <ChatCheckbox id={'nonrp'} text={'nonrp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
               <ChatCheckbox id={'diceSound'} text={'dice sounds'} isChecked={!disableDiceSounds} onChange={(e) => setDisableDiceSounds(!e.target.checked)} />
+              <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} />
+              <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
             </div>
           </div>
         }
@@ -153,7 +165,12 @@ const Chat = (props) => {
       {
         isInputHidden
           ? <></>
-          : <Dices send={props.send} disableSound={disableDiceSounds} />
+          : <Dices
+              isOpened={isPouchOpened}
+              setOpened={setPocuhOpened}
+              send={props.send}
+              disableSound={disableDiceSounds}
+          />
       }
       {
         hideNonRP

@@ -1,84 +1,103 @@
 #chat {
-    width: calc(26.6% + 70px);
-    height: 372px;
-    position: absolute;
-    bottom: 30px;
-    left: 30px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+  width: calc(26.6% + 70px);
+  height: 372px;
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-family: Din-pro;
+  font-size: 16px;
+  .chat-main {
+    flex-direction: column;
+    width: calc(100% - 60px);
+    > .list {
+      width: 100%;
+      height: 300px;
+      overflow-y: scroll;
+      &::-webkit-scrollbar {
+        width: 0 !important;
+      }
+      > .msg {
+        margin-top: 5px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        max-width: 100%;
+        overflow-wrap: break-word;
+        text-shadow: -0 -2px 0 rgba(0, 0, 0, 0.63), 0 -2px 0 rgba(0, 0, 0, 0.63),
+          -0 2px 0 rgba(0, 0, 0, 0.63), 0 2px 0 rgba(0, 0, 0, 0.63),
+          -2px -0 0 rgba(0, 0, 0, 0.63), 2px -0 0 rgba(0, 0, 0, 0.63),
+          -2px 0 0 rgba(0, 0, 0, 0.63), 2px 0 0 rgba(0, 0, 0, 0.63),
+          -1px -2px 0 rgba(0, 0, 0, 0.63), 1px -2px 0 rgba(0, 0, 0, 0.63),
+          -1px 2px 0 rgba(0, 0, 0, 0.63), 1px 2px 0 rgba(0, 0, 0, 0.63),
+          -2px -1px 0 rgba(0, 0, 0, 0.63), 2px -1px 0 rgba(0, 0, 0, 0.63),
+          -2px 1px 0 rgba(0, 0, 0, 0.63), 2px 1px 0 rgba(0, 0, 0, 0.63),
+          -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
+          -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63),
+          -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
+          -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63);
+        color: #fafafa;
+        &.default {
+          color: #fafafa;
+        }
+        &.action {
+          color: #c37bdd;
+        }
+        &.admin {
+          color: #ce3131;
+        }
+      }
+    }
+  }
+
+  #chatInput {
+    width: 100%;
+    height: 0;
+    border-radius: 15px;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding-left: 10px;
     font-family: Din-pro;
     font-size: 16px;
-    .chat-main {
-      flex-direction: column;
-      width: calc(100% - 60px);
-      >.list {
-        width: 100%;
-        height: 300px;
-        overflow-y: scroll;
-        &::-webkit-scrollbar {
-          width: 0 !important;
-        }
-        > .msg {
-          margin-top: 5px;
-          font-weight: bold;
-          letter-spacing: 1px;
-          text-shadow: 
-          -0   -2px 0   rgba( 0, 0, 0, 0.63 ),
-           0   -2px 0   rgba( 0, 0, 0, 0.63 ),
-          -0    2px 0   rgba( 0, 0, 0, 0.63 ),
-           0    2px 0   rgba( 0, 0, 0, 0.63 ),
-          -2px -0   0   rgba( 0, 0, 0, 0.63 ),
-           2px -0   0   rgba( 0, 0, 0, 0.63 ),
-          -2px  0   0   rgba( 0, 0, 0, 0.63 ),
-           2px  0   0   rgba( 0, 0, 0, 0.63 ),
-          -1px -2px 0   rgba( 0, 0, 0, 0.63 ),
-           1px -2px 0   rgba( 0, 0, 0, 0.63 ),
-          -1px  2px 0   rgba( 0, 0, 0, 0.63 ),
-           1px  2px 0   rgba( 0, 0, 0, 0.63 ),
-          -2px -1px 0   rgba( 0, 0, 0, 0.63 ),
-           2px -1px 0   rgba( 0, 0, 0, 0.63 ),
-          -2px  1px 0   rgba( 0, 0, 0, 0.63 ),
-           2px  1px 0   rgba( 0, 0, 0, 0.63 ),
-          -2px -2px 0   rgba( 0, 0, 0, 0.63 ),
-           2px -2px 0   rgba( 0, 0, 0, 0.63 ),
-          -2px  2px 0   rgba( 0, 0, 0, 0.63 ),
-           2px  2px 0   rgba( 0, 0, 0, 0.63 ),
-          -2px -2px 0   rgba( 0, 0, 0, 0.63 ),
-           2px -2px 0   rgba( 0, 0, 0, 0.63 ),
-          -2px  2px 0   rgba( 0, 0, 0, 0.63 ),
-           2px  2px 0   rgba( 0, 0, 0, 0.63 );
-          color: #FAFAFA;
-          &.default {
-            color: #FAFAFA;
-          }
-          &.action {
-            color: #C37BDD;
-          }
-          &.admin {
-            color: #CE3131;
-          }
-        }
-      }
+    color: #fafafa;
+    opacity: 0;
+    &.show {
+      opacity: 1;
+      height: 32px;
     }
-    
-    #chatInput {
-      width: 100%;
-      height: 0;
-      border-radius: 15px;
-      background-color: rgba(0, 0, 0, .75);
-      padding-left: 10px;
+  }
+  .chat-checkboxes {
+    display: flex;
+    flex-direction: row;
+    .chat-message-limit {
+      margin: auto auto auto auto;
+    }
+  }
+  .text {
       font-family: Din-pro;
-      font-size: 16px;
+      font-weight: bold;
+      width: max-content;
+      letter-spacing: 1px;
+      font-family: Din-pro;
+      font-weight: bold;
+      opacity: 0.68;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-shadow: -0 -2px 0 rgba(0, 0, 0, 0.63), 0 -2px 0 rgba(0, 0, 0, 0.63),
+        -0 2px 0 rgba(0, 0, 0, 0.63), 0 2px 0 rgba(0, 0, 0, 0.63),
+        -2px -0 0 rgba(0, 0, 0, 0.63), 2px -0 0 rgba(0, 0, 0, 0.63),
+        -2px 0 0 rgba(0, 0, 0, 0.63), 2px 0 0 rgba(0, 0, 0, 0.63),
+        -1px -2px 0 rgba(0, 0, 0, 0.63), 1px -2px 0 rgba(0, 0, 0, 0.63),
+        -1px 2px 0 rgba(0, 0, 0, 0.63), 1px 2px 0 rgba(0, 0, 0, 0.63),
+        -2px -1px 0 rgba(0, 0, 0, 0.63), 2px -1px 0 rgba(0, 0, 0, 0.63),
+        -2px 1px 0 rgba(0, 0, 0, 0.63), 2px 1px 0 rgba(0, 0, 0, 0.63),
+        -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
+        -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63),
+        -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
+        -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63);
       color: #fafafa;
-      opacity: 0;
-      &.show {
-        opacity: 1;
-        height: 32px;
+      &.limit {
+        color: red;
       }
-    }
-    .chat-checkboxes {
-      display: flex;
-      flex-direction: row;
-    }
+  }
 }

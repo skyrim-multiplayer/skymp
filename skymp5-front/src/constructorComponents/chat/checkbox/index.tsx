@@ -14,7 +14,7 @@ const ChatCheckbox = (props: {
             <input id={props.id} checked={props.isChecked} onChange={(e) => props.onChange(e)} type="checkbox" className="promoted-input-checkbox" />
             <label htmlFor={props.id}>
                 <img src={props.isChecked ? checkboxCheckedSVG : checkboxSVG} />
-                <span>{props.text}</span>
+                <span className='text'>{props.text}</span>
             </label>
         </div>
   );

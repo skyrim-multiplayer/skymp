@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './styles.scss';
 import D100 from './icons/D100';
 import Coin from './icons/Coin';
@@ -10,8 +10,9 @@ import Pouch from './icons/Pouch';
 const Dices = (props: {
   send: (msg: string) => void,
   disableSound: boolean,
+  isOpened: boolean,
+  setOpened: (boolean) => void,
 }) => {
-  const [isOpened, setOpened] = useState(false);
   const count = useRef(0);
 
   const roll = (type: 'coin' | 'dice', code: string) => {
@@ -36,7 +37,7 @@ const Dices = (props: {
       audio.play();
     }
     if (type === 'pouch') {
-      const audio = new Audio(require(`../../../sound/pouch_${isOpened ? 'close' : 'open'}.mp3`).default);
+      const audio = new Audio(require(`../../../sound/pouch_${props.isOpened ? 'close' : 'open'}.mp3`).default);
       audio.play();
     }
     if (type === 'coin') {
@@ -47,7 +48,7 @@ const Dices = (props: {
   return (
     <div className='chat-dices'>
       {
-        isOpened
+        props.isOpened
           ? <>
               <D100 onClick={() => { roll('dice', '1d100'); }}/>
               <D20 onClick={() => { roll('dice', '1d20'); }}/>
@@ -57,9 +58,9 @@ const Dices = (props: {
             </>
           : null
       }
-      <Pouch isOpened={isOpened} onClick={() => {
-        playSound('pouch');
-        setOpened(!isOpened);
+      <Pouch isOpened={props.isOpened} onClick={() => {
+        if (!props.disableSound) { playSound('pouch'); }
+        props.setOpened(!props.isOpened);
       }} />
       <span>dice</span>
     </div>
