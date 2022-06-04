@@ -20,8 +20,8 @@ class LocalizationProvider
   std::map<std::string, std::map<uint32_t, std::string>>
     localization; // localization[filename][stringId]
 
-  std::vector<DirectoryEntry> ParseDirectoryEntries(
-    const std::vector<char>& buffer);
+  void ParseDirectoryEntries(const std::vector<char>& buffer,
+                             std::vector<DirectoryEntry>& entries);
 
   void ParseStrings(std::string name, const std::vector<char>& buffer,
                     std::vector<DirectoryEntry>& entries);
@@ -34,5 +34,5 @@ class LocalizationProvider
 public:
   LocalizationProvider(const std::string& dataDir,
                        const std::string& language);
-  std::string Get(const std::string& file, uint32_t stringId);
+  const std::string& Get(const std::string& file, uint32_t stringId);
 };

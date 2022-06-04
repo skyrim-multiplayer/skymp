@@ -368,11 +368,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       serverSettings["lang"] = "english";
     }
 
-    logger->info("Run localization provider for language:",
-                 serverSettings["lang"]);
-    this->localizationProvider =
-      std::shared_ptr<LocalizationProvider>(new LocalizationProvider(
-        serverSettings["dataDir"], serverSettings["lang"]));
+    logger->info("Run localization provider");
+    localizationProvider = std::make_shared<LocalizationProvider>(
+      serverSettings["dataDir"], serverSettings["lang"]);
 
     auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
       (espm::fs::path(dataDir) / "scripts").string());

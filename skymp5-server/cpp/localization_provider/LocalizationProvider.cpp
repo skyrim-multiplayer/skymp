@@ -7,12 +7,12 @@ DirectoryEntry::DirectoryEntry(uint32_t stringId, uint32_t stringOffset)
 {
 }
 
-std::vector<DirectoryEntry> LocalizationProvider::ParseDirectoryEntries(
-  const std::vector<char>& buffer)
+void LocalizationProvider::ParseDirectoryEntries(
+  const std::vector<char>& buffer, std::vector<DirectoryEntry>& entries)
 {
   uint32_t numberOfEntries = *reinterpret_cast<const uint32_t*>(&buffer[0]);
 
-  std::vector<DirectoryEntry> entries;
+  entries.clear();
   entries.resize(numberOfEntries);
 
   uint32_t offset = 8;
@@ -28,8 +28,6 @@ std::vector<DirectoryEntry> LocalizationProvider::ParseDirectoryEntries(
     DirectoryEntry entry(stringId, stringOffset);
     entries[i] = entry;
   }
-
-  return entries;
 }
 
 void LocalizationProvider::ParseStrings(std::string name,
@@ -93,7 +91,8 @@ void LocalizationProvider::Parse(const std::filesystem::directory_entry& file)
                              file.path().string());
   }
 
-  std::vector<DirectoryEntry> directoryEntries = ParseDirectoryEntries(buffer);
+  std::vector<DirectoryEntry> directoryEntries;
+  ParseDirectoryEntries(buffer, directoryEntries);
 
   if (file.path().extension() == ".strings") {
     ParseStrings(name, buffer, directoryEntries);
@@ -123,8 +122,8 @@ LocalizationProvider::LocalizationProvider(const std::string& dataDir,
   }
 }
 
-std::string LocalizationProvider::Get(const std::string& file,
-                                      uint32_t stringId)
+const std::string& LocalizationProvider::Get(const std::string& file,
+                                             uint32_t stringId)
 {
   return localization[file][stringId];
 }
