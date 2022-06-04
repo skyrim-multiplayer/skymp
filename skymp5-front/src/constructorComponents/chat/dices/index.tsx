@@ -8,14 +8,15 @@ import D20 from './icons/D20';
 import Pouch from './icons/Pouch';
 
 const Dices = (props: {
-  send: (msg: string) => void
+  send: (msg: string) => void,
+  disableSound: boolean,
 }) => {
   const [isOpened, setOpened] = useState(false);
   const count = useRef(0);
 
   const roll = (type: 'coin' | 'dice', code: string) => {
     if (count.current < 10) {
-      playSound(type);
+      if (!props.disableSound) { playSound(type); }
       props.send(`/${code}`);
       count.current += 1;
     }

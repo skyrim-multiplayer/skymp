@@ -12,6 +12,7 @@ const Chat = (props) => {
   const [input, updateInput] = useState('');
   const [isInputFocus, changeInputFocus] = useState(false);
   const [hideNonRP, changeNonRPHide] = useState(false);
+  const [disableDiceSounds, setDisableDiceSounds] = useState(false);
 
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;
@@ -142,8 +143,9 @@ const Chat = (props) => {
                 ref={inputRef}
               />
             </div>
-            <div>
+            <div className='chat-checkboxes'>
               <ChatCheckbox id={'nonrp'} text={'nonrp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
+              <ChatCheckbox id={'diceSound'} text={'dice sounds'} isChecked={!disableDiceSounds} onChange={(e) => setDisableDiceSounds(!e.target.checked)} />
             </div>
           </div>
         }
@@ -151,7 +153,7 @@ const Chat = (props) => {
       {
         isInputHidden
           ? <></>
-          : <Dices send={props.send} />
+          : <Dices send={props.send} disableSound={disableDiceSounds} />
       }
       {
         hideNonRP
