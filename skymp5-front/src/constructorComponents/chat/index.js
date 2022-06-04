@@ -9,7 +9,8 @@ const NONRP_REGEX = /\(\((.*?)\)\)/gi;
 const ACTION_REGEX = /\*(.*?)\*/gi;
 const IS_DICES_MESSAGE = /#\{.{6}\}(.)+ #\{ffffff\}- (.)+/gi;
 
-const MAX_LENGTH = 700;
+const MAX_LENGTH = 700; // Max message length
+const TIME_LIMIT = 5; // Seconds
 
 const Chat = (props) => {
   const [input, updateInput] = useState('');
@@ -27,6 +28,8 @@ const Chat = (props) => {
 
   const chatRef = useRef();
 
+  const isReset = useRef(true);
+
   const handleScroll = () => {
     if (chatRef.current) {
       window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
@@ -35,13 +38,18 @@ const Chat = (props) => {
 
   useEffect(() => {
     window.needToScroll = true;
+    const interval = setInterval(() => {
+      isReset.current = true;
+    }, 1000 * TIME_LIMIT);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.keyCode === 13) {
-        if (input !== '' && isInputFocus === true && input.length <= MAX_LENGTH) {
+        if (input !== '' && isInputFocus === true && input.length <= MAX_LENGTH && isReset.current) {
           if (send !== undefined) send(input);
+          isReset.current = false;
           updateInput('');
         }
       }
@@ -154,8 +162,8 @@ const Chat = (props) => {
               />
             </div>
             <div className='chat-checkboxes'>
-              <ChatCheckbox id={'nonrp'} text={'nonrp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
-              <ChatCheckbox id={'diceSound'} text={'dice sounds'} isChecked={!disableDiceSounds} onChange={(e) => setDisableDiceSounds(!e.target.checked)} />
+              <ChatCheckbox id={'nonrp'} text={'non-rp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
+              <ChatCheckbox id={'diceSound'} text={'dice sounds'} isChecked={disableDiceSounds} onChange={(e) => setDisableDiceSounds(e.target.checked)} />
               {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
               <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
             </div>

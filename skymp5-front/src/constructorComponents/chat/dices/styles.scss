@@ -3,12 +3,12 @@
     flex-direction: column;
     min-width: 54px;
     min-height: 340px;
-    margin-bottom: 15px;
+    margin-bottom: 11px;
     margin-top: auto;
     span {
         font-family: Din-pro;
         font-weight: bold;
-        margin: 0 auto;
+        margin: 5px auto 0 auto;
         opacity: 0.68;
         font-weight: bold;
           letter-spacing: 1px;
@@ -94,7 +94,7 @@
         width: 54px;
         height: 54px;
         cursor: pointer;
-        opacity: 0.63;
+        opacity: 0.80;
     }
 }
 .dice-wrapper {
