@@ -1,8 +1,8 @@
 import React from 'react';
 import './styles.scss';
+import checkboxSVG from '../../../img/checkbox.svg';
+import checkboxCheckedSVG from '../../../img/checkbox_checked.svg';
 
-const checkboxSVG = require('../../../img/checkbox.svg').default;
-const checkboxCheckedSVG = require('../../../img/checkbox_checked.svg').default;
 const ChatCheckbox = (props: {
     text: string,
     isChecked: boolean,
