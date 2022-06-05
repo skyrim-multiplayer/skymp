@@ -364,13 +364,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       }
     }
 
-    if (serverSettings["lang"] == nullptr) {
-      serverSettings["lang"] = "english";
+    if (serverSettings["lang"] != nullptr) {
+      logger->info("Run localization provider");
+      localizationProvider = std::make_shared<LocalizationProvider>(
+        serverSettings["dataDir"], serverSettings["lang"]);
     }
-
-    logger->info("Run localization provider");
-    localizationProvider = std::make_shared<LocalizationProvider>(
-      serverSettings["dataDir"], serverSettings["lang"]);
 
     auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
       (espm::fs::path(dataDir) / "scripts").string());
@@ -981,47 +979,58 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
   mp.SetProperty(
     "getLocalizedString",
     JsValue::Function([this](const JsFunctionArguments& args) {
+      auto translatedString = JsValue::Undefined();
+
+      if (!localizationProvider) {
+        return translatedString;
+      }
+
       auto globalRecordId = ExtractFormId(args[1], "globalRecordId");
       auto lookupRes =
         partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
-      auto translatedString = JsValue::Undefined();
 
-      if (lookupRes.rec) {
-        auto fields = JsValue::Array(0);
-
-        auto& cache = partOne->worldState.GetEspmCache();
-
-        espm::IterateFields_(
-          lookupRes.rec,
-          [&](const char* type, uint32_t size, const char* data) {
-            if (std::string(type, 4) == "FULL" && size == 4) {
-              auto stringId = *reinterpret_cast<const uint32_t*>(data);
-              if (serverSettings["loadOrder"].is_array()) {
-                for (size_t i = 0; i < serverSettings["loadOrder"].size();
-                     ++i) {
-                  std::filesystem::path loadOrderElement =
-                    static_cast<std::string>(serverSettings["loadOrder"][i]);
-
-                  if (i == lookupRes.fileIdx) {
-                    auto fileNameFull = loadOrderElement.filename().string();
-                    auto fileNameWithoutExt =
-                      fileNameFull.substr(0, fileNameFull.find_last_of("."));
-
-                    std::transform(
-                      fileNameWithoutExt.begin(), fileNameWithoutExt.end(),
-                      fileNameWithoutExt.begin(),
-                      [](unsigned char c) { return std::tolower(c); });
-
-                    translatedString =
-                      JsValue::String(this->localizationProvider->Get(
-                        fileNameWithoutExt, stringId));
-                  }
-                }
-              }
-            }
-          },
-          cache);
+      if (!lookupRes.rec) {
+        return translatedString;
       }
+
+      auto fields = JsValue::Array(0);
+
+      auto& cache = partOne->worldState.GetEspmCache();
+
+      espm::IterateFields_(
+        lookupRes.rec,
+        [&](const char* type, uint32_t size, const char* data) {
+          if (std::string(type, 4) != "FULL" || size != 4) {
+            return;
+          }
+
+          auto stringId = *reinterpret_cast<const uint32_t*>(data);
+          if (!serverSettings["loadOrder"].is_array()) {
+            return;
+          }
+
+          for (size_t i = 0; i < serverSettings["loadOrder"].size(); ++i) {
+            if (i != lookupRes.fileIdx) {
+              continue;
+            }
+
+            std::filesystem::path loadOrderElement =
+              static_cast<std::string>(serverSettings["loadOrder"][i]);
+
+            auto fileNameFull = loadOrderElement.filename().string();
+            auto fileNameWithoutExt =
+              fileNameFull.substr(0, fileNameFull.find_last_of("."));
+
+            std::transform(fileNameWithoutExt.begin(),
+                           fileNameWithoutExt.end(),
+                           fileNameWithoutExt.begin(),
+                           [](unsigned char c) { return std::tolower(c); });
+
+            translatedString = JsValue::String(
+              this->localizationProvider->Get(fileNameWithoutExt, stringId));
+          }
+        },
+        cache);
 
       return translatedString;
     }));
