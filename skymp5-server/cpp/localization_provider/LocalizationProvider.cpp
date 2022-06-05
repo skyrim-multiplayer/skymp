@@ -87,8 +87,7 @@ void LocalizationProvider::Parse(const std::filesystem::directory_entry& file)
   buffer.resize(file.file_size());
 
   if (!fileStream.read(buffer.data(), file.file_size())) {
-    throw std::runtime_error("[Localization Provider] can't read " +
-                             file.path().string());
+    return;
   }
 
   std::vector<DirectoryEntry> directoryEntries;
@@ -99,9 +98,6 @@ void LocalizationProvider::Parse(const std::filesystem::directory_entry& file)
   } else if (file.path().extension() == ".dlstrings" ||
              file.path().extension() == ".ilstrings") {
     ParseILDLStrings(name, buffer, directoryEntries);
-  } else {
-    throw std::runtime_error("Unexcepted file in ./data/strings/ path: " +
-                             file.path().filename().string());
   }
 }
 
@@ -110,6 +106,10 @@ LocalizationProvider::LocalizationProvider(const std::string& dataDir,
 {
   std::filesystem::path stringsPath =
     std::filesystem::path(dataDir) / "strings";
+
+  if (!std::filesystem::exists(stringsPath)){
+    return;
+  }
 
   for (const auto& entry : std::filesystem::directory_iterator(stringsPath)) {
     std::string filename = entry.path().filename().string();
