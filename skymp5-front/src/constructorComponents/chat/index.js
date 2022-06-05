@@ -135,16 +135,11 @@ const Chat = (props) => {
     ));
   };
 
-  const hideNonRPStyles = `
-  .nonrp {
-    display: none;
-  }
-  `;
 
   return (
     <div id="chat">
       <div className="chat-main">
-        <div className="list" ref={chatRef} onScroll={(e) => handleScroll()}>{getList()}</div>
+        <div className={`list ${hideNonRP ? 'hideNonRP' : ''}`} ref={chatRef} onScroll={(e) => handleScroll()}>{getList()}</div>
         {isInputHidden
           ? <></>
           : <div className='input'>
@@ -179,13 +174,6 @@ const Chat = (props) => {
               send={props.send}
               disableSound={disableDiceSounds}
           />
-      }
-      {
-        hideNonRP
-          ? <style>
-            {hideNonRPStyles}
-          </style>
-          : null
       }
     </div>
   );
