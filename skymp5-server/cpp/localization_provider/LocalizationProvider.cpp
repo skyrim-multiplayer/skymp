@@ -107,7 +107,7 @@ LocalizationProvider::LocalizationProvider(const std::string& dataDir,
   std::filesystem::path stringsPath =
     std::filesystem::path(dataDir) / "strings";
 
-  if (!std::filesystem::exists(stringsPath)){
+  if (!std::filesystem::exists(stringsPath)) {
     return;
   }
 
