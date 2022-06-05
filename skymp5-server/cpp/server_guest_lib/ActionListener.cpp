@@ -160,6 +160,31 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   }
 }
 
+void RecalculateWornWardrobe(MpObjectReference& refr)
+{
+  if (!refr.GetParent()->HasEspm()) {
+    return;
+  }
+
+  auto& loader = refr.GetParent()->GetEspm();
+  auto& cache = refr.GetParent()->GetEspmCache();
+
+  auto ac = dynamic_cast<MpActor*>(&refr);
+
+  if (!ac) {
+    return;
+  }
+
+  const Equipment eq = ac->GetEquipment();
+  Equipment newEq;
+  newEq.numChanges = eq.numChanges + 1;
+  for (const auto& entry : eq.inv.entries) {
+    bool isEquipped = entry.extra.worn == Inventory::Worn::None;
+    if (!isEquipped) {
+    }
+  }
+}
+
 void RecalculateWorn(MpObjectReference& refr)
 {
   if (!refr.GetParent()->HasEspm()) {
@@ -256,6 +281,10 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
     caster == 0x14 ? *ac
                    : partOne.worldState.GetFormAt<MpObjectReference>(caster));
 
+  if (hosterId) {
+    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
+  }
+
   constexpr uint32_t wardrobeDoor = 0x0760AADA;
   if (target == wardrobeDoor) {
     const Inventory& inv = ac->GetInventory();
@@ -264,10 +293,6 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
         ac->RemoveItems({ entry });
       }
     }
-  }
-
-  if (hosterId) {
-    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
   }
 }
 
