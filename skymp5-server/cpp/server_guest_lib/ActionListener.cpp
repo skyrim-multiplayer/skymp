@@ -160,31 +160,6 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   }
 }
 
-void RecalculateWornWardrobe(MpObjectReference& refr)
-{
-  if (!refr.GetParent()->HasEspm()) {
-    return;
-  }
-
-  auto& loader = refr.GetParent()->GetEspm();
-  auto& cache = refr.GetParent()->GetEspmCache();
-
-  auto ac = dynamic_cast<MpActor*>(&refr);
-
-  if (!ac) {
-    return;
-  }
-
-  const Equipment eq = ac->GetEquipment();
-  Equipment newEq;
-  newEq.numChanges = eq.numChanges + 1;
-  for (const auto& entry : eq.inv.entries) {
-    bool isEquipped = entry.extra.worn == Inventory::Worn::None;
-    if (!isEquipped) {
-    }
-  }
-}
-
 void RecalculateWorn(MpObjectReference& refr)
 {
   if (!refr.GetParent()->HasEspm()) {
