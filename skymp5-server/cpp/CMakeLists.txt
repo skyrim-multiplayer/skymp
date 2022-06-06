@@ -85,6 +85,16 @@ endif()
 target_link_libraries(papyrus-vm-lib PUBLIC viet)
 
 #
+# localization-provider
+#
+
+file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/localization_provider/*")
+list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(localization-provider STATIC ${src})
+apply_default_settings(TARGETS localization-provider)
+target_include_directories(localization-provider PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/localization_provider")
+
+#
 # Link vcpkg deps
 #
 
