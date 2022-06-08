@@ -225,6 +225,73 @@ void RecalculateWorn(MpObjectReference& refr)
   }
 }
 
+void RecalculateWornOnSweetpieTeleport(MpObjectReference& refr)
+{
+  if (!refr.GetParent()->HasEspm()) {
+    return;
+  }
+  auto& loader = refr.GetParent()->GetEspm();
+  auto& cache = refr.GetParent()->GetEspmCache();
+
+  auto ac = dynamic_cast<MpActor*>(&refr);
+  if (!ac) {
+    return;
+  }
+
+  const Equipment eq = ac->GetEquipment();
+
+  Equipment newEq;
+  newEq.numChanges = eq.numChanges + 1;
+  for (auto& entry : eq.inv.entries) {
+    bool isEquipped = entry.extra.worn != Inventory::Worn::None;
+    bool isWeap =
+      espm::GetRecordType(entry.baseId, refr.GetParent()) == espm::WEAP::kType;
+    if (isEquipped && isWeap) {
+      continue;
+    } else if (isEquipped && !isWeap) {
+
+      newEq.inv.AddItems({ entry });
+    }
+  }
+
+  const Inventory inv = ac->GetInventory();
+  Inventory::Entry bestEntry;
+  int16_t bestDamage = -1;
+  for (auto& entry : inv.entries) {
+    if (entry.baseId) {
+      auto lookupRes = loader.GetBrowser().LookupById(entry.baseId);
+      if (auto weap = espm::Convert<espm::WEAP>(lookupRes.rec)) {
+        if (!bestEntry.count ||
+            weap->GetData(cache).weapData->damage > bestDamage) {
+          bestEntry = entry;
+          bestDamage = weap->GetData(cache).weapData->damage;
+        }
+      }
+    }
+  }
+
+  if (bestEntry.count > 0) {
+    bestEntry.extra.worn = Inventory::Worn::Right;
+    newEq.inv.AddItems({ bestEntry });
+  }
+
+  ac->SetEquipment(newEq.ToJson().dump());
+  for (auto listener : ac->GetListeners()) {
+    auto actor = dynamic_cast<MpActor*>(listener);
+    if (!actor) {
+      continue;
+    }
+    std::string s;
+    s += Networking::MinPacketId;
+    s += nlohmann::json{
+      { "t", MsgType::UpdateEquipment },
+      { "idx", ac->GetIdx() },
+      { "data", newEq.ToJson() }
+    }.dump();
+    actor->SendToUser(s.data(), s.size(), true);
+  }
+}
+
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,
                                 uint32_t caster, uint32_t target)
 {
@@ -257,16 +324,12 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
                    : partOne.worldState.GetFormAt<MpObjectReference>(caster));
 
   if (hosterId) {
-    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
-  }
-
-  constexpr uint32_t wardrobeDoor = 0x0760AADA;
-  if (target == wardrobeDoor) {
-    const Inventory& inv = ac->GetInventory();
-    for (const auto& entry : inv.entries) {
-      if (entry.extra.worn == Inventory::Worn::None) {
-        ac->RemoveItems({ entry });
-      }
+    constexpr uint32_t wardrobeDoor = 0x0760AADA;
+    if (target == wardrobeDoor) {
+      RecalculateWornOnSweetpieTeleport(
+        partOne.worldState.GetFormAt<MpObjectReference>(caster));
+    } else {
+      RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
     }
   }
 }
