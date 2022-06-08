@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Draggable from 'react-draggable';
 import ChatCheckbox from './checkbox';
 import Dices from './dices';
 
 import './styles.scss';
+import ChatCorner from '../../img/chat_corner.svg';
 
 const FULL_NON_RP_REGEX = /(.*?):\s*\(\((.*?)\)\)/gi;
 const NONRP_REGEX = /\(\((.*?)\)\)/gi;
@@ -19,6 +21,8 @@ const Chat = (props) => {
   const [disableDiceSounds, setDisableDiceSounds] = useState(false);
   const [disableDiceColors, setDisableDiceColors] = useState(false);
   const [isPouchOpened, setPocuhOpened] = useState(false);
+  const [moveChat, setMoveChat] = useState(false);
+
 
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;
@@ -135,46 +139,59 @@ const Chat = (props) => {
     ));
   };
 
-
   return (
-    <div id="chat">
-      <div className="chat-main">
-        <div className={`list ${hideNonRP ? 'hideNonRP' : ''}`} ref={chatRef} onScroll={(e) => handleScroll()}>{getList()}</div>
-        {isInputHidden
-          ? <></>
-          : <div className='input'>
-            <div>
-              <input
-                id="chatInput"
-                className={'show'}
-                type="text"
-                placeholder={placeholder !== undefined ? placeholder : ''}
-                value={input}
-                onChange={(e) => { updateInput(e.target.value); }}
-                onFocus={(e) => changeInputFocus(true)}
-                onBlur={(e) => changeInputFocus(false)}
-                ref={inputRef}
-              />
+    <div className='fullPage'>
+      <Draggable handle='#handle' disabled={!moveChat} bounds={'.fullPage'}>
+        <div id="chat">
+          <div className="chat-main">
+            {
+              isInputHidden
+                ? null
+                : <div className='chat-corner'>
+                      <img src={ChatCorner} />
+                  </div>
+            }
+            <div className={`list ${hideNonRP ? 'hideNonRP' : ''}`} ref={chatRef} onScroll={(e) => handleScroll()} id='handle'>
+              {getList()}
             </div>
-            <div className='chat-checkboxes'>
-              <ChatCheckbox id={'nonrp'} text={'non-rp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
-              <ChatCheckbox id={'diceSound'} text={'dice sounds'} isChecked={disableDiceSounds} onChange={(e) => setDisableDiceSounds(e.target.checked)} />
-              {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
-              <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
-            </div>
+            {isInputHidden
+              ? <></>
+              : <div className='input'>
+                <div>
+                  <input
+                    id="chatInput"
+                    className={'show'}
+                    type="text"
+                    placeholder={placeholder !== undefined ? placeholder : ''}
+                    value={input}
+                    onChange={(e) => { updateInput(e.target.value); }}
+                    onFocus={(e) => changeInputFocus(true)}
+                    onBlur={(e) => changeInputFocus(false)}
+                    ref={inputRef}
+                  />
+                </div>
+                <div className='chat-checkboxes'>
+                  <ChatCheckbox id={'nonrp'} text={'non-rp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
+                  <ChatCheckbox id={'diceSound'} text={'dice sounds'} isChecked={disableDiceSounds} onChange={(e) => setDisableDiceSounds(e.target.checked)} />
+                  {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
+                  <ChatCheckbox id={'moveChat'} text={'move chat'} isChecked={moveChat} onChange={(e) => setMoveChat(e.target.checked)} />
+                  <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
+                </div>
+              </div>
+            }
           </div>
-        }
-      </div>
-      {
-        isInputHidden
-          ? <></>
-          : <Dices
-              isOpened={isPouchOpened}
-              setOpened={setPocuhOpened}
-              send={props.send}
-              disableSound={disableDiceSounds}
-          />
-      }
+          {
+            isInputHidden
+              ? <></>
+              : <Dices
+                  isOpened={isPouchOpened}
+                  setOpened={setPocuhOpened}
+                  send={props.send}
+                  disableSound={disableDiceSounds}
+              />
+          }
+        </div>
+      </Draggable>
     </div>
   );
 };

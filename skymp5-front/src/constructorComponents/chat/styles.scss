@@ -1,3 +1,9 @@
+.fullPage {
+  height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
 #chat {
   width: calc(26.6% + 70px);
   height: 372px;
@@ -12,12 +18,20 @@
   .chat-main {
     flex-direction: column;
     width: calc(100% - 60px);
+    .chat-corner {
+      position: absolute;
+      right: 0px;
+      img {
+        pointer-events: none;
+      }
+    }
     > .list {
       &.hideNonRP {
         .nonrp {
           display: none;
         }
       }
+      position: relative;
       width: 100%;
       height: 300px;
       overflow-y: scroll;
