@@ -139,7 +139,7 @@ const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefine
 if (!(authGameData?.local || authGameData?.remote)) {
   authSystem.addAuthListener((data) => {
     if (data.remote) {
-      browser.setAuthData(data.remote.rememberMe ? data.remote : null);
+      browser.setAuthData(data.remote);
     }
     storage[AuthGameData.storageKey] = data;
     spBrowser.setFocused(false);

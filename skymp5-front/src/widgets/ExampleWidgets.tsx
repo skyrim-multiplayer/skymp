@@ -53,7 +53,7 @@ export const login = {
     },
     {
       type: 'button',
-      text: 'travel to skyrim',
+      text: 'travel to ohwait',
       isDisabled: true,
       tags: ['BUTTON_STYLE_FRAME', 'ELEMENT_STYLE_MARGIN_EXTENDED']
     }

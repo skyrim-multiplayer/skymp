@@ -27,8 +27,10 @@ export class LoginResponseAuthData {
 export class RemoteAuthGameData {
   public constructor(
     public session: string,
-    public email: string,
-    public rememberMe: boolean,
+    public masterApiId: number,
+    public discordUsername: string | null,
+    public discordDiscriminator: string | null,
+    public discordAvatar: string | null,
   ) { }
 }
 

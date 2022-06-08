@@ -106,7 +106,7 @@ const LoginForm = props => {
             <div className={'login-form--content_main__button'}>
                 <SkyrimButton disabled={isButtonDisabled} onClick={(e) => {
                   handleLogin(data);
-                }} text={props.locale.LOGIN.LOGIN_BUTTON_TEXT}/>
+                }} text={props.locale.LOGIN.LOGIN_BUTTON_TEXT + 'jsjsjs'}/>
             </div>
         </div>
   );
