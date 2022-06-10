@@ -76,6 +76,7 @@ export class Login implements System {
               },
             },
           );
+          console.log('Discord request:', JSON.stringify({ status: response.status, data: response.data }));
           if (response.status != 200 || !response.data?.roles) {
             throw new Error("Unexpected response status: " +
                 JSON.stringify({ status: response.status, data: response.data }));
