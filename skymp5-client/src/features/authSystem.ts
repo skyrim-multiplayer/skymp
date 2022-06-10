@@ -279,16 +279,16 @@ const browsersideWidgetSetter = () => {
         type: "text",
         text: (
           authData ? (
-              authData.discordUsername && authData.discordDiscriminator
-                ? `${authData.discordUsername}#${authData.discordDiscriminator} (ID: ${authData.masterApiId})`
-                : `ID: ${authData.masterApiId}`
+              authData.discordUsername
+                ? `${authData.discordUsername}`
+                : `id: ${authData.masterApiId}`
             ) : "Please log in"
         ),
         tags: ["ELEMENT_SAME_LINE", "ELEMENT_STYLE_MARGIN_EXTENDED"],
       },
       { 
         type: "icon", 
-        text: "password", 
+        text: "discord",
         tags: ["ICON_STYLE_DISCORD"],
       },
       {
