@@ -1,6 +1,12 @@
 import { ArgumentParser } from 'argparse';
 import * as fs from 'fs';
 
+export interface DiscordAuthSettings {
+  guildId: string;
+  banRoleId: string;
+  adminRoleId: string;
+}
+
 export class Settings {
   ip: string | null = null;
   port = 7777;
@@ -18,6 +24,7 @@ export class Settings {
       angleZ: 268,
     },
   ];
+  discordAuth: DiscordAuthSettings | null = null;
 
   constructor() {
     if (fs.existsSync('./skymp5-gamemode')) {
@@ -39,11 +46,14 @@ export class Settings {
         'dataDir',
         'startPoints',
         'offlineMode',
+        'discordAuth',
       ].forEach((prop) => {
         if (parsed[prop]) (this as Record<string, unknown>)[prop] = parsed[prop];
       });
     }
   }
+
+  // static cachedSettings;
 
   static get(): Settings {
     const args = Settings.parseArgs();
