@@ -255,7 +255,6 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   targetPtr->Activate(
     caster == 0x14 ? *ac
                    : partOne.worldState.GetFormAt<MpObjectReference>(caster));
-
   if (hosterId) {
     RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
   }
