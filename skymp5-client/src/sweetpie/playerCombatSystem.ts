@@ -1,19 +1,19 @@
 import * as sp from "skyrimPlatform";
 
 const weaponTimings = new Map<sp.WeaponType, [number, number]>([
-  [sp.WeaponType.Fist, [200, 210]],
-  [sp.WeaponType.Sword, [190, 150]],
-  [sp.WeaponType.Dagger, [180, 120]],
-  [sp.WeaponType.WarAxe, [190, 180]],
-  [sp.WeaponType.Mace, [190, 210]],
-  [sp.WeaponType.Greatsword, [540, 350]],
+  [sp.WeaponType.Fist, [200, 0]],
+  [sp.WeaponType.Sword, [256, 41]],
+  [sp.WeaponType.Dagger, [218, 35]],
+  [sp.WeaponType.WarAxe, [288, 46]],
+  [sp.WeaponType.Mace, [320, 51]],
+  [sp.WeaponType.Greatsword, [368, 59]],
   // NOTE: both of the next two weapon types correspond to id=6.
   // TODO(#xyz): do something about it. Maybe we can distinguish them somehow...
-  [sp.WeaponType.Battleaxe, [540, 550]],
-  [sp.WeaponType.Warhammer, [540, 450]],
-  [sp.WeaponType.Bow, [0, 0]],
-  [sp.WeaponType.Staff, [0, 180]],
-  [sp.WeaponType.Crossbow, [0, 0]],
+  [sp.WeaponType.Battleaxe, [416, 66]],
+  [sp.WeaponType.Warhammer, [416, 66]],
+  [sp.WeaponType.Bow, [0, 218]],
+  [sp.WeaponType.Staff, [320, 51]],
+  [sp.WeaponType.Crossbow, [0, 320]],
 ]);
 
 let blockPlayerControlTimeStamp: number = 0;
