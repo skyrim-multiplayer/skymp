@@ -69,7 +69,12 @@ export class Login implements System {
             throw new Error("Not logged in via Discord");
           }
           const response = await Axios.get(
-            `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`
+            `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
+            {
+              headers: {
+                'Authorization': `${discordAuth.botToken}`
+              },
+            },
           );
           if (response.status != 200 || !response.data?.roles) {
             throw new Error("Unexpected response status: " +

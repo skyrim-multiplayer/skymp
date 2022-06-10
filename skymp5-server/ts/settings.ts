@@ -2,6 +2,7 @@ import { ArgumentParser } from 'argparse';
 import * as fs from 'fs';
 
 export interface DiscordAuthSettings {
+  botToken: string;
   guildId: string;
   banRoleId: string;
   adminRoleId: string;
