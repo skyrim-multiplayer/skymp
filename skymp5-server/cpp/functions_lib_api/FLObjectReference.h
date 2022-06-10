@@ -25,6 +25,12 @@ JsValue Enable(std::shared_ptr<PartOne> partOne,
 JsValue GetAngle(std::shared_ptr<PartOne> partOne,
                  const JsFunctionArguments& args);
 
+JsValue GetBaseId(std::shared_ptr<PartOne> partOne,
+                  const JsFunctionArguments& args);
+
+JsValue GetCellOrWorld(std::shared_ptr<PartOne> partOne,
+                       const JsFunctionArguments& args);
+
 JsValue GetAnimationVariableBool(std::shared_ptr<PartOne> partOne,
                                  const JsFunctionArguments& args);
 

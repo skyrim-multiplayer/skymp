@@ -1,4 +1,5 @@
 #include "FLObjectReference.h"
+#include "FormCallbacks.h"
 #include "FunctionsLibApi.h"
 #include <math.h>
 
@@ -541,7 +542,7 @@ JsValue PlaceAtMe(std::shared_ptr<PartOne> partOne,
 
   LocationalData locationalData = { pos, rot, cellOrWorld };
 
-  auto callbacks = partOne->CreateFormCallbacks();
+  FormCallbacks callbacks = partOne->CreateFormCallbacks();
 
   std::unique_ptr<MpObjectReference> newRefr;
   if (akFormToPlace.rec->GetType() == "NPC_") {
