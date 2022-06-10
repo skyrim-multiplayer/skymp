@@ -98,6 +98,16 @@ target_link_libraries(functions_lib_api PUBLIC server_guest_lib)
 target_include_directories(functions_lib_api PUBLIC "${CMAKE_SOURCE_DIR}/1js")
 
 #
+# localization-provider
+#
+
+file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/localization_provider/*")
+list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(localization-provider STATIC ${src})
+apply_default_settings(TARGETS localization-provider)
+target_include_directories(localization-provider PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/localization_provider")
+
+#
 # Link vcpkg deps
 #
 

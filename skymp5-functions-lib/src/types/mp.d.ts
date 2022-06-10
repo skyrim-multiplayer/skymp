@@ -169,6 +169,8 @@ export interface Mp {
 
   getIdFromDesc(formDesc: string): number;
 
+  getLocalizedString(id: number): string;
+
   place(globalRecordId: number): number;
 
   registerPapyrusFunction(callType: 'method', className: string, functionName: string, f: PapyrusMethod): void;
