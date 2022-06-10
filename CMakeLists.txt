@@ -45,7 +45,7 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
   message(FATAL_ERROR "${msg}")
 endif()
 
-option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" ON)
+option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
 
 if (SKYRIM_SE)
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
@@ -59,7 +59,7 @@ enable_testing()
 
 # Bool options
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
-option(SWEETPIE "Affects default client and server configs" OFF)
+option(SWEETPIE "Affects default client and server configs" ON)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
