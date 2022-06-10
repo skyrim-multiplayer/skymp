@@ -2,7 +2,7 @@
 #include "FormDesc.h"
 #include "FunctionsLibApi.h"
 
-void RegisterFormApi(std::shared_ptr<PartOne> partOne)
+void RegisterActorApi(std::shared_ptr<PartOne> partOne)
 {
   JsValue globalObject = JsValue::GlobalObject();
 
@@ -526,14 +526,14 @@ JsValue SetSpawnPoint(std::shared_ptr<PartOne> partOne,
 
   LocationalData locationalData = {
     {
-      Uint32FromJsValue(pos.GetProperty(0)),
-      Uint32FromJsValue(pos.GetProperty(1)),
-      Uint32FromJsValue(pos.GetProperty(2)),
+      FloatFromJsValue(pos.GetProperty(0)),
+      FloatFromJsValue(pos.GetProperty(1)),
+      FloatFromJsValue(pos.GetProperty(2)),
     },
     {
-      Uint32FromJsValue(rot.GetProperty(0)),
-      Uint32FromJsValue(rot.GetProperty(1)),
-      Uint32FromJsValue(rot.GetProperty(2)),
+      FloatFromJsValue(rot.GetProperty(0)),
+      FloatFromJsValue(rot.GetProperty(1)),
+      FloatFromJsValue(rot.GetProperty(2)),
     },
     FormDesc::FromString(jsLocationalData.GetProperty("cellOrWorldDesc"))
   };
