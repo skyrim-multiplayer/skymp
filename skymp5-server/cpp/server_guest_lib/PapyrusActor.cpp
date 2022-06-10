@@ -1,5 +1,6 @@
 #include "PapyrusActor.h"
 
+#include "EspmGameObject.h"
 #include "MpActor.h"
 #include "MpForm.h"
 #include "MpFormGameObject.h"
@@ -82,11 +83,12 @@ VarValue PapyrusActor::EquipItem(VarValue self,
                                  const std::vector<VarValue>& arguments)
 {
   if (auto actor = GetFormPtr<MpActor>(self)) {
-    const MpForm* form = GetFormPtr<MpForm>(arguments[0]);
-    if (!form) {
-      throw std::runtime_error(fmt::format("Unable to find form to equip"));
+    auto& form = GetRecordPtr(arguments[0]);
+    if (!form.rec) {
+      throw std::runtime_error(
+        fmt::format("Unable to find a record of a form"));
     }
-    actor->OnEquip(form->GetFormId());
+    actor->OnEquip(form.rec->GetId());
   }
   return VarValue::None();
 }
