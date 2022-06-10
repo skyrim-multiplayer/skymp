@@ -1,6 +1,7 @@
 #include "PapyrusActor.h"
 
 #include "MpActor.h"
+#include "MpForm.h"
 #include "MpFormGameObject.h"
 
 #include "CIString.h"
@@ -73,6 +74,19 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
           .Execute(targetRefr);
       }
     }
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusActor::EquipItem(VarValue self,
+                                 const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    const MpForm* form = GetFormPtr<MpForm>(arguments[0]);
+    if (!form) {
+      throw std::runtime_error(fmt::format("Unable to find form to equip"));
+    }
+    actor->OnEquip(form->GetFormId());
   }
   return VarValue::None();
 }
