@@ -1,8 +1,7 @@
 import * as sp from "skyrimPlatform";
 import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
-//                     v                                       v
-import { AuthGameData, LoginRegisterData, LoginResponseAuthData, RemoteAuthGameData } from "./authModel";
+import { AuthGameData, RemoteAuthGameData } from "./authModel";
 import { Transform } from "../sync/movement";
 import { escapeJs } from "../lib/escapeJs";
 
@@ -16,11 +15,9 @@ const events = {
   openGithub: 'openGithub',
   openPatreon: 'openPatreon',
   clearAuthData: 'clearAuthData',
-  refreshWidgets: 'refreshWidgets',
 };
 
 const browserState = {
-  discordName: 'SomeNickname#1234',
   comment: '',
   failCount: 9000,
 };
@@ -129,11 +126,7 @@ const onBrowserMessage = (): void => {
     sp.printConsole(JSON.stringify(e.arguments));
     const eventKey = e.arguments[0];
     switch (eventKey) {
-      // case registerEventKey:
-      //   registerAccountWithSkympIO(e.arguments[1] as LoginRegisterData);
-      //   break;
       case events.openDiscordOauth:
-        // browser.setAuthData(null);
         sp.win32.loadUrl(`https://blank.page/#${authUrl}/api/users/login-discord?state=${discordAuthState}`);
         break;
       case events.login:
@@ -152,9 +145,6 @@ const onBrowserMessage = (): void => {
         break;
       case events.openPatreon:
         sp.win32.loadUrl(patreonUrl);
-        break;
-      case events.refreshWidgets:
-        refreshWidgets();
         break;
       default:
         break;
@@ -183,7 +173,6 @@ const checkLoginState = () => {
           } = JSON.parse(response.body) as AuthStatus;
           browserState.failCount = 0;
           createPlaySession(token).then((playSession) => {
-            // authData = { email: 'fake@skymp.io', rememberMe: true, session: playSession }; // + idscord
             authData = {
               session: playSession,
               masterApiId,
@@ -317,6 +306,5 @@ const browsersideWidgetSetter = () => {
 };
 
 const refreshWidgets = () => {
-  sp.printConsole(`comment: '${browserState.comment}'`);
   sp.browser.executeJavaScript(new FunctionInfo(browsersideWidgetSetter).getText({events, browserState, authData}));
 };
