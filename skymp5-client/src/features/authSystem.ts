@@ -3,7 +3,7 @@ import * as browser from "./browser";
 import * as loadGameManager from "./loadGameManager";
 import { AuthGameData, RemoteAuthGameData } from "./authModel";
 import { Transform } from "../sync/movement";
-import { escapeJs } from "../lib/escapeJs";
+import { FunctionInfo } from "../lib/functionInfo";
 
 const authUrl = (sp.settings["skymp5-client"]["master"] as string) || "https://skymp.io";
 const githubUrl = "https://github.com/skyrim-multiplayer/skymp";
@@ -23,27 +23,6 @@ const browserState = {
 };
 
 const discordAuthState = "" + Math.random();
-
-export class FunctionInfo<F extends { toString: () => string }> {
-  public constructor(private f: F) {}
-
-  get text(): string {
-    return `try{${this.getTextWithoutErrorHandling()}}catch(e){` +
-        `ctx.sp.printConsole('[CTX ERROR]', e, '\\n', ${this.f})}`
-  }
-
-  getText(args?: Record<string, unknown>): string {
-    if (!args) {
-      return this.text;
-    }
-    return `(function(){const {${Object.keys(args).join(',')}} = ${JSON.stringify(args)};${this.text}})()`;
-  }
-
-  private getTextWithoutErrorHandling(): string {
-    const funcString = this.f.toString().substring(0, this.f.toString().length - 1);
-    return funcString.replace(new RegExp('^.+?{', 'm'), '').trim();
-  }
-}
 
 interface AuthStatus {
   token: string;
@@ -195,7 +174,7 @@ const checkLoginState = () => {
           break;
         default:
           ++browserState.failCount;
-          browserState.comment = `Server returned ${escapeJs(response.status.toString() || "???")} \\"${escapeJs(response.body || response.error)}\\"`;
+          browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
           sp.Utility.wait(1.5 + Math.random() * 2).then(checkLoginState);
       }
     })
