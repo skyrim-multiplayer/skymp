@@ -125,14 +125,14 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
       {
         { Tier::Tier1,
           {
-            0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC, 0x06557B54,
-            0x000DB5D2, 0x06557B55, 0x000C886C, 0x0005ACDB, 0x00071CF3,
+            0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC, 0x08557B54,
+            0x000DB5D2, 0x08557B55, 0x000C886C, 0x0005ACDB, 0x00071CF3,
             0x00034CDD, 0x0005ACE2, 0x0005ACE1, 0x0401CD7C, 0x0005ACDD,
             0x0005ACE0, 0x0402B04E, 0x0003AD53, 0x0003AD57,
           } },
         { Tier::Tier2,
           { 0x0006AC4A, 0x0001B3BD, 0x00064B2E, 0x00064B2F, 0x00023D77,
-            0x06557B55 } },
+            0x08557B55 } },
         {
           Tier::Tier3,
           { 0x0003ADA4, 0x0005ACDC, 0x0402B06B, 0x0003AD5B },
@@ -149,7 +149,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     {
       StarterKitType::ChefKit,
       { 0x0001BCA7, 0x000261C1, 0x0001BC82, 0x0001F25B, 0x000D1921,
-        0x064D2B03 },
+        0x084D2B03 },
     },
     { StarterKitType::LumberjackKit,
       {
@@ -165,7 +165,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     },
     { StarterKitType::PrisonerKit,
       { 0x000646AB, 0x0008F19A, 0x0003ca00, 0x000426C8, 0x0010E039,
-        0x0651F7E4 } },
+        0x0851F7E4 } },
     { StarterKitType::PatronKit,
       { 0x0008895A, 0x000B145B, 0x0001C1FE, 0x00088956, 0x00088958 } },
   };

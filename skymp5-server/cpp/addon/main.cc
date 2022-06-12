@@ -3,6 +3,7 @@
 #include "FileDatabase.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
+#include "LocalizationProvider.h"
 #include "MigrationDatabase.h"
 #include "MongoDatabase.h"
 #include "MpFormGameObject.h"
@@ -14,6 +15,7 @@
 #include "formulas/TES5DamageFormula.h"
 #include <JsEngine.h>
 #include <cassert>
+#include <cctype>
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -116,6 +118,8 @@ private:
   std::shared_ptr<JsEngine> chakraEngine;
   Viet::TaskQueue chakraTaskQueue;
   GamemodeApi::State gamemodeApiState;
+
+  std::shared_ptr<LocalizationProvider> localizationProvider;
 
   static Napi::FunctionReference constructor;
 };
@@ -358,6 +362,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
           pluginPaths.push_back(dataDir / loadOrderElement);
         }
       }
+    }
+
+    if (serverSettings["lang"] != nullptr) {
+      logger->info("Run localization provider");
+      localizationProvider = std::make_shared<LocalizationProvider>(
+        serverSettings["dataDir"], serverSettings["lang"]);
     }
 
     auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
@@ -965,6 +975,65 @@ std::string GetDataDirSafe(nlohmann::json serverSettings)
 void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 {
   JsValue mp = JsValue::Object();
+
+  mp.SetProperty(
+    "getLocalizedString",
+    JsValue::Function([this](const JsFunctionArguments& args) {
+      auto translatedString = JsValue::Undefined();
+
+      if (!localizationProvider) {
+        return translatedString;
+      }
+
+      auto globalRecordId = ExtractFormId(args[1], "globalRecordId");
+      auto lookupRes =
+        partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+
+      if (!lookupRes.rec) {
+        return translatedString;
+      }
+
+      auto fields = JsValue::Array(0);
+
+      auto& cache = partOne->worldState.GetEspmCache();
+
+      espm::IterateFields_(
+        lookupRes.rec,
+        [&](const char* type, uint32_t size, const char* data) {
+          if (std::string(type, 4) != "FULL" || size != 4) {
+            return;
+          }
+
+          auto stringId = *reinterpret_cast<const uint32_t*>(data);
+          if (!serverSettings["loadOrder"].is_array()) {
+            return;
+          }
+
+          for (size_t i = 0; i < serverSettings["loadOrder"].size(); ++i) {
+            if (i != lookupRes.fileIdx) {
+              continue;
+            }
+
+            std::filesystem::path loadOrderElement =
+              static_cast<std::string>(serverSettings["loadOrder"][i]);
+
+            auto fileNameFull = loadOrderElement.filename().string();
+            auto fileNameWithoutExt =
+              fileNameFull.substr(0, fileNameFull.find_last_of("."));
+
+            std::transform(fileNameWithoutExt.begin(),
+                           fileNameWithoutExt.end(),
+                           fileNameWithoutExt.begin(),
+                           [](unsigned char c) { return std::tolower(c); });
+
+            translatedString = JsValue::String(
+              this->localizationProvider->Get(fileNameWithoutExt, stringId));
+          }
+        },
+        cache);
+
+      return translatedString;
+    }));
 
   mp.SetProperty("getServerSettings",
                  JsValue::Function([this](const JsFunctionArguments& args) {

@@ -94,6 +94,18 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 }
 ```
 
+## lang
+
+The language, the translation of which will be obtained from the string files located in Data/strings
+
+```json5
+{
+  // ...
+  "lang": "english"
+  // ...
+}
+```
+
 ## offlineMode
 
 The boolean variable shows is server in "offline mode" or not (the server allows clients to connect with any profile id they choose).
