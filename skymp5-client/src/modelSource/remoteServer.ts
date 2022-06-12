@@ -68,8 +68,8 @@ if (Array.isArray(storage["eventSourceContexts"])) {
 //
 
 const showConnectionError = () => {
-  const { width, height } = getScreenResolution();
-  sp.createText(width / 2, height / 2, `Server connection failed. This may be caused by one of the following:
+  // TODO: unhardcode it or render via browser
+  sp.createText(1920 / 2, 1080 / 2, `Server connection failed. This may be caused by one of the following:
 1. You are not present on the SkyMP Discord server
 2. You have been banned by server admins
 3. There is some technical issue. Try linking your Discord account again
