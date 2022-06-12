@@ -242,7 +242,7 @@ const browsersideWidgetSetter = () => {
         type: "icon",
         text: "username",
         tags: ["ICON_STYLE_SKYMP"],
-      },  
+      },
       {
         type: "text",
         text: (
@@ -254,8 +254,8 @@ const browsersideWidgetSetter = () => {
         ),
         tags: ["ELEMENT_SAME_LINE", "ELEMENT_STYLE_MARGIN_EXTENDED"],
       },
-      { 
-        type: "icon", 
+      {
+        type: "icon",
         text: "discord",
         tags: ["ICON_STYLE_DISCORD"],
       },
