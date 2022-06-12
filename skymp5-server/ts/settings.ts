@@ -53,9 +53,12 @@ export class Settings {
     }
   }
 
-  // static cachedSettings;
+  static cachedSettings: Settings | null = null;
 
   static get(): Settings {
+    if (Settings.cachedSettings) {
+      return Settings.cachedSettings;
+    }
     const args = Settings.parseArgs();
     const res = new Settings();
 
@@ -65,6 +68,7 @@ export class Settings {
     res.name = args['name'] || res.name;
     res.ip = args['ip'] || res.ip;
     res.offlineMode = args['offlineMode'] || res.offlineMode;
+    Settings.cachedSettings = res;
     return res;
   }
 
