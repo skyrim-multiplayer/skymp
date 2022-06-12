@@ -33,6 +33,7 @@ import { FormModel } from "./modelSource/model";
 import * as netInfo from "./features/netInfoSystem";
 import { WorldView } from "./view/worldView";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./view/worldViewMisc";
+import { getScreenResolution } from "./view/formView";
 
 interface AnyMessage {
   type?: string;
@@ -103,6 +104,16 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
   }
 };
 
+const showConnectionError = () => {
+  const { width, height } = getScreenResolution();
+  sp.createText(width / 2, height / 2, `Server connection failed. This may be caused by one of the following:
+1. You are not present on the SkyMP Discord server
+2. You have been banned by server admins
+3. There is some technical issue. Try linking your Discord account again
+
+If you feel that something is wrong, please contact us on Discord.`, [255, 255, 255, 1]);
+};
+
 export class SkympClient {
   constructor() {
     this.resetView();
@@ -114,10 +125,12 @@ export class SkympClient {
 
     networking.on("connectionFailed", () => {
       printConsole("Connection failed");
+      showConnectionError();
     });
 
     networking.on("connectionDenied", (err: Record<string, any> | string) => {
       printConsole("Connection denied: ", err);
+      showConnectionError();
     });
 
     networking.on("connectionAccepted", () => {
