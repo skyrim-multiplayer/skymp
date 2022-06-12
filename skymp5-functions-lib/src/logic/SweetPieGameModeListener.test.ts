@@ -80,7 +80,7 @@ describe("SweetPieGameModeListener: DeathMatch", () => {
   });
 
   test("Player attempts to hide from fight in interior", () => {
-    const controller = makePlayerContrller();
+    const controller = makePlayerController();
     const maps: SweetPieMap[] = [{ safePointName: 'whiterun:safePlace' }];
     const listener = new SweetPieGameModeListener(controller, maps);
     forceJoinRound(controller, listener.getRounds(), listener.getRounds()[0], 1);

@@ -161,9 +161,9 @@ export class SweetPieGameModeListener implements GameModeListener {
           const percentages = this.controller.getPercentages(casterActorId);
           this.controller.setPercentages(
             casterActorId, {
-            health: percentages.health! + .5,
-            magicka: percentages.magicka! + .5,
-            stamina: percentages.stamina! + .5
+              health: percentages.health! + .5,
+              magicka: percentages.magicka! + .5,
+              stamina: percentages.stamina! + .5
           });
           return 'continue';
         }
@@ -196,8 +196,11 @@ export class SweetPieGameModeListener implements GameModeListener {
           this.controller.sendChatMessage(casterActorId, sprintf(this.restoreDeniedMessage[0], -elapsed / 1000));
           return 'continue';
         }
-      }
-    }
+	if (this.controller.isTeleportActivator(targetActorId)) {
+          this.controller.sendChatMessage(casterActorId, ...this.interiorsBlockedMessage);
+          return 'blockActivation';
+      	}
+    }   
     return 'continue';
   }
 
