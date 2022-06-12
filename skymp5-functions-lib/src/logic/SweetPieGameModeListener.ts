@@ -48,7 +48,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         controller.setPercentages(actorId, { health: 0 });
         controller.sendChatMessage(actorId, 'You killed yourself...');
       }
-    },
+    }, 
   ]
 
   warmupTimerMaximum = 60;
@@ -86,7 +86,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     }
     this.controller.setRoundsArray(this.rounds);
     this.controller.updateCustomName(this.quitGamePortal, this.quitGamePortalName);
-    this.controller.updateCustomName(this.redPortal, this.comingSoonPortalName);
+    this.controller.updateCustomName(thisredPortal, this.comingSoonPortalName);
     this.controller.updateCustomName(this.bluePortal, this.comingSoonPortalName);
     // FIXME: does not apply in-game
     this.rounds.forEach((round) => round.map?.leaveRoundDoors?.forEach(
@@ -195,12 +195,13 @@ export class SweetPieGameModeListener implements GameModeListener {
           }
           this.controller.sendChatMessage(casterActorId, sprintf(this.restoreDeniedMessage[0], -elapsed / 1000));
           return 'continue';
-        }
-	if (this.controller.isTeleportActivator(targetActorId)) {
+          }
+        if (this.controller.isTeleportActivator(targetActorId)) {
           this.controller.sendChatMessage(casterActorId, ...this.interiorsBlockedMessage);
           return 'blockActivation';
-      	}
-    }   
+        }
+      }
+    }
     return 'continue';
   }
 
