@@ -43,9 +43,11 @@ export class WorldView implements View<WorldModel> {
   update(model: WorldModel): void {
     if (!this.allowUpdate) return;
 
+    const skipUpdates = settings["skymp5-client"]["skipUpdates"];
+
     // skip 50% of updated
     this.counter = !this.counter;
-    if (this.counter) return;
+    if (this.counter && skipUpdates) return;
 
     this.formViews.resize(model.forms.length);
 
