@@ -1,22 +1,30 @@
 import React from 'react';
 
-let mailSVG = require('../../img/mail.svg').default;
-let passwordSVG = require('../../img/password.svg').default;
+import mailSVG from '../../img/mail.svg';
+import passwordSVG from '../../img/password.svg';
+import discordSVG from '../../img/discord.svg';
+import skympSVG from '../../img/skymp.svg';
 
 const Icon = (props) => {
-  let text = props.text || "";
-  let css = props.css;
-  let width = props.width;
-  let height = props.height;
-  
-  let image="";
+  const text = props.text || '';
+  const css = props.css;
+  const width = props.width;
+  const height = props.height;
+
+  let image = '';
 
   switch (css) {
-    case "ICON_STYLE_MAIL":
+    case 'ICON_STYLE_MAIL':
       image = <img src={mailSVG} />;
       break;
-    case "ICON_STYLE_KEY":
+    case 'ICON_STYLE_KEY':
       image = <img src={passwordSVG} />;
+      break;
+    case 'ICON_STYLE_SKYMP':
+      image = <img src={skympSVG} />;
+      break;
+    case 'ICON_STYLE_DISCORD':
+      image = <img src={discordSVG} />;
       break;
     default:
       break;
@@ -27,7 +35,7 @@ const Icon = (props) => {
       <span className={'login-form--content_main__label___text'}>{text}</span>
       {image}
     </div>
-  )
-}
+  );
+};
 
 export default Icon;
