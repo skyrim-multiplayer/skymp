@@ -649,14 +649,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
-  std::unordered_set<uint32_t> greenZones = { 0x0760AADA };
-  uint32_t aggressorCell =
-    aggressor->GetCellOrWorld().ToFormId(aggressor->GetParent()->espmFiles);
-  auto it = greenZones.find(aggressorCell);
-  if (it != greenZones.end()) {
-    return;
-  }
-
   HitData hitData = hitData_;
 
   if (hitData.aggressor == 0x14) {

@@ -161,9 +161,9 @@ export class SweetPieGameModeListener implements GameModeListener {
           const percentages = this.controller.getPercentages(casterActorId);
           this.controller.setPercentages(
             casterActorId, {
-            health: percentages.health! + .5,
-            magicka: percentages.magicka! + .5,
-            stamina: percentages.stamina! + .5
+              health: percentages.health! + .5,
+              magicka: percentages.magicka! + .5,
+              stamina: percentages.stamina! + .5
           });
           return 'continue';
         }
