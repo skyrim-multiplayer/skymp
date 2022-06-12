@@ -3,6 +3,7 @@
 #include "CropRegeneration.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "MpChangeForms.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
 #include "PieScript.h"
@@ -103,17 +104,12 @@ void MpActor::OnEquip(uint32_t baseId)
     WorldState* espmProvider = GetParent();
     std::vector<std::string> espmFiles = espmProvider->espmFiles;
 
-    constexpr uint32_t kApplePieId0 = 0x00064B43;
-    constexpr uint32_t kApplePieId1 = 0x0300353B;
-    constexpr uint32_t kApplePieId2 = 0x03003539;
-    constexpr uint32_t kApplePieId3 = 0x0300353A;
+    constexpr uint32_t kApplePieId0 = 0x082b9671;
     constexpr uint32_t kStareterKitPie = 0x030009DB;
     constexpr uint32_t kPatronStarterKitPie = 0x00064B30;
+    constexpr uint32_t kWardrobePie = 0x082DD28A;
     bool isPie = false;
     isPie = isPie || baseId == kApplePieId0;
-    isPie = isPie || baseId == kApplePieId1;
-    isPie = isPie || baseId == kApplePieId2;
-    isPie = isPie || baseId == kApplePieId3;
 
     std::set<std::string> s;
     s = { espmFiles.begin(), espmFiles.end() };
@@ -128,6 +124,15 @@ void MpActor::OnEquip(uint32_t baseId)
         WorldState* worldState = GetParent();
         PieScript pieScript(espmFiles);
         pieScript.AddPatronStarterKitItems(*this, *worldState);
+      }
+
+      if (baseId == kWardrobePie) {
+        WorldState* worldState = GetParent();
+        constexpr uint32_t wardrobeId = 0x0756C165;
+        const NiPoint3 wardrobePos = { -769, 10461, -915 };
+        this->Teleport({ wardrobePos,
+                         { 0, 0, 0 },
+                         FormDesc::FromFormId(wardrobeId, espmFiles) });
       }
 
       if (isPie) {
