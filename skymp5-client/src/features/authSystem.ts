@@ -106,7 +106,7 @@ const onBrowserMessage = (): void => {
     const eventKey = e.arguments[0];
     switch (eventKey) {
       case events.openDiscordOauth:
-        sp.win32.loadUrl(`https://blank.page/#${authUrl}/api/users/login-discord?state=${discordAuthState}`);
+        sp.win32.loadUrl(`${authUrl}/api/users/login-discord?state=${discordAuthState}`);
         break;
       case events.login:
         if (!authData) {
