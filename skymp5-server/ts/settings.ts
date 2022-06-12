@@ -5,7 +5,6 @@ export interface DiscordAuthSettings {
   botToken: string;
   guildId: string;
   banRoleId: string;
-  adminRoleId: string;
 }
 
 export class Settings {
