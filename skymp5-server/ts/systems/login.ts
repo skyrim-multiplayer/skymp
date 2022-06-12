@@ -8,6 +8,10 @@ interface UserProfile {
   discordId: string | null;
 }
 
+namespace DiscordErrors {
+  export const unknownMember = 10007;
+}
+
 export class Login implements System {
   systemName = "Login";
 
@@ -74,9 +78,13 @@ export class Login implements System {
               headers: {
                 'Authorization': `${discordAuth.botToken}`
               },
+              validateStatus: (status) => true,
             },
           );
           console.log('Discord request:', JSON.stringify({ status: response.status, data: response.data }));
+          if (response.status == 404 && response.data?.code === DiscordErrors.unknownMember) {
+            throw new Error("Not on the Discord server");
+          }
           if (response.status != 200 || !response.data?.roles) {
             throw new Error("Unexpected response status: " +
                 JSON.stringify({ status: response.status, data: response.data }));
