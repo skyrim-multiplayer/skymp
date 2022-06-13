@@ -52,9 +52,9 @@ const std::string& ConsoleCommands::Argument::GetString() const
 
 namespace {
 
-void EnsureAdmin(MpActor& me)
+void EnsureAdmin(const MpActor& me)
 {
-  if (kAdmins.count(me.GetChangeForm().profileId) == kAdmins.end()) {
+  if (kAdmins.find(me.GetChangeForm().profileId) == kAdmins.end()) {
     throw std::runtime_error("Not enough permissions to use this command");
   }
 }
