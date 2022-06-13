@@ -45,7 +45,7 @@ export class WorldView implements View<WorldModel> {
 
     const skipUpdates = settings["skymp5-client"]["skipUpdates"];
 
-    // skip 50% of updated
+    // skip 50% of updated if said in the settings
     this.counter = !this.counter;
     if (this.counter && skipUpdates) return;
 
