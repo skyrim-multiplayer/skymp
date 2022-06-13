@@ -7,7 +7,7 @@ using Catch::Matchers::Contains;
 
 PartOne& GetPartOne();
 
-int pospelov = std::numeric_limits<int>::max();
+int kValidAdminUserId = 479;
 
 TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
@@ -83,7 +83,7 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RegisterProfileId(pospelov);
+  ac.RegisterProfileId(kValidAdminUserId);
   ac.RemoveAllItems();
 
   ActionListener::RawMessageData msgData;
@@ -121,7 +121,7 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RegisterProfileId(pospelov);
+  ac.RegisterProfileId(kValidAdminUserId);
 
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;
