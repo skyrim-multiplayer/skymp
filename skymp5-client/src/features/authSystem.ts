@@ -285,5 +285,8 @@ const browsersideWidgetSetter = () => {
 };
 
 const refreshWidgets = () => {
+  if (browserState.failCount) {
+    sp.printConsole(`Auth check fail: ${browserState.comment}`);
+  }
   sp.browser.executeJavaScript(new FunctionInfo(browsersideWidgetSetter).getText({events, browserState, authData}));
 };
