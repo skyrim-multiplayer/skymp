@@ -6,12 +6,8 @@
 #include "WorldState.h"
 
 // There were hardcoded real profile ids
-// For now, we disable this system by the hack with invalid values
-enum ProfileIds
-{
-  kProfileId_Pospelov = std::numeric_limits<int>::max(),
-  kProfileId_Xccane = -1,
-};
+// TODO(#1136): make it configurable
+const std::set<int> kAdmins{ 479, 485, 486, 487, 488, 489 };
 
 ConsoleCommands::Argument::Argument()
 {
@@ -56,17 +52,17 @@ const std::string& ConsoleCommands::Argument::GetString() const
 
 namespace {
 
-void EnsureIsOneOf(MpActor& me, std::set<ProfileIds> allowed)
+void EnsureAdmin(const MpActor& me)
 {
-  auto profileId = static_cast<ProfileIds>(me.GetChangeForm().profileId);
-  if (allowed.count(profileId) == 0)
+  if (kAdmins.find(me.GetChangeForm().profileId) == kAdmins.end()) {
     throw std::runtime_error("Not enough permissions to use this command");
+  }
 }
 
 void ExecuteAddItem(MpActor& caller,
                     const std::vector<ConsoleCommands::Argument>& args)
 {
-  EnsureIsOneOf(caller, { kProfileId_Pospelov });
+  EnsureAdmin(caller);
 
   const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
   const auto itemId = static_cast<uint32_t>(args.at(1).GetInteger());
@@ -90,7 +86,7 @@ void ExecuteAddItem(MpActor& caller,
 void ExecutePlaceAtMe(MpActor& caller,
                       const std::vector<ConsoleCommands::Argument>& args)
 {
-  EnsureIsOneOf(caller, { kProfileId_Pospelov });
+  EnsureAdmin(caller);
 
   const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
   const auto baseFormId = static_cast<uint32_t>(args.at(1).GetInteger());
@@ -115,7 +111,7 @@ void ExecutePlaceAtMe(MpActor& caller,
 void ExecuteDisable(MpActor& caller,
                     const std::vector<ConsoleCommands::Argument>& args)
 {
-  EnsureIsOneOf(caller, { kProfileId_Xccane, kProfileId_Pospelov });
+  EnsureAdmin(caller);
 
   const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
 
