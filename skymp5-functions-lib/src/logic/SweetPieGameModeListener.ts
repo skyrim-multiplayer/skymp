@@ -8,8 +8,8 @@ import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRou
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
   readonly applePieFormId = 0x082b9671;
-  readonly goldOreFormId = 0x082DD288;
-  readonly silverOreFormId = 0x082DD28E;
+  readonly goldOreFormId = 0x084042fd;
+  readonly silverOreFormId = 0x084042fb;
 
   readonly quitGamePortal = '42f3f:SweetPie.esp';
   readonly neutralPortal = '42f70:SweetPie.esp';
