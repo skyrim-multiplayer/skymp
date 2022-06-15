@@ -581,13 +581,5 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   // TODO: Take count into account
   int count = entry.count;
   RemoveItems({ entry });
-  PapyrusObjectReference papyrusObjectReference;
-  auto baseForm = VarValue(std::make_shared<EspmGameObject>(
-    GetParent()->GetEspm().GetBrowser().LookupById(baseId)));
-  auto aCount = VarValue(count);
-  auto aForcePersist = VarValue(false);
-  auto aInitiallyDisabled = VarValue(false);
-  (void)papyrusObjectReference.PlaceAtMe(
-    this->ToVarValue(),
-    { baseForm, aCount, aForcePersist, aInitiallyDisabled });
+  // TODO(#1141): reimplement spawning items
 }
