@@ -74,7 +74,7 @@ export class Login implements System {
           }
           if (discordAuth.eventLogChannelId) {
             await Axios.post(
-              `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
+              `https://discord.com/api/channels/${discordAuth.eventLogChannelId}/messages`,
               {
                 content: `Server Login: Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`,
                 allowed_mentions: { parse: [] },
