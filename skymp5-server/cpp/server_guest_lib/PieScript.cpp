@@ -125,7 +125,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
       {
         { Tier::Tier1,
           {
-            0x0004B0BA, 0x00034CDF, 0x0005076E, 0x0001D4EC, 0x08557B54,
+            0x0004B0BA, 0x000D8E3F, 0x0005076E, 0x0001D4EC, 0x08557B54,
             0x000DB5D2, 0x08557B55, 0x000C886C, 0x0005ACDB, 0x00071CF3,
             0x00034CDD, 0x0005ACE2, 0x0005ACE1, 0x0401CD7C, 0x0005ACDD,
             0x0005ACE0, 0x0402B04E, 0x0003AD53, 0x0003AD57,
