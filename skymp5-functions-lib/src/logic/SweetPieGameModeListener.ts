@@ -57,7 +57,7 @@ export class SweetPieGameModeListener implements GameModeListener {
             name: controller.getName(playerFormId),
             ids: `${playerFormId.toString(16)}/${controller.getProfileId(playerFormId)}`,
           }))
-          .filter(({ name }) => name.indexOf(argsRaw ?? '') !== -1)
+          .filter(({ name }) => name.toLocaleLowerCase().indexOf(argsRaw?.toLocaleLowerCase() ?? '') !== -1)
           .sort((a, b) => a.name.localeCompare(b.name));
         for (const { name, ids } of data) {
           controller.sendChatMessage(actorId, `${name}: ${ids}`);
