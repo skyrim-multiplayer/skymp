@@ -33,14 +33,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   // 1 message from here and another 1 is comming from actionListener
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(ac.GetInventory().GetItemCount(ironDagger) == 0);
-  /* spawning items will be implemented later
-  MpObjectReference& refr =
-    partOne.worldState.GetFormAt<MpObjectReference>(0xff000001);
-  REQUIRE(refr.GetBaseId() == ironDagger);
-  REQUIRE(refr.GetPos().x == 1.f);
-  REQUIRE(refr.GetPos().y == 2.f);
-  REQUIRE(refr.GetPos().z == 3.f);
-  */
+  // TODO(#1141): reimplement spawning items
   ac.AddItem(healingPotion, 5);
   partOne.Messages().clear();
   REQUIRE(partOne.Messages().size() == 0);
