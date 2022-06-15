@@ -7,9 +7,9 @@ import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRou
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
-  readonly applePieFormId = 0x00064B43;
-  readonly goldOreFormId = 0x0005ACDE;
-  readonly silverOreFormId = 0x0005ACDF;
+  readonly applePieFormId = 0x082b9671;
+  readonly goldOreFormId = 0x082DD288;
+  readonly silverOreFormId = 0x082DD28E;
 
   readonly quitGamePortal = '42f3f:SweetPie.esp';
   readonly neutralPortal = '42f70:SweetPie.esp';
@@ -228,7 +228,7 @@ export class SweetPieGameModeListener implements GameModeListener {
           }
           this.controller.sendChatMessage(casterActorId, sprintf(this.restoreDeniedMessage[0], -elapsed / 1000));
           return 'continue';
-          }
+        }
         if (this.controller.isTeleportActivator(targetActorId)) {
           this.controller.sendChatMessage(casterActorId, ...this.interiorsBlockedMessage);
           return 'blockActivation';

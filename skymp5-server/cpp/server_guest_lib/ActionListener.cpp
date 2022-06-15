@@ -14,6 +14,7 @@
 #include "Utils.h"
 #include "WorldState.h"
 #include <fmt/format.h>
+#include <unordered_set>
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
