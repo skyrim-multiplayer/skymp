@@ -44,10 +44,20 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly commands: Command[] = [
     {
       name: 'kill',
-      handler: (actorId: number, controller: PlayerController) => {
+      handler: ({ actorId, controller }) => {
         controller.setPercentages(actorId, { health: 0 });
         controller.sendChatMessage(actorId, 'You killed yourself...');
       }
+    },
+    {
+      name: 'list',
+      handler: ({ actorId, controller, argsRaw }) => {
+        controller.sendChatMessage(actorId, `argsRaw: '${argsRaw}'`);
+        const players = controller.getOnlinePlayers();
+        for (const playerFormId of players) {
+          controller.sendChatMessage(actorId, `ID: ${playerFormId - 0xff000000}: ${controller.getName(playerFormId)}`);
+        }
+      },
     },
   ]
 
@@ -212,8 +222,8 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
     for (const command of this.commands) {
-      if (inputText === '/' + command.name) {
-        command.handler(actorId, this.controller);
+      if (inputText === '/' + command.name || inputText.startsWith(`/${command.name} `)) {
+        command.handler({ actorId, controller: this.controller, argsRaw: inputText.substring(command.name.length + 2) });
         return;
       }
     }
