@@ -55,7 +55,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         controller.sendChatMessage(actorId, `argsRaw: '${argsRaw}'`);
         const players = controller.getOnlinePlayers();
         for (const playerFormId of players) {
-          controller.sendChatMessage(actorId, `ID: ${playerFormId - 0xff000000}: ${controller.getName(playerFormId)}`);
+          controller.sendChatMessage(actorId, `Server ID: ${playerFormId.toString(16)}, Master API: ${controller.getProfileId(playerFormId)}: ${controller.getName(playerFormId)}`);
         }
       },
     },

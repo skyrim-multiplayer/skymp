@@ -15,6 +15,7 @@ export type PlayerController = {
   sendChatMessage(actorId: number, text: string): void;
   quitGame(actorId: number): void;
   getName(actorId: number): string;
+  getProfileId(playerActorId: number): number;
   addItem(actorId: number, itemId: number, count: number): void;
   getRoundsArray(): SweetPieRound[];
   setRoundsArray(rounds: SweetPieRound[]): void;
