@@ -88,7 +88,7 @@ export class MpApiInteractor {
 
       const name = getName(input.actorId);
       if (listener.onPlayerChatInput) {
-        console.log(`chat: ${JSON.stringify(name)}: ${JSON.stringify(input.inputText)}`);
+        console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
         listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, name);
       }
     });
