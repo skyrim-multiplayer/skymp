@@ -96,10 +96,10 @@ export class Login implements System {
             },
           );
           console.log('Discord request:', JSON.stringify({ status: response.status, data: response.data }));
-          if (response.status == 404 && response.data?.code === DiscordErrors.unknownMember) {
+          if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
             throw new Error("Not on the Discord server");
           }
-          if (response.status != 200 || !response.data?.roles) {
+          if (response.status !== 200 || !response.data?.roles) {
             throw new Error("Unexpected response status: " +
                 JSON.stringify({ status: response.status, data: response.data }));
           }
