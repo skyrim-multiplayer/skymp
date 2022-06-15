@@ -394,7 +394,10 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
 
   if (!recipeUsed) {
-    throw std::runtime_error("Recipe not found");
+    throw std::runtime_error(
+      fmt::format("Recipe not found: inputObjects={}, workbenchId={:#x}, "
+                  "resultObjectId={:#x}",
+                  inputObjects.ToJson(), workbenchId, resultObjectId));
   }
 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
