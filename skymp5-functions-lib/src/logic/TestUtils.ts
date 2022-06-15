@@ -11,6 +11,7 @@ export const makePlayerController = (): PlayerController => {
     sendChatMessage: jest.fn(),
     quitGame: jest.fn(),
     getName: jest.fn(x => { return `Player${x}`; }),
+    getProfileId: jest.fn(),
     addItem: jest.fn(),
     getRoundsArray: jest.fn().mockReturnValue([]),
     setRoundsArray: jest.fn(),
