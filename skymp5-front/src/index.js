@@ -9,10 +9,10 @@ import { Provider } from 'react-redux';
 import { Widgets } from './utils/Widgets';
 
 import './main.scss';
-import {login} from "./widgets/ExampleWidgets";
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
+  window.needToScroll = true;
 }
 
 if (!window.skyrimPlatform.widgets) {
@@ -30,10 +30,10 @@ ReactDOM.render(
 
 // Called from skymp5-functions-lib, chatProperty.ts
 window.scrollToLastMessage = () => {
-  const _list = document.querySelector('#chat > .list');
-  if (_list != null) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
+  const _list = document.querySelector('#chat > .chat-main > .list');
+  if (_list != null && window.needToScroll) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
 };
 
 if (window.skyrimPlatform?.sendMessage) {
-  window.skyrimPlatform.sendMessage("front-loaded");
+  window.skyrimPlatform.sendMessage('front-loaded');
 }
