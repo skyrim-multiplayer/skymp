@@ -59,8 +59,9 @@ export class SweetPieGameModeListener implements GameModeListener {
           }))
           .filter(({ name }) => name.toLocaleLowerCase().indexOf(argsRaw?.toLocaleLowerCase() ?? '') !== -1)
           .sort((a, b) => a.name.localeCompare(b.name));
+        controller.sendChatMessage(actorId, `${data.length} players ${argsRaw ? 'matched' : 'online'}: Server ID / Master API ID - Name`);
         for (const { name, ids } of data) {
-          controller.sendChatMessage(actorId, `${name}: ${ids}`);
+          controller.sendChatMessage(actorId, `${ids} - ${name}`);
         }
       },
     },
