@@ -72,11 +72,25 @@ export class Login implements System {
           if (!profile.discordId) {
             throw new Error("Not logged in via Discord");
           }
+          if (discordAuth.eventLogChannelId) {
+            await Axios.post(
+              `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
+              {
+                content: `Server Login: Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`,
+                allowed_mentions: { parse: [] },
+              },
+              {
+                headers: {
+                  'Authorization': `${discordAuth.botToken}`,
+                },
+              },
+            );
+          }
           const response = await Axios.get(
             `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
             {
               headers: {
-                'Authorization': `${discordAuth.botToken}`
+                'Authorization': `${discordAuth.botToken}`,
               },
               validateStatus: (status) => true,
             },
