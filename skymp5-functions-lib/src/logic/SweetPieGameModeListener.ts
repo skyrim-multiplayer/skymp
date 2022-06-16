@@ -43,6 +43,29 @@ export class SweetPieGameModeListener implements GameModeListener {
   };
   readonly commands: Command[] = [
     {
+      name: 'kick',
+      handler: ({ actorId, controller, argsRaw }) => {
+        const adminMasterApiIds = [479, 485, 486, 487, 488, 489];
+        if (!adminMasterApiIds.includes(controller.getProfileId(actorId))) {
+          controller.sendChatMessage(actorId, 'No permission');
+          return;
+        }
+        if (!argsRaw) {
+          controller.sendChatMessage(actorId, 'Expected id as an argument');
+          return;
+        }
+        const targetMasterApiId = parseInt(argsRaw);
+        for (const targetPlayerActorId of controller.getOnlinePlayers()) {
+          if (controller.getProfileId(targetPlayerActorId) === targetMasterApiId) {
+            controller.quitGame(targetPlayerActorId);
+            controller.sendChatMessage(actorId, `Kicked actor ${targetPlayerActorId.toString(16)}`);
+            return;
+          }
+        }
+        controller.sendChatMessage(actorId, 'Not found');
+      },
+    },
+    {
       name: 'kill',
       handler: ({ actorId, controller }) => {
         controller.setPercentages(actorId, { health: 0 });
