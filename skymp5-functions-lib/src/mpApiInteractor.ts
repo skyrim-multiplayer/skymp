@@ -213,6 +213,9 @@ export class MpApiInteractor {
       getName(actorId: number): string {
         return getName(actorId);
       },
+      getProfileId(playerActorId: number): number {
+        return mp.get(playerActorId, 'profileId');
+      },
       addItem(actorId: number, itemId: number, count: number): void {
         mp.callPapyrusFunction(
           'method', 'ObjectReference', 'AddItem',

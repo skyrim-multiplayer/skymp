@@ -44,14 +44,30 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly commands: Command[] = [
     {
       name: 'kill',
-      handler: (actorId: number, controller: PlayerController) => {
+      handler: ({ actorId, controller }) => {
         controller.setPercentages(actorId, { health: 0 });
         controller.sendChatMessage(actorId, 'You killed yourself...');
       }
     },
     {
+      name: 'list',
+      handler: ({ actorId, controller, argsRaw }) => {
+        const data = controller.getOnlinePlayers()
+          .map((playerFormId) => ({
+            name: controller.getName(playerFormId),
+            ids: `${playerFormId.toString(16)}/${controller.getProfileId(playerFormId)}`,
+          }))
+          .filter(({ name }) => name.toLocaleLowerCase().indexOf(argsRaw?.toLocaleLowerCase() ?? '') !== -1)
+          .sort((a, b) => a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase()));
+        controller.sendChatMessage(actorId, `${data.length} players ${argsRaw ? 'matched' : 'online'}: Server ID / Master API ID - Name`);
+        for (const { name, ids } of data) {
+          controller.sendChatMessage(actorId, `${ids} - ${name}`);
+        }
+      },
+    },
+    {
       name: 'roll',
-      handler: (actorId: number, controller: PlayerController, neighbors: number[], senderName: string, inputText: string) => {
+      handler: ({ senderName, controller, neighbors, inputText }) => {
         const random: string[] = [];
         const [count, _, max]: number[] = inputText.slice(1).split(/(d|к)/g).map(str => parseInt(str));
         const colors: {
@@ -246,11 +262,11 @@ export class SweetPieGameModeListener implements GameModeListener {
   onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
     for (const command of this.commands) {
       if (/\/\d+(d|к)\d+/gi.test(inputText) && command.name === 'roll') {
-        command.handler(actorId, this.controller, neighbors, senderName, inputText)
+        command.handler({ actorId, controller: this.controller, neighbors, senderName, inputText });
         return;
       }
-      if (inputText === '/' + command.name) {
-        command.handler(actorId, this.controller, neighbors, senderName, inputText);
+      if (inputText === '/' + command.name || inputText.startsWith(`/${command.name} `)) {
+        command.handler({ actorId, controller: this.controller, neighbors, senderName, inputText, argsRaw: inputText.substring(command.name.length + 2) });
         return;
       }
     }
