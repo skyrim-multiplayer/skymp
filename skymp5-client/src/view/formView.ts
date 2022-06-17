@@ -139,7 +139,7 @@ export class FormView implements View<FormModel> {
           }
         );
         if (model.appearance && model.appearance.name) {
-          refr.setDisplayName("" + model.appearance.name, true);
+          refr.setDisplayName("", true);
         }
         Actor.from(refr)?.setActorValue("attackDamageMult", 0);
       }
