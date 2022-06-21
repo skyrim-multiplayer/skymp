@@ -505,11 +505,5 @@ export class FormView implements View<FormModel> {
   private localImmortal = false;
   private textNameId: number | undefined = undefined;
 
-  public static set isDisplayingNicknames(isDisplaying: boolean) {
-    FormView._isDisplayingNicknames = isDisplaying;
-  }
-  public static get isDisplayingNicknames(): boolean {
-    return FormView._isDisplayingNicknames;
-  }
-  private static _isDisplayingNicknames: boolean = true;
+  private static isDisplayingNicknames: boolean = true;
 }
