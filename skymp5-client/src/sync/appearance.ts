@@ -157,7 +157,7 @@ export const applyAppearanceToPlayer = (appearance: Appearance): void => {
     appearance,
     ActorBase.from((Game.getPlayer() as Actor).getBaseObject()) as ActorBase
   );
-  applyTints(null, appearance);
+  applyTints(Game.getPlayer() as Actor, appearance);
   (Game.getPlayer() as Actor).queueNiNodeUpdate();
   Utility.wait(0.0625).then(() => {
     once("update", () => {
