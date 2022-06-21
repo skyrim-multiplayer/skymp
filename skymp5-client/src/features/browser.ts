@@ -12,6 +12,7 @@ import {
   MenuOpenEvent,
   MenuCloseEvent,
 } from "skyrimPlatform";
+import { FormView } from "../view/formView";
 import { RemoteAuthGameData } from "./authModel";
 
 const pluginAuthDataName = `auth-data-no-load`;
@@ -88,8 +89,9 @@ export const main = (): void => {
   });
 
   const binding = new Map<BindingKey, BindingValue>([
-    [[DxScanCode.F2], () => browser.setVisible(!browser.isVisible())],
-    [[DxScanCode.F6], () => browser.setFocused(!browser.isFocused())],
+    [[DxScanCode.F1], () => browser.setFocused(!browser.isFocused())],
+    [[DxScanCode.F2], () => FormView.IsDisplayNickname = !FormView.IsDisplayNickname],
+    [[DxScanCode.F3], () => browser.setVisible(!browser.isVisible())],
     [
       [DxScanCode.Escape],
       () => browser.isFocused() && browser.setFocused(false),
