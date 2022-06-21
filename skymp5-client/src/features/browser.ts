@@ -89,7 +89,7 @@ export const main = (): void => {
   });
 
   const binding = new Map<BindingKey, BindingValue>([
-    [[DxScanCode.F1], () => FormView.IsDisplayNickname = !FormView.IsDisplayNickname],
+    [[DxScanCode.F1], () => FormView.isDisplayingNicknames = !FormView.isDisplayingNicknames],
     [[DxScanCode.F2], () => browser.setVisible(!browser.isVisible())],
     [[DxScanCode.F6], () => browser.setFocused(!browser.isFocused())],
     [[DxScanCode.Enter], () => browser.setFocused(true)],
