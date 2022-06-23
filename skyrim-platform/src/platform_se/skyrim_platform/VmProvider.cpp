@@ -1,15 +1,13 @@
 #include "VmProvider.h"
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
-#include <RE/BSScript/IFunction.h>
-#include <RE/BSScript/Internal/VirtualMachine.h>
 #include <optional>
 
 namespace {
 const RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo>& FindType(
   const std::string& className)
 {
-  auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+  auto vm = VM::GetSingleton();
   if (!vm)
     throw NullPointerException("vm");
 
@@ -36,7 +34,7 @@ struct AdditionalFunctionInfo
   };
   Type type = Type::Invalid;
 
-  std::vector<RE::BSScript::TypeInfo> paramTypes;
+  std::vector<TypeInfo> paramTypes;
 };
 
 using FunctionFindResult =
@@ -56,7 +54,7 @@ FunctionFindResult FindFunction(const RE::BSScript::ObjectTypeInfo* classInfo,
 {
   FunctionFindResult res;
 
-  for (UInt32 i = 0; i < classInfo->GetNumGlobalFuncs(); ++i) {
+  for (uint32_t i = 0; i < classInfo->GetNumGlobalFuncs(); ++i) {
     auto& f = classInfo->GetGlobalFuncIter()[i].func;
     if (f && !stricmp(f->GetName().data(), funcName.data())) {
       res.first = f;
@@ -64,7 +62,7 @@ FunctionFindResult FindFunction(const RE::BSScript::ObjectTypeInfo* classInfo,
       break;
     }
   }
-  for (UInt32 i = 0; i < classInfo->GetNumMemberFuncs(); ++i) {
+  for (uint32_t i = 0; i < classInfo->GetNumMemberFuncs(); ++i) {
     auto& f = classInfo->GetMemberFuncIter()[i].func;
     if (f && !stricmp(f->GetName().data(), funcName.data())) {
       res.first = f;
@@ -74,10 +72,10 @@ FunctionFindResult FindFunction(const RE::BSScript::ObjectTypeInfo* classInfo,
   }
 
   if (res.first) {
-    RE::BSFixedString outNameDummy;
+    FixedString outNameDummy;
     auto n = res.first->GetParamCount();
     res.second.paramTypes.resize(n);
-    for (UInt32 i = 0; i < n; ++i)
+    for (uint32_t i = 0; i < n; ++i)
       res.first->GetParam(i, outNameDummy, res.second.paramTypes[i]);
   }
 
@@ -112,17 +110,16 @@ public:
     }
   }
 
-  bool IsLatent() override { return GetNativeFunctionAddr::Run(*f).isLatent; }
+  bool IsLatent() override { return GetResult().isLatent; }
+
+  bool IsNative() override { return GetResult().isNative; }
 
   RE::BSTSmartPointer<RE::BSScript::IFunction> GetIFunction() override
   {
     return f;
   }
 
-  bool UsesLongSignature() override
-  {
-    return GetNativeFunctionAddr::Run(*f).useLongSignature;
-  }
+  bool UsesLongSignature() override { return GetResult().useLongSignature; }
 
   ValueType GetParamType(size_t i) override
   {
@@ -134,20 +131,29 @@ public:
   }
 
 private:
+  std::optional<GetNativeFunctionAddr::Result> result;
   RE::BSTSmartPointer<RE::BSScript::IFunction> f;
   AdditionalFunctionInfo info;
 
-  static ValueType MakeValueType(RE::BSScript::TypeInfo& typeInfo)
+  static ValueType MakeValueType(TypeInfo typeInfo)
   {
     ValueType res;
     res.type = typeInfo.GetUnmangledRawType();
-    if (res.type == RE::BSScript::TypeInfo::RawType::kObject) {
+    if (res.type == TypeInfo::RawType::kObject) {
       auto objTypeInfo = typeInfo.GetTypeInfo();
       if (!objTypeInfo)
         throw NullPointerException("objTypeInfo");
       res.className = objTypeInfo->GetName();
     }
     return res;
+  }
+
+  const GetNativeFunctionAddr::Result& GetResult()
+  {
+    if (!result) {
+      result = GetNativeFunctionAddr::Run(*f);
+    }
+    return *result;
   }
 };
 

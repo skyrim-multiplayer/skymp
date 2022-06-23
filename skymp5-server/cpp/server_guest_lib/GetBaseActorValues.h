@@ -23,6 +23,8 @@ struct BaseActorValues
   void VisitBaseActorValues(BaseActorValues& baseActorValues,
                             MpChangeForm& changeForm,
                             const PropertiesVisitor& visitor);
+
+  float GetValue(espm::ActorValue av);
 };
 
 BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,

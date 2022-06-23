@@ -1,0 +1,33 @@
+name: SP Types Update
+on:
+  workflow_dispatch:
+jobs:
+  updatetypes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Version
+        run: |
+          VERSION=$(sed -n "s/.*\([0-9]\.[0-9]\.[0-9]*\).*/\1/p" ${{ github.workspace }}/skyrim-platform/package.json | head -1)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Found version: $VERSION"
+          URL="https://raw.githubusercontent.com/skyrim-multiplayer/skymp/${{ github.sha }}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts"
+          echo "Checking url $URL"
+          CURLARGS="-f -s -S -k"
+          curl $CURLARGS $URL > test.txt
+          SIZE=$(stat -c '%s' test.txt)
+          if [ "$SIZE" = 0 ]
+          then
+            echo "Unreachable url $URL"
+            exit 1
+          fi
+          echo "URL=$URL" >> $GITHUB_ENV
+
+      - name: Update Types Repo
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.MAHAHUHA_PAT_FOR_SP_ORG_ACCESS }}
+          repository: skyrim-platform/skyrim-platform
+          event-type: update-types
+          client-payload: '{"version": "${{ env.VERSION }}", "url": "${{ env.URL }}"}'

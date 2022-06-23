@@ -1,8 +1,5 @@
 #pragma once
 #include "SFStructure.h"
-#include <array>
-#include <fstream>
-#include <zlib.h>
 
 namespace SaveFile_ {
 class SeekerOfDifferences

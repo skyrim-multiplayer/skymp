@@ -36,6 +36,7 @@ union CellOrGridPos
 class GroupHeader;
 class RecordHeader;
 class ScriptData;
+struct Effects;
 
 using GroupStack = std::vector<espm::GroupHeader*>;
 
@@ -292,6 +293,7 @@ public:
     const LocationalData* loc = nullptr;
     const DoorTeleport* teleport = nullptr;
     const float* boundsDiv2 = nullptr;
+    uint32_t count = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
@@ -734,6 +736,7 @@ public:
     uint32_t baseRatingX100 = 0;
     uint32_t baseValue = 0;
     float weight = 0;
+    uint32_t enchantmentFormId = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
@@ -779,6 +782,260 @@ public:
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 static_assert(sizeof(GMST) == sizeof(RecordHeader));
+
+struct Effects
+{
+public:
+  Effects(){};
+  Effects(const RecordHeader* parent);
+  const espm::RecordHeader* parent = nullptr;
+
+  struct Effect
+  {
+    uint32_t effectId = 0; // Corresponding MGEF record id
+    float magnitude = 0.f;
+    uint32_t areaOfEffect = 0;
+    uint32_t duration = 0;
+  };
+
+  struct Data
+  {
+    std::vector<Effect> effects;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+};
+
+class ENCH : public RecordHeader
+{
+public:
+  static constexpr auto kType = "ENCH";
+
+  struct Data
+  {
+    std::vector<espm::Effects::Effect> effects;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+};
+static_assert(sizeof(ENCH) == sizeof(RecordHeader));
+
+enum class ActorValue : int32_t
+{
+  None = -1,
+  Aggression,
+  Confidence,
+  Energy,
+  Morality,
+  Mood,
+  Assistance,
+  OneHanded,
+  TwoHanded,
+  Marksman,
+  Block,
+  Smithing,
+  HeavyArmor,
+  LightArmor,
+  Pickpocket,
+  Lockpicking,
+  Sneak,
+  Alchemy,
+  Speechcraft,
+  Alteration,
+  Conjuration,
+  Destruction,
+  Illusion,
+  Restoration,
+  Enchanting,
+  Health,
+  Magicka,
+  Stamina,
+  HealRate,
+  MagickaRate,
+  StaminaRate,
+  SpeedMult,
+  InventoryWeight,
+  CarryWeight,
+  CritChance,
+  MeleeDamage,
+  UnarmedDamage,
+  Mass,
+  VoicePoints,
+  VoiceRate,
+  DamageResist,
+  PoisonResist,
+  FireResist,
+  ElectricResist,
+  FrostResist,
+  MagicResist,
+  DiseaseResist,
+  PerceptionCondition,
+  EnduranceCondition,
+  LeftAttackCondition,
+  RightAttackCondition,
+  LeftMobilityCondition,
+  RightMobilityCondition,
+  BrainCondition,
+  Paralysis,
+  Invisibility,
+  NightEye,
+  DetectLifeRange,
+  WaterBreathing,
+  WaterWalking,
+  IgnoreCrippledLimbs,
+  Fame,
+  Infamy,
+  JumpingBonus,
+  WardPower,
+  RightItemCharge_or_EquippedItemCharge,
+  ArmorPerks,
+  ShieldPerks,
+  WardDeflection,
+  Variable01,
+  Variable02,
+  Variable03,
+  Variable04,
+  Variable05,
+  Variable06,
+  Variable07,
+  Variable08,
+  Variable09,
+  Variable10,
+  BowSpeedBonus,
+  FavorActive,
+  FavorsPerDay,
+  FavorsPerDayTimer,
+  LeftItemCharge_or_EquippedStaffCharge,
+  AbsorbChance,
+  Blindness,
+  WeaponSpeedMult,
+  ShoutRecoveryMult,
+  BowStaggerBonus,
+  Telekinesis,
+  FavorPointsBonus,
+  LastBribedIntimidated,
+  LastFlattered,
+  MovementNoiseMult,
+  BypassVendorStolenCheck,
+  BypassVendorKeywordCheck,
+  WaitingForPlayer,
+  OneHandedMod,
+  TwoHandedMod,
+  MarksmanMod,
+  BlockMod,
+  SmithingMod,
+  HeavyArmorMod,
+  LightArmorMod,
+  PickPocketMod,
+  LockpickingMod,
+  SneakMod,
+  AlchemyMod,
+  SpeechcraftMod,
+  AlterationMod,
+  ConjurationMod,
+  DestructionMod,
+  IllusionMod,
+  RestorationMod,
+  EnchantingMod,
+  OneHandedSkillAdvance,
+  TwoHandedSkillAdvance,
+  MarksmanSkillAdvance,
+  BlockSkillAdvance,
+  SmithingSkillAdvance,
+  HeavyArmorSkillAdvance,
+  LightArmorSkillAdvance,
+  PickPocketSkillAdvance,
+  LockpickingSkillAdvance,
+  SneakSkillAdvance,
+  AlchemySkillAdvance,
+  SpeechcraftSkillAdvance,
+  AlterationSkillAdvance,
+  ConjurationSkillAdvance,
+  DestructionSkillAdvance,
+  IllusionSkillAdvance,
+  RestorationSkillAdvance,
+  EnchantingSkillAdvance,
+  LeftWeaponSpeedMult,
+  DragonSouls,
+  CombatHealthRegenMult,
+  OneHandedPowerMod,
+  TwoHandedPowerMod,
+  MarksmanPowerMod,
+  BlockPowerMod,
+  SmithingPowerMod,
+  HeavyArmorPowerMod,
+  LightArmorPowerMod,
+  PickPocketPowerMod,
+  LockpickingPowerMod,
+  SneakPowerMod,
+  AlchemyPowerMod,
+  SpeechcraftPowerMod,
+  AlterationPowerMod,
+  ConjurationPowerMod,
+  DestructionPowerMod,
+  IllusionPowerMod,
+  RestorationPowerMod,
+  EnchantingPowerMod,
+  DragonRend,
+  AttackDamageMult,
+  HealRateMult_or_CombatHealthRegenMultMod,
+  MagickaRateMult_or_CombatHealthRegenMultPowerMod,
+  StaminaRateMult,
+  WerewolfPerks,
+  VampirePerks,
+  GrabActorOffset,
+  Grabbed,
+  DEPRECATED05,
+  ReflectDamage
+};
+
+class MGEF : public RecordHeader
+{
+public:
+  static constexpr auto kType = "MGEF";
+
+  struct DATA
+  {
+    // primary actor value
+    ActorValue primaryAV = espm::ActorValue::None;
+  };
+
+  struct Data
+  {
+    DATA data;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+};
+static_assert(sizeof(MGEF) == sizeof(RecordHeader));
+
+class ALCH : public RecordHeader
+{
+public:
+  static constexpr auto kType = "ALCH";
+
+  struct Data
+  {
+    std::vector<espm::Effects::Effect> effects;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+};
+static_assert(sizeof(ALCH) == sizeof(RecordHeader));
+
+class INGR : public RecordHeader
+{
+public:
+  static constexpr auto kType = "INGR";
+
+  struct Data
+  {
+    std::vector<espm::Effects::Effect> effects;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+};
+static_assert(sizeof(INGR) == sizeof(RecordHeader));
 }
 
 namespace espm {

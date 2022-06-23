@@ -1,8 +1,4 @@
 #include "SFReader.h"
-#include <cassert>
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
 
 void SaveFile_::Reader::Read()
 {

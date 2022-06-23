@@ -1,20 +1,11 @@
+#pragma comment(lib, "shell32.lib")
 #include "LoadGame.h"
 #include "NullPointerException.h"
 #include "PapyrusTESModPlatform.h"
-#include "cmrc/cmrc.hpp"
 #include "savefile/SFChangeFormNPC.h"
 #include "savefile/SFReader.h"
 #include "savefile/SFSeekerOfDifferences.h"
 #include "savefile/SFWriter.h"
-#include <RE/ScriptEventSourceHolder.h>
-#include <RE/TESLoadGameEvent.h>
-#include <filesystem>
-#include <fstream>
-#include <shlobj.h>
-#include <skse64/GameData.h>
-#include <sstream>
-#include <zlib.h>
-#pragma comment(lib, "shell32.lib")
 
 namespace fs = std::filesystem;
 
@@ -88,7 +79,7 @@ std::shared_ptr<SaveFile_::SaveFile> LoadGame::PrepareSaveFile()
     std::stringstream ss;
     ss << e.what() << std::endl << std::endl;
     ss << "Root directory contents is: " << std::endl;
-    for (auto& entry : dir)
+    for (auto entry : dir)
       ss << entry.filename() << std::endl;
     throw std::runtime_error(ss.str());
   }
@@ -120,7 +111,7 @@ void LoadGame::Run(std::shared_ptr<SaveFile_::SaveFile> save,
   TESModPlatform::BlockMoveRefrToPosition(true);
   static LoadGameEventSink g_sink;
 
-  if (auto saveLoadManager = BGSSaveLoadManager::GetSingleton()) {
+  if (auto saveLoadManager = RE::BGSSaveLoadManager::GetSingleton()) {
     return saveLoadManager->Load(name.data());
   } else {
     throw NullPointerException("saveLoadManager");
@@ -149,16 +140,15 @@ std::wstring LoadGame::GetPathToMyDocuments()
 void LoadGame::ModifyPluginInfo(std::shared_ptr<SaveFile_::SaveFile>& save)
 {
   std::vector<std::string> newPlugins;
-  auto dataHandler = DataHandler::GetSingleton();
+  auto dataHandler = RE::TESDataHandler::GetSingleton();
 
   if (!dataHandler) {
     throw NullPointerException("dataHandler");
   }
 
-  for (size_t i = 0; i < dataHandler->modList.loadedMods.count; ++i) {
-    newPlugins.push_back(
-      std::string(dataHandler->modList.loadedMods[i]->name));
-  }
+  for (auto it = dataHandler->files.begin(); it != dataHandler->files.end();
+       ++it)
+    newPlugins.push_back(std::string((*it)->fileName));
 
   save->OverwritePluginInfo(newPlugins);
 }

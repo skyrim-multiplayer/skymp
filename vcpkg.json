@@ -14,6 +14,9 @@
     "slikenet",
     "mongo-cxx-driver",
     "simdjson",
+    "robin-hood-hashing",
+    "simpleini",
+    "boost-pfr",
     {
       "name": "directxtk",
       "platform": "windows"
@@ -23,16 +26,35 @@
       "platform": "windows"
     },
     {
-      "name": "skse64",
-      "platform": "windows"
-    },
-    {
-      "name": "commonlibsse",
-      "platform": "windows"
-    },
-    {
       "name": "cef-prebuilt",
       "platform": "windows"
+    },
+    {
+      "name": "asio",
+      "platform": "windows"
     }
-  ]
+  ],
+  "features": {
+    "skyrim-se": {
+      "description": "Build platform for Skyrim Special Edition.",
+      "dependencies": [
+        {
+          "name": "commonlibse",
+          "platform": "windows"
+        }
+      ]
+    },
+    "skyrim-ae": {
+      "description": "Build platform for Skyrim Anniversary Edition.",
+      "dependencies": [
+        {
+          "name": "commonlibae",
+          "platform": "windows"
+        }
+      ]
+    },
+    "skyrim-vr": {
+      "description": "Build platform for Skyrim VR."
+    }
+  }
 }

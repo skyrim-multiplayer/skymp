@@ -1,5 +1,4 @@
 #pragma once
-#include "JsEngine.h"
 
 namespace EncodingApi {
 JsValue EncodeUtf8(const JsFunctionArguments& args);

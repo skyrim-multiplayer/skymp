@@ -396,7 +396,7 @@ public:
   ActivePexInstance();
   ActivePexInstance(
     PexScript::Lazy sourcePex,
-    const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+    const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
     VirtualMachine* parentVM, VarValue activeInstanceOwner,
     std::string childrenName);
 
@@ -457,9 +457,9 @@ private:
   bool HasParent(ActivePexInstance* script, std::string castToTypeName);
   bool HasChild(ActivePexInstance* script, std::string castToTypeName);
 
-  std::shared_ptr<ActivePexInstance> FillParentInstanse(
+  std::shared_ptr<ActivePexInstance> FillParentInstance(
     std::string nameNeedScript, VarValue activeInstanceOwner,
-    const std::shared_ptr<IVariablesHolder>& mapForFillPropertys);
+    const std::shared_ptr<IVariablesHolder>& mapForFillProperties);
 
   bool _IsValid = false;
 

@@ -1,13 +1,16 @@
 #pragma once
 
 #include "MyRenderHandler.h"
+#include "TextToDraw.h"
 #include <Signal.hpp>
+#include <functional>
 #include <mutex>
 #include <wrl.h>
 
 namespace DirectX {
 class SpriteBatch;
 class CommonStates;
+class SpriteFont;
 }
 
 struct IDXGISwapChain;
@@ -40,7 +43,7 @@ struct DX11RenderHandler : MyRenderHandler
   TP_NOCOPYMOVE(DX11RenderHandler);
 
   void Create() override;
-  void Render() override;
+  void Render(const ObtainTextsToDrawFunction& obtainTextsToDraw) override;
   void Reset() override;
 
   void GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override;
@@ -70,7 +73,9 @@ private:
   Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pContext;
   Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pImmediateContext;
 
-  std::unique_ptr<DirectX::SpriteBatch> m_pSpriteBatch;
-  std::unique_ptr<DirectX::CommonStates> m_pStates;
+  std::unique_ptr<::DirectX::SpriteBatch> m_pSpriteBatch;
+  std::unique_ptr<::DirectX::SpriteFont> m_pSpriteFont;
+
+  std::unique_ptr<::DirectX::CommonStates> m_pStates;
 };
 }

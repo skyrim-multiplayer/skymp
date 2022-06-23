@@ -50,7 +50,7 @@ VarValue PapyrusObjectReference::AddItem(
 {
   if (arguments.size() < 3)
     return VarValue::None();
-  auto item = GetRecordPtr(arguments[0]);
+  const auto& item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
@@ -58,15 +58,31 @@ VarValue PapyrusObjectReference::AddItem(
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
-  auto itemId = item.ToGlobalId(item.rec->GetId());
-  selfRefr->AddItem(itemId, count);
+  std::vector<uint32_t> formIds;
+  bool runSkympHacks = false;
 
-  if (!silent && count > 0) {
-    if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
-      auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
-      (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(actor);
+  if (auto formlist = espm::Convert<espm::FLST>(item.rec)) {
+    formIds =
+      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
+        .formIds;
+  } else {
+    formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
+    runSkympHacks = true;
+  }
+
+  for (auto itemId : formIds) {
+    selfRefr->AddItem(itemId, count);
+  }
+
+  if (runSkympHacks) {
+    if (!silent && count > 0) {
+      if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
+        auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
+        (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(actor);
+      }
     }
   }
+
   return VarValue::None();
 }
 
@@ -76,7 +92,7 @@ VarValue PapyrusObjectReference::RemoveItem(
   if (arguments.size() < 4)
     return VarValue::None();
 
-  auto item = GetRecordPtr(arguments[0]);
+  const auto& item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
   bool silent = static_cast<bool>(arguments[2].CastToBool());
@@ -85,16 +101,31 @@ VarValue PapyrusObjectReference::RemoveItem(
   if (!selfRefr || !item.rec)
     return VarValue::None();
 
-  auto itemId = item.ToGlobalId(item.rec->GetId());
-  auto realCount = selfRefr->GetInventory().GetItemCount(itemId);
-  count = count > realCount ? realCount : count;
+  std::vector<uint32_t> formIds;
+  bool runSkympHacks = false;
 
-  selfRefr->RemoveItem(itemId, count, refrToAdd);
+  if (auto formlist = espm::Convert<espm::FLST>(item.rec)) {
+    formIds =
+      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
+        .formIds;
+  } else {
+    formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
+    runSkympHacks = true;
+  }
 
-  if (!silent && count > 0) {
-    if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
-      auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
-      (void)SpSnippet("SkympHacks", "RemoveItem", args.data()).Execute(actor);
+  for (auto itemId : formIds) {
+    uint32_t maxCount = selfRefr->GetInventory().GetItemCount(itemId);
+    uint32_t realCount = count > maxCount ? maxCount : count;
+    selfRefr->RemoveItem(itemId, realCount, refrToAdd);
+  }
+
+  if (runSkympHacks) {
+    if (!silent && count > 0) {
+      if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
+        auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
+        (void)SpSnippet("SkympHacks", "RemoveItem", args.data())
+          .Execute(actor);
+      }
     }
   }
 
@@ -106,14 +137,28 @@ VarValue PapyrusObjectReference::GetItemCount(
 {
   if (arguments.size() >= 1) {
     auto selfRefr = GetFormPtr<MpObjectReference>(self);
-    auto& form = GetRecordPtr(arguments[0]);
-
-    const uint32_t formId = form.ToGlobalId(form.rec->GetId());
-
-    if (selfRefr) {
-      return VarValue(
-        static_cast<int>(selfRefr->GetInventory().GetItemCount(formId)));
+    if (!selfRefr) {
+      return VarValue(0);
     }
+    auto& form = GetRecordPtr(arguments[0]);
+    if (!form.rec) {
+      return VarValue(0);
+    }
+    std::vector<uint32_t> formIds;
+
+    if (auto formlist = espm::Convert<espm::FLST>(form.rec)) {
+      formIds =
+        espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
+          .formIds;
+    } else {
+      formIds.emplace_back(form.ToGlobalId(form.rec->GetId()));
+    }
+
+    uint32_t count = 0;
+    for (auto& formId : formIds) {
+      count += selfRefr->GetInventory().GetItemCount(formId);
+    }
+    return VarValue(static_cast<int>(count));
   }
   return VarValue(0);
 }
@@ -228,6 +273,66 @@ VarValue PapyrusObjectReference::Activate(
     bool abDefaultProcessingOnly =
       static_cast<bool>(arguments[1].CastToBool());
     selfRefr->Activate(*akActivator, abDefaultProcessingOnly);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::GetPositionX(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    return VarValue(selfRefr->GetPos().x);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::GetPositionY(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    return VarValue(selfRefr->GetPos().y);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::GetPositionZ(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    return VarValue(selfRefr->GetPos().z);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::SetPosition(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 3) {
+      throw std::runtime_error(
+        "SetPosition requires at least three arguments");
+    }
+    // TODO: Add movement/position changing sync for ingame objects and remove
+    // workaround below. Don't forget that SetPosition has fading effect. Also
+    // note that this change is global. So players should get new position on
+    // entering area or even outside of it
+    selfRefr->SetPosAndAngleSilent(
+      NiPoint3(
+        static_cast<float>(static_cast<double>(arguments[0].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat()))),
+      selfRefr->GetAngle());
+    selfRefr->ForceSubscriptionsUpdate();
+    auto funcName = "SetPosition";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
   }
   return VarValue::None();
 }

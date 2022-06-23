@@ -259,14 +259,14 @@ PexScript::Lazy VirtualMachine::GetPexByName(const std::string& name)
 
 std::shared_ptr<ActivePexInstance> VirtualMachine::CreateActivePexInstance(
   const std::string& pexScriptName, VarValue activeInstanceOwner,
-  const std::shared_ptr<IVariablesHolder>& mapForFillPropertys,
+  const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
   const std::string& childrenName)
 {
 
   auto it = allLoadedScripts.find(
     CIString{ pexScriptName.begin(), pexScriptName.end() });
   if (it != allLoadedScripts.end()) {
-    ActivePexInstance scriptInstance(it->second, mapForFillPropertys, this,
+    ActivePexInstance scriptInstance(it->second, mapForFillProperties, this,
                                      activeInstanceOwner, childrenName);
     return std::make_shared<ActivePexInstance>(scriptInstance);
   }

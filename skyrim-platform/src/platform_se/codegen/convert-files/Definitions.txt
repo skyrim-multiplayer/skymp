@@ -1,788 +1,1539 @@
 export declare class PapyrusObject {
-    static from(papyrusObject: PapyrusObject | null): PapyrusObject | null;
+  static from(papyrusObject: PapyrusObject | null): PapyrusObject | null
 }
-export type PapyrusValue = PapyrusObject | number | string | boolean | null | PapyrusValue[];
-export declare function printConsole(...arguments: unknown[]): void;
-export declare function writeLogs(pluginName: string, ...arguments: unknown[]): void;
-export declare function setPrintConsolePrefixesEnabled(enabled: boolean): void;
-export declare function writeScript(scriptName: string, src: string): void;
-export declare function callNative(className: string, functionName: string, self?: PapyrusObject, ...args: PapyrusValue[]): PapyrusValue;
-export declare function getJsMemoryUsage(): number;
-export declare function getPluginSourceCode(pluginName: string): string;
-export declare function writePlugin(pluginName: string, newSources: string): string;
-export declare function getPlatformVersion(): string;
-export declare function disableCtrlPrtScnHotkey(): void;
-export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void;
-export declare function encodeUtf8(text: string): ArrayBuffer;
-export declare function decodeUtf8(buffer: ArrayBuffer): string;
-export declare let storage: Record<string, unknown>;
-export declare let settings: Record<string, Record<string, unknown>>;
+export type PapyrusValue = PapyrusObject | number | string | boolean | null | PapyrusValue[]
+export declare function printConsole(...arguments: unknown[]): void
+export declare function writeLogs(pluginName: string, ...arguments: unknown[]): void
+export declare function setPrintConsolePrefixesEnabled(enabled: boolean): void
+export declare function callNative(className: string, functionName: string, self?: PapyrusObject, ...args: PapyrusValue[]): PapyrusValue
+export declare function getJsMemoryUsage(): number
+export declare function getPluginSourceCode(pluginName: string): string
+export declare function writePlugin(pluginName: string, newSources: string): string
+export declare function getPlatformVersion(): string
+export declare function disableCtrlPrtScnHotkey(): void
+export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void
+export declare function encodeUtf8(text: string): ArrayBuffer
+export declare function decodeUtf8(buffer: ArrayBuffer): string
+export declare let storage: Record<string, unknown>
+export declare let settings: Record<string, Record<string, unknown>>
 
-export declare function on(eventName: 'update', callback: () => void): void;
-export declare function once(eventName: 'update', callback: () => void): void;
+export declare function on(eventName: 'update', callback: () => void): EventHandle
+export declare function once(eventName: 'update', callback: () => void): EventHandle
 
-export declare function on(eventName: 'tick', callback: () => void): void;
-export declare function once(eventName: 'tick', callback: () => void): void;
+export declare function on(eventName: 'tick', callback: () => void): EventHandle
+export declare function once(eventName: 'tick', callback: () => void): EventHandle
 
 export interface IpcMessageEvent {
-    sourceSystemName: string;
-    message: ArrayBuffer;
+  sourceSystemName: string
+  message: ArrayBuffer
 }
 
-export declare function on(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): void;
-export declare function once(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): void;
+export declare function on(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): EventHandle
+export declare function once(eventName: 'ipcMessage', callback: (event: IpcMessageEvent) => void): EventHandle
 
 export interface Face {
-    hairColor: number;
-    bodySkinColor: number;
-    headTextureSetId: number;
-    headPartIds: number[];
-    presets: number[];
+  hairColor: number
+  bodySkinColor: number
+  headTextureSetId: number
+  headPartIds: number[]
+  presets: number[]
 }
 
 export interface ChangeFormNpc {
-    raceId?: number;
-    name?: string;
-    face?: Face;
+  raceId?: number
+  name?: string
+  face?: Face
 }
 
-export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc): void;
+export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc): void
 
-export declare function worldPointToScreenPoint(...args: number[][]): number[][];
+export declare function worldPointToScreenPoint(...args: number[][]): number[][]
 
-export type PacketType = 'message' | 'disconnect' | 'connectionAccepted' | 'connectionFailed' | 'connectionDenied';
+export type PacketType = 'message' | 'disconnect' | 'connectionAccepted' | 'connectionFailed' | 'connectionDenied'
 
 // Available only if multiplayer is installed on user's machine
 interface MpClientPlugin {
-    getVersion(): string;
-    createClient(host: string, port: number): void;
-    destroyClient(): void;
-    isConnected(): boolean;
-    tick(tickHandler: (packetType: PacketType, jsonContent: string, error: string) => void): void;
-    send(jsonContent: string, reliable: boolean): void;
+  getVersion(): string
+  createClient(host: string, port: number): void
+  destroyClient(): void
+  isConnected(): boolean
+  tick(tickHandler: (packetType: PacketType, jsonContent: string, error: string) => void): void
+  send(jsonContent: string, reliable: boolean): void
 }
-export declare let mpClientPlugin: MpClientPlugin;
+export declare let mpClientPlugin: MpClientPlugin
 
 export interface Browser {
-  setVisible(visible: boolean): void;
-  isVisible(): boolean;
-  setFocused(focused: boolean): void;
-  isFocused(): boolean;
-  loadUrl(url: string): void;
-  getToken(): string;
-  executeJavaScript(src: string): void;
+  setVisible(visible: boolean): void
+  isVisible(): boolean
+  setFocused(focused: boolean): void
+  isFocused(): boolean
+  loadUrl(url: string): void
+  getToken(): string
+  executeJavaScript(src: string): void
 }
-export declare let browser: Browser;
+export declare let browser: Browser
+
+export interface Win32 {
+  loadUrl(url: string): void
+  exitProcess(): void
+}
+export declare let win32: Win32
 
 export interface ExtraData {
-  type: 'Health' | 'Count' | 'Enchantment' | 'Charge' | 'TextDisplayData' | 'Soul' | 'Poison' | 'Worn' | 'WornLeft';
+  type: 'Health' | 'Count' | 'Enchantment' | 'Charge' | 'TextDisplayData' | 'Soul' | 'Poison' | 'Worn' | 'WornLeft'
 }
 export interface ExtraHealth extends ExtraData {
-  type: 'Health';
-  health: number;
+  type: 'Health'
+  health: number
 }
 export interface ExtraCount extends ExtraData {
-  type: 'Count';
-  count: number;
+  type: 'Count'
+  count: number
 }
 export interface ExtraEnchantment extends ExtraData {
-  type: 'Enchantment';
-  enchantmentId: number;
-  maxCharge: number;
-  removeOnUnequip: boolean;
+  type: 'Enchantment'
+  enchantmentId: number
+  maxCharge: number
+  removeOnUnequip: boolean
 }
 export interface ExtraCharge extends ExtraData {
-  type: 'Charge';
-  charge: number;
+  type: 'Charge'
+  charge: number
 }
 export interface ExtraTextDisplayData extends ExtraData {
-  type: 'TextDisplayData';
-  name: string;
+  type: 'TextDisplayData'
+  name: string
 }
 export interface ExtraSoul extends ExtraData {
-  type: 'Soul';
-  soul: 0 | 1 | 2 | 3 | 4 | 5;
+  type: 'Soul'
+  soul: 0 | 1 | 2 | 3 | 4 | 5
 }
 export interface ExtraPoison extends ExtraData {
-  type: 'Poison';
-  poisonId: number;
-  count: number;
+  type: 'Poison'
+  poisonId: number
+  count: number
 }
 export interface ExtraWorn extends ExtraData {
-  type: 'Worn';
+  type: 'Worn'
 }
 export interface ExtraWornLeft extends ExtraData {
-  type: 'WornLeft';
+  type: 'WornLeft'
 }
-export type BaseExtraList = ExtraData[];
+export type BaseExtraList = ExtraData[]
 export interface InventoryChangesEntry {
-  countDelta: number;
-  baseId: number;
-  extendDataList: BaseExtraList[];
+  countDelta: number
+  baseId: number
+  extendDataList: BaseExtraList[]
 }
-export declare let getExtraContainerChanges: (objectReferenceId: number) => InventoryChangesEntry[];
+export declare let getExtraContainerChanges: (objectReferenceId: number) => InventoryChangesEntry[] | null
 
 export interface InventoryEntry {
-  count: number;
-  baseId: number;
+  count: number
+  baseId: number
 }
-export declare let getContainer: (baseId: number) => InventoryEntry[];
+export declare let getContainer: (baseId: number) => InventoryEntry[]
 
 export interface ActivateEvent {
-    target: ObjectReference,
-    caster: ObjectReference,
-    isCrimeToActivate: boolean
+  target: ObjectReference
+  caster: ObjectReference
+  isCrimeToActivate: boolean
 }
 
 export interface MoveAttachDetachEvent {
-    movedRef: ObjectReference,
-    isCellAttached: boolean
+  movedRef: ObjectReference
+  isCellAttached: boolean
 }
 export interface WaitStopEvent {
-    isInterrupted: boolean
+  isInterrupted: boolean
 }
 export interface ObjectLoadedEvent {
-    object: Form,
-    isLoaded: boolean
+  object: Form
+  isLoaded: boolean
 }
 export interface LockChangedEvent {
-    lockedObject: ObjectReference
+  lockedObject: ObjectReference
 }
 
 export interface CellFullyLoadedEvent {
-    cell: Cell
+  cell: Cell
 }
 
 export interface GrabReleaseEvent {
-    refr: ObjectReference,
-    isGrabbed: boolean
+  refr: ObjectReference
+  isGrabbed: boolean
 }
 
 export interface SwitchRaceCompleteEvent {
-    subject: ObjectReference
+  subject: ObjectReference
 }
 
 export interface UniqueIDChangeEvent {
-    oldBaseID: number,
-    newBaseID: number,
-    oldUniqueID: number,
-    newUniqueID: number
+  oldBaseID: number
+  newBaseID: number
+  oldUniqueID: number
+  newUniqueID: number
 }
 
 export interface TrackedStatsEvent {
-    statName: string,
-    newValue: number
+  statName: string
+  newValue: number
 }
 
 export interface InitScriptEvent {
-    initializedObject: ObjectReference
+  initializedObject: ObjectReference
 }
 
 export interface ResetEvent {
-    object: ObjectReference
+  object: ObjectReference
 }
 
 export interface CombatEvent {
-    target: ObjectReference,
-    actor: ObjectReference,
-    isCombat: boolean,
-    isSearching: boolean
+  target: ObjectReference
+  actor: ObjectReference
+  isCombat: boolean
+  isSearching: boolean
 }
 
 export interface DeathEvent {
-    actorDying: ObjectReference,
-    actorKiller: ObjectReference
+  actorDying: ObjectReference
+  actorKiller: ObjectReference
 }
 
 export interface ContainerChangedEvent {
-    oldContainer: ObjectReference,
-    newContainer: ObjectReference,
-    baseObj: Form,
-    numItems: number,
-    uniqueID: number,
-    reference: ObjectReference
+  oldContainer: ObjectReference
+  newContainer: ObjectReference
+  baseObj: Form
+  numItems: number
+  uniqueID: number
+  reference: ObjectReference
 }
 
 export interface HitEvent {
-    target: ObjectReference,
-    aggressor: ObjectReference,
-    source: Form,
-    projectile: Projectile,
-    isPowerAttack: boolean,
-    isSneakAttack: boolean,
-    isBashAttack: boolean,
-    isHitBlocked: boolean
+  target: ObjectReference
+  aggressor: ObjectReference
+  source: Form
+  projectile: Projectile
+  isPowerAttack: boolean
+  isSneakAttack: boolean
+  isBashAttack: boolean
+  isHitBlocked: boolean
 }
 
 export interface EquipEvent {
-    actor: ObjectReference,
-    baseObj: Form,
-    uniqueId: number,
-    originalRefr: ObjectReference
+  actor: ObjectReference
+  baseObj: Form
+  uniqueId: number
+  originalRefr: ObjectReference
 }
 
 export interface ActiveEffectApplyRemoveEvent {
-    activeEffect: ActiveMagicEffect,
-    effect: MagicEffect,
-    caster: ObjectReference,
-    target: ObjectReference
+  effect: MagicEffect
+  caster: ObjectReference
+  target: ObjectReference
 }
 
 export interface MenuOpenEvent {
-    name: string
+  name: string
 }
 
 export interface MenuCloseEvent {
-    name: string
+  name: string
 }
 
 export interface MagicEffectApplyEvent {
-    activeEffect: ActiveMagicEffect,
-    effect: MagicEffect,
-    caster: ObjectReference,
-    target: ObjectReference
+  activeEffect: ActiveMagicEffect
+  effect: MagicEffect
+  caster: ObjectReference
+  target: ObjectReference
 }
 
 export interface BrowserMessageEvent {
-    arguments: unknown[]
+  arguments: unknown[]
 }
 
 /*
-* Note: The message text can contain any characters, including `'` `"` `\`.
-* Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
-*/
+ * Note: The message text can contain any characters, including `'` `"` `\`.
+ * Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
+ */
 export interface ConsoleMessageEvent {
-    message: string
+  message: string
 }
 
-export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
-export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): void;
-
-export declare function on(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): void;
-export declare function once(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): void;
-
-export declare function on(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): void;
-export declare function once(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): void;
-
-export declare function on(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): void;
-export declare function once(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): void;
-
-export declare function on(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): void;
-export declare function once(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): void;
-
-export declare function on(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): void;
-export declare function once(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): void;
-
-export declare function on(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): void;
-export declare function once(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): void;
-
-export declare function on(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): void;
-export declare function once(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): void;
-
-export declare function on(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): void;
-export declare function once(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): void;
-
-export declare function on(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): void;
-export declare function once(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): void;
-
-export declare function on(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): void;
-export declare function once(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): void;
-
-export declare function on(eventName: 'reset', callback: (event: ResetEvent) => void): void;
-export declare function once(eventName: 'reset', callback: (event: ResetEvent) => void): void;
-
-export declare function on(eventName: 'combatState', callback: (event: CombatEvent) => void): void;
-export declare function once(eventName: 'combatState', callback: (event: CombatEvent) => void): void;
-
-export declare function on(eventName: 'loadGame', callback: () => void): void;
-export declare function once(eventName: 'loadGame', callback: () => void): void;
-
-export declare function on(eventName: 'deathEnd', callback: (event: DeathEvent) => void): void;
-export declare function once(eventName: 'deathEnd', callback: (event: DeathEvent) => void): void;
-
-export declare function on(eventName: 'deathStart', callback: (event: DeathEvent) => void): void;
-export declare function once(eventName: 'deathStart', callback: (event: DeathEvent) => void): void;
-
-export declare function on(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): void;
-export declare function once(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): void;
-
-export declare function on(eventName: 'hit', callback: (event: HitEvent) => void): void;
-export declare function once(eventName: 'hit', callback: (event: HitEvent) => void): void;
-
-export declare function on(eventName: 'unequip', callback: (event: EquipEvent) => void): void;
-export declare function once(eventName: 'unequip', callback: (event: EquipEvent) => void): void;
-
-export declare function on(eventName: 'equip', callback: (event: EquipEvent) => void): void;
-export declare function once(eventName: 'equip', callback: (event: EquipEvent) => void): void;
-
-export declare function on(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): void;
-export declare function once(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): void;
-
-export declare function on(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
-export declare function once(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
-
-export declare function on(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
-export declare function once(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): void;
-
-export declare function on(eventName: 'menuOpen', callback: (event: MenuOpenEvent) => void): void;
-export declare function once(eventName: 'menuOpen', callback: (event: MenuOpenEvent) => void): void;
-
-export declare function on(eventName: 'menuClose', callback: (event: MenuCloseEvent) => void): void;
-export declare function once(eventName: 'menuClose', callback: (event: MenuCloseEvent) => void): void;
-
-export declare function on(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
-export declare function once(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): void;
-
-export declare function on(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
-export declare function once(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): void;
-
-
-declare class ConsoleComand {
-    longName: string;
-    shortName: string;
-    numArgs: number;
-    execute: (...arguments: unknown[]) => boolean;
+export interface SpellCastEvent {
+  caster: ObjectReference
+  spell: Spell
 }
-export declare function findConsoleCommand(cmdName: string): ConsoleComand;
+
+export interface OpenCloseEvent {
+  target: ObjectReference
+  cause: ObjectReference | undefined
+}
+
+export interface QuestInitEvent {
+  quest: Quest
+}
+
+export interface QuestStartStopEvent {
+  quest: Quest
+}
+
+export interface QuestStageEvent {
+  quest: Quest
+  stage: number
+}
+
+export interface TriggerEvent {
+  target: ObjectReference
+  cause: ObjectReference
+}
+
+export interface SleepStartEvent {
+  startTime: number
+  desiredStopTime: number
+}
+
+export interface SleepStopEvent {
+  isInterrupted: boolean
+}
+
+export interface CellAttachDetachEvent {
+  refr: ObjectReference
+}
+
+export interface WaitStartEvent {
+  startTime: number
+  desiredStopTime: number
+}
+
+export interface LocationChangedEvent {
+  actor: Actor
+  oldLoc: Location
+  newLoc: Location
+}
+
+export interface BookReadEvent {
+  book: Book
+}
+
+export interface SellEvent {
+  target: ObjectReference
+  seller: ObjectReference
+}
+
+export interface FurnitureEvent {
+  target: ObjectReference
+  actor: ObjectReference
+}
+
+export interface WardHitEvent {
+  target: ObjectReference
+  caster: ObjectReference
+  spell: Spell
+  status: WardHitStatus
+}
+
+export interface PackageEvent {
+  actor: ObjectReference
+  package: Package
+}
+
+export interface EnterBleedoutEvent {
+  actor: ObjectReference
+}
+
+export interface DestructionStageChangedEvent {
+  target: ObjectReference
+  oldStage: number
+  newStage: number
+}
+
+export interface SceneActionEvent {
+  actorAliasId: number
+  actionIndex: number
+  scene: Scene
+  quest: Quest
+}
+
+export interface PlayerBowShotEvent {
+  weapon: Weapon
+  ammo: Ammo
+  power: number
+  isSunGazing: boolean
+}
+
+export interface FastTravelEnd {
+  travelTimeGameHours: number
+}
+
+export interface PerkEntryRunEvent {
+  cause: ObjectReference
+  target: ObjectReference
+  perk: Perk
+  flag: number
+}
+
+export interface ActionEvent {
+  actor: Actor
+  source: Form
+  slot: SlotType
+}
+
+export interface CameraStateChangedEvent {
+  oldStateId: number
+  newStateId: number
+}
+
+export interface CrosshairRefChangedEvent {
+  reference: ObjectReference | undefined
+}
+
+export interface NiNodeUpdateEvent {
+  reference: ObjectReference | undefined
+}
+
+export interface ModEvent {
+  sender: Form
+  eventName: string
+  strArg: string
+  numArg: number
+}
+
+export interface PositionPlayerEvent {
+  eventType: PlayerPositionEventType
+}
+
+export interface FootstepEvent {
+  tag: string
+}
+
+export interface TranslationEvent {
+  reference: ObjectReference
+}
+
+export interface ButtonEvent {
+  device: InputDeviceType
+  code: DxScanCode
+  userEventName: string
+  value: number
+  heldDuration: number
+  isPressed: boolean
+  isUp: boolean
+  isDown: boolean
+  isHeld: boolean
+  isRepeating: boolean
+}
+
+export interface MouseMoveEvent {
+  device: InputDeviceType
+  code: DxScanCode
+  userEventName: string
+  inputX: number
+  inputY: number
+}
+
+export interface ThumbstickEvent {
+  device: InputDeviceType
+  code: DxScanCode
+  userEventName: string
+  inputX: number
+  inputY: number
+  isLeft: boolean
+  isRight: boolean
+}
+
+export interface KinectEvent {
+  device: InputDeviceType
+  code: DxScanCode
+  userEventName: string
+  heard: string
+}
+
+export interface DeviceConnectEvent {
+  device: InputDeviceType
+  isConnected: boolean
+}
+
+export interface EventHandle {
+  uid: number
+  eventName: string
+}
+
+export interface ActorKillEvent {
+  killer: Actor
+  victim: Actor
+}
+
+export interface BooksReadEvent {
+  book: Book
+}
+
+export interface CriticalHitEvent {
+  aggressor: ObjectReference
+  weapon: Weapon
+  isSneakHit: boolean
+}
+
+export interface DisarmedEvent {
+  source: Actor
+  target: Actor
+}
+
+export interface DragonSoulsGainedEvent {
+  souls: number
+}
+
+export interface ItemHarvestedEvent {
+  produceItem: Form
+  harvester: Actor
+}
+
+export interface LevelIncreaseEvent {
+  player: Actor
+  newLevel: number
+}
+
+export interface LocationDiscoveryEvent {
+  worldSpaceId: string
+  name: string
+  markerType: MarkerType
+  isVisible: boolean
+  canTravelTo: boolean
+  isShowAllHidden: boolean
+}
+
+export interface ShoutAttackEvent {
+  shout: Shout
+}
+
+export interface SkillIncreaseEvent {
+  player: Actor
+  actorValue: ActorValue
+}
+
+export interface SoulsTrappedEvent {
+  trapper: Actor
+  target: Actor
+}
+
+export interface SpellsLearnedEvent {
+  spell: Spell
+}
+
+export declare function unsubscribe(handle: EventHandle): void
+
+export declare function on(eventName: 'skyrimLoaded', callback: () => void): EventHandle
+export declare function once(eventName: 'skyrimLoaded', callback: () => void): EventHandle
+
+export declare function on(eventName: 'newGame', callback: () => void): EventHandle
+export declare function once(eventName: 'newGame', callback: () => void): EventHandle
+
+export declare function on(eventName: 'preLoadGame', callback: () => void): EventHandle
+export declare function once(eventName: 'preLoadGame', callback: () => void): EventHandle
+
+export declare function on(eventName: 'postLoadGame', callback: () => void): EventHandle
+export declare function once(eventName: 'postLoadGame', callback: () => void): EventHandle
+
+export declare function on(eventName: 'saveGame', callback: () => void): EventHandle
+export declare function once(eventName: 'saveGame', callback: () => void): EventHandle
+
+export declare function on(eventName: 'deleteGame', callback: () => void): EventHandle
+export declare function once(eventName: 'deleteGame', callback: () => void): EventHandle
+
+export declare function on(eventName: 'activate', callback: (event: ActivateEvent) => void): EventHandle
+export declare function once(eventName: 'activate', callback: (event: ActivateEvent) => void): EventHandle
+
+export declare function on(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): EventHandle
+export declare function once(eventName: 'waitStop', callback: (event: WaitStopEvent) => void): EventHandle
+
+export declare function on(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): EventHandle
+export declare function once(eventName: 'objectLoaded', callback: (event: ObjectLoadedEvent) => void): EventHandle
+
+export declare function on(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): EventHandle
+export declare function once(eventName: 'moveAttachDetach', callback: (event: MoveAttachDetachEvent) => void): EventHandle
+
+export declare function on(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): EventHandle
+export declare function once(eventName: 'lockChanged', callback: (event: LockChangedEvent) => void): EventHandle
+
+export declare function on(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): EventHandle
+export declare function once(eventName: 'grabRelease', callback: (event: GrabReleaseEvent) => void): EventHandle
+
+export declare function on(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): EventHandle
+export declare function once(eventName: 'cellFullyLoaded', callback: (event: CellFullyLoadedEvent) => void): EventHandle
+
+export declare function on(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): EventHandle
+export declare function once(eventName: 'switchRaceComplete', callback: (event: SwitchRaceCompleteEvent) => void): EventHandle
+
+export declare function on(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): EventHandle
+export declare function once(eventName: 'uniqueIdChange', callback: (event: UniqueIDChangeEvent) => void): EventHandle
+
+export declare function on(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): EventHandle
+export declare function once(eventName: 'trackedStats', callback: (event: TrackedStatsEvent) => void): EventHandle
+
+export declare function on(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): EventHandle
+export declare function once(eventName: 'scriptInit', callback: (event: InitScriptEvent) => void): EventHandle
+
+export declare function on(eventName: 'reset', callback: (event: ResetEvent) => void): EventHandle
+export declare function once(eventName: 'reset', callback: (event: ResetEvent) => void): EventHandle
+
+export declare function on(eventName: 'combatState', callback: (event: CombatEvent) => void): EventHandle
+export declare function once(eventName: 'combatState', callback: (event: CombatEvent) => void): EventHandle
+
+export declare function on(eventName: 'loadGame', callback: () => void): EventHandle
+export declare function once(eventName: 'loadGame', callback: () => void): EventHandle
+
+export declare function on(eventName: 'deathEnd', callback: (event: DeathEvent) => void): EventHandle
+export declare function once(eventName: 'deathEnd', callback: (event: DeathEvent) => void): EventHandle
+
+export declare function on(eventName: 'deathStart', callback: (event: DeathEvent) => void): EventHandle
+export declare function once(eventName: 'deathStart', callback: (event: DeathEvent) => void): EventHandle
+
+export declare function on(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): EventHandle
+export declare function once(eventName: 'containerChanged', callback: (event: ContainerChangedEvent) => void): EventHandle
+
+export declare function on(eventName: 'hit', callback: (event: HitEvent) => void): EventHandle
+export declare function once(eventName: 'hit', callback: (event: HitEvent) => void): EventHandle
+
+export declare function on(eventName: 'unequip', callback: (event: EquipEvent) => void): EventHandle
+export declare function once(eventName: 'unequip', callback: (event: EquipEvent) => void): EventHandle
+
+export declare function on(eventName: 'equip', callback: (event: EquipEvent) => void): EventHandle
+export declare function once(eventName: 'equip', callback: (event: EquipEvent) => void): EventHandle
+
+export declare function on(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): EventHandle
+export declare function once(eventName: 'magicEffectApply', callback: (event: MagicEffectApplyEvent) => void): EventHandle
+
+export declare function on(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): EventHandle
+export declare function once(eventName: 'effectFinish', callback: (event: ActiveEffectApplyRemoveEvent) => void): EventHandle
+
+export declare function on(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): EventHandle
+export declare function once(eventName: 'effectStart', callback: (event: ActiveEffectApplyRemoveEvent) => void): EventHandle
+
+export declare function on(eventName: 'menuOpen', callback: (event: MenuOpenEvent) => void): EventHandle
+export declare function once(eventName: 'menuOpen', callback: (event: MenuOpenEvent) => void): EventHandle
+
+export declare function on(eventName: 'menuClose', callback: (event: MenuCloseEvent) => void): EventHandle
+export declare function once(eventName: 'menuClose', callback: (event: MenuCloseEvent) => void): EventHandle
+
+export declare function on(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): EventHandle
+export declare function once(eventName: 'browserMessage', callback: (event: BrowserMessageEvent) => void): EventHandle
+
+export declare function on(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): EventHandle
+export declare function once(eventName: 'consoleMessage', callback: (event: ConsoleMessageEvent) => void): EventHandle
+
+export declare function on(eventName: 'spellCast', callback: (event: SpellCastEvent) => void): EventHandle
+export declare function once(eventName: 'spellCast', callback: (event: SpellCastEvent) => void): EventHandle
+
+export declare function on(eventName: 'open', callback: (event: OpenCloseEvent) => void): EventHandle
+export declare function once(eventName: 'open', callback: (event: OpenCloseEvent) => void): EventHandle
+
+export declare function on(eventName: 'close', callback: (event: OpenCloseEvent) => void): EventHandle
+export declare function once(eventName: 'close', callback: (event: OpenCloseEvent) => void): EventHandle
+
+export declare function on(eventName: 'questInit', callback: (event: QuestInitEvent) => void): EventHandle
+export declare function once(eventName: 'questInit', callback: (event: QuestInitEvent) => void): EventHandle
+
+export declare function on(eventName: 'questStart', callback: (event: QuestStartStopEvent) => void): EventHandle
+export declare function once(eventName: 'questStart', callback: (event: QuestStartStopEvent) => void): EventHandle
+
+export declare function on(eventName: 'questStop', callback: (event: QuestStartStopEvent) => void): EventHandle
+export declare function once(eventName: 'questStop', callback: (event: QuestStartStopEvent) => void): EventHandle
+
+export declare function on(eventName: 'questStage', callback: (event: QuestStageEvent) => void): EventHandle
+export declare function once(eventName: 'questStage', callback: (event: QuestStageEvent) => void): EventHandle
+
+export declare function on(eventName: 'trigger', callback: (event: TriggerEvent) => void): EventHandle
+export declare function once(eventName: 'trigger', callback: (event: TriggerEvent) => void): EventHandle
+
+export declare function on(eventName: 'triggerEnter', callback: (event: TriggerEvent) => void): EventHandle
+export declare function once(eventName: 'triggerEnter', callback: (event: TriggerEvent) => void): EventHandle
+
+export declare function on(eventName: 'triggerLeave', callback: (event: TriggerEvent) => void): EventHandle
+export declare function once(eventName: 'triggerLeave', callback: (event: TriggerEvent) => void): EventHandle
+
+export declare function on(eventName: 'sleepStart', callback: (event: SleepStartEvent) => void): EventHandle
+export declare function once(eventName: 'sleepStart', callback: (event: SleepStartEvent) => void): EventHandle
+
+export declare function on(eventName: 'sleepStop', callback: (event: SleepStopEvent) => void): EventHandle
+export declare function once(eventName: 'sleepStop', callback: (event: SleepStopEvent) => void): EventHandle
+
+export declare function on(eventName: 'cellAttach', callback: (event: CellAttachDetachEvent) => void): EventHandle
+export declare function once(eventName: 'cellAttach', callback: (event: CellAttachDetachEvent) => void): EventHandle
+
+export declare function on(eventName: 'cellDetach', callback: (event: CellAttachDetachEvent) => void): EventHandle
+export declare function once(eventName: 'cellDetach', callback: (event: CellAttachDetachEvent) => void): EventHandle
+
+export declare function on(eventName: 'waitStart', callback: (event: WaitStartEvent) => void): EventHandle
+export declare function once(eventName: 'waitStart', callback: (event: WaitStartEvent) => void): EventHandle
+
+export declare function on(eventName: 'locationChanged', callback: (event: LocationChangedEvent) => void): EventHandle
+export declare function once(eventName: 'locationChanged', callback: (event: LocationChangedEvent) => void): EventHandle
+
+export declare function on(eventName: 'bookRead', callback: (event: BookReadEvent) => void): EventHandle
+export declare function once(eventName: 'bookRead', callback: (event: BookReadEvent) => void): EventHandle
+
+export declare function on(eventName: 'sell', callback: (event: SellEvent) => void): EventHandle
+export declare function once(eventName: 'sell', callback: (event: SellEvent) => void): EventHandle
+
+export declare function on(eventName: 'furnitureEnter', callback: (event: FurnitureEvent) => void): EventHandle
+export declare function once(eventName: 'furnitureEnter', callback: (event: FurnitureEvent) => void): EventHandle
+
+export declare function on(eventName: 'furnitureExit', callback: (event: FurnitureEvent) => void): EventHandle
+export declare function once(eventName: 'furnitureExit', callback: (event: FurnitureEvent) => void): EventHandle
+
+export declare function on(eventName: 'wardHit', callback: (event: WardHitEvent) => void): EventHandle
+export declare function once(eventName: 'wardHit', callback: (event: WardHitEvent) => void): EventHandle
+
+export declare function on(eventName: 'packageStart', callback: (event: PackageEvent) => void): EventHandle
+export declare function once(eventName: 'packageStart', callback: (event: PackageEvent) => void): EventHandle
+
+export declare function on(eventName: 'packageChange', callback: (event: PackageEvent) => void): EventHandle
+export declare function once(eventName: 'packageChange', callback: (event: PackageEvent) => void): EventHandle
+
+export declare function on(eventName: 'packageEnd', callback: (event: PackageEvent) => void): EventHandle
+export declare function once(eventName: 'packageEnd', callback: (event: PackageEvent) => void): EventHandle
+
+export declare function on(eventName: 'enterBleedout', callback: (event: EnterBleedoutEvent) => void): EventHandle
+export declare function once(eventName: 'enterBleedout', callback: (event: EnterBleedoutEvent) => void): EventHandle
+
+export declare function on(eventName: 'destructionStageChanged', callback: (event: DestructionStageChangedEvent) => void): EventHandle
+export declare function once(eventName: 'destructionStageChanged', callback: (event: DestructionStageChangedEvent) => void): EventHandle
+
+export declare function on(eventName: 'sceneAction', callback: (event: SceneActionEvent) => void): EventHandle
+export declare function once(eventName: 'sceneAction', callback: (event: SceneActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'playerBowShot', callback: (event: PlayerBowShotEvent) => void): EventHandle
+export declare function once(eventName: 'playerBowShot', callback: (event: PlayerBowShotEvent) => void): EventHandle
+
+export declare function on(eventName: 'fastTravelEnd', callback: (event: FastTravelEnd) => void): EventHandle
+export declare function once(eventName: 'fastTravelEnd', callback: (event: FastTravelEnd) => void): EventHandle
+
+export declare function on(eventName: 'perkEntryRun', callback: (event: PerkEntryRunEvent) => void): EventHandle
+export declare function once(eventName: 'perkEntryRun', callback: (event: PerkEntryRunEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionWeaponSwing', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionWeaponSwing', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionBeginDraw', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionBeginDraw', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionEndDraw', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionEndDraw', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionBowDraw', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionBowDraw', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionBowRelease', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionBowRelease', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionBeginSheathe', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionBeginSheathe', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionEndSheathe', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionEndSheathe', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionSpellCast', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionSpellCast', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionSpellFire', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionSpellFire', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionVoiceCast', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionVoiceCast', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'actionVoiceFire', callback: (event: ActionEvent) => void): EventHandle
+export declare function once(eventName: 'actionVoiceFire', callback: (event: ActionEvent) => void): EventHandle
+
+export declare function on(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): EventHandle
+export declare function once(eventName: 'cameraStateChanged', callback: (event: CameraStateChangedEvent) => void): EventHandle
+
+export declare function on(eventName: 'crosshairRefChanged', callback: (event: CrosshairRefChangedEvent) => void): EventHandle
+export declare function once(eventName: 'crosshairRefChanged', callback: (event: CrosshairRefChangedEvent) => void): EventHandle
+
+export declare function on(eventName: 'niNodeUpdate', callback: (event: NiNodeUpdateEvent) => void): EventHandle
+export declare function once(eventName: 'niNodeUpdate', callback: (event: NiNodeUpdateEvent) => void): EventHandle
+
+export declare function on(eventName: 'modEvent', callback: (event: ModEvent) => void): EventHandle
+export declare function once(eventName: 'modEvent', callback: (event: ModEvent) => void): EventHandle
+
+export declare function on(eventName: 'positionPlayer', callback: (event: PositionPlayerEvent) => void): EventHandle
+export declare function once(eventName: 'positionPlayer', callback: (event: PositionPlayerEvent) => void): EventHandle
+
+export declare function on(eventName: 'footstep', callback: (event: FootstepEvent) => void): EventHandle
+export declare function once(eventName: 'footstep', callback: (event: FootstepEvent) => void): EventHandle
+
+export declare function on(eventName: 'translationFailed', callback: (event: TranslationEvent) => void): EventHandle
+export declare function once(eventName: 'translationFailed', callback: (event: TranslationEvent) => void): EventHandle
+
+export declare function on(eventName: 'translationAlmostCompleted', callback: (event: TranslationEvent) => void): EventHandle
+export declare function once(eventName: 'translationAlmostCompleted', callback: (event: TranslationEvent) => void): EventHandle
+
+export declare function on(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): EventHandle
+export declare function once(eventName: 'translationCompleted', callback: (event: TranslationEvent) => void): EventHandle
+
+export declare function on(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): EventHandle
+export declare function once(eventName: 'buttonEvent', callback: (event: ButtonEvent) => void): EventHandle
+
+export declare function on(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): EventHandle
+export declare function once(eventName: 'mouseMove', callback: (event: MouseMoveEvent) => void): EventHandle
+
+export declare function on(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): EventHandle
+export declare function once(eventName: 'thumbstickEvent', callback: (event: ThumbstickEvent) => void): EventHandle
+
+export declare function on(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): EventHandle
+export declare function once(eventName: 'kinectEvent', callback: (event: KinectEvent) => void): EventHandle
+
+export declare function on(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): EventHandle
+export declare function once(eventName: 'deviceConnect', callback: (event: DeviceConnectEvent) => void): EventHandle
+
+export declare function on(eventName: 'actorKill', callback: (event: ActorKillEvent) => void): EventHandle
+export declare function once(eventName: 'actorKill', callback: (event: ActorKillEvent) => void): EventHandle
+
+export declare function on(eventName: 'criticalHit', callback: (event: CriticalHitEvent) => void): EventHandle
+export declare function once(eventName: 'criticalHit', callback: (event: CriticalHitEvent) => void): EventHandle
+
+export declare function on(eventName: 'disarmedEvent', callback: (event: DisarmedEvent) => void): EventHandle
+export declare function once(eventName: 'disarmedEvent', callback: (event: DisarmedEvent) => void): EventHandle
+
+export declare function on(eventName: 'dragonSoulsGained', callback: (event: DragonSoulsGainedEvent) => void): EventHandle
+export declare function once(eventName: 'dragonSoulsGained', callback: (event: DragonSoulsGainedEvent) => void): EventHandle
+
+export declare function on(eventName: 'itemHarvested', callback: (event: ItemHarvestedEvent) => void): EventHandle
+export declare function once(eventName: 'itemHarvested', callback: (event: ItemHarvestedEvent) => void): EventHandle
+
+export declare function on(eventName: 'levelIncrease', callback: (event: LevelIncreaseEvent) => void): EventHandle
+export declare function once(eventName: 'levelIncrease', callback: (event: LevelIncreaseEvent) => void): EventHandle
+
+export declare function on(eventName: 'locationDiscovery', callback: (event: LocationDiscoveryEvent) => void): EventHandle
+export declare function once(eventName: 'locationDiscovery', callback: (event: LocationDiscoveryEvent) => void): EventHandle
+
+export declare function on(eventName: 'shoutAttack', callback: (event: ShoutAttackEvent) => void): EventHandle
+export declare function once(eventName: 'shoutAttack', callback: (event: ShoutAttackEvent) => void): EventHandle
+
+export declare function on(eventName: 'skillIncrease', callback: (event: SkillIncreaseEvent) => void): EventHandle
+export declare function once(eventName: 'skillIncrease', callback: (event: SkillIncreaseEvent) => void): EventHandle
+
+export declare function on(eventName: 'soulsTrapped', callback: (event: SoulsTrappedEvent) => void): EventHandle
+export declare function once(eventName: 'soulsTrapped', callback: (event: SoulsTrappedEvent) => void): EventHandle
+
+export declare function on(eventName: 'spellsLearned', callback: (event: SpellsLearnedEvent) => void): EventHandle
+export declare function once(eventName: 'spellsLearned', callback: (event: SpellsLearnedEvent) => void): EventHandle
+
+declare class ConsoleCommand {
+  longName: string
+  shortName: string
+  numArgs: number
+  execute: (...arguments: unknown[]) => boolean
+}
+export declare function findConsoleCommand(cmdName: string): ConsoleCommand | null
+
+export const enum MarkerType {
+  None = 0,
+  City = 1,
+  Town = 2,
+  Settlement = 3,
+  Cave = 4,
+  Camp = 5,
+  Fort = 6,
+  NordicRuins = 7,
+  DwemerRuin = 8,
+  Shipwreck = 9,
+  Grove = 10,
+  Landmark = 11,
+  DragonLair = 12,
+  Farm = 13,
+  WoodMill = 14,
+  Mine = 15,
+  ImperialCamp = 16,
+  StormcloakCamp = 17,
+  Doomstone = 18,
+  WheatMill = 19,
+  Smelter = 20,
+  Stable = 21,
+  ImperialTower = 22,
+  Clearing = 23,
+  Pass = 24,
+  Alter = 25,
+  Rock = 26,
+  Lighthouse = 27,
+  OrcStronghold = 28,
+  GiantCamp = 29,
+  Shack = 30,
+  NordicTower = 31,
+  NordicDwelling = 32,
+  Docks = 33,
+  Shrine = 34,
+  RiftenCastle = 35,
+  RiftenCapitol = 36,
+  WindhelmCastle = 37,
+  WindhelmCapitol = 38,
+  WhiterunCastle = 39,
+  WhiterunCapitol = 40,
+  SolitudeCastle = 41,
+  SolitudeCapitol = 42,
+  MarkarthCastle = 43,
+  MarkarthCapitol = 44,
+  WinterholdCastle = 45,
+  WinterholdCapitol = 46,
+  MorthalCastle = 47,
+  MorthalCapitol = 48,
+  FalkreathCastle = 49,
+  FalkreathCapitol = 50,
+  DawnstarCastle = 51,
+  DawnstarCapitol = 52,
+  DLC02_TempleOfMiraak = 53,
+  DLC02_RavenRock = 54,
+  DLC02_BeastStone = 55,
+  DLC02_TelMithryn = 56,
+  DLC02_ToSkyrim = 57,
+  DLC02_ToSolstheim = 58,
+}
+
+export const enum ActorValue {
+  Aggresion = 0,
+  Confidence = 1,
+  Energy = 2,
+  Morality = 3,
+  Mood = 4,
+  Assistance = 5,
+  OneHanded = 6,
+  TwoHanded = 7,
+  Archery = 8,
+  Block = 9,
+  Smithing = 10,
+  HeavyArmor = 11,
+  LightArmor = 12,
+  Pickpocket = 13,
+  Lockpicking = 14,
+  Sneak = 15,
+  Alchemy = 16,
+  Speech = 17,
+  Alteration = 18,
+  Conjuration = 19,
+  Destruction = 20,
+  Illusion = 21,
+  Restoration = 22,
+  Enchanting = 23,
+  Health = 24,
+  Magicka = 25,
+  Stamina = 26,
+  HealRate = 27,
+  MagickaRate = 28,
+  StaminaRate = 29,
+  SpeedMult = 30,
+  InventoryWeight = 31,
+  CarryWeight = 32,
+  CriticalChance = 33,
+  MeleeDamage = 34,
+  UnarmedDamage = 35,
+  Mass = 36,
+  VoicePoints = 37,
+  VoiceRate = 38,
+  DamageResist = 39,
+  PoisonResist = 40,
+  ResistFire = 41,
+  ResistShock = 42,
+  ResistFrost = 43,
+  ResistMagic = 44,
+  ResistDisease = 45,
+  Unknown46 = 46,
+  Unknown47 = 47,
+  Unknown48 = 48,
+  Unknown49 = 49,
+  Unknown50 = 50,
+  Unknown51 = 51,
+  Unknown52 = 52,
+  Paralysis = 53,
+  Invisibility = 54,
+  NightEye = 55,
+  DetectLifeRange = 56,
+  WaterBreathing = 57,
+  WaterWalking = 58,
+  Unknown59 = 59,
+  Fame = 60,
+  Infamy = 61,
+  JumpingBonus = 62,
+  WardPower = 63,
+  RightItemCharge = 64,
+  ArmorPerks = 65,
+  ShieldPerks = 66,
+  WardDeflection = 67,
+  Variable01 = 68,
+  Variable02 = 69,
+  Variable03 = 70,
+  Variable04 = 71,
+  Variable05 = 72,
+  Variable06 = 73,
+  Variable07 = 74,
+  Variable08 = 75,
+  Variable09 = 76,
+  Variable10 = 77,
+  BowSpeedBonus = 78,
+  FavorActive = 79,
+  FavorsPerDay = 80,
+  FavorsPerDayTimer = 81,
+  LeftItemCharge = 82,
+  AbsorbChance = 83,
+  Blindness = 84,
+  WeaponSpeedMult = 85,
+  ShoutRecoveryMult = 86,
+  BowStaggerBonus = 87,
+  Telekinesis = 88,
+  FavorPointsBonus = 89,
+  LastBribedIntimidated = 90,
+  LastFlattered = 91,
+  MovementNoiseMult = 92,
+  BypassVendorStolenCheck = 93,
+  BypassVendorKeywordCheck = 94,
+  WaitingForPlayer = 95,
+  OneHandedModifier = 96,
+  TwoHandedModifier = 97,
+  MarksmanModifier = 98,
+  BlockModifier = 99,
+  SmithingModifier = 100,
+  HeavyArmorModifier = 101,
+  LightArmorModifier = 102,
+  PickpocketModifier = 103,
+  LockpickingModifier = 104,
+  SneakingModifier = 105,
+  AlchemyModifier = 106,
+  SpeechcraftModifier = 107,
+  AlterationModifier = 108,
+  ConjurationModifier = 109,
+  DestructionModifier = 110,
+  IllusionModifier = 111,
+  RestorationModifier = 112,
+  EnchantingModifier = 113,
+  OneHandedSkillAdvance = 114,
+  TwoHandedSkillAdvance = 115,
+  MarksmanSkillAdvance = 116,
+  BlockSkillAdvance = 117,
+  SmithingSkillAdvance = 118,
+  HeavyArmorSkillAdvance = 119,
+  LightArmorSkillAdvance = 120,
+  PickpocketSkillAdvance = 121,
+  LockpickingSkillAdvance = 122,
+  SneakingSkillAdvance = 123,
+  AlchemySkillAdvance = 124,
+  SpeechcraftSkillAdvance = 125,
+  AlterationSkillAdvance = 126,
+  ConjurationSkillAdvance = 127,
+  DestructionSkillAdvance = 128,
+  IllusionSkillAdvance = 129,
+  RestorationSkillAdvance = 130,
+  EnchantingSkillAdvance = 131,
+  LeftWeaponSpeedMultiply = 132,
+  DragonSouls = 133,
+  CombatHealthRegenMultiply = 134,
+  OneHandedPowerModifier = 135,
+  TwoHandedPowerModifier = 136,
+  MarksmanPowerModifier = 137,
+  BlockPowerModifier = 138,
+  SmithingPowerModifier = 139,
+  HeavyArmorPowerModifier = 140,
+  LightArmorPowerModifier = 141,
+  PickpocketPowerModifier = 142,
+  LockpickingPowerModifier = 143,
+  SneakingPowerModifier = 144,
+  AlchemyPowerModifier = 145,
+  SpeechcraftPowerModifier = 146,
+  AlterationPowerModifier = 147,
+  ConjurationPowerModifier = 148,
+  DestructionPowerModifier = 149,
+  IllusionPowerModifier = 150,
+  RestorationPowerModifier = 151,
+  EnchantingPowerModifier = 152,
+  DragonRend = 153,
+  AttackDamageMult = 154,
+  HealRateMult = 155,
+  MagickaRateMult = 156,
+  StaminaRateMult = 157,
+  WerewolfPerks = 158,
+  VampirePerks = 159,
+  GrabActorOffset = 160,
+  Grabbed = 161,
+  Unknown162 = 162,
+  ReflectDamage = 163,
+}
+
+export const enum SlotType {
+  Left = 1,
+  Right = 2,
+  Voice = 3,
+}
+
+export const enum WardHitStatus {
+  Friendly = 0,
+  Absorbed = 1,
+  Broken = 2,
+}
+
+export const enum PlayerPositionEventType {
+  PreCellTransition = 0,
+  PreUpdatePackages = 1,
+  PostUpdatePackages = 2,
+  PostCellTransition = 3,
+  CellTransitionFinish = 4,
+}
+
+export const enum InputDeviceType {
+  Keyboard = 0,
+  Mouse = 1,
+  Gamepad = 2,
+  VirtualKeyboard = 3,
+}
 
 export const enum MotionType {
-    Dynamic = 1,
-    SphereInertia = 2,
-    BoxInertia = 3,
-    Keyframed = 4,
-    Fixed = 5,
-    ThinBoxInertia = 6,
-    Character = 7
+  Dynamic = 1,
+  SphereInertia = 2,
+  BoxInertia = 3,
+  Keyframed = 4,
+  Fixed = 5,
+  ThinBoxInertia = 6,
+  Character = 7,
 }
 
 export const enum Menu {
-    Barter = 'BarterMenu',
-    Book = 'Book Menu',
-    Console = 'Console',
-    ConsoleNativeUI = 'Console Native UI Menu',
-    Container = 'ContainerMenu',
-    Crafting = 'Crafting Menu',
-    Credits = 'Credits Menu',
-    Cursor = 'Cursor Menu',
-    Debug = 'Debug Text Menu',
-    Dialogue = 'Dialogue Menu',
-    Fader = 'Fader Menu',
-    Favorites = 'FavoritesMenu',
-    Gift = 'GiftMenu',
-    HUD = 'HUD Menu',
-    Inventory = 'InventoryMenu',
-    Journal = 'Journal Menu',
-    Kinect = 'Kinect Menu',
-    LevelUp = 'LevelUp Menu',
-    Loading = 'Loading Menu',
-    Main = 'Main Menu',
-    Lockpicking = 'Lockpicking Menu',
-    Magic = 'MagicMenu',
-    Map = 'MapMenu',
-    MessageBox = 'MessageBoxMenu',
-    Mist = 'Mist Menu',
-    OverlayInteraction = 'Overlay Interaction Menu',
-    Overlay = 'Overlay Menu',
-    Quantity = 'Quantity Menu',
-    RaceSex = 'RaceSex Menu',
-    Sleep = 'Sleep/Wait Menu',
-    Stats = 'StatsMenu',
-    TitleSequence = 'TitleSequence Menu',
-    Top = 'Top Menu',
-    Training = 'Training Menu',
-    Tutorial = 'Tutorial Menu',
-    Tween = 'TweenMenu'
+  Barter = 'BarterMenu',
+  Book = 'Book Menu',
+  Console = 'Console',
+  ConsoleNativeUI = 'Console Native UI Menu',
+  Container = 'ContainerMenu',
+  Crafting = 'Crafting Menu',
+  Credits = 'Credits Menu',
+  Cursor = 'Cursor Menu',
+  Debug = 'Debug Text Menu',
+  Dialogue = 'Dialogue Menu',
+  Fader = 'Fader Menu',
+  Favorites = 'FavoritesMenu',
+  Gift = 'GiftMenu',
+  HUD = 'HUD Menu',
+  Inventory = 'InventoryMenu',
+  Journal = 'Journal Menu',
+  Kinect = 'Kinect Menu',
+  LevelUp = 'LevelUp Menu',
+  Loading = 'Loading Menu',
+  Main = 'Main Menu',
+  Lockpicking = 'Lockpicking Menu',
+  Magic = 'MagicMenu',
+  Map = 'MapMenu',
+  MessageBox = 'MessageBoxMenu',
+  Mist = 'Mist Menu',
+  OverlayInteraction = 'Overlay Interaction Menu',
+  Overlay = 'Overlay Menu',
+  Quantity = 'Quantity Menu',
+  RaceSex = 'RaceSex Menu',
+  Sleep = 'Sleep/Wait Menu',
+  Stats = 'StatsMenu',
+  TitleSequence = 'TitleSequence Menu',
+  Top = 'Top Menu',
+  Training = 'Training Menu',
+  Tutorial = 'Tutorial Menu',
+  Tween = 'TweenMenu',
 }
 
 export const enum DxScanCode {
-    None,
-    Escape,
-    N1,
-    N2,
-    N3,
-    N4,
-    N5,
-    N6,
-    N7,
-    N8,
-    N9,
-    N0,
-    Minus,
-    Equals,
-    Backspace,
-    Tab,
-    Q,
-    W,
-    E,
-    R,
-    T,
-    Y,
-    U,
-    I,
-    O,
-    P,
-    LeftBracket,
-    RightBracket,
-    Enter,
-    LeftControl,
-    A,
-    S,
-    D,
-    F,
-    G,
-    H,
-    J,
-    K,
-    L,
-    Semicolon,
-    Apostrophe,
-    Console,
-    LeftShift,
-    BackSlash,
-    Z,
-    X,
-    C,
-    V,
-    B,
-    N,
-    M,
-    Comma,
-    Period,
-    ForwardSlash,
-    RightShift,
-    NumMult,
-    LeftAlt,
-    Spacebar,
-    CapsLock,
-    F1,
-    F2,
-    F3,
-    F4,
-    F5,
-    F6,
-    F7,
-    F8,
-    F9,
-    F10,
-    NumLock,
-    ScrollLock,
-    Num7,
-    Num8,
-    Num9,
-    NumMinus,
-    Num4,
-    Num5,
-    Num6,
-    NumPlus,
-    Num1,
-    Num2,
-    Num3,
-    Num0,
-    NumDot,
-    F11 = 87,
-    F12,
-    NumEnter = 156,
-    RightControl,
-    NumSlash = 181,
-    SysRqPtrScr = 183,
-    RightAlt,
-    Pause = 197,
-    Home = 199,
-    UpArrow,
-    PgUp,
-    LeftArrow = 203,
-    RightArrow = 205,
-    End = 207,
-    DownArrow,
-    PgDown,
-    Insert,
-    Delete,
-    LeftMouseButton = 256,
-    RightMouseButton,
-    MiddleMouseButton,
-    MouseButton3,
-    MouseButton4,
-    MouseButton5,
-    MouseButton6,
-    MouseButton7,
-    MouseWheelUp,
-    MouseWheelDown
+  None,
+  Escape,
+  N1,
+  N2,
+  N3,
+  N4,
+  N5,
+  N6,
+  N7,
+  N8,
+  N9,
+  N0,
+  Minus,
+  Equals,
+  Backspace,
+  Tab,
+  Q,
+  W,
+  E,
+  R,
+  T,
+  Y,
+  U,
+  I,
+  O,
+  P,
+  LeftBracket,
+  RightBracket,
+  Enter,
+  LeftControl,
+  A,
+  S,
+  D,
+  F,
+  G,
+  H,
+  J,
+  K,
+  L,
+  Semicolon,
+  Apostrophe,
+  Console,
+  LeftShift,
+  BackSlash,
+  Z,
+  X,
+  C,
+  V,
+  B,
+  N,
+  M,
+  Comma,
+  Period,
+  ForwardSlash,
+  RightShift,
+  NumMult,
+  LeftAlt,
+  Spacebar,
+  CapsLock,
+  F1,
+  F2,
+  F3,
+  F4,
+  F5,
+  F6,
+  F7,
+  F8,
+  F9,
+  F10,
+  NumLock,
+  ScrollLock,
+  Num7,
+  Num8,
+  Num9,
+  NumMinus,
+  Num4,
+  Num5,
+  Num6,
+  NumPlus,
+  Num1,
+  Num2,
+  Num3,
+  Num0,
+  NumDot,
+  F11 = 87,
+  F12,
+  NumEnter = 156,
+  RightControl,
+  NumSlash = 181,
+  SysRqPtrScr = 183,
+  RightAlt,
+  Pause = 197,
+  Home = 199,
+  UpArrow,
+  PgUp,
+  LeftArrow = 203,
+  RightArrow = 205,
+  End = 207,
+  DownArrow,
+  PgDown,
+  Insert,
+  Delete,
+  LeftMouseButton = 256,
+  RightMouseButton,
+  MiddleMouseButton,
+  MouseButton3,
+  MouseButton4,
+  MouseButton5,
+  MouseButton6,
+  MouseButton7,
+  MouseWheelUp,
+  MouseWheelDown,
 }
 
 export const enum FormType {
-    ANIO = 83,
-    ARMA = 102,
-    AcousticSpace = 16,
-    Action = 6,
-    Activator = 24,
-    ActorValueInfo = 95,
-    AddonNode = 94,
-    Ammo = 42,
-    Apparatus = 33,
-    Armor = 26,
-    ArrowProjectile = 64,
-    Art = 125,
-    AssociationType = 123,
-    BarrierProjectile = 69,
-    BeamProjectile = 66,
-    BodyPartData = 93,
-    Book = 27,
-    CameraPath = 97,
-    CameraShot = 96,
-    Cell = 60,
-    Character = 62,
-    Class = 10,
-    Climate = 55,
-    CollisionLayer = 132,
-    ColorForm = 133,
-    CombatStyle = 80,
-    ConeProjectile = 68,
-    ConstructibleObject = 49,
-    Container = 28,
-    DLVW = 117,
-    Debris = 88,
-    DefaultObject = 107,
-    DialogueBranch = 115,
-    Door = 29,
-    DualCastData = 129,
-    EffectSetting = 18,
-    EffectShader = 85,
-    Enchantment = 21,
-    EncounterZone = 103,
-    EquipSlot = 120,
-    Explosion = 87,
-    Eyes = 13,
-    Faction = 11,
-    FlameProjectile = 67,
-    Flora = 39,
-    Footstep = 110,
-    FootstepSet = 111,
-    Furniture = 40,
-    GMST = 3,
-    Global = 9,
-    Grass = 37,
-    GrenadeProjectile = 65,
-    Group = 2,
-    Hazard = 51,
-    HeadPart = 12,
-    Idle = 78,
-    IdleMarker = 47,
-    ImageSpace = 89,
-    ImageSpaceModifier = 90,
-    ImpactData = 100,
-    ImpactDataSet = 101,
-    Ingredient = 30,
-    Key = 45,
-    Keyword = 4,
-    Land = 72,
-    LandTexture = 20,
-    LeveledCharacter = 44,
-    LeveledItem = 53,
-    LeveledSpell = 82,
-    Light = 31,
-    LightingTemplate = 108,
-    List = 91,
-    LoadScreen = 81,
-    Location = 104,
-    LocationRef = 5,
-    Material = 126,
-    MaterialType = 99,
-    MenuIcon = 8,
-    Message = 105,
-    Misc = 32,
-    MissileProjectile = 63,
-    MovableStatic = 36,
-    MovementType = 127,
-    MusicTrack = 116,
-    MusicType = 109,
-    NAVI = 59,
-    NPC = 43,
-    NavMesh = 73,
-    None = 0,
-    Note = 48,
-    Outfit = 124,
-    PHZD = 70,
-    Package = 79,
-    Perk = 92,
-    Potion = 46,
-    Projectile = 50,
-    Quest = 77,
-    Race = 14,
-    Ragdoll = 106,
-    Reference = 61,
-    ReferenceEffect = 57,
-    Region = 58,
-    Relationship = 121,
-    ReverbParam = 134,
-    Scene = 122,
-    Script = 19,
-    ScrollItem = 23,
-    ShaderParticleGeometryData = 56,
-    Shout = 119,
-    Skill = 17,
-    SoulGem = 52,
-    Sound = 15,
-    SoundCategory = 130,
-    SoundDescriptor = 128,
-    SoundOutput = 131,
-    Spell = 22,
-    Static = 34,
-    StaticCollection = 35,
-    StoryBranchNode = 112,
-    StoryEventNode = 114,
-    StoryQuestNode = 113,
-    TES4 = 1,
-    TLOD = 74,
-    TOFT = 86,
-    TalkingActivator = 25,
-    TextureSet = 7,
-    Topic = 75,
-    TopicInfo = 76,
-    Tree = 38,
-    VoiceType = 98,
-    Water = 84,
-    Weapon = 41,
-    Weather = 54,
-    WordOfPower = 118,
-    WorldSpace = 71
+  ANIO = 83,
+  ARMA = 102,
+  AcousticSpace = 16,
+  Action = 6,
+  Activator = 24,
+  ActorValueInfo = 95,
+  AddonNode = 94,
+  Ammo = 42,
+  Apparatus = 33,
+  Armor = 26,
+  ArrowProjectile = 64,
+  Art = 125,
+  AssociationType = 123,
+  BarrierProjectile = 69,
+  BeamProjectile = 66,
+  BodyPartData = 93,
+  Book = 27,
+  CameraPath = 97,
+  CameraShot = 96,
+  Cell = 60,
+  Character = 62,
+  Class = 10,
+  Climate = 55,
+  CollisionLayer = 132,
+  ColorForm = 133,
+  CombatStyle = 80,
+  ConeProjectile = 68,
+  ConstructibleObject = 49,
+  Container = 28,
+  DLVW = 117,
+  Debris = 88,
+  DefaultObject = 107,
+  DialogueBranch = 115,
+  Door = 29,
+  DualCastData = 129,
+  EffectSetting = 18,
+  EffectShader = 85,
+  Enchantment = 21,
+  EncounterZone = 103,
+  EquipSlot = 120,
+  Explosion = 87,
+  Eyes = 13,
+  Faction = 11,
+  FlameProjectile = 67,
+  Flora = 39,
+  Footstep = 110,
+  FootstepSet = 111,
+  Furniture = 40,
+  GMST = 3,
+  Global = 9,
+  Grass = 37,
+  GrenadeProjectile = 65,
+  Group = 2,
+  Hazard = 51,
+  HeadPart = 12,
+  Idle = 78,
+  IdleMarker = 47,
+  ImageSpace = 89,
+  ImageSpaceModifier = 90,
+  ImpactData = 100,
+  ImpactDataSet = 101,
+  Ingredient = 30,
+  Key = 45,
+  Keyword = 4,
+  Land = 72,
+  LandTexture = 20,
+  LeveledCharacter = 44,
+  LeveledItem = 53,
+  LeveledSpell = 82,
+  Light = 31,
+  LightingTemplate = 108,
+  List = 91,
+  LoadScreen = 81,
+  Location = 104,
+  LocationRef = 5,
+  Material = 126,
+  MaterialType = 99,
+  MenuIcon = 8,
+  Message = 105,
+  Misc = 32,
+  MissileProjectile = 63,
+  MovableStatic = 36,
+  MovementType = 127,
+  MusicTrack = 116,
+  MusicType = 109,
+  NAVI = 59,
+  NPC = 43,
+  NavMesh = 73,
+  None = 0,
+  Note = 48,
+  Outfit = 124,
+  PHZD = 70,
+  Package = 79,
+  Perk = 92,
+  Potion = 46,
+  Projectile = 50,
+  Quest = 77,
+  Race = 14,
+  Ragdoll = 106,
+  Reference = 61,
+  ReferenceEffect = 57,
+  Region = 58,
+  Relationship = 121,
+  ReverbParam = 134,
+  Scene = 122,
+  Script = 19,
+  ScrollItem = 23,
+  ShaderParticleGeometryData = 56,
+  Shout = 119,
+  Skill = 17,
+  SoulGem = 52,
+  Sound = 15,
+  SoundCategory = 130,
+  SoundDescriptor = 128,
+  SoundOutput = 131,
+  Spell = 22,
+  Static = 34,
+  StaticCollection = 35,
+  StoryBranchNode = 112,
+  StoryEventNode = 114,
+  StoryQuestNode = 113,
+  TES4 = 1,
+  TLOD = 74,
+  TOFT = 86,
+  TalkingActivator = 25,
+  TextureSet = 7,
+  Topic = 75,
+  TopicInfo = 76,
+  Tree = 38,
+  VoiceType = 98,
+  Water = 84,
+  Weapon = 41,
+  Weather = 54,
+  WordOfPower = 118,
+  WorldSpace = 71,
 }
 
 export const enum WeaponType {
-    Fist = 0,
-    Sword,
-    Dagger,
-    WarAxe,
-    Mace,
-    Greatsword,
-    Battleaxe = 6,
-    Warhammer = 6,
-    Bow,
-    Staff,
-    Crossbow
+  Fist = 0,
+  Sword,
+  Dagger,
+  WarAxe,
+  Mace,
+  Greatsword,
+  Battleaxe = 6,
+  Warhammer = 6,
+  Bow,
+  Staff,
+  Crossbow,
 }
 
 export const enum EquippedItemType {
-    Fist = 0,
-    Sword,
-    Dagger,
-    WarAxe,
-    Mace,
-    Greatsword,
-    Battleaxe = 6,
-    Warhammer = 6,
-    Bow,
-    Staff,
-    Spell,
-    Shield,
-    Torch,
-    Crossbow,
+  Fist = 0,
+  Sword,
+  Dagger,
+  WarAxe,
+  Mace,
+  Greatsword,
+  Battleaxe = 6,
+  Warhammer = 6,
+  Bow,
+  Staff,
+  Spell,
+  Shield,
+  Torch,
+  Crossbow,
 }
 
 export const enum SlotMask {
-    Head = 0x1,
-    Hair = 0x2,
-    Body = 0x4,
-    Hands = 0x8,
-    Forearms = 0x10,
-    Amulet = 0x20,
-    Ring = 0x40,
-    Feet = 0x80,
-    Calves = 0x100,
-    Shield = 0x200,
-    Tail = 0x400,
-    LongHair = 0x800,
-    Circlet = 0x1000,
-    Ears = 0x2000,
-    Face = 0x4000,
-    Mouth = 0x4000,
-    Neck = 0x8000,
-    ChestOuter = 0x10000,
-    ChestPrimary = 0x10000,
-    Back = 0x20000,
-    Misc01 = 0x40000,
-    PelvisOuter = 0x80000,
-    PelvisPrimary = 0x80000,
-    DecapitateHead = 0x100000,
-    Decapitate = 0x200000,
-    PelvisUnder = 0x400000,
-    PelvisSecondary = 0x400000,
-    LegOuter = 0x800000,
-    LegPrimary = 0x800000,
-    LegUnder = 0x1000000,
-    LegSecondary = 0x1000000,
-    FaceAlt = 0x2000000,
-    Jewelry = 0x2000000,
-    ChestUnder = 0x4000000,
-    ChestSecondary = 0x4000000,
-    Shoulder = 0x8000000,
-    ArmUnder = 0x10000000,
-    ArmSecondary = 0x10000000,
-    ArmLeft = 0x10000000,
-    ArmOuter = 0x20000000,
-    ArmPrimary = 0x20000000,
-    ArmRight = 0x20000000,
-    Misc02 = 0x40000000,
-    FX01 = 0x80000000
+  Head = 0x1,
+  Hair = 0x2,
+  Body = 0x4,
+  Hands = 0x8,
+  Forearms = 0x10,
+  Amulet = 0x20,
+  Ring = 0x40,
+  Feet = 0x80,
+  Calves = 0x100,
+  Shield = 0x200,
+  Tail = 0x400,
+  LongHair = 0x800,
+  Circlet = 0x1000,
+  Ears = 0x2000,
+  Face = 0x4000,
+  Mouth = 0x4000,
+  Neck = 0x8000,
+  ChestOuter = 0x10000,
+  ChestPrimary = 0x10000,
+  Back = 0x20000,
+  Misc01 = 0x40000,
+  PelvisOuter = 0x80000,
+  PelvisPrimary = 0x80000,
+  DecapitateHead = 0x100000,
+  Decapitate = 0x200000,
+  PelvisUnder = 0x400000,
+  PelvisSecondary = 0x400000,
+  LegOuter = 0x800000,
+  LegPrimary = 0x800000,
+  LegUnder = 0x1000000,
+  LegSecondary = 0x1000000,
+  FaceAlt = 0x2000000,
+  Jewelry = 0x2000000,
+  ChestUnder = 0x4000000,
+  ChestSecondary = 0x4000000,
+  Shoulder = 0x8000000,
+  ArmUnder = 0x10000000,
+  ArmSecondary = 0x10000000,
+  ArmLeft = 0x10000000,
+  ArmOuter = 0x20000000,
+  ArmPrimary = 0x20000000,
+  ArmRight = 0x20000000,
+  Misc02 = 0x40000000,
+  FX01 = 0x80000000,
 }
 
 export declare namespace SendAnimationEventHook {
-    class Context {
-        readonly selfId: number;
-        animEventName: string;
+  class Context {
+    readonly selfId: number
+    animEventName: string
 
-        readonly storage: Map<string, unknown>;
-    }
+    readonly storage: Map<string, unknown>
+  }
 
-    class LeaveContext extends Context {
-        readonly animationSucceeded: boolean;
-    }
+  class LeaveContext extends Context {
+    readonly animationSucceeded: boolean
+  }
 
-    class Handler {
-        enter(ctx: Context): void;
-        leave(ctx: LeaveContext): void;
-    }
+  class Handler {
+    enter(ctx: Context): void
+    leave(ctx: LeaveContext): void
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    class Target {
-        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number;
-        remove(id: number): void;
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  class Target {
+    add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number
+    remove(id: number): void
+  }
 }
 
 export declare namespace SendPapyrusEventHook {
-    class Context {
-        readonly selfId: number;
-        readonly papyrusEventName: string;
+  class Context {
+    readonly selfId: number
+    readonly papyrusEventName: string
 
-        readonly storage: Map<string, unknown>;
-    }
+    readonly storage: Map<string, unknown>
+  }
 
-    class Handler {
-        enter(ctx: Context): void;
-    }
+  class Handler {
+    enter(ctx: Context): void
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    class Target {
-        add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number;
-        remove(id: number): void;
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  class Target {
+    add(handler: Handler, minSelfId?: number, maxSelfId?: number, eventPattern?: string): number
+    remove(id: number): void
+  }
 }
 
 export declare class Hooks {
-    sendAnimationEvent: SendAnimationEventHook.Target;
-    sendPapyrusEvent: SendPapyrusEventHook.Target;
+  sendAnimationEvent: SendAnimationEventHook.Target
+  sendPapyrusEvent: SendPapyrusEventHook.Target
 }
 
-export declare let hooks: Hooks;
+export declare let hooks: Hooks
 
 export declare class HttpResponse {
     body: string;
     status: number;
+    error: string;
 }
-export type HttpHeaders = Record<string, string>;
+export type HttpHeaders = Record<string, string>
 
 export declare class HttpClient {
     constructor(url: string);
     get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
     post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
 }
+
+export declare function createText(xPos: number, yPos: number, text: string, color: number[]): number;
+export declare function destroyText(textId: number): void;
+export declare function setTextPos(textId: number, xPos: number, yPos: number): void;
+export declare function setTextString(textId: number, text: string): void;
+export declare function setTextColor(textId: number, color: number[]): void;
+export declare function destroyAllTexts(): void;
+export declare function getTextPos(textId: number): number[];
+export declare function getTextString(textId: number): string;
+export declare function getTextColor(textId: number): number[];
+export declare function getNumCreatedTexts(): number;
+
+export declare function getFileInfo(filename: string): { crc32: number, size: number };

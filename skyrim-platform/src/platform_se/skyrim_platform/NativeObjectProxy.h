@@ -1,5 +1,4 @@
 #pragma once
-#include "JsEngine.h"
 
 class NativeObjectProxy
 {

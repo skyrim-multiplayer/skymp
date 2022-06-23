@@ -3,6 +3,7 @@
 #include "FileDatabase.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
+#include "LocalizationProvider.h"
 #include "MigrationDatabase.h"
 #include "MongoDatabase.h"
 #include "MpFormGameObject.h"
@@ -14,6 +15,7 @@
 #include "formulas/TES5DamageFormula.h"
 #include <JsEngine.h>
 #include <cassert>
+#include <cctype>
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -31,6 +33,13 @@ inline NiPoint3 NapiValueToNiPoint3(Napi::Value v)
   for (int i = 0; i < n; ++i)
     res[i] = arr.Get(i).As<Napi::Number>().FloatValue();
   return res;
+}
+
+inline Napi::Value RunScript(const Napi::Env& env, const std::string& src)
+{
+  auto eval = env.Global().Get("eval");
+  auto evalFunc = eval.As<Napi::Function>();
+  return evalFunc.Call({ Napi::String::New(env, src) });
 }
 }
 
@@ -91,6 +100,7 @@ public:
   Napi::Value SetSendUiMessageImplementation(const Napi::CallbackInfo& info);
   Napi::Value OnUiEvent(const Napi::CallbackInfo& info);
   Napi::Value Clear(const Napi::CallbackInfo& info);
+  Napi::Value WriteLogs(const Napi::CallbackInfo& info);
 
 private:
   void RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine);
@@ -102,12 +112,14 @@ private:
   Napi::Env tickEnv;
   Napi::ObjectReference emitter;
   Napi::FunctionReference emit;
+  Napi::FunctionReference sendUiMessageImplementation;
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   std::shared_ptr<JsEngine> chakraEngine;
   Viet::TaskQueue chakraTaskQueue;
-  std::optional<Napi::FunctionReference> sendUiMessageImplementation;
   GamemodeApi::State gamemodeApiState;
+
+  std::shared_ptr<LocalizationProvider> localizationProvider;
 
   static Napi::FunctionReference constructor;
 };
@@ -208,29 +220,30 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(
     env, "ScampServer",
-    { InstanceMethod<&ScampServer::AttachSaveStorage>("attachSaveStorage"),
-      InstanceMethod<&ScampServer::Tick>("tick"),
-      InstanceMethod<&ScampServer::On>("on"),
-      InstanceMethod<&ScampServer::CreateActor>("createActor"),
-      InstanceMethod<&ScampServer::SetUserActor>("setUserActor"),
-      InstanceMethod<&ScampServer::GetUserActor>("getUserActor"),
-      InstanceMethod<&ScampServer::GetActorPos>("getActorPos"),
-      InstanceMethod<&ScampServer::GetActorCellOrWorld>("getActorCellOrWorld"),
-      InstanceMethod<&ScampServer::GetActorName>("getActorName"),
-      InstanceMethod<&ScampServer::DestroyActor>("destroyActor"),
-      InstanceMethod<&ScampServer::SetRaceMenuOpen>("setRaceMenuOpen"),
-      InstanceMethod<&ScampServer::SendCustomPacket>("sendCustomPacket"),
-      InstanceMethod<&ScampServer::GetActorsByProfileId>(
-        "getActorsByProfileId"),
-      InstanceMethod<&ScampServer::SetEnabled>("setEnabled"),
-      InstanceMethod<&ScampServer::CreateBot>("createBot"),
-      InstanceMethod<&ScampServer::GetUserByActor>("getUserByActor"),
-      InstanceMethod<&ScampServer::ExecuteJavaScriptOnChakra>(
-        "executeJavaScriptOnChakra"),
-      InstanceMethod<&ScampServer::SetSendUiMessageImplementation>(
-        "setSendUiMessageImplementation"),
-      InstanceMethod<&ScampServer::OnUiEvent>("onUiEvent"),
-      InstanceMethod<&ScampServer::Clear>("clear") });
+    { InstanceMethod("attachSaveStorage", &ScampServer::AttachSaveStorage),
+      InstanceMethod("tick", &ScampServer::Tick),
+      InstanceMethod("on", &ScampServer::On),
+      InstanceMethod("createActor", &ScampServer::CreateActor),
+      InstanceMethod("setUserActor", &ScampServer::SetUserActor),
+      InstanceMethod("getUserActor", &ScampServer::GetUserActor),
+      InstanceMethod("getActorPos", &ScampServer::GetActorPos),
+      InstanceMethod("getActorCellOrWorld", &ScampServer::GetActorCellOrWorld),
+      InstanceMethod("getActorName", &ScampServer::GetActorName),
+      InstanceMethod("destroyActor", &ScampServer::DestroyActor),
+      InstanceMethod("setRaceMenuOpen", &ScampServer::SetRaceMenuOpen),
+      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket),
+      InstanceMethod("getActorsByProfileId",
+                     &ScampServer::GetActorsByProfileId),
+      InstanceMethod("setEnabled", &ScampServer::SetEnabled),
+      InstanceMethod("createBot", &ScampServer::CreateBot),
+      InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
+      InstanceMethod("executeJavaScriptOnChakra",
+                     &ScampServer::ExecuteJavaScriptOnChakra),
+      InstanceMethod("setSendUiMessageImplementation",
+                     &ScampServer::SetSendUiMessageImplementation),
+      InstanceMethod("onUiEvent", &ScampServer::OnUiEvent),
+      InstanceMethod("clear", &ScampServer::Clear),
+      InstanceMethod("writeLogs", &ScampServer::WriteLogs) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -281,6 +294,12 @@ std::shared_ptr<ISaveStorage> CreateSaveStorage(
   return std::make_shared<AsyncSaveStorage>(db, logger);
 }
 
+static std::shared_ptr<spdlog::logger>& GetLogger()
+{
+  static auto g_logger = spdlog::stdout_color_mt("console");
+  return g_logger;
+}
+
 }
 
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
@@ -298,7 +317,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     std::string dataDir;
 
-    auto logger = spdlog::stdout_color_mt("console");
+    const auto& logger = GetLogger();
     logger->set_level(spdlog::level::debug);
     spdlog::set_level(spdlog::level::debug);
     partOne->AttachLogger(logger);
@@ -350,6 +369,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       }
     }
 
+    if (serverSettings["lang"] != nullptr) {
+      logger->info("Run localization provider");
+      localizationProvider = std::make_shared<LocalizationProvider>(
+        serverSettings["dataDir"], serverSettings["lang"]);
+    }
+
     auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
       (espm::fs::path(dataDir) / "scripts").string());
 
@@ -373,10 +398,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
     }
 
-    auto res =
-      info.Env().RunScript("let require = global.require || "
-                           "global.process.mainModule.constructor._load; let "
-                           "Emitter = require('events'); new Emitter");
+    auto res = RunScript(Env(),
+                         "let require = global.require || "
+                         "global.process.mainModule.constructor._load; let "
+                         "Emitter = require('events'); new Emitter");
+
     emitter = Napi::Persistent(res.As<Napi::Object>());
     emit = Napi::Persistent(emitter.Value().Get("emit").As<Napi::Function>());
   } catch (std::exception& e) {
@@ -955,6 +981,65 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 {
   JsValue mp = JsValue::Object();
 
+  mp.SetProperty(
+    "getLocalizedString",
+    JsValue::Function([this](const JsFunctionArguments& args) {
+      auto translatedString = JsValue::Undefined();
+
+      if (!localizationProvider) {
+        return translatedString;
+      }
+
+      auto globalRecordId = ExtractFormId(args[1], "globalRecordId");
+      auto lookupRes =
+        partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+
+      if (!lookupRes.rec) {
+        return translatedString;
+      }
+
+      auto fields = JsValue::Array(0);
+
+      auto& cache = partOne->worldState.GetEspmCache();
+
+      espm::IterateFields_(
+        lookupRes.rec,
+        [&](const char* type, uint32_t size, const char* data) {
+          if (std::string(type, 4) != "FULL" || size != 4) {
+            return;
+          }
+
+          auto stringId = *reinterpret_cast<const uint32_t*>(data);
+          if (!serverSettings["loadOrder"].is_array()) {
+            return;
+          }
+
+          for (size_t i = 0; i < serverSettings["loadOrder"].size(); ++i) {
+            if (i != lookupRes.fileIdx) {
+              continue;
+            }
+
+            std::filesystem::path loadOrderElement =
+              static_cast<std::string>(serverSettings["loadOrder"][i]);
+
+            auto fileNameFull = loadOrderElement.filename().string();
+            auto fileNameWithoutExt =
+              fileNameFull.substr(0, fileNameFull.find_last_of("."));
+
+            std::transform(fileNameWithoutExt.begin(),
+                           fileNameWithoutExt.end(),
+                           fileNameWithoutExt.begin(),
+                           [](unsigned char c) { return std::tolower(c); });
+
+            translatedString = JsValue::String(
+              this->localizationProvider->Get(fileNameWithoutExt, stringId));
+          }
+        },
+        cache);
+
+      return translatedString;
+    }));
+
   mp.SetProperty("getServerSettings",
                  JsValue::Function([this](const JsFunctionArguments& args) {
                    auto builtinJson =
@@ -1259,6 +1344,23 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         res = arr;
       } else if (propertyName == "isDisabled") {
         res = JsValue(refr.IsDisabled());
+      } else if (propertyName == "isDead") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          res = JsValue::Bool(actor->IsDead());
+        }
+      } else if (propertyName == "percentages") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          auto chForm = actor->GetChangeForm();
+          res = JsValue::Object();
+          res.SetProperty("health", chForm.healthPercentage);
+          res.SetProperty("magicka", chForm.magickaPercentage);
+          res.SetProperty("stamina", chForm.staminaPercentage);
+        }
+      } else if (propertyName == "profileId") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          auto chForm = actor->GetChangeForm();
+          res = JsValue::Int(chForm.profileId);
+        }
       } else {
         EnsurePropertyExists(gamemodeApiState, propertyName);
         res = refr.GetDynamicFields().Get(propertyName);
@@ -1330,6 +1432,16 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           throw std::runtime_error(
             "'isDisabled' is not usable for non-FF forms");
         newValue.get<bool>() ? refr.Disable() : refr.Enable();
+      } else if (propertyName == "isDead") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          actor->SetIsDead(newValue.get<bool>());
+        }
+      } else if (propertyName == "percentages") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          actor->NetSetPercentages(newValue["health"].get<float>(),
+                                   newValue["magicka"].get<float>(),
+                                   newValue["stamina"].get<float>());
+        }
       } else {
 
         EnsurePropertyExists(gamemodeApiState, propertyName);
@@ -1544,15 +1656,21 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
     JsValue::Function([this, update](const JsFunctionArguments& args) {
       auto formId = ExtractFormId(args[1]);
       std::string msgDump = ExtractNewValueStr(args[2]);
-      if (sendUiMessageImplementation) {
-        auto env = sendUiMessageImplementation->Env();
-        std::vector<napi_value> sendUiMessageArgs;
-        sendUiMessageArgs.push_back(Napi::Number::New(env, formId));
-        sendUiMessageArgs.push_back(ParseJson(env, msgDump));
-        sendUiMessageImplementation->Call(sendUiMessageArgs);
-      } else {
-        logger->error("sendUiMessageImplementation was nullptr");
-      }
+      auto env = sendUiMessageImplementation.Env();
+      std::vector<napi_value> sendUiMessageArgs;
+      sendUiMessageArgs.push_back(Napi::Number::New(env, formId));
+      sendUiMessageArgs.push_back(ParseJson(env, msgDump));
+      sendUiMessageImplementation.Call(sendUiMessageArgs);
+      return JsValue::Undefined();
+    }));
+
+  mp.SetProperty(
+    "sendCustomPacket",
+    JsValue::Function([this, update](const JsFunctionArguments& args) {
+      auto formId = ExtractFormId(args[1]);
+      std::string packet = ExtractNewValueStr(args[2]);
+      auto userId = partOne->GetUserByActor(formId);
+      partOne->SendCustomPacket(userId, packet);
       return JsValue::Undefined();
     }));
 
@@ -1614,7 +1732,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           }
           src += "]))    )";
 
-          Env().RunScript(src);
+          RunScript(Env(), src);
 
           std::ifstream t("kek");
           std::stringstream buffer;
@@ -1697,10 +1815,28 @@ Napi::Value ScampServer::Clear(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-Napi::String Method(const Napi::CallbackInfo& info)
+Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
 {
-  Napi::Env env = info.Env();
-  return Napi::String::New(env, "world");
+  try {
+    Napi::String logLevel = info[0].As<Napi::String>();
+    Napi::String message = info[1].As<Napi::String>();
+
+    auto messageStr = static_cast<std::string>(message);
+    while (!messageStr.empty() && messageStr.back() == '\n') {
+      messageStr.pop_back();
+    }
+
+    if (static_cast<std::string>(logLevel) == "info") {
+      GetLogger()->info(messageStr);
+    } else if (static_cast<std::string>(logLevel) == "error") {
+      GetLogger()->error(messageStr);
+    }
+  } catch (std::exception& e) {
+    // No sense to rethrow, NodeJS will unlikely be able to print this
+    // exception
+    GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
+  }
+  return info.Env().Undefined();
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)

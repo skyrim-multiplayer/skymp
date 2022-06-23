@@ -1,7 +1,4 @@
 #include "MpClientPluginApi.h"
-#include <map>
-#include <memory>
-#include <stdexcept>
 
 namespace {
 const char* GetPacketTypeName(int32_t type)

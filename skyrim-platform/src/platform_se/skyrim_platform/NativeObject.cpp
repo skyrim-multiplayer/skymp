@@ -1,6 +1,5 @@
 #include "NativeObject.h"
 #include "PapyrusTESModPlatform.h"
-#include <sstream>
 
 NativeObject::NativeObject(const CallNative::ObjectPtr& obj_)
   : papyrusUpdateId(TESModPlatform::GetNumPapyrusUpdates())

@@ -1,5 +1,4 @@
 #include "Reader.h"
-#include <fstream>
 
 void Reader::Read()
 {

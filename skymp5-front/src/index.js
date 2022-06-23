@@ -12,9 +12,12 @@ import './main.scss';
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
+  window.needToScroll = true;
 }
 
-window.skyrimPlatform.widgets = new Widgets([]);
+if (!window.skyrimPlatform.widgets) {
+  window.skyrimPlatform.widgets = new Widgets([]);
+}
 
 ReactDOM.render(
   <React.StrictMode>
@@ -24,3 +27,13 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById('root')
 );
+
+// Called from skymp5-functions-lib, chatProperty.ts
+window.scrollToLastMessage = () => {
+  const _list = document.querySelector('#chat > .chat-main > .list');
+  if (_list != null && window.needToScroll) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
+};
+
+if (window.skyrimPlatform?.sendMessage) {
+  window.skyrimPlatform.sendMessage('front-loaded');
+}

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <fmt/format.h>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -731,6 +732,9 @@ espm::REFR::Data espm::REFR::GetData(
         result.teleport = (DoorTeleport*)data;
       else if (!memcmp(type, "XPRM", 4))
         result.boundsDiv2 = reinterpret_cast<const float*>(data);
+      else if (!memcmp(type, "XCNT", 4)) {
+        result.count = *reinterpret_cast<const uint32_t*>(data);
+      }
     },
     compressedFieldsCache);
   return result;
@@ -1006,7 +1010,9 @@ ARMO::Data ARMO::GetData(CompressedFieldsCache& compressedFieldsCache) const
   espm::RecordHeaderAccess::IterateFields(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!memcmp(type, "DATA", 4)) {
+      if (!memcmp(type, "EITM", 4)) {
+        result.enchantmentFormId = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!memcmp(type, "DATA", 4)) {
         result.baseValue = *reinterpret_cast<const uint32_t*>(data);
         result.weight = *reinterpret_cast<const float*>(data + 4);
       } else if (!memcmp(type, "DNAM", 4)) {
@@ -1056,5 +1062,91 @@ espm::GMST::Data espm::GMST::GetData(
       }
     },
     compressedFieldsCache);
+  return result;
+}
+
+espm::Effects::Effects(const RecordHeader* parent)
+  : parent(parent)
+{
+}
+
+espm::Effects::Data espm::Effects::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  if (!parent) {
+    return Data();
+  }
+
+  Data result;
+  uint32_t effectIndex = 0;
+  bool orderFlag = true;
+  bool isValid = true;
+
+  espm::RecordHeaderAccess::IterateFields(
+    parent,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!memcmp(type, "EFID", 4)) {
+        isValid = orderFlag == true;
+        result.effects.emplace_back();
+        result.effects[effectIndex].effectId =
+          *reinterpret_cast<const uint32_t*>(data);
+        orderFlag = false;
+      } else if (!memcmp(type, "EFIT", 4)) {
+        isValid = orderFlag == false;
+        Effect& eff = result.effects[effectIndex];
+        eff.magnitude = *reinterpret_cast<const float*>(data);
+        eff.areaOfEffect = *reinterpret_cast<const uint32_t*>(data + 4);
+        eff.duration = *reinterpret_cast<const uint32_t*>(data + 8);
+        effectIndex++;
+        orderFlag = true;
+      }
+      if (!isValid) {
+        auto name = parent->GetEditorId(compressedFieldsCache);
+        throw std::runtime_error(
+          fmt::format("Bad effect array for edid={}", name));
+      }
+    },
+    compressedFieldsCache);
+  return result;
+}
+
+espm::ENCH::Data espm::ENCH::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  result.effects = Effects(this).GetData(compressedFieldsCache).effects;
+  return result;
+}
+
+espm::MGEF::Data espm::MGEF::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        result.data.primaryAV =
+          espm::ActorValue(*reinterpret_cast<const uint32_t*>(data + 0x44));
+      }
+    },
+    compressedFieldsCache);
+
+  return result;
+}
+
+espm::ALCH::Data espm::ALCH::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  result.effects = Effects(this).GetData(compressedFieldsCache).effects;
+  return result;
+}
+
+espm::INGR::Data espm::INGR::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  result.effects = Effects(this).GetData(compressedFieldsCache).effects;
   return result;
 }

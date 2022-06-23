@@ -1,19 +1,14 @@
 #include "EventsApi.h"
-
-#include "GameEventSinks.h"
+#include "EventManager.h"
+#include "ExceptionPrinter.h"
+#include "IPC.h"
 #include "InvalidArgumentException.h"
+#include "JsUtils.h"
 #include "NativeObject.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
-#include "TickTask.h"
-#include <algorithm>
-#include <map>
-#include <optional>
-#include <set>
-#include <tuple>
-#include <unordered_map>
 
 namespace {
 enum class PatternType
@@ -165,10 +160,11 @@ public:
         return;
       }
 
-      return SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-        std::string s = eventName;
-        HandleEnter(owningThread, selfId, s);
-      });
+      return SkyrimPlatform::GetSingleton()->AddUpdateTask(
+        [this, owningThread, selfId, eventName] {
+          std::string s = eventName;
+          HandleEnter(owningThread, selfId, s);
+        });
     }
 
     auto f = [&](int) {
@@ -180,11 +176,11 @@ public:
       } catch (std::exception& e) {
         auto err = std::string(e.what()) + " (while performing enter on '" +
           hookName + "')";
-        SkyrimPlatform::GetSingleton().AddUpdateTask(
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
           [err] { throw std::runtime_error(err); });
       }
     };
-    SkyrimPlatform::GetSingleton().PushAndWait(f);
+    SkyrimPlatform::GetSingleton()->PushAndWait(f);
     addRemoveBlocker--;
   }
 
@@ -206,12 +202,12 @@ public:
 
       } catch (std::exception& e) {
         std::string what = e.what();
-        SkyrimPlatform::GetSingleton().AddUpdateTask([what] {
+        SkyrimPlatform::GetSingleton()->AddUpdateTask([what] {
           throw std::runtime_error(what + " (in SendAnimationEventLeave)");
         });
       }
     };
-    SkyrimPlatform::GetSingleton().PushAndWait(f);
+    SkyrimPlatform::GetSingleton()->PushAndWait(f);
     addRemoveBlocker--;
   }
 
@@ -291,11 +287,6 @@ private:
 };
 }
 
-struct EventsGlobalStatePersistent
-{
-  std::shared_ptr<GameEventSinks> gameEventSinks;
-} g_persistent;
-
 struct EventsGlobalState
 {
   EventsGlobalState()
@@ -313,65 +304,64 @@ struct EventsGlobalState
   std::shared_ptr<Hook> sendPapyrusEvent;
 } g;
 
-class IpcCallbackData
-{
-public:
-  IpcCallbackData() = default;
-  IpcCallbackData(std::string systemName_,
-                  EventsApi::IpcMessageCallback callback_, void* state_)
-    : systemName(systemName_)
-    , callback(callback_)
-    , state(state_)
-  {
-  }
-
-  friend bool operator==(const IpcCallbackData& lhs,
-                         const IpcCallbackData& rhs)
-  {
-    return std::make_tuple(lhs.systemName, lhs.callback, lhs.state) ==
-      std::make_tuple(rhs.systemName, rhs.callback, rhs.state);
-  }
-
-  std::string systemName;
-  EventsApi::IpcMessageCallback callback;
-  void* state = nullptr;
-};
-
-struct IpcShare
-{
-  std::recursive_mutex m;
-  std::vector<IpcCallbackData> ipcCallbacks;
-} g_ipcShare;
-
-std::atomic<uint32_t> g_chakraThreadId = 0;
-
-namespace {
-void CallCalbacks(const char* eventName, const std::vector<JsValue>& arguments,
-                  bool isOnce = false)
-{
-  EventsGlobalState::Callbacks callbacks =
-    isOnce ? g.callbacksOnce : g.callbacks;
-
-  if (isOnce)
-    g.callbacksOnce[eventName].clear();
-
-  for (auto& f : callbacks[eventName]) {
-    f.Call(arguments);
-  }
-}
-}
-
 void EventsApi::SendEvent(const char* eventName,
                           const std::vector<JsValue>& arguments)
 {
-  CallCalbacks(eventName, arguments);
-  CallCalbacks(eventName, arguments, true);
+  auto manager = EventManager::GetSingleton();
+
+  auto cbObjMap = manager->GetCallbackObjMap(eventName);
+
+  if (!cbObjMap || cbObjMap->empty()) {
+    logger::trace("Failed to retrieve callback map or the map is empty.");
+    return;
+  }
+
+  std::vector<uintptr_t> callbacksToUnsubscribe;
+  std::vector<CallbackObject> callbacksToCall;
+
+  // 1. Collect all callbacks and remember "runOnce" callbacks
+  for (const auto& [uid, callbackInfo] : *cbObjMap) {
+    callbacksToCall.push_back(callbackInfo);
+    if (callbackInfo.runOnce) {
+      callbacksToUnsubscribe.push_back(uid);
+    }
+  }
+
+  // 2. Make sure that "runOnce" callbacks will never be called again
+  for (auto uid : callbacksToUnsubscribe) {
+    manager->Unsubscribe(uid, eventName);
+  }
+
+  // 3. Finally, call the callbacks
+  for (auto& callbackInfo : callbacksToCall) {
+    try {
+      callbackInfo.callback.Call(arguments);
+    } catch (const std::exception& e) {
+      const char* method = callbackInfo.runOnce ? "once" : "on";
+      std::string what = e.what();
+      logger::error("{}('{}'): {}", method, eventName, what);
+
+      // We still write to the game console as we were doing before spdlog
+      // integration. When I write something wrong when coding skymp5-client I
+      // expect to see errors in game console
+      ExceptionPrinter::Print(e);
+    }
+  }
+
+  // You may want to optimize it. Feel free to. But remember that changing
+  // order of those three steps may and WILL break user code like:
+  //
+  // sp.on("tick", () => {
+  //   sp.once("tick", () => {
+  //     sp.once("tick", () => {
+  // // ...
 }
 
 void EventsApi::Clear()
 {
-  g_chakraThreadId = GetCurrentThreadId();
   g = {};
+
+  EventManager::GetSingleton()->ClearCallbacks();
 }
 
 void EventsApi::SendAnimationEventEnter(uint32_t selfId,
@@ -444,148 +434,47 @@ JsValue EventsApi::GetHooks()
   return res;
 }
 
-uint32_t EventsApi::IpcSubscribe(const char* systemName,
-                                 IpcMessageCallback callback, void* state)
-{
-  // Maybe they decide calling IpcSubscribe from multiple threads...
-  std::lock_guard l(g_ipcShare.m);
-
-  IpcCallbackData ipcCallbackData(systemName, callback, state);
-
-  auto it = std::find(g_ipcShare.ipcCallbacks.begin(),
-                      g_ipcShare.ipcCallbacks.end(), IpcCallbackData());
-  if (it == g_ipcShare.ipcCallbacks.end()) {
-    g_ipcShare.ipcCallbacks.push_back(ipcCallbackData);
-    return g_ipcShare.ipcCallbacks.size() - 1;
-  } else {
-    *it = ipcCallbackData;
-    return static_cast<uint32_t>(it - g_ipcShare.ipcCallbacks.begin());
-  }
-}
-
-void EventsApi::IpcUnsubscribe(uint32_t subscriptionId)
-{
-  std::lock_guard l(g_ipcShare.m);
-  if (g_ipcShare.ipcCallbacks.size() > subscriptionId) {
-    g_ipcShare.ipcCallbacks[subscriptionId] = IpcCallbackData();
-  }
-  // TODO: pop_back for empty subscriptions?
-}
-
-void EventsApi::IpcSend(const char* systemName, const uint8_t* data,
-                        uint32_t length)
-{
-  const DWORD currentThreadId = GetCurrentThreadId();
-  if (currentThreadId != g_chakraThreadId) {
-    assert(0 && "IpcSend is only available in Chakra thread");
-    return;
-  }
-
-  auto typedArray = JsValue::Uint8Array(length);
-  memcpy(typedArray.GetTypedArrayData(), data, length);
-
-  auto ipcMessageEvent = JsValue::Object();
-  ipcMessageEvent.SetProperty("sourceSystemName", systemName);
-  ipcMessageEvent.SetProperty("message", typedArray);
-  SendEvent("ipcMessage", { JsValue::Undefined(), ipcMessageEvent });
-}
-
-void EventsApi::SendConsoleMsgEvent(const char* msg_)
-{
-  std::string msg(msg_);
-  SkyrimPlatform::GetSingleton().AddTickTask([=] {
-    auto obj = JsValue::Object();
-    obj.SetProperty("message", JsValue::String(msg));
-    EventsApi::SendEvent("consoleMessage", { JsValue::Undefined(), obj });
-  });
-}
-
-void EventsApi::SendMenuOpen(const char* menuName)
-{
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-    auto obj = JsValue::Object();
-
-    obj.SetProperty("name", JsValue::String(menuName));
-
-    SendEvent("menuOpen", { JsValue::Undefined(), obj });
-  });
-}
-
-void EventsApi::SendMenuClose(const char* menuName)
-{
-  SkyrimPlatform::GetSingleton().AddUpdateTask([=] {
-    auto obj = JsValue::Object();
-
-    obj.SetProperty("name", JsValue::String(menuName));
-
-    SendEvent("menuClose", { JsValue::Undefined(), obj });
-  });
-}
-
 namespace {
-JsValue AddCallback(const JsFunctionArguments& args, bool isOnce = false)
+JsValue Subscribe(const JsFunctionArguments& args, bool runOnce = false)
 {
-  if (!g_persistent.gameEventSinks) {
-    g_persistent.gameEventSinks = std::make_shared<GameEventSinks>();
-  }
-
   auto eventName = args[1].ToString();
   auto callback = args[2];
 
-  std::set<std::string> events = { "tick",
-                                   "update",
-                                   "effectStart",
-                                   "effectFinish",
-                                   "magicEffectApply",
-                                   "equip",
-                                   "unequip",
-                                   "hit",
-                                   "containerChanged",
-                                   "deathStart",
-                                   "deathEnd",
-                                   "loadGame",
-                                   "combatState",
-                                   "reset",
-                                   "scriptInit",
-                                   "trackedStats",
-                                   "uniqueIdChange",
-                                   "switchRaceComplete",
-                                   "cellFullyLoaded",
-                                   "grabRelease",
-                                   "lockChanged",
-                                   "moveAttachDetach",
-                                   "objectLoaded",
-                                   "waitStop",
-                                   "activate",
-                                   "ipcMessage",
-                                   "menuOpen",
-                                   "menuClose",
-                                   "browserMessage",
-                                   "consoleMessage" };
+  auto handle =
+    EventManager::GetSingleton()->Subscribe(eventName, callback, runOnce);
 
-  if (events.count(eventName) == 0) {
-    throw InvalidArgumentException("eventName", eventName);
-  }
+  auto obj = JsValue::Object();
+  AddObjProperty(&obj, "uid", handle->uid);
+  AddObjProperty(&obj, "eventName", handle->eventName);
 
-  isOnce ? g.callbacksOnce[eventName].push_back(callback)
-         : g.callbacks[eventName].push_back(callback);
-  return JsValue::Undefined();
+  return obj;
 }
 }
 
 JsValue EventsApi::On(const JsFunctionArguments& args)
 {
-  return AddCallback(args);
+  return Subscribe(args);
 }
 
 JsValue EventsApi::Once(const JsFunctionArguments& args)
 {
-  return AddCallback(args, true);
+  return Subscribe(args, true);
+}
+
+JsValue EventsApi::Unsubscribe(const JsFunctionArguments& args)
+{
+  auto obj = args[1];
+  auto eventName = std::get<std::string>(
+    NativeValueCasts::JsValueToNativeValue(obj.GetProperty("eventName")));
+  auto uid = std::get<double>(
+    NativeValueCasts::JsValueToNativeValue(obj.GetProperty("uid")));
+  EventManager::GetSingleton()->Unsubscribe(uid, eventName);
+  return JsValue::Undefined();
 }
 
 JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
 {
-  auto targetSystemName = static_cast<std::string>(args[1]);
+  auto targetSystemName = args[1].ToString();
   auto message = args[2].GetArrayBufferData();
   auto messageLength = args[2].GetArrayBufferLength();
 
@@ -594,23 +483,8 @@ JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
       "sendIpcMessage expects a valid ArrayBuffer instance");
   }
 
-  std::vector<IpcCallbackData> callbacks;
-  {
-    std::lock_guard l(g_ipcShare.m);
-    for (auto& callbackData : g_ipcShare.ipcCallbacks) {
-      if (callbackData.systemName == targetSystemName) {
-        callbacks.push_back(callbackData);
-      }
-    }
-  }
-
-  // Want to call callbacks with g_ipcShare.m unlocked
-  for (auto& callbackData : callbacks) {
-    if (callbackData.callback) {
-      callbackData.callback(reinterpret_cast<uint8_t*>(message), messageLength,
-                            callbackData.state);
-    }
-  }
+  IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message),
+            messageLength);
 
   return JsValue::Undefined();
 }

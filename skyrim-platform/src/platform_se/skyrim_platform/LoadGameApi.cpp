@@ -3,9 +3,6 @@
 #include "LoadGame.h"
 #include "NullPointerException.h"
 #include "savefile/SFChangeFormNPC.h"
-#include <bitset>
-#include <memory>
-#include <sstream>
 
 namespace {
 uint32_t RgbToAbgr(int32_t rgb)

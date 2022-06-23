@@ -1,5 +1,6 @@
 #pragma once
-#include "IActionListener.h"
+#include "ActionListener.h"
+#include "ConsoleCommands.h"
 #include "Loader.h"
 #include "MpActor.h"
 #include "PartOne.h"
@@ -7,70 +8,84 @@
 class ServerState;
 class WorldState;
 
-class ActionListener : public IActionListener
+class ActionListener
 {
 public:
+  struct RawMessageData
+  {
+    Networking::PacketData unparsed = nullptr;
+    size_t unparsedLength = 0;
+    simdjson::dom::element parsed;
+    Networking::UserId userId = Networking::InvalidUserId;
+  };
+
   ActionListener(PartOne& partOne_)
     : partOne(partOne_)
   {
   }
 
-  void OnCustomPacket(const RawMessageData& rawMsgData,
-                      simdjson::dom::element& content) override;
+  virtual void OnCustomPacket(const RawMessageData& rawMsgData,
+                              simdjson::dom::element& content);
 
-  void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
-                        const NiPoint3& pos, const NiPoint3& rot,
-                        bool isInJumpState, bool isWeapDrawn,
-                        uint32_t worldOrCell) override;
+  virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
+                                const NiPoint3& pos, const NiPoint3& rot,
+                                bool isInJumpState, bool isWeapDrawn,
+                                uint32_t worldOrCell);
 
-  void OnUpdateAnimation(const RawMessageData& rawMsgData,
-                         uint32_t idx) override;
+  virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
+                                 uint32_t idx);
 
-  void OnUpdateAppearance(const RawMessageData& rawMsgData, uint32_t idx,
-                          const Appearance& appearance) override;
+  virtual void OnUpdateAppearance(const RawMessageData& rawMsgData,
+                                  uint32_t idx, const Appearance& appearance);
 
-  void OnUpdateEquipment(const RawMessageData& rawMsgData, uint32_t idx,
-                         simdjson::dom::element& data,
-                         const Inventory& equipmentInv) override;
+  virtual void OnUpdateEquipment(const RawMessageData& rawMsgData,
+                                 uint32_t idx, simdjson::dom::element& data,
+                                 const Inventory& equipmentInv);
 
-  void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
-                  uint32_t target) override;
+  virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
+                          uint32_t target);
 
-  void OnPutItem(const RawMessageData& rawMsgData, uint32_t target,
-                 const Inventory::Entry& entry) override;
+  virtual void OnPutItem(const RawMessageData& rawMsgData, uint32_t target,
+                         const Inventory::Entry& entry);
 
-  void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
-                  const Inventory::Entry& entry) override;
+  virtual void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
+                          const Inventory::Entry& entry);
 
-  void OnFinishSpSnippet(const RawMessageData& rawMsgData, uint32_t snippetIdx,
-                         simdjson::dom::element& returnValue) override;
+  virtual void OnDropItem(const RawMessageData& rawMsgdata, uint32_t baseId,
+                          const Inventory::Entry& entry);
 
-  void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId) override;
+  virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
+                                 uint32_t snippetIdx,
+                                 simdjson::dom::element& returnValue);
 
-  void OnConsoleCommand(
+  virtual void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId);
+
+  virtual void OnConsoleCommand(
     const RawMessageData& rawMsgData, const std::string& consoleCommandName,
-    const std::vector<ConsoleCommands::Argument>& args) override;
+    const std::vector<ConsoleCommands::Argument>& args);
 
-  void OnCraftItem(const RawMessageData& rawMsgData,
-                   const Inventory& inputObjects, uint32_t workbenchId,
-                   uint32_t resultObjectId) override;
+  virtual void OnCraftItem(const RawMessageData& rawMsgData,
+                           const Inventory& inputObjects, uint32_t workbenchId,
+                           uint32_t resultObjectId);
 
-  void OnHostAttempt(const RawMessageData& rawMsgData,
-                     uint32_t remoteId) override;
+  virtual void OnHostAttempt(const RawMessageData& rawMsgData,
+                             uint32_t remoteId);
 
-  void OnCustomEvent(const RawMessageData& rawMsgData, const char* eventName,
-                     simdjson::dom::element& e) override;
+  virtual void OnCustomEvent(const RawMessageData& rawMsgData,
+                             const char* eventName, simdjson::dom::element& e);
 
-  void OnChangeValues(const RawMessageData& rawMsgData,
-                      const float healthPercentage,
-                      const float magickaPercentage,
-                      const float staminaPercentage) override;
+  virtual void OnChangeValues(const RawMessageData& rawMsgData,
+                              const float healthPercentage,
+                              const float magickaPercentage,
+                              const float staminaPercentage);
 
-  void OnHit(const RawMessageData& rawMsgData,
-             const HitData& hitData) override;
+  virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
+
+  virtual void OnUnknown(const RawMessageData& rawMsgData,
+                         simdjson::dom::element data);
 
 private:
-  // Returns user's actor if exists
+  // Returns user's actor if there is attached one
   MpActor* SendToNeighbours(uint32_t idx,
                             const simdjson::dom::element& jMessage,
                             Networking::UserId userId,

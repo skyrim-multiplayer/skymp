@@ -1,7 +1,5 @@
 #pragma once
 #include "FunctionInfoProvider.h"
-#include <RE/BSScript/ObjectTypeInfo.h>
-#include <memory>
 
 class VmProvider : public FunctionInfoProvider
 {

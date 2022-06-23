@@ -1,7 +1,10 @@
 #define CATCH_CONFIG_RUNNER
+
 #include <Loader.h>
 #include <catch2/catch.hpp>
 #include <iostream>
+
+#include "TestUtils.hpp"
 
 namespace {
 inline void OnProgress(const std::string& fileName, float readDuration,
@@ -10,17 +13,6 @@ inline void OnProgress(const std::string& fileName, float readDuration,
   std::cout << "[ESPM] " << fileName << " read in " << readDuration
             << "s, parsed in " << parseDuration << "s, size is "
             << (fileSize / 1024 / 1024) << "Mb" << std::endl;
-}
-
-inline bool IsCmakeOptionSpecified(const std::string& optionValue)
-{
-  return !optionValue.empty() && optionValue != "OFF";
-}
-
-inline const char* GetDataDir()
-{
-  return IsCmakeOptionSpecified(UNIT_DATA_DIR) ? UNIT_DATA_DIR
-                                               : SKYRIM_DIR "/Data";
 }
 
 inline espm::Loader CreateEspmLoader()

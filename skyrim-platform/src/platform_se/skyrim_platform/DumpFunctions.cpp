@@ -1,17 +1,7 @@
 #include "DumpFunctions.h"
-
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
 #include "papyrus-vm-lib/Reader.h"
-#include <RE/BSScript/IFunction.h>
-#include <RE/BSScript/Internal/VirtualMachine.h>
-#include <RE/BSScript/ObjectTypeInfo.h>
-#include <RE/ConsoleLog.h>
-#include <filesystem>
-#include <fstream>
-#include <map>
-#include <nlohmann/json.hpp>
-#include <set>
 
 using namespace nlohmann;
 
@@ -23,43 +13,43 @@ struct State
   bool isDumpingEmptyTypesAllowed = true;
 };
 
-std::string RawTypeToString(RE::BSScript::TypeInfo::RawType raw)
+std::string RawTypeToString(TypeInfo::RawType raw)
 {
   switch (raw) {
-    case RE::BSScript::TypeInfo::RawType::kNone:
+    case TypeInfo::RawType::kNone:
       return "None";
-    case RE::BSScript::TypeInfo::RawType::kObject:
+    case TypeInfo::RawType::kObject:
       return "Object";
-    case RE::BSScript::TypeInfo::RawType::kString:
+    case TypeInfo::RawType::kString:
       return "String";
-    case RE::BSScript::TypeInfo::RawType::kInt:
+    case TypeInfo::RawType::kInt:
       return "Int";
-    case RE::BSScript::TypeInfo::RawType::kFloat:
+    case TypeInfo::RawType::kFloat:
       return "Float";
-    case RE::BSScript::TypeInfo::RawType::kBool:
+    case TypeInfo::RawType::kBool:
       return "Bool";
-    case RE::BSScript::TypeInfo::RawType::kNoneArray:
+    case TypeInfo::RawType::kNoneArray:
       return "NoneArray";
-    case RE::BSScript::TypeInfo::RawType::kObjectArray:
+    case TypeInfo::RawType::kObjectArray:
       return "ObjectArray";
-    case RE::BSScript::TypeInfo::RawType::kStringArray:
+    case TypeInfo::RawType::kStringArray:
       return "StringArray";
-    case RE::BSScript::TypeInfo::RawType::kIntArray:
+    case TypeInfo::RawType::kIntArray:
       return "IntArray";
-    case RE::BSScript::TypeInfo::RawType::kFloatArray:
+    case TypeInfo::RawType::kFloatArray:
       return "FloatArray";
-    case RE::BSScript::TypeInfo::RawType::kBoolArray:
+    case TypeInfo::RawType::kBoolArray:
       return "BoolArray";
   }
   return "";
 }
 
-json TypeInfoToJson(RE::BSScript::TypeInfo& t)
+json TypeInfoToJson(TypeInfo t)
 {
   auto res = json::object();
   auto rawType = t.GetUnmangledRawType();
   res["rawType"] = RawTypeToString(rawType);
-  if (rawType == RE::BSScript::TypeInfo::RawType::kObject)
+  if (rawType == TypeInfo::RawType::kObject)
     res["objectTypeName"] = t.GetTypeInfo()->GetName();
   return res;
 }
@@ -71,9 +61,9 @@ json FunctionToJson(const char* typeName, RE::BSScript::IFunction* f,
   res["name"] = f->GetName();
   res["returnType"] = TypeInfoToJson(f->GetReturnType());
   res["arguments"] = json::array();
-  for (UInt32 i = 0; i < f->GetParamCount(); ++i) {
-    RE::BSFixedString name;
-    RE::BSScript::TypeInfo type;
+  for (uint32_t i = 0; i < f->GetParamCount(); ++i) {
+    FixedString name;
+    TypeInfo type;
     f->GetParam(i, name, type);
     res["arguments"].push_back(
       json{ { "name", name.data() }, { "type", TypeInfoToJson(type) } });
@@ -113,7 +103,7 @@ json FunctionToJson(const char* typeName, RE::BSScript::IFunction* f,
 
   std::stringstream ss;
   auto funcInfo = GetNativeFunctionAddr::Run(*f);
-  auto baseAddr = REL::Module::BaseAddr();
+  auto baseAddr = Offsets::BaseAddress;
   auto offset = (size_t)funcInfo.fn - baseAddr;
   ss << offset;
   res["offset"] = ss.str();
@@ -176,14 +166,14 @@ void DumpType(State& state, RE::BSScript::ObjectTypeInfo* type, json& out)
 }
 }
 
-thread_local RE::BSScrapArray<RE::BSFixedString> g_typeNames;
+thread_local RE::BSScrapArray<FixedString> g_typeNames;
 
 void DumpFunctions::Run()
 {
   try {
     json out = json{ { "types", json::object() } };
 
-    auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+    auto vm = VM::GetSingleton();
     if (!vm)
       throw NullPointerException("vm");
 

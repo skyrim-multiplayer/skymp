@@ -1,97 +1,72 @@
-FROM ubuntu:21.10
-
-WORKDIR /usr/src/skymp
+# Image used as runtime base for a game server.
+# Contains a minimal subset of stuff needed for running (and debugging, if needed) the server.
+FROM ubuntu:focal AS skymp-runtime-base
 
 # Prevent apt-get from asking us about timezone
 # London is UTC+0:00
 ENV TZ=Europe/London
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Install system dependencies via apt-get
-# python2 and libicu-dev are required to build Chakracore
-# pkg-config is required for zlib
-RUN apt-get update && apt-get install -y \
-  python2 \
-  libicu-dev \
-  clang \
-  git \
-  cmake \
-  ninja-build \
-  curl \
-  unzip \
-  tar \
-  perl \
-  make \
-  zip \
-  pkg-config \
-  upx-ucl \
+RUN \
+  apt-get update && apt-get install -y curl \
+  && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+  && apt-get update \
+  && apt-get install -y nodejs yarn gdb \
   && rm -rf /var/lib/apt/lists/*
 
-ENV CC=/usr/bin/clang-12
-ENV CPP=/usr/bin/clang-cpp-12
-ENV CXX=/usr/bin/clang++-12
-ENV LD=/usr/bin/ld.lld-12
+RUN useradd -m skymp
 
-# Bootstrap vcpkg
-# (vcpkg/refs/heads/master contains vcpkg version)
-COPY .git/modules/vcpkg/refs/heads/master ./master
-RUN git clone https://github.com/skyrim-multiplayer/vcpkg.git \ 
-  && cd vcpkg \
-  && git checkout $(cat /usr/src/skymp/master) \
-  && rm /usr/src/skymp/master \
-  && chmod 777 ./bootstrap-vcpkg.sh \
-  && ./bootstrap-vcpkg.sh -useSystemBinaries -disableMetrics
 
-# Currently needed for Chakracore
-# TODO: Update to latest vcpkg where our Chakracore port fix has been shipped
-COPY ./overlay_ports ./overlay_ports
+# This is the base image for building SkyMP source.
+# It contains everything that should be installed on the system.
+FROM skymp-runtime-base AS skymp-build-base
 
-# https://github.com/chakra-core/ChakraCore/blob/6800c46e2bcb5eafd81f19716a4f9f09774f134b/bin/ch/CMakeLists.txt#L3
-RUN ln -s /usr/bin/python2.7 /usr/bin/python
+# TODO: are perl, upx-ucl, ninja needed?
+RUN \
+  curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" > /etc/apt/sources.list.d/yarn.list \
+  && curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - > /usr/share/keyrings/kitware-archive-keyring.gpg \
+  && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' > /etc/apt/sources.list.d/kitware.list \
+  && apt-get update \
+  && apt-get install -y \
+    nodejs \
+    yarn \
+    python2 \
+    libicu-dev \
+    git \
+    cmake \
+    ninja-build \
+    curl \
+    unzip \
+    tar \
+    perl \
+    make \
+    zip \
+    pkg-config \
+    upx-ucl \
+    cmake=3.22.2-0kitware1ubuntu20.04.1 \
+    clang-12 \
+  && rm -rf /var/lib/apt/lists/*
 
-# Install heavy ports first. Currently only Chakracore
-RUN vcpkg/vcpkg \
-  --feature-flags=binarycaching \
-  --triplet x64-linux \
-  --overlay-ports=./overlay_ports \
-  install chakracore \
-  && rm -r vcpkg/buildtrees \
-  && rm -r vcpkg/packages \
-  && rm -r vcpkg/downloads
 
-# Install ports specified in vcpkg.json
-COPY ./vcpkg.json ./
-RUN vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux --overlay-ports=./overlay_ports \
-  && rm -r vcpkg/buildtrees \
-  && rm -r vcpkg/packages \
-  && rm -r vcpkg/downloads
+# Intermediate image to build
+# TODO: copy less stuff, use args to pass the desired vcpkg submodule revision
+# TODO: build huge deps separately
+FROM skymp-build-base AS skymp-vcpkg-deps-builder
 
-# Install NodeJS via Node Version Manager
-ENV NODE_VERSION=14.16.0
-RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
-ENV NVM_DIR=/root/.nvm
-RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
-RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
-RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
-ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+COPY --chown=skymp:skymp . /src
 
-# Currently, we have only one overlay triplet and it is for Windows
-# But missing directory would break CMake build
-COPY ./overlay_triplets ./overlay_triplets
+USER skymp
 
-RUN mkdir -p build/dist/server/data \
-  && cd build/dist/server/data \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm
-  
-# Build the project and install missing vcpkg dependencies if any
-COPY . .
-RUN rm -rf ./skymp5-server/cmake-js-fetch-build || true \
-  && npm cache verify \
-  && mkdir -p build \
-  && cd build \ 
-  && cmake .. -DCMAKE_BUILD_TYPE=Release -DUNIT_DATA_DIR=/usr/src/skymp/build/dist/server/data \
-  && cmake --build . --config Release
+RUN  cd /src \
+  && git submodule update --init --recursive \
+  && ./build.sh --configure
+
+
+# Image that runs in CI. It contains vcpkg cache to speedup the build.
+# Sadly, the builtin NuGet cache doesn't work on Linux, see:
+# https://github.com/microsoft/vcpkg/issues/19038
+FROM skymp-base AS skymp-vcpkg-deps
+
+COPY --from=skymp-vcpkg-deps-builder --chown=skymp:skymp \
+  /home/skymp/.cache/vcpkg /home/skymp/.cache/vcpkg

@@ -26,6 +26,10 @@ public:
   VarValue IsActivationBlocked(VarValue self,
                                const std::vector<VarValue>& arguments);
   VarValue Activate(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetPositionX(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetPositionY(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetPositionZ(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue SetPosition(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(
     VirtualMachine& vm,
@@ -49,5 +53,9 @@ public:
     AddMethod(vm, "IsActivationBlocked",
               &PapyrusObjectReference::IsActivationBlocked);
     AddMethod(vm, "Activate", &PapyrusObjectReference::Activate);
+    AddMethod(vm, "GetPositionX", &PapyrusObjectReference::GetPositionX);
+    AddMethod(vm, "GetPositionY", &PapyrusObjectReference::GetPositionY);
+    AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
+    AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
   }
 };

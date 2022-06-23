@@ -29,6 +29,7 @@ struct MovementMessage
   std::array<float, 3> rot{ 0, 0, 0 };
   float direction = 0;
   float healthPercentage = 0;
+  float speed = 0;
 
   // flags & optionals
   RunMode runMode = RunMode::Standing;
@@ -42,7 +43,7 @@ struct MovementMessage
   auto Tie() const
   {
     return std::tie(idx, worldOrCell, pos, rot, direction, healthPercentage,
-                    runMode, isInJumpState, isSneaking, isBlocking,
+                    speed, runMode, isInJumpState, isSneaking, isBlocking,
                     isWeapDrawn, isDead, lookAt);
   }
 

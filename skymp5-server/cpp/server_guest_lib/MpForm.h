@@ -1,12 +1,12 @@
 #pragma once
 #include "NiPoint3.h"
+#include "Structures.h"
 #include <cstdint>
 #include <memory>
 #include <string.h>
 #include <typeinfo>
 
 class WorldState;
-class VarValue;
 class IGameObject;
 
 class MpForm
@@ -44,7 +44,7 @@ public:
 
   static const char* GetFormType(MpForm* form)
   {
-    return PrettifyType(typeid(form).name());
+    return PrettifyType(typeid(*form).name());
   }
 
   virtual ~MpForm() = default;

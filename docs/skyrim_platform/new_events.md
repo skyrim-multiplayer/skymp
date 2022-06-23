@@ -30,7 +30,21 @@ once("equip", (event) => {
 });
 ```
 
-The variable `event` always contains variables related to the event to which you are subscribed.
+Both `on` and `once` return an `EventHandle` object, which contains unique subscription id and event name: `{ uid, eventName }`.
+Using `EventHandle` is optional, but it is required if you want to unsubscribe from the event later in your code.
+
+```typescript
+import { on, unsubscribe } from "skyrimPlatform";
+
+const handle = on("equip", (event) => {
+  printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
+  printConsole(`object: ${event.baseObj.getName()}`);
+});
+
+unsubscribe(handle);
+```
+
+The variable `event` contains variables related to the event (*if they exist*) to which you are subscribed.
 
 # List of new events
 
@@ -195,30 +209,123 @@ on('consoleMessage', (e) => {
 
 Called when a saved game is loaded.
 
-***WARNING***: This event won't fire when creating a new game.\
-[Read this recipe][PluginInit] to get some ideas on how you can deal with that.
+***WARNING***: This event won't fire when creating a new game. Use `newGame` for that.\
+Or [read this recipe][PluginInit] to get some ideas on how you can deal with plugin initialization.
 
 ## Other events
 
 More info and samples for these will be added later:
 
+- action event group
+  - `actionBeginDraw`
+  - `actionBeginSheathe`
+  - `actionBowDraw`
+  - `actionBowRelease`
+  - `actionEndDraw`
+  - `actionEndSheathe`
+  - `actionSpellCast`
+  - `actionSpellFire`
+  - `actionVoiceCast`
+  - `actionVoiceFire`
+  - `actionWeaponSwing`
 - `activate`
+- `actorKill`
+- `bookRead`
+- `browserMessage`
+- input event group
+  - `buttonEvent`
+  - `mouseMove`
+  - `thumbstickEvent`
+  - `kinectEvent`
+  - `deviceConnect`
+- `cameraStateChanged`
+- cell event group
+  - `cellAttach`
+  - `cellDetach`
+  - `cellFullyLoaded`
 - `combatState`
 - `containerChanged`
-- `deathEnd`
-- `deathStart`
+- `criticalHit`
+- `crosshairRefChanged`
+- death event group
+  - `deathStart`
+  - `deathEnd`
+- `destructionStageChanged`
+- `disarmedEvent`
+- `dragonSoulsGained`
+- `enterBleedout`
+- `fastTravelEnd`
+- `footstep`
+- furniture event group
+  - `furnitureEnter`
+  - `furnitureExit`
 - `grabRelease`
 - `hit`
+- `ipcMessage`
+- `itemHarvested`
+- `levelIncrease`
+- location event group
+  - `locationChanged`
+  - `locationDiscovery`
 - `lockChanged`
 - `magicEffectApply`
+- menu event group
+  - `menuOpen`
+  - `menuClose`
+- SKSE
+  - `modEvent`
+  - `niNodeUpdate`
+  - `skyrimLoaded`
 - `moveAttachDetach`
 - `objectLoaded`
+- open\close event group
+  - `open`
+  - `close`
+- package event group
+  - `packageStart`
+  - `packageEnd`
+  - `packageChange`
+- `perkEntryRun`
+- `playerBowShot`
+- `positionPlayer`
+- quest event group
+  - `questInit`
+  - `questStart`
+  - `questStop`
+  - `questStage`
 - `reset`
+- save\load event group
+  - `saveGame`
+  - `loadGame`
+  - `postLoadGame`
+  - `preLoadGame`
+  - `deleteGame`
+  - `newGame`
+- `sceneAction`
 - `scriptInit`
+- `sell`
+- `shoutAttack`
+- `skillIncrease`
+- `sleepStart`
+- `sleepStop`
+- `soulsTrapped`
+- `spellCast`
+- `spellsLearned`
 - `switchRaceComplete`
 - `trackedStats`
+- translation event group
+  - `translationAlmostCompleted`
+  - `translationCompleted`
+  - `translationFailed`
+- trigger event group
+  - `trigger`
+  - `triggerEnter`
+  - `triggerLeave`
 - `uniqueIdChange`
-- `waitStop`
+- wait event group
+  - `waitStart`
+  - `waitStop`
+- `wardHit`
 
 [Cloaks]: cookbook.md#getting-rid-of-cloaks
 [Events]: events.md

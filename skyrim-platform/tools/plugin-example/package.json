@@ -1,17 +1,30 @@
 {
-  "name": "skyrimplatform-plugin-example",
+  "name": "example-skyrim-platform-plugin",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "node ./tsc/before-first-compilation.js && tsc-watch --onSuccess \"node ./tsc/on-success.js\""
+    "webpack": "webpack",
+    "webpack:deploy": "set DEPLOY_PLUGIN=true && npm run webpack",
+    "webpack:deploy:watch": "set DEPLOY_PLUGIN=true && npm run webpack -- --watch",
+    "zip": "set ZIP_PLUGIN=true && npm run webpack",
+    "zip:cli": "bestzip",
+    "dev": "npm i && npm run webpack:deploy:watch"
   },
-  "keywords": [],
-  "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
-  "license": "MIT",
+  "devDependencies": {
+    "bestzip": "^2.2.0",
+    "ts-loader": "^9.2.6",
+    "tsc": "^2.0.3",
+    "typescript": "^4.5.4",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-shell-plugin-next": "^2.2.2"
+  },
+  "keywords": [
+    "skyrim",
+    "skryim platform"
+  ],
   "dependencies": {
-    "@types/chai": "^4.2.0",
-    "fs-extra": "^9.0.0",
-    "tsc-watch": "^4.2.3",
-    "typescript": "^3.8.3"
+    "@skyrim-platform/skyrim-platform": "^2.3.0"
   }
 }

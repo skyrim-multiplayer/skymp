@@ -3,6 +3,7 @@
 #include "Grid.h"
 #include "GridElement.h"
 #include "MpChangeForms.h"
+#include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "VirtualMachine.h"
@@ -24,7 +25,6 @@
 #  undef AddForm
 #endif
 
-class MpObjectReference;
 class MpActor;
 class FormCallbacks;
 class MpChangeForm;
@@ -83,16 +83,26 @@ public:
   {
     auto form = LookupFormById(formId);
     if (!form) {
-      std::stringstream ss;
-      ss << "Form with id " << std::hex << formId << " doesn't exist";
-      throw std::runtime_error(ss.str());
+      throw std::runtime_error(
+        fmt::format("Form with id {:#x} doesn't exist", formId));
     }
 
     auto typedForm = std::dynamic_pointer_cast<F>(form);
     if (!typedForm) {
-      std::stringstream ss;
-      ss << "Form with id " << std::hex << formId << " is not " << F::Type();
-      throw std::runtime_error(ss.str());
+      if constexpr (std::is_same_v<F, MpActor>) {
+        if (auto ref = std::dynamic_pointer_cast<MpObjectReference>(form)) {
+          auto pos = ref->GetPos();
+          spdlog::warn(
+            "Specified Form is ObjectReference, but we tried to treat it as "
+            "Actor, likely because of a client bug. formId={:#x}, "
+            "baseId={:#x}, pos is {:.2f} {:.2f} {:.2f} at {}",
+            formId, ref->GetBaseId(), pos.x, pos.y, pos.z,
+            ref->GetCellOrWorld().ToString());
+        }
+      }
+      throw std::runtime_error(
+        fmt::format("Form with id {:#x} is not {} (actually it is {})", formId,
+                    F::Type(), MpForm::GetFormType(&*form)));
     }
 
     return *typedForm;

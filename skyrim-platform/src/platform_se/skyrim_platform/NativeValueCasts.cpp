@@ -4,7 +4,6 @@
 #include "NullPointerException.h"
 #include "Overloaded.h"
 #include "PapyrusTESModPlatform.h"
-#include <sstream>
 
 namespace {
 JsValue ToString(const JsFunctionArguments& args)
@@ -117,11 +116,39 @@ JsValue NativeValueCasts::NativeValueToJsValue(const CallNative::AnySafe& v)
   if (v.valueless_by_exception())
     return JsValue::Null();
   return std::visit(
-    overloaded{ [](double v) { return JsValue(v); },
-                [](bool v) { return JsValue::Bool(v); },
-                [](const std::string& v) { return JsValue(v); },
-                [](const CallNative::ObjectPtr& v) {
-                  return NativeObjectToJsObject(v);
-                } },
+    overloaded{
+      [](double v) { return JsValue(v); },
+      [](bool v) { return JsValue::Bool(v); },
+      [](const std::string& v) { return JsValue(v); },
+      [](const CallNative::ObjectPtr& v) { return NativeObjectToJsObject(v); },
+      [](const std::vector<std::string>& v) {
+        auto out = JsValue::Array(v.size());
+        for (size_t i = 0; i < v.size(); ++i) {
+          out.SetProperty(JsValue::Int(i), v[i]);
+        }
+        return out;
+      },
+      [](const std::vector<bool>& v) {
+        auto out = JsValue::Array(v.size());
+        for (size_t i = 0; i < v.size(); ++i) {
+          out.SetProperty(JsValue::Int(i), JsValue::Bool(v[i]));
+        }
+        return out;
+      },
+      [](const std::vector<double>& v) {
+        auto out = JsValue::Array(v.size());
+        for (size_t i = 0; i < v.size(); ++i) {
+          out.SetProperty(JsValue::Int(i), v[i]);
+        }
+        return out;
+      },
+      [](const std::vector<CallNative::ObjectPtr>& v) {
+        auto out = JsValue::Array(v.size());
+        for (size_t i = 0; i < v.size(); ++i) {
+          out.SetProperty(JsValue::Int(i), NativeObjectToJsObject(v[i]));
+        }
+        return out;
+      },
+    },
     v);
 }

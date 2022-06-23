@@ -8,6 +8,7 @@ public:
   const char* GetName() override { return "debug"; }
 
   DEFINE_STATIC_SPSNIPPET(Notification);
+  DEFINE_STATIC_SPSNIPPET(MessageBox);
 
   VarValue SendAnimationEvent(VarValue self,
                               const std::vector<VarValue>& arguments);
@@ -18,6 +19,7 @@ public:
     compatibilityPolicy = policy;
 
     AddStatic(vm, "Notification", &PapyrusDebug::Notification);
+    AddStatic(vm, "MessageBox", &PapyrusDebug::MessageBox);
     AddStatic(vm, "SendAnimationEvent", &PapyrusDebug::SendAnimationEvent);
   }
 

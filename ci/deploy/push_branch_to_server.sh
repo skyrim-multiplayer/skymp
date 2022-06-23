@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 
-message() {
-  msg="[DEPLOY $DEPLOY_BRANCH] $1"
-  echo "$msg"
-  ./ci/deploy/call_webhook.sh "$msg"
-}
-
 report_fail() {
-  message "Something went wrong, please see GitHub logs for Ubuntu build for details"
+  ./ci/deploy/call_webhook.sh "Something went wrong, please see GitHub logs for details"
   exit 1
 }
 trap report_fail ERR
@@ -17,6 +11,7 @@ trap report_fail ERR
 # Ensuring all required variables are set:
 echo "${DEPLOY_TARGET_HOST:?}" > /dev/null
 echo "${DEPLOY_TARGET_USER:?}" > /dev/null
+echo "${DEPLOY_ACTION:?}" > /dev/null
 echo "${DEPLOY_BRANCH:?}" > /dev/null
 echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
 echo "${DEPLOY_SSH_KNOWN_HOSTS:?}" > /dev/null
@@ -35,8 +30,6 @@ echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
 remote_shell="ssh -i ssh_id -o UserKnownHostsFile=ssh_known_hosts"
 remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
 
-message "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
-
 run_remote() {
   $remote_shell "$remote_server_connstr" "$@"
 }
@@ -47,19 +40,41 @@ remote_branch_dir="skymp-server-$DEPLOY_BRANCH"
 run_remote test -e "$remote_branch_dir" \
   || (echo "no branch on remote server" && exit 1)
 
-# FIXME(#164): temporary workaround for Chakra build bug
-cp build/vcpkg_installed/x64-linux/bin/libChakraCore.so build/dist/server/
-cp ci/deploy/workaround_temporary/run.sh build/dist/server/
-
-# TODO(#613): remove this copying
-cp skymp5-server/{package.json,yarn.lock} build/dist/server/
-rsync --rsh="$remote_shell" -vazPh --checksum \
-    build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
-
-message "Updated server files"
+# TODO: remove this dir after we're finished
 
 rsync --rsh="$remote_shell" -vazPh --checksum \
     ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
-run_remote "$remote_tmp_dir/pull_branch.sh" "$DEPLOY_BRANCH"
 
-message "Finished successfully"
+if [[ "$DEPLOY_ACTION" == "stop" ]]; then
+  ./ci/deploy/call_webhook.sh "Stopping the server at \`$remote_server_connstr\`..."
+  run_remote "$remote_tmp_dir/branchctl.sh" stop "$DEPLOY_BRANCH"
+  ./ci/deploy/call_webhook.sh "Server is now OFFLINE!"
+  exit 0
+elif [[ "$DEPLOY_ACTION" == "deploy" ]]; then
+  ./ci/deploy/call_webhook.sh "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
+
+  # FIXME(#164): temporary workaround for Chakra build bug
+  cp build/vcpkg_installed/x64-linux/bin/libChakraCore.so build/dist/server/
+  cp ci/deploy/workaround_temporary/run.sh build/dist/server/
+
+  rsync --rsh="$remote_shell" -vazPh --checksum \
+      --exclude=server-settings.json \
+      build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
+
+  ./ci/deploy/call_webhook.sh "Updated server files, restarting it..."
+elif [[ "$DEPLOY_ACTION" == "restart" ]]; then
+  ./ci/deploy/call_webhook.sh "Restarting server at \`$remote_server_connstr\`..."
+else
+  ./ci/deploy/call_webhook.sh "Unknown action $DEPLOY_ACTION"
+  exit 1
+fi
+
+run_remote "$remote_tmp_dir/branchctl.sh" restart "$DEPLOY_BRANCH"
+
+get_ip_port() {
+  jq --raw-output '"IP: `'"$DEPLOY_TARGET_HOST"'`, port: `" + (.port | tostring) + "`"'
+}
+
+ip_port="`run_remote cat "$remote_branch_dir/server-settings.json" | get_ip_port`"
+
+./ci/deploy/call_webhook.sh "Finished successfully. Connect to: $ip_port"

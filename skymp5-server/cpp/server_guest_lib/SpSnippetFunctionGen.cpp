@@ -21,7 +21,7 @@ uint32_t SpSnippetFunctionGen::GetFormId(VarValue varValue)
 }
 
 std::string SpSnippetFunctionGen::SerializeArguments(
-  const std::vector<VarValue>& arguments)
+  const std::vector<VarValue>& arguments, MpActor* actor)
 {
   std::stringstream ss;
   ss << '[';
@@ -36,7 +36,9 @@ std::string SpSnippetFunctionGen::SerializeArguments(
         // Player character is always 0x14 on client, but 0xff000000+ in our
         // server
         // See also SpSnippet.cpp
-        formId = formId < 0xff000000 ? formId : 0x14;
+        if (actor && formId >= 0xff000000) {
+          formId = formId != actor->GetFormId() ? formId : 0x14;
+        }
 
         auto obj = static_cast<IGameObject*>(arg);
         auto type = obj ? obj->GetParentNativeScript() : "";

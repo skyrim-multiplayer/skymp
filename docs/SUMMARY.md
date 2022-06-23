@@ -10,7 +10,6 @@
 
 - [Cpp Code Guidelines](docs_cpp_code_guidelines.md)
 - [CMake Workflow](docs_cmake_workflow.md)
-- [Usage Legal Aspects](docs_usage_legal_aspects.md)
 - [Maintainer Rules](docs_maintainer_rules.md)
 - [Repository Structure](docs_repository_structure.md)
 

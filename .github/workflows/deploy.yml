@@ -1,33 +1,87 @@
 name: Deploy
 on:
-    push:
-        branches:
-          - nic11-deploy
-          - indev
+    workflow_dispatch:
+        inputs:
+            action:
+                description: action (deploy/restart/stop)
+                required: true
+                default: deploy
+            branch:
+                description: branch, meaning server instance (sweetpie/indev)
+                required: true
+                default: indev
+
+env:
+    BUILD_TYPE: RelWithDebInfo
+
 jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Checkout
+          - name: Get action
+            run: |
+                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
+
+          - name: Checkout (full)
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/checkout@v2
             with:
                 submodules: recursive
+                fetch-depth: 0
 
-          - name: Get branch name
+          - name: Checkout (last commit)
+            if: ${{env.DEPLOY_ACTION != 'deploy'}}
+            uses: actions/checkout@v2
+            with:
+                submodules: recursive
+                fetch-depth: 0
+
+          - name: Gather PRs
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
+            env:
+                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
-                echo "DEPLOY_BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr / -)" >> "$GITHUB_ENV"
+                git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git config --local user.name "github-actions[bot]"
+                git config pull.rebase false
+
+                base_rev="`git rev-parse HEAD`"
+                echo "=== Base revision: $base_rev"
+
+                git checkout -b tmp
+                yarn --cwd="${{github.workspace}}/ci/deploy/gather-server-branch"
+                ./ci/deploy/gather_server_branch.sh
+
+                echo ""
+                echo "=== Changes since $base_rev:"
+                git log -p "$base_rev.." | tee deploy_git_log
+
+                echo ""
+                echo "=== Full diff being deployed:"
+                git diff "$base_rev" | tee deploy_git_diff
+
+          - name: Upload patches
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
+            uses: actions/upload-artifact@v2
+            with:
+                name: patches
+                path: |
+                    deploy_git_log
+                    deploy_git_diff
 
           - name: Post link
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY $DEPLOY_BRANCH] Started build. "
-                message+="You can follow the process at <$link>. "
-                message+="Once build is finished, further progress will be reported here."
-                ./ci/deploy/call_webhook.sh "$message"
+                ./ci/deploy/call_webhook.sh "Started build. " \
+                    "You can follow the process at <$link>. " \
+                    "Once build is finished, further progress will be reported here."
 
-          - name: Prepare
+          - name: Prepare for build
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
@@ -38,6 +92,7 @@ jobs:
                     chown -R skymp:skymp /src /home/skymp/.cmake-js
 
           - name: CMake Configure
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
@@ -50,7 +105,14 @@ jobs:
                     && ./build.sh --configure \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
+          - name: Upload compile_commands.json
+            uses: actions/upload-artifact@v2
+            with:
+                name: compile_commands.json
+                path: ${{github.workspace}}/build/compile_commands.json
+
           - name: Build
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
                 image: skymp/skymp-vcpkg-deps:latest
@@ -66,7 +128,7 @@ jobs:
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
                 DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST}}
-                DEPLOY_TARGET_USER: ubuntu
+                DEPLOY_TARGET_USER: skmp
                 DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
                 DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS}}
             run: |
@@ -78,6 +140,6 @@ jobs:
             if: '!success()'
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                message="[DEPLOY $DEPLOY_BRANCH] Build or deploy failed or was cancelled. "
-                message+="Check out the logs at <$link> to find out why."
-                ./ci/deploy/call_webhook.sh "$message"
+                ./ci/deploy/call_webhook.sh \
+                    "Build or deploy failed or was cancelled. " \
+                    "Check out the logs at <$link> to find out why."

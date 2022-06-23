@@ -4,6 +4,7 @@ import shutil
 from utils import find_skymp_root
 
 def main(argv):
+    skymp_root = find_skymp_root()
     cache = [
         "build",
         "skymp5-client/node_modules",
@@ -14,7 +15,7 @@ def main(argv):
         "skyrim-platform/tools/dev_service/node_modules"
     ]
     for cache_path_relative in cache:
-        cache_path_full = os.path.join(find_skymp_root(), cache_path_relative)
+        cache_path_full = os.path.join(skymp_root, cache_path_relative)
         if os.path.exists(cache_path_full):
             print("Deleting", cache_path_full)
             shutil.rmtree(cache_path_full)

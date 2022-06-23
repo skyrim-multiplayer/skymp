@@ -1,11 +1,4 @@
 #pragma once
-#include <cassert>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <stdexcept>
-#include <string>
-#include <vector>
 
 class VirtualMachine;
 struct PexScript;
@@ -39,6 +32,7 @@ private:
   } data;
 
 public:
+  VarValue(uint8_t type, const char* value);
   std::string objectType;
 
   enum valueTypes
@@ -73,8 +67,6 @@ public:
   explicit VarValue(const char* value);
   explicit VarValue(float value);
   explicit VarValue(bool value);
-
-  VarValue::VarValue(uint8_t type, const char* value);
 
   static VarValue None() { return VarValue(); }
 
@@ -362,7 +354,7 @@ struct ActivePexInstance
 
   ActivePexInstance();
   ActivePexInstance(std::shared_ptr<PexScript> sourcePex,
-                    VarForBuildActivePex mapForFillPropertys,
+                    VarForBuildActivePex mapForFillProperties,
                     VirtualMachine* parentVM, VarValue activeInstanceOwner,
                     std::string childrenName);
 
@@ -392,7 +384,7 @@ private:
 
   std::vector<ObjectTable::Object::VarInfo> FillVariables(
     std::shared_ptr<PexScript> sourcePex,
-    std::vector<std::pair<std::string, VarValue>> argsForFillPropertys);
+    std::vector<std::pair<std::string, VarValue>> argsForFillProperties);
 
   uint8_t GetArrayElementType(uint8_t type);
 
@@ -403,9 +395,9 @@ private:
   bool HasParent(ActivePexInstance* script, std::string castToTypeName);
   bool HasChild(ActivePexInstance* script, std::string castToTypeName);
 
-  std::shared_ptr<ActivePexInstance> FillParentInstanse(
+  std::shared_ptr<ActivePexInstance> FillParentInstance(
     std::string nameNeedScript, VarValue activeInstanceOwner,
-    VarForBuildActivePex mapForFillPropertys);
+    VarForBuildActivePex mapForFillProperties);
 
   VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type);
 };

@@ -18,7 +18,7 @@ Build system is CMake-based. If you work with the whole project, CMake would aut
 
 Each project has its folder: `<repo_root>/<project_name>`
 
-Regardless of language, we use kebab-case for folder names. It's a snake-case variant that uses a hyphen instead of an underscore. (i.e. `chakra-wrapper` instead of `chakra_wrapper` or `chakraWrapper`).
+Regardless of language, we use kebab-case for folder names. It's a snake-case variant that uses a hyphen instead of an underscore. (i.e. `skyrim-platform` instead of `skyrim_platform` or `skyrimPlatform`).
 
 Every project has `CMakeLists.txt`. 
 

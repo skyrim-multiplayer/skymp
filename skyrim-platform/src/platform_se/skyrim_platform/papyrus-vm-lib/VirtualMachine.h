@@ -1,7 +1,5 @@
 #pragma once
 #include "Structures.h"
-#include <functional>
-#include <map>
 
 class VirtualMachine
 {
@@ -10,8 +8,8 @@ class VirtualMachine
 public:
   std::map<std::shared_ptr<IGameObject>, std::vector<ActivePexInstance>>
     gameObjects;
-  std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
-    nativeStaticFunctions;
+  std::map<std::string, std::map<std::string, ::NativeFunction>>
+    nativeFunctions, nativeStaticFunctions;
 
   std::vector<std::shared_ptr<PexScript>> allLoadedScripts;
 
@@ -21,7 +19,7 @@ public:
                  std::vector<std::string> scripts, VarForBuildActivePex vars);
 
   void RegisterFunction(std::string className, std::string functionName,
-                        FunctionType type, NativeFunction fn);
+                        FunctionType type, ::NativeFunction fn);
 
   void SendEvent(std::shared_ptr<IGameObject> self, const char* eventName,
                  std::vector<VarValue>& arguments);

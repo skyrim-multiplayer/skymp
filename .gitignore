@@ -1,2 +1,6 @@
 build
+.clang-tidy
+.editorconfig
+.prettierrc*
 .vscode
+.cache

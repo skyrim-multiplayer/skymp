@@ -5,5 +5,4 @@
 set -e
 set -x
 
-yarn install
-LD_LIBRARY_PATH="$PWD" node dist_back/index.js
+LD_LIBRARY_PATH="$PWD" node dist_back/skymp5-server.js

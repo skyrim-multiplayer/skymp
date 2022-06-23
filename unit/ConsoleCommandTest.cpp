@@ -7,13 +7,18 @@ using Catch::Matchers::Contains;
 
 PartOne& GetPartOne();
 
-int pospelov = 20;
+int kValidAdminUserId = 479;
 
 TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
-  class MyActionListener : public IActionListener
+  class MyActionListener : public ActionListener
   {
   public:
+    MyActionListener()
+      : ActionListener(GetPartOne())
+    {
+    }
+
     void OnConsoleCommand(
       const RawMessageData& rawMsgData_,
       const std::string& consoleCommandName_,
@@ -59,7 +64,7 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  IActionListener::RawMessageData msgData;
+  ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
   REQUIRE_THROWS_WITH(p.GetActionListener().OnConsoleCommand(
@@ -78,10 +83,10 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RegisterProfileId(pospelov);
+  ac.RegisterProfileId(kValidAdminUserId);
   ac.RemoveAllItems();
 
-  IActionListener::RawMessageData msgData;
+  ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
   p.Messages().clear();
@@ -116,9 +121,9 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RegisterProfileId(pospelov);
+  ac.RegisterProfileId(kValidAdminUserId);
 
-  IActionListener::RawMessageData msgData;
+  ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
   p.Messages().clear();

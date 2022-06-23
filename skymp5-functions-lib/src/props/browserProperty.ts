@@ -3,6 +3,7 @@ import { Mp } from '../types/mp';
 import { FunctionInfo } from '../utils/functionInfo';
 
 declare const mp: Mp;
+declare const ctx: Ctx;
 
 export class BrowserProperty {
   static init() {
@@ -29,7 +30,7 @@ export class BrowserProperty {
   }
 
   private static clientsideBrowserFocusedUpdate() {
-    return (ctx: Ctx) => {
+    return () => {
       // Focused state is forced: we do not allow user to escape from dialog windows, etc
       if (ctx.value === undefined || (ctx.state.lastBrowserFocused === ctx.value && !ctx.value)) {
         return;
@@ -40,7 +41,7 @@ export class BrowserProperty {
   }
 
   private static clientsideBrowserVisibleUpdate() {
-    return (ctx: Ctx) => {
+    return () => {
       if (ctx.value === undefined || ctx.state.lastBrowserVisible === ctx.value) {
         return;
       }

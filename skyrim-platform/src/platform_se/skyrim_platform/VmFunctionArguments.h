@@ -1,14 +1,10 @@
 #pragma once
-#include <RE/BSScript/IFunctionArguments.h>
-#include <functional>
-#include <variant>
-#include <vector>
 
 class VmFunctionArguments : public RE::BSScript::IFunctionArguments
 {
 public:
   typedef size_t (*GetNumArguments)(void* state);
-  using GetNthArgument = std::function<RE::BSScript::Variable(size_t)>;
+  using GetNthArgument = std::function<Variable(size_t)>;
 
   VmFunctionArguments(GetNumArguments getNumArgs_, GetNthArgument getNthArg_,
                       void* state_)
@@ -18,8 +14,7 @@ public:
   {
   }
 
-  bool operator()(
-    RE::BSScrapArray<RE::BSScript::Variable>& dest) const override
+  bool operator()(RE::BSScrapArray<Variable>& dest) const override
   {
     size_t n = getNumArgs(state);
     dest.resize(n);

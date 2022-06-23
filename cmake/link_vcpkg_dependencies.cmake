@@ -5,7 +5,7 @@ function(link_vcpkg_dependencies)
       message(FATAL_ERROR "Missing ${arg} argument")
     endif()
   endforeach()
-  
+
   foreach(target ${A_TARGETS})
     find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
     find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
@@ -31,33 +31,19 @@ function(link_vcpkg_dependencies)
       target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
       target_include_directories(${target} PUBLIC ${MHOOH_INCLUDE_DIR})
 
-      find_library(SKSE64_LIBRARY_DEBUG skse64)
-      string(REPLACE "/debug/lib/" "/lib/" SKSE64_LIBRARY_RELEASE ${SKSE64_LIBRARY_DEBUG})
-      find_path(SKSE64_INCLUDE_DIR skse64/PluginAPI.h)
-      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_LIBRARY_DEBUG},${SKSE64_LIBRARY_RELEASE}>")
-      target_include_directories(${target} PUBLIC ${SKSE64_INCLUDE_DIR})
+      if (SKYRIM_SE)
+        find_package(commonlibse REQUIRED CONFIGS CommonLibSSEConfig.cmake)
+      else()
+        find_package(commonlibae REQUIRED CONFIGS CommonLibSSEConfig.cmake)
+      endif()
 
-      find_library(SKSE64_COMMON_LIBRARY_DEBUG skse64_common)
-      string(REPLACE "/debug/lib/" "/lib/" SKSE64_COMMON_LIBRARY_RELEASE ${SKSE64_COMMON_LIBRARY_DEBUG})
-      find_path(SKSE64_COMMON_INCLUDE_DIR skse64/PluginAPI.h)
-      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${SKSE64_COMMON_LIBRARY_DEBUG},${SKSE64_COMMON_LIBRARY_RELEASE}>")
-      target_include_directories(${target} PUBLIC ${SKSE64_COMMON_INCLUDE_DIR})
+      find_package(Boost MODULE REQUIRED)
+      find_package(robin_hood REQUIRED)
 
-      find_library(COMMON_LIBRARY_DEBUG common)
-      string(REPLACE "/debug/lib/" "/lib/" COMMON_LIBRARY_RELEASE ${COMMON_LIBRARY_DEBUG})
-      find_path(COMMON_INCLUDE_DIR skse64/PluginAPI.h)
-      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMON_LIBRARY_DEBUG},${COMMON_LIBRARY_RELEASE}>")
-      target_include_directories(${target} PUBLIC ${COMMON_INCLUDE_DIR})
+      find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
+      target_include_directories(${target} PRIVATE ${SIMPLEINI_INCLUDE_DIRS})
 
-      find_library(COMMONLIBSSE_LIBRARY_DEBUG CommonLibSSE)
-      string(REPLACE "/debug/lib/" "/lib/" COMMONLIBSSE_LIBRARY_RELEASE ${COMMONLIBSSE_LIBRARY_DEBUG})
-      find_path(COMMONLIBSSE_INCLUDE_DIR SKSE/API.h)
-      target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${COMMONLIBSSE_LIBRARY_DEBUG},${COMMONLIBSSE_LIBRARY_RELEASE}>")
-      target_include_directories(${target} PUBLIC ${COMMONLIBSSE_INCLUDE_DIR})
-
-      # CommonLibSSE requirement
-      target_link_libraries(${target} PUBLIC Version)
-      target_compile_options(${target} PUBLIC "/FI\"ForceInclude.h\"" "/FI\"SKSE/Logger.h\"")
+      target_link_libraries(${target}	PRIVATE	Boost::headers CommonLibSSE::CommonLibSSE robin_hood::robin_hood)
 
       find_package(directxtk CONFIG REQUIRED)
       find_package(directxmath CONFIG REQUIRED)
@@ -66,7 +52,7 @@ function(link_vcpkg_dependencies)
 
     find_package(spdlog CONFIG REQUIRED)
     target_link_libraries(${target} PUBLIC spdlog::spdlog)
-  
+
     find_package(OpenSSL REQUIRED)
     target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
   endforeach()

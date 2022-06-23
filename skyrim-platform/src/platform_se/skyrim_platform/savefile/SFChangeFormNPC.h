@@ -1,8 +1,5 @@
 #pragma once
 #include "SFStructure.h"
-#include <cstdint>
-#include <optional>
-#include <vector>
 
 namespace SaveFile_ {
 struct ChangeFormNPC_

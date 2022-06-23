@@ -2,6 +2,7 @@
   "name": "dev_service",
   "version": "1.0.0",
   "description": "",
+  "license": "GPL-3.0",
   "main": "index.js",
   "scripts": {
     "nodemon": "nodemon --ignore dist/ .",
@@ -9,7 +10,7 @@
     "pack-debug": "cross-env DEFAULT_CONFIG=Debug DEV_SERVICE_ONLY_ONCE=yes DEV_SERVICE_NO_GAME=yes node .",
     "start": "cross-env DEV_SERVICE_ONLY_ONCE=yes node .",
     "start-debug": "cross-env DEFAULT_CONFIG=Debug DEV_SERVICE_ONLY_ONCE=yes node .",
-	"dev": "cross-env node .",
+    "dev": "cross-env node .",
     "dev-debug": "cross-env DEFAULT_CONFIG=Debug node ."
   },
   "keywords": [],

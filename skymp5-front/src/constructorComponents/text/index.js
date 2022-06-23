@@ -1,14 +1,16 @@
-import React from "react";
+import React from 'react';
 
-import './styles.scss'
+import './styles.scss';
 
 const Text = (props) => {
-    let text = props.text || "";
-    return (
+  const text = props.text || '';
+  return (
         <div className = {'skyrimText'} >
-            {text}
+            <span>
+                {text}
+            </span>
         </div>
-    )
-}
+  );
+};
 
 export default Text;

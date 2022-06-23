@@ -1,17 +1,18 @@
 #pragma once
-#include "MpObjectReference.h"
+#include "MpChangeForms.h"
 #include <chrono>
 #include <optional>
+
+class MpObjectReference;
 
 namespace ChangeFormGuard_ {
 void RequestSave(MpObjectReference* self);
 }
 
-template <class T>
 class ChangeFormGuard
 {
 public:
-  ChangeFormGuard(T changeForm_, MpObjectReference* self_)
+  ChangeFormGuard(const MpChangeForm& changeForm_, MpObjectReference* self_)
     : changeForm(changeForm_)
     , self(self_)
   {
@@ -23,8 +24,8 @@ public:
     NoRequestSave
   };
 
-  template <class F>
-  void EditChangeForm(F f, Mode mode = Mode::RequestSave)
+  void EditChangeForm(std::function<void(MpChangeForm&)> f,
+                      Mode mode = Mode::RequestSave)
   {
     f(changeForm);
     if (!blockSaving && mode == Mode::RequestSave) {
@@ -33,14 +34,14 @@ public:
     }
   }
 
-  const T& ChangeForm() const noexcept { return changeForm; }
+  const MpChangeForm& ChangeForm() const noexcept { return changeForm; }
 
   auto GetLastSaveRequestMoment() const { return lastSaveRequest; }
 
   bool blockSaving = false;
 
 private:
-  T changeForm;
+  MpChangeForm changeForm;
   MpObjectReference* const self;
   std::optional<std::chrono::system_clock::time_point> lastSaveRequest;
 };

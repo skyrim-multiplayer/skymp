@@ -4,49 +4,40 @@
 #include "NullPointerException.h"
 #include "Overloaded.h"
 #include "SendAnimationEvent.h"
+#include "SkyrimPlatform.h"
 #include "StringHolder.h"
 #include "VmCall.h"
 #include "VmCallback.h"
-#include <RE/Actor.h>
-#include <RE/BSScript/Internal/VirtualMachine.h>
-#include <RE/BSScript/PackUnpack.h>
-#include <RE/BSScript/StackFrame.h>
-#include <RE/SkyrimVM.h>
-#include <limits>
-#include <optional>
-#include <skse64/GameReferences.h>
-#include <skse64/PapyrusActor.h>
-#include <skse64_common/Relocation.h>
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
-RE::BSScript::Variable CallNative::AnySafeToVariable(
-  const CallNative::AnySafe& v, bool treatNumberAsInt = false)
+Variable CallNative::AnySafeToVariable(const CallNative::AnySafe& v,
+                                       bool treatNumberAsInt = false)
 {
   if (v.valueless_by_exception()) {
-    RE::BSScript::Variable res;
+    Variable res;
     res.SetNone();
     return res;
   }
   return std::visit(
     overloaded{
       [&](double f) {
-        RE::BSScript::Variable res;
+        Variable res;
         treatNumberAsInt ? res.SetSInt((int)floor(f)) : res.SetFloat((float)f);
         return res;
       },
       [](bool b) {
-        RE::BSScript::Variable res;
+        Variable res;
         res.SetBool(b);
         return res;
       },
       [](const std::string& s) {
-        RE::BSScript::Variable res;
+        Variable res;
         res.SetString(StringHolder::ThreadSingleton()[s]);
         return res;
       },
       [](const CallNative::ObjectPtr& obj) {
-        RE::BSScript::Variable res;
+        Variable res;
         res.SetNone();
         if (!obj) {
           return res;
@@ -61,7 +52,7 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
         RE::VMTypeID id = 0;
 
         if (isNotForm) {
-          auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+          auto vm = VM::GetSingleton();
 
           if (!vm) {
             return res;
@@ -80,92 +71,124 @@ RE::BSScript::Variable CallNative::AnySafeToVariable(
           throw NullPointerException("nativePtrRaw");
         }
 
-        id =
-          isNotForm ? id : static_cast<RE::VMTypeID>(nativePtrRaw->formType);
+        id = isNotForm
+          ? id
+          : static_cast<RE::VMTypeID>(nativePtrRaw->formType.get());
 
         RE::BSScript::PackHandle(&res, nativePtrRaw, id);
         return res;
       },
-      [](auto) -> RE::BSScript::Variable {
-        throw std::runtime_error(
-          "Unable to cast the argument to RE::BSScript::Variable");
+      [](auto) -> Variable {
+        throw std::runtime_error("Unable to cast the argument to Variable");
       } },
     v);
 }
 
-class VariableAccess : public RE::BSScript::Variable
-{
-public:
-  VariableAccess() = delete;
-
-  static RE::BSScript::TypeInfo GetType(const RE::BSScript::Variable& v)
-  {
-    return ((VariableAccess&)v).varType;
-  }
-
-  static RE::BSTSmartPointer<RE::BSScript::Object> GetObjectSmartPtr(
-    const RE::BSScript::Variable& v)
-  {
-    return ((VariableAccess&)v).value.obj;
-  }
-};
-
 namespace {
+
+CallNative::ObjectPtr GetSingleObjectPtr(
+  const Variable& r, std::optional<const char*> className = std::nullopt)
+{
+  using namespace CallNative;
+  auto vmImpl = VM::GetSingleton();
+  if (!vmImpl) {
+    throw NullPointerException("vmImpl");
+  }
+
+  auto object = r.GetObject();
+  if (!object) {
+    return ObjectPtr();
+  }
+
+  auto policy = vmImpl->GetObjectHandlePolicy();
+
+  void* objPtr = nullptr;
+
+  for (int i = 0; i < static_cast<int>(RE::FormType::Max); ++i) {
+    if (policy->HandleIsType(i, object->handle)) {
+      objPtr = object->Resolve(i);
+      break;
+    }
+  }
+
+  if (objPtr) {
+    auto objectTypeInfo = r.varType.GetTypeInfo();
+    if (!objectTypeInfo) {
+      throw NullPointerException("objectTypeInfo");
+    }
+    return std::make_shared<Object>(
+      className.has_value() ? *className : objectTypeInfo->GetName(), objPtr);
+  } else {
+    return ObjectPtr();
+  }
+}
+
 CallNative::AnySafe VariableToAnySafe(
-  const RE::BSScript::Variable& r,
-  std::optional<const char*> className = std::nullopt)
+  const Variable& r, std::optional<const char*> className = std::nullopt)
 {
   using namespace CallNative;
 
-  auto vmImpl = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-  if (!vmImpl)
-    throw NullPointerException("vmImpl");
-
-  auto t = VariableAccess::GetType(r);
-  switch (t.GetUnmangledRawType()) {
-    case RE::BSScript::TypeInfo::RawType::kNone:
+  switch (r.varType.GetUnmangledRawType()) {
+    case TypeInfo::RawType::kNone:
       return ObjectPtr();
-    case RE::BSScript::TypeInfo::RawType::kObject: {
-      auto object = r.GetObject();
-      if (!object)
-        return ObjectPtr();
-
-      auto policy = vmImpl->GetObjectHandlePolicy();
-
-      void* objPtr = nullptr;
-
-      for (int i = 0; i < (int)RE::FormType::Max; ++i)
-        if (policy->HandleIsType(i, object->handle)) {
-          objPtr = object->Resolve(i);
-          break;
-        }
-
-      if (objPtr) {
-        auto objectTypeInfo = t.GetTypeInfo();
-        if (!objectTypeInfo)
-          throw NullPointerException("objectTypeInfo");
-        return std::make_shared<Object>(
-          className.has_value() ? *className : objectTypeInfo->GetName(),
-          objPtr);
-      } else
-        return ObjectPtr();
-    }
-    case RE::BSScript::TypeInfo::RawType::kString:
+    case TypeInfo::RawType::kObject:
+      return GetSingleObjectPtr(r, className);
+    case TypeInfo::RawType::kString:
       return (std::string)r.GetString().data();
-    case RE::BSScript::TypeInfo::RawType::kInt:
+    case TypeInfo::RawType::kInt:
       return (double)r.GetSInt();
-    case RE::BSScript::TypeInfo::RawType::kFloat:
+    case TypeInfo::RawType::kFloat:
       return (double)r.GetFloat();
-    case RE::BSScript::TypeInfo::RawType::kBool:
+    case TypeInfo::RawType::kBool:
       return r.GetBool();
-    case RE::BSScript::TypeInfo::RawType::kNoneArray:
-    case RE::BSScript::TypeInfo::RawType::kObjectArray:
-    case RE::BSScript::TypeInfo::RawType::kStringArray:
-    case RE::BSScript::TypeInfo::RawType::kIntArray:
-    case RE::BSScript::TypeInfo::RawType::kFloatArray:
-    case RE::BSScript::TypeInfo::RawType::kBoolArray:
+    case TypeInfo::RawType::kNoneArray:
       throw std::runtime_error(
-        "Functions with Array return type are not supported");
+        "Functions with NoneArray return type are not supported");
+    case TypeInfo::RawType::kObjectArray: {
+      auto array = r.GetArray();
+      std::vector<CallNative::ObjectPtr> out{};
+      out.reserve(array->size());
+      for (const auto& item : *array) {
+        out.push_back(GetSingleObjectPtr(item));
+      }
+      return out;
+    }
+    case TypeInfo::RawType::kStringArray: {
+      auto array = r.GetArray();
+      std::vector<std::string> out{};
+      out.reserve(array->size());
+      for (const auto& item : *array) {
+        out.push_back(item.GetString().data());
+      }
+      return out;
+    }
+    case TypeInfo::RawType::kIntArray: {
+      auto array = r.GetArray();
+      std::vector<double> out{};
+      out.reserve(array->size());
+      for (int i = 0; i < array->size(); ++i) {
+        out.push_back(static_cast<double>((*array)[i].GetSInt()));
+      }
+      return out;
+    }
+    case TypeInfo::RawType::kFloatArray: {
+      auto array = r.GetArray();
+      std::vector<double> out{};
+      out.reserve(array->size());
+      for (int i = 0; i < array->size(); ++i) {
+        out.push_back(static_cast<double>((*array)[i].GetFloat()));
+      }
+      return out;
+    }
+    case TypeInfo::RawType::kBoolArray: {
+      auto array = r.GetArray();
+      std::vector<bool> out{};
+      out.reserve(array->size());
+      for (const auto& item : *array) {
+        out.push_back(item.GetBool());
+      }
+      return out;
+    }
     default:
       throw std::runtime_error("Unknown function return type");
   }
@@ -188,7 +211,7 @@ bool IsAddItem(const std::string& className, const std::string& classFunc,
 {
   return IsActorOrObjectRefr(className) &&
     !stricmp(classFunc.data(), "addItem") && rawSelf &&
-    IsActorOrObjectRefr(rawSelf->formType);
+    IsActorOrObjectRefr(rawSelf->formType.get());
 }
 
 bool IsRemoveItem(const std::string& className, const std::string& classFunc,
@@ -196,7 +219,7 @@ bool IsRemoveItem(const std::string& className, const std::string& classFunc,
 {
   return IsActorOrObjectRefr(className) &&
     !stricmp(classFunc.data(), "removeItem") && rawSelf &&
-    IsActorOrObjectRefr(rawSelf->formType);
+    IsActorOrObjectRefr(rawSelf->formType.get());
 }
 }
 
@@ -214,6 +237,12 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
 
   if (!funcInfo) {
     throw std::runtime_error("Native function not found '" +
+                             std::string(className) + "." +
+                             std::string(classFunc) + "' ");
+  }
+
+  if (!funcInfo->IsNative()) {
+    throw std::runtime_error("Function is not native '" +
                              std::string(className) + "." +
                              std::string(classFunc) + "' ");
   }
@@ -248,7 +277,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   }
 
   auto f = funcInfo->GetIFunction();
-  auto vmImpl = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+  auto vmImpl = VM::GetSingleton();
   if (!vmImpl)
     throw NullPointerException("vmImpl");
 
@@ -284,14 +313,11 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     auto formId = rawSelf->GetFormID();
 
     gameThrQ.AddTask([formId] {
-      if (auto refr =
-            reinterpret_cast<RE::TESObjectREFR*>(LookupFormByID(formId))) {
+      if (auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId)) {
         if (refr->GetFormID() == formId &&
             refr->GetFormType() == RE::FormType::Reference) {
-
-          typedef float (*myfunc)(void*, void*, RE::TESObjectREFR*);
-          RelocAddr<myfunc> func(10041056);
-          func(nullptr, nullptr, refr);
+          // change name
+          Offsets::Unknown(nullptr, nullptr, refr);
         }
       }
     });
@@ -305,9 +331,10 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
       auto nativeActorPtr = (RE::Actor*)_self->GetNativeObjectPtr();
       if (!nativeActorPtr)
         throw NullPointerException("nativeActorPtr");
-      if (nativeActorPtr->formType != RE::FormType::ActorCharacter)
+      if (nativeActorPtr->formType.get() != RE::FormType::ActorCharacter)
         throw std::runtime_error("QueueNiNodeUpdate must be called on Actor");
-      papyrusActor::QueueNiNodeUpdate((Actor*)nativeActorPtr);
+      // this is called QueueNiNodeUpdate in skse
+      nativeActorPtr->DoReset3D(false);
     });
     return ObjectPtr();
   }
@@ -324,23 +351,20 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     if (nativeTargetActor->formType != RE::FormType::ActorCharacter)
       throw std::runtime_error(
         "nativeTargetActor - unexpected formType (" +
-        std::to_string(static_cast<int>(nativeTargetActor->formType)) + ")");
+        std::to_string(static_cast<int>(nativeTargetActor->formType.get())) +
+        ")");
 
     const auto targetActorId = nativeTargetActor->formID;
     const auto mag = static_cast<float>(std::get<double>(args_.args[1]));
 
     gameThrQ.AddTask([mag, nativeTargetActor, targetActorId] {
-      if (LookupFormByID(targetActorId) !=
-          reinterpret_cast<void*>(nativeTargetActor))
+      if (RE::TESForm::LookupByID<RE::Actor>(targetActorId) !=
+          nativeTargetActor)
         return;
       if (!g_nativeCallRequirements.vm)
         throw NullPointerException("g_nativeCallRequirements.vm");
 
-      typedef void(PushActorAway)(void* vm, RE::VMStackID stackId,
-                                  RE::Actor* self, RE::Actor* targetActor,
-                                  float magnitude);
-      RelocPtr<PushActorAway> pushActorAway(10052416);
-      pushActorAway.GetPtr()(g_nativeCallRequirements.vm,
+      Offsets::PushActorAway(g_nativeCallRequirements.vm,
                              g_nativeCallRequirements.stackId,
                              nativeTargetActor, nativeTargetActor, mag);
     });
@@ -402,8 +426,8 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
 
   auto topArgs = stackIterator->second->top->args;
   for (int i = 0; i < numArgs; i++) {
-    RE::BSFixedString unusedNameOut;
-    RE::BSScript::TypeInfo typeOut;
+    FixedString unusedNameOut;
+    TypeInfo typeOut;
     f->GetParam(i, unusedNameOut, typeOut);
 
     topArgs[i] = AnySafeToVariable(args[i], typeOut.IsInt());
@@ -413,8 +437,8 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     VmFunctionArguments vmFuncArgs(
       [](void* numArgs) { return (size_t)numArgs; },
       [&args_, &f](size_t i) {
-        RE::BSFixedString unusedNameOut;
-        RE::BSScript::TypeInfo typeOut;
+        FixedString unusedNameOut;
+        TypeInfo typeOut;
         f->GetParam(i, unusedNameOut, typeOut);
         return AnySafeToVariable(args_.args[i], typeOut.IsInt());
       },
@@ -422,14 +446,13 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     auto fsClassName = AnySafeToVariable(className).GetString();
     auto fsClassFunc = AnySafeToVariable(classFunc).GetString();
     auto selfScriptObject = rawSelf
-      ? VariableAccess::GetObjectSmartPtr(AnySafeToVariable(self))
+      ? AnySafeToVariable(self).value.obj
       : RE::BSTSmartPointer<RE::BSScript::Object>();
 
     auto funcReturnType = funcInfo->GetReturnType().className;
     auto jsThrQPtr = &jsThrQ;
     auto cb = latentCallback;
-    auto onResult = [cb, funcReturnType,
-                     jsThrQPtr](const RE::BSScript::Variable& result) {
+    auto onResult = [cb, funcReturnType, jsThrQPtr](const Variable& result) {
       jsThrQPtr->AddTask([=] {
         if (!cb)
           throw NullPointerException("cb");
@@ -441,11 +464,13 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     return ObjectPtr();
   }
 
-  RE::BSScript::IFunction::CallResult callResut =
-    f->Call(stackIterator->second, vmImpl->GetErrorLogger(), vmImpl, false);
-  if (callResut != RE::BSScript::IFunction::CallResult::kCompleted) {
+  RE::BSScript::IFunction::CallResult callResult =
+    RE::BSScript::IFunction::CallResult::kFailedAbort;
+  SkyrimPlatform::GetSingleton()->PushToWorkerAndWait(
+    f, stackIterator->second, vmImpl->GetErrorLogger(), vmImpl, &callResult);
+  if (callResult != RE::BSScript::IFunction::CallResult::kCompleted) {
     throw std::runtime_error("Bad call result " +
-                             std::to_string((int)callResut));
+                             std::to_string((int)callResult));
   }
 
   auto& r = stackIterator->second->returnValue;
@@ -476,7 +501,7 @@ bool IsInstanceOf(
 };
 
 void GetScriptObjectType(
-  RE::BSScript::Internal::VirtualMachine& vm, RE::VMTypeID vmTypeID,
+  VM& vm, RE::VMTypeID vmTypeID,
   RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo>& objectTypeInfo)
 {
   bool res = vm.GetScriptObjectType(vmTypeID, objectTypeInfo);
@@ -510,7 +535,7 @@ CallNative::AnySafe CallNative::DynamicCast(const std::string& outputTypeName,
   if (!stricmp(fromObjPtr->GetType(), outputTypeName.data()))
     return from_;
 
-  auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+  auto vm = VM::GetSingleton();
   if (!vm)
     throw NullPointerException("vm");
 
@@ -534,7 +559,7 @@ CallNative::AnySafe CallNative::DynamicCast(const std::string& outputTypeName,
     auto form = (RE::TESForm*)rawPtr;
 
     RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> objInfoFormType;
-    RE::VMTypeID formTypeId = (RE::VMTypeID)form->formType;
+    RE::VMTypeID formTypeId = (RE::VMTypeID)form->formType.get();
     GetScriptObjectType(*vm, formTypeId, objInfoFormType);
 
     const bool IsParentOf =

@@ -1,10 +1,6 @@
-if("${CMAKE_PROJECT_NAME}" STREQUAL "" OR "${CMAKE_PROJECT_NAME}" STREQUAL "platform_se")
-  if(MSVC)
-    set(CMAKE_SYSTEM_VERSION "10.0.17763.0" CACHE STRING INTERNAL FORCE)
-    set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION "10.0.17763.0" CACHE STRING INTERNAL FORCE)
-  endif()
-  project(platform_se)
-endif()
+project(platform_se VERSION 2.6.0 LANGUAGES CXX)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/link_vcpkg_dependencies.cmake)
@@ -25,7 +21,7 @@ if(MSVC)
 
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
   set(tilted "${SKYRIM_PLATFORM_SOURCE_DIR}/src/tilted")
-  
+
   file(GLOB_RECURSE core_library_src "${tilted}/core_library/*")
   add_library(core_library STATIC ${core_library_src})
   target_include_directories(core_library PUBLIC "${tilted}/core_library")
@@ -56,6 +52,8 @@ if(MSVC)
   add_executable(SkyrimPlatformCEF ${ui_process_src})
   target_link_libraries(SkyrimPlatformCEF PUBLIC core_library)
   target_link_libraries(SkyrimPlatformCEF PUBLIC cef)
+  # suppress missing pdb warning for cef
+  target_link_options(SkyrimPlatformCEF PRIVATE "LINKER:-ignore:4099")
   set_target_properties(SkyrimPlatformCEF PROPERTIES WIN32_EXECUTABLE TRUE)
   set_target_properties(SkyrimPlatformCEF PROPERTIES SUFFIX ".exe.hidden")
 endif()
@@ -92,22 +90,37 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
    )
 
   if(MSVC)
+    if(SKYRIM_SE)
+      add_compile_definitions(SKYRIMSE)
+    endif()
+
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
+    list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
+    list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
     add_library(skyrim_platform SHARED ${platform_src})
     set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
     target_include_directories(skyrim_platform PRIVATE "${third_party}")
-	target_include_directories(skyrim_platform PRIVATE "${tilted}")
+    target_include_directories(skyrim_platform PRIVATE "${tilted}")
+    target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib)
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
+    # suppress missing pdb warning for cef and frida
+    target_link_options(skyrim_platform PRIVATE "LINKER:-ignore:4099")
+    target_precompile_headers(skyrim_platform	PRIVATE	skyrim_platform/PCH.h)
     apply_default_settings(TARGETS skyrim_platform)
     list(APPEND VCPKG_DEPENDENT skyrim_platform)
 
     file(GLOB_RECURSE platform_entry_src "skyrim_platform_entry/*")
     list(APPEND platform_entry_src "${CMAKE_SOURCE_DIR}/.clang-format")
+    list(APPEND platform_entry_src ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
+    list(APPEND platform_entry_src ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
     add_library(skyrim_platform_entry SHARED ${platform_entry_src})
     set_target_properties(skyrim_platform_entry PROPERTIES OUTPUT_NAME "SkyrimPlatform")
     target_include_directories(skyrim_platform_entry PRIVATE "${third_party}")
+    target_include_directories(skyrim_platform_entry PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
+    target_link_libraries(skyrim_platform_entry PRIVATE CommonLibSSE::CommonLibSSE)
+    target_precompile_headers(skyrim_platform_entry	PRIVATE	skyrim_platform_entry/PCH.h)
     apply_default_settings(TARGETS skyrim_platform_entry)
 
     set_target_properties(skyrim_platform SkyrimPlatformCEF skyrim_platform_entry PROPERTIES
@@ -118,7 +131,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
   add_papyrus_library_ck(
-    NAME TESModPlatformPsc 
+    NAME TESModPlatformPsc
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
     OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
     COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
@@ -148,7 +161,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   apply_default_settings(TARGETS TSConverter)
   set_target_properties(TSConverter PROPERTIES CXX_STANDARD 20)
   list(APPEND VCPKG_DEPENDENT TSConverter)
-  
+
   set(CONVERT_FILES_DIR ${CMAKE_CURRENT_LIST_DIR}/codegen/convert-files/)
   list(APPEND CODEGEN_ARGS
     "${CONVERT_FILES_DIR}/FunctionsDump.txt"
@@ -157,7 +170,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
   add_custom_target(codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
   add_dependencies(codegen TSConverter)
-  
+
   # force "skyrim-platform" custom target to be built strictly after codegen
   list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
 

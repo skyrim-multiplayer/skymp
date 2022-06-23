@@ -27,6 +27,11 @@ add_executable(unit ${src})
 target_link_libraries(unit PUBLIC server_guest_lib platform_lib)
 apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
+
+if(SKYRIM_SE)
+  target_compile_definitions(unit PRIVATE SKYRIM_SE=1)
+endif()
+
 target_compile_definitions(unit PRIVATE
   TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
   BUILT_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex\"
@@ -34,10 +39,12 @@ target_compile_definitions(unit PRIVATE
   UNIT_DATA_DIR=\"${UNIT_DATA_DIR}\"
   DIST_DIR=\"${CMAKE_BINARY_DIR}/dist\"
 )
+
 if(WIN32)
   target_compile_options(unit PRIVATE "/bigobj")
   target_link_libraries(unit PUBLIC Dbghelp.lib)
 endif()
+
 target_link_libraries(unit PUBLIC espm)
 
 #
@@ -52,6 +59,7 @@ add_test(
     -DCOVERAGE_HTML_OUT_DIR=${CMAKE_BINARY_DIR}/__coverage
     -DCPPCOV=OFF
     -DCPPCOV_PATH=${CPPCOV_PATH}
+    -DUNIT_WORKING_DIRECTORY=${CMAKE_BINARY_DIR}
     -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
 )
 

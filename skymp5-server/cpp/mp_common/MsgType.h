@@ -21,5 +21,6 @@ enum class MsgType : int64_t
   CustomEvent = 15,
   ChangeValues = 16,
   OnHit = 17,
-  DeathStateContainer = 18
+  DeathStateContainer = 18,
+  DropItem = 19
 };

@@ -5,6 +5,10 @@ on:
     push:
         branches:
           - main
+
+env:
+    BUILD_TYPE: RelWithDebInfo
+
 jobs:
     pr-ubuntu-docker:
         runs-on: ubuntu-latest
@@ -13,6 +17,12 @@ jobs:
             uses: actions/checkout@v2
             with:
                 submodules: recursive
+
+          - name: Store SP types from commit
+            run: |
+              commit=$(< ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts)
+              chmod 777 ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files
+              echo "$commit" > ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/temp.txt
 
           # Download Skyrim SE data files
           - uses: suisei-cn/actions-download-file@v1
@@ -65,6 +75,12 @@ jobs:
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                        -DUNIT_DATA_DIR="/src/skyrim_data_files"
 
+          - name: Upload compile_commands.json
+            uses: actions/upload-artifact@v2
+            with:
+                name: compile_commands.json
+                path: ${{github.workspace}}/build/compile_commands.json
+
           - name: Build
             uses: addnab/docker-run-action@v3
             with:
@@ -95,6 +111,21 @@ jobs:
               name: dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
 
+          - name: SP Types Check
+            run: |
+              commit=$(< ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/temp.txt)
+              build=$(< ${{github.workspace}}/build/dist/client/Data/Platform/Modules/skyrimPlatform.ts)
+              difference=$(diff -u <(echo "$commit") <(echo "$build"))
+              size=$(echo -n $difference | wc -m)
+              echo "Size $size"
+              if [ $size != 0 ] ; then
+                echo "SP Types in codegen and build dist not equal"
+                echo "Difference:"
+                echo $difference
+                exit 1
+              fi
+              echo "SP Types in codegen and build dist equal"
+
           - name: Test
             uses: addnab/docker-run-action@v3
             with:
@@ -105,6 +136,4 @@ jobs:
                     -u skymp
                 run: |
                     cd /src/build \
-                    && ./unit/unit
-                # not working output for some reason:
-                # && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
+                    && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure

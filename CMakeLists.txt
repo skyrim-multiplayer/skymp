@@ -1,3 +1,9 @@
+# At the moment of writing this gives ~10% speedup of cmake command on Windows
+# https://gitlab.kitware.com/cmake/cmake/-/issues/23154
+if(POLICY 0115)
+  cmake_policy(SET CMP0115 NEW)
+endif()
+
 option(USE_SYSTEM_VCPKG "Use vcpkg from your system instead of skymp submodule" OFF)
 
 if(WIN32)
@@ -9,20 +15,14 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
-macro(set_from_environment VARIABLE)
-  if (NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
-    set(${VARIABLE} $ENV{${VARIABLE}})
-  endif ()
-endmacro()
-
-set_from_environment(VCPKG_ROOT)
-
 # Use installed VCPKG if exists
-if (USE_SYSTEM_VCPKG AND DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+if(USE_SYSTEM_VCPKG AND DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
   set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-else ()
+elseif(USE_SYSTEM_VCPKG AND DEFINED VCPKG_INSTALLATION_ROOT AND EXISTS ${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake)
+  set(CMAKE_TOOLCHAIN_FILE "${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+else()
   set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-endif ()
+endif()
 
 # File from vcpkg submodule. This indicates inability to find this file or checkout submodules.
 if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
@@ -45,13 +45,27 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
   message(FATAL_ERROR "${msg}")
 endif()
 
+option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
+
+if (SKYRIM_SE)
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
+else()
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
+endif()
+
 cmake_minimum_required(VERSION 3.18.2)
 project(skymp)
 enable_testing()
 
 # Bool options
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
-option(ONLY_SP "Build only SkyrimPlatform instead of performing full SkyMP build" OFF)
+option(SWEETPIE "Affects default client and server configs" ON)
+option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
+
+message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
+message(STATUS SWEETPIE=${SWEETPIE})
+message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
+message(STATUS SKYRIM_SE=${SKYRIM_SE})
 
 # P.S. SkyrimPlatform crashes with that JS_ENGINE_TRACING_ENABLED on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 
@@ -90,7 +104,7 @@ if(CPPCOV_PATH)
   endif()
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -99,12 +113,47 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 add_subdirectory(viet)
 add_subdirectory(skyrim-platform)
 
-if(NOT ONLY_SP)
-  add_subdirectory(client-deps)
-  add_subdirectory(skymp5-client)
-  add_subdirectory(skymp5-front)
-  add_subdirectory(skymp5-functions-lib)
-  add_subdirectory(skymp5-scripts)
-  add_subdirectory(skymp5-server)
-  add_subdirectory(unit)
+
+add_subdirectory(client-deps)
+add_subdirectory(skymp5-client)
+add_subdirectory(skymp5-front)
+add_subdirectory(skymp5-functions-lib)
+add_subdirectory(skymp5-scripts)
+add_subdirectory(skymp5-server)
+add_subdirectory(unit)
+
+if(PREPARE_NEXUS_ARCHIVES)
+  add_custom_target(
+    prepare_nexus_archives ALL
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/prepare_nexus_archives.cmake
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  )
+
+  add_dependencies(prepare_nexus_archives skyrim-platform)
+  set(TARGETS_ADDITIONAL
+    skymp5-client
+    skymp5-front
+    skymp5-functions-lib
+    skymp5-scripts
+    skymp5-server
+  )
+  foreach(target ${TARGETS_ADDITIONAL})
+    if(TARGET ${target})
+      add_dependencies(prepare_nexus_archives ${target})
+    endif()
+  endforeach()
 endif()
+
+# One or more of these targets help dev_service not to crash during build (watch mode). Not sure which target exactly.
+set(TARGETS_ADDITIONAL
+    skymp5-client
+    skymp5-front
+    skymp5-functions-lib
+    skymp5-scripts
+    skymp5-server
+  )
+foreach(target ${TARGETS_ADDITIONAL})
+  if(TARGET ${target} AND TARGET RestartGame)
+    add_dependencies(RestartGame ${target})
+  endif()
+endforeach()

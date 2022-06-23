@@ -68,6 +68,7 @@ JsValue HttpClientApi::Get(const JsFunctionArguments& args)
           "body",
           JsValue::String(std::string{ res.body.begin(), res.body.end() }));
         result.SetProperty("status", res.status);
+        result.SetProperty("error", res.error);
         resolve->Call({ JsValue::Undefined(), result });
       });
 
@@ -98,6 +99,7 @@ JsValue HttpClientApi::Post(const JsFunctionArguments& args)
           "body",
           JsValue::String(std::string{ res.body.begin(), res.body.end() }));
         result.SetProperty("status", res.status);
+        result.SetProperty("error", res.error);
         resolve->Call({ JsValue::Undefined(), result });
       });
 

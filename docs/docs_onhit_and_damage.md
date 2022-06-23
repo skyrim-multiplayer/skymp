@@ -40,8 +40,9 @@ incomingDamage = isUnarmed ? raceUnarmedDamage : baseWeaponDamage;
 
 Armor damage reduction:
 ```
-armorRating = armorRating1 + armorRating2 + armorRating3 + ... + armorRatingN;
+armorRating = armorRating1 + armorRating2 + armorRating3 + ... + armorRatingN + magicArmorRating;
 //fMaxArmorRating is [GMST:00037DEB], fArmorScalingFactor is [GMST:00021A72];
 //fMaxArmorRating = 80 by default, fArmorScalingFactor = 0.12 by default
+//magicArmorRating is sum of magnitudes of armors' enchantments with magic effect of damage resist
 receivedDamage = incomingDamage * 0.01 * (100 - std::min(armorRating * fArmorScalingFactor, fMaxArmorRating));
 ```

@@ -1,5 +1,4 @@
 #pragma once
-#include "JsEngine.h"
 
 using ProxyGetterFn =
   std::function<JsValue(const JsValue& origin, const JsValue& keyStr)>;

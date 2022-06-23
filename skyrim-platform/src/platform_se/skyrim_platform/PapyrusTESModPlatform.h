@@ -1,28 +1,13 @@
 #pragma once
-#include <RE/Actor.h>
-#include <RE/BGSColorForm.h>
-#include <RE/BSScript/ISavePatcherInterface.h>
-#include <RE/BSScript/TypeTraits.h>
-#include <RE/BSScript/VMArray.h>
-#include <RE/TESNPC.h>
-#include <RE/TESObjectCELL.h>
-#include <RE/TESRace.h>
-#include <RE/TESWorldSpace.h>
-#include <cstdint>
-#include <functional>
-#include <memory>
 
 namespace TESModPlatform {
-extern std::function<void(RE::BSScript::IVirtualMachine* vm,
-                          RE::VMStackID stackId)>
-  onPapyrusUpdate;
+extern std::function<void(IVM* vm, StackID stackId)> onPapyrusUpdate;
 
-SInt32 Add(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-           RE::StaticFunctionTag*, SInt32, SInt32, SInt32, SInt32, SInt32,
-           SInt32, SInt32, SInt32, SInt32, SInt32, SInt32, SInt32);
+int32_t Add(IVM* vm, StackID stackId, RE::StaticFunctionTag*, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t);
 
-void MoveRefrToPosition(RE::BSScript::IVirtualMachine* vm,
-                        RE::VMStackID stackId, RE::StaticFunctionTag*,
+void MoveRefrToPosition(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                         RE::TESObjectREFR* refr, RE::TESObjectCELL* cell,
                         RE::TESWorldSpace* world, float posX, float posY,
                         float posZ, float rotX, float rotY, float rotZ);
@@ -37,76 +22,67 @@ enum
   WEAP_DRAWN_MODE_MAX = WEAP_DRAWN_MODE_ALWAYS_TRUE
 };
 
-void SetWeaponDrawnMode(RE::BSScript::IVirtualMachine* vm,
-                        RE::VMStackID stackId, RE::StaticFunctionTag*,
-                        RE::Actor* actor, SInt32 weapDrawnMode);
+void SetWeaponDrawnMode(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                        RE::Actor* actor, int32_t weapDrawnMode);
 
-SInt32 GetNthVtableElement(RE::BSScript::IVirtualMachine* vm,
-                           RE::VMStackID stackId, RE::StaticFunctionTag*,
-                           RE::TESForm* pointer, SInt32 pointerOffset,
-                           SInt32 elementIndex);
+int32_t GetNthVtableElement(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                            RE::TESForm* pointer, int32_t pointerOffset,
+                            int32_t elementIndex);
 
-bool IsPlayerRunningEnabled(RE::BSScript::IVirtualMachine* vm,
-                            RE::VMStackID stackId, RE::StaticFunctionTag*);
+bool IsPlayerRunningEnabled(IVM* vm, StackID stackId, RE::StaticFunctionTag*);
 
-RE::BGSColorForm* GetSkinColor(RE::BSScript::IVirtualMachine* vm,
-                               RE::VMStackID stackId, RE::StaticFunctionTag*,
-                               RE::TESNPC* base);
+RE::BGSColorForm* GetSkinColor(IVM* vm, StackID stackId,
+                               RE::StaticFunctionTag*, RE::TESNPC* base);
 
-RE::TESNPC* CreateNpc(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                      RE::StaticFunctionTag*);
+RE::TESNPC* CreateNpc(IVM* vm, StackID stackId, RE::StaticFunctionTag*);
 
-void SetNpcSex(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-               RE::StaticFunctionTag*, RE::TESNPC* npc, SInt32 sex);
+void SetNpcSex(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+               RE::TESNPC* npc, int32_t sex);
 
-void SetNpcRace(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                RE::StaticFunctionTag*, RE::TESNPC* npc, RE::TESRace* race);
+void SetNpcRace(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                RE::TESNPC* npc, RE::TESRace* race);
 
-void SetNpcSkinColor(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                     RE::StaticFunctionTag*, RE::TESNPC* npc,
-                     SInt32 skinColor);
+void SetNpcSkinColor(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                     RE::TESNPC* npc, int32_t skinColor);
 
-void SetNpcHairColor(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                     RE::StaticFunctionTag*, RE::TESNPC* npc,
-                     SInt32 skinColor);
+void SetNpcHairColor(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                     RE::TESNPC* npc, int32_t skinColor);
 
-void ResizeHeadpartsArray(RE::BSScript::IVirtualMachine* vm,
-                          RE::VMStackID stackId, RE::StaticFunctionTag*,
-                          RE::TESNPC* npc, SInt32 size);
+void ResizeHeadpartsArray(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                          RE::TESNPC* npc, int8_t size);
 
-void ResizeTintsArray(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                      RE::StaticFunctionTag*, SInt32 size);
+void ResizeTintsArray(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                      int32_t size);
 
-void SetFormIdUnsafe(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                     RE::StaticFunctionTag*, RE::TESForm* form, UInt32 newId);
+void SetFormIdUnsafe(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                     RE::TESForm* form, uint32_t newId);
 
-void ClearTintMasks(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                    RE::StaticFunctionTag*, RE::Actor* targetActor);
+void ClearTintMasks(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                    RE::Actor* targetActor);
 
-void PushTintMask(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                  RE::StaticFunctionTag*, RE::Actor* targetActor, SInt32 type,
-                  UInt32 argb, RE::BSFixedString texturePath);
+void PushTintMask(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                  RE::Actor* targetActor, int32_t type, uint32_t argb,
+                  FixedString texturePath);
 
-void PushWornState(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                   RE::StaticFunctionTag*, bool worn, bool wornLeft);
+void PushWornState(IVM* vm, StackID stackId, RE::StaticFunctionTag*, bool worn,
+                   bool wornLeft);
 
-void AddItemEx(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-               RE::StaticFunctionTag*, RE::TESObjectREFR* containerRefr,
-               RE::TESForm* item, SInt32 countDelta, float health,
-               RE::EnchantmentItem* enchantment, SInt32 maxCharge,
+void AddItemEx(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+               RE::TESObjectREFR* containerRefr, RE::TESForm* item,
+               int32_t countDelta, float health,
+               RE::EnchantmentItem* enchantment, int32_t maxCharge,
                bool removeEnchantmentOnUnequip, float chargePercent,
-               RE::BSFixedString textDisplayData, SInt32 soul,
-               RE::AlchemyItem* poison, SInt32 poisonCount);
+               FixedString textDisplayData, int32_t soul,
+               RE::AlchemyItem* poison, int32_t poisonCount);
 
-void UpdateEquipment(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                     RE::StaticFunctionTag*, RE::Actor* containerRefr,
-                     RE::TESForm* item, bool leftHand);
+void UpdateEquipment(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                     RE::Actor* containerRefr, RE::TESForm* item,
+                     bool leftHand);
 
-void ResetContainer(RE::BSScript::IVirtualMachine* vm, RE::VMStackID stackId,
-                    RE::StaticFunctionTag*, RE::TESForm* container);
+void ResetContainer(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+                    RE::TESForm* container);
 
-void BlockPapyrusEvents(RE::BSScript::IVirtualMachine* vm,
-                        RE::VMStackID stackId, RE::StaticFunctionTag*,
+void BlockPapyrusEvents(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                         bool blocked);
 
 // Threadsafe
@@ -118,5 +94,5 @@ bool GetPapyrusEventsBlocked();
 
 void Update();
 
-bool Register(RE::BSScript::IVirtualMachine* vm);
+bool Register(IVM* vm);
 }

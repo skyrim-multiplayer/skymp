@@ -15,23 +15,38 @@ add_custom_target(skymp5-client ALL
 )
 add_dependencies(skymp5-client skyrim-platform)
 
-# The server requires `dist/server/dist_front` to contain `skymp5-client.js`
-# This is to be able to reload `skymp5-client.js` for all users when changed
-# That feature is deprecated and would be removed
-add_custom_command(
-  TARGET skymp5-client POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/dist/client/Data/Platform/Plugins/skymp5-client.js ${CMAKE_BINARY_DIR}/dist/server/dist_front/skymp5-client.js
-)
-
 set(skymp5_client_settings_txt "{
   \"server-ip\": \"127.0.0.1\",
   \"server-port\": 7777,
+  \"show-net-info\": false,
+  \"lobbyLocation\": {
+    \"pos\": [133710, -61252, 14605],
+    \"rot\": [0, 0, 0],
+    \"worldOrCell\": 60
+  },
   \"gameData\": {
     \"profileId\": 1
   }
 }
 ")
-file(WRITE ${PROJECT_BINARY_DIR}/skymp5-client-settings.txt.tmp "${skymp5_client_settings_txt}")
+
+set(skymp5_client_settings_txt_sweetpie "{
+  \"server-ip\": \"127.0.0.1\",
+  \"server-port\": 7777,
+  \"lobbyLocation\": {
+    \"pos\": [19256.69, 9777.12, 899.56],
+    \"rot\": [6.36, 0.00, 221.51],
+    \"worldOrCell\": 100936543
+  }
+}
+")
+
+if(SWEETPIE)
+  file(WRITE ${PROJECT_BINARY_DIR}/skymp5-client-settings.txt.tmp "${skymp5_client_settings_txt_sweetpie}")
+else()
+  file(WRITE ${PROJECT_BINARY_DIR}/skymp5-client-settings.txt.tmp "${skymp5_client_settings_txt}")
+endif()
+
 add_custom_command(
   TARGET skymp5-client POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/skymp5-client-settings.txt.tmp ${CMAKE_BINARY_DIR}/dist/client/Data/Platform/Plugins/skymp5-client-settings.txt

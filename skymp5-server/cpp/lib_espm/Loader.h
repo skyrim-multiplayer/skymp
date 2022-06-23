@@ -40,7 +40,13 @@ public:
 
   std::vector<std::string> GetFileNames() const noexcept;
 
-  std::map<std::string, uint32_t> GetHashes() const;
+  struct FileInfo
+  {
+    uint32_t crc32 = 0;
+    size_t size = 0;
+  };
+
+  std::map<std::string, FileInfo> GetFilesInfo() const;
 
 private:
   std::vector<fs::path> MakeFilePaths(const fs::path& dataDir,

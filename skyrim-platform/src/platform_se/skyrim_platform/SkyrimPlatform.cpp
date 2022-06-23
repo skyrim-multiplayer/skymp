@@ -1,61 +1,28 @@
 #include "SkyrimPlatform.h"
-
-#include "ThreadPoolWrapper.h"
-#include <SKSE/API.h>
-#include <SKSE/Interfaces.h>
-#include <SKSE/Stubs.h>
-#include <skse64/PluginAPI.h>
-
-#include "BrowserApi.h"    // BrowserApi::State
+#include "BrowserApi.h"    // APIs for register in CommonExecutionListener
 #include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
-
-// HelloTickListener
-#include <RE/ConsoleLog.h>
-
-// CommonExecutionListener
-#include "ConsoleApi.h"
-#include "DirectoryMonitor.h"
-#include "EventsApi.h"
-#include "ExceptionPrinter.h"
-#include "HttpClient.h"
-#include "ReadFile.h"
-#include "SkyrimPlatformProxy.h"
-
-// APIs for register in CommonExecutionListener
-#include "BrowserApi.h"
-#include "CallNativeApi.h"
 #include "CameraApi.h"
-#include "ConsoleApi.h"
+#include "ConsoleApi.h" // CommonExecutionListener
 #include "DevApi.h"
+#include "DirectoryMonitor.h"
 #include "EncodingApi.h"
 #include "EventsApi.h"
+#include "ExceptionPrinter.h"
+#include "FileInfoApi.h"
+#include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
+#include "ReadFile.h"
+#include "SkyrimPlatformProxy.h"
+#include "TextApi.h"
+#include "ThreadPoolWrapper.h"
+#include "Win32Api.h"
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {
-const char* RemoveMultiplePrefixes(const char* str, const char* prefix)
-{
-  size_t prefixLen = strlen(prefix);
-  size_t strLen = strlen(str);
-  while (strLen >= prefixLen && !memcmp(str, prefix, prefixLen)) {
-    str += prefixLen;
-    strLen -= prefixLen;
-  }
-  return str;
-}
-
-void PrintExceptionToGameConsole(const std::exception& e)
-{
-  if (auto console = RE::ConsoleLog::GetSingleton()) {
-    auto what = RemoveMultiplePrefixes(e.what(), "Error: ");
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix()).PrintException(what);
-  }
-}
-
 bool EndsWith(const std::wstring& value, const std::wstring& ending)
 {
   return ending.size() <= value.size() &&
@@ -103,6 +70,8 @@ public:
   void Tick() override
   {
     try {
+      GetJsEngine();
+
       auto fileDirs = GetFileDirs();
 
       if (monitors.empty()) {
@@ -139,19 +108,20 @@ public:
 
       EventsApi::SendEvent("tick", {});
     } catch (const std::exception& e) {
-      PrintExceptionToGameConsole(e);
+      ExceptionPrinter::Print(e);
     }
   }
 
   void Update() override
   {
     try {
+      GetJsEngine();
       taskQueue.Update();
       nativeCallRequirements.jsThrQ->Update();
       jsPromiseTaskQueue.Update();
       EventsApi::SendEvent("update", {});
     } catch (const std::exception& e) {
-      PrintExceptionToGameConsole(e);
+      ExceptionPrinter::Print(e);
     }
   }
 
@@ -170,8 +140,6 @@ private:
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
   {
-    auto& engine = GetJsEngine();
-
     for (auto& path : pathsToLoad) {
       if (EndsWith(path.wstring(), L"-settings.txt")) {
         LoadSettingsFile(path);
@@ -190,18 +158,15 @@ private:
     s.resize(s.size() - strlen("-settings.txt"));
 
     auto pluginName = std::filesystem::path(s).string();
-
-    // Why do we treat it as an exception actually?
-    std::string what =
-      "Found settings file: " + path.string() + " for plugin " + pluginName;
-    ExceptionPrinter(ConsoleApi::GetExceptionPrefix())
-      .PrintException(what.data());
+    logger::info("Found settings file {} for plugin {}.", path.string(),
+                 pluginName);
 
     settingsByPluginName[pluginName] = ReadFile(path);
   }
 
   void LoadPluginFile(const std::filesystem::path& path)
   {
+    auto engine = GetJsEngine();
     auto scriptSrc = ReadFile(path);
 
     getSettings = [this](const JsFunctionArguments&) {
@@ -216,18 +181,21 @@ private:
 
     // We will be able to use require()
     JsValue devApi = JsValue::Object();
-    DevApi::Register(devApi, &engine,
+    DevApi::Register(devApi, engine,
                      { { "skyrimPlatform",
-                         [this](JsValue e) {
+                         [this, engine](JsValue e) {
                            EncodingApi::Register(e);
                            LoadGameApi::Register(e);
                            CameraApi::Register(e);
                            MpClientPluginApi::Register(e);
                            HttpClientApi::Register(e);
                            ConsoleApi::Register(e);
-                           DevApi::Register(e, &engine, {}, GetFileDirs());
+                           DevApi::Register(e, engine, {}, GetFileDirs());
                            EventsApi::Register(e);
                            BrowserApi::Register(e, browserApiState);
+                           Win32Api::Register(e);
+                           FileInfoApi::Register(e);
+                           TextApi::Register(e);
                            InventoryApi::Register(e);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });
@@ -264,13 +232,13 @@ private:
     settingsByPluginName.clear();
   }
 
-  JsEngine& GetJsEngine()
+  std::shared_ptr<JsEngine> GetJsEngine()
   {
-    if (!engine) {
-      engine = std::make_shared<JsEngine>();
-      engine->ResetContext(jsPromiseTaskQueue);
+    if (!engine_) {
+      engine_ = std::make_shared<JsEngine>();
+      engine_->ResetContext(jsPromiseTaskQueue);
     }
-    return *engine;
+    return engine_;
   }
 
   std::vector<std::filesystem::path> GetPathsToLoad(
@@ -279,14 +247,15 @@ private:
     std::vector<std::filesystem::path> paths;
     if (std::filesystem::exists(directory)) {
       for (auto& it : std::filesystem::directory_iterator(directory)) {
-        std::filesystem::path p = it.is_directory() ? it / "index.js" : it;
+        std::filesystem::path p =
+          it.is_directory() ? it.path() / "index.js" : it;
         paths.push_back(p);
       }
     }
     return paths;
   }
 
-  std::shared_ptr<JsEngine> engine;
+  std::shared_ptr<JsEngine> engine_;
   std::vector<std::shared_ptr<DirectoryMonitor>> monitors;
   uint32_t tickId = 0;
   Viet::TaskQueue taskQueue;
@@ -298,12 +267,32 @@ private:
 };
 }
 
+typedef asio::executor_work_guard<asio::io_context::executor_type> SPWorkGuard;
+
 struct SkyrimPlatform::Impl
 {
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
   Viet::TaskQueue tickTasks, updateTasks;
   ThreadPoolWrapper pool;
+
+  // Stuff needed to push functions from js to game thread
+  asio::io_context ioContext;
+  std::mutex syncLock;
+  std::condition_variable conditionalVariable;
+  bool complete;
+  std::shared_ptr<SPWorkGuard> workGuard;
+  void RunInIOContext(RE::BSTSmartPointer<RE::BSScript::IFunction> fPtr,
+                      const RE::BSTSmartPointer<RE::BSScript::Stack>& stack,
+                      RE::BSScript::ErrorLogger* logger,
+                      RE::BSScript::Internal::VirtualMachine* vm,
+                      RE::BSScript::IFunction::CallResult* ret)
+  {
+    *ret = fPtr->Call(stack, logger, vm, false);
+    std::lock_guard<std::mutex> lock(syncLock);
+    complete = true;
+    conditionalVariable.notify_all();
+  }
 };
 
 SkyrimPlatform::SkyrimPlatform()
@@ -314,12 +303,13 @@ SkyrimPlatform::SkyrimPlatform()
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
   pImpl->tickListeners.push_back(
     std::make_shared<CommonExecutionListener>(pImpl->browserApiState));
+  pImpl->complete = false;
 }
 
-SkyrimPlatform& SkyrimPlatform::GetSingleton()
+SkyrimPlatform* SkyrimPlatform::GetSingleton()
 {
   static SkyrimPlatform g_skyrimPlatform;
-  return g_skyrimPlatform;
+  return &g_skyrimPlatform;
 }
 
 void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
@@ -331,7 +321,7 @@ void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
   try {
     (gameFunctionsAvailable ? pImpl->updateTasks : pImpl->tickTasks).Update();
   } catch (const std::exception& e) {
-    PrintExceptionToGameConsole(e);
+    ExceptionPrinter::Print(e);
   }
 }
 
@@ -354,4 +344,44 @@ void SkyrimPlatform::AddUpdateTask(const std::function<void()>& f)
 void SkyrimPlatform::PushAndWait(const std::function<void(int)>& f)
 {
   pImpl->pool.PushAndWait(f);
+}
+
+void SkyrimPlatform::Push(const std::function<void(int)>& f)
+{
+  pImpl->pool.Push(f);
+}
+
+void SkyrimPlatform::PushToWorkerAndWait(
+  RE::BSTSmartPointer<RE::BSScript::IFunction> fPtr,
+  const RE::BSTSmartPointer<RE::BSScript::Stack>& stack,
+  RE::BSScript::ErrorLogger* logger,
+  RE::BSScript::Internal::VirtualMachine* vm,
+  RE::BSScript::IFunction::CallResult* ret)
+{
+  std::unique_lock<std::mutex> lock(pImpl->syncLock);
+  pImpl->complete = false;
+  asio::post(
+    pImpl->ioContext.get_executor(),
+    std::bind(&Impl::RunInIOContext, pImpl, fPtr, stack, logger, vm, ret));
+  pImpl->conditionalVariable.wait(
+    lock, [] { return SkyrimPlatform::GetSingleton()->pImpl->complete; });
+}
+
+void SkyrimPlatform::PrepareWorker()
+{
+  if (pImpl->ioContext.stopped()) {
+    pImpl->ioContext.restart();
+  }
+  pImpl->workGuard =
+    std::make_shared<SPWorkGuard>(pImpl->ioContext.get_executor());
+}
+
+void SkyrimPlatform::StartWorker()
+{
+  pImpl->ioContext.run();
+}
+
+void SkyrimPlatform::StopWorker()
+{
+  pImpl->ioContext.stop();
 }

@@ -9,7 +9,7 @@ VarValue PapyrusDebug::SendAnimationEvent(
   auto targetActor = GetFormPtr<MpActor>(arguments[0]);
   if (targetActor) {
     auto funcName = "SendAnimationEvent";
-    auto s = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto s = SpSnippetFunctionGen::SerializeArguments(arguments, targetActor);
     SpSnippet(GetName(), funcName, s.data()).Execute(targetActor);
   }
   return VarValue::None();

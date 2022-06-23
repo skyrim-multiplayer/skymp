@@ -1,6 +1,5 @@
 #include "SFChangeFormACHR.h"
 #include "SFTemplates.h"
-#include <string>
 
 namespace {
 bool KeyCheck(const std::vector<uint8_t>& vec, const uint32_t& startIndex,

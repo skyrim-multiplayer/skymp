@@ -1,4 +1,6 @@
 #pragma once
+#include "TextToDraw.h"
+#include <functional>
 #include <include/cef_render_handler.h>
 
 namespace CEFUtils {
@@ -6,7 +8,7 @@ struct OverlayClient;
 struct MyRenderHandler : CefRenderHandler
 {
   virtual void Reset() = 0;
-  virtual void Render() = 0;
+  virtual void Render(const ObtainTextsToDrawFunction& obtainTextsToDarw) = 0;
   virtual void Create() = 0;
 
   void SetVisible(const bool aVisible) noexcept { m_visible = aVisible; }

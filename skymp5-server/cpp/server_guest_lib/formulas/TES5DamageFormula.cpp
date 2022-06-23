@@ -14,6 +14,8 @@ bool IsUnarmedAttack(const uint32_t sourceFormId)
 
 class TES5DamageFormulaImpl
 {
+  using Effects = std::vector<espm::Effects::Effect>;
+
 public:
   TES5DamageFormulaImpl(const MpActor& aggressor_, const MpActor& target_,
                         const HitData& hitData_);
@@ -32,6 +34,7 @@ private:
   float CalcArmorRatingComponent(
     const Inventory::Entry& opponentEquipmentEntry) const;
   float CalcOpponentArmorRating() const;
+  float CalcMagicEffects(const Effects& effects) const;
 };
 
 TES5DamageFormulaImpl::TES5DamageFormulaImpl(const MpActor& aggressor_,
@@ -60,6 +63,19 @@ float TES5DamageFormulaImpl::CalcWeaponRating() const
   return GetBaseWeaponDamage();
 }
 
+float TES5DamageFormulaImpl::CalcMagicEffects(const Effects& effects) const
+{
+  float armorRating = 0.f;
+  for (const auto& effect : effects) {
+    auto actorValueType =
+      espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
+    if (actorValueType == espm::ActorValue::DamageResist) {
+      armorRating += effect.magnitude;
+    }
+  }
+  return armorRating;
+}
+
 float TES5DamageFormulaImpl::CalcArmorRatingComponent(
   const Inventory::Entry& opponentEquipmentEntry) const
 {
@@ -69,7 +85,15 @@ float TES5DamageFormulaImpl::CalcArmorRatingComponent(
     auto armorData =
       espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
     // TODO(#458): take other components into account
-    return static_cast<float>(armorData.baseRatingX100) / 100;
+    auto ac = static_cast<float>(armorData.baseRatingX100) / 100;
+    if (armorData.enchantmentFormId) {
+      // TODO(#632) refactor this effect with actor effect system
+      auto enchantmentData =
+        espm::GetData<espm::ENCH>(armorData.enchantmentFormId, espmProvider);
+      ac += CalcMagicEffects(enchantmentData.effects);
+    }
+
+    return ac;
   }
   return 0;
 }
@@ -112,6 +136,9 @@ float TES5DamageFormulaImpl::CalculateDamage() const
   if (hitData.isHitBlocked) {
     // TODO(#460): implement correct block formula
     damage *= 0.1;
+  }
+  if (hitData.isSneakAttack) {
+    damage *= 2;
   }
   return damage;
 }

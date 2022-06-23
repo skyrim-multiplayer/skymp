@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "GetBaseActorValues.h"
+#include "HitData.h"
 #include "Loader.h"
 #include "PacketParser.h"
 
@@ -18,7 +19,7 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  IActionListener::RawMessageData rawMsgData;
+  ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
@@ -64,7 +65,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   ac.SetEquipment(R"({"inv": {"entries": []}})");
 
-  IActionListener::RawMessageData rawMsgData;
+  ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
@@ -105,7 +106,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
-  IActionListener::RawMessageData rawMsgData;
+  ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
 
   const uint32_t aggressor = 0xff000000;
@@ -152,7 +153,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
 TEST_CASE("Dead actors can't attack", "[Hit]")
 {
   PartOne& p = GetPartOne();
-  IActionListener::RawMessageData rawMsgData;
+  ActionListener::RawMessageData rawMsgData;
 
   const uint32_t aggressor = 0xff000000;
   const uint32_t target = 0xff000001;
@@ -196,7 +197,7 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
 
   ac.SetPercentages(1.f, 1.f, 1.f);
 
-  IActionListener::RawMessageData msgData;
+  ActionListener::RawMessageData msgData;
   msgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;

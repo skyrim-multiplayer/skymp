@@ -1,9 +1,5 @@
 #include "BrowserApi.h"
 #include "NullPointerException.h"
-#include <hooks/DInputHook.hpp>
-#include <skse64/GameMenus.h>
-#include <ui/DX11RenderHandler.h>
-#include <ui/MyChromiumApp.h>
 
 namespace {
 thread_local bool g_cursorIsOpenByFocus = false;
@@ -41,23 +37,24 @@ JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
   if (v != newFocus) {
     v = newFocus;
 
-    auto mm = MenuManager::GetSingleton();
-    if (!mm)
+    auto ui = RE::UI::GetSingleton();
+    auto msgQ = RE::UIMessageQueue::GetSingleton();
+
+    if (!ui || !msgQ)
       return JsValue::Undefined();
 
-    static const auto fsCursorMenu = new BSFixedString("Cursor Menu");
-    const bool alreadyOpen = mm->IsMenuOpen(fsCursorMenu);
+    const bool alreadyOpen = ui->IsMenuOpen(RE::CursorMenu::MENU_NAME);
 
     if (newFocus) {
       if (!alreadyOpen) {
-        CALL_MEMBER_FN(UIManager::GetSingleton(), AddMessage)
-        (fsCursorMenu, UIMessage::kMessage_Open, NULL);
+        msgQ->AddMessage(RE::CursorMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow,
+                         NULL);
         g_cursorIsOpenByFocus = true;
       }
     } else {
       if (g_cursorIsOpenByFocus) {
-        CALL_MEMBER_FN(UIManager::GetSingleton(), AddMessage)
-        (fsCursorMenu, UIMessage::kMessage_Close, NULL);
+        msgQ->AddMessage(RE::CursorMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide,
+                         NULL);
         g_cursorIsOpenByFocus = false;
       }
     }

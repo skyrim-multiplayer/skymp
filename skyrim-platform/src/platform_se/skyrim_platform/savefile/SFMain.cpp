@@ -5,11 +5,6 @@
 #include "SFStructure.h"
 #include "SFWriter.h"
 
-#include <cassert>
-#include <filesystem>
-#include <iostream>
-#include <iterator>
-
 namespace fs = std::filesystem;
 
 using namespace SaveFile_;

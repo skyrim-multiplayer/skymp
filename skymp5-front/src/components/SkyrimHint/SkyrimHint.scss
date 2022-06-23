@@ -4,12 +4,17 @@
   position: absolute;
   right: -150px;
   color: rgba(157, 158, 158, 0.75);
-  margin-top: -20px;
+  margin-top: -40px;
+  margin-left: initial;
+  margin-right: initial;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
   span {
-    margin-right: 10px;
-    margin-top: 10px;
-    margin-left: 45px;
+    margin: auto 10px auto 45px;
     text-align: center;
+    width: 100%;
+    padding: 1px;
   }
 }
 

@@ -7,7 +7,7 @@ VarValue PapyrusFormList::GetSize(VarValue self,
 {
   espm::CompressedFieldsCache dummyCache;
 
-  auto res = GetRecordPtr(self);
+  const auto& res = GetRecordPtr(self);
   if (auto formlist = espm::Convert<espm::FLST>(res.rec)) {
     int size = static_cast<int>(formlist->GetData(dummyCache).formIds.size());
     return VarValue(size);
@@ -22,7 +22,7 @@ VarValue PapyrusFormList::GetAt(VarValue self,
 
   if (arguments.size() >= 1) {
     int idx = static_cast<int>(arguments[0]);
-    auto res = GetRecordPtr(self);
+    const auto& res = GetRecordPtr(self);
     if (auto formlist = espm::Convert<espm::FLST>(res.rec)) {
       auto formIds = formlist->GetData(dummyCache).formIds;
       if (idx >= 0 && static_cast<int>(formIds.size()) > idx) {
@@ -32,5 +32,29 @@ VarValue PapyrusFormList::GetAt(VarValue self,
       }
     }
   }
+  return VarValue::None();
+}
+
+VarValue PapyrusFormList::Find(VarValue self,
+                               const std::vector<VarValue>& arguments) const
+{
+  espm::CompressedFieldsCache dummyCache;
+
+  if (arguments.size() >= 1) {
+    const auto& res = GetRecordPtr(self);
+    if (auto formlist = espm::Convert<espm::FLST>(res.rec)) {
+      const auto& arg = GetRecordPtr(arguments[0]);
+      if (arg.rec != nullptr) {
+        auto formId = arg.ToGlobalId(arg.rec->GetId());
+        auto data = formlist->GetData(dummyCache).formIds;
+        for (int i = 0; i < data.size(); i++) {
+          if (data[i] == formId) {
+            return VarValue(i);
+          }
+        }
+      }
+    }
+  }
+
   return VarValue::None();
 }

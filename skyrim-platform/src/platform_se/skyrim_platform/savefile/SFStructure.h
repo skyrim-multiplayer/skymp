@@ -1,8 +1,4 @@
 #pragma once
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace SaveFile_ {
 
@@ -200,7 +196,7 @@ struct SaveFile
   uint32_t unknown3TableSize;
   Unknown3Table unknown3Table;
 
-  ChangeForm* GetChangeFormByRefID(RefID& refID, const uint8_t& type);
+  ChangeForm* GetChangeFormByRefID(RefID refID, const uint8_t& type);
   GlobalVariables::GlobalVariable* GetGlobalvariableByRefID(RefID& refID);
   int64_t FindIndexInFormIdArray(uint32_t refID);
   void OverwritePluginInfo(std::vector<std::string>& newPlaginNames);

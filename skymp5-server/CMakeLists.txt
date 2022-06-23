@@ -24,17 +24,10 @@ add_subdirectory(ts)
 # Solution:
 # 1. Give cmake-js a special CMakeLists.txt from the `cmake-js-fetch` directory.
 #    Look into package.json and `cmake-js-fetch/CMakeLists.txt` to understand mechanism
-if (MSVC)
-  yarn_execute_command(
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    COMMAND cmake-js-fetch-msvc
-  )
-else ()
-  yarn_execute_command(
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    COMMAND cmake-js-fetch
-  )
-endif ()
+yarn_execute_command(
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  COMMAND cmake-js-fetch
+)
 
 # 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
 
@@ -62,8 +55,8 @@ add_library(${PROJECT_NAME} SHARED ${sources})
 # Apply NodeJS convention (no .dll/.so, just .node)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
-# Legacy TypeScript part expects this module to be called `scamp_native`
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scamp_native")
+# Legacy TypeScript part expects this module to be called `scam_native`
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native")
 
 # Put build artifacts into build/dist/server
 if(WIN32)
@@ -78,7 +71,7 @@ else()
   )
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE node mp_common server_guest_lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE node mp_common server_guest_lib localization-provider)
 list(APPEND VCPKG_DEPENDENT ${PROJECT_NAME})
 apply_default_settings(TARGETS ${PROJECT_NAME})
 
@@ -87,8 +80,7 @@ apply_default_settings(TARGETS ${PROJECT_NAME})
 # On Windows create launch_server.bat in build/dist/server
 # This .bat file is for launching the server
 if(WIN32)
-  set(bat "set NODE_PATH=${SKYMP5_SERVER_SOURCE_DIR}/node_modules\n")
-  set(bat "${bat}node dist_back/index.js\n")
+  set(bat "node dist_back/skymp5-server.js\n")
   set(bat "${bat}pause\n")
 
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
@@ -124,9 +116,45 @@ set(server_settings_json "{
 }
 ")
 
-file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json}")
+set(server_settings_json_sweetpie "{
+  \"dataDir\": \"data\",
+  \"loadOrder\": [
+    \"${esm_prefix}Skyrim.esm\",
+    \"${esm_prefix}Update.esm\",
+    \"${esm_prefix}Dawnguard.esm\",
+    \"${esm_prefix}HearthFires.esm\",
+    \"${esm_prefix}Dragonborn.esm\",
+    \"${esm_prefix}RavenOnMyShoulder.esp\",
+    \"${esm_prefix}SweetPie.esp\"
+  ],
+  \"name\": \"SweetPie\",
+  \"startPoints\": [
+    {
+      \"pos\": [ 18522.08, 10218.17, 624.46 ],
+      \"worldOrCell\": \"0x6042b5f\",
+      \"angleZ\": 0
+    }
+  ]
+}
+")
+
+if(SWEETPIE)
+  file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json_sweetpie}")
+else()
+  file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json}")
+endif()
 
 add_custom_command(
   TARGET ${PROJECT_NAME} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/server-settings.json.tmp ${CMAKE_BINARY_DIR}/dist/server/server-settings.json
+)
+
+add_custom_command(
+  TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/package.json ${CMAKE_BINARY_DIR}/dist/server/package.json
+)
+
+add_custom_command(
+  TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/yarn.lock ${CMAKE_BINARY_DIR}/dist/server/yarn.lock
 )

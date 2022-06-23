@@ -1,7 +1,17 @@
 import * as ui from "./ui";
 
 import * as sourceMapSupport from "source-map-support";
-sourceMapSupport.install();
+sourceMapSupport.install({
+  retrieveSourceMap: function (source: string) {
+    if (source.endsWith('skymp5-server.js')) {
+      return {
+        url: 'original.js',
+        map: fs.readFileSync('dist_back/skymp5-server.js.map', 'utf8')
+      };
+    }
+    return null;
+  }
+});
 
 import * as scampNative from "./scampNative";
 import * as chat from "./chat";
@@ -20,10 +30,8 @@ import * as libkey from "./libkey";
 
 import * as manifestGen from "./manifestGen";
 
-console.log(`Current process ID is ${pid}`);
-
 const {
-  master = "https://skymp.io",
+  master,
   port,
   maxPlayers,
   name,
@@ -109,6 +117,30 @@ const handleLibkeyJs = () => {
   }, 1);
 };
 
+const setupStreams = (server: scampNative.ScampServer) => {
+  class LogsStream {
+    constructor(private logLevel: string) {
+    }
+
+    write(chunk: Buffer, encoding: string, callback: () => void) {
+      const str = chunk.toString(encoding);
+      if (str.trim().length > 0) {
+        server.writeLogs(this.logLevel, str);
+      }
+      callback();
+    }
+  }
+
+  const infoStream = new LogsStream('info');
+  const errorStream = new LogsStream('error');
+  process.stdout.write = (chunk: Buffer, encoding: string, callback: () => void) => {
+    infoStream.write(chunk, encoding, callback);
+  };
+  process.stderr.write = (chunk: Buffer, encoding: string, callback: () => void) => {
+    errorStream.write(chunk, encoding, callback);
+  };
+};
+
 const main = async () => {
   handleLibkeyJs();
 
@@ -118,13 +150,16 @@ const main = async () => {
   const server = new scampNative.ScampServer(port, maxPlayers);
   const ctx = { svr: new NativeGameServer(server), gm: new EventEmitter() };
 
+  setupStreams(server);
+  console.log(`Current process ID is ${pid}`);
+
   (async () => {
     while (1) {
       try {
         server.tick();
         await new Promise((r) => setTimeout(r, 1));
       } catch (e) {
-        log(`Error in server.tick: ${e}\n${e.stack}`);
+        console.error(`in server.tick:\n${e.stack}`);
       }
     }
   })();
@@ -139,7 +174,7 @@ const main = async () => {
           try {
             await system.updateAsync(ctx);
           } catch (e) {
-            log(`Error in ${system.systemName}.updateAsync: ${e}\n${e.stack}`);
+            console.error(e);
           }
         }
       })();
@@ -151,7 +186,7 @@ const main = async () => {
       try {
         if (system.connect) system.connect(userId, ctx);
       } catch (e) {
-        log(`Error in ${system.systemName}.connect: ${e}\n${e.stack}`);
+        console.error(e);
       }
     }
   });
@@ -162,7 +197,7 @@ const main = async () => {
       try {
         if (system.disconnect) system.disconnect(userId, ctx);
       } catch (e) {
-        log(`Error in ${system.systemName}.disconnect: ${e}\n${e.stack}`);
+        console.error(e);
       }
     }
   });
@@ -178,7 +213,7 @@ const main = async () => {
         if (system.customPacket)
           system.customPacket(userId, type, content, ctx);
       } catch (e) {
-        log(`Error in ${system.systemName}.customPacket: ${e}\n${e.stack}`);
+        console.error(e);
       }
     }
   });
@@ -271,12 +306,9 @@ const main = async () => {
   server.attachSaveStorage();
 };
 
-main().catch((e) => {
-  log(`Main function threw an error: ${e}`);
-  if (e["stack"]) log(e["stack"]);
-  process.exit(-1);
-});
+main();
 
+// This is needed at least to handle axios errors in masterClient
 process.on("unhandledRejection", (...args) => {
   console.error(...args);
 });

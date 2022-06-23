@@ -1,0 +1,79 @@
+name: SP Release
+on:
+  workflow_dispatch:
+jobs:
+  sprelease:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get Versions
+        run: |
+          OLDVER=$(sed -n "s/.*\([0-9]\.[0-9]\.[0-9]*\).*/\1/p" ${{github.workspace}}/skyrim-platform/package.json | head -1)
+          MINOR=$(echo "$OLDVER" | sed -n "s/[0-9]\.\([0-9]\)\.[0-9]/\1/p")
+          NEWMINOR=$((MINOR+1))
+          NEWVER=$(echo "$OLDVER" | sed -n "s/\.$MINOR\./\.$NEWMINOR\./p")
+          SHORTVER=$(echo "$NEWVER" | sed -r "s/\.0//g")
+          echo "OLDVER=$OLDVER" >> $GITHUB_ENV
+          echo "NEWVER=$NEWVER" >> $GITHUB_ENV
+          echo "SHORTVER=$SHORTVER" >> $GITHUB_ENV
+          echo "Detect oldver: $OLDVER"
+          echo "Newver: $NEWVER"
+      - name: Replace Version In Files
+        run: |
+          chmod 777 ${{github.workspace}}/skyrim-platform/src/platform_se/CMakeLists.txt
+          chmod 777 ${{github.workspace}}/skyrim-platform/src/platform_se/skyrim_platform/DevApi.cpp
+          chmod 777 ${{github.workspace}}/skyrim-platform/package.json
+          chmod 777 ${{github.workspace}}/skymp5-client/src/version.ts
+          sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/src/platform_se/CMakeLists.txt
+          sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/src/platform_se/skyrim_platform/DevApi.cpp
+          sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/package.json
+          sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skymp5-client/src/version.ts
+          chmod 644 ${{github.workspace}}/skyrim-platform/src/platform_se/CMakeLists.txt
+          chmod 644 ${{github.workspace}}/skyrim-platform/src/platform_se/skyrim_platform/DevApi.cpp
+          chmod 644 ${{github.workspace}}/skyrim-platform/package.json
+          chmod 644 ${{github.workspace}}/skymp5-client/src/version.ts
+
+      - name: Generate Changelog
+        run: |
+          chmod 777 ${{github.workspace}}/docs/release
+          TRAGET=$(echo "${{github.workspace}}/docs/release/sp-${{ env.SHORTVER }}.md")
+          echo "# SP ${{ env.NEWVER }} Release Notes"$'\n'$'\n' >> $TRAGET
+          echo "This document includes changes made since SP ${{ env.OLDVER }}"$'\n'$'\n' >> $TRAGET
+          echo "SP updates regularly. This update probably doesn't include ALL patches that have to be made."$'\n' >> $TRAGET
+          echo "There are still many things to be implemented or fixed. See [issues](https://github.com/skyrim-multiplayer/skymp/issues?q=is%3Aopen+is%3Aissue+label%3Aarea%3Askyrim-platform)."$'\n' >> $TRAGET
+          echo "SP supports both Steam version of Skyrim SE (1.6+) and legacy 1.5.97."$'\n' >> $TRAGET
+          for file in `find ${{github.workspace}}/docs/release/dev -type f -name "sp*.md"`
+          do
+            content=$(< $file)
+            if grep -q "^#" "$file"; then
+              echo "$content" >> $TRAGET
+              echo $'\n' >> $TRAGET
+            else
+              echo "- $content" >> ./temp.txt
+              echo $'\n' >> ./temp.txt
+            fi
+          done
+          if [ -e temp.txt ]; then
+            echo "## Other changes"$'\n' >> $TRAGET
+            content=$(< ./temp.txt)
+            echo "$content" >> $TRAGET
+            echo $'\n' >> ./temp.txt
+            rm -f ./temp.txt
+          fi
+
+      - name: Remove files used in changelog
+        run: |
+          for file in `find ${{github.workspace}}/docs/release/dev -type f -name "sp*.md"`
+          do
+            rm $file
+          done
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: "release(skyrim-platform): version ${{ env.SHORTVER }}"
+          title: "release(skyrim-platform): version ${{ env.SHORTVER }}"
+          body: Bot put here this release PR, enjoy...
+          branch: "release-sp${{ env.SHORTVER }}"

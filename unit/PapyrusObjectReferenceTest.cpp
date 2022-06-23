@@ -53,7 +53,7 @@ auto GetDummyMessageData()
   static simdjson::dom::parser parser;
   static uint8_t unparsed[] = { Networking::MinPacketId, '{', '}' };
 
-  IActionListener::RawMessageData data;
+  ActionListener::RawMessageData data;
   data.userId = 1;
   data.unparsed = unparsed;
   data.parsed = parser.parse(std::string("{}")).value();

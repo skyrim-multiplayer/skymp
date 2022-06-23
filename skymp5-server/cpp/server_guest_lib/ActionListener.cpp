@@ -1,15 +1,20 @@
 #include "ActionListener.h"
+#include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
+#include "HitData.h"
 #include "MovementValidation.h"
+#include "MpObjectReference.h"
 #include "MsgType.h"
-#include "PapyrusObjectReference.h"
 #include "UserMessageOutput.h"
 #include "Utils.h"
+#include "WorldState.h"
+#include <fmt/format.h>
+#include <unordered_set>
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -275,6 +280,17 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   if (!actor)
     return; // TODO: Throw error instead
   ref.TakeItem(*actor, entry);
+}
+
+void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
+                                uint32_t baseId, const Inventory::Entry& entry)
+{
+  MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!ac) {
+    throw std::runtime_error(fmt::format(
+      "Unable to drop an item from user with id: {:x}.", rawMsgData.userId));
+  }
+  ac->DropItem(baseId, entry);
 }
 
 namespace {
@@ -701,27 +717,20 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   currentHealthPercentage =
     currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
 
-  targetActor.SetPercentages(currentHealthPercentage, magickaPercentage,
-                             staminaPercentage, aggressor);
   auto now = std::chrono::steady_clock::now();
-  targetActor.SetLastAttributesPercentagesUpdate(now);
+  targetActor.NetSetPercentages(currentHealthPercentage, magickaPercentage,
+                                staminaPercentage, now, aggressor);
   targetActor.SetLastHitTime(now);
 
-  targetForm = targetActor.GetChangeForm();
-
-  std::string s;
-  s += Networking::MinPacketId;
-  s += nlohmann::json{
-    { "t", MsgType::ChangeValues },
-    { "data",
-      { { "health", targetForm.healthPercentage },
-        { "magicka", targetForm.magickaPercentage },
-        { "stamina", targetForm.staminaPercentage } } }
-  }.dump();
-  targetActor.SendToUser(s.data(), s.size(), true);
   spdlog::debug("Target {0:x} is hitted by {1} damage. Current health "
                 "percentage: {2}. Last "
                 "health percentage: {3}. (Last: {3} => Current: {2})",
                 hitData.target, damage, currentHealthPercentage,
                 healthPercentage);
+}
+
+void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
+                               simdjson::dom::element data)
+{
+  spdlog::debug("Got unhandled message: {}", simdjson::minify(data));
 }

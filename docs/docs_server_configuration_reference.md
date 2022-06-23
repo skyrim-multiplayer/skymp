@@ -94,6 +94,18 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 }
 ```
 
+## lang
+
+The language, the translation of which will be obtained from the string files located in Data/strings
+
+```json5
+{
+  // ...
+  "lang": "english"
+  // ...
+}
+```
+
 ## offlineMode
 
 The boolean variable shows is server in "offline mode" or not (the server allows clients to connect with any profile id they choose).
@@ -195,6 +207,30 @@ The name of a localizaiton file in `data/localization` that would be used by `M.
 {
   // ...
   "locale": "ru-RU"
+  // ...
+}
+```
+
+## sweetPieMinimumPlayersToStart
+
+The minimal amount of players to begin deathmatch. This setting is sweetpie only and does not affect vanilla server. By default is 5.
+
+```json5
+{
+  // ...
+  "sweetPieMinimumPlayersToStart": 5
+  // ...
+}
+```
+
+## sweetPieAllowCheats
+
+Prevents the gamemode from disabling cheats. This setting is sweetpie only and does not affect vanilla server. Default is false.
+
+```json5
+{
+  // ...
+  "sweetPieAllowCheats": true
   // ...
 }
 ```

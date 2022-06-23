@@ -1,6 +1,7 @@
 import React from 'react';
 import { ImageButtonProps } from '../../interfaces';
 import '../../features/login/styles.scss';
+import './ImageButton.scss'
 
 export const ImageButton = ({ width = 320, height = 48, disabled, onClick, src }: ImageButtonProps) => {
   return (

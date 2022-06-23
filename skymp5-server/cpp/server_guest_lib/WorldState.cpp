@@ -9,6 +9,7 @@
 #include "MpObjectReference.h"
 #include "PapyrusActor.h"
 #include "PapyrusDebug.h"
+#include "PapyrusEffectShader.h"
 #include "PapyrusForm.h"
 #include "PapyrusFormList.h"
 #include "PapyrusGame.h"
@@ -607,6 +608,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusEffectShader>());
       for (auto& cl : pImpl->classes) {
         cl->Register(*pImpl->vm, pImpl->policy);
       }
