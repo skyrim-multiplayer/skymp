@@ -88,6 +88,7 @@ jobs:
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
       run: >
         cmake -B ${{github.workspace}}/build
+        -DVCPKG_ROOT=C:/vcpkg
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
         -DPREPARE_NEXUS_ARCHIVES=ON
