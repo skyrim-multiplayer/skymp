@@ -130,3 +130,10 @@ jobs:
     - name: Notify failure
       if: 'always()'
       run: Get-PSDrive
+
+    - uses: actions/upload-artifact@v2
+      if: 'always()'
+      with:
+        name: coverage
+        path: ${{github.workspace}}/build/**/*.sln
+        path: ${{github.workspace}}/build/**/*.vcxproj
