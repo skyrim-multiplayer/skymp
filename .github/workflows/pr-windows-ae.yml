@@ -28,9 +28,10 @@ jobs:
         fetch-depth: 1
         submodules: 'true'
 
-    - run: Move-Item -Path ./vcpkg C:/vcpkg
+    - run: Move-Item -Path ./vcpkg C:/
     - run: Get-PSDrive
     - run: dir C:/
+    - run: dir C:/vcpkg
 
     - name: Install tools
       run: choco install opencppcoverage
