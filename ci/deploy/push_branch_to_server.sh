@@ -75,6 +75,6 @@ get_ip_port() {
   jq --raw-output '"IP: `'"$DEPLOY_TARGET_HOST"'`, port: `" + (.port | tostring) + "`"'
 }
 
-ip_port="`run_remote cat "$remote_branch_dir/server-settings.json" | get_ip_port`"
+ip_port="`run_remote cat "$remote_branch_dir/server/server-settings.json" | get_ip_port`"
 
 ./ci/deploy/call_webhook.sh "Finished successfully. Connect to: $ip_port"
