@@ -28,7 +28,7 @@ jobs:
         fetch-depth: 1
         submodules: 'true'
 
-    - run: Move-Item -Path ./vcpkg C:/
+    - run: Move-Item -Path ./vcpkg C:/vcpkg
     - run: Get-PSDrive
     - run: dir C:/
     - run: dir C:/vcpkg
