@@ -20,6 +20,7 @@ jobs:
     runs-on: windows-2022
 
     steps:
+    - run: Get-PSDrive
     - uses: actions/checkout@v2
       with:
         fetch-depth: 1
@@ -118,3 +119,7 @@ jobs:
         name: SP-AE
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
+
+    - name: Notify failure
+      if: 'always()'
+      run: Get-PSDrive
