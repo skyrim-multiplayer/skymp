@@ -135,5 +135,6 @@ jobs:
       if: 'always()'
       with:
         name: coverage
-        path: ${{github.workspace}}/build/**/*.sln
-        path: ${{github.workspace}}/build/**/*.vcxproj
+        path: |
+          ${{github.workspace}}/build/**/*.sln
+          ${{github.workspace}}/build/**/*.vcxproj
