@@ -5,14 +5,15 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  schedule:
-    - cron: '0 0 * * *'
+  # schedule:
+  #   - cron: '0 0 * * *'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
   VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
+  VCPKG_ROOT: 'C:/vcpkg'
 
 jobs:
   build:
@@ -21,10 +22,15 @@ jobs:
 
     steps:
     - run: Get-PSDrive
+
     - uses: actions/checkout@v2
       with:
         fetch-depth: 1
         submodules: 'true'
+
+    - run: Move-Item -Path ./vcpkg C:/vcpkg
+    - run: Get-PSDrive
+    - run: dir C:/
 
     - name: Install tools
       run: choco install opencppcoverage
@@ -33,7 +39,7 @@ jobs:
       shell: 'bash'
       # Replace <OWNER> with your organization name
       run: >
-        `vcpkg fetch nuget | tail -n 1`
+        `C:/vcpkg/vcpkg fetch nuget | tail -n 1`
         sources add
         -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
         -storepasswordincleartext
@@ -81,7 +87,6 @@ jobs:
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
       run: >
         cmake -B ${{github.workspace}}/build
-        -DUSE_SYSTEM_VCPKG=ON
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
         -DPREPARE_NEXUS_ARCHIVES=ON
