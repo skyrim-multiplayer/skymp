@@ -5,8 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  # schedule:
-  #   - cron: '0 0 * * *'
+  schedule:
+    - cron: '0 0 * * *'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -28,10 +28,10 @@ jobs:
         fetch-depth: 1
         submodules: 'true'
 
-    - run: Move-Item -Path ./vcpkg C:/vcpkg
+    - name: Move vcpkg submodule to a larger drive
+      run: Move-Item -Path ./vcpkg C:/vcpkg
+
     - run: Get-PSDrive
-    - run: dir C:/
-    - run: dir C:/vcpkg
 
     - name: Install tools
       run: choco install opencppcoverage
@@ -134,7 +134,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: 'always()'
       with:
-        name: coverage
+        name: msbuild_files
         path: |
           ${{github.workspace}}/build/**/*.sln
           ${{github.workspace}}/build/**/*.vcxproj
