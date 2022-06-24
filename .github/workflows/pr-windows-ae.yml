@@ -28,14 +28,14 @@ jobs:
         fetch-depth: 1
         submodules: 'true'
 
+    - name: Install tools
+      run: choco install opencppcoverage
+
     - name: Move vcpkg submodule to a larger drive
       run: Move-Item -Path ./vcpkg C:/vcpkg
 
     - name: Debug - free space
       run: Get-PSDrive
-
-    - name: Install tools
-      run: choco install opencppcoverage
 
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
