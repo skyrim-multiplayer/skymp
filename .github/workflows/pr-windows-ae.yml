@@ -31,7 +31,8 @@ jobs:
     - name: Move vcpkg submodule to a larger drive
       run: Move-Item -Path ./vcpkg C:/vcpkg
 
-    - run: Get-PSDrive
+    - name: Debug - free space
+      run: Get-PSDrive
 
     - name: Install tools
       run: choco install opencppcoverage
@@ -127,7 +128,7 @@ jobs:
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
 
-    - name: Notify failure
+    - name: Debug - free space
       if: 'always()'
       run: Get-PSDrive
 
