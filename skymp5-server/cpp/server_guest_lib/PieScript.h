@@ -45,17 +45,16 @@ private:
     PatronKit
   };
 
-  enum EdibleItems : uint32_t
+  enum EdibleItems
   {
     kApplePieId = 0x082b9671,
     kStareterKitPie = 0x030009DB,
     kPatronStarterKitPie = 0x00064B30,
     kWardrobePie = 0x082DD28a,
-    // I'll change names as soon as I'll know what these items are
-    unidentifiedItem1 = 0x07A45089,
-    unidentifiedItem2 = 0x07A45088,
-    unidentifiedItem3 = 0x07A4A18F,
-    unidentifiedItem4 = 0x07A4A18D
+    spellBookOfSummonedBattleAxe = 0x07A45089,
+    spellBookOfSummonedBow = 0x07A45088,
+    spellBookOfSummonedDagger = 0x07A4A18F,
+    spellBookOfSummonedSword = 0x07A4A18D
   };
 
 public:

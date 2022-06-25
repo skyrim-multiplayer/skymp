@@ -235,10 +235,10 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
               Tier::Tier3);
 
   miscLootTable = {
-    { EdibleItems::unidentifiedItem1, 0x07A30B91 },
-    { EdibleItems::unidentifiedItem2, 0x07A4A191 },
-    { EdibleItems::unidentifiedItem3, 0x07A30B93 },
-    { EdibleItems::unidentifiedItem4, 0x07A30B92 },
+    { EdibleItems::spellBookOfSummonedBattleAxe, 0x07A30B91 },
+    { EdibleItems::spellBookOfSummonedBow, 0x07A4A191 },
+    { EdibleItems::spellBookOfSummonedDagger, 0x07A30B93 },
+    { EdibleItems::spellBookOfSummonedSword, 0x07A30B92 },
   };
 }
 
