@@ -10,7 +10,15 @@ class WorldState;
 
 class PieScript
 {
-public:
+private:
+  enum StarterKitChance
+  {
+    ChefKitChance = 25,
+    MinerKitChance = 25,
+    PrisonerKitChance = 25,
+    LumberjackKitChance = 25
+  };
+
   enum class LootboxItemType
   {
     Weapon = 0,
@@ -37,50 +45,52 @@ public:
     PatronKit
   };
 
-private:
-  enum StarterKitChance
+  enum EdibleItems : uint32_t
   {
-    ChefKitChance = 25,
-    MinerKitChance = 25,
-    PrisonerKitChance = 25,
-    LumberjackKitChance = 25
+    kApplePieId = 0x082b9671,
+    kStareterKitPie = 0x030009DB,
+    kPatronStarterKitPie = 0x00064B30,
+    kWardrobePie = 0x082DD28a,
+    // I'll change names as soon as I'll know what these items are
+    unidentifiedItem1 = 0x07A45089,
+    unidentifiedItem2 = 0x07A45088,
+    unidentifiedItem3 = 0x07A4A18F,
+    unidentifiedItem4 = 0x07A4A18D
   };
 
 public:
   PieScript(const std::vector<std::string>& espmFiles);
-
-public:
-  using LootTable =
-    std::unordered_map<LootboxItemType,
-                       std::unordered_map<Tier, std::vector<uint32_t>>>;
-  const LootTable& GetLootTable() const;
-  void Play(MpActor& actor, const WorldState& worldState);
-  void AddStarterKitItems(MpActor& actor, const WorldState& worldState);
-  void AddPatronStarterKitItems(MpActor& actor, const WorldState& worldState);
+  void Play(MpActor& actor, const WorldState& worldState, uint32_t itemBaseId);
 
 private:
-  Tier AcknowledgeTier(int chance);
-  uint32_t GetSlotItem(int weaponChance, int armoryChance,
-                       int consumableChance, int nothingChance);
-  std::pair<LootboxItemType, Tier> AcknowledgeTypeAndTier(int weaponChance,
-                                                          int armoryChance,
-                                                          int consumableChance,
-                                                          int nothingChance);
+  using LootboxTable =
+    std::unordered_map<LootboxItemType,
+                       std::unordered_map<Tier, std::vector<uint32_t>>>;
+  void AddPieItems(MpActor& actor, const WorldState& worldState);
+  void AddStarterKitItems(MpActor& actor, const WorldState& worldState);
+  void AddPatronStarterKitItems(MpActor& actor, const WorldState& worldState);
+  Tier AcknowledgeTier(uint32_t chance);
+  uint32_t GetSlotItem(uint32_t weaponChance, uint32_t armoryChance,
+                       uint32_t consumableChance, uint32_t nothingChance);
+  std::pair<LootboxItemType, Tier> AcknowledgeTypeAndTier(
+    uint32_t weaponChance, uint32_t armoryChance, uint32_t consumableChance,
+    uint32_t nothingChance);
   void AddDLCItems(const std::vector<std::string>& espmFiles,
                    const std::vector<std::string>& items, LootboxItemType type,
                    Tier tier);
   void AddKitItems(MpActor& actor, const WorldState& worldState,
                    StarterKitType starterKitType);
   void Notify(MpActor& actor, const WorldState& worldState, uint32_t formId,
-              int count, bool silent);
+              uint32_t count, bool silent);
 
 private:
-  LootTable lootTable;
+  LootboxTable lootboxTable;
   std::unordered_map<StarterKitType, std::vector<uint32_t>> starterKitsMap;
+  std::unordered_map<uint32_t, uint32_t> miscLootTable;
 
-  const int TIER1_CHANCE = 600;
-  const int TIER2_CHANCE = 220;
-  const int TIER3_CHANCE = 150;
-  const int TIER4_CHANCE = 25;
-  const int TIER5_CHANCE = 5;
+  const uint32_t TIER1_CHANCE = 600;
+  const uint32_t TIER2_CHANCE = 220;
+  const uint32_t TIER3_CHANCE = 150;
+  const uint32_t TIER4_CHANCE = 25;
+  const uint32_t TIER5_CHANCE = 5;
 };

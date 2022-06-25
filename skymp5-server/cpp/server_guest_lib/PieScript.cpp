@@ -2,16 +2,18 @@
 
 #include "FormDesc.h"
 #include "MpActor.h"
+#include "NiPoint3.h"
 #include "SpSnippet.h"
 #include "WorldState.h"
 #include <random>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
 std::mt19937 g_rng{ std::random_device{}() };
 
-int GenerateRandomNumber(int leftBound, int rightBound)
+uint32_t GenerateRandomNumber(uint32_t leftBound, uint32_t rightBound)
 {
   if (leftBound <= rightBound) {
     std::uniform_int_distribution<> distr(leftBound, rightBound);
@@ -31,12 +33,12 @@ void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
     FormDesc formDesc = FormDesc::FromString(item);
     uint32_t id = formDesc.ToFormId(espmFiles);
 
-    lootTable[type][tier].push_back(id);
+    lootboxTable[type][tier].push_back(id);
   }
 }
 PieScript::PieScript(const std::vector<std::string>& espmFiles)
 {
-  lootTable = {
+  lootboxTable = {
     { LootboxItemType::Weapon,
       {
         {
@@ -142,7 +144,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
           {
             0x0003EAE3,
           } },
-      } }
+      } },
   };
 
   starterKitsMap = {
@@ -231,14 +233,16 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
   AddDLCItems(espmFiles, armorTier5, LootboxItemType::Armor, Tier::Tier5);
   AddDLCItems(espmFiles, consumableTier3, LootboxItemType::Consumable,
               Tier::Tier3);
+
+  miscLootTable = {
+    { EdibleItems::unidentifiedItem1, 0x07A30B91 },
+    { EdibleItems::unidentifiedItem2, 0x07A4A191 },
+    { EdibleItems::unidentifiedItem3, 0x07A30B93 },
+    { EdibleItems::unidentifiedItem4, 0x07A30B92 },
+  };
 }
 
-const PieScript::LootTable& PieScript::GetLootTable() const
-{
-  return lootTable;
-}
-
-PieScript::Tier PieScript::AcknowledgeTier(int chance)
+PieScript::Tier PieScript::AcknowledgeTier(uint32_t chance)
 {
   Tier tier;
   if (chance <= TIER1_CHANCE) {
@@ -261,10 +265,11 @@ PieScript::Tier PieScript::AcknowledgeTier(int chance)
 }
 
 std::pair<PieScript::LootboxItemType, PieScript::Tier>
-PieScript::AcknowledgeTypeAndTier(int weaponChance, int armorChance,
-                                  int consumableChance, int nothingChance)
+PieScript::AcknowledgeTypeAndTier(uint32_t weaponChance, uint32_t armorChance,
+                                  uint32_t consumableChance,
+                                  uint32_t nothingChance)
 {
-  int chance = GenerateRandomNumber(1, 100);
+  uint32_t chance = GenerateRandomNumber(1, 100);
   LootboxItemType type;
   Tier tier;
 
@@ -287,22 +292,22 @@ PieScript::AcknowledgeTypeAndTier(int weaponChance, int armorChance,
   std::pair<LootboxItemType, Tier> tierAndType = std::make_pair(type, tier);
   return tierAndType;
 }
-
-uint32_t PieScript::GetSlotItem(int weaponChance, int armoryChacne,
-                                int consumableChance, int nothingChance)
+uint32_t PieScript::GetSlotItem(uint32_t weaponChance, uint32_t armoryChacne,
+                                uint32_t consumableChance,
+                                uint32_t nothingChance)
 {
   std::pair<LootboxItemType, Tier> typeAndTier = AcknowledgeTypeAndTier(
     weaponChance, armoryChacne, consumableChance, nothingChance);
   if (typeAndTier.first != LootboxItemType::Nothing) {
-    int item = GenerateRandomNumber(
-      0, lootTable[typeAndTier.first][typeAndTier.second].size() - 1);
-    return lootTable[typeAndTier.first][typeAndTier.second].at(item);
+    uint32_t item = GenerateRandomNumber(
+      0, lootboxTable[typeAndTier.first][typeAndTier.second].size() - 1);
+    return lootboxTable[typeAndTier.first][typeAndTier.second].at(item);
   }
   return 0;
 }
 
 void PieScript::Notify(MpActor& actor, const WorldState& worldState,
-                       uint32_t formId, int count, bool silent)
+                       uint32_t formId, uint32_t count, bool silent)
 {
   std::string type;
   std::stringstream ss;
@@ -327,14 +332,14 @@ void PieScript::Notify(MpActor& actor, const WorldState& worldState,
 
   ss << "[";
   ss << nlohmann::json({ { "formId", formId }, { "type", type } }).dump();
-  ss << "," << static_cast<int>(count) << ","
+  ss << "," << static_cast<uint32_t>(count) << ","
      << (static_cast<bool>(silent) ? "true" : "false");
   ss << "]";
   std::string args = ss.str();
   (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(&actor);
 }
 
-void PieScript::Play(MpActor& actor, const WorldState& worldState)
+void PieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
 {
   uint32_t item1 = GetSlotItem(80, 10, 10, 0);
   uint32_t item2 = GetSlotItem(10, 80, 10, 0);
@@ -371,7 +376,7 @@ void PieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
 void PieScript::AddStarterKitItems(MpActor& actor,
                                    const WorldState& worldState)
 {
-  int chance = GenerateRandomNumber(1, 100);
+  uint32_t chance = GenerateRandomNumber(1, 100);
   if (chance <= StarterKitChance::ChefKitChance) {
     AddKitItems(actor, worldState, StarterKitType::ChefKit);
   } else if (chance <= (StarterKitChance::ChefKitChance +
@@ -390,4 +395,38 @@ void PieScript::AddPatronStarterKitItems(MpActor& actor,
                                          const WorldState& worldState)
 {
   AddKitItems(actor, worldState, StarterKitType::PatronKit);
+}
+
+void PieScript::Play(MpActor& actor, const WorldState& worldState,
+                     uint32_t itemBaseId)
+{
+  bool isKit = itemBaseId == EdibleItems::kPatronStarterKitPie;
+  if (isKit) {
+    AddStarterKitItems(actor, worldState);
+  }
+
+  bool isPatron = itemBaseId == EdibleItems::kPatronStarterKitPie;
+  if (isPatron) {
+    AddPatronStarterKitItems(actor, worldState);
+  }
+
+  bool isPie = false;
+  isPie = isPie || itemBaseId == EdibleItems::kApplePieId;
+  if (isPie) {
+    AddPieItems(actor, worldState);
+  }
+
+  bool isWardrobePie = itemBaseId == EdibleItems::kWardrobePie;
+  if (isWardrobePie) {
+    constexpr uint32_t wardrobeId = 0x0756C165;
+    const NiPoint3 wardrobePos = { -769, 10461, -915 };
+    actor.Teleport({ wardrobePos,
+                     { 0, 0, 0 },
+                     FormDesc::FromFormId(wardrobeId, worldState.espmFiles) });
+  }
+
+  auto it = miscLootTable.find(itemBaseId);
+  if (it != miscLootTable.end()) {
+    actor.AddItem(miscLootTable[itemBaseId], 1);
+  }
 }
