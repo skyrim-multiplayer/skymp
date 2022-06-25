@@ -52,7 +52,7 @@ private:
     kPatronStarterKitPie = 0x00064B30,
     kWardrobePie = 0x082DD28a,
     spellBookOfSummonedBattleAxe = 0x07A45089,
-    spellBookOfSummonedBow = 0x07A45088,
+    spellBookOfSummonedBow = 0x07A4508B,
     spellBookOfSummonedDagger = 0x07A4A18F,
     spellBookOfSummonedSword = 0x07A4A18D
   };
