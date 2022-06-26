@@ -51,10 +51,6 @@ private:
     kStareterKitPie = 0x030009DB,
     kPatronStarterKitPie = 0x00064B30,
     kWardrobePie = 0x082DD28a,
-    spellBookOfSummonedBattleAxe = 0x07A45089,
-    spellBookOfSummonedBow = 0x07A45088,
-    spellBookOfSummonedDagger = 0x07A4A18F,
-    spellBookOfSummonedSword = 0x07A4A18D
   };
 
 public:
@@ -65,6 +61,8 @@ private:
   using LootboxTable =
     std::unordered_map<LootboxItemType,
                        std::unordered_map<Tier, std::vector<uint32_t>>>;
+  void AddItem(MpActor& actor, const WorldState& worldState,
+               uint32_t itemBaseId, uint32_t count);
   void AddPieItems(MpActor& actor, const WorldState& worldState);
   void AddStarterKitItems(MpActor& actor, const WorldState& worldState);
   void AddPatronStarterKitItems(MpActor& actor, const WorldState& worldState);
@@ -85,7 +83,7 @@ private:
 private:
   LootboxTable lootboxTable;
   std::unordered_map<StarterKitType, std::vector<uint32_t>> starterKitsMap;
-  std::unordered_map<uint32_t, uint32_t> miscLootTable;
+  std::unordered_map<uint32_t, std::vector<uint32_t>> miscLootTable;
 
   const uint32_t TIER1_CHANCE = 600;
   const uint32_t TIER2_CHANCE = 220;

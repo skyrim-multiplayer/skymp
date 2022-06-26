@@ -235,11 +235,24 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
               Tier::Tier3);
 
   miscLootTable = {
-    { EdibleItems::spellBookOfSummonedBattleAxe, 0x07A30B91 },
-    { EdibleItems::spellBookOfSummonedBow, 0x07A4A191 },
-    { EdibleItems::spellBookOfSummonedDagger, 0x07A30B93 },
-    { EdibleItems::spellBookOfSummonedSword, 0x07A30B92 },
+    { 0x07A45089, { 0x07A30B91 } },
+    { 0x07A45088, { 0x07A4A191 } },
+    { 0x07A4A18F, { 0x07A30B93 } },
+    { 0x07A4A18D, { 0x07A30B92 } },
+    { 0x07ABE9F6, { 0x07A59508, 0x07A59509 } },
+    { 0x07ABE9F8, { 0x07A59506, 0x07A59507 } },
+    { 0x07ABE9FE, { 0x07A5950C, 0x07A5950D } },
+    { 0x07ABEA00, { 0x07A5950F, 0x07A59510 } },
+    { 0x07ABE9FA, { 0x07A59504, 0x07A59505 } },
+    { 0x07ABE9FC, { 0x07A5950A, 0x07A5950B } },
   };
+}
+
+void PieScript::AddItem(MpActor& actor, const WorldState& worldState,
+                        uint32_t itemBaseId, uint32_t count)
+{
+  actor.AddItem(itemBaseId, 1);
+  Notify(actor, worldState, itemBaseId, 1, false);
 }
 
 PieScript::Tier PieScript::AcknowledgeTier(uint32_t chance)
@@ -347,20 +360,16 @@ void PieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
   uint32_t item4 = GetSlotItem(0, 0, 100, 0);
 
   if (item1) {
-    actor.AddItem(item1, 1);
-    Notify(actor, worldState, item1, 1, false);
+    AddItem(actor, worldState, item1, 1);
   }
   if (item2) {
-    actor.AddItem(item2, 1);
-    Notify(actor, worldState, item2, 1, false);
+    AddItem(actor, worldState, item2, 1);
   }
   if (item3) {
-    actor.AddItem(item3, 1);
-    Notify(actor, worldState, item3, 1, false);
+    AddItem(actor, worldState, item3, 1);
   }
   if (item4) {
-    actor.AddItem(item4, 1);
-    Notify(actor, worldState, item4, 1, false);
+    AddItem(actor, worldState, item4, 1);
   }
 }
 
@@ -427,6 +436,8 @@ void PieScript::Play(MpActor& actor, const WorldState& worldState,
 
   auto it = miscLootTable.find(itemBaseId);
   if (it != miscLootTable.end()) {
-    actor.AddItem(miscLootTable[itemBaseId], 1);
+    for (const auto& item : miscLootTable[itemBaseId]) {
+      AddItem(actor, worldState, item, 1);
+    }
   }
 }
