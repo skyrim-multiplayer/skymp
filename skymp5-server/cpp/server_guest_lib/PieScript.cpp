@@ -7,10 +7,7 @@
 #include "WorldState.h"
 #include <random>
 #include <sstream>
-#include <stdexcept>
-#include <unordered_map>
-#include <vector>
-
+#include <stdexcept> #include <unordered_map> #include <vector>
 std::mt19937 g_rng{ std::random_device{}() };
 
 uint32_t GenerateRandomNumber(uint32_t leftBound, uint32_t rightBound)
@@ -251,8 +248,8 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
 void PieScript::AddItem(MpActor& actor, const WorldState& worldState,
                         uint32_t itemBaseId, uint32_t count)
 {
-  actor.AddItem(itemBaseId, 1);
-  Notify(actor, worldState, itemBaseId, 1, false);
+  actor.AddItem(itemBaseId, count);
+  Notify(actor, worldState, itemBaseId, count, false);
 }
 
 PieScript::Tier PieScript::AcknowledgeTier(uint32_t chance)
