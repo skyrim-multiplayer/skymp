@@ -280,7 +280,31 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
 
   if (t == "NPC_") {
-    return false;
+    auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
+    if (npcData.isEssential || npcData.isProtected)
+      return false;
+
+    enum
+    {
+      CrimeFactionsList = 0x26953
+    };
+
+    auto formListLookupRes = br.LookupById(CrimeFactionsList);
+    auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
+    auto formIds = formList->GetData(cache).formIds;
+    for (auto& formId : formIds) {
+      formId = formListLookupRes.ToGlobalId(formId);
+    }
+
+    for (auto fact : npcData.factions) {
+      auto it = std::find(formIds.begin(), formIds.end(),
+                          base.ToGlobalId(fact.formId));
+      if (it != formIds.end()) {
+        logger->info("Skipping actor {0:x} because it's in faction {0:x}",
+                     record->GetId(), *it);
+        return false;
+      }
+    }
   }
 
   auto formId = espm::GetMappedId(record->GetId(), mapping);
