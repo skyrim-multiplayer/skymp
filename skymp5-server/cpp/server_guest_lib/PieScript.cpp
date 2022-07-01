@@ -233,7 +233,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
 
   miscLootTable = {
     { 0x07A45089, { 0x07A30B91 } },
-    { 0x07A45088, { 0x07A4A191 } },
+    { 0x07A4508b, { 0x07A4A191, 0x0010B0A7 } },
     { 0x07A4A18F, { 0x07A30B93 } },
     { 0x07A4A18D, { 0x07A30B92 } },
     { 0x07ABE9F6, { 0x07A59508, 0x07A59509 } },
