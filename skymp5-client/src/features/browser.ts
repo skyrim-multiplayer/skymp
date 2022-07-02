@@ -70,6 +70,8 @@ export const main = (): void => {
     } else if (e.name === Menu.HUD) {
       browser.setVisible(true);
     }
+
+    printConsole(`menuOpen ${e.name}; badMenusOpen: ${JSON.stringify(badMenusOpen)}`);
   });
 
   on("menuClose", (e: MenuCloseEvent) => {
@@ -83,6 +85,8 @@ export const main = (): void => {
     }
 
     if (e.name === Menu.HUD) browser.setVisible(false);
+
+    printConsole(`menuClose ${e.name}; badMenusOpen: ${JSON.stringify(badMenusOpen)}`);
   });
 
   const binding = new Map<BindingKey, BindingValue>([
@@ -90,7 +94,7 @@ export const main = (): void => {
     [[DxScanCode.F2], () => browser.setVisible(!browser.isVisible())],
     [[DxScanCode.F6], () => browser.setFocused(!browser.isFocused())],
     [[DxScanCode.Enter], () => {
-      if (badMenusOpen.size !== 0) {
+      if (badMenusOpen.size === 0) {
         browser.setFocused(true);
       }
     }],
