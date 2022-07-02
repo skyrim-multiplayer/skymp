@@ -70,8 +70,6 @@ export const main = (): void => {
     } else if (e.name === Menu.HUD) {
       browser.setVisible(true);
     }
-
-    printConsole(`menuOpen ${e.name}; badMenusOpen: ${JSON.stringify(badMenusOpen)}`);
   });
 
   on("menuClose", (e: MenuCloseEvent) => {
@@ -85,8 +83,6 @@ export const main = (): void => {
     }
 
     if (e.name === Menu.HUD) browser.setVisible(false);
-
-    printConsole(`menuClose ${e.name}; badMenusOpen: ${JSON.stringify(badMenusOpen)}`);
   });
 
   const binding = new Map<BindingKey, BindingValue>([
