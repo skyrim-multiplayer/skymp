@@ -7,7 +7,10 @@
 #include "WorldState.h"
 #include <random>
 #include <sstream>
-#include <stdexcept> #include <unordered_map> #include <vector>
+#include <stdexcept>
+#include <unordered_map>
+#include <vector>
+
 std::mt19937 g_rng{ std::random_device{}() };
 
 uint32_t GenerateRandomNumber(uint32_t leftBound, uint32_t rightBound)
@@ -255,17 +258,17 @@ void PieScript::AddItem(MpActor& actor, const WorldState& worldState,
 PieScript::Tier PieScript::AcknowledgeTier(uint32_t chance)
 {
   Tier tier;
-  if (chance <= TIER1_CHANCE) {
+  if (chance <= kTier1Chance) {
     tier = Tier::Tier1;
     return tier;
-  } else if (chance <= (TIER1_CHANCE + TIER2_CHANCE)) {
+  } else if (chance <= (kTier1Chance + kTier2Chance)) {
     tier = Tier::Tier2;
     return tier;
-  } else if (chance <= (TIER1_CHANCE + TIER2_CHANCE + TIER3_CHANCE)) {
+  } else if (chance <= (kTier1Chance + kTier2Chance + kTier3Chance)) {
     tier = Tier::Tier3;
     return tier;
   } else if (chance <=
-             (TIER1_CHANCE + TIER2_CHANCE + TIER3_CHANCE + TIER4_CHANCE)) {
+             (kTier1Chance + kTier2Chance + kTier3Chance + kTier4Chance)) {
     tier = Tier::Tier4;
     return tier;
   } else {
@@ -383,14 +386,12 @@ void PieScript::AddStarterKitItems(MpActor& actor,
                                    const WorldState& worldState)
 {
   uint32_t chance = GenerateRandomNumber(1, 100);
-  if (chance <= StarterKitChance::ChefKitChance) {
+  if (chance <= kChefKitChance) {
     AddKitItems(actor, worldState, StarterKitType::ChefKit);
-  } else if (chance <= (StarterKitChance::ChefKitChance +
-                        StarterKitChance::LumberjackKitChance)) {
+  } else if (chance <= (kChefKitChance + kLumberjackKitChance)) {
     AddKitItems(actor, worldState, StarterKitType::LumberjackKit);
-  } else if (chance <= (StarterKitChance::ChefKitChance +
-                        StarterKitChance::LumberjackKitChance +
-                        StarterKitChance::MinerKitChance)) {
+  } else if (chance <=
+             (kChefKitChance + kLumberjackKitChance + kMinerKitChance)) {
     AddKitItems(actor, worldState, StarterKitType::MinerKit);
   } else {
     AddKitItems(actor, worldState, StarterKitType::PrisonerKit);

@@ -11,14 +11,6 @@ class WorldState;
 class PieScript
 {
 private:
-  enum StarterKitChance
-  {
-    ChefKitChance = 25,
-    MinerKitChance = 25,
-    PrisonerKitChance = 25,
-    LumberjackKitChance = 25
-  };
-
   enum class LootboxItemType
   {
     Weapon = 0,
@@ -85,9 +77,13 @@ private:
   std::unordered_map<StarterKitType, std::vector<uint32_t>> starterKitsMap;
   std::unordered_map<uint32_t, std::vector<uint32_t>> miscLootTable;
 
-  const uint32_t TIER1_CHANCE = 600;
-  const uint32_t TIER2_CHANCE = 220;
-  const uint32_t TIER3_CHANCE = 150;
-  const uint32_t TIER4_CHANCE = 25;
-  const uint32_t TIER5_CHANCE = 5;
+  constexpr static uint32_t kTier1Chance = 600;
+  constexpr static uint32_t kTier2Chance = 220;
+  constexpr static uint32_t kTier3Chance = 150;
+  constexpr static uint32_t kTier4Chance = 25;
+  constexpr static uint32_t kTier5Chance = 5;
+  constexpr static uint32_t kChefKitChance = 25;
+  constexpr static uint32_t kMinerKitChance = 25;
+  constexpr static uint32_t kPrisonerKitChance = 25;
+  constexpr static uint32_t kLumberjackKitChance = 25;
 };
