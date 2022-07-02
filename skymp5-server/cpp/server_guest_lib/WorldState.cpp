@@ -300,7 +300,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       auto it = std::find(formIds.begin(), formIds.end(),
                           base.ToGlobalId(fact.formId));
       if (it != formIds.end()) {
-        logger->info("Skipping actor {0:x} because it's in faction {0:x}",
+        logger->info("Skipping actor {:#x} because it's in faction {:#x}",
                      record->GetId(), *it);
         return false;
       }
