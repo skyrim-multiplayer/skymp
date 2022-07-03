@@ -13,7 +13,11 @@
 #include "UserMessageOutput.h"
 #include "Utils.h"
 #include "WorldState.h"
+#include <fmt/core.h>
 #include <fmt/format.h>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
+#include <sstream>
 #include <unordered_set>
 
 MpActor* ActionListener::SendToNeighbours(
@@ -369,9 +373,18 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
     auto formId = espm::GetMappedId(entry.formId, *mapping);
     entries.push_back({ formId, entry.count });
   }
+  auto outputFormId =
+    espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
+  if (spdlog::should_log(spdlog::level::debug)) {
+    std::string s = fmt::format("User formId={} crafted", me->GetFormId());
+    for (const auto& entry : entries) {
+      s += fmt::format(" -{:#x}x{}", entry.baseId, entry.count);
+    }
+    s += fmt::format(" +{:#x}x{}", outputFormId, recipeData.outputCount);
+    spdlog::debug("{}", s);
+  }
   me->RemoveItems(entries);
-  me->AddItem(espm::GetMappedId(recipeData.outputObjectFormId, *mapping),
-              recipeData.outputCount);
+  me->AddItem(outputFormId, recipeData.outputCount);
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
@@ -384,6 +397,9 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   auto& br = partOne.worldState.GetEspm().GetBrowser();
   auto& cache = partOne.worldState.GetEspmCache();
   auto base = br.LookupById(workbench.GetBaseId());
+
+  spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
+                rawMsgData.userId, resultObjectId, workbenchId);
 
   if (base.rec->GetType() != "FURN") {
     throw std::runtime_error("Unable to use " +
