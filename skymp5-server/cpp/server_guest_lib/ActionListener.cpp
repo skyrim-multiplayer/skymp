@@ -376,11 +376,11 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   auto outputFormId =
     espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
   if (spdlog::should_log(spdlog::level::debug)) {
-    std::string s = fmt::format("User formId={} crafted", me->GetFormId());
+    std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
     for (const auto& entry : entries) {
-      s += fmt::format(" -{:#x}x{}", entry.baseId, entry.count);
+      s += fmt::format(" -{:#x} x{}", entry.baseId, entry.count);
     }
-    s += fmt::format(" +{:#x}x{}", outputFormId, recipeData.outputCount);
+    s += fmt::format(" +{:#x} x{}", outputFormId, recipeData.outputCount);
     spdlog::debug("{}", s);
   }
   me->RemoveItems(entries);
