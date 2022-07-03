@@ -32,7 +32,7 @@ if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
 if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
-  set(msg "CMake binary directory must be <repo_root>/build")
+  set(msg "CMake binary directory ${CMAKE_BINARY_DIR} must be <repo_root>/build (${CMAKE_SOURCE_DIR}/build)")
   set(msg "${msg}\nUse commands below after cloning the repo (replace path with your actual Skyrim SE folder):")
   set(msg "${msg}\n  mkdir build")
   set(msg "${msg}\n  cd build")
