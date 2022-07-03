@@ -5,7 +5,14 @@ import { AuthGameData, RemoteAuthGameData } from "./authModel";
 import { Transform } from "../sync/movement";
 import { FunctionInfo } from "../lib/functionInfo";
 
-const authUrl = (sp.settings["skymp5-client"]["master"] as string) || "https://skymp.io";
+const normalizeUrl = (url: string) => {
+  if (url.endsWith('/')) {
+    return url.slice(0, url.length - 1);
+  }
+  return url;
+};
+
+const authUrl = normalizeUrl((sp.settings["skymp5-client"]["master"] as string) || "https://skymp.io");
 const githubUrl = "https://github.com/skyrim-multiplayer/skymp";
 const patreonUrl = "https://www.patreon.com/skymp";
 
