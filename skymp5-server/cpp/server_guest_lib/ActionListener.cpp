@@ -413,7 +413,7 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
     throw std::runtime_error(
       fmt::format("Recipe not found: inputObjects={}, workbenchId={:#x}, "
                   "resultObjectId={:#x}",
-                  inputObjects.ToJson(), workbenchId, resultObjectId));
+                  inputObjects.ToJson().dump(), workbenchId, resultObjectId));
   }
 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
