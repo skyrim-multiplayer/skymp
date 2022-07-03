@@ -104,42 +104,11 @@ void MpActor::OnEquip(uint32_t baseId)
     WorldState* espmProvider = GetParent();
     std::vector<std::string> espmFiles = espmProvider->espmFiles;
 
-    constexpr uint32_t kApplePieId0 = 0x082b9671;
-    constexpr uint32_t kStareterKitPie = 0x030009DB;
-    constexpr uint32_t kPatronStarterKitPie = 0x00064B30;
-    constexpr uint32_t kWardrobePie = 0x082DD28A;
-    bool isPie = false;
-    isPie = isPie || baseId == kApplePieId0;
-
     std::set<std::string> s;
     s = { espmFiles.begin(), espmFiles.end() };
     if (s.count("SweetPie.esp")) {
-      if (baseId == kStareterKitPie) {
-        WorldState* worldState = GetParent();
-        PieScript pieScript(espmFiles);
-        pieScript.AddStarterKitItems(*this, *worldState);
-      }
-
-      if (baseId == kPatronStarterKitPie) {
-        WorldState* worldState = GetParent();
-        PieScript pieScript(espmFiles);
-        pieScript.AddPatronStarterKitItems(*this, *worldState);
-      }
-
-      if (baseId == kWardrobePie) {
-        WorldState* worldState = GetParent();
-        constexpr uint32_t wardrobeId = 0x0756C165;
-        const NiPoint3 wardrobePos = { -769, 10461, -915 };
-        this->Teleport({ wardrobePos,
-                         { 0, 0, 0 },
-                         FormDesc::FromFormId(wardrobeId, espmFiles) });
-      }
-
-      if (isPie) {
-        WorldState* worldState = GetParent();
-        PieScript pieScript(espmFiles);
-        pieScript.Play(*this, *worldState);
-      }
+      PieScript pieScript(espmFiles);
+      pieScript.Play(*this, *GetParent(), baseId);
     }
   }
 }
