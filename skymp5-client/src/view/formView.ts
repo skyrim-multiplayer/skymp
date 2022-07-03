@@ -410,7 +410,7 @@ export class FormView implements View<FormModel> {
       }
     }
 
-    if (this.refrId && model.appearance?.name) {
+    if (FormView.isDisplayingNicknames && this.refrId && model.appearance?.name) {
       const headPart = "NPC Head [Head]";
       const maxNicknameDrawDistance = 1000;
       const playerActor = Game.getPlayer()!;
@@ -504,4 +504,6 @@ export class FormView implements View<FormModel> {
   private state = {};
   private localImmortal = false;
   private textNameId: number | undefined = undefined;
+
+  public static isDisplayingNicknames: boolean = true;
 }
