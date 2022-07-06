@@ -195,6 +195,7 @@ const Chat = (props) => {
                   setOpened={setPocuhOpened}
                   send={props.send}
                   disableSound={disableDiceSounds}
+                  inputRef={inputRef}
               />
           }
           </div>

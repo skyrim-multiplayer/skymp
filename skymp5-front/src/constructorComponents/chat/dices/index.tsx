@@ -12,10 +12,12 @@ const Dices = (props: {
   disableSound: boolean,
   isOpened: boolean,
   setOpened: (boolean) => void,
+  inputRef: React.MutableRefObject<HTMLInputElement>
 }) => {
   const count = useRef(0);
 
   const roll = (type: 'coin' | 'dice', code: string) => {
+    props.inputRef.current.focus();
     if (count.current < 10) {
       if (!props.disableSound) { playSound(type); }
       props.send(`/${code}`);
@@ -61,6 +63,7 @@ const Dices = (props: {
       <Pouch isOpened={props.isOpened} onClick={() => {
         if (!props.disableSound) { playSound('pouch'); }
         props.setOpened(!props.isOpened);
+        props.inputRef.current.focus();
       }} />
       <span>dice</span>
     </div>
