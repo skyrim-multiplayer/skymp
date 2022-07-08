@@ -36,6 +36,7 @@ import { AuthGameData } from '../features/authModel';
 import * as netInfo from "../features/netInfoSystem";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
 import { nameof } from '../lib/nameof';
+import { getScreenResolution } from '../view/formView';
 
 //
 // eventSource system
@@ -66,11 +67,22 @@ if (Array.isArray(storage["eventSourceContexts"])) {
 //
 //
 
+const showConnectionError = () => {
+  // TODO: unhardcode it or render via browser
+  sp.createText(1920 / 2, 1080 / 2, `Server connection failed. This may be caused by one of the following:
+1. You are not present on the SkyMP Discord server
+2. You have been banned by server admins
+3. There is some technical issue. Try linking your Discord account again
+
+If you feel that something is wrong, please contact us on Discord.`, [255, 255, 255, 1]);
+};
+
 let loggingStartMoment = 0;
 on("tick", () => {
   const maxLoggingDelay = 5000;
   if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
     printConsole("Logging in failed. Reconnecting.");
+    showConnectionError();
     networking.reconnect();
     loggingStartMoment = 0;
   }

@@ -33,6 +33,7 @@ import { FormModel } from "./modelSource/model";
 import * as netInfo from "./features/netInfoSystem";
 import { WorldView } from "./view/worldView";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./view/worldViewMisc";
+import { getScreenResolution } from "./view/formView";
 
 interface AnyMessage {
   type?: string;

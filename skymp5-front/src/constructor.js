@@ -19,7 +19,9 @@ const styles = [
   'BUTTON_STYLE_FRAME_LEFT',
   'BUTTON_STYLE_FRAME_RIGHT',
   'ICON_STYLE_MAIL',
-  'ICON_STYLE_KEY'
+  'ICON_STYLE_KEY',
+  'ICON_STYLE_DISCORD',
+  'ICON_STYLE_SKYMP',
 ];
 
 const Constructor = props => {

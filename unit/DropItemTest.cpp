@@ -31,14 +31,9 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
                             { "baseId", ironDagger },
                             { "count", 1 } });
   // 1 message from here and another 1 is comming from actionListener
-  REQUIRE(partOne.Messages().size() == 2);
+  REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(ac.GetInventory().GetItemCount(ironDagger) == 0);
-  MpObjectReference& refr =
-    partOne.worldState.GetFormAt<MpObjectReference>(0xff000001);
-  REQUIRE(refr.GetBaseId() == ironDagger);
-  REQUIRE(refr.GetPos().x == 1.f);
-  REQUIRE(refr.GetPos().y == 2.f);
-  REQUIRE(refr.GetPos().z == 3.f);
+  // TODO(#1141): reimplement spawning items
   ac.AddItem(healingPotion, 5);
   partOne.Messages().clear();
   REQUIRE(partOne.Messages().size() == 0);
@@ -46,6 +41,6 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
             nlohmann::json{ { "t", MsgType::DropItem },
                             { "baseId", healingPotion },
                             { "count", 5 } });
-  REQUIRE(partOne.Messages().size() == 2);
+  REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(ac.GetInventory().GetItemCount(healingPotion) == 0);
 }

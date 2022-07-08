@@ -3,6 +3,7 @@
 #include "CropRegeneration.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "MpChangeForms.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
 #include "PieScript.h"
@@ -103,38 +104,11 @@ void MpActor::OnEquip(uint32_t baseId)
     WorldState* espmProvider = GetParent();
     std::vector<std::string> espmFiles = espmProvider->espmFiles;
 
-    constexpr uint32_t kApplePieId0 = 0x00064B43;
-    constexpr uint32_t kApplePieId1 = 0x0300353B;
-    constexpr uint32_t kApplePieId2 = 0x03003539;
-    constexpr uint32_t kApplePieId3 = 0x0300353A;
-    constexpr uint32_t kStareterKitPie = 0x030009DB;
-    constexpr uint32_t kPatronStarterKitPie = 0x00064B30;
-    bool isPie = false;
-    isPie = isPie || baseId == kApplePieId0;
-    isPie = isPie || baseId == kApplePieId1;
-    isPie = isPie || baseId == kApplePieId2;
-    isPie = isPie || baseId == kApplePieId3;
-
     std::set<std::string> s;
     s = { espmFiles.begin(), espmFiles.end() };
     if (s.count("SweetPie.esp")) {
-      if (baseId == kStareterKitPie) {
-        WorldState* worldState = GetParent();
-        PieScript pieScript(espmFiles);
-        pieScript.AddStarterKitItems(*this, *worldState);
-      }
-
-      if (baseId == kPatronStarterKitPie) {
-        WorldState* worldState = GetParent();
-        PieScript pieScript(espmFiles);
-        pieScript.AddPatronStarterKitItems(*this, *worldState);
-      }
-
-      if (isPie) {
-        WorldState* worldState = GetParent();
-        PieScript pieScript(espmFiles);
-        pieScript.Play(*this, *worldState);
-      }
+      PieScript pieScript(espmFiles);
+      pieScript.Play(*this, *GetParent(), baseId);
     }
   }
 }
@@ -576,13 +550,5 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   // TODO: Take count into account
   int count = entry.count;
   RemoveItems({ entry });
-  PapyrusObjectReference papyrusObjectReference;
-  auto baseForm = VarValue(std::make_shared<EspmGameObject>(
-    GetParent()->GetEspm().GetBrowser().LookupById(baseId)));
-  auto aCount = VarValue(count);
-  auto aForcePersist = VarValue(false);
-  auto aInitiallyDisabled = VarValue(false);
-  (void)papyrusObjectReference.PlaceAtMe(
-    this->ToVarValue(),
-    { baseForm, aCount, aForcePersist, aInitiallyDisabled });
+  // TODO(#1141): reimplement spawning items
 }

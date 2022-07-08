@@ -88,7 +88,7 @@ export class MpApiInteractor {
 
       const name = getName(input.actorId);
       if (listener.onPlayerChatInput) {
-        console.log(`chat: ${JSON.stringify(name)}: ${JSON.stringify(input.inputText)}`);
+        console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
         listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, name);
       }
     });
@@ -212,6 +212,9 @@ export class MpApiInteractor {
       },
       getName(actorId: number): string {
         return getName(actorId);
+      },
+      getProfileId(playerActorId: number): number {
+        return mp.get(playerActorId, 'profileId');
       },
       addItem(actorId: number, itemId: number, count: number): void {
         mp.callPapyrusFunction(

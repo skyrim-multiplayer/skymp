@@ -1351,6 +1351,11 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           res.SetProperty("magicka", chForm.magickaPercentage);
           res.SetProperty("stamina", chForm.staminaPercentage);
         }
+      } else if (propertyName == "profileId") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          auto chForm = actor->GetChangeForm();
+          res = JsValue::Int(chForm.profileId);
+        }
       } else {
         EnsurePropertyExists(gamemodeApiState, propertyName);
         res = refr.GetDynamicFields().Get(propertyName);
