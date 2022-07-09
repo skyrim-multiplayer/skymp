@@ -232,15 +232,6 @@ const main = async () => {
     }
   });
 
-  chat.attachMpApi((formId, msg) => server.onUiEvent(formId, msg));
-  const sendUiMessage = (formId: number, message: Record<string, unknown>) => {
-    if (typeof message !== "object") {
-      throw new TypeError("Messages must be objects");
-    }
-    chat.sendMsg(server, formId, message);
-  };
-  server.setSendUiMessageImplementation(sendUiMessage);
-
   const clear = () => server.clear();
 
   const toAbsolute = (p: string) => {
