@@ -1,4 +1,4 @@
-import { sprintf } from "../lib/sprintf-js";
+import { sprintf } from "sprintf-js";
 import { SweetPieGameModeListener } from "./SweetPieGameModeListener";
 import { SweetPieMap } from "./SweetPieMap";
 import { getPlayerCurrentRound, forceJoinRound, forceLeaveRound, determineDeathMatchWinners } from "./SweetPieRound";
