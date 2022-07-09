@@ -14,7 +14,6 @@ sourceMapSupport.install({
 });
 
 import * as scampNative from "./scampNative";
-import * as chat from "./chat";
 import { Settings } from "./settings";
 import { System } from "./systems/system";
 import { MasterClient } from "./systems/masterClient";
@@ -41,15 +40,6 @@ const {
 } = Settings.get();
 
 const gamemodeCache = new Map<string, string>();
-
-// https://stackoverflow.com/questions/37521893/determine-if-a-path-is-subdirectory-of-another-in-node-js
-const isChildOf = (child: string, parent: string) => {
-  child = path.resolve(child);
-  parent = path.resolve(parent);
-  if (child === parent) return false;
-  const parentTokens = parent.split("/").filter((i) => i.length);
-  return parentTokens.every((t, i) => child.split("/")[i] === t);
-};
 
 const runGamemodeWithVm = (
   gamemodeContents: string,
@@ -217,8 +207,6 @@ const main = async () => {
       }
     }
   });
-
-  chat.main(server);
 
   server.on("customPacket", (userId, content) => {
     const contentObj = JSON.parse(content);
