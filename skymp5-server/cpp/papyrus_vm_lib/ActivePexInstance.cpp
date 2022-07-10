@@ -134,9 +134,9 @@ VarValue CastToString(const VarValue& var)
   switch (var.GetType()) {
     case VarValue::kType_Object: {
       IGameObject* ptr = ((IGameObject*)var);
-      if (ptr)
+      if (ptr) {
         return VarValue(ptr->GetStringID());
-      else {
+      } else {
         const static std::string noneString = "None";
         return VarValue(noneString.c_str());
       }
@@ -452,8 +452,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                            argsForCall, ctx->stackIdHolder);
           }
         }
-      } else
+      } else {
         assert(false);
+      }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
       if (args[1] != nullptr) {
@@ -472,8 +473,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                 ctx->stackIdHolder);
           }
         }
-      } else
+      } else {
         assert(false);
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
       (*args[0]).pArray = std::make_shared<std::vector<VarValue>>();
@@ -483,8 +485,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         for (auto& element : *(*args[0]).pArray) {
           element = VarValue(type);
         }
-      } else
+      } else {
         assert(0);
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
       if ((*args[1]).pArray != nullptr) {
@@ -493,8 +496,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         } else if ((*args[0]).GetType() == VarValue::kType_Float) {
           *args[0] = VarValue((double)(*args[1]).pArray->size());
         }
-      } else
+      } else {
         *args[0] = VarValue((int32_t)0);
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Array_GetElement:
       if ((*args[1]).pArray != nullptr) {
@@ -506,8 +510,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
     case OpcodesImplementation::Opcodes::op_Array_SetElement:
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
-      } else
+      } else {
         assert(0);
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
       OpcodesImplementation::ArrayFindElement(*args[0], *args[1], *args[2],
@@ -883,8 +888,9 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
       noneVar = VarValue::None();
       handler({ e.what(), sourcePex.fn()->source });
       return noneVar;
-    } else
+    } else {
       throw;
+    }
   }
 
   for (auto& _name : identifiersValueNameCache) {

@@ -1472,9 +1472,10 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       if (akFormToPlace.rec->GetType() == "NPC_") {
         auto actor = new MpActor(locationalData, callbacks, globalRecordId);
         newRefr.reset(actor);
-      } else
+      } else {
         newRefr.reset(new MpObjectReference(locationalData, callbacks,
                                             globalRecordId, type));
+      }
 
       auto worldState = &partOne->worldState;
       auto newRefrId = worldState->GenerateFormId();
