@@ -8,6 +8,7 @@
 #include "PacketParser.h"
 #include <array>
 #include <cassert>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -289,6 +290,9 @@ void PartOne::AttachLogger(std::shared_ptr<spdlog::logger> logger)
 
 spdlog::logger& PartOne::GetLogger()
 {
+  if (!pImpl->logger) {
+    throw std::runtime_error("no logger attached");
+  }
   return *pImpl->logger;
 }
 
