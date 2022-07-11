@@ -13,7 +13,6 @@
 	"license": "GPL-3.0",
 	"devDependencies": {
 		"@types/node": "^17.0.23",
-		"@types/sprintf-js": "^1.1.2",
 		"jest": "^27.5.1",
 		"parcel-bundler": "1.12.3",
 		"parcel-plugin-wrapper": "^0.2.3",
@@ -25,8 +24,7 @@
 		"@types/jest": "^27.4.1",
 		"@types/node-gettext": "^3.0.3",
 		"gettext-parser": "^5.1.2",
-		"node-gettext": "^3.0.0",
-		"sprintf-js": "^1.1.2"
+		"node-gettext": "^3.0.0"
 	},
 	"prettier": {
 		"bracketSpacing": true,

@@ -1,4 +1,4 @@
-import { sprintf } from "sprintf-js";
+import { sprintf } from "../lib/sprintf-js";
 import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
