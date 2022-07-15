@@ -552,3 +552,13 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   RemoveItems({ entry });
   // TODO(#1141): reimplement spawning items
 }
+
+void MpActor::SetIsBlockActive(bool isBlockActive)
+{
+  isBlockActive = isBlockActive;
+}
+
+bool MpActor::IsBlockActive() const
+{
+  return isBlockActive;
+}
