@@ -4,12 +4,12 @@
 
 struct AnimationData
 {
-  std::string animEventName = "";
+  const char* animEventName = "";
   uint32_t numChanges = 0;
 
   static AnimationData FromJson(const simdjson::dom::element& data)
   {
-    JsonPointer animEventName("animationName"), numChanges("numChanges");
+    JsonPointer animEventName("animEventName"), numChanges("numChanges");
 
     AnimationData result;
     ReadEx(data, animEventName, &result.animEventName);
