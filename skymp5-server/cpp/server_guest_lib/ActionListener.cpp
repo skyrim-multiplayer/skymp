@@ -118,8 +118,23 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                       uint32_t idx)
+                                       uint32_t idx,
+                                       const AnimationData& animationData)
 {
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!actor) {
+    return;
+  }
+
+  constexpr const char* blockStartAnimationName = "blockStartOut";
+  constexpr const char* blockStopAnimationName = "blockStop";
+  if (animationData.animEventName == blockStartAnimationName) {
+    actor->SetIsBlockActive(true);
+  }
+  if (animationData.animEventName == blockStopAnimationName) {
+    actor->SetIsBlockActive(false);
+  }
+
   SendToNeighbours(idx, rawMsgData);
 }
 
@@ -709,6 +724,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
+  hitData.isHitBlocked = targetActor.IsBlockActive();
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
