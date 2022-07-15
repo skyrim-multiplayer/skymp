@@ -126,12 +126,12 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
     return;
   }
 
-  constexpr const char* blockStartAnimationName = "blockStartOut";
-  constexpr const char* blockStopAnimationName = "blockStop";
-  if (animationData.animEventName == blockStartAnimationName) {
+  constexpr const char* kBlockStartAnimationName = "blockStartOut";
+  constexpr const char* kBlockStopAnimationName = "blockStop";
+  if (animationData.animEventName == kBlockStartAnimationName) {
     actor->SetIsBlockActive(true);
   }
-  if (animationData.animEventName == blockStopAnimationName) {
+  if (animationData.animEventName == kBlockStopAnimationName) {
     actor->SetIsBlockActive(false);
   }
 
