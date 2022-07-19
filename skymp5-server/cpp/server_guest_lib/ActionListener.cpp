@@ -128,7 +128,6 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
 
   constexpr const char* kBlockStartAnimationName = "blockStartOut";
   constexpr const char* kBlockStopAnimationName = "blockStop";
-  spdlog::debug("Animation event name: {}\n", animationData.animEventName);
   if (!strcmp(animationData.animEventName, kBlockStopAnimationName)) {
     actor->SetIsBlockActive(true);
   }
