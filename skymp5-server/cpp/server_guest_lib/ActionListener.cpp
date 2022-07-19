@@ -127,7 +127,7 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   }
 
   spdlog::debug("Animation event name {}", animationData.animEventName);
-  constexpr const char* kBlockStartAnimationName = "blockStartOut";
+  constexpr const char* kBlockStartAnimationName = "blockStart";
   constexpr const char* kBlockStopAnimationName = "blockStop";
   if (!strcmp(animationData.animEventName, kBlockStartAnimationName)) {
     spdlog::debug("BlockingStart animation successful");
