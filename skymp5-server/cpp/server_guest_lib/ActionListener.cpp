@@ -128,7 +128,7 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
 
   constexpr const char* kBlockStartAnimationName = "blockStartOut";
   constexpr const char* kBlockStopAnimationName = "blockStop";
-  if (!strcmp(animationData.animEventName, kBlockStopAnimationName)) {
+  if (!strcmp(animationData.animEventName, kBlockStartAnimationName)) {
     actor->SetIsBlockActive(true);
   }
   if (!strcmp(animationData.animEventName, kBlockStopAnimationName)) {
