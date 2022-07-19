@@ -4,8 +4,8 @@
 	"description": "",
 	"main": "index.ts",
 	"scripts": {
-		"serve": "parcel serve index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node",
-		"build": "parcel build index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node",
+		"serve": "parcel serve index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node --bundle-node-modules",
+		"build": "parcel build index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node --bundle-node-modules",
 		"test": "jest --forceExit --coverage --verbose"
 	},
 	"keywords": [],
