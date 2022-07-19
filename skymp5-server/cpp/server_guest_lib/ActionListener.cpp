@@ -126,12 +126,15 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
     return;
   }
 
+  spdlog::debug("Animation event name {}", animationData.animEventName);
   constexpr const char* kBlockStartAnimationName = "blockStartOut";
   constexpr const char* kBlockStopAnimationName = "blockStop";
   if (!strcmp(animationData.animEventName, kBlockStartAnimationName)) {
+    spdlog::debug("BlockingStart animation successful");
     actor->SetIsBlockActive(true);
   }
   if (!strcmp(animationData.animEventName, kBlockStopAnimationName)) {
+    spdlog::debug("BlockingStop animation successful");
     actor->SetIsBlockActive(false);
   }
 
