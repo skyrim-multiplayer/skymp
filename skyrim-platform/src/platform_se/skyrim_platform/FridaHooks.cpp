@@ -277,6 +277,7 @@ void Frida::InstallHooks()
   InstallSendAnimationEventHook();
   InstallQueueNinodeUpdateHook();
   InstallRenderCursorMenuHook();
+  InstallApplyMasksToRenderTargetsHook();
 
   logger::info("Frida hooks installed.");
 }
