@@ -652,6 +652,19 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
 }
 }
 
+bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
+{
+  NiPoint3 targetEyeDirection = { 0, 0, target.GetPos().z };
+  NiPoint3 enemyDirection = aggressor.GetPos() - target.GetPos();
+  if (targetEyeDirection * enemyDirection > 0) {
+    float angle =
+      std::acos(targetEyeDirection * enemyDirection /
+                (targetEyeDirection.Length() * enemyDirection.Length()));
+    return angle < 1 ? true : false;
+  }
+  return false;
+}
+
 void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
 {
@@ -727,7 +740,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
-  hitData.isHitBlocked = targetActor.IsBlockActive();
+  hitData.isHitBlocked = targetActor.IsBlockActive()
+    ? ShouldBeBlocked(*aggressor, targetActor)
+    : false;
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
