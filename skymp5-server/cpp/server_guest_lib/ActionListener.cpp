@@ -654,10 +654,10 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
 bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
   spdlog::debug("I am in ShouldBeBlocked");
-  NiPoint3 targetEyeDirection = { 0, 0, target.GetPos().z };
+  NiPoint3 targetEyeDirection = { std::cos(target.GetAngle().x), 0, std::sin(target.GetAngle().z) };
   NiPoint3 enemyDirection = aggressor.GetPos() - target.GetPos();
-  spdlog::debug("TargetEyeDirection: [{}, {}, {}]", targetEyeDirection.x, targetEyeDirection.z, targetEyeDirection.z);
-  spdlog::debug("Enemy direction: [{}, {}, {}]", enemyDirection.x, enemyDirection.z, enemyDirection.z);
+  spdlog::debug("TargetEyeDirection: [{}, {}, {}]", targetEyeDirection.x, targetEyeDirection.y, targetEyeDirection.z);
+  spdlog::debug("Enemy direction: [{}, {}, {}]", enemyDirection.x, enemyDirection.y, enemyDirection.z);
   if (targetEyeDirection * enemyDirection > 0) {
     float angle =
       std::acos(targetEyeDirection * enemyDirection /
