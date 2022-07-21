@@ -4,8 +4,8 @@
 	"description": "",
 	"main": "index.ts",
 	"scripts": {
-		"serve": "parcel serve index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node",
-		"build": "parcel build index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node",
+		"serve": "parcel serve index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node --bundle-node-modules",
+		"build": "parcel build index.ts --out-dir ../build/dist/server --out-file gamemode.js --no-source-maps --no-cache --target node --bundle-node-modules",
 		"test": "jest --forceExit --coverage --verbose"
 	},
 	"keywords": [],
@@ -13,6 +13,7 @@
 	"license": "GPL-3.0",
 	"devDependencies": {
 		"@types/node": "^17.0.23",
+		"@types/sprintf-js": "^1.1.2",
 		"jest": "^27.5.1",
 		"parcel-bundler": "1.12.3",
 		"parcel-plugin-wrapper": "^0.2.3",
@@ -24,7 +25,8 @@
 		"@types/jest": "^27.4.1",
 		"@types/node-gettext": "^3.0.3",
 		"gettext-parser": "^5.1.2",
-		"node-gettext": "^3.0.0"
+		"node-gettext": "^3.0.0",
+		"sprintf-js": "^1.1.2"
 	},
 	"prettier": {
 		"bracketSpacing": true,

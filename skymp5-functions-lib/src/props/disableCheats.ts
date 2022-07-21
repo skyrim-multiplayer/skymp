@@ -50,6 +50,9 @@ export class DisableCheats {
         "SetPos",
         "SetAngle",
         "ToggleFogOfWar",
+        "SAQ",
+        "CAQS",
+        "openactorcontainer",
       ];
 
       // Disable commands from commandsToDisable
