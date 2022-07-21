@@ -650,10 +650,10 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
       "Cannot get weapon speed from source: {0:x}", hitData.source));
   }
 }
-}
 
 bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
+  spdlog::debug("I am in ShouldBeBlocked");
   NiPoint3 targetEyeDirection = { 0, 0, target.GetPos().z };
   NiPoint3 enemyDirection = aggressor.GetPos() - target.GetPos();
   spdlog::debug("TargetEyeDirection: [{}, {}, {}]", targetEyeDirection.x, targetEyeDirection.z, targetEyeDirection.z);
@@ -663,10 +663,12 @@ bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
       std::acos(targetEyeDirection * enemyDirection /
                 (targetEyeDirection.Length() * enemyDirection.Length()));
     spdlog::debug("YO YO YO There is an angle: {}", angle);
-    return angle < 1 ? true : false;
+    return angle < 1;
   }
   return false;
 }
+}
+
 
 void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
@@ -746,6 +748,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   hitData.isHitBlocked = targetActor.IsBlockActive()
     ? ShouldBeBlocked(*aggressor, targetActor)
     : false;
+  spdlog::debug("Yo YO YO YO YO LOOK AT ME IM isHitBlocked and I say: {}", hitData.isHitBlocked);
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
