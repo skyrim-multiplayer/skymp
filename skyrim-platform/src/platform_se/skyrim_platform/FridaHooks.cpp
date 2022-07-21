@@ -277,7 +277,9 @@ void Frida::InstallHooks()
   InstallSendAnimationEventHook();
   InstallQueueNinodeUpdateHook();
   InstallRenderCursorMenuHook();
+#ifndef SKYRIMSE
   InstallApplyMasksToRenderTargetsHook();
+#endif
 
   logger::info("Frida hooks installed.");
 }
