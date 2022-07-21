@@ -656,10 +656,13 @@ bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
   NiPoint3 targetEyeDirection = { 0, 0, target.GetPos().z };
   NiPoint3 enemyDirection = aggressor.GetPos() - target.GetPos();
+  spdlog::debug("TargetEyeDirection: [{}, {}, {}]", targetEyeDirection.x, targetEyeDirection.z, targetEyeDirection.z);
+  spdlog::debug("Enemy direction: [{}, {}, {}]", enemyDirection.x, enemyDirection.z, enemyDirection.z);
   if (targetEyeDirection * enemyDirection > 0) {
     float angle =
       std::acos(targetEyeDirection * enemyDirection /
                 (targetEyeDirection.Length() * enemyDirection.Length()));
+    spdlog::debug("YO YO YO There is an angle: {}", angle);
     return angle < 1 ? true : false;
   }
   return false;
