@@ -318,12 +318,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     std::string dataDir;
 
     const auto& logger = GetLogger();
-    logger->set_level(spdlog::level::debug);
-    spdlog::set_level(spdlog::level::debug);
     partOne->AttachLogger(logger);
-
-    logger->debug("Test debug to local logger");
-    spdlog::debug("Test debug to global logger");
 
     std::ifstream f("server-settings.json");
     if (!f.good()) {
