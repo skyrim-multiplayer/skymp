@@ -334,7 +334,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       const auto level = spdlog::level::from_str(serverSettings["logLevel"]);
       logger->set_level(level);
       spdlog::set_level(level);
-      logger->info("set log level to {}", spdlog::level::to_string_view(logger->level()));
+      logger->info("set log level to {}",
+                   spdlog::level::to_string_view(logger->level()));
     }
 
     partOne->worldState.isPapyrusHotReloadEnabled =
