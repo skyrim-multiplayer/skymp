@@ -82,8 +82,7 @@ class App extends React.Component {
           <Chat />
         </div>
       );
-    } else
-    if (this.state.widgets) {
+    } else if (this.state.widgets) {
       return (
           <>
             {this.state.widgets.map((widget, index) =>
