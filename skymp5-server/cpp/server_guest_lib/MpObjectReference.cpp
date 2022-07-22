@@ -762,8 +762,9 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   if (GetParent() && !GetParent()->espmFiles.empty()) {
     res.formDesc = FormDesc::FromFormId(GetFormId(), GetParent()->espmFiles);
     res.baseDesc = FormDesc::FromFormId(GetBaseId(), GetParent()->espmFiles);
-  } else
+  } else {
     res.formDesc = res.baseDesc = FormDesc(GetFormId(), "");
+  }
 
   return res;
 }
@@ -1239,8 +1240,9 @@ void MpObjectReference::AddContainerObject(
       espm.GetBrowser(), formLookupRes, 1, pcLevel, chanceNoneOverride.get());
     for (auto& p : map)
       (*itemsToAdd)[p.first] += p.second;
-  } else
+  } else {
     (*itemsToAdd)[entry.formId] += entry.count;
+  }
 }
 
 void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
