@@ -118,6 +118,7 @@ add_subdirectory(skymp5-front)
 add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
+add_subdirectory(unit)
 
 if(PREPARE_NEXUS_ARCHIVES)
   add_custom_target(
