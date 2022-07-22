@@ -81,8 +81,8 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
           callbacksToFire.push_back(t.callback);
         }
         if (numChangeForms > 0 && pImpl->logger)
-          pImpl->logger->info("Saved {} ChangeForms in {} ticks",
-                              numChangeForms, clock() - was);
+          pImpl->logger->trace("Saved {} ChangeForms in {} ticks",
+                               numChangeForms, clock() - was);
       }
 
       {
