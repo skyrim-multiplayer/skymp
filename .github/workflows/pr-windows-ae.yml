@@ -1,4 +1,4 @@
-name: PR Windows AE
+name: PR Windows AE (build only!)
 
 on:
   push:

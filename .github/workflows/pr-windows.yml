@@ -1,4 +1,4 @@
-name: PR Windows
+name: PR Windows (build only!)
 
 on:
   push:
