@@ -471,12 +471,12 @@ private:
       if (stack == "undefined") {
         throw 1;
       }
-      return stack;
+      return "kek1:" + stack;
     } catch (...) {
       std::stringstream ss;
       ss << JsValue(exception).ToString() << std::endl;
       ss << "<unable to get stack>";
-      return ss.str();
+      return "kek2:" + ss.str();
     }
   }
 
