@@ -268,7 +268,9 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
     ProcessActivate(activationSource);
 
   auto arg = activationSource.ToVarValue();
-  SendPapyrusEvent("OnActivate", &arg, 1);
+  if (!defaultProcessingOnly) {
+    SendPapyrusEvent("OnActivate", &arg, 1);
+  }
 }
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)
