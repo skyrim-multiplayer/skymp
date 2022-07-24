@@ -653,22 +653,24 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
 
 bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
-  spdlog::debug("I am in ShouldBeBlocked");
-  NiPoint3 targetEyeDirection = { std::cos(target.GetAngle().x), 0, std::sin(target.GetAngle().z) };
-  NiPoint3 enemyDirection = aggressor.GetPos() - target.GetPos();
-  spdlog::debug("TargetEyeDirection: [{}, {}, {}]", targetEyeDirection.x, targetEyeDirection.y, targetEyeDirection.z);
-  spdlog::debug("Enemy direction: [{}, {}, {}]", enemyDirection.x, enemyDirection.y, enemyDirection.z);
-  if (targetEyeDirection * enemyDirection > 0) {
-    float angle =
-      std::acos(targetEyeDirection * enemyDirection /
-                (targetEyeDirection.Length() * enemyDirection.Length()));
-    spdlog::debug("YO YO YO There is an angle: {}", angle);
-    return angle < 1;
+  NiPoint3 targetViewDirection = target.GetViewDirection();
+  NiPoint3 aggressorLocation = aggressor.GetPos();
+  NiPoint3 aggressorDirection = aggressorLocation - targetViewDirection;
+  spdlog::debug("Target view direction is (x: {}, y: {}, z: {})",
+                targetViewDirection.x, targetViewDirection.y,
+                targetViewDirection.z);
+  spdlog::debug("Aggressor direction is (x: {}, y: {}, z: {})",
+                aggressorLocation.x, aggressorLocation.y, aggressorLocation.z);
+  if (aggressorDirection * targetViewDirection <= 0) {
+    return false;
   }
-  return false;
+  float angle =
+    std::acos(targetViewDirection * aggressorDirection /
+              (targetViewDirection.Length() * aggressorDirection.Length()));
+  spdlog::debug("Angle is: {}", angle);
+  return angle < 1;
 }
 }
-
 
 void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
@@ -748,7 +750,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   hitData.isHitBlocked = targetActor.IsBlockActive()
     ? ShouldBeBlocked(*aggressor, targetActor)
     : false;
-  spdlog::debug("Yo YO YO YO YO LOOK AT ME IM isHitBlocked and I say: {}", hitData.isHitBlocked);
+  spdlog::debug("Yo YO YO YO YO LOOK AT ME IM isHitBlocked and I say: {}",
+                hitData.isHitBlocked);
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =

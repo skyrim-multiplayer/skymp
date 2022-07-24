@@ -562,3 +562,9 @@ bool MpActor::IsBlockActive() const
 {
   return isBlockActive;
 }
+
+NiPoint3 MpActor::GetViewDirection() const
+{
+  return {GetAngle().x, 0, GetAngle().z};
+}
+
