@@ -1,4 +1,4 @@
-import { Actor } from 'skyrimPlatform';
+import { Actor, Form } from 'skyrimPlatform';
 /* eslint-disable @typescript-eslint/no-empty-function */
 import * as networking from "../networking";
 import { FormModel, WorldModel } from "./model";
@@ -37,6 +37,8 @@ import * as netInfo from "../features/netInfoSystem";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
 import { nameof } from '../lib/nameof';
 import { getScreenResolution } from '../view/formView';
+import { ModelApplyUtils } from '../view/modelApplyUtils';
+import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
 
 //
 // eventSource system
@@ -226,6 +228,29 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   createActor(msg: messages.CreateActorMessage): void {
+    if (msg.refrId && msg.refrId < 0xff000000) {
+      const refrId = msg.refrId;
+      once("update", () => {
+        const refr = ObjectReference.from(Game.getFormEx(refrId));
+        if (refr) {
+          ObjectReferenceEx.dealWithRef(refr, refr.getBaseObject() as Form);
+          if (msg.inventory) {
+            ModelApplyUtils.applyModelInventory(refr, msg.inventory);
+          }
+          if (msg.props && msg.props["isOpen"]) {
+            ModelApplyUtils.applyModelIsOpen(refr, !!msg.props["isOpen"]);
+          }
+          if (msg.props && msg.props["isHarvested"]) {
+            ModelApplyUtils.applyModelIsHarvested(refr, !!msg.props["isHarvested"]);
+          }
+        }
+        else {
+          printConsole("Failed to apply model to", refrId.toString(16));
+        }
+      });
+      return;
+    }
+    
     loggingStartMoment = 0;
 
     const i = this.getIdManager().allocateIdFor(msg.idx);
@@ -480,6 +505,23 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
+    if (msg.refrId < 0xff000000) {
+      const refrId = msg.refrId;
+      once("update", () => {
+        const refr = ObjectReference.from(Game.getFormEx(refrId));
+        if (!refr) return printConsole("UpdateProperty: refr not found");
+        if (msg.propName === "inventory") {
+          ModelApplyUtils.applyModelInventory(refr, msg.data as Inventory);
+        }
+        else if (msg.propName === "isOpen") {
+          ModelApplyUtils.applyModelIsOpen(refr, msg.data as boolean);
+        }
+        else if (msg.propName === "isHarvested") {
+          ModelApplyUtils.applyModelIsHarvested(refr, msg.data as boolean);
+        }
+      });
+      return;
+    }
     const i = this.getIdManager().getId(msg.idx);
     const form = this.worldModel.forms[i];
     (form as Record<string, unknown>)[msg.propName] =

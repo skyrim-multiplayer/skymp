@@ -127,7 +127,7 @@ const startClient = (): void => {
         const fps = Math.round(n / timePassed);
         if (lastFps != fps) {
           lastFps = fps;
-          //printConsole(`Current FPS is ${fps}`);
+          // printConsole(`Current FPS is ${fps}`);
         }
       }
       zeroKMoment = Date.now();
