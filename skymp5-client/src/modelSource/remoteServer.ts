@@ -45,8 +45,7 @@ const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, max
     const refr = ObjectReference.from(Game.getFormEx(refrId));
     if (refr) {
       callback(refr);
-    }
-    else {
+    } else {
       maxAttempts--;
       if (maxAttempts > 0) {
         once("update", () => onceLoad(refrId, callback, maxAttempts));
