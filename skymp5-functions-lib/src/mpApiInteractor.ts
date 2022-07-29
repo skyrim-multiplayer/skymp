@@ -7,6 +7,7 @@ import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
 import { LocationalData, Mp, PapyrusObject } from "./types/mp";
+import { ChatSettings } from "./types/settings";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
@@ -48,7 +49,17 @@ const getName = (actorId: number) => {
   return 'Stranger';
 };
 
+const sqr = (x: number) => x * x;
+
+const getActorDistanceSquared = (actorId1: number, actorId2: number) => {
+  const pos1 = mp.get(actorId1, 'pos');
+  const pos2 = mp.get(actorId2, 'pos');
+  const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
+  return sqr(delta[0]) + sqr(delta[1]) + sqr(delta[2]);
+};
+
 export class MpApiInteractor {
+  private static serverSettings = mp.getServerSettings();
   private static customNames = new Map<number, string>();
 
   static setup(listener: GameModeListener) {
@@ -82,9 +93,15 @@ export class MpApiInteractor {
 
   private static setupChatHandler(listener: GameModeListener) {
     ChatProperty.setChatInputHandler((input) => {
-      // Note that in current implementation we also send chat messages to npcs...
-      // TODO: Ignore actorNeighbors that aren't in 'onlinePlayers'
-      const actorNeighbors = mp.get(input.actorId, 'actorNeighbors');
+      const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
+      const onlinePlayers = mp.get(0, 'onlinePlayers');
+      const actorNeighbors =
+        mp.get(input.actorId, 'actorNeighbors')
+          .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
+          .filter((actorId) =>
+            chatSettings.hearingRadiusNormal === undefined ||
+            getActorDistanceSquared(input.actorId, actorId) < sqr(chatSettings.hearingRadiusNormal)
+          );
 
       const name = getName(input.actorId);
       if (listener.onPlayerChatInput) {
