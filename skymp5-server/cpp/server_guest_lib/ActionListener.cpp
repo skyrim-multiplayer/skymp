@@ -13,11 +13,8 @@
 #include "UserMessageOutput.h"
 #include "Utils.h"
 #include "WorldState.h"
-#include <fmt/core.h>
 #include <fmt/format.h>
-#include <spdlog/common.h>
 #include <spdlog/spdlog.h>
-#include <sstream>
 #include <unordered_set>
 
 MpActor* ActionListener::SendToNeighbours(
