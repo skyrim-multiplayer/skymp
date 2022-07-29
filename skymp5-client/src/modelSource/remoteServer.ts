@@ -504,7 +504,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
-    if (msg.refrId < 0xff000000) {
+    if (msg.refrId && msg.refrId < 0xff000000) {
       const refrId = msg.refrId;
       once("update", () => {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
