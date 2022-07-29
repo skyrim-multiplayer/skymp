@@ -6,7 +6,7 @@
 
 #chat {
   width: calc(26.6% + 70px);
-  height: 372px;
+  // height: 372px;
   position: absolute;
   bottom: 30px;
   left: 30px;
@@ -18,9 +18,11 @@
   .chat-main {
     flex-direction: column;
     width: calc(100% - 60px);
+    position: relative;
     .chat-corner {
       position: absolute;
       right: 0px;
+      top: 0px;
       img {
         pointer-events: none;
       }
@@ -31,10 +33,9 @@
           display: none;
         }
       }
-      position: relative;
       width: 100%;
-      height: 300px;
       overflow-y: scroll;
+      resize: vertical;
       &::-webkit-scrollbar {
         width: 0 !important;
       }
@@ -68,11 +69,16 @@
         }
       }
     }
+    > .input {
+      margin: auto;
+      margin-bottom: 0;
+    }
   }
 
   #chatInput {
     width: 100%;
     height: 0;
+    margin-bottom: 0;
     border-radius: 15px;
     background-color: rgba(0, 0, 0, 0.75);
     padding-left: 10px;
