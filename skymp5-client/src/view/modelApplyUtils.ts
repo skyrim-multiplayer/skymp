@@ -56,7 +56,9 @@ export class ModelApplyUtils {
                 // Deletion takes time, so in practice this would be called a lot of times
               }
             });
-          } else refr.enable(true);
+          } else {
+            refr.enable(true);
+          }
         }
       }
     }
