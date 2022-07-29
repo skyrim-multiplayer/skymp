@@ -40,6 +40,24 @@ import { getScreenResolution } from '../view/formView';
 import { ModelApplyUtils } from '../view/modelApplyUtils';
 import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
 
+const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, maxAttempts: number = 120) => {
+  once("update", () => {
+    const refr = ObjectReference.from(Game.getFormEx(refrId));
+    if (refr) {
+      callback(refr);
+    }
+    else {
+      maxAttempts--;
+      if (maxAttempts > 0) {
+        once("update", () => onceLoad(refrId, callback, maxAttempts));
+      }
+      else {
+        printConsole("Failed to load object reference " + refrId.toString(16));
+      }
+    }
+  });
+};
+
 //
 // eventSource system
 //
@@ -230,8 +248,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   createActor(msg: messages.CreateActorMessage): void {
     if (msg.refrId && msg.refrId < 0xff000000) {
       const refrId = msg.refrId;
-      once("update", () => {
-        const refr = ObjectReference.from(Game.getFormEx(refrId));
+      onceLoad(refrId, (refr: ObjectReference) => {
         if (refr) {
           ObjectReferenceEx.dealWithRef(refr, refr.getBaseObject() as Form);
           if (msg.inventory) {
@@ -249,7 +266,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       });
       return;
     }
-    
+
     loggingStartMoment = 0;
 
     const i = this.getIdManager().allocateIdFor(msg.idx);
