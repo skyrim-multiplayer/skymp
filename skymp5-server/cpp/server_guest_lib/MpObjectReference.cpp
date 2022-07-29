@@ -34,8 +34,8 @@ nlohmann::json MpObjectReference::PreparePropertyMessage(
   return nlohmann::json{ { "idx", self->GetIdx() },
                          { "t", MsgType::UpdateProperty },
                          { "propName", name },
-                         { "data", value },
-                         { "refrId", self->GetFormId() } };
+                         { "refrId", self->GetFormId() },
+                         { "data", value } };
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink

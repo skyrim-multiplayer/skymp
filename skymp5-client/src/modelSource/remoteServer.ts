@@ -243,8 +243,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           if (msg.props && msg.props["isHarvested"]) {
             ModelApplyUtils.applyModelIsHarvested(refr, !!msg.props["isHarvested"]);
           }
-        }
-        else {
+        } else {
           printConsole("Failed to apply model to", refrId.toString(16));
         }
       });
@@ -509,14 +508,15 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       const refrId = msg.refrId;
       once("update", () => {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
-        if (!refr) return printConsole("UpdateProperty: refr not found");
+        if (!refr) {
+          printConsole("UpdateProperty: refr not found");
+          return;
+        }
         if (msg.propName === "inventory") {
           ModelApplyUtils.applyModelInventory(refr, msg.data as Inventory);
-        }
-        else if (msg.propName === "isOpen") {
+        } else if (msg.propName === "isOpen") {
           ModelApplyUtils.applyModelIsOpen(refr, msg.data as boolean);
-        }
-        else if (msg.propName === "isHarvested") {
+        } else if (msg.propName === "isHarvested") {
           ModelApplyUtils.applyModelIsHarvested(refr, msg.data as boolean);
         }
       });
