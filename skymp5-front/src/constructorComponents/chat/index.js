@@ -142,7 +142,7 @@ const Chat = (props) => {
   return (
     <div className='fullPage'>
       <Draggable handle='#handle' disabled={!moveChat} bounds={'.fullPage'}>
-      <div id='chat'>
+        <div id='chat'>
           <div className="chat-main">
             <ResizableBox
               height={320}
@@ -198,7 +198,7 @@ const Chat = (props) => {
                   inputRef={inputRef}
               />
           }
-          </div>
+        </div>
       </Draggable>
     </div>
   );
