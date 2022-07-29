@@ -128,7 +128,7 @@ const Chat = (props) => {
   };
 
   const getList = () => {
-    return props.messages.map((msg, index) => (
+    return props.messages.slice(-50).map((msg, index) => (
       <div
         className="msg"
         key={`msg-${index}`}

@@ -1,4 +1,4 @@
-name: PR Windows
+name: PR Windows (build only!)
 
 on:
   push:
@@ -13,6 +13,7 @@ env:
   BUILD_TYPE: Release
   VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
+  VCPKG_ROOT: 'C:/vcpkg'
 
 jobs:
   build:
@@ -30,11 +31,17 @@ jobs:
 
     - run: ./vcpkg/bootstrap-vcpkg.bat
 
+    - name: Move vcpkg submodule to a larger drive
+      run: Move-Item -Path ./vcpkg C:/vcpkg
+
+    - name: Debug - free space
+      run: Get-PSDrive
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
       run: >
-        `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        `C:/vcpkg/vcpkg.exe fetch nuget | tail -n 1`
         sources add
         -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
         -storepasswordincleartext
@@ -75,9 +82,11 @@ jobs:
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
       run: > 
         cmake -B ${{github.workspace}}/build
+        -DVCPKG_ROOT=C:/vcpkg
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
         -DPREPARE_NEXUS_ARCHIVES=ON
+        -DBUILD_UNIT_TESTS=OFF
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         -DSKYRIM_SE=ON
         --profiling-output cmake-profiling-output
@@ -113,3 +122,15 @@ jobs:
         name: SP-SE
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
+
+    - name: Debug - free space
+      if: 'always()'
+      run: Get-PSDrive
+
+    - uses: actions/upload-artifact@v2
+      if: 'always()'
+      with:
+        name: msbuild_files
+        path: |
+          ${{github.workspace}}/build/**/*.sln
+          ${{github.workspace}}/build/**/*.vcxproj

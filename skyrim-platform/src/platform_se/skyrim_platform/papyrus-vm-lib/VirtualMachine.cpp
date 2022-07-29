@@ -83,9 +83,10 @@ VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
 
   if (methodName == nameGoToState || methodName == nameGetState) {
     function = instance->GetFunctionByName(methodName, "");
-  } else
+  } else {
     function =
       instance->GetFunctionByName(methodName, instance->GetActiveStateName());
+  }
 
   if (function.valid) {
     return instance->StartFunction(function, arguments);

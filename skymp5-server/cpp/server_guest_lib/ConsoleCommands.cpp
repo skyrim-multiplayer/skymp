@@ -7,7 +7,7 @@
 
 // There were hardcoded real profile ids
 // TODO(#1136): make it configurable
-const std::set<int> kAdmins{ 479, 485, 486, 487, 488, 489 };
+const std::set<int> kAdmins{ 479, 485, 486, 487, 488, 489, 539 };
 
 ConsoleCommands::Argument::Argument()
 {
@@ -145,7 +145,8 @@ void ConsoleCommands::Execute(
     ExecuteDisable(me, args);
   } else if (!Utils::stricmp(consoleCommandName.data(), "Mp")) {
     ExecuteMp(me, args);
-  } else
+  } else {
     throw std::runtime_error("Unknown command name '" + consoleCommandName +
                              "'");
+  }
 }

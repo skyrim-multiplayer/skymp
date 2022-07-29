@@ -49,8 +49,7 @@ export class MasterClient implements System {
         const hasHttpStatus = e.response !== undefined;
         if (hasHttpStatus) {
           throw new Error(`${e.response.status} - ${e.response.data}`);
-        }
-        else {
+        } else {
           throw e;
         }
       }

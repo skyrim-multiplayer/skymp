@@ -5,7 +5,7 @@ on:
             action:
                 description: action (deploy/restart/stop)
                 required: true
-                default: deploy
+                default: restart
             branch:
                 description: branch, meaning server instance (sweetpie/indev)
                 required: true

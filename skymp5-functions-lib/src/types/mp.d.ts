@@ -114,6 +114,7 @@ export interface Mp {
   get(formId: number, propertyName: 'isDead'): boolean;
   get(formId: number, propertyName: 'worldOrCellDesc'): string;
   get(formId: number, propertyName: 'percentages'): { health: number, magicka: number, stamina: number };
+  get(formId: number, propertyName: 'profileId'): number;
 
   /**
    * Modifies value of the specified property.

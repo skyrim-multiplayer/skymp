@@ -49,6 +49,7 @@
       "server/data/scripts/SweetBuyPie.pex",
       "server/data/scripts/SweetBuyPieDialog.pex",
       "server/data/scripts/SweetCampFireAnim.pex",
+      "server/data/scripts/SweetClothesRemoveList.pex",
       "server/data/scripts/SweetConvertItemsTrigger.pex",
       "server/data/scripts/SweetConvertScript.pex",
       "server/data/scripts/SweetDamage.pex",
