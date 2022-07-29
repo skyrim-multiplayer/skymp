@@ -57,6 +57,8 @@
       "server/data/scripts/SweetDrinkAnim.pex",
       "server/data/scripts/SweetEatAnim.pex",
       "server/data/scripts/SweetEatSoup.pex",
+      "server/data/scripts/SweetGateLocker.pex",
+      "server/data/scripts/SweetGateLockerCheck.pex",
       "server/data/scripts/SweetKettleAnim.pex",
       "server/data/scripts/SweetKettleAnim2.pex",
       "server/data/scripts/SweetMeditationAnim.pex",
