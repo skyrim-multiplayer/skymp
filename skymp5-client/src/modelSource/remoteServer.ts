@@ -49,8 +49,7 @@ const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, max
       maxAttempts--;
       if (maxAttempts > 0) {
         once("update", () => onceLoad(refrId, callback, maxAttempts));
-      }
-      else {
+      } else {
         printConsole("Failed to load object reference " + refrId.toString(16));
       }
     }
