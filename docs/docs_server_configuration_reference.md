@@ -234,3 +234,18 @@ Prevents the gamemode from disabling cheats. This setting is sweetpie only and d
   // ...
 }
 ```
+
+## sweetPieChatSettings
+
+Allows tuning settings related to in-game chat, such as message visibility radius.
+
+```json5
+{
+  // ...
+  "sweetPieChatSettings": {
+    // Hearing distance in units. If player A says something and player B is farther away, they won't see that message.
+    "hearingRadiusNormal": 123,
+  },
+  // ...
+}
+```
