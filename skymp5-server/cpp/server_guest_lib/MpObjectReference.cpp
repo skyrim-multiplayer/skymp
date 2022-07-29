@@ -268,8 +268,10 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
       (!activationBlocked || defaultProcessingOnly))
     ProcessActivate(activationSource);
 
-  auto arg = activationSource.ToVarValue();
-  SendPapyrusEvent("OnActivate", &arg, 1);
+  if (!defaultProcessingOnly) {
+    auto arg = activationSource.ToVarValue();
+    SendPapyrusEvent("OnActivate", &arg, 1);
+  }
 }
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)
@@ -763,8 +765,9 @@ MpChangeForm MpObjectReference::GetChangeForm() const
   if (GetParent() && !GetParent()->espmFiles.empty()) {
     res.formDesc = FormDesc::FromFormId(GetFormId(), GetParent()->espmFiles);
     res.baseDesc = FormDesc::FromFormId(GetBaseId(), GetParent()->espmFiles);
-  } else
+  } else {
     res.formDesc = res.baseDesc = FormDesc(GetFormId(), "");
+  }
 
   return res;
 }
@@ -1240,8 +1243,9 @@ void MpObjectReference::AddContainerObject(
       espm.GetBrowser(), formLookupRes, 1, pcLevel, chanceNoneOverride.get());
     for (auto& p : map)
       (*itemsToAdd)[p.first] += p.second;
-  } else
+  } else {
     (*itemsToAdd)[entry.formId] += entry.count;
+  }
 }
 
 void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)

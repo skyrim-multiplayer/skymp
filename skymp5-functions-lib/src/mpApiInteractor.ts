@@ -167,8 +167,7 @@ export class MpApiInteractor {
       if (listener.onPlayerDeath) {
         if (killer === 0) {
           listener.onPlayerDeath(target, undefined);
-        }
-        else {
+        } else {
           listener.onPlayerDeath(target, killer);
         }
       }
@@ -185,8 +184,7 @@ export class MpApiInteractor {
         const point = pointsByName.get(pointName);
         if (point) {
           mp.set(player, 'spawnPoint', point);
-        }
-        else {
+        } else {
           console.log(`setSpawnPoint: point not found - ${pointName}`);
         }
       },
@@ -194,8 +192,7 @@ export class MpApiInteractor {
         const point = pointsByName.get(pointName);
         if (point) {
           mp.set(player, 'locationalData', point);
-        }
-        else {
+        } else {
           console.log(`teleport: point not found - ${pointName}`);
         }
       },
