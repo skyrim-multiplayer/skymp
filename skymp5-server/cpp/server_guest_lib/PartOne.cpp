@@ -8,7 +8,6 @@
 #include "PacketParser.h"
 #include <array>
 #include <cassert>
-#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
