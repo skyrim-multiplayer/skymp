@@ -252,10 +252,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           if (msg.inventory) {
             ModelApplyUtils.applyModelInventory(refr, msg.inventory);
           }
-          if (msg.props && msg.props["isOpen"]) {
+          if (msg.props) {
             ModelApplyUtils.applyModelIsOpen(refr, !!msg.props["isOpen"]);
-          }
-          if (msg.props && msg.props["isHarvested"]) {
             ModelApplyUtils.applyModelIsHarvested(refr, !!msg.props["isHarvested"]);
           }
         } else {
@@ -530,9 +528,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         if (msg.propName === "inventory") {
           ModelApplyUtils.applyModelInventory(refr, msg.data as Inventory);
         } else if (msg.propName === "isOpen") {
-          ModelApplyUtils.applyModelIsOpen(refr, msg.data as boolean);
+          ModelApplyUtils.applyModelIsOpen(refr, !!(msg.data as boolean));
         } else if (msg.propName === "isHarvested") {
-          ModelApplyUtils.applyModelIsHarvested(refr, msg.data as boolean);
+          ModelApplyUtils.applyModelIsHarvested(refr, !!(msg.data as boolean));
         }
       });
       return;
