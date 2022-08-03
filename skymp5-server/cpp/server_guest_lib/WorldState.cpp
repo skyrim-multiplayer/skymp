@@ -281,10 +281,6 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   if (t == "NPC_") {
     auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
-	//Exclude script npcs?
-    if (npcData.isEssential || npcData.isProtected) {
-      return false;
-    }
 
     enum
     {
@@ -307,10 +303,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
     for (auto fact : npcData.factions) {
 	auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(fact.formId));
-		if (it != formIds.end()) {
-        logger->info("Skipping actor {:#x} in faction {:#x}.", record->GetId(), *it);
+		// This works for preventing crashes on some entitys. Also required to end the thread.
+		if (npcData.isProtected || npcData.isEssential || it == formIds.end())
 		return false;
-		}
     }
   }
 
@@ -567,7 +562,7 @@ PexScript::Lazy CreatePexScriptLazy(
       auto requiredPex = scriptStorage->GetScriptPex(required.data());
       if (requiredPex.empty()) {
         throw std::runtime_error(
-          "'" + std::string({ required.begin(), required.end() }) +
+          "'" + std::string({ required.begin(), std::prev(required.end()) }) +
           "' is listed but failed to "
           "load from the storage");
       }
@@ -608,7 +603,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
         [scriptStorage, this](std::string className) {
           std::optional<PexScript::Lazy> result;
 
-          CIString classNameCi = { className.begin(), className.end() };
+          CIString classNameCi = { className.begin(), std::prev(className.end()) };
           if (scriptStorage->ListScripts(true).count(classNameCi)) {
             result =
               CreatePexScriptLazy(classNameCi, scriptStorage, this->logger,
