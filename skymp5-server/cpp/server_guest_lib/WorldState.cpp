@@ -281,29 +281,35 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   if (t == "NPC_") {
     auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
-    if (npcData.isEssential || npcData.isProtected)
+    if (npcData.isProtected) {
       return false;
+    }
 
     enum
     {
-      CrimeFactionsList = 0x26953
+      CrimeFactionsList = 0x26953, 
+	  VoicesNPCs = 0x3a185, 
+	  DA14NPCs = 0x1bb9d, 
+	  DA15NPCs = 0x2bd0a, 
+	  MS06NPCs=0x26c51, 
+	  MS07NPCs=0x25f7a, 
+	  MS04NPCs=0x2267f
     };
 
     auto formListLookupRes = br.LookupById(CrimeFactionsList);
     auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
-    auto formIds = formList->GetData(cache).formIds;
+    auto formIds = formList->GetData(cache).formIds;	
+	
     for (auto& formId : formIds) {
       formId = formListLookupRes.ToGlobalId(formId);
     }
 
     for (auto fact : npcData.factions) {
-      auto it = std::find(formIds.begin(), formIds.end(),
-                          base.ToGlobalId(fact.formId));
-      if (it != formIds.end()) {
-        logger->info("Skipping actor {:#x} because it's in faction {:#x}",
-                     record->GetId(), *it);
-        return false;
-      }
+	auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(fact.formId));
+		if (it != formIds.end()) {
+        logger->info("Skipping actor {:#x} in faction {:#x}.", record->GetId(), *it);
+		return false;
+		}
     }
   }
 
