@@ -80,6 +80,7 @@ void WorldState::AttachEspm(espm::Loader* espm_,
   formCallbacksFactory = formCallbacksFactory_;
   espmCache.reset(new espm::CompressedFieldsCache);
   espmFiles = espm->GetFileNames();
+  Clear();
 }
 
 void WorldState::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
@@ -163,7 +164,7 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     baseType = rec->GetType().ToString();
   }
 
-  if (formId < 0xff000000) {
+  if (LoadForm(formId)) {
     auto it = forms.find(formId);
     if (it != forms.end()) {
       auto refr = std::dynamic_pointer_cast<MpObjectReference>(it->second);
@@ -236,13 +237,9 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 
   auto it = forms.find(formId);
   if (it == forms.end()) {
-    if (formId < 0xff000000) {
-      if (LoadForm(formId)) {
-        it = forms.find(formId);
-        return it == forms.end() ? kNullForm : it->second;
-      }
-    }
-    return kNullForm;
+	if (LoadForm(formId))
+		return it == forms.end() ? kNullForm : it->second;
+   return kNullForm;
   }
   return it->second;
 }
@@ -298,16 +295,12 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     auto formIds = formList->GetData(cache).formIds;	
 	
     for (auto& formId : formIds) {
-      formId = formListLookupRes.ToGlobalId(formId);
-    }
-
-    for (auto fact : npcData.factions) {
-	auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(fact.formId));
-		// This works for preventing crashes on some entitys. Also required to end the thread.
-		if (npcData.isProtected || npcData.isEssential || it == formIds.end())
-		return false;
-    }
-  }
+	formId = formListLookupRes.ToGlobalId(formId);	
+	for (auto fact : npcData.factions) {
+		auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(formId));
+			}
+		}
+	}
 
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
@@ -351,12 +344,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
     if (t != "NPC_") {
-      form.reset(new MpObjectReference(formLocationalData,
-                                       formCallbacksFactory(), baseId,
-                                       typeStr.data(), primitiveBoundsDiv2));
+      form.reset(new MpObjectReference(formLocationalData, formCallbacksFactory(), baseId, typeStr.data(), primitiveBoundsDiv2));
     } else {
-      form.reset(
-        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+      form.reset(new MpActor(formLocationalData, formCallbacksFactory(), baseId));
     }
     AddForm(std::move(form), formId, true);
     // Do not TriggerFormInitEvent here, doing it later after changeForm apply
@@ -367,6 +357,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
 bool WorldState::LoadForm(uint32_t formId)
 {
+  if (formId < 0xff000000 || formId > 0xff000000) {
   bool atLeastOneLoaded = false;
   auto& br = GetEspm().GetBrowser();
   auto lookupResults = br.LookupByIdAll(formId);
@@ -384,11 +375,11 @@ bool WorldState::LoadForm(uint32_t formId)
       refr.ApplyChangeForm(it->second);
       pImpl->changeFormsForDeferredLoad.erase(it);
     }
-
-    refr.ForceSubscriptionsUpdate();
+	refr.ForceSubscriptionsUpdate();
   }
-
   return atLeastOneLoaded;
+  }
+  return false;
 }
 
 void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
@@ -466,13 +457,12 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
           for (size_t i = 0; i < espmFiles.size(); ++i) {
             auto combMapping = br.GetCombMapping(i);
             auto rawMapping = br.GetRawMapping(i);
-            uint32_t mappedCellOrWorld =
-              espm::GetMappedId(cellOrWorld, *rawMapping);
+            uint32_t mappedCellOrWorld = espm::GetMappedId(cellOrWorld, *rawMapping);
             auto records = br.GetRecordsAtPos(mappedCellOrWorld, x, y);
             for (auto rec : *records[i]) {
               auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
-              assert(mappedId < 0xff000000);
-              LoadForm(mappedId);
+			  if (!LoadForm(mappedId))
+			  assert(mappedId);
             }
           }
           // Do not keep "loaded" reference here since LoadForm would
@@ -482,7 +472,6 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
       }
     }
   }
-
   auto& neighbours =
     grids[cellOrWorld].grid->GetNeighboursByPosition(cellX, cellY);
   return neighbours;
@@ -657,10 +646,13 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
 
 uint32_t WorldState::GenerateFormId()
 {
+  if (pImpl->nextId != 0xff000000) {
   while (LookupFormById(pImpl->nextId)) {
     ++pImpl->nextId;
   }
   return pImpl->nextId++;
+  }
+return pImpl->nextId;
 }
 
 void WorldState::SetRelootTime(std::string recordType,

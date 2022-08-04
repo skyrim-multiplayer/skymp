@@ -470,8 +470,7 @@ void MpObjectReference::ForceSubscriptionsUpdate()
     worldState->GetReferencesAtPosition(worldOrCell, pos.first, pos.second);
 
   std::vector<MpObjectReference*> toRemove;
-  std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
-                      std::inserter(toRemove, toRemove.begin()));
+  std::set_difference(was.begin(), was.end(), now.begin(), now.end(), std::inserter(toRemove, toRemove.begin()));
   for (auto listener : toRemove) {
     Unsubscribe(this, listener);
     // Unsubscribe from self is NEEDED. See comment below
@@ -480,8 +479,7 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   }
 
   std::vector<MpObjectReference*> toAdd;
-  std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
-                      std::inserter(toAdd, toAdd.begin()));
+  std::set_difference(now.begin(), now.end(), was.begin(), was.end(), std::inserter(toAdd, toAdd.begin()));
   for (auto listener : toAdd) {
     Subscribe(this, listener);
     // Note: Self-subscription is OK this check is performed as we don't want
@@ -1123,16 +1121,13 @@ void MpObjectReference::InitScripts()
     auto& scriptsInStorage =
       GetParent()->GetScriptStorage()->ListScripts(false);
     for (auto& script : scriptData.scripts) {
-      if (scriptsInStorage.count(
-            { script.scriptName.begin(), script.scriptName.end() })) {
-
-        if (std::count(scriptNames.begin(), scriptNames.end(),
-                       script.scriptName) == 0) {
+      if (scriptsInStorage.count({ script.scriptName.begin(), script.scriptName.end() })) {
+        if (std::count(scriptNames.begin(), scriptNames.end(), script.scriptName) == 0) {
           scriptNames.push_back(script.scriptName);
         }
-      } else if (auto wst = GetParent())
-        wst->logger->warn("Script '{}' not found in the script storage",
-                          script.scriptName);
+      } else if (auto wst = GetParent()) {
+		wst->logger->warn("Script '{}' not found in the script storage", script.scriptName);
+	  }
     }
   }
 
