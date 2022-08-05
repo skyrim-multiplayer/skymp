@@ -403,9 +403,8 @@ void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
 
 void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 {
-  if (!pImpl->saveStorage) {
+  if (!pImpl->saveStorage)
     return;
-  }
 
   pImpl->saveStorage->Tick();
 
@@ -420,8 +419,7 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
     changes.clear();
 
     auto pImpl_ = pImpl;
-    pImpl->saveStorage->Upsert(changeForms,
-                               [pImpl_] { pImpl_->saveStorageBusy = false; });
+    pImpl->saveStorage->Upsert(changeForms, [pImpl_] { pImpl_->saveStorageBusy = false; });
   }
 }
 
@@ -482,7 +480,7 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
 MpForm* WorldState::LookupFormByIdx(int idx)
 {
   if (formIdxManager) {
-    if (idx >= 0 && idx < formByIdxUnreliable.size()) {
+    if (idx < formByIdxUnreliable.size()) {
       auto form = formByIdxUnreliable[idx];
       if (auto formIndex = dynamic_cast<FormIndex*>(form)) {
         if (formIndex->GetIdx() == idx)
