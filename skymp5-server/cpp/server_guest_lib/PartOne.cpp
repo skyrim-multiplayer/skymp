@@ -162,7 +162,7 @@ uint32_t PartOne::GetUserActor(Networking::UserId userId)
 
   auto actor = serverState.ActorByUser(userId);
   if (!actor)
-    return 0xff000000;
+    return 0;
   return actor->GetFormId();
 }
 

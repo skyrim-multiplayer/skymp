@@ -237,9 +237,9 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
     throw std::runtime_error("Can't do this without Actor attached");
 
   auto it = partOne.worldState.hosters.find(caster);
-  auto hosterId = it == std::prev(partOne.worldState.hosters.end()) ? 0 : it->second;
+  auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
 
-  if (caster != 0x14 && hosterId != 0) {
+  if (caster != 0x14) {
     if (hosterId != ac->GetFormId()) {
       std::stringstream ss;
       ss << std::hex << "Bad hoster is attached to caster 0x" << caster
