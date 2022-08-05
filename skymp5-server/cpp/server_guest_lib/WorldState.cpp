@@ -238,8 +238,8 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
   auto it = forms.find(formId);
   if (it == forms.end()) {
 	if (LoadForm(formId))
-		return it == forms.end() ? kNullForm : it->second;
-   return kNullForm;
+	return it == forms.end() ? kNullForm : it->second;
+	return kNullForm;
   }
   return it->second;
 }
@@ -298,7 +298,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 	formId = formListLookupRes.ToGlobalId(formId);	
 	for (auto fact : npcData.factions) {
 		auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(formId));
-		if (it == formIds.end())
+		if (it == std::prev(formIds.end()))
 		break;
 			}
 		}
@@ -648,13 +648,10 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
 
 uint32_t WorldState::GenerateFormId()
 {
-  if (pImpl->nextId != 0xff000000) {
   while (LookupFormById(pImpl->nextId)) {
     ++pImpl->nextId;
   }
   return pImpl->nextId++;
-  }
-return pImpl->nextId;
 }
 
 void WorldState::SetRelootTime(std::string recordType,
