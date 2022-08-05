@@ -298,9 +298,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 	formId = formListLookupRes.ToGlobalId(formId);	
 	for (auto fact : npcData.factions) {
 		auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(formId));
-			if (it != formIds.end()) {
-			return false;
-				}
+		if (it == formIds.end())
+		break;
 			}
 		}
 	}
