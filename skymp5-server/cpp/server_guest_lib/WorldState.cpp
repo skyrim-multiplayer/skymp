@@ -648,10 +648,10 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
 
 uint32_t WorldState::GenerateFormId()
 {
-  while (LookupFormById(pImpl->nextId)) {
-    ++pImpl->nextId;
-  }
-  return pImpl->nextId++;
+	while (LookupFormById(pImpl->nextId)) {
+	++pImpl->nextId;
+	}
+  return pImpl->nextId;
 }
 
 void WorldState::SetRelootTime(std::string recordType,
