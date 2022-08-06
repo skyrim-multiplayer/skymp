@@ -163,7 +163,7 @@ export class SkympClient {
       if (!target || !caster) return;
 
       // Actors never have non-ff ids locally in skymp
-      if (caster !== 0x14 && caster < 0xff000000) return;
+      if (caster !== 0x14 && caster <= 0xff000000 || caster >= 0xff000000) return;
 
       target = this.localIdToRemoteId(target);
       if (!target) return printConsole("localIdToRemoteId returned 0 (target)");

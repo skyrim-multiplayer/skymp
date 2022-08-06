@@ -485,7 +485,7 @@ void PartOne::Init()
     refrIdPrefix = R"(, "refrId": )";
 
     long long unsigned int longFormId = emitter->GetFormId();
-    if (emitterAsActor && longFormId < 0xff000000) {
+    if (emitterAsActor && (longFormId < 0xff000000 || longFormId > 0xff000000)) {
       longFormId += 0x100000000;
     }
     sprintf(refrId, "%llu", longFormId);

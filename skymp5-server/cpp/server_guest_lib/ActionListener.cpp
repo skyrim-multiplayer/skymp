@@ -442,7 +442,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
   const auto hostResetTimeout = std::chrono::seconds(2);
 
-  if (hoster == 0 || !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
+  if (hoster == 0xff000000 || !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
     partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
                              me->GetFormId());
     hoster = me->GetFormId();
@@ -450,7 +450,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     RecalculateWorn(remote);
 
     uint64_t longFormId = remote.GetFormId();
-    if (dynamic_cast<MpActor*>(&remote) && longFormId < 0xff000000) {
+    if (dynamic_cast<MpActor*>(&remote) && longFormId < 0xff000000 || longFormId > 0xff000000) {
       longFormId += 0x100000000;
     }
 

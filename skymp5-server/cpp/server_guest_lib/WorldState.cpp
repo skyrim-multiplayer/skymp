@@ -274,6 +274,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   if (t == "NPC_") {
     auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
 
+	if (npcData.isEssential || npcData.isProtected)
+	return true;
+
     enum
     {
       CrimeFactionsList = 0x26953, 
@@ -405,7 +408,7 @@ void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
 
 void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 {
-  if (!pImpl->saveStorage)
+  if (!pImpl->saveStorage || pImpl->saveStorageBusy)
     return;
 
   pImpl->saveStorage->Tick();
