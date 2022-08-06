@@ -236,12 +236,7 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
   static const std::shared_ptr<MpForm> kNullForm;
 
   auto it = forms.find(formId);
-  if (it == forms.end()) {
-	if (LoadForm(formId))
-	return it == forms.end() ? kNullForm : it->second;
-	return kNullForm;
-  }
-  return it->second;
+	return (it == forms.end()) ? kNullForm : it->second;
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
@@ -293,14 +288,19 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     auto formListLookupRes = br.LookupById(CrimeFactionsList);
     auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
     auto formIds = formList->GetData(cache).formIds;	
+	auto formId = formListLookupRes.ToGlobalId(baseId);
 	
     for (auto& formId : formIds) {
 	formId = formListLookupRes.ToGlobalId(formId);	
+	}
+	
 	for (auto fact : npcData.factions) {
 		auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(formId));
-		if (it == std::prev(formIds.end()))
+
+		logger->info("Loading Actor: {}", base.ToGlobalId(formId));
+		logger->info("Faction: {:#x}, {:#x}", record->GetId(), *it);
+		if (it == formIds.end())
 		break;
-			}
 		}
 	}
 
@@ -379,8 +379,10 @@ bool WorldState::LoadForm(uint32_t formId)
     }
 	refr.ForceSubscriptionsUpdate();
   }
+  else
   return atLeastOneLoaded;
   }
+  espmCache.reset(new espm::CompressedFieldsCache);
   return false;
 }
 
@@ -649,7 +651,7 @@ uint32_t WorldState::GenerateFormId()
 	while (LookupFormById(pImpl->nextId)) {
 	++pImpl->nextId;
 	}
-  return pImpl->nextId;
+  return pImpl->nextId++;
 }
 
 void WorldState::SetRelootTime(std::string recordType,
