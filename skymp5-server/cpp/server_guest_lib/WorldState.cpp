@@ -47,7 +47,7 @@ struct WorldState::Impl
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
-  uint32_t nextId = 0xff000000;
+  uint32_t nextId = 0;
   std::shared_ptr<HeuristicPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
@@ -162,8 +162,6 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     }
     baseType = rec->GetType().ToString();
   }
-  
-  assert(mappedId < 0xff000000);
 
   if (LoadForm(formId)) {
     auto it = forms.find(formId);
@@ -283,9 +281,6 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   if (t == "NPC_") {
     auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
-    if (npcData.isProtected) {
-      return false;
-    }
 
     enum
     {
@@ -390,7 +385,7 @@ bool WorldState::LoadForm(uint32_t formId)
       refr.ApplyChangeForm(it->second);
       pImpl->changeFormsForDeferredLoad.erase(it);
     }
-
+	
     refr.ForceSubscriptionsUpdate();
   }
 
@@ -477,8 +472,8 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
             auto records = br.GetRecordsAtPos(mappedCellOrWorld, x, y);
             for (auto rec : *records[i]) {
               auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
-              assert(mappedId < 0xff000000);
-              LoadForm(mappedId);
+              if (LoadForm(mappedId))
+				  continue;
             }
           }
           // Do not keep "loaded" reference here since LoadForm would
@@ -497,7 +492,7 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
 MpForm* WorldState::LookupFormByIdx(int idx)
 {
   if (formIdxManager) {
-    if (idx < formByIdxUnreliable.size()) {
+    if (idx >= 0 && idx < formByIdxUnreliable.size()) {
       auto form = formByIdxUnreliable[idx];
       if (auto formIndex = dynamic_cast<FormIndex*>(form)) {
         if (formIndex->GetIdx() == idx)
@@ -568,7 +563,7 @@ PexScript::Lazy CreatePexScriptLazy(
       auto requiredPex = scriptStorage->GetScriptPex(required.data());
       if (requiredPex.empty()) {
         throw std::runtime_error(
-          "'" + std::string({ required.begin(), required.end() }) +
+          "'" + std::string({ required.begin(), std::prev(required.end()) }) +
           "' is listed but failed to "
           "load from the storage");
       }
@@ -609,7 +604,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
         [scriptStorage, this](std::string className) {
           std::optional<PexScript::Lazy> result;
 
-          CIString classNameCi = { className.begin(), className.end() };
+          CIString classNameCi = { className.begin(), std::prev(className.end()) };
           if (scriptStorage->ListScripts(true).count(classNameCi)) {
             result =
               CreatePexScriptLazy(classNameCi, scriptStorage, this->logger,
