@@ -285,8 +285,7 @@ export class SkympClient {
                 const take = entry.count < 0;
                 if (put) {
                   lastInv = removeSimpleItemsAsManyAsPossible(lastInv, entry.baseId, entry.count);
-                }
-                else if (take) {
+                } else if (take) {
                   const add = { entries: [entry] };
                   add.entries[0].count *= -1;
                   lastInv = sumInventories(lastInv, add);

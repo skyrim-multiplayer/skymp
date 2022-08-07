@@ -261,7 +261,6 @@ public:
       auto& decompressedFieldsHolder =
         compressedFieldsCache.pImpl->data[rec].decompressedFieldsHolder;
       if (!decompressedFieldsHolder) {
-
         const uint32_t* decompSize = reinterpret_cast<const uint32_t*>(ptr);
         ptr += sizeof(uint32_t);
 
@@ -722,17 +721,17 @@ espm::REFR::Data espm::REFR::GetData(
   espm::RecordHeaderAccess::IterateFields(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!memcmp(type, "NAME", 4))
+      if (!memcmp(type, "NAME", 4)) {
         result.baseId = *(uint32_t*)data;
-      else if (!memcmp(type, "XSCL", 4))
+      } else if (!memcmp(type, "XSCL", 4)) {
         result.scale = *reinterpret_cast<const float*>(data);
-      else if (!memcmp(type, "DATA", 4))
+      } else if (!memcmp(type, "DATA", 4)) {
         result.loc = (LocationalData*)data;
-      else if (!memcmp(type, "XTEL", 4))
+      } else if (!memcmp(type, "XTEL", 4)) {
         result.teleport = (DoorTeleport*)data;
-      else if (!memcmp(type, "XPRM", 4))
+      } else if (!memcmp(type, "XPRM", 4)) {
         result.boundsDiv2 = reinterpret_cast<const float*>(data);
-      else if (!memcmp(type, "XCNT", 4)) {
+      } else if (!memcmp(type, "XCNT", 4)) {
         result.count = *reinterpret_cast<const uint32_t*>(data);
       }
     },
@@ -828,15 +827,15 @@ espm::LVLI::Data espm::LVLI::GetData(
   espm::RecordHeaderAccess::IterateFields(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!memcmp(type, "EDID", 4))
+      if (!memcmp(type, "EDID", 4)) {
         result.editorId = data;
-      else if (!memcmp(type, "LVLF", 4))
+      } else if (!memcmp(type, "LVLF", 4)) {
         result.leveledItemFlags = *(uint8_t*)data;
-      else if (!memcmp(type, "LVLG", 4))
+      } else if (!memcmp(type, "LVLG", 4)) {
         result.chanceNoneGlobalId = *(uint32_t*)data;
-      else if (!memcmp(type, "LVLD", 4))
+      } else if (!memcmp(type, "LVLD", 4)) {
         result.chanceNone = *(uint8_t*)data;
-      else if (!memcmp(type, "LLCT", 4)) {
+      } else if (!memcmp(type, "LLCT", 4)) {
         result.numEntries = *(uint8_t*)data;
         result.entries = (Entry*)(data + 1);
       }
