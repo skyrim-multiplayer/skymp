@@ -239,7 +239,7 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   auto it = partOne.worldState.hosters.find(caster);
   auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
 
-  if (caster != 0x14) {
+  if (caster != 0x14 && hosterId != 0x0) {
     if (hosterId != ac->GetFormId()) {
       std::stringstream ss;
       ss << std::hex << "Bad hoster is attached to caster 0x" << caster
@@ -247,11 +247,14 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
       throw std::runtime_error(ss.str());
     }
   }
-  auto targetPtr = std::dynamic_pointer_cast<MpObjectReference>(partOne.worldState.LookupFormById(target));
+
+  auto targetPtr = std::dynamic_pointer_cast<MpObjectReference>(
+    partOne.worldState.LookupFormById(target));
   if (!targetPtr)
     return;
-	targetPtr->Activate(caster == 0x14 ? *ac : partOne.worldState.GetFormAt<MpObjectReference>(caster));
-    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
+
+  targetPtr->Activate(caster == 0x14 ? *ac : partOne.worldState.GetFormAt<MpObjectReference>(caster));
+	RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
 }
 
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
@@ -442,7 +445,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
   const auto hostResetTimeout = std::chrono::seconds(2);
 
-  if (hoster == 0xff000000 || !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
+  if (hoster == 0 || !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
     partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
                              me->GetFormId());
     hoster = me->GetFormId();
@@ -450,7 +453,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     RecalculateWorn(remote);
 
     uint64_t longFormId = remote.GetFormId();
-    if (dynamic_cast<MpActor*>(&remote) && longFormId < 0xff000000 || longFormId > 0xff000000) {
+    if (dynamic_cast<MpActor*>(&remote) && longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
 

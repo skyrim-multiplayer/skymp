@@ -80,7 +80,6 @@ void WorldState::AttachEspm(espm::Loader* espm_,
   formCallbacksFactory = formCallbacksFactory_;
   espmCache.reset(new espm::CompressedFieldsCache);
   espmFiles = espm->GetFileNames();
-  Clear();
 }
 
 void WorldState::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
@@ -163,6 +162,8 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     }
     baseType = rec->GetType().ToString();
   }
+  
+  assert(mappedId < 0xff000000);
 
   if (LoadForm(formId)) {
     auto it = forms.find(formId);
@@ -236,7 +237,16 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
   static const std::shared_ptr<MpForm> kNullForm;
 
   auto it = forms.find(formId);
-	return (it == forms.end()) ? kNullForm : it->second;
+  if (it == forms.end()) {
+    if (formId < 0xff000000) {
+      if (LoadForm(formId)) {
+        it = forms.find(formId);
+        return it == forms.end() ? kNullForm : it->second;
+      }
+    }
+    return kNullForm;
+  }
+  return it->second;
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
@@ -273,9 +283,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   if (t == "NPC_") {
     auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
-
-	if (npcData.isEssential || npcData.isProtected)
-	return true;
+    if (npcData.isProtected) {
+      return false;
+    }
 
     enum
     {
@@ -291,21 +301,19 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     auto formListLookupRes = br.LookupById(CrimeFactionsList);
     auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
     auto formIds = formList->GetData(cache).formIds;	
-	auto formId = formListLookupRes.ToGlobalId(baseId);
 	
     for (auto& formId : formIds) {
-	formId = formListLookupRes.ToGlobalId(formId);	
-	}
-	
-	for (auto fact : npcData.factions) {
-		auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(formId));
+      formId = formListLookupRes.ToGlobalId(formId);
+    }
 
-		logger->info("Loading Actor: {}", base.ToGlobalId(formId));
-		logger->info("Faction: {:#x}, {:#x}", record->GetId(), *it);
-		if (it == formIds.end())
-		break;
+    for (auto fact : npcData.factions) {
+	auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(fact.formId));
+		if (it != formIds.end()) {
+        logger->info("Skipping actor {:#x} in faction {:#x}.", record->GetId(), *it);
+		return false;
 		}
-	}
+    }
+  }
 
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
@@ -349,9 +357,12 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
     if (t != "NPC_") {
-      form.reset(new MpObjectReference(formLocationalData, formCallbacksFactory(), baseId, typeStr.data(), primitiveBoundsDiv2));
+      form.reset(new MpObjectReference(formLocationalData,
+                                       formCallbacksFactory(), baseId,
+                                       typeStr.data(), primitiveBoundsDiv2));
     } else {
-      form.reset(new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+      form.reset(
+        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
     }
     AddForm(std::move(form), formId, true);
     // Do not TriggerFormInitEvent here, doing it later after changeForm apply
@@ -362,7 +373,6 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
 bool WorldState::LoadForm(uint32_t formId)
 {
-  if (formId < 0xff000000 || formId > 0xff000000) {
   bool atLeastOneLoaded = false;
   auto& br = GetEspm().GetBrowser();
   auto lookupResults = br.LookupByIdAll(formId);
@@ -380,13 +390,11 @@ bool WorldState::LoadForm(uint32_t formId)
       refr.ApplyChangeForm(it->second);
       pImpl->changeFormsForDeferredLoad.erase(it);
     }
-	refr.ForceSubscriptionsUpdate();
+
+    refr.ForceSubscriptionsUpdate();
   }
-  else
+
   return atLeastOneLoaded;
-  }
-  espmCache.reset(new espm::CompressedFieldsCache);
-  return false;
 }
 
 void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
@@ -408,8 +416,9 @@ void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
 
 void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 {
-  if (!pImpl->saveStorage || pImpl->saveStorageBusy)
+  if (!pImpl->saveStorage) {
     return;
+  }
 
   pImpl->saveStorage->Tick();
 
@@ -424,7 +433,8 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
     changes.clear();
 
     auto pImpl_ = pImpl;
-    pImpl->saveStorage->Upsert(changeForms, [pImpl_] { pImpl_->saveStorageBusy = false; });
+    pImpl->saveStorage->Upsert(changeForms,
+                               [pImpl_] { pImpl_->saveStorageBusy = false; });
   }
 }
 
@@ -462,12 +472,13 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
           for (size_t i = 0; i < espmFiles.size(); ++i) {
             auto combMapping = br.GetCombMapping(i);
             auto rawMapping = br.GetRawMapping(i);
-            uint32_t mappedCellOrWorld = espm::GetMappedId(cellOrWorld, *rawMapping);
+            uint32_t mappedCellOrWorld =
+              espm::GetMappedId(cellOrWorld, *rawMapping);
             auto records = br.GetRecordsAtPos(mappedCellOrWorld, x, y);
             for (auto rec : *records[i]) {
               auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
-			  if (!LoadForm(mappedId))
-			  assert(mappedId);
+              assert(mappedId < 0xff000000);
+              LoadForm(mappedId);
             }
           }
           // Do not keep "loaded" reference here since LoadForm would
@@ -477,6 +488,7 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
       }
     }
   }
+
   auto& neighbours =
     grids[cellOrWorld].grid->GetNeighboursByPosition(cellX, cellY);
   return neighbours;
@@ -556,7 +568,7 @@ PexScript::Lazy CreatePexScriptLazy(
       auto requiredPex = scriptStorage->GetScriptPex(required.data());
       if (requiredPex.empty()) {
         throw std::runtime_error(
-          "'" + std::string({ required.begin(), std::prev(required.end()) }) +
+          "'" + std::string({ required.begin(), required.end() }) +
           "' is listed but failed to "
           "load from the storage");
       }
@@ -597,7 +609,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
         [scriptStorage, this](std::string className) {
           std::optional<PexScript::Lazy> result;
 
-          CIString classNameCi = { className.begin(), std::prev(className.end()) };
+          CIString classNameCi = { className.begin(), className.end() };
           if (scriptStorage->ListScripts(true).count(classNameCi)) {
             result =
               CreatePexScriptLazy(classNameCi, scriptStorage, this->logger,
@@ -651,9 +663,9 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
 
 uint32_t WorldState::GenerateFormId()
 {
-	while (LookupFormById(pImpl->nextId)) {
-	++pImpl->nextId;
-	}
+  while (LookupFormById(pImpl->nextId)) {
+    ++pImpl->nextId;
+  }
   return pImpl->nextId++;
 }
 

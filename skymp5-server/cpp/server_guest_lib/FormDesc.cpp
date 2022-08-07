@@ -39,14 +39,15 @@ uint32_t FormDesc::ToFormId(const std::vector<std::string>& files) const
     int numFiles = static_cast<int>(files.size());
     for (int i = 0; i < numFiles; ++i) {
       if (files[i] == file) {
-	  fileIdx = i;
-	  continue;
+        fileIdx = i;
+        continue;
       }
     }
     if (fileIdx == -1) {
       throw std::runtime_error(file + " not found in loaded files");
     }
-	realFormId = fileIdx * 0x01000000 + shortFormId;
+
+    realFormId = fileIdx * 0x01000000 + shortFormId;
   }
   return realFormId;
 }
@@ -61,7 +62,7 @@ FormDesc FormDesc::FromFormId(uint32_t formId,
   }
 
   FormDesc res;
-  if (formId < 0xff000000 || formId > 0xff000000) {
+  if (formId < 0xff000000) {
     int fileIdx = formId / 0x01000000;
     if (fileIdx >= static_cast<int>(files.size())) {
       throw std::runtime_error("FromFormId failed due to invalid file index " +
