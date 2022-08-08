@@ -13,9 +13,9 @@ function processOneActor(): void {
   const actorId = actor.getFormID();
   const currentProtection = protection.get(actorId) as number;
   const ac = Actor.from(Game.getFormEx(actorId));
-  if (actor != ac || actorId === 0x14 || actor.isDisabled() || actor.isDeleted())
+  if (!ac || !actor || actorId === 0x14 || actor.isDisabled() || actor.isDeleted())
     return;
-  if (currentProtection) {
+  if (currentProtection >= 0) {
   actor.disable(false).then(() => {
     ac.delete();
   });
