@@ -1,4 +1,4 @@
-import { Actor, Form, FormType } from 'skyrimPlatform';
+import { Actor, Form } from 'skyrimPlatform';
 /* eslint-disable @typescript-eslint/no-empty-function */
 import * as networking from "../networking";
 import { FormModel, WorldModel } from "./model";
@@ -57,7 +57,7 @@ const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, max
 };
 
 const skipFormViewCreation = (msg: messages.UpdatePropertyMessage | messages.CreateActorMessage) => {
-  return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== FormType.Door;
+  return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== "DOOR";
 };
 
 //
