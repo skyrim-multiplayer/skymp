@@ -43,7 +43,7 @@ nlohmann::json MpObjectReference::PreparePropertyMessage(
                          { "t", MsgType::UpdateProperty },
                          { "propName", name },
                          { "refrId", self->GetFormId() },
-                         { "baseRecordType", baseRecordType }
+                         { "baseRecordType", baseRecordType },
                          { "data", value } };
 }
 
