@@ -52,8 +52,7 @@ struct WorldState::Impl
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
-  std::map<std::string, std::chrono::system_clock::duration>
-    relootTimeForTypes;
+  std::map<std::string, std::chrono::system_clock::duration> relootTimeForTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
   Viet::Timer timer;
 };
@@ -161,12 +160,9 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
       throw std::runtime_error(ss.str());
     }
     baseType = rec->GetType().ToString();
-  }
-  
-  assert(mappedId < 0xff000000);
-
-  if (LoadForm(formId)) {
-    auto it = forms.find(formId);
+  }						
+  if (LookupFormById(formId)) {										 
+	auto it = forms.find(formId);
     if (it != forms.end()) {
       auto refr = std::dynamic_pointer_cast<MpObjectReference>(it->second);
       if (refr) {
@@ -177,7 +173,6 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     }
     return;
   }
-
   switch (changeForm.recType) {
     case MpChangeForm::ACHR:
       form.reset(new MpActor(LocationalData(), callbacks, baseId));
@@ -204,6 +199,7 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
   // For Release configuration we just manually remove formId from changes
   pImpl->changes.erase(formId);
 }
+
 
 void WorldState::RequestReloot(MpObjectReference& ref,
                                std::chrono::system_clock::duration time)
@@ -233,20 +229,13 @@ Viet::Promise<Viet::Void> WorldState::SetTimer(float seconds)
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
-{
+{ 
   static const std::shared_ptr<MpForm> kNullForm;
-
   auto it = forms.find(formId);
-  if (it == forms.end()) {
-    if (formId < 0xff000000) {
-      if (LoadForm(formId)) {
-        it = forms.find(formId);
-        return it == forms.end() ? kNullForm : it->second;
-      }
-    }
-    return kNullForm;
-  }
-  return it->second;
+  if (it != forms.end())
+	    return it->second;
+  else
+	  return kNullForm;				
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
@@ -256,13 +245,14 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto& cache = GetEspmCache();
   auto refr = reinterpret_cast<espm::REFR*>(record);
   auto data = refr->GetData(cache);
-
   auto baseId = espm::GetMappedId(data.baseId, mapping);
+  auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto base = br.LookupById(baseId);
   if (!base.rec) {
     logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
     return false;
   }
+
 
   espm::Type t = base.rec->GetType();
   if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
@@ -282,11 +272,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
 
   if (t == "NPC_") {
-    auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
-    if (npcData.isProtected) {
-      return false;
-    }
-
+  auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);	  		   																   												
     enum
     {
       CrimeFactionsList = 0x26953, 
@@ -296,26 +282,18 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 	  MS06NPCs=0x26c51, 
 	  MS07NPCs=0x25f7a, 
 	  MS04NPCs=0x2267f
-    };
+    };;
 
-    auto formListLookupRes = br.LookupById(CrimeFactionsList);
-    auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
-    auto formIds = formList->GetData(cache).formIds;	
-	
-    for (auto& formId : formIds) {
-      formId = formListLookupRes.ToGlobalId(formId);
-    }
-
-    for (auto fact : npcData.factions) {
-	auto it = std::find(formIds.begin(), std::prev(formIds.end()), base.ToGlobalId(fact.formId));
-		if (it != formIds.end()) {
-        logger->info("Skipping actor {:#x} in faction {:#x}.", record->GetId(), *it);
-		return false;
-		}
-    }
+  auto formListLookupRes = br.LookupById(CrimeFactionsList);
+  auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
+  auto formIds = formList->GetData(cache).formIds;
+  auto it = std::find(formIds.begin(), formIds.end(), formId);
+	if (it == formIds.end()) {
+	logger->info("Skipping actor {}.", record->GetId());
+	return false;
+	}
   }
 
-  auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
   uint32_t worldOrCell =
@@ -478,7 +456,7 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
             for (auto rec : *records[i]) {
               auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
               assert(mappedId < 0xff000000);
-              LoadForm(mappedId);
+              LoadForm(mappedId);											  
             }
           }
           // Do not keep "loaded" reference here since LoadForm would

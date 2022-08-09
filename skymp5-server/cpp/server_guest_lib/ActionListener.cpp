@@ -239,7 +239,7 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   auto it = partOne.worldState.hosters.find(caster);
   auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
 
-  if (caster != 0x14 && hosterId != 0x0) {
+  if (caster != 0x14) {
     if (hosterId != ac->GetFormId()) {
       std::stringstream ss;
       ss << std::hex << "Bad hoster is attached to caster 0x" << caster
@@ -253,8 +253,11 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   if (!targetPtr)
     return;
 
-  targetPtr->Activate(caster == 0x14 ? *ac : partOne.worldState.GetFormAt<MpObjectReference>(caster));
-	RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
+  targetPtr->Activate(
+    caster == 0x14 ? *ac
+                   : partOne.worldState.GetFormAt<MpObjectReference>(caster));
+	if (hosterId)
+    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
 }
 
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
@@ -440,12 +443,12 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
   if (partOne.worldState.lastMovUpdateByIdx.size() > remoteIdx) {
     lastRemoteUpdate = partOne.worldState.lastMovUpdateByIdx[remoteIdx];
   }
-  else
-	 return;
 
   const auto hostResetTimeout = std::chrono::seconds(2);
 
-  if (hoster == 0 || !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
+  if (!lastRemoteUpdate ||
+      std::chrono::system_clock::now() - *lastRemoteUpdate >
+        hostResetTimeout) {
     partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
                              me->GetFormId());
     hoster = me->GetFormId();
