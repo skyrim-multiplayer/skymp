@@ -532,9 +532,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         if (msg.propName === "inventory") {
           ModelApplyUtils.applyModelInventory(refr, msg.data as Inventory);
         } else if (msg.propName === "isOpen") {
-          ModelApplyUtils.applyModelIsOpen(refr, !!(msg.data as boolean));
+          ModelApplyUtils.applyModelIsOpen(refr, !!msg.data);
         } else if (msg.propName === "isHarvested") {
-          ModelApplyUtils.applyModelIsHarvested(refr, !!(msg.data as boolean));
+          ModelApplyUtils.applyModelIsHarvested(refr, !!msg.data);
         }
       });
       return;
