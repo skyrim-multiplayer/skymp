@@ -1,4 +1,4 @@
-import { Actor, Form } from 'skyrimPlatform';
+import { Actor, Form, FormType } from 'skyrimPlatform';
 /* eslint-disable @typescript-eslint/no-empty-function */
 import * as networking from "../networking";
 import { FormModel, WorldModel } from "./model";
@@ -54,6 +54,10 @@ const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, max
       }
     }
   });
+};
+
+const skipFormViewCreation = (msg: messages.UpdatePropertyMessage | messages.CreateActorMessage) => {
+  return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== FormType.Door;
 };
 
 //
@@ -244,7 +248,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   createActor(msg: messages.CreateActorMessage): void {
-    if (msg.refrId && msg.refrId < 0xff000000) {
+    if (skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       onceLoad(refrId, (refr: ObjectReference) => {
         if (refr) {
@@ -517,7 +521,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
-    if (msg.refrId && msg.refrId < 0xff000000) {
+    if (skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       once("update", () => {
         const refr = ObjectReference.from(Game.getFormEx(refrId));

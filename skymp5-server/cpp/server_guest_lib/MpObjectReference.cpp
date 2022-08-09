@@ -31,10 +31,19 @@ std::string MpObjectReference::CreatePropertyMessage(
 nlohmann::json MpObjectReference::PreparePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
+  std::string baseRecordType;
+
+  auto& loader = self->GetParent()->GetEspm();
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (base.rec) {
+    baseRecordType = base.rec->GetType().ToString();
+  }
+
   return nlohmann::json{ { "idx", self->GetIdx() },
                          { "t", MsgType::UpdateProperty },
                          { "propName", name },
                          { "refrId", self->GetFormId() },
+                         { "baseRecordType", baseRecordType }
                          { "data", value } };
 }
 
