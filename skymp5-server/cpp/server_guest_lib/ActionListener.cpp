@@ -421,9 +421,7 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   UseCraftRecipe(me, recipeData, br, espmIdx);
 }
 
-void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
-                                   uint32_t remoteId)
-{
+void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData, uint32_t remoteId) {
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!me)
     throw std::runtime_error("Unable to host without actor attached");
@@ -446,11 +444,8 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
   const auto hostResetTimeout = std::chrono::seconds(2);
 
-  if (!lastRemoteUpdate ||
-      std::chrono::system_clock::now() - *lastRemoteUpdate >
-        hostResetTimeout) {
-    partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
-                             me->GetFormId());
+  if ((hoster == 0) && !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
+    partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster, me->GetFormId());
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
     RecalculateWorn(remote);
@@ -467,11 +462,8 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
           partOne.worldState.LookupFormById(prevHoster).get())) {
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
-      if (prevHosterUser != Networking::InvalidUserId &&
-          prevHosterUser != rawMsgData.userId) {
-        Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser,
-                                  R"({ "type": "hostStop", "target": %llu })",
-                                  longFormId);
+      if (prevHosterUser != Networking::InvalidUserId && prevHosterUser != rawMsgData.userId) { 
+	  Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser, R"({ "type": "hostStop", "target": %llu })", longFormId);
       }
     }
   }

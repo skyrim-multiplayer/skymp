@@ -47,7 +47,7 @@ struct WorldState::Impl
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
-  uint32_t nextId = 0xff000000;
+  uint32_t nextId = 0x0;
   std::shared_ptr<HeuristicPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
@@ -272,7 +272,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
 
   if (t == "NPC_") {
-  auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);	  		   																   												
+  auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
+  
     enum
     {
       CrimeFactionsList = 0x26953, 
@@ -288,10 +289,13 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
   auto formIds = formList->GetData(cache).formIds;
   auto it = std::find(formIds.begin(), formIds.end(), formId);
-	if (it == formIds.end()) {
-	logger->info("Skipping actor {}.", record->GetId());
-	return false;
+	if (*it > 16 && !(it == formIds.end())) {
+    logger->info("Loading actor {:#x}, {:#x}.", *it, formId);
 	}
+	else {
+    logger->info("Skipping actor {:#x}, {:#x}.", *it, formId);
+	return false;
+	} 
   }
 
   auto locationalData = data.loc;
