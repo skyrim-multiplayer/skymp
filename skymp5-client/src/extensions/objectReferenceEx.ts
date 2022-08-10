@@ -35,7 +35,7 @@ export class ObjectReferenceEx {
     const isItem = FormTypeEx.isItem(t);
 
     // You can also block for t === FormType.Flora || t === FormType.Tree, but I don't think it's necessary.
-    if if (t === FormType.Container || isItem || t === FormType.NPC) {
+    if (t === FormType.Container || isItem || t === FormType.NPC || t === FormType.Door) {
       self.blockActivation(true);
     } else {
       self.blockActivation(false);
