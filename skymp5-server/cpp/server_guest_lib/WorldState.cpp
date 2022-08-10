@@ -47,7 +47,7 @@ struct WorldState::Impl
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
-  uint32_t nextId = 0x0;
+  uint32_t nextId;
   std::shared_ptr<HeuristicPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
@@ -232,10 +232,7 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 { 
   static const std::shared_ptr<MpForm> kNullForm;
   auto it = forms.find(formId);
-  if (it != forms.end())
-	    return it->second;
-  else
-	  return kNullForm;				
+  return (it == forms.end()) ? kNullForm : it->second;
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
@@ -638,9 +635,8 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
   static const std::set<uint32_t> g_emptySet;
 
   auto it = actorIdByProfileId.find(profileId);
-  if (it == actorIdByProfileId.end())
-    return g_emptySet;
-  return it->second;
+  return it == actorIdByProfileId.end() ? g_emptySet : it->second; 
+
 }
 
 uint32_t WorldState::GenerateFormId()
