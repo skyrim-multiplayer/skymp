@@ -56,6 +56,9 @@ const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, max
   });
 };
 
+const skipFormViewCreation = (msg: messages.UpdatePropertyMessage | messages.CreateActorMessage) => {
+  return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== "DOOR";
+};
 //
 // eventSource system
 //
@@ -244,7 +247,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   createActor(msg: messages.CreateActorMessage): void {
-    if (msg.refrId && msg.refrId < 0xff000000) {
+    if (skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       onceLoad(refrId, (refr: ObjectReference) => {
         if (refr) {
@@ -517,7 +520,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
-    if (msg.refrId && msg.refrId < 0xff000000) {
+    if (skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       once("update", () => {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
@@ -528,9 +531,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         if (msg.propName === "inventory") {
           ModelApplyUtils.applyModelInventory(refr, msg.data as Inventory);
         } else if (msg.propName === "isOpen") {
-          ModelApplyUtils.applyModelIsOpen(refr, !!(msg.data as boolean));
+          ModelApplyUtils.applyModelIsOpen(refr, !!(msg.data));
         } else if (msg.propName === "isHarvested") {
-          ModelApplyUtils.applyModelIsHarvested(refr, !!(msg.data as boolean));
+          ModelApplyUtils.applyModelIsHarvested(refr, !!(msg.data));
         }
       });
       return;

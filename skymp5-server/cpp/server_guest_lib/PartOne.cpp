@@ -111,10 +111,7 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
   }
   worldState.AddForm(
     std::unique_ptr<MpActor>(
-      new MpActor({ pos,
-                    { 0, 0, angleZ },
-                    FormDesc::FromFormId(cellOrWorld, worldState.espmFiles) },
-                  CreateFormCallbacks())),
+      new MpActor({ pos, { 0, 0, angleZ }, FormDesc::FromFormId(cellOrWorld, worldState.espmFiles) }, CreateFormCallbacks())),
     formId);
   if (profileId >= 0) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
@@ -269,6 +266,7 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
   pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
                       "(Including {} player characters)",
                       clock() - was, n, numPlayerCharacters);
+
 }
 
 espm::Loader& PartOne::GetEspm() const
