@@ -249,7 +249,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   createActor(msg: messages.CreateActorMessage): void {
     if (skipFormViewCreation(msg)) {
-      const refrId = msg.refrId;
+      const refrId = msg.refrId!;
       onceLoad(refrId, (refr: ObjectReference) => {
         if (refr) {
           ObjectReferenceEx.dealWithRef(refr, refr.getBaseObject() as Form);
