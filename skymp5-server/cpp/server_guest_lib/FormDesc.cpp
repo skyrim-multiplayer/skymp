@@ -40,7 +40,7 @@ uint32_t FormDesc::ToFormId(const std::vector<std::string>& files) const
     for (int i = 0; i < numFiles; ++i) {
       if (files[i] == file) {
         fileIdx = i;
-        continue;
+        break;
       }
     }
     if (fileIdx == -1) {
