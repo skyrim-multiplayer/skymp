@@ -113,6 +113,26 @@ const startClient = (): void => {
     refr.lock(false, false);
     riftenUnlocked = true;
   });
+
+  const n = 10;
+  let k = 0;
+  let zeroKMoment = 0;
+  let lastFps = 0;
+  on("update", () => {
+    ++k;
+    if (k == n) {
+      k = 0;
+      if (zeroKMoment) {
+        const timePassed = (Date.now() - zeroKMoment) * 0.001;
+        const fps = Math.round(n / timePassed);
+        if (lastFps != fps) {
+          lastFps = fps;
+          //printConsole(`Current FPS is ${fps}`);
+        }
+      }
+      zeroKMoment = Date.now();
+    }
+  });
 }
 
 const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;

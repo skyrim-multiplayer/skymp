@@ -49,8 +49,7 @@ export interface CreateActorMessage {
   type: "createActor";
   idx: number;
   refrId?: number;
-  refrId: number;
-  baseRecordType: string; // DOOR, ACTI, etc											
+  baseRecordType: string; // DOOR, ACTI, etc
   transform: Transform;
   isMe: boolean;
   appearance?: Appearance;
@@ -93,7 +92,7 @@ export interface UpdatePropertyMessage {
   t: MsgType.UpdateProperty;
   idx: number;
   refrId: number;
-  baseRecordType: string; // DOOR, ACTI, etc											
+  baseRecordType: string; // DOOR, ACTI, etc
   data: unknown;
   propName: string;
 }

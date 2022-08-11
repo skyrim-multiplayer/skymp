@@ -27,7 +27,7 @@ function processOneActor(): void {
     actor.setPosition(0, 0, 0);
     return;
   }
-  actor.disable(true).then(() => {
+  actor.disable(false).then(() => {
     const ac = Actor.from(Game.getFormEx(actorId));
     if (!ac || isInDialogue(ac)) return;
     ac.delete();

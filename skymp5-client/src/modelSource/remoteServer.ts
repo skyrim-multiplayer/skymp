@@ -56,9 +56,6 @@ const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, max
   });
 };
 
-const skipFormViewCreation = (msg: messages.UpdatePropertyMessage | messages.CreateActorMessage) => {
-  return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== "DOOR";
-};
 //
 // eventSource system
 //
@@ -221,33 +218,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
-  teleport(msg: messages.Teleport): void {
-    once("update", () => {
-      printConsole(
-        "Teleporting...",
-        msg.pos,
-        "cell/world is",
-        msg.worldOrCell.toString(16)
-      );
-      // todo: think about track ragdoll state of player
-      safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
-        TESModPlatform.moveRefrToPosition(
-          Game.getPlayer()!,
-          Cell.from(Game.getFormEx(msg.worldOrCell)),
-          WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
-          msg.pos[0],
-          msg.pos[1],
-          msg.pos[2],
-          msg.rot[0],
-          msg.rot[1],
-          msg.rot[2]
-        );
-      });
-    });
-  }
-
   createActor(msg: messages.CreateActorMessage): void {
-    if (skipFormViewCreation(msg)) {
+    if (msg.refrId && msg.refrId < 0xff000000) {
       const refrId = msg.refrId;
       onceLoad(refrId, (refr: ObjectReference) => {
         if (refr) {
@@ -520,7 +492,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
-    if (skipFormViewCreation(msg)) {
+    if (msg.refrId && msg.refrId < 0xff000000) {
       const refrId = msg.refrId;
       once("update", () => {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
@@ -531,9 +503,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         if (msg.propName === "inventory") {
           ModelApplyUtils.applyModelInventory(refr, msg.data as Inventory);
         } else if (msg.propName === "isOpen") {
-          ModelApplyUtils.applyModelIsOpen(refr, !!(msg.data));
+          ModelApplyUtils.applyModelIsOpen(refr, !!(msg.data as boolean));
         } else if (msg.propName === "isHarvested") {
-          ModelApplyUtils.applyModelIsHarvested(refr, !!(msg.data));
+          ModelApplyUtils.applyModelIsHarvested(refr, !!(msg.data as boolean));
         }
       });
       return;
@@ -545,6 +517,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   DeathStateContainer(msg: messages.DeathStateContainerMessage): void {
+    const id = this.getIdManager().getId(msg.tIsDead.idx);
     once("update", () => printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`));
     if (msg.tIsDead.propName !== nameof<FormModel>("isDead") || typeof msg.tIsDead.data !== "boolean") return;
 
@@ -553,11 +526,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     }
     once("update", () => this.UpdateProperty(msg.tIsDead));
 
-    if (msg.tTeleport) {
-      this.teleport(msg.tTeleport);
-    }
-
-    const id = this.getIdManager().getId(msg.tIsDead.idx);
     const form = this.worldModel.forms[id];
     once("update", () => {
       const actor = id === this.getWorldModel().playerCharacterFormIdx ?

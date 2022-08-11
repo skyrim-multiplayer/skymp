@@ -47,7 +47,7 @@ struct WorldState::Impl
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
-  uint32_t nextId = 0x0;
+  uint32_t nextId = 0xff000000;
   std::shared_ptr<HeuristicPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
@@ -304,6 +304,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto formIds = formList->GetData(cache).formIds;
   auto it = std::find(formIds.begin(), formIds.end(), formId);
   form.reset(new MpActor(formLocationalData, formCallbacksFactory(), baseId));																   
+  return false;
   }
   else
   form.reset(new MpObjectReference(formLocationalData, formCallbacksFactory(), baseId, typeStr.data(), primitiveBoundsDiv2));
