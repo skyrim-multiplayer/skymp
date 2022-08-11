@@ -161,7 +161,7 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     }
     baseType = rec->GetType().ToString();
   }						
-  if (LookupFormById(formId)) {										 
+  if (formId < 0xff000000) {										 
 	auto it = forms.find(formId);
     if (it != forms.end()) {
       auto refr = std::dynamic_pointer_cast<MpObjectReference>(it->second);
@@ -232,10 +232,7 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 { 
   static const std::shared_ptr<MpForm> kNullForm;
   auto it = forms.find(formId);
-  if (it != forms.end())
-	    return it->second;
-  else
-	  return kNullForm;				
+  return (it == forms.end()) ? kNullForm : it->second;
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
@@ -248,13 +245,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto baseId = espm::GetMappedId(data.baseId, mapping);
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto base = br.LookupById(baseId);
-  if (!base.rec) {
-    logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
-    return false;
-  }
-
+  auto existing = forms.find(formId);
 
   espm::Type t = base.rec->GetType();
+  auto typeStr = t.ToString();
   if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
       t != "DOOR" && t != "CONT" &&
       (t != "FLOR" ||
@@ -270,6 +264,26 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   };
   if (refr->GetFlags() & InitiallyDisabled)
     return false;
+
+  uint32_t worldOrCell = espm::GetMappedId(GetWorldOrCell(br, record), mapping);
+  
+  if (!worldOrCell) {
+    logger->error("Anomally: refr without world/cell");
+    return false;
+  }
+
+  auto locationalData = data.loc;
+  std::unique_ptr<MpForm> form;
+  std::optional<NiPoint3> primitiveBoundsDiv2;  
+  LocationalData formLocationalData = { GetPos(locationalData), GetRot(locationalData), FormDesc::FromFormId(worldOrCell, espmFiles) };
+
+  if (locationalData) {
+    if (data.boundsDiv2)
+	primitiveBoundsDiv2 = NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+    // Do not TriggerFormInitEvent here, doing it later after changeForm apply
+  }
+  else
+	  return false;
 
   if (t == "NPC_") {
   auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
@@ -289,69 +303,14 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto formList = reinterpret_cast<espm::FLST*>(formListLookupRes.rec);
   auto formIds = formList->GetData(cache).formIds;
   auto it = std::find(formIds.begin(), formIds.end(), formId);
-	if (*it > 16 && !(it == formIds.end())) {
-    logger->info("Loading actor {:#x}, {:#x}.", *it, formId);
-	}
-	else {
-    logger->info("Skipping actor {:#x}, {:#x}.", *it, formId);
-	return false;
-	} 
+  form.reset(new MpActor(formLocationalData, formCallbacksFactory(), baseId));																   
   }
-
-  auto locationalData = data.loc;
-
-  uint32_t worldOrCell =
-    espm::GetMappedId(GetWorldOrCell(br, record), mapping);
-  if (!worldOrCell) {
-    logger->error("Anomally: refr without world/cell");
-    return false;
-  }
-
-  // This function dosen't use LookupFormById to prevent recursion
-  auto existing = forms.find(formId);
-
-  if (existing != forms.end()) {
-    auto existingAsRefr =
-      reinterpret_cast<MpObjectReference*>(existing->second.get());
-
-    if (locationalData) {
-      existingAsRefr->SetPosAndAngleSilent(GetPos(locationalData),
-                                           GetRot(locationalData));
-
-      assert(existingAsRefr->GetPos() == NiPoint3(GetPos(locationalData)));
-    }
-
-  } else {
-    if (!locationalData) {
-      logger->error("Anomally: refr without locationalData");
-      return false;
-    }
-
-    std::optional<NiPoint3> primitiveBoundsDiv2;
-    if (data.boundsDiv2)
-      primitiveBoundsDiv2 =
-        NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
-
-    auto typeStr = t.ToString();
-    std::unique_ptr<MpForm> form;
-    LocationalData formLocationalData = {
-      GetPos(locationalData), GetRot(locationalData),
-      FormDesc::FromFormId(worldOrCell, espmFiles)
-    };
-    if (t != "NPC_") {
-      form.reset(new MpObjectReference(formLocationalData,
-                                       formCallbacksFactory(), baseId,
-                                       typeStr.data(), primitiveBoundsDiv2));
-    } else {
-      form.reset(
-        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
-    }
-    AddForm(std::move(form), formId, true);
-    // Do not TriggerFormInitEvent here, doing it later after changeForm apply
-  }
-
+  else
+  form.reset(new MpObjectReference(formLocationalData, formCallbacksFactory(), baseId, typeStr.data(), primitiveBoundsDiv2));
+  auto existingAsRefr = reinterpret_cast<MpObjectReference*>(existing->second.get());
+  AddForm(std::move(form), formId, true);
   return true;
-}
+} 
 
 bool WorldState::LoadForm(uint32_t formId)
 {
@@ -638,9 +597,8 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
   static const std::set<uint32_t> g_emptySet;
 
   auto it = actorIdByProfileId.find(profileId);
-  if (it == actorIdByProfileId.end())
-    return g_emptySet;
-  return it->second;
+  return it == actorIdByProfileId.end() ? g_emptySet : it->second; 
+
 }
 
 uint32_t WorldState::GenerateFormId()

@@ -258,6 +258,7 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
                    : partOne.worldState.GetFormAt<MpObjectReference>(caster));
 	if (hosterId)
     RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
+   
 }
 
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
@@ -380,6 +381,7 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
     spdlog::debug("{}", s);
   }
   me->RemoveItems(entries);
+																		 
   me->AddItem(outputFormId, recipeData.outputCount);
 }
 
@@ -422,6 +424,8 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData, uint32_t remoteId) {
+													 
+ 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!me)
     throw std::runtime_error("Unable to host without actor attached");
@@ -444,8 +448,11 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData, uint32_t re
 
   const auto hostResetTimeout = std::chrono::seconds(2);
 
-  if (hoster == 0 && !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
+										 
+  if (!lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
+						   
     partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster, me->GetFormId());
+											  
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
     RecalculateWorn(remote);
@@ -461,10 +468,13 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData, uint32_t re
 
     if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
           partOne.worldState.LookupFormById(prevHoster).get())) {
-      auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);																								
+      auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
       if (prevHosterUser != Networking::InvalidUserId && prevHosterUser != rawMsgData.userId) { 
+												
 	  Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser, R"({ "type": "hostStop", "target": %llu })", longFormId);
-	  }
+																			  
+											  
+      }
     }
   }
 }
