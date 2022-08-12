@@ -18,7 +18,8 @@ import { verifyVersion } from "./version";
 import { updateWc } from "./features/worldCleaner";
 import * as authSystem from "./features/authSystem";
 import { AuthGameData } from "./features/authModel";
-import * as NetInfo from "./features/netInfoSystem";
+import * as NetInfo from "./debug/netInfoSystem";
+import * as animDebugSystem from "./debug/animDebugSystem";
 import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
 
@@ -57,6 +58,7 @@ once("update", verifyLoadOrder);
 
 const startClient = (): void => {
   NetInfo.start();
+  animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
 
   playerCombatSystem.start();
   once("update", () => authSystem.setPlayerAuthMode(false));
