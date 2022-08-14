@@ -11,23 +11,25 @@ export interface AnimDebugSettings {
 type AnimListItem = {
   name: string,
   textId: number,
+  color: number[]
 }
 
 const playerId = 0x14;
+const animationSucceededTextColor = [255, 255, 255, 1];
+const animationNotSucceededTextColor = [255, 0, 0, 1];
 
 class AnimQueueCollection {
   public static readonly Name = "AnimQueueCollection";
 
   constructor(settings: AnimDebugSettings) {
     const animListCount = settings.animListCount ?? 5;
-    const animListStartPos = settings.animListStartPos ?? { x: 400, y: 600 };
-    const animListYPosDelta = settings.animListYPosDelta ?? 40;
-    const textColor = [255, 255, 255, 1];
+    const animListStartPos = settings.animListStartPos ?? { x: 650, y: 600 };
+    const animListYPosDelta = settings.animListYPosDelta ?? 32;
     let y = animListStartPos.y;
 
     this.list = new Array<AnimListItem>(animListCount);
     for (let idx = 0; idx < animListCount; ++idx) {
-      this.list[idx] = { name: "", textId: sp.createText(animListStartPos.x, y, "", textColor) };
+      this.list[idx] = { name: "", textId: sp.createText(animListStartPos.x, y, "", animationSucceededTextColor), color: animationSucceededTextColor };
       y += animListYPosDelta;
     }
   }
@@ -39,14 +41,19 @@ class AnimQueueCollection {
     this.list.forEach(item => sp.destroyText(item.textId));
   }
 
-  public push(animName: string): void {
-    let prevAnimName: string | null = null;
+  public push(animName: string, color: number[]): void {
+    let prevItem: AnimListItem | null = null;
     for (let idx = this.list.length - 1; idx >= 0; --idx) {
       const item = this.list[idx];
-      prevAnimName = item.name;
+      prevItem = { ...item };
+
       item.name = animName;
-      sp.setTextString(item.textId, animName);
-      animName = prevAnimName;
+      item.color = color;
+      sp.setTextString(item.textId, item.name);
+      sp.setTextColor(item.textId, item.color);
+
+      animName = prevItem.name;
+      color = prevItem.color;
     }
   }
 }
@@ -64,9 +71,7 @@ export const init = (settings: AnimDebugSettings): void => {
   sp.hooks.sendAnimationEvent.add({
     enter: (ctx) => { },
     leave: (ctx) => {
-      if (ctx.animationSucceeded) {
-        queue.push(ctx.animEventName);
-      }
+      queue.push(ctx.animEventName, ctx.animationSucceeded ? animationSucceededTextColor : animationNotSucceededTextColor);
     }
   }, playerId, playerId);
 
