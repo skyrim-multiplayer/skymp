@@ -565,5 +565,7 @@ bool MpActor::IsBlockActive() const
 
 NiPoint3 MpActor::GetViewDirection() const
 {
-  return { std::cos(GetAngle().x), 0, std::cos(GetAngle().z) };
+  static const float kPi = std::acos(-1.f);
+  static const float kAngleToRadians = kPi / 180.f;
+  return { std::cos(GetAngle().z * kAngleToRadians), 0, std::sin(GetAngle().z * kAngleToRadians) };
 }

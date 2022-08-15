@@ -654,20 +654,25 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
 bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
   NiPoint3 targetViewDirection = target.GetViewDirection();
-  NiPoint3 aggressorLocation = aggressor.GetPos();
-  NiPoint3 aggressorDirection = aggressorLocation - targetViewDirection;
-  spdlog::debug("Target view direction is (x: {}, y: {}, z: {})",
+  NiPoint3 aggressorViewDirection = aggressor.GetViewDirection();
+  spdlog::debug("Target view direction: x: {}, y: {}, z: {}",
                 targetViewDirection.x, targetViewDirection.y,
                 targetViewDirection.z);
-  spdlog::debug("Aggressor direction is (x: {}, y: {}, z: {})",
-                aggressorLocation.x, aggressorLocation.y, aggressorLocation.z);
-  if (aggressorDirection * targetViewDirection <= 0) {
+  spdlog::debug("Aggressor view direction: x: {}, y: {}, z: {}",
+                aggressorViewDirection.x, aggressorViewDirection.y,
+                aggressorViewDirection.z);
+  if (targetViewDirection * aggressorViewDirection >= 0) {
     return false;
   }
+  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
+  spdlog::debug("AggressorDirection: x: {}, y: {}, z: {}",
+                aggressorDirection.x, aggressorDirection.y,
+                aggressorDirection.z);
   float angle =
-    std::acos(targetViewDirection * aggressorDirection /
+    std::acos((targetViewDirection * aggressorDirection) /
               (targetViewDirection.Length() * aggressorDirection.Length()));
-  spdlog::debug("Angle is: {}", angle);
+  spdlog::debug("Angle between aggressor and target: {}", angle);
+  spdlog::debug("Angle < 60*: {}", angle < 1);
   return angle < 1;
 }
 }
