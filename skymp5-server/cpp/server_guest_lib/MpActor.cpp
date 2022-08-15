@@ -567,5 +567,5 @@ NiPoint3 MpActor::GetViewDirection() const
 {
   static const float kPi = std::acos(-1.f);
   static const float kAngleToRadians = kPi / 180.f;
-  return { std::cos(GetAngle().z * kAngleToRadians), 0, std::sin(GetAngle().z * kAngleToRadians) };
+  return { std::sin(GetAngle().z * kAngleToRadians), std::cos(GetAngle().z * kAngleToRadians), 0};
 }
