@@ -126,15 +126,12 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
     return;
   }
 
-  spdlog::debug("Animation event name {}", animationData.animEventName);
   constexpr const char* kBlockStartAnimationName = "blockStart";
   constexpr const char* kBlockStopAnimationName = "blockStop";
   if (!strcmp(animationData.animEventName, kBlockStartAnimationName)) {
-    spdlog::debug("BlockingStart animation successful");
     actor->SetIsBlockActive(true);
   }
   if (!strcmp(animationData.animEventName, kBlockStopAnimationName)) {
-    spdlog::debug("BlockingStop animation successful");
     actor->SetIsBlockActive(false);
   }
 
@@ -655,24 +652,13 @@ bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
   NiPoint3 targetViewDirection = target.GetViewDirection();
   NiPoint3 aggressorViewDirection = aggressor.GetViewDirection();
-  spdlog::debug("Target view direction: x: {}, y: {}, z: {}",
-                targetViewDirection.x, targetViewDirection.y,
-                targetViewDirection.z);
-  spdlog::debug("Aggressor view direction: x: {}, y: {}, z: {}",
-                aggressorViewDirection.x, aggressorViewDirection.y,
-                aggressorViewDirection.z);
   if (targetViewDirection * aggressorViewDirection >= 0) {
     return false;
   }
   NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
-  spdlog::debug("AggressorDirection: x: {}, y: {}, z: {}",
-                aggressorDirection.x, aggressorDirection.y,
-                aggressorDirection.z);
   float angle =
     std::acos((targetViewDirection * aggressorDirection) /
               (targetViewDirection.Length() * aggressorDirection.Length()));
-  spdlog::debug("Angle between aggressor and target: {}", angle);
-  spdlog::debug("Angle < 60*: {}", angle < 1);
   return angle < 1;
 }
 }
@@ -755,8 +741,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   hitData.isHitBlocked = targetActor.IsBlockActive()
     ? ShouldBeBlocked(*aggressor, targetActor)
     : false;
-  spdlog::debug("Yo YO YO YO YO LOOK AT ME IM isHitBlocked and I say: {}",
-                hitData.isHitBlocked);
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =
