@@ -34,6 +34,7 @@ nlohmann::json MpObjectReference::PreparePropertyMessage(
   return nlohmann::json{ { "idx", self->GetIdx() },
                          { "t", MsgType::UpdateProperty },
                          { "propName", name },
+                         { "refrId", self->GetFormId() },
                          { "data", value } };
 }
 

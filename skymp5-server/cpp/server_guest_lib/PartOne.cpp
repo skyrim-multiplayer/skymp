@@ -253,7 +253,7 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
   clock_t was = clock();
 
   int n = 0;
-  int numPlayerCharacters = 0;
+  int numPlayerCharacters = 1;
   saveStorage->IterateSync([&](MpChangeForm changeForm) {
     // Do not let players become NPCs
     if (changeForm.profileId != -1 && !changeForm.isDisabled) {
