@@ -134,7 +134,6 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   if (!strcmp(animationData.animEventName, kBlockStopAnimationName)) {
     actor->SetIsBlockActive(false);
   }
-
   SendToNeighbours(idx, rawMsgData);
 }
 
