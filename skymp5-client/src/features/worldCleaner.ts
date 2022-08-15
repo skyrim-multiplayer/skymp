@@ -7,7 +7,7 @@ const isInDialogue = (ac: Actor): boolean =>
 
 function processOneActor(): void {
   const pc = Game.getPlayer() as Actor;
-  const actor = Game.findRandomActor(
+  const actor = Game.findClosestActor(
     pc.getPositionX(),
     pc.getPositionY(),
     pc.getPositionZ(),
@@ -20,6 +20,8 @@ function processOneActor(): void {
 
   if (!actor || actorId === 0x14 || actor.isDisabled() || actor.isDeleted())
     return;
+
+  actor.disableNoWait(true);
 
   if (isInDialogue(actor)) {
     // Deleting actor in dialogue crashes Skyrim
