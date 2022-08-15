@@ -26,6 +26,7 @@ MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
   : MpObjectReference(locationalData_, callbacks_,
                       optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
+  , isBlockActive(false)
 {
   pImpl.reset(new Impl);
 }

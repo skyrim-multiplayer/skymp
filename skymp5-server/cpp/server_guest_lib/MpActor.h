@@ -113,7 +113,7 @@ private:
 
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
 
-  bool isBlockActive = false;
+  bool isBlockActive;
 
 protected:
   void BeforeDestroy() override;
