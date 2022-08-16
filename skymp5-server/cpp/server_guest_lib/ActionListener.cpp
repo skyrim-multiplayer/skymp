@@ -514,7 +514,7 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
 
-  if (timeAfterRegeneration == 0.0f && health != healthPercentage || magicka != magickaPercentage || stamina != staminaPercentage) {
+  if (timeAfterRegeneration <= 0.0f && (health != healthPercentage || magicka != magickaPercentage || stamina != staminaPercentage)) {
     std::string s;
     s += Networking::MinPacketId;
     s += nlohmann::json{
@@ -526,7 +526,7 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     }.dump();
     actor->SendToUser(s.data(), s.size(), true);
   }
-  else if (timeAfterRegeneration > 0.0f) {
+  if (timeAfterRegeneration > 0.0f) {
   actor->SetPercentages(health, magicka, stamina);
   actor->SetLastAttributesPercentagesUpdate(now);
   }
