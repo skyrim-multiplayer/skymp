@@ -279,7 +279,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   std::optional<NiPoint3> primitiveBoundsDiv2;  
   LocationalData formLocationalData = { GetPos(locationalData), GetRot(locationalData), FormDesc::FromFormId(worldOrCell, espmFiles) };
 
-  if (refr->GetFlags() & IsGuard || refr->GetFlags() & InitiallyDisabled) {
+  if (refr->GetFlags() & InitiallyDisabled) {
    logger->info("Skipping load of: {}", formId);
    return false;
   }
@@ -299,7 +299,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 	form.reset(new MpActor(formLocationalData, formCallbacksFactory(), baseId));
   }
   else if (typeStrEval == "REFR") {
-	form.reset(new MpObjectReference(formLocationalData, formCallbacksFactory(), baseId, typeStrEval.data(), primitiveBoundsDiv2));
+	form.reset(new MpObjectReference(formLocationalData, formCallbacksFactory(), baseId, t.ToString().data(), primitiveBoundsDiv2));
   }
   AddForm(std::move(form), formId, false);
   return false;
