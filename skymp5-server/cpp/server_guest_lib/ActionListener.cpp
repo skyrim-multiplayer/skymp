@@ -492,26 +492,29 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                     const float staminaPercentage)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  MpChangeForm changeForm = actor->GetChangeForm();
-  if (!actor)
+  if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
-  auto now = actor->GetDurationOfAttributesPercentagesUpdate(std::chrono::steady_clock::now());
-
-  float timeAfterRegeneration = CropPeriodAfterLastRegen(now.count());
-
-  float health = CropHealthRegeneration(changeForm.healthPercentage, timeAfterRegeneration, actor);
-  float magicka = CropMagickaRegeneration(changeForm.magickaPercentage, timeAfterRegeneration, actor);
-  float stamina = CropStaminaRegeneration(changeForm.staminaPercentage, timeAfterRegeneration, actor);
-  
-  if (timeAfterRegeneration) {
-	if (health <= healthPercentage || magicka <= magickaPercentage || stamina <= staminaPercentage)
-	actor->SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
-	else
-	actor->SetPercentages(health, magicka, stamina);
   }
-  else if (IsNearlyEqual(health, healthPercentage) == false ||
-      IsNearlyEqual(magicka, magickaPercentage) == false ||
-      IsNearlyEqual(stamina, staminaPercentage) == false) {
+  auto now = std::chrono::steady_clock::now();
+
+  float timeAfterRegeneration = CropPeriodAfterLastRegen(actor->GetDurationOfAttributesPercentagesUpdate(now).count());
+  
+  MpChangeForm changeForm = actor->GetChangeForm();
+  float health = healthPercentage;
+  float magicka = magickaPercentage;
+  float stamina = staminaPercentage;
+
+  if (healthPercentage != changeForm.healthPercentage) {
+    health = CropHealthRegeneration(health, timeAfterRegeneration, actor);
+  }
+  if (magickaPercentage != changeForm.magickaPercentage) {
+    magicka = CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
+  }
+  if (staminaPercentage != changeForm.staminaPercentage) {
+    stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
+  }
+
+  if (timeAfterRegeneration == 0.0f && health != healthPercentage || magicka != magickaPercentage || stamina != staminaPercentage) {
     std::string s;
     s += Networking::MinPacketId;
     s += nlohmann::json{
@@ -522,7 +525,11 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
           { "stamina", stamina } } }
     }.dump();
     actor->SendToUser(s.data(), s.size(), true);
-    }
+  }
+  else
+	return;
+  actor->SetPercentages(health, magicka, stamina);
+  actor->SetLastAttributesPercentagesUpdate(now);
 }
 
 namespace {
