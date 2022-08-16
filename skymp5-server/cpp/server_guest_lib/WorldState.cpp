@@ -233,7 +233,7 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 {
   static const std::shared_ptr<MpForm> kNullForm;
   auto it = forms.find(formId);
-  // We need to exclude the player from this as it will loop back to the beginning otherwise.
+  // It may loop back to the beginning otherwise.
   if (it == forms.end() && it != forms.begin())
 	return kNullForm;
   return (it == forms.end()) ? kNullForm : it->second;
