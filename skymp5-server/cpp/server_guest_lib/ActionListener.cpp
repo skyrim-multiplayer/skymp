@@ -447,8 +447,11 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
   const auto hostResetTimeout = std::chrono::seconds(2);
 
-  if (hoster == 0 || !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
-    partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster, me->GetFormId());
+  if (hoster == 0 || !lastRemoteUpdate ||
+      std::chrono::system_clock::now() - *lastRemoteUpdate >
+        hostResetTimeout) {
+    partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
+                             me->GetFormId());
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
     RecalculateWorn(remote);
@@ -457,14 +460,18 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     if (dynamic_cast<MpActor*>(&remote) && longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
-    Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId, R"({ "type": "hostStart", "target": %llu })", longFormId);
+    Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId,
+                              R"({ "type": "hostStart", "target": %llu })",
+                              longFormId);
 
     if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
           partOne.worldState.LookupFormById(prevHoster).get())) {
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
       if (prevHosterUser != Networking::InvalidUserId &&
           prevHosterUser != rawMsgData.userId) {
-        Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser, R"({ "type": "hostStop", "target": %llu })", longFormId);
+        Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser,
+                                  R"({ "type": "hostStop", "target": %llu })",
+                                  longFormId);
       }
     }
   }
@@ -497,8 +504,9 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   }
   auto now = std::chrono::steady_clock::now();
 
-  float timeAfterRegeneration = CropPeriodAfterLastRegen(actor->GetDurationOfAttributesPercentagesUpdate(now).count());
-  
+  float timeAfterRegeneration = CropPeriodAfterLastRegen(
+    actor->GetDurationOfAttributesPercentagesUpdate(now).count());
+
   MpChangeForm changeForm = actor->GetChangeForm();
   float health = healthPercentage;
   float magicka = magickaPercentage;
@@ -514,7 +522,9 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
 
-  if (timeAfterRegeneration <= 0.0f && (health != healthPercentage || magicka != magickaPercentage || stamina != staminaPercentage)) {
+  if (timeAfterRegeneration <= 0.0f &&
+      (health != healthPercentage || magicka != magickaPercentage ||
+       stamina != staminaPercentage)) {
     std::string s;
     s += Networking::MinPacketId;
     s += nlohmann::json{
@@ -527,8 +537,8 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     actor->SendToUser(s.data(), s.size(), true);
   }
   if (timeAfterRegeneration > 0.0f) {
-  actor->SetPercentages(health, magicka, stamina);
-  actor->SetLastAttributesPercentagesUpdate(now);
+    actor->SetPercentages(health, magicka, stamina);
+    actor->SetLastAttributesPercentagesUpdate(now);
   }
 }
 

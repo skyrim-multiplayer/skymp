@@ -989,7 +989,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     auto refrRecord = espm::Convert<espm::REFR>(
       loader.GetBrowser().LookupById(GetFormId()).rec);
     auto teleport = refrRecord->GetData(compressedFieldsCache).teleport;
-	// Worldspace sync fix here.
+    // Worldspace sync fix here.
     if (teleport && IsOpen()) {
       RequestReloot();
 

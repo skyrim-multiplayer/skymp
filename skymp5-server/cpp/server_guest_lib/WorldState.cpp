@@ -181,7 +181,8 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
       form.reset(new MpActor(LocationalData(), callbacks, baseId));
       break;
     case MpChangeForm::REFR:
-      form.reset(new MpObjectReference(LocationalData(), callbacks, baseId, baseType.data()));
+      form.reset(new MpObjectReference(LocationalData(), callbacks, baseId,
+                                       baseType.data()));
       break;
     default:
       throw std::runtime_error("Unknown ChangeForm type: " +
@@ -235,7 +236,7 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
   auto it = forms.find(formId);
   // It may loop back to the beginning otherwise.
   if (it == forms.end() && it != forms.begin())
-	return kNullForm;
+    return kNullForm;
   return (it == forms.end()) ? kNullForm : it->second;
 }
 
@@ -248,7 +249,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto data = refr->GetData(cache);
   auto baseId = espm::GetMappedId(data.baseId, mapping);
   auto base = br.LookupById(baseId);
-  
+
   espm::Type t = base.rec->GetType();
   espm::Type typeStr = record->GetType();
   auto typeStrEval = typeStr.ToString();
@@ -260,55 +261,61 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       (t != "TREE" ||
        !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
     return false;
-	
+
   // TODO: Load disabled references
   enum
   {
     InitiallyDisabled = 0x800,
-	NoRespawns = 0x20000000,
-	IsGuard = 0x40000000
+    NoRespawns = 0x20000000,
+    IsGuard = 0x40000000
   };
 
-  uint32_t worldOrCell = espm::GetMappedId(GetWorldOrCell(br, record), mapping);
-  
+  uint32_t worldOrCell =
+    espm::GetMappedId(GetWorldOrCell(br, record), mapping);
+
   if (!worldOrCell) {
     logger->error("Anomally: refr without world/cell");
     return false;
   }
-  
+
   auto formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
   std::unique_ptr<MpForm> form;
-  std::optional<NiPoint3> primitiveBoundsDiv2;  
-  LocationalData formLocationalData = { GetPos(locationalData), GetRot(locationalData), FormDesc::FromFormId(worldOrCell, espmFiles) };
+  std::optional<NiPoint3> primitiveBoundsDiv2;
+  LocationalData formLocationalData = {
+    GetPos(locationalData), GetRot(locationalData),
+    FormDesc::FromFormId(worldOrCell, espmFiles)
+  };
 
   if (refr->GetFlags() & InitiallyDisabled) {
-   logger->info("Skipping load of: {}", formId);
-   return false;
+    logger->info("Skipping load of: {}", formId);
+    return false;
   }
 
   if (!locationalData) {
     logger->error("Anomally: refr without locationalData");
-	return false;
+    return false;
   }
-  
+
   auto existing = LookupFormById(formId);
 
   // The root cause of duplication is here.
   if (!existing) {
-	if (t == "NPC_" && typeStrEval == "ACHR") {
-	auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
-	//logger->info("{:#x} {:#x}", formId, worldOrCell);
-	form.reset(new MpActor(formLocationalData, formCallbacksFactory(), baseId));
-  }
-  else if (typeStrEval == "REFR") {
-	form.reset(new MpObjectReference(formLocationalData, formCallbacksFactory(), baseId, t.ToString().data(), primitiveBoundsDiv2));
-  }
-  AddForm(std::move(form), formId, false);
-  return false;
+    if (t == "NPC_" && typeStrEval == "ACHR") {
+      auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
+      // logger->info("{:#x} {:#x}", formId, worldOrCell);
+      form.reset(
+        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+    } else if (typeStrEval == "REFR") {
+      form.reset(new MpObjectReference(
+        formLocationalData, formCallbacksFactory(), baseId,
+        t.ToString().data(), primitiveBoundsDiv2));
+    }
+    AddForm(std::move(form), formId, false);
+    return false;
   }
   return true;
-} 
+}
 
 bool WorldState::LoadForm(uint32_t formId)
 {
@@ -342,7 +349,8 @@ void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
     auto& list = p.second;
     while (!list.empty() && list.begin()->second <= now) {
       uint32_t relootTargetId = list.begin()->first;
-      auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(LookupFormById(relootTargetId));
+      auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
+        LookupFormById(relootTargetId));
       if (relootTarget) {
         relootTarget->DoReloot();
       }
@@ -588,7 +596,8 @@ VirtualMachine& WorldState::GetPapyrusVm()
   return *pImpl->vm;
 }
 
-const std::set<uint32_t>& WorldState::GetActorsByProfileId(int32_t profileId) const
+const std::set<uint32_t>& WorldState::GetActorsByProfileId(
+  int32_t profileId) const
 {
   static const std::set<uint32_t> g_emptySet;
 
