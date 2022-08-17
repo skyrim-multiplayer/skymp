@@ -499,47 +499,33 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                     const float staminaPercentage)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor) {
-    throw std::runtime_error("Unable to change values without Actor attached");
-  }
-  auto now = std::chrono::steady_clock::now();
-
-  float timeAfterRegeneration = CropPeriodAfterLastRegen(
-    actor->GetDurationOfAttributesPercentagesUpdate(now).count());
-
   MpChangeForm changeForm = actor->GetChangeForm();
-  float health = healthPercentage;
-  float magicka = magickaPercentage;
-  float stamina = staminaPercentage;
+  if (!actor)
+    throw std::runtime_error("Unable to change values without Actor attached");
+  auto now = actor->GetDurationOfAttributesPercentagesUpdate(
+    std::chrono::steady_clock::now());
 
-  if (healthPercentage != changeForm.healthPercentage) {
-    health = CropHealthRegeneration(health, timeAfterRegeneration, actor);
-  }
-  if (magickaPercentage != changeForm.magickaPercentage) {
-    magicka = CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
-  }
-  if (staminaPercentage != changeForm.staminaPercentage) {
-    stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
-  }
+  float timeAfterRegeneration = CropPeriodAfterLastRegen(now.count());
 
-  if (timeAfterRegeneration <= 0.0f &&
-      (health != healthPercentage || magicka != magickaPercentage ||
-       stamina != staminaPercentage)) {
-    std::string s;
-    s += Networking::MinPacketId;
-    s += nlohmann::json{
-      { "t", MsgType::ChangeValues },
-      { "data",
-        { { "health", health },
-          { "magicka", magicka },
-          { "stamina", stamina } } }
-    }.dump();
-    actor->SendToUser(s.data(), s.size(), true);
-  }
-  if (timeAfterRegeneration > 0.0f) {
-    actor->SetPercentages(health, magicka, stamina);
-    actor->SetLastAttributesPercentagesUpdate(now);
-  }
+  float health =
+    CropHealthRegeneration(healthPercentage, timeAfterRegeneration, actor);
+  float magicka =
+    CropMagickaRegeneration(magickaPercentage, timeAfterRegeneration, actor);
+  float stamina =
+    CropStaminaRegeneration(staminaPercentage, timeAfterRegeneration, actor);
+
+  if (health != changeForm.healthPercentage ||
+      magicka != changeForm.magickaPercentage ||
+      stamina != changeForm.staminaPercentage) {
+    if (healthPercentage > changeForm.healthPercentage)
+      health = health + (healthPercentage - changeForm.healthPercentage);
+    if (magickaPercentage > changeForm.magickaPercentage)
+      magicka = magicka + (magickaPercentage - changeForm.magickaPercentage);
+    if (staminaPercentage > changeForm.staminaPercentage)
+      stamina = stamina + (staminaPercentage - changeForm.staminaPercentage);
+    actor->NetSetPercentages(health, magicka, stamina);
+  } else
+    actor->NetSetPercentages(health, magicka, stamina);
 }
 
 namespace {
