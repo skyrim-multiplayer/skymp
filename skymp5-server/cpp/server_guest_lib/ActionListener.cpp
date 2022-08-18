@@ -652,10 +652,11 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   HitData hitData = hitData_;
 
-  if (hitData.target < 0xff000000 && hitData.target != 0x14)
+  if (hitData.aggressor == 0x14) {
     hitData.aggressor = aggressor->GetFormId();
-  else if (hitData.aggressor >= 0xff000000 || hitData.aggressor == 0x14)
-    hitData.target = aggressor->GetFormId();
+  } else {
+    throw std::runtime_error("Events from non aggressor is not supported yet");
+  }
 
   if (aggressor->GetEquipment().inv.HasItem(hitData.source) == false &&
       IsUnarmedAttack(hitData.source) == false) {
