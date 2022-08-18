@@ -380,8 +380,7 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
     spdlog::debug("{}", s);
   }
   me->RemoveItems(entries);
-  me->AddItem(espm::GetMappedId(recipeData.outputObjectFormId, *mapping),
-              recipeData.outputCount);
+  me->AddItem(outputFormId, recipeData.outputCount);
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
@@ -657,9 +656,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     hitData.aggressor = aggressor->GetFormId();
   } else {
     throw std::runtime_error("Events from non aggressor is not supported yet");
-  }
-  if (hitData.target == 0x14) {
-    hitData.target = aggressor->GetFormId();
   }
 
   if (aggressor->GetEquipment().inv.HasItem(hitData.source) == false &&
