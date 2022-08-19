@@ -564,8 +564,7 @@ bool MpActor::IsBlockActive() const
   return isBlockActive;
 }
 
-static const float kPi = std::acos(-1.f);
-static const float kAngleToRadians = kPi / 180.f;
+const float kAngleToRadians = std::acos(-1.f) / 180.f;
 
 NiPoint3 MpActor::GetViewDirection() const
 {
