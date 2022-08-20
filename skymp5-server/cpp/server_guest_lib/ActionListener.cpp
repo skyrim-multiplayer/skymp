@@ -513,18 +513,16 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   float stamina =
     CropStaminaRegeneration(staminaPercentage, timeAfterRegeneration, actor);
 
-  if (health != changeForm.healthPercentage ||
-      magicka != changeForm.magickaPercentage ||
-      stamina != changeForm.staminaPercentage) {
+  if (health != healthPercentage || magicka != magickaPercentage ||
+      stamina != staminaPercentage) {
     if (healthPercentage > changeForm.healthPercentage)
       health = health + (healthPercentage - changeForm.healthPercentage);
     if (magickaPercentage > changeForm.magickaPercentage)
       magicka = magicka + (magickaPercentage - changeForm.magickaPercentage);
     if (staminaPercentage > changeForm.staminaPercentage)
       stamina = stamina + (staminaPercentage - changeForm.staminaPercentage);
-    actor->NetSetPercentages(health, magicka, stamina);
-  } else
-    actor->NetSetPercentages(health, magicka, stamina);
+  }
+  actor->NetSetPercentages(health, magicka, stamina);
 }
 
 namespace {
