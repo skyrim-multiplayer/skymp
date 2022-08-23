@@ -22,24 +22,40 @@
     .chat-corner {
       position: absolute;
       right: 0px;
+      transition: all 0.15s ease;
       top: 0px;
+      opacity: 0.8;
       img {
         pointer-events: none;
+        height: 100%;
+        width: 100%;
+      }
+      &:hover, &:active {
+        width: 24px;
+        opacity: 1;
       }
     }
     > .list {
+      .chat-list {
+        height: 100%;
+        width: 100%;
+        overflow-y: scroll;
+        &::-webkit-scrollbar {
+          width: 0;  /* Remove scrollbar space */
+          background: transparent;  /* Optional: just make scrollbar invisible */
+        }
+      }
       &.hideNonRP {
         .nonrp {
           display: none;
         }
       }
       width: 100%;
-      overflow-y: scroll;
       resize: vertical;
       &::-webkit-scrollbar {
         width: 0 !important;
       }
-      > .msg {
+      .msg {
         margin-top: 5px;
         font-weight: bold;
         letter-spacing: 1px;

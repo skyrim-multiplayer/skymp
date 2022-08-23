@@ -146,23 +146,25 @@ const Chat = (props) => {
           <div className="chat-main">
             <ResizableBox
               height={320}
-              maxConstraints={[800, 800]}
+              maxConstraints={[800, 1100]}
+              minConstraints={[320, 320]}
               axis={'y'}
               handle={
-                <div className='chat-corner'>
-                  <img src={ChatCorner} />
-                </div>
+                 !isInputHidden &&
+                 <div className='chat-corner'>
+                    <img src={ChatCorner} />
+                  </div>
               }
               resizeHandles={['nw']}
               className={`list ${hideNonRP ? 'hideNonRP' : ''}`}
-              ref={chatRef}
-              onScroll={(e) => handleScroll()}
               id='handle'
             >
-              {getList()}
+              <div className='chat-list' ref={chatRef} onScroll={(e) => handleScroll()}>
+                {getList()}
+              </div>
             </ResizableBox>
             {isInputHidden
-              ? <></>
+              ? <div style={{ height: '72px' }}></div>
               : <div className='input'>
                 <div>
                   <input
