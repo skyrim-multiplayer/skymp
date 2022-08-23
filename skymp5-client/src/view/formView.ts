@@ -410,7 +410,7 @@ export class FormView implements View<FormModel> {
       }
     }
 
-    if (this.refrId && model.appearance?.name) {
+    if (FormView.isDisplayingNicknames && this.refrId && model.appearance?.name) {
       const headPart = "NPC Head [Head]";
       const maxNicknameDrawDistance = 1000;
       const playerActor = Game.getPlayer()!;
@@ -419,7 +419,7 @@ export class FormView implements View<FormModel> {
         const headScreenPos = worldPointToScreenPoint([
           NetImmerse.getNodeWorldPositionX(refr, headPart, false),
           NetImmerse.getNodeWorldPositionY(refr, headPart, false),
-          NetImmerse.getNodeWorldPositionZ(refr, headPart, false) + 22
+          NetImmerse.getNodeWorldPositionZ(refr, headPart, false) + 32
         ])[0];
         const resolution = getScreenResolution();
         const textXPos = Math.round(headScreenPos[0] * resolution.width);
@@ -504,4 +504,6 @@ export class FormView implements View<FormModel> {
   private state = {};
   private localImmortal = false;
   private textNameId: number | undefined = undefined;
+
+  public static isDisplayingNicknames: boolean = true;
 }
