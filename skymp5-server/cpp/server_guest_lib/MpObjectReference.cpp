@@ -979,11 +979,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     auto refrRecord = espm::Convert<espm::REFR>(
       loader.GetBrowser().LookupById(GetFormId()).rec);
     auto teleport = refrRecord->GetData(compressedFieldsCache).teleport;
-    if (teleport) {
-      if (!IsOpen()) {
-        SetOpen(true);
-        RequestReloot();
-      }
+    if (teleport && IsOpen()) {
+      RequestReloot();
 
       auto destination =
         loader.GetBrowser().LookupById(teleport->destinationDoor);
