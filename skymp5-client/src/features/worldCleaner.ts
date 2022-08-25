@@ -8,8 +8,14 @@ const isInDialogue = (ac: Actor): boolean =>
 function processOneActor(): void
 {
   const pc = Game.getPlayer() as Actor;
-  const actor = Game.findClosestActor(pc.getPositionX(), pc.getPositionY(),
-                                      pc.getPositionZ(), 8192) as Actor;
+
+  const actor = Game.findClosestActor(
+    pc.getPositionX(),
+    pc.getPositionY(),
+    pc.getPositionZ(),
+    8192
+  ) as Actor;
+
   const actorId = actor.getFormID();
 
   const currentProtection = protection.get(actorId) as number;
