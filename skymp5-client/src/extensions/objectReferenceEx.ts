@@ -34,16 +34,6 @@ export class ObjectReferenceEx {
     const t = base.getType();
     const isItem = FormTypeEx.isItem(t);
 
-    if (t === FormType.Container || isItem || t === FormType.Flora || t === FormType.Tree || t === FormType.NPC || t === FormType.Door) {
-      self.blockActivation(true);
-    } else {
-      self.blockActivation(false);
-    }
-
-    if (self.isLocked()) {
-      self.lock(false, false);
-    }
-
     if (isItem) {
       self.setMotionType(MotionType.Keyframed, false);
     }
