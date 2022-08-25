@@ -306,7 +306,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         formLocationalData, formCallbacksFactory(), baseId,
         t.ToString().data(), primitiveBoundsDiv2));
     }
-    AddForm(std::move(form), formId, false);
+    AddForm(std::move(form), formId, true);
     return false;
   }
   return true;
