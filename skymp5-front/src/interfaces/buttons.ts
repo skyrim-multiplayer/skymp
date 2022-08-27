@@ -19,6 +19,14 @@ export interface ImageButtonProps extends DefaultButtonComponentProps {
 export interface SkyrimButtonProps extends DefaultButtonComponentProps {
     text: string
 }
+export interface SkyrimSliderProps extends DefaultButtonComponentProps {
+    setValue: (value: number) => void,
+    sliderValue: number,
+    marks: number[],
+    min: number,
+    max: number,
+    text: string
+}
 
 export interface FrameButtonProps extends DefaultButtonComponentProps {
     variant: string;
