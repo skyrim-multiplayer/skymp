@@ -1,0 +1,22 @@
+.checkbox_container {
+  display: flex;
+  font-family: 'Bankir-Retro', sans-serif;
+  flex-direction: row;
+  width: 70%;
+  justify-content: space-between;
+  margin: auto;
+  img {
+    height: 54px;
+    margin: auto;
+  }
+  .checkbox_text {
+    color: rgba(157, 158, 158, 0.75);
+    font-size: 26px;
+    margin: auto;
+    margin-left: 0;
+  }
+  label {
+    margin: auto auto 0;
+    margin-right: 0;
+  }
+}
