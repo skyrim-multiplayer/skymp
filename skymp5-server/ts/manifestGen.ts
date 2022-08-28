@@ -1,22 +1,26 @@
-import { Settings } from "./settings";
 import * as crc32 from "crc-32";
-import * as path from "path";
 import * as fs from "fs";
+import * as path from "path";
 
-interface ManifestModEntry {
+import {Settings} from "./settings";
+
+interface ManifestModEntry
+{
   filename: string;
   crc32: number;
   size: number;
 }
 
-interface Manifest {
+interface Manifest
+{
   versionMajor: number;
   mods: Array<ManifestModEntry>;
   loadOrder: Array<string>;
 }
 
 const getBsaNameByEspmName = (espmName: string) => {
-  if (espmName.endsWith(".esp") || espmName.endsWith(".esm")) {
+  if (espmName.endsWith(".esp") || espmName.endsWith(".esm") ||
+      espmName.endsWith(".esl")) {
     const nameNoExt = espmName.split(".").slice(0, -1).join(".");
     return nameNoExt + ".bsa";
   }
@@ -25,9 +29,9 @@ const getBsaNameByEspmName = (espmName: string) => {
 
 export const generateManifest = (settings: Settings): void => {
   const manifest: Manifest = {
-    mods: [],
-    versionMajor: 1,
-    loadOrder: settings.loadOrder.map(x => path.basename(x)),
+    mods : [],
+    versionMajor : 1,
+    loadOrder : settings.loadOrder.map(x => path.basename(x)),
   };
 
   settings.loadOrder.forEach((loadOrderElement) => {
@@ -41,9 +45,9 @@ export const generateManifest = (settings: Settings): void => {
 
     const buf: Uint8Array = fs.readFileSync(espmPath);
     manifest.mods.push({
-      crc32: crc32.buf(buf),
-      filename: espmName,
-      size: buf.length,
+      crc32 : crc32.buf(buf),
+      filename : espmName,
+      size : buf.length,
     });
 
     const bsaName = getBsaNameByEspmName(espmName);
@@ -51,9 +55,9 @@ export const generateManifest = (settings: Settings): void => {
     if (fs.existsSync(bsaPath)) {
       const buf: Uint8Array = fs.readFileSync(bsaPath);
       manifest.mods.push({
-        crc32: crc32.buf(buf),
-        filename: bsaName,
-        size: buf.length,
+        crc32 : crc32.buf(buf),
+        filename : bsaName,
+        size : buf.length,
       });
     }
   });
