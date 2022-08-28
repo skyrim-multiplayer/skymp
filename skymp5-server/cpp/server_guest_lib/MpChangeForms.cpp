@@ -48,8 +48,6 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
                             changeForm.spawnPoint.rot[2] };
   res["spawnPoint_cellOrWorldDesc"] =
     changeForm.spawnPoint.cellOrWorldDesc.ToString();
-
-  res["spawnDelay"] = changeForm.spawnDelay;
   return res;
 }
 
@@ -64,10 +62,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     appearanceDump("appearanceDump"), equipmentDump("equipmentDump"),
     dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
-    staminaPercentage("staminaPercentage"), isDead("isDead"),
-    spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
-    spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay");
+    staminaPercentage("staminaPercentage"), isDead("isDead");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -127,20 +122,6 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   res.dynamicFields = DynamicFields::FromJson(nlohmann::json::parse(
     static_cast<std::string>(simdjson::minify(jDynamicFields))));
 
-  ReadEx(element, spawnPointPos, &jTmp);
-  for (int i = 0; i < 3; ++i) {
-    ReadEx(jTmp, i, &res.spawnPoint.pos[i]);
-  }
-
-  ReadEx(element, spawnPointRot, &jTmp);
-  for (int i = 0; i < 3; ++i) {
-    ReadEx(jTmp, i, &res.spawnPoint.rot[i]);
-  }
-
-  ReadEx(element, spawnPointCellOrWorldDesc, &tmp);
   res.spawnPoint.cellOrWorldDesc = FormDesc::FromString(tmp);
-
-  ReadEx(element, spawnDelay, &res.spawnDelay);
-
   return res;
 }

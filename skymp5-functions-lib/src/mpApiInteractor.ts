@@ -1,6 +1,5 @@
-import { GameModeListener } from "./logic/GameModeListener";
+import { GameModeListener } from "./logic/GameModeListenerEx";
 import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
-import { SweetPieRound } from "./logic/SweetPieRound";
 import { ChatProperty } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
@@ -62,7 +61,7 @@ export class MpApiInteractor {
   private static serverSettings = mp.getServerSettings();
   private static customNames = new Map<number, string>();
 
-  static setup(listener: GameModeListener) {
+  static setup(listener: GameModeListenerEx) {
     MpApiInteractor.setupActivateHandler(listener);
     MpApiInteractor.setupChatHandler(listener);
     MpApiInteractor.setupDialogResponseHandler(listener);
@@ -70,19 +69,16 @@ export class MpApiInteractor {
     MpApiInteractor.setupDeathHandler(listener);
   }
 
-  private static setupActivateHandler(listener: GameModeListener) {
+  private static setupActivateHandler(listener: GameModeListenerEx) {
     mp.onActivate = (target: number, caster: number) => {
-      const type = mp.get(target, "type");
-      if (type !== "MpObjectReference") {
-        return true;
-      }
-
+      const baseDesc = mp.get(target, "baseDesc");
+      const baseRecType = mp.lookupEspmRecordById(mp.getIdFromDesc(baseDesc)).record?.type;
       const targetDesc = mp.getDescFromId(target);
       if (!listener.onPlayerActivateObject) {
         return true;
       }
 
-      const res = listener.onPlayerActivateObject(caster, targetDesc, target);
+      const res = listener.onPlayerActivateObject(caster, targetDesc, target, baseRecType);
       if (res === 'continue') {
         return true;
       }
@@ -91,9 +87,9 @@ export class MpApiInteractor {
     };
   }
 
-  private static setupChatHandler(listener: GameModeListener) {
+  private static setupChatHandler(listener: GameModeListenerEx) {
     ChatProperty.setChatInputHandler((input) => {
-      const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
+      const chatSettings = this.serverSettings.chatSettings as ChatSettings ?? {};
       const onlinePlayers = mp.get(0, 'onlinePlayers');
       const actorNeighbors =
         mp.get(input.actorId, 'actorNeighbors')
@@ -111,7 +107,7 @@ export class MpApiInteractor {
     });
   }
 
-  private static setupDialogResponseHandler(listener: GameModeListener) {
+  private static setupDialogResponseHandler(listener: GameModeListenerEx) {
     DialogProperty.setDialogResponseHandler((response) => {
       if (listener.onPlayerDialogResponse) {
         listener.onPlayerDialogResponse(response.actorId, response.dialogId, response.buttonIndex);
@@ -120,7 +116,7 @@ export class MpApiInteractor {
     });
   }
 
-  private static setupTimer(listener: GameModeListener) {
+  private static setupTimer(listener: GameModeListenerEx) {
     Timer.everySecond = () => {
       // console.log(PersistentStorage.getSingleton().reloads);
 
@@ -129,6 +125,10 @@ export class MpApiInteractor {
 
       const joinedPlayers = onlinePlayers.filter((x) => !onlinePlayersOld.includes(x));
       const leftPlayers = onlinePlayersOld.filter((x) => !onlinePlayers.includes(x));
+
+      if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
+        PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;
+      }
 
       if (listener.onPlayerJoin) {
         for (const actorId of joinedPlayers) {
@@ -172,14 +172,10 @@ export class MpApiInteractor {
           }
         }, { nameUpdatesClientSide: nameUpdates });
       }
-
-      if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
-        PersistentStorage.getSingleton().onlinePlayers = onlinePlayers;
-      }
     };
   }
 
-  private static setupDeathHandler(listener: GameModeListener) {
+  private static setupDeathHandler(listener: GameModeListenerEx) {
     mp.onDeath = (target: number, killer: number) => {
       if (listener.onPlayerDeath) {
         if (killer === 0) {
@@ -236,12 +232,6 @@ export class MpApiInteractor {
           { type: 'form', desc: mp.getDescFromId(actorId) },
           [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/false]
         );
-      },
-      getRoundsArray(): SweetPieRound[] {
-        return PersistentStorage.getSingleton().rounds;
-      },
-      setRoundsArray(rounds: SweetPieRound[]): void {
-        PersistentStorage.getSingleton().rounds = rounds;
       },
       getOnlinePlayers(): number[] {
         return PersistentStorage.getSingleton().onlinePlayers;

@@ -1,7 +1,6 @@
 import { isNull } from 'util';
 import { PlayerController } from './src/logic/PlayerController';
-import { SweetPieGameModeListener } from './src/logic/SweetPieGameModeListener';
-import { SweetPieMap } from './src/logic/SweetPieMap';
+import { GameModeListener } from './src/logic/GameModeListener';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { ChatProperty } from './src/props/chatProperty';
@@ -86,7 +85,7 @@ export const getForm = (mp: Mp, self: null, args: PapyrusValue[]): PapyrusObject
     }
     const obj: PapyrusObject = {
       desc: mp.getDescFromId(formId),
-      type: ['REFR', 'ACHR'].includes(espm.record?.type) ? 'form' : 'espm',
+      type: espm.record.type,
     };
     return obj;
   } catch (err) {
@@ -271,7 +270,6 @@ export const getSPExchangeNumberField = (mp: Mp, self: null, args: PapyrusValue[
     return exchanges[licenseIndex][field];
   }
   return ret;
-  return ret;
 }
 
 export const getRequiredItemCount = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
@@ -333,229 +331,19 @@ mp.registerPapyrusFunction('global', 'Game', 'GetForm', (self, args) => getForm(
 mp.registerPapyrusFunction('global', 'Game', 'GetFormEx', (self, args) => getForm(mp, self, args));
 mp.registerPapyrusFunction('method', 'ObjectReference', 'MoveTo', (self, args) => moveTo(mp, self, args));
 mp.registerPapyrusFunction('method', 'Actor', 'IsDead', (self, args) => isDead(mp, self, args));
-mp.registerPapyrusFunction('global', 'SweetPie', 'SPLog', (self, args) => placeholder(mp, self, args, 'SPLog'));
-mp.registerPapyrusFunction('global', 'SweetPie', 'SPDumpActorArray', (self, args) => placeholder(mp, self, args, 'SPDumpActorArray'));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieLicenses', (self, args) => getLicenses(mp, self, args, spExchanges));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItems', (self, args) => getRequiredItems(mp, self, args, spExchanges));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItemCount', (self, args) => getRequiredItemCount(mp, self, args, spExchanges));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieStartMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'startMessage'));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieFailMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'failMessage'));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieFinishMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'finishMessage'));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemIndex', (self, args) => getReturnItemIndex(mp, self, args, spExchanges));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItem', (self, args) => getReturnItem(mp, self, args, spExchanges));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemCount', (self, args) => getReturnItemCount(mp, self, args, spExchanges));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionItem', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionItem'));
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionSize', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionSize'));
-
 console.log('gamemode.js reloaded');
 
 const pointsByName = new Map<string, LocationalData>();
-pointsByName.set('hall:spawnPoint', {
-  pos: [18522.08, 10218.17, 624.46],
-  cellOrWorldDesc: '42b5f:SweetPie.esp',
-  rot: [0, 0, 0],
-});
-pointsByName.set('markarth:safePlace', {
-  pos: [-5818.1523, -1085.7805, -7.9892],
-  cellOrWorldDesc: '16dfe:Skyrim.esm',
-  rot: [0, 0, 154.6992],
-});
-pointsByName.set('markarth:spawnPoint1', {
-  pos: [-174156.5781, 7128.9624, -3105.9287],
-  cellOrWorldDesc: '16d71:Skyrim.esm',
-  rot: [0, 0, 166.6154],
-});
-pointsByName.set('markarth:spawnPoint2', {
-  pos: [-177508.5000, 1116.4828, -2312.4185],
-  cellOrWorldDesc: '16d71:Skyrim.esm',
-  rot: [0, 0, 55.6242],
-});
-pointsByName.set('markarth:spawnPoint3', {
-  pos: [-178162.2813, 5273.3086, -2149.9355],
-  cellOrWorldDesc: '16d71:Skyrim.esm',
-  rot: [0, 0, 55.6245],
-});
-pointsByName.set('markarth:spawnPoint4', {
-  pos: [-175959.4688, 6482.9048, -2727.4172],
-  cellOrWorldDesc: '16d71:Skyrim.esm',
-  rot: [0, 0, 164.4858],
-});
-pointsByName.set('markarth:spawnPoint5', {
-  pos: [-174378.8750, 4578.2480, -1677.9618],
-  cellOrWorldDesc: '16d71:Skyrim.esm',
-  rot: [0, 0, -13.1307],
-});
-pointsByName.set('markarth:spawnPoint6', {
-  pos: [-176310.9688, 2410.2986, -3245.0044],
-  cellOrWorldDesc: '16d71:Skyrim.esm',
-  rot: [0, 0, 78.5424],
-});
-pointsByName.set('riften:safePlace', {
-  pos: [418.4863, -179.2634, 64.0000],
-  cellOrWorldDesc: '16bdf:Skyrim.esm',
-  rot: [0, 0, -88.6934],
-});
-pointsByName.set('riften:spawnPoint1', {
-  pos: [172414.4688, -99692.1719, 11136.5918],
-  cellOrWorldDesc: '16bb4:Skyrim.esm',
-  rot: [0, 0, 177.6169],
-});
-pointsByName.set('riften:spawnPoint2', {
-  pos: [174379.4063, -93622.4688, 11125.2783],
-  cellOrWorldDesc: '16bb4:Skyrim.esm',
-  rot: [0, 0, 4.0566],
-});
-pointsByName.set('riften:spawnPoint3', {
-  pos: [172683.5625, -93227.9766, 11221.7686],
-  cellOrWorldDesc: '16bb4:Skyrim.esm',
-  rot: [0, 0, 177.6169],
-});
-pointsByName.set('riften:spawnPoint4', {
-  pos: [174862.0938, -95209.4141, 11397.0518],
-  cellOrWorldDesc: '16bb4:Skyrim.esm',
-  rot: [0, 0, 269.2902],
-});
-pointsByName.set('riften:spawnPoint5', {
-  pos: [175102.6563, -97816.5859, 11139.4395],
-  cellOrWorldDesc: '16bb4:Skyrim.esm',
-  rot: [0, 0, -70.4278],
-});
-pointsByName.set('riften:spawnPoint6', {
-  pos: [171816.8125, -96627.7891, 11136.0000],
-  cellOrWorldDesc: '16bb4:Skyrim.esm',
-  rot: [0, 0, 111.9557],
-});
-pointsByName.set('whiterun:spawnPoint', {
-  pos: [22659, -8697, -3594],
-  cellOrWorldDesc: '1a26f:Skyrim.esm',
-  rot: [0, 0, 268],
-});
-pointsByName.set('whiterun:safePlace', {
-  pos: [-108, -809, 69.25],
-  cellOrWorldDesc: '1605e:Skyrim.esm',
-  rot: [0, 0, 176],
-});
-pointsByName.set('whiterun:spawnPoint1', {
-  pos: [26496.7656, -6511.5684, -3183.8271],
-  cellOrWorldDesc: '1a26f:Skyrim.esm',
-  rot: [0, 0, -81.8869],
-});
-pointsByName.set('whiterun:spawnPoint2', {
-  pos: [19170.6484, -6968.4121, -3549.6443],
-  cellOrWorldDesc: '1a26f:Skyrim.esm',
-  rot: [0, 0, 72.8116],
-});
-pointsByName.set('whiterun:spawnPoint3', {
-  pos: [20930.9316, -9920.6191, -3497.4736],
-  cellOrWorldDesc: '1a26f:Skyrim.esm',
-  rot: [0, 0, 32.7047],
-});
-pointsByName.set('whiterun:spawnPoint4', {
-  pos: [20287.3750, -6478.4185, -3225.1785],
-  cellOrWorldDesc: '1a26f:Skyrim.esm',
-  rot: [0, 0, 170.2144],
-});
-pointsByName.set('whiterun:spawnPoint5', {
-  pos: [24443.8594, -11096.1328, -3292.7659],
-  cellOrWorldDesc: '1a26f:Skyrim.esm',
-  rot: [0, 0, -1.6730],
-});
-pointsByName.set('whiterun:spawnPoint6', {
-  pos: [22855.9473, -6104.4355, -3092.7661],
-  cellOrWorldDesc: '1a26f:Skyrim.esm',
-  rot: [0, 0, 84.2714],
-});
-pointsByName.set('windhelm:safePlace', {
-  pos: [-98.3297, -3405.2292, 323.0901],
-  cellOrWorldDesc: '16789:Skyrim.esm',
-  rot: [0, 0, 154.6992],
-});
-pointsByName.set('windhelm:spawnPoint1', {
-  pos: [134123.7813, 36661.9023, -12252.2842],
-  cellOrWorldDesc: 'd45f0:Skyrim.esm',
-  rot: [0, 0, -83.5598],
-});
-pointsByName.set('windhelm:spawnPoint2', {
-  pos: [131426.0625, 41579.3945, -11889.8086],
-  cellOrWorldDesc: 'd45f0:Skyrim.esm',
-  rot: [0, 0, -143.9488],
-});
-pointsByName.set('windhelm:spawnPoint3', {
-  pos: [132020.8750, 36545.2188, -12260.5020],
-  cellOrWorldDesc: 'd45f0:Skyrim.esm',
-  rot: [0, 0, -81.8858],
-});
-pointsByName.set('windhelm:spawnPoint4', {
-  pos: [130052.2656, 34946.4414, -11835.0566],
-  cellOrWorldDesc: 'd45f0:Skyrim.esm',
-  rot: [0, 0, 44.1644],
-});
-pointsByName.set('windhelm:spawnPoint5', {
-  pos: [129352.6328, 40330.7852, -11652.3076],
-  cellOrWorldDesc: 'd45f0:Skyrim.esm',
-  rot: [0, 0, 130.1079],
-});
-pointsByName.set('windhelm:spawnPoint6', {
-  pos: [131651.7344, 39875.6367, -12101.8936],
-  cellOrWorldDesc: 'd45f0:Skyrim.esm',
-  rot: [0, 0, -155.4077],
+pointsByName.set('riverwood:spawnPoint', {
+  pos: [19256.69, 9777.12, 899.56],
+  cellOrWorldDesc: '133C6:Skyrim.esm',
+  rot: [6.36, 0.00, 221.51],
 });
 
-const maps: Required<SweetPieMap>[] = [{
-  safePointName: 'markarth:safePlace',
-  mainSpawnPointName: 'markarth:spawnPoint1',
-  safePlaceEnterDoors: ['16e3b:Skyrim.esm'],
-  safePlaceLeaveDoors: ['793a4:Skyrim.esm'],
-  leaveRoundDoors: ['1c38b:Skyrim.esm'],
-  playerRestoreActivators: [],
-  playerRestoreWaitTime: 30000,
-  spawnPointNames: ['markarth:spawnPoint1', 'markarth:spawnPoint2', 'markarth:spawnPoint3', 'markarth:spawnPoint4', 'markarth:spawnPoint5', 'markarth:spawnPoint6'],
-  enabled: true,
-},
-{
-  // '2b46a7:SweetPie.esp' ActorAlpha and bridges activator
-  safePointName: 'riften:safePlace',
-  mainSpawnPointName: 'riften:spawnPoint1',
-  safePlaceEnterDoors: ['430a6:Skyrim.esm', '42279:Skyrim.esm'],
-  safePlaceLeaveDoors: ['16c3c:Skyrim.esm', '44bd7:Skyrim.esm'],
-  leaveRoundDoors: ['42285:Skyrim.esm', '42283:Skyrim.esm'],
-  playerRestoreActivators: [],
-  playerRestoreWaitTime: 30000,
-  spawnPointNames: ['riften:spawnPoint1', 'riften:spawnPoint2', 'riften:spawnPoint3', 'riften:spawnPoint4', 'riften:spawnPoint5', 'riften:spawnPoint6'],
-  enabled: true,
-},
-{
-  safePointName: 'whiterun:safePlace',
-  mainSpawnPointName: 'whiterun:spawnPoint',
-  safePlaceEnterDoors: ['1a6f4:Skyrim.esm'],
-  safePlaceLeaveDoors: ['16072:Skyrim.esm'],
-  leaveRoundDoors: ['1b1f3:Skyrim.esm'],
-  playerRestoreActivators: ['3a99d6:SweetPie.esp'],
-  playerRestoreWaitTime: 30000,
-  spawnPointNames: ['whiterun:spawnPoint1', 'whiterun:spawnPoint2', 'whiterun:spawnPoint3', 'whiterun:spawnPoint4', 'whiterun:spawnPoint5', 'whiterun:spawnPoint6'],
-  enabled: true,
-},
-{
-  //'3716f4:SweetPie.esp' - wind activator
-  safePointName: 'windhelm:safePlace',
-  mainSpawnPointName: 'windhelm:spawnPoint1',
-  safePlaceEnterDoors: ['d18b2:Skyrim.esm', 'd18b1:Skyrim.esm', '16964:Skyrim.esm'],
-  safePlaceLeaveDoors: ['d18b5:Skyrim.esm', 'd18b4:Skyrim.esm', '167be:Skyrim.esm'],
-  leaveRoundDoors: ['55fca:Skyrim.esm'],
-  playerRestoreActivators: [],
-  playerRestoreWaitTime: 30000,
-  spawnPointNames: ['windhelm:spawnPoint1', 'windhelm:spawnPoint2', 'windhelm:spawnPoint3', 'windhelm:spawnPoint4', 'windhelm:spawnPoint5', 'windhelm:spawnPoint6'],
-  enabled: false,
-}];
-
-const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[], playersToStart: unknown): SweetPieGameModeListener => {
-  if (typeof playersToStart === "number") {
-    return new SweetPieGameModeListener(controller, maps, playersToStart);
-  } else {
-    return new SweetPieGameModeListener(controller, maps);
-  }
+const createGameModeListener = (controller: PlayerController): GameModeListener => {
+    return new GameModeListener(controller);
 };
 
 const playerController = MpApiInteractor.makeController(pointsByName);
-const gameModeListener = createGameModeListener(playerController, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]);
+const gameModeListener = createGameModeListener(playerController);
 MpApiInteractor.setup(gameModeListener);

@@ -123,18 +123,10 @@ set(server_settings_json_sweetpie "{
     \"${esm_prefix}Update.esm\",
     \"${esm_prefix}Dawnguard.esm\",
     \"${esm_prefix}HearthFires.esm\",
-    \"${esm_prefix}Dragonborn.esm\",
-    \"${esm_prefix}RavenOnMyShoulder.esp\",
-    \"${esm_prefix}SweetPie.esp\"
+    \"${esm_prefix}Dragonborn.esm\"
   ],
-  \"name\": \"SweetPie\",
-  \"startPoints\": [
-    {
-      \"pos\": [ 18522.08, 10218.17, 624.46 ],
-      \"worldOrCell\": \"0x6042b5f\",
-      \"angleZ\": 0
-    }
-  ]
+  \"offlineMode\": true,
+  \"name\": \"SweetPie\"
 }
 ")
 

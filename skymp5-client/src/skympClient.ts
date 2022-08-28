@@ -179,8 +179,6 @@ export class SkympClient {
         Closed,
         Closing,
       }
-      if (openState === OpenState.Opening || openState === OpenState.Closing)
-        return;
 
       this.sendTarget.send(
         { t: MsgType.Activate, data: { caster, target } },

@@ -1381,7 +1381,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-      if (propertyName == "locationalData" || propertyName == "spawnPoint") {
+      if (propertyName == "locationalData") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
           LocationalData locationalData;
           locationalData.cellOrWorldDesc =

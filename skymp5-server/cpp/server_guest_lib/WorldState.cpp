@@ -234,6 +234,9 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 {
   static const std::shared_ptr<MpForm> kNullForm;
   auto it = forms.find(formId);
+  // It may loop back to the beginning otherwise.
+  if (it == forms.end() && it != forms.begin())
+    return kNullForm;
   return (it == forms.end()) ? kNullForm : it->second;
 }
 
@@ -296,9 +299,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   auto existing = LookupFormById(formId);
 
+  // The root cause of duplication is here.
   if (!existing) {
     if (t == "NPC_" && typeStrEval == "ACHR") {
       auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
+      // logger->info("{:#x} {:#x}", formId, worldOrCell);
       form.reset(
         new MpActor(formLocationalData, formCallbacksFactory(), baseId));
     } else if (typeStrEval == "REFR") {
@@ -306,7 +311,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         formLocationalData, formCallbacksFactory(), baseId,
         t.ToString().data(), primitiveBoundsDiv2));
     }
-    AddForm(std::move(form), formId, true);
+    AddForm(std::move(form), formId, false);
     return false;
   }
   return true;

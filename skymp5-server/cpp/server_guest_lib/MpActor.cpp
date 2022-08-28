@@ -460,7 +460,7 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
 
   uint32_t formId = GetFormId();
   if (auto worldState = GetParent()) {
-    worldState->SetTimer(GetRespawnTime())
+    worldState->SetTimer(8.0f)
       .Then([worldState, this, formId, shouldTeleport](Viet::Void) {
         if (worldState->LookupFormById(formId).get() == this) {
           this->Respawn(shouldTeleport);
@@ -480,6 +480,9 @@ void MpActor::Respawn(bool shouldTeleport)
 
 void MpActor::Teleport(const LocationalData& position)
 {
+  SetCellOrWorldObsolete(position.cellOrWorldDesc);
+  SetPos(position.pos);
+  SetAngle(position.rot);
   std::string teleportMsg;
   teleportMsg += Networking::MinPacketId;
   teleportMsg += nlohmann::json{
@@ -490,10 +493,6 @@ void MpActor::Teleport(const LocationalData& position)
     { "type", "teleport" }
   }.dump();
   SendToUser(teleportMsg.data(), teleportMsg.size(), true);
-
-  SetCellOrWorldObsolete(position.cellOrWorldDesc);
-  SetPos(position.pos);
-  SetAngle(position.rot);
 }
 
 void MpActor::SetSpawnPoint(const LocationalData& position)
@@ -505,17 +504,6 @@ void MpActor::SetSpawnPoint(const LocationalData& position)
 LocationalData MpActor::GetSpawnPoint() const
 {
   return ChangeForm().spawnPoint;
-}
-
-const float MpActor::GetRespawnTime() const
-{
-  return ChangeForm().spawnDelay;
-}
-
-void MpActor::SetRespawnTime(float time)
-{
-  EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.spawnDelay = time; });
 }
 
 void MpActor::SetIsDead(bool isDead)

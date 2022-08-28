@@ -1,5 +1,3 @@
-import { SweetPieRound } from "./SweetPieRound";
-
 export type Percentages = {
   health?: number;
   magicka?: number;
@@ -17,8 +15,6 @@ export type PlayerController = {
   getName(actorId: number): string;
   getProfileId(playerActorId: number): number;
   addItem(actorId: number, itemId: number, count: number): void;
-  getRoundsArray(): SweetPieRound[];
-  setRoundsArray(rounds: SweetPieRound[]): void;
   getOnlinePlayers(): number[];
   setPercentages(actorId: number, percentages: Percentages): void;
   getPercentages(actorId: number): Percentages;

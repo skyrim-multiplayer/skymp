@@ -69,6 +69,7 @@ export class Settings {
     res.name = args['name'] || res.name;
     res.ip = args['ip'] || res.ip;
     res.offlineMode = args['offlineMode'] || res.offlineMode;
+    res.allowCheats = args['allowCheats'] || res.allowCheats;
     Settings.cachedSettings = res;
     return res;
   }

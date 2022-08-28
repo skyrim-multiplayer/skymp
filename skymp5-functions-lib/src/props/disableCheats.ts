@@ -7,7 +7,7 @@ declare const ctx: Ctx;
 
 export class DisableCheats {
   static init() {
-    if (mp.getServerSettings()['sweetPieAllowCheats']) {
+    if (mp.getServerSettings()['allowCheats']) {
       return;
     }
     mp.makeEventSource('_onHacks', new FunctionInfo(this.clientsideInit()).getText());
