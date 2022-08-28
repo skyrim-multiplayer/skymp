@@ -548,9 +548,10 @@ void PartOne::Init()
     uint32_t worldOrCell =
       emitter->GetCellOrWorld().ToFormId(worldState.espmFiles);
 
+    // See 'perf: improve game framerate #1186'
+    // Client needs to know if it is DOOR or not
     const char* baseRecordTypePrefix = "";
     std::string baseRecordType;
-
     if (const std::string& baseType = emitter->GetBaseType();
         baseType == "DOOR") {
       baseRecordTypePrefix = R"(, "baseRecordType": )";

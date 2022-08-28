@@ -56,6 +56,7 @@ const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, max
 };
 
 const skipFormViewCreation = (msg: messages.UpdatePropertyMessage | messages.CreateActorMessage) => {
+  // Optimization added in #1186, however it doesn't work for doors for some reason
   return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== "DOOR";
 };
 

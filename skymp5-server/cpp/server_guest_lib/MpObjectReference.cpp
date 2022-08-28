@@ -44,9 +44,13 @@ nlohmann::json MpObjectReference::PreparePropertyMessage(
                                 { "propName", name },
                                 { "refrId", self->GetFormId() },
                                 { "data", value } };
+
+  // See 'perf: improve game framerate #1186'
+  // Client needs to know if it is DOOR or not
   if (baseRecordType == "DOOR") {
     object["baseRecordType"] = baseRecordType;
   }
+
   return object;
 }
 
