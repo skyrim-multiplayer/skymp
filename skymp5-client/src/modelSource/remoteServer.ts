@@ -36,7 +36,6 @@ import { AuthGameData } from '../features/authModel';
 import * as netInfo from "../features/netInfoSystem";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
 import { nameof } from '../lib/nameof';
-import { getScreenResolution } from '../view/formView';
 import { ModelApplyUtils } from '../view/modelApplyUtils';
 import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
 
