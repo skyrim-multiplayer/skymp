@@ -39,12 +39,15 @@ nlohmann::json MpObjectReference::PreparePropertyMessage(
     baseRecordType = base.rec->GetType().ToString();
   }
 
-  return nlohmann::json{ { "idx", self->GetIdx() },
-                         { "t", MsgType::UpdateProperty },
-                         { "propName", name },
-                         { "refrId", self->GetFormId() },
-                         { "baseRecordType", baseRecordType },
-                         { "data", value } };
+  auto object = nlohmann::json{ { "idx", self->GetIdx() },
+                                { "t", MsgType::UpdateProperty },
+                                { "propName", name },
+                                { "refrId", self->GetFormId() },
+                                { "data", value } };
+  if (baseRecordType == "DOOR") {
+    object["baseRecordType"] = baseRecordType;
+  }
+  return object;
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
@@ -163,6 +166,11 @@ const FormDesc& MpObjectReference::GetCellOrWorld() const
 const uint32_t& MpObjectReference::GetBaseId() const
 {
   return baseId;
+}
+
+const std::string& MpObjectReference::GetBaseType() const
+{
+  return baseType;
 }
 
 const Inventory& MpObjectReference::GetInventory() const

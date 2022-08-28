@@ -49,7 +49,7 @@ export interface CreateActorMessage {
   type: "createActor";
   idx: number;
   refrId?: number;
-  baseRecordType: string; // DOOR, ACTI, etc
+  baseRecordType: "DOOR" | undefined; // see PartOne.cpp
   transform: Transform;
   isMe: boolean;
   appearance?: Appearance;

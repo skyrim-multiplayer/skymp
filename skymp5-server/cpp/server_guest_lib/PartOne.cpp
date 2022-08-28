@@ -548,15 +548,24 @@ void PartOne::Init()
     uint32_t worldOrCell =
       emitter->GetCellOrWorld().ToFormId(worldState.espmFiles);
 
+    const char* baseRecordTypePrefix = "";
+    std::string baseRecordType;
+
+    if (const std::string& baseType = emitter->GetBaseType();
+        baseType == "DOOR") {
+      baseRecordTypePrefix = R"(, "baseRecordType": )";
+      baseRecordType = '"' + baseType + '"';
+    }
+
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      worldOrCell, appearancePrefix, appearance, equipmentPrefix, equipment,
-      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
-      propsPostfix);
+      worldOrCell, baseRecordTypePrefix, baseRecordType, appearancePrefix,
+      appearance, equipmentPrefix, equipment, refrIdPrefix, refrId,
+      baseIdPrefix, baseId, propsPrefix, props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
