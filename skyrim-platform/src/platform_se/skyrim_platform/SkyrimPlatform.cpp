@@ -129,7 +129,7 @@ private:
   std::vector<const char*> GetFileDirs() const
   {
     constexpr auto kSkympPluginsDir =
-      "C:/projects/skymp/build/dist/client/Data/Platform/Plugins";
+      "../build/dist/client/Data/Platform/Plugins";
     if (std::filesystem::exists(kSkympPluginsDir)) {
       return { kSkympPluginsDir };
     }
