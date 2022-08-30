@@ -567,9 +567,9 @@ void PartOne::Init()
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      worldOrCell, baseRecordTypePrefix, baseRecordType.data(), appearancePrefix,
-      appearance, equipmentPrefix, equipment, refrIdPrefix, refrId,
-      baseIdPrefix, baseId, propsPrefix, props.data(), propsPostfix);
+      worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
+      appearancePrefix, appearance, equipmentPrefix, equipment, refrIdPrefix,
+      refrId, baseIdPrefix, baseId, propsPrefix, props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
