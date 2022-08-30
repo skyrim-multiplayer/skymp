@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Draggable from 'react-draggable';
+import { ResizableBox } from 'react-resizable';
 import ChatCheckbox from './checkbox';
 import Dices from './dices';
 
@@ -22,7 +23,6 @@ const Chat = (props) => {
   const [disableDiceColors, setDisableDiceColors] = useState(false);
   const [isPouchOpened, setPocuhOpened] = useState(false);
   const [moveChat, setMoveChat] = useState(false);
-
 
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;
@@ -142,18 +142,25 @@ const Chat = (props) => {
   return (
     <div className='fullPage'>
       <Draggable handle='#handle' disabled={!moveChat} bounds={'.fullPage'}>
-        <div id="chat">
+        <div id='chat'>
           <div className="chat-main">
-            {
-              isInputHidden
-                ? null
-                : <div className='chat-corner'>
-                      <img src={ChatCorner} />
-                  </div>
-            }
-            <div className={`list ${hideNonRP ? 'hideNonRP' : ''}`} ref={chatRef} onScroll={(e) => handleScroll()} id='handle'>
+            <ResizableBox
+              height={320}
+              maxConstraints={[800, 800]}
+              axis={'y'}
+              handle={
+                <div className='chat-corner'>
+                  <img src={ChatCorner} />
+                </div>
+              }
+              resizeHandles={['nw']}
+              className={`list ${hideNonRP ? 'hideNonRP' : ''}`}
+              ref={chatRef}
+              onScroll={(e) => handleScroll()}
+              id='handle'
+            >
               {getList()}
-            </div>
+            </ResizableBox>
             {isInputHidden
               ? <></>
               : <div className='input'>
@@ -188,6 +195,7 @@ const Chat = (props) => {
                   setOpened={setPocuhOpened}
                   send={props.send}
                   disableSound={disableDiceSounds}
+                  inputRef={inputRef}
               />
           }
         </div>

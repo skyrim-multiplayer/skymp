@@ -30,7 +30,9 @@ export const forceLeaveRound = (controller: PlayerController, rounds: SweetPieRo
   const round = getPlayerCurrentRound(rounds, player);
   const newSpawnPointName = round?.hallPointName || 'hall:spawnPoint';
   controller.setSpawnPoint(player, newSpawnPointName);
-  controller.teleport(player, newSpawnPointName);
+  if (round) {
+    controller.teleport(player, newSpawnPointName);
+  }
   round?.players?.delete(player);
 }
 
