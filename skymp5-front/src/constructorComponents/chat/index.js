@@ -45,10 +45,12 @@ const Chat = (props) => {
     }
   };
   const sendMessage = () => {
-    if (send !== undefined) send(input);
-    isReset.current = false;
-    updateInput('');
-    inputRef.current.focus();
+    if (input !== '' && input.length <= MAX_LENGTH && isReset.current) {
+      if (send !== undefined) send(input);
+      isReset.current = false;
+      updateInput('');
+      inputRef.current.focus();
+    }
   };
 
   useEffect(() => {
