@@ -37,7 +37,8 @@ export const SkyrimFrame = ({
   return (
         <div className={'frame'} style={{ width: `${width}px`, height: `${height}px` }}>
             {
-                !!header && (
+                header
+                  ? (
                   <>
                     <FrameItem name={'Header left'} />
                     <FrameItem name={'Header top'} width={width - 64 * 4} />
@@ -46,18 +47,29 @@ export const SkyrimFrame = ({
                     <FrameItem name={'Header left-2'}/>
                     <FrameItem name={'Header top 3 1'} width={width - 64 * 4}/>
                     <FrameItem name={'Header right-2'}/>
+                    <FrameItem name={'Border right top'} />
+                    <FrameItem name={'Border left'} height={height - 64 * 3} />
+                    <FrameItem name={'Border middle'} height={height - 64 * 3} width={width - 64 * 2} />
+                    <FrameItem name={'Border right'} height={height - 64 * 3} />
+                    <FrameItem name={'Border left down'} />
+                    <FrameItem name={'Border down'} width={width - 64 * 2} />
+                    <FrameItem name={'Border right down'} />
                   </>
-                )
+                    )
+                  : (
+                  <>
+                    <FrameItem name={'Border left top'} />
+                    <FrameItem name={'Border down'} width={width - 64 * 2} rotated/>
+                    <FrameItem name={'Border right top'} />
+                    <FrameItem name={'Border left'} height={header ? height - 64 * 3 : height - 64 * 2} />
+                    <FrameItem name={'Border middle'} height={header ? height - 64 * 3 : height - 64 * 2} width={width - 64 * 2} />
+                    <FrameItem name={'Border right'} height={header ? height - 64 * 3 : height - 64 * 2} />
+                    <FrameItem name={'Border left down'} />
+                    <FrameItem name={'Border down'} width={width - 64 * 2} />
+                    <FrameItem name={'Border right down'} />
+                  </>
+                    )
             }
-        <FrameItem name={'Border left top'} />
-        <FrameItem name={'Border down'} width={width - 64 * 2} rotated/>
-        <FrameItem name={'Border right top'} />
-        <FrameItem name={'Border left'} height={header ? height - 64 * 3 : height - 64 * 2} />
-        <FrameItem name={'Border middle'} height={header ? height - 64 * 3 : height - 64 * 2} width={width - 64 * 2} />
-        <FrameItem name={'Border right'} height={header ? height - 64 * 3 : height - 64 * 2} />
-        <FrameItem name={'Border left down'} />
-        <FrameItem name={'Border down'} width={width - 64 * 2} />
-        <FrameItem name={'Border right down'} />
     </div>
   );
 };
