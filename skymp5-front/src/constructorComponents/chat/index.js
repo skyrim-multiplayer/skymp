@@ -158,7 +158,7 @@ const Chat = (props) => {
         <div id='chat'>
           <div className="chat-main">
             <ResizableBox
-              width={392}
+              width={'100%'}
               height={320}
               maxConstraints={[800, 1100]}
               minConstraints={[320, 320]}
