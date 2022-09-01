@@ -89,8 +89,8 @@ export interface Equipment {
 }
 export interface LocationalData {
   cellOrWorldDesc: string;
-  pos: [number, number, number];
-  rot: [number, number, number];
+  pos: number[3];
+  rot: number[3];
 }
 
 export interface Mp {
@@ -127,7 +127,11 @@ export interface Mp {
   set(formId: number, propertyName: 'locationalData', newValue: LocationalData): void;
   set(formId: number, propertyName: 'spawnPoint', newValue: LocationalData): void;
   set(formId: number, propertyName: 'isDead', newValue: boolean): void;
-  set(formId: number, propertyName: 'percentages', newValue: { health: number, magicka: number, stamina: number }): void;
+  set(
+    formId: number,
+    propertyName: 'percentages',
+    newValue: { health: number; magicka: number; stamina: number }
+  ): void;
 
   /**
    * Creates a new property that would be attached to all instances of
