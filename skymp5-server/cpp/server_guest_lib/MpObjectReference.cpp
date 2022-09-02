@@ -1009,7 +1009,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       }.dump();
 
       if (actorActivator) {
-        actorActivator->SetTeleportFlag(true);
+        actorActivator->SetTeleportFlag(false);
         actorActivator->SendToUser(msg.data(), msg.size(), true);
       }
 
