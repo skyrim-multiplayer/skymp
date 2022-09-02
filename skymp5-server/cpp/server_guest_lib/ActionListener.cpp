@@ -103,10 +103,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
           isMe ? static_cast<IMessageOutput&>(msgOutput)
                : static_cast<IMessageOutput&>(msgOutputDummy),
           espmFiles)) {
-      actor->SetTeleportFlag(false);
       return;
     }
-    actor->SetTeleportFlag(true);
     actor->SetPos(pos);
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
@@ -115,7 +113,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
       auto newSize = static_cast<size_t>(idx) + 1;
       partOne.worldState.lastMovUpdateByIdx.resize(newSize);
-    }
+    } else
+      actor->SetTeleportFlag(true);
     partOne.worldState.lastMovUpdateByIdx[idx] =
       std::chrono::system_clock::now();
   }

@@ -1008,10 +1008,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         { "type", "teleport" }
       }.dump();
 
-      if (actorActivator) {
-        actorActivator->SetTeleportFlag(false);
-        actorActivator->SendToUser(msg.data(), msg.size(), true);
-      }
+      if (actorActivator)
+      actorActivator->SendToUser(msg.data(), msg.size(), true);
 
       activationSource.SetCellOrWorldObsolete(
         FormDesc::FromFormId(teleportWorldOrCell, worldState->espmFiles));
