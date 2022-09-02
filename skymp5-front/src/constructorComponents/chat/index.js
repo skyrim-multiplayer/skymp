@@ -6,6 +6,8 @@ import Dices from './dices';
 
 import './styles.scss';
 import ChatCorner from '../../img/chat_corner.svg';
+import Settings from './settings';
+import SendButton from './sendButton';
 
 const FULL_NON_RP_REGEX = /(.*?):\s*\(\((.*?)\)\)/gi;
 const NONRP_REGEX = /\(\((.*?)\)\)/gi;
@@ -23,6 +25,9 @@ const Chat = (props) => {
   const [disableDiceColors, setDisableDiceColors] = useState(false);
   const [isPouchOpened, setPocuhOpened] = useState(false);
   const [moveChat, setMoveChat] = useState(false);
+  const [showSendButton, setSendButtonShow] = useState(false);
+  const [isSettingsOpened, setSettingsOpened] = useState(false);
+  const [fontSize, setFontSize] = useState(16);
 
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;
@@ -37,6 +42,14 @@ const Chat = (props) => {
   const handleScroll = () => {
     if (chatRef.current) {
       window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
+    }
+  };
+  const sendMessage = () => {
+    if (input !== '' && input.length <= MAX_LENGTH && isReset.current) {
+      if (send !== undefined) send(input);
+      isReset.current = false;
+      updateInput('');
+      inputRef.current.focus();
     }
   };
 
@@ -145,26 +158,29 @@ const Chat = (props) => {
         <div id='chat'>
           <div className="chat-main">
             <ResizableBox
+              width={'100%'}
               height={320}
-              maxConstraints={[800, 800]}
+              maxConstraints={[800, 1100]}
+              minConstraints={[320, 320]}
               axis={'y'}
               handle={
-                <div className='chat-corner'>
-                  <img src={ChatCorner} />
-                </div>
+                 !isInputHidden &&
+                 <div className='chat-corner'>
+                    <img src={ChatCorner} />
+                  </div>
               }
               resizeHandles={['nw']}
               className={`list ${hideNonRP ? 'hideNonRP' : ''}`}
-              ref={chatRef}
-              onScroll={(e) => handleScroll()}
               id='handle'
             >
-              {getList()}
+              <div className='chat-list' style={{ fontSize }} ref={chatRef} onScroll={(e) => handleScroll()}>
+                {getList()}
+              </div>
             </ResizableBox>
             {isInputHidden
-              ? <></>
+              ? <div style={{ height: '72px' }}></div>
               : <div className='input'>
-                <div>
+                <div className='chat-input'>
                   <input
                     id="chatInput"
                     className={'show'}
@@ -176,11 +192,12 @@ const Chat = (props) => {
                     onBlur={(e) => changeInputFocus(false)}
                     ref={inputRef}
                   />
+                  {
+                    showSendButton && <SendButton onClick={() => sendMessage()} />
+                  }
                 </div>
                 <div className='chat-checkboxes'>
-                  <ChatCheckbox id={'nonrp'} text={'Non-rp'} isChecked={hideNonRP} onChange={(e) => changeNonRPHide(e.target.checked)} />
-                  <ChatCheckbox id={'diceSound'} text={'Dice Sounds'} isChecked={disableDiceSounds} onChange={(e) => setDisableDiceSounds(e.target.checked)} />
-                  {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
+                  <ChatCheckbox id={'settings'} text={'Settings'} isChecked={isSettingsOpened} onChange={(e) => setSettingsOpened(e.target.checked)} />
                   <ChatCheckbox id={'moveChat'} text={'Move Chat'} isChecked={moveChat} onChange={(e) => setMoveChat(e.target.checked)} />
                   <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
                 </div>
@@ -200,6 +217,9 @@ const Chat = (props) => {
           }
         </div>
       </Draggable>
+      {
+         (isSettingsOpened && !isInputHidden) && <Settings fontSize={fontSize} setFontSize={setFontSize} isSoundsDisabled={disableDiceSounds} setDisableSounds={setDisableDiceSounds} showSendButton={showSendButton} setShowSendButton={setSendButtonShow} />
+      }
     </div>
   );
 };
