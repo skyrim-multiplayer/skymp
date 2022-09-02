@@ -934,6 +934,9 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 {
   auto actorActivator = dynamic_cast<MpActor*>(&activationSource);
 
+  if (!actorActivator)
+    return;
+
   auto worldState = GetParent();
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
@@ -1007,10 +1010,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         { "worldOrCell", teleportWorldOrCell },
         { "type", "teleport" }
       }.dump();
-
-      if (actorActivator)
+      
       actorActivator->SendToUser(msg.data(), msg.size(), true);
-
       activationSource.SetCellOrWorldObsolete(
         FormDesc::FromFormId(teleportWorldOrCell, worldState->espmFiles));
       activationSource.SetPos(
@@ -1019,7 +1020,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     } else {
       SetOpen(!IsOpen());
     }
-  } else if (t == espm::CONT::kType && actorActivator) {
+  } else if (t == espm::CONT::kType) {
     EnsureBaseContainerAdded(loader);
     if (!this->occupant) {
       SetOpen(true);

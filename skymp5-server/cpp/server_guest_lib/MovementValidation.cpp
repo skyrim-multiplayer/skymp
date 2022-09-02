@@ -16,8 +16,9 @@ bool MovementValidation::Validate(const IWorldObject& worldObject,
   const auto& currentCellOrWorld = worldObject.GetCellOrWorld();
 
   float maxDistance = 4096;
-  if (currentCellOrWorld != newCellOrWorld ||
-      (currentPos - newPos).Length() >= maxDistance) {
+  if ((currentPos - newPos).Length() >= maxDistance)
+    return false;
+  if (currentCellOrWorld != newCellOrWorld) {
     std::string s;
     s += Networking::MinPacketId;
     s += nlohmann::json{

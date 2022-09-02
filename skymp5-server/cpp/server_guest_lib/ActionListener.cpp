@@ -84,11 +84,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
 
     bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
-
     bool teleportFlag = actor->GetTeleportFlag();
-    
-    if (teleportFlag)
-      return;
+
 
     static const NiPoint3 reallyWrongPos = {
       std::numeric_limits<float>::infinity(),
@@ -113,8 +110,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
       auto newSize = static_cast<size_t>(idx) + 1;
       partOne.worldState.lastMovUpdateByIdx.resize(newSize);
-    } else
-      actor->SetTeleportFlag(true);
+    }
     partOne.worldState.lastMovUpdateByIdx[idx] =
       std::chrono::system_clock::now();
   }
