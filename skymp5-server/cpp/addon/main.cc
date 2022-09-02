@@ -332,6 +332,14 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     auto serverSettings = nlohmann::json::parse(buffer.str());
 
+    if (serverSettings["logLevel"].is_string()) {
+      const auto level = spdlog::level::from_str(serverSettings["logLevel"]);
+      logger->set_level(level);
+      spdlog::set_level(level);
+      logger->info("set log level to {}",
+                   spdlog::level::to_string_view(logger->level()));
+    }
+
     partOne->worldState.isPapyrusHotReloadEnabled =
       serverSettings.count("isPapyrusHotReloadEnabled") != 0 &&
       serverSettings.at("isPapyrusHotReloadEnabled").get<bool>();
@@ -1355,6 +1363,11 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           res.SetProperty("magicka", chForm.magickaPercentage);
           res.SetProperty("stamina", chForm.staminaPercentage);
         }
+      } else if (propertyName == "profileId") {
+        if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+          auto chForm = actor->GetChangeForm();
+          res = JsValue::Int(chForm.profileId);
+        }
       } else {
         EnsurePropertyExists(gamemodeApiState, propertyName);
         res = refr.GetDynamicFields().Get(propertyName);
@@ -1471,9 +1484,10 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       if (akFormToPlace.rec->GetType() == "NPC_") {
         auto actor = new MpActor(locationalData, callbacks, globalRecordId);
         newRefr.reset(actor);
-      } else
+      } else {
         newRefr.reset(new MpObjectReference(locationalData, callbacks,
                                             globalRecordId, type));
+      }
 
       auto worldState = &partOne->worldState;
       auto newRefrId = worldState->GenerateFormId();

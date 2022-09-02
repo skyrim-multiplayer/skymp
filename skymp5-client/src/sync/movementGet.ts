@@ -56,8 +56,7 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
   let speed;
   if (refr.getFormID() !== 0x14) {
     speed = refr.getAnimationVariableFloat("SpeedSampled");
-  }
-  else {
+  } else {
     // Real players often run into the wall.
     // We need to have zero speed in this case. SpeedSampled doesn't help
     const w = ObjectReferenceEx.getWorldOrCell(refr);

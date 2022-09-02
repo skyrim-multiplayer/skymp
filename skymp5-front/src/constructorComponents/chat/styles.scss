@@ -1,19 +1,41 @@
+.fullPage {
+  height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
 #chat {
-    width: 560px;
-    height: 300px;
-    position: absolute;
-    bottom: 30px;
-    left: 30px;
-    display: flex;
+  width: calc(26.6% + 70px);
+  // height: 372px;
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-family: Din-pro;
+  font-size: 16px;
+  .chat-main {
     flex-direction: column;
-    justify-content: space-between;
-    font-family: Din-pro;
-    font-size: 16px;
-  
+    width: calc(100% - 60px);
+    position: relative;
+    .chat-corner {
+      position: absolute;
+      right: 0px;
+      top: 0px;
+      img {
+        pointer-events: none;
+      }
+    }
     > .list {
+      &.hideNonRP {
+        .nonrp {
+          display: none;
+        }
+      }
       width: 100%;
-      height: 245px;
       overflow-y: scroll;
+      resize: vertical;
       &::-webkit-scrollbar {
         width: 0 !important;
       }
@@ -21,33 +43,86 @@
         margin-top: 5px;
         font-weight: bold;
         letter-spacing: 1px;
-        text-shadow: #000 1.4px 0 0px, #000 0 1.4px 0px, #000 -1.4px 0 0px, #000 0 -1.4px 0px;
-        color: #FAFAFA;
+        max-width: 100%;
+        overflow-wrap: break-word;
+        text-shadow: -0 -2px 0 rgba(0, 0, 0, 0.63), 0 -2px 0 rgba(0, 0, 0, 0.63),
+          -0 2px 0 rgba(0, 0, 0, 0.63), 0 2px 0 rgba(0, 0, 0, 0.63),
+          -2px -0 0 rgba(0, 0, 0, 0.63), 2px -0 0 rgba(0, 0, 0, 0.63),
+          -2px 0 0 rgba(0, 0, 0, 0.63), 2px 0 0 rgba(0, 0, 0, 0.63),
+          -1px -2px 0 rgba(0, 0, 0, 0.63), 1px -2px 0 rgba(0, 0, 0, 0.63),
+          -1px 2px 0 rgba(0, 0, 0, 0.63), 1px 2px 0 rgba(0, 0, 0, 0.63),
+          -2px -1px 0 rgba(0, 0, 0, 0.63), 2px -1px 0 rgba(0, 0, 0, 0.63),
+          -2px 1px 0 rgba(0, 0, 0, 0.63), 2px 1px 0 rgba(0, 0, 0, 0.63),
+          -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
+          -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63),
+          -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
+          -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63);
+        color: #fafafa;
         &.default {
-          color: #FAFAFA;
+          color: #fafafa;
         }
         &.action {
-          color: #C37BDD;
+          color: #c37bdd;
         }
         &.admin {
-          color: #CE3131;
+          color: #ce3131;
         }
       }
     }
-    > input {
-      width: 450px;
-      height: 0;
-      border-radius: 5px;
-      background-color: rgba(0, 0, 0, .75);
-      padding-left: 10px;
-      font-family: Din-pro;
-      font-size: 16px;
-      color: #fafafa;
-      opacity: 0;
-      &.show {
-        opacity: 1;
-        height: 40px;
-      }
+    > .input {
+      margin: auto;
+      margin-bottom: 0;
     }
-    
+  }
+
+  #chatInput {
+    width: 100%;
+    height: 0;
+    margin-bottom: 0;
+    border-radius: 15px;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding-left: 10px;
+    font-family: Din-pro;
+    font-size: 16px;
+    color: #fafafa;
+    opacity: 0;
+    &.show {
+      opacity: 1;
+      height: 32px;
+    }
+  }
+  .chat-checkboxes {
+    display: flex;
+    flex-direction: row;
+    .chat-message-limit {
+      margin: auto 5px auto auto;
+    }
+  }
+  .text {
+      font-family: Din-pro;
+      font-weight: bold;
+      width: max-content;
+      letter-spacing: 1px;
+      font-family: Din-pro;
+      font-weight: bold;
+      opacity: 0.68;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-shadow: -0 -2px 0 rgba(0, 0, 0, 0.63), 0 -2px 0 rgba(0, 0, 0, 0.63),
+        -0 2px 0 rgba(0, 0, 0, 0.63), 0 2px 0 rgba(0, 0, 0, 0.63),
+        -2px -0 0 rgba(0, 0, 0, 0.63), 2px -0 0 rgba(0, 0, 0, 0.63),
+        -2px 0 0 rgba(0, 0, 0, 0.63), 2px 0 0 rgba(0, 0, 0, 0.63),
+        -1px -2px 0 rgba(0, 0, 0, 0.63), 1px -2px 0 rgba(0, 0, 0, 0.63),
+        -1px 2px 0 rgba(0, 0, 0, 0.63), 1px 2px 0 rgba(0, 0, 0, 0.63),
+        -2px -1px 0 rgba(0, 0, 0, 0.63), 2px -1px 0 rgba(0, 0, 0, 0.63),
+        -2px 1px 0 rgba(0, 0, 0, 0.63), 2px 1px 0 rgba(0, 0, 0, 0.63),
+        -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
+        -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63),
+        -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
+        -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63);
+      color: #fafafa;
+      &.limit {
+        color: #F78C8C;
+      }
+  }
 }

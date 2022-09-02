@@ -7,6 +7,7 @@ import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
 import { LocationalData, Mp, PapyrusObject } from "./types/mp";
+import { ChatSettings } from "./types/settings";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
@@ -48,7 +49,17 @@ const getName = (actorId: number) => {
   return 'Stranger';
 };
 
+const sqr = (x: number) => x * x;
+
+const getActorDistanceSquared = (actorId1: number, actorId2: number) => {
+  const pos1 = mp.get(actorId1, 'pos');
+  const pos2 = mp.get(actorId2, 'pos');
+  const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
+  return sqr(delta[0]) + sqr(delta[1]) + sqr(delta[2]);
+};
+
 export class MpApiInteractor {
+  private static serverSettings = mp.getServerSettings();
   private static customNames = new Map<number, string>();
 
   static setup(listener: GameModeListener) {
@@ -82,13 +93,19 @@ export class MpApiInteractor {
 
   private static setupChatHandler(listener: GameModeListener) {
     ChatProperty.setChatInputHandler((input) => {
-      // Note that in current implementation we also send chat messages to npcs...
-      // TODO: Ignore actorNeighbors that aren't in 'onlinePlayers'
-      const actorNeighbors = mp.get(input.actorId, 'actorNeighbors');
+      const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
+      const onlinePlayers = mp.get(0, 'onlinePlayers');
+      const actorNeighbors =
+        mp.get(input.actorId, 'actorNeighbors')
+          .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
+          .filter((actorId) =>
+            chatSettings.hearingRadiusNormal === undefined ||
+            getActorDistanceSquared(input.actorId, actorId) < sqr(chatSettings.hearingRadiusNormal)
+          );
 
       const name = getName(input.actorId);
       if (listener.onPlayerChatInput) {
-        console.log(`chat: ${JSON.stringify(name)}: ${JSON.stringify(input.inputText)}`);
+        console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
         listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, name);
       }
     });
@@ -167,8 +184,7 @@ export class MpApiInteractor {
       if (listener.onPlayerDeath) {
         if (killer === 0) {
           listener.onPlayerDeath(target, undefined);
-        }
-        else {
+        } else {
           listener.onPlayerDeath(target, killer);
         }
       }
@@ -185,8 +201,7 @@ export class MpApiInteractor {
         const point = pointsByName.get(pointName);
         if (point) {
           mp.set(player, 'spawnPoint', point);
-        }
-        else {
+        } else {
           console.log(`setSpawnPoint: point not found - ${pointName}`);
         }
       },
@@ -194,8 +209,7 @@ export class MpApiInteractor {
         const point = pointsByName.get(pointName);
         if (point) {
           mp.set(player, 'locationalData', point);
-        }
-        else {
+        } else {
           console.log(`teleport: point not found - ${pointName}`);
         }
       },
@@ -212,6 +226,9 @@ export class MpApiInteractor {
       },
       getName(actorId: number): string {
         return getName(actorId);
+      },
+      getProfileId(playerActorId: number): number {
+        return mp.get(playerActorId, 'profileId');
       },
       addItem(actorId: number, itemId: number, count: number): void {
         mp.callPapyrusFunction(

@@ -4,8 +4,6 @@ if(POLICY 0115)
   cmake_policy(SET CMP0115 NEW)
 endif()
 
-option(USE_SYSTEM_VCPKG "Use vcpkg from your system instead of skymp submodule" OFF)
-
 if(WIN32)
   set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
 else()
@@ -15,10 +13,10 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
-# Use installed VCPKG if exists
-if(USE_SYSTEM_VCPKG AND DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+# Use specified VCPKG if exists
+if(DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
   set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-elseif(USE_SYSTEM_VCPKG AND DEFINED VCPKG_INSTALLATION_ROOT AND EXISTS ${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake)
+elseif(DEFINED VCPKG_INSTALLATION_ROOT AND EXISTS ${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake)
   set(CMAKE_TOOLCHAIN_FILE "${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 else()
   set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
@@ -61,6 +59,7 @@ enable_testing()
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(SWEETPIE "Affects default client and server configs" ON)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
+option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
 message(STATUS SWEETPIE=${SWEETPIE})
@@ -120,7 +119,10 @@ add_subdirectory(skymp5-front)
 add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
-add_subdirectory(unit)
+if(BUILD_UNIT_TESTS)
+  # Workaround for #1182 (tests are failing to build in Windows CI)
+  add_subdirectory(unit)
+endif()
 
 if(PREPARE_NEXUS_ARCHIVES)
   add_custom_target(

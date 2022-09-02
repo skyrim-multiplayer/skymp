@@ -23,6 +23,7 @@ public:
                             const std::vector<VarValue>& arguments);
 
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
@@ -37,6 +38,7 @@ public:
     AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
     AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
     AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
+    AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

@@ -1,0 +1,109 @@
+.chat-dices {
+    display: flex;
+    flex-direction: column;
+    min-width: 54px;
+    min-height: 340px;
+    margin-bottom: 11px;
+    margin-top: auto;
+    span {
+        font-family: Din-pro;
+        font-weight: bold;
+        margin: 5px auto 0 auto;
+        opacity: 0.68;
+        font-weight: bold;
+          letter-spacing: 1px;
+          text-shadow: 
+          -0   -2px 0   rgba( 0, 0, 0, 0.63 ),
+           0   -2px 0   rgba( 0, 0, 0, 0.63 ),
+          -0    2px 0   rgba( 0, 0, 0, 0.63 ),
+           0    2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px -0   0   rgba( 0, 0, 0, 0.63 ),
+           2px -0   0   rgba( 0, 0, 0, 0.63 ),
+          -2px  0   0   rgba( 0, 0, 0, 0.63 ),
+           2px  0   0   rgba( 0, 0, 0, 0.63 ),
+          -1px -2px 0   rgba( 0, 0, 0, 0.63 ),
+           1px -2px 0   rgba( 0, 0, 0, 0.63 ),
+          -1px  2px 0   rgba( 0, 0, 0, 0.63 ),
+           1px  2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px -1px 0   rgba( 0, 0, 0, 0.63 ),
+           2px -1px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px  1px 0   rgba( 0, 0, 0, 0.63 ),
+           2px  1px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px -2px 0   rgba( 0, 0, 0, 0.63 ),
+           2px -2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px  2px 0   rgba( 0, 0, 0, 0.63 ),
+           2px  2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px -2px 0   rgba( 0, 0, 0, 0.63 ),
+           2px -2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px  2px 0   rgba( 0, 0, 0, 0.63 ),
+           2px  2px 0   rgba( 0, 0, 0, 0.63 );
+          color: #FAFAFA;
+
+    }
+}
+
+.icon {
+    &-d100 {
+        &:hover {
+            .to-color {
+                fill: #A062C9;
+                
+            }
+        }
+    }
+    &-d12 {
+        &:hover {
+            .to-color {
+                fill: #5DAD60;
+                
+            }
+        }
+    }
+    &-d6 {
+        &:hover {
+            .to-color {
+                fill: #F78C8C;
+                
+            }
+        }
+    }
+    &-d20 {
+        &:hover {
+            .to-color {
+                fill: #7175D6;
+                
+            }
+        }
+    }
+    &-coin {
+        &:hover {
+            .to-color {
+                fill: #BDBD7D; 
+            }
+        }
+    }
+}
+
+.dice {
+    opacity: 0.5;
+    margin: auto;
+    .to-color {
+        fill: white;
+    }
+    &:hover {
+        width: 54px;
+        height: 54px;
+        cursor: pointer;
+        opacity: 0.80;
+    }
+}
+.dice-wrapper {
+    display: flex;
+    width: 54px;
+    height: 54px;
+    margin: auto auto 0 auto;
+    transition: all 0.1s ease;
+    &:active {
+        width: 38px;
+    }
+}
