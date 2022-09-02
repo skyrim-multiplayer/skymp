@@ -193,9 +193,9 @@ VarValue ActivePexInstance::CastToString(const VarValue& var)
 
     case var.kType_Object: {
       IGameObject* ptr = ((IGameObject*)var);
-      if (ptr)
+      if (ptr) {
         return VarValue(ptr->GetStringID());
-      else {
+      } else {
         const static std::string noneString = "None";
         return VarValue(noneString.c_str());
       }
@@ -551,9 +551,10 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             functionName == nameOnEndState) {
           parentVM->SendEvent(this, functionName.c_str(), argsForCall);
           break;
-        } else
+        } else {
           *opCode[line].second[2] = parentVM->CallMethod(
             this, (IGameObject*)object, functionName.c_str(), argsForCall);
+        }
       }
 
       break;
@@ -604,8 +605,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
               ptrPex->StartFunction(runProperty->readHandler, argsForCall);
           }
 
-        } else
+        } else {
           assert(false);
+        }
         break;
 
       case OpcodesImplementation::Opcodes::op_PropSet:
@@ -625,8 +627,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             ptrPex->StartFunction(runProperty->writeHandler, argsForCall);
           }
 
-        } else
+        } else {
           assert(false);
+        }
         break;
 
       case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -645,8 +648,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             element = VarValue(type);
           }
 
-        } else
+        } else {
           assert(0);
+        }
 
         break;
 
@@ -656,9 +660,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           if ((*opCode[line].second[0]).GetType() == VarValue::kType_Integer)
             *opCode[line].second[0] =
               VarValue((int32_t)(*opCode[line].second[1]).pArray->size());
-
-        } else
+        } else {
           *opCode[line].second[0] = VarValue((int32_t)0);
+        }
         break;
 
       case OpcodesImplementation::Opcodes::op_Array_GetElement:
@@ -667,8 +671,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           *opCode[line].second[0] =
             (*opCode[line].second[1])
               .pArray->at((int32_t)(*opCode[line].second[2]));
-        } else
+        } else {
           assert(0);
+        }
         break;
 
       case OpcodesImplementation::Opcodes::op_Array_SetElement:
@@ -677,8 +682,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           (*opCode[line].second[0])
             .pArray->at((int32_t)(*opCode[line].second[1])) =
             *opCode[line].second[2];
-        } else
+        } else {
           assert(0);
+        }
         break;
 
       case OpcodesImplementation::Opcodes::op_Array_FindElement:
@@ -720,8 +726,8 @@ VarValue& ActivePexInstance::GetIndentifierValue(
     std::string temp;
     temp = temp + (const char*)value;
     return GetVariableValueByName(locals, temp);
-  } else
-    return value;
+  }
+  return value;
 }
 
 uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
@@ -813,7 +819,6 @@ void ActivePexInstance::CastObjectToObject(
   }
 
   if (resultTypeName != "" && objectToCastTypeName != "") {
-
     auto scriptOwner = std::find_if(
       parentVM->gameObjects.begin(), parentVM->gameObjects.end(),
       [&](
@@ -823,7 +828,6 @@ void ActivePexInstance::CastObjectToObject(
     ActivePexInstance* ptrScriptToCast = nullptr;
 
     if (scriptOwner != parentVM->gameObjects.end()) {
-
       for (auto& activeScript : scriptOwner->second) {
         if (activeScript.sourcePex->source == objectToCastTypeName) {
           ptrScriptToCast = &activeScript;
@@ -836,10 +840,12 @@ void ActivePexInstance::CastObjectToObject(
         HasChild(ptrScriptToCast, resultTypeName)) {
       *result = *scriptToCastOwner;
       return;
-    } else
+    } else {
       *result = VarValue::None();
-  } else
+    }
+  } else {
     *result = VarValue::None();
+  }
 }
 
 bool ActivePexInstance::HasParent(ActivePexInstance* script,
@@ -847,7 +853,6 @@ bool ActivePexInstance::HasParent(ActivePexInstance* script,
 {
 
   if (script != nullptr) {
-
     if (script->sourcePex->source == castToTypeName)
       return true;
 

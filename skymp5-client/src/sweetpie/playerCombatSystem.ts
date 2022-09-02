@@ -21,7 +21,8 @@ let isPlayerControlDisabled: boolean = true;
 let playerAttackTimeout: number = 0;
 
 export const start = (): void => {
-  sp.once('update', registerHandlersIfNeeded);
+  // Sup asked for this (Temporary disabled)
+  //sp.once('update', registerHandlersIfNeeded);
 };
 
 const hasSweetPie = (): boolean => {

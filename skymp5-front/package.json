@@ -27,6 +27,7 @@
     "@storybook/react": "^6.4.21",
     "@types/react": "^18.0.2",
     "@types/react-dom": "^18.0.0",
+    "@types/react-resizable": "^3.0.1",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
     "@typescript-eslint/parser": "^5.19.0",
     "babel-loader": "^8.2.4",
@@ -57,7 +58,8 @@
     "react": "^18.0.0",
     "react-alert": "^7.0.3",
     "react-dom": "^18.0.0",
-    "react-draggable": "^4.4.5"
+    "react-draggable": "^4.4.5",
+    "react-resizable": "^3.0.4"
   },
   "babel": {
     "presets": [

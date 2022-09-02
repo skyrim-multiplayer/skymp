@@ -145,7 +145,8 @@ void ConsoleCommands::Execute(
     ExecuteDisable(me, args);
   } else if (!Utils::stricmp(consoleCommandName.data(), "Mp")) {
     ExecuteMp(me, args);
-  } else
+  } else {
     throw std::runtime_error("Unknown command name '" + consoleCommandName +
                              "'");
+  }
 }

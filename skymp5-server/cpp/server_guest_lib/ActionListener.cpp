@@ -14,6 +14,7 @@
 #include "Utils.h"
 #include "WorldState.h"
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 #include <unordered_set>
 
 MpActor* ActionListener::SendToNeighbours(
@@ -369,9 +370,18 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
     auto formId = espm::GetMappedId(entry.formId, *mapping);
     entries.push_back({ formId, entry.count });
   }
+  auto outputFormId =
+    espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
+  if (spdlog::should_log(spdlog::level::debug)) {
+    std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
+    for (const auto& entry : entries) {
+      s += fmt::format(" -{:#x} x{}", entry.baseId, entry.count);
+    }
+    s += fmt::format(" +{:#x} x{}", outputFormId, recipeData.outputCount);
+    spdlog::debug("{}", s);
+  }
   me->RemoveItems(entries);
-  me->AddItem(espm::GetMappedId(recipeData.outputObjectFormId, *mapping),
-              recipeData.outputCount);
+  me->AddItem(outputFormId, recipeData.outputCount);
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
@@ -385,6 +395,9 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   auto& cache = partOne.worldState.GetEspmCache();
   auto base = br.LookupById(workbench.GetBaseId());
 
+  spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
+                rawMsgData.userId, resultObjectId, workbenchId);
+
   if (base.rec->GetType() != "FURN") {
     throw std::runtime_error("Unable to use " +
                              base.rec->GetType().ToString() + " as workbench");
@@ -394,7 +407,10 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
 
   if (!recipeUsed) {
-    throw std::runtime_error("Recipe not found");
+    throw std::runtime_error(
+      fmt::format("Recipe not found: inputObjects={}, workbenchId={:#x}, "
+                  "resultObjectId={:#x}",
+                  inputObjects.ToJson().dump(), workbenchId, resultObjectId));
   }
 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);

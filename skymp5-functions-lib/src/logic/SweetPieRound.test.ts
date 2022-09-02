@@ -44,7 +44,7 @@ describe("forceLeaveRound", () => {
     const controller = makePlayerController();
     forceLeaveRound(controller, rounds, 1);
     expect(controller.setSpawnPoint).toBeCalledWith(1, 'hall:spawnPoint');
-    expect(controller.teleport).toBeCalledWith(1, 'hall:spawnPoint');
+    expect(controller.teleport).not.toBeCalled();
   });
 
   test("Leaving a round teleports to the hall and removes from player set", () => {
