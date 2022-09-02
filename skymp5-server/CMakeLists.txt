@@ -148,7 +148,7 @@ set(server_settings_json_sweetpie "{
 	\"angleZ\": 268
 	}
   ],
-  \"allowCheats\": false,
+  \"allowCheats\": true,
   \"name\": \"SweetPie\"
 }
 ")

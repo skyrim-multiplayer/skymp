@@ -3,7 +3,7 @@ import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
 
-export class SweetPieGameModeListener implements GameModeListener {
+export class GameModeListenerEx implements GameModeListener {
   readonly commands: Command[] = [
     {
       name: 'kick',

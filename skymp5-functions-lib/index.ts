@@ -1,6 +1,6 @@
 import { isNull } from 'util';
 import { PlayerController } from './src/logic/PlayerController';
-import { SweetPieGameModeListener } from './src/logic/SweetPieGameModeListener';
+import { GameModeListenerEx } from './src/logic/GameModeListenerEx';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { ChatProperty } from './src/props/chatProperty';
@@ -174,8 +174,8 @@ mp.registerPapyrusFunction('method', 'Actor', 'IsDead', (self, args) => isDead(m
 
 console.log('gamemode.js reloaded');
 
-const createGameModeListener = (controller: PlayerController): SweetPieGameModeListener => {
-    return new SweetPieGameModeListener(controller);
+const createGameModeListener = (controller: PlayerController): GameModeListenerEx => {
+    return new GameModeListenerEx(controller);
 };
 
 const playerController = MpApiInteractor.makeController();
