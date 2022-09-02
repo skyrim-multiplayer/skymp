@@ -179,7 +179,7 @@ export class SkympClient {
         Closed,
         Closing,
       }
-      if (openState === OpenState.Opening || openState === OpenState.Closing)
+      if (e.target.isLocked())
         return;
 
       this.sendTarget.send(

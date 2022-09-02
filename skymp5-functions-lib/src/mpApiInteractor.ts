@@ -1,6 +1,5 @@
 import { GameModeListener } from "./logic/GameModeListener";
 import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
-import { SweetPieRound } from "./logic/SweetPieRound";
 import { ChatProperty } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
@@ -72,20 +71,18 @@ export class MpApiInteractor {
 
   private static setupActivateHandler(listener: GameModeListener) {
     mp.onActivate = (target: number, caster: number) => {
-      const type = mp.get(target, "type");
-      if (type !== "MpObjectReference") {
-        return true;
-      }
 
+      const baseDesc = mp.get(target, "baseDesc");
+      const baseRecType = mp.lookupEspmRecordById(mp.getIdFromDesc(baseDesc)).record?.type;
       const targetDesc = mp.getDescFromId(target);
+
       if (!listener.onPlayerActivateObject) {
         return true;
       }
 
-      const res = listener.onPlayerActivateObject(caster, targetDesc, target);
-      if (res === 'continue') {
+      const res = listener.onPlayerActivateObject(caster, targetDesc, target, baseRecType);
+      if (res)
         return true;
-      }
 
       return false;
     };
@@ -93,7 +90,7 @@ export class MpApiInteractor {
 
   private static setupChatHandler(listener: GameModeListener) {
     ChatProperty.setChatInputHandler((input) => {
-      const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
+      const chatSettings = this.serverSettings.chatSettings as ChatSettings ?? {};
       const onlinePlayers = mp.get(0, 'onlinePlayers');
       const actorNeighbors =
         mp.get(input.actorId, 'actorNeighbors')
@@ -195,24 +192,8 @@ export class MpApiInteractor {
     ChatProperty.showChat(actorId, true);
   }
 
-  static makeController(pointsByName: Map<string, LocationalData>): PlayerController {
+  static makeController(): PlayerController {
     return {
-      setSpawnPoint(player: number, pointName: string) {
-        const point = pointsByName.get(pointName);
-        if (point) {
-          mp.set(player, 'spawnPoint', point);
-        } else {
-          console.log(`setSpawnPoint: point not found - ${pointName}`);
-        }
-      },
-      teleport(player: number, pointName: string): void {
-        const point = pointsByName.get(pointName);
-        if (point) {
-          mp.set(player, 'locationalData', point);
-        } else {
-          console.log(`teleport: point not found - ${pointName}`);
-        }
-      },
       showMessageBox(actorId: number, dialogId: number, caption: string, text: string, buttons: string[]): void {
         DialogProperty.showMessageBox(actorId, dialogId, caption.toLowerCase(), text.toLowerCase(), buttons.map(x => x.toLowerCase()));
       },
@@ -236,12 +217,6 @@ export class MpApiInteractor {
           { type: 'form', desc: mp.getDescFromId(actorId) },
           [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/false]
         );
-      },
-      getRoundsArray(): SweetPieRound[] {
-        return PersistentStorage.getSingleton().rounds;
-      },
-      setRoundsArray(rounds: SweetPieRound[]): void {
-        PersistentStorage.getSingleton().rounds = rounds;
       },
       getOnlinePlayers(): number[] {
         return PersistentStorage.getSingleton().onlinePlayers;
@@ -267,12 +242,7 @@ export class MpApiInteractor {
       },
       updateCustomName(formDesc: string, name: string): void {
         MpApiInteractor.customNames.set(mp.getIdFromDesc(formDesc), name);
-      },
-      incrementCounter(actorId: number, counter: Counter, by?: number): number {
-        const current = CounterProperty.get(actorId, counter);
-        CounterProperty.set(actorId, counter, current + (by ?? 0));
-        return current;
-      },
+      }
     }
   }
 }

@@ -20,9 +20,9 @@ set(skymp5_client_settings_txt "{
   \"server-port\": 7777,
   \"show-net-info\": false,
   \"lobbyLocation\": {
-    \"pos\": [133710, -61252, 14605],
-    \"rot\": [0, 0, 0],
-    \"worldOrCell\": 60
+    \"pos\": [22659, -8697, -3594],
+    \"rot\": [0, 0, 268],
+    \"worldOrCell\": \"0x1a26f\"
   },
   \"gameData\": {
     \"profileId\": 1
@@ -34,9 +34,12 @@ set(skymp5_client_settings_txt_sweetpie "{
   \"server-ip\": \"127.0.0.1\",
   \"server-port\": 7777,
   \"lobbyLocation\": {
-    \"pos\": [19256.69, 9777.12, 899.56],
-    \"rot\": [6.36, 0.00, 221.51],
-    \"worldOrCell\": 100936543
+    \"pos\": [22659, -8697, -3594],
+    \"rot\": [0, 0, 268],
+    \"worldOrCell\": \"0x1a26f\"
+  },
+  \"gameData\": {
+    \"profileId\": 1
   }
 }
 ")

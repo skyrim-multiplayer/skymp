@@ -65,7 +65,7 @@ const Dices = (props: {
         props.setOpened(!props.isOpened);
         props.inputRef.current.focus();
       }} />
-      <span>dice</span>
+      <span>Dice</span>
     </div>
   );
 };

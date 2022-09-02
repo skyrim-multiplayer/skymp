@@ -233,18 +233,8 @@ Viet::Promise<Viet::Void> WorldState::SetTimer(float seconds)
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 {
   static const std::shared_ptr<MpForm> kNullForm;
-
   auto it = forms.find(formId);
-  if (it == forms.end()) {
-    if (formId < 0xff000000) {
-      if (LoadForm(formId)) {
-        it = forms.find(formId);
-        return it == forms.end() ? kNullForm : it->second;
-      }
-    }
-    return kNullForm;
-  }
-  return it->second;
+  return (it == forms.end()) ? kNullForm : it->second;
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,

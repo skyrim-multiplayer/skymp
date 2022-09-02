@@ -16,7 +16,7 @@ interface Manifest {
 }
 
 const getBsaNameByEspmName = (espmName: string) => {
-  if (espmName.endsWith(".esp") || espmName.endsWith(".esm")) {
+  if (espmName.endsWith(".esp") || espmName.endsWith(".esm") || espmName.endsWith(".esl")) {
     const nameNoExt = espmName.split(".").slice(0, -1).join(".");
     return nameNoExt + ".bsa";
   }

@@ -86,7 +86,9 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
 
     bool teleportFlag = actor->GetTeleportFlag();
-    actor->SetTeleportFlag(false);
+    
+    if (teleportFlag)
+      return;
 
     static const NiPoint3 reallyWrongPos = {
       std::numeric_limits<float>::infinity(),
@@ -101,9 +103,10 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
           isMe ? static_cast<IMessageOutput&>(msgOutput)
                : static_cast<IMessageOutput&>(msgOutputDummy),
           espmFiles)) {
+      actor->SetTeleportFlag(false);
       return;
     }
-
+    actor->SetTeleportFlag(true);
     actor->SetPos(pos);
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
@@ -509,37 +512,23 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
   MpChangeForm changeForm = actor->GetChangeForm();
-  float health = healthPercentage;
-  float magicka = magickaPercentage;
-  float stamina = staminaPercentage;
+  float health =
+    CropHealthRegeneration(healthPercentage, timeAfterRegeneration, actor);
+  float magicka =
+    CropMagickaRegeneration(magickaPercentage, timeAfterRegeneration, actor);
+  float stamina =
+    CropStaminaRegeneration(staminaPercentage, timeAfterRegeneration, actor);
 
-  if (healthPercentage != changeForm.healthPercentage) {
-    health = CropHealthRegeneration(health, timeAfterRegeneration, actor);
+  if (health != healthPercentage || magicka != magickaPercentage ||
+      stamina != staminaPercentage) {
+    if (healthPercentage > changeForm.healthPercentage)
+      health = health + (healthPercentage - changeForm.healthPercentage);
+    if (magickaPercentage > changeForm.magickaPercentage)
+      magicka = magicka + (magickaPercentage - changeForm.magickaPercentage);
+    if (staminaPercentage > changeForm.staminaPercentage)
+      stamina = stamina + (staminaPercentage - changeForm.staminaPercentage);
   }
-  if (magickaPercentage != changeForm.magickaPercentage) {
-    magicka = CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
-  }
-  if (staminaPercentage != changeForm.staminaPercentage) {
-    stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
-  }
-
-  if (IsNearlyEqual(health, healthPercentage) == false ||
-      IsNearlyEqual(magicka, magickaPercentage) == false ||
-      IsNearlyEqual(stamina, staminaPercentage) == false) {
-    std::string s;
-    s += Networking::MinPacketId;
-    s += nlohmann::json{
-      { "t", MsgType::ChangeValues },
-      { "data",
-        { { "health", health },
-          { "magicka", magicka },
-          { "stamina", stamina } } }
-    }.dump();
-    actor->SendToUser(s.data(), s.size(), true);
-  }
-
-  actor->SetPercentages(health, magicka, stamina);
-  actor->SetLastAttributesPercentagesUpdate(now);
+  actor->NetSetPercentages(health, magicka, stamina);
 }
 
 namespace {

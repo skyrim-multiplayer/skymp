@@ -104,37 +104,52 @@ message(STATUS "esm_prefix is '${esm_prefix}'")
 set(server_settings_json "{
   \"dataDir\": \"data\",
   \"loadOrder\": [
-    \"${esm_prefix}Skyrim.esm\",
-    \"${esm_prefix}Update.esm\",
-    \"${esm_prefix}Dawnguard.esm\",
-    \"${esm_prefix}HearthFires.esm\",
-    \"${esm_prefix}Dragonborn.esm\"
+	\"Skyrim.esm\",
+    \"Update.esm\",
+    \"Dawnguard.esm\",
+    \"HearthFires.esm\",
+    \"Dragonborn.esm\",
+	\"ccBGSSSE001-Fish.esm\",
+	\"ccBGSSSE025-AdvDSGS.esm\",
+	\"ccBGSSSE037-Curios.esl\",
+	\"ccQDRSSE001-SurvivalMode.esl\"
   ],
-  \"ip\": \"127.0.0.1\",
-  \"name\": \"My Server\",
-  \"offlineMode\": true
+  \"offlineMode\": true,
+  \"startPoints\": [
+    {
+	\"pos\": [22659, -8697, -3594],
+    \"worldOrCell\": \"0x1a26f\",
+	\"angleZ\": 268
+	}
+  ],
+  \"allowCheats\": true,
+  \"name\": \"My Server\"
 }
 ")
 
 set(server_settings_json_sweetpie "{
   \"dataDir\": \"data\",
   \"loadOrder\": [
-    \"${esm_prefix}Skyrim.esm\",
-    \"${esm_prefix}Update.esm\",
-    \"${esm_prefix}Dawnguard.esm\",
-    \"${esm_prefix}HearthFires.esm\",
-    \"${esm_prefix}Dragonborn.esm\",
-    \"${esm_prefix}RavenOnMyShoulder.esp\",
-    \"${esm_prefix}SweetPie.esp\"
+	\"Skyrim.esm\",
+    \"Update.esm\",
+    \"Dawnguard.esm\",
+    \"HearthFires.esm\",
+    \"Dragonborn.esm\",
+	\"ccBGSSSE001-Fish.esm\",
+	\"ccBGSSSE025-AdvDSGS.esm\",
+	\"ccBGSSSE037-Curios.esl\",
+	\"ccQDRSSE001-SurvivalMode.esl\"
   ],
-  \"name\": \"SweetPie\",
+  \"offlineMode\": true,
   \"startPoints\": [
     {
-      \"pos\": [ 18522.08, 10218.17, 624.46 ],
-      \"worldOrCell\": \"0x6042b5f\",
-      \"angleZ\": 0
-    }
-  ]
+	\"pos\": [22659, -8697, -3594],
+    \"worldOrCell\": \"0x1a26f\",
+	\"angleZ\": 268
+	}
+  ],
+  \"allowCheats\": false,
+  \"name\": \"SweetPie\"
 }
 ")
 

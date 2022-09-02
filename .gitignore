@@ -4,3 +4,4 @@ build
 .prettierrc*
 .vscode
 .cache
+*.pex

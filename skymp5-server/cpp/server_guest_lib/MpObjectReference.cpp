@@ -981,12 +981,9 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       loader.GetBrowser().LookupById(GetFormId()).rec);
     auto teleport = refrRecord->GetData(compressedFieldsCache).teleport;
     if (teleport) {
-      if (!IsOpen()) {
-        SetOpen(true);
+      if (!IsOpen())
         RequestReloot();
-      }
-
-      auto destination =
+        auto destination =
         loader.GetBrowser().LookupById(teleport->destinationDoor);
       auto destinationRecord = espm::Convert<espm::REFR>(destination.rec);
       if (!destinationRecord) {
@@ -1010,15 +1007,17 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         { "worldOrCell", teleportWorldOrCell },
         { "type", "teleport" }
       }.dump();
-      if (actorActivator)
+
+      if (actorActivator) {
+        actorActivator->SetTeleportFlag(true);
         actorActivator->SendToUser(msg.data(), msg.size(), true);
+      }
 
       activationSource.SetCellOrWorldObsolete(
         FormDesc::FromFormId(teleportWorldOrCell, worldState->espmFiles));
       activationSource.SetPos(
         { teleport->pos[0], teleport->pos[1], teleport->pos[2] });
       activationSource.SetAngle(rot);
-
     } else {
       SetOpen(!IsOpen());
     }
