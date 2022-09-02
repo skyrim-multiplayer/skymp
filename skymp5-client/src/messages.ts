@@ -90,6 +90,7 @@ export interface UpdateEquipmentMessage {
 export interface UpdatePropertyMessage {
   t: MsgType.UpdateProperty;
   idx: number;
+  refrId: number;
   data: unknown;
   propName: string;
 }
