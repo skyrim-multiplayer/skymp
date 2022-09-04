@@ -454,7 +454,7 @@ public:
           case VTYPE_DOUBLE:
             return JsValue::Double(cefValue->GetDouble());
           case VTYPE_STRING:
-            return JsValue::String(cefValue->GetString());
+            return JsValue::String(cefValue->GetString().ToString());
           case VTYPE_DICTIONARY: {
             auto dict = cefValue->GetDictionary();
             auto result = JsValue::Object();
