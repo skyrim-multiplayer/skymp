@@ -78,3 +78,5 @@ These deps should be installed via vcpkg:
 - tilted reverse
 - tilted ui
 - makeid
+- cmrc
+- chakracore (official port instead of overlay or just update overlay)
