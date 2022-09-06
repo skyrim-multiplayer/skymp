@@ -86,6 +86,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
     bool teleportFlag = actor->GetTeleportFlag();
 
+    if (teleportFlag)
+    return;
 
     static const NiPoint3 reallyWrongPos = {
       std::numeric_limits<float>::infinity(),

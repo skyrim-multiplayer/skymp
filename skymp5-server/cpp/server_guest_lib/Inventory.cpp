@@ -44,23 +44,25 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
       continue;
 
     auto matchingEntry = std::find_if(
-      copy.entries.begin(), copy.entries.end(), [&](const Entry& sub) {
+      copy.entries.begin(), copy.entries.end(), [&](const Entry sub) {
         return sub.baseId == e.baseId && sub.extra == e.extra;
       });
 
-    auto count =
-      matchingEntry == copy.entries.end() ? 0 : matchingEntry->count;
-
-    if (count < e.count) {
+    if (matchingEntry->count < e.count) {
       throw std::runtime_error(
         fmt::format("Source inventory doesn't have enough {:#x} ({} is "
                     "required while {} present)",
-                    e.baseId, e.count, count));
+                    e.baseId, e.count, matchingEntry->count));
     }
 
-    matchingEntry->count -= e.count;
-    if (matchingEntry->count == 0) {
+    matchingEntry->count = GetItemCount(matchingEntry->baseId) - e.count;
+    if (!HasItem(e.baseId)) {
       copy.entries.erase(matchingEntry);
+    }
+    else {
+      for (auto& e : copy.entries) {
+      copy.entries.erase(e);  
+      }
     }
   }
 

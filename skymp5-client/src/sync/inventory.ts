@@ -269,11 +269,11 @@ export const getDiff = (
   const rhsCopy: Inventory = JSON.parse(JSON.stringify(rhs));
 
   rhsCopy.entries.forEach((e) => {
-    const sameFromLeft = lhsCopy.entries.find(
+    const sameFromRight = lhsCopy.entries.find(
       (x) => x.baseId === e.baseId && extrasEqual(x, e, ignoreWorn)
     );
-    if (sameFromLeft) {
-      sameFromLeft.count -= e.count;
+    if (sameFromRight) {
+      sameFromRight.count -= e.count;
     } else {
       lhsCopy.entries.push(e);
       lhsCopy.entries[lhsCopy.entries.length - 1].count *= -1;
@@ -306,7 +306,6 @@ const resetBase = (refr: ObjectReference): void => {
   if (!basesReset().has(baseId)) {
     basesReset().add(baseId);
     TESModPlatform.resetContainer(base);
-
     refr.removeAllItems(null, false, true);
   }
 };

@@ -5,5 +5,5 @@ export interface GameModeListener {
   everySecond?: () => void;
   onPlayerChatInput?: (actorId: number, inputText: string, neighbors: number[], senderName: string) => void;
   onPlayerDialogResponse?: (actorId: number, dialogId: number, buttonIndex: number) => void;
-  onPlayerActivateObject?: (casterActorId: number, targetObjectDesc: string, targetActorId: number);
+  onPlayerActivateObject?: (casterActorId: number, targetObjectDesc: string, targetActorId: number, baseRecType: string) => boolean;
 }

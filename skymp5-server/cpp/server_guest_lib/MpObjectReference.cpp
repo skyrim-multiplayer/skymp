@@ -1001,17 +1001,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       const NiPoint3 rot = { teleport->rotRadians[0] / g_pi * 180,
                              teleport->rotRadians[1] / g_pi * 180,
                              teleport->rotRadians[2] / g_pi * 180 };
-
-      std::string msg;
-      msg += Networking::MinPacketId;
-      msg += nlohmann::json{
-        { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
-        { "rot", { rot[0], rot[1], rot[2] } },
-        { "worldOrCell", teleportWorldOrCell },
-        { "type", "teleport" }
-      }.dump();
-      
-      actorActivator->SendToUser(msg.data(), msg.size(), true);
+                             
       activationSource.SetCellOrWorldObsolete(
         FormDesc::FromFormId(teleportWorldOrCell, worldState->espmFiles));
       activationSource.SetPos(

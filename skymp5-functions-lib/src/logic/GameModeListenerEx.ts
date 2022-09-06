@@ -1,4 +1,5 @@
 import { sprintf } from "sprintf-js";
+import { EspmRecord } from "../types/mp";
 import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
@@ -90,6 +91,8 @@ export class GameModeListenerEx implements GameModeListener {
   }
 
   onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, targetActorId: number, baseRecType: string) {
+    // You can handle activations here. They return a value of true to signal successful completion.
+    return true;
   }
 
   onPlayerDialogResponse(actorId: number, dialogId: number, buttonIndex: number) {
