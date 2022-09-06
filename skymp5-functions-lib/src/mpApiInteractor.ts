@@ -1,5 +1,5 @@
 import { GameModeListener } from "./logic/GameModeListener";
-import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
+import { Percentages, PlayerController } from "./logic/PlayerController";
 import { ChatProperty } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
@@ -76,11 +76,7 @@ export class MpApiInteractor {
       const baseRecType = mp.lookupEspmRecordById(mp.getIdFromDesc(baseDesc)).record?.type;
       const targetDesc = mp.getDescFromId(target);
 
-      if (!listener.onPlayerActivateObject) {
-        return true;
-      }
-
-      const res = listener.onPlayerActivateObject(caster, targetDesc, target, baseRecType);
+      const res = listener.onPlayerActivateObject!(caster, targetDesc, target, baseRecType!);
       if (res)
         return true;
 
