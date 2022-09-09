@@ -8,6 +8,7 @@ import './styles.scss';
 import ChatCorner from '../../img/chat_corner.svg';
 import Settings from './settings';
 import SendButton from './sendButton';
+import ChatInput from './input';
 
 const FULL_NON_RP_REGEX = /(.*?):\s*\(\((.*?)\)\)/gi;
 const NONRP_REGEX = /\(\((.*?)\)\)/gi;
@@ -41,14 +42,17 @@ const Chat = (props) => {
 
   const handleScroll = () => {
     if (chatRef.current) {
+      console.log(chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
       window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
     }
   };
   const sendMessage = () => {
+    console.log(input)
     if (input !== '' && input.length <= MAX_LENGTH && isReset.current) {
       if (send !== undefined) send(input);
       isReset.current = false;
       updateInput('');
+      inputRef.current.innerHTML = '';
       inputRef.current.focus();
     }
   };
@@ -62,11 +66,26 @@ const Chat = (props) => {
   }, []);
 
   useEffect(() => {
+    const node = inputRef.current;
+    const listener = (event) => {
+      // Imitate message sending on Enter press
+      if (event.code === 'Enter' && !event.shiftKey && inputRef.current) {
+        event.preventDefault();
+        sendMessage();
+      }
+    };
+    node?.addEventListener('keydown', listener);
+    return () => node?.removeEventListener('keydown', listener);
+    // eslint-disable-next-line
+  }, [inputRef.current])
+
+  useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.keyCode === 13) {
+      if (e.keyCode === 13 && !e.shiftKey) {
         if (input !== '' && isInputFocus === true && input.length <= MAX_LENGTH && isReset.current) {
           if (send !== undefined) send(input);
           isReset.current = false;
+          inputRef.current.innerHTML = '';
           updateInput('');
         }
       }
@@ -158,7 +177,6 @@ const Chat = (props) => {
         <div id='chat'>
           <div className="chat-main">
             <ResizableBox
-              width={'100%'}
               height={320}
               maxConstraints={[800, 1100]}
               minConstraints={[320, 320]}
@@ -181,13 +199,12 @@ const Chat = (props) => {
               ? <div style={{ height: '72px' }}></div>
               : <div className='input'>
                 <div className='chat-input'>
-                  <input
+                  <ChatInput
                     id="chatInput"
                     className={'show'}
                     type="text"
                     placeholder={placeholder !== undefined ? placeholder : ''}
-                    value={input}
-                    onChange={(e) => { updateInput(e.target.value); }}
+                    onChange={(value) => { updateInput(value); }}
                     onFocus={(e) => changeInputFocus(true)}
                     onBlur={(e) => changeInputFocus(false)}
                     ref={inputRef}
