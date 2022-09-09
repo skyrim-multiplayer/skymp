@@ -30,7 +30,7 @@ import * as updateOwner from "./gamemodeApi/updateOwner";
 import { ActorValues, getActorValues } from "./sync/actorvalues";
 import { getHitData } from "./sync/hit";
 import { FormModel } from "./modelSource/model";
-import * as netInfo from "./features/netInfoSystem";
+import * as netInfo from "./debug/netInfoSystem";
 import { WorldView } from "./view/worldView";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./view/worldViewMisc";
 import { getScreenResolution } from "./view/formView";

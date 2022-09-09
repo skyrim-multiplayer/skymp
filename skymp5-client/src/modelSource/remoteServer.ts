@@ -33,7 +33,7 @@ import * as updateOwner from "../gamemodeApi/updateOwner";
 import { setActorValuePercentage } from "../sync/actorvalues";
 import { applyDeathState, safeRemoveRagdollFromWorld } from '../sync/deathSystem';
 import { AuthGameData } from '../features/authModel';
-import * as netInfo from "../features/netInfoSystem";
+import * as netInfo from "../debug/netInfoSystem";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
 import { nameof } from '../lib/nameof';
 import { getScreenResolution } from '../view/formView';
