@@ -104,10 +104,10 @@ const watchCallback = (_eventType, fileName) => {
         });
         ["libEGL.dll", "libGLESv2.dll"].forEach((item, i) => {
           cp(
-            path.join(cefDir, "Release/swiftshader", item),
+            path.join(cefDir, "Release", item),
             path.join(
               distDir,
-              "Data/Platform/Distribution/RuntimeDependencies/swiftshader"
+              "Data/Platform/Distribution/RuntimeDependencies"
             )
           );
         });
@@ -118,11 +118,9 @@ const watchCallback = (_eventType, fileName) => {
           );
         });
         [
-          "cef.pak",
-          "cef_100_percent.pak",
-          "cef_200_percent.pak",
-          "cef_extensions.pak",
-          "devtools_resources.pak",
+          "chrome_100_percent.pak",
+          "chrome_200_percent.pak",
+          "resources.pak",
         ].forEach((item, i) => {
           cp(
             path.join(cefDir, "Resources", item),
