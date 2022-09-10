@@ -91,7 +91,7 @@ Object::PropInfo* ActivePexInstance::GetProperty(
   uint8_t flag)
 {
   if (!scriptInstance.IsValid())
-   throw std::runtime_error("Error");
+    throw std::runtime_error(" Papyrus script instance is not valid ");
 
   if (flag == Object::PropInfo::kFlags_Read) {
 
@@ -144,7 +144,6 @@ VarValue CastToString(const VarValue& var)
     }
     case VarValue::kType_Identifier:
       throw std::runtime_error("Error");
-      return VarValue();
     case VarValue::kType_String:
       return var;
     case VarValue::kType_Integer:
@@ -203,7 +202,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        throw std::runtime_error("Error");
+        throw std::runtime_error("Wrong Type ");
     }
 
     if (i < array.pArray->size() - 1)
@@ -711,7 +710,6 @@ uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
     return VarValue::kType_ObjectArray;
   }
   if (typeRef == "none") {
-   // throw std::runtime_error("Error");
     return VarValue::kType_Object;
   }
   return VarValue::kType_Object;
