@@ -1,5 +1,6 @@
 #include "Validators.h"
-#include <exception>
+#include <stdexcept>
+
 
 bool ValidateFilename(std::string_view filename, bool allowDots)
 {
@@ -7,7 +8,7 @@ bool ValidateFilename(std::string_view filename, bool allowDots)
     if (!(('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') ||
           ('a' <= c && c <= 'z') || (c == '.' && allowDots) || c == '-' ||
           c == '_')) {
-      throw std::runtime_error("Error");
+      return false;
     }
   }
   return true;
@@ -21,10 +22,10 @@ bool ValidateRelativePath(std::string_view path)
     if (!(('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') ||
           ('a' <= c && c <= 'z') || c == '.' || c == '-' || c == '_' ||
           c == '/' || c == '\\')) {
-      throw std::runtime_error("Error");
+      return false;
     }
     if (i > 0 && path[i - 1] == '.' && path[i] == '.') {
-      throw std::runtime_error("Error");
+      return false;
     }
   }
   return true;
