@@ -17,13 +17,19 @@ export const SkyrimSlider = ({
       <span className="skyrimSlider_text">{text}</span>
       <ReactSlider
         className="skyrimSlider_slider"
-        trackClassName="skyrimSlider_track"
         thumbClassName="skyrimSlider_thumb"
         min={min}
         max={max}
         value={sliderValue}
         marks={marks}
         onChange={(value) => setValue(value)}
+        renderTrack={(props, state) => {
+          return (
+            <div {...props} className={'skyrimSlider_track'}>
+              <div className={'skyrimSlider_track_inner'} />
+            </div>
+          );
+        }}
         renderMark={(props) => {
           if ((props.key as number) % 2 === 0) {
             return (
