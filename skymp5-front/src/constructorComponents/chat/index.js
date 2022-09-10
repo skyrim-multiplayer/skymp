@@ -236,7 +236,15 @@ const Chat = (props) => {
         </div>
       </Draggable>
       {
-         (isSettingsOpened && !isInputHidden) && <Settings fontSize={fontSize} setFontSize={setFontSize} isSoundsDisabled={disableDiceSounds} setDisableSounds={setDisableDiceSounds} showSendButton={showSendButton} setShowSendButton={setSendButtonShow} />
+        (isSettingsOpened && !isInputHidden) &&
+        <Settings
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          isSoundsDisabled={disableDiceSounds}
+          setDisableSounds={setDisableDiceSounds}
+          showSendButton={showSendButton}
+          setShowSendButton={setSendButtonShow}
+        />
       }
     </div>
   );

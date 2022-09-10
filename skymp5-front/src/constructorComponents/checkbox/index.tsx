@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './styles.scss';
 
-const CheckBox = (props:{
+const CheckBox = (props: {
   text: string,
   setChecked: (newValue: boolean) => void,
   initialValue: boolean,
