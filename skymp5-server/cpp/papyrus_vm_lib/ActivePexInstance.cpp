@@ -6,7 +6,8 @@
 #include <functional>
 #include <sstream>
 #include <stdexcept>
-#include <exception>
+#include <stdexcept>
+
 
 namespace {
 bool IsSelfStr(const VarValue& v)
