@@ -92,7 +92,8 @@ Object::PropInfo* ActivePexInstance::GetProperty(
   uint8_t flag)
 {
   if (!scriptInstance.IsValid())
-    throw std::runtime_error(" Papyrus script instance is not valid ");
+    return nullptr;
+  
 
   if (flag == Object::PropInfo::kFlags_Read) {
 
