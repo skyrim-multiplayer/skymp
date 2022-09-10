@@ -1,4 +1,4 @@
-#include "WorldState.h"
+÷   #include "WorldState.h"
 #include "FormCallbacks.h"
 #include "GroupUtils.h"
 #include "HeuristicPolicy.h"
@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <deque>
 #include <unordered_map>
+
 
 namespace {
 inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
@@ -259,7 +260,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto base = br.LookupById(baseId);
   if (!base.rec) {
     logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
-    return false;
+    throw std::runtime_error("Error in 261 string ");
   }
 
   espm::Type t = base.rec->GetType();
@@ -269,7 +270,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
        !reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem) &&
       (t != "TREE" ||
        !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
-    return false;
+    throw std::runtime_error("Error in 267 string ");
 
   // TODO: Load disabled references
   enum
@@ -277,10 +278,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     InitiallyDisabled = 0x800
   };
   if (refr->GetFlags() & InitiallyDisabled)
-    return false;
+    throw std::runtime_error("Error in 280 string ");
 
   if (t == "NPC_") {
-    return false;
+    throw std::runtime_error("Error in 283 string ");
   }
 
   auto formId = espm::GetMappedId(record->GetId(), mapping);
@@ -310,7 +311,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   } else {
     if (!locationalData) {
       logger->error("Anomally: refr without locationalData");
-      return false;
+      throw std::runtime_error("Error in 312 string ");
     }
 
     std::optional<NiPoint3> primitiveBoundsDiv2;
