@@ -13,12 +13,12 @@ export const SkyrimSlider = ({
   marks
 }: SkyrimSliderProps) => {
   return (
-    <div className='skyrimSlider'>
-      <span className='skyrimSlider_text'>{text}</span>
+    <div className="skyrimSlider">
+      <span className="skyrimSlider_text">{text}</span>
       <ReactSlider
-        className='skyrimSlider_slider'
-        trackClassName='skyrimSlider_track'
-        thumbClassName='skyrimSlider_thumb'
+        className="skyrimSlider_slider"
+        trackClassName="skyrimSlider_track"
+        thumbClassName="skyrimSlider_thumb"
         min={min}
         max={max}
         value={sliderValue}
@@ -26,12 +26,15 @@ export const SkyrimSlider = ({
         onChange={(value) => setValue(value)}
         renderMark={(props) => {
           if ((props.key as number) % 2 === 0) {
-            return <div {...props} className={'skyrimSlider_mark even'}><span className={'skyrimSlider_mark__number'}>{props.key}</span></div>;
+            return (
+              <div {...props} className={'skyrimSlider_mark even'}>
+                <span className={'skyrimSlider_mark__number'}>{props.key}</span>
+              </div>
+            );
           } else {
             return <span {...props} className={'skyrimSlider_mark odd'} />;
           }
-        }
-    }
+        }}
       />
     </div>
   );

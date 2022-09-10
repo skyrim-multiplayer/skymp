@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import './styles.scss';
 
 interface ChatInputProps {
@@ -6,6 +6,7 @@ interface ChatInputProps {
   onFocus: () => void,
   onBlur: () => void,
   placeholder: string,
+  fontSize: number,
 }
 
 const ChatInput = React.forwardRef<HTMLSpanElement, ChatInputProps>(
@@ -17,12 +18,6 @@ const ChatInput = React.forwardRef<HTMLSpanElement, ChatInputProps>(
         target.innerHTML = '';
       }
       props.onChange(target.innerText);
-      // if (
-      // // @ts-ignore (Didn't find a type, where inputType is available)
-      //   event.nativeEvent.inputType !== 'insertLineBreak' &&
-      // // @ts-ignore
-      // event.nativeEvent.inputType !== 'deleteContentBackward'
-      // ) {  };
     };
     return (
     <div className='chat-input--wrapper'>
@@ -33,6 +28,9 @@ const ChatInput = React.forwardRef<HTMLSpanElement, ChatInputProps>(
         onInput={handleInput}
         ref={ref}
         id={'chatInput'}
+        style={{
+          fontSize: props.fontSize
+        }}
         onPaste={(event) => {
           // Paste only text
           event.preventDefault();

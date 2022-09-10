@@ -42,12 +42,10 @@ const Chat = (props) => {
 
   const handleScroll = () => {
     if (chatRef.current) {
-      console.log(chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
       window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
     }
   };
   const sendMessage = () => {
-    console.log(input)
     if (input !== '' && input.length <= MAX_LENGTH && isReset.current) {
       if (send !== undefined) send(input);
       isReset.current = false;
@@ -208,6 +206,7 @@ const Chat = (props) => {
                     onFocus={(e) => changeInputFocus(true)}
                     onBlur={(e) => changeInputFocus(false)}
                     ref={inputRef}
+                    fontSize={fontSize}
                   />
                   {
                     showSendButton && <SendButton onClick={() => sendMessage()} />
