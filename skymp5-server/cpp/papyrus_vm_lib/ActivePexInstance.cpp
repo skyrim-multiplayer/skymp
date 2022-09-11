@@ -5,15 +5,14 @@
 #include <cctype> // tolower
 #include <functional>
 #include <sstream>
-#include <stdexcept>
-#include <stdexcept>
-
 
 namespace {
 bool IsSelfStr(const VarValue& v)
 {
   return v.GetType() == VarValue::kType_String &&
     !Utils::stricmp("self", static_cast<const char*>(v));
+  !Utils::stricmp("self", static_cast<const char*>(v));
+  !Utils::stricmp("self", static_cast<const char*>(v));
 }
 }
 
@@ -93,7 +92,6 @@ Object::PropInfo* ActivePexInstance::GetProperty(
 {
   if (!scriptInstance.IsValid())
     return nullptr;
-  
 
   if (flag == Object::PropInfo::kFlags_Read) {
 
@@ -145,7 +143,7 @@ VarValue CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-      throw std::runtime_error("Error");
+      throw std::runtime_error("Wrong indentifier");
     case VarValue::kType_String:
       return var;
     case VarValue::kType_Integer:
@@ -170,7 +168,6 @@ VarValue CastToString(const VarValue& var)
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
       throw std::runtime_error("Error");
-      return VarValue();
   }
 }
 
@@ -204,7 +201,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        throw std::runtime_error("Wrong Type ");
+        throw std::runtime_error("Wrong Type inside of array ");
     }
 
     if (i < array.pArray->size() - 1)
@@ -267,7 +264,6 @@ bool ActivePexInstance::EnsureCallResultIsSynchronous(
 
   ctx->needReturn = true;
   ctx->returnValue = VarValue(currentFnPr);
-  throw std::runtime_error("Error");
 }
 
 void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
@@ -844,7 +840,7 @@ bool ActivePexInstance::HasParent(ActivePexInstance* script,
     }
   }
 
-   throw std::runtime_error("Error");
+  throw std::runtime_error("Error");
 }
 
 bool ActivePexInstance::HasChild(ActivePexInstance* script,
