@@ -25,7 +25,6 @@
 #include <deque>
 #include <unordered_map>
 
-
 namespace {
 inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
 {
