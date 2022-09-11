@@ -1,4 +1,4 @@
-÷   #include "WorldState.h"
+#include "WorldState.h"
 #include "FormCallbacks.h"
 #include "GroupUtils.h"
 #include "HeuristicPolicy.h"
