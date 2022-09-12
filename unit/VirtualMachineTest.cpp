@@ -1,6 +1,5 @@
 #include "TestUtils.hpp"
 #include <catch2/catch.hpp>
-
 #include "Reader.h"
 #include "ScriptVariablesHolder.h"
 #include "VirtualMachine.h"
