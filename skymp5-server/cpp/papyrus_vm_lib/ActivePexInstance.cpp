@@ -5,6 +5,7 @@
 #include <cctype> // tolower
 #include <functional>
 #include <sstream>
+#include <stdexcept>
 
 namespace {
 bool IsSelfStr(const VarValue& v)
@@ -141,7 +142,8 @@ VarValue CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-      throw std::runtime_error("Wrong indentifier");
+      assert(false);
+      return VarValue();
     case VarValue::kType_String:
       return var;
     case VarValue::kType_Integer:
@@ -165,7 +167,9 @@ VarValue CastToString(const VarValue& var)
     case VarValue::kType_BoolArray:
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
-      throw std::runtime_error("Error");
+      throw std::runtime_error("Wrong Type");
+     // assert(false);
+      //return VarValue();
   }
 }
 
@@ -199,7 +203,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        throw std::runtime_error("Wrong Type inside of array ");
+        assert(false);
     }
 
     if (i < array.pArray->size() - 1)
@@ -262,6 +266,7 @@ bool ActivePexInstance::EnsureCallResultIsSynchronous(
 
   ctx->needReturn = true;
   ctx->returnValue = VarValue(currentFnPr);
+  return false;
 }
 
 void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
@@ -449,7 +454,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        throw std::runtime_error("Error");
+        assert(false);
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -470,7 +475,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        throw std::runtime_error("Error");
+        assert(false);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -482,7 +487,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        throw std::runtime_error("Error");
+        assert(0);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
@@ -507,7 +512,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
       } else {
-        throw std::runtime_error("Error");
+        assert(0);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
@@ -519,7 +524,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                                *args[3]);
       break;
     default:
-      throw std::runtime_error("Error");
+      assert(0);
   }
 }
 
@@ -688,7 +693,7 @@ uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
     return VarValue::kType_Bool;
   }
   if (typeRef == "identifier") {
-    throw std::runtime_error("Error");
+    assert(0);
   }
   if (typeRef == "string[]") {
     return VarValue::kType_StringArray;
@@ -706,6 +711,7 @@ uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
     return VarValue::kType_ObjectArray;
   }
   if (typeRef == "none") {
+    // assert(false);
     return VarValue::kType_Object;
   }
   return VarValue::kType_Object;
@@ -737,7 +743,7 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error("Error");
+      assert(false);
       return VarValue::kType_Object;
   }
 
@@ -770,7 +776,7 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error("Error");
+      assert(false);
       return VarValue::kType_ObjectArray;
   }
 
@@ -920,7 +926,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
     }
   }
 
-  throw std::runtime_error("Error");
+  assert(false);
   static VarValue _;
   return _;
 }
