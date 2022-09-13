@@ -12,13 +12,14 @@ bool IsSelfStr(const VarValue& v)
   return v.GetType() == VarValue::kType_String &&
     !Utils::stricmp("self", static_cast<const char*>(v));
 }
+}
 
 ActivePexInstance::ActivePexInstance()
 {
   this->parentVM = nullptr;
 }
 
-ActivePexInstance::ActivePexInstance(
+ActivePexInstance::ActivePexInstance()
   PexScript::Lazy sourcePex,
   const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
   VirtualMachine* parentVM, VarValue activeInstanceOwner,
