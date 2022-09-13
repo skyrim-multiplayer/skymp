@@ -168,7 +168,7 @@ VarValue CastToString(const VarValue& var)
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
       assert(false);
-     /return VarValue();
+     return VarValue();
   }
 }
 
