@@ -8,7 +8,6 @@
 #include <filesystem>
 #include <iterator>
 #include <list>
-#include <stdexcept>
 
 namespace fs = std::filesystem;
 
