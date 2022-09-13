@@ -167,9 +167,8 @@ VarValue CastToString(const VarValue& var)
     case VarValue::kType_BoolArray:
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
-      throw std::runtime_error("Wrong Type");
-     // assert(false);
-      //return VarValue();
+      assert(false);
+     /return VarValue();
   }
 }
 
