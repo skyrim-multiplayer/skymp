@@ -838,7 +838,7 @@ bool ActivePexInstance::HasParent(ActivePexInstance* script,
     }
   }
 
-  throw std::runtime_error("Error");
+  return false;
 }
 
 bool ActivePexInstance::HasChild(ActivePexInstance* script,
@@ -855,7 +855,7 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
         return true;
     }
   }
-  throw std::runtime_error("Error");
+  return false;
 }
 
 VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
