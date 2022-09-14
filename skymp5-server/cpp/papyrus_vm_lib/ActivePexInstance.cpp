@@ -453,7 +453,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        assert(false);
+        throw std::runtime_error("Argv equal to zero");
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -486,7 +486,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        assert(false);
+        throw std::runtime_error("Argv equal to zero");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
@@ -523,7 +523,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                                *args[3]);
       break;
     default:
-      assert(0);
+      throw std::runtime_error("Caught an exception in default");
   }
 }
 
