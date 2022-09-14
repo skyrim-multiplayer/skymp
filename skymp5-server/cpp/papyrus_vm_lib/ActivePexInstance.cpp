@@ -1,122 +1,21 @@
-#include "OpcodesImplementation.h"
-#include "Utils.h"
-#include "VirtualMachine.h"
-#include <algorithm>
-#include <cctype> // tolower
-#include <functional>
-#include <sstream>
-#include <stdexcept>
-
-namespace {
-bool IsSelfStr(const VarValue& v)
-{
-  return v.GetType() == VarValue::kType_String &&
-    !Utils::stricmp("self", static_cast<const char*>(v));
+ÿ
+}
 }
 }
 
-ActivePexInstance::ActivePexInstance()
-{
-  this->parentVM = nullptr;
-}
+if (flag == Object::PropInfo::kFlags_Write) {
 
-ActivePexInstance::ActivePexInstance(
-  PexScript::Lazy sourcePex,
-  const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
-  VirtualMachine* parentVM, VarValue activeInstanceOwner,
-  std::string childrenName)
-{
-  this->childrenName = childrenName;
-  this->activeInstanceOwner = activeInstanceOwner;
-  this->parentVM = parentVM;
-  this->sourcePex = sourcePex;
-  this->parentInstance =
-    FillParentInstance(sourcePex.fn()->objectTable[0].parentClassName,
-                       activeInstanceOwner, mapForFillProperties);
-
-  this->variables = mapForFillProperties;
-
-  this->_IsValid = true;
-}
-
-std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
-  std::string nameNeedScript, VarValue activeInstanceOwner,
-  const std::shared_ptr<IVariablesHolder>& mapForFillProperties)
-{
-  return parentVM->CreateActivePexInstance(nameNeedScript, activeInstanceOwner,
-                                           mapForFillProperties,
-                                           this->sourcePex.source);
-}
-
-FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
-                                                  std::string stateName) const
-{
-
-  FunctionInfo function;
-  for (auto& object : sourcePex.fn()->objectTable) {
-    for (auto& state : object.states) {
-      if (state.name == stateName) {
-        for (auto& func : state.functions) {
-          if (!Utils::stricmp(func.name.data(), name)) {
-            function = func.function;
-            function.valid = true;
-            return function;
-          }
-        }
+  for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
+    for (auto& prop : object.properties) {
+      if (prop.name == nameProperty && (prop.flags & 6) == prop.kFlags_Write) {
+        return &prop;
       }
     }
   }
-  return function;
+}
 }
 
-std::string ActivePexInstance::GetActiveStateName() const
-{
-  VarValue* var = nullptr;
-  try {
-    var = variables->GetVariableByName("::State", *sourcePex.fn());
-  } catch (...) {
-    assert(0 &&
-           "GetVariableByName must never throw when '::State' variable is "
-           "requested");
-  }
-  if (!var)
-    throw std::runtime_error(
-      "'::State' variable doesn't exist in ActivePexInstance");
-  return static_cast<const char*>(*var);
-}
-
-Object::PropInfo* ActivePexInstance::GetProperty(
-  const ActivePexInstance& scriptInstance, std::string nameProperty,
-  uint8_t flag)
-{
-  if (!scriptInstance.IsValid())
-    return nullptr;
-
-  if (flag == Object::PropInfo::kFlags_Read) {
-
-    for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
-      for (auto& prop : object.properties) {
-        if (prop.name == nameProperty &&
-            (prop.flags & 5) == prop.kFlags_Read) {
-          return &prop;
-        }
-      }
-    }
-
-    if (flag == Object::PropInfo::kFlags_Write) {
-
-      for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
-        for (auto& prop : object.properties) {
-          if (prop.name == nameProperty &&
-              (prop.flags & 6) == prop.kFlags_Write) {
-            return &prop;
-          }
-        }
-      }
-    }
-  }
-
-  return nullptr;
+return nullptr;
 }
 
 const std::string& ActivePexInstance::GetSourcePexName() const
@@ -453,7 +352,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        throw std::runtime_error("Papyrus VM: null argument for PropGet opcode");
+        throw std::runtime_error(
+          "Papyrus VM: null argument for PropGet opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -474,7 +374,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        throw std::runtime_error("Papyrus VM: null argument for op_PropSet opcode");
+        throw std::runtime_error(
+          "Papyrus VM: null argument for op_PropSet opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -486,7 +387,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        throw std::runtime_error("Papyrus VM: null argument for op_Array_Create opcode");
+        throw std::runtime_error(
+          "Papyrus VM: null argument for op_Array_Create opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
