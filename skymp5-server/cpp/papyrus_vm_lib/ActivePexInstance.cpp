@@ -474,7 +474,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        assert(false);
+        throw std::runtime_error("Argv equal to zero");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
