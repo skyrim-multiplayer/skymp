@@ -453,7 +453,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        throw std::runtime_error("Equal to zero");
+        assert(0);
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -474,7 +474,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        throw std::runtime_error("Equal to zero");
+        assert(0);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -511,7 +511,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
       } else {
-        throw std::runtime_error("Equal to zero");
+        assert(0);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
