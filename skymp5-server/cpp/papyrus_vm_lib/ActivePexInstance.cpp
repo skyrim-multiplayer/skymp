@@ -453,7 +453,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        assert(0);
+        assert(false);
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -474,7 +474,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        assert(0);
+        assert(false);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -486,7 +486,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        assert(0);
+        assert(false);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
