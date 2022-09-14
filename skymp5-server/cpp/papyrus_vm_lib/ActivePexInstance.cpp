@@ -523,7 +523,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                                *args[3]);
       break;
     default:
-      throw std::runtime_error("Equal to zero");
+      assert(0);
   }
 }
 
