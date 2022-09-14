@@ -7,6 +7,7 @@
 #include <ctime>
 #include <filesystem>
 #include <iterator>
+#include <stdexcept>
 #include <list>
 
 namespace fs = std::filesystem;
