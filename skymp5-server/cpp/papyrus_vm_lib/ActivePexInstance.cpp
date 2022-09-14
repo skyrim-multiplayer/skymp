@@ -453,7 +453,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        throw std::runtime_error("Unknown opcode");
+        throw std::runtime_error("Papyrus VM: null argument for PropGet opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -474,7 +474,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        throw std::runtime_error("Unknown opcode");
+        throw std::runtime_error("Papyrus VM: null argument for op_PropSet opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -486,7 +486,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        throw std::runtime_error("Argv equal to zero");
+        throw std::runtime_error("Papyrus VM: null argument for op_Array_Create opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
