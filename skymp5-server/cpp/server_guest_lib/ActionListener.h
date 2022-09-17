@@ -1,5 +1,6 @@
 #pragma once
 #include "ActionListener.h"
+#include "AnimationData.h"
 #include "ConsoleCommands.h"
 #include "Loader.h"
 #include "MpActor.h"
@@ -33,7 +34,8 @@ public:
                                 uint32_t worldOrCell);
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                 uint32_t idx);
+                                 uint32_t idx,
+                                 const AnimationData& animationData);
 
   virtual void OnUpdateAppearance(const RawMessageData& rawMsgData,
                                   uint32_t idx, const Appearance& appearance);

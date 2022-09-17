@@ -26,6 +26,7 @@ MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
   : MpObjectReference(locationalData_, callbacks_,
                       optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
+  , isBlockActive(false)
 {
   pImpl.reset(new Impl);
 }
@@ -551,4 +552,22 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   int count = entry.count;
   RemoveItems({ entry });
   // TODO(#1141): reimplement spawning items
+}
+
+void MpActor::SetIsBlockActive(bool active)
+{
+  isBlockActive = active;
+}
+
+bool MpActor::IsBlockActive() const
+{
+  return isBlockActive;
+}
+
+const float kAngleToRadians = std::acos(-1.f) / 180.f;
+
+NiPoint3 MpActor::GetViewDirection() const
+{
+  return { std::sin(GetAngle().z * kAngleToRadians),
+           std::cos(GetAngle().z * kAngleToRadians), 0 };
 }

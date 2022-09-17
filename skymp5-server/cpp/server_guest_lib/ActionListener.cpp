@@ -119,8 +119,22 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                       uint32_t idx)
+                                       uint32_t idx,
+                                       const AnimationData& animationData)
 {
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!actor) {
+    return;
+  }
+
+  constexpr const char* kBlockStartAnimationName = "blockStart";
+  constexpr const char* kBlockStopAnimationName = "blockStop";
+  if (!strcmp(animationData.animEventName, kBlockStartAnimationName)) {
+    actor->SetIsBlockActive(true);
+  }
+  if (!strcmp(animationData.animEventName, kBlockStopAnimationName)) {
+    actor->SetIsBlockActive(false);
+  }
   SendToNeighbours(idx, rawMsgData);
 }
 
@@ -648,6 +662,20 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
       "Cannot get weapon speed from source: {0:x}", hitData.source));
   }
 }
+
+bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
+{
+  NiPoint3 targetViewDirection = target.GetViewDirection();
+  NiPoint3 aggressorViewDirection = aggressor.GetViewDirection();
+  if (targetViewDirection * aggressorViewDirection >= 0) {
+    return false;
+  }
+  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
+  float angle =
+    std::acos((targetViewDirection * aggressorDirection) /
+              (targetViewDirection.Length() * aggressorDirection.Length()));
+  return angle < 1;
+}
 }
 
 void ActionListener::OnHit(const RawMessageData& rawMsgData_,
@@ -725,6 +753,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   float magickaPercentage = targetForm.magickaPercentage;
   float staminaPercentage = targetForm.staminaPercentage;
 
+  hitData.isHitBlocked = targetActor.IsBlockActive()
+    ? ShouldBeBlocked(*aggressor, targetActor)
+    : false;
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float currentHealthPercentage =

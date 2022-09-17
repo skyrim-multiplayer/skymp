@@ -95,6 +95,9 @@ public:
   BaseActorValues GetMaximumValues();
 
   void DropItem(const uint32_t baseId, const Inventory::Entry& entry);
+  void SetIsBlockActive(bool isBlockActive);
+  bool IsBlockActive() const;
+  NiPoint3 GetViewDirection() const;
 
 private:
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
@@ -109,6 +112,8 @@ private:
   void EatItem(uint32_t baseId, espm::Type t);
 
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
+
+  bool isBlockActive;
 
 protected:
   void BeforeDestroy() override;

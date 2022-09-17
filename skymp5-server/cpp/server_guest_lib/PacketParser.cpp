@@ -1,4 +1,5 @@
 #include "PacketParser.h"
+#include "AnimationData.h"
 #include "Exceptions.h"
 #include "HitData.h"
 #include "JsonUtils.h"
@@ -123,7 +124,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     case MsgType::UpdateAnimation: {
       uint32_t idx;
       ReadEx(jMessage, JsonPointers::idx, &idx);
-      actionListener.OnUpdateAnimation(rawMsgData, idx);
+      simdjson::dom::element jData;
+      ReadEx(jMessage, JsonPointers::data, &jData);
+      actionListener.OnUpdateAnimation(rawMsgData, idx,
+                                       AnimationData::FromJson(jData));
     } break;
     case MsgType::UpdateAppearance: {
       uint32_t idx;
