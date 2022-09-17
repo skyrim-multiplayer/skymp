@@ -23,7 +23,7 @@ const scriptName = (refrId: number) => {
       const strLength = vmadData[6] + (vmadData[7] << 8);
       var strData: string = '';
       for (var i = 0; i < strLength; i++) {
-        strData += String.fromCharCode(vmadData[8+i]).valueOf();
+        strData += String.fromCharCode(vmadData[8 + i]).valueOf();
       }
       return strData;
     }
