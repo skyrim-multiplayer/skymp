@@ -488,7 +488,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        assert(0);
+        throw std::runtime_error(
+          "Papyrus VM: null argument for op_Array_Create opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
@@ -513,7 +514,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
       } else {
-        assert(0);
+        throw std::runtime_error(
+          "Papyrus VM: null argument for op_Array_SetElement opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
