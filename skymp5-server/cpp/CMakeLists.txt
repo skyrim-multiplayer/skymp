@@ -3,25 +3,6 @@ enable_testing()
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 
 #
-# MpClientPlugin
-#
-
-if(WIN32)
-  file(GLOB_RECURSE src "client/*")
-  list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
-  add_library(MpClientPlugin SHARED ${src})
-  target_link_libraries(MpClientPlugin PUBLIC mp_common)
-  set_target_properties(MpClientPlugin PROPERTIES OUTPUT_NAME "MpClientPlugin")
-  apply_default_settings(TARGETS MpClientPlugin)
-  list(APPEND VCPKG_DEPENDENT MpClientPlugin)
-
-  # Not mistake that skyrim-platform depends on MpClientPlugin
-  # skyrim-platform is a logical target that invokes dev_service
-  # dev_service wants to access built MpClientPlugin.dll
-  add_dependencies(skyrim-platform MpClientPlugin)
-endif()
-
-#
 # lib_espm
 #
 
@@ -44,6 +25,8 @@ list(APPEND VCPKG_DEPENDENT mp_common)
 if(WIN32)
   target_link_libraries(mp_common PUBLIC ws2_32.lib)
 endif()
+#add_dependencies(skyrim_platform mp_common)
+target_link_libraries(skyrim_platform PUBLIC mp_common)
 
 #
 # geo

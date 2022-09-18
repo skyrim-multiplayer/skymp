@@ -156,10 +156,6 @@ const watchCallback = (_eventType, fileName) => {
           path.join(distDir, "Data/Scripts")
         );
         cp(
-          `${getBinaryDir()}/skymp5-server/cpp/${buildCfg}/MpClientPlugin.dll`,
-          path.join(distDir, "Data/SKSE/Plugins")
-        );
-        cp(
           path.join(
             sourceDir,
             "tools/system_polyfill/dist/___systemPolyfill.js"

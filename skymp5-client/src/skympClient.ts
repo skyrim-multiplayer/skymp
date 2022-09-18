@@ -115,10 +115,12 @@ export class SkympClient {
 
     networking.on("connectionFailed", () => {
       printConsole("Connection failed");
+      networking.reconnect();
     });
 
     networking.on("connectionDenied", (err: Record<string, any> | string) => {
       printConsole("Connection denied: ", err);
+      networking.reconnect();
     });
 
     networking.on("connectionAccepted", () => {
@@ -127,6 +129,7 @@ export class SkympClient {
 
     networking.on("disconnect", () => {
       this.msgHandler.handleDisconnect();
+      networking.reconnect();
     });
 
     networking.on("message", (msgAny: Record<string, unknown> | string) => {

@@ -11,9 +11,10 @@
 #include "FileInfoApi.h"
 #include "HttpClient.h"
 #include "HttpClientApi.h"
+#include "NetworkingClient.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
-#include "MpClientPluginApi.h"
+#include "NetworkingClientApi.h"
 #include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
@@ -47,7 +48,7 @@ public:
     if (auto console = RE::ConsoleLog::GetSingleton()) {
       if (!helloSaid) {
         helloSaid = true;
-        console->Print("Hello SE");
+        console->Print("Hello SkyrimPlatform");
       }
     }
   }
@@ -70,7 +71,7 @@ public:
   void Tick() override
   {
     try {
-      GetJsEngine();
+      GetJsEngine(); //init js engine
 
       auto fileDirs = GetFileDirs();
 
@@ -106,6 +107,8 @@ public:
 
       HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
 
+      NetworkingClient::Tick();
+
       EventsApi::SendEvent("tick", {});
     } catch (const std::exception& e) {
       ExceptionPrinter::Print(e);
@@ -115,7 +118,7 @@ public:
   void Update() override
   {
     try {
-      GetJsEngine();
+      GetJsEngine(); //init js engine
       taskQueue.Update();
       nativeCallRequirements.jsThrQ->Update();
       jsPromiseTaskQueue.Update();
@@ -187,7 +190,7 @@ private:
                            EncodingApi::Register(e);
                            LoadGameApi::Register(e);
                            CameraApi::Register(e);
-                           MpClientPluginApi::Register(e);
+                           NetworkingClientApi::Register(e);
                            HttpClientApi::Register(e);
                            ConsoleApi::Register(e);
                            DevApi::Register(e, engine, {}, GetFileDirs());

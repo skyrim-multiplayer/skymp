@@ -1,4 +1,6 @@
-#include "MpClientPlugin.h"
+#ifdef _SP_WITH_NETWORKING_CLIENT
+
+#include "NetworkingClient.h"
 
 #include <vector>
 
@@ -8,35 +10,38 @@
 
 #include <nlohmann/json.hpp>
 
-void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
+NetworkingClient::State& GetState()
+{
+    static NetworkingClient::State state;
+    return state;
+}
+
+void NetworkingClient::Create(const char* targetHostname,
                                   uint16_t targetPort)
 {
-  state.cl = Networking::CreateClient(targetHostname, targetPort);
+  GetState().cl = Networking::CreateClient(targetHostname, targetPort);
 }
 
-void MpClientPlugin::DestroyClient(State& state)
+void NetworkingClient::Destroy()
 {
-  state.cl.reset();
+  GetState().cl.reset();
 }
 
-bool MpClientPlugin::IsConnected(State& state)
+bool NetworkingClient::IsConnected()
 {
+  auto state = GetState();
   return state.cl && state.cl->IsConnected();
 }
 
-void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
+void NetworkingClient::Tick()
 {
+  auto state = GetState();
   if (!state.cl)
     return;
-
-  std::pair<OnPacket, void*> packetAndState(onPacket, state_);
 
   state.cl->Tick(
     [](void* rawState, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
-      const auto& [onPacket, state] =
-        *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
-
       std::string jsonContent;
 
       if (packetType == Networking::PacketType::Message && length > 1) {
@@ -53,14 +58,27 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
         }
       }
 
-      onPacket(static_cast<int32_t>(packetType), jsonContent.data(), error,
-               state);
-    },
-    &packetAndState);
+      GetState().queue.push({ packetType, jsonContent, error });
+    }, nullptr);
 }
 
-void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
+void NetworkingClient::HandlePackets(OnPacket onPacket, void* state_) {
+    auto state = GetState();
+    if (!state.cl) {
+        // TODO(#263): we probably should log something here
+        return;
+    }
+
+    while (state.queue.empty()) {
+        auto packet = state.queue.front();
+        onPacket(static_cast<int32_t>(packet.type), packet.data.data(), packet.err.data(), &state_);
+        state.queue.pop();
+    }
+}
+
+void NetworkingClient::Send(const char* jsonContent, bool reliable)
 {
+  auto state = GetState();
   if (!state.cl) {
     // TODO(#263): we probably should log something here
     return;
@@ -91,3 +109,4 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
 
   state.cl->Send(buf.data(), buf.size(), reliable);
 }
+#endif

@@ -52,15 +52,14 @@ export declare function worldPointToScreenPoint(...args: number[][]): number[][]
 export type PacketType = 'message' | 'disconnect' | 'connectionAccepted' | 'connectionFailed' | 'connectionDenied'
 
 // Available only if multiplayer is installed on user's machine
-interface MpClientPlugin {
-  getVersion(): string
-  createClient(host: string, port: number): void
-  destroyClient(): void
+interface NetworkingClient {
+  create(host: string, port: number): void
+  destroy(): void
   isConnected(): boolean
-  tick(tickHandler: (packetType: PacketType, jsonContent: string, error: string) => void): void
+  handlePackets(handler: (packetType: PacketType, jsonContent: string, error: string) => void): void
   send(jsonContent: string, reliable: boolean): void
 }
-export declare let mpClientPlugin: MpClientPlugin
+export declare let networkingClient: NetworkingClient
 
 export interface Browser {
   setVisible(visible: boolean): void

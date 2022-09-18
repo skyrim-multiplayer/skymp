@@ -87,7 +87,7 @@ export const start = (): void => {
     dt += Date.now() - lastDt;
     lastDt = Date.now();
 
-    const isConnected = sp.mpClientPlugin.isConnected();
+    const isConnected = sp.networkingClient.isConnected();
     sp.setTextString(textIds.connectionStateTextId, `${isConnected ? "ON" : "OFF"}`);
     sp.setTextColor(textIds.connectionStateTextId, isConnected ? greenARGB : redARGB);
 

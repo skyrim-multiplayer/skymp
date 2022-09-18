@@ -1,4 +1,4 @@
-import { mpClientPlugin, PacketType } from "skyrimPlatform";
+import { networkingClient, PacketType } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
 
 type Handler = (messageOrError: Record<string, unknown> | string) => void;
@@ -12,12 +12,12 @@ const createClientSafe = (hostname: string, port: number): void => {
   // It causes assertion failure in Debug mode, but doesn't lead to anything on a regular player's machine.
   // It seems that this function will be called with the valid parameters later
   if (hostname !== "" && lastPort !== 0) {
-    mpClientPlugin.createClient(hostname, port);
+    networkingClient.create(hostname, port);
   }
 };
 
 sp.on("tick", () => {
-  mpClientPlugin.tick((packetType, jsonContent, error) => {
+  networkingClient.handlePackets((packetType, jsonContent, error) => {
     const handlers = handlersMap.get(packetType) || [];
     handlers.forEach((handler) => {
       const parse = () => {
@@ -38,8 +38,10 @@ export const connect = (hostname: string, port: number): void => {
   createClientSafe(hostname, port);
 };
 
+export const reconnect = (): void => createClientSafe(lastHostname, lastPort);
+
 export const close = (): void => {
-  mpClientPlugin.destroyClient();
+  networkingClient.destroy();
 };
 
 export const on = (packetType: PacketType, handler: Handler): void => {
@@ -50,11 +52,5 @@ export const on = (packetType: PacketType, handler: Handler): void => {
 
 export const send = (msg: Record<string, unknown>, reliable: boolean): void => {
   // TODO(#175): JS object instead of JSON?
-  mpClientPlugin.send(JSON.stringify(msg), reliable);
+  networkingClient.send(JSON.stringify(msg), reliable);
 };
-
-// Reconnect automatically
-export const reconnect = (): void => createClientSafe(lastHostname, lastPort);
-on("connectionFailed", reconnect);
-on("connectionDenied", reconnect);
-on("disconnect", reconnect);
