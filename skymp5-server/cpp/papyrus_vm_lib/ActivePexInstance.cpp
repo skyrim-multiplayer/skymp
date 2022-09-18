@@ -488,7 +488,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        throw std::runtime_error("Caught an exception in default");
+          assert(0);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
