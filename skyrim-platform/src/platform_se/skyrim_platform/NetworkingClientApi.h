@@ -14,10 +14,10 @@ inline void Register(JsValue& exports)
 #ifdef _SP_WITH_NETWORKING_CLIENT
   auto networkingClient = JsValue::Object();
   networkingClient.SetProperty("create", JsValue::Function(Create));
-  networkingClient.SetProperty("destroy",
-                             JsValue::Function(Destroy));
+  networkingClient.SetProperty("destroy", JsValue::Function(Destroy));
   networkingClient.SetProperty("isConnected", JsValue::Function(IsConnected));
-  networkingClient.SetProperty("handlePackets", JsValue::Function(HandlePackets));
+  networkingClient.SetProperty("handlePackets",
+                               JsValue::Function(HandlePackets));
   networkingClient.SetProperty("send", JsValue::Function(Send));
   exports.SetProperty("networkingClient", networkingClient);
 

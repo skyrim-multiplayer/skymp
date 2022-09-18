@@ -2,17 +2,18 @@
 
 #ifdef _SP_WITH_NETWORKING_CLIENT
 
-#include "Networking.h"
-#include <cstdint>
+#  include "Networking.h"
+#  include <cstdint>
 
 namespace NetworkingClient {
 typedef void (*OnPacket)(int32_t type, const char* jsonContent,
                          const char* error, void* state_);
 
-struct Packet {
-    Networking::PacketType  type;
-    std::string data;
-    std::string err;
+struct Packet
+{
+  Networking::PacketType type;
+  std::string data;
+  std::string err;
 };
 
 struct State

@@ -1,23 +1,22 @@
 #ifdef _SP_WITH_NETWORKING_CLIENT
 
-#include "NetworkingClient.h"
+#  include "NetworkingClient.h"
 
-#include <vector>
+#  include <vector>
 
-#include "MovementMessage.h"
-#include "MovementMessageSerialization.h"
-#include "MsgType.h"
+#  include "MovementMessage.h"
+#  include "MovementMessageSerialization.h"
+#  include "MsgType.h"
 
-#include <nlohmann/json.hpp>
+#  include <nlohmann/json.hpp>
 
 NetworkingClient::State& GetState()
 {
-    static NetworkingClient::State state;
-    return state;
+  static NetworkingClient::State state;
+  return state;
 }
 
-void NetworkingClient::Create(const char* targetHostname,
-                                  uint16_t targetPort)
+void NetworkingClient::Create(const char* targetHostname, uint16_t targetPort)
 {
   GetState().cl = Networking::CreateClient(targetHostname, targetPort);
 }
@@ -59,21 +58,24 @@ void NetworkingClient::Tick()
       }
 
       GetState().queue.push({ packetType, jsonContent, error });
-    }, nullptr);
+    },
+    nullptr);
 }
 
-void NetworkingClient::HandlePackets(OnPacket onPacket, void* state_) {
-    auto state = GetState();
-    if (!state.cl) {
-        // TODO(#263): we probably should log something here
-        return;
-    }
+void NetworkingClient::HandlePackets(OnPacket onPacket, void* state_)
+{
+  auto state = GetState();
+  if (!state.cl) {
+    // TODO(#263): we probably should log something here
+    return;
+  }
 
-    while (state.queue.empty()) {
-        auto packet = state.queue.front();
-        onPacket(static_cast<int32_t>(packet.type), packet.data.data(), packet.err.data(), &state_);
-        state.queue.pop();
-    }
+  while (state.queue.empty()) {
+    auto packet = state.queue.front();
+    onPacket(static_cast<int32_t>(packet.type), packet.data.data(),
+             packet.err.data(), &state_);
+    state.queue.pop();
+  }
 }
 
 void NetworkingClient::Send(const char* jsonContent, bool reliable)

@@ -11,9 +11,9 @@
 #include "FileInfoApi.h"
 #include "HttpClient.h"
 #include "HttpClientApi.h"
-#include "NetworkingClient.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
+#include "NetworkingClient.h"
 #include "NetworkingClientApi.h"
 #include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
@@ -71,7 +71,7 @@ public:
   void Tick() override
   {
     try {
-      GetJsEngine(); //init js engine
+      GetJsEngine(); // init js engine
 
       auto fileDirs = GetFileDirs();
 
@@ -120,7 +120,7 @@ public:
   void Update() override
   {
     try {
-      GetJsEngine(); //init js engine
+      GetJsEngine(); // init js engine
       taskQueue.Update();
       nativeCallRequirements.jsThrQ->Update();
       jsPromiseTaskQueue.Update();

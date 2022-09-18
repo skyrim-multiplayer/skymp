@@ -1,6 +1,6 @@
 #ifdef _SP_WITH_NETWORKING_CLIENT
-#include "NetworkingClientApi.h"
-#include "NetworkingClient.h"
+#  include "NetworkingClientApi.h"
+#  include "NetworkingClient.h"
 
 namespace {
 const char* GetPacketTypeName(int32_t type)
@@ -50,14 +50,12 @@ JsValue NetworkingClientApi::HandlePackets(const JsFunctionArguments& args)
 {
   auto onPacket = args[1];
   NetworkingClient::HandlePackets(
-      [](int32_t type, const char* jsonContent, const char* error, void* state) {
-          auto onPacket = reinterpret_cast<JsValue*>(state);
-          onPacket->Call(
-              { JsValue::Undefined(), GetPacketTypeName(type), jsonContent, error }
-          );
-      },
-      &onPacket
-  );
+    [](int32_t type, const char* jsonContent, const char* error, void* state) {
+      auto onPacket = reinterpret_cast<JsValue*>(state);
+      onPacket->Call(
+        { JsValue::Undefined(), GetPacketTypeName(type), jsonContent, error });
+    },
+    &onPacket);
   return JsValue::Undefined();
 }
 
