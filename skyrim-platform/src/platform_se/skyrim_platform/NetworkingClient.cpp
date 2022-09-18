@@ -43,8 +43,8 @@ void NetworkingClient::Tick(OnPacket onPacket, void* state_)
   state.cl->Tick(
     [](void* rawState, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
-            const auto& [onPacket, state] =
-                *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
+      const auto& [onPacket, state] =
+        *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
 
       std::string jsonContent;
 
@@ -63,7 +63,7 @@ void NetworkingClient::Tick(OnPacket onPacket, void* state_)
       }
 
       onPacket(static_cast<int32_t>(packetType), jsonContent.data(), error,
-          state);
+               state);
     },
     &packetAndState);
 }

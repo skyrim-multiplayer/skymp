@@ -16,8 +16,7 @@ inline void Register(JsValue& exports)
   networkingClient.SetProperty("create", JsValue::Function(Create));
   networkingClient.SetProperty("destroy", JsValue::Function(Destroy));
   networkingClient.SetProperty("isConnected", JsValue::Function(IsConnected));
-  networkingClient.SetProperty("tick",
-                               JsValue::Function(Tick));
+  networkingClient.SetProperty("tick", JsValue::Function(Tick));
   networkingClient.SetProperty("send", JsValue::Function(Send));
   exports.SetProperty("networkingClient", networkingClient);
 
