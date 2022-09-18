@@ -107,7 +107,9 @@ public:
 
       HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
 
+#ifdef _SP_WITH_NETWORKING_CLIENT
       NetworkingClient::Tick();
+#endif
 
       EventsApi::SendEvent("tick", {});
     } catch (const std::exception& e) {
