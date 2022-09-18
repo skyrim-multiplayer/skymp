@@ -488,7 +488,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-          assert(0);
+        assert(0);
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
