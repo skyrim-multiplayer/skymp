@@ -5,7 +5,7 @@ namespace NetworkingClientApi {
 JsValue Create(const JsFunctionArguments& args);
 JsValue Destroy(const JsFunctionArguments& args);
 JsValue IsConnected(const JsFunctionArguments& args);
-JsValue HandlePackets(const JsFunctionArguments& args);
+JsValue Tick(const JsFunctionArguments& args);
 JsValue Send(const JsFunctionArguments& args);
 #endif
 
@@ -16,8 +16,8 @@ inline void Register(JsValue& exports)
   networkingClient.SetProperty("create", JsValue::Function(Create));
   networkingClient.SetProperty("destroy", JsValue::Function(Destroy));
   networkingClient.SetProperty("isConnected", JsValue::Function(IsConnected));
-  networkingClient.SetProperty("handlePackets",
-                               JsValue::Function(HandlePackets));
+  networkingClient.SetProperty("tick",
+                               JsValue::Function(Tick));
   networkingClient.SetProperty("send", JsValue::Function(Send));
   exports.SetProperty("networkingClient", networkingClient);
 

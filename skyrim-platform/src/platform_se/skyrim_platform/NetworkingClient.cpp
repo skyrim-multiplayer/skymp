@@ -32,15 +32,20 @@ bool NetworkingClient::IsConnected()
   return state.cl && state.cl->IsConnected();
 }
 
-void NetworkingClient::Tick()
+void NetworkingClient::Tick(OnPacket onPacket, void* state_)
 {
   auto state = GetState();
   if (!state.cl)
     return;
 
+  std::pair<OnPacket, void*> packetAndState(onPacket, state_);
+
   state.cl->Tick(
     [](void* rawState, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
+            const auto& [onPacket, state] =
+                *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
+
       std::string jsonContent;
 
       if (packetType == Networking::PacketType::Message && length > 1) {
@@ -57,25 +62,10 @@ void NetworkingClient::Tick()
         }
       }
 
-      GetState().queue.push({ packetType, jsonContent, error });
+      onPacket(static_cast<int32_t>(packetType), jsonContent.data(), error,
+          state);
     },
-    nullptr);
-}
-
-void NetworkingClient::HandlePackets(OnPacket onPacket, void* state_)
-{
-  auto state = GetState();
-  if (!state.cl) {
-    // TODO(#263): we probably should log something here
-    return;
-  }
-
-  while (state.queue.empty()) {
-    auto packet = state.queue.front();
-    onPacket(static_cast<int32_t>(packet.type), packet.data.data(),
-             packet.err.data(), &state_);
-    state.queue.pop();
-  }
+    &packetAndState);
 }
 
 void NetworkingClient::Send(const char* jsonContent, bool reliable)

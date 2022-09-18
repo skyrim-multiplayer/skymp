@@ -25,8 +25,7 @@ struct State
 void Create(const char* targetHostname, uint16_t targetPort);
 void Destroy();
 bool IsConnected();
-void Tick();
-void HandlePackets(OnPacket onPacket, void* state_);
+void Tick(OnPacket onPacket, void* state_);
 void Send(const char* jsonContent, bool reliable);
 };
 

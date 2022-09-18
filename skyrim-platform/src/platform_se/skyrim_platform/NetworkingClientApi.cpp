@@ -46,10 +46,10 @@ JsValue NetworkingClientApi::IsConnected(const JsFunctionArguments& args)
   return JsValue::Bool(res);
 }
 
-JsValue NetworkingClientApi::HandlePackets(const JsFunctionArguments& args)
+JsValue NetworkingClientApi::Tick(const JsFunctionArguments& args)
 {
   auto onPacket = args[1];
-  NetworkingClient::HandlePackets(
+  NetworkingClient::Tick(
     [](int32_t type, const char* jsonContent, const char* error, void* state) {
       auto onPacket = reinterpret_cast<JsValue*>(state);
       onPacket->Call(

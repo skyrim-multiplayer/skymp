@@ -17,7 +17,7 @@ const createClientSafe = (hostname: string, port: number): void => {
 };
 
 sp.on("tick", () => {
-  networkingClient.handlePackets((packetType, jsonContent, error) => {
+  networkingClient.tick((packetType, jsonContent, error) => {
     const handlers = handlersMap.get(packetType) || [];
     handlers.forEach((handler) => {
       const parse = () => {

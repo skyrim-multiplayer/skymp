@@ -56,7 +56,7 @@ interface NetworkingClient {
   create(host: string, port: number): void
   destroy(): void
   isConnected(): boolean
-  handlePackets(handler: (packetType: PacketType, jsonContent: string, error: string) => void): void
+  tick(tickHandler: (packetType: PacketType, jsonContent: string, error: string) => void): void
   send(jsonContent: string, reliable: boolean): void
 }
 export declare let networkingClient: NetworkingClient
