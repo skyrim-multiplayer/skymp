@@ -19,7 +19,6 @@ inline void Register(JsValue& exports)
   networkingClient.SetProperty("tick", JsValue::Function(Tick));
   networkingClient.SetProperty("send", JsValue::Function(Send));
   exports.SetProperty("networkingClient", networkingClient);
-
 #endif
 }
 }

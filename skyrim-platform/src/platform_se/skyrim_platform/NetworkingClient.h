@@ -9,16 +9,9 @@ namespace NetworkingClient {
 typedef void (*OnPacket)(int32_t type, const char* jsonContent,
                          const char* error, void* state_);
 
-struct Packet
-{
-  Networking::PacketType type;
-  std::string data;
-  std::string err;
-};
-
 struct State
 {
-  std::shared_ptr<Networking::IClient> cl;
+  std::shared_ptr<Networking::IClient> client;
   std::queue<Packet> queue;
 };
 

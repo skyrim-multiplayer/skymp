@@ -18,29 +18,29 @@ NetworkingClient::State& GetState()
 
 void NetworkingClient::Create(const char* targetHostname, uint16_t targetPort)
 {
-  GetState().cl = Networking::CreateClient(targetHostname, targetPort);
+  GetState().client = Networking::CreateClient(targetHostname, targetPort);
 }
 
 void NetworkingClient::Destroy()
 {
-  GetState().cl.reset();
+  GetState().client.reset();
 }
 
 bool NetworkingClient::IsConnected()
 {
   auto state = GetState();
-  return state.cl && state.cl->IsConnected();
+  return state.client && state.client->IsConnected();
 }
 
 void NetworkingClient::Tick(OnPacket onPacket, void* state_)
 {
   auto state = GetState();
-  if (!state.cl)
+  if (!state.client)
     return;
 
   std::pair<OnPacket, void*> packetAndState(onPacket, state_);
 
-  state.cl->Tick(
+  state.client->Tick(
     [](void* rawState, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
       const auto& [onPacket, state] =
@@ -71,7 +71,7 @@ void NetworkingClient::Tick(OnPacket onPacket, void* state_)
 void NetworkingClient::Send(const char* jsonContent, bool reliable)
 {
   auto state = GetState();
-  if (!state.cl) {
+  if (!state.client) {
     // TODO(#263): we probably should log something here
     return;
   }
@@ -89,7 +89,7 @@ void NetworkingClient::Send(const char* jsonContent, bool reliable)
     std::copy(stream.GetData(),
               stream.GetData() + stream.GetNumberOfBytesUsed(),
               buf.begin() + 2);
-    state.cl->Send(buf.data(), buf.size(), reliable);
+    state.client->Send(buf.data(), buf.size(), reliable);
 
     return;
   }
@@ -99,6 +99,6 @@ void NetworkingClient::Send(const char* jsonContent, bool reliable)
   buf[0] = Networking::MinPacketId;
   memcpy(buf.data() + 1, jsonContent, n);
 
-  state.cl->Send(buf.data(), buf.size(), reliable);
+  state.client->Send(buf.data(), buf.size(), reliable);
 }
 #endif
