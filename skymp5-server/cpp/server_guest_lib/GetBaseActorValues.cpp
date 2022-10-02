@@ -18,11 +18,11 @@ void BaseActorValues::VisitBaseActorValues(BaseActorValues& baseActorValues,
   visitor("magickaRateMult",
           std::to_string(baseActorValues.magickaRateMult).c_str());
   visitor("healthPercentage",
-          std::to_string(changeForm.healthPercentage).c_str());
+          std::to_string(changeForm.actorValues.healthPercentage).c_str());
   visitor("staminaPercentage",
-          std::to_string(changeForm.staminaPercentage).c_str());
+          std::to_string(changeForm.actorValues.staminaPercentage).c_str());
   visitor("magickaPercentage",
-          std::to_string(changeForm.magickaPercentage).c_str());
+          std::to_string(changeForm.actorValues.magickaPercentage).c_str());
 }
 
 float BaseActorValues::GetValue(espm::ActorValue av)
@@ -58,11 +58,12 @@ BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,
   auto npcData = espm::GetData<espm::NPC_>(baseId, worldState);
   uint32_t raceID = raceIdOverride ? raceIdOverride : npcData.race;
   auto raceData = espm::GetData<espm::RACE>(raceID, worldState);
-
-  return { raceData.startingHealth + npcData.healthOffset,
-           raceData.startingMagicka + npcData.magickaOffset,
-           raceData.startingStamina + npcData.staminaOffset,
-           raceData.healRegen,
-           raceData.magickaRegen,
-           raceData.staminaRegen };
+  BaseActorValues actorValues;
+  actorValues.health = raceData.startingHealth + npcData.healthOffset;
+  actorValues.magicka = raceData.startingMagicka + npcData.magickaOffset;
+  actorValues.stamina = raceData.startingStamina + npcData.staminaOffset;
+  actorValues.healRate = raceData.healRegen;
+  actorValues.magickaRate = raceData.magickaRegen;
+  actorValues.staminaRate = raceData.staminaRegen;
+  return actorValues;
 }
