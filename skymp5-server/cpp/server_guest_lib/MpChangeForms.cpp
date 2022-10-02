@@ -34,9 +34,12 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     res["equipmentDump"] = nlohmann::json::parse(changeForm.equipmentDump);
   }
 
-  res["healthPercentage"] = changeForm.healthPercentage;
-  res["magickaPercentage"] = changeForm.magickaPercentage;
-  res["staminaPercentage"] = changeForm.staminaPercentage;
+  res["healthPercentage"] = changeForm.actorValues.healthPercentage;
+  res["magickaPercentage"] = changeForm.actorValues.magickaPercentage;
+  res["staminaPercentage"] = changeForm.actorValues.staminaPercentage;
+  res["healRate"] = changeForm.actorValues.healRate;
+  res["magickaRate"] = changeForm.actorValues.magickaRate;
+  res["staminaRate"] = changeForm.actorValues.staminaRate;
 
   res["isDead"] = changeForm.isDead;
 
@@ -67,7 +70,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     staminaPercentage("staminaPercentage"), isDead("isDead"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay");
+    spawnDelay("spawnDelay"), healRate("healRate"), magickaRate("magickaRate"),
+    staminaRate("staminaRate");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -117,9 +121,12 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     res.equipmentDump.clear();
   }
 
-  ReadEx(element, healthPercentage, &res.healthPercentage);
-  ReadEx(element, magickaPercentage, &res.magickaPercentage);
-  ReadEx(element, staminaPercentage, &res.staminaPercentage);
+  ReadEx(element, healthPercentage, &res.actorValues.healthPercentage);
+  ReadEx(element, magickaPercentage, &res.actorValues.magickaPercentage);
+  ReadEx(element, staminaPercentage, &res.actorValues.staminaPercentage);
+  ReadEx(element, healRate, &res.actorValues.healRate);
+  ReadEx(element, magickaRate, &res.actorValues.magickaRate);
+  ReadEx(element, staminaRate, &res.actorValues.staminaRate);
   ReadEx(element, isDead, &res.isDead);
 
   simdjson::dom::element jDynamicFields;
