@@ -27,9 +27,12 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   changeForm.equipmentDump = R"({"inv": {"entries":[]}})";
   changeForm.appearanceDump = Appearance().ToJson();
   changeForm.recType = MpChangeForm::ACHR;
-  changeForm.healthPercentage = 1.0f;
-  changeForm.magickaPercentage = 0.9f;
-  changeForm.staminaPercentage = 0.0f;
+  changeForm.actorValues.healthPercentage = 1.0f;
+  changeForm.actorValues.magickaPercentage = 0.9f;
+  changeForm.actorValues.staminaPercentage = 0.0f;
+  changeForm.actorValues.healRate = 9.f;
+  changeForm.actorValues.magickaRate = 2.f;
+  changeForm.actorValues.staminaRate = 3.f;
   changeForm.isDead = true;
   changeForm.spawnPoint.cellOrWorldDesc.file = "yay";
   changeForm.spawnPoint.cellOrWorldDesc.shortFormId = 0xDEAD;
@@ -43,9 +46,12 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   REQUIRE(actor.GetChangeForm().isRaceMenuOpen == true);
   REQUIRE(actor.GetChangeForm().equipmentDump == R"({"inv": {"entries":[]}})");
   REQUIRE(actor.GetChangeForm().appearanceDump == Appearance().ToJson());
-  REQUIRE(actor.GetChangeForm().healthPercentage == 1.0f);
-  REQUIRE(actor.GetChangeForm().magickaPercentage == 0.9f);
-  REQUIRE(actor.GetChangeForm().staminaPercentage == 0.0f);
+  REQUIRE(actor.GetChangeForm().actorValues.healthPercentage == 1.0f);
+  REQUIRE(actor.GetChangeForm().actorValues.magickaPercentage == 0.9f);
+  REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.0f);
+  REQUIRE(actor.GetChangeForm().actorValues.healRate == 9.f);
+  REQUIRE(actor.GetChangeForm().actorValues.magickaRate == 2.f);
+  REQUIRE(actor.GetChangeForm().actorValues.staminaRate == 3.f);
   REQUIRE(actor.GetChangeForm().isDead == true);
   REQUIRE(actor.GetChangeForm().spawnPoint.cellOrWorldDesc.file == "yay");
   REQUIRE(actor.GetChangeForm().spawnPoint.cellOrWorldDesc.shortFormId ==
