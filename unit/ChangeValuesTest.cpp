@@ -124,8 +124,8 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
 
   REQUIRE_THAT(changeForm.actorValues.healthPercentage,
                Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.000001f));
-  // REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
-  //              Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
+  REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
+               Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
   REQUIRE_THAT(changeForm.actorValues.staminaPercentage,
                Catch::Matchers::WithinAbs(expectedStamina, 0.000001f));
 
