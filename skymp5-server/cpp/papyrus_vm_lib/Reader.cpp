@@ -269,7 +269,7 @@ VarValue Reader::FillVariableData()
       Read32_bit();
       break;
     default:
-      throw std::runtime_error("Wrong Type");
+      throw std::runtime_error("failed to populate variables with data");
   }
 
   return Data;
