@@ -1,5 +1,6 @@
 #include "OpcodesImplementation.h"
 #include "VirtualMachine.h"
+#include <stdexcept>
 
 ActivePexInstance::ActivePexInstance()
 {
@@ -46,7 +47,7 @@ std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
   }
 
   if (nameNeedScript != "")
-    assert(0);
+    throw std::runtime_error("nameNeedScript empty");
   return nullptr;
 }
 
@@ -201,7 +202,7 @@ VarValue ActivePexInstance::CastToString(const VarValue& var)
       }
     }
     case var.kType_Identifier:
-      assert(false);
+      throw std::runtime_error("Failed get type indentifier");
       return VarValue();
 
     case var.kType_Integer:
@@ -649,7 +650,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(0);
+            throw std::runtime_error("Failed to process op_Array_Create");
         }
 
         break;
@@ -672,7 +673,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             (*opCode[line].second[1])
               .pArray->at((int32_t)(*opCode[line].second[2]));
         } else {
-          assert(0);
+          throw std::runtime_error("Failed to process op_Array_GetElement");
         }
         break;
 
@@ -683,7 +684,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             .pArray->at((int32_t)(*opCode[line].second[1])) =
             *opCode[line].second[2];
         } else {
-          assert(0);
+          throw std::runtime_error("Failed to process op_Array_SetElement");
         }
         break;
 
