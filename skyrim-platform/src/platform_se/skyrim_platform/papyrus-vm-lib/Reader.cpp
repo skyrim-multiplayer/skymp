@@ -1,5 +1,4 @@
 #include "Reader.h"
-#include <exception>
 
 void Reader::Read()
 {
@@ -288,7 +287,7 @@ VarValue Reader::FillVariableData()
       Read32_bit();
       break;
     default:
-      throw std::runtime_error("Wrong Type");
+      throw std::runtime_error("invalid type received");
   }
 
   return Data;
