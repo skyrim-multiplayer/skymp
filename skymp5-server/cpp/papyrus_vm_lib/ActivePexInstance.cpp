@@ -142,7 +142,7 @@ VarValue CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-      assert(false);
+      throw runtime_error("Wrong type indentifier");
       return VarValue();
     case VarValue::kType_String:
       return var;
