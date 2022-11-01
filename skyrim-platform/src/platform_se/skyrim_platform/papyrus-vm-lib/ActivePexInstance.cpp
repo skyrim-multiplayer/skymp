@@ -650,7 +650,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-            throw std::runtime_error("Failed to process op_Array_Create");
+          throw std::runtime_error("Failed to process op_Array_Create");
         }
 
         break;
