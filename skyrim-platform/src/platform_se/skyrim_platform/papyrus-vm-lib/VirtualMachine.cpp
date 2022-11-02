@@ -91,7 +91,7 @@ VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
   if (function.valid) {
     return instance->StartFunction(function, arguments);
   }
-  assert(false);
+  throw std::runtime_error("Function isn't valid");
   return VarValue::None();
 }
 
