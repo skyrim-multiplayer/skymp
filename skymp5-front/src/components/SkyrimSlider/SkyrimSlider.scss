@@ -1,0 +1,63 @@
+.skyrimSlider {
+  position: relative;
+  display: flex;
+  font-family: 'Bankir-Retro', sans-serif;
+  font-size: 32px;
+  color: rgba(157, 158, 158, 0.63);
+  flex-direction: column;
+  height: 138px;
+  &_slider {
+    margin-top: 24px;
+  }
+  &_track {
+    height: 40px;
+    position: relative;
+    vertical-align: middle;
+    margin-left: 2px;
+    margin-right: 24px;
+    margin-top: -20px;
+    &-0 {
+      margin-left: 3px;
+    }
+    &_inner {
+      background: rgba(157, 158, 158, 0.63);
+      height: 2px;
+      margin-top: 20px;
+    }
+  }
+  &_thumb {
+    background: #9D9E9E;
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    margin-left: -12px  ;
+    top: calc(50% - 12px);
+  }
+  &_mark {
+    margin-right: -12px;
+    vertical-align: middle;
+    background: rgba(157, 158, 158, 0.63);
+    display: flex;
+    &.even {
+      width: 3px;
+      bottom: calc(50% - 8px);
+      height: 15px;
+    }
+    &.odd {
+      width: 2px;
+      bottom: calc(50% - 5px);
+      height: 8px;
+    }
+    &__number {
+      font-size: 32px;
+      color: rgba(157, 158, 158, 0.63);
+      margin-top: 12px;
+      margin-left: -12px;
+    }
+  }
+  .slider {
+    height: 20px;
+    margin: auto;
+    width: 100%;
+  }
+}
