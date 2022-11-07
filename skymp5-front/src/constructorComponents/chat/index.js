@@ -75,7 +75,7 @@ const Chat = (props) => {
     node?.addEventListener('keydown', listener);
     return () => node?.removeEventListener('keydown', listener);
     // eslint-disable-next-line
-  }, [inputRef.current])
+  }, [inputRef.current]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
