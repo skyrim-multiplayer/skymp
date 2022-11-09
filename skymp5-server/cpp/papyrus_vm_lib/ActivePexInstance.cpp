@@ -202,7 +202,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        assert(false);
+        throw std::runtime_error("Failed to get element array at String");
     }
 
     if (i < array.pArray->size() - 1)
@@ -696,7 +696,7 @@ uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
     return VarValue::kType_Bool;
   }
   if (typeRef == "identifier") {
-    assert(0);
+      throw std::runtime_error("Typeref got type indentifer (catched exception in GetTypeByName)");
   }
   if (typeRef == "string[]") {
     return VarValue::kType_StringArray;
