@@ -142,7 +142,7 @@ VarValue CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-       throw std::runtime_error("Failed to cast type_Indentifier to String");
+      throw std::runtime_error("Failed to cast type_Indentifier to String");
       return VarValue();
     case VarValue::kType_String:
       return var;
@@ -202,7 +202,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-          throw std::runtime_error("Failed to get element array at String");
+        throw std::runtime_error("Failed to get element array at String");
     }
 
     if (i < array.pArray->size() - 1)
@@ -453,7 +453,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-         throw std::runtime_error("Papyrus VM: null argument for op_PropGet opcode");
+        throw std::runtime_error(
+          "Papyrus VM: null argument for op_PropGet opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -474,7 +475,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-           throw std::runtime_error(
+        throw std::runtime_error(
           "Papyrus VM: null argument for op_PropSet opcode");
       }
       break;
@@ -487,7 +488,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-          throw std::runtime_error(
+        throw std::runtime_error(
           "Papyrus VM: null argument for op_Array_Create opcode");
       }
       break;
@@ -513,7 +514,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
       } else {
-          throw std::runtime_error(
+        throw std::runtime_error(
           "Papyrus VM: null argument for op_Array_SetElement opcode");
       }
       break;
@@ -695,8 +696,7 @@ uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
     return VarValue::kType_Bool;
   }
   if (typeRef == "identifier") {
-     throw std::runtime_error(
-      "Typeref got type indentifer (catched exception in GetTypeByName)");
+    assert(false);
   }
   if (typeRef == "string[]") {
     return VarValue::kType_StringArray;
