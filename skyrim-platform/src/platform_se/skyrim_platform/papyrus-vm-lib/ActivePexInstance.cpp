@@ -201,7 +201,7 @@ VarValue ActivePexInstance::CastToString(const VarValue& var)
       }
     }
     case var.kType_Identifier:
-      throw std::runtime_error("Failed get type indentifier");
+      throw std::runtime_error("Failed cast type_indentifier to String");
       return VarValue();
 
     case var.kType_Integer:
@@ -291,7 +291,7 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
         break;
       }
       default:
-        throw std::runtime_error("Failed to get valid type");
+        throw std::runtime_error("Failed to get array of elements in string");
     }
 
     if (i < array.pArray->size() - 1)
