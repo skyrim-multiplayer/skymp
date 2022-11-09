@@ -609,6 +609,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           throw std::runtime_error(
             "(if) did not pass the test in case Opcodes::Op_PropGet");
         }
+
         break;
 
       case OpcodesImplementation::Opcodes::op_PropSet:
@@ -675,9 +676,11 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             (*opCode[line].second[1])
               .pArray->at((int32_t)(*opCode[line].second[2]));
         } else {
+          assert(0);
           throw std::runtime_error("(if) did not pass the test in case "
                                    "Opcodes::Op_Array_Get_Element");
         }
+
         break;
 
       case OpcodesImplementation::Opcodes::op_Array_SetElement:
@@ -690,6 +693,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           throw std::runtime_error(
             "(if) did not pass the test in case Opcodes::Op_Array_SetElement");
         }
+
         break;
 
       case OpcodesImplementation::Opcodes::op_Array_FindElement:
