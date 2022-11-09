@@ -708,7 +708,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
         break;
 
       default:
-         throw std::runtime_error(("Catched exception in default in switching (opCode[line].first)");
+        assert(false);
     }
 
     if (needReturn) {
