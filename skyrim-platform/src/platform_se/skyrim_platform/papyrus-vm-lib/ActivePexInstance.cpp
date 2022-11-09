@@ -606,7 +606,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(false);
+          throw std::runtime_error(
+            "(if) did not pass the test in case Opcodes::Op_PropGet");
         }
         break;
 
@@ -628,7 +629,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(false);
+          throw std::runtime_error(
+            "(if) did not pass the test in case Opcodes::Op_PropSet");
         }
         break;
 
@@ -649,7 +651,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(0);
+          throw std::runtime_error(
+            "(if) did not pass the test in case Opcodes::Op_Array_Create");
         }
 
         break;
@@ -672,7 +675,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             (*opCode[line].second[1])
               .pArray->at((int32_t)(*opCode[line].second[2]));
         } else {
-          assert(0);
+          throw std::runtime_error("(if) did not pass the test in case "
+                                   "Opcodes::Op_Array_Get_Element");
         }
         break;
 
@@ -683,7 +687,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             .pArray->at((int32_t)(*opCode[line].second[1])) =
             *opCode[line].second[2];
         } else {
-          assert(0);
+          throw std::runtime_error(
+            "(if) did not pass the test in case Opcodes::Op_Array_SetElement");
         }
         break;
 
@@ -748,7 +753,7 @@ uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
     return VarValue::kType_Bool;
   }
   if (typeRef == "identifier") {
-    assert(0);
+    throw std::runtime_error("TypeRef equals indetifier,GetTypeByName()");
   }
   if (typeRef == "string[]") {
     return VarValue::kType_StringArray;
