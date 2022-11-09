@@ -1,5 +1,4 @@
 #include "Validators.h"
-#include <stdexcept>
 
 bool ValidateFilename(std::string_view filename, bool allowDots)
 {
