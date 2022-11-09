@@ -696,7 +696,8 @@ uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
     return VarValue::kType_Bool;
   }
   if (typeRef == "identifier") {
-      throw std::runtime_error("Typeref got type indentifer (catched exception in GetTypeByName)");
+    throw std::runtime_error(
+      "Typeref got type indentifer (catched exception in GetTypeByName)");
   }
   if (typeRef == "string[]") {
     return VarValue::kType_StringArray;
