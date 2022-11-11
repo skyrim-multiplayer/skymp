@@ -75,9 +75,7 @@ std::string ActivePexInstance::GetActiveStateName() const
   try {
     var = variables->GetVariableByName("::State", *sourcePex.fn());
   } catch (...) {
-    assert(0 &&
-           "GetVariableByName must never throw when '::State' variable is "
-           "requested");
+    throw std::runtime_error("Failed to get variable by name");
   }
   if (!var)
     throw std::runtime_error(
@@ -166,8 +164,8 @@ VarValue CastToString(const VarValue& var)
     case VarValue::kType_BoolArray:
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
-      assert(false);
-      return VarValue();
+      throw std::runtime_error(
+        "Failed to get required type from var variable");
   }
 }
 
@@ -745,8 +743,7 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      assert(false);
-      return VarValue::kType_Object;
+      throw std::runtime_error("Failed to get array element uint8_t type");
   }
 
   return returnType;
@@ -778,8 +775,7 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
       break;
     default:
-      assert(false);
-      return VarValue::kType_ObjectArray;
+      throw std::runtime_error("Faield to get array type by element type");
   }
 
   return returnType;
