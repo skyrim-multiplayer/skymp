@@ -92,7 +92,6 @@ VarValue VirtualMachine::CallMethod(ActivePexInstance* instance,
     return instance->StartFunction(function, arguments);
   }
   throw std::runtime_error("Function isn't valid");
-  return VarValue::None();
 }
 
 VarValue VirtualMachine::CallStatic(std::string className,
