@@ -78,8 +78,8 @@ std::string ActivePexInstance::GetActiveStateName() const
     throw std::runtime_error("Failed to get variable by name");
   }
   if (!var)
-    throw std::runtime_error(
-      "'::State' variable doesn't exist in ActivePexInstance");
+    throw std::runtime_error("GetVariableByName should not throw for'::State' "
+                             "variable,but got error: + exc.what()");
   return static_cast<const char*>(*var);
 }
 
@@ -199,9 +199,10 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        throw std::runtime_error("Failed to get element array at String");
+        throw std::runtime_error(
+          "None of the type values ​​matched, catched exception in "
+          "::GetElementArrayAtString()");
     }
-
     if (i < array.pArray->size() - 1)
       returnValue += ", ";
     else
