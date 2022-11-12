@@ -75,11 +75,12 @@ std::string ActivePexInstance::GetActiveStateName() const
   try {
     var = variables->GetVariableByName("::State", *sourcePex.fn());
   } catch (...) {
-    throw std::runtime_error("Failed to get variable by name");
-  }
-  if (!var)
     throw std::runtime_error("GetVariableByName should not throw for'::State' "
                              "variable,but got error: + exc.what()");
+  }
+  if (!var)
+    throw std::runtime_error(
+      "Var equals nullptr,::GetActiveStateName catched exception ()");
   return static_cast<const char*>(*var);
 }
 
