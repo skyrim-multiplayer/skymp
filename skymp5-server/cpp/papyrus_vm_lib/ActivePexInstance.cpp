@@ -76,11 +76,11 @@ std::string ActivePexInstance::GetActiveStateName() const
     var = variables->GetVariableByName("::State", *sourcePex.fn());
   } catch (...) {
     throw std::runtime_error("GetVariableByName should not throw for'::State' "
-                             "variable,but got error: + exc.what()");
+                             "variable,but got error");
   }
   if (!var)
     throw std::runtime_error(
-      "Var equals nullptr,::GetActiveStateName catched exception ()");
+      "Papyrus VM: ::State variable doesn't exist in ActivePexInstance");
   return static_cast<const char*>(*var);
 }
 
@@ -488,7 +488,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         }
       } else {
         throw std::runtime_error(
-          "Papyrus VM: argument less than zero for op_Array_Create opcode");
+          "Papyrus VM: tried to create negative-sized array");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
