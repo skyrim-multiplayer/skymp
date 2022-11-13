@@ -3,7 +3,7 @@ set(CEF_URL "https://cef-builds.spotifycdn.com/cef_binary_107.1.9+g1f0a21a+chrom
 vcpkg_download_distfile(ARCHIVE
     URLS ${CEF_URL}
     FILENAME "cef.tar.bz2"
-    SHA1 382d9ad0205b99a88f92da79a1e424602704d51f 
+    SHA512 81e4ce641cbf44f35bc09ff471d1893b9ce037ce27f399af8898be429b745a8e0f5fa8cfa203965f55b74d335dec94f7be4b9a73b0f0fbe71b5fbab0f8116e49
 )
 
 vcpkg_extract_source_archive_ex(
