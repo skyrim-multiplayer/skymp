@@ -488,7 +488,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         }
       } else {
         throw std::runtime_error(
-          "Papyrus VM: null argument for op_Array_Create opcode");
+          "Papyrus VM:  argument for op_Array_Create opcode equals 0");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
