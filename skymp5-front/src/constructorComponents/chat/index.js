@@ -250,7 +250,6 @@ const Chat = (props) => {
                   <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
                 </div>
               </div>
-            }
           </div>
           {
             isInputHidden
