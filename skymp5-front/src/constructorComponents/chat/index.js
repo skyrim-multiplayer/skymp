@@ -193,9 +193,18 @@ const Chat = (props) => {
                 {getList()}
               </div>
             </ResizableBox>
-            {isInputHidden
-              ? <div style={{ height: '100px' }}></div>
-              : <div className='input'>
+                <div
+                  style={{
+                    height: '100px',
+                    display: !isInputHidden ? 'none' : 'block'
+                  }}
+                />
+                <div
+                  className='input'
+                  style={{
+                    display: isInputHidden ? 'none' : 'block'
+                  }}
+                >
                 <div className='chat-input'>
                   <ChatInput
                     id="chatInput"
