@@ -177,6 +177,6 @@ How to check that everything is working fine:
 Debugging a core dump:
 1. Attach to en existing container with a server (or create a new container
    with a similar setup) and run `gdb`:
-   `docker exec -it skymp-server-indev gdb /work/scam_native.node /var/crash/...`
+   `docker exec -it skymp-server-indev gdb /usr/bin/node /var/crash/...`
 2. Run `bt` to view a stack trace
 3. Have fun with debugging it...
