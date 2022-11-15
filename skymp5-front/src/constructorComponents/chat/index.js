@@ -193,63 +193,63 @@ const Chat = (props) => {
                 {getList()}
               </div>
             </ResizableBox>
-                <div
-                  style={{
-                    height: '100px',
-                    display: !isInputHidden ? 'none' : 'block'
-                  }}
+            <div
+              style={{
+                height: '100px',
+                display: !isInputHidden ? 'none' : 'block'
+              }}
+            />
+            <div
+              className='input'
+              style={{
+                display: isInputHidden ? 'none' : 'block'
+              }}
+            >
+              <div className='chat-input'>
+                <ChatInput
+                  id="chatInput"
+                  className={'show'}
+                  type="text"
+                  placeholder={placeholder !== undefined ? placeholder : ''}
+                  onChange={(value) => { updateInput(value); }}
+                  onFocus={(e) => changeInputFocus(true)}
+                  onBlur={(e) => changeInputFocus(false)}
+                  ref={inputRef}
+                  fontSize={fontSize}
                 />
-                <div
-                  className='input'
-                  style={{
-                    display: isInputHidden ? 'none' : 'block'
-                  }}
-                >
-                <div className='chat-input'>
-                  <ChatInput
-                    id="chatInput"
-                    className={'show'}
-                    type="text"
-                    placeholder={placeholder !== undefined ? placeholder : ''}
-                    onChange={(value) => { updateInput(value); }}
-                    onFocus={(e) => changeInputFocus(true)}
-                    onBlur={(e) => changeInputFocus(false)}
-                    ref={inputRef}
-                    fontSize={fontSize}
-                  />
-                  {
-                    showSendButton && <SendButton onClick={() => sendMessage()} />
-                  }
-                </div>
-                <div className='chat-checkboxes'>
-                  <ChatCheckbox
-                  id={'nonrp'}
-                  text={'non-rp'}
-                  isChecked={hideNonRP}
-                  onChange={(e) => {
-                    inputRef.current.focus();
-                    changeNonRPHide(e.target.checked);
-                  }} />
-                  <ChatCheckbox
-                  id={'settings'}
-                  text={'settings'}
-                  isChecked={isSettingsOpened}
-                  onChange={(e) => {
-                    inputRef.current.focus();
-                    setSettingsOpened(e.target.checked);
-                  }} />
-                  {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
-                  <ChatCheckbox
-                  id={'moveChat'}
-                  text={'move chat'}
-                  isChecked={moveChat}
-                  onChange={(e) => {
-                    inputRef.current.focus();
-                    setMoveChat(e.target.checked);
-                  }} />
-                  <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
-                </div>
+                {
+                  showSendButton && <SendButton onClick={() => sendMessage()} />
+                }
               </div>
+              <div className='chat-checkboxes'>
+                <ChatCheckbox
+                id={'nonrp'}
+                text={'non-rp'}
+                isChecked={hideNonRP}
+                onChange={(e) => {
+                  inputRef.current.focus();
+                  changeNonRPHide(e.target.checked);
+                }} />
+                <ChatCheckbox
+                id={'settings'}
+                text={'settings'}
+                isChecked={isSettingsOpened}
+                onChange={(e) => {
+                  inputRef.current.focus();
+                  setSettingsOpened(e.target.checked);
+                }} />
+                {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
+                <ChatCheckbox
+                id={'moveChat'}
+                text={'move chat'}
+                isChecked={moveChat}
+                onChange={(e) => {
+                  inputRef.current.focus();
+                  setMoveChat(e.target.checked);
+                }} />
+                <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
+              </div>
+            </div>
           </div>
           {
             isInputHidden
