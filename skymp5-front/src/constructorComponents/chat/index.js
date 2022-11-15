@@ -182,8 +182,8 @@ const Chat = (props) => {
               handle={
                  !isInputHidden &&
                  <div className='chat-corner'>
-                    <img src={ChatCorner} />
-                  </div>
+                   <img src={ChatCorner} />
+                 </div>
               }
               resizeHandles={['nw']}
               className={`list ${hideNonRP ? 'hideNonRP' : ''}`}
@@ -223,30 +223,30 @@ const Chat = (props) => {
               </div>
               <div className='chat-checkboxes'>
                 <ChatCheckbox
-                id={'nonrp'}
-                text={'non-rp'}
-                isChecked={hideNonRP}
-                onChange={(e) => {
-                  inputRef.current.focus();
-                  changeNonRPHide(e.target.checked);
-                }} />
+                  id={'nonrp'}
+                  text={'non-rp'}
+                  isChecked={hideNonRP}
+                  onChange={(e) => {
+                    inputRef.current.focus();
+                    changeNonRPHide(e.target.checked);
+                  }} />
                 <ChatCheckbox
-                id={'settings'}
-                text={'settings'}
-                isChecked={isSettingsOpened}
-                onChange={(e) => {
-                  inputRef.current.focus();
-                  setSettingsOpened(e.target.checked);
-                }} />
+                  id={'settings'}
+                  text={'settings'}
+                  isChecked={isSettingsOpened}
+                  onChange={(e) => {
+                    inputRef.current.focus();
+                    setSettingsOpened(e.target.checked);
+                  }} />
                 {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
                 <ChatCheckbox
-                id={'moveChat'}
-                text={'move chat'}
-                isChecked={moveChat}
-                onChange={(e) => {
-                  inputRef.current.focus();
-                  setMoveChat(e.target.checked);
-                }} />
+                  id={'moveChat'}
+                  text={'move chat'}
+                  isChecked={moveChat}
+                  onChange={(e) => {
+                    inputRef.current.focus();
+                    setMoveChat(e.target.checked);
+                  }} />
                 <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
               </div>
             </div>
