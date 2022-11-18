@@ -134,3 +134,10 @@ jobs:
         path: |
           ${{github.workspace}}/build/**/*.sln
           ${{github.workspace}}/build/**/*.vcxproj
+
+    - uses: actions/upload-artifact@v3
+      if: 'always()'
+      with:
+        name: vcpkg_include
+        path: |
+          ${{github.workspace}}/build/vcpkg_installed/*/include
