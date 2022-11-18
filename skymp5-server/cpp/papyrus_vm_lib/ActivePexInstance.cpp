@@ -526,7 +526,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                                *args[3]);
       break;
     default:
-      throw std::runtime_error("Unable to get type of first argument")
+      throw std::runtime_error("Args got an unknown type,to ::ExecuteOpCode");
   }
 }
 
