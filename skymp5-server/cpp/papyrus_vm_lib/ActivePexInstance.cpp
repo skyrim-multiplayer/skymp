@@ -453,7 +453,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         }
       } else {
         throw std::runtime_error(
-          "Papyrus VM: null argument for op_PropGet opcode");
+          "Papyrus VM: null argument for Opcodes::op_PropGet");
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -475,7 +475,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         }
       } else {
         throw std::runtime_error(
-          "Papyrus VM: null argument for op_PropSet opcode");
+          "Papyrus VM: null argument for Opcodes::op_PropSet");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -487,8 +487,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        throw std::runtime_error(
-          "Papyrus VM: tried to create negative-sized array");
+        throw std::runtime_error("Papyrus VM: tried to create negative-sized "
+                                 "array,Opcodes::op_Array_Create");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
@@ -526,7 +526,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                                *args[3]);
       break;
     default:
-      assert(0);
+      throw std::runtime_error("Unable to get type of first argument")
   }
 }
 
@@ -745,7 +745,8 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error("Failed to get array element uint8_t type");
+      throw std::runtime_error(
+        "Unable to get required type,to ::GetArrayElementType");
   }
 
   return returnType;
@@ -777,7 +778,8 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error("Faield to get array type by element type");
+      throw std::runtime_error(
+        "Unable to get required type,to ::GetArrayTypeByElementType");
   }
 
   return returnType;
