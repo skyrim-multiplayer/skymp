@@ -1,8 +1,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO Ryan-rsm-McKenzie/CommonLibSSE
-    REF 4bf99d0d8fc917dc803e3dc7668caa948a12b59c
-    SHA512 23ac8932f92da746f28930d7138b1f565f03dbf6e8a92284b70df1cd09f56bd8d7d924ee6ae84ad9cd84982dff4943d68186bc0347769f208c66650b62ebfbaa
+    REF 0e9d380b90950eb3ece1e5b95e3b6a379ee03f8e
+    SHA512 0
     HEAD_REF master
     PATCHES
       patches/objectrefr-make_moverefr_public.patch
