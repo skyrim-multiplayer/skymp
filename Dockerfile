@@ -9,7 +9,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN \
   apt-get update && apt-get install -y curl \
-  && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+  && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
   && apt-get update \
   && apt-get install -y nodejs yarn gdb \
   && rm -rf /var/lib/apt/lists/*
@@ -44,7 +44,7 @@ RUN \
     zip \
     pkg-config \
     upx-ucl \
-    cmake=3.22.2-0kitware1ubuntu20.04.1 \
+    cmake \
     clang-12 \
   && rm -rf /var/lib/apt/lists/*
 
@@ -66,7 +66,7 @@ RUN  cd /src \
 # Image that runs in CI. It contains vcpkg cache to speedup the build.
 # Sadly, the builtin NuGet cache doesn't work on Linux, see:
 # https://github.com/microsoft/vcpkg/issues/19038
-FROM skymp-base AS skymp-vcpkg-deps
+FROM skymp-build-base AS skymp-vcpkg-deps
 
 COPY --from=skymp-vcpkg-deps-builder --chown=skymp:skymp \
   /home/skymp/.cache/vcpkg /home/skymp/.cache/vcpkg
