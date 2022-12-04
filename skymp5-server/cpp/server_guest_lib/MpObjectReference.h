@@ -70,6 +70,7 @@ public:
   const NiPoint3& GetAngle() const override;
   const FormDesc& GetCellOrWorld() const override;
   const uint32_t& GetBaseId() const;
+  const std::string& GetBaseType() const;
   const Inventory& GetInventory() const;
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
