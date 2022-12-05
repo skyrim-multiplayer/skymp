@@ -2,7 +2,7 @@
 
 #include "MyRenderHandler.h"
 #include "TextToDraw.h"
-#include <DirectXTK/SimpleMath.h>
+#include <DirectXTK/CommonStates.h>
 #include <DirectXTK/SpriteBatch.h>
 #include <DirectXTK/SpriteFont.h>
 #include <Signal.hpp>

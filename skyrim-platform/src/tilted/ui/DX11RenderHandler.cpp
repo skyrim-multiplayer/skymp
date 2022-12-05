@@ -2,8 +2,8 @@
 #include "TextToDraw.h"
 #include <DX11RenderHandler.h>
 #include <DirectXColors.h>
-#include <DirectXTK/CommonStates.h>
 #include <DirectXTK/DDSTextureLoader.h>
+#include <DirectXTK/SimpleMath.h>
 #include <DirectXTK/WICTextureLoader.h>
 #include <OverlayClient.h>
 #include <cmrc/cmrc.hpp>
