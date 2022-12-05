@@ -34,6 +34,7 @@ import * as netInfo from "./debug/netInfoSystem";
 import { WorldView } from "./view/worldView";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./view/worldViewMisc";
 import { getScreenResolution } from "./view/formView";
+import * as taffyPerkSystem from "./sweetpie/taffyPerkSystem";
 
 interface AnyMessage {
   type?: string;
@@ -261,19 +262,21 @@ export class SkympClient {
             for (let i = 0; i < diff.entries.length; ++i) {
               printConsole(`[${i}] ${JSON.stringify(diff.entries[i])}`);
             }
-            const msgs = diff.entries.map((entry) => {
-              if (entry.count !== 0) {
-                const msg = JSON.parse(JSON.stringify(entry));
-                delete msg["name"]; // Extra name works too strange
-                msg["t"] = entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
-                msg["count"] = Math.abs(msg["count"]);
-                msg["target"] =
-                  e.oldContainer.getFormID() === 0x14
-                    ? e.newContainer.getFormID()
-                    : e.oldContainer.getFormID();
-                return msg;
-              }
-            });
+            const msgs = diff.entries
+              .filter(entry => entry.count > 0 ? taffyPerkSystem.canDropOrPutItem(entry.baseId) : true)
+              .map((entry) => {
+                if (entry.count !== 0) {
+                  const msg = JSON.parse(JSON.stringify(entry));
+                  delete msg["name"]; // Extra name works too strange
+                  msg["t"] = entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
+                  msg["count"] = Math.abs(msg["count"]);
+                  msg["target"] =
+                    e.oldContainer.getFormID() === 0x14
+                      ? e.newContainer.getFormID()
+                      : e.oldContainer.getFormID();
+                  return msg;
+                }
+              });
             msgs.forEach((msg) => this.sendTarget.send(msg, true));
 
             // Prevent emitting 1,2,3,4,5 changes when taking/putting 5 potions one by one
