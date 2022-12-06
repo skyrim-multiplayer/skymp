@@ -3,7 +3,6 @@ import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
 import { RespawnNeededError } from "../lib/errors";
-import { applyInventory } from "../sync/inventory";
 import { FormModel } from "../modelSource/model";
 import { applyMovement } from "../sync/movementApply";
 import { SpawnProcess } from "./spawnProcess";
@@ -15,6 +14,7 @@ import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";
 import { lastTryHost, tryHost } from "./hostAttempts";
+import { ModelApplyUtils } from "./modelApplyUtils";
 
 export interface ScreenResolution {
   width: number;
@@ -181,56 +181,6 @@ export class FormView implements View<FormModel> {
     this.removeNickname();
   }
 
-  private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
-    const base = refr.getBaseObject();
-    if (base) {
-      const t = base.getType();
-      if (t == FormType.Tree || t == FormType.Flora) {
-        const wasHarvested = refr.isHarvested();
-        if (isHarvested != wasHarvested) {
-          let ac: Actor | null = null;
-          if (isHarvested) {
-            for (let i = 0; i < 20; ++i) {
-              ac = Game.findRandomActor(
-                refr.getPositionX(),
-                refr.getPositionY(),
-                refr.getPositionZ(),
-                10000
-              );
-              if (ac && ac.getFormID() !== 0x14) {
-                break;
-              }
-            }
-          }
-          if (isHarvested && ac && ac.getFormID() !== 0x14) {
-            refr.activate(ac, true);
-          } else {
-            refr.setHarvested(isHarvested);
-            const id = refr.getFormID();
-            refr.disable(false).then(() => {
-              const restoredRefr = ObjectReference.from(Game.getFormEx(id));
-              if (restoredRefr) restoredRefr.enable(false);
-            });
-          }
-        }
-      } else {
-        const wasHarvested = refr.isDisabled();
-        if (isHarvested != wasHarvested) {
-          if (isHarvested) {
-            const id = refr.getFormID();
-            refr.disable(false).then(() => {
-              const restoredRefr = ObjectReference.from(Game.getFormEx(id));
-              if (restoredRefr && !restoredRefr.isDisabled()) {
-                restoredRefr.delete();
-                // Deletion takes time, so in practice this would be called a lot of times
-              }
-            });
-          } else refr.enable(true);
-        }
-      }
-    }
-  }
-
   private lastHarvestedApply = 0;
   private lastOpenApply = 0;
 
@@ -244,11 +194,11 @@ export class FormView implements View<FormModel> {
     const now = Date.now();
     if (now - this.lastHarvestedApply > 666) {
       this.lastHarvestedApply = now;
-      this.applyHarvested(refr, !!model.isHarvested);
+      ModelApplyUtils.applyModelIsHarvested(refr, !!model.isHarvested);
     }
     if (now - this.lastOpenApply > 133) {
       this.lastOpenApply = now;
-      refr.setOpen(!!model.isOpen);
+      ModelApplyUtils.applyModelIsOpen(refr, !!model.isOpen);
     }
 
     if (
@@ -260,7 +210,7 @@ export class FormView implements View<FormModel> {
       // However, actually, actors do not have inventory in their models
       // Except your clone.
       if (!Actor.from(refr)) {
-        applyInventory(refr, model.inventory, false, true);
+        ModelApplyUtils.applyModelInventory(refr, model.inventory);
         model.inventory = undefined;
       }
     }
