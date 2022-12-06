@@ -91,12 +91,3 @@ inline bool operator<(const MpChangeForm& lhs, const MpChangeForm& rhs)
 {
   return lhs.ToTuple() < rhs.ToTuple();
 }
-
-inline std::ostream& operator<<(std::ostream& os,
-                                const MpChangeForm& changeForm)
-{
-  return os << "{" << changeForm.formDesc.ToString() << ", "
-            << "[" << changeForm.position.x << ", " << changeForm.position.y
-            << ", " << changeForm.position.z << "] "
-            << "}";
-}
