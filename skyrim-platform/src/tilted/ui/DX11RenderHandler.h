@@ -2,16 +2,13 @@
 
 #include "MyRenderHandler.h"
 #include "TextToDraw.h"
+#include <DirectXTK/CommonStates.h>
+#include <DirectXTK/SpriteBatch.h>
+#include <DirectXTK/SpriteFont.h>
 #include <Signal.hpp>
 #include <functional>
 #include <mutex>
 #include <wrl.h>
-
-namespace DirectX {
-class SpriteBatch;
-class CommonStates;
-class SpriteFont;
-}
 
 struct IDXGISwapChain;
 struct ID3D11Texture2D;

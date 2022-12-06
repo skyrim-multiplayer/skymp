@@ -54,7 +54,7 @@ jobs:
           - name: Prepare
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: skymp/skymp-vcpkg-deps:20221121-1
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -64,7 +64,7 @@ jobs:
           - name: CMake Configure
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: skymp/skymp-vcpkg-deps:20221121-1
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -84,7 +84,7 @@ jobs:
           - name: Build
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: skymp/skymp-vcpkg-deps:20221121-1
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -96,7 +96,7 @@ jobs:
           - name: Prepare dist.tar.gz
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: skymp/skymp-vcpkg-deps:20221121-1
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -129,7 +129,7 @@ jobs:
           - name: Test
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: skymp/skymp-vcpkg-deps:20221121-1
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
