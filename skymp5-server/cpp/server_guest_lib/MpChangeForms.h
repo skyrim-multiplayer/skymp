@@ -62,32 +62,6 @@ public:
 class MpChangeForm : public MpChangeFormREFR
 {
 public:
-  auto ToTuple() const
-  {
-    return std::make_tuple(
-      recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
-      angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
-      baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
-      isRaceMenuOpen, isDead, appearanceDump, equipmentDump, healthPercentage,
-      magickaPercentage, staminaPercentage, spawnPoint, dynamicFields,
-      spawnDelay);
-  }
-
   static nlohmann::json ToJson(const MpChangeForm& changeForm);
   static MpChangeForm JsonToChangeForm(simdjson::dom::element& element);
 };
-
-inline bool operator==(const MpChangeForm& lhs, const MpChangeForm& rhs)
-{
-  return lhs.ToTuple() == rhs.ToTuple();
-}
-
-inline bool operator!=(const MpChangeForm& lhs, const MpChangeForm& rhs)
-{
-  return !(lhs == rhs);
-}
-
-inline bool operator<(const MpChangeForm& lhs, const MpChangeForm& rhs)
-{
-  return lhs.ToTuple() < rhs.ToTuple();
-}
