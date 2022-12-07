@@ -1,5 +1,5 @@
 import * as sp from "skyrimPlatform";
-import { Entry } from "../sync/inventory";
+import { BasicEntry, Entry } from "../sync/inventory";
 import * as exp from "../sync/expSystem";
 
 const keywordPerkMap = new Map<string, number>([
@@ -41,7 +41,8 @@ const keywordPerkMap = new Map<string, number>([
 const cantDropKeyword = "SweetCantDrop";
 const playerId = 0x14;
 
-export const inventoryChanged = (refr: sp.ObjectReference, entry: Entry): void => {
+export const inventoryChanged = (refr: sp.ObjectReference, entry: BasicEntry): void => {
+  // Only for player
   if (refr.getFormID() !== playerId) return;
 
   const item = sp.Game.getFormEx(entry.baseId);

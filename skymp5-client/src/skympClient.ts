@@ -247,6 +247,9 @@ export class SkympClient {
           e.oldContainer.getFormID() === 0x14 ||
           e.newContainer.getFormID() === 0x14
         ) {
+          if (e.newContainer.getFormID() === 0x14 && e.numItems > 0) {
+            taffyPerkSystem.inventoryChanged(e.newContainer, { baseId: e.baseObj.getFormID(), count: e.numItems });
+          }
           if (!lastInv) lastInv = getPcInventory();
           if (lastInv) {
             const newInv = getInventory(Game.getPlayer() as Actor);
@@ -307,7 +310,7 @@ export class SkympClient {
       const noContainer: boolean = e.newContainer === null || e.newContainer === undefined;
       const isReference: boolean = e.reference !== null;
       if (e.newContainer && e.newContainer.getFormID() === pl.getFormID()) return;
-      if (isPlayer && isReference && noContainer) {
+      if (isPlayer && isReference && noContainer && taffyPerkSystem.canDropOrPutItem(e.baseObj.getFormID())) {
         const radius: number = 200;
         const baseId: number = e.baseObj.getFormID();
         const refrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();
