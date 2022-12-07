@@ -3,8 +3,10 @@
     "baseUrl": "../build/dist/client/Data/Platform/Modules",
     "noImplicitAny": true,
     "lib": [
+      "DOM",
       "ES2015",
       "es2017",
+      "es2018"
     ],
     "removeComments": true,
     "strict": true,
@@ -12,5 +14,6 @@
     "moduleResolution": "node",
     "module": "CommonJS",
     "target": "ES5",
+    "types": [],
   }
 }

@@ -13,6 +13,7 @@ import {
   ActorValueInfo,
   ActorValue
 } from "skyrimPlatform";
+import * as timers from "./extensions/timers"; timers;
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./features/browser";
 import * as loadGameManager from "./features/loadGameManager";
