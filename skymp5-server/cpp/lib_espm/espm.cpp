@@ -164,8 +164,8 @@ bool espm::GroupHeader::GetXY(int16_t& outX, int16_t& outY) const noexcept
 {
   if (grType == GroupType::EXTERIOR_CELL_BLOCK ||
       grType == GroupType::EXTERIOR_CELL_SUBBLOCK) {
-    outY = *(int16_t*)label;
-    outX = *(int16_t*)(label + 2);
+    outY = *reinterpret_cast<const int16_t*>(label);
+    outX = *reinterpret_cast<const int16_t*>(label + 2);
     return true;
   }
   return false;
@@ -182,7 +182,7 @@ bool espm::GroupHeader::GetBlockNumber(int32_t& outBlockNum) const noexcept
 {
   if (grType != GroupType::INTERIOR_CELL_BLOCK)
     return false;
-  outBlockNum = *(int32_t*)label;
+  outBlockNum = *reinterpret_cast<const int32_t*>(label);
   return true;
 }
 
@@ -191,7 +191,7 @@ bool espm::GroupHeader::GetSubBlockNumber(
 {
   if (grType != GroupType::INTERIOR_CELL_SUBBLOCK)
     return false;
-  outSubBlockNum = *(int32_t*)label;
+  outSubBlockNum = *reinterpret_cast<const int32_t*>(label);
   return true;
 }
 
@@ -199,7 +199,7 @@ bool espm::GroupHeader::GetParentWRLD(uint32_t& outId) const noexcept
 {
   if (grType != GroupType::WORLD_CHILDREN)
     return false;
-  outId = *(uint32_t*)label;
+  outId = *reinterpret_cast<const uint32_t*>(label);
   return true;
 }
 
@@ -211,7 +211,7 @@ bool espm::GroupHeader::GetParentCELL(uint32_t& outId) const noexcept
       grType != GroupType::CELL_VISIBLE_DISTANT_CHILDREN) {
     return false;
   }
-  outId = *(uint32_t*)label;
+  outId = *reinterpret_cast<const uint32_t*>(label);
   return true;
 }
 
@@ -219,7 +219,7 @@ bool espm::GroupHeader::GetParentDIAL(uint32_t& outId) const noexcept
 {
   if (grType != GroupType::TOPIC_CHILDREN)
     return false;
-  outId = *(uint32_t*)label;
+  outId = *reinterpret_cast<const uint32_t*>(label);
   return true;
 }
 
@@ -253,7 +253,7 @@ public:
   static void IterateFields(const espm::RecordHeader* rec, const T& f,
                             espm::CompressedFieldsCache& compressedFieldsCache)
   {
-    const int8_t* ptr = ((int8_t*)rec) + sizeof(*rec);
+    const int8_t* ptr = (reinterpret_cast<const int8_t*>(rec)) + sizeof(*rec);
     const int8_t* endPtr = ptr + rec->GetFieldsSizeSum();
     uint32_t fiDataSizeOverride = 0;
 
@@ -279,15 +279,15 @@ public:
     }
 
     while (ptr < endPtr) {
-      const auto fiHeader = (FieldHeader*)ptr;
+      const auto fiHeader = reinterpret_cast<const FieldHeader*>(ptr);
       ptr += sizeof(FieldHeader);
       const uint32_t fiDataSize =
         fiHeader->dataSize ? fiHeader->dataSize : fiDataSizeOverride;
-      const char* fiData = (char*)ptr;
+      const char* fiData = reinterpret_cast<const char*>(ptr);
       ptr += fiDataSize;
 
       if (!memcmp(fiHeader->type, "XXXX", 4)) {
-        fiDataSizeOverride = *(uint32_t*)fiData;
+        fiDataSizeOverride = *reinterpret_cast<const uint32_t*>(fiData);
       }
       f(fiHeader->type, fiDataSize, fiData);
     }
@@ -463,6 +463,7 @@ std::vector<uint32_t> espm::RecordHeader::GetKeywordIds(
 
 espm::Type espm::RecordHeader::GetType() const noexcept
 {
+  // TODO(#1244): fix this
   return ((char*)this) - 8;
 }
 
@@ -473,8 +474,8 @@ uint32_t espm::RecordHeader::GetFlags() const noexcept
 
 uint32_t espm::RecordHeader::GetFieldsSizeSum() const noexcept
 {
-  const auto ptr = ((int8_t*)this) - 4;
-  return *(uint32_t*)ptr;
+  const auto ptr = (reinterpret_cast<const int8_t*>(this)) - 4;
+  return *reinterpret_cast<const uint32_t*>(ptr);
 }
 
 struct espm::Browser::Impl
@@ -527,6 +528,7 @@ struct espm::Browser::Impl
 espm::Browser::Browser(const void* fileContent, size_t length)
   : pImpl(new Impl)
 {
+  // TODO(#1244): buf should be const
   pImpl->buf = (char*)fileContent;
   pImpl->length = length;
   while (ReadAny(nullptr))
@@ -625,13 +627,16 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
     return false;
   }
 
+  // TODO(#1244): pType should be const
   char* pType = pImpl->buf + pImpl->pos;
   pImpl->pos += 4;
-  uint32_t* pDataSize = (uint32_t*)(pImpl->buf + pImpl->pos);
+  const uint32_t* pDataSize =
+    reinterpret_cast<const uint32_t*>(pImpl->buf + pImpl->pos);
   pImpl->pos += 4;
 
   const bool isGrup = !memcmp(pType, "GRUP", 4);
   if (isGrup) {
+    // TODO(#1244): should be reinterpret_cast<const GroupHeader*>
     // Read group header
     const auto grHeader = (GroupHeader*)(pImpl->buf + pImpl->pos);
 
@@ -642,6 +647,7 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
     pImpl->pos += sizeof(GroupHeader);
     const size_t end = pImpl->pos + *pDataSize - 24;
 
+    // TODO(#1244): grStack should be const
     pImpl->grStack.push_back(grHeader);
     auto p = new GroupStack(pImpl->grStack);
     pImpl->grStackCopies.emplace_back(p);
@@ -702,7 +708,7 @@ espm::TES4::Data espm::TES4::GetData(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "HEDR", 4))
-        result.header = (Header*)data;
+        result.header = reinterpret_cast<const Header*>(data);
       else if (!memcmp(type, "CNAM", 4))
         result.author = data;
       else if (!memcmp(type, "SNAM", 4))
@@ -722,13 +728,13 @@ espm::REFR::Data espm::REFR::GetData(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
       if (!memcmp(type, "NAME", 4)) {
-        result.baseId = *(uint32_t*)data;
+        result.baseId = *reinterpret_cast<const uint32_t*>(data);
       } else if (!memcmp(type, "XSCL", 4)) {
         result.scale = *reinterpret_cast<const float*>(data);
       } else if (!memcmp(type, "DATA", 4)) {
-        result.loc = (LocationalData*)data;
+        result.loc = reinterpret_cast<const LocationalData*>(data);
       } else if (!memcmp(type, "XTEL", 4)) {
-        result.teleport = (DoorTeleport*)data;
+        result.teleport = reinterpret_cast<const DoorTeleport*>(data);
       } else if (!memcmp(type, "XPRM", 4)) {
         result.boundsDiv2 = reinterpret_cast<const float*>(data);
       } else if (!memcmp(type, "XCNT", 4)) {
@@ -748,9 +754,10 @@ std::vector<espm::CONT::ContainerObject> GetContainerObjects(
   espm::RecordHeaderAccess::IterateFields(
     rec,
     [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!memcmp(type, "CNTO", 4))
-        objects.push_back(*(espm::CONT::ContainerObject*)data);
-      else if (!memcmp(type, "COED", 4)) {
+      if (!memcmp(type, "CNTO", 4)) {
+        objects.push_back(
+          *reinterpret_cast<const espm::CONT::ContainerObject*>(data));
+      } else if (!memcmp(type, "COED", 4)) {
         // Not supported
       }
     },
@@ -830,13 +837,14 @@ espm::LVLI::Data espm::LVLI::GetData(
       if (!memcmp(type, "EDID", 4)) {
         result.editorId = data;
       } else if (!memcmp(type, "LVLF", 4)) {
-        result.leveledItemFlags = *(uint8_t*)data;
+        result.leveledItemFlags = *reinterpret_cast<const uint8_t*>(data);
       } else if (!memcmp(type, "LVLG", 4)) {
-        result.chanceNoneGlobalId = *(uint32_t*)data;
+        result.chanceNoneGlobalId = *reinterpret_cast<const uint32_t*>(data);
       } else if (!memcmp(type, "LVLD", 4)) {
-        result.chanceNone = *(uint8_t*)data;
+        result.chanceNone = *reinterpret_cast<const uint8_t*>(data);
       } else if (!memcmp(type, "LLCT", 4)) {
-        result.numEntries = *(uint8_t*)data;
+        result.numEntries = *reinterpret_cast<const uint8_t*>(data);
+        // TODO(#1244): entries should be const
         result.entries = (Entry*)(data + 1);
       }
     },
