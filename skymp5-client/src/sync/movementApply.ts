@@ -10,7 +10,7 @@ import {
 import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "../lib/errors";
 import { Movement, RunMode, AnimationVariables, Transform, NiPoint3 } from "./movement";
-import { NetInfo } from "../features/netInfoSystem";
+import { NetInfo } from "../debug/netInfoSystem";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 
 const sqr = (x: number) => x * x;

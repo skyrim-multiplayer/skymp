@@ -1,5 +1,6 @@
 #include "OverlayV8Handler.h"
 #include "../core_library/Platform.hpp"
+#include <algorithm>
 
 namespace CEFUtils {
 OverlayV8Handler::OverlayV8Handler(

@@ -33,6 +33,16 @@ set(skymp5_client_settings_txt "{
 set(skymp5_client_settings_txt_sweetpie "{
   \"server-ip\": \"127.0.0.1\",
   \"server-port\": 7777,
+  \"show-net-info\": false,
+  \"animDebug\": {
+    \"isActive\": false,
+    \"animListCount\": 9,
+    \"animListStartPos\": { \"x\": 650, \"y\": 600 },
+    \"animListYPosDelta\": 32,
+    \"animKeys\": {
+      \"2\": \"attackStart\"
+    }
+  },
   \"lobbyLocation\": {
     \"pos\": [19256.69, 9777.12, 899.56],
     \"rot\": [6.36, 0.00, 221.51],

@@ -63,7 +63,7 @@ jobs:
 
           - name: Upload patches
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v3
             with:
                 name: patches
                 path: |
@@ -84,7 +84,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: skymp/skymp-vcpkg-deps:20221121-1
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -95,7 +95,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: skymp/skymp-vcpkg-deps:20221121-1
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -106,7 +106,7 @@ jobs:
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v3
             with:
                 name: compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
@@ -115,7 +115,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: skymp/skymp-vcpkg-deps:20221121-1
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
