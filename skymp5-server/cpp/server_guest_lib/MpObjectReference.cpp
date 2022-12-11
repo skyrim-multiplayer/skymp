@@ -31,10 +31,27 @@ std::string MpObjectReference::CreatePropertyMessage(
 nlohmann::json MpObjectReference::PreparePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
-  return nlohmann::json{ { "idx", self->GetIdx() },
-                         { "t", MsgType::UpdateProperty },
-                         { "propName", name },
-                         { "data", value } };
+  std::string baseRecordType;
+
+  auto& loader = self->GetParent()->GetEspm();
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (base.rec) {
+    baseRecordType = base.rec->GetType().ToString();
+  }
+
+  auto object = nlohmann::json{ { "idx", self->GetIdx() },
+                                { "t", MsgType::UpdateProperty },
+                                { "propName", name },
+                                { "refrId", self->GetFormId() },
+                                { "data", value } };
+
+  // See 'perf: improve game framerate #1186'
+  // Client needs to know if it is DOOR or not
+  if (baseRecordType == "DOOR") {
+    object["baseRecordType"] = baseRecordType;
+  }
+
+  return object;
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
@@ -153,6 +170,11 @@ const FormDesc& MpObjectReference::GetCellOrWorld() const
 const uint32_t& MpObjectReference::GetBaseId() const
 {
   return baseId;
+}
+
+const std::string& MpObjectReference::GetBaseType() const
+{
+  return baseType;
 }
 
 const Inventory& MpObjectReference::GetInventory() const
