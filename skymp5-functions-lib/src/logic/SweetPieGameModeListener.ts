@@ -1,4 +1,5 @@
 import { sprintf } from "sprintf-js";
+import { ChatMessage, ChatNeighbor, createSystemMessage, FULL_NON_RP_REGEX, getColorByNickname, parseMessageText } from "../props/chatProperty";
 import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
@@ -47,29 +48,29 @@ export class SweetPieGameModeListener implements GameModeListener {
       handler: ({ actorId, controller, argsRaw }) => {
         const adminMasterApiIds = [479, 485, 486, 487, 488, 489, 497, 539];
         if (!adminMasterApiIds.includes(controller.getProfileId(actorId))) {
-          controller.sendChatMessage(actorId, 'No permission');
+          controller.sendChatMessage(actorId, createSystemMessage('No permission'));
           return;
         }
         if (!argsRaw) {
-          controller.sendChatMessage(actorId, 'Expected id as an argument');
+          controller.sendChatMessage(actorId, createSystemMessage('Expected id as an argument'));
           return;
         }
         const targetMasterApiId = parseInt(argsRaw);
         for (const targetPlayerActorId of controller.getOnlinePlayers()) {
           if (controller.getProfileId(targetPlayerActorId) === targetMasterApiId) {
             controller.quitGame(targetPlayerActorId);
-            controller.sendChatMessage(actorId, `Kicked actor ${targetPlayerActorId.toString(16)}`);
+            controller.sendChatMessage(actorId, createSystemMessage(`Kicked actor ${targetPlayerActorId.toString(16)}`));
             return;
           }
         }
-        controller.sendChatMessage(actorId, 'Not found');
+        controller.sendChatMessage(actorId, createSystemMessage('Not found'));
       },
     },
     {
       name: 'kill',
       handler: ({ actorId, controller }) => {
         controller.setPercentages(actorId, { health: 0 });
-        controller.sendChatMessage(actorId, 'You killed yourself...');
+        controller.sendChatMessage(actorId, createSystemMessage('You killed yourself...'));
       }
     },
     {
@@ -82,9 +83,9 @@ export class SweetPieGameModeListener implements GameModeListener {
           }))
           .filter(({ name }) => name.toLocaleLowerCase().indexOf(argsRaw?.toLocaleLowerCase() ?? '') !== -1)
           .sort((a, b) => a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase()));
-        controller.sendChatMessage(actorId, `${data.length} players ${argsRaw ? 'matched' : 'online'}: Server ID / Master API ID - Name`);
+        controller.sendChatMessage(actorId, createSystemMessage(`${data.length} players ${argsRaw ? 'matched' : 'online'}: Server ID / Master API ID - Name`));
         for (const { name, ids } of data) {
-          controller.sendChatMessage(actorId, `${ids} - ${name}`);
+          controller.sendChatMessage(actorId, createSystemMessage(`${ids} - ${name}`));
         }
       },
     },
@@ -110,14 +111,41 @@ export class SweetPieGameModeListener implements GameModeListener {
             random.push(`${Math.floor(Math.random() * (max) + 1)}`);
           }
         }
-        let message: string;
+        let message: ChatMessage = {
+          opacity: 1,
+          sender: {
+            masterApiId: 0,
+            gameId: "0",
+          },
+          category: 'system',
+          text: []
+        };;
         if (max === 2) {
-          message = `#{${colors[max] ? colors[max] : '9159B6'}}${senderName} подбрасывает монетку #{FFFFFF}- ${random.join(', ')}`;
+          message.text = [
+            {
+              text: `${senderName} подбрасывает монетку`,
+              color: colors[max] ? colors[max] : '9159B6'
+            },
+            {
+              text: `- ${random.join(', ')}`,
+              color: 'FFFFFF'
+            }
+          ]
         } else {
-          message = `#{${colors[max] ? colors[max] : '9159B6'}}${senderName} бросает D${max} #{FFFFFF}- ${random.join(', ')}`;
+          message.text = [
+            {
+              text: `${senderName} бросает D${max} `,
+              color: colors[max] ? colors[max] : '9159B6'
+            },
+            {
+              text: `- ${random.join(', ')}`,
+              color: 'FFFFFF'
+            }
+          ]
         }
         for (const neighbor of neighbors) {
-          controller.sendChatMessage(neighbor, message);
+          message.opacity = neighbor.opacity
+          controller.sendChatMessage(neighbor.actorId, message);
         } 
       },
     },
@@ -243,7 +271,7 @@ export class SweetPieGameModeListener implements GameModeListener {
       if (round && round.map) {
         if (round.map.safePlaceEnterDoors?.includes(targetObjectDesc)) {
           if (round.state !== 'wait') {
-            this.controller.sendChatMessage(casterActorId, ...this.noEnterSafePlaceMessage);
+            this.controller.sendChatMessage(casterActorId, createSystemMessage(...this.noEnterSafePlaceMessage));
             return 'blockActivation';
           }
           return 'continue';
@@ -262,14 +290,14 @@ export class SweetPieGameModeListener implements GameModeListener {
           if (elapsed >= 0) {
             round.players!.get(casterActorId)!.restored = now + waitTime;
             this.controller.setPercentages(casterActorId, {});
-            this.controller.sendChatMessage(casterActorId, ...this.restoreMessage);
+            this.controller.sendChatMessage(casterActorId,  createSystemMessage(...this.restoreMessage));
             return 'continue';
           }
-          this.controller.sendChatMessage(casterActorId, sprintf(this.restoreDeniedMessage[0], -elapsed / 1000));
+          this.controller.sendChatMessage(casterActorId,  createSystemMessage(sprintf(this.restoreDeniedMessage[0], -elapsed / 1000)));
           return 'continue';
         }
         if (this.controller.isTeleportActivator(targetActorId)) {
-          this.controller.sendChatMessage(casterActorId, ...this.interiorsBlockedMessage);
+          this.controller.sendChatMessage(casterActorId,  createSystemMessage(...this.interiorsBlockedMessage));
           return 'blockActivation';
         }
       }
@@ -282,7 +310,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     // TODO(#835): maybe return the dialog system when bugs are fixed?
   }
 
-  onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
+  onPlayerChatInput(actorId: number, inputText: string, neighbors: ChatNeighbor[], senderName: string) {
     for (const command of this.commands) {
       if (/\/\d+(d|к)\d+/gi.test(inputText) && command.name === 'roll') {
         command.handler({ actorId, controller: this.controller, neighbors, senderName, inputText });
@@ -293,8 +321,29 @@ export class SweetPieGameModeListener implements GameModeListener {
         return;
       }
     }
-    for (const neighborActorId of neighbors) {
-      this.controller.sendChatMessage(neighborActorId, '' + senderName + ': ' + inputText);
+    const message: ChatMessage = {
+      opacity: 0,
+      sender: {
+        masterApiId: 0,
+        gameId: `${actorId}`
+      },
+      category: 'plain',
+      text: [
+        {
+          text: senderName,
+          color: getColorByNickname(senderName),
+        },
+        {
+          text: ": ",
+          color: "FFFFFF"
+        },
+        ...parseMessageText(inputText)
+    ]
+    }
+    console.log(message)
+    for (const neighbor of neighbors) {
+      message.opacity = neighbor.opacity
+      this.controller.sendChatMessage(neighbor.actorId, message);
     }
   }
 
@@ -426,7 +475,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   private sendRoundChatMessage(round: SweetPieRound, msg: string) {
     for (const [player] of (round.players || new Map)) {
-      this.controller.sendChatMessage(player, msg);
+      this.controller.sendChatMessage(player, createSystemMessage(msg));
     }
   }
 

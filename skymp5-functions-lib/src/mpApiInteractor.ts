@@ -1,7 +1,7 @@
 import { GameModeListener } from "./logic/GameModeListener";
 import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/SweetPieRound";
-import { ChatProperty } from "./props/chatProperty";
+import { ChatMessage, ChatNeighbor, ChatProperty } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
@@ -94,15 +94,23 @@ export class MpApiInteractor {
   private static setupChatHandler(listener: GameModeListener) {
     ChatProperty.setChatInputHandler((input) => {
       const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
+      const hearingRadius = chatSettings.hearingRadiusNormal !== undefined ?
+                            sqr(chatSettings.hearingRadiusNormal) :
+                            45 // sqr(2000)
       const onlinePlayers = mp.get(0, 'onlinePlayers');
       const actorNeighbors =
         mp.get(input.actorId, 'actorNeighbors')
-          .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
-          .filter((actorId) =>
-            chatSettings.hearingRadiusNormal === undefined ||
-            getActorDistanceSquared(input.actorId, actorId) < sqr(chatSettings.hearingRadiusNormal)
-          );
-
+        .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
+        .reduce<ChatNeighbor[]>((filtered, actorId) => {
+          const distance = getActorDistanceSquared(input.actorId, actorId) 
+          if (distance < hearingRadius) {
+            filtered.push({
+              actorId,
+              opacity: Number(((hearingRadius - distance) / hearingRadius).toFixed(3))
+            })
+          }
+          return filtered
+        }, [])
       const name = getName(input.actorId);
       if (listener.onPlayerChatInput) {
         console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
@@ -216,8 +224,8 @@ export class MpApiInteractor {
       showMessageBox(actorId: number, dialogId: number, caption: string, text: string, buttons: string[]): void {
         DialogProperty.showMessageBox(actorId, dialogId, caption.toLowerCase(), text.toLowerCase(), buttons.map(x => x.toLowerCase()));
       },
-      sendChatMessage(actorId: number, text: string): void {
-        ChatProperty.sendChatMessage(actorId, text);
+      sendChatMessage(actorId: number, message: ChatMessage): void {
+        ChatProperty.sendChatMessage(actorId, message);
       },
       quitGame(actorId: number): void {
         EvalProperty.eval(actorId, () => {

@@ -12,8 +12,87 @@ declare const ctx: Ctx;
 declare const messageString: string;
 declare const refreshWidgets: string;
 
+type ChatText = {
+  color: string;
+  text: string;
+  href?: string;
+  scream?: boolean;
+  whisper?: boolean;
+  nonRP?: boolean;
+};
+export interface ChatMessage {
+  opacity: number;
+  sender: {
+    masterApiId: number;
+    gameId: string
+  };
+  category: "dice" | "nonrp" | "system" | "plain";
+  text: ChatText[]
+}
 export type ChatInput = { actorId: number; inputText: string };
 export type ChatInputHandler = (input: ChatInput) => void;
+
+export type ChatNeighbor = { actorId: number; opacity: number };
+
+const NONRP_REGEX = /\(\((.*?)\)\)/gi;
+const ACTION_REGEX = /\*(.*?)\*/gi;
+
+const isChatMessage = (object: unknown): object is ChatMessage => {
+  return Object.prototype.hasOwnProperty.call(object, "distance") &&
+          Object.prototype.hasOwnProperty.call(object, "category") &&
+          Object.prototype.hasOwnProperty.call(object, "sender")
+}
+
+const colorsArray = ["5DAD60", "62C985", "7175D6", "71D0D6", "93AD5D", "A062C9", "BDBD7D", "D76464", "F78C8C", "F78CD9"]
+
+export const getColorByNickname = (name: string) => {
+  let result = 0;
+  for (let i = 0; i < name.length; i++) {
+    result += name.charCodeAt(i)
+  }
+  return colorsArray[result % colorsArray.length]
+}
+
+export const parseMessageText = (text: string): ChatText[] => {
+    const resultMessage = [];
+    let lastIndex = 0;
+    for (let i = 0; i < text.length; ++i) {
+      if (text[i] === '*' && text.indexOf('*', i + 1) && text.slice(i).match(ACTION_REGEX)) {
+        const end = text.indexOf('*', i + 1) + 1;
+        resultMessage.push({text: text.slice(lastIndex, i), color: 'FFFFFF'});
+        resultMessage.push({text: text.slice(i + 1, end - 1).replace(/\*/g, ''),  color: 'CFAA6E' });
+        lastIndex = end;
+        i = end;
+      }
+      if (text[i] === '(' && text[i + 1] === '(' && text.indexOf('))', i + 1) && text.slice(i).match(NONRP_REGEX)) {
+        const end = text.indexOf('))', i + 1) + 2;
+        resultMessage.push({text: text.slice(lastIndex, i), color: 'FFFFFF'});
+        resultMessage.push({text: text.slice(i, end),  color: '91916D', nonRP: true });
+        lastIndex = end;
+        i = end;
+      }
+    }
+    resultMessage.push({
+      text: text.slice(lastIndex),
+      color: "FFFFFF"
+    });
+    return resultMessage.filter(msg => msg.text.trim() !== "");
+}
+
+export const createSystemMessage = (text: string): ChatMessage => {
+  return {
+    opacity: 1,
+    sender: {
+      masterApiId: 0,
+      gameId: "0",
+    },
+    category: 'system',
+    text: [{
+      color: 'FFFFFF',
+      text
+    }]
+  };
+}
 
 export class ChatProperty {
   static init() {
@@ -41,7 +120,7 @@ export class ChatProperty {
     mp.set(actorId, 'chat', value);
   }
 
-  public static sendChatMessage(actorId: number, message: string) {
+  public static sendChatMessage(actorId: number, message: ChatMessage) {
     EvalProperty.eval(
       actorId,
       () => {
