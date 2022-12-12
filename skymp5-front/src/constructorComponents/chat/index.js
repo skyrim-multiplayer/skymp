@@ -101,73 +101,20 @@ const Chat = (props) => {
     }
   }, [props.messages]);
 
-  // const getMessageSpans = (text, currentColor = undefined) => {
-  //   const isFullNonRp = FULL_NON_RP_REGEX.test(text);
-  //   const isDiceMessage = text.match(IS_DICES_MESSAGE);
-  //   const colorSnippetTpl = '#{123456}';
-  //   if (!isDiceMessage || !disableDiceColors) {
-  //     for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
-  //       if (text[i] == '#' && text[i + 1] == '{' &&
-  //         text[i + colorSnippetTpl.length - 1] == '}') {
-  //         return (
-  //           <span style={{ color: currentColor }}>
-  //             {text.substring(0, i)}
-  //             {
-  //               getMessageSpans(
-  //                 text.substring(i + colorSnippetTpl.length),
-  //                 '#' + text.substring(i + 2, i + 8)
-  //               )
-  //             }
-  //           </span>
-  //         );
-  //       }
-  //     }
-  //   } else {
-  //     text = text.replace(/#\{.{6}\}/gi, '');
-  //   }
-  //   const resultMessage = [];
-  //   let lastIndex = 0;
-  //   for (let i = 0; i < text.length; ++i) {
-  //     if (text[i] === '*' && text.indexOf('*', i + 1) && text.slice(i).match(ACTION_REGEX)) {
-  //       const end = text.indexOf('*', i + 1) + 1;
-  //       resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
-  //       resultMessage.push(<span style={{ color: '#CFAA6E' }}>{text.slice(i + 1, end - 1).replace(/\*/g, '')}</span>);
-  //       lastIndex = end;
-  //       i = end;
-  //     }
-  //     if (text[i] === '(' && text[i + 1] === '(' && text.indexOf('))', i + 1) && text.slice(i).match(NONRP_REGEX)) {
-  //       const end = text.indexOf('))', i + 1) + 2;
-  //       resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
-  //       resultMessage.push(<span style={{ color: '#91916D' }} className='nonrp'>{text.slice(i, end)}</span>);
-  //       lastIndex = end;
-  //       i = end;
-  //     }
-  //   }
-  //   resultMessage.push(text.slice(lastIndex));
-  //   return (
-  //     <span className={isFullNonRp ? 'nonrp' : ''} style={{ color: currentColor }}>
-  //       {resultMessage}
-  //     </span>
-  //   );
-  // };
-
   const getMessageSpans = (message) => {
-    console.log(message);
     let isNonRp = message.category === 'plain';
     const result = message.text.map((text, i) => {
       if (i > 1) {
         isNonRp = text.nonRP;
       }
-      console.log(text, i, isNonRp);
-      return <span key={`${text.text}_${i}`} style={{ color: `#${text.color}` }} className={`${text.nonRP ? 'nonrp' : ''}`}>{text.text}</span>;
+      return <span key={`${text.text}_${i}`} style={{ color: `${text.color}` }} className={`${text.nonRP ? 'nonrp' : ''}`}>{text.text}</span>;
     });
     return [result, isNonRp];
   };
 
   const getList = () => {
-    return props.messages.slice(-50).map((msg, index) => {
+    return window.chatMessages.map((msg, index) => {
       const result = getMessageSpans(msg);
-      console.log(result);
       return (
         <div
           className={`msg ${result[1] ? 'nonrp' : ''}`}

@@ -1,5 +1,5 @@
 import { sprintf } from "sprintf-js";
-import { ChatMessage, ChatNeighbor, createSystemMessage, FULL_NON_RP_REGEX, getColorByNickname, parseMessageText } from "../props/chatProperty";
+import { ChatMessage, ChatNeighbor, createSystemMessage, getColorByNickname, parseMessageText } from "../props/chatProperty";
 import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
@@ -97,11 +97,11 @@ export class SweetPieGameModeListener implements GameModeListener {
         const colors: {
           [key: number]: string
         } = {
-          2: 'BDBD7D',
-          6: 'F78C8C',
-          12: '5DAD60',
-          20: '7175D6',
-          100: '9159B6',
+          2: '#BDBD7D',
+          6: '#F78C8C',
+          12: '#5DAD60',
+          20: '#7175D6',
+          100: '#9159B6',
         }
         for (let i = 0; i < count; i++) {
           if (i > 4) break;
@@ -124,22 +124,22 @@ export class SweetPieGameModeListener implements GameModeListener {
           message.text = [
             {
               text: `${senderName} подбрасывает монетку`,
-              color: colors[max] ? colors[max] : '9159B6'
+              color: colors[max] ? colors[max] : '#9159B6'
             },
             {
               text: `- ${random.join(', ')}`,
-              color: 'FFFFFF'
+              color: '#FFFFFF'
             }
           ]
         } else {
           message.text = [
             {
               text: `${senderName} бросает D${max} `,
-              color: colors[max] ? colors[max] : '9159B6'
+              color: colors[max] ? colors[max] : '#9159B6'
             },
             {
               text: `- ${random.join(', ')}`,
-              color: 'FFFFFF'
+              color: '#FFFFFF'
             }
           ]
         }
@@ -335,7 +335,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         },
         {
           text: ": ",
-          color: "FFFFFF"
+          color: "#FFFFFF"
         },
         ...parseMessageText(inputText)
     ]
