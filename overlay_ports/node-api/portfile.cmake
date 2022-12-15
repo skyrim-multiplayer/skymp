@@ -1,4 +1,5 @@
-vcpkg_minimum_required(VERSION 2022-10-12) # for ${VERSION}
+# different to the PR version, but only for the VERSION variable handling
+set(VERSION 18.12.1)
 
 set(SHA512 0)
 
