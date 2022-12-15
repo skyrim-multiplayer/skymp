@@ -21,4 +21,3 @@ if(WIN32)
     IMPORTED_LOCATION_RELEASE "${node-api_LIBRARY_RELEASE}"
   )
 endif()
- 
