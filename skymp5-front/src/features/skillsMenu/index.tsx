@@ -9,14 +9,13 @@ import quitSound from './assets/Quit.wav';
 import selectSound from './assets/ButtonDown.wav';
 import learnSound from './assets/LearnSkill.wav';
 
-const SkillsMenu = (props) => {
+const SkillsMenu = () => {
   const [isOpen, setisOpen] = useState(true);
   const [currentHeader, setcurrentHeader] = useState('способности');
   const [currentLevel, setcurrentLevel] = useState(' ');
   const [currentDescription, setcurrentDescription] = useState(' ');
   const [selectedPerk, setselectedPerk] = useState(null);
   const [scale, setscale] = useState(1);
-
   const [pExp, setpExp] = useState(0);
   const [expHint, setexpHint] = useState(false);
   const [pMem, setpMem] = useState(0);
@@ -46,7 +45,7 @@ const SkillsMenu = (props) => {
 
   const hoverHandler = (perk) => {
     setcurrentHeader(perk.description);
-    const audio = document.getElementById('hoverSound').cloneNode(true);
+    const audio = document.getElementById('hoverSound').cloneNode(true) as HTMLAudioElement;
     audio.play();
     const playerLevel = playerData.perks[perk.name] || 0;
     setcurrentLevel(levels[playerLevel].name);
@@ -64,7 +63,7 @@ const SkillsMenu = (props) => {
     } else {
       setcurrentDescription('');
     }
-    const audio = document.getElementById('selectSound').cloneNode(true);
+    const audio = document.getElementById('selectSound').cloneNode(true) as HTMLAudioElement;
     audio.play();
     if (levels[playerLevel].price > pExp) {
       setcurrentDescription(
@@ -87,12 +86,12 @@ const SkillsMenu = (props) => {
       setpMem(pMem - 1);
     }
     playerData.perks[selectedPerk.name] = level + 1;
-    const audio = document.getElementById('learnSound').cloneNode(true);
+    const audio = document.getElementById('learnSound').cloneNode(true) as HTMLAudioElement;
     audio.play();
   };
 
   const quitHandler = () => {
-    const audio = document.getElementById('quitSound').cloneNode(true);
+    const audio = document.getElementById('quitSound').cloneNode(true) as HTMLAudioElement;
     audio.play();
     setisOpen(false);
   };
@@ -142,6 +141,7 @@ const SkillsMenu = (props) => {
                       <SkyrimHint
                         text={'за опыт можно улучшить способности'}
                         isOpened={expHint}
+                        active='true'
                         left={true}
                       />
                       <span>Опыт:</span>
@@ -156,6 +156,7 @@ const SkillsMenu = (props) => {
                       onMouseLeave={() => setmemHint(false)}
                     >
                       <SkyrimHint
+                        active='true'
                         text={'память нужна для изучения новых способностей'}
                         isOpened={memHint}
                         left={true}
@@ -183,6 +184,7 @@ const SkillsMenu = (props) => {
             <div className="perks__footer__buttons">
               <FrameButton
                 text="изучить"
+                name='learnBtn'
                 variant="DEFAULT"
                 width={242}
                 height={56}
@@ -195,6 +197,7 @@ const SkillsMenu = (props) => {
                 onMouseDown={() => learnHandler()}
               ></FrameButton>
               <FrameButton
+                name='learnBtn'
                 text="выйти"
                 variant="DEFAULT"
                 width={242}
@@ -205,7 +208,7 @@ const SkillsMenu = (props) => {
           </div>
         </div>
       </div>
-      <SkyrimFrame width={1720} height={980} />
+      <SkyrimFrame width={1720} height={980} name="perkSystem" />
       <audio id='hoverSound'>
         <source src={hoverSound}></source>
       </audio>
