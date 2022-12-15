@@ -17,6 +17,7 @@
     "robin-hood-hashing",
     "simpleini",
     "boost-pfr",
+    "node-api",
     {
       "name": "directxtk",
       "platform": "windows"

@@ -11,40 +11,19 @@ add_subdirectory(cpp)
 # Add TypeScript part of the server
 add_subdirectory(ts)
 
-# Add "cpp/addon" in a few steps:
-
-# "cmake-js" is tool from JS world allowing us to fetch NodeJS headers/libs/sources
-# We need them to our build native NodeJS addon
-
-# cmake-js doesn't allow to simply include something into existing CMake-based build system
-# it expects top-level CMakeLists.txt. We can't meet this requirement.
-# We want to generate project files with `cmake ..`, not `yarn configure` or something
-# But we still want to build native NodeJS addon
-
-# Solution:
-# 1. Give cmake-js a special CMakeLists.txt from the `cmake-js-fetch` directory.
-#    Look into package.json and `cmake-js-fetch/CMakeLists.txt` to understand mechanism
-yarn_execute_command(
-  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  COMMAND cmake-js-fetch
-)
-
-# 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
-
-# 3. Simply include `node.cmake`.
-include(${CMAKE_CURRENT_LIST_DIR}/cmake-js-fetch-build/node.cmake)
-
-# 4. Include `node-addon-api`, a wrapper over NAPI.
+# Include `node-addon-api`, a wrapper over NAPI.
 execute_process(COMMAND node -p "require('node-addon-api').include"
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   OUTPUT_VARIABLE NODE_ADDON_API_DIR
 )
 string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
 
-# Great. Now we have CMake target called "node".
-# We can link our target against it.
+# Create target called "node" to be linked into addon
+add_library(node INTERFACE)
+target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
+find_package(unofficial-node-api CONFIG REQUIRED)
+target_link_libraries(node INTERFACE unofficial::node-api::node-api)
 
 file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
 if(MSVC)
