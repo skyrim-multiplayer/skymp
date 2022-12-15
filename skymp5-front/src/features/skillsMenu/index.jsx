@@ -26,12 +26,13 @@ const SkillsMenu = (props) => {
     () => ({
       exp: 3375,
       mem: 2,
+      // 0 based, from 0 to 4
       perks: {
-        saltmaker: 2,
-        weapon: 2,
-        leather: 4,
-        jewelry: 3,
-        clother: 5
+        saltmaker: 1,
+        weapon: 1,
+        leather: 3,
+        jewelry: 2,
+        clother: 4
       }
     }),
     []
@@ -47,31 +48,31 @@ const SkillsMenu = (props) => {
     setcurrentHeader(perk.description);
     const audio = document.getElementById('hoverSound').cloneNode(true);
     audio.play();
-    const playerLevel = playerData.perks[perk.name] || 1;
-    setcurrentLevel(levels[playerLevel - 1].name); // 0 based
+    const playerLevel = playerData.perks[perk.name] || 0;
+    setcurrentLevel(levels[playerLevel].name);
     setcurrentDescription('');
     if (!perk.levelsDescription) return;
-    setcurrentDescription(perk.levelsDescription[playerLevel - 1]); // 0 based
+    setcurrentDescription(perk.levelsDescription[playerLevel]);
   };
 
   const clickHandler = (perk) => {
-    const playerLevel = playerData.perks[perk.name] || 1;
-    if (playerLevel === 5) return;
-    setcurrentLevel(levels[playerLevel].name);
+    const playerLevel = playerData.perks[perk.name] || 0;
+    if (playerLevel === 4) return;
+    setcurrentLevel(levels[playerLevel + 1].name);
     if (perk.levelsDescription) {
-      setcurrentDescription(perk.levelsDescription[playerLevel]);
+      setcurrentDescription(perk.levelsDescription[playerLevel + 1]);
     } else {
       setcurrentDescription('');
     }
     const audio = document.getElementById('selectSound').cloneNode(true);
     audio.play();
-    if (levels[playerLevel - 1].price > pExp) {
+    if (levels[playerLevel].price > pExp) {
       setcurrentDescription(
-        `не хватает ${levels[playerLevel - 1].price - pExp} опыта`
+        `не хватает ${levels[playerLevel].price - pExp} опыта`
       );
       return;
     }
-    if (playerLevel === 1 && pMem === 0) {
+    if (playerLevel === 0 && pMem === 0) {
       setcurrentDescription('не хватает памяти');
       return;
     }
@@ -79,10 +80,10 @@ const SkillsMenu = (props) => {
   };
 
   const learnHandler = () => {
-    const level = playerData.perks[selectedPerk.name] || 1;
-    const price = levels[level - 1].price;
+    const level = playerData.perks[selectedPerk.name] || 0;
+    const price = levels[level].price;
     setpExp(pExp - price);
-    if (level === 1) {
+    if (level === 0) {
       setpMem(pMem - 1);
     }
     playerData.perks[selectedPerk.name] = level + 1;
@@ -103,7 +104,6 @@ const SkillsMenu = (props) => {
       <div className="perks__content">
         <div className="perks__header">{currentHeader}</div>
         <div className="perks__list-container">
-          {scale}
           <div className="perks__list">
             {content.map((category, cIndex) => (
               <ul className="perks__category" key={cIndex}>
@@ -125,7 +125,7 @@ const SkillsMenu = (props) => {
                     <p className="perks__perk__price">
                       <span>
                         {playerData.perks[perk.name]
-                          ? levels[playerData.perks[perk.name] - 1].price
+                          ? levels[playerData.perks[perk.name]].price
                           : levels[0].price}
                       </span>
                       <span className="perks__exp" />
@@ -188,7 +188,7 @@ const SkillsMenu = (props) => {
                 height={56}
                 disabled={
                   !selectedPerk ||
-                  levels[playerData.perks[selectedPerk.name] - 1 || 0].price >
+                  levels[playerData.perks[selectedPerk.name] || 0].price >
                     pExp ||
                   (!playerData.perks[selectedPerk.name] && pMem === 0)
                 }

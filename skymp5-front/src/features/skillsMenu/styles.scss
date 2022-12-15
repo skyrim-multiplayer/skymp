@@ -1,9 +1,9 @@
-$level-1: rgb(157, 158, 158);
+$level-0: rgb(157, 158, 158);
 $font-color: rgba(157, 158, 158, 0.75);
-$level-2: #7175d6;
-$level-3: #5dad60;
-$level-4: #c5d321;
-$level-5: #a062c9;
+$level-1: #7175d6;
+$level-2: #5dad60;
+$level-3: #c5d321;
+$level-4: #a062c9;
 
 $regular: 200ms;
 
@@ -53,8 +53,8 @@ $regular: 200ms;
     align-items: center;
     justify-content: center;
     border-radius: 32px;
-    border: 6px $level-1 solid;
-    color: $level-1;
+    border: 6px $level-0 solid;
+    color: $level-0;
     transition: color $regular, border-color $regular, opacity $regular,
       scale $regular;
     opacity: 0.75;
@@ -64,7 +64,7 @@ $regular: 200ms;
       bottom: -12px;
       height: 70px;
       svg {
-        fill: $level-1;
+        fill: $level-0;
       }
     }
 
@@ -90,6 +90,27 @@ $regular: 200ms;
     opacity: 0.35;
     &:focus {
       opacity: 0.75;
+      color: $level-1;
+      border-color: $level-1;
+      svg {
+        fill: $level-1;
+      }
+      .perks__exp {
+        background-color: $level-1;
+      }
+    }
+  }
+
+  &__perk--level-1 {
+    color: $level-1;
+    border-color: $level-1;
+    svg {
+      fill: $level-1;
+    }
+    .perks__exp {
+      background-color: $level-1;
+    }
+    &:focus {
       color: $level-2;
       border-color: $level-2;
       svg {
@@ -152,27 +173,6 @@ $regular: 200ms;
     .perks__exp {
       background-color: $level-4;
     }
-    &:focus {
-      color: $level-5;
-      border-color: $level-5;
-      svg {
-        fill: $level-5;
-      }
-      .perks__exp {
-        background-color: $level-5;
-      }
-    }
-  }
-
-  &__perk--level-5 {
-    color: $level-5;
-    border-color: $level-5;
-    svg {
-      fill: $level-5;
-    }
-    .perks__exp {
-      background-color: $level-5;
-    }
   }
 
   &__exp-container {
@@ -198,7 +198,7 @@ $regular: 200ms;
 
   &__exp {
     border-radius: 50%;
-    background-color: $level-1;
+    background-color: $level-0;
     width: 16px;
     height: 16px;
     display: inline-block;
