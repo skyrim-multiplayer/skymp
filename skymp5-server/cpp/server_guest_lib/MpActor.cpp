@@ -196,10 +196,7 @@ void MpActor::NetSendChangeValues(const ActorValues& actorValues)
     { "data",
       { { "health", actorValues.healthPercentage },
         { "magicka", actorValues.magickaPercentage },
-        { "stamina", actorValues.staminaPercentage },
-        { "healRate", actorValues.healRate },
-        { "magickaRate", actorValues.magickaRate },
-        { "staminaRate", actorValues.staminaRate } } }
+        { "stamina", actorValues.staminaPercentage }, } }
   }.dump();
   SendToUser(s.data(), s.size(), true);
 }

@@ -1,16 +1,24 @@
 #pragma once
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
+#include <functional>
+#include <string>
 
-class AnimationData;
 class MpActor;
+struct AnimationData;
 
 class AnimationSystem
 {
 public:
   AnimationSystem();
-  void Process(MpActor* const actor, const AnimationData& animData) const;
+  void Process(MpActor* actor, const AnimationData& animData) const;
 
 private:
-  std::unordered_set<std::string> animations;
+  using AnimationCallback = std::function<void(MpActor*)>;
+  using AnimationCallbacks = std::unordered_map<std::string, AnimationCallback>;
+
+  void InitAnimationCallbacks();
+  void AddAnimationCallback(std::string animEvenName, AnimationCallback callback);
+
+  AnimationCallbacks animationCallbacks;
 };

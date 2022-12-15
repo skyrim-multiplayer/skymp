@@ -1445,9 +1445,6 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
           actorValues.healthPercentage = newValue["health"].get<float>();
           actorValues.magickaPercentage = newValue["magicka"].get<float>();
           actorValues.staminaPercentage = newValue["stamina"].get<float>();
-          actorValues.healRate = newValue["healRate"].get<float>();
-          actorValues.magickaRate = newValue["magickaRate"].get<float>();
-          actorValues.staminaRate = newValue["staminaRate"].get<float>();
           actor->NetSetPercentages(actorValues);
         }
       } else {

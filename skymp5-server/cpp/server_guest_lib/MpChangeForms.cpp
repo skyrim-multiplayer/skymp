@@ -37,9 +37,6 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["healthPercentage"] = changeForm.actorValues.healthPercentage;
   res["magickaPercentage"] = changeForm.actorValues.magickaPercentage;
   res["staminaPercentage"] = changeForm.actorValues.staminaPercentage;
-  res["healRate"] = changeForm.actorValues.healRate;
-  res["magickaRate"] = changeForm.actorValues.magickaRate;
-  res["staminaRate"] = changeForm.actorValues.staminaRate;
 
   res["isDead"] = changeForm.isDead;
 
@@ -70,8 +67,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     staminaPercentage("staminaPercentage"), isDead("isDead"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay"), healRate("healRate"), magickaRate("magickaRate"),
-    staminaRate("staminaRate");
+    spawnDelay("spawnDelay");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -124,9 +120,6 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   ReadEx(element, healthPercentage, &res.actorValues.healthPercentage);
   ReadEx(element, magickaPercentage, &res.actorValues.magickaPercentage);
   ReadEx(element, staminaPercentage, &res.actorValues.staminaPercentage);
-  ReadEx(element, healRate, &res.actorValues.healRate);
-  ReadEx(element, magickaRate, &res.actorValues.magickaRate);
-  ReadEx(element, staminaRate, &res.actorValues.staminaRate);
   ReadEx(element, isDead, &res.isDead);
 
   simdjson::dom::element jDynamicFields;

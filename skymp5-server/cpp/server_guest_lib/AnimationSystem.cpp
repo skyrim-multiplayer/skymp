@@ -4,21 +4,37 @@
 
 AnimationSystem::AnimationSystem()
 {
-  animations = { "blockStart", "blockStop", "attackStart" };
+  InitAnimationCallbacks();
 }
 
-void AnimationSystem::Process(MpActor* const actor,
+void AnimationSystem::Process(MpActor* actor,
                               const AnimationData& animData) const
 {
-  if (!animations.count(animData.animEventName)) {
+  auto it = animationCallbacks.find(animData.animEventName);
+  if (it == animationCallbacks.end()) {
     return;
   }
-  if (!strcmp(animData.animEventName, "blockStart")) {
-    actor->SetIsBlockActive(true);
-  } else if (!strcmp(animData.animEventName, "blockStop")) {
-    actor->SetIsBlockActive(false);
-  } else if (!strcmp(animData.animEventName, "attackStart")) {
+  it->second(actor);
+}
+
+void AnimationSystem::InitAnimationCallbacks()
+{
+  AddAnimationCallback("blockStart",
+                       [&](MpActor* actor) { actor->SetIsBlockActive(true); });
+  AddAnimationCallback(
+    "blockStop", [&](MpActor* actor) { actor->SetIsBlockActive(false); });
+  AddAnimationCallback("attackStart", [&](MpActor* actor) {
     constexpr float modifier = 5.f;
     actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-  }
+  });
+  AddAnimationCallback("jumpStart", [&](MpActor* actor) {
+    constexpr float modifier = 5.f;
+    actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+  });
+}
+
+void AnimationSystem::AddAnimationCallback(std::string animEventName,
+                                           AnimationCallback callback)
+{
+  animationCallbacks[animEventName] = callback;
 }

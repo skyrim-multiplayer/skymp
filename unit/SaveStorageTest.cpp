@@ -87,9 +87,6 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   f1.actorValues.healthPercentage = 0.25f;
   f1.actorValues.magickaPercentage = 0.3f;
   f1.actorValues.staminaPercentage = 1.0f;
-  f1.actorValues.healRate = 2.f;
-  f1.actorValues.magickaRate = 3.f;
-  f1.actorValues.staminaRate = 4.f;
   f2.formDesc = { 2, "" };
   f2.position = { 2, 4, 6 };
   f2.isDisabled = true;
@@ -97,9 +94,6 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   f2.actorValues.healthPercentage = 0;
   f2.actorValues.magickaPercentage = 0;
   f2.actorValues.staminaPercentage = 0;
-  f2.actorValues.healRate = 0;
-  f2.actorValues.magickaRate = 0;
-  f2.actorValues.staminaRate = 0;
   UpsertSync(*st, { f1, f2 });
 
   auto res = ISaveStorageUtils::FindAllSync(*st);
@@ -113,18 +107,12 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   REQUIRE(res[{ 1, "" }].actorValues.healthPercentage == 0.25f);
   REQUIRE(res[{ 1, "" }].actorValues.magickaPercentage == 0.3f);
   REQUIRE(res[{ 1, "" }].actorValues.staminaPercentage == 1.0f);
-  REQUIRE(res[{ 1, "" }].actorValues.healRate == 2.f);
-  REQUIRE(res[{ 1, "" }].actorValues.magickaRate == 3.f);
-  REQUIRE(res[{ 1, "" }].actorValues.staminaRate == 4.f);
   REQUIRE(res[{ 2, "" }].position == NiPoint3(2, 4, 6));
   REQUIRE(res[{ 2, "" }].isDisabled == true);
   REQUIRE(res[{ 2, "" }].profileId == 10);
   REQUIRE(res[{ 2, "" }].actorValues.healthPercentage == 0);
   REQUIRE(res[{ 2, "" }].actorValues.magickaPercentage == 0);
   REQUIRE(res[{ 2, "" }].actorValues.staminaPercentage == 0);
-  REQUIRE(res[{ 2, "" }].actorValues.healRate == 0);
-  REQUIRE(res[{ 2, "" }].actorValues.magickaRate == 0);
-  REQUIRE(res[{ 2, "" }].actorValues.staminaRate == 0);
 }
 
 TEST_CASE("Upsert affects the number of change forms in the database in the "
