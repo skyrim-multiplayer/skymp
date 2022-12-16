@@ -96,13 +96,13 @@ export class MpApiInteractor {
       const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
       const hearingRadius = chatSettings.hearingRadiusNormal !== undefined ?
                             sqr(chatSettings.hearingRadiusNormal) :
-                            45 // sqr(2000)
+                            sqr(2000)
       const onlinePlayers = mp.get(0, 'onlinePlayers');
       const actorNeighbors =
         mp.get(input.actorId, 'actorNeighbors')
         .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
         .reduce<ChatNeighbor[]>((filtered, actorId) => {
-          const distance = getActorDistanceSquared(input.actorId, actorId) 
+          const distance = getActorDistanceSquared(input.actorId, actorId)
           if (distance < hearingRadius) {
             filtered.push({
               actorId,

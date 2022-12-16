@@ -340,9 +340,8 @@ export class SweetPieGameModeListener implements GameModeListener {
         ...parseMessageText(inputText)
     ]
     }
-    console.log(message)
     for (const neighbor of neighbors) {
-      message.opacity = neighbor.opacity
+      message.opacity = neighbor.opacity;
       this.controller.sendChatMessage(neighbor.actorId, message);
     }
   }
