@@ -98,10 +98,4 @@ public:
   {
     return !(lhs == rhs);
   }
-
-  friend bool operator<(const Inventory& lhs, const Inventory& rhs)
-  {
-    // Slow but seems to be used only in tests
-    return lhs.ToJson() < rhs.ToJson();
-  }
 };
