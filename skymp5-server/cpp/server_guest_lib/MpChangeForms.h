@@ -6,7 +6,6 @@
 #include "Inventory.h"
 #include "LocationalData.h"
 #include "NiPoint3.h"
-#include <boost/pfr.hpp>
 #include <cstdint>
 #include <optional>
 #include <ostream>
@@ -65,8 +64,13 @@ class MpChangeForm : public MpChangeFormREFR
 public:
   auto ToTuple() const
   {
-    return boost::pfr::structure_to_tuple(
-      static_cast<const MpChangeFormREFR&>(*this));
+    return std::make_tuple(
+      recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
+      angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
+      baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
+      isRaceMenuOpen, isDead, appearanceDump, equipmentDump, healthPercentage,
+      magickaPercentage, staminaPercentage, spawnPoint, dynamicFields,
+      spawnDelay);
   }
 
   static nlohmann::json ToJson(const MpChangeForm& changeForm);
