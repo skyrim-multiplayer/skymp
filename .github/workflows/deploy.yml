@@ -80,11 +80,15 @@ jobs:
                     "You can follow the process at <$link>. " \
                     "Once build is finished, further progress will be reported here."
 
+          - name: Get image to build upon
+            run: |
+                cat ${{github.workspace}}/ci/github_env_linux >> "$GITHUB_ENV"
+
           - name: Prepare for build
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:20221121-1
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -95,7 +99,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:20221121-1
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -115,7 +119,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:20221121-1
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js

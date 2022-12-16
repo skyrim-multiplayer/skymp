@@ -2,7 +2,6 @@
 // https://github.com/himika/libSkyrim/blob/2559175f7f30189b7d3681d01b3e055505c3e0d7/Skyrim/include/Skyrim/NetImmerse/NiPoint3.h
 #pragma once
 #include <cmath>
-#include <tuple>
 
 class NiPoint3
 {
@@ -139,12 +138,6 @@ public:
   float x = 0;
   float y = 0;
   float z = 0;
-
-  friend bool operator<(const NiPoint3& left, const NiPoint3& right)
-  {
-    return std::make_tuple(left.x, left.y, left.z) <
-      std::make_tuple(right.x, right.y, right.z);
-  }
 
 private:
   static const unsigned int* GetSqrtTable()
