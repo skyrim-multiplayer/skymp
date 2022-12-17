@@ -31,8 +31,11 @@ jobs:
 
     - name: Move vcpkg submodule to a larger drive
       run: |
+        dir C:/
         Remove-Item -Recurse -Force C:/vcpkg
+        dir C:/
         Move-Item -Path ./vcpkg C:/vcpkg
+        dir C:/
 
     - name: Debug - free space
       run: Get-PSDrive
