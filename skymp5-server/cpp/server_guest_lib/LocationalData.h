@@ -21,7 +21,9 @@ struct LocationalData
 
   friend bool operator<(const LocationalData& r, const LocationalData& l)
   {
-    return std::make_tuple(r.pos, r.rot, r.cellOrWorldDesc) <
-      std::make_tuple(l.pos, l.rot, l.cellOrWorldDesc);
+    return std::make_tuple(r.rot[0], r.rot[1], r.rot[2], r.pos[0], r.pos[1],
+                           r.pos[2], r.cellOrWorldDesc) <
+      std::make_tuple(l.rot[0], l.rot[1], l.rot[2], l.pos[0], l.pos[1],
+                      l.pos[2], l.cellOrWorldDesc);
   }
 };
