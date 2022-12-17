@@ -68,8 +68,7 @@ public:
       angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
       isRaceMenuOpen, isDead, appearanceDump, equipmentDump, actorValues,
-      healthPercentage, magickaPercentage, staminaPercentage, spawnPoint,
-      dynamicFields, spawnDelay);
+      spawnPoint, dynamicFields, spawnDelay);
   }
 
   static nlohmann::json ToJson(const MpChangeForm& changeForm);
