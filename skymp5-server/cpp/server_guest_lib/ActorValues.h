@@ -1,5 +1,5 @@
 #pragma once
-#include <boost/pfr.hpp>
+#include <tuple>
 
 struct ActorValues
 {
@@ -18,8 +18,10 @@ struct ActorValues
 
   auto ToTuple() const
   {
-    return boost::pfr::structure_to_tuple(
-      static_cast<const ActorValues&>(*this));
+    return std::make_tuple(healthPercentage, magickaPercentage,
+                           staminaPercentage, health, magicka, stamina,
+                           healRate, magickaRate, staminaRate, healRateMult,
+                           magickaRate, staminaRate);
   }
 
   friend bool operator==(const ActorValues& lhs, const ActorValues& rhs)
