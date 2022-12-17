@@ -37,13 +37,13 @@ function(link_vcpkg_dependencies)
         find_package(commonlibae REQUIRED CONFIGS CommonLibSSEConfig.cmake)
       endif()
 
-      # ???
+      find_package(Boost MODULE REQUIRED)
       find_package(robin_hood REQUIRED)
 
       find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
       target_include_directories(${target} PRIVATE ${SIMPLEINI_INCLUDE_DIRS})
 
-      target_link_libraries(${target}	PRIVATE	CommonLibSSE::CommonLibSSE robin_hood::robin_hood)
+      target_link_libraries(${target}	PRIVATE	Boost::headers CommonLibSSE::CommonLibSSE robin_hood::robin_hood)
 
       find_package(directxtk CONFIG REQUIRED)
       find_package(directxmath CONFIG REQUIRED)
