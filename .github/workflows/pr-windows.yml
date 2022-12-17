@@ -29,10 +29,13 @@ jobs:
     - name: Install tools
       run: choco install opencppcoverage
 
-    - run: ./vcpkg/bootstrap-vcpkg.bat
-
     - name: Move vcpkg submodule to a larger drive
-      run: Move-Item -Path ./vcpkg C:/vcpkg
+      run: |
+        Remove-Item -Recurse -Force C:/vcpkg
+        Move-Item -Path ./vcpkg C:/vcpkg
+
+    - name: Bootstrap vcpkg
+      run: C:/vcpkg/bootstrap-vcpkg.bat
 
     - name: Debug - free space
       run: Get-PSDrive
@@ -86,7 +89,6 @@ jobs:
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
         -DPREPARE_NEXUS_ARCHIVES=ON
-        -DBUILD_UNIT_TESTS=OFF
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         -DSKYRIM_SE=ON
         --profiling-output cmake-profiling-output
