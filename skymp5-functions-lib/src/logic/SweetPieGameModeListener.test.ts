@@ -95,7 +95,7 @@ describe("SweetPieGameModeListener: Chat", () => {
   test("Chat messages are transferred to neighbors", () => {
     const controller = makePlayerController();
     const listener = new SweetPieGameModeListener(controller);
-    listener.onPlayerChatInput(1, "hello!", [1, 2, 3], "SupAidme");
+    listener.onPlayerChatInput(1, "hello!", [1, 2, 3], [1, 2, 3], "SupAidme");
 
     const msg = 'SupAidme: hello!';
     expect(controller.sendChatMessage).toBeCalledTimes(3);
