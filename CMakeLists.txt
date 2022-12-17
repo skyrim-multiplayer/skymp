@@ -12,15 +12,7 @@ endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
-
-# Use specified VCPKG if exists
-if(DEFINED VCPKG_ROOT AND EXISTS ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
-  set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-elseif(DEFINED VCPKG_INSTALLATION_ROOT AND EXISTS ${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake)
-  set(CMAKE_TOOLCHAIN_FILE "${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-else()
-  set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-endif()
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 # File from vcpkg submodule. This indicates inability to find this file or checkout submodules.
 if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
