@@ -29,10 +29,10 @@ jobs:
     - name: Install tools
       run: choco install opencppcoverage
 
-    - run: ./vcpkg/bootstrap-vcpkg.bat
-
     - name: Move vcpkg submodule to a larger drive
-      run: Move-Item -Path ./vcpkg C:/vcpkg
+      run: |
+        Remove-Item -Recurse -Force C:/vcpkg
+        Move-Item -Path ./vcpkg C:/vcpkg
 
     - name: Debug - free space
       run: Get-PSDrive
