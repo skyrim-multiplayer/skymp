@@ -35,6 +35,8 @@ export class SweetPieGameModeListener implements GameModeListener {
   readonly returnToHallPortalName = 'Return to hall';
   readonly neutralPortalNameTpl = 'Enter deathmatch\nPlayers: %d (min %d)\n%s';
 
+  readonly shoutTooLongMessage: [string] = ["Shout is too long"];
+
   readonly roundStateToHumanReadable: Record<SweetPieRound['state'], string> = {
     'wait': 'Waiting for players...',
     'warmup': 'Warmup',
@@ -282,18 +284,33 @@ export class SweetPieGameModeListener implements GameModeListener {
     // TODO(#835): maybe return the dialog system when bugs are fixed?
   }
 
-  onPlayerChatInput(actorId: number, inputText: string, neighbors: number[], senderName: string) {
+  onPlayerChatInput(actorId: number, inputText: string, neighborsHearingNormal: number[], neighborsHearingShout: number[], senderName: string) {
     for (const command of this.commands) {
       if (/\/\d+(d|к)\d+/gi.test(inputText) && command.name === 'roll') {
-        command.handler({ actorId, controller: this.controller, neighbors, senderName, inputText });
+        command.handler({ actorId, controller: this.controller, neighbors: neighborsHearingNormal, senderName, inputText });
         return;
       }
       if (inputText === '/' + command.name || inputText.startsWith(`/${command.name} `)) {
-        command.handler({ actorId, controller: this.controller, neighbors, senderName, inputText, argsRaw: inputText.substring(command.name.length + 2) });
+        command.handler({ actorId, controller: this.controller, neighbors: neighborsHearingNormal, senderName, inputText, argsRaw: inputText.substring(command.name.length + 2) });
         return;
       }
     }
-    for (const neighborActorId of neighbors) {
+
+    // Shout messages
+    if (inputText.startsWith('#') && inputText.endsWith('#')) {
+      const text = inputText.substring(1, inputText.length - 1).toUpperCase();
+      if (text.length > 100) {
+        this.controller.sendChatMessage(actorId, ...this.shoutTooLongMessage);
+        return;
+      }
+      for (const neighborActorId of neighborsHearingShout) {
+        this.controller.sendChatMessage(neighborActorId, '#{FF0000}' + senderName + 'крикнул: ' + text);
+      }
+      return;
+    }
+
+    // Regular messages
+    for (const neighborActorId of neighborsHearingNormal) {
       this.controller.sendChatMessage(neighborActorId, '' + senderName + ': ' + inputText);
     }
   }

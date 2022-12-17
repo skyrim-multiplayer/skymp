@@ -24,7 +24,7 @@ const scriptName = (refrId: number) => {
       const strLength = vmadData[6] + (vmadData[7] << 8);
       var strData: string = '';
       for (var i = 0; i < strLength; i++) {
-        strData += String.fromCharCode(vmadData[8+i]).valueOf();
+        strData += String.fromCharCode(vmadData[8 + i]).valueOf();
       }
       return strData;
     }
@@ -95,18 +95,25 @@ export class MpApiInteractor {
     ChatProperty.setChatInputHandler((input) => {
       const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
       const onlinePlayers = mp.get(0, 'onlinePlayers');
-      const actorNeighbors =
+      const neighborsHearingNormal =
         mp.get(input.actorId, 'actorNeighbors')
           .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
           .filter((actorId) =>
             chatSettings.hearingRadiusNormal === undefined ||
             getActorDistanceSquared(input.actorId, actorId) < sqr(chatSettings.hearingRadiusNormal)
           );
+      const neighborsHearingShout =
+        mp.get(input.actorId, 'actorNeighbors')
+          .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
+          .filter((actorId) =>
+            chatSettings.hearingRadiusShout === undefined ||
+            getActorDistanceSquared(input.actorId, actorId) < sqr(chatSettings.hearingRadiusShout)
+          );
 
       const name = getName(input.actorId);
       if (listener.onPlayerChatInput) {
         console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
-        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, name);
+        listener.onPlayerChatInput(input.actorId, input.inputText, neighborsHearingNormal, neighborsHearingShout, name);
       }
     });
   }
