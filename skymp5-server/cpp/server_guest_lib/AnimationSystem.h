@@ -18,7 +18,6 @@ private:
   using AnimationCallbacks = std::unordered_map<std::string, AnimationCallback>;
 
   void InitAnimationCallbacks();
-  void AddAnimationCallback(std::string animEvenName, AnimationCallback callback);
 
   AnimationCallbacks animationCallbacks;
 };

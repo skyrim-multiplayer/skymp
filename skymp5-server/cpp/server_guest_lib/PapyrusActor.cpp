@@ -55,18 +55,6 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
   return VarValue();
 }
 
-VarValue PapyrusActor::SetActorValue(VarValue self,
-                                     const std::vector<VarValue>& arguments)
-{
-  espm::ActorValue attributeName =
-    ConvertToAV(static_cast<const char*>(arguments[0]));
-  float value = static_cast<double>(arguments[1]);
-  if (auto actor = GetFormPtr<MpActor>(self)) {
-    actor->SetActorValue(attributeName, value);
-  }
-  return VarValue();
-}
-
 VarValue PapyrusActor::SetAlpha(VarValue self,
                                 const std::vector<VarValue>& arguments)
 {

@@ -19,22 +19,21 @@ void AnimationSystem::Process(MpActor* actor,
 
 void AnimationSystem::InitAnimationCallbacks()
 {
-  AddAnimationCallback("blockStart",
-                       [&](MpActor* actor) { actor->SetIsBlockActive(true); });
-  AddAnimationCallback(
-    "blockStop", [&](MpActor* actor) { actor->SetIsBlockActive(false); });
-  AddAnimationCallback("attackStart", [&](MpActor* actor) {
-    constexpr float modifier = 5.f;
-    actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-  });
-  AddAnimationCallback("jumpStart", [&](MpActor* actor) {
-    constexpr float modifier = 5.f;
-    actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-  });
-}
-
-void AnimationSystem::AddAnimationCallback(std::string animEventName,
-                                           AnimationCallback callback)
-{
-  animationCallbacks[animEventName] = callback;
+  animationCallbacks = {
+    {
+      "blockStart",
+      [&](MpActor* actor) { actor->SetIsBlockActive(true); },
+    },
+    { "blockStop", [&](MpActor* actor) { actor->SetIsBlockActive(false); } },
+    { "attackStart",
+      [&](MpActor* actor) {
+        constexpr float modifier = 5.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      } },
+    { "jumpStart",
+      [&](MpActor* actor) {
+        constexpr float modifier = 5.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      } }
+  };
 }
