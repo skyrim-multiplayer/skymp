@@ -1,8 +1,7 @@
 #pragma once
-#include <string>
-#include <unordered_map>
 #include <functional>
 #include <string>
+#include <unordered_map>
 
 class MpActor;
 struct AnimationData;
@@ -15,7 +14,8 @@ public:
 
 private:
   using AnimationCallback = std::function<void(MpActor*)>;
-  using AnimationCallbacks = std::unordered_map<std::string, AnimationCallback>;
+  using AnimationCallbacks =
+    std::unordered_map<std::string, AnimationCallback>;
 
   void InitAnimationCallbacks();
 

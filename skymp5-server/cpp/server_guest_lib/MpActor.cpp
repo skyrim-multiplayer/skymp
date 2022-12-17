@@ -194,9 +194,11 @@ void MpActor::NetSendChangeValues(const ActorValues& actorValues)
   s += nlohmann::json{
     { "t", MsgType::ChangeValues },
     { "data",
-      { { "health", actorValues.healthPercentage },
+      {
+        { "health", actorValues.healthPercentage },
         { "magicka", actorValues.magickaPercentage },
-        { "stamina", actorValues.staminaPercentage }, } }
+        { "stamina", actorValues.staminaPercentage },
+      } }
   }.dump();
   SendToUser(s.data(), s.size(), true);
 }

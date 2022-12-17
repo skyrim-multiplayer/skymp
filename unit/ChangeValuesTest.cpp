@@ -145,9 +145,11 @@ TEST_CASE("ChangeValues message is being delivered to client",
 
   nlohmann::json j = nlohmann::json{ { "t", MsgType::ChangeValues },
                                      { "data",
-                                       { { "health", 1.0f },
+                                       {
+                                         { "health", 1.0f },
                                          { "magicka", 1.0f },
-                                         { "stamina", 1.0f }, } } };
+                                         { "stamina", 1.0f },
+                                       } } };
   std::string s = MakeMessage(j);
 
   ac.SendToUser(s.data(), s.size(), true);
@@ -205,7 +207,7 @@ TEST_CASE("OnChangeValues function doesn't sends ChangeValues message if "
           "[ChangeValues]")
 {
   using namespace std::chrono_literals;
-    
+
   PartOne& partOne = GetPartOne();
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
