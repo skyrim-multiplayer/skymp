@@ -35,7 +35,9 @@ jobs:
       run: |
         Remove-Item -Recurse -Force C:/vcpkg
         Move-Item -Path ./vcpkg C:/vcpkg
-        C:/vcpkg/bootstrap-vcpkg.bat
+
+    - name: Bootstrap vcpkg
+      run: C:/vcpkg/bootstrap-vcpkg.bat
 
     - name: Debug - free space
       run: Get-PSDrive
@@ -96,7 +98,6 @@ jobs:
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
         -DPREPARE_NEXUS_ARCHIVES=ON
-        -DBUILD_UNIT_TESTS=OFF
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
