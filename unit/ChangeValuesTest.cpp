@@ -121,13 +121,21 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
     baseValues.staminaRate * baseValues.staminaRateMult * time / 10000.0f;
 
   auto changeForm = ac.GetChangeForm();
-
+  std::cout << std::setprecision(10) << changeForm.actorValues.healthPercentage
+            << "vs "
+            << expectedHealth + 0.1f << '\n';
+  std::cout << std::setprecision(10)
+            << changeForm.actorValues.magickaPercentage << "vs "
+            << expectedMagicka << '\n';
+  std::cout << std::setprecision(10)
+            << changeForm.actorValues.staminaPercentage << "vs "
+            << expectedStamina << '\n';
   REQUIRE_THAT(changeForm.actorValues.healthPercentage,
                Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.000001f));
   REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
-               Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
+               Catch::Matchers::WithinAbs(expectedMagicka, 0.00001f));
   REQUIRE_THAT(changeForm.actorValues.staminaPercentage,
-               Catch::Matchers::WithinAbs(expectedStamina, 0.000001f));
+               Catch::Matchers::WithinAbs(expectedStamina, 0.00001f));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
@@ -147,10 +155,7 @@ TEST_CASE("ChangeValues message is being delivered to client",
                                      { "data",
                                        { { "health", 1.0f },
                                          { "magicka", 1.0f },
-                                         { "stamina", 1.0f },
-                                         { "healRate", 0.5f },
-                                         { "magickaRate", 0.3f },
-                                         { "staminaRate", 10.f } } } };
+                                         { "stamina", 1.0f }, } } };
   std::string s = MakeMessage(j);
 
   ac.SendToUser(s.data(), s.size(), true);
@@ -160,9 +165,6 @@ TEST_CASE("ChangeValues message is being delivered to client",
   REQUIRE(message["data"]["health"] == 1.0f);
   REQUIRE(message["data"]["magicka"] == 1.0f);
   REQUIRE(message["data"]["stamina"] == 1.0f);
-  REQUIRE(message["data"]["healRate"] == 0.5f);
-  REQUIRE(message["data"]["magickaRate"] == 0.3f);
-  REQUIRE(message["data"]["staminaRate"] == 10.f);
 
   partOne.DestroyActor(0xff000000);
   DoDisconnect(partOne, 0);
@@ -211,7 +213,7 @@ TEST_CASE("OnChangeValues function doesn't sends ChangeValues message if "
           "[ChangeValues]")
 {
   using namespace std::chrono_literals;
-
+    
   PartOne& partOne = GetPartOne();
   DoConnect(partOne, 0);
   partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
