@@ -121,15 +121,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
     baseValues.staminaRate * baseValues.staminaRateMult * time / 10000.0f;
 
   auto changeForm = ac.GetChangeForm();
-  std::cout << std::setprecision(10) << changeForm.actorValues.healthPercentage
-            << "vs "
-            << expectedHealth + 0.1f << '\n';
-  std::cout << std::setprecision(10)
-            << changeForm.actorValues.magickaPercentage << "vs "
-            << expectedMagicka << '\n';
-  std::cout << std::setprecision(10)
-            << changeForm.actorValues.staminaPercentage << "vs "
-            << expectedStamina << '\n';
+
   REQUIRE_THAT(changeForm.actorValues.healthPercentage,
                Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.000001f));
   REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
