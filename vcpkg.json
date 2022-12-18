@@ -4,6 +4,7 @@
   "homepage": "https://skymp.io",
   "description": "Online mod for Skyrim SE.",
   "dependencies": [
+    "cmrc",
     "chakracore",
     "nlohmann-json",
     "cpp-httplib",
