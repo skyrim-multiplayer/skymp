@@ -14,16 +14,15 @@ TEST_CASE("Animations system processes animation events correctly",
   p.SetUserActor(0, 0xff000000);
 
   auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
-  AnimationSystem system;
   AnimationData data;
   data.animEventName = "attackStart";
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 1.f);
-  system.Process(&actor, data);
+  p.animationSystem.Process(&actor, data);
   // attackStart consumes 7 points of stamina
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.93f);
   data.animEventName = "jumpStandingStart";
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.93f);
-  system.Process(&actor, data);
+  p.animationSystem.Process(&actor, data);
   // jumpStart consumes 10 points of stamina
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.83f);
 }
