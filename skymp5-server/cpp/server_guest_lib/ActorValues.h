@@ -23,21 +23,3 @@ struct ActorValues
                            healRate, magickaRate, staminaRate, healRateMult,
                            magickaRate, staminaRate);
   }
-
-  friend bool operator==(const ActorValues& lhs, const ActorValues& rhs)
-  {
-    return lhs.ToTuple() == rhs.ToTuple();
-  }
-  friend bool operator!=(const ActorValues& lhs, const ActorValues& rhs)
-  {
-    return !(lhs == rhs);
-  }
-  friend bool operator<(const ActorValues& lhs, const ActorValues& rhs)
-  {
-    return lhs.ToTuple() < rhs.ToTuple();
-  }
-  friend bool operator>(const ActorValues& lhs, const ActorValues& rhs)
-  {
-    return lhs.ToTuple() > rhs.ToTuple();
-  }
-};
