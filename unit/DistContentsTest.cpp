@@ -113,8 +113,8 @@ TEST_CASE("Distribution folder must contain all requested files",
     std::stringstream err;
     err << "Unexpected contents of '" << DIST_DIR << "', see diff"
         << std::endl;
-    err << ss.str() << std::endl;
-    err << "Update unit/DistContentsExpected.json if it was expected to change"
+    err << ss.str()
+        << "Update unit/DistContentsExpected.json if it was expected to change"
         << std::endl;
     err << std::endl;
     throw std::runtime_error(err.str());
