@@ -23,6 +23,6 @@ TEST_CASE("Animations system processes animation events correctly",
   data.animEventName = "jumpStandingStart";
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.93f);
   p.animationSystem.Process(&actor, data);
-  // jumpStart consumes 10 points of stamina
+  // jumpStandingStart consumes 10 points of stamina
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.83f);
 }
