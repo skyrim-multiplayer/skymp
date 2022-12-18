@@ -60,7 +60,7 @@ endif()
 
 if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
-find_package(CMakeRC CONFIG REQUIRED)
+  find_package(CMakeRC CONFIG REQUIRED)
 
   # assets
   set(ASSET_FILES
