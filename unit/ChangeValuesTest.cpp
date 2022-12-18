@@ -123,7 +123,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   auto changeForm = ac.GetChangeForm();
 
   REQUIRE_THAT(changeForm.actorValues.healthPercentage,
-               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.000001f));
+               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.00001f));
   REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
                Catch::Matchers::WithinAbs(expectedMagicka, 0.00001f));
   REQUIRE_THAT(changeForm.actorValues.staminaPercentage,
