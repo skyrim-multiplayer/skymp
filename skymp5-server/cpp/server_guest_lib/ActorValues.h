@@ -23,3 +23,4 @@ struct ActorValues
                            healRate, magickaRate, staminaRate, healRateMult,
                            magickaRate, staminaRate);
   }
+}
