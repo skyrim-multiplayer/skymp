@@ -1,4 +1,4 @@
-name: PR Windows AE (build only!)
+name: PR Windows AE
 
 on:
   push:
@@ -44,7 +44,6 @@ jobs:
 
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
-      # Replace <OWNER> with your organization name
       run: >
         `C:/vcpkg/vcpkg.exe fetch nuget | tail -n 1`
         sources add
