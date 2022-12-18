@@ -36,49 +36,64 @@ void AnimationSystem::InitAnimationCallbacks()
   animationCallbacks = {
     {
       "blockStart",
-      [&](MpActor* actor) {
+      [](MpActor* actor) {
         constexpr float newRate = 0.f;
         actor->SetIsBlockActive(true);
         actor->SetActorValue(espm::ActorValue::StaminaRate, newRate);
       },
     },
-    { "blockStop",
+    {
+      "blockStop",
       [&](MpActor* actor) {
         actor->SetIsBlockActive(false);
         actor->SetActorValue(espm::ActorValue::StaminaRate,
                              actor->GetBaseValues().staminaRate);
-      } },
-    { "attackStart",
-      [&](MpActor* actor) {
+      },
+    },
+    {
+      "attackStart",
+      [](MpActor* actor) {
         constexpr float modifier = 7.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      } },
-    { "attackStartH2HRight",
-      [&](MpActor* actor) {
+      },
+    },
+    {
+      "attackStartH2HRight",
+      [](MpActor* actor) {
         constexpr float modifier = 4.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      } },
-    { "attackStartH2HLeft",
-      [&](MpActor* actor) {
+      },
+    },
+    {
+      "attackStartH2HLeft",
+      [](MpActor* actor) {
         constexpr float modifier = 4.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      } },
-    { "jumpStandingStart",
-      [&](MpActor* actor) {
+      },
+    },
+    {
+      "jumpStandingStart",
+      [](MpActor* actor) {
         constexpr float modifier = 10.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      } },
-    { "jumpDirectionalStart",
-      [&](MpActor* actor) {
+      },
+    },
+    {
+      "jumpDirectionalStart",
+      [](MpActor* actor) {
         constexpr float modifier = 15.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      } },
-    { "bowAttackStart",
-      [&](MpActor* actor) {
+      },
+    },
+    {
+      "bowAttackStart",
+      [](MpActor* actor) {
         constexpr float modifier = 5.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      } },
-    { "attackRelease ",
+      },
+    },
+    {
+      "attackRelease ",
       [&](MpActor* actor) {
         std::chrono::duration<float> elapsedTime =
           std::chrono::steady_clock::now() - GetLastAnimationTime();
@@ -89,16 +104,21 @@ void AnimationSystem::InitAnimationCallbacks()
           constexpr float modifier = 50.f;
           actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
         }
-      } },
-    { "crossbowAttackStart",
-      [&](MpActor* actor) {
+      },
+    },
+    {
+      "crossbowAttackStart",
+      [](MpActor* actor) {
         constexpr float modifier = 5.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      } },
-    { "reloadStart",
-      [&](MpActor* actor) {
+      },
+    },
+    {
+      "reloadStart",
+      [](MpActor* actor) {
         constexpr float modifier = 10.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      } }
+      },
+    }
   };
 }
