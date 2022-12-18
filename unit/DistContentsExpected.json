@@ -10,7 +10,6 @@
       "server/data/scripts/Actor.pex",
       "server/data/scripts/ActorValueInfo.pex",
       "server/data/scripts/Alias.pex",
-      "server/data/scripts/Book.pex",
       "server/data/scripts/Camera.pex",
       "server/data/scripts/Cell.pex",
       "server/data/scripts/ColorComponent.pex",
