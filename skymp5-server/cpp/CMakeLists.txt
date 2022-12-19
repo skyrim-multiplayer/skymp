@@ -122,10 +122,6 @@ foreach(target ${VCPKG_DEPENDENT})
   find_package(slikenet CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC SLikeNet)
 
-  find_package(Boost REQUIRED)
-  target_include_directories(${target} PUBLIC ${Boost_INCLUDE_DIRS})
-  target_link_libraries(${target} PUBLIC ${Boost_LIBRARIES})
-
   find_package(ZLIB REQUIRED)
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 

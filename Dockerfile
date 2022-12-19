@@ -1,10 +1,11 @@
 # Image used as runtime base for a game server.
 # Contains a minimal subset of stuff needed for running (and debugging, if needed) the server.
+# TODO: Update to 22.04
 FROM ubuntu:focal AS skymp-runtime-base
 
 # Prevent apt-get from asking us about timezone
-# London is UTC+0:00
-ENV TZ=Europe/London
+# London is not always UTC+0:00
+ENV TZ=Etc/GMT
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN \
@@ -21,7 +22,7 @@ RUN useradd -m skymp
 # It contains everything that should be installed on the system.
 FROM skymp-runtime-base AS skymp-build-base
 
-# TODO: are perl, upx-ucl, ninja needed?
+# TODO: update clang
 RUN \
   curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
   && echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" > /etc/apt/sources.list.d/yarn.list \
@@ -35,15 +36,12 @@ RUN \
     libicu-dev \
     git \
     cmake \
-    ninja-build \
     curl \
     unzip \
     tar \
-    perl \
     make \
     zip \
     pkg-config \
-    upx-ucl \
     cmake \
     clang-12 \
   && rm -rf /var/lib/apt/lists/*

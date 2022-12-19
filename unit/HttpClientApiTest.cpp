@@ -71,13 +71,12 @@ TEST_CASE("Should be able to fetch a resource via https", "[HttpClientApi]")
   )";
 
   auto result = ExecuteScript(src);
+  auto body = nlohmann::json::parse(result["body"].get<std::string>());
 
-  nlohmann::json body = nlohmann::json::object();
-  body["message"] = "Not Found";
-  body["documentation_url"] = "https://docs.github.com/rest";
-
-  REQUIRE(nlohmann::json::parse(result["body"].get<std::string>()) == body);
-  REQUIRE(result["status"] == 404);
+  // Can be Not Found or Rate Limited
+  REQUIRE(body["documentation_url"].type() == nlohmann::json::value_t::string);
+  REQUIRE(body["message"].type() == nlohmann::json::value_t::string);
+  REQUIRE(result["status"] >= 400);
 }
 
 TEST_CASE("Should be able to perform Bearer authorization", "[HttpClientApi]")

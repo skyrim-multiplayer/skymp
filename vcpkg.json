@@ -16,7 +16,6 @@
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
-    "boost-pfr",
     "node-addon-api",
     {
       "name": "directxtk",
