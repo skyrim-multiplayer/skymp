@@ -11,19 +11,10 @@ add_subdirectory(cpp)
 # Add TypeScript part of the server
 add_subdirectory(ts)
 
-# Include `node-addon-api`, a wrapper over NAPI.
-execute_process(COMMAND node -p "require('node-addon-api').include"
-  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  OUTPUT_VARIABLE NODE_ADDON_API_DIR
-)
-string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-
 # Create target called "node" to be linked into addon
 add_library(node INTERFACE)
-target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
-find_package(unofficial-node-api CONFIG REQUIRED)
-target_link_libraries(node INTERFACE unofficial::node-api::node-api)
+find_package(unofficial-node-addon-api CONFIG REQUIRED)
+target_link_libraries(node INTERFACE unofficial::node-addon-api::node-addon-api)
 
 file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
 if(MSVC)
