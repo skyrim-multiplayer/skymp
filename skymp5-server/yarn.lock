@@ -1732,27 +1732,6 @@ clone@^2.1.1:
   resolved "https://registry.yarnpkg.com/clone/-/clone-2.1.2.tgz#1b7f4b9f591f1e8f83670401600345a02887435f"
   integrity sha1-G39Ln1kfHo+DZwQBYANFoCiHQ18=
 
-cmake-js@^6.3.0:
-  version "6.3.0"
-  resolved "https://registry.yarnpkg.com/cmake-js/-/cmake-js-6.3.0.tgz#ea9b5fd6789bf18dd02bdfec900bccc3fbe72af6"
-  integrity "sha1-6ptf1nib8Y3QK9/skAvMw/vnKvY= sha512-1uqTOmFt6BIqKlrX+39/aewU/JVhyZWDqwAL+6psToUwxj3yWPJiwxiZFmV0XdcoWmqGs7peZTxTbJtAcH8hxw=="
-  dependencies:
-    axios "^0.21.1"
-    debug "^4"
-    fs-extra "^5.0.0"
-    is-iojs "^1.0.1"
-    lodash "^4"
-    memory-stream "0"
-    npmlog "^1.2.0"
-    rc "^1.2.7"
-    semver "^5.0.3"
-    splitargs "0"
-    tar "^4"
-    unzipper "^0.8.13"
-    url-join "0"
-    which "^1.0.9"
-    yargs "^3.6.0"
-
 co@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/co/-/co-4.6.0.tgz#6ea6bdf3d853ae54ccb8e47bfa0bf3f9031fb184"
