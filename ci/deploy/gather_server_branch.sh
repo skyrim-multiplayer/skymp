@@ -12,4 +12,4 @@ msg+="`echo "$data" | tail -n +2`"  # start from second line
 # Take first line and pass it to script. It treats this as a list of PR numbers
 echo "$data" | head -n 1 | xargs ./ci/deploy/merge_pulls.sh
 
-git submodule init --update --recursive
+git submodule update --init --recursive
