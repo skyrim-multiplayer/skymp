@@ -58,28 +58,28 @@ void AnimationSystem::InitAnimationCallbacks()
       },
     },
     {
-      "attackStartH2HRight",
+      "AttackStartH2HRight",
       [](MpActor* actor) {
         constexpr float modifier = 4.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
-      "attackStartH2HLeft",
+      "AttackStartH2HLeft",
       [](MpActor* actor) {
         constexpr float modifier = 4.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
-      "jumpStandingStart",
+      "JumpStandingStart",
       [](MpActor* actor) {
         constexpr float modifier = 10.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
-      "jumpDirectionalStart",
+      "JumpDirectionalStart",
       [](MpActor* actor) {
         constexpr float modifier = 15.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
@@ -93,7 +93,7 @@ void AnimationSystem::InitAnimationCallbacks()
       },
     },
     {
-      "attackRelease ",
+      "attackRelease",
       [&](MpActor* actor) {
         std::chrono::duration<float> elapsedTime =
           std::chrono::steady_clock::now() - GetLastAnimationTime();
