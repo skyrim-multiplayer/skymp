@@ -107,6 +107,7 @@ jobs:
                 run: |
                     cd /src \
                     && ./build.sh --configure \
+                       -DBUILD_UNIT_TESTS=OFF \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
           - name: Upload compile_commands.json
