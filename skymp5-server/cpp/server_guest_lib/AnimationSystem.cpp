@@ -109,14 +109,14 @@ void AnimationSystem::InitAnimationCallbacks()
     {
       "crossbowAttackStart",
       [](MpActor* actor) {
-        constexpr float modifier = 5.f;
+        constexpr float modifier = 10.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
       "reloadStart",
       [](MpActor* actor) {
-        constexpr float modifier = 10.f;
+        constexpr float modifier = 50.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     }
