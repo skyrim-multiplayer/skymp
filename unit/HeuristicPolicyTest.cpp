@@ -17,9 +17,9 @@ TEST_CASE("HeuristicPolicy", "[HeuristicPolicy]")
 
   std::vector<VarValue> args = { actorVarValue };
 
-  REQUIRE_THROWS_WITH(
-    policy.GetDefaultActor("", "", 0),
-    Catch::Contains("Invalid stackId was passed to GetDefaultActor (0)"));
+  REQUIRE_THROWS_WITH(policy.GetDefaultActor("", "", 0),
+                      Catch::Matchers::ContainsSubstring(
+                        "Invalid stackId was passed to GetDefaultActor (0)"));
 
   policy.SetDefaultActor(0, nullptr);
   REQUIRE(policy.GetDefaultActor("", "", 0) == nullptr);

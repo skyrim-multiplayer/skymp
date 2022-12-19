@@ -3,7 +3,7 @@
 
 #include "PacketParser.h"
 
-using Catch::Matchers::Contains;
+using Catch::Matchers::ContainsSubstring;
 
 PartOne& GetPartOne();
 
@@ -67,9 +67,10 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
-  REQUIRE_THROWS_WITH(p.GetActionListener().OnConsoleCommand(
-                        msgData, "additem", { 0x14, 0x12eb7, 0x108 }),
-                      Contains("Not enough permissions to use this command"));
+  REQUIRE_THROWS_WITH(
+    p.GetActionListener().OnConsoleCommand(msgData, "additem",
+                                           { 0x14, 0x12eb7, 0x108 }),
+    ContainsSubstring("Not enough permissions to use this command"));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
