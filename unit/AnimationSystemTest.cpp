@@ -20,9 +20,9 @@ TEST_CASE("Animations system processes animation events correctly",
   p.animationSystem.Process(&actor, data);
   // attackStart consumes 7 points of stamina
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.93f);
-  data.animEventName = "jumpStandingStart";
+  data.animEventName = "JumpStandingStart";
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.93f);
   p.animationSystem.Process(&actor, data);
-  // jumpStandingStart consumes 10 points of stamina
+  // JumpStandingStart consumes 10 points of stamina
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.83f);
 }
