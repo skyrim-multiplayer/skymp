@@ -19,10 +19,12 @@ private:
     std::unordered_map<std::string, AnimationCallback>;
 
   void InitAnimationCallbacks();
-  std::chrono::steady_clock::time_point GetLastAnimationTime() const;
-  void SetLastAnimationTime(std::chrono::steady_clock::time_point timePoint =
-                              std::chrono::steady_clock::now());
+  std::chrono::steady_clock::time_point GetLastAttackReleaseAnimationTime()
+    const;
+  void SetLastAttackReleaseAnimationTime(
+    std::chrono::steady_clock::time_point timePoint =
+      std::chrono::steady_clock::now());
 
   AnimationCallbacks animationCallbacks;
-  std::chrono::steady_clock::time_point lastAnimationTime;
+  std::chrono::steady_clock::time_point lastAttackReleaseAnimationTime;
 };

@@ -1,6 +1,7 @@
 #include "AnimationSystem.h"
 #include "AnimationData.h"
 #include "MpActor.h"
+#include "espm.h"
 
 AnimationSystem::AnimationSystem()
 {
@@ -14,19 +15,18 @@ void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
     return;
   }
   it->second(actor);
-  SetLastAnimationTime();
 }
 
-std::chrono::steady_clock::time_point AnimationSystem::GetLastAnimationTime()
-  const
+std::chrono::steady_clock::time_point
+AnimationSystem::GetLastAttackReleaseAnimationTime() const
 {
-  return lastAnimationTime;
+  return lastAttackReleaseAnimationTime;
 }
 
-void AnimationSystem::SetLastAnimationTime(
+void AnimationSystem::SetLastAttackReleaseAnimationTime(
   std::chrono::steady_clock::time_point timePoint)
 {
-  lastAnimationTime = timePoint;
+  lastAttackReleaseAnimationTime = timePoint;
 }
 
 using namespace std::chrono_literals;
@@ -87,31 +87,50 @@ void AnimationSystem::InitAnimationCallbacks()
     },
     {
       "bowAttackStart",
-      [](MpActor* actor) {
-        constexpr float modifier = 5.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      },
+      [this](MpActor* actor) { SetLastAttackReleaseAnimationTime(); },
     },
     {
       "attackRelease",
       [&](MpActor* actor) {
         std::chrono::duration<float> elapsedTime =
-          std::chrono::steady_clock::now() - GetLastAnimationTime();
+          std::chrono::steady_clock::now() -
+          GetLastAttackReleaseAnimationTime();
         if (elapsedTime > 2s) {
-          constexpr float modifier = 15.f;
+          constexpr float modifier = 20.f;
           actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
         } else {
-          constexpr float modifier = 50.f;
+          constexpr float modifier = 60.f;
           actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
         }
       },
     },
     {
-      "reloadStart",
+      "crossbowAttackStart",
       [](MpActor* actor) {
-        constexpr float modifier = 35.f;
+        constexpr float modifier = 15.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
-    }
+    },
+    {
+      "SneakStart",
+      [](MpActor* actor) {
+        constexpr float newRate = 0.5f;
+        actor->SetActorValue(espm::ActorValue::Stamina, newRate);
+      },
+    },
+    {
+      "SneakStop",
+      [](MpActor* actor) {
+        actor->SetActorValue(espm::ActorValue::Stamina,
+                             actor->GetBaseValues().staminaRate);
+      },
+    },
+    {
+      "SneakSprintStartRoll",
+      [](MpActor* actor) {
+        constexpr float modifier = 15.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
   };
 }
