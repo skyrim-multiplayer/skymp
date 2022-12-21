@@ -65,7 +65,8 @@ float CropStaminaRegeneration(float newAttributeValue,
 {
   BaseActorValues baseValues = GetValues(actor);
   return CropRegeneration(
-    newAttributeValue, secondsAfterLastRegen, baseValues.staminaRate,
+    newAttributeValue, secondsAfterLastRegen,
+    actor->GetChangeForm().actorValues.staminaRate,
     baseValues.staminaRateMult,
     actor->GetChangeForm().actorValues.staminaPercentage);
 }
