@@ -16,9 +16,9 @@ declare const ctx: Ctx;
 declare const messageString: string;
 declare const refreshWidgets: string;
 
-const whisperDistanceCoeff = 0.25;
+const whisperDistanceCoeff = 0.1;
 const shoutDistanceCoeff = 2.4;
-const minDistanceToChange = sqr(100); // TODO: move const to config
+const minDistanceToChange = sqr(800); // TODO: move const to config
 
 export type ChatText = {
   opacity?: string;
@@ -68,7 +68,7 @@ const calculateOpacity = (distance: number, max: number, minDistance: number, co
   if (distance <= minDistance * coeff) {
     return '1';
   } 
-  return (((max * coeff) - distance) / (max * coeff)).toFixed(5)
+  return (((max * coeff) - distance + (minDistance * coeff)) / (max * coeff)).toFixed(5)
 }
 
 export class ChatMessage {
@@ -117,7 +117,7 @@ export class ChatMessage {
       const distance = getActorDistanceSquared(actorId, this.sender.gameId);
       const chatSettings = (mp.getServerSettings().sweetpieChatSettings as ChatSettings) ?? {};
       const hearingRadius =
-        chatSettings.hearingRadiusNormal !== undefined ? sqr(chatSettings.hearingRadiusNormal) : sqr(2000);  
+        chatSettings.hearingRadiusNormal !== undefined ? sqr(chatSettings.hearingRadiusNormal) : sqr(1900);  
       texts = texts.reduce<ChatText[]>((filtered, text) => {
         if (text.type === 'shout' && distance < hearingRadius * shoutDistanceCoeff) {
           filtered.push({opacity: calculateOpacity(distance, hearingRadius, minDistanceToChange, shoutDistanceCoeff), ...text})
