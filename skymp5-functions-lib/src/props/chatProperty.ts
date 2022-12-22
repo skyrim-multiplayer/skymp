@@ -1,6 +1,10 @@
+import { getActorDistanceSquared, getName } from '../mpApiInteractor';
 import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
+import { ChatSettings } from '../types/settings';
 import { FunctionInfo } from '../utils/functionInfo';
+import { parseMessage } from '../utils/parseChatMessage';
+import { sqr } from '../utils/sqr';
 import { EvalProperty } from './evalProperty';
 import { refreshWidgetsJs } from './refreshWidgets';
 
@@ -12,81 +16,141 @@ declare const ctx: Ctx;
 declare const messageString: string;
 declare const refreshWidgets: string;
 
-type ChatText = {
+const whisperDistanceCoeff = 0.25;
+const shoutDistanceCoeff = 2.4;
+
+export type ChatText = {
+  opacity?: string;
   color: string;
   text: string;
   href?: string;
-  scream?: boolean;
-  whisper?: boolean;
-  nonRP?: boolean;
+  type: 'nonrp' | 'action' | 'whisper' | 'shout' | 'plain';
 };
-export interface ChatMessage {
+
+export interface IChatMessage {
   opacity: number;
   sender: {
     masterApiId: number;
-    gameId: string
+    gameId: number;
   };
-  category: "dice" | "nonrp" | "system" | "plain";
-  text: ChatText[]
+  category: 'dice' | 'nonrp' | 'system' | 'plain';
+  text: ChatText[];
 }
+
 export type ChatInput = { actorId: number; inputText: string };
 export type ChatInputHandler = (input: ChatInput) => void;
 
 export type ChatNeighbor = { actorId: number; opacity: number };
 
-const NONRP_REGEX = /\(\((.*?)\)\)/gi;
-const ACTION_REGEX = /\*(.*?)\*/gi;
-
-const colorsArray = ["#5DAD60", "#62C985", "#7175D6", "#71D0D6", "#93AD5D", "#A062C9", "#BDBD7D", "#D76464", "#F78C8C", "#F78CD9"]
+const colorsArray = [
+  '#5DAD60',
+  '#62C985',
+  '#7175D6',
+  '#71D0D6',
+  '#93AD5D',
+  '#A062C9',
+  '#BDBD7D',
+  '#D76464',
+  '#F78C8C',
+  '#F78CD9',
+];
 
 export const getColorByNickname = (name: string) => {
   let result = 0;
   for (let i = 0; i < name.length; i++) {
-    result += name.charCodeAt(i)
+    result += name.charCodeAt(i);
   }
-  return colorsArray[result % colorsArray.length]
-}
+  return colorsArray[result % colorsArray.length];
+};
 
-export const parseMessageText = (text: string): ChatText[] => {
-    const resultMessage = [];
-    let lastIndex = 0;
-    for (let i = 0; i < text.length; ++i) {
-      if (text[i] === '*' && text.indexOf('*', i + 1) && text.slice(i).match(ACTION_REGEX)) {
-        const end = text.indexOf('*', i + 1) + 1;
-        resultMessage.push({text: text.slice(lastIndex, i), color: '#FFFFFF'});
-        resultMessage.push({text: text.slice(i + 1, end - 1).replace(/\*/g, ''),  color: '#CFAA6E' });
-        lastIndex = end;
-        i = end;
-      }
-      if (text[i] === '(' && text[i + 1] === '(' && text.indexOf('))', i + 1) && text.slice(i).match(NONRP_REGEX)) {
-        const end = text.indexOf('))', i + 1) + 2;
-        resultMessage.push({text: text.slice(lastIndex, i), color: '#FFFFFF'});
-        resultMessage.push({text: text.slice(i, end),  color: '#91916D', nonRP: true });
-        lastIndex = end;
-        i = end;
-      }
-    }
-    resultMessage.push({
-      text: text.slice(lastIndex),
-      color: "#FFFFFF"
-    });
-    return resultMessage.filter(msg => msg.text.trim() !== "");
-}
-
-export const createSystemMessage = (text: string): ChatMessage => {
-  return {
-    opacity: 1,
-    sender: {
-      masterApiId: 0,
-      gameId: "0",
-    },
-    category: 'system',
-    text: [{
-      color: '#FFFFFF',
-      text
-    }]
+export class ChatMessage {
+  private category: 'dice' | 'nonrp' | 'system' | 'plain';
+  private text: ChatText[];
+  private rawText?: string;
+  private sender: {
+    masterApiId: number;
+    gameId: number;
+    name?: string;
   };
+
+  constructor(
+    actorId: number,
+    masterApiId: number,
+    text: string | ChatText[],
+    category: 'dice' | 'nonrp' | 'system' | 'plain' = 'plain'
+  ) {
+    this.sender = {
+      masterApiId,
+      gameId: actorId,
+    };
+    this.category = category;
+
+    console.log(typeof text)
+
+    if (typeof text === 'string') {
+      this.sender.name = getName(actorId);
+      this.text = parseMessage(text);
+    } else {
+      this.text = text as ChatText[];
+    }
+  }
+
+  static system(text: string | ChatText[]) {
+    return new this(0, 0, text, 'system');
+  }
+  
+  // TBD
+  public toUser(actorId: number): IChatMessage | false {
+    const distance = getActorDistanceSquared(actorId, this.sender.gameId);
+    const chatSettings = (mp.getServerSettings().sweetpieChatSettings as ChatSettings) ?? {};
+    const hearingRadius =
+      chatSettings.hearingRadiusNormal !== undefined ? sqr(chatSettings.hearingRadiusNormal) : sqr(2000);
+
+    let texts: ChatText[] = this.text
+
+    console.log(texts)
+    if (this.category !== 'system') {
+      texts = texts.reduce<ChatText[]>((filtered, text) => {
+        if (text.type === 'shout' && distance < hearingRadius * shoutDistanceCoeff) {
+          filtered.push({opacity: (((hearingRadius * shoutDistanceCoeff) - distance) / (hearingRadius * shoutDistanceCoeff)).toFixed(3), ...text})
+        } else if (text.type === 'whisper' && distance < hearingRadius * whisperDistanceCoeff) {
+          filtered.push({opacity: (((hearingRadius * whisperDistanceCoeff) - distance) / (hearingRadius * whisperDistanceCoeff)).toFixed(3), ...text})
+        } else if (distance < hearingRadius) {
+          filtered.push({opacity: (((hearingRadius) - distance) / (hearingRadius)).toFixed(3), ...text})
+        }
+        return filtered
+      }, [])
+    }
+
+    if (texts.length === 0)
+      return false
+      
+    if (this.sender.name) {
+      texts = [
+        {
+          type: 'plain',
+          text: `${this.sender.name}: `,
+          color: getColorByNickname(this.sender.name)
+        },
+        ...texts
+      ]
+    }
+    console.log(JSON.stringify(texts), actorId, this.sender.gameId)
+    return {
+      opacity: 1,
+      sender: {
+        gameId: this.sender.gameId,
+        masterApiId: this.sender.masterApiId
+      },
+      text: texts,
+      category: this.category
+    };
+  }
 }
+
+export const createSystemMessage = (text: string | ChatText[]): ChatMessage => {
+  return ChatMessage.system(text);
+};
 
 export class ChatProperty {
   static init() {
@@ -115,18 +179,21 @@ export class ChatProperty {
   }
 
   public static sendChatMessage(actorId: number, message: ChatMessage) {
-    EvalProperty.eval(
-      actorId,
-      () => {
-        let src = '';
-        src += `window.chatMessages = window.chatMessages.slice(-49) || [];`;
-        src += `window.chatMessages.push(${messageString});`;
-        src += refreshWidgets;
-        src += `if (window.scrollToLastMessage) { window.scrollToLastMessage(); }`;
-        ctx.sp.browser.executeJavaScript(src);
-      },
-      { messageString: JSON.stringify(message), refreshWidgets: refreshWidgetsJs }
-    );
+    const messageToUser = message.toUser(actorId)
+    if (messageToUser) {
+      EvalProperty.eval(
+        actorId,
+        () => {
+          let src = '';
+          src += `window.chatMessages = window.chatMessages.slice(-49) || [];`;
+          src += `window.chatMessages.push(${messageString});`;
+          src += refreshWidgets;
+          src += `if (window.scrollToLastMessage) { window.scrollToLastMessage(); }`;
+          ctx.sp.browser.executeJavaScript(src);
+        },
+        { messageString: JSON.stringify(messageToUser), refreshWidgets: refreshWidgetsJs }
+      );
+    }
   }
 
   public static setChatInputHandler(handler: ChatInputHandler) {
@@ -172,5 +239,5 @@ export class ChatProperty {
     };
   }
 
-  private static chatInputHandler: ChatInputHandler = () => { };
+  private static chatInputHandler: ChatInputHandler = () => {};
 }

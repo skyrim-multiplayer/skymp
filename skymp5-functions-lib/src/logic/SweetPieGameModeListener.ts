@@ -1,5 +1,5 @@
 import { sprintf } from "sprintf-js";
-import { ChatMessage, ChatNeighbor, createSystemMessage, getColorByNickname, parseMessageText } from "../props/chatProperty";
+import { ChatMessage, ChatText, createSystemMessage} from "../props/chatProperty";
 import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
@@ -111,41 +111,37 @@ export class SweetPieGameModeListener implements GameModeListener {
             random.push(`${Math.floor(Math.random() * (max) + 1)}`);
           }
         }
-        let message: ChatMessage = {
-          opacity: 1,
-          sender: {
-            masterApiId: 0,
-            gameId: "0",
-          },
-          category: 'system',
-          text: []
-        };;
+        let text: ChatText[] = []
         if (max === 2) {
-          message.text = [
+          text = [
             {
               text: `${senderName} подбрасывает монетку`,
-              color: colors[max] ? colors[max] : '#9159B6'
+              color: colors[max] ? colors[max] : '#9159B6',
+              type: 'plain'
             },
             {
               text: `- ${random.join(', ')}`,
-              color: '#FFFFFF'
+              color: '#FFFFFF',
+              type: 'plain'
             }
           ]
         } else {
-          message.text = [
+          text = [
             {
               text: `${senderName} бросает D${max} `,
-              color: colors[max] ? colors[max] : '#9159B6'
+              color: colors[max] ? colors[max] : '#9159B6',
+              type: 'plain'
             },
             {
               text: `- ${random.join(', ')}`,
-              color: '#FFFFFF'
+              color: '#FFFFFF',
+              type: 'plain'
             }
           ]
         }
+        const message = new ChatMessage(0, 0, text, 'dice')
         for (const neighbor of neighbors) {
-          message.opacity = neighbor.opacity
-          controller.sendChatMessage(neighbor.actorId, message);
+          controller.sendChatMessage(neighbor, message);
         } 
       },
     },
@@ -310,39 +306,20 @@ export class SweetPieGameModeListener implements GameModeListener {
     // TODO(#835): maybe return the dialog system when bugs are fixed?
   }
 
-  onPlayerChatInput(actorId: number, inputText: string, neighbors: ChatNeighbor[], senderName: string) {
+  onPlayerChatInput(actorId: number, input: string, neighbors: number[]) {
     for (const command of this.commands) {
-      if (/\/\d+(d|к)\d+/gi.test(inputText) && command.name === 'roll') {
-        command.handler({ actorId, controller: this.controller, neighbors, senderName, inputText });
+      if (/\/\d+(d|к)\d+/gi.test(input) && command.name === 'roll') {
+        command.handler({ actorId, controller: this.controller, neighbors, inputText: input });
         return;
       }
-      if (inputText === '/' + command.name || inputText.startsWith(`/${command.name} `)) {
-        command.handler({ actorId, controller: this.controller, neighbors, senderName, inputText, argsRaw: inputText.substring(command.name.length + 2) });
+      if (input === '/' + command.name || input.startsWith(`/${command.name} `)) {
+        command.handler({ actorId, controller: this.controller, neighbors, inputText: input, argsRaw: input.substring(command.name.length + 2) });
         return;
       }
     }
-    const message: ChatMessage = {
-      opacity: 0,
-      sender: {
-        masterApiId: 0,
-        gameId: `${actorId}`
-      },
-      category: 'plain',
-      text: [
-        {
-          text: senderName,
-          color: getColorByNickname(senderName),
-        },
-        {
-          text: ": ",
-          color: "#FFFFFF"
-        },
-        ...parseMessageText(inputText)
-    ]
-    }
+    const message = new ChatMessage(actorId, 1, input, 'plain')
     for (const neighbor of neighbors) {
-      message.opacity = neighbor.opacity;
-      this.controller.sendChatMessage(neighbor.actorId, message);
+      this.controller.sendChatMessage(neighbor, message);
     }
   }
 

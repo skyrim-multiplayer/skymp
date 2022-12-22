@@ -19,7 +19,7 @@ const Chat = (props) => {
   const [hideNonRP, changeNonRPHide] = useState(false);
   const [disableDiceSounds, setDisableDiceSounds] = useState(false);
   const [disableDiceColors, setDisableDiceColors] = useState(false);
-  const [isPouchOpened, setPocuhOpened] = useState(false);
+  const [isPouchOpened, setPouchOpened] = useState(false);
   const [moveChat, setMoveChat] = useState(false);
   const [showSendButton, setSendButtonShow] = useState(false);
   const [isSettingsOpened, setSettingsOpened] = useState(false);
@@ -103,11 +103,11 @@ const Chat = (props) => {
 
   const getMessageSpans = (message) => {
     let isNonRp = message.category === 'plain';
-    const result = message.text.map((text, i) => {
+    const result = message.text.map(({ text, color, opacity, type }, i) => {
       if (i > 1) {
-        isNonRp = text.nonRP;
+        isNonRp = (type === 'nonrp' && isNonRp);
       }
-      return <span key={`${text.text}_${i}`} style={{ color: `${text.color}` }} className={`${text.nonRP ? 'nonrp' : ''}`}>{text.text}</span>;
+      return <span key={`${text}_${i}`} style={{ color: `${color}`, opacity: opacity }} className={`${type}`}>{text}</span>;
     });
     return [result, isNonRp];
   };
@@ -128,7 +128,7 @@ const Chat = (props) => {
       );
     });
   };
-
+  console.log(window.chatMessages)
   return (
     <div className='fullPage'>
       <Draggable handle='#handle' disabled={!moveChat} bounds={'.fullPage'}>
@@ -216,7 +216,7 @@ const Chat = (props) => {
               ? <></>
               : <Dices
                   isOpened={isPouchOpened}
-                  setOpened={setPocuhOpened}
+                  setOpened={setPouchOpened}
                   send={props.send}
                   disableSound={disableDiceSounds}
                   inputRef={inputRef}

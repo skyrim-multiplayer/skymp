@@ -4,10 +4,10 @@ import { PlayerController } from "./PlayerController";
 export interface HandlerInput {
   actorId: number;
   controller: PlayerController;
-  neighbors: ChatNeighbor[];
-  senderName: string;
+  neighbors: number[];
   inputText: string;
   argsRaw?: string;
+  senderName?: string;
 }
 
 export interface Command {

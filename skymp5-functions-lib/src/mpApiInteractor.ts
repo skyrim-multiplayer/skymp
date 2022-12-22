@@ -9,6 +9,7 @@ import { Ctx } from "./types/ctx";
 import { LocationalData, Mp, PapyrusObject } from "./types/mp";
 import { ChatSettings } from "./types/settings";
 import { PersistentStorage } from "./utils/persistentStorage";
+import { sqr } from "./utils/sqr";
 import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
@@ -41,7 +42,7 @@ const isTeleportDoor = (refrId: number) => {
   return false;
 };
 
-const getName = (actorId: number) => {
+export const getName = (actorId: number) => {
   const appearance = mp.get(actorId, 'appearance');
   if (appearance && appearance.name) {
     return `${appearance.name}`;
@@ -49,9 +50,7 @@ const getName = (actorId: number) => {
   return 'Stranger';
 };
 
-const sqr = (x: number) => x * x;
-
-const getActorDistanceSquared = (actorId1: number, actorId2: number) => {
+export const getActorDistanceSquared = (actorId1: number, actorId2: number) => {
   const pos1 = mp.get(actorId1, 'pos');
   const pos2 = mp.get(actorId2, 'pos');
   const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
@@ -101,20 +100,10 @@ export class MpApiInteractor {
       const actorNeighbors =
         mp.get(input.actorId, 'actorNeighbors')
         .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
-        .reduce<ChatNeighbor[]>((filtered, actorId) => {
-          const distance = getActorDistanceSquared(input.actorId, actorId)
-          if (distance < hearingRadius) {
-            filtered.push({
-              actorId,
-              opacity: Number(((hearingRadius - distance) / hearingRadius).toFixed(3))
-            })
-          }
-          return filtered
-        }, [])
       const name = getName(input.actorId);
       if (listener.onPlayerChatInput) {
         console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
-        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, name);
+        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors);
       }
     });
   }
