@@ -18,7 +18,7 @@ declare const refreshWidgets: string;
 
 const whisperDistanceCoeff = 0.25;
 const shoutDistanceCoeff = 2.4;
-const minDistanceToChange = sqr(100);
+const minDistanceToChange = sqr(100); // TODO: move const to config
 
 export type ChatText = {
   opacity?: string;
@@ -113,7 +113,6 @@ export class ChatMessage {
   public toUser(actorId: number): IChatMessage | false {
     let texts: ChatText[] = this.text
 
-    console.log(texts)
     if (['plain', 'nonrp'].includes(this.category) && actorId !== this.sender.gameId) {
       const distance = getActorDistanceSquared(actorId, this.sender.gameId);
       const chatSettings = (mp.getServerSettings().sweetpieChatSettings as ChatSettings) ?? {};
