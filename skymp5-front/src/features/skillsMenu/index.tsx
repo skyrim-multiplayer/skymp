@@ -23,7 +23,7 @@ const SkillsMenu = () => {
   const [memHint, setmemHint] = useState(false);
   const [playerData, setplayerData] = useState<IPlayerData | undefined>();
 
-  addEventListener('updateSkillMenu', (event) => {
+  const fetchData = (event) => {
     // !Important: Run commented code to dispatch event
     // const event = new CustomEvent('updateSkillMenu', { detail: {
     //   exp: 3375,
@@ -38,11 +38,18 @@ const SkillsMenu = () => {
     //   }
     // } });
     // window.dispatchEvent(event)
-    if (playerData) return;
+    // if (playerData) return;
     const newPlayerData = (event as CustomEvent).detail as IPlayerData;
     console.log(newPlayerData);
     setplayerData(newPlayerData);
-  });
+  };
+
+  useEffect(() => {
+    window.addEventListener('updateSkillMenu', fetchData);
+    return () => {
+      window.removeEventListener('updateSkillMenu', fetchData);
+    };
+  }, []);
 
   useEffect(() => {
     if (!playerData) return;
