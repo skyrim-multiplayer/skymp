@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SkyrimFrame } from '../../components/SkyrimFrame/SkyrimFrame';
 import { FrameButton } from '../../components/FrameButton/FrameButton';
 import content, { levels } from './content';
@@ -8,9 +8,10 @@ import hoverSound from './assets/OnCoursor.wav';
 import quitSound from './assets/Quit.wav';
 import selectSound from './assets/ButtonDown.wav';
 import learnSound from './assets/LearnSkill.wav';
+import { IPlayerData } from '../../interfaces/skillMenu';
 
 const SkillsMenu = () => {
-  const [isOpen, setisOpen] = useState(true);
+  // const [isOpen, setisOpen] = useState(true);
   const [currentHeader, setcurrentHeader] = useState('способности');
   const [currentLevel, setcurrentLevel] = useState(' ');
   const [currentDescription, setcurrentDescription] = useState(' ');
@@ -20,32 +21,45 @@ const SkillsMenu = () => {
   const [expHint, setexpHint] = useState(false);
   const [pMem, setpMem] = useState(0);
   const [memHint, setmemHint] = useState(false);
+  const [playerData, setplayerData] = useState<IPlayerData | undefined>();
 
-  const playerData = useMemo(
-    () => ({
-      exp: 3375,
-      mem: 2,
-      // 0 based, from 0 to 4
-      perks: {
-        saltmaker: 1,
-        weapon: 1,
-        leather: 3,
-        jewelry: 2,
-        clother: 4
-      }
-    }),
-    []
-  );
+  addEventListener('updateSkillMenu', (event) => {
+    // !Important: Run commented code to dispatch event
+    // const event = new CustomEvent('updateSkillMenu', { detail: {
+    //   exp: 3375,
+    //   mem: 2,
+    //   // 0 based, from 0 to 4
+    //   perks: {
+    //     saltmaker: 1,
+    //     weapon: 1,
+    //     leather: 3,
+    //     jewelry: 2,
+    //     clother: 4
+    //   }
+    // } });
+    // window.dispatchEvent(event)
+    if (playerData) return;
+    const newPlayerData = (event as CustomEvent).detail as IPlayerData;
+    console.log(newPlayerData);
+    setplayerData(newPlayerData);
+  });
 
   useEffect(() => {
+    if (!playerData) return;
     setpExp(playerData.exp);
     setpMem(playerData.mem);
-    setscale(window.innerWidth >= 1920 ? window.innerWidth / 1920 : window.innerWidth / 2500);
+    setscale(
+      window.innerWidth >= 1920
+        ? window.innerWidth / 1920
+        : window.innerWidth / 2500
+    );
   }, []);
 
   const hoverHandler = (perk) => {
     setcurrentHeader(perk.description);
-    const audio = document.getElementById('hoverSound').cloneNode(true) as HTMLAudioElement;
+    const audio = document
+      .getElementById('hoverSound')
+      .cloneNode(true) as HTMLAudioElement;
     audio.play();
     const playerLevel = playerData.perks[perk.name] || 0;
     setcurrentLevel(levels[playerLevel].name);
@@ -63,7 +77,9 @@ const SkillsMenu = () => {
     } else {
       setcurrentDescription('');
     }
-    const audio = document.getElementById('selectSound').cloneNode(true) as HTMLAudioElement;
+    const audio = document
+      .getElementById('selectSound')
+      .cloneNode(true) as HTMLAudioElement;
     audio.play();
     if (levels[playerLevel].price > pExp) {
       setcurrentDescription(
@@ -86,17 +102,22 @@ const SkillsMenu = () => {
       setpMem(pMem - 1);
     }
     playerData.perks[selectedPerk.name] = level + 1;
-    const audio = document.getElementById('learnSound').cloneNode(true) as HTMLAudioElement;
+    const audio = document
+      .getElementById('learnSound')
+      .cloneNode(true) as HTMLAudioElement;
     audio.play();
   };
 
   const quitHandler = () => {
-    const audio = document.getElementById('quitSound').cloneNode(true) as HTMLAudioElement;
+    const audio = document
+      .getElementById('quitSound')
+      .cloneNode(true) as HTMLAudioElement;
     audio.play();
-    setisOpen(false);
+    setplayerData(undefined);
+    // setisOpen(false);
   };
 
-  if (!isOpen) return <></>;
+  if (!playerData) return <></>;
 
   return (
     <div className="perks" style={{ transform: `scale(${scale})` }}>
@@ -141,7 +162,7 @@ const SkillsMenu = () => {
                       <SkyrimHint
                         text={'за опыт можно улучшить способности'}
                         isOpened={expHint}
-                        active='true'
+                        active="true"
                         left={true}
                       />
                       <span>Опыт:</span>
@@ -156,7 +177,7 @@ const SkillsMenu = () => {
                       onMouseLeave={() => setmemHint(false)}
                     >
                       <SkyrimHint
-                        active='true'
+                        active="true"
                         text={'память нужна для изучения новых способностей'}
                         isOpened={memHint}
                         left={true}
@@ -184,7 +205,7 @@ const SkillsMenu = () => {
             <div className="perks__footer__buttons">
               <FrameButton
                 text="изучить"
-                name='learnBtn'
+                name="learnBtn"
                 variant="DEFAULT"
                 width={242}
                 height={56}
@@ -197,7 +218,7 @@ const SkillsMenu = () => {
                 onMouseDown={() => learnHandler()}
               ></FrameButton>
               <FrameButton
-                name='learnBtn'
+                name="learnBtn"
                 text="выйти"
                 variant="DEFAULT"
                 width={242}
@@ -209,16 +230,16 @@ const SkillsMenu = () => {
         </div>
       </div>
       <SkyrimFrame width={1720} height={980} name="perkSystem" />
-      <audio id='hoverSound'>
+      <audio id="hoverSound">
         <source src={hoverSound}></source>
       </audio>
-      <audio id='learnSound'>
+      <audio id="learnSound">
         <source src={learnSound}></source>
       </audio>
-      <audio id='selectSound'>
+      <audio id="selectSound">
         <source src={selectSound}></source>
       </audio>
-      <audio id='quitSound'>
+      <audio id="quitSound">
         <source src={quitSound}></source>
       </audio>
     </div>

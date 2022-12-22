@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import Chat from './constructorComponents/chat';
 import AnimList from './features/animList';
 import Constructor from './constructor';
+import SkillsMenu from './features/skillsMenu';
 
 class App extends React.Component {
   constructor (props) {
@@ -80,6 +81,7 @@ class App extends React.Component {
         <div className={`App ${!window.hasOwnProperty('skyrimPlatform') ? 'bg' : ''}`}>
           <AnimList />
           <Chat />
+          <SkillsMenu />
         </div>
       );
     } else if (this.state.widgets) {
