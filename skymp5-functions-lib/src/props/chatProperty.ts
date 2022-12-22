@@ -18,6 +18,7 @@ declare const refreshWidgets: string;
 
 const whisperDistanceCoeff = 0.25;
 const shoutDistanceCoeff = 2.4;
+const minDistanceToChange = sqr(100);
 
 export type ChatText = {
   opacity?: string;
@@ -63,6 +64,13 @@ export const getColorByNickname = (name: string) => {
   return colorsArray[result % colorsArray.length];
 };
 
+const calculateOpacity = (distance: number, max: number, minDistance: number, coeff: number): string => { // TODO: rename args
+  if (distance <= minDistance * coeff) {
+    return '1';
+  } 
+  return (((max * coeff) - distance) / (max * coeff)).toFixed(5)
+}
+
 export class ChatMessage {
   private category: 'dice' | 'nonrp' | 'system' | 'plain';
   private text: ChatText[];
@@ -88,7 +96,9 @@ export class ChatMessage {
     console.log(typeof text)
 
     if (typeof text === 'string') {
-      this.sender.name = getName(actorId);
+      if (['plain', 'nonrp'].includes(category)) {
+        this.sender.name = getName(actorId);
+      }
       this.text = parseMessage(text);
     } else {
       this.text = text as ChatText[];
@@ -101,22 +111,21 @@ export class ChatMessage {
   
   // TBD
   public toUser(actorId: number): IChatMessage | false {
-    const distance = getActorDistanceSquared(actorId, this.sender.gameId);
-    const chatSettings = (mp.getServerSettings().sweetpieChatSettings as ChatSettings) ?? {};
-    const hearingRadius =
-      chatSettings.hearingRadiusNormal !== undefined ? sqr(chatSettings.hearingRadiusNormal) : sqr(2000);
-
     let texts: ChatText[] = this.text
 
     console.log(texts)
-    if (this.category !== 'system') {
+    if (['plain', 'nonrp'].includes(this.category) && actorId !== this.sender.gameId) {
+      const distance = getActorDistanceSquared(actorId, this.sender.gameId);
+      const chatSettings = (mp.getServerSettings().sweetpieChatSettings as ChatSettings) ?? {};
+      const hearingRadius =
+        chatSettings.hearingRadiusNormal !== undefined ? sqr(chatSettings.hearingRadiusNormal) : sqr(2000);  
       texts = texts.reduce<ChatText[]>((filtered, text) => {
         if (text.type === 'shout' && distance < hearingRadius * shoutDistanceCoeff) {
-          filtered.push({opacity: (((hearingRadius * shoutDistanceCoeff) - distance) / (hearingRadius * shoutDistanceCoeff)).toFixed(3), ...text})
+          filtered.push({opacity: calculateOpacity(distance, hearingRadius, minDistanceToChange, shoutDistanceCoeff), ...text})
         } else if (text.type === 'whisper' && distance < hearingRadius * whisperDistanceCoeff) {
-          filtered.push({opacity: (((hearingRadius * whisperDistanceCoeff) - distance) / (hearingRadius * whisperDistanceCoeff)).toFixed(3), ...text})
+          filtered.push({opacity: calculateOpacity(distance, hearingRadius, minDistanceToChange, whisperDistanceCoeff), ...text})
         } else if (distance < hearingRadius) {
-          filtered.push({opacity: (((hearingRadius) - distance) / (hearingRadius)).toFixed(3), ...text})
+          filtered.push({opacity: calculateOpacity(distance, hearingRadius, minDistanceToChange, 1), ...text})
         }
         return filtered
       }, [])

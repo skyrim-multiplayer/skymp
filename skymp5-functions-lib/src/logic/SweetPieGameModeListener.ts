@@ -1,4 +1,5 @@
 import { sprintf } from "sprintf-js";
+import { getName } from "../mpApiInteractor";
 import { ChatMessage, ChatText, createSystemMessage} from "../props/chatProperty";
 import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
@@ -91,7 +92,8 @@ export class SweetPieGameModeListener implements GameModeListener {
     },
     {
       name: 'roll',
-      handler: ({ senderName, controller, neighbors, inputText }) => {
+      handler: ({ actorId, controller, neighbors, inputText }) => {
+        const name = getName(actorId)
         const random: string[] = [];
         const [count, _, max]: number[] = inputText.slice(1).split(/(d|к)/g).map(str => parseInt(str));
         const colors: {
@@ -115,7 +117,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         if (max === 2) {
           text = [
             {
-              text: `${senderName} подбрасывает монетку`,
+              text: `${name} подбрасывает монетку`,
               color: colors[max] ? colors[max] : '#9159B6',
               type: 'plain'
             },
@@ -128,7 +130,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         } else {
           text = [
             {
-              text: `${senderName} бросает D${max} `,
+              text: `${name} бросает D${max} `,
               color: colors[max] ? colors[max] : '#9159B6',
               type: 'plain'
             },
