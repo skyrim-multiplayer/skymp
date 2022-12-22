@@ -308,7 +308,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     // TODO(#835): maybe return the dialog system when bugs are fixed?
   }
 
-  onPlayerChatInput(actorId: number, input: string, neighbors: number[]) {
+  onPlayerChatInput(actorId: number, input: string, neighbors: number[], masterApiId: number) {
     for (const command of this.commands) {
       if (/\/\d+(d|к)\d+/gi.test(input) && command.name === 'roll') {
         command.handler({ actorId, controller: this.controller, neighbors, inputText: input });
@@ -319,7 +319,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         return;
       }
     }
-    const message = new ChatMessage(actorId, 1, input, 'plain')
+    const message = new ChatMessage(actorId, masterApiId, input, 'plain')
     for (const neighbor of neighbors) {
       this.controller.sendChatMessage(neighbor, message);
     }

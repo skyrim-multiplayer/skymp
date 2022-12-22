@@ -92,10 +92,6 @@ export class MpApiInteractor {
 
   private static setupChatHandler(listener: GameModeListener) {
     ChatProperty.setChatInputHandler((input) => {
-      const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
-      const hearingRadius = chatSettings.hearingRadiusNormal !== undefined ?
-                            sqr(chatSettings.hearingRadiusNormal) :
-                            sqr(2000)
       const onlinePlayers = mp.get(0, 'onlinePlayers');
       const actorNeighbors =
         mp.get(input.actorId, 'actorNeighbors')
@@ -103,7 +99,7 @@ export class MpApiInteractor {
       const name = getName(input.actorId);
       if (listener.onPlayerChatInput) {
         console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
-        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors);
+        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, mp.get(input.actorId, 'profileId'));
       }
     });
   }
