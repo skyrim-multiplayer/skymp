@@ -12,6 +12,9 @@ import ChatInput from './input';
 
 const MAX_LENGTH = 700; // Max message length
 const TIME_LIMIT = 5; // Seconds
+const SHOUT_LIMIT = 60; // Seconds
+
+const SHOUTREGEXP = /№(.*?)№/gi;
 
 const Chat = (props) => {
   const [input, updateInput] = useState('');
@@ -28,26 +31,47 @@ const Chat = (props) => {
   const isInputHidden = props.isInputHidden;
   const send = props.send;
 
+  const [doesIncludeShout, setIncludeShout] = useState(false);
+
+  const [shoutLength, setShoutLength] = useState(0);
+
   const inputRef = useRef();
 
   const chatRef = useRef();
 
   const isReset = useRef(true);
 
+  const shoutReset = useRef(true);
+
   const handleScroll = () => {
     if (chatRef.current) {
       window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
     }
   };
-  const sendMessage = () => {
-    if (input !== '' && input.length <= MAX_LENGTH && isReset.current) {
-      if (send !== undefined) send(input.trim());
+  const sendMessage = useCallback((text) => {
+    const shout = text.match(SHOUTREGEXP);
+    const shoutLen = shout
+      ? shout.reduce((acc, text) => {
+        acc += text.length;
+        return acc;
+      }, 0)
+      : 0;
+    if (text !== '' && text.length <= MAX_LENGTH && isReset.current && shoutLen <= 100 && (shoutLen === 0 || shoutReset.current)) {
+      if (send !== undefined) send(text.trim());
       isReset.current = false;
       updateInput('');
       inputRef.current.innerHTML = '';
       inputRef.current.focus();
+      if (shout) {
+        shoutReset.current = false;
+        setTimeout(() => {
+          shoutReset.current = true;
+        }, 1000 * SHOUT_LIMIT);
+        setIncludeShout(false);
+        setShoutLength(0);
+      }
     }
-  };
+  }, [send, updateInput, input, isReset.current, shoutReset.current, shoutLength, doesIncludeShout]);
 
   useEffect(() => {
     window.needToScroll = true;
@@ -63,30 +87,12 @@ const Chat = (props) => {
       // Imitate message sending on Enter press
       if (event.code === 'Enter' && !event.shiftKey && inputRef.current) {
         event.preventDefault();
-        sendMessage();
+        sendMessage(input);
       }
     };
     node?.addEventListener('keydown', listener);
     return () => node?.removeEventListener('keydown', listener);
-    // eslint-disable-next-line
-  }, [inputRef.current]);
-
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      if (e.keyCode === 13 && !e.shiftKey) {
-        if (input !== '' && isInputFocus === true && input.length <= MAX_LENGTH && isReset.current) {
-          if (send !== undefined) send(input);
-          isReset.current = false;
-          inputRef.current.innerHTML = '';
-          updateInput('');
-        }
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [input, isInputFocus]);
+  }, [inputRef.current, input]);
 
   useEffect(() => {
     if (inputRef !== undefined && inputRef.current !== undefined && !isInputHidden) {
@@ -100,6 +106,21 @@ const Chat = (props) => {
       inputRef.current.focus();
     }
   }, [props.messages]);
+
+  const handleInput = (value) => {
+    updateInput(value);
+    const shout = value.match(SHOUTREGEXP);
+    if (shout && shout[0] !== '') {
+      setIncludeShout(true);
+      setShoutLength(shout.reduce((acc, text) => {
+        acc += text.length;
+        return acc;
+      }, 0));
+    } else {
+      setIncludeShout(false);
+      setShoutLength(0);
+    }
+  };
 
   const getMessageSpans = (message) => {
     let isNonRp = message.category === 'plain';
@@ -128,7 +149,6 @@ const Chat = (props) => {
       );
     });
   };
-  console.log(window.chatMessages)
   return (
     <div className='fullPage'>
       <Draggable handle='#handle' disabled={!moveChat} bounds={'.fullPage'}>
@@ -171,14 +191,14 @@ const Chat = (props) => {
                   className={'show'}
                   type="text"
                   placeholder={placeholder !== undefined ? placeholder : ''}
-                  onChange={(value) => { updateInput(value); }}
+                  onChange={(value) => { handleInput(value); }}
                   onFocus={(e) => changeInputFocus(true)}
                   onBlur={(e) => changeInputFocus(false)}
                   ref={inputRef}
                   fontSize={fontSize}
                 />
                 {
-                  showSendButton && <SendButton onClick={() => sendMessage()} />
+                  showSendButton && <SendButton onClick={() => sendMessage(input)} />
                 }
               </div>
               <div className='chat-checkboxes'>
@@ -208,6 +228,9 @@ const Chat = (props) => {
                     setMoveChat(e.target.checked);
                   }} />
                 <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
+                { doesIncludeShout &&
+                  <span className={`chat-message-limit shout-limit ${shoutLength > 100 ? 'limit' : ''} text`}>{shoutLength}/100</span>
+                }
               </div>
             </div>
           </div>
