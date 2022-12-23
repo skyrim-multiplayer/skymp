@@ -119,12 +119,12 @@ export class SweetPieGameModeListener implements GameModeListener {
             {
               text: `${name} подбрасывает монетку`,
               color: colors[max] ? colors[max] : '#9159B6',
-              type: 'plain'
+              type: ['plain']
             },
             {
               text: `- ${random.join(', ')}`,
               color: '#FFFFFF',
-              type: 'plain'
+              type: ['plain']
             }
           ]
         } else {
@@ -132,12 +132,12 @@ export class SweetPieGameModeListener implements GameModeListener {
             {
               text: `${name} бросает D${max} `,
               color: colors[max] ? colors[max] : '#9159B6',
-              type: 'plain'
+              type: ['plain']
             },
             {
               text: `- ${random.join(', ')}`,
               color: '#FFFFFF',
-              type: 'plain'
+              type: ['plain']
             }
           ]
         }

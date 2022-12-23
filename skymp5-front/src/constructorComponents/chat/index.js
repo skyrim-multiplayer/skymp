@@ -107,7 +107,7 @@ const Chat = (props) => {
       if (i > 1) {
         isNonRp = (type === 'nonrp' && isNonRp);
       }
-      return <span key={`${text}_${i}`} style={{ color: `${color}`, opacity: opacity }} className={`${type}`}>{text}</span>;
+      return <span key={`${text}_${i}`} style={{ color: `${color}`, opacity: opacity }} className={`${type.join(' ')}`}>{text}</span>;
     });
     return [result, isNonRp];
   };

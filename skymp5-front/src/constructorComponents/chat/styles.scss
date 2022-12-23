@@ -48,10 +48,8 @@
       &.hideNonRP {
         .nonrp {
           display: none;
+          text-transform: none !important;
         }
-      }
-      .shout {
-        text-transform: uppercase;
       }
       width: 100%;
       resize: vertical;
@@ -128,4 +126,7 @@
         color: #F78C8C;
       }
   }
+}
+[class="shout"] {
+  text-transform: uppercase;
 }
