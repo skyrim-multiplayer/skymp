@@ -1,7 +1,7 @@
 #include "MigrationDatabase.h"
 #include "FileDatabase.h"
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 inline std::shared_ptr<IDatabase> MakeDatabase(const char* directory)
 {

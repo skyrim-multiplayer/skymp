@@ -1,6 +1,6 @@
 #include "MpChangeForms.h"
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include "MpObjectReference.h"
 #include "PartOne.h"

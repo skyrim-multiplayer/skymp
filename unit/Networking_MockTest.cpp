@@ -1,5 +1,5 @@
 #include "NetworkingMock.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <cstring>
 
 using namespace Networking;
@@ -56,9 +56,9 @@ TEST_CASE("MockServer - send message to client", "[Networking]")
 
 TEST_CASE("MockServer - send message to unexisting client", "[Networking]")
 {
-  REQUIRE_THROWS_WITH(
-    MockServer().Send(0, nullptr, 9000, true),
-    Catch::Contains("No client with id 0 found on MockServer"));
+  REQUIRE_THROWS_WITH(MockServer().Send(0, nullptr, 9000, true),
+                      Catch::Matchers::ContainsSubstring(
+                        "No client with id 0 found on MockServer"));
 }
 
 TEST_CASE("MockServer - connect/disconnect", "[Networking]")
