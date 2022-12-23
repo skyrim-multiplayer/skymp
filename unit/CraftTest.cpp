@@ -1,10 +1,10 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include "FindRecipe.h"
 #include "PacketParser.h"
 
-using Catch::Matchers::Contains;
+using Catch::Matchers::ContainsSubstring;
 
 PartOne& GetPartOne();
 
@@ -136,7 +136,7 @@ TEST_CASE(
   REQUIRE_THROWS_WITH(p.GetActionListener().OnCraftItem(msgData, requiredItems,
                                                         workbenchId,
                                                         wrongResultObject),
-                      Contains("Recipe not found"));
+                      ContainsSubstring("Recipe not found"));
 }
 
 TEST_CASE("DLC Dragonborn recipes are working", "[Craft][espm]")
