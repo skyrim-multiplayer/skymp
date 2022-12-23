@@ -14,7 +14,9 @@ set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
 if("$ENV{CI}" STREQUAL "true" AND WIN32)
-  # The same submodule but moved to a larger disk in Windows CI. See action files (.yml)
+  # The same submodule but moved to a larger disk in Windows CI. See action files:
+  # - https://github.com/skyrim-multiplayer/skymp/blob/main/.github/workflows/pr-windows.yml
+  # - https://github.com/skyrim-multiplayer/skymp/blob/main/.github/workflows/pr-windows-ae.yml
   set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 else()
   set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
