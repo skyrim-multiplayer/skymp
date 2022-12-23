@@ -75,13 +75,12 @@ std::string ActivePexInstance::GetActiveStateName() const
   try {
     var = variables->GetVariableByName("::State", *sourcePex.fn());
   } catch (...) {
-    assert(0 &&
-           "GetVariableByName must never throw when '::State' variable is "
-           "requested");
+    throw std::runtime_error("GetVariableByName should not throw for'::State' "
+                             "variable,but got error");
   }
   if (!var)
     throw std::runtime_error(
-      "'::State' variable doesn't exist in ActivePexInstance");
+      "Papyrus VM: ::State variable doesn't exist in ActivePexInstance");
   return static_cast<const char*>(*var);
 }
 
@@ -142,8 +141,7 @@ VarValue CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-      assert(false);
-      return VarValue();
+      throw std::runtime_error("Failed to cast type_Indentifier to String");
     case VarValue::kType_String:
       return var;
     case VarValue::kType_Integer:
@@ -167,8 +165,8 @@ VarValue CastToString(const VarValue& var)
     case VarValue::kType_BoolArray:
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
-      assert(false);
-      return VarValue();
+      throw std::runtime_error(
+        "Failed to get required type from var variable");
   }
 }
 
@@ -202,9 +200,10 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        assert(false);
+        throw std::runtime_error(
+          "None of the type values ​​matched, catched exception in "
+          "::GetElementArrayAtString()");
     }
-
     if (i < array.pArray->size() - 1)
       returnValue += ", ";
     else
@@ -453,7 +452,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        assert(false);
+        throw std::runtime_error(
+          "Papyrus VM: null argument for Opcodes::op_PropGet");
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -474,7 +474,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        assert(false);
+        throw std::runtime_error(
+          "Papyrus VM: null argument for Opcodes::op_PropSet");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -486,7 +487,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        assert(0);
+        throw std::runtime_error("Papyrus VM: tried to create negative-sized "
+                                 "array,Opcodes::op_Array_Create");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
@@ -511,7 +513,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
       } else {
-        assert(0);
+        throw std::runtime_error(
+          "Papyrus VM: null argument for op_Array_SetElement opcode");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
@@ -523,7 +526,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                                *args[3]);
       break;
     default:
-      assert(0);
+      throw std::runtime_error("Args got an unknown type,to ::ExecuteOpCode");
   }
 }
 
@@ -692,7 +695,7 @@ uint8_t ActivePexInstance::GetTypeByName(std::string typeRef)
     return VarValue::kType_Bool;
   }
   if (typeRef == "identifier") {
-    assert(0);
+    assert(false);
   }
   if (typeRef == "string[]") {
     return VarValue::kType_StringArray;
@@ -742,8 +745,8 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      assert(false);
-      return VarValue::kType_Object;
+      throw std::runtime_error(
+        "Unable to get required type,to ::GetArrayElementType");
   }
 
   return returnType;
@@ -775,8 +778,8 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
       break;
     default:
-      assert(false);
-      return VarValue::kType_ObjectArray;
+      throw std::runtime_error(
+        "Unable to get required type,to ::GetArrayTypeByElementType");
   }
 
   return returnType;

@@ -46,7 +46,7 @@ std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
   }
 
   if (nameNeedScript != "")
-    assert(0);
+    throw std::runtime_error("NameNeedScript empty !");
   return nullptr;
 }
 
@@ -291,7 +291,7 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
         break;
       }
       default:
-        assert(false);
+        throw std::runtime_error("Failed to parse required type in string");
     }
 
     if (i < array.pArray->size() - 1)
@@ -480,7 +480,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             *opCode[line].second[0] = CastToString(*opCode[line].second[1]);
             break;
           default:
-            assert(0);
+            throw std::runtime_error(
+              "Failed to cast in case ::Opcodes::op_cast ");
         }
 
         break;
@@ -606,7 +607,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(false);
+          throw std::runtime_error("OpCode[line].second[1] equals nullptr in "
+                                   "case ::Opcodes::op_ProGet");
         }
         break;
 
@@ -628,7 +630,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(false);
+          throw std::runtime_error("OpCode[line].second[1] equals nullptr in "
+                                   "case ::Opcodes::op_ProSet");
         }
         break;
 
@@ -649,7 +652,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(0);
+          throw std::runtime_error("OpCode[line].second[1] equals nullptr in "
+                                   "case ::Opcodes::op_Array_Create");
         }
 
         break;
@@ -672,7 +676,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             (*opCode[line].second[1])
               .pArray->at((int32_t)(*opCode[line].second[2]));
         } else {
-          assert(0);
+          throw std::runtime_error("OpCode[line].second[1] equals nullptr in "
+                                   "case ::Opcodes::op_Array_Get_Element");
         }
         break;
 
@@ -683,7 +688,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             .pArray->at((int32_t)(*opCode[line].second[1])) =
             *opCode[line].second[2];
         } else {
-          assert(0);
+          throw std::runtime_error("OpCode[line].second[1] equals nullptr in "
+                                   "case ::Opcodes::op_Array_Set_Element");
         }
         break;
 
@@ -702,7 +708,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
         break;
 
       default:
-        assert(0);
+        throw std::runtime_error(
+          "Catched exception in default in switch  (opCode[line].first");
     }
 
     if (needReturn) {
@@ -798,7 +805,8 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      assert(false);
+      throw std::runtime_error(
+        "Failed to process one of the cases in switch(type)");
   }
 
   return returnType;

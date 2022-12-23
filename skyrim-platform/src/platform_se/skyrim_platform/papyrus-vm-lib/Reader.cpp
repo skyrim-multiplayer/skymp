@@ -2,7 +2,6 @@
 
 void Reader::Read()
 {
-
   char temp;
 
   arrayBytes.clear();
@@ -23,7 +22,7 @@ void Reader::Read()
   }
 
   File.close();
-};
+}
 
 std::vector<std::shared_ptr<PexScript>> Reader::GetSourceStructures()
 {
@@ -287,7 +286,7 @@ VarValue Reader::FillVariableData()
       Read32_bit();
       break;
     default:
-      assert(false);
+      throw std::runtime_error("invalid type received");
   }
 
   return Data;
