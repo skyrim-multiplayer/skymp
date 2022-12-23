@@ -13,7 +13,6 @@ env:
   BUILD_TYPE: Release
   VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
-  VCPKG_ROOT: 'C:/vcpkg'
 
 jobs:
   build:
