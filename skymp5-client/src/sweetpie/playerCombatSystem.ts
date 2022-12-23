@@ -21,6 +21,8 @@ let isPlayerControlDisabled: boolean = true;
 let playerAttackTimeout: number = 0;
 
 export const start = (): void => {
+  sp.once("update", () => setAttackStaminaRestriction());
+
   // Sup asked for this (Temporary disabled)
   //sp.once('update', registerHandlersIfNeeded);
 };
@@ -103,3 +105,45 @@ const getTimings = (weapon?: sp.WeaponType): [number, number] => {
 
   return timings;
 };
+
+type AttackType = "Std" | "Power";
+let playerLastStaminaValue = 0;
+const staminaAttackMap = new Map<AttackType, number>([
+  ["Std", 5],
+  ["Power", 30],
+]);
+const setAttackStaminaRestriction = () => {
+  if (!hasSweetPie()) {
+    return;
+  }
+
+  sp.on("update", () => {
+    playerLastStaminaValue = sp.Game.getPlayer()!.getActorValue("Stamina");
+  });
+
+  for (const pattern of ['attackStart*', 'AttackStart*']) {
+    sp.hooks.sendAnimationEvent.add({
+      enter: ((ctx) => {
+        if (playerLastStaminaValue < (staminaAttackMap.get("Std") ?? 0)) {
+          ctx.animEventName = "";
+        }
+      }),
+      leave: (() => { }),
+    }, 0x14, 0x14, pattern);
+  }
+
+  for (const pattern of ['attackPowerStart*', 'AttackPowerStart*', 'Jump*']) {
+    sp.hooks.sendAnimationEvent.add({
+      enter: ((ctx) => {
+        if (playerLastStaminaValue < (staminaAttackMap.get("Power") ?? 0)) {
+          ctx.animEventName = "";
+        }
+      }),
+      leave: (() => { }),
+    }, 0x14, 0x14, pattern);
+  }
+}
+
+const canAttackWithStamina = (aType: AttackType, actor: sp.Actor): boolean => {
+  return actor.getActorValue("Stamina") > (staminaAttackMap.get(aType) ?? 0);
+}
