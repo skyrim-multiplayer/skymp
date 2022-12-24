@@ -80,7 +80,6 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
   VarValue PapyrusActor::GetActorValue(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
-
     if (arguments.size() < 1)
     throw std::runtime_error(
       "Papyrus Actor.GetActorValue: wrong argument count");
@@ -90,7 +89,15 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
       esmp::ActorValue attrID =
         ConvertToAV(static_cast<const char*>(arguments[0]));
 
-      return VarValue(actor->GetActorValue(attrID));
+    if (attrID == espm::ActorValue::Health) {
+      return form.healthPercentage;
+    } else if (attrID == espm::ActorValue::Stamina) {
+      return form.staminaPercentage;
+    } else if (attrID==espm::ActorValue::Magicka)
+      return form.magickaPercentage;
+    else {
+      return 0.0f;
+    }   
   }
   return VarValue();
 }
