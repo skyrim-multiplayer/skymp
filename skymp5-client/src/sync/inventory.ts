@@ -325,7 +325,6 @@ export const applyInventory = (
 
   diff.sort((a, b) => (a.count < b.count ? -1 : 1));
   diff.forEach((e, i) => {
-
     taffyPerkSystem.inventoryChanged(refr, e);
 
     if (i > 0 && enableCrashProtection) {

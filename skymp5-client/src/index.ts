@@ -11,7 +11,7 @@ import {
   browser as spBrowser,
   printConsole,
   ActorValueInfo,
-  ActorValue
+  ActorValue,
 } from "skyrimPlatform";
 import * as timers from "./extensions/timers"; timers;
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
