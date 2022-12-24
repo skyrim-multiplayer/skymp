@@ -22,7 +22,7 @@ public:
   VarValue DamageActorValue(VarValue self,
                             const std::vector<VarValue>& arguments);
 
-   VarValue GetActorValue(VarValue self,
+  VarValue GetActorValue(VarValue self,
                          const std::vector<VarValue>& arguments);
 
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);

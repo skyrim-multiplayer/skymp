@@ -55,15 +55,16 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
   return VarValue();
 }
 
- VarValue PapyrusActor::GetActorValue(VarValue self,
+VarValue PapyrusActor::GetActorValue(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 1)
+  if (arguments.size() < 1) {
     throw std::runtime_error(
       "Papyrus Actor.GetActorValue: wrong argument count");
+  }
 
   if (actor = GetFormPtr<MpActor>(self)) {
-    esmp::ActorValue attrID =
+    espm::ActorValue attrID =
       ConvertToAV(static_cast<const char*>(arguments[0]));
 
     if (attrID == espm::ActorValue::Health) {
