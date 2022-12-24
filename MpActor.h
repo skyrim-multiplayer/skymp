@@ -66,7 +66,7 @@ public:
                            std::chrono::steady_clock::now(),
                          MpActor* aggressor = nullptr);
 
-  float MpActor::GetActorValue(espm::ActorValue av);
+  float GetActorValue(espm::ActorValue av);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
   std::chrono::steady_clock::time_point GetLastHitTime();
