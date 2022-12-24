@@ -63,11 +63,11 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
       "Papyrus Actor.GetActorValue: wrong argument count");
   }
 
-  if (auto actor = GetFormPtr<MpActor>(self)) {
+  if (auto actor = GetFormPtr<MpActor*>(&self)) {
     espm::ActorValue attrID =
       ConvertToAV(static_cast<const char*>(arguments[0]));
 
-    auto form = MpActor::GetChangeForm();
+    auto form = actor->GetChangeForm();
     if (attrID == espm::ActorValue::Health) {
       return form.healthPercentage;
     } else if (attrID == espm::ActorValue::Stamina) {
@@ -75,7 +75,7 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
     } else if (attrID == espm::ActorValue::Magicka)
       return form.magickaPercentage;
     else {
-      return 0.0f;
+      return VarValue::None();
     }
   }
   return VarValue();
