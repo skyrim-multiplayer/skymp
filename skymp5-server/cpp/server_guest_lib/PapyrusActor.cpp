@@ -63,7 +63,7 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
       "Papyrus Actor.GetActorValue: wrong argument count");
   }
 
-  if (auto actor = GetFormPtr<MpActor*>(&self)) {
+  if (auto actor = GetFormPtr<MpActor>(self)) {
     espm::ActorValue attrID =
       ConvertToAV(static_cast<const char*>(arguments[0]));
 
