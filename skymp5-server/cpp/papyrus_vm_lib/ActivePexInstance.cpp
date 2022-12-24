@@ -453,7 +453,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        assert(false);
+        throw std::runtime_error(
+          "args[1] equals nullptr, case Opcodes::op_ProGet()");
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
@@ -474,7 +475,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           }
         }
       } else {
-        assert(false);
+        throw std::runtime_error(
+          "args[1] equals nullptr,case Opcodes::op_PropSet");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -486,7 +488,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        assert(0);
+        throw std::runtime_error(
+          "Papyrus VM: tried to create negative-sized array");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
@@ -511,7 +514,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
       } else {
-        assert(0);
+        throw std::runtime_error(
+          "args[0] equals nullptr,Opcodes::op_Array_SetElement");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
@@ -523,7 +527,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                                *args[3]);
       break;
     default:
-      assert(0);
+      throw std::runtime_error("Args got an unknown type,to ::ExecuteOpCode");
   }
 }
 
