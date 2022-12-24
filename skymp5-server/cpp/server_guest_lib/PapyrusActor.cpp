@@ -69,11 +69,11 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
 
     auto form = actor->GetChangeForm();
     if (attrID == espm::ActorValue::Health) {
-      return static_cast<VarValue>(form.healthPercentage);
+      return VarValue(form.healthPercentage);
     } else if (attrID == espm::ActorValue::Stamina) {
-      return static_cast<VarValue>(form.staminaPercentage);
+      return VarValue(form.staminaPercentage);
     } else if (attrID == espm::ActorValue::Magicka)
-      return static_cast<VarValue>(form.magickaPercentage);
+      return VarValue(form.magickaPercentage);
     else {
       return VarValue::None();
     }
