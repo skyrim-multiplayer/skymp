@@ -67,6 +67,7 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
     espm::ActorValue attrID =
       ConvertToAV(static_cast<const char*>(arguments[0]));
 
+    auto form = MpActor::GetChangeForm();
     if (attrID == espm::ActorValue::Health) {
       return form.healthPercentage;
     } else if (attrID == espm::ActorValue::Stamina) {
