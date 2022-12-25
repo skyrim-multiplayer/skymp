@@ -1,4 +1,4 @@
-#include "PapyrusActor.h"
+    #include "PapyrusActor.h"
 
 #include "MpActor.h"
 #include "MpFormGameObject.h"
@@ -80,6 +80,29 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
   }
   return VarValue();
 }
+
+VarValue PapyrusActor::IsEquipped(VarValue self,
+                                  const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1) {
+    throw std::runtime_error(
+      "Papyrus Actor IsEquipped:: wrong argument count");
+  }
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto baseId = GetFormPtr<MpForm>(arguments[0])->baseId;
+
+    for (actor->GetEquipment().inv.IsEquippedItem(baseId)){
+        return VarValue(true);
+    }
+  }
+
+  return VarValue(false);
+}
+
+ if (entry.baseId == baseId &&
+    entry.extras.worn != Inventory::EntryExtras::Worn::None)
+  return VarValue(true);
 
 VarValue PapyrusActor::SetAlpha(VarValue self,
                                 const std::vector<VarValue>& arguments)
