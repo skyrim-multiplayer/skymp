@@ -3,7 +3,7 @@ set(CEF_URL "https://cef-builds.spotifycdn.com/cef_binary_108.4.13+ga98cd4c+chro
 vcpkg_download_distfile(ARCHIVE
     URLS ${CEF_URL}
     FILENAME "cef.tar.bz2"
-    SHA512 0
+    SHA512 a11f1a266ba35d86ff272f5c71ba553cdf3b30aa0478556cb7973e644716bb0bfa7f2b3a57b78e573ec2e6132f48b36fd8189978ecb548876e4dc8c8c3aad59f
 )
 
 vcpkg_extract_source_archive_ex(
