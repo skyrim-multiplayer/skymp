@@ -22,6 +22,9 @@ public:
   VarValue DamageActorValue(VarValue self,
                             const std::vector<VarValue>& arguments);
 
+  VarValue GetActorValue(VarValue self,
+                         const std::vector<VarValue>& arguments);
+
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
 
@@ -39,6 +42,7 @@ public:
     AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
     AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
     AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+    AddMethod(vm, "GetActorValue", &PapyrusActor::GetActorValue);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
