@@ -28,8 +28,8 @@ public:
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
 
-  VarValue IsEquipped(VarValue self,const std::vector<VarValue>&arguments);
- 
+  VarValue IsEquipped(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
