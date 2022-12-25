@@ -85,6 +85,15 @@ uint32_t Inventory::GetItemCount(uint32_t baseId) const
   return sum;
 }
 
+bool Inventory::IsEquippedItem(uint32_t baseId) const
+{
+  for (auto& entry : entries) {
+    if (entry.baseId == baseId && entry.extra.worn!=Worn::None)
+      return true;
+  }
+  return false;
+ }
+
 uint32_t Inventory::GetTotalItemCount() const
 {
   uint32_t sum = 0;

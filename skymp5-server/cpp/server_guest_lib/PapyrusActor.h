@@ -28,6 +28,8 @@ public:
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue IsEquipped(VarValue self,const std::vector<VarValue>&arguments);
+ 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
@@ -43,6 +45,7 @@ public:
     AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
     AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
     AddMethod(vm, "GetActorValue", &PapyrusActor::GetActorValue);
+    AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
