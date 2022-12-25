@@ -100,10 +100,6 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
   return VarValue(false);
 }
 
- if (entry.baseId == baseId &&
-    entry.extras.worn != Inventory::EntryExtras::Worn::None)
-  return VarValue(true);
-
 VarValue PapyrusActor::SetAlpha(VarValue self,
                                 const std::vector<VarValue>& arguments)
 {
