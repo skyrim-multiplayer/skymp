@@ -55,6 +55,32 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
   return VarValue();
 }
 
+VarValue PapyrusActor::GetActorValue(VarValue self,
+                                     const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1) {
+    throw std::runtime_error(
+      "Papyrus Actor.GetActorValue: wrong argument count");
+  }
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    espm::ActorValue attrID =
+      ConvertToAV(static_cast<const char*>(arguments[0]));
+
+    auto form = actor->GetChangeForm();
+    if (attrID == espm::ActorValue::Health) {
+      return VarValue(form.healthPercentage);
+    } else if (attrID == espm::ActorValue::Stamina) {
+      return VarValue(form.staminaPercentage);
+    } else if (attrID == espm::ActorValue::Magicka)
+      return VarValue(form.magickaPercentage);
+    else {
+      return VarValue::None();
+    }
+  }
+  return VarValue();
+}
+
 VarValue PapyrusActor::SetAlpha(VarValue self,
                                 const std::vector<VarValue>& arguments)
 {
