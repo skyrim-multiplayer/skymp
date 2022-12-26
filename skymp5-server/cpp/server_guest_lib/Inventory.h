@@ -85,7 +85,7 @@ public:
   bool HasItem(uint32_t baseId) const;
   uint32_t GetItemCount(uint32_t baseId) const;
   uint32_t GetTotalItemCount() const;
-  uint32_t GetEquippedItem(Inventory::Worn choice) const
+  uint32_t GetEquippedItem(Inventory::Worn choice) const;
   bool IsEmpty() const;
 
   std::vector<Entry> entries;
