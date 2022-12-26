@@ -9,6 +9,8 @@
 PartOne& GetPartOne();
 extern espm::Loader l;
 
+using namespace std::chrono_literals;
+
 TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
 {
   class MyActionListener : public ActionListener
@@ -80,8 +82,6 @@ TEST_CASE("Player attribute percentages are changing correctly",
 TEST_CASE("OnChangeValues call is cropping percentage values",
           "[ChangeValues]")
 {
-  using namespace std::chrono_literals;
-
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
@@ -102,23 +102,22 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   actorValues.magickaPercentage = 0.f;
   actorValues.staminaPercentage = 0.f;
   ac.SetPercentages(actorValues);
-  auto past = std::chrono::steady_clock::now() - 1s;
-  ac.SetLastAttributesPercentagesUpdate(past);
+  ac.SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now() - 1s);
   actorValues.healthPercentage = 1.f;
   actorValues.magickaPercentage = 1.f;
   actorValues.staminaPercentage = 1.f;
   p.GetActionListener().OnChangeValues(msgData, actorValues);
 
   auto now = ac.GetLastAttributesPercentagesUpdate();
-  std::chrono::duration<float> timeDuration = now - past;
-  float time = timeDuration.count();
+  auto was = now - 1s;
+  std::chrono::duration<float> elapsedTime = now - was;
 
   float expectedHealth =
-    baseValues.healRate * baseValues.healRateMult * time / 10000.0f;
+    baseValues.healRate * baseValues.healRateMult * elapsedTime.count() / 10000.0f;
   float expectedMagicka =
-    baseValues.magickaRate * baseValues.magickaRateMult * time / 10000.0f;
+    baseValues.magickaRate * baseValues.magickaRateMult * elapsedTime.count() / 10000.0f;
   float expectedStamina =
-    baseValues.staminaRate * baseValues.staminaRateMult * time / 10000.0f;
+    baseValues.staminaRate * baseValues.staminaRateMult * elapsedTime.count() / 10000.0f;
 
   auto changeForm = ac.GetChangeForm();
 
