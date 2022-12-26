@@ -85,12 +85,13 @@ uint32_t Inventory::GetItemCount(uint32_t baseId) const
   return sum;
 }
 
-bool Inventory::IsEquippedItem(uint32_t baseId) const
+bool Inventory::IsEquippedItem(Inventory::Worn choice) const
 {
   for (auto& entry : entries) {
-    if (entry.baseId == baseId && entry.extra.worn != Worn::None)
+    if (entry.baseId==choice)
       return true;
   }
+
   return false;
 }
 
