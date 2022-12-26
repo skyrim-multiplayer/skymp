@@ -1,4 +1,4 @@
-import { ChatText, ChatTextType } from "../props/chatProperty";
+import { ChatText, ChatTextType } from '../props/chatProperty';
 
 export interface IChatMessage {
   opacity: number;
@@ -57,37 +57,32 @@ export const parseMessage = (text: string): ChatText[] => {
   for (let i = 0; i < text.length; i++) {
     let char = text[i];
     if (char in map) {
-      if (map[char].double && char !== text[i + 1]) {
-        continue;
-      } else {
-        i += 1;
-      }
       if (char === stack[stack.length - 1]) {
         stack.pop();
         texts.push({
-          text: text.slice(lastIndex, i - 1),
+          text: text.slice(lastIndex, i),
           color: map[char].color,
           type: [...currentType],
         });
         lastIndex = i;
         currentType.pop();
       } else {
-        if (
-          map[char].isSeparate &&
-          (stack.length !== 0 || currentType.length !== 0)
-        ) {
-          console.log(
-            'stack',
-            stack.length === 0 || currentType.length === 0,
-            texts
-          );
+        if (map[char].double && char !== text[i + 1]) {
           continue;
+        } else {
+          i += 1;
+        }
+        if (map[char].isSeparate && (stack.length !== 0 || currentType.length !== 0)) {
+          continue;
+        }
+        let t = 0;
+        if (stack[0] && map[stack[stack.length - 1]].double) {
+          t += 1;
         }
         stack.push(char);
         texts.push({
-          text: text.slice(lastIndex, i - 1),
-          color:
-            currentType.length > 0 ? map[stack[0]].color : '#FFFFFF',
+          text: text.slice(lastIndex + t, i - 1),
+          color: currentType.length > 0 ? map[stack[0]].color : '#FFFFFF',
           type: currentType.length > 0 ? [...currentType] : ['plain'],
         });
         currentType.push(map[char].type);
@@ -96,7 +91,6 @@ export const parseMessage = (text: string): ChatText[] => {
     } else {
       const closing = Object.keys(map).find((key) => map[key].close === char);
       if (closing) {
-        console.log(char, closing);
         if (map[closing].double && map[closing].close !== text[i + 1]) {
           continue;
         } else {
