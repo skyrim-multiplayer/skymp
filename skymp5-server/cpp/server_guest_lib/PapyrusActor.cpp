@@ -92,8 +92,7 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
   if (auto actor = GetFormPtr<MpActor>(self)) {
     auto baseId = GetFormPtr<MpForm>(arguments[0]);
 
-    if (actor->GetEquipment().inv.GetEquippedItem(Inventory::Worn::Right) ==
-        baseId))
+    if (actor->GetEquipment().inv.GetEquippedItem(Inventory::Worn::Right) == baseId))
       {
         return VarValue(true);
       }
