@@ -92,7 +92,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     },
     {
       name: 'roll',
-      handler: ({ actorId, controller, neighbors, inputText }) => {
+      handler: ({ actorId, controller, neighbors, inputText, masterApiId }) => {
         const name = getName(actorId)
         const random: string[] = [];
         const [count, _, max]: number[] = inputText.slice(1).split(/(d|к)/g).map(str => parseInt(str));
@@ -141,7 +141,7 @@ export class SweetPieGameModeListener implements GameModeListener {
             }
           ]
         }
-        const message = new ChatMessage(0, 0, text, 'dice')
+        const message = new ChatMessage(actorId, masterApiId || controller.getProfileId(actorId), text, 'dice', controller)
         for (const neighbor of neighbors) {
           controller.sendChatMessage(neighbor, message);
         } 
@@ -315,11 +315,11 @@ export class SweetPieGameModeListener implements GameModeListener {
         return;
       }
       if (input === '/' + command.name || input.startsWith(`/${command.name} `)) {
-        command.handler({ actorId, controller: this.controller, neighbors, inputText: input, argsRaw: input.substring(command.name.length + 2) });
+        command.handler({ actorId, controller: this.controller, neighbors, masterApiId, inputText: input, argsRaw: input.substring(command.name.length + 2) });
         return;
       }
     }
-    const message = new ChatMessage(actorId, masterApiId, input, 'plain')
+    const message = new ChatMessage(actorId, masterApiId, input, 'plain', this.controller)
     for (const neighbor of neighbors) {
       this.controller.sendChatMessage(neighbor, message);
     }

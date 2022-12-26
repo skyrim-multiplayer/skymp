@@ -8,6 +8,7 @@ export interface HandlerInput {
   inputText: string;
   argsRaw?: string;
   senderName?: string;
+  masterApiId?: number;
 }
 
 export interface Command {

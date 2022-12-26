@@ -1,7 +1,6 @@
-import { getActorDistanceSquared, getName } from '../mpApiInteractor';
+import { PlayerController } from '../logic/PlayerController';
 import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
-import { ChatSettings } from '../types/settings';
 import { FunctionInfo } from '../utils/functionInfo';
 import { parseMessage } from '../utils/parseChatMessage';
 import { sqr } from '../utils/sqr';
@@ -16,35 +15,18 @@ declare const ctx: Ctx;
 declare const messageString: string;
 declare const refreshWidgets: string;
 
-const chatSettings = (mp.getServerSettings().sweetpieChatSettings as ChatSettings) ?? {};
-
-const hearingRadius =
-        chatSettings.hearingRadiusNormal !== undefined ? sqr(chatSettings.hearingRadiusNormal) : sqr(1900);  
-const whisperDistanceCoeff = chatSettings.whisperDistance !== undefined ? chatSettings.whisperDistance : 0.10;  
-const shoutDistanceCoeff = chatSettings.shoutDistance !== undefined ? chatSettings.shoutDistance : 2.45;  
-const minDistanceToChange = chatSettings.minDistanceToChange !== undefined ? sqr(chatSettings.minDistanceToChange) : sqr(500); // TODO: move const to config
-
-console.log(chatSettings.hearingRadiusNormal,chatSettings.whisperDistance, chatSettings.shoutDistance,chatSettings.minDistanceToChange  )
-
-
-export type ChatTextType = 'nonrp' | 'action' | 'whisper' | 'shout' | 'plain';
-
-export type ChatText = {
-  opacity?: string
-  color: string;
-  text: string;
-  href?: string;
-  type: ChatTextType[];
-};
-
-
-type FilterMessagesType = {
-  [index: ChatTextType | string]: {
-    type: ChatTextType;
-    status: 'disabled' | 'enabled' | 'inherit' | 'distanceOnly';
-    color?: string;
-  }[]
-};
+const colorsArray = [
+  '#5DAD60',
+  '#62C985',
+  '#7175D6',
+  '#71D0D6',
+  '#93AD5D',
+  '#A062C9',
+  '#BDBD7D',
+  '#D76464',
+  '#F78C8C',
+  '#F78CD9',
+];
 
 const filterMessages: FilterMessagesType = {
   'shout': [
@@ -77,7 +59,43 @@ const filterMessages: FilterMessagesType = {
       status: 'disabled'
     }
   ],
+  'nonrp': [
+    {
+      type: 'action',
+      status: 'inherit',
+      color: '#91916D'
+    }, 
+    {
+      type: 'shout',
+      status: 'inherit',
+      color: '#91916D'
+    },
+    {
+      type: 'whisper', 
+      status: 'inherit',
+      color: '#91916D'
+    }
+  ]
 }
+
+export type ChatTextType = 'nonrp' | 'action' | 'whisper' | 'shout' | 'plain';
+
+export type ChatText = {
+  opacity?: string
+  color: string;
+  text: string;
+  href?: string;
+  type: ChatTextType[];
+};
+
+
+type FilterMessagesType = {
+  [index: ChatTextType | string]: {
+    type: ChatTextType;
+    status: 'disabled' | 'enabled' | 'inherit' | 'distanceOnly';
+    color?: string;
+  }[]
+};
 
 export interface IChatMessage {
   opacity: number;
@@ -93,19 +111,6 @@ export type ChatInput = { actorId: number; inputText: string };
 export type ChatInputHandler = (input: ChatInput) => void;
 
 export type ChatNeighbor = { actorId: number; opacity: number };
-
-const colorsArray = [
-  '#5DAD60',
-  '#62C985',
-  '#7175D6',
-  '#71D0D6',
-  '#93AD5D',
-  '#A062C9',
-  '#BDBD7D',
-  '#D76464',
-  '#F78C8C',
-  '#F78CD9',
-];
 
 export const getColorByNickname = (name: string) => {
   let result = 0;
@@ -130,12 +135,14 @@ export class ChatMessage {
     gameId: number;
     name?: string;
   };
+  private controller: PlayerController | undefined;
 
   constructor(
     actorId: number,
     masterApiId: number,
     text: string | ChatText[],
-    category: 'dice' | 'nonrp' | 'system' | 'plain' = 'plain'
+    category: 'dice' | 'nonrp' | 'system' | 'plain' = 'plain',
+    controller?: PlayerController
   ) {
     this.sender = {
       masterApiId,
@@ -143,9 +150,12 @@ export class ChatMessage {
     };
     this.category = category;
     console.log(category);
+    if (controller) {
+      this.controller = controller
+    }
     if (typeof text === 'string') {
-      if (['plain', 'nonrp'].includes(category)) {
-        this.sender.name = getName(actorId);
+      if (['plain', 'nonrp'].includes(category) && controller) {
+        this.sender.name = controller.getName(actorId);
       }
       this.text = parseMessage(text);
     } else {
@@ -153,22 +163,26 @@ export class ChatMessage {
     }
   }
 
-  static system(text: string | ChatText[]) {
-    return new this(0, 0, text, 'system');
+  static system(text: string | ChatText[], controller?: PlayerController) {
+    return new this(0, 0, text, 'system', controller ?? undefined);
   }
   
   // TBD
   public toUser(actorId: number): IChatMessage | false {
     let texts: ChatText[] = this.text
 
-    if (['plain', 'nonrp'].includes(this.category)) {
-      const distance = getActorDistanceSquared(actorId, this.sender.gameId);
+    if (['plain', 'nonrp', 'dice'].includes(this.category) && this.controller) {
+
+      const hearingRadius =
+              this.controller.getSetting('hearingRadiusNormal') !== undefined ? sqr(this.controller.getSetting('hearingRadiusNormal')) : sqr(1900);  
+      const whisperDistanceCoeff = this.controller.getSetting('whisperDistance')!== undefined ? this.controller.getSetting('whisperDistance') : 0.10;  
+      const shoutDistanceCoeff = this.controller.getSetting('shoutDistance') !== undefined ? this.controller.getSetting('shoutDistance') : 2.45;  
+      const minDistanceToChange = this.controller.getSetting('minDistanceToChange') !== undefined ? sqr(this.controller.getSetting('minDistanceToChange')) : sqr(500); // TODO: move const to config
+
+      const distance = this.controller.getActorDistanceSquared(actorId, this.sender.gameId);
       texts = texts.reduce<ChatText[]>((filtered, text) => {
-        console.log(JSON.stringify(text), distance)
-
         const current = {...text}
-
-        if (text.type.length > 0) {
+        if (text.type.length > 0) { // Apply filters
           for (let i = 0; i < text.type.length; i++) {
             const category = text.type[i]
             if (category in filterMessages) {
@@ -184,20 +198,24 @@ export class ChatMessage {
                   if (filter[j].status === 'enabled') {
                     current.type = current.type.filter(e => e !== category)
                   }
+                  if (filter[j].status === 'inherit') {
+                    current.type = current.type.filter(e => e !== filter[j].type)
+                  } 
                 }
               }
             }
           }
         }
 
-        console.log(JSON.stringify(current), distance)
-        if (current.type.includes('shout') && distance < hearingRadius * shoutDistanceCoeff) {
+        // Apply distance filters
+
+        if ((current.type.includes('shout') || current.type.includes('nonrp')) && distance < hearingRadius * shoutDistanceCoeff) {
           filtered.push({opacity: calculateOpacity(distance, hearingRadius, minDistanceToChange, shoutDistanceCoeff), ...current})
           return filtered
         } else if (current.type.includes('whisper')) {
-          if (distance < hearingRadius * whisperDistanceCoeff)
-            filtered.push({opacity: calculateOpacity(distance, hearingRadius, minDistanceToChange, whisperDistanceCoeff), ...current})
-          return filtered
+            if (distance < hearingRadius * whisperDistanceCoeff)
+              filtered.push({opacity: '1', ...current})
+            return filtered
         } else if (distance < hearingRadius) {
           filtered.push({opacity: calculateOpacity(distance, hearingRadius, minDistanceToChange, 1), ...current})
           return filtered

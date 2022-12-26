@@ -49,16 +49,7 @@ export const getName = (actorId: number) => {
   }
   return 'Stranger';
 };
-
-export const getActorDistanceSquared = (actorId1: number, actorId2: number) => {
-  const pos1 = mp.get(actorId1, 'pos');
-  const pos2 = mp.get(actorId2, 'pos');
-  const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
-  return sqr(delta[0]) + sqr(delta[1]) + sqr(delta[2]);
-};
-
 export class MpApiInteractor {
-  private static serverSettings = mp.getServerSettings();
   private static customNames = new Map<number, string>();
 
   static setup(listener: GameModeListener) {
@@ -255,6 +246,12 @@ export class MpApiInteractor {
       getScriptName(refrId: number): string {
         return scriptName(refrId);
       },
+      getActorDistanceSquared(actorId1: number, actorId2: number): number {
+        const pos1 = mp.get(actorId1, 'pos');
+        const pos2 = mp.get(actorId2, 'pos');
+        const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
+        return sqr(delta[0]) + sqr(delta[1]) + sqr(delta[2]);
+      },
       isTeleportActivator(refrId: number): boolean {
         return isTeleportDoor(refrId);
       },
@@ -266,6 +263,9 @@ export class MpApiInteractor {
         CounterProperty.set(actorId, counter, current + (by ?? 0));
         return current;
       },
+      getSetting(name: string): any {
+        return mp.getServerSettings()[name]
+      }
     }
   }
 }

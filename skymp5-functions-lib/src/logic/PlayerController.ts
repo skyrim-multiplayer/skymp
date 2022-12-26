@@ -27,4 +27,6 @@ export type PlayerController = {
   isTeleportActivator(refrId: number): boolean;
   updateCustomName(formDesc: string, name: string): void;
   incrementCounter(actorId: number, counter: Counter, by?: number): number;
+  getSetting(name: string): any;
+  getActorDistanceSquared(actorId1: number, actorId2: number): number;
 }
