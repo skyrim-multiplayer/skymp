@@ -94,30 +94,13 @@ describe('SweetPieGameModeListener: Chat', () => {
     const controller = makePlayerController();
     const listener = new SweetPieGameModeListener(controller);
     const neighbors = [
-      { actorId: 1, opacity: 1 },
-      { actorId: 2, opacity: 0.67 },
-      { actorId: 3, opacity: 0.5 },
+      1, 2, 3
     ];
 
-    listener.onPlayerChatInput(1, 'hello!', neighbors, 'SupAidme');
-
-
-    const buildMessage = (i: number): ChatMessage => {
-      return {
-        category: 'plain',
-        opacity: neighbors[i].opacity,
-        sender: { gameId: `1`, masterApiId: 0 },
-        text: [
-          { color: '#7175D6', text: 'SupAidme' },
-          { color: '#FFFFFF', text: ': ' },
-          { color: '#FFFFFF', text: 'hello!' },
-        ],
-      };
-    }
-    
+    listener.onPlayerChatInput(1, 'hello!', neighbors, 1);
 
     expect(controller.sendChatMessage).toBeCalledTimes(3);
-    expect(controller.sendChatMessage).toHaveBeenLastCalledWith(3, buildMessage(2));
+    expect(controller.sendChatMessage).toBeCalledWith(1, new ChatMessage(1, 1, 'hello!', 'plain', controller));
   });
 });
 

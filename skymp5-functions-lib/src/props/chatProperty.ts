@@ -149,7 +149,6 @@ export class ChatMessage {
       gameId: actorId,
     };
     this.category = category;
-    console.log(category);
     if (controller) {
       this.controller = controller
     }

@@ -26,6 +26,12 @@ export const makePlayerController = (): PlayerController => {
       counters.set(actorId, old + (by ?? 0));
       return old;
     },
+    getActorDistanceSquared(actorId1, actorId2) {
+        return 1
+    },
+    getSetting(name) {
+        return 2000
+    },
   };
 };
 
