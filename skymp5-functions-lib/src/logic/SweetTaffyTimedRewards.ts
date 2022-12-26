@@ -19,32 +19,36 @@ export function dayStart(date: Date): Date {
 export class SweetTaffyTimedRewards implements GameModeListener {
   static rewardItemFormId = 0x07F33922;
 
+  // enableDaily, enablyHourly are here to simplify tests
   constructor(private controller: TimedRewardController, private enableDaily: boolean, private enableHourly: boolean) {
   }
 
   everySecond() {
     const currentTime = this.controller.getCurrentTime();
+    const todayStart = dayStart(currentTime).getTime();
     for (const playerActorId of this.controller.getOnlinePlayers()) {
       if (this.enableDaily) {
         const lastDay = this.controller.getCounter(playerActorId, 'everydayStart');
         if (lastDay === 0) {
-          this.controller.setCounter(playerActorId, 'everydayStart', dayStart(currentTime).getTime());
+          this.controller.setCounter(playerActorId, 'everydayStart', todayStart);
+          this.controller.setCounter(playerActorId, 'secondsToday', 0);
+          this.controller.setCounter(playerActorId, 'lastExtraRewardDay', todayStart);
           this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, 150);
         } else {
           const fullDays = Math.floor((currentTime.getTime() - lastDay) / (1000 * 60 * 60 * 24));
           if (fullDays > 0) {
-            this.controller.setCounter(playerActorId, 'everydayStart', dayStart(currentTime).getTime());
+            this.controller.setCounter(playerActorId, 'everydayStart', todayStart);
+            this.controller.setCounter(playerActorId, 'secondsToday', 0);
             this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, fullDays);
           }
         }
       }
 
       if (this.enableHourly) {
-        const secondsUntilHour = this.controller.getCounter(playerActorId, 'secondsAccumulatedUntilHour');
-        if (secondsUntilHour + 1 < 60 * 60) {
-          this.controller.setCounter(playerActorId, 'secondsAccumulatedUntilHour', secondsUntilHour + 1);
-        } else {
-          this.controller.setCounter(playerActorId, 'secondsAccumulatedUntilHour', 0);
+        const secondsToday = this.controller.getCounter(playerActorId, 'secondsToday') + 1;
+        this.controller.setCounter(playerActorId, 'secondsToday', secondsToday);
+        if (secondsToday == 60 * 60 && this.controller.getCounter(playerActorId, 'lastExtraRewardDay') !== todayStart) {
+          this.controller.setCounter(playerActorId, 'lastExtraRewardDay', todayStart);
           this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, 9);
         }
       }
