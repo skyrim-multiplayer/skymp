@@ -87,7 +87,6 @@ public:
   uint32_t GetTotalItemCount() const;
   uint32_t GetEquippedItem(Inventory::Worn choice) const;
   bool IsEmpty() const;
-
   std::vector<Entry> entries;
 
   friend bool operator==(const Inventory& lhs, const Inventory& rhs)

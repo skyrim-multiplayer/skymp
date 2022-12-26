@@ -76,7 +76,7 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
       return VarValue(form.magickaPercentage);
     else {
       return VarValue::None();
-    }       
+    }
   }
   return VarValue();
 }
@@ -90,12 +90,12 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
   }
 
   if (auto actor = GetFormPtr<MpActor>(self)) {
-    auto baseId = GetFormPtr<MpForm>(arguments[0]);
+    auto baseId = GetFormPtr<MpForm>(arguments[0])->baseId;
 
-    if (actor->GetEquipment().inv.GetEquippedItem(Inventory::Worn::Right) == baseId))
-      {
-        return VarValue(true);
-      }
+    if (actor->GetEquipment().inv.GetEquippedItem(Inventory::Worn::Right) ==
+        baseId) {
+      return VarValue(true);
+    }
   }
 
   return VarValue(false);
