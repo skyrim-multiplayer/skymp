@@ -48,12 +48,23 @@ describe("SweetTaffyTimedRewards", () => {
     expect(controller.addItem).toBeCalledWith(1, SweetTaffyTimedRewards.rewardItemFormId, 1);
     expect(controller.addItem).toBeCalledWith(2, SweetTaffyTimedRewards.rewardItemFormId, 150);
 
-    controller.getCurrentTime.mockReturnValueOnce(new Date('2022-12-27T23:59:59.999+0300'));
+    controller.getCurrentTime.mockReturnValueOnce(new Date('2022-12-31T00:00:00.000+0300'));
+    controller.getOnlinePlayers.mockReturnValue([1, 2]);
     controller.addItem.mockReset();
   
     listener.everySecond();
-    expect(controller.getCounter(1, 'everydayStart')).toEqual(new Date('2022-12-27T00:00:00.000+0300').getTime());
-    expect(controller.getCounter(2, 'everydayStart')).toEqual(new Date('2022-12-27T00:00:00.000+0300').getTime());
+    expect(controller.getCounter(1, 'everydayStart')).toEqual(new Date('2022-12-31T00:00:00.000+0300').getTime());
+    expect(controller.getCounter(2, 'everydayStart')).toEqual(new Date('2022-12-31T00:00:00.000+0300').getTime());
+    expect(controller.addItem).toBeCalledTimes(2);
+    expect(controller.addItem).toBeCalledWith(1, SweetTaffyTimedRewards.rewardItemFormId, 4);
+    expect(controller.addItem).toBeCalledWith(2, SweetTaffyTimedRewards.rewardItemFormId, 4);
+
+    controller.getCurrentTime.mockReturnValueOnce(new Date('2022-12-31T23:59:59.999+0300'));
+    controller.addItem.mockReset();
+
+    listener.everySecond();
+    expect(controller.getCounter(1, 'everydayStart')).toEqual(new Date('2022-12-31T00:00:00.000+0300').getTime());
+    expect(controller.getCounter(2, 'everydayStart')).toEqual(new Date('2022-12-31T00:00:00.000+0300').getTime());
     expect(controller.addItem).toBeCalledTimes(0);
   });
 
