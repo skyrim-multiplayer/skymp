@@ -91,7 +91,6 @@ uint32_t Inventory::GetEquippedItem(Inventory::Worn choice) const
     if (entry.extra.worn != choice)
       return entry.baseId;
   }
-
 }
 
 uint32_t Inventory::GetTotalItemCount() const
