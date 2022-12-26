@@ -63,6 +63,11 @@ globalThis.clearInterval = (id: number | undefined): void => {
 
 //#region Timers processing
 
+enum ProcessMethodType {
+  update = "update",
+  tick = "tick"
+}
+let processMethodTypeStorageKey = "updateTypeStorageKey";
 let updateEventHandle: sp.EventHandle | null;
 let lastCallTime: number = Date.now();
 
@@ -110,13 +115,36 @@ const processTimers = (): void => {
   }
 }
 
+const setProcessMethod = (method: ProcessMethodType): void => {
+  switch (method) {
+    case ProcessMethodType.tick:
+      sp.storage[processMethodTypeStorageKey] = ProcessMethodType.tick;
+      updateEventHandle = sp.on(ProcessMethodType.tick, () => processTimers());
+      return;
+    case ProcessMethodType.update:
+      sp.storage[processMethodTypeStorageKey] = ProcessMethodType.update;
+      updateEventHandle = sp.on(ProcessMethodType.update, () => processTimers());
+      return;
+    default:
+      break;
+  }
+
+  try {
+    if (sp.Game.getPlayer()!) { };
+    setProcessMethod(ProcessMethodType.update);
+  }
+  catch {
+    setProcessMethod(ProcessMethodType.tick);
+  }
+}
+
 sp.on("menuOpen", (e) => {
   if (e.name === sp.Menu.Main) {
     if (updateEventHandle) {
       sp.unsubscribe(updateEventHandle);
     }
 
-    updateEventHandle = sp.on("tick", () => processTimers());
+    setProcessMethod(ProcessMethodType.tick);
   }
 });
 
@@ -125,15 +153,14 @@ sp.on("preLoadGame", () => {
     sp.unsubscribe(updateEventHandle);
   }
 
-  updateEventHandle = sp.on("update", () => processTimers());
+  setProcessMethod(ProcessMethodType.update);
 });
 
-try {
-  if (sp.Game.getPlayer()!) { };
-  updateEventHandle = sp.on("update", () => processTimers());
-}
-catch {
-  updateEventHandle = sp.on("tick", () => processTimers());
+const storageProcessMethod = sp.storage[processMethodTypeStorageKey];
+if (storageProcessMethod) {
+  setProcessMethod(storageProcessMethod as ProcessMethodType);
+} else {
+  setProcessMethod(ProcessMethodType.tick);
 }
 
 //#endregion
