@@ -1,5 +1,5 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include "HeuristicPolicy.h"
 #include "MpActor.h"
@@ -17,9 +17,9 @@ TEST_CASE("HeuristicPolicy", "[HeuristicPolicy]")
 
   std::vector<VarValue> args = { actorVarValue };
 
-  REQUIRE_THROWS_WITH(
-    policy.GetDefaultActor("", "", 0),
-    Catch::Contains("Invalid stackId was passed to GetDefaultActor (0)"));
+  REQUIRE_THROWS_WITH(policy.GetDefaultActor("", "", 0),
+                      Catch::Matchers::ContainsSubstring(
+                        "Invalid stackId was passed to GetDefaultActor (0)"));
 
   policy.SetDefaultActor(0, nullptr);
   REQUIRE(policy.GetDefaultActor("", "", 0) == nullptr);

@@ -1,7 +1,7 @@
 #include "ScriptStorage.h"
 #include "TestUtils.hpp"
 
-using Catch::Matchers::Contains;
+using Catch::Matchers::ContainsSubstring;
 
 extern espm::Loader l;
 
@@ -43,7 +43,7 @@ TEST_CASE("Activate without espm attached", "[PartOne][espm]")
       partOne, 0,
       nlohmann::json{ { "t", MsgType::Activate },
                       { "data", { { "caster", 0x15 }, { "target", 0 } } } }),
-    Contains("No loaded esm or esp files are found"));
+    ContainsSubstring("No loaded esm or esp files are found"));
 }
 
 TEST_CASE("Activate without Actor attached", "[PartOne][espm]")
@@ -57,7 +57,7 @@ TEST_CASE("Activate without Actor attached", "[PartOne][espm]")
       partOne, 0,
       nlohmann::json{ { "t", MsgType::Activate },
                       { "data", { { "caster", 0x15 }, { "target", 0 } } } }),
-    Contains("Can't do this without Actor attached"));
+    ContainsSubstring("Can't do this without Actor attached"));
 
   DoDisconnect(partOne, 0);
 }
@@ -75,8 +75,9 @@ TEST_CASE("Activate with bad caster", "[PartOne][espm]")
       partOne, 0,
       nlohmann::json{ { "t", MsgType::Activate },
                       { "data", { { "caster", 0x15 }, { "target", 0 } } } }),
-    Contains("Bad hoster is attached to caster 0x15, expected 0xff000000, but "
-             "found 0x0"));
+    ContainsSubstring(
+      "Bad hoster is attached to caster 0x15, expected 0xff000000, but "
+      "found 0x0"));
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
@@ -96,8 +97,9 @@ TEST_CASE("Activate with incorrect WorldSpace", "[PartOne][espm]")
       nlohmann::json{
         { "t", MsgType::Activate },
         { "data", { { "caster", 0x14 }, { "target", barrelInWhiterun } } } }),
-    Contains("WorldSpace doesn't match: caster is in Tamriel (0x3c), target "
-             "is in WhiterunWorld (0x1a26f)"));
+    ContainsSubstring(
+      "WorldSpace doesn't match: caster is in Tamriel (0x3c), target "
+      "is in WhiterunWorld (0x1a26f)"));
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
@@ -362,8 +364,9 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
   actor.RemoveAllItems();
 
-  REQUIRE_THROWS_WITH(ref.PutItem(actor, { 0x12eb7, 2 }),
-                      Contains("Actor 0xff000000 doesn't occupy ref 0x20570"));
+  REQUIRE_THROWS_WITH(
+    ref.PutItem(actor, { 0x12eb7, 2 }),
+    ContainsSubstring("Actor 0xff000000 doesn't occupy ref 0x20570"));
 
   // Activation forces base container to be added
   partOne.Messages().clear();
@@ -385,14 +388,16 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[2].j["type"] == "openContainer");
   REQUIRE(partOne.Messages()[2].j["target"] == ref.GetFormId());
 
-  REQUIRE_THROWS_WITH(ref.PutItem(actor, { 0x12eb7, 2 }),
-                      Contains("Source inventory doesn't have enough 0x12eb7 "
-                               "(2 is required while 0 present)"));
+  REQUIRE_THROWS_WITH(
+    ref.PutItem(actor, { 0x12eb7, 2 }),
+    ContainsSubstring("Source inventory doesn't have enough 0x12eb7 "
+                      "(2 is required while 0 present)"));
 
   actor.AddItem(0x12eb7, 1);
-  REQUIRE_THROWS_WITH(ref.PutItem(actor, { 0x12eb7, 2 }),
-                      Contains("Source inventory doesn't have enough 0x12eb7 "
-                               "(2 is required while 1 present)"));
+  REQUIRE_THROWS_WITH(
+    ref.PutItem(actor, { 0x12eb7, 2 }),
+    ContainsSubstring("Source inventory doesn't have enough 0x12eb7 "
+                      "(2 is required while 1 present)"));
 
   actor.AddItem(0x12eb7, 1);
 

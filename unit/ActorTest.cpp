@@ -1,5 +1,5 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 TEST_CASE(
   "Actor appearance, equipment and isRaceMenuOpen properties should present "

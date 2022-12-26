@@ -5,7 +5,7 @@
   "license": "AGPL-3.0",
   "scripts": {
     "build-ts": "parcel build ts/index.ts --bundle-node-modules --out-dir ../build/dist/server/dist_back --out-file skymp5-server.js --no-cache --target node",
-    "cmake-js-fetch": "cmake-js configure --directory cmake-js-fetch --out cmake-js-fetch-build"
+    "cmake-js-fetch": "cmake-js configure --directory cmake-js-fetch --out ../build/cmake-js-fetch-build"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
