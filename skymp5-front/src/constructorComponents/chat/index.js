@@ -227,10 +227,10 @@ const Chat = (props) => {
                     inputRef.current.focus();
                     setMoveChat(e.target.checked);
                   }} />
-                <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
                 { doesIncludeShout &&
                   <span className={`chat-message-limit shout-limit ${shoutLength > 100 ? 'limit' : ''} text`}>{shoutLength}/100</span>
                 }
+                <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
               </div>
             </div>
           </div>
