@@ -7,9 +7,17 @@ $level-4: #a062c9;
 
 $regular: 200ms;
 
+.skill-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .perks {
   font-size: 32px;
   color: $font-color;
+  transform-origin: top;
   position: relative;
 
   &__content {

@@ -25,22 +25,18 @@ const SkillsMenu = () => {
 
   const fetchData = (event) => {
     // !Important: Run commented code to dispatch event
-    // const event = new CustomEvent('updateSkillMenu', { detail: {
-    //   exp: 3375,
-    //   mem: 2,
-    //   // 0 based, from 0 to 4
-    //   perks: {
-    //     saltmaker: 1,
-    //     weapon: 1,
-    //     leather: 3,
-    //     jewelry: 2,
-    //     clother: 4
-    //   }
-    // } });
-    // window.dispatchEvent(event)
-    // if (playerData) return;
+  //   window.dispatchEvent(new CustomEvent('updateSkillMenu', { detail: {
+  //     exp: 3375,
+  //     mem: 2,
+  //     perks: {
+  //         saltmaker: 1,
+  //         weapon: 1,
+  //         leather: 3,
+  //         jewelry: 2,
+  //         clother: 4
+  //     }
+  // } }))
     const newPlayerData = (event as CustomEvent).detail as IPlayerData;
-    console.log(newPlayerData);
     setplayerData(newPlayerData);
   };
 
@@ -60,7 +56,7 @@ const SkillsMenu = () => {
         ? window.innerWidth / 1920
         : window.innerWidth / 2500
     );
-  }, []);
+  }, [playerData]);
 
   const hoverHandler = (perk) => {
     setcurrentHeader(perk.description);
@@ -127,6 +123,7 @@ const SkillsMenu = () => {
   if (!playerData) return <></>;
 
   return (
+    <div className='skill-container'>
     <div className="perks" style={{ transform: `scale(${scale})` }}>
       <div className="perks__content">
         <div className="perks__header">{currentHeader}</div>
@@ -161,7 +158,7 @@ const SkillsMenu = () => {
                 ))}
                 {cIndex === content.length - 1 && (
                   <div className="perks__exp-container">
-                    <p
+                    <div
                       className="perks__exp-container__line"
                       onMouseEnter={() => setexpHint(true)}
                       onMouseLeave={() => setexpHint(false)}
@@ -177,8 +174,8 @@ const SkillsMenu = () => {
                         {pExp}
                         <span className="perks__exp" />
                       </span>
-                    </p>
-                    <p
+                    </div>
+                    <div
                       className="perks__exp-container__line"
                       onMouseEnter={() => setmemHint(true)}
                       onMouseLeave={() => setmemHint(false)}
@@ -194,7 +191,7 @@ const SkillsMenu = () => {
                         {pMem}
                         <span className="perks__exp" style={{ opacity: 0 }} />
                       </span>
-                    </p>
+                    </div>
                   </div>
                 )}
               </ul>
@@ -249,6 +246,7 @@ const SkillsMenu = () => {
       <audio id="quitSound">
         <source src={quitSound}></source>
       </audio>
+    </div>
     </div>
   );
 };
