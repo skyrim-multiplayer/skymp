@@ -1,5 +1,5 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include "HeuristicPolicy.h"
 #include "PapyrusSkymp.h"
@@ -24,8 +24,9 @@ TEST_CASE("SetDefaultActor should store actor per stack", "[Papyrus][Skymp]")
   REQUIRE(skymp.policy->GetDefaultActor("", "", 1) == nullptr);
   REQUIRE_THROWS_WITH(
     skymp.policy->GetDefaultActor("", "", 91298),
-    Catch::Contains("Invalid stackId was passed to GetDefaultActor (91298)"));
-  REQUIRE_THROWS_WITH(
-    skymp.policy->GetDefaultActor("", "", -1),
-    Catch::Contains("Invalid stackId was passed to GetDefaultActor (-1)"));
+    Catch::Matchers::ContainsSubstring(
+      "Invalid stackId was passed to GetDefaultActor (91298)"));
+  REQUIRE_THROWS_WITH(skymp.policy->GetDefaultActor("", "", -1),
+                      Catch::Matchers::ContainsSubstring(
+                        "Invalid stackId was passed to GetDefaultActor (-1)"));
 }

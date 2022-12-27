@@ -7,7 +7,7 @@ export type Percentages = {
   stamina?: number;
 }
 
-export type Counter = 'finishedDeathmatches';
+export type Counter = 'finishedDeathmatches' | 'everydayStart' | 'secondsToday' | 'lastExtraRewardDay';
 
 export type PlayerController = {
   setSpawnPoint(player: number, pointName: string): void;

@@ -3,7 +3,6 @@ import { Counter, PlayerController } from "./PlayerController";
 
 export const makePlayerController = (): PlayerController => {
   // TODO: use ES6 Proxy to automate handy methods adding
-  // TODO: fix getName always returning undefined
   const counters = new Map<number, number>();
   return {
     teleport: jest.fn(),

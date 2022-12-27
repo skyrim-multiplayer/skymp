@@ -4,6 +4,7 @@
   "homepage": "https://skymp.io",
   "description": "Online mod for Skyrim SE.",
   "dependencies": [
+    "cmakerc",
     "chakracore",
     "nlohmann-json",
     "cpp-httplib",
@@ -16,7 +17,6 @@
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
-    "boost-pfr",
     {
       "name": "directxtk",
       "platform": "windows"

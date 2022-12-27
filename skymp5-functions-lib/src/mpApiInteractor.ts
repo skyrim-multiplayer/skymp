@@ -53,15 +53,15 @@ export const getName = (actorId: number) => {
 export class MpApiInteractor {
   private static customNames = new Map<number, string>();
 
-  static setup(listener: GameModeListener) {
-    MpApiInteractor.setupActivateHandler(listener);
-    MpApiInteractor.setupChatHandler(listener);
-    MpApiInteractor.setupDialogResponseHandler(listener);
-    MpApiInteractor.setupTimer(listener);
-    MpApiInteractor.setupDeathHandler(listener);
+  static setup(listeners: GameModeListener[]) {
+    MpApiInteractor.setupActivateHandler(listeners);
+    MpApiInteractor.setupChatHandler(listeners);
+    MpApiInteractor.setupDialogResponseHandler(listeners);
+    MpApiInteractor.setupTimer(listeners);
+    MpApiInteractor.setupDeathHandler(listeners);
   }
 
-  private static setupActivateHandler(listener: GameModeListener) {
+  private static setupActivateHandler(listeners: GameModeListener[]) {
     mp.onActivate = (target: number, caster: number) => {
       const type = mp.get(target, 'type');
       if (type !== 'MpObjectReference') {
@@ -69,20 +69,24 @@ export class MpApiInteractor {
       }
 
       const targetDesc = mp.getDescFromId(target);
-      if (!listener.onPlayerActivateObject) {
-        return true;
+
+      let notBlocked = true;
+
+      for (const listener of listeners) {
+        if (!listener.onPlayerActivateObject) {
+          continue;
+        }
+        const res = listener.onPlayerActivateObject(caster, targetDesc, target);
+        if (res == 'blockActivation') {
+          notBlocked = false;
+        }
       }
 
-      const res = listener.onPlayerActivateObject(caster, targetDesc, target);
-      if (res === 'continue') {
-        return true;
-      }
-
-      return false;
+      return notBlocked;
     };
   }
 
-  private static setupChatHandler(listener: GameModeListener) {
+  private static setupChatHandler(listeners: GameModeListener[]) {
     ChatProperty.setChatInputHandler((input) => {
       const onlinePlayers = mp.get(0, 'onlinePlayers');
       const actorNeighbors = mp
@@ -99,16 +103,18 @@ export class MpApiInteractor {
     });
   }
 
-  private static setupDialogResponseHandler(listener: GameModeListener) {
+  private static setupDialogResponseHandler(listeners: GameModeListener[]) {
     DialogProperty.setDialogResponseHandler((response) => {
-      if (listener.onPlayerDialogResponse) {
-        listener.onPlayerDialogResponse(response.actorId, response.dialogId, response.buttonIndex);
+      for (const listener of listeners) {
+        if (listener.onPlayerDialogResponse) {
+          listener.onPlayerDialogResponse(response.actorId, response.dialogId, response.buttonIndex);
+        }
       }
       return true;
     });
   }
 
-  private static setupTimer(listener: GameModeListener) {
+  private static setupTimer(listeners: GameModeListener[]) {
     Timer.everySecond = () => {
       // console.log(PersistentStorage.getSingleton().reloads);
 
@@ -118,21 +124,23 @@ export class MpApiInteractor {
       const joinedPlayers = onlinePlayers.filter((x) => !onlinePlayersOld.includes(x));
       const leftPlayers = onlinePlayersOld.filter((x) => !onlinePlayers.includes(x));
 
-      if (listener.onPlayerJoin) {
-        for (const actorId of joinedPlayers) {
-          MpApiInteractor.onPlayerJoinHardcoded(actorId);
-          listener.onPlayerJoin(actorId);
+      for (const listener of listeners) {
+        if (listener.onPlayerJoin) {
+          for (const actorId of joinedPlayers) {
+            MpApiInteractor.onPlayerJoinHardcoded(actorId);
+            listener.onPlayerJoin(actorId);
+          }
         }
-      }
 
-      if (listener.onPlayerLeave) {
-        for (const actorId of leftPlayers) {
-          listener.onPlayerLeave(actorId);
+        if (listener.onPlayerLeave) {
+          for (const actorId of leftPlayers) {
+            listener.onPlayerLeave(actorId);
+          }
         }
-      }
 
-      if (listener.everySecond) {
-        listener.everySecond();
+        if (listener.everySecond) {
+          listener.everySecond();
+        }
       }
 
       for (const actorId of leftPlayers) {
@@ -171,13 +179,15 @@ export class MpApiInteractor {
     };
   }
 
-  private static setupDeathHandler(listener: GameModeListener) {
+  private static setupDeathHandler(listeners: GameModeListener[]) {
     mp.onDeath = (target: number, killer: number) => {
-      if (listener.onPlayerDeath) {
-        if (killer === 0) {
-          listener.onPlayerDeath(target, undefined);
-        } else {
-          listener.onPlayerDeath(target, killer);
+      for (const listener of listeners) {
+        if (listener.onPlayerDeath) {
+          if (killer === 0) {
+            listener.onPlayerDeath(target, undefined);
+          } else {
+            listener.onPlayerDeath(target, killer);
+          }
         }
       }
     };
@@ -187,7 +197,7 @@ export class MpApiInteractor {
     ChatProperty.showChat(actorId, true);
   }
 
-  static makeController(pointsByName: Map<string, LocationalData>): PlayerController {
+  static makeController(pointsByName: Map<string, LocationalData>) {
     return {
       setSpawnPoint(player: number, pointName: string) {
         const point = pointsByName.get(pointName);
@@ -277,9 +287,18 @@ export class MpApiInteractor {
         return current;
       },
       getServerSetting(name: string): any {
-        // Add typings
+        // TODO: Add typings
         return mp.getServerSettings()[name];
       },
-    };
+      setCounter(actorId: number, counter: Counter, to: number) {
+        CounterProperty.set(actorId, counter, to);
+      },
+      getCounter(actorId: number, counter: Counter) {
+        return CounterProperty.get(actorId, counter);
+      },
+      getCurrentTime(): Date {
+        return new Date();
+      },
+    }
   }
 }

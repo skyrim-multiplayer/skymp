@@ -1,6 +1,6 @@
 #include "ActionListener.h"
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <chrono>
 
 PartOne& GetPartOne();

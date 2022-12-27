@@ -1,6 +1,6 @@
 #include "ServerState.h"
 #include "MsgType.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <nlohmann/json.hpp>
 
 TEST_CASE("Connect/Disconnect", "[ServerState]")

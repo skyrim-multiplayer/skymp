@@ -25,6 +25,7 @@ function processOneActor(): void {
     // Deleting actor in dialogue crashes Skyrim
     // https://github.com/skyrim-multiplayer/issue-tracker/issues/13
     actor.setPosition(0, 0, 0);
+    actor.disableNoWait(true); // Seems to not crash
     return;
   }
   actor.disable(false).then(() => {
