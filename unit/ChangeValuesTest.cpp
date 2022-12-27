@@ -81,7 +81,7 @@ TEST_CASE("Player attribute percentages are changing correctly",
 
 bool IsNearlyEqual(float a, float b)
 {
-  float eps = 0.00001f;
+  float eps = 0.001f;
   return std::fabs(a - b) < eps;
 }
 
@@ -126,15 +126,6 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
     elapsedTime.count() / 10000.0f;
 
   auto changeForm = ac.GetChangeForm();
-
-  std::cout << std::setprecision(10) << changeForm.actorValues.healthPercentage
-            << " " << expectedHealth + 0.1f << '\n';
-  std::cout << std::setprecision(10)
-            << changeForm.actorValues.staminaPercentage << " "
-            << expectedStamina << '\n';
-  std::cout << std::setprecision(10)
-            << changeForm.actorValues.magickaPercentage << " "
-            << expectedMagicka << '\n';
 
   REQUIRE(IsNearlyEqual(expectedHealth + 0.1f,
                         changeForm.actorValues.healthPercentage));
