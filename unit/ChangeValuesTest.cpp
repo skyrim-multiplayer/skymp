@@ -102,15 +102,15 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   actorValues.magickaPercentage = 0.f;
   actorValues.staminaPercentage = 0.f;
   ac.SetPercentages(actorValues);
-  ac.SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now() - 1s);
+  auto past = std::chrono::steady_clock::now() - 1s;
+  ac.SetLastAttributesPercentagesUpdate(past);
   actorValues.healthPercentage = 1.f;
   actorValues.magickaPercentage = 1.f;
   actorValues.staminaPercentage = 1.f;
   p.GetActionListener().OnChangeValues(msgData, actorValues);
 
   auto now = ac.GetLastAttributesPercentagesUpdate();
-  auto was = now - 1s;
-  std::chrono::duration<float> elapsedTime = now - was;
+  std::chrono::duration<float> elapsedTime = now - past;
 
   float expectedHealth = baseValues.healRate * baseValues.healRateMult *
     elapsedTime.count() / 10000.0f;
@@ -120,9 +120,16 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
     elapsedTime.count() / 10000.0f;
 
   auto changeForm = ac.GetChangeForm();
-
+  std::cout << std::setprecision(10) << changeForm.actorValues.healthPercentage
+            << " " << expectedHealth + 0.1f << '\n';
+  std::cout << std::setprecision(10)
+            << changeForm.actorValues.staminaPercentage << " "
+            << expectedStamina << '\n';
+  std::cout << std::setprecision(10)
+            << changeForm.actorValues.magickaPercentage << " "
+            << expectedMagicka << '\n';
   REQUIRE_THAT(changeForm.actorValues.healthPercentage,
-               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.00001f));
+               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.000001f));
   REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
                Catch::Matchers::WithinAbs(expectedMagicka, 0.00001f));
   REQUIRE_THAT(changeForm.actorValues.staminaPercentage,
