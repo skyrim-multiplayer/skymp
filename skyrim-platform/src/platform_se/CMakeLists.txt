@@ -18,6 +18,8 @@ if(MSVC)
   target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/cef_sandbox.lib")
   target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/libcef.lib")
   target_include_directories(cef INTERFACE ${CEF_INCLUDE_DIR})
+  message(STATUS "CEF_LIBRARY_RELEASE: ${CEF_LIBRARY_RELEASE}")
+  message(STATUS "CEF_LIBRARY_DEBUG: ${CEF_LIBRARY_DEBUG}")
 
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
   set(tilted "${SKYRIM_PLATFORM_SOURCE_DIR}/src/tilted")
