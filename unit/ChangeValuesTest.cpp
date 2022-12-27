@@ -79,6 +79,12 @@ TEST_CASE("Player attribute percentages are changing correctly",
   DoDisconnect(p, 0);
 }
 
+bool IsNearlyEqual(float a, float b)
+{
+  float eps = 0.000001f;
+  return std::fabs(a - b) < eps;
+}
+
 TEST_CASE("OnChangeValues call is cropping percentage values",
           "[ChangeValues]")
 {
@@ -102,14 +108,14 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   actorValues.magickaPercentage = 0.f;
   actorValues.staminaPercentage = 0.f;
   ac.SetPercentages(actorValues);
-  auto past = std::chrono::steady_clock::now() - 1s;
-  ac.SetLastAttributesPercentagesUpdate(past);
+  ac.SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now() - 1s);
   actorValues.healthPercentage = 1.f;
   actorValues.magickaPercentage = 1.f;
   actorValues.staminaPercentage = 1.f;
   p.GetActionListener().OnChangeValues(msgData, actorValues);
 
   auto now = ac.GetLastAttributesPercentagesUpdate();
+  auto past = now - 1s;
   std::chrono::duration<float> elapsedTime = now - past;
 
   float expectedHealth = baseValues.healRate * baseValues.healRateMult *
@@ -120,6 +126,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
     elapsedTime.count() / 10000.0f;
 
   auto changeForm = ac.GetChangeForm();
+
   std::cout << std::setprecision(10) << changeForm.actorValues.healthPercentage
             << " " << expectedHealth + 0.1f << '\n';
   std::cout << std::setprecision(10)
@@ -128,12 +135,13 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   std::cout << std::setprecision(10)
             << changeForm.actorValues.magickaPercentage << " "
             << expectedMagicka << '\n';
-  REQUIRE_THAT(changeForm.actorValues.healthPercentage,
-               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.000001f));
-  REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
-               Catch::Matchers::WithinAbs(expectedMagicka, 0.00001f));
-  REQUIRE_THAT(changeForm.actorValues.staminaPercentage,
-               Catch::Matchers::WithinAbs(expectedStamina, 0.00001f));
+
+  REQUIRE(
+    IsNearlyEqual(expectedHealth + 0.1f, changeForm.actorValues.healthPercentage));
+  REQUIRE(
+    IsNearlyEqual(expectedMagicka, changeForm.actorValues.magickaPercentage));
+  REQUIRE(
+    IsNearlyEqual(expectedStamina, changeForm.actorValues.staminaPercentage));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
