@@ -24,13 +24,13 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
 {
   float validRegenerationPercentage = PercentToFloat(attributeRate) *
     PercentToFloat(attributeRateMult) * secondsAfterLastRegen;
+  validRegenerationPercentage =
+    validRegenerationPercentage < 0.0f ? 0.0f : validRegenerationPercentage;
 
   float validAttributePercentage =
     oldAttributeValue + validRegenerationPercentage;
   validAttributePercentage =
     validAttributePercentage > 1.0f ? 1.0f : validAttributePercentage;
-  validAttributePercentage =
-    validAttributePercentage < 0.f ? 0.f : validAttributePercentage;
 
   if (newAttributeValue > validAttributePercentage) {
     return validAttributePercentage;

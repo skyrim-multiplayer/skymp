@@ -112,20 +112,6 @@ void AnimationSystem::InitAnimationCallbacks()
       },
     },
     {
-      "SneakStart",
-      [](MpActor* actor) {
-        constexpr float newRate = -8.f;
-        actor->SetActorValue(espm::ActorValue::StaminaRate, newRate);
-      },
-    },
-    {
-      "SneakStop",
-      [](MpActor* actor) {
-        actor->SetActorValue(espm::ActorValue::StaminaRate,
-                             actor->GetBaseValues().staminaRate);
-      },
-    },
-    {
       "SneakSprintStartRoll",
       [](MpActor* actor) {
         constexpr float modifier = 15.f;
