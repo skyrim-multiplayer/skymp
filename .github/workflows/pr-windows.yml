@@ -9,13 +9,14 @@ on:
     - cron: '0 0 * * *'
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
   VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
 
 jobs:
   build:
+    strategy:
+      matrix:
+        BUILD_TYPE: [Release, Debug]
     # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
     runs-on: windows-2022
 
@@ -87,7 +88,7 @@ jobs:
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
         -DPREPARE_NEXUS_ARCHIVES=ON
-        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        -DCMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE }}
         -DSKYRIM_SE=ON
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
@@ -99,13 +100,13 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{ matrix.BUILD_TYPE }}
 
     - name: Test
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
+      run: ctest -C ${{ matrix.BUILD_TYPE }} --verbose # --output-on-failure
 
     - uses: actions/upload-artifact@v3
       with:
