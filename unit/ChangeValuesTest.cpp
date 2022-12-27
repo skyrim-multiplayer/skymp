@@ -112,12 +112,12 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   auto was = now - 1s;
   std::chrono::duration<float> elapsedTime = now - was;
 
-  float expectedHealth =
-    baseValues.healRate * baseValues.healRateMult * elapsedTime.count() / 10000.0f;
-  float expectedMagicka =
-    baseValues.magickaRate * baseValues.magickaRateMult * elapsedTime.count() / 10000.0f;
-  float expectedStamina =
-    baseValues.staminaRate * baseValues.staminaRateMult * elapsedTime.count() / 10000.0f;
+  float expectedHealth = baseValues.healRate * baseValues.healRateMult *
+    elapsedTime.count() / 10000.0f;
+  float expectedMagicka = baseValues.magickaRate * baseValues.magickaRateMult *
+    elapsedTime.count() / 10000.0f;
+  float expectedStamina = baseValues.staminaRate * baseValues.staminaRateMult *
+    elapsedTime.count() / 10000.0f;
 
   auto changeForm = ac.GetChangeForm();
 
