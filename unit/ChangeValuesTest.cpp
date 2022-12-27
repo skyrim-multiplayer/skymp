@@ -81,7 +81,7 @@ TEST_CASE("Player attribute percentages are changing correctly",
 
 bool IsNearlyEqual(float a, float b)
 {
-  float eps = 0.000001f;
+  float eps = 0.00001f;
   return std::fabs(a - b) < eps;
 }
 
@@ -108,15 +108,15 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   actorValues.magickaPercentage = 0.f;
   actorValues.staminaPercentage = 0.f;
   ac.SetPercentages(actorValues);
-  ac.SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now() - 1s);
+  auto past = std::chrono::steady_clock::now() - 1s;
+  ac.SetLastAttributesPercentagesUpdate(past);
   actorValues.healthPercentage = 1.f;
   actorValues.magickaPercentage = 1.f;
   actorValues.staminaPercentage = 1.f;
   p.GetActionListener().OnChangeValues(msgData, actorValues);
 
-  auto now = ac.GetLastAttributesPercentagesUpdate();
-  auto past = now - 1s;
-  std::chrono::duration<float> elapsedTime = now - past;
+  std::chrono::duration<float> elapsedTime =
+    std::chrono::steady_clock::now() - past;
 
   float expectedHealth = baseValues.healRate * baseValues.healRateMult *
     elapsedTime.count() / 10000.0f;
@@ -136,8 +136,8 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
             << changeForm.actorValues.magickaPercentage << " "
             << expectedMagicka << '\n';
 
-  REQUIRE(
-    IsNearlyEqual(expectedHealth + 0.1f, changeForm.actorValues.healthPercentage));
+  REQUIRE(IsNearlyEqual(expectedHealth + 0.1f,
+                        changeForm.actorValues.healthPercentage));
   REQUIRE(
     IsNearlyEqual(expectedMagicka, changeForm.actorValues.magickaPercentage));
   REQUIRE(
