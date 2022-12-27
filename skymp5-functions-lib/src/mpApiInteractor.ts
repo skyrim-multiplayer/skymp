@@ -9,12 +9,13 @@ import { Ctx } from "./types/ctx";
 import { LocationalData, Mp, PapyrusObject } from "./types/mp";
 import { ChatSettings } from "./types/settings";
 import { PersistentStorage } from "./utils/persistentStorage";
-import { sqr } from "./utils/sqr";
 import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
 declare const nameUpdatesClientSide: [number, string][];
+
+export const sqr = (x: number) => x * x;
 
 const scriptName = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -62,8 +63,8 @@ export class MpApiInteractor {
 
   private static setupActivateHandler(listener: GameModeListener) {
     mp.onActivate = (target: number, caster: number) => {
-      const type = mp.get(target, "type");
-      if (type !== "MpObjectReference") {
+      const type = mp.get(target, 'type');
+      if (type !== 'MpObjectReference') {
         return true;
       }
 
@@ -84,13 +85,16 @@ export class MpApiInteractor {
   private static setupChatHandler(listener: GameModeListener) {
     ChatProperty.setChatInputHandler((input) => {
       const onlinePlayers = mp.get(0, 'onlinePlayers');
-      const actorNeighbors =
-        mp.get(input.actorId, 'actorNeighbors')
-        .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
+      const actorNeighbors = mp
+        .get(input.actorId, 'actorNeighbors')
+        .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1);
       const name = getName(input.actorId);
+      const profileId = mp.get(input.actorId, 'profileId');
+      console.log(
+        `chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}/${profileId}): ${JSON.stringify(input.inputText)}`
+      );
       if (listener.onPlayerChatInput) {
-        console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
-        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, mp.get(input.actorId, 'profileId'));
+        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, profileId);
       }
     });
   }
@@ -146,15 +150,19 @@ export class MpApiInteractor {
         if (!nameUpdates.length) {
           continue;
         }
-        EvalProperty.eval(actorId, () => {
-          for (const [formId, name] of nameUpdatesClientSide) {
-            const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
-            const ret = refr?.setDisplayName(name, true);
-            if (!ret) {
-              ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
+        EvalProperty.eval(
+          actorId,
+          () => {
+            for (const [formId, name] of nameUpdatesClientSide) {
+              const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
+              const ret = refr?.setDisplayName(name, true);
+              if (!ret) {
+                ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
+              }
             }
-          }
-        }, { nameUpdatesClientSide: nameUpdates });
+          },
+          { nameUpdatesClientSide: nameUpdates }
+        );
       }
 
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
@@ -198,7 +206,13 @@ export class MpApiInteractor {
         }
       },
       showMessageBox(actorId: number, dialogId: number, caption: string, text: string, buttons: string[]): void {
-        DialogProperty.showMessageBox(actorId, dialogId, caption.toLowerCase(), text.toLowerCase(), buttons.map(x => x.toLowerCase()));
+        DialogProperty.showMessageBox(
+          actorId,
+          dialogId,
+          caption.toLowerCase(),
+          text.toLowerCase(),
+          buttons.map((x) => x.toLowerCase())
+        );
       },
       sendChatMessage(actorId: number, message: ChatMessage): void {
         ChatProperty.sendChatMessage(actorId, message);
@@ -216,9 +230,11 @@ export class MpApiInteractor {
       },
       addItem(actorId: number, itemId: number, count: number): void {
         mp.callPapyrusFunction(
-          'method', 'ObjectReference', 'AddItem',
+          'method',
+          'ObjectReference',
+          'AddItem',
           { type: 'form', desc: mp.getDescFromId(actorId) },
-          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/false]
+          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/ false]
         );
       },
       getRoundsArray(): SweetPieRound[] {
@@ -231,14 +247,11 @@ export class MpApiInteractor {
         return PersistentStorage.getSingleton().onlinePlayers;
       },
       setPercentages(actorId: number, percentages: Percentages): void {
-        mp.set(
-          actorId,
-          'percentages',
-          {
-            health: percentages.health ?? 1.0,
-            magicka: percentages.magicka ?? 1.0,
-            stamina: percentages.stamina ?? 1.0
-          });
+        mp.set(actorId, 'percentages', {
+          health: percentages.health ?? 1.0,
+          magicka: percentages.magicka ?? 1.0,
+          stamina: percentages.stamina ?? 1.0,
+        });
       },
       getPercentages(actorId: number): Percentages {
         return mp.get(actorId, 'percentages');
@@ -263,9 +276,10 @@ export class MpApiInteractor {
         CounterProperty.set(actorId, counter, current + (by ?? 0));
         return current;
       },
-      getSetting(name: string): any {
-        return mp.getServerSettings()[name]
-      }
-    }
+      getServerSetting(name: string): any {
+        // Add typings
+        return mp.getServerSettings()[name];
+      },
+    };
   }
 }

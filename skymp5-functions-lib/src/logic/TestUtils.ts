@@ -1,3 +1,4 @@
+import { ChatSettings } from "../types/settings";
 import { Counter, PlayerController } from "./PlayerController";
 
 export const makePlayerController = (): PlayerController => {
@@ -29,8 +30,18 @@ export const makePlayerController = (): PlayerController => {
     getActorDistanceSquared(actorId1, actorId2) {
         return 1
     },
-    getSetting(name) {
-        return 2000
+    getServerSetting(name: string) {
+      const settings: ChatSettings = {
+        hearingRadiusNormal: 2000,
+        whisperDistance: 0.1,
+        shoutDistance: 1.5,
+        minDistanceToChange: 500,
+      }
+      if (name in settings) {
+        return settings[(name as keyof ChatSettings)]
+      } else {
+        return 1
+      }
     },
   };
 };

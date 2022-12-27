@@ -1,5 +1,3 @@
-import { ChatMessage, ChatNeighbor } from "../props/chatProperty";
-
 export interface GameModeListener {
   onPlayerJoin?: (actorId: number) => void;
   onPlayerLeave?: (actorId: number) => void;

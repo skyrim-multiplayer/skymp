@@ -16,11 +16,11 @@ type delimitersMap = {
     close: string;
     type: ChatTextType;
     color: string;
-    isSeparate?: boolean;
+    canBeNested?: boolean;
   };
 };
 
-export const parseMessage = (text: string): ChatText[] => {
+export const parseChatMessage = (text: string): ChatText[] => {
   const map: delimitersMap = {
     '(': {
       double: true,
@@ -36,13 +36,13 @@ export const parseMessage = (text: string): ChatText[] => {
     '%': {
       close: '%',
       type: 'whisper',
-      color: '#FFFFFF',
+      color: '#A062C9',
     },
     '№': {
       close: '№',
       type: 'shout',
       color: '#F78C8C',
-      isSeparate: true,
+      canBeNested: false,
     },
   };
 
@@ -67,22 +67,34 @@ export const parseMessage = (text: string): ChatText[] => {
         lastIndex = i;
         currentType.pop();
       } else {
-        if (map[char].double && char !== text[i + 1]) {
+        if (map[char].double) {
+          if (char !== text[i + 1]) {
+            continue;
+          } else {
+            i += 1;
+          }
+        }
+        if (map[char].canBeNested === false && (stack.length !== 0 || currentType.length !== 0)) {
           continue;
-        } else {
-          i += 1;
         }
-        if (map[char].isSeparate && (stack.length !== 0 || currentType.length !== 0)) {
-          continue;
-        }
-        let t = 0;
-        if (stack[0] && map[stack[stack.length - 1]].double) {
-          t += 1;
-        }
+
+        const prevColor = currentType.length > 0 ? map[stack[0]].color : '#FFFFFF';
+
         stack.push(char);
+
+        let t_this = 0;
+        let t_prev = 0;
+
+        if (stack[0] && map[stack[stack.length - 1]].double) {
+          t_this += 1;
+        }
+        if (stack[1] && map[stack[stack.length - 2]].double) {
+          t_prev += 1;
+        }
+
         texts.push({
-          text: text.slice(lastIndex + t, i - 1),
-          color: currentType.length > 0 ? map[stack[0]].color : '#FFFFFF',
+          text: text.slice(lastIndex + t_this + t_prev, i - t_this),
+          color: prevColor,
           type: currentType.length > 0 ? [...currentType] : ['plain'],
         });
         currentType.push(map[char].type);
@@ -91,10 +103,12 @@ export const parseMessage = (text: string): ChatText[] => {
     } else {
       const closing = Object.keys(map).find((key) => map[key].close === char);
       if (closing) {
-        if (map[closing].double && map[closing].close !== text[i + 1]) {
-          continue;
-        } else {
-          i += 1;
+        if (map[closing].double) {
+          if (map[closing].close !== text[i + 1]) {
+            continue;
+          } else {
+            i += 1;
+          }
         }
         if (closing === stack[stack.length - 1]) {
           stack.pop();
