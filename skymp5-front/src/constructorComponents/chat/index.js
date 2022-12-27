@@ -12,7 +12,7 @@ import ChatInput from './input';
 
 const MAX_LENGTH = 700; // Max message length
 const TIME_LIMIT = 5; // Seconds
-const SHOUT_LIMIT = 60; // Seconds
+const SHOUT_LIMIT = 180; // Seconds
 
 const SHOUTREGEXP = /№(.*?)№/gi;
 
@@ -125,8 +125,8 @@ const Chat = (props) => {
   const getMessageSpans = (message) => {
     let isNonRp = message.category === 'plain';
     const result = message.text.map(({ text, color, opacity, type }, i) => {
-      if (i > 1) {
-        isNonRp = (type === 'nonrp' && isNonRp);
+      if (i >= 1) {
+        isNonRp = (type.includes('nonrp') && isNonRp);
       }
       return <span key={`${text}_${i}`} style={{ color: `${color}`, opacity: opacity }} className={`${type.join(' ')}`}>{text}</span>;
     });

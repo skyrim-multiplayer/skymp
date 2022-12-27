@@ -117,7 +117,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         if (max === 2) {
           text = [
             {
-              text: `${name} подбрасывает монетку`,
+              text: `${name} подбрасывает монетку `,
               color: colors[max] ? colors[max] : '#9159B6',
               type: ['plain']
             },
