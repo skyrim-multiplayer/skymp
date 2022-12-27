@@ -82,18 +82,18 @@ export const parseChatMessage = (text: string): ChatText[] => {
 
         stack.push(char);
 
-        let t_this = 0;
-        let t_prev = 0;
+        let tThis = 0;
+        let tPrev = 0;
 
         if (stack[0] && map[stack[stack.length - 1]].double) {
-          t_this += 1;
+          tThis += 1;
         }
         if (stack[1] && map[stack[stack.length - 2]].double) {
-          t_prev += 1;
+          tPrev += 1;
         }
 
         texts.push({
-          text: text.slice(lastIndex + t_this + t_prev, i - t_this),
+          text: text.slice(lastIndex + tThis + tPrev, i - tThis),
           color: prevColor,
           type: currentType.length > 0 ? [...currentType] : ['plain'],
         });

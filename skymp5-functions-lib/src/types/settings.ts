@@ -4,3 +4,7 @@ export interface ChatSettings {
   shoutDistance?: number;
   minDistanceToChange?: number;
 };
+
+export interface ServerSettings {
+  sweetpieChatSettings: ChatSettings
+}

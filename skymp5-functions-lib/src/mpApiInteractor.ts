@@ -97,8 +97,10 @@ export class MpApiInteractor {
       console.log(
         `chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}/${profileId}): ${JSON.stringify(input.inputText)}`
       );
-      if (listener.onPlayerChatInput) {
-        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, profileId);
+      for (const listener of listeners) {
+        if (listener.onPlayerChatInput) {
+          listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, profileId);
+        }
       }
     });
   }

@@ -6,6 +6,7 @@ import { parseChatMessage } from '../utils/parseChatMessage';
 import { sqr } from '../mpApiInteractor';
 import { EvalProperty } from './evalProperty';
 import { refreshWidgetsJs } from './refreshWidgets';
+import { ChatSettings } from '../types/settings';
 
 type ChatValue = { show: boolean };
 type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean };
@@ -167,22 +168,14 @@ export class ChatMessage {
     let texts: ChatText[] = this.text;
 
     if (['plain', 'nonrp', 'dice'].includes(this.category) && this.controller) {
+      const chatSettings = this.controller.getServerSetting('sweetpieChatSettings') as ChatSettings ?? {};
       const hearingRadius =
-        this.controller.getServerSetting('hearingRadiusNormal') !== undefined
-          ? sqr(this.controller.getServerSetting('hearingRadiusNormal'))
-          : sqr(1900);
+        chatSettings['hearingRadiusNormal'] !== undefined ? sqr(chatSettings['hearingRadiusNormal']) : sqr(1900);
       const whisperDistanceCoeff =
-        this.controller.getServerSetting('whisperDistance') !== undefined
-          ? this.controller.getServerSetting('whisperDistance')
-          : 0.1;
-      const shoutDistanceCoeff =
-        this.controller.getServerSetting('shoutDistance') !== undefined
-          ? this.controller.getServerSetting('shoutDistance')
-          : 2.45;
+        chatSettings['whisperDistance'] !== undefined ? chatSettings['whisperDistance'] : 0.1;
+      const shoutDistanceCoeff = chatSettings['shoutDistance'] !== undefined ? chatSettings['shoutDistance'] : 2.45;
       const minDistanceToChange =
-        this.controller.getServerSetting('minDistanceToChange') !== undefined
-          ? sqr(this.controller.getServerSetting('minDistanceToChange'))
-          : sqr(500); // TODO: move const to config
+        chatSettings['minDistanceToChange'] !== undefined ? sqr(chatSettings['minDistanceToChange']) : sqr(500); // TODO: move const to config
 
       const distance = this.controller.getActorDistanceSquared(actorId, this.sender.gameId);
       texts = texts.reduce<ChatText[]>((filtered, text) => {
@@ -237,7 +230,7 @@ export class ChatMessage {
         return filtered;
       }, []);
     }
-    
+
     if (texts.length === 0) {
       return false;
     }
