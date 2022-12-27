@@ -79,17 +79,19 @@ export class MpApiInteractor {
 
       const targetDesc = mp.getDescFromId(target);
 
+      let notBlocked = true;
+
       for (const listener of listeners) {
         if (!listener.onPlayerActivateObject) {
           continue;
         }
         const res = listener.onPlayerActivateObject(caster, targetDesc, target);
         if (res == 'blockActivation') {
-          return false;
+          notBlocked = false;
         }
       }
 
-      return true;
+      return notBlocked;
     };
   }
 
