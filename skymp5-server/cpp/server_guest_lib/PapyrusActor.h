@@ -1,6 +1,6 @@
 #pragma once
+#include "EspmGameObject.h"
 #include "IPapyrusClass.h"
-
 #include "SpSnippetFunctionGen.h"
 
 class PapyrusActor : public IPapyrusClass<PapyrusActor>
