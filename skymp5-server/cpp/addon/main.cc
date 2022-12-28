@@ -395,7 +395,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto reloot = serverSettings["reloot"];
     for (auto it = reloot.begin(); it != reloot.end(); ++it) {
       std::string recordType = it.key();
-      auto timeMs = static_cast<int>(it.value());
+      auto timeMs = static_cast<uint64_t>(it.value());
       auto time = std::chrono::milliseconds(1) * timeMs;
       partOne->worldState.SetRelootTime(recordType, time);
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
