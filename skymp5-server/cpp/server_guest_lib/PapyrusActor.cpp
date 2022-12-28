@@ -1,9 +1,7 @@
 #include "PapyrusActor.h"
-
+#include "CIString.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
-
-#include "CIString.h"
 #include "SpSnippetFunctionGen.h"
 
 namespace {
@@ -84,20 +82,37 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
 VarValue PapyrusActor::IsEquipped(VarValue self,
                                   const std::vector<VarValue>& arguments)
 {
+
   if (arguments.size() < 1) {
     throw std::runtime_error(
       "Papyrus Actor IsEquipped:: wrong argument count");
   }
 
-  if (auto actor = GetFormPtr<MpActor>(self)) {
-    auto baseId = GetFormPtr<MpForm>(arguments[0])->GetFormId();
+  auto selfRefr = GetFormPtr<MpForm>(self);
+  auto actor = GetFormPtr<MpActor>(self);
+  auto form = GetRecordPtr(arguments[0]);
 
-    if (actor->GetEquipment().inv.GetEquippedItem(Inventory::Worn::Right) ==
-        baseId) {
+  if (!form.rec) {
+    return VarValue(false);
+  }
+
+  std::vector<uint32_t> formIds;
+
+  if (auto formlist = esmp::Convert<esmp::FLST>(form.res)) {
+    formIds =
+      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
+        .formIds;
+  } else {
+    formIds.emplace_back(form.ToGlobalId(form.rec->GetId()));
+  }
+
+  auto equipment =
+    actor->GetEquipment().inv.GetEquippedItem(Inventory::Worn::Right);
+  for (const auto& formId : formIds) {
+    if (equipment == formId) {
       return VarValue(true);
     }
   }
-
   return VarValue(false);
 }
 
