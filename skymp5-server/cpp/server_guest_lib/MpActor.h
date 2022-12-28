@@ -113,8 +113,6 @@ private:
 
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
 
-  bool isBlockActive;
-
 protected:
   void BeforeDestroy() override;
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
