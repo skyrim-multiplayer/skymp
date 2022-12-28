@@ -96,8 +96,9 @@ uint32_t Inventory::GetTotalItemCount() const
 uint32_t Inventory::GetEquippedItem(Inventory::Worn slot) const
 {
   for (auto& entry : entries) {
-    if (entry.extra.worn == slot)
+    if (entry.extra.worn == slot) {
       return entry.baseId;
+    }
   }
 }
 
