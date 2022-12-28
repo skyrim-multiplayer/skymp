@@ -12,11 +12,11 @@
   background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   flex-direction: row;
-  min-height: 32px;
+  min-height: 48px;
   text-align: left;
   justify-content: center;
-  max-height: 64px;
-  height: 48px;
+  max-height: 96px;
+  height: max-content;
   .chat-send {
     margin: auto 8px;
     margin-left: 2px;
@@ -48,7 +48,7 @@
   
   &::-webkit-scrollbar
   {
-    width: 5px;
+    width: 7px;
     padding: 10px 0;
     cursor: pointer;
     pointer-events: none;
@@ -62,7 +62,7 @@
     background-color: #000000;
     border-radius: 25px;
     cursor: pointer;
-    border: solid 10px transparent;
+    border: solid 15px transparent;
     background-clip: padding-box;
     border: 1px solid #555555;
   }
@@ -79,6 +79,10 @@
     opacity: 1;
     min-height: 20px;
     height: max-content;
-    max-height: 48px;
+    overflow-y: scroll;
+    max-height: 80px;
+    margin: auto;
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 }

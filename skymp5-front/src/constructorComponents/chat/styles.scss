@@ -48,6 +48,7 @@
       &.hideNonRP {
         .nonrp {
           display: none;
+          text-transform: none !important;
         }
       }
       width: 100%;
@@ -97,6 +98,9 @@
     .chat-message-limit {
       margin: auto 5px auto auto;
     }
+    // .shout-limit {
+    //   color: rgb(247, 140, 140);
+    // }
   }
   .text {
       font-family: Din-pro;
@@ -125,4 +129,7 @@
         color: #F78C8C;
       }
   }
+}
+[class="shout"] {
+  text-transform: uppercase;
 }
