@@ -112,6 +112,9 @@ private:
   void EatItem(uint32_t baseId, espm::Type t);
 
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
+  std::chrono::steady_clock::time_point GetLastConsumedTime() const;
+  void SetLastConsumedTime(std::chrono::steady_clock::time_point timePoint =
+                             std::chrono::steady_clock::now());
 
   bool isBlockActive;
 

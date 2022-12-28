@@ -13,13 +13,15 @@
 #include <random>
 #include <string>
 
+using namespace std::chrono_literals;
+
 struct MpActor::Impl
 {
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
   uint32_t snippetIndex = 0;
   bool isRespawning = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
-    lastHitTimePoint;
+    lastHitTimePoint, lastConsumedTime;
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -389,6 +391,10 @@ void MpActor::MpApiDeath(MpActor* killer)
 
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
+  if (std::chrono::steady_clock::now() - GetLastConsumedTime() < 3s) {
+    SetLastConsumedTime();
+    return;
+  }
   auto espmProvider = GetParent();
   std::vector<espm::Effects::Effect> effects;
   if (t == "ALCH") {
@@ -404,9 +410,22 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
       espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
     if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
         av == espm::ActorValue::Magicka) { // other types is unsupported
+
       RestoreActorValue(av, effect.magnitude);
     }
   }
+  SetLastConsumedTime();
+}
+
+std::chrono::steady_clock::time_point MpActor::GetLastConsumedTime() const
+{
+  return pImpl->lastConsumedTime;
+}
+
+void MpActor::SetLastConsumedTime(
+  std::chrono::steady_clock::time_point timePoint)
+{
+  pImpl->lastConsumedTime = timePoint;
 }
 
 void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
