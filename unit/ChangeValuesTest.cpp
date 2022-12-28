@@ -79,12 +79,6 @@ TEST_CASE("Player attribute percentages are changing correctly",
   DoDisconnect(p, 0);
 }
 
-bool IsNearlyEqual(float a, float b)
-{
-  float eps = 0.001f;
-  return std::fabs(a - b) < eps;
-}
-
 TEST_CASE("OnChangeValues call is cropping percentage values",
           "[ChangeValues]")
 {
@@ -127,12 +121,12 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
 
   auto changeForm = ac.GetChangeForm();
 
-  REQUIRE(IsNearlyEqual(expectedHealth + 0.1f,
-                        changeForm.actorValues.healthPercentage));
-  REQUIRE(
-    IsNearlyEqual(expectedMagicka, changeForm.actorValues.magickaPercentage));
-  REQUIRE(
-    IsNearlyEqual(expectedStamina, changeForm.actorValues.staminaPercentage));
+  REQUIRE_THAT(changeForm.actorValues.healthPercentage,
+               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.001f));
+  REQUIRE_THAT(changeForm.actorValues.staminaPercentage,
+               Catch::Matchers::WithinAbs(expectedStamina, 0.001f));
+  REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
+               Catch::Matchers::WithinAbs(expectedStamina, 0.001f));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
