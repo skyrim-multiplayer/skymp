@@ -1,4 +1,5 @@
 #pragma once
+#include "CIString.h"
 #include <chrono>
 #include <functional>
 #include <string>
@@ -10,21 +11,24 @@ struct AnimationData;
 class AnimationSystem
 {
 public:
-  AnimationSystem();
+  AnimationSystem(bool isSweetpie);
   void Process(MpActor* actor, const AnimationData& animData);
+  void ClearInfo(MpActor* actor);
 
 private:
   using AnimationCallback = std::function<void(MpActor*)>;
-  using AnimationCallbacks =
-    std::unordered_map<std::string, AnimationCallback>;
+  using AnimationCallbacks = std::unordered_map<CIString, AnimationCallback>;
+  using AnimationTimePoints =
+    std::unordered_map<uint32_t, std::chrono::steady_clock::time_point>;
 
-  void InitAnimationCallbacks();
-  std::chrono::steady_clock::time_point GetLastAttackReleaseAnimationTime()
-    const;
+  void InitAnimationCallbacks(bool isSweetpie);
+  std::chrono::steady_clock::time_point GetLastAttackReleaseAnimationTime(
+    MpActor* actor) const;
   void SetLastAttackReleaseAnimationTime(
+    MpActor* actor,
     std::chrono::steady_clock::time_point timePoint =
       std::chrono::steady_clock::now());
 
   AnimationCallbacks animationCallbacks;
-  std::chrono::steady_clock::time_point lastAttackReleaseAnimationTime;
+  AnimationTimePoints lastAttackReleaseAnimationTimePoints;
 };

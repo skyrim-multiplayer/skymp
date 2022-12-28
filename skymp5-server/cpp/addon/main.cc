@@ -1441,7 +1441,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         }
       } else if (propertyName == "percentages") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          ActorValues actorValues;
+          ActorValues actorValues = actor->GetChangeForm().actorValues;
           actorValues.healthPercentage = newValue["health"].get<float>();
           actorValues.magickaPercentage = newValue["magicka"].get<float>();
           actorValues.staminaPercentage = newValue["stamina"].get<float>();
