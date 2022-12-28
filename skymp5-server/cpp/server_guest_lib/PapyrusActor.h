@@ -22,13 +22,13 @@ public:
   VarValue DamageActorValue(VarValue self,
                             const std::vector<VarValue>& arguments);
 
+  VarValue IsEquipped(VarValue self, const std::vector<VarValue>& arguments);
+
   VarValue GetActorValue(VarValue self,
                          const std::vector<VarValue>& arguments);
 
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
-
-  VarValue IsEquipped(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
@@ -42,10 +42,10 @@ public:
     AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
     AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
     AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
+    AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
+    AddMethod(vm, "GetActorValue", &PapyrusActor::GetActorValue);
     AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
     AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
-    AddMethod(vm, "GetActorValue", &PapyrusActor::GetActorValue);
-    AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

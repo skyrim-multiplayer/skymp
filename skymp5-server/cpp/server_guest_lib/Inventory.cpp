@@ -85,19 +85,20 @@ uint32_t Inventory::GetItemCount(uint32_t baseId) const
   return sum;
 }
 
-uint32_t Inventory::GetEquippedItem(Inventory::Worn choice) const
-{
-  for (auto& entry : entries)
-    if (entry.extra.worn == choice)
-      return entry.baseId;
-}
-
 uint32_t Inventory::GetTotalItemCount() const
 {
   uint32_t sum = 0;
   for (auto& entry : entries)
     sum += entry.count;
   return sum;
+}
+
+uint32_t Inventory::GetEquippedItem(Inventory::Worn slot) const
+{
+  for (auto& entry : entries) {
+    if (entry.extra.worn == slot)
+      return entry.baseId;
+  }
 }
 
 bool Inventory::IsEmpty() const
