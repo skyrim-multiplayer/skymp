@@ -100,6 +100,7 @@ uint32_t Inventory::GetEquippedItem(Inventory::Worn slot) const
       return entry.baseId;
     }
   }
+  return 0;
 }
 
 bool Inventory::IsEmpty() const
