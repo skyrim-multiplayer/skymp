@@ -1,7 +1,7 @@
 #include "PapyrusActor.h"
-#include "CIString.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
+#include "CIString.h"
 #include "SpSnippetFunctionGen.h"
 
 namespace {
@@ -53,32 +53,6 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
   return VarValue();
 }
 
-VarValue PapyrusActor::GetActorValue(VarValue self,
-                                     const std::vector<VarValue>& arguments)
-{
-  if (arguments.size() < 1) {
-    throw std::runtime_error(
-      "Papyrus Actor.GetActorValue: wrong argument count");
-  }
-
-  if (auto actor = GetFormPtr<MpActor>(self)) {
-    espm::ActorValue attrID =
-      ConvertToAV(static_cast<const char*>(arguments[0]));
-
-    auto form = actor->GetChangeForm();
-    if (attrID == espm::ActorValue::Health) {
-      return VarValue(form.healthPercentage);
-    } else if (attrID == espm::ActorValue::Stamina) {
-      return VarValue(form.staminaPercentage);
-    } else if (attrID == espm::ActorValue::Magicka)
-      return VarValue(form.magickaPercentage);
-    else {
-      return VarValue::None();
-    }
-  }
-  return VarValue();
-}
-
 VarValue PapyrusActor::IsEquipped(VarValue self,
                                   const std::vector<VarValue>& arguments)
 {
@@ -114,6 +88,33 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
     }
   }
   return VarValue(false);
+}
+
+
+VarValue PapyrusActor::GetActorValue(VarValue self,
+                                     const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1) {
+    throw std::runtime_error(
+      "Papyrus Actor.GetActorValue: wrong argument count");
+  }
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    espm::ActorValue attrID =
+      ConvertToAV(static_cast<const char*>(arguments[0]));
+
+    auto form = actor->GetChangeForm();
+    if (attrID == espm::ActorValue::Health) {
+      return VarValue(form.healthPercentage);
+    } else if (attrID == espm::ActorValue::Stamina) {
+      return VarValue(form.staminaPercentage);
+    } else if (attrID == espm::ActorValue::Magicka)
+      return VarValue(form.magickaPercentage);
+    else {
+      return VarValue(0.0f);
+    }
+  }
+  return VarValue(0.0f);
 }
 
 VarValue PapyrusActor::SetAlpha(VarValue self,
