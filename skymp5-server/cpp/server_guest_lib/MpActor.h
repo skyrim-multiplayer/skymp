@@ -100,8 +100,6 @@ public:
   NiPoint3 GetViewDirection() const;
 
 private:
-  std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
-
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
