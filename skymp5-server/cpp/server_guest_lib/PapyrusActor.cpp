@@ -1,7 +1,7 @@
 #include "PapyrusActor.h"
+#include "CIString.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
-#include "CIString.h"
 #include "SpSnippetFunctionGen.h"
 
 namespace {
@@ -90,7 +90,6 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
   return VarValue(false);
 }
 
-
 VarValue PapyrusActor::GetActorValue(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
@@ -105,11 +104,11 @@ VarValue PapyrusActor::GetActorValue(VarValue self,
 
     auto form = actor->GetChangeForm();
     if (attrID == espm::ActorValue::Health) {
-      return VarValue(form.healthPercentage);
+      return VarValue(form.actorValues.healthPercentage);
     } else if (attrID == espm::ActorValue::Stamina) {
-      return VarValue(form.staminaPercentage);
+      return VarValue(form.actorValues.staminaPercentage);
     } else if (attrID == espm::ActorValue::Magicka)
-      return VarValue(form.magickaPercentage);
+      return VarValue(form.actorValues.magickaPercentage);
     else {
       return VarValue(0.0f);
     }
