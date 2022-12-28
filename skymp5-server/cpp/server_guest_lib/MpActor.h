@@ -8,6 +8,7 @@
 #include <set>
 
 class WorldState;
+struct ActorValues;
 
 class MpActor : public MpObjectReference
 {
@@ -57,12 +58,10 @@ public:
     std::optional<Viet::Promise<VarValue>> promise = std::nullopt);
 
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
-  void SetPercentages(float healthPercentage, float magickaPercentage,
-                      float staminaPercentage, MpActor* aggressor = nullptr);
-  void NetSetPercentages(float healthPercentage, float magickaPercentage,
-                         float staminaPercentage,
-                         std::chrono::steady_clock::time_point timePoint =
-                           std::chrono::steady_clock::now(),
+  void SetPercentages(const ActorValues& actorValues,
+                      MpActor* aggressor = nullptr);
+  void NetSendChangeValues(const ActorValues& actorValues);
+  void NetSetPercentages(const ActorValues& actorValues,
                          MpActor* aggressor = nullptr);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
@@ -90,6 +89,7 @@ public:
 
   void RestoreActorValue(espm::ActorValue av, float value);
   void DamageActorValue(espm::ActorValue av, float value);
+  void SetActorValue(espm::ActorValue actorValue, float value);
 
   BaseActorValues GetBaseValues();
   BaseActorValues GetMaximumValues();

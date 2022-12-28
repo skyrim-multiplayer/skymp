@@ -169,40 +169,45 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
   }
 }
 
-void MpActor::SetPercentages(float healthPercentage, float magickaPercentage,
-                             float staminaPercentage, MpActor* aggressor)
+void MpActor::SetPercentages(const ActorValues& actorValues,
+                             MpActor* aggressor)
 {
   if (IsDead() || pImpl->isRespawning) {
     return;
   }
-  if (healthPercentage == 0.f) {
+  if (actorValues.healthPercentage == 0.f) {
     Kill(aggressor);
     return;
   }
   EditChangeForm([&](MpChangeForm& changeForm) {
-    changeForm.healthPercentage = healthPercentage;
-    changeForm.magickaPercentage = magickaPercentage;
-    changeForm.staminaPercentage = staminaPercentage;
+    changeForm.actorValues.healthPercentage = actorValues.healthPercentage;
+    changeForm.actorValues.magickaPercentage = actorValues.magickaPercentage;
+    changeForm.actorValues.staminaPercentage = actorValues.staminaPercentage;
   });
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
 }
 
-void MpActor::NetSetPercentages(
-  float healthPercentage, float magickaPercentage, float staminaPercentage,
-  std::chrono::steady_clock::time_point timePoint, MpActor* aggressor)
+void MpActor::NetSendChangeValues(const ActorValues& actorValues)
 {
   std::string s;
   s += Networking::MinPacketId;
   s += nlohmann::json{
     { "t", MsgType::ChangeValues },
     { "data",
-      { { "health", healthPercentage },
-        { "magicka", magickaPercentage },
-        { "stamina", staminaPercentage } } }
+      {
+        { "health", actorValues.healthPercentage },
+        { "magicka", actorValues.magickaPercentage },
+        { "stamina", actorValues.staminaPercentage },
+      } }
   }.dump();
   SendToUser(s.data(), s.size(), true);
-  SetPercentages(healthPercentage, magickaPercentage, staminaPercentage,
-                 aggressor);
-  SetLastAttributesPercentagesUpdate(timePoint);
+}
+
+void MpActor::NetSetPercentages(const ActorValues& actorValues,
+                                MpActor* aggressor)
+{
+  NetSendChangeValues(actorValues);
+  SetPercentages(actorValues, aggressor);
 }
 
 std::chrono::steady_clock::time_point
@@ -313,9 +318,9 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = isDead;
-    changeForm.healthPercentage = attribute;
-    changeForm.magickaPercentage = attribute;
-    changeForm.staminaPercentage = attribute;
+    changeForm.actorValues.healthPercentage = attribute;
+    changeForm.actorValues.magickaPercentage = attribute;
+    changeForm.actorValues.staminaPercentage = attribute;
   });
   if (shouldTeleport) {
     SetCellOrWorldObsolete(position.cellOrWorldDesc);
@@ -407,24 +412,24 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
 void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
                                          float percentageDelta)
 {
-  MpChangeForm form = GetChangeForm();
-  float hp = form.healthPercentage;
-  float mp = form.magickaPercentage;
-  float sp = form.staminaPercentage;
+  ActorValues currentActorValues = GetChangeForm().actorValues;
   switch (av) {
     case espm::ActorValue::Health:
-      hp = CropValue(form.healthPercentage + percentageDelta);
+      currentActorValues.healthPercentage =
+        CropValue(currentActorValues.healthPercentage + percentageDelta);
       break;
     case espm::ActorValue::Stamina:
-      sp = CropValue(form.staminaPercentage + percentageDelta);
+      currentActorValues.staminaPercentage =
+        CropValue(currentActorValues.staminaPercentage + percentageDelta);
       break;
     case espm::ActorValue::Magicka:
-      mp = CropValue(form.magickaPercentage + percentageDelta);
+      currentActorValues.magickaPercentage =
+        CropValue(currentActorValues.magickaPercentage + percentageDelta);
       break;
     default:
       return;
   }
-  NetSetPercentages(hp, mp, sp, std::chrono::steady_clock::now());
+  NetSetPercentages(currentActorValues);
 }
 
 void MpActor::BeforeDestroy()
@@ -570,4 +575,28 @@ NiPoint3 MpActor::GetViewDirection() const
 {
   return { std::sin(GetAngle().z * kAngleToRadians),
            std::cos(GetAngle().z * kAngleToRadians), 0 };
+}
+
+void MpActor::SetActorValue(espm::ActorValue actorValue, float value)
+{
+  ActorValues currentActorValues = GetChangeForm().actorValues;
+  switch (actorValue) {
+    case espm::ActorValue::HealRate:
+      currentActorValues.healRate = value;
+      break;
+    case espm::ActorValue::MagickaRate:
+      currentActorValues.magickaRate = value;
+      break;
+    case espm::ActorValue::StaminaRate:
+      currentActorValues.staminaRate = value;
+      break;
+    default:
+      break;
+  }
+  NetSendChangeValues(currentActorValues);
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.actorValues.healRate = currentActorValues.healRate;
+    changeForm.actorValues.magickaRate = currentActorValues.magickaRate;
+    changeForm.actorValues.staminaRate = currentActorValues.staminaRate;
+  });
 }
