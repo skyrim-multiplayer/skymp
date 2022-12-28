@@ -126,7 +126,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   REQUIRE_THAT(changeForm.actorValues.staminaPercentage,
                Catch::Matchers::WithinAbs(expectedStamina, 0.001f));
   REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
-               Catch::Matchers::WithinAbs(expectedStamina, 0.001f));
+               Catch::Matchers::WithinAbs(expectedMagicka, 0.001f));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
