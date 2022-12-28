@@ -17,7 +17,7 @@ public:
 
 private:
   using AnimationCallback = std::function<void(MpActor*)>;
-  using AnimationCallbacks = std::unordered_map<CIString, AnimationCallback>;
+  using AnimationCallbacks = CIMap<AnimationCallback>;
   using AnimationTimePoints =
     std::unordered_map<uint32_t, std::chrono::steady_clock::time_point>;
 
