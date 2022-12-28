@@ -98,7 +98,7 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
 
   std::vector<uint32_t> formIds;
 
-  if (auto formlist = esmp::Convert<esmp::FLST>(form.res)) {
+  if (auto formlist = espm::Convert<esmp::FLST>(form.rec)) {
     formIds =
       espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
         .formIds;
