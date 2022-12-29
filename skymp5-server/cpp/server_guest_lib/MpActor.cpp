@@ -420,7 +420,7 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
         // this coefficient (workaround) has been added for sake of game
         // balance and because of disability to restrict players use potions
         // often on client side
-        constexpr float kMagnitudeCoeff = 5.f;
+        constexpr float kMagnitudeCoeff = 100.f;
         RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
       }
 #else
