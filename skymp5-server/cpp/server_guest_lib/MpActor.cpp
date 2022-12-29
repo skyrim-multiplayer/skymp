@@ -13,8 +13,6 @@
 #include <random>
 #include <string>
 
-using namespace std::chrono_literals;
-
 struct MpActor::Impl
 {
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
@@ -391,7 +389,12 @@ void MpActor::MpApiDeath(MpActor* killer)
 
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
-  if (std::chrono::steady_clock::now() - GetLastConsumedTime() < 3s) {
+  std::unordered_set<std::string> modFiles{ GetParent()->espmFiles.begin(),
+                                     GetParent()->espmFiles.end() };
+  bool hasSweetpie = modFiles.count("SweetPie.esp");
+  if (std::chrono::steady_clock::now() - GetLastConsumedTime() <
+        std::chrono::minutes(1) &&
+      hasSweetpie) {
     SetLastConsumedTime();
     return;
   }
