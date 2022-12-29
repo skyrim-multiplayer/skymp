@@ -18,6 +18,7 @@ bool IsSelfStr(const VarValue& v)
 ActivePexInstance::ActivePexInstance()
 {
   this->parentVM = nullptr;
+
 }
 
 ActivePexInstance::ActivePexInstance(
