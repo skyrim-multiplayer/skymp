@@ -75,9 +75,9 @@ std::string ActivePexInstance::GetActiveStateName() const
   try {
     var = variables->GetVariableByName("::State", *sourcePex.fn());
   } catch (...) {
-    assert(0 &&
-           "GetVariableByName must never throw when '::State' variable is "
-           "requested");
+    throw std::runtime_error(
+      "GetVariableByName must never throw when '::State' variable is "
+      "requested");
   }
   if (!var)
     throw std::runtime_error(
