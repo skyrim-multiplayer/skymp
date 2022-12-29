@@ -59,8 +59,7 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
                                   const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
-    throw std::runtime_error(
-      "Papyrus Actor IsEquipped: wrong argument count");
+    throw std::runtime_error("Papyrus Actor IsEquipped: wrong argument count");
   }
 
   auto selfRefr = GetFormPtr<MpForm>(self);
