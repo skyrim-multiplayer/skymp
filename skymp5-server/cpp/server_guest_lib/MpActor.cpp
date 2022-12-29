@@ -417,7 +417,10 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
         av == espm::ActorValue::Magicka) { // other types is unsupported
       if (hasSweetpie) {
         if (CanActorValueBeRestored(av)) {
-          RestoreActorValue(av, effect.magnitude * 5);
+          // this coefficient (workaround) has been added for sake of game balance
+          // and because of disability to restrict player use potions often on client side
+          constexpr float kMagnitudeCoeff = 5.f;
+          RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
         }
       } else {
         RestoreActorValue(av, effect.magnitude);
