@@ -338,7 +338,7 @@ export const applyInventory = (
     let oneStepCount = e.count / absCount;
 
     // TODO: It looks like this part should be revised. For now removed gold from this logic.
-    if (absCount > 1000 && e.baseId != 0xf) {
+    if (absCount > 500000 && e.baseId != 0xf) {
       absCount = 1;
       oneStepCount = 1;
 
