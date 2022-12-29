@@ -7,11 +7,11 @@ jobs:
         steps:
           - name: Checkout
             uses: actions/checkout@v2
-          - name: Ensure files terminated with one LF
-            uses: fernandrone/linelint@0.0.6
-            id: linelint
-          - name: Ensure files use LF line endings instead of CRLF
-            uses: erclu/check-crlf@v1
+          #- name: Ensure files terminated with one LF
+          #  uses: fernandrone/linelint@0.0.6
+          #  id: linelint
+          #- name: Ensure files use LF line endings instead of CRLF
+          #  uses: erclu/check-crlf@v1
           - uses: DoozyX/clang-format-lint-action@v0.14
             with:
               source: '.'
