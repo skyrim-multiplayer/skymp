@@ -390,7 +390,7 @@ void MpActor::MpApiDeath(MpActor* killer)
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
   std::unordered_set<std::string> modFiles{ GetParent()->espmFiles.begin(),
-                                     GetParent()->espmFiles.end() };
+                                            GetParent()->espmFiles.end() };
   bool hasSweetpie = modFiles.count("SweetPie.esp");
   if (std::chrono::steady_clock::now() - GetLastConsumedTime() <
         std::chrono::minutes(1) &&
