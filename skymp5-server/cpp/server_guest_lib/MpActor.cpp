@@ -21,7 +21,7 @@ struct MpActor::Impl
   uint32_t snippetIndex = 0;
   bool isRespawning = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
-    lastHitTimePoint, lastConsumedTime;
+    lastHitTimePoint;
   using RestorationTimePoints =
     std::unordered_map<espm::ActorValue,
                        std::chrono::steady_clock::time_point>;
