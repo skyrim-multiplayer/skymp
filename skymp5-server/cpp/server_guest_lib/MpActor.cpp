@@ -13,8 +13,6 @@
 #include <random>
 #include <string>
 
-const std::chrono::steady_clock::time_point initialTimePoint;
-
 struct MpActor::Impl
 {
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
@@ -26,9 +24,12 @@ struct MpActor::Impl
     std::unordered_map<espm::ActorValue,
                        std::chrono::steady_clock::time_point>;
   RestorationTimePoints restorationTimePoints = {
-    { espm::ActorValue::Health, initialTimePoint },
-    { espm::ActorValue::Stamina, initialTimePoint },
-    { espm::ActorValue::Magicka, initialTimePoint },
+    { espm::ActorValue::Health,
+      std::chrono::time_point<std::chrono::steady_clock>::min() },
+    { espm::ActorValue::Stamina,
+      std::chrono::time_point<std::chrono::steady_clock>::min() },
+    { espm::ActorValue::Magicka,
+      std::chrono::time_point<std::chrono::steady_clock>::min() },
   };
 };
 
