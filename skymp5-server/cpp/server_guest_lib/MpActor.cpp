@@ -20,6 +20,14 @@ struct MpActor::Impl
   bool isRespawning = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
     lastHitTimePoint, lastConsumedTime;
+  using RestorationTimePoints =
+    std::unordered_map<espm::ActorValue,
+                       std::chrono::steady_clock::time_point>;
+  RestorationTimePoints restorationTimePoints = {
+    { espm::ActorValue::Health, std::chrono::steady_clock::time_point() },
+    { espm::ActorValue::Stamina, std::chrono::steady_clock::time_point() },
+    { espm::ActorValue::Magicka, std::chrono::steady_clock::time_point() },
+  };
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -389,15 +397,6 @@ void MpActor::MpApiDeath(MpActor* killer)
 
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
-  std::unordered_set<std::string> modFiles{ GetParent()->espmFiles.begin(),
-                                            GetParent()->espmFiles.end() };
-  bool hasSweetpie = modFiles.count("SweetPie.esp");
-  if (std::chrono::steady_clock::now() - GetLastConsumedTime() <
-        std::chrono::minutes(1) &&
-      hasSweetpie) {
-    SetLastConsumedTime();
-    return;
-  }
   auto espmProvider = GetParent();
   std::vector<espm::Effects::Effect> effects;
   if (t == "ALCH") {
@@ -408,27 +407,45 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
     return;
   }
 
+  std::unordered_set<std::string> modFiles{ GetParent()->espmFiles.begin(),
+                                            GetParent()->espmFiles.end() };
+  bool hasSweetpie = modFiles.count("SweetPie.esp");
   for (const auto& effect : effects) {
     espm::ActorValue av =
       espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
     if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
         av == espm::ActorValue::Magicka) { // other types is unsupported
-
-      RestoreActorValue(av, effect.magnitude);
+      if (hasSweetpie) {
+        if (CanActorValueBeRestored(av)) {
+          RestoreActorValue(av, effect.magnitude);
+        }
+      } else {
+        RestoreActorValue(av, effect.magnitude);
+      }
     }
   }
-  SetLastConsumedTime();
 }
 
-std::chrono::steady_clock::time_point MpActor::GetLastConsumedTime() const
+bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
 {
-  return pImpl->lastConsumedTime;
+  if (std::chrono::steady_clock::now() - GetLastRestorationTime(av) <
+      std::chrono::minutes(1)) {
+    return false;
+  }
+  SetLastRestorationTime(av);
+  return true;
 }
 
-void MpActor::SetLastConsumedTime(
-  std::chrono::steady_clock::time_point timePoint)
+std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
+  espm::ActorValue av) const
 {
-  pImpl->lastConsumedTime = timePoint;
+  return pImpl->restorationTimePoints[av];
+}
+
+void MpActor::SetLastRestorationTime(
+  espm::ActorValue av, std::chrono::steady_clock::time_point timePoint)
+{
+  pImpl->restorationTimePoints.insert({ av, timePoint });
 }
 
 void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
