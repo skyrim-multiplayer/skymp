@@ -417,7 +417,7 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
         av == espm::ActorValue::Magicka) { // other types is unsupported
       if (hasSweetpie) {
         if (CanActorValueBeRestored(av)) {
-          RestoreActorValue(av, effect.magnitude);
+          RestoreActorValue(av, effect.magnitude * 5);
         }
       } else {
         RestoreActorValue(av, effect.magnitude);
