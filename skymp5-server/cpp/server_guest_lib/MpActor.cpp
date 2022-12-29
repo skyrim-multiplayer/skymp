@@ -445,7 +445,7 @@ std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
 void MpActor::SetLastRestorationTime(
   espm::ActorValue av, std::chrono::steady_clock::time_point timePoint)
 {
-  pImpl->restorationTimePoints.insert({ av, timePoint });
+  pImpl->restorationTimePoints[av] = timePoint;
 }
 
 void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
