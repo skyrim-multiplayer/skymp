@@ -522,6 +522,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       OpcodesImplementation::ArrayRFindElement(*args[0], *args[1], *args[2],
                                                *args[3]);
       break;
+
     default:
       assert(0);
   }
