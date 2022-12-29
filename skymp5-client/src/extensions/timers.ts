@@ -132,8 +132,7 @@ const setProcessMethod = (method: ProcessMethodType): void => {
   try {
     if (sp.Game.getPlayer()!) { };
     setProcessMethod(ProcessMethodType.update);
-  }
-  catch {
+  } catch {
     setProcessMethod(ProcessMethodType.tick);
   }
 }
