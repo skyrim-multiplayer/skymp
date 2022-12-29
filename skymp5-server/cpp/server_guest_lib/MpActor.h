@@ -115,8 +115,7 @@ private:
   std::chrono::steady_clock::time_point GetLastRestorationTime(
     espm::ActorValue av) const;
   void SetLastRestorationTime(espm::ActorValue av,
-                              std::chrono::steady_clock::time_point timePoint =
-                                std::chrono::steady_clock::now());
+                              std::chrono::steady_clock::time_point timePoint);
   bool CanActorValueBeRestored(espm::ActorValue av);
 
   bool isBlockActive;

@@ -13,6 +13,8 @@
 #include <random>
 #include <string>
 
+const std::chrono::steady_clock::time_point initialTimePoint;
+
 struct MpActor::Impl
 {
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
@@ -24,9 +26,9 @@ struct MpActor::Impl
     std::unordered_map<espm::ActorValue,
                        std::chrono::steady_clock::time_point>;
   RestorationTimePoints restorationTimePoints = {
-    { espm::ActorValue::Health, std::chrono::steady_clock::time_point() },
-    { espm::ActorValue::Stamina, std::chrono::steady_clock::time_point() },
-    { espm::ActorValue::Magicka, std::chrono::steady_clock::time_point() },
+    { espm::ActorValue::Health, initialTimePoint },
+    { espm::ActorValue::Stamina, initialTimePoint },
+    { espm::ActorValue::Magicka, initialTimePoint },
   };
 };
 
@@ -407,25 +409,22 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
     return;
   }
 
-  std::unordered_set<std::string> modFiles{ GetParent()->espmFiles.begin(),
-                                            GetParent()->espmFiles.end() };
-  bool hasSweetpie = modFiles.count("SweetPie.esp");
   for (const auto& effect : effects) {
     espm::ActorValue av =
       espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
     if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
         av == espm::ActorValue::Magicka) { // other types is unsupported
-      if (hasSweetpie) {
-        if (CanActorValueBeRestored(av)) {
-          // this coefficient (workaround) has been added for sake of game
-          // balance and because of disability to restrict player use potions
-          // often on client side
-          constexpr float kMagnitudeCoeff = 5.f;
-          RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
-        }
-      } else {
-        RestoreActorValue(av, effect.magnitude);
+#ifdef SWEETPIE
+      if (CanActorValueBeRestored(av)) {
+        // this coefficient (workaround) has been added for sake of game
+        // balance and because of disability to restrict players use potions
+        // often on client side
+        constexpr float kMagnitudeCoeff = 5.f;
+        RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
       }
+#else
+      RestoreActorValue(av, effect.magnitude);
+#endif
     }
   }
 }
@@ -436,7 +435,7 @@ bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
       std::chrono::minutes(1)) {
     return false;
   }
-  SetLastRestorationTime(av);
+  SetLastRestorationTime(av, std::chrono::steady_clock::now());
   return true;
 }
 
