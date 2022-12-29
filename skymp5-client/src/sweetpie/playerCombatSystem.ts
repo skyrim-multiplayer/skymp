@@ -146,7 +146,7 @@ const setAttackStaminaRestriction = () => {
     }, 0x14, 0x14, pattern);
   }
 
-  for (const pattern of ['JumpDirectionalStart*', 'JumpStandingstart*']) {
+  for (const pattern of ['JumpDirectionalStart*', 'JumpStandingStart*']) {
     sp.hooks.sendAnimationEvent.add({
       enter: ((ctx) => {
         if (playerLastStaminaValue < (staminaAttackMap.get("Jump") ?? 0)) {
