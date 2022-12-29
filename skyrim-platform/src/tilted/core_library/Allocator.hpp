@@ -7,7 +7,10 @@
   {                                                                           \
     m_pAllocator = apAllocator;                                               \
   }                                                                           \
-  CEFUtils::AllocatorBase* GetAllocator() noexcept { return m_pAllocator; }   \
+  CEFUtils::AllocatorBase* GetAllocator() noexcept                            \
+  {                                                                           \
+    return m_pAllocator;                                                      \
+  }                                                                           \
                                                                               \
 private:                                                                      \
   CEFUtils::AllocatorBase* m_pAllocator{ CEFUtils::AllocatorBase::Get() };    \

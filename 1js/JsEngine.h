@@ -605,8 +605,12 @@ private:
     return g_nextId;
   }
 #else
-  void TraceConstructor() {}
-  void TraceDestructor() {}
+  void TraceConstructor()
+  {
+  }
+  void TraceDestructor()
+  {
+  }
 #endif
 
   JsValueRef value = nullptr;
