@@ -109,11 +109,11 @@ const getTimings = (weapon?: sp.WeaponType): [number, number] => {
 type AttackType = "Std" | "Power" | "Jump" | "Bow" | "Crossbow";
 let playerLastStaminaValue = 0;
 const staminaAttackMap = new Map<AttackType, number>([
-  ["Std", 5],
-  ["Power", 30],
+  ["Std", 7],
+  ["Power", 40],
   ["Jump", 15],
   ["Bow", 25],
-  ["Crossbow", 35],
+  ["Crossbow", 30]
 ]);
 const setAttackStaminaRestriction = () => {
   if (!hasSweetPie()) {
