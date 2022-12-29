@@ -12,8 +12,17 @@ jobs:
             id: linelint
           - name: Ensure files use LF line endings instead of CRLF
             uses: erclu/check-crlf@v1
-          - name: Run clang-format style check for C/C++ programs.
-            uses: jidicula/clang-format-action@v4.9.0
+          - uses: DoozyX/clang-format-lint-action@v0.14
             with:
-              clang-format-version: '12'
-              exclude-regex: '.*third_party.*'
+              source: '.'
+              exclude: './skyrim-platform/src/third_party'
+              extensions: 'h,cpp,hpp'
+              clangFormatVersion: 14
+              inplace: True
+          - uses: EndBug/add-and-commit@v4
+            with:
+              author_name: Clang Robot
+              author_email: robot@example.com
+              message: 'Committing clang-format changes'
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
