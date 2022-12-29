@@ -46,7 +46,8 @@ std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
   }
 
   if (nameNeedScript != "")
-    assert(0);
+    throw std::runtime_error(
+      "The resulting empty string(NameNeedScript),::FillParentInstance");
   return nullptr;
 }
 
@@ -291,7 +292,8 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
         break;
       }
       default:
-        assert(false);
+        throw std::runtime_error(
+          "VarValue: Failed Get Element Array At String");
     }
 
     if (i < array.pArray->size() - 1)
@@ -798,10 +800,12 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      assert(false);
+      throw std::runtime_error("Failed to process one of the cases in "
+                               "switch(type),::GetArrayElementType()");
   }
+}
 
-  return returnType;
+return returnType;
 }
 
 void ActivePexInstance::CastObjectToObject(
