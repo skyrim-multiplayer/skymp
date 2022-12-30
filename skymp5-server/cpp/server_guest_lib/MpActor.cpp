@@ -409,23 +409,25 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   } else {
     return;
   }
-
+  std::unordered_set<std::string> modFiles = { GetParent()->espmFiles.begin(),
+                                               GetParent()->espmFiles.end() };
+  bool hasSweetpie = modFiles.count("SweetPie.esp");
   for (const auto& effect : effects) {
     espm::ActorValue av =
       espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
     if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
         av == espm::ActorValue::Magicka) { // other types is unsupported
-#ifdef SWEETPIE
-      if (CanActorValueBeRestored(av)) {
-        // this coefficient (workaround) has been added for sake of game
-        // balance and because of disability to restrict players use potions
-        // often on client side
-        constexpr float kMagnitudeCoeff = 100.f;
-        RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
+      if (hasSweetpie) {
+        if (CanActorValueBeRestored(av)) {
+          // this coefficient (workaround) has been added for sake of game
+          // balance and because of disability to restrict players use potions
+          // often on client side
+          constexpr float kMagnitudeCoeff = 100.f;
+          RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
+        }
+      } else {
+        RestoreActorValue(av, effect.magnitude);
       }
-#else
-      RestoreActorValue(av, effect.magnitude);
-#endif
     }
   }
 }
