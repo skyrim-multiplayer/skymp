@@ -12,7 +12,7 @@ import ChatInput from './input';
 
 const MAX_LENGTH = 700; // Max message length
 const TIME_LIMIT = 5; // Seconds
-const SHOUT_LIMIT = 180; // Seconds
+const SHOUT_LIMIT = 60; // Seconds
 
 const SHOUTREGEXP = /№(.*?)№/gi;
 
