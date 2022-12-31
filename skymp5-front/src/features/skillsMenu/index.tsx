@@ -25,17 +25,17 @@ const SkillsMenu = () => {
 
   const fetchData = (event) => {
     // !Important: Run commented code to dispatch event
-  //   window.dispatchEvent(new CustomEvent('updateSkillMenu', { detail: {
-  //     exp: 3375,
-  //     mem: 2,
-  //     perks: {
-  //         saltmaker: 1,
-  //         weapon: 1,
-  //         leather: 3,
-  //         jewelry: 2,
-  //         clother: 4
-  //     }
-  // } }))
+    //   window.dispatchEvent(new CustomEvent('updateSkillMenu', { detail: {
+    //     exp: 3375,
+    //     mem: 2,
+    //     perks: {
+    //         saltmaker: 1,
+    //         weapon: 1,
+    //         leather: 3,
+    //         jewelry: 2,
+    //         clother: 4
+    //     }
+    // } }))
     const newPlayerData = (event as CustomEvent).detail as IPlayerData;
     setplayerData(newPlayerData);
   };
@@ -73,7 +73,7 @@ const SkillsMenu = () => {
 
   const clickHandler = (perk) => {
     const playerLevel = playerData.perks[perk.name] || 0;
-    if (playerLevel === 4) return;
+    if (playerLevel === perk.levelsPrice.length) return;
     setcurrentLevel(levels[playerLevel + 1].name);
     if (perk.levelsDescription) {
       setcurrentDescription(perk.levelsDescription[playerLevel + 1]);
@@ -84,9 +84,9 @@ const SkillsMenu = () => {
       .getElementById('selectSound')
       .cloneNode(true) as HTMLAudioElement;
     audio.play();
-    if (levels[playerLevel].price > pExp) {
+    if (perk.levelsPrice[playerLevel] > pExp) {
       setcurrentDescription(
-        `не хватает ${levels[playerLevel].price - pExp} опыта`
+        `не хватает ${selectedPerk.levelsPrice[playerLevel] - pExp} опыта`
       );
       return;
     }
@@ -99,7 +99,7 @@ const SkillsMenu = () => {
 
   const learnHandler = () => {
     const level = playerData.perks[selectedPerk.name] || 0;
-    const price = levels[level].price;
+    const price = selectedPerk.levelsPrice[level];
     setpExp(pExp - price);
     if (level === 0) {
       setpMem(pMem - 1);
@@ -123,130 +123,132 @@ const SkillsMenu = () => {
   if (!playerData) return <></>;
 
   return (
-    <div className='skill-container'>
-    <div className="perks" style={{ transform: `scale(${scale})` }}>
-      <div className="perks__content">
-        <div className="perks__header">{currentHeader}</div>
-        <div className="perks__list-container">
-          <div className="perks__list">
-            {content.map((category, cIndex) => (
-              <ul className="perks__category" key={cIndex}>
-                {category.map((perk, index) => (
-                  <div
-                    className={`perks__perk perks__perk--level-${
-                      playerData.perks[perk.name] || 0
-                    }`}
-                    key={index}
-                    onMouseEnter={() => hoverHandler(perk)}
-                    onClick={() => clickHandler(perk)}
-                    onBlur={() => setselectedPerk(null)}
-                    tabIndex={0}
-                  >
+    <div className="skill-container">
+      <div className="perks" style={{ transform: `scale(${scale})` }}>
+        <div className="perks__content">
+          <div className="perks__header">{currentHeader}</div>
+          <div className="perks__list-container">
+            <div className="perks__list">
+              {content.map((category, cIndex) => (
+                <ul className="perks__category" key={cIndex}>
+                  {category.map((perk, index) => (
                     <div
-                      className="perks__perk__icon"
-                      dangerouslySetInnerHTML={{ __html: perk.icon }}
-                    ></div>
-                    <p className="perks__perk__price">
-                      <span>
-                        {playerData.perks[perk.name]
-                          ? levels[playerData.perks[perk.name]].price
-                          : levels[0].price}
-                      </span>
-                      <span className="perks__exp" />
-                    </p>
-                  </div>
-                ))}
-                {cIndex === content.length - 1 && (
-                  <div className="perks__exp-container">
-                    <div
-                      className="perks__exp-container__line"
-                      onMouseEnter={() => setexpHint(true)}
-                      onMouseLeave={() => setexpHint(false)}
+                      className={`perks__perk perks__perk--level-${
+                        playerData.perks[perk.name] || 0
+                      }`}
+                      key={index}
+                      onMouseEnter={() => hoverHandler(perk)}
+                      onClick={() => clickHandler(perk)}
+                      onBlur={() => setselectedPerk(null)}
+                      tabIndex={0}
                     >
-                      <SkyrimHint
-                        text={'за опыт можно улучшить способности'}
-                        isOpened={expHint}
-                        active="true"
-                        left={true}
-                      />
-                      <span>Опыт:</span>
-                      <span className="perks__exp-container__line__price">
-                        {pExp}
-                        <span className="perks__exp" />
-                      </span>
+                      <div
+                        className="perks__perk__icon"
+                        dangerouslySetInnerHTML={{ __html: perk.icon }}
+                      ></div>
+                      {playerData.perks[perk.name] !== perk.levelsPrice.length && (
+                        <p className="perks__perk__price">
+                          <span>
+                            {playerData.perks[perk.name]
+                              ? perk.levelsPrice[playerData.perks[perk.name]]
+                              : perk.levelsPrice[0]}
+                          </span>
+                          <span className="perks__exp" />
+                        </p>
+                      )}
                     </div>
-                    <div
-                      className="perks__exp-container__line"
-                      onMouseEnter={() => setmemHint(true)}
-                      onMouseLeave={() => setmemHint(false)}
-                    >
-                      <SkyrimHint
-                        active="true"
-                        text={'память нужна для изучения новых способностей'}
-                        isOpened={memHint}
-                        left={true}
-                      />
-                      <span>Память:</span>
-                      <span className="perks__exp-container__line__price">
-                        {pMem}
-                        <span className="perks__exp" style={{ opacity: 0 }} />
-                      </span>
+                  ))}
+                  {cIndex === content.length - 1 && (
+                    <div className="perks__exp-container">
+                      <div
+                        className="perks__exp-container__line"
+                        onMouseEnter={() => setexpHint(true)}
+                        onMouseLeave={() => setexpHint(false)}
+                      >
+                        <SkyrimHint
+                          text={'за опыт можно улучшить способности'}
+                          isOpened={expHint}
+                          active="true"
+                          left={true}
+                        />
+                        <span>Опыт:</span>
+                        <span className="perks__exp-container__line__price">
+                          {pExp}
+                          <span className="perks__exp" />
+                        </span>
+                      </div>
+                      <div
+                        className="perks__exp-container__line"
+                        onMouseEnter={() => setmemHint(true)}
+                        onMouseLeave={() => setmemHint(false)}
+                      >
+                        <SkyrimHint
+                          active="true"
+                          text={'память нужна для изучения новых способностей'}
+                          isOpened={memHint}
+                          left={true}
+                        />
+                        <span>Память:</span>
+                        <span className="perks__exp-container__line__price">
+                          {pMem}
+                          <span className="perks__exp" style={{ opacity: 0 }} />
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </ul>
-            ))}
-          </div>
-          <div className="perks__footer">
-            <div className="perks__footer__description">
-              <p className="perks__footer__description__title">
-                {currentLevel}
-              </p>
-              <p className="perks__footer__description__text">
-                {currentDescription}
-              </p>
+                  )}
+                </ul>
+              ))}
             </div>
-            <div className="perks__footer__buttons">
-              <FrameButton
-                text="изучить"
-                name="learnBtn"
-                variant="DEFAULT"
-                width={242}
-                height={56}
-                disabled={
-                  !selectedPerk ||
-                  levels[playerData.perks[selectedPerk.name] || 0].price >
-                    pExp ||
-                  (!playerData.perks[selectedPerk.name] && pMem === 0)
-                }
-                onMouseDown={() => learnHandler()}
-              ></FrameButton>
-              <FrameButton
-                name="learnBtn"
-                text="выйти"
-                variant="DEFAULT"
-                width={242}
-                height={56}
-                onClick={() => quitHandler()}
-              ></FrameButton>
+            <div className="perks__footer">
+              <div className="perks__footer__description">
+                <p className="perks__footer__description__title">
+                  {currentLevel}
+                </p>
+                <p className="perks__footer__description__text">
+                  {currentDescription}
+                </p>
+              </div>
+              <div className="perks__footer__buttons">
+                <FrameButton
+                  text="изучить"
+                  name="learnBtn"
+                  variant="DEFAULT"
+                  width={242}
+                  height={56}
+                  disabled={
+                    !selectedPerk ||
+                    selectedPerk.levelsPrice[playerData.perks[selectedPerk.name] || 0] >
+                      pExp ||
+                    (!playerData.perks[selectedPerk.name] && pMem === 0)
+                  }
+                  onMouseDown={() => learnHandler()}
+                ></FrameButton>
+                <FrameButton
+                  name="learnBtn"
+                  text="выйти"
+                  variant="DEFAULT"
+                  width={242}
+                  height={56}
+                  onClick={() => quitHandler()}
+                ></FrameButton>
+              </div>
             </div>
           </div>
         </div>
+        <SkyrimFrame width={1720} height={980} name="perkSystem" />
+        <audio id="hoverSound">
+          <source src={hoverSound}></source>
+        </audio>
+        <audio id="learnSound">
+          <source src={learnSound}></source>
+        </audio>
+        <audio id="selectSound">
+          <source src={selectSound}></source>
+        </audio>
+        <audio id="quitSound">
+          <source src={quitSound}></source>
+        </audio>
       </div>
-      <SkyrimFrame width={1720} height={980} name="perkSystem" />
-      <audio id="hoverSound">
-        <source src={hoverSound}></source>
-      </audio>
-      <audio id="learnSound">
-        <source src={learnSound}></source>
-      </audio>
-      <audio id="selectSound">
-        <source src={selectSound}></source>
-      </audio>
-      <audio id="quitSound">
-        <source src={quitSound}></source>
-      </audio>
-    </div>
     </div>
   );
 };
