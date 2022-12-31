@@ -16,8 +16,10 @@
 struct MpActor::Impl
 {
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
+  std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
   uint32_t snippetIndex = 0;
   bool isRespawning = false;
+  bool isBlockActive = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
     lastHitTimePoint;
 };
@@ -26,7 +28,6 @@ MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
   : MpObjectReference(locationalData_, callbacks_,
                       optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
-  , isBlockActive(false)
 {
   pImpl.reset(new Impl);
 }
@@ -116,12 +117,12 @@ void MpActor::OnEquip(uint32_t baseId)
 
 void MpActor::AddEventSink(std::shared_ptr<DestroyEventSink> sink)
 {
-  destroyEventSinks.insert(sink);
+  pImpl->destroyEventSinks.insert(sink);
 }
 
 void MpActor::RemoveEventSink(std::shared_ptr<DestroyEventSink> sink)
 {
-  destroyEventSinks.erase(sink);
+  pImpl->destroyEventSinks.erase(sink);
 }
 
 MpChangeForm MpActor::GetChangeForm() const
@@ -434,7 +435,7 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
 
 void MpActor::BeforeDestroy()
 {
-  for (auto& sink : destroyEventSinks)
+  for (auto& sink : pImpl->destroyEventSinks)
     sink->BeforeDestroy(*this);
 
   MpObjectReference::BeforeDestroy();
@@ -561,12 +562,12 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
 void MpActor::SetIsBlockActive(bool active)
 {
-  isBlockActive = active;
+  pImpl->isBlockActive = active;
 }
 
 bool MpActor::IsBlockActive() const
 {
-  return isBlockActive;
+  return pImpl->isBlockActive;
 }
 
 const float kAngleToRadians = std::acos(-1.f) / 180.f;
