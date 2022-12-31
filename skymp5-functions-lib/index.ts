@@ -559,5 +559,4 @@ const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[
 const controller = MpApiInteractor.makeController(pointsByName);
 MpApiInteractor.setup([
   createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
-  new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
 ]);
