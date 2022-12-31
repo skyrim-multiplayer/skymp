@@ -35,10 +35,13 @@ set(skymp5_client_settings_txt_sweetpie "{
   \"server-port\": 7777,
   \"show-net-info\": false,
   \"animDebug\": {
-    \"isActive\": false,
-    \"animListCount\": 9,
-    \"animListStartPos\": { \"x\": 650, \"y\": 600 },
-    \"animListYPosDelta\": 32,
+    \"isActive\": true,
+    \"textOutput\": {
+      \"isActive\": false,
+      \"itemCount\": 9,
+      \"startPos\": { \"x\": 650, \"y\": 600 },
+      \"yPosDelta\": 32
+    },
     \"animKeys\": {
       \"2\": \"attackStart\"
     }

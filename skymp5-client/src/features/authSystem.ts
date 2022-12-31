@@ -145,6 +145,7 @@ const checkLoginState = () => {
   if (!isListenBrowserMessage) {
     return;
   }
+  
   new sp.HttpClient(authUrl)
     .get("/api/users/login-discord/status?state=" + discordAuthState)
     .then(response => {
@@ -172,7 +173,7 @@ const checkLoginState = () => {
         case 401: // Unauthorized
           browserState.failCount = 0;
           browserState.comment = (`Still waiting...`);
-          sp.Utility.wait(1.5 + Math.random() * 2).then(checkLoginState);
+          setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
           break;
         case 403: // Forbidden
         case 404: // Not found
@@ -182,7 +183,7 @@ const checkLoginState = () => {
         default:
           ++browserState.failCount;
           browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
-          sp.Utility.wait(1.5 + Math.random() * 2).then(checkLoginState);
+          setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
       }
     })
     .catch(reason => {
@@ -254,10 +255,10 @@ const browsersideWidgetSetter = () => {
         type: "text",
         text: (
           authData ? (
-              authData.discordUsername
-                ? `${authData.discordUsername}`
-                : `id: ${authData.masterApiId}`
-            ) : "Please log in"
+            authData.discordUsername
+              ? `${authData.discordUsername}`
+              : `id: ${authData.masterApiId}`
+          ) : "Please log in"
         ),
         tags: ["ELEMENT_SAME_LINE", "ELEMENT_STYLE_MARGIN_EXTENDED"],
       },
@@ -295,5 +296,5 @@ const refreshWidgets = () => {
   if (browserState.failCount) {
     sp.printConsole(`Auth check fail: ${browserState.comment}`);
   }
-  sp.browser.executeJavaScript(new FunctionInfo(browsersideWidgetSetter).getText({events, browserState, authData}));
+  sp.browser.executeJavaScript(new FunctionInfo(browsersideWidgetSetter).getText({ events, browserState, authData }));
 };
