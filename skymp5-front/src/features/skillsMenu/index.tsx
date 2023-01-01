@@ -134,9 +134,11 @@ const SkillsMenu = () => {
                   {category.map((perk, index) => (
                     <div
                       className={`perks__perk perks__perk--level-${
-                        playerData.perks[perk.name] || 0
-                      }`}
-                      key={index}
+                        playerData.perks[perk.name] / perk.levelsPrice.length * 4 || 0
+                      } ${index > 7 ? 'perks__perk--absolute' : ''} ${index % 2 ? 'perks__perk--right' : 'perks__perk--left'}
+                        ${perk.levelsPrice.length < 4 ? 'perks__perk--short' : ''}
+                      `}
+                      key={perk.name}
                       onMouseEnter={() => hoverHandler(perk)}
                       onClick={() => clickHandler(perk)}
                       onBlur={() => setselectedPerk(null)}
@@ -146,7 +148,8 @@ const SkillsMenu = () => {
                         className="perks__perk__icon"
                         dangerouslySetInnerHTML={{ __html: perk.icon }}
                       ></div>
-                      {playerData.perks[perk.name] !== perk.levelsPrice.length && (
+                      {playerData.perks[perk.name] !==
+                        perk.levelsPrice.length && (
                         <p className="perks__perk__price">
                           <span>
                             {playerData.perks[perk.name]
@@ -158,44 +161,6 @@ const SkillsMenu = () => {
                       )}
                     </div>
                   ))}
-                  {cIndex === content.length - 1 && (
-                    <div className="perks__exp-container">
-                      <div
-                        className="perks__exp-container__line"
-                        onMouseEnter={() => setexpHint(true)}
-                        onMouseLeave={() => setexpHint(false)}
-                      >
-                        <SkyrimHint
-                          text={'за опыт можно улучшить способности'}
-                          isOpened={expHint}
-                          active="true"
-                          left={true}
-                        />
-                        <span>Опыт:</span>
-                        <span className="perks__exp-container__line__price">
-                          {pExp}
-                          <span className="perks__exp" />
-                        </span>
-                      </div>
-                      <div
-                        className="perks__exp-container__line"
-                        onMouseEnter={() => setmemHint(true)}
-                        onMouseLeave={() => setmemHint(false)}
-                      >
-                        <SkyrimHint
-                          active="true"
-                          text={'память нужна для изучения новых способностей'}
-                          isOpened={memHint}
-                          left={true}
-                        />
-                        <span>Память:</span>
-                        <span className="perks__exp-container__line__price">
-                          {pMem}
-                          <span className="perks__exp" style={{ opacity: 0 }} />
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </ul>
               ))}
             </div>
@@ -209,6 +174,42 @@ const SkillsMenu = () => {
                 </p>
               </div>
               <div className="perks__footer__buttons">
+                <div className="perks__exp-container">
+                  <div
+                    className="perks__exp-container__line"
+                    onMouseEnter={() => setexpHint(true)}
+                    onMouseLeave={() => setexpHint(false)}
+                  >
+                    <SkyrimHint
+                      text={'за опыт можно улучшить способности'}
+                      isOpened={expHint}
+                      active="true"
+                      left={true}
+                    />
+                    <span>опыт:</span>
+                    <span className="perks__exp-container__line__price">
+                      {pExp}
+                      <span className="perks__exp" />
+                    </span>
+                  </div>
+                  <div
+                    className="perks__exp-container__line"
+                    onMouseEnter={() => setmemHint(true)}
+                    onMouseLeave={() => setmemHint(false)}
+                  >
+                    <SkyrimHint
+                      active="true"
+                      text={'память нужна для изучения новых способностей'}
+                      isOpened={memHint}
+                      left={true}
+                    />
+                    <span>память:</span>
+                    <span className="perks__exp-container__line__price">
+                      {pMem}
+                      <span className="perks__exp" style={{ opacity: 0 }} />
+                    </span>
+                  </div>
+                </div>
                 <FrameButton
                   text="изучить"
                   name="learnBtn"
@@ -217,14 +218,17 @@ const SkillsMenu = () => {
                   height={56}
                   disabled={
                     !selectedPerk ||
-                    selectedPerk.levelsPrice[playerData.perks[selectedPerk.name] || 0] >
-                      pExp ||
+                    selectedPerk.levelsPrice[
+                      playerData.perks[selectedPerk.name] || 0
+                    ] > pExp ||
                     (!playerData.perks[selectedPerk.name] && pMem === 0)
                   }
                   onMouseDown={() => learnHandler()}
                 ></FrameButton>
+              </div>
+              <div className="perks__footer__exit-button">
                 <FrameButton
-                  name="learnBtn"
+                  name="extBtn"
                   text="выйти"
                   variant="DEFAULT"
                   width={242}
@@ -235,7 +239,7 @@ const SkillsMenu = () => {
             </div>
           </div>
         </div>
-        <SkyrimFrame width={1720} height={980} name="perkSystem" />
+        <SkyrimFrame width={1720} height={1004} name="perkSystem" />
         <audio id="hoverSound">
           <source src={hoverSound}></source>
         </audio>
