@@ -1,5 +1,4 @@
 #include "ScriptStorage.h"
-#include <cstring>
 #include <filesystem>
 
 namespace {
