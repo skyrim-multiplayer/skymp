@@ -7,6 +7,7 @@
 
 class MpActor;
 class WorldState;
+class SweetPieBoundWeapon;
 
 class PieScript
 {
@@ -76,6 +77,7 @@ private:
   LootboxTable lootboxTable;
   std::unordered_map<StarterKitType, std::vector<uint32_t>> starterKitsMap;
   std::unordered_map<uint32_t, std::vector<uint32_t>> miscLootTable;
+  std::unordered_map<uint32_t, SweetPieBoundWeapon> bookBoundWeapons;
 
   constexpr static uint32_t kTier1Chance = 600;
   constexpr static uint32_t kTier2Chance = 220;

@@ -4,7 +4,9 @@
 #include "MpActor.h"
 #include "NiPoint3.h"
 #include "SpSnippet.h"
+#include "SweetPieBoundWeapon.h"
 #include "WorldState.h"
+#include <espm.h>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -246,6 +248,10 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     { 0x07ABE9FA, { 0x07A59504, 0x07A59505 } },
     { 0x07ABE9FC, { 0x07A5950A, 0x07A5950B } },
   };
+
+  bookBoundWeapons = {
+    { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } }
+  };
 }
 
 void PieScript::AddItem(MpActor& actor, const WorldState& worldState,
@@ -436,6 +442,17 @@ void PieScript::Play(MpActor& actor, const WorldState& worldState,
   if (it != miscLootTable.end()) {
     for (const auto& item : miscLootTable[itemBaseId]) {
       AddItem(actor, worldState, item, 1);
+    }
+  }
+
+  if (auto it = bookBoundWeapons.find(itemBaseId);
+      it != bookBoundWeapons.end()) {
+    float currentMagickaPercentage =
+      actor.GetChangeForm().actorValues.magickaPercentage;
+    if (currentMagickaPercentage > it->second.GetPercentageManacost()) {
+      actor.DamageActorValue(espm::ActorValue::Magicka,
+                             it->second.GetPercentageManacost());
+      actor.AddItem(it->second.GetBaseId(), 1);
     }
   }
 }
