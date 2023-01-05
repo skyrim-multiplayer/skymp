@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# run from repository root:
+# nice ./misc/build-docker-image.sh YYYYMMDD-rev
+
 if [ "" == "$1" ]; then
   echo Expected version tag >&2
   exit 1
@@ -18,8 +21,10 @@ sed -i -r -e 's/(skymp-(vcpkg-deps|runtime-base):)[-0-9a-zA-Z]+/\1'"$VERSION_TAG
 podman build . --target=skymp-vcpkg-deps --tag=skymp/skymp-vcpkg-deps:"$VERSION_TAG" --cpu-quota=$((100000*10)) --build-arg VCPKG_URL="$VCPKG_URL" --build-arg VCPKG_COMMIT="$VCPKG_COMMIT"
 podman build . --target=skymp-runtime-base --tag=skymp/skymp-runtime-base:"$VERSION_TAG" --cpu-quota=$((100000*10)) --build-arg VCPKG_URL="$VCPKG_URL" --build-arg VCPKG_COMMIT="$VCPKG_COMMIT"
 
+set +x
 echo -n 'ENTER to push'
 read
+set -x
 
 podman push localhost/skymp/skymp-vcpkg-deps:"$VERSION_TAG" docker.io/skymp/skymp-vcpkg-deps:"$VERSION_TAG"
 podman push localhost/skymp/skymp-runtime-base:"$VERSION_TAG" docker.io/skymp/skymp-runtime-base:"$VERSION_TAG"
