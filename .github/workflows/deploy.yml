@@ -84,7 +84,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:20221121-1
+                image: skymp/skymp-vcpkg-deps:20221121-2-upd-chakracore
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -95,7 +95,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:20221121-1
+                image: skymp/skymp-vcpkg-deps:20221121-2-upd-chakracore
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -115,7 +115,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:20221121-1
+                image: skymp/skymp-vcpkg-deps:20221121-2-upd-chakracore
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
