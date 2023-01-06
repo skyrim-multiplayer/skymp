@@ -23,8 +23,13 @@ endif()
 
 file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/*")
 list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+
 add_executable(unit ${src})
-target_link_libraries(unit PUBLIC server_guest_lib platform_lib)
+
+find_package(Catch2 CONFIG REQUIRED)
+target_link_libraries(unit PRIVATE Catch2::Catch2)
+
+target_link_libraries(unit PUBLIC server_guest_lib platform_lib espm)
 apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
 
@@ -44,8 +49,6 @@ if(WIN32)
   target_compile_options(unit PRIVATE "/bigobj")
   target_link_libraries(unit PUBLIC Dbghelp.lib)
 endif()
-
-target_link_libraries(unit PUBLIC espm)
 
 #
 # ctest tests

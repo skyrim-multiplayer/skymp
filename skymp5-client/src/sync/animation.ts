@@ -139,10 +139,6 @@ export class AnimationSource {
       return;
     }
 
-    //if (animEventName === "Ragdoll") return;
-
-    if (animEventName === "IdleForceDefaultState") return;
-
     this.numChanges++;
     this.animEventName = animEventName;
   }

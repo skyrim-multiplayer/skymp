@@ -47,25 +47,27 @@ float CropHealthRegeneration(float newAttributeValue,
   BaseActorValues baseValues = GetValues(actor);
   return CropRegeneration(newAttributeValue, secondsAfterLastRegen,
                           baseValues.healRate, baseValues.healRateMult,
-                          actor->GetChangeForm().healthPercentage);
+                          actor->GetChangeForm().actorValues.healthPercentage);
 }
 
 float CropMagickaRegeneration(float newAttributeValue,
                               float secondsAfterLastRegen, MpActor* actor)
 {
   BaseActorValues baseValues = GetValues(actor);
-  return CropRegeneration(newAttributeValue, secondsAfterLastRegen,
-                          baseValues.magickaRate, baseValues.magickaRateMult,
-                          actor->GetChangeForm().magickaPercentage);
+  return CropRegeneration(
+    newAttributeValue, secondsAfterLastRegen, baseValues.magickaRate,
+    baseValues.magickaRateMult,
+    actor->GetChangeForm().actorValues.magickaPercentage);
 }
 
 float CropStaminaRegeneration(float newAttributeValue,
                               float secondsAfterLastRegen, MpActor* actor)
 {
   BaseActorValues baseValues = GetValues(actor);
-  return CropRegeneration(newAttributeValue, secondsAfterLastRegen,
-                          baseValues.staminaRate, baseValues.staminaRateMult,
-                          actor->GetChangeForm().staminaPercentage);
+  return CropRegeneration(
+    newAttributeValue, secondsAfterLastRegen,
+    actor->GetChangeForm().actorValues.staminaRate, baseValues.staminaRateMult,
+    actor->GetChangeForm().actorValues.staminaPercentage);
 }
 
 float CropPeriodAfterLastRegen(float secondsAfterLastRegen,

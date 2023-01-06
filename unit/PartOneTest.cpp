@@ -1,16 +1,16 @@
 #include "TestUtils.hpp"
 
-using Catch::Matchers::Contains;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("PartOne API doesn't crash when bad userId passed", "[PartOne]")
 {
   PartOne partOne;
 
   REQUIRE_THROWS_WITH(partOne.GetUserActor(Networking::InvalidUserId),
-                      Contains("User with id 65535 doesn't exist"));
+                      ContainsSubstring("User with id 65535 doesn't exist"));
 
   REQUIRE_THROWS_WITH(partOne.SetUserActor(Networking::InvalidUserId, 0),
-                      Contains("User with id 65535 doesn't exist"));
+                      ContainsSubstring("User with id 65535 doesn't exist"));
 }
 
 TEST_CASE("SetUserActor doesn't accept disabled actors", "[PartOne]")
@@ -23,7 +23,7 @@ TEST_CASE("SetUserActor doesn't accept disabled actors", "[PartOne]")
   DoConnect(partOne, 0);
 
   REQUIRE_THROWS_WITH(partOne.SetUserActor(0, 0xff000000),
-                      Contains("Actor with id ff000000 is disabled"));
+                      ContainsSubstring("Actor with id ff000000 is disabled"));
 }
 
 TEST_CASE("OnConnect/OnDisconnect", "[PartOne]")
@@ -34,7 +34,7 @@ TEST_CASE("OnConnect/OnDisconnect", "[PartOne]")
   DoConnect(partOne, 0);
   DoDisconnect(partOne, 0);
 
-  REQUIRE_THAT(lst->str(), Contains("OnConnect(0)\nOnDisconnect(0)"));
+  REQUIRE_THAT(lst->str(), ContainsSubstring("OnConnect(0)\nOnDisconnect(0)"));
 }
 
 TEST_CASE("OnCustomPacket", "[PartOne]")
@@ -46,11 +46,12 @@ TEST_CASE("OnCustomPacket", "[PartOne]")
   DoMessage(partOne, 0,
             nlohmann::json{ { "t", MsgType::CustomPacket },
                             { "content", { { "x", "y" } } } });
-  REQUIRE_THAT(lst->str(), Contains("OnCustomPacket(0, {\"x\":\"y\"})"));
+  REQUIRE_THAT(lst->str(),
+               ContainsSubstring("OnCustomPacket(0, {\"x\":\"y\"})"));
 
   REQUIRE_THROWS_WITH(
     DoMessage(partOne, 0, nlohmann::json{ { "t", MsgType::CustomPacket } }),
-    Contains("Unable to read key 'content'"));
+    ContainsSubstring("Unable to read key 'content'"));
 }
 
 TEST_CASE("Messages for non-existent users", "[PartOne]")
@@ -61,7 +62,7 @@ TEST_CASE("Messages for non-existent users", "[PartOne]")
     DoMessage(partOne, 0,
               nlohmann::json{ { "t", MsgType::CustomPacket },
                               { "content", { { "x", "y" } } } }),
-    Contains("User with id 0 doesn't exist"));
+    ContainsSubstring("User with id 0 doesn't exist"));
 
   DoConnect(partOne, 0);
 
@@ -76,7 +77,7 @@ TEST_CASE("Messages for non-existent users", "[PartOne]")
     DoMessage(partOne, 0,
               nlohmann::json{ { "t", MsgType::CustomPacket },
                               { "content", { { "x", "y" } } } }),
-    Contains("User with id 0 doesn't exist"));
+    ContainsSubstring("User with id 0 doesn't exist"));
 }
 
 TEST_CASE("Disconnect event sent before user actually disconnects",
@@ -103,7 +104,7 @@ TEST_CASE("Disconnect event sent before user actually disconnects",
   DoDisconnect(*partOne, 0);
   REQUIRE(!partOne->IsConnected(0));
 
-  REQUIRE_THAT(lst->str(), Contains("OnConnect(0)\nOnDisconnect(0)"));
+  REQUIRE_THAT(lst->str(), ContainsSubstring("OnConnect(0)\nOnDisconnect(0)"));
   partOne.reset();
 }
 

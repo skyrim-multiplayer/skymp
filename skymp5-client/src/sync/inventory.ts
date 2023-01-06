@@ -20,6 +20,7 @@ import {
   printConsole,
   ActorBase,
 } from "skyrimPlatform";
+import * as taffyPerkSystem from "../sweetpie/taffyPerkSystem";
 
 export interface Extra {
   health?: number;
@@ -250,7 +251,7 @@ export const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
 export const removeSimpleItemsAsManyAsPossible = (inv: Inventory, baseId: number, count: number): Inventory => {
   const res: Inventory = { entries: [] };
   res.entries = JSON.parse(JSON.stringify(inv.entries));
-  
+
   const entry = res.entries.find((e) => !hasExtras(e) && e.baseId === baseId);
   if (entry) {
     entry.count -= count;
@@ -324,6 +325,8 @@ export const applyInventory = (
 
   diff.sort((a, b) => (a.count < b.count ? -1 : 1));
   diff.forEach((e, i) => {
+    taffyPerkSystem.inventoryChanged(refr, e);
+
     if (i > 0 && enableCrashProtection) {
       res = false;
       return;
