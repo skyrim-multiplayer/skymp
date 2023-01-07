@@ -1,4 +1,5 @@
 #pragma once
+#include "SweetPieBoundWeapon.h"
 #include <array>
 #include <string>
 #include <unordered_map>
@@ -7,7 +8,6 @@
 
 class MpActor;
 class WorldState;
-class SweetPieBoundWeapon;
 
 class PieScript
 {

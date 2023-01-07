@@ -4,7 +4,6 @@
 #include "MpActor.h"
 #include "NiPoint3.h"
 #include "SpSnippet.h"
-#include "SweetPieBoundWeapon.h"
 #include "WorldState.h"
 #include <espm.h>
 #include <random>
