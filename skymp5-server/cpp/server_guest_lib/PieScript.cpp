@@ -4,6 +4,7 @@
 #include "MpActor.h"
 #include "NiPoint3.h"
 #include "SpSnippet.h"
+#include "SweetPieBoundWeapon.h"
 #include "WorldState.h"
 #include <espm.h>
 #include <random>
@@ -448,7 +449,7 @@ void PieScript::Play(MpActor& actor, const WorldState& worldState,
       it != bookBoundWeapons.end()) {
     float currentMagickaPercentage =
       actor.GetChangeForm().actorValues.magickaPercentage;
-    if (currentMagickaPercentage > it->second.GetPercentageManacost()) {
+    if (currentMagickaPercentage >= it->second.GetPercentageManacost()) {
       actor.DamageActorValue(espm::ActorValue::Magicka,
                              it->second.GetPercentageManacost());
       actor.AddItem(it->second.GetBaseId(), 1);
