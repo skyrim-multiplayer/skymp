@@ -86,7 +86,8 @@ class App extends React.Component {
       );
     } else if (this.state.widgets) {
       return (
-          <>
+          <div style={{ position: 'static' }}>
+            <SkillsMenu />
             {this.state.widgets.map((widget, index) =>
                <Constructor
                   key={index.toString() + widget.type + ((widget.type === 'form') ? widget.elements + widget.caption : 'chat')}
@@ -95,7 +96,7 @@ class App extends React.Component {
                   height={this.props.height || 704}
                   width={this.props.width || 512} />
             )}
-          </>
+          </div>
       );
     } else { return <></>; }
   }

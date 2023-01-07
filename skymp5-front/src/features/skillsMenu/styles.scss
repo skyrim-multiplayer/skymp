@@ -9,6 +9,10 @@ $regular: 200ms;
 
 .skill-container {
   width: 100%;
+  position: absolute;
+  z-index: 100;
+  align-self: center;
+  justify-self: center;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -255,6 +259,7 @@ $regular: 200ms;
     display: flex;
     padding: 0 6px 24px;
     min-height: 245px;
+    position: relative;
 
     &__description {
       width: 60%;
@@ -275,6 +280,10 @@ $regular: 200ms;
       display: flex;
       align-items: end;
       width: 20%;
+      height: 100%;
+      bottom: 24px;
+      right: 0;
+      position: absolute;
     }
   }
 }
