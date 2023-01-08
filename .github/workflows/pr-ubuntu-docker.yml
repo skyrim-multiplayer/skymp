@@ -20,7 +20,7 @@ jobs:
 
           - name: Get image to build upon
             run: |
-                cat ${{github.workspace}}/ci/github_env_linux >> "$GITHUB_ENV"
+                cat ${{github.workspace}}/misc/github_env_linux >> "$GITHUB_ENV"
 
           - name: Store SP types from commit
             run: |
