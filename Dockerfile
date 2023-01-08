@@ -48,16 +48,19 @@ RUN \
 
 
 # Intermediate image to build
-# TODO: copy less stuff, use args to pass the desired vcpkg submodule revision
+# TODO: copy less stuff
 # TODO: build huge deps separately
 FROM skymp-build-base AS skymp-vcpkg-deps-builder
+ARG VCPKG_URL
+ARG VCPKG_COMMIT
 
 COPY --chown=skymp:skymp . /src
 
 USER skymp
 
 RUN  cd /src \
-  && git submodule update --init --recursive \
+  && git clone "$VCPKG_URL" vcpkg \
+  && git -C vcpkg checkout "$VCPKG_COMMIT" \
   && ./build.sh --configure
 
 
