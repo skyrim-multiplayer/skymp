@@ -120,7 +120,6 @@ add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
 if(BUILD_UNIT_TESTS)
-  # Workaround for #1182 (tests are failing to build in Windows CI)
   add_subdirectory(unit)
 endif()
 
