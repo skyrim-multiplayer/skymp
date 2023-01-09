@@ -172,5 +172,6 @@ if (!(authGameData?.local || authGameData?.remote)) {
   authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
 } else {
   startClient();
-  skillSystem.skillMenuInit();
 }
+
+skillSystem.skillMenuInit();

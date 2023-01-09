@@ -2,30 +2,30 @@ import { browser, on, printConsole, Debug, Game } from 'skyrimPlatform'
 import { getInventory } from '../sync/inventory';
 
 interface IItemsIds {
-    [id:number]: {name:string, level: number}
+    [id: number]: { name: string, level: number }
 }
 
 interface IFrontData {
     exp: number,
     mem: number,
     perks: {
-        [skill:string]: number,
+        [skill: string]: number,
     }
 }
 
 
 export const skillMenuInit = () => {
     const itemsIds = {
-        0x7f4ced9: { name: 'woodcutter', level: 1 }, 
-        0x7f4ceda: { name: 'woodcutter', level: 2 }, 
-        0x7f4cedb: { name: 'woodcutter', level: 3 }, 
+        0x7f4ced9: { name: 'woodcutter', level: 1 },
+        0x7f4ceda: { name: 'woodcutter', level: 2 },
+        0x7f4cedb: { name: 'woodcutter', level: 3 },
         0x7f4cedc: { name: 'woodcutter', level: 4 },
-        
+
         0x7f4cedd: { name: 'fishman', level: 1 },
         0x7f4cede: { name: 'fishman', level: 2 },
         0x7f4cedf: { name: 'fishman', level: 3 },
         0x7f4cee0: { name: 'fishman', level: 4 },
-        
+
         0x7e595b2: { name: 'miner', level: 1 },
         0x7e595b3: { name: 'miner', level: 2 },
         0x7e595b4: { name: 'miner', level: 3 },
@@ -228,8 +228,8 @@ export const skillMenuInit = () => {
         if (!altars.includes(event.target.getBaseObject()?.getFormID() || -1)) return;
         const player = Game.getPlayer();
         if (!player) return;
-        const {entries} = getInventory(player);
-        const frontData = {exp: 0, mem: 0, perks: {}} as IFrontData;
+        const { entries } = getInventory(player);
+        const frontData = { exp: 0, mem: 0, perks: {} } as IFrontData;
         entries.forEach(item => {
             if (item.baseId in itemsIds) {
                 const itemData = itemsIds[item.baseId];
@@ -241,26 +241,10 @@ export const skillMenuInit = () => {
 
         })
 
-        printConsole(frontData)
         const src = `
-            window.dispatchEvent(new CustomEvent('updateSkillMenu', { detail: ${JSON.stringify(frontData)}))
+            window.dispatchEvent(new CustomEvent('updateSkillMenu', { detail: ${JSON.stringify(frontData)}}))
         `
-        // let src = '';
-        // src += `
-            // window.dispatchEvent(new CustomEvent('updateSkillMenu', { detail: {
-            //     exp: 3375,
-            //     mem: 2,
-            //     perks: {
-            //         saltmaker: 1,
-            //         weapon: 1,
-            //         leather: 3,
-            //         jewelry: 2,
-            //         clother: 4
-            //     }
-            // } }))
-        // `
         browser.setFocused(true)
         browser.executeJavaScript(src)
-        // browser.keepCursorMenuOpenedWhenBrowserFocused();
     })
 }

@@ -43,6 +43,7 @@ const SkillsMenu = () => {
   useEffect(() => {
     window.addEventListener('updateSkillMenu', fetchData);
     return () => {
+      setplayerData(undefined);
       window.removeEventListener('updateSkillMenu', fetchData);
     };
   }, []);
