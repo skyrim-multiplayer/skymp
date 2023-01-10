@@ -7,11 +7,8 @@ function(link_vcpkg_dependencies)
   endforeach()
 
   foreach(target ${A_TARGETS})
-    find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
-    find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
-    string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
-    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")
-    target_include_directories(${target} PUBLIC ${ChakraCore_INCLUDE_DIR})
+    find_package(unofficial-node-api CONFIG)
+    target_link_libraries(${target} PUBLIC unofficial::chakracore::chakracore)
 
     find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
     get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
