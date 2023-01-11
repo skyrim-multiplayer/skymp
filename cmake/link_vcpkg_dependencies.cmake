@@ -7,7 +7,7 @@ function(link_vcpkg_dependencies)
   endforeach()
 
   foreach(target ${A_TARGETS})
-    find_package(unofficial-node-api CONFIG)
+    find_package(unofficial-node-api CONFIG REQUIRED)
     target_link_libraries(${target} PUBLIC unofficial::chakracore::chakracore)
 
     find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
