@@ -1,5 +1,5 @@
 if(NOT TARGET unofficial::chakracore::chakracore)
-  add_library(unofficial::chakracore::chakracore INTERFACE IMPORTED)
+  add_library(unofficial::chakracore::chakracore UNKNOWN IMPORTED)
 
   find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
 
@@ -13,5 +13,6 @@ if(NOT TARGET unofficial::chakracore::chakracore)
   set_target_properties(unofficial::chakracore::chakracore PROPERTIES
     IMPORTED_LOCATION_DEBUG "${ChakraCore_LIBRARY_DEBUG}"
     IMPORTED_LOCATION_RELEASE "${ChakraCore_LIBRARY_RELEASE}"
+    IMPORTED_CONFIGURATIONS Release;Debug
   )
 endif()
