@@ -13,6 +13,6 @@ if(NOT TARGET unofficial::chakracore::chakracore)
   set_target_properties(unofficial::chakracore::chakracore PROPERTIES
     IMPORTED_LOCATION_DEBUG "${ChakraCore_LIBRARY_DEBUG}"
     IMPORTED_LOCATION_RELEASE "${ChakraCore_LIBRARY_RELEASE}"
-    IMPORTED_CONFIGURATIONS Release;Debug
+    IMPORTED_CONFIGURATIONS "Release;Debug"
   )
 endif()
