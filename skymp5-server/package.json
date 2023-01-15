@@ -17,6 +17,7 @@
     "koa-proxy": "^1.0.0-alpha.3",
     "koa-router": "^10.1.1",
     "koa-static": "^5.0.0",
+    "node-addon-api": "^5.1.0",
     "parcel-bundler": "^1.12.5",
     "source-map-support": "^0.5.21",
     "ws": "^8.5.0"
