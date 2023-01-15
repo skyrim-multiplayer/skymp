@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SkyrimFrame } from '../../components/SkyrimFrame/SkyrimFrame';
 import { FrameButton } from '../../components/FrameButton/FrameButton';
-import content, { levels } from './content';
+import content, { levels, mapper } from './content';
 import './styles.scss';
 import { SkyrimHint } from '../../components/SkyrimHint/SkyrimHint';
 import hoverSound from './assets/OnCoursor.wav';
@@ -24,24 +24,28 @@ const SkillsMenu = () => {
   const [playerData, setplayerData] = useState<IPlayerData | undefined>();
 
   const fetchData = (event) => {
-    // !Important: Run commented code to dispatch event
-    //   window.dispatchEvent(new CustomEvent('updateSkillMenu', { detail: {
-    //     exp: 3375,
-    //     mem: 2,
-    //     perks: {
-    //         saltmaker: 1,
-    //         weapon: 1,
-    //         leather: 3,
-    //         jewelry: 2,
-    //         clother: 4
-    //     }
-    // } }))
     const newPlayerData = (event as CustomEvent).detail as IPlayerData;
     setplayerData(newPlayerData);
   };
 
   useEffect(() => {
     window.addEventListener('updateSkillMenu', fetchData);
+    // !Important: Run commented code to dispatch event
+    window.dispatchEvent(
+      new CustomEvent('updateSkillMenu', {
+        detail: {
+          exp: 3375,
+          mem: 2,
+          perks: {
+            saltmaker: 1,
+            weapon: 1,
+            leather: 3,
+            jewelry: 2,
+            clother: 4
+          }
+        }
+      })
+    );
     return () => {
       setplayerData(undefined);
       window.removeEventListener('updateSkillMenu', fetchData);
@@ -121,13 +125,54 @@ const SkillsMenu = () => {
     // setisOpen(false);
   };
 
+  const discardHandler = () => {
+    let returnExp = 0;
+    let memReturn = 0;
+    Object.keys(playerData.perks).forEach((key) => {
+      const index = mapper[key];
+      const returnPrice = content[index[0]][index[1]].levelsPrice
+        .slice(0, playerData.perks[key])
+        .reduce((a, b) => a + b, 0);
+      returnExp += returnPrice;
+      memReturn += 1;
+    });
+    const newExp = pExp + Math.round(returnExp / 2);
+    const newMem = pMem + memReturn;
+    setpExp(newExp);
+    setpMem(newMem);
+    setplayerData({
+      mem: newMem,
+      exp: newExp,
+      perks: {}
+    });
+  };
+
   if (!playerData) return <></>;
 
   return (
     <div className="skill-container">
       <div className="perks" style={{ transform: `scale(${scale})` }}>
         <div className="perks__content">
-          <div className="perks__header">{currentHeader}</div>
+          <div className="perks__header">
+            <span>{currentHeader}</span>
+            <div
+              className="perks__exp-container__line"
+              onMouseEnter={() => setmemHint(true)}
+              onMouseLeave={() => setmemHint(false)}
+            >
+              <SkyrimHint
+                active="true"
+                text={'память нужна для изучения новых способностей'}
+                isOpened={memHint}
+                left={true}
+              />
+              <span>память:</span>
+              <span className="perks__exp-container__line__price">
+                {pMem}
+                <span className="perks__exp" style={{ opacity: 0 }} />
+              </span>
+            </div>
+          </div>
           <div className="perks__list-container">
             <div className="perks__list">
               {content.map((category, cIndex) => (
@@ -135,9 +180,17 @@ const SkillsMenu = () => {
                   {category.map((perk, index) => (
                     <div
                       className={`perks__perk perks__perk--level-${
-                        playerData.perks[perk.name] / perk.levelsPrice.length * 4 || 0
-                      } ${index > 7 ? 'perks__perk--absolute' : ''} ${index % 2 ? 'perks__perk--right' : 'perks__perk--left'}
-                        ${perk.levelsPrice.length < 4 ? 'perks__perk--short' : ''}
+                        (playerData.perks[perk.name] /
+                          perk.levelsPrice.length) *
+                          4 || 0
+                      } ${index > 7 ? 'perks__perk--absolute' : ''} ${
+                        index % 2 ? 'perks__perk--right' : 'perks__perk--left'
+                      }
+                        ${
+                          perk.levelsPrice.length < 4
+                            ? 'perks__perk--short'
+                            : ''
+                        }
                       `}
                       key={perk.name}
                       onMouseEnter={() => hoverHandler(perk)}
@@ -193,23 +246,6 @@ const SkillsMenu = () => {
                       <span className="perks__exp" />
                     </span>
                   </div>
-                  <div
-                    className="perks__exp-container__line"
-                    onMouseEnter={() => setmemHint(true)}
-                    onMouseLeave={() => setmemHint(false)}
-                  >
-                    <SkyrimHint
-                      active="true"
-                      text={'память нужна для изучения новых способностей'}
-                      isOpened={memHint}
-                      left={true}
-                    />
-                    <span>память:</span>
-                    <span className="perks__exp-container__line__price">
-                      {pMem}
-                      <span className="perks__exp" style={{ opacity: 0 }} />
-                    </span>
-                  </div>
                 </div>
                 <FrameButton
                   text="изучить"
@@ -225,6 +261,15 @@ const SkillsMenu = () => {
                     (!playerData.perks[selectedPerk.name] && pMem === 0)
                   }
                   onMouseDown={() => learnHandler()}
+                ></FrameButton>
+                <FrameButton
+                  text="сбросить"
+                  name="discardBtn"
+                  variant="DEFAULT"
+                  width={242}
+                  height={56}
+                  disabled={Object.keys(playerData.perks).length === 0}
+                  onMouseDown={() => discardHandler()}
                 ></FrameButton>
               </div>
               <div className="perks__footer__exit-button">

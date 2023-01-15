@@ -330,6 +330,8 @@ const content = [
     }
   ]];
 
-export const mapper = { miner: [0, 0], fishman: [0, 1], saltmaker: [0, 2], hunter: [0, 3], doctor: [0, 4], woodcutter: [0, 5], bee: [0, 6], farmer: [0, 7], armor: [1, 0], weapon: [1, 1], jewelry: [1, 2], leather: [1, 3], clother: [1, 4], carpenter: [1, 5], somelie: [1, 6], cheif: [1, 7], daggers: [2, 0], shortswords: [2, 1], swords: [2, 2], scimitar: [2, 3], katana: [2, 4], mace: [2, 5], axes: [2, 6], hammer: [2, 7], bows: [3, 0], longsword: [3, 1], greatkatana: [3, 2], battleaxe: [3, 3], warhammer: [3, 4], staff: [3, 5], pike: [3, 6], halberd: [3, 7], armorlight: [3, 0], armorheavy: [3, 1], shield: [3, 2], conjuration: [3, 3], alchemy: [3, 4], enchant: [3, 5] };
+export const mapper = { miner: [0, 0], fishman: [0, 1], saltmaker: [0, 2], hunter: [0, 3], doctor: [0, 4], woodcutter: [0, 5], bee: [0, 6], farmer: [0, 7], armor: [1, 0], weapon: [1, 1], jewelry: [1, 2], leather: [1, 3], clother: [1, 4], carpenter: [1, 5], somelie: [1, 6], cheif: [1, 7], daggers: [2, 0], shortswords: [2, 1], swords: [2, 2], scimitar: [2, 3], katana: [2, 4], mace: [2, 5], axes: [2, 6], hammer: [2, 7], bows: [3, 0], longsword: [3, 1], greatkatana: [3, 2], battleaxe: [3, 3], warhammer: [3, 4], staff: [3, 5], pike: [3, 6], halberd: [3, 7], armorlight: [4, 0], armorheavy: [4, 1], shield: [4, 2], conjuration: [4, 3], alchemy: [4, 4], enchant: [4, 5], alteration: [4, 6], destruction: [4, 7], illusion: [4, 8], restoration: [4, 9] } as {
+  [key: string]: number[]
+};
 
 export default content;

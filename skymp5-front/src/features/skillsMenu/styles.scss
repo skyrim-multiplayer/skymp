@@ -36,6 +36,9 @@ $regular: 200ms;
 
   &__header {
     margin: 28px auto auto;
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
   }
 
   &__list-container {
@@ -56,6 +59,7 @@ $regular: 200ms;
     flex-wrap: wrap;
     column-gap: 16px;
     row-gap: 32px;
+    z-index: 10;
   }
 
   &__perk {
@@ -236,8 +240,7 @@ $regular: 200ms;
     &__line {
       display: flex;
       position: relative;
-      width: 100%;
-      justify-content: space-between;
+      gap: 18px;
 
       &__price {
         display: flex;
