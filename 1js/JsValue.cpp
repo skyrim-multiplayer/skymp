@@ -1,4 +1,3 @@
-#pragma once
 #include "JsValue.h"
 
 #define USE_CHAKRA // TODO: move to CMakeLists.txt

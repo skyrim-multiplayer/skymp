@@ -70,14 +70,17 @@ void *ChakraBackend::Function(const FunctionT &arg) {
 // TODO: fix memory leak (new FunctionT(arg))
 void *ChakraBackend::NamedFunction(const char *name, const FunctionT &arg) {
     JsValueRef v;
-    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateNamedFunction), name,
+    auto jsName = String(name);
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateNamedFunction), jsName,
              ChakraBackendUtils::NativeFunctionImpl, new FunctionT(arg), &v);
     return v;
 }
 
 void *ChakraBackend::Uint8Array(uint32_t length) {
     JsValueRef v;
-    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateTypedArray), JsTypedArrayType::JsArrayTypeUint8, nullptr, 0, &v);
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateTypedArray),
+             JsTypedArrayType::JsArrayTypeUint8, JS_INVALID_REFERENCE, 0,
+             length, &v);
     return v;
 }
 
