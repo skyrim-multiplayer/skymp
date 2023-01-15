@@ -47,18 +47,18 @@ SaveFile_::RefID FormIdToRefId(uint32_t formId)
 std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
   std::shared_ptr<SaveFile_::SaveFile> save, JsValue npcData)
 {
-  if (npcData.GetType() != JsValue::Type::Object)
+  if (npcData.GetType() != JsType::Object)
     return nullptr;
 
   std::unique_ptr<SaveFile_::ChangeFormNPC_> changeFormNpc;
   changeFormNpc.reset(new SaveFile_::ChangeFormNPC_);
 
   if (auto name = npcData.GetProperty("name");
-      name.GetType() == JsValue::Type::String)
+      name.GetType() == JsType::String)
     changeFormNpc->playerName = static_cast<std::string>(name);
 
   if (auto raceId = npcData.GetProperty("raceId");
-      raceId.GetType() == JsValue::Type::Number) {
+      raceId.GetType() == JsType::Number) {
     changeFormNpc->race = SaveFile_::ChangeFormNPC_::RaceChange();
     changeFormNpc->race->defaultRace =
       FormIdToRefId(static_cast<uint32_t>(static_cast<double>(raceId)));
@@ -67,17 +67,17 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
   }
 
   if (auto face = npcData.GetProperty("face");
-      face.GetType() == JsValue::Type::Object) {
+      face.GetType() == JsType::Object) {
     changeFormNpc->face = SaveFile_::ChangeFormNPC_::Face();
 
     if (auto bodySkinColor = face.GetProperty("bodySkinColor");
-        bodySkinColor.GetType() == JsValue::Type::Number) {
+        bodySkinColor.GetType() == JsType::Number) {
       changeFormNpc->face->bodySkinColor =
         RgbToAbgr(static_cast<int32_t>(bodySkinColor));
     }
 
     if (auto headPartIds = face.GetProperty("headPartIds");
-        headPartIds.GetType() == JsValue::Type::Array) {
+        headPartIds.GetType() == JsType::Array) {
       int n = static_cast<int>(headPartIds.GetProperty("length"));
 
       for (int i = 0; i < n; ++i) {
@@ -88,7 +88,7 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
     }
 
     if (auto presets = face.GetProperty("presets");
-        presets.GetType() == JsValue::Type::Array) {
+        presets.GetType() == JsType::Array) {
       int n = static_cast<int>(presets.GetProperty("length"));
       for (int i = 0; i < n; ++i) {
         auto jValue = presets.GetProperty(i);
@@ -98,7 +98,7 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
     }
 
     if (auto headTextureSetId = face.GetProperty("headTextureSetId");
-        headTextureSetId.GetType() == JsValue::Type::Number) {
+        headTextureSetId.GetType() == JsType::Number) {
       auto id = static_cast<uint32_t>(static_cast<double>(headTextureSetId));
       changeFormNpc->face->headTextureSet = FormIdToRefId(id);
     }

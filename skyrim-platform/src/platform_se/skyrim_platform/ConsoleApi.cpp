@@ -253,7 +253,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
             JsValue arg = GetTypedArg(paramInfo[i].paramType.get(),
                                       parseCommandResult.params[i]);
 
-            if (arg.GetType() == JsValue::Type::Undefined) {
+            if (arg.GetType() == JsType::Undefined) {
               auto err = " typeId " +
                 std::to_string((uint32_t)paramInfo[i].paramType.get()) +
                 " not yet supported";
@@ -319,7 +319,7 @@ JsValue ConsoleApi::FindConsoleCommand(const JsFunctionArguments& args)
     FindCommand(commandName, RE::SCRIPT_FUNCTION::GetFirstConsoleCommand(),
                 RE::SCRIPT_FUNCTION::Commands::kConsoleCommandsEnd);
 
-  if (res.GetType() == JsValue::Type::Null) {
+  if (res.GetType() == JsType::Null) {
     res =
       FindCommand(commandName, RE::SCRIPT_FUNCTION::GetFirstScriptCommand(),
                   RE::SCRIPT_FUNCTION::Commands::kScriptCommandsEnd);
@@ -346,7 +346,7 @@ JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
 
   for (size_t i = 2; i < args.GetSize(); ++i) {
     JsValue str = args[i];
-    if (args[i].GetType() == JsValue::Type::Object &&
+    if (args[i].GetType() == JsType::Object &&
         !args[i].GetExternalData()) {
 
       JsValue json = JsValue::GlobalObject().GetProperty("JSON");

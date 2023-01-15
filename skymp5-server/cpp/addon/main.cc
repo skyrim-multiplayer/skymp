@@ -173,7 +173,7 @@ public:
     auto mp = JsValue::GlobalObject().GetProperty("mp");
 
     auto f = mp.GetProperty(eventName);
-    if (f.GetType() != JsValue::Type::Function)
+    if (f.GetType() != JsType::Function)
       return true;
 
     std::vector<JsValue> argumentsInNapiFormat;
@@ -196,7 +196,7 @@ public:
     try {
       auto callResult = f.Call(argumentsInNapiFormat);
 
-      if (callResult.GetType() == JsValue::Type::Undefined)
+      if (callResult.GetType() == JsType::Undefined)
         return true;
 
       // TODO: Handle non-boolean values? Current implementation would throw...
@@ -660,7 +660,7 @@ std::string GetPropertyAlphabet()
 
 uint32_t GetFormId(const JsValue& v)
 {
-  if (v.GetType() == JsValue::Type::Number) {
+  if (v.GetType() == JsType::Number) {
     double formId = static_cast<double>(v);
     constexpr auto max =
       static_cast<double>(std::numeric_limits<uint32_t>::max());
@@ -673,7 +673,7 @@ uint32_t GetFormId(const JsValue& v)
 
 std::string ExtractString(const JsValue& v, const char* argName)
 {
-  if (v.GetType() != JsValue::Type::String) {
+  if (v.GetType() != JsType::String) {
     std::stringstream ss;
     ss << "Expected '" << argName << "' to be string, but got '";
     ss << v.ToString();
@@ -685,7 +685,7 @@ std::string ExtractString(const JsValue& v, const char* argName)
 
 const JsValue& ExtractFunction(const JsValue& v, const char* argName)
 {
-  if (v.GetType() != JsValue::Type::Function) {
+  if (v.GetType() != JsType::Function) {
     std::stringstream ss;
     ss << "Expected '" << argName << "' to be function, but got '";
     ss << v.ToString();
@@ -697,7 +697,7 @@ const JsValue& ExtractFunction(const JsValue& v, const char* argName)
 
 uint32_t ExtractFormId(const JsValue& v, const char* argName = "formId")
 {
-  if (v.GetType() != JsValue::Type::Number) {
+  if (v.GetType() != JsType::Number) {
     std::stringstream ss;
     ss << "Expected '" << argName << "' to be number, but got '";
     ss << v.ToString();
@@ -857,29 +857,29 @@ VarValue GetPapyrusValueFromJsValue(const JsValue& v, bool treatNumberAsInt,
                                     WorldState& wst)
 {
   switch (v.GetType()) {
-    case JsValue::Type::Boolean:
+    case JsType::Boolean:
       if (std::string(v.ToString())[0] == 't') {
         return VarValue(true);
       }
       return VarValue(false);
-    case JsValue::Type::Null:
+    case JsType::Null:
       return VarValue::None();
     // undefined is not a valid value in Papyrus
     // But TypeScript should be able to return void, so:
-    case JsValue::Type::Undefined: {
+    case JsType::Undefined: {
       return VarValue::None();
     }
-    case JsValue::Type::Number: {
+    case JsType::Number: {
       double number = static_cast<double>(v);
       return treatNumberAsInt ? VarValue(static_cast<int32_t>(number))
                               : VarValue(number);
     }
-    case JsValue::Type::String: {
+    case JsType::String: {
       auto str = static_cast<std::string>(v);
       VarValue res(str);
       return res;
     }
-    case JsValue::Type::Array: {
+    case JsType::Array: {
       auto arr = v;
       if (arr.GetProperty("length").ToString() == "0") {
         // Treat zero-length arrays as kType_ObjectArray ("none array")
@@ -911,9 +911,9 @@ VarValue GetPapyrusValueFromJsValue(const JsValue& v, bool treatNumberAsInt,
 
       return papyrusArray;
     }
-    case JsValue::Type::Object: {
+    case JsType::Object: {
       bool isPromise =
-        v.GetProperty("then").GetType() == JsValue::Type::Function;
+        v.GetProperty("then").GetType() == JsType::Function;
       if (isPromise) {
         VarValue res = VarValue::None();
         res.promise = std::make_shared<Viet::Promise<VarValue>>();
@@ -1150,7 +1150,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       GamemodeApi::PropertyInfo propertyInfo;
 
-      if (args[2].GetType() != JsValue::Type::Object) {
+      if (args[2].GetType() != JsType::Object) {
         std::stringstream ss;
         ss << "Expected 'options' to be object, but got '";
         ss << args[2].ToString();
@@ -1166,7 +1166,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       };
       for (auto [optionName, ptr] : booleans) {
         auto v = options.GetProperty(optionName.data());
-        if (v.GetType() != JsValue::Type::Boolean) {
+        if (v.GetType() != JsType::Boolean) {
           std::stringstream ss;
           ss << "Expected 'options." << optionName;
           ss << "' to be boolean, but got '";
@@ -1183,7 +1183,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       };
       for (auto [optionName, ptr] : strings) {
         auto v = options.GetProperty(optionName.data());
-        if (v.GetType() != JsValue::Type::String) {
+        if (v.GetType() != JsType::String) {
           std::stringstream ss;
           ss << "Expected 'options." << optionName;
           ss << "' to be string, but got '";
@@ -1203,7 +1203,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
   mp.SetProperty(
     "makeEventSource",
     JsValue::Function([this, update](const JsFunctionArguments& args) {
-      if (args[1].GetType() != JsValue::Type::String) {
+      if (args[1].GetType() != JsType::String) {
         std::stringstream ss;
         ss << "Expected 'eventName' to be string, but got '";
         ss << args[1].ToString();
@@ -1219,7 +1219,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         throw std::runtime_error(ss.str());
       }
 
-      if (args[2].GetType() != JsValue::Type::String) {
+      if (args[2].GetType() != JsType::String) {
         std::stringstream ss;
         ss << "Expected 'functionBody' to be string, but got '";
         ss << args[2].ToString();
@@ -1690,7 +1690,7 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 
       for (size_t i = 1; i < args.GetSize(); ++i) {
         JsValue str = args[i];
-        if (args[i].GetType() == JsValue::Type::Object &&
+        if (args[i].GetType() == JsType::Object &&
             !args[i].GetExternalData()) {
 
           JsValue json = JsValue::GlobalObject().GetProperty("JSON");

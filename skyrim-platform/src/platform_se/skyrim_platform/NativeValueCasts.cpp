@@ -26,10 +26,10 @@ CallNative::ObjectPtr NativeValueCasts::JsObjectToNativeObject(
   const JsValue& v)
 {
   switch (v.GetType()) {
-    case JsValue::Type::Null:
-    case JsValue::Type::Undefined:
+    case JsType::Null:
+    case JsType::Undefined:
       return nullptr;
-    case JsValue::Type::Object: {
+    case JsType::Object: {
       auto nativeObj = dynamic_cast<NativeObject*>(v.GetExternalData());
       if (!nativeObj)
         throw std::runtime_error(
@@ -59,7 +59,7 @@ JsValue NativeValueCasts::NativeObjectToJsObject(
     throw NullPointerException("nativeObjPtr");
 
   auto& poolEntry = g_nativeObjectPool[nativeObjPtr];
-  if (poolEntry.object.GetType() != JsValue::Type::Object ||
+  if (poolEntry.object.GetType() != JsType::Object ||
       0 != strcmp(poolEntry.type, obj->GetType())) {
     auto nativeObject = new NativeObject(obj);
     poolEntry.object = JsValue::ExternalObject(nativeObject);
@@ -95,15 +95,15 @@ JsValue NativeValueCasts::NativeObjectToJsObject(
 CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const JsValue& v)
 {
   switch (v.GetType()) {
-    case JsValue::Type::Boolean:
+    case JsType::Boolean:
       return (bool)v;
-    case JsValue::Type::Number:
+    case JsType::Number:
       return (double)v;
-    case JsValue::Type::String:
+    case JsType::String:
       return (std::string)v;
-    case JsValue::Type::Object:
-    case JsValue::Type::Null:
-    case JsValue::Type::Undefined:
+    case JsType::Object:
+    case JsType::Null:
+    case JsType::Undefined:
       return JsObjectToNativeObject(v);
     default:
       throw std::runtime_error("Unsupported JavaScript type (" +

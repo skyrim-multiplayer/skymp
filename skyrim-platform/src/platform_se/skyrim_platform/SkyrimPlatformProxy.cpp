@@ -21,7 +21,7 @@ JsValue GetProxyForClass(const std::string& className,
       auto s = (std::string)keyStr;
       auto& f = (*functionsCache)[s];
 
-      if (f.GetType() != JsValue::Type::Function) {
+      if (f.GetType() != JsType::Function) {
 
         std::shared_ptr<std::vector<JsValue>> callNativeArgs(
           new std::vector<JsValue>{ origin, className, keyStr,
@@ -106,7 +106,7 @@ JsValue SkyrimPlatformProxy::Attach(const JsValue& skyrimPlatformExports)
   handler.SetProperty(
     "get", ProxyGetter([=](const JsValue& origin, const JsValue& keyStr) {
       auto& proxy = g_classProxies[(std::string)keyStr];
-      if (proxy.GetType() != JsValue::Type::Object)
+      if (proxy.GetType() != JsType::Object)
         proxy = GetProxyForClass((std::string)keyStr, skyrimPlatformExports);
       return proxy;
     }));

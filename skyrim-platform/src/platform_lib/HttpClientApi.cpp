@@ -8,7 +8,7 @@ HttpClient g_httpClient;
 template <class F>
 inline void IterateKeys(const JsValue& object, F fn)
 {
-  if (object.GetType() != JsValue::Type::Object) {
+  if (object.GetType() != JsType::Object) {
     return;
   }
 
@@ -25,12 +25,12 @@ inline void IterateKeys(const JsValue& object, F fn)
 
 inline HttpClient::Headers GetHeaders(const JsValue& options)
 {
-  if (options.GetType() != JsValue::Type::Object) {
+  if (options.GetType() != JsType::Object) {
     return HttpClient::Headers();
   }
 
   auto headers = options.GetProperty("headers");
-  if (headers.GetType() != JsValue::Type::Object) {
+  if (headers.GetType() != JsType::Object) {
     return HttpClient::Headers();
   }
 

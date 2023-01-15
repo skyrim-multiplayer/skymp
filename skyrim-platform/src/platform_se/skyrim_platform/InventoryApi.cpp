@@ -123,7 +123,7 @@ JsValue ToJsValue(RE::ExtraDataList* extraList)
 
   for (auto it = extraList->begin(); it != extraList->end(); ++it) {
     auto extra = ToJsValue(&(*it));
-    if (extra.GetType() != JsValue::Type::Undefined) {
+    if (extra.GetType() != JsType::Undefined) {
       jData.push_back(extra);
     }
   }

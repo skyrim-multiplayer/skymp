@@ -23,7 +23,7 @@ void WindowsConsolePrinter::Print(const JsFunctionArguments& args)
 
   for (size_t i = 1; i < args.GetSize(); ++i) {
     JsValue str = args[i];
-    if (args[i].GetType() == JsValue::Type::Object &&
+    if (args[i].GetType() == JsType::Object &&
         !args[i].GetExternalData()) {
 
       JsValue json = JsValue::GlobalObject().GetProperty("JSON");

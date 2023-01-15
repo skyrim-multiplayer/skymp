@@ -23,7 +23,7 @@ void NativeObjectProxy::Attach(JsValue& obj, const std::string& cacheClassName,
   auto& classCache = g_classCache[cacheClassName];
   if (!classCache)
     classCache.reset(new PerClassCache);
-  if (classCache->prototype.GetType() != JsValue::Type::Object) {
+  if (classCache->prototype.GetType() != JsType::Object) {
 
     auto handler = JsValue::Object();
     auto proxyTarget = JsValue::Object();
@@ -35,7 +35,7 @@ void NativeObjectProxy::Attach(JsValue& obj, const std::string& cacheClassName,
       ProxyGetter([classCache, cacheClassName](const JsValue& origin,
                                                const JsValue& keyStr) {
         auto& f = classCache->funcsCache[(std::string)keyStr];
-        if (f.GetType() != JsValue::Type::Function) {
+        if (f.GetType() != JsType::Function) {
 
           thread_local JsValue callNativeApi = [] {
             auto e = JsValue::Object();

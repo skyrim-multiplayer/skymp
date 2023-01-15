@@ -4,7 +4,7 @@ inline std::array<float, 3> JsExtractPoint(const JsValue& v)
 {
   std::array<float, 3> res;
 
-  if (v.GetType() != JsValue::Type::Array)
+  if (v.GetType() != JsType::Array)
     throw std::runtime_error("Array expected");
 
   int n = (int)v.GetProperty("length");
@@ -15,7 +15,7 @@ inline std::array<float, 3> JsExtractPoint(const JsValue& v)
 
   for (int i = 0; i < n; ++i) {
     auto el = v.GetProperty(i);
-    if (el.GetType() != JsValue::Type::Number)
+    if (el.GetType() != JsType::Number)
       throw std::runtime_error(
         "Expected array element to be a number, but got '" + el.ToString() +
         "'");

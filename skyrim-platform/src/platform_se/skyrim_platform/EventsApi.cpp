@@ -236,13 +236,13 @@ private:
 
   void PrepareContext(Handler::PerThread& h)
   {
-    if (h.context.GetType() != JsValue::Type::Object) {
+    if (h.context.GetType() != JsType::Object) {
       h.context = JsValue::Object();
     }
 
     thread_local auto g_standardMap =
       JsValue::GlobalObject().GetProperty("Map");
-    if (h.storage.GetType() != JsValue::Type::Object) {
+    if (h.storage.GetType() != JsType::Object) {
       h.storage = g_standardMap.Constructor({ g_standardMap });
       h.context.SetProperty("storage", h.storage);
     }
@@ -395,17 +395,17 @@ JsValue CreateHookApi(std::shared_ptr<Hook> hookInfo)
       auto handlerObj = args[1];
 
       std::optional<double> minSelfId;
-      if (args[2].GetType() == JsValue::Type::Number) {
+      if (args[2].GetType() == JsType::Number) {
         minSelfId = static_cast<double>(args[2]);
       }
 
       std::optional<double> maxSelfId;
-      if (args[3].GetType() == JsValue::Type::Number) {
+      if (args[3].GetType() == JsType::Number) {
         maxSelfId = static_cast<double>(args[3]);
       }
 
       std::optional<Pattern> pattern;
-      if (args[4].GetType() == JsValue::Type::String) {
+      if (args[4].GetType() == JsType::String) {
         pattern = Pattern::Parse(static_cast<std::string>(args[4]));
       }
 

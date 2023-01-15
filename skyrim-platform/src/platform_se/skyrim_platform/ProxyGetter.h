@@ -9,9 +9,9 @@ inline JsValue ProxyGetter(const ProxyGetterFn& f)
     auto& origin = args[1];
     auto& key = args[2];
     auto originProperty = origin.GetProperty(key);
-    if (originProperty.GetType() != JsValue::Type::Undefined)
+    if (originProperty.GetType() != JsType::Undefined)
       return originProperty;
-    return key.GetType() != JsValue::Type::String ? JsValue::Undefined()
+    return key.GetType() != JsType::String ? JsValue::Undefined()
                                                   : f(origin, key);
   });
 }
