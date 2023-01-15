@@ -101,8 +101,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
-add_subdirectory(1js)
 add_subdirectory(viet)
+add_subdirectory(1js)
 add_subdirectory(skyrim-platform)
 
 add_subdirectory(client-deps)
