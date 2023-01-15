@@ -19,7 +19,7 @@
     "node-api",
     {
       "name": "chakracore",
-      "platform": "windows"
+      "platform": "windows | linux"
     },
     {
       "name": "directxtk",
