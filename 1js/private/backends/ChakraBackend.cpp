@@ -299,7 +299,7 @@ void ChakraBackend::DefineProperty(void *value, void* key, void* descriptor) {
 }
 
 void *ChakraBackend::GetProperty(void *value, void *key) {
-    JsType type = GetType(value);
+    JsType type = GetType(key);
     switch (type) {
       case JsType::Number: {
         JsValueRef res;
