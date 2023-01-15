@@ -298,6 +298,67 @@ void ChakraBackend::DefineProperty(void *value, void* key, void* descriptor) {
   ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsObjectDefineProperty), value, key, descriptor, &result);
 }
 
+void *ChakraBackend::GetProperty(void *value, void *key) {
+    JsType type = GetType(value);
+    switch (type) {
+      case JsType::Number: {
+        JsValueRef res;
+        ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsGetIndexedProperty), value, key, &res);
+        return res;
+      }
+      case JsType::String: {
+        JsPropertyIdRef propId;
+        JsValueRef res;
+
+        // Hot path. Platform-specific functions on Windows are faster than the
+        // cross-platform equivalents
+#ifndef WIN32
+        auto str = GetString(key);
+        ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreatePropertyId), str.data(), str.size(),
+                 &propId);
+#else
+        const wchar_t* stringPtr;
+        size_t stringSize;
+        ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsStringToPointer), key, &stringPtr,
+                 &stringSize);
+        ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsGetPropertyIdFromName), stringPtr, &propId);
+#endif
+        ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsGetProperty), value, propId, &res);
+        return res;
+      }
+      case JsType::Symbol: {
+        JsValueRef res;
+        JsPropertyIdRef propId;
+        ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsGetPropertyIdFromSymbol), key, &propId);
+        ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsGetProperty), value, propId, &res);
+        return res;
+      }
+      default:
+        throw std::runtime_error("GetProperty: Bad key type (" +
+                                 std::to_string(static_cast<int>(type)) + ")");
+    }
+}
+
+void* ChakraBackend::Call(void *value, void** arguments, uint32_t argumentCount, bool isConstructor) {
+    JsValueRef res;
+
+    JsValueRef undefined;
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsGetUndefinedValue), &undefined);
+
+    JsValueRef* args = nullptr;
+
+    if (argumentCount > 0) {
+      args = arguments;
+    } else {
+      args = &undefined;
+      ++argumentCount;
+    }
+
+    ChakraBackendUtils::SafeCall(isConstructor ? JsConstructObject : JsCallFunction,
+             "JsCallFunction/JsConstructObject", value, args, argumentCount, &res);
+    return res;
+}
+
 void ChakraBackend::AddRef(void *value) {
   ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsAddRef), value, nullptr);
 }
