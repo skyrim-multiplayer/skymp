@@ -31,8 +31,8 @@ void ChakraBackend::ResetContext(Viet::TaskQueue &taskQueue) {
 void *ChakraBackend::RunScript(const char *src, const char *fileName) {
     JsValueRef scriptSource;
     ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateExternalArrayBuffer),
-                      src,
-                      strlen(src),
+                      (void*)src,
+                      (unsigned int)strlen(src),
                       nullptr, nullptr, &scriptSource);
 
     JsValueRef fname;
@@ -51,6 +51,8 @@ void *ChakraBackend::RunScript(const char *src, const char *fileName) {
         throw std::runtime_error("JsRun failed");
       }
     }
+
+    return result;
 }
 
 size_t ChakraBackend::GetMemoryUsage() {
