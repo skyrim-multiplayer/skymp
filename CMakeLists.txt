@@ -5,11 +5,6 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
-# pass -v to linker to make it print all the symbols
-if(UNIX)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -v")
-endif()
-
 if("$ENV{CI}" STREQUAL "true" AND WIN32)
   # The same submodule but moved to a larger disk in Windows CI. See action files:
   # - https://github.com/skyrim-multiplayer/skymp/blob/main/.github/workflows/pr-windows.yml
