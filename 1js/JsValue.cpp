@@ -20,6 +20,10 @@ JsValue JsValue::Null() {
     return JsValue(BACKEND::Null());
 }
 
+JsValue JsValue::Object() {
+    return JsValue(BACKEND::Object());
+}
+
 JsValue JsValue::ExternalObject(JsExternalObjectBase* data) {
     return JsValue(BACKEND::ExternalObject(data));
 }

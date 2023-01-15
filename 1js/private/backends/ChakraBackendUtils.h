@@ -4,6 +4,8 @@
 #include "private/JsFunctionArgumentsImpl.h"
 #include "FunctionT.h"
 
+#define JS_ENGINE_F(func) func, #func
+
 class ChakraBackendUtils {
 public:
   template <class F, class... A>
@@ -19,6 +21,11 @@ public:
                                   void** arguments,
                                   unsigned short argumentsCount,
                                   void* callbackState);
+
+  static void OnPromiseContinuation(JsValueRef task, void* state);
+
+  static void OnPromiseRejection(JsValueRef promise, JsValueRef reason_,
+                                 bool handled, void* state);
 
   static std::string ConvertJsExceptionToString(JsValueRef exception);
 

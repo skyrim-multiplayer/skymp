@@ -1,9 +1,64 @@
 #include "ChakraBackend.h"
 #include "ChakraBackendUtils.h"
-
+#include <cstring>
 #include <ChakraCore.h>
 
-#define JS_ENGINE_F(func) func, #func
+thread_local unsigned g_currentSourceContext = 0;
+thread_local JsRuntimeHandle g_runtime = nullptr;
+thread_local JsContextRef g_context = nullptr;
+
+void ChakraBackend::Create() {
+    JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &g_runtime);
+}
+
+void ChakraBackend::Destroy() {
+    JsSetCurrentContext(JS_INVALID_REFERENCE);
+    JsDisposeRuntime(g_runtime);
+}
+
+void ChakraBackend::ResetContext(Viet::TaskQueue &taskQueue) {
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateContext), g_runtime,
+                      &g_context);
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsSetCurrentContext), g_context);
+
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsSetPromiseContinuationCallback),
+                      ChakraBackendUtils::OnPromiseContinuation, &taskQueue);
+
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsSetHostPromiseRejectionTracker),
+                      ChakraBackendUtils::OnPromiseRejection, &taskQueue);
+}
+
+void *ChakraBackend::RunScript(const char *src, const char *fileName) {
+    JsValueRef scriptSource;
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateExternalArrayBuffer),
+                      src,
+                      strlen(src),
+                      nullptr, nullptr, &scriptSource);
+
+    JsValueRef fname;
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateString), fileName,
+                      strlen(fileName), &fname);
+
+    JsValueRef result = nullptr;
+    auto jsRunRes = JsRun(scriptSource, g_currentSourceContext++, fname,
+                          JsParseScriptAttributeNone, &result);
+    if (jsRunRes != JsNoError) {
+      JsValueRef exception = nullptr;
+      if (JsGetAndClearException(&exception) == JsNoError) {
+        std::string str = ChakraBackendUtils::ConvertJsExceptionToString(exception);
+        throw std::runtime_error(str);
+      } else {
+        throw std::runtime_error("JsRun failed");
+      }
+    }
+}
+
+size_t ChakraBackend::GetMemoryUsage() {
+    size_t res;
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsGetRuntimeMemoryUsage), g_runtime,
+                      &res);
+    return res;
+}
 
 void *ChakraBackend::Undefined() {
     JsValueRef v;
@@ -14,6 +69,12 @@ void *ChakraBackend::Undefined() {
 void *ChakraBackend::Null() {
     JsValueRef v;
     ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsGetNullValue), &v);
+    return v;
+}
+
+void *ChakraBackend::Object() {
+    JsValueRef v;
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateObject), &v);
     return v;
 }
 
