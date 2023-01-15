@@ -1,3 +1,4 @@
+#pragma once
 #include <stdexcept>
 #include <ChakraCore.h>
 #include "private/JsFunctionArgumentsImpl.h"
