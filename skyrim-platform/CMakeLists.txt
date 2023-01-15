@@ -1,4 +1,4 @@
-project(platform_se)
+project(skyrim-platform)
 
 set(DEV_SERVICE_CFG_PATH "tools/dev_service/config.js")
 file(WRITE ${DEV_SERVICE_CFG_PATH} "")

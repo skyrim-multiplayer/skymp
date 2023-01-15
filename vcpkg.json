@@ -5,7 +5,6 @@
   "description": "Online mod for Skyrim SE.",
   "dependencies": [
     "cmakerc",
-    "chakracore",
     "nlohmann-json",
     "cpp-httplib",
     "zlib",
@@ -17,6 +16,10 @@
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
+    {
+      "name": "chakracore",
+      "platform": "windows"
+    },
     {
       "name": "directxtk",
       "platform": "windows"

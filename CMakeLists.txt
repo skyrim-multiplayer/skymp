@@ -1,13 +1,5 @@
-# At the moment of writing this gives ~10% speedup of cmake command on Windows
-# https://gitlab.kitware.com/cmake/cmake/-/issues/23154
-if(POLICY 0115)
-  cmake_policy(SET CMP0115 NEW)
-endif()
-
 if(WIN32)
   set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
-else()
-  set(VCPKG_TARGET_TRIPLET "x64-linux")
 endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
@@ -51,7 +43,7 @@ else()
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
 endif()
 
-cmake_minimum_required(VERSION 3.18.2)
+cmake_minimum_required(VERSION 3.18.2...3.24.0)
 project(skymp)
 enable_testing()
 
@@ -109,9 +101,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
+add_subdirectory(1js)
 add_subdirectory(viet)
 add_subdirectory(skyrim-platform)
-
 
 add_subdirectory(client-deps)
 add_subdirectory(skymp5-client)

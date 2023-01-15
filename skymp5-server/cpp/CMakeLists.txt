@@ -66,8 +66,8 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo)
-target_include_directories(server_guest_lib PUBLIC "${CMAKE_SOURCE_DIR}/1js")
+target_link_libraries(server_guest_lib PUBLIC node 1js viet mp_common espm papyrus-vm-lib geo)
+target_compile_definitions(server_guest_lib PUBLIC JS_ENGINE_NODE_API=1)
 
 #
 # papyrus-vm-lib
@@ -97,8 +97,6 @@ target_include_directories(localization-provider PUBLIC "${CMAKE_CURRENT_SOURCE_
 #
 # Link vcpkg deps
 #
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 foreach(target ${VCPKG_DEPENDENT})
   find_path(CATCH_INCLUDE_DIR NAMES catch.hpp PATH_SUFFIXES catch2)
@@ -137,11 +135,12 @@ foreach(target ${VCPKG_DEPENDENT})
   if(WIN32)
     target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
   endif()
+
+  if(MSVC AND "${target}" STREQUAL "server_guest_lib")
+    find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
+    find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
+    string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
+    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")
+    target_include_directories(${target} PUBLIC ${ChakraCore_INCLUDE_DIR})
+  endif()
 endforeach()
-
-find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
-find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
-string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
-
-# don't want to link against MpClientPlugin for example..
-target_link_libraries(server_guest_lib PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")

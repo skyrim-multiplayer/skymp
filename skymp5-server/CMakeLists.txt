@@ -5,12 +5,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 
 set(SKYMP5_SERVER_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-# Add C++ part of the server (except cpp/addon)
-add_subdirectory(cpp)
-
-# Add TypeScript part of the server
-add_subdirectory(ts)
-
 # Add "cpp/addon" in a few steps:
 
 # "cmake-js" is tool from JS world allowing us to fetch NodeJS headers/libs/sources
@@ -43,8 +37,13 @@ string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
 
-# Great. Now we have CMake target called "node".
-# We can link our target against it.
+# Add C++ part of the server (except cpp/addon)
+add_subdirectory(cpp)
+
+# Add TypeScript part of the server
+add_subdirectory(ts)
+
+# Add C++ addon for NodeJS
 
 file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
 if(MSVC)

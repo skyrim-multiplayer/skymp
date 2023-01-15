@@ -13,7 +13,7 @@
 #include "PartOne.h"
 #include "ScriptStorage.h"
 #include "formulas/TES5DamageFormula.h"
-#include <JsEngine.h>
+#include "JsEngineNode.h"
 #include <cassert>
 #include <cctype>
 #include <memory>
