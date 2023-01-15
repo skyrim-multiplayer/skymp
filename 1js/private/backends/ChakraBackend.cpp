@@ -31,8 +31,8 @@ void ChakraBackend::ResetContext(Viet::TaskQueue &taskQueue) {
 void *ChakraBackend::RunScript(const char *src, const char *fileName) {
     JsValueRef scriptSource;
     ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateExternalArrayBuffer),
-                      (void*)src,
-                      (unsigned int)strlen(src),
+                      reinterpret_cast<void*>(const_cast<char *>(src)),
+                      static_cast<unsigned int>(strlen(src)),
                       nullptr, nullptr, &scriptSource);
 
     JsValueRef fname;
