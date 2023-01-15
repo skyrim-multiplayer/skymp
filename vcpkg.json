@@ -16,6 +16,7 @@
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
+    "node-api",
     {
       "name": "chakracore",
       "platform": "windows"

@@ -1,41 +1,20 @@
 project(skymp5-server)
 enable_testing()
-
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
-
 set(SKYMP5_SERVER_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-# Add "cpp/addon" in a few steps:
-
-# "cmake-js" is tool from JS world allowing us to fetch NodeJS headers/libs/sources
-# We need them to our build native NodeJS addon
-
-# cmake-js doesn't allow to simply include something into existing CMake-based build system
-# it expects top-level CMakeLists.txt. We can't meet this requirement.
-# We want to generate project files with `cmake ..`, not `yarn configure` or something
-# But we still want to build native NodeJS addon
-
-# Solution:
-# 1. Give cmake-js a special CMakeLists.txt from the `cmake-js-fetch` directory.
-#    Look into package.json and `cmake-js-fetch/CMakeLists.txt` to understand mechanism
-yarn_execute_command(
-  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  COMMAND cmake-js-fetch
-)
-
-# 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
-
-# 3. Simply include `node.cmake`.
-include(${CMAKE_BINARY_DIR}/cmake-js-fetch-build/node.cmake)
-
-# 4. Include `node-addon-api`, a wrapper over NAPI.
+# Find node-addon-api
+add_library(node-addon-api INTERFACE)
 execute_process(COMMAND node -p "require('node-addon-api').include"
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   OUTPUT_VARIABLE NODE_ADDON_API_DIR
 )
 string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-target_include_directories(node INTERFACE ${NODE_ADDON_API_DIR})
+target_include_directories(node-addon-api INTERFACE ${NODE_ADDON_API_DIR})
+
+# Find node-api
+find_package(unofficial-node-api REQUIRED)
 
 # Add C++ part of the server (except cpp/addon)
 add_subdirectory(cpp)
@@ -44,18 +23,13 @@ add_subdirectory(cpp)
 add_subdirectory(ts)
 
 # Add C++ addon for NodeJS
-
 file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
 if(MSVC)
   list(APPEND sources "${CMAKE_SOURCE_DIR}/.clang-format")
 endif()
 add_library(${PROJECT_NAME} SHARED ${sources})
-
-# Apply NodeJS convention (no .dll/.so, just .node)
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
-
-# Legacy TypeScript part expects this module to be called `scam_native`
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
+target_link_libraries(${PROJECT_NAME} PRIVATE node-addon-api unofficial::node-api::node-api)
 
 # Put build artifacts into build/dist/server
 if(WIN32)
