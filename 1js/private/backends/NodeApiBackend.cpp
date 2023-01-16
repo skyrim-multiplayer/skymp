@@ -297,25 +297,23 @@ void NodeApiBackend::SetProperty(void *value, void* key, void *newValue) {
     }
 }
 
-void NodeApiBackend::DefineProperty(void *value, void* key, void* descriptor) {
-    // // get getter and setter from descriptor
-    // napi_value getter;
-    // NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_named_property), g_env, descriptor, "get", &getter);
-    // napi_value setter;
-    // NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_named_property), g_env, descriptor, "set", &setter);
+// TODO: fix memory leak. It uses Function method which creates new std::function every time
+void NodeApiBackend::DefineProperty(void *value, void* key, const FunctionT &getter, const FunctionT &setter) {
+    // TODO: rewrite without eval
+    auto src = "(value, key, getter, setter) => Object.defineProperty(value, key, { getter, setter });";
+    napi_value script = static_cast<napi_value>(String(src));
+    napi_value definePropertyFunction;
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_run_script), g_env, script, &definePropertyFunction);
 
-    // napi_property_descriptor desc = {
-    // nullptr,
-    // static_cast<napi_value>(key),
-    // nullptr, //method
-    // getter,
-    // setter,
-    // nullptr,
-    // napi_writable | napi_enumerable | napi_configurable,
-    // nullptr
-    // };
+    napi_value args[4] = {
+        static_cast<napi_value>(value),
+        static_cast<napi_value>(key),
+        static_cast<napi_value>(Function(getter)),
+        static_cast<napi_value>(Function(setter))
+    };
 
-    // NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_define_properties), g_env, value, 1, &desc);
+    napi_value result;
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_call_function), g_env, nullptr, definePropertyFunction, 4, args, &result);
 }
 
 void* NodeApiBackend::GetProperty(void *value, void *key) {

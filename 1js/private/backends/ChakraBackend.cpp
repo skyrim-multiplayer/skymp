@@ -297,7 +297,17 @@ void ChakraBackend::SetProperty(void *value, void* key, void *newValue) {
   }
 }
 
-void ChakraBackend::DefineProperty(void *value, void* key, void* descriptor) {
+void ChakraBackend::DefineProperty(void *value, void* key, const FunctionT &getter, const FunctionT &setter) {
+    auto descriptor = Object();
+    if (getter) {
+        auto strGet = String("get");
+        SetProperty(descriptor, strGet, Function(getter));
+    }
+    if (setter) {
+        auto strSet = String("set");
+        SetProperty(descriptor, strSet, Function(setter));
+    }
+
   bool result;
   ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsObjectDefineProperty), value, key, descriptor, &result);
 }

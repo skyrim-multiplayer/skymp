@@ -182,15 +182,8 @@ JsValue::JsValue()
 
   void JsValue::SetProperty(const char* propertyName, const FunctionT& getter,
                    const FunctionT& setter) const {
-    JsValue descriptor = JsValue::Object();
     JsValue propName = JsValue::String(propertyName);
-    if (getter) { 
-      descriptor.SetProperty("get", JsValue::Function(getter));
-    }
-    if (setter) {
-      descriptor.SetProperty("set", JsValue::Function(setter));
-    }
-    BACKEND::DefineProperty(value, propName.value, descriptor.value);
+    BACKEND::DefineProperty(value, propName.value, getter, setter);
   }
 
   JsValue JsValue::GetProperty(const JsValue& key) const {

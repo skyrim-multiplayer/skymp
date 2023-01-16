@@ -43,7 +43,7 @@ public:
     static JsType GetType(void *value);
     static JsExternalObjectBase *GetExternalData(void *value);
     static void SetProperty(void *value, void* key, void *newValue);
-    static void DefineProperty(void *value, void* key, void* descriptor);
+    static void DefineProperty(void *value, void* key, const FunctionT &getter, const FunctionT &setter);
     static void *GetProperty(void *value, void *key);
     static void *Call(void *value, void** arguments, uint32_t argumentCount, bool isConstructor);
     static void AddRef(void *value);
