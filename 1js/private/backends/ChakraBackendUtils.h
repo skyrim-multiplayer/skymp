@@ -26,7 +26,5 @@ public:
   static void OnPromiseRejection(JsValueRef promise, JsValueRef reason_,
                                  bool handled, void* state);
 
-  static std::string ConvertJsExceptionToString(JsValueRef exception);
-
   static std::string GetJsExceptionMessage(const char* opName, JsErrorCode ec);
 };
