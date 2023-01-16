@@ -1,7 +1,10 @@
+#include "AnyBackend.h"
 #include "ChakraBackend.h"
 #include "ChakraBackendUtils.h"
 #include <cstring>
 #include <ChakraCore.h>
+
+AnyBackend_DefineCreateFunction(MakeChakraBackend, ChakraBackend);
 
 thread_local unsigned g_currentSourceContext = 0;
 thread_local JsRuntimeHandle g_runtime = nullptr;

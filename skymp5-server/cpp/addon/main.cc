@@ -1757,7 +1757,8 @@ Napi::Value ScampServer::ExecuteJavaScriptOnChakra(
 {
   try {
     if (!chakraEngine) {
-      chakraEngine.reset(new JsEngine);
+      JsEngine engine = JsEngine::CreateNodeApi(static_cast<napi_env>(info.Env()));
+      chakraEngine = std::make_shared<JsEngine>(std::move(engine));
       chakraEngine->ResetContext(chakraTaskQueue);
     }
     auto src = static_cast<std::string>(info[0].As<Napi::String>());

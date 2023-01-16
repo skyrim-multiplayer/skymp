@@ -1,15 +1,15 @@
 #pragma once
 #include "CommonBackendUtils.h"
-#include <napi.h>
+#include <js_native_api.h>
 
 class NodeApiBackendUtils : public CommonBackendUtils {
 public:
   template <class F, class... A>
   static void SafeCall(F func, const char* funcName, napi_env env, A... args)
   {
-    auto result = func(args...);
+    auto result = func(env, args...);
     if (result != napi_status::napi_ok) {
-      throw std::runtime_error(GetJsExceptionMessage(env, uncName, result));
+      throw std::runtime_error(GetJsExceptionMessage(env, funcName, result));
     }
   }
 

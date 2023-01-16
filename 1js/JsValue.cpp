@@ -1,87 +1,77 @@
 #include "JsValue.h"
-
-#define USE_CHAKRA // TODO: move to CMakeLists.txt
-
-#if defined(USE_CHAKRA)
-#include "private/backends/ChakraBackend.h"
-#define BACKEND ChakraBackend
-#elif defined(USE_NODE_API)
-#include "private/backends/NodeApiBackend.h"
-#define BACKEND NodeApiBackend
-#else
-#error "No backend defined"
-#endif
+#include "private/backends/AnyBackend.h"
 
 JsValue JsValue::Undefined() {
-    return JsValue(BACKEND::Undefined());
+    return JsValue(BACKEND Undefined());
 }
 
 JsValue JsValue::Null() {
-    return JsValue(BACKEND::Null());
+    return JsValue(BACKEND Null());
 }
 
 JsValue JsValue::Object() {
-    return JsValue(BACKEND::Object());
+    return JsValue(BACKEND Object());
 }
 
 JsValue JsValue::ExternalObject(JsExternalObjectBase* data) {
-    return JsValue(BACKEND::ExternalObject(data));
+    // TODO: Add finalizer parameter to JsValue::ExternalObject instead of using std::nullopt here
+    return JsValue(BACKEND ExternalObject(data, std::nullopt));
 }
 
 JsValue JsValue::Array(uint32_t n) {
-    return JsValue(BACKEND::Array(n));
+    return JsValue(BACKEND Array(n));
 }
 
 JsValue JsValue::GlobalObject() {
-    return JsValue(BACKEND::GlobalObject());
+    return JsValue(BACKEND GlobalObject());
 }
 
 JsValue JsValue::Bool(bool arg) {
-    return JsValue(BACKEND::Bool(arg));
+    return JsValue(BACKEND Bool(arg));
 }
 
 JsValue JsValue::String(const std::string& arg) {
-    return JsValue(BACKEND::String(arg));
+    return JsValue(BACKEND String(arg));
 }
 
 JsValue JsValue::Int(int arg) {
-    return JsValue(BACKEND::Int(arg));
+    return JsValue(BACKEND Int(arg));
 }
 
 JsValue JsValue::Double(double arg) {
-    return JsValue(BACKEND::Double(arg));
+    return JsValue(BACKEND Double(arg));
 }
 
 JsValue JsValue::Function(const FunctionT& arg) {
-    return JsValue(BACKEND::Function(arg));
+    return JsValue(BACKEND Function(arg));
 }
 
 JsValue JsValue::NamedFunction(const char* name, const FunctionT& arg) {
-    return JsValue(BACKEND::NamedFunction(name, arg));
+    return JsValue(BACKEND NamedFunction(name, arg));
 }
 
 JsValue JsValue::Uint8Array(uint32_t length) {
-    return JsValue(BACKEND::Uint8Array(length));
+    return JsValue(BACKEND Uint8Array(length));
 }
 
 JsValue JsValue::ArrayBuffer(uint32_t length) {
-    return JsValue(BACKEND::ArrayBuffer(length));
+    return JsValue(BACKEND ArrayBuffer(length));
 }
 
 void* JsValue::GetTypedArrayData() const {
-    return BACKEND::GetTypedArrayData(value);
+    return BACKEND GetTypedArrayData(value);
 }
 
 uint32_t JsValue::GetTypedArrayBufferLength() const {
-    return BACKEND::GetTypedArrayBufferLength(value);
+    return BACKEND GetTypedArrayBufferLength(value);
 }
 
 void* JsValue::GetArrayBufferData() const {
-    return BACKEND::GetArrayBufferData(value);
+    return BACKEND GetArrayBufferData(value);
 }
 
 uint32_t JsValue::GetArrayBufferLength() const {
-    return BACKEND::GetArrayBufferLength(value);
+    return BACKEND GetArrayBufferLength(value);
 }
 
 JsValue::JsValue()
@@ -147,47 +137,47 @@ JsValue::JsValue()
 
   std::string JsValue::ToString() const
   {
-    void* res = BACKEND::ConvertValueToString(value);
-    return BACKEND::GetString(res);
+    void* res = BACKEND ConvertValueToString(value);
+    return BACKEND GetString(res);
   }
 
   JsValue::operator bool() const
   {
-    return BACKEND::GetBool(value);
+    return BACKEND GetBool(value);
   }
 
-  JsValue::operator std::string() const { return BACKEND::GetString(value); }
+  JsValue::operator std::string() const { return BACKEND GetString(value); }
 
   JsValue::operator int() const
   {
-    return BACKEND::GetInt(value);
+    return BACKEND GetInt(value);
   }
 
   JsValue::operator double() const
   {
-    return BACKEND::GetDouble(value);
+    return BACKEND GetDouble(value);
   }
 
   JsType JsValue::GetType() const {
-    return BACKEND::GetType(value);
+    return BACKEND GetType(value);
   }
 
   JsExternalObjectBase* JsValue::GetExternalData() const {
-    return BACKEND::GetExternalData(value);
+    return BACKEND GetExternalData(value);
   }
 
   void JsValue::SetProperty(const JsValue& key, const JsValue& newValue) const {
-    BACKEND::SetProperty(value, key.value, newValue.value);
+    BACKEND SetProperty(value, key.value, newValue.value);
   }
 
   void JsValue::SetProperty(const char* propertyName, const FunctionT& getter,
                    const FunctionT& setter) const {
     JsValue propName = JsValue::String(propertyName);
-    BACKEND::DefineProperty(value, propName.value, getter, setter);
+    BACKEND DefineProperty(value, propName.value, getter, setter);
   }
 
   JsValue JsValue::GetProperty(const JsValue& key) const {
-    return JsValue(BACKEND::GetProperty(value, key.value));
+    return JsValue(BACKEND GetProperty(value, key.value));
   }
 
   JsValue JsValue::Call(const std::vector<JsValue>& arguments) const {
@@ -203,20 +193,20 @@ JsValue::JsValue()
 
   void JsValue::AddRef() {
     if (value) {
-      BACKEND::AddRef(value);
+      BACKEND AddRef(value);
     }
   }
 
   void JsValue::Release() {
     if (value) {
-      BACKEND::Release(value);
+      BACKEND Release(value);
     }
   }
 
   JsValue JsValue::Call(const std::vector<JsValue>& arguments, bool isConstructor) const {
     JsValue *ptr = const_cast<JsValue*>(arguments.data());
     void **args = reinterpret_cast<void**>(ptr);
-    return JsValue(BACKEND::Call(value, args, arguments.size(), isConstructor));
+    return JsValue(BACKEND Call(value, args, arguments.size(), isConstructor));
   }
 
 #ifdef JS_ENGINE_TRACING_ENABLED

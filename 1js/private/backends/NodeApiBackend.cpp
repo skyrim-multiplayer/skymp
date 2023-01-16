@@ -1,7 +1,10 @@
+#include "AnyBackend.h"
 #include "NodeApiBackend.h"
 #include "NodeApiBackendUtils.h"
-#include <napi.h>
+#include <js_native_api.h>
 #include <cstring>
+
+AnyBackend_DefineCreateFunction(MakeNodeApiBackend, NodeApiBackend);
 
 thread_local napi_env g_env;
 
@@ -50,7 +53,7 @@ void* NodeApiBackend::Object() {
 void* NodeApiBackend::ExternalObject(JsExternalObjectBase *data, std::optional<Finalize> finalize) {
     napi_value result;
     if (finalize) {
-        NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_external), g_env, data, NodeApiBackendUtils::Finalize, *finalize, &result);
+        NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_external), g_env, data, NodeApiBackendUtils::Finalize, reinterpret_cast<void*>(*finalize), &result);
     }
     else {
         NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_external), g_env, data, nullptr, nullptr, &result);
@@ -110,7 +113,7 @@ void* NodeApiBackend::NamedFunction(const char *name, const FunctionT &arg) {
 
 void* NodeApiBackend::Uint8Array(uint32_t length) {
     napi_value arrayBuffer;
-    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_arraybuffer), g_env, length, &arrayBuffer);
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_arraybuffer), g_env, length, nullptr, &arrayBuffer);
 
     napi_value result;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_typedarray), g_env, napi_uint8_array, length, arrayBuffer, 0, &result);
@@ -119,11 +122,12 @@ void* NodeApiBackend::Uint8Array(uint32_t length) {
 
 void* NodeApiBackend::ArrayBuffer(uint32_t length) {
     napi_value result;
-    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_arraybuffer), g_env, length, &result);
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_arraybuffer), g_env, length, nullptr, &result);
     return result;
 }
 
-void* NodeApiBackend::GetTypedArrayData(void *value) {
+void* NodeApiBackend::GetTypedArrayData(void *value_) {
+    napi_value value = reinterpret_cast<napi_value>(value_);
     napi_typedarray_type type;
     size_t length;
     void *data;
@@ -133,7 +137,8 @@ void* NodeApiBackend::GetTypedArrayData(void *value) {
     return data;
 }
 
-uint32_t NodeApiBackend::GetTypedArrayBufferLength(void *value) {
+uint32_t NodeApiBackend::GetTypedArrayBufferLength(void *value_) {
+    napi_value value = reinterpret_cast<napi_value>(value_);
     napi_typedarray_type type;
     size_t length;
     void *data;
@@ -159,27 +164,31 @@ uint32_t NodeApiBackend::GetTypedArrayBufferLength(void *value) {
     }
 }   
 
-void* NodeApiBackend::GetArrayBufferData(void *value) {
+void* NodeApiBackend::GetArrayBufferData(void *value_) {
+    auto value = static_cast<napi_value>(value_);
     size_t length;
     void *data;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_arraybuffer_info), g_env, value, &data, &length);
     return data;
 }
 
-uint32_t NodeApiBackend::GetArrayBufferLength(void *value) {
+uint32_t NodeApiBackend::GetArrayBufferLength(void *value_) {
+    auto value = static_cast<napi_value>(value_);
     size_t length;
     void *data;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_arraybuffer_info), g_env, value, &data, &length);
     return length;
 }
 
-void* NodeApiBackend::ConvertValueToString(void *value) {
+void* NodeApiBackend::ConvertValueToString(void *value_) {
+    auto value = static_cast<napi_value>(value_);
     napi_value result;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_coerce_to_string), g_env, value, &result);
     return result;
 }
 
-std::string NodeApiBackend::GetString(void *value) {
+std::string NodeApiBackend::GetString(void *value_) {
+    auto value = static_cast<napi_value>(value_);
     size_t length;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_value_string_utf8), g_env, value, nullptr, 0, &length);
     std::string result(length, '\0');
@@ -187,25 +196,30 @@ std::string NodeApiBackend::GetString(void *value) {
     return result;
 }
 
-bool NodeApiBackend::GetBool(void *value) {
+bool NodeApiBackend::GetBool(void *value_) {
+    auto value = static_cast<napi_value>(value_);
     bool result;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_value_bool), g_env, value, &result);
     return result;
 }
 
-int NodeApiBackend::GetInt(void *value) {
+int NodeApiBackend::GetInt(void *value_) {
+    napi_value value = static_cast<napi_value>(value_);
     int32_t result;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_value_int32), g_env, value, &result);
     return result;
 }
 
-double NodeApiBackend::GetDouble(void *value) {
+double NodeApiBackend::GetDouble(void *value_) {
+    napi_value value = static_cast<napi_value>(value_);
     double result;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_value_double), g_env, value, &result);
     return result;
 }
 
-JsType NodeApiBackend::GetType(void *value) {
+JsType NodeApiBackend::GetType(void *value_) {
+    napi_value value = static_cast<napi_value>(value_);
+
     // TODO: replace napi_typeof with napi_is_* functions for numbers, strings, etc.
     // Check for popular types first
 
@@ -266,7 +280,9 @@ JsType NodeApiBackend::GetType(void *value) {
     }
 }
 
-JsExternalObjectBase* NodeApiBackend::GetExternalData(void *value) {
+JsExternalObjectBase* NodeApiBackend::GetExternalData(void *value_) {
+    napi_value value = static_cast<napi_value>(value_);
+
     napi_valuetype type;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_typeof), g_env, value, &type);
     if (type != napi_external) {
@@ -278,7 +294,11 @@ JsExternalObjectBase* NodeApiBackend::GetExternalData(void *value) {
     return result;
 }
 
-void NodeApiBackend::SetProperty(void *value, void* key, void *newValue) {
+void NodeApiBackend::SetProperty(void *value_, void* key_, void *newValue_) {
+    napi_value value = static_cast<napi_value>(value_);
+    napi_value key = static_cast<napi_value>(key_);
+    napi_value newValue = static_cast<napi_value>(newValue_);
+
     napi_valuetype type;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_typeof), g_env, key, &type);
     switch (type) {
@@ -316,7 +336,10 @@ void NodeApiBackend::DefineProperty(void *value, void* key, const FunctionT &get
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_call_function), g_env, nullptr, definePropertyFunction, 4, args, &result);
 }
 
-void* NodeApiBackend::GetProperty(void *value, void *key) {
+void* NodeApiBackend::GetProperty(void *value_, void *key_) {
+    auto value = static_cast<napi_value>(value_);
+    auto key = static_cast<napi_value>(key_);
+
     napi_valuetype type;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_typeof), g_env, key, &type);
     switch (type) {

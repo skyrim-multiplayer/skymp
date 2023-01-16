@@ -1,6 +1,6 @@
 file(GLOB ESPM_SRC "*.h" "*.cpp")
 add_library(espm STATIC ${ESPM_SRC})
 target_include_directories(espm PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-if(UNIX)
+if(UNIX AND NOT APPLE)
   target_link_libraries(espm PUBLIC stdc++fs)
 endif()

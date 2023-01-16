@@ -2,10 +2,10 @@
 #include "CommonBackend.h"
 #include "JsExternalObjectBase.h"
 #include "FunctionT.h"
-#include "JsFunctionArgumentsImpl.h"
+#include "private/JsFunctionArgumentsImpl.h"
 #include "JsValue.h" // Required for calling FunctionT
 #include <sstream>
-#include <napi.h>
+#include <js_native_api.h>
 
 void NodeApiBackendUtils::Finalize(napi_env env, void *finalizeData, void *finalizeHint)
 {
