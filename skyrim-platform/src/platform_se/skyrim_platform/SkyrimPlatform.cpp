@@ -235,7 +235,7 @@ private:
   std::shared_ptr<JsEngine> GetJsEngine()
   {
     if (!engine_) {
-      engine_ = std::make_shared<JsEngine>();
+      engine_ = std::make_shared<JsEngine>(JsEngine::CreateChakra());
       engine_->ResetContext(jsPromiseTaskQueue);
     }
     return engine_;
