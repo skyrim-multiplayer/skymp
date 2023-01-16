@@ -16,4 +16,6 @@ public:
   static void Finalize(napi_env env, void *finalizeData, void *finalizeHint);
 
   static std::string GetJsExceptionMessage(napi_env env, const char* operationName, napi_status errorCode);
+
+  static napi_value NativeFunctionImpl(napi_env env, napi_callback_info info);
 };

@@ -94,14 +94,18 @@ void* NodeApiBackend::Double(double arg) {
     return result;
 }
 
+// TODO: fix memory leak (new FunctionT(arg)), node-addon-api may have a reference on how to do this
 void* NodeApiBackend::Function(const FunctionT &arg) {
-
+    napi_value result;
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_function), g_env, nullptr, 0, NodeApiBackendUtils::NativeFunctionImpl, new FunctionT(arg), &result);
+    return result;
 }
 
+// TODO: fix memory leak (new FunctionT(arg)), node-addon-api may have a reference on how to do this
 void* NodeApiBackend::NamedFunction(const char *name, const FunctionT &arg) {
-    //napi_value result;
-    //NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_function), g_env, name, strlen(name), NodeApiBackendUtils::Function, arg, &result);
-    //return result;
+    napi_value result;
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_function), g_env, name, strlen(name), NodeApiBackendUtils::NativeFunctionImpl, new FunctionT(arg), &result);
+    return result;
 }
 
 void* NodeApiBackend::Uint8Array(uint32_t length) {

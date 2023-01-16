@@ -1,6 +1,9 @@
 #include "NodeApiBackendUtils.h"
 #include "CommonBackend.h"
 #include "JsExternalObjectBase.h"
+#include "FunctionT.h"
+#include "JsFunctionArgumentsImpl.h"
+#include "JsValue.h" // Required for calling FunctionT
 #include <sstream>
 #include <napi.h>
 
@@ -23,4 +26,36 @@ std::string NodeApiBackendUtils::GetJsExceptionMessage(napi_env env, const char*
     }
 
     return ss.str();
+}
+
+napi_value NodeApiBackendUtils::NativeFunctionImpl(napi_env env, napi_callback_info info) {
+    // get arguments count
+    size_t argc = 0;
+    auto errorCode = napi_get_cb_info(env, info, &argc, nullptr, nullptr, nullptr);
+    if (errorCode != napi_status::napi_ok) {
+        std::terminate();
+    }
+
+    // get arguments, thisArg and data
+    std::vector<napi_value> arguments(argc + 1);
+    void* data;
+    errorCode = napi_get_cb_info(env, info, &argc, arguments.data() + 1, &arguments[0], &data);
+    if (errorCode != napi_status::napi_ok) {
+        std::terminate();
+    }
+
+    // construct JsFunctionArgumentsImpl
+    auto argsStart = reinterpret_cast<void**>(arguments.data());
+    JsFunctionArgumentsImpl jsArguments(argsStart, argc);
+
+    // call function
+    FunctionT* function = reinterpret_cast<FunctionT*>(data);
+    try {
+        JsValue result = (*function)(jsArguments);
+        return static_cast<napi_value>(result.value);
+    }
+    catch (std::exception &e) {
+        napi_throw_error(env, nullptr, e.what());
+        return nullptr;
+    }
 }
