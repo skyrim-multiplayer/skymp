@@ -9,7 +9,7 @@ TEST_CASE("Asynchronous operations should not trigger assert during static "
           "[HttpClientApi][JsEngine]")
 {
   Viet::TaskQueue taskQueue;
-  JsEngine engine;
+  JsEngine engine = JsEngine::CreateChakra();
   engine.ResetContext(taskQueue);
 
   // Triggers OnPromiseContinuation that adds a task to the queue.
@@ -30,7 +30,7 @@ TEST_CASE("Asynchronous operations should not trigger assert during static "
 nlohmann::json ExecuteScript(const char* src)
 {
   Viet::TaskQueue taskQueue;
-  JsEngine engine;
+  JsEngine engine = JsEngine::CreateChakra();
   engine.ResetContext(taskQueue);
 
   HttpClientApi::Register(JsValue::GlobalObject());
