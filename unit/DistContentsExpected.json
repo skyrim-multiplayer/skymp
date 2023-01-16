@@ -352,8 +352,7 @@
       "client/Data/SKSE/Plugins/MpClientPlugin.dll",
       "client/Data/SKSE/Plugins/SkyrimPlatform.dll",
       "client/Data/SKSE/Plugins/SkyrimSoulsRE.dll",
-      "client/Data/SKSE/Plugins/SkyrimSoulsRE.ini",
-      "server/ChakraCore.dll"
+      "client/Data/SKSE/Plugins/SkyrimSoulsRE.ini"
     ]
   }
 ]

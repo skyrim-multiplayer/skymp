@@ -2,7 +2,6 @@
 #include "NodeApiBackend.h"
 #include "NodeApiBackendUtils.h"
 #include "JsEngine.h"
-#include <js_native_api.h>
 #include <cstring>
 
 AnyBackend_DefineCreateFunction(MakeNodeApiBackend, NodeApiBackend);
