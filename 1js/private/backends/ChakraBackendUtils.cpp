@@ -69,22 +69,6 @@ void* ChakraBackendUtils::NativeFunctionImpl(void* callee, bool isConstructorCal
     q->AddTask([str = std::move(str)] { throw std::runtime_error(str); });
   }
 
-  std::string ChakraBackendUtils::ConvertJsExceptionToString(JsValueRef exception)
-  {
-    try {
-      auto stack = JsValue(exception).GetProperty("stack").ToString();
-      if (stack == "undefined") {
-        throw 1;
-      }
-      return stack;
-    } catch (...) {
-      std::stringstream ss;
-      ss << JsValue(exception).ToString() << std::endl;
-      ss << "<unable to get stack>";
-      return ss.str();
-    }
-  }
-
   std::string ChakraBackendUtils::GetJsExceptionMessage(const char* opName, JsErrorCode ec)
   {
     std::stringstream ss;

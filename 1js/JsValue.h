@@ -50,7 +50,9 @@
 class JsValue
 {
   friend class JsEngine;
+  friend class CommonBackendUtils;
   friend class ChakraBackendUtils;
+  friend class NodeApiBackendUtils;
 public:
   static JsValue Undefined();
   static JsValue Null();

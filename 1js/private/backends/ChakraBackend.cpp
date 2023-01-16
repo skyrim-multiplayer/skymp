@@ -7,7 +7,7 @@ thread_local unsigned g_currentSourceContext = 0;
 thread_local JsRuntimeHandle g_runtime = nullptr;
 thread_local JsContextRef g_context = nullptr;
 
-void ChakraBackend::Create() {
+void ChakraBackend::Create(void*) {
     JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &g_runtime);
 }
 
@@ -80,9 +80,13 @@ void *ChakraBackend::Object() {
     return v;
 }
 
-void *ChakraBackend::ExternalObject(JsExternalObjectBase *data) {
+void *ChakraBackend::ExternalObject(JsExternalObjectBase *data, std::optional<Finalize> finalizer) {
     JsValueRef v;
-    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateExternalObject), data, nullptr, &v);
+    JsFinalizeCallback callback = nullptr;
+    if (finalizer) {
+        callback = reinterpret_cast<JsFinalizeCallback>(*finalizer);
+    }
+    ChakraBackendUtils::SafeCall(JS_ENGINE_F(JsCreateExternalObject), data, callback, &v);
     return v;
 }
 

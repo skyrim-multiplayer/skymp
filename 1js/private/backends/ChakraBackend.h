@@ -1,14 +1,18 @@
 #pragma once
+#include "CommonBackend.h"
 #include "FunctionT.h"
 #include "JsExternalObjectBase.h"
 #include "JsType.h"
 #include "TaskQueue.h"
 #include <string>
+#include <optional>
 
 class ChakraBackend {
 public:
+    using Finalize = CommonBackend::Finalize;
+
     // expected lifecycle is Create -> ResetContext -> RunScript -> Destroy
-    static void Create();
+    static void Create(void*);
     static void Destroy();
     static void ResetContext(Viet::TaskQueue &taskQueue);
     static void *RunScript(const char *src, const char *fileName);
@@ -16,7 +20,7 @@ public:
     static void *Undefined();
     static void *Null();
     static void *Object();
-    static void *ExternalObject(JsExternalObjectBase *data);
+    static void *ExternalObject(JsExternalObjectBase *data, std::optional<Finalize> finalize);
     static void *Array(uint32_t n);
     static void *GlobalObject();
     static void *Bool(bool arg);

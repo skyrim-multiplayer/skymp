@@ -3,10 +3,9 @@
 #include <ChakraCore.h>
 #include "private/JsFunctionArgumentsImpl.h"
 #include "FunctionT.h"
+#include "CommonBackendUtils.h"
 
-#define JS_ENGINE_F(func) func, #func
-
-class ChakraBackendUtils {
+class ChakraBackendUtils : public CommonBackendUtils {
 public:
   template <class F, class... A>
   static void SafeCall(F func, const char* funcName, A... args)
