@@ -1,10 +1,16 @@
 #include "AnyBackend.h"
 #include "NodeApiBackend.h"
 #include "NodeApiBackendUtils.h"
+#include "JsEngine.h"
 #include <js_native_api.h>
 #include <cstring>
 
 AnyBackend_DefineCreateFunction(MakeNodeApiBackend, NodeApiBackend);
+
+JsEngine JsEngine::CreateNodeApi(void* env) {
+    AnyBackend::GetInstanceForCurrentThread() = AnyBackend::MakeNodeApiBackend();
+    return JsEngine(env);
+}
 
 thread_local napi_env g_env;
 
@@ -368,7 +374,8 @@ void* NodeApiBackend::GetProperty(void *value_, void *key_) {
 }
 
 void* NodeApiBackend::Call(void *value, void** arguments, uint32_t argumentCount, bool isConstructor) {
-
+    // TODO: implement me
+    return Undefined();
 }
 
 void NodeApiBackend::AddRef(void *value) {

@@ -1,10 +1,16 @@
 #include "AnyBackend.h"
 #include "ChakraBackend.h"
 #include "ChakraBackendUtils.h"
+#include "JsEngine.h
 #include <cstring>
 #include <ChakraCore.h>
 
 AnyBackend_DefineCreateFunction(MakeChakraBackend, ChakraBackend);
+
+JsEngine JsEngine::CreateChakra() {
+    AnyBackend::GetInstanceForCurrentThread() = AnyBackend::MakeChakraBackend();
+    return JsEngine(nullptr);
+}
 
 thread_local unsigned g_currentSourceContext = 0;
 thread_local JsRuntimeHandle g_runtime = nullptr;

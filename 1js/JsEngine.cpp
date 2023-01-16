@@ -6,15 +6,6 @@ struct JsEngine::Impl {
     std::vector<std::shared_ptr<std::string>> scriptSrcHolder;
 };
 
-  JsEngine JsEngine::CreateChakra() {
-    AnyBackend::GetInstanceForCurrentThread() = AnyBackend::MakeChakraBackend();
-    return JsEngine(nullptr);
-  }
-  JsEngine JsEngine::CreateNodeApi(void* env) {
-    AnyBackend::GetInstanceForCurrentThread() = AnyBackend::MakeNodeApiBackend();
-    return JsEngine(env);
-  }
-
 JsEngine::~JsEngine()
 {
     BACKEND Destroy();
