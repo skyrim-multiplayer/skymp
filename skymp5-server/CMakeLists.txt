@@ -11,17 +11,7 @@ yarn_execute_command(
 )
 
 # Find node-addon-api
-add_library(node-addon-api INTERFACE)
-execute_process(COMMAND node -p "require('node-addon-api').include"
-  WORKING_DIRECTORY ${SKYMP5_SERVER_SOURCE_DIR}
-  OUTPUT_VARIABLE NODE_ADDON_API_DIR
-)
-string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-target_include_directories(node-addon-api INTERFACE ${NODE_ADDON_API_DIR})
-
-# Find node-api
-find_package(unofficial-node-api REQUIRED)
+find_package(unofficial-node-addon-api REQUIRED)
 
 # Add C++ part of the server (except cpp/addon)
 add_subdirectory(cpp)
@@ -36,7 +26,7 @@ if(MSVC)
 endif()
 add_library(${PROJECT_NAME} SHARED ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
-target_link_libraries(${PROJECT_NAME} PRIVATE node-addon-api unofficial::node-api::node-api)
+target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
 
 # Put build artifacts into build/dist/server
 if(WIN32)

@@ -17,6 +17,7 @@
     "robin-hood-hashing",
     "simpleini",
     "node-api",
+    "node-addon-api",
     {
       "name": "chakracore",
       "platform": "windows | linux"
