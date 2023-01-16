@@ -1,6 +1,7 @@
 #pragma once
 #include "CommonBackendUtils.h"
 #include <js_native_api.h>
+#include <stdexcept>
 
 class NodeApiBackendUtils : public CommonBackendUtils {
 public:
