@@ -4,11 +4,16 @@
 
 struct JsEngine::Impl {
     std::vector<std::shared_ptr<std::string>> scriptSrcHolder;
+
+    ~Impl()
+    {
+        BACKEND Destroy();
+    }
 };
 
 JsEngine::~JsEngine()
 {
-    BACKEND Destroy();
+    // Do not destroy here, because JsEngine is now copyable and movable
 }
 
 JsValue JsEngine::RunScript(const std::string& src, const std::string& fileName)

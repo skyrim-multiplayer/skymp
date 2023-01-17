@@ -80,3 +80,4 @@ void* ChakraBackendUtils::NativeFunctionImpl(void* callee, bool isConstructorCal
     }
     return ss.str();
   }
+  
