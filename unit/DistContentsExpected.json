@@ -213,7 +213,6 @@
       "MacOS"
     ],
     "expectedFiles": [
-      "server/data/_libkey.js",
       "server/dist_back/fsevents.9a750ea0.node"
     ]
   },
