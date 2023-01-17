@@ -31,21 +31,21 @@ const SkillsMenu = () => {
   useEffect(() => {
     window.addEventListener('updateSkillMenu', fetchData);
     // !Important: Run commented code to dispatch event
-    window.dispatchEvent(
-      new CustomEvent('updateSkillMenu', {
-        detail: {
-          exp: 3375,
-          mem: 2,
-          perks: {
-            saltmaker: 1,
-            weapon: 1,
-            leather: 3,
-            jewelry: 2,
-            clother: 4
-          }
-        }
-      })
-    );
+    // window.dispatchEvent(
+    //   new CustomEvent('updateSkillMenu', {
+    //     detail: {
+    //       exp: 3375,
+    //       mem: 2,
+    //       perks: {
+    //         saltmaker: 1,
+    //         weapon: 1,
+    //         leather: 3,
+    //         jewelry: 2,
+    //         clother: 4
+    //       }
+    //     }
+    //   })
+    // );
     return () => {
       setplayerData(undefined);
       window.removeEventListener('updateSkillMenu', fetchData);

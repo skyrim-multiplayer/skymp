@@ -220,7 +220,8 @@ export const skillMenuInit = () => {
         0x7f7fad3: { name: 'restoration', level: 3 },
         0x7f7fad4: { name: 'restoration', level: 4 },
     } as IItemsIds;
-    const goldId = 0x7f33922;
+    const expId = 0x7f33922;
+    const memId = 0x700DE02;
     on('activate', (event) => {
         const altars =
             [
@@ -239,8 +240,11 @@ export const skillMenuInit = () => {
                 const itemData = itemsIds[item.baseId];
                 frontData.perks[itemData.name] = itemData.level;
             }
-            if (item.baseId == goldId) {
+            if (item.baseId == expId) {
                 frontData.exp = item.count;
+            }
+            if (item.baseId == memId) {
+                frontData.mem = item.count;
             }
         })
 
