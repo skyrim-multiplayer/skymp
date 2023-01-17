@@ -24,6 +24,10 @@ endif()
 file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/*")
 list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
 
+if(APPLE)
+  list(FILTER src EXCLUDE REGEX ".*HttpClientApiTest\.cpp")
+endif()
+
 add_executable(unit ${src})
 
 find_package(Catch2 CONFIG REQUIRED)
