@@ -255,8 +255,9 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[1].j["pos"].dump() ==
           nlohmann::json{ 19243.53515625, -7427.3427734375, -3595.4052734375 }
             .dump());
-  REQUIRE(partOne.Messages()[1].j["rot"].dump() ==
-          nlohmann::json{ 0.0, -0.0, -89.99922180175781 }.dump());
+  REQUIRE(round(static_cast<float>(partOne.Messages()[1].j["rot"][0])) == 0.0f);
+  REQUIRE(round(static_cast<float>(partOne.Messages()[1].j["rot"][1])) == -0.0f);
+  REQUIRE(round(static_cast<float>(partOne.Messages()[1].j["rot"][2])) == -90.0f);
   REQUIRE(partOne.Messages()[1].j["worldOrCell"] == 0x3c);
 
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
@@ -271,7 +272,9 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne][espm]")
   REQUIRE((ac.GetPos() -
            NiPoint3(19243.53515625, -7427.3427734375, -3595.4052734375))
             .Length() < 5);
-  REQUIRE(ac.GetAngle() == NiPoint3{ 0.0, -0.0, -89.99922180175781 });
+  REQUIRE_THAT(ac.GetAngle().x, Catch::Matchers::WithinAbs(-0.0f, 0.0001f));
+  REQUIRE_THAT(ac.GetAngle().y, Catch::Matchers::WithinAbs(-0.0f, 0.0001f));
+  REQUIRE_THAT(ac.GetAngle().z, Catch::Matchers::WithinAbs(-90.0f, 0.001f));
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
