@@ -409,7 +409,7 @@ void PieScript::AddPatronStarterKitItems(MpActor& actor,
   AddKitItems(actor, worldState, StarterKitType::PatronKit);
 }
 
-void PieScript::Play(MpActor& actor, const WorldState& worldState,
+void PieScript::Play(MpActor& actor, WorldState& worldState,
                      uint32_t itemBaseId)
 {
   bool isKit = itemBaseId == EdibleItems::kPatronStarterKitPie;
@@ -452,6 +452,10 @@ void PieScript::Play(MpActor& actor, const WorldState& worldState,
       actor.DamageActorValue(espm::ActorValue::Magicka,
                              it->second.GetPercentageManacost());
       actor.AddItem(it->second.GetBaseId(), 1);
+      worldState.SetTimer(20 * 3).Then([&](Viet::Void) {
+        actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
+        actor.AddItem(it->first, 1);
+      });
     }
   }
 }
