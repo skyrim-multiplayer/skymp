@@ -48,7 +48,7 @@ private:
 
 public:
   PieScript(const std::vector<std::string>& espmFiles);
-  void Play(MpActor& actor, const WorldState& worldState, uint32_t itemBaseId);
+  void Play(MpActor& actor, WorldState& worldState, uint32_t itemBaseId);
 
 private:
   using LootboxTable =
