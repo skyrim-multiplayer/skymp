@@ -54,7 +54,7 @@ elif [[ "$DEPLOY_ACTION" == "deploy" ]]; then
   ./ci/deploy/call_webhook.sh "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
 
   # FIXME(#164): temporary workaround for Chakra build bug
-  cp build/vcpkg_installed/x64-linux/bin/libChakraCore.so build/dist/server/
+  cp build/vcpkg_installed/x64-linux/lib/libChakraCore.so build/dist/server/
   cp ci/deploy/workaround_temporary/run.sh build/dist/server/
 
   rsync --rsh="$remote_shell" -vazPh --checksum \
