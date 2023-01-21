@@ -372,9 +372,32 @@ void* NodeApiBackend::GetProperty(void *value_, void *key_) {
     }
 }
 
-void* NodeApiBackend::Call(void *value, void** arguments, uint32_t argumentCount, bool isConstructor) {
-    // TODO: implement me
-    return Undefined();
+void* NodeApiBackend::Call(void *value, void** arguments_, uint32_t argumentCount, bool isConstructor) {
+    napi_value *arguments = reinterpret_cast<napi_value*>(arguments_);
+    napi_value functionToCall = static_cast<napi_value>(value);
+
+    napi_value thisArg;
+    const napi_value *argumentsNoThis;
+    size_t argumentsNoThisCount;
+    if (argumentCount == 0) {
+        thisArg = static_cast<napi_value>(Undefined());
+        argumentsNoThis = nullptr;
+        argumentsNoThisCount = 0;
+    }
+    else if (argumentCount == 1) {
+        thisArg = arguments[0];
+        argumentsNoThis = nullptr;
+        argumentsNoThisCount = 0;
+    }
+    else {
+        thisArg = arguments[0];
+        argumentsNoThis = arguments + 1;
+        argumentsNoThisCount = argumentCount - 1;
+    }
+
+    napi_value result;
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_call_function), g_env, thisArg, functionToCall, argumentsNoThisCount, argumentsNoThis, &result);
+    return result;
 }
 
 void NodeApiBackend::AddRef(void *value) {
