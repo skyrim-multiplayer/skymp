@@ -67,7 +67,6 @@ target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/se
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
 target_link_libraries(server_guest_lib PUBLIC 1js viet mp_common espm papyrus-vm-lib geo)
-target_compile_definitions(server_guest_lib PUBLIC JS_ENGINE_NODE_API=1)
 
 #
 # papyrus-vm-lib
