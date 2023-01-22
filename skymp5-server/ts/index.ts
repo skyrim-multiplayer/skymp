@@ -1,4 +1,9 @@
 import * as ui from "./ui";
+import * as fs from "fs";
+
+// force working directory to be the same as if we were running "node dist_back/skymp5-server.js"
+process.chdir(__dirname);
+process.chdir("..");
 
 import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install({
@@ -23,7 +28,6 @@ import { Login } from "./systems/login";
 import { EventEmitter } from "events";
 import { NativeGameServer } from "./nativeGameServer";
 import { pid } from "process";
-import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
 import * as libkey from "./libkey";
@@ -270,12 +274,6 @@ const main = async () => {
       console.error(e);
     }
 
-    const watcher = chokidar.watch(absoluteGamemodePath, {
-      ignored: /^\./,
-      persistent: true,
-      awaitWriteFinish: true,
-    });
-
     const numReloads = { n: 0 };
 
     const reloadGamemode = () => {
@@ -295,6 +293,18 @@ const main = async () => {
       );
     };
 
+    if (process.platform === "darwin") {
+      fs.watchFile(absoluteGamemodePath, () => {
+        reloadGamemodeTimeout();
+      });
+      return;
+    }
+
+    const watcher = chokidar.watch(absoluteGamemodePath, {
+      ignored: /^\./,
+      persistent: true,
+      awaitWriteFinish: true,
+    });
     watcher.on("add", reloadGamemodeTimeout);
     watcher.on("addDir", reloadGamemodeTimeout);
     watcher.on("change", reloadGamemodeTimeout);
