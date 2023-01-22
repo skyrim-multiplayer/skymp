@@ -26,9 +26,9 @@ std::chrono::minutes SweetPieBoundWeapon::GetCooldown() const
   return kCooldowns[skillLevel];
 }
 
-float SweetPieBoundWeapon::GetPercentageManacost() const
+float SweetPieBoundWeapon::GetManacost() const
 {
-  return kPercentageManacosts[skillLevel];
+  return kManacosts[skillLevel];
 }
 
 uint32_t SweetPieBoundWeapon::GetBaseId() const
