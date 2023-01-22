@@ -7,11 +7,11 @@ const std::array<std::chrono::minutes, 4> SweetPieBoundWeapon::kCooldowns = {
   std::chrono::minutes(6),
 };
 
-const std::array<float, 4> SweetPieBoundWeapon::kPercentageManacosts = {
-  0.3f,
-  0.4f,
-  0.5f,
-  0.6f,
+const std::array<float, 4> SweetPieBoundWeapon::kManacosts = {
+  30.f,
+  40.f,
+  50.f,
+  60.f,
 };
 
 SweetPieBoundWeapon::SweetPieBoundWeapon(uint32_t baseId_,

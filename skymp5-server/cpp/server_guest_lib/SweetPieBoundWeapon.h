@@ -22,5 +22,5 @@ private:
   uint32_t baseId;
   SkillLevel skillLevel;
   const static std::array<std::chrono::minutes, 4> kCooldowns;
-  const static std::array<float, 4> kPercentageManacosts;
+  const static std::array<float, 4> kManacosts;
 };
