@@ -51,6 +51,7 @@ and it can be tricky to get Skyrim itself to work with non-ASCII text, for examp
     ```sh
     echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
     ```
+Also you can use containers to build and run server. More info can be found in the next section.
 
 ## Configuring and Building
 
