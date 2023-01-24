@@ -449,7 +449,7 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
       it != bookBoundWeapons.end()) {
     float currentMagickaPercentage =
       actor.GetChangeForm().actorValues.magickaPercentage;
-    if (currentMagickaPercentage >= it->second.GetManacost()) {
+    if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
       actor.DamageActorValue(espm::ActorValue::Magicka,
                              it->second.GetManacost());
       actor.AddItem(it->second.GetBaseId(), 1);

@@ -16,11 +16,12 @@ public:
   SweetPieBoundWeapon(uint32_t baseId_, SkillLevel skillLevel_);
   std::chrono::minutes GetCooldown() const;
   float GetManacost() const;
+  float GetManacostPercentage() const;
   uint32_t GetBaseId() const;
 
 private:
   uint32_t baseId;
   SkillLevel skillLevel;
   const static std::array<std::chrono::minutes, 4> kCooldowns;
-  const static std::array<float, 4> kManacosts;
+  const static std::array<float, 4> kManacostPercentages;
 };
