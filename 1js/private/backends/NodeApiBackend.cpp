@@ -401,9 +401,10 @@ void* NodeApiBackend::Call(void *value, void** arguments_, uint32_t argumentCoun
 }
 
 void NodeApiBackend::AddRef(void *value) {
-    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_reference_ref), g_env, static_cast<napi_ref>(value), nullptr);
+    napi_create_reference;
+    // NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_reference_ref), g_env, static_cast<napi_ref>(value), nullptr);
 }
 
 void NodeApiBackend::Release(void *value) {
-    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_reference_unref), g_env, static_cast<napi_ref>(value), nullptr);
+    // NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_reference_unref), g_env, static_cast<napi_ref>(value), nullptr);
 }
