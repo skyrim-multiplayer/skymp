@@ -3,6 +3,69 @@
 #include "NodeApiBackendUtils.h"
 #include "JsEngine.h"
 #include <cstring>
+#include <variant>
+
+namespace {
+    struct Null {};
+    struct Undefined {};
+
+    using Variant = std::variant<napi_ref, std::string, int, double, bool, Null, Undefined>;
+    
+    struct ValueImpl {
+        Variant value = Undefined{};
+        int64_t refCount = 0;
+
+        // explicit ValueImpl(napi_value value) {
+        //     napi_valuetype type;
+        //     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_typeof), g_env, value, &type);
+        //     switch(type) {
+        //         case napi_undefined:
+        //             this->value = Undefined{};
+        //             return;
+        //         case napi_null:
+        //             this->value = Null{};
+        //             return;
+        //         case napi_boolean: {
+        //             bool b;
+        //             NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_value_bool), g_env, value, &b);
+        //             this->value = b;
+        //             return;
+        //         }
+        //         case napi_number: {
+        //             double d;
+        //             NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_value_double), g_env, value, &d);
+        //             if (d == static_cast<int>(d)) {
+        //                 this->value = static_cast<int>(d);
+        //             }
+        //             else {
+        //                 this->value = d;
+        //             }
+        //             return;
+        //         }
+        //         case napi_string: {
+        //             size_t len;
+        //             NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_value_string_utf8), g_env, value, nullptr, 0, &len);
+        //             std::string str(len, '\0');
+        //             NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_value_string_utf8), g_env, value, str.data(), len + 1, &len);
+        //             this->value = std::move(str);
+        //             return;
+        //         }
+        //         // TODO: verify that napi_create_reference works for napi_symbol
+        //         case napi_symbol:
+        //         case napi_object:
+        //         case napi_function:
+        //         case napi_external: {
+        //             napi_ref ref;
+        //             NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_reference), g_env, value, 1, &ref);
+        //             this->value = ref;
+        //             return;
+        //         }
+        //         default:
+        //             return;
+        //         }
+        //     }
+    };
+}
 
 AnyBackend_DefineCreateFunction(MakeNodeApiBackend, NodeApiBackend);
 
@@ -30,6 +93,7 @@ void* NodeApiBackend::RunScript(const char *src, const char *) {
 
     napi_value result;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_run_script), g_env, script, &result);
+
     return result;
 }
 
