@@ -6,13 +6,13 @@
 #include <variant>
 
 namespace {
-    struct Null {};
-    struct Undefined {};
+    struct NullT {};
+    struct UndefinedT {};
 
-    using Variant = std::variant<napi_ref, std::string, int, double, bool, Null, Undefined>;
+    using Variant = std::variant<napi_ref, std::string, int, double, bool, NullT, UndefinedT>;
     
     struct ValueImpl {
-        Variant value = Undefined{};
+        Variant value = UndefinedT{};
         int64_t refCount = 0;
 
         // explicit ValueImpl(napi_value value) {
@@ -102,20 +102,24 @@ size_t NodeApiBackend::GetMemoryUsage() {
 }
 
 void* NodeApiBackend::Undefined() {
-    napi_value result;
-    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_undefined), g_env, &result);
+    auto result = new ValueImpl();
+    result->value = UndefinedT{};
     return result;
 }
 
 void* NodeApiBackend::Null() {
-    napi_value result;
-    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_get_null), g_env, &result);
+    auto result = new ValueImpl();
+    result->value = NullT{};
     return result;
 }
 
 void* NodeApiBackend::Object() {
-    napi_value result;
-    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_object), g_env, &result);
+    napi_value object;
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_object), g_env, &object);
+
+    auto result = new ValueImpl();
+    result->value = napi_ref{};
+    NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_reference), g_env, object, 1, &std::get<napi_ref>(result->value));
     return result;
 }
 
