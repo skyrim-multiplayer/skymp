@@ -8,6 +8,7 @@
 #include "MpChangeForms.h"
 #include "PapyrusGame.h"
 #include "PapyrusObjectReference.h"
+#include "PieScript.h"
 #include "Primitive.h"
 #include "Reader.h"
 #include "ScopedTask.h"
@@ -1059,6 +1060,14 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       SetOpen(false);
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
+    }
+  } else if (t == espm::BOOK::kType && actorActivator) {
+    std::unordered_set<std::string> s = { worldState->espmFiles.begin(),
+                                          worldState->espmFiles.end() };
+    bool hasSweetPie = s.count("SweetPie.esp");
+    if (hasSweetPie) {
+      PieScript pieScript{ worldState->espmFiles };
+      pieScript.Play(*actorActivator, *worldState, GetBaseId());
     }
   }
 }
