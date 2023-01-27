@@ -105,10 +105,10 @@ If you don't wish to build all the dependencies by yourself, or have an unsuppor
 you can use [a Docker image with preinstalled dependencies](https://hub.docker.com/r/skymp/skymp-vcpkg-deps):
 
 ```sh
-. ci/github_env_linux; docker run -it --rm -v "$PWD:$PWD" -w "$PWD" -u "`id -u`:`id -g`" \
+. misc/github_env_linux; docker run -it --rm -v "$PWD:$PWD" -w "$PWD" -u "`id -u`:`id -g`" \
     $SKYMP_VCPKG_DEPS_IMAGE bash
 # ... or go rootless!
-. ci/github_env_linux; podman run -it --rm -v "$PWD:$PWD" --security-opt label=disable -w "$PWD" \
+. misc/github_env_linux; podman run -it --rm -v "$PWD:$PWD" --security-opt label=disable -w "$PWD" \
     -e VCPKG_DEFAULT_BINARY_CACHE=/home/skymp/.cache/vcpkg/archives \
     $SKYMP_VCPKG_DEPS_IMAGE bash
 ```
