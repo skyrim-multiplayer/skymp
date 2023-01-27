@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 report_fail() {
-  ./ci/deploy/call_webhook.sh "Something went wrong, please see GitHub logs for details"
+  ./misc/deploy/call_webhook.sh "Something went wrong, please see GitHub logs for details"
   exit 1
 }
 trap report_fail ERR
@@ -43,29 +43,29 @@ run_remote test -e "$remote_branch_dir" \
 # TODO: remove this dir after we're finished
 
 rsync --rsh="$remote_shell" -vazPh --checksum \
-    ci/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
+    misc/deploy/remote/ "$remote_server_connstr:$remote_tmp_dir/"
 
 if [[ "$DEPLOY_ACTION" == "stop" ]]; then
-  ./ci/deploy/call_webhook.sh "Stopping the server at \`$remote_server_connstr\`..."
+  ./misc/deploy/call_webhook.sh "Stopping the server at \`$remote_server_connstr\`..."
   run_remote "$remote_tmp_dir/branchctl.sh" stop "$DEPLOY_BRANCH"
-  ./ci/deploy/call_webhook.sh "Server is now OFFLINE!"
+  ./misc/deploy/call_webhook.sh "Server is now OFFLINE!"
   exit 0
 elif [[ "$DEPLOY_ACTION" == "deploy" ]]; then
-  ./ci/deploy/call_webhook.sh "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
+  ./misc/deploy/call_webhook.sh "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
 
   # FIXME(#164): temporary workaround for Chakra build bug
   cp build/vcpkg_installed/x64-linux/lib/libChakraCore.so build/dist/server/
-  cp ci/deploy/workaround_temporary/run.sh build/dist/server/
+  cp misc/deploy/workaround_temporary/run.sh build/dist/server/
 
   rsync --rsh="$remote_shell" -vazPh --checksum \
       --exclude=server-settings.json \
       build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
 
-  ./ci/deploy/call_webhook.sh "Updated server files, restarting it..."
+  ./misc/deploy/call_webhook.sh "Updated server files, restarting it..."
 elif [[ "$DEPLOY_ACTION" == "restart" ]]; then
-  ./ci/deploy/call_webhook.sh "Restarting server at \`$remote_server_connstr\`..."
+  ./misc/deploy/call_webhook.sh "Restarting server at \`$remote_server_connstr\`..."
 else
-  ./ci/deploy/call_webhook.sh "Unknown action $DEPLOY_ACTION"
+  ./misc/deploy/call_webhook.sh "Unknown action $DEPLOY_ACTION"
   exit 1
 fi
 
@@ -77,4 +77,4 @@ get_ip_port() {
 
 ip_port="`run_remote cat "$remote_branch_dir/server/server-settings.json" | get_ip_port`"
 
-./ci/deploy/call_webhook.sh "Finished successfully. Connect to: $ip_port"
+./misc/deploy/call_webhook.sh "Finished successfully. Connect to: $ip_port"
