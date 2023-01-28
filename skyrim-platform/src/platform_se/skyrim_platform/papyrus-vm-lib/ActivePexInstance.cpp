@@ -803,9 +803,7 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
       throw std::runtime_error("Failed to process one of the cases in "
                                "switch(type),::GetArrayElementType()");
   }
-}
-
-return returnType;
+  return returnType;
 }
 
 void ActivePexInstance::CastObjectToObject(
