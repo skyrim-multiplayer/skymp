@@ -102,18 +102,19 @@ size_t NodeApiBackend::GetMemoryUsage() {
 }
 
 void* NodeApiBackend::Undefined() {
-    auto result = new ValueImpl();
-    result->value = UndefinedT{};
-    return result;
+    static ValueImpl g_undefined { UndefinedT{}, 1 };
+    return &g_undefined;
 }
 
 void* NodeApiBackend::Null() {
-    auto result = new ValueImpl();
-    result->value = NullT{};
-    return result;
+    static ValueImpl g_null { NullT{}, 1 };
+    return &g_null;
 }
 
 void* NodeApiBackend::Object() {
+    return new ValueImpl{};
+    // wip
+
     napi_value object;
     NodeApiBackendUtils::SafeCall(JS_ENGINE_F(napi_create_object), g_env, &object);
 
