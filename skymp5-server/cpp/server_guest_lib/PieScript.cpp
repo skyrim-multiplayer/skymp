@@ -249,10 +249,8 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     { 0x07ABE9FC, { 0x07A5950A, 0x07A5950B } },
   };
 
-  // glass dagger 0x000139a6
-  // book 0x0401ce07
   bookBoundWeapons = {
-    { 0x000139a6, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } }
+    { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } }
   };
 }
 
@@ -450,16 +448,15 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
       it != bookBoundWeapons.end()) {
     float currentMagickaPercentage =
       actor.GetChangeForm().actorValues.magickaPercentage;
-    // if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
-    AddItem(actor, worldState, 0x000139a6, 1);
-    actor.DamageActorValue(espm::ActorValue::Magicka,
-                           it->second.GetManacost());
-    AddItem(actor, worldState, it->second.GetBaseId(), 1);
-    actor.RemoveItem(it->first, 1, nullptr);
-    worldState.SetTimer(20 * 3).Then([&](Viet::Void) {
-      actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
-      AddItem(actor, worldState, it->first, 1);
-    });
-    // }
+    if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
+      actor.DamageActorValue(espm::ActorValue::Magicka,
+                             it->second.GetManacost());
+      actor.AddItem(it->second.GetBaseId(), 1);
+      actor.RemoveItem(it->first, 1, nullptr);
+      worldState.SetTimer(20 * 3).Then([&](Viet::Void) {
+        actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
+        actor.AddItem(it->first, 1);
+      });
+    }
   }
 }

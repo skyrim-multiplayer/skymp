@@ -101,16 +101,12 @@ void MpActor::OnEquip(uint32_t baseId)
     VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
                         VarValue::None() };
     SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
-
-    WorldState* espmProvider = GetParent();
-    std::vector<std::string> espmFiles = espmProvider->espmFiles;
-
-    std::set<std::string> s;
-    s = { espmFiles.begin(), espmFiles.end() };
-    if (s.count("SweetPie.esp")) {
-      PieScript pieScript(espmFiles);
-      pieScript.Play(*this, *GetParent(), baseId);
-    }
+  }
+  std::set<std::string> s;
+  s = { GetParent()->espmFiles.begin(), GetParent()->espmFiles.end() };
+  if (s.count("SweetPie.esp")) {
+    PieScript pieScript(GetParent()->espmFiles);
+    pieScript.Play(*this, *GetParent(), baseId);
   }
 }
 

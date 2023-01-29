@@ -1061,14 +1061,6 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
     }
-  } else if (t == espm::BOOK::kType && actorActivator) {
-    std::unordered_set<std::string> s = { worldState->espmFiles.begin(),
-                                          worldState->espmFiles.end() };
-    bool hasSweetPie = s.count("SweetPie.esp");
-    if (hasSweetPie) {
-      PieScript pieScript{ worldState->espmFiles };
-      pieScript.Play(*actorActivator, *worldState, GetBaseId());
-    }
   }
 }
 
