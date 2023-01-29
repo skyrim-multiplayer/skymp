@@ -102,9 +102,10 @@ void MpActor::OnEquip(uint32_t baseId)
                         VarValue::None() };
     SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
   }
-  std::set<std::string> s;
-  s = { GetParent()->espmFiles.begin(), GetParent()->espmFiles.end() };
-  if (s.count("SweetPie.esp")) {
+  std::set<std::string> s = { GetParent()->espmFiles.begin(),
+                              GetParent()->espmFiles.end() };
+  bool hasSweetPie = s.count("SweetPie.esp");
+  if (hasSweetPie) {
     PieScript pieScript(GetParent()->espmFiles);
     pieScript.Play(*this, *GetParent(), baseId);
   }
