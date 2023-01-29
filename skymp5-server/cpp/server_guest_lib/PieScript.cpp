@@ -451,15 +451,15 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
       it != bookBoundWeapons.end()) {
     float currentMagickaPercentage =
       actor.GetChangeForm().actorValues.magickaPercentage;
-    if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
-      actor.DamageActorValue(espm::ActorValue::Magicka,
-                             it->second.GetManacost());
-      actor.AddItem(it->second.GetBaseId(), 1);
-      actor.RemoveItem(it->first, 1, nullptr);
-      worldState.SetTimer(20 * 3).Then([&](Viet::Void) {
-        actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
-        actor.AddItem(it->first, 1);
-      });
-    }
+    // if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
+    actor.DamageActorValue(espm::ActorValue::Magicka,
+                           it->second.GetManacost());
+    actor.AddItem(it->second.GetBaseId(), 1);
+    actor.RemoveItem(it->first, 1, nullptr);
+    worldState.SetTimer(20 * 3).Then([&](Viet::Void) {
+      actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
+      actor.AddItem(it->first, 1);
+    });
+    // }
   }
 }
