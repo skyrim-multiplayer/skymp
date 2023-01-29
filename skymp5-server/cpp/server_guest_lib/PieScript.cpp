@@ -440,8 +440,7 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
                      FormDesc::FromFormId(wardrobeId, worldState.espmFiles) });
   }
 
-  auto it = miscLootTable.find(itemBaseId);
-  if (it != miscLootTable.end()) {
+  if (auto it = miscLootTable.find(itemBaseId); it != miscLootTable.end()) {
     for (const auto& item : miscLootTable[itemBaseId]) {
       AddItem(actor, worldState, item, 1);
     }
