@@ -10,7 +10,7 @@ import selectSound from './assets/ButtonDown.wav';
 import learnSound from './assets/LearnSkill.wav';
 import { IPlayerData } from '../../interfaces/skillMenu';
 
-const SkillsMenu = () => {
+const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
   // const [isOpen, setisOpen] = useState(true);
   const [currentHeader, setcurrentHeader] = useState('способности');
   const [currentLevel, setcurrentLevel] = useState(' ');
@@ -105,6 +105,7 @@ const SkillsMenu = () => {
   const learnHandler = () => {
     const level = playerData.perks[selectedPerk.name] || 0;
     const price = selectedPerk.levelsPrice[level];
+    send(`/craft ${selectedPerk.name} ${level + 1}`);
     setpExp(pExp - price);
     if (level === 0) {
       setpMem(pMem - 1);
@@ -128,6 +129,7 @@ const SkillsMenu = () => {
   const discardHandler = () => {
     let returnExp = 0;
     let memReturn = 0;
+    send('/craft discard');
     Object.keys(playerData.perks).forEach((key) => {
       const index = mapper[key];
       const returnPrice = content[index[0]][index[1]].levelsPrice
