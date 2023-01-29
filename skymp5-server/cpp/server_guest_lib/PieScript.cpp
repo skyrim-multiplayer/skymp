@@ -249,8 +249,10 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     { 0x07ABE9FC, { 0x07A5950A, 0x07A5950B } },
   };
 
+  // iron dagger 0x000139a6
+  // book 0x0401ce07
   bookBoundWeapons = {
-    { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } }
+    { 0x000139a6, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } }
   };
 }
 
