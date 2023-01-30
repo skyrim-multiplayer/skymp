@@ -105,7 +105,9 @@ const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
   const learnHandler = () => {
     const level = playerData.perks[selectedPerk.name] || 0;
     const price = selectedPerk.levelsPrice[level];
-    send(`/craft ${selectedPerk.name} ${level + 1}`);
+    // level index for skills array
+    // 0 level for first level to craft
+    send(`/craft ${selectedPerk.name} ${level}`);
     setpExp(pExp - price);
     if (level === 0) {
       setpMem(pMem - 1);

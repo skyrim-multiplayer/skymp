@@ -1,0 +1,256 @@
+interface ISkillRecipes {
+  [name: string]: { id: number; price: number }[];
+}
+
+const skillRecipes = {
+  woodcutter: [
+    { id: 0x7f4ced9, price: 0 },
+    { id: 0x7f4ceda, price: 0 },
+    { id: 0x7f4cedb, price: 0 },
+    { id: 0x7f4cedc, price: 0 },
+  ],
+  fishman: [
+    { id: 0x7f4cedd, price: 0 },
+    { id: 0x7f4cede, price: 0 },
+    { id: 0x7f4cedf, price: 0 },
+    { id: 0x7f4cee0, price: 0 },
+  ],
+  miner: [
+    { id: 0x7e595b2, price: 0 },
+    { id: 0x7e595b3, price: 0 },
+    { id: 0x7e595b4, price: 0 },
+    { id: 0x7e595b5, price: 0 },
+  ],
+  bee: [
+    { id: 0x7f4cee5, price: 0 },
+    { id: 0x7f4cee6, price: 0 },
+    { id: 0x7f4cee7, price: 0 },
+    { id: 0x7f4cee8, price: 0 },
+  ],
+  saltmaker: [
+    { id: 0x7f4ced5, price: 0 },
+    { id: 0x7f4ced6, price: 0 },
+    { id: 0x7f4ced7, price: 0 },
+    { id: 0x7f4ced8, price: 0 },
+  ],
+  hunter: [
+    { id: 0x7f7074d, price: 0 },
+    { id: 0x7f7074e, price: 0 },
+    { id: 0x7f7074f, price: 0 },
+    { id: 0x7f70750, price: 0 },
+  ],
+  doctor: [
+    { id: 0x7f4cee1, price: 0 },
+    { id: 0x7f4cee2, price: 0 },
+    { id: 0x7f4cee3, price: 0 },
+    { id: 0x7f4cee4, price: 0 },
+  ],
+  farmer: [
+    { id: 0x7f4cee9, price: 0 },
+    { id: 0x7f4ceea, price: 0 },
+    { id: 0x7f4ceeb, price: 0 },
+    { id: 0x7f4ceec, price: 0 },
+  ],
+  armor: [
+    { id: 0x7f70751, price: 0 },
+    { id: 0x7f70752, price: 0 },
+    { id: 0x7f70753, price: 0 },
+    { id: 0x7f70754, price: 0 },
+  ],
+  weapon: [
+    { id: 0x7f70755, price: 0 },
+    { id: 0x7f70756, price: 0 },
+    { id: 0x7f70757, price: 0 },
+    { id: 0x7f70758, price: 0 },
+  ],
+  jewelry: [
+    { id: 0x7f70759, price: 0 },
+    { id: 0x7f7075a, price: 0 },
+    { id: 0x7f7075b, price: 0 },
+    { id: 0x7f7075c, price: 0 },
+  ],
+  leather: [
+    { id: 0x7f7075d, price: 0 },
+    { id: 0x7f7075e, price: 0 },
+    { id: 0x7f7075f, price: 0 },
+    { id: 0x7f70760, price: 0 },
+  ],
+  clother: [
+    { id: 0x7f70761, price: 0 },
+    { id: 0x7f70762, price: 0 },
+    { id: 0x7f70763, price: 0 },
+    { id: 0x7f70764, price: 0 },
+  ],
+  carpenter: [
+    { id: 0x7f70769, price: 0 },
+    { id: 0x7f7076a, price: 0 },
+    { id: 0x7f7076b, price: 0 },
+    { id: 0x7f7076c, price: 0 },
+  ],
+  somelie: [
+    { id: 0x7f7076d, price: 0 },
+    { id: 0x7f7076e, price: 0 },
+    { id: 0x7f7076f, price: 0 },
+    { id: 0x7f70770, price: 0 },
+  ],
+  cheif: [
+    { id: 0x7f70765, price: 0 },
+    { id: 0x7f70766, price: 0 },
+    { id: 0x7f70767, price: 0 },
+    { id: 0x7f70768, price: 0 },
+  ],
+  daggers: [
+    { id: 0x7f75871, price: 0 },
+    { id: 0x7f75872, price: 0 },
+    { id: 0x7f75873, price: 0 },
+    { id: 0x7f75874, price: 0 },
+  ],
+  shortswords: [
+    { id: 0x7f75881, price: 0 },
+    { id: 0x7f75882, price: 0 },
+    { id: 0x7f75883, price: 0 },
+    { id: 0x7f75884, price: 0 },
+  ],
+  swords: [
+    { id: 0x7f75875, price: 0 },
+    { id: 0x7f75876, price: 0 },
+    { id: 0x7f75877, price: 0 },
+    { id: 0x7f75878, price: 0 },
+  ],
+  scimitar: [
+    { id: 0x7f75885, price: 0 },
+    { id: 0x7f75886, price: 0 },
+    { id: 0x7f75887, price: 0 },
+    { id: 0x7f75888, price: 0 },
+  ],
+  katana: [
+    { id: 0x7f75879, price: 0 },
+    { id: 0x7f7587a, price: 0 },
+    { id: 0x7f7587b, price: 0 },
+    { id: 0x7f7587c, price: 0 },
+  ],
+  mace: [
+    { id: 0x7f75889, price: 0 },
+    { id: 0x7f7588a, price: 0 },
+    { id: 0x7f7588b, price: 0 },
+    { id: 0x7f7588c, price: 0 },
+  ],
+  axes: [
+    { id: 0x7f7587d, price: 0 },
+    { id: 0x7f7587e, price: 0 },
+    { id: 0x7f7587f, price: 0 },
+    { id: 0x7f75880, price: 0 },
+  ],
+  hammer: [
+    { id: 0x7f7588d, price: 0 },
+    { id: 0x7f7588e, price: 0 },
+    { id: 0x7f7588f, price: 0 },
+    { id: 0x7f75890, price: 0 },
+  ],
+  bows: [
+    { id: 0x7f7a991, price: 0 },
+    { id: 0x7f7a992, price: 0 },
+    { id: 0x7f7a993, price: 0 },
+    { id: 0x7f7a994, price: 0 },
+  ],
+  longsword: [
+    { id: 0x7f7a9a1, price: 0 },
+    { id: 0x7f7a9a2, price: 0 },
+    { id: 0x7f7a9a3, price: 0 },
+    { id: 0x7f7a9a4, price: 0 },
+  ],
+  greatkatana: [
+    { id: 0x7f7a995, price: 0 },
+    { id: 0x7f7a996, price: 0 },
+    { id: 0x7f7a997, price: 0 },
+    { id: 0x7f7a998, price: 0 },
+  ],
+  battleaxe: [
+    { id: 0x7f7a9a5, price: 0 },
+    { id: 0x7f7a9a6, price: 0 },
+    { id: 0x7f7a9a7, price: 0 },
+    { id: 0x7f7a9a8, price: 0 },
+  ],
+  warhammer: [
+    { id: 0x7f7a999, price: 0 },
+    { id: 0x7f7a99a, price: 0 },
+    { id: 0x7f7a99b, price: 0 },
+    { id: 0x7f7a99c, price: 0 },
+  ],
+  staff: [
+    { id: 0x7f7a9a9, price: 0 },
+    { id: 0x7f7a9aa, price: 0 },
+    { id: 0x7f7a9ab, price: 0 },
+    { id: 0x7f7a9ac, price: 0 },
+  ],
+  pike: [
+    { id: 0x7f7a99d, price: 0 },
+    { id: 0x7f7a99e, price: 0 },
+    { id: 0x7f7a99f, price: 0 },
+    { id: 0x7f7a9a0, price: 0 },
+  ],
+  halberd: [
+    { id: 0x7f7a9ad, price: 0 },
+    { id: 0x7f7a9ae, price: 0 },
+    { id: 0x7f7a9af, price: 0 },
+    { id: 0x7f7a9b0, price: 0 },
+  ],
+  armorlight: [
+    { id: 0x7f7fab1, price: 0 },
+    { id: 0x7f7fab2, price: 0 },
+  ],
+  armorheavy: [
+    { id: 0x7f7fab3, price: 0 },
+    { id: 0x7f7fab4, price: 0 },
+  ],
+  shield: [
+    { id: 0x7f7fab5, price: 0 },
+    { id: 0x7f7fab6, price: 0 },
+    { id: 0x7f7fab7, price: 0 },
+    { id: 0x7f7fab8, price: 0 },
+  ],
+  conjuration: [
+    { id: 0x7f7fac5, price: 0 },
+    { id: 0x7f7fac6, price: 0 },
+    { id: 0x7f7fac7, price: 0 },
+    { id: 0x7f7fac8, price: 0 },
+  ],
+  alchemy: [
+    { id: 0x7f7fab9, price: 0 },
+    { id: 0x7f7faba, price: 0 },
+    { id: 0x7f7fabb, price: 0 },
+    { id: 0x7f7fabc, price: 0 },
+  ],
+  enchant: [
+    { id: 0x7f7fac9, price: 0 },
+    { id: 0x7f7faca, price: 0 },
+    { id: 0x7f7facb, price: 0 },
+    { id: 0x7f7facc, price: 0 },
+  ],
+  alteration: [
+    { id: 0x7f7fabd, price: 0 },
+    { id: 0x7f7fabe, price: 0 },
+    { id: 0x7f7fabf, price: 0 },
+    { id: 0x7f7fac0, price: 0 },
+  ],
+  destruction: [
+    { id: 0x7f7facd, price: 0 },
+    { id: 0x7f7face, price: 0 },
+    { id: 0x7f7facf, price: 0 },
+    { id: 0x7f7fad0, price: 0 },
+  ],
+  illusion: [
+    { id: 0x7f7fac1, price: 0 },
+    { id: 0x7f7fac2, price: 0 },
+    { id: 0x7f7fac3, price: 0 },
+    { id: 0x7f7fac4, price: 0 },
+  ],
+  restoration: [
+    { id: 0x7f7fad1, price: 0 },
+    { id: 0x7f7fad2, price: 0 },
+    { id: 0x7f7fad3, price: 0 },
+    { id: 0x7f7fad4, price: 0 },
+  ],
+} as ISkillRecipes;
+const expId = 0x7f33922;
+const memId = 0x700de02;
