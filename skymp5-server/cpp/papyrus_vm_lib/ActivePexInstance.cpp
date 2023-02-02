@@ -142,7 +142,7 @@ VarValue CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-      throw std::runtime_error("Failed to cast type_Indentifier to String");
+      throw std::runtime_error("Papyruv VM: Failed to cast type_Indentifier to String");
     case VarValue::kType_String:
       return var;
     case VarValue::kType_Integer:
