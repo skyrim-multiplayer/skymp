@@ -202,9 +202,9 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        throw std::runtime_error(" Papyrus VM: None of the type values "
-                                 "​​matched, catched exception in "
-                                 "::GetElementArrayAtString()");
+        throw std::runtime_error(
+          " Papyrus VM: None of the type values "
+          "​​matched, catched exception ::GetElementArrayAtString");
     }
 
     if (i < array.pArray->size() - 1)
