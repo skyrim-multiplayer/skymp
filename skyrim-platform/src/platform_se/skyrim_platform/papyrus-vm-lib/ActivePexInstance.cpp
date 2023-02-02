@@ -484,7 +484,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           default:
             throw std::runtime_error(
               "Papyrus VM: none of the cases were reached "
-              ":switch(*opcode[line].second[0].GetType()")
+              ":switch(*opcode[line].second[0].GetType()");
         }
 
         break;
@@ -611,7 +611,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
 
         } else {
           throw std::runtime_error("Papyrus VM: Got nullptr argument "
-                                   "OpcodesImplementation::Opcodes::PropGet")
+                                   "OpcodesImplementation::Opcodes::PropGet");
         }
         break;
 
@@ -634,7 +634,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
 
         } else {
           throw std::runtime_error("Papyrus VM: Got nullptr argument "
-                                   "OpcodesImplementation::Opcodes::PropSet")
+                                   "OpcodesImplementation::Opcodes::PropSet");
         }
         break;
 
@@ -657,7 +657,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
         } else {
           throw std::runtime_error(
             "Papyrus VM: The resulting argument cannot be less than 0 "
-            "OpcodesImplementation::Opcodes::Array_Create")
+            "OpcodesImplementation::Opcodes::Array_Create");
         }
 
         break;
@@ -682,7 +682,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
         } else {
           throw std::runtime_error(
             "Papyrus VM: Got nullptr argument "
-            "OpcodesImplementation::Opcodes::Array_GetElement")
+            "OpcodesImplementation::Opcodes::Array_GetElement");
         }
         break;
 
@@ -695,7 +695,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
         } else {
           throw std::runtime_error(
             "Papyrus VM: Got nullptr argument "
-            "OpcodesImplementation::Opcodes::Array_SetElement")
+            "OpcodesImplementation::Opcodes::Array_SetElement");
         }
         break;
 
@@ -714,8 +714,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
         break;
 
       default:
-        throw std::runtime_error("Papyrus VM: None of the cases were reached, "
-                                 "an exception was caught :switch[line].first")
+        throw std::runtime_error(
+          "Papyrus VM: None of the cases were reached, "
+          "an exception was caught :switch[line].first");
     }
 
     if (needReturn) {
