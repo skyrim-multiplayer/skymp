@@ -76,8 +76,8 @@ std::string ActivePexInstance::GetActiveStateName() const
     var = variables->GetVariableByName("::State", *sourcePex.fn());
   } catch (...) {
     throw std::runtime_error(
-      "GetVariableByName must never throw when '::State' variable is "
-      "requested");
+      " Papyrus VM: GetVariableByName must never throw when "
+      "'::State' variable is  requested");
   }
   if (!var)
     throw std::runtime_error(
@@ -201,9 +201,9 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        throw std::runtime_error(
-          "None of the type values ​​matched, catched exception in "
-          "::GetElementArrayAtString()");
+        throw std::runtime_error(" Papyrus VM:     None of the type values "
+                                 "​​matched, catched exception in "
+                                 "::GetElementArrayAtString()");
     }
 
     if (i < array.pArray->size() - 1)
@@ -748,7 +748,7 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
       break;
     default:
       throw std::runtime_error(
-        "Unable to get required type,to ::GetArrayElementType");
+        "Papyrus VM:  Unable to get required type,to ::GetArrayElementType");
   }
 
   return returnType;
@@ -780,8 +780,8 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error(
-        "Unable to get required type,to ::GetArrayTypeByElementType");
+      throw std::runtime_error("Papyrus VM:  Unable to get required type,to "
+                               "::GetArrayTypeByElementType");
   }
 
   return returnType;
