@@ -142,7 +142,8 @@ VarValue CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-      throw std::runtime_error("Papyruv VM: Failed to cast type_Indentifier to String");
+      throw std::runtime_error(
+        "Papyruv VM: Failed to cast type_Indentifier to String");
     case VarValue::kType_String:
       return var;
     case VarValue::kType_Integer:
@@ -201,7 +202,7 @@ VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
         break;
       }
       default:
-        throw std::runtime_error(" Papyrus VM:     None of the type values "
+        throw std::runtime_error(" Papyrus VM: None of the type values "
                                  "​​matched, catched exception in "
                                  "::GetElementArrayAtString()");
     }
