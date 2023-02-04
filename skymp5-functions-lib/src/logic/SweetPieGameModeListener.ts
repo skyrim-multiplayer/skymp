@@ -1,4 +1,5 @@
 import { sprintf } from "sprintf-js";
+import { craftSkill } from './skillMenuLogic';
 import { getName } from "../mpApiInteractor";
 import { ChatMessage, ChatText, createSystemMessage} from "../props/chatProperty";
 import { Command } from "./Command";
@@ -147,6 +148,13 @@ export class SweetPieGameModeListener implements GameModeListener {
         } 
       },
     },
+    {
+      name: 'skill',
+      handler: ({ actorId, controller, argsRaw}) => {
+        // controller.sendChatMessage(actorId, createSystemMessage(`${argsRaw}`));
+        craftSkill(actorId, controller, argsRaw);
+      }
+    }
   ]
 
   warmupTimerMaximum = 60;

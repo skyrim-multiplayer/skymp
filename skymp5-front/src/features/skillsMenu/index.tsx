@@ -107,7 +107,7 @@ const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
     const price = selectedPerk.levelsPrice[level];
     // level index for skills array
     // 0 level for first level to craft
-    send(`/craft ${selectedPerk.name} ${level}`);
+    send(`/skill ${selectedPerk.name} ${level}`);
     setpExp(pExp - price);
     if (level === 0) {
       setpMem(pMem - 1);
@@ -131,7 +131,7 @@ const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
   const discardHandler = () => {
     let returnExp = 0;
     let memReturn = 0;
-    send('/craft discard');
+    send('/skill discard');
     Object.keys(playerData.perks).forEach((key) => {
       const index = mapper[key];
       const returnPrice = content[index[0]][index[1]].levelsPrice

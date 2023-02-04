@@ -2,7 +2,7 @@ interface ISkillRecipes {
   [name: string]: { id: number; price: number }[];
 }
 
-const skillRecipes = {
+export const skillRecipes = {
   woodcutter: [
     { id: 0x7f4ced9, price: 50 },
     { id: 0x7f4ceda, price: 70 },
@@ -252,5 +252,33 @@ const skillRecipes = {
     { id: 0x7f7fad4, price: 143 },
   ],
 } as ISkillRecipes;
-const expId = 0x7f33922;
-const memId = 0x700de02;
+export const expId = 0x7f33922;
+export const memId = 0x700de02;
+
+interface IIdSkill {
+  [key:number] : {
+    name: string;
+    level: number;
+    price: number;
+  }
+}
+
+const convertData = (data : ISkillRecipes) => {
+  const res = {} as IIdSkill;
+  for (const skill of Object.keys(data)) {
+    data[skill].forEach((item, index) => {
+      res[item.id] = {name: skill, level: index, price: item.price}
+    });
+  } 
+  return res;
+}
+
+export const idBasedData = convertData(skillRecipes);
+
+export interface IPossessedSkills {
+  [key:string] : {
+    id: number;
+    level: number;
+    price: number;
+  }
+}

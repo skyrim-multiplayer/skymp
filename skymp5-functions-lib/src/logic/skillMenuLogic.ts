@@ -1,0 +1,75 @@
+import { PlayerController } from './PlayerController';
+import { memId, expId, skillRecipes, idBasedData, IPossessedSkills } from './skillMenuData';
+import { Mp } from '../types/mp';
+
+declare const mp: Mp;
+
+// import function
+const removeItem = (actorId: number, itemId: number, count: number) => {
+  mp.callPapyrusFunction('method', 'ObjectReference', 'RemoveItem', { type: 'form', desc: mp.getDescFromId(actorId) }, [
+    { type: 'espm', desc: mp.getDescFromId(itemId) },
+    count,
+    /*silent*/ false,
+  ]);
+};
+
+const discardSkills = (actorId : number, controller: PlayerController, possessedSkills : IPossessedSkills) => {
+  let totalExp = 0;
+  Object.keys(possessedSkills).forEach(skillName => {
+    const skill = possessedSkills[skillName]
+    const price = skillRecipes[skillName].slice(0, skill.level + 1).reduce((a, b) => a + b.price, 0);
+    totalExp += price;
+    removeItem(actorId, skill.id, 1);
+    controller.addItem(actorId, memId, 1);
+  })
+  controller.addItem(actorId, expId, Math.round(totalExp/2))
+}
+
+export const craftSkill = (actorId: number, controller: PlayerController, argsRaw: string | undefined) => {
+  if (!argsRaw) return;
+  console.log(actorId, argsRaw);
+  controller.addItem(actorId, memId, 2);
+  const [newSkillName, level] = argsRaw.split(' ');
+  const inventory = mp.get(actorId, 'inventory').entries;
+  console.log(inventory);
+
+  let memCount = 0;
+  let expCount = 0;
+  let possessedSkills = {} as IPossessedSkills;
+  for (const item of inventory) {
+    if (item.baseId === memId) {
+      memCount = item.count;
+    } else if (item.baseId === expId) {
+      expCount = item.count;
+    } else if (item.baseId in idBasedData) {
+      const skill = idBasedData[item.baseId];
+      possessedSkills[skill.name] = {id: item.baseId, level: skill.level, price: skill.price}
+    }
+  }
+
+  if (newSkillName === 'discard') return discardSkills(actorId, controller, possessedSkills)
+
+  let itemIdToRemove = 0;
+  if (level === '0') {
+    if (memCount > 0) {
+      itemIdToRemove = memId;
+    }
+  } else {
+    const possesedSkill = possessedSkills[newSkillName];
+    if (possesedSkill && possesedSkill.level + 1 === +level ) {
+      itemIdToRemove = possesedSkill.id;
+    }
+  }
+
+  if (itemIdToRemove === 0) return;
+
+  const newSkill = skillRecipes[newSkillName][+level]
+  const price = newSkill.price;
+  if (price > expCount) return;
+
+  removeItem(actorId, itemIdToRemove, 1);
+  removeItem(actorId, expId, price);
+  controller.addItem(actorId, newSkill.id, 1);
+
+
+};
