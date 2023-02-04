@@ -301,6 +301,9 @@ export class MpApiInteractor {
       getCurrentTime(): Date {
         return new Date();
       },
+      getInventory(actorId: number): any {
+        return mp.get(actorId, 'inventory');
+      },
     }
   }
 }

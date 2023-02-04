@@ -45,6 +45,15 @@ export class SweetPieGameModeListener implements GameModeListener {
   };
   readonly commands: Command[] = [
     {
+      name: 'debug',
+      handler: ({ actorId, controller }) => {
+        const inv = controller.getInventory(actorId);
+        const invJson = JSON.stringify(inv);
+        console.log(invJson);
+        controller.sendChatMessage(actorId, createSystemMessage(invJson));
+      },
+    },
+    {
       name: 'kick',
       handler: ({ actorId, controller, argsRaw }) => {
         const adminMasterApiIds = [479, 485, 486, 487, 488, 489, 497, 539];

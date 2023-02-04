@@ -49,9 +49,13 @@ export class SweetTaffyTimedRewards implements GameModeListener {
         this.controller.setCounter(playerActorId, 'secondsToday', secondsToday);
         if (secondsToday == 60 * 60 && this.controller.getCounter(playerActorId, 'lastExtraRewardDay') !== todayStart) {
           this.controller.setCounter(playerActorId, 'lastExtraRewardDay', todayStart);
-          this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, 9);
+          this.giveExtraHourOfGameplayReward(playerActorId);
         }
       }
     }
+  }
+
+  private giveExtraHourOfGameplayReward(playerActorId: number) {
+    this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, 9);
   }
 }
