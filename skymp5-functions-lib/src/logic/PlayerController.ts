@@ -1,4 +1,5 @@
 import { ChatMessage } from "../props/chatProperty";
+import { Inventory } from "../types/mp";
 import { SweetPieRound } from "./SweetPieRound";
 
 export type Percentages = {
@@ -29,5 +30,5 @@ export type PlayerController = {
   incrementCounter(actorId: number, counter: Counter, by?: number): number;
   getServerSetting(name: string): any;
   getActorDistanceSquared(actorId1: number, actorId2: number): number;
-  getInventory(actorId: number): any;
+  getInventory(actorId: number): Inventory;
 }

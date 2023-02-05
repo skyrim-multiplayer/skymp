@@ -6,8 +6,7 @@ import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
-import { LocationalData, Mp, PapyrusObject } from "./types/mp";
-import { ChatSettings } from "./types/settings";
+import { LocationalData, Mp, Inventory } from "./types/mp";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
@@ -301,7 +300,7 @@ export class MpApiInteractor {
       getCurrentTime(): Date {
         return new Date();
       },
-      getInventory(actorId: number): any {
+      getInventory(actorId: number): Inventory {
         return mp.get(actorId, 'inventory');
       },
     }
