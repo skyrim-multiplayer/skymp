@@ -22,6 +22,7 @@ export type RewardRule = {
 }
 
 export type TimedRewardConfig = {
+  // enableDaily, enablyHourly are here to simplify tests
   enableDaily: boolean;
   enableHourly: boolean;
   rules?: RewardRule[];
@@ -52,7 +53,6 @@ export function dayStart(date: Date): Date {
 export class SweetTaffyTimedRewards implements GameModeListener {
   static rewardItemFormId = 0x07F33922;
 
-  // enableDaily, enablyHourly are here to simplify tests
   constructor(private controller: TimedRewardController, private config: TimedRewardConfig) {
   }
 
