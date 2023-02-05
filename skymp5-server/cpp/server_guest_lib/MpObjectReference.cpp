@@ -634,7 +634,8 @@ void MpObjectReference::RemoveItem(uint32_t baseId, uint32_t count,
 }
 
 void MpObjectReference::RemoveItems(
-  const std::vector<Inventory::Entry>& entries, MpObjectReference* target)
+  const std::vector<Inventory::Entry>& entries, MpObjectReference* target,
+  bool sendInventoryUpdate = true)
 {
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
     changeForm.inv.RemoveItems(entries);
@@ -643,7 +644,8 @@ void MpObjectReference::RemoveItems(
   if (target)
     target->AddItems(entries);
 
-  SendInventoryUpdate();
+  if (sendInventoryUpdate)
+    SendInventoryUpdate();
 }
 
 void MpObjectReference::RemoveAllItems(MpObjectReference* target)

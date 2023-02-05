@@ -126,7 +126,8 @@ public:
   void AddItems(const std::vector<Inventory::Entry>& entries);
   void RemoveItem(uint32_t baseId, uint32_t count, MpObjectReference* target);
   void RemoveItems(const std::vector<Inventory::Entry>& entries,
-                   MpObjectReference* target = nullptr);
+                   MpObjectReference* target = nullptr,
+                   bool sendInventoryUpdate = true);
   void RemoveAllItems(MpObjectReference* target = nullptr);
   void RelootContainer();
   void RegisterProfileId(int32_t profileId);

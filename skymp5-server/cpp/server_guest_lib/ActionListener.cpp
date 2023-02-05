@@ -387,7 +387,7 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
     s += fmt::format(" +{:#x} x{}", outputFormId, recipeData.outputCount);
     spdlog::debug("{}", s);
   }
-  me->RemoveItems(entries);
+  me->RemoveItems(entries, nullptr, false);
   me->AddItem(outputFormId, recipeData.outputCount);
 }
 
