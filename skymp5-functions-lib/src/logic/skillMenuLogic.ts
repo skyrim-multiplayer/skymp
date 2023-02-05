@@ -4,14 +4,6 @@ import { Mp } from '../types/mp';
 
 declare const mp: Mp;
 
-// import function
-const removeItem = (actorId: number, itemId: number, count: number) => {
-  mp.callPapyrusFunction('method', 'ObjectReference', 'RemoveItem', { type: 'form', desc: mp.getDescFromId(actorId) }, [
-    { type: 'espm', desc: mp.getDescFromId(itemId) },
-    count,
-    /*silent*/ false,
-  ]);
-};
 
 const discardSkills = (actorId : number, controller: PlayerController, possessedSkills : IPossessedSkills) => {
   let totalExp = 0;
@@ -19,7 +11,7 @@ const discardSkills = (actorId : number, controller: PlayerController, possessed
     const skill = possessedSkills[skillName]
     const price = skillRecipes[skillName].slice(0, skill.level + 1).reduce((a, b) => a + b.price, 0);
     totalExp += price;
-    removeItem(actorId, skill.id, 1);
+    controller.removeItem(actorId, skill.id, 1, null);
     controller.addItem(actorId, memId, 1);
   })
   controller.addItem(actorId, expId, Math.round(totalExp/2))
@@ -27,11 +19,8 @@ const discardSkills = (actorId : number, controller: PlayerController, possessed
 
 export const craftSkill = (actorId: number, controller: PlayerController, argsRaw: string | undefined) => {
   if (!argsRaw) return;
-  console.log(actorId, argsRaw);
-  controller.addItem(actorId, memId, 2);
   const [newSkillName, level] = argsRaw.split(' ');
   const inventory = mp.get(actorId, 'inventory').entries;
-  console.log(inventory);
 
   let memCount = 0;
   let expCount = 0;
@@ -67,8 +56,8 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
   const price = newSkill.price;
   if (price > expCount) return;
 
-  removeItem(actorId, itemIdToRemove, 1);
-  removeItem(actorId, expId, price);
+  controller.removeItem(actorId, itemIdToRemove, 1, null);
+  controller.removeItem(actorId, expId, price, null);
   controller.addItem(actorId, newSkill.id, 1);
 
 
