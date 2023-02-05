@@ -59,6 +59,4 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
   controller.removeItem(actorId, itemIdToRemove, 1, null);
   controller.removeItem(actorId, expId, price, null);
   controller.addItem(actorId, newSkill.id, 1);
-
-
 };
