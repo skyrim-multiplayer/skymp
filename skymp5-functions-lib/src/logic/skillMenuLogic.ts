@@ -22,6 +22,16 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
   const [newSkillName, level] = argsRaw.split(' ');
   const inventory = mp.get(actorId, 'inventory').entries;
 
+  //TODO: remove before release
+  if (newSkillName === 'mem' && level) {
+    controller.addItem(actorId, memId, +level)
+    return
+  }
+  if (newSkillName === 'exp' && level) {
+    controller.addItem(actorId, expId, +level)
+    return
+  }
+
   let memCount = 0;
   let expCount = 0;
   let possessedSkills = {} as IPossessedSkills;
