@@ -454,7 +454,11 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
       actor.AddItem(it->second.GetBaseId(), 1);
       actor.RemoveItem(it->first, 1, nullptr);
       worldState.SetTimer(20 * 3).Then([it, &actor](Viet::Void) {
+        std::cout << "====timer log====\n";
         actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
+        std::cout << "actor form id: " << actor.GetFormId() << '\n';
+        std::cout << "item to remove: " << it->second.GetBaseId() << '\n';
+        std::cout << "item to add: " << it->first << '\n';
         actor.AddItem(it->first, 1);
       });
     }
