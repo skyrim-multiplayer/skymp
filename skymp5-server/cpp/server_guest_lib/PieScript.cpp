@@ -7,6 +7,7 @@
 #include "SweetPieBoundWeapon.h"
 #include "WorldState.h"
 #include <espm.h>
+#include <iostream>
 #include <random>
 #include <sstream>
 #include <stdexcept>
