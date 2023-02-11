@@ -8,6 +8,7 @@
 #include "WorldState.h"
 #include <espm.h>
 #include <random>
+#include <spdlog/logger.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -452,7 +453,9 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
       actor.DamageActorValue(espm::ActorValue::Magicka,
                              it->second.GetManacost());
       actor.AddItem(it->second.GetBaseId(), 1);
+      spdlog::debug("added item {:x}", it->second.GetBaseId());
       actor.RemoveItem(it->first, 1, nullptr);
+      spdlog::debug("removed item {:x}", it->first);
       worldState.SetTimer(20 * 3).Then([it, &actor](Viet::Void) {
         std::cout << "====timer log====\n";
         actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
