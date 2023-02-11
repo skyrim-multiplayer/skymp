@@ -1,11 +1,14 @@
 import { sprintf } from "sprintf-js";
 import { getName } from "../mpApiInteractor";
 import { ChatMessage, ChatText, createSystemMessage} from "../props/chatProperty";
+import { Mp } from "../types/mp";
 import { Command } from "./Command";
 import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
+
+declare const mp: Mp;
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
@@ -47,7 +50,9 @@ export class SweetPieGameModeListener implements GameModeListener {
     {
       name: 'debug',
       handler: ({ actorId, controller }) => {
-        const inv = controller.getInventory(actorId);
+        const inv: Record<string, any> = {};
+        inv.cell = mp.get(actorId, 'worldOrCellDesc');
+        inv.pos = mp.get(actorId, 'pos');
         const invJson = JSON.stringify(inv);
         console.log(invJson);
         controller.sendChatMessage(actorId, createSystemMessage(invJson));
