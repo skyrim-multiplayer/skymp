@@ -24,12 +24,9 @@ struct MpActor::Impl
     std::unordered_map<espm::ActorValue,
                        std::chrono::steady_clock::time_point>;
   RestorationTimePoints restorationTimePoints = {
-    { espm::ActorValue::Health,
-      std::chrono::time_point<std::chrono::steady_clock>::min() },
-    { espm::ActorValue::Stamina,
-      std::chrono::time_point<std::chrono::steady_clock>::min() },
-    { espm::ActorValue::Magicka,
-      std::chrono::time_point<std::chrono::steady_clock>::min() },
+    { espm::ActorValue::Health, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::Stamina, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::Magicka, std::chrono::steady_clock::time_point{} },
   };
 };
 
