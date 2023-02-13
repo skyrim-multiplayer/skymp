@@ -453,16 +453,11 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
       actor.DamageActorValue(espm::ActorValue::Magicka,
                              it->second.GetManacost());
       actor.AddItem(it->second.GetBaseId(), 1);
-      spdlog::debug("added item {:x}", it->second.GetBaseId());
       actor.RemoveItem(it->first, 1, nullptr);
-      spdlog::debug("removed item {:x}", it->first);
-      worldState.SetTimer(20 * 3).Then([it, &actor](Viet::Void) {
-        std::cout << "====timer log====\n";
-        actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
-        std::cout << "actor form id: " << actor.GetFormId() << '\n';
-        std::cout << "item to remove: " << it->second.GetBaseId() << '\n';
-        std::cout << "item to add: " << it->first << '\n';
-        actor.AddItem(it->first, 1);
+      MpActor* actorPtr = &actor;
+      worldState.SetTimer(20 * 3).Then([it, actorPtr](Viet::Void) {
+        actorPtr->RemoveItem(it->second.GetBaseId(), 1, nullptr);
+        actorPtr->AddItem(it->first, 1);
       });
     }
   }
