@@ -9,6 +9,7 @@
 #include <espm.h>
 #include <iostream>
 #include <random>
+#include <spdlog/logger.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -454,13 +455,10 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
                              it->second.GetManacost());
       actor.AddItem(it->second.GetBaseId(), 1);
       actor.RemoveItem(it->first, 1, nullptr);
-      worldState.SetTimer(20 * 3).Then([it, &actor](Viet::Void) {
-        std::cout << "====timer log====\n";
-        actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
-        std::cout << "actor form id: " << actor.GetFormId() << '\n';
-        std::cout << "item to remove: " << it->second.GetBaseId() << '\n';
-        std::cout << "item to add: " << it->first << '\n';
-        actor.AddItem(it->first, 1);
+      MpActor* actorPtr = &actor;
+      worldState.SetTimer(20 * 3).Then([it, actorPtr](Viet::Void) {
+        actorPtr->RemoveItem(it->second.GetBaseId(), 1, nullptr);
+        actorPtr->AddItem(it->first, 1);
       });
     }
   }
