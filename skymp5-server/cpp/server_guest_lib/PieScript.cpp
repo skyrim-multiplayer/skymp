@@ -455,8 +455,11 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
       actor.AddItem(it->second.GetBaseId(), 1);
       actor.RemoveItem(it->first, 1, nullptr);
       worldState.SetTimer(5.f).Then([it, &actor](Viet::Void) {
+        std::cout << "Inside lambda\n";
         actor.AddItem(it->first, 1);
+        std::cout << "added item " << it->first << '\n';
         actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
+        std::cout << "removed item " << it->second.GetBaseId() << '\n';
       });
     }
   }
