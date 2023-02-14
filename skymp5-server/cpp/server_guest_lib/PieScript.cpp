@@ -248,7 +248,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     { 0x07ABEA00, { 0x07A5950F, 0x07A59510 } },
     { 0x07ABE9FA, { 0x07A59504, 0x07A59505 } },
     { 0x07ABE9FC, { 0x07A5950A, 0x07A5950B } },
-  };
+  };    
 
   bookBoundWeapons = {
     { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } }
@@ -457,9 +457,11 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
       worldState.SetTimer(5.f).Then([it, &actor](Viet::Void) {
         std::cout << "Inside lambda\n";
         actor.AddItem(it->first, 1);
-        std::cout << "added item " << it->first << '\n';
+        std::cout << "added item " << std::hex << it->first << '\n';
+        std::cout << "trying to remove an item: " << std::hex
+                  << it->second.GetBaseId() << '\n';
         actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
-        std::cout << "removed item " << it->second.GetBaseId() << '\n';
+        std::cout << "removed item " << std::hex << it->second.GetBaseId() << '\n';
       });
     }
   }
