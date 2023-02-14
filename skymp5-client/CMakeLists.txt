@@ -44,7 +44,8 @@ set(skymp5_client_settings_txt_sweetpie "{
     },
     \"animKeys\": {
       \"2\": \"attackStart\"
-    }
+    },
+    \"npc-apply-inventory-random\": 0
   },
   \"lobbyLocation\": {
     \"pos\": [19256.69, 9777.12, 899.56],

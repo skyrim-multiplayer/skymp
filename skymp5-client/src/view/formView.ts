@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, settings, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
@@ -341,13 +341,16 @@ export class FormView implements View<FormModel> {
         // 1. Place ~90 bots and force them to reequip iron swords to the left hand (rate should be ~50ms)
         // 2. Open your inventory and reequip different items fast
         // 3. After 1-2 minutes close your inventory and see that HUD disappeared
+        const dateNow = Date.now();
         if (
           ac &&
           !isBadMenuShown() &&
-          Date.now() - this.eqState.lastEqMoment > 500 &&
-          Date.now() - this.spawnMoment > -1 &&
+          dateNow - this.eqState.randomEqSpawnMoment > 0 &&
+          dateNow - this.eqState.lastEqMoment > 500 &&
+          dateNow - this.spawnMoment > -1 &&
           this.spawnMoment > 0
         ) {
+          
           //if (this.spawnMoment > 0 && Date.now() - this.spawnMoment > 5000) {
           if (applyEquipment(ac, model.equipment)) {
             this.eqState.lastNumChanges = model.equipment.numChanges;
@@ -405,7 +408,7 @@ export class FormView implements View<FormModel> {
   }
 
   private getDefaultEquipState() {
-    return { lastNumChanges: 0, isBadMenuShown: false, lastEqMoment: 0 };
+    return { lastNumChanges: 0, isBadMenuShown: false, lastEqMoment: 0, randomEqSpawnMoment: Date.now() + Math.random() * (settings["skymp5-client"]["npc-apply-inventory-random"] as number ?? 0) };
   };
 
   private getDefaultAppearanceState() {
