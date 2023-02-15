@@ -248,7 +248,7 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     { 0x07ABEA00, { 0x07A5950F, 0x07A59510 } },
     { 0x07ABE9FA, { 0x07A59504, 0x07A59505 } },
     { 0x07ABE9FC, { 0x07A5950A, 0x07A5950B } },
-  };    
+  };
 
   bookBoundWeapons = {
     { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } }
@@ -452,16 +452,17 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
     if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
       actor.DamageActorValue(espm::ActorValue::Magicka,
                              it->second.GetManacost());
-      actor.AddItem(it->second.GetBaseId(), 1);
-      actor.RemoveItem(it->first, 1, nullptr);
-      worldState.SetTimer(5.f).Then([it, &actor](Viet::Void) {
+      uint32_t boundWeapon = it->second.GetBaseId(), book = it->first;
+      actor.AddItem(boundWeapon, 1);
+      actor.RemoveItem(book, 1, nullptr);
+      worldState.SetTimer(10.f).Then([book, boundWeapon, &actor](Viet::Void) {
         std::cout << "Inside lambda\n";
-        actor.AddItem(it->first, 1);
-        std::cout << "added item " << std::hex << it->first << '\n';
-        std::cout << "trying to remove an item: " << std::hex
-                  << it->second.GetBaseId() << '\n';
-        actor.RemoveItem(it->second.GetBaseId(), 1, nullptr);
-        std::cout << "removed item " << std::hex << it->second.GetBaseId() << '\n';
+        actor.AddItem(book, 1);
+        std::cout << "added item " << std::hex << book << '\n';
+        std::cout << "trying to remove an item: " << std::hex << boundWeapon
+                  << '\n';
+        actor.RemoveItem(boundWeapon, 1, nullptr);
+        std::cout << "removed item " << std::hex << boundWeapon << '\n';
       });
     }
   }
