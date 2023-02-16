@@ -105,8 +105,7 @@ $regular: 200ms;
 
   &__perk--absolute {
     position: absolute;
-    bottom: 0;
-    transform: translateY(calc(100% + 32px));
+    bottom: -160px;
   }
 
   &__perk--left {
@@ -277,6 +276,10 @@ $regular: 200ms;
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
+      &__confirm {
+        display: flex;
+        gap: 11px;
+      }
     }
     &__exit-button {
       justify-content: center;

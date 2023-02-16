@@ -10,7 +10,7 @@ import selectSound from './assets/ButtonDown.wav';
 import learnSound from './assets/LearnSkill.wav';
 import { IPlayerData } from '../../interfaces/skillMenu';
 
-const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
+const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   // const [isOpen, setisOpen] = useState(true);
   const [currentHeader, setcurrentHeader] = useState('способности');
   const [currentLevel, setcurrentLevel] = useState(' ');
@@ -22,14 +22,36 @@ const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
   const [pMem, setpMem] = useState(0);
   const [memHint, setmemHint] = useState(false);
   const [playerData, setplayerData] = useState<IPlayerData | undefined>();
+  const [confirmDiscard, setconfirmDiscard] = useState(false);
 
   const fetchData = (event) => {
     const newPlayerData = (event as CustomEvent).detail as IPlayerData;
     setplayerData(newPlayerData);
   };
 
+  const quitHandler = () => {
+    const audio = document
+      .getElementById('quitSound')
+      .cloneNode(true) as HTMLAudioElement;
+    audio.play();
+    setplayerData(undefined);
+    send('/skill quit');
+    // setisOpen(false);
+  };
+
+  const keyListener = (event) => {
+    if (event.key === 'Escape') {
+      quitHandler();
+    }
+  };
+
   useEffect(() => {
     window.addEventListener('updateSkillMenu', fetchData);
+    window.onkeydown = keyListener;
+    const el = document.getElementsByClassName('fullPage')[0] as HTMLElement;
+    if (el) {
+      el.style.display = 'none';
+    }
     // !Important: Run commented code to dispatch event
     // window.dispatchEvent(
     //   new CustomEvent('updateSkillMenu', {
@@ -49,6 +71,10 @@ const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
     return () => {
       setplayerData(undefined);
       window.removeEventListener('updateSkillMenu', fetchData);
+      const el = document.getElementsByClassName('fullPage')[0] as HTMLElement;
+      if (el) {
+        el.style.display = 'flex';
+      }
     };
   }, []);
 
@@ -119,15 +145,6 @@ const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
     audio.play();
   };
 
-  const quitHandler = () => {
-    const audio = document
-      .getElementById('quitSound')
-      .cloneNode(true) as HTMLAudioElement;
-    audio.play();
-    setplayerData(undefined);
-    // setisOpen(false);
-  };
-
   const discardHandler = () => {
     let returnExp = 0;
     let memReturn = 0;
@@ -149,6 +166,12 @@ const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
       exp: newExp,
       perks: {}
     });
+  };
+
+  const confirmHanlder = () => {
+    setconfirmDiscard(true);
+    setcurrentLevel('хотите сбросить все профессии?');
+    setcurrentDescription('нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину накопленного опыта. в первую очередь,  это стоит сделать если ваш персонаж умер.');
   };
 
   if (!playerData) return <></>;
@@ -266,15 +289,38 @@ const SkillsMenu = ({ send }: {send: (message: string) => void}) => {
                   }
                   onMouseDown={() => learnHandler()}
                 ></FrameButton>
-                <FrameButton
-                  text="сбросить"
-                  name="discardBtn"
-                  variant="DEFAULT"
-                  width={242}
-                  height={56}
-                  disabled={Object.keys(playerData.perks).length === 0}
-                  onMouseDown={() => discardHandler()}
-                ></FrameButton>
+                {confirmDiscard
+                  ? (
+                  <div className="perks__footer__buttons__confirm">
+                    <FrameButton
+                      text="да"
+                      name="yesBtn"
+                      variant="DEFAULT"
+                      width={178}
+                      height={56}
+                      onMouseDown={() => discardHandler()}
+                    ></FrameButton>
+                    <FrameButton
+                      text="нет"
+                      name="noBtn"
+                      variant="DEFAULT"
+                      width={178}
+                      height={56}
+                      onMouseDown={() => setconfirmDiscard(false)}
+                    ></FrameButton>
+                  </div>
+                    )
+                  : (
+                  <FrameButton
+                    text="сбросить"
+                    name="discardBtn"
+                    variant="DEFAULT"
+                    width={242}
+                    height={56}
+                    disabled={Object.keys(playerData.perks).length === 0}
+                    onMouseDown={() => confirmHanlder()}
+                  ></FrameButton>
+                    )}
               </div>
               <div className="perks__footer__exit-button">
                 <FrameButton

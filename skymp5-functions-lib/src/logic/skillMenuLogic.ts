@@ -1,6 +1,7 @@
 import { PlayerController } from './PlayerController';
 import { memId, expId, skillRecipes, idBasedData, IPossessedSkills } from './skillMenuData';
 import { Mp } from '../types/mp';
+import { BrowserProperty } from '../props/browserProperty';
 
 declare const mp: Mp;
 
@@ -30,6 +31,11 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
   if (newSkillName === 'exp' && level) {
     controller.addItem(actorId, expId, +level)
     return
+  }
+
+  if (newSkillName == 'quit') {
+    BrowserProperty.setFocused(actorId, false);
+    return;
   }
 
   let memCount = 0;
