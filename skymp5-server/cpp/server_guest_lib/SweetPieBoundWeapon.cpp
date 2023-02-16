@@ -1,10 +1,10 @@
 #include "SweetPieBoundWeapon.h"
 
 const std::array<std::chrono::minutes, 4> SweetPieBoundWeapon::kCooldowns = {
-  std::chrono::minutes(3),
-  std::chrono::minutes(4),
-  std::chrono::minutes(5),
-  std::chrono::minutes(6),
+  180.f,
+  240.f,
+  300.f,
+  360.f,
 };
 
 const std::array<float, 4> SweetPieBoundWeapon::kManacostPercentages = {
@@ -21,7 +21,7 @@ SweetPieBoundWeapon::SweetPieBoundWeapon(uint32_t baseId_,
 {
 }
 
-std::chrono::minutes SweetPieBoundWeapon::GetCooldown() const
+float SweetPieBoundWeapon::GetCooldown() const
 {
   return kCooldowns[skillLevel];
 }

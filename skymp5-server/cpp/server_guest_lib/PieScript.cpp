@@ -251,7 +251,14 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
   };
 
   bookBoundWeapons = {
-    { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } }
+    { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } },
+    { 0x07f42cc2, { 0x7a30b931, SweetPieBoundWeapon::SkillLevel::Novice } },
+    { 0x07f5c2ad, { 0x07f42cb5, SweetPieBoundWeapon::SkillLevel::Adept } },
+    { 0x000a26f1, { 0x07a4a191, SweetPieBoundWeapon::SkillLevel::Adept } },
+    { 0x07f42cc1, { 0x07f42cb4, SweetPieBoundWeapon::SkillLevel::Expert } },
+    { 0x000a26ed, { 0x00058f5e, SweetPieBoundWeapon::SkillLevel::Expert } },
+    { 0x07f38aab, { 0x07f42caf, SweetPieBoundWeapon::SkillLevel::Master } },
+    { 0x0009e2a9, { 0x00058f5f, SweetPieBoundWeapon::SkillLevel::Master } },
   };
 }
 
@@ -452,18 +459,17 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
     if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
       actor.DamageActorValue(espm::ActorValue::Magicka,
                              it->second.GetManacost());
-      uint32_t boundWeapon = it->second.GetBaseId(), book = it->first;
-      actor.AddItem(boundWeapon, 1);
-      actor.RemoveItem(book, 1, nullptr);
-      worldState.SetTimer(10.f).Then([book, boundWeapon, &actor](Viet::Void) {
-        std::cout << "Inside lambda\n";
-        actor.AddItem(book, 1);
-        std::cout << "added item " << std::hex << book << '\n';
-        std::cout << "trying to remove an item: " << std::hex << boundWeapon
-                  << '\n';
-        actor.RemoveItem(boundWeapon, 1, nullptr);
-        std::cout << "removed item " << std::hex << boundWeapon << '\n';
-      });
+      uint32_t boundWeaponBaseId = it->second.GetBaseId(),
+               bookBaseId = it->first;
+      actor.AddItem(boundWeaponBaseId, 1);
+      actor.RemoveItem(bookBaseId, 1, nullptr);
+      worldState.SetTimer(it->second.GetCooldown())
+        .Then([bookBaseId, boundWeaponBaseId, &actor](Viet::Void) {
+          actor.AddItem(bookBaseId, 1);
+          uint32_t count =
+            actor.GetInventory().GetItemCount(boundWeaponBaseId);
+          actor.RemoveItem(boundWeaponBaseId, count, nullptr);
+        });
     }
   }
 }
