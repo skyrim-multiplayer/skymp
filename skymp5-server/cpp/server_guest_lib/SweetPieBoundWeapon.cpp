@@ -1,6 +1,6 @@
 #include "SweetPieBoundWeapon.h"
 
-const std::array<std::chrono::minutes, 4> SweetPieBoundWeapon::kCooldowns = {
+const std::array<float, 4> SweetPieBoundWeapon::kCooldowns = {
   180.f,
   240.f,
   300.f,
