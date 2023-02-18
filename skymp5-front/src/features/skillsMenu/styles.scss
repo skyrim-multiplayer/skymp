@@ -16,6 +16,13 @@ $regular: 200ms;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  .skymp-button {
+    transition: scale $regular;
+  }
+  .skymp-button:not(.disabled):hover {
+    scale: 1.125;
+  }
 }
 
 .perks {
