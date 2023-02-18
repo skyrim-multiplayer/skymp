@@ -103,6 +103,7 @@ export class SweetTaffyTimedRewards implements GameModeListener {
   private giveExtraHourOfGameplayReward(playerActorId: number) {
     this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, 9);
     const playerBiome = this.getPlayerBiome(playerActorId);
+    console.log(`player actorId=${playerActorId.toString(16)} biome=${playerBiome}`);
     for (const rule of this.config.rules || []) {
       this.giveRewardByRule(playerActorId, playerBiome, rule);
     }
