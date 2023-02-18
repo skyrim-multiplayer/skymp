@@ -7,14 +7,13 @@ import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
 import { LocationalData, Mp, Inventory } from "./types/mp";
+import { squareDist } from "./utils/locationUtils";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
 declare const nameUpdatesClientSide: [number, string][];
-
-export const sqr = (x: number) => x * x;
 
 const scriptName = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -198,7 +197,7 @@ export class MpApiInteractor {
     ChatProperty.showChat(actorId, true);
   }
 
-  static makeController(pointsByName: Map<string, LocationalData>) {
+  static makeController(pointsByName: Map<string, LocationalData>) { // указать, что должно удовлетворять всем полям
     return {
       setSpawnPoint(player: number, pointName: string) {
         const point = pointsByName.get(pointName);
@@ -273,8 +272,7 @@ export class MpApiInteractor {
       getActorDistanceSquared(actorId1: number, actorId2: number): number {
         const pos1 = mp.get(actorId1, 'pos');
         const pos2 = mp.get(actorId2, 'pos');
-        const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
-        return sqr(delta[0]) + sqr(delta[1]) + sqr(delta[2]);
+        return squareDist(pos1, pos2);
       },
       isTeleportActivator(refrId: number): boolean {
         return isTeleportDoor(refrId);
@@ -302,6 +300,13 @@ export class MpApiInteractor {
       },
       getInventory(actorId: number): Inventory {
         return mp.get(actorId, 'inventory');
+      },
+      getLocation(actorId: number): LocationalData {
+        return {
+          cellOrWorldDesc: mp.get(actorId, 'worldOrCellDesc'),
+          pos: mp.get(actorId, 'pos'),
+          rot: mp.get(actorId, 'angle'),
+        };
       },
     }
   }

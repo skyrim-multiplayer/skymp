@@ -15,6 +15,7 @@ export const mockController = () => {
       counters.set(actorId + ':' + counter, to);
     },
     getInventory: jest.fn(),
+    getLocation: jest.fn(),
   };
 };
 

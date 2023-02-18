@@ -1,4 +1,5 @@
-import { Inventory } from "../types/mp";
+import { Inventory, LocationalData } from "../types/mp";
+import { Position, squareDist } from "../utils/locationUtils";
 import { GameModeListener } from "./GameModeListener";
 import { Counter } from "./PlayerController";
 
@@ -9,23 +10,34 @@ export type TimedRewardController = {
   setCounter(actorId: number, counter: Counter, to: number): void;
   getCounter(actorId: number, counter: Counter): number;
   getInventory(actorId: number): Inventory;
+  getLocation(actorId: number): LocationalData;
 }
 
-export type Biome = 'pineForest' | 'aspenForest' | 'aaltoValley' | 'plains' | 'mountains' | 'tundra' | 'seaside';
+// export type Biome = 'pineForest' | 'aspenForest' | 'aaltoValley' | 'plains' | 'mountains' | 'tundra' | 'seaside';
+export type BiomeName = string;
+
+export type BiomeInfo = {
+  name: BiomeName;
+  pos: [number, number, number];
+};
 
 export type RewardRule = {
   itemFormId: number;
   itemCountWeights: number[];
 
-  biome?: Biome;
+  biome?: BiomeName;
   requiredItemFormId?: number;
 }
+
+// export type RewardRuleSet = Record<string, any[]/*RewardRuleSet*/> | {rule: RewardRule};
 
 export type TimedRewardConfig = {
   // enableDaily, enablyHourly are here to simplify tests
   enableDaily: boolean;
   enableHourly: boolean;
   rules?: RewardRule[];
+  // ruleSet?: RewardRuleSet;
+  biomes?: BiomeInfo[];
 }
 
 export function getRandomIntByWeights(weights: number[]): number {
@@ -96,11 +108,38 @@ export class SweetTaffyTimedRewards implements GameModeListener {
     }
   }
 
-  getPlayerBiome(playerActorId: number): Biome {
-    // TODO: to be unhardcoded
-    const biomes: Biome[] = ['pineForest', 'aspenForest', 'aaltoValley', 'plains', 'mountains', 'tundra', 'seaside'];
-    const idx = Math.floor(Math.random() * biomes.length);
-    return biomes[idx];
+  /*
+  private giveExtraHourOfGameplayRewardWalk(playerActorId: number, ruleSet: RewardRuleSet) {
+    const rule = ruleSet.rule;
+    if (!Array.isArray(rule)) {
+      this.giveRewardByRule(playerActorId, rule);
+      return;
+    }
+    for (let [condition, subset] of rule) {
+      ;
+    }
+  }
+  */
+
+  getPlayerBiome(playerActorId: number): BiomeName {
+    const biomes = this.config.biomes || [];
+    if (biomes.length === 0) {
+      return '';
+    }
+    const {cellOrWorldDesc: playerCell, pos: playerPos} = this.controller.getLocation(playerActorId);
+    if (playerCell !== '3c:Skyrim.esm') {
+      return '';
+    }
+    const getSquareDist = (biomePos: Position) => squareDist(playerPos, biomePos);
+    let closestBiomeIdx = 0, closestBiomeSquareDist = getSquareDist(biomes[0].pos);
+    for (let i = 1; i < biomes.length; ++i) {
+      const currentBiomeSquareDist = getSquareDist(biomes[i].pos);
+      if (currentBiomeSquareDist < closestBiomeSquareDist) {
+        closestBiomeIdx = i;
+        closestBiomeSquareDist = currentBiomeSquareDist;
+      }
+    }
+    return biomes[closestBiomeIdx].name;
   }
 
   playerHasItem(playerActorId: number, itemFormId: number) {
@@ -112,7 +151,7 @@ export class SweetTaffyTimedRewards implements GameModeListener {
     return false;
   }
 
-  giveRewardByRule(playerActorId: number, playerBiome: Biome, rule: RewardRule) {
+  giveRewardByRule(playerActorId: number, playerBiome: BiomeName, rule: RewardRule) {
     if (rule.biome && rule.biome !== playerBiome) {
       return;
     }
