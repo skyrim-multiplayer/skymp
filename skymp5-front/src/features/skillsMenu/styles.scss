@@ -18,10 +18,10 @@ $regular: 200ms;
   justify-content: center;
 
   .skymp-button {
-    transition: scale $regular;
+    transition: transform $regular;
   }
   .skymp-button:not(.disabled):hover {
-    scale: 1.125;
+    transform: scale(1.125);
   }
 }
 
@@ -80,7 +80,7 @@ $regular: 200ms;
     border: 6px $level-0 solid;
     color: $level-0;
     transition: color $regular, border-color $regular, opacity $regular,
-      scale $regular;
+      transform $regular;
     opacity: 0.75;
 
     &__icon {
@@ -102,7 +102,7 @@ $regular: 200ms;
 
     &:hover {
       opacity: 0.75;
-      scale: 1.125;
+      transform: scale(1.125);
       cursor: pointer;
     }
     &:focus {
