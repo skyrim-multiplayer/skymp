@@ -1,9 +1,11 @@
 import { PlayerController } from './PlayerController';
 import { memId, expId, skillRecipes, idBasedData, IPossessedSkills } from './skillMenuData';
 import { Mp } from '../types/mp';
-import { BrowserProperty } from '../props/browserProperty';
+import { EvalProperty } from "../props/evalProperty";
+import { Ctx } from "../types/ctx";
 
 declare const mp: Mp;
+declare const ctx: Ctx;
 
 
 const discardSkills = (actorId : number, controller: PlayerController, possessedSkills : IPossessedSkills) => {
@@ -34,7 +36,12 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
   }
 
   if (newSkillName == 'quit') {
-    BrowserProperty.setFocused(actorId, false);
+    EvalProperty.eval(
+      actorId,
+      () => {
+        ctx.sp.browser.setFocused(false)
+      },
+    );
     return;
   }
 
