@@ -142,8 +142,8 @@ VarValue CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-      assert(false);
-      return VarValue();
+      throw std::runtime_error(
+        "Papyrus VM: failed to get valid type indentifier, ::CastToString()");
     case VarValue::kType_String:
       return var;
     case VarValue::kType_Integer:
@@ -167,8 +167,8 @@ VarValue CastToString(const VarValue& var)
     case VarValue::kType_BoolArray:
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
-      assert(false);
-      return VarValue();
+      throw std::runtime_error(
+        "Papyrus VM: Received wrong type, ::CastToString()");
   }
 }
 
