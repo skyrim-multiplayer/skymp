@@ -22,7 +22,7 @@ const Chat = (props) => {
   const [hideNonRP, changeNonRPHide] = useState(false);
   const [disableDiceSounds, setDisableDiceSounds] = useState(false);
   const [disableDiceColors, setDisableDiceColors] = useState(false);
-  const [isPouchOpened, setPouchOpened] = useState(false);
+  const [isPouchOpened, setPouchOpened] = useState(0);
   const [moveChat, setMoveChat] = useState(false);
   const [showSendButton, setSendButtonShow] = useState(false);
   const [isSettingsOpened, setSettingsOpened] = useState(false);

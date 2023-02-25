@@ -1,3 +1,5 @@
+$regular: 200ms;
+
 .chat-dices {
     display: flex;
     flex-direction: column;
@@ -38,6 +40,19 @@
            2px  2px 0   rgba( 0, 0, 0, 0.63 );
           color: #FAFAFA;
 
+    }
+
+    &__button {
+        align-self: center;
+        display: flex;
+        opacity: 0.5;
+        scale: 1;
+        transition: opacity $regular, scale $regular;
+    }
+
+    &__button:hover {
+        opacity: 0.8;
+        scale: 1.125;
     }
 }
 
