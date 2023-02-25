@@ -26,6 +26,7 @@ import * as animDebugSystem from "./debug/animDebugSystem";
 import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
 import * as expSystem from "./sync/expSystem";
+import * as CarryAnimSystem from "./sweetpie/CarryAnimSystem";
 
 browser.main();
 
@@ -101,6 +102,7 @@ const startClient = (): void => {
   animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
 
   playerCombatSystem.start();
+  CarryAnimSystem.Install();
   once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
