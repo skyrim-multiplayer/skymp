@@ -25,11 +25,19 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   const [confirmDiscard, setconfirmDiscard] = useState(false);
 
   const fetchData = (event) => {
+    const el = document.getElementsByClassName('fullPage')[0] as HTMLElement;
+    if (el) {
+      el.style.display = 'none';
+    }
     const newPlayerData = (event as CustomEvent).detail as IPlayerData;
     setplayerData(newPlayerData);
   };
 
   const quitHandler = () => {
+    const el = document.getElementsByClassName('fullPage')[0] as HTMLElement;
+    if (el) {
+      el.style.display = 'flex';
+    }
     const audio = document
       .getElementById('quitSound')
       .cloneNode(true) as HTMLAudioElement;
@@ -48,10 +56,6 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   useEffect(() => {
     window.addEventListener('updateSkillMenu', fetchData);
     window.onkeydown = keyListener;
-    const el = document.getElementsByClassName('fullPage')[0] as HTMLElement;
-    if (el) {
-      el.style.display = 'none';
-    }
     // !Important: Run commented code to dispatch event
     // window.dispatchEvent(
     //   new CustomEvent('updateSkillMenu', {
