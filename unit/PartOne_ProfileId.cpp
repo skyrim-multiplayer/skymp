@@ -1,5 +1,5 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 TEST_CASE("Should return 0 for invalid/unexisting profileId", "[ProfileId]")
 {

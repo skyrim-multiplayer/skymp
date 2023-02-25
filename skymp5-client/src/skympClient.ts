@@ -34,6 +34,7 @@ import * as netInfo from "./debug/netInfoSystem";
 import { WorldView } from "./view/worldView";
 import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./view/worldViewMisc";
 import { getScreenResolution } from "./view/formView";
+import * as taffyPerkSystem from "./sweetpie/taffyPerkSystem";
 
 interface AnyMessage {
   type?: string;
@@ -246,6 +247,9 @@ export class SkympClient {
           e.oldContainer.getFormID() === 0x14 ||
           e.newContainer.getFormID() === 0x14
         ) {
+          if (e.newContainer.getFormID() === 0x14 && e.numItems > 0) {
+            taffyPerkSystem.inventoryChanged(e.newContainer, { baseId: e.baseObj.getFormID(), count: e.numItems });
+          }
           if (!lastInv) lastInv = getPcInventory();
           if (lastInv) {
             const newInv = getInventory(Game.getPlayer() as Actor);
@@ -261,19 +265,21 @@ export class SkympClient {
             for (let i = 0; i < diff.entries.length; ++i) {
               printConsole(`[${i}] ${JSON.stringify(diff.entries[i])}`);
             }
-            const msgs = diff.entries.map((entry) => {
-              if (entry.count !== 0) {
-                const msg = JSON.parse(JSON.stringify(entry));
-                delete msg["name"]; // Extra name works too strange
-                msg["t"] = entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
-                msg["count"] = Math.abs(msg["count"]);
-                msg["target"] =
-                  e.oldContainer.getFormID() === 0x14
-                    ? e.newContainer.getFormID()
-                    : e.oldContainer.getFormID();
-                return msg;
-              }
-            });
+            const msgs = diff.entries
+              .filter(entry => entry.count > 0 ? taffyPerkSystem.canDropOrPutItem(entry.baseId) : true)
+              .map((entry) => {
+                if (entry.count !== 0) {
+                  const msg = JSON.parse(JSON.stringify(entry));
+                  delete msg["name"]; // Extra name works too strange
+                  msg["t"] = entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
+                  msg["count"] = Math.abs(msg["count"]);
+                  msg["target"] =
+                    e.oldContainer.getFormID() === 0x14
+                      ? e.newContainer.getFormID()
+                      : e.oldContainer.getFormID();
+                  return msg;
+                }
+              });
             msgs.forEach((msg) => this.sendTarget.send(msg, true));
 
             // Prevent emitting 1,2,3,4,5 changes when taking/putting 5 potions one by one
@@ -285,8 +291,7 @@ export class SkympClient {
                 const take = entry.count < 0;
                 if (put) {
                   lastInv = removeSimpleItemsAsManyAsPossible(lastInv, entry.baseId, entry.count);
-                }
-                else if (take) {
+                } else if (take) {
                   const add = { entries: [entry] };
                   add.entries[0].count *= -1;
                   lastInv = sumInventories(lastInv, add);
@@ -304,7 +309,7 @@ export class SkympClient {
       const noContainer: boolean = e.newContainer === null || e.newContainer === undefined;
       const isReference: boolean = e.reference !== null;
       if (e.newContainer && e.newContainer.getFormID() === pl.getFormID()) return;
-      if (isPlayer && isReference && noContainer) {
+      if (isPlayer && isReference && noContainer && taffyPerkSystem.canDropOrPutItem(e.baseObj.getFormID())) {
         const radius: number = 200;
         const baseId: number = e.baseObj.getFormID();
         const refrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();

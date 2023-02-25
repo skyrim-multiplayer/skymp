@@ -4,7 +4,7 @@
 #include "MpActor.h"
 #include "MsgType.h"
 #include "PartOne.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 // Utilities for testing
 

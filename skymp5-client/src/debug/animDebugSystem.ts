@@ -1,10 +1,15 @@
 import * as sp from "skyrimPlatform";
 
+export interface AnimTextOutput {
+  isActive?: boolean;
+  itemCount?: number;
+  startPos?: { x: number, y: number },
+  yPosDelta?: number,
+}
+
 export interface AnimDebugSettings {
   isActive?: boolean;
-  animListCount?: number;
-  animListStartPos?: { x: number, y: number },
-  animListYPosDelta?: number;
+  textOutput?: AnimTextOutput,
   animKeys?: { [index: number]: string };
 }
 
@@ -22,15 +27,16 @@ class AnimQueueCollection {
   public static readonly Name = "AnimQueueCollection";
 
   constructor(settings: AnimDebugSettings) {
-    const animListCount = settings.animListCount ?? 5;
-    const animListStartPos = settings.animListStartPos ?? { x: 650, y: 600 };
-    const animListYPosDelta = settings.animListYPosDelta ?? 32;
-    let y = animListStartPos.y;
+    const arrayLength = settings?.textOutput?.itemCount ?? 5;
+    const startPos = settings?.textOutput?.startPos ?? { x: 650, y: 600 };;
+    const yPosDelta = settings?.textOutput?.yPosDelta ?? 32;
 
-    this.list = new Array<AnimListItem>(animListCount);
-    for (let idx = 0; idx < animListCount; ++idx) {
-      this.list[idx] = { name: "", textId: sp.createText(animListStartPos.x, y, "", animationSucceededTextColor), color: animationSucceededTextColor };
-      y += animListYPosDelta;
+    let y = startPos.y;
+
+    this.list = new Array<AnimListItem>(arrayLength);
+    for (let idx = 0; idx < arrayLength; ++idx) {
+      this.list[idx] = { name: "", textId: sp.createText(startPos.x, y, "", animationSucceededTextColor), color: animationSucceededTextColor };
+      y += yPosDelta;
     }
   }
 
@@ -59,21 +65,23 @@ class AnimQueueCollection {
 }
 
 if (sp.storage[AnimQueueCollection.Name] && (sp.storage[AnimQueueCollection.Name] as AnimQueueCollection).clearSPText) {
-  (sp.storage[AnimQueueCollection.Name] as AnimQueueCollection)?.clearSPText();
+  (sp.storage[AnimQueueCollection.Name] as AnimQueueCollection).clearSPText();
 }
 
 export const init = (settings: AnimDebugSettings): void => {
   if (!settings || !settings.isActive) return;
+  
+  if (settings.textOutput?.isActive) {
+    var queue = new AnimQueueCollection(settings);
+    sp.storage[AnimQueueCollection.name] = queue;
 
-  var queue = new AnimQueueCollection(settings);
-  sp.storage[AnimQueueCollection.name] = queue;
-
-  sp.hooks.sendAnimationEvent.add({
-    enter: (ctx) => { },
-    leave: (ctx) => {
-      queue.push(ctx.animEventName, ctx.animationSucceeded ? animationSucceededTextColor : animationNotSucceededTextColor);
-    }
-  }, playerId, playerId);
+    sp.hooks.sendAnimationEvent.add({
+      enter: (ctx) => { },
+      leave: (ctx) => {
+        queue.push(ctx.animEventName, ctx.animationSucceeded ? animationSucceededTextColor : animationNotSucceededTextColor);
+      }
+    }, playerId, playerId);
+  }
 
   if (settings.animKeys) {
     sp.on("buttonEvent", (e) => {

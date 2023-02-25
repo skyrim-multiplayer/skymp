@@ -60,7 +60,7 @@ endif()
 
 if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
-  include(${CMAKE_SOURCE_DIR}/cmake/CMakeRC.cmake)
+  find_package(CMakeRC CONFIG REQUIRED)
 
   # assets
   set(ASSET_FILES

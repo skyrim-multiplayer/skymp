@@ -10,13 +10,11 @@ import Settings from './settings';
 import SendButton from './sendButton';
 import ChatInput from './input';
 
-const FULL_NON_RP_REGEX = /(.*?):\s*\(\((.*?)\)\)/gi;
-const NONRP_REGEX = /\(\((.*?)\)\)/gi;
-const ACTION_REGEX = /\*(.*?)\*/gi;
-const IS_DICES_MESSAGE = /#\{.{6}\}(.)+ #\{ffffff\}- (.)+/gi;
-
 const MAX_LENGTH = 700; // Max message length
 const TIME_LIMIT = 5; // Seconds
+const SHOUT_LIMIT = 180; // Seconds
+
+const SHOUTREGEXP = /№(.*?)№/gi;
 
 const Chat = (props) => {
   const [input, updateInput] = useState('');
@@ -24,15 +22,18 @@ const Chat = (props) => {
   const [hideNonRP, changeNonRPHide] = useState(false);
   const [disableDiceSounds, setDisableDiceSounds] = useState(false);
   const [disableDiceColors, setDisableDiceColors] = useState(false);
-  const [isPouchOpened, setPocuhOpened] = useState(false);
+  const [isPouchOpened, setPouchOpened] = useState(false);
   const [moveChat, setMoveChat] = useState(false);
   const [showSendButton, setSendButtonShow] = useState(false);
   const [isSettingsOpened, setSettingsOpened] = useState(false);
   const [fontSize, setFontSize] = useState(16);
-
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;
   const send = props.send;
+
+  const [doesIncludeShout, setIncludeShout] = useState(false);
+
+  const [shoutLength, setShoutLength] = useState(0);
 
   const inputRef = useRef();
 
@@ -40,20 +41,37 @@ const Chat = (props) => {
 
   const isReset = useRef(true);
 
+  const shoutReset = useRef(true);
+
   const handleScroll = () => {
     if (chatRef.current) {
       window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
     }
   };
-  const sendMessage = () => {
-    if (input !== '' && input.length <= MAX_LENGTH && isReset.current) {
-      if (send !== undefined) send(input);
+  const sendMessage = useCallback((text) => {
+    const shout = text.match(SHOUTREGEXP);
+    const shoutLen = shout
+      ? shout.reduce((acc, text) => {
+        acc += text.length;
+        return acc;
+      }, 0)
+      : 0;
+    if (text !== '' && text.length <= MAX_LENGTH && isReset.current && shoutLen <= 100 && (shoutLen === 0 || shoutReset.current)) {
+      if (send !== undefined) send(text.trim());
       isReset.current = false;
       updateInput('');
       inputRef.current.innerHTML = '';
       inputRef.current.focus();
+      if (shout) {
+        shoutReset.current = false;
+        setTimeout(() => {
+          shoutReset.current = true;
+        }, 1000 * SHOUT_LIMIT);
+        setIncludeShout(false);
+        setShoutLength(0);
+      }
     }
-  };
+  }, [send, updateInput, input, isReset.current, shoutReset.current, shoutLength, doesIncludeShout]);
 
   useEffect(() => {
     window.needToScroll = true;
@@ -69,30 +87,12 @@ const Chat = (props) => {
       // Imitate message sending on Enter press
       if (event.code === 'Enter' && !event.shiftKey && inputRef.current) {
         event.preventDefault();
-        sendMessage();
+        sendMessage(input);
       }
     };
     node?.addEventListener('keydown', listener);
     return () => node?.removeEventListener('keydown', listener);
-    // eslint-disable-next-line
-  }, [inputRef.current]);
-
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      if (e.keyCode === 13 && !e.shiftKey) {
-        if (input !== '' && isInputFocus === true && input.length <= MAX_LENGTH && isReset.current) {
-          if (send !== undefined) send(input);
-          isReset.current = false;
-          inputRef.current.innerHTML = '';
-          updateInput('');
-        }
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [input, isInputFocus]);
+  }, [inputRef.current, input]);
 
   useEffect(() => {
     if (inputRef !== undefined && inputRef.current !== undefined && !isInputHidden) {
@@ -107,68 +107,48 @@ const Chat = (props) => {
     }
   }, [props.messages]);
 
-  const getMessageSpans = (text, currentColor = undefined) => {
-    const isFullNonRp = FULL_NON_RP_REGEX.test(text);
-    const isDiceMessage = text.match(IS_DICES_MESSAGE);
-    const colorSnippetTpl = '#{123456}';
-    if (!isDiceMessage || !disableDiceColors) {
-      for (let i = 0; i + colorSnippetTpl.length < text.length; ++i) {
-        if (text[i] == '#' && text[i + 1] == '{' &&
-          text[i + colorSnippetTpl.length - 1] == '}') {
-          return (
-            <span style={{ color: currentColor }}>
-              {text.substring(0, i)}
-              {
-                getMessageSpans(
-                  text.substring(i + colorSnippetTpl.length),
-                  '#' + text.substring(i + 2, i + 8)
-                )
-              }
-            </span>
-          );
-        }
-      }
+  const handleInput = (value) => {
+    updateInput(value);
+    const shout = value.match(SHOUTREGEXP);
+    if (shout && shout[0] !== '') {
+      setIncludeShout(true);
+      setShoutLength(shout.reduce((acc, text) => {
+        acc += text.length;
+        return acc;
+      }, 0));
     } else {
-      text = text.replace(/#\{.{6}\}/gi, '');
+      setIncludeShout(false);
+      setShoutLength(0);
     }
-    const resultMessage = [];
-    let lastIndex = 0;
-    for (let i = 0; i < text.length; ++i) {
-      if (text[i] === '*' && text.indexOf('*', i + 1) && text.slice(i).match(ACTION_REGEX)) {
-        const end = text.indexOf('*', i + 1) + 1;
-        resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
-        resultMessage.push(<span style={{ color: '#CFAA6E' }}>{text.slice(i + 1, end - 1).replace(/\*/g, '')}</span>);
-        lastIndex = end;
-        i = end;
+  };
+
+  const getMessageSpans = (message) => {
+    let isNonRp = message.category === 'plain';
+    const result = message.text.map(({ text, color, opacity, type }, i) => {
+      if (i >= 1) {
+        isNonRp = (type.includes('nonrp') && isNonRp);
       }
-      if (text[i] === '(' && text[i + 1] === '(' && text.indexOf('))', i + 1) && text.slice(i).match(NONRP_REGEX)) {
-        const end = text.indexOf('))', i + 1) + 2;
-        resultMessage.push(<span>{text.slice(lastIndex, i)}</span>);
-        resultMessage.push(<span style={{ color: '#91916D' }} className='nonrp'>{text.slice(i, end)}</span>);
-        lastIndex = end;
-        i = end;
-      }
-    }
-    resultMessage.push(text.slice(lastIndex));
-    return (
-      <span className={isFullNonRp ? 'nonrp' : ''} style={{ color: currentColor }}>
-        {resultMessage}
-      </span>
-    );
+      return <span key={`${text}_${i}`} style={{ color: `${color}`, opacity: opacity }} className={`${type.join(' ')}`}>{text}</span>;
+    });
+    return [result, isNonRp];
   };
 
   const getList = () => {
-    return props.messages.slice(-50).map((msg, index) => (
-      <div
-        className="msg"
-        key={`msg-${index}`}
-        style={{ marginLeft: '10px' }}
-      >
-        {getMessageSpans(msg)}
-      </div>
-    ));
+    return window.chatMessages.map((msg, index) => {
+      const result = getMessageSpans(msg);
+      return (
+        <div
+          className={`msg ${result[1] ? 'nonrp' : ''}`}
+          key={`msg-${index}`}
+          style={{ marginLeft: '10px', opacity: msg.opacity }}
+        >
+          {
+            result[0]
+          }
+        </div>
+      );
+    });
   };
-
   return (
     <div className='fullPage'>
       <Draggable handle='#handle' disabled={!moveChat} bounds={'.fullPage'}>
@@ -211,14 +191,14 @@ const Chat = (props) => {
                   className={'show'}
                   type="text"
                   placeholder={placeholder !== undefined ? placeholder : ''}
-                  onChange={(value) => { updateInput(value); }}
+                  onChange={(value) => { handleInput(value); }}
                   onFocus={(e) => changeInputFocus(true)}
                   onBlur={(e) => changeInputFocus(false)}
                   ref={inputRef}
                   fontSize={fontSize}
                 />
                 {
-                  showSendButton && <SendButton onClick={() => sendMessage()} />
+                  showSendButton && <SendButton onClick={() => sendMessage(input)} />
                 }
               </div>
               <div className='chat-checkboxes'>
@@ -247,6 +227,9 @@ const Chat = (props) => {
                     inputRef.current.focus();
                     setMoveChat(e.target.checked);
                   }} />
+                { doesIncludeShout &&
+                  <span className={`chat-message-limit shout-limit ${shoutLength > 100 ? 'limit' : ''} text`}>{shoutLength}/100</span>
+                }
                 <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
               </div>
             </div>
@@ -256,7 +239,7 @@ const Chat = (props) => {
               ? <></>
               : <Dices
                   isOpened={isPouchOpened}
-                  setOpened={setPocuhOpened}
+                  setOpened={setPouchOpened}
                   send={props.send}
                   disableSound={disableDiceSounds}
                   inputRef={inputRef}

@@ -26,7 +26,6 @@ const LoginForm = props => {
     }
   };
   const handleLogin = (credentials) => {
-    console.log(credentials);
     if (isRemember) {
       localStorage.setItem('email', credentials.email);
       localStorage.setItem('password', credentials.password);

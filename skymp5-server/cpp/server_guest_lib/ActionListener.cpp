@@ -1,4 +1,5 @@
 #include "ActionListener.h"
+#include "AnimationSystem.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
@@ -126,15 +127,7 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   if (!actor) {
     return;
   }
-
-  constexpr const char* kBlockStartAnimationName = "blockStart";
-  constexpr const char* kBlockStopAnimationName = "blockStop";
-  if (!strcmp(animationData.animEventName, kBlockStartAnimationName)) {
-    actor->SetIsBlockActive(true);
-  }
-  if (!strcmp(animationData.animEventName, kBlockStopAnimationName)) {
-    actor->SetIsBlockActive(false);
-  }
+  partOne.animationSystem.Process(actor, animationData);
   SendToNeighbours(idx, rawMsgData);
 }
 
@@ -509,9 +502,7 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
-                                    const float healthPercentage,
-                                    const float magickaPercentage,
-                                    const float staminaPercentage)
+                                    const ActorValues& newActorValues)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
@@ -522,38 +513,35 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   float timeAfterRegeneration = CropPeriodAfterLastRegen(
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
-  MpChangeForm changeForm = actor->GetChangeForm();
-  float health = healthPercentage;
-  float magicka = magickaPercentage;
-  float stamina = staminaPercentage;
+  ActorValues currentActorValues = actor->GetChangeForm().actorValues;
+  float health = newActorValues.healthPercentage;
+  float magicka = newActorValues.magickaPercentage;
+  float stamina = newActorValues.staminaPercentage;
 
-  if (healthPercentage != changeForm.healthPercentage) {
-    health = CropHealthRegeneration(health, timeAfterRegeneration, actor);
+  if (newActorValues.healthPercentage != currentActorValues.healthPercentage) {
+    currentActorValues.healthPercentage =
+      CropHealthRegeneration(health, timeAfterRegeneration, actor);
   }
-  if (magickaPercentage != changeForm.magickaPercentage) {
-    magicka = CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
+  if (newActorValues.magickaPercentage !=
+      currentActorValues.magickaPercentage) {
+    currentActorValues.magickaPercentage =
+      CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
   }
-  if (staminaPercentage != changeForm.staminaPercentage) {
-    stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
-  }
-
-  if (IsNearlyEqual(health, healthPercentage) == false ||
-      IsNearlyEqual(magicka, magickaPercentage) == false ||
-      IsNearlyEqual(stamina, staminaPercentage) == false) {
-    std::string s;
-    s += Networking::MinPacketId;
-    s += nlohmann::json{
-      { "t", MsgType::ChangeValues },
-      { "data",
-        { { "health", health },
-          { "magicka", magicka },
-          { "stamina", stamina } } }
-    }.dump();
-    actor->SendToUser(s.data(), s.size(), true);
+  if (newActorValues.staminaPercentage !=
+      currentActorValues.staminaPercentage) {
+    currentActorValues.staminaPercentage =
+      CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
 
-  actor->SetPercentages(health, magicka, stamina);
-  actor->SetLastAttributesPercentagesUpdate(now);
+  if (!IsNearlyEqual(currentActorValues.healthPercentage,
+                     newActorValues.healthPercentage) ||
+      !IsNearlyEqual(currentActorValues.magickaPercentage,
+                     newActorValues.magickaPercentage) ||
+      !IsNearlyEqual(currentActorValues.staminaPercentage,
+                     newActorValues.staminaPercentage)) {
+    actor->NetSendChangeValues(currentActorValues);
+  }
+  actor->SetPercentages(currentActorValues);
 }
 
 namespace {
@@ -747,32 +735,32 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
-  MpChangeForm targetForm = targetActor.GetChangeForm();
+  ActorValues currentActorValues = targetActor.GetChangeForm().actorValues;
 
-  float healthPercentage = targetForm.healthPercentage;
-  float magickaPercentage = targetForm.magickaPercentage;
-  float staminaPercentage = targetForm.staminaPercentage;
+  float healthPercentage = currentActorValues.healthPercentage;
+  float magickaPercentage = currentActorValues.magickaPercentage;
+  float staminaPercentage = currentActorValues.staminaPercentage;
 
   hitData.isHitBlocked = targetActor.IsBlockActive()
     ? ShouldBeBlocked(*aggressor, targetActor)
     : false;
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
-  float currentHealthPercentage =
+  currentActorValues.healthPercentage =
     CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
 
-  currentHealthPercentage =
-    currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
+  currentActorValues.healthPercentage =
+    currentActorValues.healthPercentage < 0.f
+    ? 0.f
+    : currentActorValues.healthPercentage;
 
-  auto now = std::chrono::steady_clock::now();
-  targetActor.NetSetPercentages(currentHealthPercentage, magickaPercentage,
-                                staminaPercentage, now, aggressor);
-  targetActor.SetLastHitTime(now);
+  targetActor.NetSetPercentages(currentActorValues, aggressor);
+  targetActor.SetLastHitTime();
 
   spdlog::debug("Target {0:x} is hitted by {1} damage. Current health "
                 "percentage: {2}. Last "
                 "health percentage: {3}. (Last: {3} => Current: {2})",
-                hitData.target, damage, currentHealthPercentage,
+                hitData.target, damage, currentActorValues.healthPercentage,
                 healthPercentage);
 }
 

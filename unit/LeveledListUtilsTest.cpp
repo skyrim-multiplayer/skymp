@@ -1,7 +1,7 @@
 #include "LeveledListUtils.h"
 #include <algorithm>
 #include <atomic>
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <numeric>
 #include <thread>
 

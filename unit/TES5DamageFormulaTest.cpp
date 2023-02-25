@@ -1,5 +1,5 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <chrono>
 
 #include "GetBaseActorValues.h"
@@ -132,7 +132,7 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
   Appearance appearance;
   appearance.raceId = 0x13745; // KhajiitRace
   ac.SetAppearance(&appearance);
-  ac.SetPercentages(1, 1, 1);
+  ac.SetPercentages({ 1, 1, 1 });
 
   {
     TES5DamageFormula formula{};

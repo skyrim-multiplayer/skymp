@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>

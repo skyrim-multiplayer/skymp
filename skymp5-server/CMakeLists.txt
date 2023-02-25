@@ -32,7 +32,7 @@ yarn_execute_command(
 # 2. `cmake-js-fetch/CMakeLists.txt` creates `node.cmake` while generating
 
 # 3. Simply include `node.cmake`.
-include(${CMAKE_CURRENT_LIST_DIR}/cmake-js-fetch-build/node.cmake)
+include(${CMAKE_BINARY_DIR}/cmake-js-fetch-build/node.cmake)
 
 # 4. Include `node-addon-api`, a wrapper over NAPI.
 execute_process(COMMAND node -p "require('node-addon-api').include"

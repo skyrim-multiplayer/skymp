@@ -8,6 +8,7 @@
 
 class ServerState;
 class WorldState;
+struct ActorValues;
 
 class ActionListener
 {
@@ -77,9 +78,7 @@ public:
                              const char* eventName, simdjson::dom::element& e);
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
-                              const float healthPercentage,
-                              const float magickaPercentage,
-                              const float staminaPercentage);
+                              const ActorValues& actorValues);
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
 

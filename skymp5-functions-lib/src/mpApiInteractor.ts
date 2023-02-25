@@ -1,7 +1,7 @@
 import { GameModeListener } from "./logic/GameModeListener";
 import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/SweetPieRound";
-import { ChatProperty } from "./props/chatProperty";
+import { ChatMessage, ChatNeighbor, ChatProperty } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
@@ -14,6 +14,8 @@ import { Timer } from "./utils/timer";
 declare const mp: Mp;
 declare const ctx: Ctx;
 declare const nameUpdatesClientSide: [number, string][];
+
+export const sqr = (x: number) => x * x;
 
 const scriptName = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -41,86 +43,80 @@ const isTeleportDoor = (refrId: number) => {
   return false;
 };
 
-const getName = (actorId: number) => {
+export const getName = (actorId: number) => {
   const appearance = mp.get(actorId, 'appearance');
   if (appearance && appearance.name) {
     return `${appearance.name}`;
   }
   return 'Stranger';
 };
-
-const sqr = (x: number) => x * x;
-
-const getActorDistanceSquared = (actorId1: number, actorId2: number) => {
-  const pos1 = mp.get(actorId1, 'pos');
-  const pos2 = mp.get(actorId2, 'pos');
-  const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
-  return sqr(delta[0]) + sqr(delta[1]) + sqr(delta[2]);
-};
-
 export class MpApiInteractor {
-  private static serverSettings = mp.getServerSettings();
   private static customNames = new Map<number, string>();
 
-  static setup(listener: GameModeListener) {
-    MpApiInteractor.setupActivateHandler(listener);
-    MpApiInteractor.setupChatHandler(listener);
-    MpApiInteractor.setupDialogResponseHandler(listener);
-    MpApiInteractor.setupTimer(listener);
-    MpApiInteractor.setupDeathHandler(listener);
+  static setup(listeners: GameModeListener[]) {
+    MpApiInteractor.setupActivateHandler(listeners);
+    MpApiInteractor.setupChatHandler(listeners);
+    MpApiInteractor.setupDialogResponseHandler(listeners);
+    MpApiInteractor.setupTimer(listeners);
+    MpApiInteractor.setupDeathHandler(listeners);
   }
 
-  private static setupActivateHandler(listener: GameModeListener) {
+  private static setupActivateHandler(listeners: GameModeListener[]) {
     mp.onActivate = (target: number, caster: number) => {
-      const type = mp.get(target, "type");
-      if (type !== "MpObjectReference") {
+      const type = mp.get(target, 'type');
+      if (type !== 'MpObjectReference') {
         return true;
       }
 
       const targetDesc = mp.getDescFromId(target);
-      if (!listener.onPlayerActivateObject) {
-        return true;
+
+      let notBlocked = true;
+
+      for (const listener of listeners) {
+        if (!listener.onPlayerActivateObject) {
+          continue;
+        }
+        const res = listener.onPlayerActivateObject(caster, targetDesc, target);
+        if (res == 'blockActivation') {
+          notBlocked = false;
+        }
       }
 
-      const res = listener.onPlayerActivateObject(caster, targetDesc, target);
-      if (res === 'continue') {
-        return true;
-      }
-
-      return false;
+      return notBlocked;
     };
   }
 
-  private static setupChatHandler(listener: GameModeListener) {
+  private static setupChatHandler(listeners: GameModeListener[]) {
     ChatProperty.setChatInputHandler((input) => {
-      const chatSettings = this.serverSettings.sweetpieChatSettings as ChatSettings ?? {};
       const onlinePlayers = mp.get(0, 'onlinePlayers');
-      const actorNeighbors =
-        mp.get(input.actorId, 'actorNeighbors')
-          .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1)
-          .filter((actorId) =>
-            chatSettings.hearingRadiusNormal === undefined ||
-            getActorDistanceSquared(input.actorId, actorId) < sqr(chatSettings.hearingRadiusNormal)
-          );
-
+      const actorNeighbors = mp
+        .get(input.actorId, 'actorNeighbors')
+        .filter((actorId) => onlinePlayers.indexOf(actorId) !== -1);
       const name = getName(input.actorId);
-      if (listener.onPlayerChatInput) {
-        console.log(`chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}): ${JSON.stringify(input.inputText)}`);
-        listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, name);
+      const profileId = mp.get(input.actorId, 'profileId');
+      console.log(
+        `chat: ${JSON.stringify(name)} (${input.actorId.toString(16)}/${profileId}): ${JSON.stringify(input.inputText)}`
+      );
+      for (const listener of listeners) {
+        if (listener.onPlayerChatInput) {
+          listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, profileId);
+        }
       }
     });
   }
 
-  private static setupDialogResponseHandler(listener: GameModeListener) {
+  private static setupDialogResponseHandler(listeners: GameModeListener[]) {
     DialogProperty.setDialogResponseHandler((response) => {
-      if (listener.onPlayerDialogResponse) {
-        listener.onPlayerDialogResponse(response.actorId, response.dialogId, response.buttonIndex);
+      for (const listener of listeners) {
+        if (listener.onPlayerDialogResponse) {
+          listener.onPlayerDialogResponse(response.actorId, response.dialogId, response.buttonIndex);
+        }
       }
       return true;
     });
   }
 
-  private static setupTimer(listener: GameModeListener) {
+  private static setupTimer(listeners: GameModeListener[]) {
     Timer.everySecond = () => {
       // console.log(PersistentStorage.getSingleton().reloads);
 
@@ -130,21 +126,23 @@ export class MpApiInteractor {
       const joinedPlayers = onlinePlayers.filter((x) => !onlinePlayersOld.includes(x));
       const leftPlayers = onlinePlayersOld.filter((x) => !onlinePlayers.includes(x));
 
-      if (listener.onPlayerJoin) {
-        for (const actorId of joinedPlayers) {
-          MpApiInteractor.onPlayerJoinHardcoded(actorId);
-          listener.onPlayerJoin(actorId);
+      for (const listener of listeners) {
+        if (listener.onPlayerJoin) {
+          for (const actorId of joinedPlayers) {
+            MpApiInteractor.onPlayerJoinHardcoded(actorId);
+            listener.onPlayerJoin(actorId);
+          }
         }
-      }
 
-      if (listener.onPlayerLeave) {
-        for (const actorId of leftPlayers) {
-          listener.onPlayerLeave(actorId);
+        if (listener.onPlayerLeave) {
+          for (const actorId of leftPlayers) {
+            listener.onPlayerLeave(actorId);
+          }
         }
-      }
 
-      if (listener.everySecond) {
-        listener.everySecond();
+        if (listener.everySecond) {
+          listener.everySecond();
+        }
       }
 
       for (const actorId of leftPlayers) {
@@ -162,15 +160,19 @@ export class MpApiInteractor {
         if (!nameUpdates.length) {
           continue;
         }
-        EvalProperty.eval(actorId, () => {
-          for (const [formId, name] of nameUpdatesClientSide) {
-            const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
-            const ret = refr?.setDisplayName(name, true);
-            if (!ret) {
-              ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
+        EvalProperty.eval(
+          actorId,
+          () => {
+            for (const [formId, name] of nameUpdatesClientSide) {
+              const refr = ctx.sp.ObjectReference.from(ctx.sp.Game.getFormEx(formId));
+              const ret = refr?.setDisplayName(name, true);
+              if (!ret) {
+                ctx.sp.printConsole('setDisplayName failed:', name, refr, ret);
+              }
             }
-          }
-        }, { nameUpdatesClientSide: nameUpdates });
+          },
+          { nameUpdatesClientSide: nameUpdates }
+        );
       }
 
       if (joinedPlayers.length > 0 || leftPlayers.length > 0) {
@@ -179,13 +181,15 @@ export class MpApiInteractor {
     };
   }
 
-  private static setupDeathHandler(listener: GameModeListener) {
+  private static setupDeathHandler(listeners: GameModeListener[]) {
     mp.onDeath = (target: number, killer: number) => {
-      if (listener.onPlayerDeath) {
-        if (killer === 0) {
-          listener.onPlayerDeath(target, undefined);
-        } else {
-          listener.onPlayerDeath(target, killer);
+      for (const listener of listeners) {
+        if (listener.onPlayerDeath) {
+          if (killer === 0) {
+            listener.onPlayerDeath(target, undefined);
+          } else {
+            listener.onPlayerDeath(target, killer);
+          }
         }
       }
     };
@@ -195,7 +199,7 @@ export class MpApiInteractor {
     ChatProperty.showChat(actorId, true);
   }
 
-  static makeController(pointsByName: Map<string, LocationalData>): PlayerController {
+  static makeController(pointsByName: Map<string, LocationalData>) {
     return {
       setSpawnPoint(player: number, pointName: string) {
         const point = pointsByName.get(pointName);
@@ -214,10 +218,16 @@ export class MpApiInteractor {
         }
       },
       showMessageBox(actorId: number, dialogId: number, caption: string, text: string, buttons: string[]): void {
-        DialogProperty.showMessageBox(actorId, dialogId, caption.toLowerCase(), text.toLowerCase(), buttons.map(x => x.toLowerCase()));
+        DialogProperty.showMessageBox(
+          actorId,
+          dialogId,
+          caption.toLowerCase(),
+          text.toLowerCase(),
+          buttons.map((x) => x.toLowerCase())
+        );
       },
-      sendChatMessage(actorId: number, text: string): void {
-        ChatProperty.sendChatMessage(actorId, text);
+      sendChatMessage(actorId: number, message: ChatMessage): void {
+        ChatProperty.sendChatMessage(actorId, message);
       },
       quitGame(actorId: number): void {
         EvalProperty.eval(actorId, () => {
@@ -232,9 +242,11 @@ export class MpApiInteractor {
       },
       addItem(actorId: number, itemId: number, count: number): void {
         mp.callPapyrusFunction(
-          'method', 'ObjectReference', 'AddItem',
+          'method',
+          'ObjectReference',
+          'AddItem',
           { type: 'form', desc: mp.getDescFromId(actorId) },
-          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/false]
+          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/ false]
         );
       },
       getRoundsArray(): SweetPieRound[] {
@@ -247,20 +259,23 @@ export class MpApiInteractor {
         return PersistentStorage.getSingleton().onlinePlayers;
       },
       setPercentages(actorId: number, percentages: Percentages): void {
-        mp.set(
-          actorId,
-          'percentages',
-          {
-            health: percentages.health ?? 1.0,
-            magicka: percentages.magicka ?? 1.0,
-            stamina: percentages.stamina ?? 1.0
-          });
+        mp.set(actorId, 'percentages', {
+          health: percentages.health ?? 1.0,
+          magicka: percentages.magicka ?? 1.0,
+          stamina: percentages.stamina ?? 1.0,
+        });
       },
       getPercentages(actorId: number): Percentages {
         return mp.get(actorId, 'percentages');
       },
       getScriptName(refrId: number): string {
         return scriptName(refrId);
+      },
+      getActorDistanceSquared(actorId1: number, actorId2: number): number {
+        const pos1 = mp.get(actorId1, 'pos');
+        const pos2 = mp.get(actorId2, 'pos');
+        const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
+        return sqr(delta[0]) + sqr(delta[1]) + sqr(delta[2]);
       },
       isTeleportActivator(refrId: number): boolean {
         return isTeleportDoor(refrId);
@@ -272,6 +287,19 @@ export class MpApiInteractor {
         const current = CounterProperty.get(actorId, counter);
         CounterProperty.set(actorId, counter, current + (by ?? 0));
         return current;
+      },
+      getServerSetting(name: string): any {
+        // TODO: Add typings
+        return mp.getServerSettings()[name];
+      },
+      setCounter(actorId: number, counter: Counter, to: number) {
+        CounterProperty.set(actorId, counter, to);
+      },
+      getCounter(actorId: number, counter: Counter) {
+        return CounterProperty.get(actorId, counter);
+      },
+      getCurrentTime(): Date {
+        return new Date();
       },
     }
   }

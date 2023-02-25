@@ -85,6 +85,7 @@ public:
   bool HasItem(uint32_t baseId) const;
   uint32_t GetItemCount(uint32_t baseId) const;
   uint32_t GetTotalItemCount() const;
+  uint32_t GetEquippedItem(Inventory::Worn slot) const;
   bool IsEmpty() const;
 
   std::vector<Entry> entries;
@@ -97,11 +98,5 @@ public:
   friend bool operator!=(const Inventory& lhs, const Inventory& rhs)
   {
     return !(lhs == rhs);
-  }
-
-  friend bool operator<(const Inventory& lhs, const Inventory& rhs)
-  {
-    // Slow but seems to be used only in tests
-    return lhs.ToJson() < rhs.ToJson();
   }
 };

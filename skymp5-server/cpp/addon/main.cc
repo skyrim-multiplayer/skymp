@@ -395,7 +395,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto reloot = serverSettings["reloot"];
     for (auto it = reloot.begin(); it != reloot.end(); ++it) {
       std::string recordType = it.key();
-      auto timeMs = static_cast<int>(it.value());
+      auto timeMs = static_cast<uint64_t>(it.value());
       auto time = std::chrono::milliseconds(1) * timeMs;
       partOne->worldState.SetRelootTime(recordType, time);
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
@@ -1355,9 +1355,9 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
           auto chForm = actor->GetChangeForm();
           res = JsValue::Object();
-          res.SetProperty("health", chForm.healthPercentage);
-          res.SetProperty("magicka", chForm.magickaPercentage);
-          res.SetProperty("stamina", chForm.staminaPercentage);
+          res.SetProperty("health", chForm.actorValues.healthPercentage);
+          res.SetProperty("magicka", chForm.actorValues.magickaPercentage);
+          res.SetProperty("stamina", chForm.actorValues.staminaPercentage);
         }
       } else if (propertyName == "profileId") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
@@ -1441,9 +1441,11 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
         }
       } else if (propertyName == "percentages") {
         if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-          actor->NetSetPercentages(newValue["health"].get<float>(),
-                                   newValue["magicka"].get<float>(),
-                                   newValue["stamina"].get<float>());
+          ActorValues actorValues;
+          actorValues.healthPercentage = newValue["health"].get<float>();
+          actorValues.magickaPercentage = newValue["magicka"].get<float>();
+          actorValues.staminaPercentage = newValue["stamina"].get<float>();
+          actor->NetSetPercentages(actorValues);
         }
       } else {
 

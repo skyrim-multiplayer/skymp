@@ -1,7 +1,7 @@
 // Copied from
 // https://gitlab.com/pospelov/skymp2-server/-/raw/master/src/tests/GridTest.cpp
 #include "Grid.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 using formid = uint64_t;
 

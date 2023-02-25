@@ -1,6 +1,6 @@
 #include "PartOne.h"
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 /*TEST_CASE("Bot connect/disconnect", "[PartOne]")
 {

@@ -1,4 +1,5 @@
 #pragma once
+#include "AnimationSystem.h"
 #include "GamemodeApi.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
@@ -77,6 +78,7 @@ public:
 
   WorldState worldState;
   ServerState serverState;
+  AnimationSystem animationSystem;
 
   Networking::ISendTarget& GetSendTarget() const;
 
