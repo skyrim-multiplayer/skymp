@@ -494,7 +494,7 @@ RE::ExtraDataList* CreateExtraDataList()
   for (int i = 0; i < 0x18; ++i) {
     p[i] = 0;
   }
-  reinterpret_cast<void*&>(extraList->_presence) = p;
+  reinterpret_cast<void*&>(extraList->_extraData.presence) = p;
 
   return extraList;
 }
@@ -508,7 +508,7 @@ void TESModPlatform::AddItemEx(
   FixedString textDisplayData, int32_t soul, RE::AlchemyItem* poison,
   int32_t poisonCount)
 {
-  auto markType = [](RE::ExtraDataList::PresenceBitfield* presence,
+  auto markType = [](RE::BaseExtraList::PresenceBitfield* presence,
                      uint32_t type, bool bCleared) {
     uint32_t index = (type >> 3);
     uint8_t bitMask = 1 << (type % 8);
@@ -529,10 +529,10 @@ void TESModPlatform::AddItemEx(
     }
 
     RE::BSWriteLockGuard locker(this_->_lock);
-    auto* next = this_->_data;
-    this_->_data = toAdd;
+    auto* next = this_->_extraData.data;
+    this_->_extraData.data = toAdd;
     toAdd->next = next;
-    markType(this_->_presence, extraType, false);
+    markType(this_->_extraData.presence, extraType, false);
     return true;
   };
 
