@@ -6,7 +6,7 @@
 }
 
 #chat {
-  width: calc(26.6% + 70px);
+  // width: calc(26.6% + 70px);
   position: absolute;
   bottom: 30px;
   left: 30px;
@@ -17,7 +17,8 @@
   font-size: 16px;
   .chat-main {
     flex-direction: column;
-    width: calc(100% - 60px);
+    // width: calc(100% - 60px);
+    width: 433px;
     position: relative;
     .chat-corner {
       position: absolute;

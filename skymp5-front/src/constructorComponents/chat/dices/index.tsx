@@ -6,7 +6,7 @@ import D6 from './icons/D6';
 import D12 from './icons/D12';
 import D20 from './icons/D20';
 import Pouch from './icons/Pouch';
-import heart5 from '../../../img/dices/heart5.svg';
+import SkillDices from './skillDices';
 
 const Dices = (props: {
   send: (msg: string) => void;
@@ -89,13 +89,7 @@ const Dices = (props: {
       )}
       {props.isOpened === 2
         ? (
-        <img
-          className="chat-dices__button"
-          onClick={() => props.setOpened(0)}
-          src={heart5}
-          width="41"
-          height="41"
-        ></img>
+        <SkillDices onClose={() => props.setOpened(0)}></SkillDices>
           )
         : (
         <Pouch

@@ -1,4 +1,10 @@
 $regular: 200ms;
+$keyLimePie: #C5D321;
+$geraldine: #F78C8C;
+$fern: #5DAD60;
+$moodyBlue: #7175D6;
+$amethyst: #A062C9;
+
 
 .chat-dices {
     display: flex;
@@ -42,12 +48,48 @@ $regular: 200ms;
 
     }
 
+    &__container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-left: 11px;
+    }
+
+    &__number-container {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    &__row-container {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
     &__button {
-        align-self: center;
         display: flex;
         opacity: 0.5;
         scale: 1;
-        transition: opacity $regular, scale $regular;
+        transition: opacity $regular, scale $regular, fill $regular;
+
+        &--yellow:hover [fill='white']{
+            fill: $keyLimePie;
+        }
+        &--red:hover [fill='white']{
+            fill: $geraldine;
+        }
+        &--green:hover [fill='white']{
+            fill: $fern;
+        }
+        &--blue:hover [fill='white']{
+            fill: $moodyBlue;
+        }
+        &--purple:hover [fill='white']{
+            fill: $amethyst;
+        }
     }
 
     &__button:hover {
