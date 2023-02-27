@@ -4,6 +4,7 @@ $geraldine: #F78C8C;
 $fern: #5DAD60;
 $moodyBlue: #7175D6;
 $amethyst: #A062C9;
+$black: #000000;
 
 
 .chat-dices {
@@ -12,7 +13,7 @@ $amethyst: #A062C9;
     min-width: 54px;
     margin-bottom: 10px;
     margin-top: auto;
-    span {
+    > span {
         font-family: Din-pro;
         font-weight: bold;
         margin: 7px auto 0 auto;
@@ -61,19 +62,41 @@ $amethyst: #A062C9;
         display: flex;
         justify-content: center;
         align-items: center;
+        position: relative;
     }
+
+    &__number-frame {
+        width: 28px;
+        height: 28px;
+
+        &--yellow [fill="#BDBD7D"] {
+            fill: $keyLimePie;
+        }
+    }
+
+    &__number {
+        font-family: 'Bankir-Retro';
+        position: absolute;
+        color: $black;
+        font-weight: bold;
+        font-size: 21px;
+    } 
 
     &__row-container {
         display: flex;
         align-items: center;
         gap: 9px;
+
+        &--yellow .chat-dices__card--selected [fill='white']{
+            fill: $keyLimePie;
+        }
     }
 
     &__button {
         display: flex;
         opacity: 0.5;
-        scale: 1;
-        transition: opacity $regular, scale $regular, fill $regular;
+        transform: scale(1);
+        transition: opacity $regular, transform $regular, fill $regular;
 
         &--yellow:hover [fill='white']{
             fill: $keyLimePie;
@@ -92,10 +115,15 @@ $amethyst: #A062C9;
         }
     }
 
-    &__button:hover {
-        opacity: 0.8;
-        scale: 1.125;
+    &__card {
+        opacity: 0.5;
     }
+
+    &__button:hover, &__card--selected  {
+        opacity: 0.8;
+        transform: scale(1.125);
+    }
+
 }
 
 .icon {
