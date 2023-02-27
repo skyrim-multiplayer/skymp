@@ -90,6 +90,14 @@ $black: #000000;
         &--yellow .chat-dices__card--selected [fill='white']{
             fill: $keyLimePie;
         }
+
+        &--red .chat-dices__card--selected [fill='white']{
+            fill: $geraldine;
+        }
+
+        &--green .chat-dices__card--selected [fill='white']{
+            fill: $fern;
+        }
     }
 
     &__button {
