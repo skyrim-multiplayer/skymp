@@ -80,6 +80,14 @@ $black: #000000;
         &--purple [fill="#BDBD7D"] {
             fill: $amethyst;
         }
+
+        &--red [fill="#BDBD7D"] {
+            fill: $geraldine;
+        }
+
+        &--green [fill="#BDBD7D"] {
+            fill: $fern;
+        }
     }
 
     &__number {
@@ -141,8 +149,8 @@ $black: #000000;
 
     &__card {
         opacity: 0.5;
-        width: 24px;
-        height: 40px;
+        width: 26px;
+        height: 41px;
     }
 
     &__button:hover, &__card--selected  {

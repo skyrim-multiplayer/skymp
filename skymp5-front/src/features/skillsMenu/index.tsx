@@ -11,7 +11,6 @@ import learnSound from './assets/LearnSkill.wav';
 import { IPlayerData } from '../../interfaces/skillMenu';
 
 const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
-  // const [isOpen, setisOpen] = useState(true);
   const [currentHeader, setcurrentHeader] = useState('способности');
   const [currentLevel, setcurrentLevel] = useState(' ');
   const [currentDescription, setcurrentDescription] = useState(' ');
@@ -44,7 +43,6 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     audio.play();
     setplayerData(undefined);
     send('/skill quit');
-    // setisOpen(false);
   };
 
   const keyListener = (event) => {
