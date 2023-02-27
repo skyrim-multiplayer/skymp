@@ -1,0 +1,301 @@
+$level-0: rgb(157, 158, 158);
+$font-color: rgba(157, 158, 158, 0.75);
+$level-1: #7175d6;
+$level-2: #5dad60;
+$level-3: #c5d321;
+$level-4: #a062c9;
+
+$regular: 200ms;
+
+.skill-container {
+  width: 100%;
+  position: absolute;
+  z-index: 100;
+  align-self: center;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .skymp-button {
+    transition: transform $regular;
+  }
+  .skymp-button:not(.disabled):hover {
+    transform: scale(1.125);
+  }
+}
+
+.perks {
+  font-size: 32px;
+  color: $font-color;
+  transform-origin: top;
+  position: relative;
+
+  &__content {
+    font-family: 'Bankir-Retro', sans-serif;
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    width: 1720px;
+    height: 980px;
+    padding: 0 32px;
+  }
+
+  &__header {
+    margin: 28px auto auto;
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+  }
+
+  &__list-container {
+    height: 100%;
+  }
+
+  &__list {
+    padding: 28px 0;
+    display: flex;
+    gap: 74px;
+  }
+
+  &__category {
+    display: flex;
+    position: relative;
+    height: fit-content;
+    width: 272px;
+    flex-wrap: wrap;
+    column-gap: 16px;
+    row-gap: 32px;
+    z-index: 10;
+  }
+
+  &__perk {
+    width: 128px;
+    height: 128px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    border-radius: 32px;
+    border: 6px $level-0 solid;
+    color: $level-0;
+    transition: color $regular, border-color $regular, opacity $regular,
+      transform $regular;
+    opacity: 0.75;
+
+    &__icon {
+      position: relative;
+      bottom: -12px;
+      height: 70px;
+      svg {
+        fill: $level-0;
+      }
+    }
+
+    &__price {
+      position: relative;
+      bottom: -4px;
+      gap: 4px;
+      display: flex;
+      align-items: center;
+    }
+
+    &:hover {
+      opacity: 0.75;
+      transform: scale(1.125);
+      cursor: pointer;
+    }
+    &:focus {
+      scale: 1;
+    }
+  }
+
+  &__perk--absolute {
+    position: absolute;
+    bottom: -160px;
+  }
+
+  &__perk--left {
+    left: 0;
+  }
+
+  &__perk--right {
+    right: 0;
+  }
+
+  &__perk--level-0 {
+    opacity: 0.35;
+    &:focus {
+      opacity: 0.75;
+      color: $level-1;
+      border-color: $level-1;
+      svg {
+        fill: $level-1;
+      }
+      .perks__exp {
+        background-color: $level-1;
+      }
+    }
+    &.perks__perk--short {
+      &:focus {
+        color: $level-2;
+        border-color: $level-2;
+        svg {
+          fill: $level-2;
+        }
+        .perks__exp {
+          background-color: $level-2;
+        }
+      }
+    }
+  }
+
+  &__perk--level-1 {
+    color: $level-1;
+    border-color: $level-1;
+    svg {
+      fill: $level-1;
+    }
+    .perks__exp {
+      background-color: $level-1;
+    }
+    &:focus {
+      color: $level-2;
+      border-color: $level-2;
+      svg {
+        fill: $level-2;
+      }
+      .perks__exp {
+        background-color: $level-2;
+      }
+    }
+  }
+
+  &__perk--level-2 {
+    color: $level-2;
+    border-color: $level-2;
+    svg {
+      fill: $level-2;
+    }
+    .perks__exp {
+      background-color: $level-2;
+    }
+    &:focus {
+      color: $level-3;
+      border-color: $level-3;
+      svg {
+        fill: $level-3;
+      }
+      .perks__exp {
+        background-color: $level-3;
+      }
+    }
+    &.perks__perk--short {
+      &:focus {
+        color: $level-4;
+        border-color: $level-4;
+        svg {
+          fill: $level-4;
+        }
+        .perks__exp {
+          background-color: $level-4;
+        }
+      }
+    }
+  }
+
+  &__perk--level-3 {
+    color: $level-3;
+    border-color: $level-3;
+    svg {
+      fill: $level-3;
+    }
+    .perks__exp {
+      background-color: $level-3;
+    }
+    &:focus {
+      color: $level-4;
+      border-color: $level-4;
+      svg {
+        fill: $level-4;
+      }
+      .perks__exp {
+        background-color: $level-4;
+      }
+    }
+  }
+
+  &__perk--level-4 {
+    color: $level-4;
+    border-color: $level-4;
+    svg {
+      fill: $level-4;
+    }
+    .perks__exp {
+      background-color: $level-4;
+    }
+  }
+
+  &__exp-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+
+    &__line {
+      display: flex;
+      position: relative;
+      gap: 18px;
+
+      &__price {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+      }
+    }
+  }
+
+  &__exp {
+    border-radius: 50%;
+    background-color: $level-0;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+  }
+
+  &__footer {
+    display: flex;
+    padding: 0 6px 24px;
+    min-height: 245px;
+    position: relative;
+
+    &__description {
+      width: 60%;
+      padding-right: 24px;
+      &__text {
+        margin-top: 17px;
+      }
+    }
+    &__buttons {
+      width: 20%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      &__confirm {
+        display: flex;
+        gap: 11px;
+      }
+    }
+    &__exit-button {
+      justify-content: center;
+      display: flex;
+      align-items: end;
+      width: 20%;
+      bottom: 24px;
+      right: 0;
+      position: absolute;
+    }
+  }
+}
