@@ -17,6 +17,13 @@ export class CarryAnimSystem {
 
     private static clientsideInitEvent() {
         return () => {
+            if (ctx.sp.storage["CarryAnimSystemInstalled"] !== true) {
+                ctx.sp.storage["CarryAnimSystemInstalled"] = true;
+            }
+            else {
+                return;
+            }
+
             if (typeof ctx.sp.storage.sweetCarryAnimationActive !== "boolean") {
                 ctx.sp.storage.sweetCarryAnimationActive = false;
             }
