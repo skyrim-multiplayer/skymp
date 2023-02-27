@@ -72,6 +72,14 @@ $black: #000000;
         &--yellow [fill="#BDBD7D"] {
             fill: $keyLimePie;
         }
+
+        &--blue [fill="#BDBD7D"] {
+            fill: $moodyBlue;
+        }
+
+        &--purple [fill="#BDBD7D"] {
+            fill: $amethyst;
+        }
     }
 
     &__number {
@@ -97,6 +105,14 @@ $black: #000000;
 
         &--green .chat-dices__card--selected [fill='white']{
             fill: $fern;
+        }
+
+        &--blue .chat-dices__card--selected [fill='white']{
+            fill: $moodyBlue;
+        }
+
+        &--purple .chat-dices__card--selected [fill='white']{
+            fill: $amethyst;
         }
     }
 
@@ -125,6 +141,8 @@ $black: #000000;
 
     &__card {
         opacity: 0.5;
+        width: 24px;
+        height: 40px;
     }
 
     &__button:hover, &__card--selected  {
