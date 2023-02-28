@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import heart5 from '../../../../img/dices/heart5.svg';
+import heart4 from '../../../../img/dices/heart4.svg';
+import heart3 from '../../../../img/dices/heart3.svg';
+import heart2 from '../../../../img/dices/heart2.svg';
+import heart1 from '../../../../img/dices/heart1.svg';
+import heart0 from '../../../../img/dices/heart0.svg';
 import IndexBox from './indexBox';
 
 interface ISkillDices {
@@ -7,7 +12,11 @@ interface ISkillDices {
   send: (msg: string) => void;
 }
 
+const MAX_HEALTH = 5;
+const COMMAND_NAME = '/skill-dice';
+
 const SkillDices = ({ onClose, send }: ISkillDices) => {
+  const [hitPoints, sethitPoints] = useState(5);
   const [defenceIndex, setdefenceIndex] = useState(3);
   const [attackIndex, setattackIndex] = useState(1);
   const [magicIndex, setmagicIndex] = useState(2);
@@ -22,9 +31,25 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   const [magicBuff, setmagicBuff] = useState(1);
   const [attackBuff, setattackBuff] = useState(-1);
   const [defenceBuff, setdefenceBuff] = useState(2);
+  const currentHealthIcon = useMemo(() => ({ 0: heart0, 1: heart1, 2: heart2, 3: heart3, 4: heart4, 5: heart5 })[hitPoints], [hitPoints]);
 
   const handleClick = (message: string) => {
-    send(`/skill-dice ${message}`);
+    send(`${COMMAND_NAME} ${message}`);
+  };
+
+  const handleHeal = () => {
+    if (hitPoints === MAX_HEALTH) return;
+    sethitPoints(hitPoints + 1);
+    send(`${COMMAND_NAME} heal`);
+  };
+
+  const handleSelfAttack = () => {
+    if (hitPoints === 0) {
+      sethitPoints(MAX_HEALTH);
+      return;
+    };
+    sethitPoints(hitPoints - 1);
+    send(`${COMMAND_NAME} self-attack`);
   };
 
   return (
@@ -249,6 +274,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       </div>
       <div className="chat-dices__row-container chat-dices__row-container--green">
         <svg
+          onClick={() => handleHeal()}
           className="chat-dices__button chat-dices__button--green"
           width="48"
           height="48"
@@ -330,6 +356,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       </div>
       <div className="chat-dices__row-container chat-dices__row-container--red">
         <svg
+          onClick={() => handleSelfAttack()}
           className="chat-dices__button chat-dices__button--red"
           width="48"
           height="48"
@@ -503,7 +530,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
         <img
           className="chat-dices__button"
           onClick={onClose}
-          src={heart5}
+          src={currentHealthIcon}
           width="48"
           height="48"
         ></img>
