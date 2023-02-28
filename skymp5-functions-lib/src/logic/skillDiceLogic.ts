@@ -9,8 +9,8 @@ export const skillDice = (
   inputText: string,
   masterApiId: number | undefined
 ) => {
-  const name = getName(actorId);
-  const [_, arg1] = inputText.split(' ');
+  const actorName = getName(actorId);
+  const [_, action, type, value] = inputText.split(' ');
   const colors: {
     [key: string]: string;
   } = {
@@ -18,21 +18,20 @@ export const skillDice = (
     white: '#FFFFFF',
     green: '#5DAD60',
     red: '#F78C8C',
-    20: '#7175D6',
-    100: '#9159B6',
+    blue: '#7175D6',
+    purple: '#9159B6',
   };
   let text: ChatText[] = [];
-  switch (arg1) {
+  switch (action) {
     case 'initiative':
-      const result = Math.floor(Math.random() * 100 + 1);
       text = [
         {
-          text: `${name} имеет инциативу `,
+          text: `${actorName} имеет инциативу `,
           color: colors['yellow'],
           type: ['plain'],
         },
         {
-          text: `- ${result}`,
+          text: `- ${Math.floor(Math.random() * 100 + 1)}`,
           color: colors['white'],
           type: ['plain'],
         },
@@ -41,7 +40,7 @@ export const skillDice = (
     case 'heal':
       text = [
         {
-          text: `${name} восстанавливает единицу здоровья`,
+          text: `${actorName} восстанавливает единицу здоровья`,
           color: colors['green'],
           type: ['plain'],
         },
@@ -50,7 +49,7 @@ export const skillDice = (
     case 'self-attack':
       text = [
         {
-          text: `${name} теряет единицу здоровья`,
+          text: `${actorName} теряет единицу здоровья`,
           color: colors['red'],
           type: ['plain'],
         },
@@ -59,8 +58,39 @@ export const skillDice = (
     case 'heal':
       text = [
         {
-          text: `${name} восстанавливает единицу здоровья`,
+          text: `${actorName} восстанавливает единицу здоровья`,
           color: colors['green'],
+          type: ['plain'],
+        },
+      ];
+      break;
+    case 'magic':
+      const magicNames = {
+        conjuration: 'колдовства',
+        destruction: 'разрушения',
+        restoration: 'восстановления',
+        alteration: 'изменения',
+        illusion: 'иллюзии',
+      } as { [key: string]: string };
+      if (type === 'select') {
+        text = [
+          {
+            text: `${actorName} использует магию ${magicNames[value]}`,
+            color: colors['purple'],
+            type: ['plain'],
+          },
+        ];
+        break;
+      }
+      text = [
+        {
+          text: `${actorName} использует магию ${magicNames[type]} `,
+          color: colors['purple'],
+          type: ['plain'],
+        },
+        {
+          text: `- ${Math.floor(Math.random() * 20 + 1) + +value}`,
+          color: colors['white'],
           type: ['plain'],
         },
       ];
