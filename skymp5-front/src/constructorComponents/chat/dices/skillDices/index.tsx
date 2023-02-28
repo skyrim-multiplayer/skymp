@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import heart5 from '../../../../img/dices/heart5.svg';
 import heart4 from '../../../../img/dices/heart4.svg';
 import heart3 from '../../../../img/dices/heart3.svg';
@@ -6,13 +6,20 @@ import heart2 from '../../../../img/dices/heart2.svg';
 import heart1 from '../../../../img/dices/heart1.svg';
 import heart0 from '../../../../img/dices/heart0.svg';
 import IndexBox from './indexBox';
+import { IPossessedSkills } from '../../../../interfaces/skillDices';
 
 interface ISkillDices {
   onClose: () => void;
   send: (msg: string) => void;
 }
 
-type IMagic = 'conjuration' | 'destruction' | 'restoration' | 'alteration' | 'illusion';
+type IMagic =
+  | 'conjuration'
+  | 'destruction'
+  | 'restoration'
+  | 'alteration'
+  | 'illusion'
+  | null;
 
 const MAX_HEALTH = 5;
 const COMMAND_NAME = '/skill-dice';
@@ -21,19 +28,48 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   const [hitPoints, sethitPoints] = useState(5);
   const [defenceIndex, setdefenceIndex] = useState(3);
   const [attackIndex, setattackIndex] = useState(1);
-  const [magicIndex, setmagicIndex] = useState(2);
+  const [magicIndex, setmagicIndex] = useState(0);
   const [defenceSelected, setdefenceSelected] =
     useState<'' | 'light' | 'heavy' | 'robe'>('heavy');
   const [weaponSelected, setweaponSelected] =
     useState<'equipped' | 'staff'>('equipped');
-  const [magicSelected, setmagicSelected] =
-    useState<IMagic>('destruction');
+  const [magicSelected, setmagicSelected] = useState<IMagic>(null);
   const [magicBuff, setmagicBuff] = useState(1);
   const [attackBuff, setattackBuff] = useState(-1);
   const [defenceBuff, setdefenceBuff] = useState(2);
-  const currentHealthIcon = useMemo(() => ({ 0: heart0, 1: heart1, 2: heart2, 3: heart3, 4: heart4, 5: heart5 })[hitPoints], [hitPoints]);
+  const [playerData, setplayerData] = useState<null | IPossessedSkills>(null);
+  const currentHealthIcon = useMemo(
+    () =>
+      ({ 0: heart0, 1: heart1, 2: heart2, 3: heart3, 4: heart4, 5: heart5 }[
+        hitPoints
+      ]),
+    [hitPoints]
+  );
 
-  const handleClick = (action: string, type?:string, value?: number) => {
+  useEffect(() => {
+    console.log(playerData);
+    if (!magicSelected || !playerData) return;
+    if (magicSelected in playerData) {
+      setmagicIndex(playerData[magicSelected].level + 1);
+    } else {
+      setmagicIndex(0);
+    }
+  }, [magicSelected]);
+
+  const init = (event) => {
+    const newPlayerData = (event as CustomEvent).detail as IPossessedSkills;
+    setplayerData(newPlayerData);
+  };
+
+  useEffect(() => {
+    send(`${COMMAND_NAME} init`);
+    window.addEventListener('initSkillDices', init);
+    return () => {
+      window.removeEventListener('updateSkillMenu', init);
+    };
+  }, []);
+
+  const handleClick = (action: string, type?: string, value?: number) => {
     send(`${COMMAND_NAME} ${action} ${type} ${value}`);
   };
 
@@ -47,7 +83,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     if (hitPoints === 0) {
       sethitPoints(MAX_HEALTH);
       return;
-    };
+    }
     sethitPoints(hitPoints - 1);
     send(`${COMMAND_NAME} self-attack`);
   };
@@ -87,7 +123,9 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       </svg>
       <div className="chat-dices__row-container chat-dices__row-container--purple">
         <svg
-          onClick={() => handleClick('magic', magicSelected, magicIndex + magicBuff)}
+          onClick={() =>
+            handleClick('magic', magicSelected, magicIndex + magicBuff)
+          }
           className="chat-dices__button chat-dices__button--purple"
           width="48"
           height="48"
@@ -131,7 +169,10 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
             d="M25.2504 4.34998C25.2504 1.68331 23.9171 0.349976 21.2504 0.349976H4.90039C2.23372 0.349976 0.900391 1.68331 0.900391 4.34998V36.35C0.900391 39.0166 2.23372 40.35 4.90039 40.35H21.2504C23.9171 40.35 25.2504 39.0166 25.2504 36.35V4.34998ZM18.4004 2.84998L22.9004 7.19998V33.35L18.3504 38H7.65039L3.40039 33.95V7.29998L7.60039 2.84998H18.4004ZM17.9004 9.49998L17.1504 9.44998C16.3837 9.48331 15.8671 9.59998 15.6004 9.79998L14.9004 10.15L9.50039 10.4L8.60039 10.55L7.95039 10.3C7.48373 10.3 7.11706 10.45 6.85039 10.75L4.80039 11.3C4.33372 11.6333 4.20039 12 4.40039 12.4C4.40039 12.4666 4.56706 12.6833 4.90039 13.05L6.90039 14.1L5.70039 16.3C5.16706 17 4.86706 17.8166 4.80039 18.75C4.70039 19.45 4.83372 20.4 5.20039 21.6L5.75039 25.7C5.75039 26.6666 5.95039 27.3833 6.35039 27.85C6.68372 28.7166 7.38373 29.65 8.45039 30.65L9.20039 31.6C9.66706 32.0666 9.96706 32.2166 10.1004 32.05C10.3004 31.9833 10.4671 31.8666 10.6004 31.7L10.5004 31.35C10.5671 31.05 10.4337 30.7 10.1004 30.3C9.06706 28.7 8.40039 27.2 8.10039 25.8C7.90039 24.6333 7.85039 23.2833 7.95039 21.75L8.70039 17.9L9.15039 16.65L11.8504 13.85C12.5171 13.4166 13.0837 13.2333 13.5504 13.3C13.8171 13.5333 14.3337 14.0333 15.1004 14.8L16.5004 16.55C16.9671 17.4833 17.3004 18.45 17.5004 19.45C18.0004 21.1166 18.2504 22.4666 18.2504 23.5V25.1C18.2504 25.2333 18.0337 25.7 17.6004 26.5L16.5004 29.15L16.3004 29.95C16.2671 30.35 16.3671 30.65 16.6004 30.85C16.9671 31.0166 17.3504 30.8833 17.7504 30.45C19.2837 29.2166 20.2837 27.4666 20.7504 25.2C21.3837 23.1333 21.4337 20.9333 20.9004 18.6L20.3004 16.65L18.6504 14.9H18.7504L18.6504 14.45C18.6504 14.2166 18.6837 13.9833 18.7504 13.75L19.5504 11.8L20.2004 11C20.4004 10.7 20.4837 10.4666 20.4504 10.3L20.1504 9.79998L19.1504 9.59998H19.1004L18.7504 9.24998C18.5837 9.18331 18.3837 9.21664 18.1504 9.34998L17.9004 9.49998ZM14.0004 17.25C13.5671 17.15 13.1837 17.1 12.8504 17.1L11.8504 17.55L11.4504 18.25L11.5504 18.6L10.9004 20.15L11.1504 21.3L11.5504 21.95L12.8504 23.1C13.0504 23.2666 13.3837 23.2833 13.8504 23.15L14.2504 22.9C14.5504 22.8 14.9171 22.45 15.3504 21.85L15.6004 21.6L16.0004 20L15.9504 19.55L15.7004 19.05L14.7504 17.9L14.4504 17.45L14.0004 17.25Z"
             fill="black"
           />
-          <path d="M22.9004 7.19998L18.4004 2.84998H7.60039L3.40039 7.29998V33.95L7.65039 38H18.3504L22.9004 33.35V7.19998ZM12.8504 17.1C13.1837 17.1 13.5671 17.15 14.0004 17.25L14.4504 17.45L14.7504 17.9L15.7004 19.05L15.9504 19.55L16.0004 20L15.6004 21.6L15.3504 21.85C14.9171 22.45 14.5504 22.8 14.2504 22.9L13.8504 23.15C13.3837 23.2833 13.0504 23.2666 12.8504 23.1L11.5504 21.95L11.1504 21.3L10.9004 20.15L11.5504 18.6L11.4504 18.25L11.8504 17.55L12.8504 17.1ZM17.1504 9.44998L17.9004 9.49998L18.1504 9.34998C18.3837 9.21664 18.5837 9.18331 18.7504 9.24998L19.1004 9.59998H19.1504L20.1504 9.79998L20.4504 10.3C20.4837 10.4666 20.4004 10.7 20.2004 11L19.5504 11.8L18.7504 13.75C18.6837 13.9833 18.6504 14.2166 18.6504 14.45L18.7504 14.9H18.6504L20.3004 16.65L20.9004 18.6C21.4337 20.9333 21.3837 23.1333 20.7504 25.2C20.2837 27.4666 19.2837 29.2166 17.7504 30.45C17.3504 30.8833 16.9671 31.0166 16.6004 30.85C16.3671 30.65 16.2671 30.35 16.3004 29.95L16.5004 29.15L17.6004 26.5C18.0337 25.7 18.2504 25.2333 18.2504 25.1V23.5C18.2504 22.4666 18.0004 21.1166 17.5004 19.45C17.3004 18.45 16.9671 17.4833 16.5004 16.55L15.1004 14.8C14.3337 14.0333 13.8171 13.5333 13.5504 13.3C13.0837 13.2333 12.5171 13.4166 11.8504 13.85L9.15039 16.65L8.70039 17.9L7.95039 21.75C7.85039 23.2833 7.90039 24.6333 8.10039 25.8C8.40039 27.2 9.06706 28.7 10.1004 30.3C10.4337 30.7 10.5671 31.05 10.5004 31.35L10.6004 31.7C10.4671 31.8666 10.3004 31.9833 10.1004 32.05C9.96706 32.2166 9.66706 32.0666 9.20039 31.6L8.45039 30.65C7.38373 29.65 6.68372 28.7166 6.35039 27.85C5.95039 27.3833 5.75039 26.6666 5.75039 25.7L5.20039 21.6C4.83373 20.4 4.70039 19.45 4.80039 18.75C4.86706 17.8166 5.16706 17 5.70039 16.3L6.90039 14.1L4.90039 13.05C4.56706 12.6833 4.40039 12.4666 4.40039 12.4C4.20039 12 4.33372 11.6333 4.80039 11.3L6.85039 10.75C7.11706 10.45 7.48373 10.3 7.95039 10.3L8.60039 10.55L9.50039 10.4L14.9004 10.15L15.6004 9.79998C15.8671 9.59998 16.3837 9.48331 17.1504 9.44998Z" fill="white"/>
+          <path
+            d="M22.9004 7.19998L18.4004 2.84998H7.60039L3.40039 7.29998V33.95L7.65039 38H18.3504L22.9004 33.35V7.19998ZM12.8504 17.1C13.1837 17.1 13.5671 17.15 14.0004 17.25L14.4504 17.45L14.7504 17.9L15.7004 19.05L15.9504 19.55L16.0004 20L15.6004 21.6L15.3504 21.85C14.9171 22.45 14.5504 22.8 14.2504 22.9L13.8504 23.15C13.3837 23.2833 13.0504 23.2666 12.8504 23.1L11.5504 21.95L11.1504 21.3L10.9004 20.15L11.5504 18.6L11.4504 18.25L11.8504 17.55L12.8504 17.1ZM17.1504 9.44998L17.9004 9.49998L18.1504 9.34998C18.3837 9.21664 18.5837 9.18331 18.7504 9.24998L19.1004 9.59998H19.1504L20.1504 9.79998L20.4504 10.3C20.4837 10.4666 20.4004 10.7 20.2004 11L19.5504 11.8L18.7504 13.75C18.6837 13.9833 18.6504 14.2166 18.6504 14.45L18.7504 14.9H18.6504L20.3004 16.65L20.9004 18.6C21.4337 20.9333 21.3837 23.1333 20.7504 25.2C20.2837 27.4666 19.2837 29.2166 17.7504 30.45C17.3504 30.8833 16.9671 31.0166 16.6004 30.85C16.3671 30.65 16.2671 30.35 16.3004 29.95L16.5004 29.15L17.6004 26.5C18.0337 25.7 18.2504 25.2333 18.2504 25.1V23.5C18.2504 22.4666 18.0004 21.1166 17.5004 19.45C17.3004 18.45 16.9671 17.4833 16.5004 16.55L15.1004 14.8C14.3337 14.0333 13.8171 13.5333 13.5504 13.3C13.0837 13.2333 12.5171 13.4166 11.8504 13.85L9.15039 16.65L8.70039 17.9L7.95039 21.75C7.85039 23.2833 7.90039 24.6333 8.10039 25.8C8.40039 27.2 9.06706 28.7 10.1004 30.3C10.4337 30.7 10.5671 31.05 10.5004 31.35L10.6004 31.7C10.4671 31.8666 10.3004 31.9833 10.1004 32.05C9.96706 32.2166 9.66706 32.0666 9.20039 31.6L8.45039 30.65C7.38373 29.65 6.68372 28.7166 6.35039 27.85C5.95039 27.3833 5.75039 26.6666 5.75039 25.7L5.20039 21.6C4.83373 20.4 4.70039 19.45 4.80039 18.75C4.86706 17.8166 5.16706 17 5.70039 16.3L6.90039 14.1L4.90039 13.05C4.56706 12.6833 4.40039 12.4666 4.40039 12.4C4.20039 12 4.33372 11.6333 4.80039 11.3L6.85039 10.75C7.11706 10.45 7.48373 10.3 7.95039 10.3L8.60039 10.55L9.50039 10.4L14.9004 10.15L15.6004 9.79998C15.8671 9.59998 16.3837 9.48331 17.1504 9.44998Z"
+            fill="white"
+          />
         </svg>
         <svg
           className={`chat-dices__button ${
@@ -213,7 +254,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
             fill="white"
           />
         </svg>
-        <IndexBox index={magicBuff} ></IndexBox>
+        <IndexBox index={magicBuff}></IndexBox>
       </div>
       <div className="chat-dices__row-container chat-dices__row-container--blue">
         <svg
@@ -240,7 +281,11 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
             </clipPath>
           </defs>
         </svg>
-        <IndexBox index={attackIndex} positiveColor="blue" negativeColor='blue'></IndexBox>
+        <IndexBox
+          index={attackIndex}
+          positiveColor="blue"
+          negativeColor="blue"
+        ></IndexBox>
         <svg
           className={`chat-dices__button ${
             weaponSelected === 'equipped' ? 'chat-dices__card--selected' : ''
@@ -282,7 +327,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
         </svg>
         <div className="chat-dices__card"></div>
         <div className="chat-dices__card"></div>
-        <IndexBox index={attackBuff} ></IndexBox>
+        <IndexBox index={attackBuff}></IndexBox>
       </div>
       <div className="chat-dices__row-container chat-dices__row-container--green">
         <svg
@@ -476,7 +521,11 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
             </clipPath>
           </defs>
         </svg>
-        <IndexBox index={defenceIndex} positiveColor="yellow" negativeColor='yellow'></IndexBox>
+        <IndexBox
+          index={defenceIndex}
+          positiveColor="yellow"
+          negativeColor="yellow"
+        ></IndexBox>
         <svg
           className={`chat-dices__card ${
             defenceSelected === 'light' ? 'chat-dices__card--selected' : ''
@@ -536,7 +585,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
         </svg>
         <div className="chat-dices__card"></div>
         <div className="chat-dices__card"></div>
-        <IndexBox index={defenceBuff} ></IndexBox>
+        <IndexBox index={defenceBuff}></IndexBox>
       </div>
       <div className="chat-dices__row-container">
         <img

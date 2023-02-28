@@ -20,10 +20,27 @@ const discardSkills = (actorId : number, controller: PlayerController, possessed
   controller.addItem(actorId, expId, Math.round(totalExp/2))
 }
 
+export const getPossesedSkills = (actorId:number) => {
+  const possessedSkills = {} as IPossessedSkills;
+  let memCount = 0;
+  let expCount = 0;
+  const inventory = mp.get(actorId, 'inventory').entries;
+  for (const item of inventory) {
+    if (item.baseId === memId) {
+      memCount = item.count;
+    } else if (item.baseId === expId) {
+      expCount = item.count;
+    } else if (item.baseId in idBasedData) {
+      const skill = idBasedData[item.baseId];
+      possessedSkills[skill.name] = {id: item.baseId, level: skill.level, price: skill.price}
+    }
+  }
+  return {possessedSkills, memCount, expCount}
+}
+
 export const craftSkill = (actorId: number, controller: PlayerController, argsRaw: string | undefined) => {
   if (!argsRaw) return;
   const [newSkillName, level] = argsRaw.split(' ');
-  const inventory = mp.get(actorId, 'inventory').entries;
 
   //TODO: remove before release
   if (newSkillName === 'mem' && level) {
@@ -45,20 +62,7 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
     return;
   }
 
-  let memCount = 0;
-  let expCount = 0;
-  let possessedSkills = {} as IPossessedSkills;
-  for (const item of inventory) {
-    if (item.baseId === memId) {
-      memCount = item.count;
-    } else if (item.baseId === expId) {
-      expCount = item.count;
-    } else if (item.baseId in idBasedData) {
-      const skill = idBasedData[item.baseId];
-      possessedSkills[skill.name] = {id: item.baseId, level: skill.level, price: skill.price}
-    }
-  }
-
+  const {possessedSkills, memCount, expCount} = getPossesedSkills(actorId);
   if (newSkillName === 'discard') return discardSkills(actorId, controller, possessedSkills)
 
   let itemIdToRemove = 0;

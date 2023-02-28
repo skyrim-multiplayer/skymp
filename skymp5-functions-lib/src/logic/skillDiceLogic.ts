@@ -1,6 +1,12 @@
 import { ChatMessage, ChatText } from '../props/chatProperty';
 import { PlayerController } from './PlayerController';
 import { getName } from '../mpApiInteractor';
+import { getPossesedSkills } from './skillMenuLogic';
+import { EvalProperty } from '..//props/evalProperty';
+import { Ctx } from '../types/ctx';
+
+declare const ctx: Ctx;
+declare const eventString: string;
 
 export const skillDice = (
   actorId: number,
@@ -23,6 +29,20 @@ export const skillDice = (
   };
   let text: ChatText[] = [];
   switch (action) {
+    case 'init':
+      const { possessedSkills } = getPossesedSkills(actorId);
+      console.log('in init gamemode');
+      EvalProperty.eval(
+        actorId,
+        () => {
+          const src = `
+          window.dispatchEvent(new CustomEvent('initSkillDices', { detail: ${eventString}}))
+          `;
+          ctx.sp.browser.executeJavaScript(src);
+        },
+        { eventString: JSON.stringify(possessedSkills) }
+      );
+      break;
     case 'initiative':
       text = [
         {
