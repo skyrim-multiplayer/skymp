@@ -7,6 +7,7 @@ import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
+import { skillDice } from './skillDiceLogic';
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
@@ -146,6 +147,12 @@ export class SweetPieGameModeListener implements GameModeListener {
         for (const neighbor of neighbors) {
           controller.sendChatMessage(neighbor, message);
         } 
+      },
+    },
+    {
+      name: 'skill-dice',
+      handler: ({ actorId, controller, neighbors, inputText, masterApiId}) => {
+        skillDice(actorId, controller, neighbors, inputText, masterApiId);
       },
     },
     {

@@ -4,9 +4,10 @@ import IndexBox from './indexBox';
 
 interface ISkillDices {
   onClose: () => void;
+  send: (msg: string) => void;
 }
 
-const SkillDices = ({ onClose }: ISkillDices) => {
+const SkillDices = ({ onClose, send }: ISkillDices) => {
   const [defenceIndex, setdefenceIndex] = useState(3);
   const [attackIndex, setattackIndex] = useState(1);
   const [magicIndex, setmagicIndex] = useState(2);
@@ -22,9 +23,14 @@ const SkillDices = ({ onClose }: ISkillDices) => {
   const [attackBuff, setattackBuff] = useState(-1);
   const [defenceBuff, setdefenceBuff] = useState(2);
 
+  const handleClick = (message: string) => {
+    send(`/skill-dice ${message}`);
+  };
+
   return (
     <div className="chat-dices__container ">
       <svg
+        onClick={() => handleClick('initiative')}
         className="chat-dices__button chat-dices__button--yellow"
         width="48"
         height="48"
