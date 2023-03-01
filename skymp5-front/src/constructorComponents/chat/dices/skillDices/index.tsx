@@ -6,20 +6,7 @@ import heart2 from '../../../../img/dices/heart2.svg';
 import heart1 from '../../../../img/dices/heart1.svg';
 import heart0 from '../../../../img/dices/heart0.svg';
 import IndexBox from './indexBox';
-import { IPossessedSkills } from '../../../../interfaces/skillDices';
-
-interface ISkillDices {
-  onClose: () => void;
-  send: (msg: string) => void;
-}
-
-type IMagic =
-  | 'conjuration'
-  | 'destruction'
-  | 'restoration'
-  | 'alteration'
-  | 'illusion'
-  | null;
+import { IMagic, IPossessedSkills, ISkillDices, IWeapon } from '../../../../interfaces/skillDices';
 
 const MAX_HEALTH = 5;
 const COMMAND_NAME = '/skill-dice';
@@ -33,11 +20,12 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     useState<'' | 'light' | 'heavy' | 'robe'>('heavy');
   const [weaponSelected, setweaponSelected] =
     useState<'equipped' | 'staff'>('equipped');
+  const [equipped, setequipped] = useState<IWeapon[]>([]);
   const [magicSelected, setmagicSelected] = useState<IMagic>(null);
   const [magicBuff, setmagicBuff] = useState(1);
   const [attackBuff, setattackBuff] = useState(-1);
   const [defenceBuff, setdefenceBuff] = useState(2);
-  const [playerData, setplayerData] = useState<null | IPossessedSkills>(null);
+  const [playerSkillData, setplayerSkillData] = useState<null | IPossessedSkills>(null);
   const currentHealthIcon = useMemo(
     () =>
       ({ 0: heart0, 1: heart1, 2: heart2, 3: heart3, 4: heart4, 5: heart5 }[
@@ -47,18 +35,18 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   );
 
   useEffect(() => {
-    console.log(playerData);
-    if (!magicSelected || !playerData) return;
-    if (magicSelected in playerData) {
-      setmagicIndex(playerData[magicSelected].level + 1);
+    if (!magicSelected || !playerSkillData) return;
+    if (magicSelected in playerSkillData) {
+      setmagicIndex(playerSkillData[magicSelected].level + 1);
     } else {
       setmagicIndex(0);
     }
   }, [magicSelected]);
 
   const init = (event) => {
-    const newPlayerData = (event as CustomEvent).detail as IPossessedSkills;
-    setplayerData(newPlayerData);
+    const { skills, weapons } = (event as CustomEvent).detail as {skills: IPossessedSkills, weapons: IWeapon[]};
+    setplayerSkillData(skills);
+    setequipped(weapons);
   };
 
   useEffect(() => {

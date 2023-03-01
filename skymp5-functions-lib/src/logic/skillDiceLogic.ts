@@ -4,9 +4,16 @@ import { getName } from '../mpApiInteractor';
 import { getPossesedSkills } from './skillMenuLogic';
 import { EvalProperty } from '..//props/evalProperty';
 import { Ctx } from '../types/ctx';
+import { Mp } from '../types/mp';
+import { weaponTypes } from './skillDiceData';
 
 declare const ctx: Ctx;
 declare const eventString: string;
+declare const weaponKeywords: {
+  keyword: string;
+  name: string;
+}[];
+declare const mp: Mp;
 
 export const skillDice = (
   actorId: number,
@@ -31,16 +38,27 @@ export const skillDice = (
   switch (action) {
     case 'init':
       const { possessedSkills } = getPossesedSkills(actorId);
-      console.log('in init gamemode');
+      // const equipment = mp.get(actorId, 'equipment');
+      // console.log(equipment);
       EvalProperty.eval(
         actorId,
         () => {
+          const player = ctx.sp.Game.getPlayer()!;
+          // ctx.sp.printConsole(player.getEquippedWeapon(false)?.getWeaponType())
+          const equippedWeapons = [] as string[];
+          weaponKeywords.forEach((type) => {
+            const keyword = ctx.sp.Keyword.getKeyword(type.keyword);
+            if (player.wornHasKeyword(keyword)) {
+              equippedWeapons.push(type.name);
+            }
+          });
+          // ctx.sp.printConsole(equippedWeapons);
           const src = `
-          window.dispatchEvent(new CustomEvent('initSkillDices', { detail: ${eventString}}))
+          window.dispatchEvent(new CustomEvent('initSkillDices', { detail: { skills: ${eventString}, weapons: ${JSON.stringify(equippedWeapons)}}}))
           `;
           ctx.sp.browser.executeJavaScript(src);
         },
-        { eventString: JSON.stringify(possessedSkills) }
+        { eventString: JSON.stringify(possessedSkills), weaponKeywords: weaponTypes }
       );
       break;
     case 'initiative':
