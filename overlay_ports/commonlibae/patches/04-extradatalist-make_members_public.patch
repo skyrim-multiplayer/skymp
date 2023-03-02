@@ -7,7 +7,7 @@ index 82c4ba8b..07ef3405 100644
                 void                  SetOwner(TESForm* a_owner);
  
 -       private:
-+       public:  // XXX: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
++       public:
                 BSExtraData* GetByTypeImpl(ExtraDataType a_type) const;
                 void         MarkType(std::uint32_t a_type, bool a_cleared);
                 void         MarkType(ExtraDataType a_type, bool a_cleared);

@@ -5,13 +5,12 @@ vcpkg_from_github(
     SHA512 80afa2c9444f4bbb873e8de4a4af8b38b19af2ac3b60d0d68ca25d02b1b3f4bdac83ebe30ced2385c8fc90bb0e0dcf64f9fc05f896951a0dd60a799bc8d53a35
     HEAD_REF master
     PATCHES
-      patches/objectrefr-make_moverefr_public.patch
-      patches/variable-make_members_public.patch
-      patches/stackframe-uncomment_top_args.patch
-      patches/extradatalist-make_members_public.patch
-      patches/expand-alias.patch
+      patches/01-objectrefr-make_moverefr_public.patch
+      patches/02-variable-make_members_public.patch
+      patches/03-stackframe-uncomment_top_args.patch
+      patches/04-extradatalist-make_members_public.patch
+      patches/05-expand-alias.patch
       patches/06-fix-destructor.patch
-      # TODO: stop hating life and get rid of this
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})
