@@ -115,17 +115,3 @@ clear(): void;
 // Usage
 mp.clear();
 ```
-
-## mp.sendUiMessage()
-
-Sends a message to the user's in-game browser using WebSocket.
-
-```typescript
-// Definition
-sendUiMessage(formId: number, message: Record<string, unknown>): void;
-```
-
-```typescript
-// Usage
-mp.sendUiMessage(0xff000000, { foo: 'bar' });
-```
