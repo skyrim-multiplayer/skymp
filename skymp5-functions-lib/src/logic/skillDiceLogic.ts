@@ -6,6 +6,7 @@ import { EvalProperty } from '..//props/evalProperty';
 import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
 import { weaponTypes } from './skillDiceData';
+import { ActorBase, Race } from 'skyrimPlatform';
 
 declare const ctx: Ctx;
 declare const eventString: string;
@@ -44,7 +45,6 @@ export const skillDice = (
         actorId,
         () => {
           const player = ctx.sp.Game.getPlayer()!;
-          // ctx.sp.printConsole(player.getEquippedWeapon(false)?.getWeaponType())
           const equippedWeapons = [] as string[];
           weaponKeywords.forEach((type) => {
             const keyword = ctx.sp.Keyword.getKeyword(type.keyword);
@@ -52,7 +52,17 @@ export const skillDice = (
               equippedWeapons.push(type.name);
             }
           });
-          // ctx.sp.printConsole(equippedWeapons);
+          if (equippedWeapons.length === 0) {
+            const clawRaces = [0x00013745, 0x00013740];
+            const base = ctx.sp.ActorBase.from(player.getBaseObject()) as ActorBase;
+            const raceId = base.getRace() ? (base.getRace() as Race).getFormID() : 0;
+            if (clawRaces.includes(raceId)) {
+              equippedWeapons.push('claw');
+            } else {
+              equippedWeapons.push('fist');
+            }
+            ctx.sp.printConsole(raceId);
+          }
           const src = `
           window.dispatchEvent(new CustomEvent('initSkillDices', { detail: { skills: ${eventString}, weapons: ${JSON.stringify(equippedWeapons)}}}))
           `;
@@ -133,6 +143,53 @@ export const skillDice = (
         },
       ];
       break;
+    case 'weapon':
+      const weaponNames = {
+        daggers: 'кинжал',
+        shortswords: 'короткий меч',
+        swords: 'меч',
+        scimitar: 'скимитар',
+        katana: 'катану',
+        mace: 'булаву',
+        axes: 'топор',
+        hammer: 'молоток',
+        bows: 'лук или арбалет',
+        longsword: 'двуручный меч',
+        greatkatana: 'нодати',
+        battleaxe: 'двуручный топор',
+        warhammer: 'молот',
+        staff: 'боевой посох',
+        pike: 'копье',
+        halberd: 'алебарду',
+        fist: 'дерется в рукопашную',
+        claw: 'когти',
+        magicstaff: 'магический посох',
+        different: 'парное оружие',
+      } as { [key: string]: string };
+
+      if (type === 'select') {
+        text = [
+          {
+            text: `${actorName} ${value === 'fist' ? weaponNames[value] : `будет использовать в бою ${weaponNames[value]}`}`,
+            color: colors['blue'],
+            type: ['plain'],
+          },
+        ];
+        break;
+      }
+
+      text = [
+        {
+          text: `${actorName} ${type === 'fist' ? weaponNames[type] : `использует ${weaponNames[type]}`} `,
+          color: colors['blue'],
+          type: ['plain'],
+        },
+        {
+          text: `- ${Math.floor(Math.random() * 20 + 1) + +value}`,
+          color: colors['white'],
+          type: ['plain'],
+        },
+      ];
     default:
       break;
   }
