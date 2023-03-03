@@ -7,14 +7,14 @@ inline RE::BSTEventSource<E>* GetEventSource()
 }
 
 template <class T, class E = T::Event>
-  requires HasEvent<T>
+requires HasEvent<T>
 inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetEventSource();
 }
 
 template <class T, class E>
-  requires SingletonSource<T, E>
+requires SingletonSource<T, E>
 inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetSingleton();
