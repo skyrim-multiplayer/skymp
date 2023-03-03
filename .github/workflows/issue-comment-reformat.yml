@@ -4,7 +4,7 @@ on:
     types: [created]
 jobs:
     issue-comment-reformat:
-        name: Formatting Check
+        name: /reformat
         runs-on: ubuntu-latest
         if: contains(github.event.comment.body, '/reformat')
           - name: Checkout
