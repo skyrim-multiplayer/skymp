@@ -11,7 +11,7 @@ jobs:
           - uses: DoozyX/clang-format-lint-action@v0.14
             with:
               source: '.'
-              exclude: './skyrim-platform/src/third_party'
+              exclude: './skyrim-platform/src/third_party ./skymp5-server/cpp/third_party/MakeID.h'
               extensions: 'h,cpp,hpp'
               clangFormatVersion: 12
               inplace: True
