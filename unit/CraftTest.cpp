@@ -10,7 +10,12 @@ PartOne& GetPartOne();
 
 TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
 {
-  class MyActionListener : public ActionListener
+  class MyActionListener : 
+  
+  
+  
+  
+  public ActionListener
   {
   public:
     MyActionListener()
