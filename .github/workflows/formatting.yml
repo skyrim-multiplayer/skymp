@@ -19,7 +19,7 @@ jobs:
               extensions: 'h,cpp,hpp'
               clangFormatVersion: 12
               inplace: True
-          - uses: EndBug/add-and-commit@v4
+          - uses: EndBug/add-and-commit@v9
             with:
               default_author: github_actor
               message: 'Committing clang-format changes'
