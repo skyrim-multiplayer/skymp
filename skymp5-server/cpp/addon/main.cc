@@ -97,7 +97,6 @@ public:
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
   Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
   Napi::Value ExecuteJavaScriptOnChakra(const Napi::CallbackInfo& info);
-  Napi::Value SetSendUiMessageImplementation(const Napi::CallbackInfo& info);
   Napi::Value OnUiEvent(const Napi::CallbackInfo& info);
   Napi::Value Clear(const Napi::CallbackInfo& info);
   Napi::Value WriteLogs(const Napi::CallbackInfo& info);
@@ -112,7 +111,6 @@ private:
   Napi::Env tickEnv;
   Napi::ObjectReference emitter;
   Napi::FunctionReference emit;
-  Napi::FunctionReference sendUiMessageImplementation;
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   std::shared_ptr<JsEngine> chakraEngine;
@@ -239,8 +237,6 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
       InstanceMethod("executeJavaScriptOnChakra",
                      &ScampServer::ExecuteJavaScriptOnChakra),
-      InstanceMethod("setSendUiMessageImplementation",
-                     &ScampServer::SetSendUiMessageImplementation),
       InstanceMethod("onUiEvent", &ScampServer::OnUiEvent),
       InstanceMethod("clear", &ScampServer::Clear),
       InstanceMethod("writeLogs", &ScampServer::WriteLogs) });
@@ -1658,19 +1654,6 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
     }));
 
   mp.SetProperty(
-    "sendUiMessage",
-    JsValue::Function([this, update](const JsFunctionArguments& args) {
-      auto formId = ExtractFormId(args[1]);
-      std::string msgDump = ExtractNewValueStr(args[2]);
-      auto env = sendUiMessageImplementation.Env();
-      std::vector<napi_value> sendUiMessageArgs;
-      sendUiMessageArgs.push_back(Napi::Number::New(env, formId));
-      sendUiMessageArgs.push_back(ParseJson(env, msgDump));
-      sendUiMessageImplementation.Call(sendUiMessageArgs);
-      return JsValue::Undefined();
-    }));
-
-  mp.SetProperty(
     "sendCustomPacket",
     JsValue::Function([this, update](const JsFunctionArguments& args) {
       auto formId = ExtractFormId(args[1]);
@@ -1765,18 +1748,6 @@ Napi::Value ScampServer::ExecuteJavaScriptOnChakra(
     RegisterChakraApi(chakraEngine);
 
     chakraEngine->RunScript(src, "skymp5-gamemode/gamemode.js");
-  } catch (std::exception& e) {
-    throw Napi::Error::New(info.Env(), (std::string)e.what());
-  }
-  return info.Env().Undefined();
-}
-
-Napi::Value ScampServer::SetSendUiMessageImplementation(
-  const Napi::CallbackInfo& info)
-{
-  try {
-    Napi::Function fn = info[0].As<Napi::Function>();
-    sendUiMessageImplementation = Napi::Persistent(fn);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

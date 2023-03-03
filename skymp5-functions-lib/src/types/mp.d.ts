@@ -151,13 +151,6 @@ export interface Mp {
    */
   clear(): void;
 
-  /**
-   * Sends a message to the user's in-game browser using WebSocket.
-   * @param formId A number representing ID of MpActor or MpObjectReference.
-   * @param message JSON-serializable object representing a message.
-   */
-  sendUiMessage(formId: number, message: { [key: string]: JsonSerializable }): void;
-
   lookupEspmRecordById(globalRecordId: number): EspmLookupResult | Partial<EspmLookupResult>;
 
   getEspmLoadOrder(): string[];

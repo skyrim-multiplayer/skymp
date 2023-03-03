@@ -287,7 +287,8 @@ VarValue Reader::FillVariableData()
       Read32_bit();
       break;
     default:
-      assert(false);
+      throw std::runtime_error(
+        "Unable to get required data type,Reader::FillVariable");
   }
 
   return Data;

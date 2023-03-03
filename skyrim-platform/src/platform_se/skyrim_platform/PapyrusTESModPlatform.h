@@ -1,5 +1,9 @@
 #pragma once
 
+#include <functional>
+
+#include "PCH.h"
+
 namespace TESModPlatform {
 extern std::function<void(IVM* vm, StackID stackId)> onPapyrusUpdate;
 
