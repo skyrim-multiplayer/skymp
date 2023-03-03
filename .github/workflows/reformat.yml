@@ -1,12 +1,10 @@
-name: PR Comment Trigger
-on:
-  issue_comment:
-    types: [created]
+name: Reformat
+on: [push, pull_request]
 jobs:
-    issue-comment-reformat:
-        name: /reformat
+    reformat:
+        name: Reformat
         runs-on: ubuntu-latest
-        if: contains(github.event.comment.body, '/reformat')
+        if: contains(github.event.head_commit.message, '[reformat]')
         steps:
           - name: Checkout
             uses: actions/checkout@v2
