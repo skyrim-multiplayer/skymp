@@ -494,7 +494,11 @@ RE::ExtraDataList* CreateExtraDataList()
   for (int i = 0; i < 0x18; ++i) {
     p[i] = 0;
   }
+#ifdef SKYRIMSE
   reinterpret_cast<void*&>(extraList->_presence) = p;
+#else
+  reinterpret_cast<void*&>(extraList->_extraData.presence) = p;
+#endif
 
   return extraList;
 }
@@ -508,7 +512,11 @@ void TESModPlatform::AddItemEx(
   FixedString textDisplayData, int32_t soul, RE::AlchemyItem* poison,
   int32_t poisonCount)
 {
+#ifdef SKYRIMSE
   auto markType = [](RE::ExtraDataList::PresenceBitfield* presence,
+#else
+  auto markType = [](RE::BaseExtraList::PresenceBitfield* presence,
+#endif
                      uint32_t type, bool bCleared) {
     uint32_t index = (type >> 3);
     uint8_t bitMask = 1 << (type % 8);
@@ -529,10 +537,19 @@ void TESModPlatform::AddItemEx(
     }
 
     RE::BSWriteLockGuard locker(this_->_lock);
+#ifdef SKYRIMSE
     auto* next = this_->_data;
     this_->_data = toAdd;
+#else
+    auto* next = this_->_extraData.data;
+    this_->_extraData.data = toAdd;
+#endif
     toAdd->next = next;
+#ifdef SKYRIMSE
     markType(this_->_presence, extraType, false);
+#else
+    markType(this_->_extraData.presence, extraType, false);
+#endif
     return true;
   };
 
