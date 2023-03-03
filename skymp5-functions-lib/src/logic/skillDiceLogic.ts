@@ -24,7 +24,7 @@ export const skillDice = (
   masterApiId: number | undefined
 ) => {
   const actorName = getName(actorId);
-  const [_, action, type, value] = inputText.split(' ');
+  const [_, action, type, value, buff] = inputText.split(' ');
   const colors: {
     [key: string]: string;
   } = {
@@ -56,7 +56,7 @@ export const skillDice = (
                 if (leftHandedWeapon?.hasKeyword(keyword)) {
                   equippedWeapons.reverse();
                 }
-               return;
+                return;
               }
             }
           });
@@ -71,7 +71,9 @@ export const skillDice = (
             }
           }
           const src = `
-          window.dispatchEvent(new CustomEvent('initSkillDices', { detail: { skills: ${eventString}, weapons: ${JSON.stringify(equippedWeapons)}}}))
+          window.dispatchEvent(new CustomEvent('initSkillDices', { detail: { skills: ${eventString}, weapons: ${JSON.stringify(
+            equippedWeapons
+          )}}}))
           `;
           ctx.sp.browser.executeJavaScript(src);
         },
@@ -137,18 +139,32 @@ export const skillDice = (
         ];
         break;
       }
-      text = [
-        {
-          text: `${actorName} использует магию ${magicNames[type]} `,
+      text = [];
+      const magicBuff = +buff;
+      if (magicBuff < 0) {
+        text.push({
+          text: `${actorName} под ослаблением. Сила воли снижена на ${Math.abs(magicBuff)}\n`,
           color: colors['purple'],
           type: ['plain'],
-        },
-        {
-          text: `- ${Math.floor(Math.random() * 20 + 1) + +value}`,
-          color: colors['white'],
+        });
+      }
+      if (magicBuff > 0) {
+        text.push({
+          text: `${actorName} под усилением. Сила воли повышена на ${buff}\n`,
+          color: colors['purple'],
           type: ['plain'],
-        },
-      ];
+        });
+      }
+      text.push({
+        text: `${actorName} использует магию ${magicNames[type] || ''} `,
+        color: colors['purple'],
+        type: ['plain'],
+      });
+      text.push({
+        text: `- ${Math.floor(Math.random() * 20 + 1) + (+value + magicBuff)}`,
+        color: colors['white'],
+        type: ['plain'],
+      });
       break;
     case 'weapon':
       const weaponNames = {
@@ -177,26 +193,69 @@ export const skillDice = (
       if (type === 'select') {
         text = [
           {
-            text: `${actorName} ${value === 'fist' ? weaponNames[value] : `будет использовать в бою ${weaponNames[value]}`}`,
+            text: `${actorName} ${
+              value === 'fist' ? weaponNames[value] : `будет использовать в бою ${weaponNames[value]}`
+            }`,
             color: colors['blue'],
             type: ['plain'],
           },
         ];
         break;
       }
-
-      text = [
-        {
-          text: `${actorName} ${type === 'fist' ? weaponNames[type] : `использует ${weaponNames[type]}`} `,
+      text = [];
+      const attackBuff = +buff;
+      if (attackBuff < 0) {
+        text.push({
+          text: `${actorName} под ослаблением. Сила атаки снижена на ${Math.abs(attackBuff)}\n`,
           color: colors['blue'],
           type: ['plain'],
-        },
-        {
-          text: `- ${Math.floor(Math.random() * 20 + 1) + +value}`,
-          color: colors['white'],
+        });
+      }
+      if (attackBuff > 0) {
+        text.push({
+          text: `${actorName} под усилением. Сила атаки повышена на ${buff}\n`,
+          color: colors['blue'],
           type: ['plain'],
-        },
-      ];
+        });
+      }
+      text.push({
+        text: `${actorName} ${type === 'fist' ? weaponNames[type] : `использует ${weaponNames[type]}`} `,
+        color: colors['blue'],
+        type: ['plain'],
+      });
+      text.push({
+        text: `- ${Math.floor(Math.random() * 20 + 1) + (+value + attackBuff)}`,
+        color: colors['white'],
+        type: ['plain'],
+      });
+      break;
+    case 'defence':
+      text = [];
+      const defenceBuff = +buff;
+      if (defenceBuff < 0) {
+        text.push({
+          text: `${actorName} под ослаблением. Защита снижена на ${Math.abs(defenceBuff)}\n`,
+          color: colors['yellow'],
+          type: ['plain'],
+        });
+      }
+      if (defenceBuff > 0) {
+        text.push({
+          text: `${actorName} под усилением. Защита повышена на ${buff}\n`,
+          color: colors['yellow'],
+          type: ['plain'],
+        });
+      }
+      text.push({
+        text: `${actorName}`,
+        color: colors['yellow'],
+        type: ['plain'],
+      });
+      text.push({
+        text: `- ${Math.floor(Math.random() * 20 + 1) + (+value + +buff)}`,
+        color: colors['white'],
+        type: ['plain'],
+      });
     default:
       break;
   }

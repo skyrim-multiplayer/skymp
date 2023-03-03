@@ -31,9 +31,9 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   const [weaponSelected, setweaponSelected] = useState<IWeapon>('fist');
   const [weaponEquipped, setweaponEquipped] = useState<IWeapon[]>(['fist']);
   const [magicSelected, setmagicSelected] = useState<IMagic | null>(null);
-  const [magicBuff, setmagicBuff] = useState(1);
-  const [attackBuff, setattackBuff] = useState(-1);
-  const [defenceBuff, setdefenceBuff] = useState(2);
+  const [magicBuff, setmagicBuff] = useState(0);
+  const [attackBuff, setattackBuff] = useState(0);
+  const [defenceBuff, setdefenceBuff] = useState(0);
   const [playerSkillData, setplayerSkillData] =
     useState<null | IPossessedSkills>(null);
   const currentHealthIcon = useMemo(
@@ -93,8 +93,8 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     };
   }, []);
 
-  const handleClick = (action: string, type?: string, value?: number) => {
-    send(`${COMMAND_NAME} ${action} ${type} ${value}`);
+  const handleRoll = (action: string, type?: string, value?: number, buff?: number) => {
+    send(`${COMMAND_NAME} ${action} ${type} ${value} ${buff}`);
   };
 
   const handleHeal = () => {
@@ -132,7 +132,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   return (
     <div className="chat-dices__container ">
       <svg
-        onClick={() => handleClick('initiative')}
+        onClick={() => handleRoll('initiative')}
         className="chat-dices__button chat-dices__button--yellow"
         width="48"
         height="48"
@@ -159,7 +159,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       <div className="chat-dices__row-container chat-dices__row-container--purple">
         <svg
           onClick={() =>
-            handleClick('magic', magicSelected, magicIndex + magicBuff)
+            handleRoll('magic', magicSelected, magicIndex, magicBuff)
           }
           className="chat-dices__button chat-dices__button--purple"
           width="48"
@@ -297,7 +297,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
         weaponEquipped={weaponEquipped}
         weaponSelected={weaponSelected}
         onSelect={handleWeaponSelect}
-        onRoll={() => handleClick('weapon', weaponSelected, attackIndex + attackBuff)}
+        onRoll={() => handleRoll('weapon', weaponSelected, attackIndex, attackBuff)}
       ></WeaponsRows>
       <div className="chat-dices__row-container chat-dices__row-container--green">
         <svg
@@ -323,6 +323,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             magicBuff > 0 ? 'chat-dices__card--selected' : ''
           }`}
+          onClick={() => setmagicBuff(magicBuff + 1)}
           width="26"
           height="41"
           viewBox="0 0 26 41"
@@ -342,6 +343,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             attackBuff > 0 ? 'chat-dices__card--selected' : ''
           }`}
+          onClick={() => setattackBuff(attackBuff + 1)}
           width="26"
           height="41"
           viewBox="0 0 26 41"
@@ -365,6 +367,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             defenceBuff > 0 ? 'chat-dices__card--selected' : ''
           }`}
+          onClick={() => setdefenceBuff(defenceBuff + 1)}
           width="25"
           height="41"
           viewBox="0 0 25 41"
@@ -412,6 +415,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             magicBuff < 0 ? 'chat-dices__card--selected' : ''
           }`}
+          onClick={() => setmagicBuff(magicBuff - 1)}
           width="25"
           height="41"
           viewBox="0 0 25 41"
@@ -431,6 +435,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             attackBuff < 0 ? 'chat-dices__card--selected' : ''
           }`}
+          onClick={() => setattackBuff(attackBuff - 1)}
           width="25"
           height="41"
           viewBox="0 0 25 41"
@@ -450,6 +455,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             defenceBuff < 0 ? 'chat-dices__card--selected' : ''
           }`}
+          onClick={() => setdefenceBuff(defenceBuff - 1)}
           width="26"
           height="41"
           viewBox="0 0 26 41"
@@ -468,6 +474,9 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       </div>
       <div className="chat-dices__row-container chat-dices__row-container--yellow">
         <svg
+          onClick={() =>
+            handleRoll('defence', defenceSelected, defenceIndex, defenceBuff)
+          }
           className="chat-dices__button chat-dices__button--yellow"
           width="48"
           height="48"
