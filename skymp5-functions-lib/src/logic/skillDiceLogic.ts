@@ -45,11 +45,19 @@ export const skillDice = (
         actorId,
         () => {
           const player = ctx.sp.Game.getPlayer()!;
+          const leftHandedWeapon = player.getEquippedWeapon(true);
           const equippedWeapons = [] as string[];
           weaponKeywords.forEach((type) => {
             const keyword = ctx.sp.Keyword.getKeyword(type.keyword);
             if (player.wornHasKeyword(keyword)) {
               equippedWeapons.push(type.name);
+              if (equippedWeapons.length == 2) {
+                // put left hand weapon in left slot
+                if (leftHandedWeapon?.hasKeyword(keyword)) {
+                  equippedWeapons.reverse();
+                }
+               return;
+              }
             }
           });
           if (equippedWeapons.length === 0) {
@@ -61,7 +69,6 @@ export const skillDice = (
             } else {
               equippedWeapons.push('fist');
             }
-            ctx.sp.printConsole(raceId);
           }
           const src = `
           window.dispatchEvent(new CustomEvent('initSkillDices', { detail: { skills: ${eventString}, weapons: ${JSON.stringify(equippedWeapons)}}}))

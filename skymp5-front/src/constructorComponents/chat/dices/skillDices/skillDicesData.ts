@@ -146,6 +146,6 @@ export const weapons = {
   },
   different: {
     icon: '',
-    index: 2
+    index: 1
   }
 };

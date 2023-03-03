@@ -21,8 +21,11 @@ const COMMAND_NAME = '/skill-dice';
 const SkillDices = ({ onClose, send }: ISkillDices) => {
   const [hitPoints, sethitPoints] = useState(5);
   const [defenceIndex, setdefenceIndex] = useState(3);
-  const [attackIndex, setattackIndex] = useState(-4);
+  const [attackIndex, setattackIndex] = useState(0);
+  const [attackMastery, setattackMastery] = useState(0);
+  const [attackWeaponIndex, setattackWeaponIndex] = useState(0);
   const [magicIndex, setmagicIndex] = useState(0);
+  const [magicMastery, setmagicMastery] = useState(0);
   const [defenceSelected, setdefenceSelected] =
     useState<'' | 'light' | 'heavy' | 'robe'>('heavy');
   const [weaponSelected, setweaponSelected] = useState<IWeapon>('fist');
@@ -44,11 +47,32 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   useEffect(() => {
     if (!magicSelected || !playerSkillData) return;
     if (magicSelected in playerSkillData) {
-      setmagicIndex(playerSkillData[magicSelected].level + 1);
+      setmagicMastery(playerSkillData[magicSelected].level + 1);
     } else {
-      setmagicIndex(0);
+      setmagicMastery(0);
     }
   }, [magicSelected]);
+
+  useEffect(() => {
+    const magicStaffBuff = weaponSelected === 'magicstaff' ? 1 : 0;
+    setmagicIndex(magicMastery + magicStaffBuff);
+  }, [magicMastery, weaponSelected]);
+
+  useEffect(() => {
+    setattackWeaponIndex(weapons[weaponSelected].index);
+    if (!playerSkillData) return;
+    if (weaponEquipped.length === 1 && weaponEquipped[0] in playerSkillData) {
+      setattackMastery(playerSkillData[weaponEquipped[0]].level + 1);
+    }
+    // take right hand mastery
+    if (weaponEquipped.length === 2 && weaponEquipped[1] in playerSkillData) {
+      setattackMastery(playerSkillData[weaponEquipped[1]].level + 1);
+    }
+  }, [weaponSelected, playerSkillData, weaponEquipped, weapons]);
+
+  useEffect(() => {
+    setattackIndex(attackWeaponIndex + attackMastery);
+  }, [attackWeaponIndex, attackMastery]);
 
   const init = (event) => {
     const { skills, weapons } = (event as CustomEvent).detail as {
@@ -96,9 +120,6 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
 
   const handleWeaponSelect = (name: IWeapon) => {
     if (weaponSelected === name) return;
-    if (weaponSelected === 'magicstaff') {
-      setmagicIndex(magicIndex - 1);
-    }
     if (name !== 'magicstaff' && weaponEquipped.length === 2 && weaponEquipped[0] !== weaponEquipped[1]) {
       setweaponSelected('different');
       send(`${COMMAND_NAME} weapon select different`);
@@ -107,15 +128,6 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     setweaponSelected(name);
     send(`${COMMAND_NAME} weapon select ${name}`);
   };
-
-  useEffect(() => {
-    if (weaponSelected === 'magicstaff') {
-      setmagicIndex(magicIndex + 1);
-      setattackIndex(0);
-      return;
-    }
-    setattackIndex(weapons[weaponSelected].index);
-  }, [weaponSelected]);
 
   return (
     <div className="chat-dices__container ">
