@@ -16,7 +16,14 @@ export type IMagic =
   | 'destruction'
   | 'restoration'
   | 'alteration'
-  | 'illusion'
-  | null;
+  | 'illusion';
 
 export type IWeapon = 'daggers' | 'shortswords' | 'swords' | 'scimitar' | 'katana' | 'mace' | 'axes' | 'hammer' | 'bows' | 'longsword' | 'greatkatana' | 'battleaxe' | 'warhammer' | 'staff' | 'pike' | 'halberd' | 'fist' | 'claw' | 'magicstaff' | 'different';
+
+export type IDefence = 'armorlight' | 'armorheavy' | 'robe';
+
+export interface ISkillDicesData {
+  skills: IPossessedSkills;
+  weapons: IWeapon[];
+  armor: IDefence;
+};

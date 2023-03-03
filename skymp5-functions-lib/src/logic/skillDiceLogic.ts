@@ -47,6 +47,7 @@ export const skillDice = (
           const player = ctx.sp.Game.getPlayer()!;
           const leftHandedWeapon = player.getEquippedWeapon(true);
           const equippedWeapons = [] as string[];
+          let armorType = null;
           weaponKeywords.forEach((type) => {
             const keyword = ctx.sp.Keyword.getKeyword(type.keyword);
             if (player.wornHasKeyword(keyword)) {
@@ -70,10 +71,15 @@ export const skillDice = (
               equippedWeapons.push('fist');
             }
           }
+          // TODO: add other types of armor
+          const keyword = ctx.sp.Keyword.getKeyword('ArmorMageRobe');
+          if (player.wornHasKeyword(keyword)) {
+            armorType = 'robe';
+          }
           const src = `
           window.dispatchEvent(new CustomEvent('initSkillDices', { detail: { skills: ${eventString}, weapons: ${JSON.stringify(
             equippedWeapons
-          )}}}))
+          )}, armor: ${JSON.stringify(armorType)}}}))
           `;
           ctx.sp.browser.executeJavaScript(src);
         },
@@ -247,7 +253,7 @@ export const skillDice = (
         });
       }
       text.push({
-        text: `${actorName}`,
+        text: `${actorName} защищается `,
         color: colors['yellow'],
         type: ['plain'],
       });
