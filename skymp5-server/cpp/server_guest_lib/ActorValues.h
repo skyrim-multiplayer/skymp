@@ -3,9 +3,12 @@
 
 struct ActorValues
 {
+  // Percentages are expected to be always on top of struct
+  // See unit/ChangeValuesTest.cpp
   float healthPercentage = 1.f;
   float magickaPercentage = 1.f;
   float staminaPercentage = 1.f;
+
   float health = 100.f;
   float magicka = 100.f;
   float stamina = 100.f;
@@ -21,6 +24,6 @@ struct ActorValues
     return std::make_tuple(healthPercentage, magickaPercentage,
                            staminaPercentage, health, magicka, stamina,
                            healRate, magickaRate, staminaRate, healRateMult,
-                           magickaRate, staminaRate);
+                           magickaRateMult, staminaRateMult);
   }
 };
