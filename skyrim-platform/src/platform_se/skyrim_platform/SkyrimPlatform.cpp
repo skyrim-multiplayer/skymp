@@ -142,7 +142,7 @@ private:
   {
     for (auto& path : pathsToLoad) {
       // otherwise SkyrimPlatform tries to interpret skymp5-client-settings.txt.txt as a JavaScript code
-      if (EndsWith(path.wstring(), L".txt.txt")) {
+      if ( EndsWith(path.wstring(), L".txt.txt")) {
         logger::error("Found file with double extension: {}", path.string());
         continue;
       }
