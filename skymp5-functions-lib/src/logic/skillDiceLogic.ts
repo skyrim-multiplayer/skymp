@@ -267,6 +267,12 @@ export const skillDice = (
         color: colors['white'],
         type: ['plain'],
       });
+    case 'wolf':
+      text = [{text: `${actorName} превращается в вервольфа`, color: colors['blue'], type: ['plain']}];
+      break;
+    case 'vampus':
+      text = [{text: `Ночное время.  ${actorName} использует вампирские навыки`, color: colors['purple'], type: ['plain']}];
+      break;
     default:
       break;
   }

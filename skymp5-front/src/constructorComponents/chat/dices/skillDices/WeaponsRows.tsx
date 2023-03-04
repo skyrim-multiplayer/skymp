@@ -8,6 +8,7 @@ interface IWeaponsRows {
   buff: number;
   weaponEquipped: IWeapon[];
   weaponSelected: IWeapon;
+  isWolf: boolean;
   onSelect: (name: IWeapon) => void;
   onRoll: () => void;
 }
@@ -18,7 +19,8 @@ const WeaponsRows = ({
   weaponEquipped,
   weaponSelected,
   onSelect,
-  onRoll
+  onRoll,
+  isWolf
 }: IWeaponsRows) => {
   return (
     <div className="chat-dices__row-container chat-dices__row-container--blue">
@@ -52,33 +54,57 @@ const WeaponsRows = ({
         positiveColor="blue"
         negativeColor="blue"
       ></IndexBox>
-      <div
-        className={`chat-dices__button ${
-          weaponSelected !== 'magicstaff' ? 'chat-dices__card--selected' : ''
-        }`}
-        dangerouslySetInnerHTML={{ __html: weapons[weaponEquipped[0]].icon }}
-        onClick={() => onSelect(weaponEquipped[0])}
-      ></div>
-      {weaponEquipped.length === 2
+      {isWolf
         ? (
-        <div
-          className={`chat-dices__button ${
-            weaponSelected !== 'magicstaff' ? 'chat-dices__card--selected' : ''
-          }`}
-          dangerouslySetInnerHTML={{ __html: weapons[weaponEquipped[1]].icon }}
-          onClick={() => onSelect(weaponEquipped[1])}
-        ></div>
+        <>
+          <div
+            className={'chat-dices__button \'chat-dices__card--selected'}
+            dangerouslySetInnerHTML={{ __html: weapons.claw.icon }}
+          ></div>
+          <div className="chat-dices__card"></div>
+        </>
           )
         : (
-        <div className="chat-dices__card"></div>
+        <>
+          <div
+            className={`chat-dices__button ${
+              weaponSelected !== 'magicstaff'
+                ? 'chat-dices__card--selected'
+                : ''
+            }`}
+            dangerouslySetInnerHTML={{
+              __html: weapons[weaponEquipped[0]].icon
+            }}
+            onClick={() => onSelect(weaponEquipped[0])}
+          ></div>
+          {weaponEquipped.length === 2
+            ? (
+            <div
+              className={`chat-dices__button ${
+                weaponSelected !== 'magicstaff'
+                  ? 'chat-dices__card--selected'
+                  : ''
+              }`}
+              dangerouslySetInnerHTML={{
+                __html: weapons[weaponEquipped[1]].icon
+              }}
+              onClick={() => onSelect(weaponEquipped[1])}
+            ></div>
+              )
+            : (
+            <div className="chat-dices__card"></div>
+              )}
+          <div
+            onClick={() => onSelect('magicstaff')}
+            className={`chat-dices__button ${
+              weaponSelected === 'magicstaff'
+                ? 'chat-dices__card--selected'
+                : ''
+            }`}
+            dangerouslySetInnerHTML={{ __html: weapons.magicstaff.icon }}
+          ></div>
+        </>
           )}
-      <div
-        onClick={() => onSelect('magicstaff')}
-        className={`chat-dices__button ${
-          weaponSelected === 'magicstaff' ? 'chat-dices__card--selected' : ''
-        }`}
-        dangerouslySetInnerHTML={{ __html: weapons.magicstaff.icon }}
-      ></div>
       <div className="chat-dices__card"></div>
       <div className="chat-dices__card"></div>
       <IndexBox index={buff}></IndexBox>

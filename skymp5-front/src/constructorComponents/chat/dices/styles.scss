@@ -139,10 +139,10 @@ $black: #000000;
         &--green:hover [fill='white']{
             fill: $fern;
         }
-        &--blue:hover [fill='white']{
+        &--blue:hover [fill='white'], &--blue.chat-dices__card--selected [fill='white']{
             fill: $moodyBlue;
         }
-        &--purple:hover [fill='white']{
+        &--purple:hover [fill='white'], &--purple.chat-dices__card--selected [fill='white']{
             fill: $amethyst;
         }
     }
