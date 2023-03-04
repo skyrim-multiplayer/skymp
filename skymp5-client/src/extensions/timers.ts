@@ -156,7 +156,7 @@ sp.on("preLoadGame", () => {
 });
 
 const storageProcessMethod = sp.storage[processMethodTypeStorageKey];
-if (storageProcessMethod) {
+if (typeof storageProcessMethod !== "function") {
   setProcessMethod(storageProcessMethod as ProcessMethodType);
 } else {
   setProcessMethod(ProcessMethodType.tick);
