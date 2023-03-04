@@ -17,4 +17,12 @@ export const weaponTypes = [
   { keyword: 'WeapTypeHalberd', name: 'halberd' },
   { keyword: 'WeapTypeBattleStaff', name: 'staff' },
   { keyword: 'WeapTypeBow', name: 'bows' },
+  { keyword: 'ArmorShieldLight', name: 'shieldlight' },
+  { keyword: 'ArmorShieldHeavy', name: 'shieldheavy' },
+];
+
+export const armorTypes = [
+  { keyword: 'ArmorLight', name: 'armorlight' },
+  { keyword: 'ArmorHeavy', name: 'armorheavy' },
+  { keyword: 'ArmorMageRobe', name: 'robe' },
 ];

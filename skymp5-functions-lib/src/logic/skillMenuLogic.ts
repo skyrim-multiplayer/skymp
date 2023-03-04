@@ -44,11 +44,11 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
 
   //TODO: remove before release
   if (newSkillName === 'mem' && level) {
-    controller.addItem(actorId, memId, +level)
+    controller.addItem(actorId, memId, +level);
     return
   }
   if (newSkillName === 'exp' && level) {
-    controller.addItem(actorId, expId, +level)
+    controller.addItem(actorId, expId, +level);
     return
   }
 
@@ -56,7 +56,7 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
     EvalProperty.eval(
       actorId,
       () => {
-        ctx.sp.browser.setFocused(false)
+        ctx.sp.browser.setFocused(false);
       },
     );
     return;

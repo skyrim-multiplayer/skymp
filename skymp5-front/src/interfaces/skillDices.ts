@@ -18,7 +18,7 @@ export type IMagic =
   | 'alteration'
   | 'illusion';
 
-export type IWeapon = 'daggers' | 'shortswords' | 'swords' | 'scimitar' | 'katana' | 'mace' | 'axes' | 'hammer' | 'bows' | 'longsword' | 'greatkatana' | 'battleaxe' | 'warhammer' | 'staff' | 'pike' | 'halberd' | 'fist' | 'claw' | 'magicstaff' | 'different';
+export type IWeapon = 'daggers' | 'shortswords' | 'swords' | 'scimitar' | 'katana' | 'mace' | 'axes' | 'hammer' | 'bows' | 'longsword' | 'greatkatana' | 'battleaxe' | 'warhammer' | 'staff' | 'pike' | 'halberd' | 'fist' | 'claw' | 'magicstaff' | 'different' | 'shieldlight' | 'shieldheavy';
 
 export type IDefence = 'armorlight' | 'armorheavy' | 'robe';
 

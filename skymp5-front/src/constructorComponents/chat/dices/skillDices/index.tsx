@@ -25,6 +25,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   const [defenceIndex, setdefenceIndex] = useState(0);
   const [defenceArmorIndex, setdefenceArmorIndex] = useState(0);
   const [defenceMastery, setdefenceMastery] = useState(0);
+  const [shieldDefenceIndex, setshieldDefenceIndex] = useState(0);
   const [attackIndex, setattackIndex] = useState(0);
   const [attackMastery, setattackMastery] = useState(0);
   const [attackWeaponIndex, setattackWeaponIndex] = useState(0);
@@ -62,8 +63,8 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   }, [defenceSelected]);
 
   useEffect(() => {
-    setdefenceIndex(defenceMastery + defenceArmorIndex + defenceBuff);
-  }, [defenceMastery]);
+    setdefenceIndex(defenceMastery + defenceArmorIndex + defenceBuff + shieldDefenceIndex);
+  }, [defenceMastery, defenceArmorIndex, defenceBuff, shieldDefenceIndex]);
 
   useEffect(() => {
     if (!magicSelected || !playerSkillData) return;
@@ -84,8 +85,21 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     setattackWeaponIndex(weapons[weaponSelected].index);
     if (!playerSkillData) {
       setattackMastery(0);
+      setshieldDefenceIndex(0);
       return;
     }
+    // shield defence index
+    if (['shieldlight', 'shieldheavy'].includes(weaponEquipped[0])) {
+      const shieldIndex = weaponEquipped[0] === 'shieldlight' ? 1 : 2;
+      let shieldMasteryIndex = 0;
+      if ('shield' in playerSkillData) {
+        const shieldMastery = playerSkillData.shield.level;
+        if (shieldMastery > 0) shieldMasteryIndex = 1;
+        if (shieldMastery === 3) shieldMasteryIndex = 2;
+      }
+      setshieldDefenceIndex(shieldIndex + shieldMasteryIndex);
+    }
+    // one arm weapon
     if (
       weaponSelected !== 'magicstaff' &&
       weaponEquipped.length === 1 &&
@@ -94,7 +108,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       setattackMastery(playerSkillData[weaponEquipped[0]].level + 1);
       return;
     }
-    // take right hand mastery
+    // take right hand mastery if two handed
     if (
       weaponSelected !== 'magicstaff' &&
       weaponEquipped.length === 2 &&
@@ -114,8 +128,9 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     const { skills, weapons, armor } = (event as CustomEvent)
       .detail as ISkillDicesData;
     setplayerSkillData(skills);
-    const differentWeapon = weapons.length === 2 && weapons[0] !== weapons[1];
-    setweaponSelected(differentWeapon ? 'different' : weapons[0]);
+    const differentWeapon = weapons.length === 2 && weapons[0] !== weapons[1] && !['shieldlight', 'shieldheavy'].includes(weapons[0]);
+    const weaponName = weapons.length === 1 || differentWeapon ? weapons[0] : weapons[1];
+    setweaponSelected(differentWeapon ? 'different' : weaponName);
     setweaponEquipped(weapons);
     if (armor) {
       setdefenceSelected(armor);

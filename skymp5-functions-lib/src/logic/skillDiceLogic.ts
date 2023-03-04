@@ -5,12 +5,16 @@ import { getPossesedSkills } from './skillMenuLogic';
 import { EvalProperty } from '..//props/evalProperty';
 import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
-import { weaponTypes } from './skillDiceData';
+import { armorTypes, weaponTypes } from './skillDiceData';
 import { ActorBase, Race } from 'skyrimPlatform';
 
 declare const ctx: Ctx;
 declare const eventString: string;
 declare const weaponKeywords: {
+  keyword: string;
+  name: string;
+}[];
+declare const armorKeywords: {
   keyword: string;
   name: string;
 }[];
@@ -61,7 +65,7 @@ export const skillDice = (
               }
             }
           });
-          if (equippedWeapons.length === 0) {
+          if (equippedWeapons.length === 0 || (equippedWeapons.length === 1 && ['shieldlight', 'shieldheavy'].includes(equippedWeapons[0]))) {
             const clawRaces = [0x00013745, 0x00013740];
             const base = ctx.sp.ActorBase.from(player.getBaseObject()) as ActorBase;
             const raceId = base.getRace() ? (base.getRace() as Race).getFormID() : 0;
@@ -71,11 +75,12 @@ export const skillDice = (
               equippedWeapons.push('fist');
             }
           }
-          // TODO: add other types of armor
-          const keyword = ctx.sp.Keyword.getKeyword('ArmorMageRobe');
-          if (player.wornHasKeyword(keyword)) {
-            armorType = 'robe';
-          }
+          armorKeywords.forEach((type) => {
+            const keyword = ctx.sp.Keyword.getKeyword(type.keyword);
+            if (player.wornHasKeyword(keyword)) {
+              armorType = type.name;
+            }
+          });
           const src = `
           window.dispatchEvent(new CustomEvent('initSkillDices', { detail: { skills: ${eventString}, weapons: ${JSON.stringify(
             equippedWeapons
@@ -83,7 +88,7 @@ export const skillDice = (
           `;
           ctx.sp.browser.executeJavaScript(src);
         },
-        { eventString: JSON.stringify(possessedSkills), weaponKeywords: weaponTypes }
+        { eventString: JSON.stringify(possessedSkills), weaponKeywords: weaponTypes, armorKeywords: armorTypes }
       );
       break;
     case 'initiative':
