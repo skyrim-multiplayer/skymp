@@ -9,7 +9,6 @@ import { refreshWidgetsJs } from './refreshWidgets';
 import { ChatSettings } from '../types/settings';
 
 type ChatValue = { show: boolean };
-type ChatState = { chatPrevValue?: ChatValue; chatIsInputHidden?: boolean };
 
 declare const mp: Mp;
 declare const ctx: Ctx;

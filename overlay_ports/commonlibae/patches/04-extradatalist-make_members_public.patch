@@ -1,0 +1,13 @@
+diff --git a/include/RE/E/ExtraDataList.h b/include/RE/E/ExtraDataList.h
+index 82c4ba8b..07ef3405 100644
+--- a/include/RE/E/ExtraDataList.h
++++ b/include/RE/E/ExtraDataList.h
+@@ -175,7 +175,7 @@ namespace RE
+                void                  SetInventoryChanges(InventoryChanges* a_changes);
+                void                  SetOwner(TESForm* a_owner);
+ 
+-       private:
++       public:
+                BSExtraData* GetByTypeImpl(ExtraDataType a_type) const;
+                void         MarkType(std::uint32_t a_type, bool a_cleared);
+                void         MarkType(ExtraDataType a_type, bool a_cleared);

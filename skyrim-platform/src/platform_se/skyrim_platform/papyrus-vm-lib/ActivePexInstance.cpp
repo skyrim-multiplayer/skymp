@@ -46,7 +46,8 @@ std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
   }
 
   if (nameNeedScript != "")
-    assert(0);
+    throw std::runtime_error("Papyrus VM: The resulting empty "
+                             "string(NameNeedScript),::FillParentInstance");
   return nullptr;
 }
 
@@ -291,7 +292,8 @@ VarValue ActivePexInstance::GetElementsArrayAtString(const VarValue& array,
         break;
       }
       default:
-        assert(false);
+        throw std::runtime_error(
+          "Papyrus VM:  VarValue: Failed Get Element Array At String");
     }
 
     if (i < array.pArray->size() - 1)
@@ -480,7 +482,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             *opCode[line].second[0] = CastToString(*opCode[line].second[1]);
             break;
           default:
-            assert(0);
+            throw std::runtime_error(
+              "Papyrus VM: none of the cases were reached "
+              ":switch(*opcode[line].second[0].GetType()");
         }
 
         break;
@@ -606,7 +610,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(false);
+          throw std::runtime_error("Papyrus VM: Got nullptr argument "
+                                   "OpcodesImplementation::Opcodes::PropGet");
         }
         break;
 
@@ -628,7 +633,8 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(false);
+          throw std::runtime_error("Papyrus VM: Got nullptr argument "
+                                   "OpcodesImplementation::Opcodes::PropSet");
         }
         break;
 
@@ -649,7 +655,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
           }
 
         } else {
-          assert(0);
+          throw std::runtime_error(
+            "Papyrus VM: The resulting argument cannot be less than 0 "
+            "OpcodesImplementation::Opcodes::Array_Create");
         }
 
         break;
@@ -672,7 +680,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             (*opCode[line].second[1])
               .pArray->at((int32_t)(*opCode[line].second[2]));
         } else {
-          assert(0);
+          throw std::runtime_error(
+            "Papyrus VM: Got nullptr argument "
+            "OpcodesImplementation::Opcodes::Array_GetElement");
         }
         break;
 
@@ -683,7 +693,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
             .pArray->at((int32_t)(*opCode[line].second[1])) =
             *opCode[line].second[2];
         } else {
-          assert(0);
+          throw std::runtime_error(
+            "Papyrus VM: Got nullptr argument "
+            "OpcodesImplementation::Opcodes::Array_SetElement");
         }
         break;
 
@@ -702,7 +714,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
         break;
 
       default:
-        assert(0);
+        throw std::runtime_error(
+          "Papyrus VM: None of the cases were reached, "
+          "an exception was caught :switch[line].first");
     }
 
     if (needReturn) {
@@ -798,9 +812,10 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      assert(false);
+      throw std::runtime_error(
+        "Papyrus VM: Failed to process one of the cases in "
+        "switch(type),::GetArrayElementType()");
   }
-
   return returnType;
 }
 

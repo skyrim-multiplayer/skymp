@@ -127,7 +127,23 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   if (!actor) {
     return;
   }
-  partOne.animationSystem.Process(actor, animationData);
+
+  WorldState* espmProvider = actor->GetParent();
+  if (!espmProvider) {
+    return;
+  }
+
+  if (!partOne.animationSystem) {
+    std::vector<std::string> espmFiles = espmProvider->espmFiles;
+
+    std::set<std::string> s;
+    s = { espmFiles.begin(), espmFiles.end() };
+    bool isSweetpie = s.count("SweetPie.esp") != 0;
+
+    partOne.animationSystem = std::make_unique<AnimationSystem>(isSweetpie);
+  }
+  partOne.animationSystem->Process(actor, animationData);
+
   SendToNeighbours(idx, rawMsgData);
 }
 
