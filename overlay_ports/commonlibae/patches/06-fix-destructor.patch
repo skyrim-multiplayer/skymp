@@ -1,0 +1,13 @@
+diff --git a/include/RE/E/ExtraDataList.h b/include/RE/E/ExtraDataList.h
+index 82c4ba8b..3c001c94 100644
+--- a/include/RE/E/ExtraDataList.h
++++ b/include/RE/E/ExtraDataList.h
+@@ -28,7 +28,7 @@ namespace RE
+                };
+                static_assert(sizeof(PresenceBitfield) == 0x18);
+ 
+-               virtual ~BaseExtraList();  // 00
++               virtual ~BaseExtraList() = default;  // 00
+ 
+                // members
+                BSExtraData*      data = nullptr;      // 08

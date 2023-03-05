@@ -1,5 +1,5 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 // PartOne_ActivateTest.cpp
 extern espm::CompressedFieldsCache g_dummyCache;

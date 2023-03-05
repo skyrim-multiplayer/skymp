@@ -269,7 +269,8 @@ VarValue Reader::FillVariableData()
       Read32_bit();
       break;
     default:
-      assert(false);
+      throw std::runtime_error(
+        "Papyrus VM: Failed to populate variables with data");
   }
 
   return Data;

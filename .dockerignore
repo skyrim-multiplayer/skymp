@@ -1,3 +1,4 @@
+.git
 .github
 build
 docs
@@ -8,6 +9,5 @@ skymp5-functions-lib/node_modules
 skymp5-functions-lib/coverage
 skymp5-functions-lib/gamemode.js
 skymp5-server/node_modules
-skymp5-server/cmake-js-fetch-build
 skyrim-platform/node_modules
 vcpkg

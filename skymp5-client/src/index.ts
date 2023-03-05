@@ -9,8 +9,11 @@ import {
   settings,
   storage,
   browser as spBrowser,
-  printConsole
+  printConsole,
+  ActorValueInfo,
+  ActorValue,
 } from "skyrimPlatform";
+import * as timers from "./extensions/timers"; timers;
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./features/browser";
 import * as loadGameManager from "./features/loadGameManager";
@@ -22,6 +25,7 @@ import * as NetInfo from "./debug/netInfoSystem";
 import * as animDebugSystem from "./debug/animDebugSystem";
 import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
+import * as expSystem from "./sync/expSystem";
 
 browser.main();
 
@@ -35,6 +39,16 @@ export const setLocalDamageMult = (damageMult: number): void => {
   Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
 }
 
+const turnOffSkillLocalExp = (av: ActorValue): void => {
+  const avi = ActorValueInfo.getActorValueInfoByID(av);
+  if (!avi) {
+    once("update", () => printConsole(`Not found "${ActorValueInfo}" with value "${av}"`));
+    return;
+  }
+  avi.setSkillUseMult(0);
+  avi.setSkillOffsetMult(0);
+};
+
 const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
 };
@@ -45,6 +59,32 @@ loadGameManager.addLoadGameListener(enforceLimitations);
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
   Game.setGameSettingInt("iDeathDropWeaponChance", 0);
+
+  // turn off player level exp
+  Game.setGameSettingFloat("fXPPerSkillRank", 0);
+  // turn off skill exp
+  turnOffSkillLocalExp(ActorValue.Alteration);
+  turnOffSkillLocalExp(ActorValue.Conjuration);
+  turnOffSkillLocalExp(ActorValue.Destruction);
+  turnOffSkillLocalExp(ActorValue.Illusion);
+  turnOffSkillLocalExp(ActorValue.Restoration);
+  turnOffSkillLocalExp(ActorValue.Enchanting);
+  turnOffSkillLocalExp(ActorValue.OneHanded);
+  turnOffSkillLocalExp(ActorValue.TwoHanded);
+  turnOffSkillLocalExp(ActorValue.Archery);
+  turnOffSkillLocalExp(ActorValue.Block);
+  turnOffSkillLocalExp(ActorValue.Smithing);
+  turnOffSkillLocalExp(ActorValue.HeavyArmor);
+  turnOffSkillLocalExp(ActorValue.LightArmor);
+  turnOffSkillLocalExp(ActorValue.Pickpocket);
+  turnOffSkillLocalExp(ActorValue.Lockpicking);
+  turnOffSkillLocalExp(ActorValue.Sneak);
+  turnOffSkillLocalExp(ActorValue.Alchemy);
+  turnOffSkillLocalExp(ActorValue.Speech);
+
+  // Init exp system
+  expSystem.init();
+
   setLocalDamageMult(defaultLocalDamageMult);
 });
 on("update", () => {
