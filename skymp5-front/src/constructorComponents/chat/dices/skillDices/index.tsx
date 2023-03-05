@@ -5,7 +5,7 @@ import heart3 from '../../../../img/dices/heart3.svg';
 import heart2 from '../../../../img/dices/heart2.svg';
 import heart1 from '../../../../img/dices/heart1.svg';
 import heart0 from '../../../../img/dices/heart0.svg';
-import IndexBox from './indexBox';
+import IndexBox from './elements/IndexBox';
 import {
   IDefence,
   IMagic,
@@ -14,7 +14,7 @@ import {
   ISkillDicesData,
   IWeapon
 } from '../../../../interfaces/skillDices';
-import WeaponsRows from './weaponsRows';
+import WeaponsRows from './elements/WeaponsRows';
 import { defence, magic, weapons } from './skillDicesData';
 
 const MAX_HEALTH = 5;

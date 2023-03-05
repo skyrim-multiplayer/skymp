@@ -1,7 +1,7 @@
 import React from 'react';
-import { IWeapon } from '../../../../interfaces/skillDices';
-import IndexBox from './indexBox';
-import { weapons } from './skillDicesData';
+import { IWeapon } from '../../../../../interfaces/skillDices';
+import IndexBox from './IndexBox';
+import { weapons } from '../skillDicesData';
 
 interface IWeaponsRows {
   index: number;
