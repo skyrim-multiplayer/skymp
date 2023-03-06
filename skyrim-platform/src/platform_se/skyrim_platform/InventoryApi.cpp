@@ -209,3 +209,47 @@ JsValue InventoryApi::GetContainer(const JsFunctionArguments& args)
 
   return res;
 }
+
+JsValue SetInventory(const JsFunctionArguments& args)
+{
+  double formId = static_cast<double>(args[1]);
+  RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
+  if (!pActor) {
+    throw NullPointerException("pActor");
+  }
+  for (auto& [pBoundObject, countAndEntryData] : pActor->GetInventory()) {
+    pActor->RemoveItem(pBoundObject, countAndEntryData.first,
+                       RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+  };
+  const JsValue& entries = args[2].GetProperty("entries");
+  for (uint32_t i = 0; i < entries.GetArrayBufferLength(); ++i) {
+    const JsValue& entry = entries.GetProperty(JsValue::Int(i));
+    const double baseId = static_cast<double>(entry.GetProperty("baseId"));
+    RE::TESBoundObject* pBoundObject =
+      RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
+    if (!pBoundObject) {
+      throw NullPointerException("pBoundObject");
+    }
+    const uint32_t count = static_cast<int>(entry.GetProperty("count"));
+    const bool worn =
+      entry.GetProperty("worn").GetType() != JsValue::Type::Undefined
+      ? static_cast<bool>(entry.GetProperty("worn"))
+      : false;
+    pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
+    if (worn) {
+      RE::ActorEquipManager* equipManager =
+        RE::ActorEquipManager::GetSingleton();
+      equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, nullptr,
+                                false, true);
+    }
+  }
+  return JsValue::Undefined();
+}
+
+void Register(JsValue& exports)
+{
+  exports.SetProperty("getExtraContainerChanges",
+                      JsValue::Function(GetExtraContainerChanges));
+  exports.SetProperty("getContainer", JsValue::Function(GetContainer));
+  exports.SetProperty("setInventory", JsValue::Function(SetInventory));
+}

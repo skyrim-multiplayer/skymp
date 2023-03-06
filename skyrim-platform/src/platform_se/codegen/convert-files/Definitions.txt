@@ -1537,3 +1537,4 @@ export declare function getTextColor(textId: number): number[];
 export declare function getNumCreatedTexts(): number;
 
 export declare function getFileInfo(filename: string): { crc32: number, size: number };
+export declare function setInventory(formId: number, inventory: Inventory): void;
