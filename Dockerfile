@@ -1,10 +1,8 @@
-# Image used as runtime base for a game server.
-# Contains a minimal subset of stuff needed for running (and debugging, if needed) the server.
-# TODO: Update to 22.04
-FROM ubuntu:focal AS skymp-runtime-base
+FROM ubuntu:focal
+
+WORKDIR /usr/src/skymp
 
 # Prevent apt-get from asking us about timezone
-# London is not always UTC+0:00
 ENV TZ=Etc/GMT
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -15,13 +13,9 @@ RUN \
   && apt-get install -y nodejs yarn gdb \
   && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m skymp
-
-
-# This is the base image for building SkyMP source.
-# It contains everything that should be installed on the system.
-FROM skymp-runtime-base AS skymp-build-base
-
+# Install system dependencies via apt-get
+# python2 and libicu-dev are required to build Chakracore
+# pkg-config is required for zlib
 # TODO: update clang
 RUN \
   curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
@@ -44,30 +38,67 @@ RUN \
     pkg-config \
     cmake \
     clang-12 \
+    ninja-build \
   && rm -rf /var/lib/apt/lists/*
 
+ENV CC=/usr/bin/clang-12
+ENV CPP=/usr/bin/clang-cpp-12
+ENV CXX=/usr/bin/clang++-12
+ENV LD=/usr/bin/ld.lld-12
 
-# Intermediate image to build
-# TODO: copy less stuff
-# TODO: build huge deps separately
-FROM skymp-build-base AS skymp-vcpkg-deps-builder
-ARG VCPKG_URL
-ARG VCPKG_COMMIT
+# Bootstrap vcpkg
+# (vcpkg/refs/heads/master contains vcpkg version)
+COPY ./.git/modules/vcpkg/HEAD ./master
+RUN git clone https://github.com/microsoft/vcpkg.git \ 
+  && cd vcpkg \
+  && git checkout $(cat /usr/src/skymp/master) \
+  && rm /usr/src/skymp/master \
+  && chmod 777 ./bootstrap-vcpkg.sh \
+  && ./bootstrap-vcpkg.sh -useSystemBinaries
 
-COPY --chown=skymp:skymp . /src
+# Currently needed for Chakracore
+# TODO: Update to latest vcpkg where our Chakracore port fix has been shipped
+COPY ./overlay_ports ./overlay_ports
 
-USER skymp
+# https://github.com/chakra-core/ChakraCore/blob/6800c46e2bcb5eafd81f19716a4f9f09774f134b/bin/ch/CMakeLists.txt#L3
+RUN ln -s /usr/bin/python2.7 /usr/bin/python
 
-RUN  cd /src \
-  && git clone "$VCPKG_URL" vcpkg \
-  && git -C vcpkg checkout "$VCPKG_COMMIT" \
-  && ./build.sh --configure
+# Install heavy ports first. Currently only Chakracore
+RUN vcpkg/vcpkg \
+  --feature-flags=binarycaching \
+  --triplet x64-linux \
+  --overlay-ports=./overlay_ports \
+  install chakracore \
+  && rm -r vcpkg/buildtrees \
+  && rm -r vcpkg/packages \
+  && rm -r vcpkg/downloads
 
+# Install ports specified in vcpkg.json
+COPY ./vcpkg.json ./
+RUN vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-linux --overlay-ports=./overlay_ports \
+  && rm -r vcpkg/buildtrees \
+  && rm -r vcpkg/packages \
+  && rm -r vcpkg/downloads
 
-# Image that runs in CI. It contains vcpkg cache to speedup the build.
-# Sadly, the builtin NuGet cache doesn't work on Linux, see:
-# https://github.com/microsoft/vcpkg/issues/19038
-FROM skymp-build-base AS skymp-vcpkg-deps
+# Currently, we have only one overlay triplet and it is for Windows
+# But missing directory would break CMake build
+COPY ./overlay_triplets ./overlay_triplets
 
-COPY --from=skymp-vcpkg-deps-builder --chown=skymp:skymp \
-  /home/skymp/.cache/vcpkg /home/skymp/.cache/vcpkg
+RUN mkdir -p build/dist/server/data \
+  && cd build/dist/server/data \
+  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm \
+  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm \
+  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm \
+  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm \
+  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm
+
+# Build the project and install missing vcpkg dependencies if any
+COPY . .
+RUN rm -rf ./skymp5-server/cmake-js-fetch-build || true \
+  && mkdir -p build \
+  && cd build \ 
+  && cmake .. -DCMAKE_BUILD_TYPE=Release -DUNIT_DATA_DIR=/usr/src/skymp/build/dist/server/data \
+  && cmake --build . --config Release
+
+WORKDIR /usr/src/skymp/build/dist/server
+CMD ["node", "./dist_back/skymp5-server.js"]
