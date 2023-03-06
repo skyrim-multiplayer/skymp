@@ -6,6 +6,7 @@ import { Ctx } from "../types/ctx";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
+declare const frontData: string;
 
 
 const discardSkills = (actorId : number, controller: PlayerController, possessedSkills : IPossessedSkills) => {
@@ -52,7 +53,29 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
     return
   }
 
-  if (newSkillName == 'quit') {
+  if (newSkillName === 'init') {
+    const { possessedSkills, memCount, expCount } = getPossesedSkills(actorId);
+    const perks = {} as {[key: string]: number};
+    Object.keys(possessedSkills).forEach(key => perks[key] = possessedSkills[key].level + 1)
+    const payload = {
+            exp: expCount,
+            mem: memCount,
+            perks
+    }
+    EvalProperty.eval(
+      actorId,
+      () => {
+        const src = `
+        window.dispatchEvent(new CustomEvent('updateSkillMenu', { detail: ${JSON.stringify(frontData)}}))
+        `
+        ctx.sp.browser.executeJavaScript(src)
+      },
+      { frontData: JSON.stringify(payload)}
+    );
+    return;
+  }
+
+  if (newSkillName === 'quit') {
     EvalProperty.eval(
       actorId,
       () => {

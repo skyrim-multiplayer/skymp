@@ -20,7 +20,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   const [expHint, setexpHint] = useState(false);
   const [pMem, setpMem] = useState(0);
   const [memHint, setmemHint] = useState(false);
-  const [playerData, setplayerData] = useState<IPlayerData | undefined>();
+  const [playerData, setplayerData] = useState<IPlayerData | null>(null);
   const [confirmDiscard, setconfirmDiscard] = useState(false);
 
   const fetchData = (event) => {
@@ -28,7 +28,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     if (el) {
       el.style.display = 'none';
     }
-    const newPlayerData = (event as CustomEvent).detail as IPlayerData;
+    const newPlayerData = JSON.parse((event as CustomEvent).detail) as IPlayerData;
     setplayerData(newPlayerData);
   };
 
@@ -51,8 +51,13 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     }
   };
 
+  const init = () => {
+    send('/skill init');
+  };
+
   useEffect(() => {
     window.addEventListener('updateSkillMenu', fetchData);
+    window.addEventListener('initSkillMenu', init);
     window.onkeydown = keyListener;
     // !Important: Run commented code to dispatch event
     // window.dispatchEvent(
@@ -73,6 +78,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     return () => {
       setplayerData(undefined);
       window.removeEventListener('updateSkillMenu', fetchData);
+      window.removeEventListener('initSkillMenu', init);
       const el = document.getElementsByClassName('fullPage')[0] as HTMLElement;
       if (el) {
         el.style.display = 'flex';
