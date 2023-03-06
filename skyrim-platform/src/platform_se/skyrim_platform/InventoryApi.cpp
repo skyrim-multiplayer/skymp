@@ -230,7 +230,7 @@ JsValue SetInventory(const JsFunctionArguments& args)
     if (!pBoundObject) {
       throw NullPointerException("pBoundObject");
     }
-    const uint32_t count = static_cast<int>(entry.GetProperty("count"));
+    const int count = static_cast<int>(entry.GetProperty("count"));
     const bool worn =
       entry.GetProperty("worn").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("worn"))
