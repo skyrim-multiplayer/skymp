@@ -210,7 +210,7 @@ JsValue InventoryApi::GetContainer(const JsFunctionArguments& args)
   return res;
 }
 
-JsValue SetInventory(const JsFunctionArguments& args)
+JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
 {
   double formId = static_cast<double>(args[1]);
   RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
@@ -246,7 +246,7 @@ JsValue SetInventory(const JsFunctionArguments& args)
   return JsValue::Undefined();
 }
 
-void Register(JsValue& exports)
+void InventoryApi::Register(JsValue& exports)
 {
   exports.SetProperty("getExtraContainerChanges",
                       JsValue::Function(GetExtraContainerChanges));
