@@ -58,7 +58,7 @@ const WeaponsRows = ({
         ? (
         <>
           <div
-            className={'chat-dices__button \'chat-dices__card--selected'}
+            className={'chat-dices__button chat-dices__card--selected'}
             dangerouslySetInnerHTML={{ __html: weapons.claw.icon }}
           ></div>
           <div className="chat-dices__card"></div>

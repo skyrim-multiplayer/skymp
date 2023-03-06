@@ -173,6 +173,10 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     value?: number,
     buff?: number
   ) => {
+    if (action === 'weapon' && isWolf) {
+      send(`${COMMAND_NAME} ${action} claw ${value} ${buff}`);
+      return;
+    }
     send(`${COMMAND_NAME} ${action} ${type} ${value} ${buff}`);
   };
 
