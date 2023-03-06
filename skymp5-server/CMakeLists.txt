@@ -65,8 +65,6 @@ endif()
 
 if(SKYRIM_DIR)
   set(esm_prefix "${SKYRIM_DIR}/Data/")
-elseif(UNIT_DATA_DIR)
-  set(esm_prefix "${UNIT_DATA_DIR}/")
 else()
   set(esm_prefix "")
 endif()
