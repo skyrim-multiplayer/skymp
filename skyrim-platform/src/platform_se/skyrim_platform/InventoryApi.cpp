@@ -222,8 +222,8 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
                        RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
   };
   const JsValue& entries = args[2].GetProperty("entries");
-  const uint32_t size = static_cast<uint32_t>(entries.GetProperty("length"));
-  for (uint32_t i = 0; i < size; ++i) {
+  const int size = static_cast<int>(entries.GetProperty("length"));
+  for (int i = 0; i < size; ++i) {
     const JsValue& entry = entries.GetProperty(JsValue::Int(i));
     const double baseId = static_cast<double>(entry.GetProperty("baseId"));
     RE::TESBoundObject* pBoundObject =
