@@ -256,7 +256,7 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
         : static_cast<RE::BGSEquipSlot*>(
             RE::TESForm::LookupByID(EquipSlot::LeftHand));
       equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, slot, false,
-                                true);
+                                true, false, false);
     }
   }
   return JsValue::Undefined();
