@@ -236,12 +236,27 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
       entry.GetProperty("worn").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("worn"))
       : false;
+    const bool wornLeft =
+      entry.GetProperty("wornLeft").GetType() != JsValue::Type::Undefined
+      ? static_cast<bool>(entry.GetProperty("worn"))
+      : false;
     pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
-    if (worn) {
-      RE::ActorEquipManager* equipManager =
-        RE::ActorEquipManager::GetSingleton();
-      equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, nullptr,
-                                false, true);
+    RE::ActorEquipManager* equipManager =
+      RE::ActorEquipManager::GetSingleton();
+    enum EquipSlot
+    {
+      BothHands = 0x13f45,
+      LeftHand = 0x13f43,
+      RightHand = 0x13f42
+    };
+    if (worn || wornLeft) {
+      RE::BGSEquipSlot* slot = worn
+        ? static_cast<RE::BGSEquipSlot*>(
+            RE::TESForm::LookupByID(EquipSlot::RightHand))
+        : static_cast<RE::BGSEquipSlot*>(
+            RE::TESForm::LookupByID(EquipSlot::LeftHand));
+      equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, slot, false,
+                                true);
     }
   }
   return JsValue::Undefined();
