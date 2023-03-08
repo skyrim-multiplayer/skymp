@@ -234,7 +234,7 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
       : false;
     const bool wornLeft =
       entry.GetProperty("wornLeft").GetType() != JsValue::Type::Undefined
-      ? static_cast<bool>(entry.GetProperty("worn"))
+      ? static_cast<bool>(entry.GetProperty("wornLeft"))
       : false;
     pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
     RE::ActorEquipManager* equipManager =
