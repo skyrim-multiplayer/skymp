@@ -217,10 +217,6 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
   if (!pActor) {
     throw NullPointerException("pActor");
   }
-  for (auto& [pBoundObject, countAndEntryData] : pActor->GetInventory()) {
-    pActor->RemoveItem(pBoundObject, countAndEntryData.first,
-                       RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-  };
   const JsValue& entries = args[2].GetProperty("entries");
   const int size = static_cast<int>(entries.GetProperty("length"));
   for (int i = 0; i < size; ++i) {
