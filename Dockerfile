@@ -1,3 +1,13 @@
+#
+# docker build -t skymp . --platfrom linux/amd64
+#
+
+#
+# docker run --rm --name myserver \
+# -p 7777:7777/udp -p 3000:3000 -p 8080:8080 \
+# -v $(pwd)/build/dist/server/gamemode.js:/usr/src/skymp/build/dist/server/gamemode.js \
+# -v "<your_data_dir>:/skyrim_data_dir" skymp
+
 FROM ubuntu:focal
 
 WORKDIR /usr/src/skymp
@@ -16,7 +26,6 @@ RUN \
 # Install system dependencies via apt-get
 # python2 and libicu-dev are required to build Chakracore
 # pkg-config is required for zlib
-# TODO: update clang
 RUN \
   curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
   && echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" > /etc/apt/sources.list.d/yarn.list \
