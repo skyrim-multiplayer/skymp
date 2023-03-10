@@ -347,8 +347,6 @@ mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemCount', (se
 mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionItem', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionItem'));
 mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionSize', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionSize'));
 
-console.log('gamemode.js reloaded');
-
 const pointsByName = new Map<string, LocationalData>();
 pointsByName.set('hall:spawnPoint', {
   pos: [18522.08, 10218.17, 624.46],
@@ -556,8 +554,11 @@ const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[
   }
 };
 
-const controller = MpApiInteractor.makeController(pointsByName);
-MpApiInteractor.setup([
-  createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
-  new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
-]);
+// const controller = MpApiInteractor.makeController(pointsByName);
+// MpApiInteractor.setup([
+//   createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
+//   new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
+// ]);
+
+
+console.log('skymp5-functions-lib loaded');

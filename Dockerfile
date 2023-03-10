@@ -6,7 +6,8 @@
 # docker run --rm --name myserver \
 # -p 7777:7777/udp -p 3000:3000 -p 8080:8080 \
 # -v $(pwd)/build/dist/server/gamemode.js:/usr/src/skymp/build/dist/server/gamemode.js \
-# -v "<your_data_dir>:/skyrim_data_dir" skymp
+# -v "<your_data_dir>:/skyrim_data_dir" \
+# skymp
 
 FROM ubuntu:focal
 
@@ -112,4 +113,8 @@ RUN mkdir -p build \
   && cmake --build . --config Release
 
 WORKDIR /usr/src/skymp/build/dist/server
+
+# TODO: make volume for this file
+COPY misc/docker-server-settings.json ./server-settings.json
+
 CMD ["node", "./dist_back/skymp5-server.js"]

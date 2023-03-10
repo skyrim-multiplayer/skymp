@@ -1,0 +1,24 @@
+{
+    "dataDir": "data",
+    "loadOrder": [
+        "/skyrim_data_dir/Skyrim.esm",
+        "/skyrim_data_dir/Update.esm",
+        "/skyrim_data_dir/Dawnguard.esm",
+        "/skyrim_data_dir/HearthFires.esm",
+        "/skyrim_data_dir/Dragonborn.esm"
+    ],
+    "ip": "127.0.0.1",
+    "name": "SkyMP Legends",
+    "offlineMode": true,
+    "startPoints": [
+        {
+            "pos": [
+                18522.08,
+                10218.17,
+                624.46
+            ],
+            "worldOrCell": "0x6042b5f",
+            "angleZ": 0
+        }
+    ]
+}
