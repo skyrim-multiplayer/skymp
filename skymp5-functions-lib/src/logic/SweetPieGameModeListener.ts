@@ -47,7 +47,7 @@ export class SweetPieGameModeListener implements GameModeListener {
     {
       name: 'kick',
       handler: ({ actorId, controller, argsRaw }) => {
-        const adminMasterApiIds = [479, 485, 486, 487, 488, 489, 497, 539];
+        const adminMasterApiIds = [479, 485, 486, 487, 488, 489, 497];
         if (!adminMasterApiIds.includes(controller.getProfileId(actorId))) {
           controller.sendChatMessage(actorId, createSystemMessage('No permission'));
           return;
