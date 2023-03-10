@@ -57,7 +57,6 @@ RUN git clone https://github.com/microsoft/vcpkg.git \
   && ./bootstrap-vcpkg.sh -useSystemBinaries
 
 # Currently needed for Chakracore
-# TODO: Update to latest vcpkg where our Chakracore port fix has been shipped
 COPY ./overlay_ports ./overlay_ports
 
 # https://github.com/chakra-core/ChakraCore/blob/6800c46e2bcb5eafd81f19716a4f9f09774f134b/bin/ch/CMakeLists.txt#L3
