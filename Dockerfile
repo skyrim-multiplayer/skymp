@@ -84,20 +84,23 @@ RUN vcpkg/vcpkg --feature-flags=binarycaching,manifests install --triplet x64-li
 # But missing directory would break CMake build
 COPY ./overlay_triplets ./overlay_triplets
 
-RUN mkdir -p build/dist/server/data \
-  && cd build/dist/server/data \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm \
-  && curl -LJO https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm
+COPY ./skymp5-client ./skymp5-client
+COPY ./skymp5-functions-lib ./skymp5-functions-lib
+COPY ./skymp5-server ./skymp5-server
+COPY ./skymp5-front ./skymp5-front
+COPY ./skymp5-scripts ./skymp5-scripts
+COPY ./skyrim-platform ./skyrim-platform
+COPY ./unit ./unit
+COPY ./viet ./viet
+COPY ./client-deps ./client-deps
+COPY CMakeLists.txt ./
+COPY .clang-format ./
+COPY cmake ./cmake
+COPY ./1js ./1js
 
-# Build the project and install missing vcpkg dependencies if any
-COPY . .
-RUN rm -rf ./skymp5-server/cmake-js-fetch-build || true \
-  && mkdir -p build \
-  && cd build \ 
-  && cmake .. -DCMAKE_BUILD_TYPE=Release -DUNIT_DATA_DIR=/usr/src/skymp/build/dist/server/data \
+RUN mkdir -p build \
+  && cd build \
+  && cmake .. -DCMAKE_BUILD_TYPE=Release \
   && cmake --build . --config Release
 
 WORKDIR /usr/src/skymp/build/dist/server
