@@ -7,9 +7,7 @@ interface IWeaponsRows {
   index: number;
   buff: number;
   weaponEquipped: IWeapon[];
-  weaponSelected: IWeapon;
   isWolf: boolean;
-  onSelect: (name: IWeapon) => void;
   onRoll: () => void;
 }
 
@@ -17,8 +15,6 @@ const WeaponsRows = ({
   index,
   buff,
   weaponEquipped,
-  weaponSelected,
-  onSelect,
   onRoll,
   isWolf
 }: IWeaponsRows) => {
@@ -58,7 +54,7 @@ const WeaponsRows = ({
         ? (
         <>
           <div
-            className={'chat-dices__button chat-dices__card--selected'}
+            className='chat-dices__card--selected'
             dangerouslySetInnerHTML={{ __html: weapons.claw.icon }}
           ></div>
           <div className="chat-dices__card"></div>
@@ -67,42 +63,23 @@ const WeaponsRows = ({
         : (
         <>
           <div
-            className={`chat-dices__button ${
-              weaponSelected !== 'magicstaff'
-                ? 'chat-dices__card--selected'
-                : ''
-            }`}
+            className='chat-dices__card--selected'
             dangerouslySetInnerHTML={{
               __html: weapons[weaponEquipped[0]].icon
             }}
-            onClick={() => onSelect(weaponEquipped[0])}
           ></div>
           {weaponEquipped.length === 2
             ? (
             <div
-              className={`chat-dices__button ${
-                weaponSelected !== 'magicstaff'
-                  ? 'chat-dices__card--selected'
-                  : ''
-              }`}
+              className='chat-dices__card--selected'
               dangerouslySetInnerHTML={{
                 __html: weapons[weaponEquipped[1]].icon
               }}
-              onClick={() => onSelect(weaponEquipped[1])}
             ></div>
               )
             : (
             <div className="chat-dices__card"></div>
               )}
-          <div
-            onClick={() => onSelect('magicstaff')}
-            className={`chat-dices__button ${
-              weaponSelected === 'magicstaff'
-                ? 'chat-dices__card--selected'
-                : ''
-            }`}
-            dangerouslySetInnerHTML={{ __html: weapons.magicstaff.icon }}
-          ></div>
         </>
           )}
       <div className="chat-dices__card"></div>

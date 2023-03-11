@@ -89,10 +89,10 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   }, [magicSelected, isVampus]);
 
   useEffect(() => {
-    const magicStaffBuff = weaponSelected === 'magicstaff' ? 1 : 0;
+    const magicStaffBuff = weaponEquipped[0] === 'magicstaff' ? 1 : 0;
     const mageRobeBuff = defenceSelected === 'robe' ? 1 : 0;
-    setmagicIndex(magicMastery + magicStaffBuff + mageRobeBuff);
-  }, [magicMastery, weaponSelected, defenceSelected]);
+    setmagicIndex(magicMastery + magicStaffBuff + mageRobeBuff + magicBuff);
+  }, [magicMastery, weaponSelected, defenceSelected, magicBuff]);
 
   useEffect(() => {
     setattackWeaponIndex(weapons[weaponSelected].index);
@@ -114,7 +114,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     }
     // one arm weapon
     if (
-      weaponSelected !== 'magicstaff' &&
+      // weaponSelected !== 'magicstaff' &&
       weaponEquipped.length === 1 &&
       weaponEquipped[0] in playerSkillData
     ) {
@@ -123,7 +123,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     }
     // take right hand mastery if two handed
     if (
-      weaponSelected !== 'magicstaff' &&
+      // weaponSelected !== 'magicstaff' &&
       weaponEquipped.length === 2 &&
       weaponEquipped[1] in playerSkillData
     ) {
@@ -139,8 +139,8 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       return;
     }
     const vampusBuff = isVampus ? 2 : 0;
-    setattackIndex(attackWeaponIndex + attackMastery + vampusBuff);
-  }, [attackWeaponIndex, attackMastery, isWolf, isVampus]);
+    setattackIndex(attackWeaponIndex + attackMastery + vampusBuff + attackBuff);
+  }, [attackWeaponIndex, attackMastery, isWolf, isVampus, attackBuff]);
 
   const init = (event) => {
     const { skills, weapons, armor } = (event as CustomEvent)
@@ -149,7 +149,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     const differentWeapon =
       weapons.length === 2 &&
       weapons[0] !== weapons[1] &&
-      !['shieldlight', 'shieldheavy'].includes(weapons[0]);
+      !['shieldlight', 'shieldheavy', 'magicstaff'].includes(weapons[0]);
     const weaponName =
       weapons.length === 1 || differentWeapon ? weapons[0] : weapons[1];
     setweaponSelected(differentWeapon ? 'different' : weaponName);
@@ -171,13 +171,14 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     action: string,
     type?: string,
     value?: number,
-    buff?: number
+    buff?: number,
+    hitPoints?: number
   ) => {
     if (action === 'weapon' && isWolf) {
       send(`${COMMAND_NAME} ${action} claw ${value} ${buff}`);
       return;
     }
-    send(`${COMMAND_NAME} ${action} ${type} ${value} ${buff}`);
+    send(`${COMMAND_NAME} ${action} ${type} ${value} ${buff} ${hitPoints}`);
   };
 
   const handleHeal = () => {
@@ -198,32 +199,29 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   const handleMagicSelect = (name: IMagic) => {
     if (magicSelected === name) return;
     setmagicSelected(name);
-    send(`${COMMAND_NAME} magic select ${name}`);
-  };
-
-  const handleWeaponSelect = (name: IWeapon) => {
-    if (weaponSelected === name) return;
-    if (
-      name !== 'magicstaff' &&
-      weaponEquipped.length === 2 &&
-      weaponEquipped[0] !== weaponEquipped[1]
-    ) {
-      setweaponSelected('different');
-      send(`${COMMAND_NAME} weapon select different`);
-      return;
-    }
-    setweaponSelected(name);
-    send(`${COMMAND_NAME} weapon select ${name}`);
   };
 
   const handleFormSelect = (name: 'wolf' | 'vampus') => {
     if (name === 'wolf') {
-      if (!isWolf) send(`${COMMAND_NAME} wolf`);
+      send(`${COMMAND_NAME} wolf ${isWolf ? 'off' : 'on'}`);
       setisWolf(!isWolf);
+      setisVampus(false);
     }
     if (name === 'vampus') {
-      if (!isVampus) send(`${COMMAND_NAME} vampus`);
+      send(`${COMMAND_NAME} vampus ${isVampus ? 'off' : 'on'}`);
       setisVampus(!isVampus);
+      setisWolf(false);
+    }
+  };
+
+  const buffHandler = (name: 'magic' | 'attack' | 'defence', newValue: number) => {
+    const setter = {
+      magic: setmagicBuff,
+      attack: setattackBuff,
+      defence: setdefenceBuff
+    }[name];
+    if (Math.abs(newValue) <= 6) {
+      setter(newValue);
     }
   };
 
@@ -328,9 +326,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
         index={attackIndex}
         buff={attackBuff}
         weaponEquipped={weaponEquipped}
-        weaponSelected={weaponSelected}
         isWolf={isWolf}
-        onSelect={handleWeaponSelect}
         onRoll={() =>
           handleRoll('weapon', weaponSelected, attackIndex, attackBuff)
         }
@@ -359,7 +355,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             magicBuff > 0 ? 'chat-dices__card--selected' : ''
           }`}
-          onClick={() => setmagicBuff(magicBuff + 1)}
+          onClick={() => buffHandler('magic', magicBuff + 1)}
           width="26"
           height="41"
           viewBox="0 0 26 41"
@@ -379,7 +375,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             attackBuff > 0 ? 'chat-dices__card--selected' : ''
           }`}
-          onClick={() => setattackBuff(attackBuff + 1)}
+          onClick={() => buffHandler('attack', attackBuff + 1)}
           width="26"
           height="41"
           viewBox="0 0 26 41"
@@ -403,7 +399,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             defenceBuff > 0 ? 'chat-dices__card--selected' : ''
           }`}
-          onClick={() => setdefenceBuff(defenceBuff + 1)}
+          onClick={() => buffHandler('defence', defenceBuff + 1)}
           width="25"
           height="41"
           viewBox="0 0 25 41"
@@ -451,7 +447,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             magicBuff < 0 ? 'chat-dices__card--selected' : ''
           }`}
-          onClick={() => setmagicBuff(magicBuff - 1)}
+          onClick={() => buffHandler('magic', magicBuff - 1)}
           width="25"
           height="41"
           viewBox="0 0 25 41"
@@ -471,7 +467,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             attackBuff < 0 ? 'chat-dices__card--selected' : ''
           }`}
-          onClick={() => setattackBuff(attackBuff - 1)}
+          onClick={() => buffHandler('attack', attackBuff - 1)}
           width="25"
           height="41"
           viewBox="0 0 25 41"
@@ -491,7 +487,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           className={`chat-dices__button ${
             defenceBuff < 0 ? 'chat-dices__card--selected' : ''
           }`}
-          onClick={() => setdefenceBuff(defenceBuff - 1)}
+          onClick={() => buffHandler('defence', defenceBuff - 1)}
           width="26"
           height="41"
           viewBox="0 0 26 41"
@@ -511,7 +507,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       <div className="chat-dices__row-container chat-dices__row-container--yellow">
         <svg
           onClick={() =>
-            handleRoll('defence', defenceSelected, defenceIndex, defenceBuff)
+            handleRoll('defence', defenceSelected, defenceIndex, defenceBuff, hitPoints)
           }
           className="chat-dices__button chat-dices__button--yellow"
           width="48"
@@ -565,7 +561,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       </div>
       <div className="chat-dices__row-container">
         <img
-          className="chat-dices__button"
+          className="chat-dices__heart-button"
           onClick={onClose}
           src={currentHealthIcon}
           width="48"

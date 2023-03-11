@@ -28,7 +28,7 @@ export const skillDice = (
   masterApiId: number | undefined
 ) => {
   const actorName = getName(actorId);
-  const [_, action, type, value, buff] = inputText.split(' ');
+  const [_, action, type, value, buff, hitPoints] = inputText.split(' ');
   const colors: {
     [key: string]: string;
   } = {
@@ -43,8 +43,6 @@ export const skillDice = (
   switch (action) {
     case 'init':
       const { possessedSkills } = getPossesedSkills(actorId);
-      // const equipment = mp.get(actorId, 'equipment');
-      // console.log(equipment);
       EvalProperty.eval(
         actorId,
         () => {
@@ -54,6 +52,7 @@ export const skillDice = (
           let armorType = null;
           weaponKeywords.forEach((type) => {
             const keyword = ctx.sp.Keyword.getKeyword(type.keyword);
+            // ctx.sp.printConsole(type.keyword, player.wornHasKeyword(keyword));
             if (player.wornHasKeyword(keyword)) {
               equippedWeapons.push(type.name);
               if (equippedWeapons.length == 2) {
@@ -65,7 +64,7 @@ export const skillDice = (
               }
             }
           });
-          if (equippedWeapons.length === 0 || (equippedWeapons.length === 1 && ['shieldlight', 'shieldheavy'].includes(equippedWeapons[0]))) {
+          if (equippedWeapons.length === 0 || (equippedWeapons.length === 1 && ['shieldlight', 'shieldheavy', 'magicstaff'].includes(equippedWeapons[0]))) {
             const clawRaces = [0x00013745, 0x00013740];
             const base = ctx.sp.ActorBase.from(player.getBaseObject()) as ActorBase;
             const raceId = base.getRace() ? (base.getRace() as Race).getFormID() : 0;
@@ -140,29 +139,29 @@ export const skillDice = (
         alteration: 'изменения',
         illusion: 'иллюзии',
       } as { [key: string]: string };
-      if (type === 'select') {
-        text = [
-          {
-            text: `${actorName} использует магию ${magicNames[value]}`,
-            color: colors['purple'],
-            type: ['plain'],
-          },
-        ];
-        break;
-      }
       text = [];
       const magicBuff = +buff;
       if (magicBuff < 0) {
         text.push({
-          text: `${actorName} под ослаблением. Сила воли снижена на ${Math.abs(magicBuff)}\n`,
+          text: `${actorName} под ослаблением. Сила воли снижена на `,
           color: colors['purple'],
+          type: ['plain'],
+        });
+        text.push({
+          text: `${Math.abs(magicBuff)}\n`,
+          color: colors['white'],
           type: ['plain'],
         });
       }
       if (magicBuff > 0) {
         text.push({
-          text: `${actorName} под усилением. Сила воли повышена на ${buff}\n`,
+          text: `${actorName} под усилением. Сила воли повышена на `,
           color: colors['purple'],
+          type: ['plain'],
+        });
+        text.push({
+          text: `${buff}\n`,
+          color: colors['white'],
           type: ['plain'],
         });
       }
@@ -200,32 +199,29 @@ export const skillDice = (
         magicstaff: 'магический посох',
         different: 'парное оружие',
       } as { [key: string]: string };
-
-      if (type === 'select') {
-        text = [
-          {
-            text: `${actorName} ${
-              value === 'fist' ? weaponNames[value] : `будет использовать в бою ${weaponNames[value]}`
-            }`,
-            color: colors['blue'],
-            type: ['plain'],
-          },
-        ];
-        break;
-      }
       text = [];
       const attackBuff = +buff;
       if (attackBuff < 0) {
         text.push({
-          text: `${actorName} под ослаблением. Сила атаки снижена на ${Math.abs(attackBuff)}\n`,
+          text: `${actorName} под ослаблением. Сила атаки снижена на `,
           color: colors['blue'],
+          type: ['plain'],
+        });
+        text.push({
+          text: `${Math.abs(attackBuff)}\n`,
+          color: colors['white'],
           type: ['plain'],
         });
       }
       if (attackBuff > 0) {
         text.push({
-          text: `${actorName} под усилением. Сила атаки повышена на ${buff}\n`,
+          text: `${actorName} под усилением. Сила атаки повышена на `,
           color: colors['blue'],
+          type: ['plain'],
+        });
+        text.push({
+          text: `${buff}\n`,
+          color: colors['white'],
           type: ['plain'],
         });
       }
@@ -245,20 +241,30 @@ export const skillDice = (
       const defenceBuff = +buff;
       if (defenceBuff < 0) {
         text.push({
-          text: `${actorName} под ослаблением. Защита снижена на ${Math.abs(defenceBuff)}\n`,
+          text: `${actorName} под ослаблением. Защита снижена на `,
           color: colors['yellow'],
+          type: ['plain'],
+        });
+        text.push({
+          text: `${Math.abs(defenceBuff)}\n`,
+          color: colors['white'],
           type: ['plain'],
         });
       }
       if (defenceBuff > 0) {
         text.push({
-          text: `${actorName} под усилением. Защита повышена на ${buff}\n`,
+          text: `${actorName} под усилением. Защита повышена на `,
           color: colors['yellow'],
+          type: ['plain'],
+        });
+        text.push({
+          text: `${buff}\n`,
+          color: colors['white'],
           type: ['plain'],
         });
       }
       text.push({
-        text: `${actorName} защищается `,
+        text: `${actorName} ❤${hitPoints} защищается `,
         color: colors['yellow'],
         type: ['plain'],
       });
@@ -267,11 +273,20 @@ export const skillDice = (
         color: colors['white'],
         type: ['plain'],
       });
+      break;
     case 'wolf':
-      text = [{text: `${actorName} превращается в вервольфа`, color: colors['blue'], type: ['plain']}];
+      if (type === 'on') {
+        text = [{text: `${actorName} превращается в вервольфа`, color: colors['blue'], type: ['plain']}];
+      } else {
+        text = [{text: `${actorName} возвращется в человеческую форму`, color: colors['blue'], type: ['plain']}];
+      }
       break;
     case 'vampus':
-      text = [{text: `Ночное время.  ${actorName} использует вампирские навыки`, color: colors['purple'], type: ['plain']}];
+      if (type === 'on') {
+        text = [{text: `Ночное время. ${actorName} использует вампирские навыки`, color: colors['purple'], type: ['plain']}];
+      } else {
+        text = [{text: `Взошло солнце. ${actorName} не может использовать вампирские навыки`, color: colors['purple'], type: ['plain']}];
+      }
       break;
     default:
       break;

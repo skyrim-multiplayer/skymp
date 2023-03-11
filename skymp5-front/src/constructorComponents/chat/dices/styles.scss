@@ -11,6 +11,7 @@ $black: #000000;
     display: flex;
     flex-direction: column;
     min-width: 54px;
+    padding-left: 11px;
     margin-bottom: 10px;
     margin-top: auto;
     > span {
@@ -53,7 +54,6 @@ $black: #000000;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding-left: 11px;
     }
 
     &__number-container {
@@ -144,6 +144,18 @@ $black: #000000;
         }
         &--purple:hover [fill='white'], &--purple.chat-dices__card--selected [fill='white']{
             fill: $amethyst;
+        }
+    }
+
+    &__heart-button {
+        display: flex;
+        opacity: 0.8;
+        transform: scale(1.125);
+        transition: opacity $regular, transform $regular;
+
+        &:hover {
+            opacity: 0.5;
+            transform: scale(1);
         }
     }
 
