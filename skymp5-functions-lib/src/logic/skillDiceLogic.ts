@@ -52,7 +52,6 @@ export const skillDice = (
           let armorType = null;
           weaponKeywords.forEach((type) => {
             const keyword = ctx.sp.Keyword.getKeyword(type.keyword);
-            // ctx.sp.printConsole(type.keyword, player.wornHasKeyword(keyword));
             if (player.wornHasKeyword(keyword)) {
               equippedWeapons.push(type.name);
               if (equippedWeapons.length == 2) {
