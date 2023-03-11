@@ -3,6 +3,8 @@
 #include "FileDatabase.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
+#include "HttpClient.h"
+#include "HttpClientApi.h"
 #include "LocalizationProvider.h"
 #include "MigrationDatabase.h"
 #include "MongoDatabase.h"
@@ -426,6 +428,7 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
     tickEnv = info.Env();
     server->Tick(PartOne::HandlePacket, partOne.get());
     partOne->Tick();
+    HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
@@ -979,6 +982,8 @@ std::string GetDataDirSafe(nlohmann::json serverSettings)
 void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 {
   JsValue mp = JsValue::Object();
+
+  HttpClientApi::Register(mp);
 
   mp.SetProperty(
     "getLocalizedString",
