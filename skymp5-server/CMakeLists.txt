@@ -43,6 +43,7 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE mp_common server_guest_lib localization-provider)
 target_link_libraries(${PROJECT_NAME} PRIVATE platform_lib) # for http client api
+
 list(APPEND VCPKG_DEPENDENT ${PROJECT_NAME})
 apply_default_settings(TARGETS ${PROJECT_NAME})
 
