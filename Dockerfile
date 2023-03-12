@@ -9,7 +9,7 @@
 # -v "<your_data_dir>:/skyrim_data_dir" \
 # skymp
 
-FROM ubuntu:focal
+FROM ubuntu:focal as builder
 
 WORKDIR /usr/src/skymp
 
@@ -113,6 +113,13 @@ RUN mkdir -p build \
   && cmake --build . --config Release
 
 WORKDIR /usr/src/skymp/build/dist/server
+
+
+FROM ubuntu:focal
+
+WORKDIR /usr/src/skymp
+
+COPY --from=builder /usr/src/skymp/build/dist/server ./build/dist/server
 
 # TODO: make volume for this file
 COPY misc/docker-server-settings.json ./server-settings.json
