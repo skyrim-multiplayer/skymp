@@ -429,6 +429,7 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
     server->Tick(PartOne::HandlePacket, partOne.get());
     partOne->Tick();
     HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
+    chakraTaskQueue.Update();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

@@ -93,6 +93,11 @@ export interface LocationalData {
   rot: [number, number, number];
 }
 
+export interface HttpClient {
+  get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
+  post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
+}
+
 export interface Mp {
   /**
    * Returns the actual value of a specified property. If there is no value, then
@@ -185,6 +190,8 @@ export interface Mp {
   readDataDirectory(): string[];
   readDataFile(path: string): string;
   writeDataFile(path: string, content: string): void;
+
+  HttpClient: new (baseUrl: string) => HttpClient;
 
   [key: string]: unknown;
 }

@@ -561,4 +561,10 @@ const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[
 // ]);
 
 
-console.log('skymp5-functions-lib loaded');
+console.log('skymp5-functions-lib loaded!');
+
+const httpClient = new mp.HttpClient("example.com");
+
+httpClient.get("/").then(() => {
+  console.log("GET request succeeded");
+});

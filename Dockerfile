@@ -1,5 +1,5 @@
 #
-# docker build -t skymp . --platfrom linux/amd64
+# docker build -t skymp . --platform linux/amd64
 #
 
 #
