@@ -6,7 +6,7 @@ sourceMapSupport.install({
     if (source.endsWith('skymp5-server.js')) {
       return {
         url: 'original.js',
-        map: fs.readFileSync('dist_back/skymp5-server.js.map', 'utf8')
+        map: require('fs').readFileSync('dist_back/skymp5-server.js.map', 'utf8')
       };
     }
     return null;
