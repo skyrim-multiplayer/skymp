@@ -12,7 +12,7 @@ $black: #000000;
     flex-direction: column;
     min-width: 54px;
     padding-left: 11px;
-    margin-bottom: 10px;
+    // margin-bottom: 10px;
     margin-top: auto;
     > span {
         font-family: Din-pro;
@@ -147,15 +147,26 @@ $black: #000000;
         }
     }
 
-    &__heart-button {
+    &__heart-button--hover {
+        display: none;
+    }
+
+    &__heart-button__container {
         display: flex;
         opacity: 0.8;
-        transform: scale(1.125);
+        transform: scale(1);
         transition: opacity $regular, transform $regular;
-
         &:hover {
             opacity: 0.5;
-            transform: scale(1);
+            & .chat-dices__heart-button {
+                display: none;
+            }
+            & .chat-dices__heart-button--hover {
+                display: flex;
+            }
+        }
+        &:active {
+            transform: scale(0.88);
         }
     }
 
@@ -233,7 +244,7 @@ $black: #000000;
     height: 54px;
     margin: auto auto 0 auto;
     transition: all 0.1s ease;
-    &:active {
+    &:active .dice {
         width: 38px;
     }
 }

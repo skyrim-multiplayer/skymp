@@ -5,6 +5,7 @@ import heart3 from '../../../../img/dices/heart3.svg';
 import heart2 from '../../../../img/dices/heart2.svg';
 import heart1 from '../../../../img/dices/heart1.svg';
 import heart0 from '../../../../img/dices/heart0.svg';
+import heartHover from '../../../../img/dices/heartHover.svg';
 import IndexBox from './elements/IndexBox';
 import {
   IDefence,
@@ -66,7 +67,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
 
   useEffect(() => {
     if (isWolf) {
-      setdefenceIndex(6);
+      setdefenceIndex(6 + defenceBuff);
       return;
     }
     const vampusBuff = isVampus ? 2 : 0;
@@ -135,7 +136,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
 
   useEffect(() => {
     if (isWolf) {
-      setattackIndex(7);
+      setattackIndex(7 + attackBuff);
       return;
     }
     const vampusBuff = isVampus ? 2 : 0;
@@ -184,7 +185,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   const handleHeal = () => {
     if (hitPoints === MAX_HEALTH) return;
     sethitPoints(hitPoints + 1);
-    send(`${COMMAND_NAME} heal`);
+    send(`${COMMAND_NAME} heal ${hitPoints + 1}`);
   };
 
   const handleSelfAttack = () => {
@@ -193,7 +194,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       return;
     }
     sethitPoints(hitPoints - 1);
-    send(`${COMMAND_NAME} self-attack`);
+    send(`${COMMAND_NAME} self-attack ${hitPoints - 1}`);
   };
 
   const handleMagicSelect = (name: IMagic) => {
@@ -560,6 +561,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
         <IndexBox index={defenceBuff}></IndexBox>
       </div>
       <div className="chat-dices__row-container">
+        <div className='chat-dices__heart-button__container'>
         <img
           className="chat-dices__heart-button"
           onClick={onClose}
@@ -567,6 +569,14 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           width="48"
           height="48"
         ></img>
+        <img
+          className="chat-dices__heart-button--hover"
+          onClick={onClose}
+          src={heartHover}
+          width="48"
+          height="48"
+        ></img>
+        </div>
         <svg
           className={`chat-dices__button chat-dices__button--blue ${isWolf ? 'chat-dices__card--selected' : ''}`}
           onClick={() => handleFormSelect('wolf')}

@@ -106,7 +106,7 @@ export const skillDice = (
     case 'heal':
       text = [
         {
-          text: `${actorName} восстанавливает единицу здоровья`,
+          text: `${actorName} восстанавливает единицу здоровья - ❤${type}`,
           color: colors['green'],
           type: ['plain'],
         },
@@ -115,17 +115,8 @@ export const skillDice = (
     case 'self-attack':
       text = [
         {
-          text: `${actorName} теряет единицу здоровья`,
+          text: `${actorName} теряет единицу здоровья - ❤${type}`,
           color: colors['red'],
-          type: ['plain'],
-        },
-      ];
-      break;
-    case 'heal':
-      text = [
-        {
-          text: `${actorName} восстанавливает единицу здоровья`,
-          color: colors['green'],
           type: ['plain'],
         },
       ];
