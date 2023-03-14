@@ -159,6 +159,7 @@
       "server/data/ui/b2422b6faed4209b53b16946877b5d52.svg",
       "server/data/ui/ba7f86afe59d769feb36fbaa88a5faca.svg",
       "server/data/ui/c3f0ce7307ae5d17c8a0a6faedb739fe.svg",
+      "server/data/ui/c5ce282718fc847f993170a705c22125.svg",
       "server/data/ui/c607cf803e8ca2a885e1bd6141999c6d.svg",
       "server/data/ui/c97f9a61534aa6adb5ce52e0a909f328.svg",
       "server/data/ui/cb339e63ba0a96c297fad9db03e15565.svg",
@@ -168,7 +169,6 @@
       "server/data/ui/e197a558b8027cfddbdfca28a6e01ba8.mp3",
       "server/data/ui/e48234a46f0ec154aaffe69b8d05a247.mp3",
       "server/data/ui/ef92c2ecafd152e547c2f9296ce6956a.svg",
-      "server/data/ui/f655e3a42059b672499377fbc0d8408b.svg",
       "server/data/ui/fb344395b65fad4dc9b2b4dbecaaf9ae.svg"
     ]
   },
@@ -177,6 +177,7 @@
       "Unix"
     ],
     "expectedFiles": [
+      "server/data/ui/08383611e86325b042d52c4c60d4f3c0.svg",
       "server/data/ui/09424635ea350f722acbcde754761c4b.wav",
       "server/data/ui/02687b2110d1a50a6b4e194282ab8deb.svg",
       "server/data/ui/10e908e65fc531810ade31b77d30c836.svg",
@@ -203,7 +204,6 @@
       "server/data/ui/870d99e8a8e3d8373ffd53a6e5c0eac0.svg",
       "server/data/ui/88a868e753f79f8cb51565dd11b3d69f.wav",
       "server/data/ui/8ab581eaed69fe66637db5bd39f0213a.svg",
-      "server/data/ui/8b59a1356ca23430daadb1ba4954e665.svg",
       "server/data/ui/8fca65b0fd38aeb91b082f3dfa9c0fea.svg",
       "server/data/ui/950d70ac47775f05426108221b176b26.svg",
       "server/data/ui/a0b33bdfcc30ed830c07648e3544c52a.svg",
