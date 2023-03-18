@@ -1381,3 +1381,15 @@ void MpObjectReference::BeforeDestroy()
 
   RemoveFromGrid();
 }
+
+void MpObjectReference::ForceEquip(uint32_t baseId)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    if (!changeForm.inv.HasItem(baseId)) {
+      throw std::runtime_error(fmt::format(
+        "Form {:x} has no item {:x} to force equip", GetFormId(), baseId));
+    }
+    changeForm.inv.SetWorn(baseId, Inventory::Worn::Right);
+    SendInventoryUpdate();
+  });
+}
