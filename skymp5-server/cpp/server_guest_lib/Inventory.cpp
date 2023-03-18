@@ -199,3 +199,13 @@ Inventory Inventory::FromJson(const nlohmann::json& j)
   simdjson::dom::element parsed = p.parse(j.dump());
   return FromJson(parsed);
 }
+
+void Inventory::SetWorn(uint32_t baseId, Worn worn)
+{
+  for (auto& entry : entries) {
+    if (entry.baseId == baseId) {
+      entry.extra.worn = worn;
+      break;
+    }
+  }
+}
