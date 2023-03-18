@@ -463,13 +463,16 @@ void PieScript::Play(MpActor& actor, WorldState& worldState,
                bookBaseId = it->first;
       actor.AddItem(boundWeaponBaseId, 1);
       actor.RemoveItem(bookBaseId, 1, nullptr);
+      uint32_t formId = actor.GetFormId();
       worldState.SetTimer(it->second.GetCooldown())
-        .Then([bookBaseId, boundWeaponBaseId, &actor](Viet::Void) {
-          actor.AddItem(bookBaseId, 1);
-          uint32_t count =
-            actor.GetInventory().GetItemCount(boundWeaponBaseId);
-          actor.RemoveItem(boundWeaponBaseId, count, nullptr);
-        });
+        .Then(
+          [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
+            MpActor& actor = worldState.GetFormAt<MpActor>(formId);
+            actor.AddItem(bookBaseId, 1);
+            uint32_t count =
+              actor.GetInventory().GetItemCount(boundWeaponBaseId);
+            actor.RemoveItem(boundWeaponBaseId, count, nullptr);
+          });
     }
   }
 }
