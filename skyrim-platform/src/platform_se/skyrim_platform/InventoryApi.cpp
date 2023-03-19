@@ -1,5 +1,8 @@
 #include "InventoryApi.h"
+#include "CallNativeApi.h"
 #include "NullPointerException.h"
+
+extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {
 
@@ -236,7 +239,10 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
       entry.GetProperty("wornLeft").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("wornLeft"))
       : false;
-    pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
+    g_nativeCallRequirements.gameThrQ->AddTask(
+      [pActor, pBoundObject, count]() {
+        pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
+      });
     RE::ActorEquipManager* equipManager =
       RE::ActorEquipManager::GetSingleton();
     enum EquipSlot
@@ -251,8 +257,11 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
             RE::TESForm::LookupByID(EquipSlot::RightHand))
         : static_cast<RE::BGSEquipSlot*>(
             RE::TESForm::LookupByID(EquipSlot::LeftHand));
-      equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, slot, false,
-                                true, false, false);
+      g_nativeCallRequirements.gameThrQ->AddTask(
+        [equipManager, pActor, pBoundObject, slot]() {
+          equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, slot,
+                                    false, true, false, false);
+        });
     }
   }
   return JsValue::Undefined();
