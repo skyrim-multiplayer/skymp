@@ -216,20 +216,11 @@ JsValue InventoryApi::GetContainer(const JsFunctionArguments& args)
 JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
 {
   double formId = static_cast<double>(args[1]);
-  RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
-  if (!pActor) {
-    throw NullPointerException("pActor");
-  }
   const JsValue& entries = args[2].GetProperty("entries");
   const int size = static_cast<int>(entries.GetProperty("length"));
   for (int i = 0; i < size; ++i) {
     const JsValue& entry = entries.GetProperty(JsValue::Int(i));
     const double baseId = static_cast<double>(entry.GetProperty("baseId"));
-    RE::TESBoundObject* pBoundObject =
-      RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
-    if (!pBoundObject) {
-      throw NullPointerException("pBoundObject");
-    }
     const int count = static_cast<int>(entry.GetProperty("count"));
     const bool worn =
       entry.GetProperty("worn").GetType() != JsValue::Type::Undefined
@@ -239,12 +230,18 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
       entry.GetProperty("wornLeft").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("wornLeft"))
       : false;
-    g_nativeCallRequirements.gameThrQ->AddTask(
-      [pActor, pBoundObject, count]() {
-        pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
-      });
-    RE::ActorEquipManager* equipManager =
-      RE::ActorEquipManager::GetSingleton();
+    g_nativeCallRequirements.gameThrQ->AddTask([formId, baseId, count]() {
+      RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
+      if (!pActor) {
+        throw NullPointerException("pActor");
+      }
+      RE::TESBoundObject* pBoundObject =
+        RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
+      if (!pBoundObject) {
+        throw NullPointerException("pBoundObject");
+      }
+      pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
+    });
     enum EquipSlot
     {
       BothHands = 0x13f45,
@@ -257,11 +254,21 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
             RE::TESForm::LookupByID(EquipSlot::RightHand))
         : static_cast<RE::BGSEquipSlot*>(
             RE::TESForm::LookupByID(EquipSlot::LeftHand));
-      g_nativeCallRequirements.gameThrQ->AddTask(
-        [equipManager, pActor, pBoundObject, slot]() {
-          equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, slot,
-                                    false, true, false, false);
-        });
+      g_nativeCallRequirements.gameThrQ->AddTask([formId, baseId, slot]() {
+        RE::ActorEquipManager* equipManager =
+          RE::ActorEquipManager::GetSingleton();
+        RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
+        if (!pActor) {
+          throw NullPointerException("pActor");
+        }
+        RE::TESBoundObject* pBoundObject =
+          RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
+        if (!pBoundObject) {
+          throw NullPointerException("pBoundObject");
+        }
+        equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, slot,
+                                  false, true, false, false);
+      });
     }
   }
   return JsValue::Undefined();
