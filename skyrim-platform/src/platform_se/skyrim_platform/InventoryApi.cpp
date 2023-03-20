@@ -213,6 +213,21 @@ JsValue InventoryApi::GetContainer(const JsFunctionArguments& args)
   return res;
 }
 
+namespace {
+struct BoundObject
+{
+  double baseId;
+  int count;
+  RE::BGSEquipSlot* slot;
+};
+enum EquipSlot
+{
+  BothHands = 0x13f45,
+  LeftHand = 0x13f43,
+  RightHand = 0x13f42
+};
+}
+
 JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
 {
   double formId = static_cast<double>(args[1]);
@@ -222,15 +237,16 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
   if (!pActor) {
     throw NullPointerException("pActor");
   }
+  std::vector<BoundObject> objects;
   for (int i = 0; i < size; ++i) {
     const JsValue& entry = entries.GetProperty(JsValue::Int(i));
-    const double baseId = static_cast<double>(entry.GetProperty("baseId"));
+    double baseId = static_cast<double>(entry.GetProperty("baseId"));
     RE::TESBoundObject* pBoundObject =
       RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
     if (!pBoundObject) {
       continue;
     }
-    const int count = static_cast<int>(entry.GetProperty("count"));
+    int count = static_cast<int>(entry.GetProperty("count"));
     const bool worn =
       entry.GetProperty("worn").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("worn"))
@@ -239,47 +255,36 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
       entry.GetProperty("wornLeft").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("wornLeft"))
       : false;
-    g_nativeCallRequirements.gameThrQ->AddTask([formId, baseId, count]() {
-      RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
-      if (!pActor) {
-        return;
-      }
-      RE::TESBoundObject* pBoundObject =
-        RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
-      if (!pBoundObject) {
-        return;
-      }
-      pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
-    });
-    enum EquipSlot
-    {
-      BothHands = 0x13f45,
-      LeftHand = 0x13f43,
-      RightHand = 0x13f42
-    };
+    double baseId = baseId;
+    RE::BGSEquipSlot* slot = nullptr;
     if (worn || wornLeft) {
-      RE::BGSEquipSlot* slot = worn
-        ? static_cast<RE::BGSEquipSlot*>(
-            RE::TESForm::LookupByID(EquipSlot::RightHand))
-        : static_cast<RE::BGSEquipSlot*>(
-            RE::TESForm::LookupByID(EquipSlot::LeftHand));
-      g_nativeCallRequirements.gameThrQ->AddTask([formId, baseId, slot]() {
-        RE::ActorEquipManager* equipManager =
-          RE::ActorEquipManager::GetSingleton();
-        RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
-        if (!pActor) {
-          return;
-        }
-        RE::TESBoundObject* pBoundObject =
-          RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
-        if (!pBoundObject) {
-          return;
-        }
-        equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, slot,
-                                  false, true, false, false);
-      });
+      slot = worn ? static_cast<RE::BGSEquipSlot*>(
+                      RE::TESForm::LookupByID(EquipSlot::RightHand))
+                  : static_cast<RE::BGSEquipSlot*>(
+                      RE::TESForm::LookupByID(EquipSlot::LeftHand));
     }
+    objects.push_back({ baseId, count, slot });
   }
+  g_nativeCallRequirements.gameThrQ->AddTask([formId, objects]() {
+    RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
+    if (!pActor) {
+      return;
+    }
+    for (auto& object : objects) {
+      RE::TESBoundObject* pBoundObject =
+        RE::TESForm::LookupByID<RE::TESBoundObject>(object.baseId);
+      if (!pBoundObject) {
+        continue;
+      }
+      pActor->AddObjectToContainer(pBoundObject, nullptr, object.count,
+                                   nullptr);
+      if (object.slot) {
+        RE::ActorEquipManager* manager = RE::ActorEquipManager::GetSingleton();
+        manager->EquipObject(pActor, pBoundObject, nullptr, 1, object.slot,
+                             false, true, false, false);
+      }
+    }
+  });
   return JsValue::Undefined();
 }
 
