@@ -218,9 +218,18 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
   double formId = static_cast<double>(args[1]);
   const JsValue& entries = args[2].GetProperty("entries");
   const int size = static_cast<int>(entries.GetProperty("length"));
+  RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
+  if (!pActor) {
+    throw NullPointerException("pActor");
+  }
   for (int i = 0; i < size; ++i) {
     const JsValue& entry = entries.GetProperty(JsValue::Int(i));
     const double baseId = static_cast<double>(entry.GetProperty("baseId"));
+    RE::TESBoundObject* pBoundObject =
+      RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
+    if (!pBoundObject) {
+      continue;
+    }
     const int count = static_cast<int>(entry.GetProperty("count"));
     const bool worn =
       entry.GetProperty("worn").GetType() != JsValue::Type::Undefined
@@ -233,12 +242,12 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
     g_nativeCallRequirements.gameThrQ->AddTask([formId, baseId, count]() {
       RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
       if (!pActor) {
-        throw NullPointerException("pActor");
+        return;
       }
       RE::TESBoundObject* pBoundObject =
         RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
       if (!pBoundObject) {
-        throw NullPointerException("pBoundObject");
+        return;
       }
       pActor->AddObjectToContainer(pBoundObject, nullptr, count, nullptr);
     });
@@ -259,12 +268,12 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
           RE::ActorEquipManager::GetSingleton();
         RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
         if (!pActor) {
-          throw NullPointerException("pActor");
+          return;
         }
         RE::TESBoundObject* pBoundObject =
           RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
         if (!pBoundObject) {
-          throw NullPointerException("pBoundObject");
+          return;
         }
         equipManager->EquipObject(pActor, pBoundObject, nullptr, 1, slot,
                                   false, true, false, false);
