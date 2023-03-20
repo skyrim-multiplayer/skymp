@@ -255,7 +255,6 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
       entry.GetProperty("wornLeft").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("wornLeft"))
       : false;
-    double baseId = baseId;
     RE::BGSEquipSlot* slot = nullptr;
     if (worn || wornLeft) {
       slot = worn ? static_cast<RE::BGSEquipSlot*>(
