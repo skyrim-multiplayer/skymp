@@ -238,6 +238,7 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
     throw NullPointerException("pActor");
   }
   std::vector<BoundObject> objects;
+  objects.reserve(size);
   for (int i = 0; i < size; ++i) {
     const JsValue& entry = entries.GetProperty(JsValue::Int(i));
     double baseId = static_cast<double>(entry.GetProperty("baseId"));
