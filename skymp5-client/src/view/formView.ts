@@ -400,7 +400,7 @@ export class FormView implements View<FormModel> {
   }
 
   private getDefaultEquipState() {
-    return { lastNumChanges: 0, isBadMenuShown: false, lastEqMoment: 0 };
+    return { lastNumChanges: 0, lastEqMoment: 0 };
   };
 
   private getDefaultAppearanceState() {
