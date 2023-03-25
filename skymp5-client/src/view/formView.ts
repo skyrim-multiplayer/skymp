@@ -330,11 +330,6 @@ export class FormView implements View<FormModel> {
     }
 
     if (model.equipment) {
-      const isShown = isBadMenuShown();
-      if (this.eqState.isBadMenuShown !== isShown) {
-        this.eqState.isBadMenuShown = isShown;
-        if (!isShown) this.eqState.lastNumChanges = -1;
-      }
       if (this.eqState.lastNumChanges !== model.equipment.numChanges) {
         const ac = Actor.from(refr);
         // If we do not block inventory here, we will be able to reproduce the bug:
