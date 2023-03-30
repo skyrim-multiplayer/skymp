@@ -10,7 +10,7 @@ import Settings from './settings';
 import SendButton from './sendButton';
 import ChatInput from './input';
 
-const MAX_LENGTH = 700; // Max message length
+const MAX_LENGTH = 2000; // Max message length
 const TIME_LIMIT = 5; // Seconds
 const SHOUT_LIMIT = 180; // Seconds
 
