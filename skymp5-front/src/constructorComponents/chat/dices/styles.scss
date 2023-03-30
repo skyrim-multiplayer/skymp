@@ -12,7 +12,7 @@ $black: #000000;
     flex-direction: column;
     min-width: 54px;
     padding-left: 11px;
-    // margin-bottom: 10px;
+    margin-bottom: 10px;
     margin-top: auto;
     > span {
         font-family: Din-pro;
@@ -53,7 +53,7 @@ $black: #000000;
     &__container {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
     }
 
     &__number-container {
@@ -179,6 +179,10 @@ $black: #000000;
     &__button:hover, &__card--selected  {
         opacity: 0.8;
         transform: scale(1.125);
+    }
+
+    &__button:active {
+        transform: scale(0.88);
     }
 
 }

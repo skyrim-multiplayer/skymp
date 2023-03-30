@@ -28,6 +28,13 @@ const Dices = (props: {
     }
   };
 
+  const diceSend = (msg: string) => {
+    if (count.current < 10) {
+      props.send(msg);
+      count.current += 1;
+    }
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       count.current = 0;
@@ -89,7 +96,7 @@ const Dices = (props: {
       )}
       {props.isOpened === 2
         ? (
-        <SkillDices onClose={() => props.setOpened(0)} send={props.send}></SkillDices>
+        <SkillDices onClose={() => props.setOpened(0)} send={diceSend}></SkillDices>
           )
         : (
         <Pouch

@@ -245,11 +245,13 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
 
   return (
     <div className="chat-dices__container ">
+    <div className="chat-dices__row-container chat-dices__row-container--yellow">
       <div
         onClick={() => handleRoll('initiative')}
         className="chat-dices__button chat-dices__button--yellow"
         dangerouslySetInnerHTML={{ __html: rollButtons.initiative }}
       ></div>
+      </div>
       <div className="chat-dices__row-container chat-dices__row-container--purple">
         <div
           onClick={() =>
