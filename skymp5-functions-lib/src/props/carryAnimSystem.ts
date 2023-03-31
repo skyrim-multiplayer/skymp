@@ -32,18 +32,15 @@ export class CarryAnimSystem {
                 ctx.sp.storage.sweetCarryEquippedFormId = null;
             }
 
-            const playerId = 0x14;
+            const playerId: number = 0x14;
 
             const SWEET_CARRY_ANIM_KEYWORD = "SweetAnimationCarry";
             const SWEET_CARRY_ANIM_NAME = "OffsetCarryBasketStart";
             const SWEET_CARRY_ANIM_RESET = "IdleForceDefaultState";
             const SWEET_CARRY_ANIM_RESTRICT = [
                 "Jump*",
-                "JampStandingStart",
-                "JampLand",
-                "JampFall",
-                "JumpDirectionalStart",
-                "JumpLandDirectional",
+                "SprintStart",
+                "WeapEquip"
             ];
 
             function hasKeyword(form: Form): boolean {
@@ -51,19 +48,21 @@ export class CarryAnimSystem {
                 return (kw1 && form.hasKeyword(kw1)) ?? false;
             }
 
-            ctx.sp.hooks.sendAnimationEvent.add({
-                enter: ((animationEventCtx) => {
-                    if (ctx.sp.storage.sweetCarryAnimationActive) {
-                        animationEventCtx.animEventName = "";
-                    }
-                }),
-                leave: () => { },
-            }, playerId, playerId, SWEET_CARRY_ANIM_RESTRICT[0]);
+            for (let restrictedAnim of SWEET_CARRY_ANIM_RESTRICT) {
+                ctx.sp.hooks.sendAnimationEvent.add({
+                    enter: ((animationEventCtx) => {
+                        if (ctx.sp.storage.sweetCarryAnimationActive) {
+                            animationEventCtx.animEventName = "";
+                        }
+                    }),
+                    leave: () => { },
+                }, playerId, playerId, restrictedAnim);
+            }
 
             ctx.sp.on("equip", (event) => {
                 if (event.actor.getFormID() == playerId && hasKeyword(event.baseObj)) {
                     ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), SWEET_CARRY_ANIM_NAME);
-                    ctx.sp.storage.sweetCarryEquippedFormId = event.originalRefr.getFormID();
+                    ctx.sp.storage.sweetCarryEquippedFormId = event.baseObj?.getFormID() ?? null;
                     ctx.sp.storage.sweetCarryAnimationActive = true;
                 }
             });
