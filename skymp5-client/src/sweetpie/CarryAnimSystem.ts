@@ -1,35 +1,35 @@
 import * as sp from "skyrimPlatform";
 
-const playerId = 0x14;
+const playerId: number = 0x14;
 
 const SWEET_CARRY_ANIM_KEYWORD = "SweetAnimationCarry";
 const SWEET_CARRY_ANIM_NAME = "OffsetCarryBasketStart";
 const SWEET_CARRY_ANIM_RESET = "IdleForceDefaultState";
 const SWEET_CARRY_ANIM_RESTRICT = [
     "Jump*",
-    "JampStandingStart",
-    "JampLand",
-    "JampFall",
-    "JumpDirectionalStart",
-    "JumpLandDirectional",
+    "SprintStart",
+    "WeapEquip"
+
 ];
 let SweetCarryAnimationActive = false;
 let SweetCarryEquippedFormId: number | null = null;
 
 export function Install() {
-    sp.hooks.sendAnimationEvent.add({
-        enter: ((ctx) => {
-            if (SweetCarryAnimationActive) {
-                ctx.animEventName = "";
-            }
-        }),
-        leave: () => { },
-    }, playerId, playerId, SWEET_CARRY_ANIM_RESTRICT[0]);
+    for (let restrictedAnim of SWEET_CARRY_ANIM_RESTRICT) {
+        sp.hooks.sendAnimationEvent.add({
+            enter: ((ctx) => {
+                if (SweetCarryAnimationActive) {
+                    ctx.animEventName = "";
+                }
+            }),
+            leave: () => { },
+        }, playerId, playerId, restrictedAnim);
+    }
 
     sp.on("equip", (event: sp.EquipEvent) => {
         if (event.actor.getFormID() == playerId && hasKeyword(event.baseObj)) {
             sp.Debug.sendAnimationEvent(sp.Game.getPlayer(), SWEET_CARRY_ANIM_NAME);
-            SweetCarryEquippedFormId = event.originalRefr.getFormID();
+            SweetCarryEquippedFormId = event.baseObj?.getFormID() ?? null;
             SweetCarryAnimationActive = true;
         }
     });
@@ -48,6 +48,7 @@ export function Install() {
             sp.Actor.from(event.actor)?.unequipItem(unqForm, false, false);
         }
     });
+
 }
 
 function hasKeyword(form: sp.Form): boolean {
