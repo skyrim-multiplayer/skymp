@@ -28,7 +28,7 @@ export const getEquipment = (ac: Actor, numChanges: number): Equipment => {
 
 export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
   ac.removeAllItems(null, false, true);
-  setInventory(ac.getFormID(), removeUnnecessaryExtra(filterWorn(eq.inv));
+  setInventory(ac.getFormID(), removeUnnecessaryExtra(filterWorn(eq.inv)));
   return true;
 };
 
