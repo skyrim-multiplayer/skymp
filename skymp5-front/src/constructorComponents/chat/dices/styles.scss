@@ -17,7 +17,7 @@ $black: #000000;
     > span {
         font-family: Din-pro;
         font-weight: bold;
-        margin: 7px auto 0 auto;
+        margin: 7px 11px 0;
         opacity: 0.68;
         font-weight: bold;
           letter-spacing: 1px;
@@ -144,6 +144,10 @@ $black: #000000;
         }
         &--purple:hover [fill='white'], &--purple.chat-dices__card--selected [fill='white']{
             fill: $amethyst;
+        }
+
+        &--disabled {
+            pointer-events: none;
         }
     }
 

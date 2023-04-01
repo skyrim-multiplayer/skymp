@@ -257,7 +257,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
           onClick={() =>
             handleRoll('magic', magicSelected, magicIndex, magicBuff)
           }
-          className="chat-dices__button chat-dices__button--purple"
+          className={`chat-dices__button chat-dices__button--purple ${magicSelected ? '' : 'chat-dices__button--disabled'}`}
           dangerouslySetInnerHTML={{ __html: rollButtons.magic }}
         ></div>
         <IndexBox
