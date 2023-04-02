@@ -4,18 +4,12 @@ include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 # papyrus_test_files
 #
 
-if(NOT SKYRIM_DIR)
-  message(WARNING "SKYRIM_DIR is not specified, Papyrus sources will not be built")
-elseif(NOT EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
-  message(WARNING "PapyrusCompiler.exe not found, Papyrus sources will not be built")
-else()
-  add_papyrus_library_ck(
-    NAME papyrus_test_files 
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files
-    OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex
-    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
-  )
-endif()
+add_papyrus_library_ck(
+  NAME papyrus_test_files 
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files
+  OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex
+  COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+)
 
 #
 # unit executable

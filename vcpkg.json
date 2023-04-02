@@ -17,6 +17,8 @@
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
+    "node-api",
+    "node-addon-api",
     {
       "name": "directxtk",
       "platform": "windows"

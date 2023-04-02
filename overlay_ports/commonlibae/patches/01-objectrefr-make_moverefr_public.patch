@@ -12,5 +12,5 @@ index 3f5c46fb..b04992a6 100644
 +	public:
 +		void MoveTo_Impl(const ObjectRefHandle& a_targetHandle, TESObjectCELL* a_targetCell, TESWorldSpace* a_selfWorldSpace, const NiPoint3& a_position, const NiPoint3& a_rotation);
  	};
- 	static_assert(sizeof(TESObjectREFR) == 0x98);
+ 	static_assert(sizeof(TESObjectREFR) == 0xA0);
  };

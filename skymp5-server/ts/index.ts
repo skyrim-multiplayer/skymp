@@ -6,7 +6,7 @@ sourceMapSupport.install({
     if (source.endsWith('skymp5-server.js')) {
       return {
         url: 'original.js',
-        map: fs.readFileSync('dist_back/skymp5-server.js.map', 'utf8')
+        map: require('fs').readFileSync('dist_back/skymp5-server.js.map', 'utf8')
       };
     }
     return null;
@@ -14,7 +14,6 @@ sourceMapSupport.install({
 });
 
 import * as scampNative from "./scampNative";
-import * as chat from "./chat";
 import { Settings } from "./settings";
 import { System } from "./systems/system";
 import { MasterClient } from "./systems/masterClient";
@@ -41,15 +40,6 @@ const {
 } = Settings.get();
 
 const gamemodeCache = new Map<string, string>();
-
-// https://stackoverflow.com/questions/37521893/determine-if-a-path-is-subdirectory-of-another-in-node-js
-const isChildOf = (child: string, parent: string) => {
-  child = path.resolve(child);
-  parent = path.resolve(parent);
-  if (child === parent) return false;
-  const parentTokens = parent.split("/").filter((i) => i.length);
-  return parentTokens.every((t, i) => child.split("/")[i] === t);
-};
 
 const runGamemodeWithVm = (
   gamemodeContents: string,
@@ -218,8 +208,6 @@ const main = async () => {
     }
   });
 
-  chat.main(server);
-
   server.on("customPacket", (userId, content) => {
     const contentObj = JSON.parse(content);
 
@@ -231,15 +219,6 @@ const main = async () => {
         break;
     }
   });
-
-  chat.attachMpApi((formId, msg) => server.onUiEvent(formId, msg));
-  const sendUiMessage = (formId: number, message: Record<string, unknown>) => {
-    if (typeof message !== "object") {
-      throw new TypeError("Messages must be objects");
-    }
-    chat.sendMsg(server, formId, message);
-  };
-  server.setSendUiMessageImplementation(sendUiMessage);
 
   const clear = () => server.clear();
 

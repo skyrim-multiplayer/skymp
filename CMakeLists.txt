@@ -12,6 +12,7 @@ endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
+set(VCPKG_INSTALL_OPTIONS --no-print-usage)
 
 if("$ENV{CI}" STREQUAL "true" AND WIN32)
   # The same submodule but moved to a larger disk in Windows CI. See action files:
@@ -32,7 +33,7 @@ if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
 if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
-  set(msg "CMake binary directory must be <repo_root>/build")
+  set(msg "CMake binary directory ${CMAKE_BINARY_DIR} must be <repo_root>/build (${CMAKE_SOURCE_DIR}/build)")
   set(msg "${msg}\nUse commands below after cloning the repo (replace path with your actual Skyrim SE folder):")
   set(msg "${msg}\n  mkdir build")
   set(msg "${msg}\n  cd build")
@@ -66,7 +67,7 @@ message(STATUS SWEETPIE=${SWEETPIE})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
 message(STATUS SKYRIM_SE=${SKYRIM_SE})
 
-# P.S. SkyrimPlatform crashes with that JS_ENGINE_TRACING_ENABLED on. See https://github.com/skyrim-multiplayer/skymp/issues/266
+# Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
 
 if(JS_ENGINE_TRACING_ENABLED)
   add_compile_definitions(JS_ENGINE_TRACING_ENABLED)
@@ -82,7 +83,7 @@ if(UNIT_DATA_DIR AND NOT IS_ABSOLUTE "${UNIT_DATA_DIR}")
 endif()
 
 if(NOT SKYRIM_DIR)
-  message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
+  message(STATUS "SKYRIM_DIR is not specified. You will have to fill server config with esm paths manually")
 endif()
 string(REPLACE "\\" "/" SKYRIM_DIR "${SKYRIM_DIR}")
 
@@ -93,7 +94,7 @@ if(SKYRIM_DIR)
 endif()
 
 if(NOT CPPCOV_PATH)
-  message(STATUS "CPPCOV_PATH is not specified, coverage would not be calculated")
+  message(STATUS "CPPCOV_PATH is not specified, coverage will not be calculated")
 endif()
 string(REPLACE "\\" "/" CPPCOV_PATH "${CPPCOV_PATH}")
 
@@ -120,7 +121,6 @@ add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
 if(BUILD_UNIT_TESTS)
-  # Workaround for #1182 (tests are failing to build in Windows CI)
   add_subdirectory(unit)
 endif()
 
