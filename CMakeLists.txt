@@ -61,11 +61,14 @@ option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h"
 option(SWEETPIE "Affects default client and server configs" ON)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
+option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
 message(STATUS SWEETPIE=${SWEETPIE})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
 message(STATUS SKYRIM_SE=${SKYRIM_SE})
+message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
+message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 
 # P.S. SkyrimPlatform crashes with that JS_ENGINE_TRACING_ENABLED on. See https://github.com/skyrim-multiplayer/skymp/issues/266
 
@@ -159,3 +162,12 @@ foreach(target ${TARGETS_ADDITIONAL})
     add_dependencies(RestartGame ${target})
   endif()
 endforeach()
+
+if(INSTALL_CLIENT_DIST)
+  add_custom_target(
+    install_client_dist ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/dist/client ${SKYRIM_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  )
+  add_dependencies(install_client_dist skymp5-client skyrim-platform)
+endif()
