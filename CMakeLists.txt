@@ -66,7 +66,7 @@ message(STATUS SWEETPIE=${SWEETPIE})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
 message(STATUS SKYRIM_SE=${SKYRIM_SE})
 
-# P.S. SkyrimPlatform crashes with that JS_ENGINE_TRACING_ENABLED on. See https://github.com/skyrim-multiplayer/skymp/issues/266
+# Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
 
 if(JS_ENGINE_TRACING_ENABLED)
   add_compile_definitions(JS_ENGINE_TRACING_ENABLED)
