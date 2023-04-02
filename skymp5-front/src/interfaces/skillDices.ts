@@ -1,6 +1,6 @@
 export interface ISkillDices {
   onClose: () => void;
-  send: (msg: string) => void;
+  send: (msg: string) => boolean;
 }
 
 export interface IPossessedSkills {
@@ -10,6 +10,8 @@ export interface IPossessedSkills {
     price: number;
   }
 }
+
+export type IRollAction = 'initiative' | 'weapon' | 'magic' | 'defence';
 
 export type IMagic =
   | 'conjuration'

@@ -32,7 +32,9 @@ const Dices = (props: {
     if (count.current < 10) {
       props.send(msg);
       count.current += 1;
+      return true;
     }
+    return false;
   };
 
   useEffect(() => {

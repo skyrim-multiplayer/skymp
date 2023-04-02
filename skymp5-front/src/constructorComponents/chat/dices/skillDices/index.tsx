@@ -11,6 +11,7 @@ import {
   IDefence,
   IMagic,
   IPossessedSkills,
+  IRollAction,
   ISkillDices,
   ISkillDicesData,
   IWeapon
@@ -182,13 +183,31 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
     };
   }, []);
 
+  const playSound = (action: IRollAction | 'heal' | 'self-attack' | 'wolf' | 'vampus') => {
+    const mapper = {
+      initiative: 'Initiative',
+      weapon: 'Sword',
+      magic: 'Magic',
+      defence: 'Initiative',
+      vampus: 'Vampire',
+      wolf: 'Werewolf',
+      heal: 'HP_plus',
+      'self-attack': 'HP_minus'
+    };
+    const audio = new Audio(
+      require(`../../../../sound/${mapper[action]}.mp3`).default
+    );
+    audio.play();
+  };
+
   const handleRoll = (
-    action: string,
+    action: IRollAction,
     type?: string,
     value?: number,
     buff?: number,
     hitPoints?: number
   ) => {
+    playSound(action);
     if (action === 'weapon' && isWolf) {
       send(`${COMMAND_NAME} ${action} claw ${value} ${buff}`);
       return;
@@ -198,8 +217,11 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
 
   const handleHeal = () => {
     if (hitPoints === MAX_HEALTH) return;
-    sethitPoints(hitPoints + 1);
-    send(`${COMMAND_NAME} heal ${hitPoints + 1}`);
+    if (send(`${COMMAND_NAME} heal ${hitPoints + 1}`)) {
+      playSound('heal');
+      sethitPoints(hitPoints + 1);
+    }
+    ;
   };
 
   const handleSelfAttack = () => {
@@ -207,8 +229,11 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       sethitPoints(MAX_HEALTH);
       return;
     }
-    sethitPoints(hitPoints - 1);
-    send(`${COMMAND_NAME} self-attack ${hitPoints - 1}`);
+    if (send(`${COMMAND_NAME} self-attack ${hitPoints - 1}`)) {
+      playSound('self-attack');
+      sethitPoints(hitPoints - 1);
+    }
+    ;
   };
 
   const handleMagicSelect = (name: IMagic) => {
@@ -219,11 +244,17 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   const handleFormSelect = (name: 'wolf' | 'vampus') => {
     if (name === 'wolf') {
       send(`${COMMAND_NAME} wolf ${isWolf ? 'off' : 'on'}`);
+      if (!isWolf) {
+        playSound('wolf');
+      }
       setisWolf(!isWolf);
       setisVampus(false);
     }
     if (name === 'vampus') {
       send(`${COMMAND_NAME} vampus ${isVampus ? 'off' : 'on'}`);
+      if (!isVampus) {
+        playSound('vampus');
+      }
       setisVampus(!isVampus);
       setisWolf(false);
     }
