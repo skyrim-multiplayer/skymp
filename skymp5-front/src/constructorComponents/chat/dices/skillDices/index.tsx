@@ -188,7 +188,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
       initiative: 'Initiative',
       weapon: 'Sword',
       magic: 'Magic',
-      defence: 'Initiative',
+      defence: 'Shield',
       vampus: 'Vampire',
       wolf: 'Werewolf',
       heal: 'HP_plus',
