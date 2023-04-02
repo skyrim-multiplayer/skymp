@@ -12,6 +12,7 @@ endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
+set(VCPKG_INSTALL_OPTIONS --no-print-usage)
 
 if("$ENV{CI}" STREQUAL "true" AND WIN32)
   # The same submodule but moved to a larger disk in Windows CI. See action files:
@@ -82,7 +83,7 @@ if(UNIT_DATA_DIR AND NOT IS_ABSOLUTE "${UNIT_DATA_DIR}")
 endif()
 
 if(NOT SKYRIM_DIR)
-  message(STATUS "SKYRIM_DIR is not specified. Using prebuilt Papyrus scripts instead of building from sources")
+  message(STATUS "SKYRIM_DIR is not specified. You will have to fill server config with esm paths manually")
 endif()
 string(REPLACE "\\" "/" SKYRIM_DIR "${SKYRIM_DIR}")
 
@@ -93,7 +94,7 @@ if(SKYRIM_DIR)
 endif()
 
 if(NOT CPPCOV_PATH)
-  message(STATUS "CPPCOV_PATH is not specified, coverage would not be calculated")
+  message(STATUS "CPPCOV_PATH is not specified, coverage will not be calculated")
 endif()
 string(REPLACE "\\" "/" CPPCOV_PATH "${CPPCOV_PATH}")
 
