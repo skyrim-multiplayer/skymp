@@ -341,14 +341,13 @@ export const applyInventory = (
 
     let oneStepCount = e.count / absCount;
 
-    // TODO: It looks like this part should be revised. For now removed gold from this logic.
-
-    // alch, misc, ingr
     const f = Game.getFormEx(e.baseId);
     if (!f) {
       return printConsole(`Bad form ID ${e.baseId.toString(16)}`);
     }
     const type = f.getType();
+    // For misc items, potions and ingredients we don't want to split them into multiple items
+    // This was made to fix a performance issue with users having 10000+ of misc items (i.e. gold)
     if (type === FormType.Misc || type === FormType.Potion || type === FormType.Ingredient) {
       absCount = 1;
       oneStepCount = e.count;
