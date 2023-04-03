@@ -56,6 +56,5 @@ TEST_CASE("Not enough items to remove", "[Inventory]")
   inv.entries.push_back({ 0xf, 10, {} });
   inv.entries.push_back({ 0xf, 9, {} });
 
-    REQUIRE_THROWS_AS(inv.RemoveItems({ { 0xf, 20, {} } }),
-                        std::runtime_error);
+  REQUIRE_THROWS_AS(inv.RemoveItems({ { 0xf, 20, {} } }), std::runtime_error);
 }
