@@ -118,7 +118,8 @@ bool Inventory::IsEmpty() const
   return entries.empty();
 }
 
-void Inventory::JoinSameItemEntries() {
+void Inventory::JoinSameItemEntries()
+{
   for (auto it = entries.begin(); it != entries.end(); ++it) {
     for (auto jt = it + 1; jt != entries.end(); ++jt) {
       if (it->baseId == jt->baseId && it->extra == jt->extra) {
