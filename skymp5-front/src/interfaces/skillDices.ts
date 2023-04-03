@@ -1,6 +1,7 @@
 export interface ISkillDices {
   onClose: () => void;
   send: (msg: string) => boolean;
+  disableSound: boolean;
 }
 
 export interface IPossessedSkills {

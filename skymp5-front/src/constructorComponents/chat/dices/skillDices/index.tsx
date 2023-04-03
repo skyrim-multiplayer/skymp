@@ -22,7 +22,7 @@ import { defence, magic, weapons, rollButtons } from './skillDicesData';
 const MAX_HEALTH = 5;
 const COMMAND_NAME = '/skill-dice';
 
-const SkillDices = ({ onClose, send }: ISkillDices) => {
+const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
   const [hitPoints, sethitPoints] = useState(5);
   const [defenceIndex, setdefenceIndex] = useState(0);
   const [defenceArmorIndex, setdefenceArmorIndex] = useState(0);
@@ -184,6 +184,7 @@ const SkillDices = ({ onClose, send }: ISkillDices) => {
   }, []);
 
   const playSound = (action: IRollAction | 'heal' | 'self-attack' | 'wolf' | 'vampus') => {
+    if (disableSound) return;
     const mapper = {
       initiative: 'Initiative',
       weapon: 'Sword',

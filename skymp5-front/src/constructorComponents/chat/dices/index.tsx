@@ -98,7 +98,7 @@ const Dices = (props: {
       )}
       {props.isOpened === 2
         ? (
-        <SkillDices onClose={() => props.setOpened(0)} send={diceSend}></SkillDices>
+        <SkillDices onClose={() => props.setOpened(0)} send={diceSend} disableSound={props.disableSound}></SkillDices>
           )
         : (
         <Pouch
