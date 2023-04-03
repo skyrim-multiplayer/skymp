@@ -118,17 +118,6 @@ bool Inventory::IsEmpty() const
   return entries.empty();
 }
 
-void Inventory::JoinSameItemEntries() {
-  for (auto it = entries.begin(); it != entries.end(); ++it) {
-    for (auto jt = it + 1; jt != entries.end(); ++jt) {
-      if (it->baseId == jt->baseId && it->extra == jt->extra) {
-        it->count += jt->count;
-        jt = entries.erase(jt);
-      }
-    }
-  }
-}
-
 nlohmann::json Inventory::Entry::ToJson() const
 {
   const EntryExtras emptyExtras;
