@@ -19,6 +19,7 @@ import {
   Ammo,
   printConsole,
   ActorBase,
+  FormType,
 } from "skyrimPlatform";
 import * as taffyPerkSystem from "../sweetpie/taffyPerkSystem";
 
@@ -341,20 +342,36 @@ export const applyInventory = (
     let oneStepCount = e.count / absCount;
 
     // TODO: It looks like this part should be revised. For now removed gold from this logic.
-    if (absCount > 1000 && e.baseId != 0xf) {
-      absCount = 1;
-      oneStepCount = 1;
 
-      // Also for arrows with strange count
-      if (worn && e.count < 0) absCount = 0;
+    // alch, misc, ingr
+    const f = Game.getFormEx(e.baseId);
+    if (!f) {
+      return printConsole(`Bad form ID ${e.baseId.toString(16)}`);
     }
-
-    if (e.count > 1 && Ammo.from(Game.getFormEx(e.baseId))) {
+    const type = f.getType();
+    if (type === FormType.Misc || type === FormType.Potion || type === FormType.Ingredient) {
       absCount = 1;
       oneStepCount = e.count;
-      if (e.count > 60000) {
-        // Why would actor have 60k arrows?
-        e.count = 1;
+    }
+    else {
+
+      if (absCount > 1000) {
+        absCount = 1;
+        oneStepCount = 1;
+
+        // Also for arrows with strange count
+        if (worn && e.count < 0) {
+          absCount = 0;
+        }
+      }
+
+      if (e.count > 1 && Ammo.from(Game.getFormEx(e.baseId))) {
+        absCount = 1;
+        oneStepCount = e.count;
+        if (e.count > 60000) {
+          // Why would actor have 60k arrows?
+          e.count = 1;
+        }
       }
     }
 
@@ -364,26 +381,23 @@ export const applyInventory = (
         queueNiNodeUpdateNeeded = true;
       }
 
-      const f = Game.getFormEx(e.baseId);
-
-      if (!f) printConsole(`Bad form ID ${e.baseId.toString(16)}`);
-      else
-        TESModPlatform.addItemEx(
-          refr,
-          f,
-          oneStepCount,
-          e.health ? e.health : 1,
-          e.enchantmentId
-            ? Enchantment.from(Game.getFormEx(e.enchantmentId))
-            : null,
-          e.maxCharge ? e.maxCharge : 0,
-          !!e.removeEnchantmentOnUnequip,
-          e.chargePercent ? e.chargePercent : 0,
-          e.name ? cropName(e.name) : f.getName(),
-          e.soul ? e.soul : 0,
-          e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
-          e.poisonCount ? e.poisonCount : 0
-        );
+      printConsole(`Adding ${e.baseId} to ${refr.getFormID().toString(16)} with count ${oneStepCount}`);
+      TESModPlatform.addItemEx(
+        refr,
+        f,
+        oneStepCount,
+        e.health ? e.health : 1,
+        e.enchantmentId
+          ? Enchantment.from(Game.getFormEx(e.enchantmentId))
+          : null,
+        e.maxCharge ? e.maxCharge : 0,
+        !!e.removeEnchantmentOnUnequip,
+        e.chargePercent ? e.chargePercent : 0,
+        e.name ? cropName(e.name) : f.getName(),
+        e.soul ? e.soul : 0,
+        e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
+        e.poisonCount ? e.poisonCount : 0
+      );
     }
 
     if (queueNiNodeUpdateNeeded) {
