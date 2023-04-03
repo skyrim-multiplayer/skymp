@@ -43,25 +43,35 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
     if (!e.count)
       continue;
 
-    auto matchingEntry = std::find_if(
-      copy.entries.begin(), copy.entries.end(), [&](const Entry& sub) {
-        return sub.baseId == e.baseId && sub.extra == e.extra;
-      });
+    uint32_t remaining = e.count;
+    uint32_t totalRemoved = 0;
+    for (auto& entry : copy.entries) {
+      if (entry.baseId == e.baseId && entry.extra == e.extra) {
+        if (entry.count > remaining) {
+          entry.count -= remaining;
+          totalRemoved += remaining;
+          remaining = 0;
+          break;
+        } else {
+          totalRemoved += entry.count;
+          remaining -= entry.count;
+          entry.count = 0;
+        }
+      }
+    }
 
-    auto count =
-      matchingEntry == copy.entries.end() ? 0 : matchingEntry->count;
-
-    if (count < e.count) {
+    if (totalRemoved != e.count) {
       throw std::runtime_error(
         fmt::format("Source inventory doesn't have enough {:#x} ({} is "
                     "required while {} present)",
-                    e.baseId, e.count, count));
+                    e.baseId, e.count, totalRemoved));
     }
 
-    matchingEntry->count -= e.count;
-    if (matchingEntry->count == 0) {
-      copy.entries.erase(matchingEntry);
-    }
+    // remove empty entries
+    copy.entries.erase(
+      std::remove_if(copy.entries.begin(), copy.entries.end(),
+                     [](const Entry& e) { return e.count == 0; }),
+      copy.entries.end());
   }
 
   *this = copy;
@@ -106,6 +116,17 @@ uint32_t Inventory::GetEquippedItem(Inventory::Worn slot) const
 bool Inventory::IsEmpty() const
 {
   return entries.empty();
+}
+
+void Inventory::JoinSameItemEntries() {
+  for (auto it = entries.begin(); it != entries.end(); ++it) {
+    for (auto jt = it + 1; jt != entries.end(); ++jt) {
+      if (it->baseId == jt->baseId && it->extra == jt->extra) {
+        it->count += jt->count;
+        jt = entries.erase(jt);
+      }
+    }
+  }
 }
 
 nlohmann::json Inventory::Entry::ToJson() const
@@ -200,6 +221,7 @@ Inventory Inventory::FromJson(simdjson::dom::element& j)
     auto& e = res.entries[i];
     e = Entry::FromJson(jEntry);
   }
+
   return res;
 }
 

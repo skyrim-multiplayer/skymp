@@ -88,6 +88,9 @@ public:
   uint32_t GetEquippedItem(Inventory::Worn slot) const;
   bool IsEmpty() const;
 
+  // should be called after modifying entries manually, also called by FromJson
+  void JoinSameItemEntries();
+
   std::vector<Entry> entries;
 
   friend bool operator==(const Inventory& lhs, const Inventory& rhs)
