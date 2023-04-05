@@ -58,13 +58,6 @@ void AnimationSystem::InitAnimationCallbacks()
       },
     },
     {
-      "attackStartLeftHand",
-      [](MpActor* actor) {
-        constexpr float modifier = 7.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
-      },
-    },
-    {
       "AttackStartH2HRight",
       [](MpActor* actor) {
         constexpr float modifier = 4.f;
