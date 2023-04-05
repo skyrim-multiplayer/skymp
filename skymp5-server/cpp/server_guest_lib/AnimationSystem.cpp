@@ -91,7 +91,7 @@ void AnimationSystem::InitAnimationCallbacks()
     },
     {
       "attackRelease",
-      [this](MpActor* actor) {
+      [&](MpActor* actor) {
         std::chrono::duration<float> elapsedTime =
           std::chrono::steady_clock::now() -
           GetLastAttackReleaseAnimationTime();
