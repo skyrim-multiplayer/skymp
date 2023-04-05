@@ -2,9 +2,9 @@
 #include "EventsApi.h"
 #include "FridaHookHandler.h"
 #include "FridaHooksUtils.h"
+#include "Override.h"
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
-#include "Override.h"
 
 /**
  * Send Event hook
@@ -186,7 +186,7 @@ void OnSendAnimationEventEnter(GumInvocationContext* ic)
 void OnSendAnimationEventLeave(GumInvocationContext* ic)
 {
   if (Override::IsOverriden()) {
-    return; 
+    return;
   }
   bool res = !!gum_invocation_context_get_return_value(ic);
   EventsApi::SendAnimationEventLeave(res);

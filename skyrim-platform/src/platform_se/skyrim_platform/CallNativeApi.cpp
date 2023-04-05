@@ -3,8 +3,8 @@
 #include "CreatePromise.h"
 #include "NativeValueCasts.h"
 #include "NullPointerException.h"
-#include "VmProvider.h"
 #include "Override.h"
+#include "VmProvider.h"
 
 JsValue CallNativeApi::CallNative(
   const JsFunctionArguments& args,
@@ -71,7 +71,7 @@ JsValue CallNativeApi::CallNative(
       });
     return CreatePromise(g_promiseFn);
   } else {
-    Override o; 
+    Override o;
     auto res = NativeValueCasts::NativeValueToJsValue(
       CallNative::CallNativeSafe(callNativeArgs));
     return res;

@@ -13,6 +13,6 @@ public:
 
   static bool IsOverriden();
 
- private:
+private:
   static std::atomic<bool> g_overriden;
 };
