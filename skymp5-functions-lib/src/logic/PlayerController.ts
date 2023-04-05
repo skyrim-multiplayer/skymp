@@ -1,4 +1,5 @@
 import { ChatMessage } from "../props/chatProperty";
+import { PacketHistory } from "../types/mp";
 import { SweetPieRound } from "./SweetPieRound";
 
 export type Percentages = {
@@ -29,4 +30,8 @@ export type PlayerController = {
   incrementCounter(actorId: number, counter: Counter, by?: number): number;
   getServerSetting(name: string): any;
   getActorDistanceSquared(actorId1: number, actorId2: number): number;
+  setPacketHistoryRecording(formId: number, enabled: boolean): void;
+  getPacketHistory(formId: number): PacketHistory;
+  clearPacketHistory(formId: number): void;
+  requestPacketHistoryPlayback(formId: number, packetHistory: PacketHistory): void;
 }

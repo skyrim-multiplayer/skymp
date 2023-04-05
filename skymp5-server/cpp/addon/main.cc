@@ -654,7 +654,7 @@ std::string GetPropertyAlphabet()
   return alphabet;
 }
 
-uint32_t GetFormId(const JsValue& v)
+uint32_t GetUint32(const JsValue& v)
 {
   if (v.GetType() == JsValue::Type::Number) {
     double formId = static_cast<double>(v);
@@ -700,7 +700,30 @@ uint32_t ExtractFormId(const JsValue& v, const char* argName = "formId")
     ss << "'";
     throw std::runtime_error(ss.str());
   }
-  return GetFormId(v);
+  return GetUint32(v);
+}
+
+uint32_t ExtractUserId(const JsValue& v, const char* argName = "userId")
+{
+  if (v.GetType() != JsValue::Type::Number) {
+    std::stringstream ss;
+    ss << "Expected '" << argName << "' to be number, but got '";
+    ss << v.ToString();
+    ss << "'";
+    throw std::runtime_error(ss.str());
+  }
+
+  auto res = GetUint32(v);
+
+  if (res > std::numeric_limits<Networking::UserId>::max()) {
+    std::stringstream ss;
+    ss << "Expected '" << argName << "' to be less or equal to " << std::numeric_limits<Networking::UserId>::max() << ", but got '";
+    ss << v.ToString();
+    ss << "'";
+    throw std::runtime_error(ss.str());
+  }
+
+  return res;
 }
 
 std::string ExtractNewValueStr(Napi::Value v)
@@ -1660,6 +1683,75 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
       std::string packet = ExtractNewValueStr(args[2]);
       auto userId = partOne->GetUserByActor(formId);
       partOne->SendCustomPacket(userId, packet);
+      return JsValue::Undefined();
+    }));
+
+  mp.SetProperty(
+    "setPacketHistoryRecording",
+    JsValue::Function([this, update](const JsFunctionArguments& args) {
+      auto formId = ExtractFormId(args[1]);
+      auto userId = partOne->GetUserByActor(formId);
+      bool record = static_cast<bool>(args[2]);
+      partOne->SetPacketHistoryRecording(userId, record);
+      return JsValue::Undefined();
+    }));
+
+  mp.SetProperty(
+    "getPacketHistory",
+    JsValue::Function([this, update](const JsFunctionArguments& args) {
+      auto formId = ExtractFormId(args[1]);
+      auto userId = partOne->GetUserByActor(formId);
+      auto history = partOne->GetPacketHistory(userId);
+      auto result = JsValue::Object();
+
+      auto buffer = JsValue::Uint8Array(history.buffer.size());
+      memcpy(buffer.GetTypedArrayData(), history.buffer.data(), history.buffer.size());
+
+      result.SetProperty("buffer", buffer);
+      auto arr = JsValue::Array(history.packets.size());
+      for (int i = 0; i < static_cast<int>(history.packets.size()); ++i) {
+        auto element = JsValue::Object();
+        element.SetProperty("offset", static_cast<int>(history.packets[i].offset));
+        element.SetProperty("size", static_cast<int>(history.packets[i].length));
+        element.SetProperty("timeMs", static_cast<double>(history.packets[i].timeMs));
+        arr.SetProperty(JsValue(i), element);
+      }
+      result.SetProperty("packets", arr);
+      return result;
+    }));
+
+  mp.SetProperty("clearPacketHistory", JsValue::Function([this, update](const JsFunctionArguments& args) {
+    auto formId = ExtractFormId(args[1]);
+    auto userId = partOne->GetUserByActor(formId);
+    partOne->ClearPacketHistory(userId);
+    return JsValue::Undefined();
+  }));
+
+  mp.SetProperty(
+    "requestPacketHistoryPlayback",
+    JsValue::Function([this, update](const JsFunctionArguments& args) {
+      auto formId = ExtractFormId(args[1]);
+      auto userId = partOne->GetUserByActor(formId);
+      auto packetHistory = args[2];
+
+      PacketHistory history;
+
+      auto buffer = packetHistory.GetProperty("buffer");
+      history.buffer.resize(buffer.GetTypedArrayBufferLength());
+      memcpy(history.buffer.data(), buffer.GetTypedArrayData(), history.buffer.size());
+
+      auto packets = packetHistory.GetProperty("packets");
+      for (int i = 0; i < static_cast<int>(packets.GetProperty("length")); ++i) {
+        auto packet = packets.GetProperty(JsValue(i));
+        PacketHistoryElement element;
+        element.offset = static_cast<int>(packet.GetProperty("offset"));;
+        element.length = static_cast<int>(packet.GetProperty("size"));
+        element.timeMs = static_cast<int>(packet.GetProperty("timeMs"));
+
+        history.packets.push_back(element);
+      }
+
+      partOne->RequestPacketHistoryPlayback(userId, history);
       return JsValue::Undefined();
     }));
 

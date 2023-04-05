@@ -88,6 +88,12 @@ public:
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;
 
+  void SetPacketHistoryRecording(Networking::UserId userId, bool value);
+  PacketHistory GetPacketHistory(Networking::UserId userId);
+  void ClearPacketHistory(Networking::UserId userId);
+  void RequestPacketHistoryPlayback(Networking::UserId userId,
+                                    const PacketHistory& history);
+
 private:
   void Init();
 

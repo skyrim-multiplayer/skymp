@@ -6,7 +6,7 @@ import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
-import { LocationalData, Mp, PapyrusObject } from "./types/mp";
+import { LocationalData, Mp, PacketHistory, PapyrusObject } from "./types/mp";
 import { ChatSettings } from "./types/settings";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
@@ -126,10 +126,13 @@ export class MpApiInteractor {
       const joinedPlayers = onlinePlayers.filter((x) => !onlinePlayersOld.includes(x));
       const leftPlayers = onlinePlayersOld.filter((x) => !onlinePlayers.includes(x));
 
+      for (const actorId of joinedPlayers) {
+        MpApiInteractor.onPlayerJoinHardcoded(actorId);
+      }
+
       for (const listener of listeners) {
         if (listener.onPlayerJoin) {
           for (const actorId of joinedPlayers) {
-            MpApiInteractor.onPlayerJoinHardcoded(actorId);
             listener.onPlayerJoin(actorId);
           }
         }
@@ -196,7 +199,9 @@ export class MpApiInteractor {
   }
 
   private static onPlayerJoinHardcoded(actorId: number) {
+    console.log('show chat 1')
     ChatProperty.showChat(actorId, true);
+    console.log('show chat 2')
   }
 
   static makeController(pointsByName: Map<string, LocationalData>) {
@@ -301,6 +306,18 @@ export class MpApiInteractor {
       getCurrentTime(): Date {
         return new Date();
       },
+      setPacketHistoryRecording(formId: number, enabled: boolean): void {
+        return mp.setPacketHistoryRecording(formId, enabled);
+      },
+      getPacketHistory(formId: number): PacketHistory {
+        return mp.getPacketHistory(formId);
+      },
+      clearPacketHistory(formId: number): void {
+        return mp.clearPacketHistory(formId);
+      },
+      requestPacketHistoryPlayback(formId: number, packetHistory: PacketHistory): void {
+        return mp.requestPacketHistoryPlayback(formId, packetHistory);
+      }
     }
   }
 }

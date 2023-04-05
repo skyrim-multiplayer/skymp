@@ -93,6 +93,15 @@ export interface LocationalData {
   rot: [number, number, number];
 }
 
+export interface PacketHistory {
+  buffer: Uint8Array;
+  packets: Array<{
+    offset: number;
+    size: number;
+    timeMs: number;
+  }>
+}
+
 export interface Mp {
   /**
    * Returns the actual value of a specified property. If there is no value, then
@@ -185,6 +194,11 @@ export interface Mp {
   readDataDirectory(): string[];
   readDataFile(path: string): string;
   writeDataFile(path: string, content: string): void;
+
+  setPacketHistoryRecording(formId: number, enabled: boolean): void;
+  getPacketHistory(formId: number): PacketHistory;
+  clearPacketHistory(formId: number): void;
+  requestPacketHistoryPlayback(formId: number, packetHistory: PacketHistory): void;
 
   [key: string]: unknown;
 }

@@ -6,12 +6,36 @@
 #include <memory>
 #include <simdjson.h>
 #include <unordered_map>
+#include <map>
+#include <deque>
+#include <chrono>
+#include <optional>
 
 class MpActor;
+
+struct PacketHistoryElement {
+  size_t offset = 0;
+  size_t length = 0;
+  uint64_t timeMs = 0;
+};
+
+struct PacketHistory {
+  std::vector<uint8_t> buffer;
+  std::deque<PacketHistoryElement> packets;
+};
+
+struct Playback {
+  PacketHistory history;
+  std::chrono::time_point<std::chrono::steady_clock> startTime;
+};
 
 struct UserInfo
 {
   bool isDisconnecting = false;
+
+  bool isPacketHistoryRecording = false;
+  PacketHistory packetHistory;
+  std::optional<std::chrono::time_point<std::chrono::steady_clock>> packetHistoryStartTime;
 };
 
 class ServerState
@@ -23,6 +47,8 @@ public:
   Networking::UserId maxConnectedId = 0;
   ActorsMap actorsMap;
   Networking::UserId disconnectingUserId = Networking::InvalidUserId;
+  std::map<Networking::UserId, Playback> activePlaybacks; // do not modify directly, use requestedPlaybacks
+  std::map<Networking::UserId, Playback> requestedPlaybacks;
 
   void Connect(Networking::UserId userId);
   void Disconnect(Networking::UserId userId) noexcept;

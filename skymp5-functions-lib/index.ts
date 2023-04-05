@@ -4,7 +4,7 @@ import { SweetPieMap } from './src/logic/SweetPieMap';
 import { SweetTaffyTimedRewards } from './src/logic/SweetTaffyTimedRewards';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
-import { ChatProperty } from './src/props/chatProperty';
+import { ChatMessage, ChatProperty } from './src/props/chatProperty';
 import { CounterProperty } from './src/props/counterProperty';
 import { DialogProperty } from './src/props/dialogProperty';
 import { DisableCheats } from './src/props/disableCheats';
@@ -559,5 +559,15 @@ const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[
 const controller = MpApiInteractor.makeController(pointsByName);
 MpApiInteractor.setup([
   createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
-  new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
+  //new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
 ]);
+
+// ChatProperty.setChatInputHandler((input) => {
+//   mp.get(0, "onlinePlayers").forEach((player) => {
+//     const appearance = mp.get(input.actorId, "appearance");
+
+//     ChatProperty.sendChatMessage(player, 
+//       ChatMessage.system(appearance.name + ": " + input.inputText)
+//     );
+//   });
+// });
