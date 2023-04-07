@@ -8,12 +8,12 @@
 #include "MpChangeForms.h"
 #include "PapyrusGame.h"
 #include "PapyrusObjectReference.h"
-#include "PieScript.h"
 #include "Primitive.h"
 #include "Reader.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
+#include "SweetPieScript.h"
 #include "VirtualMachine.h"
 #include "WorldState.h"
 #include <MsgType.h>

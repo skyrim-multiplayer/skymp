@@ -9,7 +9,7 @@
 class MpActor;
 class WorldState;
 
-class PieScript
+class SweetPieScript
 {
 private:
   enum class LootboxItemType
@@ -47,7 +47,7 @@ private:
   };
 
 public:
-  PieScript(const std::vector<std::string>& espmFiles);
+  SweetPieScript(const std::vector<std::string>& espmFiles);
   void Play(MpActor& actor, WorldState& worldState, uint32_t itemBaseId);
 
 private:

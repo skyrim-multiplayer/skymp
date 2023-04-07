@@ -1,4 +1,4 @@
-#include "PieScript.h"
+#include "SweetPieScript.h"
 
 #include "FormDesc.h"
 #include "MpActor.h"
@@ -28,7 +28,7 @@ uint32_t GenerateRandomNumber(uint32_t leftBound, uint32_t rightBound)
   }
 }
 
-void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
+void SweetPieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
                             const std::vector<std::string>& items,
                             LootboxItemType type, Tier tier)
 {
@@ -39,7 +39,7 @@ void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
     lootboxTable[type][tier].push_back(id);
   }
 }
-PieScript::PieScript(const std::vector<std::string>& espmFiles)
+SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
 {
   lootboxTable = {
     { LootboxItemType::Weapon,
@@ -262,14 +262,14 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
   };
 }
 
-void PieScript::AddItem(MpActor& actor, const WorldState& worldState,
+void SweetPieScript::AddItem(MpActor& actor, const WorldState& worldState,
                         uint32_t itemBaseId, uint32_t count)
 {
   actor.AddItem(itemBaseId, count);
   Notify(actor, worldState, itemBaseId, count, false);
 }
 
-PieScript::Tier PieScript::AcknowledgeTier(uint32_t chance)
+SweetPieScript::Tier SweetPieScript::AcknowledgeTier(uint32_t chance)
 {
   Tier tier;
   if (chance <= kTier1Chance) {
@@ -291,8 +291,9 @@ PieScript::Tier PieScript::AcknowledgeTier(uint32_t chance)
   }
 }
 
-std::pair<PieScript::LootboxItemType, PieScript::Tier>
-PieScript::AcknowledgeTypeAndTier(uint32_t weaponChance, uint32_t armorChance,
+std::pair<SweetPieScript::LootboxItemType, SweetPieScript::Tier>
+SweetPieScript::AcknowledgeTypeAndTier(uint32_t weaponChance,
+                                       uint32_t armorChance,
                                   uint32_t consumableChance,
                                   uint32_t nothingChance)
 {
@@ -319,7 +320,7 @@ PieScript::AcknowledgeTypeAndTier(uint32_t weaponChance, uint32_t armorChance,
   std::pair<LootboxItemType, Tier> tierAndType = std::make_pair(type, tier);
   return tierAndType;
 }
-uint32_t PieScript::GetSlotItem(uint32_t weaponChance, uint32_t armoryChacne,
+uint32_t SweetPieScript::GetSlotItem(uint32_t weaponChance, uint32_t armoryChacne,
                                 uint32_t consumableChance,
                                 uint32_t nothingChance)
 {
@@ -333,7 +334,7 @@ uint32_t PieScript::GetSlotItem(uint32_t weaponChance, uint32_t armoryChacne,
   return 0;
 }
 
-void PieScript::Notify(MpActor& actor, const WorldState& worldState,
+void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
                        uint32_t formId, uint32_t count, bool silent)
 {
   std::string type;
@@ -366,7 +367,7 @@ void PieScript::Notify(MpActor& actor, const WorldState& worldState,
   (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(&actor);
 }
 
-void PieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
+void SweetPieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
 {
   uint32_t item1 = GetSlotItem(80, 10, 10, 0);
   uint32_t item2 = GetSlotItem(10, 80, 10, 0);
@@ -387,7 +388,7 @@ void PieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
   }
 }
 
-void PieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
+void SweetPieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
                             StarterKitType type)
 {
   for (auto item : starterKitsMap[type]) {
@@ -396,7 +397,7 @@ void PieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
   }
 }
 
-void PieScript::AddStarterKitItems(MpActor& actor,
+void SweetPieScript::AddStarterKitItems(MpActor& actor,
                                    const WorldState& worldState)
 {
   uint32_t chance = GenerateRandomNumber(1, 100);
@@ -412,13 +413,13 @@ void PieScript::AddStarterKitItems(MpActor& actor,
   }
 }
 
-void PieScript::AddPatronStarterKitItems(MpActor& actor,
+void SweetPieScript::AddPatronStarterKitItems(MpActor& actor,
                                          const WorldState& worldState)
 {
   AddKitItems(actor, worldState, StarterKitType::PatronKit);
 }
 
-void PieScript::Play(MpActor& actor, WorldState& worldState,
+void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
                      uint32_t itemBaseId)
 {
   bool isKit = itemBaseId == EdibleItems::kPatronStarterKitPie;

@@ -6,7 +6,7 @@
 #include "MpChangeForms.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
-#include "PieScript.h"
+#include "SweetPieScript.h"
 #include "ServerState.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
@@ -106,8 +106,8 @@ void MpActor::OnEquip(uint32_t baseId)
                               GetParent()->espmFiles.end() };
   bool hasSweetPie = s.count("SweetPie.esp");
   if (hasSweetPie) {
-    PieScript pieScript(GetParent()->espmFiles);
-    pieScript.Play(*this, *GetParent(), baseId);
+    SweetPieScript SweetPieScript(GetParent()->espmFiles);
+    SweetPieScript.Play(*this, *GetParent(), baseId);
   }
 }
 
