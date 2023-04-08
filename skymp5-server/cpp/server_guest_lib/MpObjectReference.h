@@ -124,7 +124,6 @@ public:
   void SetInventory(const Inventory& inv);
   void AddItem(uint32_t baseId, uint32_t count);
   void AddItems(const std::vector<Inventory::Entry>& entries);
-  void ForceEquip(uint32_t baseId);
   void RemoveItem(uint32_t baseId, uint32_t count, MpObjectReference* target);
   void RemoveItems(const std::vector<Inventory::Entry>& entries,
                    MpObjectReference* target = nullptr);

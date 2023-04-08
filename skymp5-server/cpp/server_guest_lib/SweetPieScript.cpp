@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
 
 std::mt19937 g_rng{ std::random_device{}() };
 
@@ -463,7 +464,6 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
       uint32_t boundWeaponBaseId = it->second.GetBaseId(),
                bookBaseId = it->first;
       actor.AddItem(boundWeaponBaseId, 1);
-      actor.ForceEquip(boundWeaponBaseId);
       actor.RemoveItem(bookBaseId, 1, nullptr);
       uint32_t formId = actor.GetFormId();
       worldState.SetTimer(it->second.GetCooldown())
