@@ -114,19 +114,6 @@ class SpawnTask {
   running = false;
 }
 
-const sendBrowserToken = () => {
-  networking.send(
-    {
-      t: messages.MsgType.CustomPacket,
-      content: {
-        customPacketType: "browserToken",
-        token: browser.getToken(),
-      },
-    },
-    true
-  );
-};
-
 const loginWithSkympIoCredentials = () => {
   loggingStartMoment = Date.now();
   const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
@@ -575,7 +562,6 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.worldModel.playerCharacterFormIdx = -1;
 
     loginWithSkympIoCredentials();
-    sendBrowserToken();
   }
 
   handleDisconnect(): void { }
