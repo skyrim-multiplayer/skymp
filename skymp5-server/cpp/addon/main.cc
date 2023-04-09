@@ -961,19 +961,6 @@ VarValue GetPapyrusValueFromJsValue(const JsValue& v, bool treatNumberAsInt,
   throw std::runtime_error(ss.str());
 }
 
-std::string GetDataDirSafe(nlohmann::json serverSettings)
-{
-  std::string dataDir = serverSettings["dataDir"];
-  if (dataDir != "data") {
-    // Don't want to deal with security issues, so only <server_root>/data
-    // please
-    throw std::runtime_error(
-      "readDataDirectory doesn't support custom dataDir in "
-      "server-settings.json, consider using 'data' as dataDir");
-  }
-  return dataDir;
-}
-
 void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
 {
   JsValue mp = JsValue::Object();
@@ -1044,61 +1031,6 @@ void ScampServer::RegisterChakraApi(std::shared_ptr<JsEngine> chakraEngine)
                    auto builtinParse = builtinJson.GetProperty("parse");
                    return builtinParse.Call(
                      { builtinJson, JsValue(serverSettings.dump()) });
-                 }));
-
-  mp.SetProperty(
-    "readDataDirectory",
-    JsValue::Function([this](const JsFunctionArguments& args) {
-      auto dataDir = GetDataDirSafe(serverSettings);
-      std::vector<JsValue> paths;
-      for (std::filesystem::recursive_directory_iterator i(dataDir), end;
-           i != end; ++i) {
-        std::string p = i->path().string();
-
-        // Remove "data/" prefix to be consistent with readDataFile
-        p = std::string{ p.begin() + dataDir.size() + 1, p.end() };
-
-        paths.push_back(p);
-      }
-      return paths;
-    }));
-
-  mp.SetProperty("readDataFile",
-                 JsValue::Function([this](const JsFunctionArguments& args) {
-                   std::string path = args[1];
-                   if (path.find("..") != std::string::npos) {
-                     throw std::runtime_error(
-                       "readDataFile doesn't support paths containing '..'");
-                   }
-                   auto dataDir = GetDataDirSafe(serverSettings);
-                   auto filePath = std::filesystem::path(dataDir) / path;
-
-                   std::ifstream t(filePath);
-                   std::stringstream buffer;
-                   buffer << t.rdbuf();
-                   return buffer.str();
-                 }));
-
-  mp.SetProperty("writeDataFile",
-                 JsValue::Function([this](const JsFunctionArguments& args) {
-                   std::string path = args[1];
-
-                   if (path.find("..") != std::string::npos) {
-                     throw std::runtime_error(
-                       "writeDataFile doesn't support paths containing '..'");
-                   }
-
-                   auto dataDir = GetDataDirSafe(serverSettings);
-                   auto filePath = std::filesystem::path(dataDir) / path;
-
-                   std::string stringToWrite = args[2];
-                   std::ofstream dataFile(filePath);
-
-                   dataFile << stringToWrite;
-
-                   dataFile.close();
-
-                   return JsValue::Undefined();
                  }));
 
   auto update = [this] {
