@@ -181,7 +181,6 @@ private:
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
-  void MpApiOnInit();
   bool MpApiOnActivate(MpObjectReference& caster);
 
   bool everSubscribedOrListened = false;

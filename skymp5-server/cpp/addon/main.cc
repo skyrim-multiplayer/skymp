@@ -97,7 +97,6 @@ public:
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
   Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
   Napi::Value ExecuteJavaScriptOnChakra(const Napi::CallbackInfo& info);
-  Napi::Value OnUiEvent(const Napi::CallbackInfo& info);
   Napi::Value Clear(const Napi::CallbackInfo& info);
   Napi::Value WriteLogs(const Napi::CallbackInfo& info);
 
@@ -237,7 +236,6 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
       InstanceMethod("executeJavaScriptOnChakra",
                      &ScampServer::ExecuteJavaScriptOnChakra),
-      InstanceMethod("onUiEvent", &ScampServer::OnUiEvent),
       InstanceMethod("clear", &ScampServer::Clear),
       InstanceMethod("writeLogs", &ScampServer::WriteLogs) });
   constructor = Napi::Persistent(func);
@@ -1748,33 +1746,6 @@ Napi::Value ScampServer::ExecuteJavaScriptOnChakra(
     RegisterChakraApi(chakraEngine);
 
     chakraEngine->RunScript(src, "skymp5-gamemode/gamemode.js");
-  } catch (std::exception& e) {
-    throw Napi::Error::New(info.Env(), (std::string)e.what());
-  }
-  return info.Env().Undefined();
-}
-
-Napi::Value ScampServer::OnUiEvent(const Napi::CallbackInfo& info)
-{
-  try {
-    Napi::Number jsFormId = info[0].As<Napi::Number>();
-    Napi::Object jsMsg = info[1].As<Napi::Object>();
-
-    double formId = static_cast<double>(jsFormId);
-    std::string msg = ExtractNewValueStr(jsMsg);
-
-    if (!chakraEngine) {
-      throw std::runtime_error("nullptr chakraEngine");
-    }
-
-    auto builtinJson = JsValue::GlobalObject().GetProperty("JSON");
-    auto builtinParse = builtinJson.GetProperty("parse");
-    JsValue chakraMsg = builtinParse.Call({ builtinJson, JsValue(msg) });
-
-    auto onUiEvent =
-      JsValue::GlobalObject().GetProperty("mp").GetProperty("onUiEvent");
-    onUiEvent.Call({ JsValue::Undefined(), JsValue(formId), chakraMsg });
-
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
