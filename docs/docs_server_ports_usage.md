@@ -19,15 +19,6 @@ Used by the embedded browser to access HTML/CSS/JS and other assets.
 - Non-configurable
 - Equals `(Main Port + 1)` if its value is non-default
 
-## WebSocket Communication Port
-
-Used by the embedded browser to communicate with the backend.
-
-- Protocol is WebSocket
-- Default value is 8080
-- Non-configurable
-- Equals `(Main Port + 2)` if its value is non-default
-
 ## WebPack DevServer Port
 
 If you run the WebPack dev server and the skymp server on the same machine, the skymp server would proxy UI requests to the WebPack dev server.

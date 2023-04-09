@@ -185,15 +185,7 @@ const main = async () => {
   });
 
   server.on("customPacket", (userId, content) => {
-    const contentObj = JSON.parse(content);
-
-    switch (contentObj.customPacketType) {
-      case "browserToken":
-        const newToken = `${contentObj.token}`;
-        console.log(`User ${userId} sets browser token to ${newToken}`);
-        chat.onBrowserTokenChange(userId, newToken);
-        break;
-    }
+    // At this moment we don't have any custom packets
   });
 
   const clear = () => server.clear();
