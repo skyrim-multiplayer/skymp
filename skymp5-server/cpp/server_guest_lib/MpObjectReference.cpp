@@ -687,8 +687,6 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
       listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
     emitter->SendPapyrusEvent("OnInit");
-
-    emitter->MpApiOnInit();
   }
 
   const bool hasPrimitive = emitter->HasPrimitive();
@@ -849,8 +847,6 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
       tp - std::chrono::system_clock::now());
     RequestReloot(ms);
   }
-
-  MpApiOnInit();
 }
 
 const DynamicFields& MpObjectReference::GetDynamicFields() const
@@ -1061,17 +1057,6 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupant = nullptr;
     }
   }
-}
-
-void MpObjectReference::MpApiOnInit()
-{
-  // nice API (91% of cpu in profiler when spawning player)
-  /*if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      listener->OnMpApiEvent("onInit", std::nullopt, id);
-    }
-  }*/
 }
 
 bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
