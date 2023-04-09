@@ -1157,3 +1157,18 @@ espm::INGR::Data espm::INGR::GetData(
   result.effects = Effects(this).GetData(compressedFieldsCache).effects;
   return result;
 }
+
+espm::KYWD::Data espm::KYWD::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!memcmp(type, "EDID", 4)) {
+        result.editorId = data;
+      }
+    },
+    compressedFieldsCache);
+  return result;
+}
