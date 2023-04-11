@@ -1,27 +1,25 @@
 #include "DynamicFields.h"
-#include <JsEngine.h>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
 #include <vector>
+#include <optional>
 
 namespace {
-nlohmann::json JsValueToJson(const JsValue& v)
+nlohmann::json JsValueToJson(Napi::Env env, const Napi::Value& value)
 {
-  JsValue stringify =
-    JsValue::GlobalObject().GetProperty("JSON").GetProperty("stringify");
-  std::vector<JsValue> args = { JsValue::Undefined(), JsValue::Undefined() };
-  args[1] = v;
-  auto dump = static_cast<std::string>(stringify.Call(args));
+  auto builtinJson = env.Global().Get("JSON").As<Napi::Object>();
+  auto builtinStringify = builtinJson.Get("stringify").As<Napi::Function>();
+  auto result = builtinStringify.Call(builtinJson, { value });
+  auto dump = static_cast<std::string>(result.As<Napi::String>());
   return nlohmann::json::parse(dump);
 }
 
-JsValue JsonToJsValue(const nlohmann::json& j)
+Napi::Value JsonToJsValue(Napi::Env env, const nlohmann::json& j)
 {
-  JsValue parse =
-    JsValue::GlobalObject().GetProperty("JSON").GetProperty("parse");
-  std::vector<JsValue> args = { JsValue::Undefined(), JsValue::Undefined() };
-  args[1] = j.dump();
-  return parse.Call(args);
+  auto builtinJson = env.Global().Get("JSON").As<Napi::Object>();
+  auto builtinParse = builtinJson.Get("parse").As<Napi::Function>();
+  auto result = builtinParse.Call(builtinJson, { Napi::String::New(env, j.dump()) });
+  return result;
 }
 }
 
@@ -48,19 +46,25 @@ DynamicFields& DynamicFields::operator=(const DynamicFields& rhs)
   return *this;
 }
 
-void DynamicFields::Set(const std::string& propName, const JsValue& value)
+void DynamicFields::Set(Napi::Env env, const std::string& propName, const Napi::Value& value)
 {
   pImpl->jsonCache.reset();
-  pImpl->props[propName] = JsValueToJson(value);
+  pImpl->props[propName] = JsValueToJson(env, value);
 }
 
-JsValue DynamicFields::Get(const std::string& propName) const
+Napi::Value DynamicFields::Get(Napi::Env env, const std::string& propName) const
 {
   auto it = pImpl->props.find(propName);
   if (it == pImpl->props.end()) {
-    return JsValue::Undefined();
+    return env.Undefined();
   }
-  return JsonToJsValue(it->second);
+  return JsonToJsValue(env, it->second);
+}
+
+void DynamicFields::Set(const std::string& propName, const nlohmann::json& value)
+{
+  pImpl->jsonCache.reset();
+  pImpl->props[propName] = value;
 }
 
 const nlohmann::json& DynamicFields::GetAsJson() const
@@ -82,7 +86,7 @@ DynamicFields DynamicFields::FromJson(const nlohmann::json& j)
 {
   DynamicFields res;
   for (auto it = j.begin(); it != j.end(); ++it) {
-    res.Set(it.key(), JsonToJsValue(it.value()));
+    res.pImpl->props[it.key()] = it.value();
   }
   return res;
 }

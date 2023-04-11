@@ -3,8 +3,7 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
-
-class JsValue;
+#include <napi.h>
 
 class DynamicFields
 {
@@ -13,8 +12,10 @@ public:
   DynamicFields(const DynamicFields& rhs);
   DynamicFields& operator=(const DynamicFields& rhs);
 
-  void Set(const std::string& propName, const JsValue& value);
-  JsValue Get(const std::string& propName) const;
+  void Set(Napi::Env env, const std::string& propName, const Napi::Value& value);
+  Napi::Value Get(Napi::Env env, const std::string& propName) const;
+
+  void Set(const std::string &propName, const nlohmann::json& value);
 
   const nlohmann::json& GetAsJson() const;
   static DynamicFields FromJson(const nlohmann::json& j);

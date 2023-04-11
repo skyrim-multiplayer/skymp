@@ -37,7 +37,6 @@ struct GridPosInfo
 class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
-class JsValue;
 
 class FormCallbacks;
 
@@ -109,8 +108,8 @@ public:
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
   void SetProperty(const std::string& propertyName,
-                   const nlohmann::json& newValue,
-                   const JsValue& newValueChakra, bool isVisibleByOwner,
+                   const nlohmann::json& newValue, 
+                   bool isVisibleByOwner,
                    bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
