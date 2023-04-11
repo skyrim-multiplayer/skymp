@@ -1,8 +1,11 @@
 #pragma once
 #include <napi.h>
-
 #include "Networking.h"
 #include "PartOne.h"
+#include "NetworkingMock.h"
+#include <memory>
+#include <spdlog.h>
+#include "LocalizationProvider.h"
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {

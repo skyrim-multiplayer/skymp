@@ -1,5 +1,56 @@
 #include "ScampServer.h"
 
+#include "Bot.h"
+#include "AsyncSaveStorage.h"
+#include "EspmGameObject.h"
+#include "FileDatabase.h"
+#include "FormCallbacks.h"
+#include "GamemodeApi.h"
+#include "MigrationDatabase.h"
+#include "MongoDatabase.h"
+#include "MpFormGameObject.h"
+#include "NetworkingCombined.h"
+#include "ScriptStorage.h"
+#include "ScampServerListener.h"
+#include "formulas/TES5DamageFormula.h"
+#include "NapiHelper.h"
+#include "SettingsUtils.h"
+#include <cassert>
+#include <cctype>
+#include <memory>
+#include <napi.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+namespace {
+  std::shared_ptr<spdlog::logger>& GetLogger()
+  {
+    static auto g_logger = spdlog::stdout_color_mt("console");
+    return g_logger;
+  }
+
+  std::shared_ptr<ISaveStorage> CreateSaveStorage(
+  std::shared_ptr<IDatabase> db, std::shared_ptr<spdlog::logger> logger)
+  {
+    return std::make_shared<AsyncSaveStorage>(db, logger);
+  }
+
+  std::string GetPropertyAlphabet()
+  {
+    std::string alphabet;
+    for (char c = 'a'; c <= 'z'; c++) {
+      alphabet += c;
+    }
+    for (char c = 'A'; c <= 'Z'; c++) {
+      alphabet += c;
+    }
+    for (char c = '0'; c <= '9'; c++) {
+      alphabet += c;
+    }
+    alphabet += '_';
+    return alphabet;
+  }
+}
+
 Napi::FunctionReference ScampServer::constructor;
 
 Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
@@ -147,7 +198,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
     }
 
-    auto res = RunScript(Env(),
+    auto res = NapiHelper::RunScript(Env(),
                          "let require = global.require || "
                          "global.process.mainModule.constructor._load; let "
                          "Emitter = require('events'); new Emitter");
@@ -163,7 +214,7 @@ Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 {
   try {
     partOne->AttachSaveStorage(
-      CreateSaveStorage(CreateDatabase(serverSettings, logger), logger));
+      CreateSaveStorage(SettingsUtils::CreateDatabase(serverSettings, logger), logger));
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
@@ -191,10 +242,10 @@ Napi::Value ScampServer::On(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::CreateActor(const Napi::CallbackInfo& info)
 {
-  auto formId = info[0].As<Napi::Number>().Uint32Value();
-  auto pos = NapiValueToNiPoint3(info[1]);
-  auto angleZ = info[2].As<Napi::Number>().FloatValue();
-  auto cellOrWorld = info[3].As<Napi::Number>().Uint32Value();
+  auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
+  auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
+  auto angleZ = NapiHelper::ExtractFloat(info[2], "angleZ");
+  auto cellOrWorld = NapiHelper::ExtractUInt32(info[3], "cellOrWorld");
 
   int32_t userProfileId = -1;
   if (info[4].IsNumber())
@@ -386,15 +437,8 @@ Napi::Value ScampServer::ExecuteJavaScriptOnChakra(
   const Napi::CallbackInfo& info)
 {
   try {
-    if (!chakraEngine) {
-      chakraEngine.reset(new JsEngine);
-      chakraEngine->ResetContext(chakraTaskQueue);
-    }
-    auto src = static_cast<std::string>(info[0].As<Napi::String>());
-
-    RegisterChakraApi(chakraEngine);
-
-    chakraEngine->RunScript(src, "skymp5-gamemode/gamemode.js");
+    auto src = NapiHelper::ExtractString(info[0], "src");
+    return NapiHelper::RunScript(info.Env(), src);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
@@ -440,8 +484,6 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo &info) {
       if (!lookupRes.rec) {
         return translatedString;
       }
-
-      auto fields = JsValue::Array(0);
 
       auto& cache = partOne->worldState.GetEspmCache();
 
@@ -565,6 +607,16 @@ Napi::Value ScampServer::MakeEventSource(const Napi::CallbackInfo &info) {
     partOne->NotifyGamemodeApiStateChanged(gamemodeApiState);
   }
   catch(std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::Get(const Napi::CallbackInfo &info) {
+  try {
+    auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
+    auto propertyName = NapiHelper::ExtractString(info[1], "propertyName");
+  }
+  catch (std::exception &e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
