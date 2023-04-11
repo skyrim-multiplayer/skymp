@@ -4,25 +4,6 @@
 #include <vector>
 #include <optional>
 
-namespace {
-nlohmann::json JsValueToJson(Napi::Env env, const Napi::Value& value)
-{
-  auto builtinJson = env.Global().Get("JSON").As<Napi::Object>();
-  auto builtinStringify = builtinJson.Get("stringify").As<Napi::Function>();
-  auto result = builtinStringify.Call(builtinJson, { value });
-  auto dump = static_cast<std::string>(result.As<Napi::String>());
-  return nlohmann::json::parse(dump);
-}
-
-Napi::Value JsonToJsValue(Napi::Env env, const nlohmann::json& j)
-{
-  auto builtinJson = env.Global().Get("JSON").As<Napi::Object>();
-  auto builtinParse = builtinJson.Get("parse").As<Napi::Function>();
-  auto result = builtinParse.Call(builtinJson, { Napi::String::New(env, j.dump()) });
-  return result;
-}
-}
-
 struct DynamicFields::Impl
 {
   std::unordered_map<std::string, nlohmann::json> props;
@@ -46,25 +27,18 @@ DynamicFields& DynamicFields::operator=(const DynamicFields& rhs)
   return *this;
 }
 
-void DynamicFields::Set(Napi::Env env, const std::string& propName, const Napi::Value& value)
-{
-  pImpl->jsonCache.reset();
-  pImpl->props[propName] = JsValueToJson(env, value);
-}
-
-Napi::Value DynamicFields::Get(Napi::Env env, const std::string& propName) const
-{
-  auto it = pImpl->props.find(propName);
-  if (it == pImpl->props.end()) {
-    return env.Undefined();
-  }
-  return JsonToJsValue(env, it->second);
-}
-
 void DynamicFields::Set(const std::string& propName, const nlohmann::json& value)
 {
   pImpl->jsonCache.reset();
   pImpl->props[propName] = value;
+}
+
+nlohmann::json DynamicFields::Get(const std::string &propName) const {
+  auto it = pImpl->props.find(propName);
+  if (it == pImpl->props.end()) {
+    return nlohmann::json();
+  }
+  return it->second;
 }
 
 const nlohmann::json& DynamicFields::GetAsJson() const
