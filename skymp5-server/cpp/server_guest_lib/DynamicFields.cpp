@@ -1,8 +1,8 @@
 #include "DynamicFields.h"
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 struct DynamicFields::Impl
 {
@@ -27,13 +27,15 @@ DynamicFields& DynamicFields::operator=(const DynamicFields& rhs)
   return *this;
 }
 
-void DynamicFields::Set(const std::string& propName, const nlohmann::json& value)
+void DynamicFields::Set(const std::string& propName,
+                        const nlohmann::json& value)
 {
   pImpl->jsonCache.reset();
   pImpl->props[propName] = value;
 }
 
-nlohmann::json DynamicFields::Get(const std::string &propName) const {
+nlohmann::json DynamicFields::Get(const std::string& propName) const
+{
   auto it = pImpl->props.find(propName);
   if (it == pImpl->props.end()) {
     return nlohmann::json();

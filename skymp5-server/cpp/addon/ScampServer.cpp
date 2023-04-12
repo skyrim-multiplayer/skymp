@@ -1,7 +1,7 @@
 #include "ScampServer.h"
 
-#include "Bot.h"
 #include "AsyncSaveStorage.h"
+#include "Bot.h"
 #include "EspmGameObject.h"
 #include "FileDatabase.h"
 #include "FormCallbacks.h"
@@ -9,48 +9,48 @@
 #include "MigrationDatabase.h"
 #include "MongoDatabase.h"
 #include "MpFormGameObject.h"
-#include "NetworkingCombined.h"
-#include "ScriptStorage.h"
-#include "ScampServerListener.h"
-#include "formulas/TES5DamageFormula.h"
 #include "NapiHelper.h"
+#include "NetworkingCombined.h"
+#include "PapyrusUtils.h"
+#include "ScampServerListener.h"
+#include "ScriptStorage.h"
 #include "SettingsUtils.h"
+#include "formulas/TES5DamageFormula.h"
+#include "property_bindings/PropertyBindingFactory.h"
 #include <cassert>
 #include <cctype>
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include "property_bindings/PropertyBindingFactory.h"
-#include "PapyrusUtils.h"
 
 namespace {
-  std::shared_ptr<spdlog::logger>& GetLogger()
-  {
-    static auto g_logger = spdlog::stdout_color_mt("console");
-    return g_logger;
-  }
+std::shared_ptr<spdlog::logger>& GetLogger()
+{
+  static auto g_logger = spdlog::stdout_color_mt("console");
+  return g_logger;
+}
 
-  std::shared_ptr<ISaveStorage> CreateSaveStorage(
+std::shared_ptr<ISaveStorage> CreateSaveStorage(
   std::shared_ptr<IDatabase> db, std::shared_ptr<spdlog::logger> logger)
-  {
-    return std::make_shared<AsyncSaveStorage>(db, logger);
-  }
+{
+  return std::make_shared<AsyncSaveStorage>(db, logger);
+}
 
-  std::string GetPropertyAlphabet()
-  {
-    std::string alphabet;
-    for (char c = 'a'; c <= 'z'; c++) {
-      alphabet += c;
-    }
-    for (char c = 'A'; c <= 'Z'; c++) {
-      alphabet += c;
-    }
-    for (char c = '0'; c <= '9'; c++) {
-      alphabet += c;
-    }
-    alphabet += '_';
-    return alphabet;
+std::string GetPropertyAlphabet()
+{
+  std::string alphabet;
+  for (char c = 'a'; c <= 'z'; c++) {
+    alphabet += c;
   }
+  for (char c = 'A'; c <= 'Z'; c++) {
+    alphabet += c;
+  }
+  for (char c = '0'; c <= '9'; c++) {
+    alphabet += c;
+  }
+  alphabet += '_';
+  return alphabet;
+}
 }
 
 Napi::FunctionReference ScampServer::constructor;
@@ -87,14 +87,15 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("get", &ScampServer::Get),
       InstanceMethod("set", &ScampServer::Set),
       InstanceMethod("place", &ScampServer::Place),
-      InstanceMethod("lookupEspmRecordById", &ScampServer::LookupEspmRecordById),
+      InstanceMethod("lookupEspmRecordById",
+                     &ScampServer::LookupEspmRecordById),
       InstanceMethod("getEspmLoadOrder", &ScampServer::GetEspmLoadOrder),
       InstanceMethod("getDescFromId", &ScampServer::GetDescFromId),
       InstanceMethod("getIdFromDesc", &ScampServer::GetIdFromDesc),
       InstanceMethod("callPapyrusFunction", &ScampServer::CallPapyrusFunction),
-      InstanceMethod("registerPapyrusFunction", &ScampServer::RegisterPapyrusFunction),
-      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket)
-       });
+      InstanceMethod("registerPapyrusFunction",
+                     &ScampServer::RegisterPapyrusFunction),
+      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -200,10 +201,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
     }
 
-    auto res = NapiHelper::RunScript(Env(),
-                         "let require = global.require || "
-                         "global.process.mainModule.constructor._load; let "
-                         "Emitter = require('events'); new Emitter");
+    auto res =
+      NapiHelper::RunScript(Env(),
+                            "let require = global.require || "
+                            "global.process.mainModule.constructor._load; let "
+                            "Emitter = require('events'); new Emitter");
 
     emitter = Napi::Persistent(res.As<Napi::Object>());
     emit = Napi::Persistent(emitter.Value().Get("emit").As<Napi::Function>());
@@ -215,8 +217,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 {
   try {
-    partOne->AttachSaveStorage(
-      CreateSaveStorage(SettingsUtils::CreateDatabase(serverSettings, logger), logger));
+    partOne->AttachSaveStorage(CreateSaveStorage(
+      SettingsUtils::CreateDatabase(serverSettings, logger), logger));
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
@@ -471,70 +473,71 @@ Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
+{
   try {
-      auto translatedString = info.Env().Undefined();
+    auto translatedString = info.Env().Undefined();
 
-      if (!localizationProvider) {
-        return translatedString;
-      }
-
-      auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
-      auto lookupRes =
-        partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
-
-      if (!lookupRes.rec) {
-        return translatedString;
-      }
-
-      auto& cache = partOne->worldState.GetEspmCache();
-
-      espm::IterateFields_(
-        lookupRes.rec,
-        [&](const char* type, uint32_t size, const char* data) {
-          if (std::string(type, 4) != "FULL" || size != 4) {
-            return;
-          }
-
-          auto stringId = *reinterpret_cast<const uint32_t*>(data);
-          if (!serverSettings["loadOrder"].is_array()) {
-            return;
-          }
-
-          for (size_t i = 0; i < serverSettings["loadOrder"].size(); ++i) {
-            if (i != lookupRes.fileIdx) {
-              continue;
-            }
-
-            std::filesystem::path loadOrderElement =
-              static_cast<std::string>(serverSettings["loadOrder"][i]);
-
-            auto fileNameFull = loadOrderElement.filename().string();
-            auto fileNameWithoutExt =
-              fileNameFull.substr(0, fileNameFull.find_last_of("."));
-
-            std::transform(fileNameWithoutExt.begin(),
-                           fileNameWithoutExt.end(),
-                           fileNameWithoutExt.begin(),
-                           [](unsigned char c) { return std::tolower(c); });
-
-            translatedString = Napi::String::New(info.Env(), this->localizationProvider->Get(fileNameWithoutExt, stringId));
-          }
-        },
-        cache);
-
+    if (!localizationProvider) {
       return translatedString;
-  }
-  catch(std::exception& e) {
+    }
+
+    auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
+    auto lookupRes =
+      partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+
+    if (!lookupRes.rec) {
+      return translatedString;
+    }
+
+    auto& cache = partOne->worldState.GetEspmCache();
+
+    espm::IterateFields_(
+      lookupRes.rec,
+      [&](const char* type, uint32_t size, const char* data) {
+        if (std::string(type, 4) != "FULL" || size != 4) {
+          return;
+        }
+
+        auto stringId = *reinterpret_cast<const uint32_t*>(data);
+        if (!serverSettings["loadOrder"].is_array()) {
+          return;
+        }
+
+        for (size_t i = 0; i < serverSettings["loadOrder"].size(); ++i) {
+          if (i != lookupRes.fileIdx) {
+            continue;
+          }
+
+          std::filesystem::path loadOrderElement =
+            static_cast<std::string>(serverSettings["loadOrder"][i]);
+
+          auto fileNameFull = loadOrderElement.filename().string();
+          auto fileNameWithoutExt =
+            fileNameFull.substr(0, fileNameFull.find_last_of("."));
+
+          std::transform(fileNameWithoutExt.begin(), fileNameWithoutExt.end(),
+                         fileNameWithoutExt.begin(),
+                         [](unsigned char c) { return std::tolower(c); });
+
+          translatedString = Napi::String::New(
+            info.Env(),
+            this->localizationProvider->Get(fileNameWithoutExt, stringId));
+        }
+      },
+      cache);
+
+    return translatedString;
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::GetServerSettings(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::GetServerSettings(const Napi::CallbackInfo& info)
+{
   try {
     return NapiHelper::ParseJson(info.Env(), serverSettings);
-  }
-  catch(std::exception &e) {
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
@@ -550,322 +553,345 @@ Napi::Value ScampServer::Clear(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-Napi::Value ScampServer::MakeProperty(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::MakeProperty(const Napi::CallbackInfo& info)
+{
   try {
-      static const auto kAlphabet = GetPropertyAlphabet();
-      static const std::pair<size_t, size_t> kMinMaxSize = {1, 128};
-      auto isUnique = [this] (const std::string &s) { 
-        return gamemodeApiState.createdProperties.count(s) == 0; 
-      };
-      auto propertyName = NapiHelper::ExtractString(info[0], "propertyName", kAlphabet, kMinMaxSize, isUnique);
+    static const auto kAlphabet = GetPropertyAlphabet();
+    static const std::pair<size_t, size_t> kMinMaxSize = { 1, 128 };
+    auto isUnique = [this](const std::string& s) {
+      return gamemodeApiState.createdProperties.count(s) == 0;
+    };
+    auto propertyName = NapiHelper::ExtractString(
+      info[0], "propertyName", kAlphabet, kMinMaxSize, isUnique);
 
-      GamemodeApi::PropertyInfo propertyInfo;
+    GamemodeApi::PropertyInfo propertyInfo;
 
-      auto options = NapiHelper::ExtractObject(info[1], "options");
+    auto options = NapiHelper::ExtractObject(info[1], "options");
 
-      std::vector<std::pair<std::string, bool*>> booleans{
-        { "isVisibleByOwner", &propertyInfo.isVisibleByOwner },
-        { "isVisibleByNeighbors", &propertyInfo.isVisibleByNeighbors }
-      };
-      for (auto [optionName, ptr] : booleans) {
-        std::string argName = "options." + optionName;
-        auto v = NapiHelper::ExtractBoolean(options.Get(optionName.data()), argName.data());
-        *ptr = static_cast<bool>(v);
-      }
+    std::vector<std::pair<std::string, bool*>> booleans{
+      { "isVisibleByOwner", &propertyInfo.isVisibleByOwner },
+      { "isVisibleByNeighbors", &propertyInfo.isVisibleByNeighbors }
+    };
+    for (auto [optionName, ptr] : booleans) {
+      std::string argName = "options." + optionName;
+      auto v = NapiHelper::ExtractBoolean(options.Get(optionName.data()),
+                                          argName.data());
+      *ptr = static_cast<bool>(v);
+    }
 
-      std::vector<std::pair<std::string, std::string*>> strings{
-        { "updateNeighbor", &propertyInfo.updateNeighbor },
-        { "updateOwner", &propertyInfo.updateOwner }
-      };
-      for (auto [optionName, ptr] : strings) {
-        std::string argName = "options." + optionName;
-        static const std::pair<size_t, size_t> kMinMaxSize = {0, 100 * 1024};
-        auto v = NapiHelper::ExtractString(options.Get(optionName.data()), argName.data(), std::nullopt, kMinMaxSize);
-        *ptr = static_cast<std::string>(v);
-      }
+    std::vector<std::pair<std::string, std::string*>> strings{
+      { "updateNeighbor", &propertyInfo.updateNeighbor },
+      { "updateOwner", &propertyInfo.updateOwner }
+    };
+    for (auto [optionName, ptr] : strings) {
+      std::string argName = "options." + optionName;
+      static const std::pair<size_t, size_t> kMinMaxSize = { 0, 100 * 1024 };
+      auto v =
+        NapiHelper::ExtractString(options.Get(optionName.data()),
+                                  argName.data(), std::nullopt, kMinMaxSize);
+      *ptr = static_cast<std::string>(v);
+    }
 
-      gamemodeApiState.createdProperties[propertyName] = propertyInfo;
-      partOne->NotifyGamemodeApiStateChanged(gamemodeApiState);
+    gamemodeApiState.createdProperties[propertyName] = propertyInfo;
+    partOne->NotifyGamemodeApiStateChanged(gamemodeApiState);
 
-      return info.Env().Undefined();
-  }
-  catch(std::exception &e) {
+    return info.Env().Undefined();
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::MakeEventSource(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::MakeEventSource(const Napi::CallbackInfo& info)
+{
   try {
     static const auto kAlphabet = GetPropertyAlphabet();
-    static const std::pair<size_t, size_t> kMinMaxSizeEventName = {1, 128};
-    auto isUnique = [this] (const std::string &s) { 
-      return gamemodeApiState.createdEventSources.count(s) == 0; 
+    static const std::pair<size_t, size_t> kMinMaxSizeEventName = { 1, 128 };
+    auto isUnique = [this](const std::string& s) {
+      return gamemodeApiState.createdEventSources.count(s) == 0;
     };
-    auto eventName = NapiHelper::ExtractString(info[0], "eventName", kAlphabet, kMinMaxSizeEventName);
+    auto eventName = NapiHelper::ExtractString(info[0], "eventName", kAlphabet,
+                                               kMinMaxSizeEventName);
 
-    static const std::pair<size_t, size_t> kMinMaxSizeFunctionBody = {0, 100 * 1024};
-    auto functionBody = NapiHelper::ExtractString(info[1], "functionBody", std::nullopt, kMinMaxSizeFunctionBody);
+    static const std::pair<size_t, size_t> kMinMaxSizeFunctionBody = {
+      0, 100 * 1024
+    };
+    auto functionBody = NapiHelper::ExtractString(
+      info[1], "functionBody", std::nullopt, kMinMaxSizeFunctionBody);
     gamemodeApiState.createdEventSources[eventName] = { functionBody };
     partOne->NotifyGamemodeApiStateChanged(gamemodeApiState);
     return info.Env().Undefined();
-  }
-  catch(std::exception &e) {
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::Get(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::Get(const Napi::CallbackInfo& info)
+{
   try {
     auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
     auto propertyName = NapiHelper::ExtractString(info[1], "propertyName");
 
-    static auto g_standardPropertyBindings = PropertyBindingFactory().CreateStandardPropertyBindings();
+    static auto g_standardPropertyBindings =
+      PropertyBindingFactory().CreateStandardPropertyBindings();
 
     auto it = g_standardPropertyBindings.find(propertyName);
     if (it != g_standardPropertyBindings.end()) {
       return it->second->Get(info.Env(), *this, formId);
-    }
-    else {
-      return PropertyBindingFactory().CreateCustomPropertyBinding(propertyName)->Get(info.Env(), *this, formId);
+    } else {
+      return PropertyBindingFactory()
+        .CreateCustomPropertyBinding(propertyName)
+        ->Get(info.Env(), *this, formId);
     }
 
-  }
-  catch (std::exception &e) {
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::Set(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::Set(const Napi::CallbackInfo& info)
+{
   try {
     auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
     auto propertyName = NapiHelper::ExtractString(info[1], "propertyName");
     auto value = info[2];
 
-    static auto g_standardPropertyBindings = PropertyBindingFactory().CreateStandardPropertyBindings();
+    static auto g_standardPropertyBindings =
+      PropertyBindingFactory().CreateStandardPropertyBindings();
 
     auto it = g_standardPropertyBindings.find(propertyName);
     if (it != g_standardPropertyBindings.end()) {
       it->second->Set(info.Env(), *this, formId, value);
-    }
-    else {
-      PropertyBindingFactory().CreateCustomPropertyBinding(propertyName)->Set(info.Env(), *this, formId, value);
+    } else {
+      PropertyBindingFactory()
+        .CreateCustomPropertyBinding(propertyName)
+        ->Set(info.Env(), *this, formId, value);
     }
 
     return info.Env().Undefined();
-  }
-  catch (std::exception &e) {
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::Place(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::Place(const Napi::CallbackInfo& info)
+{
   try {
     auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
-      auto akFormToPlace =
-        partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
-      if (!akFormToPlace.rec) {
-        std::stringstream ss;
-        ss << std::hex << "Bad record Id " << globalRecordId;
-        throw std::runtime_error(ss.str());
-      }
+    auto akFormToPlace =
+      partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+    if (!akFormToPlace.rec) {
+      std::stringstream ss;
+      ss << std::hex << "Bad record Id " << globalRecordId;
+      throw std::runtime_error(ss.str());
+    }
 
-      std::string type = akFormToPlace.rec->GetType().ToString();
+    std::string type = akFormToPlace.rec->GetType().ToString();
 
-      LocationalData locationalData = { { 0, 0, 0 },
-                                        { 0, 0, 0 },
-                                        FormDesc::Tamriel() };
-      FormCallbacks callbacks = partOne->CreateFormCallbacks();
+    LocationalData locationalData = { { 0, 0, 0 },
+                                      { 0, 0, 0 },
+                                      FormDesc::Tamriel() };
+    FormCallbacks callbacks = partOne->CreateFormCallbacks();
 
-      std::unique_ptr<MpObjectReference> newRefr;
-      if (akFormToPlace.rec->GetType() == "NPC_") {
-        auto actor = new MpActor(locationalData, callbacks, globalRecordId);
-        newRefr.reset(actor);
-      } else {
-        newRefr.reset(new MpObjectReference(locationalData, callbacks,
-                                            globalRecordId, type));
-      }
+    std::unique_ptr<MpObjectReference> newRefr;
+    if (akFormToPlace.rec->GetType() == "NPC_") {
+      auto actor = new MpActor(locationalData, callbacks, globalRecordId);
+      newRefr.reset(actor);
+    } else {
+      newRefr.reset(new MpObjectReference(locationalData, callbacks,
+                                          globalRecordId, type));
+    }
 
-      auto worldState = &partOne->worldState;
-      auto newRefrId = worldState->GenerateFormId();
-      worldState->AddForm(std::move(newRefr), newRefrId);
+    auto worldState = &partOne->worldState;
+    auto newRefrId = worldState->GenerateFormId();
+    worldState->AddForm(std::move(newRefr), newRefrId);
 
-      auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
-      refr.ForceSubscriptionsUpdate();
+    auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
+    refr.ForceSubscriptionsUpdate();
 
-      return Napi::Number::New(info.Env(), refr.GetFormId());
-  }
-  catch (std::exception &e) {
+    return Napi::Number::New(info.Env(), refr.GetFormId());
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
+{
   try {
     auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
 
-      auto espmLookupResult = Napi::Object::New(info.Env());
+    auto espmLookupResult = Napi::Object::New(info.Env());
 
-      auto lookupRes =
-        partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
-      if (lookupRes.rec) {
-        auto fields = Napi::Array::New(info.Env());
+    auto lookupRes =
+      partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+    if (lookupRes.rec) {
+      auto fields = Napi::Array::New(info.Env());
 
-        auto& cache = partOne->worldState.GetEspmCache();
+      auto& cache = partOne->worldState.GetEspmCache();
 
-        espm::IterateFields_(
-          lookupRes.rec,
-          [&](const char* type, uint32_t size, const char* data) {
-            auto uint8arr = Napi::Uint8Array::New(info.Env(), size);
-            memcpy(uint8arr.Data(), data, size);
+      espm::IterateFields_(
+        lookupRes.rec,
+        [&](const char* type, uint32_t size, const char* data) {
+          auto uint8arr = Napi::Uint8Array::New(info.Env(), size);
+          memcpy(uint8arr.Data(), data, size);
 
-            auto push = fields.Get("push").As<Napi::Function>();
-            auto field = Napi::Object::New(info.Env());
-            field.Set("type", Napi::String::New(info.Env(), std::string(type, 4)));
-            field.Set("data", uint8arr);
-            push.Call({ fields, field });
-          },
-          cache);
+          auto push = fields.Get("push").As<Napi::Function>();
+          auto field = Napi::Object::New(info.Env());
+          field.Set("type",
+                    Napi::String::New(info.Env(), std::string(type, 4)));
+          field.Set("data", uint8arr);
+          push.Call({ fields, field });
+        },
+        cache);
 
-        auto id = Napi::Number::New(info.Env(), lookupRes.rec->GetId());
-        auto edid = Napi::String::New(info.Env(), lookupRes.rec->GetEditorId(cache));
-        auto type = Napi::String::New(info.Env(), lookupRes.rec->GetType().ToString());
-        auto flags = Napi::Number::New(info.Env(), lookupRes.rec->GetFlags());
+      auto id = Napi::Number::New(info.Env(), lookupRes.rec->GetId());
+      auto edid =
+        Napi::String::New(info.Env(), lookupRes.rec->GetEditorId(cache));
+      auto type =
+        Napi::String::New(info.Env(), lookupRes.rec->GetType().ToString());
+      auto flags = Napi::Number::New(info.Env(), lookupRes.rec->GetFlags());
 
-        auto record = Napi::Object::New(info.Env());
-        record.Set("id", id);
-        record.Set("editorId", edid);
-        record.Set("type", type);
-        record.Set("flags", flags);
-        record.Set("fields", fields);
-        espmLookupResult.Set("record", record);
+      auto record = Napi::Object::New(info.Env());
+      record.Set("id", id);
+      record.Set("editorId", edid);
+      record.Set("type", type);
+      record.Set("flags", flags);
+      record.Set("fields", fields);
+      espmLookupResult.Set("record", record);
 
-        espmLookupResult.Set(
-          "fileIndex", Napi::Number::New(info.Env(), lookupRes.fileIdx));
-      }
+      espmLookupResult.Set("fileIndex",
+                           Napi::Number::New(info.Env(), lookupRes.fileIdx));
+    }
 
-      return espmLookupResult;
-  }
-  catch (std::exception &e) {
+    return espmLookupResult;
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::GetEspmLoadOrder(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::GetEspmLoadOrder(const Napi::CallbackInfo& info)
+{
   try {
-      auto fileNames = partOne->GetEspm().GetFileNames();
-      auto arr = Napi::Array::New(info.Env(), fileNames.size());
-      for (int i = 0; i < static_cast<int>(fileNames.size()); ++i) {
-        arr.Set(i, Napi::String::New(info.Env(), fileNames[i]));
-      }
-      return arr;
-  }
-  catch (std::exception &e) {
+    auto fileNames = partOne->GetEspm().GetFileNames();
+    auto arr = Napi::Array::New(info.Env(), fileNames.size());
+    for (int i = 0; i < static_cast<int>(fileNames.size()); ++i) {
+      arr.Set(i, Napi::String::New(info.Env(), fileNames[i]));
+    }
+    return arr;
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::GetDescFromId(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::GetDescFromId(const Napi::CallbackInfo& info)
+{
   try {
     auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
     auto espmFileNames = partOne->GetEspm().GetFileNames();
     auto formDesc = FormDesc::FromFormId(formId, espmFileNames);
 
     return Napi::String::New(info.Env(), formDesc.ToString());
-  }
-  catch(std::exception &e) {
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
+{
   try {
     auto formDescStr = NapiHelper::ExtractString(info[0], "formDesc");
     auto formDesc = FormDesc::FromString(formDescStr);
     auto espmFileNames = partOne->GetEspm().GetFileNames();
 
     return Napi::Number::New(info.Env(), formDesc.ToFormId(espmFileNames));
-  }
-  catch(std::exception &e) {
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo &info) {
+Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
+{
   try {
-      auto callType = NapiHelper::ExtractString(info[0], "callType");
-      auto className = NapiHelper::ExtractString(info[1], "className");
-      auto functionName = NapiHelper::ExtractString(info[2], "functionName");
-      auto self =
-        PapyrusUtils::GetPapyrusValueFromJsValue(info[3], false, partOne->worldState);
+    auto callType = NapiHelper::ExtractString(info[0], "callType");
+    auto className = NapiHelper::ExtractString(info[1], "className");
+    auto functionName = NapiHelper::ExtractString(info[2], "functionName");
+    auto self = PapyrusUtils::GetPapyrusValueFromJsValue(info[3], false,
+                                                         partOne->worldState);
 
-      auto arr = NapiHelper::ExtractArray(info[4], "args");
-      auto arrSize = arr.Length();
+    auto arr = NapiHelper::ExtractArray(info[4], "args");
+    auto arrSize = arr.Length();
 
-      bool treatNumberAsInt = false; // TODO?
+    bool treatNumberAsInt = false; // TODO?
 
-      std::vector<VarValue> args;
-      args.resize(arrSize);
-      for (int i = 0; i < arrSize; ++i) {
-        args[i] = PapyrusUtils::GetPapyrusValueFromJsValue(
-          arr.Get(i), treatNumberAsInt, partOne->worldState);
-      }
+    std::vector<VarValue> args;
+    args.resize(arrSize);
+    for (int i = 0; i < arrSize; ++i) {
+      args[i] = PapyrusUtils::GetPapyrusValueFromJsValue(
+        arr.Get(i), treatNumberAsInt, partOne->worldState);
+    }
 
-      VarValue res;
+    VarValue res;
 
-      auto& vm = partOne->worldState.GetPapyrusVm();
-      if (callType == "method") {
-        res = vm.CallMethod(static_cast<IGameObject*>(self),
-                            functionName.data(), args);
-      } else if (callType == "global") {
-        res = vm.CallStatic(className, functionName, args);
-      } else {
-        throw std::runtime_error("Unknown call type '" + callType + "', expected one of ['method', 'global']");
-      }
+    auto& vm = partOne->worldState.GetPapyrusVm();
+    if (callType == "method") {
+      res = vm.CallMethod(static_cast<IGameObject*>(self), functionName.data(),
+                          args);
+    } else if (callType == "global") {
+      res = vm.CallStatic(className, functionName, args);
+    } else {
+      throw std::runtime_error("Unknown call type '" + callType +
+                               "', expected one of ['method', 'global']");
+    }
 
-      return PapyrusUtils::GetJsValueFromPapyrusValue(info.Env(), res, partOne->worldState.espmFiles);
-  }
-  catch(std::exception &e) {
+    return PapyrusUtils::GetJsValueFromPapyrusValue(
+      info.Env(), res, partOne->worldState.espmFiles);
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
 
-Napi::Value ScampServer::RegisterPapyrusFunction(const Napi::CallbackInfo &info) {
-      auto callType = NapiHelper::ExtractString(info[0], "callType");
-      auto className = NapiHelper::ExtractString(info[1], "className");
-      auto functionName = NapiHelper::ExtractString(info[2], "functionName");
-      auto f = NapiHelper::ExtractFunction(info[3], "f");
+Napi::Value ScampServer::RegisterPapyrusFunction(
+  const Napi::CallbackInfo& info)
+{
+  auto callType = NapiHelper::ExtractString(info[0], "callType");
+  auto className = NapiHelper::ExtractString(info[1], "className");
+  auto functionName = NapiHelper::ExtractString(info[2], "functionName");
+  auto f = NapiHelper::ExtractFunction(info[3], "f");
 
-      auto& vm = partOne->worldState.GetPapyrusVm();
+  auto& vm = partOne->worldState.GetPapyrusVm();
 
-      auto* wst = &partOne->worldState;
+  auto* wst = &partOne->worldState;
 
-      FunctionType fType;
+  FunctionType fType;
 
-      if (callType == "method") {
-        fType = FunctionType::Method;
-      } else if (callType == "global") {
-        fType = FunctionType::GlobalFunction;
-      } else {
-        throw std::runtime_error("Unknown callType " + callType);
+  if (callType == "method") {
+    fType = FunctionType::Method;
+  } else if (callType == "global") {
+    fType = FunctionType::GlobalFunction;
+  } else {
+    throw std::runtime_error("Unknown callType " + callType);
+  }
+
+  vm.RegisterFunction(
+    className, functionName, fType,
+    [f, wst, env = info.Env()](const VarValue& self,
+                               const std::vector<VarValue>& args) {
+      Napi::Value jsSelf =
+        PapyrusUtils::GetJsValueFromPapyrusValue(env, self, wst->espmFiles);
+
+      auto jsArgs = Napi::Array::New(env, args.size());
+      for (int i = 0; i < static_cast<int>(args.size()); ++i) {
+        jsArgs.Set(i,
+                   PapyrusUtils::GetJsValueFromPapyrusValue(env, args[i],
+                                                            wst->espmFiles));
       }
 
-      vm.RegisterFunction(
-        className, functionName, fType,
-        [f, wst, env = info.Env()](const VarValue& self, const std::vector<VarValue>& args) {
-          Napi::Value jsSelf = PapyrusUtils::GetJsValueFromPapyrusValue(env, self, wst->espmFiles);
+      auto jsResult = f.Call({ jsSelf, jsArgs });
 
-          auto jsArgs = Napi::Array::New(env, args.size());
-          for (int i = 0; i < static_cast<int>(args.size()); ++i) {
-            jsArgs.Set(
-              i, PapyrusUtils::GetJsValueFromPapyrusValue(env, args[i], wst->espmFiles));
-          }
+      bool treatResultAsInt = false; // TODO?
 
-          auto jsResult = f.Call({ jsSelf, jsArgs });
+      return PapyrusUtils::GetPapyrusValueFromJsValue(jsResult,
+                                                      treatResultAsInt, *wst);
+    });
 
-          bool treatResultAsInt = false; // TODO?
-
-          return PapyrusUtils::GetPapyrusValueFromJsValue(jsResult, treatResultAsInt, *wst);
-        });
-
-      return info.Env().Undefined();
+  return info.Env().Undefined();
 }

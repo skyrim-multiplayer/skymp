@@ -1,7 +1,9 @@
 #include "ActorNeighborsBinding.h"
 
-Napi::Value ActorNeighborsBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t formId) {
-  auto &partOne = scampServer.GetPartOne();
+Napi::Value ActorNeighborsBinding::Get(Napi::Env env, ScampServer& scampServer,
+                                       uint32_t formId)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 

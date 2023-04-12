@@ -1,8 +1,10 @@
 #include "AppearanceBinding.h"
 #include "NapiHelper.h"
 
-Napi::Value AppearanceBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t formId) {
-  auto &partOne = scampServer.GetPartOne();
+Napi::Value AppearanceBinding::Get(Napi::Env env, ScampServer& scampServer,
+                                   uint32_t formId)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
   auto& appearanceDump = actor.GetAppearanceAsJson();
@@ -13,10 +15,12 @@ Napi::Value AppearanceBinding::Get(Napi::Env env, ScampServer &scampServer, uint
   }
 }
 
-void AppearanceBinding::Set(Napi::Env env, ScampServer &scampServer, uint32_t formId, Napi::Value newValue) {
+void AppearanceBinding::Set(Napi::Env env, ScampServer& scampServer,
+                            uint32_t formId, Napi::Value newValue)
+{
   // TODO: Live update of appearance
   // TODO: Validation
-  auto &partOne = scampServer.GetPartOne();
+  auto& partOne = scampServer.GetPartOne();
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
   if (newValue.IsObject()) {
     auto appearanceDump = NapiHelper::Stringify(env, newValue);

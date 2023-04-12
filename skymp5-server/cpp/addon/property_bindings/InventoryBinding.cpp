@@ -1,15 +1,19 @@
 #include "InventoryBinding.h"
 #include "NapiHelper.h"
 
-Napi::Value InventoryBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t formId) {
-  auto &partOne = scampServer.GetPartOne();
+Napi::Value InventoryBinding::Get(Napi::Env env, ScampServer& scampServer,
+                                  uint32_t formId)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
   return NapiHelper::ParseJson(env, refr.GetInventory().ToJson());
 }
 
-void InventoryBinding::Set(Napi::Env env, ScampServer &scampServer, uint32_t formId, Napi::Value newValue) {
-  auto &partOne = scampServer.GetPartOne();
+void InventoryBinding::Set(Napi::Env env, ScampServer& scampServer,
+                           uint32_t formId, Napi::Value newValue)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
   if (newValue.IsObject()) {

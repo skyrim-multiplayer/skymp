@@ -2,7 +2,7 @@
 #include "NapiHelper.h"
 
 namespace {
-  auto EnsurePropertyExists(const GamemodeApi::State& state,
+auto EnsurePropertyExists(const GamemodeApi::State& state,
                           const std::string& propertyName)
 {
   auto it = state.createdProperties.find(propertyName);
@@ -15,16 +15,20 @@ namespace {
 }
 }
 
-CustomPropertyBinding::CustomPropertyBinding(const std::string &propertyName_) {
+CustomPropertyBinding::CustomPropertyBinding(const std::string& propertyName_)
+{
   this->propertyName = propertyName_;
 }
 
-std::string CustomPropertyBinding::GetPropertyName() const {
+std::string CustomPropertyBinding::GetPropertyName() const
+{
   return propertyName;
 }
 
-Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t formId) {
-  auto &partOne = scampServer.GetPartOne();
+Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer& scampServer,
+                                       uint32_t formId)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
@@ -32,16 +36,19 @@ Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer &scampServer, 
   return NapiHelper::ParseJson(env, refr.GetDynamicFields().Get(propertyName));
 }
 
-void CustomPropertyBinding::Set(Napi::Env env, ScampServer &scampServer, uint32_t formId, Napi::Value newValue) {
-  auto &partOne = scampServer.GetPartOne();
+void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
+                                uint32_t formId, Napi::Value newValue)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-  auto &state = scampServer.GetGamemodeApiState();
+  auto& state = scampServer.GetGamemodeApiState();
   auto it = EnsurePropertyExists(state, propertyName);
 
   auto newValueDump = NapiHelper::Stringify(env, newValue);
   auto newValueJson = nlohmann::json::parse(newValueDump);
 
-  refr.SetProperty(propertyName, newValueJson, it->second.isVisibleByOwner, it->second.isVisibleByNeighbors);
+  refr.SetProperty(propertyName, newValueJson, it->second.isVisibleByOwner,
+                   it->second.isVisibleByNeighbors);
 }

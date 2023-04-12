@@ -1,7 +1,9 @@
 #include "PosBinding.h"
 
-Napi::Value PosBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t formId) {
-  auto &partOne = scampServer.GetPartOne();
+Napi::Value PosBinding::Get(Napi::Env env, ScampServer& scampServer,
+                            uint32_t formId)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
   auto niPoint3 = refr.GetPos();
@@ -13,6 +15,10 @@ Napi::Value PosBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t fo
   return arr;
 }
 
-void PosBinding::Set(Napi::Env env, ScampServer &scampServer, uint32_t formId, Napi::Value newValue) {
-  throw std::runtime_error("mp.set is not implemented for '" + GetPropertyName() + "', use 'locationalData' instead");
+void PosBinding::Set(Napi::Env env, ScampServer& scampServer, uint32_t formId,
+                     Napi::Value newValue)
+{
+  throw std::runtime_error("mp.set is not implemented for '" +
+                           GetPropertyName() +
+                           "', use 'locationalData' instead");
 }

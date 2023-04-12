@@ -1,14 +1,14 @@
 #pragma once
-#include <napi.h>
-#include "Networking.h"
-#include "PartOne.h"
-#include "NetworkingMock.h"
-#include <memory>
-#include <spdlog/spdlog.h>
-#include "LocalizationProvider.h"
-#include "ScampServerListener.h"
-#include <nlohmann/json.hpp>
 #include "GamemodeApi.h"
+#include "LocalizationProvider.h"
+#include "Networking.h"
+#include "NetworkingMock.h"
+#include "PartOne.h"
+#include "ScampServerListener.h"
+#include <memory>
+#include <napi.h>
+#include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {
@@ -31,11 +31,11 @@ public:
   Napi::Value SetRaceMenuOpen(const Napi::CallbackInfo& info);
   Napi::Value GetActorsByProfileId(const Napi::CallbackInfo& info);
   Napi::Value SetEnabled(const Napi::CallbackInfo& info);
-  //Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
+  // Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
   Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
   Napi::Value ExecuteJavaScriptOnChakra(const Napi::CallbackInfo& info);
-  //Napi::Value Clear(const Napi::CallbackInfo& info);
+  // Napi::Value Clear(const Napi::CallbackInfo& info);
   Napi::Value WriteLogs(const Napi::CallbackInfo& info);
 
   Napi::Value GetLocalizedString(const Napi::CallbackInfo& info);
@@ -54,8 +54,11 @@ public:
   Napi::Value RegisterPapyrusFunction(const Napi::CallbackInfo& info);
   Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
 
-  const std::shared_ptr<PartOne> &GetPartOne() const { return partOne; }
-  const GamemodeApi::State &GetGamemodeApiState() const { return gamemodeApiState; }
+  const std::shared_ptr<PartOne>& GetPartOne() const { return partOne; }
+  const GamemodeApi::State& GetGamemodeApiState() const
+  {
+    return gamemodeApiState;
+  }
 
 private:
   std::shared_ptr<PartOne> partOne;

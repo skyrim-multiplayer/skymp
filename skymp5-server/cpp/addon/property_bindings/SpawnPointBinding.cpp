@@ -1,15 +1,19 @@
 #include "SpawnPointBinding.h"
 
-Napi::Value SpawnPointBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t formId) {
-  auto &partOne = scampServer.GetPartOne();
+Napi::Value SpawnPointBinding::Get(Napi::Env env, ScampServer& scampServer,
+                                   uint32_t formId)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
   LocationalData spawnPoint = actor.GetSpawnPoint();
 
   auto locationalData = Napi::Object::New(env);
-  
-  locationalData.Set("cellOrWorldDesc", Napi::String::New(env, spawnPoint.cellOrWorldDesc.ToString())); 
-  
+
+  locationalData.Set(
+    "cellOrWorldDesc",
+    Napi::String::New(env, spawnPoint.cellOrWorldDesc.ToString()));
+
   auto& niPoint3 = spawnPoint.pos;
   auto arr = Napi::Array::New(env, 3);
   arr.Set(uint32_t(0), Napi::Number::New(env, niPoint3.x));
@@ -27,6 +31,8 @@ Napi::Value SpawnPointBinding::Get(Napi::Env env, ScampServer &scampServer, uint
   return locationalData;
 }
 
-void SpawnPointBinding::Apply(MpActor &actor, const LocationalData &locationalData) {
+void SpawnPointBinding::Apply(MpActor& actor,
+                              const LocationalData& locationalData)
+{
   actor.SetSpawnPoint(locationalData);
 }

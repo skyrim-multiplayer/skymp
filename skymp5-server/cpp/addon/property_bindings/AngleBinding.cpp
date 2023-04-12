@@ -1,7 +1,9 @@
 #include "AngleBinding.h"
 
-Napi::Value AngleBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t formId) {
-  auto &partOne = scampServer.GetPartOne();
+Napi::Value AngleBinding::Get(Napi::Env env, ScampServer& scampServer,
+                              uint32_t formId)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
   auto& niPoint3 = refr.GetAngle();
@@ -13,6 +15,10 @@ Napi::Value AngleBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t 
   return arr;
 }
 
-void AngleBinding::Set(Napi::Env env, ScampServer &scampServer, uint32_t formId, Napi::Value newValue) {
-  throw std::runtime_error("mp.set is not implemented for '" + GetPropertyName() + "', use 'locationalData' instead");
+void AngleBinding::Set(Napi::Env env, ScampServer& scampServer,
+                       uint32_t formId, Napi::Value newValue)
+{
+  throw std::runtime_error("mp.set is not implemented for '" +
+                           GetPropertyName() +
+                           "', use 'locationalData' instead");
 }

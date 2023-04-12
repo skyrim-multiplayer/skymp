@@ -1,7 +1,9 @@
 #include "OnlinePlayersBinding.h"
 
-Napi::Value OnlinePlayersBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t) {
-  auto &partOne = scampServer.GetPartOne();
+Napi::Value OnlinePlayersBinding::Get(Napi::Env env, ScampServer& scampServer,
+                                      uint32_t)
+{
+  auto& partOne = scampServer.GetPartOne();
 
   auto n = partOne->serverState.userInfo.size();
   std::vector<uint32_t> onlineActors;
@@ -19,5 +21,5 @@ Napi::Value OnlinePlayersBinding::Get(Napi::Env env, ScampServer &scampServer, u
     arr.Set(i, Napi::Number::New(env, id));
     ++i;
   }
-  return arr; 
+  return arr;
 }
