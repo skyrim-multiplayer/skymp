@@ -1,5 +1,5 @@
 #include <memory>
-#include <spdlog.h>
+#include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
 
 #include "FileDatabase.h"

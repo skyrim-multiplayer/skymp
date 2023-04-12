@@ -4,8 +4,11 @@
 #include "PartOne.h"
 #include "NetworkingMock.h"
 #include <memory>
-#include <spdlog.h>
+#include <spdlog/spdlog.h>
 #include "LocalizationProvider.h"
+#include "ScampServerListener.h"
+#include <nlohmann/json.hpp>
+#include "GamemodeApi.h"
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {

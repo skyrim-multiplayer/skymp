@@ -1,14 +1,17 @@
 #include "CustomPropertyBinding.h"
+#include "NapiHelper.h"
 
 namespace {
-  void EnsurePropertyExists(const GamemodeApi::State& state,
+  auto EnsurePropertyExists(const GamemodeApi::State& state,
                           const std::string& propertyName)
 {
-  if (!state.createdProperties.count(propertyName)) {
+  auto it = state.createdProperties.find(propertyName);
+  if (it == state.createdProperties.end()) {
     std::stringstream ss;
     ss << "Property '" << propertyName << "' doesn't exist";
     throw std::runtime_error(ss.str());
   }
+  return it;
 }
 }
 
@@ -26,7 +29,7 @@ Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer &scampServer, 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
   EnsurePropertyExists(scampServer.GetGamemodeApiState(), propertyName);
-  return refr.GetDynamicFields().Get(env, propertyName);
+  return NapiHelper::ParseJson(env, refr.GetDynamicFields().Get(propertyName));
 }
 
 void CustomPropertyBinding::Set(Napi::Env env, ScampServer &scampServer, uint32_t formId, Napi::Value newValue) {
@@ -34,11 +37,11 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer &scampServer, uint32_
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-  EnsurePropertyExists(scampServer.GetGamemodeApiState(), propertyName);
-  auto& info = scampServer.GetGamemodeApiState().createdProperties.find(propertyName);
+  auto &state = scampServer.GetGamemodeApiState();
+  auto it = EnsurePropertyExists(state, propertyName);
 
   auto newValueDump = NapiHelper::Stringify(env, newValue);
   auto newValueJson = nlohmann::json::parse(newValueDump);
 
-  refr.SetProperty(propertyName, newValueJson, info->second.isVisibleByOwner, info->second.isVisibleByNeighbors);
+  refr.SetProperty(propertyName, newValueJson, it->second.isVisibleByOwner, it->second.isVisibleByNeighbors);
 }

@@ -4,18 +4,18 @@ Napi::Value OnlinePlayersBinding::Get(Napi::Env env, ScampServer &scampServer, u
   auto &partOne = scampServer.GetPartOne();
 
   auto n = partOne->serverState.userInfo.size();
-  std::vector<uint32_t> neighbors;
-  neighbors.reserve(n);
+  std::vector<uint32_t> onlineActors;
+  onlineActors.reserve(n);
 
   for (size_t i = 0; i < n; ++i) {
     if (auto actor = partOne->serverState.ActorByUser(i)) {
-      neighbors.push_back(actor->GetFormId());
+      onlineActors.push_back(actor->GetFormId());
     }
   }
 
-  auto arr = Napi::Array::New(env, neighbors.size());
+  auto arr = Napi::Array::New(env, onlineActors.size());
   int i = 0;
-  for (auto id : neighbors) {
+  for (auto id : onlineActors) {
     arr.Set(i, Napi::Number::New(env, id));
     ++i;
   }

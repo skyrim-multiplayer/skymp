@@ -15,6 +15,6 @@ void IsDisabledBinding::Set(Napi::Env env, ScampServer &scampServer, uint32_t fo
   if (refr.GetFormId() < 0xff000000) {
     throw std::runtime_error("'isDisabled' is not usable for non-FF forms");
   }
-  bool newValue = NapiHelper::ExtractBoolean(newValue, "newValue");
-  newValue ? refr.Disable() : refr.Enable();
+  bool newValueBoolean = NapiHelper::ExtractBoolean(newValue, "newValue");
+  newValueBoolean ? refr.Disable() : refr.Enable();
 }

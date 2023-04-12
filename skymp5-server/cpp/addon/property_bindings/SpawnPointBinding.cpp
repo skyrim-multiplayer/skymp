@@ -23,6 +23,8 @@ Napi::Value SpawnPointBinding::Get(Napi::Env env, ScampServer &scampServer, uint
   arrAngle.Set(uint32_t(1), Napi::Number::New(env, niPoint3Angle.y));
   arrAngle.Set(uint32_t(2), Napi::Number::New(env, niPoint3Angle.z));
   locationalData.Set("rot", arrAngle);
+
+  return locationalData;
 }
 
 void SpawnPointBinding::Apply(MpActor &actor, const LocationalData &locationalData) {

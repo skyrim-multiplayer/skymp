@@ -92,6 +92,17 @@ public:
     return result;
   }
 
+  static Napi::Function ExtractFunction(const Napi::Value &v, const char *argName) {
+    if (!v.IsFunction()) {
+      std::stringstream ss;
+      ss << "Expected '" << argName << "' to be function, but got '";
+      ss << v.ToString();
+      ss << "'";
+      throw std::runtime_error(ss.str());
+    }
+    return v.As<Napi::Function>();
+  }
+
   static Napi::Object ExtractObject(const Napi::Value &v, const char *argName) {
     if (!v.IsObject()) {
         std::stringstream ss;
@@ -101,6 +112,17 @@ public:
         throw std::runtime_error(ss.str());
       }
     return v.As<Napi::Object>();
+  }
+
+  static Napi::Array ExtractArray(const Napi::Value &v, const char *argName) {
+    if (!v.IsArray()) {
+      std::stringstream ss;
+        ss << "Expected '"<< argName << "' to be array, but got '";
+        ss << v.ToString();
+        ss << "'";
+        throw std::runtime_error(ss.str());
+    }
+    return v.As<Napi::Array>();
   }
 
   static NiPoint3 ExtractNiPoint3(const Napi::Value &v, const char *argName) {

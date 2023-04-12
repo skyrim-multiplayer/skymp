@@ -1,4 +1,5 @@
 #include "AppearanceBinding.h"
+#include "NapiHelper.h"
 
 Napi::Value AppearanceBinding::Get(Napi::Env env, ScampServer &scampServer, uint32_t formId) {
   auto &partOne = scampServer.GetPartOne();

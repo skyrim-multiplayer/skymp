@@ -20,6 +20,8 @@
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include "property_bindings/PropertyBindingFactory.h"
+#include "PapyrusUtils.h"
 
 namespace {
   std::shared_ptr<spdlog::logger>& GetLogger()
@@ -605,6 +607,7 @@ Napi::Value ScampServer::MakeEventSource(const Napi::CallbackInfo &info) {
     auto functionBody = NapiHelper::ExtractString(info[1], "functionBody", std::nullopt, kMinMaxSizeFunctionBody);
     gamemodeApiState.createdEventSources[eventName] = { functionBody };
     partOne->NotifyGamemodeApiStateChanged(gamemodeApiState);
+    return info.Env().Undefined();
   }
   catch(std::exception &e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
@@ -615,8 +618,254 @@ Napi::Value ScampServer::Get(const Napi::CallbackInfo &info) {
   try {
     auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
     auto propertyName = NapiHelper::ExtractString(info[1], "propertyName");
+
+    static auto g_standardPropertyBindings = PropertyBindingFactory().CreateStandardPropertyBindings();
+
+    auto it = g_standardPropertyBindings.find(propertyName);
+    if (it != g_standardPropertyBindings.end()) {
+      return it->second->Get(info.Env(), *this, formId);
+    }
+    else {
+      return PropertyBindingFactory().CreateCustomPropertyBinding(propertyName)->Get(info.Env(), *this, formId);
+    }
+
   }
   catch (std::exception &e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
+}
+
+Napi::Value ScampServer::Set(const Napi::CallbackInfo &info) {
+  try {
+    auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
+    auto propertyName = NapiHelper::ExtractString(info[1], "propertyName");
+    auto value = info[2];
+
+    static auto g_standardPropertyBindings = PropertyBindingFactory().CreateStandardPropertyBindings();
+
+    auto it = g_standardPropertyBindings.find(propertyName);
+    if (it != g_standardPropertyBindings.end()) {
+      it->second->Set(info.Env(), *this, formId, value);
+    }
+    else {
+      PropertyBindingFactory().CreateCustomPropertyBinding(propertyName)->Set(info.Env(), *this, formId, value);
+    }
+
+    return info.Env().Undefined();
+  }
+  catch (std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::Place(const Napi::CallbackInfo &info) {
+  try {
+    auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
+      auto akFormToPlace =
+        partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+      if (!akFormToPlace.rec) {
+        std::stringstream ss;
+        ss << std::hex << "Bad record Id " << globalRecordId;
+        throw std::runtime_error(ss.str());
+      }
+
+      std::string type = akFormToPlace.rec->GetType().ToString();
+
+      LocationalData locationalData = { { 0, 0, 0 },
+                                        { 0, 0, 0 },
+                                        FormDesc::Tamriel() };
+      FormCallbacks callbacks = partOne->CreateFormCallbacks();
+
+      std::unique_ptr<MpObjectReference> newRefr;
+      if (akFormToPlace.rec->GetType() == "NPC_") {
+        auto actor = new MpActor(locationalData, callbacks, globalRecordId);
+        newRefr.reset(actor);
+      } else {
+        newRefr.reset(new MpObjectReference(locationalData, callbacks,
+                                            globalRecordId, type));
+      }
+
+      auto worldState = &partOne->worldState;
+      auto newRefrId = worldState->GenerateFormId();
+      worldState->AddForm(std::move(newRefr), newRefrId);
+
+      auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
+      refr.ForceSubscriptionsUpdate();
+
+      return Napi::Number::New(info.Env(), refr.GetFormId());
+  }
+  catch (std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo &info) {
+  try {
+    auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
+
+      auto espmLookupResult = Napi::Object::New(info.Env());
+
+      auto lookupRes =
+        partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+      if (lookupRes.rec) {
+        auto fields = Napi::Array::New(info.Env());
+
+        auto& cache = partOne->worldState.GetEspmCache();
+
+        espm::IterateFields_(
+          lookupRes.rec,
+          [&](const char* type, uint32_t size, const char* data) {
+            auto uint8arr = Napi::Uint8Array::New(info.Env(), size);
+            memcpy(uint8arr.Data(), data, size);
+
+            auto push = fields.Get("push").As<Napi::Function>();
+            auto field = Napi::Object::New(info.Env());
+            field.Set("type", Napi::String::New(info.Env(), std::string(type, 4)));
+            field.Set("data", uint8arr);
+            push.Call({ fields, field });
+          },
+          cache);
+
+        auto id = Napi::Number::New(info.Env(), lookupRes.rec->GetId());
+        auto edid = Napi::String::New(info.Env(), lookupRes.rec->GetEditorId(cache));
+        auto type = Napi::String::New(info.Env(), lookupRes.rec->GetType().ToString());
+        auto flags = Napi::Number::New(info.Env(), lookupRes.rec->GetFlags());
+
+        auto record = Napi::Object::New(info.Env());
+        record.Set("id", id);
+        record.Set("editorId", edid);
+        record.Set("type", type);
+        record.Set("flags", flags);
+        record.Set("fields", fields);
+        espmLookupResult.Set("record", record);
+
+        espmLookupResult.Set(
+          "fileIndex", Napi::Number::New(info.Env(), lookupRes.fileIdx));
+      }
+
+      return espmLookupResult;
+  }
+  catch (std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::GetEspmLoadOrder(const Napi::CallbackInfo &info) {
+  try {
+      auto fileNames = partOne->GetEspm().GetFileNames();
+      auto arr = Napi::Array::New(info.Env(), fileNames.size());
+      for (int i = 0; i < static_cast<int>(fileNames.size()); ++i) {
+        arr.Set(i, Napi::String::New(info.Env(), fileNames[i]));
+      }
+      return arr;
+  }
+  catch (std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::GetDescFromId(const Napi::CallbackInfo &info) {
+  try {
+    auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
+    auto espmFileNames = partOne->GetEspm().GetFileNames();
+    auto formDesc = FormDesc::FromFormId(formId, espmFileNames);
+
+    return Napi::String::New(info.Env(), formDesc.ToString());
+  }
+  catch(std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo &info) {
+  try {
+    auto formDescStr = NapiHelper::ExtractString(info[0], "formDesc");
+    auto formDesc = FormDesc::FromString(formDescStr);
+    auto espmFileNames = partOne->GetEspm().GetFileNames();
+
+    return Napi::Number::New(info.Env(), formDesc.ToFormId(espmFileNames));
+  }
+  catch(std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo &info) {
+  try {
+      auto callType = NapiHelper::ExtractString(info[0], "callType");
+      auto className = NapiHelper::ExtractString(info[1], "className");
+      auto functionName = NapiHelper::ExtractString(info[2], "functionName");
+      auto self =
+        PapyrusUtils::GetPapyrusValueFromJsValue(info[3], false, partOne->worldState);
+
+      auto arr = NapiHelper::ExtractArray(info[4], "args");
+      auto arrSize = arr.Length();
+
+      bool treatNumberAsInt = false; // TODO?
+
+      std::vector<VarValue> args;
+      args.resize(arrSize);
+      for (int i = 0; i < arrSize; ++i) {
+        args[i] = PapyrusUtils::GetPapyrusValueFromJsValue(
+          arr.Get(i), treatNumberAsInt, partOne->worldState);
+      }
+
+      VarValue res;
+
+      auto& vm = partOne->worldState.GetPapyrusVm();
+      if (callType == "method") {
+        res = vm.CallMethod(static_cast<IGameObject*>(self),
+                            functionName.data(), args);
+      } else if (callType == "global") {
+        res = vm.CallStatic(className, functionName, args);
+      } else {
+        throw std::runtime_error("Unknown call type '" + callType + "', expected one of ['method', 'global']");
+      }
+
+      return PapyrusUtils::GetJsValueFromPapyrusValue(info.Env(), res, partOne->worldState.espmFiles);
+  }
+  catch(std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::RegisterPapyrusFunction(const Napi::CallbackInfo &info) {
+      auto callType = NapiHelper::ExtractString(info[0], "callType");
+      auto className = NapiHelper::ExtractString(info[1], "className");
+      auto functionName = NapiHelper::ExtractString(info[2], "functionName");
+      auto f = NapiHelper::ExtractFunction(info[3], "f");
+
+      auto& vm = partOne->worldState.GetPapyrusVm();
+
+      auto* wst = &partOne->worldState;
+
+      FunctionType fType;
+
+      if (callType == "method") {
+        fType = FunctionType::Method;
+      } else if (callType == "global") {
+        fType = FunctionType::GlobalFunction;
+      } else {
+        throw std::runtime_error("Unknown callType " + callType);
+      }
+
+      vm.RegisterFunction(
+        className, functionName, fType,
+        [f, wst, env = info.Env()](const VarValue& self, const std::vector<VarValue>& args) {
+          Napi::Value jsSelf = PapyrusUtils::GetJsValueFromPapyrusValue(env, self, wst->espmFiles);
+
+          auto jsArgs = Napi::Array::New(env, args.size());
+          for (int i = 0; i < static_cast<int>(args.size()); ++i) {
+            jsArgs.Set(
+              i, PapyrusUtils::GetJsValueFromPapyrusValue(env, args[i], wst->espmFiles));
+          }
+
+          auto jsResult = f.Call({ jsSelf, jsArgs });
+
+          bool treatResultAsInt = false; // TODO?
+
+          return PapyrusUtils::GetPapyrusValueFromJsValue(jsResult, treatResultAsInt, *wst);
+        });
+
+      return info.Env().Undefined();
 }
