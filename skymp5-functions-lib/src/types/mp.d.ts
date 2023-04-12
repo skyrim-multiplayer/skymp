@@ -191,9 +191,6 @@ export interface Mp {
   ): PapyrusValue;
 
   getServerSettings(): Record<string, unknown>;
-  readDataDirectory(): string[];
-  readDataFile(path: string): string;
-  writeDataFile(path: string, content: string): void;
 
   setPacketHistoryRecording(formId: number, enabled: boolean): void;
   getPacketHistory(formId: number): PacketHistory;

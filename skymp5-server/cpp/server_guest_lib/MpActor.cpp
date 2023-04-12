@@ -22,6 +22,14 @@ struct MpActor::Impl
   bool isBlockActive = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
     lastHitTimePoint;
+  using RestorationTimePoints =
+    std::unordered_map<espm::ActorValue,
+                       std::chrono::steady_clock::time_point>;
+  RestorationTimePoints restorationTimePoints = {
+    { espm::ActorValue::Health, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::Stamina, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::Magicka, std::chrono::steady_clock::time_point{} },
+  };
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -399,15 +407,49 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   } else {
     return;
   }
-
+  std::unordered_set<std::string> modFiles = { GetParent()->espmFiles.begin(),
+                                               GetParent()->espmFiles.end() };
+  bool hasSweetpie = modFiles.count("SweetPie.esp");
   for (const auto& effect : effects) {
     espm::ActorValue av =
       espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
     if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
         av == espm::ActorValue::Magicka) { // other types is unsupported
-      RestoreActorValue(av, effect.magnitude);
+      if (hasSweetpie) {
+        if (CanActorValueBeRestored(av)) {
+          // this coefficient (workaround) has been added for sake of game
+          // balance and because of disability to restrict players use potions
+          // often on client side
+          constexpr float kMagnitudeCoeff = 100.f;
+          RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
+        }
+      } else {
+        RestoreActorValue(av, effect.magnitude);
+      }
     }
   }
+}
+
+bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
+{
+  if (std::chrono::steady_clock::now() - GetLastRestorationTime(av) <
+      std::chrono::minutes(1)) {
+    return false;
+  }
+  SetLastRestorationTime(av, std::chrono::steady_clock::now());
+  return true;
+}
+
+std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
+  espm::ActorValue av) const
+{
+  return pImpl->restorationTimePoints[av];
+}
+
+void MpActor::SetLastRestorationTime(
+  espm::ActorValue av, std::chrono::steady_clock::time_point timePoint)
+{
+  pImpl->restorationTimePoints[av] = timePoint;
 }
 
 void MpActor::ModifyActorValuePercentage(espm::ActorValue av,

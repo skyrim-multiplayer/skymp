@@ -27,6 +27,7 @@ endif()
 add_library(${PROJECT_NAME} SHARED ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
+target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
 
 # Put build artifacts into build/dist/server
 if(WIN32)
