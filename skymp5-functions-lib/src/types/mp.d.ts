@@ -192,10 +192,10 @@ export interface Mp {
 
   getServerSettings(): Record<string, unknown>;
 
-  setPacketHistoryRecording(formId: number, enabled: boolean): void;
-  getPacketHistory(formId: number): PacketHistory;
-  clearPacketHistory(formId: number): void;
-  requestPacketHistoryPlayback(formId: number, packetHistory: PacketHistory): void;
+  setPacketHistoryRecording(userId: number, enabled: boolean): void;
+  getPacketHistory(userId: number): PacketHistory;
+  clearPacketHistory(userId: number): void;
+  requestPacketHistoryPlayback(userId: number, packetHistory: PacketHistory): void;
 
   [key: string]: unknown;
 }
