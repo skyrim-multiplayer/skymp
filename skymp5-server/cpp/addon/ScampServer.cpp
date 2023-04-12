@@ -75,8 +75,6 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("setEnabled", &ScampServer::SetEnabled),
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
-      InstanceMethod("executeJavaScriptOnChakra",
-                     &ScampServer::ExecuteJavaScriptOnChakra),
       InstanceMethod("writeLogs", &ScampServer::WriteLogs),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
@@ -431,18 +429,6 @@ Napi::Value ScampServer::GetUserByActor(const Napi::CallbackInfo& info)
   auto formId = info[0].As<Napi::Number>().Uint32Value();
   try {
     return Napi::Number::New(info.Env(), partOne->GetUserByActor(formId));
-  } catch (std::exception& e) {
-    throw Napi::Error::New(info.Env(), (std::string)e.what());
-  }
-  return info.Env().Undefined();
-}
-
-Napi::Value ScampServer::ExecuteJavaScriptOnChakra(
-  const Napi::CallbackInfo& info)
-{
-  try {
-    auto src = NapiHelper::ExtractString(info[0], "src");
-    return NapiHelper::RunScript(info.Env(), src);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

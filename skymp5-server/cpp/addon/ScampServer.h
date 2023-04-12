@@ -31,11 +31,8 @@ public:
   Napi::Value SetRaceMenuOpen(const Napi::CallbackInfo& info);
   Napi::Value GetActorsByProfileId(const Napi::CallbackInfo& info);
   Napi::Value SetEnabled(const Napi::CallbackInfo& info);
-  // Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
   Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
-  Napi::Value ExecuteJavaScriptOnChakra(const Napi::CallbackInfo& info);
-  // Napi::Value Clear(const Napi::CallbackInfo& info);
   Napi::Value WriteLogs(const Napi::CallbackInfo& info);
 
   Napi::Value GetLocalizedString(const Napi::CallbackInfo& info);
