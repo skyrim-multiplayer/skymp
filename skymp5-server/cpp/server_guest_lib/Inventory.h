@@ -86,7 +86,6 @@ public:
   uint32_t GetItemCount(uint32_t baseId) const;
   uint32_t GetTotalItemCount() const;
   bool IsEmpty() const;
-  void SetWorn(uint32_t baseId, Worn worn);
 
   std::vector<Entry> entries;
 
