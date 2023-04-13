@@ -6,8 +6,8 @@
 #include "MpChangeForms.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
-#include "SweetPieScript.h"
 #include "ServerState.h"
+#include "SweetPieScript.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 #include <random>
