@@ -72,8 +72,6 @@ private:
                    StarterKitType starterKitType);
   void Notify(MpActor& actor, const WorldState& worldState, uint32_t formId,
               uint32_t count, bool silent);
-  void EquipItem(MpActor& actor, uint32_t formId, bool preventRemoval = false,
-                 bool silent = false);
 
 private:
   LootboxTable lootboxTable;

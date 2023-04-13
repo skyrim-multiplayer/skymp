@@ -8,12 +8,12 @@
 #include "WorldState.h"
 #include <espm.h>
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <random>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
 
 std::mt19937 g_rng{ std::random_device{}() };
 
@@ -30,8 +30,8 @@ uint32_t GenerateRandomNumber(uint32_t leftBound, uint32_t rightBound)
 }
 
 void SweetPieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
-                                 const std::vector<std::string>& items,
-                                 LootboxItemType type, Tier tier)
+                            const std::vector<std::string>& items,
+                            LootboxItemType type, Tier tier)
 {
   for (const auto& item : items) {
     FormDesc formDesc = FormDesc::FromString(item);
@@ -264,7 +264,7 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
 }
 
 void SweetPieScript::AddItem(MpActor& actor, const WorldState& worldState,
-                             uint32_t itemBaseId, uint32_t count)
+                        uint32_t itemBaseId, uint32_t count)
 {
   actor.AddItem(itemBaseId, count);
   Notify(actor, worldState, itemBaseId, count, false);
@@ -295,8 +295,8 @@ SweetPieScript::Tier SweetPieScript::AcknowledgeTier(uint32_t chance)
 std::pair<SweetPieScript::LootboxItemType, SweetPieScript::Tier>
 SweetPieScript::AcknowledgeTypeAndTier(uint32_t weaponChance,
                                        uint32_t armorChance,
-                                       uint32_t consumableChance,
-                                       uint32_t nothingChance)
+                                  uint32_t consumableChance,
+                                  uint32_t nothingChance)
 {
   uint32_t chance = GenerateRandomNumber(1, 100);
   LootboxItemType type;
@@ -321,10 +321,9 @@ SweetPieScript::AcknowledgeTypeAndTier(uint32_t weaponChance,
   std::pair<LootboxItemType, Tier> tierAndType = std::make_pair(type, tier);
   return tierAndType;
 }
-uint32_t SweetPieScript::GetSlotItem(uint32_t weaponChance,
-                                     uint32_t armoryChacne,
-                                     uint32_t consumableChance,
-                                     uint32_t nothingChance)
+uint32_t SweetPieScript::GetSlotItem(uint32_t weaponChance, uint32_t armoryChacne,
+                                uint32_t consumableChance,
+                                uint32_t nothingChance)
 {
   std::pair<LootboxItemType, Tier> typeAndTier = AcknowledgeTypeAndTier(
     weaponChance, armoryChacne, consumableChance, nothingChance);
@@ -337,7 +336,7 @@ uint32_t SweetPieScript::GetSlotItem(uint32_t weaponChance,
 }
 
 void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
-                            uint32_t formId, uint32_t count, bool silent)
+                       uint32_t formId, uint32_t count, bool silent)
 {
   std::string type;
   std::stringstream ss;
@@ -391,7 +390,7 @@ void SweetPieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
 }
 
 void SweetPieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
-                                 StarterKitType type)
+                            StarterKitType type)
 {
   for (auto item : starterKitsMap[type]) {
     actor.AddItem(item, 1);
@@ -400,7 +399,7 @@ void SweetPieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
 }
 
 void SweetPieScript::AddStarterKitItems(MpActor& actor,
-                                        const WorldState& worldState)
+                                   const WorldState& worldState)
 {
   uint32_t chance = GenerateRandomNumber(1, 100);
   if (chance <= kChefKitChance) {
@@ -416,13 +415,13 @@ void SweetPieScript::AddStarterKitItems(MpActor& actor,
 }
 
 void SweetPieScript::AddPatronStarterKitItems(MpActor& actor,
-                                              const WorldState& worldState)
+                                         const WorldState& worldState)
 {
   AddKitItems(actor, worldState, StarterKitType::PatronKit);
 }
 
 void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
-                          uint32_t itemBaseId)
+                     uint32_t itemBaseId)
 {
   bool isKit = itemBaseId == EdibleItems::kPatronStarterKitPie;
   if (isKit) {
@@ -465,7 +464,6 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
       uint32_t boundWeaponBaseId = it->second.GetBaseId(),
                bookBaseId = it->first;
       actor.AddItem(boundWeaponBaseId, 1);
-      EquipItem(actor, boundWeaponBaseId);
       actor.RemoveItem(bookBaseId, 1, nullptr);
       uint32_t formId = actor.GetFormId();
       worldState.SetTimer(it->second.GetCooldown())
@@ -479,18 +477,4 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
           });
     }
   }
-}
-
-void SweetPieScript::EquipItem(MpActor& actor, uint32_t baseId,
-                               bool preventRemoval, bool silent)
-{
-  std::stringstream ss;
-  ss << "["
-     << nlohmann::json{ { "formId", baseId }, { "type", "weapon" } }.dump()
-     << ", " << (preventRemoval ? "true" : "false") << ", "
-     << (silent ? "true" : "false") << "]";
-  std::string args = ss.str();
-  spdlog::info(args);
-  SpSnippet("Actor", "EquipItem", args.data(), actor.GetFormId())
-    .Execute(&actor);
 }
