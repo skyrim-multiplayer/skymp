@@ -129,10 +129,13 @@ export class MpApiInteractor {
 
       const joinedPlayers = onlinePlayers.filter((x) => !onlinePlayersOld.includes(x));
       const leftPlayers = onlinePlayersOld.filter((x) => !onlinePlayers.includes(x));
-
+      
+      for (const actorId of joinedPlayers) {
+        MpApiInteractor.onPlayerJoinHardcoded(actorId);
+      }
+      
       if (listener.onPlayerJoin) {
         for (const actorId of joinedPlayers) {
-          MpApiInteractor.onPlayerJoinHardcoded(actorId);
           listener.onPlayerJoin(actorId);
         }
       }
