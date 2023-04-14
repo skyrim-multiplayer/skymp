@@ -128,7 +128,7 @@ public:
   }
 
   static Napi::Uint8Array ExtractUInt8Array(const Napi::Value& v,
-                                        const char* argName)
+                                            const char* argName)
   {
     if (!v.IsTypedArray()) {
       std::stringstream ss;
