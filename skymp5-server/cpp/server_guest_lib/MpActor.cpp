@@ -6,8 +6,8 @@
 #include "MpChangeForms.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
-#include "PieScript.h"
 #include "ServerState.h"
+#include "SweetPieScript.h"
 #include "WorldState.h"
 #include <NiPoint3.h>
 #include <random>
@@ -110,16 +110,13 @@ void MpActor::OnEquip(uint32_t baseId)
     VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
                         VarValue::None() };
     SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
-
-    WorldState* espmProvider = GetParent();
-    std::vector<std::string> espmFiles = espmProvider->espmFiles;
-
-    std::set<std::string> s;
-    s = { espmFiles.begin(), espmFiles.end() };
-    if (s.count("SweetPie.esp")) {
-      PieScript pieScript(espmFiles);
-      pieScript.Play(*this, *GetParent(), baseId);
-    }
+  }
+  std::set<std::string> s = { GetParent()->espmFiles.begin(),
+                              GetParent()->espmFiles.end() };
+  bool hasSweetPie = s.count("SweetPie.esp");
+  if (hasSweetPie) {
+    SweetPieScript SweetPieScript(GetParent()->espmFiles);
+    SweetPieScript.Play(*this, *GetParent(), baseId);
   }
 }
 
