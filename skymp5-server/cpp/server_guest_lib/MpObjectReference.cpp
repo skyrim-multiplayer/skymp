@@ -539,12 +539,11 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
 
 void MpObjectReference::SetProperty(const std::string& propertyName,
                                     const nlohmann::json& newValue,
-                                    const JsValue& newValueChakra,
                                     bool isVisibleByOwner,
                                     bool isVisibleByNeighbor)
 {
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    changeForm.dynamicFields.Set(propertyName, newValueChakra);
+    changeForm.dynamicFields.Set(propertyName, newValue);
   });
   if (isVisibleByNeighbor) {
     SendPropertyToListeners(propertyName.data(), newValue);
