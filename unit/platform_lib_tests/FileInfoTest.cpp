@@ -3,7 +3,7 @@
 #include <catch2/catch_all.hpp>
 
 #include "FileInfo.h"
-#include "TestUtils.hpp"
+#include "../TestUtils.hpp"
 
 extern espm::Loader l;
 
