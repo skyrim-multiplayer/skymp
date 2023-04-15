@@ -1,4 +1,5 @@
 import { sprintf } from "sprintf-js";
+import { craftSkill } from './skillMenuLogic';
 import { getName } from "../mpApiInteractor";
 import { ChatMessage, ChatText, createSystemMessage} from "../props/chatProperty";
 import { Command } from "./Command";
@@ -6,6 +7,7 @@ import { GameModeListener } from "./GameModeListener";
 import { PlayerController } from "./PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
+import { skillDice } from './skillDiceLogic';
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
@@ -147,6 +149,19 @@ export class SweetPieGameModeListener implements GameModeListener {
         } 
       },
     },
+    {
+      name: 'skill-dice',
+      handler: ({ actorId, controller, neighbors, inputText, masterApiId}) => {
+        skillDice(actorId, controller, neighbors, inputText, masterApiId);
+      },
+    },
+    {
+      name: 'skill',
+      handler: ({ actorId, controller, argsRaw}) => {
+        // controller.sendChatMessage(actorId, createSystemMessage(`${argsRaw}`));
+        craftSkill(actorId, controller, argsRaw);
+      }
+    }
   ]
 
   warmupTimerMaximum = 60;
