@@ -1,11 +1,10 @@
 {
   "name": "skymp",
   "version-string": "",
-  "homepage": "https://skymp.io",
-  "description": "Online mod for Skyrim SE.",
+  "homepage": "https://github.com/skyrim-multiplayer/skymp",
+  "description": "Multiplayer Mod & TypeScript SDK for Skyrim Special Edition",
   "dependencies": [
     "cmakerc",
-    "chakracore",
     "nlohmann-json",
     "cpp-httplib",
     "zlib",
@@ -19,6 +18,10 @@
     "simpleini",
     "node-api",
     "node-addon-api",
+    {
+      "name": "chakracore",
+      "platform": "windows"
+    },
     {
       "name": "directxtk",
       "platform": "windows"
