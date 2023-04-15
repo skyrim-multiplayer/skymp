@@ -4,15 +4,18 @@ import { ResizableBox } from 'react-resizable';
 import ChatCheckbox from './checkbox';
 import Dices from './dices';
 
-import './styles.scss';
 import ChatCorner from '../../img/chat_corner.svg';
 import Settings from './settings';
 import SendButton from './sendButton';
 import ChatInput from './input';
+import { replaceIfMoreThan20 } from '../../utils/replaceIfMoreThan20';
 
+import './styles.scss';
 const MAX_LENGTH = 2000; // Max message length
 const TIME_LIMIT = 5; // Seconds
 const SHOUT_LIMIT = 180; // Seconds
+const MAX_LINES = 10;
+const MAX_SHOUT_LENGTH = 100;
 
 const SHOUTREGEXP = /№(.*?)№/gi;
 
@@ -21,7 +24,6 @@ const Chat = (props) => {
   const [isInputFocus, changeInputFocus] = useState(false);
   const [hideNonRP, changeNonRPHide] = useState(false);
   const [disableDiceSounds, setDisableDiceSounds] = useState(false);
-  const [disableDiceColors, setDisableDiceColors] = useState(false);
   const [isPouchOpened, setPouchOpened] = useState(false);
   const [moveChat, setMoveChat] = useState(false);
   const [showSendButton, setSendButtonShow] = useState(false);
@@ -56,8 +58,10 @@ const Chat = (props) => {
         return acc;
       }, 0)
       : 0;
-    if (text !== '' && text.length <= MAX_LENGTH && isReset.current && shoutLen <= 100 && (shoutLen === 0 || shoutReset.current)) {
-      if (send !== undefined) send(text.trim());
+    if (text !== '' && text.length <= MAX_LENGTH && isReset.current && shoutLen <= MAX_SHOUT_LENGTH && (shoutLen === 0 || shoutReset.current)) {
+      if (send !== undefined) {
+        send(replaceIfMoreThan20(text.trim(), '\n', '', MAX_LINES));
+      }
       isReset.current = false;
       updateInput('');
       inputRef.current.innerHTML = '';
@@ -196,6 +200,7 @@ const Chat = (props) => {
                   onBlur={(e) => changeInputFocus(false)}
                   ref={inputRef}
                   fontSize={fontSize}
+                  maxLines={MAX_LINES}
                 />
                 {
                   showSendButton && <SendButton onClick={() => sendMessage(input)} />
@@ -228,7 +233,7 @@ const Chat = (props) => {
                     setMoveChat(e.target.checked);
                   }} />
                 { doesIncludeShout &&
-                  <span className={`chat-message-limit shout-limit ${shoutLength > 100 ? 'limit' : ''} text`}>{shoutLength}/100</span>
+                  <span className={`chat-message-limit shout-limit ${shoutLength > MAX_SHOUT_LENGTH ? 'limit' : ''} text`}>{shoutLength}/{MAX_SHOUT_LENGTH}</span>
                 }
                 <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
               </div>
