@@ -131,7 +131,7 @@ export const parseChatMessage = (text: string): ChatText[] => {
   });
 
   texts.forEach((msg) => {
-    msg.text = msg.text.replace(/\%|\№|(\(\()|(\)\))/gi, '');
+    msg.text = msg.text.replace(/\%|\№|\*|(\(\()|(\)\))/gi, '');
   });
 
   texts = texts.filter((msg) => msg.text !== '');
