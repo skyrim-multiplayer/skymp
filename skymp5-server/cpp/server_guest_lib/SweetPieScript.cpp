@@ -493,4 +493,5 @@ void SweetPieScript::EquipItem(MpActor& actor, uint32_t baseId,
   spdlog::info(args);
   SpSnippet("Actor", "EquipItem", args.data(), actor.GetFormId())
     .Execute(&actor);
+  SpSnippet("Actor", "DrawWeapon", "[]", actor.GetFormId()).Execute(&actor);
 }
