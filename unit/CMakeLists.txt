@@ -17,6 +17,11 @@ add_papyrus_library_ck(
 
 file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/*")
 list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+if(WIN32)
+  # TODO: make unit tests per project instead of OS-specific handling here
+  file(GLOB src_windows "${CMAKE_CURRENT_SOURCE_DIR}/windows/*")
+  list(APPEND src ${src_windows})
+endif()
 
 add_executable(unit ${src})
 
