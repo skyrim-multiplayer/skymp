@@ -2,8 +2,8 @@
 #include <Loader.h>
 #include <catch2/catch_all.hpp>
 
+#include "../TestUtils.hpp"
 #include "FileInfo.h"
-#include "TestUtils.hpp"
 
 extern espm::Loader l;
 

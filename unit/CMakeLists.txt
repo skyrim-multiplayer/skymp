@@ -17,13 +17,20 @@ add_papyrus_library_ck(
 
 file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/*")
 list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+if(TARGET platform_lib)
+  file(GLOB src_windows "${CMAKE_CURRENT_SOURCE_DIR}/platform_lib_tests/*")
+  list(APPEND src ${src_windows})
+endif()
 
 add_executable(unit ${src})
 
 find_package(Catch2 CONFIG REQUIRED)
 target_link_libraries(unit PRIVATE Catch2::Catch2)
 
-target_link_libraries(unit PUBLIC server_guest_lib platform_lib espm)
+target_link_libraries(unit PUBLIC server_guest_lib espm)
+if(TARGET platform_lib)
+  target_link_libraries(unit PUBLIC platform_lib)
+endif()
 apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
 

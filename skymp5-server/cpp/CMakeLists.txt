@@ -137,10 +137,3 @@ foreach(target ${VCPKG_DEPENDENT})
     target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
   endif()
 endforeach()
-
-find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
-find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
-string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
-
-# don't want to link against MpClientPlugin for example..
-target_link_libraries(server_guest_lib PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")
