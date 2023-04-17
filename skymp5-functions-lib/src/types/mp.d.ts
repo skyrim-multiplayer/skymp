@@ -182,9 +182,6 @@ export interface Mp {
   ): PapyrusValue;
 
   getServerSettings(): Record<string, unknown>;
-  readDataDirectory(): string[];
-  readDataFile(path: string): string;
-  writeDataFile(path: string, content: string): void;
 
   [key: string]: unknown;
 }

@@ -7,8 +7,10 @@ function(link_vcpkg_dependencies)
   endforeach()
 
   foreach(target ${A_TARGETS})
-    find_package(unofficial-chakracore CONFIG REQUIRED)
-    target_link_libraries(${target} PUBLIC unofficial::chakracore::chakracore)
+    if(MSVC)
+      find_package(unofficial-chakracore CONFIG REQUIRED)
+      target_link_libraries(${target} PUBLIC unofficial::chakracore::chakracore)
+    endif()
 
     find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
     get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)

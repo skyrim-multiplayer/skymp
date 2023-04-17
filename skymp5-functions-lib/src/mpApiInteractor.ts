@@ -249,6 +249,15 @@ export class MpApiInteractor {
           [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/ false]
         );
       },
+      removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null): void {
+        mp.callPapyrusFunction(
+          'method',
+          'ObjectReference',
+          'RemoveItem',
+          { type: 'form', desc: mp.getDescFromId(actorId) },
+          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/ false, akOtherContainer || null]
+        );
+      },
       getRoundsArray(): SweetPieRound[] {
         return PersistentStorage.getSingleton().rounds;
       },

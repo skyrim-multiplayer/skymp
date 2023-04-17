@@ -60,7 +60,6 @@ Contains relative or absolute path to a "data" directory which contains:
 This directory is exposed to `uiPort` and available via http.
 
 At this moment, the server uses this directory for non-vanilla needs too:
-* storing `_libkey.js`
 * storing web-based GUI in `${dataDir}/ui`
 * storing auto-generated manifest describing .esm/.esp files used and CRC32 of them
 

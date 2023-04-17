@@ -25,7 +25,7 @@ import { pid } from "process";
 import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
-import * as libkey from "./libkey";
+import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
 
@@ -41,19 +41,39 @@ const {
 
 const gamemodeCache = new Map<string, string>();
 
-const runGamemodeWithVm = (
-  gamemodeContents: string,
-  server: scampNative.ScampServer
-) => {
-  server.executeJavaScriptOnChakra(gamemodeContents);
-};
+function requireTemp(module: string) {
+  // https://blog.mastykarz.nl/create-temp-directory-app-node-js/
+  let tmpDir;
+  const appPrefix = 'skymp5-server';
+  try {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), appPrefix));
+
+    const contents = fs.readFileSync(module, 'utf8');
+    const tempPath = path.join(tmpDir, Math.random() + '-' + Date.now() + '.js');
+    fs.writeFileSync(tempPath, contents);
+
+    require(tempPath);
+  }
+  catch(e) {
+    console.error(e.stack);
+  }
+  finally {
+    try {
+      if (tmpDir) {
+        fs.rmSync(tmpDir, { recursive: true });
+      }
+    }
+    catch (e) {
+      console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
+    }
+  }
+}
 
 function requireUncached(
   module: string,
   clear: () => void,
   server: scampNative.ScampServer
 ): void {
-  delete require.cache[require.resolve(module)];
   let gamemodeContents = fs.readFileSync(require.resolve(module), "utf8");
 
   // Reload gamemode.js only if there are real changes
@@ -64,7 +84,26 @@ function requireUncached(
     while (1) {
       try {
         clear();
-        runGamemodeWithVm(gamemodeContents, server);
+
+        // In native module we now register mp-api methods into the ScampServer class
+        // This workaround allows code that is bound to global 'mp' object to run
+        globalThis.mp = globalThis.mp || {};
+        globalThis.mp.getLocalizedString = (...args: unknown[]) => (server as any).getLocalizedString(...args);
+        globalThis.mp.getServerSettings = (...args: unknown[]) => (server as any).getServerSettings(...args);
+        globalThis.mp.clear = (...args: unknown[]) => (server as any).clear(...args);
+        globalThis.mp.makeProperty = (...args: unknown[]) => (server as any).makeProperty(...args);
+        globalThis.mp.makeEventSource = (...args: unknown[]) => (server as any).makeEventSource(...args);
+        globalThis.mp.get = (...args: unknown[]) => (server as any).get(...args);
+        globalThis.mp.set = (...args: unknown[]) => (server as any).set(...args);
+        globalThis.mp.place = (...args: unknown[]) => (server as any).place(...args);
+        globalThis.mp.lookupEspmRecordById = (...args: unknown[]) => (server as any).lookupEspmRecordById(...args);
+        globalThis.mp.getEspmLoadOrder = (...args: unknown[]) => (server as any).getEspmLoadOrder(...args);
+        globalThis.mp.getDescFromId = (...args: unknown[]) => (server as any).getDescFromId(...args);
+        globalThis.mp.getIdFromDesc = (...args: unknown[]) => (server as any).getIdFromDesc(...args);
+        globalThis.mp.callPapyrusFunction = (...args: unknown[]) => (server as any).callPapyrusFunction(...args);
+        globalThis.mp.registerPapyrusFunction = (...args: unknown[]) => (server as any).registerPapyrusFunction(...args);
+
+        requireTemp(module);
         return;
       } catch (e) {
         if (`${e}`.indexOf("'JsRun' returned error 0x30002") === -1) {
@@ -85,27 +124,6 @@ systems.push(
   new Spawn(log),
   new Login(log, maxPlayers, master, port, ip, offlineMode)
 );
-
-const handleLibkeyJs = () => {
-  fs.writeFileSync("data/_libkey.js", libkey.src);
-  setTimeout(async () => {
-    while (1) {
-      await new Promise((r) => setTimeout(r, 5000));
-
-      const data = await new Promise<string>((resolve) =>
-        fs.readFile("data/_libkey.js", { encoding: "utf-8" }, (err, data) => {
-          err ? resolve("") : resolve(data);
-        })
-      );
-
-      if (data !== libkey.src) {
-        await new Promise<void>((r) =>
-          fs.writeFile("data/_libkey.js", libkey.src, () => r())
-        );
-      }
-    }
-  }, 1);
-};
 
 const setupStreams = (server: scampNative.ScampServer) => {
   class LogsStream {
@@ -132,8 +150,6 @@ const setupStreams = (server: scampNative.ScampServer) => {
 };
 
 const main = async () => {
-  handleLibkeyJs();
-
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
@@ -209,15 +225,7 @@ const main = async () => {
   });
 
   server.on("customPacket", (userId, content) => {
-    const contentObj = JSON.parse(content);
-
-    switch (contentObj.customPacketType) {
-      case "browserToken":
-        const newToken = `${contentObj.token}`;
-        console.log(`User ${userId} sets browser token to ${newToken}`);
-        chat.onBrowserTokenChange(userId, newToken);
-        break;
-    }
+    // At this moment we don't have any custom packets
   });
 
   const clear = () => server.clear();

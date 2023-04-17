@@ -1,10 +1,14 @@
-#include "PieScript.h"
+#include "SweetPieScript.h"
 
 #include "FormDesc.h"
 #include "MpActor.h"
 #include "NiPoint3.h"
 #include "SpSnippet.h"
+#include "SweetPieBoundWeapon.h"
 #include "WorldState.h"
+#include <espm.h>
+#include <iostream>
+#include <nlohmann/json.hpp>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -25,9 +29,9 @@ uint32_t GenerateRandomNumber(uint32_t leftBound, uint32_t rightBound)
   }
 }
 
-void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
-                            const std::vector<std::string>& items,
-                            LootboxItemType type, Tier tier)
+void SweetPieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
+                                 const std::vector<std::string>& items,
+                                 LootboxItemType type, Tier tier)
 {
   for (const auto& item : items) {
     FormDesc formDesc = FormDesc::FromString(item);
@@ -36,7 +40,7 @@ void PieScript::AddDLCItems(const std::vector<std::string>& espmFiles,
     lootboxTable[type][tier].push_back(id);
   }
 }
-PieScript::PieScript(const std::vector<std::string>& espmFiles)
+SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
 {
   lootboxTable = {
     { LootboxItemType::Weapon,
@@ -246,16 +250,27 @@ PieScript::PieScript(const std::vector<std::string>& espmFiles)
     { 0x07ABE9FA, { 0x07A59504, 0x07A59505 } },
     { 0x07ABE9FC, { 0x07A5950A, 0x07A5950B } },
   };
+
+  bookBoundWeapons = {
+    { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } },
+    { 0x07f42cc2, { 0x7a30b931, SweetPieBoundWeapon::SkillLevel::Novice } },
+    { 0x07f5c2ad, { 0x07f42cb5, SweetPieBoundWeapon::SkillLevel::Adept } },
+    { 0x000a26f1, { 0x07a4a191, SweetPieBoundWeapon::SkillLevel::Adept } },
+    { 0x07f42cc1, { 0x07f42cb4, SweetPieBoundWeapon::SkillLevel::Expert } },
+    { 0x000a26ed, { 0x00058f5e, SweetPieBoundWeapon::SkillLevel::Expert } },
+    { 0x07f38aab, { 0x07f42caf, SweetPieBoundWeapon::SkillLevel::Master } },
+    { 0x0009e2a9, { 0x00058f5f, SweetPieBoundWeapon::SkillLevel::Master } },
+  };
 }
 
-void PieScript::AddItem(MpActor& actor, const WorldState& worldState,
-                        uint32_t itemBaseId, uint32_t count)
+void SweetPieScript::AddItem(MpActor& actor, const WorldState& worldState,
+                             uint32_t itemBaseId, uint32_t count)
 {
   actor.AddItem(itemBaseId, count);
   Notify(actor, worldState, itemBaseId, count, false);
 }
 
-PieScript::Tier PieScript::AcknowledgeTier(uint32_t chance)
+SweetPieScript::Tier SweetPieScript::AcknowledgeTier(uint32_t chance)
 {
   Tier tier;
   if (chance <= kTier1Chance) {
@@ -277,10 +292,11 @@ PieScript::Tier PieScript::AcknowledgeTier(uint32_t chance)
   }
 }
 
-std::pair<PieScript::LootboxItemType, PieScript::Tier>
-PieScript::AcknowledgeTypeAndTier(uint32_t weaponChance, uint32_t armorChance,
-                                  uint32_t consumableChance,
-                                  uint32_t nothingChance)
+std::pair<SweetPieScript::LootboxItemType, SweetPieScript::Tier>
+SweetPieScript::AcknowledgeTypeAndTier(uint32_t weaponChance,
+                                       uint32_t armorChance,
+                                       uint32_t consumableChance,
+                                       uint32_t nothingChance)
 {
   uint32_t chance = GenerateRandomNumber(1, 100);
   LootboxItemType type;
@@ -305,9 +321,10 @@ PieScript::AcknowledgeTypeAndTier(uint32_t weaponChance, uint32_t armorChance,
   std::pair<LootboxItemType, Tier> tierAndType = std::make_pair(type, tier);
   return tierAndType;
 }
-uint32_t PieScript::GetSlotItem(uint32_t weaponChance, uint32_t armoryChacne,
-                                uint32_t consumableChance,
-                                uint32_t nothingChance)
+uint32_t SweetPieScript::GetSlotItem(uint32_t weaponChance,
+                                     uint32_t armoryChacne,
+                                     uint32_t consumableChance,
+                                     uint32_t nothingChance)
 {
   std::pair<LootboxItemType, Tier> typeAndTier = AcknowledgeTypeAndTier(
     weaponChance, armoryChacne, consumableChance, nothingChance);
@@ -319,8 +336,8 @@ uint32_t PieScript::GetSlotItem(uint32_t weaponChance, uint32_t armoryChacne,
   return 0;
 }
 
-void PieScript::Notify(MpActor& actor, const WorldState& worldState,
-                       uint32_t formId, uint32_t count, bool silent)
+void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
+                            uint32_t formId, uint32_t count, bool silent)
 {
   std::string type;
   std::stringstream ss;
@@ -352,7 +369,7 @@ void PieScript::Notify(MpActor& actor, const WorldState& worldState,
   (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(&actor);
 }
 
-void PieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
+void SweetPieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
 {
   uint32_t item1 = GetSlotItem(80, 10, 10, 0);
   uint32_t item2 = GetSlotItem(10, 80, 10, 0);
@@ -373,8 +390,8 @@ void PieScript::AddPieItems(MpActor& actor, const WorldState& worldState)
   }
 }
 
-void PieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
-                            StarterKitType type)
+void SweetPieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
+                                 StarterKitType type)
 {
   for (auto item : starterKitsMap[type]) {
     actor.AddItem(item, 1);
@@ -382,8 +399,8 @@ void PieScript::AddKitItems(MpActor& actor, const WorldState& worldState,
   }
 }
 
-void PieScript::AddStarterKitItems(MpActor& actor,
-                                   const WorldState& worldState)
+void SweetPieScript::AddStarterKitItems(MpActor& actor,
+                                        const WorldState& worldState)
 {
   uint32_t chance = GenerateRandomNumber(1, 100);
   if (chance <= kChefKitChance) {
@@ -398,14 +415,14 @@ void PieScript::AddStarterKitItems(MpActor& actor,
   }
 }
 
-void PieScript::AddPatronStarterKitItems(MpActor& actor,
-                                         const WorldState& worldState)
+void SweetPieScript::AddPatronStarterKitItems(MpActor& actor,
+                                              const WorldState& worldState)
 {
   AddKitItems(actor, worldState, StarterKitType::PatronKit);
 }
 
-void PieScript::Play(MpActor& actor, const WorldState& worldState,
-                     uint32_t itemBaseId)
+void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
+                          uint32_t itemBaseId)
 {
   bool isKit = itemBaseId == EdibleItems::kPatronStarterKitPie;
   if (isKit) {
@@ -432,10 +449,49 @@ void PieScript::Play(MpActor& actor, const WorldState& worldState,
                      FormDesc::FromFormId(wardrobeId, worldState.espmFiles) });
   }
 
-  auto it = miscLootTable.find(itemBaseId);
-  if (it != miscLootTable.end()) {
+  if (auto it = miscLootTable.find(itemBaseId); it != miscLootTable.end()) {
     for (const auto& item : miscLootTable[itemBaseId]) {
       AddItem(actor, worldState, item, 1);
     }
   }
+
+  if (auto it = bookBoundWeapons.find(itemBaseId);
+      it != bookBoundWeapons.end()) {
+    float currentMagickaPercentage =
+      actor.GetChangeForm().actorValues.magickaPercentage;
+    if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
+      actor.DamageActorValue(espm::ActorValue::Magicka,
+                             it->second.GetManacost());
+      uint32_t boundWeaponBaseId = it->second.GetBaseId(),
+               bookBaseId = it->first;
+      actor.AddItem(boundWeaponBaseId, 1);
+      EquipItem(actor, boundWeaponBaseId);
+      actor.RemoveItem(bookBaseId, 1, nullptr);
+      uint32_t formId = actor.GetFormId();
+      worldState.SetTimer(it->second.GetCooldown())
+        .Then(
+          [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
+            MpActor& actor = worldState.GetFormAt<MpActor>(formId);
+            actor.AddItem(bookBaseId, 1);
+            uint32_t count =
+              actor.GetInventory().GetItemCount(boundWeaponBaseId);
+            actor.RemoveItem(boundWeaponBaseId, count, nullptr);
+          });
+    }
+  }
+}
+
+void SweetPieScript::EquipItem(MpActor& actor, uint32_t baseId,
+                               bool preventRemoval, bool silent)
+{
+  std::stringstream ss;
+  ss << "["
+     << nlohmann::json{ { "formId", baseId }, { "type", "weapon" } }.dump()
+     << ", " << (preventRemoval ? "true" : "false") << ", "
+     << (silent ? "true" : "false") << "]";
+  std::string args = ss.str();
+  spdlog::info(args);
+  SpSnippet("Actor", "EquipItem", args.data(), actor.GetFormId())
+    .Execute(&actor);
+  SpSnippet("Actor", "DrawWeapon", "[]", actor.GetFormId()).Execute(&actor);
 }
