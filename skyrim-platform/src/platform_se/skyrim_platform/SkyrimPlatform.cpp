@@ -350,12 +350,12 @@ void SkyrimPlatform::AddUpdateTask(const std::function<void()>& f)
   pImpl->updateTasks.AddTask(f);
 }
 
-void SkyrimPlatform::PushAndWait(const std::function<void(int)>& f)
+void SkyrimPlatform::PushAndWait(const std::function<void()>& f)
 {
   pImpl->pool.PushAndWait(f);
 }
 
-void SkyrimPlatform::Push(const std::function<void(int)>& f)
+void SkyrimPlatform::Push(const std::function<void()>& f)
 {
   pImpl->pool.Push(f);
 }

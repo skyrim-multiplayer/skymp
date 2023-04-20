@@ -1,7 +1,8 @@
 #pragma once
+#include <BS_thread_pool_light.hpp>
 #include <cstdint>
-#include <ctpl/ctpl_stl.h>
 #include <memory>
+#include <mutex>
 
 class ThreadPoolWrapper
 {
@@ -11,20 +12,21 @@ public:
   {
   }
 
-  std::future<void> Push(const std::function<void(int32_t)>& task)
+  std::future<void> Push(const std::function<void()>& task)
   {
-    if (!pool) {
-      pool = std::make_unique<ctpl::thread_pool>(numThreads);
+    {
+      std::lock_guard l(initMutex);
+      if (!pool) {
+        pool = std::make_unique<BS::thread_pool_light>(numThreads);
+      }
     }
-    return pool->push(task);
+    return pool->submit(task);
   }
 
-  void PushAndWait(const std::function<void(int32_t)>& task)
-  {
-    Push(task).wait();
-  }
+  void PushAndWait(const std::function<void()>& task) { Push(task).wait(); }
 
 private:
-  std::unique_ptr<ctpl::thread_pool> pool;
+  std::unique_ptr<BS::thread_pool_light> pool;
   const int32_t numThreads;
+  std::mutex initMutex;
 };

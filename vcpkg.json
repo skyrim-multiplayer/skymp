@@ -17,6 +17,7 @@
     "robin-hood-hashing",
     "simpleini",
     "node-addon-api",
+    "bshoshany-thread-pool",
     {
       "name": "chakracore",
       "platform": "windows"
