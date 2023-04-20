@@ -23,10 +23,9 @@ if(SWEETPIE)
       -P ${CMAKE_SOURCE_DIR}/cmake/run_test_functions_lib.cmake
   )
 else()
-  file(WRITE "${CMAKE_BINARY_DIR}/empty_file" "")
   add_custom_target(skymp5-functions-lib ALL
     SOURCES ${sources}
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/empty_file ${CMAKE_BINARY_DIR}/dist/server/gamemode.js
+    COMMAND ${CMAKE_COMMAND} -E true > ${CMAKE_BINARY_DIR}/dist/server/gamemode.js
   )
 endif()
 
