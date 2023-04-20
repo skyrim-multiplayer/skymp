@@ -1,6 +1,6 @@
 #pragma once
-#include <cstdint>
 #include <BS_thread_pool_light.hpp>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 
@@ -23,10 +23,7 @@ public:
     return pool->submit(task);
   }
 
-  void PushAndWait(const std::function<void()>& task)
-  {
-    Push(task).wait();
-  }
+  void PushAndWait(const std::function<void()>& task) { Push(task).wait(); }
 
 private:
   std::unique_ptr<BS::thread_pool_light> pool;
