@@ -48,13 +48,19 @@ apply_default_settings(TARGETS ${PROJECT_NAME})
 
 # All targets are ready
 
-# On Windows create launch_server.bat in build/dist/server
-# This .bat file is for launching the server
 if(WIN32)
+  # On Windows create launch_server.bat in ./build/dist/server
+  # This .bat file is for launching the server
   set(bat "node dist_back/skymp5-server.js\n")
   set(bat "${bat}pause\n")
-
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
+
+  # Same but for dev (no pause, placed into ./build dir)
+  set(bat "setlocal\n") # setlocal/endlocal is for temporary cd
+  set(bat "${bat}cd dist/server\n")
+  set(bat "${bat}node dist_back/skymp5-server.js\n")
+  set(bat "${bat}endlocal\n")
+  file(WRITE ${CMAKE_BINARY_DIR}/launch_server.bat "${bat}")
 
   add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
