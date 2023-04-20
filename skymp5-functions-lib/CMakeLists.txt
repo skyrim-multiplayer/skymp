@@ -25,7 +25,7 @@ if(SWEETPIE)
 else()
   add_custom_target(skymp5-functions-lib ALL
     SOURCES ${sources}
-    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/dist/server/gamemode.js
+    COMMAND ${CMAKE_COMMAND} -E true > ${CMAKE_BINARY_DIR}/dist/server/gamemode.js
   )
 endif()
 
