@@ -710,24 +710,26 @@ Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
     auto lookupRes =
       partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
     if (lookupRes.rec) {
-      auto fields = Napi::Array::New(info.Env());
-
       auto& cache = partOne->worldState.GetEspmCache();
 
+      std::vector<Napi::Value> fields;
       espm::IterateFields_(
         lookupRes.rec,
         [&](const char* type, uint32_t size, const char* data) {
           auto uint8arr = Napi::Uint8Array::New(info.Env(), size);
           memcpy(uint8arr.Data(), data, size);
 
-          auto push = fields.Get("push").As<Napi::Function>();
           auto field = Napi::Object::New(info.Env());
           field.Set("type",
                     Napi::String::New(info.Env(), std::string(type, 4)));
           field.Set("data", uint8arr);
-          push.Call({ fields, field });
+          fields.push_back(field);
         },
         cache);
+      auto fieldsArray = Napi::Array::New(info.Env(), fields.size());
+      for (size_t i = 0; i < fields.size(); i++) {
+        fieldsArray.Set(i, fields[i]);
+      }
 
       auto id = Napi::Number::New(info.Env(), lookupRes.rec->GetId());
       auto edid =
@@ -741,7 +743,7 @@ Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
       record.Set("editorId", edid);
       record.Set("type", type);
       record.Set("flags", flags);
-      record.Set("fields", fields);
+      record.Set("fields", fieldsArray);
       espmLookupResult.Set("record", record);
 
       espmLookupResult.Set("fileIndex",
