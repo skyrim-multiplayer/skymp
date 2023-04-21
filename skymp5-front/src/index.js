@@ -19,6 +19,14 @@ if (!window.skyrimPlatform.widgets) {
   window.skyrimPlatform.widgets = new Widgets([]);
 }
 
+let validator = {
+  set: function(target, key, value) {
+      console.log(`The property ${key} has been updated with ${value}, stack trace: ${(new Error()).stack}`);
+      return true;
+  }
+};
+window.skyrimPlatform = new Proxy(window.skyrimPlatform, validator);
+
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
