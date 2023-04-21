@@ -703,50 +703,62 @@ Napi::Value ScampServer::Place(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
 {
   try {
+    spdlog::warn("1");
     auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
 
     auto espmLookupResult = Napi::Object::New(info.Env());
 
     auto lookupRes =
       partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
+    spdlog::warn("2");
     if (lookupRes.rec) {
+      spdlog::warn("2.1");
       auto fields = Napi::Array::New(info.Env());
 
       auto& cache = partOne->worldState.GetEspmCache();
-
+      spdlog::warn("2.2");
       espm::IterateFields_(
         lookupRes.rec,
         [&](const char* type, uint32_t size, const char* data) {
+          spdlog::warn("2.2a");
           auto uint8arr = Napi::Uint8Array::New(info.Env(), size);
           memcpy(uint8arr.Data(), data, size);
 
+          spdlog::warn("2.2b");
           auto push = fields.Get("push").As<Napi::Function>();
           auto field = Napi::Object::New(info.Env());
+          spdlog::warn("2.2c");
           field.Set("type",
                     Napi::String::New(info.Env(), std::string(type, 4)));
           field.Set("data", uint8arr);
+          spdlog::warn("2.2d");
           push.Call({ fields, field });
+          spdlog::warn("2.2e");
         },
         cache);
-
+      spdlog::warn("2.3");
       auto id = Napi::Number::New(info.Env(), lookupRes.rec->GetId());
       auto edid =
         Napi::String::New(info.Env(), lookupRes.rec->GetEditorId(cache));
       auto type =
         Napi::String::New(info.Env(), lookupRes.rec->GetType().ToString());
       auto flags = Napi::Number::New(info.Env(), lookupRes.rec->GetFlags());
-
+      spdlog::warn("2.4");
       auto record = Napi::Object::New(info.Env());
       record.Set("id", id);
       record.Set("editorId", edid);
       record.Set("type", type);
       record.Set("flags", flags);
       record.Set("fields", fields);
+      spdlog::warn("2.5");
       espmLookupResult.Set("record", record);
+      spdlog::warn("2.6");
 
       espmLookupResult.Set("fileIndex",
                            Napi::Number::New(info.Env(), lookupRes.fileIdx));
+      spdlog::warn("2.7");
     }
+    spdlog::warn("3");
 
     return espmLookupResult;
   } catch (std::exception& e) {
