@@ -283,6 +283,10 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 void MpObjectReference::Activate(MpObjectReference& activationSource,
                                  bool defaultProcessingOnly)
 {
+  if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
+    CheckInteractionAbility(activationSource);
+  }
+
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
 
   if (!activationBlockedByMpApi &&
@@ -953,8 +957,6 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
   auto worldState = GetParent();
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
-
-  CheckInteractionAbility(activationSource);
 
   auto base = loader.GetBrowser().LookupById(GetBaseId());
   if (!base.rec || !GetBaseId()) {
