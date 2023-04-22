@@ -845,6 +845,8 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
   auto functionName = NapiHelper::ExtractString(info[2], "functionName");
   auto f = NapiHelper::ExtractFunction(info[3], "f");
 
+  std::shared_ptr<Napi::Reference<Napi::Function>> functionRef(new Napi::Reference<Napi::Function>(Napi::Persistent<Napi::Function>(f)));
+
   auto& vm = partOne->worldState.GetPapyrusVm();
 
   auto* wst = &partOne->worldState;
@@ -861,7 +863,7 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
 
   vm.RegisterFunction(
     className, functionName, fType,
-    [f, wst, env = info.Env()](const VarValue& self,
+    [functionRef, wst, env = info.Env()](const VarValue& self,
                                const std::vector<VarValue>& args) {
       Napi::Value jsSelf =
         PapyrusUtils::GetJsValueFromPapyrusValue(env, self, wst->espmFiles);
@@ -873,7 +875,7 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
                                                             wst->espmFiles));
       }
 
-      auto jsResult = f.Call({ jsSelf, jsArgs });
+      auto jsResult = functionRef->Value().Call({ jsSelf, jsArgs });
 
       bool treatResultAsInt = false; // TODO?
 
