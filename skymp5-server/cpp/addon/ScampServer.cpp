@@ -845,7 +845,8 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
   auto functionName = NapiHelper::ExtractString(info[2], "functionName");
   auto f = NapiHelper::ExtractFunction(info[3], "f");
 
-  std::shared_ptr<Napi::Reference<Napi::Function>> functionRef(new Napi::Reference<Napi::Function>(Napi::Persistent<Napi::Function>(f)));
+  std::shared_ptr<Napi::Reference<Napi::Function>> functionRef(
+    new Napi::Reference<Napi::Function>(Napi::Persistent<Napi::Function>(f)));
 
   auto& vm = partOne->worldState.GetPapyrusVm();
 
@@ -864,7 +865,7 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
   vm.RegisterFunction(
     className, functionName, fType,
     [functionRef, wst, env = info.Env()](const VarValue& self,
-                               const std::vector<VarValue>& args) {
+                                         const std::vector<VarValue>& args) {
       Napi::Value jsSelf =
         PapyrusUtils::GetJsValueFromPapyrusValue(env, self, wst->espmFiles);
 
