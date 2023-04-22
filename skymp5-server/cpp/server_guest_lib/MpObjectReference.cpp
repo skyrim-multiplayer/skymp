@@ -283,7 +283,9 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 void MpObjectReference::Activate(MpObjectReference& activationSource,
                                  bool defaultProcessingOnly)
 {
-  CheckInteractionAbility(activationSource);
+  if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
+    CheckInteractionAbility(activationSource);
+  }
 
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
 
