@@ -2,8 +2,8 @@ export class FunctionInfo<F extends { toString: () => string }> {
   public constructor(private f: F) {}
 
   get text(): string {
-    return `try{${this.getTextWithoutErrorHandling()}}catch(e){` +
-        `ctx.sp.printConsole('[CTX ERROR]', e, '\\n', ${this.f})}`
+    // this part is different to functionInfo.ts used in skymp5-functions-lib
+    return this.getTextWithoutErrorHandling();
   }
 
   getText(args?: Record<string, unknown>): string {
