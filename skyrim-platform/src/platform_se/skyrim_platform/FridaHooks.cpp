@@ -251,31 +251,21 @@ void InstallApplyMasksToRenderTargetsHook()
  * Render Cursor Menu hook
  */
 bool g_allowHideCursorMenu = true;
-bool g_transparentCursor = false;
 
 void OnRenderCursorMenuEnter(GumInvocationContext* ic)
 {
   auto menu = FridaHooksUtils::GetMenuByName(RE::CursorMenu::MENU_NAME);
-  auto this_ = (int64_t*)ic->cpu_context->rcx;
-  if (!this_ || !g_allowHideCursorMenu || this_ != menu)
+  auto this_ = reinterpret_cast<int64_t*>(ic->cpu_context->rcx);
+  if (!this_ || !g_allowHideCursorMenu || this_ != menu) {
     return;
+  }
 
   auto& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
   auto& focusFlag = CEFUtils::DInputHook::ChromeFocus();
   if (visibleFlag && focusFlag) {
-    if (!g_transparentCursor) {
-      if (FridaHooksUtils::SetMenuNumberVariable(
-            RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 0)) {
-        g_transparentCursor = true;
-      }
-    }
+    FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 0);
   } else {
-    if (g_transparentCursor) {
-      if (FridaHooksUtils::SetMenuNumberVariable(
-            RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 100)) {
-        g_transparentCursor = false;
-      }
-    }
+    FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 100);
   }
 }
 
