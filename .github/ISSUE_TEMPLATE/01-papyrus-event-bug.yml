@@ -15,6 +15,7 @@ body:
       label: How to get this bug
       description: MINIMUM steps to reproduce. If ALWAYS not working, please give an example
       placeholder: |
+        EXAMPLE:
         1. Go to the Talos statue
         2. Hit altar with your iron sword
     validations:
@@ -34,5 +35,6 @@ body:
       label: What happens? (Other)
       description: If you choose Other, please tell us expected and real results
       placeholder: |
+        EXAMPLE:
         Expected result: Event sent right now
         Real result: Event sent after 2 seconds delay
