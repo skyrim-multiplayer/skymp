@@ -46,7 +46,7 @@ body:
       description: Text of the script (.psc file)
       placeholder: |
         ScriptName SweetReference extends ObjectReference
-        
+
         Event OnHit()
           Debug.Notification("hit!")
         EndEvent
