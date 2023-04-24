@@ -263,9 +263,11 @@ void OnRenderCursorMenuEnter(GumInvocationContext* ic)
   auto& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
   auto& focusFlag = CEFUtils::DInputHook::ChromeFocus();
   if (visibleFlag && focusFlag) {
-    FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 0);
+    FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME,
+                                           "_root.mc_Cursor._alpha", 0);
   } else {
-    FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 100);
+    FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME,
+                                           "_root.mc_Cursor._alpha", 100);
   }
 }
 
