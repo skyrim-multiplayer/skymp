@@ -40,12 +40,13 @@ body:
         EXAMPLE:
         Expected result: Event sent right now
         Real result: Event sent after 2 seconds delay
-  - type: markdown
+  - type: textarea
     attributes:
       label: Text of the script (.psc file)
       description: Text of the script (.psc file)
       placeholder: |
         ScriptName SweetReference extends ObjectReference
+        
         Event OnHit()
           Debug.Notification("hit!")
         EndEvent
