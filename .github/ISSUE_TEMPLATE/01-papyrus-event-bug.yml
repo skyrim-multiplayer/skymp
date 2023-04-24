@@ -3,19 +3,6 @@ description: One of events works incorrectly such as ObjectReference.OnHit, Obje
 title: "Bug in <Class and event name here>"
 labels: ["category:papyrus-bug"]
 body:
-  - type: dropdown
-    attributes:
-      label: Type of bug
-      description: Please choose one
-      options:
-        - Nothing happens when I call the function
-        - Nothing happens when my script catches the event
-        - The function gives wrong return value
-        - The function works differently to the original game
-        - The event works differently to the original game
-        - Other
-    validations:
-      required: true
   - type: textarea
     attributes:
       label: Environment
