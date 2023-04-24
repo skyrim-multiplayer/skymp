@@ -1,6 +1,6 @@
 name: Papyrus Event Bug
 description: One of events works incorrectly such as ObjectReference.OnHit, ObjectReference.OnActivate, etc
-title: "Bug in <Class and event name here>"
+title: "Bug in <ClassName.OnEventName>"
 labels: ["category:papyrus-bug"]
 body:
   - type: textarea
