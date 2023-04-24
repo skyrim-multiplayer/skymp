@@ -1,0 +1,12 @@
+name: Papyrus Bug
+description: Buggy behavior of Papyrus event or function
+title: "Bug in <Class and function name here>"
+labels: ["category:papyrus-bug"]
+body:
+  - type: input
+    attributes:
+      label: Class and function name
+      description: Class and function name
+      placeholder: ObjectReference.OnItemAdded
+    validations:
+      required: true
