@@ -7,7 +7,9 @@ body:
     attributes:
       label: Environment
       description: MINIMUM requirements to reproduce the bug
-      placeholder: You should be in Whiterun exterior and wear an iron sword
+      placeholder: |
+        EXAMPLE:
+        You should be in Whiterun exterior and wear an iron sword
     validations:
       required: true
   - type: textarea
