@@ -841,53 +841,53 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
   const Napi::CallbackInfo& info)
 {
   try {
-  auto callType = NapiHelper::ExtractString(info[0], "callType");
-  auto className = NapiHelper::ExtractString(info[1], "className");
-  auto functionName = NapiHelper::ExtractString(info[2], "functionName");
-  auto f = NapiHelper::ExtractFunction(info[3], "f");
+    auto callType = NapiHelper::ExtractString(info[0], "callType");
+    auto className = NapiHelper::ExtractString(info[1], "className");
+    auto functionName = NapiHelper::ExtractString(info[2], "functionName");
+    auto f = NapiHelper::ExtractFunction(info[3], "f");
 
-  std::shared_ptr<Napi::Reference<Napi::Function>> functionRef(
-    new Napi::Reference<Napi::Function>(Napi::Persistent<Napi::Function>(f)));
+    std::shared_ptr<Napi::Reference<Napi::Function>> functionRef(
+      new Napi::Reference<Napi::Function>(
+        Napi::Persistent<Napi::Function>(f)));
 
-  auto& vm = partOne->worldState.GetPapyrusVm();
+    auto& vm = partOne->worldState.GetPapyrusVm();
 
-  auto* wst = &partOne->worldState;
+    auto* wst = &partOne->worldState;
 
-  FunctionType fType;
+    FunctionType fType;
 
-  if (callType == "method") {
-    fType = FunctionType::Method;
-  } else if (callType == "global") {
-    fType = FunctionType::GlobalFunction;
-  } else {
-    throw std::runtime_error("Unknown callType " + callType);
-  }
+    if (callType == "method") {
+      fType = FunctionType::Method;
+    } else if (callType == "global") {
+      fType = FunctionType::GlobalFunction;
+    } else {
+      throw std::runtime_error("Unknown callType " + callType);
+    }
 
-  vm.RegisterFunction(
-    className, functionName, fType,
-    [functionRef, wst, env = info.Env()](const VarValue& self,
-                                         const std::vector<VarValue>& args) {
-      Napi::Value jsSelf =
-        PapyrusUtils::GetJsValueFromPapyrusValue(env, self, wst->espmFiles);
+    vm.RegisterFunction(
+      className, functionName, fType,
+      [functionRef, wst, env = info.Env()](const VarValue& self,
+                                           const std::vector<VarValue>& args) {
+        Napi::Value jsSelf =
+          PapyrusUtils::GetJsValueFromPapyrusValue(env, self, wst->espmFiles);
 
-      auto jsArgs = Napi::Array::New(env, args.size());
-      for (int i = 0; i < static_cast<int>(args.size()); ++i) {
-        jsArgs.Set(i,
-                   PapyrusUtils::GetJsValueFromPapyrusValue(env, args[i],
-                                                            wst->espmFiles));
-      }
+        auto jsArgs = Napi::Array::New(env, args.size());
+        for (int i = 0; i < static_cast<int>(args.size()); ++i) {
+          jsArgs.Set(i,
+                     PapyrusUtils::GetJsValueFromPapyrusValue(env, args[i],
+                                                              wst->espmFiles));
+        }
 
-      auto jsResult = functionRef->Value().Call({ jsSelf, jsArgs });
+        auto jsResult = functionRef->Value().Call({ jsSelf, jsArgs });
 
-      bool treatResultAsInt = false; // TODO?
+        bool treatResultAsInt = false; // TODO?
 
-      return PapyrusUtils::GetPapyrusValueFromJsValue(jsResult,
-                                                      treatResultAsInt, *wst);
-    });
+        return PapyrusUtils::GetPapyrusValueFromJsValue(
+          jsResult, treatResultAsInt, *wst);
+      });
 
-  return info.Env().Undefined();
-  }
-  catch(std::exception &e) {
+    return info.Env().Undefined();
+  } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
