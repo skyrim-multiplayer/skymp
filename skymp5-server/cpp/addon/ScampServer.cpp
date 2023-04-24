@@ -840,6 +840,7 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::RegisterPapyrusFunction(
   const Napi::CallbackInfo& info)
 {
+  try {
   auto callType = NapiHelper::ExtractString(info[0], "callType");
   auto className = NapiHelper::ExtractString(info[1], "className");
   auto functionName = NapiHelper::ExtractString(info[2], "functionName");
@@ -885,4 +886,8 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
     });
 
   return info.Env().Undefined();
+  }
+  catch(std::exception &e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
 }
