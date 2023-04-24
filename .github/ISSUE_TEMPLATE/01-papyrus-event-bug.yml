@@ -1,4 +1,4 @@
-name: Papyrus Event Bug
+name: "[SkyMP] Papyrus Event Bug"
 description: One of events works incorrectly such as ObjectReference.OnHit, ObjectReference.OnActivate, etc
 title: "Bug in <ClassName.OnEventName>"
 labels: ["category:papyrus-bug"]
@@ -40,3 +40,12 @@ body:
         EXAMPLE:
         Expected result: Event sent right now
         Real result: Event sent after 2 seconds delay
+  - type: markdown
+    attributes:
+      label: Text of the script (.psc file)
+      placeholder: |
+        ScriptName SweetReference extends ObjectReference
+
+        Event OnHit()
+          Debug.Notification("hit!")
+        EndEvent
