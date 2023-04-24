@@ -43,9 +43,9 @@ body:
   - type: markdown
     attributes:
       label: Text of the script (.psc file)
+      description: Text of the script (.psc file)
       placeholder: |
         ScriptName SweetReference extends ObjectReference
-
         Event OnHit()
           Debug.Notification("hit!")
         EndEvent
