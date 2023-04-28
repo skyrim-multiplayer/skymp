@@ -4,7 +4,7 @@ The recommended way to configure the server is setting up all required values in
 
 ## name
 
-Server's name. Displayed on skymp.io and in launcher.
+Server's name that will be published on a master server.
 
 ```json5
 {
