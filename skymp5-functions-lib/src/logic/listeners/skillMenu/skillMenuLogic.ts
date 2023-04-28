@@ -1,8 +1,8 @@
-import { PlayerController } from './PlayerController';
+import { PlayerController } from '../../PlayerController';
 import { memId, expId, skillRecipes, idBasedData, IPossessedSkills } from './skillMenuData';
-import { Mp } from '../types/mp';
-import { EvalProperty } from "../props/evalProperty";
-import { Ctx } from "../types/ctx";
+import { Mp } from '../../../types/mp';
+import { EvalProperty } from "../../../props/evalProperty";
+import { Ctx } from "../../../types/ctx";
 
 declare const mp: Mp;
 declare const ctx: Ctx;

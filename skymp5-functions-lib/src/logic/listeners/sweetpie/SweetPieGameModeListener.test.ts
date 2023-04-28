@@ -1,9 +1,9 @@
 import { sprintf } from 'sprintf-js';
-import { ChatMessage, createSystemMessage } from '../props/chatProperty';
+import { ChatMessage, createSystemMessage } from '../../../props/chatProperty';
 import { SweetPieGameModeListener } from './SweetPieGameModeListener';
 import { SweetPieMap } from './SweetPieMap';
 import { getPlayerCurrentRound, forceJoinRound, forceLeaveRound, determineDeathMatchWinners } from './SweetPieRound';
-import { makePlayerController, resetMocks } from './TestUtils';
+import { makePlayerController, resetMocks } from '../../TestUtils';
 
 describe('SweetPieGameModeListener: Activation default', () => {
   test('Activators should continue by default', () => {

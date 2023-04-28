@@ -1,5 +1,5 @@
 import { SweetPieRound, getPlayerCurrentRound, forceJoinRound, forceLeaveRound, determineDeathMatchWinners, getAvailableRound } from "./SweetPieRound";
-import { makePlayerController } from "./TestUtils";
+import { makePlayerController } from "../../TestUtils";
 
 describe("SweetPie", () => {
   test("Is able to find available round", () => {

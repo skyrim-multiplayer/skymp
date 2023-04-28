@@ -1,5 +1,5 @@
-import { GameModeListener } from "./GameModeListener";
-import { Counter } from "./PlayerController";
+import { GameModeListener } from "../GameModeListener";
+import { Counter } from "../../PlayerController";
 
 export type TimedRewardController = {
   getCurrentTime(): Date;
