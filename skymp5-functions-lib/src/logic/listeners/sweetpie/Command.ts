@@ -1,5 +1,5 @@
-import { ChatNeighbor } from "../props/chatProperty";
-import { PlayerController } from "./PlayerController";
+import { ChatNeighbor } from "../../../props/chatProperty";
+import { PlayerController } from "../../PlayerController";
 
 export interface HandlerInput {
   actorId: number;

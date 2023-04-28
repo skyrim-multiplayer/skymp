@@ -1,5 +1,5 @@
 import { ChatMessage } from "../props/chatProperty";
-import { SweetPieRound } from "./SweetPieRound";
+import { SweetPieRound } from "./listeners/sweetpie/SweetPieRound";
 
 export type Percentages = {
   health?: number;

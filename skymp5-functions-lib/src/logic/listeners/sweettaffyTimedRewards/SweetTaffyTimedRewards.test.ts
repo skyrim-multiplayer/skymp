@@ -1,4 +1,4 @@
-import { Counter } from "./PlayerController";
+import { Counter } from "../../PlayerController";
 import { dayStart, SweetTaffyTimedRewards, TimedRewardController } from "./SweetTaffyTimedRewards";
 
 export const mockController = () => {

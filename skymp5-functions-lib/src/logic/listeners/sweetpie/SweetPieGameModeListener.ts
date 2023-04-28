@@ -1,13 +1,13 @@
 import { sprintf } from "sprintf-js";
-import { craftSkill } from './skillMenuLogic';
-import { getName } from "../mpApiInteractor";
-import { ChatMessage, ChatText, createSystemMessage} from "../props/chatProperty";
+import { craftSkill } from '../skillMenu/skillMenuLogic';
+import { getName } from "../../../mpApiInteractor";
+import { ChatMessage, ChatText, createSystemMessage} from "../../../props/chatProperty";
 import { Command } from "./Command";
-import { GameModeListener } from "./GameModeListener";
-import { PlayerController } from "./PlayerController";
+import { GameModeListener } from "../GameModeListener";
+import { PlayerController } from "../../PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
-import { skillDice } from './skillDiceLogic';
+import { skillDice } from '../skillDice/skillDiceLogic';
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;

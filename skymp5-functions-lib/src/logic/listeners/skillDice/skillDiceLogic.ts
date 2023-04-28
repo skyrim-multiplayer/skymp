@@ -1,10 +1,10 @@
-import { ChatMessage, ChatText } from '../props/chatProperty';
-import { PlayerController } from './PlayerController';
-import { getName } from '../mpApiInteractor';
-import { getPossesedSkills } from './skillMenuLogic';
-import { EvalProperty } from '..//props/evalProperty';
-import { Ctx } from '../types/ctx';
-import { Mp } from '../types/mp';
+import { ChatMessage, ChatText } from '../../../props/chatProperty';
+import { PlayerController } from '../../PlayerController';
+import { getName } from '../../../mpApiInteractor';
+import { getPossesedSkills } from '../skillMenu/skillMenuLogic';
+import { EvalProperty } from '../../../props/evalProperty';
+import { Ctx } from '../../../types/ctx';
+import { Mp } from '../../../types/mp';
 import { armorTypes, weaponTypes } from './skillDiceData';
 import { ActorBase, Race } from 'skyrimPlatform';
 

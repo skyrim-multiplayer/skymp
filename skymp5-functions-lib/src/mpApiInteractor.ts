@@ -1,6 +1,6 @@
-import { GameModeListener } from "./logic/GameModeListener";
+import { GameModeListener } from "./logic/listeners/GameModeListener";
 import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
-import { SweetPieRound } from "./logic/SweetPieRound";
+import { SweetPieRound } from "./logic/listeners/sweetpie/SweetPieRound";
 import { ChatMessage, ChatNeighbor, ChatProperty } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
