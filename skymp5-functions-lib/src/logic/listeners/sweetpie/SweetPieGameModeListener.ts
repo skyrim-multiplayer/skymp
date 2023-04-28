@@ -342,7 +342,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   onPlayerJoin(actorId: number) {
     //this.controller.setSpawnPoint(actorId, this.hallSpawnPointName);
-    // see onPlayerJoin in DeathSystem
+    // see onPlayerJoin in DeathSystem, see also commented lines in describe('SweetPieGameModeListener: OnJoin', ...
   }
 
   everySecond() {
