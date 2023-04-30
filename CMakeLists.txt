@@ -52,7 +52,7 @@ else()
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
 endif()
 
-cmake_minimum_required(VERSION 3.18.2)
+cmake_minimum_required(VERSION 3.19)
 project(skymp)
 enable_testing()
 
@@ -61,8 +61,8 @@ option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h"
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
 option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
-option(BUILD_GAMEMODE "Build gamemode" ON)
-option(OFFLINE_MODE "Build gamemode in offline mode" OFF)
+option(BUILD_GAMEMODE "Build gamemode" OFF)
+option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
