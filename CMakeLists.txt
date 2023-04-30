@@ -58,17 +58,19 @@ enable_testing()
 
 # Bool options
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
-option(SWEETPIE "Affects default client and server configs" ON)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
 option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
+option(BUILD_GAMEMODE "Build gamemode" ON)
+option(OFFLINE_MODE "Build gamemode in offline mode" OFF)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
-message(STATUS SWEETPIE=${SWEETPIE})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
 message(STATUS SKYRIM_SE=${SKYRIM_SE})
 message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
 message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
+message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})
+message(STATUS OFFLINE_MODE=${OFFLINE_MODE})
 
 # Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
 
