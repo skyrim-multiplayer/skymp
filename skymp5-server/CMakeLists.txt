@@ -80,54 +80,6 @@ endif()
 
 message(STATUS "esm_prefix is '${esm_prefix}'")
 
-# set(server_settings_json "{
-#   \"dataDir\": \"data\",
-#   \"loadOrder\": [
-#     \"${esm_prefix}Skyrim.esm\",
-#     \"${esm_prefix}Update.esm\",
-#     \"${esm_prefix}Dawnguard.esm\",
-#     \"${esm_prefix}HearthFires.esm\",
-#     \"${esm_prefix}Dragonborn.esm\"
-#   ],
-#   \"ip\": \"127.0.0.1\",
-#   \"name\": \"My Server\",
-#   \"offlineMode\": true
-# }
-# ")
-
-# set(server_settings_json_sweetpie "{
-#   \"dataDir\": \"data\",
-#   \"loadOrder\": [
-#     \"${esm_prefix}Skyrim.esm\",
-#     \"${esm_prefix}Update.esm\",
-#     \"${esm_prefix}Dawnguard.esm\",
-#     \"${esm_prefix}HearthFires.esm\",
-#     \"${esm_prefix}Dragonborn.esm\",
-#     \"${esm_prefix}RavenOnMyShoulder.esp\",
-#     \"${esm_prefix}SweetPie.esp\"
-#   ],
-#   \"name\": \"SweetPie\",
-#   \"startPoints\": [
-#     {
-#       \"pos\": [ 18522.08, 10218.17, 624.46 ],
-#       \"worldOrCell\": \"0x6042b5f\",
-#       \"angleZ\": 0
-#     }
-#   ]
-# }
-# ")
-
-# if(SWEETPIE)
-#   file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json_sweetpie}")
-# else()
-#   file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json}")
-# endif()
-
-# add_custom_command(
-#   TARGET ${PROJECT_NAME} POST_BUILD
-#   COMMAND ${CMAKE_COMMAND} -DSRC_FILE=${PROJECT_BINARY_DIR}/server-settings.json.tmp -DDST_FILE=${CMAKE_BINARY_DIR}/dist/server/server-settings.json -P ${CMAKE_SOURCE_DIR}/cmake/scripts/copy_if_not_exists.cmake
-# )
-
 add_custom_command(
   TARGET ${PROJECT_NAME} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -DSERVER_SETTINGS_JSON_PATH=${CMAKE_BINARY_DIR}/dist/server/server-settings.json -DOFFLINE_MODE=${OFFLINE_MODE} -P ${CMAKE_SOURCE_DIR}/cmake/scripts/generate_server_settings.cmake
