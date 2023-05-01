@@ -6,8 +6,8 @@ Napi::Value EquipmentBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  auto& equipmentDump = actor.GetEquipmentAsJson();
+  auto actor = partOne->worldState.Get<MpActor>(formId);
+  auto& equipmentDump = actor->GetEquipmentAsJson();
   if (!equipmentDump.empty()) {
     return NapiHelper::ParseJson(env, equipmentDump);
   } else {

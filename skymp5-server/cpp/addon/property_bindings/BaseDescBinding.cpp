@@ -5,9 +5,9 @@ Napi::Value BaseDescBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
+  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
   auto desc =
-    FormDesc::FromFormId(refr.GetBaseId(), partOne->worldState.espmFiles)
+    FormDesc::FromFormId(refr->GetBaseId(), partOne->worldState.espmFiles)
       .ToString();
   return Napi::String::New(env, desc);
 }

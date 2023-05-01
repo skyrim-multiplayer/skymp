@@ -471,11 +471,11 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
       worldState.SetTimer(it->second.GetCooldown())
         .Then(
           [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
-            MpActor& actor = worldState.GetFormAt<MpActor>(formId);
-            actor.AddItem(bookBaseId, 1);
+            auto actor = worldState.Get<MpActor>(formId);
+            actor->AddItem(bookBaseId, 1);
             uint32_t count =
-              actor.GetInventory().GetItemCount(boundWeaponBaseId);
-            actor.RemoveItem(boundWeaponBaseId, count, nullptr);
+              actor->GetInventory().GetItemCount(boundWeaponBaseId);
+            actor->RemoveItem(boundWeaponBaseId, count, nullptr);
           });
     }
   }

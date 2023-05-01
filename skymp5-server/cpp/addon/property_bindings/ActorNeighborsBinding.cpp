@@ -5,16 +5,16 @@ Napi::Value ActorNeighborsBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
+  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
 
   std::set<MpActor*> neighbors;
 
-  for (auto listener : refr.GetListeners()) {
+  for (auto listener : refr->GetListeners()) {
     if (auto actor = dynamic_cast<MpActor*>(listener)) {
       neighbors.insert(actor);
     }
   }
-  for (auto emitter : refr.GetEmitters()) {
+  for (auto emitter : refr->GetEmitters()) {
     if (auto actor = dynamic_cast<MpActor*>(emitter)) {
       neighbors.insert(actor);
     }

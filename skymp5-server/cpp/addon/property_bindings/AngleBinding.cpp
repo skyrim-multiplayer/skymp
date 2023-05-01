@@ -5,8 +5,8 @@ Napi::Value AngleBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
-  auto& niPoint3 = refr.GetAngle();
+  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
+  auto& niPoint3 = refr->GetAngle();
 
   auto arr = Napi::Array::New(env, 3);
   arr.Set(uint32_t(0), Napi::Number::New(env, niPoint3.x));

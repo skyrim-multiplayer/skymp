@@ -5,8 +5,8 @@ Napi::Value IsDeadBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  return Napi::Boolean::New(env, actor.IsDead());
+  auto actor = partOne->worldState.Get<MpActor>(formId);
+  return Napi::Boolean::New(env, actor->IsDead());
 }
 
 void IsDeadBinding::Set(Napi::Env env, ScampServer& scampServer,
@@ -14,6 +14,6 @@ void IsDeadBinding::Set(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  actor.SetIsDead(newValue.As<Napi::Boolean>().Value());
+  auto actor = partOne->worldState.Get<MpActor>(formId);
+  actor->SetIsDead(newValue.As<Napi::Boolean>().Value());
 }

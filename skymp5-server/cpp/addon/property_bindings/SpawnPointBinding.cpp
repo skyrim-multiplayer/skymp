@@ -5,8 +5,8 @@ Napi::Value SpawnPointBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  LocationalData spawnPoint = actor.GetSpawnPoint();
+  auto actor = partOne->worldState.Get<MpActor>(formId);
+  LocationalData spawnPoint = actor->GetSpawnPoint();
 
   auto locationalData = Napi::Object::New(env);
 

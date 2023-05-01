@@ -5,14 +5,14 @@ Napi::Value NeighborsBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
+  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
 
   std::set<MpObjectReference*> neighbors;
 
-  for (auto listener : refr.GetListeners()) {
+  for (auto listener : refr->GetListeners()) {
     neighbors.insert(listener);
   }
-  for (auto emitter : refr.GetEmitters()) {
+  for (auto emitter : refr->GetEmitters()) {
     neighbors.insert(emitter);
   }
 

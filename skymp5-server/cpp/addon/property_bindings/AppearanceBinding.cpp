@@ -6,8 +6,8 @@ Napi::Value AppearanceBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  auto& appearanceDump = actor.GetAppearanceAsJson();
+  auto actor = partOne->worldState.Get<MpActor>(formId);
+  auto& appearanceDump = actor->GetAppearanceAsJson();
   if (!appearanceDump.empty()) {
     return NapiHelper::ParseJson(env, appearanceDump);
   } else {
@@ -21,13 +21,13 @@ void AppearanceBinding::Set(Napi::Env env, ScampServer& scampServer,
   // TODO: Live update of appearance
   // TODO: Validation
   auto& partOne = scampServer.GetPartOne();
-  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
+  auto actor = partOne->worldState.Get<MpActor>(formId);
   if (newValue.IsObject()) {
     auto appearanceDump = NapiHelper::Stringify(env, newValue);
     simdjson::dom::parser p;
     auto appearance = Appearance::FromJson(p.parse(appearanceDump));
-    actor.SetAppearance(&appearance);
+    actor->SetAppearance(&appearance);
   } else {
-    actor.SetAppearance(nullptr);
+    actor->SetAppearance(nullptr);
   }
 }

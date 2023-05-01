@@ -196,23 +196,14 @@ VarValue PapyrusObjectReference::PlaceAtMe(
         selfRefr->GetCellOrWorld()
       };
       FormCallbacks callbacks = selfRefr->GetCallbacks();
-      std::string type = akFormToPlace.rec->GetType().ToString();
-
-      std::unique_ptr<MpObjectReference> newRefr;
-
-      if (akFormToPlace.rec->GetType() == "NPC_") {
-        auto actor = new MpActor(locationalData, callbacks, baseId);
-        newRefr.reset(actor);
-      } else {
-        newRefr.reset(
-          new MpObjectReference(locationalData, callbacks, baseId, type));
-      }
-
-      auto worldState = selfRefr->GetParent();
-      auto newRefrId = worldState->GenerateFormId();
-      worldState->AddForm(std::move(newRefr), newRefrId);
-
-      auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
+      espm::Type type = akFormToPlace.rec->GetType();
+      WorldState* worldState = selfRefr->GetParent();
+      uint32_t newRefrId = worldState->GenerateFormId();
+      auto& refr = type == "NPC_"
+        ? worldState->Emplace<MpActor>(newRefrId, locationalData, callbacks,
+                                       baseId)
+        : worldState->Emplace<MpObjectReference>(newRefrId, locationalData,
+                                                 callbacks, baseId, type.ToString());
       refr.ForceSubscriptionsUpdate();
       return VarValue(std::make_shared<MpFormGameObject>(&refr));
     }

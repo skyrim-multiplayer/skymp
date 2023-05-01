@@ -671,27 +671,20 @@ Napi::Value ScampServer::Place(const Napi::CallbackInfo& info)
       throw std::runtime_error(ss.str());
     }
 
-    std::string type = akFormToPlace.rec->GetType().ToString();
-
+    espm::Type type = akFormToPlace.rec->GetType();
     LocationalData locationalData = { { 0, 0, 0 },
                                       { 0, 0, 0 },
                                       FormDesc::Tamriel() };
     FormCallbacks callbacks = partOne->CreateFormCallbacks();
-
-    std::unique_ptr<MpObjectReference> newRefr;
-    if (akFormToPlace.rec->GetType() == "NPC_") {
-      auto actor = new MpActor(locationalData, callbacks, globalRecordId);
-      newRefr.reset(actor);
-    } else {
-      newRefr.reset(new MpObjectReference(locationalData, callbacks,
-                                          globalRecordId, type));
-    }
-
-    auto worldState = &partOne->worldState;
-    auto newRefrId = worldState->GenerateFormId();
-    worldState->AddForm(std::move(newRefr), newRefrId);
-
-    auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
+    
+    WorldState* worldState = &partOne->worldState;
+    uint32_t newRefrId = worldState->GenerateFormId();
+    
+    auto& refr = type == "NPC_"
+      ? worldState->Emplace<MpActor>(newRefrId, locationalData, callbacks,
+                                     globalRecordId)
+      : worldState->Emplace<MpObjectReference>(
+          newRefrId, locationalData, callbacks, globalRecordId, type.ToString());
     refr.ForceSubscriptionsUpdate();
 
     return Napi::Number::New(info.Env(), refr.GetFormId());

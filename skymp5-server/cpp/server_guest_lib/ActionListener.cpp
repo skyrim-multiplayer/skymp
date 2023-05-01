@@ -278,9 +278,9 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
 
   targetPtr->Activate(
     caster == 0x14 ? *ac
-                   : partOne.worldState.GetFormAt<MpObjectReference>(caster));
+                   : *partOne.worldState.Get<MpObjectReference>(caster));
   if (hosterId) {
-    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
+    RecalculateWorn(*partOne.worldState.Get<MpObjectReference>(caster));
   }
 }
 
@@ -288,22 +288,22 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
+  auto ref = partOne.worldState.Get<MpObjectReference>(target);
 
   if (!actor)
     return; // TODO: Throw error instead
-  ref.PutItem(*actor, entry);
+  ref->PutItem(*actor, entry);
 }
 
 void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
                                 uint32_t target, const Inventory::Entry& entry)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
+  auto ref = partOne.worldState.Get<MpObjectReference>(target);
 
   if (!actor)
     return; // TODO: Throw error instead
-  ref.TakeItem(*actor, entry);
+  ref->TakeItem(*actor, entry);
 }
 
 void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
@@ -411,12 +411,12 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
                                  const Inventory& inputObjects,
                                  uint32_t workbenchId, uint32_t resultObjectId)
 {
-  auto& workbench =
-    partOne.worldState.GetFormAt<MpObjectReference>(workbenchId);
+  auto workbench =
+    partOne.worldState.Get<MpObjectReference>(workbenchId);
 
   auto& br = partOne.worldState.GetEspm().GetBrowser();
   auto& cache = partOne.worldState.GetEspmCache();
-  auto base = br.LookupById(workbench.GetBaseId());
+  auto base = br.LookupById(workbench->GetBaseId());
 
   spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
                 rawMsgData.userId, resultObjectId, workbenchId);
@@ -452,16 +452,16 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
   if (!me)
     throw std::runtime_error("Unable to host without actor attached");
 
-  auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
+  auto remote = partOne.worldState.Get<MpObjectReference>(remoteId);
 
-  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
+  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(remote));
   if (user != Networking::InvalidUserId)
     return;
 
   auto& hoster = partOne.worldState.hosters[remoteId];
   const uint32_t prevHoster = hoster;
 
-  auto remoteIdx = remote.GetIdx();
+  auto remoteIdx = remote->GetIdx();
 
   std::optional<std::chrono::system_clock::time_point> lastRemoteUpdate;
   if (partOne.worldState.lastMovUpdateByIdx.size() > remoteIdx) {
@@ -476,11 +476,11 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
                              me->GetFormId());
     hoster = me->GetFormId();
-    remote.UpdateHoster(hoster);
-    RecalculateWorn(remote);
+    remote->UpdateHoster(hoster);
+    RecalculateWorn(*remote);
 
-    uint64_t longFormId = remote.GetFormId();
-    if (dynamic_cast<MpActor*>(&remote) && longFormId < 0xff000000) {
+    uint64_t longFormId = remote->GetFormId();
+    if (dynamic_cast<MpActor*>(remote) && longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
 
@@ -721,12 +721,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   };
 
-  auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
-  auto lastHitTime = targetActor.GetLastHitTime();
+  auto targetActor = partOne.worldState.Get<MpActor>(hitData.target);
+  auto lastHitTime = targetActor->GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
-  if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
-    WorldState* espmProvider = targetActor.GetParent();
+  if (!IsAvailableForNextAttack(*targetActor, hitData, timePassed)) {
+    WorldState* espmProvider = targetActor->GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
     float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) -
@@ -739,11 +739,11 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
-  if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance = sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
+  if (IsDistanceValid(*aggressor, *targetActor, hitData) == false) {
+    float distance = sqrtf(GetSqrDistanceToBounds(*aggressor, *targetActor));
     float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
-    uint32_t targetId = targetActor.GetFormId();
+    uint32_t targetId = targetActor->GetFormId();
     spdlog::debug(
       fmt::format("{:x} actor can't reach {:x} target because distance {} is "
                   "greater then first actor attack radius {}",
@@ -751,27 +751,27 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
-  ActorValues currentActorValues = targetActor.GetChangeForm().actorValues;
+  ActorValues currentActorValues = targetActor->GetChangeForm().actorValues;
 
   float healthPercentage = currentActorValues.healthPercentage;
   float magickaPercentage = currentActorValues.magickaPercentage;
   float staminaPercentage = currentActorValues.staminaPercentage;
 
-  hitData.isHitBlocked = targetActor.IsBlockActive()
-    ? ShouldBeBlocked(*aggressor, targetActor)
+  hitData.isHitBlocked = targetActor->IsBlockActive()
+    ? ShouldBeBlocked(*aggressor, *targetActor)
     : false;
-  float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
+  float damage = partOne.CalculateDamage(*aggressor, *targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   currentActorValues.healthPercentage =
-    CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
+    CalculateCurrentHealthPercentage(*targetActor, damage, healthPercentage);
 
   currentActorValues.healthPercentage =
     currentActorValues.healthPercentage < 0.f
     ? 0.f
     : currentActorValues.healthPercentage;
 
-  targetActor.NetSetPercentages(currentActorValues, aggressor);
-  targetActor.SetLastHitTime();
+  targetActor->NetSetPercentages(currentActorValues, aggressor);
+  targetActor->SetLastHitTime();
 
   spdlog::debug("Target {0:x} is hitted by {1} damage. Current health "
                 "percentage: {2}. Last "

@@ -5,13 +5,7 @@ Napi::Value ProfileIdBinding::Get(Napi::Env env, ScampServer& scampServer,
                                   uint32_t formId)
 {
   auto& partOne = scampServer.GetPartOne();
-
-  auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
-
-  if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-    auto chForm = actor->GetChangeForm();
-    return Napi::Number::New(env, chForm.profileId);
-  }
-
-  return env.Undefined();
+  auto actor = partOne->worldState.Get<MpActor>(formId);
+  return actor ? Napi::Number::New(env, actor->GetChangeForm().profileId)
+               : env.Undefined();
 }
