@@ -48,7 +48,7 @@ export const parseChatMessage = (text: string): ChatText[] => {
 
   const stack: string[] = [];
 
-  const texts: ChatText[] = [];
+  let texts: ChatText[] = [];
 
   let lastIndex = 0;
 
@@ -74,7 +74,10 @@ export const parseChatMessage = (text: string): ChatText[] => {
             i += 1;
           }
         }
-        if (map[char].canBeNested === false && (stack.length !== 0 || currentType.length !== 0)) {
+        if (
+          (map[char].canBeNested === false && (stack.length !== 0 || currentType.length !== 0)) ||
+          text.lastIndexOf(map[char].close) === i
+        ) {
           continue;
         }
 
@@ -102,7 +105,7 @@ export const parseChatMessage = (text: string): ChatText[] => {
       }
     } else {
       const closing = Object.keys(map).find((key) => map[key].close === char);
-      if (closing) {
+      if (closing && closing === stack[stack.length - 1]) {
         if (map[closing].double) {
           if (map[closing].close !== text[i + 1]) {
             continue;
@@ -110,16 +113,14 @@ export const parseChatMessage = (text: string): ChatText[] => {
             i += 1;
           }
         }
-        if (closing === stack[stack.length - 1]) {
-          stack.pop();
-          texts.push({
-            text: text.slice(lastIndex + 1, i - 1),
-            color: map[closing].color,
-            type: [...currentType],
-          });
-          currentType.pop();
-          lastIndex = i + 1;
-        }
+        stack.pop();
+        texts.push({
+          text: text.slice(lastIndex + 1, i - (map[closing].double ? 1 : 0)),
+          color: map[closing].color,
+          type: [...currentType],
+        });
+        currentType.pop();
+        lastIndex = i + 1;
       }
     }
   }
@@ -128,8 +129,28 @@ export const parseChatMessage = (text: string): ChatText[] => {
     text: text.slice(lastIndex),
     color: '#FFFFFF',
   });
+
   texts.forEach((msg) => {
-    msg.text = msg.text.replace(/\%|\№|\*/gi, '');
+    msg.text = msg.text.replace(/\%|\№|\*|(\(\()|(\)\))/gi, '');
   });
-  return texts.filter((msg) => msg.text !== '');
+
+  texts = texts.filter((msg) => msg.text !== '');
+
+  let isNonRpOpened = false;
+
+  texts.forEach((msg, i) => {
+    if (msg.type.includes('nonrp')) {
+      if (isNonRpOpened && ((texts[i + 1] && !texts[i + 1].type.includes('nonrp')) || i + 1 === texts.length)) {
+        msg.text += '))';
+        isNonRpOpened = false;
+      } else if (!isNonRpOpened && (i + 1 === texts.length || !texts[i + 1].type.includes('nonrp'))) {
+        msg.text = '((' + msg.text + '))';
+      } else if (!isNonRpOpened) {
+        msg.text = '((' + msg.text;
+        isNonRpOpened = true;
+      }
+    }
+  });
+
+  return texts;
 };

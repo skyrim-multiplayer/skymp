@@ -108,6 +108,8 @@ jobs:
                     cd /src \
                     && ./build.sh --configure \
                        -DBUILD_UNIT_TESTS=OFF \
+                       -DBUILD_GAMEMODE=ON \
+                       -DOFFLINE_MODE=OFF \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
           - name: Upload compile_commands.json
