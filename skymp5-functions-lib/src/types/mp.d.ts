@@ -95,7 +95,7 @@ export interface LocationalData {
 
 export interface StartPoint {
   pos: [number, number, number];
-  worldOrCell: number;
+  worldOrCell: string; // hex form id (like "0x3c", use parseInt)
   angleZ: number;
 }
 
