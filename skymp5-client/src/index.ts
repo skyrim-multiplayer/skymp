@@ -27,7 +27,6 @@ import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
 import * as expSystem from "./sync/expSystem";
 import * as skillSystem from "./features/skillMenu";
-import * as harvestingMultiplier from "./features/harvestingMultiplier";
 
 browser.main();
 
@@ -176,4 +175,3 @@ if (!(authGameData?.local || authGameData?.remote)) {
 }
 
 skillSystem.skillMenuInit();
-harvestingMultiplier.harvestingMultiplierInit();

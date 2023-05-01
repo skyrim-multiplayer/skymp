@@ -3,7 +3,6 @@ import { GameModeListener } from '../GameModeListener';
 import { Mp, ServerSettings } from '../../../types/mp';
 import { Ctx } from '../../../types/ctx';
 import { EvalProperty } from '../../../props/evalProperty';
-import { FunctionInfo } from '../../../utils/functionInfo';
 
 declare const mp: Mp;
 declare const ctx: Ctx;
@@ -11,61 +10,72 @@ declare const ctx: Ctx;
 export class HarvestingSystem implements GameModeListener {
   constructor(private mp: Mp, private controller: PlayerController) {
     this.serverSettings = this.mp.getServerSettings();
-    this.controller
+  }
 
-    mp.makeEventSource('_onHarvestingSystem', new FunctionInfo(HarvestingSystem.clientInitEvent()).getText());
+  private serverSettings: ServerSettings;
 
-    mp['_onHarvestingSystem'] = () => {};
+  private static uint8ToNumber(data: Uint8Array): number {
+    const uint8Arr = new Uint8Array(data);
+    // TODO: call toGlobalRecordId on received id, won't work with mod items
+    return new Uint32Array(uint8Arr.buffer)[0];
   }
 
   onPlayerActivateObject(
     casterActorId: number,
     targetObjectDesc: string,
-    targetActorId: number
+    targetId: number
   ): 'continue' | 'blockActivation' {
-    console.log(casterActorId, targetObjectDesc, targetActorId);
-    // const targetBaseObject = this.mp.get(targetActorId);
-    // const testArray = [2];
-    // EvalProperty.eval(
-    //   casterActorId,
-    //   () => {
-    //     testArray.push(3);
-    //   },
-    //   { testArray: testArray }
-    // );
-    // console.log(testArray);
-    return 'continue';
-  } 
+    const lookupRes = mp.lookupEspmRecordById(targetId);
+    console.log(casterActorId);
+    if (!lookupRes.record) return 'continue';
+    const nameIndex = lookupRes.record.fields.findIndex((field) => field.type === 'NAME');
+    if (nameIndex === -1) return 'continue';
+    const baseId = HarvestingSystem.uint8ToNumber(lookupRes.record.fields[nameIndex].data);
 
-  private static harvestLogic(actorId: number, controller: PlayerController, argsRaw: string | undefined) {
-    console.log(argsRaw);
-  }
-  private static clientInitEvent() {
-    return () => {
-    //   const animationName = 'IdleActivatePickUpLow';
-    //   ctx.sp.on('activate', (event) => {
-    //     const targetBaseObject = event.target.getBaseObject();
-    //     if (!targetBaseObject) return;
-    //     const targetType = targetBaseObject.getType();
-    //     ctx.sp.printConsole(
-    //       'gammode harvest',
-    //       targetBaseObject.getNthKeyword(0),
-    //       targetType,
-    //       targetBaseObject.getNumKeywords(),
-    //       targetBaseObject.getFormID().toString(16)
-    //     );
-    //     if (targetType === 39) {
-    //       ctx.sp.printConsole('flora activated');
-    //     } 
-    //     if (targetType === 38) {
-    //       const plant = ctx.sp.TreeObject.from(targetBaseObject);
-    //       if (!plant) return;
-    //       const ingredient = plant.getIngredient();
-    //       ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), 'IdleActivatePickUpLow');
-    //     }
-    //   });
-    };
-  }
+    const lookupResBase = mp.lookupEspmRecordById(baseId);
+    if (!lookupResBase.record) return 'continue';
+    const pfigIndex = lookupResBase.record.fields.findIndex((field) => field.type === 'PFIG');
+    if (pfigIndex === -1) return 'continue';
+    const ingredientId = HarvestingSystem.uint8ToNumber(lookupResBase.record.fields[pfigIndex].data);
+    const isJazbayGrapes = 0x0006ac4a === ingredientId;
+    const isIngredientToFood = [0x4b0ba, 0x34d22].includes(ingredientId);
 
-  private serverSettings: ServerSettings;
+    const skillType = [];
+
+    const lookupResIngredient = mp.lookupEspmRecordById(ingredientId);
+    if (!lookupResIngredient.record) return 'continue';
+    const kwdaIndex = lookupResIngredient.record.fields.findIndex((field) => field.type === 'KWDA');
+    if (kwdaIndex === -1) return 'continue';
+    const keywordsArray = lookupResIngredient.record.fields[kwdaIndex].data;
+    const importantKeywords = [];
+    for (let i = 0; i < keywordsArray.length / 4; i++) {
+      const keywordId = HarvestingSystem.uint8ToNumber(
+        lookupResIngredient.record.fields[kwdaIndex].data.slice(i * 4, (i + 1) * 4)
+      );
+      const keywordRecord = mp.lookupEspmRecordById(keywordId).record;
+      if (!keywordRecord) return 'continue';
+      if (keywordRecord.editorId === 'VendorItemFood' || keywordRecord.editorId === 'VendorItemIngredient') {
+        importantKeywords.push(keywordRecord.editorId);
+      }
+    }
+    if (importantKeywords.includes('VendorItemFood') || isJazbayGrapes || isIngredientToFood) {
+      skillType.push('farmer');
+    }
+    if (importantKeywords.includes('VendorItemIngredient') && !isIngredientToFood) {
+      skillType.push('doctor');
+    }
+    if (isJazbayGrapes) {
+      skillType.push('bee');
+    }
+
+    console.log(skillType);
+    if (skillType.length === 0) return 'continue';
+
+    EvalProperty.eval(casterActorId, () => {
+        const animations = ['IdleActivatePickUpLow', 'IdleActivatePickUp'];
+        ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), animations[(Math.random() > 0.5) ? 1 : 0]);
+    });
+
+    return 'blockActivation';
+  }
 }
