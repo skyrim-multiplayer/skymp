@@ -32,10 +32,6 @@ class MpChangeForm;
 class ISaveStorage;
 class IScriptStorage;
 
-struct test
-{
-};
-
 class WorldState : private entt::registry
 {
   friend class MpObjectReference;
@@ -243,5 +239,4 @@ private:
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
-  entt::registry reg;
 };
