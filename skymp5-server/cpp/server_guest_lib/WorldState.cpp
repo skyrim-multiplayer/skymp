@@ -105,7 +105,6 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                                             << formId << " already exists")
         .str());
   }
-  form->Init(this, formId, optionalChangeFormToApply != nullptr);
 
   if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
     if (!formIdxManager)
@@ -146,8 +145,6 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
                               pImpl->formLoadingInProgress);
   pImpl->formLoadingInProgress = true;
 
-  std::unique_ptr<MpObjectReference> form;
-
   const auto baseId = changeForm.baseDesc.ToFormId(espmFiles);
   const auto formId = changeForm.formDesc.ToFormId(espmFiles);
 
@@ -178,19 +175,16 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
 
   switch (changeForm.recType) {
     case MpChangeForm::ACHR:
-      form.reset(new MpActor(LocationalData(), callbacks, baseId));
+      Emplace<MpActor>(formId, LocationalData(), callbacks, baseId);
       break;
     case MpChangeForm::REFR:
-      form.reset(new MpObjectReference(LocationalData(), callbacks, baseId,
-                                       baseType.data()));
+      Emplace<MpObjectReference>(formId, LocationalData(), callbacks, baseId,
+                                 baseType.data());
       break;
     default:
       throw std::runtime_error("Unknown ChangeForm type: " +
                                std::to_string(changeForm.recType));
   }
-
-  AddForm(std::move(form), formId, false, &changeForm);
-
   // EnsureBaseContainerAdded forces saving here.
   // We do not want characters to save when they are load partially
   // This behaviour results in
@@ -319,20 +313,17 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
 
     auto typeStr = t.ToString();
-    std::unique_ptr<MpForm> form;
     LocationalData formLocationalData = {
       GetPos(locationalData), GetRot(locationalData),
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
-    if (t != "NPC_") {
-      form.reset(new MpObjectReference(formLocationalData,
-                                       formCallbacksFactory(), baseId,
-                                       typeStr.data(), primitiveBoundsDiv2));
-    } else {
-      form.reset(
-        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
-    }
-    AddForm(std::move(form), formId, true);
+
+    t != "NPC_"
+      ? Emplace<MpObjectReference>(formId, formLocationalData,
+                                   formCallbacksFactory(), baseId,
+                                   typeStr.data(), primitiveBoundsDiv2)
+      : Emplace<MpActor>(formId, formLocationalData, formCallbacksFactory(),
+                         baseId);
     // Do not TriggerFormInitEvent here, doing it later after changeForm apply
   }
 
@@ -352,14 +343,14 @@ bool WorldState::LoadForm(uint32_t formId)
   }
 
   if (atLeastOneLoaded) {
-    auto& refr = GetFormAt<MpObjectReference>(formId);
+    auto refr = Get<MpObjectReference>(formId);
     auto it = pImpl->changeFormsForDeferredLoad.find(formId);
     if (it != pImpl->changeFormsForDeferredLoad.end()) {
-      refr.ApplyChangeForm(it->second);
+      refr->ApplyChangeForm(it->second);
       pImpl->changeFormsForDeferredLoad.erase(it);
     }
 
-    refr.ForceSubscriptionsUpdate();
+    refr->ForceSubscriptionsUpdate();
   }
 
   return atLeastOneLoaded;

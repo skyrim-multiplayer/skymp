@@ -12,6 +12,7 @@
 #include <MpForm.h>
 #include <algorithm>
 #include <chrono>
+#include <entt/entt.hpp>
 #include <functional>
 #include <list>
 #include <map>
@@ -31,7 +32,11 @@ class MpChangeForm;
 class ISaveStorage;
 class IScriptStorage;
 
-class WorldState
+struct test
+{
+};
+
+class WorldState : private entt::registry
 {
   friend class MpObjectReference;
   friend class MpActor;
@@ -53,6 +58,43 @@ public:
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                bool skipChecks = false,
                const MpChangeForm* optionalChangeFormToApply = nullptr);
+
+  template <typename T, typename... Args>
+  decltype(auto) Emplace(uint32_t formId, Args&&... args)
+  {
+    if (auto it = entityIds.find(formId); it != entityIds.end()) {
+      throw std::runtime_error(
+        fmt::format("Unable to create {} with id {:x}. An entity with this id "
+                    "already exists.",
+                    typeid(T).name(), formId));
+    }
+    entt::entity entity = create();
+    entityIds.insert({ formId, entity });
+    return emplace<T>(entity, std::forward<Args>(args)...);
+  }
+
+  template <typename... T>
+  decltype(auto) Get(uint32_t formId)
+  {
+    auto it = entityIds.find(formId);
+    if (it == entityIds.end()) {
+      throw std::runtime_error(fmt::format(
+        "Couldn't find an entity associated with formId {:x}", formId));
+    }
+    return try_get<T...>(it->second);
+  }
+
+  uint16_t Destroy(uint32_t formId)
+  {
+    auto it = entityIds.find(formId);
+    if (it != entityIds.end()) {
+      throw std::runtime_error(fmt::format(
+        "Couldn't destroy an entity associated with formId {:x}", formId));
+    }
+    uint16_t version = destroy(it->second, entt::to_version(it->second));
+    entityIds.erase(it);
+    return version;
+  }
 
   void LoadChangeForm(const MpChangeForm& changeForm,
                       const FormCallbacks& callbacks);
@@ -176,9 +218,9 @@ private:
       std::make_shared<GridImpl<MpObjectReference*>>();
     std::map<int16_t, std::map<int16_t, bool>> loadedChunks;
   };
-
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
+  spp::sparse_hash_map<uint32_t, entt::entity> entityIds;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
   std::map<
@@ -201,4 +243,5 @@ private:
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
+  entt::registry reg;
 };
