@@ -15,7 +15,6 @@ class MpForm
 
 public:
   MpForm();
-  MpForm(WorldState* parent_, uint32_t formId_);
 
   static const char* Type() { return "Form"; }
   virtual const char* GetFormType() const { return "Form"; }

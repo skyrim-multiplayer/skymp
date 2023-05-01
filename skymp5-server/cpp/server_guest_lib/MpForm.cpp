@@ -7,12 +7,6 @@ MpForm::MpForm()
 {
 }
 
-MpForm::MpForm(WorldState* parent_, uint32_t formId_)
-  : parent(parent_)
-  , id(formId_)
-{
-}
-
 void MpForm::Init(WorldState* parent_, uint32_t formId_, bool hasChangeForm)
 {
   parent = parent_;
