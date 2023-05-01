@@ -991,14 +991,15 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
       if (leveledItem) {
         const auto kCountMult = 1;
-        auto map = LeveledListUtils::EvaluateListRecurse(loader.GetBrowser(), resultItemLookupRes, kCountMult, kPlayerCharacterLevel, chanceNoneOverride.get());
+        auto map = LeveledListUtils::EvaluateListRecurse(
+          loader.GetBrowser(), resultItemLookupRes, kCountMult,
+          kPlayerCharacterLevel, chanceNoneOverride.get());
         for (auto& p : map) {
           activationSource.AddItem(p.first, p.second);
         }
-      }
-      else {
+      } else {
         auto refrRecord = espm::Convert<espm::REFR>(
-        loader.GetBrowser().LookupById(GetFormId()).rec);
+          loader.GetBrowser().LookupById(GetFormId()).rec);
         uint32_t count =
           refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
         activationSource.AddItem(resultItem, count ? count : 1);
@@ -1259,7 +1260,8 @@ void MpObjectReference::AddContainerObject(
   if (leveledItem) {
     constexpr uint32_t kCountMult = 1;
     auto map = LeveledListUtils::EvaluateListRecurse(
-      espm.GetBrowser(), formLookupRes, kCountMult, kPlayerCharacterLevel, chanceNoneOverride.get());
+      espm.GetBrowser(), formLookupRes, kCountMult, kPlayerCharacterLevel,
+      chanceNoneOverride.get());
     for (auto& p : map)
       (*itemsToAdd)[p.first] += p.second;
   } else {
