@@ -26,32 +26,31 @@ export class HarvestingSystem implements GameModeListener {
     targetId: number
   ): 'continue' | 'blockActivation' {
     const lookupRes = mp.lookupEspmRecordById(targetId);
-    console.log(casterActorId);
-    if (!lookupRes.record) return 'continue';
+    if (!lookupRes.record || !lookupRes.toGlobalRecordId) return 'continue';
     const nameIndex = lookupRes.record.fields.findIndex((field) => field.type === 'NAME');
     if (nameIndex === -1) return 'continue';
-    const baseId = HarvestingSystem.uint8ToNumber(lookupRes.record.fields[nameIndex].data);
+    const baseId = lookupRes.toGlobalRecordId(HarvestingSystem.uint8ToNumber(lookupRes.record.fields[nameIndex].data));
 
     const lookupResBase = mp.lookupEspmRecordById(baseId);
-    if (!lookupResBase.record) return 'continue';
+    if (!lookupResBase.record || !lookupResBase.toGlobalRecordId) return 'continue';
     const pfigIndex = lookupResBase.record.fields.findIndex((field) => field.type === 'PFIG');
     if (pfigIndex === -1) return 'continue';
-    const ingredientId = HarvestingSystem.uint8ToNumber(lookupResBase.record.fields[pfigIndex].data);
+    const ingredientId = lookupResBase.toGlobalRecordId(HarvestingSystem.uint8ToNumber(lookupResBase.record.fields[pfigIndex].data));
     const isJazbayGrapes = 0x0006ac4a === ingredientId;
     const isIngredientToFood = [0x4b0ba, 0x34d22].includes(ingredientId);
 
     const skillType = [];
 
     const lookupResIngredient = mp.lookupEspmRecordById(ingredientId);
-    if (!lookupResIngredient.record) return 'continue';
+    if (!lookupResIngredient.record || !lookupResIngredient.toGlobalRecordId) return 'continue';
     const kwdaIndex = lookupResIngredient.record.fields.findIndex((field) => field.type === 'KWDA');
     if (kwdaIndex === -1) return 'continue';
     const keywordsArray = lookupResIngredient.record.fields[kwdaIndex].data;
     const importantKeywords = [];
     for (let i = 0; i < keywordsArray.length / 4; i++) {
-      const keywordId = HarvestingSystem.uint8ToNumber(
+      const keywordId = lookupResIngredient.toGlobalRecordId(HarvestingSystem.uint8ToNumber(
         lookupResIngredient.record.fields[kwdaIndex].data.slice(i * 4, (i + 1) * 4)
-      );
+      ));
       const keywordRecord = mp.lookupEspmRecordById(keywordId).record;
       if (!keywordRecord) return 'continue';
       if (keywordRecord.editorId === 'VendorItemFood' || keywordRecord.editorId === 'VendorItemIngredient') {
