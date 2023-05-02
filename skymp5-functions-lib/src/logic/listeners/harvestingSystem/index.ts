@@ -3,6 +3,7 @@ import { GameModeListener } from '../GameModeListener';
 import { Mp, ServerSettings } from '../../../types/mp';
 import { Ctx } from '../../../types/ctx';
 import { EvalProperty } from '../../../props/evalProperty';
+import { getPossesedSkills } from '../skillMenu/skillMenuLogic';
 
 declare const mp: Mp;
 declare const ctx: Ctx;
@@ -35,7 +36,9 @@ export class HarvestingSystem implements GameModeListener {
     if (!lookupResBase.record || !lookupResBase.toGlobalRecordId) return 'continue';
     const pfigIndex = lookupResBase.record.fields.findIndex((field) => field.type === 'PFIG');
     if (pfigIndex === -1) return 'continue';
-    const ingredientId = lookupResBase.toGlobalRecordId(HarvestingSystem.uint8ToNumber(lookupResBase.record.fields[pfigIndex].data));
+    const ingredientId = lookupResBase.toGlobalRecordId(
+      HarvestingSystem.uint8ToNumber(lookupResBase.record.fields[pfigIndex].data)
+    );
     const isJazbayGrapes = 0x0006ac4a === ingredientId;
     const isIngredientToFood = [0x4b0ba, 0x34d22].includes(ingredientId);
 
@@ -48,9 +51,9 @@ export class HarvestingSystem implements GameModeListener {
     const keywordsArray = lookupResIngredient.record.fields[kwdaIndex].data;
     const importantKeywords = [];
     for (let i = 0; i < keywordsArray.length / 4; i++) {
-      const keywordId = lookupResIngredient.toGlobalRecordId(HarvestingSystem.uint8ToNumber(
-        lookupResIngredient.record.fields[kwdaIndex].data.slice(i * 4, (i + 1) * 4)
-      ));
+      const keywordId = lookupResIngredient.toGlobalRecordId(
+        HarvestingSystem.uint8ToNumber(lookupResIngredient.record.fields[kwdaIndex].data.slice(i * 4, (i + 1) * 4))
+      );
       const keywordRecord = mp.lookupEspmRecordById(keywordId).record;
       if (!keywordRecord) return 'continue';
       if (keywordRecord.editorId === 'VendorItemFood' || keywordRecord.editorId === 'VendorItemIngredient') {
@@ -60,21 +63,30 @@ export class HarvestingSystem implements GameModeListener {
     if (importantKeywords.includes('VendorItemFood') || isJazbayGrapes || isIngredientToFood) {
       skillType.push('farmer');
     }
-    if (importantKeywords.includes('VendorItemIngredient') && !isIngredientToFood) {
+    if ((importantKeywords.includes('VendorItemIngredient') && !isIngredientToFood) || isJazbayGrapes) {
       skillType.push('doctor');
     }
     if (isJazbayGrapes) {
       skillType.push('bee');
     }
 
-    console.log(skillType);
     if (skillType.length === 0) return 'continue';
-
     EvalProperty.eval(casterActorId, () => {
-        const animations = ['IdleActivatePickUpLow', 'IdleActivatePickUp'];
-        ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), animations[(Math.random() > 0.5) ? 1 : 0]);
+      const animations = ['IdleActivatePickUpLow', 'IdleActivatePickUp'];
+      ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), animations[Math.random() > 0.5 ? 1 : 0]);
     });
 
-    return 'blockActivation';
+    const { possessedSkills } = getPossesedSkills(casterActorId);
+    // 0 level is student, 1 level is adept...
+    let maxLevel = -1;
+    skillType.forEach((skillName) => {
+      if (skillName in possessedSkills) {
+        maxLevel = Math.max(possessedSkills[skillName].level, maxLevel);
+      }
+    });
+    const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0);
+    setTimeout(() => this.controller.addItem(casterActorId, ingredientId, additionalItemsNumber), 1000);
+
+    return 'continue';
   }
 }
