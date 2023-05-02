@@ -86,6 +86,9 @@
         &.admin {
           color: #ce3131;
         }
+        span {
+          white-space: pre-line;
+        }
       }
     }
     > .input {

@@ -748,6 +748,16 @@ Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
 
       espmLookupResult.Set("fileIndex",
                            Napi::Number::New(info.Env(), lookupRes.fileIdx));
+
+      espmLookupResult.Set(
+        "toGlobalRecordId",
+        Napi::Function::New(
+          info.Env(), [lookupRes](const Napi::CallbackInfo& info) {
+            auto localRecordId =
+              NapiHelper::ExtractUInt32(info[0], "localRecordId");
+            uint32_t res = lookupRes.ToGlobalId(localRecordId);
+            return Napi::Number::New(info.Env(), res);
+          }));
     }
 
     return espmLookupResult;

@@ -7,6 +7,7 @@ interface ChatInputProps {
   onBlur: () => void,
   placeholder: string,
   fontSize: number,
+  maxLines: number
 }
 
 const ChatInput = React.forwardRef<HTMLSpanElement, ChatInputProps>(
@@ -18,6 +19,17 @@ const ChatInput = React.forwardRef<HTMLSpanElement, ChatInputProps>(
         target.innerHTML = '';
       }
       props.onChange(target.innerText);
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'Enter') {
+        const target = event.target as HTMLDivElement;
+        const lines = target.innerHTML.split('<br>').length;
+        // Prevent new lines from being created if the number of lines exceeds props.maxLines
+        if (lines >= props.maxLines) {
+          event.preventDefault();
+        }
+      }
     };
     return (
     <div className='chat-input--wrapper'>
@@ -42,6 +54,7 @@ const ChatInput = React.forwardRef<HTMLSpanElement, ChatInputProps>(
         }}
         onFocus={props.onFocus}
         onBlur={props.onBlur}
+        onKeyDown={handleKeyDown}
       />
     </div>
     );
