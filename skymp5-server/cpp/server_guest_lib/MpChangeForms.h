@@ -71,8 +71,8 @@ public:
       actorValues.ToTuple(), spawnPoint, dynamicFields, spawnDelay);
   }
 
-  static nlohmann::json ToJson(const MpChangeForm& changeForm);
-  static MpChangeForm JsonToChangeForm(simdjson::dom::element& element);
+  static nlohmann::json ToJson(const MpChangeForm& changeForm, const std::vector<std::string> &espmFiles);
+  static MpChangeForm JsonToChangeForm(simdjson::dom::element& element, const std::vector<std::string> &espmFiles);
 };
 
 inline bool operator==(const MpChangeForm& lhs, const MpChangeForm& rhs)

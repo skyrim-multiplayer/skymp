@@ -1,5 +1,6 @@
 #include "Inventory.h"
 #include "JsonUtils.h"
+#include "FormDesc.h"
 #include <fmt/format.h>
 #include <tuple>
 
@@ -118,15 +119,23 @@ bool Inventory::IsEmpty() const
   return entries.empty();
 }
 
-nlohmann::json Inventory::Entry::ToJson() const
+nlohmann::json Inventory::Entry::ToJson(ToJsonMode toJsonMode, const std::vector<std::string> &files) const
 {
+  auto writeFormId = [&](uint32_t formId) -> nlohmann::json {
+    if (toJsonMode == ToJsonMode::UseFormIds) {
+      return formId;
+    } else {
+      return FormDesc::FromFormId(formId, files).ToString();
+    }
+  };
+
   const EntryExtras emptyExtras;
 
-  nlohmann::json obj = { { "baseId", baseId }, { "count", count } };
+  nlohmann::json obj = { { "baseId", writeFormId(baseId) }, { "count", count } };
   if (extra.health != emptyExtras.health)
     obj["health"] = extra.health;
   if (extra.ench.id != emptyExtras.ench.id) {
-    obj["enchantmentId"] = extra.ench.id;
+    obj["enchantmentId"] = writeFormId(extra.ench.id);
     obj["maxCharge"] = extra.ench.maxCharge;
     obj["removeEnchantmentOnUnequip"] = extra.ench.removeOnUnequip;
   }
@@ -140,7 +149,7 @@ nlohmann::json Inventory::Entry::ToJson() const
     obj["soul"] = emptyExtras.soul;
   }
   if (extra.poison.id != emptyExtras.poison.id) {
-    obj["poisonId"] = emptyExtras.poison.id;
+    obj["poisonId"] = writeFormId(emptyExtras.poison.id);
     obj["poisonCount"] = emptyExtras.poison.count;
   }
   if (extra.worn == Worn::Left) {
@@ -153,13 +162,26 @@ nlohmann::json Inventory::Entry::ToJson() const
 }
 
 Inventory::Entry Inventory::Entry::FromJson(
-  const simdjson::dom::element& jEntry)
+  const simdjson::dom::element& jEntry, ToJsonMode toJsonMode, const std::vector<std::string> &files)
 {
   static JsonPointer baseId("baseId"), count("count"), worn("worn"),
     wornLeft("wornLeft");
 
   Entry e;
-  ReadEx(jEntry, baseId, &e.baseId);
+  if(toJsonMode == ToJsonMode::UseFormIds) {
+    ReadEx(jEntry, baseId, &e.baseId);
+  }
+  else {
+    try {
+      // support earlier versions of the changeforms format
+      ReadEx(jEntry, baseId, &e.baseId);
+    }
+    catch (const std::exception&) {
+      const char *text = "";
+      ReadEx(jEntry, baseId, text);
+      e.baseId = FormDesc::FromString(text).ToFormId(files);
+    }
+  }
   ReadEx(jEntry, count, &e.count);
 
   bool wornValue;
@@ -178,25 +200,28 @@ Inventory::Entry Inventory::Entry::FromJson(
     wornLeftValue = false;
   }
 
-  if (wornLeftValue)
+  if (wornLeftValue) {
     e.extra.worn = Inventory::Worn::Left;
-  else if (wornValue)
+  }
+  else if (wornValue) {
     e.extra.worn = Inventory::Worn::Right;
+  }
 
   // TODO: Other extras
 
   return e;
 }
 
-nlohmann::json Inventory::ToJson() const
+nlohmann::json Inventory::ToJson(ToJsonMode toJsonMode, const std::vector<std::string> &files) const
 {
   auto r = nlohmann::json::array();
-  for (int i = 0; i < static_cast<int>(entries.size()); ++i)
-    r.push_back(entries[i].ToJson());
+  for (int i = 0; i < static_cast<int>(entries.size()); ++i) {
+    r.push_back(entries[i].ToJson(toJsonMode, files));
+  }
   return { { "entries", r } };
 }
 
-Inventory Inventory::FromJson(simdjson::dom::element& j)
+Inventory Inventory::FromJson(simdjson::dom::element& j, ToJsonMode toJsonMode, const std::vector<std::string> &files)
 {
   static const JsonPointer entries("entries");
 
@@ -208,15 +233,15 @@ Inventory Inventory::FromJson(simdjson::dom::element& j)
   for (size_t i = 0; i != res.entries.size(); ++i) {
     auto& jEntry = parsedEntries[i];
     auto& e = res.entries[i];
-    e = Entry::FromJson(jEntry);
+    e = Entry::FromJson(jEntry, toJsonMode, files);
   }
 
   return res;
 }
 
-Inventory Inventory::FromJson(const nlohmann::json& j)
+Inventory Inventory::FromJson(const nlohmann::json& j, ToJsonMode toJsonMode, const std::vector<std::string> &files)
 {
   simdjson::dom::parser p;
   simdjson::dom::element parsed = p.parse(j.dump());
-  return FromJson(parsed);
+  return FromJson(parsed, toJsonMode, files);
 }

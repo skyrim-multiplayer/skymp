@@ -50,22 +50,27 @@ public:
     }
   };
 
-  nlohmann::json ToJson() const;
+  enum class ToJsonMode {
+    UseFormIds,
+    UseFormDescs
+  };
+
+  nlohmann::json ToJson(ToJsonMode toJsonMode = ToJsonMode::UseFormIds, const std::vector<std::string> &files = std::vector<std::string>()) const;
 
   // Doesn't parse extra data currently
-  static Inventory FromJson(simdjson::dom::element& element);
-  static Inventory FromJson(const nlohmann::json& j);
+  static Inventory FromJson(simdjson::dom::element& element, ToJsonMode toJsonMode = ToJsonMode::UseFormIds, const std::vector<std::string> &files = std::vector<std::string>());
+  static Inventory FromJson(const nlohmann::json& j, ToJsonMode toJsonMode = ToJsonMode::UseFormIds, const std::vector<std::string> &files = std::vector<std::string>());
 
   class Entry
   {
   public:
-    nlohmann::json ToJson() const;
+    nlohmann::json ToJson(ToJsonMode toJsonMode = ToJsonMode::UseFormIds, const std::vector<std::string> &files = std::vector<std::string>()) const;
 
     uint32_t baseId = 0;
     uint32_t count = 0;
     EntryExtras extra;
 
-    static Entry FromJson(const simdjson::dom::element& e);
+    static Entry FromJson(const simdjson::dom::element& e, ToJsonMode toJsonMode = ToJsonMode::UseFormIds, const std::vector<std::string> &files = std::vector<std::string>());
 
     friend bool operator==(const Entry& lhs, const Entry& rhs)
     {
