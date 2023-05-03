@@ -1,6 +1,6 @@
 #include "Inventory.h"
-#include "JsonUtils.h"
 #include "FormDesc.h"
+#include "JsonUtils.h"
 #include <fmt/format.h>
 #include <tuple>
 
@@ -119,7 +119,8 @@ bool Inventory::IsEmpty() const
   return entries.empty();
 }
 
-nlohmann::json Inventory::Entry::ToJson(ToJsonMode toJsonMode, const std::vector<std::string> &files) const
+nlohmann::json Inventory::Entry::ToJson(
+  ToJsonMode toJsonMode, const std::vector<std::string>& files) const
 {
   auto writeFormId = [&](uint32_t formId) -> nlohmann::json {
     if (toJsonMode == ToJsonMode::UseFormIds) {
@@ -131,7 +132,8 @@ nlohmann::json Inventory::Entry::ToJson(ToJsonMode toJsonMode, const std::vector
 
   const EntryExtras emptyExtras;
 
-  nlohmann::json obj = { { "baseId", writeFormId(baseId) }, { "count", count } };
+  nlohmann::json obj = { { "baseId", writeFormId(baseId) },
+                         { "count", count } };
   if (extra.health != emptyExtras.health)
     obj["health"] = extra.health;
   if (extra.ench.id != emptyExtras.ench.id) {
@@ -162,22 +164,21 @@ nlohmann::json Inventory::Entry::ToJson(ToJsonMode toJsonMode, const std::vector
 }
 
 Inventory::Entry Inventory::Entry::FromJson(
-  const simdjson::dom::element& jEntry, ToJsonMode toJsonMode, const std::vector<std::string> &files)
+  const simdjson::dom::element& jEntry, ToJsonMode toJsonMode,
+  const std::vector<std::string>& files)
 {
   static JsonPointer baseId("baseId"), count("count"), worn("worn"),
     wornLeft("wornLeft");
 
   Entry e;
-  if(toJsonMode == ToJsonMode::UseFormIds) {
+  if (toJsonMode == ToJsonMode::UseFormIds) {
     ReadEx(jEntry, baseId, &e.baseId);
-  }
-  else {
+  } else {
     try {
       // support earlier versions of the changeforms format
       ReadEx(jEntry, baseId, &e.baseId);
-    }
-    catch (const std::exception&) {
-      const char *text = "";
+    } catch (const std::exception&) {
+      const char* text = "";
       ReadEx(jEntry, baseId, text);
       e.baseId = FormDesc::FromString(text).ToFormId(files);
     }
@@ -202,8 +203,7 @@ Inventory::Entry Inventory::Entry::FromJson(
 
   if (wornLeftValue) {
     e.extra.worn = Inventory::Worn::Left;
-  }
-  else if (wornValue) {
+  } else if (wornValue) {
     e.extra.worn = Inventory::Worn::Right;
   }
 
@@ -212,7 +212,8 @@ Inventory::Entry Inventory::Entry::FromJson(
   return e;
 }
 
-nlohmann::json Inventory::ToJson(ToJsonMode toJsonMode, const std::vector<std::string> &files) const
+nlohmann::json Inventory::ToJson(ToJsonMode toJsonMode,
+                                 const std::vector<std::string>& files) const
 {
   auto r = nlohmann::json::array();
   for (int i = 0; i < static_cast<int>(entries.size()); ++i) {
@@ -221,7 +222,8 @@ nlohmann::json Inventory::ToJson(ToJsonMode toJsonMode, const std::vector<std::s
   return { { "entries", r } };
 }
 
-Inventory Inventory::FromJson(simdjson::dom::element& j, ToJsonMode toJsonMode, const std::vector<std::string> &files)
+Inventory Inventory::FromJson(simdjson::dom::element& j, ToJsonMode toJsonMode,
+                              const std::vector<std::string>& files)
 {
   static const JsonPointer entries("entries");
 
@@ -239,7 +241,8 @@ Inventory Inventory::FromJson(simdjson::dom::element& j, ToJsonMode toJsonMode, 
   return res;
 }
 
-Inventory Inventory::FromJson(const nlohmann::json& j, ToJsonMode toJsonMode, const std::vector<std::string> &files)
+Inventory Inventory::FromJson(const nlohmann::json& j, ToJsonMode toJsonMode,
+                              const std::vector<std::string>& files)
 {
   simdjson::dom::parser p;
   simdjson::dom::element parsed = p.parse(j.dump());

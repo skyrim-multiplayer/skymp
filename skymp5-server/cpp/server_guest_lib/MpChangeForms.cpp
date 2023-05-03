@@ -1,7 +1,8 @@
 #include "MpChangeForms.h"
 #include "JsonUtils.h"
 
-nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm, const std::vector<std::string> &espmFiles)
+nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm,
+                                    const std::vector<std::string>& espmFiles)
 {
   auto res = nlohmann::json::object();
   res["recType"] = static_cast<int>(changeForm.recType);
@@ -12,7 +13,8 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm, const std::v
   res["angle"] = { changeForm.angle[0], changeForm.angle[1],
                    changeForm.angle[2] };
   res["worldOrCellDesc"] = changeForm.worldOrCellDesc.ToString();
-  res["inv"] = changeForm.inv.ToJson(Inventory::ToJsonMode::UseFormDescs, espmFiles);
+  res["inv"] =
+    changeForm.inv.ToJson(Inventory::ToJsonMode::UseFormDescs, espmFiles);
   res["isHarvested"] = changeForm.isHarvested;
   res["isOpen"] = changeForm.isOpen;
   res["baseContainerAdded"] = changeForm.baseContainerAdded;
@@ -53,7 +55,8 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm, const std::v
   return res;
 }
 
-MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element, const std::vector<std::string> &espmFiles)
+MpChangeForm MpChangeForm::JsonToChangeForm(
+  simdjson::dom::element& element, const std::vector<std::string>& espmFiles)
 {
   static const JsonPointer recType("recType"), formDesc("formDesc"),
     baseDesc("baseDesc"), position("position"), angle("angle"),
@@ -95,7 +98,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element, con
   res.worldOrCellDesc = FormDesc::FromString(tmp);
 
   ReadEx(element, inv, &jTmp);
-  res.inv = Inventory::FromJson(jTmp, Inventory::ToJsonMode::UseFormDescs, espmFiles);
+  res.inv =
+    Inventory::FromJson(jTmp, Inventory::ToJsonMode::UseFormDescs, espmFiles);
 
   ReadEx(element, isHarvested, &res.isHarvested);
   ReadEx(element, isOpen, &res.isOpen);
