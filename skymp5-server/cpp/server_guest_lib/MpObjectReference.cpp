@@ -19,6 +19,8 @@
 #include <map>
 #include <optional>
 
+constexpr uint32_t kPlayerCharacterLevel = 1;
+
 std::string MpObjectReference::CreatePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
@@ -985,11 +987,23 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
       }
 
-      auto refrRecord = espm::Convert<espm::REFR>(
-        loader.GetBrowser().LookupById(GetFormId()).rec);
-      uint32_t count =
-        refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
-      activationSource.AddItem(resultItem, count ? count : 1);
+      auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);
+      auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
+      if (leveledItem) {
+        const auto kCountMult = 1;
+        auto map = LeveledListUtils::EvaluateListRecurse(
+          loader.GetBrowser(), resultItemLookupRes, kCountMult,
+          kPlayerCharacterLevel, chanceNoneOverride.get());
+        for (auto& p : map) {
+          activationSource.AddItem(p.first, p.second);
+        }
+      } else {
+        auto refrRecord = espm::Convert<espm::REFR>(
+          loader.GetBrowser().LookupById(GetFormId()).rec);
+        uint32_t count =
+          refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
+        activationSource.AddItem(resultItem, count ? count : 1);
+      }
       SetHarvested(true);
       RequestReloot();
     }
@@ -1240,14 +1254,14 @@ void MpObjectReference::AddContainerObject(
   const espm::CONT::ContainerObject& entry,
   std::map<uint32_t, uint32_t>* itemsToAdd)
 {
-  constexpr uint32_t pcLevel = 1;
-
   auto& espm = GetParent()->GetEspm();
   auto formLookupRes = espm.GetBrowser().LookupById(entry.formId);
   auto leveledItem = espm::Convert<espm::LVLI>(formLookupRes.rec);
   if (leveledItem) {
+    constexpr uint32_t kCountMult = 1;
     auto map = LeveledListUtils::EvaluateListRecurse(
-      espm.GetBrowser(), formLookupRes, 1, pcLevel, chanceNoneOverride.get());
+      espm.GetBrowser(), formLookupRes, kCountMult, kPlayerCharacterLevel,
+      chanceNoneOverride.get());
     for (auto& p : map)
       (*itemsToAdd)[p.first] += p.second;
   } else {

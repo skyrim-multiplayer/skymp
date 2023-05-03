@@ -10,10 +10,10 @@ export class DeathSystem implements GameModeListener {
         this.startPoints = (this.serverSettings.startPoints || [])
             .filter(point => typeof point.angleZ === "number")
             .filter(point => Array.isArray(point.pos))
-            .filter(point => typeof point.worldOrCell === "number")
+            .filter(point => !Number.isNaN(parseInt(point.worldOrCell)))
             .map(point => {
                 const locationalData: LocationalData = {
-                    cellOrWorldDesc: mp.getDescFromId(point.worldOrCell),
+                    cellOrWorldDesc: mp.getDescFromId(parseInt(point.worldOrCell)),
                     pos: point.pos,
                     rot: [0, 0, point.angleZ]
                 }
@@ -30,8 +30,10 @@ export class DeathSystem implements GameModeListener {
 
     onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
         const locationalData = this.mp.get(targetActorId, "locationalData");
-        const newSpawnPoint = this.getNearestPoint(locationalData, this.startPoints);
-        this.mp.set(targetActorId, "spawnPoint", newSpawnPoint);
+        const newSpawnPoint = this.getNearestPoint(locationalData, this.startPoints) || this.getRandomPoint(this.startPoints);
+        if (newSpawnPoint !== undefined) {
+            this.mp.set(targetActorId, "spawnPoint", newSpawnPoint);
+        }
         this.controller.sendChatMessage(targetActorId, ChatMessage.system("You have been respawned"));
     }
 
