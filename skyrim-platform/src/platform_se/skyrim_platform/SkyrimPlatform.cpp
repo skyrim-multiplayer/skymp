@@ -141,11 +141,20 @@ private:
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
   {
     for (auto& path : pathsToLoad) {
+      // otherwise SkyrimPlatform tries to interpret
+      // skymp5-client-settings.txt.txt as a JavaScript code
+      if (EndsWith(path.wstring(), L".txt.txt")) {
+        logger::error("Found file with double extension: {}", path.string());
+        continue;
+      }
       if (EndsWith(path.wstring(), L"-settings.txt")) {
         LoadSettingsFile(path);
         continue;
       }
       if (EndsWith(path.wstring(), L"-logs.txt")) {
+        continue;
+      }
+      if (EndsWith(path.wstring(), L".DS_Store")) {
         continue;
       }
       LoadPluginFile(path);
@@ -341,12 +350,12 @@ void SkyrimPlatform::AddUpdateTask(const std::function<void()>& f)
   pImpl->updateTasks.AddTask(f);
 }
 
-void SkyrimPlatform::PushAndWait(const std::function<void(int)>& f)
+void SkyrimPlatform::PushAndWait(const std::function<void()>& f)
 {
   pImpl->pool.PushAndWait(f);
 }
 
-void SkyrimPlatform::Push(const std::function<void(int)>& f)
+void SkyrimPlatform::Push(const std::function<void()>& f)
 {
   pImpl->pool.Push(f);
 }

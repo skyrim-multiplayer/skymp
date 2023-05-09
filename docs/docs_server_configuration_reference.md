@@ -4,7 +4,7 @@ The recommended way to configure the server is setting up all required values in
 
 ## name
 
-Server's name. Displayed on skymp.io and in launcher.
+Server's name that will be published on a master server.
 
 ```json5
 {
@@ -60,7 +60,6 @@ Contains relative or absolute path to a "data" directory which contains:
 This directory is exposed to `uiPort` and available via http.
 
 At this moment, the server uses this directory for non-vanilla needs too:
-* storing `_libkey.js`
 * storing web-based GUI in `${dataDir}/ui`
 * storing auto-generated manifest describing .esm/.esp files used and CRC32 of them
 

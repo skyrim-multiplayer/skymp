@@ -1,7 +1,8 @@
 import { PlayerController } from './src/logic/PlayerController';
-import { SweetPieGameModeListener } from './src/logic/SweetPieGameModeListener';
-import { SweetPieMap } from './src/logic/SweetPieMap';
-import { SweetTaffyTimedRewards } from './src/logic/SweetTaffyTimedRewards';
+import { DeathSystem } from './src/logic/listeners/deathSystem';
+import { SweetPieGameModeListener } from './src/logic/listeners/sweetpie/SweetPieGameModeListener';
+import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
+import { SweetTaffyTimedRewards } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { ChatProperty } from './src/props/chatProperty';
@@ -560,4 +561,5 @@ const controller = MpApiInteractor.makeController(pointsByName);
 MpApiInteractor.setup([
   createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
   new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
+  new DeathSystem(mp, controller)
 ]);

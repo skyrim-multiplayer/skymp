@@ -1,6 +1,6 @@
-import { GameModeListener } from "./logic/GameModeListener";
+import { GameModeListener } from "./logic/listeners/GameModeListener";
 import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
-import { SweetPieRound } from "./logic/SweetPieRound";
+import { SweetPieRound } from "./logic/listeners/sweetpie/SweetPieRound";
 import { ChatMessage, ChatNeighbor, ChatProperty } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
@@ -126,10 +126,13 @@ export class MpApiInteractor {
       const joinedPlayers = onlinePlayers.filter((x) => !onlinePlayersOld.includes(x));
       const leftPlayers = onlinePlayersOld.filter((x) => !onlinePlayers.includes(x));
 
+      for (const actorId of joinedPlayers) {
+        MpApiInteractor.onPlayerJoinHardcoded(actorId);
+      }
+
       for (const listener of listeners) {
         if (listener.onPlayerJoin) {
           for (const actorId of joinedPlayers) {
-            MpApiInteractor.onPlayerJoinHardcoded(actorId);
             listener.onPlayerJoin(actorId);
           }
         }
@@ -247,6 +250,15 @@ export class MpApiInteractor {
           'AddItem',
           { type: 'form', desc: mp.getDescFromId(actorId) },
           [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/ false]
+        );
+      },
+      removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null): void {
+        mp.callPapyrusFunction(
+          'method',
+          'ObjectReference',
+          'RemoveItem',
+          { type: 'form', desc: mp.getDescFromId(actorId) },
+          [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, /*silent*/ false, akOtherContainer || null]
         );
       },
       getRoundsArray(): SweetPieRound[] {

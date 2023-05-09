@@ -95,7 +95,8 @@ export const FrameButton = ({
   disabled = false,
   variant,
   onClick,
-  text
+  text,
+  ...other
 }: FrameButtonProps) => {
   const isDefault = variant === 'DEFAULT';
   const isFrameLeft = variant === 'LEFT';
@@ -104,6 +105,7 @@ export const FrameButton = ({
   return (
         <>
             {isDefault && <button
+                {...other}
                 className={`skymp-button ${disabled ? 'disabled' : 'active'}`}
                 onClick={(e) => {
                   if (!disabled) { onClick ? onClick(e) : console.log(e); }
