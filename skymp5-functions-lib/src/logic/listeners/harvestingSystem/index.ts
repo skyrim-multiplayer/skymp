@@ -1,6 +1,6 @@
 import { PlayerController } from '../../PlayerController';
 import { GameModeListener } from '../GameModeListener';
-import { Mp, ServerSettings } from '../../../types/mp';
+import { EspmLookupResult, Mp, ServerSettings } from '../../../types/mp';
 import { Ctx } from '../../../types/ctx';
 import { EvalProperty } from '../../../props/evalProperty';
 import { getPossesedSkills } from '../skillMenu/skillMenuLogic';
@@ -21,24 +21,24 @@ export class HarvestingSystem implements GameModeListener {
     return new Uint32Array(uint8Arr.buffer)[0];
   }
 
+  private static getNumberField(lookup: EspmLookupResult | Partial<EspmLookupResult>, fieldName: string):number {
+    if (!lookup.record || !lookup.toGlobalRecordId) return NaN;
+    const fieldIndex = lookup.record.fields.findIndex(field => field.type === fieldName);
+    if (fieldIndex === -1) return NaN;
+    return lookup.toGlobalRecordId(HarvestingSystem.uint8ToNumber(lookup.record.fields[fieldIndex].data));
+  }
+
   onPlayerActivateObject(
     casterActorId: number,
     targetObjectDesc: string,
     targetId: number
   ): 'continue' | 'blockActivation' {
-    const lookupRes = mp.lookupEspmRecordById(targetId);
-    if (!lookupRes.record || !lookupRes.toGlobalRecordId) return 'continue';
-    const nameIndex = lookupRes.record.fields.findIndex((field) => field.type === 'NAME');
-    if (nameIndex === -1) return 'continue';
-    const baseId = lookupRes.toGlobalRecordId(HarvestingSystem.uint8ToNumber(lookupRes.record.fields[nameIndex].data));
+    const baseId = HarvestingSystem.getNumberField(mp.lookupEspmRecordById(targetId), "NAME");
+    if (!baseId) return 'continue';
 
-    const lookupResBase = mp.lookupEspmRecordById(baseId);
-    if (!lookupResBase.record || !lookupResBase.toGlobalRecordId) return 'continue';
-    const pfigIndex = lookupResBase.record.fields.findIndex((field) => field.type === 'PFIG');
-    if (pfigIndex === -1) return 'continue';
-    const ingredientId = lookupResBase.toGlobalRecordId(
-      HarvestingSystem.uint8ToNumber(lookupResBase.record.fields[pfigIndex].data)
-    );
+    const ingredientId =  HarvestingSystem.getNumberField(mp.lookupEspmRecordById(baseId), 'PFIG')
+    if (!ingredientId) return 'continue';
+
     const isJazbayGrapes = 0x0006ac4a === ingredientId;
     const isIngredientToFood = [0x4b0ba, 0x34d22].includes(ingredientId);
 
@@ -60,6 +60,7 @@ export class HarvestingSystem implements GameModeListener {
         importantKeywords.push(keywordRecord.editorId);
       }
     }
+
     if (importantKeywords.includes('VendorItemFood') || isJazbayGrapes || isIngredientToFood) {
       skillType.push('farmer');
     }
