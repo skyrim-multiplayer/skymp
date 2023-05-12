@@ -93,8 +93,17 @@ export class AnimationSource {
     hooks.sendAnimationEvent.add({
       enter: () => { },
       leave: (ctx) => {
-        if (ctx.selfId !== this.refrId) return;
-        if (!ctx.animationSucceeded) return;
+        if (ctx.selfId !== this.refrId) {
+          return;
+        }
+
+        if (!ctx.animationSucceeded) {
+          // Workaround, see carryAnimSystem.ts in gamemode
+          // Case-sensetive check here for better performance
+          if (ctx.animEventName !== "OffsetCarryBasketStart") {
+            return;
+          }
+        }
         this.onSendAnimationEvent(ctx.animEventName);
       },
     });

@@ -5,6 +5,7 @@ import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
 import { SweetTaffyTimedRewards } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
+import { CarryAnimSystem } from './src/props/carryAnimSystem';
 import { ChatProperty } from './src/props/chatProperty';
 import { CounterProperty } from './src/props/counterProperty';
 import { DialogProperty } from './src/props/dialogProperty';
@@ -322,11 +323,12 @@ export const getReturnItemCount = (mp: Mp, self: null, args: PapyrusValue[], exc
 
 DialogProperty.init();
 BrowserProperty.init();
-EvalProperty.init();
+CarryAnimSystem.init();
 ChatProperty.init();
 CounterProperty.init();
 Timer.init();
 DisableCheats.init();
+EvalProperty.init();
 
 declare const mp: Mp;
 mp.registerPapyrusFunction('global', 'Utility', 'RandomInt', (self, args) => randomInt(mp, self, args));

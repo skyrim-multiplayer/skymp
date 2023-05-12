@@ -21,6 +21,9 @@ export class CarryAnimSystem {
                 ctx.sp.storage["CarryAnimSystemInstalled"] = true;
             }
             else {
+                // Hot reload is not supported for now
+                // Just stop the loop here
+                ctx.sp.storage.sweetCarryAnimationActive = false;
                 return;
             }
 
@@ -44,6 +47,7 @@ export class CarryAnimSystem {
             ];
 
             function hasKeyword(form: Form): boolean {
+                return true;
                 const kw1 = ctx.sp.Keyword.getKeyword(SWEET_CARRY_ANIM_KEYWORD);
                 return (kw1 && form.hasKeyword(kw1)) ?? false;
             }
@@ -64,6 +68,26 @@ export class CarryAnimSystem {
                     ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), SWEET_CARRY_ANIM_NAME);
                     ctx.sp.storage.sweetCarryEquippedFormId = event.baseObj?.getFormID() ?? null;
                     ctx.sp.storage.sweetCarryAnimationActive = true;
+                    (function () {
+                        function sendAnimation() {
+                          // This will not succeed, but still will be sent to the server (see workaround in skymp5-client/animation.ts)
+                          // Make sure that people will spawn with animation for others
+                          if (ctx.sp.storage.sweetCarryAnimationActive) {
+                            ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), SWEET_CARRY_ANIM_NAME);
+                          }
+                        }
+                      
+                        function checkAnimation() {
+                          if (ctx.sp.storage.sweetCarryAnimationActive) {
+                            ctx.sp.Utility.wait(3).then(() => {
+                              sendAnimation();
+                              checkAnimation();
+                            });
+                          }
+                        }
+                      
+                        checkAnimation();
+                    })();
                 }
             });
 

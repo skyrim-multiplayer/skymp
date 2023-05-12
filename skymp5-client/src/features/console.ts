@@ -53,16 +53,16 @@ export const setUpConsoleCommands = (
   send: (msg: Record<string, unknown>) => void,
   localIdToRemoteId: (localId: number) => number
 ): void => {
-  const command =
-    findConsoleCommand(" ConfigureUM") || findConsoleCommand("test");
-  if (command) {
-    command.shortName = "mp";
-    command.execute = getCommandExecutor("mp", send, localIdToRemoteId) as (...args: unknown[]) => boolean;
-  }
+  // const command =
+  //   findConsoleCommand(" ConfigureUM") || findConsoleCommand("test");
+  // if (command) {
+  //   command.shortName = "mp";
+  //   command.execute = getCommandExecutor("mp", send, localIdToRemoteId) as (...args: unknown[]) => boolean;
+  // }
 
-  (Object.keys(schemas) as any[]).forEach((commandName: CmdName) => {
-    const command = findConsoleCommand(commandName);
-    if (!command || nonVanilaCommands.includes(commandName)) return;
-    command.execute = getCommandExecutor(commandName, send, localIdToRemoteId) as (...args: unknown[]) => boolean;
-  });
+  // (Object.keys(schemas) as any[]).forEach((commandName: CmdName) => {
+  //   const command = findConsoleCommand(commandName);
+  //   if (!command || nonVanilaCommands.includes(commandName)) return;
+  //   command.execute = getCommandExecutor(commandName, send, localIdToRemoteId) as (...args: unknown[]) => boolean;
+  // });
 };
