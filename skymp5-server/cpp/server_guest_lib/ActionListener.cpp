@@ -650,7 +650,7 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   float reach = GetReach(actor, hitData.source);
 
   // For bow/crossbow shots we don't want to check melee radius
-  if (hitData.projectile != 0) {
+  if (!hitData.isBashAttack) {
     constexpr float kExteriorCellWidthUnits = 4096.f;
     if (auto worldState = actor.GetParent()) {
       if (worldState->HasEspm()) {
