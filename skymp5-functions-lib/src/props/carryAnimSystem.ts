@@ -47,7 +47,8 @@ export class CarryAnimSystem {
             ];
 
             function hasKeyword(form: Form): boolean {
-                return true;
+                // Uncomment this to test with any items:
+                // return true;
                 const kw1 = ctx.sp.Keyword.getKeyword(SWEET_CARRY_ANIM_KEYWORD);
                 return (kw1 && form.hasKeyword(kw1)) ?? false;
             }
