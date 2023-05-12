@@ -85,9 +85,10 @@ export class HarvestingSystem implements GameModeListener {
         maxLevel = Math.max(possessedSkills[skillName].level, maxLevel);
       }
     });
+    if (ingredientId === 0x00064b3f) return 'blockActivation';
     const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0);
     setTimeout(() => this.controller.addItem(casterActorId, ingredientId, additionalItemsNumber), 1000);
 
-    return 'continue';
+    return 'blockActivation';
   }
 }
