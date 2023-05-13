@@ -127,15 +127,27 @@ export class HarvestingSystem implements GameModeListener {
 
     if (ingredientId === 0x00064b3f) return 'blockActivation';
 
+    const isDrawn = mp.callPapyrusFunction(
+      'method',
+      'Actor',
+      'IsWeaponDrawn',
+      {desc: mp.getDescFromId(casterActorId), type: 'form'},
+      []
+    );
+
+    const equipment = mp.get(casterActorId, 'equipment').inv.entries;
+
     if (ingredientId === 0x4b0ba) {
-      // TODO check if 70BAD73 drawn and give bonus
+      const sickle = equipment.find(item => item.baseId === 0x70BAD73);
+      if (!(sickle && sickle.worn && isDrawn)) return 'blockActivation';
     }
 
-    if (ingredientId === 0x64B41 ) {
-      // TODO check if 7E870FB drawn and give bonus
+    if (ingredientId === 0x64B41) {
+      const shovel = equipment.find(item => item.baseId === 0x7E870FB);
+      if (!(shovel && shovel.worn && isDrawn)) return 'blockActivation';
     }
 
-    const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0);
+    const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0) + 5;
     setTimeout(() => this.controller.addItem(casterActorId, ingredientId, additionalItemsNumber), 1000);
 
     return 'blockActivation';
