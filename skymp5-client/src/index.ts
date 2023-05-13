@@ -27,6 +27,7 @@ import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
 import * as expSystem from "./sync/expSystem";
 import * as skillSystem from "./features/skillMenu";
+import { doorActivationInit } from './features/doorActivation';
 
 browser.main();
 
@@ -175,3 +176,4 @@ if (!(authGameData?.local || authGameData?.remote)) {
 }
 
 skillSystem.skillMenuInit();
+doorActivationInit();
