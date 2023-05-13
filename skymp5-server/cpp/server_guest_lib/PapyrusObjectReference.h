@@ -6,7 +6,7 @@ class PapyrusObjectReference : public IPapyrusClass<PapyrusObjectReference>
 public:
   const char* GetName() override { return "objectreference"; }
 
-  VarValue IsHarvested(VarValue self, const std::vector<VarValue> &arguments);
+  VarValue IsHarvested(VarValue self, const std::vector<VarValue>& arguments);
   VarValue IsDisabled(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetScale(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetScale(VarValue self, const std::vector<VarValue>& arguments);

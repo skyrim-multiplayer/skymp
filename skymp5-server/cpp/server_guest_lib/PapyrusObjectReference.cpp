@@ -9,7 +9,9 @@
 #include "WorldState.h"
 #include <cstring>
 
-VarValue PapyrusObjectReference::IsHarvested(VarValue self, const std::vector<VarValue> &arguments) {
+VarValue PapyrusObjectReference::IsHarvested(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
   return VarValue(selfRefr && selfRefr->IsHarvested());
 }
