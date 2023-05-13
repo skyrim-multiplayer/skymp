@@ -6,6 +6,7 @@ class PapyrusObjectReference : public IPapyrusClass<PapyrusObjectReference>
 public:
   const char* GetName() override { return "objectreference"; }
 
+  VarValue IsHarvested(VarValue self, const std::vector<VarValue> &arguments);
   VarValue IsDisabled(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetScale(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetScale(VarValue self, const std::vector<VarValue>& arguments);
@@ -35,6 +36,7 @@ public:
     VirtualMachine& vm,
     std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
   {
+    AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
     AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
     AddMethod(vm, "GetScale", &PapyrusObjectReference::GetScale);
     AddMethod(vm, "SetScale", &PapyrusObjectReference::SetScale);
