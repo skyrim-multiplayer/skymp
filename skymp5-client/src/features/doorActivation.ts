@@ -1,4 +1,3 @@
-import { printConsole } from 'skyrimPlatform';
 import { FormType } from 'skyrimPlatform';
 import { on, Debug, Game } from 'skyrimPlatform'
 
