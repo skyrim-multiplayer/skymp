@@ -134,6 +134,8 @@ export class HarvestingSystem implements GameModeListener {
       }
     });
 
+    console.log(skillType);
+
     if (ingredientId === 0x00064b3f) return 'blockActivation';
 
     const isDrawn = mp.callPapyrusFunction(
