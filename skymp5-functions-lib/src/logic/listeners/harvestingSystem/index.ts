@@ -42,7 +42,6 @@ export class HarvestingSystem implements GameModeListener {
         for (let restrictedAnim of HARVEST_ANIM_RESTRICT) {
           ctx.sp.hooks.sendAnimationEvent.add({
               enter: ((animationEventCtx) => {
-                  ctx.sp.printConsole(ctx.sp.storage.harvestAnimationActive);
                   if (ctx.sp.storage.harvestAnimationActive) {
                       animationEventCtx.animEventName = "";
                   }
@@ -133,8 +132,6 @@ export class HarvestingSystem implements GameModeListener {
         maxLevel = Math.max(possessedSkills[skillName].level, maxLevel);
       }
     });
-
-    console.log(skillType);
 
     if (ingredientId === 0x00064b3f) return 'blockActivation';
 
