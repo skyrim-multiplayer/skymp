@@ -70,6 +70,17 @@ export class HarvestingSystem implements GameModeListener {
     targetObjectDesc: string,
     targetId: number
   ): 'continue' | 'blockActivation' {
+
+    const isHarvested = mp.callPapyrusFunction(
+      'method',
+      'ObjectReference',
+      'IsHarvested',
+      {desc: targetObjectDesc, type: 'form'},
+      []
+    );
+
+    if (isHarvested) return 'blockActivation';
+
     const baseId = HarvestingSystem.getNumberField(mp.lookupEspmRecordById(targetId), 'NAME');
     if (!baseId) return 'continue';
 
@@ -125,6 +136,8 @@ export class HarvestingSystem implements GameModeListener {
       }
     });
 
+    console.log(skillType);
+
     if (ingredientId === 0x00064b3f) return 'blockActivation';
 
     const isDrawn = mp.callPapyrusFunction(
@@ -147,7 +160,7 @@ export class HarvestingSystem implements GameModeListener {
       if (!(shovel && shovel.worn && isDrawn)) return 'blockActivation';
     }
 
-    const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0) + 5;
+    const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0);
     setTimeout(() => this.controller.addItem(casterActorId, ingredientId, additionalItemsNumber), 1000);
 
     return 'blockActivation';
