@@ -53,16 +53,16 @@ export class HarvestingSystem implements GameModeListener {
     };
 }
 
-  private static uint8ToNumber(data: Uint8Array): number {
+  private static uint8ToUint32(data: Uint8Array): number[] {
     const uint8Arr = new Uint8Array(data);
-    return new Uint32Array(uint8Arr.buffer)[0];
+    return Array.from(new Uint32Array(uint8Arr.buffer));
   }
 
   private static getNumberField(lookup: EspmLookupResult | Partial<EspmLookupResult>, fieldName: string): number {
     if (!lookup.record || !lookup.toGlobalRecordId) return NaN;
     const fieldIndex = lookup.record.fields.findIndex((field) => field.type === fieldName);
     if (fieldIndex === -1) return NaN;
-    return lookup.toGlobalRecordId(HarvestingSystem.uint8ToNumber(lookup.record.fields[fieldIndex].data));
+    return lookup.toGlobalRecordId(HarvestingSystem.uint8ToUint32(lookup.record.fields[fieldIndex].data)[0]);
   }
 
   onPlayerActivateObject(
@@ -93,26 +93,24 @@ export class HarvestingSystem implements GameModeListener {
     const skillType = [];
 
     const lookupResIngredient = mp.lookupEspmRecordById(ingredientId);
-    if (!lookupResIngredient.record || !lookupResIngredient.toGlobalRecordId) return 'continue';
+    if (!lookupResIngredient.record) return 'continue';
     const kwdaIndex = lookupResIngredient.record.fields.findIndex((field) => field.type === 'KWDA');
     if (kwdaIndex === -1) return 'continue';
     const keywordsArray = lookupResIngredient.record.fields[kwdaIndex].data;
-    const importantKeywords = [];
-    for (let i = 0; i < keywordsArray.length / 4; i++) {
-      const keywordId = lookupResIngredient.toGlobalRecordId(
-        HarvestingSystem.uint8ToNumber(lookupResIngredient.record.fields[kwdaIndex].data.slice(i * 4, (i + 1) * 4))
-      );
+    const keywords:string[] = [];
+    const keywordIds = HarvestingSystem.uint8ToUint32(keywordsArray);
+    keywordIds.forEach(id => {
+      if (!lookupResIngredient.toGlobalRecordId) return 'continue';
+      const keywordId = lookupResIngredient.toGlobalRecordId(id);
       const keywordRecord = mp.lookupEspmRecordById(keywordId).record;
       if (!keywordRecord) return 'continue';
-      if (keywordRecord.editorId === 'VendorItemFood' || keywordRecord.editorId === 'VendorItemIngredient') {
-        importantKeywords.push(keywordRecord.editorId);
-      }
-    }
+      keywords.push(keywordRecord.editorId);
+    })
 
-    if (importantKeywords.includes('VendorItemFood') || isJazbayGrapes || isIngredientToFood) {
+    if (keywords.includes('VendorItemFood') || isJazbayGrapes || isIngredientToFood) {
       skillType.push('farmer');
     }
-    if ((importantKeywords.includes('VendorItemIngredient') && !isIngredientToFood) || isJazbayGrapes) {
+    if ((keywords.includes('VendorItemIngredient') && !isIngredientToFood) || isJazbayGrapes) {
       skillType.push('doctor');
     }
     if (isJazbayGrapes) {
@@ -135,8 +133,6 @@ export class HarvestingSystem implements GameModeListener {
         maxLevel = Math.max(possessedSkills[skillName].level, maxLevel);
       }
     });
-
-    console.log(skillType);
 
     if (ingredientId === 0x00064b3f) return 'blockActivation';
 
