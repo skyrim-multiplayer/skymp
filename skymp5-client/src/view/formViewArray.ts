@@ -43,8 +43,8 @@ export class FormViewArray {
       if (offset) {
         realPos = (form.movement as Movement).pos;
         (form.movement as Movement).pos = [
-          realPos[0] + 128,
-          realPos[1] + 128,
+          realPos[0] + 64,
+          realPos[1] + 64,
           realPos[2],
         ];
       }

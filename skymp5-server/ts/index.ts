@@ -20,7 +20,6 @@ import { MasterClient } from "./systems/masterClient";
 import { Spawn } from "./systems/spawn";
 import { Login } from "./systems/login";
 import { EventEmitter } from "events";
-import { NativeGameServer } from "./nativeGameServer";
 import { pid } from "process";
 import * as fs from "fs";
 import * as chokidar from "chokidar";
@@ -154,7 +153,7 @@ const main = async () => {
   ui.main();
 
   const server = new scampNative.ScampServer(port, maxPlayers);
-  const ctx = { svr: new NativeGameServer(server), gm: new EventEmitter() };
+  const ctx = { svr: server, gm: new EventEmitter() };
 
   setupStreams(server);
   console.log(`Current process ID is ${pid}`);

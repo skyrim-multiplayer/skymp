@@ -10,6 +10,16 @@ export type SendChatMessageFn = (
   message: Record<string, unknown>
 ) => void;
 
+// sendCustomPacket(
+//   userId: number,
+//   type: string,
+//   content: Record<string, unknown>
+// ): void {
+//   content["customPacketType"] = type;
+//   this.svr.sendCustomPacket(userId, JSON.stringify(content));
+//   delete content["customPacketType"];
+// }
+
 export declare class ScampServer {
   constructor(serverPort: number, maxPlayers: number);
 
@@ -26,8 +36,9 @@ export declare class ScampServer {
     formId: number,
     pos: number[],
     angleZ: number,
-    cellOrWorld: number
-  ): void;
+    cellOrWorld: number,
+    userProfileId?: number
+  ): number;
 
   destroyActor(formId: number): void;
   setUserActor(userId: number, actorFormId: number): void;
