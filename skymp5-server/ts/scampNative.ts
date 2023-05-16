@@ -10,16 +10,6 @@ export type SendChatMessageFn = (
   message: Record<string, unknown>
 ) => void;
 
-// sendCustomPacket(
-//   userId: number,
-//   type: string,
-//   content: Record<string, unknown>
-// ): void {
-//   content["customPacketType"] = type;
-//   this.svr.sendCustomPacket(userId, JSON.stringify(content));
-//   delete content["customPacketType"];
-// }
-
 export declare class ScampServer {
   constructor(serverPort: number, maxPlayers: number);
 
