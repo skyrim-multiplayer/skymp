@@ -33,21 +33,7 @@ export class Spawn implements System {
         ctx.svr.setUserActor(userId, actorId);
         ctx.svr.setRaceMenuOpen(actorId, true);
       }
-
-      try {
-        (ctx.svr as unknown as Mp).makeProperty("discordRoles", {
-          isVisibleByNeighbors: false,
-          isVisibleByOwner: false,
-          updateNeighbor: "",
-          updateOwner: ""
-        });
-      }
-      catch (e) {
-        if (`${e}`.indexOf("must be unique") === -1) {
-          throw e;
-        }
-      }
-      (ctx.svr as unknown as Mp).set(actorId, "discordRoles", discordRoleIds);
+      (ctx.svr as unknown as Mp).set(actorId, "private.discordRoles", discordRoleIds);
     });
   }
 

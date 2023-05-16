@@ -1,19 +1,38 @@
 import { ChatMessage } from "../../../props/chatProperty";
-import { Mp } from "../../../types/mp";
+import { Mp, ServerSettings } from "../../../types/mp";
 import { PlayerController } from "../../PlayerController";
 import { GameModeListener } from "../GameModeListener";
 
 export class KitsSystem implements GameModeListener {
     constructor(private mp: Mp, private controller: PlayerController) {
+        this.serverSettings = this.mp.getServerSettings();
     }
 
     onPlayerChatInput(actorId: number, input: string, neighbors: number[], masterApiId: number) {
+        const baseKitDiscordRole = this.serverSettings.discordAuth?.baseKitRoleId;
+
         if (input === '/kit base') {
             const discordRoles = this.getDiscordRoles(actorId);
-            console.log({discordRoles})
-            if (discordRoles.includes("1106647876022583381")) {
-                this.controller.sendChatMessage(actorId, ChatMessage.system("You have been given a base kit", this.controller));
-                this.controller.addItem(actorId, 0xf, 1000);
+            if (baseKitDiscordRole === undefined) {
+                this.controller.sendChatMessage(actorId, ChatMessage.system("Base kit is not configured.", this.controller));
+                this.controller.sendChatMessage(actorId, ChatMessage.system("discordAuth.baseKitRoleId should be set in server-settings.json", this.controller));
+                return 'eventBusStop';
+            }
+            else if (discordRoles.includes(baseKitDiscordRole)) {
+                const previousDate = this.mp.get(actorId, "private.kits.lastBaseKitGiftDate") as number | undefined;
+                const currentDate = Date.now();
+                const days = 1;
+                const secondsBetweenGifts = 60 * 60 * 24 * days;
+                if (!previousDate || currentDate - previousDate > secondsBetweenGifts * 1000) {
+                    console.log(currentDate - previousDate)
+                    this.controller.sendChatMessage(actorId, ChatMessage.system("You have been given a base kit", this.controller));
+                    this.controller.addItem(actorId, 0xf, 1000);
+                    this.mp.set(actorId, "private.kits.lastBaseKitGiftDate", currentDate);
+                }
+                else {
+                    const diffSeconds = secondsBetweenGifts - Math.ceil((currentDate - previousDate) / 1000);
+                    this.controller.sendChatMessage(actorId, ChatMessage.system(`${diffSeconds} seconds remaining`, this.controller));
+                }
                 return 'eventBusStop';
             }
             else {
@@ -30,19 +49,8 @@ export class KitsSystem implements GameModeListener {
     }
 
     private getDiscordRoles(actorId: number): string[] {
-        try {
-            this.mp.makeProperty("discordRoles", {
-              isVisibleByNeighbors: false,
-              isVisibleByOwner: false,
-              updateNeighbor: "",
-              updateOwner: ""
-            });
-          }
-          catch (e) {
-            if (`${e}`.indexOf("must be unique") === -1) {
-              throw e;
-            }
-        }
-        return this.mp.get(actorId, 'discordRoles') as string[];
+        return this.mp.get(actorId, 'private.discordRoles') as string[];
     }
+
+    private serverSettings: ServerSettings;
 }

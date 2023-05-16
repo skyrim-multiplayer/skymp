@@ -121,6 +121,9 @@ export interface ServerSettings {
   sweetPieChatSettings?: {
     hearingRadiusNormal?: number
   };
+  discordAuth?: {
+    baseKitRoleId?: string;
+  }
 
   readonly [key: string]: unknown;
 }
