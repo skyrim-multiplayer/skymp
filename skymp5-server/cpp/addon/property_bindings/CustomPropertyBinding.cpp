@@ -20,7 +20,8 @@ CustomPropertyBinding::CustomPropertyBinding(const std::string& propertyName_)
   this->propertyName = propertyName_;
 
   static const std::string kPrivatePrefix = "private.";
-  this->isPrivate = this->propertyName.compare(0, kPrivatePrefix.size(), kPrivatePrefix) == 0;
+  this->isPrivate =
+    this->propertyName.compare(0, kPrivatePrefix.size(), kPrivatePrefix) == 0;
 }
 
 std::string CustomPropertyBinding::GetPropertyName() const
@@ -36,11 +37,12 @@ Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer& scampServer,
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
   if (isPrivate) {
-    return NapiHelper::ParseJson(env, refr.GetDynamicFields().Get(propertyName));
-  }
-  else {
+    return NapiHelper::ParseJson(env,
+                                 refr.GetDynamicFields().Get(propertyName));
+  } else {
     EnsurePropertyExists(scampServer.GetGamemodeApiState(), propertyName);
-    return NapiHelper::ParseJson(env, refr.GetDynamicFields().Get(propertyName));
+    return NapiHelper::ParseJson(env,
+                                 refr.GetDynamicFields().Get(propertyName));
   }
 }
 
