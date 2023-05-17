@@ -233,12 +233,11 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
       try {
         server->Tick(PartOne::HandlePacket, partOne.get());
         tickFinished = true;
-      }
-      catch (std::exception &e) {
+      } catch (std::exception& e) {
         logger->error("{}", e.what());
       }
     }
-    
+
     partOne->Tick();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
