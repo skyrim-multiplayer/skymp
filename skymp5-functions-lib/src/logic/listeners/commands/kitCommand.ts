@@ -1,9 +1,9 @@
-import { ChatMessage } from "../../props/chatProperty";
-import { Mp, ServerSettings } from "../../types/mp";
-import { PlayerController } from "../PlayerController";
-import { GameModeListener } from "./gameModeListener";
+import { ChatMessage } from "../../../props/chatProperty";
+import { Mp, ServerSettings } from "../../../types/mp";
+import { PlayerController } from "../../PlayerController";
+import { GameModeListener } from "../gameModeListener";
 
-export class KitsSystem implements GameModeListener {
+export class KitCommand implements GameModeListener {
     constructor(private mp: Mp, private controller: PlayerController) {
         this.serverSettings = this.mp.getServerSettings();
     }
