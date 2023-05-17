@@ -58,37 +58,58 @@ public:
   template <typename T, typename... Args>
   decltype(auto) Emplace(uint32_t formId, Args&&... args)
   {
-    if (auto it = entityIds.find(formId); it != entityIds.end()) {
+    auto it = entityIdByFormId.find(formId);
+    if (it != entityIdByFormId.end()) {
       throw std::runtime_error(
         fmt::format("Unable to create {} with id {:x}. An entity with this id "
                     "already exists.",
                     typeid(T).name(), formId));
     }
     entt::entity entity = create();
-    entityIds.insert({ formId, entity });
+    entityIdByFormId.insert({ formId, entity });
     return emplace<T>(entity, std::forward<Args>(args)...);
   }
 
   template <typename... T>
   decltype(auto) Get(uint32_t formId)
   {
-    auto it = entityIds.find(formId);
-    if (it == entityIds.end()) {
+    auto it = entityIdByFormId.find(formId);
+    if (it == entityIdByFormId.end()) {
       throw std::runtime_error(fmt::format(
         "Couldn't find an entity associated with formId {:x}", formId));
     }
-    return try_get<T...>(it->second);
-  }
 
+    auto components = try_get<T...>(it->second);
+    auto valid = [formId](auto&& component) {
+      if (!static_cast<bool>(component)) {
+        throw std::runtime_error(
+          fmt::format("Couldn't obtain a component of an entity associeated "
+                      "with formId {:x}",
+                      formId));
+      }
+    };
+
+    if constexpr (sizeof...(T) == 1) {
+      std::invoke(valid, components);
+    } else {
+      std::apply([valid](auto&&... component) { (..., valid(component)); },
+                 components);
+    }
+    return get<T...>(it->second);
+  }
+  
+  template<typename T = MpForm>
   uint16_t Destroy(uint32_t formId)
   {
-    auto it = entityIds.find(formId);
-    if (it != entityIds.end()) {
+    auto it = entityIdByFormId.find(formId);
+    if (it != entityIdByFormId.end()) {
       throw std::runtime_error(fmt::format(
         "Couldn't destroy an entity associated with formId {:x}", formId));
     }
+    auto& form = get<T>(it->second);
+    form.BeforeDestroy();
     uint16_t version = destroy(it->second, entt::to_version(it->second));
-    entityIds.erase(it);
+    entityIdByFormId.erase(it);
     return version;
   }
 
@@ -216,7 +237,7 @@ private:
   };
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
-  spp::sparse_hash_map<uint32_t, entt::entity> entityIds;
+  spp::sparse_hash_map<uint32_t, entt::entity> entityIdByFormId;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
   std::map<

@@ -5,8 +5,8 @@ Napi::Value PosBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
-  auto niPoint3 = refr->GetPos();
+  auto& refr = partOne->worldState.Get<MpObjectReference>(formId);
+  auto niPoint3 = refr.GetPos();
 
   auto arr = Napi::Array::New(env, 3);
   arr.Set(uint32_t(0), Napi::Number::New(env, niPoint3.x));

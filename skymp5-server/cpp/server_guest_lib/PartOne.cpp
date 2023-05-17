@@ -125,9 +125,9 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t formId)
   serverState.EnsureUserExists(userId);
 
   if (formId > 0) {
-    auto actor = worldState.Get<MpActor>(formId);
+    auto& actor = worldState.Get<MpActor>(formId);
 
-    if (actor->IsDisabled()) {
+    if (actor.IsDisabled()) {
       std::stringstream ss;
       ss << "Actor with id " << std::hex << formId << " is disabled";
       throw std::runtime_error(ss.str());
@@ -136,15 +136,15 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t formId)
     // Both functions are required here, but it is NOT covered by unit tests
     // properly. If you do something wrong here, players would not be able to
     // interact with items in the same cell after reconnecting.
-    actor->UnsubscribeFromAll();
-    actor->RemoveFromGrid();
+    actor.UnsubscribeFromAll();
+    actor.RemoveFromGrid();
 
-    serverState.actorsMap.Set(userId, actor);
+    serverState.actorsMap.Set(userId, &actor);
 
-    actor->ForceSubscriptionsUpdate();
+    actor.ForceSubscriptionsUpdate();
 
-    if (actor->IsDead() && !actor->IsRespawning()) {
-      actor->RespawnWithDelay();
+    if (actor.IsDead() && !actor.IsRespawning()) {
+      actor.RespawnWithDelay();
     }
 
   } else {
@@ -181,14 +181,14 @@ void PartOne::DestroyActor(uint32_t actorFormId)
 
 void PartOne::SetRaceMenuOpen(uint32_t formId, bool open)
 {
-  auto actor = worldState.Get<MpActor>(formId);
+  auto& actor = worldState.Get<MpActor>(formId);
 
-  if (actor->IsRaceMenuOpen() == open)
+  if (actor.IsRaceMenuOpen() == open)
     return;
 
-  actor->SetRaceMenuOpen(open);
+  actor.SetRaceMenuOpen(open);
 
-  auto userId = serverState.UserByActor(actor);
+  auto userId = serverState.UserByActor(&actor);
   if (userId == Networking::InvalidUserId) {
     throw std::runtime_error(fmt::format(
       "Actor with id {:#x} is not attached to any of users", formId));
@@ -209,20 +209,20 @@ void PartOne::SendCustomPacket(Networking::UserId userId,
 
 std::string PartOne::GetActorName(uint32_t formId)
 {
-  auto ac = worldState.Get<MpActor>(formId);
-  return ac->GetAppearance() ? ac->GetAppearance()->name : "Prisoner";
+  auto& ac = worldState.Get<MpActor>(formId);
+  return ac.GetAppearance() ? ac.GetAppearance()->name : "Prisoner";
 }
 
 NiPoint3 PartOne::GetActorPos(uint32_t formId)
 {
-  auto ac = worldState.Get<MpActor>(formId);
-  return ac->GetPos();
+  auto& ac = worldState.Get<MpActor>(formId);
+  return ac.GetPos();
 }
 
 uint32_t PartOne::GetActorCellOrWorld(uint32_t formId)
 {
-  auto ac = worldState.Get<MpActor>(formId);
-  return ac->GetCellOrWorld().ToFormId(worldState.espmFiles);
+  auto& ac = worldState.Get<MpActor>(formId);
+  return ac.GetCellOrWorld().ToFormId(worldState.espmFiles);
 }
 
 const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
@@ -232,8 +232,8 @@ const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
 
 void PartOne::SetEnabled(uint32_t formId, bool enabled)
 {
-  auto ac = worldState.Get<MpActor>(formId);
-  enabled ? ac->Enable() : ac->Disable();
+  auto& ac = worldState.Get<MpActor>(formId);
+  enabled ? ac.Enable() : ac.Disable();
 }
 
 void PartOne::AttachEspm(espm::Loader* espm)

@@ -6,7 +6,7 @@ Napi::Value WorldOrCellDescBinding::Get(Napi::Env env,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
-  auto desc = refr->GetCellOrWorld().ToString();
+  auto& refr = partOne->worldState.Get<MpObjectReference>(formId);
+  auto desc = refr.GetCellOrWorld().ToString();
   return Napi::String::New(env, desc);
 }

@@ -5,8 +5,8 @@ Napi::Value IsOpenBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
-  return Napi::Boolean::New(env, refr->IsOpen());
+  auto& refr = partOne->worldState.Get<MpObjectReference>(formId);
+  return Napi::Boolean::New(env, refr.IsOpen());
 }
 
 void IsOpenBinding::Set(Napi::Env env, ScampServer& scampServer,
@@ -14,6 +14,6 @@ void IsOpenBinding::Set(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
-  refr->SetOpen(newValue.As<Napi::Boolean>().Value());
+  auto& refr = partOne->worldState.Get<MpObjectReference>(formId);
+  refr.SetOpen(newValue.As<Napi::Boolean>().Value());
 }

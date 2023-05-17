@@ -30,10 +30,10 @@ Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
+  auto& refr = partOne->worldState.Get<MpObjectReference>(formId);
 
   EnsurePropertyExists(scampServer.GetGamemodeApiState(), propertyName);
-  return NapiHelper::ParseJson(env, refr->GetDynamicFields().Get(propertyName));
+  return NapiHelper::ParseJson(env, refr.GetDynamicFields().Get(propertyName));
 }
 
 void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
@@ -41,7 +41,7 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
 
-  auto refr = partOne->worldState.Get<MpObjectReference>(formId);
+  auto& refr = partOne->worldState.Get<MpObjectReference>(formId);
 
   auto& state = scampServer.GetGamemodeApiState();
   auto it = EnsurePropertyExists(state, propertyName);
@@ -49,6 +49,6 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto newValueDump = NapiHelper::Stringify(env, newValue);
   auto newValueJson = nlohmann::json::parse(newValueDump);
 
-  refr->SetProperty(propertyName, newValueJson, it->second.isVisibleByOwner,
+  refr.SetProperty(propertyName, newValueJson, it->second.isVisibleByOwner,
                    it->second.isVisibleByNeighbors);
 }

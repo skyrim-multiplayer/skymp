@@ -208,8 +208,8 @@ public:
           uint32_t id = FormDesc::FromString(desc).ToFormId(espmFileNames);
 
           if (type == "form") {
-            auto refr = wst.Get<MpObjectReference>(id);
-            return VarValue(std::make_shared<MpFormGameObject>(refr));
+            auto& refr = wst.Get<MpObjectReference>(id);
+            return VarValue(std::make_shared<MpFormGameObject>(&refr));
           }
 
           if (type == "espm") {

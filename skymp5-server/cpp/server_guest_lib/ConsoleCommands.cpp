@@ -70,7 +70,7 @@ void ExecuteAddItem(MpActor& caller,
 
   MpObjectReference& target = (targetId == 0x14)
     ? caller
-    : *caller.GetParent()->Get<MpObjectReference>(targetId);
+    : caller.GetParent()->Get<MpObjectReference>(targetId);
 
   auto& br = caller.GetParent()->GetEspm().GetBrowser();
 
@@ -93,7 +93,7 @@ void ExecutePlaceAtMe(MpActor& caller,
 
   MpObjectReference& target = (targetId == 0x14)
     ? caller
-    : *caller.GetParent()->Get<MpObjectReference>(targetId);
+    : caller.GetParent()->Get<MpObjectReference>(targetId);
 
   auto& br = caller.GetParent()->GetEspm().GetBrowser();
 
@@ -117,7 +117,7 @@ void ExecuteDisable(MpActor& caller,
 
   MpObjectReference& target = (targetId == 0x14)
     ? caller
-    : *caller.GetParent()->Get<MpObjectReference>(targetId);
+    : caller.GetParent()->Get<MpObjectReference>(targetId);
 
   if (target.GetFormId() >= 0xff000000)
     target.Disable();

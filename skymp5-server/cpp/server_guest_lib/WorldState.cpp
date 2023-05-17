@@ -343,14 +343,14 @@ bool WorldState::LoadForm(uint32_t formId)
   }
 
   if (atLeastOneLoaded) {
-    auto refr = Get<MpObjectReference>(formId);
+    auto& refr = Get<MpObjectReference>(formId);
     auto it = pImpl->changeFormsForDeferredLoad.find(formId);
     if (it != pImpl->changeFormsForDeferredLoad.end()) {
-      refr->ApplyChangeForm(it->second);
+      refr.ApplyChangeForm(it->second);
       pImpl->changeFormsForDeferredLoad.erase(it);
     }
 
-    refr->ForceSubscriptionsUpdate();
+    refr.ForceSubscriptionsUpdate();
   }
 
   return atLeastOneLoaded;

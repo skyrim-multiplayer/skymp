@@ -278,9 +278,9 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
 
   targetPtr->Activate(
     caster == 0x14 ? *ac
-                   : *partOne.worldState.Get<MpObjectReference>(caster));
+                   : partOne.worldState.Get<MpObjectReference>(caster));
   if (hosterId) {
-    RecalculateWorn(*partOne.worldState.Get<MpObjectReference>(caster));
+    RecalculateWorn(partOne.worldState.Get<MpObjectReference>(caster));
   }
 }
 
@@ -288,22 +288,22 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  auto ref = partOne.worldState.Get<MpObjectReference>(target);
+  auto& ref = partOne.worldState.Get<MpObjectReference>(target);
 
   if (!actor)
     return; // TODO: Throw error instead
-  ref->PutItem(*actor, entry);
+  ref.PutItem(*actor, entry);
 }
 
 void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
                                 uint32_t target, const Inventory::Entry& entry)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  auto ref = partOne.worldState.Get<MpObjectReference>(target);
+  auto& ref = partOne.worldState.Get<MpObjectReference>(target);
 
   if (!actor)
     return; // TODO: Throw error instead
-  ref->TakeItem(*actor, entry);
+  ref.TakeItem(*actor, entry);
 }
 
 void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
@@ -411,12 +411,12 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
                                  const Inventory& inputObjects,
                                  uint32_t workbenchId, uint32_t resultObjectId)
 {
-  auto workbench =
+  auto& workbench =
     partOne.worldState.Get<MpObjectReference>(workbenchId);
 
   auto& br = partOne.worldState.GetEspm().GetBrowser();
   auto& cache = partOne.worldState.GetEspmCache();
-  auto base = br.LookupById(workbench->GetBaseId());
+  auto base = br.LookupById(workbench.GetBaseId());
 
   spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
                 rawMsgData.userId, resultObjectId, workbenchId);
@@ -452,16 +452,16 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
   if (!me)
     throw std::runtime_error("Unable to host without actor attached");
 
-  auto remote = partOne.worldState.Get<MpObjectReference>(remoteId);
+  auto& remote = partOne.worldState.Get<MpObjectReference>(remoteId);
 
-  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(remote));
+  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
   if (user != Networking::InvalidUserId)
     return;
 
   auto& hoster = partOne.worldState.hosters[remoteId];
   const uint32_t prevHoster = hoster;
 
-  auto remoteIdx = remote->GetIdx();
+  auto remoteIdx = remote.GetIdx();
 
   std::optional<std::chrono::system_clock::time_point> lastRemoteUpdate;
   if (partOne.worldState.lastMovUpdateByIdx.size() > remoteIdx) {
@@ -721,12 +721,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   };
 
-  auto targetActor = partOne.worldState.Get<MpActor>(hitData.target);
-  auto lastHitTime = targetActor->GetLastHitTime();
+  auto& targetActor = partOne.worldState.Get<MpActor>(hitData.target);
+  auto lastHitTime = targetActor.GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
-  if (!IsAvailableForNextAttack(*targetActor, hitData, timePassed)) {
-    WorldState* espmProvider = targetActor->GetParent();
+  if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+    WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
     float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) -
