@@ -1,6 +1,6 @@
-import { ChatMessage } from "../../../props/chatProperty";
-import { PlayerController } from "../../PlayerController";
-import { GameModeListener } from "../GameModeListener";
+import { ChatMessage } from "../../props/chatProperty";
+import { PlayerController } from "../PlayerController";
+import { GameModeListener } from "./gameModeListener";
 
 export class ChatSystem implements GameModeListener {
     constructor(private controller: PlayerController) {

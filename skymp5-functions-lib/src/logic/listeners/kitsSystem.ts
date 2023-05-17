@@ -1,7 +1,7 @@
-import { ChatMessage } from "../../../props/chatProperty";
-import { Mp, ServerSettings } from "../../../types/mp";
-import { PlayerController } from "../../PlayerController";
-import { GameModeListener } from "../GameModeListener";
+import { ChatMessage } from "../../props/chatProperty";
+import { Mp, ServerSettings } from "../../types/mp";
+import { PlayerController } from "../PlayerController";
+import { GameModeListener } from "./gameModeListener";
 
 export class KitsSystem implements GameModeListener {
     constructor(private mp: Mp, private controller: PlayerController) {
@@ -24,7 +24,6 @@ export class KitsSystem implements GameModeListener {
                 const days = 1;
                 const secondsBetweenGifts = 60 * 60 * 24 * days;
                 if (!previousDate || currentDate - previousDate > secondsBetweenGifts * 1000) {
-                    console.log(currentDate - previousDate)
                     this.controller.sendChatMessage(actorId, ChatMessage.system("You have been given a base kit", this.controller));
                     this.controller.addItem(actorId, 0xf, 1000);
                     this.mp.set(actorId, "private.kits.lastBaseKitGiftDate", currentDate);

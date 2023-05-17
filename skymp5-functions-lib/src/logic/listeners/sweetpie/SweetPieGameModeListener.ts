@@ -3,7 +3,7 @@ import { craftSkill } from '../skillMenu/skillMenuLogic';
 import { getName } from "../../../mpApiInteractor";
 import { ChatMessage, ChatText, createSystemMessage} from "../../../props/chatProperty";
 import { Command } from "./Command";
-import { GameModeListener } from "../GameModeListener";
+import { GameModeListener } from "../gameModeListener";
 import { PlayerController } from "../../PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
