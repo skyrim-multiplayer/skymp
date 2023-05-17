@@ -99,7 +99,10 @@ export class MpApiInteractor {
       );
       for (const listener of listeners) {
         if (listener.onPlayerChatInput) {
-          listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, profileId);
+          const result = listener.onPlayerChatInput(input.actorId, input.inputText, actorNeighbors, profileId);
+          if (result === 'eventBusStop') {
+            break;
+          }
         }
       }
     });

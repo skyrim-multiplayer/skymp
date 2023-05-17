@@ -14,4 +14,5 @@ public:
 
 private:
   std::string propertyName;
+  bool isPrivate = false;
 };
