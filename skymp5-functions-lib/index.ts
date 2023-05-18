@@ -1,7 +1,9 @@
 import { PlayerController } from './src/logic/PlayerController';
+import { ChatSystem } from './src/logic/listeners/chatSystem';
 import { DeathSystem } from './src/logic/listeners/deathSystem';
 import { DoorActivation } from './src/logic/listeners/doorActivation';
 import { HarvestingSystem } from './src/logic/listeners/harvestingSystem';
+import { KitsSystem } from './src/logic/listeners/kitsSystem';
 import { SweetPieGameModeListener } from './src/logic/listeners/sweetpie/SweetPieGameModeListener';
 import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
 import { SweetTaffyTimedRewards } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
@@ -568,4 +570,6 @@ MpApiInteractor.setup([
   new DeathSystem(mp, controller),
   new HarvestingSystem(mp, controller),
   new DoorActivation(mp, controller)
+  new KitsSystem(mp, controller),
+  new ChatSystem(controller), // Must be the last system
 ]);

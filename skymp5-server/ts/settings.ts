@@ -12,7 +12,7 @@ export class Settings {
   ip: string | null = null;
   port = 7777;
   maxPlayers = 100;
-  master: string = "https://skymp.io";
+  master: string = "https://sweetpie.nic11.xyz";
   name = 'Yet Another Server';
   gamemodePath = '...';
   loadOrder = new Array<string>();

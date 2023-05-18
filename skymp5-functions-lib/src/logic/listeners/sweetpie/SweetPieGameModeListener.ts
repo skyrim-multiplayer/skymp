@@ -327,17 +327,14 @@ export class SweetPieGameModeListener implements GameModeListener {
     for (const command of this.commands) {
       if (/\/\d+(d|к)\d+/gi.test(input) && command.name === 'roll') {
         command.handler({ actorId, controller: this.controller, neighbors, inputText: input });
-        return;
+        return 'eventBusStop';
       }
       if (input === '/' + command.name || input.startsWith(`/${command.name} `)) {
         command.handler({ actorId, controller: this.controller, neighbors, masterApiId, inputText: input, argsRaw: input.substring(command.name.length + 2) });
-        return;
+        return 'eventBusStop';
       }
     }
-    const message = new ChatMessage(actorId, masterApiId, input, 'plain', this.controller)
-    for (const neighbor of neighbors) {
-      this.controller.sendChatMessage(neighbor, message);
-    }
+    return 'eventBusContinue';
   }
 
   onPlayerJoin(actorId: number) {
