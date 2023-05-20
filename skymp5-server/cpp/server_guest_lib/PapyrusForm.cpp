@@ -1,9 +1,9 @@
 #include "PapyrusForm.h"
 
+#include "EspmGameObject.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 #include "WorldState.h"
-#include "EspmGameObject.h"
 
 VarValue PapyrusForm::RegisterForSingleUpdate(
   VarValue self, const std::vector<VarValue>& arguments)
@@ -26,11 +26,11 @@ VarValue PapyrusForm::GetType(VarValue self, const std::vector<VarValue>&)
   }
 
   if (auto form = GetFormPtr<MpForm>(self)) {
-    if (dynamic_cast<MpActor *>(form)) {
+    if (dynamic_cast<MpActor*>(form)) {
       constexpr auto kCharacter = 62;
       return VarValue(static_cast<int32_t>(kCharacter));
     }
-    if (dynamic_cast<MpObjectReference *>(form)) {
+    if (dynamic_cast<MpObjectReference*>(form)) {
       constexpr auto kReference = 61;
       return VarValue(static_cast<int32_t>(kReference));
     }
