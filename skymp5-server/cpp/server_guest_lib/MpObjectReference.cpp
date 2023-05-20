@@ -760,6 +760,10 @@ void MpObjectReference::RequestReloot(
 
 void MpObjectReference::DoReloot()
 {
+  if (this->GetFormId() >= 0xff000000) {
+    return;
+  }
+
   if (ChangeForm().nextRelootDatetime) {
     EditChangeForm([&](MpChangeFormREFR& changeForm) {
       changeForm.nextRelootDatetime = 0;
