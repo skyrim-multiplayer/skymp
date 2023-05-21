@@ -129,35 +129,35 @@ jobs:
       # - run: |
       #     New-Item -ItemType Directory -Path ${{github.workspace}}/build/nexus/sp/data/ -Force
       #     New-Item ${{github.workspace}}/build/nexus/sp/data/foo.bar.txt
-      - uses: actions/upload-artifact@v3
-        with:
-          name: SP-AE
-          # Data folder is skipped for mod managers
-          path: ${{github.workspace}}/build/nexus/sp/data/*
-      # create a zip archive
-      - run: |
-          $zip = ${{github.workspace}}/build/nexus/sp.zip
-          $source = ${{github.workspace}}/build/nexus/sp/data
-          Compress-Archive -Path $source -DestinationPath $zip
-      - run: |
-          dotnet tool install -g Digitalroot.ModUploader
-          drmu nexusmods upload 54909 ${{github.workspace}}/build/nexus/sp/data --file-name "Skyrim Platform 2.7.0 (Anniversary Edition)" --version "2.7.0" --category Main --description "THIS IS FOR ANNIVERSARY EDITION (1.6.x)!\n\nPlease backup your saves before updating. There are issues with some modlists.\n\nChangelog: https://github.com/skyrim-multiplayer/skymp/blob/main/docs/release/sp-2.7.0.md\n\nFor questions: https://discord.gg/k39uQ9Yudt" --game skyrimspecialedition
+    - uses: actions/upload-artifact@v3
+      with:
+        name: SP-AE
+        # Data folder is skipped for mod managers
+        path: ${{github.workspace}}/build/nexus/sp/data/*
+    # create a zip archive
+    - run: |
+        $zip = ${{github.workspace}}/build/nexus/sp.zip
+        $source = ${{github.workspace}}/build/nexus/sp/data
+        Compress-Archive -Path $source -DestinationPath $zip
+    - run: |
+        dotnet tool install -g Digitalroot.ModUploader
+        drmu nexusmods upload 54909 ${{github.workspace}}/build/nexus/sp/data --file-name "Skyrim Platform 2.7.0 (Anniversary Edition)" --version "2.7.0" --category Main --description "THIS IS FOR ANNIVERSARY EDITION (1.6.x)!\n\nPlease backup your saves before updating. There are issues with some modlists.\n\nChangelog: https://github.com/skyrim-multiplayer/skymp/blob/main/docs/release/sp-2.7.0.md\n\nFor questions: https://discord.gg/k39uQ9Yudt" --game skyrimspecialedition
 
-    # - name: Debug - free space
-    #   if: 'always()'
-    #   run: Get-PSDrive
+    - name: Debug - free space
+      if: 'always()'
+      run: Get-PSDrive
 
-    # - uses: actions/upload-artifact@v3
-    #   if: 'always()'
-    #   with:
-    #     name: msbuild_files
-    #     path: |
-    #       ${{github.workspace}}/build/**/*.sln
-    #       ${{github.workspace}}/build/**/*.vcxproj
+    - uses: actions/upload-artifact@v3
+      if: 'always()'
+      with:
+        name: msbuild_files
+        path: |
+          ${{github.workspace}}/build/**/*.sln
+          ${{github.workspace}}/build/**/*.vcxproj
 
-    # - uses: actions/upload-artifact@v3
-    #   if: 'always()'
-    #   with:
-    #     name: vcpkg_include
-    #     path: |
-    #       ${{github.workspace}}/build/vcpkg_installed/*/include
+    - uses: actions/upload-artifact@v3
+      if: 'always()'
+      with:
+        name: vcpkg_include
+        path: |
+          ${{github.workspace}}/build/vcpkg_installed/*/include
