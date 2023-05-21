@@ -125,13 +125,13 @@ jobs:
     #     name: coverage
     #     path: ${{github.workspace}}/build/__coverage
 
-    - run: |
-      touch ${{github.workspace}}/build/nexus/sp/data/foo.bar.txt
-    - uses: actions/upload-artifact@v3
-      with:
-        name: SP-AE
-        # Data folder is skipped for mod managers
-        path: ${{github.workspace}}/build/nexus/sp/data/*
+      - run: |
+        touch ${{github.workspace}}/build/nexus/sp/data/foo.bar.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: SP-AE
+          # Data folder is skipped for mod managers
+          path: ${{github.workspace}}/build/nexus/sp/data/*
 
     # - name: Debug - free space
     #   if: 'always()'
