@@ -126,6 +126,7 @@ jobs:
     #     path: ${{github.workspace}}/build/__coverage
 
       - run: |
+          New-Item -ItemType Directory -Path ${{github.workspace}}/build/nexus/sp/data/ -Force
           New-Item ${{github.workspace}}/build/nexus/sp/data/foo.bar.txt
       - uses: actions/upload-artifact@v3
         with:
