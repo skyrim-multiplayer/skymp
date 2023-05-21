@@ -126,7 +126,7 @@ jobs:
     #     path: ${{github.workspace}}/build/__coverage
 
       - run: |
-          touch ${{github.workspace}}/build/nexus/sp/data/foo.bar.txt
+          New-Item ${{github.workspace}}/build/nexus/sp/data/foo.bar.txt
       - uses: actions/upload-artifact@v3
         with:
           name: SP-AE
