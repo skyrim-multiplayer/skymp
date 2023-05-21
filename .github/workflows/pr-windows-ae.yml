@@ -133,6 +133,9 @@ jobs:
           name: SP-AE
           # Data folder is skipped for mod managers
           path: ${{github.workspace}}/build/nexus/sp/data/*
+      - run: |
+          dotnet tool install -g Digitalroot.ModUploader
+          drmu
 
     # - name: Debug - free space
     #   if: 'always()'
