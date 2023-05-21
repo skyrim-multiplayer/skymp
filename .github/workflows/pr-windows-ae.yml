@@ -135,7 +135,7 @@ jobs:
           path: ${{github.workspace}}/build/nexus/sp/data/*
       - run: |
           dotnet tool install -g Digitalroot.ModUploader
-          drmu
+          drmu --help
 
     # - name: Debug - free space
     #   if: 'always()'
