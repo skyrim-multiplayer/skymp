@@ -1016,10 +1016,9 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         SetOpen(true);
         RequestReloot();
       }
-      
+
       auto destinationId = lookupRes.ToGlobalId(teleport->destinationDoor);
-      auto destination =
-        loader.GetBrowser().LookupById(destinationId);
+      auto destination = loader.GetBrowser().LookupById(destinationId);
       auto destinationRecord = espm::Convert<espm::REFR>(destination.rec);
       if (!destinationRecord) {
         throw std::runtime_error(
