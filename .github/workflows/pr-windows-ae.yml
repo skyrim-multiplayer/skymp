@@ -14,10 +14,6 @@ env:
   VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
 
-  NEXUSMOD_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
-  NEXUSMOD_COOKIE_NEXUSID: ${{ secrets.NEXUS_COOKIE_NEXUSID }}
-  NEXUSMOD_COOKIE_SID_DEVELOP: ${{ secrets.NEXUS_COOKIE_SID_DEVELOP }}
-
 jobs:
   build:
     # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
@@ -141,7 +137,7 @@ jobs:
         Compress-Archive -Path ${{github.workspace}}/build/nexus/sp/data -DestinationPath ${{github.workspace}}/build/nexus/sp.zip
     - run: |
         dotnet tool install -g Digitalroot.ModUploader
-        drmu nexusmods upload 54909 ${{github.workspace}}/build/nexus/sp.zip --file-name "Skyrim Platform 2.7.0 (Anniversary Edition)" --version "2.7.0" --category Main --description "THIS IS FOR ANNIVERSARY EDITION (1.6.x)!\n\nPlease backup your saves before updating. There are issues with some modlists.\n\nChangelog: https://github.com/skyrim-multiplayer/skymp/blob/main/docs/release/sp-2.7.0.md\n\nFor questions: https://discord.gg/k39uQ9Yudt" --game skyrimspecialedition --key ${{env.NEXUSMOD_API_KEY}} --cookie_nexusid ${{env.NEXUSMOD_COOKIE_NEXUSID}} --cookie_sid_develop ${{env.NEXUSMOD_COOKIE_SID_DEVELOP}}
+        drmu nexusmods upload 54909 ${{github.workspace}}/build/nexus/sp.zip --file-name "Skyrim Platform 2.7.0 (Anniversary Edition)" --version "2.7.0" --category Main --description "THIS IS FOR ANNIVERSARY EDITION (1.6.x)!\n\nPlease backup your saves before updating. There are issues with some modlists.\n\nChangelog: https://github.com/skyrim-multiplayer/skymp/blob/main/docs/release/sp-2.7.0.md\n\nFor questions: https://discord.gg/k39uQ9Yudt" --game skyrimspecialedition --key ${{ secrets.NEXUSMODS_API_KEY }} --cookie_nexusid ${{ secrets.NEXUS_COOKIE_NEXUSID }} --cookie_sid_develop ${{ secrets.NEXUS_COOKIE_SID_DEVELOP }}
 
     - name: Debug - free space
       if: 'always()'
