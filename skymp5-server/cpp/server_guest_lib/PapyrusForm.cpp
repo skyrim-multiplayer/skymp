@@ -39,7 +39,8 @@ VarValue PapyrusForm::GetType(VarValue self, const std::vector<VarValue>&)
   return VarValue::None();
 }
 
-VarValue PapyrusForm::HasKeyword(VarValue self, const std::vector<VarValue>&args)
+VarValue PapyrusForm::HasKeyword(VarValue self,
+                                 const std::vector<VarValue>& args)
 {
   static espm::CompressedFieldsCache g_dummyCache;
 
@@ -47,8 +48,8 @@ VarValue PapyrusForm::HasKeyword(VarValue self, const std::vector<VarValue>&args
     spdlog::error("Form.HasKeyword - at least one argument expected");
     return VarValue(false);
   }
-  
-  const auto &keywordRec = GetRecordPtr(args[0]);
+
+  const auto& keywordRec = GetRecordPtr(args[0]);
   if (!keywordRec.rec) {
     spdlog::error("Form.HasKeyword - invalid keyword form");
     return VarValue(false);
