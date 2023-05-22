@@ -30,6 +30,9 @@ jobs:
           sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/src/platform_se/skyrim_platform/DevApi.cpp
           sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/package.json
           sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skymp5-client/src/version.ts
+          sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/.github/workflows/pr-windows-ae.yml
+          sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/.github/workflows/pr-windows-ae.yml
+          sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/.github/workflows/pr-windows-ae.yml
           chmod 644 ${{github.workspace}}/skyrim-platform/src/platform_se/CMakeLists.txt
           chmod 644 ${{github.workspace}}/skyrim-platform/src/platform_se/skyrim_platform/DevApi.cpp
           chmod 644 ${{github.workspace}}/skyrim-platform/package.json
