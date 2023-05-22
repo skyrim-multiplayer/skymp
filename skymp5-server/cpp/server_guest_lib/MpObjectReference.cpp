@@ -1008,18 +1008,18 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       RequestReloot();
     }
   } else if (t == espm::DOOR::kType) {
-
-    auto refrRecord = espm::Convert<espm::REFR>(
-      loader.GetBrowser().LookupById(GetFormId()).rec);
+    auto lookupRes = loader.GetBrowser().LookupById(GetFormId());
+    auto refrRecord = espm::Convert<espm::REFR>(lookupRes.rec);
     auto teleport = refrRecord->GetData(compressedFieldsCache).teleport;
     if (teleport) {
       if (!IsOpen()) {
         SetOpen(true);
         RequestReloot();
       }
-
+      
+      auto destinationId = lookupRes.ToGlobalId(teleport->destinationDoor);
       auto destination =
-        loader.GetBrowser().LookupById(teleport->destinationDoor);
+        loader.GetBrowser().LookupById(destinationId);
       auto destinationRecord = espm::Convert<espm::REFR>(destination.rec);
       if (!destinationRecord) {
         throw std::runtime_error(
