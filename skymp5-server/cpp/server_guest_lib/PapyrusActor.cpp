@@ -80,13 +80,21 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
     formIds.emplace_back(form.ToGlobalId(form.rec->GetId()));
   }
 
-  auto equipment =
-    actor->GetEquipment().inv.GetEquippedItem(Inventory::Worn::Right);
-  for (const auto& formId : formIds) {
-    if (equipment == formId) {
-      return VarValue(true);
+  auto equipment = actor->GetEquipment().inv;
+  // Enum entries of equipment
+  for (auto &entry : equipment.entries) {
+    // Filter out non-worn (in current implementation it is possible)
+    if (entry.extra.worn == Inventory::Worn::Right || entry.extra.worn == Inventory::Worn::Left) {
+      // Enum entries of form list
+      for (const auto& formId : formIds) {
+        // If one of equipment entries matches one of formlist entries, then return true
+        if (entry.baseId == formId) {
+          return VarValue(true);
+        }
+      }
     }
   }
+
   return VarValue(false);
 }
 
