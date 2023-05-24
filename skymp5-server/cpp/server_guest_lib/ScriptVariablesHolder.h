@@ -2,6 +2,7 @@
 #include "CIString.h"
 #include "Loader.h"
 #include "VirtualMachine.h"
+#include <optional>
 
 class EspmGameObject;
 
@@ -17,10 +18,11 @@ public:
   VarValue* GetVariableByName(const char* name, const PexScript& pex) override;
 
 private:
-  void FillProperties(const espm::Script& script);
+  void FillProperties();
   void FillNormalVariables(const PexScript& pex);
   void FillState(const PexScript& pex);
-  espm::Script GetScript();
+
+  std::optional<espm::Script> GetScript(espm::RecordHeader* const record);
 
   using VarsMap = CIMap<VarValue>;
   using EspmObjectsHolder =
