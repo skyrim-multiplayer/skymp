@@ -3,7 +3,7 @@
 #include "EspmGameObject.h"
 #include "Utils.h"
 
-#include <spdlog.h>
+// #include <spdlog.h>
 
 ScriptVariablesHolder::ScriptVariablesHolder(
   const std::string& myScriptName_, espm::RecordHeader* baseRecordWithScripts_,
@@ -60,7 +60,7 @@ void ScriptVariablesHolder::FillProperties()
         fullVarName += prop.propertyName.data();
         fullVarName += "_var";
         (*vars)[fullVarName] = out;
-        spdlog::info("{} - Setting {} property value from {} properties", myScriptName, fullVarName.c_str(), varName);
+        // spdlog::info("{} - Setting {} property value from {} properties", myScriptName, fullVarName.c_str(), varName);
       }
     }
   }
