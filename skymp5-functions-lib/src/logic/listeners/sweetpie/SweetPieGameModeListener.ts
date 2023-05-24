@@ -1,13 +1,9 @@
 import { sprintf } from "sprintf-js";
-import { craftSkill } from '../skillMenu/skillMenuLogic';
-import { getName } from "../../../mpApiInteractor";
-import { ChatMessage, ChatText, createSystemMessage} from "../../../props/chatProperty";
-import { Command } from "../commands/command";
+import { createSystemMessage} from "../../../props/chatProperty";
 import { GameModeListener } from "../gameModeListener";
 import { PlayerController } from "../../PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
-import { skillDice } from '../skillDice/skillDiceLogic';
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
@@ -45,21 +41,6 @@ export class SweetPieGameModeListener implements GameModeListener {
     'running': 'Running, please wait',
     'finished': 'Running, please wait',
   };
-  readonly commands: Command[] = [
-    {
-      name: 'skill-dice',
-      handler: ({ actorId, controller, neighbors, inputText, masterApiId}) => {
-        skillDice(actorId, controller, neighbors, inputText, masterApiId);
-      },
-    },
-    {
-      name: 'skill',
-      handler: ({ actorId, controller, argsRaw}) => {
-        // controller.sendChatMessage(actorId, createSystemMessage(`${argsRaw}`));
-        craftSkill(actorId, controller, argsRaw);
-      }
-    }
-  ]
 
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
@@ -221,17 +202,7 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerChatInput(actorId: number, input: string, neighbors: number[], masterApiId: number) {
-    for (const command of this.commands) {
-      if (/\/\d+(d|к)\d+/gi.test(input) && command.name === 'roll') {
-        command.handler({ actorId, controller: this.controller, neighbors, inputText: input });
-        return 'eventBusStop';
-      }
-      if (input === '/' + command.name || input.startsWith(`/${command.name} `)) {
-        command.handler({ actorId, controller: this.controller, neighbors, masterApiId, inputText: input, argsRaw: input.substring(command.name.length + 2) });
-        return 'eventBusStop';
-      }
-    }
-    return 'eventBusContinue';
+    return 'eventBusContinue' as 'eventBusContinue';
   }
 
   onPlayerJoin(actorId: number) {

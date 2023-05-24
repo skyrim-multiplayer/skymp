@@ -1,4 +1,4 @@
-import { ChatMessage, ChatText, createSystemMessage } from "../../../props/chatProperty";
+import { ChatMessage, ChatText } from "../../../props/chatProperty";
 import { Mp } from "../../../types/mp";
 import { PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
