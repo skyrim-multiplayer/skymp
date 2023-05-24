@@ -345,12 +345,14 @@ VarValue PapyrusObjectReference::SetPosition(
   return VarValue::None();
 }
 
-VarValue PapyrusObjectReference::GetBaseObject(VarValue self, const std::vector<VarValue>& arguments) {
+VarValue PapyrusObjectReference::GetBaseObject(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
   if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
     auto baseId = selfRefr->GetBaseId();
     if (baseId) {
       if (auto worldState = selfRefr->GetParent()) {
-        auto &espm = worldState->GetEspm();
+        auto& espm = worldState->GetEspm();
         auto lookupRes = espm.GetBrowser().LookupById(baseId);
         if (lookupRes.rec) {
           return VarValue(std::make_shared<EspmGameObject>(lookupRes));

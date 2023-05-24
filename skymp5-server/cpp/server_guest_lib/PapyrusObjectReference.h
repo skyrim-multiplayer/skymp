@@ -32,7 +32,8 @@ public:
   VarValue GetPositionZ(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetPosition(VarValue self, const std::vector<VarValue>& arguments);
 
-  VarValue GetBaseObject(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetBaseObject(VarValue self,
+                         const std::vector<VarValue>& arguments);
 
   void Register(
     VirtualMachine& vm,
