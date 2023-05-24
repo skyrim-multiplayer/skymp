@@ -21,8 +21,8 @@ private:
   void FillProperties();
   void FillNormalVariables(const PexScript& pex);
   void FillState(const PexScript& pex);
-  
-  std::optional<espm::Script> GetScript(espm::RecordHeader *const record);
+
+  std::optional<espm::Script> GetScript(espm::RecordHeader* const record);
 
   using VarsMap = CIMap<VarValue>;
   using EspmObjectsHolder =

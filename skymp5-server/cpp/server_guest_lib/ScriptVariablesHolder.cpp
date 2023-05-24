@@ -45,8 +45,8 @@ void ScriptVariablesHolder::FillProperties()
 {
   auto baseScript = GetScript(baseRecordWithScripts);
   auto refrScript = GetScript(refrRecordWithScripts);
-  
-  for (auto &script : { baseScript, refrScript }) {
+
+  for (auto& script : { baseScript, refrScript }) {
     if (script) {
       for (auto& prop : script->properties) {
         VarValue out;
@@ -83,7 +83,8 @@ void ScriptVariablesHolder::FillState(const PexScript& pex)
   state = VarValue(pex.objectTable[0].autoStateName.data());
 }
 
-std::optional<espm::Script> ScriptVariablesHolder::GetScript(espm::RecordHeader *const record)
+std::optional<espm::Script> ScriptVariablesHolder::GetScript(
+  espm::RecordHeader* const record)
 {
   if (!record) {
     return std::nullopt;
