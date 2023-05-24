@@ -3,8 +3,6 @@
 #include "EspmGameObject.h"
 #include "Utils.h"
 
-// #include <spdlog.h>
-
 ScriptVariablesHolder::ScriptVariablesHolder(
   const std::string& myScriptName_, espm::RecordHeader* baseRecordWithScripts_,
   espm::RecordHeader* refrRecordWithScripts_,
@@ -47,8 +45,6 @@ void ScriptVariablesHolder::FillProperties()
 {
   auto baseScript = GetScript(baseRecordWithScripts);
   auto refrScript = GetScript(refrRecordWithScripts);
-
-  const char* varName = "base";
   
   for (auto &script : { baseScript, refrScript }) {
     if (script) {
@@ -60,11 +56,8 @@ void ScriptVariablesHolder::FillProperties()
         fullVarName += prop.propertyName.data();
         fullVarName += "_var";
         (*vars)[fullVarName] = out;
-        // spdlog::info("{} - Setting {} property value from {} properties", myScriptName, fullVarName.c_str(), varName);
       }
     }
-
-    varName = "refr";
   }
 }
 
@@ -107,28 +100,6 @@ std::optional<espm::Script> ScriptVariablesHolder::GetScript(espm::RecordHeader 
     return std::move(*matchingScriptData);
   }
   return std::nullopt;
-
-  // std::vector<espm::Script> scripts;
-
-  // Scripts on REFR is in priority due to property values override
-  // for (auto rec : { refrRecordWithScripts, baseRecordWithScripts }) {
-  //   if (!rec) {
-  //     continue;
-  //   }
-  //   espm::ScriptData scriptData;
-  //   rec->GetScriptData(&scriptData, *compressedFieldsCache);
-  //   auto matchingScriptData = std::find_if(
-  //     scriptData.scripts.begin(), scriptData.scripts.end(),
-  //     [&](const espm::Script& script) {
-  //       return !Utils::stricmp(script.scriptName.data(), myScriptName.data());
-  //     });
-  //   if (matchingScriptData != scriptData.scripts.end()) {
-  //     //return std::move(*matchingScriptData);
-  //     scripts.push_back(*matchingScriptData);
-  //   }
-  // }
-  // throw std::runtime_error("ScriptData doesn't contain script with name '" +
-  //                          myScriptName + "'");
 }
 
 VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
