@@ -48,9 +48,9 @@ void ScriptVariablesHolder::FillProperties()
   auto baseScript = GetScript(baseRecordWithScripts);
   auto refrScript = GetScript(refrRecordWithScripts);
 
-  for (auto script : { baseScript, refrScript }) {
-    const char* varName = script == baseScript ? "base" : "refr";
-
+  const char* varName = "base";
+  
+  for (auto &script : { baseScript, refrScript }) {
     if (script) {
       for (auto& prop : script->properties) {
         VarValue out;
@@ -63,6 +63,8 @@ void ScriptVariablesHolder::FillProperties()
         // spdlog::info("{} - Setting {} property value from {} properties", myScriptName, fullVarName.c_str(), varName);
       }
     }
+
+    varName = "refr";
   }
 }
 
