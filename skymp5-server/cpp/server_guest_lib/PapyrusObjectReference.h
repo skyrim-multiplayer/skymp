@@ -32,6 +32,8 @@ public:
   VarValue GetPositionZ(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetPosition(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue GetBaseObject(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(
     VirtualMachine& vm,
     std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
@@ -59,5 +61,6 @@ public:
     AddMethod(vm, "GetPositionY", &PapyrusObjectReference::GetPositionY);
     AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
     AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
+    AddMethod(vm, "GetBaseObject", &PapyrusObjectReference::GetBaseObject);
   }
 };
