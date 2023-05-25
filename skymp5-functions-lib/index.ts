@@ -20,6 +20,7 @@ import { ListCommand } from './src/logic/listeners/commands/listCommand';
 import { RollCommand } from './src/logic/listeners/commands/rollCommand';
 import { SkillCommand } from './src/logic/listeners/commands/skillCommand';
 import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceCommand';
+import { KickCommand } from './src/logic/listeners/commands/kickCommand';
 
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
   throw new TypeError(`The argument with index ${index} has value (${JSON.stringify(x)}) that doesn't meet the requirements of ${expectedTypeName}`);
@@ -573,6 +574,7 @@ MpApiInteractor.setup([
   new DeathSystem(mp, controller),
   new KitCommand(mp, controller),
   new KillCommand(mp, controller),
+  new KickCommand(mp, controller),
   new ListCommand(mp, controller),
   new RollCommand(mp, controller),
   new SkillCommand(mp, controller),
