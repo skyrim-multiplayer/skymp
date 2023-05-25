@@ -1,7 +1,7 @@
 import { PlayerController } from './src/logic/PlayerController';
 import { ChatSystem } from './src/logic/listeners/chatSystem';
 import { DeathSystem } from './src/logic/listeners/deathSystem';
-import { KitsSystem } from './src/logic/listeners/kitsSystem';
+import { KitCommand } from './src/logic/listeners/commands/kitCommand';
 import { SweetPieGameModeListener } from './src/logic/listeners/sweetpie/SweetPieGameModeListener';
 import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
 import { SweetTaffyTimedRewards } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
@@ -15,6 +15,12 @@ import { DisableCheats } from './src/props/disableCheats';
 import { EvalProperty } from './src/props/evalProperty';
 import { LocationalData, Mp, PapyrusObject, PapyrusValue } from './src/types/mp';
 import { Timer } from './src/utils/timer';
+import { KillCommand } from './src/logic/listeners/commands/killCommand';
+import { ListCommand } from './src/logic/listeners/commands/listCommand';
+import { RollCommand } from './src/logic/listeners/commands/rollCommand';
+import { SkillCommand } from './src/logic/listeners/commands/skillCommand';
+import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceCommand';
+import { KickCommand } from './src/logic/listeners/commands/kickCommand';
 
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
   throw new TypeError(`The argument with index ${index} has value (${JSON.stringify(x)}) that doesn't meet the requirements of ${expectedTypeName}`);
@@ -566,6 +572,12 @@ MpApiInteractor.setup([
   createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
   new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
   new DeathSystem(mp, controller),
-  new KitsSystem(mp, controller),
+  new KitCommand(mp, controller),
+  new KillCommand(mp, controller),
+  new KickCommand(mp, controller),
+  new ListCommand(mp, controller),
+  new RollCommand(mp, controller),
+  new SkillCommand(mp, controller),
+  new SkillDiceCommand(mp, controller),
   new ChatSystem(controller), // Must be the last system
 ]);

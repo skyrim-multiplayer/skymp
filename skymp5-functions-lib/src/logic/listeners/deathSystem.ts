@@ -1,7 +1,7 @@
-import { PlayerController } from "../../PlayerController";
-import { GameModeListener } from "../GameModeListener";
-import { LocationalData, Mp, ServerSettings } from "../../../types/mp";
-import { ChatMessage } from "../../../props/chatProperty";
+import { PlayerController } from "../PlayerController";
+import { GameModeListener } from "./gameModeListener";
+import { LocationalData, Mp, ServerSettings } from "../../types/mp";
+import { ChatMessage } from "../../props/chatProperty";
 
 export class DeathSystem implements GameModeListener {
     constructor(private mp: Mp, private controller: PlayerController) {
