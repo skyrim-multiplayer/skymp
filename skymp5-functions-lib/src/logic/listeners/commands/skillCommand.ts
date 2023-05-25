@@ -8,9 +8,9 @@ declare const mp: Mp;
 declare const ctx: Ctx;
 declare const frontData: string;
 
-export class SkillDiceCommand extends Command {
+export class SkillCommand extends Command {
     constructor(mp: Mp, controller: PlayerController) {
-        super(mp, controller, "skill-dice");
+        super(mp, controller, "skill");
     }
 
     handle(input: HandlerInput): void {
