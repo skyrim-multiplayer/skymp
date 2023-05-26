@@ -43,9 +43,10 @@ void DirectoryMonitor::ThrowOnceIfHasError()
   if (pImpl->errorCode && !pImpl->thrown) {
     pImpl->thrown = true;
     if (pImpl->errorCode == 3) {
-      throw std::runtime_error(fmt::format("Dir {} not found (it's ok, SkyrimPlatform still works)", pImpl->dir.string()));
-    }
-    else {
+      throw std::runtime_error(
+        fmt::format("Dir {} not found (it's ok, SkyrimPlatform still works)",
+                    pImpl->dir.string()));
+    } else {
       throw std::runtime_error(
         fmt::format("DirectoryMonitor({}) failed with code {}",
                     pImpl->dir.string(), std::to_string(pImpl->errorCode)));
