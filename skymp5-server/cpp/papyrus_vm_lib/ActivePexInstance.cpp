@@ -7,6 +7,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <spdlog/spdlog.h>
+
 namespace {
 bool IsSelfStr(const VarValue& v)
 {
@@ -671,10 +673,18 @@ VarValue& ActivePexInstance::GetIndentifierValue(
   if (auto valueAsString = static_cast<const char*>(value)) {
     if (treatStringsAsIdentifiers &&
         value.GetType() == VarValue::kType_String) {
-      return GetVariableValueByName(&locals, valueAsString);
+      auto &res = GetVariableValueByName(&locals, valueAsString);
+      std::stringstream ss;
+      ss << res;
+      spdlog::info("{}: {} = {}", this->sourcePex.fn()->source, valueAsString, ss.str());
+      return res;
     }
     if (value.GetType() == VarValue::kType_Identifier) {
-      return GetVariableValueByName(&locals, valueAsString);
+      auto &res =  GetVariableValueByName(&locals, valueAsString);
+      std::stringstream ss;
+      ss << res;
+      spdlog::info("{}: {} = {}", this->sourcePex.fn()->source, valueAsString, ss.str());
+      return res;
     }
   }
   return value;

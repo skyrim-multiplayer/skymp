@@ -82,6 +82,7 @@ if(UNIX)
   target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
 endif()
 target_link_libraries(papyrus-vm-lib PUBLIC viet)
+list(APPEND VCPKG_DEPENDENT papyrus-vm-lib)
 
 #
 # localization-provider
