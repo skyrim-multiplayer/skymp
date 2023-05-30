@@ -3,6 +3,8 @@
 #include "EspmGameObject.h"
 #include "Utils.h"
 
+#include <spdlog/spdlog.h>
+
 ScriptVariablesHolder::ScriptVariablesHolder(
   const std::string& myScriptName_, espm::RecordHeader* baseRecordWithScripts_,
   espm::RecordHeader* refrRecordWithScripts_,
@@ -56,6 +58,10 @@ void ScriptVariablesHolder::FillProperties()
         fullVarName += prop.propertyName.data();
         fullVarName += "_var";
         (*vars)[fullVarName] = out;
+
+        VarValue asStr = CastToString(out);
+        auto str = static_cast<const char *>(asStr);
+        spdlog::info("{}: Adding property {} with value {}", script->scriptName, fullVarName.data(), str);
       }
     }
   }
