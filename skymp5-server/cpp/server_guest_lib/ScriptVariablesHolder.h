@@ -2,8 +2,8 @@
 #include "CIString.h"
 #include "Loader.h"
 #include "VirtualMachine.h"
-#include <optional>
 #include <functional>
+#include <optional>
 
 class EspmGameObject;
 
@@ -23,14 +23,15 @@ private:
   void FillNormalVariables(const PexScript& pex);
   void FillState(const PexScript& pex);
 
-  struct Script {
+  struct Script
+  {
     espm::Script script;
 
     // To decode formIds for property values of Object type
     std::function<uint32_t(uint32_t rawId)> toGlobalId;
   };
 
-  std::optional<Script> GetScript(const espm::LookupResult &lookupRes);
+  std::optional<Script> GetScript(const espm::LookupResult& lookupRes);
 
   using VarsMap = CIMap<VarValue>;
   using EspmObjectsHolder =
@@ -42,13 +43,13 @@ private:
 
   static VarValue CastPrimitivePropertyValue(
     const espm::CombineBrowser& br, ScriptsCache& st,
-    const espm::Property::Value& propValue, espm::PropertyType type, 
-    const std::function<uint32_t(uint32_t)> &toGlobalId);
+    const espm::Property::Value& propValue, espm::PropertyType type,
+    const std::function<uint32_t(uint32_t)>& toGlobalId);
 
-  static void CastProperty(const espm::CombineBrowser& br,
-                           const espm::Property& prop, VarValue* out,
-                           ScriptsCache* scriptsCache, 
-                           const std::function<uint32_t(uint32_t)> &toGlobalId);
+  static void CastProperty(
+    const espm::CombineBrowser& br, const espm::Property& prop, VarValue* out,
+    ScriptsCache* scriptsCache,
+    const std::function<uint32_t(uint32_t)>& toGlobalId);
   static espm::PropertyType GetElementType(espm::PropertyType arrayType);
 
   espm::LookupResult baseRecordWithScripts;

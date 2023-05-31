@@ -303,30 +303,34 @@ const espm::LookupResult& GetRecordPtr(const VarValue& papyrusObject)
   if (papyrusObject.GetType() != VarValue::kType_Object) {
     std::stringstream papyrusObjectStr;
     papyrusObjectStr << papyrusObject;
-    spdlog::warn("GetRecordPtr called with non-object ({})", papyrusObjectStr.str());
+    spdlog::warn("GetRecordPtr called with non-object ({})",
+                 papyrusObjectStr.str());
     return emptyResult;
   }
   auto gameObject = static_cast<IGameObject*>(papyrusObject);
   if (!gameObject) {
     std::stringstream papyrusObjectStr;
     papyrusObjectStr << papyrusObject;
-    spdlog::warn("GetRecordPtr called with null object ({})", papyrusObjectStr.str());
+    spdlog::warn("GetRecordPtr called with null object ({})",
+                 papyrusObjectStr.str());
     return emptyResult;
   }
   auto espmGameObject = dynamic_cast<EspmGameObject*>(gameObject);
   if (!espmGameObject) {
     std::stringstream papyrusObjectStr;
     papyrusObjectStr << papyrusObject;
-    spdlog::warn("GetRecordPtr called with non-espm object ({})", papyrusObjectStr.str());
+    spdlog::warn("GetRecordPtr called with non-espm object ({})",
+                 papyrusObjectStr.str());
     return emptyResult;
   }
   return espmGameObject->record;
 }
 
-const char* EspmGameObject::GetStringID() {
+const char* EspmGameObject::GetStringID()
+{
   static std::map<uint32_t, std::shared_ptr<std::string>> g_strings;
   auto formId = this->record.ToGlobalId(this->record.rec->GetId());
-  auto &v = g_strings[formId];
+  auto& v = g_strings[formId];
   if (!v) {
     v.reset(new std::string(fmt::format("espm {:x}", formId)));
   }

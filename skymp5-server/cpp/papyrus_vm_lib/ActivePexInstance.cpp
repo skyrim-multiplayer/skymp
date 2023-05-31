@@ -6,7 +6,6 @@
 #include <functional>
 #include <sstream>
 #include <stdexcept>
-#include <sstream>
 
 #include <spdlog/spdlog.h>
 
@@ -674,16 +673,20 @@ VarValue& ActivePexInstance::GetIndentifierValue(
   if (auto valueAsString = static_cast<const char*>(value)) {
     if (treatStringsAsIdentifiers &&
         value.GetType() == VarValue::kType_String) {
-      auto &res = GetVariableValueByName(&locals, valueAsString);
+      auto& res = GetVariableValueByName(&locals, valueAsString);
       if (spdlog::should_log(spdlog::level::trace)) {
-        spdlog::trace("GetIndentifierValue {}: {} = {}", this->sourcePex.fn()->source, valueAsString, res.ToString());
+        spdlog::trace("GetIndentifierValue {}: {} = {}",
+                      this->sourcePex.fn()->source, valueAsString,
+                      res.ToString());
       }
       return res;
     }
     if (value.GetType() == VarValue::kType_Identifier) {
-      auto &res =  GetVariableValueByName(&locals, valueAsString);
+      auto& res = GetVariableValueByName(&locals, valueAsString);
       if (spdlog::should_log(spdlog::level::trace)) {
-        spdlog::trace("GetIndentifierValue {}: {} = {}", this->sourcePex.fn()->source, valueAsString, res.ToString());
+        spdlog::trace("GetIndentifierValue {}: {} = {}",
+                      this->sourcePex.fn()->source, valueAsString,
+                      res.ToString());
       }
       return res;
     }
@@ -810,7 +813,8 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
       *scriptToCastOwner == VarValue::None()) {
     *result = VarValue::None();
     if (spdlog::should_log(spdlog::level::trace)) {
-      spdlog::trace("CastObjectToObject {} -> {} (object is null)", scriptToCastOwner->ToString(), result->ToString());
+      spdlog::trace("CastObjectToObject {} -> {} (object is null)",
+                    scriptToCastOwner->ToString(), result->ToString());
     }
     return;
   }
@@ -829,11 +833,14 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
       if (!Utils::stricmp(resultTypeName.data(), scriptName.data())) {
         *result = *scriptToCastOwner;
         if (spdlog::should_log(spdlog::level::trace)) {
-          spdlog::trace("CastObjectToObject {} -> {} (match found: {})", scriptToCastOwner->ToString(), result->ToString(), resultTypeName);
+          spdlog::trace("CastObjectToObject {} -> {} (match found: {})",
+                        scriptToCastOwner->ToString(), result->ToString(),
+                        resultTypeName);
         }
         return;
       }
-      //spdlog::info("CastObjectToObject keep looking (scripts non matching {} != {})", resultTypeName, scriptName);
+      // spdlog::info("CastObjectToObject keep looking (scripts non matching {}
+      // != {})", resultTypeName, scriptName);
 
       // TODO: Test this with attention
       // Here is the case when i.e. variable with type 'Form' casts to
@@ -853,7 +860,10 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
 
   *result = VarValue::None();
   if (spdlog::should_log(spdlog::level::trace)) {
-    spdlog::trace("CastObjectToObject {} -> {} (match not found, wanted {}, stack is {})", scriptToCastOwner->ToString(), result->ToString(), resultTypeName, fmt::join(classesStack, ", "));
+    spdlog::trace(
+      "CastObjectToObject {} -> {} (match not found, wanted {}, stack is {})",
+      scriptToCastOwner->ToString(), result->ToString(), resultTypeName,
+      fmt::join(classesStack, ", "));
   }
 }
 
