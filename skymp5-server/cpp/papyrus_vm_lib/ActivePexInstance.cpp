@@ -839,8 +839,6 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
         }
         return;
       }
-      // spdlog::info("CastObjectToObject keep looking (scripts non matching {}
-      // != {})", resultTypeName, scriptName);
 
       // TODO: Test this with attention
       // Here is the case when i.e. variable with type 'Form' casts to
