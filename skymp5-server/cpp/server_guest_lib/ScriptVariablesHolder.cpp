@@ -59,9 +59,9 @@ void ScriptVariablesHolder::FillProperties()
         fullVarName += "_var";
         (*vars)[fullVarName] = out;
 
-        VarValue asStr = CastToString(out);
-        auto str = static_cast<const char *>(asStr);
-        spdlog::trace("FillProperties for script {}: Adding property {} with value {}", script->script.scriptName, fullVarName.data(), str);
+        if (spdlog::should_log(spdlog::level::trace)) {
+          spdlog::trace("FillProperties for script {}: Adding property {} with value {}", script->script.scriptName, fullVarName.data(), out.ToString());
+        }
       }
     }
   }
@@ -147,7 +147,7 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
     case espm::PropertyType::Bool:
       return VarValue(propValue.boolean);
     default:
-      spdlog::error("Unexpected type in CastPrimitivePropertyValue ({})", type);
+      spdlog::error("Unexpected type in CastPrimitivePropertyValue ({})", static_cast<int>(type));
       return VarValue::None();
   }
 }
