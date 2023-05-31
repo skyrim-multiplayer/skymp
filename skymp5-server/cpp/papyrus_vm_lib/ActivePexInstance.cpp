@@ -6,6 +6,7 @@
 #include <functional>
 #include <sstream>
 #include <stdexcept>
+#include <sstream>
 
 #include <spdlog/spdlog.h>
 
@@ -808,12 +809,18 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
   if (scriptToCastOwner->GetType() != VarValue::kType_Object ||
       *scriptToCastOwner == VarValue::None()) {
     *result = VarValue::None();
+    std::stringstream ss;
+    ss << *scriptToCastOwner << " -> " << *result;
+    spdlog::info("CastObjectToObject {} (object is null)", ss.str());
     return;
   }
+
+  std::vector<std::string> classesStack;
 
   auto object = static_cast<IGameObject*>(*scriptToCastOwner);
   if (object) {
     std::string scriptName = object->GetParentNativeScript();
+    classesStack.push_back(scriptName);
     while (1) {
       if (scriptName.empty()) {
         break;
@@ -821,8 +828,12 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
 
       if (!Utils::stricmp(resultTypeName.data(), scriptName.data())) {
         *result = *scriptToCastOwner;
+        std::stringstream ss;
+        ss << *scriptToCastOwner << " -> " << *result;
+        spdlog::info("CastObjectToObject {} (match found: {})", ss.str(), resultTypeName);
         return;
       }
+      //spdlog::info("CastObjectToObject keep looking (scripts non matching {} != {})", resultTypeName, scriptName);
 
       // TODO: Test this with attention
       // Here is the case when i.e. variable with type 'Form' casts to
@@ -835,10 +846,14 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
       }
 
       scriptName = myScriptPex.fn()->objectTable[0].parentClassName;
+      classesStack.push_back(scriptName);
     }
   }
 
   *result = VarValue::None();
+  std::stringstream ss;
+  ss << *scriptToCastOwner << " -> " << *result;
+  spdlog::info("CastObjectToObject {} (match not found, wanted {}, stack is) {}", ss.str(), resultTypeName, fmt::join(classesStack, ", "));
 }
 
 bool ActivePexInstance::HasParent(ActivePexInstance* script,

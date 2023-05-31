@@ -1162,7 +1162,7 @@ void MpObjectReference::InitScripts()
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
       auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
-        scriptName, base.rec, refr.rec, base.parent, &compressedFieldsCache);
+        scriptName, base, refr, base.parent, &compressedFieldsCache);
       scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
     }
 

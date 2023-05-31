@@ -145,10 +145,12 @@ VarValue PapyrusObjectReference::GetItemCount(
   if (arguments.size() >= 1) {
     auto selfRefr = GetFormPtr<MpObjectReference>(self);
     if (!selfRefr) {
+      spdlog::warn("GetItemCount: self is not a reference");
       return VarValue(0);
     }
     auto& form = GetRecordPtr(arguments[0]);
     if (!form.rec) {
+      spdlog::warn("GetItemCount: failed to extract form with GetRecordPtr");
       return VarValue(0);
     }
     std::vector<uint32_t> formIds;
@@ -163,6 +165,7 @@ VarValue PapyrusObjectReference::GetItemCount(
 
     uint32_t count = 0;
     for (auto& formId : formIds) {
+      spdlog::info("{:x}", formId);
       count += selfRefr->GetInventory().GetItemCount(formId);
     }
     return VarValue(static_cast<int>(count));
