@@ -136,6 +136,7 @@ public:
   bool operator<=(const VarValue& argument2) const;
 
   friend std::ostream& operator<<(std::ostream& os, const VarValue& varValue);
+  std::string ToString() const;
 
   VarValue& operator=(const VarValue& arg2);
 

@@ -9,6 +9,7 @@ public:
 
   const char* GetParentNativeScript() override;
   bool EqualsByValue(const IGameObject& obj) const override;
+  const char* GetStringID() override;
 
   const espm::LookupResult record;
 };
