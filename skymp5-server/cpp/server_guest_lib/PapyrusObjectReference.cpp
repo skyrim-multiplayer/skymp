@@ -165,7 +165,6 @@ VarValue PapyrusObjectReference::GetItemCount(
 
     uint32_t count = 0;
     for (auto& formId : formIds) {
-      spdlog::info("{:x}", formId);
       count += selfRefr->GetInventory().GetItemCount(formId);
     }
     return VarValue(static_cast<int>(count));

@@ -61,7 +61,7 @@ void ScriptVariablesHolder::FillProperties()
 
         VarValue asStr = CastToString(out);
         auto str = static_cast<const char *>(asStr);
-        spdlog::info("{}: Adding property {} with value {}", script->script.scriptName, fullVarName.data(), str);
+        spdlog::trace("FillProperties for script {}: Adding property {} with value {}", script->script.scriptName, fullVarName.data(), str);
       }
     }
   }
@@ -123,7 +123,7 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
         return VarValue::None();
       }
       auto propValueFormIdGlobal = toGlobalId(propValue.formId);
-      spdlog::info("Prop to global id {:x} -> {:x}", propValue.formId, propValueFormIdGlobal);
+      spdlog::trace("CastPrimitivePropertyValue - Prop to global id {:x} -> {:x}", propValue.formId, propValueFormIdGlobal);
       auto& gameObject = st.espmObjectsHolder[propValueFormIdGlobal];
       if (!gameObject) {
         auto lookupResult = br.LookupById(propValueFormIdGlobal);
@@ -131,17 +131,14 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
           spdlog::error("CastPrimitivePropertyValue - Record with id {:x} not found", propValueFormIdGlobal);
         }
         else {
-          gameObject.reset(new EspmGameObject(lookupResult));
+          gameObject = std::make_shared<EspmGameObject>(lookupResult);
         }
       }
       return VarValue(gameObject.get());
     }
     case espm::PropertyType::String: {
       std::string str(propValue.str.data, propValue.str.length);
-      auto& stringPtr = st.propStringValues[str];
-      if (!stringPtr)
-        stringPtr.reset(new std::string(str));
-      return VarValue(stringPtr->data());
+      return VarValue(str);
     }
     case espm::PropertyType::Int:
       return VarValue(propValue.integer);
@@ -150,9 +147,8 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
     case espm::PropertyType::Bool:
       return VarValue(propValue.boolean);
     default:
-      throw std::runtime_error(
-        "Unexpected type in CastPrimitivePropertyValue (" +
-        std::to_string(static_cast<int>(type)) + ")");
+      spdlog::error("Unexpected type in CastPrimitivePropertyValue ({})", type);
+      return VarValue::None();
   }
 }
 

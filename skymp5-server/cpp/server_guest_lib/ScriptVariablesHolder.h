@@ -35,11 +35,9 @@ private:
   using VarsMap = CIMap<VarValue>;
   using EspmObjectsHolder =
     std::map<uint32_t, std::shared_ptr<EspmGameObject>>;
-  using PropStringValues = std::map<std::string, std::shared_ptr<std::string>>;
   struct ScriptsCache
   {
     EspmObjectsHolder espmObjectsHolder;
-    PropStringValues propStringValues;
   };
 
   static VarValue CastPrimitivePropertyValue(
