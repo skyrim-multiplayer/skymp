@@ -1,1 +1,0 @@
-Added back the "a**g**ressor" field of hit event. It should be still there for backward compatibility of compiled plugins. Only the 2.6 version was affected by the bug. This typo will be completely removed from the project in 3.0.0.

@@ -1,4 +1,4 @@
-import { GameModeListener } from "../GameModeListener";
+import { GameModeListener } from "../gameModeListener";
 import { Counter } from "../../PlayerController";
 
 export type TimedRewardController = {

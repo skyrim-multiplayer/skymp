@@ -1,13 +1,9 @@
 import { sprintf } from "sprintf-js";
-import { craftSkill } from '../skillMenu/skillMenuLogic';
-import { getName } from "../../../mpApiInteractor";
-import { ChatMessage, ChatText, createSystemMessage} from "../../../props/chatProperty";
-import { Command } from "./Command";
-import { GameModeListener } from "../GameModeListener";
+import { createSystemMessage} from "../../../props/chatProperty";
+import { GameModeListener } from "../gameModeListener";
 import { PlayerController } from "../../PlayerController";
 import { SweetPieMap } from "./SweetPieMap";
 import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
-import { skillDice } from '../skillDice/skillDiceLogic';
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
@@ -45,124 +41,6 @@ export class SweetPieGameModeListener implements GameModeListener {
     'running': 'Running, please wait',
     'finished': 'Running, please wait',
   };
-  readonly commands: Command[] = [
-    {
-      name: 'kick',
-      handler: ({ actorId, controller, argsRaw }) => {
-        const adminMasterApiIds = [479, 485, 486, 487, 488, 489, 497];
-        if (!adminMasterApiIds.includes(controller.getProfileId(actorId))) {
-          controller.sendChatMessage(actorId, createSystemMessage('No permission'));
-          return;
-        }
-        if (!argsRaw) {
-          controller.sendChatMessage(actorId, createSystemMessage('Expected id as an argument'));
-          return;
-        }
-        const targetMasterApiId = parseInt(argsRaw);
-        for (const targetPlayerActorId of controller.getOnlinePlayers()) {
-          if (controller.getProfileId(targetPlayerActorId) === targetMasterApiId) {
-            controller.quitGame(targetPlayerActorId);
-            controller.sendChatMessage(actorId, createSystemMessage(`Kicked actor ${targetPlayerActorId.toString(16)}`));
-            return;
-          }
-        }
-        controller.sendChatMessage(actorId, createSystemMessage('Not found'));
-      },
-    },
-    {
-      name: 'kill',
-      handler: ({ actorId, controller }) => {
-        controller.setPercentages(actorId, { health: 0 });
-        controller.sendChatMessage(actorId, createSystemMessage('You killed yourself...'));
-      }
-    },
-    {
-      name: 'list',
-      handler: ({ actorId, controller, argsRaw }) => {
-        const data = controller.getOnlinePlayers()
-          .map((playerFormId) => ({
-            name: controller.getName(playerFormId),
-            ids: `${playerFormId.toString(16)}/${controller.getProfileId(playerFormId)}`,
-          }))
-          .filter(({ name }) => name.toLocaleLowerCase().indexOf(argsRaw?.toLocaleLowerCase() ?? '') !== -1)
-          .sort((a, b) => a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase()));
-        controller.sendChatMessage(actorId, createSystemMessage(`${data.length} players ${argsRaw ? 'matched' : 'online'}: Server ID / Master API ID - Name`));
-        for (const { name, ids } of data) {
-          controller.sendChatMessage(actorId, createSystemMessage(`${ids} - ${name}`));
-        }
-      },
-    },
-    {
-      name: 'roll',
-      handler: ({ actorId, controller, neighbors, inputText, masterApiId }) => {
-        const name = getName(actorId)
-        const random: string[] = [];
-        const [count, _, max]: number[] = inputText.slice(1).split(/(d|к)/g).map(str => parseInt(str));
-        const colors: {
-          [key: number]: string
-        } = {
-          2: '#BDBD7D',
-          6: '#F78C8C',
-          12: '#5DAD60',
-          20: '#7175D6',
-          100: '#9159B6',
-        }
-        for (let i = 0; i < count; i++) {
-          if (i > 4) break;
-          if (max === 2) {
-            random.push(Math.floor(Math.random() * (max) + 1) === 2 ? 'успех' : 'неудача');
-          } else {
-            random.push(`${Math.floor(Math.random() * (max) + 1)}`);
-          }
-        }
-        let text: ChatText[] = []
-        if (max === 2) {
-          text = [
-            {
-              text: `${name} подбрасывает монетку `,
-              color: colors[max] ? colors[max] : '#9159B6',
-              type: ['plain']
-            },
-            {
-              text: `- ${random.join(', ')}`,
-              color: '#FFFFFF',
-              type: ['plain']
-            }
-          ]
-        } else {
-          text = [
-            {
-              text: `${name} бросает D${max} `,
-              color: colors[max] ? colors[max] : '#9159B6',
-              type: ['plain']
-            },
-            {
-              text: `- ${random.join(', ')}`,
-              color: '#FFFFFF',
-              type: ['plain']
-            }
-          ]
-        }
-        const message = new ChatMessage(actorId, masterApiId || controller.getProfileId(actorId), text, 'dice', controller)
-        for (const neighbor of neighbors) {
-          controller.sendChatMessage(neighbor, message);
-        } 
-      },
-    },
-    {
-      name: 'skill-dice',
-      handler: ({ actorId, controller, neighbors, inputText, masterApiId}) => {
-        skillDice(actorId, controller, neighbors, inputText, masterApiId);
-      },
-    },
-    {
-      name: 'skill',
-      handler: ({ actorId, controller, argsRaw}) => {
-        // controller.sendChatMessage(actorId, createSystemMessage(`${argsRaw}`));
-        craftSkill(actorId, controller, argsRaw);
-      }
-    }
-  ]
 
   warmupTimerMaximum = 60;
   runningTimerMaximum = 300;
@@ -324,17 +202,7 @@ export class SweetPieGameModeListener implements GameModeListener {
   }
 
   onPlayerChatInput(actorId: number, input: string, neighbors: number[], masterApiId: number) {
-    for (const command of this.commands) {
-      if (/\/\d+(d|к)\d+/gi.test(input) && command.name === 'roll') {
-        command.handler({ actorId, controller: this.controller, neighbors, inputText: input });
-        return 'eventBusStop';
-      }
-      if (input === '/' + command.name || input.startsWith(`/${command.name} `)) {
-        command.handler({ actorId, controller: this.controller, neighbors, masterApiId, inputText: input, argsRaw: input.substring(command.name.length + 2) });
-        return 'eventBusStop';
-      }
-    }
-    return 'eventBusContinue';
+    return 'eventBusContinue' as 'eventBusContinue';
   }
 
   onPlayerJoin(actorId: number) {

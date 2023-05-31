@@ -1008,9 +1008,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       RequestReloot();
     }
   } else if (t == espm::DOOR::kType) {
-
-    auto refrRecord = espm::Convert<espm::REFR>(
-      loader.GetBrowser().LookupById(GetFormId()).rec);
+    auto lookupRes = loader.GetBrowser().LookupById(GetFormId());
+    auto refrRecord = espm::Convert<espm::REFR>(lookupRes.rec);
     auto teleport = refrRecord->GetData(compressedFieldsCache).teleport;
     if (teleport) {
       if (!IsOpen()) {
@@ -1018,8 +1017,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         RequestReloot();
       }
 
-      auto destination =
-        loader.GetBrowser().LookupById(teleport->destinationDoor);
+      auto destinationId = lookupRes.ToGlobalId(teleport->destinationDoor);
+      auto destination = loader.GetBrowser().LookupById(destinationId);
       auto destinationRecord = espm::Convert<espm::REFR>(destination.rec);
       if (!destinationRecord) {
         throw std::runtime_error(
@@ -1163,7 +1162,7 @@ void MpObjectReference::InitScripts()
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
       auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
-        scriptName, base.rec, refr.rec, base.parent, &compressedFieldsCache);
+        scriptName, base, refr, base.parent, &compressedFieldsCache);
       scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
     }
 

@@ -538,6 +538,13 @@ std::ostream& operator<<(std::ostream& os, const VarValue& varValue)
   return os;
 }
 
+std::string VarValue::ToString() const
+{
+  std::stringstream ss;
+  ss << *this;
+  return ss.str();
+}
+
 VarValue& VarValue::operator=(const VarValue& arg2)
 {
   // DO NOT DO THIS:
