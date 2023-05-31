@@ -53,16 +53,6 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
     if (!argsRaw) return;
     const [newSkillName, level] = argsRaw.split(' ');
 
-    //TODO: remove before release
-    if (newSkillName === 'mem' && level) {
-        controller.addItem(actorId, memId, +level);
-        return
-    }
-    if (newSkillName === 'exp' && level) {
-        controller.addItem(actorId, expId, +level);
-        return
-    }
-
     if (newSkillName === 'init') {
         const { possessedSkills, memCount, expCount } = getPossesedSkills(actorId);
         const perks = {} as { [key: string]: number };

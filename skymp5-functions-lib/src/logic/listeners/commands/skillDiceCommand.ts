@@ -6,7 +6,7 @@ import { Ctx } from "../../../types/ctx";
 import { Mp } from "../../../types/mp";
 import { PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
-import { getPossesedSkills } from "./skillCommand";
+import { getPossesedSkills as getPossessedSkills } from "./skillCommand";
 
 export class SkillDiceCommand extends Command {
     constructor(mp: Mp, controller: PlayerController) {
@@ -53,7 +53,9 @@ export const skillDice = (
     let text: ChatText[] = [];
     switch (action) {
         case 'init':
-            const { possessedSkills } = getPossesedSkills(actorId);
+            const { possessedSkills } = getPossessedSkills(actorId);
+            const inventory = mp.get(actorId, 'inventory');
+            console.log(inventory);
             EvalProperty.eval(
                 actorId,
                 () => {
@@ -61,6 +63,13 @@ export const skillDice = (
                     const leftHandedWeapon = player.getEquippedWeapon(true);
                     const equippedWeapons = [] as string[];
                     let armorType = null;
+                    const magicStaffIds = [
+                        0x07A5950B, 0x07A5950A, 0x07A59505, 0x07A59504, 0x07A6D92E, 0x07A5950E0, 0x07A59510, 0x07A5950F, 0x07A5950D, 0x07A5950C, 0x07005905, 0x07005906, 0x07A59507, 0x07A59506, 0x07A59509, 0x07A59508, 0x070DA798, 0x070DA795, 0x070DA796, 0x070DA797, 0x070DA799
+                    ]
+                    const leftHandObject = player.getEquippedObject(0)
+                    if (leftHandObject && magicStaffIds.includes(leftHandObject.getFormID())) {
+                        equippedWeapons.push('magicstaff')
+                    }
                     weaponKeywords.forEach((type) => {
                         const keyword = ctx.sp.Keyword.getKeyword(type.keyword);
                         if (player.wornHasKeyword(keyword)) {
@@ -319,7 +328,6 @@ export const weaponTypes = [
     { keyword: 'WeapTypeBow', name: 'bows' },
     { keyword: 'ArmorShieldLight', name: 'shieldlight' },
     { keyword: 'ArmorShieldHeavy', name: 'shieldheavy' },
-    { keyword: 'ArmorTorch', name: 'magicstaff' },
 ];
 
 export const armorTypes = [
