@@ -1,6 +1,8 @@
 import { PlayerController } from './src/logic/PlayerController';
 import { ChatSystem } from './src/logic/listeners/chatSystem';
 import { DeathSystem } from './src/logic/listeners/deathSystem';
+import { DoorActivation } from './src/logic/listeners/doorActivation';
+import { HarvestingSystem } from './src/logic/listeners/harvestingSystem';
 import { KitCommand } from './src/logic/listeners/commands/kitCommand';
 import { SweetPieGameModeListener } from './src/logic/listeners/sweetpie/SweetPieGameModeListener';
 import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
@@ -572,6 +574,8 @@ MpApiInteractor.setup([
   createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
   new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
   new DeathSystem(mp, controller),
+  new HarvestingSystem(mp, controller),
+  new DoorActivation(mp, controller)
   new KitCommand(mp, controller),
   new KillCommand(mp, controller),
   new KickCommand(mp, controller),
