@@ -28,8 +28,6 @@ public:
 private:
   SweetPieDamageFormulaSettings ParseConfig(
     const nlohmann::json& config) const;
-  // int GetLevelByKeyword(const MpActor& aggressor, const std::string&
-  // weaponKeyword) const;
 
 private:
   std::unique_ptr<IDamageFormula> baseFormula;
