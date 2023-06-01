@@ -35,7 +35,7 @@ export class DeathSystem implements GameModeListener {
         const locationalData = this.mp.get(casterActorId, "locationalData");
         const newSpawnPoint = this.getNearestPoint(locationalData, this.startPoints);
         if (newSpawnPoint !== undefined) {
-            this.mp.set(formid, "private.spawnPointBackup", newSpawnPoint);
+            this.mp.set(casterActorId, "private.spawnPointBackup", newSpawnPoint);
         }
 
         return "continue";
