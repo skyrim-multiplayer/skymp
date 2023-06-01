@@ -90,12 +90,3 @@ export class DeathSystem implements GameModeListener {
     private serverSettings: ServerSettings;
     private startPoints: LocationalData[];
 }
-
-const isTeleportDoor = (mp: Mp, refrId: number) => {
-    const lookupRes = mp.lookupEspmRecordById(refrId);
-    if (lookupRes.record) {
-      const xtelIndex = lookupRes.record.fields.findIndex((field) => field.type === 'XTEL');
-      return xtelIndex !== -1;
-    }
-    return false;
-};
