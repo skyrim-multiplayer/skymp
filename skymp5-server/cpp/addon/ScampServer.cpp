@@ -15,8 +15,8 @@
 #include "ScampServerListener.h"
 #include "ScriptStorage.h"
 #include "SettingsUtils.h"
-#include "formulas/TES5DamageFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
+#include "formulas/TES5DamageFormula.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include <cassert>
 #include <cctype>
@@ -186,9 +186,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->SetSendTarget(server.get());
 
-    const auto& sweetPieDamageFormulaSettings = serverSettings["sweetPieDamageFormulaSettings"];
+    const auto& sweetPieDamageFormulaSettings =
+      serverSettings["sweetPieDamageFormulaSettings"];
     if (sweetPieDamageFormulaSettings.is_object()) {
-      partOne->SetDamageFormula(std::make_unique<SweetPieDamageFormula>(std::make_unique<TES5DamageFormula>(), sweetPieDamageFormulaSettings));
+      partOne->SetDamageFormula(std::make_unique<SweetPieDamageFormula>(
+        std::make_unique<TES5DamageFormula>(), sweetPieDamageFormulaSettings));
     } else {
       partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
     }

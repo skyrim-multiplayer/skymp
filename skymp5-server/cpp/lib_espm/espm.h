@@ -1046,7 +1046,6 @@ public:
 static_assert(sizeof(BOOK) == sizeof(RecordHeader));
 }
 
-
 namespace espm {
 
 class KYWD : public espm::RecordHeader

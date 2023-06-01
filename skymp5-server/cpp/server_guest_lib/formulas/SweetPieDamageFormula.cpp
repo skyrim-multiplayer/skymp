@@ -12,17 +12,23 @@
 #include "MpActor.h"
 #include "espm.h"
 
-SweetPieDamageFormula::SweetPieDamageFormula(std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
-: baseFormula(std::move(baseFormula_)), settings(ParseConfig(config)) {
+SweetPieDamageFormula::SweetPieDamageFormula(
+  std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
+  : baseFormula(std::move(baseFormula_))
+  , settings(ParseConfig(config))
+{
 }
 
-SweetPieDamageFormulaSettings SweetPieDamageFormula::ParseConfig(const nlohmann::json& config) const {
+SweetPieDamageFormulaSettings SweetPieDamageFormula::ParseConfig(
+  const nlohmann::json& config) const
+{
   SweetPieDamageFormulaSettings result{};
   for (const auto& level : config["damageMultByLevel"]) {
     result.damageMultByLevel.push_back(level.get<float>());
   }
   if (result.damageMultByLevel.size() != 5) {
-    throw std::runtime_error("error parsing damage formula config: damageMultByLevel must have 5 elements");
+    throw std::runtime_error("error parsing damage formula config: "
+                             "damageMultByLevel must have 5 elements");
   }
 
   for (const auto& keywordData : config["weaponKeywords"].items()) {
@@ -36,36 +42,49 @@ SweetPieDamageFormulaSettings SweetPieDamageFormula::ParseConfig(const nlohmann:
       } else if (formId.is_number_integer()) {
         formIds.push_back(formId.get<uint32_t>());
       } else {
-        throw std::runtime_error(fmt::format("error parsing damage formula config: invalid formId type for keyword {}: {} ({})", keyword, formId.type_name(), static_cast<int>(formId.type())));
+        throw std::runtime_error(fmt::format(
+          "error parsing damage formula config: invalid formId type for "
+          "keyword {}: {} ({})",
+          keyword, formId.type_name(), static_cast<int>(formId.type())));
       }
     }
     if (formIds.size() != 4) {
-      throw std::runtime_error(fmt::format("error parsing damage formula config: got {} formIds for keyword {} instead of 4", formIds.size(), keyword));
+      throw std::runtime_error(
+        fmt::format("error parsing damage formula config: got {} formIds for "
+                    "keyword {} instead of 4",
+                    formIds.size(), keyword));
     }
   }
   return result;
 }
 
 float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
-                                         const MpActor& target,
-                                         const HitData& hitData) const
+                                             const MpActor& target,
+                                             const HitData& hitData) const
 {
   float baseDamage = baseFormula->CalculateDamage(aggressor, target, hitData);
 
   uint32_t weaponFormId = hitData.source;
   auto& espmCache = aggressor.GetParent()->GetEspmCache();
 
-  const auto& keywordIds = aggressor.GetParent()->GetEspm().GetBrowser().LookupById(weaponFormId).rec->GetKeywordIds(espmCache);
+  const auto& keywordIds = aggressor.GetParent()
+                             ->GetEspm()
+                             .GetBrowser()
+                             .LookupById(weaponFormId)
+                             .rec->GetKeywordIds(espmCache);
   std::vector<const char*> keywordNames;
   keywordNames.reserve(keywordIds.size());
   for (uint32_t id : keywordIds) {
     const auto& keyword = espm::GetData<espm::KYWD>(id, aggressor.GetParent());
     keywordNames.emplace_back(keyword.editorId);
   }
-  spdlog::debug("SweetPieDamageFormula: {:x} hit {:x}, weapon keywords: [{}]", aggressor.GetFormId(), target.GetFormId(), fmt::join(keywordNames.begin(), keywordNames.end(), ","));
+  spdlog::debug("SweetPieDamageFormula: {:x} hit {:x}, weapon keywords: [{}]",
+                aggressor.GetFormId(), target.GetFormId(),
+                fmt::join(keywordNames.begin(), keywordNames.end(), ","));
 
   for (const auto& keyword : keywordNames) {
-    const auto it = settings.weaponKeywords.find(keyword); // TODO: rename weaponKeywords?
+    const auto it =
+      settings.weaponKeywords.find(keyword); // TODO: rename weaponKeywords?
     if (it == settings.weaponKeywords.end()) {
       continue;
     }

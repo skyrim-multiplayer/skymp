@@ -10,7 +10,8 @@
 
 // Modifies vanilla damage
 
-struct SweetPieDamageFormulaSettings {
+struct SweetPieDamageFormulaSettings
+{
   std::vector<float> damageMultByLevel{};
   std::unordered_map<std::string, std::vector<uint32_t>> weaponKeywords{};
 };
@@ -18,14 +19,17 @@ struct SweetPieDamageFormulaSettings {
 class SweetPieDamageFormula : public IDamageFormula
 {
 public:
-  SweetPieDamageFormula(std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config);
+  SweetPieDamageFormula(std::unique_ptr<IDamageFormula> baseFormula_,
+                        const nlohmann::json& config);
 
   float CalculateDamage(const MpActor& aggressor, const MpActor& target,
                         const HitData& hitData) const override;
 
 private:
-  SweetPieDamageFormulaSettings ParseConfig(const nlohmann::json& config) const;
-  // int GetLevelByKeyword(const MpActor& aggressor, const std::string& weaponKeyword) const;
+  SweetPieDamageFormulaSettings ParseConfig(
+    const nlohmann::json& config) const;
+  // int GetLevelByKeyword(const MpActor& aggressor, const std::string&
+  // weaponKeyword) const;
 
 private:
   std::unique_ptr<IDamageFormula> baseFormula;
