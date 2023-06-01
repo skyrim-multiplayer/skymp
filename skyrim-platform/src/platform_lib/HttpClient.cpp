@@ -49,7 +49,7 @@ void HttpClient::Get(const char* host, const char* path,
   auto cl = std::make_shared<httplib::Client>(host);
 
   auto pImpl_ = pImpl;
-  pImpl->pool.Push([cl, path_, headers, callback, pImpl_](int) {
+  pImpl->pool.Push([cl, path_, headers, callback, pImpl_] {
     httplib::Result res = cl->Get(path_.data(), CastHeaders(headers));
     auto resultVector = res
       ? std::vector<uint8_t>(res->body.begin(), res->body.end())
@@ -78,7 +78,7 @@ void HttpClient::Post(const char* host, const char* path, const char* body,
 
   auto pImpl_ = pImpl;
   pImpl->pool.Push(
-    [cl, path_, body_, contentType_, headers, callback, pImpl_](int) {
+    [cl, path_, body_, contentType_, headers, callback, pImpl_] {
       httplib::Result res =
         cl->Post(path_.data(), CastHeaders(headers), body_.data(),
                  body_.size(), contentType_.data());

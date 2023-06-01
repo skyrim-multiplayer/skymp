@@ -1036,6 +1036,14 @@ public:
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 static_assert(sizeof(INGR) == sizeof(RecordHeader));
+
+class BOOK : public RecordHeader
+{
+public:
+  static constexpr auto kType = "BOOK";
+};
+
+static_assert(sizeof(BOOK) == sizeof(RecordHeader));
 }
 
 

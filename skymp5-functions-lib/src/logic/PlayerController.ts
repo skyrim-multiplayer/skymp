@@ -1,5 +1,5 @@
 import { ChatMessage } from "../props/chatProperty";
-import { SweetPieRound } from "./SweetPieRound";
+import { SweetPieRound } from "./listeners/sweetpie/SweetPieRound";
 
 export type Percentages = {
   health?: number;
@@ -18,6 +18,7 @@ export type PlayerController = {
   getName(actorId: number): string;
   getProfileId(playerActorId: number): number;
   addItem(actorId: number, itemId: number, count: number): void;
+  removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null): void;
   getRoundsArray(): SweetPieRound[];
   setRoundsArray(rounds: SweetPieRound[]): void;
   getOnlinePlayers(): number[];

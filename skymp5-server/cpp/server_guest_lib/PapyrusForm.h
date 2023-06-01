@@ -9,10 +9,16 @@ public:
   VarValue RegisterForSingleUpdate(VarValue self,
                                    const std::vector<VarValue>& arguments);
 
+  VarValue GetType(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue HasKeyword(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy>) override
   {
     AddMethod(vm, "RegisterForSingleUpdate",
               &PapyrusForm::RegisterForSingleUpdate);
+    AddMethod(vm, "GetType", &PapyrusForm::GetType);
+    AddMethod(vm, "HasKeyword", &PapyrusForm::HasKeyword);
   }
 };

@@ -7,6 +7,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <spdlog/spdlog.h>
+
 namespace {
 bool IsSelfStr(const VarValue& v)
 {
@@ -671,10 +673,22 @@ VarValue& ActivePexInstance::GetIndentifierValue(
   if (auto valueAsString = static_cast<const char*>(value)) {
     if (treatStringsAsIdentifiers &&
         value.GetType() == VarValue::kType_String) {
-      return GetVariableValueByName(&locals, valueAsString);
+      auto& res = GetVariableValueByName(&locals, valueAsString);
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("GetIndentifierValue {}: {} = {}",
+                      this->sourcePex.fn()->source, valueAsString,
+                      res.ToString());
+      }
+      return res;
     }
     if (value.GetType() == VarValue::kType_Identifier) {
-      return GetVariableValueByName(&locals, valueAsString);
+      auto& res = GetVariableValueByName(&locals, valueAsString);
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("GetIndentifierValue {}: {} = {}",
+                      this->sourcePex.fn()->source, valueAsString,
+                      res.ToString());
+      }
+      return res;
     }
   }
   return value;
@@ -798,12 +812,19 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
   if (scriptToCastOwner->GetType() != VarValue::kType_Object ||
       *scriptToCastOwner == VarValue::None()) {
     *result = VarValue::None();
+    if (spdlog::should_log(spdlog::level::trace)) {
+      spdlog::trace("CastObjectToObject {} -> {} (object is null)",
+                    scriptToCastOwner->ToString(), result->ToString());
+    }
     return;
   }
+
+  std::vector<std::string> classesStack;
 
   auto object = static_cast<IGameObject*>(*scriptToCastOwner);
   if (object) {
     std::string scriptName = object->GetParentNativeScript();
+    classesStack.push_back(scriptName);
     while (1) {
       if (scriptName.empty()) {
         break;
@@ -811,6 +832,11 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
 
       if (!Utils::stricmp(resultTypeName.data(), scriptName.data())) {
         *result = *scriptToCastOwner;
+        if (spdlog::should_log(spdlog::level::trace)) {
+          spdlog::trace("CastObjectToObject {} -> {} (match found: {})",
+                        scriptToCastOwner->ToString(), result->ToString(),
+                        resultTypeName);
+        }
         return;
       }
 
@@ -821,14 +847,22 @@ void ActivePexInstance::CastObjectToObject(VarValue* result,
       auto myScriptPex = parentVM->GetPexByName(scriptName);
 
       if (!myScriptPex.fn) {
+        spdlog::error("Script not found: {}", scriptName);
         break;
       }
 
       scriptName = myScriptPex.fn()->objectTable[0].parentClassName;
+      classesStack.push_back(scriptName);
     }
   }
 
   *result = VarValue::None();
+  if (spdlog::should_log(spdlog::level::trace)) {
+    spdlog::trace(
+      "CastObjectToObject {} -> {} (match not found, wanted {}, stack is {})",
+      scriptToCastOwner->ToString(), result->ToString(), resultTypeName,
+      fmt::join(classesStack, ", "));
+  }
 }
 
 bool ActivePexInstance::HasParent(ActivePexInstance* script,

@@ -1,29 +1,8 @@
 #include "DynamicFields.h"
-#include <JsEngine.h>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <unordered_map>
 #include <vector>
-
-namespace {
-nlohmann::json JsValueToJson(const JsValue& v)
-{
-  JsValue stringify =
-    JsValue::GlobalObject().GetProperty("JSON").GetProperty("stringify");
-  std::vector<JsValue> args = { JsValue::Undefined(), JsValue::Undefined() };
-  args[1] = v;
-  auto dump = static_cast<std::string>(stringify.Call(args));
-  return nlohmann::json::parse(dump);
-}
-
-JsValue JsonToJsValue(const nlohmann::json& j)
-{
-  JsValue parse =
-    JsValue::GlobalObject().GetProperty("JSON").GetProperty("parse");
-  std::vector<JsValue> args = { JsValue::Undefined(), JsValue::Undefined() };
-  args[1] = j.dump();
-  return parse.Call(args);
-}
-}
 
 struct DynamicFields::Impl
 {
@@ -48,19 +27,20 @@ DynamicFields& DynamicFields::operator=(const DynamicFields& rhs)
   return *this;
 }
 
-void DynamicFields::Set(const std::string& propName, const JsValue& value)
+void DynamicFields::Set(const std::string& propName,
+                        const nlohmann::json& value)
 {
   pImpl->jsonCache.reset();
-  pImpl->props[propName] = JsValueToJson(value);
+  pImpl->props[propName] = value;
 }
 
-JsValue DynamicFields::Get(const std::string& propName) const
+nlohmann::json DynamicFields::Get(const std::string& propName) const
 {
   auto it = pImpl->props.find(propName);
   if (it == pImpl->props.end()) {
-    return JsValue::Undefined();
+    return nlohmann::json();
   }
-  return JsonToJsValue(it->second);
+  return it->second;
 }
 
 const nlohmann::json& DynamicFields::GetAsJson() const
@@ -82,7 +62,7 @@ DynamicFields DynamicFields::FromJson(const nlohmann::json& j)
 {
   DynamicFields res;
   for (auto it = j.begin(); it != j.end(); ++it) {
-    res.Set(it.key(), JsonToJsValue(it.value()));
+    res.pImpl->props[it.key()] = it.value();
   }
   return res;
 }

@@ -27,6 +27,7 @@ endif()
 add_library(${PROJECT_NAME} SHARED ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
+target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
 
 # Put build artifacts into build/dist/server
 if(WIN32)
@@ -47,13 +48,19 @@ apply_default_settings(TARGETS ${PROJECT_NAME})
 
 # All targets are ready
 
-# On Windows create launch_server.bat in build/dist/server
-# This .bat file is for launching the server
 if(WIN32)
+  # On Windows create launch_server.bat in ./build/dist/server
+  # This .bat file is for launching the server
   set(bat "node dist_back/skymp5-server.js\n")
   set(bat "${bat}pause\n")
-
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
+
+  # Same but for dev (no pause, placed into ./build dir)
+  set(bat "setlocal\n") # setlocal/endlocal is for temporary cd
+  set(bat "${bat}cd dist/server\n")
+  set(bat "${bat}node dist_back/skymp5-server.js\n")
+  set(bat "${bat}endlocal\n")
+  file(WRITE ${CMAKE_BINARY_DIR}/launch_server.bat "${bat}")
 
   add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
@@ -73,52 +80,9 @@ endif()
 
 message(STATUS "esm_prefix is '${esm_prefix}'")
 
-set(server_settings_json "{
-  \"dataDir\": \"data\",
-  \"loadOrder\": [
-    \"${esm_prefix}Skyrim.esm\",
-    \"${esm_prefix}Update.esm\",
-    \"${esm_prefix}Dawnguard.esm\",
-    \"${esm_prefix}HearthFires.esm\",
-    \"${esm_prefix}Dragonborn.esm\"
-  ],
-  \"ip\": \"127.0.0.1\",
-  \"name\": \"My Server\",
-  \"offlineMode\": true
-}
-")
-
-set(server_settings_json_sweetpie "{
-  \"dataDir\": \"data\",
-  \"loadOrder\": [
-    \"${esm_prefix}Skyrim.esm\",
-    \"${esm_prefix}Update.esm\",
-    \"${esm_prefix}Dawnguard.esm\",
-    \"${esm_prefix}HearthFires.esm\",
-    \"${esm_prefix}Dragonborn.esm\",
-    \"${esm_prefix}RavenOnMyShoulder.esp\",
-    \"${esm_prefix}SweetPie.esp\"
-  ],
-  \"name\": \"SweetPie\",
-  \"startPoints\": [
-    {
-      \"pos\": [ 18522.08, 10218.17, 624.46 ],
-      \"worldOrCell\": \"0x6042b5f\",
-      \"angleZ\": 0
-    }
-  ]
-}
-")
-
-if(SWEETPIE)
-  file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json_sweetpie}")
-else()
-  file(WRITE ${PROJECT_BINARY_DIR}/server-settings.json.tmp "${server_settings_json}")
-endif()
-
 add_custom_command(
   TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/server-settings.json.tmp ${CMAKE_BINARY_DIR}/dist/server/server-settings.json
+  COMMAND ${CMAKE_COMMAND} -DESM_PREFIX=${esm_prefix} -DSERVER_SETTINGS_JSON_PATH=${CMAKE_BINARY_DIR}/dist/server/server-settings.json -DOFFLINE_MODE=${OFFLINE_MODE} -P ${CMAKE_SOURCE_DIR}/cmake/scripts/generate_server_settings.cmake
 )
 
 add_custom_command(

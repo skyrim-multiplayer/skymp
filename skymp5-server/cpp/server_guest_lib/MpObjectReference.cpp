@@ -19,6 +19,8 @@
 #include <map>
 #include <optional>
 
+constexpr uint32_t kPlayerCharacterLevel = 1;
+
 std::string MpObjectReference::CreatePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
@@ -283,6 +285,10 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 void MpObjectReference::Activate(MpObjectReference& activationSource,
                                  bool defaultProcessingOnly)
 {
+  if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
+    CheckInteractionAbility(activationSource);
+  }
+
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
 
   if (!activationBlockedByMpApi &&
@@ -539,12 +545,11 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
 
 void MpObjectReference::SetProperty(const std::string& propertyName,
                                     const nlohmann::json& newValue,
-                                    const JsValue& newValueChakra,
                                     bool isVisibleByOwner,
                                     bool isVisibleByNeighbor)
 {
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    changeForm.dynamicFields.Set(propertyName, newValueChakra);
+    changeForm.dynamicFields.Set(propertyName, newValue);
   });
   if (isVisibleByNeighbor) {
     SendPropertyToListeners(propertyName.data(), newValue);
@@ -687,8 +692,6 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
       listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
     emitter->SendPapyrusEvent("OnInit");
-
-    emitter->MpApiOnInit();
   }
 
   const bool hasPrimitive = emitter->HasPrimitive();
@@ -849,8 +852,6 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
       tp - std::chrono::system_clock::now());
     RequestReloot(ms);
   }
-
-  MpApiOnInit();
 }
 
 const DynamicFields& MpObjectReference::GetDynamicFields() const
@@ -959,8 +960,6 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
-  CheckInteractionAbility(activationSource);
-
   auto base = loader.GetBrowser().LookupById(GetBaseId());
   if (!base.rec || !GetBaseId()) {
     std::stringstream ss;
@@ -988,18 +987,29 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
       }
 
-      auto refrRecord = espm::Convert<espm::REFR>(
-        loader.GetBrowser().LookupById(GetFormId()).rec);
-      uint32_t count =
-        refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
-      activationSource.AddItem(resultItem, count ? count : 1);
+      auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);
+      auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
+      if (leveledItem) {
+        const auto kCountMult = 1;
+        auto map = LeveledListUtils::EvaluateListRecurse(
+          loader.GetBrowser(), resultItemLookupRes, kCountMult,
+          kPlayerCharacterLevel, chanceNoneOverride.get());
+        for (auto& p : map) {
+          activationSource.AddItem(p.first, p.second);
+        }
+      } else {
+        auto refrRecord = espm::Convert<espm::REFR>(
+          loader.GetBrowser().LookupById(GetFormId()).rec);
+        uint32_t count =
+          refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
+        activationSource.AddItem(resultItem, count ? count : 1);
+      }
       SetHarvested(true);
       RequestReloot();
     }
   } else if (t == espm::DOOR::kType) {
-
-    auto refrRecord = espm::Convert<espm::REFR>(
-      loader.GetBrowser().LookupById(GetFormId()).rec);
+    auto lookupRes = loader.GetBrowser().LookupById(GetFormId());
+    auto refrRecord = espm::Convert<espm::REFR>(lookupRes.rec);
     auto teleport = refrRecord->GetData(compressedFieldsCache).teleport;
     if (teleport) {
       if (!IsOpen()) {
@@ -1007,8 +1017,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         RequestReloot();
       }
 
-      auto destination =
-        loader.GetBrowser().LookupById(teleport->destinationDoor);
+      auto destinationId = lookupRes.ToGlobalId(teleport->destinationDoor);
+      auto destination = loader.GetBrowser().LookupById(destinationId);
       auto destinationRecord = espm::Convert<espm::REFR>(destination.rec);
       if (!destinationRecord) {
         throw std::runtime_error(
@@ -1061,17 +1071,6 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupant = nullptr;
     }
   }
-}
-
-void MpObjectReference::MpApiOnInit()
-{
-  // nice API (91% of cpu in profiler when spawning player)
-  /*if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      listener->OnMpApiEvent("onInit", std::nullopt, id);
-    }
-  }*/
 }
 
 bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
@@ -1163,7 +1162,7 @@ void MpObjectReference::InitScripts()
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
       auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
-        scriptName, base.rec, refr.rec, base.parent, &compressedFieldsCache);
+        scriptName, base, refr, base.parent, &compressedFieldsCache);
       scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
     }
 
@@ -1254,14 +1253,14 @@ void MpObjectReference::AddContainerObject(
   const espm::CONT::ContainerObject& entry,
   std::map<uint32_t, uint32_t>* itemsToAdd)
 {
-  constexpr uint32_t pcLevel = 1;
-
   auto& espm = GetParent()->GetEspm();
   auto formLookupRes = espm.GetBrowser().LookupById(entry.formId);
   auto leveledItem = espm::Convert<espm::LVLI>(formLookupRes.rec);
   if (leveledItem) {
+    constexpr uint32_t kCountMult = 1;
     auto map = LeveledListUtils::EvaluateListRecurse(
-      espm.GetBrowser(), formLookupRes, 1, pcLevel, chanceNoneOverride.get());
+      espm.GetBrowser(), formLookupRes, kCountMult, kPlayerCharacterLevel,
+      chanceNoneOverride.get());
     for (auto& p : map)
       (*itemsToAdd)[p.first] += p.second;
   } else {

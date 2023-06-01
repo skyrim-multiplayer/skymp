@@ -71,6 +71,13 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
       },
     },
     {
+      "attackStartLeftHand",
+      [](MpActor* actor) {
+        constexpr float modifier = 7.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
       "AttackStartH2HRight",
       [](MpActor* actor) {
         constexpr float modifier = 4.f;
@@ -104,7 +111,7 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
     },
     {
       "attackRelease",
-      [&](MpActor* actor) {
+      [this](MpActor* actor) {
         std::chrono::duration<float> elapsedTime =
           std::chrono::steady_clock::now() -
           GetLastAttackReleaseAnimationTime(actor);

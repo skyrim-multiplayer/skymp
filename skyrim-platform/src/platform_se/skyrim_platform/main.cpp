@@ -49,7 +49,7 @@ void OnUpdate(IVM* vm, StackID stackId)
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
   SkyrimPlatform::GetSingleton()->PrepareWorker();
-  SkyrimPlatform::GetSingleton()->Push([=](int) {
+  SkyrimPlatform::GetSingleton()->Push([=] {
     SkyrimPlatform::GetSingleton()->JsTick(true);
     SkyrimPlatform::GetSingleton()->StopWorker();
   });
