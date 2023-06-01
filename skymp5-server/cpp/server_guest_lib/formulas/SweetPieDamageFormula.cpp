@@ -12,12 +12,6 @@
 #include "MpActor.h"
 #include "espm.h"
 
-namespace {
-
-// int GetLevelByKeyword(const Inventory& inventory, const std::string& keyword, const SweetPieSettings& settings) {
-
-}
-
 SweetPieDamageFormula::SweetPieDamageFormula(std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
 : baseFormula(std::move(baseFormula_)), settings(ParseConfig(config)) {
 }
@@ -57,7 +51,6 @@ float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
                                          const HitData& hitData) const
 {
   float baseDamage = baseFormula->CalculateDamage(aggressor, target, hitData);
-      // float baseDamage = baseFormula->CalculateDamage(aggressor, target, hitData);
 
   uint32_t weaponFormId = hitData.source;
   auto& espmCache = aggressor.GetParent()->GetEspmCache();
@@ -72,7 +65,7 @@ float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
   spdlog::debug("SweetPieDamageFormula: {:x} hit {:x}, weapon keywords: [{}]", aggressor.GetFormId(), target.GetFormId(), fmt::join(keywordNames.begin(), keywordNames.end(), ","));
 
   for (const auto& keyword : keywordNames) {
-    const auto it = settings.weaponKeywords.find(keyword); // XXX rename weaponKeywords
+    const auto it = settings.weaponKeywords.find(keyword); // TODO: rename weaponKeywords?
     if (it == settings.weaponKeywords.end()) {
       continue;
     }
