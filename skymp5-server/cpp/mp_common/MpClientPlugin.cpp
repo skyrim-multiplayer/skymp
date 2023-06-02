@@ -1,17 +1,26 @@
 #include "MpClientPlugin.h"
 
 #include <vector>
-
+#include <nlohmann/json.hpp>
 #include "MovementMessage.h"
 #include "MovementMessageSerialization.h"
 #include "MsgType.h"
-
-#include <nlohmann/json.hpp>
+#include "ReadFile.h"
+#include <spdlog/spdlog.h>
 
 void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
                                   uint16_t targetPort)
 {
-  state.cl = Networking::CreateClient(targetHostname, targetPort);
+  std::string password = kNetworkingPassword;
+  static const std::string kPasswordPath = "Data/Platform/Distribution/password";
+  static const int kTimeoutMs = 4000;
+  try {
+    password = ReadFile(kPasswordPath);
+  }
+  catch (std::exception &e) {
+    spdlog::warn("Unable to read password from '{}', will use standard '{}'", kPasswordPath, kNetworkingPassword);
+  }
+  state.cl = Networking::CreateClient(targetHostname, targetPort, kTimeoutMs, password.data());
 }
 
 void MpClientPlugin::DestroyClient(State& state)

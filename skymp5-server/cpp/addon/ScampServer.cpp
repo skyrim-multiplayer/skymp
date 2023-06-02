@@ -180,8 +180,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       (espm::fs::path(dataDir) / "scripts").string());
 
     auto espm = new espm::Loader(pluginPaths);
+    std::string password = serverSettings.contains("password") ? static_cast<std::string>(serverSettings["password"]) : std::string(kNetworkingPassword);
     auto realServer = Networking::CreateServer(
-      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
+      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections), password.data());
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->SetSendTarget(server.get());
     partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
