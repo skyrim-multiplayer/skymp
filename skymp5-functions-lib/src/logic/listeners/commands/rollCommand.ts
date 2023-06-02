@@ -4,8 +4,8 @@ import { PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
 
 export class RollCommand extends Command {
-    constructor(mp: Mp, controller: PlayerController) {
-        super(mp, controller, "roll");
+    constructor(mp: Mp, controller: PlayerController, name: string) {
+        super(mp, controller, name);
     }
 
     handle(input: HandlerInput): void {
