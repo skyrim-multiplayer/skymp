@@ -575,12 +575,16 @@ MpApiInteractor.setup([
   new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
   new DeathSystem(mp, controller),
   new HarvestingSystem(mp, controller),
-  new DoorActivation(mp, controller)
+  new DoorActivation(mp, controller),
   new KitCommand(mp, controller),
   new KillCommand(mp, controller),
   new KickCommand(mp, controller),
   new ListCommand(mp, controller),
-  new RollCommand(mp, controller),
+  new RollCommand(mp, controller, "1d100"),
+  new RollCommand(mp, controller, "1d20"),
+  new RollCommand(mp, controller, "1d12"),
+  new RollCommand(mp, controller, "1d6"),
+  new RollCommand(mp, controller, "1d2"),
   new SkillCommand(mp, controller),
   new SkillDiceCommand(mp, controller),
   new ChatSystem(controller), // Must be the last system
