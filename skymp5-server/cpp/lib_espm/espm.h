@@ -1047,7 +1047,23 @@ static_assert(sizeof(BOOK) == sizeof(RecordHeader));
 }
 
 namespace espm {
+
+class KYWD : public espm::RecordHeader
+{
+public:
+  static constexpr auto kType = "KYWD";
+
+  struct Data
+  {
+    const char* editorId = "";
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
+};
+static_assert(sizeof(KYWD) == sizeof(espm::RecordHeader));
+
 uint32_t CalculateHashcode(const void* readBuffer, size_t length);
 uint32_t GetCorrectHashcode(const std::string& fileName);
+
 }
 #pragma pack(pop)
