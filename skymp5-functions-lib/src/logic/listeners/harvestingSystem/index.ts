@@ -1,10 +1,10 @@
 import { PlayerController } from '../../PlayerController';
-import { GameModeListener } from '../GameModeListener';
 import { EspmLookupResult, Mp, ServerSettings } from '../../../types/mp';
 import { Ctx } from '../../../types/ctx';
 import { EvalProperty } from '../../../props/evalProperty';
-import { getPossesedSkills } from '../skillMenu/skillMenuLogic';
 import { FunctionInfo } from '../../../utils/functionInfo';
+import { GameModeListener } from '../gameModeListener';
+import { getPossesedSkills } from '../commands/skillCommand';
 
 declare const mp: Mp;
 declare const ctx: Ctx;
