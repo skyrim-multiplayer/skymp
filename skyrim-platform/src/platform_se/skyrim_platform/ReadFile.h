@@ -1,9 +1,9 @@
 #pragma once
-#include <fstream>
-#include <string>
 #include <filesystem>
-#include <stdexcept>
+#include <fstream>
 #include <sstream>
+#include <stdexcept>
+#include <string>
 
 inline std::string ReadFile(const std::filesystem::path& p)
 {
