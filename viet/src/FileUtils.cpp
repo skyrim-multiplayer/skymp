@@ -10,7 +10,8 @@ std::string Viet::ReadFileIntoString(const std::filesystem::path& filePath)
   std::ifstream file(filePath);
 
   if (!file.is_open()) {
-    throw std::runtime_error("Unable to open file '" + filePath.string() + "' for reading");
+    throw std::runtime_error("Unable to open file '" + filePath.string() +
+                             "' for reading");
   }
 
   std::stringstream resultString;

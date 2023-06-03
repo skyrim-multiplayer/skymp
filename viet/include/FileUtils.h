@@ -1,6 +1,6 @@
-#include <string>
 #include <filesystem>
+#include <string>
 
 namespace Viet {
-    std::string ReadFileIntoString(const std::filesystem::path& filePath);
+std::string ReadFileIntoString(const std::filesystem::path& filePath);
 }

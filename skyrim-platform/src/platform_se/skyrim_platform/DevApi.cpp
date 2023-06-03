@@ -1,7 +1,7 @@
 #include "DevApi.h"
+#include "FileUtils.h"
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
-#include "FileUtils.h"
 #include "Validators.h"
 
 std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
