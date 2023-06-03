@@ -12,6 +12,7 @@ void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
                                   uint16_t targetPort)
 {
   std::string password = kNetworkingPassword;
+  // Keep in sync with installer code
   static const std::string kPasswordPath =
     "Data/Platform/Distribution/password";
   static const int kTimeoutMs = 4000;
