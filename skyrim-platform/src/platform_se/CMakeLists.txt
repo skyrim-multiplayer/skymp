@@ -103,7 +103,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_include_directories(skyrim_platform PRIVATE "${third_party}")
     target_include_directories(skyrim_platform PRIVATE "${tilted}")
     target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
-    target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib)
+    target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib viet)
     target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
     # suppress missing pdb warning for cef and frida
     target_link_options(skyrim_platform PRIVATE "LINKER:-ignore:4099")
