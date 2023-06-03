@@ -9,7 +9,7 @@ WARNING: SP may break your saves. For now, please backup your saves before insta
 
 SP supports both Steam version of Skyrim SE (1.6.640) and legacy 1.5.97.
 
-## Other changes
+## Changes
 
 - Improved DirectoryMonitor error message in case of missing directory
 
