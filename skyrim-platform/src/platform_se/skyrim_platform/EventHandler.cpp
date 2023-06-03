@@ -184,19 +184,37 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  RE::TESObjectREFR* refr = event->reference.get();
+  if (!refr) {
+    return EventResult::kContinue;
+  }
+  auto refrId = refr->GetFormID();
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
-    auto obj = JsValue::Object();
+  bool isAttach = event->action == 1;
+  if (isAttach) {
+    SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
+      auto obj = JsValue::Object();
+      auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
+      if (refr) {
+        AddObjProperty(&obj, "refr", refr, "ObjectReference");
+        SendEvent("cellAttach", obj);
+      }
+    });
+    return EventResult::kContinue;
+  }
 
-    AddObjProperty(&obj, "refr", e->reference.get(), "ObjectReference");
-
-    if (e->action == 1) {
-      SendEvent("cellAttach", obj);
-    } else if (e->action == 0) {
-      SendEvent("cellDetach", obj);
-    }
-  });
+  bool isDetach = event->action == 0;
+  if (isDetach) {
+    SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
+      auto obj = JsValue::Object();
+      auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
+      if (refr) {
+        AddObjProperty(&obj, "refr", refr, "ObjectReference");
+        SendEvent("cellDetach", obj);
+      }
+    });
+    return EventResult::kContinue;
+  }
 
   return EventResult::kContinue;
 }
