@@ -1,4 +1,4 @@
-# SP 2.8.0 Release Notes
+# SP 2.7.1 Release Notes
 
 
 This document includes changes made since SP 2.7.0
