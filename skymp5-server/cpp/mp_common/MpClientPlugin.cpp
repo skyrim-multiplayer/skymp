@@ -3,7 +3,7 @@
 #include "MovementMessage.h"
 #include "MovementMessageSerialization.h"
 #include "MsgType.h"
-#include "ReadFile.h"
+#include "FileUtils.h"
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 #include <vector>
@@ -16,7 +16,7 @@ void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
     "Data/Platform/Distribution/password";
   static const int kTimeoutMs = 4000;
   try {
-    password = ReadFile(kPasswordPath);
+    password = Viet::ReadFileIntoString(kPasswordPath);
   } catch (std::exception& e) {
     spdlog::warn("Unable to read password from '{}', will use standard '{}'",
                  kPasswordPath, kNetworkingPassword);
