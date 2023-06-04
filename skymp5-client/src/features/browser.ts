@@ -113,16 +113,7 @@ export const main = (): void => {
     });
   });
 
-  const cfg = {
-    ip: settings["skymp5-client"]["server-ip"],
-    port: settings["skymp5-client"]["server-port"],
-  };
-
-  printConsole({ cfg });
-
-  const url = `file:///Data/Platform/UI/index.html`;
-  printConsole(`loading url ${url}`);
-  browser.loadUrl(url);
+  // "file:///Data/Platform/UI/index.html" is loaded by default so we need to call it manually 
 };
 
 export const getAuthData = (): RemoteAuthGameData | null => {
