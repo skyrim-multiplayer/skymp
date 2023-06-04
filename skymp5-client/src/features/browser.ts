@@ -120,9 +120,7 @@ export const main = (): void => {
 
   printConsole({ cfg });
 
-  const uiPort = cfg.port === 7777 ? 3000 : (cfg.port as number) + 1;
-
-  const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
+  const url = `file:///Data/Platform/UI/index.html`;
   printConsole(`loading url ${url}`);
   browser.loadUrl(url);
 };
