@@ -19,19 +19,23 @@ export class SkillCommand extends Command {
     }
 }
 
-const discardSkills = (actorId: number, controller: PlayerController, possessedSkills: IPossessedSkills) => {
+const discardSkills = (actorId: number, controller: PlayerController, possessedSkills: IPossessedSkills, expCount: number) => {
+    if (expCount > 500) {
+        controller.removeItem(actorId, expId, expCount - 500, null);
+    }
     let totalExp = 0;
     Object.keys(possessedSkills).forEach(skillName => {
         const skill = possessedSkills[skillName]
         const price = skillRecipes[skillName].slice(0, skill.level + 1).reduce((a, b) => a + b.price, 0);
         totalExp += price;
         controller.removeItem(actorId, skill.id, 1, null);
-        controller.addItem(actorId, memId, 1);
+        controller.addItem(actorId, memId, price);
     })
+    console.log(totalExp)
     controller.addItem(actorId, expId, Math.round(totalExp / 2))
 }
 
-export const getPossesedSkills = (actorId: number) => {
+export const getPossessedSkills = (actorId: number, controller?: PlayerController) => {
     const possessedSkills = {} as IPossessedSkills;
     let memCount = 0;
     let expCount = 0;
@@ -41,6 +45,9 @@ export const getPossesedSkills = (actorId: number) => {
             memCount = item.count;
         } else if (item.baseId === expId) {
             expCount = item.count;
+            if (expCount > 1000 && controller) {
+                controller.removeItem(actorId, expId, expCount - 1000, null);
+            }
         } else if (item.baseId in idBasedData) {
             const skill = idBasedData[item.baseId];
             possessedSkills[skill.name] = { id: item.baseId, level: skill.level, price: skill.price }
@@ -54,7 +61,7 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
     const [newSkillName, level] = argsRaw.split(' ');
 
     if (newSkillName === 'init') {
-        const { possessedSkills, memCount, expCount } = getPossesedSkills(actorId);
+        const { possessedSkills, memCount, expCount } = getPossessedSkills(actorId, controller);
         const perks = {} as { [key: string]: number };
         Object.keys(possessedSkills).forEach(key => perks[key] = possessedSkills[key].level + 1)
         const payload = {
@@ -85,29 +92,25 @@ export const craftSkill = (actorId: number, controller: PlayerController, argsRa
         return;
     }
 
-    const { possessedSkills, memCount, expCount } = getPossesedSkills(actorId);
-    if (newSkillName === 'discard') return discardSkills(actorId, controller, possessedSkills)
+    const { possessedSkills, memCount, expCount } = getPossessedSkills(actorId);
+    if (newSkillName === 'discard') return discardSkills(actorId, controller, possessedSkills, expCount)
 
-    let itemIdToRemove = 0;
-    if (level === '0') {
-        if (memCount > 0) {
-            itemIdToRemove = memId;
-        }
-    } else {
-        const possesedSkill = possessedSkills[newSkillName];
-        if (possesedSkill && possesedSkill.level + 1 === +level) {
-            itemIdToRemove = possesedSkill.id;
-        }
+    let prevSkillIdToRemove = 0;
+    const possessedSkill = possessedSkills[newSkillName];
+    if (possessedSkill && possessedSkill.level + 1 === +level) {
+        prevSkillIdToRemove = possessedSkill.id;
     }
 
-    if (itemIdToRemove === 0) return;
 
     const newSkill = skillRecipes[newSkillName][+level]
     const price = newSkill.price;
-    if (price > expCount) return;
+    if (price > expCount || price > memCount) return;
 
-    controller.removeItem(actorId, itemIdToRemove, 1, null);
+    if (prevSkillIdToRemove) {
+        controller.removeItem(actorId, prevSkillIdToRemove, 1, null);
+    }
     controller.removeItem(actorId, expId, price, null);
+    controller.removeItem(actorId, memId, price, null);
     controller.addItem(actorId, newSkill.id, 1);
 };
 

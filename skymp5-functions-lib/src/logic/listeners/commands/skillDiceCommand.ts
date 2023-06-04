@@ -6,7 +6,7 @@ import { Ctx } from "../../../types/ctx";
 import { Mp } from "../../../types/mp";
 import { PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
-import { getPossesedSkills as getPossessedSkills } from "./skillCommand";
+import { getPossessedSkills } from "./skillCommand";
 
 export class SkillDiceCommand extends Command {
     constructor(mp: Mp, controller: PlayerController) {
