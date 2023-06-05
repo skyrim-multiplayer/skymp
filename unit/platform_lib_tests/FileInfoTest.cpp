@@ -1,6 +1,6 @@
+#include <catch2/catch_all.hpp>
 #include <libespm/GroupUtils.h>
 #include <libespm/Loader.h>
-#include <catch2/catch_all.hpp>
 
 #include "../TestUtils.hpp"
 #include "FileInfo.h"
