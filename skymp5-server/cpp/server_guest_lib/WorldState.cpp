@@ -1,6 +1,5 @@
 #include "WorldState.h"
 #include "FormCallbacks.h"
-#include "libespm/GroupUtils.h"
 #include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
@@ -20,6 +19,7 @@
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "Timer.h"
+#include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
 #include <algorithm>
 #include <deque>

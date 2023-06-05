@@ -7,8 +7,8 @@
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
-#include "papyrus-vm/VirtualMachine.h"
 #include "libespm/Loader.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <MakeID.h>
 #include <algorithm>
 #include <chrono>

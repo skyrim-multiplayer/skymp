@@ -1,9 +1,9 @@
 #pragma once
 #include "ActorValues.h"
 #include "libespm/Loader.h"
+#include "libespm/espm.h"
 #include <WorldState.h>
 #include <cstdint>
-#include "libespm/espm.h"
 #include <fmt/format.h>
 
 struct BaseActorValues : public ActorValues

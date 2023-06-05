@@ -8,8 +8,8 @@
 #include <nlohmann/json.hpp>
 
 #include "HitData.h"
-#include "libespm/Loader.h"
 #include "MpActor.h"
+#include "libespm/Loader.h"
 #include "libespm/espm.h"
 
 SweetPieDamageFormula::SweetPieDamageFormula(

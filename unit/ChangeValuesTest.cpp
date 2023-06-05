@@ -3,8 +3,8 @@
 #include <chrono>
 
 #include "GetBaseActorValues.h"
-#include "libespm/Loader.h"
 #include "PacketParser.h"
+#include "libespm/Loader.h"
 
 PartOne& GetPartOne();
 extern espm::Loader l;

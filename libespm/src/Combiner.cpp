@@ -1,9 +1,9 @@
+#include "libespm/Combiner.h"
 #include "libespm/espm.h"
 #include <array>
 #include <fmt/format.h>
 #include <sparsepp/spp.h>
 #include <string>
-#include "libespm/Combiner.h"
 
 struct Source
 {

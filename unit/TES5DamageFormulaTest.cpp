@@ -4,9 +4,9 @@
 
 #include "GetBaseActorValues.h"
 #include "HitData.h"
-#include "libespm/Loader.h"
 #include "PacketParser.h"
 #include "formulas/TES5DamageFormula.h"
+#include "libespm/Loader.h"
 
 PartOne& GetPartOne();
 extern espm::Loader l;
