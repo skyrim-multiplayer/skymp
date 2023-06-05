@@ -22,14 +22,6 @@ if(WIN32)
 endif()
 
 #
-# lib_espm
-#
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib_espm)
-list(APPEND VCPKG_DEPENDENT espm)
-apply_default_settings(TARGETS espm)
-
-#
 # mp_common
 #
 
@@ -68,22 +60,6 @@ target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/se
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
 target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo)
-
-#
-# papyrus-vm-lib
-#
-
-file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib/*")
-list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
-add_library(papyrus-vm-lib STATIC ${src})
-apply_default_settings(TARGETS papyrus-vm-lib)
-target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib")
-target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
-if(UNIX)
-  target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
-endif()
-target_link_libraries(papyrus-vm-lib PUBLIC viet)
-list(APPEND VCPKG_DEPENDENT papyrus-vm-lib)
 
 #
 # localization-provider

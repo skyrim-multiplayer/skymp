@@ -1,6 +1,6 @@
 #pragma once
-#include "Combiner.h"
-#include "VirtualMachine.h"
+#include "libespm/Combiner.h"
+#include "papyrus-vm/VirtualMachine.h"
 
 class EspmGameObject : public IGameObject
 {

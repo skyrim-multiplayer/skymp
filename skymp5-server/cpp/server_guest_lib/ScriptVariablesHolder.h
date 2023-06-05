@@ -1,7 +1,7 @@
 #pragma once
-#include "CIString.h"
-#include "Loader.h"
-#include "VirtualMachine.h"
+#include "libespm/Loader.h"
+#include "papyrus-vm/CIString.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <functional>
 #include <optional>
 

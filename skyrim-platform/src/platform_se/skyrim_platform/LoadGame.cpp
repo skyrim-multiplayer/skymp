@@ -72,15 +72,16 @@ std::shared_ptr<SaveFile_::SaveFile> LoadGame::PrepareSaveFile()
   cmrc::file file;
   try {
     file = cmrc::skyrim_plugin_resources::get_filesystem().open(
-      "savefile/template.ess");
+      "assets/template.ess");
   } catch (std::exception& e) {
     auto dir =
       cmrc::skyrim_plugin_resources::get_filesystem().iterate_directory("");
     std::stringstream ss;
     ss << e.what() << std::endl << std::endl;
     ss << "Root directory contents is: " << std::endl;
-    for (auto entry : dir)
+    for (auto entry : dir) {
       ss << entry.filename() << std::endl;
+    }
     throw std::runtime_error(ss.str());
   }
   return SaveFile_::Reader((uint8_t*)(file.begin()), file.size())

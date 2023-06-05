@@ -1,9 +1,9 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "Reader.h"
 #include "ScriptVariablesHolder.h"
-#include "VirtualMachine.h"
+#include "papyrus-vm/Reader.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <cstdint>
 #include <ctime>
 #include <filesystem>

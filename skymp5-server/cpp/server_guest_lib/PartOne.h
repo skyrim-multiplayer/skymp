@@ -9,7 +9,7 @@
 #include "ServerState.h"
 #include "WorldState.h"
 #include "formulas/IDamageFormula.h"
-#include <Loader.h>
+#include "libespm/Loader.h"
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <set>

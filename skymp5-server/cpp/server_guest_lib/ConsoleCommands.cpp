@@ -2,8 +2,8 @@
 #include "EspmGameObject.h"
 #include "MpActor.h"
 #include "PapyrusObjectReference.h"
-#include "Utils.h"
 #include "WorldState.h"
+#include "papyrus-vm/Utils.h"
 
 // There were hardcoded real profile ids
 // TODO(#1136): make it configurable
