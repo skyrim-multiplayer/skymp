@@ -1,5 +1,5 @@
 #include "papyrus-vm/VirtualMachine.h"
-#include "Utils.h"
+#include "papyrus-vm/Utils.h"
 #include <MakeID.h>
 #include <algorithm>
 #include <sstream>
