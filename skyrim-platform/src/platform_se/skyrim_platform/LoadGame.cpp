@@ -7,8 +7,6 @@
 #include "savefile/SFSeekerOfDifferences.h"
 #include "savefile/SFWriter.h"
 
-#include <EventHandler.h>
-
 namespace fs = std::filesystem;
 
 CMRC_DECLARE(skyrim_plugin_resources);
