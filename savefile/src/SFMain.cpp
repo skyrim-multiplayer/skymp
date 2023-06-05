@@ -1,9 +1,11 @@
-#include "SFChangeFormACHR.h"
-#include "SFChangeFormNPC.h"
-#include "SFReader.h"
-#include "SFSeekerOfDifferences.h"
-#include "SFStructure.h"
-#include "SFWriter.h"
+#include "savefile/SFChangeFormACHR.h"
+#include "savefile/SFChangeFormNPC.h"
+#include "savefile/SFReader.h"
+#include "savefile/SFSeekerOfDifferences.h"
+#include "savefile/SFStructure.h"
+#include "savefile/SFWriter.h"
+
+#include <filesystem>
 
 namespace fs = std::filesystem;
 

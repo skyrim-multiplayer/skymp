@@ -1,6 +1,11 @@
 
-#include "SFSeekerOfDifferences.h"
-#include "SFChangeFormNPC.h"
+#include "savefile/SFSeekerOfDifferences.h"
+#include "savefile/SFChangeFormNPC.h"
+
+#include <iostream>
+#include <bitset>
+
+#include <zlib.h>
 
 namespace {
 // Example program

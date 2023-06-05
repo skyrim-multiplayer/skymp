@@ -116,6 +116,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 add_subdirectory(viet)
+add_subdirectory(savefile)
 add_subdirectory(skyrim-platform)
 
 

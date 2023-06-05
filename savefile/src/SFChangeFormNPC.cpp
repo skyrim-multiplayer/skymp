@@ -1,4 +1,6 @@
-#include "SFChangeFormNPC.h"
+#include "savefile/SFChangeFormNPC.h"
+
+#include <sstream>
 
 namespace {
 enum Flags

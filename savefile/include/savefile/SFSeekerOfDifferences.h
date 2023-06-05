@@ -1,6 +1,11 @@
 #pragma once
 #include "SFStructure.h"
 
+#include <fstream>
+#include <memory>
+#include <vector>
+#include <array>
+
 namespace SaveFile_ {
 class SeekerOfDifferences
 {

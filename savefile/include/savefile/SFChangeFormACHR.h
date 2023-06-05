@@ -1,4 +1,7 @@
 #pragma once
+#include <vector>
+#include <utility>
+#include <cstdint>
 
 namespace SaveFile_ {
 struct ChangeFormACHR_

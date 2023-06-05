@@ -7,6 +7,8 @@
 #include "savefile/SFSeekerOfDifferences.h"
 #include "savefile/SFWriter.h"
 
+#include <EventHandler.h>
+
 namespace fs = std::filesystem;
 
 CMRC_DECLARE(skyrim_plugin_resources);
@@ -84,7 +86,7 @@ std::shared_ptr<SaveFile_::SaveFile> LoadGame::PrepareSaveFile()
     }
     throw std::runtime_error(ss.str());
   }
-  return SaveFile_::Reader(static_cast<uint8_t*>(file.begin()), file.size())
+  return SaveFile_::Reader((uint8_t*)(file.begin()), file.size())
     .GetStructure();
 }
 
