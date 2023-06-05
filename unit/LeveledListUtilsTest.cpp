@@ -4,10 +4,8 @@
 #include <catch2/catch_all.hpp>
 #include <numeric>
 #include <thread>
-
-#include <espm.h>
-
-#include <Loader.h>
+#include "libespm/espm.h"
+#include "libespm/Loader.h"
 
 extern espm::Loader l;
 

@@ -8,9 +8,9 @@
 #include <nlohmann/json.hpp>
 
 #include "HitData.h"
-#include "Loader.h"
+#include "libespm/Loader.h"
 #include "MpActor.h"
-#include "espm.h"
+#include "libespm/espm.h"
 
 SweetPieDamageFormula::SweetPieDamageFormula(
   std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)

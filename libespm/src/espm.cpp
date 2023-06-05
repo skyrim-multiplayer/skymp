@@ -1,4 +1,4 @@
-#include "ZlibUtils.h"
+#include "libespm/ZlibUtils.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -8,8 +8,8 @@
 #include <memory>
 #include <sparsepp/spp.h>
 
-#include "GroupUtils.h"
-#include "espm.h"
+#include "libespm/GroupUtils.h"
+#include "libespm/espm.h"
 
 static_assert(sizeof(char) == 1);
 

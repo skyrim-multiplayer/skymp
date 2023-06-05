@@ -22,14 +22,6 @@ if(WIN32)
 endif()
 
 #
-# lib_espm
-#
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib_espm)
-list(APPEND VCPKG_DEPENDENT espm)
-apply_default_settings(TARGETS espm)
-
-#
 # mp_common
 #
 

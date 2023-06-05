@@ -1,6 +1,6 @@
 #include "WorldState.h"
 #include "FormCallbacks.h"
-#include "GroupUtils.h"
+#include "libespm/GroupUtils.h"
 #include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"

@@ -4,7 +4,7 @@
 
 #include "GetBaseActorValues.h"
 #include "HitData.h"
-#include "Loader.h"
+#include "libespm/Loader.h"
 #include "PacketParser.h"
 
 PartOne& GetPartOne();

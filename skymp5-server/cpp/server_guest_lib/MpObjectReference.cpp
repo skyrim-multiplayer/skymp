@@ -2,20 +2,20 @@
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
-#include "GroupUtils.h"
+#include "libespm/GroupUtils.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "PapyrusGame.h"
 #include "PapyrusObjectReference.h"
 #include "Primitive.h"
-#include "Reader.h"
+#include "papyrus-vm/Reader.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
-#include "VirtualMachine.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include "WorldState.h"
-#include <MsgType.h>
+#include "MsgType.h"
 #include <map>
 #include <optional>
 

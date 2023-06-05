@@ -8,7 +8,7 @@
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "papyrus-vm/VirtualMachine.h"
-#include <Loader.h>
+#include "libespm/Loader.h"
 #include <MakeID.h>
 #include <algorithm>
 #include <chrono>

@@ -1,7 +1,7 @@
 #include "AnimationSystem.h"
 #include "AnimationData.h"
 #include "MpActor.h"
-#include "espm.h"
+#include "libespm/espm.h"
 
 AnimationSystem::AnimationSystem(bool isSweetpie)
 {

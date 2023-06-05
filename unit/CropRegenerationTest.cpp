@@ -4,7 +4,7 @@
 
 #include "CropRegeneration.h"
 #include "GetBaseActorValues.h"
-#include "Loader.h"
+#include "libespm/Loader.h"
 
 PartOne& GetPartOne();
 extern espm::Loader l;

@@ -1,5 +1,5 @@
 #pragma once
-#include "Loader.h"
+#include "libespm/Loader.h"
 #include "papyrus-vm/CIString.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <functional>
