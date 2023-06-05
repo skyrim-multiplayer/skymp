@@ -1,4 +1,4 @@
-#include "Utils.h"
+#include "papyrus-vm/Utils.h"
 
 #ifdef WIN32
 #  include <cstring>
