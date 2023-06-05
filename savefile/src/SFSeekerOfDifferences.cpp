@@ -2,8 +2,8 @@
 #include "savefile/SFSeekerOfDifferences.h"
 #include "savefile/SFChangeFormNPC.h"
 
-#include <iostream>
 #include <bitset>
+#include <iostream>
 
 #include <zlib.h>
 

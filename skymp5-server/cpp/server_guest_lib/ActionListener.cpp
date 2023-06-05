@@ -12,8 +12,8 @@
 #include "MpObjectReference.h"
 #include "MsgType.h"
 #include "UserMessageOutput.h"
-#include "papyrus-vm/Utils.h"
 #include "WorldState.h"
+#include "papyrus-vm/Utils.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>

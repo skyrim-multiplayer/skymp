@@ -1,6 +1,6 @@
 #pragma once
-#include "papyrus-vm/CIString.h"
 #include "Loader.h"
+#include "papyrus-vm/CIString.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <functional>
 #include <optional>

@@ -1,11 +1,11 @@
 #pragma once
 #include "SFStructure.h"
 
-#include <memory>
 #include <cassert>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <filesystem>
+#include <memory>
 
 namespace SaveFile_ {
 class Writer

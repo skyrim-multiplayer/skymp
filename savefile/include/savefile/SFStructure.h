@@ -1,9 +1,9 @@
 #pragma once
-#include <optional>
 #include <cstdint>
+#include <memory>
+#include <optional>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace SaveFile_ {
 
