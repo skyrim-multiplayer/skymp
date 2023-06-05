@@ -1,5 +1,5 @@
-#include "Structures.h"
-#include "VirtualMachine.h"
+#include "papyrus-vm/Structures.h"
+#include "papyrus-vm/VirtualMachine.h"
 
 #include <cmath>
 #include <sstream>

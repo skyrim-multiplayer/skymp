@@ -1,4 +1,4 @@
-#include "Reader.h"
+#include "papyrus-vm/Reader.h"
 #include <fstream>
 
 void Reader::Read()

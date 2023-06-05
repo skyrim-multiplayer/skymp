@@ -1,4 +1,4 @@
-#include "OpcodesImplementation.h"
+#include "papyrus-vm/OpcodesImplementation.h"
 
 VarValue OpcodesImplementation::StrCat(const VarValue& s1, const VarValue& s2,
                                        StringTable&)

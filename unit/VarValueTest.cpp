@@ -1,7 +1,7 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "OpcodesImplementation.h"
+#include "papyrus-vm/OpcodesImplementation.h"
 #include "Structures.h"
 #include <cstdint>
 #include <stdexcept>

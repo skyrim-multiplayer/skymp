@@ -17,7 +17,7 @@
 #include "PapyrusObjectReference.h"
 #include "PapyrusSkymp.h"
 #include "PapyrusUtility.h"
-#include "Reader.h"
+#include "papyrus-vm/Reader.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "Timer.h"

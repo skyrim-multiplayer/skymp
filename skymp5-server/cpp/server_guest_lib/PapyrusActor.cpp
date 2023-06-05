@@ -3,7 +3,7 @@
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 
-#include "CIString.h"
+#include "papyrus-vm/CIString.h"
 #include "SpSnippetFunctionGen.h"
 
 namespace {

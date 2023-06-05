@@ -3,7 +3,7 @@
 #include "FormDesc.h"
 #include "MpFormGameObject.h"
 #include "NapiHelper.h"
-#include "Structures.h"
+#include "papyrus-vm/Structures.h"
 #include "WorldState.h"
 #include <napi.h>
 #include <sstream>

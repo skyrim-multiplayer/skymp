@@ -1,6 +1,6 @@
-﻿#include "OpcodesImplementation.h"
-#include "Utils.h"
-#include "VirtualMachine.h"
+﻿#include "papyrus-vm/OpcodesImplementation.h"
+#include "papyrus-vm/Utils.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <algorithm>
 #include <cctype> // tolower
 #include <functional>

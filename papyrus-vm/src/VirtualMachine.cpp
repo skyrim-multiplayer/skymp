@@ -1,4 +1,4 @@
-#include "VirtualMachine.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include "Utils.h"
 #include <MakeID.h>
 #include <algorithm>

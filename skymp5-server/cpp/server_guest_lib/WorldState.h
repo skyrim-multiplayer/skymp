@@ -6,10 +6,10 @@
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
-#include "VirtualMachine.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <Loader.h>
 #include <MakeID.h>
-#include <MpForm.h>
+#include "MpForm.h"
 #include <algorithm>
 #include <chrono>
 #include <functional>

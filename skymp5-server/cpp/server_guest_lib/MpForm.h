@@ -1,6 +1,6 @@
 #pragma once
 #include "NiPoint3.h"
-#include "Structures.h"
+#include "papyrus-vm/Structures.h"
 #include <cstdint>
 #include <memory>
 #include <string.h>

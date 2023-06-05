@@ -2,7 +2,7 @@
 #include "EspmGameObject.h"
 #include "MpActor.h"
 #include "PapyrusObjectReference.h"
-#include "Utils.h"
+#include "papyrus-vm/Utils.h"
 #include "WorldState.h"
 
 // There were hardcoded real profile ids
