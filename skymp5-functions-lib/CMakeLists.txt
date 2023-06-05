@@ -31,6 +31,8 @@ if(BUILD_GAMEMODE)
 else()
   add_custom_target(skymp5-functions-lib ALL
     SOURCES ${sources}
+    COMMAND ${CMAKE_COMMAND} -E echo "Building skymp5-functions-lib is disabled. To enable it, set BUILD_GAMEMODE to ON."
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/dist/server
     COMMAND ${CMAKE_COMMAND} -E true > ${CMAKE_BINARY_DIR}/dist/server/gamemode.js
   )
 endif()
