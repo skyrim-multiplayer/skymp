@@ -2,7 +2,7 @@
 #include <catch2/catch_all.hpp>
 
 #include "papyrus-vm/OpcodesImplementation.h"
-#include "Structures.h"
+#include "papyrus-vm/Structures.h"
 #include <cstdint>
 #include <stdexcept>
 
