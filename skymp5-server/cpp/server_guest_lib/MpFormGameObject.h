@@ -1,6 +1,6 @@
 #pragma once
 #include "MpForm.h"
-#include "VirtualMachine.h"
+#include "papyrus-vm/VirtualMachine.h"
 
 class MpFormGameObject : public IGameObject
 {

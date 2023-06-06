@@ -3,8 +3,8 @@
 
 #include "MpActor.h"
 #include "MpFormGameObject.h"
-#include "Utils.h"
-#include "VirtualMachine.h"
+#include "papyrus-vm/Utils.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <spdlog/logger.h>
 #include <vector>
 

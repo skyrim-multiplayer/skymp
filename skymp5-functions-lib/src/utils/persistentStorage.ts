@@ -1,5 +1,5 @@
 import { Mp } from '../types/mp';
-import { SweetPieRound } from "../logic/SweetPieRound";
+import { SweetPieRound } from "../logic/listeners/sweetpie/SweetPieRound";
 import * as fs from "fs";
 
 declare const mp: Mp;

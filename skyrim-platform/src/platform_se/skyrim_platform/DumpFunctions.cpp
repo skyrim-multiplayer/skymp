@@ -1,7 +1,10 @@
 #include "DumpFunctions.h"
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
-#include "papyrus-vm-lib/Reader.h"
+#include "papyrus-vm/Reader.h"
+#include <algorithm>
+#include <nlohmann/json.hpp>
+#include <set>
 
 using namespace nlohmann;
 
@@ -69,32 +72,29 @@ json FunctionToJson(const char* typeName, RE::BSScript::IFunction* f,
       json{ { "name", name.data() }, { "type", TypeInfoToJson(type) } });
 
     if (pex) {
-      auto it = std::find_if(pex->objectTable.m_data.begin(),
-                             pex->objectTable.m_data.end(),
-                             [typeName](const ObjectTable::Object& obj) {
+      auto it = std::find_if(pex->objectTable.begin(), pex->objectTable.end(),
+                             [typeName](const auto& obj) {
                                return !stricmp(obj.NameIndex.data(), typeName);
                              });
-      if (it == pex->objectTable.m_data.end())
+      if (it == pex->objectTable.end())
         throw std::runtime_error("Unable to find object in pex");
 
       auto stateIt =
         std::find_if(it->states.begin(), it->states.end(),
-                     [&](const ObjectTable::Object::StateInfo& state) {
-                       return state.name.empty();
-                     });
+                     [&](const auto& state) { return state.name.empty(); });
       if (stateIt == it->states.end())
         throw std::runtime_error("Unable to find state in pex object");
 
-      auto funcIt = std::find_if(
-        stateIt->functions.begin(), stateIt->functions.end(),
-        [&](const ObjectTable::Object::StateInfo::StateFunction& pexF) {
-          return !stricmp(pexF.name.data(), f->GetName().data());
-        });
+      auto funcIt =
+        std::find_if(stateIt->functions.begin(), stateIt->functions.end(),
+                     [&](const auto& pexF) {
+                       return !stricmp(pexF.name.data(), f->GetName().data());
+                     });
       if (funcIt == stateIt->functions.end())
         throw std::runtime_error("Unable to find " +
                                  std::string(f->GetName().data()) + " in pex");
 
-      auto n =
+      size_t n =
         std::min(funcIt->function.params.size(), res["arguments"].size());
       for (size_t i = 0; i < n; ++i)
         res["arguments"].at(i)["name"] = funcIt->function.params[i].name;

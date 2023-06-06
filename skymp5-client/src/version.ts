@@ -1,6 +1,6 @@
 import { Utility, Debug, getPlatformVersion, on, Game, Ui } from 'skyrimPlatform';
 
-const requiredVersion = '2.6.0';
+const requiredVersion = '2.7.1';
 
 const realVersion = typeof getPlatformVersion === 'function' ? getPlatformVersion() : 'unknown';
 

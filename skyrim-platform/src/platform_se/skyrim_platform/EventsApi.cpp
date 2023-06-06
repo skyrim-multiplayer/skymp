@@ -167,7 +167,7 @@ public:
         });
     }
 
-    auto f = [&](int) {
+    auto f = [&] {
       try {
         if (inProgressThreads.count(owningThread))
           throw std::runtime_error("'" + hookName + "' is already processing");
@@ -193,7 +193,7 @@ public:
       return;
     }
 
-    auto f = [&](int) {
+    auto f = [&] {
       try {
         if (!inProgressThreads.count(owningThread))
           throw std::runtime_error("'" + hookName + "' is not processing");

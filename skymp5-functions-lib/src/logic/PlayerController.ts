@@ -1,6 +1,5 @@
 import { ChatMessage } from "../props/chatProperty";
-import { PacketHistory } from "../types/mp";
-import { SweetPieRound } from "./SweetPieRound";
+import { SweetPieRound } from "./listeners/sweetpie/SweetPieRound";
 
 export type Percentages = {
   health?: number;
@@ -19,6 +18,7 @@ export type PlayerController = {
   getName(actorId: number): string;
   getProfileId(playerActorId: number): number;
   addItem(actorId: number, itemId: number, count: number): void;
+  removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null): void;
   getRoundsArray(): SweetPieRound[];
   setRoundsArray(rounds: SweetPieRound[]): void;
   getOnlinePlayers(): number[];
@@ -30,8 +30,4 @@ export type PlayerController = {
   incrementCounter(actorId: number, counter: Counter, by?: number): number;
   getServerSetting(name: string): any;
   getActorDistanceSquared(actorId1: number, actorId2: number): number;
-  setPacketHistoryRecording(formId: number, enabled: boolean): void;
-  getPacketHistory(formId: number): PacketHistory;
-  clearPacketHistory(formId: number): void;
-  requestPacketHistoryPlayback(formId: number, packetHistory: PacketHistory): void;
 }

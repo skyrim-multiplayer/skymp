@@ -23,7 +23,7 @@ public:
     if (!v.IsNumber()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be number, but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }
@@ -35,7 +35,7 @@ public:
     if (!v.IsNumber()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be number, but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }
@@ -47,7 +47,7 @@ public:
     if (!v.IsBoolean()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be boolean, but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }
@@ -64,7 +64,7 @@ public:
     if (!v.IsString()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be string, but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }
@@ -108,7 +108,7 @@ public:
     if (!v.IsFunction()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be function, but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }
@@ -120,7 +120,7 @@ public:
     if (!v.IsObject()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be object, but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }
@@ -155,7 +155,7 @@ public:
     if (!v.IsArray()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be array, but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }
@@ -167,7 +167,7 @@ public:
     if (!v.IsArray()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be array, but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }
@@ -180,7 +180,7 @@ public:
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be array with length "
          << kExpectedLength << ", but got '";
-      ss << v.ToString();
+      ss << Stringify(v.Env(), v);
       ss << "'";
       throw std::runtime_error(ss.str());
     }

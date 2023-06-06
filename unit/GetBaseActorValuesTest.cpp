@@ -1,6 +1,6 @@
 #include "TestUtils.hpp"
-#include <GroupUtils.h>
-#include <Loader.h>
+#include "libespm/GroupUtils.h"
+#include "libespm/Loader.h"
 #include <catch2/catch_all.hpp>
 
 #include "GetBaseActorValues.h"

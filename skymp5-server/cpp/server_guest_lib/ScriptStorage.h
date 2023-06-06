@@ -1,5 +1,5 @@
 #pragma once
-#include "CIString.h"
+#include "papyrus-vm/CIString.h"
 #include <cstdint>
 #include <fstream>
 #include <regex>

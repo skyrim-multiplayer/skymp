@@ -26,8 +26,9 @@ export declare class ScampServer {
     formId: number,
     pos: number[],
     angleZ: number,
-    cellOrWorld: number
-  ): void;
+    cellOrWorld: number,
+    userProfileId?: number
+  ): number;
 
   destroyActor(formId: number): void;
   setUserActor(userId: number, actorFormId: number): void;

@@ -3,7 +3,7 @@
 #include "HitData.h"
 #include "MpActor.h"
 #include "WorldState.h"
-#include <espm.h>
+#include "libespm/espm.h"
 
 namespace {
 

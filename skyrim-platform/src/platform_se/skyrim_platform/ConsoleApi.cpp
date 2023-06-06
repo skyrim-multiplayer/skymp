@@ -225,7 +225,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
 {
   std::pair<const std::string, ConsoleCommand>* iterator = nullptr;
 
-  auto func = [&](int) {
+  auto func = [&] {
     try {
       if (!scriptObj)
         throw NullPointerException("scriptObj");

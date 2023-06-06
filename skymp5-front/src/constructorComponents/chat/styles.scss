@@ -6,7 +6,7 @@
 }
 
 #chat {
-  width: calc(26.6% + 70px);
+  // width: calc(26.6% + 70px);
   position: absolute;
   bottom: 30px;
   left: 30px;
@@ -17,7 +17,8 @@
   font-size: 16px;
   .chat-main {
     flex-direction: column;
-    width: calc(100% - 60px);
+    // width: calc(100% - 60px);
+    width: 495px;
     position: relative;
     .chat-corner {
       position: absolute;
@@ -62,6 +63,7 @@
         letter-spacing: 1px;
         max-width: 100%;
         overflow-wrap: break-word;
+        white-space: pre-wrap;
         text-shadow: -0 -2px 0 rgba(0, 0, 0, 0.63), 0 -2px 0 rgba(0, 0, 0, 0.63),
           -0 2px 0 rgba(0, 0, 0, 0.63), 0 2px 0 rgba(0, 0, 0, 0.63),
           -2px -0 0 rgba(0, 0, 0, 0.63), 2px -0 0 rgba(0, 0, 0, 0.63),
@@ -83,6 +85,9 @@
         }
         &.admin {
           color: #ce3131;
+        }
+        span {
+          white-space: pre-line;
         }
       }
     }

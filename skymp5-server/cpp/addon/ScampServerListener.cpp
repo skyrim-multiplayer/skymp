@@ -87,10 +87,21 @@ bool ScampServerListener::OnMpApiEvent(
 
     // TODO: Handle non-boolean values? Current implementation will throw
     return static_cast<bool>(callResult);
+  } catch (Napi::Error& e) {
+    std::string stacktrace;
+    try {
+      Napi::Value stack = e.Get("stack");
+      stacktrace = stack.ToString();
+    } catch (std::exception& e) {
+      stacktrace =
+        fmt::format("<failed to retrieve stack trace: {}>", e.what());
+    }
+    spdlog::error("'{}' event handler finished with javascript error '{}', "
+                  "stack trace:\n{}",
+                  eventName, e.what(), stacktrace);
   } catch (std::exception& e) {
-    std::cout << "[" << eventName << "] "
-              << " " << e.what() << std::endl;
-    return true;
+    spdlog::error("'{}' event handler finished with c++ exception '{}'",
+                  eventName, e.what());
   }
 
   return true;

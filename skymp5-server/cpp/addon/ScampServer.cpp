@@ -15,6 +15,7 @@
 #include "ScampServerListener.h"
 #include "ScriptStorage.h"
 #include "SettingsUtils.h"
+#include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include <cassert>
@@ -180,11 +181,24 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       (espm::fs::path(dataDir) / "scripts").string());
 
     auto espm = new espm::Loader(pluginPaths);
+    std::string password = serverSettings.contains("password")
+      ? static_cast<std::string>(serverSettings["password"])
+      : std::string(kNetworkingPassword);
     auto realServer = Networking::CreateServer(
-      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
+      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections),
+      password.data());
     server = Networking::CreateCombinedServer({ realServer, serverMock });
     partOne->SetSendTarget(server.get());
-    partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
+
+    const auto& sweetPieDamageFormulaSettings =
+      serverSettings["sweetPieDamageFormulaSettings"];
+    if (sweetPieDamageFormulaSettings.is_object()) {
+      partOne->SetDamageFormula(std::make_unique<SweetPieDamageFormula>(
+        std::make_unique<TES5DamageFormula>(), sweetPieDamageFormulaSettings));
+    } else {
+      partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
+    }
+
     partOne->worldState.AttachScriptStorage(scriptStorage);
     partOne->AttachEspm(espm);
     this->serverSettings = serverSettings;
@@ -227,10 +241,20 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
 {
   try {
     tickEnv = info.Env();
-    server->Tick(PartOne::HandlePacket, partOne.get());
+
+    bool tickFinished = false;
+    while (!tickFinished) {
+      try {
+        server->Tick(PartOne::HandlePacket, partOne.get());
+        tickFinished = true;
+      } catch (std::exception& e) {
+        logger->error("{}", e.what());
+      }
+    }
+
     partOne->Tick();
   } catch (std::exception& e) {
-    throw Napi::Error::New(info.Env(), (std::string)e.what());
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
   return info.Env().Undefined();
 }
@@ -710,24 +734,26 @@ Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
     auto lookupRes =
       partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
     if (lookupRes.rec) {
-      auto fields = Napi::Array::New(info.Env());
-
       auto& cache = partOne->worldState.GetEspmCache();
 
+      std::vector<Napi::Value> fields;
       espm::IterateFields_(
         lookupRes.rec,
         [&](const char* type, uint32_t size, const char* data) {
           auto uint8arr = Napi::Uint8Array::New(info.Env(), size);
           memcpy(uint8arr.Data(), data, size);
 
-          auto push = fields.Get("push").As<Napi::Function>();
           auto field = Napi::Object::New(info.Env());
           field.Set("type",
                     Napi::String::New(info.Env(), std::string(type, 4)));
           field.Set("data", uint8arr);
-          push.Call({ fields, field });
+          fields.push_back(field);
         },
         cache);
+      auto fieldsArray = Napi::Array::New(info.Env(), fields.size());
+      for (size_t i = 0; i < fields.size(); i++) {
+        fieldsArray.Set(i, fields[i]);
+      }
 
       auto id = Napi::Number::New(info.Env(), lookupRes.rec->GetId());
       auto edid =
@@ -741,11 +767,21 @@ Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
       record.Set("editorId", edid);
       record.Set("type", type);
       record.Set("flags", flags);
-      record.Set("fields", fields);
+      record.Set("fields", fieldsArray);
       espmLookupResult.Set("record", record);
 
       espmLookupResult.Set("fileIndex",
                            Napi::Number::New(info.Env(), lookupRes.fileIdx));
+
+      espmLookupResult.Set(
+        "toGlobalRecordId",
+        Napi::Function::New(
+          info.Env(), [lookupRes](const Napi::CallbackInfo& info) {
+            auto localRecordId =
+              NapiHelper::ExtractUInt32(info[0], "localRecordId");
+            uint32_t res = lookupRes.ToGlobalId(localRecordId);
+            return Napi::Number::New(info.Env(), res);
+          }));
     }
 
     return espmLookupResult;
@@ -844,6 +880,10 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
     auto functionName = NapiHelper::ExtractString(info[2], "functionName");
     auto f = NapiHelper::ExtractFunction(info[3], "f");
 
+    std::shared_ptr<Napi::Reference<Napi::Function>> functionRef(
+      new Napi::Reference<Napi::Function>(
+        Napi::Persistent<Napi::Function>(f)));
+
     auto& vm = partOne->worldState.GetPapyrusVm();
 
     auto* wst = &partOne->worldState;
@@ -860,8 +900,8 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
 
     vm.RegisterFunction(
       className, functionName, fType,
-      [f, wst, env = info.Env()](const VarValue& self,
-                                 const std::vector<VarValue>& args) {
+      [functionRef, wst, env = info.Env()](const VarValue& self,
+                                           const std::vector<VarValue>& args) {
         Napi::Value jsSelf =
           PapyrusUtils::GetJsValueFromPapyrusValue(env, self, wst->espmFiles);
 
@@ -872,7 +912,7 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
                                                               wst->espmFiles));
         }
 
-        auto jsResult = f.Call({ jsSelf, jsArgs });
+        auto jsResult = functionRef->Value().Call({ jsSelf, jsArgs });
 
         bool treatResultAsInt = false; // TODO?
 
