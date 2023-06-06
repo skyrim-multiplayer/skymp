@@ -1,5 +1,5 @@
 #pragma once
-#include "Structures.h"
+#include "papyrus-vm/Structures.h"
 #include <cstdint>
 #include <functional>
 #include <nlohmann/json.hpp>

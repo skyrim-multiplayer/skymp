@@ -1,7 +1,7 @@
 #include "ScriptVariablesHolder.h"
 
 #include "EspmGameObject.h"
-#include "Utils.h"
+#include "papyrus-vm/Utils.h"
 
 #include <spdlog/spdlog.h>
 

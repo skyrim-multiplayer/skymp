@@ -1,6 +1,5 @@
 #include "WorldState.h"
 #include "FormCallbacks.h"
-#include "GroupUtils.h"
 #include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
@@ -17,10 +16,11 @@
 #include "PapyrusObjectReference.h"
 #include "PapyrusSkymp.h"
 #include "PapyrusUtility.h"
-#include "Reader.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "Timer.h"
+#include "libespm/GroupUtils.h"
+#include "papyrus-vm/Reader.h"
 #include <algorithm>
 #include <deque>
 #include <unordered_map>

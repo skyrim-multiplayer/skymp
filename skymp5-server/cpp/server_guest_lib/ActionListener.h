@@ -2,9 +2,9 @@
 #include "ActionListener.h"
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
-#include "Loader.h"
 #include "MpActor.h"
 #include "PartOne.h"
+#include "libespm/Loader.h"
 
 class ServerState;
 class WorldState;

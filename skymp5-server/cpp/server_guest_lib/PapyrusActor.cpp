@@ -3,8 +3,8 @@
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 
-#include "CIString.h"
 #include "SpSnippetFunctionGen.h"
+#include "papyrus-vm/CIString.h"
 
 namespace {
 espm::ActorValue ConvertToAV(CIString actorValueName)

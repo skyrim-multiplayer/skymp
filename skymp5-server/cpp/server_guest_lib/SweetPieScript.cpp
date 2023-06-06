@@ -6,7 +6,7 @@
 #include "SpSnippet.h"
 #include "SweetPieBoundWeapon.h"
 #include "WorldState.h"
-#include <espm.h>
+#include "libespm/espm.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <random>
