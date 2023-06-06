@@ -154,7 +154,7 @@ export class ChatMessage {
       }
       this.text = parseChatMessage(text);
     } else {
-      this.text = text;
+      this.text = text as ChatText[];
     }
   }
 
