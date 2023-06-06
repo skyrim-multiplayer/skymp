@@ -1,9 +1,9 @@
 # This code is intended to run with cmake -P
 # It's not recommended to include this file
 
-set(dir dist/client/data)
-
 file(REMOVE_RECURSE "./nexus")
+
+set(dir dist/client/data)
 file(COPY ${dir} DESTINATION "./nexus/sp")
 
 file(GLOB_RECURSE files "./nexus/sp/*")
@@ -15,3 +15,6 @@ if(files)
     endif()
   endforeach()
 endif()
+
+set(dir dist/papyrus-vm/data)
+file(COPY ${dir} DESTINATION "./nexus/papyrus-vm")

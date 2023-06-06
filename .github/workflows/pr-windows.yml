@@ -119,9 +119,14 @@ jobs:
       
     - uses: actions/upload-artifact@v3
       with:
-        name: SP-SE
+        name: SP-SE-nexus
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
+    - uses: actions/upload-artifact@v3
+      with:
+        name: papyrus-vm-nexus
+        # Data folder is skipped for mod managers
+        path: ${{github.workspace}}/build/nexus/papyrus-vm/data/*
 
     - name: Debug - free space
       if: 'always()'
