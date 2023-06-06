@@ -10,6 +10,7 @@ target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/in
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 # after build copy to build/dist/papyrus-vm
 add_custom_command(TARGET papyrus-vm-lib POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:papyrus-vm-lib> "${CMAKE_BINARY_DIR}/dist/papyrus-vm/Data/Platform/Distribution/RuntimeDependencies/$<TARGET_FILE_NAME:papyrus-vm-lib>")
+add_custom_command(TARGET papyrus-vm-lib POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:papyrus-vm-lib> "${CMAKE_BINARY_DIR}/dist/client/Data/Platform/Distribution/RuntimeDependencies/$<TARGET_FILE_NAME:papyrus-vm-lib>")
 
 # TODO: fetch this via vcpkg
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_SOURCE_DIR}/skymp5-server/cpp/third_party")
