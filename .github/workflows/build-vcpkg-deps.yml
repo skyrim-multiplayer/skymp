@@ -1,9 +1,7 @@
 name: Docker Build and Push
 
 on:
-  repository_dispatch:
-    types: [docker_build]
-
+    workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
