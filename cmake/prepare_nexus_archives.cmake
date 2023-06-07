@@ -16,4 +16,10 @@ if(files)
   endforeach()
 endif()
 
-file(COPY "dist/papyrus-vm/papyrus-vm${CMAKE_EXECUTABLE_SUFFIX}" DESTINATION "./nexus/papyrus-vm")
+if(WIN32)
+  set(EXECUTABLE_SUFFIX ".exe")
+else()
+  set(EXECUTABLE_SUFFIX "")
+endif()
+
+file(COPY "dist/papyrus-vm/papyrus-vm${EXECUTABLE_SUFFIX}" DESTINATION "./nexus/papyrus-vm")
