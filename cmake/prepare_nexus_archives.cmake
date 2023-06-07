@@ -16,5 +16,4 @@ if(files)
   endforeach()
 endif()
 
-set(dir dist/papyrus-vm/data)
-file(COPY ${dir} DESTINATION "./nexus/papyrus-vm")
+file(COPY "dist/papyrus-vm/papyrus-vm${CMAKE_EXECUTABLE_SUFFIX}" DESTINATION "./nexus/papyrus-vm")
