@@ -1,10 +1,11 @@
 name: Docker Build and Push
 
 on:
-    workflow_dispatch:
-    push:
-        branches:
-        - Pospelove-patch-3
+  workflow_dispatch:
+  push:
+    branches:
+      - Pospelove-patch-3
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,11 +22,11 @@ jobs:
       uses: docker/login-action@v1
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN2 }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Extract branch name
+    - name: Extract short SHA
       shell: bash
-      run: echo "BRANCH_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      run: echo "SHORT_SHA=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
 
     - name: Extract submodule details
       shell: bash
@@ -39,7 +40,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        key: ${{ runner.os }}-buildx-
         restore-keys: |
           ${{ runner.os }}-buildx-
 
@@ -50,7 +51,7 @@ jobs:
         file: ./Dockerfile
         builder: ${{ steps.buildx.outputs.name }}
         push: true
-        tags: skymp/skymp-vcpkg-deps:${{ env.BRANCH_NAME }}
+        tags: skymp/skymp-vcpkg-deps:${{ env.SHORT_SHA }}
         build-args: |
           VCPKG_URL=${{ env.VCPKG_URL }}
           VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
