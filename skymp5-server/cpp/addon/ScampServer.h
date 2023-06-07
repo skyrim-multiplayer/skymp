@@ -51,6 +51,11 @@ public:
   Napi::Value RegisterPapyrusFunction(const Napi::CallbackInfo& info);
   Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
 
+  Napi::Value SetPacketHistoryRecording(const Napi::CallbackInfo& info);
+  Napi::Value GetPacketHistory(const Napi::CallbackInfo& info);
+  Napi::Value ClearPacketHistory(const Napi::CallbackInfo& info);
+  Napi::Value RequestPacketHistoryPlayback(const Napi::CallbackInfo& info);
+
   const std::shared_ptr<PartOne>& GetPartOne() const { return partOne; }
   const GamemodeApi::State& GetGamemodeApiState() const
   {

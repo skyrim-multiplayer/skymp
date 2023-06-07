@@ -925,3 +925,102 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 }
+
+Napi::Value ScampServer::SetPacketHistoryRecording(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = NapiHelper::ExtractUInt32(info[0], "userId");
+    bool isRecording = NapiHelper::ExtractBoolean(info[1], "isRecording");
+    partOne->SetPacketHistoryRecording(userId, isRecording);
+    return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::GetPacketHistory(const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = NapiHelper::ExtractUInt32(info[0], "userId");
+    auto history = partOne->GetPacketHistory(userId);
+    auto result = Napi::Object::New(info.Env());
+
+    auto buffer = Napi::Uint8Array::New(info.Env(), history.buffer.size());
+    memcpy(buffer.Data(), history.buffer.data(), history.buffer.size());
+
+    result.Set("buffer", buffer);
+    auto arr = Napi::Array::New(info.Env(), history.packets.size());
+    for (int i = 0; i < static_cast<int>(history.packets.size()); ++i) {
+      auto element = Napi::Object::New(info.Env());
+      element.Set("offset",
+                  Napi::Number::New(info.Env(), history.packets[i].offset));
+      element.Set("size",
+                  Napi::Number::New(info.Env(), history.packets[i].length));
+      element.Set("timeMs",
+                  Napi::Number::New(info.Env(), history.packets[i].timeMs));
+      arr.Set(i, element);
+    }
+
+    result.Set("packets", arr);
+    return result;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::ClearPacketHistory(const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = NapiHelper::ExtractUInt32(info[0], "userId");
+    partOne->ClearPacketHistory(userId);
+    return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::RequestPacketHistoryPlayback(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = NapiHelper::ExtractUInt32(info[0], "userId");
+    auto packetHistory = NapiHelper::ExtractObject(info[1], "packetHistory");
+
+    PacketHistory history;
+
+    auto buffer = NapiHelper::ExtractUInt8Array(packetHistory.Get("buffer"),
+                                                "packetHistory.buffer");
+    history.buffer.resize(buffer.ByteLength());
+    memcpy(history.buffer.data(), buffer.Data(), history.buffer.size());
+
+    auto packets = NapiHelper::ExtractArray(packetHistory.Get("packets"),
+                                            "packetHistory.packets");
+    for (uint32_t i = 0; i < packets.Length(); ++i) {
+      std::string tip = "packetHistory.packets." + std::to_string(i);
+      std::string tip1 =
+        "packetHistory.packets." + std::to_string(i) + ".offset";
+      std::string tip2 =
+        "packetHistory.packets." + std::to_string(i) + ".length";
+      std::string tip3 =
+        "packetHistory.packets." + std::to_string(i) + ".timeMs";
+
+      auto packet = NapiHelper::ExtractObject(packets.Get(i), tip.data());
+
+      PacketHistoryElement element;
+      element.offset =
+        NapiHelper::ExtractUInt32(packet.Get("offset"), tip1.data());
+      element.length =
+        NapiHelper::ExtractUInt32(packet.Get("size"), tip2.data());
+      element.timeMs =
+        NapiHelper::ExtractUInt32(packet.Get("timeMs"), tip2.data());
+
+      history.packets.push_back(element);
+    }
+
+    partOne->RequestPacketHistoryPlayback(userId, history);
+    return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
