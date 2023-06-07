@@ -1,7 +1,10 @@
 name: Docker Build and Push
 
 on:
-    workflow_dispatch
+    workflow_dispatch:
+    push:
+        branches:
+        - Pospelove-patch-3
 jobs:
   build:
     runs-on: ubuntu-latest
