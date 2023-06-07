@@ -1,0 +1,57 @@
+name: Docker Build and Push
+
+on:
+  repository_dispatch:
+    types: [docker_build]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive' # ensures submodules are checked out
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract branch name
+      shell: bash
+      run: echo "BRANCH_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+    - name: Extract submodule details
+      shell: bash
+      run: |
+        cd vcpkg
+        echo "VCPKG_URL=$(git config --get remote.origin.url)" >> $GITHUB_ENV
+        echo "VCPKG_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        cd ..
+
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        builder: ${{ steps.buildx.outputs.name }}
+        push: true
+        tags: skymp/skymp-vcpkg-deps:${{ env.BRANCH_NAME }}
+        build-args: |
+          VCPKG_URL=${{ env.VCPKG_URL }}
+          VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
