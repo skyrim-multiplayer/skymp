@@ -126,7 +126,7 @@ jobs:
       with:
         name: papyrus-vm-nexus
         # Data folder is skipped for mod managers
-        path: ${{github.workspace}}/build/nexus/papyrus-vm/data/*
+        path: ${{github.workspace}}/build/nexus/papyrus-vm/*
 
     - name: Debug - free space
       if: 'always()'
