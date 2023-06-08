@@ -24,6 +24,10 @@
       "platform": "windows"
     },
     {
+      "name": "frida-gum",
+      "platform": "windows"
+    },
+    {
       "name": "chakracore",
       "platform": "windows"
     },
