@@ -2,9 +2,6 @@ name: Build & Push Vcpkg Deps (Docker)
 
 on:
   workflow_dispatch:
-  push:
-    branches: 
-      - Pospelove-patch-3
 
 jobs:
   build:
