@@ -89,11 +89,16 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
     add_library(skyrim_platform SHARED ${platform_src})
     set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
-    target_include_directories(skyrim_platform PRIVATE "${third_party}")
     target_include_directories(skyrim_platform PRIVATE "${tilted}")
     target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform PRIVATE papyrus-vm-lib savefile skyrim_plugin_resources ui cef platform_lib viet)
-    target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
+    
+    find_path(FRIDA_GUM_INCLUDE_DIR NAMES frida-gum.h)
+    find_library(FRIDA_GUM_LIBRARY NAMES frida-gum.lib)
+
+    target_include_directories(skyrim_platform PRIVATE ${FRIDA_GUM_INCLUDE_DIR})
+    target_link_libraries(skyrim_platform PRIVATE ${FRIDA_GUM_LIBRARY})
+
     # suppress missing pdb warning for cef and frida
     target_link_options(skyrim_platform PRIVATE "LINKER:-ignore:4099")
     target_precompile_headers(skyrim_platform	PRIVATE	skyrim_platform/PCH.h)

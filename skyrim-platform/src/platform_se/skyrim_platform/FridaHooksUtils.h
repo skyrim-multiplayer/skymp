@@ -13,11 +13,11 @@ double GetMenuNumberVariable(std::string_view menuName, const char* target)
 {
   auto ui = RE::UI::GetSingleton();
   if (!ui)
-    return NULL;
+    return 0;
 
   auto view = ui->GetMovieView(menuName);
   if (!view)
-    return NULL;
+    return 0;
 
   RE::GFxValue fxValue;
   view->GetVariable(&fxValue, target);
