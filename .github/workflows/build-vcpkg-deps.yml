@@ -37,18 +37,42 @@ jobs:
       uses: actions/cache@v2
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-
+        key: ${{ runner.os }}-buildx-vcpkg-${{ github.run_number }}
         restore-keys: |
-          ${{ runner.os }}-buildx-
+          ${{ runner.os }}-buildx-vcpkg-
 
-    - name: Build and push
+    - name: Build and push skymp-vcpkg-deps
       uses: docker/build-push-action@v2
       with:
         context: .
         file: ./Dockerfile
+        target: skymp-vcpkg-deps
         builder: ${{ steps.buildx.outputs.name }}
         push: true
         tags: skymp/skymp-vcpkg-deps:${{ env.SHORT_SHA }}
+        build-args: |
+          VCPKG_URL=${{ env.VCPKG_URL }}
+          VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
+
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-runtime-${{ github.run_number }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-runtime-
+
+    - name: Build and push skymp-runtime-base
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        target: skymp-runtime-base
+        builder: ${{ steps.buildx.outputs.name }}
+        push: true
+        tags: skymp/skymp-runtime-base:${{ env.SHORT_SHA }}
         build-args: |
           VCPKG_URL=${{ env.VCPKG_URL }}
           VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
