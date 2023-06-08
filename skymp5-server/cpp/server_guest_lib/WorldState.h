@@ -9,7 +9,7 @@
 #include "PartOneListener.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
-#include <MakeID.h>
+#include <MakeID.h-1.0.2>
 #include <algorithm>
 #include <chrono>
 #include <functional>

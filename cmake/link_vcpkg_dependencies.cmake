@@ -23,6 +23,9 @@ function(link_vcpkg_dependencies)
     find_package(ZLIB REQUIRED)
     target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
+    find_path(MAKEID_INCLUDE_DIR NAMES MakeID.h-1.0.2)
+    target_include_directories(${target} PUBLIC ${MAKEID_INCLUDE_DIR})
+
     if(MSVC AND "${target}" MATCHES "skyrim_platform")
       find_library(MHOOH_LIBRARY_DEBUG mhook)
       string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})

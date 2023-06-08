@@ -1,8 +1,7 @@
 #pragma once
 #include "CIString.h"
-#include "MakeID.h"
 #include "Structures.h"
-#include <MakeID.h>
+#include <MakeID.h-1.0.2>
 #include <functional>
 #include <map>
 #include <set>
