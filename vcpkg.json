@@ -19,6 +19,10 @@
     "node-addon-api",
     "bshoshany-thread-pool",
     {
+      "name": "frida-gum",
+      "platform": "windows"
+    },
+    {
       "name": "chakracore",
       "platform": "windows"
     },
