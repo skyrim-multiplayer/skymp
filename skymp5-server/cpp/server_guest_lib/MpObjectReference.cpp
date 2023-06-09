@@ -292,7 +292,10 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   }
 
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
-  spdlog::trace("Activate {:x} by {:x} - activationBlockedByMpApi={}, activationBlocked={}, defaultProcessingOnly={}", formId, casterFormId, activationBlockedByMpApi, activationBlocked, defaultProcessingOnly);
+  spdlog::trace("Activate {:x} by {:x} - activationBlockedByMpApi={}, "
+                "activationBlocked={}, defaultProcessingOnly={}",
+                formId, casterFormId, activationBlockedByMpApi,
+                activationBlocked, defaultProcessingOnly);
 
   bool wasInUse = this->occupant == &activationSource;
 
@@ -300,25 +303,27 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
       (!activationBlocked || defaultProcessingOnly)) {
     spdlog::trace("Activate {:x} by {:x} - Processing", formId, casterFormId);
     ProcessActivate(activationSource);
-    spdlog::trace("Activate {:x} by {:x} - Processing finished", formId, casterFormId);
-  }
-  else {
-    spdlog::trace("Activate {:x} by {:x} - Skip processing", formId, casterFormId);
+    spdlog::trace("Activate {:x} by {:x} - Processing finished", formId,
+                  casterFormId);
+  } else {
+    spdlog::trace("Activate {:x} by {:x} - Skip processing", formId,
+                  casterFormId);
   }
 
   bool isInUse = this->occupant == &activationSource;
 
   if (!defaultProcessingOnly) {
     if (wasInUse && !isInUse) {
-      spdlog::trace("Activate {:x} by {:x} - Skipping OnActivate Papyrus event (container close isn't activation in vanilla game)", formId, casterFormId);
-    }
-    else {
+      spdlog::trace("Activate {:x} by {:x} - Skipping OnActivate Papyrus "
+                    "event (container close isn't activation in vanilla game)",
+                    formId, casterFormId);
+    } else {
       auto arg = activationSource.ToVarValue();
-      spdlog::trace("Activate {:x} by {:x} - Sending OnActivate Papyrus event", formId, casterFormId);
+      spdlog::trace("Activate {:x} by {:x} - Sending OnActivate Papyrus event",
+                    formId, casterFormId);
       SendPapyrusEvent("OnActivate", &arg, 1);
     }
-  }
-  else {
+  } else {
     spdlog::trace("Activate {:x} by {:x} - Processing", formId, casterFormId);
   }
 }
