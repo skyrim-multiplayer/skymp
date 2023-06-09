@@ -147,23 +147,24 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
           auto type = lookupResult.rec->GetType();
           if (type == espm::REFR::kType || type == espm::ACHR::kType) {
             if (worldState) {
-            auto& form = worldState->LookupFormById(propValueFormIdGlobal);
-            if (form != nullptr) {
-              gameObject = std::make_shared<MpFormGameObject>(form.get());
-              spdlog::trace("CastPrimitivePropertyValue - Created {} "
-                            "(MpFormGameObject) property with id {:x}",
-                            type.ToString(), propValueFormIdGlobal);
-            } else {
-              spdlog::warn("CastPrimitivePropertyValue - Unable to create {} "
-                           "(MpFormGameObject) property with id {:x}, form "
-                           "not found in the world",
-                           type.ToString(), propValueFormIdGlobal);
-            }
+              auto& form = worldState->LookupFormById(propValueFormIdGlobal);
+              if (form != nullptr) {
+                gameObject = std::make_shared<MpFormGameObject>(form.get());
+                spdlog::trace("CastPrimitivePropertyValue - Created {} "
+                              "(MpFormGameObject) property with id {:x}",
+                              type.ToString(), propValueFormIdGlobal);
+              } else {
+                spdlog::warn(
+                  "CastPrimitivePropertyValue - Unable to create {} "
+                  "(MpFormGameObject) property with id {:x}, form "
+                  "not found in the world",
+                  type.ToString(), propValueFormIdGlobal);
+              }
             } else {
               spdlog::error("CastPrimitivePropertyValue - Unable to create {} "
-                           "(MpFormGameObject) property with id {:x}, null "
-                           "WorldState",
-                           type.ToString(), propValueFormIdGlobal);
+                            "(MpFormGameObject) property with id {:x}, null "
+                            "WorldState",
+                            type.ToString(), propValueFormIdGlobal);
             }
           } else {
             gameObject = std::make_shared<EspmGameObject>(lookupResult);
