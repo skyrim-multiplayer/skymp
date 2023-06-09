@@ -559,6 +559,7 @@ void MpObjectReference::SetProperty(const std::string& propertyName,
     }
   }
   pImpl->setPropertyCalled = true;
+  spdlog::trace("SetProperty - {} {}", propertyName, newValue.dump());
 }
 
 void MpObjectReference::SetTeleportFlag(bool value)
