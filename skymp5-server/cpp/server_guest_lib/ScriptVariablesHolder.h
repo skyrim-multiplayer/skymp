@@ -49,7 +49,8 @@ private:
   static void CastProperty(
     const espm::CombineBrowser& br, const espm::Property& prop, VarValue* out,
     ScriptsCache* scriptsCache,
-    const std::function<uint32_t(uint32_t)>& toGlobalId);
+    const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState);
+    
   static espm::PropertyType GetElementType(espm::PropertyType arrayType);
 
   espm::LookupResult baseRecordWithScripts;

@@ -58,7 +58,7 @@ void ScriptVariablesHolder::FillProperties()
       for (auto& prop : script->script.properties) {
         VarValue out;
         CastProperty(*browser, prop, &out, scriptsCache.get(),
-                     script->toGlobalId);
+                     script->toGlobalId, worldState);
         CIString fullVarName;
         fullVarName += "::";
         fullVarName += prop.propertyName.data();
@@ -188,7 +188,7 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
 void ScriptVariablesHolder::CastProperty(
   const espm::CombineBrowser& br, const espm::Property& prop, VarValue* out,
   ScriptsCache* scriptsCache,
-  const std::function<uint32_t(uint32_t)>& toGlobalId)
+  const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState *worldState)
 {
   if (prop.propertyType >= espm::PropertyType::ObjectArray &&
       prop.propertyType <= espm::PropertyType::BoolArray) {
@@ -197,14 +197,14 @@ void ScriptVariablesHolder::CastProperty(
     for (auto& entry : prop.array) {
       v.pArray->push_back(CastPrimitivePropertyValue(
         br, *scriptsCache, entry, GetElementType(prop.propertyType),
-        toGlobalId));
+        toGlobalId, worldState));
     }
     *out = v;
     return;
   }
 
   *out = CastPrimitivePropertyValue(br, *scriptsCache, prop.value,
-                                    prop.propertyType, toGlobalId);
+                                    prop.propertyType, toGlobalId, worldState);
 }
 
 espm::PropertyType ScriptVariablesHolder::GetElementType(
