@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 class EspmGameObject;
+class WorldState;
 
 class ScriptVariablesHolder : public IVariablesHolder
 {
