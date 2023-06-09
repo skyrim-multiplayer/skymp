@@ -519,16 +519,23 @@ PexScript::Lazy CreatePexScriptLazy(
 {
   auto lazyState = std::make_shared<LazyState>();
 
+  auto lastReload = std::make_shared<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
   PexScript::Lazy lazy;
   lazy.source = required.data();
-  lazy.fn = [lazyState, scriptStorage, required, logger, enableHotReload]() {
+  lazy.fn = [lazyState, scriptStorage, required, logger, enableHotReload, lastReload] {
     if (enableHotReload) {
-      auto requiredPex = scriptStorage->GetScriptPex(required.data());
-      if (requiredPex != lazyState->pexBin) {
-        lazyState->oldPexHolder.push_back(lazyState->pex);
-        lazyState->pex.reset();
-        lazyState->pexBin = requiredPex;
-        logger->info("Papyrus script {} has been reloaded", required);
+      auto now = std::chrono::steady_clock::now();
+      auto timePassed = now - *lastReload;
+      if (timePassed > std::chrono::seconds(15)) {
+        *lastReload = now;
+        auto requiredPex = scriptStorage->GetScriptPex(required.data());
+        if (requiredPex != lazyState->pexBin) {
+          lazyState->oldPexHolder.push_back(lazyState->pex);
+          lazyState->pex.reset();
+          lazyState->pexBin = requiredPex;
+          logger->info("Papyrus script {} has been reloaded", required);
+        }
       }
     }
 
