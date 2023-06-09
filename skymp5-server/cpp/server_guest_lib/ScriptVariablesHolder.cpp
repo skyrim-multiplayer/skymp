@@ -188,7 +188,7 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
 void ScriptVariablesHolder::CastProperty(
   const espm::CombineBrowser& br, const espm::Property& prop, VarValue* out,
   ScriptsCache* scriptsCache,
-  const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState *worldState)
+  const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState)
 {
   if (prop.propertyType >= espm::PropertyType::ObjectArray &&
       prop.propertyType <= espm::PropertyType::BoolArray) {
