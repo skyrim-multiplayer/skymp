@@ -16,7 +16,7 @@ public:
                         espm::LookupResult refrRecordWithScripts,
                         const espm::CombineBrowser* browser,
                         espm::CompressedFieldsCache* compressedFieldsCache,
-                        WorldState *worldState);
+                        WorldState* worldState);
 
   VarValue* GetVariableByName(const char* name, const PexScript& pex) override;
 
@@ -43,7 +43,8 @@ private:
   static VarValue CastPrimitivePropertyValue(
     const espm::CombineBrowser& br, ScriptsCache& st,
     const espm::Property::Value& propValue, espm::PropertyType type,
-    const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState *worldState);
+    const std::function<uint32_t(uint32_t)>& toGlobalId,
+    WorldState* worldState);
 
   static void CastProperty(
     const espm::CombineBrowser& br, const espm::Property& prop, VarValue* out,
@@ -59,5 +60,5 @@ private:
   VarValue state;
   std::unique_ptr<ScriptsCache> scriptsCache;
   espm::CompressedFieldsCache* const compressedFieldsCache;
-  WorldState *const worldState;
+  WorldState* const worldState;
 };

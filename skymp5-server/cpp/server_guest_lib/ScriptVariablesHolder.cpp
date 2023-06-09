@@ -2,8 +2,8 @@
 
 #include "EspmGameObject.h"
 #include "MpFormGameObject.h"
-#include "papyrus-vm/Utils.h"
 #include "WorldState.h"
+#include "papyrus-vm/Utils.h"
 
 #include <spdlog/spdlog.h>
 
@@ -11,8 +11,7 @@ ScriptVariablesHolder::ScriptVariablesHolder(
   const std::string& myScriptName_, espm::LookupResult baseRecordWithScripts_,
   espm::LookupResult refrRecordWithScripts_,
   const espm::CombineBrowser* browser_,
-  espm::CompressedFieldsCache* compressedFieldsCache_,
-  WorldState *worldState_)
+  espm::CompressedFieldsCache* compressedFieldsCache_, WorldState* worldState_)
   : baseRecordWithScripts(baseRecordWithScripts_)
   , refrRecordWithScripts(refrRecordWithScripts_)
   , myScriptName(myScriptName_)
@@ -126,7 +125,7 @@ std::optional<ScriptVariablesHolder::Script> ScriptVariablesHolder::GetScript(
 VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
   const espm::CombineBrowser& br, ScriptsCache& st,
   const espm::Property::Value& propValue, espm::PropertyType type,
-  const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState *worldState)
+  const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState)
 {
   switch (type) {
     case espm::PropertyType::Object: {
@@ -147,18 +146,23 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
         } else {
           auto type = lookupResult.rec->GetType();
           if (type == espm::REFR::kType || type == espm::ACHR::kType) {
-            auto &form = worldState->LookupFormById(propValueFormIdGlobal);
+            auto& form = worldState->LookupFormById(propValueFormIdGlobal);
             if (form != nullptr) {
               gameObject = std::make_shared<MpFormGameObject>(form.get());
-              spdlog::trace("CastPrimitivePropertyValue - Created {} (MpFormGameObject) property with id {:x}", type.ToString(), propValueFormIdGlobal);
+              spdlog::trace("CastPrimitivePropertyValue - Created {} "
+                            "(MpFormGameObject) property with id {:x}",
+                            type.ToString(), propValueFormIdGlobal);
+            } else {
+              spdlog::warn("CastPrimitivePropertyValue - Failed to create {} "
+                           "(MpFormGameObject) property with id {:x}, form "
+                           "not found in the world",
+                           type.ToString(), propValueFormIdGlobal);
             }
-            else {
-              spdlog::warn("CastPrimitivePropertyValue - Failed to create {} (MpFormGameObject) property with id {:x}, form not found in the world", type.ToString(), propValueFormIdGlobal);
-            }
-          }
-          else {
+          } else {
             gameObject = std::make_shared<EspmGameObject>(lookupResult);
-            spdlog::trace("CastPrimitivePropertyValue - Created {} (EspmGameObject) property with id {:x}", type.ToString(), propValueFormIdGlobal);
+            spdlog::trace("CastPrimitivePropertyValue - Created {} "
+                          "(EspmGameObject) property with id {:x}",
+                          type.ToString(), propValueFormIdGlobal);
           }
         }
       }
