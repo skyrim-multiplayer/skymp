@@ -519,11 +519,13 @@ PexScript::Lazy CreatePexScriptLazy(
 {
   auto lazyState = std::make_shared<LazyState>();
 
-  auto lastReload = std::make_shared<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  auto lastReload = std::make_shared<std::chrono::steady_clock::time_point>(
+    std::chrono::steady_clock::now());
 
   PexScript::Lazy lazy;
   lazy.source = required.data();
-  lazy.fn = [lazyState, scriptStorage, required, logger, enableHotReload, lastReload] {
+  lazy.fn = [lazyState, scriptStorage, required, logger, enableHotReload,
+             lastReload] {
     if (enableHotReload) {
       auto now = std::chrono::steady_clock::now();
       auto timePassed = now - *lastReload;
