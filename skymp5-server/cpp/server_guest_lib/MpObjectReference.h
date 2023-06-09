@@ -196,7 +196,6 @@ private:
   std::optional<std::chrono::system_clock::duration> relootTimeOverride;
   std::unique_ptr<uint8_t> chanceNoneOverride;
   bool activationBlocked = false;
-  bool changeFormLoaded = false;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
