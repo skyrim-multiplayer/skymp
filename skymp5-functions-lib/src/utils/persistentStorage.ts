@@ -20,10 +20,10 @@ export class PersistentStorage {
   }
 
   get rounds(): SweetPieRound[] {
-    const obj = mp.get(storeObject, "private.persistentStorage") || {};
-    if (Array.isArray(obj['rounds']) && !obj['rounds'].find((x) => typeof x !== 'object')) {
+    const roundsData = mp.get(storeObject, "private.rounds") || [];
+    if (Array.isArray(roundsData) && !roundsData.find((x) => typeof x !== 'object')) {
       const rounds: SweetPieRound[] = [];
-      for (const round of obj['rounds']) {
+      for (const round of roundsData) {
         const players = new Map<number, { kills?: number }>();
         for (const obj of round['players']) {
           players.set(
@@ -45,7 +45,6 @@ export class PersistentStorage {
   }
 
   set rounds(newValue: SweetPieRound[]) {
-    const obj = mp.get(storeObject, "private.persistentStorage") || {};
     const rounds = new Array();
     for (const round of newValue) {
       const players = new Array();
@@ -60,49 +59,37 @@ export class PersistentStorage {
         players: players
       });
     }
-    obj['rounds'] = rounds;
-    mp.set(storeObject, "private.persistentStorage", obj);
+    mp.set(storeObject, "private.rounds", rounds);
   }
 
   get reloads(): number {
-    const obj = mp.get(storeObject, "private.persistentStorage") || {};
-    return typeof obj['reloads'] === 'number' ? obj['reloads'] : 0;
+    return mp.get(storeObject, "private.reloads") || 0;
   }
 
   set reloads(newValue: number) {
-    const obj = mp.get(storeObject, "private.persistentStorage") || {};
-    obj['reloads'] = newValue;
-    mp.set(storeObject, "private.persistentStorage", obj);
+    mp.set(storeObject, "private.reloads", newValue);
   }
 
   get onlinePlayers(): number[] {
-    const obj = mp.get(storeObject, "private.persistentStorage") || {};
-    if (Array.isArray(obj['onlinePlayers'])) {
-      if (obj['onlinePlayers'].filter((x) => typeof x === 'number').length === obj['onlinePlayers'].length) {
-        return obj['onlinePlayers'];
+    const onlinePlayersData = mp.get(storeObject, "private.onlinePlayers") || [];
+    if (Array.isArray(onlinePlayersData)) {
+      if (onlinePlayersData.filter((x) => typeof x === 'number').length === onlinePlayersData.length) {
+        return onlinePlayersData;
       }
     }
     return [];
   }
 
   set onlinePlayers(newValue: number[]) {
-    const obj = mp.get(storeObject, "private.persistentStorage") || {};
-    obj['onlinePlayers'] = newValue;
-    mp.set(storeObject, "private.persistentStorage", obj);
+    mp.set(storeObject, "private.onlinePlayers", newValue);
   }
 
   get teleports(): TeleportData {
-    const obj = mp.get(storeObject, "private.persistentStorage") || {};
-    if (typeof obj['teleports'] === "object") {
-      return obj['teleports'];
-    }
-    return {};
+    return mp.get(storeObject, "private.teleports") || {};
   }
 
   set teleports(newValue: TeleportData) {
-    const obj = mp.get(storeObject, "private.persistentStorage") || {};
-    obj['teleports'] = newValue;
-    mp.set(storeObject, "private.persistentStorage", obj);
+    mp.set(storeObject, "private.teleports", newValue);
   }
 
   private constructor() {}

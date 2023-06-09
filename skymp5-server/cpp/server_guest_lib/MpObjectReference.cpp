@@ -558,8 +558,19 @@ void MpObjectReference::SetProperty(const std::string& propertyName,
       SendPropertyTo(propertyName.data(), newValue, *ac);
     }
   }
-  pImpl->setPropertyCalled = true;
-  spdlog::trace("SetProperty - {} {}", propertyName, newValue.dump());
+  //pImpl->setPropertyCalled = true;
+
+  if (!this->changeFormLoaded) {
+    spdlog::trace("SetProperty {:x} - Needs changeForm load", this->GetFormId());
+    auto worldState = GetParent();
+    worldState->LoadForm(this->GetFormId());
+    spdlog::trace("SetProperty {:x} - Loaded", this->GetFormId());
+  }
+  else {
+    spdlog::trace("SetProperty {:x} - Change form already loaded", this->GetFormId());
+  }
+
+  spdlog::trace("SetProperty {:x} - {} {}", this->GetFormId(), propertyName, newValue.dump());
 }
 
 void MpObjectReference::SetTeleportFlag(bool value)
@@ -853,6 +864,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
       tp - std::chrono::system_clock::now());
     RequestReloot(ms);
   }
+  this->changeFormLoaded = true;
 }
 
 const DynamicFields& MpObjectReference::GetDynamicFields() const
