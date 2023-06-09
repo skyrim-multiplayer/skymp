@@ -185,6 +185,7 @@
       "Unix"
     ],
     "expectedFiles": [
+      "papyrus-vm/papyrus-vm",
       "client/Data/Platform/UI/08383611e86325b042d52c4c60d4f3c0.svg",
       "client/Data/Platform/UI/09424635ea350f722acbcde754761c4b.wav",
       "client/Data/Platform/UI/02687b2110d1a50a6b4e194282ab8deb.svg",
@@ -253,6 +254,7 @@
       "Win32"
     ],
     "expectedFiles": [
+      "papyrus-vm/papyrus-vm.exe",
       "server/launch_server.bat",
       "server/scam_native.pdb"
     ]

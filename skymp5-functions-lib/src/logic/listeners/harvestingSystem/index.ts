@@ -4,7 +4,7 @@ import { Ctx } from '../../../types/ctx';
 import { EvalProperty } from '../../../props/evalProperty';
 import { FunctionInfo } from '../../../utils/functionInfo';
 import { GameModeListener } from '../gameModeListener';
-import { getPossesedSkills } from '../commands/skillCommand';
+import { getPossessedSkills } from '../commands/skillCommand';
 
 declare const mp: Mp;
 declare const ctx: Ctx;
@@ -124,7 +124,7 @@ export class HarvestingSystem implements GameModeListener {
       setTimeout(() => ctx.sp.storage.harvestAnimationActive = false, 2500);
     });
 
-    const { possessedSkills } = getPossesedSkills(casterActorId);
+    const { possessedSkills } = getPossessedSkills(casterActorId);
     // 0 level is student, 1 level is adept...
     let maxLevel = -1;
     skillType.forEach((skillName) => {

@@ -18,6 +18,15 @@
     "simpleini",
     "node-addon-api",
     "bshoshany-thread-pool",
+    "makeid",
+    {
+      "name": "frida-gum",
+      "platform": "windows"
+    },
+    {
+      "name": "frida-gum",
+      "platform": "windows"
+    },
     {
       "name": "chakracore",
       "platform": "windows"

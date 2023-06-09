@@ -1,0 +1,8 @@
+{
+    "name": "frida-gum",
+    "version-string": "16.0.19",
+    "homepage": "https://github.com/frida/frida",
+    "description": "Frida is a dynamic instrumentation toolkit for developers, reverse-engineers, and security researchers.",
+    "supports": "windows",
+    "dependencies": []
+}
