@@ -59,6 +59,19 @@ size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
   return changeForms.size(); // Should take data from mongo instead?
 }
 
+std::optional<MpChangeForm> MongoDatabase::FindOne(const FormDesc &formDesc) {
+  auto value = pImpl->changeFormsCollection->find_one(
+    bsoncxx::builder::stream::document{} << "formDesc" << formDesc.ToString()
+                                         << bsoncxx::builder::stream::finalize);
+  if (value == std::nullopt) {
+    return std::nullopt;
+  }
+
+  simdjson::dom::parser p;
+  auto document = p.parse(bsoncxx::to_json(*value)).value();
+  return MpChangeForm::JsonToChangeForm(document);
+}
+
 void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 {
   auto emptyFilter = nlohmann::json::object();

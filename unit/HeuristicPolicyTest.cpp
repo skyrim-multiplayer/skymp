@@ -11,7 +11,7 @@ TEST_CASE("HeuristicPolicy", "[HeuristicPolicy]")
   WorldState wst;
   HeuristicPolicy policy(logger, &wst);
 
-  MpActor actor(LocationalData(), FormCallbacks::DoNothing());
+  MpActor actor(LocationalData(), FormCallbacks::DoNothing(), std::nullopt);
   MpFormGameObject actorGameObject(&actor);
   VarValue actorVarValue(&actorGameObject);
 

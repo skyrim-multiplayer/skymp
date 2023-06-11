@@ -146,7 +146,6 @@ public:
   GetNextRelootMoment() const;
 
   virtual MpChangeForm GetChangeForm() const;
-  virtual void ApplyChangeForm(const MpChangeForm& changeForm);
   const DynamicFields& GetDynamicFields() const;
 
   // This method removes ObjectReference from a current grid and doesn't attach
@@ -160,7 +159,8 @@ protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
                         size_t argumentsCount = 0) override;
-  void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
+  void Init(WorldState* parent, uint32_t formId) override;
+  virtual void ApplyChangeForm(const MpChangeForm& changeForm);
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
 
@@ -210,4 +210,5 @@ protected:
                                         const nlohmann::json& value);
 
   const std::shared_ptr<FormCallbacks> callbacks;
+  std::optional<MpChangeForm> initialChangeForm;
 };

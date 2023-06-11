@@ -33,9 +33,9 @@ struct MpActor::Impl
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
-                 const FormCallbacks& callbacks_, uint32_t optBaseId)
+                 const FormCallbacks& callbacks_, std::optional<MpChangeForm> changeForm, uint32_t optBaseId)
   : MpObjectReference(locationalData_, callbacks_,
-                      optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
+                      optBaseId == 0 ? 0x7 : optBaseId, "NPC_", changeForm)
 {
   pImpl.reset(new Impl);
 }
@@ -482,9 +482,9 @@ void MpActor::BeforeDestroy()
   UnsubscribeFromAll();
 }
 
-void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
+void MpActor::Init(WorldState* worldState, uint32_t formId)
 {
-  MpObjectReference::Init(worldState, formId, hasChangeForm);
+  MpObjectReference::Init(worldState, formId);
 
   if (worldState->HasEspm()) {
     EnsureBaseContainerAdded(GetParent()->GetEspm());

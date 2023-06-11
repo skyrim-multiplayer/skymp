@@ -9,7 +9,7 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   PartOne p;
   {
     auto ac =
-      std::make_unique<MpActor>(LocationalData(), p.CreateFormCallbacks());
+      std::make_unique<MpActor>(LocationalData(), p.CreateFormCallbacks(), std::nullopt);
     p.worldState.AddForm(std::move(ac), 0xff000000);
   }
 
