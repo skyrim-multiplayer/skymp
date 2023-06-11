@@ -26,7 +26,7 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   args("args"), workbench("workbench"), resultObjectId("resultObjectId"),
   craftInputObjects("craftInputObjects"), remoteId("remoteId"),
   eventName("eventName"), health("health"), magicka("magicka"),
-  stamina("stamina");
+  stamina("stamina"), isBlockActive("isBlocking");
 }
 
 struct PacketParser::Impl
@@ -116,9 +116,13 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       uint32_t worldOrCell = 0;
       ReadEx(data_, JsonPointers::worldOrCell, &worldOrCell);
 
+      bool isBlockActive = false;
+      Read(data_, JsonPointers::isBlockActive, &isBlockActive);
+
       actionListener.OnUpdateMovement(
         rawMsgData, idx, { pos[0], pos[1], pos[2] },
-        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, worldOrCell);
+        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, worldOrCell,
+        isBlockActive);
 
     } break;
     case MsgType::UpdateAnimation: {
