@@ -11,6 +11,7 @@ import Icon from './constructorComponents/icon';
 import CheckBox from './constructorComponents/checkbox';
 import Text from './constructorComponents/text';
 import Chat from './constructorComponents/chat';
+import SkillsMenu from './features/skillsMenu';
 
 const styles = [
   'BUTTON_STYLE_GITHUB',
@@ -204,7 +205,10 @@ const Constructor = props => {
       );
     case 'chat':
       return (
+        <>
+        <SkillsMenu send={rend.send}/>
         <Chat messages={rend.messages} send={rend.send} placeholder={rend.placeholder} isInputHidden={rend.isInputHidden} />
+        </>
       );
     default:
       break;

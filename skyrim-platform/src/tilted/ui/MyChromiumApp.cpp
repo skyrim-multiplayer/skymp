@@ -258,12 +258,14 @@ bool MyChromiumApp::LoadUrl(const char* url) noexcept
 
 void MyChromiumApp::RunTasks()
 {
-  bool isBrowserFocused = CEFUtils::DInputHook::ChromeFocus();
+  if (m_pGameClient && m_pGameClient->IsReady()) {
+    bool isBrowserFocused = CEFUtils::DInputHook::ChromeFocus();
 
-  int isFocusedInt = isBrowserFocused ? 1 : 0;
-  if (isFocusedInt != m_wasFocused) {
-    m_wasFocused = isFocusedInt;
-    m_pGameClient->GetBrowser()->GetHost()->SetFocus(isBrowserFocused);
+    int isFocusedInt = isBrowserFocused ? 1 : 0;
+    if (isFocusedInt != m_wasFocused) {
+      m_wasFocused = isFocusedInt;
+      m_pGameClient->GetBrowser()->GetHost()->SetFocus(isBrowserFocused);
+    }
   }
 }
 

@@ -1,11 +1,11 @@
 #include "AnimationSystem.h"
 #include "AnimationData.h"
 #include "MpActor.h"
-#include "espm.h"
+#include "libespm/espm.h"
 
-AnimationSystem::AnimationSystem()
+AnimationSystem::AnimationSystem(bool isSweetpie)
 {
-  InitAnimationCallbacks();
+  InitAnimationCallbacks(isSweetpie);
 }
 
 void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
@@ -17,41 +17,61 @@ void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
   it->second(actor);
 }
 
-std::chrono::steady_clock::time_point
-AnimationSystem::GetLastAttackReleaseAnimationTime() const
+void AnimationSystem::ClearInfo(MpActor* actor)
 {
-  return lastAttackReleaseAnimationTime;
+  lastAttackReleaseAnimationTimePoints.erase(actor->GetFormId());
+}
+
+std::chrono::steady_clock::time_point
+AnimationSystem::GetLastAttackReleaseAnimationTime(MpActor* actor) const
+{
+  auto it = lastAttackReleaseAnimationTimePoints.find(actor->GetFormId());
+  if (it == lastAttackReleaseAnimationTimePoints.end()) {
+    return std::chrono::steady_clock::time_point();
+  }
+  return it->second;
 }
 
 void AnimationSystem::SetLastAttackReleaseAnimationTime(
-  std::chrono::steady_clock::time_point timePoint)
+  MpActor* actor, std::chrono::steady_clock::time_point timePoint)
 {
-  lastAttackReleaseAnimationTime = timePoint;
+  lastAttackReleaseAnimationTimePoints[actor->GetFormId()] = timePoint;
 }
 
-using namespace std::chrono_literals;
-
-void AnimationSystem::InitAnimationCallbacks()
+void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
 {
   animationCallbacks = {
     {
       "blockStart",
-      [](MpActor* actor) {
+      [isSweetpie](MpActor* actor) {
         constexpr float newRate = 0.f;
         actor->SetIsBlockActive(true);
-        actor->SetActorValue(espm::ActorValue::StaminaRate, newRate);
+        if (isSweetpie) {
+          actor->SetActorValue(espm::ActorValue::StaminaRate, newRate);
+        }
       },
     },
     {
       "blockStop",
-      [&](MpActor* actor) {
+      [isSweetpie](MpActor* actor) {
         actor->SetIsBlockActive(false);
-        actor->SetActorValue(espm::ActorValue::StaminaRate,
-                             actor->GetBaseValues().staminaRate);
+        if (isSweetpie) {
+          actor->SetActorValue(espm::ActorValue::StaminaRate,
+                               actor->GetBaseValues().staminaRate);
+        }
+      },
+    }
+  };
+  const AnimationCallbacks additionalCallbacks = {
+    {
+      "attackStart",
+      [](MpActor* actor) {
+        constexpr float modifier = 7.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
-      "attackStart",
+      "attackStartLeftHand",
       [](MpActor* actor) {
         constexpr float modifier = 7.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
@@ -87,15 +107,15 @@ void AnimationSystem::InitAnimationCallbacks()
     },
     {
       "bowAttackStart",
-      [this](MpActor* actor) { SetLastAttackReleaseAnimationTime(); },
+      [this](MpActor* actor) { SetLastAttackReleaseAnimationTime(actor); },
     },
     {
       "attackRelease",
-      [&](MpActor* actor) {
+      [this](MpActor* actor) {
         std::chrono::duration<float> elapsedTime =
           std::chrono::steady_clock::now() -
-          GetLastAttackReleaseAnimationTime();
-        if (elapsedTime > 2s) {
+          GetLastAttackReleaseAnimationTime(actor);
+        if (elapsedTime > std::chrono::seconds(2)) {
           constexpr float modifier = 20.f;
           actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
         } else {
@@ -119,4 +139,9 @@ void AnimationSystem::InitAnimationCallbacks()
       },
     },
   };
+
+  if (isSweetpie) {
+    animationCallbacks.insert(additionalCallbacks.begin(),
+                              additionalCallbacks.end());
+  }
 }

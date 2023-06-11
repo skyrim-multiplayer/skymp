@@ -1,9 +1,15 @@
 import { PlayerController } from './src/logic/PlayerController';
-import { SweetPieGameModeListener } from './src/logic/SweetPieGameModeListener';
-import { SweetPieMap } from './src/logic/SweetPieMap';
-import { SweetTaffyTimedRewards } from './src/logic/SweetTaffyTimedRewards';
+import { ChatSystem } from './src/logic/listeners/chatSystem';
+import { DeathSystem } from './src/logic/listeners/deathSystem';
+import { DoorActivation } from './src/logic/listeners/doorActivation';
+import { HarvestingSystem } from './src/logic/listeners/harvestingSystem';
+import { KitCommand } from './src/logic/listeners/commands/kitCommand';
+import { SweetPieGameModeListener } from './src/logic/listeners/sweetpie/SweetPieGameModeListener';
+import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
+import { SweetTaffyTimedRewards } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
+import { CarryAnimSystem } from './src/props/carryAnimSystem';
 import { ChatProperty } from './src/props/chatProperty';
 import { CounterProperty } from './src/props/counterProperty';
 import { DialogProperty } from './src/props/dialogProperty';
@@ -11,6 +17,12 @@ import { DisableCheats } from './src/props/disableCheats';
 import { EvalProperty } from './src/props/evalProperty';
 import { LocationalData, Mp, PapyrusObject, PapyrusValue } from './src/types/mp';
 import { Timer } from './src/utils/timer';
+import { KillCommand } from './src/logic/listeners/commands/killCommand';
+import { ListCommand } from './src/logic/listeners/commands/listCommand';
+import { RollCommand } from './src/logic/listeners/commands/rollCommand';
+import { SkillCommand } from './src/logic/listeners/commands/skillCommand';
+import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceCommand';
+import { KickCommand } from './src/logic/listeners/commands/kickCommand';
 
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
   throw new TypeError(`The argument with index ${index} has value (${JSON.stringify(x)}) that doesn't meet the requirements of ${expectedTypeName}`);
@@ -321,11 +333,12 @@ export const getReturnItemCount = (mp: Mp, self: null, args: PapyrusValue[], exc
 
 DialogProperty.init();
 BrowserProperty.init();
-EvalProperty.init();
+CarryAnimSystem.init();
 ChatProperty.init();
 CounterProperty.init();
 Timer.init();
 DisableCheats.init();
+EvalProperty.init();
 
 declare const mp: Mp;
 mp.registerPapyrusFunction('global', 'Utility', 'RandomInt', (self, args) => randomInt(mp, self, args));
@@ -564,4 +577,19 @@ MpApiInteractor.setup([
     enableHourly: true,
     rules: (mp.getServerSettings().sweetPieRewards ?? {} as any).rules,
   }),
+  new DeathSystem(mp, controller),
+  new HarvestingSystem(mp, controller),
+  new DoorActivation(mp, controller),
+  new KitCommand(mp, controller),
+  new KillCommand(mp, controller),
+  new KickCommand(mp, controller),
+  new ListCommand(mp, controller),
+  new RollCommand(mp, controller, "1d100"),
+  new RollCommand(mp, controller, "1d20"),
+  new RollCommand(mp, controller, "1d12"),
+  new RollCommand(mp, controller, "1d6"),
+  new RollCommand(mp, controller, "1d2"),
+  new SkillCommand(mp, controller),
+  new SkillDiceCommand(mp, controller),
+  new ChatSystem(controller), // Must be the last system
 ]);

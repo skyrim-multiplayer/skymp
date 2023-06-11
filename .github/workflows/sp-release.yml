@@ -41,9 +41,8 @@ jobs:
           TRAGET=$(echo "${{github.workspace}}/docs/release/sp-${{ env.SHORTVER }}.md")
           echo "# SP ${{ env.NEWVER }} Release Notes"$'\n'$'\n' >> $TRAGET
           echo "This document includes changes made since SP ${{ env.OLDVER }}"$'\n'$'\n' >> $TRAGET
-          echo "SP updates regularly. This update probably doesn't include ALL patches that have to be made."$'\n' >> $TRAGET
-          echo "There are still many things to be implemented or fixed. See [issues](https://github.com/skyrim-multiplayer/skymp/issues?q=is%3Aopen+is%3Aissue+label%3Aarea%3Askyrim-platform)."$'\n' >> $TRAGET
-          echo "SP supports both Steam version of Skyrim SE (1.6+) and legacy 1.5.97."$'\n' >> $TRAGET
+          echo "WARNING: SP may break your saves. For now, please backup your saves before installing. See https://github.com/skyrim-multiplayer/skymp/issues/796"$'\n'$'\n' >> $TRAGET
+          echo "SP supports both Steam version of Skyrim SE (1.6.640) and legacy 1.5.97."$'\n' >> $TRAGET
           for file in `find ${{github.workspace}}/docs/release/dev -type f -name "sp*.md"`
           do
             content=$(< $file)

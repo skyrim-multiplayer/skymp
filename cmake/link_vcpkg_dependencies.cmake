@@ -7,11 +7,10 @@ function(link_vcpkg_dependencies)
   endforeach()
 
   foreach(target ${A_TARGETS})
-    find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
-    find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
-    string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
-    target_link_libraries(${target} PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")
-    target_include_directories(${target} PUBLIC ${ChakraCore_INCLUDE_DIR})
+    if(MSVC)
+      find_package(unofficial-chakracore CONFIG REQUIRED)
+      target_link_libraries(${target} PUBLIC unofficial::chakracore::chakracore)
+    endif()
 
     find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
     get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
@@ -23,6 +22,9 @@ function(link_vcpkg_dependencies)
 
     find_package(ZLIB REQUIRED)
     target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
+
+    find_path(MAKEID_INCLUDE_DIR NAMES MakeID.h-1.0.2)
+    target_include_directories(${target} PUBLIC ${MAKEID_INCLUDE_DIR})
 
     if(MSVC AND "${target}" MATCHES "skyrim_platform")
       find_library(MHOOH_LIBRARY_DEBUG mhook)

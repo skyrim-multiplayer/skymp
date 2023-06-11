@@ -1,11 +1,13 @@
 #include "ScriptVariablesHolder.h"
 
 #include "EspmGameObject.h"
-#include "Utils.h"
+#include "papyrus-vm/Utils.h"
+
+#include <spdlog/spdlog.h>
 
 ScriptVariablesHolder::ScriptVariablesHolder(
-  const std::string& myScriptName_, espm::RecordHeader* baseRecordWithScripts_,
-  espm::RecordHeader* refrRecordWithScripts_,
+  const std::string& myScriptName_, espm::LookupResult baseRecordWithScripts_,
+  espm::LookupResult refrRecordWithScripts_,
   const espm::CombineBrowser* browser_,
   espm::CompressedFieldsCache* compressedFieldsCache_)
   : baseRecordWithScripts(baseRecordWithScripts_)
@@ -31,8 +33,7 @@ VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
   if (!vars) {
     vars.reset(new VarsMap);
     FillNormalVariables(pex);
-    if (baseRecordWithScripts || refrRecordWithScripts)
-      FillProperties(GetScript());
+    FillProperties();
   }
 
   auto it = vars->find(name);
@@ -42,16 +43,30 @@ VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
   return nullptr;
 }
 
-void ScriptVariablesHolder::FillProperties(const espm::Script& script)
+void ScriptVariablesHolder::FillProperties()
 {
-  for (auto& prop : script.properties) {
-    VarValue out;
-    CastProperty(*browser, prop, &out, scriptsCache.get());
-    CIString fullVarName;
-    fullVarName += "::";
-    fullVarName += prop.propertyName.data();
-    fullVarName += "_var";
-    (*vars)[fullVarName] = out;
+  auto baseScript = GetScript(baseRecordWithScripts);
+  auto refrScript = GetScript(refrRecordWithScripts);
+
+  for (auto& script : { baseScript, refrScript }) {
+    if (script) {
+      for (auto& prop : script->script.properties) {
+        VarValue out;
+        CastProperty(*browser, prop, &out, scriptsCache.get(),
+                     script->toGlobalId);
+        CIString fullVarName;
+        fullVarName += "::";
+        fullVarName += prop.propertyName.data();
+        fullVarName += "_var";
+        (*vars)[fullVarName] = out;
+
+        if (spdlog::should_log(spdlog::level::trace)) {
+          spdlog::trace(
+            "FillProperties for script {}: Adding property {} with value {}",
+            script->script.scriptName, fullVarName.data(), out.ToString());
+        }
+      }
+    }
   }
 }
 
@@ -77,54 +92,61 @@ void ScriptVariablesHolder::FillState(const PexScript& pex)
   state = VarValue(pex.objectTable[0].autoStateName.data());
 }
 
-espm::Script ScriptVariablesHolder::GetScript()
+std::optional<ScriptVariablesHolder::Script> ScriptVariablesHolder::GetScript(
+  const espm::LookupResult& lookupRes)
 {
-  // Scripts on REFR is in priority due to property values override
-  for (auto rec : { refrRecordWithScripts, baseRecordWithScripts }) {
-    if (!rec)
-      continue;
-    espm::ScriptData scriptData;
-    rec->GetScriptData(&scriptData, *compressedFieldsCache);
-    auto matchingScriptData = std::find_if(
-      scriptData.scripts.begin(), scriptData.scripts.end(),
-      [&](const espm::Script& script) {
-        return !Utils::stricmp(script.scriptName.data(), myScriptName.data());
-      });
-    if (matchingScriptData != scriptData.scripts.end())
-      return std::move(*matchingScriptData);
+  if (!lookupRes.rec) {
+    return std::nullopt;
   }
-  throw std::runtime_error("ScriptData doesn't contain script with name '" +
-                           myScriptName + "'");
+
+  espm::ScriptData scriptData;
+  lookupRes.rec->GetScriptData(&scriptData, *compressedFieldsCache);
+  auto matchingScriptData = std::find_if(
+    scriptData.scripts.begin(), scriptData.scripts.end(),
+    [&](const espm::Script& script) {
+      return !Utils::stricmp(script.scriptName.data(), myScriptName.data());
+    });
+  if (matchingScriptData != scriptData.scripts.end()) {
+    ScriptVariablesHolder::Script result;
+    result.script = std::move(*matchingScriptData);
+    result.toGlobalId = [lookupRes](uint32_t rawId) {
+      return lookupRes.ToGlobalId(rawId);
+    };
+    return result;
+  }
+  return std::nullopt;
 }
 
 VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
   const espm::CombineBrowser& br, ScriptsCache& st,
-  const espm::Property::Value& propValue, espm::PropertyType type)
+  const espm::Property::Value& propValue, espm::PropertyType type,
+  const std::function<uint32_t(uint32_t)>& toGlobalId)
 {
   switch (type) {
     case espm::PropertyType::Object: {
-      if (!propValue.formId)
+      if (!propValue.formId) {
         return VarValue::None();
-      auto& gameObject = st.espmObjectsHolder[propValue.formId];
+      }
+      auto propValueFormIdGlobal = toGlobalId(propValue.formId);
+      spdlog::trace(
+        "CastPrimitivePropertyValue - Prop to global id {:x} -> {:x}",
+        propValue.formId, propValueFormIdGlobal);
+      auto& gameObject = st.espmObjectsHolder[propValueFormIdGlobal];
       if (!gameObject) {
-        auto formId = propValue.formId;
-        auto lookupResult = br.LookupById(formId);
+        auto lookupResult = br.LookupById(propValueFormIdGlobal);
         if (!lookupResult.rec) {
-          std::stringstream ss;
-          ss << "CastPrimitivePropertyValue - Record with id " << std::hex
-             << formId << " not found";
-          throw std::runtime_error(ss.str());
+          spdlog::error(
+            "CastPrimitivePropertyValue - Record with id {:x} not found",
+            propValueFormIdGlobal);
+        } else {
+          gameObject = std::make_shared<EspmGameObject>(lookupResult);
         }
-        gameObject.reset(new EspmGameObject(lookupResult));
       }
       return VarValue(gameObject.get());
     }
     case espm::PropertyType::String: {
       std::string str(propValue.str.data, propValue.str.length);
-      auto& stringPtr = st.propStringValues[str];
-      if (!stringPtr)
-        stringPtr.reset(new std::string(str));
-      return VarValue(stringPtr->data());
+      return VarValue(str);
     }
     case espm::PropertyType::Int:
       return VarValue(propValue.integer);
@@ -133,16 +155,16 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
     case espm::PropertyType::Bool:
       return VarValue(propValue.boolean);
     default:
-      throw std::runtime_error(
-        "Unexpected type in CastPrimitivePropertyValue (" +
-        std::to_string(static_cast<int>(type)) + ")");
+      spdlog::error("Unexpected type in CastPrimitivePropertyValue ({})",
+                    static_cast<int>(type));
+      return VarValue::None();
   }
 }
 
-void ScriptVariablesHolder::CastProperty(const espm::CombineBrowser& br,
-                                         const espm::Property& prop,
-                                         VarValue* out,
-                                         ScriptsCache* scriptsCache)
+void ScriptVariablesHolder::CastProperty(
+  const espm::CombineBrowser& br, const espm::Property& prop, VarValue* out,
+  ScriptsCache* scriptsCache,
+  const std::function<uint32_t(uint32_t)>& toGlobalId)
 {
   if (prop.propertyType >= espm::PropertyType::ObjectArray &&
       prop.propertyType <= espm::PropertyType::BoolArray) {
@@ -150,14 +172,15 @@ void ScriptVariablesHolder::CastProperty(const espm::CombineBrowser& br,
     v.pArray.reset(new std::vector<VarValue>);
     for (auto& entry : prop.array) {
       v.pArray->push_back(CastPrimitivePropertyValue(
-        br, *scriptsCache, entry, GetElementType(prop.propertyType)));
+        br, *scriptsCache, entry, GetElementType(prop.propertyType),
+        toGlobalId));
     }
     *out = v;
     return;
   }
 
   *out = CastPrimitivePropertyValue(br, *scriptsCache, prop.value,
-                                    prop.propertyType);
+                                    prop.propertyType, toGlobalId);
 }
 
 espm::PropertyType ScriptVariablesHolder::GetElementType(

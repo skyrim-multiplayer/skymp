@@ -2,7 +2,6 @@
 #include "Appearance.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
-#include "Structures.h"
 #include <memory>
 #include <optional>
 #include <set>
@@ -110,6 +109,11 @@ private:
   void EatItem(uint32_t baseId, espm::Type t);
 
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
+  std::chrono::steady_clock::time_point GetLastRestorationTime(
+    espm::ActorValue av) const;
+  void SetLastRestorationTime(espm::ActorValue av,
+                              std::chrono::steady_clock::time_point timePoint);
+  bool CanActorValueBeRestored(espm::ActorValue av);
 
 protected:
   void BeforeDestroy() override;

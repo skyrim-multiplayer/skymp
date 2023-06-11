@@ -1,10 +1,9 @@
 #pragma once
+#include "libespm/Combiner.h"
+#include "libespm/espm.h"
 #include <cstdint>
-#include <espm.h>
 #include <map>
 #include <vector>
-
-#include <Combiner.h>
 
 namespace LeveledListUtils {
 struct Entry

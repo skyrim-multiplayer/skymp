@@ -12,8 +12,8 @@
 #include "MpObjectReference.h"
 #include "MsgType.h"
 #include "UserMessageOutput.h"
-#include "Utils.h"
 #include "WorldState.h"
+#include "papyrus-vm/Utils.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
@@ -127,7 +127,23 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   if (!actor) {
     return;
   }
-  partOne.animationSystem.Process(actor, animationData);
+
+  WorldState* espmProvider = actor->GetParent();
+  if (!espmProvider) {
+    return;
+  }
+
+  if (!partOne.animationSystem) {
+    std::vector<std::string> espmFiles = espmProvider->espmFiles;
+
+    std::set<std::string> s;
+    s = { espmFiles.begin(), espmFiles.end() };
+    bool isSweetpie = s.count("SweetPie.esp") != 0;
+
+    partOne.animationSystem = std::make_unique<AnimationSystem>(isSweetpie);
+  }
+  partOne.animationSystem->Process(actor, animationData);
+
   SendToNeighbours(idx, rawMsgData);
 }
 
@@ -632,6 +648,23 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
 {
   float sqrDistance = GetSqrDistanceToBounds(actor, targetActor);
   float reach = GetReach(actor, hitData.source);
+
+  // For bow/crossbow shots we don't want to check melee radius
+  if (!hitData.isBashAttack) {
+    constexpr float kExteriorCellWidthUnits = 4096.f;
+    if (auto worldState = actor.GetParent()) {
+      if (worldState->HasEspm()) {
+        auto weapDNAM =
+          espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
+        if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
+          reach = kExteriorCellWidthUnits;
+        } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
+          reach = kExteriorCellWidthUnits;
+        }
+      }
+    }
+  }
+
   return reach * reach > sqrDistance;
 }
 

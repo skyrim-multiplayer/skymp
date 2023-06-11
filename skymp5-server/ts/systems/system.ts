@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { ServerInterface } from "../serverInterface";
 import { EventEmitter } from "events";
+import { ScampServer } from "../scampNative";
 
 export interface SystemContext {
-  svr: ServerInterface;
+  svr: ScampServer;
   gm: EventEmitter;
 }
 

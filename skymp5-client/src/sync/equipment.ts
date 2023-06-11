@@ -1,4 +1,4 @@
-import { Actor, Game, Ammo, Ui } from "skyrimPlatform";
+import { Actor, Game, Ammo, Ui, setInventory } from "skyrimPlatform";
 import { Inventory, getInventory, applyInventory, Entry } from "./inventory";
 
 export interface Equipment {
@@ -27,7 +27,9 @@ export const getEquipment = (ac: Actor, numChanges: number): Equipment => {
 };
 
 export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
-  return applyInventory(ac, removeUnnecessaryExtra(filterWorn(eq.inv)), true);
+  ac.removeAllItems(null, false, true);
+  setInventory(ac.getFormID(), removeUnnecessaryExtra(filterWorn(eq.inv)));
+  return true;
 };
 
 export const isBadMenuShown = (): boolean => {

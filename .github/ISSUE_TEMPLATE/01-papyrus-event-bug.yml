@@ -1,0 +1,52 @@
+name: "[SkyMP] Papyrus Event Bug"
+description: One of events works incorrectly such as ObjectReference.OnHit, ObjectReference.OnActivate, etc
+title: "Bug in <ClassName.OnEventName>"
+labels: ["category:papyrus-bug"]
+body:
+  - type: textarea
+    attributes:
+      label: Environment
+      description: MINIMUM requirements to reproduce the bug
+      placeholder: |
+        EXAMPLE:
+        You should be in Whiterun exterior and wear an iron sword
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: How to get this bug
+      description: MINIMUM steps to reproduce. If ALWAYS not working, please give an example
+      placeholder: |
+        EXAMPLE:
+        1. Go to the Talos statue
+        2. Hit altar with your iron sword
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: What happens?
+      description: Please choose one
+      options:
+        - No event sent to my script
+        - Event sent with wrong arguments
+        - Other (Please write more below)
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What happens? (Other)
+      description: If you choose Other, please tell us expected and real results
+      placeholder: |
+        EXAMPLE:
+        Expected result: Event sent right now
+        Real result: Event sent after 2 seconds delay
+  - type: textarea
+    attributes:
+      label: Text of the script (.psc file)
+      description: Text of the script (.psc file)
+      placeholder: |
+        ScriptName SweetReference extends ObjectReference
+
+        Event OnHit()
+          Debug.Notification("hit!")
+        EndEvent
