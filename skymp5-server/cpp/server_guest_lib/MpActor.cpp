@@ -18,7 +18,6 @@ struct MpActor::Impl
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
   uint32_t snippetIndex = 0;
-  bool isRespawning = false;
   bool isBlockActive = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
     lastHitTimePoint;
@@ -33,39 +32,17 @@ struct MpActor::Impl
   ActorValues actorValues;
 };
 
-//MpActor::MpActor(const LocationalData& locationalData_,
-//                 const FormCallbacks& callbacks   _, uint32_t optBaseId)
-//  : MpObjectReference(locationalData_, callbacks_,
-//                      optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
+// MpActor::MpActor(const LocationalData& locationalData_,
+//                  const FormCallbacks& callbacks   _, uint32_t optBaseId)
+//   : MpObjectReference(locationalData_, callbacks_,
+//                       optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
 //{
-//  pImpl.reset(new Impl);
-//}
+//   pImpl.reset(new Impl);
+// }
 
- MpActor::MpActor()
+MpActor::MpActor()
 {
-   pImpl.reset(new Impl);
-}
-
-void MpActor::SetRaceMenuOpen(bool isOpen)
-{
-  EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.isRaceMenuOpen = isOpen; });
-}
-
-void MpActor::SetAppearance(const Appearance* newAppearance)
-{
-  EditChangeForm([&](MpChangeForm& changeForm) {
-    if (newAppearance)
-      changeForm.appearanceDump = newAppearance->ToJson();
-    else
-      changeForm.appearanceDump.clear();
-  });
-}
-
-void MpActor::SetEquipment(const std::string& jsonString)
-{
-  EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
+  pImpl.reset(new Impl);
 }
 
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
@@ -85,7 +62,7 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 
   MpObjectReference::VisitProperties(visitor, mode);
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen()) {
-    visitor("isRaceMenuOpen", "true"); 
+    visitor("isRaceMenuOpen", "true");
   }
 
   if (mode == VisitPropertiesMode::All) {
@@ -98,7 +75,7 @@ void MpActor::SendToUser(const void* data, size_t size, bool reliable)
   if (callbacks->sendToUser) {
     callbacks->sendToUser(this, data, size, reliable);
   } else {
-    throw std::runtime_error("sendToUser is nullptr"); 
+    throw std::runtime_error("sendToUser is nullptr");
   }
 }
 
@@ -132,8 +109,9 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
 
       // Actor without appearance would not be visible so we force player to
       // choose appearance
-      if (cf.appearanceDump.empty())
+      if (cf.appearanceDump.empty()) {
         cf.isRaceMenuOpen = true;
+      }
     },
     Mode::NoRequestSave);
 }
@@ -142,8 +120,9 @@ uint32_t MpActor::NextSnippetIndex(
   std::optional<Viet::Promise<VarValue>> promise)
 {
   auto res = pImpl->snippetIndex++;
-  if (promise)
+  if (promise) {
     pImpl->snippetPromises[res] = *promise;
+  }
   return res;
 }
 
@@ -228,21 +207,6 @@ std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
   return timeAfterRegeneration;
 }
 
-const bool& MpActor::IsRaceMenuOpen() const
-{
-  return ChangeForm().isRaceMenuOpen;
-}
-
-const bool& MpActor::IsDead() const
-{
-  return ChangeForm().isDead;
-}
-
-const bool& MpActor::IsRespawning() const
-{
-  return pImpl->isRespawning;
-}
-
 std::unique_ptr<const Appearance> MpActor::GetAppearance() const
 {
   auto& changeForm = ChangeForm();
@@ -255,16 +219,6 @@ std::unique_ptr<const Appearance> MpActor::GetAppearance() const
     return res;
   }
   return nullptr;
-}
-
-const std::string& MpActor::GetAppearanceAsJson()
-{
-  return ChangeForm().appearanceDump;
-}
-
-const std::string& MpActor::GetEquipmentAsJson() const
-{
-  return ChangeForm().equipmentDump;
 }
 
 Equipment MpActor::GetEquipment() const
@@ -422,11 +376,10 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
 
 void MpActor::BeforeDestroy()
 {
-  for (auto& sink : pImpl->destroyEventSinks)
+  for (auto& sink : pImpl->destroyEventSinks) {
     sink->BeforeDestroy(*this);
-
+  }
   MpObjectReference::BeforeDestroy();
-
   UnsubscribeFromAll();
 }
 
@@ -488,28 +441,6 @@ void MpActor::Teleport(const LocationalData& position)
   SetCellOrWorldObsolete(position.cellOrWorldDesc);
   SetPos(position.pos);
   SetAngle(position.rot);
-}
-
-void MpActor::SetSpawnPoint(const LocationalData& position)
-{
-  EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.spawnPoint = position; });
-}
-
-LocationalData MpActor::GetSpawnPoint() const
-{
-  return ChangeForm().spawnPoint;
-}
-
-const float MpActor::GetRespawnTime() const
-{
-  return ChangeForm().spawnDelay;
-}
-
-void MpActor::SetRespawnTime(float time)
-{
-  EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.spawnDelay = time; });
 }
 
 void MpActor::SetIsDead(bool isDead)

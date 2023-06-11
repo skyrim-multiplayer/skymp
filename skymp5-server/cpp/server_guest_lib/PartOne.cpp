@@ -9,6 +9,7 @@
 #include "PacketParser.h"
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <type_traits>
 #include <vector>
 
@@ -37,22 +38,16 @@ struct PartOne::Impl
 {
   simdjson::dom::parser parser;
   espm::Loader* espm = nullptr;
-
-  std::function<void(Networking::ISendTarget*sendTarget,
-                     MpObjectReference*emitter, MpObjectReference*listener)>
+  std::function<void(Networking::ISendTarget* sendTarget,
+                     MpObjectReference* emitter, MpObjectReference* listener)>
     onSubscribe, onUnsubscribe;
-
   espm::CompressedFieldsCache compressedFieldsCache;
-
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<ActionListener> actionListener;
-
   std::shared_ptr<spdlog::logger> logger;
-
   Networking::ISendTarget* sendTarget = nullptr;
   std::unique_ptr<IDamageFormula> damageFormula{};
   FakeSendTarget fakeSendTarget;
-
   GamemodeApi::State gamemodeApiState;
   std::string updateGamemodeDataMsg;
 };
@@ -107,7 +102,7 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
                               float angleZ, uint32_t cellOrWorld,
                               ProfileId profileId)
 {
-  if (!formId) {
+  if (!ServerState::Valid(formId)) {
     formId = worldState.GenerateFormId();
   }
   LocationalData locData = { pos,
@@ -119,8 +114,8 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
   // QUESTION
   // formId & baseId ??
   auto& objectReference = worldState.Emplace<MpObjectReference>(
-    formId, locData, CreateFormCallbacks(), formId == 0 ? 0x7 : formId,
-    "NPC_");
+    formId, locData, CreateFormCallbacks(),
+    !ServerState::Valid(formId) ? 0x7 : formId, "NPC_");
   if (profileId >= 0) {
     objectReference.RegisterProfileId(profileId);
   }
@@ -131,14 +126,13 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t formId)
 {
   serverState.EnsureUserExists(userId);
 
-  if (formId > 0) {
+  if (ServerState::Valid(formId)) {
     auto [actor, objectReference] =
       worldState.Get<MpActor, MpObjectReference>(formId);
 
     if (objectReference.IsDisabled()) {
-      std::stringstream ss;
-      ss << "Actor with id " << std::hex << formId << " is disabled";
-      throw std::runtime_error(ss.str());
+      throw std::runtime_error(
+        fmt::format("Actor with id {:x} is disabled", formId));
     }
 
     // Both functions are required here, but it is NOT covered by unit tests
@@ -146,12 +140,9 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t formId)
     // interact with items in the same cell after reconnecting.
     objectReference.UnsubscribeFromAll();
     objectReference.RemoveFromGrid();
-
-    serverState.Set(userId, worldState.GetEntityByFormId(formId));
-
+    serverState.Set(userId, formId);
     objectReference.ForceSubscriptionsUpdate();
-
-    if (actor.IsDead() && !actor.IsRespawning()) {
+    if (objectReference.IsDead() && !actor.IsRespawning()) {
       actor.RespawnWithDelay();
     }
 
@@ -160,20 +151,17 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t formId)
   }
 }
 
-entity_t PartOne::GetUserEntity(Networking::UserId userId) const
+uint32_t PartOne::GetFormIdByUserId(Networking::UserId userId) const
 {
   serverState.EnsureUserExists(userId);
-  return serverState.GetEntityByUserId(userId);
+  return serverState.GetFormIdByUserId(userId);
 }
 
-Networking::UserId PartOne::GetUserByEntity(uint32_t formId)
+Networking::UserId PartOne::GetUserIdByFormId(uint32_t formId) const
 {
-  entity_t entity = worldState.GetEntityByFormId(formId);
-  return serverState.GetUserIdByEntity(entity);
-  /*auto& form = worldState.LookupFormById(formId)
-  if (auto ac = dynamic_cast<MpActor*>(form.get())) {
-    return serverState.UserByActor(ac);
-  }*/
+  if (worldState.Exists(formId)) {
+    return serverState.GetUserIdByFormId(formId);
+  };
   return Networking::InvalidUserId;
 }
 
@@ -185,19 +173,17 @@ void PartOne::DestroyActor(uint32_t actorFormId)
 
 void PartOne::SetRaceMenuOpen(uint32_t formId, bool open)
 {
-  auto& actor = worldState.Get<MpActor>(formId);
-
-  if (actor.IsRaceMenuOpen() == open)
+  auto [actor, objectReference] =
+    worldState.Get<MpActor, MpObjectReference>(formId);
+  if (objectReference.IsRaceMenuOpen() == open) {
     return;
-
-  actor.SetRaceMenuOpen(open);
-
-  auto userId = serverState.UserByActor(&actor);
-  if (userId == Networking::InvalidUserId) {
+  }
+  objectReference.SetRaceMenuOpen(open);
+  auto userId = serverState.GetUserIdByFormId(objectReference.GetFormId());
+  if (!ServerState::Valid(userId)) {
     throw std::runtime_error(fmt::format(
       "Actor with id {:#x} is not attached to any of users", formId));
   }
-
   Networking::SendFormatted(pImpl->sendTarget, userId,
                             R"({"type": "setRaceMenuOpen", "open": %s})",
                             open ? "true" : "false");
@@ -219,14 +205,16 @@ std::string PartOne::GetActorName(uint32_t formId)
 
 NiPoint3 PartOne::GetActorPos(uint32_t formId)
 {
-  auto& ac = worldState.Get<MpActor>(formId);
-  return ac.GetPos();
+  auto [ac, objectReference] =
+    worldState.Get<MpActor, MpObjectReference>(formId);
+  return objectReference.GetPos();
 }
 
 uint32_t PartOne::GetActorCellOrWorld(uint32_t formId)
 {
-  auto& ac = worldState.Get<MpActor>(formId);
-  return ac.GetCellOrWorld().ToFormId(worldState.espmFiles);
+  auto [ac, objectReference] =
+    worldState.Get<MpActor, MpObjectReference>(formId);
+  return objectReference.GetCellOrWorld().ToFormId(worldState.espmFiles);
 }
 
 const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
@@ -236,8 +224,9 @@ const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
 
 void PartOne::SetEnabled(uint32_t formId, bool enabled)
 {
-  auto& ac = worldState.Get<MpActor>(formId);
-  enabled ? ac.Enable() : ac.Disable();
+  auto [ac, objectReference] =
+    worldState.Get<MpActor, MpObjectReference>(formId);
+  enabled ? objectReference.Enable() : objectReference.Disable();
 }
 
 void PartOne::AttachEspm(espm::Loader* espm)
@@ -250,7 +239,7 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 {
   worldState.AttachSaveStorage(saveStorage);
 
-  clock_t was = clock();
+  auto was = std::chrono::steady_clock::now();
 
   int n = 0;
   int numPlayerCharacters = 0;
@@ -262,13 +251,15 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 
     n++;
     worldState.LoadChangeForm(changeForm, CreateFormCallbacks());
-    if (changeForm.profileId >= 0)
+    if (changeForm.profileId >= 0) {
       ++numPlayerCharacters;
+    }
   });
 
+  auto duration = std::chrono::steady_clock::now() - was;
   pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
                       "(Including {} player characters)",
-                      clock() - was, n, numPlayerCharacters);
+                      duration.count(), n, numPlayerCharacters);
 }
 
 espm::Loader& PartOne::GetEspm() const
@@ -321,6 +312,7 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
       return this_->AddUser(userId, UserType::User);
     case Networking::PacketType::ServerSideUserDisconnect: {
       ScopedTask t([userId, this_] {
+        // formId or entitt ??
         if (auto actor = this_->serverState.ActorByUser(userId)) {
           if (this_->animationSystem) {
             this_->animationSystem->ClearInfo(actor);
@@ -404,11 +396,11 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
   FormCallbacks::SubscribeCallback
     subscribe =
-      [this](MpObjectReference*emitter, MpObjectReference*listener) {
+      [this](MpObjectReference* emitter, MpObjectReference* listener) {
         return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
       },
-    unsubscribe = [this](MpObjectReference*emitter,
-                         MpObjectReference*listener) {
+    unsubscribe = [this](MpObjectReference* emitter,
+                         MpObjectReference* listener) {
       return pImpl->onUnsubscribe(pImpl->sendTarget, emitter, listener);
     };
 
@@ -449,50 +441,48 @@ void PartOne::Init()
   pImpl->logger.reset(new spdlog::logger{ "empty logger" });
 
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
-                              MpObjectReference* emitter,
-                              MpObjectReference* listener) {
-    if (!emitter)
-      throw std::runtime_error("nullptr emitter in onSubscribe");
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor)
+                              uint32_t emitterFormId,
+                              uint32_t listenerFormId) {
+    auto& [emitterActor, emitterObjectReference] =
+      worldState.Get<MpObjectReference>(emitterFormId);
+    auto [listenerActor, listenerObjectReference] =
+      worldState.Get<MpActor, MpObjectReference>(listenerFormId);
+
+    // entity or formId
+    Networking::UserId listenerUserId =
+      serverState.GetUserIdByFormId(listenerObjectReference.GetFormId());
+    if (!ServerState::Valid(listenerUserId)) {
       return;
-    Networking::UserId listenerUserId = serverState.GetUserIdByEntity(listenerAsActor);
-    if (!ServerState::Valid(listenerUserId))
-      return;
+    }
 
-    auto& emitterPos = emitter->GetPos();
-    auto& emitterRot = emitter->GetAngle();
+    const NiPoint3& emitterPos = emitterObjectReference.GetPos();
+    const NiPoint3& emitterRot = emitterObjectReference.GetAngle();
 
-    bool isMe = emitter == listener;
-
-    auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
+    bool isMe = emitterObjectReference.GetFormId() ==
+      listenerObjectReference.GetFormId();
 
     std::string jEquipment, jAppearance;
 
     const char *appearancePrefix = "", *appearance = "";
-    if (emitterAsActor) {
-      jAppearance = emitterAsActor->GetAppearanceAsJson();
-      if (!jAppearance.empty()) {
-        appearancePrefix = R"(, "appearance": )";
-        appearance = jAppearance.data();
-      }
+    jAppearance = emitterActor.GetAppearanceAsJson();
+    if (!jAppearance.empty()) {
+      appearancePrefix = R"(, "appearance": )";
+      appearance = jAppearance.data();
     }
 
     const char *equipmentPrefix = "", *equipment = "";
-    if (emitterAsActor) {
-      jEquipment = emitterAsActor->GetEquipmentAsJson();
-      if (!jEquipment.empty()) {
-        equipmentPrefix = R"(, "equipment": )";
-        equipment = jEquipment.data();
-      }
+    jEquipment = emitterActor.GetEquipmentAsJson();
+    if (!jEquipment.empty()) {
+      equipmentPrefix = R"(, "equipment": )";
+      equipment = jEquipment.data();
     }
 
     const char* refrIdPrefix = "";
     char refrId[32] = { 0 };
     refrIdPrefix = R"(, "refrId": )";
 
-    long long unsigned int longFormId = emitter->GetFormId();
-    if (emitterAsActor && longFormId < 0xff000000) {
+    unsigned long long longFormId = emitterObjectReference.GetFormId();
+    if (longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
     sprintf(refrId, "%llu", longFormId);
@@ -510,8 +500,9 @@ void PartOne::Init()
     std::string props;
 
     auto mode = VisitPropertiesMode::OnlyPublic;
-    if (isOwner)
+    if (isOwner) {
       mode = VisitPropertiesMode::All;
+    }
 
     const char *propsPrefix = "", *propsPostfix = "";
     auto visitor = [&](const char* propName, const char* jsonValue) {
@@ -532,10 +523,11 @@ void PartOne::Init()
       propsPrefix = R"(, "props": { )";
       propsPostfix = R"( })";
 
-      if (props.size() > 0)
+      if (props.size() > 0) {
         props += R"(, ")";
-      else
+      } else {
         props += '"';
+      }
       props += propName;
       props += R"(": )";
       props += jsonValue;
@@ -543,6 +535,7 @@ void PartOne::Init()
     emitter->VisitProperties(visitor, mode);
 
     const bool hasUser = emitterAsActor &&
+      // entity or formId
       serverState.UserByActor(emitterAsActor) != Networking::InvalidUserId;
     auto hosterIterator = worldState.hosters.find(emitter->GetFormId());
 
@@ -583,23 +576,27 @@ void PartOne::Init()
                                 MpObjectReference* emitter,
                                 MpObjectReference* listener) {
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor)
+    if (!listenerAsActor) {
       return;
+    }
 
+    // entity or formId ??
     auto listenerUserId = serverState.UserByActor(listenerAsActor);
     if (listenerUserId != Networking::InvalidUserId &&
-        listenerUserId != serverState.disconnectingUserId)
+        listenerUserId != serverState.disconnectingUserId) {
       Networking::SendFormatted(sendTarget, listenerUserId,
                                 R"({"type": "destroyActor", "idx": %u})",
                                 emitter->GetIdx());
+    }
   };
 }
 
 void PartOne::AddUser(Networking::UserId userId, UserType type)
 {
   serverState.Connect(userId);
-  for (auto& listener : worldState.listeners)
+  for (auto& listener : worldState.listeners) {
     listener->OnConnect(userId);
+  }
 
   if (!pImpl->updateGamemodeDataMsg.empty()) {
     GetSendTarget().Send(userId,
@@ -612,14 +609,14 @@ void PartOne::AddUser(Networking::UserId userId, UserType type)
 void PartOne::HandleMessagePacket(Networking::UserId userId,
                                   Networking::PacketData data, size_t length)
 {
-  if (!serverState.IsConnected(userId))
+  if (!serverState.IsConnected(userId)) {
     throw std::runtime_error("User with id " + std::to_string(userId) +
                              " doesn't exist");
-  if (!pImpl->packetParser)
+  }
+  if (!pImpl->packetParser) {
     pImpl->packetParser.reset(new PacketParser);
-
+  }
   InitActionListener();
-
   pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
                                                  *pImpl->actionListener);
 }

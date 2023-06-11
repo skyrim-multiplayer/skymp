@@ -1,4 +1,5 @@
 #include "ActionListener.h"
+#include "Aliases.h"
 #include "AnimationSystem.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
@@ -34,17 +35,20 @@ MpActor* ActionListener::SendToNeighbours(
     ? hosterIterator->second
     : 0;
 
-  if (idx != objectReference.GetIdx() && hosterId != objectReference.GetFormId()) {
+  if (idx != objectReference.GetIdx() &&
+      hosterId != objectReference.GetFormId()) {
     std::stringstream ss;
     ss << std::hex << "You aren't able to update actor with idx " << idx
        << " (your actor's idx is " << objectReference.GetIdx() << ')';
     throw PublicError(ss.str());
   }
 
+  // what is listener?
   for (auto listener : objectReference.GetListeners()) {
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
 
     if (listenerAsActor) {
+      // entity or formId
       auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
       if (targetuserId != Networking::InvalidUserId) {
         partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
@@ -81,7 +85,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     DummyMessageOutput msgOutputDummy;
     UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
 
-    bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
+    bool isMe =
+      partOne.serverState.GetEntityByUserId(rawMsgData.userId) == actor;
 
     bool teleportFlag = actor->GetTeleportFlag();
     actor->SetTeleportFlag(false);
@@ -247,33 +252,31 @@ void RecalculateWorn(MpObjectReference& refr)
 }
 
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,
-                                uint32_t caster, uint32_t target)
+                                uint32_t casterFormId, uint32_t targetFormId)
 {
-  if (!partOne.HasEspm())
+  if (!partOne.HasEspm()) {
     throw std::runtime_error("No loaded esm or esp files are found");
-
-  const auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!ac)
-    throw std::runtime_error("Can't do this without Actor attached");
-
-  auto it = partOne.worldState.hosters.find(caster);
-  auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
-
-  if (caster != 0x14) {
-    if (hosterId != ac->GetFormId()) {
-      std::stringstream ss;
-      ss << std::hex << "Bad hoster is attached to caster 0x" << caster
-         << ", expected 0x" << ac->GetFormId() << ", but found 0x" << hosterId;
-      throw std::runtime_error(ss.str());
-    }
   }
 
-  auto targetPtr = std::dynamic_pointer_cast<MpObjectReference>(
-    partOne.worldState.LookupFormById(target));
-  if (!targetPtr)
-    return;
-  targetPtr->Activate(
-    caster == 0x14 ? *ac : partOne.worldState.Get<MpObjectReference>(caster));
+  const entity_t entity =
+    partOne.serverState.GetEntityByUserId(rawMsgData.userId);
+  auto [actor, objectReference] =
+    partOne.worldState.Get<MpActor, MpObjectReference>(entity);
+
+  auto it = partOne.worldState.hosters.find(casterFormId);
+  auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
+
+  if (casterFormId != 0x14 && hosterId != objectReference.GetFormId()) {
+    throw std::runtime_error(fmt::format(
+      "Bad hoster is attached to caster {:x}, expected {:x}, but found {:x}",
+      casterFormId, objectReference.GetFormId(), hosterId));
+  }
+
+  auto& target = partOne.worldState.Get<MpObjectReference>(targetFormId);
+
+  target.Activate(casterFormId == 0x14
+                    ? *ac
+                    : partOne.worldState.Get<MpObjectReference>(caster));
   if (hosterId) {
     RecalculateWorn(partOne.worldState.Get<MpObjectReference>(caster));
   }

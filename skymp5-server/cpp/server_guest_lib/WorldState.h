@@ -54,7 +54,6 @@ public:
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
   void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
 
-
   bool Valid(entity_t entity) const;
   entity_t GetEntityByFormId(uint32_t formId) const noexcept;
 
@@ -69,7 +68,7 @@ public:
                     typeid(T).name(), formId));
     }
     entity = create();
-    entityIdByFormId.insert({ formId, entity });
+    entityByFormId.insert({ formId, entity });
     return emplace<T>(entity, std::forward<Args>(args)...);
   }
 
@@ -95,7 +94,7 @@ public:
     entity_t entity = GetEntityByFormId(formId);
     if (!valid(entity)) {
       throw std::runtime_error(fmt::format(
-        "Couldn't destroy an entity associated with formId {:x}", formId)s;
+        "Couldn't destroy an entity associated with formId {:x}", formId));
     }
     auto& objectReference = get<MpObjectReference>(entity);
     objectReference.BeforeDestroy();
@@ -103,7 +102,6 @@ public:
     entityByFormId.erase(formId);
     return version;
   }
-
 
   void LoadChangeForm(const MpChangeForm& changeForm,
                       const FormCallbacks& callbacks);
@@ -144,18 +142,19 @@ public:
   std::vector<std::optional<std::chrono::system_clock::time_point>>
     lastMovUpdateByIdx;
   bool isPapyrusHotReloadEnabled = false;
+  bool Exists(uint32_t formId) const noexcept;
 
 private:
   template <typename... T>
   decltype(auto) _get(entity_t entity)
   {
     auto components = try_get<T...>(entity);
-    auto valid = [formId](auto&& component) {
+    auto valid = [entity](auto&& component) {
       if (!static_cast<bool>(component)) {
-        throw std::runtime_error(
-          fmt::format("Couldn't obtain a component of an entity associeated "
-                      "with formId {:x}",
-                      formId));
+        throw std::runtime_error(fmt::format(
+          "Couldn't obtain the component of the entity associeated "
+          "with formId {:x}",
+          static_cast<uint32_t>(entity)));
       }
     };
 
@@ -165,7 +164,7 @@ private:
       std::apply([valid](auto&&... component) { (..., valid(component)); },
                  components);
     }
-    return get<T...>(it->second);
+    return get<T...>(entity);
   }
 
 private:

@@ -615,8 +615,9 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
   static const std::set<uint32_t> g_emptySet;
 
   auto it = actorIdByProfileId.find(profileId);
-  if (it == actorIdByProfileId.end())
+  if (it == actorIdByProfileId.end()) {
     return g_emptySet;
+  }
   return it->second;
 }
 
@@ -644,7 +645,8 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   return it->second;
 }
 
-bool WorldState::Valid(entity_t entity) const {
+bool WorldState::Valid(entity_t entity) const
+{
   return valid(entity);
 }
 
@@ -653,4 +655,10 @@ WorldState::entity_t WorldState::GetEntityByFormId(
 {
   auto it = entityByFormId.find(formId);
   return it == entityByFormId.end() ? null_t{} : it->second;
+}
+
+bool WorldState::Exists(uint32_t formId) const noexcept
+{
+  entity_t entity = GetEntityByFormId(formId);
+  return valid(entity);
 }

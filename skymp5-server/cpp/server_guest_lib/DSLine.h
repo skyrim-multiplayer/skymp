@@ -13,8 +13,9 @@ public:
   {
     const size_t realIdx = index >= 0 ? size_t(index) : size_t(-index);
     auto& vec = index >= 0 ? positive : negative;
-    if (vec.size() <= realIdx)
+    if (vec.size() <= realIdx) {
       vec.resize(realIdx + 1);
+    }
     return vec[realIdx];
   }
 

@@ -54,8 +54,8 @@ public:
   uint32_t CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                        uint32_t cellOrWorld, ProfileId profileId = -1);
   void SetUserActor(Networking::UserId userId, uint32_t actorFormId);
-  entity_t GetUserEntity(Networking::UserId userId) const;
-  Networking::UserId GetUserByEntity(entity_t entity);
+  uint32_t GetFormIdByUserId(Networking::UserId userId) const;
+  Networking::UserId GetUserIdByFormId(uint32_t formId) const;
   void DestroyActor(uint32_t actorFormId);
   void SetRaceMenuOpen(uint32_t formId, bool open);
   void SendCustomPacket(Networking::UserId userId,

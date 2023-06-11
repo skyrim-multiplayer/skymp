@@ -1,14 +1,16 @@
 #include "ServerState.h"
+
 #include "Exceptions.h"
 #include "JsonUtils.h"
 #include "MpActor.h"
 #include "MsgType.h"
+#include "NetworkingInterface.h"
 #include <algorithm>
 
 ServerState::ServerState()
 {
   connectionMask.resize(kMaxPlayers);
-  entities.resize(kMaxPlayers, null_entity);
+  formIds.resize(kMaxPlayers, kInvalidFormId);
 }
 
 void ServerState::Connect(Networking::UserId userId) noexcept
@@ -27,9 +29,9 @@ void ServerState::Disconnect(Networking::UserId userId) noexcept
     maxConnectedId =
       it != connectionMask.rend() ? connectionMask.rend() - it : 0;
   }
-  entity_t formId = GetEntityByUserId(userId);
+  uint32_t formId = GetFormIdByUserId(userId);
   userIdByEntity.erase(formId);
-  entities[userId] = null_entity;
+  formIds[userId] = kInvalidFormId;
 }
 
 bool ServerState::IsConnected(Networking::UserId userId) const noexcept
@@ -46,22 +48,21 @@ void ServerState::EnsureUserExists(Networking::UserId userId) const
 
 // ATTENTION
 // QUESTION
-Networking::UserId ServerState::GetUserIdByEntity(
-  entity_t entity) const noexcept
+Networking::UserId ServerState::GetUserIdByFormId(
+  uint32_t formId) const noexcept
 {
-  auto it = userIdByEntity.find(entity);
+  auto it = userIdByEntity.find(formId);
   if (it == userIdByEntity.end()) {
-    spdlog::error("User does not exist for the form with enityt id {:x}",
-                  entity);
-    return;
+    spdlog::error("User does not exist for the form with id {:x}", formId);
+    return Networking::InvalidUserId;
   }
   return it->second;
 }
 
-entity_t ServerState::GetEntityByUserId(
+uint32_t ServerState::GetFormIdByUserId(
   Networking::UserId userId) const noexcept
 {
-  return userId >= entities.size() ? null_entity : entities[userId];
+  return userId >= formIds.size() ? kInvalidFormId : formIds[userId];
 }
 
 bool ServerState::Valid(Networking::UserId userId) noexcept
@@ -69,47 +70,47 @@ bool ServerState::Valid(Networking::UserId userId) noexcept
   return userId != Networking::InvalidUserId;
 }
 
-bool ServerState::Valid(entity_t entity) noexcept
+bool ServerState::Valid(uint32_t formId) noexcept
 {
-  return entity != null_entity;
+  return formId != kInvalidFormId;
 }
 
-void ServerState::Set(Networking::UserId userId, entity_t entity)
+void ServerState::Set(Networking::UserId userId, uint32_t formId)
 {
   if (!Valid(userId)) {
     throw std::runtime_error(
       "Trying to insert Networking::InvalidUserId into ServerState");
   }
 
-  if (!Valid(entity)) {
+  if (!Valid(formId)) {
     throw std::runtime_error("Trying to insert nullptr into ServerState");
   }
 
-  if (userId >= entities.size()) {
+  if (userId >= formIds.size()) {
     throw std::runtime_error(fmt::format(
       "UserId {:x} is too big to be stored in ServerState", userId));
   }
 
   Erase(userId);
-  Erase(entity);
-  entities[userId] = entity;
-  userIdByEntity[entity] = userId;
+  Erase(formId);
+  formIds[userId] = formId;
+  userIdByEntity[formId] = userId;
 }
 
-void ServerState::Erase(entity_t entity) noexcept
+void ServerState::Erase(uint32_t formId) noexcept
 {
-  Networking::UserId userId = GetUserIdByEntity(entity);
+  Networking::UserId userId = GetUserIdByFormId(formId);
   if (Valid(userId)) {
-    userIdByEntity.erase(entity);
-    entities[userId] = null_entity;
+    userIdByEntity.erase(formId);
+    formIds[userId] = kInvalidFormId;
   }
 }
 
 void ServerState::Erase(Networking::UserId userId) noexcept
 {
-  entity_t entity = GetEntityByUserId(userId);
-  if (Valid(entity)) {
-    userIdByEntity.erase(entity);
-    entities[userId] = null_entity;
+  uint32_t formId = GetFormIdByUserId(userId);
+  if (Valid(formId)) {
+    userIdByEntity.erase(formId);
+    formIds[userId] = kInvalidFormId;
   }
 }

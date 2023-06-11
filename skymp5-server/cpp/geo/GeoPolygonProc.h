@@ -1,13 +1,11 @@
 #pragma once
-
-#include <vector>
-
 #include "GeoFace.h"
 #include "GeoPlane.h"
 #include "GeoPoint.h"
 #include "GeoPolygon.h"
 #include "GeoVector.h"
 #include "Utility.h"
+#include <vector>
 
 namespace GeoProc {
 // 3D Polygon Process
@@ -31,11 +29,8 @@ class GeoPolygonProc
   // Maximum point to face plane distance error, point is considered in the
   // face plane if its distance is less than this error
   double _MaxDisError;
-
   void Set3DPolygonBoundary();
-
   void Set3DPolygonUnitError();
-
   void SetConvex3DFaces();
 
 public:
@@ -43,31 +38,26 @@ public:
 
   GeoPolygonProc(GeoPolygon polygon)
   {
-    this->_polygon = polygon;
-
+    _polygon = polygon;
     Set3DPolygonBoundary();
-
     Set3DPolygonUnitError();
-
     SetConvex3DFaces();
   }
 
   GeoPolygon GetPolygon() { return _polygon; }
 
-  double GetX0() { return this->_x0; }
-  double GetX1() { return this->_x1; }
-  double GetY0() { return this->_y0; }
-  double GetY1() { return this->_y1; }
-  double GetZ0() { return this->_z0; }
-  double GetZ1() { return this->_z1; }
+  double GetX0() { return _x0; }
+  double GetX1() { return _x1; }
+  double GetY0() { return _y0; }
+  double GetY1() { return _y1; }
+  double GetZ0() { return _z0; }
+  double GetZ1() { return _z1; }
 
-  std::vector<GeoFace> GetFaces() { return this->_Faces; }
-  std::vector<GeoPlane> GetFacePlanes() { return this->_FacePlanes; }
-  int GetNumberOfFaces() { return this->_NumberOfFaces; }
-
-  double GetMaxDisError() { return this->_MaxDisError; }
-  void SetMaxDisError(double value) { this->_MaxDisError = value; }
-
+  std::vector<GeoFace> GetFaces() { return _Faces; }
+  std::vector<GeoPlane> GetFacePlanes() { return _FacePlanes; }
+  int GetNumberOfFaces() { return _NumberOfFaces; }
+  double GetMaxDisError() { return _MaxDisError; }
+  void SetMaxDisError(double value) { _MaxDisError = value; }
   bool PointInside3DPolygon(double x, double y, double z);
 };
 
