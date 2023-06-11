@@ -142,6 +142,7 @@ MpChangeForm MakeChangeForm(const LocationalData& locationalData)
 MpObjectReference::MpObjectReference(
   const LocationalData& locationalData_, const FormCallbacks& callbacks_,
   uint32_t baseId_, std::string baseType_,
+  std::optional<MpChangeForm> changeForm,
   std::optional<NiPoint3> primitiveBoundsDiv2)
   : callbacks(new FormCallbacks(callbacks_))
   , baseId(baseId_)
@@ -150,8 +151,13 @@ MpObjectReference::MpObjectReference(
 {
   pImpl.reset(new Impl);
 
-  if (primitiveBoundsDiv2)
+  if (primitiveBoundsDiv2) {
     SetPrimitive(*primitiveBoundsDiv2);
+  }
+
+  if (changeForm) {
+    ApplyChangeForm(*changeForm); 
+  }
 }
 
 const NiPoint3& MpObjectReference::GetPos() const
