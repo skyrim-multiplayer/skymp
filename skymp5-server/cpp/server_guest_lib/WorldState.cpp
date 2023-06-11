@@ -337,12 +337,12 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 bool WorldState::LoadForm(uint32_t formId)
 {
   if (!pImpl->saveStorage) {
-    spdlog::error("LoadForm {:x} - Called before save storage attach", formId);
-    return false;
+    spdlog::warn("LoadForm {:x} - Called before save storage attach", formId);
+    //return false;
   }
   
   auto desc = FormDesc::FromFormId(formId, GetEspm().GetFileNames());
-  std::optional<MpChangeForm> changeForm = pImpl->saveStorage->FindOneSync(desc);
+  std::optional<MpChangeForm> changeForm = pImpl->saveStorage ? pImpl->saveStorage->FindOneSync(desc) : std::optional<MpChangeForm>(std::nullopt);
 
   spdlog::trace("LoadForm {:x} - change form found: {}", formId, !!changeForm);
 
