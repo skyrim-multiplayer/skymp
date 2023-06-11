@@ -1,4 +1,5 @@
 #pragma once
+#include "Aliases.h"
 #include "AnimationSystem.h"
 #include "GamemodeApi.h"
 #include "ISaveStorage.h"
@@ -22,7 +23,7 @@ class ActionListener;
 
 struct HitData;
 
-class PartOne
+class PartOne final
 {
 public:
   struct Message
@@ -53,8 +54,8 @@ public:
   uint32_t CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,
                        uint32_t cellOrWorld, ProfileId profileId = -1);
   void SetUserActor(Networking::UserId userId, uint32_t actorFormId);
-  uint32_t GetUserActor(Networking::UserId userId);
-  Networking::UserId GetUserByActor(uint32_t formId);
+  entity_t GetUserEntity(Networking::UserId userId) const;
+  Networking::UserId GetUserByEntity(entity_t entity);
   void DestroyActor(uint32_t actorFormId);
   void SetRaceMenuOpen(uint32_t formId, bool open);
   void SendCustomPacket(Networking::UserId userId,

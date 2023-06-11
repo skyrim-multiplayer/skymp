@@ -200,8 +200,7 @@ VarValue PapyrusObjectReference::PlaceAtMe(
       WorldState* worldState = selfRefr->GetParent();
       uint32_t newRefrId = worldState->GenerateFormId();
       auto& refr = type == "NPC_"
-        ? worldState->Emplace<MpActor>(newRefrId, locationalData, callbacks,
-                                       baseId)
+        ? worldState->Emplace<MpActor>(newRefrId)
         : worldState->Emplace<MpObjectReference>(newRefrId, locationalData,
                                                  callbacks, baseId, type.ToString());
       refr.ForceSubscriptionsUpdate();

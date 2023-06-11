@@ -38,8 +38,11 @@ class WorldState : private entt::registry
   friend class MpActor;
 
 public:
-  using FormCallbacksFactory = std::function<FormCallbacks()>;
+  using entity_t = entt::entity;
+  using null_t = entt::null_t;
 
+public:
+  using FormCallbacksFactory = std::function<FormCallbacks()>;
   WorldState();
   WorldState(const WorldState&) = delete;
   WorldState& operator=(const WorldState&) = delete;
@@ -51,21 +54,21 @@ public:
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
   void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
 
-  void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
-               bool skipChecks = false,
-               const MpChangeForm* optionalChangeFormToApply = nullptr);
+
+  bool Valid(entity_t entity) const;
+  entity_t GetEntityByFormId(uint32_t formId) const noexcept;
 
   template <typename T, typename... Args>
   decltype(auto) Emplace(uint32_t formId, Args&&... args)
   {
-    auto it = entityIdByFormId.find(formId);
-    if (it != entityIdByFormId.end()) {
+    entity_t entity = GetEntityByFormId(formId);
+    if (valid(entity)) {
       throw std::runtime_error(
         fmt::format("Unable to create {} with id {:x}. An entity with this id "
                     "already exists.",
                     typeid(T).name(), formId));
     }
-    entt::entity entity = create();
+    entity = create();
     entityIdByFormId.insert({ formId, entity });
     return emplace<T>(entity, std::forward<Args>(args)...);
   }
@@ -73,13 +76,80 @@ public:
   template <typename... T>
   decltype(auto) Get(uint32_t formId)
   {
-    auto it = entityIdByFormId.find(formId);
-    if (it == entityIdByFormId.end()) {
+    entity_t entity = GetEntityByFormId(formId);
+    if (!valid(entity)) {
       throw std::runtime_error(fmt::format(
         "Couldn't find an entity associated with formId {:x}", formId));
     }
+    return _get<T...>(entity);
+  }
 
-    auto components = try_get<T...>(it->second);
+  template <typename... T>
+  decltype(auto) Get(entity_t entity)
+  {
+    return _get<T...>(entity);
+  }
+
+  uint16_t Destroy(uint32_t formId)
+  {
+    entity_t entity = GetEntityByFormId(formId);
+    if (!valid(entity)) {
+      throw std::runtime_error(fmt::format(
+        "Couldn't destroy an entity associated with formId {:x}", formId)s;
+    }
+    auto& objectReference = get<MpObjectReference>(entity);
+    objectReference.BeforeDestroy();
+    uint16_t version = destroy(entity, entt::to_version(entity));
+    entityByFormId.erase(formId);
+    return version;
+  }
+
+
+  void LoadChangeForm(const MpChangeForm& changeForm,
+                      const FormCallbacks& callbacks);
+  void Tick();
+  void RequestReloot(MpObjectReference& ref,
+                     std::chrono::system_clock::duration time);
+  void RequestSave(MpObjectReference& ref);
+  void RegisterForSingleUpdate(const VarValue& self, float seconds);
+  Viet::Promise<Viet::Void> SetTimer(float seconds);
+  const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
+  MpForm* LookupFormByIdx(int idx);
+  void SendPapyrusEvent(MpForm* form, const char* eventName,
+                        const VarValue* arguments, size_t argumentsCount);
+
+  const std::set<MpObjectReference*>& GetReferencesAtPosition(
+    uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
+  espm::Loader& GetEspm() const;
+  bool HasEspm() const;
+  espm::CompressedFieldsCache& GetEspmCache();
+  IScriptStorage* GetScriptStorage() const;
+  VirtualMachine& GetPapyrusVm();
+  const std::set<uint32_t>& GetActorsByProfileId(int32_t profileId) const;
+  uint32_t GenerateFormId();
+  void SetRelootTime(std::string recordType,
+                     std::chrono::system_clock::duration dur);
+  std::optional<std::chrono::system_clock::duration> GetRelootTime(
+    std::string recordType) const;
+
+public:
+  std::vector<std::string> espmFiles;
+  std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
+  std::shared_ptr<spdlog::logger> logger;
+  std::vector<std::shared_ptr<PartOneListener>> listeners;
+
+  // Only for tests
+  auto& GetGrids() { return grids; }
+  std::map<uint32_t, uint32_t> hosters;
+  std::vector<std::optional<std::chrono::system_clock::time_point>>
+    lastMovUpdateByIdx;
+  bool isPapyrusHotReloadEnabled = false;
+
+private:
+  template <typename... T>
+  decltype(auto) _get(entity_t entity)
+  {
+    auto components = try_get<T...>(entity);
     auto valid = [formId](auto&& component) {
       if (!static_cast<bool>(component)) {
         throw std::runtime_error(
@@ -97,136 +167,6 @@ public:
     }
     return get<T...>(it->second);
   }
-  
-  template<typename T = MpForm>
-  uint16_t Destroy(uint32_t formId)
-  {
-    auto it = entityIdByFormId.find(formId);
-    if (it != entityIdByFormId.end()) {
-      throw std::runtime_error(fmt::format(
-        "Couldn't destroy an entity associated with formId {:x}", formId));
-    }
-    auto& form = get<T>(it->second);
-    form.BeforeDestroy();
-    uint16_t version = destroy(it->second, entt::to_version(it->second));
-    entityIdByFormId.erase(it);
-    return version;
-  }
-
-  void LoadChangeForm(const MpChangeForm& changeForm,
-                      const FormCallbacks& callbacks);
-
-  void Tick();
-
-  void RequestReloot(MpObjectReference& ref,
-                     std::chrono::system_clock::duration time);
-
-  void RequestSave(MpObjectReference& ref);
-
-  void RegisterForSingleUpdate(const VarValue& self, float seconds);
-
-  Viet::Promise<Viet::Void> SetTimer(float seconds);
-
-  const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
-
-  MpForm* LookupFormByIdx(int idx);
-
-  void SendPapyrusEvent(MpForm* form, const char* eventName,
-                        const VarValue* arguments, size_t argumentsCount);
-
-  const std::set<MpObjectReference*>& GetReferencesAtPosition(
-    uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
-
-  template <class F>
-  F& GetFormAt(uint32_t formId)
-  {
-    auto form = LookupFormById(formId);
-    if (!form) {
-      throw std::runtime_error(
-        fmt::format("Form with id {:#x} doesn't exist", formId));
-    }
-
-    auto typedForm = std::dynamic_pointer_cast<F>(form);
-    if (!typedForm) {
-      if constexpr (std::is_same_v<F, MpActor>) {
-        if (auto ref = std::dynamic_pointer_cast<MpObjectReference>(form)) {
-          auto pos = ref->GetPos();
-          spdlog::warn(
-            "Specified Form is ObjectReference, but we tried to treat it as "
-            "Actor, likely because of a client bug. formId={:#x}, "
-            "baseId={:#x}, pos is {:.2f} {:.2f} {:.2f} at {}",
-            formId, ref->GetBaseId(), pos.x, pos.y, pos.z,
-            ref->GetCellOrWorld().ToString());
-        }
-      }
-      throw std::runtime_error(
-        fmt::format("Form with id {:#x} is not {} (actually it is {})", formId,
-                    F::Type(), MpForm::GetFormType(&*form)));
-    }
-
-    return *typedForm;
-  };
-
-  template <class FormType = MpForm>
-  void DestroyForm(uint32_t formId,
-                   std::shared_ptr<FormType>* outDestroyedForm = nullptr)
-  {
-    auto it = forms.find(formId);
-    if (it == forms.end()) {
-      throw std::runtime_error(
-        static_cast<const std::stringstream&>(std::stringstream()
-                                              << "Form with id " << std::hex
-                                              << formId << " doesn't exist")
-          .str());
-    }
-
-    auto& form = it->second;
-    if (!dynamic_cast<FormType*>(form.get())) {
-      std::stringstream s;
-      s << "Expected form " << std::hex << formId << " to be "
-        << MpForm::GetFormType<FormType>() << ", but got "
-        << MpForm::GetFormType(form.get());
-      throw std::runtime_error(s.str());
-    }
-
-    if (outDestroyedForm)
-      *outDestroyedForm = std::dynamic_pointer_cast<FormType>(it->second);
-
-    it->second->BeforeDestroy();
-
-    if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
-      if (formIdxManager && !formIdxManager->DestroyID(formIndex->idx))
-        throw std::runtime_error("DestroyID failed");
-    }
-
-    forms.erase(it);
-  };
-
-  espm::Loader& GetEspm() const;
-  bool HasEspm() const;
-  espm::CompressedFieldsCache& GetEspmCache();
-  IScriptStorage* GetScriptStorage() const;
-  VirtualMachine& GetPapyrusVm();
-  const std::set<uint32_t>& GetActorsByProfileId(int32_t profileId) const;
-  uint32_t GenerateFormId();
-  void SetRelootTime(std::string recordType,
-                     std::chrono::system_clock::duration dur);
-  std::optional<std::chrono::system_clock::duration> GetRelootTime(
-    std::string recordType) const;
-
-  std::vector<std::string> espmFiles;
-  std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
-  std::shared_ptr<spdlog::logger> logger;
-  std::vector<std::shared_ptr<PartOneListener>> listeners;
-
-  // Only for tests
-  auto& GetGrids() { return grids; }
-
-  std::map<uint32_t, uint32_t> hosters;
-  std::vector<std::optional<std::chrono::system_clock::time_point>>
-    lastMovUpdateByIdx;
-
-  bool isPapyrusHotReloadEnabled = false;
 
 private:
   struct GridInfo
@@ -237,7 +177,7 @@ private:
   };
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
-  spp::sparse_hash_map<uint32_t, entt::entity> entityIdByFormId;
+  spp::sparse_hash_map<uint32_t, entt::entity> entityByFormId;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
   std::map<

@@ -37,9 +37,7 @@ struct GridPosInfo
 class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
-
 class FormCallbacks;
-
 class FormCallbacks;
 
 enum class VisitPropertiesMode
@@ -48,7 +46,7 @@ enum class VisitPropertiesMode
   All
 };
 
-class MpObjectReference
+class MpObjectReference final
   : public MpForm
   , public FormIndex
   , public IWorldObject
@@ -82,6 +80,7 @@ public:
   bool HasScript(const char* name) const;
   bool IsActivationBlocked() const;
   bool GetTeleportFlag() const;
+  NiPoint3 GetViewDirection() const;
 
   using PropertiesVisitor =
     std::function<void(const char* propName, const char* jsonValue)>;
@@ -154,11 +153,12 @@ public:
 
   using Visitor = std::function<void(MpObjectReference*)>;
   void VisitNeighbours(const Visitor& visitor);
-
-protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
                         size_t argumentsCount = 0) override;
+  void BeforeDestroy() override;
+
+protected:
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
@@ -200,8 +200,6 @@ private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
-protected:
-  void BeforeDestroy() override;
   std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
                                     const nlohmann::json& value);
   nlohmann::json PreparePropertyMessage(MpObjectReference* self,

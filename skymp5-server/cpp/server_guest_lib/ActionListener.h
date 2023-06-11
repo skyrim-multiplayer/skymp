@@ -9,8 +9,9 @@
 class ServerState;
 class WorldState;
 struct ActorValues;
+class RawMessageData;
 
-class ActionListener
+class ActionListener final
 {
 public:
   struct RawMessageData

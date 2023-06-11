@@ -13,6 +13,7 @@
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
+#include "SweetPieScript.h"
 #include "VirtualMachine.h"
 #include "WorldState.h"
 #include <MsgType.h>
@@ -67,8 +68,9 @@ public:
 
   void BeforeDestroy(MpActor& actor) override
   {
-    if (!RefStillValid())
-      return;
+    if (!RefStillValid()) {
+      return; 
+    }
     if (untrustedRefPtr->occupant == &actor) {
       untrustedRefPtr->SetOpen(false);
       untrustedRefPtr->occupant = nullptr;
@@ -127,6 +129,7 @@ auto MakeMode(bool isLocationSaveNeeded)
   return isLocationSaveNeeded ? ChangeFormGuard::Mode::RequestSave
                               : ChangeFormGuard::Mode::NoRequestSave;
 }
+
 MpChangeForm MakeChangeForm(const LocationalData& locationalData)
 {
   MpChangeForm changeForm;
@@ -239,8 +242,9 @@ bool MpObjectReference::HasPrimitive() const
 
 FormCallbacks MpObjectReference::GetCallbacks() const
 {
-  if (!callbacks)
-    return FormCallbacks::DoNothing();
+  if (!callbacks) {
+    return FormCallbacks::DoNothing(); 
+  }
   return *callbacks;
 }
 
@@ -290,8 +294,9 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
 
   if (!activationBlockedByMpApi &&
-      (!activationBlocked || defaultProcessingOnly))
-    ProcessActivate(activationSource);
+      (!activationBlocked || defaultProcessingOnly)) {
+    ProcessActivate(activationSource); 
+  }
 
   if (!defaultProcessingOnly) {
     auto arg = activationSource.ToVarValue();
@@ -308,8 +313,9 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
     [&newPos](MpChangeFormREFR& changeForm) { changeForm.position = newPos; },
     MakeMode(IsLocationSavingNeeded()));
 
-  if (oldGridPos != newGridPos || !everSubscribedOrListened)
-    ForceSubscriptionsUpdate();
+  if (oldGridPos != newGridPos || !everSubscribedOrListened) {
+    ForceSubscriptionsUpdate(); 
+  }
 
   if (!IsDisabled()) {
     if (emittersWithPrimitives) {
@@ -410,11 +416,11 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
   CheckInteractionAbility(ac);
   if (this->occupant != &ac) {
     std::stringstream err;
-    err << std::hex << "Actor 0x" << ac.GetFormId() << " doesn't occupy ref 0x"
+    err << std::hex << "Actor 0x" << GetFormId() << " doesn't occupy ref 0x"
         << GetFormId();
     throw std::runtime_error(err.str());
   }
-  ac.RemoveItems({ e }, this);
+  RemoveItems({ e }, this);
 }
 
 void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
@@ -422,7 +428,7 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
   CheckInteractionAbility(ac);
   if (this->occupant != &ac) {
     std::stringstream err;
-    err << std::hex << "Actor 0x" << ac.GetFormId() << " doesn't occupy ref 0x"
+    err << std::hex << "Actor 0x" << GetFormId() << " doesn't occupy ref 0x"
         << GetFormId();
     throw std::runtime_error(err.str());
   }
@@ -643,8 +649,9 @@ void MpObjectReference::RemoveItems(
     changeForm.inv.RemoveItems(entries);
   });
 
-  if (target)
+  if (target) {
     target->AddItems(entries);
+  }
 
   SendInventoryUpdate();
 }
@@ -683,8 +690,9 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 {
   const bool emitterIsActor = !!dynamic_cast<MpActor*>(emitter);
   const bool listenerIsActor = !!dynamic_cast<MpActor*>(listener);
-  if (!emitterIsActor && !listenerIsActor)
+  if (!emitterIsActor && !listenerIsActor) {
     return;
+  }
 
   if (!emitter->pImpl->onInitEventSent &&
       listener->GetChangeForm().profileId != -1) {
@@ -698,12 +706,14 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
   listener->emitters->insert(emitter);
-  if (!hasPrimitive)
+  if (!hasPrimitive) {
     emitter->callbacks->subscribe(emitter, listener);
+  }
 
   if (hasPrimitive) {
-    if (!listener->emittersWithPrimitives)
-      listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>);
+    if (!listener->emittersWithPrimitives) {
+      listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>); 
+    }
     listener->emittersWithPrimitives->insert({ emitter->GetFormId(), false });
   }
 }
@@ -713,13 +723,15 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
 {
   bool bothNonActors =
     !dynamic_cast<MpActor*>(emitter) && !dynamic_cast<MpActor*>(listener);
-  if (bothNonActors)
-    return;
+  if (bothNonActors) {
+    return; 
+  }
 
   const bool hasPrimitive = emitter->HasPrimitive();
 
-  if (!hasPrimitive)
-    emitter->callbacks->unsubscribe(emitter, listener);
+  if (!hasPrimitive) {
+    emitter->callbacks->unsubscribe(emitter, listener); 
+  }
   emitter->listeners->erase(listener);
   listener->emitters->erase(emitter);
 
@@ -743,8 +755,9 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 void MpObjectReference::RequestReloot(
   std::optional<std::chrono::system_clock::duration> time)
 {
-  if (!time)
-    time = GetRelootTime();
+  if (!time) {
+    time = GetRelootTime(); 
+  }
 
   if (!ChangeForm().nextRelootDatetime) {
     EditChangeForm([&](MpChangeFormREFR& changeForm) {
@@ -772,10 +785,11 @@ std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
 MpObjectReference::GetNextRelootMoment() const
 {
   std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>> res;
-  if (ChangeForm().nextRelootDatetime)
+  if (ChangeForm().nextRelootDatetime) {
     res.reset(new std::chrono::time_point<std::chrono::system_clock>(
       std::chrono::system_clock::from_time_t(
         ChangeForm().nextRelootDatetime)));
+  }
   return res;
 }
 
@@ -1047,15 +1061,15 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       SendPropertyTo("inventory", GetInventory().ToJson(), *actorActivator);
       activationSource.SendOpenContainer(GetFormId());
 
-      this->occupant = actorActivator;
+      occupant = actorActivator;
 
-      this->occupantDestroySink.reset(
+      occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
-      this->occupant->AddEventSink(occupantDestroySink);
-    } else if (this->occupant == &activationSource) {
+      occupant->AddEventSink(occupantDestroySink);
+    } else if (occupant == &activationSource) {
       SetOpen(false);
-      this->occupant->RemoveEventSink(this->occupantDestroySink);
-      this->occupant = nullptr;
+      occupant->RemoveEventSink(this->occupantDestroySink);
+      occupant = nullptr;
     }
   }
 }
@@ -1173,15 +1187,17 @@ void MpObjectReference::InitListenersAndEmitters()
 
 void MpObjectReference::SendInventoryUpdate()
 {
-  auto actor = dynamic_cast<MpActor*>(this);
-  if (actor) {
-    std::string msg;
-    msg += Networking::MinPacketId;
-    msg += nlohmann::json{
-      { "inventory", actor->GetInventory().ToJson() },
-      { "type", "setInventory" }
-    }.dump();
-    actor->SendToUser(msg.data(), msg.size(), true);
+  std::string msg;
+  msg += Networking::MinPacketId;
+  msg += nlohmann::json{
+    { "inventory", GetInventory().ToJson() }, { "type", "setInventory" }
+  }.dump();
+  if (callbacks->sendToUser) {
+    // QUESTION WHY ACTOR
+    // 
+    callbacks->sendToUser(dynamic_cast<MpActor*>(this), msg.data(), msg.size(), true);
+  } else {
+    throw std::runtime_error("sendTouser is nullptr");
   }
 }
 
@@ -1365,4 +1381,12 @@ void MpObjectReference::BeforeDestroy()
   MpForm::BeforeDestroy();
 
   RemoveFromGrid();
+}
+
+const float kAngleToRadians = std::acos(-1.f) / 180.f;
+
+NiPoint3 MpObjectReference::GetViewDirection() const
+{
+  return { std::sin(GetAngle().z * kAngleToRadians),
+           std::cos(GetAngle().z * kAngleToRadians), 0 };
 }

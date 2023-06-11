@@ -121,5 +121,4 @@ typename RecordT::Data GetData(uint32_t formId, EspmProvider* espmProvider)
 
   return convertedRecord->GetData(espmCache);
 }
-
 } // namespace espm

@@ -29,6 +29,8 @@ void ActorsMap::Set(Networking::UserId userId, MpActor* actor)
   userIdByActor[actor] = userId;
 }
 
+// 0xfffffffe std::uint32_t a = -1; == std::numeric_limits::<uint32_t>::max() // true
+
 void ActorsMap::Erase(Networking::UserId userId)
 {
   auto actor = Find(userId);

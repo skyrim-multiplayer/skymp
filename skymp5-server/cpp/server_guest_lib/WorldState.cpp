@@ -643,3 +643,14 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   }
   return it->second;
 }
+
+bool WorldState::Valid(entity_t entity) const {
+  return valid(entity);
+}
+
+WorldState::entity_t WorldState::GetEntityByFormId(
+  uint32_t formId) const noexcept
+{
+  auto it = entityByFormId.find(formId);
+  return it == entityByFormId.end() ? null_t{} : it->second;
+}

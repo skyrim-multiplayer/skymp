@@ -11,6 +11,7 @@
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
+#include "OnEquipSystem.h"
 #include "UserMessageOutput.h"
 #include "Utils.h"
 #include "WorldState.h"
@@ -23,30 +24,26 @@ MpActor* ActionListener::SendToNeighbours(
   Networking::UserId userId, Networking::PacketData data, size_t length,
   bool reliable)
 {
-  MpActor* myActor = partOne.serverState.ActorByUser(userId);
-  // The old behavior is doing nothing in that case. This is covered by tests
-  if (!myActor)
-    return nullptr;
+  entity_t entity = partOne.serverState.GetEntityByUserId(userId);
+  auto& actor = partOne.worldState.Get<MpActor>(entity);
+  auto& objectReference = partOne.worldState.Get<MpObjectReference>(entity);
 
-  MpActor* actor =
-    dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
-  if (!actor)
-    throw std::runtime_error("SendToNeighbours - target actor doesn't exist");
-
-  auto hosterIterator = partOne.worldState.hosters.find(actor->GetFormId());
+  auto hosterIterator =
+    partOne.worldState.hosters.find(objectReference.GetFormId());
   uint32_t hosterId = hosterIterator != partOne.worldState.hosters.end()
     ? hosterIterator->second
     : 0;
 
-  if (idx != actor->GetIdx() && hosterId != myActor->GetFormId()) {
+  if (idx != objectReference.GetIdx() && hosterId != objectReference.GetFormId()) {
     std::stringstream ss;
     ss << std::hex << "You aren't able to update actor with idx " << idx
-       << " (your actor's idx is " << actor->GetIdx() << ')';
+       << " (your actor's idx is " << objectReference.GetIdx() << ')';
     throw PublicError(ss.str());
   }
 
-  for (auto listener : actor->GetListeners()) {
+  for (auto listener : objectReference.GetListeners()) {
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
+
     if (listenerAsActor) {
       auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
       if (targetuserId != Networking::InvalidUserId) {
@@ -275,10 +272,8 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
     partOne.worldState.LookupFormById(target));
   if (!targetPtr)
     return;
-
   targetPtr->Activate(
-    caster == 0x14 ? *ac
-                   : partOne.worldState.Get<MpObjectReference>(caster));
+    caster == 0x14 ? *ac : partOne.worldState.Get<MpObjectReference>(caster));
   if (hosterId) {
     RecalculateWorn(partOne.worldState.Get<MpObjectReference>(caster));
   }
@@ -366,13 +361,14 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
 
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
 {
-  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor)
-    throw std::runtime_error(
-      "Unable to finish SpSnippet: No Actor found for user " +
-      std::to_string(rawMsgData.userId));
+  uint32_t formId = partOne.serverState.GetFormIdByUserId(rawMsgData.userId);
+  OnEquipSystem::Run(partOne.worldState, formId, baseId);
+}
 
-  actor->OnEquip(baseId);
+void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
+{
+  uint32_t formId = partOne.serverState.GetFormIdByUserId(rawMsgData.userId);
+  OnEquipSystem::Run(partOne.worldState, formId, baseId);
 }
 
 void ActionListener::OnConsoleCommand(
@@ -411,8 +407,7 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
                                  const Inventory& inputObjects,
                                  uint32_t workbenchId, uint32_t resultObjectId)
 {
-  auto& workbench =
-    partOne.worldState.Get<MpObjectReference>(workbenchId);
+  auto& workbench = partOne.worldState.Get<MpObjectReference>(workbenchId);
 
   auto& br = partOne.worldState.GetEspm().GetBrowser();
   auto& cache = partOne.worldState.GetEspmCache();
@@ -448,15 +443,14 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
 void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                                    uint32_t remoteId)
 {
-  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!me)
-    throw std::runtime_error("Unable to host without actor attached");
-
+  entity_t entity = partOne.serverState.GetEntityByUserId(rawMsgData.userId);
+  auto& me = partOne.worldState.Get<MpActor>(entity);
   auto& remote = partOne.worldState.Get<MpObjectReference>(remoteId);
 
-  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
-  if (user != Networking::InvalidUserId)
+  Networking::UserId userId = partOne.serverState.GetUserIdByEntity(entity);
+  if (!ServerState::Valid(userId)) {
     return;
+  }
 
   auto& hoster = partOne.worldState.hosters[remoteId];
   const uint32_t prevHoster = hoster;
@@ -506,11 +500,13 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
                                    simdjson::dom::element& args)
 {
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!ac)
+  if (!ac) {
     return;
+  }
 
-  if (eventName[0] != '_')
+  if (eventName[0] != '_') {
     return;
+  }
 
   for (auto& listener : partOne.GetListeners()) {
     listener->OnMpApiEvent(eventName, args, ac->GetFormId());

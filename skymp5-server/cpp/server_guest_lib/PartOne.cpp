@@ -4,6 +4,7 @@
 #include "FormCallbacks.h"
 #include "IdManager.h"
 #include "JsonUtils.h"
+#include "MpObjectReference.h"
 #include "MsgType.h"
 #include "PacketParser.h"
 #include <array>
@@ -113,9 +114,15 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
                              { 0, 0, angleZ },
                              FormDesc::FromFormId(cellOrWorld,
                                                   worldState.espmFiles) };
-  auto& actor = worldState.Emplace<MpActor>(formId, locData, CreateFormCallbacks());
+  auto& actor = worldState.Emplace<MpActor>(formId);
+  // ATTENTION
+  // QUESTION
+  // formId & baseId ??
+  auto& objectReference = worldState.Emplace<MpObjectReference>(
+    formId, locData, CreateFormCallbacks(), formId == 0 ? 0x7 : formId,
+    "NPC_");
   if (profileId >= 0) {
-    actor.RegisterProfileId(profileId);
+    objectReference.RegisterProfileId(profileId);
   }
   return formId;
 }
@@ -125,9 +132,10 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t formId)
   serverState.EnsureUserExists(userId);
 
   if (formId > 0) {
-    auto& actor = worldState.Get<MpActor>(formId);
+    auto [actor, objectReference] =
+      worldState.Get<MpActor, MpObjectReference>(formId);
 
-    if (actor.IsDisabled()) {
+    if (objectReference.IsDisabled()) {
       std::stringstream ss;
       ss << "Actor with id " << std::hex << formId << " is disabled";
       throw std::runtime_error(ss.str());
@@ -136,47 +144,43 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t formId)
     // Both functions are required here, but it is NOT covered by unit tests
     // properly. If you do something wrong here, players would not be able to
     // interact with items in the same cell after reconnecting.
-    actor.UnsubscribeFromAll();
-    actor.RemoveFromGrid();
+    objectReference.UnsubscribeFromAll();
+    objectReference.RemoveFromGrid();
 
-    serverState.actorsMap.Set(userId, &actor);
+    serverState.Set(userId, worldState.GetEntityByFormId(formId));
 
-    actor.ForceSubscriptionsUpdate();
+    objectReference.ForceSubscriptionsUpdate();
 
     if (actor.IsDead() && !actor.IsRespawning()) {
       actor.RespawnWithDelay();
     }
 
   } else {
-    serverState.actorsMap.Erase(userId);
+    serverState.Erase(userId);
   }
 }
 
-uint32_t PartOne::GetUserActor(Networking::UserId userId)
+entity_t PartOne::GetUserEntity(Networking::UserId userId) const
 {
   serverState.EnsureUserExists(userId);
-
-  auto actor = serverState.ActorByUser(userId);
-  if (!actor)
-    return 0;
-  return actor->GetFormId();
+  return serverState.GetEntityByUserId(userId);
 }
 
-Networking::UserId PartOne::GetUserByActor(uint32_t formId)
+Networking::UserId PartOne::GetUserByEntity(uint32_t formId)
 {
-  auto& form = worldState.LookupFormById(formId);
+  entity_t entity = worldState.GetEntityByFormId(formId);
+  return serverState.GetUserIdByEntity(entity);
+  /*auto& form = worldState.LookupFormById(formId)
   if (auto ac = dynamic_cast<MpActor*>(form.get())) {
     return serverState.UserByActor(ac);
-  }
+  }*/
   return Networking::InvalidUserId;
 }
 
 void PartOne::DestroyActor(uint32_t actorFormId)
 {
-  std::shared_ptr<MpActor> destroyedForm;
-  worldState.DestroyForm<MpActor>(actorFormId, &destroyedForm);
-
-  serverState.actorsMap.Erase(destroyedForm.get());
+  worldState.Destroy(actorFormId);
+  serverState.Erase(actorFormId);
 }
 
 void PartOne::SetRaceMenuOpen(uint32_t formId, bool open)
@@ -384,8 +388,9 @@ void PartOne::NotifyGamemodeApiStateChanged(
   pImpl->updateGamemodeDataMsg = m;
 
   for (Networking::UserId i = 0; i <= serverState.maxConnectedId; ++i) {
-    if (!serverState.IsConnected(i))
+    if (!serverState.IsConnected(i)) {
       continue;
+    }
     GetSendTarget().Send(i, reinterpret_cast<Networking::PacketData>(m.data()),
                          m.size(), true);
   }
@@ -408,13 +413,14 @@ FormCallbacks PartOne::CreateFormCallbacks()
     };
 
   FormCallbacks::SendToUserFn sendToUser =
-    [this, st](MpActor* actor, const void* data, size_t size, bool reliable) {
-      auto targetuserId = st->UserByActor(actor);
-      if (targetuserId != Networking::InvalidUserId &&
-          st->disconnectingUserId != targetuserId)
-        pImpl->sendTarget->Send(targetuserId,
+    [this, st](entity_t entity, const void* data, size_t size, bool reliable) {
+      Networking::UserId targetUserId = st->GetUserIdByEntity(entity);
+      if (ServerState::Valid(targetUserId) &&
+          st->disconnectingUserId != targetUserId) {
+        pImpl->sendTarget->Send(targetUserId,
                                 reinterpret_cast<Networking::PacketData>(data),
                                 size, reliable);
+      }
     };
 
   return { subscribe, unsubscribe, sendToUser };
@@ -450,8 +456,8 @@ void PartOne::Init()
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
     if (!listenerAsActor)
       return;
-    auto listenerUserId = serverState.UserByActor(listenerAsActor);
-    if (listenerUserId == Networking::InvalidUserId)
+    Networking::UserId listenerUserId = serverState.GetUserIdByEntity(listenerAsActor);
+    if (!ServerState::Valid(listenerUserId))
       return;
 
     auto& emitterPos = emitter->GetPos();
@@ -620,6 +626,7 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
 
 void PartOne::InitActionListener()
 {
-  if (!pImpl->actionListener)
+  if (!pImpl->actionListener) {
     pImpl->actionListener.reset(new ActionListener(*this));
+  }
 }

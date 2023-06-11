@@ -30,14 +30,20 @@ struct MpActor::Impl
     { espm::ActorValue::Stamina, std::chrono::steady_clock::time_point{} },
     { espm::ActorValue::Magicka, std::chrono::steady_clock::time_point{} },
   };
+  ActorValues actorValues;
 };
 
-MpActor::MpActor(const LocationalData& locationalData_,
-                 const FormCallbacks& callbacks_, uint32_t optBaseId)
-  : MpObjectReference(locationalData_, callbacks_,
-                      optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
+//MpActor::MpActor(const LocationalData& locationalData_,
+//                 const FormCallbacks& callbacks   _, uint32_t optBaseId)
+//  : MpObjectReference(locationalData_, callbacks_,
+//                      optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
+//{
+//  pImpl.reset(new Impl);
+//}
+
+ MpActor::MpActor()
 {
-  pImpl.reset(new Impl);
+   pImpl.reset(new Impl);
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
@@ -78,8 +84,9 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   MpChangeForm changeForm = GetChangeForm();
 
   MpObjectReference::VisitProperties(visitor, mode);
-  if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
-    visitor("isRaceMenuOpen", "true");
+  if (mode == VisitPropertiesMode::All && IsRaceMenuOpen()) {
+    visitor("isRaceMenuOpen", "true"); 
+  }
 
   if (mode == VisitPropertiesMode::All) {
     baseActorValues.VisitBaseActorValues(baseActorValues, changeForm, visitor);
@@ -88,35 +95,10 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
-  if (callbacks->sendToUser)
+  if (callbacks->sendToUser) {
     callbacks->sendToUser(this, data, size, reliable);
-  else
-    throw std::runtime_error("sendToUser is nullptr");
-}
-
-void MpActor::OnEquip(uint32_t baseId)
-{
-  if (GetInventory().GetItemCount(baseId) == 0)
-    return;
-  auto& espm = GetParent()->GetEspm();
-  auto lookupRes = espm.GetBrowser().LookupById(baseId);
-  if (!lookupRes.rec)
-    return;
-  auto t = lookupRes.rec->GetType();
-  if (t == "INGR" || t == "ALCH") {
-    EatItem(baseId, t);
-    RemoveItem(baseId, 1, nullptr);
-
-    VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
-                        VarValue::None() };
-    SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
-  }
-  std::set<std::string> s = { GetParent()->espmFiles.begin(),
-                              GetParent()->espmFiles.end() };
-  bool hasSweetPie = s.count("SweetPie.esp");
-  if (hasSweetPie) {
-    SweetPieScript SweetPieScript(GetParent()->espmFiles);
-    SweetPieScript.Play(*this, *GetParent(), baseId);
+  } else {
+    throw std::runtime_error("sendToUser is nullptr"); 
   }
 }
 
@@ -381,7 +363,7 @@ void MpActor::MpApiDeath(MpActor* killer)
   auto args = parser.parse(s).value();
 
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
+    const uint32_t id = GetFormId();
     for (auto& listener : wst->listeners) {
       if (listener->OnMpApiEvent("onDeath", args, id) == false) {
         isRespawnBlocked = true;
@@ -390,40 +372,6 @@ void MpActor::MpApiDeath(MpActor* killer)
   }
   if (!isRespawnBlocked) {
     RespawnWithDelay();
-  }
-}
-
-void MpActor::EatItem(uint32_t baseId, espm::Type t)
-{
-  auto espmProvider = GetParent();
-  std::vector<espm::Effects::Effect> effects;
-  if (t == "ALCH") {
-    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
-  } else if (t == "INGR") {
-    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
-  } else {
-    return;
-  }
-  std::unordered_set<std::string> modFiles = { GetParent()->espmFiles.begin(),
-                                               GetParent()->espmFiles.end() };
-  bool hasSweetpie = modFiles.count("SweetPie.esp");
-  for (const auto& effect : effects) {
-    espm::ActorValue av =
-      espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
-    if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
-        av == espm::ActorValue::Magicka) { // other types is unsupported
-      if (hasSweetpie) {
-        if (CanActorValueBeRestored(av)) {
-          // this coefficient (workaround) has been added for sake of game
-          // balance and because of disability to restrict players use potions
-          // often on client side
-          constexpr float kMagnitudeCoeff = 100.f;
-          RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
-        }
-      } else {
-        RestoreActorValue(av, effect.magnitude);
-      }
-    }
   }
 }
 
@@ -607,14 +555,6 @@ void MpActor::SetIsBlockActive(bool active)
 bool MpActor::IsBlockActive() const
 {
   return pImpl->isBlockActive;
-}
-
-const float kAngleToRadians = std::acos(-1.f) / 180.f;
-
-NiPoint3 MpActor::GetViewDirection() const
-{
-  return { std::sin(GetAngle().z * kAngleToRadians),
-           std::cos(GetAngle().z * kAngleToRadians), 0 };
 }
 
 void MpActor::SetActorValue(espm::ActorValue actorValue, float value)

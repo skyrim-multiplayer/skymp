@@ -10,14 +10,13 @@
 class WorldState;
 struct ActorValues;
 
-class MpActor : public MpObjectReference
+class MpActor final
 {
 public:
   static const char* Type() { return "Actor"; }
-  const char* GetFormType() const override { return "Actor"; }
+  const char* GetFormType() const { return "Actor"; }
 
-  MpActor(const LocationalData& locationalData_,
-          const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
+  MpActor();
 
   const bool& IsRaceMenuOpen() const;
   const bool& IsDead() const;
@@ -38,8 +37,6 @@ public:
                        VisitPropertiesMode mode) override;
 
   void SendToUser(const void* data, size_t size, bool reliable);
-
-  void OnEquip(uint32_t baseId);
 
   class DestroyEventSink
   {
@@ -98,6 +95,7 @@ public:
   void SetIsBlockActive(bool isBlockActive);
   bool IsBlockActive() const;
   NiPoint3 GetViewDirection() const;
+  bool CanActorValueBeRestored(espm::ActorValue av);
 
 private:
   struct Impl;
@@ -114,7 +112,6 @@ private:
     espm::ActorValue av) const;
   void SetLastRestorationTime(espm::ActorValue av,
                               std::chrono::steady_clock::time_point timePoint);
-  bool CanActorValueBeRestored(espm::ActorValue av);
 
 protected:
   void BeforeDestroy() override;

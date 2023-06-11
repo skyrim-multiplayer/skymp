@@ -5,47 +5,111 @@
 #include "MsgType.h"
 #include <algorithm>
 
-void ServerState::Connect(Networking::UserId userId)
+ServerState::ServerState()
 {
-  userInfo[userId].reset(new UserInfo);
-  if (maxConnectedId < userId)
-    maxConnectedId = userId;
+  connectionMask.resize(kMaxPlayers);
+  entities.resize(kMaxPlayers, null_entity);
+}
+
+void ServerState::Connect(Networking::UserId userId) noexcept
+{
+  // QUESTION userId > kMaxPlayers
+  connectionMask[userId] = true;
+  maxConnectedId = maxConnectedId < userId ? userId : maxConnectedId;
 }
 
 void ServerState::Disconnect(Networking::UserId userId) noexcept
 {
-  userInfo[userId].reset();
+  connectionMask[userId] = false;
   if (maxConnectedId == userId) {
-    auto it =
-      std::find_if(userInfo.rbegin(), userInfo.rend(),
-                   [](const std::unique_ptr<UserInfo>& v) { return !!v; });
-    if (it != userInfo.rend())
-      maxConnectedId = &*it - &userInfo[0];
-    else
-      maxConnectedId = 0;
+    auto it = std::find_if(connectionMask.rbegin(), connectionMask.rend(),
+                           [](const bool connected) { return connected; });
+    maxConnectedId =
+      it != connectionMask.rend() ? connectionMask.rend() - it : 0;
+  }
+  entity_t formId = GetEntityByUserId(userId);
+  userIdByEntity.erase(formId);
+  entities[userId] = null_entity;
+}
+
+bool ServerState::IsConnected(Networking::UserId userId) const noexcept
+{
+  return userId < connectionMask.size() && connectionMask[userId];
+}
+
+void ServerState::EnsureUserExists(Networking::UserId userId) const
+{
+  if (connectionMask.size() <= userId || !connectionMask[userId])
+    throw std::runtime_error(
+      fmt::format("User with id {:x} doesn't exist", userId));
+}
+
+// ATTENTION
+// QUESTION
+Networking::UserId ServerState::GetUserIdByEntity(
+  entity_t entity) const noexcept
+{
+  auto it = userIdByEntity.find(entity);
+  if (it == userIdByEntity.end()) {
+    spdlog::error("User does not exist for the form with enityt id {:x}",
+                  entity);
+    return;
+  }
+  return it->second;
+}
+
+entity_t ServerState::GetEntityByUserId(
+  Networking::UserId userId) const noexcept
+{
+  return userId >= entities.size() ? null_entity : entities[userId];
+}
+
+bool ServerState::Valid(Networking::UserId userId) noexcept
+{
+  return userId != Networking::InvalidUserId;
+}
+
+bool ServerState::Valid(entity_t entity) noexcept
+{
+  return entity != null_entity;
+}
+
+void ServerState::Set(Networking::UserId userId, entity_t entity)
+{
+  if (!Valid(userId)) {
+    throw std::runtime_error(
+      "Trying to insert Networking::InvalidUserId into ServerState");
   }
 
-  actorsMap.Erase(userId);
+  if (!Valid(entity)) {
+    throw std::runtime_error("Trying to insert nullptr into ServerState");
+  }
+
+  if (userId >= entities.size()) {
+    throw std::runtime_error(fmt::format(
+      "UserId {:x} is too big to be stored in ServerState", userId));
+  }
+
+  Erase(userId);
+  Erase(entity);
+  entities[userId] = entity;
+  userIdByEntity[entity] = userId;
 }
 
-bool ServerState::IsConnected(Networking::UserId userId) const
+void ServerState::Erase(entity_t entity) noexcept
 {
-  return userId < std::size(userInfo) && userInfo[userId];
+  Networking::UserId userId = GetUserIdByEntity(entity);
+  if (Valid(userId)) {
+    userIdByEntity.erase(entity);
+    entities[userId] = null_entity;
+  }
 }
 
-MpActor* ServerState::ActorByUser(Networking::UserId userId)
+void ServerState::Erase(Networking::UserId userId) noexcept
 {
-  return actorsMap.Find(userId);
-}
-
-Networking::UserId ServerState::UserByActor(MpActor* actor)
-{
-  return actorsMap.Find(actor);
-}
-
-void ServerState::EnsureUserExists(Networking::UserId userId)
-{
-  if (userInfo.size() <= userId || !userInfo[userId])
-    throw std::runtime_error("User with id " + std::to_string(userId) +
-                             " doesn't exist");
+  entity_t entity = GetEntityByUserId(userId);
+  if (Valid(entity)) {
+    userIdByEntity.erase(entity);
+    entities[userId] = null_entity;
+  }
 }
