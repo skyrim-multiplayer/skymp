@@ -141,7 +141,7 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
     {
       "attackStartDualWield",
       [](MpActor* actor) {
-        constexpr float modifier = 7.f;
+        constexpr float modifier = 14.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     }
