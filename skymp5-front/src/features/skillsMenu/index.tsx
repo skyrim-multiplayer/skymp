@@ -52,6 +52,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   };
 
   const init = () => {
+    setconfirmDiscard(false);
     send('/skill init');
   };
 
@@ -92,7 +93,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     setpMem(playerData.mem);
     setscale(
       window.innerWidth >= 1920
-        ? window.innerWidth / 1920
+        ? 1
         : window.innerWidth / 2500
     );
   }, [playerData]);
