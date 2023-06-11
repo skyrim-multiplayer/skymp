@@ -1,6 +1,8 @@
 #include "ScriptVariablesHolder.h"
 
 #include "EspmGameObject.h"
+#include "MpFormGameObject.h"
+#include "WorldState.h"
 #include "papyrus-vm/Utils.h"
 
 #include <spdlog/spdlog.h>
@@ -9,29 +11,32 @@ ScriptVariablesHolder::ScriptVariablesHolder(
   const std::string& myScriptName_, espm::LookupResult baseRecordWithScripts_,
   espm::LookupResult refrRecordWithScripts_,
   const espm::CombineBrowser* browser_,
-  espm::CompressedFieldsCache* compressedFieldsCache_)
+  espm::CompressedFieldsCache* compressedFieldsCache_, WorldState* worldState_)
   : baseRecordWithScripts(baseRecordWithScripts_)
   , refrRecordWithScripts(refrRecordWithScripts_)
   , myScriptName(myScriptName_)
   , browser(browser_)
   , compressedFieldsCache(compressedFieldsCache_)
+  , worldState(worldState_)
 {
 }
 
 VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
                                                    const PexScript& pex)
 {
-  if (!scriptsCache)
-    scriptsCache.reset(new ScriptsCache);
+  if (!scriptsCache) {
+    scriptsCache = std::make_unique<ScriptsCache>();
+  }
 
   if (!Utils::stricmp(name, "::State")) {
-    if (state == VarValue::None())
+    if (state == VarValue::None()) {
       FillState(pex);
+    }
     return &state;
   }
 
   if (!vars) {
-    vars.reset(new VarsMap);
+    vars = std::make_unique<CIMap<VarValue>>();
     FillNormalVariables(pex);
     FillProperties();
   }
@@ -53,7 +58,7 @@ void ScriptVariablesHolder::FillProperties()
       for (auto& prop : script->script.properties) {
         VarValue out;
         CastProperty(*browser, prop, &out, scriptsCache.get(),
-                     script->toGlobalId);
+                     script->toGlobalId, worldState);
         CIString fullVarName;
         fullVarName += "::";
         fullVarName += prop.propertyName.data();
@@ -120,7 +125,7 @@ std::optional<ScriptVariablesHolder::Script> ScriptVariablesHolder::GetScript(
 VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
   const espm::CombineBrowser& br, ScriptsCache& st,
   const espm::Property::Value& propValue, espm::PropertyType type,
-  const std::function<uint32_t(uint32_t)>& toGlobalId)
+  const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState)
 {
   switch (type) {
     case espm::PropertyType::Object: {
@@ -131,7 +136,7 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
       spdlog::trace(
         "CastPrimitivePropertyValue - Prop to global id {:x} -> {:x}",
         propValue.formId, propValueFormIdGlobal);
-      auto& gameObject = st.espmObjectsHolder[propValueFormIdGlobal];
+      auto& gameObject = st.objectsHolder[propValueFormIdGlobal];
       if (!gameObject) {
         auto lookupResult = br.LookupById(propValueFormIdGlobal);
         if (!lookupResult.rec) {
@@ -139,7 +144,34 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
             "CastPrimitivePropertyValue - Record with id {:x} not found",
             propValueFormIdGlobal);
         } else {
-          gameObject = std::make_shared<EspmGameObject>(lookupResult);
+          auto type = lookupResult.rec->GetType();
+          if (type == espm::REFR::kType || type == espm::ACHR::kType) {
+            if (worldState) {
+              auto& form = worldState->LookupFormById(propValueFormIdGlobal);
+              if (form != nullptr) {
+                gameObject = std::make_shared<MpFormGameObject>(form.get());
+                spdlog::trace("CastPrimitivePropertyValue - Created {} "
+                              "(MpFormGameObject) property with id {:x}",
+                              type.ToString(), propValueFormIdGlobal);
+              } else {
+                spdlog::warn(
+                  "CastPrimitivePropertyValue - Unable to create {} "
+                  "(MpFormGameObject) property with id {:x}, form "
+                  "not found in the world",
+                  type.ToString(), propValueFormIdGlobal);
+              }
+            } else {
+              spdlog::error("CastPrimitivePropertyValue - Unable to create {} "
+                            "(MpFormGameObject) property with id {:x}, null "
+                            "WorldState",
+                            type.ToString(), propValueFormIdGlobal);
+            }
+          } else {
+            gameObject = std::make_shared<EspmGameObject>(lookupResult);
+            spdlog::trace("CastPrimitivePropertyValue - Created {} "
+                          "(EspmGameObject) property with id {:x}",
+                          type.ToString(), propValueFormIdGlobal);
+          }
         }
       }
       return VarValue(gameObject.get());
@@ -164,7 +196,7 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
 void ScriptVariablesHolder::CastProperty(
   const espm::CombineBrowser& br, const espm::Property& prop, VarValue* out,
   ScriptsCache* scriptsCache,
-  const std::function<uint32_t(uint32_t)>& toGlobalId)
+  const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState)
 {
   if (prop.propertyType >= espm::PropertyType::ObjectArray &&
       prop.propertyType <= espm::PropertyType::BoolArray) {
@@ -173,14 +205,14 @@ void ScriptVariablesHolder::CastProperty(
     for (auto& entry : prop.array) {
       v.pArray->push_back(CastPrimitivePropertyValue(
         br, *scriptsCache, entry, GetElementType(prop.propertyType),
-        toGlobalId));
+        toGlobalId, worldState));
     }
     *out = v;
     return;
   }
 
   *out = CastPrimitivePropertyValue(br, *scriptsCache, prop.value,
-                                    prop.propertyType, toGlobalId);
+                                    prop.propertyType, toGlobalId, worldState);
 }
 
 espm::PropertyType ScriptVariablesHolder::GetElementType(
