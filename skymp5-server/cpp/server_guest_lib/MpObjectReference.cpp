@@ -927,10 +927,6 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
   MpForm::Init(parent, formId);
 
-  if (initialChangeForm) {
-    ApplyChangeForm(*initialChangeForm);
-  }
-
   // We should queue created form for saving as soon as it is initialized
   const auto mode = (!initialChangeForm && formId >= 0xff000000)
     ? Mode::RequestSave
@@ -943,6 +939,9 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
     },
     mode);
   
+  if (initialChangeForm) {
+    ApplyChangeForm(*initialChangeForm);
+  }
   initialChangeForm = std::nullopt;
 }
 

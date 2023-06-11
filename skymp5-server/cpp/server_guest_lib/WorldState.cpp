@@ -49,7 +49,7 @@ struct WorldState::Impl
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
   std::shared_ptr<HeuristicPolicy> policy;
-  std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
+  // std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
   std::map<std::string, std::chrono::system_clock::duration>
@@ -166,7 +166,7 @@ void WorldState::LoadFFChangeForm(const MpChangeForm& changeForm,
   //     }
   //   } else {
   //     pImpl->changeFormsForDeferredLoad[formId] = changeForm;
-  //   }
+  //   }git 
   //   return;
   // }
 
@@ -336,15 +336,23 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
 bool WorldState::LoadForm(uint32_t formId)
 {
-  std::optional<MpChangeForm> changeForm;
+  if (!pImpl->saveStorage) {
+    spdlog::error("LoadForm {:x} - Called before save storage attach", formId);
+    return false;
+  }
+  
+  auto desc = FormDesc::FromFormId(formId, GetEspm().GetFileNames());
+  std::optional<MpChangeForm> changeForm = pImpl->saveStorage->FindOneSync(desc);
 
-  auto it = pImpl->changeFormsForDeferredLoad.find(formId);
-  if (it != pImpl->changeFormsForDeferredLoad.end()) {
-    changeForm = it->second;
-  }
-  else {
-    changeForm = std::nullopt;
-  }
+  spdlog::trace("LoadForm {:x} - change form found: {}", formId, !!changeForm);
+
+  // auto it = pImpl->changeFormsForDeferredLoad.find(formId);
+  // if (it != pImpl->changeFormsForDeferredLoad.end()) {
+  //   changeForm = it->second;
+  // }
+  // else {
+  //   changeForm = std::nullopt;
+  // }
 
   bool atLeastOneLoaded = false;
   auto& br = GetEspm().GetBrowser();
@@ -357,7 +365,7 @@ bool WorldState::LoadForm(uint32_t formId)
   }
 
   if (atLeastOneLoaded) {
-    pImpl->changeFormsForDeferredLoad.erase(it);
+    // pImpl->changeFormsForDeferredLoad.erase(it);
     auto& refr = GetFormAt<MpObjectReference>(formId);
     refr.ForceSubscriptionsUpdate();
   }
