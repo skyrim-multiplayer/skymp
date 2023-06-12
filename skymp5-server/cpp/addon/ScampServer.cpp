@@ -833,6 +833,7 @@ Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
 {
   try {
+    spdlog::trace("1");
     auto callType = NapiHelper::ExtractString(info[0], "callType");
     auto className = NapiHelper::ExtractString(info[1], "className");
     auto functionName = NapiHelper::ExtractString(info[2], "functionName");
@@ -844,12 +845,16 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
 
     bool treatNumberAsInt = false; // TODO?
 
+    spdlog::trace("2");
+
     std::vector<VarValue> args;
     args.resize(arrSize);
     for (int i = 0; i < arrSize; ++i) {
       args[i] = PapyrusUtils::GetPapyrusValueFromJsValue(
         arr.Get(i), treatNumberAsInt, partOne->worldState);
     }
+
+    spdlog::trace("3");
 
     VarValue res;
 
@@ -863,6 +868,8 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
       throw std::runtime_error("Unknown call type '" + callType +
                                "', expected one of ['method', 'global']");
     }
+
+    spdlog::trace("4");
 
     return PapyrusUtils::GetJsValueFromPapyrusValue(
       info.Env(), res, partOne->worldState.espmFiles);
