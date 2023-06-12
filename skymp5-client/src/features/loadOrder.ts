@@ -32,10 +32,10 @@ const resetText = () => {
   }
 };
 
-const updateText = (text: string, color: [number, number, number, number], clearDelay?: number) => {
+const updateText = (text: string, color: [number, number, number, number], font: string, clearDelay?: number) => {
   const { width, height } = getScreenResolution();
   resetText();
-  const statusTextId = createText(width / 2, height / 2, text, color);
+  const statusTextId = createText(width / 2, height / 2, text, color, font);
   setState({ statusTextId });
   if (clearDelay) {
     Utility.wait(clearDelay).then(resetText);
@@ -95,6 +95,10 @@ const getClientMods = () => {
   return enumerateClientMods(Game.getModCount, Game.getModName);
 };
 
+const getDefaultFont = (): string => {
+  return "DINPro";
+};
+
 const printModOrder = (header: string, order: Mod[]) => {
   printConsole(header);
   for (const [i, mod] of Object.entries(order)) {
@@ -115,7 +119,7 @@ export const verifyLoadOrder = () => {
       if (clientMods.length > serverMods.length) {
         updateText(
           'LOAD ORDER WARNING: you have more mods than server!\n(or could not receive server mod list)\nCheck console for details.',
-          [255, 255, 0, 1], 5,
+          [255, 255, 0, 1], getDefaultFont(), 5,
         );
       }
       let fail = [];
@@ -143,13 +147,13 @@ export const verifyLoadOrder = () => {
           'LOAD ORDER ERROR!\nHowever, ignoring it because of ignoreLoadOrderMismatch being set.' +
           '\nExpect EVERYTHING BREAK, unless you know what you are doing.\nCheck console for details.' +
           '\nThis message will disappear after 30 seconds.',
-          [255, 0, 0, 1], 30,
+          [255, 0, 0, 1], getDefaultFont(), 30,
         );
         return;
       }
       updateText(
         'LOAD ORDER ERROR!\nCheck console for details.',
-        [255, 0, 0, 1],
+        [255, 0, 0, 1], getDefaultFont(),
       );
       sp.browser.loadUrl('about:blank');
     });

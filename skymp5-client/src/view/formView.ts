@@ -371,7 +371,7 @@ export class FormView implements View<FormModel> {
         const textYPos = Math.round((1 - headScreenPos[1]) * resolution.height);
 
         if (!this.textNameId) {
-          this.textNameId = createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1]);
+                    this.textNameId = createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1], "Tavern");
         } else {
           setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
           setTextPos(this.textNameId, textXPos, textYPos);
