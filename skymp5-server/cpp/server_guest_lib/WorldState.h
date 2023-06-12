@@ -1,7 +1,7 @@
 #pragma once
 #include "FormIndex.h"
-#include "Grid.h"
 #include "GridElement.h"
+#include "GridInfo.h"
 #include "MpChangeForms.h"
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
@@ -34,28 +34,19 @@ class IScriptStorage;
 
 class WorldState : private entt::registry
 {
+private:
   friend class MpObjectReference;
   friend class MpActor;
 
 public:
   using entity_t = entt::entity;
   using null_t = entt::null_t;
+  using FormCallbacksFactory = std::function<FormCallbacks()>;
 
 public:
-  using FormCallbacksFactory = std::function<FormCallbacks()>;
   WorldState();
   WorldState(const WorldState&) = delete;
   WorldState& operator=(const WorldState&) = delete;
-
-  void Clear();
-
-  void AttachEspm(espm::Loader* espm,
-                  const FormCallbacksFactory& formCallbacksFactory);
-  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
-  void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
-
-  bool Valid(entity_t entity) const;
-  entity_t GetEntityByFormId(uint32_t formId) const noexcept;
 
   template <typename T, typename... Args>
   decltype(auto) Emplace(uint32_t formId, Args&&... args)
@@ -86,23 +77,33 @@ public:
   template <typename... T>
   decltype(auto) Get(entity_t entity)
   {
+    if (!valid(entity)) {
+      throw std::runtime_error(fmt::format("Required entity is null_entity"));
+    }
     return _get<T...>(entity);
   }
 
-  uint16_t Destroy(uint32_t formId)
+  template <typename... T>
+  decltype(auto) TryGet(uint32_t formId)
   {
-    entity_t entity = GetEntityByFormId(formId);
-    if (!valid(entity)) {
-      throw std::runtime_error(fmt::format(
-        "Couldn't destroy an entity associated with formId {:x}", formId));
-    }
-    auto& objectReference = get<MpObjectReference>(entity);
-    objectReference.BeforeDestroy();
-    uint16_t version = destroy(entity, entt::to_version(entity));
-    entityByFormId.erase(formId);
-    return version;
+    const entity_t entity = GetEntityByFormId(formId);
+    return try_get<T...>(entity);
   }
 
+  template <typename... T>
+  decltype(auto) TryGet(entity_t entity)
+  {
+    return try_get<T...>(entity);
+  }
+
+  uint16_t Destroy(uint32_t formId);
+  void Clear();
+  void AttachEspm(espm::Loader* espm,
+                  const FormCallbacksFactory& formCallbacksFactory);
+  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
+  void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
+  bool Valid(entity_t entity) const;
+  entity_t GetEntityByFormId(uint32_t formId) const noexcept;
   void LoadChangeForm(const MpChangeForm& changeForm,
                       const FormCallbacks& callbacks);
   void Tick();
@@ -115,7 +116,6 @@ public:
   MpForm* LookupFormByIdx(int idx);
   void SendPapyrusEvent(MpForm* form, const char* eventName,
                         const VarValue* arguments, size_t argumentsCount);
-
   const std::set<MpObjectReference*>& GetReferencesAtPosition(
     uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
   espm::Loader& GetEspm() const;
@@ -129,20 +129,15 @@ public:
                      std::chrono::system_clock::duration dur);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
+  bool Exists(uint32_t formId) const noexcept;
+  const std::vector<std::shared_ptr<PartOneListener>>& GetListeners()
+    const noexcept;
 
 public:
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
   std::shared_ptr<spdlog::logger> logger;
-  std::vector<std::shared_ptr<PartOneListener>> listeners;
-
-  // Only for tests
-  auto& GetGrids() { return grids; }
   std::map<uint32_t, uint32_t> hosters;
-  std::vector<std::optional<std::chrono::system_clock::time_point>>
-    lastMovUpdateByIdx;
-  bool isPapyrusHotReloadEnabled = false;
-  bool Exists(uint32_t formId) const noexcept;
 
 private:
   template <typename... T>
@@ -167,16 +162,21 @@ private:
     return get<T...>(entity);
   }
 
+  bool AttachEspmRecord(const espm::CombineBrowser& br,
+                        espm::RecordHeader* record,
+                        const espm::IdMapping& mapping);
+  bool LoadForm(uint32_t formId);
+  void TickReloot(const std::chrono::system_clock::time_point& now);
+  void TickSaveStorage(const std::chrono::system_clock::time_point& now);
+  void TickTimers(const std::chrono::system_clock::time_point& now);
+
+  // Only for tests
+  auto& GetGrids() const noexcept;
+
 private:
-  struct GridInfo
-  {
-    std::shared_ptr<GridImpl<MpObjectReference*>> grid =
-      std::make_shared<GridImpl<MpObjectReference*>>();
-    std::map<int16_t, std::map<int16_t, bool>> loadedChunks;
-  };
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
-  spp::sparse_hash_map<uint32_t, entt::entity> entityByFormId;
+  spp::sparse_hash_map<uint32_t, entity_t> entityByFormId;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
   std::map<
@@ -186,16 +186,10 @@ private:
   espm::Loader* espm = nullptr;
   FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
-
-  bool AttachEspmRecord(const espm::CombineBrowser& br,
-                        espm::RecordHeader* record,
-                        const espm::IdMapping& mapping);
-
-  bool LoadForm(uint32_t formId);
-
-  void TickReloot(const std::chrono::system_clock::time_point& now);
-  void TickSaveStorage(const std::chrono::system_clock::time_point& now);
-  void TickTimers(const std::chrono::system_clock::time_point& now);
+  std::vector<std::optional<std::chrono::system_clock::time_point>>
+    lastMovUpdateByIdx;
+  bool isPapyrusHotReloadEnabled = false;
+  std::vector<std::shared_ptr<PartOneListener>> listeners;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

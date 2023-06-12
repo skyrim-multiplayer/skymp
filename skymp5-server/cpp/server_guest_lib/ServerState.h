@@ -27,6 +27,7 @@ public:
   void Erase(uint32_t formId) noexcept;
   uint32_t GetFormIdByUserId(Networking::UserId userId) const noexcept;
   Networking::UserId GetUserIdByFormId(uint32_t formId) const noexcept;
+  bool IsUserDisconnecting(uint32_t userId) const noexcept;
 
 public:
   static bool Valid(Networking::UserId userId) noexcept;

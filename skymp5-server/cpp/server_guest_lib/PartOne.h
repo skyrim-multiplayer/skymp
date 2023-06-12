@@ -1,5 +1,4 @@
 #pragma once
-#include "Aliases.h"
 #include "AnimationSystem.h"
 #include "GamemodeApi.h"
 #include "ISaveStorage.h"
@@ -26,6 +25,9 @@ struct HitData;
 class PartOne final
 {
 public:
+  using Listener = PartOneListener;
+
+public:
   struct Message
   {
     nlohmann::json j;
@@ -33,8 +35,7 @@ public:
     bool reliable = false;
   };
 
-  using Listener = PartOneListener;
-
+public:
   PartOne(Networking::ISendTarget* sendTarget = nullptr);
   PartOne(std::shared_ptr<Listener> listener,
           Networking::ISendTarget* sendTarget = nullptr);
@@ -43,11 +44,11 @@ public:
   void SetSendTarget(Networking::ISendTarget* sendTarget);
   void SetDamageFormula(std::unique_ptr<IDamageFormula> dmgFormulaFactory);
   void AddListener(std::shared_ptr<Listener> listener);
-  bool IsConnected(Networking::UserId userId) const;
+  bool IsConnected(Networking::UserId userId) const noexcept;
   void Tick();
   FormCallbacks CreateFormCallbacks();
   ActionListener& GetActionListener();
-  const std::vector<std::shared_ptr<Listener>>& GetListeners() const;
+  const std::vector<std::shared_ptr<Listener>>& GetListeners() const noexcept;
   std::vector<Message>& Messages();
 
   // API
@@ -55,11 +56,10 @@ public:
                        uint32_t cellOrWorld, ProfileId profileId = -1);
   void SetUserActor(Networking::UserId userId, uint32_t actorFormId);
   uint32_t GetFormIdByUserId(Networking::UserId userId) const;
-  Networking::UserId GetUserIdByFormId(uint32_t formId) const;
+  Networking::UserId GetUserIdByFormId(uint32_t formId) const noexcept;
   void DestroyActor(uint32_t actorFormId);
   void SetRaceMenuOpen(uint32_t formId, bool open);
-  void SendCustomPacket(Networking::UserId userId,
-                        const std::string& jContent);
+  void SendCustomPacket(Networking::UserId userId, const std::string& Content);
   std::string GetActorName(uint32_t actorFormId);
   NiPoint3 GetActorPos(uint32_t actorFormId);
   uint32_t GetActorCellOrWorld(uint32_t actorFormId);
@@ -72,39 +72,37 @@ public:
   bool HasEspm() const;
   void AttachLogger(std::shared_ptr<spdlog::logger> logger);
   spdlog::logger& GetLogger();
+  Networking::ISendTarget& GetSendTarget() const;
+  float CalculateDamage(const MpActor& aggressor, const MpActor& target,
+                        const HitData& hitData) const;
+  void NotifyGamemodeApiStateChanged(
+    const GamemodeApi::State& newState) noexcept;
 
+public:
   static void HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
                            Networking::PacketData data, size_t length);
 
+public:
   WorldState worldState;
   ServerState serverState;
   std::shared_ptr<AnimationSystem> animationSystem;
 
-  Networking::ISendTarget& GetSendTarget() const;
-
-  float CalculateDamage(const MpActor& aggressor, const MpActor& target,
-                        const HitData& hitData) const;
-
-  void NotifyGamemodeApiStateChanged(
-    const GamemodeApi::State& newState) noexcept;
-
 private:
-  void Init();
-
   enum class UserType
   {
     User,
     Bot
   };
 
+private:
+  void Init();
   void AddUser(Networking::UserId userId, UserType userType);
-
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
-
   void InitActionListener();
 
+private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };

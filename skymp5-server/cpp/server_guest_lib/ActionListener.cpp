@@ -20,27 +20,28 @@
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
+ActionListener::ActionListener(PartOne& partOne_)
+  : partOne(partOne_)
+{
+}
+
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
   Networking::UserId userId, Networking::PacketData data, size_t length,
   bool reliable)
 {
-  entity_t entity = partOne.serverState.GetEntityByUserId(userId);
-  auto& actor = partOne.worldState.Get<MpActor>(entity);
-  auto& objectReference = partOne.worldState.Get<MpObjectReference>(entity);
+  const uint32_t formId = partOne.serverState.GetFormIdByUserId(userId);
+  auto& actor = partOne.worldState.Get<MpActor>(formId);
+  auto& objectReference = partOne.worldState.Get<MpObjectReference>(formId);
 
-  auto hosterIterator =
-    partOne.worldState.hosters.find(objectReference.GetFormId());
-  uint32_t hosterId = hosterIterator != partOne.worldState.hosters.end()
-    ? hosterIterator->second
-    : 0;
+  auto it = partOne.worldState.hosters.find(objectReference.GetFormId());
+  uint32_t hosterId = it != partOne.worldState.hosters.end() ? it->second : 0;
 
   if (idx != objectReference.GetIdx() &&
       hosterId != objectReference.GetFormId()) {
-    std::stringstream ss;
-    ss << std::hex << "You aren't able to update actor with idx " << idx
-       << " (your actor's idx is " << objectReference.GetIdx() << ')';
-    throw PublicError(ss.str());
+    throw PublicError(fmt::format(
+      "You are not able to update actor with idx {} (your actor's idx is {})",
+      idx, objectReference.GetIdx()));
   }
 
   // what is listener?
@@ -49,9 +50,10 @@ MpActor* ActionListener::SendToNeighbours(
 
     if (listenerAsActor) {
       // entity or formId
-      auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
-      if (targetuserId != Networking::InvalidUserId) {
-        partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
+      const uint32_t targetUserId =
+        partOne.serverState.GetUserIdByFormId(listenerAsActor);
+      if (ServerState::Valid(targetUserId)) {
+        partOne.GetSendTarget().Send(targetUserId, data, length, reliable);
       }
     }
   }
@@ -85,8 +87,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     DummyMessageOutput msgOutputDummy;
     UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
 
-    bool isMe =
-      partOne.serverState.GetEntityByUserId(rawMsgData.userId) == actor;
+    bool isMe = partOne.serverState.GetFormIdByUserId(rawMsgData.userId);
 
     bool teleportFlag = actor->GetTeleportFlag();
     actor->SetTeleportFlag(false);
@@ -97,7 +98,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       std::numeric_limits<float>::infinity()
     };
 
-    auto& espmFiles = actor->GetParent()->espmFiles;
+    auto& espmFiles = partOne.worldState.espmFiles;
     if (!MovementValidation::Validate(
           *actor, teleportFlag ? reallyWrongPos : pos,
           FormDesc::FromFormId(worldOrCell, espmFiles),
@@ -154,7 +155,8 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
                                         const Appearance& appearance)
 { // TODO: validate
 
-  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  const uint32_t formId =
+    partOne.serverState.GetFormIdByUserId(rawMsgData.userId);
   if (!actor || !actor->IsRaceMenuOpen())
     return;
 

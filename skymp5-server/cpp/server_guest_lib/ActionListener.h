@@ -22,10 +22,7 @@ public:
     Networking::UserId userId = Networking::InvalidUserId;
   };
 
-  ActionListener(PartOne& partOne_)
-    : partOne(partOne_)
-  {
-  }
+  ActionListener(PartOne& partOne_);
 
   virtual void OnCustomPacket(const RawMessageData& rawMsgData,
                               simdjson::dom::element& content);

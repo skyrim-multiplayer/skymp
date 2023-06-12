@@ -22,7 +22,9 @@
 #include "ScriptStorage.h"
 #include "Timer.h"
 #include <algorithm>
+#include <catch2/reporters/catch_reporter_registrars.hpp>
 #include <deque>
+#include <list>
 #include <unordered_map>
 
 namespace {
@@ -61,7 +63,6 @@ struct WorldState::Impl
 WorldState::WorldState()
 {
   logger.reset(new spdlog::logger("empty logger"));
-
   pImpl.reset(new Impl);
   pImpl->policy.reset(new HeuristicPolicy(logger, this));
 }
@@ -71,6 +72,7 @@ void WorldState::Clear()
   forms.clear();
   grids.clear();
   formIdxManager.reset();
+  entityByFormId.clear();
 }
 
 void WorldState::AttachEspm(espm::Loader* espm_,
@@ -98,22 +100,20 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                          const MpChangeForm* optionalChangeFormToApply)
 {
   if (!skipChecks && forms.find(formId) != forms.end()) {
-
     throw std::runtime_error(
-      static_cast<const std::stringstream&>(std::stringstream()
-                                            << "Form with id " << std::hex
-                                            << formId << " already exists")
-        .str());
+      fmt::format("Form with id {:x} already exists", formId));
   }
 
   if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
-    if (!formIdxManager)
+    if (!formIdxManager) {
       formIdxManager.reset(new MakeID(FormIndex::g_invalidIdx - 1));
-    if (!formIdxManager->CreateID(formIndex->idx))
+    }
+    if (!formIdxManager->CreateID(formIndex->idx)) {
       throw std::runtime_error("CreateID failed");
-
-    if (formByIdxUnreliable.size() <= formIndex->idx)
+    }
+    if (formByIdxUnreliable.size() <= formIndex->idx) {
       formByIdxUnreliable.resize(formIndex->idx + 1, nullptr);
+    }
     formByIdxUnreliable[formIndex->idx] = form.get();
   }
 
@@ -144,7 +144,6 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
   Viet::ScopedTask<bool> task([](bool& st) { st = false; },
                               pImpl->formLoadingInProgress);
   pImpl->formLoadingInProgress = true;
-
   const auto baseId = changeForm.baseDesc.ToFormId(espmFiles);
   const auto formId = changeForm.formDesc.ToFormId(espmFiles);
 
@@ -153,9 +152,8 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     const auto rec = espm->GetBrowser().LookupById(baseId).rec;
 
     if (!rec) {
-      std::stringstream ss;
-      ss << std::hex << "Unable to find record " << baseId;
-      throw std::runtime_error(ss.str());
+      throw std::runtime_error(
+        fmt::format("Unable to find record {:x}", baseId));
     }
     baseType = rec->GetType().ToString();
   }
@@ -182,8 +180,8 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
                                  baseType.data());
       break;
     default:
-      throw std::runtime_error("Unknown ChangeForm type: " +
-                               std::to_string(changeForm.recType));
+      throw std::runtime_error(
+        fmt::format("Unknown ChangeForm type: {}", changeForm.recType));
   }
   // EnsureBaseContainerAdded forces saving here.
   // We do not want characters to save when they are load partially
@@ -214,8 +212,9 @@ void WorldState::RequestSave(MpObjectReference& ref)
 void WorldState::RegisterForSingleUpdate(const VarValue& self, float seconds)
 {
   SetTimer(seconds).Then([self](Viet::Void) {
-    if (auto form = GetFormPtr<MpForm>(self))
+    if (auto form = GetFormPtr<MpForm>(self)) {
       form->Update();
+    }
   });
 }
 
@@ -248,7 +247,6 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto& cache = GetEspmCache();
   auto refr = reinterpret_cast<espm::REFR*>(record);
   auto data = refr->GetData(cache);
-
   auto baseId = espm::GetMappedId(data.baseId, mapping);
   auto base = br.LookupById(baseId);
   if (!base.rec) {
@@ -257,29 +255,38 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   }
 
   espm::Type t = base.rec->GetType();
-  if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
-      t != "DOOR" && t != "CONT" &&
-      (t != "FLOR" ||
+  bool isNpc = t == "NPC_";
+  bool isFurniture = t == "FURN";
+  bool isActi = t == "ACTI";
+  bool isDoor = t == "DOOR";
+  bool isContainer = t == "CONT";
+  bool isFlor = t == "FLOR";
+  bool isTree = t == "TREE";
+  if (!isNpc && !isFurniture && !isActi && !espm::IsItem(t) && !isDoor &&
+      !isContainer &&
+      (!isFlor ||
        !reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem) &&
-      (t != "TREE" ||
-       !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
+      (!isTree ||
+       !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem)) {
     return false;
+  }
 
   // TODO: Load disabled references
   enum
   {
     InitiallyDisabled = 0x800
   };
-  if (refr->GetFlags() & InitiallyDisabled)
-    return false;
 
-  if (t == "NPC_") {
+  if (refr->GetFlags() & InitiallyDisabled) {
     return false;
   }
 
-  auto formId = espm::GetMappedId(record->GetId(), mapping);
-  auto locationalData = data.loc;
+  if (isNpc) {
+    return false;
+  }
 
+  uint32_t formId = espm::GetMappedId(record->GetId(), mapping);
+  auto& locationalData = data.loc;
   uint32_t worldOrCell =
     espm::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
@@ -308,9 +315,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     }
 
     std::optional<NiPoint3> primitiveBoundsDiv2;
-    if (data.boundsDiv2)
+    if (data.boundsDiv2) {
       primitiveBoundsDiv2 =
         NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+    }
 
     auto typeStr = t.ToString();
     LocationalData formLocationalData = {
@@ -349,10 +357,8 @@ bool WorldState::LoadForm(uint32_t formId)
       refr.ApplyChangeForm(it->second);
       pImpl->changeFormsForDeferredLoad.erase(it);
     }
-
     refr.ForceSubscriptionsUpdate();
   }
-
   return atLeastOneLoaded;
 }
 
@@ -367,7 +373,6 @@ void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
       if (relootTarget) {
         relootTarget->DoReloot();
       }
-
       list.pop_front();
     }
   }
@@ -380,7 +385,6 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
   }
 
   pImpl->saveStorage->Tick();
-
   auto& changes = pImpl->changes;
   if (!pImpl->saveStorageBusy && !changes.empty()) {
     pImpl->saveStorageBusy = true;
@@ -390,7 +394,6 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
       changeForms.push_back(changeForm);
     }
     changes.clear();
-
     auto pImpl_ = pImpl;
     pImpl->saveStorage->Upsert(changeForms,
                                [pImpl_] { pImpl_->saveStorageBusy = false; });
@@ -661,4 +664,29 @@ bool WorldState::Exists(uint32_t formId) const noexcept
 {
   entity_t entity = GetEntityByFormId(formId);
   return valid(entity);
+}
+
+auto& WorldState::GetGrids() const noexcept
+{
+  return grids;
+}
+
+uint16_t WorldState::Destroy(uint32_t formId)
+{
+  entity_t entity = GetEntityByFormId(formId);
+  if (!valid(entity)) {
+    throw std::runtime_error(fmt::format(
+      "Couldn't destroy an entity associated with formId {:x}", formId));
+  }
+  auto& objectReference = get<MpObjectReference>(entity);
+  objectReference.BeforeDestroy();
+  uint16_t version = destroy(entity, entt::to_version(entity));
+  entityByFormId.erase(formId);
+  return version;
+}
+
+const std::vector<std::shared_ptr<PartOneListener>>& WorldState::GetListeners()
+  const noexcept
+{
+  return listeners;
 }

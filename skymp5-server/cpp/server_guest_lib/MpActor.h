@@ -22,7 +22,6 @@ public:
 
   MpActor();
 
-  const bool& IsRespawning() const;
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;

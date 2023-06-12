@@ -478,8 +478,9 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   for (auto listener : toRemove) {
     Unsubscribe(this, listener);
     // Unsubscribe from self is NEEDED. See comment below
-    if (this != listener)
+    if (this != listener) {
       Unsubscribe(listener, this);
+    }
   }
 
   std::vector<MpObjectReference*> toAdd;
@@ -490,8 +491,9 @@ void MpObjectReference::ForceSubscriptionsUpdate()
     // Note: Self-subscription is OK this check is performed as we don't want
     // to self-subscribe twice! We have already been subscribed to self in
     // the last line of code
-    if (this != listener)
+    if (this != listener) {
       Subscribe(listener, this);
+    }
   }
 
   pImpl->everSubscribedOrListened = true;

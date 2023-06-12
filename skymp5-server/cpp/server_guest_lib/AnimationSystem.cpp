@@ -1,14 +1,16 @@
 #include "AnimationSystem.h"
 #include "AnimationData.h"
 #include "MpActor.h"
+#include "MpChangeForms.h"
 #include "espm.h"
+#include <simdjson.h>
 
 AnimationSystem::AnimationSystem(bool isSweetpie)
 {
   InitAnimationCallbacks(isSweetpie);
 }
 
-void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
+void AnimationSystem::Process(MpActor& actor, const AnimationData& animData)
 {
   auto it = animationCallbacks.find(animData.animEventName);
   if (it == animationCallbacks.end()) {
@@ -17,15 +19,17 @@ void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
   it->second(actor);
 }
 
-void AnimationSystem::ClearInfo(MpActor* actor)
+void AnimationSystem::ClearInfo(MpObjectReference& objectReference)
 {
-  lastAttackReleaseAnimationTimePoints.erase(actor->GetFormId());
+  lastAttackReleaseAnimationTimePoints.erase(objectReference.GetFormId());
 }
 
 std::chrono::steady_clock::time_point
-AnimationSystem::GetLastAttackReleaseAnimationTime(MpActor* actor) const
+AnimationSystem::GetLastAttackReleaseAnimationTime(
+  MpObjectReference& objectReference) const noexcept
 {
-  auto it = lastAttackReleaseAnimationTimePoints.find(actor->GetFormId());
+  auto it =
+    lastAttackReleaseAnimationTimePoints.find(objectReference.GetFormId());
   if (it == lastAttackReleaseAnimationTimePoints.end()) {
     return std::chrono::steady_clock::time_point();
   }
@@ -33,9 +37,11 @@ AnimationSystem::GetLastAttackReleaseAnimationTime(MpActor* actor) const
 }
 
 void AnimationSystem::SetLastAttackReleaseAnimationTime(
-  MpActor* actor, std::chrono::steady_clock::time_point timePoint)
+  MpObjectReference& objectReference,
+  std::chrono::steady_clock::time_point timePoint)
 {
-  lastAttackReleaseAnimationTimePoints[actor->GetFormId()] = timePoint;
+  lastAttackReleaseAnimationTimePoints[objectReference.GetFormId()] =
+    timePoint;
 }
 
 void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
@@ -65,49 +71,51 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
   const AnimationCallbacks additionalCallbacks = {
     {
       "attackStart",
-      [](MpActor* actor) {
+      [](MpActor& actor) {
         constexpr float modifier = 7.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+        actor.DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
       "attackStartLeftHand",
-      [](MpActor* actor) {
+      [](MpActor& actor) {
         constexpr float modifier = 7.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+        actor.DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
       "AttackStartH2HRight",
-      [](MpActor* actor) {
+      [](MpActor& actor) {
         constexpr float modifier = 4.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+        actor.DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
       "AttackStartH2HLeft",
-      [](MpActor* actor) {
+      [](MpActor& actor) {
         constexpr float modifier = 4.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+        actor.DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
       "JumpStandingStart",
-      [](MpActor* actor) {
+      [](MpActor& actor) {
         constexpr float modifier = 10.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+        actor.DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
       "JumpDirectionalStart",
-      [](MpActor* actor) {
+      [](MpActor& actor) {
         constexpr float modifier = 15.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+        actor.DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
     },
     {
       "bowAttackStart",
-      [this](MpActor* actor) { SetLastAttackReleaseAnimationTime(actor); },
+      [this](MpObjectReference& actor) {
+        SetLastAttackReleaseAnimationTime(actor);
+      },
     },
     {
       "attackRelease",

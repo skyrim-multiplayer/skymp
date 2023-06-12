@@ -1,5 +1,5 @@
 #pragma once
-#include "Aliases.h"
+#include <cstdint>
 #include <functional>
 
 class MpObjectReference;
@@ -8,18 +8,13 @@ class MpActor;
 class FormCallbacks
 {
 public:
-  using SubscribeCallback = std::function<void(MpObjectReference* emitter,
-                                               MpObjectReference* listener)>;
-  // entity or formId
-  using SendToUserFn = std::function<void(entity_t entity, const void* data,
+  using SubscribeCallback =
+    std::function<void(uint32_t emitterFormId, uint32_t listenerFormId)>;
+  using SendToUserFn = std::function<void(uint32_t formId, const void* data,
                                           size_t size, bool reliable)>;
 
 public:
-  static FormCallbacks DoNothing()
-  {
-    return { [](auto, auto) {}, [](auto, auto) {},
-             [](auto, auto, auto, auto) {} };
-  }
+  static FormCallbacks DoNothing() noexcept;
 
 public:
   SubscribeCallback subscribe, unsubscribe;

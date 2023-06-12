@@ -6,6 +6,7 @@
 #include "JsonUtils.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
+#include "NetworkingInterface.h"
 #include "PacketParser.h"
 #include <array>
 #include <cassert>
@@ -24,9 +25,7 @@ public:
     try {
       m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliable };
     } catch (std::exception& e) {
-      std::stringstream ss;
-      ss << e.what() << std::endl << "`" << s << "`";
-      throw std::runtime_error(ss.str());
+      throw std::runtime_error(fmt::format("{}\n`{}`", e.what(), s));
     }
     messages.push_back(m);
   }
@@ -39,7 +38,7 @@ struct PartOne::Impl
   simdjson::dom::parser parser;
   espm::Loader* espm = nullptr;
   std::function<void(Networking::ISendTarget* sendTarget,
-                     MpObjectReference* emitter, MpObjectReference* listener)>
+                     uint32_t emitterFormId, uint32_t listenerFormid)>
     onSubscribe, onUnsubscribe;
   espm::CompressedFieldsCache compressedFieldsCache;
   std::shared_ptr<PacketParser> packetParser;
@@ -88,7 +87,7 @@ void PartOne::AddListener(std::shared_ptr<Listener> listener)
   worldState.listeners.push_back(listener);
 }
 
-bool PartOne::IsConnected(Networking::UserId userId) const
+bool PartOne::IsConnected(Networking::UserId userId) const noexcept
 {
   return serverState.IsConnected(userId);
 }
@@ -142,10 +141,9 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t formId)
     objectReference.RemoveFromGrid();
     serverState.Set(userId, formId);
     objectReference.ForceSubscriptionsUpdate();
-    if (objectReference.IsDead() && !actor.IsRespawning()) {
+    if (objectReference.IsDead() && !objectReference.IsRespawning()) {
       actor.RespawnWithDelay();
     }
-
   } else {
     serverState.Erase(userId);
   }
@@ -157,7 +155,7 @@ uint32_t PartOne::GetFormIdByUserId(Networking::UserId userId) const
   return serverState.GetFormIdByUserId(userId);
 }
 
-Networking::UserId PartOne::GetUserIdByFormId(uint32_t formId) const
+Networking::UserId PartOne::GetUserIdByFormId(uint32_t formId) const noexcept
 {
   if (worldState.Exists(formId)) {
     return serverState.GetUserIdByFormId(formId);
@@ -179,7 +177,8 @@ void PartOne::SetRaceMenuOpen(uint32_t formId, bool open)
     return;
   }
   objectReference.SetRaceMenuOpen(open);
-  auto userId = serverState.GetUserIdByFormId(objectReference.GetFormId());
+  Networking::UserId userId =
+    serverState.GetUserIdByFormId(objectReference.GetFormId());
   if (!ServerState::Valid(userId)) {
     throw std::runtime_error(fmt::format(
       "Actor with id {:#x} is not attached to any of users", formId));
@@ -305,30 +304,32 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
                            Networking::PacketData data, size_t length)
 {
-  auto this_ = reinterpret_cast<PartOne*>(partOneInstance);
+  auto _this = reinterpret_cast<PartOne*>(partOneInstance);
 
   switch (packetType) {
     case Networking::PacketType::ServerSideUserConnect:
-      return this_->AddUser(userId, UserType::User);
+      return _this->AddUser(userId, UserType::User);
     case Networking::PacketType::ServerSideUserDisconnect: {
-      ScopedTask t([userId, this_] {
+      ScopedTask t([userId, _this] {
         // formId or entitt ??
-        if (auto actor = this_->serverState.ActorByUser(userId)) {
-          if (this_->animationSystem) {
-            this_->animationSystem->ClearInfo(actor);
-          }
+        const uint32_t formId = _this->serverState.GetFormIdByUserId(userId);
+        auto [actor, objectReference] =
+          _this->worldState.Get<MpActor, MpObjectReference>(formId);
+        if (_this->animationSystem) {
+          _this->animationSystem->ClearInfo(objectReference);
         }
-        this_->serverState.Disconnect(userId);
-        this_->serverState.disconnectingUserId = Networking::InvalidUserId;
+        _this->serverState.Disconnect(userId);
+        _this->serverState.disconnectingUserId = Networking::InvalidUserId;
       });
 
-      this_->serverState.disconnectingUserId = userId;
-      for (auto& listener : this_->worldState.listeners)
+      _this->serverState.disconnectingUserId = userId;
+      for (const auto& listener : _this->worldState.GetListeners()) {
         listener->OnDisconnect(userId);
+      }
       return;
     }
     case Networking::PacketType::Message:
-      return this_->HandleMessagePacket(userId, data, length);
+      return _this->HandleMessagePacket(userId, data, length);
     default:
       throw std::runtime_error("Unexpected PacketType: " +
                                std::to_string((int)packetType));
@@ -392,29 +393,29 @@ void PartOne::NotifyGamemodeApiStateChanged(
 
 FormCallbacks PartOne::CreateFormCallbacks()
 {
-  auto st = &serverState;
-
   FormCallbacks::SubscribeCallback
     subscribe =
-      [this](MpObjectReference* emitter, MpObjectReference* listener) {
-        return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
+      [this](uint32_t emitterFormId, uint32_t listenerFormId) {
+        return pImpl->onSubscribe(pImpl->sendTarget, emitterFormId,
+                                  listenerFormId);
       },
-    unsubscribe = [this](MpObjectReference* emitter,
-                         MpObjectReference* listener) {
-      return pImpl->onUnsubscribe(pImpl->sendTarget, emitter, listener);
+    unsubscribe = [this](uint32_t emitterFormId, uint32_t listenerFormId) {
+      return pImpl->onUnsubscribe(pImpl->sendTarget, emitterFormId,
+                                  listenerFormId);
     };
 
-  FormCallbacks::SendToUserFn sendToUser =
-    [this, st](entity_t entity, const void* data, size_t size, bool reliable) {
-      Networking::UserId targetUserId = st->GetUserIdByEntity(entity);
-      if (ServerState::Valid(targetUserId) &&
-          st->disconnectingUserId != targetUserId) {
-        pImpl->sendTarget->Send(targetUserId,
-                                reinterpret_cast<Networking::PacketData>(data),
-                                size, reliable);
-      }
-    };
-
+  FormCallbacks::SendToUserFn sendToUser = [this, pServerState = &serverState](
+                                             uint32_t targetFormId,
+                                             const void* data, size_t size,
+                                             bool reliable) {
+    Networking::UserId targetUserId =
+      pServerState->GetUserIdByFormId(targetFormId);
+    if (ServerState::Valid(targetUserId) &&
+        !pServerState->IsUserDisconnecting(targetUserId)) {
+      const auto& packetData = reinterpret_cast<Networking::PacketData>(data);
+      pImpl->sendTarget->Send(targetUserId, packetData, size, reliable);
+    }
+  };
   return { subscribe, unsubscribe, sendToUser };
 }
 
@@ -425,9 +426,9 @@ ActionListener& PartOne::GetActionListener()
 }
 
 const std::vector<std::shared_ptr<PartOne::Listener>>& PartOne::GetListeners()
-  const
+  const noexcept
 {
-  return worldState.listeners;
+  return worldState.GetListeners();
 }
 
 std::vector<PartOne::Message>& PartOne::Messages()
@@ -439,22 +440,19 @@ void PartOne::Init()
 {
   pImpl.reset(new Impl);
   pImpl->logger.reset(new spdlog::logger{ "empty logger" });
-
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
                               uint32_t emitterFormId,
                               uint32_t listenerFormId) {
-    auto& [emitterActor, emitterObjectReference] =
-      worldState.Get<MpObjectReference>(emitterFormId);
+    auto [emitterActor, emitterObjectReference] =
+      worldState.Get<MpActor, MpObjectReference>(emitterFormId);
     auto [listenerActor, listenerObjectReference] =
       worldState.Get<MpActor, MpObjectReference>(listenerFormId);
 
-    // entity or formId
     Networking::UserId listenerUserId =
       serverState.GetUserIdByFormId(listenerObjectReference.GetFormId());
     if (!ServerState::Valid(listenerUserId)) {
       return;
     }
-
     const NiPoint3& emitterPos = emitterObjectReference.GetPos();
     const NiPoint3& emitterRot = emitterObjectReference.GetAngle();
 
@@ -462,7 +460,6 @@ void PartOne::Init()
       listenerObjectReference.GetFormId();
 
     std::string jEquipment, jAppearance;
-
     const char *appearancePrefix = "", *appearance = "";
     jAppearance = emitterActor.GetAppearanceAsJson();
     if (!jAppearance.empty()) {
@@ -489,16 +486,16 @@ void PartOne::Init()
 
     const char* baseIdPrefix = "";
     char baseId[32] = { 0 };
-    if (emitter->GetBaseId() != 0x00000000 &&
-        emitter->GetBaseId() != 0x00000007) {
+    if (emitterObjectReference.GetBaseId() != 0x00000000 &&
+        emitterObjectReference.GetBaseId() != 0x00000007) {
       baseIdPrefix = R"(, "baseId": )";
-      sprintf(baseId, "%u", emitter->GetBaseId());
+      sprintf(baseId, "%u", emitterObjectReference.GetBaseId());
     }
 
-    const bool isOwner = emitter == listener;
+    const bool isOwner = emitterObjectReference.GetBaseId() ==
+      listenerObjectReference.GetBaseId();
 
     std::string props;
-
     auto mode = VisitPropertiesMode::OnlyPublic;
     if (isOwner) {
       mode = VisitPropertiesMode::All;
@@ -532,30 +529,30 @@ void PartOne::Init()
       props += R"(": )";
       props += jsonValue;
     };
-    emitter->VisitProperties(visitor, mode);
+    emitterObjectReference.VisitProperties(visitor, mode);
 
-    const bool hasUser = emitterAsActor &&
-      // entity or formId
-      serverState.UserByActor(emitterAsActor) != Networking::InvalidUserId;
-    auto hosterIterator = worldState.hosters.find(emitter->GetFormId());
+    const bool hasUser = ServerState::Valid(
+      serverState.GetUserIdByFormId(emitterObjectReference.GetFormId()));
 
+    auto hosterIterator =
+      worldState.hosters.find(emitterObjectReference.GetFormId());
     if (hasUser ||
         (hosterIterator != worldState.hosters.end() &&
          hosterIterator->second != 0 &&
-         hosterIterator->second != listener->GetFormId())) {
+         hosterIterator->second != listenerObjectReference.GetFormId())) {
       visitor("isHostedByOther", "true");
     }
 
     const char* method = "createActor";
 
     uint32_t worldOrCell =
-      emitter->GetCellOrWorld().ToFormId(worldState.espmFiles);
+      emitterObjectReference.GetCellOrWorld().ToFormId(worldState.espmFiles);
 
     // See 'perf: improve game framerate #1186'
     // Client needs to know if it is DOOR or not
     const char* baseRecordTypePrefix = "";
     std::string baseRecordType;
-    if (const std::string& baseType = emitter->GetBaseType();
+    if (const std::string& baseType = emitterObjectReference.GetBaseType();
         baseType == "DOOR") {
       baseRecordTypePrefix = R"(, "baseRecordType": )";
       baseRecordType = '"' + baseType + '"';
@@ -565,28 +562,27 @@ void PartOne::Init()
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
     [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s})",
-      method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
-      emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
+      method, emitterObjectReference.GetIdx(), isMe ? "true" : "false",
+      emitterPos.x, emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y,
+      emitterRot.z, worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
       appearancePrefix, appearance, equipmentPrefix, equipment, refrIdPrefix,
       refrId, baseIdPrefix, baseId, propsPrefix, props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
-                                MpObjectReference* emitter,
-                                MpObjectReference* listener) {
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor) {
-      return;
-    }
-
-    // entity or formId ??
-    auto listenerUserId = serverState.UserByActor(listenerAsActor);
-    if (listenerUserId != Networking::InvalidUserId &&
+                                uint32_t emitterFormId,
+                                uint32_t listenerFormId) {
+    auto [listenerActor, listenerObjectReference] =
+      worldState.Get<MpActor, MpObjectReference>(listenerFormId);
+    auto [emitterActor, emitterObjectReference] =
+      worldState.Get<MpActor, MpObjectReference>(listenerFormId);
+    const Networking::UserId listenerUserId =
+      serverState.GetUserIdByFormId(listenerObjectReference.GetFormId());
+    if (ServerState::Valid(listenerUserId) &&
         listenerUserId != serverState.disconnectingUserId) {
       Networking::SendFormatted(sendTarget, listenerUserId,
                                 R"({"type": "destroyActor", "idx": %u})",
-                                emitter->GetIdx());
+                                emitterObjectReference.GetIdx());
     }
   };
 }
@@ -594,7 +590,7 @@ void PartOne::Init()
 void PartOne::AddUser(Networking::UserId userId, UserType type)
 {
   serverState.Connect(userId);
-  for (auto& listener : worldState.listeners) {
+  for (const auto& listener : worldState.GetListeners()) {
     listener->OnConnect(userId);
   }
 
@@ -610,8 +606,8 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
                                   Networking::PacketData data, size_t length)
 {
   if (!serverState.IsConnected(userId)) {
-    throw std::runtime_error("User with id " + std::to_string(userId) +
-                             " doesn't exist");
+    throw std::runtime_error(
+      fmt::format("User with id {:x} does not exist", userId));
   }
   if (!pImpl->packetParser) {
     pImpl->packetParser.reset(new PacketParser);

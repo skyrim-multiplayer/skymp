@@ -41,9 +41,10 @@ bool ServerState::IsConnected(Networking::UserId userId) const noexcept
 
 void ServerState::EnsureUserExists(Networking::UserId userId) const
 {
-  if (connectionMask.size() <= userId || !connectionMask[userId])
+  if (connectionMask.size() <= userId || !connectionMask[userId]) {
     throw std::runtime_error(
       fmt::format("User with id {:x} doesn't exist", userId));
+  }
 }
 
 // ATTENTION
@@ -113,4 +114,9 @@ void ServerState::Erase(Networking::UserId userId) noexcept
     userIdByEntity.erase(formId);
     formIds[userId] = kInvalidFormId;
   }
+}
+
+bool ServerState::IsUserDisconnecting(uint32_t userId) const noexcept
+{
+  return disconnectingUserId == userId;
 }
