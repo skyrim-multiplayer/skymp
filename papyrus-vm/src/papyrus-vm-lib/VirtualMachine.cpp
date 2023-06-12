@@ -245,7 +245,7 @@ VarValue VirtualMachine::CallStatic(
   }
   if (!function.valid) {
     throw std::runtime_error("Function is not valid - '" +
-                               std::string(functionName) + "'");
+                             std::string(functionName) + "'");
   }
 
   return result;
