@@ -227,6 +227,9 @@ const main = async () => {
     // At this moment we don't have any custom packets
   });
 
+  // It's important to call this before gamemode
+  server.attachSaveStorage();
+
   const clear = () => server.clear();
 
   const toAbsolute = (p: string) => {
@@ -289,7 +292,6 @@ const main = async () => {
       console.error("Error happened in chokidar watch", error);
     });
   }
-  server.attachSaveStorage();
 };
 
 main();
