@@ -19,7 +19,8 @@ public:
   VarValue ShowRaceMenu(VarValue self, const std::vector<VarValue>& arguments);
   VarValue ShowLimitedRaceMenu(VarValue self,
                                const std::vector<VarValue>& arguments);
-  VarValue GetCameraState(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetCameraState(VarValue self,
+                          const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override

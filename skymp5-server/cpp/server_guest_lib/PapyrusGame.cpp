@@ -86,12 +86,16 @@ VarValue PapyrusGame::ShowLimitedRaceMenu(
   return VarValue::None();
 }
 
-VarValue PapyrusGame::GetCameraState(VarValue self, const std::vector<VarValue>& arguments) {
+VarValue PapyrusGame::GetCameraState(VarValue self,
+                                     const std::vector<VarValue>& arguments)
+{
   auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
   if (auto actor = compatibilityPolicy->GetDefaultActor(
         GetName(), "GetCameraState", self.GetMetaStackId())) {
-          Viet::Promise<VarValue> promise = SpSnippet(GetName(), "GetCameraState", serializedArgs.data()).Execute(actor);
-          return VarValue(Viet::Promise<VarValue>(promise));
+    Viet::Promise<VarValue> promise =
+      SpSnippet(GetName(), "GetCameraState", serializedArgs.data())
+        .Execute(actor);
+    return VarValue(Viet::Promise<VarValue>(promise));
   }
   return VarValue(-1);
 }

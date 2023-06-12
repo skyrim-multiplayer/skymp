@@ -55,16 +55,16 @@ public:
     if (value.promise) {
       Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
 
-      value.promise->Then(
-            [deferred, espmFilenames](const VarValue& v) {
-              auto value = GetJsValueFromPapyrusValue(deferred.Env(), v, espmFilenames);
-              deferred.Resolve(value);
-            });
+      value.promise->Then([deferred, espmFilenames](const VarValue& v) {
+        auto value =
+          GetJsValueFromPapyrusValue(deferred.Env(), v, espmFilenames);
+        deferred.Resolve(value);
+      });
 
       value.promise->Catch([deferred, espmFilenames](const char* what) {
-            auto error = Napi::String::New(deferred.Env(), what);
-            deferred.Reject(error);
-          });
+        auto error = Napi::String::New(deferred.Env(), what);
+        deferred.Reject(error);
+      });
       return deferred.Promise();
     }
     switch (value.GetType()) {
