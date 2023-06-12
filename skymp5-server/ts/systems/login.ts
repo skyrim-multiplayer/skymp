@@ -61,11 +61,20 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
-        const discordAuth = Settings.get().discordAuth;
+        let discordAuth = Settings.get().discordAuth;
         const profile = await this.getUserProfile(gameData.session);
         console.log("getUserProfileId:", profile);
 
         let roles = new Array<string>();
+
+        if (discordAuth && !discordAuth.botToken) {
+          discordAuth = undefined;
+          console.error("discordAuth.botToken is missing, skipping Discord server integration");
+        }
+        if (discordAuth && !discordAuth.guildId) {
+          discordAuth = undefined;
+          console.error("discordAuth.guildId is missing, skipping Discord server integration");
+        }
 
         if (discordAuth) {
           if (!profile.discordId) {

@@ -86,21 +86,21 @@ function requireUncached(
 
         // In native module we now register mp-api methods into the ScampServer class
         // This workaround allows code that is bound to global 'mp' object to run
-        globalThis.mp = globalThis.mp || {};
-        globalThis.mp.getLocalizedString = (...args: unknown[]) => (server as any).getLocalizedString(...args);
-        globalThis.mp.getServerSettings = (...args: unknown[]) => (server as any).getServerSettings(...args);
-        globalThis.mp.clear = (...args: unknown[]) => (server as any).clear(...args);
-        globalThis.mp.makeProperty = (...args: unknown[]) => (server as any).makeProperty(...args);
-        globalThis.mp.makeEventSource = (...args: unknown[]) => (server as any).makeEventSource(...args);
-        globalThis.mp.get = (...args: unknown[]) => (server as any).get(...args);
-        globalThis.mp.set = (...args: unknown[]) => (server as any).set(...args);
-        globalThis.mp.place = (...args: unknown[]) => (server as any).place(...args);
-        globalThis.mp.lookupEspmRecordById = (...args: unknown[]) => (server as any).lookupEspmRecordById(...args);
-        globalThis.mp.getEspmLoadOrder = (...args: unknown[]) => (server as any).getEspmLoadOrder(...args);
-        globalThis.mp.getDescFromId = (...args: unknown[]) => (server as any).getDescFromId(...args);
-        globalThis.mp.getIdFromDesc = (...args: unknown[]) => (server as any).getIdFromDesc(...args);
-        globalThis.mp.callPapyrusFunction = (...args: unknown[]) => (server as any).callPapyrusFunction(...args);
-        globalThis.mp.registerPapyrusFunction = (...args: unknown[]) => (server as any).registerPapyrusFunction(...args);
+        globalThis.mp = globalThis.mp || server;
+        // globalThis.mp.getLocalizedString = (...args: unknown[]) => (server as any).getLocalizedString(...args);
+        // globalThis.mp.getServerSettings = (...args: unknown[]) => (server as any).getServerSettings(...args);
+        // globalThis.mp.clear = (...args: unknown[]) => (server as any).clear(...args);
+        // globalThis.mp.makeProperty = (...args: unknown[]) => (server as any).makeProperty(...args);
+        // globalThis.mp.makeEventSource = (...args: unknown[]) => (server as any).makeEventSource(...args);
+        // globalThis.mp.get = (...args: unknown[]) => (server as any).get(...args);
+        // globalThis.mp.set = (...args: unknown[]) => (server as any).set(...args);
+        // globalThis.mp.place = (...args: unknown[]) => (server as any).place(...args);
+        // globalThis.mp.lookupEspmRecordById = (...args: unknown[]) => (server as any).lookupEspmRecordById(...args);
+        // globalThis.mp.getEspmLoadOrder = (...args: unknown[]) => (server as any).getEspmLoadOrder(...args);
+        // globalThis.mp.getDescFromId = (...args: unknown[]) => (server as any).getDescFromId(...args);
+        // globalThis.mp.getIdFromDesc = (...args: unknown[]) => (server as any).getIdFromDesc(...args);
+        // globalThis.mp.callPapyrusFunction = (...args: unknown[]) => (server as any).callPapyrusFunction(...args);
+        // globalThis.mp.registerPapyrusFunction = (...args: unknown[]) => (server as any).registerPapyrusFunction(...args);
 
         requireTemp(module);
         return;
