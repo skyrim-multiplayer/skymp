@@ -1,6 +1,6 @@
 import { PlayerController } from '../../PlayerController';
 import { GameModeListener } from '../GameModeListener';
-import { Mp } from '../../../types/mp';
+import { Mp, PapyrusObject } from '../../../types/mp';
 import { Ctx } from '../../../types/ctx';
 import { EvalProperty } from '../../../props/evalProperty';
 
@@ -16,23 +16,26 @@ export class DoorActivation implements GameModeListener {
     targetObjectDesc: string,
     targetId: number
   ): 'continue' | 'blockActivation' {
-    EvalProperty.eval(
-      casterActorId,
-      () => {
-        const form = ctx.sp.Game.getForm(target);
-        if (form) {
-          const targetReference = ctx.sp.ObjectReference.from(form);
-          if (targetReference) {;
-            const baseObject = targetReference.getBaseObject();
-            if (baseObject) {
-              if (baseObject.getType() === 29)
-                ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), 'IdleActivateDoor');
-            }
-          }
-        }
-      },
-      { target: targetId }
-    );
+    const caster: PapyrusObject = {
+      type: "form",
+      desc: mp.getDescFromId(casterActorId)
+    };
+
+    const base = mp.callPapyrusFunction("method", "ObjectReference", "GetBaseObject", {type: "form", desc: targetObjectDesc}, []);
+    const type = mp.callPapyrusFunction("method", "Form", "GetType", base as PapyrusObject, []);
+    if (type !== 29) {
+      return "continue";
+    }
+    mp.callPapyrusFunction("global", "SkyMP", "SetDefaultActor", null, [caster]); // todo: should be detected automatically?
+    
+    (mp.callPapyrusFunction("global", "Game", "GetCameraState", null, []) as unknown as Promise<any>).then((state) => {
+      const isFirstPerson = state === 0;
+      if (!isFirstPerson) {
+        mp.callPapyrusFunction("global", "Debug", "SendAnimationEvent", null, [caster, "IdleActivateDoor"]);
+      }
+    });
+
+    mp.callPapyrusFunction("global", "SkyMP", "SetDefaultActor", null, [null]);
 
     return 'continue';
   }
