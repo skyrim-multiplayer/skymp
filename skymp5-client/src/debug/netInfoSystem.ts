@@ -43,14 +43,14 @@ class NetInfoTexts {
   public static readonly Name = "netInfoTexts";
 
   constructor(
-    public readonly connectionStaticTextId = sp.createText(100, 350, "connection:", [255, 255, 255, 1], "Tavern"),
-    public readonly connectionStateTextId = sp.createText(220, 350, "", [255, 255, 255, 1], "Tavern"),
-    public readonly receivedPacketStaticTextId = sp.createText(120, 390, "incoming (p/s):", [255, 255, 255, 1], "Tavern"),
-    public readonly receivedPacketAmountTextId = sp.createText(250, 390, "", [255, 255, 255, 1], "Tavern"),
-    public readonly sentPacketStaticTextId = sp.createText(120, 430, "outgoing (p/s):", [255, 255, 255, 1], "Tavern"),
-    public readonly sentPacketAmountTextId = sp.createText(250, 430, "", [255, 255, 255, 1], "Tavern"),
-    public readonly localPositionLagStaticTextId = sp.createText(90, 470, "local lag:", [255, 255, 255, 1], "Tavern"),
-    public readonly localPositionLagAmountTextId = sp.createText(250, 470, "", [255, 255, 255, 1], "Tavern"),
+    public readonly connectionStaticTextId = sp.createText(100, 350, "connection:", [255, 255, 255, 1]),
+    public readonly connectionStateTextId = sp.createText(220, 350, "", [255, 255, 255, 1]),
+    public readonly receivedPacketStaticTextId = sp.createText(120, 390, "incoming (p/s):", [255, 255, 255, 1]),
+    public readonly receivedPacketAmountTextId = sp.createText(250, 390, "", [255, 255, 255, 1]),
+    public readonly sentPacketStaticTextId = sp.createText(120, 430, "outgoing (p/s):", [255, 255, 255, 1]),
+    public readonly sentPacketAmountTextId = sp.createText(250, 430, "", [255, 255, 255, 1]),
+    public readonly localPositionLagStaticTextId = sp.createText(90, 470, "local lag:", [255, 255, 255, 1]),
+    public readonly localPositionLagAmountTextId = sp.createText(250, 470, "", [255, 255, 255, 1]),
   ) { }
 
   public clear(): void {

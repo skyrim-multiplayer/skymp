@@ -1530,7 +1530,7 @@ export declare class HttpClient {
     post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
 }
 
-export declare function createText(xPos: number, yPos: number, text: string, color: number[], name: string): number;
+export declare function createText(xPos: number, yPos: number, text: string, color: number[], name?: string): number; //default name is Tavern
 export declare function destroyText(textId: number): void;
 export declare function destroyAllTexts(): void;
 export declare function setTextPos(textId: number, xPos: number, yPos: number): void;

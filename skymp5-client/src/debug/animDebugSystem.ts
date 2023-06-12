@@ -35,7 +35,7 @@ class AnimQueueCollection {
 
     this.list = new Array<AnimListItem>(arrayLength);
     for (let idx = 0; idx < arrayLength; ++idx) {
-      this.list[idx] = { name: "", textId: sp.createText(startPos.x, y, "", animationSucceededTextColor, "Tavern"), color: animationSucceededTextColor };
+      this.list[idx] = { name: "", textId: sp.createText(startPos.x, y, "", animationSucceededTextColor), color: animationSucceededTextColor };
       y += yPosDelta;
     }
   }

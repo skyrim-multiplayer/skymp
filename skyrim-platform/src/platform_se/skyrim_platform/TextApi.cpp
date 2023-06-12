@@ -11,14 +11,25 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   auto argString = converter.from_bytes(static_cast<std::string>(args[3]));
-  auto argFontName = converter.from_bytes(static_cast<std::string>(args[5]));
 
-  for (int i = 0; i < 4; i++) {
+  std::wstring fontName;
+
+  if (args[5].GetType() != JsValue::Type::String)
+  {
+    fontName = L"Tavern";
+  }
+  else
+  {
+    fontName = converter.from_bytes(static_cast<std::string>(args[5]));
+  }
+
+  for (int i = 0; i < 4; i++)
+  {
     argColor[i] = args[4].GetProperty(i);
   }
 
   return JsValue(TextsCollection::GetSingleton().CreateText(
-    argPosX, argPosY, argString, argColor, argFontName));
+    argPosX, argPosY, argString, argColor, fontName));
 }
 
 JsValue TextApi::DestroyText(const JsFunctionArguments& args)
