@@ -37,12 +37,13 @@ TEST_CASE(
 //   changeForm.spawnPoint.rot = { 1, 2, 4 };
 //   changeForm.spawnDelay = 8.0f;
 
-//   MpActor actor(LocationalData(), FormCallbacks::DoNothing(), std::nullopt, 0xff000000);
-//   actor.ApplyChangeForm(changeForm);
+//   MpActor actor(LocationalData(), FormCallbacks::DoNothing(), std::nullopt,
+//   0xff000000); actor.ApplyChangeForm(changeForm);
 
 //   REQUIRE(actor.GetChangeForm().isRaceMenuOpen == true);
-//   REQUIRE(actor.GetChangeForm().equipmentDump == R"({"inv": {"entries":[]}})");
-//   REQUIRE(actor.GetChangeForm().appearanceDump == Appearance().ToJson());
+//   REQUIRE(actor.GetChangeForm().equipmentDump == R"({"inv":
+//   {"entries":[]}})"); REQUIRE(actor.GetChangeForm().appearanceDump ==
+//   Appearance().ToJson());
 //   REQUIRE(actor.GetChangeForm().actorValues.healthPercentage == 1.0f);
 //   REQUIRE(actor.GetChangeForm().actorValues.magickaPercentage == 0.9f);
 //   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 0.0f);

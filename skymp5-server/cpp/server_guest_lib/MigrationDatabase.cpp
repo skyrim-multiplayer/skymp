@@ -18,7 +18,9 @@ size_t MigrationDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
   return pImpl->newDatabase->Upsert(changeForms);
 }
 
-std::optional<MpChangeForm> MigrationDatabase::FindOne(const FormDesc &formDesc) {
+std::optional<MpChangeForm> MigrationDatabase::FindOne(
+  const FormDesc& formDesc)
+{
   auto result = pImpl->newDatabase->FindOne(formDesc);
   if (result) {
     return result;

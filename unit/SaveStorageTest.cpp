@@ -142,8 +142,9 @@ TEST_CASE("AttachSaveStorage forces loading", "[save]")
   PartOne p;
   p.worldState.espmFiles = { "AaAaAa.esm" };
   p.worldState.AddForm(
-    std::unique_ptr<MpObjectReference>(new MpObjectReference(
-      LocationalData(), FormCallbacks::DoNothing(), 0xaaaa, "STAT", std::nullopt)),
+    std::unique_ptr<MpObjectReference>(
+      new MpObjectReference(LocationalData(), FormCallbacks::DoNothing(),
+                            0xaaaa, "STAT", std::nullopt)),
     0xee);
 
   auto& refr = p.worldState.GetFormAt<MpObjectReference>(0xee);

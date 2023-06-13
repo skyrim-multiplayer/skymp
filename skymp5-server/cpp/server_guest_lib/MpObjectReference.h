@@ -63,7 +63,8 @@ public:
   MpObjectReference(
     const LocationalData& locationalData, const FormCallbacks& callbacks,
     uint32_t baseId, std::string baseType,
-    std::optional<MpChangeForm> changeForm, // if set, overrides all other values
+    std::optional<MpChangeForm>
+      changeForm, // if set, overrides all other values
     std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt);
 
   const NiPoint3& GetPos() const override;

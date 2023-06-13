@@ -54,7 +54,7 @@ public:
                bool skipChecks = false);
 
   void LoadFFChangeForm(const MpChangeForm& changeForm,
-                      const FormCallbacks& callbacks);
+                        const FormCallbacks& callbacks);
 
   void Tick();
 
@@ -190,7 +190,7 @@ private:
 
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         espm::RecordHeader* record,
-                        const espm::IdMapping& mapping, 
+                        const espm::IdMapping& mapping,
                         std::optional<MpChangeForm> changeFormToApply);
 
   bool LoadForm(uint32_t formId);

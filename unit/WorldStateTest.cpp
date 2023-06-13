@@ -125,7 +125,8 @@ TEST_CASE("DestroyForm failures", "[WorldState]")
 //   WorldState worldState;
 //   worldState.espmFiles = { "Skyrim.esm" };
 //   auto newRefr = new MpObjectReference(
-//     LocationalData(), FormCallbacks::DoNothing(), 0x0000ded0, "STAT", std::nullopt);
+//     LocationalData(), FormCallbacks::DoNothing(), 0x0000ded0, "STAT",
+//     std::nullopt);
 //   worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
 
 //   MpChangeForm changeForm;
@@ -134,7 +135,8 @@ TEST_CASE("DestroyForm failures", "[WorldState]")
 
 //   REQUIRE_THROWS_WITH(
 //     worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing()),
-//     ContainsSubstring("Anomally, baseId should never change (ded0 => abcd)"));
+//     ContainsSubstring("Anomally, baseId should never change (ded0 =>
+//     abcd)"));
 // }
 
 extern PartOne& GetPartOne();

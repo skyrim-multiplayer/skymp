@@ -15,7 +15,7 @@ public:
   // saving succeed.
   virtual size_t Upsert(const std::vector<MpChangeForm>& changeForms) = 0;
 
-  virtual std::optional<MpChangeForm> FindOne(const FormDesc &formDesc) = 0;
+  virtual std::optional<MpChangeForm> FindOne(const FormDesc& formDesc) = 0;
 
   virtual void Iterate(const IterateCallback& iterateCallback) = 0;
 };

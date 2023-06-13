@@ -118,8 +118,11 @@ void AsyncSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
   pImpl->share3.upsertTasks.push_back({ changeForms, cb });
 }
 
-std::optional<MpChangeForm> AsyncSaveStorage::FindOneSync(const FormDesc& formDesc) {
-  if (auto it = pImpl->changeFormsForDeferredLoad.find(formDesc.ToString()); it != pImpl->changeFormsForDeferredLoad.end()) {
+std::optional<MpChangeForm> AsyncSaveStorage::FindOneSync(
+  const FormDesc& formDesc)
+{
+  if (auto it = pImpl->changeFormsForDeferredLoad.find(formDesc.ToString());
+      it != pImpl->changeFormsForDeferredLoad.end()) {
     return it->second;
   }
   std::lock_guard l(pImpl->share.m);

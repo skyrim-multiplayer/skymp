@@ -15,7 +15,8 @@ public:
   virtual void IterateSync(const IterateSyncCallback& cb) = 0;
   virtual void Upsert(const std::vector<MpChangeForm>& changeForms,
                       const UpsertCallback& cb) = 0;
-  virtual std::optional<MpChangeForm> FindOneSync(const FormDesc& formDesc) = 0;
+  virtual std::optional<MpChangeForm> FindOneSync(
+    const FormDesc& formDesc) = 0;
   virtual uint32_t GetNumFinishedUpserts() const = 0;
   virtual void Tick() = 0;
 };

@@ -16,7 +16,8 @@ public:
   const char* GetFormType() const override { return "Actor"; }
 
   MpActor(const LocationalData& locationalData_,
-          const FormCallbacks& calbacks_, std::optional<MpChangeForm> changeForm, uint32_t optBaseId = 0);
+          const FormCallbacks& calbacks_,
+          std::optional<MpChangeForm> changeForm, uint32_t optBaseId = 0);
 
   const bool& IsRaceMenuOpen() const;
   const bool& IsDead() const;

@@ -33,7 +33,8 @@ struct MpActor::Impl
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
-                 const FormCallbacks& callbacks_, std::optional<MpChangeForm> changeForm, uint32_t optBaseId)
+                 const FormCallbacks& callbacks_,
+                 std::optional<MpChangeForm> changeForm, uint32_t optBaseId)
   : MpObjectReference(locationalData_, callbacks_,
                       optBaseId == 0 ? 0x7 : optBaseId, "NPC_", changeForm)
 {

@@ -938,7 +938,7 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId)
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
     mode);
-  
+
   if (initialChangeForm) {
     ApplyChangeForm(*initialChangeForm);
   }

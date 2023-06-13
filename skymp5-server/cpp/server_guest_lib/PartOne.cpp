@@ -310,8 +310,8 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
   });
 
   spdlog::info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
-                      "(Including {} player characters). {} skipped for later",
-                      clock() - was, n, numPlayerCharacters, nSkipped);
+               "(Including {} player characters). {} skipped for later",
+               clock() - was, n, numPlayerCharacters, nSkipped);
 }
 
 espm::Loader& PartOne::GetEspm() const
