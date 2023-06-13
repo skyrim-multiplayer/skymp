@@ -301,6 +301,13 @@ public:
 };
 static_assert(sizeof(REFR) == sizeof(RecordHeader));
 
+class ACHR : public RecordHeader
+{
+public:
+  static constexpr auto kType = "ACHR";
+};
+static_assert(sizeof(ACHR) == sizeof(RecordHeader));
+
 class CONT : public RecordHeader
 {
 public:

@@ -132,6 +132,7 @@ export interface ServerSettings {
   };
   discordAuth?: {
     baseKitRoleId?: string;
+    adminRoleId?: string;
   }
 
   readonly [key: string]: unknown;

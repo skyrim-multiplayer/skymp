@@ -39,7 +39,6 @@ export class TpCommand extends Command {
                 this.teleportPlayer(actorId, command); // command here is the teleport name
         }
     }
-
     printHelp(actorId: number): void {
         const helpMessage = [
             "/tp <teleport_name> - moves player to the saved location named teleport_name.",
