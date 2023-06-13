@@ -337,7 +337,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 bool WorldState::LoadForm(uint32_t formId)
 {
   if (!pImpl->saveStorage) {
-    spdlog::warn("LoadForm {:x} - Called before save storage attach", formId);
+    // Too much logs in unit tests here so once_flag is used
+    static std::once_flag g_flag;
+    std::call_once(g_flag, [formId] {
+      spdlog::warn("LoadForm {:x} - Called before save storage attach", formId);
+    });
     //return false;
   }
   
