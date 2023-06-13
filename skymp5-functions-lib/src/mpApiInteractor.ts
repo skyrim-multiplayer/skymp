@@ -1,15 +1,15 @@
+import { Percentages, Counter } from "./logic/PlayerController";
 import { GameModeListener } from "./logic/listeners/gameModeListener";
-import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/listeners/sweetpie/SweetPieRound";
-import { ChatMessage, ChatNeighbor, ChatProperty } from "./props/chatProperty";
+import { ChatProperty, ChatMessage } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
-import { LocationalData, Mp, PapyrusObject } from "./types/mp";
-import { ChatSettings } from "./types/settings";
+import { Mp, LocationalData } from "./types/mp";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
+
 
 declare const mp: Mp;
 declare const ctx: Ctx;

@@ -1,9 +1,9 @@
 import { sprintf } from "sprintf-js";
-import { createSystemMessage} from "../../../props/chatProperty";
-import { GameModeListener } from "../gameModeListener";
+import { createSystemMessage } from "../../../props/chatProperty";
 import { PlayerController } from "../../PlayerController";
+import { GameModeListener } from "../gameModeListener";
 import { SweetPieMap } from "./SweetPieMap";
-import { forceLeaveRound, getPlayerCurrentRound, getAvailableRound, forceJoinRound, determineDeathMatchWinners, SweetPieRound } from "./SweetPieRound";
+import { SweetPieRound, forceLeaveRound, getAvailableRound, forceJoinRound, getPlayerCurrentRound, determineDeathMatchWinners } from "./SweetPieRound";
 
 export class SweetPieGameModeListener implements GameModeListener {
   readonly coinFormId = 0xf;
@@ -51,6 +51,7 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayersToStart: number = 5) {
     this.rounds = this.controller.getRoundsArray();
+    this.roundsLast = "";
     if (this.rounds.length === 0) {
       maps.forEach(map => this.rounds.push({ state: 'wait', map: map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }));
     } else {
@@ -297,7 +298,10 @@ export class SweetPieGameModeListener implements GameModeListener {
         }
       }
     }
-    this.controller.setRoundsArray(this.rounds);
+    if (JSON.stringify(this.rounds) !== this.roundsLast) {
+      this.controller.setRoundsArray(this.rounds);
+      this.roundsLast = JSON.stringify(this.rounds);
+    }
   }
 
   onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
@@ -342,4 +346,5 @@ export class SweetPieGameModeListener implements GameModeListener {
   };
 
   private rounds: SweetPieRound[];
+  private roundsLast: string;
 }

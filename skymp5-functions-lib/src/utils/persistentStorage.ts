@@ -1,8 +1,15 @@
-import { Mp } from '../types/mp';
 import { SweetPieRound } from "../logic/listeners/sweetpie/SweetPieRound";
-import * as fs from "fs";
+import { Mp, LocationalData } from "../types/mp";
 
 declare const mp: Mp;
+
+// A world object: HonningBrew Boilery entrance.
+// Used to store data as private vars
+const storeObject = 0x7d7a8;
+
+interface TeleportData {
+  [key: string]: LocationalData;
+}
 
 export class PersistentStorage {
   static getSingleton(): PersistentStorage {
@@ -13,11 +20,10 @@ export class PersistentStorage {
   }
 
   get rounds(): SweetPieRound[] {
-    const str = this.readFileSync("data/persistentStorage.json");
-    const obj = this.parse(str);
-    if (Array.isArray(obj['rounds']) && !obj['rounds'].find((x) => typeof x !== 'object')) {
+    const roundsData = mp.get(storeObject, "private.rounds") || [];
+    if (Array.isArray(roundsData) && !roundsData.find((x) => typeof x !== 'object')) {
       const rounds: SweetPieRound[] = [];
-      for (const round of obj['rounds']) {
+      for (const round of roundsData) {
         const players = new Map<number, { kills?: number }>();
         for (const obj of round['players']) {
           players.set(
@@ -39,8 +45,6 @@ export class PersistentStorage {
   }
 
   set rounds(newValue: SweetPieRound[]) {
-    const str = this.readFileSync("data/persistentStorage.json");
-    const obj = this.parse(str);
     const rounds = new Array();
     for (const round of newValue) {
       const players = new Array();
@@ -55,62 +59,40 @@ export class PersistentStorage {
         players: players
       });
     }
-    obj['rounds'] = rounds;
-    fs.writeFileSync("data/persistentStorage.json", JSON.stringify(obj, null, 2));
+    mp.set(storeObject, "private.rounds", rounds);
   }
 
   get reloads(): number {
-    const str = this.readFileSync("data/persistentStorage.json");
-    const obj = this.parse(str);
-    return typeof obj['reloads'] === 'number' ? obj['reloads'] : 0;
+    return mp.get(storeObject, "private.reloads") || 0;
   }
 
   set reloads(newValue: number) {
-    const str = this.readFileSync('data/persistentStorage.json');
-    const obj = this.parse(str);
-    obj['reloads'] = newValue;
-    fs.writeFileSync("data/persistentStorage.json", JSON.stringify(obj, null, 2));
+    mp.set(storeObject, "private.reloads", newValue);
   }
 
   get onlinePlayers(): number[] {
-    const str = this.readFileSync('data/persistentStorage.json');
-    const obj = this.parse(str);
-    if (Array.isArray(obj['onlinePlayers'])) {
-      if (obj['onlinePlayers'].filter((x) => typeof x === 'number').length === obj['onlinePlayers'].length) {
-        return obj['onlinePlayers'];
+    const onlinePlayersData = mp.get(storeObject, "private.onlinePlayers") || [];
+    if (Array.isArray(onlinePlayersData)) {
+      if (onlinePlayersData.filter((x) => typeof x === 'number').length === onlinePlayersData.length) {
+        return onlinePlayersData;
       }
     }
     return [];
   }
 
   set onlinePlayers(newValue: number[]) {
-    const str = this.readFileSync('data/persistentStorage.json');
-    const obj = this.parse(str);
-    obj['onlinePlayers'] = newValue;
-    fs.writeFileSync("data/persistentStorage.json", JSON.stringify(obj, null, 2));
+    mp.set(storeObject, "private.onlinePlayers", newValue);
+  }
+
+  get teleports(): TeleportData {
+    return mp.get(storeObject, "private.teleports") || {};
+  }
+
+  set teleports(newValue: TeleportData) {
+    mp.set(storeObject, "private.teleports", newValue);
   }
 
   private constructor() {}
-
-  private parse(str: string): Record<string, unknown> {
-    if (str === '') {
-      return {};
-    }
-    return JSON.parse(str);
-  }
-
-  private readFileSync(filePath: string): string {
-    try {
-      const s = fs.readFileSync(filePath, "utf8");
-      return s;
-    }
-    catch(e: unknown) {
-      if ((e as Record<string, unknown>).code === 'ENOENT') {
-        return '';
-      }
-      throw e;
-    }
-  }
 
   private static instance: PersistentStorage;
 }
