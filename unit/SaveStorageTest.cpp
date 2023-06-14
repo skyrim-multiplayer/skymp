@@ -157,7 +157,9 @@ TEST_CASE("AttachSaveStorage forces loading", "[save]")
   UpsertSync(*st, { f });
   p.AttachSaveStorage(st);
 
-  REQUIRE(refr.GetPos() == NiPoint3(1, 1, 1));
+  REQUIRE(refr.GetPos().x == 1);
+  REQUIRE(refr.GetPos().y == 1);
+  REQUIRE(refr.GetPos().z == 1);
 }
 
 TEST_CASE("Changes are transferred to SaveStorage", "[save]")
