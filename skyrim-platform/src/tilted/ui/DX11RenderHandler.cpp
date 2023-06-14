@@ -73,9 +73,9 @@ void DX11RenderHandler::Render(
         std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,
                        wchar_t>);
        
-      std::string fontName = std::string(textToDraw.fontName.begin(), textToDraw.fontName.end());
+      std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
 
-      DirectX::SpriteFont* font = m_pFonts[fontName];
+      DirectX::SpriteFont* font = m_pFonts[conv.to_bytes(textToDraw.fontName)];
 
       auto origin = DirectX::SimpleMath::Vector2(font->MeasureString(textToDraw.string.c_str())) / 2;
 
@@ -166,18 +166,42 @@ void DX11RenderHandler::Create()
   if (!m_pTexture)
     CreateRenderTexture();
 
-  for (const auto& entry : std::filesystem::directory_iterator("Data/Platform/Fonts/")) {
-    std::filesystem::path path = entry.path();
+    if (AllocConsole()) {
+        FILE* file{};
+        freopen_s(&file, "CONOUT$", "w+", stdout);
+    }
 
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    auto widestrFontPath = converter.from_bytes(static_cast<std::string>(path.string()));
+    std::list<std::string> fontsList;
+ 
+    for (const auto& entry : std::filesystem::directory_iterator("Data/Platform/Fonts/")) {
+        std::filesystem::path path = entry.path();
 
-    const wchar_t* fontPath = widestrFontPath.c_str();
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        auto widestrFontPath = converter.from_bytes(static_cast<std::string>(path.string()));
 
-    DirectX::SpriteFont spriteFont = DirectX::SpriteFont(m_pDevice.Get(), fontPath);
+        if (path.extension().string() != ".spritefont") continue;
 
-    m_pFonts[entry.path().stem().string()] = &spriteFont;
-  }
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+
+        fontsList.push_back(conv.to_bytes(widestrFontPath).c_str());
+       
+        const wchar_t* fontPath = widestrFontPath.c_str();
+
+        DirectX::SpriteFont spriteFont = DirectX::SpriteFont(m_pDevice.Get(), fontPath);
+
+        m_pFonts[entry.path().stem().string()] = &spriteFont;
+    }
+    
+    if (fontsList.size() > 0) {
+        std::cout << "Fonts were loaded successfully: " << std::endl;
+        for (std::string e : fontsList) {
+            std::cout << "- " << e << std::endl;
+        }
+    } else {
+        std::cout << "[WARNING] Fonts were not loaded! " << std::endl;
+    }
+
+
 }
 
 void DX11RenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser,
