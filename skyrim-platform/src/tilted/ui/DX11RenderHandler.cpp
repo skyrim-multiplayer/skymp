@@ -31,7 +31,6 @@ DX11RenderHandler::~DX11RenderHandler() = default;
 void DX11RenderHandler::Render(
 const ObtainTextsToDrawFunction& obtainTextsToDraw)
 {
-  std::cout << "JAJAJAJAJA 0" << std::endl;
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {
     Create();
@@ -39,7 +38,6 @@ const ObtainTextsToDrawFunction& obtainTextsToDraw)
     if (!m_pImmediateContext || !m_pContext)
       return;
   }
-  std::cout << "JAJAJAJAJA 1" << std::endl;
 
   // First of all we flush our deferred context in case we have updated the
   // texture
@@ -53,7 +51,6 @@ const ObtainTextsToDrawFunction& obtainTextsToDraw)
       m_pImmediateContext->ExecuteCommandList(pCommandList.Get(), TRUE);
     }
   }
-  std::cout << "JAJAJAJAJA 2" << std::endl;
   GetRenderTargetSize();
 
   m_pSpriteBatch->Begin(DirectX::SpriteSortMode_Deferred,
