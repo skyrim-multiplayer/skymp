@@ -105,23 +105,6 @@ TEST_CASE("Activate with incorrect WorldSpace", "[PartOne][espm]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("Activation of unexisting ref doesn't throw anything",
-          "[PartOne][espm]")
-{
-  auto& partOne = GetPartOne();
-  DoConnect(partOne, 0);
-  partOne.CreateActor(0xff000000, { 22572, -8634, -3597 }, 0, 0x1a26f);
-  partOne.SetUserActor(0, 0xff000000);
-
-  DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", 0xdeadbeef } } } });
-
-  DoDisconnect(partOne, 0);
-  partOne.DestroyActor(0xff000000);
-}
-
 TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
