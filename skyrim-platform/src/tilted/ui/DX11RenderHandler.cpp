@@ -82,9 +82,10 @@ const ObtainTextsToDrawFunction& obtainTextsToDraw)
       if (!m_pFonts[conv.to_bytes(textToDraw.fontName)]) return;
  
         m_pFonts[conv.to_bytes(textToDraw.fontName)]->DrawString(
-            m_pSpriteBatch.get(), textToDraw.string.c_str(),
-            DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color, 0.f,
-            origin);
+        m_pSpriteBatch.get(), textToDraw.string.c_str(),
+        DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color,
+        textToDraw.rotation, origin, textToDraw.size, textToDraw.effects,
+        textToDraw.layerDepth);
       
 
     });
