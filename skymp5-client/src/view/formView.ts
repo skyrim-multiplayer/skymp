@@ -375,7 +375,7 @@ export class FormView implements View<FormModel> {
         } else {
           setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
           setTextPos(this.textNameId, textXPos, textYPos);
-          setTextRotation(this.textNameId, getTextRotation(this.textNameId) + 1);
+          //setTextRotation(this.textNameId, getTextRotation(this.textNameId) + 1);
         }
       } else {
         this.removeNickname();
