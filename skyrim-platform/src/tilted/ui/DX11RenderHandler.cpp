@@ -29,7 +29,7 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
 DX11RenderHandler::~DX11RenderHandler() = default;
 
 void DX11RenderHandler::Render(
-  const ObtainTextsToDrawFunction& obtainTextsToDraw)
+const ObtainTextsToDrawFunction& obtainTextsToDraw)
 {
   std::cout << "JAJAJAJAJA 0" << std::endl;
   // We need contexts first
@@ -68,56 +68,28 @@ void DX11RenderHandler::Render(
                            DirectX::Colors::White, 0.f);
     }
   }
-
-    std::cout << "JAJAJAJAJA 3" << std::endl;
     
   if (Visible()) {
-    std::cout << "JAJAJAJAJA 4" << std::endl;
     obtainTextsToDraw([&](const TextToDraw& textToDraw) {
-      std::cout << "JAJAJAJAJA 5" << std::endl;
-      std::cout << textToDraw.fontName << std::endl;
-      std::cout << textToDraw.string << std::endl;
-      std::cout << "JAJAJAJAJA 6" << std::endl;
       static_assert(std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>, wchar_t>);
        
       std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
-      std::cout << "JAJAJAJAJA 7" << std::endl;
-      std::cout << conv.to_bytes(textToDraw.fontName) << std::endl;
-      DirectX::SpriteFont* font = m_pFonts[conv.to_bytes(textToDraw.fontName)];
-      std::cout << m_pFonts.begin()->first << std::endl;
-      std::cout << conv.to_bytes(textToDraw.fontName) << std::endl;
-      std::cout << font << std::endl;
-      std::cout << "JAJAJAJAJA 8" << std::endl;
 
-      if (font == nullptr) std::cout << "font" << std::endl;
-      if (textToDraw.string.c_str() == nullptr) std::cout << "cstr" << std::endl;
-
-      auto origin = DirectX::SimpleMath::Vector2(0.5f,0.5f);
-
-      std::cout << origin.x << std::endl;
-      std::cout << origin.y << std::endl;
+      auto origin = DirectX::SimpleMath::Vector2(m_pFonts[conv.to_bytes(textToDraw.fontName)]->MeasureString(textToDraw.string.c_str())) / 2;
     
-      std::cout << "JAJAJAJAJA 9" << std::endl;
       DirectX::XMVECTORF32 color = { static_cast<float>(textToDraw.color[0]),
                                      static_cast<float>(textToDraw.color[1]),
                                      static_cast<float>(textToDraw.color[2]),
                                      static_cast<float>(textToDraw.color[3]) };
-      std::cout << "JAJAJAJAJA 10" << std::endl;
-      if (m_pSpriteBatch == nullptr) std::cout << "m_pSpriteBatch" << std::endl;
-      if (m_pSpriteBatch.get() == nullptr) std::cout << "m_pSpriteBatch.get()" << std::endl;
-      DirectX::XMFLOAT2 xm = DirectX::XMFLOAT2(textToDraw.x, textToDraw.y);
-      std::cout << xm.x << std::endl;
       
-      if (font) {
-        std::cout << "JAJAJAJAJA 1144" << std::endl;
-        std::cout << font->GetLineSpacing() << std::endl;
-        
-        font->DrawString(m_pSpriteBatch.get(), textToDraw.string.c_str(), xm, color, 0.f, origin);
-      } else {
-        std::cout << "JAJAJAJAJA 11" << std::endl;
-      }
-     
-      std::cout << "JAJAJAJAJA 12" << std::endl;
+      if (!m_pFonts[conv.to_bytes(textToDraw.fontName)]) return;
+ 
+        m_pFonts[conv.to_bytes(textToDraw.fontName)]->DrawString(
+            m_pSpriteBatch.get(), textToDraw.string.c_str(),
+            DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color, 0.f,
+            origin);
+      
+
     });
   }
 
@@ -198,12 +170,7 @@ void DX11RenderHandler::Create()
   if (!m_pTexture)
     CreateRenderTexture();
 
-    if (AllocConsole()) {
-        FILE* file{};
-        freopen_s(&file, "CONOUT$", "w+", stdout);
-    }
-
-    std::list<std::string> fontsList;
+    int fontsCount = 0;
  
     for (const auto& entry : std::filesystem::directory_iterator("Data/Platform/Fonts/")) {
         std::filesystem::path path = entry.path();
@@ -213,32 +180,12 @@ void DX11RenderHandler::Create()
 
         if (path.extension().string() != ".spritefont") continue;
 
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+        fontsCount++;
 
-        fontsList.push_back(conv.to_bytes(widestrFontPath).c_str());
-       
         const wchar_t* fontPath = widestrFontPath.c_str();
 
-        DirectX::SpriteFont spriteFont = DirectX::SpriteFont(m_pDevice.Get(), fontPath);
-
-        m_pFonts[entry.path().stem().string()] = &spriteFont;
+        m_pFonts[entry.path().stem().string()] = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), fontPath);
     }
-    std::cout << m_pFonts.size() << std::endl;
-
-    for (const auto& kv : m_pFonts) {
-        std::cout << "+ " << kv.second->GetLineSpacing() << std::endl;
-    }
-
-    if (fontsList.size() > 0) {
-        std::cout << "Fonts were loaded successfully: " << std::endl;
-        for (std::string e : fontsList) {
-            std::cout << "- " << e << std::endl;
-        }
-    } else {
-        std::cout << "[WARNING] Fonts were not loaded! " << std::endl;
-    }
-
-
 }
 
 void DX11RenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser,

@@ -75,6 +75,6 @@ private:
 
   std::unique_ptr<::DirectX::CommonStates> m_pStates;
 
-  std::map<std::string, DirectX::SpriteFont*> m_pFonts;
+  std::map < std::string, std::unique_ptr<::DirectX::SpriteFont>> m_pFonts;
 };
 }

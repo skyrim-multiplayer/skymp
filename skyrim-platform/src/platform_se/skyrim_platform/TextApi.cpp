@@ -14,8 +14,6 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
 
   std::wstring fontName;
 
-  std::cout << "AHAHAHAHAHAHA 1" << std::endl;
-
   if (args[5].GetType() != JsValue::Type::String)
   {
     fontName = L"Tavern";
@@ -29,8 +27,6 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
   {
     argColor[i] = args[4].GetProperty(i);
   }
-
-  std::cout << "AHAHAHAHAHAHA 2" << std::endl;
 
   return JsValue(TextsCollection::GetSingleton().CreateText(
     argPosX, argPosY, argString, argColor, fontName));
@@ -46,8 +42,6 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
 {
   auto argPosX = static_cast<double>(args[2]);
   auto argPosY = static_cast<double>(args[3]);
-
-    std::cout << "AHAHAHAHAHAHA 3" << std::endl;
 
   TextsCollection::GetSingleton().SetTextPos(static_cast<int>(args[1]),
                                              argPosX, argPosY);
