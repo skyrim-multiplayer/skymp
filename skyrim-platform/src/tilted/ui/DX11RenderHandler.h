@@ -9,6 +9,7 @@
 #include <functional>
 #include <mutex>
 #include <wrl.h>
+#include <map>
 
 struct IDXGISwapChain;
 struct ID3D11Texture2D;
@@ -73,5 +74,7 @@ private:
   std::unique_ptr<::DirectX::SpriteBatch> m_pSpriteBatch;
 
   std::unique_ptr<::DirectX::CommonStates> m_pStates;
+
+  std::map<std::string, DirectX::SpriteFont*> m_pFonts;
 };
 }

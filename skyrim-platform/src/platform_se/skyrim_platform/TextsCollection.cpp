@@ -14,8 +14,8 @@ int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
                                                                 1.f },
                                 std::wstring name = L"Tavern")
 {
-  TextToDraw text{ std::move(L"Data/Platform/Fonts/" + name + L".spritefont"),
-                   xPos, yPos, std::move(str), std::move(color) };
+  TextToDraw text{ L"Data/Platform/Fonts/" + name + L".spritefont",
+                   xPos, yPos, str, color };
 
   textCount++;
   std::pair<int, TextToDraw> arg = { textCount, text };

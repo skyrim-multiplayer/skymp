@@ -7,10 +7,12 @@
 #include <DirectXTK/WICTextureLoader.h>
 #include <OverlayClient.h>
 #include <cmrc/cmrc.hpp>
-#include <filesystem>
 #include <functional>
 #include <iostream>
+#include <iterator>
 #include <string>
+#include <filesystem>
+#include <codecvt>
 
 CMRC_DECLARE(skyrim_plugin_resources);
 
@@ -70,26 +72,20 @@ void DX11RenderHandler::Render(
       static_assert(
         std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,
                        wchar_t>);
-      std::wstring widestrFontName =
-        std::wstring(textToDraw.fontName.begin(), textToDraw.fontName.end());
+       
+      std::string fontName = std::string(textToDraw.fontName.begin(), textToDraw.fontName.end());
 
-      const wchar_t* fontPath = widestrFontName.c_str();
+      DirectX::SpriteFont* font = m_pFonts[fontName];
 
-      DirectX::SpriteFont m_pSpriteFont =
-        DirectX::SpriteFont(m_pDevice.Get(), fontPath);
-
-      auto origin = DirectX::SimpleMath::Vector2(
-                      m_pSpriteFont.MeasureString(textToDraw.string.c_str())) / 2;
+      auto origin = DirectX::SimpleMath::Vector2(font->MeasureString(textToDraw.string.c_str())) / 2;
 
       DirectX::XMVECTORF32 color = { static_cast<float>(textToDraw.color[0]),
                                      static_cast<float>(textToDraw.color[1]),
                                      static_cast<float>(textToDraw.color[2]),
                                      static_cast<float>(textToDraw.color[3]) };
-      m_pSpriteFont.DrawString(m_pSpriteBatch.get(), textToDraw.string.c_str(),
-                               DirectX::XMFLOAT2(textToDraw.x, textToDraw.y),
-                               color, textToDraw.rotation, origin,
-                               textToDraw.size, textToDraw.effects,
-                               textToDraw.layerDepth);
+      font->DrawString(
+        m_pSpriteBatch.get(), textToDraw.string.c_str(),
+        DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color, 0.f, origin);
     });
   }
 
@@ -169,6 +165,19 @@ void DX11RenderHandler::Create()
 
   if (!m_pTexture)
     CreateRenderTexture();
+
+  for (const auto& entry : std::filesystem::directory_iterator("Data/Platform/Fonts/")) {
+    std::filesystem::path path = entry.path();
+
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    auto widestrFontPath = converter.from_bytes(static_cast<std::string>(path.string()));
+
+    const wchar_t* fontPath = widestrFontPath.c_str();
+
+    DirectX::SpriteFont spriteFont = DirectX::SpriteFont(m_pDevice.Get(), fontPath);
+
+    m_pFonts[entry.path().stem().string()] = &spriteFont;
+  }
 }
 
 void DX11RenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser,

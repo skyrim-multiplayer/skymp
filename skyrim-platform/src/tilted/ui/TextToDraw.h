@@ -6,7 +6,7 @@
 #include <string>
 struct TextToDraw
 {
-  std::wstring fontName = L"Tavern";
+  std::wstring fontName;
   double x = 0.f;
   double y = 0.f;
   std::wstring string;
