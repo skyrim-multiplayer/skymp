@@ -14,6 +14,8 @@
 #include <filesystem>
 #include <codecvt>
 
+#include <spdlog/spdlog.h>
+
 CMRC_DECLARE(skyrim_plugin_resources);
 
 namespace CEFUtils {
@@ -167,19 +169,17 @@ void DX11RenderHandler::Create()
 
   if (!m_pTexture)
     CreateRenderTexture();
-
-    int fontsCount = 0;
- 
+    
     for (const auto& entry : std::filesystem::directory_iterator("Data/Platform/Fonts/")) {
         std::filesystem::path path = entry.path();
 
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        auto widestrFontPath = converter.from_bytes(static_cast<std::string>(path.string()));
-
         if (path.extension().string() != ".spritefont") continue;
 
-        fontsCount++;
+        spdlog::info("Font has been added - " + entry.path().stem().string());
 
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        auto widestrFontPath = converter.from_bytes(static_cast<std::string>(path.string()));
+      
         const wchar_t* fontPath = widestrFontPath.c_str();
 
         m_pFonts[entry.path().stem().string()] = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), fontPath);
