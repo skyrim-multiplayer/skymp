@@ -20,3 +20,19 @@ public:
   SubscribeCallback subscribe, unsubscribe;
   SendToUserFn sendToUser;
 };
+
+
+struct listener
+{
+};
+
+struct PacketData
+{
+  int minPacketId;
+  int someting_else;
+};
+
+struct PacketType final : public PacketData
+{
+  std::string additional_info;
+};

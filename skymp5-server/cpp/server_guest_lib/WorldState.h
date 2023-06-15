@@ -1,4 +1,5 @@
 #pragma once
+#include "Entity.h"
 #include "FormIndex.h"
 #include "GridElement.h"
 #include "GridInfo.h"
@@ -39,8 +40,6 @@ private:
   friend class MpActor;
 
 public:
-  using entity_t = entt::entity;
-  using null_t = entt::null_t;
   using FormCallbacksFactory = std::function<FormCallbacks()>;
 
 public:
@@ -48,62 +47,16 @@ public:
   WorldState(const WorldState&) = delete;
   WorldState& operator=(const WorldState&) = delete;
 
-  template <typename T, typename... Args>
-  decltype(auto) Emplace(uint32_t formId, Args&&... args)
-  {
-    entity_t entity = GetEntityByFormId(formId);
-    if (valid(entity)) {
-      throw std::runtime_error(
-        fmt::format("Unable to create {} with id {:x}. An entity with this id "
-                    "already exists.",
-                    typeid(T).name(), formId));
-    }
-    entity = create();
-    entityByFormId.insert({ formId, entity });
-    return emplace<T>(entity, std::forward<Args>(args)...);
-  }
-
-  template <typename... T>
-  decltype(auto) Get(uint32_t formId)
-  {
-    entity_t entity = GetEntityByFormId(formId);
-    if (!valid(entity)) {
-      throw std::runtime_error(fmt::format(
-        "Couldn't find an entity associated with formId {:x}", formId));
-    }
-    return _get<T...>(entity);
-  }
-
-  template <typename... T>
-  decltype(auto) Get(entity_t entity)
-  {
-    if (!valid(entity)) {
-      throw std::runtime_error(fmt::format("Required entity is null_entity"));
-    }
-    return _get<T...>(entity);
-  }
-
-  template <typename... T>
-  decltype(auto) TryGet(uint32_t formId)
-  {
-    const entity_t entity = GetEntityByFormId(formId);
-    return try_get<T...>(entity);
-  }
-
-  template <typename... T>
-  decltype(auto) TryGet(entity_t entity)
-  {
-    return try_get<T...>(entity);
-  }
-
+  Entity& CreateEntity(uint32_t formId);
+  Entity GetEntityByFormId(uint32_t formId) const noexcept;
   uint16_t Destroy(uint32_t formId);
+
   void Clear();
   void AttachEspm(espm::Loader* espm,
                   const FormCallbacksFactory& formCallbacksFactory);
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
   void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
-  bool Valid(entity_t entity) const;
-  entity_t GetEntityByFormId(uint32_t formId) const noexcept;
+  bool Valid(Entity entity) const noexcept;
   void LoadChangeForm(const MpChangeForm& changeForm,
                       const FormCallbacks& callbacks);
   void Tick();
@@ -140,28 +93,6 @@ public:
   std::map<uint32_t, uint32_t> hosters;
 
 private:
-  template <typename... T>
-  decltype(auto) _get(entity_t entity)
-  {
-    auto components = try_get<T...>(entity);
-    auto valid = [entity](auto&& component) {
-      if (!static_cast<bool>(component)) {
-        throw std::runtime_error(fmt::format(
-          "Couldn't obtain the component of the entity associeated "
-          "with formId {:x}",
-          static_cast<uint32_t>(entity)));
-      }
-    };
-
-    if constexpr (sizeof...(T) == 1) {
-      std::invoke(valid, components);
-    } else {
-      std::apply([valid](auto&&... component) { (..., valid(component)); },
-                 components);
-    }
-    return get<T...>(entity);
-  }
-
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         espm::RecordHeader* record,
                         const espm::IdMapping& mapping);
@@ -176,7 +107,10 @@ private:
 private:
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
-  spp::sparse_hash_map<uint32_t, entity_t> entityByFormId;
+
+  // spp::sparse_hash_m-ap<uint32_t, entity_t> entityByFormId;
+  spp::sparse_hash_map<uint32_t, Entity> entityByFormId;
+
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
   std::map<

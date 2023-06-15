@@ -95,40 +95,40 @@ void WorldState::AttachScriptStorage(
   pImpl->scriptStorage = scriptStorage;
 }
 
-void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
-                         bool skipChecks,
-                         const MpChangeForm* optionalChangeFormToApply)
-{
-  if (!skipChecks && forms.find(formId) != forms.end()) {
-    throw std::runtime_error(
-      fmt::format("Form with id {:x} already exists", formId));
-  }
-
-  if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
-    if (!formIdxManager) {
-      formIdxManager.reset(new MakeID(FormIndex::g_invalidIdx - 1));
-    }
-    if (!formIdxManager->CreateID(formIndex->idx)) {
-      throw std::runtime_error("CreateID failed");
-    }
-    if (formByIdxUnreliable.size() <= formIndex->idx) {
-      formByIdxUnreliable.resize(formIndex->idx + 1, nullptr);
-    }
-    formByIdxUnreliable[formIndex->idx] = form.get();
-  }
-
-  auto it = forms.insert({ formId, std::move(form) }).first;
-
-  if (optionalChangeFormToApply) {
-    auto refr = dynamic_cast<MpObjectReference*>(it->second.get());
-    if (!refr) {
-      forms.erase(it); // Rollback changes due to exception
-      throw std::runtime_error(
-        "Unable to apply ChangeForm, cast to ObjectReference failed");
-    }
-    refr->ApplyChangeForm(*optionalChangeFormToApply);
-  }
-}
+//void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
+//                         bool skipChecks,
+//                         const MpChangeForm* optionalChangeFormToApply)
+//{
+//  if (!skipChecks && forms.find(formId) != forms.end()) {
+//    throw std::runtime_error(
+//      fmt::format("Form with id {:x} already exists", formId));
+//  }
+//
+//  if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
+//    if (!formIdxManager) {
+//      formIdxManager.reset(new MakeID(FormIndex::g_invalidIdx - 1));
+//    }
+//    if (!formIdxManager->CreateID(formIndex->idx)) {
+//      throw std::runtime_error("CreateID failed");
+//    }
+//    if (formByIdxUnreliable.size() <= formIndex->idx) {
+//      formByIdxUnreliable.resize(formIndex->idx + 1, nullptr);
+//    }
+//    formByIdxUnreliable[formIndex->idx] = form.get();
+//  }
+//
+//  auto it = forms.insert({ formId, std::move(form) }).first;
+//
+//  if (optionalChangeFormToApply) {
+//    auto refr = dynamic_cast<MpObjectReference*>(it->second.get());
+//    if (!refr) {
+//      forms.erase(it); // Rollback changes due to exception
+//      throw std::runtime_error(
+//        "Unable to apply ChangeForm, cast to ObjectReference failed");
+//    }
+//    refr->ApplyChangeForm(*optionalChangeFormToApply);
+//  }
+//}
 
 void WorldState::Tick()
 {
@@ -172,11 +172,12 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
   }
 
   switch (changeForm.recType) {
+    Entity entity = GetEntityByFormId(formId);
     case MpChangeForm::ACHR:
-      Emplace<MpActor>(formId, LocationalData(), callbacks, baseId);
+      entity.Add<MpActor>(formId, LocationalData(), callbacks, baseId);
       break;
     case MpChangeForm::REFR:
-      Emplace<MpObjectReference>(formId, LocationalData(), callbacks, baseId,
+      entity.Add<MpObjectReference>(formId, LocationalData(), callbacks, baseId,
                                  baseType.data());
       break;
     default:
@@ -326,11 +327,12 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
 
+    Entity& entity = CreateEntity(formId);
     t != "NPC_"
-      ? Emplace<MpObjectReference>(formId, formLocationalData,
+      ? entity.Add<MpObjectReference>(formId, formLocationalData,
                                    formCallbacksFactory(), baseId,
                                    typeStr.data(), primitiveBoundsDiv2)
-      : Emplace<MpActor>(formId, formLocationalData, formCallbacksFactory(),
+      : entity.Add<MpActor>(formId, formLocationalData, formCallbacksFactory(),
                          baseId);
     // Do not TriggerFormInitEvent here, doing it later after changeForm apply
   }
@@ -351,7 +353,8 @@ bool WorldState::LoadForm(uint32_t formId)
   }
 
   if (atLeastOneLoaded) {
-    auto& refr = Get<MpObjectReference>(formId);
+    Entity entity = GetEntityByFormId(formId);
+    auto& refr = entity.Get<MpObjectReference>();
     auto it = pImpl->changeFormsForDeferredLoad.find(formId);
     if (it != pImpl->changeFormsForDeferredLoad.end()) {
       refr.ApplyChangeForm(it->second);
@@ -648,22 +651,21 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   return it->second;
 }
 
-bool WorldState::Valid(entity_t entity) const
+bool WorldState::Valid(Entity entity) const noexcept
 {
-  return valid(entity);
+  return valid(entity.id);
 }
 
-WorldState::entity_t WorldState::GetEntityByFormId(
-  uint32_t formId) const noexcept
+Entity WorldState::GetEntityByFormId(uint32_t formId) const noexcept
 {
   auto it = entityByFormId.find(formId);
-  return it == entityByFormId.end() ? null_t{} : it->second;
+  return it == entityByFormId.end() ? Entity::Null() : it->second;
 }
 
 bool WorldState::Exists(uint32_t formId) const noexcept
 {
-  entity_t entity = GetEntityByFormId(formId);
-  return valid(entity);
+  Entity entity = GetEntityByFormId(formId);
+  return valid(entity.id);
 }
 
 auto& WorldState::GetGrids() const noexcept
@@ -673,16 +675,22 @@ auto& WorldState::GetGrids() const noexcept
 
 uint16_t WorldState::Destroy(uint32_t formId)
 {
-  entity_t entity = GetEntityByFormId(formId);
-  if (!valid(entity)) {
+  Entity entity = GetEntityByFormId(formId);
+  if (!Valid(entity)) {
     throw std::runtime_error(fmt::format(
       "Couldn't destroy an entity associated with formId {:x}", formId));
   }
-  auto& objectReference = get<MpObjectReference>(entity);
+  auto& objectReference = entity.Get<MpObjectReference>();
   objectReference.BeforeDestroy();
-  uint16_t version = destroy(entity, entt::to_version(entity));
   entityByFormId.erase(formId);
-  return version;
+  return destroy(entity.id, entt::to_version(entity.id));
+}
+
+Entity& WorldState::CreateEntity(uint32_t formId)
+{
+  Entity& entity =
+    entityByFormId.emplace(formId, Entity{ create(), this }).first->second;
+  return entity;
 }
 
 const std::vector<std::shared_ptr<PartOneListener>>& WorldState::GetListeners()
