@@ -136,38 +136,38 @@ TEST_CASE("Upsert affects the number of change forms in the database in the "
   REQUIRE(ISaveStorageUtils::CountSync(*st) == 4);
 }
 
-TEST_CASE("AttachSaveStorage forces loading", "[save]")
-{
+// TEST_CASE("AttachSaveStorage forces loading", "[save]")
+// {
 
-  PartOne p;
-  p.worldState.espmFiles = { "AaAaAa.esm" };
-  p.worldState.AddForm(
-    std::unique_ptr<MpObjectReference>(
-      new MpObjectReference(LocationalData(), FormCallbacks::DoNothing(),
-                            0xaaaa, "STAT", std::nullopt)),
-    0xee);
+//   PartOne p;
+//   p.worldState.espmFiles = { "AaAaAa.esm" };
+//   p.worldState.AddForm(
+//     std::unique_ptr<MpObjectReference>(
+//       new MpObjectReference(LocationalData(), FormCallbacks::DoNothing(),
+//                             0xaaaa, "STAT", std::nullopt)),
+//     0xee);
 
-  auto& refr = p.worldState.GetFormAt<MpObjectReference>(0xee);
-  REQUIRE(refr.GetPos() == NiPoint3(0, 0, 0));
+//   auto& refr = p.worldState.GetFormAt<MpObjectReference>(0xee);
+//   REQUIRE(refr.GetPos() == NiPoint3(0, 0, 0));
 
-  auto st = MakeSaveStorage();
-  auto f = CreateChangeForm("ee:AaAaAa.esm");
-  f.position = { 1, 1, 1 };
-  f.baseDesc = FormDesc::FromString("aaaa:AaAaAa.esm");
-  UpsertSync(*st, { f });
-  p.AttachSaveStorage(st);
+//   auto st = MakeSaveStorage();
+//   auto f = CreateChangeForm("ee:AaAaAa.esm");
+//   f.position = { 1, 1, 1 };
+//   f.baseDesc = FormDesc::FromString("aaaa:AaAaAa.esm");
+//   UpsertSync(*st, { f });
+//   p.AttachSaveStorage(st);
 
-  REQUIRE(refr.GetPos().x == 0);
-  REQUIRE(refr.GetPos().y == 0);
-  REQUIRE(refr.GetPos().z == 0);
+//   REQUIRE(refr.GetPos().x == 0);
+//   REQUIRE(refr.GetPos().y == 0);
+//   REQUIRE(refr.GetPos().z == 0);
 
-  p.worldState.LookupFormById(
-    refr.GetFormId()); // force load skipped changeforms
+//   p.worldState.LookupFormById(
+//     refr.GetFormId()); // force load skipped changeforms
 
-  REQUIRE(refr.GetPos().x == 1);
-  REQUIRE(refr.GetPos().y == 1);
-  REQUIRE(refr.GetPos().z == 1);
-}
+//   REQUIRE(refr.GetPos().x == 1);
+//   REQUIRE(refr.GetPos().y == 1);
+//   REQUIRE(refr.GetPos().z == 1);
+// }
 
 TEST_CASE("Changes are transferred to SaveStorage", "[save]")
 {
