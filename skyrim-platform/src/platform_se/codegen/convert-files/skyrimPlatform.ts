@@ -1467,6 +1467,12 @@ export const enum SlotMask {
   FX01 = 0x80000000,
 }
 
+export const enum SpriteEffects {
+  None = 0,
+  FlipHorizontally = 1,
+  FlipVertically = 2
+}
+
 export declare namespace SendAnimationEventHook {
   class Context {
     readonly selfId: number

@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, getTextRotation, getTextSize, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextRotation, setTextSize, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, getTextColor, getTextDepth, getTextEffect, getTextFont, getTextOrigin, getTextPos, getTextRotation, getTextSize, getTextString, NetImmerse, ObjectReference, once, printConsole, setTextColor, setTextDepth, setTextEffect, setTextFont, setTextOrigin, setTextPos, setTextRotation, setTextSize, setTextString, SpriteEffects, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
@@ -374,11 +374,17 @@ export class FormView implements View<FormModel> {
         if (!this.textNameId) {
                     this.textNameId = createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1], "Tavern");
         } else {
+          this.time += 1 / 5;
+
           setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
           setTextPos(this.textNameId, textXPos, textYPos);
-            //setTextRotation(this.textNameId, getTextRotation(this.textNameId) + 100);
-            this.time += 1 / 5;
-            setTextSize(this.textNameId, Math.abs((Math.sin(this.time) + 0.2)));
+          // setTextSize(this.textNameId, Math.abs((Math.sin(this.time) + 0.2)));
+          // setTextColor(this.textNameId, [Math.random(),Math.random(),Math.random(), 1]);
+          // setTextFont(this.textNameId, "DINPro");
+          // setTextRotation(this.textNameId, getTextRotation(this.textNameId) + 10);
+          setTextEffect(this.textNameId, SpriteEffects.FlipVertically);
+          // setTextDepth(this.textNameId, 5);
+          // setTextOrigin(this.textNameId, [1, 1]);
         }
       } else {
         this.removeNickname();
