@@ -1533,6 +1533,7 @@ export declare class HttpClient {
 export declare function createText(xPos: number, yPos: number, text: string, color: number[], name?: string): number; //default name is Tavern
 export declare function destroyText(textId: number): void;
 export declare function destroyAllTexts(): void;
+
 export declare function setTextPos(textId: number, xPos: number, yPos: number): void;
 export declare function setTextString(textId: number, text: string): void;
 export declare function setTextColor(textId: number, color: number[]): void;
@@ -1542,11 +1543,10 @@ export declare function setTextFont(textId: number, name: string): void;
 export declare function setTextDepth(textId: number, depth: number): void;
 export declare function setTextEffect(textId: number, effect: number): void;
 export declare function setTextOrigin(textId: number, origin: number[]): void;
-export declare function destroyAllTexts(): void;
+
 export declare function getTextPos(textId: number): number[];
 export declare function getTextString(textId: number): string;
 export declare function getTextColor(textId: number): number[];
-export declare function getNumCreatedTexts(): number;
 export declare function getTextSize(textId: number): number;
 export declare function getTextRotation(textId: number): number;
 export declare function getTextFont(textId: number): string;
@@ -1554,6 +1554,7 @@ export declare function getTextDepth(textId: number): number;
 export declare function getTextEffect(textId: number): number;
 export declare function getTextOrigin(textId: number): number[];
 
+export declare function getNumCreatedTexts(): number;
 
 export declare function getFileInfo(filename: string): { crc32: number, size: number };
 
