@@ -7,12 +7,12 @@
 #include <DirectXTK/WICTextureLoader.h>
 #include <OverlayClient.h>
 #include <cmrc/cmrc.hpp>
+#include <codecvt>
+#include <filesystem>
 #include <functional>
 #include <iostream>
 #include <iterator>
 #include <string>
-#include <filesystem>
-#include <codecvt>
 
 #include <spdlog/spdlog.h>
 
@@ -31,7 +31,7 @@ DX11RenderHandler::DX11RenderHandler(Renderer* apRenderer) noexcept
 DX11RenderHandler::~DX11RenderHandler() = default;
 
 void DX11RenderHandler::Render(
-const ObtainTextsToDrawFunction& obtainTextsToDraw)
+  const ObtainTextsToDrawFunction& obtainTextsToDraw)
 {
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {
@@ -67,29 +67,33 @@ const ObtainTextsToDrawFunction& obtainTextsToDraw)
                            DirectX::Colors::White, 0.f);
     }
   }
-    
+
   if (Visible()) {
     obtainTextsToDraw([&](const TextToDraw& textToDraw) {
-      static_assert(std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>, wchar_t>);
-       
+      static_assert(
+        std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,
+                       wchar_t>);
+
       std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
 
-      auto origin = DirectX::SimpleMath::Vector2(m_pFonts[conv.to_bytes(textToDraw.fontName)]->MeasureString(textToDraw.string.c_str())) / 2;
-    
+      auto& font = m_pFonts[conv.to_bytes(textToDraw.fontName)];
+
+      if (!font)
+        return;
+
+      auto origin = DirectX::SimpleMath::Vector2(
+                      font->MeasureString(textToDraw.string.c_str())) /
+        2;
+
       DirectX::XMVECTORF32 color = { static_cast<float>(textToDraw.color[0]),
                                      static_cast<float>(textToDraw.color[1]),
                                      static_cast<float>(textToDraw.color[2]),
                                      static_cast<float>(textToDraw.color[3]) };
-      
-      if (!m_pFonts[conv.to_bytes(textToDraw.fontName)]) return;
- 
-        m_pFonts[conv.to_bytes(textToDraw.fontName)]->DrawString(
-        m_pSpriteBatch.get(), textToDraw.string.c_str(),
-        DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color,
-        textToDraw.rotation, origin, textToDraw.size, textToDraw.effects,
-        textToDraw.layerDepth);
-      
 
+      font->DrawString(m_pSpriteBatch.get(), textToDraw.string.c_str(),
+                       DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color,
+                       textToDraw.rotation, origin, textToDraw.size,
+                       textToDraw.effects, textToDraw.layerDepth);
     });
   }
 
@@ -169,21 +173,25 @@ void DX11RenderHandler::Create()
 
   if (!m_pTexture)
     CreateRenderTexture();
-    
-    for (const auto& entry : std::filesystem::directory_iterator("Data/Platform/Fonts/")) {
-        std::filesystem::path path = entry.path();
 
-        if (path.extension().string() != ".spritefont") continue;
+  for (const auto& entry :
+       std::filesystem::directory_iterator("Data/Platform/Fonts/")) {
+    std::filesystem::path path = entry.path();
 
-        spdlog::info("Font has been added - " + entry.path().stem().string());
+    if (path.extension().string() != ".spritefont")
+      continue;
 
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        auto widestrFontPath = converter.from_bytes(static_cast<std::string>(path.string()));
-      
-        const wchar_t* fontPath = widestrFontPath.c_str();
+    spdlog::info("Font has been added - " + entry.path().stem().string());
 
-        m_pFonts[entry.path().stem().string()] = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), fontPath);
-    }
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    auto widestrFontPath =
+      converter.from_bytes(static_cast<std::string>(path.string()));
+
+    const wchar_t* fontPath = widestrFontPath.c_str();
+
+    m_pFonts[entry.path().stem().string()] =
+      std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), fontPath);
+  }
 }
 
 void DX11RenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser,

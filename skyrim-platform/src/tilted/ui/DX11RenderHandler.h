@@ -7,9 +7,9 @@
 #include <DirectXTK/SpriteFont.h>
 #include <Signal.hpp>
 #include <functional>
+#include <map>
 #include <mutex>
 #include <wrl.h>
-#include <map>
 
 struct IDXGISwapChain;
 struct ID3D11Texture2D;
@@ -75,6 +75,6 @@ private:
 
   std::unique_ptr<::DirectX::CommonStates> m_pStates;
 
-  std::map < std::string, std::unique_ptr<::DirectX::SpriteFont>> m_pFonts;
+  std::map<std::string, std::unique_ptr<::DirectX::SpriteFont>> m_pFonts;
 };
 }

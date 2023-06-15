@@ -25,7 +25,8 @@ public:
 
   static TextsCollection& GetSingleton() noexcept;
 
-  public : TextsCollection(const TextsCollection&) = delete;
+public:
+  TextsCollection(const TextsCollection&) = delete;
   TextsCollection(TextsCollection&&) = delete;
 
   TextsCollection& operator=(const TextsCollection&) = delete;

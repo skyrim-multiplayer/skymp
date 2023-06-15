@@ -9,7 +9,10 @@ TextsCollection::~TextsCollection()
 {
 }
 
-int TextsCollection::CreateText(double xPos, double yPos, std::wstring str, std::array<double, 4> color = { 0.f, 0.f, 1.f, 1.f }, std::wstring name = L"Tavern")
+int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
+                                std::array<double, 4> color = { 0.f, 0.f, 1.f,
+                                                                1.f },
+                                std::wstring name = L"Tavern")
 {
   TextToDraw text{ name, xPos, yPos, str, color };
 
@@ -25,7 +28,7 @@ void TextsCollection::DestroyText(int textId)
 {
   texts.erase(textId);
 }
-void TextsCollection::DestroyAllTexts() 
+void TextsCollection::DestroyAllTexts()
 {
   texts.clear();
   textCount = 0;
@@ -111,7 +114,8 @@ const std::array<double, 2> TextsCollection::GetTextOrigin(int textId) const
   return texts.at(textId).origin;
 }
 
-const std::unordered_map<int, TextToDraw>& TextsCollection::GetCreatedTexts() const
+const std::unordered_map<int, TextToDraw>& TextsCollection::GetCreatedTexts()
+  const
 {
   return texts;
 }
@@ -121,8 +125,3 @@ TextsCollection& TextsCollection::GetSingleton() noexcept
   static TextsCollection text;
   return text;
 }
-
-
-
-
-

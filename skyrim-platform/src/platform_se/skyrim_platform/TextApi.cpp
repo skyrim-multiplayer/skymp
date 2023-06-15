@@ -1,4 +1,5 @@
 #include "TextApi.h"
+#include <Validators.h>
 
 namespace TextApi {
 
@@ -14,17 +15,14 @@ JsValue TextApi::CreateText(const JsFunctionArguments& args)
 
   std::wstring fontName;
 
-  if (args[5].GetType() != JsValue::Type::String)
-  {
+  if (args[5].GetType() != JsValue::Type::String ||
+      !ValidateFilename(static_cast<std::string>(args[5]), false)) {
     fontName = L"Tavern";
-  }
-  else
-  {
+  } else {
     fontName = converter.from_bytes(static_cast<std::string>(args[5]));
   }
 
-  for (int i = 0; i < 4; i++)
-  {
+  for (int i = 0; i < 4; i++) {
     argColor[i] = args[4].GetProperty(i);
   }
 
@@ -68,11 +66,11 @@ JsValue TextApi::SetTextColor(const JsFunctionArguments& args)
   std::array<double, 4> argColor;
 
   auto textNameId = static_cast<int>(args[1]);
-  
+
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[2].GetProperty(i);
   }
-    
+
   auto moveArgColor = std::move(argColor);
 
   TextsCollection::GetSingleton().SetTextColor(textNameId, moveArgColor);
@@ -133,7 +131,7 @@ JsValue TextApi::SetTextOrigin(const JsFunctionArguments& args)
     argOrigin[i] = args[2].GetProperty(i);
   }
 
-  auto textNameId = static_cast<int>(args[1]); 
+  auto textNameId = static_cast<int>(args[1]);
   auto moveArgOrigin = std::move(argOrigin);
 
   TextsCollection::GetSingleton().SetTextOrigin(textNameId, moveArgOrigin);
@@ -142,7 +140,8 @@ JsValue TextApi::SetTextOrigin(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 {
-  auto& postions = TextsCollection::GetSingleton().GetTextPos(static_cast<int>(args[1]));
+  auto& postions =
+    TextsCollection::GetSingleton().GetTextPos(static_cast<int>(args[1]));
   auto jsArray = JsValue::Array(2);
 
   jsArray.SetProperty(0, postions.first);
@@ -230,7 +229,7 @@ void Register(JsValue& exports)
 
   exports.SetProperty("destroyText", JsValue::Function(DestroyText));
   exports.SetProperty("destroyAllTexts", JsValue::Function(DestroyAllTexts));
-  
+
   exports.SetProperty("setTextPos", JsValue::Function(SetTextPos));
   exports.SetProperty("setTextString", JsValue::Function(SetTextString));
   exports.SetProperty("setTextColor", JsValue::Function(SetTextColor));
@@ -251,7 +250,8 @@ void Register(JsValue& exports)
   exports.SetProperty("getTextEffect", JsValue::Function(GetTextEffect));
   exports.SetProperty("getTextOrigin", JsValue::Function(GetTextOrigin));
 
-  exports.SetProperty("getNumCreatedTexts", JsValue::Function(GetNumCreatedTexts));
+  exports.SetProperty("getNumCreatedTexts",
+                      JsValue::Function(GetNumCreatedTexts));
 }
 
 }
