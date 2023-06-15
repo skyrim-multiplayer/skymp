@@ -236,14 +236,17 @@ VarValue VirtualMachine::CallStatic(
   function = instance->GetFunctionByName(functionName.c_str(), "");
 
   if (function.valid) {
-    if (function.IsNative())
+    if (function.IsNative()) {
       throw std::runtime_error("Function not found - '" +
                                std::string(functionName) + "'");
+    }
 
     result = instance->StartFunction(function, arguments, stackIdHolder);
   }
-  if (!function.valid)
-    throw std::runtime_error("function is not valid");
+  if (!function.valid) {
+    throw std::runtime_error("Function is not valid - '" +
+                             std::string(functionName) + "'");
+  }
 
   return result;
 }

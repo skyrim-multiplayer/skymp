@@ -19,6 +19,8 @@ public:
   VarValue ShowRaceMenu(VarValue self, const std::vector<VarValue>& arguments);
   VarValue ShowLimitedRaceMenu(VarValue self,
                                const std::vector<VarValue>& arguments);
+  VarValue GetCameraState(VarValue self,
+                          const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
@@ -35,6 +37,7 @@ public:
     AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
     AddStatic(vm, "ShowRaceMenu", &PapyrusGame::ShowRaceMenu);
     AddStatic(vm, "ShowLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
+    AddStatic(vm, "GetCameraState", &PapyrusGame::GetCameraState);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

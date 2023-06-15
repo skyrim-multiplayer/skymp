@@ -13,26 +13,42 @@ export class KickCommand extends Command {
         const { actorId } = input;
         const args = input.argsRaw?.split(' ') || [];
 
-        // TODO: dehardcode this
-        const adminMasterApiIds = [479, 485, 486, 487, 488, 489, 497];
-        if (!adminMasterApiIds.includes(this.controller.getProfileId(actorId))) {
-          this.controller.sendChatMessage(actorId, createSystemMessage('No permission'));
-          return;
+        const role = this.serverSettings.discordAuth?.adminRoleId;
+        const discordRoles = this.getDiscordRoles(actorId);
+        if (role === undefined) {
+          this.controller.sendChatMessage(actorId, ChatMessage.system("Admin role is not configured.", this.controller));
+          this.controller.sendChatMessage(actorId, ChatMessage.system("discordAuth.adminRoleId should be set in server-settings.json", this.controller));
         }
-        if (!input.argsRaw) {
-          this.controller.sendChatMessage(actorId, createSystemMessage('Expected profile id as an argument'));
-          return;
-        }
-        const targetMasterApiId = parseInt(input.argsRaw);
-        for (const targetPlayerActorId of this.controller.getOnlinePlayers()) {
-          if (this.controller.getProfileId(targetPlayerActorId) === targetMasterApiId) {
-            // TODO: disable actor instead of quitGame which is local
-            this.controller.quitGame(targetPlayerActorId);
-            this.controller.sendChatMessage(actorId, createSystemMessage(`Kicked actor ${targetPlayerActorId.toString(16)}`));
+        else if (discordRoles.includes(role)) {
+          if (!input.argsRaw) {
+            this.controller.sendChatMessage(actorId, createSystemMessage('Expected profile id as an argument'));
             return;
           }
+          const targetMasterApiId = parseInt(input.argsRaw);
+          for (const targetPlayerActorId of this.controller.getOnlinePlayers()) {
+            if (this.controller.getProfileId(targetPlayerActorId) === targetMasterApiId) {
+              this.controller.sendChatMessage(actorId, createSystemMessage(`Kicked actor ${targetPlayerActorId.toString(16)}`));
+              this.controller.sendChatMessage(targetPlayerActorId, createSystemMessage('You have been kicked. Exiting game in 5 seconds.'));
+              setTimeout(() => {
+                // Quits game unsafe (player can resist)
+                this.controller.quitGame(targetPlayerActorId);
+
+                // Quits to main menu safely by disabling the actor
+                // TODO: add setEnabled and other ScampServer APIs to types
+                (this.mp.setEnabled as (actorId: number, set: boolean) => void) (targetPlayerActorId, false);
+
+                // TODO: Kick instead of crashing the game?
+                // TODO: Teleport far away to prevent instant reconnecting to the same place?
+              }, 5000);
+              return;
+            }
+          }
+          this.controller.sendChatMessage(actorId, createSystemMessage('Not found'));
         }
-        this.controller.sendChatMessage(actorId, createSystemMessage('Not found'));
+        else {
+          console.log(discordRoles);
+          this.controller.sendChatMessage(actorId, ChatMessage.system("You do not have permission to use this command", this.controller));
+        }
     }
 
     private getDiscordRoles(actorId: number): string[] {
