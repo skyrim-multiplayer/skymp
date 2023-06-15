@@ -161,7 +161,8 @@ TEST_CASE("AttachSaveStorage forces loading", "[save]")
   REQUIRE(refr.GetPos().y == 0);
   REQUIRE(refr.GetPos().z == 0);
 
-  p.worldState.LookupFormById(refr.GetFormId()); // force load skipped changeforms
+  p.worldState.LookupFormById(
+    refr.GetFormId()); // force load skipped changeforms
 
   REQUIRE(refr.GetPos().x == 1);
   REQUIRE(refr.GetPos().y == 1);
