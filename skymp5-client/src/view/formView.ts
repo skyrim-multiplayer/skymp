@@ -378,11 +378,11 @@ export class FormView implements View<FormModel> {
 
           setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
           setTextPos(this.textNameId, textXPos, textYPos);
-          // setTextSize(this.textNameId, Math.abs((Math.sin(this.time) + 0.2)));
-          // setTextColor(this.textNameId, [Math.random(),Math.random(),Math.random(), 1]);
-          // setTextFont(this.textNameId, "DINPro");
-          // setTextRotation(this.textNameId, getTextRotation(this.textNameId) + 10);
-          setTextEffect(this.textNameId, SpriteEffects.FlipVertically);
+          setTextSize(this.textNameId, Math.abs((Math.sin(this.time) + 0.2)));
+          setTextColor(this.textNameId, [1,0,0, 1]);
+          setTextFont(this.textNameId, "DINPro");
+          setTextRotation(this.textNameId, getTextRotation(this.textNameId) + 10);
+          //setTextEffect(this.textNameId, SpriteEffects.FlipVertically);
           // setTextDepth(this.textNameId, 5);
           // setTextOrigin(this.textNameId, [1, 1]);
         }

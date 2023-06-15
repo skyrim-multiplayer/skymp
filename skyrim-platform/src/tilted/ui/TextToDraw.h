@@ -14,7 +14,7 @@ struct TextToDraw
   float rotation = 0.f;
   float size = 1;
   DirectX::SpriteEffects effects = DirectX::SpriteEffects_None;
-  float layerDepth = 0.f;
+  int layerDepth = 0;
   std::array<double, 2> origin = { 0.f, 0.f };
 };
 

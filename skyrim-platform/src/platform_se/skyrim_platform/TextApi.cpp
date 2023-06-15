@@ -45,11 +45,11 @@ JsValue TextApi::DestroyAllTexts(const JsFunctionArguments&)
 
 JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
 {
+  auto textNameId = static_cast<int>(args[1]);
   auto argPosX = static_cast<double>(args[2]);
   auto argPosY = static_cast<double>(args[3]);
 
-  TextsCollection::GetSingleton().SetTextPos(static_cast<int>(args[1]),
-                                             argPosX, argPosY);
+  TextsCollection::GetSingleton().SetTextPos(textNameId, argPosX, argPosY);
   return JsValue::Undefined();
 }
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
@@ -58,27 +58,31 @@ JsValue TextApi::SetTextString(const JsFunctionArguments& args)
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   auto argString = converter.from_bytes(static_cast<std::string>(args[2]));
+  auto moveArgString = std::move(argString);
 
-  TextsCollection::GetSingleton().SetTextString(textId, std::move(argString));
+  TextsCollection::GetSingleton().SetTextString(textId, moveArgString);
   return JsValue::Undefined();
 }
 JsValue TextApi::SetTextColor(const JsFunctionArguments& args)
 {
   std::array<double, 4> argColor;
 
+  auto textNameId = static_cast<int>(args[1]);
+  
   for (int i = 0; i < 4; i++) {
     argColor[i] = args[2].GetProperty(i);
   }
+    
+  auto moveArgColor = std::move(argColor);
 
-  TextsCollection::GetSingleton().SetTextColor(static_cast<int>(args[1]),
-                                               std::move(argColor));
+  TextsCollection::GetSingleton().SetTextColor(textNameId, moveArgColor);
   return JsValue::Undefined();
 }
 JsValue TextApi::SetTextSize(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
 
-  auto size = static_cast<double>(args[2]);
+  auto size = (float)static_cast<double>(args[2]);
 
   TextsCollection::GetSingleton().SetTextSize(textId, size);
   return JsValue::Undefined();
@@ -87,7 +91,7 @@ JsValue TextApi::SetTextRotation(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
 
-  auto rot = static_cast<double>(args[2]);
+  auto rot = (float)static_cast<double>(args[2]);
 
   TextsCollection::GetSingleton().SetTextRotation(textId, rot);
   return JsValue::Undefined();
@@ -107,7 +111,7 @@ JsValue TextApi::SetTextDepth(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
 
-  auto depth = static_cast<double>(args[2]);
+  auto depth = static_cast<int>(args[2]);
 
   TextsCollection::GetSingleton().SetTextDepth(textId, depth);
   return JsValue::Undefined();
@@ -129,8 +133,10 @@ JsValue TextApi::SetTextOrigin(const JsFunctionArguments& args)
     argOrigin[i] = args[2].GetProperty(i);
   }
 
-  TextsCollection::GetSingleton().SetTextOrigin(static_cast<int>(args[1]),
-                                                std::move(argOrigin));
+  auto textNameId = static_cast<int>(args[1]); 
+  auto moveArgOrigin = std::move(argOrigin);
+
+  TextsCollection::GetSingleton().SetTextOrigin(textNameId, moveArgOrigin);
   return JsValue::Undefined();
 }
 

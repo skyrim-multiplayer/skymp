@@ -31,40 +31,40 @@ void TextsCollection::DestroyAllTexts()
   textCount = 0;
 }
 
-void TextsCollection::SetTextPos(int textId, float xPos, float yPos)
+void TextsCollection::SetTextPos(int& textId, double& xPos, double& yPos)
 {
   texts.at(textId).x = xPos;
   texts.at(textId).y = yPos;
 }
-void TextsCollection::SetTextString(int textId, std::wstring str)
+void TextsCollection::SetTextString(int& textId, std::wstring& str)
 {
   texts.at(textId).string = std::move(str);
 }
-void TextsCollection::SetTextColor(int textId, std::array<double, 4> color)
+void TextsCollection::SetTextColor(int& textId, std::array<double, 4>& color)
 {
   texts.at(textId).color = color;
 }
-void TextsCollection::SetTextFont(int textId, std::wstring name)
+void TextsCollection::SetTextFont(int& textId, std::wstring& name)
 {
   texts.at(textId).fontName = name;
 }
-void TextsCollection::SetTextRotation(int textId, float rotation)
+void TextsCollection::SetTextRotation(int& textId, float& rotation)
 {
   texts.at(textId).rotation = rotation;
 }
-void TextsCollection::SetTextSize(int textId, float size)
+void TextsCollection::SetTextSize(int& textId, float& size)
 {
   texts.at(textId).size = size;
 }
-void TextsCollection::SetTextEffect(int textId, int effect)
+void TextsCollection::SetTextEffect(int& textId, int& effect)
 {
   texts.at(textId).effects = static_cast<DirectX::SpriteEffects>(effect);
 }
-void TextsCollection::SetTextDepth(int textId, float depth)
+void TextsCollection::SetTextDepth(int& textId, int& depth)
 {
   texts.at(textId).layerDepth = depth;
 }
-void TextsCollection::SetTextOrigin(int textId, std::array<double, 2> origin)
+void TextsCollection::SetTextOrigin(int& textId, std::array<double, 2>& origin)
 {
   texts.at(textId).origin = origin;
 }
