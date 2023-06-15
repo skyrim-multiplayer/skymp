@@ -157,6 +157,12 @@ TEST_CASE("AttachSaveStorage forces loading", "[save]")
   UpsertSync(*st, { f });
   p.AttachSaveStorage(st);
 
+  REQUIRE(refr.GetPos().x == 0);
+  REQUIRE(refr.GetPos().y == 0);
+  REQUIRE(refr.GetPos().z == 0);
+
+  p.worldState.LookupFormById(refr.GetFormId()); // force load skipped changeforms
+
   REQUIRE(refr.GetPos().x == 1);
   REQUIRE(refr.GetPos().y == 1);
   REQUIRE(refr.GetPos().z == 1);
