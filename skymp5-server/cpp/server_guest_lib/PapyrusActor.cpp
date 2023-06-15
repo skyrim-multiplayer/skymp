@@ -100,8 +100,8 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
   return VarValue(false);
 }
 
-VarValue PapyrusActor::GetActorValuePercentage(VarValue self,
-                                     const std::vector<VarValue>& arguments)
+VarValue PapyrusActor::GetActorValuePercentage(
+  VarValue self, const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
     throw std::runtime_error(

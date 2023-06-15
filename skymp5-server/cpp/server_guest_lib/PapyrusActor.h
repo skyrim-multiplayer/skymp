@@ -25,7 +25,7 @@ public:
   VarValue IsEquipped(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue GetActorValuePercentage(VarValue self,
-                         const std::vector<VarValue>& arguments);
+                                   const std::vector<VarValue>& arguments);
 
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
@@ -43,7 +43,8 @@ public:
     AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
     AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
     AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
-    AddMethod(vm, "GetActorValuePercentage", &PapyrusActor::GetActorValuePercentage);
+    AddMethod(vm, "GetActorValuePercentage",
+              &PapyrusActor::GetActorValuePercentage);
     AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
     AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
   }
