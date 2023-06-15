@@ -32,15 +32,15 @@ public:
   TextsCollection& operator=(const TextsCollection&&) = delete;
 
 public:
-  std::pair<double, double> GetTextPos(int textId) const;
+  const std::pair<double, double> GetTextPos(int textId) const;
   const std::wstring& GetTextString(int textId) const;
-  std::array<double, 4> GetTextColor(int textId) const;
-  std::wstring GetTextFont(int textId) const;
-  float GetTextRotation(int textId) const;
-  float GetTextSize(int textId) const;
-  int GetTextEffect(int textId) const;
-  int GetTextDepth(int textId) const;
-  std::array<double, 2> GetTextOrigin(int textId) const;
+  const std::array<double, 4>& GetTextColor(int textId) const;
+  const std::wstring& GetTextFont(int textId) const;
+  const float& GetTextRotation(int textId) const;
+  const float& GetTextSize(int textId) const;
+  const int GetTextEffect(int textId) const;
+  const int& GetTextDepth(int textId) const;
+  const std::array<double, 2> GetTextOrigin(int textId) const;
 
   const std::unordered_map<int, TextToDraw>& GetCreatedTexts() const;
 

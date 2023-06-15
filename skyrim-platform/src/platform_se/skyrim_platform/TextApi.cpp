@@ -142,8 +142,7 @@ JsValue TextApi::SetTextOrigin(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 {
-  auto postions =
-    TextsCollection::GetSingleton().GetTextPos(static_cast<int>(args[1]));
+  auto& postions = TextsCollection::GetSingleton().GetTextPos(static_cast<int>(args[1]));
   auto jsArray = JsValue::Array(2);
 
   jsArray.SetProperty(0, postions.first);
@@ -161,7 +160,7 @@ JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 }
 JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
 {
-  auto argArray =
+  const auto& argArray =
     TextsCollection::GetSingleton().GetTextColor(static_cast<int>(args[1]));
   auto jsArray = JsValue::Array(4);
 
@@ -202,7 +201,7 @@ JsValue TextApi::GetTextDepth(const JsFunctionArguments& args)
 }
 JsValue TextApi::GetTextEffect(const JsFunctionArguments& args)
 {
-  const int effect =
+  const auto& effect =
     TextsCollection::GetSingleton().GetTextEffect(static_cast<int>(args[1]));
 
   return JsValue(effect);

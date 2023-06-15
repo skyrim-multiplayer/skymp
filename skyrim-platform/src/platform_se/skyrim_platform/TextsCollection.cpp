@@ -69,7 +69,7 @@ void TextsCollection::SetTextOrigin(int& textId, std::array<double, 2>& origin)
   texts.at(textId).origin = origin;
 }
 
-std::pair<double, double> TextsCollection::GetTextPos(int textId) const
+const std::pair<double, double> TextsCollection::GetTextPos(int textId) const
 {
   std::pair<double, double> positions = {
     texts.at(textId).x,
@@ -82,35 +82,33 @@ const std::wstring& TextsCollection::GetTextString(int textId) const
 {
   return texts.at(textId).string;
 }
-std::array<double, 4> TextsCollection::GetTextColor(int textId) const
+const std::array<double, 4>& TextsCollection::GetTextColor(int textId) const
 {
   return texts.at(textId).color;
 }
-std::wstring TextsCollection::GetTextFont(int textId) const
+const std::wstring& TextsCollection::GetTextFont(int textId) const
 {
-  std::wstring txt = texts.at(textId).fontName;
-
-  return txt;
+  return texts.at(textId).fontName;
 }
-float TextsCollection::GetTextRotation(int textId) const
+const float& TextsCollection::GetTextRotation(int textId) const
 {
   return texts.at(textId).rotation;
 }
-float TextsCollection::GetTextSize(int textId) const
+const float& TextsCollection::GetTextSize(int textId) const
 {
   return texts.at(textId).size;
 }
-int TextsCollection::GetTextEffect(int textId) const
+const int TextsCollection::GetTextEffect(int textId) const
 {
   return texts.at(textId).effects;
 }
-int TextsCollection::GetTextDepth(int textId) const
+const int& TextsCollection::GetTextDepth(int textId) const
 {
   return texts.at(textId).layerDepth;
 }
-std::array<double, 2> TextsCollection::GetTextOrigin(int textId) const
+const std::array<double, 2> TextsCollection::GetTextOrigin(int textId) const
 {
-  return std::array<double, 2>();
+  return texts.at(textId).origin;
 }
 
 const std::unordered_map<int, TextToDraw>& TextsCollection::GetCreatedTexts() const
