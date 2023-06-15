@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, getTextRotation, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextRotation, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, getTextRotation, getTextSize, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextRotation, setTextSize, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
@@ -183,6 +183,7 @@ export class FormView implements View<FormModel> {
 
   private lastHarvestedApply = 0;
   private lastOpenApply = 0;
+  private time = 0;
 
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
@@ -375,7 +376,9 @@ export class FormView implements View<FormModel> {
         } else {
           setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
           setTextPos(this.textNameId, textXPos, textYPos);
-          setTextRotation(this.textNameId, getTextRotation(this.textNameId) + 100);
+            //setTextRotation(this.textNameId, getTextRotation(this.textNameId) + 100);
+            this.time += 1 / 5;
+            setTextSize(this.textNameId, Math.abs((Math.sin(this.time) + 0.2)));
         }
       } else {
         this.removeNickname();
