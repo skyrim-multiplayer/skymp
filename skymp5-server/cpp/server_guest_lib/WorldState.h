@@ -51,10 +51,11 @@ public:
   void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
 
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
-               bool skipChecks = false);
+               bool skipChecks = false,
+               const MpChangeForm* optionalChangeFormToApply = nullptr);
 
-  void LoadFFChangeForm(const MpChangeForm& changeForm,
-                        const FormCallbacks& callbacks);
+  void LoadChangeForm(const MpChangeForm& changeForm,
+                      const FormCallbacks& callbacks);
 
   void Tick();
 
@@ -190,8 +191,7 @@ private:
 
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         espm::RecordHeader* record,
-                        const espm::IdMapping& mapping,
-                        std::optional<MpChangeForm> changeFormToApply);
+                        const espm::IdMapping& mapping);
 
   bool LoadForm(uint32_t formId);
 

@@ -13,7 +13,7 @@ TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus][espm]")
   partOne.worldState.AddForm(
     std::make_unique<MpActor>(LocationalData{ nirnrootRef.GetPos(), NiPoint3(),
                                               nirnrootRef.GetCellOrWorld() },
-                              FormCallbacks::DoNothing(), std::nullopt),
+                              FormCallbacks::DoNothing()),
     0xff000000);
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
@@ -37,7 +37,7 @@ TEST_CASE("Server crash in CallMethod", "[Papyrus][espm]")
   partOne.worldState.AddForm(
     std::make_unique<MpActor>(
       LocationalData{ ref.GetPos(), NiPoint3(), ref.GetCellOrWorld() },
-      FormCallbacks::DoNothing(), std::nullopt),
+      FormCallbacks::DoNothing()),
     0xff000000);
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
@@ -54,7 +54,7 @@ TEST_CASE("Server crash in PropGet", "[Papyrus][espm]")
   partOne.worldState.AddForm(
     std::make_unique<MpActor>(
       LocationalData{ ref.GetPos(), NiPoint3(), ref.GetCellOrWorld() },
-      FormCallbacks::DoNothing(), std::nullopt),
+      FormCallbacks::DoNothing()),
     0xff000000);
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
@@ -73,7 +73,7 @@ TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne][espm]")
   partOne.worldState.AddForm(
     std::make_unique<MpActor>(
       LocationalData{ ref.GetPos(), NiPoint3(), ref.GetCellOrWorld() },
-      FormCallbacks::DoNothing(), std::nullopt),
+      FormCallbacks::DoNothing()),
     0xff000000);
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 
@@ -94,7 +94,7 @@ TEST_CASE("OnTriggerEnter crash in MovarthsLairExterior01", "[PartOne][espm]")
   partOne.worldState.AddForm(
     std::make_unique<MpActor>(
       LocationalData{ { 0, 0, 0 }, NiPoint3(), ref.GetCellOrWorld() },
-      FormCallbacks::DoNothing(), std::nullopt),
+      FormCallbacks::DoNothing()),
     0xff000000);
   auto& actor = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 

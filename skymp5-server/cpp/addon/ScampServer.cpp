@@ -704,12 +704,11 @@ Napi::Value ScampServer::Place(const Napi::CallbackInfo& info)
 
     std::unique_ptr<MpObjectReference> newRefr;
     if (akFormToPlace.rec->GetType() == "NPC_") {
-      auto actor =
-        new MpActor(locationalData, callbacks, std::nullopt, globalRecordId);
+      auto actor = new MpActor(locationalData, callbacks, globalRecordId);
       newRefr.reset(actor);
     } else {
       newRefr.reset(new MpObjectReference(locationalData, callbacks,
-                                          globalRecordId, type, std::nullopt));
+                                          globalRecordId, type));
     }
 
     auto worldState = &partOne->worldState;

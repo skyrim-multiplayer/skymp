@@ -22,7 +22,7 @@ TEST_CASE("Picking up a bunch of items", "[PickUpItemCountTest]")
   partOne.worldState.AddForm(
     std::make_unique<MpActor>(
       LocationalData{ refr.GetPos(), NiPoint3(), refr.GetCellOrWorld() },
-      FormCallbacks::DoNothing(), std::nullopt),
+      FormCallbacks::DoNothing()),
     0xff000000);
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
 

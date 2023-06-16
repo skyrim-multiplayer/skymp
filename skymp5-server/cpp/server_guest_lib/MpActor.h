@@ -16,8 +16,7 @@ public:
   const char* GetFormType() const override { return "Actor"; }
 
   MpActor(const LocationalData& locationalData_,
-          const FormCallbacks& calbacks_,
-          std::optional<MpChangeForm> changeForm, uint32_t optBaseId = 0);
+          const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
 
   const bool& IsRaceMenuOpen() const;
   const bool& IsDead() const;
@@ -52,6 +51,7 @@ public:
   void RemoveEventSink(std::shared_ptr<DestroyEventSink> sink);
 
   MpChangeForm GetChangeForm() const override;
+  void ApplyChangeForm(const MpChangeForm& changeForm) override;
 
   uint32_t NextSnippetIndex(
     std::optional<Viet::Promise<VarValue>> promise = std::nullopt);
@@ -117,6 +117,5 @@ private:
 
 protected:
   void BeforeDestroy() override;
-  void Init(WorldState* parent, uint32_t formId) override;
-  void ApplyChangeForm(const MpChangeForm& changeForm) override;
+  void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 };

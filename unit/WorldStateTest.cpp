@@ -31,113 +31,111 @@ TEST_CASE("DestroyForm failures", "[WorldState]")
     ContainsSubstring("Expected form 12345678 to be Actor, but got Form"));
 }
 
-// TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
-// {
-//   WorldState worldState;
-//   worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
+TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
-//   MpChangeForm changeForm;
-//   changeForm.recType = MpChangeForm::ACHR;
-//   changeForm.position = { 1, 2, 3 };
-//   changeForm.worldOrCellDesc = FormDesc::Tamriel();
-//   changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+  MpChangeForm changeForm;
+  changeForm.recType = MpChangeForm::ACHR;
+  changeForm.position = { 1, 2, 3 };
+  changeForm.worldOrCellDesc = FormDesc::Tamriel();
+  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
 
-//   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
+  worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
 
-//   auto& refr = worldState.GetFormAt<MpActor>(0xff000000);
-//   REQUIRE(refr.GetFormId() == 0xff000000);
-//   REQUIRE(refr.GetChangeForm().formDesc.ToString() == "0");
-//   REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
-//   REQUIRE(refr.GetCellOrWorld() == FormDesc::Tamriel());
-//   REQUIRE(refr.GetBaseId() == 0x0100abcd);
-// }
+  auto& refr = worldState.GetFormAt<MpActor>(0xff000000);
+  REQUIRE(refr.GetFormId() == 0xff000000);
+  REQUIRE(refr.GetChangeForm().formDesc.ToString() == "0");
+  REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
+  REQUIRE(refr.GetCellOrWorld() == FormDesc::Tamriel());
+  REQUIRE(refr.GetBaseId() == 0x0100abcd);
+}
 
-// TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
-//           "[WorldState]")
-// {
-//   WorldState worldState;
-//   worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
+TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
+          "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
-//   MpChangeForm changeForm;
-//   changeForm.recType = MpChangeForm::ACHR;
-//   changeForm.worldOrCellDesc = FormDesc::FromString("dead:Morrowind.esm");
-//   changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
-//   changeForm.isDisabled = true;
+  MpChangeForm changeForm;
+  changeForm.recType = MpChangeForm::ACHR;
+  changeForm.worldOrCellDesc = FormDesc::FromString("dead:Morrowind.esm");
+  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+  changeForm.isDisabled = true;
 
-//   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
+  worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
 
-//   auto& refr = worldState.GetFormAt<MpActor>(0xff000000);
-//   REQUIRE(refr.IsDisabled());
+  auto& refr = worldState.GetFormAt<MpActor>(0xff000000);
+  REQUIRE(refr.IsDisabled());
 
-//   // Disabled actors should not pollute grids during load process
-//   REQUIRE(worldState.GetGrids().count(0xdead) == 0);
-// }
+  // Disabled actors should not pollute grids during load process
+  REQUIRE(worldState.GetGrids().count(0xdead) == 0);
+}
 
-// TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
-// {
-//   WorldState worldState;
-//   worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
+TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
-//   MpChangeForm changeForm;
-//   changeForm.recType = MpChangeForm::ACHR;
-//   changeForm.worldOrCellDesc = FormDesc::FromString("dead:Morrowind.esm");
-//   changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
-//   changeForm.isDisabled = true;
-//   changeForm.profileId = 100;
+  MpChangeForm changeForm;
+  changeForm.recType = MpChangeForm::ACHR;
+  changeForm.worldOrCellDesc = FormDesc::FromString("dead:Morrowind.esm");
+  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+  changeForm.isDisabled = true;
+  changeForm.profileId = 100;
 
-//   REQUIRE(worldState.GetActorsByProfileId(100).empty());
-//   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
+  REQUIRE(worldState.GetActorsByProfileId(100).empty());
+  worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
 
-//   REQUIRE(worldState.GetGrids().count(0xdead) == 0);
-//   REQUIRE(worldState.GetActorsByProfileId(100) ==
-//           std::set<uint32_t>({ 0xff000000 }));
-// }
+  REQUIRE(worldState.GetGrids().count(0xdead) == 0);
+  REQUIRE(worldState.GetActorsByProfileId(100) ==
+          std::set<uint32_t>({ 0xff000000 }));
+}
 
-// TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
-// {
-//   WorldState worldState;
-//   worldState.espmFiles = { "Skyrim.esm" };
+TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Skyrim.esm" };
 
-//   MpChangeForm changeForm;
-//   changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
-//   changeForm.position = { 1, 2, 3 };
-//   changeForm.worldOrCellDesc = FormDesc::Tamriel();
-//   changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
+  MpChangeForm changeForm;
+  changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
+  changeForm.position = { 1, 2, 3 };
+  changeForm.worldOrCellDesc = FormDesc::Tamriel();
+  changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
 
-//   auto newRefr = new MpObjectReference(
-//     LocationalData(), FormCallbacks::DoNothing(), 0x0000abcd, "STAT");
-//   worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
+  auto newRefr = new MpObjectReference(
+    LocationalData(), FormCallbacks::DoNothing(), 0x0000abcd, "STAT");
+  worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
 
-//   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
-//   auto& refr = worldState.GetFormAt<MpObjectReference>(0xeeee);
-//   REQUIRE(refr.GetFormId() == 0xeeee);
-//   REQUIRE(refr.GetChangeForm().formDesc.ToString() == "eeee:Skyrim.esm");
-//   REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
-//   REQUIRE(refr.GetCellOrWorld() == FormDesc::Tamriel());
-//   REQUIRE(refr.GetBaseId() == 0x0000abcd);
-//   REQUIRE(refr.Type() == std::string("ObjectReference"));
-//   REQUIRE(&refr == newRefr);
-// }
+  worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
+  auto& refr = worldState.GetFormAt<MpObjectReference>(0xeeee);
+  REQUIRE(refr.GetFormId() == 0xeeee);
+  REQUIRE(refr.GetChangeForm().formDesc.ToString() == "eeee:Skyrim.esm");
+  REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
+  REQUIRE(refr.GetCellOrWorld() == FormDesc::Tamriel());
+  REQUIRE(refr.GetBaseId() == 0x0000abcd);
+  REQUIRE(refr.Type() == std::string("ObjectReference"));
+  REQUIRE(&refr == newRefr);
+}
 
-// TEST_CASE("Load ChangeForm of modified object with changed baseType",
-//           "[WorldState]")
-// {
-//   WorldState worldState;
-//   worldState.espmFiles = { "Skyrim.esm" };
-//   auto newRefr = new MpObjectReference(
-//     LocationalData(), FormCallbacks::DoNothing(), 0x0000ded0, "STAT",
-//     std::nullopt);
-//   worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
+TEST_CASE("Load ChangeForm of modified object with changed baseType",
+          "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "Skyrim.esm" };
+  auto newRefr = new MpObjectReference(
+    LocationalData(), FormCallbacks::DoNothing(), 0x0000ded0, "STAT");
+  worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
 
-//   MpChangeForm changeForm;
-//   changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
-//   changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
+  MpChangeForm changeForm;
+  changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
+  changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
 
-//   REQUIRE_THROWS_WITH(
-//     worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing()),
-//     ContainsSubstring("Anomally, baseId should never change (ded0 =>
-//     abcd)"));
-// }
+  REQUIRE_THROWS_WITH(
+    worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing()),
+    ContainsSubstring("Anomally, baseId should never change (ded0 => abcd)"));
+}
 
 extern PartOne& GetPartOne();
 
