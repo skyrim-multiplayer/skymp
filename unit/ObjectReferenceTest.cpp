@@ -6,7 +6,7 @@ MpObjectReference& CreateMpObjectReference_(WorldState& worldState,
                                             uint32_t id)
 {
   auto refr = std::make_unique<MpObjectReference>(
-    LocationalData(), FormCallbacks::DoNothing(), 0, "CONT");
+    LocationalData(), FormCallbacks::DoNothing(), 0, "CONT", std::nullopt);
   worldState.AddForm(std::move(refr), id);
   return worldState.GetFormAt<MpObjectReference>(id);
 }

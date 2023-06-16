@@ -49,7 +49,7 @@ struct WorldState::Impl
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
   std::shared_ptr<HeuristicPolicy> policy;
-  std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
+  // std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
   std::map<std::string, std::chrono::system_clock::duration>
@@ -94,8 +94,7 @@ void WorldState::AttachScriptStorage(
 }
 
 void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
-                         bool skipChecks,
-                         const MpChangeForm* optionalChangeFormToApply)
+                         bool skipChecks)
 {
   if (!skipChecks && forms.find(formId) != forms.end()) {
 
@@ -105,7 +104,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                                             << formId << " already exists")
         .str());
   }
-  form->Init(this, formId, optionalChangeFormToApply != nullptr);
+  form->Init(this, formId);
 
   if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
     if (!formIdxManager)
@@ -119,16 +118,6 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
   }
 
   auto it = forms.insert({ formId, std::move(form) }).first;
-
-  if (optionalChangeFormToApply) {
-    auto refr = dynamic_cast<MpObjectReference*>(it->second.get());
-    if (!refr) {
-      forms.erase(it); // Rollback changes due to exception
-      throw std::runtime_error(
-        "Unable to apply ChangeForm, cast to ObjectReference failed");
-    }
-    refr->ApplyChangeForm(*optionalChangeFormToApply);
-  }
 }
 
 void WorldState::Tick()
@@ -139,17 +128,22 @@ void WorldState::Tick()
   TickTimers(now);
 }
 
-void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
-                                const FormCallbacks& callbacks)
+void WorldState::LoadFFChangeForm(const MpChangeForm& changeForm,
+                                  const FormCallbacks& callbacks)
 {
+  const auto baseId = changeForm.baseDesc.ToFormId(espmFiles);
+  const auto formId = changeForm.formDesc.ToFormId(espmFiles);
+
+  if (formId < 0xff000000) {
+    return spdlog::error(
+      "LoadFFChangeForm {:x} - Called with bad argument, FF formId expected");
+  }
+
   Viet::ScopedTask<bool> task([](bool& st) { st = false; },
                               pImpl->formLoadingInProgress);
   pImpl->formLoadingInProgress = true;
 
   std::unique_ptr<MpObjectReference> form;
-
-  const auto baseId = changeForm.baseDesc.ToFormId(espmFiles);
-  const auto formId = changeForm.formDesc.ToFormId(espmFiles);
 
   std::string baseType = "STAT";
   if (espm) {
@@ -163,33 +157,35 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     baseType = rec->GetType().ToString();
   }
 
-  if (formId < 0xff000000) {
-    auto it = forms.find(formId);
-    if (it != forms.end()) {
-      auto refr = std::dynamic_pointer_cast<MpObjectReference>(it->second);
-      if (refr) {
-        refr->ApplyChangeForm(changeForm);
-      }
-    } else {
-      pImpl->changeFormsForDeferredLoad[formId] = changeForm;
-    }
-    return;
-  }
+  // if (formId < 0xff000000) {
+  //   auto it = forms.find(formId);
+  //   if (it != forms.end()) {
+  //     auto refr = std::dynamic_pointer_cast<MpObjectReference>(it->second);
+  //     if (refr) {
+  //       // refr->ApplyChangeForm(changeForm);
+  //       spdlog::error("LoadChangeForm {:x} - Form already present. How can
+  //       it be?", refr->GetFormId());
+  //     }
+  //   } else {
+  //     pImpl->changeFormsForDeferredLoad[formId] = changeForm;
+  //   }git
+  //   return;
+  // }
 
   switch (changeForm.recType) {
     case MpChangeForm::ACHR:
-      form.reset(new MpActor(LocationalData(), callbacks, baseId));
+      form.reset(new MpActor(LocationalData(), callbacks, changeForm, baseId));
       break;
     case MpChangeForm::REFR:
       form.reset(new MpObjectReference(LocationalData(), callbacks, baseId,
-                                       baseType.data()));
+                                       baseType.data(), changeForm));
       break;
     default:
       throw std::runtime_error("Unknown ChangeForm type: " +
                                std::to_string(changeForm.recType));
   }
 
-  AddForm(std::move(form), formId, false, &changeForm);
+  AddForm(std::move(form), formId, false);
 
   // EnsureBaseContainerAdded forces saving here.
   // We do not want characters to save when they are load partially
@@ -247,9 +243,10 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
   return it->second;
 }
 
-bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
-                                  espm::RecordHeader* record,
-                                  const espm::IdMapping& mapping)
+bool WorldState::AttachEspmRecord(
+  const espm::CombineBrowser& br, espm::RecordHeader* record,
+  const espm::IdMapping& mapping,
+  std::optional<MpChangeForm> changeFormToApply)
 {
   auto& cache = GetEspmCache();
   auto refr = reinterpret_cast<espm::REFR*>(record);
@@ -258,7 +255,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto baseId = espm::GetMappedId(data.baseId, mapping);
   auto base = br.LookupById(baseId);
   if (!base.rec) {
-    logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
+    spdlog::warn(
+      "AttachEspmRecord - Unable to find record by its baseId {} {}", baseId,
+      static_cast<void*>(base.rec));
     return false;
   }
 
@@ -297,6 +296,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   auto existing = forms.find(formId);
 
   if (existing != forms.end()) {
+    // It seems that the server also handles other possible REFR changes like
+    // VMAD changes. But not in this piece of code.
     auto existingAsRefr =
       reinterpret_cast<MpObjectReference*>(existing->second.get());
 
@@ -325,15 +326,14 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
     if (t != "NPC_") {
-      form.reset(new MpObjectReference(formLocationalData,
-                                       formCallbacksFactory(), baseId,
-                                       typeStr.data(), primitiveBoundsDiv2));
+      form.reset(new MpObjectReference(
+        formLocationalData, formCallbacksFactory(), baseId, typeStr.data(),
+        changeFormToApply, primitiveBoundsDiv2));
     } else {
-      form.reset(
-        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+      form.reset(new MpActor(formLocationalData, formCallbacksFactory(),
+                             changeFormToApply, baseId));
     }
     AddForm(std::move(form), formId, true);
-    // Do not TriggerFormInitEvent here, doing it later after changeForm apply
   }
 
   return true;
@@ -341,24 +341,44 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
 bool WorldState::LoadForm(uint32_t formId)
 {
+  if (!pImpl->saveStorage) {
+    // Too much logs in unit tests here so once_flag is used
+    static std::once_flag g_flag;
+    std::call_once(g_flag, [formId] {
+      spdlog::warn("LoadForm {:x} - Called before save storage attach",
+                   formId);
+    });
+    // return false;
+  }
+
+  auto desc = FormDesc::FromFormId(formId, GetEspm().GetFileNames());
+  std::optional<MpChangeForm> changeForm = pImpl->saveStorage
+    ? pImpl->saveStorage->FindOneSync(desc)
+    : std::optional<MpChangeForm>(std::nullopt);
+
+  spdlog::trace("LoadForm {:x} - change form found: {}", formId, !!changeForm);
+
+  // auto it = pImpl->changeFormsForDeferredLoad.find(formId);
+  // if (it != pImpl->changeFormsForDeferredLoad.end()) {
+  //   changeForm = it->second;
+  // }
+  // else {
+  //   changeForm = std::nullopt;
+  // }
+
   bool atLeastOneLoaded = false;
   auto& br = GetEspm().GetBrowser();
   auto lookupResults = br.LookupByIdAll(formId);
   for (auto& lookupRes : lookupResults) {
     auto mapping = br.GetCombMapping(lookupRes.fileIdx);
-    if (AttachEspmRecord(br, lookupRes.rec, *mapping)) {
+    if (AttachEspmRecord(br, lookupRes.rec, *mapping, changeForm)) {
       atLeastOneLoaded = true;
     }
   }
 
   if (atLeastOneLoaded) {
+    // pImpl->changeFormsForDeferredLoad.erase(it);
     auto& refr = GetFormAt<MpObjectReference>(formId);
-    auto it = pImpl->changeFormsForDeferredLoad.find(formId);
-    if (it != pImpl->changeFormsForDeferredLoad.end()) {
-      refr.ApplyChangeForm(it->second);
-      pImpl->changeFormsForDeferredLoad.erase(it);
-    }
-
     refr.ForceSubscriptionsUpdate();
   }
 

@@ -18,6 +18,16 @@ size_t MigrationDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
   return pImpl->newDatabase->Upsert(changeForms);
 }
 
+std::optional<MpChangeForm> MigrationDatabase::FindOne(
+  const FormDesc& formDesc)
+{
+  auto result = pImpl->newDatabase->FindOne(formDesc);
+  if (result) {
+    return result;
+  }
+  return pImpl->oldDatabase->FindOne(formDesc);
+}
+
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)
 {
   std::set<FormDesc> alreadyMigrated;

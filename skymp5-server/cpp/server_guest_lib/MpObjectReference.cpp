@@ -142,6 +142,7 @@ MpChangeForm MakeChangeForm(const LocationalData& locationalData)
 MpObjectReference::MpObjectReference(
   const LocationalData& locationalData_, const FormCallbacks& callbacks_,
   uint32_t baseId_, std::string baseType_,
+  std::optional<MpChangeForm> changeForm,
   std::optional<NiPoint3> primitiveBoundsDiv2)
   : callbacks(new FormCallbacks(callbacks_))
   , baseId(baseId_)
@@ -150,8 +151,11 @@ MpObjectReference::MpObjectReference(
 {
   pImpl.reset(new Impl);
 
-  if (primitiveBoundsDiv2)
+  if (primitiveBoundsDiv2) {
     SetPrimitive(*primitiveBoundsDiv2);
+  }
+
+  this->initialChangeForm = std::move(changeForm);
 }
 
 const NiPoint3& MpObjectReference::GetPos() const
@@ -799,7 +803,7 @@ MpChangeForm MpObjectReference::GetChangeForm() const
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
   if (pImpl->setPropertyCalled) {
-    GetParent()->logger->critical("ApplyChangeForm called after SetProperty");
+    spdlog::critical("ApplyChangeForm called after SetProperty");
     std::terminate();
   }
 
@@ -919,21 +923,12 @@ void MpObjectReference::SendPapyrusEvent(const char* eventName,
   return MpForm::SendPapyrusEvent(eventName, arguments, argumentsCount);
 }
 
-void MpObjectReference::Init(WorldState* parent, uint32_t formId,
-                             bool hasChangeForm)
+void MpObjectReference::Init(WorldState* parent, uint32_t formId)
 {
-  MpForm::Init(parent, formId, hasChangeForm);
-
-  // It crashed during sparsepp hashmap indexing.
-  // Not sure why. And not sure why this code actually been here.
-  // It seems that MoveOnGrid will be caled later.
-  /*if (!IsDisabled()) {
-    auto& gridInfo = GetParent()->grids[ChangeForm().worldOrCell];
-    MoveOnGrid(*gridInfo.grid);
-  }*/
+  MpForm::Init(parent, formId);
 
   // We should queue created form for saving as soon as it is initialized
-  const auto mode = (!hasChangeForm && formId >= 0xff000000)
+  const auto mode = (!initialChangeForm && formId >= 0xff000000)
     ? Mode::RequestSave
     : Mode::NoRequestSave;
 
@@ -943,6 +938,11 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
     mode);
+
+  if (initialChangeForm) {
+    ApplyChangeForm(*initialChangeForm);
+  }
+  initialChangeForm = std::nullopt;
 }
 
 bool MpObjectReference::IsLocationSavingNeeded() const

@@ -67,3 +67,29 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
     }
   }
 }
+
+std::optional<MpChangeForm> FileDatabase::FindOne(const FormDesc& formDesc)
+{
+  auto p = pImpl->changeFormsDirectory;
+  std::string fileName = formDesc.ToString('_') + ".json";
+  auto filePath = p / fileName;
+
+  if (!std::filesystem::exists(filePath)) {
+    return std::nullopt;
+  }
+
+  simdjson::dom::parser parser;
+
+  try {
+    std::ifstream t(filePath);
+    std::string jsonDump((std::istreambuf_iterator<char>(t)),
+                         std::istreambuf_iterator<char>());
+
+    auto result = parser.parse(jsonDump).value();
+    return MpChangeForm::JsonToChangeForm(result);
+  } catch (std::exception& e) {
+    pImpl->logger->error("Parsing of {} failed with {}", filePath.string(),
+                         e.what());
+    return std::nullopt;
+  }
+}
