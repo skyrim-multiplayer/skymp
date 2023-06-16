@@ -85,8 +85,8 @@ bool ScampServerListener::OnMpApiEvent(
       return true;
     }
 
-    // TODO: Handle non-boolean values? Current implementation will throw
-    return static_cast<bool>(callResult);
+    // Be careful: callResult.As<Napi::Boolean>() before static_cast<bool> is strictly required
+    return static_cast<bool>(callResult.As<Napi::Boolean>());
   } catch (Napi::Error& e) {
     std::string stacktrace;
     try {
