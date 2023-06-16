@@ -20,7 +20,7 @@ uint32_t LongToNormal(uint64_t longFormId)
 namespace JsonPointers {
 static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   pos("pos"), rot("rot"), isInJumpState("isInJumpState"),
-  isWeapDrawn("isWeapDrawn"), worldOrCell("worldOrCell"), inv("inv"),
+  isWeapDrawn("isWeapDrawn"), isBlocking("isBlocking"), worldOrCell("worldOrCell"), inv("inv"),
   caster("caster"), target("target"), snippetIdx("snippetIdx"),
   returnValue("returnValue"), baseId("baseId"), commandName("commandName"),
   args("args"), workbench("workbench"), resultObjectId("resultObjectId"),
@@ -114,12 +114,15 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       bool isWeapDrawn = false;
       Read(data_, JsonPointers::isWeapDrawn, &isWeapDrawn);
 
+      bool isBlocking = false;
+      Read(data_, JsonPointers::isBlocking, &isBlocking);
+
       uint32_t worldOrCell = 0;
       ReadEx(data_, JsonPointers::worldOrCell, &worldOrCell);
 
       actionListener.OnUpdateMovement(
         rawMsgData, idx, { pos[0], pos[1], pos[2] },
-        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, worldOrCell);
+        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, isBlocking, worldOrCell);
 
     } break;
     case MsgType::UpdateAnimation: {
