@@ -77,7 +77,8 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
 void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
-                                      bool isWeapDrawn, bool isBlocking, uint32_t worldOrCell)
+                                      bool isWeapDrawn, bool isBlocking,
+                                      uint32_t worldOrCell)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
