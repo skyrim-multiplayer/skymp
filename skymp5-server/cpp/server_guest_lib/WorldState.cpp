@@ -378,8 +378,10 @@ bool WorldState::LoadForm(uint32_t formId)
 
   if (atLeastOneLoaded) {
     // pImpl->changeFormsForDeferredLoad.erase(it);
-    auto& refr = GetFormAt<MpObjectReference>(formId);
-    refr.ForceSubscriptionsUpdate();
+
+    // This crashes, not sure why is ForceSubscriptionsUpdate needed here
+    // auto& refr = GetFormAt<MpObjectReference>(formId);
+    // refr.ForceSubscriptionsUpdate();
   }
 
   return atLeastOneLoaded;
