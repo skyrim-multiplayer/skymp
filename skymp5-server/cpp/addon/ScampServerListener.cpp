@@ -85,7 +85,8 @@ bool ScampServerListener::OnMpApiEvent(
       return true;
     }
 
-    // Be careful: callResult.As<Napi::Boolean>() before static_cast<bool> is strictly required
+    // Be careful: callResult.As<Napi::Boolean>() before static_cast<bool> is
+    // strictly required
     return static_cast<bool>(callResult.As<Napi::Boolean>());
   } catch (Napi::Error& e) {
     std::string stacktrace;
